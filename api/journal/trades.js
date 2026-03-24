@@ -217,9 +217,7 @@ module.exports = async (req, res) => {
 
     if (body.date !== undefined) {
       const nextD = normalizeYyyyMmDd(body.date);
-      if (jctx.bypassJournalDateLock) {
-        /* admin may change date */
-      } else if (nextD && existingDate && nextD !== existingDate) {
+      if (nextD && existingDate && nextD !== existingDate) {
         return res.status(403).json({ success: false, message: 'Cannot change trade date.' });
       }
     }

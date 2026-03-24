@@ -59,6 +59,10 @@ const MONTH_NAMES = [
 ];
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+function isCanceledError(err) {
+  return Boolean(err && (err.code === 'ERR_CANCELED' || err.name === 'CanceledError'));
+}
+
 /* ══════════════════════════════════════════════════════════════
    PHOTO LIGHTBOX
    ══════════════════════════════════════════════════════════════ */
@@ -152,7 +156,8 @@ export default function Journal() {
   const [dailyNotes, setDailyNotes]       = useState('');
   const [dailyMood, setDailyMood]         = useState(null);
   const [dailySaving, setDailySaving]     = useState(false);
-  const [savedFeedback, setSavedFeedback] = useState(false);
+  /** 'idle' | 'saving' | 'saved' | 'error' — diary line status for non-admins */
+  const [diarySaveStatus, setDiarySaveStatus] = useState('idle');
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editTitle, setEditTitle]         = useState('');
   const [dailyNotesList, setDailyNotesList]   = useState([]);
@@ -173,6 +178,20 @@ export default function Journal() {
   const [editingNoteId, setEditingNoteId]     = useState(null);
   const [editingNoteText, setEditingNoteText] = useState('');
 
+  const lastSavedDiaryRef = useRef('');
+  const skipDiaryAutosaveRef = useRef(true);
+  const diaryDebounceTimerRef = useRef(null);
+  const diaryAbortRef = useRef(null);
+  const dailyNotesRef = useRef(dailyNotes);
+  dailyNotesRef.current = dailyNotes;
+  const dailyMoodRef = useRef(dailyMood);
+  dailyMoodRef.current = dailyMood;
+
+  const canEditJournal = useMemo(
+    () => isSameDay(selectedDate, journalToday),
+    [selectedDate, journalToday]
+  );
+
   useEffect(() => { setCompletionBannerDismissed(false); }, [selectedDate]);
 
   useEffect(() => {
@@ -181,7 +200,7 @@ export default function Journal() {
 
   useEffect(() => {
     const tick = () => setJournalToday(getJournalTodayForUser(authUser));
-    const id = setInterval(tick, 60000);
+    const id = setInterval(tick, 15000);
     const onVis = () => {
       if (document.visibilityState === 'visible') tick();
     };
@@ -209,6 +228,7 @@ export default function Journal() {
   /* ── Data fetch ─────────────────────────────────────── */
   useEffect(() => {
     let cancelled = false;
+    skipDiaryAutosaveRef.current = true;
     setLoading(true);
     setError(null);
 
@@ -230,14 +250,19 @@ export default function Journal() {
       });
       setProofPhotos(restoredPhotos);
       setLoading(false);
-      setDailyNotes(dailyRes.data?.note?.notes ?? '');
+      const noteText = dailyRes.data?.note?.notes ?? '';
+      setDailyNotes(noteText);
+      lastSavedDiaryRef.current = noteText;
       setDailyMood(dailyRes.data?.note?.mood ?? null);
       setDailyNotesList(Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : []);
+      setDiarySaveStatus('idle');
+      skipDiaryAutosaveRef.current = false;
     }).catch((err) => {
       if (!cancelled) {
         setError(err.response?.data?.message || 'Failed to load tasks.');
         setMonthTasks([]);
         setLoading(false);
+        skipDiaryAutosaveRef.current = false;
       }
     });
 
@@ -257,25 +282,82 @@ export default function Journal() {
       .catch(() => {});
   }, [loading, selectedDate]);
 
-  /* ── Save daily note ─────────────────────────────────── */
+  /* ── Save daily note (immediate; clears pending debounced save) ───────── */
   const saveDailyNote = useCallback(async (overrides = {}) => {
+    if (!canEditJournal) return;
+    if (diaryDebounceTimerRef.current) {
+      clearTimeout(diaryDebounceTimerRef.current);
+      diaryDebounceTimerRef.current = null;
+    }
+    diaryAbortRef.current?.abort();
+    const ac = new AbortController();
+    diaryAbortRef.current = ac;
+
+    const notes = overrides.notes !== undefined ? overrides.notes : dailyNotes;
+    const mood = overrides.mood !== undefined ? overrides.mood : dailyMood;
+
     setDailySaving(true);
-    setSavedFeedback(false);
+    setDiarySaveStatus('saving');
     try {
-      const res = await Api.updateJournalDaily({
-        date:  selectedDate,
-        notes: overrides.notes !== undefined ? overrides.notes : dailyNotes,
-        mood:  overrides.mood  !== undefined ? overrides.mood  : dailyMood,
-      });
-      setSavedFeedback(true);
-      setTimeout(() => setSavedFeedback(false), 1800);
+      const res = await Api.updateJournalDaily(
+        { date: selectedDate, notes, mood },
+        { signal: ac.signal }
+      );
+      const saved = res.data?.note?.notes ?? notes;
+      lastSavedDiaryRef.current = saved;
       if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for saving notes!`, { icon: '⭐' });
+      setDiarySaveStatus('saved');
+      setTimeout(() => setDiarySaveStatus((s) => (s === 'saved' ? 'idle' : s)), 2200);
     } catch (err) {
+      if (isCanceledError(err)) return;
+      setDiarySaveStatus('error');
       setError(err.response?.data?.message || 'Failed to save notes.');
     } finally {
       setDailySaving(false);
     }
-  }, [selectedDate, dailyNotes, dailyMood]);
+  }, [canEditJournal, selectedDate, dailyNotes, dailyMood]);
+
+  /* Debounced autosave for diary text (non-admins only) */
+  useEffect(() => {
+    if (userAdmin || !canEditJournal || loading) return;
+    if (skipDiaryAutosaveRef.current) return;
+    const cur = dailyNotesRef.current;
+    if (cur === lastSavedDiaryRef.current) return;
+
+    if (diaryDebounceTimerRef.current) clearTimeout(diaryDebounceTimerRef.current);
+    diaryDebounceTimerRef.current = setTimeout(() => {
+      diaryDebounceTimerRef.current = null;
+      const notes = dailyNotesRef.current;
+      if (notes === lastSavedDiaryRef.current) return;
+
+      diaryAbortRef.current?.abort();
+      const ac = new AbortController();
+      diaryAbortRef.current = ac;
+      setDiarySaveStatus('saving');
+      Api.updateJournalDaily(
+        { date: selectedDate, notes, mood: dailyMoodRef.current },
+        { signal: ac.signal }
+      )
+        .then((res) => {
+          lastSavedDiaryRef.current = res.data?.note?.notes ?? notes;
+          if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for saving notes!`, { icon: '⭐' });
+          setDiarySaveStatus('saved');
+          setTimeout(() => setDiarySaveStatus((s) => (s === 'saved' ? 'idle' : s)), 2200);
+        })
+        .catch((err) => {
+          if (isCanceledError(err)) return;
+          setDiarySaveStatus('error');
+          setError(err.response?.data?.message || 'Failed to save notes.');
+        });
+    }, 700);
+
+    return () => {
+      if (diaryDebounceTimerRef.current) {
+        clearTimeout(diaryDebounceTimerRef.current);
+        diaryDebounceTimerRef.current = null;
+      }
+    };
+  }, [dailyNotes, userAdmin, canEditJournal, loading, selectedDate]);
 
   /* ── Derived task lists ──────────────────────────────── */
   const dayTasks           = monthTasks.filter((t) => isSameDay(t.date, selectedDate));
@@ -315,6 +397,7 @@ export default function Journal() {
   /* ── Task CRUD ───────────────────────────────────────── */
   const handleAddTask = async (e) => {
     e.preventDefault();
+    if (!canEditJournal) return;
     const title = newTaskTitle.trim();
     if (!title || adding) return;
     setAdding(true);
@@ -334,6 +417,7 @@ export default function Journal() {
   };
 
   const handleToggle = async (task) => {
+    if (!canEditJournal) return;
     const prevCompleted = task.completed;
     const nextCompleted = !prevCompleted;
     setMonthTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: nextCompleted } : t)));
@@ -351,6 +435,7 @@ export default function Journal() {
   };
 
   const handleDelete = async (id) => {
+    if (!canEditJournal) return;
     try {
       await Api.deleteJournalTask(id);
       setMonthTasks((prev) => prev.filter((t) => t.id !== id));
@@ -363,6 +448,7 @@ export default function Journal() {
   const handleEditStart  = (task) => { setEditingTaskId(task.id); setEditTitle(task.title); };
   const handleEditCancel = ()     => { setEditingTaskId(null); setEditTitle(''); };
   const handleEditSave   = async () => {
+    if (!canEditJournal) return;
     if (!editingTaskId || !editTitle.trim()) { setEditingTaskId(null); return; }
     try {
       const res = await Api.updateJournalTask(editingTaskId, { title: editTitle.trim() });
@@ -377,11 +463,13 @@ export default function Journal() {
 
   /* ── Multi-photo proof ───────────────────────────────── */
   const handleProofClick = (taskId) => {
+    if (!canEditJournal) return;
     pendingProofTaskId.current = taskId;
     proofInputRef.current?.click();
   };
 
   const handleProofFilesChange = (e) => {
+    if (!canEditJournal) return;
     const files  = Array.from(e.target.files || []);
     const taskId = pendingProofTaskId.current;
     pendingProofTaskId.current = null;
@@ -412,6 +500,7 @@ export default function Journal() {
   };
 
   const handleRemoveProofPhoto = (taskId, idx) => {
+    if (!canEditJournal) return;
     setProofPhotos((prev) => {
       const updated = (prev[taskId] || []).filter((_, i) => i !== idx);
       Api.updateJournalTask(taskId, { proofImages: updated, proofImage: updated[0] || null }).catch(() => {});
@@ -422,6 +511,7 @@ export default function Journal() {
   /* ── Notes CRUD ──────────────────────────────────────── */
   const handleAddNote = async (e) => {
     e.preventDefault();
+    if (!canEditJournal) return;
     const content = newNoteContent.trim();
     if (!content || addingNote) return;
     setAddingNote(true);
@@ -441,6 +531,7 @@ export default function Journal() {
   };
 
   const handleDeleteNote = async (id) => {
+    if (!canEditJournal) return;
     try {
       await Api.deleteJournalNote(id);
       setDailyNotesList((prev) => prev.filter((n) => n.id !== id));
@@ -452,6 +543,7 @@ export default function Journal() {
   const handleNoteEditStart  = (note) => { setEditingNoteId(note.id); setEditingNoteText(note.content); };
   const handleNoteEditCancel = ()      => { setEditingNoteId(null); setEditingNoteText(''); };
   const handleNoteEditSave   = async (noteId) => {
+    if (!canEditJournal) return;
     const text = editingNoteText.trim();
     if (!text) { handleNoteEditCancel(); return; }
     try {
@@ -524,17 +616,22 @@ export default function Journal() {
           <div key={i} className="journal-proof-thumb"
             onClick={() => setLightbox({ photos, index: i })} title="Tap to view">
             <img src={src} alt={`Proof ${i + 1}`} loading="lazy" />
-            <button type="button" className="journal-proof-thumb-remove"
-              onClick={(e) => { e.stopPropagation(); handleRemoveProofPhoto(taskId, i); }} title="Remove">✕</button>
+            {canEditJournal && (
+              <button type="button" className="journal-proof-thumb-remove"
+                onClick={(e) => { e.stopPropagation(); handleRemoveProofPhoto(taskId, i); }} title="Remove">✕</button>
+            )}
           </div>
         ))}
-        <button type="button" className="journal-proof-add-more"
-          onClick={() => handleProofClick(taskId)} title="Add more photos">+</button>
+        {canEditJournal && (
+          <button type="button" className="journal-proof-add-more"
+            onClick={() => handleProofClick(taskId)} title="Add more photos">+</button>
+        )}
       </div>
     );
   };
 
   const renderProofBtn = (taskId) => {
+    if (!canEditJournal) return null;
     const count = (proofPhotos[taskId] || []).length;
     return (
       <button type="button" className="journal-task-proof-btn"
@@ -548,7 +645,7 @@ export default function Journal() {
 
   /* ── Task card renderer ──────────────────────────────── */
   const renderTaskCard = (task) => {
-    const isEditing = editingTaskId === task.id;
+    const isEditing = canEditJournal && editingTaskId === task.id;
     const isDone    = task.completed;
     const isMand    = task.isMandatory;
 
@@ -559,6 +656,7 @@ export default function Journal() {
           'journal-task-item',
           isDone ? 'journal-task-item--done' : '',
           isMand ? 'journal-task-item--mandatory' : '',
+          !canEditJournal ? 'journal-task-item--readonly' : '',
         ].filter(Boolean).join(' ')}
       >
         {isEditing ? (
@@ -592,6 +690,7 @@ export default function Journal() {
                 type="button"
                 className="journal-task-check"
                 onClick={() => handleToggle(task)}
+                disabled={!canEditJournal}
                 aria-label={isDone ? 'Mark not done' : 'Mark done'}
               >
                 {isDone ? <FaCheck /> : <span className="journal-task-check-empty" />}
@@ -603,8 +702,8 @@ export default function Journal() {
             <div className="journal-task-card-body">
               <span
                 className="journal-task-title"
-                onClick={() => !isMand && handleEditStart(task)}
-                title={isMand ? task.title : 'Click to edit'}
+                onClick={() => canEditJournal && !isMand && handleEditStart(task)}
+                title={isMand ? task.title : (canEditJournal ? 'Click to edit' : task.title)}
               >
                 {task.title}
               </span>
@@ -617,14 +716,14 @@ export default function Journal() {
             <div className="journal-task-card-footer">
               <div className="journal-task-actions">
                 {renderProofBtn(task.id)}
-                {!isMand && (
+                {canEditJournal && !isMand && (
                   <button type="button" className="journal-task-edit-icon"
                     onClick={(e) => { e.stopPropagation(); handleEditStart(task); }}
                     aria-label="Edit task">
                     <FaEdit />
                   </button>
                 )}
-                {!isMand && (
+                {canEditJournal && !isMand && (
                   <button type="button" className="journal-task-delete"
                     onClick={() => handleDelete(task.id)}
                     aria-label="Delete task">
@@ -722,6 +821,12 @@ export default function Journal() {
         {/* ══════════ MAIN ══════════ */}
         <main className="journal-main">
           {error && <div className="journal-error" role="alert">{error}</div>}
+
+          {!canEditJournal && (
+            <div className="journal-readonly-banner" role="status">
+              View only — journal edits are allowed for today only (your local calendar day after midnight). Past days cannot be changed.
+            </div>
+          )}
 
           {/* Header */}
           <div className="journal-main-header">
@@ -863,9 +968,9 @@ export default function Journal() {
                 placeholder="Add a personal task…"
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
-                disabled={adding}
+                disabled={adding || !canEditJournal}
               />
-              <button type="submit" className="journal-add-btn" disabled={adding || !newTaskTitle.trim()}>
+              <button type="submit" className="journal-add-btn" disabled={adding || !newTaskTitle.trim() || !canEditJournal}>
                 <FaPlus /> Add
               </button>
             </form>
@@ -903,37 +1008,56 @@ export default function Journal() {
                 className="journal-diary-textarea"
                 value={dailyNotes}
                 onChange={(e) => setDailyNotes(e.target.value)}
-                placeholder="Write freely… (saved when you click Save diary)"
+                readOnly={!canEditJournal}
+                placeholder={
+                  !canEditJournal
+                    ? 'This day is read-only.'
+                    : userAdmin
+                      ? 'Write freely… (saved when you click Save diary)'
+                      : 'Write freely… (saved automatically for today)'
+                }
                 maxLength={8000}
                 rows={10}
                 spellCheck
               />
               <div className="journal-diary-actions">
-                <button
-                  type="button"
-                  className="journal-diary-save-btn"
-                  disabled={dailySaving}
-                  onClick={() => saveDailyNote()}
-                >
-                  {dailySaving ? 'Saving…' : 'Save diary'}
-                </button>
-                {savedFeedback && journalTab === 'reflection' && (
-                  <span className="journal-diary-saved">Saved ✓</span>
+                {!userAdmin && canEditJournal && (
+                  <span className="journal-diary-autosave-status" aria-live="polite">
+                    {diarySaveStatus === 'saving' && 'Saving…'}
+                    {diarySaveStatus === 'saved' && 'Saved ✓'}
+                    {diarySaveStatus === 'error' && 'Could not save — check your connection'}
+                  </span>
+                )}
+                {userAdmin && canEditJournal && (
+                  <button
+                    type="button"
+                    className="journal-diary-save-btn"
+                    disabled={dailySaving}
+                    onClick={() => saveDailyNote()}
+                  >
+                    {dailySaving ? 'Saving…' : 'Save diary'}
+                  </button>
                 )}
               </div>
             </section>
 
             <section className="journal-glass-card journal-mood-section">
               <h3 className="journal-subsection-title">Mood today</h3>
-              <p className="journal-diary-hint">Tap to set how you felt — saves automatically.</p>
+              <p className="journal-diary-hint">
+                {canEditJournal
+                  ? 'Tap to set how you felt — saves automatically.'
+                  : 'Mood is read-only for past days.'}
+              </p>
               <div className="journal-mood-row">
                 <div className="journal-mood-options">
                   {MOOD_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
+                      disabled={!canEditJournal}
                       className={`journal-mood-btn${dailyMood === opt.value ? ' journal-mood-btn--active' : ''}`}
                       onClick={() => {
+                        if (!canEditJournal) return;
                         const m = dailyMood === opt.value ? null : opt.value;
                         setDailyMood(m);
                         saveDailyNote({ mood: m });
@@ -945,7 +1069,9 @@ export default function Journal() {
                   ))}
                 </div>
               </div>
-              {savedFeedback && <span className="journal-mood-saved">Saved ✓</span>}
+              {canEditJournal && diarySaveStatus === 'saved' && journalTab === 'reflection' && (
+                <span className="journal-mood-saved">Saved ✓</span>
+              )}
             </section>
 
             <section className="journal-notes-section journal-reflection-section">
@@ -994,26 +1120,28 @@ export default function Journal() {
                       ) : (
                         <>
                           <span className="journal-note-content">{note.content}</span>
-                          <div className="journal-note-actions">
-                            <button
-                              type="button"
-                              className="journal-note-action-btn journal-note-edit-btn"
-                              onClick={() => handleNoteEditStart(note)}
-                              title="Edit note"
-                              aria-label="Edit note"
-                            >
-                              <FaEdit />
-                            </button>
-                            <button
-                              type="button"
-                              className="journal-note-action-btn journal-note-delete"
-                              onClick={() => handleDeleteNote(note.id)}
-                              title="Delete note"
-                              aria-label="Delete note"
-                            >
-                              <FaTrash />
-                            </button>
-                          </div>
+                          {canEditJournal && (
+                            <div className="journal-note-actions">
+                              <button
+                                type="button"
+                                className="journal-note-action-btn journal-note-edit-btn"
+                                onClick={() => handleNoteEditStart(note)}
+                                title="Edit note"
+                                aria-label="Edit note"
+                              >
+                                <FaEdit />
+                              </button>
+                              <button
+                                type="button"
+                                className="journal-note-action-btn journal-note-delete"
+                                onClick={() => handleDeleteNote(note.id)}
+                                title="Delete note"
+                                aria-label="Delete note"
+                              >
+                                <FaTrash />
+                              </button>
+                            </div>
+                          )}
                         </>
                       )}
                     </li>
@@ -1028,12 +1156,12 @@ export default function Journal() {
                   placeholder="Add a quick note…"
                   value={newNoteContent}
                   onChange={(e) => setNewNoteContent(e.target.value)}
-                  disabled={addingNote}
+                  disabled={addingNote || !canEditJournal}
                 />
                 <button
                   type="submit"
                   className="journal-add-note-btn journal-add-note-btn-gold"
-                  disabled={addingNote || !newNoteContent.trim()}
+                  disabled={addingNote || !newNoteContent.trim() || !canEditJournal}
                 >
                   <FaPlus /> Add note
                 </button>

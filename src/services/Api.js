@@ -984,8 +984,8 @@ const Api = {
     getJournalDaily: (date) => {
         return axios.get(`${API_BASE_URL}/api/journal/daily`, { params: { date } });
     },
-    updateJournalDaily: (body) => {
-        return axios.put(`${API_BASE_URL}/api/journal/daily`, body);
+    updateJournalDaily: (body, config = {}) => {
+        return axios.put(`${API_BASE_URL}/api/journal/daily`, body, config);
     },
     getJournalXpCheck: (date) => {
         return axios.get(`${API_BASE_URL}/api/journal/xp-check`, { params: { date } });

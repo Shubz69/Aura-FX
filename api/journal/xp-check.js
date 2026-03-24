@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
   }
   const dateStr = String(date).trim().slice(0, 10);
   const jctx = await getJournalContext(userId);
-  const mayAward = jctx.bypassJournalDateLock || dateStr === jctx.todayYyyyMmDd;
+  const mayAward = dateStr === jctx.todayYyyyMmDd;
 
   const weekStart = getWeekStart(dateStr);
   const monthStart = getMonthStart(dateStr);

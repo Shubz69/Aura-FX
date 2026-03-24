@@ -473,12 +473,7 @@ module.exports = async (req, res) => {
     }
     if (body.date !== undefined) {
       const nextD = normalizeYyyyMmDd(body.date);
-      if (jctx.bypassJournalDateLock) {
-        if (nextD && /^\d{4}-\d{2}-\d{2}$/.test(nextD)) {
-          updates.push('date = ?');
-          params.push(nextD);
-        }
-      } else if (nextD && rowDate && nextD !== rowDate) {
+      if (nextD && rowDate && nextD !== rowDate) {
         return res.status(403).json({ success: false, message: 'Cannot change task date.' });
       }
     }
