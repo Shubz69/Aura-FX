@@ -18,7 +18,7 @@ const TIER_NAMES = [
   'Legend Tier',
   'Mythical Tier',
   'Immortal Tier',
-  'God Tier',
+  'GOD Tier',
 ];
 
 const TIER_RANK_NAMES = [

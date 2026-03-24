@@ -610,7 +610,7 @@ const Leaderboard = () => {
                                 <li><strong>Scaling:</strong> Premium hard curve with decimal XP progression</li>
                                 <li><strong>Anti-Spam:</strong> Cooldowns and moderation-gated XP events</li>
                                 <li><strong>Rank Titles:</strong> Unique premium rank title for every level</li>
-                                <li><strong>Tiers:</strong> Beginner → Intermediate → Advanced → Professional → Elite → Master → Legend → Mythical → Immortal → God</li>
+                                <li><strong>Tiers:</strong> Beginner → Intermediate → Advanced → Professional → Elite → Master → Legend → Mythical → Immortal → GOD</li>
                             </ul>
                         </div>
                     </div>

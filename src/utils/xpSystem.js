@@ -3,7 +3,7 @@
  * - 100 levels max
  * - Decimal XP economy
  * - Much harder progression curve
- * - Tier ladder preserved: Beginner → Intermediate → Advanced → Professional → Elite → Master → Legend → Mythical → Immortal → God
+ * - Tier ladder preserved: Beginner → Intermediate → Advanced → Professional → Elite → Master → Legend → Mythical → Immortal → GOD
  */
 
 export const MAX_LEVEL = 100;
@@ -40,7 +40,7 @@ const TIER_NAMES = [
     'Legend Tier',
     'Mythical Tier',
     'Immortal Tier',
-    'God Tier'
+    'GOD Tier'
 ];
 
 const TIER_COLORS = [

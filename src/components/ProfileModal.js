@@ -72,7 +72,7 @@ const ALL_ACHIEVEMENTS = [
     { id: 'level_50', name: 'Level 50', icon: '🔥', description: 'Reach Level 50', unlockLevel: 50 },
     { id: 'tier_elite', name: 'Elite Tier', icon: '🎯', description: 'Reach Level 60', unlockLevel: 60 },
     { id: 'tier_legend', name: 'Legend Tier', icon: '👑', description: 'Reach Level 80', unlockLevel: 80 },
-    { id: 'god_tier', name: 'God Tier', icon: '💎', description: 'Reach Level 100', unlockLevel: 100 },
+    { id: 'god_tier', name: 'GOD Tier', icon: '💎', description: 'Reach Level 100', unlockLevel: 100 },
     { id: 'streak_7', name: 'Week Warrior', icon: '🗓️', description: '7 day streak', unlockStreak: 7 },
     { id: 'streak_30', name: 'Monthly Master', icon: '📅', description: '30 day streak', unlockStreak: 30 },
     { id: 'ai_user', name: 'AI Explorer', icon: '🤖', description: 'Use AI 10 times', unlockAiChats: 10 },
