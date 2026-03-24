@@ -45,6 +45,11 @@ Your OpenAI API key needs to be added to Vercel environment variables for the Pr
    - Click "Redeploy"
    - Or push a new commit to trigger auto-deploy
 
+7. **All Markets / live snapshot (recommended for accurate spot FX & metals):**
+   - **`FINNHUB_API_KEY`** — Primary source for OANDA-style spot forex and gold/silver in `/api/markets/snapshot` and the All Markets modal. Without it, the app falls back to Yahoo/Stooq, which can be delayed or use futures symbols for metals.
+   - **Optional:** `TWELVE_DATA_API_KEY`, `POLYGON_API_KEY`, `COINMARKETCAP_API_KEY` — Extra redundancy for stocks, indices, and crypto. See [`.env.example`](.env.example) for descriptions.
+   - After setting keys, redeploy and open **View All Markets** — prices should show provider-backed quotes (not “Live quote unavailable” placeholders).
+
 ## Verify It's Working:
 
 1. After redeploy, test the Premium AI:
