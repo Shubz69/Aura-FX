@@ -101,8 +101,18 @@ const STOOQ_PARAM_BY_SYMBOL = {
 };
 const STOOQ_FOREX_METALS = new Set(Object.keys(STOOQ_PARAM_BY_SYMBOL));
 
+/** Reject obvious bad Yahoo futures / parse glitches for spot gold & silver (USD). */
+function isPlausibleSpotMetalPrice(symbol, rawPrice) {
+  if (symbol !== 'XAUUSD' && symbol !== 'XAGUSD') return true;
+  if (!rawPrice || !Number.isFinite(rawPrice)) return false;
+  if (symbol === 'XAUUSD') return rawPrice >= 800 && rawPrice <= 6000;
+  if (symbol === 'XAGUSD') return rawPrice >= 5 && rawPrice <= 200;
+  return true;
+}
+
 function buildStooqPriceRow(symbol, close) {
   if (!close || !Number.isFinite(close) || close <= 0) return null;
+  if ((symbol === 'XAUUSD' || symbol === 'XAGUSD') && !isPlausibleSpotMetalPrice(symbol, close)) return null;
   return {
     symbol,
     price: formatPrice(close, symbol),
@@ -635,6 +645,23 @@ async function fetchPrice(symbol, options = {}) {
     if (!result) result = await fetchTwelveDataPrice(symbol);
     if (!result && stooqBySymbol[symbol]) result = stooqBySymbol[symbol];
     if (!result) result = await fetchYahooPrice(symbol);
+    // Yahoo GC=F / SI=F can diverge from spot; prefer Stooq when Yahoo looks implausible
+    if (
+      result &&
+      (symbol === 'XAUUSD' || symbol === 'XAGUSD') &&
+      result.source === 'yahoo' &&
+      !isPlausibleSpotMetalPrice(symbol, result.rawPrice)
+    ) {
+      const stooq = stooqBySymbol[symbol];
+      result = stooq && isPlausibleSpotMetalPrice(symbol, stooq.rawPrice) ? stooq : null;
+    }
+    if (
+      result &&
+      (symbol === 'XAUUSD' || symbol === 'XAGUSD') &&
+      !isPlausibleSpotMetalPrice(symbol, result.rawPrice)
+    ) {
+      result = null;
+    }
   } else {
     // Stocks, indices, DXY, etc: Yahoo -> Polygon.io -> Finnhub -> Twelve Data
     result = await fetchYahooPrice(symbol);
