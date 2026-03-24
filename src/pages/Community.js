@@ -38,7 +38,7 @@ import {
     toggleChannel as toggleMutedChannel,
     has as isChannelMuted
 } from '../utils/mutedChannelsStore';
-import { popTraderPassportShare, setTraderPassportShare } from '../utils/traderPassportShare';
+import { popTraderPassportShare, setTraderPassportShare, dataUrlToBlob } from '../utils/traderPassportShare';
 import { subscribeVisibleInterval } from '../utils/subscribeVisibleInterval';
 // All API calls use real endpoints only - no mock mode
 
@@ -922,13 +922,14 @@ const [journalLoading, setJournalLoading] = useState(false);
                 return;
             }
             try {
-                const res = await fetch(dataUrl);
-                const blob = await res.blob();
+                const blob = dataUrlToBlob(dataUrl);
                 if (cancelled) {
                     setTraderPassportShare({ dataUrl, ts });
                     return;
                 }
-                const file = new File([blob], 'aura-trader-passport.png', { type: 'image/png' });
+                const file = new File([blob], 'aura-trader-passport.png', {
+                    type: blob.type || 'image/png',
+                });
                 setSelectedFile(file);
                 setNewMessage((prev) => (prev && prev.trim() ? prev : 'My Trader Passport (Aura FX)'));
                 toast.info('Trader Passport attached — pick a channel and send. Only people in that channel will see it.');
