@@ -211,13 +211,9 @@ const AdminPanel = () => {
     const [templateDraft, setTemplateDraft] = useState('');
     const [templateLoading, setTemplateLoading] = useState(false);
     const [templateSaving, setTemplateSaving] = useState(false);
-    const [templatePreviewLoading, setTemplatePreviewLoading] = useState(false);
-    const [templatePublishing, setTemplatePublishing] = useState(false);
     const [templateStatus, setTemplateStatus] = useState('');
     const [templatePreview, setTemplatePreview] = useState({ issues: [], sections: [], instruments: [], suggested: '' });
-    const [generatedPreview, setGeneratedPreview] = useState('');
-    const [previewPublishDate, setPreviewPublishDate] = useState(new Date().toISOString().slice(0, 10));
-    const [generatedPreviewTitle, setGeneratedPreviewTitle] = useState('');
+    const [briefToolsUnlocked, setBriefToolsUnlocked] = useState(false);
 
     // Handle real-time online status updates from WebSocket
     const handleOnlineStatusUpdate = (data) => {
@@ -671,6 +667,26 @@ const AdminPanel = () => {
     const isSuperAdmin =
         userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
 
+    useEffect(() => {
+        if (!isSuperAdmin) return;
+        try {
+            const params = new URLSearchParams(window.location.search || '');
+            const unlockFromQuery = params.get('briefTools') === '1';
+            const unlockFromStorage = localStorage.getItem('adminBriefToolsUnlocked') === '1';
+            const unlocked = unlockFromQuery || unlockFromStorage;
+            setBriefToolsUnlocked(unlocked);
+            if (unlockFromQuery) localStorage.setItem('adminBriefToolsUnlocked', '1');
+        } catch (_) {
+            setBriefToolsUnlocked(false);
+        }
+    }, [isSuperAdmin]);
+
+    useEffect(() => {
+        if (activeTab === 'brief-templates' && (!isSuperAdmin || !briefToolsUnlocked)) {
+            setActiveTab('users');
+        }
+    }, [activeTab, isSuperAdmin, briefToolsUnlocked]);
+
     const loadTemplate = useCallback(async (period) => {
         try {
             setTemplateLoading(true);
@@ -702,9 +718,9 @@ const AdminPanel = () => {
     }, []);
 
     useEffect(() => {
-        if (!isSuperAdmin || activeTab !== 'brief-templates') return;
+        if (!isSuperAdmin || !briefToolsUnlocked || activeTab !== 'brief-templates') return;
         loadTemplate(templatePeriod);
-    }, [activeTab, templatePeriod, isSuperAdmin, loadTemplate]);
+    }, [activeTab, templatePeriod, isSuperAdmin, briefToolsUnlocked, loadTemplate]);
 
     const handleSaveTemplate = async () => {
         try {
@@ -735,57 +751,6 @@ const AdminPanel = () => {
         }
     };
 
-    const handleGenerateTemplatePreview = async () => {
-        try {
-            if (!templateDraft.trim()) {
-                setTemplateStatus('Add template text first, then generate preview.');
-                return;
-            }
-            setTemplatePreviewLoading(true);
-            setTemplateStatus('');
-            const res = await Api.previewTraderDeckBriefTemplate(templatePeriod, templateDraft.trim());
-            const body = res?.data?.body || '';
-            const title = res?.data?.title || 'Market Brief';
-            setGeneratedPreview(body);
-            setGeneratedPreviewTitle(title);
-            setTemplateStatus('Generated test brief preview (not published).');
-        } catch (err) {
-            setGeneratedPreview('');
-            setGeneratedPreviewTitle('');
-            setTemplateStatus(err?.response?.data?.message || 'Failed to generate test preview.');
-        } finally {
-            setTemplatePreviewLoading(false);
-        }
-    };
-
-    const handlePublishPreviewNow = async () => {
-        try {
-            if (!generatedPreview.trim()) {
-                setTemplateStatus('Generate a test preview first.');
-                return;
-            }
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(previewPublishDate)) {
-                setTemplateStatus('Select a valid publish date.');
-                return;
-            }
-            const ok = window.confirm(`Publish this preview to ${previewPublishDate} (${templatePeriod}) now?`);
-            if (!ok) return;
-            setTemplatePublishing(true);
-            setTemplateStatus('');
-            await Api.publishTraderDeckBriefPreview({
-                period: templatePeriod,
-                date: previewPublishDate,
-                previewTitle: generatedPreviewTitle || `${templatePeriod} brief`,
-                previewBody: generatedPreview,
-            });
-            setTemplateStatus(`Preview published to ${previewPublishDate} (${templatePeriod}).`);
-        } catch (err) {
-            setTemplateStatus(err?.response?.data?.message || 'Failed to publish preview.');
-        } finally {
-            setTemplatePublishing(false);
-        }
-    };
-    
     if (!isAuthenticated || !isAdmin) {
         return null; // Don't render anything while redirecting
     }
@@ -814,7 +779,7 @@ const AdminPanel = () => {
           >
             Channels
           </button>
-          {isSuperAdmin && (
+          {isSuperAdmin && briefToolsUnlocked && (
             <button
               className={`admin-tab-btn ${activeTab === 'brief-templates' ? 'active' : ''}`}
               onClick={() => setActiveTab('brief-templates')}
@@ -839,7 +804,7 @@ const AdminPanel = () => {
             </button>
           </div>
         )}
-        {activeTab === 'brief-templates' && isSuperAdmin && (
+        {activeTab === 'brief-templates' && isSuperAdmin && briefToolsUnlocked && (
           <div className="user-summary">
             <span>Manage daily/weekly AI brief structure</span>
           </div>
@@ -1042,7 +1007,7 @@ const AdminPanel = () => {
         </>
       )}
 
-      {activeTab === 'brief-templates' && isSuperAdmin && (
+      {activeTab === 'brief-templates' && isSuperAdmin && briefToolsUnlocked && (
         <section className="brief-template-panel">
           <div className="brief-template-row">
             <label htmlFor="brief-template-period">Period</label>
@@ -1082,14 +1047,6 @@ const AdminPanel = () => {
           <div className="brief-template-actions">
             <button
               type="button"
-              className="action-btn plan-btn"
-              onClick={handleGenerateTemplatePreview}
-              disabled={templateSaving || templateLoading || templatePreviewLoading}
-            >
-              {templatePreviewLoading ? 'Generating…' : 'Generate test brief preview'}
-            </button>
-            <button
-              type="button"
               className="action-btn reset-xp-btn"
               onClick={handleImproveTemplate}
               disabled={templateSaving || templateLoading}
@@ -1124,31 +1081,6 @@ const AdminPanel = () => {
               <p className="brief-template-preview-ok">Template structure passes validation and is ready for generation.</p>
             )}
           </div>
-          {generatedPreview && (
-            <div className="brief-template-generated-preview">
-              <h3>Generated brief preview (not published)</h3>
-              <div className="brief-template-publish-row">
-                <label htmlFor="brief-preview-date">Publish date</label>
-                <input
-                  id="brief-preview-date"
-                  type="date"
-                  className="brief-template-date"
-                  value={previewPublishDate}
-                  onChange={(e) => setPreviewPublishDate(e.target.value)}
-                  disabled={templatePublishing}
-                />
-                <button
-                  type="button"
-                  className="action-btn grant-access-btn"
-                  onClick={handlePublishPreviewNow}
-                  disabled={templatePublishing || templatePreviewLoading}
-                >
-                  {templatePublishing ? 'Publishing…' : 'Publish this preview now'}
-                </button>
-              </div>
-              <pre>{generatedPreview}</pre>
-            </div>
-          )}
           {templateStatus && <p className="brief-template-status">{templateStatus}</p>}
         </section>
       )}

@@ -3,7 +3,7 @@ require('../utils/suppress-warnings');
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
 const { getTemplate, saveTemplate, normalizePeriod } = require('./services/briefTemplateService');
-const { generatePreviewBrief, publishManualBrief } = require('./services/autoBriefGenerator');
+const { generatePreviewBrief } = require('./services/autoBriefGenerator');
 
 function parseBody(req) {
   if (req.body == null) return {};
@@ -67,19 +67,7 @@ module.exports = async (req, res) => {
     const templateText = String(body.templateText || '').trim();
     try {
       if (action === 'publish-preview') {
-        const previewBody = String(body.previewBody || '').trim();
-        const previewTitle = String(body.previewTitle || 'Market Brief').trim();
-        const targetDate = String(body.date || '').trim().slice(0, 10);
-        if (!previewBody) {
-          return res.status(400).json({ success: false, message: 'previewBody is required' });
-        }
-        const briefId = await publishManualBrief({
-          period,
-          date: targetDate,
-          title: previewTitle,
-          body: previewBody,
-        });
-        return res.status(200).json({ success: true, briefId, period, date: targetDate });
+        return res.status(400).json({ success: false, message: 'Manual publish is disabled. Automation publishes briefs on schedule.' });
       }
       const preview = await generatePreviewBrief({
         period,
