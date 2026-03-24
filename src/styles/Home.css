@@ -1429,3 +1429,32 @@ html, body {
 }
 
 
+
+/* ══════════════════════════════════════════════
+   iPAD SLIDE IMAGE — always fully visible
+   Uses <img> with object-fit: contain so any
+   image size / aspect ratio fits without cropping.
+══════════════════════════════════════════════ */
+.ipad-slide {
+    /* Reset any leftover background-image approach */
+    background-image: none !important;
+    background-color: #07080F; /* deep dark fallback behind the image */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ipad-slide-img {
+    position: absolute;
+    inset: 0;
+    width:  100%;
+    height: 100%;
+    object-fit: contain;      /* full image always visible, no cropping */
+    object-position: center;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    /* Subtle fade-in as slide becomes active */
+    transition: opacity 0.3s ease;
+}
