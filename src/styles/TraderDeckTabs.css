@@ -2,7 +2,7 @@
 
 .td-deck-with-tabs.td-layout-page {
   min-height: 100vh;
-  padding: calc(70px + env(safe-area-inset-top, 0) + 20px) 20px 48px;
+  padding: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 8px) 20px 48px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -662,7 +662,7 @@
 
 .td-deck-sidebar {
   position: sticky;
-  top: calc(70px + env(safe-area-inset-top, 0) + 16px);
+  top: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 16px);
 }
 
 .td-deck-sidebar-inner {
@@ -889,7 +889,7 @@
 
 /* Layout overrides — sidebar wider to fit calendar */
 .td-deck-jlayout {
-  padding-top: calc(70px + env(safe-area-inset-top, 0) + 12px);
+  padding-top: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 12px);
 }
 
 .td-deck-jsidebar {
