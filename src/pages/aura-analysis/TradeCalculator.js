@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
@@ -114,11 +114,40 @@ export default function TradeCalculator() {
       .filter((g) => g.instruments.length > 0);
   }, [instrumentGroups, pairSearch]);
 
+  /** When searching, show one flat scrollable list (plan: no category headers). */
+  const filteredFlatSearchResults = useMemo(() => {
+    const q = pairSearch.trim().toLowerCase();
+    if (!q) return null;
+    const out = [];
+    for (const g of instrumentGroups) {
+      for (const inst of g.instruments) {
+        const match =
+          inst.symbol.toLowerCase().includes(q) ||
+          (inst.displayName && inst.displayName.toLowerCase().includes(q));
+        if (match) out.push({ ...inst, categoryLabel: g.label });
+      }
+    }
+    return out;
+  }, [instrumentGroups, pairSearch]);
+
   const selectedAccount = useMemo(
     () => accounts.find((a) => Number(a.id) === Number(selectedAccountId)),
     [accounts, selectedAccountId]
   );
   const accountCurrency = selectedAccount?.accountCurrency || 'USD';
+
+  const handleAccountCurrencyChange = useCallback(
+    async (e) => {
+      const ccy = e.target.value;
+      if (!selectedAccountId) return;
+      try {
+        await patchAccountCurrency(selectedAccountId, ccy);
+      } catch (err) {
+        toast.error(err?.response?.data?.message || err.message || 'Could not update account currency');
+      }
+    },
+    [selectedAccountId, patchAccountCurrency]
+  );
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -189,6 +218,8 @@ export default function TradeCalculator() {
       direction: form.direction,
       positionSize: manual,
       usdJpy: usdJpyForCalc,
+      accountCurrency,
+      fxRates,
     });
     if (derived == null) return;
     const rounded = Math.round(derived * 100000) / 100000;
@@ -286,7 +317,7 @@ export default function TradeCalculator() {
   const showHighRiskWarning = riskPctNum > RISK_WARNING_PCT;
 
   const priceExamples = useMemo(() => {
-    const inst = getInstrumentOrFallback(form.pair);
+    const inst = getInstrumentForWatchlistSymbol(form.pair);
     return getPriceExamples(inst);
   }, [form.pair]);
 
@@ -446,24 +477,39 @@ export default function TradeCalculator() {
                       autoComplete="off"
                     />
                     <div className="trade-calc-pair-list" role="listbox" aria-label="Pair and asset list">
-                      {filteredInstrumentGroups.map(({ label, instruments }) => (
-                        <div key={label} className="trade-calc-pair-category">
-                          <div className="trade-calc-pair-category-label">{label}</div>
-                          {instruments.map((inst) => (
+                      {filteredFlatSearchResults != null
+                        ? filteredFlatSearchResults.map((inst) => (
                             <button
                               key={inst.symbol}
                               type="button"
                               role="option"
                               aria-selected={form.pair === inst.symbol}
-                              className={`trade-calc-pair-option ${form.pair === inst.symbol ? 'selected' : ''}`}
+                              className={`trade-calc-pair-option trade-calc-pair-option--flat ${form.pair === inst.symbol ? 'selected' : ''}`}
                               onClick={() => handlePairSelect(inst)}
                             >
                               <span className="trade-calc-pair-option-symbol">{inst.symbol}</span>
                               <span className="trade-calc-pair-option-name">{inst.displayName}</span>
+                              <span className="trade-calc-pair-option-cat">{inst.categoryLabel}</span>
                             </button>
+                          ))
+                        : filteredInstrumentGroups.map(({ label, instruments }) => (
+                            <div key={label} className="trade-calc-pair-category">
+                              <div className="trade-calc-pair-category-label">{label}</div>
+                              {instruments.map((inst) => (
+                                <button
+                                  key={inst.symbol}
+                                  type="button"
+                                  role="option"
+                                  aria-selected={form.pair === inst.symbol}
+                                  className={`trade-calc-pair-option ${form.pair === inst.symbol ? 'selected' : ''}`}
+                                  onClick={() => handlePairSelect(inst)}
+                                >
+                                  <span className="trade-calc-pair-option-symbol">{inst.symbol}</span>
+                                  <span className="trade-calc-pair-option-name">{inst.displayName}</span>
+                                </button>
+                              ))}
+                            </div>
                           ))}
-                        </div>
-                      ))}
                     </div>
                   </div>
                 )}

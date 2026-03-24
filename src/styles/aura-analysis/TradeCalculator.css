@@ -409,6 +409,22 @@
   font-size: 0.82rem;
 }
 
+.trade-calc-pair-option--flat .trade-calc-pair-option-name {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.trade-calc-pair-option-cat {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
 .trade-calc-helper {
   display: block;
   font-size: 0.76rem;
