@@ -1147,12 +1147,12 @@ body.loading-active .navbar {
   margin: 0 0 1rem 0; padding: 0;
   width: 100%; max-width: 520px;
   font-family: var(--font);
-  font-size: 0.65rem;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.34em;
   text-transform: uppercase;
   color: rgba(234, 169, 96, 0.50);
-  text-align: left;
+  text-align: center;
   box-sizing: border-box;
   position: relative; z-index: 1;
 }
