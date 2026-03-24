@@ -1,15 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Api from '../../services/Api';
 import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
+import { formatMoneyAccount, formatSignedPnL } from '../../lib/aura-analysis/formatAccountCurrency';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import '../../styles/aura-analysis/AuraAnalytics.css';
-
-function formatPnL(n) {
-  if (n == null || Number.isNaN(n)) return '$0.00';
-  const v = Number(n);
-  const abs = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return v >= 0 ? `$${abs}` : `-$${abs}`;
-}
 
 function computeAnalyticsKpis(trades = [], pnlData = {}) {
   const totalTrades = trades.length;
@@ -117,7 +111,11 @@ function buildSessionPerformance(trades) {
 }
 
 export default function AuraAnalytics() {
-  const { selectedAccountId, loading: accountsLoading } = useTradeValidatorAccount();
+  const { accounts, selectedAccountId, loading: accountsLoading } = useTradeValidatorAccount();
+  const analyticsCurrency = useMemo(() => {
+    const a = accounts.find((x) => Number(x.id) === Number(selectedAccountId));
+    return a?.accountCurrency || 'USD';
+  }, [accounts, selectedAccountId]);
   const [trades, setTrades] = useState([]);
   const [pnlData, setPnlData] = useState({});
   const [loading, setLoading] = useState(true);
@@ -193,7 +191,7 @@ export default function AuraAnalytics() {
         <div className="aura-analytics-kpi-card">
           <span className="aura-analytics-kpi-label">Total PnL</span>
           <span className={`aura-analytics-kpi-value ${kpis.totalPnL >= 0 ? 'positive' : 'negative'}`}>
-            {formatPnL(kpis.totalPnL)}
+            {formatSignedPnL(kpis.totalPnL, analyticsCurrency)}
           </span>
         </div>
         <div className="aura-analytics-kpi-card">
@@ -206,7 +204,9 @@ export default function AuraAnalytics() {
         </div>
         <div className="aura-analytics-kpi-card">
           <span className="aura-analytics-kpi-label">Max drawdown</span>
-          <span className="aura-analytics-kpi-value negative">{formatPnL(kpis.maxDrawdown)}</span>
+          <span className="aura-analytics-kpi-value negative">
+            {formatMoneyAccount(kpis.maxDrawdown, analyticsCurrency)}
+          </span>
         </div>
         <div className="aura-analytics-kpi-card">
           <span className="aura-analytics-kpi-label">Consistency score</span>
@@ -307,7 +307,7 @@ export default function AuraAnalytics() {
                       style={{ width: `${(Math.abs(pnl) / (pairMax || 1)) * 100}%` }}
                     />
                   </div>
-                  <span className={`aura-analytics-pair-value ${pnl >= 0 ? 'positive' : 'negative'}`}>{formatPnL(pnl)}</span>
+                  <span className={`aura-analytics-pair-value ${pnl >= 0 ? 'positive' : 'negative'}`}>{formatSignedPnL(pnl, analyticsCurrency)}</span>
                 </div>
               ))
             ) : (
@@ -323,9 +323,9 @@ export default function AuraAnalytics() {
                 <div className="aura-analytics-session-yaxis">
                   {sessionExtent > 0 && (
                     <>
-                      <span>{formatPnL(sessionExtent)}</span>
-                      <span>$0</span>
-                      <span>{formatPnL(-sessionExtent)}</span>
+                      <span>{formatMoneyAccount(sessionExtent, analyticsCurrency)}</span>
+                      <span>{formatMoneyAccount(0, analyticsCurrency)}</span>
+                      <span>{formatMoneyAccount(-sessionExtent, analyticsCurrency)}</span>
                     </>
                   )}
                 </div>

@@ -92,4 +92,19 @@ describe('calculateRisk forex integration', () => {
     expect(res.positionSize).toBeGreaterThan(0);
     expect(res.warnings.every((w) => !/USD\/JPY|Enter USD/i.test(w))).toBe(true);
   });
+
+  test('EUR account: risk line is 1% of balance in EUR', () => {
+    const res = calculateRisk('EURUSD', {
+      accountBalance: 10000,
+      riskPercent: 1,
+      entry: 1.08,
+      stop: 1.07,
+      takeProfit: 1.1,
+      direction: 'buy',
+      accountCurrency: 'EUR',
+      fxRates: { EURUSD: 1.08 },
+    });
+    expect(res.riskAmount).toBeCloseTo(100, 4);
+    expect(res.positionSize).toBeGreaterThan(0);
+  });
 });

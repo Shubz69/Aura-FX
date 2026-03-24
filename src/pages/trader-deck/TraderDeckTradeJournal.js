@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
 import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
+import { formatSignedPnL } from '../../lib/aura-analysis/formatAccountCurrency';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import '../../styles/trader-deck/TraderDeckTradeJournal.css';
 
@@ -13,13 +14,6 @@ function formatDate(d) {
   const day = date.getDate();
   const year = String(date.getFullYear()).slice(2);
   return `${mon} ${day}.${year}`;
-}
-
-function formatPnL(n) {
-  if (n == null || Number.isNaN(n)) return '$0.00';
-  const v = Number(n);
-  const abs = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return v >= 0 ? `$${abs}` : `-$${abs}`;
 }
 
 function formatNum(v, decimals = 2) {
@@ -75,6 +69,10 @@ function getPnlForResult(trade, result) {
 
 export default function TraderDeckTradeJournal() {
   const { accounts, selectedAccountId, loading: accountsLoading } = useTradeValidatorAccount();
+  const journalCurrency = useMemo(() => {
+    const a = accounts.find((x) => Number(x.id) === Number(selectedAccountId));
+    return a?.accountCurrency || 'USD';
+  }, [accounts, selectedAccountId]);
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -390,7 +388,7 @@ export default function TraderDeckTradeJournal() {
                         </span>
                       </td>
                       <td className={pnlNum != null && pnlNum < 0 ? 'td-journal-pnl-neg' : pnlNum != null && pnlNum > 0 ? 'td-journal-pnl-pos' : ''}>
-                        {formatPnL(t.pnl)}
+                        {formatSignedPnL(t.pnl, journalCurrency)}
                       </td>
                       <td>
                         <span className={['td-journal-verify-badge', ver.cls].filter(Boolean).join(' ')}>{ver.label}</span>
@@ -451,7 +449,7 @@ export default function TraderDeckTradeJournal() {
                 </select>
               </label>
               <label>
-                PnL ($) — auto-filled for Win/Loss, editable
+                PnL ({journalCurrency}) — auto-filled for Win/Loss, editable
                 <input
                   type="number"
                   step="0.01"

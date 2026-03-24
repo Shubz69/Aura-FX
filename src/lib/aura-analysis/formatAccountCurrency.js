@@ -25,4 +25,17 @@ export function formatMoneyAccount(n, currency = 'USD', fractionDigits = 2) {
   return `${neg}${pref}${str}`;
 }
 
+/**
+ * Signed P/L for KPIs and lists: leading + on gains; matches Overview behaviour.
+ * @param {number|null|undefined} n
+ * @param {string} [currency='USD']
+ */
+export function formatSignedPnL(n, currency = 'USD') {
+  if (n == null || Number.isNaN(Number(n))) return formatMoneyAccount(0, currency);
+  const v = Number(n);
+  const s = formatMoneyAccount(v, currency);
+  if (v > 0) return `+${s}`;
+  return s;
+}
+
 export const ACCOUNT_CURRENCY_OPTIONS = ['USD', 'EUR', 'GBP', 'AUD', 'NZD', 'CAD', 'CHF', 'JPY'];
