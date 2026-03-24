@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import A7Logo from "./A7Logo";
 import "../styles/Footer.css";
 
 const Footer = React.memo(function Footer() {
@@ -12,7 +13,9 @@ const Footer = React.memo(function Footer() {
         <div className="footer-brand">
           <div className="footer-logo-wrap">
             <span className="footer-logo">AURA TERMINAL</span>
-            <span className="footer-logo-dot" />
+            <div className="footer-a7-mark" aria-hidden="true">
+              <A7Logo />
+            </div>
           </div>
           <p className="footer-tagline">Trade smarter with AI-powered insights.</p>
           <div className="footer-social">

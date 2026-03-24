@@ -182,39 +182,36 @@
   gap: 10px;
 }
 
-/* Hexagon badge — matches navbar .logo-square */
-.footer-logo-dot {
-  width: 32px;
-  height: 32px;
+/* A7 mark — same 32×32 footprint as former hexagon badge */
+.footer-logo-wrap .footer-a7-mark {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--eaa-warm) 0%, var(--eaa-core) 60%, var(--eaa-bright) 100%);
-  clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
-  position: relative;
-  box-shadow:
-    0 0 14px rgba(234, 169, 96, 0.50),
-    0 0 36px rgba(234, 169, 96, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
-  flex-shrink: 0;
-  transition: box-shadow var(--transition), transform var(--transition);
 }
 
-.footer-logo-dot::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 55%);
-  clip-path: inherit;
-  z-index: 1;
+.footer-logo-wrap .footer-a7-mark .a7-logo-container {
+  width: 32px;
+  height: 32px;
 }
 
-.footer-logo-wrap:hover .footer-logo-dot {
-  box-shadow:
-    0 0 24px rgba(234, 169, 96, 0.75),
-    0 0 55px rgba(234, 169, 96, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  transform: translateY(-1px) scale(1.06);
+.footer-logo-wrap .footer-a7-mark .a7-logo-image {
+  width: 32px !important;
+  height: 32px !important;
+  transform: none !important;
+  margin-bottom: 0 !important;
+  align-self: center !important;
+  filter:
+    drop-shadow(0 0 6px rgba(234, 169, 96, 0.45))
+    drop-shadow(0 0 14px rgba(234, 169, 96, 0.2));
+  transition: filter var(--transition), transform var(--transition);
+}
+
+.footer-logo-wrap:hover .footer-a7-mark .a7-logo-image {
+  filter:
+    drop-shadow(0 0 10px rgba(234, 169, 96, 0.85))
+    drop-shadow(0 0 22px rgba(234, 169, 96, 0.35));
+  transform: translateY(-1px) scale(1.06) !important;
 }
 
 /* Wordmark — gradient text matching navbar .logo */
