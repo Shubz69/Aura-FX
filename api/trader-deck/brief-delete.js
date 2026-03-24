@@ -3,6 +3,8 @@
  * DELETE ?id=123
  */
 
+require('../utils/suppress-warnings');
+
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 

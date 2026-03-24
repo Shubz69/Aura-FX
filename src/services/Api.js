@@ -1,11 +1,25 @@
 import axios from 'axios';
 import { savePostAuthRedirect } from '../utils/postAuthRedirect';
 
+/** If REACT_APP_API_URL points at the standalone analysis API host, ignore it — app JWT routes live on the main site. */
+function resolveReactAppApiUrl() {
+    const raw = process.env.REACT_APP_API_URL;
+    if (!raw) return null;
+    try {
+        const host = new URL(raw).hostname || '';
+        if (/(?:^|\.)aura-analysis\.com$/i.test(host)) return null;
+        return raw;
+    } catch {
+        return raw;
+    }
+}
+
 // Define a fixed API base URL with proper fallback
 // Automatically detect the origin to avoid CORS issues with www redirects
 const getApiBaseUrl = () => {
-    if (process.env.REACT_APP_API_URL) {
-        return process.env.REACT_APP_API_URL;
+    const fromEnv = resolveReactAppApiUrl();
+    if (fromEnv) {
+        return fromEnv;
     }
     // In local dev prefer relative URLs so CRA proxy handles routing consistently.
     if (process.env.NODE_ENV === 'development') {

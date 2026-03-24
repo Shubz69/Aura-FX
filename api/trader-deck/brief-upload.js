@@ -8,6 +8,8 @@
  *   2) { action: 'finalize', token, date, period, title, fileName, mimeType, totalChunks }
  */
 
+require('../utils/suppress-warnings');
+
 const { executeQuery, addColumnIfNotExists } = require('../db');
 const { verifyToken } = require('../utils/auth');
 

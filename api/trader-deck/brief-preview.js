@@ -3,6 +3,8 @@
  * GET ?id=123&token=JWT (token required for iframe; Authorization: Bearer also accepted)
  */
 
+require('../utils/suppress-warnings');
+
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 

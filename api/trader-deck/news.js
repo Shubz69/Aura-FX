@@ -4,6 +4,8 @@
  * Cached 5 minutes server-side.
  */
 
+require('../utils/suppress-warnings');
+
 const { getConfig } = require('./config');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getCached, setCached } = require('../cache');

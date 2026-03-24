@@ -5,6 +5,8 @@
  * Cache: TRADER_DECK_MI_CACHE_SEC (default 90s). ?refresh=1 bypasses cache.
  */
 
+require('../utils/suppress-warnings');
+
 const { runEngine } = require('./marketIntelligenceEngine');
 const { enrichTraderDeckPayload } = require('./openaiTraderInsights');
 

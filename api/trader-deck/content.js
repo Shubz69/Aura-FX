@@ -4,6 +4,8 @@
  * PUT (admin) body: { type, date, payload } for outlook; intel briefs are managed via brief-upload + list.
  */
 
+require('../utils/suppress-warnings');
+
 const { executeQuery, addColumnIfNotExists } = require('../db');
 const { verifyToken } = require('../utils/auth');
 
