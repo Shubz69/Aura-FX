@@ -1,10 +1,24 @@
 /* =============================================================================
    Trader Desk page ONLY — src/pages/TraderDeck.js
-   Presentation only: layout, glass, tabs shell. No API or state logic here.
+   Fully responsive: Mobile (320–480px) · Tablet (481–1099px) · Desktop (1100px+)
    Scoped to .td-deck-with-tabs.td-layout-page so other routes are unaffected.
    ============================================================================= */
 
-/* ── Tab zone: same glass stack as Aura Journal (.journal-page) ─────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   BASE / SHARED UTILITIES
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Box-sizing safety net for all deck children */
+.td-deck-with-tabs.td-layout-page *,
+.td-deck-with-tabs.td-layout-page *::before,
+.td-deck-with-tabs.td-layout-page *::after {
+  box-sizing: border-box;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TAB ZONE
+   ───────────────────────────────────────────────────────────────────────────── */
+
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
   margin-bottom: 18px;
   padding: 18px 18px 16px;
@@ -24,6 +38,7 @@
   border-bottom: none;
 }
 
+/* Calendar sub-zone */
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar {
   margin-top: 4px;
   margin-bottom: 12px;
@@ -36,6 +51,9 @@
   box-shadow: var(--journal-panel-outer-glow);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  /* Prevent overflow on small screens */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar .td-deck-header-line-left,
@@ -45,11 +63,15 @@
   opacity: 0.85;
 }
 
+/* Period tabs row */
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-period {
   margin-bottom: 0;
   justify-content: flex-start;
+  flex-wrap: wrap;          /* wrap on very narrow viewports */
+  gap: 6px;
 }
 
+/* Period segment pill */
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment {
   display: inline-flex;
   flex-direction: row;
@@ -64,8 +86,12 @@
   box-shadow: var(--journal-panel-outer-glow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  /* Allow wrapping on very small screens */
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 
+/* Individual sub-tab buttons */
 .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab {
   position: relative;
   border: none;
@@ -81,6 +107,8 @@
   color: rgba(255, 255, 255, 0.55);
   box-shadow: none;
   transition: color 0.2s ease, background 0.2s ease;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab:hover {
@@ -97,6 +125,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
+/* Main tab rail minimum touch target */
 .td-deck-with-tabs.td-layout-page .td-deck-main-tab-rail .td-deck-tab {
   min-height: 44px;
   display: inline-flex;
@@ -104,24 +133,12 @@
   justify-content: center;
 }
 
-@media (max-width: 640px) {
-  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
-    padding: 14px 12px 12px;
-    border-radius: var(--radius-lg);
-  }
-
-  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab {
-    min-width: 0;
-    flex: 1;
-    padding: 10px 14px;
-    font-size: 0.72rem;
-    letter-spacing: 0.06em;
-  }
-}
+/* ─────────────────────────────────────────────────────────────────────────────
+   CONTENT BOX & BODY
+   ───────────────────────────────────────────────────────────────────────────── */
 
 .td-deck-with-tabs.td-layout-page .td-deck-content--modern {
   margin-top: 4px;
-  /* Let the page scroll — avoid a scrollbar inside the glass box */
   overflow: visible;
   flex: 1 1 auto;
   min-height: min-content;
@@ -141,7 +158,10 @@
   flex: 0 0 auto;
 }
 
-/* Main + sticky rail */
+/* ─────────────────────────────────────────────────────────────────────────────
+   MAIN INNER — TWO-COLUMN LAYOUT (main stage + rail)
+   ───────────────────────────────────────────────────────────────────────────── */
+
 .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
   display: grid;
   gap: 22px;
@@ -149,12 +169,12 @@
   width: 100%;
 }
 
+/* Desktop: side-by-side */
 @media (min-width: 1100px) {
   .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
     grid-template-columns: minmax(0, 1fr) minmax(268px, 300px);
   }
 
-  /* Rail scrolls with the page — no nested scrollbar */
   .td-deck-with-tabs.td-layout-page .td-deck-rail {
     position: static;
     max-height: none;
@@ -164,9 +184,11 @@
   }
 }
 
+/* Tablet + Mobile: stacked */
 @media (max-width: 1099px) {
   .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
     grid-template-columns: 1fr;
+    gap: 18px;
   }
 
   .td-deck-with-tabs.td-layout-page .td-deck-rail {
@@ -178,11 +200,16 @@
   }
 }
 
+/* Dashboard wrappers: no extra margin when hosting outlook/intelligence */
 .td-deck-with-tabs.td-layout-page .td-deck-dashboard-wrap:has(.td-deck-mo-root),
 .td-deck-with-tabs.td-layout-page .td-deck-dashboard-wrap:has(.td-deck-mi-modern) {
   max-width: none;
   margin: 0;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RAIL — Inbox footer blocks
+   ───────────────────────────────────────────────────────────────────────────── */
 
 .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-footer {
   border-top: none !important;
@@ -204,7 +231,7 @@
   -webkit-backdrop-filter: blur(12px) saturate(1.05);
 }
 
-/* Rail ~280px wide: viewport ≥900px still must not use 4 columns (TraderDeckTabs.css MQ). */
+/* Sessions list always single column inside rail */
 .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-sessions {
   min-width: 0;
 }
@@ -228,7 +255,10 @@
   min-height: min-content;
 }
 
-/* ── Shared eyebrow ─────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   SHARED EYEBROW LABEL
+   ───────────────────────────────────────────────────────────────────────────── */
+
 .td-deck-with-tabs.td-layout-page .td-deck-mo-eyebrow {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 0.62rem;
@@ -239,23 +269,21 @@
   margin: 0 0 8px;
 }
 
-/* ── Market Outlook (bento) ─────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   MARKET OUTLOOK — BENTO LAYOUT
+   ───────────────────────────────────────────────────────────────────────────── */
+
 .td-deck-with-tabs.td-layout-page .td-deck-mo-root.td-deck-mo-outlook {
   width: 100%;
   animation: td-mo-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes td-mo-enter {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Hero banner */
 .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-hero {
   display: flex;
   flex-wrap: wrap;
@@ -289,59 +317,70 @@
   margin: 0;
 }
 
-/* Bento: override legacy grid */
+/* Bento grid — Mobile-first: single column */
 .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
   display: grid;
   gap: 16px;
   grid-template-columns: 1fr;
 }
 
+/* Tablet (481–899px): 2 columns, panels reflow naturally */
+@media (min-width: 481px) and (max-width: 899px) {
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  /* Let each panel span full width on its own row if needed */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
+    grid-column: 1 / -1;
+  }
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    grid-column: 1 / -1;
+  }
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals {
+    grid-column: span 1;
+  }
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    grid-column: 1 / -1;
+  }
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    grid-column: span 1;
+  }
+}
+
+/* Desktop (≥900px): full 12-column bento */
 @media (min-width: 900px) {
   .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
     grid-template-columns: repeat(12, 1fr);
     grid-auto-rows: minmax(min-content, auto);
   }
 
-  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
-    grid-column: 1 / span 7;
-    grid-row: 1;
-  }
-  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
-    grid-column: 8 / span 5;
-    grid-row: 1;
-  }
-  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers {
-    grid-column: 1 / span 4;
-    grid-row: 2;
-  }
-  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals {
-    grid-column: 5 / span 4;
-    grid-row: 2;
-  }
-  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
-    grid-column: 9 / span 4;
-    grid-row: 2;
-  }
-  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
-    grid-column: 1 / span 6;
-    grid-row: 3;
-  }
-  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
-    grid-column: 7 / span 6;
-    grid-row: 3;
-  }
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime  { grid-column: 1 / span 7; grid-row: 1; }
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse   { grid-column: 8 / span 5; grid-row: 1; }
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers { grid-column: 1 / span 4; grid-row: 2; }
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals { grid-column: 5 / span 4; grid-row: 2; }
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes { grid-column: 9 / span 4; grid-row: 2; }
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus   { grid-column: 1 / span 6; grid-row: 3; }
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar   { grid-column: 7 / span 6; grid-row: 3; }
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-mo-ff {
   margin-top: 22px;
 }
 
-/* ── Market Intelligence (modern tiles) ──────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   MARKET INTELLIGENCE — MODERN TILES
+   ───────────────────────────────────────────────────────────────────────────── */
+
 .td-deck-with-tabs.td-layout-page .td-deck-mi-modern {
   width: 100%;
   animation: td-mo-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Hero banner */
 .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-hero {
   display: flex;
   flex-wrap: wrap;
@@ -382,6 +421,9 @@
   border-radius: 14px;
   background: rgba(234, 169, 96, 0.08);
   border: 1px solid rgba(234, 169, 96, 0.22);
+  /* Full width on mobile so it doesn't crowd the title block */
+  flex: 1 1 auto;
+  min-width: min-content;
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat-value {
@@ -399,12 +441,27 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
+/* Tile grid — mobile-first: single column */
 .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
   display: grid;
   gap: 18px;
   grid-template-columns: 1fr;
 }
 
+/* Tablet: two columns */
+@media (min-width: 600px) and (max-width: 959px) {
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
+    grid-template-columns: repeat(2, 1fr);
+    align-items: start;
+  }
+
+  /* Upload tile spans full width for visibility */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-tile--upload {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Desktop: upload tile + results side by side, upload sticky */
 @media (min-width: 960px) {
   .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
     grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
@@ -417,6 +474,7 @@
   }
 }
 
+/* Individual tile */
 .td-deck-with-tabs.td-layout-page .td-deck-mi-tile {
   padding: 20px 20px 18px;
   border-radius: 16px;
@@ -427,6 +485,7 @@
   box-shadow:
     0 10px 36px rgba(0, 0, 0, 0.42),
     0 0 0 0.5px rgba(234, 169, 96, 0.05) inset;
+  min-width: 0; /* prevent grid blowout */
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-mi-tile-head {
@@ -435,6 +494,7 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 14px;
+  flex-wrap: wrap;
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-mi-tile-title {
@@ -454,6 +514,7 @@
   background: rgba(234, 169, 96, 0.12);
   border: 1px solid rgba(234, 169, 96, 0.28);
   color: #f8c37d;
+  white-space: nowrap;
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-mi-tile-hint {
@@ -485,6 +546,7 @@
   min-width: 160px;
 }
 
+/* Brief cards list */
 .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-cards {
   list-style: none;
   margin: 0;
@@ -517,6 +579,7 @@
   color: rgba(255, 255, 255, 0.92);
   min-width: 0;
   flex: 1;
+  word-break: break-word;
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions {
@@ -535,14 +598,10 @@
   border: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .td-deck-with-tabs.td-layout-page .td-deck-mo-root.td-deck-mo-outlook,
-  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern {
-    animation: none;
-  }
-}
+/* ─────────────────────────────────────────────────────────────────────────────
+   AURA JOURNAL GLASS OVERRIDES (journal-page context)
+   ───────────────────────────────────────────────────────────────────────────── */
 
-/* ── Aura Journal panel stack (same as Journal.css) — outlook / intelligence ─ */
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-mo-eyebrow {
   color: var(--text-dim);
   background: var(--grad-gold);
@@ -603,7 +662,7 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
-/* Market Outlook bento tiles — same glass stack as journal-progress-card */
+/* Bento panels — glass stack */
 .journal-page .td-deck-with-tabs.td-layout-page .td-outlook-panel {
   border: 1px solid transparent !important;
   background: none !important;
@@ -623,7 +682,8 @@
   left: 5% !important;
   right: 14% !important;
   height: 1px !important;
-  background: linear-gradient(90deg,
+  background: linear-gradient(
+    90deg,
     rgba(255, 255, 255, 0.98) 0%,
     rgba(255, 255, 255, 0.58) 28%,
     rgba(175, 200, 255, 0.42) 55%,
@@ -649,7 +709,7 @@
   background: var(--line-gold) !important;
 }
 
-/* Live desk intelligence (OpenAI + APIs) */
+/* AI Desk brief block */
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-desk-brief {
   margin: 0 0 18px;
   padding: 16px 18px;
@@ -658,12 +718,14 @@
   background: rgba(12, 18, 32, 0.45);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
 }
+
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-brief-body {
   margin: 10px 0 0;
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.88);
   font-size: 0.95rem;
 }
+
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-priorities {
   margin: 12px 0 0;
   padding-left: 1.25rem;
@@ -671,9 +733,171 @@
   font-size: 0.9rem;
   line-height: 1.45;
 }
+
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-sources {
   margin: 12px 0 0;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   color: rgba(255, 255, 255, 0.45);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TABLET ADJUSTMENTS  (481px – 1099px)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 481px) and (max-width: 1099px) {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
+    padding: 16px 16px 14px;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern {
+    padding: 16px 18px 22px !important;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-hero,
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-hero {
+    padding: 16px 18px;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat {
+    text-align: left;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MOBILE ADJUSTMENTS  (≤ 640px)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  /* Tab zone */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
+    padding: 14px 12px 12px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 14px;
+  }
+
+  /* Period tabs */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab {
+    min-width: 0;
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+  }
+
+  /* Content box */
+  .td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern {
+    padding: 14px 14px 20px !important;
+    border-radius: 16px !important;
+  }
+
+  /* Outlook hero */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-hero {
+    padding: 14px 16px;
+    gap: 12px;
+    margin-bottom: 16px;
+    border-radius: 14px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  /* Intelligence hero */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-hero {
+    padding: 14px 16px;
+    gap: 14px;
+    margin-bottom: 16px;
+    border-radius: 14px;
+    flex-direction: column;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat {
+    text-align: left;
+    width: 100%;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat-value {
+    font-size: 1.5rem;
+  }
+
+  /* Tile grid: always single column on mobile */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  /* Tile padding */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-tile {
+    padding: 16px 16px 14px;
+    border-radius: 14px;
+  }
+
+  /* Bento gap */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    gap: 12px;
+  }
+
+  /* Rail footer blocks */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-footer-block {
+    padding: 14px 14px 12px;
+    border-radius: var(--radius);
+  }
+
+  /* AI desk brief */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-desk-brief {
+    padding: 14px 14px;
+  }
+
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-brief-body {
+    font-size: 0.9rem;
+  }
+
+  /* Main inner grid gap */
+  .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
+    gap: 14px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   EXTRA SMALL  (≤ 380px) — very tight screens
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 380px) {
+  .td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern {
+    padding: 12px 10px 16px !important;
+    border-radius: 14px !important;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-title {
+    font-size: 1rem;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-tile {
+    padding: 12px 12px 10px;
+    border-radius: 12px;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-hero,
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-hero {
+    padding: 12px 12px;
+    border-radius: 12px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   REDUCED MOTION
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-root.td-deck-mo-outlook,
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern {
+    animation: none;
+  }
 }
