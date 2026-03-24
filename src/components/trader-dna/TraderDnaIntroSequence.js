@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import TraderDnaHelixVisual from './TraderDnaHelixVisual';
 
 const PHASES = [
   { label: 'Initialising DNA engine', sub: 'Secure channel · trader data vault', cmd: 'vault.mount --encrypt=AES256' },
@@ -169,6 +170,12 @@ export default function TraderDnaIntroSequence({ onComplete }) {
       <div className="tdna-intro-orbit" aria-hidden>
         <div className="tdna-intro-orbit-ring" />
         <div className="tdna-intro-orbit-ring tdna-intro-orbit-ring--slow" />
+      </div>
+
+      <div className="tdna-intro-helix-wrap" aria-hidden>
+        <div className="tdna-intro-helix-spin">
+          <TraderDnaHelixVisual progress={progress} />
+        </div>
       </div>
 
       <aside className="tdna-intro-stream" aria-hidden>

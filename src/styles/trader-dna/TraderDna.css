@@ -388,6 +388,55 @@
   }
 }
 
+/* Synthesis chamber — double helix builds with global progress; slow rotation on wrapper */
+.tdna-intro-helix-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.tdna-intro-helix-spin {
+  width: min(44vmin, 340px);
+  height: min(72vmin, 540px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: tdna-helix-turn 48s linear infinite;
+  filter:
+    drop-shadow(0 0 32px rgba(91, 124, 255, 0.28))
+    drop-shadow(0 0 64px rgba(139, 123, 255, 0.12));
+}
+
+@keyframes tdna-helix-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tdna-helix-svg {
+  width: 100%;
+  height: 100%;
+  max-height: min(72vmin, 540px);
+  display: block;
+  overflow: visible;
+}
+
+.tdna-helix-ambient {
+  pointer-events: none;
+}
+
+.tdna-helix-basepair {
+  pointer-events: none;
+}
+
+.tdna-helix-nuc {
+  filter: drop-shadow(0 0 5px rgba(125, 211, 252, 0.4));
+}
+
 .tdna-intro-stream {
   position: absolute;
   left: max(12px, 1.5vw);
@@ -682,6 +731,7 @@
   .tdna-intro-nebula--b,
   .tdna-intro-nebula--c,
   .tdna-intro-orbit-ring,
+  .tdna-intro-helix-spin,
   .tdna-matrix-col,
   .tdna-intro-star,
   .tdna-intro-stream-line {
