@@ -23,7 +23,7 @@ export default function TraderDnaNotReady({ dna, afterIntro = false }) {
     if (status === 'COOLDOWN') return 'Your Trader DNA is sealed for this cycle';
     if (eligible) return 'You are cleared for synthesis';
     if (status === 'INSUFFICIENT_FOR_NEXT_CYCLE') return 'Your DNA is still forming';
-    return 'Trader DNA requires more signal';
+    return 'Trader DNA requires more data';
   };
 
   const kickerForStatus = () => {
