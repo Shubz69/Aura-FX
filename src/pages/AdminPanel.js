@@ -23,6 +23,79 @@ function normalizePlanForSelect(raw) {
   return 'aura';
 }
 
+function analyzeTemplateDraft(draft, period) {
+  const text = String(draft || '').trim();
+  const lines = text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const issues = [];
+  const sections = [];
+  let instruments = [];
+  let hasNoSourcesRule = /no sources/i.test(text);
+
+  let inSections = false;
+  for (const line of lines) {
+    const lower = line.toLowerCase();
+    if (lower === 'sections:' || lower.startsWith('sections:')) {
+      inSections = true;
+      continue;
+    }
+    if (lower.startsWith('instruments:')) {
+      inSections = false;
+      const raw = line.split(':').slice(1).join(':');
+      instruments = raw.split(',').map((x) => x.trim()).filter(Boolean);
+      continue;
+    }
+    if (inSections && /^-\s+/.test(line)) {
+      sections.push(line.replace(/^-\s+/, '').trim());
+    }
+  }
+
+  if (sections.length < 4) {
+    issues.push('Too few sections found. Add at least 4 section headings under "Sections:".');
+  }
+  if (instruments.length < 4) {
+    issues.push('Too few instruments found. Add instrument list as "Instruments: EURUSD, GBPUSD, ...".');
+  }
+  if (!hasNoSourcesRule) {
+    issues.push('Missing explicit "no sources" instruction in template text.');
+  }
+  if (period === 'weekly' && !/week|weekly/i.test(text)) {
+    issues.push('Weekly template should mention weekly context in heading/tone.');
+  }
+  if (period === 'daily' && !/daily|session/i.test(text)) {
+    issues.push('Daily template should mention daily/session context.');
+  }
+
+  const improvedLines = [...lines];
+  if (!lines.some((l) => l.toLowerCase().startsWith('sections:'))) {
+    improvedLines.push('Sections:');
+  }
+  if (sections.length === 0) {
+    const defaults = period === 'weekly'
+      ? ['Weekly Macro Theme', 'Instrument Outlook', 'Event Map', 'Risk Radar', 'Playbook']
+      : ['Market Context', 'Instrument Outlook', 'Session Focus', 'Risk Radar', 'Execution Notes'];
+    defaults.forEach((s) => improvedLines.push(`- ${s}`));
+  }
+  if (instruments.length < 4) {
+    const defaults = period === 'weekly'
+      ? 'EURUSD, GBPUSD, USDJPY, AUDUSD, XAUUSD, US500, NAS100, DXY'
+      : 'EURUSD, GBPUSD, USDJPY, XAUUSD, US500, NAS100, DXY';
+    improvedLines.push(`Instruments: ${defaults}`);
+  }
+  if (!hasNoSourcesRule) {
+    improvedLines.push('Style: Institutional concise, no sources shown.');
+  }
+
+  return {
+    issues,
+    sections,
+    instruments,
+    suggested: improvedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim(),
+  };
+}
+
 /** Modal: set subscription plan + duration (paid plans). */
 function SubscriptionAccessModal({ open, title, userEmail, initialPlan, onClose, onConfirm, submitting }) {
   const [plan, setPlan] = useState('aura');
@@ -124,7 +197,7 @@ const AdminPanel = () => {
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: null, userEmail: null });
     const [channels, setChannels] = useState([]);
     const [channelsLoading, setChannelsLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('users'); // 'users' or 'channels'
+    const [activeTab, setActiveTab] = useState('users'); // 'users' | 'channels' | 'brief-templates'
     const [searchTerm, setSearchTerm] = useState(''); // Search filter for users
     const [accessModal, setAccessModal] = useState({
         open: false,
@@ -134,6 +207,17 @@ const AdminPanel = () => {
         title: 'Set access',
     });
     const [accessSubmitting, setAccessSubmitting] = useState(false);
+    const [templatePeriod, setTemplatePeriod] = useState('daily');
+    const [templateDraft, setTemplateDraft] = useState('');
+    const [templateLoading, setTemplateLoading] = useState(false);
+    const [templateSaving, setTemplateSaving] = useState(false);
+    const [templatePreviewLoading, setTemplatePreviewLoading] = useState(false);
+    const [templatePublishing, setTemplatePublishing] = useState(false);
+    const [templateStatus, setTemplateStatus] = useState('');
+    const [templatePreview, setTemplatePreview] = useState({ issues: [], sections: [], instruments: [], suggested: '' });
+    const [generatedPreview, setGeneratedPreview] = useState('');
+    const [previewPublishDate, setPreviewPublishDate] = useState(new Date().toISOString().slice(0, 10));
+    const [generatedPreviewTitle, setGeneratedPreviewTitle] = useState('');
 
     // Handle real-time online status updates from WebSocket
     const handleOnlineStatusUpdate = (data) => {
@@ -586,6 +670,121 @@ const AdminPanel = () => {
     const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
     const isSuperAdmin =
         userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
+
+    const loadTemplate = useCallback(async (period) => {
+        try {
+            setTemplateLoading(true);
+            setTemplateStatus('');
+            const res = await Api.getTraderDeckBriefTemplate(period);
+            const data = res?.data || {};
+            const schema = data.template || {};
+            const lines = [];
+            lines.push(`# ${period === 'weekly' ? 'Weekly' : 'Daily'} Brief Template`);
+            lines.push('');
+            if (Array.isArray(schema.sections) && schema.sections.length) {
+                lines.push('Sections:');
+                schema.sections.forEach((s) => lines.push(`- ${s.heading || ''}`));
+                lines.push('');
+            }
+            if (Array.isArray(schema.instruments) && schema.instruments.length) {
+                lines.push(`Instruments: ${schema.instruments.join(', ')}`);
+                lines.push('');
+            }
+            lines.push('Style: Institutional concise, no sources shown.');
+            const nextDraft = lines.join('\n');
+            setTemplateDraft(nextDraft);
+            setTemplatePreview(analyzeTemplateDraft(nextDraft, period));
+        } catch (err) {
+            setTemplateStatus(err?.response?.status === 404 ? 'Template manager is hidden for your account.' : 'Failed to load template.');
+        } finally {
+            setTemplateLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!isSuperAdmin || activeTab !== 'brief-templates') return;
+        loadTemplate(templatePeriod);
+    }, [activeTab, templatePeriod, isSuperAdmin, loadTemplate]);
+
+    const handleSaveTemplate = async () => {
+        try {
+            if (!templateDraft.trim()) {
+                setTemplateStatus('Template text cannot be empty.');
+                return;
+            }
+            setTemplateSaving(true);
+            setTemplateStatus('');
+            await Api.putTraderDeckBriefTemplate(templatePeriod, templateDraft.trim());
+            setTemplateStatus('Template saved. New auto-briefs will follow this structure.');
+            setTemplatePreview(analyzeTemplateDraft(templateDraft.trim(), templatePeriod));
+        } catch (err) {
+            setTemplateStatus(err?.response?.status === 404 ? 'Template manager is hidden for your account.' : (err?.response?.data?.message || 'Failed to save template.'));
+        } finally {
+            setTemplateSaving(false);
+        }
+    };
+
+    const handleImproveTemplate = () => {
+        const next = analyzeTemplateDraft(templateDraft, templatePeriod);
+        setTemplatePreview(next);
+        setTemplateDraft(next.suggested || templateDraft);
+        if (next.issues.length > 0) {
+            setTemplateStatus('Template improved with fixes for detected issues. Review and save.');
+        } else {
+            setTemplateStatus('Template already looks good. No critical issues found.');
+        }
+    };
+
+    const handleGenerateTemplatePreview = async () => {
+        try {
+            if (!templateDraft.trim()) {
+                setTemplateStatus('Add template text first, then generate preview.');
+                return;
+            }
+            setTemplatePreviewLoading(true);
+            setTemplateStatus('');
+            const res = await Api.previewTraderDeckBriefTemplate(templatePeriod, templateDraft.trim());
+            const body = res?.data?.body || '';
+            const title = res?.data?.title || 'Market Brief';
+            setGeneratedPreview(body);
+            setGeneratedPreviewTitle(title);
+            setTemplateStatus('Generated test brief preview (not published).');
+        } catch (err) {
+            setGeneratedPreview('');
+            setGeneratedPreviewTitle('');
+            setTemplateStatus(err?.response?.data?.message || 'Failed to generate test preview.');
+        } finally {
+            setTemplatePreviewLoading(false);
+        }
+    };
+
+    const handlePublishPreviewNow = async () => {
+        try {
+            if (!generatedPreview.trim()) {
+                setTemplateStatus('Generate a test preview first.');
+                return;
+            }
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(previewPublishDate)) {
+                setTemplateStatus('Select a valid publish date.');
+                return;
+            }
+            const ok = window.confirm(`Publish this preview to ${previewPublishDate} (${templatePeriod}) now?`);
+            if (!ok) return;
+            setTemplatePublishing(true);
+            setTemplateStatus('');
+            await Api.publishTraderDeckBriefPreview({
+                period: templatePeriod,
+                date: previewPublishDate,
+                previewTitle: generatedPreviewTitle || `${templatePeriod} brief`,
+                previewBody: generatedPreview,
+            });
+            setTemplateStatus(`Preview published to ${previewPublishDate} (${templatePeriod}).`);
+        } catch (err) {
+            setTemplateStatus(err?.response?.data?.message || 'Failed to publish preview.');
+        } finally {
+            setTemplatePublishing(false);
+        }
+    };
     
     if (!isAuthenticated || !isAdmin) {
         return null; // Don't render anything while redirecting
@@ -615,6 +814,14 @@ const AdminPanel = () => {
           >
             Channels
           </button>
+          {isSuperAdmin && (
+            <button
+              className={`admin-tab-btn ${activeTab === 'brief-templates' ? 'active' : ''}`}
+              onClick={() => setActiveTab('brief-templates')}
+            >
+              Brief Templates
+            </button>
+          )}
         </div>
         {activeTab === 'users' && (
           <div className="user-summary">
@@ -630,6 +837,11 @@ const AdminPanel = () => {
             <button onClick={fetchChannels} className="refresh-btn">
               ↻ Refresh
             </button>
+          </div>
+        )}
+        {activeTab === 'brief-templates' && isSuperAdmin && (
+          <div className="user-summary">
+            <span>Manage daily/weekly AI brief structure</span>
           </div>
         )}
       </div>
@@ -828,6 +1040,117 @@ const AdminPanel = () => {
             </div>
           )}
         </>
+      )}
+
+      {activeTab === 'brief-templates' && isSuperAdmin && (
+        <section className="brief-template-panel">
+          <div className="brief-template-row">
+            <label htmlFor="brief-template-period">Period</label>
+            <select
+              id="brief-template-period"
+              className="access-level-select"
+              value={templatePeriod}
+              onChange={(e) => setTemplatePeriod(e.target.value)}
+              disabled={templateLoading || templateSaving}
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+            <button
+              type="button"
+              className="refresh-btn"
+              onClick={() => loadTemplate(templatePeriod)}
+              disabled={templateLoading || templateSaving}
+            >
+              {templateLoading ? 'Loading…' : 'Reload'}
+            </button>
+          </div>
+          <p className="brief-template-help">
+            Super-admin only. This controls section order, headings, and instrument flow used by automated briefs. Sources are never shown in generated briefs.
+          </p>
+          <textarea
+            className="brief-template-textarea"
+            value={templateDraft}
+            onChange={(e) => {
+              const next = e.target.value;
+              setTemplateDraft(next);
+              setTemplatePreview(analyzeTemplateDraft(next, templatePeriod));
+            }}
+            placeholder="Paste your template structure here..."
+            disabled={templateLoading || templateSaving}
+          />
+          <div className="brief-template-actions">
+            <button
+              type="button"
+              className="action-btn plan-btn"
+              onClick={handleGenerateTemplatePreview}
+              disabled={templateSaving || templateLoading || templatePreviewLoading}
+            >
+              {templatePreviewLoading ? 'Generating…' : 'Generate test brief preview'}
+            </button>
+            <button
+              type="button"
+              className="action-btn reset-xp-btn"
+              onClick={handleImproveTemplate}
+              disabled={templateSaving || templateLoading}
+            >
+              Improve template
+            </button>
+            <button
+              type="button"
+              className="action-btn grant-access-btn"
+              onClick={handleSaveTemplate}
+              disabled={templateSaving || templateLoading}
+            >
+              {templateSaving ? 'Saving…' : `Save ${templatePeriod} template`}
+            </button>
+          </div>
+          {templatePreview.issues.length > 0 && (
+            <div className="brief-template-error-box" role="alert">
+              <strong>What went wrong</strong>
+              <ul>
+                {templatePreview.issues.map((issue, idx) => (
+                  <li key={`${issue}-${idx}`}>{issue}</li>
+                ))}
+              </ul>
+              <p>Use "Improve template" to auto-fix structure, then save again.</p>
+            </div>
+          )}
+          <div className="brief-template-preview">
+            <h3>Preview check</h3>
+            <p>Sections ({templatePreview.sections.length || 0}): {templatePreview.sections.join(' | ') || 'None yet'}</p>
+            <p>Instruments ({templatePreview.instruments.length || 0}): {templatePreview.instruments.join(', ') || 'None yet'}</p>
+            {templatePreview.issues.length === 0 && templatePreview.sections.length > 0 && templatePreview.instruments.length > 0 && (
+              <p className="brief-template-preview-ok">Template structure passes validation and is ready for generation.</p>
+            )}
+          </div>
+          {generatedPreview && (
+            <div className="brief-template-generated-preview">
+              <h3>Generated brief preview (not published)</h3>
+              <div className="brief-template-publish-row">
+                <label htmlFor="brief-preview-date">Publish date</label>
+                <input
+                  id="brief-preview-date"
+                  type="date"
+                  className="brief-template-date"
+                  value={previewPublishDate}
+                  onChange={(e) => setPreviewPublishDate(e.target.value)}
+                  disabled={templatePublishing}
+                />
+                <button
+                  type="button"
+                  className="action-btn grant-access-btn"
+                  onClick={handlePublishPreviewNow}
+                  disabled={templatePublishing || templatePreviewLoading}
+                >
+                  {templatePublishing ? 'Publishing…' : 'Publish this preview now'}
+                </button>
+              </div>
+              <pre>{generatedPreview}</pre>
+            </div>
+          )}
+          {templateStatus && <p className="brief-template-status">{templateStatus}</p>}
+        </section>
       )}
     </div>
 

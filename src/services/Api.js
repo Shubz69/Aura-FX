@@ -917,6 +917,52 @@ const Api = {
         if (token) q.push(`token=${encodeURIComponent(token)}`);
         return `${base}/api/trader-deck/brief-preview?${q.join('&')}`;
     },
+    getTraderDeckBriefTemplate: (period = 'daily') => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/trader-deck/brief-template`, {
+            params: { period },
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+    },
+    putTraderDeckBriefTemplate: (period = 'daily', templateText = '') => {
+        const token = localStorage.getItem('token');
+        return axios.put(
+            `${API_BASE_URL}/api/trader-deck/brief-template`,
+            { period, templateText },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                }
+            }
+        );
+    },
+    previewTraderDeckBriefTemplate: (period = 'daily', templateText = '') => {
+        const token = localStorage.getItem('token');
+        return axios.post(
+            `${API_BASE_URL}/api/trader-deck/brief-template`,
+            { period, action: 'preview', templateText },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                }
+            }
+        );
+    },
+    publishTraderDeckBriefPreview: ({ period = 'daily', date, previewTitle, previewBody }) => {
+        const token = localStorage.getItem('token');
+        return axios.post(
+            `${API_BASE_URL}/api/trader-deck/brief-template`,
+            { period, action: 'publish-preview', date, previewTitle, previewBody },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                }
+            }
+        );
+    },
 
     getJournalDaily: (date) => {
         return axios.get(`${API_BASE_URL}/api/journal/daily`, { params: { date } });

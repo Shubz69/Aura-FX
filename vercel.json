@@ -455,6 +455,10 @@
       "destination": "/api/cron/journal-wellness-alerts.js"
     },
     {
+      "source": "/api/cron/auto-market-briefs",
+      "destination": "/api/cron/auto-market-briefs.js"
+    },
+    {
       "source": "/api/seed/demo-leaderboard",
       "destination": "/api/seed/demo-leaderboard.js"
     },
@@ -591,6 +595,10 @@
       "destination": "/api/trader-deck/brief-delete.js"
     },
     {
+      "source": "/api/trader-deck/brief-template",
+      "destination": "/api/trader-deck/brief-template.js"
+    },
+    {
       "source": "/api/ai/chart-check",
       "destination": "/api/ai/chart-check.js"
     },
@@ -639,6 +647,10 @@
     {
       "path": "/api/cron/journal-wellness-alerts",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/auto-market-briefs",
+      "schedule": "*/15 * * * *"
     }
   ]
 }
