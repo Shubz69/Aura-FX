@@ -17,13 +17,23 @@ function resolveReactAppApiUrl() {
 // Define a fixed API base URL with proper fallback
 // Automatically detect the origin to avoid CORS issues with www redirects
 const getApiBaseUrl = () => {
-  // If running on localhost → use LIVE backend
-  if (window.location.hostname === "localhost") {
-    return "https://www.auraterminal.ai";
-  }
-
-  // Otherwise (production)
-  return window.location.origin;
+    const fromEnv = resolveReactAppApiUrl();
+    if (fromEnv) {
+        return fromEnv;
+    }
+    // In local dev prefer relative URLs so CRA proxy handles routing consistently.
+    if (process.env.NODE_ENV === 'development') {
+        return '';
+    }
+    if (typeof window !== 'undefined' && window.location?.origin) {
+        // Production domain currently serves marketing redirects on /api/*.
+        // Route API traffic to the live app API host unless explicitly overridden.
+        if (/(?:^|\.)auraxfx\.com$/i.test(window.location.hostname || '') || /(?:^|\.)auraterminal\.ai$/i.test(window.location.hostname || '')) {
+            return 'https://www.auraterminal.ai';
+        }
+        return window.location.origin;
+    }
+    return '';
 };
 
 const API_BASE_URL = getApiBaseUrl();
