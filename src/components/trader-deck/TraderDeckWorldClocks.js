@@ -62,24 +62,50 @@ function secondRotationDeg(second) {
   return second * 6;
 }
 
-function AnalogClockFace({ label, hour, minute, second, digitalTitle }) {
+/** Stable SVG id fragment per IANA zone (unique per clock on the page). */
+function clockIdFragment(timeZone) {
+  return String(timeZone).replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+function AnalogClockFace({ label, timeZone, hour, minute, second, digitalTitle }) {
   const hDeg = hourRotationDeg(hour, minute, second);
   const mDeg = minuteRotationDeg(minute, second);
   const sDeg = secondRotationDeg(second);
+  const uid = clockIdFragment(timeZone);
+  const dialGrad = `tdck-dial-${uid}`;
+  const shineGrad = `tdck-shine-${uid}`;
 
-  const ticks = [];
+  const hourTicks = [];
   for (let i = 0; i < 12; i += 1) {
     const a = (i * 30 - 90) * (Math.PI / 180);
-    const r0 = 41;
-    const r1 = i % 3 === 0 ? 33 : 36;
-    ticks.push(
+    const r0 = 41.5;
+    const r1 = i % 3 === 0 ? 32.5 : 35.2;
+    hourTicks.push(
       <line
-        key={i}
+        key={`h-${i}`}
         x1={CX + r0 * Math.cos(a)}
         y1={CY + r0 * Math.sin(a)}
         x2={CX + r1 * Math.cos(a)}
         y2={CY + r1 * Math.sin(a)}
-        className="td-deck-analog-clock__tick"
+        className={i % 3 === 0 ? 'td-deck-analog-clock__tick td-deck-analog-clock__tick--major' : 'td-deck-analog-clock__tick'}
+      />,
+    );
+  }
+
+  const minorTicks = [];
+  for (let i = 0; i < 60; i += 1) {
+    if (i % 5 === 0) continue;
+    const a = (i * 6 - 90) * (Math.PI / 180);
+    const r0 = 40.4;
+    const r1 = 38.6;
+    minorTicks.push(
+      <line
+        key={`m-${i}`}
+        x1={CX + r0 * Math.cos(a)}
+        y1={CY + r0 * Math.sin(a)}
+        x2={CX + r1 * Math.cos(a)}
+        y2={CY + r1 * Math.sin(a)}
+        className="td-deck-analog-clock__tick-minor"
       />,
     );
   }
@@ -97,6 +123,24 @@ function AnalogClockFace({ label, hour, minute, second, digitalTitle }) {
           viewBox="0 0 100 100"
           aria-hidden="true"
         >
+          <defs>
+            <radialGradient id={dialGrad} cx="38%" cy="32%" r="78%">
+              <stop offset="0%" stopColor="#1a2848" />
+              <stop offset="52%" stopColor="#0a1024" />
+              <stop offset="100%" stopColor="#020308" />
+            </radialGradient>
+            <linearGradient id={shineGrad} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(190, 210, 255, 0.22)" />
+              <stop offset="40%" stopColor="rgba(120, 150, 220, 0.06)" />
+              <stop offset="100%" stopColor="rgba(0, 0, 0, 0)" />
+            </linearGradient>
+          </defs>
+          <circle
+            className="td-deck-analog-clock__rim-shadow"
+            cx={CX}
+            cy={CY}
+            r="47"
+          />
           <circle
             className="td-deck-analog-clock__rim-outer"
             cx={CX}
@@ -113,16 +157,26 @@ function AnalogClockFace({ label, hour, minute, second, digitalTitle }) {
             className="td-deck-analog-clock__dial"
             cx={CX}
             cy={CY}
-            r="40"
+            r="40.5"
+            fill={`url(#${dialGrad})`}
           />
-          {ticks}
+          <ellipse
+            className="td-deck-analog-clock__glass"
+            cx={CX}
+            cy={36}
+            rx={29}
+            ry={21}
+            fill={`url(#${shineGrad})`}
+          />
+          {minorTicks}
+          {hourTicks}
           <g transform={`rotate(${hDeg} ${CX} ${CY})`}>
             <line
               className="td-deck-analog-clock__hand td-deck-analog-clock__hand--hour"
               x1={CX}
               y1={CY}
               x2={CX}
-              y2={32}
+              y2={31}
               strokeLinecap="round"
             />
           </g>
@@ -132,7 +186,7 @@ function AnalogClockFace({ label, hour, minute, second, digitalTitle }) {
               x1={CX}
               y1={CY}
               x2={CX}
-              y2={24}
+              y2={23}
               strokeLinecap="round"
             />
           </g>
@@ -142,11 +196,11 @@ function AnalogClockFace({ label, hour, minute, second, digitalTitle }) {
               x1={CX}
               y1={CY}
               x2={CX}
-              y2={22}
+              y2={21}
               strokeLinecap="round"
             />
           </g>
-          <circle className="td-deck-analog-clock__cap" cx={CX} cy={CY} r="3.2" />
+          <circle className="td-deck-analog-clock__cap" cx={CX} cy={CY} r="3.4" />
         </svg>
       </div>
       <span className="td-deck-analog-clock__city">{label}</span>
@@ -181,7 +235,7 @@ export default function TraderDeckWorldClocks() {
   );
 
   return (
-    <div className="td-deck-world-clocks-rail">
+    <div className="td-deck-world-clocks-rail td-deck-world-clocks-rail--above">
       <div
         className="td-deck-world-clocks td-deck-world-clocks--top"
         aria-label="World clocks"
@@ -191,6 +245,7 @@ export default function TraderDeckWorldClocks() {
           <AnalogClockFace
             key={timeZone}
             label={label}
+            timeZone={timeZone}
             hour={hour}
             minute={minute}
             second={second}

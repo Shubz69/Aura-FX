@@ -97,10 +97,10 @@
   margin-bottom: 0;
 }
 
-/* Top rail: circular analog world clocks (above MARKET OUTLOOK / title / INTEL) */
+/* Top rail: circular analog world clocks (above tab zone / title row) */
 .td-deck-world-clocks-rail {
   width: 100%;
-  margin-bottom: 2px;
+  margin-bottom: 0;
 }
 
 .td-deck-world-clocks.td-deck-world-clocks--top {
@@ -126,7 +126,9 @@
 .td-deck-analog-clock__face-wrap {
   width: clamp(52px, 10.5vw, 84px);
   height: clamp(52px, 10.5vw, 84px);
-  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.4));
+  filter:
+    drop-shadow(0 0 10px rgba(100, 140, 220, 0.2))
+    drop-shadow(0 5px 18px rgba(0, 0, 0, 0.55));
 }
 
 .td-deck-analog-clock__svg {
@@ -135,51 +137,71 @@
   display: block;
 }
 
+.td-deck-analog-clock__rim-shadow {
+  fill: rgba(0, 0, 0, 0.42);
+  stroke: none;
+  stroke-width: 0;
+}
+
 .td-deck-analog-clock__rim-outer {
   fill: none;
-  stroke: rgba(160, 185, 240, 0.38);
-  stroke-width: 1;
+  stroke: rgba(175, 200, 255, 0.42);
+  stroke-width: 1.15;
 }
 
 .td-deck-analog-clock__rim {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.1);
-  stroke-width: 0.75;
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 0.65;
 }
 
+/* Dial fill comes from SVG gradient (per clock); stroke only here */
 .td-deck-analog-clock__dial {
-  fill: rgba(4, 8, 20, 0.94);
-  stroke: rgba(160, 185, 240, 0.2);
-  stroke-width: 0.5;
+  stroke: rgba(140, 180, 255, 0.22);
+  stroke-width: 0.55;
+}
+
+.td-deck-analog-clock__glass {
+  pointer-events: none;
 }
 
 .td-deck-analog-clock__tick {
-  stroke: rgba(255, 255, 255, 0.24);
-  stroke-width: 1.15;
+  stroke: rgba(255, 255, 255, 0.26);
+  stroke-width: 1.1;
+}
+
+.td-deck-analog-clock__tick--major {
+  stroke: rgba(255, 255, 255, 0.38);
+  stroke-width: 1.35;
+}
+
+.td-deck-analog-clock__tick-minor {
+  stroke: rgba(255, 255, 255, 0.11);
+  stroke-width: 0.55;
 }
 
 .td-deck-analog-clock__hand {
-  stroke: rgba(255, 255, 255, 0.92);
+  stroke: rgba(255, 255, 255, 0.96);
 }
 
 .td-deck-analog-clock__hand--hour {
-  stroke-width: 3;
+  stroke-width: 3.1;
 }
 
 .td-deck-analog-clock__hand--minute {
-  stroke-width: 2;
-  opacity: 0.9;
+  stroke-width: 2.05;
+  opacity: 0.94;
 }
 
 .td-deck-analog-clock__hand--second {
-  stroke: rgba(248, 195, 125, 0.95);
-  stroke-width: 1;
+  stroke: rgba(248, 200, 130, 0.98);
+  stroke-width: 1.05;
 }
 
 .td-deck-analog-clock__cap {
-  fill: rgba(248, 195, 125, 0.9);
-  stroke: rgba(255, 255, 255, 0.25);
-  stroke-width: 0.35;
+  fill: rgba(248, 195, 125, 0.95);
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 0.4;
 }
 
 .td-deck-analog-clock__city {
@@ -188,7 +210,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.52);
+  color: rgba(255, 255, 255, 0.62);
   white-space: nowrap;
   max-width: 88px;
   text-align: center;
