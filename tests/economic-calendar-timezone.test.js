@@ -34,11 +34,31 @@ function run() {
   assert(zeroActual.actual === '0', 'actual=0 should be preserved as "0"');
   assert(emptyActual.actual == null, 'empty actual should normalize to null');
 
-  // header-driven timezone resolution (IP authoritative)
+  const utcMs = Date.UTC(2026, 2, 24, 14, 0, 0);
+  const withNumericTs = _test.normalizeEventShape({
+    date: '2026-03-24',
+    time: '10:00 AM',
+    timestamp: utcMs,
+    currency: 'USD',
+    impact: 'high',
+    event: 'NFP',
+  });
+  assert(withNumericTs.timestamp === utcMs, 'numeric timestamp ms must survive normalizeEventShape');
+
+  // X-Client-Timezone wins over IP; IP fallback when no client header
+  const tzClientWins = _test.resolveViewerTimeZone({
+    headers: {
+      'x-client-timezone': 'Australia/Sydney',
+      'x-vercel-ip-timezone': 'Europe/London',
+    },
+  });
+  assert(tzClientWins === 'Australia/Sydney', `client tz should win, got ${tzClientWins}`);
   const tzFromHeader = _test.resolveViewerTimeZone({ headers: { 'x-vercel-ip-timezone': 'Europe/London' } });
   assert(tzFromHeader === 'Europe/London', `expected Europe/London, got ${tzFromHeader}`);
   const tzBad = _test.resolveViewerTimeZone({ headers: { 'x-vercel-ip-timezone': 'Not/AZone' } });
   assert(tzBad === 'UTC', `invalid timezone should fallback UTC, got ${tzBad}`);
+  const tzQuery = _test.resolveViewerTimeZone({ headers: {}, query: { tz: 'Europe/London' } });
+  assert(tzQuery === 'Europe/London', `query tz= should work, got ${tzQuery}`);
 
   // timezone conversion should differ for different regions on same UTC timestamp
   const ts = Date.UTC(2026, 2, 24, 14, 0, 0); // 2026-03-24 14:00:00Z
@@ -62,6 +82,37 @@ function run() {
   const tkDate = new Date(ts).toLocaleDateString('en-CA', { timeZone: 'Asia/Tokyo' });
   assert(/^\d{4}-\d{2}-\d{2}$/.test(nyDate), 'NY date key must be YYYY-MM-DD');
   assert(/^\d{4}-\d{2}-\d{2}$/.test(tkDate), 'Tokyo date key must be YYYY-MM-DD');
+
+  const tsMatch = Date.UTC(2026, 2, 24, 14, 0, 0);
+  const merged = _test.mergeSupplementActuals(
+    [
+      {
+        date: '2026-03-24',
+        time: '10:00 AM',
+        timestamp: tsMatch,
+        currency: 'USD',
+        impact: 'high',
+        event: 'ISM Manufacturing PMI',
+        actual: null,
+        forecast: '49',
+        previous: '48',
+      },
+    ],
+    [
+      {
+        date: '2026-03-24',
+        time: '10:00 AM',
+        timestamp: tsMatch + 45000,
+        currency: 'USD',
+        impact: 'high',
+        event: 'ISM Manufacturing PMI',
+        actual: '50.1',
+        forecast: '49',
+        previous: '48',
+      },
+    ]
+  );
+  assert(merged[0].actual === '50.1', 'mergeSupplementActuals should fill actual from FMP row');
 
   console.log('OK economic-calendar-timezone tests');
 }

@@ -5,6 +5,10 @@ import {
   parseEventTimestamp,
   formatEventTimeLocal,
   getEventDateKeyLocal,
+  getBrowserTimeZone,
+  getReleaseCountdownMs,
+  formatCountdownMs,
+  isEventWaitingForActual,
 } from '../../utils/economicCalendarTime';
 
 const ALL_CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF', 'CNH'];
@@ -33,24 +37,8 @@ function getEventStatus(ev) {
   return 'upcoming';
 }
 
-function getCountdownMs(ev, nowMs = Date.now()) {
-  if (hasActualValue(ev.actual)) return null;
-  const ts = parseEventTimestamp(ev);
-  if (!ts) return null;
-  const diff = ts - nowMs;
-  if (diff <= 0 || diff > SOON_WINDOW_MS) return null;
-  return diff;
-}
-
-function formatCountdown(ms) {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const mm = String(Math.floor(total / 60)).padStart(2, '0');
-  const ss = String(total % 60).padStart(2, '0');
-  return `${mm}:${ss}`;
-}
-
 export default function ForexFactoryNews({ date, onlyToday = true }) {
-  const [viewerTimeZone, setViewerTimeZone] = useState('UTC');
+  const [displayTimeZone] = useState(() => getBrowserTimeZone());
   const [events, setEvents]           = useState([]);
   const [loading, setLoading]         = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -64,7 +52,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
   const sinceLastFetch = useRef(0);   // ms since last baseline fetch
   const fetchInFlightRef = useRef(false);
 
-  const todayStr = date || new Date().toLocaleDateString('en-CA', { timeZone: viewerTimeZone });
+  const todayStr = date || new Date().toLocaleDateString('en-CA', { timeZone: displayTimeZone });
 
   // Core fetch — refresh=true bypasses server cache for precision fetches
   const fetchEvents = useCallback(async (refresh = false) => {
@@ -74,7 +62,6 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
       const res  = await Api.getTraderDeckEconomicCalendar(1, refresh);
       const list = res.data?.events || [];
       setEvents(list);
-      setViewerTimeZone(res.data?.viewerTimeZone || 'UTC');
       eventsRef.current = list;
       setLastUpdated(new Date());
       return list;
@@ -125,7 +112,8 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
       const isNear = eventsRef.current.some(ev => {
         const ts = parseEventTimestamp(ev);
         if (!ts || hasActualValue(ev.actual)) return false;
-        return Math.abs(ts - now) < SOON_WINDOW_MS;
+        if (Math.abs(ts - now) < SOON_WINDOW_MS) return true;
+        return isEventWaitingForActual(ev, now);
       });
       const pollMs = isNear ? POLL_FAST_MS : POLL_NORMAL_MS;
 
@@ -158,7 +146,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
   };
 
   const filtered = events
-    .filter(e => !onlyToday || getEventDateKeyLocal(e, viewerTimeZone) === todayStr)
+    .filter(e => !onlyToday || getEventDateKeyLocal(e, displayTimeZone) === todayStr)
     .filter(e => filterCurrencies.includes(e.currency))
     .filter(e => filterImpact.includes(e.impact))
     .sort((a, b) => {
@@ -275,14 +263,14 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
             <tbody>
               {filtered.map((ev, i) => {
                 const status = getEventStatus(ev);
-                const countdownMs = getCountdownMs(ev);
+                const countdownMs = getReleaseCountdownMs(ev);
                 return (
                   <tr
                     key={i}
                     className={`td-ff-row td-ff-row--${ev.impact} td-ff-row--${status}`}
                   >
                     <td className="td-ff-td td-ff-time">
-                      {formatEventTimeLocal(ev, viewerTimeZone)}
+                      {formatEventTimeLocal(ev, displayTimeZone)}
                       {countdownMs != null && (
                         <span className="td-ff-countdown">{formatCountdown(countdownMs)}</span>
                       )}

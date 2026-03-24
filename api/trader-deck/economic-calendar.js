@@ -3,18 +3,21 @@ require('../utils/suppress-warnings');
  * GET /api/trader-deck/economic-calendar
  * Returns economic calendar events for the next 7 days.
  * Priority chain:
- *   1. Forex Factory (HTML scrape — free, no key)
- *   2. FMP /stable/economic-calendar (requires FMP_API_KEY)
- *   3. Trading Economics (requires TRADING_ECONOMICS_API_KEY)
- *   4. Static fallback payload
- * Cached 15 minutes server-side.
+ *   1. Forex Factory JSON (faireconomy CDN — schedule/titles; **no actuals in JSON**)
+ *   2. Merge actuals from FMP + Trading Economics (matched by time ±6m, currency, title)
+ *   3. If still missing (post-release): Forex Factory **HTML** scrape per calendar day
+ *   4. Else FMP-only / TE-only / static fallback
+ * Cached ~45s server-side (bump CACHE_KEY when changing merge logic).
  */
 
+const cheerio = require('cheerio');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getCached, setCached } = require('../cache');
 
-const CACHE_KEY = 'trader-deck:economic-calendar:v5';
+const CACHE_KEY = 'trader-deck:economic-calendar:v6';
 const CACHE_TTL_MS = 45 * 1000; // 45 s — fresher calendar for release times
+const SCRAPE_DAY_CACHE_MS = 35 * 1000; // per-day HTML scrape (actuals) — short TTL
+const MATCH_WINDOW_MS = 6 * 60 * 1000; // align FF schedule row to FMP/TE by time
 
 const IMPACT_COLORS = { High: 'high', Medium: 'medium', Low: 'low' };
 
@@ -93,7 +96,9 @@ function zonedDateTimeToUtcTimestamp(parts, timeZone) {
 
 function parseDateToTimestamp(rawDate, options = {}) {
   const defaultTimeZone = options.defaultTimeZone || 'UTC';
-  if (!rawDate) return null;
+  if (rawDate == null || rawDate === '') return null;
+  // normalizeEventShape passes through numeric ms from providers — Date.parse(string(ms)) is NaN
+  if (typeof rawDate === 'number' && Number.isFinite(rawDate)) return rawDate;
   const raw = String(rawDate).trim();
   if (!raw) return null;
   let parsed = Date.parse(raw);
@@ -169,16 +174,276 @@ function compareEvents(a, b) {
   return String(a.event || '').localeCompare(String(b.event || ''));
 }
 
-function resolveViewerTimeZone(req) {
-  const raw = req?.headers?.['x-vercel-ip-timezone'];
-  const tz = raw ? String(raw).trim() : '';
-  if (!tz) return 'UTC';
+function isValidIanaTimeZone(tz) {
+  if (!tz || typeof tz !== 'string') return false;
+  const s = tz.trim();
+  if (!s) return false;
   try {
-    new Intl.DateTimeFormat('en-US', { timeZone: tz }).format(new Date());
-    return tz;
+    new Intl.DateTimeFormat('en-US', { timeZone: s }).format(new Date());
+    return true;
   } catch (_) {
-    return 'UTC';
+    return false;
   }
+}
+
+/**
+ * Prefer browser-reported IANA zone (X-Client-Timezone / ?tz=), then Vercel IP geolocation.
+ */
+function resolveViewerTimeZone(req) {
+  const h = req?.headers || {};
+  const fromHeader =
+    h['x-client-timezone'] ||
+    h['X-Client-Timezone'] ||
+    h['X-CLIENT-TIMEZONE'];
+  const q = req?.query?.tz;
+  const fromQuery = q != null && String(q).trim() !== '' ? String(q).trim() : '';
+  const clientFirst = fromQuery || (fromHeader ? String(fromHeader).trim() : '');
+  if (isValidIanaTimeZone(clientFirst)) return clientFirst.trim();
+
+  const raw = h['x-vercel-ip-timezone'] || h['X-Vercel-Ip-Timezone'];
+  const tz = raw ? String(raw).trim() : '';
+  if (isValidIanaTimeZone(tz)) return tz;
+  return 'UTC';
+}
+
+function hasActualBackend(v) {
+  return normalizeValue(v) != null;
+}
+
+function normTitle(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function titleSimilarity(a, b) {
+  const A = normTitle(a);
+  const B = normTitle(b);
+  if (!A || !B) return 0;
+  if (A === B) return 1;
+  const wordsA = new Set(A.split(' ').filter((w) => w.length > 2));
+  const wordsB = B.split(' ').filter((w) => w.length > 2);
+  if (wordsB.length === 0) return 0;
+  let hit = 0;
+  for (const w of wordsB) if (wordsA.has(w)) hit += 1;
+  return hit / Math.max(wordsA.length, wordsB.length, 1);
+}
+
+/**
+ * FF faireconomy JSON has no `actual` key at all — merge from FMP/TE by time + ccy + title.
+ */
+function mergeSupplementActuals(primary, supplement) {
+  if (!Array.isArray(primary) || !Array.isArray(supplement) || supplement.length === 0) return primary;
+  const used = new Set();
+  return primary.map((ev) => {
+    if (hasActualBackend(ev.actual)) return ev;
+    const ts = ev.timestamp;
+    if (!ts) return ev;
+    let best = null;
+    let bestScore = -Infinity;
+    supplement.forEach((sup, idx) => {
+      if (used.has(idx)) return;
+      if (sup.currency !== ev.currency) return;
+      const st = sup.timestamp;
+      if (!st) return;
+      const delta = Math.abs(st - ts);
+      if (delta > MATCH_WINDOW_MS) return;
+      const sim = titleSimilarity(ev.event, sup.event);
+      if (sim < 0.12 && delta > 120000) return;
+      const score = sim * 1000 - delta / 10000;
+      if (score > bestScore) {
+        bestScore = score;
+        best = { idx, sup };
+      }
+    });
+    if (best && best.sup && hasActualBackend(best.sup.actual)) {
+      used.add(best.idx);
+      return {
+        ...ev,
+        actual: best.sup.actual,
+        forecast: ev.forecast || best.sup.forecast,
+        previous: ev.previous || best.sup.previous,
+      };
+    }
+    const candidates = [];
+    supplement.forEach((sup, idx) => {
+      if (used.has(idx)) return;
+      if (sup.currency !== ev.currency) return;
+      const st = sup.timestamp;
+      if (!st) return;
+      const delta = Math.abs(st - ts);
+      if (delta > MATCH_WINDOW_MS) return;
+      if (hasActualBackend(sup.actual)) candidates.push({ idx, sup, delta });
+    });
+    candidates.sort((a, b) => a.delta - b.delta);
+    if (candidates.length === 1) {
+      const c = candidates[0];
+      used.add(c.idx);
+      return {
+        ...ev,
+        actual: c.sup.actual,
+        forecast: ev.forecast || c.sup.forecast,
+        previous: ev.previous || c.sup.previous,
+      };
+    }
+    return ev;
+  });
+}
+
+function etMinuteOfDay(ts) {
+  try {
+    const s = new Date(ts).toLocaleTimeString('en-US', {
+      timeZone: 'America/New_York',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+    return parseAmPmTimeToMinutes(s);
+  } catch (_) {
+    return null;
+  }
+}
+
+function parseAmPmTimeToMinutes(s) {
+  const m = String(s || '').trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = parseInt(m[2], 10);
+  const ap = m[3].toUpperCase();
+  if (ap === 'PM' && h !== 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return h * 60 + min;
+}
+
+function scrapeTimeToMinutes(timeStr) {
+  const t = String(timeStr || '').trim().replace(/\s+/g, ' ');
+  if (!t) return null;
+  return parseAmPmTimeToMinutes(t);
+}
+
+function mergeScrapedHtml(rows, events, dateStr) {
+  if (!rows || !rows.length) return events;
+  return events.map((ev) => {
+    if (hasActualBackend(ev.actual)) return ev;
+    if (ev.date !== dateStr) return ev;
+    const ts = ev.timestamp;
+    const evMin = ts ? etMinuteOfDay(ts) : null;
+    let best = null;
+    let bestScore = -Infinity;
+    for (const r of rows) {
+      if (!r || !r.event) continue;
+      const rowCcy = normCountry(r.currency);
+      if (rowCcy !== ev.currency) continue;
+      const rowMin = scrapeTimeToMinutes(r.time);
+      const sim = titleSimilarity(ev.event, r.event);
+      let score = sim * 100;
+      if (evMin != null && rowMin != null) {
+        const diff = Math.abs(evMin - rowMin);
+        if (diff > 25) score -= 80;
+        else score += 40 - diff;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        best = r;
+      }
+    }
+    if (best && hasActualBackend(best.actual)) {
+      return {
+        ...ev,
+        actual: best.actual,
+        forecast: ev.forecast || best.forecast,
+        previous: ev.previous || best.previous,
+      };
+    }
+    return ev;
+  });
+}
+
+async function scrapeForexFactoryHtmlDay(dateStr) {
+  const cacheKey = `trader-deck:ff-scrape:${dateStr}`;
+  const cached = getCached(cacheKey, SCRAPE_DAY_CACHE_MS);
+  if (cached) return cached;
+
+  const dayParam = dateStr.replace(/-/g, '');
+  const url = `https://www.forexfactory.com/calendar?day=${dayParam}`;
+  try {
+    const res = await fetchWithTimeout(
+      url,
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Accept: 'text/html,application/xhtml+xml',
+        },
+      },
+      12000
+    );
+    if (!res.ok) return [];
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    const rows = [];
+    $('.calendar__row').each((index, element) => {
+      if (index === 0) return;
+      const $row = $(element);
+      const time = $row.find('.calendar__time').text().trim();
+      const currency = normCountry($row.find('.calendar__currency').text().trim());
+      const impactTitle = $row.find('.calendar__impact').attr('title') || '';
+      const event = $row.find('.calendar__event').text().trim();
+      const actual = $row.find('.calendar__actual').text().trim();
+      const forecast = $row.find('.calendar__forecast').text().trim();
+      const previous = $row.find('.calendar__previous').text().trim();
+      if (!event) return;
+      rows.push({
+        time,
+        currency: currency || '',
+        impact: impactTitle.toLowerCase().includes('high')
+          ? 'high'
+          : impactTitle.toLowerCase().includes('medium')
+            ? 'medium'
+            : 'low',
+        event,
+        actual: actual || null,
+        forecast: forecast || null,
+        previous: previous || null,
+      });
+    });
+    setCached(cacheKey, rows, SCRAPE_DAY_CACHE_MS);
+    return rows;
+  } catch (e) {
+    console.warn('[trader-deck/economic-calendar] FF HTML scrape error:', e.message);
+    return [];
+  }
+}
+
+async function enrichForexFactoryWithActuals(events, days, forceRefresh) {
+  if (!events || events.length === 0) return events;
+  const [fmp, te] = await Promise.all([fetchFmpSupplement(days), fetchTradingEconomicsSupplement(days)]);
+  let merged = mergeSupplementActuals(events, fmp || []);
+  merged = mergeSupplementActuals(merged, te || []);
+
+  const now = Date.now();
+  const stillMissing = merged.some((ev) => {
+    if (hasActualBackend(ev.actual)) return false;
+    const ts = ev.timestamp;
+    // Past release by ~15s — CDN JSON never has actual; try FMP/TE first, then HTML
+    return ts && ts < now - 15000 && now - ts < 7 * 24 * 60 * 60 * 1000;
+  });
+  if (!stillMissing && !forceRefresh) return merged;
+
+  const dates = new Set();
+  merged.forEach((ev) => {
+    if (hasActualBackend(ev.actual)) return;
+    const ts = ev.timestamp;
+    if (!ts || ts > now) return;
+    if (ev.date) dates.add(ev.date);
+  });
+  const list = [...dates].sort().slice(0, 5);
+  let out = merged;
+  for (const d of list) {
+    const rows = await scrapeForexFactoryHtmlDay(d);
+    out = mergeScrapedHtml(rows, out, d);
+  }
+  return out;
 }
 
 // --- Provider 1: Forex Factory JSON CDN (official FF data feed, no API key needed) ---
@@ -263,7 +528,7 @@ async function fromForexFactory(days = 7) {
 }
 
 // --- Provider 2: FMP economic calendar ---
-async function fromFMP(days = 7) {
+async function fetchFmpSupplement(days = 7) {
   const apiKey = process.env.FMP_API_KEY;
   if (!apiKey) return null;
   try {
@@ -276,28 +541,33 @@ async function fromFMP(days = 7) {
     if (!Array.isArray(raw) || raw.length === 0) return null;
     return raw
       .map((e) => normalizeEventShape({
-      date: (e.date || '').slice(0, 10),
-      time: e.date ? new Date(e.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'All Day',
-      timestamp: parseDateToTimestamp(e.date, { defaultTimeZone: 'America/New_York' }),
-      currency: normCountry(e.country || e.currency || ''),
-      impact: normImpact(e.importance || e.impact),
-      event: e.name || e.event || 'Economic Event',
-      actual: e.actual,
-      forecast: e.forecast,
-      previous: e.previous,
-      source: 'FMP',
-      sourceTimeZone: 'America/New_York',
-    }, 'FMP'))
-      .sort(compareEvents)
-      .slice(0, 80);
+        date: (e.date || '').slice(0, 10),
+        time: e.date ? new Date(e.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'All Day',
+        timestamp: parseDateToTimestamp(e.date, { defaultTimeZone: 'America/New_York' }),
+        currency: normCountry(e.country || e.currency || ''),
+        impact: normImpact(e.importance || e.impact),
+        event: e.name || e.event || 'Economic Event',
+        actual: e.actual,
+        forecast: e.forecast,
+        previous: e.previous,
+        source: 'FMP',
+        sourceTimeZone: 'America/New_York',
+      }, 'FMP'))
+      .sort(compareEvents);
   } catch (e) {
     console.warn('[trader-deck/economic-calendar] FMP error:', e.message);
     return null;
   }
 }
 
+async function fromFMP(days = 7) {
+  const list = await fetchFmpSupplement(days);
+  if (!list) return null;
+  return list.slice(0, 80);
+}
+
 // --- Provider 3: Trading Economics ---
-async function fromTradingEconomics(days = 7) {
+async function fetchTradingEconomicsSupplement(days = 7) {
   const apiKey = process.env.TRADING_ECONOMICS_API_KEY;
   if (!apiKey) return null;
   try {
@@ -310,24 +580,29 @@ async function fromTradingEconomics(days = 7) {
     if (!Array.isArray(raw)) return null;
     return raw
       .map((e) => normalizeEventShape({
-      date: (e.Date || '').slice(0, 10),
-      time: e.Date ? new Date(e.Date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'All Day',
-      timestamp: parseDateToTimestamp(e.Date, { defaultTimeZone: 'America/New_York' }),
-      currency: normCountry(e.Country || e.Currency || ''),
-      impact: normImpact(e.Importance),
-      event: e.Event || e.Category || 'Economic Event',
-      actual: e.Actual,
-      forecast: e.Forecast,
-      previous: e.Previous,
-      source: 'TradingEconomics',
-      sourceTimeZone: 'America/New_York',
-    }, 'TradingEconomics'))
-      .sort(compareEvents)
-      .slice(0, 80);
+        date: (e.Date || '').slice(0, 10),
+        time: e.Date ? new Date(e.Date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'All Day',
+        timestamp: parseDateToTimestamp(e.Date, { defaultTimeZone: 'America/New_York' }),
+        currency: normCountry(e.Country || e.Currency || ''),
+        impact: normImpact(e.Importance),
+        event: e.Event || e.Category || 'Economic Event',
+        actual: e.Actual,
+        forecast: e.Forecast,
+        previous: e.Previous,
+        source: 'TradingEconomics',
+        sourceTimeZone: 'America/New_York',
+      }, 'TradingEconomics'))
+      .sort(compareEvents);
   } catch (e) {
     console.warn('[trader-deck/economic-calendar] TE error:', e.message);
     return null;
   }
+}
+
+async function fromTradingEconomics(days = 7) {
+  const list = await fetchTradingEconomicsSupplement(days);
+  if (!list) return null;
+  return list.slice(0, 80);
 }
 
 // --- Static fallback ---
@@ -345,13 +620,14 @@ function staticFallback() {
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Timezone');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
   const viewerTimeZone = resolveViewerTimeZone(req);
-  const cacheKey = `${CACHE_KEY}:${viewerTimeZone}`;
+  // Event list is identical for all viewers; only metadata differs — single cache key
+  const cacheKey = CACHE_KEY;
 
   // ?refresh=1 bypasses cache — used by frontend for precision fetches at event release time
   const forceRefresh = req.query.refresh === '1';
@@ -365,8 +641,11 @@ module.exports = async (req, res) => {
 
   // Try providers in order
   events = await fromForexFactory(days);
-  if (events && events.length > 0) { source = 'ForexFactory'; }
-  else {
+  if (events && events.length > 0) {
+    source = 'ForexFactory';
+    // FF JSON CDN has no `actual` field — merge FMP/TE and optionally scrape FF HTML for figures
+    events = await enrichForexFactoryWithActuals(events, days, forceRefresh);
+  } else {
     events = await fromFMP(days);
     if (events && events.length > 0) { source = 'FMP'; }
     else {
@@ -401,4 +680,7 @@ module.exports._test = {
   parseDateToTimestamp,
   normalizeEventShape,
   resolveViewerTimeZone,
+  isValidIanaTimeZone,
+  mergeSupplementActuals,
+  titleSimilarity,
 };
