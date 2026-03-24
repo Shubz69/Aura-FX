@@ -125,6 +125,16 @@ export default function EconomicCalendarView() {
       if (!out[key]) out[key] = [];
       out[key].push(e);
     });
+    Object.keys(out).forEach((key) => {
+      out[key].sort((a, b) => {
+        const ta = parseEventTimestamp(a);
+        const tb = parseEventTimestamp(b);
+        if (ta != null && tb != null) return ta - tb;
+        if (ta != null) return -1;
+        if (tb != null) return 1;
+        return String(a.time || '').localeCompare(String(b.time || ''));
+      });
+    });
     return out;
   }, [filtered, viewerTimeZone]);
 

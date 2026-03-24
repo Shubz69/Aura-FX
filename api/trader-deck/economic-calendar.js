@@ -42,7 +42,57 @@ function normCountry(raw) {
   return map[lower] || raw.toUpperCase().slice(0, 3);
 }
 
-function parseDateToTimestamp(rawDate) {
+function parseNaiveDateTimeParts(raw) {
+  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (!m) return null;
+  return {
+    year: Number(m[1]),
+    month: Number(m[2]),
+    day: Number(m[3]),
+    hour: Number(m[4] || 0),
+    minute: Number(m[5] || 0),
+    second: Number(m[6] || 0),
+  };
+}
+
+function getOffsetMsForTimeZone(timestampMs, timeZone) {
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = dtf.formatToParts(new Date(timestampMs));
+  const map = {};
+  for (const p of parts) map[p.type] = p.value;
+  const asUtc = Date.UTC(
+    Number(map.year),
+    Number(map.month) - 1,
+    Number(map.day),
+    Number(map.hour),
+    Number(map.minute),
+    Number(map.second),
+  );
+  return asUtc - timestampMs;
+}
+
+function zonedDateTimeToUtcTimestamp(parts, timeZone) {
+  const naiveUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+  let ts = naiveUtc;
+  // Iterate to handle DST boundaries accurately.
+  for (let i = 0; i < 2; i += 1) {
+    const offset = getOffsetMsForTimeZone(ts, timeZone);
+    ts = naiveUtc - offset;
+  }
+  return ts;
+}
+
+function parseDateToTimestamp(rawDate, options = {}) {
+  const defaultTimeZone = options.defaultTimeZone || 'UTC';
   if (!rawDate) return null;
   const raw = String(rawDate).trim();
   if (!raw) return null;
@@ -54,10 +104,12 @@ function parseDateToTimestamp(rawDate) {
   parsed = Date.parse(tzFixed);
   if (!Number.isNaN(parsed)) return parsed;
 
-  // Handle "YYYY-MM-DD HH:mm:ss" by forcing UTC parse
-  const spaceFixed = raw.replace(' ', 'T');
-  parsed = Date.parse(spaceFixed.endsWith('Z') ? spaceFixed : `${spaceFixed}Z`);
-  return Number.isNaN(parsed) ? null : parsed;
+  // Handle naive provider datetime strings in the expected provider timezone.
+  const naive = parseNaiveDateTimeParts(raw.replace('T', ' '));
+  if (naive) {
+    return zonedDateTimeToUtcTimestamp(naive, defaultTimeZone);
+  }
+  return null;
 }
 
 function normalizeValue(v) {
@@ -67,7 +119,9 @@ function normalizeValue(v) {
 }
 
 function normalizeEventShape(input, fallbackSource = 'fallback') {
-  const ts = parseDateToTimestamp(input.timestamp ?? input.ts ?? input.datetime ?? input.date);
+  const ts = parseDateToTimestamp(input.timestamp ?? input.ts ?? input.datetime ?? input.date, {
+    defaultTimeZone: input.sourceTimeZone || 'America/New_York',
+  });
   const date = input.date ? String(input.date).slice(0, 10) : (ts ? new Date(ts).toISOString().slice(0, 10) : null);
   return {
     date,
@@ -77,11 +131,42 @@ function normalizeEventShape(input, fallbackSource = 'fallback') {
     impact: normImpact(input.impact),
     event: input.event || 'Economic Event',
     // preserve numeric zero; empty string becomes null
-    actual: normalizeValue(input.actual),
-    forecast: normalizeValue(input.forecast),
-    previous: normalizeValue(input.previous),
+    actual: normalizeValue(input.actual ?? input.Actual ?? input.value),
+    forecast: normalizeValue(input.forecast ?? input.Forecast ?? input.estimate),
+    previous: normalizeValue(input.previous ?? input.Previous ?? input.prior),
     source: input.source || fallbackSource,
   };
+}
+
+function parseClockLabelToMinutes(timeLabel) {
+  const raw = String(timeLabel || '').trim();
+  if (!raw || /^all day$/i.test(raw)) return Number.MAX_SAFE_INTEGER;
+  const m = raw.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!m) return Number.MAX_SAFE_INTEGER - 1;
+  let h = Number(m[1]) % 12;
+  const minute = Number(m[2]);
+  const ampm = m[3].toUpperCase();
+  if (ampm === 'PM') h += 12;
+  return h * 60 + minute;
+}
+
+function compareEvents(a, b) {
+  const ta = Number(a.timestamp);
+  const tb = Number(b.timestamp);
+  const hasTa = Number.isFinite(ta) && ta > 0;
+  const hasTb = Number.isFinite(tb) && tb > 0;
+  if (hasTa && hasTb) return ta - tb;
+  if (hasTa) return -1;
+  if (hasTb) return 1;
+
+  const da = String(a.date || '');
+  const db = String(b.date || '');
+  if (da !== db) return da.localeCompare(db);
+
+  const ma = parseClockLabelToMinutes(a.time);
+  const mb = parseClockLabelToMinutes(b.time);
+  if (ma !== mb) return ma - mb;
+  return String(a.event || '').localeCompare(String(b.event || ''));
 }
 
 function resolveViewerTimeZone(req) {
@@ -189,10 +274,11 @@ async function fromFMP(days = 7) {
     if (!res.ok) return null;
     const raw = await res.json();
     if (!Array.isArray(raw) || raw.length === 0) return null;
-    return raw.slice(0, 80).map((e) => normalizeEventShape({
+    return raw
+      .map((e) => normalizeEventShape({
       date: (e.date || '').slice(0, 10),
       time: e.date ? new Date(e.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'All Day',
-      timestamp: parseDateToTimestamp(e.date),
+      timestamp: parseDateToTimestamp(e.date, { defaultTimeZone: 'America/New_York' }),
       currency: normCountry(e.country || e.currency || ''),
       impact: normImpact(e.importance || e.impact),
       event: e.name || e.event || 'Economic Event',
@@ -200,7 +286,10 @@ async function fromFMP(days = 7) {
       forecast: e.forecast,
       previous: e.previous,
       source: 'FMP',
-    }, 'FMP'));
+      sourceTimeZone: 'America/New_York',
+    }, 'FMP'))
+      .sort(compareEvents)
+      .slice(0, 80);
   } catch (e) {
     console.warn('[trader-deck/economic-calendar] FMP error:', e.message);
     return null;
@@ -219,10 +308,11 @@ async function fromTradingEconomics(days = 7) {
     if (!res.ok) return null;
     const raw = await res.json();
     if (!Array.isArray(raw)) return null;
-    return raw.slice(0, 80).map((e) => normalizeEventShape({
+    return raw
+      .map((e) => normalizeEventShape({
       date: (e.Date || '').slice(0, 10),
       time: e.Date ? new Date(e.Date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'All Day',
-      timestamp: parseDateToTimestamp(e.Date),
+      timestamp: parseDateToTimestamp(e.Date, { defaultTimeZone: 'America/New_York' }),
       currency: normCountry(e.Country || e.Currency || ''),
       impact: normImpact(e.Importance),
       event: e.Event || e.Category || 'Economic Event',
@@ -230,7 +320,10 @@ async function fromTradingEconomics(days = 7) {
       forecast: e.Forecast,
       previous: e.Previous,
       source: 'TradingEconomics',
-    }, 'TradingEconomics'));
+      sourceTimeZone: 'America/New_York',
+    }, 'TradingEconomics'))
+      .sort(compareEvents)
+      .slice(0, 80);
   } catch (e) {
     console.warn('[trader-deck/economic-calendar] TE error:', e.message);
     return null;
@@ -287,14 +380,7 @@ module.exports = async (req, res) => {
   }
 
   // Sort by UTC timestamp when available for stable ordering across providers.
-  events.sort((a, b) => {
-    const ta = Number(a.timestamp) || 0;
-    const tb = Number(b.timestamp) || 0;
-    if (ta && tb) return ta - tb;
-    const da = (a.date || '') + (a.time || '');
-    const db = (b.date || '') + (b.time || '');
-    return da.localeCompare(db);
-  });
+  events.sort(compareEvents);
 
   const fetchedAt = new Date().toISOString();
   const payload = {

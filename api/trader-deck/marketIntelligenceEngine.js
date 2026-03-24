@@ -343,6 +343,54 @@ const RR_HORIZON_DAYS = 10;
 const RR_MAX_CALENDAR = 7;
 const RR_MAX_TOTAL = 8;
 
+function parseNaiveDateTimeParts(raw) {
+  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (!m) return null;
+  return {
+    year: Number(m[1]),
+    month: Number(m[2]),
+    day: Number(m[3]),
+    hour: Number(m[4] || 0),
+    minute: Number(m[5] || 0),
+    second: Number(m[6] || 0),
+  };
+}
+
+function getOffsetMsForTimeZone(timestampMs, timeZone) {
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = dtf.formatToParts(new Date(timestampMs));
+  const map = {};
+  for (const p of parts) map[p.type] = p.value;
+  const asUtc = Date.UTC(
+    Number(map.year),
+    Number(map.month) - 1,
+    Number(map.day),
+    Number(map.hour),
+    Number(map.minute),
+    Number(map.second),
+  );
+  return asUtc - timestampMs;
+}
+
+function zonedDateTimeToUtcTimestamp(parts, timeZone) {
+  const naiveUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+  let ts = naiveUtc;
+  for (let i = 0; i < 2; i += 1) {
+    const offset = getOffsetMsForTimeZone(ts, timeZone);
+    ts = naiveUtc - offset;
+  }
+  return ts;
+}
+
 /** Align with api/trader-deck/economic-calendar.js — FMP/TE date strings vary. */
 function parseDateToTimestamp(raw) {
   if (raw == null || raw === '') return NaN;
@@ -353,9 +401,9 @@ function parseDateToTimestamp(raw) {
   const tzFixed = rawStr.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
   parsed = Date.parse(tzFixed);
   if (!Number.isNaN(parsed)) return parsed;
-  const spaceFixed = rawStr.replace(' ', 'T');
-  parsed = Date.parse(spaceFixed.endsWith('Z') ? spaceFixed : `${spaceFixed}Z`);
-  return Number.isNaN(parsed) ? NaN : parsed;
+  const naive = parseNaiveDateTimeParts(rawStr.replace('T', ' '));
+  if (!naive) return NaN;
+  return zonedDateTimeToUtcTimestamp(naive, 'America/New_York');
 }
 
 function parseEventTimeMs(raw) {
