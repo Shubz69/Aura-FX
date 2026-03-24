@@ -244,6 +244,18 @@ test('formatPrice handles invalid inputs gracefully', () => {
   assert.strictEqual(formatPrice(NaN, 'BTCUSD'), '0.00');
 });
 
+// Test 18: Snapshot symbol list matches server watchlist (single source of truth)
+test('getSnapshotSymbols matches flattened default watchlist groups', () => {
+  const { getSnapshotSymbols, getWatchlistPayload } = require('../api/market/defaultWatchlist');
+  const wl = getWatchlistPayload();
+  const flat = [];
+  Object.keys(wl.groups)
+    .sort((a, b) => wl.groups[a].order - wl.groups[b].order)
+    .forEach((k) => {
+      wl.groups[k].symbols.forEach((s) => flat.push(s.symbol));
+    });
+  assert.deepStrictEqual(getSnapshotSymbols(), flat);
+});
 console.log('\n========================================');
 console.log(`  Results: ${testsPassed} passed, ${testsFailed} failed`);
 console.log('========================================\n');

@@ -261,7 +261,7 @@ async function fetchWatchlist() {
         { symbol: 'GBPUSD', displayName: 'GBP/USD' }
       ]},
       commodities: { name: 'Commodities', icon: '🥇', order: 4, symbols: [
-        { symbol: 'XAUUSD', displayName: 'Gold' }
+        { symbol: 'XAUUSD', displayName: 'GOLD' }
       ]},
       indices: { name: 'Indices', icon: '📊', order: 5, symbols: [
         { symbol: 'SPX', displayName: 'S&P 500' },
