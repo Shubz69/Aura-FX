@@ -89,11 +89,11 @@ const DISPLAY_NAMES = {
   'XRPUSD': 'XRP/USD', 'BNBUSD': 'BNB/USD', 'ADAUSD': 'ADA/USD',
   'DOGEUSD': 'DOGE/USD', 'EURUSD': 'EUR/USD', 'GBPUSD': 'GBP/USD',
   'USDJPY': 'USD/JPY', 'USDCHF': 'USD/CHF', 'AUDUSD': 'AUD/USD',
-  'USDCAD': 'USD/CAD', 'NZDUSD': 'NZD/USD', 'XAUUSD': 'Gold',
-  'XAGUSD': 'Silver', 'WTI': 'WTI Oil', 'BRENT': 'Brent',
+  'USDCAD': 'USD/CAD', 'NZDUSD': 'NZD/USD', 'XAUUSD': 'GOLD',
+  'XAGUSD': 'SILVER', 'WTI': 'WTI Oil', 'BRENT': 'Brent',
   'SPX': 'S&P 500', 'NDX': 'Nasdaq 100', 'DJI': 'Dow Jones',
   'DAX': 'DAX 40', 'FTSE': 'FTSE 100', 'NIKKEI': 'Nikkei',
-  'DXY': 'DXY', 'US10Y': '10Y Yield', 'VIX': 'VIX'
+  'DXY': 'DXY', 'US10Y': '10Y YIELD', 'VIX': 'VIX'
 };
 
 function getDecimals(symbol) {
@@ -154,6 +154,24 @@ async function fetchSnapshot() {
       healthStats.delayedSymbols = 0;
 
       Object.entries(data.prices).forEach(([symbol, priceData]) => {
+        if (priceData.source === 'fallback' && priceData.unavailable) {
+          globalPriceData[symbol] = {
+            symbol,
+            displayName: priceData.displayName || getDisplayName(symbol),
+            price: null,
+            rawPrice: null,
+            change: null,
+            changePercent: null,
+            isUp: true,
+            loading: true,
+            quoteUnavailable: true,
+            delayed: true,
+            source: 'fallback',
+            lastUpdate: data.snapshotTimestamp
+          };
+          return;
+        }
+
         const prev = globalPriceData[symbol];
         const newPrice = parseFloat(priceData.rawPrice || priceData.price);
         const oldPrice = prev ? parseFloat(prev.rawPrice || prev.price) : newPrice;
@@ -377,15 +395,19 @@ export function useLivePrices(options = {}) {
       const priceData = prices[symbol];
       const displayName = getDisplayName(symbol);
       
-      if (priceData && priceData.price && parseFloat(priceData.price) > 0) {
+      if (
+        priceData &&
+        !priceData.quoteUnavailable &&
+        priceData.price &&
+        parseFloat(priceData.price) > 0
+      ) {
         return {
           symbol,
           displayName,
           ...priceData
         };
       }
-      
-      // No valid price - show loading state (NOT 0.00)
+
       return {
         symbol,
         displayName,
@@ -394,6 +416,7 @@ export function useLivePrices(options = {}) {
         changePercent: null,
         isUp: true,
         loading: true,
+        quoteUnavailable: priceData?.quoteUnavailable,
         delayed: priceData?.delayed || false
       };
     });
@@ -410,14 +433,18 @@ export function useLivePrices(options = {}) {
         prices: group.symbols.map(s => {
           const priceData = prices[s.symbol];
           
-          if (priceData && priceData.price && parseFloat(priceData.price) > 0) {
+          if (
+            priceData &&
+            !priceData.quoteUnavailable &&
+            priceData.price &&
+            parseFloat(priceData.price) > 0
+          ) {
             return {
               ...s,
               ...priceData
             };
           }
-          
-          // No valid price - loading state
+
           return {
             ...s,
             price: null,
@@ -425,6 +452,7 @@ export function useLivePrices(options = {}) {
             changePercent: null,
             isUp: true,
             loading: true,
+            quoteUnavailable: priceData?.quoteUnavailable,
             delayed: priceData?.delayed || false
           };
         })
