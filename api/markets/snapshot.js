@@ -8,20 +8,11 @@
  */
 
 const { getCached, setCached } = require('../cache');
+const { getSnapshotSymbols } = require('../market/defaultWatchlist');
 
 const CACHE_KEY = 'markets:snapshot:v1';
 const CACHE_TTL_MS = 20 * 1000;           // 20 seconds - fresher updates for accuracy
 const STALE_OK_MS = 15 * 60 * 1000;      // 15 minutes - use last good snapshot if fetch fails
-
-// All symbols shown in All Markets (same as watchlist groups flattened)
-const SNAPSHOT_SYMBOLS = [
-  'BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'ADAUSD', 'DOGEUSD',
-  'AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'META', 'TSLA',
-  'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD',
-  'XAUUSD', 'XAGUSD', 'WTI', 'BRENT',
-  'SPX', 'NDX', 'DJI', 'DAX', 'FTSE', 'NIKKEI',
-  'DXY', 'US10Y', 'VIX'
-];
 
 let lastGoodSnapshot = null;
 let lastGoodSnapshotTime = 0;
@@ -53,7 +44,7 @@ module.exports = async (req, res) => {
 
   try {
     const { fetchPricesForSymbols } = require('../market/prices');
-    const { prices, timestamp } = await fetchPricesForSymbols(SNAPSHOT_SYMBOLS);
+    const { prices, timestamp } = await fetchPricesForSymbols(getSnapshotSymbols());
 
     const snapshot = {
       prices,
