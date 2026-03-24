@@ -2,7 +2,7 @@
  * Trader Desk route (/trader-deck). UI structure/CSS imports are presentation-only;
  * data flow: state here + Api.* in MarketOutlookView / MarketIntelligenceBriefsView.
  */
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../utils/roles';
@@ -17,31 +17,28 @@ import '../styles/TraderDeckTabs.css';
 import '../styles/TraderDeckNews.css';
 import '../styles/trader-deck/TraderDeckJournalGlass.css';
 import '../styles/trader-deck/TraderDeckContentModern.css';
+import {
+  TRADER_DESK_SESSIONS,
+  isSessionOpen,
+  getSessionCountdown,
+  formatSessionEta,
+} from '../utils/traderDeskSessions';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-const SESSIONS = [
-  { name: 'Sydney', openH: 22, closeH: 7 },
-  { name: 'Tokyo', openH: 0, closeH: 9 },
-  { name: 'London', openH: 8, closeH: 17 },
-  { name: 'New York', openH: 13, closeH: 22 },
-];
+const SESSION_UI_TICK_MS = 30000;
 
-function isSessionOpen({ openH, closeH }) {
-  const h = new Date().getUTCHours();
-  return openH < closeH ? (h >= openH && h < closeH) : (h >= openH || h < closeH);
-}
-
-function MarketSessionStatus() {
+function MarketSessionsInline() {
   const [tick, setTick] = React.useState(0);
   React.useEffect(() => {
-    const iv = setInterval(() => setTick((t) => t + 1), 60000);
+    const iv = setInterval(() => setTick((t) => t + 1), SESSION_UI_TICK_MS);
     return () => clearInterval(iv);
   }, []);
+  const now = useMemo(() => Date.now(), [tick]);
   return (
-    <ul className="td-deck-sessions-list">
-      {SESSIONS.map((s) => {
-        const open = isSessionOpen(s);
+    <ul className="td-deck-sessions-list td-deck-sessions-list--inline" aria-label="Market sessions UTC">
+      {TRADER_DESK_SESSIONS.map((s) => {
+        const open = isSessionOpen(s, now);
         return (
           <li key={s.name} className={`td-deck-session-item${open ? ' td-deck-session-item--open' : ''}`}>
             <span className={`td-deck-session-dot${open ? ' td-deck-session-dot--open' : ''}`} />
@@ -51,6 +48,32 @@ function MarketSessionStatus() {
         );
       })}
     </ul>
+  );
+}
+
+function MarketSessionCountdowns() {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => setTick((t) => t + 1), SESSION_UI_TICK_MS);
+    return () => clearInterval(iv);
+  }, []);
+  const now = useMemo(() => Date.now(), [tick]);
+  return (
+    <div className="td-deck-session-countdowns" aria-live="polite">
+      {TRADER_DESK_SESSIONS.map((s) => {
+        const { ms, phrase } = getSessionCountdown(s, now);
+        return (
+          <span key={s.name} className="td-deck-session-countdown-chip">
+            <span className="td-deck-session-countdown-name">{s.name}</span>
+            <span className="td-deck-session-countdown-meta">
+              {' · '}
+              <span className="td-deck-session-countdown-phrase">{phrase}</span>{' '}
+              <span className="td-deck-session-countdown-eta">{formatSessionEta(ms)}</span>
+            </span>
+          </span>
+        );
+      })}
+    </div>
   );
 }
 
@@ -185,23 +208,27 @@ export default function TraderDeck() {
             <div className="td-deck-header-line-right" aria-hidden="true" />
           </div>
 
-          <div className="td-deck-below-header td-deck-tab-zone-period">
-            <nav className="td-deck-sub-tabs td-deck-sub-tabs-under-left td-deck-period-segment" aria-label="Period">
-              <button
-                type="button"
-                className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
-                onClick={() => setSubTab('daily')}
-              >
-                Daily
-              </button>
-              <button
-                type="button"
-                className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
-                onClick={() => setSubTab('weekly')}
-              >
-                Weekly
-              </button>
-            </nav>
+          <div className="td-deck-below-header td-deck-tab-zone-period td-deck-period-stack">
+            <div className="td-deck-period-row-main">
+              <nav className="td-deck-sub-tabs td-deck-sub-tabs-under-left td-deck-period-segment" aria-label="Period">
+                <button
+                  type="button"
+                  className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
+                  onClick={() => setSubTab('daily')}
+                >
+                  Daily
+                </button>
+                <button
+                  type="button"
+                  className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
+                  onClick={() => setSubTab('weekly')}
+                >
+                  Weekly
+                </button>
+              </nav>
+              <MarketSessionsInline />
+            </div>
+            <MarketSessionCountdowns />
           </div>
         </div>
 
@@ -220,12 +247,8 @@ export default function TraderDeck() {
                       )}
                     </div>
                   </div>
-                  <aside className="td-deck-rail" aria-label="Sessions and headlines">
-                    <div className="td-deck-inbox-footer" aria-label="Sessions and headlines">
-                      <div className="td-deck-inbox-footer-block td-deck-inbox-sessions">
-                        <h2 className="td-deck-inbox-footer-title">Market sessions</h2>
-                        <MarketSessionStatus />
-                      </div>
+                  <aside className="td-deck-rail" aria-label="Market headlines">
+                    <div className="td-deck-inbox-footer" aria-label="Market headlines">
                       <div className="td-deck-inbox-footer-block td-deck-inbox-headlines">
                         <NewsHeadlines />
                       </div>

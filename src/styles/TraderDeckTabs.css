@@ -33,15 +33,28 @@
 
 .td-deck-header-left {
   justify-self: start;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .td-deck-header-right {
   justify-self: end;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .td-deck-header-nav {
   display: flex;
   gap: 8px;
+}
+
+.td-deck-header-left .td-deck-header-nav,
+.td-deck-header-right .td-deck-header-nav {
+  flex-wrap: wrap;
 }
 
 .td-deck-page-title {

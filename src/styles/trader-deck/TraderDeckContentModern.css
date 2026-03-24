@@ -110,6 +110,138 @@
   gap: 6px;
 }
 
+/* Period stack: Daily/Weekly + inline sessions, then countdown row */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main .td-deck-period-segment {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-sessions-list--inline {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-sessions-list--inline .td-deck-session-item {
+  flex: 0 1 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: box-shadow 0.28s ease, background-image 0.28s ease, border-color 0.2s ease;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-sessions-list--inline .td-deck-session-item:hover {
+  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover);
+  box-shadow: var(--journal-panel-outer-glow-hover);
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-sessions-list--inline .td-deck-session-name {
+  font-size: 0.72rem;
+  flex: 0 1 auto;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-sessions-list--inline .td-deck-session-status {
+  font-size: 0.58rem;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdowns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(234, 169, 96, 0.22);
+  background: rgba(234, 169, 96, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdown-chip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 4px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.78);
+  min-width: 0;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdown-name {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdown-phrase {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdown-eta {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1099px) {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sessions-list--inline {
+    justify-content: flex-start;
+  }
+
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdowns {
+    gap: 10px 14px;
+  }
+}
+
 /* Period segment pill container */
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment {
   display: inline-flex;
