@@ -37,14 +37,18 @@ const TickerItem = memo(({
   flash,
   loading,
   stale,
-  delayed
+  delayed,
+  quoteUnavailable
 }) => {
   const flashClass = flash === 'up' ? 'flash-green' : flash === 'down' ? 'flash-red' : '';
-  const hasPrice = price && parseFloat(price) > 0;
+  const hasPrice = price && parseFloat(price) > 0 && !quoteUnavailable;
   const sign = isUp ? '+' : '';
 
   return (
-    <div className={`ticker-item ${flashClass} ${stale ? 'stale' : ''} ${loading ? 'loading' : ''} ${delayed ? 'delayed' : ''}`}>
+    <div
+      className={`ticker-item ${flashClass} ${stale ? 'stale' : ''} ${loading ? 'loading' : ''} ${delayed ? 'delayed' : ''}`}
+      title={quoteUnavailable ? 'Live quote unavailable' : undefined}
+    >
       <span className="ticker-symbol">{displayName || symbol}</span>
 
       {hasPrice ? (
@@ -79,13 +83,17 @@ const MarketItem = memo(({
   isUp,
   flash,
   loading,
-  delayed
+  delayed,
+  quoteUnavailable
 }) => {
   const flashClass = flash === 'up' ? 'flash-green' : flash === 'down' ? 'flash-red' : '';
-  const hasPrice = price && parseFloat(price) > 0;
+  const hasPrice = price && parseFloat(price) > 0 && !quoteUnavailable;
 
   return (
-    <div className={`market-item ${flashClass} ${delayed ? 'delayed' : ''}`}>
+    <div
+      className={`market-item ${flashClass} ${delayed ? 'delayed' : ''} ${quoteUnavailable ? 'quote-unavailable' : ''}`}
+      title={quoteUnavailable ? 'Live quote unavailable — check API keys or try again shortly' : undefined}
+    >
       <div className="market-item-info">
         <span className="market-item-symbol">{displayName || symbol}</span>
       </div>
