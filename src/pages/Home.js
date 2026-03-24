@@ -64,13 +64,13 @@ const StatItem = ({ number, label, fill = '75%' }) => {
 };
 
 /* ══════════════════════════════════════════════════════════
-   iPad slideshow — on-brand SVG panels in /public/images/ipad-slides/
+   iPad slideshow
 ══════════════════════════════════════════════════════════ */
 const IPAD_SLIDE_BASE = `${process.env.PUBLIC_URL || ''}/images/ipad-slides`;
 
 const SLIDES = [
     {
-        image:      `${IPAD_SLIDE_BASE}/journal.svg`,
+        image:      `${IPAD_SLIDE_BASE}/journal.png`,
         tag:        '📓 Trading Journal',
         title:      'Your Daily Trading Discipline',
         subtitle:   'Streaks, checklists, and session notes—built to keep execution consistent.',
@@ -78,7 +78,7 @@ const SLIDES = [
         chartColor: '#0FD98A',
     },
     {
-        image:      `${IPAD_SLIDE_BASE}/market-intelligence.svg`,
+        image:      `${IPAD_SLIDE_BASE}/trader desk.png`,
         tag:        '📊 Market Intelligence',
         title:      'Briefs, Bias & Macro Context',
         subtitle:   'Session-ready views of structure, drivers, and what matters before London & New York.',
@@ -133,133 +133,19 @@ const MiniSparkline = ({ color = '#0FD98A' }) => {
         </svg>
     );
 };
-/* ══════════════════════════════════════════════
-   iPAD TOUCH 3D ROTATION — COMPANION JS SNIPPET
-   ──────────────────────────────────────────────*/
-
-  
-
-(function initIpadTilt() {
-  const scene   = document.querySelector('.ipad-scene');
-  const wrap    = document.querySelector('.ipad-wrap');
-  const cursor  = document.querySelector('.ipad-cursor');
-  if (!scene || !wrap) return;
-
-  // Base resting rotation
-  const REST_RX = 7;   // rotateX degrees at rest (desktop)
-  const REST_RY = -13; // rotateY degrees at rest (desktop)
-  const MOBILE_REST_RX = 5;
-  const MOBILE_REST_RY = -8;
-  const MAX_TILT = 22; // maximum tilt from drag, degrees
-
-  const isMobile = () => window.matchMedia('(hover:none) and (pointer:coarse)').matches;
-
-  // ── Desktop mouse tilt ──────────────────────
-  scene.addEventListener('mousemove', (e) => {
-    if (isMobile()) return;
-    const r   = scene.getBoundingClientRect();
-    const nx  = (e.clientX - r.left)  / r.width  - 0.5; // -0.5 to 0.5
-    const ny  = (e.clientY - r.top)   / r.height - 0.5;
-    const rx  = REST_RX  - ny * 18;
-    const ry  = REST_RY  + nx * 22;
-    wrap.style.transform = `translateY(0px) rotateX(${rx}deg) rotateY(${ry}deg)`;
-    if (cursor) {
-      cursor.style.left    = (e.clientX - r.left)  + 'px';
-      cursor.style.top     = (e.clientY - r.top)   + 'px';
-      cursor.style.opacity = '1';
-    }
-  });
-
-  scene.addEventListener('mouseleave', () => {
-    if (isMobile()) return;
-    wrap.classList.remove('is-dragging');
-    wrap.classList.add('is-resting');
-    wrap.style.transform = `translateY(0px) rotateX(${REST_RX}deg) rotateY(${REST_RY}deg)`;
-    if (cursor) cursor.style.opacity = '0';
-    setTimeout(() => wrap.classList.remove('is-resting'), 700);
-  });
-
-  // ── Mobile / touch tilt ─────────────────────
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let currentRx   = MOBILE_REST_RX;
-  let currentRy   = MOBILE_REST_RY;
-  let rafId       = null;
-
-  scene.addEventListener('touchstart', (e) => {
-    if (!isMobile()) return;
-    if (e.touches.length !== 1) return;
-    e.preventDefault(); // prevent scroll while dragging the iPad
-    wrap.classList.add('is-dragging');
-    wrap.classList.remove('is-resting');
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    currentRx   = MOBILE_REST_RX;
-    currentRy   = MOBILE_REST_RY;
-
-    // Spawn gold ripple
-    spawnRipple(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: false });
-
-  scene.addEventListener('touchmove', (e) => {
-    if (!isMobile()) return;
-    if (e.touches.length !== 1) return;
-    e.preventDefault();
-
-    const dx = e.touches[0].clientX - touchStartX;
-    const dy = e.touches[0].clientY - touchStartY;
-
-    // Map drag delta to rotation (clamp to MAX_TILT)
-    const drx = Math.max(-MAX_TILT, Math.min(MAX_TILT, -dy * 0.28));
-    const dry = Math.max(-MAX_TILT, Math.min(MAX_TILT,  dx * 0.28));
-
-    currentRx = MOBILE_REST_RX + drx;
-    currentRy = MOBILE_REST_RY + dry;
-
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(() => {
-      wrap.style.transform = `rotateX(${currentRx}deg) rotateY(${currentRy}deg)`;
-    });
-  }, { passive: false });
-
-  scene.addEventListener('touchend', () => {
-    if (!isMobile()) return;
-    wrap.classList.remove('is-dragging');
-    wrap.classList.add('is-resting');
-    wrap.style.transform = `rotateX(${MOBILE_REST_RX}deg) rotateY(${MOBILE_REST_RY}deg)`;
-    setTimeout(() => wrap.classList.remove('is-resting'), 700);
-  });
-
-  scene.addEventListener('touchcancel', () => {
-    wrap.classList.remove('is-dragging');
-    wrap.classList.add('is-resting');
-    wrap.style.transform = `rotateX(${MOBILE_REST_RX}deg) rotateY(${MOBILE_REST_RY}deg)`;
-    setTimeout(() => wrap.classList.remove('is-resting'), 700);
-  });
-
-  // ── Gold ripple helper ───────────────────────
-  function spawnRipple(clientX, clientY) {
-    const r    = scene.getBoundingClientRect();
-    const el   = document.createElement('div');
-    el.className = 'ipad-touch-ripple';
-    el.style.left = (clientX - r.left)  + 'px';
-    el.style.top  = (clientY - r.top)   + 'px';
-    scene.appendChild(el);
-    el.addEventListener('animationend', () => el.remove());
-  }
-})();
-
 
 /* ══════════════════════════════════════════════════════════
    3D FLOATING iPAD WITH SLIDESHOW
+   Touch rotation is handled INSIDE this component's useEffect
+   alongside the existing mouse tilt logic.
 ══════════════════════════════════════════════════════════ */
 const FloatingIPad = () => {
-    const sceneRef   = useRef(null);
-    const wrapRef    = useRef(null);
-    const bodyRef    = useRef(null);
-    const cursorRef  = useRef(null);
+    const sceneRef  = useRef(null);
+    const wrapRef   = useRef(null);
+    const bodyRef   = useRef(null);
+    const cursorRef = useRef(null);
 
-    const [activeSlide, setActiveSlide]   = useState(0);
+    const [activeSlide, setActiveSlide] = useState(0);
     const slideTimerRef = useRef(null);
 
     /* ── Auto-advance slides ── */
@@ -278,21 +164,33 @@ const FloatingIPad = () => {
         return () => clearInterval(slideTimerRef.current);
     }, []);
 
-    /* ── 3D tilt + float logic (identical architecture to original terminal) ── */
+    /* ══════════════════════════════════════════════
+       3D TILT — MOUSE (desktop) + TOUCH (mobile)
+       Both live here so refs are guaranteed to exist.
+    ══════════════════════════════════════════════ */
     useEffect(() => {
         const scene  = sceneRef.current;
         const wrap   = wrapRef.current;
         const body   = bodyRef.current;
         const cursor = cursorRef.current;
-        if (!scene || !wrap || !body || !cursor) return;
+        if (!scene || !wrap) return;
 
-        const BASE_X     =  7;
-        const BASE_Y     = -13;
-        const MAX_TILT   =  20;
-        const LERP       =  0.08;
-        const FLOAT_AMP  =  4.0;
-        const FLOAT_SPD  =  0.00065;
+        // ── Shared config ──────────────────────────
+        const BASE_X          =  7;
+        const BASE_Y          = -13;
+        const MOBILE_BASE_X   =  5;
+        const MOBILE_BASE_Y   = -8;
+        const MAX_TILT        =  20;
+        const MAX_TOUCH_TILT  =  22;
+        const LERP            =  0.08;
+        const FLOAT_AMP       =  4.0;
+        const FLOAT_SPD       =  0.00065;
 
+        // Detect touch/coarse-pointer device
+        const isTouchDevice = () =>
+            window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+        // ── Mouse state ────────────────────────────
         let targetX  = BASE_X;
         let targetY  = BASE_Y;
         let currentX = BASE_X;
@@ -304,16 +202,31 @@ const FloatingIPad = () => {
 
         const lerp = (a, b, t) => a + (b - a) * t;
 
-        const onEnter = () => { inside = true;  cursor.style.opacity = '1'; };
+        // ── Touch state ────────────────────────────
+        let touchStartX  = 0;
+        let touchStartY  = 0;
+        let touchRafId   = null;
+
+        // ════════════════════════════════════════════
+        // MOUSE HANDLERS
+        // ════════════════════════════════════════════
+        const onEnter = () => {
+            if (isTouchDevice()) return;
+            inside = true;
+            if (cursor) cursor.style.opacity = '1';
+        };
+
         const onLeave = () => {
-            inside = false;
-            targetX = BASE_X;
-            targetY = BASE_Y;
-            cursor.style.opacity = '0';
-            body.style.boxShadow = '';
+            if (isTouchDevice()) return;
+            inside   = false;
+            targetX  = BASE_X;
+            targetY  = BASE_Y;
+            if (cursor) cursor.style.opacity = '0';
+            if (body)   body.style.boxShadow = '';
         };
 
         const onMove = (e) => {
+            if (isTouchDevice()) return;
             const r  = scene.getBoundingClientRect();
             const cx = r.left + r.width  / 2;
             const cy = r.top  + r.height / 2;
@@ -323,36 +236,42 @@ const FloatingIPad = () => {
             targetX = BASE_X - ny * MAX_TILT;
             targetY = BASE_Y + nx * MAX_TILT;
 
-            cursor.style.left = (e.clientX - r.left) + 'px';
-            cursor.style.top  = (e.clientY - r.top)  + 'px';
+            if (cursor) {
+                cursor.style.left = (e.clientX - r.left) + 'px';
+                cursor.style.top  = (e.clientY - r.top)  + 'px';
+            }
 
-            const sx = nx * 16;
-            const sy = ny * 9;
-            body.style.boxShadow = `
-                ${sx}px ${30 + sy}px 60px rgba(0,0,0,0.96),
-                ${sx*0.6}px ${60+sy}px 100px rgba(0,0,0,0.70),
-                ${sx*0.3}px ${95+sy}px 160px rgba(0,0,0,0.42),
-                ${-10+sx*-0.4}px 22px 62px rgba(245,176,65,0.065),
-                inset ${-14+nx*5}px 0 32px rgba(0,0,0,0.55),
-                inset 0 ${-12+ny*4}px 28px rgba(0,0,0,0.44),
-                inset 0 1px 0 rgba(255,255,255,0.20),
-                inset 1px 0 0 rgba(255,255,255,0.08)
-            `;
+            if (body) {
+                const sx = nx * 16;
+                const sy = ny * 9;
+                body.style.boxShadow = `
+                    ${sx}px ${30 + sy}px 60px rgba(0,0,0,0.96),
+                    ${sx*0.6}px ${60+sy}px 100px rgba(0,0,0,0.70),
+                    ${sx*0.3}px ${95+sy}px 160px rgba(0,0,0,0.42),
+                    ${-10+sx*-0.4}px 22px 62px rgba(245,176,65,0.065),
+                    inset ${-14+nx*5}px 0 32px rgba(0,0,0,0.55),
+                    inset 0 ${-12+ny*4}px 28px rgba(0,0,0,0.44),
+                    inset 0 1px 0 rgba(255,255,255,0.20),
+                    inset 1px 0 0 rgba(255,255,255,0.08)
+                `;
+            }
         };
 
         const onDown = () => {
+            if (isTouchDevice()) return;
             wrap.style.transition = 'transform 0.1s ease';
             wrap.dataset.punch = 'true';
-            cursor.style.width  = '12px';
-            cursor.style.height = '12px';
-        };
-        const onUp = () => {
-            wrap.style.transition = '';
-            wrap.dataset.punch = '';
-            cursor.style.width  = '8px';
-            cursor.style.height = '8px';
+            if (cursor) { cursor.style.width = '12px'; cursor.style.height = '12px'; }
         };
 
+        const onUp = () => {
+            if (isTouchDevice()) return;
+            wrap.style.transition = '';
+            wrap.dataset.punch = '';
+            if (cursor) { cursor.style.width = '8px'; cursor.style.height = '8px'; }
+        };
+
+        // ── Animation loop (desktop float + lerp) ──
         const tick = (ts) => {
             const dt = ts - lastTime;
             lastTime = ts;
@@ -372,24 +291,106 @@ const FloatingIPad = () => {
             rafId = requestAnimationFrame(tick);
         };
 
-        scene.addEventListener('mousemove',  onMove);
-        scene.addEventListener('mouseenter', onEnter);
-        scene.addEventListener('mouseleave', onLeave);
-        scene.addEventListener('mousedown',  onDown);
-        scene.addEventListener('mouseup',    onUp);
+        // ════════════════════════════════════════════
+        // TOUCH HANDLERS
+        // ════════════════════════════════════════════
 
+        // Spawn a gold ripple at the touch point
+        const spawnRipple = (clientX, clientY) => {
+            const r  = scene.getBoundingClientRect();
+            const el = document.createElement('div');
+            el.className  = 'ipad-touch-ripple';
+            el.style.left = (clientX - r.left) + 'px';
+            el.style.top  = (clientY - r.top)  + 'px';
+            scene.appendChild(el);
+            el.addEventListener('animationend', () => el.remove());
+        };
+
+        const onTouchStart = (e) => {
+            if (!isTouchDevice()) return;
+            if (e.touches.length !== 1) return;
+            e.preventDefault(); // prevent page scroll while tilting
+
+            // Cancel the desktop RAF loop — touch drives transforms directly
+            cancelAnimationFrame(rafId);
+            rafId = null;
+
+            wrap.classList.add('is-dragging');
+            wrap.classList.remove('is-resting');
+
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+
+            spawnRipple(e.touches[0].clientX, e.touches[0].clientY);
+        };
+
+        const onTouchMove = (e) => {
+            if (!isTouchDevice()) return;
+            if (e.touches.length !== 1) return;
+            e.preventDefault();
+
+            const dx = e.touches[0].clientX - touchStartX;
+            const dy = e.touches[0].clientY - touchStartY;
+
+            // Map pixel drag to rotation degrees, clamped
+            const drx = Math.max(-MAX_TOUCH_TILT, Math.min(MAX_TOUCH_TILT, -dy * 0.28));
+            const dry = Math.max(-MAX_TOUCH_TILT, Math.min(MAX_TOUCH_TILT,  dx * 0.28));
+
+            const rx = MOBILE_BASE_X + drx;
+            const ry = MOBILE_BASE_Y + dry;
+
+            if (touchRafId) cancelAnimationFrame(touchRafId);
+            touchRafId = requestAnimationFrame(() => {
+                wrap.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+            });
+        };
+
+        const onTouchEnd = () => {
+            if (!isTouchDevice()) return;
+            if (touchRafId) { cancelAnimationFrame(touchRafId); touchRafId = null; }
+
+            wrap.classList.remove('is-dragging');
+            wrap.classList.add('is-resting');
+            wrap.style.transform = `rotateX(${MOBILE_BASE_X}deg) rotateY(${MOBILE_BASE_Y}deg)`;
+
+            setTimeout(() => wrap.classList.remove('is-resting'), 700);
+        };
+
+        // ════════════════════════════════════════════
+        // REGISTER ALL LISTENERS
+        // ════════════════════════════════════════════
+        scene.addEventListener('mousemove',   onMove);
+        scene.addEventListener('mouseenter',  onEnter);
+        scene.addEventListener('mouseleave',  onLeave);
+        scene.addEventListener('mousedown',   onDown);
+        scene.addEventListener('mouseup',     onUp);
+
+        // passive:false lets us call e.preventDefault() to block page scroll
+        scene.addEventListener('touchstart',  onTouchStart,  { passive: false });
+        scene.addEventListener('touchmove',   onTouchMove,   { passive: false });
+        scene.addEventListener('touchend',    onTouchEnd,    { passive: true  });
+        scene.addEventListener('touchcancel', onTouchEnd,    { passive: true  });
+
+        // Start the desktop float loop
         rafId = requestAnimationFrame((ts) => {
             lastTime = ts;
             rafId = requestAnimationFrame(tick);
         });
 
+        // ── Cleanup ────────────────────────────────
         return () => {
             cancelAnimationFrame(rafId);
-            scene.removeEventListener('mousemove',  onMove);
-            scene.removeEventListener('mouseenter', onEnter);
-            scene.removeEventListener('mouseleave', onLeave);
-            scene.removeEventListener('mousedown',  onDown);
-            scene.removeEventListener('mouseup',    onUp);
+            if (touchRafId) cancelAnimationFrame(touchRafId);
+
+            scene.removeEventListener('mousemove',   onMove);
+            scene.removeEventListener('mouseenter',  onEnter);
+            scene.removeEventListener('mouseleave',  onLeave);
+            scene.removeEventListener('mousedown',   onDown);
+            scene.removeEventListener('mouseup',     onUp);
+            scene.removeEventListener('touchstart',  onTouchStart);
+            scene.removeEventListener('touchmove',   onTouchMove);
+            scene.removeEventListener('touchend',    onTouchEnd);
+            scene.removeEventListener('touchcancel', onTouchEnd);
         };
     }, []);
 
@@ -399,16 +400,22 @@ const FloatingIPad = () => {
             ref={sceneRef}
             style={{ cursor: 'none' }}
         >
-            {/* Gold cursor dot */}
+            {/* Gold cursor dot (desktop only) */}
             <div
                 ref={cursorRef}
                 className="ipad-cursor"
                 style={{
-                    width:  '8px',
-                    height: '8px',
+                    width:    '8px',
+                    height:   '8px',
                     transition: 'opacity .22s ease, width .15s ease, height .15s ease',
                 }}
             />
+
+            {/* Drag hint shown on touch devices (CSS hides it on desktop) */}
+            <div className="ipad-drag-hint">
+                <span className="ipad-drag-hint-icon">✦</span>
+                Drag to rotate
+            </div>
 
             {/* 3D rotating wrapper */}
             <div
