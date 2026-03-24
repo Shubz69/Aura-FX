@@ -111,7 +111,7 @@ function AuraDashboardInner() {
   const activeTabPath = location.pathname.replace(`${base}/`, '') || 'overview';
 
   return (
-    <div className="aura-dashboard journal-glass-panel journal-glass-panel--pad">
+    <div className="aura-dashboard journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
 
       {/* ══ Primary Tab Header ══ */}
       <div className="aura-dashboard-tabs-wrap">

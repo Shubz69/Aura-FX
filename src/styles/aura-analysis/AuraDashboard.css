@@ -27,6 +27,8 @@ html, body, #root {
   color: #fff;
   font-family: 'Space Grotesk', sans-serif;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (min-width: 768px) and (max-width: 1150px) {
@@ -399,6 +401,8 @@ html, body, #root {
 
 /* Main outlet — consistent horizontal rhythm with tab/filter rails */
 .aura-dashboard-content {
+  flex: 1;
+  min-height: 0;
   max-width: 1440px;
   margin: 0 auto;
   width: 100%;

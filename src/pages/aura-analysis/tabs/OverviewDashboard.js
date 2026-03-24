@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum, fmtDuration } from '../../../lib/aura-analysis/analytics';
+import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 /* ── Helpers ──────────────────────────────────────────────── */
@@ -120,7 +121,8 @@ function LoadingSkeleton() {
 
 /* ── Main ─────────────────────────────────────────────────── */
 export default function OverviewDashboard() {
-  const { analytics, account, trades, loading, error } = useAuraAnalysis();
+  const { analytics, account, trades, loading, error, activePlatformId, connections } = useAuraAnalysis();
+  const needsConnection = !connections?.length || !activePlatformId;
   const [calMonth, setCalMonth] = useState(() => new Date());
   const [selDay, setSelDay] = useState(null);
 
@@ -157,15 +159,22 @@ export default function OverviewDashboard() {
     </div>
   );
 
-  if (!account && !trades.length) return (
-    <div className="aa-page">
-      <div className="aa-no-platform">
-        <div className="aa-no-platform-icon"><i className="fas fa-plug" /></div>
-        <h3>No data available</h3>
-        <p>Connect your MT5 account to start tracking performance.</p>
+  if (!account && !trades.length) {
+    return (
+      <div className="aa-page">
+        <AuraAnalysisEmptyState
+          icon="fa-plug"
+          variant={needsConnection ? 'connect' : 'data'}
+          title={needsConnection ? 'Connect MT5 to unlock your dashboard' : 'No account data yet'}
+          description={
+            needsConnection
+              ? 'Link your MetaTrader 5 account from the Connection Hub to sync balance, trades, and analytics.'
+              : 'We could not load account details. Try refreshing, or reconnect from the Connection Hub.'
+          }
+        />
       </div>
-    </div>
-  );
+    );
+  }
 
   const a = analytics;
 

@@ -268,6 +268,28 @@
 }
 
 /* ═══════════ Aura shared cards / KPIs (not bar fills) ═══════════ */
+/* Aura Analysis — empty / connect card (dashboard) */
+.journal-page .aa-empty-state-card {
+  background: linear-gradient(
+    135deg,
+    rgba(160, 185, 240, 0.28) 0%,
+    rgba(234, 169, 96, 0.18) 55%,
+    rgba(100, 130, 220, 0.2) 100%
+  ) !important;
+  box-shadow:
+    0 0 0 1px rgba(160, 185, 240, 0.1) inset,
+    0 24px 48px rgba(0, 0, 0, 0.5) !important;
+}
+
+.journal-page .aa-empty-state-icon-wrap {
+  border-color: rgba(160, 185, 240, 0.28) !important;
+  box-shadow: 0 0 28px rgba(100, 130, 220, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.journal-page .aa-empty-state-icon-wrap i {
+  color: rgba(200, 215, 255, 0.9) !important;
+}
+
 .journal-page .aa-page .aa-card {
   border-color: rgba(160, 185, 240, 0.14) !important;
 }
