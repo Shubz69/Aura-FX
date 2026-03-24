@@ -125,6 +125,29 @@ function run() {
   );
   assert(merged[0].actual === '50.1', 'mergeSupplementActuals should fill actual from FMP row');
 
+  // Range query parsing (historical browse API)
+  assert(_test.isValidIsoDateOnly('2025-06-15') === true, 'valid ISO date');
+  assert(_test.isValidIsoDateOnly('2025-13-01') === false, 'invalid month');
+  assert(_test.isValidIsoDateOnly('25-06-01') === false, 'short year rejected');
+
+  const rNull = _test.parseCalendarRangeQuery({});
+  assert(rNull == null, 'empty query should not be a range');
+
+  const rDate = _test.parseCalendarRangeQuery({ date: '2026-03-10' });
+  assert(rDate.from === '2026-03-10' && rDate.to === '2026-03-10', 'date= expands to from/to');
+
+  const rSwap = _test.parseCalendarRangeQuery({ from: '2026-03-12', to: '2026-03-10' });
+  assert(rSwap.from === '2026-03-10' && rSwap.to === '2026-03-12', 'from/to should be ordered');
+
+  const days = _test.enumerateInclusiveDays('2026-03-10', '2026-03-12');
+  assert(days.length === 3 && days[0] === '2026-03-10' && days[2] === '2026-03-12', 'enumerateInclusiveDays');
+
+  const rErr = _test.parseCalendarRangeQuery({ from: '2026-01-01' });
+  assert(rErr && rErr.error, 'partial range should error');
+
+  const rSpan = _test.parseCalendarRangeQuery({ from: '2026-01-01', to: '2026-01-20' });
+  assert(rSpan && rSpan.error && rSpan.error.includes('max'), '8+ day span should reject');
+
   console.log('OK economic-calendar-timezone tests');
 }
 

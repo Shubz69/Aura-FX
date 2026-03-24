@@ -58,7 +58,7 @@ export default function ForexFactoryNews({ date, onlyToday: _onlyToday = true })
   const [events, setEvents]           = useState([]);
   const [loading, setLoading]         = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [tick, setTick]               = useState(0);   // drives SOON badge re-renders
+  const [, setTick]               = useState(0);   // drives re-renders for countdowns while LIVE
   const [showFilter, setShowFilter]   = useState(false);
   const [filterCurrencies, setFCurr] = useState(() => loadPref('td_ff_currencies', ALL_CURRENCIES));
   const [filterImpact, setFImpact]   = useState(() => loadPref('td_ff_impact', ALL_IMPACTS));

@@ -888,7 +888,11 @@ async function fetchHistoricalRange(fromStr, toStr) {
   }
   const te = await fetchTradingEconomicsCalendarRange(fromStr, toStr);
   if (te && te.length) {
-    events = mergeSupplementActuals(events, te);
+    if (events.length === 0) {
+      events = te.map(ensureEventTimestamp);
+    } else {
+      events = mergeSupplementActuals(events, te);
+    }
   }
 
   events = events.map(ensureEventTimestamp);
