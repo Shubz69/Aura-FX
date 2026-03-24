@@ -12,13 +12,23 @@ const { getCached, setCached } = require('../cache');
 
 const CACHE_KEY = 'trader-deck:news:v2';
 const CACHE_TTL_MS = Math.min(300, Math.max(60, parseInt(process.env.TRADER_DECK_NEWS_CACHE_SEC, 10) || 90)) * 1000;
+const SOURCE_SUFFIX_RE = /\s*[-–—,]\s*(reuters|bloomberg|forex factory|financial times|wsj|cnbc|yahoo finance|marketwatch)\s*$/i;
+const ATTRIBUTION_RE = /\b(according to|reported by|via)\b/gi;
+
+function cleanInsightText(v) {
+  return String(v || '')
+    .replace(SOURCE_SUFFIX_RE, '')
+    .replace(ATTRIBUTION_RE, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 function normalise(item, source) {
   return {
-    headline: item.headline || item.title || '',
-    summary: item.summary || item.text || item.content || '',
+    headline: cleanInsightText(item.headline || item.title || ''),
+    summary: cleanInsightText(item.summary || item.text || item.content || ''),
     url: item.url || '',
-    source: item.source || item.site || source,
+    source: null,
     publishedAt: item.datetime ? new Date(item.datetime * 1000).toISOString() : (item.publishedDate || item.date || null),
     category: item.category || 'market',
     related: Array.isArray(item.related) ? item.related : [],

@@ -40,7 +40,7 @@ function formatTime(t) {
   return t;
 }
 
-export default function RiskRadarList({ items = [] }) {
+export default function RiskRadarList({ items = [], riskEngine = null }) {
   if (!items.length) {
     return <p className="td-mi-list-empty" style={{ padding: '12px 0', color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>No upcoming events</p>;
   }
@@ -50,6 +50,25 @@ export default function RiskRadarList({ items = [] }) {
 
   return (
     <div className="rr-table-wrap">
+      {riskEngine && (
+        <div className="td-mi-pulse-meta" style={{ marginBottom: 10 }}>
+          <p><strong>Market Risk Score:</strong> {Number(riskEngine.score || 0)}/100</p>
+          <p><strong>Risk Level:</strong> {riskEngine.level || 'Moderate'}</p>
+          {riskEngine.breakdown && (
+            <p>
+              <strong>Breakdown:</strong>{' '}
+              Event Risk {riskEngine.breakdown.eventRisk ?? '—'} ·
+              Geopolitical Risk {riskEngine.breakdown.geopoliticalRisk ?? '—'} ·
+              Volatility {riskEngine.breakdown.volatility ?? '—'} ·
+              Liquidity {riskEngine.breakdown.liquidity ?? '—'} ·
+              Clustering {riskEngine.breakdown.clustering ?? '—'}
+            </p>
+          )}
+          {Number.isFinite(riskEngine.nextRiskEventInMins) && (
+            <p><strong>Next Risk Event:</strong> in {riskEngine.nextRiskEventInMins} mins</p>
+          )}
+        </div>
+      )}
       <table className="rr-table">
         <thead>
           <tr>

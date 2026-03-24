@@ -8,9 +8,11 @@ import Api from '../services/Api';
 
 export const DEFAULT_MARKET_REGIME = {
   currentRegime: '',
+  bias: '',
   primaryDriver: '',
   secondaryDriver: '',
   marketSentiment: '',
+  tradeEnvironment: '',
 };
 
 export const DEFAULT_MARKET_PULSE = { value: 50, label: 'NEUTRAL' };
@@ -18,27 +20,46 @@ export const DEFAULT_MARKET_PULSE = { value: 50, label: 'NEUTRAL' };
 export const SEED_MARKET_INTELLIGENCE = {
   marketRegime: {
     currentRegime: 'Rate Sensitivity',
+    bias: 'Mixed',
     primaryDriver: 'Bond Yields',
-    secondaryDriver: 'US Economic Data',
-    marketSentiment: 'Neutral',
+    secondaryDriver: 'Macro Data + Commodities + Geopolitics',
+    marketSentiment: 'Neutral / Mixed',
+    tradeEnvironment: 'Event-Driven',
   },
-  marketPulse: { value: 50, label: 'NEUTRAL' },
+  marketPulse: {
+    value: 50,
+    label: 'MIXED',
+    recommendedAction: [
+      'Reduce position size around clustered events',
+      'Wait for confirmation before directional commitment',
+      'Expect volatility spikes at session handovers',
+    ],
+  },
   keyDrivers: [
-    { title: 'Bond Yields', direction: 'up', impact: 'High' },
-    { title: 'US Dollar', direction: 'up', impact: 'Medium' },
-    { title: 'Oil Prices', direction: 'down', impact: 'Low' },
-    { title: 'Geopolitical Risk', direction: 'up', impact: 'Medium' },
+    { title: 'Bond Yields', direction: 'up', impact: 'High', effect: 'Pressure on equities and gold' },
+    { title: 'US Dollar', direction: 'up', impact: 'High', effect: 'FX and commodities repricing' },
+    { title: 'Oil Prices', direction: 'down', impact: 'Medium', effect: 'Shifts inflation and risk tone' },
+    { title: 'Equity Markets', direction: 'neutral', impact: 'High', effect: 'Risk appetite transmission across assets' },
   ],
   crossAssetSignals: [
     { asset: 'Yields', direction: 'up', label: 'Bullish' },
     { asset: 'USD', direction: 'up', label: 'Strong' },
     { asset: 'Gold', direction: 'down', label: 'Bearish' },
     { asset: 'Stocks', direction: 'neutral', label: 'Neutral' },
-    { asset: 'Oil', direction: 'up', label: 'Rising' },
+    { asset: 'Oil', direction: 'up', label: 'Supported by geopolitical risk' },
+    { asset: 'Crypto', direction: 'neutral', label: 'Following broad risk sentiment' },
+    { asset: 'Volatility', direction: 'neutral', label: 'Elevated' },
+    { asset: 'DXY RSI', direction: 'neutral', label: 'Neutral zone' },
   ],
-  marketChangesToday: ['Strong US Jobs Data', 'Bond Yields Surging', 'USD Gaining Strength', 'Gold Under Pressure'],
-  traderFocus: ['Watch US bond yields', 'Monitor EURUSD levels', "Track gold's reaction to yields"],
+  marketChangesToday: ['USD strength increased after macro repricing', 'Gold reacted to real-yield and risk tone', 'Equities lost momentum into later sessions', 'Crypto stayed defensive versus risk benchmarks'],
+  traderFocus: ['Avoid adding risk before high-impact events', 'Watch bond yields for equity/gold inflections', 'Expect volatility into session opens', 'Reduce risk when events cluster', 'Use confirmation-based entries'],
   riskRadar: ['Upcoming CPI Report', 'Fed Speakers Today', 'Geopolitical Tensions'],
+  riskEngine: {
+    score: 58,
+    level: 'Moderate',
+    breakdown: { eventRisk: 62, geopoliticalRisk: 54, volatility: 60, liquidity: 46, clustering: 51 },
+    nextRiskEventInMins: 45,
+  },
 };
 
 function capitalize(s) {
@@ -86,19 +107,26 @@ function mapBackendToDashboard(apiData) {
     marketRegime: r
       ? {
           currentRegime: r.currentRegime || '',
+          bias: r.bias || '',
           primaryDriver: r.primaryDriver || '',
           secondaryDriver: r.secondaryDriver || '',
-          marketSentiment: r.marketSentiment || 'Neutral',
+          marketSentiment: r.marketSentiment || 'Neutral / Mixed',
+          tradeEnvironment: r.tradeEnvironment || '',
         }
       : SEED_MARKET_INTELLIGENCE.marketRegime,
     marketPulse: p
-      ? { value: typeof p.score === 'number' ? p.score : 50, label: p.label || 'NEUTRAL' }
+      ? {
+          value: typeof p.score === 'number' ? p.score : 50,
+          label: p.label || 'MIXED',
+          recommendedAction: Array.isArray(p.recommendedAction) ? p.recommendedAction : [],
+        }
       : SEED_MARKET_INTELLIGENCE.marketPulse,
     keyDrivers: Array.isArray(k)
       ? k.map((d) => ({
           title: d.name || d.title || '',
           direction: d.direction || 'neutral',
           impact: capitalize(d.impact) || 'Medium',
+          effect: d.effect || '',
         }))
       : SEED_MARKET_INTELLIGENCE.keyDrivers,
     crossAssetSignals: Array.isArray(c)
@@ -117,6 +145,9 @@ function mapBackendToDashboard(apiData) {
     riskRadar: Array.isArray(rr)
       ? rr.map(normalizeRiskRadarItem).filter((x) => x !== '')
       : SEED_MARKET_INTELLIGENCE.riskRadar,
+    riskEngine: apiData.riskEngine && typeof apiData.riskEngine === 'object'
+      ? apiData.riskEngine
+      : SEED_MARKET_INTELLIGENCE.riskEngine,
     updatedAt: apiData.updatedAt || null,
     aiSessionBrief: typeof apiData.aiSessionBrief === 'string' ? apiData.aiSessionBrief : '',
     aiTradingPriorities: Array.isArray(apiData.aiTradingPriorities) ? apiData.aiTradingPriorities : [],

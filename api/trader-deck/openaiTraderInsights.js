@@ -4,10 +4,33 @@
  */
 
 const { getOpenAIModelForChat } = require('../ai/openai-config');
+const SOURCE_MARKER_RE = /(https?:\/\/|www\.|source\s*:|sources\s*:|according to|reuters|bloomberg|fmp|finnhub|forex factory|trading economics)/i;
+
+function getAutomationModel() {
+  return String(
+    process.env.OPENAI_AUTOMATION_MODEL
+    || process.env.OPENAI_CHAT_MODEL
+    || process.env.OPENAI_MODEL
+    || getOpenAIModelForChat()
+  ).trim();
+}
 
 function stripStars(s) {
   if (s == null || typeof s !== 'string') return s;
   return s.replace(/\*/g, '');
+}
+
+function sanitizeLine(text) {
+  return String(text || '')
+    .replace(/\b(according to|reported by|via)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function assertNoSourceMarkers(text) {
+  if (SOURCE_MARKER_RE.test(String(text || ''))) {
+    throw new Error('AI enrichment contained source markers');
+  }
 }
 
 /**
@@ -45,14 +68,15 @@ async function enrichTraderDeckPayload(payload) {
         Authorization: `Bearer ${key}`,
       },
       body: JSON.stringify({
-        model: getOpenAIModelForChat(),
-        temperature: 0.35,
-        max_tokens: 550,
+        model: getAutomationModel(),
+        temperature: 0.2,
+        max_tokens: 900,
+        response_format: { type: 'json_object' },
         messages: [
           {
             role: 'system',
             content:
-              'You are a trading desk analyst. Reply with valid JSON only: {"sessionBrief":"string (2-4 sentences)","tradingPriorities":["short string",...]} — 3 to 5 priorities. Plain English. No markdown, no asterisks, no bullet symbols.',
+              'You are an institutional trading desk analyst. Reply with valid JSON only: {"sessionBrief":"string (3-5 sentences)","tradingPriorities":["short string",...]} — 4 to 6 priorities. Cover cross-asset context from provided facts only. No markdown, no asterisks, no bullet symbols, no source attributions.',
           },
           { role: 'user', content: userMsg },
         ],
@@ -74,11 +98,15 @@ async function enrichTraderDeckPayload(payload) {
         aiTradingPriorities: [],
       };
     }
-    const brief = stripStars(parsed.sessionBrief || parsed.session_brief || '');
+    const brief = sanitizeLine(stripStars(parsed.sessionBrief || parsed.session_brief || ''));
     const pri = Array.isArray(parsed.tradingPriorities)
-      ? parsed.tradingPriorities.map((x) => stripStars(String(x || ''))).filter(Boolean).slice(0, 6)
+      ? parsed.tradingPriorities
+        .map((x) => sanitizeLine(stripStars(String(x || ''))))
+        .filter(Boolean)
+        .slice(0, 6)
       : [];
     if (!brief && pri.length === 0) return null;
+    assertNoSourceMarkers(`${brief}\n${pri.join('\n')}`);
     return { aiSessionBrief: brief, aiTradingPriorities: pri };
   } catch (e) {
     clearTimeout(t);

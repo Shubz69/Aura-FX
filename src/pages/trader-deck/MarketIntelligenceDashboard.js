@@ -26,6 +26,7 @@ function normalizeForUI(data) {
     name: d.name || d.title || '',
     direction: (d.direction || 'neutral').toLowerCase(),
     impact: typeof d.impact === 'string' ? d.impact.toLowerCase() : (d.impact || 'medium'),
+    effect: d.effect || '',
   }));
   const signals = (data.crossAssetSignals || []).map((s) => ({
     asset: s.asset || '',
@@ -39,12 +40,14 @@ function normalizeForUI(data) {
         ? (pulse.score ?? pulse.value)
         : 50,
       label: (pulse && pulse.label) || 'NEUTRAL',
+      recommendedAction: Array.isArray(pulse?.recommendedAction) ? pulse.recommendedAction : [],
     },
     keyDrivers: drivers,
     crossAssetSignals: signals,
     marketChangesToday: data.marketChangesToday || [],
     traderFocus: data.traderFocus || [],
     riskRadar: data.riskRadar || [],
+    riskEngine: data.riskEngine || null,
     riskRadarDate: data.riskRadarDate || null,
     updatedAt: data.updatedAt,
   };
@@ -187,6 +190,7 @@ export default function MarketIntelligenceDashboard({ embedded }) {
     marketChangesToday,
     traderFocus,
     riskRadar,
+    riskEngine,
     updatedAt,
   } = showing;
 
@@ -199,13 +203,15 @@ export default function MarketIntelligenceDashboard({ embedded }) {
       const r = editDraft.marketRegime || {};
       return (
         <div className="td-mi-regime-rows td-mi-edit">
-          {['currentRegime', 'primaryDriver', 'secondaryDriver', 'marketSentiment'].map((key, i) => (
+          {['currentRegime', 'bias', 'primaryDriver', 'secondaryDriver', 'marketSentiment', 'tradeEnvironment'].map((key) => (
             <div key={key} className="td-mi-regime-row">
               <label className="td-mi-regime-label">
-                {key === 'currentRegime' && 'Current Regime'}
+                {key === 'currentRegime' && 'Regime'}
+                {key === 'bias' && 'Bias'}
                 {key === 'primaryDriver' && 'Primary Driver'}
                 {key === 'secondaryDriver' && 'Secondary Driver'}
-                {key === 'marketSentiment' && 'Market Sentiment'}
+                {key === 'marketSentiment' && 'Global Sentiment'}
+                {key === 'tradeEnvironment' && 'Trade Environment'}
               </label>
               <input
                 type="text"
@@ -255,7 +261,7 @@ export default function MarketIntelligenceDashboard({ embedded }) {
         </div>
       );
     }
-    return <MarketPulseGauge score={marketPulse.score} label={marketPulse.label} />;
+    return <MarketPulseGauge score={marketPulse.score} label={marketPulse.label} recommendedAction={marketPulse.recommendedAction} />;
   };
 
   const renderListEdit = (list, key, placeholder) => (
@@ -462,16 +468,16 @@ export default function MarketIntelligenceDashboard({ embedded }) {
         <DashboardPanel title="Trader Focus" wide className="td-mi-panel--focus">
           {editMode && editDraft ? renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item') : <FocusList items={traderFocus} />}
         </DashboardPanel>
-        <DashboardPanel title="Risk Radar" wide className="td-mi-panel--radar">
+        <DashboardPanel title="Market Risk Engine" wide className="td-mi-panel--radar">
           {editMode && editDraft ? (
             <>
-              <p className="td-mi-source">Upcoming news. List refreshes at midnight.</p>
+              <p className="td-mi-source">Event-risk engine. List refreshes from live calendar and macro flow.</p>
               {renderListEdit(editDraft.riskRadar, 'riskRadar', 'News event')}
             </>
           ) : (
             <>
-              <p className="td-mi-source td-mi-source--readonly">Upcoming news. Refreshes at midnight.</p>
-              <RiskRadarList items={riskRadar} />
+              <p className="td-mi-source td-mi-source--readonly">Cross-market risk engine with event, volatility, liquidity and clustering context.</p>
+              <RiskRadarList items={riskRadar} riskEngine={riskEngine} />
             </>
           )}
         </DashboardPanel>

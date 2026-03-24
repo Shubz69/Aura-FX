@@ -10,7 +10,7 @@ function ArrowIcon({ direction }) {
   return <span className="td-mi-arrow td-mi-arrow--neutral" aria-hidden>↔</span>;
 }
 
-export default function MarketPulseGauge({ score = 50, label = 'NEUTRAL' }) {
+export default function MarketPulseGauge({ score = 50, label = 'NEUTRAL', recommendedAction = [] }) {
   const normalized = Math.max(0, Math.min(100, Number(score)));
   // Needle: 0 = left (Risk Off), 100 = right (Risk On). Semi-circle = 180°; we use -90° to +90° (left to right)
   const rotation = -90 + (normalized / 100) * 180;
@@ -35,6 +35,20 @@ export default function MarketPulseGauge({ score = 50, label = 'NEUTRAL' }) {
       </div>
       <div className={`td-mi-gauge-badge td-mi-gauge-badge--${badgeClass}`}>
         {label}
+      </div>
+      <div className="td-mi-pulse-meta">
+        <p><strong>Market State:</strong> {label}</p>
+        <p><strong>Confidence:</strong> {normalized}%</p>
+        {Array.isArray(recommendedAction) && recommendedAction.length > 0 && (
+          <>
+            <p><strong>Recommended Action:</strong></p>
+            <ul className="td-mi-bullets">
+              {recommendedAction.slice(0, 3).map((line, idx) => (
+                <li key={idx} className="td-mi-bullet-item">{line}</li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
     </div>
   );

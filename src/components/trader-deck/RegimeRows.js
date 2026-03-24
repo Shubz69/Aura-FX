@@ -1,10 +1,12 @@
 import React from 'react';
 
 const ROWS = [
-  { key: 'currentRegime', label: 'Current Regime' },
+  { key: 'currentRegime', label: 'Regime' },
+  { key: 'bias', label: 'Bias' },
   { key: 'primaryDriver', label: 'Primary Driver' },
   { key: 'secondaryDriver', label: 'Secondary Driver' },
-  { key: 'marketSentiment', label: 'Market Sentiment' },
+  { key: 'marketSentiment', label: 'Global Sentiment' },
+  { key: 'tradeEnvironment', label: 'Trade Environment' },
 ];
 
 export default function RegimeRows({ regime }) {

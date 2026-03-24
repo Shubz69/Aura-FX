@@ -3,6 +3,7 @@ const { runEngine } = require('../marketIntelligenceEngine');
 const { getTemplate, normalizePeriod, parseTemplateFromText } = require('./briefTemplateService');
 const { getOpenAIModelForChat } = require('../../ai/openai-config');
 const { fetchWithTimeout } = require('./fetchWithTimeout');
+const { enrichTraderDeckPayload } = require('../openaiTraderInsights');
 
 const SOURCE_MARKER_RE = /(https?:\/\/|www\.|source\s*:|sources\s*:|according to|reuters|bloomberg|fmp|finnhub|forex factory|trading economics)/i;
 
@@ -51,9 +52,51 @@ function stripSources(text) {
   return lines.join('\n');
 }
 
+function sanitizeSentence(text) {
+  return String(text || '')
+    .replace(/\b(according to|reported by|via)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function assertNoSources(text) {
   if (SOURCE_MARKER_RE.test(String(text || ''))) {
     throw new Error('Brief contains source markers and was blocked');
+  }
+}
+
+function sanitizeOutlookPayload(value) {
+  if (value == null) return value;
+  if (typeof value === 'string') {
+    return sanitizeSentence(stripSources(value));
+  }
+  if (Array.isArray(value)) {
+    return value
+      .map((v) => sanitizeOutlookPayload(v))
+      .filter((v) => v !== '' && v != null);
+  }
+  if (typeof value === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) {
+      out[k] = sanitizeOutlookPayload(v);
+    }
+    return out;
+  }
+  return value;
+}
+
+function validateOutlookPayload(payload) {
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('Outlook payload is invalid');
+  }
+  if (!payload.marketRegime || !payload.marketPulse) {
+    throw new Error('Outlook payload missing regime/pulse');
+  }
+  const requiredArrays = ['keyDrivers', 'crossAssetSignals', 'marketChangesToday', 'traderFocus', 'riskRadar'];
+  for (const key of requiredArrays) {
+    if (!Array.isArray(payload[key]) || payload[key].length === 0) {
+      throw new Error(`Outlook payload missing ${key}`);
+    }
   }
 }
 
@@ -65,6 +108,21 @@ function normalizeCalendarValue(v) {
   if (v == null) return null;
   const s = String(v).trim();
   return s === '' ? null : s;
+}
+
+function getAutomationModel() {
+  return String(
+    process.env.OPENAI_AUTOMATION_MODEL
+    || process.env.OPENAI_CHAT_MODEL
+    || process.env.OPENAI_MODEL
+    || getOpenAIModelForChat()
+  ).trim();
+}
+
+function assertAutomationModelConfigured() {
+  if (!String(process.env.OPENAI_AUTOMATION_MODEL || '').trim()) {
+    throw new Error('OPENAI_AUTOMATION_MODEL is required for automated Trader Desk runs');
+  }
 }
 
 async function fetchNewsSample() {
@@ -87,6 +145,35 @@ async function fetchNewsSample() {
   } catch (_) {
     return [];
   }
+}
+
+async function fetchUnifiedNewsSample() {
+  try {
+    const newsHandler = require('../news');
+    let payload = null;
+    const req = {
+      method: 'GET',
+      headers: {},
+      query: { refresh: '1' },
+      url: 'http://localhost/api/trader-deck/news?refresh=1',
+    };
+    const res = {
+      setHeader: () => {},
+      status: () => res,
+      json: (p) => { payload = p; return p; },
+      end: () => {},
+    };
+    await newsHandler(req, res);
+    const rows = Array.isArray(payload?.articles) ? payload.articles : [];
+    const headlines = rows
+      .map((r) => String(r?.headline || '').trim())
+      .filter(Boolean)
+      .slice(0, 20);
+    if (headlines.length > 0) return headlines;
+  } catch (_) {
+    // fallback below
+  }
+  return fetchNewsSample();
 }
 
 function buildFactPack({ period, template, market, econ, news }) {
@@ -138,13 +225,14 @@ async function generateWithOpenAi(factPack, template) {
         Authorization: `Bearer ${key}`,
       },
       body: JSON.stringify({
-        model: getOpenAIModelForChat(),
-        temperature: 0.2,
-        max_tokens: 1200,
+        model: getAutomationModel(),
+        temperature: 0.15,
+        max_tokens: 1800,
+        response_format: { type: 'json_object' },
         messages: [
           {
             role: 'system',
-            content: 'You are a market brief writer. Return valid JSON only: {"title":"string","sections":[{"heading":"string","body":"string"}],"instrumentNotes":[{"instrument":"string","note":"string"}],"riskRadar":["string"],"playbook":["string"]}. Never include source names, references, URLs, or citation language.',
+            content: 'You are an institutional multi-asset trading desk analyst. Return valid JSON only: {"title":"string","sections":[{"heading":"string","body":"string"}],"instrumentNotes":[{"instrument":"string","note":"string"}],"riskRadar":["string"],"playbook":["string"]}. Cover FX, indices, commodities, crypto, yields/rates and global risk sentiment where relevant from provided facts. Never include source names, references, URLs, or citation language. Never invent facts.',
           },
           { role: 'user', content: JSON.stringify(prompt) },
         ],
@@ -266,6 +354,17 @@ async function ensureAutomationTables() {
     )
   `);
   await executeQuery(`
+    CREATE TABLE IF NOT EXISTS trader_deck_outlook (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      date DATE NOT NULL,
+      period VARCHAR(20) NOT NULL,
+      payload JSON NOT NULL,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_date_period (date, period),
+      INDEX idx_tdo_date (date)
+    )
+  `);
+  await executeQuery(`
     CREATE TABLE IF NOT EXISTS trader_deck_briefs (
       id INT AUTO_INCREMENT PRIMARY KEY,
       date DATE NOT NULL,
@@ -325,6 +424,17 @@ async function finalizeRun(runKey, status, briefId, errorMessage) {
   );
 }
 
+async function saveOutlookSnapshot({ period, date, payload }) {
+  await executeQuery(
+    `INSERT INTO trader_deck_outlook (date, period, payload)
+     VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       payload = VALUES(payload),
+       updated_at = CURRENT_TIMESTAMP`,
+    [date, period, JSON.stringify(payload)]
+  );
+}
+
 async function publishAutoBrief({ period, date, title, body }) {
   const safeTitle = String(title || 'Market Brief').slice(0, 255);
   const [result] = await executeQuery(
@@ -362,6 +472,7 @@ function computeTitle(template, now, timeZone) {
 }
 
 async function generateAndStoreBrief({ period, timeZone = 'Europe/London', runDate = new Date() }) {
+  assertAutomationModelConfigured();
   await ensureAutomationTables();
   const normalizedPeriod = normalizePeriod(period);
   const date = toYmdInTz(runDate, timeZone);
@@ -377,7 +488,7 @@ async function generateAndStoreBrief({ period, timeZone = 'Europe/London', runDa
       getTemplate(normalizedPeriod),
       runEngine(),
       fetchEconomicCalendar(),
-      fetchNewsSample(),
+      fetchUnifiedNewsSample(),
     ]);
     const factPack = buildFactPack({
       period: normalizedPeriod,
@@ -407,6 +518,49 @@ async function generateAndStoreBrief({ period, timeZone = 'Europe/London', runDa
   }
 }
 
+async function generateAndStoreOutlook({ period, timeZone = 'Europe/London', runDate = new Date() }) {
+  assertAutomationModelConfigured();
+  await ensureAutomationTables();
+  const normalizedPeriod = normalizePeriod(period);
+  const date = toYmdInTz(runDate, timeZone);
+  const runKey = `auto-outlook:${normalizedPeriod}:${date}`;
+
+  const reserved = await reserveRun(runKey, normalizedPeriod, date);
+  if (!reserved) {
+    return { success: true, skipped: true, reason: 'already-generated', runKey, period: normalizedPeriod, date };
+  }
+
+  try {
+    const raw = await runEngine();
+    let enriched = null;
+    try {
+      enriched = await enrichTraderDeckPayload(raw);
+    } catch (_) {
+      enriched = null;
+    }
+    const full = {
+      ...raw,
+      ...(enriched || {}),
+    };
+    const sanitized = sanitizeOutlookPayload(full);
+    validateOutlookPayload(sanitized);
+    assertNoSources(JSON.stringify(sanitized));
+    await saveOutlookSnapshot({
+      period: normalizedPeriod,
+      date,
+      payload: {
+        ...sanitized,
+        updatedAt: new Date().toISOString(),
+      },
+    });
+    await finalizeRun(runKey, 'success', null, null);
+    return { success: true, runKey, date, period: normalizedPeriod };
+  } catch (err) {
+    await finalizeRun(runKey, 'failed', null, (err.message || 'outlook generation failed').slice(0, 255));
+    return { success: false, runKey, date, period: normalizedPeriod, error: err.message || 'outlook generation failed' };
+  }
+}
+
 async function generatePreviewBrief({
   period,
   timeZone = 'Europe/London',
@@ -420,7 +574,7 @@ async function generatePreviewBrief({
   const [market, econ, news] = await Promise.all([
     runEngine(),
     fetchEconomicCalendar(),
-    fetchNewsSample(),
+    fetchUnifiedNewsSample(),
   ]);
   const factPack = buildFactPack({
     period: normalizedPeriod,
@@ -471,6 +625,7 @@ function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' 
 }
 
 module.exports = {
+  generateAndStoreOutlook,
   generateAndStoreBrief,
   generatePreviewBrief,
   publishManualBrief,
@@ -481,5 +636,7 @@ module.exports = {
     shouldRunWindow,
     stripSources,
     assertNoSources,
+    sanitizeOutlookPayload,
+    validateOutlookPayload,
   },
 };

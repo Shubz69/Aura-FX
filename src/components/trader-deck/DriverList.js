@@ -24,7 +24,10 @@ export default function DriverList({ drivers = [] }) {
         <li key={i} className="td-mi-list-item">
           <ArrowIcon direction={d.direction || 'neutral'} />
           <span className="td-mi-list-main"><strong>{d.name || d.title || '—'}</strong></span>
-          <span className="td-mi-list-meta">{impactLabel(d.impact)}</span>
+          <span className="td-mi-list-meta">
+            {impactLabel(d.impact)}
+            {d.effect ? ` · ${d.effect}` : ''}
+          </span>
         </li>
       ))}
     </ul>

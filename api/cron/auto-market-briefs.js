@@ -3,7 +3,11 @@
  * Daily: 06:00 UK (Europe/London)
  * Weekly: Sunday 18:00 UK (Europe/London)
  */
-const { generateAndStoreBrief, shouldRunWindow } = require('../trader-deck/services/autoBriefGenerator');
+const { generateAndStoreOutlook, generateAndStoreBrief, shouldRunWindow } = require('../trader-deck/services/autoBriefGenerator');
+
+function hasAutomationModelConfigured() {
+  return Boolean(String(process.env.OPENAI_AUTOMATION_MODEL || '').trim());
+}
 
 function isAuthorized(req) {
   const authHeader = req.headers.authorization;
@@ -23,6 +27,13 @@ module.exports = async (req, res) => {
   if (!isAuthorized(req) && process.env.NODE_ENV === 'production') {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
+  if (!hasAutomationModelConfigured()) {
+    return res.status(503).json({
+      success: false,
+      message: 'Automation blocked: OPENAI_AUTOMATION_MODEL is required.',
+      code: 'OPENAI_AUTOMATION_MODEL_REQUIRED',
+    });
+  }
 
   const force = req.query?.force === '1' || req.query?.force === 'true';
   const periodParam = req.query?.period ? String(req.query.period).toLowerCase() : '';
@@ -36,12 +47,17 @@ module.exports = async (req, res) => {
       out.push({ period, skipped: true, reason: 'outside-window' });
       continue;
     }
-    const result = await generateAndStoreBrief({
+    const outlook = await generateAndStoreOutlook({
       period,
       runDate: now,
       timeZone: 'Europe/London',
     });
-    out.push(result);
+    const brief = await generateAndStoreBrief({
+      period,
+      runDate: now,
+      timeZone: 'Europe/London',
+    });
+    out.push({ period, outlook, brief });
   }
 
   return res.status(200).json({

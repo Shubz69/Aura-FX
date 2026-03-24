@@ -12,7 +12,7 @@ import {
 } from '../../utils/economicCalendarTime';
 import '../../styles/trader-deck/EconomicCalendarView.css';
 
-const IMPACT_LABELS = { high: 'HIGH', medium: 'MED', low: 'LOW' };
+const IMPACT_LABELS = { high: 'HIGH', medium: 'MEDIUM', low: 'LOW' };
 const CURRENCIES = ['ALL', 'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF', 'CNH'];
 const SOON_WINDOW_MS = 5 * 60 * 1000;
 const REFRESH_INTERVAL_MS = 75 * 1000;
@@ -147,16 +147,14 @@ export default function EconomicCalendarView() {
         <div className="ec-header-left">
           <h2 className="ec-title">Economic Calendar</h2>
           <p className="ec-sub">
-            Showing upcoming economic events
+            Impact-tagged event risk across key regions
             {updatedAt && (
               <span className="ec-updated"> · Updated {new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             )}
           </p>
         </div>
         <div className="ec-header-right">
-          {highCount > 0 && (
-            <span className="ec-high-badge">{highCount} High Impact</span>
-          )}
+          {highCount > 0 && <span className="ec-high-badge">{highCount} High Impact Events Ahead</span>}
           <select
             className="ec-select"
             value={days}
@@ -198,6 +196,7 @@ export default function EconomicCalendarView() {
           </select>
         </div>
       </div>
+      <p className="ec-source-note">Clustered events can trigger volatility spikes across FX, indices, commodities and crypto.</p>
 
       {loading && (
         <div className="ec-loading">
@@ -259,7 +258,7 @@ export default function EconomicCalendarView() {
         </section>
       ))}
 
-      <p className="ec-source-note">Times shown in your regional timezone ({viewerTimeZone})</p>
+      <p className="ec-source-note">Times shown in your regional timezone ({viewerTimeZone}).</p>
     </div>
   );
 }

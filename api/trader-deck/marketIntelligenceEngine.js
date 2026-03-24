@@ -83,7 +83,7 @@ function directionFromChange(prev, curr) {
 function sentimentFromScore(score) {
   if (score >= 65) return 'Risk On';
   if (score <= 35) return 'Risk Off';
-  return 'Neutral';
+  return 'Mixed';
 }
 
 // --- Resolve 10Y yield (FRED primary, FMP fallback) ---
@@ -118,16 +118,31 @@ function getTreasuryRecentDirection(fred) {
 function buildMarketRegime(fred, finnhub, fmp, spxQuote, fng) {
   const treasury = getTreasury10y(fred, fmp);
   const hasRates = treasury != null && !Number.isNaN(treasury);
-  const regime = hasRates && treasury > 4 ? 'Rate Sensitivity' : hasRates && treasury < 3.5 ? 'Growth / Low Rates' : 'Mixed';
-  const primary = hasRates ? 'Bond Yields' : 'Macro Data';
-  const secondary = 'US Economic Data';
+  const regime = hasRates && treasury > 4.25
+    ? 'Rate Sensitivity'
+    : hasRates && treasury < 3.4
+      ? 'Liquidity Driven'
+      : 'Risk Rotation';
+  const primary = hasRates ? 'Bond Yields' : 'Global Liquidity';
+  const secondary = 'Macro Data + Commodities + Geopolitics';
   const pulseScore = buildMarketPulse(fred, finnhub, fmp, spxQuote, fng).score;
-  const marketSentiment = sentimentFromScore(pulseScore);
+  const marketSentiment = sentimentFromScore(pulseScore) === 'Mixed' ? 'Neutral / Mixed' : sentimentFromScore(pulseScore);
+  const bias = sentimentFromScore(pulseScore);
+  const tradeEnvironment =
+    pulseScore >= 68
+      ? 'Trending'
+      : pulseScore <= 32
+        ? 'Volatile'
+        : hasRates && treasury > 4.4
+          ? 'Event-Driven'
+          : 'Choppy';
   return {
     currentRegime: regime,
+    bias,
     primaryDriver: primary,
     secondaryDriver: secondary,
     marketSentiment,
+    tradeEnvironment,
   };
 }
 
@@ -165,8 +180,22 @@ function buildMarketPulse(fred, finnhub, fmp, spxQuote, fng) {
 
   score = Math.max(0, Math.min(100, score));
   const state = sentimentFromScore(score);
-  const label = state === 'Risk On' ? 'RISK ON' : state === 'Risk Off' ? 'RISK OFF' : 'NEUTRAL';
-  return { state, score, label, fng: fng || null };
+  const label = state === 'Risk On' ? 'RISK ON' : state === 'Risk Off' ? 'RISK OFF' : 'MIXED';
+  const recommendedAction = [];
+  if (state === 'Risk Off') {
+    recommendedAction.push('Reduce position size');
+    recommendedAction.push('Avoid breakout entries into resistance');
+    recommendedAction.push('Wait for confirmation before risk-on continuation');
+  } else if (state === 'Risk On') {
+    recommendedAction.push('Prioritize trend continuation setups');
+    recommendedAction.push('Scale only when cross-asset confirms');
+    recommendedAction.push('Protect gains into high-impact event windows');
+  } else {
+    recommendedAction.push('Avoid forcing directional conviction');
+    recommendedAction.push('Wait for confirmation around key levels');
+    recommendedAction.push('Expect volatility spikes around scheduled events');
+  }
+  return { state, score, label, confidence: score, recommendedAction, fng: fng || null };
 }
 
 // --- Key drivers ---
@@ -182,12 +211,14 @@ function buildKeyDrivers(fred, finnhub, fmp, spxQuote) {
     impact: 'high',
     biasLabel: treasury != null ? (treasury > 4 ? 'Rising' : treasury < 3.5 ? 'Falling' : 'Stable') : '—',
     value: treasury != null ? `${Number(treasury).toFixed(2)}%` : undefined,
+    effect: treasury > 4 ? 'Pressure on equities and gold' : 'Supportive for duration assets',
   });
   drivers.push({
     name: 'US Dollar',
     direction: eurUsd && eurUsd.dp != null ? (eurUsd.dp < 0 ? 'up' : eurUsd.dp > 0 ? 'down' : 'neutral') : 'neutral',
-    impact: 'medium',
+    impact: 'high',
     biasLabel: eurUsd && eurUsd.dp != null ? (eurUsd.dp < 0 ? 'Strong' : 'Weak') : '—',
+    effect: 'FX pairs and commodities repricing around USD trend',
   });
   const oilDp = oil && oil.dp != null ? oil.dp : null;
   const oilPrice = oil && oil.c != null ? oil.c : null;
@@ -197,6 +228,7 @@ function buildKeyDrivers(fred, finnhub, fmp, spxQuote) {
     impact: 'medium',
     biasLabel: oilDp != null ? (oilDp > 0.3 ? 'Rising' : oilDp < -0.3 ? 'Falling' : 'Stable') : '—',
     value: oilPrice != null ? `$${Number(oilPrice).toFixed(2)}` : undefined,
+    effect: 'Inflation expectations and risk sentiment shift',
   });
   const spxDp = spxQuote && spxQuote.dp != null ? spxQuote.dp : null;
   drivers.push({
@@ -205,6 +237,7 @@ function buildKeyDrivers(fred, finnhub, fmp, spxQuote) {
     impact: 'high',
     biasLabel: spxDp != null ? (spxDp > 0.5 ? 'Bullish' : spxDp < -0.5 ? 'Bearish' : 'Flat') : '—',
     value: spxQuote && spxQuote.c ? `${Number(spxQuote.c).toFixed(0)}` : undefined,
+    effect: 'Global risk appetite transmission into FX and crypto',
   });
   return drivers;
 }
@@ -281,14 +314,29 @@ function buildCrossAssetSignals(fred, finnhub, fmp, spxQuote, rsi) {
     direction: oilDp != null ? (oilDp > 0.25 ? 'up' : oilDp < -0.25 ? 'down' : 'neutral') : 'neutral',
   });
 
+  const btc = finnhub.forex && finnhub.forex.btc ? finnhub.forex.btc : null;
+  const btcDp = btc && btc.dp != null ? Number(btc.dp) : null;
+  signals.push({
+    asset: 'Crypto',
+    signal: btcDp != null ? (btcDp > 0.7 ? 'Risk appetite improving' : btcDp < -0.7 ? 'Defensive tone' : 'Range-bound') : 'Following broad risk sentiment',
+    direction: btcDp != null ? (btcDp > 0.3 ? 'up' : btcDp < -0.3 ? 'down' : 'neutral') : 'neutral',
+  });
+
+  const vix = fmp && fmp.vix != null ? Number(fmp.vix) : null;
+  signals.push({
+    asset: 'Volatility',
+    signal: vix != null ? (vix > 20 ? `Elevated (${vix.toFixed(1)})` : `Contained (${vix.toFixed(1)})`) : 'Watch for volatility clustering',
+    direction: 'neutral',
+  });
+
   if (rsi != null) {
     signals.push({
-      asset: 'RSI(SPY)',
+      asset: 'DXY RSI',
       signal:
         rsi > 70
-          ? `Overbought (${rsi.toFixed(1)}) — pullback risk`
+          ? `Overbought (${rsi.toFixed(1)})`
           : rsi < 30
-            ? `Oversold (${rsi.toFixed(1)}) — bounce risk`
+            ? `Oversold (${rsi.toFixed(1)})`
             : `Neutral zone (${rsi.toFixed(1)})`,
       direction: 'neutral',
     });
@@ -305,13 +353,15 @@ function buildMarketChangesToday(finnhub, fmp) {
     .filter(Boolean);
   const seen = new Set();
   const themes = [
-    { keywords: ['fed', 'rate', 'interest', 'fomc', 'powell'], title: 'Fed policy in focus' },
-    { keywords: ['cpi', 'inflation', 'consumer price'], title: 'Inflation data in focus' },
-    { keywords: ['jobs', 'employment', 'nfp', 'nonfarm', 'unemployment'], title: 'Labour market in focus' },
-    { keywords: ['treasury', 'yield', 'bond', '10-year'], title: 'Bond yields driving moves' },
-    { keywords: ['dollar', 'usd', 'greenback', 'eur', 'euro'], title: 'USD strength in focus' },
-    { keywords: ['gold', 'xau', 'precious'], title: 'Gold reacting to macro' },
-    { keywords: ['geopolitic', 'war', 'tension', 'election'], title: 'Geopolitical risk in focus' },
+    { keywords: ['fed', 'rate', 'interest', 'fomc', 'powell'], title: 'Rates narrative shifted intraday and repriced risk assets' },
+    { keywords: ['cpi', 'inflation', 'consumer price'], title: 'Inflation-sensitive assets adjusted to fresh macro impulse' },
+    { keywords: ['jobs', 'employment', 'nfp', 'nonfarm', 'unemployment'], title: 'USD and yields reacted to labor-data surprise tone' },
+    { keywords: ['treasury', 'yield', 'bond', '10-year'], title: 'Yield direction altered equity and gold momentum' },
+    { keywords: ['dollar', 'usd', 'greenback', 'eur', 'euro'], title: 'USD pressure/strength rebalanced major FX pairs' },
+    { keywords: ['gold', 'xau', 'precious'], title: 'Gold repriced against real-yield and risk backdrop' },
+    { keywords: ['oil', 'brent', 'wti', 'opec', 'supply'], title: 'Oil tone influenced inflation expectations and risk sentiment' },
+    { keywords: ['bitcoin', 'btc', 'crypto', 'ethereum'], title: 'Crypto remained a proxy for speculative risk appetite' },
+    { keywords: ['geopolitic', 'war', 'tension', 'election'], title: 'Geopolitical risk added cross-asset volatility premium' },
   ];
   for (const t of themes) {
     const match = headlines.some((h) => t.keywords.some((k) => (h || '').toLowerCase().includes(k)));
@@ -321,8 +371,8 @@ function buildMarketChangesToday(finnhub, fmp) {
     }
   }
   if (items.length === 0) {
-    items.push({ title: 'Macro and rates driving sentiment', priority: 'medium' });
-    items.push({ title: 'Watch USD and bond yields', priority: 'low' });
+    items.push({ title: 'Cross-asset tone stayed mixed as macro and liquidity signals diverged', priority: 'medium' });
+    items.push({ title: 'No dominant narrative: confirmation remained essential before commitment', priority: 'low' });
   }
   return items.slice(0, 6);
 }
@@ -330,11 +380,13 @@ function buildMarketChangesToday(finnhub, fmp) {
 // --- Trader Focus ---
 function buildTraderFocus(fred, finnhub, keyDrivers, crossAssetSignals) {
   const focus = [];
-  if (fred.treasury10y != null) focus.push({ title: 'Watch US bond yields', reason: 'Primary macro driver' });
+  if (fred.treasury10y != null) focus.push({ title: 'Watch bond yields for equity and gold reaction pivots', reason: 'Primary macro driver' });
   const usdSignal = (crossAssetSignals || []).find((s) => s.asset === 'USD');
-  if (usdSignal && usdSignal.direction !== 'neutral') focus.push({ title: 'Monitor EURUSD reaction to USD', reason: 'FX sensitivity' });
-  focus.push({ title: "Track gold's reaction to real yields", reason: 'Inverse correlation' });
-  if ((keyDrivers || []).some((d) => d.name === 'Bond Yields' && d.direction === 'up')) focus.push({ title: 'Rate-sensitive assets under pressure', reason: 'Yields rising' });
+  if (usdSignal && usdSignal.direction !== 'neutral') focus.push({ title: 'Treat USD trend as directional filter for majors', reason: 'FX sensitivity' });
+  focus.push({ title: 'Avoid new positions immediately ahead of high-impact events', reason: 'Event-risk control' });
+  focus.push({ title: 'Reduce risk when releases cluster within a single session window', reason: 'Volatility management' });
+  focus.push({ title: 'Prioritize confirmation-based entries over predictive entries', reason: 'Execution discipline' });
+  if ((keyDrivers || []).some((d) => d.name === 'Bond Yields' && d.direction === 'up')) focus.push({ title: 'Keep size conservative in rate-sensitive instruments', reason: 'Yields rising' });
   return focus.slice(0, 5);
 }
 
@@ -565,14 +617,43 @@ function buildRiskRadar(fmp, finnhub) {
   const headlineWatch = buildRiskRadarHeadlineWatch(finnhub, fmp, calTitlesLower);
   const merged = [...calendarOut, ...headlineWatch].slice(0, RR_MAX_TOTAL);
 
-  if (merged.length === 0) {
-    return [
+  const fallbackItems = [
       { title: 'High-impact US data (CPI, NFP, GDP) — check calendar', severity: 'high', impact: 'high', currency: 'USD' },
       { title: 'Fed guidance & yields — watch headlines', severity: 'medium', impact: 'medium', currency: 'USD' },
       { title: 'Geopolitical headlines — risk flows', severity: 'medium', impact: 'medium', currency: 'GLB' },
     ];
+  const radarItems = merged.length === 0 ? fallbackItems : merged;
+
+  const eventRisk = Math.min(100, Math.round((rows.slice(0, 4).reduce((sum, r) => sum + (r._score || 0), 0) / 4) || 35));
+  const geopoliticalRisk = /geopolitic|war|tension|sanction|conflict/i.test((finnhub.news || []).map((n) => n.headline || '').join(' ')) ? 72 : 44;
+  const volatility = Math.min(100, Math.round(eventRisk * 0.6 + geopoliticalRisk * 0.4));
+  const clustering = Math.min(100, Math.max(20, Math.round((rows.length / Math.max(1, RR_HORIZON_DAYS)) * 18)));
+  const liquidity = rows.some((r) => (r.time || '').toLowerCase().includes('all day')) ? 58 : 46;
+  const score = Math.round(eventRisk * 0.34 + geopoliticalRisk * 0.18 + volatility * 0.18 + liquidity * 0.14 + clustering * 0.16);
+  const level = score >= 80 ? 'Extreme' : score >= 65 ? 'High' : score >= 45 ? 'Moderate' : 'Low';
+
+  let nextRiskEventInMins = null;
+  const nowMs = Date.now();
+  for (const r of rows.sort((a, b) => (a._ms || 0) - (b._ms || 0))) {
+    if (r._ms && r._ms > nowMs) {
+      nextRiskEventInMins = Math.max(1, Math.round((r._ms - nowMs) / 60000));
+      break;
+    }
   }
-  return merged;
+
+  return {
+    score,
+    level,
+    breakdown: {
+      eventRisk,
+      geopoliticalRisk,
+      volatility,
+      liquidity,
+      clustering,
+    },
+    nextRiskEventInMins,
+    items: radarItems,
+  };
 }
 
 /** Short “market watch” lines from headlines when they add context calendar rows don’t cover. */
@@ -658,7 +739,13 @@ function buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi) {
     crossAssetSignals,
     marketChangesToday,
     traderFocus,
-    riskRadar,
+    riskRadar: riskRadar.items || [],
+    riskEngine: {
+      score: riskRadar.score,
+      level: riskRadar.level,
+      breakdown: riskRadar.breakdown,
+      nextRiskEventInMins: riskRadar.nextRiskEventInMins,
+    },
     headlineSample,
     updatedAt: new Date().toISOString(),
   };

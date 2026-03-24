@@ -23,6 +23,7 @@ function normalizeForUI(data) {
     name: d.name || d.title || '',
     direction: (d.direction || 'neutral').toLowerCase(),
     impact: typeof d.impact === 'string' ? d.impact.toLowerCase() : (d.impact || 'medium'),
+    effect: d.effect || '',
   }));
   const signals = (data.crossAssetSignals || []).map((s) => ({
     asset: s.asset || '',
@@ -34,12 +35,14 @@ function normalizeForUI(data) {
     marketPulse: {
       score: pulse && (typeof pulse.score === 'number' ? pulse.score : pulse.value) != null ? (pulse.score ?? pulse.value) : 50,
       label: (pulse && pulse.label) || 'NEUTRAL',
+      recommendedAction: Array.isArray(pulse?.recommendedAction) ? pulse.recommendedAction : [],
     },
     keyDrivers: drivers,
     crossAssetSignals: signals,
     marketChangesToday: data.marketChangesToday || [],
     traderFocus: data.traderFocus || [],
     riskRadar: data.riskRadar || [],
+    riskEngine: data.riskEngine || null,
     riskRadarDate: data.riskRadarDate || null,
     updatedAt: data.updatedAt,
     aiSessionBrief: data.aiSessionBrief || '',
@@ -210,6 +213,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     marketChangesToday,
     traderFocus,
     riskRadar,
+    riskEngine,
     aiSessionBrief,
     aiTradingPriorities,
   } = showing;
@@ -219,13 +223,15 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       const r = editDraft.marketRegime || {};
       return (
         <div className="td-mi-regime-rows td-mi-edit">
-          {['currentRegime', 'primaryDriver', 'secondaryDriver', 'marketSentiment'].map((key) => (
+          {['currentRegime', 'bias', 'primaryDriver', 'secondaryDriver', 'marketSentiment', 'tradeEnvironment'].map((key) => (
             <div key={key} className="td-mi-regime-row">
               <label className="td-mi-regime-label">
-                {key === 'currentRegime' && 'Current Regime'}
+                {key === 'currentRegime' && 'Regime'}
+                {key === 'bias' && 'Bias'}
                 {key === 'primaryDriver' && 'Primary Driver'}
                 {key === 'secondaryDriver' && 'Secondary Driver'}
-                {key === 'marketSentiment' && 'Market Sentiment'}
+                {key === 'marketSentiment' && 'Global Sentiment'}
+                {key === 'tradeEnvironment' && 'Trade Environment'}
               </label>
               <input
                 type="text"
@@ -257,7 +263,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
         </div>
       );
     }
-    return <MarketPulseGauge score={marketPulse.score} label={marketPulse.label} />;
+    return <MarketPulseGauge score={marketPulse.score} label={marketPulse.label} recommendedAction={marketPulse.recommendedAction} />;
   };
 
   const renderListEdit = (list, key, placeholder) => (
@@ -412,9 +418,9 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               <DashboardPanel title="Trader Focus" className="td-outlook-panel td-outlook-panel--focus">
                 {editMode && editDraft ? renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item') : (traderFocus && traderFocus.length > 0 ? <FocusList items={traderFocus} /> : <p className="td-outlook-empty">No focus items. Use Edit to add.</p>)}
               </DashboardPanel>
-              <DashboardPanel title="Risk Radar" className="td-outlook-panel td-outlook-panel--radar">
+              <DashboardPanel title="Market Risk Engine" className="td-outlook-panel td-outlook-panel--radar">
                 {editMode && editDraft ? renderListEdit(editDraft.riskRadar, 'riskRadar', 'News event') : (
-                  riskRadar && riskRadar.length > 0 ? <RiskRadarList items={riskRadar} /> : <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
+                  riskRadar && riskRadar.length > 0 ? <RiskRadarList items={riskRadar} riskEngine={riskEngine} /> : <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
                 )}
               </DashboardPanel>
             </div>

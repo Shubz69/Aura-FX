@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { FaExternalLinkAlt, FaNewspaper, FaSyncAlt } from 'react-icons/fa';
+import { FaNewspaper, FaSyncAlt } from 'react-icons/fa';
 import '../styles/NewsHeadlines.css';
 
 const API_BASE = typeof window !== 'undefined' ? window.location.origin : '';
 const CACHE_KEY = 'at_td_news_cache_v2';
 const CACHE_TTL = 3 * 60 * 1000;
 const AUTO_REFRESH_MS = 3 * 60 * 1000;
+const SOURCE_STRIP_RE = /\s*[-–—]\s*(reuters|bloomberg|forex factory|financial times|wsj|cnbc|yahoo finance|marketwatch)\s*$/i;
+const ATTRIBUTION_RE = /\b(according to|reported by|via)\b/i;
 
 const timeAgo = (iso) => {
   if (!iso) return '';
@@ -16,6 +18,23 @@ const timeAgo = (iso) => {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
+};
+
+const classifyHeadline = (text) => {
+  const s = String(text || '').toLowerCase();
+  if (/\b(war|conflict|sanction|emergency|surge|plunge|fomc|rate decision|cpi|nfp)\b/.test(s)) return 'HIGH';
+  if (/\b(yield|dollar|inflation|pmi|gdp|earnings|oil|crypto)\b/.test(s)) return 'MEDIUM';
+  return 'LOW';
+};
+
+const toInternalInsight = (headline) => {
+  const clean = String(headline || '')
+    .replace(SOURCE_STRIP_RE, '')
+    .replace(ATTRIBUTION_RE, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const level = classifyHeadline(clean);
+  return `${level}: ${clean}`;
 };
 
 const NewsHeadlines = () => {
@@ -46,11 +65,9 @@ const NewsHeadlines = () => {
       const json = await res.json();
       if (json.success && json.articles) {
         const rows = json.articles.map((a) => ({
-          title: a.title || a.headline || '',
-          url: a.url || '',
-          source: a.source || 'News',
+          title: toInternalInsight(a.title || a.headline || ''),
           publishedAt: a.publishedAt || a.datetime || null,
-        })).filter((a) => a.title);
+        })).filter((a) => a.title && !/^(HIGH|MEDIUM|LOW):\s*$/i.test(a.title));
         setArticles(rows);
         const now = Date.now();
         setLastFetch(new Date(now));
@@ -109,20 +126,14 @@ const NewsHeadlines = () => {
         <ul className="news-headlines__list">
           {articles.map((a, i) => (
             <li key={i} className="news-headlines__item">
-              <a
-                href={a.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="news-headlines__link"
-              >
+              <div className="news-headlines__link">
                 <div className="news-headlines__item-content">
                   <span className="news-headlines__item-title">{a.title}</span>
                   <div className="news-headlines__item-meta">
                     <span className="news-headlines__time">{timeAgo(a.publishedAt)}</span>
-                    <FaExternalLinkAlt className="news-headlines__ext-icon" />
                   </div>
                 </div>
-              </a>
+              </div>
             </li>
           ))}
         </ul>
