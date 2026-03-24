@@ -133,6 +133,122 @@ const MiniSparkline = ({ color = '#0FD98A' }) => {
         </svg>
     );
 };
+/* ══════════════════════════════════════════════
+   iPAD TOUCH 3D ROTATION — COMPANION JS SNIPPET
+   ──────────────────────────────────────────────*/
+
+  
+
+(function initIpadTilt() {
+  const scene   = document.querySelector('.ipad-scene');
+  const wrap    = document.querySelector('.ipad-wrap');
+  const cursor  = document.querySelector('.ipad-cursor');
+  if (!scene || !wrap) return;
+
+  // Base resting rotation
+  const REST_RX = 7;   // rotateX degrees at rest (desktop)
+  const REST_RY = -13; // rotateY degrees at rest (desktop)
+  const MOBILE_REST_RX = 5;
+  const MOBILE_REST_RY = -8;
+  const MAX_TILT = 22; // maximum tilt from drag, degrees
+
+  const isMobile = () => window.matchMedia('(hover:none) and (pointer:coarse)').matches;
+
+  // ── Desktop mouse tilt ──────────────────────
+  scene.addEventListener('mousemove', (e) => {
+    if (isMobile()) return;
+    const r   = scene.getBoundingClientRect();
+    const nx  = (e.clientX - r.left)  / r.width  - 0.5; // -0.5 to 0.5
+    const ny  = (e.clientY - r.top)   / r.height - 0.5;
+    const rx  = REST_RX  - ny * 18;
+    const ry  = REST_RY  + nx * 22;
+    wrap.style.transform = `translateY(0px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+    if (cursor) {
+      cursor.style.left    = (e.clientX - r.left)  + 'px';
+      cursor.style.top     = (e.clientY - r.top)   + 'px';
+      cursor.style.opacity = '1';
+    }
+  });
+
+  scene.addEventListener('mouseleave', () => {
+    if (isMobile()) return;
+    wrap.classList.remove('is-dragging');
+    wrap.classList.add('is-resting');
+    wrap.style.transform = `translateY(0px) rotateX(${REST_RX}deg) rotateY(${REST_RY}deg)`;
+    if (cursor) cursor.style.opacity = '0';
+    setTimeout(() => wrap.classList.remove('is-resting'), 700);
+  });
+
+  // ── Mobile / touch tilt ─────────────────────
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let currentRx   = MOBILE_REST_RX;
+  let currentRy   = MOBILE_REST_RY;
+  let rafId       = null;
+
+  scene.addEventListener('touchstart', (e) => {
+    if (!isMobile()) return;
+    if (e.touches.length !== 1) return;
+    e.preventDefault(); // prevent scroll while dragging the iPad
+    wrap.classList.add('is-dragging');
+    wrap.classList.remove('is-resting');
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    currentRx   = MOBILE_REST_RX;
+    currentRy   = MOBILE_REST_RY;
+
+    // Spawn gold ripple
+    spawnRipple(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+
+  scene.addEventListener('touchmove', (e) => {
+    if (!isMobile()) return;
+    if (e.touches.length !== 1) return;
+    e.preventDefault();
+
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+
+    // Map drag delta to rotation (clamp to MAX_TILT)
+    const drx = Math.max(-MAX_TILT, Math.min(MAX_TILT, -dy * 0.28));
+    const dry = Math.max(-MAX_TILT, Math.min(MAX_TILT,  dx * 0.28));
+
+    currentRx = MOBILE_REST_RX + drx;
+    currentRy = MOBILE_REST_RY + dry;
+
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      wrap.style.transform = `rotateX(${currentRx}deg) rotateY(${currentRy}deg)`;
+    });
+  }, { passive: false });
+
+  scene.addEventListener('touchend', () => {
+    if (!isMobile()) return;
+    wrap.classList.remove('is-dragging');
+    wrap.classList.add('is-resting');
+    wrap.style.transform = `rotateX(${MOBILE_REST_RX}deg) rotateY(${MOBILE_REST_RY}deg)`;
+    setTimeout(() => wrap.classList.remove('is-resting'), 700);
+  });
+
+  scene.addEventListener('touchcancel', () => {
+    wrap.classList.remove('is-dragging');
+    wrap.classList.add('is-resting');
+    wrap.style.transform = `rotateX(${MOBILE_REST_RX}deg) rotateY(${MOBILE_REST_RY}deg)`;
+    setTimeout(() => wrap.classList.remove('is-resting'), 700);
+  });
+
+  // ── Gold ripple helper ───────────────────────
+  function spawnRipple(clientX, clientY) {
+    const r    = scene.getBoundingClientRect();
+    const el   = document.createElement('div');
+    el.className = 'ipad-touch-ripple';
+    el.style.left = (clientX - r.left)  + 'px';
+    el.style.top  = (clientY - r.top)   + 'px';
+    scene.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+})();
+
 
 /* ══════════════════════════════════════════════════════════
    3D FLOATING iPAD WITH SLIDESHOW

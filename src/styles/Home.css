@@ -2,6 +2,7 @@
    HOME.CSS — AURA TERMINAL | Premium Redesign v2
    Enhanced: refined gold system, premium typography, deeper
    spatial layers, smoother transitions, polished components
+   + Glassy iPad frame + Touch 3D rotation for mobile
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
@@ -60,6 +61,21 @@
 
     /* Accent line */
     --line-gold:     linear-gradient(90deg, transparent, var(--eaa-core) 30%, var(--eaa-bright) 70%, transparent);
+
+    /* ── iPad Glass Frame tokens ── */
+    --ipad-frame-bg:      rgba(18, 16, 36, 0.55);
+    --ipad-frame-border:  rgba(255, 255, 255, 0.13);
+    --ipad-frame-blur:    18px;
+    --ipad-frame-sat:     1.18;
+    --ipad-frame-shadow:
+        0 30px 60px rgba(0,0,0,.82),
+        0 60px 100px rgba(0,0,0,.52),
+        0 100px 160px rgba(0,0,0,.28),
+        0 0 0 1px rgba(234,169,96,0.10),
+        inset 0 1px 0 rgba(255,255,255,0.22),
+        inset 0 -1px 0 rgba(234,169,96,0.06),
+        inset 1px 0 0 rgba(255,255,255,0.09),
+        inset -1px 0 0 rgba(255,255,255,0.05);
 }
 
 .home-container,
@@ -441,7 +457,7 @@ html, body {
 .partner-logo-icon { font-size: .86rem; color: rgba(234,169,96,.55); }
 
 /* ══════════════════════════════════════════════
-   3D IPAD CARD SCENE
+   3D iPAD CARD SCENE — GLASSY FRAME REDESIGN
 ══════════════════════════════════════════════ */
 .ipad-scene {
     width: 100%; max-width: 580px;
@@ -449,6 +465,10 @@ html, body {
     position: relative;
     padding-bottom: 36px; padding-right: 8px;
     cursor: none;
+    /* Allow touch events without hijacking page scroll */
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .ipad-wrap {
@@ -456,24 +476,59 @@ html, body {
     transform-style: preserve-3d;
     transform: translateY(0px) rotateX(7deg) rotateY(-13deg);
     will-change: transform;
+    /* Smooth spring-like return after touch release */
+    transition: transform 0.08s linear;
 }
 
-/* iPad body */
+/* When actively being dragged — no transition lag */
+.ipad-wrap.is-dragging {
+    transition: none;
+}
+
+/* When returning to rest — smooth spring */
+.ipad-wrap.is-resting {
+    transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── iPad body — NOW GLASSY ── */
 .ipad-body {
     width: 100%;
     border-radius: 28px;
-    background: linear-gradient(160deg, #1C1C1E 0%, #141416 60%, #0F0F11 100%);
-    box-shadow:
-        0 30px 60px rgba(0,0,0,.88),
-        0 60px 100px rgba(0,0,0,.58),
-        0 100px 160px rgba(0,0,0,.30),
-        inset 0 -14px 28px rgba(0,0,0,.32),
-        inset 0 1px 0 rgba(255,255,255,.18),
-        inset 1px 0 0 rgba(255,255,255,.07),
-        inset -1px 0 0 rgba(255,255,255,.04);
+
+    /* Glassy frame matching site theme */
+    background: var(--ipad-frame-bg);
+    backdrop-filter: blur(var(--ipad-frame-blur)) saturate(var(--ipad-frame-sat));
+    -webkit-backdrop-filter: blur(var(--ipad-frame-blur)) saturate(var(--ipad-frame-sat));
+
+    border: 1px solid var(--ipad-frame-border);
+    box-shadow: var(--ipad-frame-shadow);
+
     position: relative; z-index: 4;
-    transition: box-shadow .08s linear;
     overflow: hidden;
+}
+
+/* Glassy top-edge shimmer — replaces the old metal gradient */
+.ipad-body::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,255,255,0.28) 28%,
+        rgba(234,169,96,0.22) 54%,
+        rgba(255,255,255,0.14) 78%,
+        transparent 100%);
+    z-index: 10; pointer-events: none;
+}
+
+/* Inner aurora-like glass tint — subtle gold ambient */
+.ipad-body::after {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+        radial-gradient(ellipse at 20% 0%,  rgba(234,169,96,0.07)  0%, transparent 55%),
+        radial-gradient(ellipse at 80% 100%, rgba(120,100,200,0.04) 0%, transparent 52%);
+    pointer-events: none; z-index: 1; border-radius: 28px;
 }
 
 /* Camera + speaker bar (top) */
@@ -481,19 +536,24 @@ html, body {
     display: flex; align-items: center; justify-content: center;
     gap: .80rem;
     padding: .65rem 1.5rem .50rem;
-    background: rgba(0,0,0,.08);
+    background: rgba(0,0,0,0.10);
+    /* Glass tint on topbar */
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     position: relative; z-index: 5;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 .ipad-camera {
     width: 8px; height: 8px; border-radius: 50%;
     background: radial-gradient(circle at 38% 38%, #2A2A2C, #111113);
-    border: 1px solid rgba(255,255,255,.08);
-    box-shadow: 0 0 0 1px rgba(0,0,0,.6) inset;
+    border: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 0 0 2px rgba(234,169,96,0.08), 0 0 0 1px rgba(0,0,0,.6) inset;
 }
 .ipad-speaker {
     width: 64px; height: 5px; border-radius: 3px;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.05);
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.06);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.4);
 }
 
 /* Screen area */
@@ -504,6 +564,8 @@ html, body {
     overflow: hidden;
     position: relative;
     aspect-ratio: 4 / 3;
+    /* Screen glass reflection line */
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
 }
 
 /* Slideshow images */
@@ -516,7 +578,7 @@ html, body {
 }
 .ipad-slide.active { opacity: 1; }
 
-/* Slide placeholder gradient panels (before real images) */
+/* Slide placeholder gradient panels */
 .ipad-slide:nth-child(1) {
     background: linear-gradient(135deg,
         #0D1B3E 0%, #112048 25%, #1A3A6E 50%,
@@ -596,7 +658,11 @@ html, body {
     display: flex; justify-content: center; align-items: center;
     gap: .46rem;
     padding: .62rem 0 .70rem;
-    background: rgba(0,0,0,.10);
+    background: rgba(0,0,0,0.06);
+    /* Glass tint on dots bar */
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-top: 1px solid rgba(255,255,255,0.04);
 }
 .ipad-dot {
     width: 5px; height: 5px; border-radius: 50%;
@@ -614,33 +680,49 @@ html, body {
 .ipad-home-btn {
     display: flex; align-items: center; justify-content: center;
     padding: .62rem 0 .72rem;
-    background: rgba(0,0,0,.06);
+    background: rgba(0,0,0,.04);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-top: 1px solid rgba(255,255,255,0.04);
 }
 .ipad-home-circle {
     width: 26px; height: 26px; border-radius: 50%;
-    background: radial-gradient(circle at 40% 35%, rgba(255,255,255,.12), rgba(255,255,255,.04));
-    border: 1px solid rgba(255,255,255,.12);
-    box-shadow: 0 1px 0 rgba(255,255,255,.08) inset;
+    /* Glass-style home button */
+    background: radial-gradient(circle at 40% 35%,
+        rgba(255,255,255,.14),
+        rgba(255,255,255,.04));
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow:
+        0 1px 0 rgba(255,255,255,.10) inset,
+        0 0 0 1px rgba(234,169,96,0.08);
 }
 
-/* Physical sides (CSS) */
+/* Physical sides — now glassy/translucent */
 .ipad-wrap::before {
     content: '';
     position: absolute; left: 1%; right: 0%; top: 100%;
     height: 18px; transform-origin: top center;
     transform: rotateX(-90deg);
-    background: linear-gradient(180deg, #0E0E10 0%, #07070A 100%);
+    background: linear-gradient(180deg,
+        rgba(20,18,40,0.72) 0%,
+        rgba(10,8,22,0.55) 100%);
     border-radius: 0 0 4px 4px;
     z-index: 3; pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-top: none;
 }
 .ipad-wrap::after {
     content: '';
     position: absolute; top: 1%; bottom: 0; left: 100%;
     width: 16px; transform-origin: left center;
     transform: rotateY(90deg);
-    background: linear-gradient(90deg, #060608 0%, #030305 100%);
+    background: linear-gradient(90deg,
+        rgba(15,12,30,0.68) 0%,
+        rgba(8,6,18,0.50) 100%);
     border-radius: 0 4px 4px 0;
     z-index: 3; pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-left: none;
 }
 
 /* Scene ambient glow */
@@ -678,6 +760,22 @@ html, body {
     transition: opacity .22s ease, width .15s ease, height .15s ease;
 }
 
+/* ── Touch ripple feedback (mobile) ── */
+.ipad-touch-ripple {
+    position: absolute;
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1.5px solid rgba(234,169,96,0.52);
+    pointer-events: none; z-index: 100;
+    transform: translate(-50%,-50%) scale(0.4);
+    opacity: 0;
+    animation: touchRippleAnim 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+@keyframes touchRippleAnim {
+    0%   { opacity:.72; transform:translate(-50%,-50%) scale(.4); }
+    60%  { opacity:.30; transform:translate(-50%,-50%) scale(1.4); }
+    100% { opacity:0;   transform:translate(-50%,-50%) scale(1.8); }
+}
+
 /* Reflection */
 .ipad-reflection {
     position: absolute; top: calc(100% + 2px); left: 3%; right: 3%; height: 90px;
@@ -691,6 +789,76 @@ html, body {
     -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,.40) 0%, transparent 100%);
     mask-image: linear-gradient(to bottom, rgba(0,0,0,.40) 0%, transparent 100%);
     filter: blur(1px); z-index: 1;
+}
+
+/* ══════════════════════════════════════════════
+   TOUCH 3D ROTATION — JS HOOK CLASSES
+   Applied by JS to .ipad-scene for touch devices
+══════════════════════════════════════════════ */
+
+/*
+   JS should listen for touchstart/touchmove/touchend on .ipad-scene
+   and update a CSS custom property:
+     --touch-rx  (rotateX delta)
+     --touch-ry  (rotateY delta)
+   then apply to .ipad-wrap via inline style or classList.
+
+   The animation reference transforms:
+     - Idle:    rotateX(7deg) rotateY(-13deg)
+     - Drag:    rotateX(calc(7deg + var(--touch-rx))) rotateY(calc(-13deg + var(--touch-ry)))
+
+   See the companion JS snippet below this CSS.
+*/
+
+/* Visual hint on touch devices — subtle pulse on first load */
+@media (hover: none) and (pointer: coarse) {
+    .ipad-scene {
+        /* Ensure 3D works on mobile */
+        perspective: 900px;
+        perspective-origin: 50% 38%;
+    }
+
+    /* On mobile, default resting state has a gentle tilt */
+    .ipad-wrap {
+        transform: translateY(0px) rotateX(5deg) rotateY(-8deg);
+    }
+
+    /* Entry animation that hints at 3D rotatability */
+    .ipad-wrap {
+        animation: mobileIpadEntry 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.6s both;
+    }
+    @keyframes mobileIpadEntry {
+        0%   { transform: rotateX(0deg) rotateY(0deg) scale(0.92); opacity: 0; }
+        30%  { transform: rotateX(10deg) rotateY(-22deg) scale(1.0); opacity: 1; }
+        58%  { transform: rotateX(4deg) rotateY(-4deg); }
+        78%  { transform: rotateX(7deg) rotateY(-12deg); }
+        100% { transform: rotateX(5deg) rotateY(-8deg); }
+    }
+
+    /* Show drag hint indicator */
+    .ipad-drag-hint {
+        display: flex;
+        position: absolute;
+        bottom: -2px; left: 50%; transform: translateX(-50%);
+        align-items: center; gap: .42rem;
+        font-size: .60rem; font-weight: 600;
+        color: rgba(234,169,96,.54);
+        letter-spacing: .18em; text-transform: uppercase;
+        pointer-events: none; z-index: 10;
+        animation: hintFade 3.5s ease-in-out 2.4s forwards;
+        white-space: nowrap;
+    }
+    .ipad-drag-hint-icon {
+        font-size: .78rem; opacity: .72;
+        animation: hintSwipe 1.4s ease-in-out 2.6s 2 forwards;
+    }
+    @keyframes hintFade  { 0%{opacity:0} 18%{opacity:1} 72%{opacity:1} 100%{opacity:0} }
+    @keyframes hintSwipe { 0%,100%{transform:translateX(0)} 50%{transform:translateX(6px)} }
+}
+
+/* On desktop, hide the drag hint */
+@media (hover: hover) and (pointer: fine) {
+    .ipad-drag-hint { display: none !important; }
 }
 
 /* ══════════════════════════════════════════════
@@ -1165,7 +1333,6 @@ html, body {
     .partner-logos-row { justify-content: center; }
     .hero-eyebrow   { align-self: center; }
     .ipad-scene     { max-width: 520px; width: 100%; }
-    .ipad-wrap      { transform: rotateX(7deg) rotateY(-10deg); }
     .feature-cards-grid { grid-template-columns: repeat(2,1fr); }
     .stats-grid     { grid-template-columns: repeat(2,1fr); gap: 1.2rem; }
     .why-grid       { grid-template-columns: repeat(2,1fr); }
@@ -1189,9 +1356,15 @@ html, body {
     .home-cta-button, .home-secondary-button { width: 100%; max-width: 360px; padding: 1.05rem 2rem; }
     .hero-trust-badges { justify-content: center; gap: 1.2rem; }
     .partner-logos-row { justify-content: center; gap: 1.5rem; }
-    .ipad-scene     { perspective: none; }
-    .ipad-wrap      { transform: none; }
-    .ipad-body      { box-shadow: 0 22px 44px rgba(0,0,0,.76), inset 0 1px 0 rgba(255,255,255,.10); }
+    .ipad-scene     { perspective: 900px; }
+    .ipad-wrap      { transform: rotateX(5deg) rotateY(-8deg); }
+    .ipad-body      {
+        box-shadow:
+            0 22px 44px rgba(0,0,0,.76),
+            0 0 0 1px rgba(234,169,96,0.10),
+            inset 0 1px 0 rgba(255,255,255,.18),
+            inset 0 -1px 0 rgba(234,169,96,.05);
+    }
     .ipad-wrap::before, .ipad-wrap::after { display: none; }
     .ipad-scene::after { display: none; }
     .feature-cards-grid { grid-template-columns: 1fr; gap: 1.1rem; }
@@ -1254,3 +1427,5 @@ html, body {
     .feature-cards-grid { grid-template-columns: repeat(2,1fr); }
     .stats-grid         { grid-template-columns: repeat(2,1fr); }
 }
+
+
