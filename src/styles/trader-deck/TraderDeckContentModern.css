@@ -10,6 +10,14 @@
      lg   900–1099px (tablets landscape / small laptops)
      xl   1100–1399px (standard desktops)
      2xl  ≥ 1400px   (wide / ultrawide)
+
+   iPad targets:
+     iPad mini / Air portrait  768px  → md
+     iPad mini / Air landscape 1024px → lg
+     iPad Pro 11" portrait     834px  → md
+     iPad Pro 11" landscape    1194px → xl
+     iPad Pro 12.9" portrait   1024px → lg
+     iPad Pro 12.9" landscape  1366px → xl
    ============================================================================= */
 
 
@@ -48,7 +56,6 @@
   box-shadow: var(--journal-panel-outer-glow);
   backdrop-filter: blur(20px) saturate(1.06);
   -webkit-backdrop-filter: blur(20px) saturate(1.06);
-  /* Prevent horizontal overflow on any screen */
   overflow: hidden;
   width: 100%;
 }
@@ -74,15 +81,16 @@
   box-shadow: var(--journal-panel-outer-glow);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  /* Horizontal scroll only if calendar truly overflows */
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
-  /* Styled thin scrollbar */
   scrollbar-width: thin;
   scrollbar-color: rgba(234, 169, 96, 0.3) transparent;
   width: 100%;
+  /* iPad: ensure calendar inner content has a sensible min-width so it
+     scrolls rather than wraps/collapses awkwardly */
+  min-width: 0;
 }
 
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar::-webkit-scrollbar {
@@ -242,6 +250,20 @@
   }
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPad portrait (768px) — period row stays horizontal, not stacked
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 899px) {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sessions-list--inline {
+    justify-content: flex-end;
+  }
+}
+
 /* Period segment pill container */
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment {
   display: inline-flex;
@@ -259,7 +281,6 @@
   -webkit-backdrop-filter: blur(12px);
   flex-wrap: wrap;
   max-width: 100%;
-  /* Don't let it overflow the tab zone */
   overflow: hidden;
 }
 
@@ -281,7 +302,6 @@
   transition: color 0.2s ease, background 0.2s ease;
   cursor: pointer;
   white-space: nowrap;
-  /* Minimum touch target */
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -302,7 +322,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
-/* World clocks — above glass tab zone (gap before panel; no in-panel divider) */
+/* World clocks */
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-rail--above {
   width: 100%;
   margin-bottom: 18px;
@@ -318,7 +338,6 @@
   stroke: rgba(185, 210, 255, 0.48);
 }
 
-/* Dial face fill is SVG radial gradient; stroke only */
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-analog-clock__dial {
   stroke: rgba(150, 190, 255, 0.3);
 }
@@ -341,7 +360,7 @@
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
-  scrollbar-width: none; /* hide scrollbar but keep scroll */
+  scrollbar-width: none;
   flex-wrap: nowrap;
   width: 100%;
 }
@@ -388,7 +407,6 @@
   gap: 22px;
   align-items: start;
   width: 100%;
-  /* Mobile default: single column */
   grid-template-columns: 1fr;
 }
 
@@ -407,8 +425,34 @@
   }
 }
 
-/* Tablet + Mobile: stacked, rail below stage */
-@media (max-width: 1099px) {
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPad landscape 1024px — two-column layout (stage + narrower rail)
+   Sits within the lg breakpoint (900–1099px) so we need a targeted override
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 900px) and (max-width: 1099px) {
+  .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
+    /* Give stage priority; rail gets a fixed comfortable width */
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 270px);
+    gap: 18px;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-rail {
+    order: unset;
+    width: 100%;
+    position: static;
+    max-height: none;
+    overflow: visible;
+    align-self: start;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-main-stage {
+    order: unset;
+    min-width: 0;
+  }
+}
+
+/* Tablet + Mobile below 900px: stacked, rail below stage */
+@media (max-width: 899px) {
   .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
     grid-template-columns: 1fr;
     gap: 18px;
@@ -416,7 +460,6 @@
 
   .td-deck-with-tabs.td-layout-page .td-deck-rail {
     order: 2;
-    /* Rail full-width on mobile */
     width: 100%;
   }
 
@@ -493,6 +536,23 @@
   min-width: 0;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPad portrait (768px) — rail goes 2-col side by side below stage
+   This gives a much better use of the available space vs full-width stacked
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 899px) {
+  .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-footer {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-footer-block {
+    width: 100%;
+  }
+}
+
 
 /* ─────────────────────────────────────────────────────────────────────────────
    SHARED EYEBROW LABEL
@@ -560,11 +620,11 @@
   margin: 0;
 }
 
-/* ── Bento grid — true mobile-first ── */
+/* ── Bento grid — mobile-first ── */
 .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
   display: grid;
   gap: 14px;
-  grid-template-columns: 1fr; /* xs default: single column */
+  grid-template-columns: 1fr;
   width: 100%;
   min-width: 0;
 }
@@ -583,8 +643,8 @@
   }
 }
 
-/* md 640–899px: 2 columns, wider panels span full row */
-@media (min-width: 640px) and (max-width: 899px) {
+/* md 640–767px (phones/phablets) */
+@media (min-width: 640px) and (max-width: 767px) {
   .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
     grid-template-columns: repeat(2, 1fr);
     gap: 14px;
@@ -610,11 +670,47 @@
   }
 }
 
-/* lg 900–1099px: 3 columns for the bento */
-@media (min-width: 900px) and (max-width: 1099px) {
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPad portrait 768–899px — bento gets its own 3-column treatment
+   The main layout is stacked here, so the stage is full-width and we can
+   give the bento more columns without it feeling cramped.
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 899px) {
   .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
     grid-template-columns: repeat(3, 1fr);
     gap: 14px;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
+    grid-column: 1 / span 2;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    grid-column: 3 / span 1;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    grid-column: span 1;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
+    grid-column: 1 / span 2;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    grid-column: 3 / span 1;
+  }
+}
+
+/* lg 900–1099px: 3 columns for the bento.
+   Now that the main layout is 2-col at this range, the stage is narrower —
+   so we keep 3 cols but tighten the span assignments. */
+@media (min-width: 900px) and (max-width: 1099px) {
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 13px;
   }
 
   .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
@@ -764,14 +860,13 @@
     gap: 14px;
   }
 
-  /* Upload tile spans full width so drop zone is usable */
   .td-deck-with-tabs.td-layout-page .td-deck-mi-tile--upload {
     grid-column: 1 / -1;
   }
 }
 
-/* md 600–959px: 2-col, upload spans full */
-@media (min-width: 600px) and (max-width: 959px) {
+/* md 600–767px: 2-col, upload spans full */
+@media (min-width: 600px) and (max-width: 767px) {
   .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
     grid-template-columns: repeat(2, 1fr);
     align-items: start;
@@ -783,12 +878,32 @@
   }
 }
 
-/* lg 960–1099px: upload column (sticky) + results */
-@media (min-width: 960px) and (max-width: 1099px) {
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPad portrait 768–899px — upload column left, results right.
+   Stage is full-width here so we have room for a proper 2-col tile layout.
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 899px) {
   .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
-    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
     align-items: start;
-    gap: 18px;
+    gap: 16px;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-tile--upload {
+    position: sticky;
+    top: calc(70px + env(safe-area-inset-top, 0px) + 8px);
+    grid-column: unset;
+  }
+}
+
+/* lg 900–1099px: upload column (sticky) + results.
+   Now that the main layout is 2-col, the stage is narrower (~65% of viewport).
+   We still use upload + results layout but tighten the upload col width. */
+@media (min-width: 900px) and (max-width: 1099px) {
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
   }
 
   .td-deck-with-tabs.td-layout-page .td-deck-mi-tile--upload {
@@ -1163,14 +1278,12 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 @media (min-width: 320px) and (max-width: 479px) {
-  /* Tab zone */
   .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
     padding: 12px 10px 10px;
     border-radius: var(--radius-lg);
     margin-bottom: 12px;
   }
 
-  /* Period sub-tabs */
   .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab {
     min-width: 0;
     flex: 1;
@@ -1180,13 +1293,11 @@
     min-height: 42px;
   }
 
-  /* Content box */
   .td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern {
     padding: 12px 12px 18px !important;
     border-radius: 14px !important;
   }
 
-  /* Outlook hero → column layout */
   .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-hero {
     padding: 12px 14px;
     gap: 10px;
@@ -1202,7 +1313,6 @@
     justify-content: flex-start;
   }
 
-  /* Intelligence hero → column layout */
   .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-hero {
     padding: 12px 14px;
     gap: 12px;
@@ -1220,7 +1330,6 @@
     font-size: 1.35rem;
   }
 
-  /* Always single column on xs */
   .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -1231,12 +1340,10 @@
     border-radius: 12px;
   }
 
-  /* Bento gap */
   .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
     gap: 10px;
   }
 
-  /* Rail */
   .journal-page .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-footer-block {
     padding: 12px 12px 10px;
     border-radius: var(--radius);
@@ -1246,7 +1353,6 @@
     gap: 12px;
   }
 
-  /* AI desk brief */
   .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-desk-brief {
     padding: 12px;
   }
@@ -1255,12 +1361,10 @@
     font-size: 0.88rem;
   }
 
-  /* Grid gap */
   .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
     gap: 12px;
   }
 
-  /* Brief card — stack actions below title on very small */
   .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card {
     flex-direction: column;
     align-items: flex-start;
@@ -1272,7 +1376,6 @@
     justify-content: flex-start;
   }
 
-  /* URL row: stack input + button */
   .td-deck-with-tabs.td-layout-page .td-deck-mi-url-row {
     flex-direction: column;
   }
@@ -1354,10 +1457,10 @@
 
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   md  640–899px — tablets portrait / large phablets
+   md  640–767px — tablets portrait / large phablets (non-iPad range)
    ───────────────────────────────────────────────────────────────────────────── */
 
-@media (min-width: 640px) and (max-width: 899px) {
+@media (min-width: 640px) and (max-width: 767px) {
   .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
     padding: 16px 16px 14px;
     margin-bottom: 16px;
@@ -1374,7 +1477,6 @@
     margin-bottom: 18px;
   }
 
-  /* Two-column rail on md — show rail side by side with stage */
   .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat {
     text-align: left;
   }
@@ -1390,7 +1492,63 @@
 
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   lg  900–1099px — tablet landscape / small laptops
+   iPad portrait  768–899px — targeted polish pass
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 768px) and (max-width: 899px) {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
+    padding: 16px 18px 14px;
+    margin-bottom: 16px;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern {
+    padding: 16px 18px 22px !important;
+    border-radius: 18px !important;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-hero,
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-hero {
+    padding: 16px 20px;
+    gap: 14px;
+    margin-bottom: 18px;
+    /* Keep hero row (text + stat) side by side on iPad portrait */
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-actions {
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat {
+    text-align: right;
+    width: auto;
+    flex: 0 0 auto;
+    min-width: 120px;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-tile {
+    padding: 16px 16px 14px;
+    border-radius: 14px;
+  }
+
+  .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
+    gap: 16px;
+  }
+
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-footer {
+    gap: 14px;
+  }
+
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-desk-brief {
+    padding: 14px 16px;
+  }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   lg  900–1099px — iPad landscape + small laptops
    ───────────────────────────────────────────────────────────────────────────── */
 
 @media (min-width: 900px) and (max-width: 1099px) {
@@ -1413,7 +1571,7 @@
   }
 
   .td-deck-with-tabs.td-layout-page .td-deck-mi-tile {
-    padding: 18px 18px 16px;
+    padding: 16px 16px 14px;
   }
 }
 
@@ -1486,7 +1644,6 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 @media (pointer: coarse) and (min-width: 640px) {
-  /* Bigger touch targets for all interactive tab elements */
   .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab {
     min-height: 48px;
     padding-top: 12px;
@@ -1499,7 +1656,6 @@
     padding-right: 18px;
   }
 
-  /* Brief card actions more tappable */
   .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card {
     padding: 16px 18px;
   }
@@ -1509,55 +1665,793 @@
   }
 }
 
-
 /* ─────────────────────────────────────────────────────────────────────────────
-   PRINT
+   iPad Pro 12.9" portrait (1024px) & iPad landscape overlap fix.
+   At exactly 1024px the device is technically in the lg band but the viewport
+   is wide enough that the 3-col bento inside the now-narrower stage can
+   squeeze. We nudge the bento to 2 cols inside the stage column only.
    ───────────────────────────────────────────────────────────────────────────── */
-
-@media print {
-  .td-deck-with-tabs.td-layout-page .td-deck-main-tab-rail,
-  .td-deck-with-tabs.td-layout-page .td-deck-period-segment,
-  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-actions,
-  .td-deck-with-tabs.td-layout-page .td-deck-mi-upload-stack {
-    display: none !important;
-  }
-
-  .td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern {
-    padding: 0 !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    border: none !important;
-    background: #fff !important;
-  }
-
-  .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
-    grid-template-columns: 1fr !important;
-    gap: 16px !important;
-  }
-
+@media (min-width: 1000px) and (max-width: 1099px) {
+  /* Stage column is ~65% of 1024px ≈ 665px — enough for 3 cols but tight.
+     Drop gap so panels breathe without collapsing. */
   .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
-    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 11px;
   }
 
-  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
-    grid-template-columns: 1fr !important;
+  /* Ensure all panel text doesn't overflow its container */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel {
+    overflow: hidden;
+    min-width: 0;
   }
 }
 
 
+/* =============================================================================
+   iPAD-SPECIFIC OPTIMIZATIONS - Comprehensive Fix
+   Addresses empty spaces, awkward layouts, and visual gaps on all iPad models
+   ============================================================================= */
+
 /* ─────────────────────────────────────────────────────────────────────────────
-   REDUCED MOTION
+   iPad portrait (768px - 899px) - Main layout optimizations
    ───────────────────────────────────────────────────────────────────────────── */
 
-@media (prefers-reduced-motion: reduce) {
-  .td-deck-with-tabs.td-layout-page .td-deck-mo-root.td-deck-mo-outlook,
-  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern {
-    animation: none !important;
+@media (min-width: 768px) and (max-width: 899px) {
+  
+  /* Reduce overall vertical spacing */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
+    padding: 12px 16px 10px !important;
+    margin-bottom: 12px !important;
   }
-
-  .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab,
+  
+  /* Keep period row horizontal on iPad portrait (not stacked) */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sessions-list--inline {
+    justify-content: flex-end !important;
+  }
+  
+  /* Compact session countdown area */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdowns {
+    padding: 6px 10px !important;
+    gap: 6px 10px !important;
+  }
+  
+  /* Reduce content box padding */
+  .td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern {
+    padding: 12px 14px 18px !important;
+    border-radius: 16px !important;
+  }
+  
+  /* Stage and rail stacking - ensure no gaps */
+  .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
+    gap: 14px !important;
+  }
+  
+  /* Hero sections - horizontal layout, not stacked */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-hero,
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-hero {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 12px 16px !important;
+    margin-bottom: 14px !important;
+    gap: 12px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-hero-text {
+    flex: 1;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-actions {
+    width: auto !important;
+    flex-shrink: 0;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat {
+    text-align: right !important;
+    width: auto !important;
+    min-width: 100px;
+    padding: 8px 12px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat-value {
+    font-size: 1.3rem !important;
+  }
+  
+  /* MARKET OUTLOOK BENTO - Optimized for iPad portrait - NO GAPS */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    grid-auto-rows: minmax(min-content, auto) !important;
+    align-items: start !important;
+  }
+  
+  /* Make panels more compact and ensure they flow naturally */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel {
+    padding: 12px !important;
+    margin: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Specific panel placements - ensure no gaps between panels */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+    margin-bottom: 0 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* Key Market Drivers - left column */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers {
+    grid-column: 1 / span 1 !important;
+    grid-row: auto !important;
+  }
+  
+  /* Cross Asset Signals - right column */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals {
+    grid-column: 2 / span 1 !important;
+    grid-row: auto !important;
+  }
+  
+  /* Market Change Today - left column (below drivers) */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    grid-column: 1 / span 1 !important;
+    grid-row: auto !important;
+  }
+  
+  /* Trader Focus - right column (below signals) */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
+    grid-column: 2 / span 1 !important;
+    grid-row: auto !important;
+  }
+  
+  /* Market Risk Engine - full width at bottom */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+  }
+  
+  /* Ensure no extra margins between panels */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel:not(:last-child) {
+    margin-bottom: 0 !important;
+  }
+  
+  /* MARKET INTELLIGENCE - Optimized grid */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: start !important;
+  }
+  
+  /* Upload tile styling */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-tile--upload {
+    position: static !important;
+    padding: 14px !important;
+    height: auto !important;
+  }
+  
+  /* Results tiles - make them more compact */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-tile:not(.td-deck-mi-tile--upload) {
+    padding: 14px !important;
+    margin-bottom: 0 !important;
+  }
+  
   .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card {
-    transition: none !important;
+    padding: 10px 12px !important;
+    gap: 8px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-title {
+    font-size: 0.85rem !important;
+  }
+  
+  /* RAIL - 2-col layout already exists, but optimize spacing */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-footer {
+    gap: 12px !important;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-footer-block {
+    padding: 12px !important;
+    height: auto !important;
+  }
+  
+  /* Remove extra margins that create empty space */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-ff {
+    margin-top: 16px !important;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-desk-brief {
+    padding: 12px !important;
+    margin-bottom: 12px !important;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-brief-body {
+    font-size: 0.85rem !important;
+  }
+  
+  /* Ensure no gaps between panels in the results section */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-tile + .td-deck-mi-tile {
+    margin-top: 12px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPad landscape (900px - 1099px) - Optimize for wider but shorter view
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 900px) and (max-width: 1099px) {
+  
+  /* Reduce vertical spacing */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
+    padding: 12px 16px 10px !important;
+    margin-bottom: 12px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern {
+    padding: 14px 16px 18px !important;
+  }
+  
+  /* Two-column layout with better proportions */
+  .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 280px) !important;
+    gap: 16px !important;
+  }
+  
+  /* Hero sections - compact */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-hero,
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-hero {
+    padding: 12px 16px !important;
+    margin-bottom: 14px !important;
+    gap: 12px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat {
+    padding: 6px 10px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat-value {
+    font-size: 1.3rem !important;
+  }
+  
+  /* MARKET OUTLOOK - 3-col but more compact with proper flow */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 12px !important;
+    grid-auto-rows: minmax(min-content, auto) !important;
+    align-items: start !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel {
+    padding: 12px !important;
+    height: auto !important;
+    min-height: auto !important;
+  }
+  
+  /* Layout for iPad landscape - no gaps */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
+    grid-column: 1 / span 2 !important;
+    grid-row: 1 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    grid-column: 3 / span 1 !important;
+    grid-row: 1 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers {
+    grid-column: 1 / span 1 !important;
+    grid-row: 2 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals {
+    grid-column: 2 / span 1 !important;
+    grid-row: 2 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    grid-column: 3 / span 1 !important;
+    grid-row: 2 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
+    grid-column: 1 / span 2 !important;
+    grid-row: 3 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    grid-column: 3 / span 1 !important;
+    grid-row: 3 !important;
+  }
+  
+  /* MARKET INTELLIGENCE - More compact */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
+    grid-template-columns: minmax(200px, 260px) minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: start !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-tile--upload {
+    position: static !important;
+    padding: 12px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-tile:not(.td-deck-mi-tile--upload) {
+    padding: 12px !important;
+    margin-bottom: 0 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card {
+    padding: 10px 12px !important;
+  }
+  
+  /* Rail blocks - more compact */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-footer-block {
+    padding: 12px !important;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-inbox-footer {
+    padding-top: 0 !important;
+    border-top: none !important;
+  }
+  
+  /* Reduce AI brief spacing */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-desk-brief {
+    padding: 10px 12px !important;
+    margin-bottom: 12px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPad Pro 12.9" specific (1024px portrait, 1366px landscape)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 1024px) and (max-width: 1099px) and (orientation: portrait) {
+  
+  /* Adjust for the larger screen estate */
+  .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Market Outlook - use 3-col on larger portrait with proper flow */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 14px !important;
+    grid-auto-rows: minmax(min-content, auto) !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
+    grid-column: 1 / span 2 !important;
+    grid-row: 1 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    grid-column: 3 / span 1 !important;
+    grid-row: 1 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers {
+    grid-column: 1 / span 1 !important;
+    grid-row: 2 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals {
+    grid-column: 2 / span 1 !important;
+    grid-row: 2 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    grid-column: 3 / span 1 !important;
+    grid-row: 2 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
+    grid-column: 1 / span 2 !important;
+    grid-row: 3 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    grid-column: 3 / span 1 !important;
+    grid-row: 3 !important;
+  }
+  
+  /* Market Intelligence - wider upload column */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPad landscape with larger screens (1194px - 1366px)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 1194px) and (max-width: 1366px) and (orientation: landscape) {
+  
+  /* More breathing room but still compact */
+  .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 320px) !important;
+    gap: 18px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern {
+    padding: 18px 20px 22px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    gap: 14px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) !important;
+    gap: 18px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   General iPad optimizations - reduce empty space
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Reduce margins and padding across the board for all iPad sizes */
+@media (min-width: 768px) and (max-width: 1099px) {
+  
+  /* Remove unnecessary spacing */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar {
+    margin-bottom: 8px !important;
+    padding: 6px 8px !important;
+  }
+  
+  /* Compact period segment pills */
+  .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab {
+    padding: 8px 16px !important;
+    font-size: 0.72rem !important;
+    min-width: 80px !important;
+  }
+  
+  /* Reduce spacing in session items */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sessions-list--inline .td-deck-session-item {
+    padding: 4px 8px !important;
+  }
+  
+  /* More compact world clocks if present */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-rail--above {
+    margin-bottom: 12px !important;
+  }
+  
+  /* Ensure no extra bottom margins create white space */
+  .td-deck-with-tabs.td-layout-page .td-deck-content--modern {
+    margin-top: 0 !important;
+  }
+  
+  /* Make rail blocks more compact */
+  .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-sessions .td-deck-sessions-list {
+    gap: 6px !important;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-footer-block .td-deck-inbox-footer-title {
+    font-size: 0.6rem !important;
+    margin-bottom: 8px !important;
+  }
+  
+  /* Remove extra spacing in AI brief section */
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-desk-brief {
+    padding: 10px 12px !important;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-priorities {
+    margin-top: 6px !important;
+    margin-bottom: 0 !important;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-sources {
+    margin-top: 6px !important;
+  }
+  
+  /* Ensure the main container doesn't create overflow */
+  .td-deck-with-tabs.td-layout-page {
+    overflow-x: hidden !important;
+  }
+  
+  /* Remove any gaps between bento panels */
+  .td-deck-with-tabs.td-layout-page .td-outlook-unified-grid.td-deck-mo-bento {
+    gap: 12px !important;
+  }
+  
+  /* Ensure panels don't have unexpected margins */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel {
+    margin: 0 !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Fix for iPad Safari rendering issues - ensure no gap between panels
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Add this to your TraderDeckContentModern.css - replace the iPad panel height consistency section */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPAD PANEL HEIGHT CONSISTENCY - Uniform heights for professional look
+   Ensures all panels in the same row have matching heights
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  
+  /* Force all panels to have consistent heights using flexbox */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    display: grid !important;
+    align-items: stretch !important; /* Stretch all grid items to same height */
+  }
+  
+  /* Make all panels use flexbox for internal content distribution */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important; /* Take full height of grid cell */
+    min-height: 0 !important; /* Allow flex children to shrink */
+  }
+  
+  /* Make panel content area flexible to fill space */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-mi-panel-content,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel > *:not(.td-mi-panel-title) {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Ensure titles are consistent across all panels */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-mi-panel-title {
+    flex-shrink: 0 !important;
+    margin-bottom: 12px !important;
+    padding-bottom: 8px !important;
+  }
+  
+  /* Ensure lists and content fill available space */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel ul,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-metrics-list,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-panel-content {
+    flex: 1 !important;
+    margin: 0 !important;
+  }
+  
+  /* Specific adjustments for Market Pulse (which might have more content) */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    justify-content: flex-start !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse .td-mi-panel-content {
+    overflow-y: auto !important;
+    max-height: none !important;
+  }
+  
+  /* Ensure Market Regime matches height with Pulse */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
+    justify-content: flex-start !important;
+  }
+  
+  /* For the second row - ensure Drivers, Signals, Changes all same height */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    height: 100% !important;
+  }
+  
+  /* For the third row - ensure Focus and Radar same height */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    height: 100% !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPad Portrait (768-899px) - 2-col layout with consistent row heights
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 768px) and (max-width: 899px) {
+  
+  /* Row 1: Regime and Pulse are stacked (full width) - they'll have consistent heights naturally */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    min-height: 260px !important;
+  }
+  
+  /* Row 2: Drivers and Signals side by side - force equal heights */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals {
+    min-height: 280px !important;
+  }
+  
+  /* Row 3: Changes and Focus side by side - force equal heights */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
+    min-height: 280px !important;
+  }
+  
+  /* Row 4: Radar full width - consistent with other rows */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    min-height: 240px !important;
+  }
+  
+  /* Add subtle dividers between rows for visual clarity */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    margin-bottom: 4px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals {
+    margin-bottom: 4px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
+    margin-bottom: 4px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPad Landscape (900-1099px) - 3-col layout with consistent row heights
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 900px) and (max-width: 1099px) {
+  
+  /* Row 1: Regime (2 cols) and Pulse (1 col) - ensure they match in height */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    min-height: 320px !important;
+  }
+  
+  /* Row 2: Drivers, Signals, Changes - all three must have equal heights */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    min-height: 300px !important;
+  }
+  
+  /* Row 3: Focus (2 cols) and Radar (1 col) - ensure they match in height */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    min-height: 300px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPad Pro 12.9" Portrait (1024px) - 3-col layout with adjusted heights
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 1024px) and (max-width: 1099px) and (orientation: portrait) {
+  
+  /* Slightly taller panels for larger screen */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    min-height: 340px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    min-height: 320px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    min-height: 320px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Ensure content doesn't overflow and scrollbars appear when needed
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  
+  /* Allow panels with lots of content to scroll */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-mi-panel-content {
+    overflow-y: auto !important;
+    max-height: 100% !important;
+  }
+  
+  /* Custom scrollbar for consistency */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-mi-panel-content::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-mi-panel-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-mi-panel-content::-webkit-scrollbar-thumb {
+    background: rgba(234, 169, 96, 0.4);
+    border-radius: 4px;
+  }
+  
+  /* Ensure consistent padding across all panels */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel {
+    padding: 14px !important;
+  }
+  
+  /* Make list items consistent */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel li {
+    margin-bottom: 10px !important;
+    line-height: 1.4 !important;
+  }
+  
+  /* Ensure the last item doesn't have extra margin */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel li:last-child {
+    margin-bottom: 0 !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Visual polish - subtle separators between panels for better readability
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  
+  /* Add subtle gradient border between panels for definition */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel {
+    position: relative !important;
+  }
+  
+  /* Optional: Add a subtle separator between rows (uncomment if desired) */
+  /*
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 10%;
+    width: 80%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.3), transparent);
+  }
+  */
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Ensure Market Intelligence tiles also have consistent heights
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  
+  /* Make all brief cards in the results column have consistent heights */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-tile:not(.td-deck-mi-tile--upload) {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+  }
+  
+  /* Ensure all brief cards have equal heights within the results column */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-cards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card {
+    min-height: 70px !important;
+  }
+  
+  /* Upload tile should match the height of the results column */
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-tile--upload {
+    height: auto !important;
+    min-height: 300px !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mi-upload-stack {
+    flex: 1 !important;
+    justify-content: center !important;
   }
 }
