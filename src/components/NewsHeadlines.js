@@ -37,6 +37,17 @@ const toInternalInsight = (headline) => {
   return `${level}: ${clean}`;
 };
 
+function isHttpUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  const u = url.trim();
+  try {
+    const parsed = new URL(u);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 const NewsHeadlines = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -64,10 +75,13 @@ const NewsHeadlines = () => {
       const res = await fetch(`${API_BASE}/api/trader-deck/news${q}`);
       const json = await res.json();
       if (json.success && json.articles) {
-        const rows = json.articles.map((a) => ({
-          title: toInternalInsight(a.title || a.headline || ''),
-          publishedAt: a.publishedAt || a.datetime || null,
-        })).filter((a) => a.title && !/^(HIGH|MEDIUM|LOW):\s*$/i.test(a.title));
+        const rows = json.articles
+          .map((a) => ({
+            title: toInternalInsight(a.title || a.headline || ''),
+            publishedAt: a.publishedAt || a.datetime || null,
+            url: String(a.url || '').trim(),
+          }))
+          .filter((a) => a.title && !/^(HIGH|MEDIUM|LOW):\s*$/i.test(a.title));
         setArticles(rows);
         const now = Date.now();
         setLastFetch(new Date(now));
@@ -124,18 +138,34 @@ const NewsHeadlines = () => {
         </div>
       ) : (
         <ul className="news-headlines__list">
-          {articles.map((a, i) => (
-            <li key={i} className="news-headlines__item">
-              <div className="news-headlines__link">
-                <div className="news-headlines__item-content">
-                  <span className="news-headlines__item-title">{a.title}</span>
-                  <div className="news-headlines__item-meta">
-                    <span className="news-headlines__time">{timeAgo(a.publishedAt)}</span>
-                  </div>
+          {articles.map((a, i) => {
+            const linked = isHttpUrl(a.url);
+            const inner = (
+              <div className="news-headlines__item-content">
+                <span className="news-headlines__item-title">{a.title}</span>
+                <div className="news-headlines__item-meta">
+                  <span className="news-headlines__time">{timeAgo(a.publishedAt)}</span>
                 </div>
               </div>
-            </li>
-          ))}
+            );
+            return (
+              <li key={i} className="news-headlines__item">
+                {linked ? (
+                  <a
+                    className="news-headlines__link"
+                    href={a.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Read article: ${a.title}`}
+                  >
+                    {inner}
+                  </a>
+                ) : (
+                  <div className="news-headlines__link news-headlines__link--static">{inner}</div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

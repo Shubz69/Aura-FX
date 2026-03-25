@@ -125,13 +125,33 @@ async function fromYahooRss() {
     if (!res.ok) return [];
     const text = await res.text();
     const items = [];
-    const re = /<title><!\[CDATA\[(.*?)\]\]><\/title>/g;
+    const itemRe = /<item>([\s\S]*?)<\/item>/g;
     let m;
-    let i = 0;
-    while ((m = re.exec(text)) !== null) {
-      if (i++ === 0) continue;
-      const headline = (m[1] || '').trim();
-      if (headline) items.push(normalise({ headline, datetime: Math.floor(Date.now() / 1000) }, 'Yahoo Finance'));
+    while ((m = itemRe.exec(text)) !== null) {
+      const itemHtml = m[1] || '';
+      const titleMatch =
+        /<title><!\[CDATA\[(.*?)\]\]><\/title>/i.exec(itemHtml) ||
+        /<title>(.*?)<\/title>/i.exec(itemHtml);
+      const linkMatch =
+        /<link><!\[CDATA\[(.*?)\]\]><\/link>/i.exec(itemHtml) ||
+        /<link>(.*?)<\/link>/i.exec(itemHtml);
+      const pubDateMatch = /<pubDate>(.*?)<\/pubDate>/i.exec(itemHtml);
+      const headline = (titleMatch?.[1] || '').trim();
+      const link = (linkMatch?.[1] || '').trim();
+      const publishedAt = (pubDateMatch?.[1] || '').trim() || null;
+      if (headline) {
+        items.push(
+          normalise(
+            {
+              headline,
+              url: link,
+              publishedDate: publishedAt,
+              datetime: undefined,
+            },
+            'Yahoo Finance'
+          )
+        );
+      }
       if (items.length >= 12) break;
     }
     return items;

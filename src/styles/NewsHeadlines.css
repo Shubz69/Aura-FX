@@ -253,10 +253,16 @@
   display: block;
   padding: 14px 0;
   text-decoration: none;
+  color: inherit;
+  cursor: pointer;
   transition: all var(--nh-transition-fast);
   border-radius: 6px;
   position: relative;
   z-index: 1;
+}
+
+.news-headlines__link--static {
+  cursor: default;
 }
 
 .news-headlines__link:hover {
