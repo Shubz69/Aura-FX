@@ -638,57 +638,288 @@ html, body {
 
 /* Slide overlay content */
 .slide-overlay {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
     justify-content: flex-end;
     padding: 1.4rem 1.6rem;
     background: linear-gradient(to top,
         rgba(0,0,0,.72) 0%,
         rgba(0,0,0,.20) 55%,
         transparent 100%);
+    pointer-events: none;
+    z-index: 2;
 }
+
 .slide-tag {
-    display: inline-flex; align-items: center; gap: .36rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .36rem;
     padding: .22rem .70rem;
     background: rgba(234,169,96,.15);
     border: 1px solid rgba(234,169,96,.32);
     border-radius: 100px;
-    font-size: .58rem; font-weight: 700;
+    font-size: .58rem;
+    font-weight: 700;
     color: var(--eaa-bright);
-    letter-spacing: .22em; text-transform: uppercase;
+    letter-spacing: .22em;
+    text-transform: uppercase;
     margin-bottom: .60rem;
     width: fit-content;
-}
-.slide-title {
-    font-family: var(--font); font-size: 1.15rem; font-weight: 700;
-    color: #FFF; letter-spacing: .04em;
-    margin: 0 0 .28rem;
-    text-shadow: 0 2px 12px rgba(0,0,0,.80);
-}
-.slide-subtitle {
-    font-family: var(--font); font-size: .72rem;
-    color: rgba(235,230,255,.76);
-    margin: 0; letter-spacing: .06em;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
-/* Slide chart decoration */
+.slide-title {
+    font-family: var(--font);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #FFF;
+    letter-spacing: .04em;
+    margin: 0 0 .28rem;
+    text-shadow: 0 2px 12px rgba(0,0,0,.80);
+    line-height: 1.2;
+}
+.slide-subtitle {
+    font-family: var(--font);
+    font-size: .72rem;
+    color: rgba(235,230,255,.76);
+    margin: 0;
+    letter-spacing: .06em;
+    line-height: 1.3;
+}
+
+/* Slide chart decoration - repositioned for mobile */
 .slide-chart-wrap {
     position: absolute;
-    top: 1.1rem; right: 1.2rem;
+    top: 1.1rem;
+    right: 1.2rem;
     opacity: .55;
+    pointer-events: none;
 }
+
+/* Stat badge repositioned for mobile */
 .slide-stat-badge {
     position: absolute;
-    top: 1.1rem; left: 1.2rem;
+    top: 1.1rem;
+    left: 1.2rem;
     background: rgba(10,217,138,.14);
     border: 1px solid rgba(10,217,138,.28);
     border-radius: 8px;
     padding: .36rem .70rem;
-    font-family: var(--font); font-size: .68rem;
-    font-weight: 700; color: #0FD98A;
+    font-family: var(--font);
+    font-size: .68rem;
+    font-weight: 700;
+    color: #0FD98A;
     letter-spacing: .08em;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    pointer-events: none;
+    z-index: 2;
+}
+/* Mobile-specific overlay adjustments */
+@media (max-width: 767px) {
+    /* Reduce overlay padding on mobile to show more image */
+    .slide-overlay {
+        padding: 0.8rem 1rem 1rem;
+        background: linear-gradient(to top,
+            rgba(0,0,0,.75) 0%,
+            rgba(0,0,0,.25) 40%,
+            transparent 100%);
+    }
+    
+    /* Smaller tag on mobile */
+    .slide-tag {
+        font-size: 0.48rem;
+        padding: 0.18rem 0.55rem;
+        margin-bottom: 0.35rem;
+        letter-spacing: 0.18em;
+        background: rgba(234,169,96,.2);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+    
+    /* Smaller title on mobile */
+    .slide-title {
+        font-size: 0.85rem;
+        margin-bottom: 0.15rem;
+        text-shadow: 0 1px 8px rgba(0,0,0,.9);
+    }
+    
+    /* Smaller subtitle on mobile */
+    .slide-subtitle {
+        font-size: 0.58rem;
+        letter-spacing: 0.04em;
+        line-height: 1.25;
+        text-shadow: 0 1px 6px rgba(0,0,0,.8);
+    }
+    
+    /* Reposition stat badge for better visibility */
+    .slide-stat-badge {
+        top: 0.7rem;
+        left: 0.8rem;
+        padding: 0.22rem 0.55rem;
+        font-size: 0.55rem;
+        background: rgba(10,217,138,.18);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+    
+    /* Reposition chart decoration */
+    .slide-chart-wrap {
+        top: 0.7rem;
+        right: 0.8rem;
+        opacity: 0.45;
+        transform: scale(0.85);
+    }
+    
+    /* Ensure images are properly displayed */
+    .ipad-slide-img {
+        object-fit: cover;
+        object-position: center;
+    }
+    
+    /* Slightly reduce the dark overlay gradient intensity on very small screens */
+    @media (max-width: 480px) {
+        .slide-overlay {
+            padding: 0.6rem 0.8rem 0.8rem;
+            background: linear-gradient(to top,
+                rgba(0,0,0,.8) 0%,
+                rgba(0,0,0,.3) 35%,
+                transparent 100%);
+        }
+        
+        .slide-title {
+            font-size: 0.75rem;
+        }
+        
+        .slide-subtitle {
+            font-size: 0.52rem;
+        }
+        
+        .slide-tag {
+            font-size: 0.42rem;
+            padding: 0.15rem 0.45rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .slide-stat-badge {
+            top: 0.55rem;
+            left: 0.65rem;
+            padding: 0.18rem 0.45rem;
+            font-size: 0.48rem;
+        }
+        
+        .slide-chart-wrap {
+            top: 0.55rem;
+            right: 0.65rem;
+            transform: scale(0.75);
+        }
+    }
 }
 
+/* Additional fix for very tall images */
+@media (max-width: 767px) and (orientation: portrait) {
+    .ipad-slide-img {
+        object-fit: contain;
+        background-color: #050711;
+    }
+    
+    /* Reduce the gradient overlay area for tall images */
+    .slide-overlay {
+        background: linear-gradient(to top,
+            rgba(0,0,0,.85) 0%,
+            rgba(0,0,0,.2) 30%,
+            transparent 100%);
+    }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 896px) and (orientation: landscape) {
+    .slide-overlay {
+        padding: 0.5rem 0.9rem 0.8rem;
+        background: linear-gradient(to top,
+            rgba(0,0,0,.8) 0%,
+            rgba(0,0,0,.25) 35%,
+            transparent 100%);
+    }
+    
+    .slide-title {
+        font-size: 0.7rem;
+        margin-bottom: 0.1rem;
+    }
+    
+    .slide-subtitle {
+        font-size: 0.5rem;
+    }
+    
+    .slide-tag {
+        font-size: 0.45rem;
+        padding: 0.15rem 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .slide-stat-badge {
+        top: 0.5rem;
+        left: 0.6rem;
+        padding: 0.18rem 0.45rem;
+        font-size: 0.48rem;
+    }
+    
+    .slide-chart-wrap {
+        top: 0.5rem;
+        right: 0.6rem;
+        transform: scale(0.7);
+    }
+}
+/* Ensure images are always visible - no cropping on important content */
+.ipad-slide {
+    background-color: #050711;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.ipad-slide-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    transition: opacity 0.3s ease;
+}
+
+/* Ensure the image container doesn't clip the image */
+.ipad-screen {
+    margin: 0;
+    border-radius: 0;
+    background: #050711;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 16 / 10;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+/* Prevent overlay from covering too much of the image */
+@media (max-width: 767px) {
+    .ipad-screen {
+        aspect-ratio: 16 / 10;
+    }
+    
+    /* For devices with very small screens, adjust aspect ratio */
+    @media (max-width: 480px) {
+        .ipad-screen {
+            aspect-ratio: 4 / 3;
+        }
+    }
+}
 /* ── Bottom stats bar — matches reference image ── */
 .ipad-dots {
     display: grid;
