@@ -46,6 +46,8 @@ async function checkCommunityAccess(userId) {
 
     const user = rows[0];
     const now = new Date();
+    const role = (user.role || '').toString().trim().toLowerCase();
+    const plan = (user.subscription_plan || '').toString().trim().toLowerCase();
     
     // Super admin by email: full access regardless of DB role (Shubzfx@gmail.com)
     const superAdminEmail = 'shubzfx@gmail.com';
@@ -59,40 +61,34 @@ async function checkCommunityAccess(userId) {
     }
     
     // Admin check - always has access
-    if (['admin', 'super_admin'].includes(user.role)) {
+    if (['admin', 'super_admin'].includes(role)) {
       return { hasAccess: true, accessType: 'ADMIN', reason: 'Admin role' };
     }
     
     // Check subscription status and expiry
     const expiryDate = user.subscription_expiry ? new Date(user.subscription_expiry) : null;
-    const isSubscriptionActive = user.subscription_status === 'active' && 
+    const normalizedStatus = (user.subscription_status || '').toString().trim().toLowerCase();
+    const isSubscriptionActive = user.subscription_status === 'active' &&
                                   expiryDate && 
                                   expiryDate > now;
+    const isExpired = !!(expiryDate && expiryDate <= now);
     
     // A7FX Elite check (£250)
-    if (isSubscriptionActive && ['a7fx', 'elite', 'A7FX'].includes(user.subscription_plan)) {
+    if (isSubscriptionActive && ['a7fx', 'elite'].includes(plan)) {
       return { hasAccess: true, accessType: 'A7FX_ELITE_ACTIVE', reason: 'A7FX Elite subscription active' };
     }
     
-    // Role-based A7FX Elite check (fallback)
-    if (['elite', 'a7fx'].includes(user.role)) {
-      return { hasAccess: true, accessType: 'A7FX_ELITE_ACTIVE', reason: 'A7FX Elite role' };
-    }
-    
     // Aura Terminal check (£99)
-    if (isSubscriptionActive && ['aura', 'premium'].includes(user.subscription_plan)) {
+    if (isSubscriptionActive && ['aura', 'premium'].includes(plan)) {
       return { hasAccess: true, accessType: 'AURA_FX_ACTIVE', reason: 'Aura Terminal subscription active' };
     }
-    
-    // Role-based Aura Terminal check (fallback)
-    if (user.role === 'premium') {
-      return { hasAccess: true, accessType: 'AURA_FX_ACTIVE', reason: 'Premium role' };
+    // Legacy role-based fallback for migrated users without expiry rows.
+    // Never allow role-only fallback for explicitly expired users.
+    if (!isExpired && ['elite', 'a7fx'].includes(role)) {
+      return { hasAccess: true, accessType: 'A7FX_ELITE_ACTIVE', reason: 'Legacy elite role fallback' };
     }
-    
-    // FREE: allow community access when user has explicitly selected a plan (subscription_plan set)
-    const planSelected = !!(user.subscription_plan && String(user.subscription_plan).trim().length > 0);
-    if (planSelected) {
-      return { hasAccess: true, accessType: 'FREE', reason: 'Plan selected (Free)' };
+    if (!isExpired && role === 'premium') {
+      return { hasAccess: true, accessType: 'AURA_FX_ACTIVE', reason: 'Legacy premium role fallback' };
     }
     
     // No valid subscription or role

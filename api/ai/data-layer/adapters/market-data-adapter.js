@@ -4,7 +4,12 @@
  * Uses central symbol registry and validators. Never returns fabricated prices.
  */
 
-const axios = require('axios');
+let axios;
+try {
+  axios = require('axios');
+} catch (_) {
+  axios = require('axios/dist/node/axios.cjs');
+}
 const { DataAdapter, CONFIG } = require('../index');
 const { getCached, setCached } = require('../../../cache');
 const { toCanonical, forProvider, getAssetClass } = require('../../utils/symbol-registry');

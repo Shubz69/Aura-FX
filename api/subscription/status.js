@@ -29,9 +29,6 @@ const { generateRequestId, createLogger } = require('../utils/logger');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 const { jsonSafeDeep } = require('../utils/jsonSafe');
-const { sendDebugLog } = require('../utils/debug-log');
-
-const debugLog = sendDebugLog;
 
 // Decode JWT token
 function decodeToken(authHeader) {
@@ -157,22 +154,6 @@ module.exports = async (req, res) => {
       subscriptionExpiry: user.subscription_expiry,
       paymentFailed: user.payment_failed
     });
-    // #region agent log
-    debugLog({
-      runId: String(req.headers['x-debug-run'] || 'initial'),
-      hypothesisId: 'H3',
-      location: 'api/subscription/status.js:user-loaded',
-      message: 'Loaded user for subscription status',
-      data: {
-        userId,
-        role: String(user.role || '').toLowerCase(),
-        plan: String(user.subscription_plan || '').toLowerCase(),
-        subscriptionStatus: String(user.subscription_status || '').toLowerCase(),
-        paymentFailed: !!user.payment_failed,
-        hasExpiry: !!user.subscription_expiry
-      }
-    });
-    // #endregion
     
     // Determine subscription details
     let planId = user.subscription_plan || null;
@@ -323,23 +304,6 @@ module.exports = async (req, res) => {
       status: subscription.status,
       isActive: subscription.isActive 
     });
-    // #region agent log
-    debugLog({
-      runId: String(req.headers['x-debug-run'] || 'initial'),
-      hypothesisId: 'H3',
-      location: 'api/subscription/status.js:decision',
-      message: 'Computed subscription entitlement response',
-      data: {
-        userId,
-        tier: subscription.tier,
-        accessType: subscription.accessType,
-        hasCommunityAccess: !!subscription.hasCommunityAccess,
-        status: subscription.status,
-        planId: String(subscription.planId || '')
-      }
-    });
-    // #endregion
-
     return res.status(200).json(
       jsonSafeDeep({
         success: true,

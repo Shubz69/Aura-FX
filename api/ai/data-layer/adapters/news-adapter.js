@@ -3,7 +3,12 @@
  * Fetches market news from multiple sources with caching
  */
 
-const axios = require('axios');
+let axios;
+try {
+  axios = require('axios');
+} catch (_) {
+  axios = require('axios/dist/node/axios.cjs');
+}
 const { DataAdapter, CONFIG } = require('../index');
 const { getCached, setCached } = require('../../../cache');
 

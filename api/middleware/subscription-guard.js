@@ -10,9 +10,6 @@
 
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
-const { sendDebugLog } = require('../utils/debug-log');
-
-const debugLog = sendDebugLog;
 
 /**
  * Check if user has community access (server-authoritative)
@@ -85,15 +82,6 @@ async function checkCommunityAccess(authHeader) {
     // Plan selected (including Free): grant community access (FREE = allowlist only; server enforces channels)
     const plan = (user.subscription_plan || '').toString().trim().toLowerCase();
     if (plan.length > 0) {
-      // #region agent log
-      debugLog({
-        runId: 'initial',
-        hypothesisId: 'H5',
-        location: 'api/middleware/subscription-guard.js:free-plan-selected',
-        message: 'Subscription guard granted access due to plan selected',
-        data: { userId: Number(userId), plan }
-      });
-      // #endregion
       return { hasAccess: true, accessType: plan === 'free' ? 'FREE' : 'NONE', userId, error: null };
     }
     
