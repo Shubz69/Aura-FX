@@ -1,10 +1,6 @@
-/* PremiumAI.css - COMPLETE FIXED VERSION with your original styles */
+/* PremiumAI.css — Themed to match Aura Journal deep-space aesthetic */
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
-/* ═══════════════════════════════════════════════════════════
-   TOKENS — scoped to .pai (Journal / terminal luxury gold + navy glass)
-   ═══════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap');
 
 /* ═══════════════════════════════════════════════════════════
    FONT SCOPE
@@ -17,7 +13,7 @@
 .pai .md-code,
 .pai .md-pre,
 .pai .md-pre code {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'DM Mono', monospace;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -35,52 +31,203 @@ body.pai-active [class*="Footer"] {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   PAGE SHELL
+   TOKENS — mirrored from journal-page CSS variables
    ═══════════════════════════════════════════════════════════ */
 .pai {
-  --bg: #010008;
-  --border: rgba(255, 255, 255, 0.07);
-  --text: #ffffff;
-  --muted: rgba(255, 255, 255, 0.45);
-  --pai-gold: #d4af37;
-  --pai-gold-bright: #e8c658;
-  --pai-gold-mid: #dfc056;
-  --accent: var(--pai-gold);
-  --accent2: var(--pai-gold-bright);
-  --up: var(--pai-gold-bright);
-  --down: #9a8f84;
-  --radius: 12px;
-  --ease: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  --pai-gold-rgb: 212, 175, 55;
-  --pai-gold-bright-rgb: 232, 198, 88;
-  --pai-header-fill: linear-gradient(168deg, rgba(4, 5, 18, 0.94) 0%, rgba(5, 6, 20, 0.9) 100%);
-  --pai-composer-fill: linear-gradient(180deg, rgba(5, 6, 22, 0.97) 0%, rgba(2, 3, 12, 0.99) 100%);
+  /* Background — same deep space as journal */
+  --bg:                   #010008;
+  --bg-card:              rgba(3, 2, 10, 0.70);
+  --bg-glass:             rgba(2, 1, 8, 0.65);
 
+  /* Borders */
+  --border:               rgba(255, 255, 255, 0.10);
+  --border-h:             rgba(160, 185, 240, 0.28);
+
+  /* Gold — identical to journal */
+  --pai-gold:             #D4AF37;
+  --pai-gold-bright:      #E8C658;
+  --pai-gold-warm:        #9A7B22;
+  --pai-gold-dim:         rgba(212, 175, 55, 0.32);
+  --pai-gold-glass:       rgba(212, 175, 55, 0.12);
+  --pai-gold-glow:        rgba(212, 175, 55, 0.14);
+  --pai-gold-rgb:         212, 175, 55;
+  --pai-gold-bright-rgb:  232, 198, 88;
+  --accent:               var(--pai-gold);
+  --accent2:              var(--pai-gold-bright);
+
+  /* Text */
+  --text:                 #FFFFFF;
+  --text-muted:           rgba(232, 235, 255, 0.86);
+  --muted:                rgba(210, 216, 248, 0.58);
+
+  /* Status */
+  --up:                   #0FD98A;
+  --down:                 rgba(160, 170, 210, 0.65);
+  --green:                #0FD98A;
+  --red:                  #F03D5F;
+
+  /* Shapes */
+  --radius:               12px;
+  --radius-lg:            18px;
+  --radius-xl:            22px;
+  --ease:                 0.26s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Journal glass panel system — reused verbatim */
+  --journal-panel-fill:   linear-gradient(168deg, rgba(4, 5, 18, 0.92) 0%, rgba(5, 6, 20, 0.89) 100%);
+  --journal-panel-fill-hover: linear-gradient(168deg, rgba(7, 8, 24, 0.95) 0%, rgba(9, 10, 28, 0.91) 100%);
+  --journal-panel-border: linear-gradient(135deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.88) 11%,
+    rgba(255, 255, 255, 0.48) 26%,
+    rgba(185, 205, 255, 0.42) 44%,
+    rgba(85, 115, 195, 0.58) 64%,
+    rgba(38, 52, 105, 0.72) 84%,
+    rgba(212, 175, 55, 0.18) 100%);
+  --journal-panel-border-hover: linear-gradient(135deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.92) 9%,
+    rgba(255, 255, 255, 0.52) 24%,
+    rgba(195, 215, 255, 0.48) 42%,
+    rgba(95, 125, 210, 0.65) 62%,
+    rgba(45, 58, 118, 0.78) 82%,
+    rgba(212, 175, 55, 0.24) 100%);
+  --journal-panel-outer-glow:
+    0 18px 52px rgba(0, 0, 0, 0.64),
+    0 0 0 1px rgba(255, 255, 255, 0.20),
+    0 0 40px -10px rgba(255, 255, 255, 0.12),
+    0 0 52px -12px rgba(70, 100, 190, 0.28),
+    0 8px 30px -12px rgba(12, 16, 40, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26);
+  --journal-panel-outer-glow-hover:
+    0 22px 60px rgba(0, 0, 0, 0.70),
+    0 0 0 1px rgba(255, 255, 255, 0.24),
+    0 0 48px -8px rgba(255, 255, 255, 0.14),
+    0 0 60px -10px rgba(85, 115, 205, 0.34),
+    0 10px 34px -10px rgba(15, 20, 48, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  --journal-focus-fill:   linear-gradient(168deg, rgba(72, 102, 185, 0.18) 0%, rgba(3, 4, 14, 0.90) 100%);
+  --journal-focus-ring:   0 0 0 3px rgba(110, 145, 230, 0.22);
+  --journal-cta-fill:     linear-gradient(135deg, #283d68 0%, #3a5490 50%, #5a7ed8 100%);
+  --journal-cta-shadow:   0 0 26px rgba(75, 110, 205, 0.42), 0 0 40px rgba(255, 255, 255, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+  --journal-cta-shadow-hover: 0 0 44px rgba(90, 125, 220, 0.52), 0 0 36px rgba(255, 255, 255, 0.14), 0 8px 24px rgba(0, 0, 0, 0.48);
+
+  /* Gradient text — same as journal heading */
+  --grad-gold: linear-gradient(125deg,
+    #ffffff 0%,
+    rgba(252, 253, 255, 0.99) 28%,
+    rgba(200, 215, 255, 0.96) 58%,
+    rgba(120, 150, 220, 0.92) 82%,
+    rgba(212, 175, 55, 0.48) 100%);
+
+  /* Header & composer fills */
+  --pai-header-fill:      linear-gradient(168deg, rgba(4, 5, 18, 0.94) 0%, rgba(5, 6, 20, 0.90) 100%);
+  --pai-composer-fill:    linear-gradient(180deg, rgba(5, 6, 22, 0.97) 0%, rgba(2, 3, 12, 0.99) 100%);
+
+  /* Line shimmer */
+  --line-gold: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55) 22%,
+    rgba(160, 185, 240, 0.45) 48%,
+    rgba(255, 255, 255, 0.75) 72%,
+    rgba(212, 175, 55, 0.22) 92%,
+    transparent);
+
+  /* Layout */
   position: fixed;
   top: calc(var(--nav-height, 62px) + env(safe-area-inset-top, 0px));
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 900; /* Increased z-index */
+  z-index: 900;
   background: var(--bg);
   color: var(--text);
   width: 100%;
   display: flex;
   flex-direction: column;
+  isolation: isolate;
 }
 
-/* Ambient glow — gold + cool rim (matches cosmic / journal) */
+/* ═══════════════════════════════════════════════════════════
+   DEEP SPACE BACKGROUND — mirrors journal-page::before
+   ═══════════════════════════════════════════════════════════ */
 .pai::before {
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse 58% 38% at 14% 8%, rgba(var(--pai-gold-rgb), 0.1) 0%, transparent 72%),
-    radial-gradient(ellipse 45% 32% at 88% 88%, rgba(140, 170, 255, 0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 35% at 85% 85%, rgba(var(--pai-gold-bright-rgb), 0.06) 0%, transparent 70%);
-  pointer-events: none;
   z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 85% 55% at 18% 8%,
+      rgba(20, 28, 55, 0.65) 0%,
+      rgba(12, 18, 40, 0.45) 35%,
+      transparent 68%
+    ),
+    radial-gradient(ellipse 60% 45% at 55% 20%,
+      rgba(10, 15, 40, 0.38) 0%,
+      rgba(6, 10, 28, 0.22) 50%,
+      transparent 75%
+    ),
+    radial-gradient(ellipse 55% 75% at 92% 28%,
+      rgba(5, 8, 25, 0.75) 0%,
+      rgba(3, 5, 18, 0.48) 55%,
+      transparent 78%
+    ),
+    radial-gradient(ellipse 42% 32% at 88% 6%,
+      rgba(45, 65, 145, 0.18) 0%,
+      transparent 68%
+    ),
+    linear-gradient(168deg,
+      #010008 0%,
+      #01010a 15%,
+      #02010c 30%,
+      #01010a 50%,
+      #000006 70%,
+      #010008 100%
+    );
 }
+
+/* ── Star layer 1 — fast twinklers (matches journal-page::after) */
+.pai::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(2px 2px at 7%   6%,  white, transparent),
+    radial-gradient(2px 2px at 34%  11%, white, transparent),
+    radial-gradient(2px 2px at 61%   4%, white, transparent),
+    radial-gradient(2px 2px at 89%  14%, white, transparent),
+    radial-gradient(2px 2px at 15%  32%, white, transparent),
+    radial-gradient(2px 2px at 78%  27%, white, transparent),
+    radial-gradient(2px 2px at 50%  18%, white, transparent),
+    radial-gradient(2px 2px at 23%  44%, white, transparent),
+    radial-gradient(2px 2px at 69%  38%, white, transparent),
+    radial-gradient(2px 2px at 92%  48%, white, transparent),
+    radial-gradient(2.5px 2.5px at 16%  85%, rgba(130,170,240,0.82),  transparent),
+    radial-gradient(2.5px 2.5px at 48%  88%, rgba(110,155,230,0.78),  transparent),
+    radial-gradient(2.5px 2.5px at 77%  82%, rgba(140,180,250,0.80),  transparent),
+    radial-gradient(2.5px 2.5px at  9%  12%, rgba(140,175,255,0.85),  transparent),
+    radial-gradient(2px   2px   at 23%  18%, rgba(140,175,255,0.80),  transparent),
+    radial-gradient(2.5px 2.5px at 52%  15%, rgba(120,160,255,0.82),  transparent),
+    radial-gradient(2px   2px   at 82%  20%, rgba(140,175,255,0.78),  transparent);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  animation: paiTwinkle1 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes paiTwinkle1 {
+  0%   { opacity: 0.10; filter: blur(0.8px); }
+  15%  { opacity: 0.85; filter: blur(0px);   }
+  30%  { opacity: 0.22; filter: blur(1px);   }
+  45%  { opacity: 0.95; filter: blur(0px);   }
+  60%  { opacity: 0.15; filter: blur(0.6px); }
+  75%  { opacity: 0.80; filter: blur(0px);   }
+  90%  { opacity: 0.28; filter: blur(0.9px); }
+  100% { opacity: 0.90; filter: blur(0px);   }
+}
+
+/* All direct children above the background layers */
 .pai > * { position: relative; z-index: 1; }
 
 /* ═══════════════════════════════════════════════════════════
@@ -93,31 +240,49 @@ body.pai-active [class*="Footer"] {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  border-bottom: 1px solid rgba(var(--pai-gold-rgb), 0.2);
-  background: var(--pai-header-fill);
+  border-bottom: 1px solid transparent;
+  background-image: var(--pai-header-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
   backdrop-filter: blur(22px) saturate(1.35);
   -webkit-backdrop-filter: blur(22px) saturate(1.35);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.04),
-    0 12px 40px rgba(0, 0, 0, 0.35),
-    0 0 48px rgba(var(--pai-gold-rgb), 0.05);
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 48px rgba(var(--pai-gold-rgb), 0.04);
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Shimmer line under header */
+/* Top rim shimmer — matches journal panel */
+.pai-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 4%;
+  right: 14%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.48) 32%,
+    rgba(175, 200, 255, 0.42) 58%,
+    rgba(212, 175, 55, 0.12) 88%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Bottom shimmer line */
 .pai-header::after {
   content: '';
   position: absolute;
   bottom: -1px;
   left: 8%; right: 8%;
   height: 1px;
-  background: linear-gradient(90deg,
-    transparent,
-    rgba(var(--pai-gold-rgb), 0.5),
-    rgba(255, 255, 255, 0.35) 50%,
-    rgba(var(--pai-gold-bright-rgb), 0.35),
-    transparent);
-  opacity: 0.7;
+  background: var(--line-gold);
+  opacity: 0.6;
   pointer-events: none;
 }
 
@@ -127,24 +292,51 @@ body.pai-active [class*="Footer"] {
   gap: 12px;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   LOGO — three-star SVG cluster (navy · white · gold)
+   ═══════════════════════════════════════════════════════════ */
 .pai-logo-wrap {
   display: flex;
   align-items: center;
   gap: 9px;
+  position: relative;
 }
 
+/*
+   The host element (.pai-logo-icon) renders whatever emoji/char the JS puts in.
+   We hide that character and replace with a precision SVG background.
+   SVG contains three 4-point stars at pixel-perfect positions:
+     - Large white star  (centre-top)  with white glow filter
+     - Medium gold star  (bottom-right) with gold glow filter
+     - Small navy star   (bottom-left)  with blue glow filter
+*/
 .pai-logo-icon {
-  font-size: 1.2rem;
-  filter: drop-shadow(0 0 12px rgba(var(--pai-gold-rgb), 0.65));
+  font-size: 0 !important;
+  color: transparent !important;
+  display: inline-block !important;
+  width: 34px !important;
+  height: 30px !important;
+  flex-shrink: 0 !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 30' width='34' height='30'%3E%3Cdefs%3E%3Cfilter id='gw' x='-80%25' y='-80%25' width='260%25' height='260%25'%3E%3CfeGaussianBlur stdDeviation='2.2' result='blur'/%3E%3CfeMerge%3E%3CfeMergeNode in='blur'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3Cfilter id='gg' x='-80%25' y='-80%25' width='260%25' height='260%25'%3E%3CfeGaussianBlur stdDeviation='2.0' result='blur'/%3E%3CfeMerge%3E%3CfeMergeNode in='blur'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3Cfilter id='gb' x='-80%25' y='-80%25' width='260%25' height='260%25'%3E%3CfeGaussianBlur stdDeviation='1.8' result='blur'/%3E%3CfeMerge%3E%3CfeMergeNode in='blur'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3C!-- Navy star bottom-left small --%3E%3Cpath filter='url(%23gb)' fill='%235d7fd6' d='M8 19 L9.4 15.2 L13 15.2 L10.2 13 L11.3 9.2 L8 11.7 L4.7 9.2 L5.8 13 L3 15.2 L6.6 15.2 Z'/%3E%3C!-- Gold star bottom-right medium --%3E%3Cpath filter='url(%23gg)' fill='%23E8C658' d='M26 21 L27.6 16.4 L32 16.4 L28.5 13.7 L29.9 9 L26 11.9 L22.1 9 L23.5 13.7 L20 16.4 L24.4 16.4 Z'/%3E%3C!-- White star top-centre large --%3E%3Cpath filter='url(%23gw)' fill='%23ffffff' d='M17 2 L19 8.4 L25.6 8.4 L20.3 12.4 L22.3 18.8 L17 14.8 L11.7 18.8 L13.7 12.4 L8.4 8.4 L15 8.4 Z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  animation: paiLogoTwinkle 3.6s ease-in-out infinite !important;
+}
+
+@keyframes paiLogoTwinkle {
+  0%,  100% { filter: brightness(0.82) saturate(0.9);  opacity: 0.88; }
+  35%        { filter: brightness(1.22) saturate(1.15); opacity: 1.00; }
+  65%        { filter: brightness(0.90) saturate(1.0);  opacity: 0.92; }
 }
 
 .pai-title {
   font-size: 1rem;
-  font-weight: 300;
+  font-weight: 200;
   letter-spacing: 0.3em;
   text-transform: uppercase;
   margin: 0;
-  background: linear-gradient(110deg, #fff 22%, var(--pai-gold-bright) 50%, var(--pai-gold) 100%);
+  background: var(--grad-gold);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -157,9 +349,9 @@ body.pai-active [class*="Footer"] {
   text-transform: uppercase;
   padding: 3px 9px;
   border-radius: 20px;
-  background: rgba(var(--pai-gold-rgb), 0.12);
-  border: 1px solid rgba(var(--pai-gold-rgb), 0.32);
-  color: var(--pai-gold-bright);
+  background: rgba(var(--pai-gold-rgb), 0.10);
+  border: 1px solid rgba(var(--pai-gold-rgb), 0.28);
+  color: rgba(248, 240, 210, 0.94);
 }
 
 .pai-clear {
@@ -176,9 +368,9 @@ body.pai-active [class*="Footer"] {
   transition: all var(--ease);
 }
 .pai-clear:hover {
-  border-color: rgba(130,118,108,0.4);
-  color: var(--down);
-  background: rgba(130,118,108,0.07);
+  border-color: rgba(160, 185, 240, 0.35);
+  color: var(--text-muted);
+  background: rgba(45, 65, 130, 0.18);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -195,10 +387,9 @@ body.pai-active [class*="Footer"] {
   overscroll-behavior: contain;
   padding: 32px 20px 20px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.08) transparent;
+  scrollbar-color: rgba(120, 155, 220, 0.28) transparent;
 }
 
-/* Empty state: pin hero + chips to the bottom (above composer) — no dead middle gap */
 .pai-body--welcome {
   padding-top: 8px;
   padding-bottom: 10px;
@@ -213,8 +404,11 @@ body.pai-active [class*="Footer"] {
 .pai-body::-webkit-scrollbar { width: 3px; }
 .pai-body::-webkit-scrollbar-track { background: transparent; }
 .pai-body::-webkit-scrollbar-thumb {
-  background: rgba(var(--pai-gold-rgb),0.3);
+  background: rgba(120, 155, 220, 0.32);
   border-radius: 4px;
+}
+.pai-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(195, 215, 255, 0.48);
 }
 
 .pai-messages {
@@ -235,20 +429,25 @@ body.pai-active [class*="Footer"] {
   align-items: center;
   text-align: center;
   padding: 20px 16px 28px;
-  animation: fadeUp 0.5s ease both;
+  animation: paiFadeUp 0.5s ease both;
 }
 
 .pai-welcome-icon {
   font-size: 3rem;
   margin-bottom: 14px;
-  color: rgba(var(--pai-gold-bright-rgb), 0.95);
-  filter: drop-shadow(0 0 18px rgba(var(--pai-gold-rgb),0.55));
-  animation: floatIcon 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 18px rgba(var(--pai-gold-rgb), 0.45))
+          drop-shadow(0 0 32px rgba(100, 135, 215, 0.22));
+  animation: paiFloatIcon 4s ease-in-out infinite;
 }
 
-@keyframes floatIcon {
+@keyframes paiFloatIcon {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(-8px); }
+}
+
+@keyframes paiFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .pai-welcome h2 {
@@ -257,10 +456,12 @@ body.pai-active [class*="Footer"] {
   letter-spacing: 0.3em;
   text-transform: uppercase;
   margin: 0 0 6px;
-  background: linear-gradient(110deg, #fff 22%, var(--pai-gold-bright) 50%, var(--pai-gold) 100%);
+  background: var(--grad-gold);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  filter: drop-shadow(0 0 22px rgba(255, 255, 255, 0.28))
+          drop-shadow(0 0 36px rgba(100, 135, 215, 0.18));
 }
 
 .pai-welcome-sub {
@@ -271,7 +472,7 @@ body.pai-active [class*="Footer"] {
   margin: 0 0 28px;
 }
 
-/* Capability cards */
+/* Capability cards — use journal glass panel system */
 .pai-caps {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -286,31 +487,39 @@ body.pai-active [class*="Footer"] {
   align-items: flex-start;
   gap: 11px;
   padding: 14px 13px;
-  background: rgba(255,255,255,0.025);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--radius);
   text-align: left;
   transition: all var(--ease);
   position: relative;
   overflow: hidden;
   cursor: default;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
 }
 
-.pai-cap::after {
+/* Top rim */
+.pai-cap::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(var(--pai-gold-rgb),0.05), transparent);
-  opacity: 0;
-  transition: opacity var(--ease);
+  top: 0; left: 6%; right: 14%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.75) 0%,
+    rgba(175, 200, 255, 0.38) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 1;
 }
 
 .pai-cap:hover {
-  border-color: rgba(var(--pai-gold-rgb),0.3);
+  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover);
+  box-shadow: var(--journal-panel-outer-glow-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
-.pai-cap:hover::after { opacity: 1; }
 
 .pai-cap-icon {
   width: 36px;
@@ -320,8 +529,8 @@ body.pai-active [class*="Footer"] {
   justify-content: center;
   font-size: 1.15rem;
   line-height: 1;
-  background: rgba(var(--pai-gold-rgb),0.1);
-  border: 1px solid rgba(var(--pai-gold-rgb),0.22);
+  background: rgba(45, 65, 130, 0.25);
+  border: 1px solid rgba(160, 185, 240, 0.28);
   border-radius: 8px;
   flex-shrink: 0;
 }
@@ -358,16 +567,19 @@ body.pai-active [class*="Footer"] {
   display: inline-flex;
   align-items: center;
   padding: 7px 14px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: 20px;
-  color: rgba(255,255,255,0.65);
+  color: var(--muted);
   font-size: 0.76rem;
   font-family: 'Space Grotesk', sans-serif;
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all var(--ease);
   white-space: nowrap;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
 }
 .pai-chip-glyph {
   display: inline-flex;
@@ -379,8 +591,8 @@ body.pai-active [class*="Footer"] {
   flex-shrink: 0;
 }
 .pai-chip:hover:not(:disabled) {
-  background: rgba(var(--pai-gold-rgb),0.1);
-  border-color: rgba(var(--pai-gold-rgb),0.35);
+  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover);
+  box-shadow: var(--journal-panel-outer-glow-hover);
   color: #fff;
   transform: translateY(-1px);
 }
@@ -390,7 +602,7 @@ body.pai-active [class*="Footer"] {
   font-size: 0.65rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.22);
   margin: 0;
 }
 
@@ -400,14 +612,9 @@ body.pai-active [class*="Footer"] {
 .pai-msg {
   display: flex;
   gap: 11px;
-  animation: fadeUp 0.28s ease both;
+  animation: paiFadeUp 0.28s ease both;
 }
 .pai-msg.user { flex-direction: row-reverse; }
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
 
 /* Avatars */
 .pai-avatar {
@@ -421,11 +628,11 @@ body.pai-active [class*="Footer"] {
   flex-shrink: 0;
 }
 .pai-avatar.user {
-  background: linear-gradient(135deg, #3d3318, #6b5a1c 45%, var(--pai-gold));
-  border: 1px solid rgba(var(--pai-gold-rgb), 0.35);
+  background: linear-gradient(135deg, #1e2850, #2e4080 45%, rgba(var(--pai-gold-rgb), 0.65));
+  border: 1px solid rgba(160, 185, 240, 0.35);
 }
 .pai-avatar.ai {
-  background: linear-gradient(135deg, var(--pai-gold), #f0e4c4);
+  background: linear-gradient(135deg, rgba(var(--pai-gold-rgb), 0.9), #f0e4c4);
   border: 1px solid rgba(var(--pai-gold-rgb), 0.35);
   box-shadow: 0 0 14px rgba(var(--pai-gold-rgb), 0.22);
 }
@@ -455,39 +662,55 @@ body.pai-active [class*="Footer"] {
   -webkit-user-select: text;
 }
 
+/* User bubble — navy gradient */
 .pai-msg.user .pai-bubble {
-  background: linear-gradient(135deg, rgba(var(--pai-gold-rgb),0.55), rgba(var(--pai-gold-bright-rgb),0.35));
-  border: 1px solid rgba(var(--pai-gold-rgb),0.35);
+  border: 1px solid transparent;
   border-bottom-right-radius: 4px;
   color: #fff;
   font-weight: 400;
+  background-image:
+    linear-gradient(135deg, rgba(40, 60, 120, 0.85) 0%, rgba(55, 85, 160, 0.80) 100%) padding-box,
+    var(--journal-panel-border-hover) border-box;
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
 }
 
+/* AI bubble — journal glass style */
 .pai-msg.assistant .pai-bubble {
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.045) 0%, rgba(5, 8, 22, 0.35) 100%);
-  border: 1px solid rgba(var(--pai-gold-rgb), 0.14);
+  border: 1px solid transparent;
   border-bottom-left-radius: 4px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
 }
+
+/* Top rim on AI bubble */
 .pai-msg.assistant .pai-bubble::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0; left: 6%; right: 14%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(var(--pai-gold-rgb),0.4), transparent);
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.75) 0%,
+    rgba(175, 200, 255, 0.38) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
 .pai-msg.error .pai-bubble {
-  background: rgba(130,118,108,0.07);
-  border-color: rgba(130,118,108,0.2);
-  color: #c4bbb2;
+  background: rgba(240, 61, 95, 0.06);
+  border: 1px solid rgba(240, 61, 95, 0.20);
+  color: rgba(252, 165, 165, 0.95);
 }
 
 /* Text selection */
 .pai-msg.assistant .pai-bubble ::selection {
-  background: rgba(var(--pai-gold-rgb),0.3);
+  background: rgba(var(--pai-gold-rgb), 0.25);
   color: #fff;
 }
 
@@ -526,32 +749,41 @@ body.pai-active [class*="Footer"] {
 }
 .pai-bubble .md-heading:first-child { margin-top: 0; }
 .pai-bubble .md-code {
-  background: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.38);
   padding: 1px 5px;
   border-radius: 4px;
   font-size: 0.82em;
-  color: var(--pai-gold-bright);
+  color: rgba(248, 240, 210, 0.94);
   border: 1px solid rgba(255,255,255,0.07);
+  font-family: 'DM Mono', monospace;
 }
 .pai-bubble .md-pre {
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.42);
   padding: 10px 13px;
   border-radius: 8px;
   overflow-x: auto;
   margin: 6px 0;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,0.07);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 155, 220, 0.25) transparent;
+}
+.pai-bubble .md-pre::-webkit-scrollbar { height: 3px; }
+.pai-bubble .md-pre::-webkit-scrollbar-track { background: transparent; }
+.pai-bubble .md-pre::-webkit-scrollbar-thumb {
+  background: rgba(120, 155, 220, 0.28);
+  border-radius: 4px;
 }
 .pai-bubble .md-quote {
   margin: 6px 0;
   padding: 8px 12px;
-  border-left: 2px solid rgba(var(--pai-gold-rgb),0.5);
-  background: rgba(var(--pai-gold-rgb),0.06);
+  border-left: 2px solid rgba(130, 165, 235, 0.55);
+  background: rgba(45, 70, 140, 0.12);
   border-radius: 0 6px 6px 0;
   font-style: italic;
   color: var(--muted);
 }
 
-/* ── Message action bar (copy, voice) ── */
+/* ── Message action bar ── */
 .pai-actions {
   display: flex;
   align-items: center;
@@ -567,25 +799,25 @@ body.pai-active [class*="Footer"] {
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 6px;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.30);
   cursor: pointer;
   transition: all var(--ease);
 }
 .pai-action-btn:hover {
-  background: rgba(255,255,255,0.04);
+  background: rgba(45, 65, 130, 0.22);
   color: rgba(255,255,255,0.75);
-  border-color: rgba(255,255,255,0.15);
+  border-color: rgba(160, 185, 240, 0.35);
 }
 .pai-action-btn.active {
-  background: rgba(var(--pai-gold-rgb),0.12);
-  border-color: rgba(var(--pai-gold-rgb),0.3);
-  color: var(--pai-gold-bright);
+  background: rgba(var(--pai-gold-rgb), 0.10);
+  border-color: rgba(var(--pai-gold-rgb), 0.28);
+  color: rgba(248, 240, 210, 0.94);
 }
 .pai-action-btn.copy:hover,
 .pai-action-btn.copied {
-  background: rgba(var(--pai-gold-rgb),0.12);
-  border-color: rgba(var(--pai-gold-rgb),0.35);
-  color: var(--up);
+  background: rgba(15, 217, 138, 0.08);
+  border-color: rgba(15, 217, 138, 0.28);
+  color: var(--green);
 }
 
 .pai-speed {
@@ -595,7 +827,7 @@ body.pai-active [class*="Footer"] {
   border-radius: 5px;
   color: var(--muted);
   font-size: 0.7rem;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'DM Mono', monospace;
   cursor: pointer;
 }
 
@@ -607,8 +839,8 @@ body.pai-active [class*="Footer"] {
   align-items: center;
   gap: 5px;
   padding: 5px 10px;
-  background: rgba(var(--pai-gold-rgb),0.07);
-  border: 1px solid rgba(var(--pai-gold-rgb),0.18);
+  background: rgba(45, 68, 130, 0.14);
+  border: 1px solid rgba(120, 155, 220, 0.28);
   border-radius: 20px;
   color: var(--muted);
   font-size: 0.72rem;
@@ -617,15 +849,15 @@ body.pai-active [class*="Footer"] {
   transition: all var(--ease);
 }
 .pai-sources-btn:hover {
-  background: rgba(var(--pai-gold-rgb),0.12);
-  border-color: rgba(var(--pai-gold-rgb),0.32);
+  background: rgba(55, 80, 150, 0.28);
+  border-color: rgba(160, 190, 255, 0.45);
   color: var(--text);
 }
 
 .pai-sources-list {
   margin-top: 6px;
   padding: 8px 12px;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0,0,0,0.22);
   border: 1px solid var(--border);
   border-radius: 8px;
 }
@@ -642,10 +874,10 @@ body.pai-active [class*="Footer"] {
 
 .pai-cached {
   padding: 1px 5px;
-  background: rgba(var(--pai-gold-rgb),0.12);
+  background: rgba(15, 217, 138, 0.08);
   border-radius: 4px;
   font-size: 0.62rem;
-  color: var(--up);
+  color: var(--green);
 }
 
 /* ── Typing dots ── */
@@ -657,14 +889,14 @@ body.pai-active [class*="Footer"] {
 .pai-dots span {
   width: 6px;
   height: 6px;
-  background: rgba(var(--pai-gold-rgb),0.5);
+  background: rgba(120, 155, 220, 0.55);
   border-radius: 50%;
-  animation: dotBounce 1.4s ease-in-out infinite;
+  animation: paiDotBounce 1.4s ease-in-out infinite;
 }
 .pai-dots span:nth-child(2) { animation-delay: 0.16s; }
 .pai-dots span:nth-child(3) { animation-delay: 0.32s; }
 
-@keyframes dotBounce {
+@keyframes paiDotBounce {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
   30%            { transform: translateY(-6px); opacity: 1; }
 }
@@ -676,45 +908,47 @@ body.pai-active [class*="Footer"] {
   gap: 7px;
   padding: 4px 0;
   font-size: 0.68rem;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.30);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .pai-pulse {
   width: 6px;
   height: 6px;
-  background: var(--pai-gold);
+  background: rgba(var(--pai-gold-rgb), 0.85);
   border-radius: 50%;
-  animation: pulseAnim 1.2s ease-in-out infinite;
+  animation: paiPulse 1.2s ease-in-out infinite;
 }
-@keyframes pulseAnim {
+@keyframes paiPulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(0.75); }
+  50%       { opacity: 0.45; transform: scale(0.72); }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   COMPOSER — ULTIMATE FIX (CRITICAL)
+   COMPOSER
    ═══════════════════════════════════════════════════════════ */
 .pai-composer {
   position: relative;
   display: flex !important;
   flex-direction: column !important;
-  background: var(--pai-composer-fill) !important;
-  border-top: 1px solid rgba(var(--pai-gold-rgb), 0.35) !important;
+  border-top: 1px solid transparent !important;
   padding: 16px 24px !important;
   padding-bottom: max(16px, env(safe-area-inset-bottom, 16px)) !important;
   flex-shrink: 0 !important;
   width: 100% !important;
-  backdrop-filter: blur(18px) saturate(1.25);
-  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  backdrop-filter: blur(22px) saturate(1.25);
+  -webkit-backdrop-filter: blur(22px) saturate(1.25);
   box-shadow:
-    0 -1px 0 rgba(255, 255, 255, 0.04),
     0 -12px 48px rgba(0, 0, 0, 0.55),
-    0 0 40px rgba(var(--pai-gold-rgb), 0.06) !important;
+    0 0 40px rgba(var(--pai-gold-rgb), 0.04) !important;
   z-index: 999999 !important;
   visibility: visible !important;
   opacity: 1 !important;
   pointer-events: auto !important;
+  /* Journal glass panel on bottom surface */
+  background-image: var(--pai-composer-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
 }
 
 /* Override any hidden styles */
@@ -725,19 +959,22 @@ footer.pai-composer,
   opacity: 1 !important;
 }
 
-/* Shimmer line above composer */
+/* Top rim shimmer on composer */
 .pai-composer::before {
   content: '';
   position: absolute;
   top: -1px;
-  left: 8%; right: 8%;
+  left: 4%; right: 14%;
   height: 1px;
   background: linear-gradient(90deg,
-    transparent,
-    rgba(var(--pai-gold-rgb),0.45),
-    rgba(var(--pai-gold-bright-rgb),0.3),
-    transparent);
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(255, 255, 255, 0.42) 32%,
+    rgba(175, 200, 255, 0.38) 62%,
+    rgba(var(--pai-gold-rgb), 0.10) 88%,
+    transparent 100%
+  );
   pointer-events: none;
+  z-index: 1;
 }
 
 /* Image preview strip */
@@ -787,7 +1024,7 @@ footer.pai-composer,
   width: 100% !important;
 }
 
-/* Icon buttons */
+/* Icon buttons — journal glass style */
 .pai-icon-btn {
   display: flex !important;
   align-items: center !important;
@@ -795,72 +1032,139 @@ footer.pai-composer,
   width: 44px !important;
   height: 44px !important;
   flex-shrink: 0 !important;
-  background: rgba(17,18,23,0.8) !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid transparent !important;
   border-radius: 12px !important;
   color: var(--muted) !important;
   cursor: pointer !important;
   transition: all var(--ease) !important;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35) !important;
 }
 .pai-icon-btn:hover:not(:disabled) {
-  background: rgba(var(--pai-gold-rgb),0.15) !important;
-  border-color: rgba(var(--pai-gold-rgb),0.4) !important;
+  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover) !important;
+  box-shadow: var(--journal-panel-outer-glow-hover) !important;
   color: var(--text) !important;
 }
 .pai-icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
 .pai-icon-btn.recording {
-  background: rgba(130,118,108,0.15) !important;
-  border-color: rgba(130,118,108,0.4) !important;
-  color: var(--down) !important;
-  animation: recPulse 1.2s ease-in-out infinite;
+  background-image:
+    linear-gradient(168deg, rgba(240, 61, 95, 0.12) 0%, rgba(3, 4, 14, 0.90) 100%) padding-box,
+    var(--journal-panel-border) border-box !important;
+  color: rgba(252, 165, 165, 0.90) !important;
+  animation: paiRecPulse 1.2s ease-in-out infinite;
 }
-@keyframes recPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(130,118,108,0.3); }
-  50%       { box-shadow: 0 0 0 5px rgba(130,118,108,0); }
+@keyframes paiRecPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 61, 95, 0.25); }
+  50%       { box-shadow: 0 0 0 5px rgba(240, 61, 95, 0); }
 }
 
 .pai-icon-btn.stop {
-  background: rgba(130,118,108,0.15) !important;
-  border-color: rgba(130,118,108,0.4) !important;
-  color: var(--down) !important;
+  background-image:
+    linear-gradient(168deg, rgba(240, 61, 95, 0.08) 0%, rgba(3, 4, 14, 0.90) 100%) padding-box,
+    var(--journal-panel-border) border-box !important;
+  color: rgba(252, 165, 165, 0.80) !important;
 }
 
-/* Textarea wrapper - CRITICAL */
-.pai-input-wrap { 
-  flex: 1 !important; 
+/* ── Textarea wrapper — GRACEFUL SCROLLBAR FIX ── */
+.pai-input-wrap {
+  flex: 1 !important;
   min-width: 0 !important;
+  position: relative !important;
 }
 
 .pai-input-wrap textarea {
   width: 100% !important;
-  padding: 12px 16px !important;
-  background: rgba(17,18,23,0.8) !important;
-  border: 2px solid var(--border) !important;
+  padding: 11px 16px !important;
+  border: 1px solid transparent !important;
   border-radius: 12px !important;
-  color: var(--text) !important;
+  color: rgba(248, 250, 252, 0.94) !important;
+  -webkit-text-fill-color: rgba(248, 250, 252, 0.94) !important;
+  caret-color: rgba(200, 215, 255, 0.90) !important;
   font-size: 0.95rem !important;
   font-family: 'Space Grotesk', sans-serif !important;
   font-weight: 300 !important;
   line-height: 1.55 !important;
   resize: none !important;
   min-height: 48px !important;
-  max-height: 150px !important;
+  max-height: 148px !important;
   overflow-y: auto !important;
   display: block !important;
-  transition: border-color var(--ease), background var(--ease) !important;
+  /* Permanent dark base — prevents browser from ever flashing white */
+  background-color: rgba(2, 3, 14, 0.97) !important;
+  background-image:
+    linear-gradient(168deg, rgba(8, 10, 28, 0.98) 0%, rgba(3, 4, 16, 0.99) 100%),
+    var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset !important;
+  transition: box-shadow var(--ease), background-color var(--ease) !important;
+  /* Thin graceful scrollbar */
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(120, 155, 220, 0.25) transparent !important;
+  /* Kill browser default appearance that can override bg */
+  -webkit-appearance: none !important;
+  appearance: none !important;
 }
+
+/* Graceful scrollbar — webkit */
+.pai-input-wrap textarea::-webkit-scrollbar {
+  width: 3px !important;
+}
+.pai-input-wrap textarea::-webkit-scrollbar-track {
+  background: transparent !important;
+  margin: 8px 0 !important;
+}
+.pai-input-wrap textarea::-webkit-scrollbar-thumb {
+  background: rgba(120, 155, 220, 0.28) !important;
+  border-radius: 99px !important;
+  transition: background 0.2s ease !important;
+}
+.pai-input-wrap textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(195, 215, 255, 0.45) !important;
+}
+
 .pai-input-wrap textarea:focus {
   outline: none !important;
-  border-color: var(--accent) !important;
-  background: rgba(var(--pai-gold-rgb),0.1) !important;
+  background-color: rgba(2, 4, 18, 0.99) !important;
+  background-image:
+    linear-gradient(168deg, rgba(10, 14, 38, 0.99) 0%, rgba(4, 6, 22, 0.99) 100%),
+    var(--journal-panel-border-hover) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  color: rgba(248, 250, 252, 0.96) !important;
+  -webkit-text-fill-color: rgba(248, 250, 252, 0.96) !important;
+  box-shadow:
+    0 6px 28px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    var(--journal-focus-ring) !important;
 }
-.pai-input-wrap textarea::placeholder { 
-  color: rgba(255,255,255,0.3) !important; 
+.pai-input-wrap textarea::placeholder {
+  color: rgba(255,255,255,0.26) !important;
+  -webkit-text-fill-color: rgba(255,255,255,0.26) !important;
 }
 .pai-input-wrap textarea:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Send button */
+/* Autofill — prevent browser yellow/white fill */
+.pai-input-wrap textarea:-webkit-autofill,
+.pai-input-wrap textarea:-webkit-autofill:hover,
+.pai-input-wrap textarea:-webkit-autofill:focus,
+.pai-input-wrap textarea:-webkit-autofill:active {
+  -webkit-text-fill-color: rgba(248, 250, 252, 0.94) !important;
+  caret-color: rgba(200, 215, 255, 0.90) !important;
+  /* Paint a dark inset shadow over the autofill colour */
+  box-shadow:
+    inset 0 0 0 1000px rgba(2, 3, 14, 0.98),
+    0 4px 24px rgba(0, 0, 0, 0.55) !important;
+  background-color: rgba(4, 5, 18, 0.98) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Send button — gold gradient (same as journal CTA but gold-flavored) */
 .pai-send {
   display: flex !important;
   align-items: center !important;
@@ -870,19 +1174,24 @@ footer.pai-composer,
   min-width: 48px !important;
   flex-shrink: 0 !important;
   background: linear-gradient(135deg, #9a7b22 0%, var(--pai-gold) 40%, var(--pai-gold-bright) 100%) !important;
-  border: 1px solid rgba(var(--pai-gold-bright-rgb), 0.45) !important;
+  border: 1px solid rgba(var(--pai-gold-bright-rgb), 0.42) !important;
   border-radius: 12px !important;
-  color: #0a0a0c !important;
+  color: #04050e !important;
   cursor: pointer !important;
   transition: transform var(--ease), box-shadow var(--ease), opacity var(--ease) !important;
-  box-shadow: 0 0 22px rgba(var(--pai-gold-rgb), 0.38) !important;
+  box-shadow:
+    0 0 22px rgba(var(--pai-gold-rgb), 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
 }
 .pai-send:hover:not(:disabled) {
   transform: translateY(-2px) !important;
-  box-shadow: 0 0 32px rgba(var(--pai-gold-bright-rgb), 0.4) !important;
+  box-shadow:
+    0 0 36px rgba(var(--pai-gold-bright-rgb), 0.42),
+    0 8px 24px rgba(0,0,0,0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
 }
 .pai-send:active:not(:disabled) { transform: scale(0.96) !important; }
-.pai-send:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
+.pai-send:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none !important; }
 
 /* Composer hint text */
 .pai-hint-text {
@@ -890,7 +1199,7 @@ footer.pai-composer,
   font-size: 0.65rem !important;
   letter-spacing: 0.13em !important;
   text-transform: uppercase !important;
-  color: rgba(255,255,255,0.3) !important;
+  color: rgba(255,255,255,0.22) !important;
   margin: 8px 0 0 !important;
   display: block !important;
 }
