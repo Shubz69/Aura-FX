@@ -21,6 +21,9 @@ const POLL_NORMAL_MS = 2 * 60 * 1000;   // 2 min baseline
 const POLL_FAST_MS   = 20 * 1000;       // 20 s when an event is within ±5 min
 const SOON_WINDOW_MS = 5 * 60 * 1000;   // ±5 min = "near" window
 const TICK_MS        = 1000;            // 1s tick for countdown display
+// Day bucketing must match Forex Factory / backend behavior (ET calendar day).
+// Display times still use the browser timezone.
+const DATA_TIME_ZONE = 'America/New_York';
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -32,6 +35,18 @@ function shiftIsoDate(dateStr, deltaDays) {
   const d = new Date(`${dateStr}T12:00:00.000Z`);
   d.setUTCDate(d.getUTCDate() + deltaDays);
   return d.toISOString().slice(0, 10);
+}
+
+function convertIsoDateToEt(isoDate) {
+  const s = String(isoDate || '').slice(0, 10);
+  if (!ISO_DATE_RE.test(s)) return s;
+  // Treat incoming YYYY-MM-DD as a UTC day boundary and convert it into the ET day bucket.
+  const d = new Date(`${s}T00:00:00.000Z`);
+  try {
+    return d.toLocaleDateString('en-CA', { timeZone: DATA_TIME_ZONE });
+  } catch (_) {
+    return s;
+  }
 }
 
 function loadPref(key, fallback) {
@@ -57,8 +72,10 @@ function getEventStatus(ev) {
 export default function ForexFactoryNews({ date, parentControlsDate = false }) {
   const [displayTimeZone] = useState(() => getBrowserTimeZone());
   const [viewDate, setViewDate] = useState(() => {
-    if (date && ISO_DATE_RE.test(String(date))) return String(date).slice(0, 10);
-    return todayInTimeZone(getBrowserTimeZone());
+    if (date && ISO_DATE_RE.test(String(date))) {
+      return parentControlsDate ? convertIsoDateToEt(String(date)) : String(date).slice(0, 10);
+    }
+    return todayInTimeZone(DATA_TIME_ZONE);
   });
   const [events, setEvents]           = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -78,20 +95,20 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
 
   useEffect(() => {
     if (date && ISO_DATE_RE.test(String(date))) {
-      setViewDate(String(date).slice(0, 10));
+      setViewDate(parentControlsDate ? convertIsoDateToEt(String(date)) : String(date).slice(0, 10));
     }
-  }, [date]);
+  }, [date, parentControlsDate]);
 
   const isViewingToday = useMemo(
-    () => viewDate === todayInTimeZone(displayTimeZone),
-    [viewDate, displayTimeZone]
+    () => viewDate === todayInTimeZone(DATA_TIME_ZONE),
+    [viewDate]
   );
 
   // Core fetch — refresh=true bypasses server cache for precision fetches; historical uses ?date=
   const fetchEvents = useCallback(async (refresh = false) => {
     const fetchId = ++latestFetchIdRef.current;
     try {
-      const todayLocal = todayInTimeZone(displayTimeZone);
+      const todayLocal = todayInTimeZone(DATA_TIME_ZONE);
       const isToday = viewDate === todayLocal;
       const res = isToday
         ? await Api.getTraderDeckEconomicCalendar(1, refresh)
@@ -142,7 +159,7 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
     setLoading(true);
     fetchEvents(false).then((evts) => {
       if (cancelled || !evts) return;
-      if (viewDateRef.current === todayInTimeZone(displayTimeZone)) {
+      if (viewDateRef.current === todayInTimeZone(DATA_TIME_ZONE)) {
         schedulePrecision(evts);
       }
     });
@@ -162,7 +179,7 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
     sinceLastFetch.current = 0;
     const tickId = setInterval(() => {
       setTick((t) => t + 1);
-      const todayLocal = todayInTimeZone(displayTimeZone);
+      const todayLocal = todayInTimeZone(DATA_TIME_ZONE);
       if (viewDateRef.current !== todayLocal) return;
 
       sinceLastFetch.current += TICK_MS;
@@ -179,7 +196,7 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
         sinceLastFetch.current = 0;
         if (viewDateRef.current !== todayLocal) return;
         fetchEvents(isNear).then((fresh) => {
-          if (fresh && viewDateRef.current === todayInTimeZone(displayTimeZone)) {
+          if (fresh && viewDateRef.current === todayInTimeZone(DATA_TIME_ZONE)) {
             schedulePrecision(fresh);
           }
         });
@@ -208,17 +225,17 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
     localStorage.setItem('td_ff_impact', JSON.stringify(next));
   };
 
-  /** Prefer wall-clock bucket from timestamp (viewer TZ); fall back to provider date string when time unknown. */
+  /** Bucket by Forex Factory day (ET). Display time remains browser-local. */
   function eventMatchesViewDate(e) {
     const ts = parseEventTimestamp(e);
     if (ts) {
-      return getEventDateKeyLocal(e, displayTimeZone) === viewDate;
+      return getEventDateKeyLocal(e, DATA_TIME_ZONE) === viewDate;
     }
     const providerDate = typeof e?.date === 'string' ? e.date.slice(0, 10) : '';
     if (providerDate && ISO_DATE_RE.test(providerDate)) {
       return providerDate === viewDate;
     }
-    return getEventDateKeyLocal(e, displayTimeZone) === viewDate;
+    return getEventDateKeyLocal(e, DATA_TIME_ZONE) === viewDate;
   }
 
   const eventsForViewDate = events.filter(eventMatchesViewDate);
@@ -305,8 +322,8 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
                   type="date"
                   className="td-ff-date-input"
                   value={viewDate}
-                  max={shiftIsoDate(todayInTimeZone(displayTimeZone), 14)}
-                  min={shiftIsoDate(todayInTimeZone(displayTimeZone), -365)}
+                  max={shiftIsoDate(todayInTimeZone(DATA_TIME_ZONE), 14)}
+                  min={shiftIsoDate(todayInTimeZone(DATA_TIME_ZONE), -365)}
                   onChange={(e) => {
                     const v = e.target.value;
                     if (v && ISO_DATE_RE.test(v)) setViewDate(v);
@@ -324,7 +341,7 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
                 <button
                   type="button"
                   className="td-ff-date-today"
-                  onClick={() => setViewDate(todayInTimeZone(displayTimeZone))}
+                  onClick={() => setViewDate(todayInTimeZone(DATA_TIME_ZONE))}
                 >
                   Today
                 </button>

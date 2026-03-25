@@ -27,6 +27,22 @@ const MATCH_WINDOW_MS = 25 * 60 * 1000;
 
 const IMPACT_COLORS = { High: 'high', Medium: 'medium', Low: 'low' };
 
+function debugLog(payload) {
+  // #region agent log
+  fetch('http://127.0.0.1:7826/ingest/3ba0a834-6e5c-4fe0-bd70-25d6a5ebbb2f', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8f4319' },
+    body: JSON.stringify({
+      sessionId: '8f4319',
+      location: 'api/trader-deck/economic-calendar.js',
+      message: 'economic-calendar-debug',
+      data: payload,
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+}
+
 // --- Normalise helpers ---
 function normImpact(raw) {
   if (!raw) return 'low';
@@ -513,7 +529,11 @@ async function scrapeForexFactoryHtmlDay(dateStr) {
 
 async function enrichForexFactoryWithActuals(events, days, forceRefresh) {
   if (!events || events.length === 0) return events;
-  const [fmp, te] = await Promise.all([fetchFmpSupplement(days), fetchTradingEconomicsSupplement(days)]);
+  const supplementDays = Math.min(14, Math.max(7, Number(days) || 7));
+  const [fmp, te] = await Promise.all([
+    fetchFmpSupplement(supplementDays),
+    fetchTradingEconomicsSupplement(supplementDays),
+  ]);
   let merged = mergeSupplementActuals(events, fmp || []);
   merged = mergeSupplementActuals(merged, te || []);
 
@@ -524,6 +544,20 @@ async function enrichForexFactoryWithActuals(events, days, forceRefresh) {
     // Past release by ~15s — CDN JSON never has actual; try FMP/TE first, then HTML
     return ts && ts < now - 15000 && now - ts < 7 * 24 * 60 * 60 * 1000;
   });
+  // #region agent log
+  debugLog({
+    hypothesisId: 'H-enrich',
+    step: 'pre-scrape',
+    supplementDays,
+    fmpLen: Array.isArray(fmp) ? fmp.length : 0,
+    teLen: Array.isArray(te) ? te.length : 0,
+    stillMissing,
+    forceRefresh,
+    withActualBefore: merged.filter((e) => hasActualBackend(e.actual)).length,
+    withForecastBefore: merged.filter((e) => normalizeValue(e.forecast) != null).length,
+  });
+  // #endregion
+
   if (!stillMissing && !forceRefresh) return merged;
 
   const dates = new Set();
@@ -535,10 +569,23 @@ async function enrichForexFactoryWithActuals(events, days, forceRefresh) {
   });
   const list = [...dates].sort().slice(0, 5);
   let out = merged;
+  let scrapeRowsTotal = 0;
   for (const d of list) {
     const rows = await scrapeForexFactoryHtmlDay(d);
+    scrapeRowsTotal += Array.isArray(rows) ? rows.length : 0;
     out = mergeScrapedHtml(rows, out, d);
   }
+  // #region agent log
+  debugLog({
+    hypothesisId: 'H-enrich',
+    step: 'post-scrape',
+    scrapeDates: list,
+    scrapeRowsTotal,
+    withActualAfter: out.filter((e) => hasActualBackend(e.actual)).length,
+    withForecastAfter: out.filter((e) => normalizeValue(e.forecast) != null).length,
+  });
+  // #endregion
+
   return out;
 }
 
@@ -1027,12 +1074,40 @@ module.exports = async (req, res) => {
     const etToday = calendarEtTodayStr();
     const includesTodayOrFuture = to >= etToday;
     const rangeTtl = includesTodayOrFuture ? CACHE_TTL_MS : HISTORICAL_RANGE_CACHE_TTL_MS;
-    const rangeCached = forceRefresh ? null : getCached(rangeKey, rangeTtl);
+    const rangeCachedForRecovery = getCached(rangeKey, rangeTtl);
+    const rangeCached = forceRefresh ? null : rangeCachedForRecovery;
     if (rangeCached) {
       return res.status(200).json({ success: true, ...rangeCached, viewerTimeZone, cached: true });
     }
     const { events, source } = await fetchHistoricalRange(from, to);
     const fetchedAt = new Date().toISOString();
+
+    // #region agent log
+    debugLog({
+      hypothesisId: 'H-range-recovery',
+      step: 'range-fetched',
+      from,
+      to,
+      forceRefresh,
+      source,
+      count: Array.isArray(events) ? events.length : 0,
+      withForecast: Array.isArray(events) ? events.filter((e) => normalizeValue(e.forecast) != null).length : 0,
+      withActual: Array.isArray(events) ? events.filter((e) => hasActualBackend(e.actual)).length : 0,
+      cachedForRecovery: Boolean(rangeCachedForRecovery),
+    });
+    // #endregion
+
+    const looksLikeStaticFallback = source === 'fallback' && Array.isArray(events) && events.length <= 5;
+    if (forceRefresh && rangeCachedForRecovery && looksLikeStaticFallback) {
+      return res.status(200).json({
+        success: true,
+        ...rangeCachedForRecovery,
+        viewerTimeZone,
+        cached: true,
+        recoveredFromCache: true,
+      });
+    }
+
     const rangePayload = {
       events,
       source,
@@ -1053,7 +1128,8 @@ module.exports = async (req, res) => {
 
   // ?refresh=1 bypasses cache — used by frontend for precision fetches at event release time
   const forceRefresh = req.query.refresh === '1';
-  const cached = forceRefresh ? null : getCached(cacheKey, CACHE_TTL_MS);
+  const cachedForRecovery = getCached(cacheKey, CACHE_TTL_MS);
+  const cached = forceRefresh ? null : cachedForRecovery;
   if (cached) return res.status(200).json({ success: true, ...cached, viewerTimeZone, cached: true });
 
   const days = Math.min(14, Math.max(1, parseInt(req.query.days, 10) || 7));
@@ -1093,6 +1169,51 @@ module.exports = async (req, res) => {
   events.sort(compareEvents);
 
   const fetchedAt = new Date().toISOString();
+
+  const withForecastNew = Array.isArray(events)
+    ? events.filter((e) => normalizeValue(e.forecast) != null).length
+    : 0;
+  const withActualNew = Array.isArray(events)
+    ? events.filter((e) => hasActualBackend(e.actual)).length
+    : 0;
+
+  const withForecastCached = cachedForRecovery?.events
+    ? cachedForRecovery.events.filter((e) => normalizeValue(e.forecast) != null).length
+    : 0;
+  const withActualCached = cachedForRecovery?.events
+    ? cachedForRecovery.events.filter((e) => hasActualBackend(e.actual)).length
+    : 0;
+
+  // #region agent log
+  debugLog({
+    hypothesisId: 'H-fallback-recovery',
+    step: 'default-fetched',
+    forceRefresh,
+    source,
+    count: Array.isArray(events) ? events.length : 0,
+    withForecastNew,
+    withActualNew,
+    withForecastCached,
+    withActualCached,
+    cachedForRecovery: Boolean(cachedForRecovery),
+  });
+  // #endregion
+
+  const looksLikeStaticFallback = source === 'fallback' && Array.isArray(events) && events.length <= 5;
+  const looksLikeFigureDrop =
+    cachedForRecovery &&
+    withForecastCached > 0 &&
+    withForecastNew < Math.max(2, Math.floor(withForecastCached * 0.25));
+  if (forceRefresh && cachedForRecovery && (looksLikeStaticFallback || looksLikeFigureDrop)) {
+    return res.status(200).json({
+      success: true,
+      ...cachedForRecovery,
+      viewerTimeZone,
+      cached: true,
+      recoveredFromCache: true,
+    });
+  }
+
   const payload = {
     events,
     source,
