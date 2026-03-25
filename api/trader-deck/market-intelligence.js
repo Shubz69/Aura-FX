@@ -14,17 +14,16 @@ const { enrichTraderDeckPayload } = require('./openaiTraderInsights');
 const CACHE_SEC = Math.min(300, Math.max(45, parseInt(process.env.TRADER_DECK_MI_CACHE_SEC, 10) || 90));
 const CACHE_TTL_MS = CACHE_SEC * 1000;
 
-let cached = null;
-let cachedAt = 0;
+const cacheStore = new Map();
 
-function getCached() {
-  if (cached != null && Date.now() - cachedAt < CACHE_TTL_MS) return cached;
+function getCached(cacheKey) {
+  const entry = cacheStore.get(cacheKey);
+  if (entry && Date.now() - entry.at < CACHE_TTL_MS) return entry.payload;
   return null;
 }
 
-function setCache(data) {
-  cached = data;
-  cachedAt = Date.now();
+function setCache(cacheKey, data) {
+  cacheStore.set(cacheKey, { at: Date.now(), payload: data });
 }
 
 /** Fallback payload when APIs fail */
@@ -80,15 +79,19 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const forceRefresh = req.query && (req.query.refresh === '1' || req.query.refresh === 'true');
-  const fromCache = forceRefresh ? null : getCached();
+  const q = req.query || {};
+  const forceRefresh = q.refresh === '1' || q.refresh === 'true';
+  const timeframe = q.timeframe === 'weekly' ? 'weekly' : 'daily';
+  const date = q.date != null && String(q.date).trim() !== '' ? String(q.date).trim().slice(0, 10) : '';
+  const cacheKey = `${timeframe}:${date || 'live'}`;
+  const fromCache = forceRefresh ? null : getCached(cacheKey);
   if (fromCache) {
     res.setHeader('Cache-Control', 'private, max-age=30');
-    return res.status(200).json({ success: true, ...fromCache, cached: true });
+    return res.status(200).json({ success: true, ...fromCache, timeframe, date: date || null, cached: true });
   }
 
   try {
-    const raw = await runEngine();
+    const raw = await runEngine({ timeframe, date });
     let enriched = null;
     try {
       enriched = await enrichTraderDeckPayload(raw);
@@ -100,9 +103,9 @@ module.exports = async (req, res) => {
       ...rest,
       ...(enriched || {}),
     };
-    setCache(payload);
+    setCache(cacheKey, payload);
     res.setHeader('Cache-Control', 'private, max-age=30');
-    res.status(200).json({ success: true, ...payload, cached: false });
+    res.status(200).json({ success: true, ...payload, timeframe, date: date || null, cached: false });
   } catch (err) {
     console.warn('[trader-deck] market-intelligence error:', err.message || err);
     const fallback = fallbackPayload();

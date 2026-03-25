@@ -115,7 +115,7 @@ function getTreasuryRecentDirection(fred) {
 }
 
 // --- Regime logic ---
-function buildMarketRegime(fred, finnhub, fmp, spxQuote, fng) {
+function buildMarketRegime(fred, finnhub, fmp, spxQuote, fng, options = {}) {
   const treasury = getTreasury10y(fred, fmp);
   const hasRates = treasury != null && !Number.isNaN(treasury);
   const regime = hasRates && treasury > 4.25
@@ -124,8 +124,11 @@ function buildMarketRegime(fred, finnhub, fmp, spxQuote, fng) {
       ? 'Liquidity Driven'
       : 'Risk Rotation';
   const primary = hasRates ? 'Bond Yields' : 'Global Liquidity';
-  const secondary = 'Macro Data + Commodities + Geopolitics';
-  const pulseScore = buildMarketPulse(fred, finnhub, fmp, spxQuote, fng).score;
+  const secondary = 'Macro Data + Commodities + Cross-asset flows';
+  const pulseScore =
+    options.pulseScore != null && Number.isFinite(Number(options.pulseScore))
+      ? Number(options.pulseScore)
+      : buildMarketPulse(fred, finnhub, fmp, spxQuote, fng).score;
   const marketSentiment = sentimentFromScore(pulseScore) === 'Mixed' ? 'Neutral / Mixed' : sentimentFromScore(pulseScore);
   const bias = sentimentFromScore(pulseScore);
   const tradeEnvironment =
@@ -147,7 +150,7 @@ function buildMarketRegime(fred, finnhub, fmp, spxQuote, fng) {
 }
 
 // --- Pulse logic ---
-function buildMarketPulse(fred, finnhub, fmp, spxQuote, fng) {
+function buildMarketPulse(fred, finnhub, fmp, spxQuote, fng, options = {}) {
   let score = 50;
   const treasury = getTreasury10y(fred, fmp);
   const eurUsd = finnhub.forex && finnhub.forex.eurUsd ? finnhub.forex.eurUsd : null;
@@ -176,6 +179,16 @@ function buildMarketPulse(fred, finnhub, fmp, spxQuote, fng) {
   }
   if (fng && fng.score != null) {
     score = Math.round(score * 0.65 + fng.score * 0.35);
+  }
+
+  const riskScore = options.riskScore != null && Number.isFinite(Number(options.riskScore))
+    ? Number(options.riskScore)
+    : null;
+  if (riskScore != null) {
+    score = Math.round(score * 0.75 + (100 - riskScore) * 0.25);
+  }
+  if (options.timeframe === 'weekly') {
+    score = Math.round(score * 0.9 + 5);
   }
 
   score = Math.max(0, Math.min(100, score));
@@ -377,8 +390,28 @@ function buildMarketChangesToday(finnhub, fmp) {
   return items.slice(0, 6);
 }
 
+function summarizeWeeklyMarketChanges(keyDrivers, crossAssetSignals, riskRadar) {
+  const items = [];
+  const highRisk = (riskRadar?.items || []).filter((x) => String(x?.impact || x?.severity || '').toLowerCase() === 'high').length;
+  if (highRisk >= 3) {
+    items.push({ title: 'High-impact event concentration is elevated this week', priority: 'high' });
+  }
+  const yields = (crossAssetSignals || []).find((s) => s.asset === 'Yields');
+  if (yields && /rising|elevated/i.test(String(yields.signal || ''))) {
+    items.push({ title: 'Yield trend remains a dominant weekly macro driver', priority: 'medium' });
+  }
+  const usdDriver = (keyDrivers || []).find((d) => d.name === 'US Dollar');
+  if (usdDriver && usdDriver.direction !== 'neutral') {
+    items.push({ title: 'USD directional pressure likely to shape majors this week', priority: 'medium' });
+  }
+  if (items.length === 0) {
+    items.push({ title: 'Weekly tone is mixed; prioritize confirmation over prediction', priority: 'medium' });
+  }
+  return items.slice(0, 6);
+}
+
 // --- Trader Focus ---
-function buildTraderFocus(fred, finnhub, keyDrivers, crossAssetSignals) {
+function buildTraderFocus(fred, finnhub, keyDrivers, crossAssetSignals, options = {}) {
   const focus = [];
   if (fred.treasury10y != null) focus.push({ title: 'Watch bond yields for equity and gold reaction pivots', reason: 'Primary macro driver' });
   const usdSignal = (crossAssetSignals || []).find((s) => s.asset === 'USD');
@@ -387,6 +420,12 @@ function buildTraderFocus(fred, finnhub, keyDrivers, crossAssetSignals) {
   focus.push({ title: 'Reduce risk when releases cluster within a single session window', reason: 'Volatility management' });
   focus.push({ title: 'Prioritize confirmation-based entries over predictive entries', reason: 'Execution discipline' });
   if ((keyDrivers || []).some((d) => d.name === 'Bond Yields' && d.direction === 'up')) focus.push({ title: 'Keep size conservative in rate-sensitive instruments', reason: 'Yields rising' });
+  if (options.timeframe === 'weekly') {
+    focus.push({ title: 'Build a weekly scenario tree before opening new swing exposure', reason: 'Weekly planning' });
+  }
+  if (String(options.riskLevel || '').toLowerCase() === 'high' || String(options.riskLevel || '').toLowerCase() === 'extreme') {
+    focus.push({ title: 'Trade defensive until risk score normalizes', reason: 'Risk engine state' });
+  }
   return focus.slice(0, 5);
 }
 
@@ -582,11 +621,19 @@ function normalizeCalendarEventToRadar(e) {
   };
 }
 
-function buildRiskRadar(fmp, finnhub) {
+function resolveReferenceDateMs(referenceDate) {
+  if (!referenceDate || typeof referenceDate !== 'string') return Date.now();
+  const parsed = Date.parse(`${referenceDate.slice(0, 10)}T12:00:00Z`);
+  return Number.isNaN(parsed) ? Date.now() : parsed;
+}
+
+function buildRiskRadar(fmp, options = {}) {
   const calendar = Array.isArray(fmp.economicCalendar) ? fmp.economicCalendar : [];
+  const refNow = resolveReferenceDateMs(options.referenceDate);
   const now = Date.now();
-  const horizonMs = now + RR_HORIZON_DAYS * 24 * 60 * 60 * 1000;
-  const startOfToday = new Date(now);
+  const horizonDays = options.timeframe === 'weekly' ? 21 : RR_HORIZON_DAYS;
+  const horizonMs = refNow + horizonDays * 24 * 60 * 60 * 1000;
+  const startOfToday = new Date(refNow);
   startOfToday.setUTCHours(0, 0, 0, 0);
 
   const rows = [];
@@ -612,28 +659,24 @@ function buildRiskRadar(fmp, finnhub) {
     return rest;
   });
 
-  const calTitlesLower = new Set(calendarOut.map((r) => (r.title || '').toLowerCase()));
-
-  const headlineWatch = buildRiskRadarHeadlineWatch(finnhub, fmp, calTitlesLower);
-  const merged = [...calendarOut, ...headlineWatch].slice(0, RR_MAX_TOTAL);
-
   const fallbackItems = [
       { title: 'High-impact US data (CPI, NFP, GDP) — check calendar', severity: 'high', impact: 'high', currency: 'USD' },
-      { title: 'Fed guidance & yields — watch headlines', severity: 'medium', impact: 'medium', currency: 'USD' },
-      { title: 'Geopolitical headlines — risk flows', severity: 'medium', impact: 'medium', currency: 'GLB' },
+      { title: 'Central-bank decisions and rates path risk', severity: 'medium', impact: 'medium', currency: 'GLB' },
+      { title: 'Liquidity windows around clustered releases', severity: 'medium', impact: 'medium', currency: 'GLB' },
     ];
-  const radarItems = merged.length === 0 ? fallbackItems : merged;
+  const radarItems = calendarOut.length === 0 ? fallbackItems : calendarOut.slice(0, RR_MAX_TOTAL);
 
   const eventRisk = Math.min(100, Math.round((rows.slice(0, 4).reduce((sum, r) => sum + (r._score || 0), 0) / 4) || 35));
-  const geopoliticalRisk = /geopolitic|war|tension|sanction|conflict/i.test((finnhub.news || []).map((n) => n.headline || '').join(' ')) ? 72 : 44;
-  const volatility = Math.min(100, Math.round(eventRisk * 0.6 + geopoliticalRisk * 0.4));
-  const clustering = Math.min(100, Math.max(20, Math.round((rows.length / Math.max(1, RR_HORIZON_DAYS)) * 18)));
+  const highImpactCount = rows.filter((r) => (r.impact || r.severity) === 'high').length;
+  const geopoliticalRisk = Math.min(90, 30 + highImpactCount * 10);
+  const volatility = Math.min(100, Math.round(eventRisk * 0.65 + geopoliticalRisk * 0.35));
+  const clustering = Math.min(100, Math.max(20, Math.round((rows.length / Math.max(1, horizonDays)) * 22)));
   const liquidity = rows.some((r) => (r.time || '').toLowerCase().includes('all day')) ? 58 : 46;
   const score = Math.round(eventRisk * 0.34 + geopoliticalRisk * 0.18 + volatility * 0.18 + liquidity * 0.14 + clustering * 0.16);
   const level = score >= 80 ? 'Extreme' : score >= 65 ? 'High' : score >= 45 ? 'Moderate' : 'Low';
 
   let nextRiskEventInMins = null;
-  const nowMs = Date.now();
+  const nowMs = refNow > now ? now : refNow;
   for (const r of rows.sort((a, b) => (a._ms || 0) - (b._ms || 0))) {
     if (r._ms && r._ms > nowMs) {
       nextRiskEventInMins = Math.max(1, Math.round((r._ms - nowMs) / 60000));
@@ -656,56 +699,6 @@ function buildRiskRadar(fmp, finnhub) {
   };
 }
 
-/** Short “market watch” lines from headlines when they add context calendar rows don’t cover. */
-function buildRiskRadarHeadlineWatch(finnhub, fmp, calendarTitlesLower) {
-  const headlines = []
-    .concat((finnhub.news || []).map((n) => n.headline))
-    .concat((fmp.news || []).map((n) => n.title))
-    .filter(Boolean);
-  const blob = headlines.join(' ').toLowerCase();
-
-  const themes = [
-    { keys: ['fomc', 'fed ', 'powell', 'interest rate'], title: 'Headlines: Fed / rates in focus', minMatch: 1 },
-    { keys: ['cpi', 'inflation', 'consumer price'], title: 'Headlines: inflation narrative active', minMatch: 1 },
-    { keys: ['nfp', 'nonfarm', 'jobs report', 'employment'], title: 'Headlines: labour market in focus', minMatch: 1 },
-    { keys: ['treasury', 'yield', '10-year', 'bond'], title: 'Headlines: yield curve / bonds moving', minMatch: 1 },
-    { keys: ['dollar', 'usd', 'euro', 'eurusd'], title: 'Headlines: USD & FX volatility', minMatch: 1 },
-    { keys: ['geopolitic', 'war', 'sanction', 'election'], title: 'Headlines: geopolitical risk', minMatch: 1 },
-  ];
-
-  const out = [];
-  const used = new Set();
-
-  function overlapsCalendar(title) {
-    const t = title.toLowerCase();
-    for (const c of calendarTitlesLower) {
-      if (!c) continue;
-      if (c.includes('fomc') && t.includes('fed')) return true;
-      if (c.includes('cpi') && t.includes('inflation')) return true;
-      if ((c.includes('nfp') || c.includes('payroll')) && t.includes('labour')) return true;
-    }
-    return false;
-  }
-
-  for (const th of themes) {
-    const hits = th.keys.filter((k) => blob.includes(k));
-    if (hits.length < th.minMatch) continue;
-    if (used.has(th.title)) continue;
-    if (overlapsCalendar(th.title)) continue;
-    used.add(th.title);
-    out.push({
-      title: th.title,
-      time: '—',
-      severity: 'medium',
-      impact: 'medium',
-      currency: 'NEWS',
-      category: 'Headline',
-    });
-    if (out.length >= 2) break;
-  }
-  return out;
-}
-
 function collectHeadlineSample(finnhub, fmp) {
   const a = (finnhub.news || []).map((n) => n.headline).filter(Boolean);
   const b = (fmp.news || []).map((n) => n.title).filter(Boolean);
@@ -722,14 +715,23 @@ function collectHeadlineSample(finnhub, fmp) {
 }
 
 // --- Main engine ---
-function buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi) {
-  const marketPulse = buildMarketPulse(fred, finnhub, fmp, spxQuote, fng);
-  const marketRegime = buildMarketRegime(fred, finnhub, fmp, spxQuote, fng);
+function buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi, options = {}) {
+  const timeframe = options.timeframe === 'weekly' ? 'weekly' : 'daily';
+  const riskRadar = buildRiskRadar(fmp, { timeframe, referenceDate: options.date });
+  const marketPulse = buildMarketPulse(fred, finnhub, fmp, spxQuote, fng, {
+    riskScore: riskRadar.score,
+    timeframe,
+  });
+  const marketRegime = buildMarketRegime(fred, finnhub, fmp, spxQuote, fng, { pulseScore: marketPulse.score });
   const keyDrivers = buildKeyDrivers(fred, finnhub, fmp, spxQuote);
   const crossAssetSignals = buildCrossAssetSignals(fred, finnhub, fmp, spxQuote, rsi);
-  const marketChangesToday = buildMarketChangesToday(finnhub, fmp);
-  const traderFocus = buildTraderFocus(fred, finnhub, keyDrivers, crossAssetSignals);
-  const riskRadar = buildRiskRadar(fmp, finnhub);
+  const marketChangesToday = timeframe === 'weekly'
+    ? summarizeWeeklyMarketChanges(keyDrivers, crossAssetSignals, riskRadar)
+    : buildMarketChangesToday(finnhub, fmp);
+  const traderFocus = buildTraderFocus(fred, finnhub, keyDrivers, crossAssetSignals, {
+    timeframe,
+    riskLevel: riskRadar.level,
+  });
   const headlineSample = collectHeadlineSample(finnhub, fmp);
 
   return {
@@ -747,11 +749,12 @@ function buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi) {
       nextRiskEventInMins: riskRadar.nextRiskEventInMins,
     },
     headlineSample,
+    timeframe,
     updatedAt: new Date().toISOString(),
   };
 }
 
-async function runEngine() {
+async function runEngine(options = {}) {
   const [finnhub, fmp, fred, spxQuote, fng, rsi] = await Promise.all([
     getFinnhubData().catch((e) => ({ news: [], forex: {}, errors: [e.message] })),
     getFmpData().catch((e) => ({ economicCalendar: [], news: [], treasury: null, errors: [e.message] })),
@@ -761,7 +764,7 @@ async function runEngine() {
     getAlphaVantageRSI().catch(() => null),
   ]);
 
-  return buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi);
+  return buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi, options);
 }
 
 module.exports = { runEngine, buildPayload };

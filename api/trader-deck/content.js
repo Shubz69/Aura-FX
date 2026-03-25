@@ -20,6 +20,16 @@ function normalizeDate(str) {
   return str.trim().slice(0, 10);
 }
 
+function getWeekEndingSunday(dateStr) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr || ''))) return dateStr;
+  const d = new Date(`${dateStr}T12:00:00.000Z`);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  const day = d.getUTCDay(); // 0 Sunday
+  const add = day === 0 ? 0 : (7 - day);
+  d.setUTCDate(d.getUTCDate() + add);
+  return d.toISOString().slice(0, 10);
+}
+
 function parseBody(req) {
   if (req.body == null) return {};
   if (typeof req.body === 'object' && !Buffer.isBuffer(req.body)) return req.body;
@@ -64,6 +74,12 @@ function typeToPeriod(type) {
   return null;
 }
 
+function normalizeStorageDateByType(type, date) {
+  const period = typeToPeriod(type);
+  if (period === 'weekly') return getWeekEndingSunday(date);
+  return date;
+}
+
 async function requireAdmin(req) {
   const decoded = verifyToken(req.headers.authorization);
   if (!decoded || !decoded.id) return { ok: false, status: 401, message: 'Authentication required' };
@@ -105,10 +121,11 @@ module.exports = async (req, res) => {
   if (req.method === 'PUT') {
     const body = parseBody(req);
     const putType = (body.type || queryType || '').toLowerCase();
-    const putDate = normalizeDate(body.date || queryDate || '');
-    if (!VALID_TYPES.includes(putType) || !/^\d{4}-\d{2}-\d{2}$/.test(putDate)) {
+    const putDateRaw = normalizeDate(body.date || queryDate || '');
+    if (!VALID_TYPES.includes(putType) || !/^\d{4}-\d{2}-\d{2}$/.test(putDateRaw)) {
       return res.status(400).json({ success: false, message: 'Invalid type or date. Use type=outlook-daily|outlook-weekly|intel-daily|intel-weekly and date=YYYY-MM-DD' });
     }
+    const putDate = normalizeStorageDateByType(putType, putDateRaw);
     let admin;
     try {
       admin = await requireAdmin(req);
@@ -145,10 +162,11 @@ module.exports = async (req, res) => {
   }
 
   const type = queryType;
-  const date = queryDate;
-  if (!VALID_TYPES.includes(type) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+  const dateRaw = queryDate;
+  if (!VALID_TYPES.includes(type) || !/^\d{4}-\d{2}-\d{2}$/.test(dateRaw)) {
     return res.status(400).json({ success: false, message: 'Invalid type or date. Use type=outlook-daily|outlook-weekly|intel-daily|intel-weekly and date=YYYY-MM-DD' });
   }
+  const date = normalizeStorageDateByType(type, dateRaw);
 
   const period = typeToPeriod(type);
   const isOutlook = type.startsWith('outlook');

@@ -22,7 +22,7 @@ export const SEED_MARKET_INTELLIGENCE = {
     currentRegime: 'Rate Sensitivity',
     bias: 'Mixed',
     primaryDriver: 'Bond Yields',
-    secondaryDriver: 'Macro Data + Commodities + Geopolitics',
+    secondaryDriver: 'Macro Data + Commodities + Cross-asset flows',
     marketSentiment: 'Neutral / Mixed',
     tradeEnvironment: 'Event-Driven',
   },
@@ -192,9 +192,9 @@ function mapBackendToDashboard(apiData) {
   };
 }
 
-export async function getMarketIntelligence({ refresh = false } = {}) {
+export async function getMarketIntelligence({ refresh = false, timeframe = 'daily', date = '' } = {}) {
   try {
-    const res = await Api.getTraderDeckMarketIntelligence(refresh);
+    const res = await Api.getTraderDeckMarketIntelligence(refresh, { timeframe, date });
     const data = res && res.data;
     if (data && data.success && (data.marketRegime || data.marketPulse)) {
       return mapBackendToDashboard(data);

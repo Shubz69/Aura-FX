@@ -16,6 +16,20 @@ function toYmdInTz(date, timeZone) {
   }).format(date);
 }
 
+function getWeekEndingSunday(dateStr) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr || ''))) return dateStr;
+  const d = new Date(`${dateStr}T12:00:00.000Z`);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  const day = d.getUTCDay();
+  const add = day === 0 ? 0 : (7 - day);
+  d.setUTCDate(d.getUTCDate() + add);
+  return d.toISOString().slice(0, 10);
+}
+
+function normalizeOutlookDate(period, dateStr) {
+  return period === 'weekly' ? getWeekEndingSunday(dateStr) : dateStr;
+}
+
 function weekdayName(date, timeZone) {
   return new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone }).format(date);
 }
@@ -425,13 +439,34 @@ async function finalizeRun(runKey, status, briefId, errorMessage) {
 }
 
 async function saveOutlookSnapshot({ period, date, payload }) {
+  const [rows] = await executeQuery(
+    'SELECT payload FROM trader_deck_outlook WHERE date = ? AND period = ? LIMIT 1',
+    [date, period]
+  );
+  const existingRaw = rows && rows[0] ? rows[0].payload : null;
+  let existing = null;
+  if (typeof existingRaw === 'string') {
+    try { existing = JSON.parse(existingRaw); } catch { existing = null; }
+  } else if (existingRaw && typeof existingRaw === 'object') {
+    existing = existingRaw;
+  }
+  const manualOverrides = existing && typeof existing.manualOverrides === 'object' ? existing.manualOverrides : null;
+  const manualOverrideKeys = Array.isArray(existing?.manualOverrideKeys) ? existing.manualOverrideKeys : [];
+  const nextPayload = manualOverrides
+    ? {
+        botPayload: payload,
+        manualOverrides,
+        manualOverrideKeys,
+        updatedAt: new Date().toISOString(),
+      }
+    : payload;
   await executeQuery(
     `INSERT INTO trader_deck_outlook (date, period, payload)
      VALUES (?, ?, ?)
      ON DUPLICATE KEY UPDATE
        payload = VALUES(payload),
        updated_at = CURRENT_TIMESTAMP`,
-    [date, period, JSON.stringify(payload)]
+    [date, period, JSON.stringify(nextPayload)]
   );
 }
 
@@ -475,7 +510,7 @@ async function generateAndStoreBrief({ period, timeZone = 'Europe/London', runDa
   assertAutomationModelConfigured();
   await ensureAutomationTables();
   const normalizedPeriod = normalizePeriod(period);
-  const date = toYmdInTz(runDate, timeZone);
+  const date = normalizeOutlookDate(normalizedPeriod, toYmdInTz(runDate, timeZone));
   const runKey = `auto-brief:${normalizedPeriod}:${date}`;
 
   const reserved = await reserveRun(runKey, normalizedPeriod, date);
@@ -531,7 +566,7 @@ async function generateAndStoreOutlook({ period, timeZone = 'Europe/London', run
   }
 
   try {
-    const raw = await runEngine();
+    const raw = await runEngine({ timeframe: normalizedPeriod, date });
     let enriched = null;
     try {
       enriched = await enrichTraderDeckPayload(raw);

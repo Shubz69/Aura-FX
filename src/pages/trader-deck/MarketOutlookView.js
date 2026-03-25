@@ -63,6 +63,35 @@ function hasDetailedRiskRadarRows(items) {
   });
 }
 
+function getWeekEndingSunday(dateStr) {
+  const s = String(dateStr || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(`${s}T12:00:00.000Z`);
+  if (isNaN(d.getTime())) return s;
+  const day = d.getUTCDay();
+  const add = day === 0 ? 0 : (7 - day);
+  d.setUTCDate(d.getUTCDate() + add);
+  return d.toISOString().slice(0, 10);
+}
+
+function getStorageDateByPeriod(dateStr, period) {
+  return period === 'weekly' ? getWeekEndingSunday(dateStr) : String(dateStr || '').slice(0, 10);
+}
+
+function mergeManualOverrides(botPayload, manualOverrides, overrideKeys = []) {
+  const base = botPayload && typeof botPayload === 'object' ? { ...botPayload } : {};
+  const overrides = manualOverrides && typeof manualOverrides === 'object' ? manualOverrides : {};
+  const keys = Array.isArray(overrideKeys) && overrideKeys.length > 0
+    ? overrideKeys
+    : Object.keys(overrides);
+  keys.forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(overrides, key)) {
+      base[key] = overrides[key];
+    }
+  });
+  return base;
+}
+
 export default function MarketOutlookView({ selectedDate, period, canEdit }) {
   const type = period === 'weekly' ? 'outlook-weekly' : 'outlook-daily';
   const [data, setData] = useState(null);
@@ -81,32 +110,51 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     setError(null);
     setSaveSuccess(null);
     dataSourceRef.current = 'loading';
-    const dateStr = String(selectedDate).trim().slice(0, 10);
+    const dateStr = getStorageDateByPeriod(selectedDate, period);
     Api.getTraderDeckContent(type, dateStr)
       .then((res) => {
         if (cancelled) return;
         const payload = res.data?.payload;
         if (payload && typeof payload === 'object') {
           dataSourceRef.current = 'saved';
-          const normalizedSaved = normalizeForUI(payload);
-          setData(normalizedSaved);
-          if (!hasDetailedRiskRadarRows(normalizedSaved?.riskRadar)) {
-            getMarketIntelligence({ refresh: true })
+          const hasOverrideEnvelope = payload.manualOverrides && payload.botPayload;
+          const loadSaved = (liveRaw) => {
+            const livePayload = liveRaw && typeof liveRaw === 'object' ? liveRaw : null;
+            const effective = hasOverrideEnvelope
+              ? mergeManualOverrides(livePayload || payload.botPayload || {}, payload.manualOverrides, payload.manualOverrideKeys || [])
+              : payload;
+            const normalizedSaved = normalizeForUI(effective);
+            setData(normalizedSaved);
+            if (!hasDetailedRiskRadarRows(normalizedSaved?.riskRadar) && !hasOverrideEnvelope) {
+              getMarketIntelligence({ refresh: true, timeframe: period, date: dateStr })
+                .then((rawLive) => {
+                  if (cancelled) return;
+                  const normalizedLive = normalizeForUI(rawLive);
+                  if (!normalizedLive?.riskRadar || normalizedLive.riskRadar.length === 0) return;
+                  setData((prev) => {
+                    if (!prev) return normalizedLive;
+                    return { ...prev, riskRadar: normalizedLive.riskRadar };
+                  });
+                })
+                .catch(() => {});
+            }
+          };
+          if (hasOverrideEnvelope) {
+            getMarketIntelligence({ refresh: false, timeframe: period, date: dateStr })
               .then((rawLive) => {
                 if (cancelled) return;
-                const normalizedLive = normalizeForUI(rawLive);
-                if (!normalizedLive?.riskRadar || normalizedLive.riskRadar.length === 0) return;
-                setData((prev) => {
-                  if (!prev) return normalizedLive;
-                  return { ...prev, riskRadar: normalizedLive.riskRadar };
-                });
+                loadSaved(rawLive);
               })
-              .catch(() => {});
+              .catch(() => {
+                if (!cancelled) loadSaved(null);
+              });
+          } else {
+            loadSaved(null);
           }
           return;
         }
         dataSourceRef.current = 'live';
-        return getMarketIntelligence({ refresh: false }).then((raw) => {
+        return getMarketIntelligence({ refresh: false, timeframe: period, date: dateStr }).then((raw) => {
           if (cancelled) return;
           const normalized = normalizeForUI(raw) || normalizeForUI(SEED_MARKET_INTELLIGENCE);
           setData(normalized);
@@ -120,7 +168,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
         setError('Using fallback data');
       })
       .finally(() => { if (!cancelled) setLoading(false); });
-  }, [type, selectedDate]);
+  }, [type, selectedDate, period]);
 
   // Refresh live outlook + AI brief on an interval (not when displaying saved admin content)
   useEffect(() => {
@@ -129,7 +177,8 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       if (dataSourceRef.current !== 'live') return;
       if (liveRefreshInFlightRef.current) return;
       liveRefreshInFlightRef.current = true;
-      getMarketIntelligence({ refresh: true })
+      const dateStr = getStorageDateByPeriod(selectedDate, period);
+      getMarketIntelligence({ refresh: true, timeframe: period, date: dateStr })
         .then((raw) => {
           const normalized = normalizeForUI(raw);
           if (normalized) setData(normalized);
@@ -140,7 +189,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
         });
     }, LIVE_REFRESH_MS);
     return () => clearInterval(iv);
-  }, [editMode, type, selectedDate]);
+  }, [editMode, type, selectedDate, period]);
 
   const handleEditToggle = () => {
     if (editMode) {
@@ -169,8 +218,8 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
 
   const handleSave = () => {
     if (!editDraft) return;
-    const dateStr = String(selectedDate).trim().slice(0, 10);
-    const payload = {
+    const dateStr = getStorageDateByPeriod(selectedDate, period);
+    const manualOverrides = {
       marketRegime: editDraft.marketRegime,
       marketPulse: { score: editDraft.marketPulse.score, label: editDraft.marketPulse.label },
       keyDrivers: editDraft.keyDrivers,
@@ -178,6 +227,12 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       marketChangesToday: editDraft.marketChangesToday,
       traderFocus: editDraft.traderFocus,
       riskRadar: editDraft.riskRadar,
+    };
+    const manualOverrideKeys = Object.keys(manualOverrides);
+    const payload = {
+      botPayload: data || {},
+      manualOverrides,
+      manualOverrideKeys,
       riskRadarDate: dateStr,
       updatedAt: new Date().toISOString(),
     };
@@ -185,7 +240,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     setSaveSuccess(null);
     Api.putTraderDeckContent(type, dateStr, payload)
       .then(() => {
-        setData(normalizeForUI(payload));
+        setData(normalizeForUI(mergeManualOverrides(data || {}, manualOverrides, manualOverrideKeys)));
         setEditMode(false);
         setEditDraft(null);
         setSaveSuccess(`Saved for ${dateStr}`);
@@ -423,7 +478,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               <DashboardPanel title="Cross-Asset Signals" className="td-outlook-panel td-outlook-panel--signals">
                 {editMode && editDraft ? renderSignalsEdit() : <SignalList signals={crossAssetSignals} />}
               </DashboardPanel>
-              <DashboardPanel title="Market Change Today" className="td-outlook-panel td-outlook-panel--changes">
+              <DashboardPanel title={period === 'weekly' ? 'Market Change This Week' : 'Market Change Today'} className="td-outlook-panel td-outlook-panel--changes">
                 {editMode && editDraft ? renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', 'Theme') : (marketChangesToday && marketChangesToday.length > 0 ? <ChangeList items={marketChangesToday} /> : <p className="td-outlook-empty">No themes recorded. Use Edit to add.</p>)}
               </DashboardPanel>
               <DashboardPanel title="Trader Focus" className="td-outlook-panel td-outlook-panel--focus">
