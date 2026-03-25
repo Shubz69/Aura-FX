@@ -201,7 +201,11 @@ export default function ForexFactoryNews({ date, onlyToday: _onlyToday = true })
   };
 
   const filtered = events
-    .filter((e) => getEventDateKeyLocal(e, displayTimeZone) === viewDate)
+    .filter((e) => {
+      const providerDate = typeof e?.date === 'string' ? e.date.slice(0, 10) : '';
+      if (providerDate) return providerDate === viewDate;
+      return getEventDateKeyLocal(e, displayTimeZone) === viewDate;
+    })
     .filter(e => filterCurrencies.includes(e.currency))
     .filter(e => filterImpact.includes(e.impact))
     .sort((a, b) => {

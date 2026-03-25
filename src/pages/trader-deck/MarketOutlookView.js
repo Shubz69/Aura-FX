@@ -150,6 +150,11 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     }
     const ui = data || normalizeForUI(SEED_MARKET_INTELLIGENCE);
     const toStr = (x) => (typeof x === 'string' ? x : (x && (x.title || x.text || x.description)) || '');
+    const toRiskRow = (x) => {
+      if (typeof x === 'string') return { title: x };
+      if (x && typeof x === 'object') return { ...x };
+      return { title: '' };
+    };
     setEditDraft({
       marketRegime: { ...ui.marketRegime },
       marketPulse: { score: ui.marketPulse.score, label: ui.marketPulse.label },
@@ -157,7 +162,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       crossAssetSignals: (ui.crossAssetSignals || []).map((s) => ({ ...s })),
       marketChangesToday: (ui.marketChangesToday || []).map(toStr),
       traderFocus: (ui.traderFocus || []).map(toStr),
-      riskRadar: (ui.riskRadar || []).map(toStr),
+      riskRadar: (ui.riskRadar || []).map(toRiskRow),
     });
     setEditMode(true);
   };
@@ -266,7 +271,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     return <MarketPulseGauge score={marketPulse.score} label={marketPulse.label} recommendedAction={marketPulse.recommendedAction} />;
   };
 
-  const renderListEdit = (list, key, placeholder) => (
+  const renderListEdit = (list, key, placeholder, options = {}) => (
     <ul className="td-mi-bullets">
       {(list || []).map((item, i) => (
         <li key={i} className="td-mi-bullet-item">
@@ -274,7 +279,13 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
             value={typeof item === 'string' ? item : (item.title || item.text || '')}
             onChange={(e) => {
               const next = [...(editDraft[key] || [])];
-              next[i] = e.target.value;
+              if (options.preserveObject && item && typeof item === 'object') {
+                next[i] = { ...item, title: e.target.value };
+              } else if (options.preserveObject) {
+                next[i] = { title: e.target.value };
+              } else {
+                next[i] = e.target.value;
+              }
               setEditDraft((d) => ({ ...d, [key]: next }));
             }}
             placeholder={placeholder} />
@@ -282,7 +293,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       ))}
       <li>
         <button type="button" className="td-mi-btn td-mi-btn-small"
-          onClick={() => setEditDraft((d) => ({ ...d, [key]: [...(d[key] || []), ''] }))}>+ Add</button>
+          onClick={() => setEditDraft((d) => ({ ...d, [key]: [...(d[key] || []), options.preserveObject ? { title: '' } : ''] }))}>+ Add</button>
       </li>
     </ul>
   );
@@ -419,7 +430,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                 {editMode && editDraft ? renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item') : (traderFocus && traderFocus.length > 0 ? <FocusList items={traderFocus} /> : <p className="td-outlook-empty">No focus items. Use Edit to add.</p>)}
               </DashboardPanel>
               <DashboardPanel title="Market Risk Engine" className="td-outlook-panel td-outlook-panel--radar">
-                {editMode && editDraft ? renderListEdit(editDraft.riskRadar, 'riskRadar', 'News event') : (
+                {editMode && editDraft ? renderListEdit(editDraft.riskRadar, 'riskRadar', 'Risk factor', { preserveObject: true }) : (
                   riskRadar && riskRadar.length > 0 ? <RiskRadarList items={riskRadar} riskEngine={riskEngine} /> : <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
                 )}
               </DashboardPanel>

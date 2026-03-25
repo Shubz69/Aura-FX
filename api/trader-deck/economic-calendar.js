@@ -263,6 +263,15 @@ function hasActualBackend(v) {
   return normalizeValue(v) != null;
 }
 
+function hasSupplementFigures(row) {
+  if (!row) return false;
+  return (
+    hasActualBackend(row.actual) ||
+    normalizeValue(row.forecast) != null ||
+    normalizeValue(row.previous) != null
+  );
+}
+
 function normTitle(s) {
   return String(s || '')
     .toLowerCase()
@@ -290,7 +299,10 @@ function mergeSupplementActuals(primary, supplement) {
   if (!Array.isArray(primary) || !Array.isArray(supplement) || supplement.length === 0) return primary;
   const used = new Set();
   return primary.map((ev) => {
-    if (hasActualBackend(ev.actual)) return ev;
+    const evHasActual = hasActualBackend(ev.actual);
+    const evHasForecast = normalizeValue(ev.forecast) != null;
+    const evHasPrevious = normalizeValue(ev.previous) != null;
+    if (evHasActual && evHasForecast && evHasPrevious) return ev;
     const ts = ev.timestamp;
     if (!ts) return ev;
     let best = null;
@@ -303,21 +315,33 @@ function mergeSupplementActuals(primary, supplement) {
       const delta = Math.abs(st - ts);
       if (delta > MATCH_WINDOW_MS) return;
       const sim = titleSimilarity(ev.event, sup.event);
-      if (sim < 0.12 && delta > 120000) return;
-      const score = sim * 1000 - delta / 10000;
+      if (sim < 0.12 && delta > 5 * 60 * 1000) return;
+      if (!hasSupplementFigures(sup)) return;
+      const figureScore =
+        (hasActualBackend(sup.actual) ? 120 : 0) +
+        (normalizeValue(sup.forecast) != null ? 30 : 0) +
+        (normalizeValue(sup.previous) != null ? 30 : 0);
+      const score = sim * 1000 - delta / 10000 + figureScore;
       if (score > bestScore) {
         bestScore = score;
         best = { idx, sup };
       }
     });
-    if (best && best.sup && hasActualBackend(best.sup.actual)) {
-      used.add(best.idx);
-      return {
+    if (best && best.sup) {
+      const merged = {
         ...ev,
-        actual: best.sup.actual,
-        forecast: ev.forecast || best.sup.forecast,
-        previous: ev.previous || best.sup.previous,
+        actual: evHasActual ? ev.actual : (hasActualBackend(best.sup.actual) ? best.sup.actual : ev.actual),
+        forecast: evHasForecast ? ev.forecast : (normalizeValue(best.sup.forecast) != null ? best.sup.forecast : ev.forecast),
+        previous: evHasPrevious ? ev.previous : (normalizeValue(best.sup.previous) != null ? best.sup.previous : ev.previous),
       };
+      const changed =
+        merged.actual !== ev.actual ||
+        merged.forecast !== ev.forecast ||
+        merged.previous !== ev.previous;
+      if (changed) {
+        used.add(best.idx);
+        return merged;
+      }
     }
     const candidates = [];
     supplement.forEach((sup, idx) => {
@@ -327,18 +351,25 @@ function mergeSupplementActuals(primary, supplement) {
       if (!st) return;
       const delta = Math.abs(st - ts);
       if (delta > MATCH_WINDOW_MS) return;
-      if (hasActualBackend(sup.actual)) candidates.push({ idx, sup, delta });
+      if (hasSupplementFigures(sup)) candidates.push({ idx, sup, delta });
     });
     candidates.sort((a, b) => a.delta - b.delta);
     if (candidates.length === 1) {
       const c = candidates[0];
-      used.add(c.idx);
-      return {
+      const merged = {
         ...ev,
-        actual: c.sup.actual,
-        forecast: ev.forecast || c.sup.forecast,
-        previous: ev.previous || c.sup.previous,
+        actual: evHasActual ? ev.actual : (hasActualBackend(c.sup.actual) ? c.sup.actual : ev.actual),
+        forecast: evHasForecast ? ev.forecast : (normalizeValue(c.sup.forecast) != null ? c.sup.forecast : ev.forecast),
+        previous: evHasPrevious ? ev.previous : (normalizeValue(c.sup.previous) != null ? c.sup.previous : ev.previous),
       };
+      const changed =
+        merged.actual !== ev.actual ||
+        merged.forecast !== ev.forecast ||
+        merged.previous !== ev.previous;
+      if (changed) {
+        used.add(c.idx);
+        return merged;
+      }
     }
     return ev;
   });

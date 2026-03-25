@@ -17,6 +17,7 @@
  * 5) Write: canWrite = false if permission_type === 'read-only' OR access_level === 'read-only'; else true when canSee.
  */
 const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels', 'notifications']);
+const { sendDebugLog } = require('./debug-log');
 
 /** Super admin email – always gets full access regardless of DB role */
 const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
@@ -24,6 +25,8 @@ const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
 const ACCESS_LEVELS_ELITE = new Set(['open', 'free', 'read-only', 'premium', 'a7fx', 'elite', 'support', 'staff']);
 const ACCESS_LEVELS_PREMIUM = new Set(['open', 'free', 'read-only', 'premium', 'support', 'staff']);
 // FREE: no access_level set; only allowlist
+
+const debugLog = sendDebugLog;
 
 /**
  * Normalize DB role to API role (USER | ADMIN | SUPER_ADMIN).
@@ -137,6 +140,24 @@ function getEntitlements(userRow) {
   const needsReaccept = !isAdmin && needsOnboardingReaccept(userRow);
 
   const isSuperAdminUser = isSuperAdminEmail(userRow);
+  // #region agent log
+  debugLog({
+    runId: 'initial',
+    hypothesisId: 'H5',
+    location: 'api/utils/entitlements.js:getEntitlements',
+    message: 'Calculated entitlements from user row',
+    data: {
+      userId: Number(userRow?.id || 0),
+      role,
+      tier,
+      effectiveTier,
+      status,
+      canAccessCommunity: isAdmin || planSelected,
+      onboardingAccepted: isAdmin || onboardingAccepted,
+      needsReaccept
+    }
+  });
+  // #endregion
   return {
     role,
     tier,

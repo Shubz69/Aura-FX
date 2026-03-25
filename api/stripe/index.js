@@ -1,10 +1,13 @@
 const nodemailer = require('nodemailer');
 const Stripe = require('stripe');
+const { sendDebugLog } = require('../utils/debug-log');
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { invalidateEntitlementsCache } = require('../cache');
 const { getDbConnection } = require('../db');
+
+const debugLog = sendDebugLog;
 
 // Validate Stripe secret key (backend only – never expose sk_ in frontend)
 function getStripeClient() {
@@ -191,6 +194,15 @@ module.exports = async (req, res) => {
       const userId = req.query.userId || req.body?.userId;
       const sessionId = req.query.session_id || req.body?.session_id;
       const planType = req.query.plan || req.body?.plan || 'aura'; // Default to 'aura' if not specified
+      // #region agent log
+      debugLog({
+        runId: String(req.headers['x-debug-run'] || 'initial'),
+        hypothesisId: 'H1',
+        location: 'api/stripe/index.js:subscription-success-entry',
+        message: 'Subscription success endpoint called',
+        data: { hasUserId: !!userId, hasSessionId: !!sessionId, planType: String(planType || '').toLowerCase() }
+      });
+      // #endregion
       
       if (!userId) {
         return res.status(400).json({
@@ -316,6 +328,21 @@ module.exports = async (req, res) => {
            WHERE id = ?`,
           [expiryDate, sessionId || null, userRole, planType, markFreeTrialUsed, userId]
         );
+        // #region agent log
+        debugLog({
+          runId: String(req.headers['x-debug-run'] || 'initial'),
+          hypothesisId: 'H1',
+          location: 'api/stripe/index.js:subscription-success-update',
+          message: 'Subscription success wrote role/plan',
+          data: {
+            userId: Number(userId),
+            normalizedPlan: String(planType || '').toLowerCase(),
+            userRole,
+            subscriptionDays,
+            markFreeTrialUsed: !!markFreeTrialUsed
+          }
+        });
+        // #endregion
         
         // Log the role update for debugging
         console.log(`✅ Subscription activated for user ${userId}: role=${userRole}, plan=${planType}, expiry=${expiryDate}`);
@@ -442,6 +469,21 @@ module.exports = async (req, res) => {
                    WHERE id = ?`,
                   [expiryStr, session?.id || null, userRole, planType, markFreeTrialUsed, userId]
                 );
+                // #region agent log
+                debugLog({
+                  runId: 'initial',
+                  hypothesisId: 'H2',
+                  location: 'api/stripe/index.js:webhook-checkout-completed',
+                  message: 'Webhook checkout.session.completed wrote role/plan',
+                  data: {
+                    userId: Number(userId),
+                    planType: String(planType || '').toLowerCase(),
+                    userRole,
+                    hasUsedFreeTrial: !!hasUsedFreeTrial,
+                    markFreeTrialUsed: !!markFreeTrialUsed
+                  }
+                });
+                // #endregion
                 console.log(`✅ Webhook: Subscription activated for ${customerEmail} (user ${userId}): role=${userRole}, plan=${planType}`);
                 invalidateEntitlementsCache(userId);
                 try {
@@ -497,6 +539,15 @@ module.exports = async (req, res) => {
               'UPDATE users SET payment_failed = TRUE, subscription_status = \'inactive\', role = \'user\', subscription_plan = \'free\', subscription_expiry = NULL, onboarding_accepted = FALSE WHERE id = ?',
               [userId]
             );
+            // #region agent log
+            debugLog({
+              runId: 'initial',
+              hypothesisId: 'H4',
+              location: 'api/stripe/index.js:webhook-downgrade',
+              message: 'Webhook downgraded user to free after billing issue',
+              data: { userId: Number(userId), eventType: String(event.type || '') }
+            });
+            // #endregion
             console.log('Immediate downgrade to FREE for user:', userId);
             invalidateEntitlementsCache(userId);
 
