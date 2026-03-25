@@ -28,7 +28,7 @@ function normalise(item, source) {
     headline: cleanInsightText(item.headline || item.title || ''),
     summary: cleanInsightText(item.summary || item.text || item.content || ''),
     url: item.url || '',
-    source: source || null,
+    source: null,
     publishedAt: item.datetime ? new Date(item.datetime * 1000).toISOString() : (item.publishedDate || item.date || null),
     category: item.category || 'market',
     related: Array.isArray(item.related) ? item.related : [],
@@ -125,59 +125,15 @@ async function fromYahooRss() {
     if (!res.ok) return [];
     const text = await res.text();
     const items = [];
-    // Minimal RSS parsing via regex to avoid adding XML dependencies.
-    // We try to capture title/link/description/pubDate per <item>.
-    const itemRe = /<item>([\s\S]*?)<\/item>/g;
+    const re = /<title><!\[CDATA\[(.*?)\]\]><\/title>/g;
     let m;
     let i = 0;
-    while ((m = itemRe.exec(text)) !== null) {
-      if (i++ === 0) continue; // first <item> is frequently empty/boilerplate
-      const itemHtml = m[1] || '';
-
-      const titleMatch =
-        /<title><!\[CDATA\[(.*?)\]\]><\/title>/i.exec(itemHtml) ||
-        /<title>(.*?)<\/title>/i.exec(itemHtml);
-      const linkMatch =
-        /<link><!\[CDATA\[(.*?)\]\]><\/link>/i.exec(itemHtml) ||
-        /<link>(.*?)<\/link>/i.exec(itemHtml);
-      const descMatch =
-        /<description><!\[CDATA\[(.*?)\]\]><\/description>/i.exec(itemHtml) ||
-        /<description>([\s\S]*?)<\/description>/i.exec(itemHtml);
-      const pubDateMatch = /<pubDate>(.*?)<\/pubDate>/i.exec(itemHtml);
-
-      const headline = (titleMatch?.[1] || '').trim();
-      const link = (linkMatch?.[1] || '').trim();
-      const publishedAt = (pubDateMatch?.[1] || '').trim() || null;
-
-      // Remove HTML tags inside description so UI doesn’t show markup.
-      const rawDesc = (descMatch?.[1] || '').trim();
-      const summary = rawDesc
-        ? rawDesc
-            .replace(/<[^>]*>/g, ' ')
-            .replace(/&amp;/g, '&')
-            .replace(/&nbsp;/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim()
-        : '';
-
-      if (headline) {
-        items.push(
-          normalise(
-            {
-              headline,
-              url: link,
-              summary,
-              publishedDate: publishedAt,
-              datetime: undefined,
-            },
-            'Yahoo Finance'
-          )
-        );
-      }
-
+    while ((m = re.exec(text)) !== null) {
+      if (i++ === 0) continue;
+      const headline = (m[1] || '').trim();
+      if (headline) items.push(normalise({ headline, datetime: Math.floor(Date.now() / 1000) }, 'Yahoo Finance'));
       if (items.length >= 12) break;
     }
-
     return items;
   } catch (e) {
     console.warn('[trader-deck/news] Yahoo RSS error:', e.message);
@@ -214,14 +170,13 @@ module.exports = async (req, res) => {
   const forexItems = forex.status === 'fulfilled' ? forex.value : [];
   const yahooItems = yahoo.status === 'fulfilled' ? yahoo.value : [];
 
-  // Merge, deduplicate by (url || headline), sort by date
+  // Merge, deduplicate by headline, sort by date
   const seen = new Set();
   const merged = [...generalItems, ...fmpItems, ...forexItems, ...yahooItems]
     .filter((n) => withinDateWindow(n, fromDate, toDate))
     .filter((n) => {
-      const key = (n.url || n.headline || '').trim();
-      if (!key || !n.headline || seen.has(key)) return false;
-      seen.add(key);
+      if (!n.headline || seen.has(n.headline)) return false;
+      seen.add(n.headline);
       return true;
     })
     .sort((a, b) => {
