@@ -257,6 +257,24 @@
   opacity: 0.7;
 }
 
+.td-ff-date-input--readonly {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 118px;
+  cursor: default;
+  user-select: none;
+}
+
+.td-ff-filter-embed-cal {
+  margin-top: 12px;
+  max-width: 340px;
+}
+
+.td-ff-filter-embed-cal .journal-calendar {
+  margin-bottom: 0;
+}
+
 .td-ff-date-nav {
   width: 32px;
   height: 32px;
@@ -278,6 +296,12 @@
   background: var(--td-blue-dim);
   border-color: rgba(107,143,232,0.4);
   color: #fff;
+}
+
+.td-ff-date-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .td-ff-date-today,
@@ -681,21 +705,38 @@
 
 .td-ff-actual {
   color: var(--td-text-dim);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  white-space: nowrap;
 }
 
-.td-ff-actual--live {
+.td-ff-actual--beat {
   color: var(--td-up);
   font-weight: 600;
-  text-shadow: 0 0 12px rgba(15,217,138,0.4);
+}
+
+.td-ff-actual--miss {
+  color: var(--td-down);
+  font-weight: 600;
+}
+
+.td-ff-actual--flat,
+.td-ff-actual--neutral {
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 500;
 }
 
 /* ── Responsive ────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .td-ff-filter-panel { flex-direction: column; }
-  .td-ff-th--num      { display: none; }
-  .td-ff-td.td-ff-num { display: none; }
-  .td-ff-td.td-ff-actual { display: table-cell; }
-  .td-ff-th--actual   { display: table-cell; }
+  .td-ff-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .td-ff-table {
+    min-width: 640px;
+  }
 }
 
 @media (max-width: 480px) {

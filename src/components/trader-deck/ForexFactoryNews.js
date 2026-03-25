@@ -10,6 +10,9 @@ import {
   formatCountdownMs,
   isEventWaitingForActual,
 } from '../../utils/economicCalendarTime';
+import { getActualVsForecastTone } from '../../utils/economicCalendarFigures';
+import TraderDeckCalendar from './TraderDeckCalendar';
+import '../../styles/Journal.css';
 
 const ALL_CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF', 'CNH'];
 const ALL_IMPACTS    = ['high', 'medium', 'low'];
@@ -31,10 +34,31 @@ function todayInTimeZone(ianaTz) {
   return new Date().toLocaleDateString('en-CA', { timeZone: ianaTz });
 }
 
-function shiftIsoDate(dateStr, deltaDays) {
-  const d = new Date(`${dateStr}T12:00:00.000Z`);
-  d.setUTCDate(d.getUTCDate() + deltaDays);
-  return d.toISOString().slice(0, 10);
+/** UTC instant aligned so `toLocaleDateString(en-CA, America/New_York) === iso` (for calendar-day math). */
+function utcMsForEtCalendarDay(iso) {
+  const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return Date.now();
+  let u = Date.UTC(y, m - 1, d, 12, 0, 0);
+  for (let i = 0; i < 12; i += 1) {
+    const cal = new Date(u).toLocaleDateString('en-CA', { timeZone: DATA_TIME_ZONE });
+    if (cal === String(iso).slice(0, 10)) return u;
+    const parts = cal.split('-').map(Number);
+    const du = Date.UTC(y, m - 1, d) - Date.UTC(parts[0], parts[1] - 1, parts[2]);
+    const days = Math.round(du / 86400000);
+    u += days * 86400000;
+  }
+  return u;
+}
+
+function shiftIsoDateEt(iso, deltaDays) {
+  const u = utcMsForEtCalendarDay(iso) + Number(deltaDays) * 86400000;
+  return new Date(u).toLocaleDateString('en-CA', { timeZone: DATA_TIME_ZONE });
+}
+
+function bumpCalendarMonth(ymStr, deltaMonths) {
+  const [y, m] = ymStr.split('-').map(Number);
+  const dt = new Date(y, m - 1 + deltaMonths, 1);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
 }
 
 function convertIsoDateToEt(isoDate) {
@@ -65,18 +89,17 @@ function getEventStatus(ev) {
 }
 
 /**
- * @param {string} [date] - YYYY-MM-DD; when set, syncs the viewed day to this value.
- * @param {boolean} [parentControlsDate=false] - When true (e.g. Market Outlook), the parent owns the day:
- *   hide internal prev/next/date input so one date control drives the panel.
+ * @param {string} [date] - YYYY-MM-DD; when set, syncs the viewed ET calendar day (converted from parent date if needed).
  */
-export default function ForexFactoryNews({ date, parentControlsDate = false }) {
+export default function ForexFactoryNews({ date }) {
   const [displayTimeZone] = useState(() => getBrowserTimeZone());
   const [viewDate, setViewDate] = useState(() => {
     if (date && ISO_DATE_RE.test(String(date))) {
-      return parentControlsDate ? convertIsoDateToEt(String(date)) : String(date).slice(0, 10);
+      return convertIsoDateToEt(String(date));
     }
     return todayInTimeZone(DATA_TIME_ZONE);
   });
+  const [calendarMonth, setCalendarMonth] = useState(() => viewDate.slice(0, 7));
   const [events, setEvents]           = useState([]);
   const [loading, setLoading]         = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -95,14 +118,22 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
 
   useEffect(() => {
     if (date && ISO_DATE_RE.test(String(date))) {
-      setViewDate(parentControlsDate ? convertIsoDateToEt(String(date)) : String(date).slice(0, 10));
+      setViewDate(convertIsoDateToEt(String(date)));
     }
-  }, [date, parentControlsDate]);
+  }, [date]);
+
+  useEffect(() => {
+    setCalendarMonth(viewDate.slice(0, 7));
+  }, [viewDate]);
 
   const isViewingToday = useMemo(
     () => viewDate === todayInTimeZone(DATA_TIME_ZONE),
     [viewDate]
   );
+
+  const etToday = todayInTimeZone(DATA_TIME_ZONE);
+  const minBrowseDate = shiftIsoDateEt(etToday, -365);
+  const maxBrowseDate = shiftIsoDateEt(etToday, 14);
 
   // Core fetch — refresh=true bypasses server cache for precision fetches; historical uses ?date=
   const fetchEvents = useCallback(async (refresh = false) => {
@@ -306,63 +337,70 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
       {/* Filter panel */}
       {showFilter && (
         <div className="td-ff-filter-panel">
-          {!parentControlsDate && (
-            <div className="td-ff-filter-section td-ff-filter-section--date">
-              <span className="td-ff-filter-label">Browse date</span>
-              <div className="td-ff-date-row">
+          <div className="td-ff-filter-section td-ff-filter-section--date">
+            <span className="td-ff-filter-label">Browse date</span>
+            <div className="td-ff-date-row">
+              <button
+                type="button"
+                className="td-ff-date-nav"
+                onClick={() => setViewDate((d) => {
+                  const n = shiftIsoDateEt(d, -1);
+                  return n < minBrowseDate ? minBrowseDate : n;
+                })}
+                disabled={viewDate <= minBrowseDate}
+                aria-label="Previous day"
+              >
+                ‹
+              </button>
+              <span className="td-ff-date-input td-ff-date-input--readonly" aria-live="polite">
+                {viewDate}
+              </span>
+              <button
+                type="button"
+                className="td-ff-date-nav"
+                onClick={() => setViewDate((d) => {
+                  const n = shiftIsoDateEt(d, 1);
+                  return n > maxBrowseDate ? maxBrowseDate : n;
+                })}
+                disabled={viewDate >= maxBrowseDate}
+                aria-label="Next day"
+              >
+                ›
+              </button>
+              <button
+                type="button"
+                className="td-ff-date-today"
+                onClick={() => setViewDate(todayInTimeZone(DATA_TIME_ZONE))}
+              >
+                Today
+              </button>
+              {!isViewingToday && (
                 <button
                   type="button"
-                  className="td-ff-date-nav"
-                  onClick={() => setViewDate((d) => shiftIsoDate(d, -1))}
-                  aria-label="Previous day"
+                  className="td-ff-date-refresh"
+                  onClick={() => fetchEvents(true)}
                 >
-                  ‹
+                  Refresh
                 </button>
-                <input
-                  type="date"
-                  className="td-ff-date-input"
-                  value={viewDate}
-                  max={shiftIsoDate(todayInTimeZone(DATA_TIME_ZONE), 14)}
-                  min={shiftIsoDate(todayInTimeZone(DATA_TIME_ZONE), -365)}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (v && ISO_DATE_RE.test(v)) setViewDate(v);
-                  }}
-                  aria-label="Calendar date"
-                />
-                <button
-                  type="button"
-                  className="td-ff-date-nav"
-                  onClick={() => setViewDate((d) => shiftIsoDate(d, 1))}
-                  aria-label="Next day"
-                >
-                  ›
-                </button>
-                <button
-                  type="button"
-                  className="td-ff-date-today"
-                  onClick={() => setViewDate(todayInTimeZone(DATA_TIME_ZONE))}
-                >
-                  Today
-                </button>
-                {!isViewingToday && (
-                  <button
-                    type="button"
-                    className="td-ff-date-refresh"
-                    onClick={() => fetchEvents(true)}
-                  >
-                    Refresh
-                  </button>
-                )}
-              </div>
-              <p className="td-ff-date-hint">Prev / Fcst / Actual from Forex Factory and data partners for this day.</p>
+              )}
             </div>
-          )}
-          {parentControlsDate && (
-            <div className="td-ff-filter-section td-ff-filter-section--date">
-              <p className="td-ff-date-hint">Showing the day selected in Market Outlook (use the outlook date control to change).</p>
+            <div className="td-ff-filter-embed-cal">
+              <TraderDeckCalendar
+                selectedDate={viewDate}
+                todayIso={etToday}
+                onSelectDate={(ds) => {
+                  if (!ds || !ISO_DATE_RE.test(ds)) return;
+                  if (ds < minBrowseDate || ds > maxBrowseDate) return;
+                  setViewDate(ds);
+                }}
+                calendarMonth={calendarMonth}
+                onPrevMonth={() => setCalendarMonth((m) => bumpCalendarMonth(m, -1))}
+                onNextMonth={() => setCalendarMonth((m) => bumpCalendarMonth(m, 1))}
+                datesWithContent={{}}
+              />
             </div>
-          )}
+            <p className="td-ff-date-hint">Actual / Forecast / Previous from Forex Factory and data partners (ET day). Green/red compare actual to forecast where parseable.</p>
+          </div>
           <div className="td-ff-filter-section">
             <span className="td-ff-filter-label">Currencies</span>
             <div className="td-ff-filter-chips">
@@ -441,15 +479,24 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
                 <th className="td-ff-th td-ff-th--ccy">Ccy</th>
                 <th className="td-ff-th td-ff-th--impact"></th>
                 <th className="td-ff-th td-ff-th--event">Event</th>
-                <th className="td-ff-th td-ff-th--num">Prev</th>
-                <th className="td-ff-th td-ff-th--num">Fcst</th>
                 <th className="td-ff-th td-ff-th--actual">Actual</th>
+                <th className="td-ff-th td-ff-th--num">Fcst</th>
+                <th className="td-ff-th td-ff-th--num">Prev</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((ev, i) => {
                 const status = getEventStatus(ev);
                 const countdownMs = getReleaseCountdownMs(ev);
+                const tone = hasActualValue(ev.actual)
+                  ? getActualVsForecastTone(ev.actual, ev.forecast, ev.event)
+                  : 'unknown';
+                const actualToneClass =
+                  tone === 'beat' ? ' td-ff-actual--beat'
+                    : tone === 'miss' ? ' td-ff-actual--miss'
+                      : tone === 'flat' ? ' td-ff-actual--flat'
+                        : hasActualValue(ev.actual) ? ' td-ff-actual--neutral'
+                          : '';
                 return (
                   <tr
                     key={i}
@@ -485,9 +532,7 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
                       )}
                     </td>
                     <td className="td-ff-td td-ff-event-cell">{ev.event}</td>
-                    <td className="td-ff-td td-ff-num td-ff-prev">{ev.previous ?? '—'}</td>
-                    <td className="td-ff-td td-ff-num td-ff-forecast">{ev.forecast ?? '—'}</td>
-                    <td className={`td-ff-td td-ff-num td-ff-actual${hasActualValue(ev.actual) ? ' td-ff-actual--live' : ''}`}>
+                    <td className={`td-ff-td td-ff-num td-ff-actual${actualToneClass}`}>
                       {hasActualValue(ev.actual) ? (
                         ev.actual
                       ) : status === 'overdue' ? (
@@ -496,6 +541,8 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
                         '--'
                       )}
                     </td>
+                    <td className="td-ff-td td-ff-num td-ff-forecast">{ev.forecast ?? '—'}</td>
+                    <td className="td-ff-td td-ff-num td-ff-prev">{ev.previous ?? '—'}</td>
                   </tr>
                 );
               })}

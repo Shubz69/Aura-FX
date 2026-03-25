@@ -21,6 +21,8 @@ export default function TraderDeckCalendar({
   onPrevMonth,
   onNextMonth,
   datesWithContent = {},
+  /** YYYY-MM-DD for “today” styling (e.g. ET trading day); defaults to UTC calendar date */
+  todayIso,
 }) {
   const calendarDays = useMemo(() => {
     const parts = String(calendarMonth).split('-');
@@ -37,7 +39,7 @@ export default function TraderDeckCalendar({
     return days;
   }, [calendarMonth]);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = (todayIso && String(todayIso).slice(0, 10)) || new Date().toISOString().slice(0, 10);
 
   return (
     <div className="journal-calendar">
