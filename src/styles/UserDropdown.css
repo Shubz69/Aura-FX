@@ -1,5 +1,6 @@
 /* ============================================================
    USER PROFILE DROPDOWN — AURA TERMINAL  |  Gold Theme
+   Fully Responsive with Scroll Support
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
@@ -90,12 +91,13 @@
   opacity: 1;
 }
 
-/* ── Dropdown Panel ────────────────────────────────────────── */
+/* ── Dropdown Panel ── Fully Scrollable ────────────────────── */
 .user-dropdown {
   position: fixed;
   top: calc(55px + env(safe-area-inset-top, 0) + 10px);
   right: 16px;
-  width: 268px;
+  width: 280px;
+  max-height: calc(100vh - 100px);
   font-family: 'Space Grotesk', sans-serif;
 
   /* Deep glass with gold tint */
@@ -109,18 +111,71 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.055);
   backdrop-filter: blur(22px) saturate(1.1);
   -webkit-backdrop-filter: blur(22px) saturate(1.1);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   z-index: 10002;
 
   animation: dropdownAppear 0.30s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   transform-origin: top right;
+
+  /* Smooth scrolling */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  
+  /* Custom scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-dim) rgba(255, 255, 255, 0.05);
+}
+
+/* Custom scrollbar for WebKit browsers */
+.user-dropdown::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.user-dropdown::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  margin: 8px 0;
+}
+
+.user-dropdown::-webkit-scrollbar-thumb {
+  background: var(--gold-dim);
+  border-radius: 10px;
+  transition: background var(--transition);
+}
+
+.user-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+
+/* Scroll indicator gradient (visual cue that there's more content) */
+.user-dropdown.scroll-top::after,
+.user-dropdown:not(.scroll-top)::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: linear-gradient(to bottom, transparent, rgba(5, 5, 18, 0.95));
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.user-dropdown:not(.scroll-bottom)::after {
+  opacity: 1;
 }
 
 /* Gold shimmer line on top */
 .user-dropdown::before {
   content: '';
-  position: absolute;
-  top: 0; left: 6%; right: 18%;
+  position: sticky;
+  top: 0;
+  left: 6%;
+  right: 18%;
   height: 1px;
   background: linear-gradient(90deg,
     rgba(255, 255, 255, 0.22) 0%,
@@ -128,21 +183,28 @@
     rgba(248, 195, 125, 0.40) 70%,
     transparent 100%
   );
-  z-index: 1;
+  z-index: 2;
 }
 
 /* Ambient gold glow at top */
-.user-dropdown::after {
+.user-dropdown::before {
   content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 140px;
-  background: radial-gradient(ellipse at top center,
-    rgba(234, 169, 96, 0.065) 0%,
-    transparent 72%
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(234, 169, 96, 0.55) 40%,
+    rgba(248, 195, 125, 0.40) 70%,
+    transparent 100%
   );
-  pointer-events: none;
-  z-index: 0;
+  z-index: 2;
+}
+
+.user-dropdown > *:first-child {
+  margin-top: 0;
 }
 
 @keyframes dropdownAppear {
@@ -169,7 +231,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  position: relative;
+  position: sticky;
+  top: 0;
+  background: rgba(5, 5, 18, 0.96);
+  backdrop-filter: blur(12px);
   z-index: 2;
 }
 
@@ -182,12 +247,17 @@
   vertical-align: middle;
 }
 
+/* ── Menu Items Container ── Improves scroll performance ──── */
+.user-dropdown .dropdown-items-container {
+  padding: 4px 0;
+}
+
 /* ── Menu Items ────────────────────────────────────────────── */
 .user-dropdown a,
 .user-dropdown button {
   display: flex;
   align-items: center;
-  padding: 11px 18px;
+  padding: 12px 18px;
   color: rgba(255, 255, 255, 0.68);
   text-decoration: none;
   transition: all var(--transition);
@@ -203,7 +273,7 @@
   text-transform: uppercase;
   position: relative;
   overflow: hidden;
-  z-index: 2;
+  z-index: 1;
 }
 
 /* Gold left accent bar */
@@ -241,11 +311,22 @@
   transform: scaleY(1);
 }
 
+/* Active/Tap state for mobile */
+.user-dropdown a:active,
+.user-dropdown button:active {
+  background: var(--gold-glass);
+  transform: scale(0.98);
+}
+
 /* Logout / danger */
 .user-dropdown button:last-child {
   color: rgba(240, 61, 95, 0.72);
   border-top: 1px solid rgba(255, 255, 255, 0.045);
-  margin-top: 2px;
+  margin-top: 4px;
+  position: sticky;
+  bottom: 0;
+  background: rgba(5, 5, 18, 0.98);
+  backdrop-filter: blur(12px);
 }
 
 .user-dropdown button:last-child::before {
@@ -337,7 +418,7 @@
 /* ── Divider ───────────────────────────────────────────────── */
 .dropdown-divider {
   height: 1px;
-  margin: 4px 14px;
+  margin: 8px 14px;
   background: linear-gradient(90deg,
     transparent,
     rgba(234, 169, 96, 0.12),
@@ -346,7 +427,7 @@
   );
   border: none;
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 
 /* ── Staggered fade-in ─────────────────────────────────────── */
@@ -404,7 +485,7 @@
   -webkit-appearance: none;
   appearance: none;
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 
 .avatar-dropdown:hover,
@@ -413,14 +494,15 @@
   background: var(--gold-ultra);
 }
 
-/* ── Tablet / Mobile ───────────────────────────────────────── */
+/* ── Tablet / Mobile Responsive ───────────────────────────── */
 @media (max-width: 1150px) {
   .user-dropdown {
     top: calc(56px + env(safe-area-inset-top, 0) + 8px);
     right: max(12px, env(safe-area-inset-right, 0));
     left: auto;
-    width: min(300px, calc(100vw - 20px));
-    max-width: min(300px, calc(100vw - 20px));
+    width: min(320px, calc(100vw - 24px));
+    max-width: min(320px, calc(100vw - 24px));
+    max-height: calc(100dvh - 80px);
     border-radius: 18px;
     box-shadow:
       0 28px 72px rgba(0, 0, 0, 0.80),
@@ -437,49 +519,144 @@
 
   .user-dropdown a,
   .user-dropdown button {
-    padding: 13px 16px;
+    padding: 14px 16px;
     font-size: 0.72rem;
     letter-spacing: 0.15em;
-    min-height: 48px;
+    min-height: 52px;
     -webkit-tap-highlight-color: transparent;
   }
 
   .user-dropdown .dropdown-icon {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     font-size: 1rem;
     color: var(--gold-soft);
     background: var(--gold-glass);
     border-color: rgba(234, 169, 96, 0.20);
   }
+
+  /* Improve touch targets */
+  .user-dropdown a:active,
+  .user-dropdown button:active {
+    transform: scale(0.98);
+  }
 }
 
+/* Mobile specific optimizations */
+@media (max-width: 767px) {
+  .user-dropdown {
+    top: calc(50px + env(safe-area-inset-top, 0) + 8px);
+    right: max(8px, env(safe-area-inset-right, 0));
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 70px);
+    border-radius: 16px;
+  }
+
+  .user-dropdown > p {
+    padding: 12px 14px 10px;
+    font-size: 0.65rem;
+    white-space: normal;
+    word-break: break-all;
+    line-height: 1.4;
+  }
+
+  .user-dropdown a,
+  .user-dropdown button {
+    padding: 14px 14px;
+    font-size: 0.68rem;
+    min-height: 54px;
+  }
+
+  .user-dropdown .dropdown-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
+    margin-right: 10px;
+  }
+
+  /* Larger scrollbar for touch */
+  .user-dropdown::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .user-dropdown::-webkit-scrollbar-thumb {
+    background: var(--gold);
+  }
+}
+
+/* Very small screens (under 380px) */
 @media (max-width: 380px) {
   .user-dropdown {
     width: calc(100vw - 16px);
-    max-width: none;
     right: 8px;
+    max-height: calc(100dvh - 60px);
+  }
+
+  .user-dropdown a,
+  .user-dropdown button {
+    padding: 12px 12px;
+    font-size: 0.65rem;
+    min-height: 48px;
+  }
+
+  .user-dropdown .dropdown-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
   }
 }
 
-/* iPad/tablet: allow touch scroll inside dropdown (without visible scrollbar) */
-@media (min-width: 768px) and (max-width: 1366px) {
+/* Landscape orientation on mobile */
+@media (max-width: 896px) and (orientation: landscape) {
   .user-dropdown {
-    width: min(300px, calc(100vw - 24px));
-    max-width: min(300px, calc(100vw - 24px));
-    max-height: calc(100dvh - 90px);
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
-    overscroll-behavior: contain;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    top: calc(45px + env(safe-area-inset-top, 0) + 8px);
+    max-height: calc(100dvh - 60px);
   }
 
-  .user-dropdown::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none;
+  .user-dropdown a,
+  .user-dropdown button {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+}
+
+/* iPad/tablet specific optimizations */
+@media (min-width: 768px) and (max-width: 1366px) {
+  .user-dropdown {
+    max-height: calc(100dvh - 90px);
+    scrollbar-width: thin;
+  }
+
+  /* Ensure smooth scrolling on iPad */
+  .user-dropdown {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* High contrast / accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .user-dropdown,
+  .user-dropdown a,
+  .user-dropdown button,
+  .dropdown-icon,
+  .user-icon {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  .user-dropdown {
+    top: calc(55px + max(env(safe-area-inset-top, 0), 10px));
+    right: max(16px, env(safe-area-inset-right, 0));
+  }
+  
+  @media (max-width: 767px) {
+    .user-dropdown {
+      top: calc(50px + max(env(safe-area-inset-top, 0), 8px));
+      right: max(8px, env(safe-area-inset-right, 0));
+    }
   }
 }
