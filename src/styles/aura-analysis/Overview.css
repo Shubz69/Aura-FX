@@ -2320,6 +2320,109 @@
   border-color: rgba(234, 169, 96, 0.7);
 }
 
+.aura-overview-account-currency-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aura-overview-account-currency-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.aura-overview-account-currency-select {
+  min-width: 88px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 0.82rem;
+  font-family: inherit;
+  padding: 0 10px;
+}
+
+.aura-overview-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.aura-overview-modal {
+  width: min(460px, 100%);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #121321;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.38);
+  padding: 18px;
+}
+
+.aura-overview-modal-title {
+  margin: 0;
+  font-size: 1.02rem;
+  color: #fff;
+}
+
+.aura-overview-modal-sub {
+  margin: 8px 0 14px;
+  font-size: 0.83rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.aura-overview-modal-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.aura-overview-modal-input {
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  padding: 0 12px;
+  font-family: inherit;
+}
+
+.aura-overview-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.aura-overview-modal-btn {
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 0.82rem;
+  font-family: inherit;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.aura-overview-modal-btn--primary {
+  border-color: rgba(234, 169, 96, 0.6);
+  background: rgba(234, 169, 96, 0.22);
+  color: #ffe8c2;
+}
+
 .aura-overview-account-error {
   font-size: 0.85rem;
   color: #9a8f84;

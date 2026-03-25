@@ -120,8 +120,12 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     const body = parseBody(req);
     const name = (body.name || '').toString().trim().slice(0, 120);
+    const rawCcy = (body.accountCurrency || body.account_currency || 'USD').toString().trim().toUpperCase();
     if (!name) {
       return res.status(400).json({ success: false, message: 'name is required' });
+    }
+    if (!ALLOWED_ACCOUNT_CURRENCIES.has(rawCcy)) {
+      return res.status(400).json({ success: false, message: 'Invalid accountCurrency' });
     }
     try {
       const [maxRow] = await executeQuery(
@@ -131,7 +135,7 @@ module.exports = async (req, res) => {
       const sortOrder = maxRow?.[0]?.n ?? 0;
       await executeQuery(
         'INSERT INTO trade_validator_accounts (user_id, name, sort_order, account_currency) VALUES (?, ?, ?, ?)',
-        [userId, name, sortOrder, 'USD']
+        [userId, name, sortOrder, rawCcy]
       );
       const [list] = await executeQuery(
         'SELECT id, name, sort_order, account_currency, created_at FROM trade_validator_accounts WHERE user_id = ? ORDER BY sort_order ASC, id ASC',

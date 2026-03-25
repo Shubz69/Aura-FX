@@ -721,11 +721,11 @@ const Api = {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
     },
-    createValidatorAccount: (name) => {
+    createValidatorAccount: (name, accountCurrency = 'USD') => {
         const token = localStorage.getItem('token');
         return axios.post(
             `${API_BASE_URL}/api/aura-analysis/validator-accounts`,
-            { name },
+            { name, accountCurrency },
             { headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
         );
     },

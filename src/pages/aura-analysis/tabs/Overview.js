@@ -4,7 +4,7 @@ import { FaPlus } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Api from '../../../services/Api';
 import { useTradeValidatorAccount } from '../../../context/TradeValidatorAccountContext';
-import { formatSignedPnL } from '../../../lib/aura-analysis/formatAccountCurrency';
+import { ACCOUNT_CURRENCY_OPTIONS, formatSignedPnL } from '../../../lib/aura-analysis/formatAccountCurrency';
 import '../../../styles/aura-analysis/AuraTabSection.css';
 import '../../../styles/aura-analysis/Overview.css';
 
@@ -49,13 +49,23 @@ function computeKpis(trades = [], pnlData = {}) {
 export default function Overview() {
   const location = useLocation();
   const fromTransition = location.state?.fromTransition === true;
-  const { accounts, selectedAccountId, setSelectedAccountId, loading: accountsLoading, addAccount, error: accountsError } =
-    useTradeValidatorAccount();
+  const {
+    accounts,
+    selectedAccountId,
+    setSelectedAccountId,
+    loading: accountsLoading,
+    addAccount,
+    patchAccountCurrency,
+    error: accountsError,
+  } = useTradeValidatorAccount();
   const [trades, setTrades] = useState([]);
   const [pnlData, setPnlData] = useState({});
   const [loading, setLoading] = useState(true);
   const [viewDate, setViewDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newAccountName, setNewAccountName] = useState('');
+  const [newAccountCurrency, setNewAccountCurrency] = useState('USD');
 
   const fetchData = useCallback(() => {
     const params =
@@ -85,10 +95,16 @@ export default function Overview() {
   }, [accountsLoading, fetchData]);
 
   const handleAddAccount = async () => {
-    const name = window.prompt('Account name (e.g. FTMO, Personal)');
-    if (!name?.trim()) return;
+    const name = newAccountName.trim();
+    if (!name) {
+      toast.error('Enter an account name.');
+      return;
+    }
     try {
-      await addAccount(name.trim());
+      await addAccount(name, newAccountCurrency);
+      setNewAccountName('');
+      setNewAccountCurrency('USD');
+      setShowAddModal(false);
       toast.success('Account added. Select it to use it for new trades.');
     } catch (e) {
       toast.error(e?.response?.data?.message || e.message || 'Could not add account');
@@ -101,6 +117,17 @@ export default function Overview() {
     const a = accounts.find((x) => Number(x.id) === Number(selectedAccountId));
     return a?.accountCurrency || 'USD';
   }, [accounts, selectedAccountId]);
+
+  const handleSelectedAccountCurrencyChange = async (e) => {
+    if (!selectedAccountId) return;
+    const ccy = e.target.value;
+    try {
+      await patchAccountCurrency(selectedAccountId, ccy);
+      toast.success(`Account currency updated to ${ccy}.`);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || 'Could not update account currency');
+    }
+  };
 
   const yearMonth = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}`;
   const monthTrades = useMemo(
@@ -203,12 +230,75 @@ export default function Overview() {
             </button>
           ))}
         </div>
-        <button type="button" className="aura-overview-account-add" onClick={handleAddAccount} title="Add account">
+        <div className="aura-overview-account-currency-wrap">
+          <span className="aura-overview-account-currency-label">Currency</span>
+          <select
+            className="aura-overview-account-currency-select"
+            value={overviewCurrency}
+            onChange={handleSelectedAccountCurrencyChange}
+            disabled={!selectedAccountId}
+            aria-label="Selected account currency"
+          >
+            {ACCOUNT_CURRENCY_OPTIONS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="button"
+          className="aura-overview-account-add"
+          onClick={() => setShowAddModal(true)}
+          title="Add account"
+        >
           <FaPlus aria-hidden />
           <span>Add</span>
         </button>
       </div>
       {accountsError && <p className="aura-overview-account-error">{accountsError}</p>}
+      {showAddModal && (
+        <div className="aura-overview-modal-backdrop" role="presentation" onClick={() => setShowAddModal(false)}>
+          <div className="aura-overview-modal" role="dialog" aria-modal="true" aria-label="Add account" onClick={(e) => e.stopPropagation()}>
+            <h3 className="aura-overview-modal-title">Add Trade Validator Account</h3>
+            <p className="aura-overview-modal-sub">Name it and choose the currency you trade this account in.</p>
+            <label className="aura-overview-modal-label">
+              Account name
+              <input
+                className="aura-overview-modal-input"
+                type="text"
+                value={newAccountName}
+                onChange={(e) => setNewAccountName(e.target.value)}
+                placeholder="e.g. FTMO, Personal"
+                maxLength={120}
+                autoFocus
+              />
+            </label>
+            <label className="aura-overview-modal-label">
+              Account currency
+              <select
+                className="aura-overview-modal-input"
+                value={newAccountCurrency}
+                onChange={(e) => setNewAccountCurrency(e.target.value)}
+              >
+                {ACCOUNT_CURRENCY_OPTIONS.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="aura-overview-modal-actions">
+              <button type="button" className="aura-overview-modal-btn" onClick={() => setShowAddModal(false)}>
+                Cancel
+              </button>
+              <button type="button" className="aura-overview-modal-btn aura-overview-modal-btn--primary" onClick={handleAddAccount}>
+                Add account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <h2 className="aura-overview-glance-title">Your trading performance at a glance</h2>
       <div className="aura-overview-kpi-grid">
         <div className="aura-overview-kpi-card">

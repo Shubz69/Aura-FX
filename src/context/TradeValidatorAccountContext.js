@@ -61,8 +61,8 @@ export function TradeValidatorAccountProvider({ children }) {
     [storageKey]
   );
 
-  const addAccount = useCallback(async (name) => {
-    const res = await Api.createValidatorAccount(name);
+  const addAccount = useCallback(async (name, accountCurrency = 'USD') => {
+    const res = await Api.createValidatorAccount(name, accountCurrency);
     const accs = res.data?.accounts ?? [];
     setAccounts(accs);
     return accs[accs.length - 1] ?? null;
