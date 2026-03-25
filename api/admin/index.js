@@ -3,7 +3,26 @@ require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
 const nodemailer = require('nodemailer');
 const { verifyToken } = require('../utils/auth');
+const { isSuperAdminEmail, getSuperAdminEmailLower } = require('../utils/entitlements');
 const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
+
+/** Cryptographic JWT + DB role super_admin or env SUPER_ADMIN_EMAIL match. */
+async function assertSuperAdminDb(db, authHeader) {
+  const decoded = verifyToken(authHeader);
+  if (!decoded || !decoded.id) {
+    return { ok: false, status: 401, message: 'Unauthorized' };
+  }
+  const [rows] = await db.execute('SELECT email, role FROM users WHERE id = ? LIMIT 1', [decoded.id]);
+  if (!rows || !rows.length) {
+    return { ok: false, status: 401, message: 'Unauthorized' };
+  }
+  const row = rows[0];
+  const r = (row.role || '').toString().trim().toLowerCase();
+  if (r === 'super_admin' || isSuperAdminEmail(row)) {
+    return { ok: true, decoded };
+  }
+  return { ok: false, status: 403, message: 'Super Admin access required' };
+}
 const { postLevelUpToLevelsChannel } = require('../utils/post-level-up-to-levels-channel');
 
 // Configure email transporter (optional – logs warning if credentials missing)
@@ -762,11 +781,6 @@ module.exports = async (req, res) => {
   // Handle /api/admin/users/:userId/role - Update user role and capabilities (Super Admin only)
   if (pathname.includes('/users/') && pathname.includes('/role') && req.method === 'PUT') {
     try {
-      const token = req.headers.authorization?.replace('Bearer ', '');
-      if (!token) {
-        return res.status(401).json({ success: false, message: 'Unauthorized' });
-      }
-
       // Extract userId from path
       const userIdMatch = pathname.match(/\/users\/(\d+)\/role/);
       if (!userIdMatch) {
@@ -791,51 +805,42 @@ module.exports = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Database connection error' });
       }
 
-      try {
-        // Verify requester is super admin
-        let requesterEmail = null;
+      const gate = await assertSuperAdminDb(db, req.headers.authorization);
+      if (!gate.ok) {
         try {
-          const tokenParts = token.split('.');
-          if (tokenParts.length === 3) {
-            const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-            const [requesterRows] = await db.execute('SELECT email, role FROM users WHERE id = ?', [payload.id]);
-            if (requesterRows.length > 0) {
-              requesterEmail = requesterRows[0].email;
-              const requesterRole = requesterRows[0].role;
-              
-              // Only super admin can assign admin or super_admin roles
-              if ((role === 'admin' || role === 'super_admin') && 
-                  requesterEmail !== 'shubzfx@gmail.com' && 
-                  requesterRole !== 'super_admin') {
-                db.release();
-                return res.status(403).json({ 
-                  success: false, 
-                  message: 'Only Super Admin can assign admin roles' 
-                });
-              }
-            }
-          }
-        } catch (tokenError) {
-          // If token parsing fails, check by email in token or allow if it's a valid admin token
-          console.warn('Token parsing error, proceeding with role check:', tokenError.message);
-        }
+          db.release();
+        } catch (_) {}
+        return res.status(gate.status).json({ success: false, message: gate.message });
+      }
 
+      try {
         // Check if target user is super admin
-        const [userRows] = await db.execute('SELECT email FROM users WHERE id = ?', [userId]);
+        const [userRows] = await db.execute('SELECT email, role FROM users WHERE id = ?', [userId]);
         if (userRows.length === 0) {
           db.release();
           return res.status(404).json({ success: false, message: 'User not found' });
         }
 
         const userEmail = (userRows[0].email || '').toString().trim().toLowerCase();
-        const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
-        if (userEmail === SUPER_ADMIN_EMAIL && role !== 'super_admin') {
+        const targetDbRole = (userRows[0].role || '').toString().trim().toLowerCase();
+        const superEl = getSuperAdminEmailLower();
+
+        if ((targetDbRole === 'super_admin' || isSuperAdminEmail(userRows[0])) && role !== 'super_admin') {
           db.release();
           return res.status(403).json({ success: false, message: 'Cannot change Super Admin role' });
         }
-        if (role === 'super_admin' && userEmail !== SUPER_ADMIN_EMAIL) {
-          db.release();
-          return res.status(403).json({ success: false, message: 'Super Admin is restricted to one user only' });
+        if (role === 'super_admin') {
+          if (!superEl) {
+            db.release();
+            return res.status(403).json({
+              success: false,
+              message: 'Set SUPER_ADMIN_EMAIL in server environment to assign super_admin role'
+            });
+          }
+          if (userEmail !== superEl) {
+            db.release();
+            return res.status(403).json({ success: false, message: 'Super Admin is restricted to configured super-admin account' });
+          }
         }
 
         // Update user role
@@ -875,11 +880,6 @@ module.exports = async (req, res) => {
   // Handle /api/admin/users/:userId - Delete user (Super Admin only)
   if (pathname.includes('/users/') && !pathname.includes('/role') && req.method === 'DELETE') {
     try {
-      const token = req.headers.authorization?.replace('Bearer ', '');
-      if (!token) {
-        return res.status(401).json({ success: false, message: 'Unauthorized' });
-      }
-
       // Extract userId from path
       const userIdMatch = pathname.match(/\/users\/(\d+)/);
       if (!userIdMatch) {
@@ -892,18 +892,24 @@ module.exports = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Database connection error' });
       }
 
+      const gate = await assertSuperAdminDb(db, req.headers.authorization);
+      if (!gate.ok) {
+        try {
+          db.release();
+        } catch (_) {}
+        return res.status(gate.status).json({ success: false, message: gate.message });
+      }
+
       try {
         // Check if user exists
-        const [userRows] = await db.execute('SELECT email FROM users WHERE id = ?', [userId]);
+        const [userRows] = await db.execute('SELECT email, role FROM users WHERE id = ?', [userId]);
         if (userRows.length === 0) {
           db.release();
           return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        const userEmail = userRows[0].email;
-        
-        // Prevent deletion of super admin
-        if (userEmail === 'shubzfx@gmail.com') {
+        const targetRole = (userRows[0].role || '').toString().trim().toLowerCase();
+        if (targetRole === 'super_admin' || isSuperAdminEmail(userRows[0])) {
           db.release();
           return res.status(403).json({ success: false, message: 'Cannot delete Super Admin account' });
         }
@@ -968,6 +974,14 @@ module.exports = async (req, res) => {
         });
       }
 
+      const gate = await assertSuperAdminDb(db, req.headers.authorization);
+      if (!gate.ok) {
+        try {
+          db.release();
+        } catch (_) {}
+        return res.status(gate.status).json({ success: false, message: gate.message });
+      }
+
       try {
         // Revoke access by setting subscription to inactive and role to free
         await db.execute(
@@ -1000,19 +1014,20 @@ module.exports = async (req, res) => {
 
   // Handle /api/admin/users/:userId/subscription - Update user subscription (Super Admin only)
   if (pathname.includes('/users/') && pathname.includes('/subscription') && req.method === 'PUT') {
+    let db;
     try {
-      const token = req.headers.authorization?.replace('Bearer ', '');
-      if (!token) {
-        return res.status(401).json({ success: false, message: 'Unauthorized' });
-      }
-
-      const db = await getDbConnection();
+      db = await getDbConnection();
       if (!db) {
         return res.status(500).json({ success: false, message: 'Database connection error' });
       }
 
-      // TODO: Verify JWT and check if user is super admin
-      // For now, allow if token exists (you should add proper JWT verification)
+      const gate = await assertSuperAdminDb(db, req.headers.authorization);
+      if (!gate.ok) {
+        try {
+          db.release();
+        } catch (_) {}
+        return res.status(gate.status).json({ success: false, message: gate.message });
+      }
 
       // Extract userId from path
       const userIdMatch = pathname.match(/\/users\/(\d+)\/subscription/);
@@ -1046,14 +1061,14 @@ module.exports = async (req, res) => {
       }
 
       // Check if user exists
-      const [userRows] = await db.execute('SELECT email FROM users WHERE id = ?', [userId]);
+      const [userRows] = await db.execute('SELECT email, role FROM users WHERE id = ?', [userId]);
       if (userRows.length === 0) {
         db.release();
         return res.status(404).json({ success: false, message: 'User not found' });
       }
 
-      const userEmail = userRows[0].email;
-      if (userEmail === 'shubzfx@gmail.com' && role && role !== 'super_admin') {
+      const targetRoleRow = (userRows[0].role || '').toString().trim().toLowerCase();
+      if ((targetRoleRow === 'super_admin' || isSuperAdminEmail(userRows[0])) && role && role !== 'super_admin') {
         db.release();
         return res.status(403).json({ success: false, message: 'Cannot change Super Admin role' });
       }
@@ -1120,6 +1135,11 @@ module.exports = async (req, res) => {
       });
     } catch (error) {
       console.error('Error updating subscription:', error);
+      if (db) {
+        try {
+          db.release();
+        } catch (_) {}
+      }
       return res.status(500).json({ success: false, message: 'Failed to update subscription' });
     }
   }

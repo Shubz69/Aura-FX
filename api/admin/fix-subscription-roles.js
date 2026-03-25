@@ -1,4 +1,5 @@
 const { getDbConnection } = require('../../db');
+const { isSuperAdminEmail } = require('../../utils/entitlements');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../../utils/suppress-warnings');
 
@@ -51,10 +52,10 @@ module.exports = async (req, res) => {
         [decoded.id]
       );
       
-      if (adminCheck.length === 0 || 
-          (adminCheck[0].role !== 'admin' && 
-           adminCheck[0].role !== 'super_admin' && 
-           adminCheck[0].email !== 'shubzfx@gmail.com')) {
+      if (adminCheck.length === 0 ||
+          (adminCheck[0].role !== 'admin' &&
+           adminCheck[0].role !== 'super_admin' &&
+           !isSuperAdminEmail(adminCheck[0]))) {
         await db.end();
         return res.status(403).json({ success: false, message: 'Admin access required' });
       }

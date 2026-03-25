@@ -55,15 +55,6 @@ const VerifyMFA = () => {
             return;
         }
         
-        // If user is ADMIN, they don't need MFA verification
-        if (user && user.role === 'ADMIN') {
-            console.log('Admin user detected, bypassing MFA');
-            localStorage.setItem("mfaVerified", "true");
-            verifyMfa();
-            navigate(location.state?.returnUrl || "/community");
-            return;
-        }
-        
         // If we don't have userId from state and can't retrieve from localStorage, 
         // redirect to login
         if (!userIdFromState && !storedUserId && !storedEmail) {

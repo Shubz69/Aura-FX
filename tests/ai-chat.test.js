@@ -180,6 +180,15 @@ describe('Token Decoding', () => {
 });
 
 describe('Access Control', () => {
+  const prevSuper = process.env.SUPER_ADMIN_EMAIL;
+  beforeAll(() => {
+    process.env.SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
+  });
+  afterAll(() => {
+    if (prevSuper === undefined) delete process.env.SUPER_ADMIN_EMAIL;
+    else process.env.SUPER_ADMIN_EMAIL = prevSuper;
+  });
+
   test('allows super admin by email', () => {
     expect(checkAccess({ email: 'shubzfx@gmail.com' })).toBe(true);
     expect(checkAccess({ email: 'SHUBZFX@GMAIL.COM' })).toBe(true);

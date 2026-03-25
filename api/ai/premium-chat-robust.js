@@ -11,6 +11,7 @@
 
 const { getDbConnection, executeQuery } = require('../db');
 const { getCached, setCached } = require('../cache');
+const { isSuperAdminEmail } = require('../utils/entitlements');
 
 // ============= CONFIGURATION =============
 const CONFIG = {
@@ -254,9 +255,7 @@ async function verifyUser(userId, logger) {
 
 // ============= ACCESS CHECK =============
 function checkAccess(user) {
-  const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
-  
-  const isSuperAdmin = user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+  const isSuperAdmin = isSuperAdminEmail(user);
   const hasRole = ['premium', 'a7fx', 'elite', 'admin', 'super_admin'].includes(user.role);
   const hasSubscription = user.subscription_status === 'active' && 
     ['aura', 'a7fx', 'premium', 'elite'].includes(user.subscription_plan);

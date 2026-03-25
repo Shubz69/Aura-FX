@@ -3,6 +3,7 @@
  * POST /api/admin/migrate-level-up-messages (admin only).
  */
 const { getDbConnection } = require('../db');
+const { isSuperAdminEmail } = require('../utils/entitlements');
 require('../utils/suppress-warnings');
 
 module.exports = async (req, res) => {
@@ -33,7 +34,7 @@ module.exports = async (req, res) => {
 
       const [adminCheck] = await db.execute('SELECT role, email FROM users WHERE id = ?', [decoded.id]);
       if (adminCheck.length === 0 ||
-          (adminCheck[0].role !== 'admin' && adminCheck[0].role !== 'super_admin' && adminCheck[0].email !== 'shubzfx@gmail.com')) {
+          (adminCheck[0].role !== 'admin' && adminCheck[0].role !== 'super_admin' && !isSuperAdminEmail(adminCheck[0]))) {
         if (db.end) await db.end(); else if (db.release) db.release();
         return res.status(403).json({ success: false, message: 'Admin access required' });
       }

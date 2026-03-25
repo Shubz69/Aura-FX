@@ -10,6 +10,7 @@
 
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
+const { isSuperAdminEmail } = require('../utils/entitlements');
 
 /**
  * Check if user has community access (server-authoritative)
@@ -44,9 +45,7 @@ async function checkCommunityAccess(authHeader) {
     const now = new Date();
     const expiryDate = user.subscription_expiry ? new Date(user.subscription_expiry) : null;
     
-    // Super admin by email: full access regardless of DB role (Shubzfx@gmail.com)
-    const superAdminEmail = 'shubzfx@gmail.com';
-    if (user.email && user.email.toString().trim().toLowerCase() === superAdminEmail) {
+    if (user.email && isSuperAdminEmail(user)) {
       return { hasAccess: true, accessType: 'ADMIN', userId, error: null };
     }
     

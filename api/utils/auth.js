@@ -16,6 +16,10 @@ const jwt = require('jsonwebtoken');
 let jwtSecretWarned = false;
 let jwtSignWarned = false;
 
+function isProductionAuth() {
+  return process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+}
+
 /**
  * Read secret at request time (trim / strip quotes) so Vercel env edits apply reliably.
  */
@@ -59,6 +63,13 @@ function verifyToken(authHeader) {
 
   const secret = getJwtSecret();
   if (!secret || secret.length < 16) {
+    if (isProductionAuth()) {
+      if (!jwtSecretWarned) {
+        jwtSecretWarned = true;
+        console.error('JWT_SECRET missing or too short in production — rejecting tokens. Set JWT_SECRET (min 16 chars).');
+      }
+      return null;
+    }
     if (!jwtSecretWarned) {
       jwtSecretWarned = true;
       console.warn(
@@ -77,7 +88,8 @@ function verifyToken(authHeader) {
     return decoded;
   } catch (err) {
     if (err.name === 'TokenExpiredError') return null;
-    // Tokens issued before JWT_SECRET was set: legacy unsigned format — accept until expiry / re-login
+    if (isProductionAuth()) return null;
+    // Non-production: tokens issued before JWT_SECRET was set — legacy unsigned format until re-login
     if (isLegacyUnsignedToken(token)) {
       const unsafe = decodeTokenUnsafe(token);
       if (!unsafe || !unsafe.id) return null;
@@ -118,6 +130,9 @@ function signToken(payload, expiresIn = '24h') {
     const safe = { ...payload };
     if (safe.id != null) safe.id = Number(safe.id) || safe.id;
     return jwt.sign(safe, secret, { algorithm: 'HS256', expiresIn });
+  }
+  if (isProductionAuth()) {
+    throw new Error('JWT_SECRET must be set (min 16 characters) in production');
   }
   if (!jwtSignWarned) {
     jwtSignWarned = true;

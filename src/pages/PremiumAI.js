@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import ReactMarkdown from 'react-markdown';
 import '../styles/PremiumAI.css';
+import { isSuperAdmin } from '../utils/roles';
 
 /* ── Icons ──────────────────────────────────────────────── */
 const SendIcon = () => (
@@ -216,7 +217,7 @@ const PremiumAI = () => {
   useEffect(() => {
     if (!isAuthenticated) { navigate('/login'); return; }
     const { role = 'free', subscription_status: ss = 'inactive', subscription_plan: sp, email = '' } = user || {};
-    const ok = email.toLowerCase() === 'shubzfx@gmail.com'
+    const ok = isSuperAdmin(user)
       || ['premium','a7fx','elite','admin','super_admin','SUPER_ADMIN'].includes(role)
       || (ss === 'active' && ['aura','a7fx'].includes(sp));
     if (!ok) { toast.error('Premium subscription required'); navigate('/subscription'); }

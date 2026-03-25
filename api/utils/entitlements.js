@@ -18,8 +18,15 @@
  */
 const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels', 'notifications']);
 
-/** Super admin email – always gets full access regardless of DB role */
-const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
+/**
+ * Super-admin email override (optional). Set SUPER_ADMIN_EMAIL in server env — do not hardcode in repo.
+ * If unset, only DB role `super_admin` grants super-admin-by-email behavior.
+ */
+function getSuperAdminEmailLower() {
+  const raw = process.env.SUPER_ADMIN_EMAIL;
+  if (raw == null || String(raw).trim() === '') return '';
+  return String(raw).trim().toLowerCase();
+}
 
 const ACCESS_LEVELS_ELITE = new Set(['open', 'free', 'read-only', 'premium', 'a7fx', 'elite', 'support', 'staff']);
 const ACCESS_LEVELS_PREMIUM = new Set(['open', 'free', 'read-only', 'premium', 'support', 'staff']);
@@ -63,9 +70,14 @@ function getEffectiveTier(userRow) {
   return getTier(userRow);
 }
 
-function isSuperAdminEmail(userRow) {
-  const email = (userRow?.email || '').toString().trim().toLowerCase();
-  return email === SUPER_ADMIN_EMAIL.toLowerCase();
+function isSuperAdminEmail(userRowOrEmail) {
+  const superEl = getSuperAdminEmailLower();
+  if (!superEl) return false;
+  const email =
+    typeof userRowOrEmail === 'string'
+      ? userRowOrEmail
+      : (userRowOrEmail?.email || '');
+  return String(email).trim().toLowerCase() === superEl;
 }
 
 /**
@@ -204,7 +216,7 @@ function getAllowedChannelSlugs(entitlements, channels) {
  *
  * SPECIAL RULES:
  * - welcome: visible to ALL users, canWrite only for ADMIN/SUPER_ADMIN (read-only for regular users)
- * - announcements: visible to ALL users, canWrite only for SUPER_ADMIN (shubzfx@gmail.com)
+ * - announcements: visible to ALL users, canWrite only for SUPER_ADMIN
  */
 function getChannelPermissions(entitlements, channel) {
   const id = (channel?.id || channel?.name || '').toString().toLowerCase();
@@ -317,7 +329,7 @@ function canAccessChannel(entitlements, channelId, channels) {
 
 module.exports = {
   FREE_CHANNEL_ALLOWLIST,
-  SUPER_ADMIN_EMAIL,
+  getSuperAdminEmailLower,
   isSuperAdminEmail,
   normalizeRole,
   getTier,

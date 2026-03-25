@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt'); // bcrypt is in package.json
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
+const { signToken } = require('../utils/auth');
+const { getSuperAdminEmailLower } = require('../utils/entitlements');
 const { sendSignupNotification } = require('../utils/email');
 const {
   resolveReferrerIdFromInput,
@@ -219,10 +221,19 @@ module.exports = async (req, res) => {
           );
           threadId = insertThread.insertId;
         }
-        const [adminRow] = await db.execute(
-          "SELECT id FROM users WHERE LOWER(role) IN ('admin', 'super_admin') OR LOWER(email) = 'shubzfx@gmail.com' ORDER BY id ASC LIMIT 1"
-        );
-        const adminId = adminRow && adminRow[0] ? adminRow[0].id : null;
+        const superEl = getSuperAdminEmailLower();
+        let adminRows;
+        if (superEl) {
+          [adminRows] = await db.execute(
+            "SELECT id FROM users WHERE LOWER(role) IN ('admin', 'super_admin') OR LOWER(email) = ? ORDER BY id ASC LIMIT 1",
+            [superEl]
+          );
+        } else {
+          [adminRows] = await db.execute(
+            "SELECT id FROM users WHERE LOWER(role) IN ('admin', 'super_admin') ORDER BY id ASC LIMIT 1"
+          );
+        }
+        const adminId = adminRows && adminRows[0] ? adminRows[0].id : null;
         if (adminId) {
           await db.execute(
             'INSERT INTO thread_messages (threadId, senderId, recipientId, body) VALUES (?, ?, ?, ?)',
@@ -234,27 +245,24 @@ module.exports = async (req, res) => {
         console.warn('Could not send welcome message to new user:', welcomeErr.message);
       }
 
-      // Generate JWT token (3-part format: header.payload.signature)
-      // Convert to base64url (replace + with -, / with _, remove = padding)
-      const toBase64Url = (str) => {
-        return Buffer.from(str).toString('base64')
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=/g, '');
-      };
-      
-      const header = toBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-      const payload = toBase64Url(JSON.stringify({
-        id: userId,
-        email: emailLower,
-        username: usernameLower,
-        role: 'USER',
-        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
-      }));
-      const signature = toBase64Url('signature-' + Date.now());
-      const token = `${header}.${payload}.${signature}`;
-      
-      console.log('Generated token (length):', token.length, 'parts:', token.split('.').length);
+      let token;
+      try {
+        token = signToken(
+          {
+            id: userId,
+            email: emailLower,
+            username: usernameLower,
+            role: 'USER',
+          },
+          '24h'
+        );
+      } catch (signErr) {
+        console.error('Registration JWT sign failed:', signErr.message);
+        return res.status(503).json({
+          success: false,
+          message: 'Authentication service is not configured. Please try again later.',
+        });
+      }
 
       return res.status(200).json({
         success: true,

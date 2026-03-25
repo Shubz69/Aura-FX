@@ -16,6 +16,7 @@
 
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
+const { isSuperAdminEmail } = require('../utils/entitlements');
 
 /**
  * Check if user has community access based on subscription/role
@@ -49,9 +50,8 @@ async function checkCommunityAccess(userId) {
     const role = (user.role || '').toString().trim().toLowerCase();
     const plan = (user.subscription_plan || '').toString().trim().toLowerCase();
     
-    // Super admin by email: full access regardless of DB role (Shubzfx@gmail.com)
-    const superAdminEmail = 'shubzfx@gmail.com';
-    if (user.email && user.email.toString().trim().toLowerCase() === superAdminEmail) {
+    // Super admin by env SUPER_ADMIN_EMAIL or DB role (checked in entitlements)
+    if (user.email && isSuperAdminEmail(user)) {
       return { hasAccess: true, accessType: 'ADMIN', reason: 'Super admin' };
     }
     

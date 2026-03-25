@@ -9,7 +9,7 @@ class WebSocketService {
         this.subscriptions = new Map();
         this.messageHandlers = new Map();
         this.encryptionEnabled = false;
-        this.encryptionKey = process.env.REACT_APP_ENCRYPTION_KEY || 'default-encryption-key';
+        this.encryptionKey = (process.env.REACT_APP_ENCRYPTION_KEY || '').trim();
         this.threadSubscription = null;
         this.threadSubscriptionDestination = null;
         this.threadMessageHandler = null;
@@ -155,10 +155,12 @@ class WebSocketService {
     }
 
     encryptMessage(message) {
+        if (!this.encryptionKey) return message;
         return CryptoJS.AES.encrypt(message, this.encryptionKey).toString();
     }
 
     decryptMessage(encryptedMessage) {
+        if (!this.encryptionKey) return encryptedMessage;
         const bytes = CryptoJS.AES.decrypt(encryptedMessage, this.encryptionKey);
         return bytes.toString(CryptoJS.enc.Utf8);
     }

@@ -10,6 +10,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import Api from '../services/Api';
+import { SUPER_ADMIN_EMAIL } from '../utils/roles';
 
 const SubscriptionContext = createContext(null);
 
@@ -65,8 +66,10 @@ export const SubscriptionProvider = ({ children }) => {
         const sub = data.subscription;
         const userRole = (user?.role || '').toLowerCase();
         const userEmail = (user?.email || '').toString().trim().toLowerCase();
-        const isSuperAdminByEmail = userEmail === 'shubzfx@gmail.com';
-        const isAdmin = isSuperAdminByEmail || ['admin', 'super_admin'].includes(userRole);
+        const superEl = SUPER_ADMIN_EMAIL.trim().toLowerCase();
+        const isSuperAdminByEmail = Boolean(superEl && userEmail === superEl);
+        const isAdmin =
+          isSuperAdminByEmail || ['admin', 'super_admin'].includes(userRole);
         // Admins and super admin (by email) ALWAYS have access - override server response if needed
         const hasAccess = isAdmin ? true : (sub.hasCommunityAccess !== false);
         setSubscription({
@@ -80,7 +83,9 @@ export const SubscriptionProvider = ({ children }) => {
         // Check role/email fallback when API returns no subscription data
         const userRole = (user?.role || '').toLowerCase();
         const userEmail = (user?.email || '').toString().trim().toLowerCase();
-        const isAdmin = (userEmail === 'shubzfx@gmail.com') || ['admin', 'super_admin'].includes(userRole);
+        const superEl2 = SUPER_ADMIN_EMAIL.trim().toLowerCase();
+        const isAdmin =
+          Boolean(superEl2 && userEmail === superEl2) || ['admin', 'super_admin'].includes(userRole);
         const isPremiumRole = ['premium', 'elite', 'a7fx'].includes(userRole);
         
         if (isAdmin || isPremiumRole) {
@@ -108,7 +113,9 @@ export const SubscriptionProvider = ({ children }) => {
       // FALLBACK: admins/super admin by email should always have access if API fails
       const userRole = (user?.role || '').toLowerCase();
       const userEmail = (user?.email || '').toString().trim().toLowerCase();
-      const isAdmin = (userEmail === 'shubzfx@gmail.com') || ['admin', 'super_admin'].includes(userRole);
+      const superEl3 = SUPER_ADMIN_EMAIL.trim().toLowerCase();
+      const isAdmin =
+        Boolean(superEl3 && userEmail === superEl3) || ['admin', 'super_admin'].includes(userRole);
       const isPremiumRole = ['premium', 'elite', 'a7fx'].includes(userRole);
       
       if (isAdmin) {

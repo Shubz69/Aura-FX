@@ -9,6 +9,7 @@ import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
+import { isSuperAdmin } from '../utils/roles';
 
 // Loading spinner component - shown while waiting for subscription status
 const LoadingSpinner = () => (
@@ -69,8 +70,7 @@ export const CommunityGuard = ({ children }) => {
 
   // Admins always have access — skip entitlements loading entirely
   const role = (user?.role || '').toLowerCase();
-  const isAdminUser = role === 'admin' || role === 'super_admin' ||
-    (user?.email || '').toLowerCase() === 'shubzfx@gmail.com';
+  const isAdminUser = role === 'admin' || isSuperAdmin(user);
   if (isAdminUser) return children;
 
   if (authLoading || entLoading) {
@@ -154,8 +154,7 @@ export const AdminGuard = ({ children }) => {
   }
   
   const role = (user?.role || '').toString().toLowerCase();
-  const isAdmin = role === 'admin' || role === 'super_admin' ||
-                  user?.email?.toLowerCase() === 'shubzfx@gmail.com';
+  const isAdmin = role === 'admin' || isSuperAdmin(user);
   
   if (!isAdmin) {
     return <Navigate to="/" replace />;

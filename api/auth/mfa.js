@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
+const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 
 // Function to create email transporter
 const createEmailTransporter = () => {
@@ -63,11 +64,26 @@ module.exports = async (req, res) => {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
 
+  const clientIp =
+    req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+
   try {
     const { action, userId, email, code } = req.body;
 
     // Handle send MFA code (action === 'send' or resend flag)
     if (action === 'send' || (req.body.resend && !code)) {
+      if (
+        !checkRateLimit(
+          `mfa_send:${clientIp}`,
+          RATE_LIMIT_CONFIGS.STRICT.requests,
+          RATE_LIMIT_CONFIGS.STRICT.windowMs
+        )
+      ) {
+        return res.status(429).json({
+          success: false,
+          message: 'Too many MFA requests. Please try again later.',
+        });
+      }
       if (!userId && !email) {
         return res.status(400).json({ 
           success: false, 
@@ -153,6 +169,18 @@ module.exports = async (req, res) => {
 
     // Handle verify MFA code (action === 'verify' or code is provided)
     if (action === 'verify' || code) {
+      if (
+        !checkRateLimit(
+          `mfa_verify:${clientIp}`,
+          RATE_LIMIT_CONFIGS.LOW.requests,
+          RATE_LIMIT_CONFIGS.LOW.windowMs
+        )
+      ) {
+        return res.status(429).json({
+          success: false,
+          message: 'Too many verification attempts. Please try again later.',
+        });
+      }
       if (!code || (!userId && !email)) {
         return res.status(400).json({ 
           success: false, 

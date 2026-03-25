@@ -7,6 +7,7 @@ import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import Api from '../services/Api';
 import { FaSearch, FaUserShield } from 'react-icons/fa';
 import '../styles/AdminPanel.css';
+import { isSuperAdmin } from '../utils/roles';
 
 const PLAN_OPTIONS = [
   { value: 'free', label: 'Free', needsDuration: false },
@@ -233,7 +234,7 @@ const AdminPanel = () => {
         }
         
         const userRole = user?.role?.toLowerCase() || '';
-        const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
+        const isAdmin = userRole === 'admin' || isSuperAdmin(user);
         
         if (user && !isAdmin) {
             navigate('/');
@@ -663,9 +664,9 @@ const AdminPanel = () => {
 
     // Check admin status more flexibly
     const userRole = user?.role?.toLowerCase() || '';
-    const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
+    const isAdmin = userRole === 'admin' || isSuperAdmin(user);
     const isSuperAdmin =
-        userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
+        userRole === 'super_admin' || isSuperAdmin(user);
 
     useEffect(() => {
         if (!isSuperAdmin) return;

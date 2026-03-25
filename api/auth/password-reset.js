@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
+const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 
 // Function to create email transporter
 const createEmailTransporter = () => {
@@ -44,6 +45,21 @@ module.exports = async (req, res) => {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
+
+  const clientIp =
+    req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+  if (
+    !checkRateLimit(
+      `password_reset:${clientIp}`,
+      RATE_LIMIT_CONFIGS.STRICT.requests,
+      RATE_LIMIT_CONFIGS.STRICT.windowMs
+    )
+  ) {
+    return res.status(429).json({
+      success: false,
+      message: 'Too many requests. Please try again later.',
+    });
   }
 
   try {

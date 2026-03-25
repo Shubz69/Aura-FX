@@ -17,6 +17,7 @@ const { toCanonical } = require('./utils/symbol-registry');
 const { validateAndSanitize, generatePricingInstructions } = require('./price-validator');
 const { getOpenAIModelForChat } = require('./openai-config');
 const { verifyToken } = require('../utils/auth');
+const { isSuperAdminEmail } = require('../utils/entitlements');
 
 const marketDataAdapter = new MarketDataAdapter();
 
@@ -394,8 +395,7 @@ async function handler(req, res) {
     }
 
     const user = users[0];
-    const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
-    const isSuperAdmin = user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    const isSuperAdmin = user.email && isSuperAdminEmail(user);
     const role = (user.role || '').toLowerCase();
     const subStatus = (user.subscription_status || '').toLowerCase();
     const subPlan = (user.subscription_plan || '').toLowerCase();

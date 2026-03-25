@@ -1,5 +1,5 @@
 // Role-based access control system
-// Super Admin: shubzfx@gmail.com - Full system access
+// Super Admin email: set REACT_APP_SUPER_ADMIN_EMAIL (must match server SUPER_ADMIN_EMAIL for UI hints).
 // Admin: Assigned by Super Admin - Limited admin access
 
 export const ROLES = {
@@ -11,7 +11,7 @@ export const ROLES = {
   SUPER_ADMIN: 'super_admin'
 };
 
-export const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
+export const SUPER_ADMIN_EMAIL = (process.env.REACT_APP_SUPER_ADMIN_EMAIL || '').trim();
 
 // Admin capabilities - what admins can do
 export const ADMIN_CAPABILITIES = {
@@ -100,17 +100,18 @@ export const isAdmin = (user = null) => {
 
 // Check if user is super admin
 export const isSuperAdmin = (user = null) => {
+  const superEmail = SUPER_ADMIN_EMAIL.trim().toLowerCase();
   if (!user) {
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const email = storedUser.email || '';
+    const email = (storedUser.email || '').toString().toLowerCase();
     const role = (storedUser.role || '').toString().toLowerCase();
-    return email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() || 
-           role === ROLES.SUPER_ADMIN;
+    if (role === ROLES.SUPER_ADMIN) return true;
+    return Boolean(superEmail && email === superEmail);
   }
-  const email = user.email || '';
+  const email = (user.email || '').toString().toLowerCase();
   const role = (user.role || '').toString().toLowerCase();
-  return email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() || 
-         role === ROLES.SUPER_ADMIN;
+  if (role === ROLES.SUPER_ADMIN) return true;
+  return Boolean(superEmail && email === superEmail);
 };
 
 // Check if user has premium subscription (premium or a7fx)

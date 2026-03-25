@@ -2,6 +2,7 @@
 // Inspect tool calls, data fetches, errors, and system health
 
 const { getDbConnection } = require('../db');
+const { isSuperAdminEmail } = require('../utils/entitlements');
 
 module.exports = async (req, res) => {
   // Handle CORS
@@ -55,7 +56,7 @@ module.exports = async (req, res) => {
 
       const user = userRows[0];
       const userRole = (user.role || '').toLowerCase();
-      const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user.email?.toLowerCase() === 'shubzfx@gmail.com';
+      const isAdmin = userRole === 'admin' || userRole === 'super_admin' || isSuperAdminEmail(user);
 
       if (!isAdmin) {
         if (db && typeof db.release === 'function') {

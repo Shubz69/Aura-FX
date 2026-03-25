@@ -1,6 +1,7 @@
 // api/admin/change-subscription.js
 
 const { getDbConnection } = require('../db');
+const { isSuperAdminEmail } = require('../utils/entitlements');
 require('../utils/suppress-warnings');
 
 const log = (level, message, data = {}) => {
@@ -140,7 +141,7 @@ module.exports = async (req, res) => {
     if (
       adminRole !== 'admin' &&
       adminRole !== 'super_admin' &&
-      adminCheck[0].email !== 'shubzfx@gmail.com'
+      !isSuperAdminEmail(adminCheck[0])
     ) {
       return res.status(403).json({
         success: false,

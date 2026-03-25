@@ -5,6 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 import { consumePostAuthRedirect } from '../utils/postAuthRedirect';
 import { armPostLoginTransition } from '../utils/postLoginTransition';
 import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/userLocalStorage';
+import { SUPER_ADMIN_EMAIL } from '../utils/roles';
 
 /** Session handoff: login writes /api/me JSON here so EntitlementsProvider can render /community without a second loading gate. */
 const ME_ENTITLEMENTS_SEED_KEY = 'aura_me_entitlements_seed';
@@ -79,7 +80,8 @@ export const AuthProvider = ({ children }) => {
     const email = (data.email || '').toLowerCase();
     let finalRole = (data.role || 'USER').toString().toUpperCase();
     if (finalRole === 'SUPERADMIN') finalRole = 'SUPER_ADMIN';
-    if (email === 'shubzfx@gmail.com') finalRole = 'SUPER_ADMIN';
+    const superEl = SUPER_ADMIN_EMAIL.trim().toLowerCase();
+    if (superEl && email === superEl) finalRole = 'SUPER_ADMIN';
     return {
       id: data.id || data.userId || data.sub || null,
       username: data.username || data.name || '',
@@ -499,8 +501,12 @@ export const AuthProvider = ({ children }) => {
         
         // ============= FAST ROUTING + NON-BLOCKING /api/me =============
         const userRole = (data.role || '').toLowerCase();
-        const isAdminUser = userRole === 'admin' || userRole === 'super_admin' ||
-          (data.email || '').toLowerCase() === 'shubzfx@gmail.com';
+        const superEl = SUPER_ADMIN_EMAIL.trim().toLowerCase();
+        const em = (data.email || '').toLowerCase();
+        const isAdminUser =
+          userRole === 'admin' ||
+          userRole === 'super_admin' ||
+          Boolean(superEl && em === superEl);
         const plan = (data.subscriptionPlan || data.subscription?.plan || '').toString().trim().toLowerCase();
         const canAccessCommunity = isAdminUser || plan.length > 0;
         if (canAccessCommunity) {
