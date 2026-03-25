@@ -1,6 +1,6 @@
 /* A7 Logo Styling - Premium Realistic Gold Leaf (Animated Shiny Gold) */
 
-/* Keyframe: sweeping light beam across the logo */
+/* Keyframe: sweeping light beam across the logo (duration = prior ÷ 0.15 ≈ 15% speed) */
 @keyframes goldShine {
     0% {
         background-position: -200% center;
@@ -24,7 +24,7 @@
     }
 }
 
-/* Keyframe: glint sparkle flash */
+/* Keyframe: glint sparkle flash (defined for reuse; main sweep is goldShine) */
 @keyframes goldGlint {
     0%, 85%, 100% { opacity: 0; transform: scale(0.8) rotate(-10deg); }
     90%            { opacity: 1; transform: scale(1.1) rotate(-10deg); }
@@ -69,9 +69,9 @@
     );
     background-size: 300% 100%;
 
-    /* Animate the sweep continuously */
+    /* Animate the sweep continuously (~15% of prior sweep speed) */
     animation:
-        goldShine 3.8s linear infinite,
+        goldShine 25.333s linear infinite,
         goldGlow  2.8s ease-in-out infinite;
 
     -webkit-mask-repeat: no-repeat;
@@ -155,7 +155,7 @@
     );
     background-size: 300% 100%;
     animation:
-        goldShine 3.4s linear infinite,
+        goldShine 22.667s linear infinite,
         goldGlow  2.6s ease-in-out infinite;
 }
 
@@ -184,7 +184,7 @@
     );
     background-size: 300% 100%;
     animation:
-        goldShine 4.2s linear infinite,
+        goldShine 28s linear infinite,
         goldGlow  3s ease-in-out infinite;
 }
 

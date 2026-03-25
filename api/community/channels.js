@@ -235,7 +235,7 @@ async function ensureChannelColumnsFromSet(db, colSet) {
 /** One round-trip seed of default channels (ON DUPLICATE KEY UPDATE). */
 async function bulkUpsertDefaultChannels(db) {
   const seeds = [
-    ['welcome', 'welcome', 'announcements', 'Welcome to AURA TERMINAL Community. Read the rules and click the checkmark below to unlock your channels.', 'open'],
+    ['welcome', 'welcome', 'announcements', 'Welcome to Aura Terminal community. Read the rules and click the checkmark below to unlock your channels.', 'open'],
     ['announcements', 'announcements', 'announcements', 'Important announcements from AURA TERMINAL.', 'open'],
     ['levels', 'levels', 'announcements', 'Level-up celebrations and progress.', 'open'],
     ['general', 'general', 'general', 'General chat for all free subscribers. Say hello and join the conversation.', 'open'],
@@ -488,7 +488,7 @@ module.exports = async (req, res) => {
     try {
       // Default channels (fallback) - include canSee/canRead so free users see them
       const defaultChannels = [
-        { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to AURA TERMINAL community!', canSee: true, canRead: true, canWrite: false },
+        { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to Aura Terminal community!', canSee: true, canRead: true, canWrite: false },
         { id: 'announcements', name: 'announcements', displayName: 'Announcements', category: 'announcements', description: 'Important announcements', canSee: true, canRead: true, canWrite: false },
         { id: 'levels', name: 'levels', displayName: 'Levels', category: 'announcements', description: 'Level-up celebrations', canSee: true, canRead: true, canWrite: false },
         { id: 'general', name: 'general', displayName: 'General', category: 'general', description: 'General discussion', canSee: true, canRead: true, canWrite: true }

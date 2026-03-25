@@ -3765,7 +3765,7 @@ useEffect(() => {
         const welcomeMessage = {
             id: 'welcome-message',
             channelId: selectedChannel.id,
-            content: `🎉 WELCOME TO AURA FX COMMUNITY! 🎉
+            content: `🎉 Welcome to Aura Terminal community! 🎉
 
 Welcome to the most elite trading and wealth-building community on the planet! We're thrilled to have you join us on this incredible journey toward financial freedom and generational wealth.
 
@@ -3837,7 +3837,7 @@ Click the ✅ below to acknowledge you've read and agree to follow these rules, 
 Let's build generational wealth together! 💰🚀`,
                     sender: {
                         id: 'system',
-                        username: 'AURA FX',
+                        username: 'AURA TERMINAL',
                         avatar: null,
                         role: 'admin'
                     },
@@ -3865,14 +3865,14 @@ Let's build generational wealth together! 💰🚀`,
             channelId: selectedChannel.id,
             content: `📢 **ANNOUNCEMENTS**
 
-Important updates and news from AURA FX will appear here.
+Important updates and news from AURA TERMINAL will appear here.
 
 Check back regularly for:
 • New features and platform updates
 • Trading insights and market analysis
 • Community events and challenges
 • Course updates and new content`,
-            sender: { id: 'system', username: 'AURA FX', avatar: null, role: 'admin' },
+            sender: { id: 'system', username: 'AURA TERMINAL', avatar: null, role: 'admin' },
             timestamp: new Date().toISOString(),
             file: null,
             isPlaceholder: true
@@ -3904,7 +3904,7 @@ Earn XP by:
 • Sharing files and insights
 • Being active in discussions
 • Completing courses`,
-            sender: { id: 'system', username: 'AURA FX', avatar: null, role: 'admin' },
+            sender: { id: 'system', username: 'AURA TERMINAL', avatar: null, role: 'admin' },
             timestamp: new Date().toISOString(),
             file: null,
             isPlaceholder: true
@@ -4915,7 +4915,7 @@ useEffect(() => {
                                                         const userId = message.sender?.id || message.userId;
                                                         if (!userId) return;
                                                         if (String(userId).toLowerCase() === 'system') {
-                                                            setProfileModalData(message.sender || { id: 'system', username: 'AURA FX' });
+                                                            setProfileModalData(message.sender || { id: 'system', username: 'AURA TERMINAL' });
                                                             setShowProfileModal(true);
                                                             return;
                                                         }
@@ -4982,7 +4982,7 @@ useEffect(() => {
                                                                     const userId = message.sender?.id || message.userId;
                                                                     if (!userId) return;
                                                                     if (String(userId).toLowerCase() === 'system') {
-                                                                        setProfileModalData(message.sender || { id: 'system', username: 'AURA FX' });
+                                                                        setProfileModalData(message.sender || { id: 'system', username: 'AURA TERMINAL' });
                                                                         setShowProfileModal(true);
                                                                         return;
                                                                     }
@@ -7316,7 +7316,7 @@ if (!isAuthenticated && !hasToken) {
                     </>
                 ) : (
                     <div className="no-channel-selected">
-                        <h2>Welcome to AURA FX Community</h2>
+                        <h2>Welcome to Aura Terminal community</h2>
                         <p>Select a channel to start chatting</p>
                     </div>
                 )}
