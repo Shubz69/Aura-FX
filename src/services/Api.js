@@ -804,11 +804,22 @@ const Api = {
         });
     },
     /** skipCache: economic calendar actuals must not sit behind the 18s client GET cache. */
-    getTraderDeckEconomicCalendar: (days = 7, refresh = false) =>
-        dedupeGet(`${API_BASE_URL}/api/trader-deck/economic-calendar`, {
-            params: { days, ...(refresh ? { refresh: '1' } : {}) },
+    getTraderDeckEconomicCalendar: (days = 7, refresh = false) => {
+        let tz = 'UTC';
+        try {
+            tz =
+                typeof Intl !== 'undefined' && Intl.DateTimeFormat().resolvedOptions().timeZone
+                    ? Intl.DateTimeFormat().resolvedOptions().timeZone
+                    : 'UTC';
+        } catch (_) {
+            /* keep UTC */
+        }
+        // tz as query avoids CORS preflight vs custom header; server uses same IANA zone for metadata
+        return dedupeGet(`${API_BASE_URL}/api/trader-deck/economic-calendar`, {
+            params: { days, ...(refresh ? { refresh: '1' } : {}), tz },
             skipCache: true,
-        }),
+        });
+    },
     getTraderDeckNews: (refresh = false) =>
         dedupeGet(`${API_BASE_URL}/api/trader-deck/news`, {
             params: refresh ? { refresh: '1' } : {},

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
+import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
@@ -57,7 +58,8 @@ function RiskBar({ label, value, max, color, fmt }) {
 }
 
 export default function RiskLab() {
-  const { analytics: a, account, trades, loading, error } = useAuraAnalysis();
+  const { analytics: a, account, trades, loading, error, activePlatformId, connections } = useAuraAnalysis();
+  const needsConnection = !connections?.length || !activePlatformId;
 
   if (loading) return (
     <div className="aa-page">
@@ -68,15 +70,22 @@ export default function RiskLab() {
 
   if (error) return <div className="aa-page"><div className="aa-error"><i className="fas fa-exclamation-circle aa-error-icon" />{error}</div></div>;
 
-  if (!trades.length) return (
-    <div className="aa-page">
-      <div className="aa-no-platform">
-        <div className="aa-no-platform-icon"><i className="fas fa-shield-alt" /></div>
-        <h3>No risk data available</h3>
-        <p>Connect your MT5 account to analyse your risk profile.</p>
+  if (!trades.length) {
+    return (
+      <div className="aa-page">
+        <AuraAnalysisEmptyState
+          icon="fa-shield-alt"
+          variant={needsConnection ? 'connect' : 'data'}
+          title={needsConnection ? 'Connect to analyse risk' : 'No trades in this period'}
+          description={
+            needsConnection
+              ? 'Link MT5 to see drawdown, streaks, stop-loss usage, and risk scores.'
+              : 'Risk metrics need closed trades in the selected range. Widen the date filter or sync again.'
+          }
+        />
       </div>
-    </div>
-  );
+    );
+  }
 
   const riskColor = a.riskScore < 25 ? '#f8c37d' : a.riskScore < 50 ? '#c9a05c' : '#9a8f84';
   const maxDD = Math.max(a.maxDrawdownPct, a.currentDrawdownPct, 1);

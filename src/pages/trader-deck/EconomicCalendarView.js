@@ -2,63 +2,38 @@
  * Trader Deck — Economic Calendar
  * Economic events (7-day view).
  */
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Api from '../../services/Api';
 import {
   hasActualValue,
   parseEventTimestamp,
   formatEventTimeLocal,
   getEventDateKeyLocal,
+  getBrowserTimeZone,
+  getReleaseCountdownMs,
+  formatCountdownMs,
+  isEventWaitingForActual,
+  getCalendarDateKeyNow,
+  getCalendarDateKeyOffsetFromNow,
+  formatCalendarHeadingDate,
 } from '../../utils/economicCalendarTime';
 import '../../styles/trader-deck/EconomicCalendarView.css';
 
 const IMPACT_LABELS = { high: 'HIGH', medium: 'MEDIUM', low: 'LOW' };
 const CURRENCIES = ['ALL', 'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF', 'CNH'];
 const SOON_WINDOW_MS = 5 * 60 * 1000;
-const REFRESH_INTERVAL_MS = 75 * 1000;
+const POLL_NORMAL_MS = 75 * 1000;
+const POLL_FAST_MS = 15 * 1000;
 
-function countdownMs(ev, nowMs) {
-  if (hasActualValue(ev.actual)) return null;
-  const ts = parseEventTimestamp(ev);
-  if (!ts) return null;
-  const diff = ts - nowMs;
-  if (diff <= 0 || diff > SOON_WINDOW_MS) return null;
-  return diff;
-}
-
-function formatCountdown(ms) {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const mm = String(Math.floor(total / 60)).padStart(2, '0');
-  const ss = String(total % 60).padStart(2, '0');
-  return `${mm}:${ss}`;
-}
-
-function formatDate(dateStr) {
+function getDayLabel(dateStr, tz) {
   if (!dateStr) return '';
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-}
-
-function isToday(dateStr) {
-  if (!dateStr) return false;
-  return new Date(dateStr + 'T00:00:00').toDateString() === new Date().toDateString();
-}
-
-function isTomorrow(dateStr) {
-  if (!dateStr) return false;
-  const t = new Date();
-  t.setDate(t.getDate() + 1);
-  return new Date(dateStr + 'T00:00:00').toDateString() === t.toDateString();
-}
-
-function getDayLabel(dateStr) {
-  if (isToday(dateStr)) return 'Today';
-  if (isTomorrow(dateStr)) return 'Tomorrow';
-  return formatDate(dateStr);
+  if (dateStr === getCalendarDateKeyNow(tz)) return 'Today';
+  if (dateStr === getCalendarDateKeyOffsetFromNow(tz, 1)) return 'Tomorrow';
+  return formatCalendarHeadingDate(dateStr, tz);
 }
 
 export default function EconomicCalendarView() {
-  const [viewerTimeZone, setViewerTimeZone] = useState('UTC');
+  const [displayTimeZone] = useState(() => getBrowserTimeZone());
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -67,47 +42,92 @@ export default function EconomicCalendarView() {
   const [currencyFilter, setCurrencyFilter] = useState('ALL');
   const [days, setDays] = useState(7);
   const [clock, setClock] = useState(Date.now());
+  const precTimersRef = useRef([]);
 
   const fetchCalendar = useCallback((silent = false, refresh = false) => {
     if (!silent) {
       setLoading(true);
       setError(null);
     }
-    Api.getTraderDeckEconomicCalendar(days, refresh)
+    return Api.getTraderDeckEconomicCalendar(days, refresh)
       .then((r) => {
-        setEvents(Array.isArray(r.data?.events) ? r.data.events : []);
-        setViewerTimeZone(r.data?.viewerTimeZone || 'UTC');
+        const list = Array.isArray(r.data?.events) ? r.data.events : [];
+        setEvents(list);
         setUpdatedAt(r.data?.fetchedAt || r.data?.updatedAt || null);
+        return list;
       })
       .catch(() => {
         if (!silent) setError('Could not load calendar. Check back soon.');
+        return null;
       })
       .finally(() => {
         if (!silent) setLoading(false);
       });
   }, [days]);
 
-  useEffect(() => {
-    fetchCalendar(false, false);
+  const schedulePrecision = useCallback((evts) => {
+    precTimersRef.current.forEach(clearTimeout);
+    precTimersRef.current = [];
+    const now = Date.now();
+    evts.forEach((ev) => {
+      const ts = parseEventTimestamp(ev);
+      if (!ts || hasActualValue(ev.actual)) return;
+      const msUntil = ts - now;
+      if (msUntil <= 0 || msUntil > 12 * 60 * 60 * 1000) return;
+      [0, 30000, 90000].forEach((offset) => {
+        const delay = msUntil + offset;
+        if (delay > 0) {
+          precTimersRef.current.push(
+            setTimeout(() => {
+              fetchCalendar(true, true).then((fresh) => {
+                if (fresh) schedulePrecision(fresh);
+              });
+            }, delay)
+          );
+        }
+      });
+    });
   }, [fetchCalendar]);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
-      const nowMs = Date.now();
-      const nearRelease = events.some((ev) => {
-        if (hasActualValue(ev.actual)) return false;
-        const ts = parseEventTimestamp(ev);
-        return ts && Math.abs(ts - nowMs) <= SOON_WINDOW_MS;
-      });
-      fetchCalendar(true, nearRelease);
-    }, REFRESH_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [fetchCalendar, events]);
+    fetchCalendar(false, false).then((evts) => {
+      if (evts) schedulePrecision(evts);
+    });
+  }, [fetchCalendar, schedulePrecision]);
+
+  const needsFastPoll = useMemo(() => {
+    const now = clock;
+    return events.some((ev) => {
+      if (hasActualValue(ev.actual)) return false;
+      const ts = parseEventTimestamp(ev);
+      if (!ts) return false;
+      if (Math.abs(ts - now) <= SOON_WINDOW_MS) return true;
+      if (isEventWaitingForActual(ev, now)) return true;
+      return false;
+    });
+  }, [events, clock]);
 
   useEffect(() => {
-    const id = setInterval(() => setClock(Date.now()), 1000);
+    let since = 0;
+    const id = setInterval(() => {
+      const now = Date.now();
+      setClock(now);
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      const pollMs = needsFastPoll ? POLL_FAST_MS : POLL_NORMAL_MS;
+      since += 1000;
+      if (since < pollMs) return;
+      since = 0;
+      fetchCalendar(true, needsFastPoll).then((fresh) => {
+        if (fresh) schedulePrecision(fresh);
+      });
+    }, 1000);
     return () => clearInterval(id);
+  }, [fetchCalendar, needsFastPoll, schedulePrecision]);
+
+  useEffect(() => {
+    return () => {
+      precTimersRef.current.forEach(clearTimeout);
+    };
   }, []);
 
   const filtered = useMemo(() => {
@@ -121,7 +141,7 @@ export default function EconomicCalendarView() {
   const grouped = useMemo(() => {
     const out = {};
     filtered.forEach((e) => {
-      const key = getEventDateKeyLocal(e, viewerTimeZone) || '';
+      const key = getEventDateKeyLocal(e, displayTimeZone) || '';
       if (!out[key]) out[key] = [];
       out[key].push(e);
     });
@@ -136,9 +156,9 @@ export default function EconomicCalendarView() {
       });
     });
     return out;
-  }, [filtered, viewerTimeZone]);
+  }, [filtered, displayTimeZone]);
 
-  const sortedDates = Object.keys(grouped).sort();
+  const sortedDates = Object.keys(grouped).filter(Boolean).sort();
   const highCount = events.filter((e) => e.impact === 'high').length;
 
   return (
@@ -214,15 +234,18 @@ export default function EconomicCalendarView() {
       )}
 
       {!loading && !error && sortedDates.map((dateKey) => (
-        <section key={dateKey} className={`ec-day-section ${isToday(dateKey) ? 'ec-day-section--today' : ''}`}>
+        <section
+          key={dateKey}
+          className={`ec-day-section ${dateKey === getCalendarDateKeyNow(displayTimeZone) ? 'ec-day-section--today' : ''}`}
+        >
           <div className="ec-day-header">
-            <span className="ec-day-label">{getDayLabel(dateKey)}</span>
+            <span className="ec-day-label">{getDayLabel(dateKey, displayTimeZone)}</span>
             <span className="ec-day-count">{grouped[dateKey].length} events</span>
           </div>
           <div className="ec-event-list">
             {grouped[dateKey].map((ev, i) => {
-              const cdm = countdownMs(ev, clock);
-              const eventTimeLabel = formatEventTimeLocal(ev, viewerTimeZone);
+              const cdm = getReleaseCountdownMs(ev, clock);
+              const eventTimeLabel = formatEventTimeLocal(ev, displayTimeZone);
               return (
               <div
                 key={i}
@@ -230,7 +253,7 @@ export default function EconomicCalendarView() {
               >
                 <div className="ec-event-time">
                   {eventTimeLabel}
-                  {cdm != null && <span className="ec-countdown">{formatCountdown(cdm)}</span>}
+                  {cdm != null && <span className="ec-countdown">{formatCountdownMs(cdm)}</span>}
                 </div>
                 <div className={`ec-event-impact ec-event-impact--${ev.impact}`}>
                   <span className="ec-impact-dot" />
@@ -242,10 +265,10 @@ export default function EconomicCalendarView() {
                   {hasActualValue(ev.actual) && (
                     <span className="ec-data-val ec-data-actual" title="Actual">A: {ev.actual}</span>
                   )}
-                  {ev.forecast != null && (
+                  {hasActualValue(ev.forecast) && (
                     <span className="ec-data-val ec-data-forecast" title="Forecast">F: {ev.forecast}</span>
                   )}
-                  {ev.previous != null && (
+                  {hasActualValue(ev.previous) && (
                     <span className="ec-data-val ec-data-previous" title="Previous">P: {ev.previous}</span>
                   )}
                   {!hasActualValue(ev.actual) && (
@@ -258,7 +281,7 @@ export default function EconomicCalendarView() {
         </section>
       ))}
 
-      <p className="ec-source-note">Times shown in your regional timezone ({viewerTimeZone}).</p>
+      <p className="ec-source-note">Times shown in your device timezone ({displayTimeZone}).</p>
     </div>
   );
 }

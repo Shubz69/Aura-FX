@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
+import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
@@ -58,7 +59,8 @@ function MonthlyBars({ byMonth }) {
 }
 
 export default function PerformanceAnalytics() {
-  const { analytics: a, trades, loading, error } = useAuraAnalysis();
+  const { analytics: a, trades, loading, error, activePlatformId, connections } = useAuraAnalysis();
+  const needsConnection = !connections?.length || !activePlatformId;
 
   if (loading) return (
     <div className="aa-page">
@@ -69,15 +71,22 @@ export default function PerformanceAnalytics() {
 
   if (error) return <div className="aa-page"><div className="aa-error"><i className="fas fa-exclamation-circle aa-error-icon" />{error}</div></div>;
 
-  if (!trades.length) return (
-    <div className="aa-page">
-      <div className="aa-no-platform">
-        <div className="aa-no-platform-icon"><i className="fas fa-chart-bar" /></div>
-        <h3>No trades to analyse</h3>
-        <p>Trade history will populate this page automatically.</p>
+  if (!trades.length) {
+    return (
+      <div className="aa-page">
+        <AuraAnalysisEmptyState
+          icon="fa-chart-bar"
+          variant={needsConnection ? 'connect' : 'data'}
+          title={needsConnection ? 'Connect to view performance' : 'No trades in this period'}
+          description={
+            needsConnection
+              ? 'Sync your MT5 account to unlock win rate, equity trends, and monthly breakdowns.'
+              : 'Nothing matched your filters for this date range yet. Try a wider range or wait for closed trades to sync.'
+          }
+        />
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
     <div className="aa-page">

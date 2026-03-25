@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
+import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
@@ -53,7 +54,8 @@ function RankedList({ items, valueKey = 'pnl', labelKey = 'pair', title, limit =
 }
 
 export default function EdgeAnalyzer() {
-  const { analytics: a, trades, loading, error } = useAuraAnalysis();
+  const { analytics: a, trades, loading, error, activePlatformId, connections } = useAuraAnalysis();
+  const needsConnection = !connections?.length || !activePlatformId;
 
   if (loading) return (
     <div className="aa-page">
@@ -64,15 +66,22 @@ export default function EdgeAnalyzer() {
 
   if (error) return <div className="aa-page"><div className="aa-error"><i className="fas fa-exclamation-circle aa-error-icon" />{error}</div></div>;
 
-  if (!trades.length) return (
-    <div className="aa-page">
-      <div className="aa-no-platform">
-        <div className="aa-no-platform-icon"><i className="fas fa-bolt" /></div>
-        <h3>No edge data yet</h3>
-        <p>Your trading edge will be revealed as you build trade history.</p>
+  if (!trades.length) {
+    return (
+      <div className="aa-page">
+        <AuraAnalysisEmptyState
+          icon="fa-bolt"
+          variant={needsConnection ? 'connect' : 'data'}
+          title={needsConnection ? 'Connect to surface your edge' : 'No trades in this period'}
+          description={
+            needsConnection
+              ? 'Connect MT5 to map sessions, symbols, and directions where you win or lose.'
+              : 'Edge heatmaps need trades in the selected range. Expand the date window or wait for history.'
+          }
+        />
       </div>
-    </div>
-  );
+    );
+  }
 
   const wdActive = a.byWeekday.filter(w => w.trades > 0);
   const wdMaxAbs = Math.max(...wdActive.map(w => Math.abs(w.pnl)), 1);

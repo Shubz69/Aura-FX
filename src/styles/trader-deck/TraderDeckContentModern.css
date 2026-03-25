@@ -170,6 +170,15 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
+/* World clocks — match period row glass / silver border */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-world-clock {
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(160, 185, 240, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
 /* Main tab rail minimum touch target */
 .td-deck-with-tabs.td-layout-page .td-deck-main-tab-rail .td-deck-tab {
   min-height: 44px;

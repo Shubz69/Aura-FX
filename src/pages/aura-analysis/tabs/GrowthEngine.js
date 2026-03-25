@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
+import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
@@ -109,7 +110,8 @@ function Milestone({ icon, label, value, color, achieved }) {
 }
 
 export default function GrowthEngine() {
-  const { analytics: a, account, trades, loading, error } = useAuraAnalysis();
+  const { analytics: a, account, trades, loading, error, activePlatformId, connections } = useAuraAnalysis();
+  const needsConnection = !connections?.length || !activePlatformId;
 
   /* ── Compound projection ── */
   const projection = useMemo(() => {
@@ -136,15 +138,22 @@ export default function GrowthEngine() {
 
   if (error) return <div className="aa-page"><div className="aa-error"><i className="fas fa-exclamation-circle aa-error-icon" />{error}</div></div>;
 
-  if (!trades.length) return (
-    <div className="aa-page">
-      <div className="aa-no-platform">
-        <div className="aa-no-platform-icon"><i className="fas fa-seedling" /></div>
-        <h3>Start trading to track growth</h3>
-        <p>Your account growth curve and milestones will appear here.</p>
+  if (!trades.length) {
+    return (
+      <div className="aa-page">
+        <AuraAnalysisEmptyState
+          icon="fa-seedling"
+          variant={needsConnection ? 'connect' : 'data'}
+          title={needsConnection ? 'Connect to track growth' : 'No trades in this period'}
+          description={
+            needsConnection
+              ? 'Link MT5 to chart growth, returns, and milestone progress against your balance.'
+              : 'Growth curves and milestones need closed trades in this date range.'
+          }
+        />
       </div>
-    </div>
-  );
+    );
+  }
 
   const currency = account?.currency || 'USD';
   const fmtBal = v => new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(v || 0);

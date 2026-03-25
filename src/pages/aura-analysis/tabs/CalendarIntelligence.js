@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
+import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
@@ -9,7 +10,8 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 const WEEKDAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 export default function CalendarIntelligence() {
-  const { analytics: a, trades, loading, error } = useAuraAnalysis();
+  const { analytics: a, trades, loading, error, activePlatformId, connections } = useAuraAnalysis();
+  const needsConnection = !connections?.length || !activePlatformId;
   const [viewDate, setViewDate] = useState(() => new Date());
   const [selDay, setSelDay]     = useState(null);
 
@@ -56,15 +58,22 @@ export default function CalendarIntelligence() {
 
   if (error) return <div className="aa-page"><div className="aa-error"><i className="fas fa-exclamation-circle aa-error-icon" />{error}</div></div>;
 
-  if (!trades.length) return (
-    <div className="aa-page">
-      <div className="aa-no-platform">
-        <div className="aa-no-platform-icon"><i className="fas fa-calendar-alt" /></div>
-        <h3>No calendar data</h3>
-        <p>Your trading calendar will populate as you build trade history.</p>
+  if (!trades.length) {
+    return (
+      <div className="aa-page">
+        <AuraAnalysisEmptyState
+          icon="fa-calendar-alt"
+          variant={needsConnection ? 'connect' : 'data'}
+          title={needsConnection ? 'Connect to fill your calendar' : 'No trades in this period'}
+          description={
+            needsConnection
+              ? 'Sync MT5 to colour daily P/L and see which days you trade best.'
+              : 'Calendar insights appear when closed trades exist in the selected history window.'
+          }
+        />
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
     <div className="aa-page">
