@@ -521,7 +521,7 @@ const latestUserFetchInFlightRef = useRef(false);
 const latestUserBackoffUntilRef = useRef(0);
 const latestUserFailCountRef = useRef(0);
 const pollingActiveRef = useRef(false);
-
+const [channelsLoading, setChannelsLoading] = useState(true);
 
   const [showPptxModal, setShowPptxModal] = useState(false);
     const [selectedPptx, setSelectedPptx] = useState(null);
@@ -1413,14 +1413,17 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
         }).filter((ch) => ch.canSee === true);
     };
 
-    // Show cache immediately so channels appear fast
-    if (cachedChannels.length > 0) {
-        const fromCache = buildPreparedFromServer(cachedChannels);
-        if (fromCache.length > 0) {
-            const sortedCache = sortChannels(fromCache);
-            setChannelList(sortedCache);
-        }
+   // Show cache immediately so channels appear fast
+if (cachedChannels.length > 0) {
+    const fromCache = buildPreparedFromServer(cachedChannels);
+    if (fromCache.length > 0) {
+        const sortedCache = sortChannels(fromCache);
+        setChannelList(sortedCache);
+        setChannelsLoading(false); // Add this
     }
+} else {
+    setChannelsLoading(true); // Add this - show loading if no cache
+}
 
     try {
         const response = await Api.getChannelsBootstrap();
@@ -1477,6 +1480,7 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
 
     const sortedChannels = sortChannels(preparedChannels);
     setChannelList(sortedChannels);
+    setChannelsLoading(false);
 
     const currentSelectedId = selectedChannelRef.current?.id || null;
     const normalizedSelectId = selectChannelId ? selectChannelId.toString() : null;
@@ -1499,6 +1503,8 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
 
     return sortedChannels;
 }, [isAuthenticated, sortChannels]);
+// ADD THE REF DECLARATION HERE (RIGHT AFTER refreshChannelList):
+const refreshChannelListRef = useRef(refreshChannelList);
     // Update refreshChannelList ref when it changes
 useEffect(() => {
     refreshChannelListRef.current = refreshChannelList;
@@ -3349,12 +3355,7 @@ useEffect(() => {
     const channelFromQuery = params.get('channel');
     refreshChannelListRef.current({ selectChannelId: channelFromQuery || channelIdParam || undefined });
 }, [location.search, channelIdParam]); // REMOVED refreshChannelList from dependencies
-// ADD THIS LINE:
-const refreshChannelListRef = useRef(refreshChannelList);
-// Update refreshChannelList ref when it changes
-useEffect(() => {
-    refreshChannelListRef.current = refreshChannelList;
-}, [refreshChannelList]);
+
     // Periodically refresh channels so new ones appear for everyone
     useEffect(() => {
         if (!isAuthenticated) return;
