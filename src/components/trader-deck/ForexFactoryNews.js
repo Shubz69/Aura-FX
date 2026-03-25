@@ -97,6 +97,30 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
         ? await Api.getTraderDeckEconomicCalendar(1, refresh)
         : await Api.getTraderDeckEconomicCalendar({ from: viewDate, to: viewDate, refresh });
       const list = res.data?.events || [];
+      // #region agent log
+      fetch('http://127.0.0.1:7826/ingest/3ba0a834-6e5c-4fe0-bd70-25d6a5ebbb2f', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8f4319' },
+        body: JSON.stringify({
+          sessionId: '8f4319',
+          location: 'ForexFactoryNews.js:fetchEvents',
+          message: 'economic calendar events sample',
+          data: {
+            hypothesisId: 'H-pipeline',
+            source: res.data?.source,
+            count: list.length,
+            sample: list.slice(0, 3).map((e) => ({
+              forecast: e?.forecast,
+              actual: e?.actual,
+              previous: e?.previous,
+              currency: e?.currency,
+            })),
+          },
+          timestamp: Date.now(),
+          runId: 'pipeline-verify',
+        }),
+      }).catch(() => {});
+      // #endregion
       setEvents(list);
       eventsRef.current = list;
       setLastUpdated(new Date());
@@ -437,11 +461,15 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
                   >
                     <td className="td-ff-td td-ff-time">
                       {formatEventTimeLocal(ev, displayTimeZone)}
-                     {countdownMs != null && (
-  <span className="td-ff-countdown">{formatCountdownMs(countdownMs)}</span>
-)}
                       {status === 'imminent' && (
                         <span className="td-ff-soon-badge">SOON</span>
+                      )}
+                    </td>
+                    <td className="td-ff-td td-ff-countdown-cell">
+                      {countdownMs != null ? (
+                        <span className="td-ff-countdown">{formatCountdownMs(countdownMs)}</span>
+                      ) : (
+                        <span className="td-ff-countdown td-ff-countdown--na">—</span>
                       )}
                     </td>
                     <td className="td-ff-td td-ff-ccy">

@@ -181,6 +181,16 @@ function normalizeValue(v) {
   return s === '' ? null : s;
 }
 
+/** Strip lone dash / em-dash placeholders so merge + UI treat missing figures as null. */
+function normalizeFigureField(v) {
+  const n = normalizeValue(v);
+  if (n == null) return null;
+  const s = String(n).trim();
+  if (s === '—' || s === '–' || s === '-' || s === '−') return null;
+  if (/^n\/?a$/i.test(s)) return null;
+  return n;
+}
+
 function normalizeEventShape(input, fallbackSource = 'fallback') {
   const ts = parseDateToTimestamp(input.timestamp ?? input.ts ?? input.datetime ?? input.date, {
     defaultTimeZone: input.sourceTimeZone || 'America/New_York',
@@ -193,10 +203,10 @@ function normalizeEventShape(input, fallbackSource = 'fallback') {
     currency: normCountry(input.currency || ''),
     impact: normImpact(input.impact),
     event: input.event || 'Economic Event',
-    // preserve numeric zero; empty string becomes null
-    actual: normalizeValue(input.actual ?? input.Actual ?? input.value),
-    forecast: normalizeValue(input.forecast ?? input.Forecast ?? input.estimate),
-    previous: normalizeValue(input.previous ?? input.Previous ?? input.prior),
+    // preserve numeric zero; empty string becomes null; dash-only → null
+    actual: normalizeFigureField(input.actual ?? input.Actual ?? input.value),
+    forecast: normalizeFigureField(input.forecast ?? input.Forecast ?? input.estimate),
+    previous: normalizeFigureField(input.previous ?? input.Previous ?? input.prior),
     source: input.source || fallbackSource,
   };
 }
@@ -1092,6 +1102,8 @@ module.exports = async (req, res) => {
   events = await fromForexFactory(days);
   if (events && events.length > 0) {
     source = 'ForexFactory';
+    // Derive timestamps from date+time before merge/scrape so matching + "past without actual" detection are reliable
+    events = events.map(ensureEventTimestamp);
     // FF JSON CDN has no `actual` field — merge FMP/TE and optionally scrape FF HTML for figures
     events = await enrichForexFactoryWithActuals(events, days, forceRefresh);
   } else {

@@ -43,11 +43,11 @@
   /* ── Navbar-specific ── */
   --nav-height:    62px;
 
-  /* ── PREMIUM GLASS — light black + navy shine (page shows through blur) ── */
-  --nav-light-black:   rgba(38, 42, 52, 0.48);
-  --nav-navy-shine:    rgba(42, 72, 128, 0.38);
-  --nav-navy-deep:     rgba(18, 38, 72, 0.45);
-  --nav-navy-edge:     rgba(55, 90, 155, 0.22);
+  /* ── PREMIUM GLASS — charcoal + navy shine (slightly darker than prior pass) ── */
+  --nav-light-black:   rgba(28, 32, 42, 0.56);
+  --nav-navy-shine:    rgba(38, 68, 118, 0.40);
+  --nav-navy-deep:     rgba(14, 32, 62, 0.52);
+  --nav-navy-edge:     rgba(48, 78, 138, 0.26);
   --glass-bg:          var(--nav-light-black);
   --glass-border-top:  rgba(255, 255, 255, 0.09);
   --glass-border-bot:  rgba(212, 175, 55, 0.10);
@@ -86,18 +86,18 @@ body.loading-active .navbar {
   overflow-x: clip;
   overflow-y: visible;
 
-  /* ── Glass stack: frosted light-black + navy radiants (navy blue + cosmic bg bleed through blur) ── */
+  /* ── Glass stack: frosted charcoal + navy radiants (navy blue + cosmic bg bleed through blur) ── */
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.055) 0%,
-      rgba(200, 215, 255, 0.04) 35%,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(190, 205, 245, 0.032) 35%,
       transparent 72%
     ),
     radial-gradient(ellipse 130% 100% at 50% -20%, var(--nav-navy-shine), transparent 58%),
     radial-gradient(ellipse 85% 70% at 100% 50%, var(--nav-navy-edge), transparent 52%),
     radial-gradient(ellipse 85% 70% at 0% 50%, var(--nav-navy-deep), transparent 55%),
-    linear-gradient(180deg, rgba(44, 48, 58, 0.55) 0%, rgba(30, 34, 44, 0.58) 100%);
+    linear-gradient(180deg, rgba(32, 36, 46, 0.64) 0%, rgba(20, 24, 34, 0.70) 100%);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
 
@@ -112,8 +112,8 @@ body.loading-active .navbar {
   /* Depth + soft navy under-glow (reads through glass with page) */
   box-shadow:
     0 1px 0  rgba(255, 255, 255, 0.07),
-    0 4px 28px rgba(0, 0, 0, 0.45),
-    0 12px 48px rgba(0, 0, 0, 0.28),
+    0 4px 28px rgba(0, 0, 0, 0.52),
+    0 12px 48px rgba(0, 0, 0, 0.34),
     0 0 80px rgba(25, 45, 85, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 -1px 0 rgba(130, 160, 220, 0.06),
@@ -134,10 +134,10 @@ body.loading-active .navbar {
       rgba(180, 200, 255, 0.03) 38%,
       transparent 75%
     ),
-    radial-gradient(ellipse 120% 90% at 50% -25%, rgba(50, 82, 145, 0.42), transparent 60%),
-    radial-gradient(ellipse 80% 65% at 92% 40%, rgba(45, 75, 130, 0.28), transparent 50%),
-    radial-gradient(ellipse 80% 65% at 8% 60%, rgba(22, 48, 88, 0.32), transparent 52%),
-    linear-gradient(180deg, rgba(36, 40, 52, 0.72) 0%, rgba(26, 30, 40, 0.78) 100%);
+    radial-gradient(ellipse 120% 90% at 50% -25%, rgba(42, 72, 128, 0.46), transparent 60%),
+    radial-gradient(ellipse 80% 65% at 92% 40%, rgba(38, 64, 112, 0.32), transparent 50%),
+    radial-gradient(ellipse 80% 65% at 8% 60%, rgba(18, 40, 78, 0.38), transparent 52%),
+    linear-gradient(180deg, rgba(28, 32, 44, 0.80) 0%, rgba(18, 22, 32, 0.86) 100%);
   backdrop-filter: saturate(1.35) blur(32px);
   -webkit-backdrop-filter: saturate(1.35) blur(32px);
   box-shadow:
@@ -187,7 +187,7 @@ body.loading-active .navbar {
   animation: navScan 14s ease-in-out infinite;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.55;
+  opacity: 0.48;
 }
 
 @keyframes navScan {
@@ -1293,10 +1293,10 @@ body.loading-active .navbar {
     padding-left: 2.3rem;
     padding-right: 2.3rem;
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.06),
-      0 4px 22px rgba(0, 0, 0, 0.42),
-      0 8px 40px rgba(0, 0, 0, 0.26),
-      0 0 70px rgba(25, 45, 85, 0.10),
+      0 1px 0 rgba(255, 255, 255, 0.05),
+      0 4px 22px rgba(0, 0, 0, 0.50),
+      0 8px 40px rgba(0, 0, 0, 0.32),
+      0 0 70px rgba(25, 45, 85, 0.11),
       inset 0 1px 0 rgba(255, 255, 255, 0.07),
       inset 0 -1px 0 rgba(130, 160, 220, 0.05),
       inset 0 -2px 10px rgba(234, 169, 96, 0.04);

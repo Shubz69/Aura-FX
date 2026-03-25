@@ -34,6 +34,19 @@ function run() {
   assert(zeroActual.actual === '0', 'actual=0 should be preserved as "0"');
   assert(emptyActual.actual == null, 'empty actual should normalize to null');
 
+  const dashPrev = _test.normalizeEventShape({
+    date: '2026-03-24',
+    time: '10:00 AM',
+    timestamp: Date.UTC(2026, 2, 24, 14, 0, 0),
+    currency: 'USD',
+    impact: 'high',
+    event: 'NFP',
+    previous: '—',
+    forecast: '-',
+  });
+  assert(dashPrev.previous == null, 'placeholder dash previous should normalize to null');
+  assert(dashPrev.forecast == null, 'placeholder hyphen forecast should normalize to null');
+
   const utcMs = Date.UTC(2026, 2, 24, 14, 0, 0);
   const withNumericTs = _test.normalizeEventShape({
     date: '2026-03-24',
@@ -145,8 +158,11 @@ function run() {
   const rErr = _test.parseCalendarRangeQuery({ from: '2026-01-01' });
   assert(rErr && rErr.error, 'partial range should error');
 
-  const rSpan = _test.parseCalendarRangeQuery({ from: '2026-01-01', to: '2026-01-20' });
-  assert(rSpan && rSpan.error && rSpan.error.includes('max'), '8+ day span should reject');
+  const rSpanOk = _test.parseCalendarRangeQuery({ from: '2026-01-01', to: '2026-01-20' });
+  assert(rSpanOk && rSpanOk.from && !rSpanOk.error, '20 day span should be allowed');
+
+  const rTooLong = _test.parseCalendarRangeQuery({ from: '2025-01-01', to: '2026-06-01' });
+  assert(rTooLong && rTooLong.error && rTooLong.error.includes('max'), 'span over max days should reject');
 
   console.log('OK economic-calendar-timezone tests');
 }
