@@ -204,14 +204,3 @@
     0 0 16px rgba(70, 100, 190, 0.16),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
-
-.journal-page .td-deck-with-tabs.td-layout-page .td-intel-preview-box {
-  border: 1px solid transparent;
-  border-radius: var(--radius-xl);
-  background-image: var(--journal-panel-fill), var(--journal-panel-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--journal-panel-outer-glow);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-}

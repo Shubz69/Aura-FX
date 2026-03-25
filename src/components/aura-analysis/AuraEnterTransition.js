@@ -391,10 +391,10 @@ export default function AuraEnterTransition({ onComplete, label }) {
     return () => window.removeEventListener('resize', fit);
   }, []);
 
-  // Progress ramp: 0→100 in 1.5s (ease-out-cubic)
+  // Progress ramp: 0→100 in 4s (ease-out-cubic), then suck + fade
   useEffect(() => {
     const start = performance.now();
-    const dur = 1500;
+    const dur = 4000;
     let rafId;
     const tick = (now) => {
       const raw = Math.min((now - start) / dur, 1);

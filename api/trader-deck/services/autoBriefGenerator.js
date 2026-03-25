@@ -475,7 +475,7 @@ async function publishAutoBrief({ period, date, title, body }) {
   const [result] = await executeQuery(
     `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data)
      VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?)`,
-    [date, period, `[AUTO] ${safeTitle}`, Buffer.from(body, 'utf8')]
+    [date, period, safeTitle, Buffer.from(body, 'utf8')]
   );
   return result.insertId;
 }
@@ -493,7 +493,7 @@ async function publishManualBrief({ period, date, title, body }) {
   const [result] = await executeQuery(
     `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data)
      VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?)`,
-    [safeDate, normalizedPeriod, `[AUTO] ${safeTitle}`, Buffer.from(String(body || ''), 'utf8')]
+    [safeDate, normalizedPeriod, safeTitle, Buffer.from(String(body || ''), 'utf8')]
   );
   return result.insertId;
 }

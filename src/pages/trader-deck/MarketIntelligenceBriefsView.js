@@ -1,9 +1,11 @@
 /**
  * Market Intelligence briefs for Trader Deck – date-scoped Daily or Weekly.
- * Preview in-modal only (no new tab / no direct download flow). Admin: upload, delete.
+ * Preview in a fullscreen body portal (no new tab / no direct download flow). Admin: upload, delete.
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Api from '../../services/Api';
+import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import { FaEye, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 
 /** Client cap (DB LONGBLOB); large files use chunked uploads to avoid HTTP 413 on Vercel. */
@@ -29,6 +31,11 @@ function isPowerPointMime(mime) {
 
 function isPdfMime(mime) {
   return (mime || '').toLowerCase().includes('application/pdf');
+}
+
+function displayBriefTitle(title) {
+  const t = String(title || '').replace(/^\s*\[AUTO\]\s*/i, '').trim();
+  return t || 'Brief';
 }
 
 export default function MarketIntelligenceBriefsView({ selectedDate, period, canEdit }) {
@@ -92,6 +99,17 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   }, [previewId]);
 
   const iframeSrc = previewEmbedUrl || storedPreviewSrc;
+
+  useEffect(() => {
+    const lock = previewOpen && Boolean(iframeSrc);
+    if (!lock) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [previewOpen, iframeSrc]);
+
   const previewMime = (previewBriefMeta?.mimeType || '').toLowerCase();
   const previewIsPpt = isPowerPointMime(previewMime);
   const previewIsPdf = isPdfMime(previewMime);
@@ -207,7 +225,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
             <p className="td-deck-mo-eyebrow">Market intelligence</p>
             <h1 className="td-deck-mi-modern-title">{mainTitle}</h1>
             <p className="td-deck-mi-modern-sub">
-              Briefs are stored per calendar date (daily or weekly mode). Preview opens inside this page — scroll to read; copying is discouraged and downloads are not linked.
+              Briefs are stored per calendar date (daily or weekly mode). Preview opens as a fullscreen overlay with a blurred backdrop — scroll inside the document; copying is discouraged and downloads are not linked from the list.
             </p>
           </div>
           {briefs.length > 0 && (
@@ -280,9 +298,9 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               ) : (
                 briefs.map((b) => (
                   <li key={b.id} className="td-deck-mi-brief-card">
-                    <span className="td-deck-mi-brief-card-title">{b.title}</span>
+                    <span className="td-deck-mi-brief-card-title">{displayBriefTitle(b.title)}</span>
                     <div className="td-deck-mi-brief-card-actions">
-                      <button type="button" className="td-mi-btn td-mi-btn-small" onClick={() => handlePreview(b)} title="Preview in page">
+                      <button type="button" className="td-mi-btn td-mi-btn-small" onClick={() => handlePreview(b)} title="Fullscreen preview">
                         <FaEye /> Preview
                       </button>
                       {canEdit && (
@@ -299,26 +317,27 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         </div>
       </div>
 
-      {previewOpen && iframeSrc && (
+      {typeof document !== 'undefined' && previewOpen && iframeSrc && createPortal(
         <div className="td-intel-preview-overlay" onClick={closePreview} role="presentation">
           <div
-            className="td-intel-preview-box td-intel-preview-box--protected"
+            className="td-intel-preview-box td-intel-preview-box--fullscreen td-intel-preview-box--protected"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={displayBriefTitle(previewBriefMeta?.title)}
           >
-            <div className="td-intel-preview-chrome">
-              <p className="td-intel-preview-hint">
-                {previewCanIframe
-                  ? 'Preview ready.'
-                  : 'This file type cannot be rendered in-browser here. Use Open/Download, or upload PDF for inline preview.'}
+            <div className="td-intel-preview-chrome--minimal">
+              <p className="td-intel-preview-title-bar" title={displayBriefTitle(previewBriefMeta?.title)}>
+                {displayBriefTitle(previewBriefMeta?.title)}
               </p>
-              <button type="button" className="td-intel-preview-close" onClick={closePreview} aria-label="Close preview">
+              <button type="button" className="td-intel-preview-close--floating" onClick={closePreview} aria-label="Close preview">
                 <FaTimes />
               </button>
             </div>
             <div className="td-intel-preview-frame-wrap">
               {previewCanIframe ? (
                 <iframe
-                  title="Brief preview"
+                  title={displayBriefTitle(previewBriefMeta?.title)}
                   src={iframeSrc}
                   className="td-intel-preview-iframe"
                   sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
@@ -326,10 +345,9 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                 />
               ) : (
                 <div className="td-intel-preview-fallback">
-                  <h3 className="td-intel-preview-fallback-title">{previewBriefMeta?.title || 'Brief'}</h3>
+                  <h3 className="td-intel-preview-fallback-title">{displayBriefTitle(previewBriefMeta?.title)}</h3>
                   <p className="td-intel-preview-fallback-text">
-                    PPT/PPTX previews are not reliably supported inside Chrome iframe mode.
-                    For in-app preview, upload a PDF copy of the brief.
+                    This file type cannot be rendered in-browser here. Use Open or Download, or upload a PDF for inline preview.
                   </p>
                   <div className="td-intel-preview-fallback-actions">
                     {previewDirectUrl && (
@@ -347,7 +365,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
