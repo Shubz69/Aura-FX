@@ -43,12 +43,16 @@
   /* ── Navbar-specific ── */
   --nav-height:    62px;
 
-  /* ── PREMIUM GLASS SYSTEM ── */
-  --glass-bg:          rgba(6, 5, 18, 0.55);
+  /* ── PREMIUM GLASS — light black + navy shine (page shows through blur) ── */
+  --nav-light-black:   rgba(38, 42, 52, 0.48);
+  --nav-navy-shine:    rgba(42, 72, 128, 0.38);
+  --nav-navy-deep:     rgba(18, 38, 72, 0.45);
+  --nav-navy-edge:     rgba(55, 90, 155, 0.22);
+  --glass-bg:          var(--nav-light-black);
   --glass-border-top:  rgba(255, 255, 255, 0.09);
-  --glass-border-bot:  rgba(212, 175, 55, 0.12);
+  --glass-border-bot:  rgba(212, 175, 55, 0.10);
   --glass-tint:        rgba(212, 175, 55, 0.03);
-  --glass-blur:        saturate(1.8) blur(32px);
+  --glass-blur:        saturate(1.45) blur(28px);
 
   --nav-border:    rgba(212, 175, 55, 0.12);
   --surface-hover: rgba(212, 175, 55, 0.055);
@@ -82,34 +86,38 @@ body.loading-active .navbar {
   overflow-x: clip;
   overflow-y: visible;
 
-  /* ── Premium glass stack ── */
+  /* ── Glass stack: frosted light-black + navy radiants (navy blue + cosmic bg bleed through blur) ── */
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.028) 0%,
-      rgba(234, 169, 96, 0.018) 40%,
-      transparent 100%
+      rgba(255, 255, 255, 0.055) 0%,
+      rgba(200, 215, 255, 0.04) 35%,
+      transparent 72%
     ),
-    var(--glass-bg);
+    radial-gradient(ellipse 130% 100% at 50% -20%, var(--nav-navy-shine), transparent 58%),
+    radial-gradient(ellipse 85% 70% at 100% 50%, var(--nav-navy-edge), transparent 52%),
+    radial-gradient(ellipse 85% 70% at 0% 50%, var(--nav-navy-deep), transparent 55%),
+    linear-gradient(180deg, rgba(44, 48, 58, 0.55) 0%, rgba(30, 34, 44, 0.58) 100%);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
 
-  /* Dual-border: white ice top + gold ember bottom */
+  /* Top: frost · bottom: warm gold + cool edge (navy/gold hybrid) */
   border-top:    1px solid var(--glass-border-top);
-  border-bottom: 1px solid var(--glass-border-bot);
+  border-bottom: 1px solid rgba(165, 155, 140, 0.14);
 
   z-index: 1000;
   height: calc(var(--nav-height) + env(safe-area-inset-top, 0));
   min-height: var(--nav-height);
 
-  /* Layered shadow: ambient depth + subtle gold halo */
+  /* Depth + soft navy under-glow (reads through glass with page) */
   box-shadow:
-    0 1px 0  rgba(255, 255, 255, 0.06),
-    0 4px 24px rgba(0, 0, 0, 0.65),
-    0 12px 60px rgba(0, 0, 0, 0.40),
-    0 0 120px rgba(0, 0, 0, 0.30),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 -1px 0 rgba(234, 169, 96, 0.08);
+    0 1px 0  rgba(255, 255, 255, 0.07),
+    0 4px 28px rgba(0, 0, 0, 0.45),
+    0 12px 48px rgba(0, 0, 0, 0.28),
+    0 0 80px rgba(25, 45, 85, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(130, 160, 220, 0.06),
+    inset 0 -2px 12px rgba(234, 169, 96, 0.05);
 
   transition:
     box-shadow var(--transition),
@@ -117,22 +125,29 @@ body.loading-active .navbar {
     backdrop-filter var(--transition);
 }
 
-/* Scrolled state — deepen glass */
+/* Scrolled — slightly stronger frost; navy stays in the mix */
 .navbar.scrolled {
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.022) 0%,
-      rgba(234, 169, 96, 0.014) 40%,
-      transparent 100%
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(180, 200, 255, 0.03) 38%,
+      transparent 75%
     ),
-    rgba(4, 3, 10, 0.72);
+    radial-gradient(ellipse 120% 90% at 50% -25%, rgba(50, 82, 145, 0.42), transparent 60%),
+    radial-gradient(ellipse 80% 65% at 92% 40%, rgba(45, 75, 130, 0.28), transparent 50%),
+    radial-gradient(ellipse 80% 65% at 8% 60%, rgba(22, 48, 88, 0.32), transparent 52%),
+    linear-gradient(180deg, rgba(36, 40, 52, 0.72) 0%, rgba(26, 30, 40, 0.78) 100%);
+  backdrop-filter: saturate(1.35) blur(32px);
+  -webkit-backdrop-filter: saturate(1.35) blur(32px);
   box-shadow:
     0 1px 0  rgba(255, 255, 255, 0.05),
-    0 6px 40px rgba(0, 0, 0, 0.75),
-    0 20px 80px rgba(0, 0, 0, 0.50),
+    0 6px 36px rgba(0, 0, 0, 0.55),
+    0 18px 70px rgba(0, 0, 0, 0.38),
+    0 0 100px rgba(20, 40, 80, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 -1px 0 rgba(234, 169, 96, 0.10);
+    inset 0 -1px 0 rgba(120, 150, 210, 0.08),
+    inset 0 -2px 14px rgba(234, 169, 96, 0.07);
 }
 
 /* Gold light-streak top edge — prismatic, finer than before */
@@ -155,7 +170,7 @@ body.loading-active .navbar {
   pointer-events: none;
 }
 
-/* Slow stardust shimmer sweep */
+/* Slow shimmer — white + gold + cool navy (reads as “shine through glass”) */
 .navbar::after {
   content: '';
   position: absolute;
@@ -164,14 +179,15 @@ body.loading-active .navbar {
   background: linear-gradient(
     108deg,
     transparent,
-    rgba(255, 255, 255, 0.028),
-    rgba(234, 169, 96, 0.032),
+    rgba(255, 255, 255, 0.035),
+    rgba(180, 205, 255, 0.045),
+    rgba(234, 169, 96, 0.028),
     transparent
   );
   animation: navScan 14s ease-in-out infinite;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.5;
+  opacity: 0.55;
 }
 
 @keyframes navScan {
@@ -1277,11 +1293,13 @@ body.loading-active .navbar {
     padding-left: 2.3rem;
     padding-right: 2.3rem;
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.05),
-      0 4px 20px rgba(0, 0, 0, 0.55),
-      0 8px 40px rgba(0, 0, 0, 0.30),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      inset 0 -1px 0 rgba(234, 169, 96, 0.07);
+      0 1px 0 rgba(255, 255, 255, 0.06),
+      0 4px 22px rgba(0, 0, 0, 0.42),
+      0 8px 40px rgba(0, 0, 0, 0.26),
+      0 0 70px rgba(25, 45, 85, 0.10),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      inset 0 -1px 0 rgba(130, 160, 220, 0.05),
+      inset 0 -2px 10px rgba(234, 169, 96, 0.04);
   }
   .logo-container { justify-self: start; }
   .nav-links {
