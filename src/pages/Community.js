@@ -1291,6 +1291,7 @@ useEffect(() => {
 
 const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
     if (!isAuthenticated) {
+        setChannelsLoading(false);
         return channelListRef.current;
     }
 
@@ -1413,18 +1414,17 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
         }).filter((ch) => ch.canSee === true);
     };
 
-   // Show cache immediately so channels appear fast
-if (cachedChannels.length > 0) {
-    const fromCache = buildPreparedFromServer(cachedChannels);
-    if (fromCache.length > 0) {
-        const sortedCache = sortChannels(fromCache);
-        setChannelList(sortedCache);
-        setChannelsLoading(false); // Add this
+    // Show cache immediately so channels appear fast
+    if (cachedChannels.length > 0) {
+        const fromCache = buildPreparedFromServer(cachedChannels);
+        if (fromCache.length > 0) {
+            const sortedCache = sortChannels(fromCache);
+            setChannelList(sortedCache);
+            setChannelsLoading(false); // CRITICAL: Set loading to false when cache is shown
+        }
     }
-} else {
-    setChannelsLoading(true); // Add this - show loading if no cache
-}
 
+    // Fetch fresh data in background
     try {
         const response = await Api.getChannelsBootstrap();
         const data = response?.data;
@@ -1456,10 +1456,14 @@ if (cachedChannels.length > 0) {
             }
         } catch (error) {
             console.warn('Failed to fetch channels from API:', error?.message || error);
-            if (cachedChannels.length > 0) return channelListRef.current;
+            if (cachedChannels.length > 0) {
+                setChannelsLoading(false);
+                return channelListRef.current;
+            }
         }
     }
 
+    // Update cache if we got fresh data
     if (channelsFromServer.length > 0) {
         try {
             localStorage.setItem(cachedChannelsKey, JSON.stringify(channelsFromServer));
@@ -1475,12 +1479,13 @@ if (cachedChannels.length > 0) {
 
     if (preparedChannels.length === 0) {
         setChannelList([]);
+        setChannelsLoading(false);
         return [];
     }
 
     const sortedChannels = sortChannels(preparedChannels);
     setChannelList(sortedChannels);
-    setChannelsLoading(false);
+    setChannelsLoading(false); // CRITICAL: Always set loading to false when done
 
     const currentSelectedId = selectedChannelRef.current?.id || null;
     const normalizedSelectId = selectChannelId ? selectChannelId.toString() : null;
@@ -1502,8 +1507,7 @@ if (cachedChannels.length > 0) {
     }
 
     return sortedChannels;
-}, [isAuthenticated, sortChannels]);
-// ADD THE REF DECLARATION HERE (RIGHT AFTER refreshChannelList):
+}, [isAuthenticated, sortChannels, channelIdParam]); // Add channelIdParam to dependencies// ADD THE REF DECLARATION HERE (RIGHT AFTER refreshChannelList):
 const refreshChannelListRef = useRef(refreshChannelList);
     // Update refreshChannelList ref when it changes
 useEffect(() => {
@@ -3349,13 +3353,20 @@ if (window.requestAnimationFrame) {
     }, []);
 
 // Load channels on mount/auth change only - NOT on channel navigation (avoids reset/flash)
-// Support ?channel= for notification deep link (e.g. /community?channel=general&jump=123)
 useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const channelFromQuery = params.get('channel');
-    refreshChannelListRef.current({ selectChannelId: channelFromQuery || channelIdParam || undefined });
-}, [location.search, channelIdParam]); // REMOVED refreshChannelList from dependencies
-
+    let isMounted = true;
+    
+    const loadChannels = async () => {
+        if (!isAuthenticated) return;
+        await refreshChannelListRef.current({ selectChannelId: channelIdParam || undefined });
+    };
+    
+    loadChannels();
+    
+    return () => {
+        isMounted = false;
+    };
+}, [isAuthenticated]); // Remove channelIdParam from dependencies to prevent reload on channel change
     // Periodically refresh channels so new ones appear for everyone
     useEffect(() => {
         if (!isAuthenticated) return;
@@ -4582,36 +4593,34 @@ setMessages(prev => {
 
     // Group channels by category. Only include channels with canSee === true (FREE: General + Announcements only).
     // Do not render empty categories (e.g. no Trading or A7FX for FREE).
-    const groupedChannels = useMemo(() => {
-        const grouped = channelList.reduce((acc, channel) => {
-            if (channel.canSee !== true) return acc;
-            const category = channel.category || 'general';
-            if (category.toLowerCase() === 'courses') return acc;
-            if (!acc[category]) acc[category] = [];
-            acc[category].push(channel);
-            return acc;
-        }, {});
-        
-        // Sort channels within each category by their order
-        Object.keys(grouped).forEach(category => {
-            const categoryOrder = channelOrder[category] || [];
-            grouped[category].sort((a, b) => {
-                const aIndex = categoryOrder.indexOf(a.id);
-                const bIndex = categoryOrder.indexOf(b.id);
-                // If both are in order, use order
-                if (aIndex !== -1 && bIndex !== -1) {
-                    return aIndex - bIndex;
-                }
-                // If only one is in order, prioritize it
-                if (aIndex !== -1) return -1;
-                if (bIndex !== -1) return 1;
-                // If neither is in order, maintain current order (by name)
-                return (a.name || '').localeCompare(b.name || '');
-            });
+// Memoize grouped channels to prevent unnecessary re-renders
+const groupedChannels = useMemo(() => {
+    const grouped = channelList.reduce((acc, channel) => {
+        if (channel.canSee !== true) return acc;
+        const category = channel.category || 'general';
+        if (category.toLowerCase() === 'courses') return acc;
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(channel);
+        return acc;
+    }, {});
+    
+    // Sort channels within each category by their order
+    Object.keys(grouped).forEach(category => {
+        const categoryOrderList = channelOrder[category] || [];
+        grouped[category].sort((a, b) => {
+            const aIndex = categoryOrderList.indexOf(a.id);
+            const bIndex = categoryOrderList.indexOf(b.id);
+            if (aIndex !== -1 && bIndex !== -1) {
+                return aIndex - bIndex;
+            }
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            return (a.name || '').localeCompare(b.name || '');
         });
-        
-        return grouped;
-    }, [channelList, channelOrder]);
+    });
+    
+    return grouped;
+}, [channelList, channelOrder]); // Only recompute when channelList or channelOrder changes
    // Detect when user is manually scrolling (rAF-throttle setState — raw scroll events can fire >100/s)
 useEffect(() => {
     const messagesContainer = messagesContainerRef.current;
@@ -5796,6 +5805,7 @@ if (!isAuthenticated && !hasToken) {
                     overflowX: 'hidden',
                     minHeight: 0
                 }}>
+                    
                     {categoryOrder.map(categoryName => {
                         const channels = groupedChannels[categoryName];
                         if (!channels || channels.length === 0) return null;

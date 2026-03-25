@@ -1,19 +1,24 @@
 /* ============================================================
-   AuraEnterTransition.css  |  Matched to AURA TERMINAL Theme
+   AuraEnterTransition.css  |  Matched to AURA JOURNAL Theme
+   Deep space aesthetic with navy/black tones, gold accents
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* ── Variables (mirror home.css) ─────────────────────────── */
+/* ── Variables (mirror journal theme) ─────────────────────────── */
 :root {
-  --aura-bg:          #0a0a0a;
-  --aura-border:      rgba(255, 255, 255, 0.08);
-  --aura-accent:      rgba(139, 92, 246, 0.55);
-  --aura-accent-blue: rgba(99, 179, 237, 0.45);
+  --aura-bg:          #010008;
+  --aura-bg-card:     rgba(3, 2, 10, 0.70);
+  --aura-border:      rgba(255, 255, 255, 0.12);
+  --aura-border-gold: rgba(212, 175, 55, 0.26);
+  --aura-accent:      rgba(90, 125, 210, 0.55);
+  --aura-accent-gold: rgba(212, 175, 55, 0.45);
   --aura-text:        #ffffff;
-  --aura-text-muted:  rgba(255, 255, 255, 0.55);
-  --aura-up:          #10b981;
-  --aura-radius:      10px;
+  --aura-text-muted:  rgba(232, 235, 255, 0.86);
+  --aura-up:          #0FD98A;
+  --aura-gold:        #D4AF37;
+  --aura-gold-dim:    rgba(212, 175, 55, 0.32);
+  --aura-radius:      12px;
   --aura-transition:  0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -36,7 +41,7 @@
   background: var(--aura-bg);
 }
 
-/* ── Cosmic background — radial pulse matching .central-glow  */
+/* ── Cosmic background — deep nebula matching journal theme */
 .aura-enter-cosmic {
   position: absolute;
   top: 50%;
@@ -46,9 +51,9 @@
   height: 900px;
   background: radial-gradient(
     ellipse at center,
-    rgba(139, 92, 246, 0.09) 0%,
-    rgba(99, 179, 237, 0.05) 35%,
-    rgba(255, 255, 255, 0.018) 60%,
+    rgba(90, 125, 210, 0.12) 0%,
+    rgba(55, 85, 165, 0.08) 35%,
+    rgba(212, 175, 55, 0.04) 60%,
     transparent 100%
   );
   border-radius: 50%;
@@ -57,32 +62,55 @@
 }
 
 @keyframes auraCosmicPulse {
-  0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+  0%, 100% { opacity: 0.65; transform: translate(-50%, -50%) scale(1); }
   50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
 }
 
-/* ── Starfield — subtle scattered dots ───────────────────── */
+/* ── Starfield — dense twinkling stars (mirror journal) ───── */
 .aura-enter-starfield {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(1px 1px at 12%  18%, rgba(255,255,255,0.18) 0%, transparent 100%),
-    radial-gradient(1px 1px at 28%  72%, rgba(139,92,246,0.25)  0%, transparent 100%),
-    radial-gradient(1px 1px at 45%  35%, rgba(255,255,255,0.12) 0%, transparent 100%),
-    radial-gradient(1px 1px at 62%  88%, rgba(99,179,237,0.2)   0%, transparent 100%),
-    radial-gradient(1px 1px at 75%  22%, rgba(255,255,255,0.15) 0%, transparent 100%),
-    radial-gradient(1px 1px at 88%  55%, rgba(139,92,246,0.18)  0%, transparent 100%),
-    radial-gradient(1px 1px at 5%   60%, rgba(255,255,255,0.1)  0%, transparent 100%),
-    radial-gradient(1px 1px at 92%  10%, rgba(99,179,237,0.15)  0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 35% 50%, rgba(255,255,255,0.08) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 55% 15%, rgba(139,92,246,0.14) 0%, transparent 100%);
-  animation: auraStarDrift 18s ease-in-out infinite alternate;
+    /* Large bright stars */
+    radial-gradient(2px 2px at 7%   6%,  rgba(255,255,255,0.92), transparent 100%),
+    radial-gradient(2.5px 2.5px at 34%  11%, rgba(255,255,255,0.88), transparent 100%),
+    radial-gradient(2px 2px at 61%   4%,  rgba(255,255,255,0.85), transparent 100%),
+    radial-gradient(2.2px 2.2px at 89%  14%, rgba(255,255,255,0.82), transparent 100%),
+    radial-gradient(2px 2px at 15%  32%, rgba(255,255,255,0.78), transparent 100%),
+    radial-gradient(2.4px 2.4px at 78%  27%, rgba(255,255,255,0.80), transparent 100%),
+    radial-gradient(2px 2px at 50%  18%, rgba(255,255,255,0.75), transparent 100%),
+    /* Medium stars */
+    radial-gradient(1.5px 1.5px at 4%   22%, rgba(255,255,255,0.68), transparent 100%),
+    radial-gradient(1.4px 1.4px at 19%   8%, rgba(255,255,255,0.64), transparent 100%),
+    radial-gradient(1.6px 1.6px at 44%  26%, rgba(255,255,255,0.62), transparent 100%),
+    radial-gradient(1.5px 1.5px at 67%  19%, rgba(255,255,255,0.66), transparent 100%),
+    radial-gradient(1.4px 1.4px at 83%   8%, rgba(255,255,255,0.62), transparent 100%),
+    radial-gradient(1.5px 1.5px at 93%  33%, rgba(255,255,255,0.58), transparent 100%),
+    radial-gradient(1.6px 1.6px at 28%  42%, rgba(255,255,255,0.56), transparent 100%),
+    /* Blue/cool stars (gold accent) */
+    radial-gradient(1.8px 1.8px at 9%   12%, rgba(212,175,55,0.70), transparent 100%),
+    radial-gradient(2px 2px at 23%  18%, rgba(212,175,55,0.65), transparent 100%),
+    radial-gradient(1.6px 1.6px at 52%  15%, rgba(212,175,55,0.62), transparent 100%),
+    radial-gradient(1.8px 1.8px at 82%  20%, rgba(212,175,55,0.60), transparent 100%),
+    /* Dim distant stars */
+    radial-gradient(0.6px 0.6px at 11%  48%, rgba(255,255,255,0.20), transparent 100%),
+    radial-gradient(0.6px 0.6px at 29%  62%, rgba(255,255,255,0.18), transparent 100%),
+    radial-gradient(0.6px 0.6px at 47%  55%, rgba(255,255,255,0.22), transparent 100%),
+    radial-gradient(0.6px 0.6px at 60%  68%, rgba(255,255,255,0.16), transparent 100%),
+    radial-gradient(0.6px 0.6px at 74%  62%, rgba(255,255,255,0.20), transparent 100%),
+    radial-gradient(0.6px 0.6px at 88%  48%, rgba(255,255,255,0.18), transparent 100%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  animation: auraStarTwinkle 4s ease-in-out infinite alternate;
 }
 
-@keyframes auraStarDrift {
-  from { transform: translateY(0px); }
-  to   { transform: translateY(-8px); }
+@keyframes auraStarTwinkle {
+  0%   { opacity: 0.35; filter: blur(0.8px) brightness(0.75); }
+  25%  { opacity: 0.75; filter: blur(0px) brightness(1.2); }
+  50%  { opacity: 0.48; filter: blur(1px) brightness(0.85); }
+  75%  { opacity: 0.88; filter: blur(0px) brightness(1.5); }
+  100% { opacity: 0.40; filter: blur(0.8px) brightness(0.80); }
 }
 
 /* ── Galaxy container ─────────────────────────────────────── */
@@ -107,11 +135,11 @@
   to   { rotate: 360deg; }
 }
 
-/* ── Galaxy items — matches GALAXY_ITEMS text tokens ─────── */
+/* ── Galaxy items — gold-accented tokens ──────────────────── */
 .aura-enter-galaxy-item {
   position: absolute;
   transform: translate(-50%, -50%);
-  color: var(--galaxy-color, rgba(167, 139, 250, 0.75));
+  color: var(--galaxy-color, rgba(212, 175, 55, 0.75));
   font-size: calc(var(--galaxy-size, 1) * 0.72rem);
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 300;
@@ -119,14 +147,13 @@
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
-  /* Soft glow matching site accent */
   text-shadow:
-    0 0 8px  rgba(139, 92, 246, 0.4),
-    0 0 20px rgba(99, 179, 237, 0.15);
+    0 0 8px rgba(212, 175, 55, 0.4),
+    0 0 20px rgba(90, 125, 210, 0.15);
   will-change: opacity, transform;
 }
 
-/* ── Loading section wrapper ──────────────────────────────── */
+/* ── Loading section wrapper (mirrors journal-glass-panel) ── */
 .aura-enter-loading-section {
   position: relative;
   z-index: 10;
@@ -134,51 +161,86 @@
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
-  /* Frosted card — mirrors .feature-card glass */
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--aura-border);
+  background: rgba(3, 2, 10, 0.70);
+  border: 1px solid transparent;
   border-radius: var(--aura-radius);
   padding: 2.25rem 3rem;
-  backdrop-filter: blur(16px);
-  /* Top shimmer line — from .feature-card::before */
+  backdrop-filter: blur(20px);
+  background-image: 
+    linear-gradient(168deg, rgba(4, 5, 18, 0.92) 0%, rgba(5, 6, 20, 0.89) 100%) padding-box,
+    linear-gradient(135deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0.88) 11%,
+      rgba(255, 255, 255, 0.48) 26%,
+      rgba(185, 205, 255, 0.42) 44%,
+      rgba(85, 115, 195, 0.58) 64%,
+      rgba(38, 52, 105, 0.72) 84%,
+      rgba(212, 175, 55, 0.18) 100%) border-box;
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 
+    0 18px 52px rgba(0, 0, 0, 0.64),
+    0 0 0 1px rgba(255, 255, 255, 0.20),
+    0 0 40px -10px rgba(255, 255, 255, 0.12),
+    0 0 52px -12px rgba(70, 100, 190, 0.28),
+    0 8px 30px -12px rgba(12, 16, 40, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26);
   position: relative;
   overflow: hidden;
 }
 
+/* Top shimmer line (gold-accented) */
 .aura-enter-loading-section::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 4%;
+  right: 14%;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(139, 92, 246, 0.55),
-    rgba(99, 179, 237, 0.4),
-    transparent
-  );
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.48) 32%,
+    rgba(175, 200, 255, 0.42) 58%,
+    rgba(212, 175, 55, 0.12) 88%,
+    transparent 100%);
+  pointer-events: none;
+  z-index: 2;
 }
 
-/* Inner glow overlay */
+/* Corner glow (navy/gold blend) */
 .aura-enter-loading-section::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at top, rgba(139, 92, 246, 0.06) 0%, transparent 65%);
+  top: -30px;
+  right: -30px;
+  width: 110px;
+  height: 110px;
+  background: radial-gradient(circle, rgba(85, 118, 205, 0.12) 0%, rgba(212, 175, 55, 0.04) 45%, transparent 70%);
   pointer-events: none;
+  border-radius: 50%;
+  z-index: 0;
 }
 
-/* ── Label — mirrors .loading-subtitle / .powered-by-glitch ─ */
+/* ── Label — mirrors journal gold gradient text ───────────── */
 .aura-enter-loading-label {
   font-size: 0.72rem;
-  font-weight: 300;
-  color: var(--aura-text-muted);
+  font-weight: 600;
+  color: rgba(232, 235, 255, 0.86);
   letter-spacing: 0.35em;
   text-transform: uppercase;
   margin: 0;
   position: relative;
   z-index: 1;
   animation: auraLabelFade 0.8s ease-out both;
+  background: linear-gradient(125deg,
+    #ffffff 0%,
+    rgba(252, 253, 255, 0.99) 28%,
+    rgba(200, 215, 255, 0.96) 58%,
+    rgba(120, 150, 220, 0.92) 82%,
+    rgba(212, 175, 55, 0.48) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 @keyframes auraLabelFade {
@@ -202,7 +264,7 @@
   width: 260px;
 }
 
-/* ── Track — mirrors .stat-trend ─────────────────────────── */
+/* ── Track — dark with subtle border ───────────────────────── */
 .aura-enter-loading-track {
   width: 260px;
   height: 3px;
@@ -210,23 +272,27 @@
   border-radius: 99px;
   overflow: hidden;
   position: relative;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
-/* ── Fill — mirrors .stat-trend-fill ─────────────────────── */
+/* ── Fill — gold gradient matching journal progress ───────── */
 .aura-enter-loading-fill {
   height: 100%;
   border-radius: 99px;
-  background: linear-gradient(
-    90deg,
-    rgba(139, 92, 246, 0.85),
-    rgba(99, 179, 237, 0.75)
-  );
-  box-shadow: 0 0 10px rgba(139, 92, 246, 0.55);
+  background: linear-gradient(90deg, 
+    #6b5a1c 0%, 
+    #9a7b22 18%, 
+    #d4af37 45%, 
+    #dfc056 72%, 
+    #e8c658 100%);
+  box-shadow: 
+    0 0 14px rgba(212, 175, 55, 0.55),
+    0 0 26px rgba(212, 175, 55, 0.32);
   position: relative;
   transition: width 0.12s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Shimmer sweep — mirrors @keyframes trendShimmer */
+/* Shimmer sweep — gold shimmer */
 .aura-enter-loading-fill::after {
   content: '';
   position: absolute;
@@ -237,7 +303,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.38),
+    rgba(255, 248, 220, 0.38),
     transparent
   );
   animation: auraBarShimmer 2.2s ease-in-out infinite;
@@ -249,20 +315,22 @@
   100% { left: 120%; opacity: 0; }
 }
 
-/* ── Percentage counter ───────────────────────────────────── */
+/* ── Percentage counter — gold gradient text ───────────────── */
 .aura-enter-loading-pct {
   font-size: 0.72rem;
-  font-weight: 300;
-  color: var(--aura-text-muted);
+  font-weight: 600;
+  color: rgba(232, 235, 255, 0.86);
   letter-spacing: 0.18em;
   margin: 0;
   font-variant-numeric: tabular-nums;
-  /* Gradient text — mirrors .stat-number */
-  background: linear-gradient(125deg, #ffffff 30%, #c4b5fd 70%, #93c5fd 100%);
+  background: linear-gradient(125deg, 
+    #ffffff 30%, 
+    #e8c658 70%, 
+    #d4af37 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
 }
 
 /* ── Responsive tweaks ────────────────────────────────────── */
@@ -278,4 +346,36 @@
   .aura-enter-loading-track,
   .aura-enter-loading-bar-reduced { width: 160px; }
   .aura-enter-loading-section { padding: 1.5rem 1.5rem; }
+}
+
+/* ── Additional twinkling star layer for depth ─────────────── */
+.aura-enter-transition::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(3px 3px at 7%   6%,  rgba(255,255,255,0.95), transparent 100%),
+    radial-gradient(4px 4px at 34%  11%, rgba(255,255,255,0.90), transparent 100%),
+    radial-gradient(3px 3px at 61%   4%,  rgba(255,255,255,0.88), transparent 100%),
+    radial-gradient(3.5px 3.5px at 89%  14%, rgba(255,255,255,0.85), transparent 100%),
+    radial-gradient(3px 3px at 15%  32%, rgba(255,255,255,0.82), transparent 100%),
+    radial-gradient(4px 4px at 78%  27%, rgba(255,255,255,0.86), transparent 100%),
+    radial-gradient(3px 3px at 50%  18%, rgba(255,255,255,0.80), transparent 100%),
+    /* Gold accent stars */
+    radial-gradient(3px 3px at 16%  85%, rgba(212,175,55,0.72),  transparent 100%),
+    radial-gradient(2.5px 2.5px at 48%  88%, rgba(212,175,55,0.65), transparent 100%),
+    radial-gradient(3px 3px at 77%  82%, rgba(212,175,55,0.70), transparent 100%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  animation: auraStarsGlowPulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes auraStarsGlowPulse {
+  0%   { opacity: 0.35; filter: blur(0.8px) brightness(0.75); }
+  25%  { opacity: 0.75; filter: blur(0px) brightness(1.2); }
+  50%  { opacity: 0.48; filter: blur(1px) brightness(0.85); }
+  75%  { opacity: 0.88; filter: blur(0px) brightness(1.5); }
+  100% { opacity: 0.40; filter: blur(0.8px) brightness(0.80); }
 }
