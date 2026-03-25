@@ -486,7 +486,11 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               </DashboardPanel>
               <DashboardPanel title="Market Risk Engine" className="td-outlook-panel td-outlook-panel--radar">
                 {editMode && editDraft ? renderListEdit(editDraft.riskRadar, 'riskRadar', 'Risk factor', { preserveObject: true }) : (
-                  riskRadar && riskRadar.length > 0 ? <RiskRadarList items={riskRadar} riskEngine={riskEngine} /> : <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
+                  (riskRadar && riskRadar.length > 0) || riskEngine ? (
+                    <RiskRadarList items={riskRadar || []} riskEngine={riskEngine} summaryOnly={period === 'daily'} />
+                  ) : (
+                    <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
+                  )
                 )}
               </DashboardPanel>
             </div>

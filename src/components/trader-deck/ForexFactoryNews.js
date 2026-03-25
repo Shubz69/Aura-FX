@@ -71,7 +71,8 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
   const eventsRef      = useRef([]);
   const precTimersRef  = useRef([]);  // precision setTimeout IDs
   const sinceLastFetch = useRef(0);   // ms since last baseline fetch
-  const fetchInFlightRef = useRef(false);
+  /** Monotonic id so StrictMode remount / overlapping calls do not drop the active fetch or leave loading stuck. */
+  const latestFetchIdRef = useRef(0);
   const viewDateRef = useRef(viewDate);
   viewDateRef.current = viewDate;
 
@@ -88,8 +89,7 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
 
   // Core fetch — refresh=true bypasses server cache for precision fetches; historical uses ?date=
   const fetchEvents = useCallback(async (refresh = false) => {
-    if (fetchInFlightRef.current) return null;
-    fetchInFlightRef.current = true;
+    const fetchId = ++latestFetchIdRef.current;
     try {
       const todayLocal = todayInTimeZone(displayTimeZone);
       const isToday = viewDate === todayLocal;
@@ -97,30 +97,7 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
         ? await Api.getTraderDeckEconomicCalendar(1, refresh)
         : await Api.getTraderDeckEconomicCalendar({ from: viewDate, to: viewDate, refresh });
       const list = res.data?.events || [];
-      // #region agent log
-      fetch('http://127.0.0.1:7826/ingest/3ba0a834-6e5c-4fe0-bd70-25d6a5ebbb2f', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8f4319' },
-        body: JSON.stringify({
-          sessionId: '8f4319',
-          location: 'ForexFactoryNews.js:fetchEvents',
-          message: 'economic calendar events sample',
-          data: {
-            hypothesisId: 'H-pipeline',
-            source: res.data?.source,
-            count: list.length,
-            sample: list.slice(0, 3).map((e) => ({
-              forecast: e?.forecast,
-              actual: e?.actual,
-              previous: e?.previous,
-              currency: e?.currency,
-            })),
-          },
-          timestamp: Date.now(),
-          runId: 'pipeline-verify',
-        }),
-      }).catch(() => {});
-      // #endregion
+      if (fetchId !== latestFetchIdRef.current) return null;
       setEvents(list);
       eventsRef.current = list;
       setLastUpdated(new Date());
@@ -128,8 +105,9 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
     } catch (_) {
       return null;
     } finally {
-      fetchInFlightRef.current = false;
-      setLoading(false);
+      if (fetchId === latestFetchIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [viewDate, displayTimeZone]);
 
@@ -170,6 +148,7 @@ export default function ForexFactoryNews({ date, parentControlsDate = false }) {
     });
     return () => {
       cancelled = true;
+      latestFetchIdRef.current += 1;
     };
   }, [viewDate, fetchEvents, schedulePrecision, displayTimeZone]);
 

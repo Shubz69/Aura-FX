@@ -74,12 +74,27 @@ function riskLevelTone(level) {
   return 'rr-level--medium';
 }
 
-export default function RiskRadarList({ items = [], riskEngine = null }) {
-  if (!items.length) {
+/**
+ * @param {boolean} [summaryOnly] - When true, only show riskEngine summary (no per-event list).
+ *   Use on Market Outlook daily where the full Economic Calendar sits below to avoid duplicate “calendars”.
+ */
+export default function RiskRadarList({ items = [], riskEngine = null, summaryOnly = false }) {
+  const hasList = items.length > 0;
+  if (!hasList && !riskEngine) {
     return <p className="td-mi-list-empty" style={{ padding: '12px 0', color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>No market risk factors available.</p>;
   }
 
-  const parsed = items.map(parseItem).slice(0, 8);
+  if (summaryOnly && !riskEngine && hasList) {
+    return (
+      <div className="rr-table-wrap">
+        <p className="td-mi-list-empty" style={{ padding: '12px 0', color: 'rgba(255,255,255,0.42)', fontSize: '0.82rem' }}>
+          Scheduled releases are listed in the Economic Calendar below.
+        </p>
+      </div>
+    );
+  }
+
+  const parsed = hasList ? items.map(parseItem).slice(0, 8) : [];
   const breakdown = riskEngine?.breakdown || null;
   const levelClass = riskLevelTone(riskEngine?.level);
 
@@ -104,32 +119,39 @@ export default function RiskRadarList({ items = [], riskEngine = null }) {
           )}
         </div>
       )}
-      <div className="rr-risk-list">
-        {parsed.map((row, i) => {
-          const impMeta = IMPACT_META[row.impact] || IMPACT_META.medium;
-          const timeLabel = formatTime(row.time);
-          const actual = metric(row.actual);
-          const forecast = metric(row.forecast);
-          const previous = metric(row.previous);
-          const hasMetrics = Boolean(actual || forecast || previous);
-          return (
-            <article key={i} className="rr-risk-item">
-              <p className="rr-risk-item-title">{row.title}</p>
-              <p className="rr-risk-item-meta">
-                {row.currency ? <span className="rr-currency">{String(row.currency).toUpperCase()}</span> : 'GLB'}
-                {' · '}
-                <span className={`rr-impact ${impMeta.cls}`} title={impMeta.title}>{impMeta.label}</span>
-                {timeLabel ? ` · ${timeLabel}` : ''}
-              </p>
-              {hasMetrics && (
-                <p className="rr-risk-item-metrics">
-                  {actual ? `Actual: ${actual}` : 'Actual: —'} · {forecast ? `Forecast: ${forecast}` : 'Forecast: —'} · {previous ? `Previous: ${previous}` : 'Previous: —'}
+      {summaryOnly && riskEngine && (
+        <p className="td-mi-list-empty" style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.38)', fontSize: '0.78rem' }}>
+          Event detail is in the Economic Calendar below.
+        </p>
+      )}
+      {!summaryOnly && (
+        <div className="rr-risk-list">
+          {parsed.map((row, i) => {
+            const impMeta = IMPACT_META[row.impact] || IMPACT_META.medium;
+            const timeLabel = formatTime(row.time);
+            const actual = metric(row.actual);
+            const forecast = metric(row.forecast);
+            const previous = metric(row.previous);
+            const hasMetrics = Boolean(actual || forecast || previous);
+            return (
+              <article key={i} className="rr-risk-item">
+                <p className="rr-risk-item-title">{row.title}</p>
+                <p className="rr-risk-item-meta">
+                  {row.currency ? <span className="rr-currency">{String(row.currency).toUpperCase()}</span> : 'GLB'}
+                  {' · '}
+                  <span className={`rr-impact ${impMeta.cls}`} title={impMeta.title}>{impMeta.label}</span>
+                  {timeLabel ? ` · ${timeLabel}` : ''}
                 </p>
-              )}
-            </article>
-          );
-        })}
-      </div>
+                {hasMetrics && (
+                  <p className="rr-risk-item-metrics">
+                    {actual ? `Actual: ${actual}` : 'Actual: —'} · {forecast ? `Forecast: ${forecast}` : 'Forecast: —'} · {previous ? `Previous: ${previous}` : 'Previous: —'}
+                  </p>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
