@@ -420,26 +420,11 @@
 }
 
 @keyframes starsGlowPulse {
-  0%   {
-    opacity: 0.35;
-    filter: blur(0.8px) brightness(0.75);
-  }
-  25%  {
-    opacity: 0.75;
-    filter: blur(0px) brightness(1.2);
-  }
-  50%  {
-    opacity: 0.48;
-    filter: blur(1px) brightness(0.85);
-  }
-  75%  {
-    opacity: 0.88;
-    filter: blur(0px) brightness(1.5);
-  }
-  100% {
-    opacity: 0.40;
-    filter: blur(0.8px) brightness(0.80);
-  }
+  0%   { opacity: 0.35; }
+  25%  { opacity: 0.75; }
+  50%  { opacity: 0.48; }
+  75%  { opacity: 0.88; }
+  100% { opacity: 0.40; }
 }
 
 /* Second independent twinkle layer with offset timing */
@@ -462,6 +447,16 @@
 .journal-page::before,
 .journal-layout::before {
   z-index: 0;
+}
+
+.journal-page::before,
+.journal-page::after,
+.journal-layout::before,
+.journal-layout::after {
+  will-change: opacity;
+  contain: strict;          /* prevents these layers from
+                               triggering layout on parent */
+  transform: translateZ(0); /* force GPU layer promotion */
 }
 
 /* ══ Layout ══════════════════════════════════════════════════════════════════ */
@@ -1066,7 +1061,8 @@
   padding: 20px 18px;
   margin-bottom: 16px;
   text-align: center;
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   position: relative;
   overflow: hidden;
   transition: box-shadow var(--transition), background-image var(--transition);
@@ -1270,7 +1266,8 @@
   padding: 20px 20px 18px 22px;
   border: 1px solid transparent;
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   overflow: hidden;
   transition: transform var(--transition), box-shadow var(--transition), background-image var(--transition);
   animation: journal-fadeIn 0.45s ease-out both;
@@ -1497,8 +1494,8 @@
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
   box-shadow: var(--journal-panel-outer-glow);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .journal-glass-card::before {
@@ -1855,11 +1852,12 @@
   overflow: hidden;
   transition: transform var(--transition), box-shadow var(--transition), background-image var(--transition);
   animation: card-popIn 0.32s cubic-bezier(0.34,1.56,0.64,1) both;
-  backdrop-filter: blur(10px);
+  backdrop-filter: none;
   background-image: var(--journal-panel-fill), var(--journal-panel-border);
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
   box-shadow: var(--journal-panel-outer-glow);
+  -webkit-backdrop-filter: none;
 }
 
 /* Stagger */
@@ -2650,6 +2648,8 @@
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
   box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .journal-daily-section::before {
@@ -3016,14 +3016,14 @@
 }
 
 @keyframes twinkleLayer1 {
-  0%   { opacity: 0.10; filter: blur(0.8px); }
-  15%  { opacity: 0.85; filter: blur(0px);   }
-  30%  { opacity: 0.22; filter: blur(1px);   }
-  45%  { opacity: 0.95; filter: blur(0px);   }
-  60%  { opacity: 0.15; filter: blur(0.6px); }
-  75%  { opacity: 0.80; filter: blur(0px);   }
-  90%  { opacity: 0.28; filter: blur(0.9px); }
-  100% { opacity: 0.90; filter: blur(0px);   }
+  0%   { opacity: 0.10; }
+  15%  { opacity: 0.85; }
+  30%  { opacity: 0.22; }
+  45%  { opacity: 0.95; }
+  60%  { opacity: 0.15; }
+  75%  { opacity: 0.80; }
+  90%  { opacity: 0.28; }
+  100% { opacity: 0.90; }
 }
 
 /* Star glow halos — larger soft glow behind the sharp stars */
@@ -3083,13 +3083,13 @@
 }
 
 @keyframes twinkleLayer2 {
-  0%   { opacity: 0.90; filter: blur(0px);   }
-  20%  { opacity: 0.16; filter: blur(1.2px); }
-  40%  { opacity: 0.84; filter: blur(0px);   }
-  55%  { opacity: 0.20; filter: blur(0.8px); }
-  70%  { opacity: 0.95; filter: blur(0px);   }
-  85%  { opacity: 0.14; filter: blur(1px);   }
-  100% { opacity: 0.78; filter: blur(0px);   }
+  0%   { opacity: 0.90; }
+  20%  { opacity: 0.16; }
+  40%  { opacity: 0.84; }
+  55%  { opacity: 0.20; }
+  70%  { opacity: 0.95; }
+  85%  { opacity: 0.14; }
+  100% { opacity: 0.78; }
 }
 
 /* Third layer — slowest, creates the "background depth" stars */
@@ -3126,10 +3126,10 @@
 }
 
 @keyframes twinkleLayer3 {
-  0%   { opacity: 0.28; filter: blur(0.4px); }
-  33%  { opacity: 0.95; filter: blur(0px);   }
-  66%  { opacity: 0.18; filter: blur(0.6px); }
-  100% { opacity: 0.86; filter: blur(0px);   }
+  0%   { opacity: 0.28; }
+  33%  { opacity: 0.95; }
+  66%  { opacity: 0.18; }
+  100% { opacity: 0.86; }
 }
 
 /* ── Journal inputs: beat global input/background rules & webkit autofill ── */
@@ -3203,3 +3203,54 @@
   -webkit-text-fill-color: rgba(248, 250, 252, 0.96);
 }
 
+@media (max-width: 1024px) {
+  .journal-task-item,
+  .journal-progress-card,
+  .journal-note-item {
+    animation: journal-fadeIn 0.2s ease-out both;
+  }
+ 
+  /* Disable the bounce/scale entrance — only opacity on mobile */
+  @keyframes card-popIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Keep layout::before (halo layer) and layout::after (deep layer).
+     Remove the two expensive page-level layers. */
+  .journal-page::after {
+    display: none;
+  }
+ 
+  /* Simplify the remaining layers further — fewer gradient calls */
+  .journal-layout::after {
+    animation-duration: 10s; /* slow it way down on mobile */
+  }
+ 
+  .journal-layout::before {
+    animation-duration: 8s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journal-page::before,
+  .journal-page::after,
+  .journal-layout::before,
+  .journal-layout::after {
+    animation: none !important;
+    opacity: 0.6; /* static, visible but not animating */
+  }
+ 
+  .journal-task-item,
+  .journal-progress-card,
+  .journal-note-item,
+  .journal-calendar-day,
+  .journal-streak-flame {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}
