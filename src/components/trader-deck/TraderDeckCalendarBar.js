@@ -2,7 +2,7 @@
  * Compact date bar for Trader Desk. Daily: full date in ALL CAPS (e.g. SUNDAY, 22 MARCH 2026).
  * Weekly: week range in ALL CAPS. Native date input for jumping to a day (no modal month grid).
  */
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -45,6 +45,16 @@ export default function TraderDeckCalendarBar({
   dateMin,
   dateMax,
 }) {
+  const nativeDateRef = useRef(null);
+
+  // Prevent the browser's native date picker from popping open right after refresh.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      nativeDateRef.current?.blur?.();
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
+
   const label = useMemo(() => {
     const str = String(selectedDate).slice(0, 10);
     const [y, m, day] = str.split('-').map(Number);
@@ -92,6 +102,7 @@ export default function TraderDeckCalendarBar({
       <input
         type="date"
         className="td-deck-calendar-bar-native-date"
+        ref={nativeDateRef}
         value={/^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : ''}
         min={dateMin}
         max={dateMax}

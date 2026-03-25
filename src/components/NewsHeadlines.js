@@ -27,12 +27,17 @@ const classifyHeadline = (text) => {
   return 'LOW';
 };
 
-const toInternalInsight = (headline) => {
+const toCleanHeadline = (headline) => {
   const clean = String(headline || '')
     .replace(SOURCE_STRIP_RE, '')
     .replace(ATTRIBUTION_RE, '')
     .replace(/\s+/g, ' ')
     .trim();
+  return clean;
+};
+
+const toInternalInsight = (headline) => {
+  const clean = toCleanHeadline(headline);
   const level = classifyHeadline(clean);
   return `${level}: ${clean}`;
 };
@@ -43,6 +48,13 @@ const NewsHeadlines = () => {
   const [error, setError] = useState(null);
   const [lastFetch, setLastFetch] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
+    setSelectedArticle(null);
+  }, []);
 
   const fetchNews = useCallback(async (force = false) => {
     if (!force) {
@@ -64,10 +76,20 @@ const NewsHeadlines = () => {
       const res = await fetch(`${API_BASE}/api/trader-deck/news${q}`);
       const json = await res.json();
       if (json.success && json.articles) {
-        const rows = json.articles.map((a) => ({
-          title: toInternalInsight(a.title || a.headline || ''),
-          publishedAt: a.publishedAt || a.datetime || null,
-        })).filter((a) => a.title && !/^(HIGH|MEDIUM|LOW):\s*$/i.test(a.title));
+        const rows = json.articles
+          .map((a) => {
+            const rawHeadline = a.title || a.headline || '';
+            const cleanHeadline = toCleanHeadline(rawHeadline);
+            const title = cleanHeadline ? toInternalInsight(rawHeadline) : '';
+            return {
+              title, // keeps current UI style (HIGH/MEDIUM/LOW prefix)
+              cleanHeadline,
+              publishedAt: a.publishedAt || a.datetime || null,
+              summary: a.summary || a.description || '',
+              url: a.url || '',
+            };
+          })
+          .filter((a) => a.title && !/^(HIGH|MEDIUM|LOW):\s*$/i.test(a.title));
         setArticles(rows);
         const now = Date.now();
         setLastFetch(new Date(now));
@@ -89,6 +111,27 @@ const NewsHeadlines = () => {
     const id = setInterval(() => fetchNews(true), AUTO_REFRESH_MS);
     return () => clearInterval(id);
   }, [fetchNews]);
+
+  useEffect(() => {
+    if (!modalOpen) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') closeModal();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [modalOpen, closeModal]);
+
+  const openArticle = useCallback((a) => {
+    setSelectedArticle(a);
+    setModalOpen(true);
+  }, []);
+
+  const truncate = (s, max = 140) => {
+    const str = String(s || '').trim();
+    if (!str) return '';
+    if (str.length <= max) return str;
+    return str.slice(0, max).trimEnd() + '…';
+  };
 
   return (
     <div className="news-headlines">
@@ -126,17 +169,70 @@ const NewsHeadlines = () => {
         <ul className="news-headlines__list">
           {articles.map((a, i) => (
             <li key={i} className="news-headlines__item">
-              <div className="news-headlines__link">
+              <button
+                type="button"
+                className="news-headlines__link"
+                onClick={() => openArticle(a)}
+                aria-label={`Open headline: ${a.cleanHeadline || a.title}`}
+              >
                 <div className="news-headlines__item-content">
                   <span className="news-headlines__item-title">{a.title}</span>
                   <div className="news-headlines__item-meta">
                     <span className="news-headlines__time">{timeAgo(a.publishedAt)}</span>
                   </div>
+                  {a.summary && (
+                    <p className="news-headlines__summary">
+                      {truncate(a.summary, 150)}
+                    </p>
+                  )}
                 </div>
-              </div>
+              </button>
             </li>
           ))}
         </ul>
+      )}
+
+      {modalOpen && selectedArticle && (
+        <div
+          className="news-headlines__modal-overlay"
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeModal();
+          }}
+        >
+          <div className="news-headlines__modal-panel" role="dialog" aria-modal="true" aria-label="Headline detail">
+            <div className="news-headlines__modal-top">
+              <h4 className="news-headlines__modal-title">
+                {selectedArticle.cleanHeadline || selectedArticle.title}
+              </h4>
+              <button type="button" className="news-headlines__modal-close" onClick={closeModal} aria-label="Close">
+                ×
+              </button>
+            </div>
+            <div className="news-headlines__modal-meta">
+              <span className="news-headlines__modal-time">{timeAgo(selectedArticle.publishedAt)}</span>
+            </div>
+
+            {selectedArticle.summary && (
+              <div className="news-headlines__modal-summary">
+                {String(selectedArticle.summary)}
+              </div>
+            )}
+
+            {selectedArticle.url && (
+              <div className="news-headlines__modal-actions">
+                <a
+                  className="news-headlines__modal-open"
+                  href={selectedArticle.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open original
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

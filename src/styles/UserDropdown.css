@@ -24,6 +24,8 @@
   --text-dim:     rgba(178, 175, 218, 0.45);
   --radius:       10px;
   --transition:   0.26s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Same stops as Home.css .home-cta-button */
+  --home-cta-text: linear-gradient(132deg, #FDE8C4 0%, #F8C37D 28%, #EAA960 58%, #D48D44 100%);
 }
 
 /* ── Wrapper ───────────────────────────────────────────────── */
@@ -258,11 +260,15 @@
   display: flex;
   align-items: center;
   padding: 12px 18px;
-  color: rgba(255, 255, 255, 0.68);
+  color: transparent;
+  background-image: var(--home-cta-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-color: transparent;
   text-decoration: none;
   transition: all var(--transition);
   border: none;
-  background: none;
   width: 100%;
   text-align: left;
   cursor: pointer;
@@ -274,6 +280,7 @@
   position: relative;
   overflow: hidden;
   z-index: 1;
+  filter: drop-shadow(0 0 10px rgba(234, 169, 96, 0.22));
 }
 
 /* Gold left accent bar */
@@ -301,8 +308,13 @@
 .user-dropdown a:hover,
 .user-dropdown button:hover {
   background: var(--gold-ultra);
-  color: #ffffff;
+  background-image: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  -webkit-text-fill-color: currentColor;
+  color: #FDE8C4;
   padding-left: 22px;
+  filter: none;
 }
 
 .user-dropdown a:hover::before,
@@ -314,13 +326,18 @@
 /* Active/Tap state for mobile */
 .user-dropdown a:active,
 .user-dropdown button:active {
-  background: var(--gold-glass);
+  background-color: var(--gold-glass);
   transform: scale(0.98);
 }
 
 /* Logout / danger */
 .user-dropdown button:last-child {
   color: rgba(240, 61, 95, 0.72);
+  background-image: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  -webkit-text-fill-color: currentColor;
+  filter: none;
   border-top: 1px solid rgba(255, 255, 255, 0.045);
   margin-top: 4px;
   position: sticky;
@@ -341,13 +358,17 @@
 .user-dropdown button:last-child:hover {
   background: rgba(240, 61, 95, 0.07);
   color: #f87171;
+  background-image: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  -webkit-text-fill-color: currentColor;
 }
 
 /* ── Dropdown Icon ─────────────────────────────────────────── */
 .dropdown-icon {
   margin-right: 12px;
   font-size: 0.95rem;
-  color: rgba(234, 169, 96, 0.72);
+  color: #F8C37D;
   flex-shrink: 0;
   transition: color var(--transition), background var(--transition),
               border-color var(--transition), box-shadow var(--transition);
@@ -358,7 +379,7 @@
   height: 28px;
   border-radius: 7px;
   background: var(--gold-ultra);
-  border: 1px solid rgba(234, 169, 96, 0.15);
+  border: 1px solid rgba(248, 195, 125, 0.35);
 }
 
 .user-dropdown a:hover .dropdown-icon,
@@ -530,9 +551,9 @@
     width: 32px;
     height: 32px;
     font-size: 1rem;
-    color: var(--gold-soft);
+    color: #F8C37D;
     background: var(--gold-glass);
-    border-color: rgba(234, 169, 96, 0.20);
+    border-color: rgba(248, 195, 125, 0.35);
   }
 
   /* Improve touch targets */
