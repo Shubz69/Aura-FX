@@ -271,9 +271,9 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
                   >
                     <td className="td-ff-td td-ff-time">
                       {formatEventTimeLocal(ev, displayTimeZone)}
-                      {countdownMs != null && (
-                        <span className="td-ff-countdown">{formatCountdown(countdownMs)}</span>
-                      )}
+                     {countdownMs != null && (
+  <span className="td-ff-countdown">{formatCountdownMs(countdownMs)}</span>
+)}
                       {status === 'imminent' && (
                         <span className="td-ff-soon-badge">SOON</span>
                       )}
