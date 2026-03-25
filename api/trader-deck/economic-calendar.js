@@ -27,12 +27,6 @@ const MATCH_WINDOW_MS = 25 * 60 * 1000;
 
 const IMPACT_COLORS = { High: 'high', Medium: 'medium', Low: 'low' };
 
-function debugLog(payload) {
-  // #region agent log
-  fetch('http://127.0.0.1:7826/ingest/3ba0a834-6e5c-4fe0-bd70-25d6a5ebbb2f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8f4319'},body:JSON.stringify({sessionId:'8f4319',location:'api/trader-deck/economic-calendar.js',message:'economic-calendar-debug',data:payload,timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
-}
-
 // --- Normalise helpers ---
 function normImpact(raw) {
   if (!raw) return 'low';
@@ -1023,23 +1017,6 @@ module.exports = async (req, res) => {
   const viewerTimeZone = resolveViewerTimeZone(req);
 
   const rangeQ = parseCalendarRangeQuery(req.query || {});
-  // #region agent log
-  debugLog({
-    runId: 'initial',
-    hypothesisId: 'H1',
-    step: 'request-received',
-    query: {
-      date: req.query?.date || null,
-      from: req.query?.from || null,
-      to: req.query?.to || null,
-      days: req.query?.days || null,
-      refresh: req.query?.refresh || null,
-      tz: req.query?.tz || null
-    },
-    hasRangeQuery: !!(rangeQ && rangeQ.from),
-    rangeError: rangeQ && rangeQ.error ? rangeQ.error : null
-  });
-  // #endregion
   if (rangeQ && rangeQ.error) {
     return res.status(400).json({ success: false, message: rangeQ.error });
   }
@@ -1055,20 +1032,6 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true, ...rangeCached, viewerTimeZone, cached: true });
     }
     const { events, source } = await fetchHistoricalRange(from, to);
-    // #region agent log
-    debugLog({
-      runId: 'initial',
-      hypothesisId: 'H2',
-      step: 'range-mode-result',
-      from,
-      to,
-      source,
-      totalEvents: Array.isArray(events) ? events.length : 0,
-      withActual: Array.isArray(events) ? events.filter((e) => normalizeValue(e.actual) != null).length : 0,
-      withForecast: Array.isArray(events) ? events.filter((e) => normalizeValue(e.forecast) != null).length : 0,
-      withPrevious: Array.isArray(events) ? events.filter((e) => normalizeValue(e.previous) != null).length : 0
-    });
-    // #endregion
     const fetchedAt = new Date().toISOString();
     const rangePayload = {
       events,
@@ -1128,21 +1091,6 @@ module.exports = async (req, res) => {
   events = events.map(ensureEventTimestamp);
   // Sort by UTC timestamp when available for stable ordering across providers.
   events.sort(compareEvents);
-  // #region agent log
-  debugLog({
-    runId: 'initial',
-    hypothesisId: 'H3',
-    step: 'default-mode-result',
-    days,
-    source,
-    totalEvents: Array.isArray(events) ? events.length : 0,
-    withActual: Array.isArray(events) ? events.filter((e) => normalizeValue(e.actual) != null).length : 0,
-    withForecast: Array.isArray(events) ? events.filter((e) => normalizeValue(e.forecast) != null).length : 0,
-    withPrevious: Array.isArray(events) ? events.filter((e) => normalizeValue(e.previous) != null).length : 0,
-    oldestDate: Array.isArray(events) && events.length ? events[0]?.date || null : null,
-    newestDate: Array.isArray(events) && events.length ? events[events.length - 1]?.date || null : null
-  });
-  // #endregion
 
   const fetchedAt = new Date().toISOString();
   const payload = {

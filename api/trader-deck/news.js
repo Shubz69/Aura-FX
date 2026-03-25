@@ -15,12 +15,6 @@ const CACHE_TTL_MS = Math.min(300, Math.max(60, parseInt(process.env.TRADER_DECK
 const SOURCE_SUFFIX_RE = /\s*[-–—,]\s*(reuters|bloomberg|forex factory|financial times|wsj|cnbc|yahoo finance|marketwatch)\s*$/i;
 const ATTRIBUTION_RE = /\b(according to|reported by|via)\b/gi;
 
-function debugLog(payload) {
-  // #region agent log
-  fetch('http://127.0.0.1:7826/ingest/3ba0a834-6e5c-4fe0-bd70-25d6a5ebbb2f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8f4319'},body:JSON.stringify({sessionId:'8f4319',location:'api/trader-deck/news.js',message:'trader-deck-news-debug',data:payload,timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
-}
-
 function cleanInsightText(v) {
   return String(v || '')
     .replace(SOURCE_SUFFIX_RE, '')
@@ -197,24 +191,6 @@ module.exports = async (req, res) => {
     count: merged.length,
     updatedAt: new Date().toISOString(),
   };
-  // #region agent log
-  debugLog({
-    runId: 'initial',
-    hypothesisId: 'H4',
-    step: 'news-aggregation-result',
-    forceRefresh: !!forceRefresh,
-    sourceCounts: {
-      finnhubGeneral: generalItems.length,
-      fmpGeneral: fmpItems.length,
-      finnhubForex: forexItems.length,
-      yahooRss: yahooItems.length
-    },
-    mergedCount: merged.length,
-    range: { from: fromDate || null, to: toDate || null },
-    oldestPublishedAt: merged.length ? merged[merged.length - 1]?.publishedAt || null : null,
-    newestPublishedAt: merged.length ? merged[0]?.publishedAt || null : null
-  });
-  // #endregion
   setCached(CACHE_KEY, payload, CACHE_TTL_MS);
   res.setHeader('Cache-Control', 'private, max-age=30');
   return res.status(200).json({ success: true, ...payload, cached: false });

@@ -432,7 +432,7 @@
   background: rgba(4,5,18,0.5);
   border: 1px solid rgba(107,143,232,0.2);
   border-radius: 40px;
-  cursor: pointer;
+  cursor: default;
   transition: all var(--td-root-transition-s);
   backdrop-filter: blur(12px);
 }
@@ -476,6 +476,26 @@
   color: rgba(255, 255, 255, 0.95);
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+/* Native date picker — replaces modal month grid (no second “floating calendar”) */
+.td-deck-calendar-bar-native-date {
+  color-scheme: dark;
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(107, 143, 232, 0.3);
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.72rem;
+  font-family: var(--td-root-font, system-ui, sans-serif);
+  max-width: 11.5rem;
+  cursor: pointer;
+}
+
+.td-deck-calendar-bar-native-date:focus {
+  outline: 2px solid rgba(107, 143, 232, 0.45);
+  outline-offset: 2px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1090,6 +1110,12 @@
   .td-deck-calendar-bar {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+
+  .td-deck-calendar-bar-native-date {
+    max-width: 100%;
   }
   
   .td-deck-below-header {

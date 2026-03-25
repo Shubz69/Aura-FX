@@ -1,6 +1,6 @@
 /**
  * Compact date bar for Trader Desk. Daily: full date in ALL CAPS (e.g. SUNDAY, 22 MARCH 2026).
- * Weekly: week range in ALL CAPS. Click opens full calendar overlay.
+ * Weekly: week range in ALL CAPS. Native date input for jumping to a day (no modal month grid).
  */
 import React, { useMemo } from 'react';
 
@@ -38,11 +38,12 @@ function getWeekEnd(dateStr) {
 
 export default function TraderDeckCalendarBar({
   selectedDate,
-  calendarMonth,
   period,
   onPrevMonth,
   onNextMonth,
-  onOpenCalendar,
+  onSelectDate,
+  dateMin,
+  dateMax,
 }) {
   const label = useMemo(() => {
     const str = String(selectedDate).slice(0, 10);
@@ -69,31 +70,42 @@ export default function TraderDeckCalendarBar({
     return `${weekday}, ${day || 1} ${monthName} ${year}`.toUpperCase();
   }, [selectedDate, period]);
 
+  const iso = String(selectedDate).slice(0, 10);
+
   return (
     <div
       className="td-deck-calendar-bar"
-      role="button"
-      tabIndex={0}
-      onClick={onOpenCalendar}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenCalendar(); } }}
-      aria-label={`${period === 'weekly' ? 'Week' : 'Date'}: ${label}. Click to open calendar.`}
+      role="group"
+      aria-label={`${period === 'weekly' ? 'Week' : 'Date'}: ${label}`}
     >
       <button
         type="button"
         className="td-deck-calendar-bar-btn"
-        onClick={(e) => { e.stopPropagation(); onPrevMonth(); }}
-        aria-label={period === 'weekly' ? 'Previous week' : 'Previous month'}
+        onClick={() => onPrevMonth()}
+        aria-label={period === 'weekly' ? 'Previous week' : 'Previous day'}
       >
         ‹
       </button>
       <span className="td-deck-calendar-bar-label">
         {label}
       </span>
+      <input
+        type="date"
+        className="td-deck-calendar-bar-native-date"
+        value={/^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : ''}
+        min={dateMin}
+        max={dateMax}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v && /^\d{4}-\d{2}-\d{2}$/.test(v)) onSelectDate(v);
+        }}
+        aria-label={period === 'weekly' ? 'Choose a day (week view follows that day)' : 'Choose date'}
+      />
       <button
         type="button"
         className="td-deck-calendar-bar-btn"
-        onClick={(e) => { e.stopPropagation(); onNextMonth(); }}
-        aria-label={period === 'weekly' ? 'Next week' : 'Next month'}
+        onClick={() => onNextMonth()}
+        aria-label={period === 'weekly' ? 'Next week' : 'Next day'}
       >
         ›
       </button>

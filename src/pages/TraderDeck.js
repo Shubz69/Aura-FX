@@ -6,7 +6,6 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../utils/roles';
-import TraderDeckCalendar from '../components/trader-deck/TraderDeckCalendar';
 import TraderDeckCalendarBar from '../components/trader-deck/TraderDeckCalendarBar';
 import TraderDeckWorldClocks from '../components/trader-deck/TraderDeckWorldClocks';
 import MarketOutlookView from './trader-deck/MarketOutlookView';
@@ -26,6 +25,12 @@ import {
 } from '../utils/traderDeskSessions';
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+function shiftIsoDate(dateStr, deltaDays) {
+  const d = new Date(`${String(dateStr).slice(0, 10)}T12:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + deltaDays);
+  return d.toISOString().slice(0, 10);
+}
 
 const SESSION_UI_TICK_MS = 30000;
 
@@ -91,7 +96,11 @@ export default function TraderDeck() {
   const [subTab, setSubTab] = useState('daily');
   const [selectedDate, setSelectedDate] = useState(today());
   const [calendarMonth, setCalendarMonth] = useState(today().slice(0, 7));
-  const [calendarOverlayOpen, setCalendarOverlayOpen] = useState(false);
+
+  const datePickerBounds = useMemo(() => {
+    const t = today();
+    return { min: shiftIsoDate(t, -365), max: shiftIsoDate(t, 14) };
+  }, []);
 
   const handlePrevMonth = useCallback(() => {
     const [y, m] = calendarMonth.split('-').map(Number);
@@ -142,33 +151,11 @@ export default function TraderDeck() {
   const handleSelectDate = useCallback((date) => {
     setSelectedDate(date);
     setCalendarMonth(date.slice(0, 7));
-    setCalendarOverlayOpen(false);
   }, []);
-
-  const datesWithContent = useMemo(() => ({}), []);
 
   return (
     <AuraTerminalThemeShell>
     <div className="td-layout-page td-deck-with-tabs" id="td-deck-top">
-      {calendarOverlayOpen && (
-        <div className="td-deck-calendar-overlay" role="dialog" aria-modal="true" aria-label="Pick a date">
-          <div className="td-deck-calendar-overlay-backdrop" onClick={() => setCalendarOverlayOpen(false)} />
-          <div className="td-deck-calendar-overlay-content">
-            <TraderDeckCalendar
-              selectedDate={selectedDate}
-              onSelectDate={handleSelectDate}
-              calendarMonth={calendarMonth}
-              onPrevMonth={handlePrevMonth}
-              onNextMonth={handleNextMonth}
-              datesWithContent={datesWithContent}
-            />
-            <button type="button" className="td-deck-calendar-overlay-close" onClick={() => setCalendarOverlayOpen(false)} aria-label="Close calendar">
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
       <div className="td-deck-layout">
         <div className="td-deck-world-clocks-rail">
   <div className="td-deck-world-clocks-container">
@@ -203,11 +190,12 @@ export default function TraderDeck() {
             <div className="td-deck-calendar-bar-wrap">
               <TraderDeckCalendarBar
                 selectedDate={selectedDate}
-                calendarMonth={calendarMonth}
                 period={subTab}
                 onPrevMonth={subTab === 'weekly' ? handlePrevWeek : handlePrevDay}
                 onNextMonth={subTab === 'weekly' ? handleNextWeek : handleNextDay}
-                onOpenCalendar={() => setCalendarOverlayOpen(true)}
+                onSelectDate={handleSelectDate}
+                dateMin={datePickerBounds.min}
+                dateMax={datePickerBounds.max}
               />
             </div>
             <div className="td-deck-header-line-right" aria-hidden="true" />
