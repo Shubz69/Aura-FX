@@ -150,25 +150,7 @@ body.loading-active .navbar {
     inset 0 -2px 16px rgba(234, 169, 96, 0.055);
 }
 
-/* Gold light-streak top edge — prismatic, finer than before */
-.navbar::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent        0%,
-    rgba(180,120,50, 0.20) 10%,
-    rgba(212,141,68, 0.55) 25%,
-    rgba(234,169,96, 0.90) 50%,
-    rgba(248,195,125,0.55) 75%,
-    rgba(180,120,50, 0.20) 90%,
-    transparent        100%
-  );
-  z-index: 2;
-  pointer-events: none;
-}
+/* Top gold streak removed — was .navbar::before prismatic line */
 
 /* Slow shimmer — white + gold + cool navy (reads as “shine through glass”) */
 .navbar::after {
