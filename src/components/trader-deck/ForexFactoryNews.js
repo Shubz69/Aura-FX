@@ -49,7 +49,12 @@ function getEventStatus(ev) {
   return 'upcoming';
 }
 
-export default function ForexFactoryNews({ date, onlyToday: _onlyToday = true }) {
+/**
+ * @param {string} [date] - YYYY-MM-DD; when set, syncs the viewed day to this value.
+ * @param {boolean} [parentControlsDate=false] - When true (e.g. Market Outlook), the parent owns the day:
+ *   hide internal prev/next/date input so one date control drives the panel.
+ */
+export default function ForexFactoryNews({ date, parentControlsDate = false }) {
   const [displayTimeZone] = useState(() => getBrowserTimeZone());
   const [viewDate, setViewDate] = useState(() => {
     if (date && ISO_DATE_RE.test(String(date))) return String(date).slice(0, 10);
@@ -200,12 +205,22 @@ export default function ForexFactoryNews({ date, onlyToday: _onlyToday = true })
     localStorage.setItem('td_ff_impact', JSON.stringify(next));
   };
 
-  const filtered = events
-    .filter((e) => {
-      const providerDate = typeof e?.date === 'string' ? e.date.slice(0, 10) : '';
-      if (providerDate) return providerDate === viewDate;
+  /** Prefer wall-clock bucket from timestamp (viewer TZ); fall back to provider date string when time unknown. */
+  function eventMatchesViewDate(e) {
+    const ts = parseEventTimestamp(e);
+    if (ts) {
       return getEventDateKeyLocal(e, displayTimeZone) === viewDate;
-    })
+    }
+    const providerDate = typeof e?.date === 'string' ? e.date.slice(0, 10) : '';
+    if (providerDate && ISO_DATE_RE.test(providerDate)) {
+      return providerDate === viewDate;
+    }
+    return getEventDateKeyLocal(e, displayTimeZone) === viewDate;
+  }
+
+  const eventsForViewDate = events.filter(eventMatchesViewDate);
+
+  const filtered = eventsForViewDate
     .filter(e => filterCurrencies.includes(e.currency))
     .filter(e => filterImpact.includes(e.impact))
     .sort((a, b) => {
@@ -214,7 +229,20 @@ export default function ForexFactoryNews({ date, onlyToday: _onlyToday = true })
       return ta - tb;
     });
 
+  const hiddenByFilters =
+    eventsForViewDate.length > 0 &&
+    filtered.length === 0 &&
+    (eventsForViewDate.some(e => !filterCurrencies.includes(e.currency)) ||
+      eventsForViewDate.some(e => !filterImpact.includes(e.impact)));
+
   const highCount = filtered.filter(e => e.impact === 'high').length;
+
+  const resetFilters = () => {
+    setFCurr([...ALL_CURRENCIES]);
+    setFImpact([...ALL_IMPACTS]);
+    localStorage.setItem('td_ff_currencies', JSON.stringify(ALL_CURRENCIES));
+    localStorage.setItem('td_ff_impact', JSON.stringify(ALL_IMPACTS));
+  };
 
   return (
     <div className="td-ff-wrap">
@@ -258,56 +286,63 @@ export default function ForexFactoryNews({ date, onlyToday: _onlyToday = true })
       {/* Filter panel */}
       {showFilter && (
         <div className="td-ff-filter-panel">
-          <div className="td-ff-filter-section td-ff-filter-section--date">
-            <span className="td-ff-filter-label">Browse date</span>
-            <div className="td-ff-date-row">
-              <button
-                type="button"
-                className="td-ff-date-nav"
-                onClick={() => setViewDate((d) => shiftIsoDate(d, -1))}
-                aria-label="Previous day"
-              >
-                ‹
-              </button>
-              <input
-                type="date"
-                className="td-ff-date-input"
-                value={viewDate}
-                max={shiftIsoDate(todayInTimeZone(displayTimeZone), 14)}
-                min={shiftIsoDate(todayInTimeZone(displayTimeZone), -365)}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (v && ISO_DATE_RE.test(v)) setViewDate(v);
-                }}
-                aria-label="Calendar date"
-              />
-              <button
-                type="button"
-                className="td-ff-date-nav"
-                onClick={() => setViewDate((d) => shiftIsoDate(d, 1))}
-                aria-label="Next day"
-              >
-                ›
-              </button>
-              <button
-                type="button"
-                className="td-ff-date-today"
-                onClick={() => setViewDate(todayInTimeZone(displayTimeZone))}
-              >
-                Today
-              </button>
-              {!isViewingToday && (
+          {!parentControlsDate && (
+            <div className="td-ff-filter-section td-ff-filter-section--date">
+              <span className="td-ff-filter-label">Browse date</span>
+              <div className="td-ff-date-row">
                 <button
                   type="button"
-                  className="td-ff-date-refresh"
-                  onClick={() => fetchEvents(true)}
+                  className="td-ff-date-nav"
+                  onClick={() => setViewDate((d) => shiftIsoDate(d, -1))}
+                  aria-label="Previous day"
                 >
-                  Refresh
+                  ‹
                 </button>
-              )}
+                <input
+                  type="date"
+                  className="td-ff-date-input"
+                  value={viewDate}
+                  max={shiftIsoDate(todayInTimeZone(displayTimeZone), 14)}
+                  min={shiftIsoDate(todayInTimeZone(displayTimeZone), -365)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v && ISO_DATE_RE.test(v)) setViewDate(v);
+                  }}
+                  aria-label="Calendar date"
+                />
+                <button
+                  type="button"
+                  className="td-ff-date-nav"
+                  onClick={() => setViewDate((d) => shiftIsoDate(d, 1))}
+                  aria-label="Next day"
+                >
+                  ›
+                </button>
+                <button
+                  type="button"
+                  className="td-ff-date-today"
+                  onClick={() => setViewDate(todayInTimeZone(displayTimeZone))}
+                >
+                  Today
+                </button>
+                {!isViewingToday && (
+                  <button
+                    type="button"
+                    className="td-ff-date-refresh"
+                    onClick={() => fetchEvents(true)}
+                  >
+                    Refresh
+                  </button>
+                )}
+              </div>
+              <p className="td-ff-date-hint">Prev / Fcst / Actual from Forex Factory and data partners for this day.</p>
             </div>
-            <p className="td-ff-date-hint">Prev / Fcst / Actual from Forex Factory and data partners for this day.</p>
-          </div>
+          )}
+          {parentControlsDate && (
+            <div className="td-ff-filter-section td-ff-filter-section--date">
+              <p className="td-ff-date-hint">Showing the day selected in Market Outlook (use the outlook date control to change).</p>
+            </div>
+          )}
           <div className="td-ff-filter-section">
             <span className="td-ff-filter-label">Currencies</span>
             <div className="td-ff-filter-chips">
@@ -362,8 +397,19 @@ export default function ForexFactoryNews({ date, onlyToday: _onlyToday = true })
           <span>
             {events.length === 0
               ? 'No calendar data for this date.'
-              : 'No events match your filters for this date.'}
+              : eventsForViewDate.length === 0
+                ? 'No events in the feed for this calendar day (try Refresh or pick another day).'
+                : hiddenByFilters
+                  ? 'Events for this day are hidden by your currency or impact filters.'
+                  : 'No events match your filters for this date.'}
           </span>
+          {hiddenByFilters && (
+            <div className="td-ff-empty-actions">
+              <button type="button" className="td-ff-date-today" onClick={resetFilters}>
+                Reset filters
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="td-ff-table-wrap">

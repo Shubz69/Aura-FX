@@ -328,6 +328,7 @@
 
 .td-ff-empty {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 28px 20px;
@@ -336,6 +337,11 @@
 }
 
 .td-ff-empty-icon { font-size: 1.2rem; }
+
+.td-ff-empty-actions {
+  flex-basis: 100%;
+  margin-top: 4px;
+}
 
 /* ── Table ─────────────────────────────────────────────────── */
 .td-ff-table-wrap {

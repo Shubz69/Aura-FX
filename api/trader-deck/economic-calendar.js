@@ -11,6 +11,8 @@ require('../utils/suppress-warnings');
  *   3. If still missing (post-release): Forex Factory **HTML** scrape per calendar day
  *   4. Else FMP-only / TE-only / static fallback
  * Cached ~45s server-side (bump CACHE_KEY when changing merge logic).
+ *
+ * Debug: set env DEBUG_TRADER_DECK_CALENDAR=1 to log ForexFactory ingest skip counts and feed errors.
  */
 
 const cheerio = require('cheerio');
@@ -538,6 +540,17 @@ async function enrichForexFactoryWithActuals(events, days, forceRefresh) {
 
 // --- Provider 1: Forex Factory JSON CDN (official FF data feed, no API key needed) ---
 async function fromForexFactory(days = 7) {
+  const debugIngest = process.env.DEBUG_TRADER_DECK_CALENDAR === '1';
+  const ingestStats = {
+    feedsAttempted: 0,
+    feedsHttpFail: 0,
+    feedsNotArray: 0,
+    skipNoTimestamp: 0,
+    skipNoTitleOrCountry: 0,
+    skipNonEconomic: 0,
+    skipDateWindow: 0,
+    accepted: 0,
+  };
   try {
     const now = new Date();
     const cutoff = new Date(now.getTime() + days * 86400 * 1000);
@@ -550,6 +563,7 @@ async function fromForexFactory(days = 7) {
     ];
 
     for (const feedUrl of feeds) {
+      ingestStats.feedsAttempted += 1;
       try {
         const res = await fetchWithTimeout(feedUrl, {
           headers: {
@@ -557,10 +571,19 @@ async function fromForexFactory(days = 7) {
             'Accept': 'application/json',
           },
         }, 10000);
-        if (!res.ok) continue;
+        if (!res.ok) {
+          ingestStats.feedsHttpFail += 1;
+          if (debugIngest) {
+            console.debug('[trader-deck/economic-calendar] FF feed HTTP', res.status, feedUrl);
+          }
+          continue;
+        }
 
         const raw = await res.json();
-        if (!Array.isArray(raw)) continue;
+        if (!Array.isArray(raw)) {
+          ingestStats.feedsNotArray += 1;
+          continue;
+        }
 
         // Today's date in ET (FF dates are expressed in ET)
         const etTodayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
@@ -568,10 +591,19 @@ async function fromForexFactory(days = 7) {
         for (const ev of raw) {
           // ev.date is ISO with ET offset e.g. "2025-03-18T10:00:00-0400"
           const ts = parseDateToTimestamp(ev.date);
-          if (!ts) continue;
+          if (!ts) {
+            ingestStats.skipNoTimestamp += 1;
+            continue;
+          }
           const evDate = new Date(ts);
-          if (!ev.title || !ev.country) continue;
-          if ((ev.impact || '').toLowerCase() === 'non-economic') continue;
+          if (!ev.title || !ev.country) {
+            ingestStats.skipNoTitleOrCountry += 1;
+            continue;
+          }
+          if ((ev.impact || '').toLowerCase() === 'non-economic') {
+            ingestStats.skipNonEconomic += 1;
+            continue;
+          }
 
           // Extract date/time from the raw string (ET — what traders expect)
           const rawDate = ev.date || '';
@@ -580,7 +612,10 @@ async function fromForexFactory(days = 7) {
 
           // Include ALL of today's events (even past ones — needed to show actuals)
           // Skip events from previous days or beyond the cutoff
-          if (dateStr < etTodayStr || evDate > cutoff) continue;
+          if (dateStr < etTodayStr || evDate > cutoff) {
+            ingestStats.skipDateWindow += 1;
+            continue;
+          }
 
           const timeMatch = rawDate.match(/T(\d{2}):(\d{2})/);
           let timeStr = 'All Day';
@@ -604,10 +639,18 @@ async function fromForexFactory(days = 7) {
             previous: ev.previous,
             source: 'ForexFactory',
           }, 'ForexFactory'));
+          ingestStats.accepted += 1;
         }
-      } catch (_) {
+      } catch (err) {
+        if (debugIngest) {
+          console.debug('[trader-deck/economic-calendar] FF feed error', feedUrl, err && err.message);
+        }
         // Try next feed
       }
+    }
+
+    if (debugIngest) {
+      console.debug('[trader-deck/economic-calendar] fromForexFactory ingest', ingestStats, 'totalEvents', allEvents.length);
     }
 
     return allEvents.length > 0 ? allEvents : null;

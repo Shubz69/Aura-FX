@@ -494,7 +494,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
           {/* Live economic calendar — daily view only */}
           {period !== 'weekly' && (
             <div className="td-outlook-ff-section td-deck-mo-ff">
-              <ForexFactoryNews date={selectedDate} onlyToday={true} />
+              <ForexFactoryNews date={selectedDate} parentControlsDate />
             </div>
           )}
       </div>
