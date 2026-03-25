@@ -520,6 +520,8 @@ const messagesContainerRef = useRef(null);
 const latestUserFetchInFlightRef = useRef(false);
 const latestUserBackoffUntilRef = useRef(0);
 const latestUserFailCountRef = useRef(0);
+const pollingActiveRef = useRef(false);
+
 
   const [showPptxModal, setShowPptxModal] = useState(false);
     const [selectedPptx, setSelectedPptx] = useState(null);
@@ -1202,7 +1204,7 @@ useEffect(() => {
     return () => {
         isMounted = false;
     };
-}, [showJournalModal]); // Only run when modal opens
+}, [showJournalModal, isAuthenticated, userId, journalSelectedDate]); // ADD missing dependencies
 
 
 
@@ -1497,7 +1499,10 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
 
     return sortedChannels;
 }, [isAuthenticated, sortChannels]);
-    
+    // Update refreshChannelList ref when it changes
+useEffect(() => {
+    refreshChannelListRef.current = refreshChannelList;
+}, [refreshChannelList]);
     // Initialize WebSocket connection for real-time messaging
     const enableRealtime = useMemo(() => {
         if (process.env.REACT_APP_ENABLE_WEBSOCKETS === 'false') return false;
@@ -3337,14 +3342,19 @@ if (window.requestAnimationFrame) {
         }
     }, []);
 
-    // Load channels on mount/auth change only - NOT on channel navigation (avoids reset/flash)
-    // Support ?channel= for notification deep link (e.g. /community?channel=general&jump=123)
-    useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const channelFromQuery = params.get('channel');
-        refreshChannelList({ selectChannelId: channelFromQuery || channelIdParam || undefined });
-    }, [refreshChannelList, location.search, channelIdParam]);
-
+// Load channels on mount/auth change only - NOT on channel navigation (avoids reset/flash)
+// Support ?channel= for notification deep link (e.g. /community?channel=general&jump=123)
+useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const channelFromQuery = params.get('channel');
+    refreshChannelListRef.current({ selectChannelId: channelFromQuery || channelIdParam || undefined });
+}, [location.search, channelIdParam]); // REMOVED refreshChannelList from dependencies
+// ADD THIS LINE:
+const refreshChannelListRef = useRef(refreshChannelList);
+// Update refreshChannelList ref when it changes
+useEffect(() => {
+    refreshChannelListRef.current = refreshChannelList;
+}, [refreshChannelList]);
     // Periodically refresh channels so new ones appear for everyone
     useEffect(() => {
         if (!isAuthenticated) return;
@@ -3511,12 +3521,16 @@ if (window.requestAnimationFrame) {
 
     // Backup poll for new messages only. Real-time path is WebSocket — aggressive 200–400ms polling
     // caused constant network + setState work and froze the tab ("Page Unresponsive") on busy channels.
-    useEffect(() => {
-        if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
+ useEffect(() => {
+    if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
+    
+    // Prevent multiple polling setups
+    if (pollingActiveRef.current) return;
+    pollingActiveRef.current = true;
 
-        const POLL_MS_WS_UP = 12000;
-        const POLL_MS_WS_DOWN = 3000;
-        const pollInterval = isConnected ? POLL_MS_WS_UP : POLL_MS_WS_DOWN;
+    const POLL_MS_WS_UP = 12000;
+    const POLL_MS_WS_DOWN = 3000;
+    const pollInterval = isConnected ? POLL_MS_WS_UP : POLL_MS_WS_DOWN;
 
         const pollMessages = async () => {
             if (messagesPollInFlightRef.current) return;
@@ -3667,7 +3681,7 @@ if (window.requestAnimationFrame) {
             document.removeEventListener('visibilitychange', onPollVis);
             if (pollTimer) clearInterval(pollTimer);
         };
-    }, [selectedChannel?.id, isAuthenticated, isConnected, storedUser, userId, updateChannelBadge]);
+    }, [selectedChannel?.id, isAuthenticated, storedUser, userId, updateChannelBadge]);
 
     // Pusher realtime subscription (production - when configured)
     useEffect(() => {
@@ -7296,248 +7310,184 @@ if (!isAuthenticated && !hasToken) {
                 )}
             </div>
 
-            {/* Channel Manager Modal */}
-            {(isAdminUser || isSuperAdminUser) && showChannelManager && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        inset: 0,
-                        background: 'rgba(0, 0, 0, 0.6)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 2000,
-                        padding: '20px'
-                    }}
+{/* Channel Manager Modal */}
+{(isAdminUser || isSuperAdminUser) && showChannelManager && (
+    <div className="channel-manager-overlay" onClick={() => {
+        if (!channelActionLoading) {
+            setShowChannelManager(false);
+        }
+    }}>
+        <div className="channel-manager-modal" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="channel-manager-header">
+                <h3>CHANNEL MANAGEMENT</h3>
+                <button 
+                    type="button" 
+                    className="channel-manager-close"
                     onClick={() => {
                         if (!channelActionLoading) {
                             setShowChannelManager(false);
                         }
                     }}
                 >
-                    <div
-                        style={{
-                            background: '#1f2024',
-                            borderRadius: '16px',
-                            padding: '24px',
-                            width: '100%',
-                            maxWidth: '520px',
-                            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
-                            border: '1px solid rgba(139, 92, 246, 0.2)'
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                            <h3 style={{ margin: 0, color: '#fff' }}>Manage Channels</h3>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (!channelActionLoading) {
-                                        setShowChannelManager(false);
-                                    }
-                                }}
-                                style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: '#9ca3af',
-                                    cursor: 'pointer',
-                                    fontSize: '1.2rem'
-                                }}
-                            >
-                                <FaTimes />
-                            </button>
-                        </div>
+                    <FaTimes />
+                </button>
+            </div>
 
-                        {channelActionStatus && (
-                            <div
-                                style={{
-                                    marginBottom: '16px',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    fontSize: '0.85rem',
-                                    background: channelActionStatus.type === 'success'
-                                        ? 'rgba(34,197,94,0.1)'
-                                        : 'rgba(248,113,113,0.1)',
-                                    border: `1px solid ${channelActionStatus.type === 'success' ? 'rgba(34,197,94,0.4)' : 'rgba(248,113,113,0.4)'}`,
-                                    color: channelActionStatus.type === 'success' ? '#34d399' : '#f87171'
-                                }}
-                            >
-                                {channelActionStatus.message}
-                            </div>
-                        )}
-
-                        <form onSubmit={handleCreateChannel} style={{ display: 'grid', gap: '12px', marginBottom: '20px' }}>
-                            <div style={{ display: 'grid', gap: '8px' }}>
-                                <label style={{ fontSize: '0.75rem', textTransform: 'none', letterSpacing: '0.05em', color: '#9ca3af' }}>
-                                    Channel Name
-                                </label>
-                                <input
-                                    type="text"
-                                    value={newChannelName}
-                                    onChange={(e) => setNewChannelName(e.target.value)}
-                                    placeholder="e.g. Smart Money Concepts"
-                                    required
-                                    style={{
-                                        background: '#111827',
-                                        border: '1px solid rgba(255,255,255,0.08)',
-                                        borderRadius: '8px',
-                                        padding: '10px 12px',
-                                        color: 'white'
-                                    }}
-                                />
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '12px' }}>
-                                <div style={{ flex: 1, display: 'grid', gap: '8px' }}>
-                                    <label style={{ fontSize: '0.75rem', textTransform: 'none', letterSpacing: '0.05em', color: '#9ca3af' }}>
-                                        Category
-                                    </label>
-                                    <select
-                                        value={newChannelCategory}
-                                        onChange={(e) => setNewChannelCategory(e.target.value)}
-                                        style={{
-                                            background: '#111827',
-                                            border: '1px solid rgba(255,255,255,0.08)',
-                                            borderRadius: '8px',
-                                            padding: '10px 12px',
-                                            color: 'white'
-                                        }}
-                                    >
-                                        <option value="forums">Forums</option>
-                                        <option value="general">General</option>
-                                        <option value="support">Support</option>
-                                        <option value="premium">Premium</option>
-                                        <option value="a7fx">A7FX</option>
-                                        <option value="staff">Staff</option>
-                                    </select>
-                                </div>
-                                <div style={{ flex: 1, display: 'grid', gap: '8px' }}>
-                                    <label style={{ fontSize: '0.75rem', textTransform: 'none', letterSpacing: '0.05em', color: '#9ca3af' }}>
-                                        Access
-                                    </label>
-                                    <select
-                                        value={newChannelAccess}
-                                        onChange={(e) => setNewChannelAccess(e.target.value)}
-                                        style={{
-                                            background: '#111827',
-                                            border: '1px solid rgba(255,255,255,0.08)',
-                                            borderRadius: '8px',
-                                            padding: '10px 12px',
-                                            color: 'white'
-                                        }}
-                                    >
-                                        <option value="free">Free - No subscription required</option>
-                                        <option value="open">Open - Everyone can view and post</option>
-                                        <option value="read-only">Read Only - View only</option>
-                                        <option value="admin-only">Admin Only</option>
-                                        <option value="premium">Premium - Subscription required (Aura FX £99/mo)</option>
-                                        <option value="a7fx">A7FX Elite - Subscription required (A7FX £250/mo)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'grid', gap: '8px' }}>
-                                <label style={{ fontSize: '0.75rem', textTransform: 'none', letterSpacing: '0.05em', color: '#9ca3af' }}>
-                                    Description
-                                </label>
-                                <textarea
-                                    value={newChannelDescription}
-                                    onChange={(e) => setNewChannelDescription(e.target.value)}
-                                    rows={3}
-                                    placeholder="Describe the purpose of this channel..."
-                                    style={{
-                                        background: '#111827',
-                                        border: '1px solid rgba(255,255,255,0.08)',
-                                        borderRadius: '8px',
-                                        padding: '10px 12px',
-                                        color: 'white',
-                                        resize: 'vertical'
-                                    }}
-                                />
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={channelActionLoading}
-                                style={{
-                                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, #6D28D9 100%)',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    padding: '12px',
-                                    color: 'white',
-                                    fontWeight: 600,
-                                    cursor: channelActionLoading ? 'not-allowed' : 'pointer',
-                                    opacity: channelActionLoading ? 0.6 : 1,
-                                    transition: 'transform 0.2s ease'
-                                }}
-                                onMouseEnter={(e) => {
-                                    if (!channelActionLoading) {
-                                        e.currentTarget.style.transform = 'translateY(-2px)';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                }}
-                            >
-                                {channelActionLoading ? 'Creating...' : 'Create Channel'}
-                            </button>
-                        </form>
-
-                        <div style={{ marginBottom: '8px', color: '#9ca3af', fontSize: '0.75rem', textTransform: 'none', letterSpacing: '0.05em' }}>
-                            Existing Channels
-                        </div>
-
-                        <div style={{ maxHeight: '220px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                            {channelList.filter(channel => !protectedChannelIds.includes(channel.id)).length === 0 ? (
-                                <div style={{ padding: '16px', color: '#9ca3af', fontSize: '0.85rem' }}>
-                                    No custom channels yet.
-                                </div>
-                            ) : (
-                                channelList
-                                    .filter(channel => !protectedChannelIds.includes(channel.id))
-                                    .map(channel => (
-                                        <div
-                                            key={channel.id}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                padding: '12px 16px',
-                                                borderBottom: '1px solid rgba(255,255,255,0.05)'
-                                            }}
-                                        >
-                                            <div>
-                                                <div style={{ color: 'white', fontWeight: 600, fontSize: '0.9rem' }}>
-                                                    {channel.displayName || channel.name}
-                                                </div>
-                                                <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>
-                                                    {(channel.category || 'general')} · {(channel.accessLevel || 'open')}
-                                                </div>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleDeleteChannel(channel)}
-                                                disabled={channelActionLoading}
-                                                style={{
-                                                    background: 'transparent',
-                                                    border: '1px solid rgba(248,113,113,0.4)',
-                                                    color: '#fca5a5',
-                                                    padding: '6px 10px',
-                                                    borderRadius: '6px',
-                                                    cursor: channelActionLoading ? 'not-allowed' : 'pointer',
-                                                    fontSize: '0.75rem'
-                                                }}
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    ))
-                            )}
-                        </div>
-                    </div>
+            {/* Status Message */}
+            {channelActionStatus && (
+                <div className={`channel-manager-status ${channelActionStatus.type}`}>
+                    <span>{channelActionStatus.type === 'success' ? '✨' : '⚠️'}</span>
+                    {channelActionStatus.message}
                 </div>
             )}
 
+            {/* Form */}
+            <form className="channel-manager-form" onSubmit={handleCreateChannel}>
+                <div className="channel-manager-form-group">
+                    <div className="channel-manager-label">
+                        <span>#</span>
+                        <span>CHANNEL NAME</span>
+                    </div>
+                    <input
+                        type="text"
+                        className="channel-manager-input"
+                        value={newChannelName}
+                        onChange={(e) => setNewChannelName(e.target.value)}
+                        placeholder="e.g., Smart Money Concepts"
+                        required
+                    />
+                </div>
+
+                <div className="channel-manager-row">
+                    <div className="channel-manager-form-group">
+                        <div className="channel-manager-label">
+                            <span>📁</span>
+                            <span>CATEGORY</span>
+                        </div>
+                        <select
+                            className="channel-manager-select"
+                            value={newChannelCategory}
+                            onChange={(e) => setNewChannelCategory(e.target.value)}
+                        >
+                            <option value="forums">📈 Forums</option>
+                            <option value="general">💬 General</option>
+                            <option value="support">🆘 Support</option>
+                            <option value="premium">⭐ Premium</option>
+                            <option value="a7fx">💎 A7FX</option>
+                            <option value="staff">👨‍💼 Staff</option>
+                        </select>
+                    </div>
+
+                    <div className="channel-manager-form-group">
+                        <div className="channel-manager-label">
+                            <span>🔒</span>
+                            <span>ACCESS</span>
+                        </div>
+                        <select
+                            className="channel-manager-select"
+                            value={newChannelAccess}
+                            onChange={(e) => setNewChannelAccess(e.target.value)}
+                        >
+                            <option value="free">🌱 Free</option>
+                            <option value="open">🔓 Open</option>
+                            <option value="read-only">📖 Read Only</option>
+                            <option value="admin-only">👑 Admin Only</option>
+                            <option value="premium">✨ Premium (£99/mo)</option>
+                            <option value="a7fx">💎 A7FX Elite (£250/mo)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="channel-manager-form-group">
+                    <div className="channel-manager-label">
+                        <span>📝</span>
+                        <span>DESCRIPTION</span>
+                    </div>
+                    <textarea
+                        className="channel-manager-textarea"
+                        value={newChannelDescription}
+                        onChange={(e) => setNewChannelDescription(e.target.value)}
+                        rows="3"
+                        placeholder="Describe the purpose of this channel..."
+                    />
+                </div>
+
+                <button
+                    type="submit"
+                    className="channel-manager-submit"
+                    disabled={channelActionLoading}
+                >
+                    <span>✨</span>
+                    {channelActionLoading ? 'Creating...' : 'Create Channel'}
+                    <span>→</span>
+                </button>
+            </form>
+
+            {/* Existing Channels Section */}
+            <div className="channel-manager-section-header">
+                <span>📋</span>
+                <span className="label">Existing Channels</span>
+                <span className="count-badge">
+                    {channelList.filter(channel => !protectedChannelIds.includes(channel.id)).length} channels
+                </span>
+            </div>
+
+            <div className="channel-manager-list">
+                {channelList.filter(channel => !protectedChannelIds.includes(channel.id)).length === 0 ? (
+                    <div className="channel-manager-empty">
+                        <span className="channel-manager-empty-icon">📭</span>
+                        <div className="channel-manager-empty-text">No custom channels yet</div>
+                        <div className="channel-manager-empty-sub">Create your first channel above</div>
+                    </div>
+                ) : (
+                    channelList
+                        .filter(channel => !protectedChannelIds.includes(channel.id))
+                        .map(channel => {
+                            const accessLevel = (channel.accessLevel || 'open').toLowerCase();
+                            const badgeClass = accessLevel === 'premium' ? 'premium' : 
+                                             accessLevel === 'a7fx' || accessLevel === 'elite' ? 'a7fx' : 'default';
+                            
+                            return (
+                                <div key={channel.id} className="channel-manager-item">
+                                    <div className="channel-manager-item-info">
+                                        <div className="channel-manager-item-name">
+                                            <span className="icon">
+                                                {channel.category === 'premium' ? '✨' : 
+                                                 channel.category === 'a7fx' ? '💎' : 
+                                                 channel.category === 'announcements' ? '📢' : '#'}
+                                            </span>
+                                            <span className="name">{channel.displayName || channel.name}</span>
+                                            <span className={`channel-manager-item-badge ${badgeClass}`}>
+                                                {accessLevel === 'premium' ? 'Premium' : 
+                                                 accessLevel === 'a7fx' || accessLevel === 'elite' ? 'Elite' : 
+                                                 accessLevel === 'admin-only' ? 'Admin' :
+                                                 accessLevel === 'read-only' ? 'Read Only' : 
+                                                 accessLevel === 'free' ? 'Free' : 'Open'}
+                                            </span>
+                                        </div>
+                                        <div className="channel-manager-item-meta">
+                                            <span>{getCategoryIcon(channel.category)}</span>
+                                            <span>{formatCategoryName(channel.category || 'general')}</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="channel-manager-delete"
+                                        onClick={() => handleDeleteChannel(channel)}
+                                        disabled={channelActionLoading}
+                                    >
+                                        <FaTrash size={10} />
+                                        Delete
+                                    </button>
+                                </div>
+                            );
+                        })
+                )}
+            </div>
+        </div>
+    </div>
+)}
             {/* Delete Message Confirmation Modal */}
             {deleteMessageModal && (
                 <div

@@ -2,7 +2,7 @@
    HOME.CSS — AURA TERMINAL | Premium Redesign v2
    Enhanced: refined gold system, premium typography, deeper
    spatial layers, smoother transitions, polished components
-   + Glassy iPad frame + Touch 3D rotation for mobile
+   + Dashboard Card (replaces iPad) + Touch 3D rotation
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
@@ -62,20 +62,20 @@
     /* Accent line */
     --line-gold:     linear-gradient(90deg, transparent, var(--eaa-core) 30%, var(--eaa-bright) 70%, transparent);
 
-    /* ── iPad Glass Frame tokens ── */
-    --ipad-frame-bg:      rgba(18, 16, 36, 0.55);
-    --ipad-frame-border:  rgba(255, 255, 255, 0.13);
-    --ipad-frame-blur:    18px;
-    --ipad-frame-sat:     1.18;
-    --ipad-frame-shadow:
-        0 30px 60px rgba(0,0,0,.82),
-        0 60px 100px rgba(0,0,0,.52),
-        0 100px 160px rgba(0,0,0,.28),
-        0 0 0 1px rgba(234,169,96,0.10),
-        inset 0 1px 0 rgba(255,255,255,0.22),
+    /* ── Dashboard Card Frame tokens ── */
+    --card-frame-bg:      rgba(8, 9, 22, 0.72);
+    --card-frame-border:  rgba(255, 255, 255, 0.10);
+    --card-frame-blur:    22px;
+    --card-frame-sat:     1.22;
+    --card-frame-shadow:
+        0 28px 56px rgba(0,0,0,.88),
+        0 56px 88px rgba(0,0,0,.54),
+        0 88px 140px rgba(0,0,0,.30),
+        0 0 0 1px rgba(234,169,96,0.12),
+        inset 0 1px 0 rgba(255,255,255,0.18),
         inset 0 -1px 0 rgba(234,169,96,0.06),
-        inset 1px 0 0 rgba(255,255,255,0.09),
-        inset -1px 0 0 rgba(255,255,255,0.05);
+        inset 1px 0 0 rgba(255,255,255,0.07),
+        inset -1px 0 0 rgba(255,255,255,0.04);
 }
 
 .home-container,
@@ -457,7 +457,10 @@ html, body {
 .partner-logo-icon { font-size: .86rem; color: rgba(234,169,96,.55); }
 
 /* ══════════════════════════════════════════════
-   3D iPAD CARD SCENE — GLASSY FRAME REDESIGN
+   DASHBOARD CARD SCENE
+   Replaces the iPad — matches reference image:
+   a sleek, glassy trading terminal card with
+   3D tilt, touch rotation, and image slideshow.
 ══════════════════════════════════════════════ */
 .ipad-scene {
     width: 100%; max-width: 580px;
@@ -465,7 +468,6 @@ html, body {
     position: relative;
     padding-bottom: 36px; padding-right: 8px;
     cursor: none;
-    /* Allow touch events without hijacking page scroll */
     touch-action: none;
     -webkit-user-select: none;
     user-select: none;
@@ -476,96 +478,130 @@ html, body {
     transform-style: preserve-3d;
     transform: translateY(0px) rotateX(7deg) rotateY(-13deg);
     will-change: transform;
-    /* Smooth spring-like return after touch release */
     transition: transform 0.08s linear;
 }
 
-/* When actively being dragged — no transition lag */
 .ipad-wrap.is-dragging {
     transition: none;
 }
 
-/* When returning to rest — smooth spring */
 .ipad-wrap.is-resting {
     transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ── iPad body — NOW GLASSY ── */
+/* ── Dashboard Card Body — replaces ipad-body ── */
 .ipad-body {
     width: 100%;
-    border-radius: 28px;
+    border-radius: 20px;
 
-    /* Glassy frame matching site theme */
-    background: var(--ipad-frame-bg);
-    backdrop-filter: blur(var(--ipad-frame-blur)) saturate(var(--ipad-frame-sat));
-    -webkit-backdrop-filter: blur(var(--ipad-frame-blur)) saturate(var(--ipad-frame-sat));
+    /* Rich glassy dark card matching reference */
+    background: var(--card-frame-bg);
+    backdrop-filter: blur(var(--card-frame-blur)) saturate(var(--card-frame-sat));
+    -webkit-backdrop-filter: blur(var(--card-frame-blur)) saturate(var(--card-frame-sat));
 
-    border: 1px solid var(--ipad-frame-border);
-    box-shadow: var(--ipad-frame-shadow);
+    border: 1px solid var(--card-frame-border);
+    box-shadow: var(--card-frame-shadow);
 
     position: relative; z-index: 4;
     overflow: hidden;
 }
 
-/* Glassy top-edge shimmer — replaces the old metal gradient */
+/* Top shimmer line — gold-tinted glass edge */
 .ipad-body::before {
     content: '';
     position: absolute; top: 0; left: 0; right: 0;
     height: 1px;
     background: linear-gradient(90deg,
         transparent 0%,
-        rgba(255,255,255,0.28) 28%,
-        rgba(234,169,96,0.22) 54%,
-        rgba(255,255,255,0.14) 78%,
+        rgba(255,255,255,0.32) 20%,
+        rgba(234,169,96,0.28) 50%,
+        rgba(255,255,255,0.16) 76%,
         transparent 100%);
     z-index: 10; pointer-events: none;
 }
 
-/* Inner aurora-like glass tint — subtle gold ambient */
+/* Inner ambient glass tint */
 .ipad-body::after {
     content: '';
     position: absolute; inset: 0;
     background:
-        radial-gradient(ellipse at 20% 0%,  rgba(234,169,96,0.07)  0%, transparent 55%),
-        radial-gradient(ellipse at 80% 100%, rgba(120,100,200,0.04) 0%, transparent 52%);
-    pointer-events: none; z-index: 1; border-radius: 28px;
+        radial-gradient(ellipse at 15% 0%,  rgba(234,169,96,0.09)  0%, transparent 52%),
+        radial-gradient(ellipse at 85% 100%, rgba(100,80,180,0.05)  0%, transparent 48%);
+    pointer-events: none; z-index: 1; border-radius: 20px;
 }
 
-/* Camera + speaker bar (top) */
+/* ── Dashboard card top header bar ── */
 .ipad-topbar {
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-content: space-between;
     gap: .80rem;
-    padding: .65rem 1.5rem .50rem;
-    background: rgba(0,0,0,0.10);
-    /* Glass tint on topbar */
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    padding: .75rem 1.2rem .60rem;
+    background: rgba(0,0,0,0.18);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     position: relative; z-index: 5;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.ipad-camera {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: radial-gradient(circle at 38% 38%, #2A2A2C, #111113);
-    border: 1px solid rgba(255,255,255,.10);
-    box-shadow: 0 0 0 2px rgba(234,169,96,0.08), 0 0 0 1px rgba(0,0,0,.6) inset;
-}
-.ipad-speaker {
-    width: 64px; height: 5px; border-radius: 3px;
-    background: rgba(255,255,255,.07);
-    border: 1px solid rgba(255,255,255,.06);
-    box-shadow: inset 0 1px 1px rgba(0,0,0,.4);
+    border-bottom: 1px solid rgba(255,255,255,0.055);
 }
 
-/* Screen area */
-.ipad-screen {
-    margin: 0 .90rem;
+/* Brand / title area in top bar */
+.ipad-topbar-brand {
+    display: flex; align-items: center; gap: .55rem;
+}
+.ipad-topbar-logo {
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--eaa-core); font-size: .80rem; font-weight: 700;
+    background: rgba(234,169,96,.10);
+    border: 1px solid rgba(234,169,96,.22);
     border-radius: 6px;
-    background: #000;
+}
+.ipad-topbar-title {
+    font-family: var(--font); font-size: .68rem; font-weight: 700;
+    color: rgba(255,255,255,.90); letter-spacing: .18em;
+    text-transform: uppercase;
+}
+
+/* Live indicator dot on top bar */
+.ipad-topbar-live {
+    display: flex; align-items: center; gap: .38rem;
+    font-family: var(--font); font-size: .58rem; font-weight: 600;
+    color: var(--up); letter-spacing: .16em; text-transform: uppercase;
+}
+.ipad-topbar-live-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--up);
+    box-shadow: 0 0 6px rgba(15,217,138,.50);
+    animation: livePulse 1.8s ease-in-out infinite;
+}
+@keyframes livePulse {
+    0%,100% { opacity:.60; transform: scale(.80); }
+    50%     { opacity:1;   transform: scale(1.30); }
+}
+
+/* User avatar area on right of top bar */
+.ipad-topbar-user {
+    display: flex; align-items: center; gap: .46rem;
+}
+.ipad-topbar-avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(234,169,96,.30), rgba(180,120,60,.20));
+    border: 1px solid rgba(234,169,96,.28);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .62rem; color: var(--eaa-core); font-weight: 700;
+}
+.ipad-topbar-username {
+    font-family: var(--font); font-size: .60rem; font-weight: 600;
+    color: rgba(234,169,96,.80); letter-spacing: .10em;
+}
+
+/* ── Screen / Slideshow area ── */
+.ipad-screen {
+    margin: 0;
+    border-radius: 0;
+    background: #050711;
     overflow: hidden;
     position: relative;
-    aspect-ratio: 4 / 3;
-    /* Screen glass reflection line */
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    aspect-ratio: 16 / 10;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
 }
 
 /* Slideshow images */
@@ -653,51 +689,103 @@ html, body {
     letter-spacing: .08em;
 }
 
-/* Slide indicator dots */
+/* ── Bottom stats bar — matches reference image ── */
 .ipad-dots {
-    display: flex; justify-content: center; align-items: center;
-    gap: .46rem;
-    padding: .62rem 0 .70rem;
-    background: rgba(0,0,0,0.06);
-    /* Glass tint on dots bar */
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    border-top: 1px solid rgba(255,255,255,0.04);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    background: rgba(4, 5, 15, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(255,255,255,0.055);
+    position: relative; z-index: 5;
 }
+
+/* Gold divider between stat cells */
+.ipad-dots::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(234,169,96,.12) 30%,
+        rgba(234,169,96,.22) 50%,
+        rgba(234,169,96,.12) 70%,
+        transparent);
+    pointer-events: none;
+}
+
+/* Individual stat cell */
 .ipad-dot {
-    width: 5px; height: 5px; border-radius: 50%;
-    background: rgba(255,255,255,.24);
-    transition: all .35s ease;
-    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: center;
+    padding: .72rem .90rem .65rem;
+    border-right: 1px solid rgba(255,255,255,0.040);
+    position: relative; cursor: pointer;
+    transition: background var(--transition);
+    /* Remove old dot styles */
+    width: auto; height: auto;
+    border-radius: 0;
+    background: transparent;
 }
-.ipad-dot.active {
-    background: var(--eaa-core);
-    width: 18px; border-radius: 3px;
-    box-shadow: 0 0 7px rgba(234,169,96,.50);
+.ipad-dot:last-child { border-right: none; }
+.ipad-dot:hover { background: rgba(234,169,96,.035); }
+
+/* Stat label text */
+.ipad-dot-label {
+    font-family: var(--font); font-size: .52rem; font-weight: 600;
+    color: rgba(200,196,232,.52); letter-spacing: .20em;
+    text-transform: uppercase; margin-bottom: .25rem;
+    display: block;
 }
 
-/* Home button */
-.ipad-home-btn {
-    display: flex; align-items: center; justify-content: center;
-    padding: .62rem 0 .72rem;
-    background: rgba(0,0,0,.04);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    border-top: 1px solid rgba(255,255,255,0.04);
+/* Stat value */
+.ipad-dot-value {
+    font-family: var(--font); font-size: .95rem; font-weight: 700;
+    line-height: 1; margin-bottom: .32rem; display: block;
+    letter-spacing: -.01em;
 }
-.ipad-home-circle {
-    width: 26px; height: 26px; border-radius: 50%;
-    /* Glass-style home button */
-    background: radial-gradient(circle at 40% 35%,
-        rgba(255,255,255,.14),
-        rgba(255,255,255,.04));
-    border: 1px solid rgba(255,255,255,.14);
-    box-shadow:
-        0 1px 0 rgba(255,255,255,.10) inset,
-        0 0 0 1px rgba(234,169,96,0.08);
+.ipad-dot-value.positive { color: var(--up); }
+.ipad-dot-value.neutral  { color: rgba(255,255,255,.88); }
+.ipad-dot-value.gold     {
+    background: linear-gradient(112deg, var(--eaa-bright), var(--eaa-core));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-/* Physical sides — now glassy/translucent */
+/* Mini progress bar under each stat */
+.ipad-dot-bar {
+    display: block; width: 100%; height: 2px;
+    background: rgba(255,255,255,.06); border-radius: 99px; overflow: hidden;
+}
+.ipad-dot-bar-fill {
+    height: 100%; border-radius: 99px;
+    transition: width 2.0s cubic-bezier(.22,1,.36,1);
+    width: 0%;
+}
+.ipad-dot.stat-visible .ipad-dot-bar-fill { width: var(--fill, 70%); }
+
+.ipad-dot-bar-fill.green {
+    background: linear-gradient(90deg, rgba(15,217,138,.6), var(--up));
+    box-shadow: 0 0 6px rgba(15,217,138,.30);
+}
+.ipad-dot-bar-fill.gold {
+    background: linear-gradient(90deg, var(--eaa-warm), var(--eaa-core), var(--eaa-bright));
+    box-shadow: 0 0 6px rgba(234,169,96,.28);
+}
+.ipad-dot-bar-fill.blue {
+    background: linear-gradient(90deg, rgba(80,140,255,.5), rgba(120,180,255,.8));
+    box-shadow: 0 0 6px rgba(80,140,255,.24);
+}
+
+/* Active indicator — thin gold line at top of active stat */
+.ipad-dot.active::after {
+    content: '';
+    position: absolute; top: 0; left: 10%; right: 10%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--eaa-core), transparent);
+    border-radius: 0 0 2px 2px;
+}
+
+/* ── Physical sides — glassy/translucent ── */
 .ipad-wrap::before {
     content: '';
     position: absolute; left: 1%; right: 0%; top: 100%;
@@ -730,8 +818,8 @@ html, body {
     content: '';
     position: absolute; bottom: -6px; left: 5%; right: 8%; height: 60px;
     background: radial-gradient(ellipse at 42% 0%,
-        rgba(234,169,96,.065) 0%,
-        rgba(234,169,96,.018) 50%,
+        rgba(234,169,96,.08) 0%,
+        rgba(234,169,96,.022) 50%,
         transparent 75%);
     filter: blur(12px);
     pointer-events: none; z-index: 1;
@@ -742,8 +830,8 @@ html, body {
     background: linear-gradient(180deg,
         transparent 0%,
         rgba(234,169,96,.10) 30%,
-        rgba(234,169,96,.16) 55%,
-        rgba(234,169,96,.05) 80%,
+        rgba(234,169,96,.18) 55%,
+        rgba(234,169,96,.06) 80%,
         transparent 100%);
     filter: blur(2px); border-radius: 2px;
     pointer-events: none; z-index: 2;
@@ -793,37 +881,17 @@ html, body {
 
 /* ══════════════════════════════════════════════
    TOUCH 3D ROTATION — JS HOOK CLASSES
-   Applied by JS to .ipad-scene for touch devices
 ══════════════════════════════════════════════ */
-
-/*
-   JS should listen for touchstart/touchmove/touchend on .ipad-scene
-   and update a CSS custom property:
-     --touch-rx  (rotateX delta)
-     --touch-ry  (rotateY delta)
-   then apply to .ipad-wrap via inline style or classList.
-
-   The animation reference transforms:
-     - Idle:    rotateX(7deg) rotateY(-13deg)
-     - Drag:    rotateX(calc(7deg + var(--touch-rx))) rotateY(calc(-13deg + var(--touch-ry)))
-
-   See the companion JS snippet below this CSS.
-*/
-
-/* Visual hint on touch devices — subtle pulse on first load */
 @media (hover: none) and (pointer: coarse) {
     .ipad-scene {
-        /* Ensure 3D works on mobile */
         perspective: 900px;
         perspective-origin: 50% 38%;
     }
 
-    /* On mobile, default resting state has a gentle tilt */
     .ipad-wrap {
         transform: translateY(0px) rotateX(5deg) rotateY(-8deg);
     }
 
-    /* Entry animation that hints at 3D rotatability */
     .ipad-wrap {
         animation: mobileIpadEntry 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.6s both;
     }
@@ -835,7 +903,6 @@ html, body {
         100% { transform: rotateX(5deg) rotateY(-8deg); }
     }
 
-    /* Show drag hint indicator */
     .ipad-drag-hint {
         display: flex;
         position: absolute;
@@ -856,7 +923,6 @@ html, body {
     @keyframes hintSwipe { 0%,100%{transform:translateX(0)} 50%{transform:translateX(6px)} }
 }
 
-/* On desktop, hide the drag hint */
 @media (hover: hover) and (pointer: fine) {
     .ipad-drag-hint { display: none !important; }
 }
@@ -1376,6 +1442,14 @@ html, body {
     .trade-markets-section__grid { grid-template-columns: 1fr; gap: 1rem; }
     .section-title  { font-size: 1.68rem; margin-bottom: 1.9rem; }
     .trade-markets-section__title { font-size: 1.68rem; }
+
+    /* Bottom stats bar collapses to 2x2 on mobile */
+    .ipad-dots {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .ipad-dot:nth-child(2) { border-right: none; }
+    .ipad-dot:nth-child(3) { border-top: 1px solid rgba(255,255,255,.04); }
+    .ipad-dot:nth-child(4) { border-top: 1px solid rgba(255,255,255,.04); }
 }
 @media (max-width: 480px) {
     .home-content   { padding: 48px 1.1rem 165px; }
@@ -1394,6 +1468,8 @@ html, body {
     .feature-item   { flex-direction: column; text-align: center; padding: 1.4rem; gap: 1rem; }
     .feature-item .feature-icon { min-width: 46px; width: 46px; height: 46px; }
     .section-title, .trade-markets-section__title { font-size: 1.50rem; }
+    .ipad-dot-value { font-size: .80rem; }
+    .ipad-dot       { padding: .55rem .65rem .50rem; }
 }
 @media (max-width: 374px) {
     .home-content   { padding: 42px .85rem 155px; }
@@ -1428,17 +1504,14 @@ html, body {
     .stats-grid         { grid-template-columns: repeat(2,1fr); }
 }
 
-
-
 /* ══════════════════════════════════════════════
-   iPAD SLIDE IMAGE — always fully visible
+   SLIDE IMAGE — always fully visible
    Uses <img> with object-fit: contain so any
    image size / aspect ratio fits without cropping.
 ══════════════════════════════════════════════ */
 .ipad-slide {
-    /* Reset any leftover background-image approach */
     background-image: none !important;
-    background-color: #07080F; /* deep dark fallback behind the image */
+    background-color: #050711;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1449,12 +1522,85 @@ html, body {
     inset: 0;
     width:  100%;
     height: 100%;
-    object-fit: contain;      /* full image always visible, no cropping */
+    object-fit: contain;
     object-position: center;
     display: block;
     pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
-    /* Subtle fade-in as slide becomes active */
     transition: opacity 0.3s ease;
 }
+
+/* ══════════════════════════════════════════════
+   HTML STRUCTURE GUIDE FOR THE DASHBOARD CARD
+   (replaces the old iPad markup)
+
+   <div class="ipad-scene">
+     <div class="ipad-wrap">
+       <div class="ipad-body">
+
+         <!-- Top header bar -->
+         <div class="ipad-topbar">
+           <div class="ipad-topbar-brand">
+             <div class="ipad-topbar-logo">A7</div>
+             <span class="ipad-topbar-title">Aura Terminal</span>
+           </div>
+           <div class="ipad-topbar-live">
+             <span class="ipad-topbar-live-dot"></span>
+             Live
+           </div>
+           <div class="ipad-topbar-user">
+             <div class="ipad-topbar-avatar">AT</div>
+             <span class="ipad-topbar-username">AURA 3358</span>
+           </div>
+         </div>
+
+         <!-- Slideshow screen -->
+         <div class="ipad-screen">
+           <div class="ipad-slide active">
+             <img class="ipad-slide-img" src="..." alt="..." />
+             <div class="slide-overlay">
+               <span class="slide-tag">Live Markets</span>
+               <p class="slide-title">Advanced Chart Analysis</p>
+               <p class="slide-subtitle">Real-time data · Multi-timeframe</p>
+             </div>
+             <div class="slide-stat-badge">+12.48%</div>
+           </div>
+           <!-- more .ipad-slide divs... -->
+         </div>
+
+         <!-- Bottom stats bar (replaces dots) -->
+         <div class="ipad-dots">
+           <div class="ipad-dot active stat-visible" style="--fill:62%">
+             <span class="ipad-dot-label">Profit</span>
+             <span class="ipad-dot-value positive">+12.48%</span>
+             <span class="ipad-dot-bar"><span class="ipad-dot-bar-fill green"></span></span>
+           </div>
+           <div class="ipad-dot stat-visible" style="--fill:27%">
+             <span class="ipad-dot-label">Risk</span>
+             <span class="ipad-dot-value neutral">2.7%</span>
+             <span class="ipad-dot-bar"><span class="ipad-dot-bar-fill gold"></span></span>
+           </div>
+           <div class="ipad-dot stat-visible" style="--fill:78%">
+             <span class="ipad-dot-label">Win Rate</span>
+             <span class="ipad-dot-value gold">78.3%</span>
+             <span class="ipad-dot-bar"><span class="ipad-dot-bar-fill gold"></span></span>
+           </div>
+           <div class="ipad-dot stat-visible" style="--fill:85%">
+             <span class="ipad-dot-label">Streak</span>
+             <span class="ipad-dot-value neutral">12 Days</span>
+             <span class="ipad-dot-bar"><span class="ipad-dot-bar-fill blue"></span></span>
+           </div>
+         </div>
+
+       </div><!-- /.ipad-body -->
+     </div><!-- /.ipad-wrap -->
+
+     <div class="ipad-reflection"></div>
+     <div class="ipad-cursor"></div>
+     <div class="ipad-drag-hint">
+       <span class="ipad-drag-hint-icon">⟺</span> Drag to rotate
+     </div>
+   </div><!-- /.ipad-scene -->
+
+══════════════════════════════════════════════ */
