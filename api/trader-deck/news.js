@@ -15,6 +15,12 @@ const CACHE_TTL_MS = Math.min(300, Math.max(60, parseInt(process.env.TRADER_DECK
 const SOURCE_SUFFIX_RE = /\s*[-–—,]\s*(reuters|bloomberg|forex factory|financial times|wsj|cnbc|yahoo finance|marketwatch)\s*$/i;
 const ATTRIBUTION_RE = /\b(according to|reported by|via)\b/gi;
 
+function debugLog(payload) {
+  // #region agent log
+  fetch('http://127.0.0.1:7826/ingest/3ba0a834-6e5c-4fe0-bd70-25d6a5ebbb2f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8f4319'},body:JSON.stringify({sessionId:'8f4319',location:'api/trader-deck/news.js',message:'trader-deck-news-debug',data:payload,timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+}
+
 function cleanInsightText(v) {
   return String(v || '')
     .replace(SOURCE_SUFFIX_RE, '')
@@ -36,6 +42,23 @@ function normalise(item, source) {
   };
 }
 
+function parseIsoDateOnly(value) {
+  if (!value) return null;
+  const s = String(value).trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  return s;
+}
+
+function withinDateWindow(article, fromDate, toDate) {
+  if (!fromDate && !toDate) return true;
+  const t = article?.publishedAt ? new Date(article.publishedAt).getTime() : NaN;
+  if (!Number.isFinite(t)) return false;
+  const day = new Date(t).toISOString().slice(0, 10);
+  if (fromDate && day < fromDate) return false;
+  if (toDate && day > toDate) return false;
+  return true;
+}
+
 async function fromFinnhub() {
   const { finnhubApiKey } = getConfig();
   if (!finnhubApiKey) return [];
@@ -51,15 +74,34 @@ async function fromFinnhub() {
   }
 }
 
-async function fromFMP() {
+async function fromFMP(options = {}) {
   const { fmpApiKey } = getConfig();
   if (!fmpApiKey) return [];
   try {
-    const url = `https://financialmodelingprep.com/api/v4/general_news?page=0&limit=20&apikey=${encodeURIComponent(fmpApiKey)}`;
-    const res = await fetchWithTimeout(url, {}, 10000);
-    if (!res.ok) return [];
-    const raw = await res.json();
-    return (Array.isArray(raw) ? raw : []).slice(0, 20).map((n) => normalise(n, 'FMP'));
+    const fromDate = parseIsoDateOnly(options.from);
+    const toDate = parseIsoDateOnly(options.to);
+    const pageCap = fromDate || toDate ? 24 : 1;
+    const out = [];
+    for (let page = 0; page < pageCap; page += 1) {
+      const url = `https://financialmodelingprep.com/api/v4/general_news?page=${page}&limit=50&apikey=${encodeURIComponent(fmpApiKey)}`;
+      const res = await fetchWithTimeout(url, {}, 10000);
+      if (!res.ok) break;
+      const raw = await res.json();
+      const list = (Array.isArray(raw) ? raw : []).map((n) => normalise(n, 'FMP'));
+      if (list.length === 0) break;
+      out.push(...list);
+      if (fromDate) {
+        const oldest = list
+          .map((n) => (n.publishedAt ? new Date(n.publishedAt).getTime() : NaN))
+          .filter((n) => Number.isFinite(n))
+          .sort((a, b) => a - b)[0];
+        if (Number.isFinite(oldest)) {
+          const oldestDay = new Date(oldest).toISOString().slice(0, 10);
+          if (oldestDay < fromDate) break;
+        }
+      }
+    }
+    return out.filter((n) => withinDateWindow(n, fromDate, toDate));
   } catch (e) {
     console.warn('[trader-deck/news] FMP error:', e.message);
     return [];
@@ -120,9 +162,11 @@ module.exports = async (req, res) => {
     return res.status(200).json({ success: true, ...cached, cached: true });
   }
 
+  const fromDate = parseIsoDateOnly(req.query?.from);
+  const toDate = parseIsoDateOnly(req.query?.to);
   const [general, fmp, forex, yahoo] = await Promise.allSettled([
     fromFinnhub(),
-    fromFMP(),
+    fromFMP({ from: fromDate, to: toDate }),
     fromFinnhubForex(),
     fromYahooRss(),
   ]);
@@ -135,6 +179,7 @@ module.exports = async (req, res) => {
   // Merge, deduplicate by headline, sort by date
   const seen = new Set();
   const merged = [...generalItems, ...fmpItems, ...forexItems, ...yahooItems]
+    .filter((n) => withinDateWindow(n, fromDate, toDate))
     .filter((n) => {
       if (!n.headline || seen.has(n.headline)) return false;
       seen.add(n.headline);
@@ -145,13 +190,31 @@ module.exports = async (req, res) => {
       const tb = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
       return tb - ta;
     })
-    .slice(0, 40);
+    .slice(0, fromDate || toDate ? 500 : 40);
 
   const payload = {
     articles: merged,
     count: merged.length,
     updatedAt: new Date().toISOString(),
   };
+  // #region agent log
+  debugLog({
+    runId: 'initial',
+    hypothesisId: 'H4',
+    step: 'news-aggregation-result',
+    forceRefresh: !!forceRefresh,
+    sourceCounts: {
+      finnhubGeneral: generalItems.length,
+      fmpGeneral: fmpItems.length,
+      finnhubForex: forexItems.length,
+      yahooRss: yahooItems.length
+    },
+    mergedCount: merged.length,
+    range: { from: fromDate || null, to: toDate || null },
+    oldestPublishedAt: merged.length ? merged[merged.length - 1]?.publishedAt || null : null,
+    newestPublishedAt: merged.length ? merged[0]?.publishedAt || null : null
+  });
+  // #endregion
   setCached(CACHE_KEY, payload, CACHE_TTL_MS);
   res.setHeader('Cache-Control', 'private, max-age=30');
   return res.status(200).json({ success: true, ...payload, cached: false });

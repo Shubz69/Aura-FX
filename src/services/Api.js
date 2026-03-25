@@ -804,9 +804,16 @@ const Api = {
         });
     },
 
-    getTraderDeckMarketIntelligence: (refresh = false) => {
+    getTraderDeckMarketIntelligence: (refresh = false, options = {}) => {
+        const timeframe = options?.timeframe === 'weekly' ? 'weekly' : 'daily';
+        const date = typeof options?.date === 'string' ? options.date.slice(0, 10) : '';
+        const params = {
+            timeframe,
+            ...(date ? { date } : {}),
+            ...(refresh ? { refresh: '1' } : {}),
+        };
         return dedupeGet(`${API_BASE_URL}/api/trader-deck/market-intelligence`, {
-            params: refresh ? { refresh: '1' } : {},
+            params,
         });
     },
     /**
@@ -847,10 +854,18 @@ const Api = {
             skipCache: true,
         });
     },
-    getTraderDeckNews: (refresh = false) =>
-        dedupeGet(`${API_BASE_URL}/api/trader-deck/news`, {
-            params: refresh ? { refresh: '1' } : {},
-        }),
+    /**
+     * News feed with optional date window.
+     * @param {boolean|{refresh?: boolean, from?: string, to?: string}} arg
+     */
+    getTraderDeckNews: (arg = false) => {
+        const opts = (arg && typeof arg === 'object') ? arg : { refresh: !!arg };
+        const params = {};
+        if (opts.refresh) params.refresh = '1';
+        if (opts.from) params.from = String(opts.from).slice(0, 10);
+        if (opts.to) params.to = String(opts.to).slice(0, 10);
+        return dedupeGet(`${API_BASE_URL}/api/trader-deck/news`, { params });
+    },
 
     getTraderDeckContent: (type, date) => {
         const token = localStorage.getItem('token');

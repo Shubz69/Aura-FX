@@ -41,6 +41,8 @@ export default function EconomicCalendarView() {
   const [impactFilter, setImpactFilter] = useState('all');
   const [currencyFilter, setCurrencyFilter] = useState('ALL');
   const [days, setDays] = useState(7);
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const [clock, setClock] = useState(Date.now());
   const precTimersRef = useRef([]);
 
@@ -49,7 +51,10 @@ export default function EconomicCalendarView() {
       setLoading(true);
       setError(null);
     }
-    return Api.getTraderDeckEconomicCalendar(days, refresh)
+    const reqArg = (fromDate && toDate)
+      ? { from: fromDate, to: toDate, refresh }
+      : days;
+    return Api.getTraderDeckEconomicCalendar(reqArg, refresh)
       .then((r) => {
         const list = Array.isArray(r.data?.events) ? r.data.events : [];
         setEvents(list);
@@ -63,7 +68,7 @@ export default function EconomicCalendarView() {
       .finally(() => {
         if (!silent) setLoading(false);
       });
-  }, [days]);
+  }, [days, fromDate, toDate]);
 
   const schedulePrecision = useCallback((evts) => {
     precTimersRef.current.forEach(clearTimeout);
@@ -180,11 +185,38 @@ export default function EconomicCalendarView() {
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
             aria-label="Days range"
+            disabled={!!(fromDate && toDate)}
           >
             <option value={3}>3 days</option>
             <option value={7}>7 days</option>
             <option value={14}>14 days</option>
           </select>
+          <input
+            type="date"
+            className="ec-select ec-select--sm"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            aria-label="Calendar from date"
+          />
+          <input
+            type="date"
+            className="ec-select ec-select--sm"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            aria-label="Calendar to date"
+          />
+          {(fromDate || toDate) && (
+            <button
+              type="button"
+              className="ec-filter-btn active"
+              onClick={() => {
+                setFromDate('');
+                setToDate('');
+              }}
+            >
+              Clear Range
+            </button>
+          )}
         </div>
       </div>
 

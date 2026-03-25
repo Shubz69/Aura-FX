@@ -92,13 +92,19 @@ export default function NewsFeedView() {
   const [updatedAt, setUpdatedAt] = useState(null);
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
+  const [windowDays, setWindowDays] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
     const load = (refresh) => {
       if (!refresh) setLoading(true);
       setError(null);
-      Api.getTraderDeckNews(refresh)
+      const now = new Date();
+      const to = now.toISOString().slice(0, 10);
+      const fromDate = new Date(now);
+      fromDate.setUTCDate(fromDate.getUTCDate() - Math.max(0, Number(windowDays) - 1));
+      const from = fromDate.toISOString().slice(0, 10);
+      Api.getTraderDeckNews({ refresh, from, to })
         .then((r) => {
           if (cancelled) return;
           setArticles(Array.isArray(r.data?.articles) ? r.data.articles : []);
@@ -110,7 +116,7 @@ export default function NewsFeedView() {
     load(false);
     const iv = setInterval(() => load(true), 90 * 1000);
     return () => { cancelled = true; clearInterval(iv); };
-  }, []);
+  }, [windowDays]);
 
   const filtered = useMemo(() => {
     return articles.filter((a) => {
@@ -158,6 +164,17 @@ export default function NewsFeedView() {
         {articles.length > 0 && (
           <span className="nf-count">{filtered.length} headlines</span>
         )}
+        <select
+          className="ec-select ec-select--sm"
+          value={windowDays}
+          onChange={(e) => setWindowDays(Number(e.target.value))}
+          aria-label="News lookback"
+        >
+          <option value={1}>Today</option>
+          <option value={7}>7 days</option>
+          <option value={30}>30 days</option>
+          <option value={365}>1 year</option>
+        </select>
       </div>
 
       {loading && (
