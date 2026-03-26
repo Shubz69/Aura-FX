@@ -3,7 +3,7 @@
  * Daily: 06:00 UK (Europe/London)
  * Weekly: Sunday 18:00 UK (Europe/London)
  */
-const { generateAndStoreOutlook, generateAndStoreBrief, shouldRunWindow } = require('../trader-deck/services/autoBriefGenerator');
+const { generateAndStoreOutlook, generateAndStoreBriefSet, shouldRunWindow } = require('../trader-deck/services/autoBriefGenerator');
 
 function hasAutomationModelConfigured() {
   return Boolean(String(process.env.OPENAI_AUTOMATION_MODEL || '').trim());
@@ -52,12 +52,12 @@ module.exports = async (req, res) => {
       runDate: now,
       timeZone: 'Europe/London',
     });
-    const brief = await generateAndStoreBrief({
+    const briefSet = await generateAndStoreBriefSet({
       period,
       runDate: now,
       timeZone: 'Europe/London',
     });
-    out.push({ period, outlook, brief });
+    out.push({ period, outlook, briefs: briefSet });
   }
 
   return res.status(200).json({

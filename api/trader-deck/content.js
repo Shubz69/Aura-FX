@@ -66,6 +66,13 @@ async function ensureTables() {
     )
   `);
   await addColumnIfNotExists('trader_deck_briefs', 'file_data', 'LONGBLOB DEFAULT NULL');
+  await addColumnIfNotExists('trader_deck_briefs', 'brief_kind', "VARCHAR(40) NOT NULL DEFAULT 'general'");
+  await addColumnIfNotExists('trader_deck_briefs', 'brief_version', 'INT NOT NULL DEFAULT 1');
+  try {
+    await executeQuery('CREATE INDEX idx_tdb_date_period_kind_created ON trader_deck_briefs (date, period, brief_kind, created_at)');
+  } catch (_) {
+    // ignore duplicate-index errors across deployments
+  }
 }
 
 function typeToPeriod(type) {
@@ -79,6 +86,19 @@ function normalizeStorageDateByType(type, date) {
   if (period === 'weekly') return getWeekEndingSunday(date);
   return date;
 }
+
+const BRIEF_KIND_ORDER_SQL =
+  "CASE COALESCE(brief_kind, 'general') " +
+  "WHEN 'general' THEN 1 " +
+  "WHEN 'stocks' THEN 2 " +
+  "WHEN 'indices' THEN 3 " +
+  "WHEN 'futures' THEN 4 " +
+  "WHEN 'forex' THEN 5 " +
+  "WHEN 'crypto' THEN 6 " +
+  "WHEN 'commodities' THEN 7 " +
+  "WHEN 'bonds' THEN 8 " +
+  "WHEN 'etfs' THEN 9 " +
+  "ELSE 99 END";
 
 async function requireAdmin(req) {
   const decoded = verifyToken(req.headers.authorization);
@@ -194,12 +214,19 @@ module.exports = async (req, res) => {
     }
     if (isIntel) {
       const [rows] = await executeQuery(
-        'SELECT id, title, file_url, mime_type, created_at FROM trader_deck_briefs WHERE date = ? AND period = ? ORDER BY created_at ASC',
+        `SELECT id, title, file_url, mime_type, created_at,
+                COALESCE(brief_kind, 'general') AS brief_kind,
+                COALESCE(brief_version, 1) AS brief_version
+         FROM trader_deck_briefs
+         WHERE date = ? AND period = ?
+         ORDER BY ${BRIEF_KIND_ORDER_SQL}, brief_version DESC, created_at DESC`,
         [date, period]
       );
       const briefs = (rows || []).map((r) => ({
         id: r.id,
         title: r.title || 'Brief',
+        briefKind: r.brief_kind || 'general',
+        briefVersion: Number(r.brief_version || 1),
         previewUrl: r.file_url ? null : `/api/trader-deck/brief-preview?id=${r.id}`,
         fileUrl: r.file_url || null,
         mimeType: r.mime_type || null,

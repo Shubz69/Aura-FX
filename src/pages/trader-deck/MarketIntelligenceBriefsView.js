@@ -38,6 +38,19 @@ function displayBriefTitle(title) {
   return t || 'Brief';
 }
 
+const BRIEF_KIND_ORDER = ['general', 'stocks', 'indices', 'futures', 'forex', 'crypto', 'commodities', 'bonds', 'etfs'];
+const BRIEF_KIND_LABEL = {
+  general: 'General',
+  stocks: 'Stocks',
+  indices: 'Indices',
+  futures: 'Futures',
+  forex: 'Forex',
+  crypto: 'Crypto',
+  commodities: 'Commodities',
+  bonds: 'Bonds',
+  etfs: 'ETFs',
+};
+
 function isTextLikeMime(mime) {
   const m = (mime || '').toLowerCase();
   return m.startsWith('text/') || m.includes('json') || m.includes('xml') || m.includes('javascript');
@@ -59,6 +72,22 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadUrl, setUploadUrl] = useState('');
   const fileInputRef = useRef(null);
+  const sortedBriefs = useMemo(() => {
+    const orderIndex = new Map(BRIEF_KIND_ORDER.map((k, i) => [k, i + 1]));
+    return [...briefs].sort((a, b) => {
+      const ak = String(a?.briefKind || 'general').toLowerCase();
+      const bk = String(b?.briefKind || 'general').toLowerCase();
+      const ao = orderIndex.get(ak) || 99;
+      const bo = orderIndex.get(bk) || 99;
+      if (ao !== bo) return ao - bo;
+      const av = Number(a?.briefVersion || 1);
+      const bv = Number(b?.briefVersion || 1);
+      if (av !== bv) return bv - av;
+      const at = new Date(a?.createdAt || 0).getTime();
+      const bt = new Date(b?.createdAt || 0).getTime();
+      return bt - at;
+    });
+  }, [briefs]);
 
   const previewOpen = Boolean(previewId || previewEmbedUrl);
 
@@ -369,9 +398,11 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               {briefs.length === 0 ? (
                 <li className="td-deck-mi-brief-empty">No briefs for this date. {canEdit && 'Pick the date above, then add a file or link.'}</li>
               ) : (
-                briefs.map((b) => (
+                sortedBriefs.map((b) => (
                   <li key={b.id} className="td-deck-mi-brief-card">
-                    <span className="td-deck-mi-brief-card-title">{displayBriefTitle(b.title)}</span>
+                    <span className="td-deck-mi-brief-card-title">
+                      [{BRIEF_KIND_LABEL[String(b?.briefKind || 'general').toLowerCase()] || 'General'}] {displayBriefTitle(b.title)}{Number(b?.briefVersion || 1) > 1 ? ` (v${Number(b.briefVersion)})` : ''}
+                    </span>
                     <div className="td-deck-mi-brief-card-actions">
                       <button type="button" className="td-mi-btn td-mi-btn-small" onClick={() => handlePreview(b)} title="Fullscreen preview">
                         <FaEye /> Preview

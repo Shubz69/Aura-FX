@@ -44,6 +44,11 @@ function run() {
   }
   assert(threw, 'validator should throw when required arrays are missing');
 
+  const stocksTop5 = _test.top5ForBriefKind('stocks');
+  assert(stocksTop5.includes('AAPL') && stocksTop5.length === 5, 'stocks category should expose top-5 instruments');
+  const fxTop5 = _test.top5ForBriefKind('forex');
+  assert(fxTop5.includes('EURUSD') && fxTop5.length === 5, 'forex category should expose top-5 instruments');
+
   console.log('OK auto-trader-desk-bot tests');
 }
 

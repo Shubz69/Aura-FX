@@ -6,6 +6,29 @@ const { fetchWithTimeout } = require('./fetchWithTimeout');
 const { enrichTraderDeckPayload } = require('../openaiTraderInsights');
 
 const SOURCE_MARKER_RE = /(https?:\/\/|www\.|source\s*:|sources\s*:|according to|reuters|bloomberg|fmp|finnhub|forex factory|trading economics)/i;
+const BRIEF_KIND_ORDER = ['general', 'stocks', 'indices', 'futures', 'forex', 'crypto', 'commodities', 'bonds', 'etfs'];
+const BRIEF_KIND_LABELS = {
+  general: 'General Market Brief',
+  stocks: 'Stocks Brief',
+  indices: 'Indices Brief',
+  futures: 'Futures Brief',
+  forex: 'Forex Brief',
+  crypto: 'Crypto Brief',
+  commodities: 'Commodities Brief',
+  bonds: 'Bonds Brief',
+  etfs: 'ETFs Brief',
+};
+const BRIEF_KIND_TOP5 = {
+  general: ['EURUSD', 'XAUUSD', 'US500', 'BTCUSD', 'US10Y'],
+  stocks: ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN'],
+  indices: ['US500', 'NAS100', 'US30', 'GER40', 'UK100'],
+  futures: ['ES1!', 'NQ1!', 'CL1!', 'GC1!', 'ZN1!'],
+  forex: ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCHF'],
+  crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD'],
+  commodities: ['XAUUSD', 'XAGUSD', 'WTI', 'BRENT', 'NATGAS'],
+  bonds: ['US02Y', 'US05Y', 'US10Y', 'US30Y', 'DE10Y'],
+  etfs: ['SPY', 'QQQ', 'IWM', 'GLD', 'TLT'],
+};
 
 function toYmdInTz(date, timeZone) {
   return new Intl.DateTimeFormat('en-CA', {
@@ -71,6 +94,20 @@ function sanitizeSentence(text) {
     .replace(/\b(according to|reported by|via)\b/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function normalizeBriefKind(kind) {
+  const k = String(kind || '').toLowerCase().trim();
+  return BRIEF_KIND_ORDER.includes(k) ? k : 'general';
+}
+
+function top5ForBriefKind(kind) {
+  const normalized = normalizeBriefKind(kind);
+  return (BRIEF_KIND_TOP5[normalized] || BRIEF_KIND_TOP5.general).slice(0, 5);
+}
+
+function orderedBriefKinds() {
+  return [...BRIEF_KIND_ORDER];
 }
 
 function assertNoSources(text) {
@@ -190,10 +227,17 @@ async function fetchUnifiedNewsSample() {
   return fetchNewsSample();
 }
 
-function buildFactPack({ period, template, market, econ, news }) {
+function buildFactPack({ period, template, market, econ, news, briefKind = 'general', topInstruments = [] }) {
+  const normalizedKind = normalizeBriefKind(briefKind);
+  const selectedTop = Array.isArray(topInstruments) && topInstruments.length > 0
+    ? topInstruments.slice(0, 5)
+    : top5ForBriefKind(normalizedKind);
   return {
     period,
-    instruments: template.instruments || [],
+    briefKind: normalizedKind,
+    briefKindLabel: BRIEF_KIND_LABELS[normalizedKind] || BRIEF_KIND_LABELS.general,
+    topInstruments: selectedTop,
+    instruments: selectedTop.length > 0 ? selectedTop : (template.instruments || []),
     sections: template.sections || [],
     marketRegime: market.marketRegime || null,
     marketPulse: market.marketPulse || null,
@@ -226,6 +270,8 @@ async function generateWithOpenAi(factPack, template) {
       noSourcesEver: true,
       noMarkdownBullets: false,
       tone: template?.style?.tone || 'institutional concise',
+      minimumDepth: 'high-detail longform',
+      mustCoverTopInstruments: factPack.topInstruments || [],
     },
   };
 
@@ -246,7 +292,7 @@ async function generateWithOpenAi(factPack, template) {
         messages: [
           {
             role: 'system',
-            content: 'You are an institutional multi-asset trading desk analyst. Return valid JSON only: {"title":"string","sections":[{"heading":"string","body":"string"}],"instrumentNotes":[{"instrument":"string","note":"string"}],"riskRadar":["string"],"playbook":["string"]}. Cover FX, indices, commodities, crypto, yields/rates and global risk sentiment where relevant from provided facts. Never include source names, references, URLs, or citation language. Never invent facts.',
+            content: 'You are an institutional multi-asset trading desk analyst. Return valid JSON only: {"title":"string","sections":[{"heading":"string","body":"string"}],"instrumentNotes":[{"instrument":"string","note":"string"}],"riskRadar":["string"],"playbook":["string"]}. Produce high-depth coverage with concrete market context and execution framing. You must include all provided top instruments in instrumentNotes, each with meaningful detail. Never include source names, references, URLs, or citation language. Never invent facts.',
           },
           { role: 'user', content: JSON.stringify(prompt) },
         ],
@@ -272,7 +318,7 @@ function fallbackGenerated(factPack, template, now, timeZone) {
   const pulse = factPack.marketPulse || {};
   const sectionBodies = {
     MarketContext: `Regime is ${mk.currentRegime || 'Mixed'} with ${mk.primaryDriver || 'macro data'} in focus. Pulse reads ${pulse.label || 'NEUTRAL'} (${pulse.score ?? 50}/100). Keep execution selective through headline risk windows.`,
-    InstrumentOutlook: (template.instruments || []).map((i) => `${i}: Maintain a bias only when momentum aligns with session flow; avoid forcing entries into high-impact data windows.`).join('\n'),
+    InstrumentOutlook: (factPack.topInstruments || template.instruments || []).map((i) => `${i}: Trend and liquidity alignment remain mandatory; define clear invalidation and map scenario pivots around macro catalysts before taking risk.`).join('\n'),
     SessionFocus: normaliseArray((factPack.traderFocus || []).map((x) => (typeof x === 'string' ? x : x.title || ''))).slice(0, 5).join('\n'),
     RiskRadar: normaliseArray(factPack.riskRadar).slice(0, 6).join('\n'),
     ExecutionNotes: 'Prioritize A-grade setups, respect invalidation quickly, and reduce size during event clustering.',
@@ -298,19 +344,21 @@ function fallbackGenerated(factPack, template, now, timeZone) {
     sections: renderedSections,
     instrumentNotes: (template.instruments || []).map((instrument) => ({
       instrument,
-      note: `${instrument}: Bias follows macro direction and intraday confirmation.`,
+      note: `${instrument}: Base case and surprise case should both be pre-mapped, with entry quality, invalidation, and volatility-adjusted risk sizing defined before execution.`,
     })),
     riskRadar: normaliseArray(factPack.riskRadar).slice(0, 6),
     playbook: ['Protect downside first', 'Scale only on confirmation', 'Avoid overtrading into major releases'],
   };
 }
 
-function renderBriefText({ title, period, date, generated, template }) {
+function renderBriefText({ title, period, date, generated, template, briefKind = 'general', topInstruments = [] }) {
+  const normalizedKind = normalizeBriefKind(briefKind);
   const lines = [];
   lines.push(title);
   lines.push('');
   lines.push(`Period: ${period}`);
   lines.push(`Date: ${date}`);
+  lines.push(`Category: ${BRIEF_KIND_LABELS[normalizedKind] || BRIEF_KIND_LABELS.general}`);
   lines.push('');
 
   const sections = Array.isArray(generated.sections) ? generated.sections : [];
@@ -322,7 +370,7 @@ function renderBriefText({ title, period, date, generated, template }) {
 
   const instrumentNotes = Array.isArray(generated.instrumentNotes) ? generated.instrumentNotes : [];
   if (instrumentNotes.length > 0) {
-    lines.push('Instruments');
+    lines.push('Top 5 Instruments');
     for (const row of instrumentNotes) {
       if (!row) continue;
       const instrument = String(row.instrument || '').trim();
@@ -330,6 +378,17 @@ function renderBriefText({ title, period, date, generated, template }) {
       lines.push(`- ${instrument}: ${stripSources(row.note || '')}`);
     }
     lines.push('');
+  }
+  if (Array.isArray(topInstruments) && topInstruments.length > 0) {
+    const listed = new Set(instrumentNotes.map((r) => String(r?.instrument || '').trim().toUpperCase()).filter(Boolean));
+    const missing = topInstruments.filter((i) => !listed.has(String(i).toUpperCase()));
+    if (missing.length > 0) {
+      lines.push('Additional Coverage');
+      missing.forEach((instrument) => {
+        lines.push(`- ${instrument}: Monitor trend strength, key support/resistance, catalyst risk, and cross-asset confirmation before execution.`);
+      });
+      lines.push('');
+    }
   }
 
   const riskRadar = normaliseArray(generated.riskRadar);
@@ -391,6 +450,13 @@ async function ensureAutomationTables() {
     )
   `);
   await addColumnIfNotExists('trader_deck_briefs', 'file_data', 'LONGBLOB DEFAULT NULL');
+  await addColumnIfNotExists('trader_deck_briefs', 'brief_kind', "VARCHAR(40) NOT NULL DEFAULT 'general'");
+  await addColumnIfNotExists('trader_deck_briefs', 'brief_version', 'INT NOT NULL DEFAULT 1');
+  try {
+    await executeQuery('CREATE INDEX idx_tdb_date_period_kind_created ON trader_deck_briefs (date, period, brief_kind, created_at)');
+  } catch (_) {
+    // ignore duplicate-index errors across deployments
+  }
 }
 
 async function fetchEconomicCalendar() {
@@ -470,14 +536,28 @@ async function saveOutlookSnapshot({ period, date, payload }) {
   );
 }
 
-async function publishAutoBrief({ period, date, title, body }) {
-  const safeTitle = String(title || 'Market Brief').slice(0, 255);
-  const [result] = await executeQuery(
-    `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data)
-     VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?)`,
-    [date, period, safeTitle, Buffer.from(body, 'utf8')]
+async function getNextBriefVersion({ period, date, briefKind }) {
+  const normalizedKind = normalizeBriefKind(briefKind);
+  const [rows] = await executeQuery(
+    `SELECT COALESCE(MAX(brief_version), 0) AS maxVersion
+     FROM trader_deck_briefs
+     WHERE date = ? AND period = ? AND brief_kind = ?`,
+    [date, period, normalizedKind]
   );
-  return result.insertId;
+  const maxVersion = Number(rows?.[0]?.maxVersion || 0);
+  return maxVersion + 1;
+}
+
+async function publishAutoBrief({ period, date, title, body, briefKind = 'general' }) {
+  const safeTitle = String(title || 'Market Brief').slice(0, 255);
+  const normalizedKind = normalizeBriefKind(briefKind);
+  const briefVersion = await getNextBriefVersion({ period, date, briefKind: normalizedKind });
+  const [result] = await executeQuery(
+    `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data, brief_kind, brief_version)
+     VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?, ?, ?)`,
+    [date, period, safeTitle, Buffer.from(body, 'utf8'), normalizedKind, briefVersion]
+  );
+  return { insertId: result.insertId, briefVersion };
 }
 
 async function publishManualBrief({ period, date, title, body }) {
@@ -490,10 +570,11 @@ async function publishManualBrief({ period, date, title, body }) {
   const safeTitle = String(title || 'Market Brief').slice(0, 255);
   assertNoSources(safeTitle);
   assertNoSources(body);
+  const briefVersion = await getNextBriefVersion({ period: normalizedPeriod, date: safeDate, briefKind: 'general' });
   const [result] = await executeQuery(
-    `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data)
-     VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?)`,
-    [safeDate, normalizedPeriod, safeTitle, Buffer.from(String(body || ''), 'utf8')]
+    `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data, brief_kind, brief_version)
+     VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?, 'general', ?)`,
+    [safeDate, normalizedPeriod, safeTitle, Buffer.from(String(body || ''), 'utf8'), briefVersion]
   );
   return result.insertId;
 }
@@ -506,16 +587,18 @@ function computeTitle(template, now, timeZone) {
     .replace('{weekRange}', weekRange(now, timeZone));
 }
 
-async function generateAndStoreBrief({ period, timeZone = 'Europe/London', runDate = new Date() }) {
+async function generateAndStoreBrief({ period, briefKind = 'general', timeZone = 'Europe/London', runDate = new Date() }) {
   assertAutomationModelConfigured();
   await ensureAutomationTables();
   const normalizedPeriod = normalizePeriod(period);
+  const normalizedKind = normalizeBriefKind(briefKind);
+  const selectedTop5 = top5ForBriefKind(normalizedKind);
   const date = normalizeOutlookDate(normalizedPeriod, toYmdInTz(runDate, timeZone));
-  const runKey = `auto-brief:${normalizedPeriod}:${date}`;
+  const runKey = `auto-brief:${normalizedPeriod}:${date}:${normalizedKind}`;
 
   const reserved = await reserveRun(runKey, normalizedPeriod, date);
   if (!reserved) {
-    return { success: true, skipped: true, reason: 'already-generated', runKey, period: normalizedPeriod, date };
+    return { success: true, skipped: true, reason: 'already-generated', runKey, period: normalizedPeriod, date, briefKind: normalizedKind };
   }
 
   try {
@@ -531,26 +614,45 @@ async function generateAndStoreBrief({ period, timeZone = 'Europe/London', runDa
       market,
       econ,
       news,
+      briefKind: normalizedKind,
+      topInstruments: selectedTop5,
     });
     let generated = await generateWithOpenAi(factPack, template);
     if (!generated) {
       generated = fallbackGenerated(factPack, template, runDate, timeZone);
     }
-    const title = stripSources(computeTitle(template, runDate, timeZone));
+    const titleBase = stripSources(computeTitle(template, runDate, timeZone));
+    const title = normalizedKind === 'general'
+      ? titleBase
+      : `${BRIEF_KIND_LABELS[normalizedKind]} - ${titleBase}`;
     const body = renderBriefText({
       title,
       period: normalizedPeriod,
       date,
       generated,
       template,
+      briefKind: normalizedKind,
+      topInstruments: selectedTop5,
     });
-    const briefId = await publishAutoBrief({ period: normalizedPeriod, date, title, body });
+    const saved = await publishAutoBrief({ period: normalizedPeriod, date, title, body, briefKind: normalizedKind });
+    const briefId = saved.insertId;
     await finalizeRun(runKey, 'success', briefId, null);
-    return { success: true, briefId, runKey, date, period: normalizedPeriod };
+    return { success: true, briefId, runKey, date, period: normalizedPeriod, briefKind: normalizedKind, briefVersion: saved.briefVersion, topInstruments: selectedTop5 };
   } catch (err) {
     await finalizeRun(runKey, 'failed', null, (err.message || 'generation failed').slice(0, 255));
-    return { success: false, runKey, date, period: normalizedPeriod, error: err.message || 'generation failed' };
+    return { success: false, runKey, date, period: normalizedPeriod, briefKind: normalizedKind, error: err.message || 'generation failed' };
   }
+}
+
+async function generateAndStoreBriefSet({ period, timeZone = 'Europe/London', runDate = new Date() }) {
+  const results = [];
+  for (const briefKind of orderedBriefKinds()) {
+    // Keep category generations isolated so one failure does not block all.
+    // eslint-disable-next-line no-await-in-loop
+    const row = await generateAndStoreBrief({ period, briefKind, timeZone, runDate });
+    results.push(row);
+  }
+  return { success: results.some((r) => r && r.success), period: normalizePeriod(period), results };
 }
 
 async function generateAndStoreOutlook({ period, timeZone = 'Europe/London', runDate = new Date() }) {
@@ -662,6 +764,7 @@ function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' 
 module.exports = {
   generateAndStoreOutlook,
   generateAndStoreBrief,
+  generateAndStoreBriefSet,
   generatePreviewBrief,
   publishManualBrief,
   shouldRunWindow,
@@ -673,5 +776,9 @@ module.exports = {
     assertNoSources,
     sanitizeOutlookPayload,
     validateOutlookPayload,
+    normalizeBriefKind,
+    top5ForBriefKind,
+    orderedBriefKinds,
+    BRIEF_KIND_ORDER,
   },
 };

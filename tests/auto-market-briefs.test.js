@@ -63,6 +63,16 @@ function run() {
   assert(Array.isArray(parsed.sections) && parsed.sections.length >= 3, 'template should parse section headings');
   assert(parsed.instruments.includes('EURUSD'), 'template should extract instruments');
 
+  const kinds = autoTest.orderedBriefKinds();
+  assert(Array.isArray(kinds) && kinds.length === 9, 'should expose 9 brief kinds');
+  assert(kinds[0] === 'general' && kinds[8] === 'etfs', 'brief kind ordering should be stable');
+  for (const kind of kinds) {
+    const top5 = autoTest.top5ForBriefKind(kind);
+    assert(Array.isArray(top5) && top5.length === 5, `top 5 instruments must exist for ${kind}`);
+  }
+  const normalizedUnknown = autoTest.normalizeBriefKind('not-a-kind');
+  assert(normalizedUnknown === 'general', 'unknown brief kind should normalize to general');
+
   console.log('OK auto-market-brief tests');
 }
 
