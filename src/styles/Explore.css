@@ -1272,3 +1272,10 @@ html, body {
     .explore-course-image-wrapper,
     .explore-course-icon-wrapper { height: 140px; }
 }
+
+/* iPad only: extra top padding so “Explore” title clears fixed navbar (touch + tablet widths; excludes mouse desktops) */
+@media only screen and (min-width: 768px) and (max-width: 1366px) and (hover: none) and (pointer: coarse) {
+    .explore-content-wrapper {
+        padding-top: calc(148px + env(safe-area-inset-top, 0px));
+    }
+}
