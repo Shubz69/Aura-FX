@@ -6,7 +6,7 @@ const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const {
   ensureReferralSchema,
-  ensureUserReferralCode,
+  getReferralDashboard,
 } = require('./referralService');
 
 function getRows(result) {
@@ -39,47 +39,25 @@ module.exports = async (req, res) => {
 
   try {
     await ensureReferralSchema();
-    const referralCode = await ensureUserReferralCode(userId);
+    const dashboard = await getReferralDashboard(userId);
+    const referralCode = dashboard?.referralCode || null;
     const legacyAtCode = `AT-${String(userId).padStart(6, '0')}`;
-
-    const [totalR] = await executeQuery(
-      'SELECT COUNT(*) AS c FROM users WHERE referred_by = ?',
-      [userId],
-    );
-    const signups = Number(getRows(totalR)[0]?.c ?? 0);
-
+    const signups = Number(dashboard?.totalSignups || 0);
     const [courseR] = await executeQuery(
       `SELECT COUNT(*) AS c FROM referral_conversion
        WHERE referrer_user_id = ? AND event_type = 'course'`,
       [userId],
     );
     const coursePurchases = Number(getRows(courseR)[0]?.c ?? 0);
-
     const [subR] = await executeQuery(
       `SELECT COUNT(*) AS c FROM referral_conversion
        WHERE referrer_user_id = ? AND event_type = 'subscription'`,
       [userId],
     );
     const subscriptionPurchases = Number(getRows(subR)[0]?.c ?? 0);
-
     const totalImpact = signups + coursePurchases + subscriptionPurchases;
-    const impactScore = Math.min(
-      100,
-      signups * 2 + subscriptionPurchases * 4 + coursePurchases * 4,
-    );
-
-    let active = signups;
-    try {
-      const [activeR] = await executeQuery(
-        `SELECT COUNT(*) AS c FROM users u
-         WHERE u.referred_by = ?
-           AND LOWER(COALESCE(u.subscription_status, '')) IN ('active', 'trialing')`,
-        [userId],
-      );
-      active = Number(getRows(activeR)[0]?.c ?? 0);
-    } catch (_) {
-      active = signups;
-    }
+    const impactScore = Math.min(100, signups * 2 + subscriptionPurchases * 4 + coursePurchases * 4);
+    const active = Number(dashboard?.activeReferredPlans || 0);
 
     return res.status(200).json({
       success: true,
@@ -94,6 +72,13 @@ module.exports = async (req, res) => {
       statsAt: new Date().toISOString(),
       active,
       earned: 0,
+      verifiedPaidReferrals: Number(dashboard?.verifiedPaidReferrals || 0),
+      currentCommissionTierPercent: Number(dashboard?.currentCommissionTierPercent || 0),
+      pendingEarningsPence: Number(dashboard?.pendingEarningsPence || 0),
+      payableEarningsPence: Number(dashboard?.payableEarningsPence || 0),
+      paidOutEarningsPence: Number(dashboard?.paidOutEarningsPence || 0),
+      lifetimeEarningsPence: Number(dashboard?.lifetimeEarningsPence || 0),
+      minWithdrawalPence: Number(dashboard?.minWithdrawalPence || 5000),
     });
   } catch (e) {
     console.error('referral/stats:', e.message);

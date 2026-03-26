@@ -9,6 +9,7 @@ const {
   resolveReferrerIdFromInput,
   ensureUserReferralCode,
   maybeNotifyReferralSignupMilestones,
+  upsertReferralAttribution,
 } = require('../referral/referralService');
 
 async function ensureUsersTable(conn) {
@@ -152,6 +153,16 @@ module.exports = async (req, res) => {
             await db.execute('ALTER TABLE users ADD COLUMN referred_by INT NULL DEFAULT NULL');
             await db.execute('UPDATE users SET referred_by = ? WHERE id = ?', [referredBy, userId]);
           }
+        }
+        try {
+          await upsertReferralAttribution({
+            referrerUserId: referredBy,
+            referredUserId: userId,
+            referralCodeUsed: (refRaw || '').toString().trim(),
+            source: 'register',
+          });
+        } catch (attrErr) {
+          console.warn('Referral attribution insert:', attrErr.message);
         }
         Promise.resolve(maybeNotifyReferralSignupMilestones(referredBy)).catch((e) =>
           console.warn('Referral milestone notify:', e.message),

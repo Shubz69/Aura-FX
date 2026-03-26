@@ -105,6 +105,62 @@ const AdminApi = {
                 'Accept': 'application/json'
             }
         });
+    },
+
+    getReferralPayouts: (params = {}) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/admin/referral/payouts`, {
+            params,
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
+    },
+
+    processReferralPayout: (id, action, extra = {}) => {
+        const token = localStorage.getItem('token');
+        return axios.post(
+            `${API_BASE_URL}/api/admin/referral/payouts`,
+            { id, action, ...extra },
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+    },
+
+    reverseReferralEventBySource: ({ sourceTable, sourceId, reason }) => {
+        const token = localStorage.getItem('token');
+        return axios.post(
+            `${API_BASE_URL}/api/admin/referral/events`,
+            { sourceTable, sourceId, reason },
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+    },
+
+    getReferralReversalHistory: (limit = 20, sourceTable = '', windowDays = 0) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/admin/referral/events`, {
+            params: {
+                limit,
+                ...(sourceTable ? { sourceTable } : {}),
+                ...(windowDays > 0 ? { windowDays } : {}),
+            },
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
     }
 };
 

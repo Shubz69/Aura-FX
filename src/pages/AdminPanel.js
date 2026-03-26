@@ -5,9 +5,10 @@ import { useWebSocket } from '../utils/useWebSocket';
 import ConfirmationModal from '../components/ConfirmationModal';
 import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import Api from '../services/Api';
+import AdminApi from '../services/AdminApi';
 import { FaSearch, FaUserShield } from 'react-icons/fa';
 import '../styles/AdminPanel.css';
-import { isSuperAdmin } from '../utils/roles';
+import { isSuperAdmin as hasSuperAdminRole } from '../utils/roles';
 
 const PLAN_OPTIONS = [
   { value: 'free', label: 'Free', needsDuration: false },
@@ -198,7 +199,7 @@ const AdminPanel = () => {
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: null, userEmail: null });
     const [channels, setChannels] = useState([]);
     const [channelsLoading, setChannelsLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('users'); // 'users' | 'channels' | 'brief-templates'
+    const [activeTab, setActiveTab] = useState('users'); // 'users' | 'channels' | 'brief-templates' | 'referral-payouts'
     const [searchTerm, setSearchTerm] = useState(''); // Search filter for users
     const [accessModal, setAccessModal] = useState({
         open: false,
@@ -215,6 +216,17 @@ const AdminPanel = () => {
     const [templateStatus, setTemplateStatus] = useState('');
     const [templatePreview, setTemplatePreview] = useState({ issues: [], sections: [], instruments: [], suggested: '' });
     const [briefToolsUnlocked, setBriefToolsUnlocked] = useState(false);
+    const [referralPayouts, setReferralPayouts] = useState([]);
+    const [referralPayoutsLoading, setReferralPayoutsLoading] = useState(false);
+    const [referralPayoutsStatusFilter, setReferralPayoutsStatusFilter] = useState('');
+    const [payoutActionBusyId, setPayoutActionBusyId] = useState(null);
+    const [reverseSourceTable, setReverseSourceTable] = useState('stripe_checkout_session');
+    const [reverseSourceId, setReverseSourceId] = useState('');
+    const [reverseReason, setReverseReason] = useState('admin_reversal');
+    const [reversingEvent, setReversingEvent] = useState(false);
+    const [recentReversals, setRecentReversals] = useState([]);
+    const [reversalSourceFilter, setReversalSourceFilter] = useState('');
+    const [reversalWindowDays, setReversalWindowDays] = useState('30');
 
     // Handle real-time online status updates from WebSocket
     const handleOnlineStatusUpdate = (data) => {
@@ -234,7 +246,7 @@ const AdminPanel = () => {
         }
         
         const userRole = user?.role?.toLowerCase() || '';
-        const isAdmin = userRole === 'admin' || isSuperAdmin(user);
+        const isAdmin = userRole === 'admin' || hasSuperAdminRole(user);
         
         if (user && !isAdmin) {
             navigate('/');
@@ -331,6 +343,73 @@ const AdminPanel = () => {
             console.error('Error fetching channels:', err);
         } finally {
             setChannelsLoading(false);
+        }
+    };
+
+    const fetchReferralPayouts = useCallback(async () => {
+        try {
+            setReferralPayoutsLoading(true);
+            const [res, revRes] = await Promise.all([
+                AdminApi.getReferralPayouts({
+                    page: 1,
+                    pageSize: 50,
+                    ...(referralPayoutsStatusFilter ? { status: referralPayoutsStatusFilter } : {}),
+                }),
+                AdminApi.getReferralReversalHistory(12, reversalSourceFilter, Number(reversalWindowDays) || 0),
+            ]);
+            const items = Array.isArray(res?.data?.items) ? res.data.items : [];
+            const revItems = Array.isArray(revRes?.data?.items) ? revRes.data.items : [];
+            setReferralPayouts(items);
+            setRecentReversals(revItems);
+        } catch (err) {
+            console.error('Error loading referral payouts:', err);
+            setError(err?.response?.data?.message || 'Failed to load referral payouts');
+        } finally {
+            setReferralPayoutsLoading(false);
+        }
+    }, [referralPayoutsStatusFilter, reversalSourceFilter, reversalWindowDays]);
+
+    useEffect(() => {
+        if (activeTab === 'referral-payouts') {
+            fetchReferralPayouts();
+        }
+    }, [activeTab, fetchReferralPayouts]);
+
+    const handlePayoutAction = async (id, action) => {
+        try {
+            setPayoutActionBusyId(id);
+            await AdminApi.processReferralPayout(id, action, {});
+            await fetchReferralPayouts();
+            setError(null);
+        } catch (err) {
+            console.error(`Payout ${action} failed:`, err);
+            setError(err?.response?.data?.message || `Failed to ${action} payout`);
+        } finally {
+            setPayoutActionBusyId(null);
+        }
+    };
+
+    const handleReverseReferralEvent = async () => {
+        if (!reverseSourceTable || !reverseSourceId.trim()) {
+            setError('Source table and source id are required to reverse an event.');
+            return;
+        }
+        try {
+            setReversingEvent(true);
+            await AdminApi.reverseReferralEventBySource({
+                sourceTable: reverseSourceTable,
+                sourceId: reverseSourceId.trim(),
+                reason: reverseReason || 'admin_reversal',
+            });
+            setReverseSourceId('');
+            setError(null);
+            await fetchReferralPayouts();
+            alert('✅ Referral event reversed (if matching source event was found).');
+        } catch (err) {
+            console.error('Reverse referral event failed:', err);
+            setError(err?.response?.data?.message || 'Failed to reverse referral event.');
+        } finally {
+            setReversingEvent(false);
         }
     };
 
@@ -664,12 +743,12 @@ const AdminPanel = () => {
 
     // Check admin status more flexibly
     const userRole = user?.role?.toLowerCase() || '';
-    const isAdmin = userRole === 'admin' || isSuperAdmin(user);
-    const isSuperAdmin =
-        userRole === 'super_admin' || isSuperAdmin(user);
+    const isAdmin = userRole === 'admin' || hasSuperAdminRole(user);
+    const isSuperAdminUser =
+        userRole === 'super_admin' || hasSuperAdminRole(user);
 
     useEffect(() => {
-        if (!isSuperAdmin) return;
+        if (!isSuperAdminUser) return;
         try {
             const params = new URLSearchParams(window.location.search || '');
             const unlockFromQuery = params.get('briefTools') === '1';
@@ -680,13 +759,13 @@ const AdminPanel = () => {
         } catch (_) {
             setBriefToolsUnlocked(false);
         }
-    }, [isSuperAdmin]);
+    }, [isSuperAdminUser]);
 
     useEffect(() => {
-        if (activeTab === 'brief-templates' && (!isSuperAdmin || !briefToolsUnlocked)) {
+        if (activeTab === 'brief-templates' && (!isSuperAdminUser || !briefToolsUnlocked)) {
             setActiveTab('users');
         }
-    }, [activeTab, isSuperAdmin, briefToolsUnlocked]);
+    }, [activeTab, isSuperAdminUser, briefToolsUnlocked]);
 
     const loadTemplate = useCallback(async (period) => {
         try {
@@ -719,9 +798,9 @@ const AdminPanel = () => {
     }, []);
 
     useEffect(() => {
-        if (!isSuperAdmin || !briefToolsUnlocked || activeTab !== 'brief-templates') return;
+        if (!isSuperAdminUser || !briefToolsUnlocked || activeTab !== 'brief-templates') return;
         loadTemplate(templatePeriod);
-    }, [activeTab, templatePeriod, isSuperAdmin, briefToolsUnlocked, loadTemplate]);
+    }, [activeTab, templatePeriod, isSuperAdminUser, briefToolsUnlocked, loadTemplate]);
 
     const handleSaveTemplate = async () => {
         try {
@@ -780,7 +859,14 @@ const AdminPanel = () => {
           >
             Channels
           </button>
-          {isSuperAdmin && briefToolsUnlocked && (
+          <button
+            className={`admin-tab-btn ${activeTab === 'referral-payouts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('referral-payouts')}
+            data-count={referralPayouts.length}
+          >
+            Referral payouts
+          </button>
+          {isSuperAdminUser && briefToolsUnlocked && (
             <button
               className={`admin-tab-btn ${activeTab === 'brief-templates' ? 'active' : ''}`}
               onClick={() => setActiveTab('brief-templates')}
@@ -805,7 +891,30 @@ const AdminPanel = () => {
             </button>
           </div>
         )}
-        {activeTab === 'brief-templates' && isSuperAdmin && briefToolsUnlocked && (
+        {activeTab === 'referral-payouts' && (
+          <div className="user-summary">
+            <span>Manual payout processing queue</span>
+            <div style={{ display: 'inline-flex', gap: 10, alignItems: 'center' }}>
+              <select
+                className="access-level-select"
+                style={{ minWidth: 160 }}
+                value={referralPayoutsStatusFilter}
+                onChange={(e) => setReferralPayoutsStatusFilter(e.target.value)}
+              >
+                <option value="">All statuses</option>
+                <option value="requested">Requested</option>
+                <option value="processing">Processing</option>
+                <option value="paid">Paid</option>
+                <option value="failed">Failed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <button onClick={fetchReferralPayouts} className="refresh-btn">
+                ↻ Refresh
+              </button>
+            </div>
+          </div>
+        )}
+        {activeTab === 'brief-templates' && isSuperAdminUser && briefToolsUnlocked && (
           <div className="user-summary">
             <span>Manage daily/weekly AI brief structure</span>
           </div>
@@ -919,7 +1028,7 @@ const AdminPanel = () => {
                     >
                       Grant Access
                     </button>
-                    {isSuperAdmin &&
+                    {isSuperAdminUser &&
                      userItem.role !== 'admin' && userItem.role !== 'super_admin' && (
                       <button 
                         className="action-btn grant-admin-btn"
@@ -1008,7 +1117,155 @@ const AdminPanel = () => {
         </>
       )}
 
-      {activeTab === 'brief-templates' && isSuperAdmin && briefToolsUnlocked && (
+      {activeTab === 'referral-payouts' && (
+        <>
+          <div className="search-container payout-reverse-box">
+            <div className="payout-reverse-title">Manual referral reversal</div>
+            <div className="payout-reverse-grid">
+              <select
+                className="access-level-select"
+                value={reverseSourceTable}
+                onChange={(e) => setReverseSourceTable(e.target.value)}
+              >
+                <option value="stripe_checkout_session">stripe_checkout_session</option>
+                <option value="stripe_invoice">stripe_invoice</option>
+                <option value="stripe_charge">stripe_charge</option>
+                <option value="stripe_payment_intent">stripe_payment_intent</option>
+                <option value="stripe_subscription">stripe_subscription</option>
+                <option value="payments_complete">payments_complete</option>
+              </select>
+              <input
+                className="search-input"
+                placeholder="Source id (session/invoice/charge/payment intent id)"
+                value={reverseSourceId}
+                onChange={(e) => setReverseSourceId(e.target.value)}
+              />
+              <input
+                className="search-input"
+                placeholder="Reason (optional)"
+                value={reverseReason}
+                onChange={(e) => setReverseReason(e.target.value)}
+              />
+              <button
+                className="action-btn revoke-access-btn"
+                type="button"
+                onClick={handleReverseReferralEvent}
+                disabled={reversingEvent}
+              >
+                {reversingEvent ? 'Reversing…' : 'Reverse event'}
+              </button>
+            </div>
+            <div className="payout-reverse-history">
+              <div className="payout-reverse-history__head">
+                <div className="payout-reverse-history__title">Recent reversals</div>
+                <select
+                  className="access-level-select payout-reverse-history__filter"
+                  value={reversalSourceFilter}
+                  onChange={(e) => setReversalSourceFilter(e.target.value)}
+                >
+                  <option value="">All sources</option>
+                  <option value="stripe_checkout_session">stripe_checkout_session</option>
+                  <option value="stripe_invoice">stripe_invoice</option>
+                  <option value="stripe_charge">stripe_charge</option>
+                  <option value="stripe_payment_intent">stripe_payment_intent</option>
+                  <option value="stripe_subscription">stripe_subscription</option>
+                  <option value="payments_complete">payments_complete</option>
+                </select>
+                <select
+                  className="access-level-select payout-reverse-history__filter payout-reverse-history__window"
+                  value={reversalWindowDays}
+                  onChange={(e) => setReversalWindowDays(e.target.value)}
+                >
+                  <option value="1">Last 24h</option>
+                  <option value="7">Last 7d</option>
+                  <option value="30">Last 30d</option>
+                  <option value="0">All time</option>
+                </select>
+              </div>
+              {recentReversals.length === 0 ? (
+                <div className="payout-reverse-history__empty">No reversals logged yet.</div>
+              ) : (
+                <div className="payout-reverse-history__list">
+                  {recentReversals.map((r) => (
+                    <div key={r.id} className="payout-reverse-history__item">
+                      <span>#{r.id} · {r.referee} {r.sourceTable ? `(${r.sourceTable})` : ''}</span>
+                      <span>{new Intl.NumberFormat(undefined, { style: 'currency', currency: 'GBP' }).format((Number(r.amountPence) || 0) / 100)}</span>
+                      <span>{r.occurredAt ? new Date(r.occurredAt).toLocaleString() : '—'}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          {referralPayoutsLoading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <div className="loading-text">Loading payouts...</div>
+            </div>
+          ) : referralPayouts.length === 0 ? (
+            <div className="no-channels-message">
+              <p>No payout requests found for this filter.</p>
+              <button onClick={fetchReferralPayouts} className="retry-btn">Refresh</button>
+            </div>
+          ) : (
+            <div className="users-grid">
+              {referralPayouts.map((p) => (
+                <div key={p.id} className="channel-card payout-card">
+                  <div className="channel-info">
+                    <div className="channel-name">Payout #{p.id}</div>
+                    <div className="channel-category">{p.user}</div>
+                    <div className="payout-row">
+                      <span className="payout-label">Amount</span>
+                      <strong>{new Intl.NumberFormat(undefined, { style: 'currency', currency: 'GBP' }).format((Number(p.amountPence) || 0) / 100)}</strong>
+                    </div>
+                    <div className="payout-row">
+                      <span className="payout-label">Method</span>
+                      <span>{p.payoutMethod || 'manual'}</span>
+                    </div>
+                    <div className="payout-row">
+                      <span className="payout-label">Destination</span>
+                      <span>{p.destinationMasked || 'masked'}</span>
+                    </div>
+                    <div className="payout-row">
+                      <span className="payout-label">Status</span>
+                      <span className={`payout-status payout-status--${String(p.status || '').toLowerCase()}`}>{p.status}</span>
+                    </div>
+                    <div className="payout-row">
+                      <span className="payout-label">Requested</span>
+                      <span>{p.requestedAt ? new Date(p.requestedAt).toLocaleString() : '—'}</span>
+                    </div>
+                  </div>
+                  <div className="user-actions">
+                    <button
+                      className="action-btn grant-access-btn"
+                      disabled={payoutActionBusyId === p.id || p.status !== 'requested'}
+                      onClick={() => handlePayoutAction(p.id, 'process')}
+                    >
+                      {payoutActionBusyId === p.id ? 'Working…' : 'Mark processing'}
+                    </button>
+                    <button
+                      className="action-btn plan-btn"
+                      disabled={payoutActionBusyId === p.id || (p.status !== 'requested' && p.status !== 'processing')}
+                      onClick={() => handlePayoutAction(p.id, 'paid')}
+                    >
+                      Mark paid
+                    </button>
+                    <button
+                      className="action-btn revoke-access-btn"
+                      disabled={payoutActionBusyId === p.id || (p.status !== 'requested' && p.status !== 'processing')}
+                      onClick={() => handlePayoutAction(p.id, 'fail')}
+                    >
+                      Mark failed
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'brief-templates' && isSuperAdminUser && briefToolsUnlocked && (
         <section className="brief-template-panel">
           <div className="brief-template-row">
             <label htmlFor="brief-template-period">Period</label>

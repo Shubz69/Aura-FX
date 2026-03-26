@@ -1071,6 +1071,69 @@ const Api = {
             headers: { Authorization: `Bearer ${token}` }
         });
     },
+    getReferralDashboard: (params = {}) => {
+        const token = localStorage.getItem('token');
+        const base =
+            typeof window !== 'undefined' && window.location?.origin
+                ? window.location.origin
+                : API_BASE_URL;
+        return axios.get(`${base}/api/referral/dashboard`, {
+            params,
+            headers: { Authorization: `Bearer ${token}` }
+        });
+    },
+    getReferralLedger: (params = {}) => {
+        const token = localStorage.getItem('token');
+        const base =
+            typeof window !== 'undefined' && window.location?.origin
+                ? window.location.origin
+                : API_BASE_URL;
+        return axios.get(`${base}/api/referral/ledger`, {
+            params,
+            headers: { Authorization: `Bearer ${token}` }
+        });
+    },
+    getReferralReferees: (params = {}) => {
+        const token = localStorage.getItem('token');
+        const base =
+            typeof window !== 'undefined' && window.location?.origin
+                ? window.location.origin
+                : API_BASE_URL;
+        return axios.get(`${base}/api/referral/referees`, {
+            params,
+            headers: { Authorization: `Bearer ${token}` }
+        });
+    },
+    getReferralPayoutMethod: () => {
+        const token = localStorage.getItem('token');
+        const base =
+            typeof window !== 'undefined' && window.location?.origin
+                ? window.location.origin
+                : API_BASE_URL;
+        return axios.get(`${base}/api/referral/payout-method`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+    },
+    setReferralPayoutMethod: (method, details) => {
+        const token = localStorage.getItem('token');
+        const base =
+            typeof window !== 'undefined' && window.location?.origin
+                ? window.location.origin
+                : API_BASE_URL;
+        return axios.post(`${base}/api/referral/payout-method`, { method, details }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+    },
+    requestReferralWithdrawal: (amountPence) => {
+        const token = localStorage.getItem('token');
+        const base =
+            typeof window !== 'undefined' && window.location?.origin
+                ? window.location.origin
+                : API_BASE_URL;
+        return axios.post(`${base}/api/referral/withdraw`, { amountPence }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+    },
 
     savePushSubscription: (subscription) => {
         const token = localStorage.getItem('token');

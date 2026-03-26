@@ -15,6 +15,9 @@ import {
   FaSyncAlt,
   FaLightbulb,
   FaChevronDown,
+  FaWallet,
+  FaCoins,
+  FaMoneyBillWave,
 } from 'react-icons/fa';
 import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import Api from '../services/Api';
@@ -114,6 +117,14 @@ export default function Affiliation() {
   const [codeCopied, setCodeCopied] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [toast, setToast] = useState(null);
+  const [dashboard, setDashboard] = useState(null);
+  const [ledger, setLedger] = useState([]);
+  const [referees, setReferees] = useState([]);
+  const [payoutMethod, setPayoutMethod] = useState(null);
+  const [payoutDetails, setPayoutDetails] = useState({ email: '' });
+  const [savingPayoutMethod, setSavingPayoutMethod] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawing, setWithdrawing] = useState(false);
   const prevMetricsRef = useRef(null);
 
   const referralLink =
@@ -126,7 +137,14 @@ export default function Affiliation() {
     if (!user) return;
     if (!silent) setLoading(true);
     try {
-      const res = await Api.getReferralStats();
+      const [statsRes, dashboardRes, payoutMethodRes, ledgerRes, refereesRes] = await Promise.allSettled([
+        Api.getReferralStats(),
+        Api.getReferralDashboard(),
+        Api.getReferralPayoutMethod(),
+        Api.getReferralLedger({ page: 1, pageSize: 8 }),
+        Api.getReferralReferees({ page: 1, pageSize: 8 }),
+      ]);
+      const res = statsRes.status === 'fulfilled' ? statsRes.value : null;
       const d = res?.data;
       if (d && typeof d === 'object') {
         const signups = Number(d.signups ?? d.referrals) || 0;
@@ -142,6 +160,37 @@ export default function Affiliation() {
           earned: Number(d.earned) || 0,
         });
         setStatsAt(d.statsAt || null);
+      }
+      if (dashboardRes.status === 'fulfilled' && dashboardRes.value?.data) {
+        const dd = dashboardRes.value.data;
+        setDashboard(dd);
+        if (!res?.data) {
+          const signups = Number(dd.totalSignups) || 0;
+          setReferralCode(dd.referralCode || null);
+          setStats({
+            signups,
+            referrals: signups,
+            coursePurchases: 0,
+            subscriptionPurchases: 0,
+            totalImpact: Number(dd.totalSignups || 0) + Number(dd.verifiedPaidReferrals || 0),
+            impactScore: Math.min(100, Number(dd.verifiedPaidReferrals || 0) * 5),
+            active: Number(dd.activeReferredPlans || 0),
+            earned: 0,
+          });
+          setStatsAt(dd.statsAt || null);
+        }
+      }
+      if (payoutMethodRes.status === 'fulfilled' && payoutMethodRes.value?.data) {
+        const pm = payoutMethodRes.value.data;
+        setPayoutMethod(pm.method || null);
+        const details = pm.details && typeof pm.details === 'object' ? pm.details : {};
+        setPayoutDetails({ email: details.email || '' });
+      }
+      if (ledgerRes.status === 'fulfilled') {
+        setLedger(Array.isArray(ledgerRes.value?.data?.items) ? ledgerRes.value.data.items : []);
+      }
+      if (refereesRes.status === 'fulfilled') {
+        setReferees(Array.isArray(refereesRes.value?.data?.items) ? refereesRes.value.data.items : []);
       }
     } catch (_) {
       /* keep defaults */
@@ -294,6 +343,43 @@ export default function Affiliation() {
   const syncedLabel = statsAt
     ? `Updated ${new Date(statsAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`
     : null;
+
+  const penceToCurrency = (pence) =>
+    new Intl.NumberFormat(undefined, { style: 'currency', currency: 'GBP' }).format((Number(pence) || 0) / 100);
+
+  const currentCommissionTierPercent = Number(dashboard?.currentCommissionTierPercent || 0);
+  const verifiedPaidReferrals = Number(dashboard?.verifiedPaidReferrals || 0);
+  const nextTierTarget = dashboard?.nextTierTarget ? Number(dashboard.nextTierTarget) : null;
+  const paidReferralsToNext = nextTierTarget ? Math.max(0, nextTierTarget - verifiedPaidReferrals) : 0;
+
+  const savePayoutMethod = async () => {
+    if (!payoutMethod) return;
+    setSavingPayoutMethod(true);
+    try {
+      await Api.setReferralPayoutMethod(payoutMethod, payoutDetails);
+      setToast({ msg: 'Payout method saved.', kind: 'win' });
+    } catch (e) {
+      setToast({ msg: e?.response?.data?.message || 'Failed to save payout method.', kind: 'err' });
+    } finally {
+      setSavingPayoutMethod(false);
+    }
+  };
+
+  const requestWithdraw = async () => {
+    const amountPence = Math.max(0, Math.round(Number(withdrawAmount || 0) * 100));
+    if (!amountPence) return;
+    setWithdrawing(true);
+    try {
+      await Api.requestReferralWithdrawal(amountPence);
+      setToast({ msg: 'Withdrawal requested. Admin review is pending.', kind: 'win' });
+      setWithdrawAmount('');
+      fetchStats({ silent: true });
+    } catch (e) {
+      setToast({ msg: e?.response?.data?.message || 'Withdrawal request failed.', kind: 'err' });
+    } finally {
+      setWithdrawing(false);
+    }
+  };
 
   return (
     <AuraTerminalThemeShell>
@@ -589,6 +675,152 @@ export default function Affiliation() {
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        <section className="aff-how" aria-label="Referral earnings wallet">
+          <h2 className="aff-section-title">
+            <FaWallet aria-hidden />
+            Earnings wallet
+          </h2>
+          <p className="aff-section-lead">
+            Wallet balances are server-calculated. Pending clears after hold, then becomes available for withdrawal.
+          </p>
+          <div className="aff-stats">
+            <div className="aff-stat aff-stat--impact">
+              <div className="aff-stat__value">{penceToCurrency(dashboard?.pendingEarningsPence)}</div>
+              <div className="aff-stat__label">Pending earnings</div>
+              <div className="aff-stat__hint">In hold window before becoming payable</div>
+            </div>
+            <div className="aff-stat">
+              <div className="aff-stat__value">{penceToCurrency(dashboard?.payableEarningsPence)}</div>
+              <div className="aff-stat__label">Available to withdraw</div>
+              <div className="aff-stat__hint">Can be withdrawn if above minimum</div>
+            </div>
+            <div className="aff-stat">
+              <div className="aff-stat__value">{penceToCurrency(dashboard?.paidOutEarningsPence)}</div>
+              <div className="aff-stat__label">Paid out all-time</div>
+              <div className="aff-stat__hint">Completed admin payout transfers</div>
+            </div>
+            <div className="aff-stat">
+              <div className="aff-stat__value">{penceToCurrency(dashboard?.lifetimeEarningsPence)}</div>
+              <div className="aff-stat__label">Lifetime earnings</div>
+              <div className="aff-stat__hint">Total credited earnings net of reversals</div>
+            </div>
+          </div>
+          <div className="aff-link-box">
+            <div className="aff-link-box__head">
+              <span className="aff-link-box__label">Commission tier status</span>
+            </div>
+            <div className="aff-link-box__code">
+              Current tier: <strong>{currentCommissionTierPercent}% commission</strong> · Verified paid referrals:{' '}
+              <strong>{verifiedPaidReferrals}</strong>
+            </div>
+            <p className="aff-milestone-progress__hint">
+              {nextTierTarget
+                ? `Bring ${paidReferralsToNext} more verified paid referral${paidReferralsToNext === 1 ? '' : 's'} to unlock ${dashboard?.nextTierLabel || 'next tier'}.`
+                : 'You are on the top affiliate tier.'}
+            </p>
+          </div>
+        </section>
+
+        <section className="aff-how" aria-label="Recent earnings ledger">
+          <h2 className="aff-section-title">
+            <FaCoins aria-hidden />
+            Recent earnings ledger
+          </h2>
+          <div className="aff-faq__list">
+            {ledger.length === 0 && <div className="aff-faq__item"><div className="aff-faq__summary">No earnings events yet.</div></div>}
+            {ledger.map((item) => (
+              <div key={item.id} className="aff-faq__item">
+                <div className="aff-faq__summary">
+                  <span>{new Date(item.date).toLocaleDateString()} · {item.maskedReferee}</span>
+                  <span>{penceToCurrency(item.commissionAmountPence || item.commissionPence)}</span>
+                </div>
+                <p className="aff-faq__answer">
+                  {String(item.eventType || '').replace(/_/g, ' ')} · <strong>{item.status}</strong>
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="aff-how" aria-label="Referred users and withdrawal">
+          <h2 className="aff-section-title">
+            <FaMoneyBillWave aria-hidden />
+            Referees &amp; withdrawal
+          </h2>
+          <div className="aff-dashboard">
+            <div className="aff-dashboard__main">
+              <div className="aff-faq__list">
+                {referees.length === 0 && <div className="aff-faq__item"><div className="aff-faq__summary">No referred users yet.</div></div>}
+                {referees.map((r) => (
+                  <div key={r.referredUserId} className="aff-faq__item">
+                    <div className="aff-faq__summary">
+                      <span>{r.maskedIdentifier}</span>
+                      <span>{penceToCurrency(r.totalCommissionEarnedPence)}</span>
+                    </div>
+                    <p className="aff-faq__answer">
+                      Joined {new Date(r.joinDate || r.joinedAt).toLocaleDateString()} · {r.verifiedPaid ? 'Verified paid' : 'Not yet verified paid'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <aside className="aff-dashboard__aside">
+              <div className="aff-link-box">
+                <div className="aff-link-box__head">
+                  <span className="aff-link-box__label">Withdrawal</span>
+                </div>
+                <div className="aff-link-box__code">
+                  Minimum withdrawal: <strong>{penceToCurrency(dashboard?.minWithdrawalPence || 5000)}</strong>
+                </div>
+                <div className="aff-link-box__row">
+                  <select
+                    className="roles-dropdown"
+                    value={payoutMethod || ''}
+                    onChange={(e) => setPayoutMethod(e.target.value || null)}
+                  >
+                    <option value="">Select payout method</option>
+                    <option value="paypal">PayPal</option>
+                    <option value="bank_transfer">Bank transfer</option>
+                    <option value="manual">Manual</option>
+                  </select>
+                  <input
+                    className="form-input"
+                    value={payoutDetails.email || ''}
+                    onChange={(e) => setPayoutDetails((p) => ({ ...p, email: e.target.value }))}
+                    placeholder="Payout destination (masked in admin)"
+                  />
+                </div>
+                <div className="aff-link-box__actions-bar">
+                  <button type="button" className="aff-btn-secondary" disabled={savingPayoutMethod || !payoutMethod} onClick={savePayoutMethod}>
+                    {savingPayoutMethod ? 'Saving...' : 'Save payout method'}
+                  </button>
+                </div>
+                <div className="aff-link-box__row">
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    placeholder="Withdrawal amount (GBP)"
+                  />
+                </div>
+                <div className="aff-link-box__actions-bar">
+                  <button
+                    type="button"
+                    className="aff-copy-btn"
+                    onClick={requestWithdraw}
+                    disabled={withdrawing || !withdrawAmount}
+                  >
+                    {withdrawing ? 'Requesting...' : 'Request withdrawal'}
+                  </button>
+                </div>
+              </div>
+            </aside>
           </div>
         </section>
 

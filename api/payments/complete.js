@@ -38,7 +38,24 @@ module.exports = async (req, res) => {
   }
 
   try {
-    await recordReferralConversion(userId, 'course');
+    const body = parseBody(req);
+    const grossAmountPence = Math.max(
+      0,
+      Math.round(
+        Number(body.amountPence ?? body.amount_pence ?? body.amount ?? body.totalPence ?? 0)
+      )
+    );
+    await recordReferralConversion(userId, 'course', {
+      sourceTable: 'payments_complete',
+      sourceId: String(body.sessionId || body.paymentIntentId || body.courseId || `course:${userId}:${Date.now()}`),
+      grossAmountPence,
+      netAmountPence: grossAmountPence,
+      currency: String(body.currency || 'GBP').toUpperCase(),
+      metadata: {
+        courseId: body.courseId || null,
+        sessionId: body.sessionId || null,
+      },
+    });
   } catch (e) {
     console.warn('payments/complete referral:', e.message);
   }

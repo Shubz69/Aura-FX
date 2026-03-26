@@ -905,3 +905,20 @@ body {
     min-height: 44px;
   }
 }
+
+.aff-page .form-input,
+.aff-page .roles-dropdown {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--aff-border-strong);
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+}
+
+.aff-page .form-input:focus,
+.aff-page .roles-dropdown:focus {
+  outline: 1px solid var(--aff-border-gold);
+  border-color: var(--aff-border-gold);
+}

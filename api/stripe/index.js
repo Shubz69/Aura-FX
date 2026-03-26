@@ -324,7 +324,14 @@ module.exports = async (req, res) => {
         if (planType !== 'free') {
           try {
             const { recordReferralConversion } = require('../referral/referralService');
-            await recordReferralConversion(Number(userId), 'subscription');
+            await recordReferralConversion(Number(userId), 'subscription', {
+              sourceTable: 'stripe_checkout_session',
+              sourceId: String(sessionId || `subscription:${userId}:${Date.now()}`),
+              grossAmountPence: Math.max(0, Math.round(Number(req.body?.amount_pence || req.body?.amountPence || 0))),
+              netAmountPence: Math.max(0, Math.round(Number(req.body?.amount_pence || req.body?.amountPence || 0))),
+              currency: String(req.body?.currency || 'GBP').toUpperCase(),
+              metadata: { planType, flow: 'subscription-success' },
+            });
           } catch (refErr) {
             console.warn('Referral subscription attribution:', refErr.message);
           }
@@ -446,7 +453,14 @@ module.exports = async (req, res) => {
                 invalidateEntitlementsCache(userId);
                 try {
                   const { recordReferralConversion } = require('../referral/referralService');
-                  await recordReferralConversion(Number(userId), 'subscription');
+                  await recordReferralConversion(Number(userId), 'subscription', {
+                    sourceTable: 'stripe_checkout_session',
+                    sourceId: String(session?.id || `checkout:${userId}:${Date.now()}`),
+                    grossAmountPence: Math.max(0, Math.round(Number(session?.amount_total || 0))),
+                    netAmountPence: Math.max(0, Math.round(Number(session?.amount_subtotal || session?.amount_total || 0))),
+                    currency: String(session?.currency || 'GBP').toUpperCase(),
+                    metadata: { planType, flow: 'webhook-checkout-session-completed' },
+                  });
                 } catch (refErr) {
                   console.warn('Webhook referral attribution:', refErr.message);
                 }
@@ -458,7 +472,13 @@ module.exports = async (req, res) => {
             }
           }
         }
-      } else if (event.type === 'invoice.payment_failed' || event.type === 'customer.subscription.deleted') {
+      } else if (
+        event.type === 'invoice.payment_failed' ||
+        event.type === 'customer.subscription.deleted' ||
+        event.type === 'charge.refunded' ||
+        event.type === 'charge.dispute.created' ||
+        event.type === 'charge.dispute.funds_withdrawn'
+      ) {
         const obj = event.data?.object || {};
         const customerId = typeof obj.customer === 'string' ? obj.customer : obj.customer?.id || null;
         const subscriptionId = obj.subscription || obj.id;
@@ -511,6 +531,25 @@ module.exports = async (req, res) => {
             }
           }
           
+          try {
+            const { reverseReferralBySource } = require('../referral/referralService');
+            const reverseCandidates = [];
+            if (obj.id) reverseCandidates.push({ sourceTable: 'stripe_invoice', sourceId: String(obj.id) });
+            if (obj.charge) reverseCandidates.push({ sourceTable: 'stripe_charge', sourceId: String(obj.charge) });
+            if (obj.payment_intent) reverseCandidates.push({ sourceTable: 'stripe_payment_intent', sourceId: String(obj.payment_intent) });
+            if (subscriptionId) reverseCandidates.push({ sourceTable: 'stripe_subscription', sourceId: String(subscriptionId) });
+            for (const c of reverseCandidates) {
+              await reverseReferralBySource({
+                sourceTable: c.sourceTable,
+                sourceId: c.sourceId,
+                reason: event.type,
+                metadata: { webhookType: event.type },
+              });
+            }
+          } catch (refRevErr) {
+            console.warn('Referral reversal webhook:', refRevErr.message);
+          }
+
           db.release();
         } catch (dbError) {
           console.error('Database error in webhook:', dbError);
@@ -552,6 +591,19 @@ module.exports = async (req, res) => {
             );
             console.log('Reactivated subscription for user:', userId, 'with role:', userRole);
             invalidateEntitlementsCache(userId);
+            try {
+              const { recordReferralConversion } = require('../referral/referralService');
+              await recordReferralConversion(Number(userId), 'renewal', {
+                sourceTable: 'stripe_invoice',
+                sourceId: String(inv.id || inv.payment_intent || `invoice:${userId}:${Date.now()}`),
+                grossAmountPence: Math.max(0, Math.round(Number(inv.amount_paid || inv.amount_due || 0))),
+                netAmountPence: Math.max(0, Math.round(Number(inv.amount_paid || inv.amount_due || 0))),
+                currency: String(inv.currency || 'GBP').toUpperCase(),
+                metadata: { flow: 'invoice-payment-succeeded' },
+              });
+            } catch (refErr) {
+              console.warn('Renewal referral attribution:', refErr.message);
+            }
           }
 
           db.release();
