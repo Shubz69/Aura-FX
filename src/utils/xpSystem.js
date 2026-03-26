@@ -51,17 +51,18 @@ const TIER_NAMES = [
     'GOD Tier'
 ];
 
+/** Tier accent colors — peachy gold ladder (brand); replaces gray/blue/teal progression */
 const TIER_COLORS = [
-    '#7d8597',
-    '#8f8bff',
-    '#3ea0ff',
-    '#2ed8a7',
+    '#9a8a7a',
+    '#b08d6a',
+    '#c9975c',
+    '#d48d44',
     '#eaa960',
     '#f8c37d',
-    '#f59e0b',
-    '#d97706',
-    '#f5d98b',
-    '#ffd700'
+    '#fde8c4',
+    '#eab56e',
+    '#ffd8a9',
+    '#fff4e6',
 ];
 
 const TIER_RANK_NAMES = [

@@ -13,6 +13,7 @@ import GDPRModal from './components/GDPRModal';
 import Footer from './components/Footer';
 import CommunityRouteBoundary from './components/CommunityRouteBoundary';
 import { consumePostLoginTransition } from './utils/postLoginTransition';
+import { ensureWebPushSubscription } from './utils/ensureWebPushSubscription';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/Courses.css';
@@ -149,6 +150,15 @@ function AppRoutes() {
     const [postLoginLoadingActive, setPostLoginLoadingActive] = useState(() => postLoginGateArmed);
 
     usePrefetchRoutes();
+
+    /** Re-register Web Push when permission already granted (DMs, @mentions → device) */
+    useEffect(() => {
+        if (loading || !user?.id) return;
+        const t = setTimeout(() => {
+            ensureWebPushSubscription();
+        }, 2500);
+        return () => clearTimeout(t);
+    }, [loading, user?.id]);
 
     /** Installed PWA / iOS “Add to Home Screen” — safe-area padding via html.pwa-standalone (see index.css) */
     useEffect(() => {

@@ -7,6 +7,7 @@ const webpush = require('web-push');
 const { executeQuery } = require('../db');
 
 let vapidConfigured = false;
+let vapidMissingLogged = false;
 const PUSH_SEND_TIMEOUT_MS = 5000;
 const PUSH_BATCH_SIZE = 10;
 
@@ -14,7 +15,13 @@ function ensureVapid() {
   if (vapidConfigured) return true;
   const pub = process.env.VAPID_PUBLIC_KEY;
   const priv = process.env.VAPID_PRIVATE_KEY;
-  if (!pub || !priv) return false;
+  if (!pub || !priv) {
+    if (!vapidMissingLogged) {
+      vapidMissingLogged = true;
+      console.warn('[webPush] VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY not set — device push disabled (in-app notifications still work)');
+    }
+    return false;
+  }
   webpush.setVapidDetails(
     `mailto:${process.env.EMAIL_USER || 'support@auraterminal.ai'}`,
     pub,

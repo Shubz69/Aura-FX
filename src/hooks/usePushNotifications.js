@@ -68,7 +68,8 @@ export function usePushNotifications() {
 
       const token = localStorage.getItem('token');
       const base = getPushApiBase();
-      await axios.post(`${base}/api/push/subscribe`, { subscription }, {
+      const subPayload = typeof subscription.toJSON === 'function' ? subscription.toJSON() : subscription;
+      await axios.post(`${base}/api/push/subscribe`, { subscription: subPayload }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

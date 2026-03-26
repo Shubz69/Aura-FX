@@ -207,10 +207,12 @@ module.exports = async (req, res) => {
 
   try {
     // GET /api/friends/list - Get friends list (with caching)
+    // ?refresh=1 skips cache (use after fixes or when list looks stale)
     if (req.method === 'GET' && (action === 'list' || action === '')) {
+      const skipCache = String(req.query?.refresh || '') === '1';
       // Check cache
       const cacheKey = `friends_list_${userId}`;
-      const cached = getCached(cacheKey, DEFAULT_TTLS.FRIENDS_LIST);
+      const cached = !skipCache ? getCached(cacheKey, DEFAULT_TTLS.FRIENDS_LIST) : null;
       if (cached) {
         logger.info('Cache HIT', { ms: Date.now() - startTime });
         return res.status(200).json({
@@ -225,17 +227,20 @@ module.exports = async (req, res) => {
       logger.startTimer('db_query');
       let friends;
       try {
+        // Include rows where we are either user_id or friend_id (legacy data sometimes had only one direction)
         const result = await executeQueryWithTimeout(`
           SELECT 
             u.id, u.username, u.avatar, u.level, u.xp, u.role,
-            u.last_seen, f.created_at as friends_since,
-            COALESCE(s.show_online_status, 1) as show_online_status
+            u.last_seen,
+            MAX(f.created_at) as friends_since,
+            MAX(COALESCE(s.show_online_status, 1)) as show_online_status
           FROM friendships f
-          JOIN users u ON f.friend_id = u.id
+          JOIN users u ON u.id = IF(f.user_id = ?, f.friend_id, f.user_id)
           LEFT JOIN user_settings s ON s.user_id = u.id
-          WHERE f.user_id = ?
+          WHERE f.user_id = ? OR f.friend_id = ?
+          GROUP BY u.id, u.username, u.avatar, u.level, u.xp, u.role, u.last_seen
           ORDER BY u.last_seen DESC
-        `, [userId], 10000, requestId);
+        `, [userId, userId, userId], 10000, requestId);
         logger.endTimer('db_query');
         const rows = getRows(result);
         friends = rows.map(f => {
@@ -259,12 +264,13 @@ module.exports = async (req, res) => {
           const result = await executeQueryWithTimeout(`
             SELECT 
               u.id, u.username, u.avatar, u.level, u.xp, u.role,
-              u.last_seen, f.created_at as friends_since
+              u.last_seen, MAX(f.created_at) as friends_since
             FROM friendships f
-            JOIN users u ON f.friend_id = u.id
-            WHERE f.user_id = ?
+            JOIN users u ON u.id = IF(f.user_id = ?, f.friend_id, f.user_id)
+            WHERE f.user_id = ? OR f.friend_id = ?
+            GROUP BY u.id, u.username, u.avatar, u.level, u.xp, u.role, u.last_seen
             ORDER BY u.last_seen DESC
-          `, [userId], 10000, requestId);
+          `, [userId, userId, userId], 10000, requestId);
           const rows = getRows(result);
           friends = rows.map(f => ({
             id: jsonNumber(f.id),
@@ -279,12 +285,13 @@ module.exports = async (req, res) => {
           }));
         } catch (e2) {
           const result = await executeQueryWithTimeout(
-            `SELECT u.id, u.username, f.created_at as friends_since
+            `SELECT u.id, u.username, MAX(f.created_at) as friends_since
              FROM friendships f
-             JOIN users u ON f.friend_id = u.id
-             WHERE f.user_id = ?
+             JOIN users u ON u.id = IF(f.user_id = ?, f.friend_id, f.user_id)
+             WHERE f.user_id = ? OR f.friend_id = ?
+             GROUP BY u.id, u.username
              ORDER BY u.id DESC`,
-            [userId],
+            [userId, userId, userId],
             10000,
             requestId
           );
@@ -419,10 +426,12 @@ module.exports = async (req, res) => {
         });
       }
       
-      // Check if already friends
+      // Check if already friends (either direction)
       const friendshipResult = await executeQuery(
-        'SELECT 1 FROM friendships WHERE user_id = ? AND friend_id = ?',
-        [userId, receiverId]
+        `SELECT 1 FROM friendships
+         WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+         LIMIT 1`,
+        [userId, receiverId, receiverId, userId]
       );
       if (getRows(friendshipResult).length > 0) {
         return res.status(400).json({
@@ -842,10 +851,12 @@ if (existing) {
         });
       }
       
-      // Check if friends
+      // Check if friends (either direction)
       const friendResult = await executeQuery(
-        'SELECT 1 FROM friendships WHERE user_id = ? AND friend_id = ?',
-        [userId, targetId]
+        `SELECT 1 FROM friendships
+         WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+         LIMIT 1`,
+        [userId, targetId, targetId, userId]
       );
       if (getRows(friendResult).length > 0) {
         return res.status(200).json({

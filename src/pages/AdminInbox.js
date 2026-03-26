@@ -213,7 +213,7 @@ useEffect(() => {
     const load = async () => {
       setLoadingFriends(true);
       try {
-        const res = await fetch(`${API_BASE()}/api/friends/list`, {
+        const res = await fetch(`${API_BASE()}/api/friends/list?refresh=1`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         if (!mounted) return;

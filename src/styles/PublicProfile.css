@@ -342,16 +342,16 @@
   gap: 12px;
   padding: 10px 18px;
   margin-bottom: 20px;
-  background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.05));
-  border: 1px solid rgba(245,158,11,0.3);
+  background: linear-gradient(135deg, rgba(234,169,96,0.14), rgba(234,169,96,0.05));
+  border: 1px solid rgba(234,169,96,0.32);
   border-radius: var(--radius);
   backdrop-filter: blur(10px);
   transition: all var(--transition);
 }
 
 .public-profile-discipline-streak:hover {
-  border-color: rgba(245,158,11,0.5);
-  background: linear-gradient(135deg, rgba(245,158,11,0.18), rgba(245,158,11,0.08));
+  border-color: rgba(248,195,125,0.45);
+  background: linear-gradient(135deg, rgba(234,169,96,0.2), rgba(248,195,125,0.08));
 }
 
 .public-profile-streak-icon { font-size: 1.4rem; }
@@ -372,8 +372,9 @@
 .public-profile-streak-value {
   font-size: 1.05rem;
   font-weight: 600;
-  color: #fbbf24;
+  color: var(--accent-light);
   letter-spacing: 0.04em;
+  text-shadow: 0 0 18px rgba(234,169,96,0.35);
 }
 
 /* ── Stat Circles (Today / Week / Month) ──────────────────── */
@@ -430,7 +431,11 @@
   z-index: 1;
   font-size: 0.88rem;
   font-weight: 600;
-  color: var(--text);
+  background: linear-gradient(125deg, #fff 20%, var(--accent-light) 65%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px rgba(234,169,96,0.25));
 }
 
 .public-profile-stat-circle-label {
@@ -481,10 +486,10 @@
 }
 
 .tab-btn.active {
-  color: #fff;
-  background: linear-gradient(135deg, rgba(234,169,96,0.2), rgba(248,195,125,0.1));
+  color: var(--accent-light);
+  background: linear-gradient(135deg, rgba(234,169,96,0.22), rgba(248,195,125,0.12));
   box-shadow: 0 4px 14px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
-  outline: 1px solid rgba(234,169,96,0.35);
+  outline: 1px solid rgba(234,169,96,0.4);
 }
 
 /* ── Tab Content ──────────────────────────────────────────── */
