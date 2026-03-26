@@ -165,19 +165,13 @@
 
     background: linear-gradient(
         110deg,
-        #3d2418   0%,
-        #6b3d22   8%,
-        #b06e32  14%,
-        #eaa960  22%,
-        #f8c37d  30%,
-        #fde8c4  36%,
-        #f8c37d  44%,
-        #eaa960  52%,
-        #d48d44  62%,
-        #f8c37d  72%,
-        #fff4e6  78%,
-        #c97b45  88%,
-        #4a2818 100%
+        #bfc4cf   0%,
+        #e6eaf2   14%,
+        #ffffff   30%,
+        #f3f6fb   44%,
+        #ffffff   58%,
+        #dde3ee   74%,
+        #b7bfcc 100%
     );
     background-size: 300% 100%;
     animation:
@@ -189,15 +183,15 @@
     background:
         repeating-linear-gradient(
             47deg,
-            rgba(253, 232, 196, 0.24) 0px,
-            rgba(253, 232, 196, 0.24) 1px,
+            rgba(255, 255, 255, 0.22) 0px,
+            rgba(255, 255, 255, 0.22) 1px,
             transparent 1px,
             transparent 5px
         ),
         repeating-linear-gradient(
             -43deg,
-            rgba(212, 141, 68, 0.14) 0px,
-            rgba(212, 141, 68, 0.14) 1px,
+            rgba(194, 202, 216, 0.2) 0px,
+            rgba(194, 202, 216, 0.2) 1px,
             transparent 1px,
             transparent 7px
         );
@@ -207,9 +201,9 @@
 .home-logo-section .a7-logo-image::after {
     background: radial-gradient(
         ellipse 65% 45% at 32% 26%,
-        rgba(255, 252, 245, 0.85) 0%,
-        rgba(253, 232, 196, 0.45) 28%,
-        rgba(248, 195, 125, 0.16) 56%,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(242, 246, 252, 0.5) 32%,
+        rgba(214, 223, 236, 0.18) 58%,
         transparent 82%
     );
     opacity: 0.82;
