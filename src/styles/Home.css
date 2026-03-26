@@ -32,8 +32,8 @@
 
     /* Text */
     --text:          #FFFFFF;
-    --text-muted:    rgba(200, 196, 232, 0.72);
-    --text-dim:      rgba(178, 175, 218, 0.50);
+    --text-muted:    rgba(235, 234, 240, 0.74);
+    --text-dim:      rgba(210, 210, 218, 0.52);
 
     /* Status */
     --up:            #0FD98A;
@@ -311,7 +311,7 @@ html, body {
 
 .powered-by-glitch {
     font-family: var(--font); font-size: .70rem;
-    color: rgba(210,206,242,.82);
+    color: rgba(235,234,240,.82);
     margin-top: .65rem; font-weight: 400;
     letter-spacing: .20em;
     animation: brandFadeIn 1.2s ease-out .32s both;
@@ -331,7 +331,7 @@ html, body {
 .hero-intro { animation: brandFadeIn 1.2s ease-out .46s both; }
 .intro-text {
     font-size: 1.02rem; font-weight: 400;
-    color: rgba(225,220,255,.88);
+    color: rgba(240,240,245,.90);
     letter-spacing: .02em; line-height: 1.76; margin: 0;
     text-shadow: 0 1px 10px rgba(0,0,0,.68);
 }
@@ -424,7 +424,7 @@ html, body {
 }
 .trust-badge {
     display: flex; align-items: center; gap: .46rem;
-    font-size: .67rem; color: rgba(235,230,255,.86);
+    font-size: .67rem; color: rgba(240,240,246,.88);
     letter-spacing: .14em; text-transform: uppercase;
     font-weight: 500;
     text-shadow: 0 1px 7px rgba(0,0,0,.86);
@@ -447,7 +447,7 @@ html, body {
 }
 .partner-logo {
     font-size: .64rem; font-weight: 600;
-    color: rgba(232,228,255,.64);
+    color: rgba(228,228,236,.68);
     letter-spacing: .20em; text-transform: uppercase;
     transition: color var(--transition);
     display: flex; align-items: center; gap: .40rem;
@@ -684,7 +684,7 @@ html, body {
 .slide-subtitle {
     font-family: var(--font);
     font-size: .72rem;
-    color: rgba(235,230,255,.76);
+    color: rgba(238,238,244,.78);
     margin: 0;
     letter-spacing: .06em;
     line-height: 1.3;
@@ -704,14 +704,14 @@ html, body {
     position: absolute;
     top: 1.1rem;
     left: 1.2rem;
-    background: rgba(10,217,138,.14);
-    border: 1px solid rgba(10,217,138,.28);
+    background: rgba(234,169,96,.14);
+    border: 1px solid rgba(234,169,96,.32);
     border-radius: 8px;
     padding: .36rem .70rem;
     font-family: var(--font);
     font-size: .68rem;
     font-weight: 700;
-    color: #0FD98A;
+    color: var(--eaa-bright);
     letter-spacing: .08em;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
@@ -761,7 +761,7 @@ html, body {
         left: 0.8rem;
         padding: 0.22rem 0.55rem;
         font-size: 0.55rem;
-        background: rgba(10,217,138,.18);
+        background: rgba(234,169,96,.18);
         backdrop-filter: blur(6px);
         -webkit-backdrop-filter: blur(6px);
     }
@@ -1259,7 +1259,7 @@ html, body {
     letter-spacing: .18em; text-transform: uppercase;
 }
 .feature-description {
-    font-size: .87rem; color: rgba(210,206,248,.74);
+    font-size: .87rem; color: var(--text-muted);
     line-height: 1.76; font-weight: 400;
 }
 
@@ -1315,7 +1315,11 @@ html, body {
 .stat-number {
     font-family: var(--font); font-size: 3.0rem; font-weight: 700;
     letter-spacing: -.02em; line-height: 1; margin-bottom: .50rem; display: block;
-    background: linear-gradient(130deg, #FFF 18%, var(--eaa-bright) 54%, var(--eaa-core) 100%);
+    background: linear-gradient(112deg,
+        var(--eaa-pale) 0%,
+        var(--eaa-bright) 32%,
+        var(--eaa-core) 62%,
+        var(--eaa-warm) 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
     filter: none;
@@ -1326,7 +1330,7 @@ html, body {
 }
 .stat-label {
     font-family: var(--font); font-size: .63rem;
-    color: rgba(210,206,242,.58); text-transform: uppercase;
+    color: rgba(235,234,240,.58); text-transform: uppercase;
     letter-spacing: .32em; font-weight: 600;
     margin-bottom: 1.4rem; display: block;
 }
@@ -1400,11 +1404,19 @@ html, body {
 }
 .why-title {
     font-family: var(--font); font-size: .92rem; font-weight: 700;
-    color: var(--text); margin-bottom: .65rem;
+    margin-bottom: .65rem;
     letter-spacing: .18em; text-transform: uppercase;
+    background: linear-gradient(112deg,
+        var(--eaa-pale) 0%,
+        var(--eaa-bright) 30%,
+        var(--eaa-core) 60%,
+        var(--eaa-warm) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 .why-text {
-    font-size: .87rem; color: rgba(210,206,242,.74);
+    font-size: .87rem; color: var(--text-muted);
     line-height: 1.78; font-weight: 400;
 }
 
@@ -1498,7 +1510,7 @@ html, body {
 }
 .trade-markets-section__card-desc {
     margin: 0; font-size: .74rem;
-    color: rgba(210,206,242,.70); line-height: 1.44;
+    color: var(--text-muted); line-height: 1.44;
 }
 
 /* ══════════════════════════════════════════════
@@ -1565,7 +1577,7 @@ html, body {
     letter-spacing: .18em; text-transform: uppercase;
 }
 .feature-item-text {
-    font-size: .87rem; color: rgba(210,206,242,.74);
+    font-size: .87rem; color: var(--text-muted);
     line-height: 1.76; font-weight: 400;
 }
 

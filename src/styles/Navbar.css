@@ -13,24 +13,25 @@
   --border:        rgba(255, 255, 255, 0.10);
   --border-h:      rgba(255, 255, 255, 0.20);
 
-  /* Journal gold family (#D4AF37) */
-  --eaa-core:      #D4AF37;
-  --eaa-bright:    #E8C658;
-  --eaa-warm:      #9A7B22;
-  --eaa-deep:      #7E631A;
-  --eaa-soft:      #EBD9A0;
-  --eaa-dim:       rgba(212, 175, 55, 0.45);
-  --eaa-glow:      rgba(212, 175, 55, 0.28);
-  --eaa-soft-glow: rgba(212, 175, 55, 0.10);
-  --eaa-ultra:     rgba(212, 175, 55, 0.055);
-  --eaa-light:     #F8F0D2;
-  --eaa-gradient-start: #9A7B22;
-  --eaa-gradient-mid:   #D4AF37;
-  --eaa-gradient-end:   #E8C658;
+  /* Peachy gold — same tokens as Home.css / hero “With Aura Terminal” */
+  --eaa-core:      #EAA960;
+  --eaa-bright:    #F8C37D;
+  --eaa-warm:      #D48D44;
+  --eaa-deep:      #B06E32;
+  --eaa-soft:      #EABB80;
+  --eaa-pale:      #FDE8C4;
+  --eaa-dim:       rgba(234, 169, 96, 0.32);
+  --eaa-glow:      rgba(234, 169, 96, 0.16);
+  --eaa-soft-glow: rgba(234, 169, 96, 0.07);
+  --eaa-ultra:     rgba(234, 169, 96, 0.030);
+  --eaa-light:     #FFD8A9;
+  --eaa-gradient-start: #D48D44;
+  --eaa-gradient-mid:   #EAA960;
+  --eaa-gradient-end:   #F8C37D;
 
   --text:          #FFFFFF;
-  --text-muted:    rgba(200, 198, 230, 0.70);
-  --text-dim:      rgba(180, 178, 215, 0.50);
+  --text-muted:    rgba(235, 234, 240, 0.74);
+  --text-dim:      rgba(210, 210, 218, 0.52);
 
   --up:            #10D98A;
   --down:          #F04060;
@@ -50,20 +51,20 @@
   --nav-navy-edge:     rgba(32, 58, 112, 0.22);
   --glass-bg:          var(--nav-light-black);
   --glass-border-top:  rgba(255, 255, 255, 0.09);
-  --glass-border-bot:  rgba(212, 175, 55, 0.10);
-  --glass-tint:        rgba(212, 175, 55, 0.03);
+  --glass-border-bot:  rgba(234, 169, 96, 0.12);
+  --glass-tint:        rgba(234, 169, 96, 0.04);
   --glass-blur:        saturate(1.25) blur(22px);
 
-  --nav-border:    rgba(212, 175, 55, 0.12);
-  --surface-hover: rgba(212, 175, 55, 0.055);
-  --surface-active:rgba(212, 175, 55, 0.09);
+  --nav-border:    rgba(234, 169, 96, 0.14);
+  --surface-hover: rgba(234, 169, 96, 0.07);
+  --surface-active:rgba(234, 169, 96, 0.11);
 
   /* CTA */
-  --cta-from:   #9A7B22;
-  --cta-to:     #D4AF37;
-  --cta-glow:   rgba(212, 175, 55, 0.38);
-  --cta-glow-h: rgba(212, 175, 55, 0.60);
-  --line-gold:  linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55) 22%, rgba(160, 185, 240, 0.45) 48%, rgba(255, 255, 255, 0.75) 72%, rgba(212, 175, 55, 0.22) 92%, transparent);
+  --cta-from:   #D48D44;
+  --cta-to:     #F8C37D;
+  --cta-glow:   rgba(234, 169, 96, 0.35);
+  --cta-glow-h: rgba(248, 195, 125, 0.55);
+  --line-gold:  linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35) 20%, var(--eaa-bright) 50%, rgba(255, 255, 255, 0.35) 80%, transparent);
 }
 
 body.loading-active .navbar {
@@ -559,7 +560,7 @@ body.loading-active .navbar {
 
 .start-trading:hover {
   transform: translateY(-1px);
-  background: linear-gradient(130deg, #FFEAB5 0%, var(--eaa-bright) 50%, var(--eaa-core) 100%);
+  background: linear-gradient(130deg, var(--eaa-pale) 0%, var(--eaa-bright) 50%, var(--eaa-core) 100%);
   box-shadow:
     0 0 0   1px  rgba(255, 220, 150, 0.28),
     0 0 28px     rgba(234, 169, 96, 0.65),
@@ -1079,7 +1080,7 @@ body.loading-active .navbar {
 }
 
 .mobile-start-trading:hover {
-  background: linear-gradient(130deg, #FFEAB5 0%, var(--eaa-bright) 50%, var(--eaa-core) 100%);
+  background: linear-gradient(130deg, var(--eaa-pale) 0%, var(--eaa-bright) 50%, var(--eaa-core) 100%);
   box-shadow:
     0 0 32px rgba(234, 169, 96, 0.60),
     0 0 70px rgba(234, 169, 96, 0.20),

@@ -13,7 +13,8 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180" />
-  <link rel="manifest" href="/manifest.json" />
+  <!-- Inline manifest avoids a separate /manifest.json fetch (401 on Vercel preview when Deployment Protection omits cookies on that request). public/manifest.json kept for tooling parity. -->
+  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22short_name%22%3A%22AURA%20TERMINAL%22%2C%22name%22%3A%22AURA%20TERMINAL%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22%2Ficons%2Ficon-192.png%22%2C%22type%22%3A%22image%2Fpng%22%2C%22sizes%22%3A%22192x192%22%2C%22purpose%22%3A%22any%22%7D%2C%7B%22src%22%3A%22%2Ficons%2Ficon-512.png%22%2C%22type%22%3A%22image%2Fpng%22%2C%22sizes%22%3A%22512x512%22%2C%22purpose%22%3A%22any%22%7D%2C%7B%22src%22%3A%22%2Ficons%2Ficon-512-maskable.png%22%2C%22type%22%3A%22image%2Fpng%22%2C%22sizes%22%3A%22512x512%22%2C%22purpose%22%3A%22maskable%22%7D%5D%2C%22start_url%22%3A%22%2F%22%2C%22scope%22%3A%22%2F%22%2C%22display%22%3A%22standalone%22%2C%22display_override%22%3A%5B%22standalone%22%2C%22browser%22%5D%2C%22orientation%22%3A%22any%22%2C%22theme_color%22%3A%22%2328282c%22%2C%22background_color%22%3A%22%2328282c%22%7D" />
 
   <!-- Content Security Policy -->
   <meta http-equiv="Content-Security-Policy" content="

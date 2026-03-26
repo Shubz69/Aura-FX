@@ -72,3 +72,12 @@ Your OpenAI API key needs to be added to Vercel environment variables for the Pr
 - ⚠️ Production: **NEEDS VERCEL ENV VARIABLES** (OPENAI_API_KEY and JWT_SECRET recommended)
 - ✅ Git protection: All key files are gitignored
 - ✅ Token system: Set JWT_SECRET in Vercel for production to enable secure signing and clear log warnings
+
+## Preview deployments: 401 on `manifest.json` (and other static files)
+
+If the browser console shows **Manifest fetch … failed, code 401** on URLs like `aura-fx-git-*-*.vercel.app`, that is usually **Vercel Deployment Protection** (authentication required for Preview deployments), not a bug in the manifest file.
+
+**Options:**
+
+1. **Vercel Dashboard** → your project → **Settings** → **Deployment Protection** → adjust who can access Preview deployments (e.g. allow the team, or disable protection for previews if the app must be public on every PR).
+2. The app **embeds the web manifest inline** in `public/index.html` so the browser does not need to request `/manifest.json` separately (avoids that 401 for the manifest link). Icon and other static URLs may still return 401 under strict preview protection until you sign in or change protection settings.

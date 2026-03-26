@@ -1,4 +1,4 @@
-/* A7 Logo Styling - Premium Realistic Gold Leaf (Animated Shiny Gold) */
+/* A7 Logo — peachy gold metallic (matches Home hero “With Aura Terminal” / #EAA960 family) */
 
 /* Keyframe: sweeping light beam across the logo (duration = prior ÷ 0.15 ≈ 15% speed) */
 @keyframes goldShine {
@@ -14,13 +14,13 @@
 @keyframes goldGlow {
     0%, 100% {
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22))
-                drop-shadow(0 0 10px rgba(212, 175, 55, 0.35))
-                drop-shadow(0 0 22px rgba(255, 215, 100, 0.2));
+                drop-shadow(0 0 10px rgba(234, 169, 96, 0.4))
+                drop-shadow(0 0 22px rgba(248, 195, 125, 0.28));
     }
     50% {
         filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.28))
-                drop-shadow(0 0 18px rgba(212, 175, 55, 0.65))
-                drop-shadow(0 0 36px rgba(255, 215, 100, 0.38));
+                drop-shadow(0 0 18px rgba(234, 169, 96, 0.62))
+                drop-shadow(0 0 36px rgba(253, 232, 196, 0.35));
     }
 }
 
@@ -45,27 +45,26 @@
     width: 100%;
     height: 100%;
 
-    /* Deep multi-stop gold — mimics hammered / leaf gold */
+    /* Peachy gold metallic — aligned with --eaa-core / --eaa-bright */
     background: linear-gradient(
         110deg,
-        #3d2b00   0%,
-        #7a5c10   4%,
-        #b8860b   8%,
-        #d4a017  12%,
-        #f5d060  18%,
-        #fff5b0  22%,   /* bright highlight */
-        #f7e070  26%,
-        #e6c840  32%,
-        #c8a020  40%,
-        #a07810  52%,
-        #c8a020  60%,
-        #e6c840  68%,
-        #f5d060  75%,
-        #fff8c0  80%,   /* secondary glint */
-        #e0b830  86%,
-        #9a7010  92%,
-        #6b4c00  96%,
-        #3d2b00 100%
+        #3d2418   0%,
+        #5c3018   5%,
+        #8a4824  10%,
+        #b06e32  16%,
+        #d48d44  22%,
+        #eaa960  28%,
+        #f8c37d  34%,
+        #fde8c4  40%,
+        #f8c37d  46%,
+        #eaa960  54%,
+        #d48d44  62%,
+        #c97b45  70%,
+        #f8c37d  78%,
+        #fff4e6  82%,
+        #eaa960  88%,
+        #7a4528  94%,
+        #3d2418 100%
     );
     background-size: 300% 100%;
 
@@ -92,15 +91,15 @@
     background:
         repeating-linear-gradient(
             47deg,
-            rgba(255, 220, 80, 0.18) 0px,
-            rgba(255, 220, 80, 0.18) 1px,
+            rgba(253, 232, 196, 0.2) 0px,
+            rgba(253, 232, 196, 0.2) 1px,
             transparent 1px,
             transparent 5px
         ),
         repeating-linear-gradient(
             -43deg,
-            rgba(180, 130, 0, 0.1) 0px,
-            rgba(180, 130, 0, 0.1) 1px,
+            rgba(212, 141, 68, 0.12) 0px,
+            rgba(212, 141, 68, 0.12) 1px,
             transparent 1px,
             transparent 7px
         );
@@ -117,9 +116,9 @@
     inset: 0;
     background: radial-gradient(
         ellipse 60% 40% at 35% 28%,
-        rgba(255, 253, 220, 0.72) 0%,
-        rgba(255, 245, 180, 0.38) 30%,
-        rgba(255, 230, 120, 0.12) 58%,
+        rgba(255, 248, 235, 0.78) 0%,
+        rgba(253, 232, 196, 0.42) 30%,
+        rgba(248, 195, 125, 0.14) 58%,
         transparent 80%
     );
     pointer-events: none;
@@ -138,20 +137,20 @@
 
     background: linear-gradient(
         110deg,
-        #3d2b00   0%,
-        #8a6510   5%,
-        #c89820  10%,
-        #e8c840  16%,
-        #fff5b0  20%,
-        #f0d850  25%,
-        #d4a820  34%,
-        #a07810  46%,
-        #c8a020  58%,
-        #edcc50  68%,
-        #fff8c0  74%,
-        #d8b030  82%,
-        #8a6510  92%,
-        #3d2b00 100%
+        #3d2418   0%,
+        #6b3d22   6%,
+        #9a5a30  12%,
+        #c97b45  18%,
+        #eaa960  24%,
+        #f8c37d  30%,
+        #fde8c4  36%,
+        #f8c37d  44%,
+        #eaa960  52%,
+        #d48d44  62%,
+        #fff4e6  72%,
+        #f8c37d  80%,
+        #b06e32  90%,
+        #3d2418 100%
     );
     background-size: 300% 100%;
     animation:
@@ -166,21 +165,19 @@
 
     background: linear-gradient(
         110deg,
-        #2e1f00   0%,
-        #7a5508   4%,
-        #b88010  10%,
-        #d4a420  16%,
-        #f0d055  22%,
-        #fffacc  26%,
-        #f5e060  32%,
-        #daba38  40%,
-        #a07510  52%,
-        #c8a020  62%,
-        #f0d858  70%,
-        #fffacc  76%,
-        #e0b828  84%,
-        #90680c  92%,
-        #2e1f00 100%
+        #3d2418   0%,
+        #6b3d22   8%,
+        #b06e32  14%,
+        #eaa960  22%,
+        #f8c37d  30%,
+        #fde8c4  36%,
+        #f8c37d  44%,
+        #eaa960  52%,
+        #d48d44  62%,
+        #f8c37d  72%,
+        #fff4e6  78%,
+        #c97b45  88%,
+        #4a2818 100%
     );
     background-size: 300% 100%;
     animation:
@@ -192,15 +189,15 @@
     background:
         repeating-linear-gradient(
             47deg,
-            rgba(255, 220, 80, 0.22) 0px,
-            rgba(255, 220, 80, 0.22) 1px,
+            rgba(253, 232, 196, 0.24) 0px,
+            rgba(253, 232, 196, 0.24) 1px,
             transparent 1px,
             transparent 5px
         ),
         repeating-linear-gradient(
             -43deg,
-            rgba(180, 130, 0, 0.12) 0px,
-            rgba(180, 130, 0, 0.12) 1px,
+            rgba(212, 141, 68, 0.14) 0px,
+            rgba(212, 141, 68, 0.14) 1px,
             transparent 1px,
             transparent 7px
         );
@@ -210,9 +207,9 @@
 .home-logo-section .a7-logo-image::after {
     background: radial-gradient(
         ellipse 65% 45% at 32% 26%,
-        rgba(255, 255, 230, 0.82) 0%,
-        rgba(255, 248, 190, 0.42) 28%,
-        rgba(255, 232, 120, 0.14) 56%,
+        rgba(255, 252, 245, 0.85) 0%,
+        rgba(253, 232, 196, 0.45) 28%,
+        rgba(248, 195, 125, 0.16) 56%,
         transparent 82%
     );
     opacity: 0.82;
@@ -266,9 +263,8 @@
 /* ─── Dark mode ─────────────────────────────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
     .a7-logo-image {
-        /* slightly brighter highlights in dark bg */
         filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55))
-                drop-shadow(0 0 14px rgba(212, 175, 55, 0.5))
-                drop-shadow(0 0 30px rgba(255, 215, 100, 0.3));
+                drop-shadow(0 0 14px rgba(234, 169, 96, 0.5))
+                drop-shadow(0 0 30px rgba(248, 195, 125, 0.32));
     }
 }
