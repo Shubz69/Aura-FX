@@ -490,7 +490,26 @@ async function reserveRun(runKey, period, date) {
       [runKey, period, date]
     );
     return true;
-  } catch (_) {
+  } catch (err) {
+    // If already exists, allow retry only when previous run failed.
+    try {
+      const [rows] = await executeQuery(
+        'SELECT status FROM trader_deck_brief_runs WHERE run_key = ? LIMIT 1',
+        [runKey]
+      );
+      const status = String(rows?.[0]?.status || '').toLowerCase();
+      if (status === 'failed') {
+        await executeQuery(
+          `UPDATE trader_deck_brief_runs
+           SET status = 'started', error_message = NULL, updated_at = CURRENT_TIMESTAMP
+           WHERE run_key = ?`,
+          [runKey]
+        );
+        return true;
+      }
+    } catch (_) {
+      // fall through
+    }
     return false;
   }
 }

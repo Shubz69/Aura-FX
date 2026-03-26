@@ -70,6 +70,7 @@ function run() {
     const top5 = autoTest.top5ForBriefKind(kind);
     assert(Array.isArray(top5) && top5.length === 5, `top 5 instruments must exist for ${kind}`);
   }
+  assert(new Set(kinds).size === 9, 'brief kinds should be unique');
   const normalizedUnknown = autoTest.normalizeBriefKind('not-a-kind');
   assert(normalizedUnknown === 'general', 'unknown brief kind should normalize to general');
 
