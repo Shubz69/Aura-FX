@@ -86,7 +86,7 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(234, 169, 96, 0.3) transparent;
+ scrollbar-color: rgba(107, 143, 232, 0.3) transparent;
   width: 100%;
   /* iPad: ensure calendar inner content has a sensible min-width so it
      scrolls rather than wraps/collapses awkwardly */
@@ -97,7 +97,7 @@
   height: 3px;
 }
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar::-webkit-scrollbar-thumb {
-  background: rgba(234, 169, 96, 0.35);
+  background: rgba(107, 143, 232, 0.35);
   border-radius: 4px;
 }
 
@@ -144,7 +144,7 @@
 }
 
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sessions-list--inline {
-  flex: 1 1 260px;
+  flex: 1 1 92px;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -198,8 +198,8 @@
   min-width: 0;
   padding: 8px 10px;
   border-radius: var(--radius);
-  border: 1px solid rgba(234, 169, 96, 0.22);
-  background: rgba(234, 169, 96, 0.06);
+  border: 1px solid rgba(107, 143, 232, 0.22);
+  background: rgba(107, 143, 232, 0.06);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
@@ -226,7 +226,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-size: 0.62rem;
-  color: rgba(248, 195, 125, 0.95);
+  color: rgba(140, 175, 255, 0.95);
 }
 
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdown-eta {
@@ -425,30 +425,701 @@
   }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   iPad landscape 1024px — two-column layout (stage + narrower rail)
-   Sits within the lg breakpoint (900–1099px) so we need a targeted override
-   ───────────────────────────────────────────────────────────────────────────── */
+/* =============================================================================
+   iPAD LANDSCAPE (900px - 1099px) - PROFESSIONAL LAYOUT
+   Clean, balanced layout with proper panel widths
+   ============================================================================= */
+
 @media (min-width: 900px) and (max-width: 1099px) {
-  .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
-    /* Give stage priority; rail gets a fixed comfortable width */
-    grid-template-columns: minmax(0, 1fr) minmax(240px, 270px);
-    gap: 18px;
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     MAIN GRID - 12-column system for precise control
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    display: grid !important;
+    grid-template-columns: repeat(12, 1fr) !important;
+    gap: 16px !important;
+    grid-auto-rows: minmax(auto, auto) !important;
   }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     ROW 1: MARKET REGIME + MARKET PULSE (7/5 split - 58%/42%)
+     Gives gauge proper width without being too narrow
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
+    grid-column: 1 / span 7 !important;
+    grid-row: 1 !important;
+    min-height: auto !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    grid-column: 8 / span 5 !important;
+    grid-row: 1 !important;
+    min-height: auto !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     ROW 2: KEY MARKET DRIVERS + CROSS-ASSET SIGNALS (6/6 split - 50%/50%)
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers {
+    grid-column: 1 / span 6 !important;
+    grid-row: 2 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals {
+    grid-column: 7 / span 6 !important;
+    grid-row: 2 !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     ROW 3: MARKET CHANGE TODAY + TRADER FOCUS (6/6 split - 50%/50%)
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    grid-column: 1 / span 6 !important;
+    grid-row: 3 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
+    grid-column: 7 / span 6 !important;
+    grid-row: 3 !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     ROW 4: MARKET RISK ENGINE (Full width)
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    grid-column: 1 / -1 !important;
+    grid-row: 4 !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     PANEL INTERIORS - Professional spacing and styling
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel {
+    padding: 18px 20px !important;
+  }
+  
+  /* Panel titles */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-mi-panel-title {
+    font-size: 0.68rem !important;
+    letter-spacing: 0.2em !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 10px !important;
+  }
+  
+  /* Panel content area */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-mi-panel-body {
+    padding: 0 !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     MARKET REGIME PANEL - 2-column grid for clean layout
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--regime .td-mi-regime-rows {
+    display: grid !important;
+    grid-template-columns: repeat(1, 1fr) !important;
+    gap: 12px 20px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--regime .td-mi-regime-row {
+    padding: 8px 0 !important;
+    border-bottom: 1px solid rgba(107, 143, 232, 0.1) !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: baseline !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--regime .td-mi-regime-label {
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+    color: rgba(140, 175, 255, 0.75) !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--regime .td-mi-regime-value {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: #fff !important;
+    text-align: right !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     MARKET PULSE GAUGE - Perfect centering and sizing
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-panel-body {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 320px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge {
+    width: 220px !important;
+    height: 110px !important;
+    margin: 0 auto 16px !important;
+    position: relative !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+    width: 220px !important;
+    margin: 12px auto 0 !important;
+    font-size: 0.62rem !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-badge {
+    margin-top: 16px !important;
+    padding: 8px 20px !important;
+    font-size: 0.72rem !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     DRIVER & SIGNAL LISTS - Clean, scannable cards
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-item {
+    padding: 10px 12px !important;
+    background: rgba(107, 143, 232, 0.04) !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-item:hover {
+    background: rgba(107, 143, 232, 0.1) !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-main {
+    flex: 1 !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-meta {
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+  
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     BULLET LISTS (Changes, Focus) - Clean and scannable
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullets {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item {
+    padding: 10px 12px 10px 28px !important;
+    background: rgba(107, 143, 232, 0.04) !important;
+    border-radius: 10px !important;
+    position: relative !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item::before {
+    content: '▹' !important;
+    position: absolute !important;
+    left: 12px !important;
+    top: 10px !important;
+    color: rgba(107, 143, 232, 0.7) !important;
+    font-size: 0.7rem !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item:hover {
+    background: rgba(107, 143, 232, 0.1) !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     RISK RADAR TABLE - Ensure proper width
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--radar .rr-table-wrap {
+    overflow-x: auto !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--radar .rr-table {
+    min-width: 580px !important;
+    width: 100% !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--radar .rr-th,
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--radar .rr-td {
+    padding: 8px 10px !important;
+    font-size: 0.72rem !important;
+  }
+  
+  /* Direction indicators */
+  .td-deck-with-tabs.td-layout-page .td-mi-arrow--up {
+    background: rgba(15, 217, 138, 0.12) !important;
+    color: #0FD98A !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-mi-arrow--down {
+    background: rgba(240, 61, 95, 0.12) !important;
+    color: #F03D5F !important;
+  }
+  
+  /* Impact indicators */
+  .td-deck-with-tabs.td-layout-page .rr-impact--high {
+    color: #F03D5F !important;
+    font-weight: 700 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .rr-impact--medium {
+    color: #f59e0b !important;
+    font-weight: 600 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .rr-impact--low {
+    color: rgba(107, 143, 232, 0.7) !important;
+  }
+}
+/* ─────────────────────────────────────────────────────────────────────────────
+   iPad Pro 12.9" Portrait (1024px) - Additional optimization
+   ───────────────────────────────────────────────────────────────────────────── */
 
-  .td-deck-with-tabs.td-layout-page .td-deck-rail {
-    order: unset;
-    width: 100%;
-    position: static;
-    max-height: none;
-    overflow: visible;
-    align-self: start;
+@media (min-width: 1024px) and (max-width: 1099px) and (orientation: portrait) {
+  
+  /* Slightly larger gaps for bigger screen */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    gap: 20px !important;
   }
+  
+  /* Increase min-height for better proportions */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
+    min-height: 300px !important;
+  }
+  
+  /* Gauge can be slightly larger */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge {
+    max-width: 220px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+    max-width: 220px !important;
+  }
+}
+/* =============================================================================
+   PROFESSIONAL FIX FOR iPAD LANDSCAPE & TABLET LAYOUTS
+   Senior UI/UX Design: Balance, Hierarchy, and Visual Flow
+   ============================================================================= */
 
-  .td-deck-with-tabs.td-layout-page .td-deck-main-stage {
-    order: unset;
-    min-width: 0;
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPLETE OVERHAUL FOR iPAD LANDSCAPE (900px - 1099px)
+   Creates a balanced, professional layout with proper proportions
+═══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 900px) and (max-width: 1099px) {
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     MAIN CONTAINER - Optimize overall spacing
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    display: grid !important;
+    grid-template-columns: repeat(12, 1fr) !important;
+    gap: 20px !important;
+    grid-auto-rows: minmax(auto, auto) !important;
   }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     ROW 1: MARKET REGIME + MARKET PULSE (60/40 split)
+     Gives gauge proper width while maintaining balance
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
+    grid-column: 1 / span 7 !important;
+    grid-row: 1 !important;
+    min-height: auto !important;
+    margin: 0 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    grid-column: 8 / span 5 !important;
+    grid-row: 1 !important;
+    min-height: auto !important;
+    margin: 0 !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     ROW 2: KEY MARKET DRIVERS + CROSS-ASSET SIGNALS (50/50 split)
+     Balanced columns for driver and signal lists
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers {
+    grid-column: 1 / span 6 !important;
+    grid-row: 2 !important;
+    min-height: 320px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals {
+    grid-column: 7 / span 6 !important;
+    grid-row: 2 !important;
+    min-height: 320px !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     ROW 3: MARKET CHANGE TODAY + TRADER FOCUS (50/50 split)
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    grid-column: 1 / span 6 !important;
+    grid-row: 3 !important;
+    min-height: 300px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
+    grid-column: 7 / span 6 !important;
+    grid-row: 3 !important;
+    min-height: 300px !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     ROW 4: MARKET RISK ENGINE (Full width)
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    grid-column: 1 / -1 !important;
+    grid-row: 4 !important;
+    min-height: auto !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     PANEL INTERIOR STYLING - Professional spacing
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel {
+    padding: 20px 22px !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--journal-panel-outer-glow-hover) !important;
+  }
+  
+  /* Panel titles - consistent spacing */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-mi-panel-title {
+    font-size: 0.7rem !important;
+    letter-spacing: 0.2em !important;
+    margin-bottom: 18px !important;
+    padding-bottom: 12px !important;
+  }
+  
+  /* Panel content - improved readability */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-mi-panel-body {
+    padding: 0 !important;
+  }
+  
+ /* ────────────────────────────────────────────────────────────────────────
+   MARKET PULSE GAUGE - Professional sizing and centering (FIXED)
+   ──────────────────────────────────────────────────────────────────────── */
+.td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-panel-body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 300px !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-wrap {
+  width: 100% !important;
+  padding: 12px 0 !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge {
+  width: 200px !important;
+  height: 110px !important;
+  margin: 0 auto 16px !important;
+  position: relative !important;
+}
+
+/* REMOVE the arc-bg override - let the original styling take over */
+/* .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-arc-bg {
+  - REMOVE OR COMMENT OUT THIS ENTIRE BLOCK -
+} */
+
+.td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+  width: 200px !important;
+  margin: 12px auto 0 !important;
+  font-size: 0.62rem !important;
+  letter-spacing: 0.08em !important;
+  color: rgba(140, 175, 255, 0.7) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-needle {
+  position: absolute !important;
+  bottom: 8px !important;
+  left: 50% !important;
+  transform-origin: 50% 100% !important;
+  transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-badge {
+    margin-top: 16px !important;
+    padding: 10px 24px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.1em !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     REGIME PANEL - Clean, readable layout
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--regime .td-mi-regime-rows {
+    display: grid !important;
+    grid-template-columns: repeat(1, 1fr) !important;
+    gap: 12px 20px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--regime .td-mi-regime-row {
+    padding: 8px 0 !important;
+    border-bottom: 1px solid rgba(107, 143, 232, 0.08) !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--regime .td-mi-regime-label {
+    font-size: 0.7rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.05em !important;
+    color: rgba(140, 175, 255, 0.7) !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--regime .td-mi-regime-value {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: #fff !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     DRIVER & SIGNAL LISTS - Professional typography
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list,
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullets {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-item,
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item {
+    padding: 10px 12px !important;
+    background: rgba(107, 143, 232, 0.04) !important;
+    border-radius: 10px !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-item:hover,
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item:hover {
+    background: rgba(107, 143, 232, 0.1) !important;
+    transform: translateX(4px) !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-main {
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-meta {
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.03em !important;
+  }
+  
+  /* Direction indicators */
+  .td-deck-with-tabs.td-layout-page .td-mi-arrow--up {
+    background: rgba(15, 217, 138, 0.12) !important;
+    color: #0FD98A !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-mi-arrow--down {
+    background: rgba(240, 61, 95, 0.12) !important;
+    color: #F03D5F !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     BULLET POINTS - Clean and scannable
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item {
+    padding-left: 28px !important;
+    position: relative !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item::before {
+    content: '▹' !important;
+    position: absolute !important;
+    left: 10px !important;
+    top: 10px !important;
+    color: rgba(107, 143, 232, 0.7) !important;
+    font-size: 0.75rem !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item:hover::before {
+    color: rgba(107, 143, 232, 1) !important;
+    transform: translateX(2px) !important;
+  }
+  
+  /* ────────────────────────────────────────────────────────────────────────
+     RISK RADAR TABLE - Proper table styling
+     ──────────────────────────────────────────────────────────────────────── */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--radar .rr-table-wrap {
+    margin-top: 8px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--radar .rr-table {
+    font-size: 0.78rem !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--radar .rr-th {
+    font-size: 0.6rem !important;
+    padding: 10px 12px !important;
+    letter-spacing: 0.12em !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--radar .rr-td {
+    padding: 10px 12px !important;
+  }
+  
+  /* Impact indicators */
+  .td-deck-with-tabs.td-layout-page .rr-impact--high {
+    color: #F03D5F !important;
+    font-weight: 700 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .rr-impact--medium {
+    color: #f59e0b !important;
+    font-weight: 600 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .rr-impact--low {
+    color: rgba(107, 143, 232, 0.7) !important;
+  }
+  
+  /* Currency badges */
+  .td-deck-with-tabs.td-layout-page .rr-currency {
+    background: rgba(107, 143, 232, 0.12) !important;
+    border-color: rgba(107, 143, 232, 0.25) !important;
+    padding: 3px 8px !important;
+    font-size: 0.65rem !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   iPad Portrait (768px - 899px) - Elegant stacking
+═══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 768px) and (max-width: 899px) {
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+  
+  /* All panels stack vertically with consistent spacing */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel {
+    padding: 20px !important;
+    margin: 0 !important;
+  }
+  
+  /* Gauge sizing for portrait */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge {
+    width: 220px !important;
+    height: 110px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+    width: 220px !important;
+  }
+  
+  /* Regime panel - two column grid for better use of space */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--regime .td-mi-regime-rows {
+    display: grid !important;
+    grid-template-columns: repeat(1, 1fr) !important;
+    gap: 12px 20px !important;
+  }
+  
+  /* Driver and signal lists - optimized spacing */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-item,
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item {
+    padding: 12px 14px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Desktop (1100px+) - Premium spacing
+═══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 1100px) {
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    gap: 24px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel {
+    padding: 24px 26px !important;
+  }
+  
+  /* Gauge slightly larger on desktop */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge {
+    width: 240px !important;
+    height: 120px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+    width: 240px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATIONS - Smooth transitions for professional feel
+═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes panelFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel {
+  animation: panelFadeIn 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1) both;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel:nth-child(1) { animation-delay: 0.02s; }
+.td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel:nth-child(2) { animation-delay: 0.06s; }
+.td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel:nth-child(3) { animation-delay: 0.1s; }
+.td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel:nth-child(4) { animation-delay: 0.14s; }
+.td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel:nth-child(5) { animation-delay: 0.18s; }
+.td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel:nth-child(6) { animation-delay: 0.22s; }
+.td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel:nth-child(7) { animation-delay: 0.26s; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR STYLING - Professional touch
+═══════════════════════════════════════════════════════════════════════════ */
+
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-panel-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-panel-body::-webkit-scrollbar-track {
+  background: rgba(107, 143, 232, 0.05);
+  border-radius: 4px;
+}
+
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(107, 143, 232, 0.3);
+  border-radius: 4px;
+}
+
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-panel-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 143, 232, 0.5);
 }
 
 /* Tablet + Mobile below 900px: stacked, rail below stage */
@@ -564,7 +1235,7 @@
   font-weight: 600;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(234, 169, 96, 0.85);
+  color: rgba(140, 175, 255, 0.85);
   margin: 0 0 8px;
 }
 
@@ -823,8 +1494,8 @@
   text-align: right;
   padding: 12px 18px;
   border-radius: 14px;
-  background: rgba(234, 169, 96, 0.08);
-  border: 1px solid rgba(234, 169, 96, 0.22);
+  background: rgba(107, 143, 232, 0.08);
+  border: 1px solid rgba(107, 143, 232, 0.22);
   flex: 1 1 auto;
   min-width: min-content;
 }
@@ -833,7 +1504,7 @@
   display: block;
   font-size: clamp(1.4rem, 3vw, 1.75rem);
   font-weight: 600;
-  color: #f8c37d;
+  color: rgba(140, 175, 255, 0.95);
   line-height: 1.1;
 }
 
@@ -936,7 +1607,7 @@
   -webkit-backdrop-filter: blur(18px) saturate(1.05);
   box-shadow:
     0 10px 36px rgba(0, 0, 0, 0.42),
-    0 0 0 0.5px rgba(234, 169, 96, 0.05) inset;
+    0 0 0 0.5px rgba(107, 143, 232, 0.05) inset;
   min-width: 0;
   width: 100%;
 }
@@ -964,9 +1635,9 @@
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(234, 169, 96, 0.12);
-  border: 1px solid rgba(234, 169, 96, 0.28);
-  color: #f8c37d;
+  background: rgba(107, 143, 232, 0.12);
+  border: 1px solid rgba(107, 143, 232, 0.28);
+  color: rgba(140, 175, 255, 0.95);
   white-space: nowrap;
 }
 
@@ -1029,10 +1700,9 @@
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card:hover {
-  border-color: rgba(234, 169, 96, 0.22);
-  background: rgba(234, 169, 96, 0.04);
+  border-color: rgba(107, 143, 232, 0.28);
+  background: rgba(107, 143, 232, 0.04);
 }
-
 .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-title {
   font-weight: 500;
   color: rgba(255, 255, 255, 0.92);
@@ -1065,8 +1735,10 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-mo-eyebrow {
-  color: var(--text-dim);
-  background: var(--grad-gold);
+  background: linear-gradient(125deg,
+    rgba(140,175,255,0.95) 0%,
+    rgba(107,143,232,0.90) 60%,
+    rgba(78,109,212,0.85)  100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1096,12 +1768,14 @@
 }
 
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat-value {
-  background: var(--grad-gold);
+  background: linear-gradient(125deg,
+    rgba(140,175,255,0.98) 0%,
+    rgba(107,143,232,0.92) 60%,
+    rgba(78,109,212,0.85)  100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-mi-tile {
   border: 1px solid transparent;
   border-radius: var(--radius-lg);
@@ -1151,7 +1825,7 @@
     rgba(255, 255, 255, 0.98) 0%,
     rgba(255, 255, 255, 0.58) 28%,
     rgba(175, 200, 255, 0.42) 55%,
-    rgba(248, 195, 125, 0.12) 86%,
+    rgba(107, 143, 232, 0.12) 86%,
     transparent 100%
   ) !important;
   pointer-events: none !important;
@@ -1169,16 +1843,15 @@
 }
 
 .journal-page .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-panel-title::after {
-  box-shadow: none !important;
-  background: var(--line-gold) !important;
+  box-shadow: 0 0 6px rgba(107, 143, 232, 0.35) !important;
+  background: linear-gradient(90deg, rgba(107,143,232,0.90), rgba(107,143,232,0.25), transparent) !important;
 }
-
 /* AI Desk brief block */
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-desk-brief {
   margin: 0 0 18px;
   padding: 16px 18px;
   border-radius: var(--radius);
-  border: 1px solid rgba(248, 195, 125, 0.22);
+  border: 1px solid rgba(107, 143, 232, 0.22);
   background: rgba(12, 18, 32, 0.45);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
   width: 100%;
@@ -2371,8 +3044,8 @@
     border-radius: 4px;
   }
   
-  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-mi-panel-content::-webkit-scrollbar-thumb {
-    background: rgba(234, 169, 96, 0.4);
+.td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel .td-mi-panel-content::-webkit-scrollbar-thumb {
+    background: rgba(107, 143, 232, 0.4);
     border-radius: 4px;
   }
   
@@ -2454,4 +3127,718 @@
     flex: 1 !important;
     justify-content: center !important;
   }
+}
+/* =============================================================================
+   GAUGE FIX - Professional sizing and positioning
+   Ensures the gauge arc fits perfectly in its container
+   ============================================================================= */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MARKET PULSE GAUGE - Complete overhaul for all screen sizes
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Gauge container - ensure proper dimensions */
+.td-outlook-panel--pulse .td-mi-panel-body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  padding: 16px 8px !important;
+}
+
+.td-outlook-panel--pulse .td-mi-gauge-wrap {
+  width: 100% !important;
+  max-width: 280px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  text-align: center !important;
+}
+
+/* Gauge container - fixed dimensions with proper scaling */
+.td-outlook-panel--pulse .td-mi-gauge {
+  position: relative !important;
+  width: 200px !important;
+  height: 100px !important;
+  margin: 0 auto 16px !important;
+  display: block !important;
+}
+
+/* Gauge arc background - FIXED POSITIONING */
+.td-outlook-panel--pulse .td-mi-gauge-arc-bg {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 100% 100% 0 0 !important;
+  overflow: hidden !important;
+}
+
+/* Ensure the conic gradient fills properly */
+.td-outlook-panel--pulse .td-mi-gauge-arc-bg {
+  background: conic-gradient(
+    from 180deg at 50% 100%,
+    #F03D5F 0deg,
+    #8B5CF6 36deg,
+    #6b8fe8 72deg,
+    #38bdf8 108deg,
+    #4e6dd4 144deg,
+    #0FD98A 180deg
+  ) !important;
+}
+
+/* Dark mask overlay for the gauge arc */
+.td-outlook-panel--pulse .td-mi-gauge-arc-bg::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 16px !important;
+  left: 16px !important;
+  right: 16px !important;
+  bottom: 0 !important;
+  border-radius: 100% 100% 0 0 !important;
+  background: radial-gradient(ellipse at 50% 110%,
+    rgba(2, 1, 12, 0.98) 55%,
+    rgba(1, 0, 8, 0.96) 100%) !important;
+}
+
+/* Gauge glow overlay */
+.td-outlook-panel--pulse .td-mi-gauge-arc-glow {
+  position: absolute !important;
+  left: 4px !important;
+  top: 4px !important;
+  width: calc(100% - 8px) !important;
+  height: calc(100% - 8px) !important;
+  border-radius: 100% 100% 0 0 !important;
+  background: conic-gradient(
+    from 180deg at 50% 100%,
+    rgba(240, 61, 95, 0.22) 0deg,
+    rgba(107, 143, 232, 0.30) 108deg,
+    rgba(15, 217, 138, 0.22) 180deg
+  ) !important;
+  pointer-events: none !important;
+  mix-blend-mode: overlay !important;
+}
+
+/* Needle styling */
+.td-outlook-panel--pulse .td-mi-gauge-needle {
+  position: absolute !important;
+  bottom: 8px !important;
+  left: 50% !important;
+  width: 2.5px !important;
+  height: 70px !important;
+  margin-left: -1.25px !important;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(175, 200, 255, 0.92) 35%,
+    rgba(107, 143, 232, 0.80) 65%,
+    rgba(107, 143, 232, 0.35) 100%) !important;
+  border-radius: 2px !important;
+  transform-origin: 50% 100% !important;
+  transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  box-shadow: 0 0 12px rgba(107, 143, 232, 0.55), 0 0 24px rgba(107, 143, 232, 0.20) !important;
+}
+
+/* Needle center cap */
+.td-outlook-panel--pulse .td-mi-gauge-needle::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: -6px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+background: radial-gradient(circle at 38% 35%,
+    rgba(255, 255, 255, 0.98),
+    rgba(175, 200, 255, 0.92) 40%,
+    rgba(107, 143, 232, 0.85) 70%,
+    rgba(78, 109, 212, 0.55) 100%) !important;
+  box-shadow: 0 0 10px rgba(107, 143, 232, 0.70), 0 0 20px rgba(107, 143, 232, 0.25) !important;
+}
+
+/* Axis labels */
+.td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+  width: 200px !important;
+  margin: 12px auto 0 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  font-size: 0.6rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: rgba(140, 175, 255, 0.7) !important;
+}
+
+/* Gauge badge */
+.td-outlook-panel--pulse .td-mi-gauge-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 16px !important;
+  padding: 8px 20px !important;
+  border-radius: 40px !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  background: rgba(107, 143, 232, 0.12) !important;
+  border: 1px solid rgba(107, 143, 232, 0.35) !important;
+  color: rgba(140, 175, 255, 0.95) !important;
+}
+
+/* Risk Off badge */
+.td-outlook-panel--pulse .td-mi-gauge-badge--risk-off {
+  background: rgba(240, 61, 95, 0.14) !important;
+  border-color: rgba(240, 61, 95, 0.38) !important;
+  color: #F03D5F !important;
+}
+
+/* Risk On badge */
+.td-outlook-panel--pulse .td-mi-gauge-badge--risk-on {
+  background: rgba(15, 217, 138, 0.11) !important;
+  border-color: rgba(15, 217, 138, 0.36) !important;
+  color: #0FD98A !important;
+}
+
+/* =============================================================================
+   iPAD LANDSCAPE (900-1099px) - Gauge specific fixes
+   ============================================================================= */
+
+@media (min-width: 900px) and (max-width: 1099px) {
+  
+  .td-outlook-panel--pulse .td-mi-panel-body {
+    min-height: 300px !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge {
+    width: 180px !important;
+    height: 99px !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge-needle {
+    height: 62px !important;
+    bottom: 6px !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+    width: 180px !important;
+    font-size: 0.55rem !important;
+  }
+    /* Ensure arc-bg is not overridden */
+  .td-outlook-panel--pulse .td-mi-gauge-arc-bg {
+    width: 100% !important;
+    height: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: 0 !important;
+  }
+  .td-outlook-panel--pulse .td-mi-gauge-badge {
+    padding: 6px 16px !important;
+    font-size: 0.65rem !important;
+  }
+}
+
+/* =============================================================================
+   iPAD PORTRAIT (768-899px) - Gauge adjustments
+   ============================================================================= */
+
+@media (min-width: 768px) and (max-width: 899px) {
+  
+  .td-outlook-panel--pulse .td-mi-panel-body {
+    min-height: 280px !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge {
+    width: 200px !important;
+    height: 100px !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge-needle {
+    height: 70px !important;
+    bottom: 8px !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+    width: 200px !important;
+  }
+}
+
+/* =============================================================================
+   MOBILE (max 767px) - Gauge adjustments
+   ============================================================================= */
+
+@media (max-width: 767px) {
+  
+  .td-outlook-panel--pulse .td-mi-panel-body {
+    min-height: 260px !important;
+    padding: 12px 8px !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge {
+    width: 180px !important;
+    height: 90px !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge-needle {
+    height: 62px !important;
+    bottom: 6px !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+    width: 180px !important;
+    font-size: 0.55rem !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge-badge {
+    padding: 6px 14px !important;
+    font-size: 0.62rem !important;
+  }
+}
+
+/* =============================================================================
+   SMALL MOBILE (max 480px) - Gauge adjustments
+   ============================================================================= */
+
+@media (max-width: 480px) {
+  
+  .td-outlook-panel--pulse .td-mi-gauge {
+    width: 160px !important;
+    height: 80px !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge-needle {
+    height: 56px !important;
+    bottom: 5px !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+    width: 160px !important;
+    font-size: 0.5rem !important;
+  }
+}
+
+/* =============================================================================
+   REMOVE CONFLICTING STYLES - Override any problematic CSS
+   ============================================================================= */
+
+/* Ensure no conflicting styles from other files */
+.td-outlook-panel--pulse .td-mi-gauge-arc-fill {
+  display: none !important;
+}
+
+.td-outlook-panel--pulse .td-mi-gauge {
+  overflow: visible !important;
+}
+
+.td-outlook-panel--pulse .td-mi-gauge-wrap * {
+  box-sizing: border-box !important;
+}
+
+
+/* =============================================================================
+   FIX FOR iPAD LANDSCAPE LAYOUT - Ensure panels have proper width
+   ============================================================================= */
+
+@media (min-width: 900px) and (max-width: 1099px) {
+  
+  /* Ensure the main content area has proper width */
+  .td-deck-with-tabs.td-layout-page .td-deck-main-stage {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  
+  /* Market Outlook grid - perfect 3-col layout */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 14px !important;
+  }
+  
+  /* Regime panel - spans 2 columns */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
+    grid-column: 1 / span 2 !important;
+  }
+  
+  /* Pulse panel - spans 1 column (right side) */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    grid-column: 3 / span 1 !important;
+  }
+  
+  /* Drivers, Signals, Changes - each take 1 column */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    grid-column: span 1 !important;
+  }
+  
+  /* Focus panel - spans 2 columns */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
+    grid-column: 1 / span 2 !important;
+  }
+  
+  /* Radar panel - spans 1 column */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    grid-column: 3 / span 1 !important;
+  }
+  
+  /* Ensure the gauge panel has proper internal spacing */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-panel-body {
+    min-height: 320px !important;
+    padding: 12px 8px !important;
+  }
+}
+
+/* =============================================================================
+   FIX FOR iPad PORTRAIT (768-899px)
+   ============================================================================= */
+
+@media (min-width: 768px) and (max-width: 899px) {
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    grid-column: 1 / -1 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals {
+    grid-column: span 1 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    grid-column: 1 / -1 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    grid-column: span 1 !important;
+  }
+  
+  .td-outlook-panel--pulse .td-mi-gauge-wrap {
+    padding: 12px 0 !important;
+  }
+}
+
+/* =============================================================================
+   REMOVE ANY CONFLICTING STYLES
+   ============================================================================= */
+
+/* Hide any hidden arc fills */
+.td-mi-gauge-arc-fill,
+.td-outlook-panel--pulse .td-mi-gauge-arc-fill {
+  display: none !important;
+}
+
+/* Ensure proper z-index stacking */
+.td-outlook-panel--pulse {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.td-outlook-panel--pulse .td-mi-panel-body {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Fix any overflow issues */
+.td-outlook-panel--pulse {
+  overflow: visible !important;
+}
+
+/* Ensure the gauge is always centered */
+.td-outlook-panel--pulse .td-mi-gauge-wrap {
+  text-align: center !important;
+}
+
+/* Fix for the gauge arc glow positioning */
+.td-outlook-panel--pulse .td-mi-gauge-arc-glow {
+  pointer-events: none !important;
+}
+
+/* Ensure the needle rotates properly */
+.td-outlook-panel--pulse .td-mi-gauge-needle {
+  will-change: transform !important;
+}
+/* =============================================================================
+   iPad LANDSCAPE - MARKET PULSE PANEL WIDER FIX
+   Makes the Market Pulse panel wider for better gauge visibility
+   ============================================================================= */
+
+@media (min-width: 900px) and (max-width: 1099px) {
+  
+  /* OVERRIDE: Market Outlook grid to give more width to Pulse panel */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+  }
+  
+  /* KEY FIX: Make Pulse panel span 2 columns instead of 1 */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    grid-column: span 2 !important;
+    grid-row: 1 !important;
+  }
+  
+  /* Regime panel takes the remaining 1 column */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
+    grid-column: span 1 !important;
+    grid-row: 1 !important;
+  }
+  
+  /* Second row: Drivers and Signals each take 1.5 columns effectively */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers {
+    grid-column: span 1 !important;
+    grid-row: 2 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals {
+    grid-column: span 1 !important;
+    grid-row: 2 !important;
+  }
+  
+  /* Third row: Changes and Focus each take 1.5 columns */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    grid-column: span 1 !important;
+    grid-row: 3 !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
+    grid-column: span 1 !important;
+    grid-row: 3 !important;
+  }
+  
+  /* Fourth row: Radar takes full width */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    grid-column: 1 / -1 !important;
+    grid-row: 4 !important;
+  }
+  
+  /* Adjust gauge sizing for the wider panel */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge {
+    width: 240px !important;
+    height: 120px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+    width: 240px !important;
+    font-size: 0.65rem !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-needle {
+    height: 78px !important;
+    bottom: 9px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-panel-body {
+    min-height: 340px !important;
+    padding: 16px 12px !important;
+  }
+  
+  /* Ensure the gauge content doesn't overflow */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse {
+    overflow: visible !important;
+  }
+  
+  /* Adjust badge styling for the wider panel */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-badge {
+    padding: 10px 24px !important;
+    font-size: 0.78rem !important;
+  }
+}
+
+/* Alternative layout for iPad Landscape - 2-column layout with Pulse as the main focus */
+@media (min-width: 900px) and (max-width: 1099px) and (min-height: 1000px) {
+  /* For larger iPad screens like iPad Pro, use 2-column layout */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+  
+  /* Regime panel - left column */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--regime {
+    grid-column: 1 / span 1 !important;
+    grid-row: 1 !important;
+  }
+  
+  /* Pulse panel - right column (wider) */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--pulse {
+    grid-column: 2 / span 1 !important;
+    grid-row: 1 !important;
+  }
+  
+  /* Drivers panel - left column (row 2) */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers {
+    grid-column: 1 / span 1 !important;
+    grid-row: 2 !important;
+  }
+  
+  /* Signals panel - right column (row 2) */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals {
+    grid-column: 2 / span 1 !important;
+    grid-row: 2 !important;
+  }
+  
+  /* Changes panel - left column (row 3) */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes {
+    grid-column: 1 / span 1 !important;
+    grid-row: 3 !important;
+  }
+  
+  /* Focus panel - right column (row 3) */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--focus {
+    grid-column: 2 / span 1 !important;
+    grid-row: 3 !important;
+  }
+  
+  /* Radar panel - full width (row 4) */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--radar {
+    grid-column: 1 / -1 !important;
+    grid-row: 4 !important;
+  }
+  
+  /* Make gauge larger in this layout */
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge {
+    width: 260px !important;
+    height: 130px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+    width: 260px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-needle {
+    height: 88px !important;
+  }
+}
+
+/* Ensure Market Pulse panel doesn't get squished on other tablets */
+@media (min-width: 768px) and (max-width: 899px) {
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge {
+    width: 260px !important;
+    height: 130px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
+    width: 260px !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-outlook-panel--pulse .td-mi-gauge-needle {
+    height: 88px !important;
+    bottom: 10px !important;
+  }
+}
+/* ═══════════════════════════════════════════════════
+   TRADER DECK — Remove gold tint, enforce blue theme
+   ═══════════════════════════════════════════════════ */
+
+/* Override journal-panel-border to remove gold whisper */
+.journal-page .td-deck-with-tabs.td-layout-page {
+  --journal-panel-border: linear-gradient(135deg,
+    rgba(255,255,255,1)     0%,
+    rgba(255,255,255,0.88)  11%,
+    rgba(255,255,255,0.42)  26%,
+    rgba(185,205,255,0.38)  44%,
+    rgba(85,115,195,0.52)   64%,
+    rgba(38,52,105,0.68)    84%,
+    rgba(107,143,232,0.18)  100%);
+
+  --journal-panel-border-hover: linear-gradient(135deg,
+    rgba(255,255,255,1)     0%,
+    rgba(255,255,255,0.92)   9%,
+    rgba(255,255,255,0.48)  24%,
+    rgba(195,215,255,0.44)  42%,
+    rgba(95,125,210,0.60)   62%,
+    rgba(45,58,118,0.74)    82%,
+    rgba(107,143,232,0.22)  100%);
+}
+
+/* Remove gold from outlook panel top shimmer line */
+.journal-page .td-deck-with-tabs.td-layout-page .td-outlook-panel::before {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.98) 0%,
+    rgba(255,255,255,0.58) 28%,
+    rgba(175,200,255,0.42) 55%,
+    rgba(107,143,232,0.18) 86%,
+    transparent 100%
+  ) !important;
+}
+
+/* Remove gold from tab zone top shimmer */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
+  --journal-panel-border: linear-gradient(135deg,
+    rgba(255,255,255,1)     0%,
+    rgba(255,255,255,0.88)  11%,
+    rgba(255,255,255,0.42)  26%,
+    rgba(185,205,255,0.38)  44%,
+    rgba(85,115,195,0.52)   64%,
+    rgba(38,52,105,0.68)    84%,
+    rgba(107,143,232,0.18)  100%);
+}
+
+/* Override session item gold border */
+.journal-page .td-deck-with-tabs.td-layout-page
+  .td-deck-sessions-list--inline .td-deck-session-item {
+  border: 1px solid transparent !important;
+  --journal-panel-border: linear-gradient(135deg,
+    rgba(255,255,255,1)     0%,
+    rgba(255,255,255,0.88)  11%,
+    rgba(255,255,255,0.42)  26%,
+    rgba(185,205,255,0.38)  44%,
+    rgba(85,115,195,0.52)   64%,
+    rgba(38,52,105,0.68)    84%,
+    rgba(107,143,232,0.18)  100%);
+}
+
+/* Remove gold from countdown chips */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdowns {
+  border-color: rgba(107,143,232,0.22) !important;
+  background: rgba(107,143,232,0.06) !important;
+}
+
+/* Remove gold from session countdown phrase */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdown-phrase {
+  color: rgba(140,175,255,0.95) !important;
+}
+
+/* Override inbox footer blocks */
+.journal-page .td-deck-with-tabs.td-layout-page
+  .td-deck-rail .td-deck-inbox-footer-block {
+  --journal-panel-border: linear-gradient(135deg,
+    rgba(255,255,255,1)     0%,
+    rgba(255,255,255,0.88)  11%,
+    rgba(255,255,255,0.42)  26%,
+    rgba(185,205,255,0.38)  44%,
+    rgba(85,115,195,0.52)   64%,
+    rgba(38,52,105,0.68)    84%,
+    rgba(107,143,232,0.18)  100%);
+}
+
+/* Override AI desk brief gold border */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-desk-brief {
+  border-color: rgba(107,143,232,0.22) !important;
+  background: rgba(107,143,232,0.05) !important;
+}
+
+/* Remove gold from tab-zone calendar lines */
+.journal-page .td-deck-with-tabs.td-layout-page
+  .td-deck-tab-zone-calendar .td-deck-header-line-left,
+.journal-page .td-deck-with-tabs.td-layout-page
+  .td-deck-tab-zone-calendar .td-deck-header-line-right {
+  background: rgba(107,143,232,0.45) !important;
+}
+
+/* Remove gold shimmer from mo-eyebrow text */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-mo-eyebrow {
+  background: linear-gradient(125deg,
+    rgba(140,175,255,0.95) 0%,
+    rgba(107,143,232,0.90) 60%,
+    rgba(78,109,212,0.85)  100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
 }

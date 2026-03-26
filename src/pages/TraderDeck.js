@@ -17,6 +17,7 @@ import '../styles/TraderDeckTabs.css';
 import '../styles/TraderDeckNews.css';
 import '../styles/trader-deck/TraderDeckJournalGlass.css';
 import '../styles/trader-deck/TraderDeckContentModern.css';
+import '../styles/trader-deck/TraderDeckWorldClocks.css';
 import {
   TRADER_DESK_SESSIONS,
   isSessionOpen,
@@ -169,7 +170,11 @@ export default function TraderDeck() {
       )}
 
       <div className="td-deck-layout">
-        <TraderDeckWorldClocks />
+        <div className="td-deck-world-clocks-rail">
+  <div className="td-deck-world-clocks-container">
+    <TraderDeckWorldClocks />
+  </div>
+</div>
         <div className="td-deck-tab-zone" aria-label="Trader Desk navigation">
           <header className="td-deck-header td-deck-header--tab-zone">
             <nav className="td-deck-header-nav td-deck-header-left td-deck-main-tab-rail" aria-label="Trader Desk sections">

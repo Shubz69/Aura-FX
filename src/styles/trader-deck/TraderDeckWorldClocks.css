@@ -1,0 +1,415 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   WORLD CLOCKS — Glass container with responsive analog clocks
+   Premium glass morphism styling with proper centering and balanced spacing
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Glass container for world clocks */
+.td-deck-world-clocks-rail {
+  width: 100%;
+  margin-bottom: 24px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.td-deck-world-clocks-container {
+  background: rgba(4, 5, 18, 0.45);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid rgba(107, 143, 232, 0.25);
+  border-radius: 48px;
+  padding: 12px 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
+              0 0 0 1px rgba(107, 143, 232, 0.1) inset,
+              0 0 20px rgba(107, 143, 232, 0.1);
+  transition: all var(--td-root-transition);
+  position: relative;
+  overflow: hidden;
+  width: auto;
+  max-width: 95%;
+}
+
+/* Subtle shimmer effect on hover */
+.td-deck-world-clocks-container:hover {
+  border-color: rgba(107, 143, 232, 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4),
+              0 0 0 1px rgba(107, 143, 232, 0.2) inset,
+              0 0 30px rgba(107, 143, 232, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Top glow line */
+.td-deck-world-clocks-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(107, 143, 232, 0.6),
+    rgba(140, 175, 255, 0.4),
+    rgba(212, 175, 55, 0.2),
+    transparent);
+  pointer-events: none;
+}
+
+/* Clocks wrapper with proper centering and balanced spacing */
+.td-deck-world-clocks.td-deck-world-clocks--top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(20px, 3vw, 48px);
+  margin: 0 auto;
+  padding: 4px 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+/* Individual clock styling with consistent sizing */
+.td-deck-analog-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  transition: all var(--td-root-transition-s);
+  position: relative;
+  min-width: 70px;
+}
+
+/* Clock face wrapper with balanced sizing */
+.td-deck-analog-clock__face-wrap {
+  width: clamp(60px, 8vw, 84px);
+  height: clamp(60px, 8vw, 84px);
+  filter: drop-shadow(0 0 12px rgba(107, 143, 232, 0.25)) 
+          drop-shadow(0 6px 20px rgba(0, 0, 0, 0.6));
+  transition: all var(--td-root-transition-s);
+  position: relative;
+}
+
+/* Clock glow effect on hover */
+.td-deck-analog-clock:hover .td-deck-analog-clock__face-wrap {
+  filter: drop-shadow(0 0 20px rgba(107, 143, 232, 0.45)) 
+          drop-shadow(0 8px 28px rgba(0, 0, 0, 0.7));
+  transform: scale(1.02);
+}
+
+/* Clock SVG styling */
+.td-deck-analog-clock__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Clock rim with blue accent */
+.td-deck-analog-clock__rim-outer {
+  fill: none;
+  stroke: rgba(107, 143, 232, 0.55);
+  stroke-width: 1.2;
+  transition: stroke var(--td-root-transition-s);
+}
+
+.td-deck-analog-clock:hover .td-deck-analog-clock__rim-outer {
+  stroke: rgba(107, 143, 232, 0.85);
+  filter: drop-shadow(0 0 4px rgba(107, 143, 232, 0.5));
+}
+
+/* Clock dial with subtle gradient */
+.td-deck-analog-clock__dial {
+  stroke: rgba(107, 143, 232, 0.25);
+  stroke-width: 0.6;
+  fill: rgba(0, 0, 0, 0.3);
+}
+
+/* Clock hands with enhanced visibility */
+.td-deck-analog-clock__hand {
+  stroke: rgba(255, 255, 255, 0.98);
+  stroke-linecap: round;
+}
+
+.td-deck-analog-clock__hand--hour {
+  stroke-width: 3.2;
+}
+
+.td-deck-analog-clock__hand--minute {
+  stroke-width: 2.2;
+  opacity: 0.96;
+}
+
+.td-deck-analog-clock__hand--second {
+  stroke: rgba(107, 143, 232, 0.95);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 0 2px rgba(107, 143, 232, 0.6));
+}
+
+/* Center cap with gold whisper */
+.td-deck-analog-clock__cap {
+  fill: rgba(107, 143, 232, 0.95);
+  stroke: rgba(212, 175, 55, 0.5);
+  stroke-width: 0.5;
+  transition: all var(--td-root-transition-s);
+}
+
+.td-deck-analog-clock:hover .td-deck-analog-clock__cap {
+  fill: rgba(107, 143, 232, 1);
+  stroke: rgba(212, 175, 55, 0.8);
+  filter: drop-shadow(0 0 4px rgba(107, 143, 232, 0.8));
+}
+
+/* City label with improved styling */
+.td-deck-analog-clock__city {
+  font-family: var(--td-root-font);
+  font-size: clamp(0.55rem, 1.2vw, 0.7rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(140, 175, 255, 0.85) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
+  text-align: center;
+  transition: all var(--td-root-transition-s);
+  text-shadow: 0 0 8px rgba(107, 143, 232, 0.3);
+  margin-top: 4px;
+}
+
+.td-deck-analog-clock:hover .td-deck-analog-clock__city {
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 12px rgba(107, 143, 232, 0.5);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS — Proper centering on all devices
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Large Desktop (1200px+) */
+@media (min-width: 1200px) {
+  .td-deck-world-clocks-container {
+    padding: 16px 40px;
+  }
+  
+  .td-deck-world-clocks.td-deck-world-clocks--top {
+    gap: 56px;
+  }
+  
+  .td-deck-analog-clock__face-wrap {
+    width: 84px;
+    height: 84px;
+  }
+  
+  .td-deck-analog-clock__city {
+    font-size: 0.7rem;
+  }
+  
+  .td-deck-analog-clock {
+    min-width: 90px;
+  }
+}
+
+/* Desktop (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .td-deck-world-clocks-container {
+    padding: 14px 32px;
+  }
+  
+  .td-deck-world-clocks.td-deck-world-clocks--top {
+    gap: 44px;
+  }
+  
+  .td-deck-analog-clock__face-wrap {
+    width: 78px;
+    height: 78px;
+  }
+  
+  .td-deck-analog-clock {
+    min-width: 85px;
+  }
+}
+
+/* Tablet Landscape (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .td-deck-world-clocks-container {
+    padding: 12px 28px;
+    border-radius: 40px;
+    max-width: 98%;
+  }
+  
+  .td-deck-world-clocks.td-deck-world-clocks--top {
+    gap: 32px;
+    justify-content: center;
+  }
+  
+  .td-deck-analog-clock__face-wrap {
+    width: 72px;
+    height: 72px;
+  }
+  
+  .td-deck-analog-clock__city {
+    font-size: 0.6rem;
+  }
+  
+  .td-deck-analog-clock {
+    min-width: 80px;
+  }
+}
+
+/* Tablet Portrait (576px - 767px) */
+@media (min-width: 576px) and (max-width: 767px) {
+  .td-deck-world-clocks-container {
+    padding: 10px 20px;
+    border-radius: 36px;
+    max-width: 100%;
+  }
+  
+  .td-deck-world-clocks.td-deck-world-clocks--top {
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .td-deck-analog-clock {
+    flex: 0 0 auto;
+    min-width: 70px;
+  }
+  
+  .td-deck-analog-clock__face-wrap {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .td-deck-analog-clock__city {
+    font-size: 0.55rem;
+    letter-spacing: 0.06em;
+  }
+}
+
+/* Mobile (375px - 575px) */
+@media (min-width: 375px) and (max-width: 575px) {
+  .td-deck-world-clocks-container {
+    padding: 8px 16px;
+    border-radius: 32px;
+    max-width: 100%;
+  }
+  
+  .td-deck-world-clocks.td-deck-world-clocks--top {
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .td-deck-analog-clock {
+    flex: 0 0 auto;
+    min-width: 65px;
+  }
+  
+  .td-deck-analog-clock__face-wrap {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .td-deck-analog-clock__city {
+    font-size: 0.5rem;
+    letter-spacing: 0.05em;
+  }
+  
+  /* Remove scroll hint indicator on mobile since we're using wrap */
+  .td-deck-world-clocks-container::after {
+    display: none;
+  }
+}
+
+/* Small Mobile (up to 374px) */
+@media (max-width: 374px) {
+  .td-deck-world-clocks-container {
+    padding: 6px 12px;
+    border-radius: 28px;
+  }
+  
+  .td-deck-world-clocks.td-deck-world-clocks--top {
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .td-deck-analog-clock {
+    flex: 0 0 auto;
+    min-width: 60px;
+  }
+  
+  .td-deck-analog-clock__face-wrap {
+    width: 52px;
+    height: 52px;
+  }
+  
+  .td-deck-analog-clock__city {
+    font-size: 0.48rem;
+    letter-spacing: 0.04em;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .td-deck-world-clocks.td-deck-world-clocks--top {
+    overflow-x: visible;
+    flex-wrap: wrap;
+  }
+  
+  .td-deck-analog-clock__face-wrap {
+    transition: none;
+  }
+  
+  .td-deck-world-clocks-container:hover {
+    transform: none;
+  }
+}
+
+/* Landscape orientation optimization */
+@media (orientation: landscape) and (max-height: 600px) {
+  .td-deck-world-clocks-container {
+    padding: 6px 20px;
+  }
+  
+  .td-deck-world-clocks.td-deck-world-clocks--top {
+    gap: 24px;
+  }
+  
+  .td-deck-analog-clock__face-wrap {
+    width: 52px;
+    height: 52px;
+  }
+  
+  .td-deck-analog-clock__city {
+    font-size: 0.48rem;
+  }
+}
+
+/* High DPI screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .td-deck-world-clocks-container {
+    backdrop-filter: blur(20px) saturate(1.3);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .td-deck-world-clocks-container {
+    transition: none;
+  }
+  
+  .td-deck-analog-clock__face-wrap {
+    transition: none;
+  }
+  
+  .td-deck-analog-clock__hand--second {
+    animation: none !important;
+  }
+}
