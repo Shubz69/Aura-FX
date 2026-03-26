@@ -29,6 +29,48 @@ const BRIEF_KIND_TOP5 = {
   bonds: ['US02Y', 'US05Y', 'US10Y', 'US30Y', 'DE10Y'],
   etfs: ['SPY', 'QQQ', 'IWM', 'GLD', 'TLT'],
 };
+const BOILERPLATE_PHRASES = [
+  'Maintain a bias only when momentum aligns with session flow',
+  'Bias follows macro direction and intraday confirmation',
+  'Protect downside first',
+  'Scale only on confirmation',
+  'Avoid overtrading into major releases',
+];
+const CATEGORY_FRAMEWORKS = {
+  daily: {
+    general: ['Market Context', 'Instrument Outlook', 'Session Focus', 'Risk Radar', 'Execution Notes'],
+    stocks: ['Equity Tape Structure', 'Top Stock Catalysts', 'Sector Rotation and Breadth', 'Execution Map', 'Stock Risk Controls'],
+    indices: ['Index Regime Snapshot', 'Breadth and Dispersion', 'Macro Trigger Ladder', 'Intraday Playbook', 'Index Risk Controls'],
+    futures: ['Curve and Carry Context', 'Order-Flow Windows', 'Contract-Specific Setups', 'Execution Checklist', 'Futures Risk Controls'],
+    forex: ['Rate Differential Pulse', 'Session Flow Map', 'Top Pair Tactical Plans', 'Event-Driven Triggers', 'FX Risk Controls'],
+    crypto: ['On-Chain and Flow Snapshot', 'Perp Basis and Funding', 'Top Coin Trade Scenarios', 'Volatility Regime Plan', 'Crypto Risk Controls'],
+    commodities: ['Physical and Macro Drivers', 'Top Commodity Setups', 'Inventory and Flow Signals', 'Execution Triggers', 'Commodities Risk Controls'],
+    bonds: ['Yield Curve Diagnostics', 'Duration and Convexity Bias', 'Top Bond Trade Maps', 'Auction/Data Sensitivity', 'Rates Risk Controls'],
+    etfs: ['ETF Flow and Positioning', 'Top ETF Tactical Setups', 'Underlying Breadth Confirmation', 'Execution Plan', 'ETF Risk Controls'],
+  },
+  weekly: {
+    general: ['Weekly Macro Theme', 'Cross-Asset Leadership', 'Event Map', 'Scenario Tree', 'Weekly Playbook'],
+    stocks: ['Weekly Equity Regime', 'Earnings and Guidance Matrix', 'Sector Leadership Outlook', 'Weekly Stock Playbook', 'Equity Risk Calendar'],
+    indices: ['Weekly Index Structure', 'Global Correlation Matrix', 'Policy and Data Path', 'Weekly Index Playbook', 'Index Portfolio Hedges'],
+    futures: ['Weekly Futures Macro Drivers', 'Curve Structure Outlook', 'Contract Rotation Plan', 'Weekly Execution Framework', 'Futures Risk Grid'],
+    forex: ['Weekly FX Macro Hierarchy', 'Central-Bank Path Matrix', 'Pair-Level Scenario Plans', 'Weekly FX Execution Framework', 'FX Risk Grid'],
+    crypto: ['Weekly Crypto Liquidity Regime', 'Narrative and Rotation Scorecard', 'Coin-Level Scenario Tree', 'Weekly Crypto Playbook', 'Crypto Drawdown Controls'],
+    commodities: ['Weekly Commodity Regime', 'Supply/Demand Inflection Map', 'Cross-Commodity Relative Value', 'Weekly Commodity Playbook', 'Commodities Risk Grid'],
+    bonds: ['Weekly Rates and Curve Outlook', 'Policy Path Sensitivity', 'Tenor-Level Trade Matrix', 'Weekly Bond Playbook', 'Rates Hedging Map'],
+    etfs: ['Weekly ETF Flow Regime', 'Cross-Asset ETF Rotation', 'Theme and Factor Matrix', 'Weekly ETF Playbook', 'ETF Risk and Hedge Grid'],
+  },
+};
+const CATEGORY_LOGIC_RULES = {
+  stocks: 'Focus on earnings revisions, sector breadth, options positioning and stock-specific catalyst windows.',
+  indices: 'Focus on index breadth, correlation shifts, dispersion, volatility term structure and macro beta.',
+  futures: 'Focus on contract structure, carry/roll dynamics, session liquidity pockets and macro release reaction plans.',
+  forex: 'Focus on relative-rate spreads, central-bank divergence, session behavior and event-volatility execution.',
+  crypto: 'Focus on funding/basis, on-chain flow, exchange liquidity, correlation to risk assets and event shock handling.',
+  commodities: 'Focus on supply-demand balances, inventory dynamics, seasonality and geopolitical transmission into price.',
+  bonds: 'Focus on curve shape, duration sensitivity, policy path repricing and auction/data calendar transmission.',
+  etfs: 'Focus on ETF flow momentum, creation/redemption pressure, factor rotation and underlying liquidity confirmation.',
+  general: 'Blend cross-asset macro leadership, risk sentiment, liquidity regime and event sequencing.',
+};
 
 function toYmdInTz(date, timeZone) {
   return new Intl.DateTimeFormat('en-CA', {
@@ -108,6 +150,53 @@ function top5ForBriefKind(kind) {
 
 function orderedBriefKinds() {
   return [...BRIEF_KIND_ORDER];
+}
+
+function frameworkHeadings(period, briefKind, fallbackSections = []) {
+  const p = period === 'weekly' ? 'weekly' : 'daily';
+  const k = normalizeBriefKind(briefKind);
+  const list = CATEGORY_FRAMEWORKS?.[p]?.[k] || [];
+  if (Array.isArray(list) && list.length >= 5) {
+    return list.map((heading, idx) => ({ key: `framework_${idx + 1}`, heading }));
+  }
+  return Array.isArray(fallbackSections) ? fallbackSections : [];
+}
+
+function tokenSet(text) {
+  return new Set(
+    String(text || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((w) => w && w.length > 2)
+  );
+}
+
+function similarityScore(a, b) {
+  const A = tokenSet(a);
+  const B = tokenSet(b);
+  if (A.size === 0 || B.size === 0) return 0;
+  let inter = 0;
+  for (const t of A) if (B.has(t)) inter += 1;
+  return inter / Math.max(A.size, B.size);
+}
+
+function containsBoilerplate(text) {
+  const s = String(text || '');
+  return BOILERPLATE_PHRASES.some((p) => s.includes(p));
+}
+
+function diversifyBody(body, { briefKind, period, topInstruments = [] }) {
+  const logic = CATEGORY_LOGIC_RULES[normalizeBriefKind(briefKind)] || CATEGORY_LOGIC_RULES.general;
+  const topLine = (topInstruments || []).slice(0, 5).join(', ');
+  const extra = [
+    '',
+    'Uniqueness Guardrails',
+    `- Category logic: ${logic}`,
+    `- Distinct top set: ${topLine}`,
+    `- ${period === 'weekly' ? 'Weekly horizon: scenario sequencing and carry path.' : 'Daily horizon: tactical trigger timing and session execution.'}`,
+  ].join('\n');
+  return String(body || '').replace(/\n{3,}/g, '\n\n').trim() + '\n' + extra + '\n';
 }
 
 function assertNoSources(text) {
@@ -238,7 +327,7 @@ function buildFactPack({ period, template, market, econ, news, briefKind = 'gene
     briefKindLabel: BRIEF_KIND_LABELS[normalizedKind] || BRIEF_KIND_LABELS.general,
     topInstruments: selectedTop,
     instruments: selectedTop.length > 0 ? selectedTop : (template.instruments || []),
-    sections: template.sections || [],
+    sections: frameworkHeadings(period, normalizedKind, template.sections || []),
     marketRegime: market.marketRegime || null,
     marketPulse: market.marketPulse || null,
     keyDrivers: (market.keyDrivers || []).slice(0, 8),
@@ -272,6 +361,8 @@ async function generateWithOpenAi(factPack, template) {
       tone: template?.style?.tone || 'institutional concise',
       minimumDepth: 'high-detail longform',
       mustCoverTopInstruments: factPack.topInstruments || [],
+      uniquenessMode: 'strict-no-repeat',
+      categoryLogicRule: CATEGORY_LOGIC_RULES[factPack.briefKind] || CATEGORY_LOGIC_RULES.general,
     },
   };
 
@@ -292,7 +383,7 @@ async function generateWithOpenAi(factPack, template) {
         messages: [
           {
             role: 'system',
-            content: 'You are an institutional multi-asset trading desk analyst. Return valid JSON only: {"title":"string","sections":[{"heading":"string","body":"string"}],"instrumentNotes":[{"instrument":"string","note":"string"}],"riskRadar":["string"],"playbook":["string"]}. Produce high-depth coverage with concrete market context and execution framing. You must include all provided top instruments in instrumentNotes, each with meaningful detail. Never include source names, references, URLs, or citation language. Never invent facts.',
+            content: 'You are an institutional multi-asset trading desk analyst. Return valid JSON only: {"title":"string","sections":[{"heading":"string","body":"string"}],"instrumentNotes":[{"instrument":"string","note":"string"}],"riskRadar":["string"],"playbook":["string"]}. Produce high-depth coverage with concrete market context and execution framing. You must include all provided top instruments in instrumentNotes, each with meaningful detail. All sections must be category-specific and period-specific (daily tactical vs weekly strategic). Strictly avoid repeated stock phrases or template-like boilerplate across briefs. Never include source names, references, URLs, or citation language. Never invent facts.',
           },
           { role: 'user', content: JSON.stringify(prompt) },
         ],
@@ -316,15 +407,21 @@ function fallbackGenerated(factPack, template, now, timeZone) {
   const sec = template.sections || [];
   const mk = factPack.marketRegime || {};
   const pulse = factPack.marketPulse || {};
+  const period = factPack.period === 'weekly' ? 'weekly' : 'daily';
+  const logicRule = CATEGORY_LOGIC_RULES[factPack.briefKind] || CATEGORY_LOGIC_RULES.general;
   const sectionBodies = {
-    MarketContext: `Regime is ${mk.currentRegime || 'Mixed'} with ${mk.primaryDriver || 'macro data'} in focus. Pulse reads ${pulse.label || 'NEUTRAL'} (${pulse.score ?? 50}/100). Keep execution selective through headline risk windows.`,
-    InstrumentOutlook: (factPack.topInstruments || template.instruments || []).map((i) => `${i}: Trend and liquidity alignment remain mandatory; define clear invalidation and map scenario pivots around macro catalysts before taking risk.`).join('\n'),
-    SessionFocus: normaliseArray((factPack.traderFocus || []).map((x) => (typeof x === 'string' ? x : x.title || ''))).slice(0, 5).join('\n'),
-    RiskRadar: normaliseArray(factPack.riskRadar).slice(0, 6).join('\n'),
-    ExecutionNotes: 'Prioritize A-grade setups, respect invalidation quickly, and reduce size during event clustering.',
-    WeeklyMacroTheme: `Weekly backdrop remains ${mk.currentRegime || 'mixed'} with ${mk.primaryDriver || 'macro drivers'} guiding directional conviction. Positioning should stay adaptive around key releases.`,
-    EventMap: (factPack.calendar || []).map((e) => `${e.currency} ${e.event} (${e.impact})`).slice(0, 8).join('\n'),
-    Playbook: 'Build scenarios for base-case and surprise outcomes, keep cross-asset confirmation mandatory, and protect capital around event spikes.',
+    MarketContext: `Regime is ${mk.currentRegime || 'Mixed'} with ${mk.primaryDriver || 'macro data'} in focus. Pulse reads ${pulse.label || 'NEUTRAL'} (${pulse.score ?? 50}/100). ${logicRule}`,
+    InstrumentOutlook: (factPack.topInstruments || template.instruments || []).map((i, idx) => `${i}: Scenario ${idx + 1} defines catalyst trigger, directional invalidation, and position-sizing discipline tied to liquidity conditions.`).join('\n'),
+    SessionFocus: normaliseArray((factPack.traderFocus || []).map((x) => (typeof x === 'string' ? x : x.title || ''))).slice(0, 5).map((x, idx) => `${idx + 1}. ${x}`).join('\n'),
+    RiskRadar: normaliseArray(factPack.riskRadar).slice(0, 6).map((x, idx) => `Risk ${idx + 1}: ${x}`).join('\n'),
+    ExecutionNotes: period === 'weekly'
+      ? 'Prioritize scenario sequencing, scale around confirmation clusters, and map hedging pathways before size expansion.'
+      : 'Prioritize tactical trigger quality, compress risk around event windows, and avoid entering late in exhausted intraday moves.',
+    WeeklyMacroTheme: `Weekly backdrop remains ${mk.currentRegime || 'mixed'} with ${mk.primaryDriver || 'macro drivers'} guiding directional conviction. ${logicRule}`,
+    EventMap: (factPack.calendar || []).map((e, idx) => `${idx + 1}) ${e.currency} ${e.event} (${e.impact})`).slice(0, 8).join('\n'),
+    Playbook: period === 'weekly'
+      ? 'Build base/alt scenarios, define rotation checkpoints, and pre-wire hedge transitions for adverse macro surprises.'
+      : 'Use tactical scenario maps, trigger-only entries, and immediate invalidation discipline during clustered catalysts.',
   };
 
   const renderedSections = sec.map((s) => {
@@ -342,9 +439,9 @@ function fallbackGenerated(factPack, template, now, timeZone) {
   return {
     title: baseTitle,
     sections: renderedSections,
-    instrumentNotes: (template.instruments || []).map((instrument) => ({
+    instrumentNotes: ((factPack.topInstruments || []).length > 0 ? factPack.topInstruments : (template.instruments || [])).map((instrument, idx) => ({
       instrument,
-      note: `${instrument}: Base case and surprise case should both be pre-mapped, with entry quality, invalidation, and volatility-adjusted risk sizing defined before execution.`,
+      note: `${instrument}: ${period === 'weekly' ? 'Weekly' : 'Daily'} scenario ${idx + 1} should define base and surprise pathways, catalyst checkpoints, and explicit invalidation tied to volatility-adjusted risk.`,
     })),
     riskRadar: normaliseArray(factPack.riskRadar).slice(0, 6),
     playbook: ['Protect downside first', 'Scale only on confirmation', 'Avoid overtrading into major releases'],
@@ -606,7 +703,13 @@ function computeTitle(template, now, timeZone) {
     .replace('{weekRange}', weekRange(now, timeZone));
 }
 
-async function generateAndStoreBrief({ period, briefKind = 'general', timeZone = 'Europe/London', runDate = new Date() }) {
+async function generateAndStoreBrief({
+  period,
+  briefKind = 'general',
+  timeZone = 'Europe/London',
+  runDate = new Date(),
+  generationContext = null,
+}) {
   assertAutomationModelConfigured();
   await ensureAutomationTables();
   const normalizedPeriod = normalizePeriod(period);
@@ -644,7 +747,7 @@ async function generateAndStoreBrief({ period, briefKind = 'general', timeZone =
     const title = normalizedKind === 'general'
       ? titleBase
       : `${BRIEF_KIND_LABELS[normalizedKind]} - ${titleBase}`;
-    const body = renderBriefText({
+    let body = renderBriefText({
       title,
       period: normalizedPeriod,
       date,
@@ -653,6 +756,15 @@ async function generateAndStoreBrief({ period, briefKind = 'general', timeZone =
       briefKind: normalizedKind,
       topInstruments: selectedTop5,
     });
+    const contextBodies = Array.isArray(generationContext?.existingBodies) ? generationContext.existingBodies : [];
+    const maxOverlap = contextBodies.reduce((m, prev) => Math.max(m, similarityScore(body, prev)), 0);
+    if (containsBoilerplate(body) || maxOverlap >= 0.66) {
+      body = diversifyBody(body, {
+        briefKind: normalizedKind,
+        period: normalizedPeriod,
+        topInstruments: selectedTop5,
+      });
+    }
     const saved = await publishAutoBrief({ period: normalizedPeriod, date, title, body, briefKind: normalizedKind });
     const briefId = saved.insertId;
     await finalizeRun(runKey, 'success', briefId, null);
@@ -665,10 +777,27 @@ async function generateAndStoreBrief({ period, briefKind = 'general', timeZone =
 
 async function generateAndStoreBriefSet({ period, timeZone = 'Europe/London', runDate = new Date() }) {
   const results = [];
+  const existingBodies = [];
   for (const briefKind of orderedBriefKinds()) {
     // Keep category generations isolated so one failure does not block all.
     // eslint-disable-next-line no-await-in-loop
-    const row = await generateAndStoreBrief({ period, briefKind, timeZone, runDate });
+    const row = await generateAndStoreBrief({
+      period,
+      briefKind,
+      timeZone,
+      runDate,
+      generationContext: { existingBodies },
+    });
+    if (row && row.success) {
+      // pull current brief body for overlap control in remaining categories
+      // eslint-disable-next-line no-await-in-loop
+      const [rows] = await executeQuery(
+        'SELECT file_data FROM trader_deck_briefs WHERE id = ? LIMIT 1',
+        [row.briefId]
+      );
+      const raw = rows?.[0]?.file_data;
+      if (raw) existingBodies.push(Buffer.isBuffer(raw) ? raw.toString('utf8') : String(raw));
+    }
     results.push(row);
   }
   return { success: results.some((r) => r && r.success), period: normalizePeriod(period), results };
@@ -799,5 +928,9 @@ module.exports = {
     top5ForBriefKind,
     orderedBriefKinds,
     BRIEF_KIND_ORDER,
+    frameworkHeadings,
+    similarityScore,
+    containsBoilerplate,
+    diversifyBody,
   },
 };

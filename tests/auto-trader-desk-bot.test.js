@@ -48,6 +48,16 @@ function run() {
   assert(stocksTop5.includes('AAPL') && stocksTop5.length === 5, 'stocks category should expose top-5 instruments');
   const fxTop5 = _test.top5ForBriefKind('forex');
   assert(fxTop5.includes('EURUSD') && fxTop5.length === 5, 'forex category should expose top-5 instruments');
+  assert(
+    _test.containsBoilerplate('Maintain a bias only when momentum aligns with session flow'),
+    'boilerplate detector should catch repeated template phrase'
+  );
+  const diversified = _test.diversifyBody('Base brief body', {
+    briefKind: 'forex',
+    period: 'daily',
+    topInstruments: ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCHF'],
+  });
+  assert(/Uniqueness Guardrails/.test(diversified), 'diversifyBody should append uniqueness section');
 
   console.log('OK auto-trader-desk-bot tests');
 }

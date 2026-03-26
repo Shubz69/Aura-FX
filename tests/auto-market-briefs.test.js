@@ -73,6 +73,17 @@ function run() {
   assert(new Set(kinds).size === 9, 'brief kinds should be unique');
   const normalizedUnknown = autoTest.normalizeBriefKind('not-a-kind');
   assert(normalizedUnknown === 'general', 'unknown brief kind should normalize to general');
+  const dailyFxFramework = autoTest.frameworkHeadings('daily', 'forex', []);
+  const weeklyFxFramework = autoTest.frameworkHeadings('weekly', 'forex', []);
+  assert(Array.isArray(dailyFxFramework) && dailyFxFramework.length >= 5, 'daily category framework should exist');
+  assert(Array.isArray(weeklyFxFramework) && weeklyFxFramework.length >= 5, 'weekly category framework should exist');
+  assert(
+    dailyFxFramework.map((x) => x.heading).join('|') !== weeklyFxFramework.map((x) => x.heading).join('|'),
+    'daily and weekly framework headings should differ'
+  );
+  const simLow = autoTest.similarityScore('Forex session map with rate divergence', 'Bond curve repricing and duration hedge');
+  const simHigh = autoTest.similarityScore('risk sentiment and liquidity regime', 'risk sentiment and liquidity regime conditions');
+  assert(simLow < simHigh, 'similarity scoring should rank related texts higher');
 
   console.log('OK auto-market-brief tests');
 }
