@@ -3,6 +3,8 @@ const nodemailer = require('nodemailer');
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
+const { signToken } = require('../utils/auth');
+const { enforceTrustedOrigin } = require('../utils/csrf');
 
 // Function to create email transporter
 const createEmailTransporter = () => {
@@ -63,6 +65,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
+  if (!enforceTrustedOrigin(req, res)) return;
 
   const clientIp =
     req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
@@ -251,23 +254,12 @@ module.exports = async (req, res) => {
           });
         }
 
-        const toBase64Url = (str) => {
-          return Buffer.from(str).toString('base64')
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, '');
-        };
-
-        const header = toBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-        const payload = toBase64Url(JSON.stringify({
+        const token = signToken({
           id: userInfo.id,
           email: userInfo.email,
           username: userInfo.username,
-          role: userInfo.role || 'USER',
-          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
-        }));
-        const signature = toBase64Url('signature-' + Date.now());
-        const token = `${header}.${payload}.${signature}`;
+          role: userInfo.role || 'USER'
+        }, '24h');
 
         return res.status(200).json({
           success: true,

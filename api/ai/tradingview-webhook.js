@@ -3,6 +3,28 @@
 // NO scraping - only webhook-based integration
 
 const { getDbConnection } = require('../db');
+const crypto = require('crypto');
+
+function safeEqual(a, b) {
+  const ab = Buffer.from(String(a || ''), 'utf8');
+  const bb = Buffer.from(String(b || ''), 'utf8');
+  if (ab.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ab, bb);
+}
+
+function parseSignature(headerValue) {
+  const v = String(headerValue || '').trim();
+  if (!v) return '';
+  return v.startsWith('sha256=') ? v.slice(7) : v;
+}
+
+function getRawBody(req) {
+  if (typeof req.rawBody === 'string') return req.rawBody;
+  if (Buffer.isBuffer(req.rawBody)) return req.rawBody.toString('utf8');
+  if (typeof req.body === 'string') return req.body;
+  if (req.body && typeof req.body === 'object') return JSON.stringify(req.body);
+  return '';
+}
 
 module.exports = async (req, res) => {
   // Handle CORS
@@ -20,6 +42,25 @@ module.exports = async (req, res) => {
   }
 
   try {
+    const secret = String(process.env.TRADINGVIEW_WEBHOOK_SECRET || '').trim();
+    if (!secret && (process.env.NODE_ENV === 'production' || process.env.VERCEL === '1')) {
+      return res.status(500).json({
+        success: false,
+        message: 'Webhook secret is not configured'
+      });
+    }
+    const headerSig = parseSignature(req.headers['x-tradingview-signature'] || req.headers['x-signature']);
+    if (secret) {
+      const raw = getRawBody(req);
+      const expected = crypto.createHmac('sha256', secret).update(raw).digest('hex');
+      if (!headerSig || !safeEqual(headerSig, expected)) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid webhook signature'
+        });
+      }
+    }
+
     const alert = req.body;
     
     // TradingView alert structure:

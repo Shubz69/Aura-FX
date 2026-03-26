@@ -151,6 +151,26 @@ async function resolveUserIdForStripeBilling(db, stripe, { customerId, customerE
   return null;
 }
 
+async function readRawBody(req) {
+  if (typeof req.rawBody === 'string') return req.rawBody;
+  if (Buffer.isBuffer(req.rawBody)) return req.rawBody.toString('utf8');
+  if (typeof req.body === 'string') return req.body;
+  if (req.body && typeof req.body === 'object') return JSON.stringify(req.body);
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', (chunk) => {
+      data += chunk.toString();
+      if (data.length > 5 * 1024 * 1024) reject(new Error('Webhook payload too large'));
+    });
+    req.on('end', () => resolve(data));
+    req.on('error', reject);
+  });
+}
+
+function allowUnsignedStripeWebhook() {
+  return String(process.env.STRIPE_WEBHOOK_ALLOW_UNSIGNED || '').trim().toLowerCase() === 'true';
+}
+
 module.exports = async (req, res) => {
   // Handle CORS
   const origin = req.headers.origin || '*';
@@ -383,7 +403,25 @@ module.exports = async (req, res) => {
     }
 
     try {
-      const event = req.body;
+      const stripe = getStripeClient();
+      if (!stripe) {
+        return res.status(500).json({ success: false, message: 'Stripe is not configured' });
+      }
+      const stripeSig = req.headers['stripe-signature'];
+      const webhookSecret = String(process.env.STRIPE_WEBHOOK_SECRET || '').trim();
+      let event = null;
+      if (webhookSecret && stripeSig) {
+        const rawBody = await readRawBody(req);
+        event = stripe.webhooks.constructEvent(rawBody, stripeSig, webhookSecret);
+      } else if (allowUnsignedStripeWebhook() && process.env.NODE_ENV !== 'production') {
+        console.warn('[stripe webhook] unsigned webhook accepted (non-production override enabled)');
+        event = req.body;
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing or invalid Stripe webhook signature configuration'
+        });
+      }
       
       // checkout.session.completed: Activate subscription when payment succeeds (first purchase)
       // This ensures ALL users get activated even if redirect fails - no bypass, real payment required
@@ -493,7 +531,6 @@ module.exports = async (req, res) => {
         }
 
         try {
-          const stripe = getStripeClient();
           const userId = await resolveUserIdForStripeBilling(db, stripe, {
             customerId,
             customerEmail,
@@ -566,7 +603,6 @@ module.exports = async (req, res) => {
         }
 
         try {
-          const stripe = getStripeClient();
           const userId = await resolveUserIdForStripeBilling(db, stripe, {
             customerId,
             customerEmail,

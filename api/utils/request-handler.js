@@ -11,6 +11,7 @@
 
 const { generateRequestId, createLogger } = require('./logger');
 const { checkRateLimit } = require('./rate-limiter');
+const { verifyToken } = require('./auth');
 
 // Standard error codes
 const ERROR_CODES = {
@@ -99,24 +100,8 @@ async function parseBody(req) {
   });
 }
 
-/**
- * Decode JWT token (basic extraction without verification)
- */
 function decodeToken(authHeader) {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-  
-  try {
-    const token = authHeader.replace('Bearer ', '');
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-    return payload;
-  } catch {
-    return null;
-  }
+  return verifyToken(authHeader);
 }
 
 /**

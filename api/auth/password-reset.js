@@ -1,10 +1,13 @@
 // Combined password reset endpoint - handles forgot-password, verify code, and reset password
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
+const { signToken, getJwtSecret } = require('../utils/auth');
+const { enforceTrustedOrigin } = require('../utils/csrf');
 
 // Function to create email transporter
 const createEmailTransporter = () => {
@@ -46,6 +49,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
+  if (!enforceTrustedOrigin(req, res)) return;
 
   const clientIp =
     req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
@@ -217,11 +221,11 @@ module.exports = async (req, res) => {
 
         await dbVerify.execute('DELETE FROM reset_codes WHERE email = ?', [emailLower]);
 
-        const resetToken = Buffer.from(JSON.stringify({
-          email: email,
-          code: code,
-          expiresAt: Date.now() + (15 * 60 * 1000)
-        })).toString('base64');
+        const resetToken = signToken({
+          purpose: 'password_reset',
+          email: emailLower,
+          code: String(code || '').trim()
+        }, '15m');
 
         return res.status(200).json({
           success: true,
@@ -268,20 +272,30 @@ module.exports = async (req, res) => {
 
       let tokenData;
       try {
-        tokenData = JSON.parse(Buffer.from(token, 'base64').toString());
-      } catch (error) {
+        const secret = getJwtSecret();
+        if (!secret || secret.length < 16) {
+          return res.status(500).json({
+            success: false,
+            message: 'Reset token verification is not configured'
+          });
+        }
+        tokenData = jwt.verify(token, secret, { algorithms: ['HS256'] });
+      } catch {
         return res.status(400).json({
           success: false,
           message: 'Invalid token'
         });
       }
 
-      if (Date.now() > tokenData.expiresAt) {
+      if (tokenData?.purpose !== 'password_reset' || !tokenData?.email || !tokenData?.code) {
         return res.status(400).json({
           success: false,
-          message: 'Token has expired'
+          message: 'Invalid token'
         });
       }
+
+      const emailLower = String(tokenData.email).toLowerCase().trim();
+      const codeValue = String(tokenData.code).trim();
 
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
@@ -296,13 +310,32 @@ module.exports = async (req, res) => {
           });
         }
 
+        const [codeRows] = await dbReset.execute(
+          'SELECT id, expires_at FROM reset_codes WHERE email = ? AND code = ? ORDER BY created_at DESC LIMIT 1',
+          [emailLower, codeValue]
+        );
+        if (!codeRows?.length) {
+          return res.status(400).json({
+            success: false,
+            message: 'Reset code is invalid or already used'
+          });
+        }
+        if (Date.now() > Number(codeRows[0].expires_at || 0)) {
+          await dbReset.execute('DELETE FROM reset_codes WHERE id = ?', [codeRows[0].id]);
+          return res.status(400).json({
+            success: false,
+            message: 'Reset code has expired'
+          });
+        }
+
         const [result] = await dbReset.execute(
           'UPDATE users SET password = ? WHERE email = ?',
-          [hashedPassword, tokenData.email.toLowerCase()]
+          [hashedPassword, emailLower]
         );
+        await dbReset.execute('DELETE FROM reset_codes WHERE id = ?', [codeRows[0].id]);
 
         if (result.affectedRows > 0) {
-          console.log(`Password reset for ${tokenData.email} - updated in MySQL database`);
+          console.log(`Password reset for ${emailLower} - updated in MySQL database`);
           return res.status(200).json({
             success: true,
             message: 'Password reset successfully'
