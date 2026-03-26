@@ -6,6 +6,7 @@
   --ap-bg: #010008;
   --ap-card: rgba(3, 2, 10, 0.72);
   --ap-card-hover: rgba(8, 6, 20, 0.85);
+  --brief-surface-navy: #050814;
   --ap-border: rgba(255, 255, 255, 0.06);
   --ap-border-gold: rgba(234, 169, 96, 0.22);
   --ap-gold: #eaa960;
@@ -670,7 +671,7 @@
   padding: 18px;
   border: 1px solid rgba(215, 180, 95, 0.28);
   border-radius: 14px;
-  background: rgba(9, 13, 34, 0.58);
+  background: var(--brief-surface-navy);
 }
 
 .admin-panel-container .brief-template-row {
@@ -698,7 +699,7 @@
   min-height: 300px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(6, 10, 25, 0.86);
+  background: var(--brief-surface-navy);
   color: #f4f6ff;
   font-family: inherit;
   font-size: 0.95rem;
@@ -746,7 +747,7 @@
 .admin-panel-container .brief-template-preview {
   margin-top: 12px;
   border: 1px solid rgba(215, 180, 95, 0.25);
-  background: rgba(5, 8, 21, 0.45);
+  background: var(--brief-surface-navy);
   border-radius: 12px;
   padding: 12px 14px;
 }
@@ -773,7 +774,7 @@
 .admin-panel-container .brief-template-generated-preview {
   margin-top: 12px;
   border: 1px solid rgba(126, 188, 255, 0.35);
-  background: rgba(7, 16, 35, 0.5);
+  background: var(--brief-surface-navy);
   border-radius: 12px;
   padding: 12px 14px;
 }

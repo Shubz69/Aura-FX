@@ -1,6 +1,6 @@
 /* Full-viewport Market Intelligence brief preview — blurred backdrop, minimal chrome */
-
 .td-intel-preview-overlay {
+  --brief-surface-navy: #050814;
   position: fixed;
   inset: 0;
   z-index: 10060;
@@ -90,7 +90,7 @@
   flex-direction: column;
   border-radius: 0 0 11px 11px;
   overflow: hidden;
-  background: rgba(2, 8, 35, 0.74);
+  background: var(--brief-surface-navy);
 }
 
 .td-intel-preview-iframe {
@@ -100,7 +100,7 @@
   height: 100%;
   border: none;
   display: block;
-  background: #020d34;
+  background: var(--brief-surface-navy);
 }
 
 .td-intel-preview-typewriter {
@@ -108,7 +108,11 @@
   min-height: min(78vh, calc(100vh - 120px));
   padding: clamp(14px, 2vw, 22px);
   overflow: auto;
-  background: linear-gradient(180deg, rgba(3, 11, 45, 0.94), rgba(2, 8, 34, 0.98));
+  background: var(--brief-surface-navy);
+}
+
+.td-intel-preview-fallback {
+  background: var(--brief-surface-navy);
 }
 
 .td-intel-preview-typewriter-text {
