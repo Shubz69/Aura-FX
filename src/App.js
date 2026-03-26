@@ -37,6 +37,10 @@ const MyCourses = lazy(() => import('./pages/MyCourses'));
 const Community = lazy(() => import('./pages/Community'));
 const Explore = lazy(() => import('./pages/Explore'));
 const WhyInfinity = lazy(() => import('./pages/WhyInfinity'));
+const OperatingSystem = lazy(() => import('./pages/OperatingSystem'));
+const LiveMetricsPage = lazy(() => import('./pages/LiveMetricsPage'));
+const MonthlyStatementsPage = lazy(() => import('./pages/MonthlyStatementsPage'));
+const TraderPassportPage = lazy(() => import('./pages/TraderPassportPage'));
 const ContactUs = lazy(() => import('./pages/ContactUs'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Chatbot = lazy(() => import('./components/Chatbot'));
@@ -251,6 +255,10 @@ function AppRoutes() {
                         <Route path="/my-courses" element={<MyCourses />} />
                         <Route path="/explore" element={<Explore />} />
                         <Route path="/why-glitch" element={<WhyInfinity />} />
+                        <Route path="/operating-system" element={<OperatingSystem />} />
+                        <Route path="/live-metrics" element={<AuthenticatedGuard><LiveMetricsPage /></AuthenticatedGuard>} />
+                        <Route path="/monthly-statements" element={<AuthenticatedGuard><MonthlyStatementsPage /></AuthenticatedGuard>} />
+                        <Route path="/trader-passport" element={<AuthenticatedGuard><TraderPassportPage /></AuthenticatedGuard>} />
                         <Route path="/contact" element={<ContactUs />} />
                         <Route path="/profile" element={<AuthenticatedGuard><Profile /></AuthenticatedGuard>} />
                         <Route path="/profile/edit-name" element={<AuthenticatedGuard><EditName /></AuthenticatedGuard>} />

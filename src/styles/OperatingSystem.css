@@ -1,0 +1,95 @@
+.ops-page {
+  padding: 24px;
+  color: rgba(255,255,255,0.92);
+}
+
+.ops-hero {
+  max-width: 980px;
+  margin: 0 auto 28px;
+}
+
+.ops-kicker {
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  color: rgba(200,220,255,0.85);
+  margin: 0 0 10px;
+  text-transform: uppercase;
+}
+
+.ops-hero h1 {
+  font-size: clamp(1.35rem, 2.6vw, 2.25rem);
+  margin: 0 0 10px;
+}
+
+.ops-core {
+  max-width: 980px;
+  margin: 0 auto 26px;
+  background: rgba(8, 12, 28, 0.55);
+  border: 1px solid rgba(120, 160, 255, 0.14);
+  border-radius: 14px;
+  padding: 18px 18px;
+}
+
+.ops-core h2 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.ops-core p {
+  margin: 0 0 16px;
+  color: rgba(240,245,255,0.86);
+  line-height: 1.55;
+}
+
+.ops-grid {
+  max-width: 1100px;
+  margin: 0 auto 22px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.ops-card {
+  background: rgba(6, 10, 26, 0.55);
+  border: 1px solid rgba(120, 160, 255, 0.14);
+  border-radius: 14px;
+  padding: 14px;
+  min-height: 160px;
+}
+
+.ops-card h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.ops-card p {
+  margin: 0 0 8px;
+  color: rgba(240,245,255,0.85);
+  line-height: 1.45;
+}
+
+.ops-flow {
+  max-width: 980px;
+  margin: 0 auto 26px;
+  padding: 16px;
+  background: rgba(8, 12, 28, 0.4);
+  border: 1px solid rgba(120, 160, 255, 0.14);
+  border-radius: 14px;
+}
+
+.ops-flow h2 {
+  margin: 0 0 8px;
+}
+
+.ops-flow p {
+  color: rgba(240,245,255,0.85);
+  line-height: 1.55;
+}
+
+.ops-page a {
+  display: inline-flex;
+  margin-top: 10px;
+  color: rgba(140, 187, 255, 0.92);
+  text-decoration: none;
+  font-weight: 600;
+}
