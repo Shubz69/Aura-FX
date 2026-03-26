@@ -659,6 +659,7 @@ async function getReferralDashboard(userId, opts = {}) {
 }
 
 async function getReferralLedger(userId, page = 1, pageSize = 20) {
+  await ensureReferralSchema();
   const uid = Number(userId);
   const p = Math.max(1, Number(page) || 1);
   const sz = Math.min(100, Math.max(1, Number(pageSize) || 20));
@@ -683,6 +684,7 @@ async function getReferralLedger(userId, page = 1, pageSize = 20) {
 }
 
 async function getReferralReferees(userId, page = 1, pageSize = 20) {
+  await ensureReferralSchema();
   const uid = Number(userId);
   const p = Math.max(1, Number(page) || 1);
   const sz = Math.min(100, Math.max(1, Number(pageSize) || 20));
@@ -719,6 +721,7 @@ async function getReferralReferees(userId, page = 1, pageSize = 20) {
 }
 
 async function getPayoutMethod(userId) {
+  await ensureReferralSchema();
   const uid = Number(userId);
   const [rows] = await executeQuery(
     `SELECT referral_payout_method, referral_payout_details_json

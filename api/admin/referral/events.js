@@ -51,8 +51,8 @@ module.exports = async (req, res) => {
           params.push(sourceTableFilter);
         }
         if (hasWindow) {
-          sql += ' AND re.occurred_at >= (UTC_TIMESTAMP() - INTERVAL ? DAY)';
-          params.push(Math.min(365, Math.max(1, Math.floor(windowDays))));
+          const safeWindowDays = Math.min(365, Math.max(1, Math.floor(windowDays)));
+          sql += ` AND re.occurred_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL ${safeWindowDays} DAY)`;
         }
         sql += ' ORDER BY re.occurred_at DESC LIMIT ?';
         params.push(limit);

@@ -24,6 +24,7 @@ module.exports = async (req, res) => {
     }
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   } catch (e) {
-    return res.status(400).json({ success: false, message: e.message || 'Failed to save payout method' });
+    const status = req.method === 'GET' ? 500 : 400;
+    return res.status(status).json({ success: false, message: e.message || 'Failed to handle payout method' });
   }
 };
