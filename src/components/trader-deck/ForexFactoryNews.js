@@ -61,6 +61,13 @@ function bumpCalendarMonth(ymStr, deltaMonths) {
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function buildRollingRangeAroundEtDate(etDate) {
+  return {
+    startDate: shiftIsoDateEt(etDate, -7),
+    endDate: shiftIsoDateEt(etDate, 14),
+  };
+}
+
 function convertIsoDateToEt(isoDate) {
   const s = String(isoDate || '').slice(0, 10);
   if (!ISO_DATE_RE.test(s)) return s;
@@ -135,15 +142,17 @@ export default function ForexFactoryNews({ date }) {
   const minBrowseDate = shiftIsoDateEt(etToday, -365);
   const maxBrowseDate = shiftIsoDateEt(etToday, 14);
 
-  // Core fetch — refresh=true bypasses server cache for precision fetches; historical uses ?date=
+  // Core fetch — refresh=true bypasses server cache for precision fetches.
+  // Always request a rolling ET range so the feed is not "today-only".
   const fetchEvents = useCallback(async (refresh = false) => {
     const fetchId = ++latestFetchIdRef.current;
     try {
-      const todayLocal = todayInTimeZone(DATA_TIME_ZONE);
-      const isToday = viewDate === todayLocal;
-      const res = isToday
-        ? await Api.getTraderDeckEconomicCalendar(1, refresh)
-        : await Api.getTraderDeckEconomicCalendar({ from: viewDate, to: viewDate, refresh });
+      const range = buildRollingRangeAroundEtDate(viewDate);
+      const res = await Api.getTraderDeckEconomicCalendar({
+        startDate: range.startDate,
+        endDate: range.endDate,
+        refresh,
+      });
       const list = res.data?.events || [];
       if (fetchId !== latestFetchIdRef.current) return null;
       setEvents(list);

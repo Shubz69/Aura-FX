@@ -818,7 +818,9 @@ const Api = {
     },
     /**
      * Economic calendar. skipCache so actuals stay fresh.
-     * @param {number|{ from?: string, to?: string, date?: string, days?: number, refresh?: boolean }} daysOrOpts - forward window days, or { from, to } / { date } for historical browse
+     * Supports both legacy params (from/to/date/days) and range aliases (startDate/endDate),
+     * plus optional currencies/countries/impact/includePast/includeFuture.
+     * @param {number|{ from?: string, to?: string, startDate?: string, endDate?: string, date?: string, days?: number, refresh?: boolean, currencies?: string[]|string, countries?: string[]|string, impact?: string[]|string, includePast?: boolean, includeFuture?: boolean }} daysOrOpts
      * @param {boolean} [refresh=false]
      */
     getTraderDeckEconomicCalendar: (daysOrOpts = 7, refresh = false) => {
@@ -839,10 +841,18 @@ const Api = {
             if (o.from && o.to) {
                 params.from = String(o.from).slice(0, 10);
                 params.to = String(o.to).slice(0, 10);
+            } else if (o.startDate && o.endDate) {
+                params.startDate = String(o.startDate).slice(0, 10);
+                params.endDate = String(o.endDate).slice(0, 10);
             } else if (o.date) {
                 params.date = String(o.date).slice(0, 10);
             }
             if (o.days != null) params.days = o.days;
+            if (o.currencies != null) params.currencies = Array.isArray(o.currencies) ? o.currencies.join(',') : String(o.currencies);
+            if (o.countries != null) params.countries = Array.isArray(o.countries) ? o.countries.join(',') : String(o.countries);
+            if (o.impact != null) params.impact = Array.isArray(o.impact) ? o.impact.join(',') : String(o.impact);
+            if (typeof o.includePast === 'boolean') params.includePast = o.includePast ? '1' : '0';
+            if (typeof o.includeFuture === 'boolean') params.includeFuture = o.includeFuture ? '1' : '0';
             if (o.refresh) doRefresh = true;
         } else {
             const d = typeof daysOrOpts === 'number' && Number.isFinite(daysOrOpts) ? daysOrOpts : 7;

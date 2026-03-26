@@ -28,6 +28,13 @@ const MATCH_WINDOW_MS = 25 * 60 * 1000;
 const IMPACT_COLORS = { High: 'high', Medium: 'medium', Low: 'low' };
 
 // --- Normalise helpers ---
+function pickFirstDefined(...vals) {
+  for (const v of vals) {
+    if (v !== undefined && v !== null) return v;
+  }
+  return null;
+}
+
 function normImpact(raw) {
   if (!raw) return 'low';
   const s = String(raw).toLowerCase();
@@ -186,22 +193,39 @@ function normalizeFigureField(v) {
 }
 
 function normalizeEventShape(input, fallbackSource = 'fallback') {
+  const inRaw = input && typeof input === 'object' ? input : {};
   const ts = parseDateToTimestamp(input.timestamp ?? input.ts ?? input.datetime ?? input.date, {
     defaultTimeZone: input.sourceTimeZone || 'America/New_York',
   });
   const date = input.date ? String(input.date).slice(0, 10) : (ts ? new Date(ts).toISOString().slice(0, 10) : null);
+  const eventIdRaw = pickFirstDefined(
+    input.providerEventId,
+    input.eventId,
+    input.calendarId,
+    input.id,
+    input.ticker,
+    inRaw.CalendarId,
+    inRaw.EventId,
+    inRaw.Ticker,
+  );
   return {
     date,
     time: input.time || 'All Day',
     timestamp: ts,
+    providerEventId: eventIdRaw != null ? String(eventIdRaw) : null,
+    title: input.event || 'Economic Event',
+    country: normalizeValue(input.country || inRaw.Country || inRaw.country),
     currency: normCountry(input.currency || ''),
     impact: normImpact(input.impact),
     event: input.event || 'Economic Event',
     // preserve numeric zero; empty string becomes null; dash-only → null
-    actual: normalizeFigureField(input.actual ?? input.Actual ?? input.value),
-    forecast: normalizeFigureField(input.forecast ?? input.Forecast ?? input.estimate),
-    previous: normalizeFigureField(input.previous ?? input.Previous ?? input.prior),
+    actual: normalizeFigureField(pickFirstDefined(input.actual, input.Actual, inRaw.ACTUAL, input.value)),
+    forecast: normalizeFigureField(pickFirstDefined(input.forecast, input.Forecast, inRaw.Forecast, inRaw.TEForecast, input.estimate, inRaw.Consensus, inRaw.survey)),
+    previous: normalizeFigureField(pickFirstDefined(input.previous, input.Previous, inRaw.PREVIOUS, input.prior)),
+    revised: normalizeFigureField(pickFirstDefined(input.revised, inRaw.Revised, inRaw.REVISED)),
+    unit: normalizeValue(pickFirstDefined(input.unit, inRaw.Unit, inRaw.unit)),
     source: input.source || fallbackSource,
+    raw: inRaw,
   };
 }
 
@@ -782,6 +806,8 @@ async function scrapeForwardDays(days = 7) {
 const RANGE_MAX_DAYS = 366;
 const RANGE_MAX_LOOKBACK_MS = 366 * 24 * 60 * 60 * 1000;
 const HISTORICAL_RANGE_CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4h — past actuals are stable
+const DEFAULT_RANGE_PAST_DAYS = 7;
+const DEFAULT_RANGE_FUTURE_DAYS = 14;
 
 const ISO_DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -813,17 +839,38 @@ function calendarEtTodayStr() {
  */
 function parseCalendarRangeQuery(query) {
   const q = query || {};
+  const parseBool = (v) => {
+    if (v == null) return null;
+    const s = String(v).trim().toLowerCase();
+    if (['1', 'true', 'yes', 'on'].includes(s)) return true;
+    if (['0', 'false', 'no', 'off'].includes(s)) return false;
+    return null;
+  };
+  const includePast = parseBool(q.includePast);
+  const includeFuture = parseBool(q.includeFuture);
   let from =
     q.from != null && String(q.from).trim() !== '' ? String(q.from).trim().slice(0, 10) : null;
   let to = q.to != null && String(q.to).trim() !== '' ? String(q.to).trim().slice(0, 10) : null;
+  if (q.startDate != null && String(q.startDate).trim() !== '') from = String(q.startDate).trim().slice(0, 10);
+  if (q.endDate != null && String(q.endDate).trim() !== '') to = String(q.endDate).trim().slice(0, 10);
   if (q.date != null && String(q.date).trim() !== '') {
     const d = String(q.date).trim().slice(0, 10);
     from = d;
     to = d;
   }
-  if (from == null && to == null) return null;
+  if (from == null && to == null) {
+    const dayStr = calendarEtTodayStr();
+    if (q.days != null && String(q.days).trim() !== '') {
+      return null;
+    }
+    if (includePast === false && includeFuture === false) return { error: 'At least one of includePast/includeFuture must be true' };
+    const start = includePast === false ? dayStr : enumerateInclusiveDays(shiftIsoDate(dayStr, -DEFAULT_RANGE_PAST_DAYS), dayStr)[0];
+    const end = includeFuture === false ? dayStr : shiftIsoDate(dayStr, DEFAULT_RANGE_FUTURE_DAYS);
+    from = start;
+    to = end;
+  }
   if (from == null || to == null) {
-    return { error: 'Use date=YYYY-MM-DD or both from= and to=' };
+    return { error: 'Use date=YYYY-MM-DD or both from/to (or startDate/endDate)' };
   }
   if (!isValidIsoDateOnly(from) || !isValidIsoDateOnly(to)) {
     return { error: 'Invalid date (use YYYY-MM-DD)' };
@@ -855,6 +902,122 @@ function normalizeScrapedTimeForEtParts(timeRaw) {
   const m2 = raw.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
   if (m2) return `${m2[1]}:${m2[2]} ${m2[3].toUpperCase()}`;
   return raw;
+}
+
+function shiftIsoDate(isoDate, deltaDays) {
+  const d = new Date(`${String(isoDate).slice(0, 10)}T12:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + Number(deltaDays || 0));
+  return d.toISOString().slice(0, 10);
+}
+
+function parseCsvParam(v) {
+  if (v == null) return [];
+  const inArr = Array.isArray(v) ? v : String(v).split(',');
+  return inArr
+    .map((x) => String(x || '').trim())
+    .filter(Boolean);
+}
+
+function statusFromEvent(ev) {
+  const now = Date.now();
+  if (normalizeValue(ev.actual) != null) return 'released';
+  const ts = Number(ev.timestamp);
+  if (!Number.isFinite(ts) || ts <= 0) {
+    const timeText = String(ev.time || '').toLowerCase();
+    if (!timeText || timeText.includes('all day') || timeText.includes('tentative')) return 'tentative';
+    return 'unknown';
+  }
+  const maybeLive = normalizeValue(ev.raw?.Status || ev.raw?.status || ev.raw?.state);
+  if (maybeLive && /live|ongoing|in\s*progress|inprogress/i.test(String(maybeLive))) return 'live';
+  if (String(ev.time || '').toLowerCase().includes('tentative')) return 'tentative';
+  if (ts > now) return 'upcoming';
+  if (Math.abs(now - ts) <= 3 * 60 * 1000) return 'live';
+  return 'unknown';
+}
+
+function dedupeEconomicEvents(events) {
+  const map = new Map();
+  for (const ev of events || []) {
+    if (!ev) continue;
+    const providerKey = ev.providerEventId ? `p:${String(ev.providerEventId)}` : null;
+    const fallbackKey = [
+      String(ev.event || ev.title || '').toLowerCase().trim(),
+      String(ev.currency || '').toUpperCase().trim(),
+      Number.isFinite(Number(ev.timestamp)) ? String(Number(ev.timestamp)) : '',
+      String(ev.country || '').toUpperCase().trim(),
+    ].join('|');
+    const key = providerKey || `f:${fallbackKey}`;
+    const prev = map.get(key);
+    if (!prev) {
+      map.set(key, ev);
+      continue;
+    }
+    const prevScore =
+      (normalizeValue(prev.actual) != null ? 8 : 0) +
+      (normalizeValue(prev.forecast) != null ? 3 : 0) +
+      (normalizeValue(prev.previous) != null ? 3 : 0) +
+      (normalizeValue(prev.revised) != null ? 2 : 0);
+    const curScore =
+      (normalizeValue(ev.actual) != null ? 8 : 0) +
+      (normalizeValue(ev.forecast) != null ? 3 : 0) +
+      (normalizeValue(ev.previous) != null ? 3 : 0) +
+      (normalizeValue(ev.revised) != null ? 2 : 0);
+    map.set(key, curScore > prevScore ? ev : prev);
+  }
+  return [...map.values()];
+}
+
+function normalizeCalendarPayloadRows(events, viewerTimeZone) {
+  return (events || []).map((ev) => {
+    const ts = Number(ev.timestamp);
+    const hasTs = Number.isFinite(ts) && ts > 0;
+    const datetimeUtc = hasTs ? new Date(ts).toISOString() : null;
+    let datetimeLocal = datetimeUtc;
+    if (hasTs && viewerTimeZone) {
+      try {
+        datetimeLocal = new Date(ts).toLocaleString('sv-SE', { timeZone: viewerTimeZone }).replace(' ', 'T');
+      } catch (_) {
+        datetimeLocal = datetimeUtc;
+      }
+    }
+    const fallbackId = [
+      String(ev.providerEventId || ''),
+      String(ev.event || ''),
+      String(ev.currency || ''),
+      String(ts || ''),
+      String(ev.country || ''),
+    ].join('|');
+    return {
+      ...ev,
+      id: ev.id || ev.providerEventId || fallbackId,
+      providerEventId: ev.providerEventId || null,
+      title: ev.title || ev.event || 'Economic Event',
+      country: ev.country || null,
+      currency: ev.currency || null,
+      impact: ev.impact || null,
+      datetimeUtc,
+      datetimeLocal,
+      status: statusFromEvent(ev),
+      actual: ev.actual,
+      forecast: ev.forecast,
+      previous: ev.previous,
+      revised: ev.revised ?? null,
+      unit: ev.unit ?? null,
+      source: ev.source || null,
+      raw: ev.raw || null,
+    };
+  });
+}
+
+function applyQueryFilters(events, query) {
+  const currencies = new Set(parseCsvParam(query?.currencies).map((s) => s.toUpperCase()));
+  const countries = new Set(parseCsvParam(query?.countries).map((s) => s.toUpperCase()));
+  const impacts = new Set(parseCsvParam(query?.impact).map((s) => normImpact(s)));
+  let out = events || [];
+  if (currencies.size > 0) out = out.filter((ev) => currencies.has(String(ev.currency || '').toUpperCase()));
+  if (countries.size > 0) out = out.filter((ev) => countries.has(String(ev.country || '').toUpperCase()));
+  if (impacts.size > 0) out = out.filter((ev) => impacts.has(normImpact(ev.impact)));
+  return out;
 }
 
 function scrapeRowsToEvents(dateStr, rows) {
@@ -1019,6 +1182,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
   const viewerTimeZone = resolveViewerTimeZone(req);
+  const debugCalendar = process.env.DEBUG_TRADER_DECK_CALENDAR === '1';
 
   const rangeQ = parseCalendarRangeQuery(req.query || {});
   if (rangeQ && rangeQ.error) {
@@ -1027,7 +1191,13 @@ module.exports = async (req, res) => {
   if (rangeQ && rangeQ.from) {
     const { from, to } = rangeQ;
     const forceRefresh = req.query.refresh === '1';
-    const rangeKey = `trader-deck:economic-calendar:range:v1:${from}:${to}`;
+    const rangeFilterKey = JSON.stringify({
+      ccy: parseCsvParam(req.query?.currencies).map((s) => s.toUpperCase()).sort(),
+      ctry: parseCsvParam(req.query?.countries).map((s) => s.toUpperCase()).sort(),
+      imp: parseCsvParam(req.query?.impact).map((s) => normImpact(s)).sort(),
+      tz: viewerTimeZone,
+    });
+    const rangeKey = `trader-deck:economic-calendar:range:v2:${from}:${to}:${rangeFilterKey}`;
     const etToday = calendarEtTodayStr();
     const includesTodayOrFuture = to >= etToday;
     const rangeTtl = includesTodayOrFuture ? CACHE_TTL_MS : HISTORICAL_RANGE_CACHE_TTL_MS;
@@ -1036,10 +1206,27 @@ module.exports = async (req, res) => {
     if (rangeCached) {
       return res.status(200).json({ success: true, ...rangeCached, viewerTimeZone, cached: true });
     }
+    const providerHint = process.env.TRADING_ECONOMICS_API_KEY ? 'TradingEconomicsRange+FFHTML+FMP' : 'FFHTML+FMP';
     const { events, source } = await fetchHistoricalRange(from, to);
+    const normalized = normalizeCalendarPayloadRows(events, viewerTimeZone);
+    const deduped = dedupeEconomicEvents(normalized);
+    const filteredRows = applyQueryFilters(deduped, req.query || {});
+    filteredRows.sort(compareEvents);
+    if (debugCalendar) {
+      console.debug('[trader-deck/economic-calendar] range', {
+        from,
+        to,
+        providerEndpoint: providerHint,
+        rowsProvider: Array.isArray(events) ? events.length : 0,
+        rowsNormalized: normalized.length,
+        rowsDeduped: deduped.length,
+        rowsFiltered: filteredRows.length,
+        sample: filteredRows[0] || null,
+      });
+    }
     const fetchedAt = new Date().toISOString();
 
-    const looksLikeStaticFallback = source === 'fallback' && Array.isArray(events) && events.length <= 5;
+    const looksLikeStaticFallback = source === 'fallback' && Array.isArray(filteredRows) && filteredRows.length <= 5;
     if (forceRefresh && rangeCachedForRecovery && looksLikeStaticFallback) {
       return res.status(200).json({
         success: true,
@@ -1051,7 +1238,7 @@ module.exports = async (req, res) => {
     }
 
     const rangePayload = {
-      events,
+      events: filteredRows,
       source,
       from,
       to,
@@ -1066,13 +1253,57 @@ module.exports = async (req, res) => {
   }
 
   // Event list is identical for all viewers; only metadata differs — single cache key
-  const cacheKey = CACHE_KEY;
+  const defaultRangeFrom = shiftIsoDate(calendarEtTodayStr(), -DEFAULT_RANGE_PAST_DAYS);
+  const defaultRangeTo = shiftIsoDate(calendarEtTodayStr(), DEFAULT_RANGE_FUTURE_DAYS);
+  const useDefaultRange = req.query.days == null && req.query.date == null && req.query.from == null && req.query.to == null && req.query.startDate == null && req.query.endDate == null;
+  const cacheKey = useDefaultRange ? `${CACHE_KEY}:default-range:v1` : CACHE_KEY;
 
   // ?refresh=1 bypasses cache — used by frontend for precision fetches at event release time
   const forceRefresh = req.query.refresh === '1';
   const cachedForRecovery = getCached(cacheKey, CACHE_TTL_MS);
   const cached = forceRefresh ? null : cachedForRecovery;
   if (cached) return res.status(200).json({ success: true, ...cached, viewerTimeZone, cached: true });
+
+  if (useDefaultRange) {
+    const forceRefreshRange = req.query.refresh === '1';
+    const rangeQuery = { from: defaultRangeFrom, to: defaultRangeTo, refresh: forceRefreshRange ? '1' : undefined };
+    const rangeKey = `trader-deck:economic-calendar:range:v2:${defaultRangeFrom}:${defaultRangeTo}:${JSON.stringify({ tz: viewerTimeZone })}`;
+    const rangeCachedForRecovery = getCached(rangeKey, CACHE_TTL_MS);
+    const rangeCached = forceRefreshRange ? null : rangeCachedForRecovery;
+    if (rangeCached) {
+      return res.status(200).json({ success: true, ...rangeCached, viewerTimeZone, cached: true });
+    }
+    const { events, source } = await fetchHistoricalRange(defaultRangeFrom, defaultRangeTo);
+    const normalized = normalizeCalendarPayloadRows(events, viewerTimeZone);
+    const deduped = dedupeEconomicEvents(normalized);
+    const filteredRows = applyQueryFilters(deduped, req.query || {}).sort(compareEvents);
+    if (debugCalendar) {
+      console.debug('[trader-deck/economic-calendar] default-range', {
+        from: defaultRangeFrom,
+        to: defaultRangeTo,
+        providerEndpoint: process.env.TRADING_ECONOMICS_API_KEY ? 'TradingEconomicsRange+FFHTML+FMP' : 'FFHTML+FMP',
+        rowsProvider: Array.isArray(events) ? events.length : 0,
+        rowsNormalized: normalized.length,
+        rowsDeduped: deduped.length,
+        rowsFiltered: filteredRows.length,
+        sample: filteredRows[0] || null,
+      });
+    }
+    const fetchedAt = new Date().toISOString();
+    const payload = {
+      events: filteredRows,
+      source,
+      from: defaultRangeFrom,
+      to: defaultRangeTo,
+      days: enumerateInclusiveDays(defaultRangeFrom, defaultRangeTo).length,
+      viewerTimeZone,
+      updatedAt: fetchedAt,
+      fetchedAt,
+      sourceUpdatedAt: fetchedAt,
+    };
+    setCached(rangeKey, payload, CACHE_TTL_MS);
+    return res.status(200).json({ success: true, ...payload, cached: false });
+  }
 
   const days = Math.min(14, Math.max(1, parseInt(req.query.days, 10) || 7));
 
@@ -1107,8 +1338,19 @@ module.exports = async (req, res) => {
   }
 
   events = events.map(ensureEventTimestamp);
+  events = normalizeCalendarPayloadRows(events, viewerTimeZone);
+  events = dedupeEconomicEvents(events);
+  events = applyQueryFilters(events, req.query || {});
   // Sort by UTC timestamp when available for stable ordering across providers.
   events.sort(compareEvents);
+  if (debugCalendar) {
+    console.debug('[trader-deck/economic-calendar] snapshot', {
+      days,
+      providerEndpoint: source === 'TradingEconomics' ? 'TradingEconomicsRange(country/all/from/to)' : source,
+      rowsAfterNormalizeAndDedupe: events.length,
+      sample: events[0] || null,
+    });
+  }
 
   const fetchedAt = new Date().toISOString();
 
