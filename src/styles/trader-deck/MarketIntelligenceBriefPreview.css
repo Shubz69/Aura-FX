@@ -9,7 +9,9 @@
   justify-content: center;
   padding: clamp(12px, 3vw, 24px);
   padding-top: max(clamp(12px, 3vw, 24px), env(safe-area-inset-top, 0));
-  background: rgba(4, 5, 18, 0.62);
+  background:
+    radial-gradient(1200px 520px at 50% -10%, rgba(24, 44, 108, 0.38), rgba(2, 6, 24, 0.78)),
+    rgba(2, 7, 29, 0.84);
   backdrop-filter: blur(16px) saturate(1.05);
   -webkit-backdrop-filter: blur(16px) saturate(1.05);
   box-sizing: border-box;
@@ -31,9 +33,9 @@
 
 .td-intel-preview-box--fullscreen.td-intel-preview-box--protected {
   /* no journal glass double-border; content fills the stage */
-  background: rgba(6, 8, 22, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  background: linear-gradient(165deg, rgba(5, 16, 58, 0.92), rgba(3, 10, 40, 0.95));
+  border: 1px solid rgba(96, 143, 255, 0.22);
+  box-shadow: 0 24px 90px rgba(1, 8, 30, 0.72);
 }
 
 .td-intel-preview-chrome--minimal {
@@ -69,7 +71,7 @@
   height: 40px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
-  background: rgba(8, 10, 28, 0.75);
+  background: rgba(3, 12, 43, 0.9);
   color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
@@ -88,7 +90,7 @@
   flex-direction: column;
   border-radius: 0 0 11px 11px;
   overflow: hidden;
-  background: rgba(2, 3, 12, 0.5);
+  background: rgba(2, 8, 35, 0.74);
 }
 
 .td-intel-preview-iframe {
@@ -98,7 +100,41 @@
   height: 100%;
   border: none;
   display: block;
-  background: #0a0c18;
+  background: #020d34;
+}
+
+.td-intel-preview-typewriter {
+  flex: 1;
+  min-height: min(78vh, calc(100vh - 120px));
+  padding: clamp(14px, 2vw, 22px);
+  overflow: auto;
+  background: linear-gradient(180deg, rgba(3, 11, 45, 0.94), rgba(2, 8, 34, 0.98));
+}
+
+.td-intel-preview-typewriter-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: clamp(0.73rem, 1.8vw, 0.84rem);
+  line-height: 1.45;
+  color: rgba(226, 237, 255, 0.96);
+}
+
+.td-intel-preview-typewriter-caret {
+  display: inline-block;
+  width: 9px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  border-radius: 1px;
+  background: rgba(125, 177, 255, 0.95);
+  animation: tdPreviewBlink 0.85s steps(1, end) infinite;
+}
+
+@keyframes tdPreviewBlink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
 }
 
 .td-intel-preview-fallback {

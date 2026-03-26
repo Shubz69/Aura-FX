@@ -38,6 +38,11 @@ function displayBriefTitle(title) {
   return t || 'Brief';
 }
 
+function isTextLikeMime(mime) {
+  const m = (mime || '').toLowerCase();
+  return m.startsWith('text/') || m.includes('json') || m.includes('xml') || m.includes('javascript');
+}
+
 export default function MarketIntelligenceBriefsView({ selectedDate, period, canEdit }) {
   const type = period === 'weekly' ? 'intel-weekly' : 'intel-daily';
   const [briefs, setBriefs] = useState([]);
@@ -47,6 +52,9 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [previewId, setPreviewId] = useState(null);
   const [previewEmbedUrl, setPreviewEmbedUrl] = useState(null);
   const [previewBriefMeta, setPreviewBriefMeta] = useState(null);
+  const [typewriterEnabled, setTypewriterEnabled] = useState(false);
+  const [typewriterLoading, setTypewriterLoading] = useState(false);
+  const [typewriterText, setTypewriterText] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadUrl, setUploadUrl] = useState('');
@@ -113,11 +121,76 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const previewMime = (previewBriefMeta?.mimeType || '').toLowerCase();
   const previewIsPpt = isPowerPointMime(previewMime);
   const previewIsPdf = isPdfMime(previewMime);
+  const previewIsTextLike = isTextLikeMime(previewMime);
   const previewHasExternalUrl = /^https?:\/\//i.test((previewBriefMeta?.fileUrl || '').trim());
   const previewCanIframe = Boolean(previewEmbedUrl || (!previewIsPpt && (previewIsPdf || storedPreviewSrc)));
   const previewDirectUrl = previewHasExternalUrl
     ? (previewBriefMeta?.fileUrl || '').trim()
     : (previewId ? Api.getTraderDeckBriefPreviewUrl(previewId) : null);
+
+  useEffect(() => {
+    const shouldType =
+      previewOpen &&
+      Boolean(previewId) &&
+      !previewEmbedUrl &&
+      Boolean(storedPreviewSrc) &&
+      previewIsTextLike;
+    if (!shouldType) {
+      setTypewriterEnabled(false);
+      setTypewriterLoading(false);
+      setTypewriterText('');
+      return undefined;
+    }
+
+    let cancelled = false;
+    let timer = null;
+    const controller = new AbortController();
+
+    const run = async () => {
+      try {
+        setTypewriterEnabled(true);
+        setTypewriterLoading(true);
+        setTypewriterText('');
+        const res = await fetch(storedPreviewSrc, { signal: controller.signal });
+        if (!res.ok) throw new Error(`Preview load failed (${res.status})`);
+        const raw = await res.text();
+        if (cancelled) return;
+        const content = String(raw || '').replace(/\r\n/g, '\n');
+        const total = content.length;
+        if (!total) {
+          setTypewriterText('');
+          setTypewriterLoading(false);
+          return;
+        }
+
+        let idx = 0;
+        const chunk = Math.max(1, Math.round(total / 420));
+        const tick = () => {
+          if (cancelled) return;
+          idx = Math.min(total, idx + chunk);
+          setTypewriterText(content.slice(0, idx));
+          if (idx < total) {
+            timer = window.setTimeout(tick, 16);
+            return;
+          }
+          setTypewriterLoading(false);
+        };
+        tick();
+      } catch (_) {
+        if (cancelled) return;
+        setTypewriterEnabled(false);
+        setTypewriterLoading(false);
+        setTypewriterText('');
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+      controller.abort();
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [previewOpen, previewId, previewEmbedUrl, storedPreviewSrc, previewIsTextLike]);
 
   const handlePreview = (brief) => {
     setPreviewBriefMeta({
@@ -335,7 +408,12 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               </button>
             </div>
             <div className="td-intel-preview-frame-wrap">
-              {previewCanIframe ? (
+              {typewriterEnabled ? (
+                <div className="td-intel-preview-typewriter" aria-live="polite">
+                  <pre className="td-intel-preview-typewriter-text">{typewriterText || (typewriterLoading ? '' : 'No text content available.')}</pre>
+                  {typewriterLoading && <span className="td-intel-preview-typewriter-caret" aria-hidden />}
+                </div>
+              ) : previewCanIframe ? (
                 <iframe
                   title={displayBriefTitle(previewBriefMeta?.title)}
                   src={iframeSrc}
