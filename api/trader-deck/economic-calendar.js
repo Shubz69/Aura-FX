@@ -1131,7 +1131,9 @@ async function fetchTradingEconomicsCalendarRange(fromStr, toStr) {
 async function fetchHistoricalRange(fromStr, toStr) {
   const dayList = enumerateInclusiveDays(fromStr, toStr);
   const allScraped = [];
-  if (dayList.length <= 14) {
+  // Free-source mode must still populate larger windows (e.g. default -7/+14 = 22 days).
+  // Keep this bounded to avoid excessive upstream load.
+  if (dayList.length <= 31) {
     const CHUNK = 3;
     for (let i = 0; i < dayList.length; i += CHUNK) {
       const chunk = dayList.slice(i, i + CHUNK);
@@ -1168,6 +1170,12 @@ async function fetchHistoricalRange(fromStr, toStr) {
 
   let source = 'ForexFactoryHTML';
   if (fmp && fmp.length) source = 'ForexFactoryHTML+FMP';
+  if (te && te.length) source = source.includes('FMP') ? 'ForexFactoryHTML+FMP+TradingEconomics' : 'ForexFactoryHTML+TradingEconomics';
+  if (events.length === 0 && fromStr <= calendarEtTodayStr() && toStr >= calendarEtTodayStr()) {
+    // Safety fallback: keep non-empty UX when providers are transiently empty.
+    source = 'fallback';
+    events = staticFallback().filter((e) => e.date && e.date >= fromStr && e.date <= toStr);
+  }
   if (events.length === 0) source = 'empty';
 
   return { events, source };
