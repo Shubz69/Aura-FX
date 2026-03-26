@@ -1130,6 +1130,12 @@ async function fetchTradingEconomicsCalendarRange(fromStr, toStr) {
 
 async function fetchHistoricalRange(fromStr, toStr) {
   const dayList = enumerateInclusiveDays(fromStr, toStr);
+  const etToday = calendarEtTodayStr();
+  const ffDays = Math.max(1, Math.min(14, enumerateInclusiveDays(etToday, toStr >= etToday ? toStr : etToday).length));
+  const ffRangeRowsRaw = await fromForexFactory(ffDays);
+  const ffRangeRows = (Array.isArray(ffRangeRowsRaw) ? ffRangeRowsRaw : [])
+    .map(ensureEventTimestamp)
+    .filter((ev) => ev.date && ev.date >= fromStr && ev.date <= toStr);
   const allScraped = [];
   // Free-source mode must still populate larger windows (e.g. default -7/+14 = 22 days).
   // Keep this bounded to avoid excessive upstream load.
@@ -1147,7 +1153,22 @@ async function fetchHistoricalRange(fromStr, toStr) {
     }
   }
 
-  let events = allScraped;
+  let events = ffRangeRows.length > 0 ? ffRangeRows : allScraped;
+  if (ffRangeRows.length > 0 && allScraped.length > 0) {
+    // Use FF JSON for schedule, then fill released actuals/figures from FF HTML rows for matching dates.
+    const byDate = new Map();
+    for (const row of allScraped) {
+      const d = String(row?.date || '');
+      if (!d) continue;
+      if (!byDate.has(d)) byDate.set(d, []);
+      byDate.get(d).push(row);
+    }
+    let merged = events;
+    for (const [d, rows] of byDate.entries()) {
+      merged = mergeScrapedHtml(rows, merged, d);
+    }
+    events = merged;
+  }
   const fmp = await fetchFmpCalendarRange(fromStr, toStr);
   if (fmp && fmp.length) {
     if (events.length === 0) {
