@@ -10,7 +10,7 @@ const { getConfig } = require('./config');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getCached, setCached } = require('../cache');
 
-const CACHE_KEY = 'trader-deck:news:v2';
+const CACHE_KEY = 'trader-deck:news:v3';
 const CACHE_TTL_MS = Math.min(300, Math.max(60, parseInt(process.env.TRADER_DECK_NEWS_CACHE_SEC, 10) || 90)) * 1000;
 const SOURCE_SUFFIX_RE = /\s*[-–—,]\s*(reuters|bloomberg|forex factory|financial times|wsj|cnbc|yahoo finance|marketwatch)\s*$/i;
 const ATTRIBUTION_RE = /\b(according to|reported by|via)\b/gi;
@@ -192,7 +192,7 @@ module.exports = async (req, res) => {
 
   // Merge, deduplicate by headline, sort by date
   const seen = new Set();
-  const merged = [...generalItems, ...fmpItems, ...forexItems, ...yahooItems]
+  const merged = [...forexItems, ...generalItems, ...fmpItems, ...yahooItems]
     .filter((n) => withinDateWindow(n, fromDate, toDate))
     .filter((n) => {
       if (!n.headline || seen.has(n.headline)) return false;

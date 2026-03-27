@@ -25,7 +25,8 @@ import {
   formatSessionEta,
 } from '../utils/traderDeskSessions';
 
-const today = () => new Date().toISOString().slice(0, 10);
+/** Local calendar date (matches date picker + ForexFactoryNews ET mapping). */
+const today = () => new Date().toLocaleDateString('en-CA');
 
 function shiftIsoDate(dateStr, deltaDays) {
   const d = new Date(`${String(dateStr).slice(0, 10)}T12:00:00.000Z`);
@@ -273,7 +274,7 @@ export default function TraderDeck() {
                     </div>
 
                     <aside className="td-deck-rail">
-                      <NewsHeadlines />
+                      <NewsHeadlines selectedDate={selectedDate} />
                     </aside>
 
                   </div>

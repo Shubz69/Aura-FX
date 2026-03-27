@@ -29,11 +29,11 @@ function run() {
   assert(threw, 'assertNoSources should throw on source markers');
 
   const dueDaily = autoTest.shouldRunWindow({
-    now: new Date('2026-03-24T06:05:00+00:00'),
+    now: new Date('2026-03-24T00:05:00+00:00'),
     period: 'daily',
     timeZone: 'Europe/London',
   });
-  assert(dueDaily === true, 'daily should run during 06:00-06:14 London window');
+  assert(dueDaily === true, 'daily should run during 00:00-00:19 London window');
 
   const notDueDaily = autoTest.shouldRunWindow({
     now: new Date('2026-03-24T05:40:00+00:00'),
@@ -41,6 +41,13 @@ function run() {
     timeZone: 'Europe/London',
   });
   assert(notDueDaily === false, 'daily should not run outside window');
+
+  const prefetchDue = autoTest.shouldPrefetchInstrumentResearchWindow({
+    now: new Date('2026-03-24T22:05:00+00:00'),
+    period: 'daily',
+    timeZone: 'Europe/London',
+  });
+  assert(prefetchDue === true, 'prefetch should run during ~22:00 London window');
 
   const dueWeekly = autoTest.shouldRunWindow({
     now: new Date('2026-03-29T18:05:00+01:00'),

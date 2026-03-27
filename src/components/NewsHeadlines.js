@@ -3,7 +3,7 @@ import { FaNewspaper, FaSyncAlt } from 'react-icons/fa';
 import '../styles/NewsHeadlines.css';
 
 const API_BASE = typeof window !== 'undefined' ? window.location.origin : '';
-const CACHE_KEY = 'at_td_news_cache_v2';
+const CACHE_KEY = 'at_td_news_cache_v3';
 const CACHE_TTL = 3 * 60 * 1000;
 const AUTO_REFRESH_MS = 3 * 60 * 1000;
 const SOURCE_STRIP_RE = /\s*[-–—]\s*(reuters|bloomberg|forex factory|financial times|wsj|cnbc|yahoo finance|marketwatch)\s*$/i;
@@ -20,21 +20,12 @@ const timeAgo = (iso) => {
   return `${Math.floor(hrs / 24)}d ago`;
 };
 
-const classifyHeadline = (text) => {
-  const s = String(text || '').toLowerCase();
-  if (/\b(war|conflict|sanction|emergency|surge|plunge|fomc|rate decision|cpi|nfp)\b/.test(s)) return 'HIGH';
-  if (/\b(yield|dollar|inflation|pmi|gdp|earnings|oil|crypto)\b/.test(s)) return 'MEDIUM';
-  return 'LOW';
-};
-
-const toInternalInsight = (headline) => {
-  const clean = String(headline || '')
+const cleanDisplayTitle = (headline) => {
+  return String(headline || '')
     .replace(SOURCE_STRIP_RE, '')
     .replace(ATTRIBUTION_RE, '')
     .replace(/\s+/g, ' ')
     .trim();
-  const level = classifyHeadline(clean);
-  return `${level}: ${clean}`;
 };
 
 function isHttpUrl(url) {
@@ -48,7 +39,7 @@ function isHttpUrl(url) {
   }
 }
 
-const NewsHeadlines = () => {
+const NewsHeadlines = ({ selectedDate }) => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -56,9 +47,13 @@ const NewsHeadlines = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchNews = useCallback(async (force = false) => {
+    const day = selectedDate && /^\d{4}-\d{2}-\d{2}$/.test(String(selectedDate).slice(0, 10))
+      ? String(selectedDate).slice(0, 10)
+      : '';
+    const storageKey = day ? `${CACHE_KEY}:${day}` : CACHE_KEY;
     if (!force) {
       try {
-        const cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
+        const cached = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
         if (cached && Date.now() - cached.ts < CACHE_TTL) {
           setArticles(cached.data);
           setLastFetch(new Date(cached.ts));
@@ -71,21 +66,27 @@ const NewsHeadlines = () => {
     force ? setRefreshing(true) : setLoading(true);
     setError(null);
     try {
-      const q = force ? '?refresh=1' : '';
+      const qs = new URLSearchParams();
+      if (force) qs.set('refresh', '1');
+      if (day) {
+        qs.set('from', day);
+        qs.set('to', day);
+      }
+      const q = qs.toString() ? `?${qs.toString()}` : '';
       const res = await fetch(`${API_BASE}/api/trader-deck/news${q}`);
       const json = await res.json();
       if (json.success && json.articles) {
         const rows = json.articles
           .map((a) => ({
-            title: toInternalInsight(a.title || a.headline || ''),
+            title: cleanDisplayTitle(a.title || a.headline || ''),
             publishedAt: a.publishedAt || a.datetime || null,
             url: String(a.url || '').trim(),
           }))
-          .filter((a) => a.title && !/^(HIGH|MEDIUM|LOW):\s*$/i.test(a.title));
+          .filter((a) => a.title);
         setArticles(rows);
         const now = Date.now();
         setLastFetch(new Date(now));
-        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: rows, ts: now })); } catch (_) {}
+        try { sessionStorage.setItem(storageKey, JSON.stringify({ data: rows, ts: now })); } catch (_) {}
       } else {
         setError('Could not load headlines.');
       }
@@ -95,7 +96,7 @@ const NewsHeadlines = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [selectedDate]);
 
   useEffect(() => { fetchNews(); }, [fetchNews]);
 

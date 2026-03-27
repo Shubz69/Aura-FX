@@ -61,25 +61,25 @@ function bumpCalendarMonth(ymStr, deltaMonths) {
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function buildRollingRangeAroundEtDate(etDate) {
-  return {
-    startDate: shiftIsoDateEt(etDate, -7),
-    endDate: shiftIsoDateEt(etDate, 14),
-  };
+/** Single ET calendar day for the API (one day per request; avoids multi-day FF HTML scrapes). */
+function buildSingleDayRange(etDate) {
+  const d = String(etDate || '').slice(0, 10);
+  return { startDate: d, endDate: d };
 }
 
 function convertIsoDateToEt(isoDate) {
   const s = String(isoDate || '').slice(0, 10);
   if (!ISO_DATE_RE.test(s)) return s;
-  // Treat incoming YYYY-MM-DD as a UTC day boundary and convert it into the ET day bucket.
-  const d = new Date(`${s}T00:00:00.000Z`);
+  const [y, m, d] = s.split('-').map(Number);
+  if (!y || !m || !d) return s;
+  // Parent passes HTML5 date (user local calendar). Map to FF America/New_York bucket.
+  const localNoon = new Date(y, m - 1, d, 12, 0, 0, 0);
   try {
-    return d.toLocaleDateString('en-CA', { timeZone: DATA_TIME_ZONE });
+    return localNoon.toLocaleDateString('en-CA', { timeZone: DATA_TIME_ZONE });
   } catch (_) {
     return s;
   }
 }
-
 function loadPref(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
   catch { return fallback; }
@@ -143,11 +143,11 @@ export default function ForexFactoryNews({ date }) {
   const maxBrowseDate = shiftIsoDateEt(etToday, 14);
 
   // Core fetch — refresh=true bypasses server cache for precision fetches.
-  // Always request a rolling ET range so the feed is not "today-only".
+  // One ET day per request keeps backend scrapes fast and reliable.
   const fetchEvents = useCallback(async (refresh = false) => {
     const fetchId = ++latestFetchIdRef.current;
     try {
-      const range = buildRollingRangeAroundEtDate(viewDate);
+      const range = buildSingleDayRange(viewDate);
       const res = await Api.getTraderDeckEconomicCalendar({
         startDate: range.startDate,
         endDate: range.endDate,
@@ -166,7 +166,7 @@ export default function ForexFactoryNews({ date }) {
         setLoading(false);
       }
     }
-  }, [viewDate, displayTimeZone]);
+  }, [viewDate]);
 
   // Schedule a cache-bypassing fetch at each upcoming event's exact release time
   // (+0s, +30s, +90s to catch delayed actuals)

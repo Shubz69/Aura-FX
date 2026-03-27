@@ -88,11 +88,11 @@ const INSTRUMENT_HEADLINE_HINTS = {
   WTI: /\b(wti|crude|oil|opec)\b/i,
   BRENT: /\b(brent|north\s*sea)\b/i,
   NATGAS: /\b(natural\s*gas|henry\s*hub|lng)\b/i,
-  ES1!: /\b(es\s|e\-mini\s*s&p|spx\s*futures)\b/i,
-  NQ1!: /\b(nq\s|nasdaq\s*futures)\b/i,
-  CL1!: /\b(crude|wti|oil\s*futures)\b/i,
-  GC1!: /\b(gold\s*futures|comex\s*gold)\b/i,
-  ZN1!: /\b(10y\s*futures|treasury\s*futures|zn\s)\b/i,
+  'ES1!': /\b(es\s|e\-mini\s*s&p|spx\s*futures)\b/i,
+  'NQ1!': /\b(nq\s|nasdaq\s*futures)\b/i,
+  'CL1!': /\b(crude|wti|oil\s*futures)\b/i,
+  'GC1!': /\b(gold\s*futures|comex\s*gold)\b/i,
+  'ZN1!': /\b(10y\s*futures|treasury\s*futures|zn\s)\b/i,
   AAPL: /\b(apple|aapl|iphone|ios)\b/i,
   MSFT: /\b(microsoft|msft|azure|windows)\b/i,
   NVDA: /\b(nvidia|nvda|gpu|cuda|blackwell)\b/i,
@@ -822,7 +822,15 @@ function fallbackGenerated(factPack, template, now, timeZone) {
       return `${label} ${period === 'weekly' ? 'weekly' : 'session'} playbook: tier risk; ${tail} ${ql ? `Live: ${ql}.` : ''}`;
     }
     if (h.includes('outlook') || h.includes('instrument')) {
-      return `${label} instrument lens: ${top.map((sym, idx) => `${sym} — scenario ${idx + 1}: catalyst, invalidation, size vs liquidity`).join('; ')}.`;
+      const sh = factPack.symbolHeadlines || {};
+      return top
+        .map((sym) => {
+          const symU = String(sym).toUpperCase();
+          const lines = (sh[symU] || []).slice(0, 2).filter(Boolean);
+          const hook = lines.length ? lines.join(' · ') : `${pulseLabel} tape and ${regimeLabel} regime context`;
+          return `${symU}: ${hook} — session plan: lean on drivers/calendar for this name only; separate invalidation from other symbols in the set.${ql ? ` Quote context: ${ql}.` : ''}`;
+        })
+        .join('\n\n');
     }
     return `${label} — ${heading}: ${drivers.slice(0, 2).join(' · ') || `${pulseLabel} conditions`}; stay disciplined on ${top[0] || 'core names'}.${ql ? ` ${ql}` : ''}`;
   };
@@ -832,15 +840,19 @@ function fallbackGenerated(factPack, template, now, timeZone) {
     body: sectionBody(s.heading),
   }));
 
-  const instrumentNotes = top.map((sym) => {
-    const q = quotes.find((x) => String(x.symbol || '').toUpperCase() === String(sym).toUpperCase());
+  const shMap = factPack.symbolHeadlines || {};
+  const instrumentNotes = top.map((sym, idx) => {
+    const symU = String(sym).toUpperCase();
+    const q = quotes.find((x) => String(x.symbol || '').toUpperCase() === symU);
     const qbit = q && (q.last != null || q.changePct != null)
       ? ` Last ${q.last != null ? q.last : '—'}${q.changePct != null ? ` (${Number(q.changePct) >= 0 ? '+' : ''}${q.changePct}%)` : ''}.`
       : '';
     const kindHint = kind === 'forex' ? 'Rate spreads and event vol.' : kind === 'crypto' ? 'Funding and liquidity.' : kind === 'commodities' ? 'USD and inventories.' : kind === 'bonds' ? 'Curve and auctions.' : kind === 'etfs' ? 'Flows vs NAV.' : 'Cross-asset confirmation.';
+    const symNews = (shMap[symU] || []).slice(0, 2).join(' · ');
+    const angle = idx % 3 === 0 ? 'Priority session triggers' : idx % 3 === 1 ? 'Volatility and gap risk' : 'Trend vs mean-reversion bias';
     return {
       instrument: sym,
-      note: `${sym} (${label}): ${pulseLabel} backdrop — structure around liquidity and event windows.${qbit} ${kindHint}`,
+      note: `${symU} (${label}): ${angle} — ${symNews ? `Watch: ${symNews}. ` : ''}${pulseLabel} backdrop; size vs liquidity into data.${qbit} ${kindHint}`,
     };
   });
 
@@ -970,6 +982,19 @@ async function ensureAutomationTables() {
   } catch (_) {
     // ignore duplicate-index errors across deployments
   }
+  await executeQuery(`
+    CREATE TABLE IF NOT EXISTS trader_deck_brief_instrument_research (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      brief_date DATE NOT NULL,
+      period VARCHAR(20) NOT NULL,
+      brief_kind VARCHAR(40) NOT NULL,
+      payload JSON NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_tdbr (brief_date, period, brief_kind),
+      KEY idx_tdbr_date (brief_date)
+    )
+  `);
 }
 
 async function fetchEconomicCalendar() {
@@ -1186,6 +1211,28 @@ async function generateAndStoreBrief({
     if (!generated) {
       generated = fallbackGenerated(factPack, template, runDate, timeZone);
     }
+    if (generated) {
+      const cachedLayer = await loadInstrumentResearch(date, normalizedPeriod, normalizedKind);
+      let layered = generated;
+      if (cachedLayer?.instrumentNotes?.length && cachedLayer?.instrumentOutlookBody) {
+        layered = applyInstrumentLayerPatch(layered, {
+          instrumentOutlookBody: cachedLayer.instrumentOutlookBody,
+          instrumentNotes: cachedLayer.instrumentNotes,
+        });
+      }
+      const outlookBody = getInstrumentOutlookBodyFromGenerated(layered);
+      if (instrumentLayerNeedsRefresh(layered.instrumentNotes, outlookBody)) {
+        const refined = await generateInstrumentLayerOpenAI(factPack, {
+          mode: 'refine',
+          priorNotes: layered.instrumentNotes,
+          priorOutlookBody: outlookBody,
+        });
+        if (refined?.instrumentNotes?.length) {
+          layered = applyInstrumentLayerPatch(layered, refined);
+        }
+      }
+      generated = layered;
+    }
     const titleBase = stripSources(computeTitle(template, runDate, timeZone));
     const title = normalizedKind === 'general'
       ? titleBase
@@ -1354,6 +1401,22 @@ async function generatePreviewBrief({
   };
 }
 
+function shouldPrefetchInstrumentResearchWindow({ now = new Date(), period, timeZone = 'Europe/London' }) {
+  if (normalizePeriod(period) !== 'daily') return false;
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now);
+  const map = {};
+  for (const p of parts) map[p.type] = p.value;
+  const hh = Number(map.hour);
+  const mm = Number(map.minute);
+  /** ~UK cash equity close: prefetch research for the next calendar session’s brief (stored under tomorrow’s date). */
+  return hh === 22 && mm < 20;
+}
+
 function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' }) {
   const normalizedPeriod = normalizePeriod(period);
   const parts = new Intl.DateTimeFormat('en-GB', {
@@ -1368,8 +1431,54 @@ function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' 
   const hh = Number(map.hour);
   const mm = Number(map.minute);
   const wd = String(map.weekday || '').toLowerCase();
-  if (normalizedPeriod === 'daily') return hh === 6 && mm < 15;
+  /** Daily briefs publish just after midnight UK so the run date matches the new session day. */
+  if (normalizedPeriod === 'daily') return hh === 0 && mm < 20;
   return wd.startsWith('sun') && hh === 18 && mm < 15;
+}
+
+async function prefetchInstrumentResearchForDaily({ timeZone = 'Europe/London', runDate = new Date() } = {}) {
+  assertAutomationModelConfigured();
+  await ensureAutomationTables();
+  const normalizedPeriod = 'daily';
+  const targetDate = tomorrowYmdInTz(runDate, timeZone);
+  const [sharedMarket, sharedEcon, sharedNews] = await Promise.all([
+    runEngine({ timeframe: normalizedPeriod, date: targetDate }),
+    fetchEconomicCalendar(),
+    fetchUnifiedNewsSample(),
+  ]);
+  const template = await getTemplate(normalizedPeriod);
+  const results = [];
+  const kinds = orderedBriefKinds();
+  const batchSize = 3;
+  for (let i = 0; i < kinds.length; i += batchSize) {
+    const slice = kinds.slice(i, i + batchSize);
+    // eslint-disable-next-line no-await-in-loop
+    const batchOut = await Promise.all(
+      slice.map(async (briefKind) => {
+        const normalizedKind = normalizeBriefKind(briefKind);
+        const selectedTop5 = top5ForBriefKind(normalizedKind);
+        const liveQuotes = await fetchLiveQuotesForSymbols(selectedTop5);
+        const factPack = buildFactPack({
+          period: normalizedPeriod,
+          template,
+          market: sharedMarket,
+          econ: sharedEcon,
+          news: sharedNews,
+          briefKind: normalizedKind,
+          topInstruments: selectedTop5,
+          liveQuotes,
+        });
+        const layer = await generateInstrumentLayerOpenAI(factPack, { mode: 'prefetch' });
+        if (layer?.instrumentNotes?.length && layer?.instrumentOutlookBody) {
+          await saveInstrumentResearch(targetDate, normalizedPeriod, normalizedKind, layer);
+          return { briefKind: normalizedKind, ok: true };
+        }
+        return { briefKind: normalizedKind, ok: false };
+      })
+    );
+    results.push(...batchOut);
+  }
+  return { success: results.some((r) => r.ok), targetDate, period: normalizedPeriod, results };
 }
 
 module.exports = {
@@ -1378,11 +1487,16 @@ module.exports = {
   generateAndStoreBriefSet,
   generatePreviewBrief,
   publishManualBrief,
+  prefetchInstrumentResearchForDaily,
   shouldRunWindow,
+  shouldPrefetchInstrumentResearchWindow,
   stripSources,
   assertNoSources,
   _test: {
     shouldRunWindow,
+    shouldPrefetchInstrumentResearchWindow,
+    instrumentLayerNeedsRefresh,
+    maxPairwiseInstrumentSimilarity,
     stripSources,
     assertNoSources,
     sanitizeOutlookPayload,
