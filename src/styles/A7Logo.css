@@ -1,49 +1,4 @@
-/* A7 Logo — peachy gold metallic (matches Home hero “With Aura Terminal” / #EAA960 family) */
-
-/* Keyframe: sweeping light beam across the logo (duration = prior ÷ 0.15 ≈ 15% speed) */
-@keyframes goldShine {
-    0% {
-        background-position: -200% center;
-    }
-    100% {
-        background-position: 300% center;
-    }
-}
-
-/* Keyframe: subtle pulsing glow */
-@keyframes goldGlow {
-    0%, 100% {
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22))
-                drop-shadow(0 0 10px rgba(234, 169, 96, 0.4))
-                drop-shadow(0 0 22px rgba(248, 195, 125, 0.28));
-    }
-    50% {
-        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.28))
-                drop-shadow(0 0 18px rgba(234, 169, 96, 0.62))
-                drop-shadow(0 0 36px rgba(253, 232, 196, 0.35));
-    }
-}
-
-/* Navbar only: glow uses light warm highlights — no black/dark drop-shadow */
-@keyframes navbarLogoGlow {
-    0%, 100% {
-        filter: drop-shadow(0 1px 3px rgba(254, 169, 108, 0.35))
-                drop-shadow(0 0 12px rgba(253, 232, 196, 0.45))
-                drop-shadow(0 0 26px rgba(255, 244, 230, 0.35));
-    }
-    50% {
-        filter: drop-shadow(0 2px 6px rgba(253, 221, 170, 0.55))
-                drop-shadow(0 0 20px rgba(255, 248, 235, 0.5))
-                drop-shadow(0 0 34px rgba(254, 169, 108, 0.4));
-    }
-}
-
-/* Keyframe: glint sparkle flash (defined for reuse; main sweep is goldShine) */
-@keyframes goldGlint {
-    0%, 85%, 100% { opacity: 0; transform: scale(0.8) rotate(-10deg); }
-    90%            { opacity: 1; transform: scale(1.1) rotate(-10deg); }
-    95%            { opacity: 0.6; transform: scale(1) rotate(-10deg); }
-}
+/* A7 Logo — Premium Gold Metallic (Custom Palette: #dd9950, #ecad64, #f3bb74, #f6bf78) */
 
 .a7-logo-container {
     display: flex;
@@ -137,7 +92,6 @@
 }
 
 /* ─── NAVBAR SIZE ───────────────────────────────────────────────────────────── */
-/* Light-only loop (matches hero “WITH AURA TERMINAL” cream → peach — no dark browns) */
 .navbar-logo-wrapper .a7-logo-image {
     width: 74px;
     height: 74px;
@@ -147,53 +101,23 @@
 
     background: linear-gradient(
         110deg,
-        #fdf2d5   0%,
-        #fef6e8   7%,
-        #fde8c4  14%,
-        #feddaa  22%,
-        #fff4e6  30%,
-        #f8c37d  40%,
-        #fdb87d  50%,
-        #fea96c  58%,
-        #fde8c4  68%,
-        #f8c37d  78%,
-        #fff8ef  88%,
-        #fdf2d5 100%
+        #a5672e   0%,
+        #b57238   6%,
+        #c97e42  12%,
+        #dd9950  18%,
+        #e5a458  24%,
+        #ecad64  30%,
+        #f3bb74  36%,
+        #f6bf78  44%,
+        #f9c87d  52%,
+        #f6bf78  60%,
+        #f3bb74  68%,
+        #ecad64  76%,
+        #dd9950  84%,
+        #c97e42  92%,
+        #a5672e 100%
     );
     background-size: 300% 100%;
-    animation:
-        goldShine 22.667s linear infinite,
-        navbarLogoGlow 2.6s ease-in-out infinite;
-}
-
-.navbar-logo-wrapper .a7-logo-image::before {
-    background:
-        repeating-linear-gradient(
-            47deg,
-            rgba(255, 248, 235, 0.35) 0px,
-            rgba(255, 248, 235, 0.35) 1px,
-            transparent 1px,
-            transparent 5px
-        ),
-        repeating-linear-gradient(
-            -43deg,
-            rgba(254, 221, 170, 0.22) 0px,
-            rgba(254, 221, 170, 0.22) 1px,
-            transparent 1px,
-            transparent 7px
-        );
-    opacity: 0.4;
-}
-
-.navbar-logo-wrapper .a7-logo-image::after {
-    background: radial-gradient(
-        ellipse 60% 40% at 35% 28%,
-        rgba(255, 252, 248, 0.85) 0%,
-        rgba(253, 232, 196, 0.5) 32%,
-        rgba(254, 201, 140, 0.22) 58%,
-        transparent 80%
-    );
-    opacity: 0.72;
 }
 
 /* ─── HOME PAGE SIZE ────────────────────────────────────────────────────────── */
@@ -296,10 +220,8 @@
 }
 
 /* ─── Dark mode ─────────────────────────────────────────────────────────────── */
-/* Navbar logo: no black drop-shadow here — it uses navbarLogoGlow only (see above). */
 @media (prefers-color-scheme: dark) {
-    .home-logo-section .a7-logo-image,
-    .footer-logo-wrap .footer-a7-mark .a7-logo-image {
+    .a7-logo-image {
         filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55))
                 drop-shadow(0 0 14px rgba(221, 153, 80, 0.45))
                 drop-shadow(0 0 30px rgba(246, 191, 120, 0.32));
