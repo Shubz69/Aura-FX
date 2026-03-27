@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 /* A7 Logo — peachy gold metallic (matches Home hero “With Aura Terminal” / #EAA960 family) */
 
 /* Keyframe: sweeping light beam across the logo (duration = prior ÷ 0.15 ≈ 15% speed) */
@@ -45,9 +44,6 @@
     90%            { opacity: 1; transform: scale(1.1) rotate(-10deg); }
     95%            { opacity: 0.6; transform: scale(1) rotate(-10deg); }
 }
-=======
-/* A7 Logo — Premium Gold Metallic (Custom Palette: #dd9950, #ecad64, #f3bb74, #f6bf78) */
->>>>>>> Stashed changes
 
 .a7-logo-container {
     display: flex;
