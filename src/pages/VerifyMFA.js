@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { isAdmin } from "../utils/roles";
 import "../styles/VerifyMFA.css";
 import CosmicBackground from '../components/CosmicBackground';
 
@@ -45,9 +46,7 @@ const VerifyMFA = () => {
             console.log('MFA verification already completed, redirecting');
             const hasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
             const pendingSubscription = localStorage.getItem('pendingSubscription') === 'true';
-            const isAdmin = user?.role === 'ADMIN';
-            
-            if (!isAdmin && !hasActiveSubscription && !pendingSubscription) {
+            if (!isAdmin(user) && !hasActiveSubscription && !pendingSubscription) {
                 navigate('/subscription');
             } else {
                 navigate(location.state?.returnUrl || "/community");
@@ -135,10 +134,9 @@ const VerifyMFA = () => {
                 // Check subscription status after MFA verification
                 const hasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
                 const pendingSubscription = localStorage.getItem('pendingSubscription') === 'true';
-                const isAdmin = res.data.role === 'ADMIN';
-                
-                // If no subscription and not admin, redirect to subscription page
-                if (!isAdmin && !hasActiveSubscription && !pendingSubscription) {
+                const staffUser = isAdmin({ role: res.data.role });
+
+                if (!staffUser && !hasActiveSubscription && !pendingSubscription) {
                     navigate('/subscription');
                 } else {
                     // Navigate to returnUrl if provided, otherwise to community

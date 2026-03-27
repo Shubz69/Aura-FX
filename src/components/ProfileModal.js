@@ -648,7 +648,9 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             <h1 style={{ fontSize: 'clamp(1.1rem, 4vw, 1.9rem)', fontWeight: 200, color: 'white', margin: 0, textTransform: 'uppercase', letterSpacing: '0.22em', fontFamily: "'Space Grotesk', sans-serif", textShadow: `0 0 40px ${tierColor}30` }}>
                                 {profile.username || profile.name || 'User'}
                             </h1>
-                            {(profile.role === 'admin' || profile.role === 'super_admin') && <FaCrown style={{ color: '#FFD700', fontSize: '1.1rem', filter: 'drop-shadow(0 0 8px #FFD70060)' }} />}
+                            {['admin', 'super_admin'].includes((profile.role || '').toString().toLowerCase()) && (
+                                <FaCrown style={{ color: '#FFD700', fontSize: '1.1rem', filter: 'drop-shadow(0 0 8px #FFD70060)' }} />
+                            )}
                             {profile.subscription_status === 'active' && <FaCheckCircle style={{ color: '#eaa960', fontSize: '1rem' }} />}
                         </div>
                         {/* Rank pill */}

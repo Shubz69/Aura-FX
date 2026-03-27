@@ -7,6 +7,7 @@ import {
   FaComments, FaExclamationCircle, FaSpinner, FaBook
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { isAdmin } from '../utils/roles';
 import '../styles/NotificationsDropdown.css';
 
 // Notification type icons
@@ -251,9 +252,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       onClose();
       // channelId 0 = admin/user thread message
       if (notification.channelId === 0 || notification.channelId === '0') {
-        const role = (user?.role || '').toString().toLowerCase();
-        const isAdminUser = role === 'admin' || role === 'super_admin';
-        if (isAdminUser && notification.title?.toLowerCase().includes('from user')) {
+        if (isAdmin(user) && notification.title?.toLowerCase().includes('from user')) {
           navigate(`/admin/inbox?thread=${notification.messageId}`);
         } else {
           navigate('/messages');

@@ -9,7 +9,7 @@ import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
-import { isSuperAdmin } from '../utils/roles';
+import { isSuperAdmin, isAdmin } from '../utils/roles';
 
 // Loading spinner component - shown while waiting for subscription status
 const LoadingSpinner = () => (
@@ -68,10 +68,8 @@ export const CommunityGuard = ({ children }) => {
     return <Navigate to="/signup" state={{ from: location, redirectAfter: '/choose-plan' }} replace />;
   }
 
-  // Admins always have access — skip entitlements loading entirely
-  const role = (user?.role || '').toLowerCase();
-  const isAdminUser = role === 'admin' || isSuperAdmin(user);
-  if (isAdminUser) return children;
+  // Staff always have access — skip entitlements loading (JWT USER + wrong casing must not block)
+  if (isAdmin(user) || isSuperAdmin(user)) return children;
 
   if (authLoading || entLoading) {
     return <LoadingSpinner />;
@@ -153,18 +151,12 @@ export const AdminGuard = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
-  const role = (user?.role || '').toString().toLowerCase();
-  const isAdmin = role === 'admin' || isSuperAdmin(user);
-  
-  if (!isAdmin) {
+  if (!isAdmin(user)) {
     return <Navigate to="/" replace />;
   }
   
   return children;
 };
-
-/** Allowed roles for Friends tab (Premium/Elite/Admin/SuperAdmin) */
-const INBOX_FRIENDS_ROLES = ['premium', 'elite', 'a7fx', 'admin', 'super_admin'];
 
 /**
  * Shown when a user without Premium/Elite tries to use the Friends tab.

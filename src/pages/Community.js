@@ -4,7 +4,7 @@ import { useWebSocket } from '../utils/useWebSocket';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Api from '../services/Api';
 import CosmicBackground from '../components/CosmicBackground';
-import { SUPER_ADMIN_EMAIL, isAdmin } from '../utils/roles';
+import { SUPER_ADMIN_EMAIL, isAdmin, isSuperAdmin, getClientAccessTier } from '../utils/roles';
 import { getJournalTodayForUser } from '../utils/journalDate';
 import axios from 'axios';
 import {
@@ -739,7 +739,7 @@ const [journalLoading, setJournalLoading] = useState(false);
     const navigate = useNavigate();
     const { id: channelIdParam } = useParams();
     const location = useLocation();
-    const { user: authUser, persistUser } = useAuth(); // Get user from AuthContext
+    const { user: authUser } = useAuth();
     const restrictMiniJournalDates = useMemo(() => !isAdmin(authUser), [authUser]);
     const [journalQuickToday, setJournalQuickToday] = useState(() => getJournalTodayForUser(null));
     useEffect(() => {
@@ -764,6 +764,17 @@ const [journalLoading, setJournalLoading] = useState(false);
     }, [showJournalModal, restrictMiniJournalDates, journalQuickToday]);
     const { entitlements, loading: entitlementsLoading, refresh: refreshEntitlements } = useEntitlements();
     const { hasCommunityAccess: hasCommunityAccessFromSubscription, refreshSubscription } = useSubscription();
+
+    useEffect(() => {
+        if (!authUser?.id) return;
+        try {
+            const fromLs = JSON.parse(localStorage.getItem('user') || '{}');
+            if (String(fromLs.id) !== String(authUser.id)) return;
+            const merged = { ...fromLs, ...authUser };
+            setIsSuperAdminUser(isSuperAdmin(merged));
+            setIsAdminUser(isAdmin(merged));
+        } catch (_) {}
+    }, [authUser]);
     
     const [channelList, setChannelList] = useState([]);
     const [selectedChannel, setSelectedChannel] = useState(null);
@@ -2009,52 +2020,27 @@ const renderMessageContent = (content, messageFile) => {
     
     // XP calculation is now handled by the imported calculateMessageXP function from xpSystem.js
 
-    // Get user's role - check subscription status and plan
-const getCurrentUserRole = () => {
-    if (isSuperAdminUser) return 'super_admin';
-    if (isAdminUser) return 'admin';
-    
-    // Check subscription status and plan from user object
-    const subscriptionStatus = storedUser?.subscription_status;
-    const subscriptionPlan = storedUser?.subscription_plan;
-    const userRole = storedUser?.role?.toLowerCase() || 'free';
-    
-    // If user has active subscription, ensure role matches plan
-    if (subscriptionStatus === 'active') {
-        const plan = (subscriptionPlan || '').toString().toLowerCase();
-        // Free tier (select-free / Stripe free): must not default to premium
-        if (plan === 'free' || plan === '') {
-            if (userRole === 'a7fx' || userRole === 'elite') return 'a7fx';
-            if (userRole === 'premium') return 'premium';
-            return 'free';
-        }
-        if (plan === 'a7fx' || plan === 'elite') {
-            return 'a7fx';
-        }
-        if (plan === 'aura' || plan === 'premium') {
-            return 'premium';
-        }
-        if (userRole === 'a7fx' || userRole === 'elite' || userRole === 'premium') {
-            return userRole;
-        }
+    /** Channel / UI tier: super_admin | admin | a7fx | premium | free — aligned with entitlements + subscription_plan */
+    const getCurrentUserRole = () => {
+        if (isSuperAdminUser) return 'super_admin';
+        if (isAdminUser) return 'admin';
+        const merged =
+            storedUser && authUser && String(storedUser.id) === String(authUser.id)
+                ? {
+                      ...storedUser,
+                      role: authUser.role ?? storedUser.role,
+                      subscription_plan: storedUser.subscription_plan ?? authUser.subscription_plan,
+                      subscription_status: storedUser.subscription_status ?? authUser.subscription_status,
+                      email: authUser.email ?? storedUser.email
+                  }
+                : storedUser || authUser || {};
+        const t = getClientAccessTier(merged, entitlements);
+        if (t === 'super_admin') return 'super_admin';
+        if (t === 'admin') return 'admin';
+        if (t === 'a7fx') return 'a7fx';
+        if (t === 'premium') return 'premium';
         return 'free';
-    }
-    
-    // If subscription is inactive/expired, downgrade to free
-    if (subscriptionStatus === 'inactive' || subscriptionStatus === 'cancelled' || subscriptionStatus === 'expired') {
-        return 'free';
-    }
-    
-    // Check entitlements context for tier information
-    if (entitlements?.tier) {
-        const tier = entitlements.tier.toLowerCase();
-        if (tier === 'elite' || tier === 'a7fx') return 'a7fx';
-        if (tier === 'premium' || tier === 'aura') return 'premium';
-    }
-    
-    // Return stored role or default to free
-    return userRole || 'free';
-};
+    };
 
     // Get user's courses
     const getUserCourses = () => {
@@ -3186,7 +3172,7 @@ if (window.requestAnimationFrame) {
         if (!isAuthenticated) return;
         
         const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
-        const isAdminCheck = storedUserData.role === 'ADMIN' || storedUserData.role === 'admin' || storedUserData.role === 'super_admin';
+        const isAdminCheck = isAdmin(storedUserData) || isSuperAdmin(storedUserData);
         
         // Admins bypass subscription requirement
         if (isAdminCheck) {
@@ -3267,16 +3253,11 @@ if (window.requestAnimationFrame) {
             setStoredUser(enhancedUser);
             setUserId(storedUserData.id);
             
-            // Check if user is admin or super admin
-            const userEmail = storedUserData.email?.toLowerCase() || '';
-            const userRole = storedUserData.role?.toLowerCase() || 'free';
-            
-            const userIsSuperAdmin = userEmail === SUPER_ADMIN_EMAIL.toLowerCase() || 
-                                    userRole === 'super_admin';
-            const userIsAdmin = userRole === 'admin' || userIsSuperAdmin;
-            
-            setIsSuperAdminUser(userIsSuperAdmin);
-            setIsAdminUser(userIsAdmin);
+            const mergedForRole = authUser?.id && String(enhancedUser.id) === String(authUser.id)
+                ? { ...enhancedUser, ...authUser }
+                : enhancedUser;
+            setIsSuperAdminUser(isSuperAdmin(mergedForRole));
+            setIsAdminUser(isAdmin(mergedForRole));
             
             // Set user level
             setUserLevel(calculatedLevel);
@@ -7230,7 +7211,12 @@ if (!isAuthenticated && !hasToken) {
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis'
                                             }}>
-                                                {displayName !== username ? `@${username}` : (user.role === 'admin' || user.role === 'super_admin' ? 'Admin' : user.role || 'Member')}
+                                                {displayName !== username ? `@${username}` : (() => {
+                                                    const rr = (user.role || '').toString().toLowerCase();
+                                                    if (rr === 'super_admin') return 'Super Admin';
+                                                    if (rr === 'admin') return 'Admin';
+                                                    return user.role || 'Member';
+                                                })()}
                                             </div>
                                         </div>
                                     </div>

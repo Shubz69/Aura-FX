@@ -6,13 +6,17 @@ import '../styles/ContactUs.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
+import { useEntitlements } from '../context/EntitlementsContext';
+import { getClientAccessTier } from '../utils/roles';
 
-const ROLE_LABEL = { free: 'Free', premium: 'Premium', elite: 'Elite', a7fx: 'A7FX', admin: 'Admin', super_admin: 'Super Admin' };
-const ROLE_COLOR = { free: '#6b7280', premium: '#8b5cf6', elite: '#f59e0b', a7fx: '#ec4899', admin: '#10b981', super_admin: '#ef4444' };
+const TIER_LABEL = { free: 'Free', premium: 'Premium', a7fx: 'Elite', admin: 'Admin', super_admin: 'Super Admin' };
+const TIER_COLOR = { free: '#6b7280', premium: '#8b5cf6', a7fx: '#ec4899', admin: '#10b981', super_admin: '#ef4444' };
 
 const ContactUs = () => {
     const location = useLocation();
     const { user } = useAuth();
+    const { entitlements } = useEntitlements();
+    const contactTier = user ? getClientAccessTier(user, entitlements) : null;
     const form = useRef();
     const sectionRef = useRef();
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -121,16 +125,16 @@ const ContactUs = () => {
                         <div className="contact-form-header">
                             <h2>Send a Message</h2>
                             <p>We typically respond within 2 hours</p>
-                            {user && user.role && (
+                            {user && contactTier && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8 }}>
-                                    <FaShieldAlt style={{ color: ROLE_COLOR[user.role.toLowerCase()] || '#6b7280', fontSize: '0.8rem' }} />
+                                    <FaShieldAlt style={{ color: TIER_COLOR[contactTier] || '#6b7280', fontSize: '0.8rem' }} />
                                     <span style={{
                                         fontSize: '0.78rem',
-                                        color: ROLE_COLOR[user.role.toLowerCase()] || '#6b7280',
+                                        color: TIER_COLOR[contactTier] || '#6b7280',
                                         fontWeight: 600,
                                         letterSpacing: '0.03em'
                                     }}>
-                                        Submitting as {ROLE_LABEL[user.role.toLowerCase()] || user.role} member
+                                        Submitting as {TIER_LABEL[contactTier] || contactTier} member
                                     </span>
                                 </div>
                             )}

@@ -5,13 +5,42 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/userLocalStorage';
 
 const CACHE_MS = 45 * 1000; // 45s cache for near-instant repeat loads, fresh enough for tier/onboarding
 
 /** Must match AuthContext — one-shot handoff after login /api/me so CommunityGuard does not spin twice. */
 const ME_ENTITLEMENTS_SEED_KEY = 'aura_me_entitlements_seed';
 const ME_SEED_MAX_AGE_MS = 120_000;
+
+/** Map /api/me user + entitlements into auth user fields (role, tier as subscription_plan for legacy UI). */
+function userPatchFromMe(meUser, ent) {
+  if (!meUser || !ent) return null;
+  const tier = (ent.effectiveTier || ent.tier || 'FREE').toString().toUpperCase();
+  const st = (ent.status || 'none').toString().toLowerCase();
+  const paidish = st === 'active' || st === 'trialing';
+
+  let subscription_plan;
+  if (tier === 'PREMIUM' && paidish) subscription_plan = 'aura';
+  else if (tier === 'ELITE' && paidish) subscription_plan = 'elite';
+  else if (tier === 'A7FX' && paidish) subscription_plan = 'a7fx';
+  else if (tier === 'FREE') subscription_plan = 'free';
+
+  const subscription_status =
+    st === 'active'
+      ? 'active'
+      : st === 'trialing'
+        ? 'trialing'
+        : st === 'expired'
+          ? 'expired'
+          : 'inactive';
+
+  const patch = { role: meUser.role };
+  if (meUser.level != null) patch.level = meUser.level;
+  if (meUser.xp != null) patch.xp = meUser.xp;
+  if (subscription_plan !== undefined) patch.subscription_plan = subscription_plan;
+  patch.subscription_status = subscription_status;
+  return patch;
+}
 
 const EntitlementsContext = createContext(null);
 
@@ -22,7 +51,7 @@ export const useEntitlements = () => {
 };
 
 export const EntitlementsProvider = ({ children }) => {
-  const { user, token } = useAuth();
+  const { user, token, mergeUserPatch } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -69,13 +98,10 @@ export const EntitlementsProvider = ({ children }) => {
       if (json.success && json.user && json.entitlements) {
         setData({ user: json.user, entitlements: json.entitlements });
         cachedAt.current = Date.now();
-        // Keep localStorage user in sync so sidebar/profile show correct level/xp
-        try {
-          const existing = sanitizeUserForLocalStorage(JSON.parse(localStorage.getItem('user') || '{}'));
-          if (existing.id === json.user.id && (json.user.level != null || json.user.xp != null)) {
-            setUserInLocalStorage({ ...existing, level: json.user.level, xp: json.user.xp });
-          }
-        } catch (_) {}
+        const patch = userPatchFromMe(json.user, json.entitlements);
+        if (patch && typeof mergeUserPatch === 'function') {
+          mergeUserPatch(patch);
+        }
       } else {
         setData(null);
       }
@@ -87,7 +113,7 @@ export const EntitlementsProvider = ({ children }) => {
       setLoading(false);
       fetchInFlight.current = false;
     }
-  }, [token, user?.id]);
+  }, [token, user?.id, mergeUserPatch]);
 
   useEffect(() => {
     if (!token || !user?.id) {

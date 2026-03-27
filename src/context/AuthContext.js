@@ -5,7 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 import { consumePostAuthRedirect } from '../utils/postAuthRedirect';
 import { armPostLoginTransition } from '../utils/postLoginTransition';
 import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/userLocalStorage';
-import { SUPER_ADMIN_EMAIL } from '../utils/roles';
+import { SUPER_ADMIN_EMAIL, isAdmin } from '../utils/roles';
 
 /** Session handoff: login writes /api/me JSON here so EntitlementsProvider can render /community without a second loading gate. */
 const ME_ENTITLEMENTS_SEED_KEY = 'aura_me_entitlements_seed';
@@ -82,6 +82,14 @@ export const AuthProvider = ({ children }) => {
     if (finalRole === 'SUPERADMIN') finalRole = 'SUPER_ADMIN';
     const superEl = SUPER_ADMIN_EMAIL.trim().toLowerCase();
     if (superEl && email === superEl) finalRole = 'SUPER_ADMIN';
+    const planRaw =
+      data.subscription_plan ??
+      data.subscriptionPlan ??
+      data.subscription?.plan ??
+      '';
+    const statusRaw = data.subscription_status ?? data.subscription?.status ?? '';
+    const subscription_plan = planRaw ? String(planRaw).trim().toLowerCase() : undefined;
+    const subscription_status = statusRaw ? String(statusRaw).trim().toLowerCase() : undefined;
     return {
       id: data.id || data.userId || data.sub || null,
       username: data.username || data.name || '',
@@ -93,7 +101,9 @@ export const AuthProvider = ({ children }) => {
       role: finalRole,
       capabilities: data.capabilities || [],
       mfaVerified: data.mfaVerified || false,
-      timezone: data.timezone ?? null
+      timezone: data.timezone ?? null,
+      subscription_plan,
+      subscription_status
     };
   };
 
@@ -111,7 +121,9 @@ export const AuthProvider = ({ children }) => {
       mfaVerified: fullUser.mfaVerified,
       level: fullUser.level != null ? fullUser.level : undefined,
       xp: fullUser.xp != null ? fullUser.xp : undefined,
-      timezone: fullUser.timezone ?? undefined
+      timezone: fullUser.timezone ?? undefined,
+      subscription_plan: fullUser.subscription_plan,
+      subscription_status: fullUser.subscription_status
     };
     const existing = sanitizeUserForLocalStorage(JSON.parse(localStorage.getItem('user') || '{}'));
     const merged = { ...existing, ...safeUser };
@@ -136,9 +148,28 @@ export const AuthProvider = ({ children }) => {
       xp: merged.xp,
       login_streak: merged.login_streak,
       bio: merged.bio,
+      subscription_plan: merged.subscription_plan,
+      subscription_status: merged.subscription_status
     };
     setUser(uiUser);
     return resolveUserInfo(merged);
+  }, []);
+
+  /** Merge server fields (e.g. from /api/me) without dropping existing profile keys in localStorage. */
+  const mergeUserPatch = useCallback((patch) => {
+    if (!patch || typeof patch !== 'object') return;
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      try {
+        const existing = sanitizeUserForLocalStorage(JSON.parse(localStorage.getItem('user') || '{}'));
+        const sanitizedPatch = sanitizeUserForLocalStorage(patch);
+        setUserInLocalStorage({ ...existing, ...sanitizedPatch });
+      } catch (_) {
+        setUserInLocalStorage(sanitizeUserForLocalStorage(next));
+      }
+      return next;
+    });
   }, []);
 
   // Check if user has a verified session in localStorage
@@ -236,7 +267,7 @@ export const AuthProvider = ({ children }) => {
             role: decodedToken.role || 'USER'
           });
           
-          if (userData.role === 'ADMIN') {
+          if (isAdmin(userData)) {
             localStorage.setItem('mfaVerified', 'true');
             setMfaVerified(true);
           }
@@ -419,7 +450,7 @@ export const AuthProvider = ({ children }) => {
         persistTokens(data.token, data.refreshToken);
         persistUser(data);
         
-        if (data.role === 'ADMIN') {
+        if (isAdmin({ role: data.role, email: data.email })) {
           localStorage.setItem('mfaVerified', 'true');
           setMfaVerified(true);
         }
@@ -633,7 +664,7 @@ export const AuthProvider = ({ children }) => {
       persistTokens(data.token, data.refreshToken);
       const userInfo = persistUser(data);
       
-      if (userInfo.role === 'ADMIN') {
+      if (isAdmin(userInfo)) {
         localStorage.setItem('mfaVerified', 'true');
         setMfaVerified(true);
       }
@@ -675,7 +706,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     register,
     mfaVerified,
-    verifyMfa
+    verifyMfa,
+    mergeUserPatch
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

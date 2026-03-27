@@ -1345,18 +1345,28 @@ const Api = {
     },
     
     verifySignupCode: async (email, code) => {
+        const emailNorm = (email || '').toString().trim().toLowerCase();
+        const codeNorm = (code || '').toString().replace(/\s/g, '').trim();
         try {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/signup-verification`, { action: 'verify', email, code });
-            if (response.data && (response.data.verified === true || response.data.success === true)) {
-                return {
-                    verified: true,
-                    token: response.data.token || null
-                };
+            const response = await axios.post(
+                `${API_BASE_URL}/api/auth/signup-verification`,
+                { action: 'verify', email: emailNorm, code: codeNorm },
+                { validateStatus: (s) => s < 500 }
+            );
+            const d = response.data || {};
+            if (response.status === 200 && (d.verified === true || d.success === true)) {
+                return { verified: true, token: d.token || null };
             }
-            throw new Error('Invalid or expired code');
+            return {
+                verified: false,
+                message: d.message || 'Invalid or expired email code. Please check and try again.'
+            };
         } catch (apiError) {
             console.error('Failed to verify signup code:', apiError);
-            throw new Error(apiError.response?.data?.message || 'Invalid or expired code');
+            return {
+                verified: false,
+                message: apiError.response?.data?.message || 'Could not verify email. Please try again.'
+            };
         }
     },
 
@@ -1371,11 +1381,26 @@ const Api = {
     },
 
     verifyPhoneCode: async (phone, code) => {
+        const codeNorm = (code || '').toString().replace(/\s/g, '').trim();
         try {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/phone-verification`, { action: 'verify', phone, code });
-            return response.data && (response.data.verified === true || response.data.success === true);
+            const response = await axios.post(
+                `${API_BASE_URL}/api/auth/phone-verification`,
+                { action: 'verify', phone: (phone || '').toString().trim(), code: codeNorm },
+                { validateStatus: (s) => s < 500 }
+            );
+            const d = response.data || {};
+            if (response.status === 200 && (d.verified === true || d.success === true)) {
+                return { verified: true };
+            }
+            return {
+                verified: false,
+                message: d.message || 'Invalid or expired phone code. Please try again or tap Resend.'
+            };
         } catch (error) {
-            throw new Error(error.response?.data?.message || 'Invalid or expired code');
+            return {
+                verified: false,
+                message: error.response?.data?.message || 'Could not verify phone. Please try again.'
+            };
         }
     },
 

@@ -44,36 +44,38 @@ async function checkCommunityAccess(authHeader) {
     const user = rows[0];
     const now = new Date();
     const expiryDate = user.subscription_expiry ? new Date(user.subscription_expiry) : null;
-    
+    const dbRole = (user.role || '').toString().trim().toLowerCase();
+    const subStatus = (user.subscription_status || '').toString().trim().toLowerCase();
+    const planLower = (user.subscription_plan || '').toString().trim().toLowerCase();
+
     if (user.email && isSuperAdminEmail(user)) {
       return { hasAccess: true, accessType: 'ADMIN', userId, error: null };
     }
-    
+
     // Check payment failed
     if (user.payment_failed) {
       return { hasAccess: false, accessType: 'NONE', userId, error: 'PAYMENT_FAILED' };
     }
-    
-    // Admin access (always has access)
-    if (['admin', 'super_admin'].includes(user.role)) {
+
+    // Admin access (always has access) — case-insensitive vs DB/JWT
+    if (['admin', 'super_admin'].includes(dbRole)) {
       return { hasAccess: true, accessType: 'ADMIN', userId, error: null };
     }
-    
-    // Check if subscription is active and not expired
-    const isActive = user.subscription_status === 'active' && expiryDate && expiryDate > now;
-    
-    // Also check role-based access for legacy premium/elite users
-    const hasRoleAccess = ['premium', 'elite', 'a7fx'].includes(user.role);
-    
-    if (isActive || hasRoleAccess) {
-      // Determine plan type
-      const planId = user.subscription_plan || user.role;
-      
-      if (['a7fx', 'elite', 'A7FX'].includes(planId) || user.role === 'elite' || user.role === 'a7fx') {
+
+    // Active or trialing with valid period end (align with entitlements / Stripe)
+    const isPaidWindow =
+      (subStatus === 'active' || subStatus === 'trialing') && expiryDate && expiryDate > now;
+
+    const hasRoleAccess = ['premium', 'elite', 'a7fx'].includes(dbRole);
+
+    if (isPaidWindow || hasRoleAccess) {
+      const planId = planLower || dbRole;
+
+      if (['a7fx', 'elite'].includes(planId) || dbRole === 'elite' || dbRole === 'a7fx') {
         return { hasAccess: true, accessType: 'A7FX_ELITE_ACTIVE', userId, error: null };
       }
-      
-      if (['aura', 'premium'].includes(planId) || user.role === 'premium') {
+
+      if (['aura', 'premium'].includes(planId) || dbRole === 'premium') {
         return { hasAccess: true, accessType: 'AURA_FX_ACTIVE', userId, error: null };
       }
     }

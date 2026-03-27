@@ -4,10 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { FaChevronRight } from 'react-icons/fa';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
+import { useAuth } from '../context/AuthContext';
+import { useEntitlements } from '../context/EntitlementsContext';
+import { isAdmin, getClientAccessTier, isPremium } from '../utils/roles';
 
 const MyCourses = () => {
+    const { user } = useAuth();
+    const { entitlements } = useEntitlements();
     const [courses, setCourses] = useState([]);
-    const [userRole, setUserRole] = useState('');
+    const accessTier = user ? getClientAccessTier(user, entitlements) : 'free';
+    const showAdminHeader = isAdmin(user);
+    const isPaidMember = isPremium(user);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -26,19 +33,17 @@ const MyCourses = () => {
     ];
     
     useEffect(() => {
-        // Get user data from stored user object instead of separate localStorage items
-        const userJson = localStorage.getItem("user");
+        const userJson = localStorage.getItem('user');
         if (userJson) {
-            const user = JSON.parse(userJson);
-            setUserRole(user.role);
-            fetchCourses(user.id, user.role);
+            const u = JSON.parse(userJson);
+            fetchCourses(u.id);
         } else {
             setError('User not authenticated');
             setLoading(false);
         }
     }, []);
 
-    const fetchCourses = async (userId, role) => {
+    const fetchCourses = async (userId) => {
         if (!userId) {
             setError('User ID not available');
             setLoading(false);
@@ -83,7 +88,7 @@ const MyCourses = () => {
                 <CosmicBackground />
                 <div className="page-header">
                     <h1 className="page-title">
-                        {userRole === "ADMIN" ? "ALL COURSES" : "MY COURSES"}
+                        {showAdminHeader ? 'ALL COURSES' : 'MY COURSES'}
                     </h1>
                 </div>
                 <div className="loading-spinner">
@@ -98,7 +103,7 @@ const MyCourses = () => {
             <CosmicBackground />
             <div className="page-header">
                 <h1 className="page-title">
-                    {userRole === "ADMIN" ? "ALL COURSES" : "MY COURSES"}
+                    {showAdminHeader ? 'ALL COURSES' : 'MY COURSES'}
                 </h1>
             </div>
             
@@ -124,7 +129,7 @@ const MyCourses = () => {
                         const userJson = localStorage.getItem("user");
                         if (userJson) {
                             const user = JSON.parse(userJson);
-                            fetchCourses(user.id, user.role);
+                            fetchCourses(user.id);
                         }
                     }} style={{
                         marginTop: '12px',
@@ -161,18 +166,18 @@ const MyCourses = () => {
                     ) : (
                         <div className="no-courses-message">
                             <p>
-                                {userRole === "FREE" 
-                                    ? "You need to upgrade to Premium to access courses." 
-                                    : userRole === "ADMIN"
-                                    ? "No courses available. Courses will appear here once they are added to the system."
-                                    : "No courses available at this time. Check back soon for new course offerings."}
+                                {!isPaidMember && accessTier === 'free'
+                                    ? 'You need to upgrade to Premium to access courses.'
+                                    : showAdminHeader
+                                    ? 'No courses available. Courses will appear here once they are added to the system.'
+                                    : 'No courses available at this time. Check back soon for new course offerings.'}
                             </p>
                         </div>
                     )}
                 </div>
             )}
             
-            {userRole === "FREE" && (
+            {!isPaidMember && accessTier === 'free' && (
                 <div className="upgrade-container">
                     <h3>Want access to premium courses?</h3>
                     <p>Upgrade your account to unlock all trading courses and premium features. Start mastering the markets today with our expert-led trading curriculum.</p>

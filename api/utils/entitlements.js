@@ -58,10 +58,14 @@ function getTier(userRow) {
   const plan = (userRow.subscription_plan || '').toLowerCase();
   const status = (userRow.subscription_status || '').toLowerCase();
   const expiry = userRow.subscription_expiry ? new Date(userRow.subscription_expiry) : null;
-  const active = status === 'active' && expiry && expiry > new Date() && !userRow.payment_failed;
-  if (active && plan === 'a7fx') return 'A7FX';
-  if (['elite', 'a7fx'].includes(role) || (active && plan === 'elite')) return 'ELITE';
-  if (role === 'premium' || (active && ['aura', 'premium'].includes(plan))) return 'PREMIUM';
+  const paidThrough =
+    (status === 'active' || status === 'trialing') &&
+    expiry &&
+    expiry > new Date() &&
+    !userRow.payment_failed;
+  if (paidThrough && plan === 'a7fx') return 'A7FX';
+  if (['elite', 'a7fx'].includes(role) || (paidThrough && plan === 'elite')) return 'ELITE';
+  if (role === 'premium' || (paidThrough && ['aura', 'premium'].includes(plan))) return 'PREMIUM';
   return 'FREE';
 }
 

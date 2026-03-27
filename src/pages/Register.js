@@ -133,28 +133,27 @@ const Register = () => {
             setError("Please enter the 6-digit code from your phone.");
             return;
         }
+        const emailNorm = formData.email.trim().toLowerCase();
         setIsLoading(true);
         setError("");
+        setSuccess("");
         try {
-            const emailResult = await Api.verifySignupCode(formData.email, emailCode);
+            const emailResult = await Api.verifySignupCode(emailNorm, emailCode);
             if (!emailResult?.verified) {
-                setError("Invalid or expired email code. Please check and try again.");
-                setIsLoading(false);
+                setError(emailResult?.message || "Invalid or expired email code. Please check and try again.");
                 return;
             }
-            const ok = await Api.verifyPhoneCode(formData.phone, phoneCode);
-            if (!ok) {
-                setError("Invalid or expired phone code.");
-                setIsLoading(false);
+            const phoneResult = await Api.verifyPhoneCode(formData.phone.trim(), phoneCode);
+            if (!phoneResult?.verified) {
+                setError(phoneResult?.message || "Invalid or expired phone code.");
                 return;
             }
-            setSuccess("Creating your account...");
             const refParam = new URLSearchParams(location.search).get('ref');
             const refManual = (formData.referralCode || '').trim();
             const referralMerged = refManual || (refParam && refParam.trim()) || '';
             const submitData = {
                 username: formData.username.trim(),
-                email: formData.email.trim().toLowerCase(),
+                email: emailNorm,
                 phone: formData.phone.trim(),
                 password: formData.password,
                 name: (formData.name || '').trim(),
@@ -164,7 +163,6 @@ const Register = () => {
             localStorage.setItem('newSignup', 'true');
             localStorage.setItem('pendingSubscription', 'true');
             const response = await registerUser(submitData);
-            setIsLoading(false);
             toast.success('🎉 Account created successfully! Welcome to AURA TERMINAL!', {
                 position: "top-center",
                 autoClose: 1500,
@@ -177,13 +175,15 @@ const Register = () => {
                 navigate("/choose-plan");
             }
         } catch (err) {
-            let errorMsg = err.message || "Verification failed. Please try again.";
+            setSuccess("");
+            let errorMsg = err.message || "Could not finish sign-up. If your SMS code was already used, tap Resend phone code and try again.";
             if (err.message && (err.message.includes('already exists') || err.message.includes('already taken'))) {
                 setCodesSent(false);
                 setEmailCode('');
                 setPhoneCode('');
             }
             setError(errorMsg);
+        } finally {
             setIsLoading(false);
         }
     };

@@ -10,7 +10,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import Api from '../services/Api';
-import { SUPER_ADMIN_EMAIL } from '../utils/roles';
+import { SUPER_ADMIN_EMAIL, hasActivePaidPlan } from '../utils/roles';
 
 const SubscriptionContext = createContext(null);
 
@@ -87,11 +87,16 @@ export const SubscriptionProvider = ({ children }) => {
         const isAdmin =
           Boolean(superEl2 && userEmail === superEl2) || ['admin', 'super_admin'].includes(userRole);
         const isPremiumRole = ['premium', 'elite', 'a7fx'].includes(userRole);
-        
-        if (isAdmin || isPremiumRole) {
+        const paidFromClient = hasActivePaidPlan(user);
+
+        if (isAdmin || isPremiumRole || paidFromClient) {
+          const eliteLike =
+            userRole === 'elite' ||
+            userRole === 'a7fx' ||
+            ['a7fx', 'elite'].includes((user?.subscription_plan || '').toString().toLowerCase());
           setSubscription({
             hasCommunityAccess: true,
-            accessType: isAdmin ? 'ADMIN' : (userRole === 'elite' || userRole === 'a7fx' ? 'A7FX_ELITE_ACTIVE' : 'AURA_FX_ACTIVE'),
+            accessType: isAdmin ? 'ADMIN' : eliteLike ? 'A7FX_ELITE_ACTIVE' : 'AURA_FX_ACTIVE',
             isActive: true,
             status: 'active',
             _roleBasedAccess: true
@@ -117,7 +122,8 @@ export const SubscriptionProvider = ({ children }) => {
       const isAdmin =
         Boolean(superEl3 && userEmail === superEl3) || ['admin', 'super_admin'].includes(userRole);
       const isPremiumRole = ['premium', 'elite', 'a7fx'].includes(userRole);
-      
+      const paidFromClient = hasActivePaidPlan(user);
+
       if (isAdmin) {
         setSubscription({
           hasCommunityAccess: true,
@@ -126,10 +132,14 @@ export const SubscriptionProvider = ({ children }) => {
           status: 'active',
           _fallback: true
         });
-      } else if (isPremiumRole) {
+      } else if (isPremiumRole || paidFromClient) {
+        const eliteLike =
+          userRole === 'elite' ||
+          userRole === 'a7fx' ||
+          ['a7fx', 'elite'].includes((user?.subscription_plan || '').toString().toLowerCase());
         setSubscription({
           hasCommunityAccess: true,
-          accessType: userRole === 'elite' || userRole === 'a7fx' ? 'A7FX_ELITE_ACTIVE' : 'AURA_FX_ACTIVE',
+          accessType: eliteLike ? 'A7FX_ELITE_ACTIVE' : 'AURA_FX_ACTIVE',
           isActive: true,
           status: 'active',
           _fallback: true

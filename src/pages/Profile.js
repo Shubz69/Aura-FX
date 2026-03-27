@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useEntitlements } from "../context/EntitlementsContext";
+import { formatMembershipLabel } from "../utils/roles";
 import axios from "axios";
 import Api from "../services/Api";
 import { usePushNotifications } from "../hooks/usePushNotifications";
@@ -81,6 +83,15 @@ const RingProgress = ({ pct, color, value, label, size = 80 }) => {
 
 const Profile = () => {
     const { user, setUser } = useAuth();
+    const { entitlements, user: meUser } = useEntitlements();
+    const membershipLabel = useMemo(
+        () =>
+            formatMembershipLabel(
+                meUser?.role ?? user?.role,
+                entitlements?.effectiveTier ?? entitlements?.tier
+            ),
+        [meUser?.role, user?.role, entitlements?.effectiveTier, entitlements?.tier]
+    );
     const { supported: pushSupported, subscribed: pushSubscribed, loading: pushLoading, permission: pushPermission, error: pushError, subscribe: enablePush, unsubscribe: disablePush } = usePushNotifications();
     const [activeTab, setActiveTab] = useState('overview');
     const [status, setStatus] = useState("");
@@ -95,7 +106,6 @@ const Profile = () => {
     const bannerInputRef = useRef(null);
     const [loading, setLoading] = useState(true);
     const [editedUserData, setEditedUserData] = useState({});
-    const [userRole, setUserRole] = useState("");
     const [avatarColor, setAvatarColor] = useState(null);
     const navigate = useNavigate();
     const [lastUsernameChange, setLastUsernameChange] = useState(null);
@@ -229,7 +239,6 @@ useEffect(() => {
                 setBannerPreview(authData.banner);
             }
 
-            setUserRole(user.role || "");
             setLoginStreak(storedUser.login_streak ?? user.login_streak ?? 0);
             setLoading(false);
 
@@ -1054,12 +1063,10 @@ if (!avatarToSave && avatarColor) {
                         <div className="pf-panel">
                             <p className="pf-section-label">Account Settings</p>
 
-                            {userRole && (
-                                <div className="pf-role-row">
-                                    <span className="pf-role-lbl">Role</span>
-                                    <span className="pf-role-val">{userRole}</span>
-                                </div>
-                            )}
+                            <div className="pf-role-row">
+                                <span className="pf-role-lbl">Membership</span>
+                                <span className="pf-role-val">{membershipLabel}</span>
+                            </div>
 
                             <div className="pf-form-row-2">
                                 <div className="pf-form-group">

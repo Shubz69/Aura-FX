@@ -6,6 +6,7 @@ import Api from '../services/Api';
 import WebSocketService from '../services/WebSocketService';
 import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { FriendsUpgradeRequired } from '../components/RouteGuards';
+import { isAdmin, isSuperAdmin, isPremium } from '../utils/roles';
 import '../styles/AdminInbox.css';
 
 const API_BASE = () => (Api.getBaseUrl() || '');
@@ -19,8 +20,9 @@ const getInitials = (name) => {
     : name.slice(0, 2).toUpperCase();
 };
 
-const ALLOWED_FRIENDS_ROLES = ['premium', 'elite', 'a7fx', 'admin', 'super_admin'];
-const isFriendsAllowed = (role) => ALLOWED_FRIENDS_ROLES.includes((role || '').toLowerCase());
+/** Friends DMs: legacy DB roles or USER + paid plan from /api/me sync (subscription_plan on user). */
+const isFriendsAllowed = (u) =>
+  isAdmin(u) || isSuperAdmin(u) || isPremium(u);
 const isAdminRole = (role) => ((role || '').toUpperCase() === 'ADMIN' || (role || '').toUpperCase() === 'SUPER_ADMIN');
 
 const AdminInbox = () => {
@@ -203,12 +205,12 @@ useEffect(() => {
   /* ── Default to Friends tab when user is Premium but not Admin ── */
   useEffect(() => {
     if (!user?.role) return;
-    if (isFriendsAllowed(user.role) && !isAdminRole(user.role)) setActiveTab('friends');
+    if (isFriendsAllowed(user) && !isAdminRole(user.role)) setActiveTab('friends');
   }, [user?.role]);
 
   /* ── Load friends (Friends tab only) ── */
   useEffect(() => {
-    if (activeTab !== 'friends' || !isFriendsAllowed(user?.role) || !user?.id) return;
+    if (activeTab !== 'friends' || !isFriendsAllowed(user) || !user?.id) return;
     let mounted = true;
     const load = async () => {
       setLoadingFriends(true);
@@ -343,7 +345,7 @@ useEffect(() => {
   /* ── Load messages + WS ── */
   useEffect(() => {
     const adminCanLoad = activeTab === 'admin' && (isAdminRole(user?.role) || userSupportThreadId);
-    const friendsCanLoad = activeTab === 'friends' && isFriendsAllowed(user?.role);
+    const friendsCanLoad = activeTab === 'friends' && isFriendsAllowed(user);
     const canLoad = adminCanLoad || friendsCanLoad;
     if (!canLoad || !activeThreadId) return;
     let mounted = true;
@@ -484,7 +486,7 @@ useEffect(() => {
 
   const showAdminTab = true;
   const showFriendsTab = true;
-  const canUseFriendsTab = isFriendsAllowed(user?.role);
+  const canUseFriendsTab = isFriendsAllowed(user);
   
   const onTabChange = (tab) => {
     setActiveTab(tab);

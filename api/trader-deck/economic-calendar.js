@@ -525,7 +525,6 @@ function scrapeTimeToMinutes(timeStr) {
 function mergeScrapedHtml(rows, events, dateStr) {
   if (!rows || !rows.length) return events;
   return events.map((ev) => {
-    if (hasActualBackend(ev.actual)) return ev;
     if (ev.date !== dateStr) return ev;
     const ts = ev.timestamp;
     const evMin = ts ? etMinuteOfDay(ts) : null;
@@ -540,20 +539,22 @@ function mergeScrapedHtml(rows, events, dateStr) {
       let score = sim * 100;
       if (evMin != null && rowMin != null) {
         const diff = Math.abs(evMin - rowMin);
-        if (diff > 25) score -= 80;
-        else score += 40 - diff;
+        // ForexFactory HTML is sometimes rendered in non-ET display zones; keep time as a soft hint.
+        if (diff <= 25) score += 20;
+        else if (diff <= 90) score += 8;
+        else if (diff >= 180) score -= 10;
       }
       if (score > bestScore) {
         bestScore = score;
         best = r;
       }
     }
-    if (best && hasActualBackend(best.actual)) {
+    if (best && bestScore >= 70) {
       return {
         ...ev,
-        actual: best.actual,
-        forecast: ev.forecast || best.forecast,
-        previous: ev.previous || best.previous,
+        actual: hasActualBackend(ev.actual) ? ev.actual : (hasActualBackend(best.actual) ? best.actual : ev.actual),
+        forecast: normalizeValue(ev.forecast) != null ? ev.forecast : (normalizeValue(best.forecast) != null ? best.forecast : ev.forecast),
+        previous: normalizeValue(ev.previous) != null ? ev.previous : (normalizeValue(best.previous) != null ? best.previous : ev.previous),
       };
     }
     return ev;
@@ -1426,35 +1427,17 @@ module.exports = async (req, res) => {
   }
 
   const days = Math.min(14, Math.max(1, parseInt(req.query.days, 10) || 7));
-
-  let events = null;
-  let source = 'fallback';
-
-  // Try providers in order
-  events = await fromForexFactory(days);
-  if (events && events.length > 0) {
-    source = 'ForexFactory';
-    // Derive timestamps from date+time before merge/scrape so matching + "past without actual" detection are reliable
-    events = events.map(ensureEventTimestamp);
-    // FF JSON CDN has no `actual` field — merge FMP/TE and optionally scrape FF HTML for figures
-    events = await enrichForexFactoryWithActuals(events, days, forceRefresh);
-  } else {
-    events = await fromFMP(days);
-    if (events && events.length > 0) { source = 'FMP'; }
-    else {
-      events = await fromTradingEconomics(days);
-      if (events && events.length > 0) { source = 'TradingEconomics'; }
-      else {
-        const scrapedForward = await scrapeForwardDays(days);
-        if (scrapedForward && scrapedForward.length > 0) {
-          events = scrapedForward;
-          source = 'ForexFactoryHTML';
-        } else {
-          events = staticFallback();
-          source = 'fallback';
-        }
-      }
-    }
+  const etToday = calendarEtTodayStr();
+  const toDay = shiftIsoDate(etToday, days);
+  const collectionStart = shiftIsoDate(etToday, -DEFAULT_RANGE_PAST_DAYS);
+  let { events, source } = await fetchHistoricalRange(collectionStart, toDay);
+  if (Array.isArray(events) && events.length > 0) {
+    const upcoming = events.filter((ev) => ev && ev.date && ev.date >= etToday);
+    if (upcoming.length > 0) events = upcoming;
+  }
+  if (!events || events.length === 0) {
+    events = staticFallback();
+    source = 'fallback';
   }
 
   events = events.map(ensureEventTimestamp);

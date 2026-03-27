@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FaCog } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
+import { useEntitlements } from '../../context/EntitlementsContext';
+import { formatMembershipLabel } from '../../utils/roles';
 import Api from '../../services/Api';
 import '../../styles/trader-deck/TraderDeckProfile.css';
 
@@ -53,6 +55,7 @@ function computeProfileStats(trades = [], pnlData = {}) {
 
 export default function TraderDeckProfile() {
   const { user } = useAuth();
+  const { entitlements, user: meUser } = useEntitlements();
   const [trades, setTrades] = useState([]);
   const [pnlData, setPnlData] = useState({});
   const [loading, setLoading] = useState(true);
@@ -78,7 +81,10 @@ export default function TraderDeckProfile() {
 
   const displayName = (user?.name && user.name.trim()) || (user?.username && user.username.trim()) || '—';
   const displayEmail = (user?.email && user.email.trim()) || '—';
-  const displayRole = (user?.role && String(user.role).toLowerCase()) || 'member';
+  const displayRole = formatMembershipLabel(
+    meUser?.role ?? user?.role,
+    entitlements?.effectiveTier ?? entitlements?.tier
+  );
   const displayBalance = defaultBalance.trim() || '—';
   const displayRisk = defaultRisk.trim() ? `${defaultRisk}%` : '—';
 

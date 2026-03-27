@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useEntitlements } from '../context/EntitlementsContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import ReactMarkdown from 'react-markdown';
@@ -184,6 +185,7 @@ const ChatMessage = ({ msg, copiedId, speakId, spRate, onCopy, onSpeak, onSpeedC
    ═══════════════════════════════════════════════════════════ */
 const PremiumAI = () => {
   const { user, isAuthenticated } = useAuth();
+  const { entitlements } = useEntitlements();
   const navigate = useNavigate();
 
   const [messages,       setMessages]       = useState([]);
@@ -479,7 +481,9 @@ const PremiumAI = () => {
   const onKey = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
 
   const isEmpty = !messages.length && !isLoading && !isStreaming;
-  const badge   = ['a7fx', 'elite'].includes(user?.role) ? 'Elite' : 'Premium';
+  const tierUpper = (entitlements?.effectiveTier || entitlements?.tier || '').toString().toUpperCase();
+  const badge =
+    tierUpper === 'ELITE' || tierUpper === 'A7FX' ? 'Elite' : 'Premium';
 
   /* ─────────────── RENDER ─────────────── */
   return (

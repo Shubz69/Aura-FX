@@ -11,8 +11,9 @@
 
 function resolveNominalReportsRole(user) {
   if (!user) return 'free';
-  const role = (user.role || '').toLowerCase();
-  const plan = (user.subscription_plan || '').toLowerCase();
+  const role = (user.role || '').toString().trim().toLowerCase();
+  const plan = (user.subscription_plan || '').toString().trim().toLowerCase();
+  // JWT/API permission roles (USER) never imply paid tier — use subscription_plan
   if (['admin', 'super_admin'].includes(role)) return 'admin';
   if (['elite', 'a7fx'].includes(role) || ['elite', 'a7fx'].includes(plan)) return 'elite';
   if (['premium', 'aura'].includes(role) || ['premium', 'aura'].includes(plan)) return 'premium';
@@ -24,7 +25,7 @@ function resolveNominalReportsRole(user) {
  */
 function effectiveReportsRole(user) {
   if (!user) return 'free';
-  const role = (user.role || '').toLowerCase();
+  const role = (user.role || '').toString().trim().toLowerCase();
   if (['admin', 'super_admin'].includes(role)) return 'admin';
 
   const failed = user.payment_failed === 1 || user.payment_failed === true;
@@ -54,7 +55,7 @@ function effectiveReportsRole(user) {
 /** Trader DNA is Elite-only; staff roles may still open the tool. */
 function canAccessTraderDna(user) {
   if (!user) return false;
-  const role = (user.role || '').toLowerCase();
+  const role = (user.role || '').toString().trim().toLowerCase();
   if (['admin', 'super_admin'].includes(role)) return true;
   return effectiveReportsRole(user) === 'elite';
 }

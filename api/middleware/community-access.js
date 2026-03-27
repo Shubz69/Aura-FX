@@ -68,9 +68,10 @@ async function checkCommunityAccess(userId) {
     // Check subscription status and expiry
     const expiryDate = user.subscription_expiry ? new Date(user.subscription_expiry) : null;
     const normalizedStatus = (user.subscription_status || '').toString().trim().toLowerCase();
-    const isSubscriptionActive = user.subscription_status === 'active' &&
-                                  expiryDate && 
-                                  expiryDate > now;
+    const isSubscriptionActive =
+      (normalizedStatus === 'active' || normalizedStatus === 'trialing') &&
+      expiryDate &&
+      expiryDate > now;
     const isExpired = !!(expiryDate && expiryDate <= now);
     
     // A7FX Elite check (£250)

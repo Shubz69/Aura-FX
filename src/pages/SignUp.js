@@ -125,37 +125,41 @@ function SignUp() {
             setError("Please enter the 6-digit code from your phone.");
             return;
         }
+        const emailNorm = formData.email.trim().toLowerCase();
         setIsLoading(true);
         setError("");
+        setSuccess("");
         try {
-            const emailResult = await Api.verifySignupCode(formData.email, emailCode);
+            const emailResult = await Api.verifySignupCode(emailNorm, emailCode);
             if (!emailResult?.verified) {
-                setError("Invalid or expired email code. Please check and try again.");
-                setIsLoading(false);
+                setError(emailResult?.message || "Invalid or expired email code. Please check and try again.");
                 return;
             }
-            const ok = await Api.verifyPhoneCode(formData.phone, phoneCode);
-            if (!ok) {
-                setError("Invalid or expired phone code.");
-                setIsLoading(false);
+            const phoneResult = await Api.verifyPhoneCode(formData.phone.trim(), phoneCode);
+            if (!phoneResult?.verified) {
+                setError(phoneResult?.message || "Invalid or expired phone code.");
                 return;
             }
-            setSuccess("Creating your account...");
             const response = await register({
                 username: formData.username.trim(),
                 name: formData.fullName.trim(),
-                email: formData.email.trim().toLowerCase(),
+                email: emailNorm,
                 phone: formData.phone.trim(),
                 password: formData.password,
                 ...(formData.referralCode.trim() ? { referralCode: formData.referralCode.trim() } : {})
             });
+            setSuccess("Account created! Redirecting…");
             if (response && response.status !== "MFA_REQUIRED") {
                 localStorage.setItem('pendingSubscription', 'true');
                 localStorage.setItem('newSignup', 'true');
                 navigate("/choose-plan");
             }
         } catch (err) {
-            setError(err.message || "Verification failed. Please try again.");
+            setSuccess("");
+            setError(
+                err.message ||
+                    "Could not finish sign-up. If your SMS code was already used once, tap Resend phone code, then try Verify again."
+            );
         } finally {
             setIsLoading(false);
         }

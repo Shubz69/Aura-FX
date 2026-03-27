@@ -354,11 +354,13 @@ module.exports = async (req, res) => {
 
         const verificationRecord = rows[0];
         const currentTime = Date.now();
-        const expiresAt = parseInt(verificationRecord.expires_at, 10);
+        const expRaw = verificationRecord.expires_at;
+        const expiresAt =
+          typeof expRaw === 'bigint' ? Number(expRaw) : parseInt(String(expRaw), 10);
 
         console.log(`Code expires at: ${expiresAt}, current time: ${currentTime}`);
 
-        if (currentTime > expiresAt) {
+        if (!Number.isFinite(expiresAt) || currentTime > expiresAt) {
           await dbVerify.execute('DELETE FROM signup_verification_codes WHERE email = ?', [emailLower]);
           console.error(`Code expired for ${emailLower}`);
           return res.status(400).json({
@@ -367,10 +369,9 @@ module.exports = async (req, res) => {
           });
         }
 
-        await dbVerify.execute(
-          'DELETE FROM signup_verification_codes WHERE email = ? AND code = ?',
-          [emailLower, codeTrimmed]
-        );
+        // Do NOT delete the row here. If /api/auth/register fails afterward, the user would retry with
+        // the same correct email code and get "invalid" because the code was already consumed.
+        // register.js deletes signup_verification_codes after a successful user insert.
 
         console.log(`Code verified successfully for ${emailLower}`);
 

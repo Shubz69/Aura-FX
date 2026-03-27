@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
+import { isAdmin } from "../utils/roles";
 import "../styles/AdminUserList.css";
 import AdminApi from "../services/AdminApi";
 import CosmicBackground from '../components/CosmicBackground';
@@ -12,7 +13,7 @@ const AdminUserList = () => {
     const [onlineUsers, setOnlineUsers] = useState(new Set());
 
     const fetchUsers = useCallback(async () => {
-        if (user?.role !== "ADMIN") return;
+        if (!isAdmin(user)) return;
         setLoading(true);
         try {
             const res = await AdminApi.getAllUsers();
@@ -30,7 +31,7 @@ const AdminUserList = () => {
     }, [fetchUsers]);
 
     const fetchOnlineUsers = useCallback(async () => {
-        if (user?.role !== "ADMIN") return;
+        if (!isAdmin(user)) return;
         try {
             const response = await AdminApi.getOnlineStatus();
             const ids = Array.isArray(response.data?.onlineUsers) ? response.data.onlineUsers.map(u => u.id) : [];
@@ -70,7 +71,7 @@ const AdminUserList = () => {
     const onlineCount = users.filter((u) => isUserOnline(u.id)).length;
     const offlineCount = users.length - onlineCount;
 
-    if (user?.role !== "ADMIN") {
+    if (!isAdmin(user)) {
         return <h4 className="text-danger">Access Denied: Admins Only</h4>;
     }
 

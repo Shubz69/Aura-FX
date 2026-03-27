@@ -138,6 +138,23 @@ module.exports = async (req, res) => {
 
       const userId = result.insertId;
 
+      try {
+        await db.execute(
+          `CREATE TABLE IF NOT EXISTS signup_verification_codes (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            email VARCHAR(255) NOT NULL,
+            code VARCHAR(10) NOT NULL,
+            expires_at BIGINT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_email (email),
+            INDEX idx_expires (expires_at)
+          )`
+        );
+        await db.execute('DELETE FROM signup_verification_codes WHERE email = ?', [emailLower]);
+      } catch (cleanupErr) {
+        console.warn('signup_verification_codes cleanup:', cleanupErr.message);
+      }
+
       const refRaw = (referralCode || ref || '').toString().trim();
       let referredBy = null;
       try {

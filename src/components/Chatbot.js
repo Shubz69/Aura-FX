@@ -163,18 +163,18 @@ const Chatbot = () => {
 
         if (isFinancialQuestion) {
             // Check if user has premium access
-            const userRole = user?.role || 'free';
-            const subscriptionStatus = user?.subscription_status || 'inactive';
-            const subscriptionPlan = user?.subscription_plan;
-            
-            const hasPremiumAccess = 
-                userRole === 'premium' || 
-                userRole === 'a7fx' || 
+            const userRole = (user?.role || 'free').toString().toLowerCase();
+            const subscriptionStatus = (user?.subscription_status || 'inactive').toString().toLowerCase();
+            const subscriptionPlan = (user?.subscription_plan || '').toString().toLowerCase();
+
+            const hasPremiumAccess =
+                userRole === 'premium' ||
+                userRole === 'a7fx' ||
                 userRole === 'elite' ||
                 userRole === 'admin' ||
                 userRole === 'super_admin' ||
-                (subscriptionStatus === 'active' && 
-                 (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx'));
+                (subscriptionStatus === 'active' &&
+                    (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx' || subscriptionPlan === 'elite'));
 
             if (hasPremiumAccess) {
                 // Redirect to Aura AI after showing message
