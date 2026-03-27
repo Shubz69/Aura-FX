@@ -422,7 +422,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         </div>
       </div>
 
-  {typeof document !== 'undefined' && previewOpen && iframeSrc && createPortal(
+ {typeof document !== 'undefined' && previewOpen && iframeSrc && createPortal(
   <>
     <CosmicBackground />
     <div className="td-intel-preview-overlay" onClick={closePreview} role="presentation">

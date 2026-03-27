@@ -36,7 +36,7 @@
 
 .td-intel-preview-box--fullscreen {
   position: relative;
-  width: min(97vw, 1500px);
+  width: min(96vw, 1400px);
   max-height: calc(100vh - clamp(24px, 6vw, 48px) - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
   display: flex;
   flex-direction: column;
@@ -61,12 +61,49 @@
   animation: previewSlideIn 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1) both;
 }
 
-.td-intel-preview-box--fullscreen.td-intel-preview-box--protected {
-  /* no journal glass double-border; content fills the stage */
-  background: linear-gradient(165deg, rgba(5, 16, 58, 0.92), rgba(3, 10, 40, 0.95));
-  border: 1px solid rgba(96, 143, 255, 0.22);
-  box-shadow: 0 24px 90px rgba(1, 8, 30, 0.72);
-  min-height: min(90vh, 940px);
+@keyframes previewSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Top gradient rim */
+.td-intel-preview-box--fullscreen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 5%;
+  right: 5%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(107, 143, 232, 0.6),
+    rgba(140, 175, 255, 0.8),
+    rgba(212, 175, 55, 0.4),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Corner glow effect */
+.td-intel-preview-box--fullscreen::after {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -40px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(107, 143, 232, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .td-intel-preview-chrome--minimal {
@@ -137,19 +174,9 @@
   flex-direction: column;
   border-radius: 0 0 20px 20px;
   overflow: hidden;
-  background: var(--brief-surface-navy);
+  background: rgba(1, 0, 8, 0.6);
   position: relative;
-}
-
-.td-intel-preview-frame-wrap::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(130% 90% at 50% -20%, rgba(102, 154, 255, 0.12), rgba(0, 0, 0, 0) 62%),
-    linear-gradient(180deg, rgba(6, 18, 62, 0.34), rgba(3, 11, 43, 0.52));
+  z-index: 1;
 }
 
 .td-intel-preview-iframe {
@@ -159,55 +186,17 @@
   height: 100%;
   border: none;
   display: block;
-  background: var(--brief-surface-navy);
-  position: relative;
-  z-index: 1;
+  background: rgba(1, 0, 8, 0.4);
 }
 
 .td-intel-preview-typewriter {
   flex: 1;
-  min-height: 100%;
-  padding: clamp(14px, 2vw, 22px);
+  min-height: min(70vh, calc(100vh - 140px));
+  padding: clamp(20px, 3vw, 32px);
   overflow: auto;
-  overscroll-behavior: contain;
-  scroll-behavior: smooth;
-  background: var(--brief-surface-navy);
-  position: relative;
-  z-index: 1;
+  background: rgba(1, 0, 8, 0.5);
   scrollbar-width: thin;
-  scrollbar-color: rgba(124, 170, 255, 0.78) rgba(8, 16, 44, 0.72);
-}
-
-.td-intel-preview-fallback {
-  background: var(--brief-surface-navy);
-  overflow: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(124, 170, 255, 0.72) rgba(8, 16, 44, 0.62);
-}
-
-.td-intel-preview-typewriter::-webkit-scrollbar,
-.td-intel-preview-fallback::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-.td-intel-preview-typewriter::-webkit-scrollbar-track,
-.td-intel-preview-fallback::-webkit-scrollbar-track {
-  background: rgba(8, 16, 44, 0.62);
-  border-radius: 10px;
-}
-
-.td-intel-preview-typewriter::-webkit-scrollbar-thumb,
-.td-intel-preview-fallback::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(111, 162, 255, 0.92), rgba(69, 121, 222, 0.92));
-  border-radius: 10px;
-  border: 2px solid rgba(8, 16, 44, 0.62);
-}
-
-.td-intel-preview-typewriter::-webkit-scrollbar-thumb:hover,
-.td-intel-preview-fallback::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(140, 187, 255, 0.96), rgba(84, 139, 240, 0.96));
+  scrollbar-color: rgba(107, 143, 232, 0.3) transparent;
 }
 
 .td-intel-preview-typewriter-text {
@@ -331,9 +320,8 @@
 
   .td-intel-preview-box--fullscreen {
     width: 100%;
-    max-height: none;
-    height: calc(100dvh - 16px - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
-    min-height: 0;
+    max-height: calc(100dvh - 16px - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
+    border-radius: 20px;
   }
 
   .td-intel-preview-iframe {
