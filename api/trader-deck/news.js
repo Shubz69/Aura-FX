@@ -170,14 +170,14 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
   const forceRefresh = req.query && (req.query.refresh === '1' || req.query.refresh === 'true');
-  const cached = forceRefresh ? null : getCached(CACHE_KEY, CACHE_TTL_MS);
+  const fromDate = parseIsoDateOnly(req.query?.from);
+  const toDate = parseIsoDateOnly(req.query?.to);
+  const cacheKeyFull = fromDate || toDate ? CACHE_KEY + ':range:' + (fromDate || '') + ':' + (toDate || '') : CACHE_KEY;
+  const cached = forceRefresh ? null : getCached(cacheKeyFull, CACHE_TTL_MS);
   if (cached) {
     res.setHeader('Cache-Control', 'private, max-age=30');
     return res.status(200).json({ success: true, ...cached, cached: true });
   }
-
-  const fromDate = parseIsoDateOnly(req.query?.from);
-  const toDate = parseIsoDateOnly(req.query?.to);
   const [general, fmp, forex, yahoo] = await Promise.allSettled([
     fromFinnhub(),
     fromFMP({ from: fromDate, to: toDate }),
@@ -211,7 +211,7 @@ module.exports = async (req, res) => {
     count: merged.length,
     updatedAt: new Date().toISOString(),
   };
-  setCached(CACHE_KEY, payload, CACHE_TTL_MS);
+  setCached(cacheKeyFull, payload, CACHE_TTL_MS);
   res.setHeader('Cache-Control', 'private, max-age=30');
   return res.status(200).json({ success: true, ...payload, cached: false });
 };
