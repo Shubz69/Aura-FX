@@ -1,14 +1,14 @@
 /* =============================================================================
    TRADER DESK — MARKET INTELLIGENCE  |  AURA TERMINAL Premium v4
-   Rethemed to match Community Page deep-space navy/blue aesthetic
-   Gold retained as a whisper accent — navy/blue is the dominant system
+   Theme aligned with World Clocks — Deep-space navy/blue dominant
+   Gold removed, replaced with refined blue/navy spectrum
    ============================================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-/* ── Root tokens — synced with community.css deep-space palette ──────────── */
+/* ── Root tokens — refined navy/blue palette (aligned with world clocks) ── */
 :root {
-  /* ── Deep-space backgrounds ── */
+  /* ── Deep-space backgrounds (enhanced) ── */
   --bg:             #010008;
   --bg-primary:     #01010a;
   --bg-secondary:   #02010c;
@@ -19,36 +19,30 @@
   --bg-glass:       rgba(4, 5, 18, 0.52);
   --bg-glass-h:     rgba(7, 9, 26, 0.68);
 
-  /* ── Borders — white corner → navy body → gold whisper (community system) ── */
-  --border:         rgba(255, 255, 255, 0.10);
-  --border-h:       rgba(160, 185, 240, 0.28);
+  /* ── Borders — consistent with world clocks container ── */
+  --border:         rgba(107, 143, 232, 0.20);
+  --border-h:       rgba(107, 143, 232, 0.45);
 
   /* ── Text ── */
   --text:           #FFFFFF;
   --text-muted:     rgba(232, 235, 255, 0.86);
   --text-dim:       rgba(210, 216, 248, 0.48);
 
-  /* ── Blue/Navy primary accent (community dominant) ── */
+  /* ── Blue/Navy primary accent (dominant, matches world clocks) ── */
   --blue:           #6b8fe8;
   --blue-dim:       rgba(107, 143, 232, 0.14);
   --blue-glow:      rgba(107, 143, 232, 0.32);
-  --blue-bright:    rgba(140, 175, 255, 0.92);
+  --blue-bright:    #8cafff;
   --indigo:         #4e6dd4;
-  --navy-deep:      #283d68;
-  --navy-mid:       #3a5490;
-  --navy-light:     #5a7ed8;
+  --navy-deep:      #1e2a4a;
+  --navy-mid:       #2c3e66;
+  --navy-light:     #3a5490;
+  --navy-glow:      rgba(58, 84, 144, 0.45);
 
-  /* ── Gold — whisper accent only ── */
-  --gold:           #D4AF37;
-  --gold-soft:      rgba(212, 175, 55, 0.55);
-  --gold-dim:       rgba(212, 175, 55, 0.18);
-  --gold-glow:      rgba(212, 175, 55, 0.10);
-  --gold-trace:     rgba(212, 175, 55, 0.06);
-
-  /* ── Status ── */
+  /* ── Status (refined) ── */
   --up:             #0FD98A;
   --down:           #F03D5F;
-  --neutral:        rgba(255, 255, 255, 0.55);
+  --neutral:        rgba(107, 143, 232, 0.55);
 
   /* ── Shape ── */
   --radius:         10px;
@@ -60,42 +54,42 @@
   --transition-s:   0.18s cubic-bezier(0.4, 0, 0.2, 1);
   --font:           'Space Grotesk', sans-serif;
 
-  /* ── Community panel glass system ── */
+  /* ── Premium glass panel system (aligned with world clocks) ── */
   --panel-fill:        linear-gradient(168deg, rgba(4,5,18,0.92) 0%, rgba(5,6,20,0.89) 100%);
   --panel-fill-h:      linear-gradient(168deg, rgba(7,8,24,0.95) 0%, rgba(9,10,28,0.91) 100%);
   --panel-border:      linear-gradient(135deg,
-                         rgba(255,255,255,1)     0%,
-                         rgba(255,255,255,0.88)  11%,
-                         rgba(255,255,255,0.42)  26%,
-                         rgba(185,205,255,0.38)  44%,
-                         rgba(85,115,195,0.52)   64%,
-                         rgba(38,52,105,0.68)    84%,
-                        rgba(107,143,232,0.18)  100%);
+                         rgba(107,143,232,0.9) 0%,
+                         rgba(107,143,232,0.7) 11%,
+                         rgba(107,143,232,0.4) 26%,
+                         rgba(107,143,232,0.3) 44%,
+                         rgba(58,84,144,0.5) 64%,
+                         rgba(30,42,74,0.7) 84%,
+                         rgba(107,143,232,0.18) 100%);
   --panel-border-h:    linear-gradient(135deg,
-                         rgba(255,255,255,1)     0%,
-                         rgba(255,255,255,0.92)   9%,
-                         rgba(255,255,255,0.48)  24%,
-                         rgba(195,215,255,0.44)  42%,
-                         rgba(95,125,210,0.60)   62%,
-                         rgba(45,58,118,0.74)    82%,
-                        rgba(107,143,232,0.22)  100%);
+                         rgba(140,175,255,1) 0%,
+                         rgba(107,143,232,0.85) 9%,
+                         rgba(107,143,232,0.55) 24%,
+                         rgba(107,143,232,0.4) 42%,
+                         rgba(58,84,144,0.65) 62%,
+                         rgba(30,42,74,0.8) 82%,
+                         rgba(107,143,232,0.25) 100%);
   --panel-shadow:
       0 18px 52px rgba(0,0,0,0.64),
-      0 0 0 1px rgba(255,255,255,0.18),
-      0 0 40px -10px rgba(255,255,255,0.10),
+      0 0 0 1px rgba(107,143,232,0.18),
+      0 0 40px -10px rgba(107,143,232,0.10),
       0 0 52px -12px rgba(70,100,190,0.26),
       0 8px 30px -12px rgba(12,16,40,0.45),
-      inset 0 1px 0 rgba(255,255,255,0.24);
+      inset 0 1px 0 rgba(107,143,232,0.12) !important;
   --panel-shadow-h:
       0 22px 60px rgba(0,0,0,0.70),
-      0 0 0 1px rgba(255,255,255,0.22),
-      0 0 48px -8px rgba(255,255,255,0.13),
+      0 0 0 1px rgba(107,143,232,0.22),
+      0 0 48px -8px rgba(107,143,232,0.13),
       0 0 60px -10px rgba(85,115,205,0.32),
       0 10px 34px -10px rgba(15,20,48,0.48),
-      inset 0 1px 0 rgba(255,255,255,0.30);
+     inset 0 1px 0 rgba(107,143,232,0.18) !important;
 
-  /* ── Gradient heading — community signature white→blue→gold whisper ── */
- --grad-primary: linear-gradient(125deg,
+  /* ── Gradient heading — refined blue spectrum ── */
+  --grad-primary: linear-gradient(125deg,
       #ffffff 0%,
       rgba(252,253,255,0.99) 28%,
       rgba(200,215,255,0.96) 58%,
@@ -104,27 +98,6 @@
 
   /* ── Shimmer line ── */
   --line-blue: linear-gradient(90deg, transparent, var(--blue) 30%, var(--blue-bright) 70%, transparent);
-
-  /* ── Legacy aliases so any existing JS refs still resolve ── */
-  --glass-bg:       var(--panel-fill);
-  --glass-border:   rgba(160,185,240,0.18);
-  --glass-blur:     16px;
-  --glass-shadow:   var(--panel-shadow);
-
-  /* ── Legacy gold aliases (kept so gauge + border refs don't break) ── */
-  --eaa-core:       var(--gold);
-  --eaa-bright:     rgba(212,175,55,0.80);
-  --eaa-warm:       rgba(180,148,44,0.70);
-  --eaa-soft:       rgba(212,175,55,0.60);
-  --eaa-pale:       rgba(240,220,140,0.70);
-  --eaa-dim:        var(--gold-dim);
-  --eaa-glow:       var(--gold-glow);
-  --aa-bg-card:     var(--bg-card);
-  --aa-bg-card-h:   var(--bg-card-h);
-  --aa-border:      var(--border);
-  --aa-border-h:    var(--border-h);
-  --aa-text:        var(--text);
-  --aa-text-muted:  var(--text-muted);
 }
 
 /* ══════════════════════════════════════════════
@@ -229,7 +202,7 @@
   gap: 14px;
   margin-bottom: 32px;
   padding-bottom: 24px;
-  border-bottom: 1px solid rgba(255,255,255,0.055);
+  border-bottom: 1px solid rgba(107,143,232,0.08);
   position: relative;
 }
 
@@ -271,7 +244,7 @@
 }
 
 /* ══════════════════════════════════════════════
-   OUTER SHELL — community panel-border system + blue glow
+   OUTER SHELL — premium border system
 ══════════════════════════════════════════════ */
 .td-mi-shell {
   position: relative;
@@ -342,7 +315,7 @@
   z-index: 0;
 }
 
-/* Top shimmer line — community signature */
+/* Top shimmer line */
 .td-mi-shell-inner::after {
   content: '';
   position: absolute;
@@ -359,7 +332,7 @@
 .td-mi-shell-header {
   margin-bottom: 28px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.052);
+  border-bottom: 1px solid rgba(107,143,232,0.08);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -399,7 +372,7 @@
 }
 
 /* ══════════════════════════════════════════════
-   BUTTONS — community CTA style with gold whisper
+   BUTTONS — premium CTA style
 ══════════════════════════════════════════════ */
 .td-mi-btn {
   padding: 8px 20px;
@@ -410,8 +383,8 @@
   text-transform: uppercase;
   border-radius: var(--radius);
   cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.090);
-  background: rgba(255,255,255,0.040);
+  border: 1px solid rgba(107,143,232,0.25);
+  background: rgba(107,143,232,0.08);
   color: rgba(235,228,255,0.84);
   transition:
     background var(--transition),
@@ -443,7 +416,7 @@
 
 .td-mi-btn:hover {
   background: rgba(55,80,150,0.16);
-  border-color: rgba(107,143,232,0.40);
+  border-color: rgba(107,143,232,0.60);
   color: #fff;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0,0,0,0.38), 0 0 12px rgba(107,143,232,0.10);
@@ -455,10 +428,10 @@
 
 .td-mi-btn-edit { color: rgba(235,228,255,0.90); }
 
-/* Save button uses community CTA gradient */
+/* Save button uses navy gradient */
 .td-mi-btn-save {
   background: linear-gradient(135deg, var(--navy-deep) 0%, var(--navy-mid) 50%, var(--navy-light) 100%);
-  border-color: rgba(255,255,255,0.15);
+  border-color: rgba(107,143,232,0.35);
   color: #fff;
   font-weight: 700;
   box-shadow:
@@ -468,7 +441,7 @@
 
 .td-mi-btn-save:hover {
   background: linear-gradient(135deg, var(--navy-mid) 0%, var(--navy-light) 50%, rgba(107,143,232,0.90) 100%);
-  border-color: rgba(255,255,255,0.22);
+  border-color: rgba(107,143,232,0.55);
   box-shadow:
     0 0 28px rgba(90,125,220,0.38),
     0 6px 20px rgba(0,0,0,0.38),
@@ -495,7 +468,7 @@
   width: 100%;
   padding: 10px 14px;
   background: rgba(0,0,5,0.60);
-  border: 1px solid rgba(160,185,240,0.18);
+  border: 1px solid rgba(107,143,232,0.25);
   border-radius: var(--radius);
   color: #fff;
   font-size: 0.88rem;
@@ -506,7 +479,7 @@
 
 .td-mi-edit-input:focus {
   outline: none;
-  border-color: rgba(107,143,232,0.60);
+  border-color: rgba(107,143,232,0.80);
   background: rgba(0,0,5,0.80);
   box-shadow: 0 0 0 3px rgba(107,143,232,0.15), 0 0 14px rgba(107,143,232,0.10);
 }
@@ -550,7 +523,7 @@
 .td-mi-edit-select {
   padding: 9px 12px;
   background: rgba(0,0,5,0.60);
-  border: 1px solid rgba(160,185,240,0.18);
+  border: 1px solid rgba(107,143,232,0.25);
   border-radius: var(--radius);
   color: #fff;
   font-size: 0.84rem;
@@ -562,7 +535,7 @@
 
 .td-mi-edit-select:focus {
   outline: none;
-  border-color: rgba(107,143,232,0.60);
+  border-color: rgba(107,143,232,0.80);
   box-shadow: 0 0 0 3px rgba(107,143,232,0.12);
 }
 
@@ -576,7 +549,7 @@
   font-size: 1.1rem; line-height: 1;
   color: var(--text-muted);
   background: rgba(255,255,255,0.048);
-  border: 1px solid rgba(255,255,255,0.09);
+  border: 1px solid rgba(107,143,232,0.25);
   transition: all var(--transition-s);
 }
 
@@ -593,7 +566,7 @@
   gap: 10px;
   align-items: center;
   padding: 9px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.052);
+  border-bottom: 1px solid rgba(107,143,232,0.08);
 }
 
 .td-mi-list-item--edit:last-child { border-bottom: none; }
@@ -640,18 +613,15 @@
 }
 
 /* ══════════════════════════════════════════════
-   BASE PANEL CARD — community glass system
+   BASE PANEL CARD — premium glass system
 ══════════════════════════════════════════════ */
 .td-mi-panel {
-  background-image: var(--panel-fill);
+  background-image: var(--panel-fill), var(--panel-border);
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
   backdrop-filter: blur(16px) saturate(1.12);
   -webkit-backdrop-filter: blur(16px) saturate(1.12);
   border: 1px solid transparent;
-  background-image: var(--panel-fill), var(--panel-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
   border-radius: var(--radius-lg);
   padding: 22px 24px;
   min-height: 160px;
@@ -662,10 +632,6 @@
     background-image var(--transition);
   position: relative;
   overflow: hidden;
-}
-
-.td-mi-panel::before {
-  display: none;
 }
 
 /* Left blue accent bar */
@@ -709,7 +675,7 @@
   font-weight: 700;
   margin: 0 0 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.055);
+  border-bottom: 1px solid rgba(107,143,232,0.12);
   color: var(--text);
   letter-spacing: 0.30em;
   text-transform: uppercase;
@@ -717,7 +683,6 @@
   z-index: 1;
 }
 
-/* Gold whisper accent under panel titles */
 .td-mi-panel-title::after {
   content: '';
   position: absolute;
@@ -748,7 +713,7 @@
   justify-content: space-between;
   align-items: baseline;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.048);
+  border-bottom: 1px solid rgba(107,143,232,0.08);
   font-size: 0.90rem;
   position: relative;
   transition: background var(--transition-s), padding-left var(--transition-s);
@@ -783,8 +748,8 @@
 .td-mi-regime-value--bearish { color: var(--down); text-shadow: 0 0 12px rgba(240,61,95,0.35); }
 .td-mi-regime-value--neutral { color: rgba(175,200,255,0.85); }
 
-/* Gold accent — kept as a whisper option */
-.td-mi-regime-value--gold {
+/* Blue spectrum value */
+.td-mi-regime-value--blue {
   background: var(--grad-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -809,7 +774,7 @@
   margin-bottom: 10px;
 }
 
-/* Blue-spectrum arc — matches community palette */
+/* Blue-spectrum arc */
 .td-mi-gauge-arc-bg {
   position: absolute;
   left: 0; top: 0;
@@ -859,7 +824,7 @@
 
 .td-mi-gauge-arc-fill { display: none; }
 
-/* Needle — blue/white gradient with gold pivot hint */
+/* Needle — blue/white gradient */
 .td-mi-gauge-needle {
   position: absolute;
   left: 50%; bottom: 6px;
@@ -878,7 +843,7 @@
     0 0 24px rgba(107,143,232,0.20);
 }
 
-/* Centre pivot — gold whisper touch */
+/* Centre pivot — blue */
 .td-mi-gauge-needle::after {
   content: '';
   position: absolute;
@@ -905,7 +870,7 @@
   padding: 0 4px;
 }
 
-/* Gauge badge — community CTA style */
+/* Gauge badge — premium style */
 .td-mi-gauge-badge {
   display: inline-flex;
   align-items: center;
@@ -924,7 +889,7 @@
 .td-mi-gauge-badge::before {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 55%);
+  background: linear-gradient(135deg, rgba(107,143,232,0.10) 0%, transparent 55%);
   pointer-events: none;
 }
 
@@ -964,7 +929,7 @@
   padding: 11px 0;
   font-family: var(--font);
   font-size: 0.88rem;
-  border-bottom: 1px solid rgba(255,255,255,0.044);
+  border-bottom: 1px solid rgba(107,143,232,0.08);
   transition: background var(--transition-s), padding-left var(--transition-s);
 }
 
@@ -1044,7 +1009,7 @@
   font-size: 0.90rem;
   color: rgba(255,255,255,0.90);
   line-height: 1.50;
-  border-bottom: 1px solid rgba(255,255,255,0.040);
+  border-bottom: 1px solid rgba(107,143,232,0.08);
   transition: background var(--transition-s), padding-left var(--transition-s);
 }
 
@@ -1056,7 +1021,7 @@
   padding-left: 28px;
 }
 
-/* Blue chevron bullet — gold whisper on hover */
+/* Blue chevron bullet */
 .td-mi-bullet-item::before {
   content: '›';
   position: absolute;
@@ -1103,7 +1068,7 @@
   color: rgba(140,175,255,0.75);
 }
 
-/* Community-style dual spinner */
+/* Premium dual spinner */
 .td-mi-loading-pulse {
   position: relative;
   width: 48px; height: 48px;
@@ -1232,7 +1197,7 @@
   z-index: 0;
 }
 
-/* Top shimmer — community signature */
+/* Top shimmer */
 .td-trader-desk-shell-inner::after {
   content: '';
   position: absolute;
@@ -1263,13 +1228,13 @@
   justify-content: space-between;
   gap: 14px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.050);
+  border-bottom: 1px solid rgba(107,143,232,0.10);
   margin-bottom: 6px;
   position: relative;
   z-index: 2;
 }
 
-/* Blue underline — gold whisper at end */
+/* Blue underline */
 .td-outlook-unified-header::after {
   content: '';
   position: absolute;
@@ -1320,7 +1285,7 @@
   .td-outlook-panel--radar   { grid-column: 9 / span 4;  grid-row: 3; }
 }
 
-/* ── Unified panels — community glass edition ─────────────────────────────── */
+/* ── Unified panels — premium glass edition ─────────────────────────────── */
 .td-outlook-panel {
   min-height: 0;
   padding: 0 !important;
@@ -1340,145 +1305,6 @@
   overflow: hidden;
 }
 
-/* ═══════════════════════════════════════════════════
-   Remove gold corner glow — enforce pure blue border
-   ═══════════════════════════════════════════════════ */
-
-.td-mi-panel,
-.td-outlook-panel {
-  --panel-border: linear-gradient(135deg,
-    rgba(255,255,255,1)     0%,
-    rgba(255,255,255,0.88)  11%,
-    rgba(255,255,255,0.42)  26%,
-    rgba(185,205,255,0.38)  44%,
-    rgba(85,115,195,0.52)   64%,
-    rgba(38,52,105,0.68)    84%,
-    rgba(107,143,232,0.18)  100%) !important;
-
-  --panel-border-h: linear-gradient(135deg,
-    rgba(255,255,255,1)     0%,
-    rgba(255,255,255,0.92)   9%,
-    rgba(255,255,255,0.48)  24%,
-    rgba(195,215,255,0.44)  42%,
-    rgba(95,125,210,0.60)   62%,
-    rgba(45,58,118,0.74)    82%,
-    rgba(107,143,232,0.22)  100%) !important;
-
-  --panel-shadow:
-    0 18px 52px rgba(0,0,0,0.64),
-    0 0 0 1px rgba(255,255,255,0.18),
-    0 0 40px -10px rgba(255,255,255,0.10),
-    0 0 52px -12px rgba(70,100,190,0.26),
-    0 8px 30px -12px rgba(12,16,40,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.24) !important;
-
-  --panel-shadow-h:
-    0 22px 60px rgba(0,0,0,0.70),
-    0 0 0 1px rgba(255,255,255,0.22),
-    0 0 48px -8px rgba(255,255,255,0.13),
-    0 0 60px -10px rgba(85,115,205,0.32),
-    0 10px 34px -10px rgba(15,20,48,0.48),
-    inset 0 1px 0 rgba(255,255,255,0.30) !important;
-}
-
-
-
-/* Remove gold from gauge needle pivot */
-.td-mi-gauge-needle::after {
-  background: radial-gradient(circle at 38% 35%,
-    rgba(255,255,255,0.98),
-    rgba(175,200,255,0.92) 40%,
-    rgba(107,143,232,0.85) 70%,
-    rgba(78,109,212,0.55) 100%) !important;
-  box-shadow:
-    0 0 10px rgba(107,143,232,0.70),
-    0 0 20px rgba(107,143,232,0.25) !important;
-}
-
-/* Remove gold from regime value gold variant */
-.td-mi-regime-value--gold {
-  background: linear-gradient(125deg,
-    rgba(140,175,255,0.98) 0%,
-    rgba(107,143,232,0.92) 50%,
-    rgba(78,109,212,0.85)  100%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
-  filter: drop-shadow(0 0 8px rgba(107,143,232,0.40)) !important;
-}
-
-/* Remove gold from gauge badge ::before overlay */
-.td-mi-gauge-badge::before {
-  background: linear-gradient(135deg,
-    rgba(107,143,232,0.10) 0%,
-    transparent 55%) !important;
-}
-
-/* Remove gold from updated dot */
-.td-mi-updated::before {
-  background: rgba(107,143,232,0.90) !important;
-  box-shadow: 0 0 6px rgba(107,143,232,0.65) !important;
-}
-
-/* Remove gold from shell outer glow */
-.td-mi-shell {
-  box-shadow:
-    0 0 0 1px rgba(107,143,232,0.18),
-    0 0 36px rgba(70,100,190,0.14),
-    0 0 72px rgba(70,100,190,0.06),
-    0 0 120px rgba(70,100,190,0.025),
-    inset 0 0 80px rgba(0,0,0,0.22) !important;
-}
-
-.td-mi-shell-title {
-  filter: drop-shadow(0 0 18px rgba(107,143,232,0.35)) !important;
-}
-
-/* Remove gold from outlook panel top shimmer */
-.td-outlook-panel .td-mi-panel-title::after {
-  background: linear-gradient(90deg,
-    rgba(107,143,232,0.90),
-    rgba(107,143,232,0.25),
-    transparent) !important;
-  box-shadow: 0 0 7px rgba(107,143,232,0.55) !important;
-}
-
-/* Remove gold from unified header underline */
-.td-outlook-unified-header::after {
-  background: linear-gradient(90deg,
-    rgba(107,143,232,0.90),
-    rgba(107,143,232,0.18),
-    transparent) !important;
-  box-shadow: 0 0 10px rgba(107,143,232,0.30) !important;
-}
-
-/* Remove gold from mi-modern stat value */
-.td-deck-mi-modern-stat-value {
-  background: linear-gradient(125deg,
-    rgba(140,175,255,0.98) 0%,
-    rgba(107,143,232,0.92) 60%,
-    rgba(78,109,212,0.85)  100%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
-}
-
-/* Remove gold from mi-tile badge */
-.td-deck-mi-tile-badge {
-  background: rgba(107,143,232,0.12) !important;
-  border-color: rgba(107,143,232,0.30) !important;
-  color: rgba(140,175,255,0.95) !important;
-}
-
-/* Remove gold from mi-tile inner box shadow */
-.td-deck-mi-tile {
-  box-shadow:
-    0 10px 36px rgba(0,0,0,0.42),
-    0 0 0 0.5px rgba(107,143,232,0.08) inset !important;
-}
-
-.td-outlook-panel.td-mi-panel::before { display: none; }
-
 .td-outlook-panel .td-mi-panel-body {
   padding: 18px 20px 22px;
   font-size: 0.88rem;
@@ -1490,7 +1316,7 @@
 
 .td-outlook-panel .td-mi-regime-label  { color: rgba(232,235,255,0.60); font-size: 0.80rem; font-weight: 500; }
 .td-outlook-panel .td-mi-regime-value  { font-weight: 700; color: #fff; font-size: 0.88rem; }
-.td-outlook-panel .td-mi-regime-row    { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.040); }
+.td-outlook-panel .td-mi-regime-row    { padding: 10px 0; border-bottom: 1px solid rgba(107,143,232,0.08); }
 .td-outlook-panel .td-mi-regime-row:last-child { border-bottom: none; }
 .td-outlook-panel .td-mi-list-item,
 .td-outlook-panel .td-mi-panel-body .td-mi-bullet-item { padding: 9px 0 9px 20px; font-size: 0.88rem; }
@@ -1653,7 +1479,7 @@
 
 .td-outlook-section {
   margin: 0; padding: 16px 0 0;
-  border-top: 1px solid rgba(255,255,255,0.034);
+  border-top: 1px solid rgba(107,143,232,0.08);
 }
 
 .td-outlook-section:first-of-type { border-top: none; padding-top: 0; }
@@ -1664,7 +1490,7 @@
   font-weight: 700;
   margin: 0 0 12px;
   padding-bottom: 9px;
-  border-bottom: 1px solid rgba(255,255,255,0.044);
+  border-bottom: 1px solid rgba(107,143,232,0.10);
   color: rgba(255,255,255,0.92);
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -1719,8 +1545,8 @@
   font-size: 0.70rem; font-weight: 600;
   letter-spacing: 0.14em;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.085);
-  background: rgba(255,255,255,0.038);
+  border: 1px solid rgba(107,143,232,0.25);
+  background: rgba(107,143,232,0.08);
   backdrop-filter: blur(8px);
 }
 
@@ -1734,7 +1560,7 @@
 .td-outlook-unified-header .td-mi-btn-save,
 .td-outlook-main-card .td-mi-btn-save {
   background: linear-gradient(135deg, var(--navy-deep), var(--navy-mid), var(--navy-light));
-  border-color: rgba(255,255,255,0.15);
+  border-color: rgba(107,143,232,0.35);
   color: #fff;
   box-shadow: 0 0 14px rgba(75,110,205,0.18);
 }
@@ -1745,12 +1571,12 @@
 }
 
 /* ══════════════════════════════════════════════
-   RISK RADAR TABLE — community glass style
+   RISK RADAR TABLE — premium glass style
 ══════════════════════════════════════════════ */
 .rr-table-wrap {
   overflow-x: auto;
   border-radius: var(--radius);
-  border: 1px solid rgba(160,185,240,0.10);
+  border: 1px solid rgba(107,143,232,0.15);
   background: transparent;
   scrollbar-width: thin;
   scrollbar-color: rgba(107,143,232,0.30) transparent;
@@ -1778,7 +1604,7 @@
   text-transform: uppercase;
   color: rgba(175,200,255,0.75);
   background: transparent;
-  border-bottom: 1px solid rgba(107,143,232,0.10);
+  border-bottom: 1px solid rgba(107,143,232,0.15);
   white-space: nowrap;
   opacity: 0.85;
 }
@@ -1789,7 +1615,7 @@
 .rr-th--impact { width: 68px; text-align: center; }
 
 .rr-row {
-  border-bottom: 1px solid rgba(255,255,255,0.034);
+  border-bottom: 1px solid rgba(107,143,232,0.08);
   transition: background var(--transition-s);
 }
 
@@ -1868,7 +1694,7 @@
   position: relative;
 }
 
-/* Gold whisper diamond at center — subtle accent */
+/* Subtle diamond accent */
 .td-mi-section-divider::before {
   content: '◈';
   position: absolute;

@@ -17,6 +17,7 @@ import '../styles/TraderDeckNews.css';
 import '../styles/trader-deck/TraderDeckJournalGlass.css';
 import '../styles/trader-deck/TraderDeckContentModern.css';
 import '../styles/trader-deck/TraderDeckWorldClocks.css';
+import TraderDeckCalendar from '../components/trader-deck/TraderDeckCalendar';
 import {
   TRADER_DESK_SESSIONS,
   isSessionOpen,
@@ -34,49 +35,36 @@ function shiftIsoDate(dateStr, deltaDays) {
 
 const SESSION_UI_TICK_MS = 30000;
 
-function MarketSessionsInline() {
-  const [tick, setTick] = React.useState(0);
-  React.useEffect(() => {
-    const iv = setInterval(() => setTick((t) => t + 1), SESSION_UI_TICK_MS);
-    return () => clearInterval(iv);
-  }, []);
-  const now = useMemo(() => Date.now(), [tick]);
-  return (
-    <ul className="td-deck-sessions-list td-deck-sessions-list--inline" aria-label="Market sessions UTC">
-      {TRADER_DESK_SESSIONS.map((s) => {
-        const open = isSessionOpen(s, now);
-        return (
-          <li key={s.name} className={`td-deck-session-item${open ? ' td-deck-session-item--open' : ''}`}>
-            <span className={`td-deck-session-dot${open ? ' td-deck-session-dot--open' : ''}`} />
-            <span className="td-deck-session-name">{s.name}</span>
-            <span className={`td-deck-session-status${open ? ' td-deck-session-status--open' : ''}`}>{open ? 'Open' : 'Closed'}</span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function MarketSessionCountdowns() {
+// Combined component that pairs each session with its countdown
+// Replace the MarketSessionsWithCountdowns component with this professional row layout
+function MarketSessionsWithCountdowns() {
   const [tick, setTick] = useState(0);
   useEffect(() => {
     const iv = setInterval(() => setTick((t) => t + 1), SESSION_UI_TICK_MS);
     return () => clearInterval(iv);
   }, []);
   const now = useMemo(() => Date.now(), [tick]);
+  
   return (
-    <div className="td-deck-session-countdowns" aria-live="polite">
+    <div className="td-deck-sessions-row">
       {TRADER_DESK_SESSIONS.map((s) => {
+        const open = isSessionOpen(s, now);
         const { ms, phrase } = getSessionCountdown(s, now);
+        
         return (
-          <span key={s.name} className="td-deck-session-countdown-chip">
-            <span className="td-deck-session-countdown-name">{s.name}</span>
-            <span className="td-deck-session-countdown-meta">
-              {' · '}
-              <span className="td-deck-session-countdown-phrase">{phrase}</span>{' '}
+          <div key={s.name} className="td-deck-session-tile">
+            <div className="td-deck-session-tile-header">
+              <span className={`td-deck-session-dot${open ? ' td-deck-session-dot--open' : ''}`} />
+              <span className="td-deck-session-name">{s.name}</span>
+              <span className={`td-deck-session-status${open ? ' td-deck-session-status--open' : ''}`}>
+                {open ? '● OPEN' : '○ CLOSED'}
+              </span>
+            </div>
+            <div className="td-deck-session-tile-countdown">
+              <span className="td-deck-session-countdown-phrase">{phrase}</span>
               <span className="td-deck-session-countdown-eta">{formatSessionEta(ms)}</span>
-            </span>
-          </span>
+            </div>
+          </div>
         );
       })}
     </div>
@@ -96,6 +84,7 @@ export default function TraderDeck() {
   const [subTab, setSubTab] = useState('daily');
   const [selectedDate, setSelectedDate] = useState(today());
   const [calendarMonth, setCalendarMonth] = useState(today().slice(0, 7));
+  const [calendarOverlayOpen, setCalendarOverlayOpen] = useState(false);
 
   const datePickerBounds = useMemo(() => {
     const t = today();
@@ -153,30 +142,62 @@ export default function TraderDeck() {
     setCalendarMonth(date.slice(0, 7));
   }, []);
 
-  return (
-    <AuraTerminalThemeShell>
+ return (
+  <AuraTerminalThemeShell>
     <div className="td-layout-page td-deck-with-tabs" id="td-deck-top">
+
+      {/* ✅ Overlay (tumhara feature) */}
+      {calendarOverlayOpen && (
+        <div className="td-deck-calendar-overlay" role="dialog" aria-modal="true">
+          <div
+            className="td-deck-calendar-overlay-backdrop"
+            onClick={() => setCalendarOverlayOpen(false)}
+          />
+          <div className="td-deck-calendar-overlay-content">
+            <TraderDeckCalendar
+              selectedDate={selectedDate}
+              onSelectDate={handleSelectDate}
+              calendarMonth={calendarMonth}
+              onPrevMonth={handlePrevMonth}
+              onNextMonth={handleNextMonth}
+            />
+            <button
+              className="td-deck-calendar-overlay-close"
+              onClick={() => setCalendarOverlayOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Main Layout */}
       <div className="td-deck-layout">
+
+        {/* World Clocks */}
         <div className="td-deck-world-clocks-rail">
-  <div className="td-deck-world-clocks-container">
-    <TraderDeckWorldClocks />
-  </div>
-</div>
-        <div className="td-deck-tab-zone" aria-label="Trader Desk navigation">
+          <div className="td-deck-world-clocks-container">
+            <TraderDeckWorldClocks />
+          </div>
+        </div>
+
+        <div className="td-deck-tab-zone">
+
+          {/* Header */}
           <header className="td-deck-header td-deck-header--tab-zone">
-            <nav className="td-deck-header-nav td-deck-header-left td-deck-main-tab-rail" aria-label="Trader Desk sections">
+            <nav className="td-deck-header-left">
               <button
-                type="button"
                 className={`td-deck-tab${mainTab === 'outlook' ? ' td-deck-tab--active' : ''}`}
                 onClick={() => setMainTab('outlook')}
               >
                 MARKET OUTLOOK
               </button>
             </nav>
+
             <h1 className="td-deck-page-title">Trader Desk</h1>
-            <nav className="td-deck-header-nav td-deck-header-right td-deck-main-tab-rail" aria-label="Trader Desk sections">
+
+            <nav className="td-deck-header-right">
               <button
-                type="button"
                 className={`td-deck-tab${mainTab === 'intelligence' ? ' td-deck-tab--active' : ''}`}
                 onClick={() => setMainTab('intelligence')}
               >
@@ -185,75 +206,85 @@ export default function TraderDeck() {
             </nav>
           </header>
 
+          {/* Calendar Bar */}
           <div className="td-deck-divider-row td-deck-tab-zone-calendar">
-            <div className="td-deck-header-line-left" aria-hidden="true" />
+            <div className="td-deck-header-line-left" />
             <div className="td-deck-calendar-bar-wrap">
               <TraderDeckCalendarBar
                 selectedDate={selectedDate}
+                calendarMonth={calendarMonth}
                 period={subTab}
                 onPrevMonth={subTab === 'weekly' ? handlePrevWeek : handlePrevDay}
                 onNextMonth={subTab === 'weekly' ? handleNextWeek : handleNextDay}
                 onSelectDate={handleSelectDate}
+                onOpenCalendar={() => setCalendarOverlayOpen(true)}
                 dateMin={datePickerBounds.min}
                 dateMax={datePickerBounds.max}
               />
             </div>
-            <div className="td-deck-header-line-right" aria-hidden="true" />
+            <div className="td-deck-header-line-right" />
           </div>
 
-          <div className="td-deck-below-header td-deck-tab-zone-period td-deck-period-stack">
+          {/* Period Tabs + Sessions */}
+          <div className="td-deck-below-header td-deck-period-stack">
             <div className="td-deck-period-row-main">
-              <nav className="td-deck-sub-tabs td-deck-sub-tabs-under-left td-deck-period-segment" aria-label="Period">
+              <nav className="td-deck-sub-tabs">
                 <button
-                  type="button"
                   className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
                   onClick={() => setSubTab('daily')}
                 >
                   Daily
                 </button>
                 <button
-                  type="button"
                   className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
                   onClick={() => setSubTab('weekly')}
                 >
                   Weekly
                 </button>
               </nav>
-              <MarketSessionsInline />
             </div>
-            <MarketSessionCountdowns />
-          </div>
-        </div>
 
-        <div className="td-deck-content td-deck-content--modern">
-          <div className="td-deck-content-box td-deck-content-box--modern journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
-            <div className="td-deck-body td-deck-body-single">
-              <main className="td-deck-main">
-                <div className="td-deck-main-inner td-deck-main-inner--modern">
-                  <div className="td-deck-main-stage">
+            <MarketSessionsWithCountdowns />
+          </div>
+
+          {/* Main Content */}
+          <div className="td-deck-content td-deck-content--modern">
+            <div className="td-deck-content-box journal-glass-panel">
+              <div className="td-deck-body">
+                <main className="td-deck-main">
+                  <div className="td-deck-main-inner">
+
                     <div className="td-deck-dashboard-wrap">
                       {mainTab === 'outlook' && (
-                        <MarketOutlookView selectedDate={selectedDate} period={subTab} canEdit={canEdit} />
+                        <MarketOutlookView
+                          selectedDate={selectedDate}
+                          period={subTab}
+                          canEdit={canEdit}
+                        />
                       )}
+
                       {mainTab === 'intelligence' && (
-                        <MarketIntelligenceBriefsView selectedDate={selectedDate} period={subTab} canEdit={canEdit} />
+                        <MarketIntelligenceBriefsView
+                          selectedDate={selectedDate}
+                          period={subTab}
+                          canEdit={canEdit}
+                        />
                       )}
                     </div>
+
+                    <aside className="td-deck-rail">
+                      <NewsHeadlines />
+                    </aside>
+
                   </div>
-                  <aside className="td-deck-rail" aria-label="Market headlines">
-                    <div className="td-deck-inbox-footer" aria-label="Market headlines">
-                      <div className="td-deck-inbox-footer-block td-deck-inbox-headlines">
-                        <NewsHeadlines />
-                      </div>
-                    </div>
-                  </aside>
-                </div>
-              </main>
+                </main>
+              </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
-    </AuraTerminalThemeShell>
-  );
+  </AuraTerminalThemeShell>
+);
 }

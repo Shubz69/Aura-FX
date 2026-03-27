@@ -1,13 +1,14 @@
 /* =============================================================================
    TRADER DECK — Main/Sub Tabs + Sidebar Calendar Layout
    Themed to match Market Intelligence deep-space navy/blue aesthetic
+   Gold replaced with refined blue/navy spectrum — cohesive with World Clocks
    Professional-grade responsive design — mobile → tablet → desktop → 4K
    ============================================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   ROOT VARIABLES — Synced with Market Intelligence palette
+   ROOT VARIABLES — Synced with Market Intelligence palette (blue/navy dominant)
 ═══════════════════════════════════════════════════════════════════════════ */
 :root {
   /* Deep-space backgrounds */
@@ -18,28 +19,24 @@
   --td-root-bg-glass: rgba(4, 5, 18, 0.52);
   --td-root-bg-glass-h: rgba(7, 9, 26, 0.68);
 
-  /* Borders — blue dominant, gold whisper */
-  --td-root-border: rgba(255, 255, 255, 0.10);
-  --td-root-border-blue: rgba(107, 143, 232, 0.28);
-  --td-root-border-gold: rgba(212, 175, 55, 0.18);
+  /* Borders — pure blue/navy, no gold */
+  --td-root-border: rgba(107, 143, 232, 0.20);
+  --td-root-border-blue: rgba(107, 143, 232, 0.35);
+  --td-root-border-strong: rgba(107, 143, 232, 0.55);
 
   /* Text */
   --td-root-text: #FFFFFF;
   --td-root-text-muted: rgba(232, 235, 255, 0.86);
   --td-root-text-dim: rgba(210, 216, 248, 0.48);
 
-  /* Blue/Navy primary accent */
+  /* Blue/Navy primary accent (dominant) */
   --td-root-blue: #6b8fe8;
   --td-root-blue-dim: rgba(107, 143, 232, 0.14);
   --td-root-blue-glow: rgba(107, 143, 232, 0.32);
-  --td-root-blue-bright: rgba(140, 175, 255, 0.92);
-  --td-root-navy-deep: #283d68;
-  --td-root-navy-mid: #3a5490;
-
-  /* Gold — whisper accent only */
-  --td-root-gold: #D4AF37;
-  --td-root-gold-dim: rgba(212, 175, 55, 0.18);
-  --td-root-gold-glow: rgba(212, 175, 55, 0.10);
+  --td-root-blue-bright: #8cafff;
+  --td-root-navy-deep: #1e2a4a;
+  --td-root-navy-mid: #2c3e66;
+  --td-root-navy-light: #3a5490;
 
   /* Status colors */
   --td-root-up: #0FD98A;
@@ -54,19 +51,19 @@
   --td-root-transition-s: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   --td-root-font: 'Space Grotesk', sans-serif;
 
-  /* Panel glass system */
+  /* Panel glass system (aligned with market intelligence) */
   --td-root-panel-fill: linear-gradient(168deg, rgba(4,5,18,0.92) 0%, rgba(5,6,20,0.89) 100%);
   --td-root-panel-border: linear-gradient(135deg,
-    rgba(255,255,255,1) 0%,
-    rgba(255,255,255,0.88) 11%,
-    rgba(255,255,255,0.42) 26%,
-    rgba(185,205,255,0.38) 44%,
-    rgba(85,115,195,0.52) 64%,
-    rgba(38,52,105,0.68) 84%,
-   rgba(107,143,232,0.18) 100%);
+    rgba(107,143,232,0.9) 0%,
+    rgba(107,143,232,0.7) 11%,
+    rgba(107,143,232,0.4) 26%,
+    rgba(107,143,232,0.3) 44%,
+    rgba(58,84,144,0.5) 64%,
+    rgba(30,42,74,0.7) 84%,
+    rgba(107,143,232,0.18) 100%);
   --td-root-panel-shadow: 0 18px 52px rgba(0,0,0,0.64),
-    0 0 0 1px rgba(107,143,232,0.18)
-    0 0 40px -10px rgba(255,255,255,0.10),
+    0 0 0 1px rgba(107,143,232,0.18),
+    0 0 40px -10px rgba(107,143,232,0.10),
     0 0 52px -12px rgba(70,100,190,0.26),
     inset 0 1px 0 rgba(255,255,255,0.24);
 
@@ -89,7 +86,7 @@
   position: relative;
 }
 
-/* Star field overlay */
+/* Star field overlay — consistent with market intelligence */
 .td-deck-with-tabs.td-layout-page::before {
   content: '';
   position: fixed;
@@ -97,7 +94,11 @@
   background-image: radial-gradient(2px 2px at 7% 6%, rgba(255,255,255,0.92), transparent),
                     radial-gradient(2.5px 2.5px at 34% 11%, rgba(255,255,255,0.88), transparent),
                     radial-gradient(2px 2px at 61% 4%, rgba(255,255,255,0.85), transparent),
-                    radial-gradient(2px 2px at 89% 14%, rgba(255,255,255,0.82), transparent);
+                    radial-gradient(2px 2px at 89% 14%, rgba(255,255,255,0.82), transparent),
+                    radial-gradient(2px 2px at 15% 32%, rgba(255,255,255,0.78), transparent),
+                    radial-gradient(2px 2px at 78% 27%, rgba(255,255,255,0.80), transparent),
+                    radial-gradient(2px 2px at 9% 12%, rgba(140,175,255,0.80), transparent),
+                    radial-gradient(2px 2px at 23% 18%, rgba(140,175,255,0.72), transparent);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   opacity: 0.22;
@@ -188,7 +189,7 @@
     rgba(252,253,255,0.99) 28%,
     rgba(200,215,255,0.96) 58%,
     rgba(120,150,220,0.92) 82%,
-    rgba(212,175,55,0.45) 100%);
+    rgba(107,143,232,0.75) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -196,7 +197,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   WORLD CLOCKS — Responsive analog clocks
+   WORLD CLOCKS — Responsive analog clocks (blue/navy themed)
 ═══════════════════════════════════════════════════════════════════════════ */
 .td-deck-world-clocks-rail {
   width: 100%;
@@ -237,7 +238,7 @@
 }
 
 .td-deck-analog-clock:hover .td-deck-analog-clock__face-wrap {
-  filter: drop-shadow(0 0 16px rgba(107,143,232,0.35)) 
+  filter: drop-shadow(0 0 16px rgba(107,143,232,0.45)) 
           drop-shadow(0 8px 24px rgba(0, 0, 0, 0.6));
 }
 
@@ -254,8 +255,13 @@
 
 .td-deck-analog-clock__rim-outer {
   fill: none;
-  stroke: rgba(107,143,232,0.42);
+  stroke: rgba(107,143,232,0.55);
   stroke-width: 1.15;
+  transition: stroke var(--td-root-transition-s);
+}
+
+.td-deck-analog-clock:hover .td-deck-analog-clock__rim-outer {
+  stroke: rgba(107,143,232,0.85);
 }
 
 .td-deck-analog-clock__rim {
@@ -265,7 +271,7 @@
 }
 
 .td-deck-analog-clock__dial {
-  stroke: rgba(107,143,232,0.22);
+  stroke: rgba(107,143,232,0.25);
   stroke-width: 0.55;
 }
 
@@ -286,6 +292,7 @@
 
 .td-deck-analog-clock__hand {
   stroke: rgba(255, 255, 255, 0.96);
+  stroke-linecap: round;
 }
 
 .td-deck-analog-clock__hand--hour {
@@ -300,12 +307,19 @@
 .td-deck-analog-clock__hand--second {
   stroke: rgba(107,143,232,0.98);
   stroke-width: 1.05;
+  filter: drop-shadow(0 0 2px rgba(107,143,232,0.6));
 }
 
 .td-deck-analog-clock__cap {
   fill: rgba(107,143,232,0.95);
   stroke: rgba(255, 255, 255, 0.35);
   stroke-width: 0.4;
+  transition: all var(--td-root-transition-s);
+}
+
+.td-deck-analog-clock:hover .td-deck-analog-clock__cap {
+  fill: rgba(107,143,232,1);
+  filter: drop-shadow(0 0 4px rgba(107,143,232,0.8));
 }
 
 .td-deck-analog-clock__city {
@@ -314,18 +328,25 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--td-root-text-dim);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(140, 175, 255, 0.85) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   white-space: nowrap;
   text-align: center;
-  transition: color var(--td-root-transition-s);
+  transition: all var(--td-root-transition-s);
+  text-shadow: 0 0 8px rgba(107,143,232,0.3);
 }
 
 .td-deck-analog-clock:hover .td-deck-analog-clock__city {
-  color: rgba(107,143,232,0.85);
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 12px rgba(107,143,232,0.5);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   MAIN TABS
+   MAIN TABS — Blue/navy gradient active state
 ═══════════════════════════════════════════════════════════════════════════ */
 .td-deck-main-tabs {
   display: flex;
@@ -347,6 +368,7 @@
   width: 80px;
   height: 1px;
   background: linear-gradient(90deg, var(--td-root-blue), rgba(107,143,232,0.18), transparent);
+  box-shadow: 0 0 6px rgba(107,143,232,0.35);
 }
 
 .td-deck-tabs {
@@ -357,9 +379,9 @@
 
 .td-deck-tab {
   padding: 10px 24px;
-  border: 1px solid rgba(107,143,232,0.2);
+  border: 1px solid rgba(107,143,232,0.25);
   border-radius: var(--td-root-radius-lg);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(107,143,232,0.05);
   color: var(--td-root-text-dim);
   font-family: var(--td-root-font);
   font-size: 0.85rem;
@@ -372,20 +394,20 @@
 
 .td-deck-tab:hover {
   background: var(--td-root-blue-dim);
-  border-color: rgba(107,143,232,0.4);
+  border-color: rgba(107,143,232,0.5);
   color: #fff;
   transform: translateY(-2px);
 }
 
 .td-deck-tab--active {
   background: linear-gradient(135deg, rgba(107,143,232,0.28), rgba(78,109,212,0.22));
-  border-color: rgba(107,143,232,0.6);
+  border-color: rgba(107,143,232,0.65);
   color: #fff;
-  box-shadow: 0 0 20px rgba(107,143,232,0.2);
+  box-shadow: 0 0 20px rgba(107,143,232,0.25);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   DIVIDER ROW WITH CALENDAR
+   DIVIDER ROW WITH CALENDAR — Blue accents
 ═══════════════════════════════════════════════════════════════════════════ */
 .td-deck-divider-row {
   display: flex;
@@ -402,8 +424,8 @@
   height: 1px;
   background: linear-gradient(90deg, 
     transparent,
-    rgba(107,143,232,0.25),
-    rgba(107,143,232,0.1),
+    rgba(107,143,232,0.35),
+    rgba(107,143,232,0.15),
     transparent);
   align-self: center;
 }
@@ -432,15 +454,16 @@
   background: rgba(4,5,18,0.5);
   border: 1px solid rgba(107,143,232,0.2);
   border-radius: 40px;
-  cursor: default;
+  cursor: pointer;
   transition: all var(--td-root-transition-s);
   backdrop-filter: blur(12px);
 }
 
 .td-deck-calendar-bar:hover {
   background: rgba(107,143,232,0.12);
-  border-color: rgba(107,143,232,0.4);
+  border-color: rgba(107,143,232,0.5);
   transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(107,143,232,0.1);
 }
 
 .td-deck-calendar-bar-btn {
@@ -450,8 +473,8 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  background: rgba(107,143,232,0.1);
   color: rgba(140,175,255,0.85);
   font-size: 1.25rem;
   cursor: pointer;
@@ -459,7 +482,7 @@
 }
 
 .td-deck-calendar-bar-btn:hover {
-  background: rgba(107,143,232,0.2);
+  background: rgba(107,143,232,0.25);
   color: #fff;
   transform: scale(1.05);
 }
@@ -499,7 +522,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   DAILY/WEEKLY SUB-TABS
+   DAILY/WEEKLY SUB-TABS — Blue theme
 ═══════════════════════════════════════════════════════════════════════════ */
 .td-deck-below-header {
   display: flex;
@@ -517,9 +540,9 @@
 
 .td-deck-sub-tab {
   padding: 8px 20px;
-  border: 1px solid rgba(107,143,232,0.2);
+  border: 1px solid rgba(107,143,232,0.25);
   border-radius: 40px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(107,143,232,0.05);
   color: var(--td-root-text-dim);
   font-family: var(--td-root-font);
   font-size: 0.8rem;
@@ -531,18 +554,20 @@
 
 .td-deck-sub-tab:hover {
   background: var(--td-root-blue-dim);
-  border-color: rgba(107,143,232,0.4);
+  border-color: rgba(107,143,232,0.5);
   color: #fff;
+  transform: translateY(-1px);
 }
 
 .td-deck-sub-tab--active {
   background: rgba(107,143,232,0.2);
-  border-color: rgba(107,143,232,0.5);
+  border-color: rgba(107,143,232,0.6);
   color: #fff;
+  box-shadow: 0 0 12px rgba(107,143,232,0.15);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CONTENT AREA — Glass panel
+   CONTENT AREA — Premium glass panel (aligned with market intelligence)
 ═══════════════════════════════════════════════════════════════════════════ */
 .td-deck-content {
   flex: 1;
@@ -573,12 +598,31 @@
   -webkit-backdrop-filter: blur(20px) saturate(1.12);
   box-shadow: var(--td-root-panel-shadow);
   transition: all var(--td-root-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top shimmer line — signature blue */
+.td-deck-content-box::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 5%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.22) 0%,
+    rgba(175,200,255,0.18) 40%,
+    rgba(107,143,232,0.08) 75%,
+    transparent 100%);
+  pointer-events: none;
+  z-index: 2;
 }
 
 .td-deck-content-box:hover {
   transform: translateY(-4px);
   box-shadow: 0 22px 60px rgba(0,0,0,0.70),
-              0 0 0 1px rgba(255,255,255,0.22),
+              0 0 0 1px rgba(107,143,232,0.22),
               0 0 48px -8px rgba(107,143,232,0.2);
 }
 
@@ -590,7 +634,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   JOURNAl-STYLE LAYOUT — Sidebar + Main
+   JOURNAL-STYLE LAYOUT — Sidebar + Main (Blue/navy accents)
 ═══════════════════════════════════════════════════════════════════════════ */
 .td-deck-jlayout {
   display: flex;
@@ -606,6 +650,7 @@
   max-height: calc(100vh - var(--nav-height) - 40px);
   overflow-y: auto;
   scrollbar-width: thin;
+  scrollbar-color: rgba(107,143,232,0.4) rgba(255,255,255,0.05);
 }
 
 .td-deck-jsidebar::-webkit-scrollbar {
@@ -618,7 +663,7 @@
 }
 
 .td-deck-jsidebar::-webkit-scrollbar-thumb {
-  background: rgba(107,143,232,0.4);
+  background: rgba(107,143,232,0.5);
   border-radius: 4px;
 }
 
@@ -633,7 +678,7 @@
 .td-deck-sidebar-period-label {
   font-size: 0.6rem;
   font-weight: 600;
-  color: rgba(107,143,232,0.6);
+  color: rgba(107,143,232,0.7);
   letter-spacing: 0.25em;
   text-transform: uppercase;
   margin: 0 0 12px;
@@ -664,28 +709,28 @@
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: rgba(4,5,18,0.5);
-  border: 1px solid rgba(107,143,232,0.12);
+  background: rgba(4,5,18,0.6);
+  border: 1px solid rgba(107,143,232,0.15);
   border-radius: var(--td-root-radius);
   transition: all var(--td-root-transition-s);
 }
 
 .td-deck-session-item:hover {
   background: rgba(107,143,232,0.08);
-  border-color: rgba(107,143,232,0.25);
+  border-color: rgba(107,143,232,0.35);
   transform: translateX(4px);
 }
 
 .td-deck-session-item--open {
   background: rgba(15,217,138,0.08);
-  border-color: rgba(15,217,138,0.25);
+  border-color: rgba(15,217,138,0.3);
 }
 
 .td-deck-session-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(107,143,232,0.4);
   flex-shrink: 0;
   transition: all var(--td-root-transition-s);
 }
@@ -740,8 +785,8 @@
   font-size: 1.2rem;
   flex-shrink: 0;
   background: rgba(4,5,18,0.6);
-  border: 1px solid rgba(107,143,232,0.2);
-  border-radius: 10px;
+  border: 1px solid rgba(107,143,232,0.25);
+  border-radius: 12px;
   color: rgba(140,175,255,0.85);
   cursor: pointer;
   transition: all var(--td-root-transition-s);
@@ -749,9 +794,10 @@
 
 .td-deck-nav-btn:hover {
   background: var(--td-root-blue-dim);
-  border-color: rgba(107,143,232,0.45);
+  border-color: rgba(107,143,232,0.55);
   color: #fff;
   transform: translateY(-2px);
+  box-shadow: 0 0 12px rgba(107,143,232,0.1);
 }
 
 .td-deck-main-dateinfo {
@@ -803,8 +849,8 @@
   font-family: var(--td-root-font);
   letter-spacing: 0.06em;
   color: var(--td-root-text-dim);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(107,143,232,0.2);
+  background: rgba(107,143,232,0.05);
+  border: 1px solid rgba(107,143,232,0.25);
   border-radius: 40px;
   cursor: pointer;
   transition: all var(--td-root-transition-s);
@@ -812,16 +858,16 @@
 
 .td-deck-main-tab-btn:hover {
   background: var(--td-root-blue-dim);
-  border-color: rgba(107,143,232,0.4);
+  border-color: rgba(107,143,232,0.5);
   color: #fff;
   transform: translateY(-2px);
 }
 
 .td-deck-main-tab-btn--active {
   background: linear-gradient(135deg, rgba(107,143,232,0.28), rgba(78,109,212,0.22));
-  border-color: rgba(107,143,232,0.6);
+  border-color: rgba(107,143,232,0.65);
   color: #fff;
-  box-shadow: 0 0 20px rgba(107,143,232,0.18);
+  box-shadow: 0 0 20px rgba(107,143,232,0.2);
 }
 
 .td-deck-tab-icon {
@@ -833,7 +879,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CALENDAR OVERLAY
+   CALENDAR OVERLAY — Blue/navy glass theme
 ═══════════════════════════════════════════════════════════════════════════ */
 .td-deck-calendar-overlay {
   position: fixed;
@@ -849,8 +895,8 @@
 .td-deck-calendar-overlay-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(16px);
 }
 
 .td-deck-calendar-overlay-content {
@@ -872,9 +918,9 @@
 
 .td-deck-calendar-overlay-close {
   padding: 12px 28px;
-  border: 1px solid rgba(107,143,232,0.3);
+  border: 1px solid rgba(107,143,232,0.35);
   border-radius: 40px;
-  background: rgba(4,5,18,0.8);
+  background: rgba(4,5,18,0.9);
   color: #fff;
   font-family: var(--td-root-font);
   font-size: 0.9rem;
@@ -886,8 +932,9 @@
 
 .td-deck-calendar-overlay-close:hover {
   background: var(--td-root-blue-dim);
-  border-color: rgba(107,143,232,0.6);
+  border-color: rgba(107,143,232,0.65);
   transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(107,143,232,0.15);
 }
 
 @keyframes td-overlay-fade {
@@ -896,7 +943,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   MARKET INTELLIGENCE PANELS — Responsive grid
+   MARKET INTELLIGENCE PANELS — Responsive grid (blue theme)
 ═══════════════════════════════════════════════════════════════════════════ */
 .td-deck-content .td-mi-grid {
   width: 100%;
@@ -910,14 +957,14 @@
   min-height: 0;
   padding: 20px 24px;
   background: rgba(4,5,18,0.5);
-  border: 1px solid rgba(107,143,232,0.12);
+  border: 1px solid rgba(107,143,232,0.15);
   border-radius: var(--td-root-radius-lg);
   transition: all var(--td-root-transition);
 }
 
 .td-deck-content .td-mi-panel:hover {
   transform: translateY(-4px);
-  border-color: rgba(107,143,232,0.3);
+  border-color: rgba(107,143,232,0.35);
   box-shadow: 0 12px 32px rgba(0,0,0,0.3);
 }
 
@@ -1440,7 +1487,7 @@
 .td-deck-inbox-footer {
   margin-top: 32px;
   padding-top: 28px;
-  border-top: 1px solid rgba(107,143,232,0.15);
+  border-top: 1px solid rgba(107,143,232,0.2);
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -1453,7 +1500,7 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(107,143,232,0.7);
+  color: rgba(107,143,232,0.8);
   margin: 0 0 16px;
 }
 
@@ -1474,7 +1521,7 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Focus styles for accessibility */
+/* Focus styles for accessibility — blue outline */
 .td-deck-tab:focus-visible,
 .td-deck-sub-tab:focus-visible,
 .td-deck-main-tab-btn:focus-visible,

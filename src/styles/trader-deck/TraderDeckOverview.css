@@ -62,11 +62,11 @@
 }
 
 .td-overview-kpi-value--green {
-  color: #f8c37d;
+  color: #6b8fe8;
 }
 
 .td-overview-kpi-value--red {
-  color: #9a8f84;
+  color: #F03D5F;
 }
 
 /* Monthly + calendar */
@@ -140,8 +140,8 @@
 }
 
 .td-overview-month-nav-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(234, 169, 96, 0.4);
+  background: rgba(107, 143, 232, 0.12);
+  border-color: rgba(107, 143, 232, 0.45);
 }
 
 .td-overview-month-nav-label {
@@ -201,8 +201,8 @@
 }
 
 .td-overview-cal-day--today {
-  border-color: rgba(248, 195, 125, 0.5);
-  box-shadow: 0 0 0 1px rgba(248, 195, 125, 0.3);
+  border-color: rgba(107, 143, 232, 0.6);
+  box-shadow: 0 0 0 1px rgba(107, 143, 232, 0.4);
 }
 
 .td-overview-cal-day--selected {

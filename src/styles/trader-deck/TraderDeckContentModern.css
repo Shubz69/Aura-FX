@@ -20,6 +20,57 @@
      iPad Pro 12.9" landscape  1366px → xl
    ============================================================================= */
 
+/* =============================================================================
+   FORCE BLUE THEME - Override any inherited gold variables
+   ============================================================================= */
+
+/* Root level overrides for all trader deck components */
+.td-deck-with-tabs.td-layout-page,
+.journal-page .td-deck-with-tabs.td-layout-page {
+  --journal-panel-border: linear-gradient(135deg,
+    rgba(107,143,232,0.9) 0%,
+    rgba(107,143,232,0.7) 11%,
+    rgba(107,143,232,0.4) 26%,
+    rgba(107,143,232,0.3) 44%,
+    rgba(58,84,144,0.5) 64%,
+    rgba(30,42,74,0.7) 84%,
+    rgba(107,143,232,0.18) 100%) !important;
+
+  --journal-panel-border-hover: linear-gradient(135deg,
+    rgba(140,175,255,1) 0%,
+    rgba(107,143,232,0.85) 9%,
+    rgba(107,143,232,0.55) 24%,
+    rgba(107,143,232,0.4) 42%,
+    rgba(58,84,144,0.65) 62%,
+    rgba(30,42,74,0.8) 82%,
+    rgba(107,143,232,0.25) 100%) !important;
+
+  --journal-panel-outer-glow: 0 18px 52px rgba(0,0,0,0.64),
+    0 0 0 1px rgba(107,143,232,0.18),
+    0 0 40px -10px rgba(107,143,232,0.10),
+    0 0 52px -12px rgba(70,100,190,0.26),
+    0 8px 30px -12px rgba(12,16,40,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.24) !important;
+
+  --journal-panel-outer-glow-hover: 0 22px 60px rgba(0,0,0,0.70),
+    0 0 0 1px rgba(107,143,232,0.22),
+    0 0 48px -8px rgba(107,143,232,0.13),
+    0 0 60px -10px rgba(85,115,205,0.32),
+    0 10px 34px -10px rgba(15,20,48,0.48),
+    inset 0 1px 0 rgba(255,255,255,0.30) !important;
+}
+
+/* Also force override any gold rgba values that might be inherited */
+.td-deck-with-tabs.td-layout-page,
+.journal-page .td-deck-with-tabs.td-layout-page {
+  --gold: #6b8fe8 !important;
+  --gold-bright: #8cafff !important;
+  --gold-warm: #5a7ed8 !important;
+  --gold-soft: #7a9ae8 !important;
+  --gold-pale: #b8d0ff !important;
+  --gold-dim: rgba(107,143,232,0.32) !important;
+  --gold-glow: rgba(107,143,232,0.22) !important;
+}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    BASE — box-sizing + fluid resets
@@ -48,14 +99,14 @@
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
   margin-bottom: 18px;
   padding: 18px 18px 16px;
-  border-radius: var(--radius-xl);
-  border: 1px solid transparent;
-  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  border-radius: 16px;
+  border: 1px solid rgba(107, 143, 232, 0.25);
+  background: linear-gradient(168deg, rgba(4,5,18,0.92) 0%, rgba(5,6,20,0.89) 100%);
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
-  box-shadow: var(--journal-panel-outer-glow);
-  backdrop-filter: blur(20px) saturate(1.06);
-  -webkit-backdrop-filter: blur(20px) saturate(1.06);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px) saturate(1.12);
+  -webkit-backdrop-filter: blur(16px) saturate(1.12);
   overflow: hidden;
   width: 100%;
 }
@@ -103,7 +154,7 @@
 
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar .td-deck-header-line-left,
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar .td-deck-header-line-right {
-  background: var(--line-gold);
+  background: linear-gradient(90deg, transparent, rgba(107,143,232,0.6), rgba(107,143,232,0.3), transparent);
   height: 1px;
   opacity: 0.85;
 }
@@ -202,7 +253,242 @@
   background: rgba(107, 143, 232, 0.06);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
+/* =============================================================================
+   SESSION COUNTDOWNS - Centralized & Professional Layout
+   Aligns session items with their countdown chips in a clean, professional grid
+   ============================================================================= */
 
+/* Centralize the countdowns container and control its width */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdowns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center; /* Center the chips */
+  gap: 12px 16px;
+  width: 100%;
+  max-width: 800px; /* Control max width - not too long */
+  margin: 0 auto; /* Center the container */
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(107, 143, 232, 0.22);
+  background: rgba(107, 143, 232, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Create a grid layout for session items with their countdowns */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Individual session card - contains both the session item and its countdown */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 100px;
+  flex: 0 1 auto;
+  background: rgba(107, 143, 232, 0.03);
+  border-radius: 12px;
+  padding: 8px 12px 10px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card:hover {
+  background: rgba(107, 143, 232, 0.08);
+  border-color: rgba(107, 143, 232, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Session item styling - aligned at top */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Session name styling */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Session status */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-status {
+  font-size: 0.62rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(107, 143, 232, 0.15);
+  color: rgba(140, 175, 255, 0.9);
+}
+
+/* Countdown chip - positioned under the session item */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-countdown-chip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px 6px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 6px 10px;
+  background: rgba(107, 143, 232, 0.08);
+  border-radius: 24px;
+  width: auto;
+  text-align: center;
+}
+
+/* Countdown name styling */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-countdown-name {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(140, 175, 255, 0.98);
+  font-size: 0.7rem;
+}
+
+/* Countdown phrase styling */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-countdown-phrase {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.58rem;
+  color: rgba(140, 175, 255, 0.85);
+}
+
+/* ETA value styling */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-countdown-eta {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.72rem;
+}
+
+/* Responsive Adjustments */
+
+/* Tablets (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-grid {
+    gap: 12px;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card {
+    min-width: 85px;
+    padding: 6px 10px 8px;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdowns {
+    max-width: 700px;
+    padding: 10px 12px;
+  }
+}
+
+/* Mobile Landscape (480px - 768px) */
+@media (min-width: 480px) and (max-width: 767px) {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-grid {
+    gap: 10px;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card {
+    min-width: 75px;
+    padding: 6px 8px 8px;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-name {
+    font-size: 0.68rem;
+    white-space: normal;
+    word-break: keep-all;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-countdown-chip {
+    font-size: 0.6rem;
+    padding: 4px 8px;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdowns {
+    max-width: 100%;
+    padding: 8px 10px;
+  }
+}
+
+/* Mobile Portrait (320px - 479px) */
+@media (max-width: 479px) {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-grid {
+    gap: 8px;
+    justify-content: center;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card {
+    min-width: 70px;
+    padding: 4px 6px 6px;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-item {
+    padding: 4px 8px;
+    margin-bottom: 4px;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-name {
+    font-size: 0.6rem;
+    white-space: normal;
+    word-break: keep-all;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-status {
+    font-size: 0.55rem;
+    padding: 1px 6px;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-countdown-chip {
+    font-size: 0.55rem;
+    padding: 3px 6px;
+    gap: 2px 4px;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-countdown-name {
+    font-size: 0.6rem;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-countdown-phrase {
+    font-size: 0.5rem;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-card .td-deck-session-countdown-eta {
+    font-size: 0.62rem;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdowns {
+    padding: 6px 8px;
+    gap: 8px;
+  }
+}
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-countdown-chip {
   display: inline-flex;
   flex-wrap: wrap;
@@ -307,18 +593,29 @@
   align-items: center;
   justify-content: center;
 }
+.td-deck-with-tabs.td-layout-page .td-deck-main-tab-rail .td-deck-tab:hover {
+  background: rgba(107, 143, 232, 0.12);
+  border-color: rgba(107, 143, 232, 0.45);
+  color: #fff;
+}
 
+.td-deck-with-tabs.td-layout-page .td-deck-main-tab-rail .td-deck-tab--active {
+  color: #fff !important;
+  background: linear-gradient(135deg, rgba(107, 143, 232, 0.28), rgba(78, 109, 212, 0.22)) !important;
+  border-color: rgba(107, 143, 232, 0.6) !important;
+  box-shadow: 0 0 20px rgba(107, 143, 232, 0.22) !important;
+}
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab:hover {
   color: rgba(255, 255, 255, 0.92);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(107, 143, 232, 0.12);
 }
 
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab--active {
   color: #fff !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(160, 185, 240, 0.38) !important;
+  background: rgba(107, 143, 232, 0.2) !important;
+  border: 1px solid rgba(107, 143, 232, 0.5) !important;
   box-shadow:
-    0 0 14px rgba(70, 100, 190, 0.15),
+    0 0 14px rgba(107, 143, 232, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
@@ -352,6 +649,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  background: rgba(107, 143, 232, 0.05);
+  border: 1px solid rgba(107, 143, 232, 0.25);
+  color: rgba(232, 235, 255, 0.75);
 }
 
 /* Main tab rail — horizontal scroll on small screens */
@@ -1430,8 +1730,8 @@
   margin-bottom: 22px;
   padding: 18px 20px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(20, 28, 55, 0.35) 0%, rgba(3, 2, 10, 0.65) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(135deg, rgba(20, 28, 55, 0.4) 0%, rgba(3, 2, 10, 0.7) 100%);
+  border: 1px solid rgba(107, 143, 232, 0.15);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
@@ -1445,6 +1745,15 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   color: #fff;
+   background: linear-gradient(125deg,
+    #ffffff 0%,
+    rgba(252,253,255,0.99) 28%,
+    rgba(200,215,255,0.96) 58%,
+    rgba(120,150,220,0.92) 82%,
+    rgba(107,143,232,0.75) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   line-height: 1.35;
 }
 
@@ -1628,8 +1937,8 @@
   margin-bottom: 22px;
   padding: 20px 22px;
   border-radius: 16px;
-  background: linear-gradient(125deg, rgba(15, 22, 48, 0.5) 0%, rgba(3, 2, 10, 0.72) 55%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+   background: linear-gradient(125deg, rgba(15, 22, 48, 0.55) 0%, rgba(3, 2, 10, 0.75) 55%);
+  border: 1px solid rgba(107, 143, 232, 0.15);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 14px 44px rgba(0, 0, 0, 0.4);
@@ -1643,6 +1952,15 @@
   font-size: clamp(1.05rem, 2.4vw, 1.35rem);
   font-weight: 600;
   color: #fff;
+   background: linear-gradient(125deg,
+    #ffffff 0%,
+    rgba(252,253,255,0.99) 28%,
+    rgba(200,215,255,0.96) 58%,
+    rgba(120,150,220,0.92) 82%,
+    rgba(107,143,232,0.75) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   letter-spacing: 0.03em;
   line-height: 1.3;
 }
@@ -1865,8 +2183,8 @@
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card:hover {
-  border-color: rgba(107, 143, 232, 0.28);
-  background: rgba(107, 143, 232, 0.04);
+  border-color: rgba(107, 143, 232, 0.4);
+  background: rgba(107, 143, 232, 0.1);
 }
 .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-title {
   font-weight: 500;
@@ -3338,18 +3656,28 @@
   height: 100% !important;
   border-radius: 100% 100% 0 0 !important;
   overflow: hidden !important;
+  background: conic-gradient(
+    from 180deg at 50% 100%,
+    #1e2a4a 0deg,      /* Navy Deep - Extreme Risk Off */
+    #2c3e66 24deg,     /* Navy Mid - Risk Off */
+    #3a5490 48deg,     /* Navy Light - Neutral */
+    #6b8fe8 72deg,     /* Blue - Moderate Risk On */
+    #8cafff 108deg,    /* Light Blue - Risk On */
+    #E8C658 144deg,    /* Gold Bright - Strong Risk On */
+    #D4AF37 180deg     /* Gold - Strong Risk On */
+  ) !important;
 }
 
 /* Ensure the conic gradient fills properly */
-.td-outlook-panel--pulse .td-mi-gauge-arc-bg {
+.td-outlook-panel--pulse .td-mi-gauge-arc-glow {
   background: conic-gradient(
     from 180deg at 50% 100%,
-    #F03D5F 0deg,
-    #8B5CF6 36deg,
-    #6b8fe8 72deg,
-    #38bdf8 108deg,
-    #4e6dd4 144deg,
-    #0FD98A 180deg
+    rgba(44, 62, 102, 0.25) 0deg,    /* Navy Deep glow */
+    rgba(58, 84, 144, 0.28) 36deg,   /* Navy Mid glow */
+    rgba(90, 126, 216, 0.28) 72deg,  /* Blue glow */
+    rgba(107, 143, 232, 0.30) 108deg, /* Bright Blue glow */
+    rgba(140, 175, 255, 0.28) 144deg, /* Light Blue glow */
+    rgba(212, 175, 55, 0.20) 180deg   /* Gold whisper glow */
   ) !important;
 }
 
@@ -3368,6 +3696,7 @@
 }
 
 /* Gauge glow overlay */
+/* Gauge glow overlay */
 .td-outlook-panel--pulse .td-mi-gauge-arc-glow {
   position: absolute !important;
   left: 4px !important;
@@ -3377,12 +3706,16 @@
   border-radius: 100% 100% 0 0 !important;
   background: conic-gradient(
     from 180deg at 50% 100%,
-    rgba(240, 61, 95, 0.22) 0deg,
-    rgba(107, 143, 232, 0.30) 108deg,
-    rgba(15, 217, 138, 0.22) 180deg
+    rgba(30, 42, 74, 0.2) 0deg,      /* Navy Deep glow */
+    rgba(44, 62, 102, 0.25) 24deg,   /* Navy Mid glow */
+    rgba(58, 84, 144, 0.28) 48deg,   /* Navy Light glow */
+    rgba(107, 143, 232, 0.30) 72deg, /* Blue glow */
+    rgba(140, 175, 255, 0.32) 108deg,/* Light Blue glow */
+    rgba(232, 198, 88, 0.4) 144deg,  /* Gold Bright glow */
+    rgba(212, 175, 55, 0.35) 180deg  /* Gold glow */
   ) !important;
   pointer-events: none !important;
-  mix-blend-mode: overlay !important;
+  mix-blend-mode: normal !important;
 }
 
 /* Needle styling */
@@ -3492,7 +3825,7 @@ background: radial-gradient(circle at 38% 35%,
   }
     /* Ensure arc-bg is not overridden */
   .td-outlook-panel--pulse .td-mi-gauge-arc-bg {
-    width: 100% !important;
+    width: 94% !important;
     height: 100% !important;
     left: 0 !important;
     right: 0 !important;
@@ -4006,4 +4339,517 @@ background: radial-gradient(circle at 38% 35%,
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
+}
+/* Add at the end of your file, after the existing overrides */
+
+/* Force remove gold glows from main inner container and its children */
+.td-deck-main-inner--modern .td-outlook-panel,
+.td-deck-main-inner--modern .td-outlook-panel:hover {
+  --journal-panel-border: linear-gradient(135deg,
+    rgba(255,255,255,1)     0%,
+    rgba(255,255,255,0.88)  11%,
+    rgba(255,255,255,0.42)  26%,
+    rgba(185,205,255,0.38)  44%,
+    rgba(85,115,195,0.52)   64%,
+    rgba(38,52,105,0.68)    84%,
+    rgba(107,143,232,0.18)  100%) !important;
+  
+  --journal-panel-border-hover: linear-gradient(135deg,
+    rgba(255,255,255,1)     0%,
+    rgba(255,255,255,0.92)   9%,
+    rgba(255,255,255,0.48)  24%,
+    rgba(195,215,255,0.44)  42%,
+    rgba(95,125,210,0.60)   62%,
+    rgba(45,58,118,0.74)    82%,
+    rgba(107,143,232,0.22)  100%) !important;
+  
+  --journal-panel-outer-glow: 0 18px 52px rgba(0,0,0,0.64),
+    0 0 0 1px rgba(107,143,232,0.18),
+    0 0 40px -10px rgba(107,143,232,0.10),
+    0 0 52px -12px rgba(70,100,190,0.26),
+    0 8px 30px -12px rgba(12,16,40,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.24) !important;
+  
+  --journal-panel-outer-glow-hover: 0 22px 60px rgba(0,0,0,0.70),
+    0 0 0 1px rgba(107,143,232,0.22),
+    0 0 48px -8px rgba(107,143,232,0.13),
+    0 0 60px -10px rgba(85,115,205,0.32),
+    0 10px 34px -10px rgba(15,20,48,0.48),
+    inset 0 1px 0 rgba(255,255,255,0.30) !important;
+}
+
+/* Also override the panel top shimmer line */
+.td-deck-main-inner--modern .td-outlook-panel::before {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.98) 0%,
+    rgba(255,255,255,0.58) 28%,
+    rgba(175,200,255,0.42) 55%,
+    rgba(107,143,232,0.18) 86%,
+    transparent 100%
+  ) !important;
+}
+
+/* Override the panel title underline */
+.td-deck-main-inner--modern .td-outlook-panel .td-mi-panel-title::after {
+  box-shadow: 0 0 6px rgba(107, 143, 232, 0.35) !important;
+  background: linear-gradient(90deg, rgba(107,143,232,0.90), rgba(107,143,232,0.25), transparent) !important;
+}
+/* =============================================================================
+   PROFESSIONAL SESSION ROW - Single row with all sessions
+   All sessions aligned horizontally in one professional card
+   ============================================================================= */
+
+/* Main container - horizontal row that scrolls on mobile */
+.td-deck-sessions-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 1px;
+  width: 100%;
+  background: rgba(107, 143, 232, 0.08);
+  border-radius: 16px;
+  border: 1px solid rgba(107, 143, 232, 0.2);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 143, 232, 0.4) transparent;
+}
+
+.td-deck-sessions-row::-webkit-scrollbar {
+  height: 3px;
+}
+
+.td-deck-sessions-row::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.td-deck-sessions-row::-webkit-scrollbar-thumb {
+  background: rgba(107, 143, 232, 0.4);
+  border-radius: 3px;
+}
+
+/* Individual session tile - each session gets equal space */
+.td-deck-session-tile {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, 
+    rgba(107, 143, 232, 0.02) 0%,
+    rgba(107, 143, 232, 0.04) 100%);
+  border-right: 1px solid rgba(107, 143, 232, 0.12);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.td-deck-session-tile:first-child {
+  border-top-left-radius: 16px;
+  border-bottom-left-radius: 16px;
+}
+
+.td-deck-session-tile:last-child {
+  border-right: none;
+  border-top-right-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+.td-deck-session-tile:hover {
+  background: linear-gradient(135deg, 
+    rgba(107, 143, 232, 0.08) 0%,
+    rgba(107, 143, 232, 0.12) 100%);
+  transform: translateY(-2px);
+}
+
+/* Session header section */
+.td-deck-session-tile-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Dot indicator */
+.td-deck-session-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4a5568;
+  flex-shrink: 0;
+}
+
+.td-deck-session-dot--open {
+  background-color: #0FD98A;
+  box-shadow: 0 0 6px rgba(15, 217, 138, 0.5);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.2); }
+}
+
+/* Session name */
+.td-deck-session-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.92);
+  text-transform: uppercase;
+}
+
+/* Session status badge */
+.td-deck-session-status {
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background: rgba(74, 85, 104, 0.3);
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.03em;
+}
+
+.td-deck-session-status--open {
+  background: rgba(15, 217, 138, 0.15);
+  color: #0FD98A;
+}
+
+/* Countdown section */
+.td-deck-session-tile-countdown {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(107, 143, 232, 0.2);
+}
+
+.td-deck-session-countdown-phrase {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(140, 175, 255, 0.8);
+}
+
+.td-deck-session-countdown-eta {
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(107, 143, 232, 0.2);
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+  font-family: monospace;
+}
+
+/* =============================================================================
+   RESPONSIVE DESIGN - Adapts beautifully to all screen sizes
+   ============================================================================= */
+
+/* Desktop (1100px+) - All sessions visible in one row */
+@media (min-width: 1100px) {
+  .td-deck-sessions-row {
+    overflow-x: visible;
+  }
+  
+  .td-deck-session-tile {
+    min-width: 150px;
+    padding: 14px 18px;
+  }
+  
+  .td-deck-session-name {
+    font-size: 0.85rem;
+  }
+  
+  .td-deck-session-countdown-eta {
+    font-size: 0.78rem;
+  }
+}
+
+/* Tablet Landscape / iPad Landscape (900px - 1099px) */
+@media (min-width: 900px) and (max-width: 1099px) {
+  .td-deck-session-tile {
+    min-width: 130px;
+    padding: 10px 12px;
+  }
+  
+  .td-deck-session-name {
+    font-size: 0.75rem;
+  }
+  
+  .td-deck-session-status {
+    font-size: 0.55rem;
+    padding: 2px 5px;
+  }
+  
+  .td-deck-session-tile-header {
+    gap: 6px;
+  }
+  
+  .td-deck-session-countdown-phrase {
+    font-size: 0.55rem;
+  }
+  
+  .td-deck-session-countdown-eta {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+  }
+}
+
+/* Tablet Portrait (768px - 899px) */
+@media (min-width: 768px) and (max-width: 899px) {
+  .td-deck-sessions-row {
+    gap: 0;
+  }
+  
+  .td-deck-session-tile {
+    min-width: 120px;
+    padding: 10px 12px;
+  }
+  
+  .td-deck-session-name {
+    font-size: 0.7rem;
+  }
+  
+  .td-deck-session-status {
+    font-size: 0.5rem;
+    padding: 2px 4px;
+  }
+  
+  .td-deck-session-tile-header {
+    gap: 5px;
+  }
+  
+  .td-deck-session-tile-countdown {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .td-deck-session-countdown-phrase {
+    font-size: 0.52rem;
+  }
+  
+  .td-deck-session-countdown-eta {
+    font-size: 0.65rem;
+    padding: 2px 5px;
+  }
+}
+
+/* Mobile Landscape (480px - 767px) - Horizontal scroll enabled */
+@media (min-width: 480px) and (max-width: 767px) {
+  .td-deck-sessions-row {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  
+  .td-deck-session-tile {
+    min-width: 160px;
+    scroll-snap-align: start;
+    padding: 10px 14px;
+  }
+  
+  .td-deck-session-name {
+    font-size: 0.78rem;
+  }
+  
+  .td-deck-session-status {
+    font-size: 0.55rem;
+    padding: 2px 6px;
+  }
+  
+  .td-deck-session-tile-countdown {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .td-deck-session-countdown-phrase {
+    font-size: 0.58rem;
+  }
+  
+  .td-deck-session-countdown-eta {
+    font-size: 0.7rem;
+  }
+}
+
+/* Mobile Portrait (320px - 479px) */
+@media (min-width: 320px) and (max-width: 479px) {
+  .td-deck-sessions-row {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 0;
+  }
+  
+  .td-deck-session-tile {
+    min-width: 140px;
+    scroll-snap-align: start;
+    padding: 10px 12px;
+  }
+  
+  .td-deck-session-dot {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .td-deck-session-name {
+    font-size: 0.7rem;
+  }
+  
+  .td-deck-session-status {
+    font-size: 0.5rem;
+    padding: 2px 5px;
+  }
+  
+  .td-deck-session-tile-header {
+    gap: 6px;
+  }
+  
+  .td-deck-session-tile-countdown {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .td-deck-session-countdown-phrase {
+    font-size: 0.5rem;
+  }
+  
+  .td-deck-session-countdown-eta {
+    font-size: 0.62rem;
+    padding: 2px 5px;
+  }
+}
+
+/* Extra Small Mobile (< 320px) */
+@media (max-width: 319px) {
+  .td-deck-sessions-row {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  
+  .td-deck-session-tile {
+    min-width: 130px;
+    scroll-snap-align: start;
+    padding: 8px 10px;
+  }
+  
+  .td-deck-session-dot {
+    width: 5px;
+    height: 5px;
+  }
+  
+  .td-deck-session-name {
+    font-size: 0.65rem;
+  }
+  
+  .td-deck-session-status {
+    font-size: 0.45rem;
+    padding: 1px 4px;
+  }
+  
+  .td-deck-session-tile-countdown {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+  
+  .td-deck-session-countdown-phrase {
+    font-size: 0.45rem;
+  }
+  
+  .td-deck-session-countdown-eta {
+    font-size: 0.58rem;
+    padding: 1px 4px;
+  }
+}
+
+/* =============================================================================
+   TOUCH DEVICE OPTIMIZATIONS
+   ============================================================================= */
+
+@media (pointer: coarse) {
+  .td-deck-session-tile {
+    cursor: pointer;
+  }
+  
+  .td-deck-session-tile:active {
+    transform: scale(0.98);
+  }
+}
+
+/* =============================================================================
+   ANIMATIONS & VISUAL POLISH
+   ============================================================================= */
+
+/* Smooth entry animation */
+.td-deck-sessions-row {
+  animation: slideUp 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1) both;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Individual tile hover effects */
+.td-deck-session-tile {
+  transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.td-deck-session-tile:hover .td-deck-session-countdown-eta {
+  background: rgba(107, 143, 232, 0.35);
+  transform: scale(1.05);
+}
+
+/* Staggered animation for tiles */
+.td-deck-session-tile {
+  animation: fadeInTile 0.3s ease forwards;
+  opacity: 0;
+}
+
+.td-deck-session-tile:nth-child(1) { animation-delay: 0.02s; }
+.td-deck-session-tile:nth-child(2) { animation-delay: 0.06s; }
+.td-deck-session-tile:nth-child(3) { animation-delay: 0.1s; }
+.td-deck-session-tile:nth-child(4) { animation-delay: 0.14s; }
+.td-deck-session-tile:nth-child(5) { animation-delay: 0.18s; }
+.td-deck-session-tile:nth-child(6) { animation-delay: 0.22s; }
+
+@keyframes fadeInTile {
+  to {
+    opacity: 1;
+  }
+}
+
+/* =============================================================================
+   BLUE THEME CONSISTENCY - No gold tints
+   ============================================================================= */
+
+.journal-page .td-deck-sessions-row {
+  background: rgba(107, 143, 232, 0.06);
+  border-color: rgba(107, 143, 232, 0.25);
+}
+
+.journal-page .td-deck-session-tile {
+  border-right-color: rgba(107, 143, 232, 0.15);
+}
+
+.journal-page .td-deck-session-tile:hover {
+  background: linear-gradient(135deg, 
+    rgba(107, 143, 232, 0.1) 0%,
+    rgba(107, 143, 232, 0.14) 100%);
+}
+
+.journal-page .td-deck-session-countdown-eta {
+  background: rgba(107, 143, 232, 0.25);
 }

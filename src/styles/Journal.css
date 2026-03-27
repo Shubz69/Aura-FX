@@ -95,8 +95,8 @@
   to   { width: 100%; }
 }
 @keyframes streakFlicker {
-  0%,100% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.22)) drop-shadow(0 0 16px rgba(90,120,200,0.28)) drop-shadow(0 0 12px rgba(212,175,55,0.14)); }
-  50%      { filter: drop-shadow(0 0 14px rgba(255,255,255,0.32)) drop-shadow(0 0 22px rgba(100,135,215,0.38)) drop-shadow(0 0 14px rgba(212,175,55,0.22)); }
+  0%,100% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.22)) drop-shadow(0 0 16px rgba(90,120,200,0.28)) drop-shadow(0 0 12px rgba(107,143,232,0.14)); }
+  50%      { filter: drop-shadow(0 0 14px rgba(255,255,255,0.32)) drop-shadow(0 0 22px rgba(100,135,215,0.38)) drop-shadow(0 0 14px rgba(107,143,232,0.22)); }
 }
 
 /* ── Twinkling star animations — different speeds & phases ── */
