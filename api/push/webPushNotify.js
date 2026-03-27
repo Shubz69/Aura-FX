@@ -5,6 +5,7 @@
 
 const webpush = require('web-push');
 const { executeQuery } = require('../db');
+const { debugAgentLog } = require('../utils/debugAgentLog');
 
 let vapidConfigured = false;
 let vapidMissingLogged = false;
@@ -70,7 +71,16 @@ function pushPayloadType(type) {
 async function sendWebPushForNotification(opts) {
   const { userId, notificationId, type, title, body = '', meta, channelId = null } = opts;
   if (!userId || !notificationId) return;
-  if (!ensureVapid()) return;
+  const vapidOk = ensureVapid();
+  // #region agent log
+  debugAgentLog({
+    location: 'webPushNotify.js:sendWebPushForNotification',
+    message: 'push path: vapid check',
+    hypothesisId: 'H1',
+    data: { vapidOk, userId: Number(userId), type: String(type || '') },
+  });
+  // #endregion
+  if (!vapidOk) return;
 
   const url = resolveOpenUrl(type, meta, channelId);
   const payload = JSON.stringify({
@@ -93,13 +103,50 @@ async function sendWebPushForNotification(opts) {
     return;
   }
 
-  if (!Array.isArray(rows) || rows.length === 0) return;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    // #region agent log
+    debugAgentLog({
+      location: 'webPushNotify.js:sendWebPushForNotification',
+      message: 'no push subscriptions for user',
+      hypothesisId: 'H2',
+      data: { userId: Number(userId), subscriptionCount: 0 },
+    });
+    // #endregion
+    return;
+  }
+
+  // #region agent log
+  debugAgentLog({
+    location: 'webPushNotify.js:sendWebPushForNotification',
+    message: 'sending web push batch',
+    hypothesisId: 'H2',
+    data: { userId: Number(userId), subscriptionCount: rows.length },
+  });
+  // #endregion
 
   // Keep latency bounded under high subscription counts.
+  let ok = 0;
+  let fail = 0;
+  let lastFailStatus = null;
   for (let i = 0; i < rows.length; i += PUSH_BATCH_SIZE) {
     const batch = rows.slice(i, i + PUSH_BATCH_SIZE);
-    await Promise.allSettled(batch.map((row) => sendOneSubscription(row, payload)));
+    const settled = await Promise.all(batch.map((row) => sendOneSubscription(row, payload)));
+    for (const r of settled) {
+      if (r && r.ok) ok += 1;
+      else {
+        fail += 1;
+        if (r && r.status != null) lastFailStatus = r.status;
+      }
+    }
   }
+  // #region agent log
+  debugAgentLog({
+    location: 'webPushNotify.js:sendWebPushForNotification',
+    message: 'push batch complete',
+    hypothesisId: 'H4',
+    data: { userId: Number(userId), ok, fail, lastFailStatus },
+  });
+  // #endregion
 }
 
 async function sendOneSubscription(row, payload) {
@@ -112,6 +159,7 @@ async function sendOneSubscription(row, payload) {
       webpush.sendNotification(sub, payload, { TTL: 86400 }),
       PUSH_SEND_TIMEOUT_MS
     );
+    return { ok: true };
   } catch (err) {
     const status = err.statusCode;
     if (status === 404 || status === 410) {
@@ -121,6 +169,7 @@ async function sendOneSubscription(row, payload) {
     } else {
       console.warn('[webPush] send failed:', status || err.message);
     }
+    return { ok: false, status: status || null, errMsg: String(err.message || '').slice(0, 80) };
   }
 }
 

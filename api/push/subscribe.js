@@ -71,6 +71,22 @@ module.exports = async (req, res) => {
         [userId, subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth]
       );
 
+      // #region agent log
+      try {
+        const { debugAgentLog } = require('../utils/debugAgentLog');
+        let endpointHost = 'invalid';
+        try {
+          endpointHost = new URL(subscription.endpoint).host;
+        } catch (_) {}
+        debugAgentLog({
+          location: 'push/subscribe.js:POST',
+          message: 'push subscription saved',
+          hypothesisId: 'H5',
+          data: { userId: Number(userId), endpointHost },
+        });
+      } catch (_) {}
+      // #endregion
+
       return res.status(200).json({ success: true, message: 'Subscription saved' });
     }
 

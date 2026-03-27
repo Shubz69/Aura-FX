@@ -66,16 +66,20 @@ async function notifyChannelActivityOptIn(db, params) {
     for (const row of rows || []) {
       const uid = row.user_id;
       if (excludeUserIds && excludeUserIds.has(uid)) continue;
-      cn({
-        userId: uid,
-        type: 'CHANNEL_ACTIVITY',
-        title: activityTitle,
-        body: activityBody,
-        channelId: channelIdForDb,
-        messageId,
-        fromUserId: senderId,
-        meta: notifMeta
-      }).catch((err) => console.warn('Channel activity notification create failed:', err.message));
+      try {
+        await cn({
+          userId: uid,
+          type: 'CHANNEL_ACTIVITY',
+          title: activityTitle,
+          body: activityBody,
+          channelId: channelIdForDb,
+          messageId,
+          fromUserId: senderId,
+          meta: notifMeta
+        });
+      } catch (err) {
+        console.warn('Channel activity notification create failed:', err.message);
+      }
       await db.execute(
         'UPDATE channel_push_prefs SET last_push_at = NOW() WHERE user_id = ? AND channel_id = ?',
         [uid, channelIdStr]
@@ -895,18 +899,24 @@ module.exports = async (req, res) => {
           }
 
           try {
-            for (const targetUserId of userIdsToNotify) {
-              createNotification({
-                userId: targetUserId,
-                type: 'MENTION',
-                title: mentionTitle,
-                body: mentionBodyText,
-                channelId: channelIdForDb,
-                messageId: newMessage.id,
-                fromUserId: senderId,
-                meta: notifMeta
-              }).catch(err => console.warn('Mention notification create failed:', err.message));
-            }
+            await Promise.all(
+              [...userIdsToNotify].map(async (targetUserId) => {
+                try {
+                  await createNotification({
+                    userId: targetUserId,
+                    type: 'MENTION',
+                    title: mentionTitle,
+                    body: mentionBodyText,
+                    channelId: channelIdForDb,
+                    messageId: newMessage.id,
+                    fromUserId: senderId,
+                    meta: notifMeta
+                  });
+                } catch (err) {
+                  console.warn('Mention notification create failed:', err.message);
+                }
+              })
+            );
           } catch (mentionErr) {
             console.warn('Mention notification create failed:', mentionErr.message);
           }

@@ -369,25 +369,48 @@ module.exports = async (req, res) => {
       await db.execute('UPDATE threads SET lastMessageAt = NOW() WHERE id = ?', [threadId]);
 
       // Notify recipient: admin→user (recipientId is user id) or user→admin (recipientId is 'ADMIN')
+      // #region agent log
+      try {
+        const { debugAgentLog } = require('../utils/debugAgentLog');
+        debugAgentLog({
+          location: 'messages/threads.js:POST message',
+          message: 'thread message notify branch',
+          hypothesisId: 'H3',
+          data: {
+            hasCreateNotification: !!createNotification,
+            threadId,
+            isDm: thread.adminId != null,
+            recipientIsNumeric: !Number.isNaN(parseInt(recipientId, 10)) && parseInt(recipientId, 10) > 0,
+          },
+        });
+      } catch (_) {}
+      // #endregion
       if (createNotification) {
         const recipientUserId = parseInt(recipientId, 10);
         if (!isNaN(recipientUserId) && recipientUserId > 0) {
           const [senderRows] = await db.execute('SELECT username FROM users WHERE id = ?', [senderId]);
-          const senderName = senderRows && senderRows[0] ? senderRows[0].username : 'Admin';
+          const senderName = senderRows && senderRows[0] ? senderRows[0].username : 'Someone';
           const preview = typeof messageBody === 'string' && messageBody.length > 80
             ? messageBody.substring(0, 77) + '...'
             : messageBody;
-          createNotification({
-            userId: recipientUserId,
-            type: 'REPLY',
-            title: 'New message from Admin',
-            body: `${senderName}: ${preview}`,
-            channelId: 0,
-            messageId: threadId,
-            fromUserId: senderId,
-            friendRequestId: null,
-            actionStatus: null
-          }).catch((e) => console.warn('Thread notification failed:', e.message));
+          const dmTitle = thread.adminId != null
+            ? `New message from ${senderName}`
+            : 'New message from Admin';
+          try {
+            await createNotification({
+              userId: recipientUserId,
+              type: 'REPLY',
+              title: dmTitle,
+              body: `${senderName}: ${preview}`,
+              channelId: 0,
+              messageId: threadId,
+              fromUserId: senderId,
+              friendRequestId: null,
+              actionStatus: null
+            });
+          } catch (e) {
+            console.warn('Thread notification failed:', e.message);
+          }
         } else if (recipientId === 'ADMIN') {
           const [senderRows] = await db.execute('SELECT username FROM users WHERE id = ?', [senderId]);
           const senderName = senderRows && senderRows[0] ? senderRows[0].username : 'A user';
@@ -399,17 +422,21 @@ module.exports = async (req, res) => {
           );
           const adminIds = (adminRows || []).map((r) => r.id).filter(Boolean);
           for (const adminId of adminIds) {
-            createNotification({
-              userId: adminId,
-              type: 'REPLY',
-              title: 'New message from user',
-              body: `${senderName}: ${preview}`,
-              channelId: 0,
-              messageId: threadId,
-              fromUserId: senderId,
-              friendRequestId: null,
-              actionStatus: null
-            }).catch((e) => console.warn('Thread notification failed:', e.message));
+            try {
+              await createNotification({
+                userId: adminId,
+                type: 'REPLY',
+                title: 'New message from user',
+                body: `${senderName}: ${preview}`,
+                channelId: 0,
+                messageId: threadId,
+                fromUserId: senderId,
+                friendRequestId: null,
+                actionStatus: null
+              });
+            } catch (e) {
+              console.warn('Thread notification failed:', e.message);
+            }
           }
         }
       }
