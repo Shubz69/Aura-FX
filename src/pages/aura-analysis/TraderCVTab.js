@@ -28,6 +28,47 @@ function formatStreak(value) {
   return `${n}d`;
 }
 
+const PASSPORT_CAPTURE_WIDTH_PX = 920;
+
+/** html2canvas poorly supports backdrop-filter and background-clip:text; normalize clone to match on-screen look. */
+function stylePassportCloneForCapture(clonedDoc) {
+  const root =
+    clonedDoc.querySelector('.trader-cv-passport-card') ||
+    (clonedDoc.body && clonedDoc.body.querySelector('.trader-cv-passport-card'));
+  if (!root || !root.querySelectorAll) return;
+
+  root.style.width = `${PASSPORT_CAPTURE_WIDTH_PX}px`;
+  root.style.minWidth = `${PASSPORT_CAPTURE_WIDTH_PX}px`;
+  root.style.maxWidth = `${PASSPORT_CAPTURE_WIDTH_PX}px`;
+  root.style.boxSizing = 'border-box';
+
+  root.querySelectorAll('*').forEach((node) => {
+    if (!node || node.nodeType !== 1) return;
+    const el = node;
+    el.style.setProperty('backdrop-filter', 'none', 'important');
+    el.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
+  });
+
+  root.querySelectorAll('.trader-cv-passport-brand-mark, .trader-cv-passport-photo-initials').forEach((el) => {
+    el.style.setProperty('background', 'none', 'important');
+    el.style.setProperty('background-image', 'none', 'important');
+    el.style.setProperty('-webkit-background-clip', 'unset', 'important');
+    el.style.setProperty('background-clip', 'unset', 'important');
+    el.style.setProperty('-webkit-text-fill-color', '#e8c27a', 'important');
+    el.style.setProperty('color', '#e8c27a', 'important');
+    el.style.setProperty('filter', 'none', 'important');
+  });
+
+  const scan = root.querySelector('.trader-cv-passport-scan');
+  if (scan) {
+    scan.style.setProperty('animation', 'none', 'important');
+    scan.style.setProperty('transform', 'none', 'important');
+    scan.style.opacity = '0.035';
+  }
+  const pulse = root.querySelector('.trader-cv-passport-chip-pulse');
+  if (pulse) pulse.style.setProperty('animation', 'none', 'important');
+}
+
 export default function TraderCVTab() {
   const { user } = useAuth();
   const { selectedAccountId, loading: accountsLoading } = useTradeValidatorAccount();
@@ -165,12 +206,26 @@ export default function TraderCVTab() {
   const capturePassportDataUrl = useCallback(async () => {
     const el = passportRef.current;
     if (!el) return null;
+    try {
+      if (typeof document !== 'undefined' && document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+    } catch (_) {
+      /* ignore */
+    }
     const canvas = await html2canvas(el, {
       scale: 2,
       backgroundColor: '#070b18',
       useCORS: true,
       allowTaint: false,
       logging: false,
+      scrollX: 0,
+      scrollY: typeof window !== 'undefined' ? -window.scrollY : 0,
+      windowWidth: el.scrollWidth,
+      windowHeight: el.scrollHeight,
+      onclone: (clonedDoc) => {
+        stylePassportCloneForCapture(clonedDoc);
+      },
     });
     return new Promise((resolve) => {
       canvas.toBlob(
@@ -512,7 +567,7 @@ export default function TraderCVTab() {
             </div>
 
             <p className="trader-cv-passport-watermark">
-              // aura-fx · private behavioural summary · not a financial credential
+              AURA TERMINAL
             </p>
           </div>
         </div>

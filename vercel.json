@@ -259,6 +259,14 @@
       "destination": "/api/referral/stats.js"
     },
     {
+      "source": "/api/referral/ledger",
+      "destination": "/api/referral/ledger.js"
+    },
+    {
+      "source": "/api/referral/referees",
+      "destination": "/api/referral/referees.js"
+    },
+    {
       "source": "/api/payments/complete",
       "destination": "/api/payments/complete.js"
     },

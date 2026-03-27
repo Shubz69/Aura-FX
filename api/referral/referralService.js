@@ -55,8 +55,82 @@ function getCurrentTierByVerifiedPaidCount(verifiedPaidReferrals) {
   return selected;
 }
 
+/** DDL mirrors database/referral_schema.sql — keep in sync. */
+const REFERRAL_EVENTS_SQL = `
+CREATE TABLE IF NOT EXISTS referral_events (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  referrer_user_id BIGINT NOT NULL,
+  referred_user_id BIGINT NOT NULL,
+  event_type ENUM('signup','paid_conversion','renewal_conversion','milestone','reversal','manual_adjustment') NOT NULL,
+  source_table VARCHAR(64) NULL,
+  source_id VARCHAR(128) NULL,
+  event_status ENUM('pending','approved','payable','paid','reversed','cancelled') NOT NULL DEFAULT 'pending',
+  gross_amount_pence BIGINT NOT NULL DEFAULT 0,
+  net_amount_pence BIGINT NOT NULL DEFAULT 0,
+  commission_rate_bps INT NOT NULL DEFAULT 0,
+  commission_amount_pence BIGINT NOT NULL DEFAULT 0,
+  currency VARCHAR(10) NOT NULL DEFAULT 'GBP',
+  occurred_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  payable_after TIMESTAMP NULL,
+  paid_out_at TIMESTAMP NULL,
+  metadata_json LONGTEXT NULL,
+  INDEX idx_referral_events_referrer (referrer_user_id),
+  INDEX idx_referral_events_referred (referred_user_id),
+  INDEX idx_referral_events_type (event_type),
+  INDEX idx_referral_events_status (event_status),
+  UNIQUE KEY uq_referral_source_event (source_table, source_id, event_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`;
+
+const REFERRAL_PAYOUTS_SQL = `
+CREATE TABLE IF NOT EXISTS referral_payouts (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  payout_method ENUM('paypal','bank_transfer','manual') NOT NULL,
+  amount_pence BIGINT NOT NULL,
+  currency VARCHAR(10) NOT NULL DEFAULT 'GBP',
+  status ENUM('requested','processing','paid','failed','cancelled') NOT NULL DEFAULT 'requested',
+  destination_masked VARCHAR(255) NULL,
+  provider_reference VARCHAR(255) NULL,
+  requested_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  processed_at TIMESTAMP NULL,
+  notes VARCHAR(255) NULL,
+  metadata_json LONGTEXT NULL,
+  INDEX idx_referral_payouts_user (user_id),
+  INDEX idx_referral_payouts_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`;
+
+const REFERRAL_PAYOUT_ITEMS_SQL = `
+CREATE TABLE IF NOT EXISTS referral_payout_items (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  payout_id BIGINT NOT NULL,
+  referral_event_id BIGINT NOT NULL,
+  amount_pence BIGINT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_referral_payout_item_event (referral_event_id),
+  INDEX idx_referral_payout_items_payout (payout_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`;
+
+/**
+ * Ensure core referral tables exist and respond to SELECT. Throws on failure.
+ * Does not set schemaReady — callers must only mark ready after full ensureReferralSchema.
+ */
+async function ensureCoreReferralTablesExist() {
+  await executeQuery(REFERRAL_EVENTS_SQL);
+  await executeQuery('SELECT 1 FROM referral_events LIMIT 1');
+  await executeQuery(REFERRAL_PAYOUTS_SQL);
+  await executeQuery('SELECT 1 FROM referral_payouts LIMIT 1');
+  await executeQuery(REFERRAL_PAYOUT_ITEMS_SQL);
+  await executeQuery('SELECT 1 FROM referral_payout_items LIMIT 1');
+}
+
 async function ensureReferralSchema() {
   if (schemaReady) return;
+  try {
+    await ensureCoreReferralTablesExist();
+  } catch (e) {
+    console.error('[referral] core referral tables failed:', e && e.message);
+    throw e;
+  }
   try {
     await addColumnIfNotExists('users', 'referral_code', 'VARCHAR(32) NULL DEFAULT NULL');
   } catch (_) {}
@@ -92,7 +166,7 @@ async function ensureReferralSchema() {
     await addColumnIfNotExists('users', 'referral_payout_method', 'VARCHAR(50) NULL');
   } catch (_) {}
   try {
-    await addColumnIfNotExists('users', 'referral_payout_details_json', 'JSON NULL');
+    await addColumnIfNotExists('users', 'referral_payout_details_json', 'LONGTEXT NULL');
   } catch (_) {}
   try {
     await executeQuery(`
@@ -104,7 +178,7 @@ async function ensureReferralSchema() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_referee_event (referee_user_id, event_type),
         INDEX idx_referrer_type (referrer_user_id, event_type)
-      )
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
   } catch (e) {
     if (!/already exists/i.test(e.message || '')) throw e;
@@ -131,70 +205,24 @@ async function ensureReferralSchema() {
         UNIQUE KEY uq_referral_attribution_referred (referred_user_id),
         INDEX idx_referral_attribution_referrer (referrer_user_id),
         INDEX idx_referral_attribution_status (status)
-      )
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
-  } catch (_) {}
+  } catch (e) {
+    console.error('[referral] referral_attributions CREATE failed:', e && e.message);
+    throw e;
+  }
   try {
-    await executeQuery(`
-      CREATE TABLE IF NOT EXISTS referral_events (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        referrer_user_id BIGINT NOT NULL,
-        referred_user_id BIGINT NOT NULL,
-        event_type ENUM('signup','paid_conversion','renewal_conversion','milestone','reversal','manual_adjustment') NOT NULL,
-        source_table VARCHAR(64) NULL,
-        source_id VARCHAR(128) NULL,
-        event_status ENUM('pending','approved','payable','paid','reversed','cancelled') NOT NULL DEFAULT 'pending',
-        gross_amount_pence BIGINT NOT NULL DEFAULT 0,
-        net_amount_pence BIGINT NOT NULL DEFAULT 0,
-        commission_rate_bps INT NOT NULL DEFAULT 0,
-        commission_amount_pence BIGINT NOT NULL DEFAULT 0,
-        currency VARCHAR(10) NOT NULL DEFAULT 'GBP',
-        occurred_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        payable_after TIMESTAMP NULL,
-        paid_out_at TIMESTAMP NULL,
-        metadata_json JSON NULL,
-        INDEX idx_referral_events_referrer (referrer_user_id),
-        INDEX idx_referral_events_referred (referred_user_id),
-        INDEX idx_referral_events_type (event_type),
-        INDEX idx_referral_events_status (event_status),
-        UNIQUE KEY uq_referral_source_event (source_table, source_id, event_type)
-      )
-    `);
-  } catch (_) {}
-  try {
-    await executeQuery(`
-      CREATE TABLE IF NOT EXISTS referral_payouts (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        user_id BIGINT NOT NULL,
-        payout_method ENUM('paypal','bank_transfer','manual') NOT NULL,
-        amount_pence BIGINT NOT NULL,
-        currency VARCHAR(10) NOT NULL DEFAULT 'GBP',
-        status ENUM('requested','processing','paid','failed','cancelled') NOT NULL DEFAULT 'requested',
-        destination_masked VARCHAR(255) NULL,
-        provider_reference VARCHAR(255) NULL,
-        requested_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        processed_at TIMESTAMP NULL,
-        notes VARCHAR(255) NULL,
-        metadata_json JSON NULL,
-        INDEX idx_referral_payouts_user (user_id),
-        INDEX idx_referral_payouts_status (status)
-      )
-    `);
-  } catch (_) {}
-  try {
-    await executeQuery(`
-      CREATE TABLE IF NOT EXISTS referral_payout_items (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        payout_id BIGINT NOT NULL,
-        referral_event_id BIGINT NOT NULL,
-        amount_pence BIGINT NOT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE KEY uq_referral_payout_item_event (referral_event_id),
-        INDEX idx_referral_payout_items_payout (payout_id)
-      )
-    `);
-  } catch (_) {}
+    await ensureCoreReferralTablesExist();
+  } catch (e) {
+    console.error('[referral] core referral tables failed:', e && e.message);
+    throw e;
+  }
   schemaReady = true;
+}
+
+/** Ledger/referees endpoints depend on referral_events; schema migration guarantees it. */
+async function ensureReferralEventsReadable() {
+  await ensureReferralSchema();
 }
 
 function randomReferralCode() {
@@ -659,19 +687,24 @@ async function getReferralDashboard(userId, opts = {}) {
 }
 
 async function getReferralLedger(userId, page = 1, pageSize = 20) {
-  await ensureReferralSchema();
+  await ensureReferralEventsReadable();
   const uid = Number(userId);
   const p = Math.max(1, Number(page) || 1);
   const sz = Math.min(100, Math.max(1, Number(pageSize) || 20));
   const off = (p - 1) * sz;
+  if (!Number.isFinite(off) || off < 0 || off > 500000) {
+    throw new Error('Invalid pagination');
+  }
+  const limitSql = String(sz);
+  const offsetSql = String(off);
   const [rows] = await executeQuery(
     `SELECT re.id, re.event_type, re.event_status, re.commission_amount_pence, re.occurred_at, u.email, u.username
      FROM referral_events re
      LEFT JOIN users u ON u.id = re.referred_user_id
      WHERE re.referrer_user_id = ?
      ORDER BY re.occurred_at DESC
-     LIMIT ? OFFSET ?`,
-    [uid, sz, off]
+     LIMIT ${limitSql} OFFSET ${offsetSql}`,
+    [uid]
   );
   return (rows || []).map((r) => ({
     id: Number(r.id),
@@ -684,11 +717,16 @@ async function getReferralLedger(userId, page = 1, pageSize = 20) {
 }
 
 async function getReferralReferees(userId, page = 1, pageSize = 20) {
-  await ensureReferralSchema();
+  await ensureReferralEventsReadable();
   const uid = Number(userId);
   const p = Math.max(1, Number(page) || 1);
   const sz = Math.min(100, Math.max(1, Number(pageSize) || 20));
   const off = (p - 1) * sz;
+  if (!Number.isFinite(off) || off < 0 || off > 500000) {
+    throw new Error('Invalid pagination');
+  }
+  const limitSql = String(sz);
+  const offsetSql = String(off);
   const [rows] = await executeQuery(
     `SELECT u.id, u.email, u.username, u.created_at,
             EXISTS(
@@ -708,8 +746,8 @@ async function getReferralReferees(userId, page = 1, pageSize = 20) {
      FROM users u
      WHERE u.referred_by = ?
      ORDER BY u.created_at DESC
-     LIMIT ? OFFSET ?`,
-    [uid, uid, uid, sz, off]
+     LIMIT ${limitSql} OFFSET ${offsetSql}`,
+    [uid, uid, uid]
   );
   return (rows || []).map((r) => ({
     referredUserId: Number(r.id),
