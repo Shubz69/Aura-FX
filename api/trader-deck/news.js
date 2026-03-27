@@ -43,11 +43,25 @@ function parseIsoDateOnly(value) {
   return s;
 }
 
-function withinDateWindow(article, fromDate, toDate) {
+function parseViewerTimeZone(q) {
+  const z = q && q.tz != null ? String(q.tz).trim() : '';
+  if (!z) return null;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: z }).format(new Date());
+    return z;
+  } catch (_) {
+    return null;
+  }
+}
+
+/** When from/to are set, bucket article day in viewer TZ (from client) so it matches the date picker. */
+function withinDateWindow(article, fromDate, toDate, viewerTz) {
   if (!fromDate && !toDate) return true;
   const t = article?.publishedAt ? new Date(article.publishedAt).getTime() : NaN;
   if (!Number.isFinite(t)) return false;
-  const day = new Date(t).toISOString().slice(0, 10);
+  const day = viewerTz
+    ? new Date(t).toLocaleDateString('en-CA', { timeZone: viewerTz })
+    : new Date(t).toISOString().slice(0, 10);
   if (fromDate && day < fromDate) return false;
   if (toDate && day > toDate) return false;
   return true;
@@ -74,6 +88,7 @@ async function fromFMP(options = {}) {
   try {
     const fromDate = parseIsoDateOnly(options.from);
     const toDate = parseIsoDateOnly(options.to);
+    const viewerTz = options.viewerTz || null;
     const pageCap = fromDate || toDate ? 24 : 1;
     const out = [];
     for (let page = 0; page < pageCap; page += 1) {
@@ -95,7 +110,7 @@ async function fromFMP(options = {}) {
         }
       }
     }
-    return out.filter((n) => withinDateWindow(n, fromDate, toDate));
+    return out.filter((n) => withinDateWindow(n, fromDate, toDate, viewerTz));
   } catch (e) {
     console.warn('[trader-deck/news] FMP error:', e.message);
     return [];
@@ -172,7 +187,11 @@ module.exports = async (req, res) => {
   const forceRefresh = req.query && (req.query.refresh === '1' || req.query.refresh === 'true');
   const fromDate = parseIsoDateOnly(req.query?.from);
   const toDate = parseIsoDateOnly(req.query?.to);
-  const cacheKeyFull = fromDate || toDate ? CACHE_KEY + ':range:' + (fromDate || '') + ':' + (toDate || '') : CACHE_KEY;
+  const viewerTz = parseViewerTimeZone(req.query);
+  const cacheKeyFull =
+    fromDate || toDate
+      ? CACHE_KEY + ':range:' + (fromDate || '') + ':' + (toDate || '') + ':' + (viewerTz || 'utc')
+      : CACHE_KEY;
   const cached = forceRefresh ? null : getCached(cacheKeyFull, CACHE_TTL_MS);
   if (cached) {
     res.setHeader('Cache-Control', 'private, max-age=30');
@@ -180,7 +199,7 @@ module.exports = async (req, res) => {
   }
   const [general, fmp, forex, yahoo] = await Promise.allSettled([
     fromFinnhub(),
-    fromFMP({ from: fromDate, to: toDate }),
+    fromFMP({ from: fromDate, to: toDate, viewerTz }),
     fromFinnhubForex(),
     fromYahooRss(),
   ]);
@@ -193,7 +212,7 @@ module.exports = async (req, res) => {
   // Merge, deduplicate by headline, sort by date
   const seen = new Set();
   const merged = [...forexItems, ...generalItems, ...fmpItems, ...yahooItems]
-    .filter((n) => withinDateWindow(n, fromDate, toDate))
+    .filter((n) => withinDateWindow(n, fromDate, toDate, viewerTz))
     .filter((n) => {
       if (!n.headline || seen.has(n.headline)) return false;
       seen.add(n.headline);

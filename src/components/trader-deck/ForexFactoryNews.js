@@ -80,6 +80,7 @@ function convertIsoDateToEt(isoDate) {
     return s;
   }
 }
+
 function loadPref(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
   catch { return fallback; }

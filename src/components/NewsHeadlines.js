@@ -39,7 +39,7 @@ function isHttpUrl(url) {
   }
 }
 
-const NewsHeadlines = ({ selectedDate }) => {
+const NewsHeadlines = ({ selectedDate } = {}) => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -71,6 +71,10 @@ const NewsHeadlines = ({ selectedDate }) => {
       if (day) {
         qs.set('from', day);
         qs.set('to', day);
+        try {
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          if (tz) qs.set('tz', tz);
+        } catch (_) {}
       }
       const q = qs.toString() ? `?${qs.toString()}` : '';
       const res = await fetch(`${API_BASE}/api/trader-deck/news${q}`);
