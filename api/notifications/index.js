@@ -188,22 +188,6 @@ async function createNotification(data) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [id, userId, type, title, body, channelId, messageId, fromUserId, friendRequestId, actionStatus, scheduledForUTC, localDate, metaStr]);
 
-  // #region agent log
-  try {
-    const { debugAgentLog } = require('../utils/debugAgentLog');
-    debugAgentLog({
-      location: 'notifications/index.js:createNotification',
-      message: 'notification row inserted, invoking web push',
-      hypothesisId: 'H3',
-      data: {
-        type: String(type || ''),
-        channelId: channelId == null ? null : Number(channelId),
-        userId: Number(userId),
-      },
-    });
-  } catch (_) {}
-  // #endregion
-
   try {
     const { sendWebPushForNotification } = require('../push/webPushNotify');
     await sendWebPushForNotification({

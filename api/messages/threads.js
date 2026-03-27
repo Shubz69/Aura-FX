@@ -369,22 +369,6 @@ module.exports = async (req, res) => {
       await db.execute('UPDATE threads SET lastMessageAt = NOW() WHERE id = ?', [threadId]);
 
       // Notify recipient: admin→user (recipientId is user id) or user→admin (recipientId is 'ADMIN')
-      // #region agent log
-      try {
-        const { debugAgentLog } = require('../utils/debugAgentLog');
-        debugAgentLog({
-          location: 'messages/threads.js:POST message',
-          message: 'thread message notify branch',
-          hypothesisId: 'H3',
-          data: {
-            hasCreateNotification: !!createNotification,
-            threadId,
-            isDm: thread.adminId != null,
-            recipientIsNumeric: !Number.isNaN(parseInt(recipientId, 10)) && parseInt(recipientId, 10) > 0,
-          },
-        });
-      } catch (_) {}
-      // #endregion
       if (createNotification) {
         const recipientUserId = parseInt(recipientId, 10);
         if (!isNaN(recipientUserId) && recipientUserId > 0) {

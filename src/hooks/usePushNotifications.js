@@ -73,21 +73,6 @@ export function usePushNotifications() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // #region agent log
-      fetch('http://127.0.0.1:7826/ingest/3ba0a834-6e5c-4fe0-bd70-25d6a5ebbb2f', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8f4319' },
-        body: JSON.stringify({
-          sessionId: '8f4319',
-          timestamp: Date.now(),
-          location: 'usePushNotifications.js:subscribe',
-          message: 'client push subscribe API ok',
-          hypothesisId: 'H5',
-          data: { origin: typeof window !== 'undefined' ? window.location.origin : '' },
-        }),
-      }).catch(() => {});
-      // #endregion
-
       setSubscribed(true);
       return true;
     } catch (e) {
