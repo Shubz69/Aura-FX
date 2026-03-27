@@ -13,7 +13,8 @@ function SignUp() {
         email: "",
         phone: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        referralCode: ""
     });
     const [emailCode, setEmailCode] = useState("");
     const [phoneCode, setPhoneCode] = useState("");
@@ -35,6 +36,16 @@ function SignUp() {
             savePostAuthRedirect({ next: nextParam, plan: planParam, from: `${location.pathname}${location.search}` });
         }
     }, [location.pathname, location.search]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const incomingRef = (params.get('ref') || params.get('referral') || params.get('referralCode') || '').trim();
+        if (!incomingRef) return;
+        setFormData((prev) => {
+            if ((prev.referralCode || '').trim()) return prev;
+            return { ...prev, referralCode: incomingRef };
+        });
+    }, [location.search]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -135,7 +146,8 @@ function SignUp() {
                 name: formData.fullName.trim(),
                 email: formData.email.trim().toLowerCase(),
                 phone: formData.phone.trim(),
-                password: formData.password
+                password: formData.password,
+                ...(formData.referralCode.trim() ? { referralCode: formData.referralCode.trim() } : {})
             });
             if (response && response.status !== "MFA_REQUIRED") {
                 localStorage.setItem('pendingSubscription', 'true');
@@ -206,6 +218,20 @@ function SignUp() {
                         <label htmlFor="phone" className="form-label">Phone Number (any country)</label>
                         <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange}
                             required placeholder="e.g. +44 7700 900000 or +1 555 123 4567" className="form-input" disabled={isLoading && !codesSent} />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="referralCode" className="form-label">Referral Code (optional)</label>
+                        <input
+                            type="text"
+                            id="referralCode"
+                            name="referralCode"
+                            value={formData.referralCode}
+                            onChange={handleChange}
+                            placeholder="e.g. AURA-XXXXXXXX or AT-000123"
+                            className="form-input"
+                            disabled={isLoading && !codesSent}
+                            autoComplete="off"
+                        />
                     </div>
                     <div className="form-group">
                         <label htmlFor="password" className="form-label">Password</label>
