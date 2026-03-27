@@ -767,4 +767,4 @@ async function runEngine(options = {}) {
   return buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi, options);
 }
 
-module.exports = { runEngine, buildPayload };
+module.exports = { runEngine, buildPayload, getTwelveDataQuote };
