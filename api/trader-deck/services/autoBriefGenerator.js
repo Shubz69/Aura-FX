@@ -61,6 +61,50 @@ const CATEGORY_FRAMEWORKS = {
   },
 };
 /** Headlines scored toward each brief category so 9 briefs are not fed identical news context. */
+/** Map instrument tickers to headline filters so each symbol gets distinct news context in the fact pack. */
+const INSTRUMENT_HEADLINE_HINTS = {
+  EURUSD: /\b(euro|eur\/usd|eurusd|ecb|lagarde|eurozone|bund)\b/i,
+  GBPUSD: /\b(sterling|cable|gbp\/usd|gbpusd|boe|bailey|uk\s*gdp)\b/i,
+  USDJPY: /\b(yen|usd\/jpy|usdjpy|boj|ueda|jgb)\b/i,
+  AUDUSD: /\b(aussie|aud\/usd|audusd|rba)\b/i,
+  USDCHF: /\b(franc|usd\/chf|usdchf|snb)\b/i,
+  XAUUSD: /\b(gold|xau|bullion|precious\s*metal)\b/i,
+  XAGUSD: /\b(silver|xag)\b/i,
+  US500: /\b(s&p|spx|s\s*p\s*500|us\s*500|index\s*futures\s*es)\b/i,
+  NAS100: /\b(nasdaq|ndx|qqq|mag\s*seven|tech\s*heavy)\b/i,
+  US30: /\b(dow|djia|us\s*30)\b/i,
+  GER40: /\b(dax|germany|ecb\s*impact)\b/i,
+  UK100: /\b(ftse|uk\s*100)\b/i,
+  BTCUSD: /\b(bitcoin|btc|etf\s*bitcoin)\b/i,
+  ETHUSD: /\b(ethereum|eth\s)\b/i,
+  SOLUSD: /\b(solana|sol\s)\b/i,
+  XRPUSD: /\b(ripple|xrp)\b/i,
+  BNBUSD: /\b(binance|bnb)\b/i,
+  US10Y: /\b(10y|10\-year|treasury|yields?|bonds?|rates)\b/i,
+  US02Y: /\b(2y|2\-year|bill|front\s*end)\b/i,
+  US05Y: /\b(5y|5\-year)\b/i,
+  US30Y: /\b(30y|30\-year|long\s*end)\b/i,
+  DE10Y: /\b(bund|german\s*yield|euro\s*rates)\b/i,
+  WTI: /\b(wti|crude|oil|opec)\b/i,
+  BRENT: /\b(brent|north\s*sea)\b/i,
+  NATGAS: /\b(natural\s*gas|henry\s*hub|lng)\b/i,
+  ES1!: /\b(es\s|e\-mini\s*s&p|spx\s*futures)\b/i,
+  NQ1!: /\b(nq\s|nasdaq\s*futures)\b/i,
+  CL1!: /\b(crude|wti|oil\s*futures)\b/i,
+  GC1!: /\b(gold\s*futures|comex\s*gold)\b/i,
+  ZN1!: /\b(10y\s*futures|treasury\s*futures|zn\s)\b/i,
+  AAPL: /\b(apple|aapl|iphone|ios)\b/i,
+  MSFT: /\b(microsoft|msft|azure|windows)\b/i,
+  NVDA: /\b(nvidia|nvda|gpu|cuda|blackwell)\b/i,
+  TSLA: /\b(tesla|tsla|musk|ev\s)\b/i,
+  AMZN: /\b(amazon|amzn|aws)\b/i,
+  SPY: /\b(spy|s&p\s*etf)\b/i,
+  QQQ: /\b(qqq|nasdaq\s*etf)\b/i,
+  IWM: /\b(russell|iwm|small\s*cap)\b/i,
+  GLD: /\b(gld|gold\s*etf)\b/i,
+  TLT: /\b(tlt|long\s*treasury\s*etf|duration)\b/i,
+};
+
 const KIND_HEADLINE_KEYWORDS = {
   general: null,
   stocks: /\b(stock|equity|equities|earnings|eps|guidance|nasdaq|nyse|s&p|apple|microsoft|nvidia|tesla|amazon|meta|split|buyback|dividend|ipo|sec)\b/i,
@@ -83,6 +127,24 @@ function filterHeadlinesForBriefKind(headlines, briefKind) {
   const rest = list.filter((h) => !re.test(h));
   const merged = [...matched, ...rest];
   return merged.slice(0, 12);
+}
+
+function headlinesForSymbol(symbol, pool) {
+  const sym = String(symbol || '').toUpperCase();
+  const re = INSTRUMENT_HEADLINE_HINTS[sym];
+  const list = Array.isArray(pool) ? pool : [];
+  if (!re) return list.slice(0, 4);
+  const hit = list.filter((h) => re.test(h));
+  const rest = list.filter((h) => !re.test(h));
+  return [...hit, ...rest].slice(0, 4);
+}
+
+function buildSymbolHeadlineMap(symbols, headlines) {
+  const out = {};
+  for (const sym of symbols || []) {
+    out[String(sym).toUpperCase()] = headlinesForSymbol(sym, headlines);
+  }
+  return out;
 }
 
 async function fetchLiveQuotesForSymbols(symbols) {
@@ -411,9 +473,83 @@ function buildFactPack({ period, template, market, econ, news, briefKind = 'gene
       previous: normalizeCalendarValue(e.previous),
     })),
     headlines: filteredNews.slice(0, 10),
+    symbolHeadlines: buildSymbolHeadlineMap(selectedTop, filteredNews),
     liveQuotes: Array.isArray(liveQuotes) ? liveQuotes.slice(0, 5) : [],
     updatedAt: new Date().toISOString(),
   };
+}
+
+/** Lazy model templates users see when the model copies one scaffold across all names. */
+const GENERIC_INSTRUMENT_SCAFFOLD_RE = /scenario\s*\d+\s+defines|catalyst trigger|directional invalidation|position-?sizing discipline|daily scenario\s*\d+\s+should define|base and surprise pathways|volatility-?adjusted risk/i;
+
+function maxPairwiseInstrumentSimilarity(notes) {
+  const list = Array.isArray(notes) ? notes.map((n) => String(n?.note || '').trim()).filter(Boolean) : [];
+  let maxSim = 0;
+  for (let i = 0; i < list.length; i += 1) {
+    for (let j = i + 1; j < list.length; j += 1) {
+      maxSim = Math.max(maxSim, similarityScore(list[i], list[j]));
+    }
+  }
+  return maxSim;
+}
+
+function instrumentLayerNeedsRefresh(instrumentNotes, outlookBody) {
+  const notes = Array.isArray(instrumentNotes) ? instrumentNotes : [];
+  if (notes.length < 2) return false;
+  if (maxPairwiseInstrumentSimilarity(notes) >= 0.5) return true;
+  const scaffoldHits = notes.filter((n) => GENERIC_INSTRUMENT_SCAFFOLD_RE.test(String(n?.note || ''))).length;
+  if (scaffoldHits >= 2) return true;
+  const ob = String(outlookBody || '');
+  if (ob && GENERIC_INSTRUMENT_SCAFFOLD_RE.test(ob)) {
+    const chunks = ob.split(/\n{2,}/).map((c) => c.trim()).filter(Boolean);
+    if (chunks.length >= 2) {
+      let maxC = 0;
+      for (let i = 0; i < chunks.length; i += 1) {
+        for (let j = i + 1; j < chunks.length; j += 1) {
+          maxC = Math.max(maxC, similarityScore(chunks[i], chunks[j]));
+        }
+      }
+      if (maxC >= 0.45) return true;
+    }
+  }
+  return false;
+}
+
+function findInstrumentOutlookSectionIndex(sections) {
+  const list = Array.isArray(sections) ? sections : [];
+  const preferIdx = list.findIndex((s) => {
+    const h = String(s?.heading || '').toLowerCase();
+    return (h.includes('instrument') && h.includes('outlook'))
+      || /catalyst|setups|scenarios|tactical plans|trade maps|commodity setups|pair tactical|coin|contract-specific|etf tactical/i.test(h);
+  });
+  if (preferIdx >= 0) return preferIdx;
+  return list.length > 1 ? 1 : 0;
+}
+
+function applyInstrumentLayerPatch(generated, { instrumentOutlookBody, instrumentNotes }) {
+  if (!generated || typeof generated !== 'object') return generated;
+  let next = { ...generated };
+  if (Array.isArray(instrumentNotes) && instrumentNotes.length > 0) {
+    next = { ...next, instrumentNotes };
+  }
+  if (instrumentOutlookBody && String(instrumentOutlookBody).trim() && Array.isArray(next.sections)) {
+    const idx = findInstrumentOutlookSectionIndex(next.sections);
+    const sections = next.sections.map((s, i) => (i === idx ? { ...s, body: String(instrumentOutlookBody).trim() } : s));
+    next = { ...next, sections };
+  }
+  return next;
+}
+
+function addDaysYmd(ymdStr, days) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(ymdStr || ''))) return ymdStr;
+  const d = new Date(`${ymdStr}T12:00:00.000Z`);
+  if (Number.isNaN(d.getTime())) return ymdStr;
+  d.setUTCDate(d.getUTCDate() + Number(days || 0));
+  return d.toISOString().slice(0, 10);
+}
+
+function tomorrowYmdInTz(now, timeZone) {
+  return addDaysYmd(toYmdInTz(now, timeZone), 1);
 }
 
 async function generateWithOpenAi(factPack, template, options = {}) {
@@ -444,6 +580,8 @@ async function generateWithOpenAi(factPack, template, options = {}) {
       categoryLogicRule: CATEGORY_LOGIC_RULES[factPack.briefKind] || CATEGORY_LOGIC_RULES.general,
       mandate: `You are writing ONLY the "${catLabel}" brief. Lead with ${factPack.briefKind === 'general' ? 'cross-asset' : factPack.briefKind + ' asset-class'} mechanics. Other eight briefs on the same day cover other categories — duplicate or paraphrased bodies are forbidden.`,
       useLiveQuotes: 'Weave liveQuotes (last, changePct) into instrumentNotes where present; if empty, rely on factPack only.',
+      perInstrumentHeadlines: 'factPack.symbolHeadlines maps each ticker to headline lines — use those lines to differentiate narratives; do not reuse the same sentence skeleton across instruments.',
+      antiScaffold: 'FORBIDDEN for any two instruments: the same opening clause, parallel "Scenario N defines…" / "Daily scenario N should define…" templates, or copy-pasted catalyst/invalidation wording. Each name needs its own drivers, levels logic, and session hook.',
       uniquenessRetryNote: uniquenessRetry
         ? 'REWRITE: prior draft was too similar to another category. Change structure, opening hooks, and examples; keep same JSON schema.'
         : null,
@@ -462,7 +600,7 @@ async function generateWithOpenAi(factPack, template, options = {}) {
       body: JSON.stringify({
         model: getAutomationModel(),
         temperature: uniquenessRetry ? 0.42 : 0.22,
-        max_tokens: 2400,
+        max_tokens: 3800,
         response_format: { type: 'json_object' },
         messages: [
           {
@@ -472,7 +610,8 @@ async function generateWithOpenAi(factPack, template, options = {}) {
               + 'Each section body must be substantive and specific to the briefKind in factPack — not a generic macro essay. '
               + 'Section headings in the JSON must match factPack.sections[].heading in order. '
               + 'You must include every instrument in factPack.topInstruments inside instrumentNotes with differentiated notes. '
-              + 'Combine factPack (regime, pulse, drivers, cross-asset, calendar, headlines, liveQuotes) with professional judgment; do not invent prices or events not implied by the pack. '
+              + 'The Instrument Outlook (or category-equivalent) section body must treat each ticker as its own mini-brief: distinct paragraph per instrument with different structure and vocabulary — never numbered scenario boilerplate repeated across names. '
+              + 'Combine factPack (regime, pulse, drivers, cross-asset, calendar, headlines, symbolHeadlines, liveQuotes) with professional judgment; do not invent prices or events not implied by the pack. '
               + 'Never include source names, URLs, or citation phrasing. '
               + 'If priorBriefExcerptsForDedup contains text, your output must be materially different in wording and emphasis from those excerpts.',
           },
@@ -492,6 +631,127 @@ async function generateWithOpenAi(factPack, template, options = {}) {
     clearTimeout(timeout);
     return null;
   }
+}
+
+function getInstrumentOutlookBodyFromGenerated(generated) {
+  if (!generated || !Array.isArray(generated.sections)) return '';
+  const idx = findInstrumentOutlookSectionIndex(generated.sections);
+  const s = generated.sections[idx];
+  return String(s?.body || '').trim();
+}
+
+async function generateInstrumentLayerOpenAI(factPack, options = {}) {
+  const key = String(process.env.OPENAI_API_KEY || '').trim();
+  if (!key) return null;
+  const { mode = 'refine', priorNotes = [], priorOutlookBody = '' } = options;
+  const top = (factPack.topInstruments || []).map((s) => String(s).toUpperCase());
+  if (top.length === 0) return null;
+
+  const slimPack = {
+    briefKind: factPack.briefKind,
+    briefKindLabel: factPack.briefKindLabel,
+    period: factPack.period,
+    topInstruments: top,
+    marketRegime: factPack.marketRegime,
+    marketPulse: factPack.marketPulse,
+    keyDrivers: (factPack.keyDrivers || []).slice(0, 6),
+    crossAssetSignals: (factPack.crossAssetSignals || []).slice(0, 4),
+    calendar: (factPack.calendar || []).slice(0, 8),
+    headlines: (factPack.headlines || []).slice(0, 10),
+    symbolHeadlines: factPack.symbolHeadlines || {},
+    liveQuotes: (factPack.liveQuotes || []).slice(0, 5),
+    instrumentSectionHeading: (factPack.sections || [])[findInstrumentOutlookSectionIndex(factPack.sections || [])]?.heading || 'Instrument Outlook',
+  };
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 32000);
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: getAutomationModel(),
+        temperature: mode === 'prefetch' ? 0.35 : 0.45,
+        max_tokens: 2200,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Return JSON only: {"instrumentOutlookBody":"string","instrumentNotes":[{"instrument":"string","note":"string"}]}. '
+              + 'instrumentOutlookBody must be one paragraph block per instrument in topInstruments (same order), separated by a blank line between instruments. '
+              + 'Start each paragraph with the ticker in bold is NOT allowed — plain text only. Start each paragraph with the ticker as plain uppercase (e.g. EURUSD: ...). '
+              + 'Each paragraph and each instrumentNotes[].note must be fully unique: different structure, verbs, and tactical angle. '
+              + 'Use symbolHeadlines for that ticker when provided; integrate calendar and liveQuotes where relevant. '
+              + 'Do not use templates like "Scenario N defines" or "Daily scenario N should define". '
+              + 'No source names, URLs, or citations. Do not invent specific numbers not in the pack.',
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              task: mode === 'prefetch' ? 'overnight_prefetch' : 'dedupe_refine',
+              slimPack,
+              rejectSimilarTo: mode === 'refine' ? { priorNotes, priorOutlookBody: String(priorOutlookBody || '').slice(0, 1200) } : null,
+            }),
+          },
+        ],
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    const json = await res.json();
+    const text = json.choices?.[0]?.message?.content?.trim();
+    if (!text) return null;
+    const cleaned = text.replace(/^```json\s*|\s*```$/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+    const rawNotes = Array.isArray(parsed.instrumentNotes) ? parsed.instrumentNotes : [];
+    const bySym = new Map(rawNotes.map((r) => [String(r?.instrument || '').toUpperCase(), String(r?.note || '').trim()]));
+    const instrumentNotes = top.map((sym) => ({
+      instrument: sym,
+      note: bySym.get(sym) || `${sym}: Session-specific read using ${slimPack.briefKindLabel} drivers and calendar — differentiate execution from other names in the set.`,
+    }));
+    const instrumentOutlookBody = String(parsed.instrumentOutlookBody || '').trim();
+    return { instrumentNotes, instrumentOutlookBody };
+  } catch (_) {
+    clearTimeout(timeout);
+    return null;
+  }
+}
+
+async function loadInstrumentResearch(briefDate, period, briefKind) {
+  try {
+    const [rows] = await executeQuery(
+      'SELECT payload FROM trader_deck_brief_instrument_research WHERE brief_date = ? AND period = ? AND brief_kind = ? LIMIT 1',
+      [briefDate, period, normalizeBriefKind(briefKind)]
+    );
+    const raw = rows?.[0]?.payload;
+    if (raw == null) return null;
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+    return typeof raw === 'object' ? raw : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function saveInstrumentResearch(briefDate, period, briefKind, payload) {
+  const kind = normalizeBriefKind(briefKind);
+  const body = JSON.stringify(payload || {});
+  await executeQuery(
+    `INSERT INTO trader_deck_brief_instrument_research (brief_date, period, brief_kind, payload)
+     VALUES (?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE payload = VALUES(payload), updated_at = CURRENT_TIMESTAMP`,
+    [briefDate, period, kind, body]
+  );
 }
 
 /** Force section headings to match CATEGORY_FRAMEWORKS so each briefKind renders distinct structure. */

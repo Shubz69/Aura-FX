@@ -8,7 +8,7 @@
  */
 
 const crypto = require('crypto');
-const { executeQuery, addColumnIfNotExists, indexExists, getDbConnection } = require('../db');
+const { executeQuery, addColumnIfNotExists, indexExists, getDbConnection, getDbPool } = require('../db');
 
 let schemaReady = false;
 
@@ -112,15 +112,27 @@ CREATE TABLE IF NOT EXISTS referral_payout_items (
 
 /**
  * Ensure core referral tables exist and respond to SELECT. Throws on failure.
- * Does not set schemaReady — callers must only mark ready after full ensureReferralSchema.
+ * Requires a real DB pool (MYSQL_* env) — never silently skips creation.
  */
 async function ensureCoreReferralTablesExist() {
+  if (!getDbPool()) {
+    throw new Error('Database pool not available — set MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE');
+  }
   await executeQuery(REFERRAL_EVENTS_SQL);
-  await executeQuery('SELECT 1 FROM referral_events LIMIT 1');
+  const [evRows] = await executeQuery('SELECT COUNT(*) AS n FROM referral_events');
+  if (!evRows || !evRows.length) {
+    throw new Error('referral_events missing after CREATE (check DB permissions)');
+  }
   await executeQuery(REFERRAL_PAYOUTS_SQL);
-  await executeQuery('SELECT 1 FROM referral_payouts LIMIT 1');
+  const [poRows] = await executeQuery('SELECT COUNT(*) AS n FROM referral_payouts');
+  if (!poRows || !poRows.length) {
+    throw new Error('referral_payouts missing after CREATE (check DB permissions)');
+  }
   await executeQuery(REFERRAL_PAYOUT_ITEMS_SQL);
-  await executeQuery('SELECT 1 FROM referral_payout_items LIMIT 1');
+  const [piRows] = await executeQuery('SELECT COUNT(*) AS n FROM referral_payout_items');
+  if (!piRows || !piRows.length) {
+    throw new Error('referral_payout_items missing after CREATE (check DB permissions)');
+  }
 }
 
 async function ensureReferralSchema() {
@@ -208,14 +220,7 @@ async function ensureReferralSchema() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
   } catch (e) {
-    console.error('[referral] referral_attributions CREATE failed:', e && e.message);
-    throw e;
-  }
-  try {
-    await ensureCoreReferralTablesExist();
-  } catch (e) {
-    console.error('[referral] core referral tables failed:', e && e.message);
-    throw e;
+    console.error('[referral] referral_attributions CREATE failed (non-fatal):', e && e.message);
   }
   schemaReady = true;
 }
