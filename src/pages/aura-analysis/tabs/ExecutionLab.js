@@ -57,7 +57,7 @@ export default function ExecutionLab() {
     return (
       <div className="aa-page">
         <AuraAnalysisEmptyState
-          icon="fa-rocket"
+          icon="mt5"
           variant={needsConnection ? 'connect' : 'data'}
           title={needsConnection ? 'Connect to view execution quality' : 'No trades in this period'}
           description={

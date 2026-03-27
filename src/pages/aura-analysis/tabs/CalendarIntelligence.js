@@ -62,7 +62,7 @@ export default function CalendarIntelligence() {
     return (
       <div className="aa-page">
         <AuraAnalysisEmptyState
-          icon="fa-calendar-alt"
+          icon="mt5"
           variant={needsConnection ? 'connect' : 'data'}
           title={needsConnection ? 'Connect to fill your calendar' : 'No trades in this period'}
           description={

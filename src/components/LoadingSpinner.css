@@ -1,11 +1,12 @@
 /* ============================================================
-   LOADING SCREEN — AURA DEEP SPACE EDITION
-   Matches Journal Page: dark #010008 bg, star field, 
-   white→navy→gold borders, blue star accents
+   LOADING SCREEN - AURA TERMINAL PREMIUM EDITION
+   Navy & Blue Theme with Subtle Gold Accents
+   Matching Aura Dashboard & Trader Deck Aesthetic
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
+/* ── Force Space Grotesk on the entire loading screen ── */
 .loading-screen,
 .loading-screen * {
     font-family: 'Space Grotesk', sans-serif !important;
@@ -25,228 +26,91 @@
     overflow: hidden !important;
     margin: 0 !important;
     padding: 0 !important;
-    isolation: isolate;
 }
 
-/* ── Deep Space Nebula Background (mirrors journal-page::before) ── */
+/* ===== Central Glow Effect - Navy Blue Core ===== */
 .loading-screen::before {
     content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    background:
-        radial-gradient(ellipse 85% 55% at 18% 8%,
-            rgba(20, 28, 55, 0.65) 0%,
-            rgba(12, 18, 40, 0.45) 35%,
-            transparent 68%
-        ),
-        radial-gradient(ellipse 60% 45% at 55% 20%,
-            rgba(10, 15, 40, 0.38) 0%,
-            rgba(6, 10, 28, 0.22) 50%,
-            transparent 75%
-        ),
-        radial-gradient(ellipse 55% 75% at 92% 28%,
-            rgba(5, 8, 25, 0.75) 0%,
-            rgba(3, 5, 18, 0.48) 55%,
-            transparent 78%
-        ),
-        radial-gradient(ellipse 42% 32% at 88% 6%,
-            rgba(45, 65, 145, 0.18) 0%,
-            transparent 68%
-        ),
-        linear-gradient(168deg,
-            #010008 0%,
-            #01010a 15%,
-            #02010c 30%,
-            #01010a 50%,
-            #000006 70%,
-            #010008 100%
-        );
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 900px;
+    height: 900px;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(107, 143, 232, 0.18) 0%,
+        rgba(58, 84, 144, 0.1) 35%,
+        rgba(30, 42, 74, 0.05) 60%,
+        transparent 100%
+    );
+    border-radius: 50%;
+    z-index: 1;
     pointer-events: none;
+    animation: loadingGlowPulse 5s ease-in-out infinite;
 }
 
-/* ── Star Field Layer 1 — static dense stars (mirrors journal-layout::before) ── */
-.loading-screen::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background-image:
-        /* Large bright white stars */
-        radial-gradient(2px 2px at 7%   6%,  rgba(255,255,255,0.92), transparent),
-        radial-gradient(2.5px 2.5px at 34%  11%, rgba(255,255,255,0.88), transparent),
-        radial-gradient(2px 2px at 61%   4%,  rgba(255,255,255,0.85), transparent),
-        radial-gradient(2.2px 2.2px at 89%  14%, rgba(255,255,255,0.82), transparent),
-        radial-gradient(2px 2px at 15%  32%, rgba(255,255,255,0.78), transparent),
-        radial-gradient(2.4px 2.4px at 78%  27%, rgba(255,255,255,0.80), transparent),
-        radial-gradient(2px 2px at 50%  18%, rgba(255,255,255,0.75), transparent),
-        /* Medium white stars */
-        radial-gradient(1.5px 1.5px at 4%   22%, rgba(255,255,255,0.68), transparent),
-        radial-gradient(1.4px 1.4px at 19%   8%, rgba(255,255,255,0.64), transparent),
-        radial-gradient(1.6px 1.6px at 44%  26%, rgba(255,255,255,0.62), transparent),
-        radial-gradient(1.5px 1.5px at 67%  19%, rgba(255,255,255,0.66), transparent),
-        radial-gradient(1.4px 1.4px at 83%   8%, rgba(255,255,255,0.62), transparent),
-        radial-gradient(1.5px 1.5px at 93%  33%, rgba(255,255,255,0.58), transparent),
-        radial-gradient(1.6px 1.6px at 28%  42%, rgba(255,255,255,0.56), transparent),
-        radial-gradient(1.4px 1.4px at 56%  38%, rgba(255,255,255,0.60), transparent),
-        radial-gradient(1.5px 1.5px at 72%  45%, rgba(255,255,255,0.54), transparent),
-        radial-gradient(1.4px 1.4px at 10%  55%, rgba(255,255,255,0.52), transparent),
-        radial-gradient(1.6px 1.6px at 38%  60%, rgba(255,255,255,0.48), transparent),
-        radial-gradient(1.5px 1.5px at 64%  58%, rgba(255,255,255,0.52), transparent),
-        radial-gradient(1.4px 1.4px at 85%  52%, rgba(255,255,255,0.46), transparent),
-        /* Small stars */
-        radial-gradient(1px 1px at 2%   45%, rgba(255,255,255,0.44), transparent),
-        radial-gradient(1px 1px at 13%  18%, rgba(255,255,255,0.42), transparent),
-        radial-gradient(1px 1px at 25%  55%, rgba(255,255,255,0.38), transparent),
-        radial-gradient(1px 1px at 48%  48%, rgba(255,255,255,0.40), transparent),
-        radial-gradient(1px 1px at 71%  36%, rgba(255,255,255,0.36), transparent),
-        radial-gradient(1px 1px at 96%  22%, rgba(255,255,255,0.42), transparent),
-        radial-gradient(0.8px 0.8px at 8%  38%, rgba(255,255,255,0.32), transparent),
-        radial-gradient(0.8px 0.8px at 22% 28%, rgba(255,255,255,0.30), transparent),
-        radial-gradient(0.8px 0.8px at 35% 15%, rgba(255,255,255,0.34), transparent),
-        /* Blue stars (journal accent) */
-        radial-gradient(1.8px 1.8px at 9%   12%, rgba(140,175,255,0.70), transparent),
-        radial-gradient(2px 2px at 23%  18%, rgba(140,175,255,0.65), transparent),
-        radial-gradient(1.6px 1.6px at 52%  15%, rgba(120,160,255,0.62), transparent),
-        radial-gradient(1.8px 1.8px at 82%  20%, rgba(140,175,255,0.60), transparent),
-        /* Cool/navy accent stars */
-        radial-gradient(1.5px 1.5px at 16%  85%, rgba(120,160,230,0.62), transparent),
-        radial-gradient(1.4px 1.4px at 48%  88%, rgba(100,145,220,0.55), transparent),
-        radial-gradient(1.6px 1.6px at 77%  82%, rgba(130,170,240,0.58), transparent),
-        radial-gradient(1.3px 1.3px at 92%  86%, rgba(160,195,255,0.50), transparent),
-        /* Dim distant stars */
-        radial-gradient(0.6px 0.6px at 11%  48%, rgba(255,255,255,0.20), transparent),
-        radial-gradient(0.6px 0.6px at 29%  62%, rgba(255,255,255,0.18), transparent),
-        radial-gradient(0.6px 0.6px at 47%  55%, rgba(255,255,255,0.22), transparent),
-        radial-gradient(0.6px 0.6px at 60%  68%, rgba(255,255,255,0.16), transparent),
-        radial-gradient(0.6px 0.6px at 74%  62%, rgba(255,255,255,0.20), transparent),
-        radial-gradient(0.6px 0.6px at 88%  48%, rgba(255,255,255,0.18), transparent);
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
+@keyframes loadingGlowPulse {
+    0%, 100% { 
+        opacity: 0.6; 
+        transform: translate(-50%, -50%) scale(1); 
+    }
+    50% { 
+        opacity: 1; 
+        transform: translate(-50%, -50%) scale(1.08); 
+    }
 }
 
-/* ── Binary digits floating up ── */
+/* ===== Animated Binary Background - Navy Tones ===== */
 .loading-background {
     position: absolute !important;
-    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
     overflow: hidden !important;
+    background: radial-gradient(
+        circle at center,
+        rgba(107, 143, 232, 0.05) 0%,
+        transparent 70%
+    ) !important;
     z-index: 1 !important;
-    pointer-events: none !important;
 }
 
 .binary-digit {
     position: absolute;
-    color: rgba(140, 175, 255, 0.18);
+    color: rgba(107, 143, 232, 0.25);
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 300;
     animation: binary-fall linear infinite;
     user-select: none;
     pointer-events: none;
     letter-spacing: 2px;
-    text-shadow: 0 0 8px rgba(100, 145, 220, 0.35);
+    text-shadow: 0 0 8px rgba(107, 143, 232, 0.3);
 }
 
 @keyframes binary-fall {
-    0%   { transform: translateY(-100px); opacity: 0; }
-    10%  { opacity: 0.22; }
-    90%  { opacity: 0.22; }
-    100% { transform: translateY(100vh);  opacity: 0; }
+    0% {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.2;
+    }
+    90% {
+        opacity: 0.2;
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
 }
 
-/* ── Twinkling animation layers (mirrors journal's 3-layer system) ── */
-.loading-particles {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-/* Star twinkle layer A — fast */
-.loading-particles::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-        radial-gradient(2px 2px at 7%   6%,  white, transparent),
-        radial-gradient(2px 2px at 34%  11%, white, transparent),
-        radial-gradient(2px 2px at 61%   4%, white, transparent),
-        radial-gradient(2px 2px at 89%  14%, white, transparent),
-        radial-gradient(2px 2px at 15%  32%, white, transparent),
-        radial-gradient(2px 2px at 78%  27%, white, transparent),
-        radial-gradient(2px 2px at 50%  18%, white, transparent),
-        radial-gradient(2px 2px at 23%  44%, white, transparent),
-        radial-gradient(2px 2px at 69%  38%, white, transparent),
-        radial-gradient(2px 2px at 92%  48%, white, transparent),
-        /* Blue glowing stars */
-        radial-gradient(2.5px 2.5px at  9%  12%, rgba(140,175,255,0.85), transparent),
-        radial-gradient(2px   2px   at 23%  18%, rgba(140,175,255,0.80), transparent),
-        radial-gradient(2.5px 2.5px at 52%  15%, rgba(120,160,255,0.82), transparent),
-        radial-gradient(2px   2px   at 82%  20%, rgba(140,175,255,0.78), transparent),
-        /* Cool navy-blue stars */
-        radial-gradient(2.5px 2.5px at 16%  85%, rgba(130,170,240,0.72), transparent),
-        radial-gradient(2.5px 2.5px at 48%  88%, rgba(110,155,230,0.65), transparent),
-        radial-gradient(2.5px 2.5px at 77%  82%, rgba(140,180,250,0.70), transparent),
-        radial-gradient(2.5px 2.5px at 31%  86%, rgba(160,195,255,0.72), transparent);
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    animation: ls-twinkleA 3.2s ease-in-out infinite alternate;
-}
-
-/* Star twinkle layer B — medium speed, offset phase */
-.loading-particles::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-        radial-gradient(1.8px 1.8px at 3%   14%, rgba(255,255,255,0.75), transparent),
-        radial-gradient(1.8px 1.8px at 41%  21%, rgba(255,255,255,0.70), transparent),
-        radial-gradient(1.8px 1.8px at 73%  16%, rgba(255,255,255,0.68), transparent),
-        radial-gradient(1.8px 1.8px at 96%  35%, rgba(255,255,255,0.64), transparent),
-        radial-gradient(1.8px 1.8px at 58%  44%, rgba(255,255,255,0.66), transparent),
-        radial-gradient(1.8px 1.8px at 25%  68%, rgba(255,255,255,0.52), transparent),
-        radial-gradient(1.8px 1.8px at 81%  61%, rgba(255,255,255,0.55), transparent),
-        /* Extra blue accents different positions */
-        radial-gradient(2px 2px at 30%  25%, rgba(140,175,255,0.70), transparent),
-        radial-gradient(2px 2px at 70%  30%, rgba(120,160,255,0.65), transparent),
-        radial-gradient(2px 2px at 95%   8%, rgba(150,185,255,0.62), transparent),
-        radial-gradient(2px 2px at  5%  42%, rgba(140,175,255,0.60), transparent),
-        radial-gradient(2px 2px at 22%  92%, rgba(120,160,230,0.70), transparent),
-        radial-gradient(2px 2px at 55%  89%, rgba(110,150,225,0.66), transparent),
-        radial-gradient(2px 2px at 88%  94%, rgba(145,180,250,0.64), transparent);
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    animation: ls-twinkleB 4.7s ease-in-out infinite alternate;
-    animation-delay: -1.8s;
-}
-
-@keyframes ls-twinkleA {
-    0%   { opacity: 0.10; filter: blur(0.8px); }
-    15%  { opacity: 0.85; filter: blur(0px);   }
-    30%  { opacity: 0.22; filter: blur(1px);   }
-    45%  { opacity: 0.95; filter: blur(0px);   }
-    60%  { opacity: 0.15; filter: blur(0.6px); }
-    75%  { opacity: 0.80; filter: blur(0px);   }
-    90%  { opacity: 0.28; filter: blur(0.9px); }
-    100% { opacity: 0.90; filter: blur(0px);   }
-}
-
-@keyframes ls-twinkleB {
-    0%   { opacity: 0.90; filter: blur(0px);   }
-    20%  { opacity: 0.16; filter: blur(1.2px); }
-    40%  { opacity: 0.84; filter: blur(0px);   }
-    55%  { opacity: 0.20; filter: blur(0.8px); }
-    70%  { opacity: 0.95; filter: blur(0px);   }
-    85%  { opacity: 0.14; filter: blur(1px);   }
-    100% { opacity: 0.78; filter: blur(0px);   }
-}
-
-/* ── Main Content ── */
+/* ===== Main Content - Centered ===== */
 .loading-content {
     text-align: center !important;
-    z-index: 100 !important;
+    z-index: 100000 !important;
     position: relative !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -254,456 +118,477 @@
     flex-direction: column !important;
     align-items: center !important;
     gap: 2rem !important;
-    animation: ls-contentAppear 1s ease-out both;
+    animation: contentAppear 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1) both;
 }
 
-@keyframes ls-contentAppear {
-    from { opacity: 0; transform: scale(0.95) translateY(12px); }
-    to   { opacity: 1; transform: scale(1)    translateY(0); }
+@keyframes contentAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
-/* ── Brand Title — journal's grad-gold gradient ── */
+/* ===== Brand Name - Navy Blue Gradient with Gold Accent ===== */
 .loading-brand {
     font-size: 5rem;
-    font-weight: 200;
+    font-weight: 300;
     letter-spacing: 0.28em;
+    color: var(--text, #ffffff);
     text-transform: uppercase;
     margin: 0;
     line-height: 1.1;
-    /* Matches --grad-gold: white → ice-blue → navy → gold whisper */
-    background: linear-gradient(125deg,
-        #ffffff       0%,
-        rgba(252,253,255,0.99) 28%,
-        rgba(200,215,255,0.96) 58%,
-        rgba(120,150,220,0.92) 82%,
-        rgba(212,175,55,0.48)  100%
+    background: linear-gradient(
+        135deg,
+        #ffffff 0%,
+        rgba(140, 175, 255, 0.98) 30%,
+        rgba(107, 143, 232, 0.95) 60%,
+        rgba(212, 175, 55, 0.75) 100%
     );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    filter:
-        drop-shadow(0 0 22px rgba(255,255,255,0.38))
-        drop-shadow(0 0 36px rgba(100,135,215,0.28))
-        drop-shadow(0 0 52px rgba(212,175,55,0.12));
-    animation: ls-brandPulse 3s ease-in-out infinite alternate;
+    text-shadow: 0 0 60px rgba(107, 143, 232, 0.4);
+    animation: brandPulse 2.5s ease-in-out infinite alternate;
 }
 
-@keyframes ls-brandPulse {
-    0%   {
-        filter:
-            drop-shadow(0 0 22px rgba(255,255,255,0.38))
-            drop-shadow(0 0 36px rgba(100,135,215,0.28))
-            drop-shadow(0 0 52px rgba(212,175,55,0.12));
+@keyframes brandPulse {
+    0% {
+        text-shadow: 0 0 40px rgba(107, 143, 232, 0.3);
+        letter-spacing: 0.28em;
     }
     100% {
-        filter:
-            drop-shadow(0 0 38px rgba(255,255,255,0.55))
-            drop-shadow(0 0 60px rgba(120,155,230,0.42))
-            drop-shadow(0 0 80px rgba(212,175,55,0.20));
+        text-shadow: 0 0 80px rgba(107, 143, 232, 0.6), 0 0 40px rgba(212, 175, 55, 0.3);
+        letter-spacing: 0.32em;
     }
 }
 
-/* ── Subtitle title — animated gradient ── */
+/* ===== Animated Title - Navy to Gold Gradient ===== */
 .loading-title {
-    font-size: 1rem;
-    font-weight: 500;
-    letter-spacing: 0.38em;
-    text-transform: uppercase;
+    font-size: 3rem;
+    font-weight: 300;
+    color: var(--text, #ffffff);
     margin: 0;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
     line-height: 1.2;
-    background: linear-gradient(270deg,
-        #ffffff       0%,
-        rgba(200,215,255,0.96) 25%,
-        rgba(140,175,255,0.92) 50%,
-        rgba(200,215,255,0.96) 75%,
-        #ffffff       100%
+    background: linear-gradient(
+        270deg,
+        #ffffff 0%,
+        rgba(140, 175, 255, 0.95) 25%,
+        rgba(107, 143, 232, 0.9) 50%,
+        rgba(212, 175, 55, 0.85) 75%,
+        rgba(140, 175, 255, 0.95) 100%
     );
     background-size: 300% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: ls-gradientShift 4s ease-in-out infinite;
+    animation: gradientShift 4s ease-in-out infinite;
 }
 
-@keyframes ls-gradientShift {
-    0%, 100% { background-position: 0%   50%; }
-    50%       { background-position: 100% 50%; }
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
-/* ── Subtitle ── */
+/* ===== Subtitle - Professional Navy Accent ===== */
 .loading-subtitle {
-    font-size: 0.72rem;
-    color: rgba(210, 216, 248, 0.58);
-    margin: -1rem 0 0;
+    font-size: 1rem;
+    color: rgba(140, 175, 255, 0.65);
+    margin: 0;
     letter-spacing: 0.35em;
-    font-weight: 300;
+    font-weight: 400;
+    animation: subtitlePulse 3s ease-in-out infinite;
     text-transform: uppercase;
-    animation: ls-subtitlePulse 3s ease-in-out infinite;
-}
-
-@keyframes ls-subtitlePulse {
-    0%, 100% { opacity: 0.6; transform: translateY(0); }
-    50%       { opacity: 1;   transform: translateY(-2px); }
-}
-
-/* ══════════════════════════════════════════════════════════════
-   SPINNER — Deep Space Orbital System
-   Three orbit rings + conic-gradient spinner + twinkling core
-   ══════════════════════════════════════════════════════════════ */
-
-.loading-spinner-wrap {
     position: relative;
-    width: 160px;
-    height: 160px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
 }
 
-/* Soft nebula glow behind the spinner */
-.loading-spinner-wrap::before {
+.loading-subtitle::before,
+.loading-subtitle::after {
     content: '';
     position: absolute;
-    inset: -40px;
-    border-radius: 50%;
-    background: radial-gradient(ellipse at center,
-        rgba(85, 118, 205, 0.18)  0%,
-        rgba(45,  70, 150, 0.10) 40%,
-        rgba(212,175,  55, 0.04) 70%,
-        transparent 100%
-    );
-    animation: ls-nebulaGlow 4s ease-in-out infinite alternate;
-    pointer-events: none;
-}
-
-@keyframes ls-nebulaGlow {
-    0%   { opacity: 0.55; transform: scale(1.0); }
-    100% { opacity: 0.90; transform: scale(1.12); }
-}
-
-/* ── Outer orbit ring (slowest — counter-clockwise) ── */
-.loading-spinner-wrap::after {
-    content: '';
-    position: absolute;
-    inset: -12px;
-    border-radius: 50%;
-    border: 1px solid transparent;
-    /* journal-panel-border gradient on the ring */
-    background:
-        linear-gradient(#010008, #010008) padding-box,
-        conic-gradient(
-            rgba(255,255,255,0.72)  0deg,
-            rgba(200,215,255,0.55) 60deg,
-            rgba(120,150,220,0.30) 120deg,
-            rgba(38,  52,105,0.15) 180deg,
-            rgba(212,175, 55,0.08) 220deg,
-            rgba(38,  52,105,0.15) 260deg,
-            rgba(120,150,220,0.30) 300deg,
-            rgba(255,255,255,0.72) 360deg
-        ) border-box;
-    animation: ls-orbitOuter 8s linear infinite reverse;
-    pointer-events: none;
-}
-
-@keyframes ls-orbitOuter {
-    to { transform: rotate(360deg); }
-}
-
-/* ── Main spinner disc ── */
-.loading-rings {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    transform: none !important;
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-/* Outer spinning ring — white → navy gradient border */
-.ring {
-    position: absolute;
+    width: 40px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(107, 143, 232, 0.5), transparent);
     top: 50%;
-    left: 50%;
-    border-radius: 50%;
-    border: 1.5px solid transparent;
 }
 
-/* Ring 1 — fast, primary spinner */
-.ring-1 {
-    width: 120px;
-    height: 120px;
-    transform: translate(-50%, -50%);
-    background:
-        linear-gradient(#010008, #010008) padding-box,
-        conic-gradient(
-            rgba(255,255,255,1.00)  0deg,
-            rgba(255,255,255,0.88) 11deg,
-            rgba(255,255,255,0.48) 26deg,
-            rgba(185,205,255,0.42) 44deg,
-            rgba( 85,115,195,0.58) 64deg,
-            rgba( 38, 52,105,0.72) 84deg,
-            rgba(212,175, 55,0.18) 100deg,
-            rgba( 38, 52,105,0.10) 180deg,
-            rgba( 85,115,195,0.15) 270deg,
-            rgba(255,255,255,1.00) 360deg
-        ) border-box;
-    animation: ls-spin1 2.4s linear infinite;
-    box-shadow:
-        0 0 0 0.5px rgba(255,255,255,0.04) inset,
-        0 0 18px rgba(255,255,255,0.08),
-        0 0 32px rgba(85,118,205,0.14);
+.loading-subtitle::before {
+    right: 100%;
+    margin-right: 20px;
 }
 
-/* Ring 2 — medium speed, inward, offset */
-.ring-2 {
-    width: 86px;
-    height: 86px;
-    transform: translate(-50%, -50%);
-    background:
-        linear-gradient(#010008, #010008) padding-box,
-        conic-gradient(
-            rgba(140,175,255,0.90)  0deg,
-            rgba(120,160,255,0.70) 40deg,
-            rgba( 80,120,200,0.30) 120deg,
-            rgba( 38, 52,105,0.08) 200deg,
-            rgba(140,175,255,0.90) 360deg
-        ) border-box;
-    animation: ls-spin2 3.8s linear infinite;
-    box-shadow:
-        0 0 14px rgba(140,175,255,0.22),
-        0 0 28px rgba(100,140,220,0.12);
+.loading-subtitle::after {
+    left: 100%;
+    margin-left: 20px;
 }
 
-/* Ring 3 — slowest, innermost */
-.ring-3 {
-    width: 56px;
-    height: 56px;
-    transform: translate(-50%, -50%);
-    background:
-        linear-gradient(#010008, #010008) padding-box,
-        conic-gradient(
-            rgba(255,255,255,0.85)  0deg,
-            rgba(200,215,255,0.60) 30deg,
-            rgba(212,175, 55,0.22) 90deg,
-            rgba( 38, 52,105,0.08) 180deg,
-            rgba(255,255,255,0.85) 360deg
-        ) border-box;
-    animation: ls-spin3 5.5s linear infinite reverse;
-    box-shadow:
-        0 0 12px rgba(212,175,55,0.18),
-        0 0 22px rgba(255,255,255,0.08);
-}
-
-@keyframes ls-spin1 { to { transform: translate(-50%,-50%) rotate(360deg); } }
-@keyframes ls-spin2 { to { transform: translate(-50%,-50%) rotate(360deg); } }
-@keyframes ls-spin3 { to { transform: translate(-50%,-50%) rotate(360deg); } }
-
-/* ── Pulsing core — the "star" at the center ── */
-.loading-rings::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    /* Conic white→navy→gold matches journal selected day */
-    background: conic-gradient(
-        #ffffff       0deg,
-        rgba(200,215,255,0.95) 90deg,
-        rgba(120,150,220,0.90) 180deg,
-        rgba(212,175, 55,0.40) 270deg,
-        #ffffff       360deg
-    );
-    box-shadow:
-        0 0  8px rgba(255,255,255,0.85),
-        0 0 20px rgba(200,215,255,0.55),
-        0 0 38px rgba(100,135,215,0.38),
-        0 0 60px rgba(212,175, 55,0.14);
-    animation: ls-coreGlow 2s ease-in-out infinite alternate;
-    z-index: 10;
-}
-
-@keyframes ls-coreGlow {
-    0%   {
-        transform: translate(-50%,-50%) scale(1.0);
-        box-shadow:
-            0 0  8px rgba(255,255,255,0.85),
-            0 0 20px rgba(200,215,255,0.55),
-            0 0 38px rgba(100,135,215,0.38),
-            0 0 60px rgba(212,175, 55,0.14);
-    }
-    100% {
-        transform: translate(-50%,-50%) scale(1.45);
-        box-shadow:
-            0 0 12px rgba(255,255,255,1.0),
-            0 0 32px rgba(200,215,255,0.75),
-            0 0 58px rgba(100,135,215,0.55),
-            0 0 90px rgba(212,175, 55,0.22);
+@media (max-width: 768px) {
+    .loading-subtitle::before,
+    .loading-subtitle::after {
+        display: none;
     }
 }
 
-/* ── Progress Section ── */
+@keyframes subtitlePulse {
+    0%, 100% {
+        opacity: 0.6;
+        transform: translateY(0);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(-2px);
+    }
+}
+
+/* ===== Loading Progress Section ===== */
 .loading-progress {
+    margin: 1rem 0 0;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    margin: 0;
 }
 
 .loading-text {
-    color: rgba(232, 235, 255, 0.86);
-    font-size: 0.72rem;
+    color: rgba(140, 175, 255, 0.75);
+    font-size: 0.875rem;
     margin: 0;
-    font-weight: 400;
-    letter-spacing: 0.22em;
+    font-weight: 500;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
 }
 
 .loading-percentage {
-    /* Matches journal --green accent */
-    color: #0FD98A;
+    color: rgba(212, 175, 55, 0.95);
     font-weight: 600;
-    text-shadow: 0 0 10px rgba(15,217,138,0.45);
-    animation: ls-percentGlow 1.5s ease-in-out infinite;
+    animation: percentageGlow 1.5s ease-in-out infinite;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
 }
 
-@keyframes ls-percentGlow {
-    0%, 100% { text-shadow: 0 0 10px rgba(15,217,138,0.45); }
-    50%       { text-shadow: 0 0 22px rgba(15,217,138,0.80); }
+@keyframes percentageGlow {
+    0%, 100% {
+        opacity: 1;
+        text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+    }
+    50% {
+        opacity: 0.85;
+        text-shadow: 0 0 20px rgba(212, 175, 55, 0.7);
+    }
 }
 
-/* ── Progress Bar — matches journal-progress-fill ── */
+/* ===== Premium Loading Bar - Navy Blue with Gold Fill ===== */
 .loading-bar {
     width: 360px;
     height: 3px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 99px;
+    background: rgba(58, 84, 144, 0.3);
+    border-radius: 3px;
     overflow: hidden;
+    margin: 0;
     position: relative;
-    box-shadow:
-        0 1px 0 rgba(255,255,255,0.10),
-        0 0 20px rgba(85,118,205,0.12);
+    box-shadow: 0 0 20px rgba(107, 143, 232, 0.2);
 }
 
 .loading-bar-fill {
     height: 100%;
     width: 70%;
-    /* Exact same gradient as .journal-progress-fill */
-    background: linear-gradient(90deg,
-        #6b5a1c  0%,
-        #9a7b22 18%,
-        #d4af37 45%,
-        #dfc056 72%,
-        #e8c658 100%
+    background: linear-gradient(
+        90deg,
+        rgba(107, 143, 232, 0.9) 0%,
+        rgba(140, 175, 255, 0.95) 35%,
+        rgba(212, 175, 55, 0.9) 65%,
+        rgba(107, 143, 232, 0.9) 100%
     );
-    border-radius: 99px;
-    animation: ls-barProgress 2s ease-in-out infinite;
-    box-shadow:
-        0 0 14px rgba(212,175,55,0.55),
-        0 0 26px rgba(212,175,55,0.32);
+    border-radius: 3px;
+    animation: loadingProgress 2s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
     position: relative;
     overflow: hidden;
 }
 
+/* Shimmer effect on loading bar */
 .loading-bar-fill::after {
     content: '';
     position: absolute;
-    top: 0; left: -60%;
-    width: 50%; height: 100%;
-    background: linear-gradient(90deg,
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
         transparent,
-        rgba(255,248,220,0.38),
+        rgba(255, 255, 255, 0.25),
         transparent
     );
-    animation: ls-shimmer 2.8s ease-in-out infinite;
+    animation: shimmer 1.8s infinite;
 }
 
-@keyframes ls-shimmer { 100% { left: 120%; } }
-
-@keyframes ls-barProgress {
-    0%   { width: 28%; box-shadow: 0 0 14px rgba(212,175,55,0.55), 0 0 26px rgba(212,175,55,0.32); }
-    50%  { width: 82%; box-shadow: 0 0 22px rgba(212,175,55,0.80), 0 0 40px rgba(212,175,55,0.48); }
-    100% { width: 28%; box-shadow: 0 0 14px rgba(212,175,55,0.55), 0 0 26px rgba(212,175,55,0.32); }
+@keyframes shimmer {
+    100% { left: 100%; }
 }
 
-/* ── Dots row (kept, re-themed) ── */
+@keyframes loadingProgress {
+    0% {
+        width: 25%;
+        box-shadow: 0 0 8px rgba(107, 143, 232, 0.5);
+    }
+    50% {
+        width: 75%;
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+    }
+    100% {
+        width: 25%;
+        box-shadow: 0 0 8px rgba(107, 143, 232, 0.5);
+    }
+}
+
+/* ===== Animated Rings - Navy Blue with Gold Accent ===== */
+.loading-rings {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 5 !important;
+}
+
+.ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid transparent;
+    border-radius: 50%;
+    animation: ringPulse 4s ease-in-out infinite;
+    background: radial-gradient(
+        circle at 30% 30%,
+        rgba(107, 143, 232, 0.08),
+        transparent 70%
+    );
+}
+
+.ring-1 {
+    width: 250px;
+    height: 250px;
+    animation-delay: 0s;
+    border-image: linear-gradient(135deg, rgba(107, 143, 232, 0.4), rgba(212, 175, 55, 0.25)) 1;
+    box-shadow: 0 0 30px rgba(107, 143, 232, 0.15);
+}
+
+.ring-2 {
+    width: 350px;
+    height: 350px;
+    animation-delay: 1s;
+    border-image: linear-gradient(225deg, rgba(107, 143, 232, 0.3), rgba(212, 175, 55, 0.2)) 1;
+    box-shadow: 0 0 40px rgba(107, 143, 232, 0.1);
+}
+
+.ring-3 {
+    width: 450px;
+    height: 450px;
+    animation-delay: 2s;
+    border-image: linear-gradient(315deg, rgba(107, 143, 232, 0.25), rgba(212, 175, 55, 0.15)) 1;
+    box-shadow: 0 0 50px rgba(58, 84, 144, 0.1);
+}
+
+@keyframes ringPulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.35;
+        border-width: 1px;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+        opacity: 0.7;
+        border-width: 2px;
+    }
+}
+
+/* ===== Floating Dots - Navy to Gold Gradient ===== */
 .loading-dots-container {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
     margin-top: 0.5rem;
 }
 
 .loading-dot {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(135deg, rgba(107, 143, 232, 0.9), rgba(212, 175, 55, 0.8));
     border-radius: 50%;
-    /* Matches journal --green */
-    background: #0FD98A;
-    box-shadow: 0 0 8px rgba(15,217,138,0.55);
-    animation: ls-dotBounce 1.4s ease-in-out infinite;
+    animation: dotPulse 1.4s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(107, 143, 232, 0.5);
 }
 
-.loading-dot:nth-child(1) { animation-delay: 0s;   }
+.loading-dot:nth-child(1) { animation-delay: 0s; }
 .loading-dot:nth-child(2) { animation-delay: 0.2s; }
 .loading-dot:nth-child(3) { animation-delay: 0.4s; }
 
-@keyframes ls-dotBounce {
-    0%, 100% {
-        opacity: 0.35;
-        transform: scale(0.78) translateY(0);
-        box-shadow: 0 0 5px rgba(15,217,138,0.30);
+@keyframes dotPulse {
+    0%, 100% { 
+        opacity: 0.5; 
+        transform: scale(0.8); 
+        box-shadow: 0 0 4px rgba(107, 143, 232, 0.3);
     }
-    50% {
-        opacity: 1;
-        transform: scale(1.35) translateY(-3px);
-        box-shadow: 0 0 16px rgba(15,217,138,0.80);
+    50% { 
+        opacity: 1; 
+        transform: scale(1.2); 
+        box-shadow: 0 0 12px rgba(212, 175, 55, 0.7);
     }
 }
 
-/* ── Fade-out on complete ── */
-.loading-screen.fade-out {
-    animation: ls-fadeOut 0.8s ease-out forwards;
+/* ===== Premium Particle Effects ===== */
+.loading-particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 2;
+    pointer-events: none;
 }
 
-@keyframes ls-fadeOut {
-    to { opacity: 0; visibility: hidden; }
+.particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(107, 143, 232, 0.4);
+    border-radius: 50%;
+    animation: particleFloat 12s linear infinite;
 }
 
-/* ══ Responsive ══════════════════════════════════════════════ */
+.particle:nth-child(even) {
+    background: rgba(212, 175, 55, 0.3);
+    width: 3px;
+    height: 3px;
+}
+
+@keyframes particleFloat {
+    0% {
+        transform: translateY(100vh) scale(1);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.4;
+    }
+    90% {
+        opacity: 0.4;
+    }
+    100% {
+        transform: translateY(-100vh) scale(0);
+        opacity: 0;
+    }
+}
+
+/* ===== Responsive Design ===== */
 @media (max-width: 1024px) {
-    .loading-brand  { font-size: 4rem; }
-    .loading-title  { font-size: 0.85rem; }
-    .loading-spinner-wrap { width: 140px; height: 140px; }
-    .ring-1 { width: 104px; height: 104px; }
-    .ring-2 { width: 74px;  height: 74px;  }
-    .ring-3 { width: 48px;  height: 48px;  }
+    .loading-brand {
+        font-size: 4rem;
+        letter-spacing: 0.24em;
+    }
+    
+    .loading-title {
+        font-size: 2.5rem;
+        letter-spacing: 0.22em;
+    }
+    
+    .ring-1 { width: 200px; height: 200px; }
+    .ring-2 { width: 280px; height: 280px; }
+    .ring-3 { width: 360px; height: 360px; }
+    
+    .loading-bar {
+        width: 320px;
+    }
 }
 
 @media (max-width: 768px) {
-    .loading-brand  { font-size: 3rem; letter-spacing: 0.2em; }
-    .loading-title  { font-size: 0.75rem; letter-spacing: 0.22em; }
-    .loading-subtitle { font-size: 0.65rem; }
-    .loading-bar    { width: 280px; }
-    .loading-spinner-wrap { width: 120px; height: 120px; }
-    .ring-1 { width: 90px;  height: 90px;  }
-    .ring-2 { width: 64px;  height: 64px;  }
-    .ring-3 { width: 42px;  height: 42px;  }
+    .loading-brand {
+        font-size: 3rem;
+        letter-spacing: 0.2em;
+    }
+    
+    .loading-title {
+        font-size: 2rem;
+        letter-spacing: 0.18em;
+    }
+    
+    .loading-subtitle {
+        font-size: 0.8rem;
+        letter-spacing: 0.25em;
+    }
+    
+    .loading-bar {
+        width: 280px;
+    }
+    
+    .ring-1 { width: 160px; height: 160px; }
+    .ring-2 { width: 220px; height: 220px; }
+    .ring-3 { width: 280px; height: 280px; }
 }
 
 @media (max-width: 480px) {
-    .loading-brand  { font-size: 2.2rem; letter-spacing: 0.15em; }
-    .loading-title  { font-size: 0.65rem; letter-spacing: 0.16em; }
-    .loading-subtitle { font-size: 0.60rem; }
-    .loading-bar    { width: 240px; }
-    .loading-spinner-wrap { width: 100px; height: 100px; }
-    .ring-1 { width: 76px;  height: 76px;  }
-    .ring-2 { width: 54px;  height: 54px;  }
-    .ring-3 { width: 36px;  height: 36px;  }
+    .loading-brand {
+        font-size: 2.2rem;
+        letter-spacing: 0.16em;
+    }
+    
+    .loading-title {
+        font-size: 1.5rem;
+        letter-spacing: 0.14em;
+    }
+    
+    .loading-subtitle {
+        font-size: 0.65rem;
+        letter-spacing: 0.2em;
+    }
+    
+    .loading-bar {
+        width: 240px;
+    }
+    
+    .loading-progress {
+        gap: 0.75rem;
+    }
+    
+    .ring-1 { width: 120px; height: 120px; }
+    .ring-2 { width: 160px; height: 160px; }
+    .ring-3 { width: 200px; height: 200px; }
+}
+
+/* ===== Fade Out Animation ===== */
+.loading-screen.fade-out {
+    animation: fadeOut 0.6s ease-out forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+/* ===== Reduce Motion Preference ===== */
+@media (prefers-reduced-motion: reduce) {
+    .loading-screen::before,
+    .loading-brand,
+    .loading-title,
+    .loading-subtitle,
+    .loading-bar-fill,
+    .ring,
+    .loading-dot,
+    .particle,
+    .binary-digit {
+        animation: none !important;
+    }
+    
+    .loading-screen::before {
+        opacity: 0.5;
+    }
+    
+    .loading-bar-fill {
+        width: 50%;
+    }
 }

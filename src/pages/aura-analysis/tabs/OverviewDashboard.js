@@ -163,7 +163,7 @@ export default function OverviewDashboard() {
     return (
       <div className="aa-page">
         <AuraAnalysisEmptyState
-          icon="fa-plug"
+          icon="mt5"
           variant={needsConnection ? 'connect' : 'data'}
           title={needsConnection ? 'Connect MT5 to unlock your dashboard' : 'No account data yet'}
           description={

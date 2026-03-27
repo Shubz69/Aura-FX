@@ -74,7 +74,7 @@ export default function RiskLab() {
     return (
       <div className="aa-page">
         <AuraAnalysisEmptyState
-          icon="fa-shield-alt"
+          icon="mt5"
           variant={needsConnection ? 'connect' : 'data'}
           title={needsConnection ? 'Connect to analyse risk' : 'No trades in this period'}
           description={

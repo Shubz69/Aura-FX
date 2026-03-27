@@ -75,7 +75,7 @@ export default function PerformanceAnalytics() {
     return (
       <div className="aa-page">
         <AuraAnalysisEmptyState
-          icon="fa-chart-bar"
+          icon="mt5"
           variant={needsConnection ? 'connect' : 'data'}
           title={needsConnection ? 'Connect to view performance' : 'No trades in this period'}
           description={

@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import Api from '../../services/Api';
 import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import { FaEye, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
+import CosmicBackground from '../../components/CosmicBackground';
 
 /** Client cap (DB LONGBLOB); large files use chunked uploads to avoid HTTP 413 on Vercel. */
 const MAX_UPLOAD_BYTES = 48 * 1024 * 1024;
@@ -421,62 +422,65 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         </div>
       </div>
 
-      {typeof document !== 'undefined' && previewOpen && iframeSrc && createPortal(
-        <div className="td-intel-preview-overlay" onClick={closePreview} role="presentation">
-          <div
-            className="td-intel-preview-box td-intel-preview-box--fullscreen td-intel-preview-box--protected"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label={displayBriefTitle(previewBriefMeta?.title)}
-          >
-            <div className="td-intel-preview-chrome--minimal">
-              <p className="td-intel-preview-title-bar" title={displayBriefTitle(previewBriefMeta?.title)}>
-                {displayBriefTitle(previewBriefMeta?.title)}
+  {typeof document !== 'undefined' && previewOpen && iframeSrc && createPortal(
+  <>
+    <CosmicBackground />
+    <div className="td-intel-preview-overlay" onClick={closePreview} role="presentation">
+      <div
+        className="td-intel-preview-box td-intel-preview-box--fullscreen td-intel-preview-box--protected"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={displayBriefTitle(previewBriefMeta?.title)}
+      >
+        <div className="td-intel-preview-chrome--minimal">
+          <p className="td-intel-preview-title-bar" title={displayBriefTitle(previewBriefMeta?.title)}>
+            {displayBriefTitle(previewBriefMeta?.title)}
+          </p>
+          <button type="button" className="td-intel-preview-close--floating" onClick={closePreview} aria-label="Close preview">
+            <FaTimes />
+          </button>
+        </div>
+        <div className="td-intel-preview-frame-wrap">
+          {typewriterEnabled ? (
+            <div className="td-intel-preview-typewriter" aria-live="polite">
+              <pre className="td-intel-preview-typewriter-text">{typewriterText || (typewriterLoading ? '' : 'No text content available.')}</pre>
+              {typewriterLoading && <span className="td-intel-preview-typewriter-caret" aria-hidden />}
+            </div>
+          ) : previewCanIframe ? (
+            <iframe
+              title={displayBriefTitle(previewBriefMeta?.title)}
+              src={iframeSrc}
+              className="td-intel-preview-iframe"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="td-intel-preview-fallback">
+              <h3 className="td-intel-preview-fallback-title">{displayBriefTitle(previewBriefMeta?.title)}</h3>
+              <p className="td-intel-preview-fallback-text">
+                This file type cannot be rendered in-browser here. Use Open or Download, or upload a PDF for inline preview.
               </p>
-              <button type="button" className="td-intel-preview-close--floating" onClick={closePreview} aria-label="Close preview">
-                <FaTimes />
-              </button>
+              <div className="td-intel-preview-fallback-actions">
+                {previewDirectUrl && (
+                  <>
+                    <a href={previewDirectUrl} target="_blank" rel="noreferrer" className="td-mi-btn td-mi-btn-edit">
+                      Open file
+                    </a>
+                    <a href={previewDirectUrl} download className="td-mi-btn td-mi-btn-small">
+                      Download
+                    </a>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="td-intel-preview-frame-wrap">
-              {typewriterEnabled ? (
-                <div className="td-intel-preview-typewriter" aria-live="polite">
-                  <pre className="td-intel-preview-typewriter-text">{typewriterText || (typewriterLoading ? '' : 'No text content available.')}</pre>
-                  {typewriterLoading && <span className="td-intel-preview-typewriter-caret" aria-hidden />}
-                </div>
-              ) : previewCanIframe ? (
-                <iframe
-                  title={displayBriefTitle(previewBriefMeta?.title)}
-                  src={iframeSrc}
-                  className="td-intel-preview-iframe"
-                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="td-intel-preview-fallback">
-                  <h3 className="td-intel-preview-fallback-title">{displayBriefTitle(previewBriefMeta?.title)}</h3>
-                  <p className="td-intel-preview-fallback-text">
-                    This file type cannot be rendered in-browser here. Use Open or Download, or upload a PDF for inline preview.
-                  </p>
-                  <div className="td-intel-preview-fallback-actions">
-                    {previewDirectUrl && (
-                      <>
-                        <a href={previewDirectUrl} target="_blank" rel="noreferrer" className="td-mi-btn td-mi-btn-edit">
-                          Open file
-                        </a>
-                        <a href={previewDirectUrl} download className="td-mi-btn td-mi-btn-small">
-                          Download
-                        </a>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          )}
+        </div>
+      </div>
+    </div>
+  </>,
+  document.body
+)}
     </>
   );
 }

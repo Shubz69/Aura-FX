@@ -142,7 +142,7 @@ export default function GrowthEngine() {
     return (
       <div className="aa-page">
         <AuraAnalysisEmptyState
-          icon="fa-seedling"
+          icon="mt5"
           variant={needsConnection ? 'connect' : 'data'}
           title={needsConnection ? 'Connect to track growth' : 'No trades in this period'}
           description={

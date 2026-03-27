@@ -1,6 +1,9 @@
-/* Full-viewport Market Intelligence brief preview — blurred backdrop, minimal chrome */
+/* ============================================================
+   MARKET INTELLIGENCE BRIEF PREVIEW - COSMIC BACKGROUND
+   Full-viewport with cosmic nebula background matching Community page
+   ============================================================ */
+
 .td-intel-preview-overlay {
-  --brief-surface-navy: #050814;
   position: fixed;
   inset: 0;
   z-index: 10060;
@@ -9,12 +12,26 @@
   justify-content: center;
   padding: clamp(12px, 3vw, 24px);
   padding-top: max(clamp(12px, 3vw, 24px), env(safe-area-inset-top, 0));
-  background:
-    radial-gradient(1200px 520px at 50% -10%, rgba(24, 44, 108, 0.38), rgba(2, 6, 24, 0.78)),
-    rgba(2, 7, 29, 0.84);
-  backdrop-filter: blur(16px) saturate(1.05);
-  -webkit-backdrop-filter: blur(16px) saturate(1.05);
+  background: transparent; /* Remove overlay background - let cosmic bg show through */
+  backdrop-filter: none; /* Remove blur from overlay - cosmic bg will have its own */
+  -webkit-backdrop-filter: none;
   box-sizing: border-box;
+  pointer-events: none; /* Allow clicks to pass through to close button */
+}
+
+/* Dark semi-transparent layer for readability */
+.td-intel-preview-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.5) 0%,
+    rgba(0, 0, 0, 0.7) 50%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
 }
 
 .td-intel-preview-box--fullscreen {
@@ -24,19 +41,78 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: transparent;
-  border: none;
-  border-radius: 12px;
-  box-shadow: none;
+  background: linear-gradient(
+    165deg,
+    rgba(5, 8, 28, 0.88) 0%,
+    rgba(2, 4, 18, 0.92) 50%,
+    rgba(1, 2, 12, 0.96) 100%
+  );
+  border: 1px solid rgba(107, 143, 232, 0.28);
+  border-radius: 24px;
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(107, 143, 232, 0.15) inset,
+    0 0 40px rgba(0, 0, 0, 0.5);
   overflow: hidden;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: auto;
+  z-index: 2;
+  animation: previewSlideIn 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1) both;
 }
 
+<<<<<<< Updated upstream
 .td-intel-preview-box--fullscreen.td-intel-preview-box--protected {
   /* no journal glass double-border; content fills the stage */
   background: linear-gradient(165deg, rgba(5, 16, 58, 0.92), rgba(3, 10, 40, 0.95));
   border: 1px solid rgba(96, 143, 255, 0.22);
   box-shadow: 0 24px 90px rgba(1, 8, 30, 0.72);
   min-height: min(90vh, 940px);
+=======
+@keyframes previewSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Top gradient rim */
+.td-intel-preview-box--fullscreen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 5%;
+  right: 5%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(107, 143, 232, 0.6),
+    rgba(140, 175, 255, 0.8),
+    rgba(212, 175, 55, 0.4),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Corner glow effect */
+.td-intel-preview-box--fullscreen::after {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -40px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(107, 143, 232, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+>>>>>>> Stashed changes
 }
 
 .td-intel-preview-chrome--minimal {
@@ -45,22 +121,30 @@
   justify-content: space-between;
   gap: 12px;
   flex-shrink: 0;
-  padding: 10px 12px 8px;
-  min-height: 44px;
+  padding: 14px 20px 12px;
+  min-height: 52px;
+  background: linear-gradient(180deg, rgba(107, 143, 232, 0.06) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(107, 143, 232, 0.15);
+  position: relative;
+  z-index: 2;
 }
 
 .td-intel-preview-title-bar {
   flex: 1;
   margin: 0;
   padding-right: 8px;
-  font-size: clamp(0.75rem, 2vw, 0.88rem);
+  font-size: clamp(0.78rem, 2vw, 0.9rem);
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.88);
-  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  background: linear-gradient(125deg, #fff, rgba(200, 215, 255, 0.95));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .td-intel-preview-close--floating {
@@ -70,18 +154,26 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 10px;
-  background: rgba(3, 12, 43, 0.9);
-  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(107, 143, 232, 0.25);
+  border-radius: 12px;
+  background: rgba(4, 5, 18, 0.7);
+  color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10;
 }
 
 .td-intel-preview-close--floating:hover {
-  background: rgba(107, 143, 232, 0.2);
-  border-color: rgba(107, 143, 232, 0.45);
-  color: #fff;
+  background: rgba(240, 61, 95, 0.2);
+  border-color: rgba(240, 61, 95, 0.45);
+  color: #f87171;
+  transform: rotate(90deg) scale(1.05);
+}
+
+.td-intel-preview-close--floating:active {
+  transform: rotate(90deg) scale(0.95);
 }
 
 .td-intel-preview-frame-wrap {
@@ -89,8 +181,9 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  border-radius: 0 0 11px 11px;
+  border-radius: 0 0 20px 20px;
   overflow: hidden;
+<<<<<<< Updated upstream
   background: var(--brief-surface-navy);
   position: relative;
 }
@@ -104,22 +197,32 @@
   background:
     radial-gradient(130% 90% at 50% -20%, rgba(102, 154, 255, 0.12), rgba(0, 0, 0, 0) 62%),
     linear-gradient(180deg, rgba(6, 18, 62, 0.34), rgba(3, 11, 43, 0.52));
+=======
+  background: rgba(1, 0, 8, 0.6);
+  position: relative;
+  z-index: 1;
+>>>>>>> Stashed changes
 }
 
 .td-intel-preview-iframe {
   flex: 1;
   width: 100%;
-  min-height: min(78vh, calc(100vh - 120px));
+  min-height: min(70vh, calc(100vh - 140px));
   height: 100%;
   border: none;
   display: block;
+<<<<<<< Updated upstream
   background: var(--brief-surface-navy);
   position: relative;
   z-index: 1;
+=======
+  background: rgba(1, 0, 8, 0.4);
+>>>>>>> Stashed changes
 }
 
 .td-intel-preview-typewriter {
   flex: 1;
+<<<<<<< Updated upstream
   min-height: 100%;
   padding: clamp(14px, 2vw, 22px);
   overflow: auto;
@@ -162,27 +265,36 @@
 .td-intel-preview-typewriter::-webkit-scrollbar-thumb:hover,
 .td-intel-preview-fallback::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, rgba(140, 187, 255, 0.96), rgba(84, 139, 240, 0.96));
+=======
+  min-height: min(70vh, calc(100vh - 140px));
+  padding: clamp(20px, 3vw, 32px);
+  overflow: auto;
+  background: rgba(1, 0, 8, 0.5);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 143, 232, 0.3) transparent;
+>>>>>>> Stashed changes
 }
 
 .td-intel-preview-typewriter-text {
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: clamp(0.73rem, 1.8vw, 0.84rem);
-  line-height: 1.45;
-  color: rgba(226, 237, 255, 0.96);
+  font-family: 'SF Mono', 'Fira Code', 'Space Grotesk', monospace;
+  font-size: clamp(0.8rem, 2vw, 0.95rem);
+  line-height: 1.6;
+  color: rgba(232, 235, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .td-intel-preview-typewriter-caret {
   display: inline-block;
-  width: 9px;
-  height: 1.05em;
+  width: 2px;
+  height: 1.2em;
   margin-left: 2px;
   vertical-align: text-bottom;
-  border-radius: 1px;
-  background: rgba(125, 177, 255, 0.95);
-  animation: tdPreviewBlink 0.85s steps(1, end) infinite;
+  background: linear-gradient(180deg, rgba(107, 143, 232, 0.9), rgba(212, 175, 55, 0.7));
+  animation: tdPreviewBlink 0.9s steps(1, end) infinite;
+  box-shadow: 0 0 6px rgba(107, 143, 232, 0.5);
 }
 
 @keyframes tdPreviewBlink {
@@ -193,36 +305,89 @@
 .td-intel-preview-fallback {
   flex: 1;
   min-height: min(50vh, 400px);
-  padding: 24px;
+  padding: 40px 32px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  gap: 12px;
-  color: rgba(232, 235, 255, 0.9);
+  gap: 20px;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(4, 5, 18, 0.7), rgba(1, 0, 8, 0.8));
+  backdrop-filter: blur(4px);
+  border-radius: 16px;
+  margin: 20px;
 }
 
 .td-intel-preview-fallback-title {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  color: #fff;
+  background: linear-gradient(125deg, #fff, rgba(200, 215, 255, 0.95));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.02em;
 }
 
 .td-intel-preview-fallback-text {
   margin: 0;
   max-width: 42ch;
-  line-height: 1.5;
-  color: rgba(220, 225, 245, 0.85);
+  line-height: 1.6;
+  color: rgba(210, 216, 248, 0.8);
+  font-size: 0.9rem;
 }
 
 .td-intel-preview-fallback-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 14px;
+  margin-top: 12px;
 }
 
+/* Button styling matching trader deck */
+.td-mi-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.td-mi-btn-edit {
+  background: linear-gradient(135deg, #283d68 0%, #3a5490 50%, #5a7ed8 100%);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(75, 110, 205, 0.3);
+}
+
+.td-mi-btn-edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(75, 110, 205, 0.4);
+}
+
+.td-mi-btn-small {
+  background: rgba(107, 143, 232, 0.12);
+  color: rgba(200, 215, 255, 0.9);
+  border: 1px solid rgba(107, 143, 232, 0.25);
+  padding: 8px 16px;
+  font-size: 0.72rem;
+}
+
+.td-mi-btn-small:hover {
+  background: rgba(107, 143, 232, 0.2);
+  border-color: rgba(107, 143, 232, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .td-intel-preview-overlay {
     padding: 8px;
@@ -237,6 +402,91 @@
   }
 
   .td-intel-preview-iframe {
-    min-height: min(70dvh, calc(100dvh - 100px));
+    min-height: min(65dvh, calc(100dvh - 120px));
   }
+  
+  .td-intel-preview-chrome--minimal {
+    padding: 10px 16px;
+    min-height: 48px;
+  }
+  
+  .td-intel-preview-close--floating {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .td-intel-preview-fallback {
+    padding: 28px 20px;
+    margin: 16px;
+  }
+  
+  .td-intel-preview-fallback-title {
+    font-size: 1rem;
+  }
+  
+  .td-intel-preview-fallback-text {
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .td-intel-preview-chrome--minimal {
+    padding: 8px 12px;
+  }
+  
+  .td-intel-preview-title-bar {
+    font-size: 0.7rem;
+  }
+  
+  .td-intel-preview-close--floating {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .td-mi-btn {
+    padding: 8px 16px;
+    font-size: 0.72rem;
+  }
+}
+
+/* Loading state inside preview */
+.td-intel-preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 20px;
+}
+
+.td-intel-preview-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(107, 143, 232, 0.2);
+  border-top-color: rgba(107, 143, 232, 0.9);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Scrollbar styling */
+.td-intel-preview-typewriter::-webkit-scrollbar {
+  width: 4px;
+}
+
+.td-intel-preview-typewriter::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.td-intel-preview-typewriter::-webkit-scrollbar-thumb {
+  background: rgba(107, 143, 232, 0.3);
+  border-radius: 4px;
+}
+
+.td-intel-preview-typewriter::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 143, 232, 0.5);
 }

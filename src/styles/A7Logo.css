@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 /* A7 Logo — peachy gold metallic (matches Home hero “With Aura Terminal” / #EAA960 family) */
 
 /* Keyframe: sweeping light beam across the logo (duration = prior ÷ 0.15 ≈ 15% speed) */
@@ -44,6 +45,9 @@
     90%            { opacity: 1; transform: scale(1.1) rotate(-10deg); }
     95%            { opacity: 0.6; transform: scale(1) rotate(-10deg); }
 }
+=======
+/* A7 Logo — Premium Gold Metallic (Custom Palette: #dd9950, #ecad64, #f3bb74, #f6bf78) */
+>>>>>>> Stashed changes
 
 .a7-logo-container {
     display: flex;
@@ -59,33 +63,28 @@
     width: 100%;
     height: 100%;
 
-    /* Peachy gold metallic — aligned with --eaa-core / --eaa-bright */
+    /* Premium gold metallic — using custom palette: #dd9950, #ecad64, #f3bb74, #f6bf78 */
     background: linear-gradient(
         110deg,
-        #3d2418   0%,
-        #5c3018   5%,
-        #8a4824  10%,
-        #b06e32  16%,
-        #d48d44  22%,
-        #eaa960  28%,
-        #f8c37d  34%,
-        #fde8c4  40%,
-        #f8c37d  46%,
-        #eaa960  54%,
-        #d48d44  62%,
-        #c97b45  70%,
-        #f8c37d  78%,
-        #fff4e6  82%,
-        #eaa960  88%,
-        #7a4528  94%,
-        #3d2418 100%
+        #a5672e   0%,
+        #b57238   5%,
+        #c97e42  10%,
+        #dd9950  16%,
+        #e5a458  22%,
+        #ecad64  28%,
+        #f3bb74  34%,
+        #f6bf78  40%,
+        #f9c87d  46%,
+        #f6bf78  52%,
+        #f3bb74  58%,
+        #ecad64  66%,
+        #e5a458  74%,
+        #dd9950  82%,
+        #c97e42  90%,
+        #b57238  95%,
+        #a5672e 100%
     );
     background-size: 300% 100%;
-
-    /* Animate the sweep continuously (~15% of prior sweep speed) */
-    animation:
-        goldShine 25.333s linear infinite,
-        goldGlow  2.8s ease-in-out infinite;
 
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
@@ -105,15 +104,15 @@
     background:
         repeating-linear-gradient(
             47deg,
-            rgba(253, 232, 196, 0.2) 0px,
-            rgba(253, 232, 196, 0.2) 1px,
+            rgba(246, 191, 120, 0.25) 0px,
+            rgba(246, 191, 120, 0.25) 1px,
             transparent 1px,
             transparent 5px
         ),
         repeating-linear-gradient(
             -43deg,
-            rgba(212, 141, 68, 0.12) 0px,
-            rgba(212, 141, 68, 0.12) 1px,
+            rgba(221, 153, 80, 0.18) 0px,
+            rgba(221, 153, 80, 0.18) 1px,
             transparent 1px,
             transparent 7px
         );
@@ -130,9 +129,9 @@
     inset: 0;
     background: radial-gradient(
         ellipse 60% 40% at 35% 28%,
-        rgba(255, 248, 235, 0.78) 0%,
-        rgba(253, 232, 196, 0.42) 30%,
-        rgba(248, 195, 125, 0.14) 58%,
+        rgba(255, 248, 235, 0.85) 0%,
+        rgba(246, 191, 120, 0.48) 30%,
+        rgba(243, 187, 116, 0.22) 58%,
         transparent 80%
     );
     pointer-events: none;
@@ -208,33 +207,36 @@
 
     background: linear-gradient(
         110deg,
-        #bfc4cf   0%,
-        #e6eaf2   14%,
-        #ffffff   30%,
-        #f3f6fb   44%,
-        #ffffff   58%,
-        #dde3ee   74%,
-        #b7bfcc 100%
+        #f6bf78   0%,
+        #f9c87d   8%,
+        #fad68a  16%,
+        #fbe096  24%,
+        #fceaa2  32%,
+        #fff3ae  40%,
+        #fff9ba  48%,
+        #fff3ae  56%,
+        #fceaa2  64%,
+        #fbe096  72%,
+        #fad68a  80%,
+        #f9c87d  88%,
+        #f6bf78 100%
     );
     background-size: 300% 100%;
-    animation:
-        goldShine 28s linear infinite,
-        goldGlow  3s ease-in-out infinite;
 }
 
 .home-logo-section .a7-logo-image::before {
     background:
         repeating-linear-gradient(
             47deg,
-            rgba(255, 255, 255, 0.22) 0px,
-            rgba(255, 255, 255, 0.22) 1px,
+            rgba(255, 245, 225, 0.28) 0px,
+            rgba(255, 245, 225, 0.28) 1px,
             transparent 1px,
             transparent 5px
         ),
         repeating-linear-gradient(
             -43deg,
-            rgba(194, 202, 216, 0.2) 0px,
-            rgba(194, 202, 216, 0.2) 1px,
+            rgba(221, 153, 80, 0.24) 0px,
+            rgba(221, 153, 80, 0.24) 1px,
             transparent 1px,
             transparent 7px
         );
@@ -244,9 +246,9 @@
 .home-logo-section .a7-logo-image::after {
     background: radial-gradient(
         ellipse 65% 45% at 32% 26%,
-        rgba(255, 255, 255, 0.9) 0%,
-        rgba(242, 246, 252, 0.5) 32%,
-        rgba(214, 223, 236, 0.18) 58%,
+        rgba(255, 252, 245, 0.95) 0%,
+        rgba(246, 191, 120, 0.55) 32%,
+        rgba(243, 187, 116, 0.25) 58%,
         transparent 82%
     );
     opacity: 0.82;
@@ -303,7 +305,7 @@
     .home-logo-section .a7-logo-image,
     .footer-logo-wrap .footer-a7-mark .a7-logo-image {
         filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55))
-                drop-shadow(0 0 14px rgba(234, 169, 96, 0.5))
-                drop-shadow(0 0 30px rgba(248, 195, 125, 0.32));
+                drop-shadow(0 0 14px rgba(221, 153, 80, 0.45))
+                drop-shadow(0 0 30px rgba(246, 191, 120, 0.32));
     }
 }

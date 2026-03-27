@@ -1202,20 +1202,22 @@
     gap: 10px !important;
   }
   
-  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-item,
-  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item {
-    padding: 10px 12px !important;
-    background: rgba(107, 143, 232, 0.04) !important;
-    border-radius: 10px !important;
-    transition: all 0.2s ease !important;
-  }
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-item,
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item {
+  background: rgba(107, 143, 232, 0.04) !important;
+  border-radius: 10px !important;
+  transition: all 0.2s ease !important;
+  padding: 10px 12px !important;
+  border-left: none !important;
+  margin-bottom: 0 !important;
+}
   
-  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-item:hover,
-  .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item:hover {
-    background: rgba(107, 143, 232, 0.1) !important;
-    transform: translateX(4px) !important;
-  }
-  
+ .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-item:hover,
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item:hover {
+  background: rgba(107, 143, 232, 0.1) !important;
+  transform: translateX(4px) !important;
+}
+
   .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-main {
     font-size: 0.82rem !important;
     font-weight: 500 !important;
@@ -4852,4 +4854,66 @@ background: radial-gradient(circle at 38% 35%,
 
 .journal-page .td-deck-session-countdown-eta {
   background: rgba(107, 143, 232, 0.25);
+}
+/* =============================================================================
+   SIMPLER FIX: Light transparent boxes across all screen sizes
+   ============================================================================= */
+
+/* Make all list items consistent - light and transparent */
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-item,
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item {
+  background: rgba(107, 143, 232, 0.04) !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin-bottom: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Hover effect - subtle and professional */
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-list-item:hover,
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item:hover {
+  background: rgba(107, 143, 232, 0.1) !important;
+  transform: translateX(3px) !important;
+}
+
+/* Remove dark panel backgrounds on desktop */
+@media (min-width: 1100px) {
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers .td-mi-panel-body,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals .td-mi-panel-body,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--changes .td-mi-panel-body {
+    background: rgba(12, 18, 48, 0.2) !important;
+    border: 1px solid rgba(107, 143, 232, 0.1) !important;
+    padding: 12px !important;
+  }
+  
+  /* Remove left border and dark styling */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers .td-mi-list-item,
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--signals .td-mi-list-item {
+    border-left: none !important;
+    background: rgba(107, 143, 232, 0.04) !important;
+  }
+  
+  /* Clean meta info styling */
+  .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-panel--drivers .td-mi-list-meta {
+    border-top: none !important;
+    padding-top: 6px !important;
+    margin-top: 4px !important;
+  }
+}
+
+/* Bullet point styling */
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item {
+  padding-left: 32px !important;
+  position: relative !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-bullet-item::before {
+  content: '▹' !important;
+  position: absolute !important;
+  left: 12px !important;
+  top: 10px !important;
+  color: rgba(107, 143, 232, 0.7) !important;
+  font-size: 0.7rem !important;
 }
