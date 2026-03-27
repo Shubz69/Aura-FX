@@ -17,9 +17,10 @@ require('../utils/suppress-warnings');
 
 const cheerio = require('cheerio');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
+const { getSeriesRange, SERIES_IDS } = require('./services/fredService');
 const { getCached, setCached } = require('../cache');
 
-const CACHE_KEY = 'trader-deck:economic-calendar:v7';
+const CACHE_KEY = 'trader-deck:economic-calendar:v8';
 const CACHE_TTL_MS = 45 * 1000; // 45 s — fresher calendar for release times
 const SCRAPE_DAY_CACHE_MS = 35 * 1000; // per-day HTML scrape (actuals) — short TTL
 /** FF + FMP rows must align; naive API datetimes were parsed as UTC and missed by 4–5h — keep a generous window */
@@ -227,6 +228,85 @@ function normalizeEventShape(input, fallbackSource = 'fallback') {
     source: input.source || fallbackSource,
     raw: inRaw,
   };
+}
+
+function formatFredValue(raw) {
+  if (raw == null) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return String(raw);
+  return n.toFixed(2).replace(/\.00$/, '');
+}
+
+function mapFredSeriesToEvents(seriesKey, observations, fromStr, toStr) {
+  const configBySeries = {
+    [SERIES_IDS.cpi]: {
+      event: 'US CPI Index',
+      impact: 'high',
+      time: '08:30 AM',
+      unit: 'index',
+    },
+    [SERIES_IDS.unemployment]: {
+      event: 'US Unemployment Rate',
+      impact: 'high',
+      time: '08:30 AM',
+      unit: '%',
+    },
+    [SERIES_IDS.treasury10y]: {
+      event: 'US 10Y Treasury Yield',
+      impact: 'medium',
+      time: '04:00 PM',
+      unit: '%',
+    },
+  };
+  const cfg = configBySeries[seriesKey];
+  if (!cfg || !Array.isArray(observations) || observations.length === 0) return [];
+
+  let prev = null;
+  const out = [];
+  for (const row of observations) {
+    const date = row && row.date ? String(row.date).slice(0, 10) : '';
+    if (!date || date < fromStr || date > toStr) {
+      if (row && row.value != null && row.value !== '') prev = row.value;
+      continue;
+    }
+    const actual = formatFredValue(row.value);
+    if (actual == null) continue;
+    out.push(
+      normalizeEventShape(
+        {
+          date,
+          time: cfg.time,
+          currency: 'USD',
+          impact: cfg.impact,
+          event: cfg.event,
+          actual,
+          previous: prev != null ? formatFredValue(prev) : null,
+          forecast: null,
+          source: 'FRED',
+          sourceTimeZone: 'America/New_York',
+          unit: cfg.unit,
+        },
+        'FRED',
+      ),
+    );
+    prev = row.value;
+  }
+  return out;
+}
+
+async function fetchFredCalendarRange(fromStr, toStr) {
+  const startBuffer = shiftIsoDate(fromStr, -40);
+  const [cpi, unemployment, treasury] = await Promise.all([
+    getSeriesRange(SERIES_IDS.cpi, { observationStart: startBuffer, observationEnd: toStr }),
+    getSeriesRange(SERIES_IDS.unemployment, { observationStart: startBuffer, observationEnd: toStr }),
+    getSeriesRange(SERIES_IDS.treasury10y, { observationStart: startBuffer, observationEnd: toStr }),
+  ]);
+  const all = []
+    .concat(mapFredSeriesToEvents(SERIES_IDS.cpi, cpi.data, fromStr, toStr))
+    .concat(mapFredSeriesToEvents(SERIES_IDS.unemployment, unemployment.data, fromStr, toStr))
+    .concat(mapFredSeriesToEvents(SERIES_IDS.treasury10y, treasury.data, fromStr, toStr));
+  if (all.length === 0) return null;
+  return all.map(ensureEventTimestamp);
 }
 
 function parseClockLabelToMinutes(timeLabel) {
@@ -1185,6 +1265,16 @@ async function fetchHistoricalRange(fromStr, toStr) {
       events = mergeSupplementActuals(events, te);
     }
   }
+  const fred = await fetchFredCalendarRange(fromStr, toStr);
+  if (fred && fred.length) {
+    if (events.length === 0) {
+      events = fred.map(ensureEventTimestamp);
+    } else {
+      events = mergeSupplementActuals(events, fred);
+      events = events.concat(fred);
+      events = dedupeEconomicEvents(events);
+    }
+  }
 
   events = events.map(ensureEventTimestamp);
   events.sort(compareEvents);
@@ -1192,6 +1282,7 @@ async function fetchHistoricalRange(fromStr, toStr) {
   let source = 'ForexFactoryHTML';
   if (fmp && fmp.length) source = 'ForexFactoryHTML+FMP';
   if (te && te.length) source = source.includes('FMP') ? 'ForexFactoryHTML+FMP+TradingEconomics' : 'ForexFactoryHTML+TradingEconomics';
+  if (fred && fred.length) source = source === 'empty' ? 'FRED' : `${source}+FRED`;
   if (events.length === 0 && fromStr <= calendarEtTodayStr() && toStr >= calendarEtTodayStr()) {
     // Safety fallback: keep non-empty UX when providers are transiently empty.
     source = 'fallback';
@@ -1438,4 +1529,5 @@ module.exports._test = {
   parseCalendarRangeQuery,
   isValidIsoDateOnly,
   enumerateInclusiveDays,
+  mapFredSeriesToEvents,
 };

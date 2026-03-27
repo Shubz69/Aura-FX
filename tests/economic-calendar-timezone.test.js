@@ -144,7 +144,7 @@ function run() {
   assert(_test.isValidIsoDateOnly('25-06-01') === false, 'short year rejected');
 
   const rNull = _test.parseCalendarRangeQuery({});
-  assert(rNull == null, 'empty query should not be a range');
+  assert(rNull && rNull.from && rNull.to, 'empty query should resolve to default calendar range');
 
   const rDate = _test.parseCalendarRangeQuery({ date: '2026-03-10' });
   assert(rDate.from === '2026-03-10' && rDate.to === '2026-03-10', 'date= expands to from/to');
@@ -163,6 +163,22 @@ function run() {
 
   const rTooLong = _test.parseCalendarRangeQuery({ from: '2025-01-01', to: '2026-06-01' });
   assert(rTooLong && rTooLong.error && rTooLong.error.includes('max'), 'span over max days should reject');
+
+  // FRED mapping should emit calendar-shaped events with previous values.
+  const fredRows = _test.mapFredSeriesToEvents(
+    'UNRATE',
+    [
+      { date: '2026-02-01', value: '4.2' },
+      { date: '2026-03-01', value: '4.1' },
+    ],
+    '2026-03-01',
+    '2026-03-31'
+  );
+  assert(Array.isArray(fredRows) && fredRows.length === 1, 'FRED range should include in-window rows only');
+  assert(fredRows[0].source === 'FRED', 'FRED events must mark source as FRED');
+  assert(fredRows[0].event === 'US Unemployment Rate', 'UNRATE should map to unemployment label');
+  assert(fredRows[0].actual === '4.10', 'FRED actual value should be normalized');
+  assert(fredRows[0].previous === '4.20', 'FRED previous value should be carried from prior observation');
 
   console.log('OK economic-calendar-timezone tests');
 }

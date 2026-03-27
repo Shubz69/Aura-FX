@@ -42,6 +42,34 @@ async function getSeriesLatest(seriesId, limit = 5) {
   }
 }
 
+async function getSeriesRange(seriesId, options = {}) {
+  const { fredApiKey } = getConfig();
+  if (!fredApiKey) return { ok: false, data: [], error: 'FRED key not configured' };
+
+  const params = {
+    series_id: seriesId,
+    sort_order: options.sortOrder || 'asc',
+  };
+  if (options.observationStart) params.observation_start = options.observationStart;
+  if (options.observationEnd) params.observation_end = options.observationEnd;
+  if (Number.isFinite(options.limit) && options.limit > 0) params.limit = String(options.limit);
+
+  const url = buildUrl('/series/observations', params);
+  try {
+    const res = await fetchWithTimeout(url, {}, TIMEOUT_MS);
+    if (!res.ok) return { ok: false, data: [], error: `FRED ${res.status}` };
+    const json = await res.json();
+    const observations = (json && json.observations) || [];
+    const data = observations
+      .map((o) => ({ date: o.date, value: o.value }))
+      .filter((o) => o.value !== '.' && o.value !== '');
+    return { ok: true, data };
+  } catch (e) {
+    console.warn('[trader-deck] FRED range error:', seriesId, e.message || e);
+    return { ok: false, data: [], error: e.message || 'FRED request failed' };
+  }
+}
+
 async function getTwelveDataTreasury10y() {
   const apiKey = process.env.TWELVE_DATA_API_KEY;
   if (!apiKey) return null;
@@ -106,4 +134,4 @@ async function getFredData() {
   };
 }
 
-module.exports = { getSeriesLatest, getFredData, SERIES_IDS };
+module.exports = { getSeriesLatest, getSeriesRange, getFredData, SERIES_IDS };
