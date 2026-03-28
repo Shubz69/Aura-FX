@@ -6,10 +6,10 @@ const { signToken } = require('../utils/auth');
 const { getSuperAdminEmailsLower } = require('../utils/entitlements');
 const { sendSignupNotification } = require('../utils/email');
 const {
-  resolveReferrerIdFromInput,
-  ensureUserReferralCode,
-  maybeNotifyReferralSignupMilestones,
-  upsertReferralAttribution,
+  resolveReferrerIdFromInputLight,
+  ensureUserReferralCodeLight,
+  maybeNotifyReferralSignupMilestonesLight,
+  upsertReferralAttributionLight,
 } = require('../referral/referralService');
 
 async function ensureUsersTable(conn) {
@@ -158,7 +158,7 @@ module.exports = async (req, res) => {
       const refRaw = (referralCode || ref || '').toString().trim();
       let referredBy = null;
       try {
-        referredBy = await resolveReferrerIdFromInput(refRaw, userId);
+        referredBy = await resolveReferrerIdFromInputLight(db, refRaw, userId);
       } catch (refErr) {
         console.warn('Referral resolve skipped:', refErr.message);
       }
@@ -172,7 +172,7 @@ module.exports = async (req, res) => {
           }
         }
         try {
-          await upsertReferralAttribution({
+          await upsertReferralAttributionLight(db, {
             referrerUserId: referredBy,
             referredUserId: userId,
             referralCodeUsed: (refRaw || '').toString().trim(),
@@ -181,13 +181,13 @@ module.exports = async (req, res) => {
         } catch (attrErr) {
           console.warn('Referral attribution insert:', attrErr.message);
         }
-        Promise.resolve(maybeNotifyReferralSignupMilestones(referredBy)).catch((e) =>
+        Promise.resolve(maybeNotifyReferralSignupMilestonesLight(referredBy)).catch((e) =>
           console.warn('Referral milestone notify:', e.message),
         );
       }
 
       try {
-        await ensureUserReferralCode(userId);
+        await ensureUserReferralCodeLight(db, userId);
       } catch (codeErr) {
         console.warn('Referral code init:', codeErr.message);
       }

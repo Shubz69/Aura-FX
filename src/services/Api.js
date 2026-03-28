@@ -1327,11 +1327,14 @@ const Api = {
     },
 
     // Signup email verification methods
-    sendSignupVerificationEmail: async (email, username = null) => {
+    sendSignupVerificationEmail: async (email, username = null, phone = null) => {
         try {
             const payload = { action: 'send', email };
             if (username) {
                 payload.username = username;
+            }
+            if (phone != null && String(phone).trim()) {
+                payload.phone = String(phone).trim();
             }
             const response = await axios.post(`${API_BASE_URL}/api/auth/signup-verification`, payload);
             return response.data.success;

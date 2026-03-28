@@ -300,6 +300,102 @@ async function resolveReferrerIdFromInput(refRaw, newUserId) {
 }
 
 /**
+ * Register hot path: resolve referrer using an existing connection only (no CREATE TABLE).
+ */
+async function resolveReferrerIdFromInputLight(conn, refRaw, newUserId) {
+  const raw = (refRaw || '').toString().trim();
+  if (!raw) return null;
+  const uid = Number(newUserId);
+
+  const atMatch = raw.match(/^AT-(\d+)$/i);
+  if (atMatch) {
+    const id = parseInt(atMatch[1], 10);
+    if (!id || id === uid) return null;
+    try {
+      const [rows] = await conn.execute('SELECT id FROM users WHERE id = ? LIMIT 1', [id]);
+      return rows[0]?.id != null ? Number(rows[0].id) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  let code = raw.toUpperCase().replace(/\s/g, '');
+  if (!code.startsWith('AURA-')) code = `AURA-${code.replace(/^AURA-?/i, '')}`;
+
+  try {
+    const [rows] = await conn.execute(
+      'SELECT id FROM users WHERE UPPER(TRIM(referral_code)) = ? LIMIT 1',
+      [code],
+    );
+    const rid = rows[0]?.id != null ? Number(rows[0].id) : null;
+    if (!rid || rid === uid) return null;
+    return rid;
+  } catch (e) {
+    if (e.code === 'ER_BAD_FIELD_ERROR') return null;
+    throw e;
+  }
+}
+
+async function upsertReferralAttributionLight(conn, { referrerUserId, referredUserId, referralCodeUsed, source = 'register', notes = null }) {
+  const referrerId = Number(referrerUserId);
+  const referredId = Number(referredUserId);
+  if (!referrerId || !referredId || referrerId === referredId) return false;
+  const sourceSafe = ['register', 'checkout', 'manual_admin'].includes(source) ? source : 'register';
+  const code = String(referralCodeUsed || normalizeReferralCode('', referrerId)).slice(0, 64);
+  try {
+    await conn.execute(
+      `INSERT INTO referral_attributions
+        (referrer_user_id, referred_user_id, referral_code_used, attribution_source, status, notes, last_confirmed_at)
+       VALUES (?, ?, ?, ?, 'active', ?, NOW())
+       ON DUPLICATE KEY UPDATE
+        last_confirmed_at = NOW(),
+        status = IF(status = 'rejected', status, 'active'),
+        notes = COALESCE(VALUES(notes), notes)`,
+      [referrerId, referredId, code, sourceSafe, notes ? String(notes).slice(0, 255) : null],
+    );
+    return true;
+  } catch (e) {
+    if (e.code === 'ER_NO_SUCH_TABLE' || e.errno === 1146) return false;
+    if (e.code === 'ER_BAD_FIELD_ERROR') return false;
+    console.warn('upsertReferralAttributionLight:', e.message);
+    return false;
+  }
+}
+
+async function ensureUserReferralCodeLight(conn, userId) {
+  const uid = Number(userId);
+  if (!uid) return null;
+  try {
+    const [rows] = await conn.execute('SELECT referral_code FROM users WHERE id = ? LIMIT 1', [uid]);
+    const cur = rows[0]?.referral_code;
+    if (cur && String(cur).trim()) return String(cur).trim();
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      const c = randomReferralCode();
+      try {
+        const [res] = await conn.execute(
+          'UPDATE users SET referral_code = ? WHERE id = ? AND (referral_code IS NULL OR referral_code = "")',
+          [c, uid],
+        );
+        if (res.affectedRows > 0) return c;
+      } catch (e) {
+        if (e.code === 'ER_DUP_ENTRY') continue;
+        if (e.code === 'ER_BAD_FIELD_ERROR') return null;
+        throw e;
+      }
+    }
+    const fallback = `AT-${String(uid).padStart(6, '0')}`;
+    try {
+      await conn.execute('UPDATE users SET referral_code = ? WHERE id = ?', [fallback, uid]);
+    } catch (_) {}
+    return fallback;
+  } catch (e) {
+    if (e.code === 'ER_BAD_FIELD_ERROR') return null;
+    console.warn('ensureUserReferralCodeLight:', e.message);
+    return null;
+  }
+}
+
+/**
  * If the user has no referrer yet, set referred_by from a code entered at checkout
  * (e.g. Stripe Payment Link custom field). First-touch wins; does not overwrite.
  */
@@ -1010,6 +1106,49 @@ async function processAdminPayout(payoutId, action, payload = {}) {
 }
 
 /**
+ * Milestone emails without running referral schema DDL (serverless-safe fire-and-forget).
+ */
+async function maybeNotifyReferralSignupMilestonesLight(referrerUserId) {
+  const rid = Number(referrerUserId);
+  if (!rid) return;
+  try {
+    const [countRows] = await executeQuery(
+      'SELECT COUNT(*) AS c FROM users WHERE referred_by = ?',
+      [rid],
+    );
+    const count = Number(countRows[0]?.c ?? 0);
+
+    const [urows] = await executeQuery(
+      'SELECT email, username, name, COALESCE(referral_milestone_emailed_up_to, 0) AS last_m FROM users WHERE id = ? LIMIT 1',
+      [rid],
+    );
+    const u = urows[0];
+    if (!u?.email) return;
+
+    const lastM = Number(u.last_m) || 0;
+    const newlyCrossed = SIGNUP_MILESTONES.filter((m) => count >= m.n && m.n > lastM);
+    if (newlyCrossed.length === 0) return;
+
+    const best = newlyCrossed[newlyCrossed.length - 1];
+    const { sendReferralMilestoneEmail } = require('../utils/email');
+    const displayName = u.name || u.username || '';
+    await sendReferralMilestoneEmail({
+      to: u.email,
+      name: displayName,
+      signupCount: count,
+      tierLabel: best.label,
+      tierReward: best.reward,
+    });
+    await executeQuery(
+      'UPDATE users SET referral_milestone_emailed_up_to = ? WHERE id = ?',
+      [best.n, rid],
+    );
+  } catch (e) {
+    console.warn('maybeNotifyReferralSignupMilestonesLight:', e.message);
+  }
+}
+
+/**
  * After a new user signs up with referred_by set, email referrer for any newly crossed tier(s).
  */
 async function maybeNotifyReferralSignupMilestones(referrerUserId) {
@@ -1058,9 +1197,12 @@ module.exports = {
   REFERRAL_REWARD_CONFIG,
   ensureReferralSchema,
   ensureUserReferralCode,
+  ensureUserReferralCodeLight,
   resolveReferrerIdFromInput,
+  resolveReferrerIdFromInputLight,
   applyReferralCodeToUserIfUnset,
   upsertReferralAttribution,
+  upsertReferralAttributionLight,
   recordReferralConversion,
   reverseReferralBySource,
   releaseMaturedPendingCommissions,
@@ -1076,5 +1218,6 @@ module.exports = {
   countVerifiedPaidReferrals,
   getCurrentTierByVerifiedPaidCount,
   maybeNotifyReferralSignupMilestones,
+  maybeNotifyReferralSignupMilestonesLight,
   SIGNUP_MILESTONES,
 };

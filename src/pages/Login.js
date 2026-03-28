@@ -111,14 +111,8 @@ const Login = () => {
         setIsLoading(true);
 
         const emailTrimmed = (email || '').trim();
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailTrimmed) {
-            setError('Please enter a valid email address.');
-            setIsLoading(false);
-            return;
-        }
-        if (!emailRegex.test(emailTrimmed)) {
-            setError('Please enter a valid email address.');
+        if (!emailTrimmed || emailTrimmed.length < 2) {
+            setError('Please enter your email or username.');
             setIsLoading(false);
             return;
         }
@@ -157,6 +151,7 @@ const Login = () => {
                 status === 404 ||
                 serverErrorCode === 'NO_ACCOUNT' ||
                 /no account with this email/i.test(serverMessage) ||
+                /no account found with that email or username/i.test(serverMessage) ||
                 /no account exists/i.test(errMsg);
             const isBadPassword =
                 status === 401 ||
@@ -363,9 +358,9 @@ const Login = () => {
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label htmlFor="email" className="form-label">Email Address</label>
+                        <label htmlFor="email" className="form-label">Email or username</label>
                         <input 
-                            type="email"
+                            type="text"
                             id="email"
                             value={email}
                             onChange={(e) => {
@@ -373,8 +368,8 @@ const Login = () => {
                                 setEmail(e.target.value);
                             }}
                             required
-                            autoComplete="email"
-                            placeholder="Enter your email"
+                            autoComplete="username"
+                            placeholder="Email or username"
                             className={`form-input ${emailError ? 'input-error' : ''}`}
                             aria-invalid={emailError}
                             aria-describedby={emailError ? 'email-error' : undefined}
@@ -413,7 +408,7 @@ const Login = () => {
                                 <div className="login-error-label">Incorrect password</div>
                             )}
                             {errorType === 'email' && (
-                                <div className="login-error-label">No account for this email</div>
+                                <div className="login-error-label">No account for this email or username</div>
                             )}
                             <div className="login-error-body">{error}</div>
                         </div>

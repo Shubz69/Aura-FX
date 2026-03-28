@@ -3,6 +3,8 @@
  * Works globally (UK, US, India, etc.) without needing country-specific numbers.
  */
 require('../utils/suppress-warnings');
+const { getDbConnection } = require('../db');
+const { checkPhoneAlreadyRegistered } = require('../utils/signupEligibility');
 
 const normalizePhone = (phone) => {
   if (!phone || typeof phone !== 'string') return '';
@@ -45,6 +47,36 @@ module.exports = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Valid phone number is required' });
       }
       const phoneE164 = normalizePhone(raw);
+
+      let dbConn = null;
+      try {
+        dbConn = await getDbConnection();
+        if (!dbConn) {
+          return res.status(503).json({
+            success: false,
+            message: 'Unable to verify signup eligibility. Please try again.',
+          });
+        }
+        const taken = await checkPhoneAlreadyRegistered(dbConn, raw);
+        if (taken) {
+          return res.status(409).json({
+            success: false,
+            message: 'An account with this phone number already exists. Please sign in.',
+          });
+        }
+      } catch (eligErr) {
+        console.warn('Phone signup eligibility check:', eligErr.message);
+        return res.status(503).json({
+          success: false,
+          message: 'Unable to verify signup eligibility. Please try again.',
+        });
+      } finally {
+        if (dbConn) {
+          try {
+            dbConn.release();
+          } catch (_) {}
+        }
+      }
 
       try {
         const twilio = require('twilio');

@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
+const { checkPhoneAlreadyRegistered } = require('../utils/signupEligibility');
 
 // Function to create transporter
 const createEmailTransporter = () => {
@@ -67,30 +68,15 @@ async function ensureSignupVerificationTable(conn) {
     `);
 }
 
-// Check if email already exists in users table
-const checkEmailExists = async (email) => {
-  let db = null;
-  try {
-    db = await getDbConnection();
-    if (!db) {
-      return null;
-    }
-    const [users] = await db.execute(
-      'SELECT id, email FROM users WHERE email = ? LIMIT 1',
-      [email.toLowerCase()]
-    );
-    return users.length > 0;
-  } catch (error) {
-    console.error('Error checking if email exists:', error.message);
-    return null;
-  } finally {
-    if (db) {
-      try {
-        db.release();
-      } catch (_) {}
-    }
+async function loadSendSignupState(conn, emailLower, usernameLower) {
+  const [emailRows] = await conn.execute('SELECT id FROM users WHERE email = ? LIMIT 1', [emailLower]);
+  if (emailRows.length > 0) return { blocked: 'email_exists' };
+  if (usernameLower) {
+    const [uRows] = await conn.execute('SELECT id FROM users WHERE username = ? LIMIT 1', [usernameLower]);
+    if (uRows.length > 0) return { blocked: 'username_taken' };
   }
-};
+  return { ok: true };
+}
 
 module.exports = async (req, res) => {
   // Set content type to JSON first to ensure we always return JSON
@@ -136,61 +122,57 @@ module.exports = async (req, res) => {
 
       const emailLower = email.toLowerCase();
       const usernameLower = body.username ? body.username.toLowerCase() : null;
+      const rawPhone = body.phone != null && String(body.phone).trim() ? String(body.phone).trim() : '';
 
-      // Check if email already exists in the system
-      const emailExists = await checkEmailExists(emailLower);
-      if (emailExists === true) {
-        return res.status(409).json({ 
-          success: false, 
-          message: 'An account with this email already exists. Please sign in instead.' 
-        });
-      }
-
-      if (usernameLower) {
-        let dbUser = null;
-        try {
-          dbUser = await getDbConnection();
-          if (dbUser) {
-            const [users] = await dbUser.execute(
-              'SELECT id FROM users WHERE username = ? LIMIT 1',
-              [usernameLower]
-            );
-            if (users.length > 0) {
-              return res.status(409).json({
-                success: false,
-                message: 'This username is already taken. Please choose a different username.'
-              });
-            }
-          }
-        } catch (error) {
-          console.error('Error checking username:', error);
-        } finally {
-          if (dbUser) {
-            try {
-              dbUser.release();
-            } catch (_) {}
-          }
-        }
-      }
-
-      // Generate verification code
       const verificationCode = generateVerificationCode();
       const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes expiration
-
-      console.log(`Generated verification code for ${emailLower}: ${verificationCode}, expires at: ${expiresAt}`);
 
       let dbStore = null;
       try {
         dbStore = await getDbConnection();
         if (!dbStore) {
-          return res.status(500).json({
+          return res.status(503).json({
             success: false,
-            message: 'Database connection error. Please try again later.'
+            message: 'Database temporarily unavailable. Please try again in a moment.'
           });
         }
+
+        let state;
+        try {
+          state = await loadSendSignupState(dbStore, emailLower, usernameLower);
+        } catch (checkErr) {
+          console.error('Signup send eligibility check failed:', checkErr.message);
+          return res.status(503).json({
+            success: false,
+            message: 'Could not verify signup eligibility. Please try again.'
+          });
+        }
+
+        if (state.blocked === 'email_exists') {
+          return res.status(409).json({
+            success: false,
+            message: 'An account with this email already exists. Please sign in instead.'
+          });
+        }
+        if (state.blocked === 'username_taken') {
+          return res.status(409).json({
+            success: false,
+            message: 'This username is already taken. Please choose a different username.'
+          });
+        }
+
+        if (rawPhone) {
+          const phoneTaken = await checkPhoneAlreadyRegistered(dbStore, rawPhone);
+          if (phoneTaken) {
+            return res.status(409).json({
+              success: false,
+              message: 'An account with this phone number already exists. Please sign in instead.'
+            });
+          }
+        }
+
         await ensureSignupVerificationTable(dbStore);
         await dbStore.execute('DELETE FROM signup_verification_codes WHERE email = ?', [emailLower]);
-        console.log(`Deleted old codes for ${emailLower}`);
         await dbStore.execute(
           'INSERT INTO signup_verification_codes (email, code, expires_at) VALUES (?, ?, ?)',
           [emailLower, verificationCode.toString(), expiresAt]

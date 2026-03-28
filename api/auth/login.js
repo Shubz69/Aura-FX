@@ -34,15 +34,47 @@ function parseMissingColumn(error) {
   return match ? match[1] : null;
 }
 
-async function fetchUserByEmailCompat(db, emailLower) {
+const LOGIN_IDENTIFIER_WHERE = `(
+  LOWER(TRIM(COALESCE(email, ''))) = ?
+  OR LOWER(TRIM(COALESCE(username, ''))) = ?
+)`;
+
+function looksLikeBcryptHash(stored) {
+  const s = String(stored || '');
+  return s.length >= 59 && /^\$2[aby]?\$\d{2}\$/.test(s);
+}
+
+/**
+ * Verify password; supports bcrypt and legacy plaintext (rehash to bcrypt on success).
+ */
+async function verifyPasswordWithOptionalRehash(plain, stored) {
+  const s = String(stored || '');
+  if (!s) return { ok: false, rehash: null };
+  if (looksLikeBcryptHash(s)) {
+    try {
+      const ok = await bcrypt.compare(plain, s);
+      return { ok, rehash: null };
+    } catch (e) {
+      console.warn('bcrypt.compare failed:', e.message);
+      return { ok: false, rehash: null };
+    }
+  }
+  const ok = plain === s;
+  if (!ok) return { ok: false, rehash: null };
+  const rehash = await bcrypt.hash(plain, 10);
+  return { ok: true, rehash };
+}
+
+async function fetchUserByLoginIdentifierCompat(db, identifierLower) {
   const fields = [...BASE_SELECT_FIELDS, ...OPTIONAL_SELECT_FIELDS];
   let attempts = 0;
+  const params = [identifierLower, identifierLower];
 
   while (attempts < OPTIONAL_SELECT_FIELDS.length + 1) {
     try {
       const [rows] = await db.execute(
-        `SELECT ${fields.join(', ')} FROM users WHERE email = ? LIMIT 1`,
-        [emailLower]
+        `SELECT ${fields.join(', ')} FROM users WHERE ${LOGIN_IDENTIFIER_WHERE} LIMIT 1`,
+        params
       );
       return rows && rows[0] ? rows[0] : null;
     } catch (error) {
@@ -59,8 +91,8 @@ async function fetchUserByEmailCompat(db, emailLower) {
   }
 
   const [fallbackRows] = await db.execute(
-    `SELECT ${BASE_SELECT_FIELDS.join(', ')} FROM users WHERE email = ? LIMIT 1`,
-    [emailLower]
+    `SELECT ${BASE_SELECT_FIELDS.join(', ')} FROM users WHERE ${LOGIN_IDENTIFIER_WHERE} LIMIT 1`,
+    params
   );
   return fallbackRows && fallbackRows[0] ? fallbackRows[0] : null;
 }
@@ -71,9 +103,11 @@ module.exports = async (req, res) => {
   const allowedOrigins = new Set([
     'https://www.auraterminal.ai',
     'https://auraterminal.ai',
-    'http://localhost:3000'
+    'http://localhost:3000',
   ]);
-  if (allowedOrigins.has(origin)) {
+  const vercelPreview =
+    origin && /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin);
+  if ((origin && allowedOrigins.has(origin)) || vercelPreview) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
   } else {
@@ -104,25 +138,19 @@ module.exports = async (req, res) => {
       });
     }
 
-    const { email, password, timezone } = req.body;
+    const { email, login, password, timezone } = req.body;
+    const rawLogin = (email != null && email !== '' ? email : login) || '';
+    const loginTrimmed = typeof rawLogin === 'string' ? rawLogin.trim() : '';
 
-    if (!email || typeof email !== 'string' || !email.trim()) {
+    if (!loginTrimmed || loginTrimmed.length < 2 || loginTrimmed.length > 254) {
       return res.status(400).json({
         success: false,
-        error: 'INVALID_EMAIL',
-        message: 'Please enter a valid email address.'
+        error: 'INVALID_LOGIN',
+        message: 'Please enter your email or username.',
       });
     }
 
-    const emailLower = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailLower)) {
-      return res.status(400).json({
-        success: false,
-        error: 'INVALID_EMAIL',
-        message: 'Please enter a valid email address.'
-      });
-    }
+    const identifierLower = loginTrimmed.toLowerCase();
 
     if (!password || typeof password !== 'string' || !String(password).trim()) {
       return res.status(400).json({
@@ -144,24 +172,34 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Find user by email (schema-compatible select that tolerates mixed legacy columns).
-      const user = await fetchUserByEmailCompat(db, emailLower);
+      // Match email or username; tolerate legacy rows with stray spaces / casing.
+      const user = await fetchUserByLoginIdentifierCompat(db, identifierLower);
       if (!user) {
         return res.status(404).json({
           success: false,
           error: 'NO_ACCOUNT',
-          message: 'No account with this email exists.'
+          message: 'No account found with that email or username.',
         });
       }
 
-      // Verify password
-      const passwordMatch = await bcrypt.compare(password, user.password);
+      const { ok: passwordMatch, rehash } = await verifyPasswordWithOptionalRehash(
+        String(password),
+        user.password,
+      );
       if (!passwordMatch) {
         return res.status(401).json({
           success: false,
           error: 'INVALID_PASSWORD',
-          message: 'Incorrect password.'
+          message: 'Incorrect password.',
         });
+      }
+
+      if (rehash) {
+        try {
+          await db.execute('UPDATE users SET password = ? WHERE id = ?', [rehash, user.id]);
+        } catch (rehashErr) {
+          console.warn('Login password rehash skipped:', rehashErr.message);
+        }
       }
 
       // Update last_seen

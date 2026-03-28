@@ -78,7 +78,7 @@ module.exports = async (req, res) => {
         });
       }
 
-      const emailLower = email.toLowerCase();
+      const emailLower = String(email).trim().toLowerCase();
 
       let db = null;
       try {
@@ -91,7 +91,10 @@ module.exports = async (req, res) => {
           });
         }
 
-        const [userRows] = await db.execute('SELECT id, email, username FROM users WHERE email = ?', [emailLower]);
+        const [userRows] = await db.execute(
+          'SELECT id, email, username FROM users WHERE LOWER(TRIM(COALESCE(email, \'\'))) = ? LIMIT 1',
+          [emailLower],
+        );
 
         if (!userRows || userRows.length === 0) {
           return res.status(200).json({
@@ -185,7 +188,7 @@ module.exports = async (req, res) => {
         });
       }
 
-      const emailLower = email.toLowerCase();
+      const emailLower = String(email).trim().toLowerCase();
       let dbVerify = null;
       try {
         dbVerify = await getDbConnection();
@@ -329,8 +332,8 @@ module.exports = async (req, res) => {
         }
 
         const [result] = await dbReset.execute(
-          'UPDATE users SET password = ? WHERE email = ?',
-          [hashedPassword, emailLower]
+          'UPDATE users SET password = ? WHERE LOWER(TRIM(COALESCE(email, \'\'))) = ?',
+          [hashedPassword, emailLower],
         );
         await dbReset.execute('DELETE FROM reset_codes WHERE id = ?', [codeRows[0].id]);
 

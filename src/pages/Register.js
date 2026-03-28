@@ -104,7 +104,7 @@ const Register = () => {
                 setIsLoading(false);
                 return;
             }
-            const result = await Api.sendSignupVerificationEmail(formData.email, formData.username);
+            const result = await Api.sendSignupVerificationEmail(formData.email, formData.username, formData.phone);
             if (result !== true && result !== undefined) {
                 setError("Failed to send verification email. Please try again.");
                 setIsLoading(false);
@@ -205,7 +205,7 @@ const Register = () => {
         setError("");
         setIsLoading(true);
         try {
-            await Api.sendSignupVerificationEmail(formData.email, formData.username);
+            await Api.sendSignupVerificationEmail(formData.email, formData.username, formData.phone);
             setSuccess("Code resent to your email.");
         } catch (err) {
             setError(err.message || "Failed to resend code.");
