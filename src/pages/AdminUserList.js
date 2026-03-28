@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
-import { isAdmin } from "../utils/roles";
+import { isAdmin, isConfiguredSuperAdminEmail } from "../utils/roles";
 import "../styles/AdminUserList.css";
 import AdminApi from "../services/AdminApi";
 import CosmicBackground from '../components/CosmicBackground';
@@ -106,8 +106,8 @@ const AdminUserList = () => {
                                     </span>
                                     <br />
                                     <span className="user-details">
-                                        🏷 Role: <span className={`user-role role-${u.role.toLowerCase()}`}>
-                                            {u.role}
+                                        🏷 Role: <span className={`user-role role-${(isConfiguredSuperAdminEmail(u.email) ? 'super_admin' : u.role).toLowerCase()}`}>
+                                            {isConfiguredSuperAdminEmail(u.email) ? 'SUPER ADMIN' : u.role}
                                         </span>
                                         {" | 🕓 Joined: " + formatDate(u.createdAt)}
                                         {u.mfaEnabled && " | 🔒 MFA: Enabled"}

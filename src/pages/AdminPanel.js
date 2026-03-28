@@ -8,7 +8,22 @@ import Api from '../services/Api';
 import AdminApi from '../services/AdminApi';
 import { FaSearch, FaUserShield } from 'react-icons/fa';
 import '../styles/AdminPanel.css';
-import { isSuperAdmin as hasSuperAdminRole } from '../utils/roles';
+import { isSuperAdmin as hasSuperAdminRole, isConfiguredSuperAdminEmail } from '../utils/roles';
+
+/** Admin card label: env-listed super admins match primary super-admin UX even if DB was left as admin. */
+function adminPanelRoleLabel(userItem) {
+  const r = (userItem?.role || '').toString().toLowerCase();
+  if (r === 'super_admin' || isConfiguredSuperAdminEmail(userItem?.email)) return 'SUPER ADMIN';
+  if (r === 'admin') return 'ADMIN';
+  return (userItem?.role || 'USER').toString().toUpperCase();
+}
+
+function isRowSuperAdminOrAdmin(userItem) {
+  const r = (userItem?.role || '').toString().toLowerCase();
+  if (r === 'super_admin' || r === 'admin') return true;
+  if (isConfiguredSuperAdminEmail(userItem?.email)) return true;
+  return false;
+}
 
 const PLAN_OPTIONS = [
   { value: 'free', label: 'Free', needsDuration: false },
@@ -983,7 +998,11 @@ const AdminPanel = () => {
                     >
                       {userItem.name || userItem.username || 'N/A'}
                     </div>
-                    <div className="user-role">{userItem.role || 'USER'}</div>
+                    <div
+                      className={`user-role${adminPanelRoleLabel(userItem) === 'SUPER ADMIN' ? ' user-role--super' : ''}`}
+                    >
+                      {adminPanelRoleLabel(userItem)}
+                    </div>
                     <div className="user-xp">
                       <span>⭐ Level {userItem.level || 1}</span>
                       <span>•</span>
@@ -1028,8 +1047,7 @@ const AdminPanel = () => {
                     >
                       Grant Access
                     </button>
-                    {isSuperAdminUser &&
-                     userItem.role !== 'admin' && userItem.role !== 'super_admin' && (
+                    {isSuperAdminUser && !isRowSuperAdminOrAdmin(userItem) && (
                       <button 
                         className="action-btn grant-admin-btn"
                         onClick={() => handleGrantAdminAccess(userItem.id, userItem.email)}

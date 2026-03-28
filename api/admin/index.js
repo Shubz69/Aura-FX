@@ -725,11 +725,14 @@ module.exports = async (req, res) => {
         const [users] = await db.execute(query);
 
         const formattedUsers = users.map(user => {
+          const rawRole = (user.role || 'free').toString();
+          const emailRow = { email: user.email || '' };
+          const effectiveRole = isSuperAdminEmail(emailRow) ? 'super_admin' : rawRole;
           const formatted = {
             id: jsonNumber(user.id),
             email: user.email || '',
             username: user.username || user.name || '',
-            role: user.role || 'free',
+            role: effectiveRole,
             capabilities: [],
             xp: hasXP ? jsonNumber(user.xp, 0) : 0,
             level: hasLevel ? jsonNumber(user.level ?? 1, 1) : 1,

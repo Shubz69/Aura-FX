@@ -446,6 +446,12 @@
   letter-spacing: 0.12em;
 }
 
+.user-role.user-role--super {
+  background: rgba(234, 169, 96, 0.14);
+  border-color: rgba(248, 195, 125, 0.45);
+  color: #fde8c4;
+}
+
 .user-xp {
   display: flex;
   align-items: center;
