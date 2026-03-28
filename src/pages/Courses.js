@@ -54,7 +54,6 @@ const Courses = () => {
                 console.log('Fetching courses from:', `${API_BASE_URL}/api/courses`);
                 const response = await Api.getCourses();
                 
-                // Handle both array response and object with courses property
                 let coursesData = [];
                 if (Array.isArray(response.data)) {
                     coursesData = response.data;
@@ -64,15 +63,12 @@ const Courses = () => {
                     coursesData = response.data.courses;
                 }
                 
-                // Filter out invalid courses
                 coursesData = coursesData.filter(course => course && course.id && course.title);
                 setCourses(coursesData);
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching courses:', error);
-                // Set empty array to prevent map error
                 setCourses([]);
-                // Show a more user-friendly error message
                 if (error.response && error.response.status === 403) {
                     setError('Authentication error. Please log in first or try again later.');
                 } else {
@@ -100,80 +96,51 @@ const Courses = () => {
     return (
         <div className="courses-container">
             <CosmicBackground />
+            
+            {/* Header with animated line decoration - No diamond icon */}
             <div className="courses-header">
-                <h1 className="courses-title">Courses & subscriptions</h1>
+                <h1 className="courses-title">
+                    <span className="line1">Courses &</span>
+                    <span className="line2">Subscriptions</span>
+                </h1>
+                <div className="courses-header-line">
+                    <div className="courses-header-dot"></div>
+                </div>
                 <p>Master the Markets with Our Comprehensive, Expert-Led Trading Education Programs</p>
             </div>
             
             {error && (
-                <div className="courses-error" style={{ 
-                    margin: '20px auto', 
-                    maxWidth: '600px', 
-                    padding: '20px', 
-                    background: 'rgba(239, 68, 68, 0.1)', 
-                    border: '1px solid rgba(239, 68, 68, 0.3)', 
-                    borderRadius: '8px',
-                    color: '#fff',
-                    textAlign: 'center'
-                }}>
-                    <h2>Oops!</h2>
+                <div className="courses-error">
+                    <h2>❄️ System Error</h2>
                     <p>{error}</p>
-                    <button onClick={() => window.location.reload()} style={{
-                        marginTop: '10px',
-                        padding: '10px 20px',
-                        background: '#b47830',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer'
-                    }}>Try Again</button>
+                    <button onClick={() => window.location.reload()}>
+                        Retry Connection
+                    </button>
                 </div>
             )}
 
             {/* SUBSCRIPTIONS SECTION */}
-            <div className="courses-subscriptions-section" style={{
-                marginTop: '6px',
-                marginBottom: '4px'
-            }}>
-                <h2 className="section-title subscriptions-title" style={{
-                    color: '#ffffff',
-                    fontSize: '36px',
-                    fontWeight: 'normal',
-                    marginBottom: '2px',
-                    textAlign: 'center',
-                    background: 'linear-gradient(135deg, #d4af37 0%, #e8c658 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    padding: '0 20px'
-                }}>
-                    💎 Subscriptions
-                </h2>
-                <p className="section-description subscriptions-description" style={{
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    fontSize: '18px',
-                    marginBottom: '4px',
-                    textAlign: 'center',
-                    lineHeight: '1.5',
-                    padding: '0 20px'
-                }}>
-                    Choose the perfect plan for your trading journey. Upgrade, downgrade, or cancel anytime.
-                </p>
+            <div className="courses-subscriptions-section">
+                <div className="section-header">
+                    <h2 className="subscriptions-title">Subscriptions</h2>
+                    <p className="subscriptions-description">
+                        Choose the perfect plan for your trading journey. Upgrade, downgrade, or cancel anytime.
+                    </p>
+                </div>
                 
                 <div className="subscriptions-grid">
-                    {/* FREE plan – first in DOM order (mobile: stacks top-to-bottom) */}
+                    {/* FREE plan */}
                     <div className="subscription-plan-card free">
                         <h3 className="subscription-plan-title">Free</h3>
                         <div className="subscription-plan-price">£0</div>
                         <div className="subscription-plan-period">per month</div>
                         <ul className="subscription-plan-features">
-                            <li>✅ Access to general community channels only</li>
-                            <li>✅ Welcome &amp; announcements channels</li>
-                            <li>❌ No Premium AI</li>
-                            <li>❌ No Premium or Elite channels</li>
+                            <li>Access to general community channels</li>
+                            <li>Welcome & announcements channels</li>
+                            <li>Community support</li>
                         </ul>
                         {freePlanError && (
-                            <p style={{ color: 'rgba(239, 68, 68, 0.9)', fontSize: '14px', marginBottom: '12px' }}>{freePlanError}</p>
+                            <p style={{ color: '#f87171', fontSize: '0.75rem', marginBottom: '12px' }}>{freePlanError}</p>
                         )}
                         <button
                             className="subscription-plan-button free"
@@ -187,7 +154,6 @@ const Courses = () => {
                                     const data = await Api.selectFreePlan();
                                     if (data && data.success) {
                                         await refreshEntitlements();
-                                        // Full-page redirect so the app loads with fresh /api/me and guard sees canAccessCommunity
                                         window.location.href = `${window.location.origin}/community`;
                                         return;
                                     }
@@ -205,25 +171,23 @@ const Courses = () => {
                         </button>
                     </div>
 
-                    {/* AURA TERMINAL (Premium) – second */}
+                    {/* AURA TERMINAL (Premium) */}
                     <div className="subscription-plan-card premium">
                         <h3 className="subscription-plan-title">AURA TERMINAL</h3>
-                        <div className="subscription-pricing-container">
-                            <div className="promotional-pricing">
-                                <div className="promo-price">£0</div>
-                                <div className="promo-text">for the first 2 months</div>
-                            </div>
-                            <div className="original-pricing">
-                                <div className="original-price-strikethrough">£99</div>
-                                <div className="subscription-plan-period">per month</div>
-                            </div>
+                        <div className="promotional-pricing">
+                            <div className="promo-price">£0</div>
+                            <div className="promo-text">for the first 2 months</div>
+                        </div>
+                        <div className="original-pricing">
+                            <div className="original-price-strikethrough">£99</div>
+                            <div className="subscription-plan-period">per month</div>
                         </div>
                         <ul className="subscription-plan-features">
-                            <li>✅ Premium channels</li>
-                            <li>✅ Market analysis</li>
-                            <li>✅ Weekly Briefs</li>
-                            <li>✅ Premium AURA AI</li>
-                            <li>✅ Advanced trading strategies</li>
+                            <li>Premium channels</li>
+                            <li>Market analysis</li>
+                            <li>Weekly Briefs</li>
+                            <li>Premium AURA AI</li>
+                            <li>Advanced trading strategies</li>
                         </ul>
                         <button
                             className="subscription-plan-button premium"
@@ -233,19 +197,19 @@ const Courses = () => {
                         </button>
                     </div>
 
-                    {/* A7FX Elite – third */}
+                    {/* A7FX Elite */}
                     <div className="subscription-plan-card elite">
                         <div className="elite-badge">ELITE</div>
                         <h3 className="subscription-plan-title">A7FX Elite</h3>
                         <div className="subscription-plan-price">£250</div>
                         <div className="subscription-plan-period">per month</div>
                         <ul className="subscription-plan-features">
-                            <li>✅ Everything in Premium</li>
-                            <li>✅ Elite-only channels</li>
-                            <li>✅ Direct founder access</li>
-                            <li>✅ Daily Briefs</li>
-                            <li>✅ Weekly Briefs</li>
-                            <li>✅ Premium AURA AI</li>
+                            <li>Everything in Premium</li>
+                            <li>Elite-only channels</li>
+                            <li>Direct founder access</li>
+                            <li>Daily Briefs</li>
+                            <li>Weekly Briefs</li>
+                            <li>Premium AURA AI</li>
                         </ul>
                         <button
                             className="subscription-plan-button elite"
@@ -258,44 +222,24 @@ const Courses = () => {
                 
                 <p style={{
                     textAlign: 'center',
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    fontSize: 'clamp(12px, 2vw, 14px)',
-                    marginTop: '6px',
-                    padding: '0 20px'
+                    color: 'rgba(210, 216, 248, 0.45)',
+                    fontSize: '0.7rem',
+                    marginTop: '24px',
+                    padding: '0 20px',
+                    letterSpacing: '0.08em'
                 }}>
                     Cancel anytime • No hidden fees • Switch plans anytime
                 </p>
             </div>
 
             {/* COURSES SECTION */}
-            <div style={{
-                marginTop: '6px',
-                marginBottom: '14px'
-            }}>
-                <h2 className="section-title courses-section-title" style={{
-                    color: '#ffffff',
-                    fontSize: '36px',
-                    fontWeight: 'normal',
-                    marginBottom: '2px',
-                    textAlign: 'center',
-                    background: 'linear-gradient(135deg, #d4af37 0%, #e8c658 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    padding: '0 20px'
-                }}>
-                    📚 Courses
-                </h2>
-                <p className="section-description courses-section-description" style={{
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    fontSize: '18px',
-                    marginBottom: '4px',
-                    textAlign: 'center',
-                    lineHeight: '1.5',
-                    padding: '0 20px'
-                }}>
-                    Master the Markets with Our Comprehensive, Expert-Led Trading Education Programs
-                </p>
+            <div style={{ marginTop: '20px', marginBottom: '20px', width: '100%' }}>
+                <div className="section-header">
+                    <h2 className="subscriptions-title">Courses</h2>
+                    <p className="subscriptions-description">
+                        Master the Markets with Our Comprehensive, Expert-Led Trading Education Programs
+                    </p>
+                </div>
                 
                 <div className="courses-grid">
                     {Array.isArray(courses) && courses.length > 0 ? (
@@ -307,22 +251,27 @@ const Courses = () => {
                                     {course.imageUrl ? (
                                         <img src={course.imageUrl} alt={course.title || 'Course'} loading="lazy" />
                                     ) : (
-                                        <div className="placeholder-image">{(course.title && course.title.length > 0) ? course.title.charAt(0).toUpperCase() : '?'}</div>
+                                        <div className="placeholder-image">
+                                            {course.title && course.title.length > 0 
+                                                ? course.title.charAt(0).toUpperCase() 
+                                                : '📘'}
+                                        </div>
                                     )}
                                 </div>
                                 <div className="course-info">
-                                    <h3>{(course.title || 'Unnamed Course').toUpperCase()}</h3>
-                                    <p className="course-description" style={{ whiteSpace: 'pre-line' }}>{course.description || 'No description available'}</p>
+                                    <h3>{course.title?.toUpperCase() || 'Unnamed Course'}</h3>
+                                    <p className="course-description" style={{ whiteSpace: 'pre-line' }}>
+                                        {course.description || 'No description available'}
+                                    </p>
                                     <div className="course-cta">
                                         <span className="coming-soon-badge">
-                                            COMING SOON
+                                            Coming Soon
                                         </span>
                                         <button 
                                             className="enroll-button disabled"
                                             disabled={true}
                                         >
-                                            <span>Buy Now</span>
-                                            <span className="button-glow"></span>
+                                            Enroll
                                         </button>
                                     </div>
                                 </div>

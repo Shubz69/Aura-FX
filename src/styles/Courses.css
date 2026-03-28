@@ -1,46 +1,89 @@
 /* ============================================================
    COURSES.CSS — AURA TERMINAL PREMIUM EDUCATION EDITION
-   FIXED SCROLLING ISSUE - Like contact.css
+   MATCHES COMMUNITY PAGE AESTHETIC - JOURNAL THEME
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* ===== Base Container - FIXED ===== */
+/* ===== CSS Variables - Matching Community Theme ===== */
+:root {
+    --bg: #010008;
+    --bg-primary: #01010a;
+    --bg-secondary: #02010c;
+    --bg-card: rgba(3, 2, 10, 0.70);
+    --bg-card-h: rgba(8, 6, 20, 0.85);
+    --border: rgba(255, 255, 255, 0.10);
+    --border-h: rgba(160, 185, 240, 0.28);
+    --text: #FFFFFF;
+    --text-muted: rgba(232, 235, 255, 0.86);
+    --text-dim: rgba(210, 216, 248, 0.48);
+    --accent: #6b8fe8;
+    --accent-dim: rgba(107, 143, 232, 0.14);
+    --accent-glow: rgba(107, 143, 232, 0.32);
+     --grad-accent: linear-gradient(130deg, var(--eaa-bright) 0%, var(--eaa-core) 52%);
+    --gold-dim: rgba(212, 175, 55, 0.12);
+    --radius: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+   
+    /* Journal Panel System */
+    --panel-fill: linear-gradient(168deg, rgba(4,5,18,0.92) 0%, rgba(5,6,20,0.89) 100%);
+    --panel-fill-h: linear-gradient(168deg, rgba(7,8,24,0.95) 0%, rgba(9,10,28,0.91) 100%);
+    --panel-border: linear-gradient(135deg,
+        rgba(255,255,255,1) 0%,
+        rgba(255,255,255,0.88) 11%,
+        rgba(255,255,255,0.42) 26%,
+        rgba(185,205,255,0.38) 44%,
+        rgba(85,115,195,0.52) 64%,
+        rgba(38,52,105,0.68) 84%,
+        rgba(212,175,55,0.14) 100%);
+    --panel-border-h: linear-gradient(135deg,
+        rgba(255,255,255,1) 0%,
+        rgba(255,255,255,0.92) 9%,
+        rgba(255,255,255,0.48) 24%,
+        rgba(195,215,255,0.44) 42%,
+        rgba(95,125,210,0.60) 62%,
+        rgba(45,58,118,0.74) 82%,
+        rgba(212,175,55,0.20) 100%);
+    --panel-shadow: 0 18px 52px rgba(0,0,0,0.64),
+                    0 0 0 1px rgba(255,255,255,0.18),
+                    0 0 40px -10px rgba(255,255,255,0.10),
+                    0 0 52px -12px rgba(70,100,190,0.26),
+                    0 8px 30px -12px rgba(12,16,40,0.45),
+                    inset 0 1px 0 rgba(255,255,255,0.24);
+    --panel-shadow-h: 0 22px 60px rgba(0,0,0,0.70),
+                      0 0 0 1px rgba(255,255,255,0.22),
+                      0 0 48px -8px rgba(255,255,255,0.13),
+                      0 0 60px -10px rgba(85,115,205,0.32),
+                      0 10px 34px -10px rgba(15,20,48,0.48),
+                      inset 0 1px 0 rgba(255,255,255,0.30);
+    
+    --grad-primary: linear-gradient(125deg,
+        #ffffff 0%,
+        rgba(252,253,255,0.99) 28%,
+        rgba(200,215,255,0.96) 58%,
+        rgba(120,150,220,0.92) 82%,
+        rgba(212,175,55,0.45) 100%);
+}
+
+/* ===== Base Container - Fixed ===== */
 html, body {
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
-    background: #070d18;
+    background: var(--bg);
     margin: 0;
     padding: 0;
 }
 
-/* ── C&S page — navy · white · luxury gold (scoped) ── */
+/* Deep space background - matching community page */
 .courses-container {
-    --bg: #070d18;
-    --bg-card: rgba(255, 255, 255, 0.06);
-    --bg-card-h: rgba(255, 255, 255, 0.095);
-    --border: rgba(255, 255, 255, 0.1);
-    --border-h: rgba(212, 175, 55, 0.35);
-    --text: #ffffff;
-    --text-muted: rgba(210, 218, 235, 0.62);
-    --accent: rgba(212, 175, 55, 0.5);
-    --accent-solid: #d4af37;
-    --accent-blue: rgba(232, 198, 88, 0.42);
-    --accent-blue-solid: #3B82F6;
-    --up: #e8c658;
-    --down: #9a8f84;
-    --radius: 10px;
-    --radius-lg: 20px;
-    --radius-xl: 24px;
-    --transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: transparent;
     width: 100%;
     max-width: 100%;
     margin: 0;
@@ -48,14 +91,52 @@ html, body {
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
     min-height: 100vh;
     color: var(--text);
     box-sizing: border-box;
     font-family: 'Space Grotesk', sans-serif;
+    background: radial-gradient(ellipse 85% 55% at 18% 8%,
+        rgba(20,28,55,0.65) 0%, rgba(12,18,40,0.45) 35%, transparent 68%),
+        radial-gradient(ellipse 60% 45% at 55% 20%,
+        rgba(10,15,40,0.38) 0%, rgba(6,10,28,0.22) 50%, transparent 75%),
+        radial-gradient(ellipse 55% 75% at 92% 28%,
+        rgba(5,8,25,0.75) 0%, rgba(3,5,18,0.48) 55%, transparent 78%),
+        linear-gradient(168deg, #010008 0%, #01010a 15%, #02010c 30%, #01010a 50%, #000006 70%, #010008 100%);
 }
 
-/* Central Glow Effect */
+/* Star field overlay - matching community */
+.courses-container::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+        radial-gradient(2px 2px at 7% 6%, rgba(255,255,255,0.92), transparent),
+        radial-gradient(2.5px 2.5px at 34% 11%, rgba(255,255,255,0.88), transparent),
+        radial-gradient(2px 2px at 61% 4%, rgba(255,255,255,0.85), transparent),
+        radial-gradient(2.2px 2.2px at 89% 14%, rgba(255,255,255,0.82), transparent),
+        radial-gradient(2px 2px at 15% 32%, rgba(255,255,255,0.78), transparent),
+        radial-gradient(2.4px 2.4px at 78% 27%, rgba(255,255,255,0.80), transparent),
+        radial-gradient(1.5px 1.5px at 4% 22%, rgba(255,255,255,0.62), transparent),
+        radial-gradient(1.4px 1.4px at 19% 8%, rgba(255,255,255,0.60), transparent),
+        radial-gradient(2px 2px at 9% 12%, rgba(140,175,255,0.80), transparent),
+        radial-gradient(1.8px 1.8px at 23% 18%, rgba(140,175,255,0.72), transparent);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    animation: starsTwinkle 4.8s ease-in-out infinite alternate;
+}
+
+@keyframes starsTwinkle {
+    0% { opacity: 0.18; filter: blur(0.8px); }
+    20% { opacity: 0.88; filter: blur(0px); }
+    40% { opacity: 0.24; filter: blur(1px); }
+    60% { opacity: 0.95; filter: blur(0px); }
+    80% { opacity: 0.20; filter: blur(0.7px); }
+    100% { opacity: 0.90; filter: blur(0px); }
+}
+
+/* Central Glow Effect - Refined */
 .courses-container::before {
     content: '';
     position: fixed;
@@ -66,20 +147,20 @@ html, body {
     height: 900px;
     background: radial-gradient(
         ellipse at center,
-        rgba(212, 175, 55, 0.07) 0%,
-        rgba(232, 198, 88, 0.04) 35%,
-        rgba(255, 255, 255, 0.015) 60%,
+        rgba(107, 143, 232, 0.06) 0%,
+        rgba(212, 175, 55, 0.03) 35%,
+        rgba(255, 255, 255, 0.01) 60%,
         transparent 100%
     );
     border-radius: 50%;
     z-index: 0;
     pointer-events: none;
-    animation: glowPulse 5s ease-in-out infinite;
+    animation: glowPulse 8s ease-in-out infinite;
 }
 
 @keyframes glowPulse {
-    0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
-    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+    0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.05); }
 }
 
 /* ===== Main Content Wrapper ===== */
@@ -93,7 +174,7 @@ html, body {
     position: relative;
 }
 
-/* ===== Header Section ===== */
+/* ===== Header Section - Matching Community ===== */
 .courses-header {
     width: 100%;
     text-align: center;
@@ -102,21 +183,25 @@ html, body {
     z-index: 2;
 }
 
-/* Eyebrow pill label */
+/* Eyebrow pill - Journal style */
 .courses-header::before {
     content: 'AURA TERMINAL EDUCATION';
     display: block;
     margin: 0 auto 1.5rem;
     width: fit-content;
-    padding: 0.35rem 1.2rem;
+    padding: 0.5rem 1.5rem;
     font-size: 0.68rem;
-    font-weight: 500;
+    font-weight: 700;
     letter-spacing: 0.35em;
-    color: #e8c658;
-    border: 1px solid rgba(212, 175, 55, 0.3);
+     color: var(--eaa-bright);
+    border: 1px solid rgba(107, 143, 232, 0.3);
+    background-image: var(--panel-fill), var(--panel-border);
+    background-origin: padding-box, border-box;
+    background-clip: padding-box, border-box;
     border-radius: 999px;
-    background: rgba(212, 175, 55, 0.06);
     text-transform: uppercase;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .courses-title {
@@ -127,28 +212,17 @@ html, body {
     margin: 0 auto 1.5rem;
     max-width: 1100px;
     padding: 0 20px;
-    display: block;
-    background: linear-gradient(270deg, #ffffff 0%, #f2e6c8 30%, #dfc056 55%, #f2e6c8 75%, #ffffff 100%);
+    background: var(--grad-primary);
     background-size: 300% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: gradientShift 6s ease-in-out infinite, titleFadeIn 1s ease-out both;
+    animation: gradientShift 8s ease-in-out infinite, titleFadeIn 1s ease-out both;
     word-wrap: break-word;
     line-height: 1.3;
 }
 
-/* Split text styling */
-.courses-title .line1 {
-    display: block;
-    margin-bottom: 5px;
-}
-
-.courses-title .line2 {
-    display: block;
-}
-
-/* Animated dot + line decoration */
+/* Header line decoration - Journal style */
 .courses-header-line {
     display: flex;
     align-items: center;
@@ -165,19 +239,19 @@ html, body {
 }
 
 .courses-header-line::before {
-    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.65));
+    background: linear-gradient(90deg, transparent, var(--eaa-bright)); 
 }
 
 .courses-header-line::after {
-    background: linear-gradient(90deg, rgba(232, 198, 88, 0.65), transparent);
+    background: linear-gradient(90deg, var(--eaa-bright), transparent); 
 }
 
 .courses-header-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #e8c658, #d4af37);
-    box-shadow: 0 0 12px rgba(212, 175, 55, 0.6);
+    background: var(--grad-accent);
+     box-shadow: 0 0 12px rgba(107, 143, 232, 0.6);
     animation: dotPulse 2s ease-in-out infinite;
 }
 
@@ -191,7 +265,6 @@ html, body {
     max-width: 700px;
     margin: 1.5rem auto 0;
     color: var(--text-muted);
-    font-family: 'Space Grotesk', sans-serif;
     font-weight: 300;
     text-transform: uppercase;
     letter-spacing: 0.15em;
@@ -205,11 +278,21 @@ html, body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+@keyframes titleFadeIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* ===== Courses Grid ===== */
 .courses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 28px;
     width: 100%;
     max-width: 1200px;
     margin: 24px auto;
@@ -218,23 +301,23 @@ html, body {
     z-index: 2;
 }
 
-/* ===== Course Cards ===== */
+/* ===== Course Cards - Journal Glass Panel ===== */
 .course-card {
     position: relative;
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background-image: var(--panel-fill);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-radius: var(--radius-xl);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     overflow: hidden;
     transition: all var(--transition-bounce);
     display: flex;
     flex-direction: column;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     animation: cardFadeIn 0.6s ease-out forwards;
     transform-origin: center;
     width: 100%;
     box-sizing: border-box;
+    box-shadow: var(--panel-shadow);
 }
 
 @keyframes cardFadeIn {
@@ -248,40 +331,35 @@ html, body {
     position: absolute;
     inset: 0;
     border-radius: var(--radius-xl);
-    padding: 2px;
-    background: linear-gradient(
-        135deg,
-        transparent 0%,
-        rgba(212, 175, 55, 0.5) 25%,
-        rgba(232, 198, 88, 0.5) 50%,
-        rgba(212, 175, 55, 0.5) 75%,
-        transparent 100%
-    );
+    padding: 1px;
+    background: var(--panel-border);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     opacity: 0;
-    transition: opacity 0.5s;
+    transition: opacity 0.4s ease;
     pointer-events: none;
 }
 
 .course-card:hover::before {
     opacity: 1;
-    animation: borderRotate 3s linear infinite;
 }
 
-@keyframes borderRotate {
-    from { filter: hue-rotate(0deg); }
-    to { filter: hue-rotate(360deg); }
-}
-
-/* Inner glow effect */
+/* Top rim line */
 .course-card::after {
     content: '';
     position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.15), transparent 70%);
+    top: 0;
+    left: 20px;
+    right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255,255,255,0.45) 22%,
+        rgba(160,185,240,0.28) 50%,
+        rgba(255,255,255,0.22) 78%,
+        transparent);
     opacity: 0;
     transition: opacity var(--transition);
     pointer-events: none;
@@ -293,25 +371,21 @@ html, body {
 
 .course-card:hover {
     transform: translateY(-12px) scale(1.02);
-    background: var(--bg-card-h);
-    border-color: transparent;
-    box-shadow: 
-        0 30px 60px -15px rgba(0, 0, 0, 0.6),
-        0 0 0 1px rgba(212, 175, 55, 0.2),
-        0 0 30px rgba(212, 175, 55, 0.2);
+    background-image: var(--panel-fill-h);
+    box-shadow: var(--panel-shadow-h);
 }
 
 /* Course Image Section */
 .course-image {
-    height: 180px;
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(232, 198, 88, 0.1));
+    height: 200px;
+    background: linear-gradient(135deg, rgba(107, 143, 232, 0.08), rgba(212, 175, 55, 0.05));
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 56px;
     font-weight: 200;
     color: var(--text);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     position: relative;
     overflow: hidden;
 }
@@ -324,11 +398,11 @@ html, body {
     background: linear-gradient(
         45deg,
         transparent 0%,
-        rgba(212, 175, 55, 0.2) 50%,
+        rgba(107, 143, 232, 0.15) 50%,
         transparent 100%
     );
     transform: translateX(-100%);
-    transition: transform 0.8s;
+    transition: transform 0.6s ease;
 }
 
 .course-card:hover .course-image::before {
@@ -339,11 +413,11 @@ html, body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s;
+    transition: transform 0.5s ease;
 }
 
 .course-card:hover .course-image img {
-    transform: scale(1.1);
+    transform: scale(1.08);
 }
 
 .placeholder-image {
@@ -352,34 +426,32 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 72px;
+    font-size: 80px;
     color: var(--text);
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(232, 198, 88, 0.15));
+    background: linear-gradient(135deg, rgba(107, 143, 232, 0.12), rgba(212, 175, 55, 0.08));
 }
 
 /* Course Info */
 .course-info {
-    padding: 24px 20px 20px;
+    padding: 24px 22px 22px;
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
 .course-info h3 {
-    font-size: 22px;
+    font-size: 1.1rem;
     margin: 0 0 12px;
     color: var(--text);
-    font-weight: 400;
+    font-weight: 600;
     text-transform: uppercase;
-    font-family: 'Space Grotesk', sans-serif;
     letter-spacing: 0.15em;
     position: relative;
     display: inline-block;
 }
 
-/* Gradient text for course titles */
 .course-info h3 span {
-    background: linear-gradient(135deg, #fff, rgba(212, 175, 55, 0.8));
+   background: var(--grad-accent); 
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -387,38 +459,37 @@ html, body {
 
 .course-description {
     margin: 0 0 20px;
-    font-size: 14px;
+    font-size: 0.875rem;
     color: var(--text-muted);
     flex: 1;
     line-height: 1.7;
-    font-family: 'Space Grotesk', sans-serif;
     font-weight: 300;
 }
 
 /* Course Meta */
 .course-meta {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 20px;
     flex-wrap: wrap;
 }
 
 .meta-item {
-    padding: 6px 14px;
-    background: rgba(212, 175, 55, 0.08);
-    border: 1px solid rgba(212, 175, 55, 0.15);
+    padding: 5px 12px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(107, 143, 232, 0.2);
     border-radius: 30px;
-    font-size: 12px;
-    font-weight: 400;
-    color: var(--text);
-    letter-spacing: 0.1em;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     transition: all var(--transition);
 }
 
 .course-card:hover .meta-item {
-    background: rgba(212, 175, 55, 0.15);
-    border-color: rgba(212, 175, 55, 0.3);
+    background: rgba(107, 143, 232, 0.2);
+    border-color: var(--accent);
     transform: translateY(-2px);
 }
 
@@ -428,48 +499,65 @@ html, body {
     align-items: center;
     justify-content: space-between;
     margin-top: auto;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .price {
     font-size: 28px;
     font-weight: 300;
     color: var(--text);
-    font-family: 'Space Grotesk', sans-serif;
     position: relative;
 }
 
-/* Price glow effect */
 .price::before {
     content: '$';
     position: absolute;
     left: -12px;
-    top: -5px;
+    top: -3px;
     font-size: 14px;
-    color: var(--accent-solid);
-    opacity: 0.7;
+    color: var(--gold);
+    opacity: 0.8;
 }
 
-.price::after {
+/* Coming Soon Badge - Refined */
+.coming-soon-badge {
+    display: inline-block;
+    background: rgba(107, 143, 232, 0.12); 
+    color: var(--eaa-bright);
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    border: 1px solid rgba(107, 143, 232, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.coming-soon-badge::before {
     content: '';
     position: absolute;
-    bottom: -4px;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: linear-gradient(90deg, var(--accent-solid), transparent);
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 3s infinite;
 }
 
-/* ===== Buttons ===== */
+@keyframes shimmer {
+    100% { transform: translateX(100%); }
+}
+
+/* ===== Buttons - Matching Community Style ===== */
 .enroll-button {
     background: transparent;
     color: var(--text);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 50px;
     padding: 12px 28px;
-    font-size: 14px;
-    font-weight: 400;
+    font-size: 0.75rem;
+    font-weight: 600;
     font-family: 'Space Grotesk', sans-serif;
     cursor: pointer;
     position: relative;
@@ -481,6 +569,7 @@ html, body {
     align-items: center;
     justify-content: center;
     min-width: 140px;
+    backdrop-filter: blur(4px);
 }
 
 /* Shine effect */
@@ -494,10 +583,10 @@ html, body {
     background: linear-gradient(
         90deg,
         transparent,
-        rgba(255, 255, 255, 0.2),
+        rgba(255, 255, 255, 0.1),
         transparent
     );
-    transition: left 0.6s;
+    transition: left 0.5s ease;
 }
 
 .enroll-button:hover::before {
@@ -505,80 +594,399 @@ html, body {
 }
 
 .enroll-button:hover {
-    background: rgba(212, 175, 55, 0.15);
-    border-color: var(--accent-solid);
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 
-        0 10px 20px -10px rgba(212, 175, 55, 0.5),
-        0 0 0 1px rgba(212, 175, 55, 0.3);
+    background: rgba(107, 143, 232, 0.12);
+    border-color: var(--accent);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 20px -10px rgba(107, 143, 232, 0.4);
     color: white;
     letter-spacing: 0.2em;
 }
 
 .enroll-button:active {
-    transform: translateY(-1px) scale(1.02);
+    transform: translateY(-1px) scale(1.01);
 }
 
 /* Disabled State */
 .enroll-button:disabled,
 .enroll-button.disabled {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--border);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
 }
 
-/* Coming Soon Badge */
-.coming-soon-badge {
-    display: inline-block;
-    background: rgba(212, 175, 55, 0.15);
-    color: var(--text);
-    padding: 8px 20px;
-    border-radius: 30px;
-    font-size: 13px;
-    font-weight: 400;
-    font-family: 'Space Grotesk', sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    position: relative;
-    overflow: hidden;
+/* ===== Subscriptions Section - Journal Style ===== */
+.courses-subscriptions-section {
+    width: 100%;
+    margin-top: 80px;
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.coming-soon-badge::before {
+.section-header {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.subscriptions-title {
+    font-size: 2.2rem;
+    font-weight: 200;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin: 0 0 0.5rem;
+    display: inline-block;
+    position: relative;
+    background: var(--grad-primary);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 8s ease-in-out infinite;
+}
+
+.subscriptions-title::after {
     content: '';
     position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transform: translateX(-100%);
-    animation: shimmer 2s infinite;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--gold), transparent);
+    border-radius: 2px;
 }
 
-@keyframes shimmer {
-    100% { transform: translateX(100%); }
-}
-
-/* ===== Error State ===== */
-.courses-error {
-    width: 100%;
+.subscriptions-description {
+    color: var(--text-muted);
+    font-size: 0.9rem;
     max-width: 600px;
-    margin: 40px auto;
-    padding: 60px 40px;
-    text-align: center;
-    background: rgba(239, 68, 68, 0.05);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: var(--radius-xl);
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    margin: 20px auto 0;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.6;
+    padding: 0 20px;
+}
+
+/* ===== Subscriptions Grid ===== */
+.subscriptions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
     box-sizing: border-box;
 }
 
+/* Subscription Cards - Journal Glass Panel */
+.subscription-plan-card {
+    padding: 40px 28px;
+    background-image: var(--panel-fill);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--radius-xl);
+    border: 1px solid transparent;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    transition: all var(--transition-bounce);
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: var(--panel-shadow);
+}
+
+/* Gradient border for subscription cards */
+.subscription-plan-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-xl);
+    padding: 1px;
+    background: var(--panel-border);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.subscription-plan-card:hover::before {
+    opacity: 1;
+}
+
+/* Top rim line */
+.subscription-plan-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20px;
+    right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255,255,255,0.35) 22%,
+        rgba(160,185,240,0.28) 50%,
+        rgba(255,255,255,0.22) 78%,
+        transparent);
+    opacity: 0;
+    transition: opacity var(--transition);
+    pointer-events: none;
+}
+
+.subscription-plan-card:hover::after {
+    opacity: 1;
+}
+
+/* Premium Plan - Enhanced */
+.subscription-plan-card.premium {
+    background-image: linear-gradient(168deg, rgba(107, 143, 232, 0.08), rgba(4,5,18,0.92));
+    transform: scale(1.02);
+    border: 1px solid rgba(107, 143, 232, 0.2);
+}
+
+/* Elite Plan - Enhanced */
+.subscription-plan-card.elite {
+    background-image: linear-gradient(168deg, rgba(212, 175, 55, 0.08), rgba(4,5,18,0.92));
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.elite-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(130deg, var(--eaa-bright) 0%, var(--eaa-core) 52%);
+    color: #010008;
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+    animation: badgeGlow 2s infinite;
+}
+
+@keyframes badgeGlow {
+    0%, 100% { box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); }
+    50% { box-shadow: 0 5px 25px rgba(212, 175, 55, 0.6); }
+}
+
+.subscription-plan-card:hover {
+    transform: translateY(-12px) scale(1.02);
+    background-image: var(--panel-fill-h);
+    box-shadow: var(--panel-shadow-h);
+}
+
+.subscription-plan-card.premium:hover,
+.subscription-plan-card.elite:hover {
+    transform: translateY(-12px) scale(1.03);
+}
+
+.subscription-plan-title {
+    font-size: 1.4rem;
+    font-weight: 300;
+    margin: 0 0 20px;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    background: var(--grad-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subscription-plan-price {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 8px;
+    line-height: 1;
+   background: linear-gradient(135deg, #fff, var(--eaa-bright));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+}
+
+.subscription-plan-period {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    margin: 0 0 25px;
+    letter-spacing: 0.1em;
+}
+
+/* Promotional Pricing */
+.promotional-pricing {
+    margin-bottom: 20px;
+}
+
+.promo-price {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin: 0 0 5px;
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(15, 217, 138, 0.3);
+    animation: promoGlow 2s infinite;
+}
+
+@keyframes promoGlow {
+    0%, 100% { text-shadow: 0 0 20px rgba(15, 217, 138, 0.3); }
+    50% { text-shadow: 0 0 40px rgba(15, 217, 138, 0.5); }
+}
+
+.promo-text {
+    color: var(--gold);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 0 0 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.original-price-strikethrough {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.25);
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--text-dim);
+}
+
+/* Features List */
+.subscription-plan-features {
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 0 0 30px;
+    padding: 0;
+    list-style: none;
+    flex: 1;
+}
+
+.subscription-plan-features li {
+    margin-bottom: 14px;
+    line-height: 1.5;
+    padding-left: 26px;
+    position: relative;
+}
+
+.subscription-plan-features li::before {
+    content: '✦';
+    position: absolute;
+    left: 0;
+    color: var(--eaa-bright);
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.subscription-plan-card:hover .subscription-plan-features li::before {
+    transform: rotate(90deg);
+    color: var(--eaa-bright); 
+}
+
+/* Subscription Button - Matching Community */
+.subscription-plan-button {
+    width: 100%;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 14px 20px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(4px);
+}
+
+/* Shine effect */
+.subscription-plan-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.subscription-plan-button:hover::before {
+    left: 100%;
+}
+
+.subscription-plan-button:hover {
+    background: rgba(107, 143, 232, 0.12);
+   border-color: var(--eaa-bright); 
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px -10px rgba(107, 143, 232, 0.4);
+    color: white;
+    letter-spacing: 0.18em;
+}
+
+/* Premium/Elite button variants */
+.subscription-plan-button.premium,
+.subscription-plan-button.elite {
+    background: rgba(107, 143, 232, 0.08);
+    border: 1px solid rgba(107, 143, 232, 0.3);
+}
+
+.subscription-plan-button.premium:hover,
+.subscription-plan-button.elite:hover {
+    background: rgba(107, 143, 232, 0.18);
+    border-color: var(--accent);
+    box-shadow: 0 10px 25px -8px rgba(107, 143, 232, 0.4);
+}
+
+.subscription-plan-button.free {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.subscription-plan-button.free:hover {
+    background: rgba(107, 143, 232, 0.12);
+    border-color: var(--accent);
+}
+
+/* ===== Error & Loading States ===== */
+.courses-error {
+    width: 100%;
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 48px 40px;
+    text-align: center;
+    background-image: var(--panel-fill);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--radius-xl);
+    border: 1px solid transparent;
+    box-sizing: border-box;
+    box-shadow: var(--panel-shadow);
+}
+
 .courses-error h2 {
-    font-size: 48px;
+    font-size: 2rem;
     font-weight: 200;
-    color: var(--down);
+    color: #f87171;
     text-transform: uppercase;
     letter-spacing: 0.15em;
     margin: 0 0 20px;
@@ -586,7 +994,7 @@ html, body {
 }
 
 .courses-error p {
-    font-size: 18px;
+    font-size: 0.9rem;
     color: var(--text-muted);
     margin: 0 0 30px;
     line-height: 1.6;
@@ -594,29 +1002,27 @@ html, body {
 }
 
 .courses-error button {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.8), rgba(239, 68, 68, 0.6));
+    background: linear-gradient(135deg, rgba(240, 61, 95, 0.8), rgba(240, 61, 95, 0.6));
     color: white;
     border: none;
     border-radius: 50px;
-    padding: 16px 48px;
-    font-size: 16px;
-    font-weight: 500;
+    padding: 14px 40px;
+    font-size: 0.85rem;
+    font-weight: 600;
     font-family: 'Space Grotesk', sans-serif;
     cursor: pointer;
     transition: all var(--transition);
     text-transform: uppercase;
-    letter-spacing: 0.2em;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    letter-spacing: 0.15em;
+    border: 1px solid rgba(240, 61, 95, 0.3);
     display: inline-block;
 }
 
 .courses-error button:hover {
     transform: translateY(-3px);
-    box-shadow: 0 15px 30px -10px rgba(239, 68, 68, 0.4);
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(239, 68, 68, 0.7));
+    box-shadow: 0 15px 30px -10px rgba(240, 61, 95, 0.4);
 }
 
-/* ===== Loading State ===== */
 .courses-loading {
     display: flex;
     flex-direction: column;
@@ -629,9 +1035,9 @@ html, body {
 .loading-spinner {
     width: 60px;
     height: 60px;
-    border: 3px solid rgba(212, 175, 55, 0.1);
-    border-top-color: var(--accent-solid);
-    border-right-color: var(--accent-blue-solid);
+    border: 2px solid rgba(107, 143, 232, 0.1);
+    border-top-color: var(--accent);
+    border-right-color: var(--gold);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -656,420 +1062,40 @@ html, body {
 /* ===== No Courses State ===== */
 .no-courses {
     text-align: center;
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
+    background-image: var(--panel-fill);
+    backdrop-filter: blur(20px);
     border-radius: var(--radius-xl);
     padding: 60px 40px;
     margin: 40px auto;
-    max-width: 600px;
-    border: 1px solid var(--border);
+    max-width: 500px;
+    border: 1px solid transparent;
+    box-shadow: var(--panel-shadow);
     animation: fadeIn 0.6s;
 }
 
 .no-courses h2 {
-    font-size: 28px;
+    font-size: 1.5rem;
     margin-bottom: 16px;
     color: var(--text);
     text-transform: uppercase;
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 200;
+    font-weight: 300;
     letter-spacing: 0.2em;
 }
 
 .no-courses p {
     color: var(--text-muted);
-    font-family: 'Space Grotesk', sans-serif;
     font-weight: 300;
-    font-size: 16px;
+    font-size: 0.9rem;
 }
 
-/* ===== All Courses Banner ===== */
-.all-courses {
-    text-align: center;
-    margin: 32px auto;
-    padding: 16px 32px;
-    background: rgba(212, 175, 55, 0.08);
-    border-radius: 50px;
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    transition: all var(--transition);
-    position: relative;
-    overflow: hidden;
-    display: inline-block;
-}
-
-.all-courses::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-    transform: translateX(-100%);
-    animation: shimmer 3s infinite;
-}
-
-.all-courses:hover {
-    background: rgba(212, 175, 55, 0.12);
-    border-color: rgba(212, 175, 55, 0.4);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px -10px rgba(212, 175, 55, 0.4);
-}
-
-.courses-heading {
-    margin: 0;
-    color: var(--text);
-    font-size: 20px;
-    font-weight: 300;
-    text-transform: uppercase;
-    font-family: 'Space Grotesk', sans-serif;
-    letter-spacing: 0.25em;
-    background: linear-gradient(135deg, #fff, rgba(212, 175, 55, 0.8));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* ===== Subscriptions Section ===== */
-.courses-subscriptions-section {
-    width: 100%;
-    margin-top: 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.section-header {
-    width: 100%;
-    text-align: center;
-    margin-bottom: 50px;
-}
-
+/* ===== Section Titles ===== */
+.courses-section-title,
 .subscriptions-title {
-    font-size: 2.8rem;
-    font-weight: 200;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    margin: 0 0 0.5rem;
-    display: inline-block;
     position: relative;
-    background: linear-gradient(270deg, #ffffff 0%, #f2e6c8 30%, #dfc056 55%, #f2e6c8 75%, #ffffff 100%);
-    background-size: 300% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradientShift 8s ease-in-out infinite;
-}
-
-.subscriptions-title::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent-solid), var(--accent-blue-solid), transparent);
-    border-radius: 2px;
-}
-
-.subscriptions-description {
-    color: var(--text-muted);
-    font-size: 16px;
-    max-width: 600px;
-    margin: 0 auto;
-    font-weight: 300;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    line-height: 1.6;
-    padding: 0 20px;
-}
-
-/* ===== Subscriptions Grid ===== */
-.subscriptions-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-    box-sizing: border-box;
-}
-
-/* Subscription Cards */
-.subscription-plan-card {
-    padding: 40px 30px;
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--border);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    transition: all var(--transition-bounce);
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* Gradient border for subscription cards */
-.subscription-plan-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: var(--radius-xl);
-    padding: 2px;
-    background: linear-gradient(
-        135deg,
-        transparent 0%,
-        rgba(212, 175, 55, 0.3) 25%,
-        rgba(232, 198, 88, 0.3) 50%,
-        rgba(212, 175, 55, 0.3) 75%,
-        transparent 100%
-    );
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0;
-    transition: opacity 0.5s;
-}
-
-.subscription-plan-card:hover::before {
-    opacity: 1;
-    animation: borderRotate 3s linear infinite;
-}
-
-/* Premium Plan */
-.subscription-plan-card.premium {
-    background: linear-gradient(145deg, rgba(212, 175, 55, 0.12), rgba(232, 198, 88, 0.08));
-    border: 1px solid rgba(212, 175, 55, 0.25);
-    transform: scale(1.02);
-}
-
-/* Elite Plan */
-.subscription-plan-card.elite {
-    background: linear-gradient(145deg, rgba(212, 175, 55, 0.18), rgba(232, 198, 88, 0.12));
-    border: 1px solid rgba(212, 175, 55, 0.4);
-}
-
-.elite-badge {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, var(--accent-solid), var(--accent-blue-solid));
-    color: white;
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
-    animation: badgePulse 2s infinite;
-}
-
-@keyframes badgePulse {
-    0%, 100% { box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); }
-    50% { box-shadow: 0 5px 25px rgba(212, 175, 55, 0.8); }
-}
-
-.subscription-plan-card:hover {
-    transform: translateY(-12px) scale(1.02);
-    background: var(--bg-card-h);
-    border-color: transparent;
-    box-shadow: 
-        0 30px 60px -15px rgba(0, 0, 0, 0.6),
-        0 0 0 1px rgba(212, 175, 55, 0.3),
-        0 0 40px rgba(212, 175, 55, 0.2);
-}
-
-.subscription-plan-card.premium:hover,
-.subscription-plan-card.elite:hover {
-    transform: translateY(-12px) scale(1.03);
-}
-
-.subscription-plan-title {
-    color: var(--text);
-    font-size: 28px;
-    font-weight: 200;
-    margin: 0 0 20px;
-    line-height: 1.2;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
-}
-
-.subscription-plan-price {
-    font-size: 52px;
-    font-weight: 700;
-    color: var(--text);
-    margin: 0 0 10px;
-    line-height: 1;
-    background: linear-gradient(135deg, #fff, var(--accent-solid));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
     display: inline-block;
 }
 
-.subscription-plan-period {
-    color: var(--text-muted);
-    font-size: 14px;
-    margin: 0 0 25px;
-    letter-spacing: 0.1em;
-}
-
-/* Promotional Pricing */
-.promotional-pricing {
-    margin-bottom: 20px;
-}
-
-.promo-price {
-    font-size: 56px;
-    font-weight: 700;
-    color: var(--up);
-    margin: 0 0 5px;
-    line-height: 1;
-    text-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
-    animation: promoGlow 2s infinite;
-}
-
-@keyframes promoGlow {
-    0%, 100% { text-shadow: 0 0 30px rgba(16, 185, 129, 0.5); }
-    50% { text-shadow: 0 0 50px rgba(16, 185, 129, 0.8); }
-}
-
-@keyframes gradientShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-}
-
-@keyframes titleFadeIn {
-    from { opacity: 0; transform: translateY(24px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.promo-text {
-    color: var(--up);
-    font-size: 14px;
-    font-weight: 600;
-    margin: 0 0 5px;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-}
-
-.original-price-strikethrough {
-    font-size: 32px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.3);
-    text-decoration: line-through;
-    text-decoration-thickness: 2px;
-    text-decoration-color: var(--down);
-    position: relative;
-}
-
-/* Features List */
-.subscription-plan-features {
-    text-align: left;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 15px;
-    margin: 0 0 30px;
-    padding: 0;
-    list-style: none;
-    flex: 1;
-}
-
-.subscription-plan-features li {
-    margin-bottom: 15px;
-    line-height: 1.5;
-    padding-left: 25px;
-    position: relative;
-}
-
-.subscription-plan-features li::before {
-    content: '✦';
-    position: absolute;
-    left: 0;
-    color: var(--accent-solid);
-    font-size: 16px;
-    transition: transform 0.3s;
-}
-
-.subscription-plan-card:hover .subscription-plan-features li::before {
-    transform: rotate(90deg);
-    color: var(--accent-blue-solid);
-}
-
-/* Subscription Button */
-.subscription-plan-button {
-    width: 100%;
-    background: transparent;
-    color: var(--text);
-    border: 1px solid var(--border);
-    padding: 16px 20px;
-    border-radius: 50px;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition);
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Shine effect */
-.subscription-plan-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.2),
-        transparent
-    );
-    transition: left 0.6s;
-}
-
-.subscription-plan-button:hover::before {
-    left: 100%;
-}
-
-.subscription-plan-button:hover {
-    background: rgba(212, 175, 55, 0.15);
-    border-color: var(--accent-solid);
-    transform: translateY(-3px);
-    box-shadow: 
-        0 10px 20px -10px rgba(212, 175, 55, 0.5),
-        0 0 0 1px rgba(212, 175, 55, 0.3);
-    color: white;
-    letter-spacing: 0.22em;
-}
-
-/* Premium/Elite button variants */
-.subscription-plan-button.premium,
-.subscription-plan-button.elite {
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(232, 198, 88, 0.2));
-    border: 1px solid rgba(212, 175, 55, 0.4);
-}
-
-.subscription-plan-button.premium:hover,
-.subscription-plan-button.elite:hover {
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(232, 198, 88, 0.3));
-    border-color: var(--accent-solid);
-    box-shadow: 
-        0 10px 25px -8px rgba(212, 175, 55, 0.6),
-        0 0 0 1px rgba(212, 175, 55, 0.5);
-}
-
-/* ===== Responsive Design - FIXED ===== */
+/* ===== Responsive Design ===== */
 
 /* Large Desktop */
 @media (max-width: 1200px) {
@@ -1079,11 +1105,11 @@ html, body {
     }
     
     .subscription-plan-card {
-        padding: 35px 25px;
+        padding: 35px 24px;
     }
     
     .courses-title {
-        font-size: 38px;
+        font-size: 2.5rem;
     }
 }
 
@@ -1094,22 +1120,22 @@ html, body {
     }
     
     .courses-title {
-        font-size: 36px;
+        font-size: 2.2rem;
     }
     
     .courses-header p {
-        font-size: 16px;
+        font-size: 0.9rem;
     }
     
     .courses-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
+        gap: 24px;
     }
     
     .subscriptions-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 25px;
-        max-width: 900px;
+        gap: 24px;
+        max-width: 800px;
     }
     
     .subscription-plan-card.premium {
@@ -1117,39 +1143,35 @@ html, body {
     }
     
     .subscriptions-title {
-        font-size: 36px;
+        font-size: 2rem;
     }
 }
 
 /* Tablet */
 @media (max-width: 768px) {
     .courses-container {
-        padding: 80px 15px 40px;
+        padding: 80px 16px 40px;
     }
     
     .courses-header {
-        margin-bottom: 30px;
+        margin-bottom: 40px;
     }
     
     .courses-title {
-        font-size: 28px;
+        font-size: 1.6rem;
         letter-spacing: 0.15em;
         padding: 0 15px;
     }
     
-    .courses-title .line1 {
-        margin-bottom: 8px;
-    }
-    
     .courses-header p {
-        font-size: 15px;
+        font-size: 0.85rem;
         padding: 0 15px;
     }
     
     .courses-grid {
         grid-template-columns: 1fr;
-        gap: 20px;
-        padding: 0 15px;
+        gap: 24px;
+        padding: 0 16px;
     }
     
     .courses-error {
@@ -1158,36 +1180,27 @@ html, body {
     }
     
     .courses-error h2 {
-        font-size: 36px;
-    }
-    
-    .courses-error p {
-        font-size: 16px;
-    }
-    
-    .courses-error button {
-        padding: 14px 40px;
-        font-size: 15px;
+        font-size: 1.8rem;
     }
     
     .subscriptions-title {
-        font-size: 32px;
+        font-size: 1.8rem;
     }
     
     .subscriptions-description {
-        font-size: 15px;
+        font-size: 0.85rem;
         padding: 0 15px;
     }
     
     .subscriptions-grid {
         grid-template-columns: 1fr;
-        max-width: 500px;
-        gap: 25px;
-        padding: 0 15px;
+        max-width: 450px;
+        gap: 24px;
+        padding: 0 16px;
     }
     
     .subscription-plan-card {
-        padding: 35px 25px;
+        padding: 32px 24px;
     }
     
     .subscription-plan-card.premium {
@@ -1199,10 +1212,10 @@ html, body {
     }
     
     .elite-badge {
-        top: 15px;
-        right: 15px;
-        padding: 6px 14px;
-        font-size: 11px;
+        top: 16px;
+        right: 16px;
+        padding: 5px 12px;
+        font-size: 0.65rem;
     }
 }
 
@@ -1213,29 +1226,25 @@ html, body {
     }
     
     .courses-header {
-        margin-bottom: 25px;
+        margin-bottom: 32px;
     }
     
     .courses-title {
-        font-size: 22px;
+        font-size: 1.3rem;
         letter-spacing: 0.1em;
         padding: 0 10px;
         line-height: 1.4;
     }
     
-    .courses-title .line1 {
-        margin-bottom: 6px;
-    }
-    
     .courses-header p {
-        font-size: 14px;
+        font-size: 0.75rem;
         letter-spacing: 0.1em;
         padding: 0 10px;
     }
     
     .courses-grid {
-        padding: 0 10px;
-        gap: 16px;
+        padding: 0 12px;
+        gap: 20px;
     }
     
     .course-card {
@@ -1247,91 +1256,97 @@ html, body {
     }
     
     .course-info {
-        padding: 20px 16px;
+        padding: 20px 18px;
     }
     
     .course-info h3 {
-        font-size: 20px;
+        font-size: 1rem;
         letter-spacing: 0.12em;
     }
     
     .course-description {
-        font-size: 13px;
+        font-size: 0.8rem;
     }
     
     .price {
-        font-size: 24px;
+        font-size: 1.5rem;
     }
     
     .enroll-button {
         padding: 10px 20px;
-        font-size: 13px;
-        min-width: 120px;
+        font-size: 0.7rem;
+        min-width: 110px;
+    }
+    
+    .coming-soon-badge {
+        padding: 6px 16px;
+        font-size: 0.7rem;
     }
     
     .courses-error {
-        padding: 35px 20px;
+        padding: 32px 20px;
         margin: 20px auto;
     }
     
     .courses-error h2 {
-        font-size: 30px;
+        font-size: 1.5rem;
         letter-spacing: 0.1em;
     }
     
     .courses-error p {
-        font-size: 15px;
+        font-size: 0.85rem;
         margin-bottom: 25px;
     }
     
     .courses-error button {
-        padding: 12px 30px;
-        font-size: 14px;
+        padding: 12px 28px;
+        font-size: 0.75rem;
     }
     
     .subscriptions-title {
-        font-size: 26px;
+        font-size: 1.4rem;
         letter-spacing: 0.15em;
         margin-bottom: 15px;
     }
     
     .subscriptions-title::after {
-        width: 60px;
+        width: 50px;
+        bottom: -10px;
     }
     
     .subscriptions-description {
-        font-size: 14px;
+        font-size: 0.75rem;
         padding: 0 10px;
     }
     
     .subscriptions-grid {
-        padding: 0 10px;
+        padding: 0 12px;
         gap: 20px;
     }
     
     .subscription-plan-card {
-        padding: 30px 20px;
+        padding: 28px 20px;
     }
     
     .subscription-plan-title {
-        font-size: 24px;
-        letter-spacing: 0.15em;
+        font-size: 1.2rem;
+        letter-spacing: 0.12em;
     }
     
     .subscription-plan-price {
-        font-size: 44px;
+        font-size: 2.2rem;
     }
     
     .promo-price {
-        font-size: 48px;
+        font-size: 2.2rem;
     }
     
     .original-price-strikethrough {
-        font-size: 28px;
+        font-size: 1.4rem;
     }
     
     .subscription-plan-features {
-        font-size: 14px;
+        font-size: 0.8rem;
     }
     
     .subscription-plan-features li {
@@ -1340,18 +1355,9 @@ html, body {
     }
     
     .subscription-plan-button {
-        padding: 14px 16px;
-        font-size: 14px;
-        letter-spacing: 0.15em;
-    }
-    
-    .all-courses {
-        padding: 14px 24px;
-        margin: 28px auto;
-    }
-    
-    .courses-heading {
-        font-size: 18px;
+        padding: 12px 16px;
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
     }
     
     .no-courses,
@@ -1360,52 +1366,52 @@ html, body {
     }
     
     .no-courses h2 {
-        font-size: 24px;
+        font-size: 1.2rem;
     }
 }
 
 /* iPhone SE & Small Phones */
 @media (max-width: 375px) {
     .courses-title {
-        font-size: 20px;
+        font-size: 1.1rem;
     }
     
     .subscriptions-title {
-        font-size: 24px;
+        font-size: 1.2rem;
     }
     
     .subscription-plan-title {
-        font-size: 22px;
+        font-size: 1.1rem;
     }
     
     .subscription-plan-price {
-        font-size: 40px;
+        font-size: 2rem;
     }
     
     .promo-price {
-        font-size: 42px;
+        font-size: 2rem;
     }
     
     .subscription-plan-period {
-        font-size: 13px;
+        font-size: 0.7rem;
     }
     
     .subscription-plan-features {
-        font-size: 13px;
+        font-size: 0.75rem;
     }
     
     .enroll-button {
         padding: 8px 16px;
-        font-size: 12px;
-        min-width: 100px;
+        font-size: 0.65rem;
+        min-width: 95px;
     }
     
     .course-info h3 {
-        font-size: 18px;
+        font-size: 0.9rem;
     }
     
     .price {
-        font-size: 22px;
+        font-size: 1.3rem;
     }
 }
 
@@ -1441,7 +1447,7 @@ html, body {
     }
     
     .courses-title {
-        font-size: clamp(1.8rem, 5vw, 2.2rem);
+        font-size: clamp(1.3rem, 5vw, 1.8rem);
         margin-bottom: 1rem;
     }
     
@@ -1452,6 +1458,10 @@ html, body {
     .course-image {
         height: 140px;
     }
+    
+    .subscriptions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 /* ===== Animation Keyframes ===== */
@@ -1461,13 +1471,13 @@ html, body {
 }
 
 /* ===== Card Animation Delays ===== */
-.course-card:nth-child(1) { animation-delay: 0.1s; }
-.course-card:nth-child(2) { animation-delay: 0.2s; }
-.course-card:nth-child(3) { animation-delay: 0.3s; }
-.course-card:nth-child(4) { animation-delay: 0.4s; }
-.course-card:nth-child(5) { animation-delay: 0.5s; }
-.course-card:nth-child(6) { animation-delay: 0.6s; }
+.course-card:nth-child(1) { animation-delay: 0.05s; }
+.course-card:nth-child(2) { animation-delay: 0.1s; }
+.course-card:nth-child(3) { animation-delay: 0.15s; }
+.course-card:nth-child(4) { animation-delay: 0.2s; }
+.course-card:nth-child(5) { animation-delay: 0.25s; }
+.course-card:nth-child(6) { animation-delay: 0.3s; }
 
-.subscription-plan-card:nth-child(1) { animation-delay: 0.15s; }
-.subscription-plan-card:nth-child(2) { animation-delay: 0.3s; }
-.subscription-plan-card:nth-child(3) { animation-delay: 0.45s; }
+.subscription-plan-card:nth-child(1) { animation-delay: 0.08s; }
+.subscription-plan-card:nth-child(2) { animation-delay: 0.16s; }
+.subscription-plan-card:nth-child(3) { animation-delay: 0.24s; }

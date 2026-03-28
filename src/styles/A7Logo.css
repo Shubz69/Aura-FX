@@ -1,4 +1,49 @@
-/* A7 Logo — Premium Gold Metallic (Custom Palette: #dd9950, #ecad64, #f3bb74, #f6bf78) */
+/* A7 Logo — Pure Gold Metallic (Consistent Gold Shine, No White/Bronze) */
+
+/* Keyframe: sweeping light beam across the logo */
+@keyframes goldShine {
+    0% {
+        background-position: -200% center;
+    }
+    100% {
+        background-position: 300% center;
+    }
+}
+
+/* Keyframe: subtle pulsing glow - pure gold only */
+@keyframes goldGlow {
+    0%, 100% {
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22))
+                drop-shadow(0 0 10px rgba(246, 191, 120, 0.55))
+                drop-shadow(0 0 22px rgba(248, 195, 125, 0.45));
+    }
+    50% {
+        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.28))
+                drop-shadow(0 0 18px rgba(248, 195, 125, 0.75))
+                drop-shadow(0 0 36px rgba(253, 232, 196, 0.55));
+    }
+}
+
+/* Navbar only: pure gold glow — no white/cream tones */
+@keyframes navbarLogoGlow {
+    0%, 100% {
+        filter: drop-shadow(0 1px 3px rgba(248, 195, 125, 0.55))
+                drop-shadow(0 0 12px rgba(248, 195, 125, 0.65))
+                drop-shadow(0 0 26px rgba(246, 191, 120, 0.55));
+    }
+    50% {
+        filter: drop-shadow(0 2px 6px rgba(248, 195, 125, 0.75))
+                drop-shadow(0 0 20px rgba(248, 195, 125, 0.85))
+                drop-shadow(0 0 34px rgba(246, 191, 120, 0.7));
+    }
+}
+
+/* Keyframe: glint sparkle flash */
+@keyframes goldGlint {
+    0%, 85%, 100% { opacity: 0; transform: scale(0.8) rotate(-10deg); }
+    90%            { opacity: 1; transform: scale(1.1) rotate(-10deg); }
+    95%            { opacity: 0.6; transform: scale(1) rotate(-10deg); }
+}
 
 .a7-logo-container {
     display: flex;
@@ -8,32 +53,28 @@
     isolation: isolate;
 }
 
-/* ─── Base logo element ─────────────────────────────────────────────────────── */
+/* ─── Base logo element — Bright Gold Only ─────────────────────────────────────── */
 .a7-logo-image {
     display: block;
     width: 100%;
     height: 100%;
 
-    /* Premium gold metallic — using custom palette: #dd9950, #ecad64, #f3bb74, #f6bf78 */
+    /* Bright gold gradient — only light to bright gold tones */
     background: linear-gradient(
         110deg,
-        #a5672e   0%,
-        #b57238   5%,
-        #c97e42  10%,
-        #dd9950  16%,
-        #e5a458  22%,
-        #ecad64  28%,
-        #f3bb74  34%,
-        #f6bf78  40%,
-        #f9c87d  46%,
-        #f6bf78  52%,
-        #f3bb74  58%,
-        #ecad64  66%,
-        #e5a458  74%,
-        #dd9950  82%,
-        #c97e42  90%,
-        #b57238  95%,
-        #a5672e 100%
+        #f6bf78   0%,
+        #f8c37d   8%,
+        #f9c87d  16%,
+        #fad68a  24%,
+        #fbe096  32%,
+        #fceaa2  40%,
+        #fff3ae  48%,
+        #fceaa2  56%,
+        #fbe096  64%,
+        #fad68a  72%,
+        #f9c87d  80%,
+        #f8c37d  88%,
+        #f6bf78 100%
     );
     background-size: 300% 100%;
 
@@ -55,15 +96,15 @@
     background:
         repeating-linear-gradient(
             47deg,
-            rgba(246, 191, 120, 0.25) 0px,
-            rgba(246, 191, 120, 0.25) 1px,
+            rgba(248, 195, 125, 0.3) 0px,
+            rgba(248, 195, 125, 0.3) 1px,
             transparent 1px,
             transparent 5px
         ),
         repeating-linear-gradient(
             -43deg,
-            rgba(221, 153, 80, 0.18) 0px,
-            rgba(221, 153, 80, 0.18) 1px,
+            rgba(246, 191, 120, 0.22) 0px,
+            rgba(246, 191, 120, 0.22) 1px,
             transparent 1px,
             transparent 7px
         );
@@ -80,9 +121,9 @@
     inset: 0;
     background: radial-gradient(
         ellipse 60% 40% at 35% 28%,
-        rgba(255, 248, 235, 0.85) 0%,
-        rgba(246, 191, 120, 0.48) 30%,
-        rgba(243, 187, 116, 0.22) 58%,
+        rgba(255, 235, 200, 0.9) 0%,
+        rgba(248, 195, 125, 0.55) 30%,
+        rgba(243, 187, 116, 0.35) 58%,
         transparent 80%
     );
     pointer-events: none;
@@ -91,7 +132,7 @@
     mix-blend-mode: screen;
 }
 
-/* ─── NAVBAR SIZE ───────────────────────────────────────────────────────────── */
+/* ─── NAVBAR SIZE — Pure Gold (Consistent Shine, No White/Bronze) ──────────────────────── */
 .navbar-logo-wrapper .a7-logo-image {
     width: 74px;
     height: 74px;
@@ -99,64 +140,105 @@
     margin-bottom: 0;
     transform: translateY(-7px);
 
+    /* Pure gold gradient — only bright gold tones, no dark/bronze */
     background: linear-gradient(
         110deg,
-        #a5672e   0%,
-        #b57238   6%,
-        #c97e42  12%,
-        #dd9950  18%,
-        #e5a458  24%,
-        #ecad64  30%,
-        #f3bb74  36%,
-        #f6bf78  44%,
-        #f9c87d  52%,
-        #f6bf78  60%,
-        #f3bb74  68%,
-        #ecad64  76%,
-        #dd9950  84%,
-        #c97e42  92%,
-        #a5672e 100%
+        #f6bf78   0%,
+        #f8c37d   6%,
+        #f9c87d  12%,
+        #fad68a  18%,
+        #fbe096  24%,
+        #fceaa2  30%,
+        #fff3ae  36%,
+        #fceaa2  44%,
+        #fbe096  52%,
+        #fad68a  60%,
+        #f9c87d  68%,
+        #f8c37d  76%,
+        #f6bf78  84%,
+        #f8c37d  92%,
+        #f6bf78 100%
     );
     background-size: 300% 100%;
+    animation:
+        goldShine 22.667s linear infinite,
+        navbarLogoGlow 2.6s ease-in-out infinite;
 }
 
-/* ─── HOME PAGE SIZE ────────────────────────────────────────────────────────── */
+/* Gold grain texture overlay — pure gold tones */
+.navbar-logo-wrapper .a7-logo-image::before {
+    background:
+        repeating-linear-gradient(
+            47deg,
+            rgba(248, 195, 125, 0.5) 0px,
+            rgba(248, 195, 125, 0.5) 1px,
+            transparent 1px,
+            transparent 5px
+        ),
+        repeating-linear-gradient(
+            -43deg,
+            rgba(246, 191, 120, 0.4) 0px,
+            rgba(246, 191, 120, 0.4) 1px,
+            transparent 1px,
+            transparent 7px
+        );
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+}
+
+/* Gold specular highlight — pure gold shimmer (SINGLE DECLARATION) */
+.navbar-logo-wrapper .a7-logo-image::after {
+    background: radial-gradient(
+        ellipse 60% 40% at 35% 28%,
+        rgba(255, 235, 190, 0.95) 0%,
+        rgba(248, 195, 125, 0.65) 28%,
+        rgba(246, 191, 120, 0.45) 50%,
+        rgba(243, 187, 116, 0.25) 70%,
+        transparent 90%
+    );
+    opacity: 0.85;
+    mix-blend-mode: screen;
+}
+
+/* ─── HOME PAGE SIZE — White Logo (Optional) ───────────────────────────────────────────── */
 .home-logo-section .a7-logo-image {
     width: 180px;
     height: 180px;
 
+    /* White/silver gradient for home page */
     background: linear-gradient(
         110deg,
-        #f6bf78   0%,
-        #f9c87d   8%,
-        #fad68a  16%,
-        #fbe096  24%,
-        #fceaa2  32%,
-        #fff3ae  40%,
-        #fff9ba  48%,
-        #fff3ae  56%,
-        #fceaa2  64%,
-        #fbe096  72%,
-        #fad68a  80%,
-        #f9c87d  88%,
-        #f6bf78 100%
+        #ffffff   0%,
+        #f8f9fc   8%,
+        #f0f2f8  16%,
+        #e8ecf4  24%,
+        #f8f9fc  32%,
+        #ffffff  40%,
+        #fafcff  48%,
+        #ffffff  56%,
+        #f8f9fc  64%,
+        #f0f2f8  72%,
+        #e8ecf4  80%,
+        #f8f9fc  88%,
+        #ffffff 100%
     );
     background-size: 300% 100%;
+    animation: goldShine 28s linear infinite;
 }
 
 .home-logo-section .a7-logo-image::before {
     background:
         repeating-linear-gradient(
             47deg,
-            rgba(255, 245, 225, 0.28) 0px,
-            rgba(255, 245, 225, 0.28) 1px,
+            rgba(255, 255, 255, 0.35) 0px,
+            rgba(255, 255, 255, 0.35) 1px,
             transparent 1px,
             transparent 5px
         ),
         repeating-linear-gradient(
             -43deg,
-            rgba(221, 153, 80, 0.24) 0px,
-            rgba(221, 153, 80, 0.24) 1px,
+            rgba(220, 230, 245, 0.25) 0px,
+            rgba(220, 230, 245, 0.25) 1px,
             transparent 1px,
             transparent 7px
         );
@@ -166,12 +248,12 @@
 .home-logo-section .a7-logo-image::after {
     background: radial-gradient(
         ellipse 65% 45% at 32% 26%,
-        rgba(255, 252, 245, 0.95) 0%,
-        rgba(246, 191, 120, 0.55) 32%,
-        rgba(243, 187, 116, 0.25) 58%,
+        rgba(255, 255, 255, 0.98) 0%,
+        rgba(240, 245, 255, 0.6) 32%,
+        rgba(220, 230, 245, 0.3) 58%,
         transparent 82%
     );
-    opacity: 0.82;
+    opacity: 0.85;
 }
 
 /* ─── Responsive ────────────────────────────────────────────────────────────── */
@@ -221,9 +303,10 @@
 
 /* ─── Dark mode ─────────────────────────────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
-    .a7-logo-image {
+    .home-logo-section .a7-logo-image,
+    .footer-logo-wrap .footer-a7-mark .a7-logo-image {
         filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55))
-                drop-shadow(0 0 14px rgba(221, 153, 80, 0.45))
-                drop-shadow(0 0 30px rgba(246, 191, 120, 0.32));
+                drop-shadow(0 0 14px rgba(248, 195, 125, 0.5))
+                drop-shadow(0 0 30px rgba(246, 191, 120, 0.4));
     }
 }
