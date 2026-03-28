@@ -162,6 +162,9 @@ const BANNED_PHRASES = [
   'scenario 1 defines',
   'scenario 2 defines',
   'scenario 3 defines',
+  'scenario 1',
+  'scenario 2',
+  'scenario 3',
   'daily scenario',
   'base and surprise pathways',
   'base and surprise',
@@ -173,12 +176,62 @@ const BANNED_PHRASES = [
   'volatility-adjusted risk',
   'invalidation from other symbols in the set',
   'separate invalidation from other symbols',
+  'it is important to note',
+  'in conclusion',
+  'moving forward',
+  'leverage appropriate',
+  'stay nimble',
+  'remain cautious',
 ];
+
+/** Generic checklist / risk filler — reject in validation (body + notes). */
+const GENERIC_BOILERPLATE_FRAGMENTS = [
+  'watch bond yields',
+  'watch yields for equity',
+  'avoid new positions immediately ahead of high-impact',
+  'avoid overtrading into major releases',
+  'reduce risk when releases cluster',
+  'reduce position size',
+  'trade defensive until',
+  'weekly scenario tree',
+  'confirmation remained essential',
+  'no dominant narrative: confirmation',
+  'prioritize confirmation-based entries over predictive',
+  'scale only on confirmation',
+  'protect downside first',
+  'maintain a bias only when momentum',
+];
+
+const GENERIC_BOILERPLATE_RE = new RegExp(
+  GENERIC_BOILERPLATE_FRAGMENTS.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'),
+  'i'
+);
 
 const BANNED_PHRASES_RE = new RegExp(
   BANNED_PHRASES.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'),
   'i'
 );
+
+const CATEGORY_INTELLIGENCE_DIRECTIVES = {
+  stocks:
+    'STOCKS DESK: Tie each name to session % move vs US500 when RS field is present; headline catalysts (earnings, guidance, legal, product); sector leadership vs XLK/XLF-style read from macro drivers; avoid generic index commentary — single-stock why now.',
+  forex:
+    'FX DESK: Each pair through rate-differential and USD lens from drivers; CB prints on calendar; session liquidity (Asia/London/NY); no generic “dollar strength” without linking to this pair’s skew.',
+  indices:
+    'INDICES DESK: Benchmark vs breadth proxy from drivers (stocks signal, vol); rates sensitivity from yields driver; what today’s tape implies for continuation vs fade — not a stock picker list.',
+  futures:
+    'FUTURES DESK: Contract beta to oil, rates, or index from context; roll/liquidity only if inferable; session gap vs cash where relevant.',
+  crypto:
+    'CRYPTO DESK: Majors vs alts from relative % moves; regulatory/ETF headlines if in feed; liquidity/vol from tape — no on-chain invention.',
+  commodities:
+    'COMMODITIES DESK: USD passthrough from drivers; oil vs metals divergence; inventory/macro headlines when present in feed.',
+  bonds:
+    'RATES DESK: Curve steepening/flattening from yield context; auction/CPI/Fed path from calendar; tenors as duration bets — explicit yield-level language only if in data.',
+  etfs:
+    'ETF DESK: Factor/sector vehicle vs underlying benchmark move; flow narrative only when headlines support; RS vs US500 for equity ETFs.',
+  general:
+    'HOUSE BRIEF: Cross-asset leadership from drivers and signals; what repriced today (marketChanges); scheduled risk — each sleeve gets distinct prose.',
+};
 
 const CALENDAR_HIGH_IMPACT = /\b(high|red)\b/i;
 
@@ -331,17 +384,47 @@ function packDriverLine(d) {
   return String(d);
 }
 
-function buildMacroSummaryLines(market, briefKind) {
+function buildMacroSummaryLines(market, briefKind, period = 'daily') {
+  return buildDeskContextLines(market, briefKind, period === 'weekly' ? 'weekly' : 'daily');
+}
+
+/** What changed / what matters now — leads with tape + drivers, not a vague regime label. */
+function buildDeskContextLines(market, briefKind, period = 'daily') {
   const k = normalizeBriefKind(briefKind);
   const lines = [];
-  const regime = market?.marketRegime && typeof market.marketRegime === 'object' ? market.marketRegime : {};
-  lines.push(`Regime: ${regime.currentRegime || market?.marketRegime || 'mixed'}.`);
-  const pulse = market?.marketPulse && typeof market.marketPulse === 'object' ? market.marketPulse : {};
-  lines.push(`Pulse: ${pulse.label || 'MIXED'} (${pulse.score != null ? pulse.score : '—'}/100).`);
+  if (period === 'weekly') {
+    lines.push('Horizon: WEEKLY — structural repricing, persistence, and next-week catalysts; not a session scalping note.');
+  } else {
+    lines.push('Horizon: DAILY / next session — tactical tape, immediate data, and liquidity.');
+  }
+  const changes = (market?.marketChangesToday || [])
+    .map((x) => (typeof x === 'string' ? x : x?.title))
+    .filter(Boolean)
+    .slice(0, 5);
+  if (changes.length) {
+    lines.push(`${period === 'weekly' ? 'Week context (engine)' : 'What moved narrative (engine)'}: ${changes.join(' · ')}`);
+  }
   const drivers = (market?.keyDrivers || []).slice(0, 5).map(packDriverLine).filter(Boolean);
-  if (drivers.length) lines.push(`Macro drivers (desk context): ${drivers.join(' | ')}`);
+  if (drivers.length) {
+    lines.push(`Quantified drivers (must cite where relevant): ${drivers.join(' | ')}`);
+  }
+  const sigs = (market?.crossAssetSignals || []).slice(0, 6);
+  for (const s of sigs) {
+    const line =
+      typeof s === 'string'
+        ? s
+        : [s.asset, s.signal, s.direction && s.direction !== 'neutral' ? `dir:${s.direction}` : null]
+            .filter(Boolean)
+            .join(' — ');
+    if (line) lines.push(`Cross-asset: ${line}`);
+  }
+  const regime = market?.marketRegime && typeof market.marketRegime === 'object' ? market.marketRegime : {};
+  const pulse = market?.marketPulse && typeof market.marketPulse === 'object' ? market.marketPulse : {};
+  lines.push(
+    `Snapshot: ${regime.currentRegime || 'mixed'} regime, ${pulse.label || 'MIXED'} pulse (${pulse.score != null ? pulse.score : '—'}/100).`
+  );
   if (k !== 'general') {
-    lines.push(`Write ONLY for ${k} — do not discuss instruments outside the provided top-5 list except as abstract macro (e.g. "risk tone") without other tickers.`);
+    lines.push(`BOUNDARY: ${k} only — no tickers outside instrumentIntelligence[].instrument.`);
   }
   return lines;
 }
@@ -362,6 +445,192 @@ function categoryWritingMandate(briefKind, period) {
     general: `House cross-asset note. ${depth} Tie leadership, liquidity, and scheduled risk across sleeves without drifting into a single-asset monologue.`,
   };
   return map[k] || map.general;
+}
+
+/** Full Twelve Data quote for brief intelligence (volume etc.) — no fabrication. */
+async function fetchTwelveDataQuoteExtended(symbol) {
+  const apiKey = process.env.TWELVE_DATA_API_KEY;
+  if (!apiKey) return null;
+  const sym = String(symbol || '').trim();
+  if (!sym) return null;
+  try {
+    const url = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(sym)}&apikey=${encodeURIComponent(apiKey)}`;
+    const res = await fetchWithTimeout(url, {}, 7000);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || data.code || data.close == null) return null;
+    const close = parseFloat(data.close);
+    const prev = parseFloat(data.previous_close);
+    if (Number.isNaN(close) || close <= 0) return null;
+    const d = Number.isNaN(prev) ? 0 : close - prev;
+    const dp = Number.isNaN(prev) || prev === 0 ? 0 : (d / prev) * 100;
+    const volume = data.volume != null ? parseFloat(data.volume) : null;
+    const averageVolume = data.average_volume != null ? parseFloat(data.average_volume) : null;
+    return {
+      c: close,
+      pc: prev,
+      d,
+      dp,
+      volume: Number.isFinite(volume) ? volume : null,
+      averageVolume: Number.isFinite(averageVolume) ? averageVolume : null,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+function calendarRelevantToSymbol(symU, cal, k) {
+  return (cal || []).some((e) => {
+    const ev = String(e.event || '').toLowerCase();
+    const hint = INSTRUMENT_HEADLINE_HINTS[symU];
+    if (hint && hint.test(ev)) return true;
+    if (k === 'forex' && /USD/.test(symU) && /\b(usd|fed|dollar|nfp|cpi)\b/i.test(ev)) return true;
+    if ((k === 'stocks' || k === 'indices') && /US500|NAS100|US30/.test(symU) && /\b(s&p|nasdaq|dow|index|fed|cpi)\b/i.test(ev)) {
+      return true;
+    }
+    return false;
+  });
+}
+
+function evidenceCountForSymbol(symU, quote, filteredHeadlines, cal, k, breakdown) {
+  let n = 0;
+  if (quote && typeof quote.dp === 'number' && Number.isFinite(quote.dp)) n += 1;
+  if (headlineHitsForSymbol(symU, filteredHeadlines) > 0) n += 1;
+  if (calendarRelevantToSymbol(symU, cal, k)) n += 1;
+  if (breakdown && (breakdown.weeklyMoveScore > 0 || (breakdown.weekApproxPct != null && Number.isFinite(breakdown.weekApproxPct)))) {
+    n += 1;
+  }
+  return n;
+}
+
+function volumeSpikeLabel(volume, avg) {
+  if (volume == null || avg == null || !Number.isFinite(volume) || !Number.isFinite(avg) || avg <= 0) return null;
+  const r = volume / avg;
+  if (r >= 1.45) return `heavy_vs_avg_${r.toFixed(2)}x`;
+  if (r <= 0.55) return 'light_vs_avg';
+  return 'near_avg_volume';
+}
+
+function classifyVolatilityShift(dp) {
+  if (dp == null || !Number.isFinite(dp)) return null;
+  const a = Math.abs(dp);
+  if (a >= 1.8) return 'expanded_move';
+  if (a <= 0.06) return 'compressed_session';
+  return 'normal_band';
+}
+
+function inferTechnicalState(dp) {
+  if (dp == null || !Number.isFinite(dp)) return 'insufficient_price_data';
+  if (dp > 0.4) return 'session_bid';
+  if (dp < -0.4) return 'session_offer';
+  if (Math.abs(dp) < 0.09) return 'session_compression';
+  return 'session_drift';
+}
+
+function pickMacroLinkForSymbol(symU, market, briefKind) {
+  const k = normalizeBriefKind(briefKind);
+  const drivers = (market?.keyDrivers || []).map(packDriverLine).join(' ').toLowerCase();
+  const parts = [];
+  if (/\b(yield|treasury|rate|bond)\b/i.test(drivers) && (k === 'bonds' || k === 'stocks' || k === 'indices')) {
+    parts.push((market.keyDrivers || []).find((d) => /yield|treasury|bond|rate/i.test(packDriverLine(d))));
+  }
+  if (/\b(dollar|usd|eur|fx)\b/i.test(drivers) && (k === 'forex' || k === 'commodities' || k === 'crypto')) {
+    parts.push((market.keyDrivers || []).find((d) => /dollar|usd|eur/i.test(packDriverLine(d))));
+  }
+  if (/\b(oil|crude)\b/i.test(drivers) && (k === 'commodities' || k === 'futures')) {
+    parts.push((market.keyDrivers || []).find((d) => /oil|crude/i.test(packDriverLine(d))));
+  }
+  const packed = parts.filter(Boolean).map(packDriverLine).filter(Boolean);
+  return packed[0] || null;
+}
+
+function nextCalendarLineForSymbol(symU, cal, k) {
+  const rows = Array.isArray(cal) ? cal : [];
+  for (const e of rows) {
+    const ev = `${e.event || ''} ${e.currency || ''}`;
+    if (calendarRelevantToSymbol(symU, [e], k)) {
+      return `${e.event || ''} (${e.currency || '—'})`.trim();
+    }
+    if (k === 'forex' && /USD|EUR|GBP|JPY|AUD|CAD|CHF|NZD/.test(symU) && /\b(cpi|gdp|employment|pmi|rate|retail)\b/i.test(ev)) {
+      return `${e.event || ''} (${e.currency || '—'})`.trim();
+    }
+  }
+  return rows[0] ? `${rows[0].event || ''} (${rows[0].currency || '—'})`.trim() : null;
+}
+
+/**
+ * Per-instrument structured intelligence — only fields grounded in quoteCache / headlines / calendar / market.
+ */
+function buildInstrumentIntelligence({
+  symbols,
+  period,
+  quoteCache,
+  headlines,
+  calendarRows,
+  market,
+  briefKind,
+  scoreRows,
+}) {
+  const k = normalizeBriefKind(briefKind);
+  const filteredHeadlines = filterHeadlinesForBriefKind(headlines, k);
+  const cal = filterCalendarForBriefKind(calendarRows, k);
+  const benchDp = quoteCache?.get?.('US500')?.dp;
+  const list = Array.isArray(symbols) ? symbols : [];
+  return list.map((sym) => {
+    const symU = String(sym).toUpperCase();
+    const q = quoteCache?.get ? quoteCache.get(symU) : null;
+    const sh = headlinesForSymbol(symU, filteredHeadlines);
+    const sr = (scoreRows || []).find((r) => r.symbol === symU);
+    const dp = q?.dp != null && Number.isFinite(q.dp) ? Math.round(q.dp * 100) / 100 : null;
+    const intel = {
+      instrument: symU,
+      dailyChangePct: dp,
+      last: q?.c != null && Number.isFinite(q.c) ? Math.round(q.c * 1e6) / 1e6 : null,
+      volumeSpike: volumeSpikeLabel(q?.volume, q?.averageVolume),
+      volatilityShift: classifyVolatilityShift(q?.dp),
+      technicalState: inferTechnicalState(q?.dp),
+      catalyst: sh[0] || null,
+      catalystSecondary: sh[1] || null,
+      macroLink: pickMacroLinkForSymbol(symU, market, k),
+      relativeStrengthVsUS500:
+        (k === 'stocks' || k === 'etfs') && dp != null && benchDp != null && Number.isFinite(benchDp)
+          ? Math.round((dp - benchDp) * 100) / 100
+          : null,
+      nextCatalyst: nextCalendarLineForSymbol(symU, cal, k),
+      selectionScore: sr?.score != null ? sr.score : null,
+      scoreBreakdown: sr?.breakdown || null,
+      period: period === 'weekly' ? 'weekly' : 'daily',
+    };
+    intel.dataQuality =
+      [intel.dailyChangePct != null, !!intel.catalyst, !!intel.macroLink, !!intel.nextCatalyst].filter(Boolean).length;
+    return intel;
+  });
+}
+
+function noteAnchoredToIntelligence(note, intel) {
+  const t = String(note || '');
+  if (t.length < 40) return false;
+  if (intel.dailyChangePct != null) {
+    const s1 = String(intel.dailyChangePct);
+    const s2 = s1.replace('-', '−');
+    if (t.includes(s1) || t.includes(s2)) return true;
+    const rounded = intel.dailyChangePct.toFixed(2);
+    if (t.includes(rounded)) return true;
+  }
+  if (intel.catalyst && intel.catalyst.length > 8) {
+    const frag = intel.catalyst.slice(0, 14).toLowerCase();
+    if (frag.length > 6 && t.toLowerCase().includes(frag)) return true;
+  }
+  if (intel.macroLink && intel.macroLink.length > 12) {
+    const mf = intel.macroLink.slice(0, 18).toLowerCase();
+    if (t.toLowerCase().includes(mf)) return true;
+  }
+  if (intel.nextCatalyst && intel.nextCatalyst.length > 10) {
+    const nf = intel.nextCatalyst.slice(0, 16).toLowerCase();
+    if (t.toLowerCase().includes(nf)) return true;
+  }
+  if (intel.relativeStrengthVsUS500 != null && t.includes(String(intel.relativeStrengthVsUS500))) return true;
+  return false;
 }
 
 async function fetchWeeklyApproxPctChange(symbol) {
@@ -474,11 +743,29 @@ async function scoreAndSelectTopInstruments({
 
   const selected = [];
   const seen = new Set();
+
+  const qualifiesEvidence = (row) => {
+    const symU = row.symbol;
+    const quote = quoteCache?.get ? quoteCache.get(symU) : null;
+    const ev = evidenceCountForSymbol(symU, quote, filteredHeadlines, cal, k, row.breakdown);
+    const strongMove = row.score >= 12;
+    return ev >= 2 || strongMove;
+  };
+
   for (const row of pool) {
     if (selected.length >= 5) break;
     if (seen.has(row.symbol)) continue;
+    if (!qualifiesEvidence(row)) continue;
     seen.add(row.symbol);
     selected.push(row);
+  }
+  if (selected.length < 5) {
+    for (const row of pool) {
+      if (selected.length >= 5) break;
+      if (seen.has(row.symbol)) continue;
+      seen.add(row.symbol);
+      selected.push(row);
+    }
   }
 
   if (selected.length < 5) {
@@ -532,6 +819,9 @@ module.exports = {
   INSTRUMENT_UNIVERSE_BY_KIND,
   BANNED_PHRASES,
   BANNED_PHRASES_RE,
+  GENERIC_BOILERPLATE_FRAGMENTS,
+  GENERIC_BOILERPLATE_RE,
+  CATEGORY_INTELLIGENCE_DIRECTIVES,
   INSTRUMENT_HEADLINE_HINTS,
   KIND_HEADLINE_KEYWORDS,
   normalizeBriefKind,
@@ -546,8 +836,12 @@ module.exports = {
   filterCalendarForBriefKind,
   detectCrossAssetContamination,
   buildMacroSummaryLines,
+  buildDeskContextLines,
   categoryWritingMandate,
   scoreAndSelectTopInstruments,
   buildQuoteCacheForSymbols,
+  fetchTwelveDataQuoteExtended,
+  buildInstrumentIntelligence,
+  noteAnchoredToIntelligence,
   packDriverLine,
 };

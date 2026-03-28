@@ -7,7 +7,16 @@ const { enrichTraderDeckPayload } = require('../openaiTraderInsights');
 const briefUniverse = require('./briefInstrumentUniverse');
 
 const SOURCE_MARKER_RE = /(https?:\/\/|www\.|source\s*:|sources\s*:|according to|reuters|bloomberg|fmp|finnhub|forex factory|trading economics)/i;
-const { BRIEF_KIND_ORDER, BANNED_PHRASES, BANNED_PHRASES_RE } = briefUniverse;
+const {
+  BRIEF_KIND_ORDER,
+  BANNED_PHRASES,
+  BANNED_PHRASES_RE,
+  GENERIC_BOILERPLATE_RE,
+  CATEGORY_INTELLIGENCE_DIRECTIVES,
+  buildInstrumentIntelligence,
+  noteAnchoredToIntelligence,
+  fetchTwelveDataQuoteExtended,
+} = briefUniverse;
 const BRIEF_KIND_LABELS = {
   general: 'General Market Brief',
   stocks: 'Stocks Brief',
@@ -26,7 +35,7 @@ const CATEGORY_FRAMEWORKS = {
     indices: ['Index Regime Snapshot', 'Breadth and Dispersion', 'Macro Trigger Ladder', 'Intraday Playbook', 'Index Risk Controls'],
     futures: ['Curve and Carry Context', 'Order-Flow Windows', 'Contract-Specific Setups', 'Execution Checklist', 'Futures Risk Controls'],
     forex: ['Rate Differential Pulse', 'Session Flow Map', 'Top Pair Tactical Plans', 'Event-Driven Triggers', 'FX Risk Controls'],
-    crypto: ['On-Chain and Flow Snapshot', 'Perp Basis and Funding', 'Top Coin Trade Scenarios', 'Volatility Regime Plan', 'Crypto Risk Controls'],
+    crypto: ['On-Chain and Flow Snapshot', 'Perp Basis and Funding', 'Top Coins — Tape, Liquidity & Drivers', 'Volatility Regime Plan', 'Crypto Risk Controls'],
     commodities: ['Physical and Macro Drivers', 'Top Commodity Setups', 'Inventory and Flow Signals', 'Execution Triggers', 'Commodities Risk Controls'],
     bonds: ['Yield Curve Diagnostics', 'Duration and Convexity Bias', 'Top Bond Trade Maps', 'Auction/Data Sensitivity', 'Rates Risk Controls'],
     etfs: ['ETF Flow and Positioning', 'Top ETF Tactical Setups', 'Underlying Breadth Confirmation', 'Execution Plan', 'ETF Risk Controls'],
@@ -36,7 +45,7 @@ const CATEGORY_FRAMEWORKS = {
     stocks: ['Weekly Equity Regime', 'Earnings and Guidance Matrix', 'Sector Leadership Outlook', 'Weekly Stock Playbook', 'Equity Risk Calendar'],
     indices: ['Weekly Index Structure', 'Global Correlation Matrix', 'Policy and Data Path', 'Weekly Index Playbook', 'Index Portfolio Hedges'],
     futures: ['Weekly Futures Macro Drivers', 'Curve Structure Outlook', 'Contract Rotation Plan', 'Weekly Execution Framework', 'Futures Risk Grid'],
-    forex: ['Weekly FX Macro Hierarchy', 'Central-Bank Path Matrix', 'Pair-Level Scenario Plans', 'Weekly FX Execution Framework', 'FX Risk Grid'],
+    forex: ['Weekly FX Macro Hierarchy', 'Central-Bank Path Matrix', 'Pair-Level Themes & Event Risk', 'Weekly FX Execution Framework', 'FX Risk Grid'],
     crypto: ['Weekly Crypto Liquidity Regime', 'Narrative and Rotation Scorecard', 'Coin-Level Tape & Drivers', 'Weekly Crypto Playbook', 'Crypto Drawdown Controls'],
     commodities: ['Weekly Commodity Regime', 'Supply/Demand Inflection Map', 'Cross-Commodity Relative Value', 'Weekly Commodity Playbook', 'Commodities Risk Grid'],
     bonds: ['Weekly Rates and Curve Outlook', 'Policy Path Sensitivity', 'Tenor-Level Trade Matrix', 'Weekly Bond Playbook', 'Rates Hedging Map'],
@@ -68,7 +77,7 @@ async function fetchLiveQuotesForSymbols(symbols) {
   const rows = await Promise.all(
     syms.map(async (symbol) => {
       try {
-        const q = await getTwelveDataQuote(symbol);
+        const q = (await fetchTwelveDataQuoteExtended(symbol)) || (await getTwelveDataQuote(symbol));
         if (!q || q.c == null) return null;
         return {
           symbol: String(symbol).toUpperCase(),
@@ -356,6 +365,7 @@ function buildFactPack({
   topInstruments = [],
   liveQuotes = [],
   instrumentScoreRows = [],
+  quoteCache = null,
 }) {
   const normalizedKind = normalizeBriefKind(briefKind);
   const selectedTop = Array.isArray(topInstruments) && topInstruments.length > 0
@@ -372,7 +382,20 @@ function buildFactPack({
     forecast: normalizeCalendarValue(e.forecast),
     previous: normalizeCalendarValue(e.previous),
   }));
-  const macroSummary = buildMacroSummaryLines(market, normalizedKind);
+  const macroSummary = buildMacroSummaryLines(market, normalizedKind, period);
+  const instrumentIntelligence =
+    quoteCache && typeof quoteCache.get === 'function'
+      ? buildInstrumentIntelligence({
+          symbols: selectedTop,
+          period,
+          quoteCache,
+          headlines: news,
+          calendarRows: econ,
+          market,
+          briefKind: normalizedKind,
+          scoreRows: instrumentScoreRows,
+        })
+      : [];
   const categoryRiskMap = (market.riskRadar || [])
     .slice(0, 8)
     .map((r) => (typeof r === 'string' ? r : r.title || r.event || ''))
@@ -400,6 +423,7 @@ function buildFactPack({
     macroSummary,
     periodMandate,
     categoryWritingMandate: categoryWritingMandate(normalizedKind, period),
+    categoryIntelligenceDirective: CATEGORY_INTELLIGENCE_DIRECTIVES[normalizedKind] || CATEGORY_INTELLIGENCE_DIRECTIVES.general,
     instrumentScores: Array.isArray(instrumentScoreRows)
       ? instrumentScoreRows.map((r) => ({
           instrument: r.symbol,
@@ -407,6 +431,7 @@ function buildFactPack({
           breakdown: r.breakdown || {},
         }))
       : [],
+    instrumentIntelligence,
     headlines: filteredNews.slice(0, 12),
     symbolHeadlines: buildSymbolHeadlineMap(selectedTop, filteredNews),
     liveQuotes: Array.isArray(liveQuotes) ? liveQuotes.slice(0, 5) : [],
@@ -416,7 +441,7 @@ function buildFactPack({
 }
 
 /** Lazy model templates users see when the model copies one scaffold across all names. */
-const GENERIC_INSTRUMENT_SCAFFOLD_RE = /scenario\s*\d+\s+defines|catalyst trigger|directional invalidation|position-?sizing discipline|daily scenario\s*\d+\s+should define|base and surprise pathways|volatility-?adjusted risk/i;
+const GENERIC_INSTRUMENT_SCAFFOLD_RE = /scenario\s*\d+\s+defines|catalyst trigger|directional invalidation|position-?sizing discipline|daily scenario\s*\d+\s+should define|base and surprise pathways|volatility-?adjusted risk|priority session triggers|trend vs mean-reversion bias|volatility and gap risk/i;
 
 function maxPairwiseInstrumentSimilarity(notes) {
   const list = Array.isArray(notes) ? notes.map((n) => String(n?.note || '').trim()).filter(Boolean) : [];
@@ -442,6 +467,19 @@ function repeatedOpeningPenalty(text) {
   return max;
 }
 
+function duplicateSentenceRatio(text) {
+  const sentences = String(text || '')
+    .split(/[.!?]+\s+/)
+    .map((s) => s.trim().toLowerCase().replace(/\s+/g, ' '))
+    .filter((s) => s.length > 28);
+  if (sentences.length < 4) return 0;
+  const counts = new Map();
+  for (const s of sentences) counts.set(s, (counts.get(s) || 0) + 1);
+  let dups = 0;
+  for (const c of counts.values()) if (c > 1) dups += c - 1;
+  return dups / sentences.length;
+}
+
 function validateBriefBeforeSave({ body, generated, factPack, priorBodies = [] }) {
   const reasons = [];
   const kind = factPack.briefKind;
@@ -452,24 +490,37 @@ function validateBriefBeforeSave({ body, generated, factPack, priorBodies = [] }
   if (!body || String(body).trim().length < minBody) reasons.push('body_too_short');
 
   if (BANNED_PHRASES_RE.test(body)) reasons.push('banned_phrase_in_body');
+  if (GENERIC_BOILERPLATE_RE.test(body)) reasons.push('generic_boilerplate_body');
 
   const contam = detectCrossAssetContamination(body, kind);
   if (contam.contaminated) reasons.push(`cross_asset:${contam.hits.join(',')}`);
 
   const notes = Array.isArray(generated?.instrumentNotes) ? generated.instrumentNotes : [];
   const top = (factPack.topInstruments || []).map((s) => String(s).toUpperCase());
+  const intelList = Array.isArray(factPack.instrumentIntelligence) ? factPack.instrumentIntelligence : [];
   for (const sym of top) {
     const row = notes.find((n) => String(n?.instrument || '').toUpperCase() === sym);
     const t = String(row?.note || '').trim();
-    if (t.length < 55) reasons.push(`thin_note:${sym}`);
+    if (t.length < 72) reasons.push(`thin_note:${sym}`);
     if (BANNED_PHRASES_RE.test(t)) reasons.push(`banned_phrase_note:${sym}`);
+    if (GENERIC_BOILERPLATE_RE.test(t)) reasons.push(`generic_note:${sym}`);
+    const intel = intelList.find((i) => String(i?.instrument || '').toUpperCase() === sym);
+    if (intel && Number(intel.dataQuality || 0) >= 1 && !noteAnchoredToIntelligence(t, intel)) {
+      reasons.push(`note_not_data_anchored:${sym}`);
+    }
   }
 
-  if (notes.length >= 2 && maxPairwiseInstrumentSimilarity(notes) >= 0.52) {
+  if (notes.length >= 2 && maxPairwiseInstrumentSimilarity(notes) >= 0.48) {
     reasons.push('instrument_notes_too_similar');
   }
 
   if (repeatedOpeningPenalty(body) >= 3) reasons.push('repeated_openings');
+  if (duplicateSentenceRatio(body) > 0.12) reasons.push('duplicate_sentences');
+
+  const radarJoin = Array.isArray(generated?.riskRadar) ? generated.riskRadar.join('\n') : '';
+  const playbookJoin = Array.isArray(generated?.playbook) ? generated.playbook.join('\n') : '';
+  if (GENERIC_BOILERPLATE_RE.test(radarJoin)) reasons.push('generic_risk_radar');
+  if (GENERIC_BOILERPLATE_RE.test(playbookJoin)) reasons.push('generic_playbook');
 
   for (const prev of priorBodies) {
     if (prev && similarityScore(body, prev) >= 0.6) reasons.push('similar_to_prior_category');
@@ -511,7 +562,7 @@ function findInstrumentOutlookSectionIndex(sections) {
   const preferIdx = list.findIndex((s) => {
     const h = String(s?.heading || '').toLowerCase();
     return (h.includes('instrument') && h.includes('outlook'))
-      || /catalyst|setups|scenarios|tactical plans|trade maps|commodity setups|pair tactical|coin|contract-specific|etf tactical/i.test(h);
+      || /catalyst|setups|tape.*liquidity|top coins|tactical plans|trade maps|commodity setups|pair tactical|coin|contract-specific|etf tactical/i.test(h);
   });
   if (preferIdx >= 0) return preferIdx;
   return list.length > 1 ? 1 : 0;
@@ -563,9 +614,11 @@ async function generateWithOpenAi(factPack, template, options = {}) {
     period: factPack.period,
     periodMandate: factPack.periodMandate,
     categoryWritingMandate: factPack.categoryWritingMandate,
+    categoryIntelligenceDirective: factPack.categoryIntelligenceDirective || '',
     macroSummaryLines: factPack.macroSummary || [],
     topInstruments: factPack.topInstruments || [],
     instrumentScores: factPack.instrumentScores || [],
+    instrumentIntelligence: factPack.instrumentIntelligence || [],
     categoryEventMap: factPack.categoryEventMap || [],
     categoryRiskMap: factPack.categoryRiskMap || [],
     liveQuotes: factPack.liveQuotes || [],
@@ -581,15 +634,15 @@ async function generateWithOpenAi(factPack, template, options = {}) {
       strictFactsOnly: true,
       noSourcesEver: true,
       noMarkdownBullets: false,
-      tone: 'professional market desk — concise, specific, no theatre',
+      tone: 'institutional desk: sharp, direct, analytical — zero filler, zero checklist tone',
       minimumDepth: 'high-detail longform',
       mustCoverTopInstruments: factPack.topInstruments || [],
       uniquenessMode: 'absolute-distinct-per-category',
       categoryLogicRule: CATEGORY_LOGIC_RULES[factPack.briefKind] || CATEGORY_LOGIC_RULES.general,
-      mandate: `You are writing ONLY the "${catLabel}" brief. Use ONLY instruments in structuredWriterInput.topInstruments for any named product — do not substitute tickers from other asset classes. ${factPack.briefKind === 'general' ? 'Cross-asset house note.' : 'Single-asset-class desk note.'} Other briefs the same day cover other sleeves — do not recycle their paragraphs or risk radar wording.`,
-      dataDiscipline: 'Use instrumentScores and liveQuotes as anchors. If a field is empty, omit speculation; reason from drivers, calendar, and headlines only.',
-      instrumentNoteContent: 'Each instrumentNotes[].note must state why it ranked today/this week for THIS category, what is driving it per fact pack, what traders should watch next, and how it differs from others in the top 5 — without repeating the same sentence frame.',
-      riskAndPlaybook: 'riskRadar and playbook must be category-specific (not generic "watch yields" unless bonds brief).',
+      mandate: `You are writing ONLY the "${catLabel}" brief. Follow structuredWriterInput.categoryIntelligenceDirective exactly. Use ONLY instruments in instrumentIntelligence[] — each note MUST explicitly use that row's fields (dailyChangePct, catalyst, macroLink, technicalState, nextCatalyst, relativeStrengthVsUS500, volumeSpike when non-null). If a field is null, do not invent a value; weave other non-null fields. No parallel sentence templates across the five notes.`,
+      dataDiscipline: 'instrumentIntelligence is the source of truth for per-name reasoning. Never invent earnings, flows, or levels not implied by the pack.',
+      instrumentNoteContent: 'Per instrument answer: (1) why top 5 now (2) what moved/setup (3) condition: tie to technicalState + dailyChangePct (4) why more important than peers in this list (5) key risk/catalyst next — use nextCatalyst and headlines. Each note different structure and opening.',
+      riskAndPlaybook: 'riskRadar[]: concrete transmission mechanisms for THIS category (e.g. bonds: curve/auction; equities: rates beta to growth; FX: CB path + spread). playbook[]: specific positioning implications — NEVER generic "watch yields" / "reduce risk" / "avoid high-impact" without naming the channel and the category sleeve.',
       bannedPhrases: factPack.bannedPhrases || BANNED_PHRASES,
       antiScaffold: 'Never use numbered scenarios, "base and surprise pathways", "catalyst trigger" templates, or parallel invalidation blurbs across names.',
       uniquenessRetryNote: uniquenessRetry || validationFix
@@ -616,12 +669,12 @@ async function generateWithOpenAi(factPack, template, options = {}) {
           {
             role: 'system',
             content:
-              'You are a senior market strategist. The user message is JSON: structuredWriterInput already locks instruments and scores — you only write prose from that structure. '
+              'You are a senior institutional strategist. The JSON includes instrumentIntelligence[]: each object is pre-computed desk data. '
               + 'Return valid JSON only: {"title":"string","sections":[{"heading":"string","body":"string"}],"instrumentNotes":[{"instrument":"string","note":"string"}],"riskRadar":["string"],"playbook":["string"]}. '
               + 'Section headings must match structuredWriterInput.sectionHeadings in order. '
-              + 'Every top instrument must appear in instrumentNotes with substantive, non-templated notes. '
-              + 'Do not invent prices, data prints, or events absent from the pack. No sources, URLs, or citations. '
-              + 'Obey requirements.bannedPhrases literally (no substring matches).',
+              + 'instrumentNotes MUST mirror instrumentIntelligence rows 1:1 (same instruments, same order) and embed the numeric dailyChangePct when present. '
+              + 'Forbidden: numbered scenarios, "catalyst trigger", "base and surprise", checklist risk lines, identical openings across notes. '
+              + 'No sources, URLs, or citations. Obey requirements.bannedPhrases (no substring matches).',
           },
           { role: 'user', content: JSON.stringify(prompt) },
         ],
@@ -661,7 +714,9 @@ async function generateInstrumentLayerOpenAI(factPack, options = {}) {
     period: factPack.period,
     periodMandate: factPack.periodMandate,
     categoryWritingMandate: factPack.categoryWritingMandate,
+    categoryIntelligenceDirective: factPack.categoryIntelligenceDirective,
     topInstruments: top,
+    instrumentIntelligence: (factPack.instrumentIntelligence || []).filter((r) => top.includes(String(r?.instrument || '').toUpperCase())),
     instrumentScores: (factPack.instrumentScores || []).slice(0, 5),
     macroSummary: (factPack.macroSummary || []).slice(0, 6),
     marketRegime: factPack.marketRegime,
@@ -832,11 +887,27 @@ function fallbackGenerated(factPack, template, now, timeZone) {
       return `${label} setups: work ${top.slice(0, 3).join(', ') || 'lead symbols'} with session structure (range, opening drive, key data) and size scaled to event risk${ql ? `; ${ql}` : ''}. ${period === 'weekly' ? 'Swing horizon: hold only if weekly trend and macro narrative align; reduce into known event clusters next week.' : 'Intraday: add only after the tape confirms direction post-headline risk.'}`;
     }
     if (h.includes('risk')) {
-      return `${label} risk radar: ${risk.length ? risk.join(' · ') : 'Event, gap, and liquidity risk'} — size down into prints; respect opens and gaps.`;
+      const specific = risk.length
+        ? risk.join(' · ')
+        : `${drivers.slice(0, 2).join(' · ') || pulseLabel + ' tape'}`;
+      return `${label} risk map: ${specific} — tie to scheduled prints in calendar slice and ${period === 'weekly' ? 'week-ahead' : 'session'} liquidity, not generic warnings.`;
     }
     if (h.includes('playbook') || h.includes('execution') || h.includes('controls') || h.includes('calendar') || h.includes('event map') || h.includes('matrix') || h.includes('checklist') || h.includes('framework') || h.includes('grid')) {
-      const tail = kind === 'crypto' ? 'Watch funding, basis, and BTC/ETH beta.' : kind === 'forex' ? 'Watch rate spreads and USD path.' : kind === 'commodities' ? 'Watch USD and inventory surprises.' : kind === 'bonds' ? 'Watch curve pivots and auction tails.' : kind === 'etfs' ? 'Confirm with underlying breadth and flows.' : kind === 'futures' ? 'Mind roll windows and curve shape.' : 'Confirm with index leadership and breadth.';
-      return `${label} ${period === 'weekly' ? 'weekly' : 'session'} playbook: tier risk; ${tail} ${ql ? `Live: ${ql}.` : ''}`;
+      const tail =
+        kind === 'crypto'
+          ? 'BTC/ETH lead vs alts from relative % in live quotes; regulatory headlines from feed.'
+          : kind === 'forex'
+            ? 'G10 skew from USD driver + listed calendar events for this week/session.'
+            : kind === 'commodities'
+              ? 'Oil/metals split vs USD driver lines; inventory headlines when in feed.'
+              : kind === 'bonds'
+                ? 'Curve driver from yield context + auction/data rows on calendar.'
+                : kind === 'etfs'
+                  ? 'Factor vehicles vs cash index moves in quotes; headline flow if present.'
+                  : kind === 'futures'
+                    ? 'Contract beta to macro drivers above; roll only if contract month is in play.'
+                    : 'Index/breadth read from cross-asset stock signal + rates.';
+      return `${label} ${period === 'weekly' ? 'weekly' : 'session'} execution frame: ${tail} ${ql ? `Spot: ${ql}.` : ''}`;
     }
     if (h.includes('outlook') || h.includes('instrument')) {
       const sh = factPack.symbolHeadlines || {};
@@ -866,10 +937,15 @@ function fallbackGenerated(factPack, template, now, timeZone) {
       : '';
     const kindHint = kind === 'forex' ? 'Rate spreads and event vol.' : kind === 'crypto' ? 'Funding and liquidity.' : kind === 'commodities' ? 'USD and inventories.' : kind === 'bonds' ? 'Curve and auctions.' : kind === 'etfs' ? 'Flows vs NAV.' : 'Cross-asset confirmation.';
     const symNews = (shMap[symU] || []).slice(0, 2).join(' · ');
-    const angle = idx % 3 === 0 ? 'Priority session triggers' : idx % 3 === 1 ? 'Volatility and gap risk' : 'Trend vs mean-reversion bias';
+    const angles = [
+      'Lead flow vs peers in this basket',
+      'Catalyst density from headlines vs rest of top 5',
+      'Rate/liquidity transmission into this name',
+    ];
+    const angle = angles[idx % angles.length];
     return {
       instrument: sym,
-      note: `${symU} (${label}): ${angle} — ${symNews ? `Watch: ${symNews}. ` : ''}${pulseLabel} backdrop; size vs liquidity into data.${qbit} ${kindHint}`,
+      note: `${symU}: ${angle}. ${symNews ? `Headline hook: ${symNews}. ` : ''}Desk pulse ${pulseLabel}; ${kindHint}.${qbit}`,
     };
   });
 
@@ -886,9 +962,9 @@ function fallbackGenerated(factPack, template, now, timeZone) {
     })),
     riskRadar: risk,
     playbook: [
-      `${label} bias: ${regimeLabel} regime, ${pulseLabel} pulse — express only within this category.`,
-      'Cut size into high-impact prints; control gap risk at opens.',
-      'Do not recycle wording from other category briefs in the same run.',
+      `${label}: express view only through instruments in this brief; regime ${regimeLabel}, pulse ${pulseLabel}.`,
+      `${period === 'weekly' ? 'Swing' : 'Intraday'} sizing should reflect calendar density for this sleeve — see event rows above.`,
+      'Keep language disjoint from other category briefs in the same automation run.',
     ],
   };
 }
@@ -1221,7 +1297,10 @@ async function generateAndStoreBrief({
 
     let quoteCache = sharedQuoteCache;
     if (!quoteCache || typeof quoteCache.get !== 'function') {
-      quoteCache = await buildQuoteCacheForSymbols(collectAllAutomationUniverseSymbols(), getTwelveDataQuote);
+      quoteCache = await buildQuoteCacheForSymbols(
+        collectAllAutomationUniverseSymbols(),
+        fetchTwelveDataQuoteExtended
+      );
     }
 
     const selection = await scoreAndSelectTopInstruments({
@@ -1252,6 +1331,7 @@ async function generateAndStoreBrief({
       topInstruments: selectedTop5,
       liveQuotes,
       instrumentScoreRows: selection.scoreRows,
+      quoteCache,
     });
     const existingExcerpts = Array.isArray(generationContext?.existingExcerpts)
       ? generationContext.existingExcerpts
@@ -1397,7 +1477,7 @@ async function generateAndStoreBriefSet({ period, timeZone = 'Europe/London', ru
   ]);
   const sharedQuoteCache = await buildQuoteCacheForSymbols(
     collectAllAutomationUniverseSymbols(),
-    getTwelveDataQuote
+    fetchTwelveDataQuoteExtended
   );
   console.info('[brief-gen] quote cache built', { symbols: sharedQuoteCache.size, period: normalizedPeriod, date });
   const results = [];
@@ -1494,7 +1574,10 @@ async function generatePreviewBrief({
     fetchEconomicCalendar(),
     fetchUnifiedNewsSample(),
   ]);
-  const qc = await buildQuoteCacheForSymbols(collectAllAutomationUniverseSymbols(), getTwelveDataQuote);
+  const qc = await buildQuoteCacheForSymbols(
+    collectAllAutomationUniverseSymbols(),
+    fetchTwelveDataQuoteExtended
+  );
   const sel = await scoreAndSelectTopInstruments({
     briefKind: 'general',
     period: normalizedPeriod,
@@ -1516,6 +1599,7 @@ async function generatePreviewBrief({
     topInstruments: previewTop,
     liveQuotes,
     instrumentScoreRows: sel.scoreRows,
+    quoteCache: qc,
   });
   let generated = await generateWithOpenAi(factPack, template, { existingExcerpts: [], uniquenessRetry: false });
   if (!generated) {
@@ -1589,7 +1673,7 @@ async function prefetchInstrumentResearchForDaily({ timeZone = 'Europe/London', 
   const template = await getTemplate(normalizedPeriod);
   const sharedQuoteCache = await buildQuoteCacheForSymbols(
     collectAllAutomationUniverseSymbols(),
-    getTwelveDataQuote
+    fetchTwelveDataQuoteExtended
   );
   const results = [];
   const kinds = orderedBriefKinds();
@@ -1621,6 +1705,7 @@ async function prefetchInstrumentResearchForDaily({ timeZone = 'Europe/London', 
           topInstruments: selectedTop5,
           liveQuotes,
           instrumentScoreRows: selection.scoreRows,
+          quoteCache: sharedQuoteCache,
         });
         const layer = await generateInstrumentLayerOpenAI(factPack, { mode: 'prefetch' });
         if (layer?.instrumentNotes?.length && layer?.instrumentOutlookBody) {
