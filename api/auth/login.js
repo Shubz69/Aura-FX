@@ -1,6 +1,6 @@
-const bcrypt = require('bcrypt');
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
+const { verifyPasswordWithOptionalRehash } = require('../utils/loginPassword');
 const { normalizeRole, isSuperAdminEmail } = require('../utils/entitlements');
 const { signToken } = require('../utils/auth');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
@@ -38,32 +38,6 @@ const LOGIN_IDENTIFIER_WHERE = `(
   LOWER(TRIM(COALESCE(email, ''))) = ?
   OR LOWER(TRIM(COALESCE(username, ''))) = ?
 )`;
-
-function looksLikeBcryptHash(stored) {
-  const s = String(stored || '');
-  return s.length >= 59 && /^\$2[aby]?\$\d{2}\$/.test(s);
-}
-
-/**
- * Verify password; supports bcrypt and legacy plaintext (rehash to bcrypt on success).
- */
-async function verifyPasswordWithOptionalRehash(plain, stored) {
-  const s = String(stored || '');
-  if (!s) return { ok: false, rehash: null };
-  if (looksLikeBcryptHash(s)) {
-    try {
-      const ok = await bcrypt.compare(plain, s);
-      return { ok, rehash: null };
-    } catch (e) {
-      console.warn('bcrypt.compare failed:', e.message);
-      return { ok: false, rehash: null };
-    }
-  }
-  const ok = plain === s;
-  if (!ok) return { ok: false, rehash: null };
-  const rehash = await bcrypt.hash(plain, 10);
-  return { ok: true, rehash };
-}
 
 async function fetchUserByLoginIdentifierCompat(db, identifierLower) {
   const fields = [...BASE_SELECT_FIELDS, ...OPTIONAL_SELECT_FIELDS];
