@@ -1,6 +1,21 @@
 // Role-based access control system
-// Super Admin email: set REACT_APP_SUPER_ADMIN_EMAIL (must match server SUPER_ADMIN_EMAIL for UI hints).
+// Super Admin emails: set REACT_APP_SUPER_ADMIN_EMAIL (must match server SUPER_ADMIN_EMAIL for UI hints).
+// Multiple: comma- or semicolon-separated, same list as SUPER_ADMIN_EMAIL on the server.
 // Admin: Assigned by Super Admin - Limited admin access
+
+function parseSuperAdminEmailsLowerFromEnv(raw) {
+  if (raw == null || String(raw).trim() === '') return [];
+  return String(raw)
+    .split(/[,;]/)
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/** Lowercased super-admin emails from env (may be empty). */
+export const SUPER_ADMIN_EMAILS_LOWER = parseSuperAdminEmailsLowerFromEnv(process.env.REACT_APP_SUPER_ADMIN_EMAIL);
+
+/** First listed email — backward compat where a single string is expected. */
+export const SUPER_ADMIN_EMAIL = (process.env.REACT_APP_SUPER_ADMIN_EMAIL || '').split(/[,;]/)[0]?.trim() || '';
 
 export const ROLES = {
   FREE: 'free',
@@ -10,8 +25,6 @@ export const ROLES = {
   ADMIN: 'admin',
   SUPER_ADMIN: 'super_admin'
 };
-
-export const SUPER_ADMIN_EMAIL = (process.env.REACT_APP_SUPER_ADMIN_EMAIL || '').trim();
 
 // Admin capabilities - what admins can do
 export const ADMIN_CAPABILITIES = {
@@ -130,20 +143,27 @@ export const isAdmin = (user = null) => {
   return role === ROLES.ADMIN || role === ROLES.SUPER_ADMIN;
 };
 
+/** True if this email is in REACT_APP_SUPER_ADMIN_EMAIL list (case-insensitive). */
+export function isConfiguredSuperAdminEmail(email) {
+  const e = (email == null ? '' : String(email)).trim().toLowerCase();
+  if (!e) return false;
+  return SUPER_ADMIN_EMAILS_LOWER.includes(e);
+}
+
 // Check if user is super admin
 export const isSuperAdmin = (user = null) => {
-  const superEmail = SUPER_ADMIN_EMAIL.trim().toLowerCase();
+  const list = SUPER_ADMIN_EMAILS_LOWER;
   if (!user) {
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
     const email = (storedUser.email || '').toString().toLowerCase();
     const role = normalizeRoleKey(storedUser.role);
     if (role === ROLES.SUPER_ADMIN) return true;
-    return Boolean(superEmail && email === superEmail);
+    return list.length > 0 && list.includes(email);
   }
   const email = (user.email || '').toString().toLowerCase();
   const role = normalizeRoleKey(user.role);
   if (role === ROLES.SUPER_ADMIN) return true;
-  return Boolean(superEmail && email === superEmail);
+  return list.length > 0 && list.includes(email);
 };
 
 // Check if user has premium subscription (premium or a7fx)

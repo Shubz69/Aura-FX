@@ -8,7 +8,7 @@ import {
   DEFAULT_ADMIN_CAPABILITIES,
   getCapabilityName,
   getCapabilityCategory,
-  SUPER_ADMIN_EMAIL,
+  isConfiguredSuperAdminEmail,
   hasCapability
 } from '../utils/roles';
 import Api from '../services/Api';
@@ -205,7 +205,7 @@ const Settings = () => {
     }
 
     // Prevent changing super admin role
-    if (selectedUser.email === SUPER_ADMIN_EMAIL && selectedRole !== 'super_admin') {
+    if (isConfiguredSuperAdminEmail(selectedUser.email) && selectedRole !== 'super_admin') {
       toast.error('Cannot change Super Admin role');
       return;
     }
@@ -289,7 +289,7 @@ const Settings = () => {
       toast.error('Only Super Admin can remove admin privileges');
       return;
     }
-    if (adminUser.email === SUPER_ADMIN_EMAIL) {
+    if (isConfiguredSuperAdminEmail(adminUser.email)) {
       toast.warning('Cannot delete Super Admin account!', {
         position: "bottom-right",
         autoClose: 3000,
@@ -524,7 +524,7 @@ const Settings = () => {
                         )}
                       </div>
                     </div>
-                    {u.email === SUPER_ADMIN_EMAIL && (
+                    {isConfiguredSuperAdminEmail(u.email) && (
                       <span className="super-admin-tag">
                         <FaCrown /> Super Admin
                       </span>
@@ -571,7 +571,7 @@ const Settings = () => {
                   <select 
                     value={selectedRole} 
                     onChange={(e) => handleRoleChange(e.target.value)}
-                    disabled={selectedUser.email === SUPER_ADMIN_EMAIL}
+                    disabled={isConfiguredSuperAdminEmail(selectedUser.email)}
                   >
                     <option value="free">Free</option>
                     <option value="premium">Premium (AURA TERMINAL)</option>
@@ -579,7 +579,7 @@ const Settings = () => {
                     <option value="admin">Admin</option>
                     {superAdmin && <option value="super_admin">Super Admin</option>}
                   </select>
-                  {selectedUser.email === SUPER_ADMIN_EMAIL && (
+                  {isConfiguredSuperAdminEmail(selectedUser.email) && (
                     <p className="help-text">Super Admin role cannot be changed</p>
                   )}
                   {!superAdmin && (selectedRole === 'admin' || selectedRole === 'super_admin') && (
@@ -604,7 +604,7 @@ const Settings = () => {
                                   type="checkbox"
                                   checked={selectedCapabilities.includes(cap)}
                                   onChange={() => toggleCapability(cap)}
-                                  disabled={selectedUser.email === SUPER_ADMIN_EMAIL}
+                                  disabled={isConfiguredSuperAdminEmail(selectedUser.email)}
                                 />
                                 <span>{getCapabilityName(cap)}</span>
                               </label>
@@ -646,7 +646,7 @@ const Settings = () => {
                     <div className="admin-info">
                       <div className="admin-email">
                         {adminUser.email}
-                        {adminUser.email === SUPER_ADMIN_EMAIL && (
+                        {isConfiguredSuperAdminEmail(adminUser.email) && (
                           <span className="super-admin-tag">
                             <FaCrown /> Super Admin
                           </span>
@@ -661,7 +661,7 @@ const Settings = () => {
                         </div>
                       )}
                     </div>
-                    {adminUser.email !== SUPER_ADMIN_EMAIL && (
+                    {!isConfiguredSuperAdminEmail(adminUser.email) && (
                       <button 
                         onClick={() => handleDeleteAdmin(adminUser)}
                         className="btn-danger"

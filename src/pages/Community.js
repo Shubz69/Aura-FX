@@ -4,7 +4,7 @@ import { useWebSocket } from '../utils/useWebSocket';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Api from '../services/Api';
 import CosmicBackground from '../components/CosmicBackground';
-import { SUPER_ADMIN_EMAIL, isAdmin, isSuperAdmin, getClientAccessTier } from '../utils/roles';
+import { isConfiguredSuperAdminEmail, isAdmin, isSuperAdmin, getClientAccessTier } from '../utils/roles';
 import { getJournalTodayForUser } from '../utils/journalDate';
 import axios from 'axios';
 import {
@@ -717,7 +717,7 @@ const [journalLoading, setJournalLoading] = useState(false);
             const u = JSON.parse(localStorage.getItem('user') || '{}');
             const r = (u.role || '').toLowerCase();
             const em = (u.email || '').toLowerCase();
-            return r === 'admin' || r === 'super_admin' || em === SUPER_ADMIN_EMAIL.toLowerCase();
+            return r === 'admin' || r === 'super_admin' || isConfiguredSuperAdminEmail(em);
         } catch {
             return false;
         }
@@ -727,7 +727,7 @@ const [journalLoading, setJournalLoading] = useState(false);
             const u = JSON.parse(localStorage.getItem('user') || '{}');
             const r = (u.role || '').toLowerCase();
             const em = (u.email || '').toLowerCase();
-            return r === 'super_admin' || em === SUPER_ADMIN_EMAIL.toLowerCase();
+            return r === 'super_admin' || isConfiguredSuperAdminEmail(em);
         } catch {
             return false;
         }
@@ -1327,8 +1327,8 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
     const storedUserForChannels = JSON.parse(localStorage.getItem('user') || '{}');
     const userRoleForChannels = (storedUserForChannels.role || '').toString().toLowerCase();
     const userEmailForChannels = (storedUserForChannels.email || '').toString().toLowerCase();
-    const isAdminOrSuperForChannels = userRoleForChannels === 'admin' || userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
-    const isSuperAdminForChannels = userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
+    const isAdminOrSuperForChannels = userRoleForChannels === 'admin' || userRoleForChannels === 'super_admin' || isConfiguredSuperAdminEmail(userEmailForChannels);
+    const isSuperAdminForChannels = userRoleForChannels === 'super_admin' || isConfiguredSuperAdminEmail(userEmailForChannels);
 
     // Get current user's subscription tier (align with getCurrentUserRole / server entitlements)
     const currentUserRole = (() => {

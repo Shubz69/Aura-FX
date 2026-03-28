@@ -19,13 +19,23 @@
 const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels', 'notifications']);
 
 /**
- * Super-admin email override (optional). Set SUPER_ADMIN_EMAIL in server env — do not hardcode in repo.
+ * Super-admin email override (optional). Set SUPER_ADMIN_EMAIL in server env.
+ * Use comma or semicolon to list multiple accounts (e.g. primary,slutherfx@gmail.com).
  * If unset, only DB role `super_admin` grants super-admin-by-email behavior.
  */
-function getSuperAdminEmailLower() {
+function getSuperAdminEmailsLower() {
   const raw = process.env.SUPER_ADMIN_EMAIL;
-  if (raw == null || String(raw).trim() === '') return '';
-  return String(raw).trim().toLowerCase();
+  if (raw == null || String(raw).trim() === '') return [];
+  return String(raw)
+    .split(/[,;]/)
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/** First entry only — backward compatibility for callers that expect one string. */
+function getSuperAdminEmailLower() {
+  const all = getSuperAdminEmailsLower();
+  return all[0] || '';
 }
 
 const ACCESS_LEVELS_ELITE = new Set(['open', 'free', 'read-only', 'premium', 'a7fx', 'elite', 'support', 'staff']);
@@ -75,13 +85,14 @@ function getEffectiveTier(userRow) {
 }
 
 function isSuperAdminEmail(userRowOrEmail) {
-  const superEl = getSuperAdminEmailLower();
-  if (!superEl) return false;
+  const allowed = getSuperAdminEmailsLower();
+  if (!allowed.length) return false;
   const email =
     typeof userRowOrEmail === 'string'
       ? userRowOrEmail
       : (userRowOrEmail?.email || '');
-  return String(email).trim().toLowerCase() === superEl;
+  const e = String(email).trim().toLowerCase();
+  return allowed.includes(e);
 }
 
 /**
@@ -334,6 +345,7 @@ function canAccessChannel(entitlements, channelId, channels) {
 module.exports = {
   FREE_CHANNEL_ALLOWLIST,
   getSuperAdminEmailLower,
+  getSuperAdminEmailsLower,
   isSuperAdminEmail,
   normalizeRole,
   getTier,

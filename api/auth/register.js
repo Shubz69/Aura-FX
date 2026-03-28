@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt'); // bcrypt is in package.json
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
 const { signToken } = require('../utils/auth');
-const { getSuperAdminEmailLower } = require('../utils/entitlements');
+const { getSuperAdminEmailsLower } = require('../utils/entitlements');
 const { sendSignupNotification } = require('../utils/email');
 const {
   resolveReferrerIdFromInput,
@@ -249,12 +249,13 @@ module.exports = async (req, res) => {
           );
           threadId = insertThread.insertId;
         }
-        const superEl = getSuperAdminEmailLower();
+        const superEmails = getSuperAdminEmailsLower();
         let adminRows;
-        if (superEl) {
+        if (superEmails.length > 0) {
+          const ph = superEmails.map(() => '?').join(',');
           [adminRows] = await db.execute(
-            "SELECT id FROM users WHERE LOWER(role) IN ('admin', 'super_admin') OR LOWER(email) = ? ORDER BY id ASC LIMIT 1",
-            [superEl]
+            `SELECT id FROM users WHERE LOWER(role) IN ('admin', 'super_admin') OR LOWER(email) IN (${ph}) ORDER BY id ASC LIMIT 1`,
+            superEmails
           );
         } else {
           [adminRows] = await db.execute(
