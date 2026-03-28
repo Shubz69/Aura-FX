@@ -4,9 +4,10 @@ const { getTemplate, normalizePeriod, parseTemplateFromText } = require('./brief
 const { getOpenAIModelForChat } = require('../../ai/openai-config');
 const { fetchWithTimeout } = require('./fetchWithTimeout');
 const { enrichTraderDeckPayload } = require('../openaiTraderInsights');
+const briefUniverse = require('./briefInstrumentUniverse');
 
 const SOURCE_MARKER_RE = /(https?:\/\/|www\.|source\s*:|sources\s*:|according to|reuters|bloomberg|fmp|finnhub|forex factory|trading economics)/i;
-const BRIEF_KIND_ORDER = ['general', 'stocks', 'indices', 'futures', 'forex', 'crypto', 'commodities', 'bonds', 'etfs'];
+const { BRIEF_KIND_ORDER, BANNED_PHRASES, BANNED_PHRASES_RE } = briefUniverse;
 const BRIEF_KIND_LABELS = {
   general: 'General Market Brief',
   stocks: 'Stocks Brief',
@@ -18,24 +19,6 @@ const BRIEF_KIND_LABELS = {
   bonds: 'Bonds Brief',
   etfs: 'ETFs Brief',
 };
-const BRIEF_KIND_TOP5 = {
-  general: ['EURUSD', 'XAUUSD', 'US500', 'BTCUSD', 'US10Y'],
-  stocks: ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN'],
-  indices: ['US500', 'NAS100', 'US30', 'GER40', 'UK100'],
-  futures: ['ES1!', 'NQ1!', 'CL1!', 'GC1!', 'ZN1!'],
-  forex: ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCHF'],
-  crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD'],
-  commodities: ['XAUUSD', 'XAGUSD', 'WTI', 'BRENT', 'NATGAS'],
-  bonds: ['US02Y', 'US05Y', 'US10Y', 'US30Y', 'DE10Y'],
-  etfs: ['SPY', 'QQQ', 'IWM', 'GLD', 'TLT'],
-};
-const BOILERPLATE_PHRASES = [
-  'Maintain a bias only when momentum aligns with session flow',
-  'Bias follows macro direction and intraday confirmation',
-  'Protect downside first',
-  'Scale only on confirmation',
-  'Avoid overtrading into major releases',
-];
 const CATEGORY_FRAMEWORKS = {
   daily: {
     general: ['Market Context', 'Instrument Outlook', 'Session Focus', 'Risk Radar', 'Execution Notes'],
@@ -49,102 +32,34 @@ const CATEGORY_FRAMEWORKS = {
     etfs: ['ETF Flow and Positioning', 'Top ETF Tactical Setups', 'Underlying Breadth Confirmation', 'Execution Plan', 'ETF Risk Controls'],
   },
   weekly: {
-    general: ['Weekly Macro Theme', 'Cross-Asset Leadership', 'Event Map', 'Scenario Tree', 'Weekly Playbook'],
+    general: ['Weekly Macro Theme', 'Cross-Asset Leadership', 'Event Map', 'Forward Catalysts & Repricing', 'Weekly Playbook'],
     stocks: ['Weekly Equity Regime', 'Earnings and Guidance Matrix', 'Sector Leadership Outlook', 'Weekly Stock Playbook', 'Equity Risk Calendar'],
     indices: ['Weekly Index Structure', 'Global Correlation Matrix', 'Policy and Data Path', 'Weekly Index Playbook', 'Index Portfolio Hedges'],
     futures: ['Weekly Futures Macro Drivers', 'Curve Structure Outlook', 'Contract Rotation Plan', 'Weekly Execution Framework', 'Futures Risk Grid'],
     forex: ['Weekly FX Macro Hierarchy', 'Central-Bank Path Matrix', 'Pair-Level Scenario Plans', 'Weekly FX Execution Framework', 'FX Risk Grid'],
-    crypto: ['Weekly Crypto Liquidity Regime', 'Narrative and Rotation Scorecard', 'Coin-Level Scenario Tree', 'Weekly Crypto Playbook', 'Crypto Drawdown Controls'],
+    crypto: ['Weekly Crypto Liquidity Regime', 'Narrative and Rotation Scorecard', 'Coin-Level Tape & Drivers', 'Weekly Crypto Playbook', 'Crypto Drawdown Controls'],
     commodities: ['Weekly Commodity Regime', 'Supply/Demand Inflection Map', 'Cross-Commodity Relative Value', 'Weekly Commodity Playbook', 'Commodities Risk Grid'],
     bonds: ['Weekly Rates and Curve Outlook', 'Policy Path Sensitivity', 'Tenor-Level Trade Matrix', 'Weekly Bond Playbook', 'Rates Hedging Map'],
     etfs: ['Weekly ETF Flow Regime', 'Cross-Asset ETF Rotation', 'Theme and Factor Matrix', 'Weekly ETF Playbook', 'ETF Risk and Hedge Grid'],
   },
 };
-/** Headlines scored toward each brief category so 9 briefs are not fed identical news context. */
-/** Map instrument tickers to headline filters so each symbol gets distinct news context in the fact pack. */
-const INSTRUMENT_HEADLINE_HINTS = {
-  EURUSD: /\b(euro|eur\/usd|eurusd|ecb|lagarde|eurozone|bund)\b/i,
-  GBPUSD: /\b(sterling|cable|gbp\/usd|gbpusd|boe|bailey|uk\s*gdp)\b/i,
-  USDJPY: /\b(yen|usd\/jpy|usdjpy|boj|ueda|jgb)\b/i,
-  AUDUSD: /\b(aussie|aud\/usd|audusd|rba)\b/i,
-  USDCHF: /\b(franc|usd\/chf|usdchf|snb)\b/i,
-  XAUUSD: /\b(gold|xau|bullion|precious\s*metal)\b/i,
-  XAGUSD: /\b(silver|xag)\b/i,
-  US500: /\b(s&p|spx|s\s*p\s*500|us\s*500|index\s*futures\s*es)\b/i,
-  NAS100: /\b(nasdaq|ndx|qqq|mag\s*seven|tech\s*heavy)\b/i,
-  US30: /\b(dow|djia|us\s*30)\b/i,
-  GER40: /\b(dax|germany|ecb\s*impact)\b/i,
-  UK100: /\b(ftse|uk\s*100)\b/i,
-  BTCUSD: /\b(bitcoin|btc|etf\s*bitcoin)\b/i,
-  ETHUSD: /\b(ethereum|eth\s)\b/i,
-  SOLUSD: /\b(solana|sol\s)\b/i,
-  XRPUSD: /\b(ripple|xrp)\b/i,
-  BNBUSD: /\b(binance|bnb)\b/i,
-  US10Y: /\b(10y|10\-year|treasury|yields?|bonds?|rates)\b/i,
-  US02Y: /\b(2y|2\-year|bill|front\s*end)\b/i,
-  US05Y: /\b(5y|5\-year)\b/i,
-  US30Y: /\b(30y|30\-year|long\s*end)\b/i,
-  DE10Y: /\b(bund|german\s*yield|euro\s*rates)\b/i,
-  WTI: /\b(wti|crude|oil|opec)\b/i,
-  BRENT: /\b(brent|north\s*sea)\b/i,
-  NATGAS: /\b(natural\s*gas|henry\s*hub|lng)\b/i,
-  'ES1!': /\b(es\s|e\-mini\s*s&p|spx\s*futures)\b/i,
-  'NQ1!': /\b(nq\s|nasdaq\s*futures)\b/i,
-  'CL1!': /\b(crude|wti|oil\s*futures)\b/i,
-  'GC1!': /\b(gold\s*futures|comex\s*gold)\b/i,
-  'ZN1!': /\b(10y\s*futures|treasury\s*futures|zn\s)\b/i,
-  AAPL: /\b(apple|aapl|iphone|ios)\b/i,
-  MSFT: /\b(microsoft|msft|azure|windows)\b/i,
-  NVDA: /\b(nvidia|nvda|gpu|cuda|blackwell)\b/i,
-  TSLA: /\b(tesla|tsla|musk|ev\s)\b/i,
-  AMZN: /\b(amazon|amzn|aws)\b/i,
-  SPY: /\b(spy|s&p\s*etf)\b/i,
-  QQQ: /\b(qqq|nasdaq\s*etf)\b/i,
-  IWM: /\b(russell|iwm|small\s*cap)\b/i,
-  GLD: /\b(gld|gold\s*etf)\b/i,
-  TLT: /\b(tlt|long\s*treasury\s*etf|duration)\b/i,
-};
 
-const KIND_HEADLINE_KEYWORDS = {
-  general: null,
-  stocks: /\b(stock|equity|equities|earnings|eps|guidance|nasdaq|nyse|s&p|apple|microsoft|nvidia|tesla|amazon|meta|split|buyback|dividend|ipo|sec)\b/i,
-  indices: /\b(index|indices|s&p\s*500|nasdaq|dow|dax|ftse|nikkei|hang\s*seng|vix|breadth|advance|decline|futures\s+on\s+index)\b/i,
-  futures: /\b(futures|es\s|nq\s|cl\s|gc\s|zb\s|zn\s|roll|curve|contango|backwardation|open\s+interest|cme)\b/i,
-  forex: /\b(forex|fx|eur|gbp|jpy|chf|aud|nzd|cad|dollar|yen|euro|cable|fed|ecb|boe|boj|cpi|nfp|rate\s+decision|currency)\b/i,
-  crypto: /\b(bitcoin|btc|ethereum|eth|crypto|defi|stablecoin|etf\s+crypto|blockchain|solana|xrp|binance|perp|funding)\b/i,
-  commodities: /\b(oil|wti|brent|gold|silver|copper|gas|lng|opec|inventory|xau|xag|commodit)\b/i,
-  bonds: /\b(bond|yield|treasury|t\-bill|duration|curve|auction|10y|2y|30y|rates|gilts|bund)\b/i,
-  etfs: /\b(etf|etn|flow|creation|redemption|spy|qqq|iwm|gld|tlt|ark|factor|passive)\b/i,
-};
+const {
+  filterHeadlinesForBriefKind,
+  buildSymbolHeadlineMap,
+  filterCalendarForBriefKind,
+  buildMacroSummaryLines,
+  categoryWritingMandate,
+  validateTopInstrumentsForKind,
+  detectCrossAssetContamination,
+  scoreAndSelectTopInstruments,
+  buildQuoteCacheForSymbols,
+  collectAllAutomationUniverseSymbols,
+  fallbackTop5ForKind,
+} = briefUniverse;
 
-function filterHeadlinesForBriefKind(headlines, briefKind) {
-  const list = Array.isArray(headlines) ? headlines.map((h) => String(h || '').trim()).filter(Boolean) : [];
-  if (list.length === 0) return [];
-  const k = normalizeBriefKind(briefKind);
-  const re = KIND_HEADLINE_KEYWORDS[k];
-  if (!re || k === 'general') return list.slice(0, 12);
-  const matched = list.filter((h) => re.test(h));
-  const rest = list.filter((h) => !re.test(h));
-  const merged = [...matched, ...rest];
-  return merged.slice(0, 12);
-}
-
-function headlinesForSymbol(symbol, pool) {
-  const sym = String(symbol || '').toUpperCase();
-  const re = INSTRUMENT_HEADLINE_HINTS[sym];
-  const list = Array.isArray(pool) ? pool : [];
-  if (!re) return list.slice(0, 4);
-  const hit = list.filter((h) => re.test(h));
-  const rest = list.filter((h) => !re.test(h));
-  return [...hit, ...rest].slice(0, 4);
-}
-
-function buildSymbolHeadlineMap(symbols, headlines) {
-  const out = {};
-  for (const sym of symbols || []) {
-    out[String(sym).toUpperCase()] = headlinesForSymbol(sym, headlines);
-  }
-  return out;
+function normalizeBriefKind(kind) {
+  return briefUniverse.normalizeBriefKind(kind);
 }
 
 async function fetchLiveQuotesForSymbols(symbols) {
@@ -246,14 +161,8 @@ function sanitizeSentence(text) {
     .trim();
 }
 
-function normalizeBriefKind(kind) {
-  const k = String(kind || '').toLowerCase().trim();
-  return BRIEF_KIND_ORDER.includes(k) ? k : 'general';
-}
-
 function top5ForBriefKind(kind) {
-  const normalized = normalizeBriefKind(kind);
-  return (BRIEF_KIND_TOP5[normalized] || BRIEF_KIND_TOP5.general).slice(0, 5);
+  return fallbackTop5ForKind(normalizeBriefKind(kind));
 }
 
 function orderedBriefKinds() {
@@ -290,21 +199,14 @@ function similarityScore(a, b) {
 }
 
 function containsBoilerplate(text) {
-  const s = String(text || '');
-  return BOILERPLATE_PHRASES.some((p) => s.includes(p));
+  const s = String(text || '').toLowerCase();
+  if (BANNED_PHRASES_RE.test(String(text || ''))) return true;
+  return BANNED_PHRASES.some((p) => s.includes(String(p).toLowerCase()));
 }
 
-function diversifyBody(body, { briefKind, period, topInstruments = [] }) {
-  const logic = CATEGORY_LOGIC_RULES[normalizeBriefKind(briefKind)] || CATEGORY_LOGIC_RULES.general;
-  const topLine = (topInstruments || []).slice(0, 5).join(', ');
-  const extra = [
-    '',
-    'Uniqueness Guardrails',
-    `- Category logic: ${logic}`,
-    `- Distinct top set: ${topLine}`,
-    `- ${period === 'weekly' ? 'Weekly horizon: scenario sequencing and carry path.' : 'Daily horizon: tactical trigger timing and session execution.'}`,
-  ].join('\n');
-  return String(body || '').replace(/\n{3,}/g, '\n\n').trim() + '\n' + extra + '\n';
+/** Light structural tidy only — do not append meta filler (handled via regeneration). */
+function diversifyBody(body) {
+  return String(body || '').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 function assertNoSources(text) {
@@ -444,12 +346,41 @@ function packSignalLine(s) {
   return String(s);
 }
 
-function buildFactPack({ period, template, market, econ, news, briefKind = 'general', topInstruments = [], liveQuotes = [] }) {
+function buildFactPack({
+  period,
+  template,
+  market,
+  econ,
+  news,
+  briefKind = 'general',
+  topInstruments = [],
+  liveQuotes = [],
+  instrumentScoreRows = [],
+}) {
   const normalizedKind = normalizeBriefKind(briefKind);
   const selectedTop = Array.isArray(topInstruments) && topInstruments.length > 0
     ? topInstruments.slice(0, 5)
     : top5ForBriefKind(normalizedKind);
   const filteredNews = filterHeadlinesForBriefKind(news, normalizedKind);
+  const calFiltered = filterCalendarForBriefKind(econ, normalizedKind);
+  const calSlice = calFiltered.slice(0, period === 'weekly' ? 16 : 10).map((e) => ({
+    currency: e.currency || '',
+    event: e.event || '',
+    impact: e.impact || '',
+    time: e.time || '',
+    actual: normalizeCalendarValue(e.actual),
+    forecast: normalizeCalendarValue(e.forecast),
+    previous: normalizeCalendarValue(e.previous),
+  }));
+  const macroSummary = buildMacroSummaryLines(market, normalizedKind);
+  const categoryRiskMap = (market.riskRadar || [])
+    .slice(0, 8)
+    .map((r) => (typeof r === 'string' ? r : r.title || r.event || ''))
+    .filter(Boolean);
+  const periodMandate =
+    period === 'weekly'
+      ? 'WEEKLY: Summarise what repriced over the week, what persisted, leadership vs laggards in THIS category only, and what matters going into next week. Do not rewrite a daily session note.'
+      : 'DAILY: Focus on the next session / upcoming catalysts, tape and liquidity for THIS category only. Do not write a multi-week strategic essay.';
   return {
     period,
     briefKind: normalizedKind,
@@ -462,19 +393,24 @@ function buildFactPack({ period, template, market, econ, news, briefKind = 'gene
     keyDrivers: (market.keyDrivers || []).slice(0, 8),
     crossAssetSignals: (market.crossAssetSignals || []).slice(0, 8),
     traderFocus: (market.traderFocus || []).slice(0, 8),
-    riskRadar: (market.riskRadar || []).slice(0, 8).map((r) => (typeof r === 'string' ? r : r.title || r.event || '')),
-    calendar: (econ || []).slice(0, period === 'weekly' ? 16 : 8).map((e) => ({
-      currency: e.currency || '',
-      event: e.event || '',
-      impact: e.impact || '',
-      time: e.time || '',
-      actual: normalizeCalendarValue(e.actual),
-      forecast: normalizeCalendarValue(e.forecast),
-      previous: normalizeCalendarValue(e.previous),
-    })),
-    headlines: filteredNews.slice(0, 10),
+    riskRadar: categoryRiskMap,
+    calendar: calSlice,
+    categoryEventMap: calSlice,
+    categoryRiskMap,
+    macroSummary,
+    periodMandate,
+    categoryWritingMandate: categoryWritingMandate(normalizedKind, period),
+    instrumentScores: Array.isArray(instrumentScoreRows)
+      ? instrumentScoreRows.map((r) => ({
+          instrument: r.symbol,
+          score: r.score,
+          breakdown: r.breakdown || {},
+        }))
+      : [],
+    headlines: filteredNews.slice(0, 12),
     symbolHeadlines: buildSymbolHeadlineMap(selectedTop, filteredNews),
     liveQuotes: Array.isArray(liveQuotes) ? liveQuotes.slice(0, 5) : [],
+    bannedPhrases: BANNED_PHRASES,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -491,6 +427,61 @@ function maxPairwiseInstrumentSimilarity(notes) {
     }
   }
   return maxSim;
+}
+
+function repeatedOpeningPenalty(text) {
+  const paras = String(text || '')
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 20);
+  const openings = paras.map((p) => p.split(/[.!?:]/)[0].slice(0, 80).toLowerCase().replace(/\s+/g, ' ').trim());
+  const counts = new Map();
+  for (const o of openings) counts.set(o, (counts.get(o) || 0) + 1);
+  let max = 0;
+  for (const c of counts.values()) max = Math.max(max, c);
+  return max;
+}
+
+function validateBriefBeforeSave({ body, generated, factPack, priorBodies = [] }) {
+  const reasons = [];
+  const kind = factPack.briefKind;
+  const inv = validateTopInstrumentsForKind(factPack.topInstruments, kind);
+  if (!inv.ok) reasons.push(`instrument_universe:${(inv.bad || []).join(',')}`);
+
+  const minBody = kind === 'general' ? 500 : 450;
+  if (!body || String(body).trim().length < minBody) reasons.push('body_too_short');
+
+  if (BANNED_PHRASES_RE.test(body)) reasons.push('banned_phrase_in_body');
+
+  const contam = detectCrossAssetContamination(body, kind);
+  if (contam.contaminated) reasons.push(`cross_asset:${contam.hits.join(',')}`);
+
+  const notes = Array.isArray(generated?.instrumentNotes) ? generated.instrumentNotes : [];
+  const top = (factPack.topInstruments || []).map((s) => String(s).toUpperCase());
+  for (const sym of top) {
+    const row = notes.find((n) => String(n?.instrument || '').toUpperCase() === sym);
+    const t = String(row?.note || '').trim();
+    if (t.length < 55) reasons.push(`thin_note:${sym}`);
+    if (BANNED_PHRASES_RE.test(t)) reasons.push(`banned_phrase_note:${sym}`);
+  }
+
+  if (notes.length >= 2 && maxPairwiseInstrumentSimilarity(notes) >= 0.52) {
+    reasons.push('instrument_notes_too_similar');
+  }
+
+  if (repeatedOpeningPenalty(body) >= 3) reasons.push('repeated_openings');
+
+  for (const prev of priorBodies) {
+    if (prev && similarityScore(body, prev) >= 0.6) reasons.push('similar_to_prior_category');
+  }
+
+  const sections = Array.isArray(generated?.sections) ? generated.sections : [];
+  for (const sec of sections) {
+    const b = String(sec?.body || '').trim();
+    if (b.length > 0 && b.length < 90) reasons.push(`thin_section:${String(sec?.heading || '').slice(0, 40)}`);
+  }
+
+  return { ok: reasons.length === 0, reasons };
 }
 
 function instrumentLayerNeedsRefresh(instrumentNotes, outlookBody) {
@@ -558,6 +549,7 @@ async function generateWithOpenAi(factPack, template, options = {}) {
   const {
     existingExcerpts = [],
     uniquenessRetry = false,
+    validationFix = false,
   } = options;
   const catLabel = factPack.briefKindLabel || BRIEF_KIND_LABELS[factPack.briefKind] || 'Market';
   const excerptBlock = Array.isArray(existingExcerpts) && existingExcerpts.length > 0
@@ -565,31 +557,49 @@ async function generateWithOpenAi(factPack, template, options = {}) {
         .map((ex, i) => `--- Other category brief #${i + 1} (do not copy phrasing; write a distinct narrative) ---\n${String(ex || '').slice(0, 520)}`)
         .join('\n\n')
     : '(no prior briefs in this run yet)';
+  const structuredWriterInput = {
+    category: factPack.briefKind,
+    categoryLabel: catLabel,
+    period: factPack.period,
+    periodMandate: factPack.periodMandate,
+    categoryWritingMandate: factPack.categoryWritingMandate,
+    macroSummaryLines: factPack.macroSummary || [],
+    topInstruments: factPack.topInstruments || [],
+    instrumentScores: factPack.instrumentScores || [],
+    categoryEventMap: factPack.categoryEventMap || [],
+    categoryRiskMap: factPack.categoryRiskMap || [],
+    liveQuotes: factPack.liveQuotes || [],
+    symbolHeadlines: factPack.symbolHeadlines || {},
+    sectionHeadings: (factPack.sections || []).map((s) => s.heading),
+  };
   const prompt = {
+    pipeline: 'structured_data_first',
+    structuredWriterInput,
     template,
-    factPack,
     priorBriefExcerptsForDedup: excerptBlock,
     requirements: {
       strictFactsOnly: true,
       noSourcesEver: true,
       noMarkdownBullets: false,
-      tone: template?.style?.tone || 'institutional concise',
+      tone: 'professional market desk — concise, specific, no theatre',
       minimumDepth: 'high-detail longform',
       mustCoverTopInstruments: factPack.topInstruments || [],
       uniquenessMode: 'absolute-distinct-per-category',
       categoryLogicRule: CATEGORY_LOGIC_RULES[factPack.briefKind] || CATEGORY_LOGIC_RULES.general,
-      mandate: `You are writing ONLY the "${catLabel}" brief. Lead with ${factPack.briefKind === 'general' ? 'cross-asset' : factPack.briefKind + ' asset-class'} mechanics. Other eight briefs on the same day cover other categories — duplicate or paraphrased bodies are forbidden.`,
-      useLiveQuotes: 'Weave liveQuotes (last, changePct) into instrumentNotes where present; if empty, rely on factPack only.',
-      perInstrumentHeadlines: 'factPack.symbolHeadlines maps each ticker to headline lines — use those lines to differentiate narratives; do not reuse the same sentence skeleton across instruments.',
-      antiScaffold: 'FORBIDDEN for any two instruments: the same opening clause, parallel "Scenario N defines…" / "Daily scenario N should define…" templates, or copy-pasted catalyst/invalidation wording. Each name needs its own drivers, levels logic, and session hook.',
-      uniquenessRetryNote: uniquenessRetry
-        ? 'REWRITE: prior draft was too similar to another category. Change structure, opening hooks, and examples; keep same JSON schema.'
+      mandate: `You are writing ONLY the "${catLabel}" brief. Use ONLY instruments in structuredWriterInput.topInstruments for any named product — do not substitute tickers from other asset classes. ${factPack.briefKind === 'general' ? 'Cross-asset house note.' : 'Single-asset-class desk note.'} Other briefs the same day cover other sleeves — do not recycle their paragraphs or risk radar wording.`,
+      dataDiscipline: 'Use instrumentScores and liveQuotes as anchors. If a field is empty, omit speculation; reason from drivers, calendar, and headlines only.',
+      instrumentNoteContent: 'Each instrumentNotes[].note must state why it ranked today/this week for THIS category, what is driving it per fact pack, what traders should watch next, and how it differs from others in the top 5 — without repeating the same sentence frame.',
+      riskAndPlaybook: 'riskRadar and playbook must be category-specific (not generic "watch yields" unless bonds brief).',
+      bannedPhrases: factPack.bannedPhrases || BANNED_PHRASES,
+      antiScaffold: 'Never use numbered scenarios, "base and surprise pathways", "catalyst trigger" templates, or parallel invalidation blurbs across names.',
+      uniquenessRetryNote: uniquenessRetry || validationFix
+        ? 'REWRITE: prior output failed validation or collided with another category. Change structure, openings, and emphasis; keep JSON schema; remove any banned phrasing.'
         : null,
     },
   };
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 26000);
+  const timeout = setTimeout(() => controller.abort(), 28000);
   try {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -599,21 +609,19 @@ async function generateWithOpenAi(factPack, template, options = {}) {
       },
       body: JSON.stringify({
         model: getAutomationModel(),
-        temperature: uniquenessRetry ? 0.42 : 0.22,
-        max_tokens: 3800,
+        temperature: uniquenessRetry || validationFix ? 0.4 : 0.2,
+        max_tokens: 4000,
         response_format: { type: 'json_object' },
         messages: [
           {
             role: 'system',
             content:
-              'You are a senior multi-asset strategist. Return valid JSON only: {"title":"string","sections":[{"heading":"string","body":"string"}],"instrumentNotes":[{"instrument":"string","note":"string"}],"riskRadar":["string"],"playbook":["string"]}. '
-              + 'Each section body must be substantive and specific to the briefKind in factPack — not a generic macro essay. '
-              + 'Section headings in the JSON must match factPack.sections[].heading in order. '
-              + 'You must include every instrument in factPack.topInstruments inside instrumentNotes with differentiated notes. '
-              + 'The Instrument Outlook (or category-equivalent) section body must treat each ticker as its own mini-brief: distinct paragraph per instrument with different structure and vocabulary — never numbered scenario boilerplate repeated across names. '
-              + 'Combine factPack (regime, pulse, drivers, cross-asset, calendar, headlines, symbolHeadlines, liveQuotes) with professional judgment; do not invent prices or events not implied by the pack. '
-              + 'Never include source names, URLs, or citation phrasing. '
-              + 'If priorBriefExcerptsForDedup contains text, your output must be materially different in wording and emphasis from those excerpts.',
+              'You are a senior market strategist. The user message is JSON: structuredWriterInput already locks instruments and scores — you only write prose from that structure. '
+              + 'Return valid JSON only: {"title":"string","sections":[{"heading":"string","body":"string"}],"instrumentNotes":[{"instrument":"string","note":"string"}],"riskRadar":["string"],"playbook":["string"]}. '
+              + 'Section headings must match structuredWriterInput.sectionHeadings in order. '
+              + 'Every top instrument must appear in instrumentNotes with substantive, non-templated notes. '
+              + 'Do not invent prices, data prints, or events absent from the pack. No sources, URLs, or citations. '
+              + 'Obey requirements.bannedPhrases literally (no substring matches).',
           },
           { role: 'user', content: JSON.stringify(prompt) },
         ],
@@ -651,7 +659,11 @@ async function generateInstrumentLayerOpenAI(factPack, options = {}) {
     briefKind: factPack.briefKind,
     briefKindLabel: factPack.briefKindLabel,
     period: factPack.period,
+    periodMandate: factPack.periodMandate,
+    categoryWritingMandate: factPack.categoryWritingMandate,
     topInstruments: top,
+    instrumentScores: (factPack.instrumentScores || []).slice(0, 5),
+    macroSummary: (factPack.macroSummary || []).slice(0, 6),
     marketRegime: factPack.marketRegime,
     marketPulse: factPack.marketPulse,
     keyDrivers: (factPack.keyDrivers || []).slice(0, 6),
@@ -660,6 +672,7 @@ async function generateInstrumentLayerOpenAI(factPack, options = {}) {
     headlines: (factPack.headlines || []).slice(0, 10),
     symbolHeadlines: factPack.symbolHeadlines || {},
     liveQuotes: (factPack.liveQuotes || []).slice(0, 5),
+    bannedPhrases: factPack.bannedPhrases || BANNED_PHRASES,
     instrumentSectionHeading: (factPack.sections || [])[findInstrumentOutlookSectionIndex(factPack.sections || [])]?.heading || 'Instrument Outlook',
   };
 
@@ -686,7 +699,7 @@ async function generateInstrumentLayerOpenAI(factPack, options = {}) {
               + 'Start each paragraph with the ticker in bold is NOT allowed — plain text only. Start each paragraph with the ticker as plain uppercase (e.g. EURUSD: ...). '
               + 'Each paragraph and each instrumentNotes[].note must be fully unique: different structure, verbs, and tactical angle. '
               + 'Use symbolHeadlines for that ticker when provided; integrate calendar and liveQuotes where relevant. '
-              + 'Do not use templates like "Scenario N defines" or "Daily scenario N should define". '
+              + 'Do not use scenario-number scaffolding or banned phrases from slimPack.bannedPhrases. '
               + 'No source names, URLs, or citations. Do not invent specific numbers not in the pack.',
           },
           {
@@ -712,7 +725,9 @@ async function generateInstrumentLayerOpenAI(factPack, options = {}) {
     const bySym = new Map(rawNotes.map((r) => [String(r?.instrument || '').toUpperCase(), String(r?.note || '').trim()]));
     const instrumentNotes = top.map((sym) => ({
       instrument: sym,
-      note: bySym.get(sym) || `${sym}: Session-specific read using ${slimPack.briefKindLabel} drivers and calendar — differentiate execution from other names in the set.`,
+      note:
+        bySym.get(sym)
+        || `${sym}: Desk read for ${slimPack.briefKindLabel} — tie to drivers, scheduled data in calendar, and any live quote in slimPack; explain why this name matters versus peers in the top list.`,
     }));
     const instrumentOutlookBody = String(parsed.instrumentOutlookBody || '').trim();
     return { instrumentNotes, instrumentOutlookBody };
@@ -765,7 +780,9 @@ function alignGeneratedSectionsToFramework(generated, factPack) {
     const body = String(gens[idx]?.body || '').trim();
     return {
       heading: f.heading,
-      body: body || `${label} — ${f.heading}: use regime, calendar, headlines, and liveQuotes from the fact pack for this asset class only; avoid generic cross-category copy.`,
+      body:
+        body
+        || `${label} — ${f.heading}: anchor to factPack for this sleeve only (regime, macroSummary, categoryEventMap, symbolHeadlines, liveQuotes). No cross-asset tickers outside topInstruments.`,
     };
   });
   return { ...generated, sections: next };
@@ -812,7 +829,7 @@ function fallbackGenerated(factPack, template, now, timeZone) {
       return `${label} flow/positioning: ${focus.length ? focus.join(' · ') : 'Two-way liquidity; fade stretched moves into events.'} Anchor to ${top.slice(0, 3).join(', ') || 'key benchmarks'}${ql ? `; spot: ${ql}` : ''}.`;
     }
     if (h.includes('technical') || h.includes('levels') || h.includes('setup') || h.includes('scenario') || h.includes('pair') || h.includes('coin') || h.includes('commodity') || h.includes('stock catalyst') || h.includes('tactical') || h.includes('etf tactical')) {
-      return `${label} setups: prioritize ${top.slice(0, 3).join(', ') || 'lead symbols'} with session anchors (VWAP/POC) and vol-adjusted stops${ql ? `; ${ql}` : ''}. ${period === 'weekly' ? 'Swing: map base vs surprise paths into next week.' : 'Intraday: trigger-only adds after confirmation.'}`;
+      return `${label} setups: work ${top.slice(0, 3).join(', ') || 'lead symbols'} with session structure (range, opening drive, key data) and size scaled to event risk${ql ? `; ${ql}` : ''}. ${period === 'weekly' ? 'Swing horizon: hold only if weekly trend and macro narrative align; reduce into known event clusters next week.' : 'Intraday: add only after the tape confirms direction post-headline risk.'}`;
     }
     if (h.includes('risk')) {
       return `${label} risk radar: ${risk.length ? risk.join(' · ') : 'Event, gap, and liquidity risk'} — size down into prints; respect opens and gaps.`;
@@ -828,7 +845,7 @@ function fallbackGenerated(factPack, template, now, timeZone) {
           const symU = String(sym).toUpperCase();
           const lines = (sh[symU] || []).slice(0, 2).filter(Boolean);
           const hook = lines.length ? lines.join(' · ') : `${pulseLabel} tape and ${regimeLabel} regime context`;
-          return `${symU}: ${hook} — session plan: lean on drivers/calendar for this name only; separate invalidation from other symbols in the set.${ql ? ` Quote context: ${ql}.` : ''}`;
+          return `${symU}: ${hook} — ${period === 'weekly' ? 'Weekly' : 'Session'} focus: link tape to drivers and scheduled prints; contrast this name’s flow vs others in the top list.${ql ? ` Quote context: ${ql}.` : ''}`;
         })
         .join('\n\n');
     }
@@ -865,7 +882,7 @@ function fallbackGenerated(factPack, template, now, timeZone) {
     sections: renderedSections,
     instrumentNotes: instrumentNotes.length > 0 ? instrumentNotes : (template.instruments || []).slice(0, 5).map((instrument, idx) => ({
       instrument,
-      note: `${instrument}: ${label} coverage ${idx + 1} — define catalyst, invalidation, and size vs vol.`,
+      note: `${instrument}: ${label} sleeve — rank ${idx + 1} focus: catalysts from headlines/calendar, liquidity vs size, and next data that can reset the tape.`,
     })),
     riskRadar: risk,
     playbook: [
@@ -1105,14 +1122,33 @@ async function getNextBriefVersion({ period, date, briefKind }) {
   return maxVersion + 1;
 }
 
-async function publishAutoBrief({ period, date, title, body, briefKind = 'general' }) {
+async function publishAutoBrief({ period, date, title, body, briefKind = 'general', generationMeta = null }) {
   const safeTitle = String(title || 'Market Brief').slice(0, 255);
   const normalizedKind = normalizeBriefKind(briefKind);
-  const briefVersion = await getNextBriefVersion({ period, date, briefKind: normalizedKind });
+  await addColumnIfNotExists('trader_deck_briefs', 'generation_meta', 'JSON NULL');
+  const metaJson = generationMeta == null ? null : JSON.stringify(generationMeta);
+  const [existing] = await executeQuery(
+    `SELECT id, brief_version FROM trader_deck_briefs
+     WHERE date = ? AND period = ? AND brief_kind = ?
+     ORDER BY brief_version DESC, id DESC LIMIT 1`,
+    [date, period, normalizedKind]
+  );
+  const row = existing && existing[0];
+  if (row && row.id) {
+    const nextV = Number(row.brief_version || 0) + 1;
+    await executeQuery(
+      `UPDATE trader_deck_briefs
+       SET title = ?, file_data = ?, mime_type = 'text/plain; charset=utf-8', brief_version = ?, generation_meta = ?
+       WHERE id = ?`,
+      [safeTitle, Buffer.from(body, 'utf8'), nextV, metaJson, row.id]
+    );
+    return { insertId: row.id, briefVersion: nextV };
+  }
+  const briefVersion = 1;
   const [result] = await executeQuery(
-    `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data, brief_kind, brief_version)
-     VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?, ?, ?)`,
-    [date, period, safeTitle, Buffer.from(body, 'utf8'), normalizedKind, briefVersion]
+    `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data, brief_kind, brief_version, generation_meta)
+     VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?, ?, ?, ?)`,
+    [date, period, safeTitle, Buffer.from(body, 'utf8'), normalizedKind, briefVersion, metaJson]
   );
   return { insertId: result.insertId, briefVersion };
 }
@@ -1153,12 +1189,12 @@ async function generateAndStoreBrief({
   sharedMarket = null,
   sharedEcon = null,
   sharedNews = null,
+  sharedQuoteCache = null,
 }) {
   assertAutomationModelConfigured();
   await ensureAutomationTables();
   const normalizedPeriod = normalizePeriod(period);
   const normalizedKind = normalizeBriefKind(briefKind);
-  const selectedTop5 = top5ForBriefKind(normalizedKind);
   const date = normalizeOutlookDate(normalizedPeriod, toYmdInTz(runDate, timeZone));
   const runKey = `auto-brief:${normalizedPeriod}:${date}:${normalizedKind}`;
 
@@ -1182,6 +1218,29 @@ async function generateAndStoreBrief({
       econ = e;
       news = n;
     }
+
+    let quoteCache = sharedQuoteCache;
+    if (!quoteCache || typeof quoteCache.get !== 'function') {
+      quoteCache = await buildQuoteCacheForSymbols(collectAllAutomationUniverseSymbols(), getTwelveDataQuote);
+    }
+
+    const selection = await scoreAndSelectTopInstruments({
+      briefKind: normalizedKind,
+      period: normalizedPeriod,
+      quoteCache,
+      headlines: news,
+      calendarRows: econ,
+      market,
+      logPrefix: '[brief-gen]',
+    });
+    const selectedTop5 = selection.top5;
+    const partialDataMode =
+      quoteCache.size < 8 ||
+      !Array.isArray(econ) ||
+      econ.length < 3 ||
+      !Array.isArray(news) ||
+      news.length < 3;
+
     const liveQuotes = await fetchLiveQuotesForSymbols(selectedTop5);
     const factPack = buildFactPack({
       period: normalizedPeriod,
@@ -1192,6 +1251,7 @@ async function generateAndStoreBrief({
       briefKind: normalizedKind,
       topInstruments: selectedTop5,
       liveQuotes,
+      instrumentScoreRows: selection.scoreRows,
     });
     const existingExcerpts = Array.isArray(generationContext?.existingExcerpts)
       ? generationContext.existingExcerpts
@@ -1203,7 +1263,7 @@ async function generateAndStoreBrief({
       generated = alignGeneratedSectionsToFramework(generated, factPack);
       const sectionBlob = (generated.sections || []).map((s) => stripSources(s.body || '')).join('\n');
       const maxOverlapSections = contextBodies.reduce((m, prev) => Math.max(m, similarityScore(sectionBlob, prev)), 0);
-      if (maxOverlapSections >= 0.58) {
+      if (maxOverlapSections >= 0.55) {
         const regen = await generateWithOpenAi(factPack, template, { existingExcerpts, uniquenessRetry: true });
         if (regen) generated = alignGeneratedSectionsToFramework(regen, factPack);
       }
@@ -1246,17 +1306,80 @@ async function generateAndStoreBrief({
       briefKind: normalizedKind,
       topInstruments: selectedTop5,
     });
+    let validation = validateBriefBeforeSave({
+      body,
+      generated,
+      factPack,
+      priorBodies: contextBodies,
+    });
     const maxOverlap = contextBodies.reduce((m, prev) => Math.max(m, similarityScore(body, prev)), 0);
-    if (containsBoilerplate(body) || maxOverlap >= 0.66) {
-      body = diversifyBody(body, {
-        briefKind: normalizedKind,
-        period: normalizedPeriod,
-        topInstruments: selectedTop5,
+    if (!validation.ok || containsBoilerplate(body) || maxOverlap >= 0.62) {
+      console.warn('[brief-gen] validation/overlap — regenerating', {
+        category: normalizedKind,
+        date,
+        reasons: validation.reasons,
+        maxOverlap,
       });
+      const regen = await generateWithOpenAi(factPack, template, {
+        existingExcerpts,
+        uniquenessRetry: true,
+        validationFix: true,
+      });
+      if (regen) {
+        generated = alignGeneratedSectionsToFramework(regen, factPack);
+        const outlookBody2 = getInstrumentOutlookBodyFromGenerated(generated);
+        if (instrumentLayerNeedsRefresh(generated.instrumentNotes, outlookBody2)) {
+          const refined2 = await generateInstrumentLayerOpenAI(factPack, {
+            mode: 'refine',
+            priorNotes: generated.instrumentNotes,
+            priorOutlookBody: outlookBody2,
+          });
+          if (refined2?.instrumentNotes?.length) {
+            generated = applyInstrumentLayerPatch(generated, refined2);
+          }
+        }
+        body = renderBriefText({
+          title,
+          period: normalizedPeriod,
+          date,
+          generated,
+          template,
+          briefKind: normalizedKind,
+          topInstruments: selectedTop5,
+        });
+        validation = validateBriefBeforeSave({ body, generated, factPack, priorBodies: contextBodies });
+      }
     }
-    const saved = await publishAutoBrief({ period: normalizedPeriod, date, title, body, briefKind: normalizedKind });
+    body = diversifyBody(body);
+    const generationMeta = {
+      generatedAt: new Date().toISOString(),
+      topInstruments: selectedTop5,
+      instrumentScores: (selection.scoreRows || []).map((r) => ({ symbol: r.symbol, score: r.score, breakdown: r.breakdown })),
+      partialDataMode,
+      validationOk: validation.ok,
+      validationReasons: validation.ok ? [] : validation.reasons,
+    };
+    if (!validation.ok) {
+      console.warn('[brief-gen] saved with validation warnings', { category: normalizedKind, reasons: validation.reasons });
+    }
+    const saved = await publishAutoBrief({
+      period: normalizedPeriod,
+      date,
+      title,
+      body,
+      briefKind: normalizedKind,
+      generationMeta,
+    });
     const briefId = saved.insertId;
     await finalizeRun(runKey, 'success', briefId, null);
+    console.info('[brief-gen] saved', {
+      category: normalizedKind,
+      period: normalizedPeriod,
+      date,
+      briefId,
+      top5: selectedTop5,
+      validationOk: validation.ok,
+    });
     return { success: true, briefId, runKey, date, period: normalizedPeriod, briefKind: normalizedKind, briefVersion: saved.briefVersion, topInstruments: selectedTop5 };
   } catch (err) {
     await finalizeRun(runKey, 'failed', null, (err.message || 'generation failed').slice(0, 255));
@@ -1272,6 +1395,11 @@ async function generateAndStoreBriefSet({ period, timeZone = 'Europe/London', ru
     fetchEconomicCalendar(),
     fetchUnifiedNewsSample(),
   ]);
+  const sharedQuoteCache = await buildQuoteCacheForSymbols(
+    collectAllAutomationUniverseSymbols(),
+    getTwelveDataQuote
+  );
+  console.info('[brief-gen] quote cache built', { symbols: sharedQuoteCache.size, period: normalizedPeriod, date });
   const results = [];
   const existingBodies = [];
   const existingExcerpts = [];
@@ -1286,6 +1414,7 @@ async function generateAndStoreBriefSet({ period, timeZone = 'Europe/London', ru
       sharedMarket,
       sharedEcon,
       sharedNews,
+      sharedQuoteCache,
       generationContext: { existingBodies, existingExcerpts },
     });
     if (row && row.success && row.briefId) {
@@ -1365,7 +1494,17 @@ async function generatePreviewBrief({
     fetchEconomicCalendar(),
     fetchUnifiedNewsSample(),
   ]);
-  const previewTop = top5ForBriefKind('general');
+  const qc = await buildQuoteCacheForSymbols(collectAllAutomationUniverseSymbols(), getTwelveDataQuote);
+  const sel = await scoreAndSelectTopInstruments({
+    briefKind: 'general',
+    period: normalizedPeriod,
+    quoteCache: qc,
+    headlines: news,
+    calendarRows: econ,
+    market,
+    logPrefix: '[brief-preview]',
+  });
+  const previewTop = sel.top5;
   const liveQuotes = await fetchLiveQuotesForSymbols(previewTop);
   const factPack = buildFactPack({
     period: normalizedPeriod,
@@ -1376,6 +1515,7 @@ async function generatePreviewBrief({
     briefKind: 'general',
     topInstruments: previewTop,
     liveQuotes,
+    instrumentScoreRows: sel.scoreRows,
   });
   let generated = await generateWithOpenAi(factPack, template, { existingExcerpts: [], uniquenessRetry: false });
   if (!generated) {
@@ -1447,6 +1587,10 @@ async function prefetchInstrumentResearchForDaily({ timeZone = 'Europe/London', 
     fetchUnifiedNewsSample(),
   ]);
   const template = await getTemplate(normalizedPeriod);
+  const sharedQuoteCache = await buildQuoteCacheForSymbols(
+    collectAllAutomationUniverseSymbols(),
+    getTwelveDataQuote
+  );
   const results = [];
   const kinds = orderedBriefKinds();
   const batchSize = 3;
@@ -1456,7 +1600,16 @@ async function prefetchInstrumentResearchForDaily({ timeZone = 'Europe/London', 
     const batchOut = await Promise.all(
       slice.map(async (briefKind) => {
         const normalizedKind = normalizeBriefKind(briefKind);
-        const selectedTop5 = top5ForBriefKind(normalizedKind);
+        const selection = await scoreAndSelectTopInstruments({
+          briefKind: normalizedKind,
+          period: normalizedPeriod,
+          quoteCache: sharedQuoteCache,
+          headlines: sharedNews,
+          calendarRows: sharedEcon,
+          market: sharedMarket,
+          logPrefix: '[brief-prefetch]',
+        });
+        const selectedTop5 = selection.top5;
         const liveQuotes = await fetchLiveQuotesForSymbols(selectedTop5);
         const factPack = buildFactPack({
           period: normalizedPeriod,
@@ -1467,6 +1620,7 @@ async function prefetchInstrumentResearchForDaily({ timeZone = 'Europe/London', 
           briefKind: normalizedKind,
           topInstruments: selectedTop5,
           liveQuotes,
+          instrumentScoreRows: selection.scoreRows,
         });
         const layer = await generateInstrumentLayerOpenAI(factPack, { mode: 'prefetch' });
         if (layer?.instrumentNotes?.length && layer?.instrumentOutlookBody) {
