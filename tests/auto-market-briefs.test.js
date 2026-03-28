@@ -82,8 +82,8 @@ function run() {
   assert(normalizedUnknown === 'general', 'unknown brief kind should normalize to general');
   const dailyFxFramework = autoTest.frameworkHeadings('daily', 'forex', []);
   const weeklyFxFramework = autoTest.frameworkHeadings('weekly', 'forex', []);
-  assert(Array.isArray(dailyFxFramework) && dailyFxFramework.length >= 5, 'daily category framework should exist');
-  assert(Array.isArray(weeklyFxFramework) && weeklyFxFramework.length >= 5, 'weekly category framework should exist');
+  assert(Array.isArray(dailyFxFramework) && dailyFxFramework.length === 6, 'daily structure lock must have 6 sections');
+  assert(Array.isArray(weeklyFxFramework) && weeklyFxFramework.length === 7, 'weekly structure lock must have 7 sections');
   assert(
     dailyFxFramework.map((x) => x.heading).join('|') !== weeklyFxFramework.map((x) => x.heading).join('|'),
     'daily and weekly framework headings should differ'

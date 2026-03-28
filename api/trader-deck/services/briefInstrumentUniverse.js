@@ -170,6 +170,8 @@ const BANNED_PHRASES = [
   'base and surprise',
   'position-sizing discipline tied to liquidity',
   'position sizing discipline tied to liquidity',
+  'position sizing discipline',
+  'position sizing',
   'check calendar',
   'catalyst trigger',
   'directional invalidation',
@@ -214,23 +216,23 @@ const BANNED_PHRASES_RE = new RegExp(
 
 const CATEGORY_INTELLIGENCE_DIRECTIVES = {
   stocks:
-    'STOCKS DESK: Tie each name to session % move vs US500 when RS field is present; headline catalysts (earnings, guidance, legal, product); sector leadership vs XLK/XLF-style read from macro drivers; avoid generic index commentary — single-stock why now.',
+    'STOCKS DESK: Macro-first tape — breadth, sector rotation, earnings/macro beta. Mention single names only when headlines or relative strength in the pack justify it; never a forced per-ticker rundown.',
   forex:
-    'FX DESK: Each pair through rate-differential and USD lens from drivers; CB prints on calendar; session liquidity (Asia/London/NY); no generic “dollar strength” without linking to this pair’s skew.',
+    'FX DESK: Rates, USD, and CB path as the spine; session liquidity and event vol. Weave pairs only when they clarify the macro transmission — not a pair-by-pair template.',
   indices:
-    'INDICES DESK: Benchmark vs breadth proxy from drivers (stocks signal, vol); rates sensitivity from yields driver; what today’s tape implies for continuation vs fade — not a stock picker list.',
+    'INDICES DESK: Benchmark regime, breadth, and vol from drivers; rates linkage. Continuation vs chop as environment — not a stock-picker list.',
   futures:
-    'FUTURES DESK: Contract beta to oil, rates, or index from context; roll/liquidity only if inferable; session gap vs cash where relevant.',
+    'FUTURES DESK: Complex vs macro (oil, rates, index beta) in prose; roll/liquidity only when data supports it.',
   crypto:
-    'CRYPTO DESK: Majors vs alts from relative % moves; regulatory/ETF headlines if in feed; liquidity/vol from tape — no on-chain invention.',
+    'CRYPTO DESK: Risk proxy, liquidity, majors vs alts from tape and headlines in the pack — no invented on-chain detail.',
   commodities:
-    'COMMODITIES DESK: USD passthrough from drivers; oil vs metals divergence; inventory/macro headlines when present in feed.',
+    'COMMODITIES DESK: USD, growth, and supply/demand themes; oil vs metals only when the pack differentiates them.',
   bonds:
-    'RATES DESK: Curve steepening/flattening from yield context; auction/CPI/Fed path from calendar; tenors as duration bets — explicit yield-level language only if in data.',
+    'RATES DESK: Curve and policy path from calendar and drivers; yield language only when backed by pack data.',
   etfs:
-    'ETF DESK: Factor/sector vehicle vs underlying benchmark move; flow narrative only when headlines support; RS vs US500 for equity ETFs.',
+    'ETF DESK: Factor/flow tone vs underlying macro; no mechanical vehicle-by-vehicle blocks.',
   general:
-    'HOUSE BRIEF: Cross-asset leadership from drivers and signals; what repriced today (marketChanges); scheduled risk — each sleeve gets distinct prose.',
+    'HOUSE BRIEF: Cross-asset leadership and what repriced; scheduled risk in narrative form — not parallel sleeves as copy-paste paragraphs.',
 };
 
 const CALENDAR_HIGH_IMPACT = /\b(high|red)\b/i;

@@ -421,7 +421,7 @@ function buildTraderFocus(fred, finnhub, keyDrivers, crossAssetSignals, options 
   focus.push({ title: 'Prioritize confirmation-based entries over predictive entries', reason: 'Execution discipline' });
   if ((keyDrivers || []).some((d) => d.name === 'Bond Yields' && d.direction === 'up')) focus.push({ title: 'Keep size conservative in rate-sensitive instruments', reason: 'Yields rising' });
   if (options.timeframe === 'weekly') {
-    focus.push({ title: 'Build a weekly scenario tree before opening new swing exposure', reason: 'Weekly planning' });
+    focus.push({ title: 'Map the week’s major risk windows before adding swing exposure', reason: 'Weekly planning' });
   }
   if (String(options.riskLevel || '').toLowerCase() === 'high' || String(options.riskLevel || '').toLowerCase() === 'extreme') {
     focus.push({ title: 'Trade defensive until risk score normalizes', reason: 'Risk engine state' });
