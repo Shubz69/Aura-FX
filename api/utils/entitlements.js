@@ -19,17 +19,29 @@
 const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels', 'notifications']);
 
 /**
- * Super-admin email override (optional). Set SUPER_ADMIN_EMAIL in server env.
- * Use comma or semicolon to list multiple accounts (e.g. primary,slutherfx@gmail.com).
- * If unset, only DB role `super_admin` grants super-admin-by-email behavior.
+ * Core super-admin accounts (always merged with SUPER_ADMIN_EMAIL env).
+ * Keeps access if env is misconfigured on a host; add more via env for other operators.
+ * Client: keep in sync with src/utils/roles.js SUPER_ADMIN_EMAIL_FALLBACK_LOWER.
+ */
+const SUPER_ADMIN_EMAIL_FALLBACK_LOWER = Object.freeze([
+  'shubzfx@gmail.com',
+  'slutherfx@gmail.com',
+]);
+
+/**
+ * Super-admin emails: SUPER_ADMIN_EMAIL env (comma/semicolon) merged with fallback list.
+ * DB role `super_admin` still works when email is not listed.
  */
 function getSuperAdminEmailsLower() {
   const raw = process.env.SUPER_ADMIN_EMAIL;
-  if (raw == null || String(raw).trim() === '') return [];
-  return String(raw)
-    .split(/[,;]/)
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
+  const fromEnv =
+    raw == null || String(raw).trim() === ''
+      ? []
+      : String(raw)
+          .split(/[,;]/)
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean);
+  return Array.from(new Set([...SUPER_ADMIN_EMAIL_FALLBACK_LOWER, ...fromEnv]));
 }
 
 /** First entry only — backward compatibility for callers that expect one string. */

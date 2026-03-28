@@ -1,7 +1,12 @@
 // Role-based access control system
-// Super Admin emails: set REACT_APP_SUPER_ADMIN_EMAIL (must match server SUPER_ADMIN_EMAIL for UI hints).
-// Multiple: comma- or semicolon-separated, same list as SUPER_ADMIN_EMAIL on the server.
+// Super Admin: REACT_APP_SUPER_ADMIN_EMAIL (comma/semicolon) merged with fallback (sync with api/utils/entitlements.js).
 // Admin: Assigned by Super Admin - Limited admin access
+
+/** Must match api/utils/entitlements.js SUPER_ADMIN_EMAIL_FALLBACK_LOWER */
+const SUPER_ADMIN_EMAIL_FALLBACK_LOWER = Object.freeze([
+  'shubzfx@gmail.com',
+  'slutherfx@gmail.com',
+]);
 
 function parseSuperAdminEmailsLowerFromEnv(raw) {
   if (raw == null || String(raw).trim() === '') return [];
@@ -11,11 +16,19 @@ function parseSuperAdminEmailsLowerFromEnv(raw) {
     .filter(Boolean);
 }
 
-/** Lowercased super-admin emails from env (may be empty). */
-export const SUPER_ADMIN_EMAILS_LOWER = parseSuperAdminEmailsLowerFromEnv(process.env.REACT_APP_SUPER_ADMIN_EMAIL);
+function mergeSuperAdminEmailsLower() {
+  const fromEnv = parseSuperAdminEmailsLowerFromEnv(process.env.REACT_APP_SUPER_ADMIN_EMAIL);
+  return Array.from(new Set([...SUPER_ADMIN_EMAIL_FALLBACK_LOWER, ...fromEnv]));
+}
 
-/** First listed email — backward compat where a single string is expected. */
-export const SUPER_ADMIN_EMAIL = (process.env.REACT_APP_SUPER_ADMIN_EMAIL || '').split(/[,;]/)[0]?.trim() || '';
+/** Lowercased super-admin emails: env + built-in founders list */
+export const SUPER_ADMIN_EMAILS_LOWER = mergeSuperAdminEmailsLower();
+
+/** First email for legacy single-string use (env first, else fallback). */
+export const SUPER_ADMIN_EMAIL =
+  (process.env.REACT_APP_SUPER_ADMIN_EMAIL || '').split(/[,;]/)[0]?.trim() ||
+  SUPER_ADMIN_EMAIL_FALLBACK_LOWER[0] ||
+  '';
 
 export const ROLES = {
   FREE: 'free',
