@@ -740,7 +740,6 @@ const [journalLoading, setJournalLoading] = useState(false);
     const { id: channelIdParam } = useParams();
     const location = useLocation();
     const { user: authUser } = useAuth();
-    const restrictMiniJournalDates = useMemo(() => !isAdmin(authUser), [authUser]);
     const [journalQuickToday, setJournalQuickToday] = useState(() => getJournalTodayForUser(null));
     useEffect(() => {
         setJournalQuickToday(getJournalTodayForUser(authUser));
@@ -757,11 +756,6 @@ const [journalLoading, setJournalLoading] = useState(false);
             document.removeEventListener('visibilitychange', onVis);
         };
     }, [authUser]);
-    useEffect(() => {
-        if (!restrictMiniJournalDates || !showJournalModal) return;
-        setJournalSelectedDate(journalQuickToday);
-        setJournalCalendarMonth(journalQuickToday.slice(0, 7));
-    }, [showJournalModal, restrictMiniJournalDates, journalQuickToday]);
     const { entitlements, loading: entitlementsLoading, refresh: refreshEntitlements } = useEntitlements();
     const { hasCommunityAccess: hasCommunityAccessFromSubscription, refreshSubscription } = useSubscription();
 
@@ -8834,7 +8828,6 @@ if (!isAuthenticated && !hasToken) {
     onTaskToggle={handleMiniTaskToggle}
     loading={journalLoading}
     journalToday={journalQuickToday}
-    restrictJournalDates={restrictMiniJournalDates}
 />
 
             {/* Image Modal */}

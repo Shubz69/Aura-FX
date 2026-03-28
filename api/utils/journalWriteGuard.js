@@ -18,21 +18,19 @@ async function getJournalContext(userId) {
 }
 
 /**
- * Journal writes are allowed only for the user's local calendar day (IANA timezone on profile).
- * No role bypass — discipline data must stay consistent with reports.
+ * Validates journal date on writes. Users may edit any calendar day (past or future).
+ * `context` is still loaded by callers for XP/report logic; not used to block dates here.
  * @returns {boolean} true if allowed to proceed
  */
-function assertJournalWritableDate(res, context, dateStr) {
+function assertJournalWritableDate(res, _context, dateStr) {
   const d = normalizeYyyyMmDd(dateStr);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) {
     res.status(400).json({ success: false, message: 'Invalid date' });
     return false;
   }
-  if (d !== context.todayYyyyMmDd) {
-    res.status(403).json({
-      success: false,
-      message: 'Journal can only be edited for today in your timezone.',
-    });
+  const y = parseInt(d.slice(0, 4), 10);
+  if (y < 2000 || y > 2100) {
+    res.status(400).json({ success: false, message: 'Invalid date' });
     return false;
   }
   return true;

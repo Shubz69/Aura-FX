@@ -187,10 +187,7 @@ export default function Journal() {
   const dailyMoodRef = useRef(dailyMood);
   dailyMoodRef.current = dailyMood;
 
-  const canEditJournal = useMemo(
-    () => isSameDay(selectedDate, journalToday),
-    [selectedDate, journalToday]
-  );
+  const canEditJournal = true;
 
   useEffect(() => { setCompletionBannerDismissed(false); }, [selectedDate]);
 
@@ -210,13 +207,6 @@ export default function Journal() {
       document.removeEventListener('visibilitychange', onVis);
     };
   }, [authUser]);
-
-  useEffect(() => {
-    if (!userAdmin) {
-      setSelectedDate(journalToday);
-      setCalendarMonth(journalToday.slice(0, 7));
-    }
-  }, [userAdmin, journalToday]);
 
   const monthStart  = getMonthStart(calendarMonth + '-01');
   const monthEnd    = getMonthEnd(calendarMonth + '-01');
@@ -319,7 +309,7 @@ export default function Journal() {
 
   /* Debounced autosave for diary text (non-admins only) */
   useEffect(() => {
-    if (userAdmin || !canEditJournal || loading) return;
+    if (userAdmin || loading) return;
     if (skipDiaryAutosaveRef.current) return;
     const cur = dailyNotesRef.current;
     if (cur === lastSavedDiaryRef.current) return;
@@ -357,7 +347,7 @@ export default function Journal() {
         diaryDebounceTimerRef.current = null;
       }
     };
-  }, [dailyNotes, userAdmin, canEditJournal, loading, selectedDate]);
+  }, [dailyNotes, userAdmin, loading, selectedDate]);
 
   /* ── Derived task lists ──────────────────────────────── */
   const dayTasks           = monthTasks.filter((t) => isSameDay(t.date, selectedDate));
@@ -385,13 +375,13 @@ export default function Journal() {
     const [y, m] = calendarMonth.split('-').map(Number);
     const nm = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
     setCalendarMonth(nm);
-    if (userAdmin && selectedDate.slice(0, 7) !== nm) setSelectedDate(`${nm}-01`);
+    if (selectedDate.slice(0, 7) !== nm) setSelectedDate(`${nm}-01`);
   };
   const handleNextMonth = () => {
     const [y, m] = calendarMonth.split('-').map(Number);
     const nm = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
     setCalendarMonth(nm);
-    if (userAdmin && selectedDate.slice(0, 7) !== nm) setSelectedDate(`${nm}-01`);
+    if (selectedDate.slice(0, 7) !== nm) setSelectedDate(`${nm}-01`);
   };
 
   /* ── Task CRUD ───────────────────────────────────────── */
@@ -758,11 +748,11 @@ export default function Journal() {
           {/* Calendar */}
           <div className="journal-calendar">
             <div className="journal-calendar-nav">
-              <button type="button" className="journal-calendar-btn" onClick={handlePrevMonth} disabled={!userAdmin} aria-label="Previous month">‹</button>
+              <button type="button" className="journal-calendar-btn" onClick={handlePrevMonth} aria-label="Previous month">‹</button>
               <span className="journal-calendar-month">
                 {MONTH_NAMES[parseInt(calendarMonth.split('-')[1], 10) - 1]}&nbsp;{calendarMonth.split('-')[0]}
               </span>
-              <button type="button" className="journal-calendar-btn" onClick={handleNextMonth} disabled={!userAdmin} aria-label="Next month">›</button>
+              <button type="button" className="journal-calendar-btn" onClick={handleNextMonth} aria-label="Next month">›</button>
             </div>
             <div className="journal-calendar-weekdays">
               {DAY_NAMES.map((d) => <span key={d} className="journal-calendar-wd">{d}</span>)}
@@ -775,12 +765,10 @@ export default function Journal() {
                 const totalCount = taskCountByDate[dateStr]      || 0;
                 const isSelected = isSameDay(dateStr, selectedDate);
                 const isToday    = isSameDay(dateStr, journalToday);
-                const isLockedDay = !userAdmin && !isSameDay(dateStr, journalToday);
                 return (
                   <button key={dateStr} type="button"
-                    disabled={isLockedDay}
-                    className={`journal-calendar-day${isSelected ? ' journal-calendar-day--selected' : ''}${isToday ? ' journal-calendar-day--today' : ''}${isLockedDay ? ' journal-calendar-day--locked' : ''}`}
-                    onClick={() => { if (!isLockedDay) setSelectedDate(dateStr); }}
+                    className={`journal-calendar-day${isSelected ? ' journal-calendar-day--selected' : ''}${isToday ? ' journal-calendar-day--today' : ''}`}
+                    onClick={() => setSelectedDate(dateStr)}
                   >
                     <span className="journal-calendar-day-num">{parseInt(dateStr.slice(-2), 10)}</span>
                     {hasTasks && (
@@ -821,12 +809,6 @@ export default function Journal() {
         {/* ══════════ MAIN ══════════ */}
         <main className="journal-main">
           {error && <div className="journal-error" role="alert">{error}</div>}
-
-          {!canEditJournal && (
-            <div className="journal-readonly-banner" role="status">
-              View only — journal edits are allowed for today only (your local calendar day after midnight). Past days cannot be changed.
-            </div>
-          )}
 
           {/* Header */}
           <div className="journal-main-header">
