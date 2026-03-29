@@ -62,7 +62,7 @@ export default function ExecutionLab() {
           title={needsConnection ? 'Connect to view execution quality' : 'No trades in this period'}
           description={
             needsConnection
-              ? 'Sync MT5 to score execution, discipline, and timing against your trade history.'
+              ? 'Connect MetaTrader from the Connection Hub to score execution, discipline, and timing against your trade history.'
               : 'Execution scores appear once closed trades exist in this range.'
           }
         />

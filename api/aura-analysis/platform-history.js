@@ -7,8 +7,21 @@ const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
-const { hasMtBridgeCredentials, getPositions } = require('./terminalSyncBridge');
+const { hasMtBridgeCredentials, getPositions } = require('./mtSyncProvider');
 const { setAuraCorsHeaders } = require('./cors');
+const { upsertTradeCacheRows, loadCachedTradesForRange } = require('./auraPlatformTradeCache');
+const {
+  normalizeMtRow,
+  dedupeNormalizedTrades,
+  filterTradesByDays,
+  rollupNetPnl,
+} = require('./mtTradeNormalize');
+const {
+  publicHistoryError,
+  isAuraDiagnosticsEnabled,
+  buildHistoryDiagnostics,
+  safeMtLog,
+} = require('./auraProductionUtils');
 
 function getEncKey() {
   const raw = process.env.PLATFORM_ENCRYPTION_KEY || process.env.JWT_SECRET || 'aura-fx-enc-key-pad-to-32chars!!';
@@ -43,24 +56,50 @@ function httpsGet(hostname, path, headers = {}, timeoutMs = 15000) {
   });
 }
 
-// ── Normalise a raw trade into a unified shape ─────────────────────────────
-function normaliseTrade(raw, platform) {
+// ── Normalise a raw trade into a unified shape (legacy MetaAPI / exchanges) ─
+function normaliseTrade(raw, platformId) {
+  const sym = raw.symbol || raw.instrument || raw.pair || raw.s || '—';
+  const openRaw = raw.openTime || raw.time || raw.transactTime || raw.createdTime || null;
+  const closeRaw = raw.closeTime || raw.updateTime || null;
+  const openTime = normalizeTimeValue(openRaw) || openRaw;
+  const closeTime = normalizeTimeValue(closeRaw) || closeRaw;
+  const baseId = raw.id ?? raw.orderId ?? raw.ticket ?? raw.dealId;
+  const stableId =
+    baseId != null && String(baseId).trim() !== ''
+      ? String(baseId).trim()
+      : `gen_${String(sym).replace(/\W/g, '')}_${String(closeTime || openTime || '').slice(0, 24)}`;
+  const platLabel = platformId === 'mt4' ? 'MT4' : platformId === 'mt5' ? 'MT5' : String(platformId || 'MT');
+  const slRaw = raw.stopLoss ?? raw.sl;
+  const tpRaw = raw.takeProfit ?? raw.tp;
+  const slNum = slRaw != null && slRaw !== '' ? parseFloat(slRaw) : NaN;
+  const tpNum = tpRaw != null && tpRaw !== '' ? parseFloat(tpRaw) : NaN;
+  const gross = parseFloat(raw.profit || raw.realizedPnl || raw.pnl || raw.realized_pnl || 0) || 0;
+  const commission = parseFloat(raw.commission || raw.fee || 0) || 0;
+  const swap = parseFloat(raw.swap || 0) || 0;
+  const netPnl = rollupNetPnl(raw, gross, commission, swap);
   return {
-    id: raw.id || raw.orderId || raw.ticket || String(Math.random()),
-    pair: raw.symbol || raw.instrument || raw.pair || raw.s || '—',
+    id: stableId,
+    pair: sym,
+    tradeStatus: 'closed',
     direction: raw.type === 0 || raw.side === 'BUY' || raw.positionType === 'long' ? 'buy' : 'sell',
-    pnl: parseFloat(raw.profit || raw.realizedPnl || raw.pnl || raw.realized_pnl || 0),
-    volume: parseFloat(raw.volume || raw.qty || raw.executedQty || raw.size || 0),
-    entryPrice: parseFloat(raw.entryPrice || raw.price || raw.openPrice || 0),
-    closePrice: parseFloat(raw.closePrice || raw.exitPrice || raw.avgPrice || 0),
-    openTime: raw.openTime || raw.time || raw.transactTime || raw.createdTime || null,
-    closeTime: raw.closeTime || raw.updateTime || null,
-    commission: parseFloat(raw.commission || raw.fee || 0),
-    swap: parseFloat(raw.swap || 0),
+    pnl: netPnl,
+    grossPnl: gross,
+    netPnl,
+    volume: parseFloat(raw.volume || raw.qty || raw.executedQty || raw.size || raw.lots || 0),
+    entryPrice: parseFloat(raw.entryPrice || raw.price || raw.openPrice || raw.price_open || 0),
+    closePrice: parseFloat(raw.closePrice || raw.exitPrice || raw.avgPrice || raw.price_current || 0),
+    openTime,
+    closeTime,
+    commission,
+    swap,
+    stopLoss: Number.isFinite(slNum) && slNum !== 0 ? slNum : undefined,
+    takeProfit: Number.isFinite(tpNum) && tpNum !== 0 ? tpNum : undefined,
+    sl: Number.isFinite(slNum) && slNum !== 0 ? slNum : undefined,
+    tp: Number.isFinite(tpNum) && tpNum !== 0 ? tpNum : undefined,
     rMultiple: raw.rMultiple || null,
-    session: detectSession(raw.openTime || raw.time),
-    platform,
-    created_at: raw.closeTime || raw.openTime || raw.time || new Date().toISOString(),
+    session: detectSession(openRaw || closeRaw),
+    platform: platLabel,
+    created_at: closeTime || openTime || new Date().toISOString(),
   };
 }
 
@@ -70,7 +109,7 @@ function detectSession(timeVal) {
   if (h >= 0 && h < 8) return 'Asian';
   if (h >= 7 && h < 12) return 'London';
   if (h >= 12 && h < 17) return 'New York';
-  if (h >= 17 && h < 21) return 'NY/London Close';
+  if (h >= 17 && h < 21) return 'NY Close';
   return 'Asian';
 }
 
@@ -87,7 +126,7 @@ function normalizeTimeValue(value) {
 }
 
 // ── MetaAPI history ────────────────────────────────────────────────────────
-async function fetchMetaApiHistory(creds, days) {
+async function fetchMetaApiHistory(creds, days, platformId = 'mt5') {
   const endTime = new Date();
   const startTime = new Date(endTime - days * 86400 * 1000);
   const start = startTime.toISOString();
@@ -118,7 +157,7 @@ async function fetchMetaApiHistory(creds, days) {
       openTime: d.time,
       commission: d.commission,
       swap: d.swap,
-    }, 'MT5'));
+    }, platformId));
 
   return { ok: true, trades };
 }
@@ -202,25 +241,58 @@ async function fetchHistoryForPlatform(platformId, creds, days) {
     case 'mt5':
     case 'mt4':
       if (hasMtBridgeCredentials(creds)) {
-        const result = await getPositions(creds);
-        if (!result.ok) return { ok: false, error: result.error };
-        // Bridge exposes open positions; map into the expected trade-like shape.
-        const trades = result.trades.map((p, idx) => normaliseTrade({
-          id: p.ticket || p.identifier || `pos_${idx}`,
-          symbol: p.symbol,
-          type: Number(p.type) === 0 ? 0 : 1,
-          profit: p.profit,
-          volume: p.volume || p.lots,
-          entryPrice: p.price_open || p.priceOpen || p.price,
-          closePrice: p.price_current || p.priceCurrent || p.closePrice || 0,
-          openTime: normalizeTimeValue(p.time || p.time_msc || p.openTime),
-          closeTime: normalizeTimeValue(p.time_update || p.timeUpdate || p.closeTime),
-          commission: p.commission || 0,
-          swap: p.swap || 0,
-        }, 'MT5'));
-        return { ok: true, trades };
+        const result = await getPositions(creds, platformId, { days });
+        if (!result.ok) return { ok: false, error: result.error, code: result.code };
+        const rawTrades = Array.isArray(result.trades) ? result.trades : [];
+        const inputRows = rawTrades.length;
+        const netPnlBreakdown = {
+          explicit_net: 0,
+          gross_includes_fees: 0,
+          rollup_commission_swap: 0,
+        };
+        const mapped = [];
+        let discardedRows = 0;
+        for (let i = 0; i < rawTrades.length; i++) {
+          const p = rawTrades[i];
+          try {
+            const hasSym = !!(p && (p.symbol || p.instrument || p.pair || p.s));
+            if (!hasSym) {
+              discardedRows++;
+              continue;
+            }
+            const row = normalizeMtRow(p, platformId, i, netPnlBreakdown);
+            const pair = String(row.pair || '').trim();
+            if (!pair || pair === '—') {
+              discardedRows++;
+              continue;
+            }
+            mapped.push(row);
+          } catch (_) {
+            discardedRows++;
+          }
+        }
+        const windowed = filterTradesByDays(mapped, days);
+        const trades = dedupeNormalizedTrades(windowed);
+        let openCount = 0;
+        let closedCount = 0;
+        for (let j = 0; j < trades.length; j++) {
+          if (trades[j].tradeStatus === 'open') openCount++;
+          else closedCount++;
+        }
+        return {
+          ok: true,
+          trades,
+          mtDiagnostics: {
+            normalizedRowCount: inputRows,
+            validAfterNormalize: mapped.length,
+            discardedRows,
+            openCount,
+            closedCount,
+            netPnlBreakdown,
+          },
+        };
       }
-      return fetchMetaApiHistory(creds, days);
+      return fetchMetaApiHistory(creds, days, platformId);
     case 'binance':
       return fetchBinanceHistory(creds, days);
     case 'bybit':
@@ -259,13 +331,71 @@ module.exports = async (req, res) => {
 
   const result = await fetchHistoryForPlatform(platformId, creds, days);
 
-  if (!result.ok) return res.status(502).json({ success: false, error: result.error });
+  if (!result.ok) {
+    safeMtLog('history_live_failed', { platformId, code: result.code || null });
+    const stale = await loadCachedTradesForRange(decoded.id, platformId, days);
+    if (stale.length) {
+      let openCount = 0;
+      let closedCount = 0;
+      for (let i = 0; i < stale.length; i++) {
+        if (stale[i].tradeStatus === 'open') openCount++;
+        else closedCount++;
+      }
+      const body = {
+        success: true,
+        trades: stale,
+        count: stale.length,
+        platformId,
+        days,
+        stale: true,
+        dataSource: 'cache',
+        cacheServedStale: true,
+      };
+      if (isAuraDiagnosticsEnabled()) {
+        body.diagnostics = buildHistoryDiagnostics({
+          dataSource: 'cache',
+          stale: true,
+          normalizedRowCount: stale.length,
+          validTradeRows: stale.length,
+          discardedRows: 0,
+          openCount,
+          closedCount,
+          netPnlBreakdown: {},
+        });
+      }
+      return res.status(200).json(body);
+    }
+    return res.status(502).json({
+      success: false,
+      error: publicHistoryError(result.code, result.error),
+      code: result.code || null,
+    });
+  }
 
-  return res.status(200).json({
+  await upsertTradeCacheRows(decoded.id, platformId, result.trades);
+
+  const body = {
     success: true,
     trades: result.trades,
     count: result.trades.length,
     platformId,
     days,
-  });
+    stale: false,
+    dataSource: 'live',
+    cacheServedStale: false,
+  };
+  if (isAuraDiagnosticsEnabled() && result.mtDiagnostics) {
+    body.diagnostics = buildHistoryDiagnostics({
+      dataSource: 'live',
+      stale: false,
+      normalizedRowCount: result.mtDiagnostics.normalizedRowCount,
+      validTradeRows: result.trades.length,
+      discardedRows: result.mtDiagnostics.discardedRows,
+      openCount: result.mtDiagnostics.openCount,
+      closedCount: result.mtDiagnostics.closedCount,
+      netPnlBreakdown: result.mtDiagnostics.netPnlBreakdown,
+    });
+  }
+
+  return res.status(200).json(body);
 };

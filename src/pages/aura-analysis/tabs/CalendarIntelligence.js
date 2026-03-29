@@ -67,7 +67,7 @@ export default function CalendarIntelligence() {
           title={needsConnection ? 'Connect to fill your calendar' : 'No trades in this period'}
           description={
             needsConnection
-              ? 'Sync MT5 to colour daily P/L and see which days you trade best.'
+              ? 'Connect MetaTrader from the Connection Hub to colour daily P/L and see which days you trade best.'
               : 'Calendar insights appear when closed trades exist in the selected history window.'
           }
         />

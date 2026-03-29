@@ -5,9 +5,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/aura-analysis/AuraShared.css';
 
-// MT5 Logo SVG Component
-const MT5LogoIcon = ({ variant = 'default' }) => {
-  // Modern MT5-inspired logo with chart elements
+// MetaTrader-style mark (shared MT4/MT5); chart artwork + “MT” initials only — no platform version in text.
+const MetaTraderLogoIcon = ({ variant = 'default' }) => {
+  // Chart-forward mark with bottom initials
   if (variant === 'trading') {
     return (
       <svg 
@@ -34,9 +34,8 @@ const MT5LogoIcon = ({ variant = 'default' }) => {
         {/* Trend line */}
         <polyline points="15,70 25,55 38,65 51,48 64,60 75,45 85,55" className="mt5-chart-line" strokeWidth="2" />
         
-        {/* MT5 Text */}
-        <text x="50" y="88" textAnchor="middle" fill="#eaa960" fontSize="10" fontWeight="bold" letterSpacing="1">
-          MT5
+        <text x="50" y="88" textAnchor="middle" fill="#eaa960" fontSize="10" fontWeight="bold" letterSpacing="0.18em">
+          MT
         </text>
         
         {/* Gradients */}
@@ -50,7 +49,7 @@ const MT5LogoIcon = ({ variant = 'default' }) => {
     );
   }
   
-  // Clean, minimal MT5 logo with M and 5 stylized
+  // Minimal: chart-peak “M” + “T” initials (same footprint as prior M+5 mark)
   if (variant === 'minimal') {
     return (
       <svg 
@@ -71,11 +70,12 @@ const MT5LogoIcon = ({ variant = 'default' }) => {
           fill="none"
         />
         
-        {/* 5 digit with trading flair */}
-        <path 
-          d="M75 58 Q78 52 78 48 Q78 42 72 42 Q68 42 66 45 Q64 48 64 52 Q64 56 66 59 Q68 62 72 62 Q76 62 78 58" 
-          stroke="url(#grad-gold)" 
-          strokeWidth="2.5" 
+        {/* T initial — matches stroke weight of M leg */}
+        <path
+          d="M66 38 L74 38 M70 38 L70 60"
+          stroke="url(#grad-gold)"
+          strokeWidth="2.5"
+          strokeLinecap="round"
           fill="none"
         />
         
@@ -97,7 +97,7 @@ const MT5LogoIcon = ({ variant = 'default' }) => {
     );
   }
   
-  // Default: Bold MT5 logo with chart bar elements
+  // Default: hex frame + MT initials + bar accents (unchanged geometry)
   return (
     <svg 
       className="aa-mt5-svg" 
@@ -113,9 +113,8 @@ const MT5LogoIcon = ({ variant = 'default' }) => {
         fill="url(#grad-bg)"
       />
       
-      {/* MT5 Text with modern font */}
-      <text x="50" y="55" textAnchor="middle" fill="url(#grad-gold)" fontSize="20" fontWeight="bold" fontFamily="monospace">
-        MT5
+      <text x="50" y="55" textAnchor="middle" fill="url(#grad-gold)" fontSize="20" fontWeight="bold" fontFamily="monospace" letterSpacing="0.2em">
+        MT
       </text>
       
       {/* Trading bars (candlesticks) */}
@@ -143,27 +142,27 @@ const MT5LogoIcon = ({ variant = 'default' }) => {
 
 /**
  * @param {'connect' | 'data'} variant
- *   connect — no platform / account; primary CTA to Connection Hub
- *   data    — connected but no trades in range; softer messaging
+ *   connect — no MetaTrader link; primary CTA to Connection Hub
+ *   data    — linked but no trades in range; softer messaging
  */
 export default function AuraAnalysisEmptyState({
-  icon = 'mt5',  // Changed default from 'fa-plug' to 'mt5'
+  icon = 'mt5',
   title,
   description,
   variant = 'connect',
 }) {
   const isConnect = variant === 'connect';
   
-  // Render custom MT5 logo or fallback to FontAwesome
+  // Branded chart icon (MetaTrader mark) or FontAwesome fallback
   const renderIcon = () => {
     if (icon === 'mt5') {
-      return <MT5LogoIcon variant="trading" />;
+      return <MetaTraderLogoIcon variant="trading" />;
     }
     if (icon === 'mt5-minimal') {
-      return <MT5LogoIcon variant="minimal" />;
+      return <MetaTraderLogoIcon variant="minimal" />;
     }
     if (icon === 'mt5-bold') {
-      return <MT5LogoIcon variant="default" />;
+      return <MetaTraderLogoIcon variant="default" />;
     }
     // Fallback to FontAwesome icon
     return <i className={`fas ${icon}`} />;
@@ -181,7 +180,7 @@ export default function AuraAnalysisEmptyState({
           {isConnect ? (
             <>
               <Link to="/aura-analysis/ai" className="aa-empty-state-cta">
-                Connect MT5 Account
+                Connect MetaTrader account
               </Link>
               <ul className="aa-empty-state-benefits">
                 <li>Live balance, equity, and margin</li>

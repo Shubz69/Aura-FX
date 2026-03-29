@@ -119,6 +119,15 @@ function LoadingSkeleton() {
   );
 }
 
+function metaTraderLine(account, activePlatformId) {
+  const p = String(account?.platform || '');
+  if (/^MT4\b/i.test(p)) return 'MetaTrader 4';
+  if (/^MT5\b/i.test(p)) return 'MetaTrader 5';
+  if (activePlatformId === 'mt4') return 'MetaTrader 4';
+  if (activePlatformId === 'mt5') return 'MetaTrader 5';
+  return 'MetaTrader';
+}
+
 /* ── Main ─────────────────────────────────────────────────── */
 export default function OverviewDashboard() {
   const { analytics, account, trades, loading, error, activePlatformId, connections } = useAuraAnalysis();
@@ -165,10 +174,10 @@ export default function OverviewDashboard() {
         <AuraAnalysisEmptyState
           icon="mt5"
           variant={needsConnection ? 'connect' : 'data'}
-          title={needsConnection ? 'Connect MT5 to unlock your dashboard' : 'No account data yet'}
+          title={needsConnection ? 'Connect MetaTrader to unlock your dashboard' : 'No account data yet'}
           description={
             needsConnection
-              ? 'Link your MetaTrader 5 account from the Connection Hub to sync balance, trades, and analytics.'
+              ? 'Link MetaTrader 4 or 5 from the Connection Hub using read-only investor access to load balance, trades, and analytics.'
               : 'We could not load account details. Try refreshing, or reconnect from the Connection Hub.'
           }
         />
@@ -189,8 +198,8 @@ export default function OverviewDashboard() {
               <i className="fas fa-chart-line" style={{ color: '#fcd9a8' }} />
             </div>
             <div>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>{account.name || 'MT5 Account'}</div>
-              <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>{account.server || account.platform || 'MetaTrader 5'}{account.leverage ? ` · 1:${account.leverage}` : ''}</div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>{account.name || 'Trading account'}</div>
+              <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>{account.server || metaTraderLine(account, activePlatformId)}{account.leverage ? ` · 1:${account.leverage}` : ''}</div>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginLeft: 'auto' }}>

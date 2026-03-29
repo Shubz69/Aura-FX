@@ -7,8 +7,9 @@ const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
-const { hasMtBridgeCredentials, syncAccount } = require('./terminalSyncBridge');
+const { hasMtBridgeCredentials, syncAccount } = require('./mtSyncProvider');
 const { setAuraCorsHeaders, safeJsonParse } = require('./cors');
+const { publicAccountLiveError, safeMtLog, isAuraDiagnosticsEnabled } = require('./auraProductionUtils');
 
 function getEncKey() {
   const raw = process.env.PLATFORM_ENCRYPTION_KEY || process.env.JWT_SECRET || 'aura-fx-enc-key-pad-to-32chars!!';
@@ -45,7 +46,7 @@ function httpsGet(hostname, path, headers = {}, timeoutMs = 12000) {
 
 // ── Platform fetchers ──────────────────────────────────────────────────────
 
-async function fetchMetaApiAccount(creds) {
+async function fetchMetaApiAccount(creds, platformId = 'mt5') {
   const { statusCode, body, error } = await httpsGet(
     'mt-client-api-v1.london.agiliumtrade.ai',
     `/users/current/accounts/${encodeURIComponent(creds.accountId)}/account-information`,
@@ -54,6 +55,14 @@ async function fetchMetaApiAccount(creds) {
   if (error || statusCode !== 200) {
     return { ok: false, error: error || body?.message || `MetaAPI ${statusCode}` };
   }
+  const plat =
+    platformId === 'mt4'
+      ? 'MT4'
+      : platformId === 'mt5'
+        ? 'MT5'
+        : String(creds.accountId || '').toUpperCase().startsWith('MT4')
+          ? 'MT4'
+          : 'MT5';
   return {
     ok: true,
     data: {
@@ -66,8 +75,9 @@ async function fetchMetaApiAccount(creds) {
       name: body.name || '',
       server: body.broker || body.server || '',
       leverage: body.leverage || 0,
-      platform: 'MT5',
+      platform: plat,
       tradeAllowed: body.tradeAllowed,
+      providerSource: 'metaapi',
     },
   };
 }
@@ -136,11 +146,11 @@ async function fetchForPlatform(platformId, creds) {
     case 'mt5':
     case 'mt4':
       if (hasMtBridgeCredentials(creds)) {
-        const result = await syncAccount(creds);
-        if (!result.ok) return { ok: false, error: result.error };
+        const result = await syncAccount(creds, platformId);
+        if (!result.ok) return { ok: false, error: result.error, code: result.code };
         return { ok: true, data: result.accountInfo };
       }
-      return fetchMetaApiAccount(creds);
+      return fetchMetaApiAccount(creds, platformId);
     case 'binance':
       return fetchBinanceAccount(creds);
     case 'bybit':
@@ -179,16 +189,25 @@ module.exports = async (req, res) => {
   const result = await fetchForPlatform(platformId, creds);
 
   if (!result.ok) {
-    // Return cached account info as fallback
+    safeMtLog('account_live_fetch_failed', { platformId, code: result.code || null });
     const cached = safeJsonParse(rows[0].account_info, null);
     if (cached) {
-      return res.status(200).json({
+      const body = {
         success: true,
         account: cached,
         stale: true,
-      });
+        dataSource: 'cache',
+      };
+      if (isAuraDiagnosticsEnabled()) {
+        body.diagnostics = { context: 'platform-account', dataSource: 'cache', stale: true };
+      }
+      return res.status(200).json(body);
     }
-    return res.status(502).json({ success: false, error: result.error });
+    return res.status(502).json({
+      success: false,
+      error: publicAccountLiveError(result.code, result.error),
+      code: result.code || null,
+    });
   }
 
   // Update cached account info + last_sync
@@ -198,5 +217,10 @@ module.exports = async (req, res) => {
     [JSON.stringify(result.data), decoded.id, platformId]
   );
 
-  return res.status(200).json({ success: true, account: result.data });
+  return res.status(200).json({
+    success: true,
+    account: result.data,
+    stale: false,
+    dataSource: 'live',
+  });
 };

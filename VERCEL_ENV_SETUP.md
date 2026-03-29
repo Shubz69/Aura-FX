@@ -45,7 +45,14 @@ Your OpenAI API key needs to be added to Vercel environment variables for the Pr
    - Click "Redeploy"
    - Or push a new commit to trigger auto-deploy
 
-7. **All Markets / live snapshot (recommended for accurate spot FX & metals):**
+7. **Aura Analysis — MetaTrader investor-password sync (REQUIRED for MT4/MT5 connect & analytics in production):**
+   - **`AURA_MT_SYNC_URL`** — Base URL of the hosted worker (must expose `POST /api/v1/sync` and `POST /api/v1/positions`). Legacy env names also work: `TERMINALSYNC_WORKER_URL`, `PYTHON_WORKER_URL`.
+   - **`AURA_MT_SYNC_SECRET`** — Shared secret; the API sends it as header `x-worker-secret` on every worker request. Legacy: `TERMINALSYNC_WORKER_SECRET`, `WORKER_SECRET`.
+   - **`PLATFORM_ENCRYPTION_KEY`** — **Set in production** for Aura platform credentials (AES-256-GCM). Use a long random value (e.g. `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`). If omitted, the code derives the key from **`JWT_SECRET`**; if **both** are omitted, a fixed development default is used (insecure — never ship that way).
+   - **`JWT_SECRET`** — Already required above for auth; keep it set. Prefer also setting **`PLATFORM_ENCRYPTION_KEY`** so MT credential encryption is not tied to the JWT signing secret.
+   - **`AURA_ANALYSIS_DIAGNOSTICS`** — Do **not** set to `1` in production (adds diagnostic payloads and extra server logging for the MT path). Use only in dev/preview when debugging.
+
+8. **All Markets / live snapshot (recommended for accurate spot FX & metals):**
    - **`FINNHUB_API_KEY`** — Primary source for OANDA-style spot forex and gold/silver in `/api/markets/snapshot` and the All Markets modal. Without it, the app falls back to Yahoo/Stooq, which can be delayed or use futures symbols for metals.
    - **Optional:** `TWELVE_DATA_API_KEY`, `POLYGON_API_KEY`, `COINMARKETCAP_API_KEY` — Extra redundancy for stocks, indices, and crypto. See [`.env.example`](.env.example) for descriptions.
    - After setting keys, redeploy and open **View All Markets** — prices should show provider-backed quotes (not “Live quote unavailable” placeholders).
@@ -65,6 +72,7 @@ Your OpenAI API key needs to be added to Vercel environment variables for the Pr
 - ⚠️ **MUST ADD TO VERCEL** for production to work
 - ⚠️ Never commit API keys to Git (already protected)
 - ✅ Set **JWT_SECRET** in Vercel (min 16 chars) to remove auth warnings and secure token signing
+- ✅ For Aura MT4/MT5: set **AURA_MT_SYNC_URL**, **AURA_MT_SYNC_SECRET**, and **PLATFORM_ENCRYPTION_KEY** (see step 7 above); keep **AURA_ANALYSIS_DIAGNOSTICS** unset in production
 
 ## Current Status:
 

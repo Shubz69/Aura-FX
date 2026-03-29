@@ -7,6 +7,9 @@ import CosmicBackground from '../../components/CosmicBackground';
 import AuraEnterTransition from '../../components/aura-analysis/AuraEnterTransition';
 import '../../styles/aura-analysis/ConnectionHub.css';
 
+const MT_CONNECT_HELPER =
+  'Uses read-only investor credentials for secure analytics access. Enter your account login, investor password, and broker server. Used for analytics and performance insights only — no trading or account changes.';
+
 // ── Credential Modal ────────────────────────────────────────────────────────
 function ConnectModal({ platform, onClose, onSubmit, connecting, error }) {
   const [fields, setFields] = useState({});
@@ -18,22 +21,25 @@ function ConnectModal({ platform, onClose, onSubmit, connecting, error }) {
     onSubmit(fields);
   };
 
+  const isMeta = platform.id === 'mt5' || platform.id === 'mt4';
+  const submitLabel = platform.id === 'mt5' ? 'Connect MetaTrader 5' : platform.id === 'mt4' ? 'Connect MetaTrader 4' : `Connect ${platform.name}`;
+
   return (
     <div className="chub-modal-overlay" onClick={onClose}>
       <div className="chub-modal" onClick={(e) => e.stopPropagation()}>
         <div className="chub-modal-header">
           <span className="chub-modal-icon">{PLATFORM_ICONS[platform.id] || '📊'}</span>
           <div>
-            <div className="chub-modal-title">Connect {platform.name}</div>
-            <div className="chub-modal-sub">Enter your credentials — encrypted before storage</div>
+            <div className="chub-modal-title">{platform.id === 'mt5' ? 'Connect MetaTrader 5' : platform.id === 'mt4' ? 'Connect MetaTrader 4' : `Connect ${platform.name}`}</div>
+            <div className="chub-modal-sub">Read-only investor-password analytics connection</div>
           </div>
           <button className="chub-modal-close" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
-        {(platform.id === 'mt5' || platform.id === 'mt4') && (
+        {isMeta && (
           <div className="chub-modal-info">
             <i className="fas fa-info-circle" />
-            <span>Uses the secure <strong>MT bridge</strong>. Enter your broker <strong>login / password / server</strong> to sync your account.</span>
+            <span>{MT_CONNECT_HELPER}</span>
           </div>
         )}
 
@@ -78,14 +84,14 @@ function ConnectModal({ platform, onClose, onSubmit, connecting, error }) {
             {connecting ? (
               <><i className="fas fa-spinner fa-spin" /> Connecting…</>
             ) : (
-              <><i className="fas fa-link" /> Connect {platform.name}</>
+              <><i className="fas fa-link" /> {submitLabel}</>
             )}
           </button>
         </form>
 
         <div className="chub-modal-security">
           <i className="fas fa-lock" />
-          <span>Credentials are AES-256-GCM encrypted and never exposed to the client</span>
+          <span>Credentials are encrypted and used only for read-only analytics connection.</span>
         </div>
       </div>
     </div>
@@ -95,26 +101,19 @@ function ConnectModal({ platform, onClose, onSubmit, connecting, error }) {
 const PLATFORM_ICONS = {
   mt5: '📊',
   mt4: '📈',
-  ctrader: '🖥️',
-  dxtrade: '💹',
-  tradovate: '📉',
-  binance: '🟡',
-  bybit: '⚫',
-  kraken: '🔵',
-  coinbase: '🔵',
 };
 
 const PLATFORM_COLORS = {
   mt5: '#8b5cf6',
   mt4: '#6366f1',
-  ctrader: '#3b82f6',
-  dxtrade: '#10b981',
-  tradovate: '#f59e0b',
-  binance: '#fbbf24',
-  bybit: '#6b7280',
-  kraken: '#4f46e5',
-  coinbase: '#2563eb',
 };
+
+/** Disconnected-card feature lines (MT4 & MT5). */
+const META_CARD_FEATURES = [
+  { icon: 'fa-eye', text: 'Read-only investor access' },
+  { icon: 'fa-lock', text: 'Encrypted credentials' },
+  { icon: 'fa-chart-line', text: 'Analytics and performance insights' },
+];
 
 // Particles component for background effect
 const Particles = () => {
@@ -161,7 +160,7 @@ export default function ConnectionHub() {
   const connectedCount = connections.length;
 
   const openModal = (platform) => {
-    if (platform?.id !== 'mt5') return;
+    if (platform?.id !== 'mt5' && platform?.id !== 'mt4') return;
     setConnectError('');
     setModalPlatform(platform);
   };
@@ -224,9 +223,7 @@ export default function ConnectionHub() {
         <header className="connection-hub-header">
           <h1 className="connection-hub-title">Connection Hub</h1>
           <p className="connection-hub-sub">
-            Securely connect your trading platforms to unlock unified analytics,
-            real-time sync, and AI-powered insights. Credentials are AES-256-GCM
-            encrypted — never stored in plain text.
+            Securely connect your MetaTrader account using read-only investor access to unlock performance analytics, account insights, and AI-powered reporting. Credentials are encrypted and never exposed in plain text.
           </p>
         </header>
 
@@ -235,7 +232,7 @@ export default function ConnectionHub() {
           <div className="connection-hub-stats-strip">
             <div className="hub-stat">
               <span className="hub-stat-number">{connectedCount}</span>
-              <span className="hub-stat-label">Connected Platforms</span>
+              <span className="hub-stat-label">Connected accounts</span>
             </div>
             <div className="hub-stat">
               <span className="hub-stat-number">
@@ -248,20 +245,22 @@ export default function ConnectionHub() {
             </div>
             <div className="hub-stat">
               <span className="hub-stat-number">{connectedCount}</span>
-              <span className="hub-stat-label">Live Connections</span>
+              <span className="hub-stat-label">Active connections</span>
             </div>
           </div>
         )}
 
         <div className="connection-hub-section-label">
-          <span>Available Platforms</span>
+          <span>MetaTrader</span>
         </div>
 
         <section className="connection-hub-grid">
           {platforms.map((p) => {
             const conn = getConnection(p.id);
             const isConn = !!conn;
-            const isMt5 = p.id === 'mt5';
+            const isMeta = p.id === 'mt5' || p.id === 'mt4';
+            const connectCta =
+              p.id === 'mt5' ? 'Connect MetaTrader 5' : p.id === 'mt4' ? 'Connect MetaTrader 4' : 'Connect Platform';
             const isSuccess = successPlatform === p.id;
             const isDisconnecting = disconnecting === p.id;
             const info = conn?.accountInfo || {};
@@ -325,41 +324,36 @@ export default function ConnectionHub() {
                   <>
                     <div className="connection-card-status">
                       <span className="status-dot off" />
-                      <span>{isMt5 ? 'Not connected' : 'Coming soon'}</span>
-                      {isMt5 && hoveredCard === p.id && (
+                      <span>{isMeta ? 'Available for connection' : 'Not available'}</span>
+                      {isMeta && hoveredCard === p.id && (
                         <span style={{ marginLeft: 'auto', fontSize: '0.7rem', opacity: 0.6 }}>
                           Click to connect
                         </span>
                       )}
                     </div>
-                    
+
                     <div className="connection-card-meta">
-                      <span>
-                        <i className="fas fa-info-circle" />
-                        {isMt5 ? `Click connect to link ${p.name}` : `${p.name} support is coming soon`}
-                      </span>
-                      <span>
-                        <i className="fas fa-shield-alt" />
-                        {isMt5 ? 'Encrypted connection' : 'Integration in progress'}
-                      </span>
-                      <span>
-                        <i className="fas fa-bolt" />
-                        {isMt5 ? 'Real-time sync ready' : 'MT5 only for now'}
-                      </span>
+                      {isMeta
+                        ? META_CARD_FEATURES.map((row) => (
+                            <span key={row.text}>
+                              <i className={`fas ${row.icon}`} />
+                              {row.text}
+                            </span>
+                          ))
+                        : null}
                     </div>
-                    
+
                     <button
                       type="button"
                       className={`connection-card-connect${isSuccess ? ' success' : ''}`}
-                      disabled={!isMt5}
+                      disabled={!isMeta}
                       onClick={() => openModal(p)}
                     >
-                      {isSuccess
-                        ? <><i className="fas fa-check connection-success-icon" /> Connected!</>
-                        : isMt5
-                          ? <><i className="fas fa-link" style={{ marginRight: 8 }} />Connect Platform</>
-                          : <>Coming soon</>
-                      }
+                      {isSuccess ? (
+                        <><i className="fas fa-check connection-success-icon" /> Connected!</>
+                      ) : (
+                        <><i className="fas fa-link" style={{ marginRight: 8 }} />{connectCta}</>
+                      )}
                     </button>
                   </>
                 )}
@@ -372,7 +366,7 @@ export default function ConnectionHub() {
           {superAdmin && connectedCount === 0 && (
             <div className="connection-hub-bypass-note">
               <i className="fas fa-crown" />
-              <span>Super Admin: Test mode enabled — bypass connection requirement</span>
+              <span>Super Admin: test mode — bypass MetaTrader connection requirement</span>
             </div>
           )}
           
@@ -383,14 +377,14 @@ export default function ConnectionHub() {
             disabled={!canEnter}
           >
             <i className="fas fa-rocket" style={{ marginRight: 12 }} />
-            Enter MT5 Dashboard
+            Enter Dashboard
             <i className="fas fa-arrow-right" style={{ marginLeft: 12 }} />
           </button>
           
           {!canEnter && !superAdmin && (
             <p className="connection-hub-enter-hint">
               <i className="fas fa-lock" />
-              Connect at least one platform to unlock analytics
+              Connect a MetaTrader account to unlock analytics
               <i className="fas fa-chart-bar" style={{ marginLeft: 6 }} />
             </p>
           )}
@@ -398,7 +392,7 @@ export default function ConnectionHub() {
           {canEnter && (
             <p className="connection-hub-enter-hint">
               <i className="fas fa-check-circle" style={{ color: '#10b981' }} />
-              Ready to analyze — {connectedCount} platform{connectedCount !== 1 ? 's' : ''} connected
+              Ready to analyze — {connectedCount} account{connectedCount !== 1 ? 's' : ''} connected
             </p>
           )}
         </section>

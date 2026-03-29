@@ -121,7 +121,7 @@ function AuraDashboardInner() {
             <span className="aura-db-brand-name">AURA TERMINAL</span>
           </Link>
 
-          <nav className="aura-dashboard-tabs" aria-label="MT5 Dashboard sections">
+          <nav className="aura-dashboard-tabs" aria-label="Aura Analysis dashboard sections">
             {TABS.map(({ path, label, icon }) => (
               <NavLink
                 key={path}

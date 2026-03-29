@@ -1,6 +1,6 @@
 /**
  * AuraAnalysisContext — Single source of truth for all Aura Analysis data.
- * Manages MT5 account data, trade history, analytics, filters, and 10-min auto-refresh.
+ * Manages linked MetaTrader (MT4/MT5) account data, trade history, analytics, filters, and 10-min auto-refresh.
  */
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Api from '../services/Api';
@@ -57,6 +57,14 @@ export function AuraAnalysisProvider({ children }) {
   const [error,       setError]       = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [refreshing,  setRefreshing]  = useState(false);
+  /** True when last successful history response used DB cache (worker failed). */
+  const [historyStale, setHistoryStale] = useState(false);
+  /** 'live' | 'cache' | null — from platform-history API. */
+  const [historyDataSource, setHistoryDataSource] = useState(null);
+  /** True when last successful account response used cached account_info (live fetch failed). */
+  const [accountStale, setAccountStale] = useState(false);
+  /** 'live' | 'cache' | null — from platform-account API. */
+  const [accountDataSource, setAccountDataSource] = useState(null);
 
   const isFetching = useRef(false);
   const intervalRef = useRef(null);
@@ -71,20 +79,47 @@ export function AuraAnalysisProvider({ children }) {
     else { setLoading(true); setError(null); }
 
     try {
-      const [accRes, histRes] = await Promise.all([
+      const [accSettled, histSettled] = await Promise.allSettled([
         Api.getAuraPlatformAccount(activePlatformId),
         Api.getAuraPlatformHistory(activePlatformId, daysFilter),
       ]);
 
-      if (accRes.data?.success || accRes.data?.account) {
-        setAccount(accRes.data.account || null);
+      let gotAccount = false;
+      let gotTrades = false;
+
+      if (accSettled.status === 'fulfilled') {
+        const accRes = accSettled.value;
+        if (accRes?.data?.success || accRes?.data?.account) {
+          setAccount(accRes.data.account || null);
+          setAccountStale(!!accRes.data.stale);
+          setAccountDataSource(
+            accRes.data.dataSource === 'cache' ? 'cache' : accRes.data.dataSource === 'live' ? 'live' : null
+          );
+          gotAccount = true;
+        }
       }
-      const trades = histRes.data?.trades;
-      if (Array.isArray(trades)) {
-        setRawTrades(trades);
+
+      if (histSettled.status === 'fulfilled') {
+        const payload = histSettled.value?.data;
+        const trades = payload?.trades;
+        if (Array.isArray(trades)) {
+          setRawTrades(trades);
+          gotTrades = true;
+          const fromCache = !!payload?.stale || !!payload?.cacheServedStale;
+          setHistoryStale(fromCache);
+          setHistoryDataSource(payload?.dataSource === 'cache' ? 'cache' : payload?.dataSource === 'live' ? 'live' : null);
+        }
       }
+
       setLastUpdated(new Date());
-      if (!background) setError(null);
+
+      if (!background) {
+        if (!gotAccount && !gotTrades) {
+          setError('Unable to load account data. Check your connection.');
+        } else {
+          setError(null);
+        }
+      }
     } catch {
       if (!background) setError('Unable to load account data. Check your connection.');
     } finally {
@@ -162,6 +197,10 @@ export function AuraAnalysisProvider({ children }) {
     refreshing,
     lastUpdated,
     lastUpdatedStr,
+    historyStale,
+    historyDataSource,
+    accountStale,
+    accountDataSource,
     refresh: () => fetchData(false),
   };
 

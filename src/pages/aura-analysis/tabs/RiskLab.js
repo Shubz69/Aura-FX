@@ -79,8 +79,8 @@ export default function RiskLab() {
           title={needsConnection ? 'Connect to analyse risk' : 'No trades in this period'}
           description={
             needsConnection
-              ? 'Link MT5 to see drawdown, streaks, stop-loss usage, and risk scores.'
-              : 'Risk metrics need closed trades in the selected range. Widen the date filter or sync again.'
+              ? 'Link MetaTrader from the Connection Hub to see drawdown, streaks, stop-loss usage, and risk scores.'
+              : 'Risk metrics need closed trades in the selected range. Widen the date filter or refresh data.'
           }
         />
       </div>

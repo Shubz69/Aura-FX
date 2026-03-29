@@ -1,6 +1,6 @@
 /**
  * Behaviour analytics: Risk Discipline, Rule Adherence, Consistency, Emotional Control.
- * Uses aura_analysis_trades + journal data where available. Extension points for MT5/API.
+ * Uses aura_analysis_trades + journal data where available. Extension points for MetaTrader-sourced data.
  */
 
 /**

@@ -75,7 +75,7 @@ export default function EdgeAnalyzer() {
           title={needsConnection ? 'Connect to surface your edge' : 'No trades in this period'}
           description={
             needsConnection
-              ? 'Connect MT5 to map sessions, symbols, and directions where you win or lose.'
+              ? 'Connect MetaTrader from the Connection Hub to map sessions, symbols, and directions where you win or lose.'
               : 'Edge heatmaps need trades in the selected range. Expand the date window or wait for history.'
           }
         />

@@ -147,7 +147,7 @@ export default function GrowthEngine() {
           title={needsConnection ? 'Connect to track growth' : 'No trades in this period'}
           description={
             needsConnection
-              ? 'Link MT5 to chart growth, returns, and milestone progress against your balance.'
+              ? 'Link MetaTrader from the Connection Hub to chart growth, returns, and milestone progress against your balance.'
               : 'Growth curves and milestones need closed trades in this date range.'
           }
         />
@@ -165,7 +165,7 @@ export default function GrowthEngine() {
       <div className="aa-grid-4" style={{ marginBottom: 16 }}>
         {[
           { label: 'Total Return',    value: fmtPnl(a.totalReturn),           cls: pnlCls(a.totalReturn), sub: `from ${fmtBal(start)}` },
-          { label: 'Return %',        value: fmtPct(a.totalReturnPct) + '%',  cls: a.totalReturnPct >= 0 ? 'aa--green' : 'aa--red', sub: 'overall' },
+          { label: 'Return %',        value: fmtPct(a.totalReturnPct),        cls: a.totalReturnPct >= 0 ? 'aa--green' : 'aa--red', sub: 'overall' },
           { label: 'Best Month',      value: a.bestMonth  ? fmtPnl(a.bestMonth.pnl)  : '—', cls: 'aa--green', sub: a.bestMonth?.month },
           { label: 'Worst Month',     value: a.worstMonth ? fmtPnl(a.worstMonth.pnl) : '—', cls: 'aa--red',   sub: a.worstMonth?.month },
           { label: 'Profitable Mons', value: String(a.profitableMonths),      cls: a.profitableMonths >= 2 ? 'aa--green' : 'aa--muted', sub: 'consecutive' },

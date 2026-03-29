@@ -10,8 +10,9 @@ const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
-const { hasMtBridgeCredentials, syncAccount, BRIDGE_ERROR } = require('./terminalSyncBridge');
+const { hasMtBridgeCredentials, syncAccount, BRIDGE_ERROR } = require('./mtSyncProvider');
 const { setAuraCorsHeaders, safeJsonParse } = require('./cors');
+const { publicConnectError, safeMtLog } = require('./auraProductionUtils');
 
 // ── Encryption helpers ─────────────────────────────────────────────────────
 function safeString(value) {
@@ -33,6 +34,8 @@ function normalizeMtCredentials(credentials = {}) {
     ),
     password: safeString(
       credentials.password ??
+      credentials.investorPassword ??
+      credentials.investor_password ??
       credentials.pass ??
       credentials.passwd
     ),
@@ -76,12 +79,15 @@ function getMissingMtFields(credentials) {
 }
 
 function toConnectDebugSummary(platformId, credentials) {
+  const keys = credentials && typeof credentials === 'object'
+    ? Object.keys(credentials).filter((k) => !/password|pass|token|secret|investor/i.test(k)).slice(0, 12)
+    : [];
   return {
     platformId,
     hasCredentialsObject: !!credentials && typeof credentials === 'object',
-    credentialKeys: credentials && typeof credentials === 'object' ? Object.keys(credentials).slice(0, 12) : [],
+    credentialKeys: keys,
     hasLogin: !!safeString(credentials?.login),
-    hasPassword: !!safeString(credentials?.password),
+    hasInvestorSecret: !!safeString(credentials?.password),
     hasServer: !!safeString(credentials?.server),
     hasMetaAccountId: !!safeString(credentials?.accountId),
     hasMetaToken: !!safeString(credentials?.token),
@@ -173,145 +179,25 @@ async function validateMetaApi(accountId, token) {
   };
 }
 
-async function validateBinance(apiKey, apiSecret) {
-  const ts = Date.now();
-  const qs = `timestamp=${ts}`;
-  const sig = crypto.createHmac('sha256', apiSecret).update(qs).digest('hex');
-  const { statusCode, body, error } = await httpsGet(
-    'api.binance.com',
-    `/api/v3/account?${qs}&signature=${sig}`,
-    { 'X-MBX-APIKEY': apiKey }
-  );
-  if (error) return { ok: false, error };
-  if (statusCode !== 200) return { ok: false, error: body.msg || `Binance error ${statusCode}` };
-  const usdtBalance = (body.balances || []).find(b => b.asset === 'USDT');
-  return {
-    ok: true,
-    accountInfo: {
-      balance: usdtBalance ? parseFloat(usdtBalance.free) + parseFloat(usdtBalance.locked) : 0,
-      currency: 'USDT',
-      platform: 'Binance',
-      canTrade: body.canTrade,
-    },
-  };
-}
-
-async function validateBybit(apiKey, apiSecret) {
-  const ts = Date.now().toString();
-  const recvWindow = '5000';
-  const paramStr = `${ts}${apiKey}${recvWindow}`;
-  const sig = crypto.createHmac('sha256', apiSecret).update(paramStr).digest('hex');
-  const { statusCode, body, error } = await httpsGet(
-    'api.bybit.com',
-    `/v5/account/wallet-balance?accountType=UNIFIED`,
-    {
-      'X-BAPI-API-KEY': apiKey,
-      'X-BAPI-SIGN': sig,
-      'X-BAPI-SIGN-METHOD': 'HMAC_SHA256',
-      'X-BAPI-TIMESTAMP': ts,
-      'X-BAPI-RECV-WINDOW': recvWindow,
-    }
-  );
-  if (error) return { ok: false, error };
-  if (statusCode !== 200 || body.retCode !== 0) {
-    return { ok: false, error: body.retMsg || `Bybit error ${statusCode}` };
-  }
-  const list = body.result?.list?.[0];
-  return {
-    ok: true,
-    accountInfo: {
-      balance: parseFloat(list?.totalWalletBalance || 0),
-      equity: parseFloat(list?.totalEquity || 0),
-      currency: 'USDT',
-      platform: 'Bybit',
-    },
-  };
-}
-
-async function validateKraken(apiKey, apiSecret) {
-  const nonce = Date.now().toString();
-  const postData = `nonce=${nonce}`;
-  const path = '/0/private/Balance';
-  const message = nonce + postData;
-  const secretBuf = Buffer.from(apiSecret, 'base64');
-  const hash = crypto.createHash('sha256').update(message).digest();
-  const hmac = crypto.createHmac('sha512', secretBuf).update(path + hash).digest('base64');
-
-  return new Promise((resolve) => {
-    const req = https.request(
-      {
-        hostname: 'api.kraken.com',
-        path,
-        method: 'POST',
-        headers: {
-          'API-Key': apiKey,
-          'API-Sign': hmac,
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Content-Length': Buffer.byteLength(postData),
-        },
-        timeout: 12000,
-      },
-      (res) => {
-        let data = '';
-        res.on('data', (c) => { data += c; });
-        res.on('end', () => {
-          try {
-            const body = JSON.parse(data);
-            if (body.error && body.error.length > 0) {
-              resolve({ ok: false, error: body.error[0] });
-            } else {
-              const usdBalance = parseFloat(body.result?.ZUSD || body.result?.USD || 0);
-              resolve({ ok: true, accountInfo: { balance: usdBalance, currency: 'USD', platform: 'Kraken' } });
-            }
-          } catch {
-            resolve({ ok: false, error: 'Parse error' });
-          }
-        });
-      }
-    );
-    req.on('error', (e) => resolve({ ok: false, error: e.message }));
-    req.on('timeout', () => { req.destroy(); resolve({ ok: false, error: 'Timeout' }); });
-    req.write(postData);
-    req.end();
-  });
-}
-
-// Platforms not yet implemented with live validation return ok:true with minimal info
-async function validateGeneric(platformId) {
-  return { ok: true, accountInfo: { platform: platformId, status: 'connected', note: 'Manual verification required' } };
-}
-
 async function validateCredentials(platformId, credentials) {
   switch (platformId) {
     case 'mt5':
     case 'mt4': {
-      // Prefer TerminalSyncc bridge credentials when supplied.
       if (hasMtBridgeCredentials(credentials)) {
-        return syncAccount(credentials);
+        return syncAccount(credentials, platformId);
       }
       const { accountId, token } = credentials;
-      if (!accountId || !token) {
-        return { ok: false, error: 'For MT5/MT4 provide login/password/server or MetaAPI accountId/token' };
+      if (!safeString(accountId) || !safeString(token)) {
+        return {
+          ok: false,
+          error: 'Provide account login, investor password, and broker server.',
+          missing: getMissingMtFields(credentials),
+        };
       }
       return validateMetaApi(accountId, token);
     }
-    case 'binance': {
-      const { apiKey, apiSecret } = credentials;
-      if (!apiKey || !apiSecret) return { ok: false, error: 'apiKey and apiSecret required for Binance' };
-      return validateBinance(apiKey, apiSecret);
-    }
-    case 'bybit': {
-      const { apiKey, apiSecret } = credentials;
-      if (!apiKey || !apiSecret) return { ok: false, error: 'apiKey and apiSecret required for Bybit' };
-      return validateBybit(apiKey, apiSecret);
-    }
-    case 'kraken': {
-      const { apiKey, apiSecret } = credentials;
-      if (!apiKey || !apiSecret) return { ok: false, error: 'apiKey and apiSecret required for Kraken' };
-      return validateKraken(apiKey, apiSecret);
-    }
     default:
-      return validateGeneric(platformId);
+      return { ok: false, error: 'Only MetaTrader 4 and 5 are supported for Aura Analysis.' };
   }
 }
 
@@ -377,17 +263,19 @@ module.exports = async (req, res) => {
       console.warn('Aura connect rejected invalid payload', toConnectDebugSummary(platformId, credentials));
       return res.status(400).json({ success: false, error: 'platformId and credentials required' });
     }
-    if ((platformId === 'mt5' || platformId === 'mt4') && !hasMtBridgeCredentials(credentials)) {
+    if (platformId !== 'mt4' && platformId !== 'mt5') {
+      return res.status(400).json({ success: false, error: 'Only MetaTrader 4 and 5 connections are supported.' });
+    }
+    if (!hasMtBridgeCredentials(credentials)) {
       const missing = getMissingMtFields(credentials);
-      // Keep support for MetaAPI fallback, but return explicit field-level feedback for MT bridge payloads.
       if (!safeString(credentials.accountId) || !safeString(credentials.token)) {
         console.warn('Aura connect rejected MT payload', { ...toConnectDebugSummary(platformId, credentials), missing });
         return res.status(400).json({
           success: false,
-          error: 'MT5/MT4 credentials are incomplete',
+          error: 'MetaTrader credentials are incomplete',
           missing,
-          accepted: ['credentials.login', 'credentials.password', 'credentials.server'],
-          fallbackAccepted: ['credentials.accountId', 'credentials.token'],
+          accepted: ['credentials.login', 'credentials.password (investor)', 'credentials.server'],
+          legacyAccepted: ['credentials.accountId', 'credentials.token'],
         });
       }
     }
@@ -396,17 +284,21 @@ module.exports = async (req, res) => {
     try {
       validation = await validateCredentials(platformId, credentials);
     } catch (e) {
-      return res.status(500).json({ success: false, error: 'Validation error: ' + e.message });
+      console.error('Aura connect validation failed:', e?.code || e?.name || 'unknown');
+      return res.status(500).json({ success: false, error: 'Could not validate connection. Please try again.' });
     }
 
     if (!validation.ok) {
-      console.warn('Aura connect validation failed', { ...toConnectDebugSummary(platformId, credentials), reason: validation.error });
+      safeMtLog('connect_validation_failed', { platformId, code: validation.code || null });
       const statusCode = resolveConnectErrorStatus(validation);
       return res.status(statusCode).json({
         success: false,
-        error: validation.error,
+        error: publicConnectError(validation.code, validation.error),
         code: validation.code || null,
-        missing: Array.isArray(validation.missing) ? validation.missing : undefined,
+        missing:
+          validation.code === 'MT5_LOGIN_PASSWORD_SERVER_REQUIRED' && Array.isArray(validation.missing)
+            ? validation.missing
+            : undefined,
       });
     }
 

@@ -80,8 +80,8 @@ export default function PerformanceAnalytics() {
           title={needsConnection ? 'Connect to view performance' : 'No trades in this period'}
           description={
             needsConnection
-              ? 'Sync your MT5 account to unlock win rate, equity trends, and monthly breakdowns.'
-              : 'Nothing matched your filters for this date range yet. Try a wider range or wait for closed trades to sync.'
+              ? 'Connect MetaTrader from the Connection Hub to unlock win rate, equity trends, and monthly breakdowns.'
+              : 'Nothing matched your filters for this date range yet. Try a wider range or refresh after new closed trades.'
           }
         />
       </div>

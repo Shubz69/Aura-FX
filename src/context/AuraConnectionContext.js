@@ -5,16 +5,28 @@ import { useAuth } from './AuthContext';
 
 const AuraConnectionContext = createContext(null);
 
+/** Aura Analysis Connection Hub: MetaTrader 4 & 5 only (read-only investor-password flow). */
 export const PLATFORMS = [
-  { id: 'mt5',       name: 'MetaTrader 5', category: 'MT',       fields: [{ key: 'login', label: 'Account Login', placeholder: 'e.g. 12345678' }, { key: 'password', label: 'Password', placeholder: 'Your MT5 password', secret: true }, { key: 'server', label: 'Broker Server', placeholder: 'e.g. ICMarketsSC-Demo' }] },
-  { id: 'mt4',       name: 'MetaTrader 4', category: 'MT',       fields: [{ key: 'login', label: 'Account Login', placeholder: 'e.g. 12345678' }, { key: 'password', label: 'Password', placeholder: 'Your MT4 password', secret: true }, { key: 'server', label: 'Broker Server', placeholder: 'e.g. ICMarketsSC-Demo' }] },
-  { id: 'ctrader',   name: 'cTrader',      category: 'Platform', fields: [{ key: 'accountId', label: 'cTrader Account ID', placeholder: 'Your account ID' }, { key: 'accessToken', label: 'Access Token', placeholder: 'OAuth access token', secret: true }] },
-  { id: 'dxtrade',   name: 'DXtrade',      category: 'Platform', fields: [{ key: 'server', label: 'Server URL', placeholder: 'https://your-broker.dxtrade.com' }, { key: 'login', label: 'Login', placeholder: 'Account login' }, { key: 'password', label: 'Password', placeholder: 'Account password', secret: true }] },
-  { id: 'tradovate', name: 'Tradovate',    category: 'Futures',  fields: [{ key: 'username', label: 'Username', placeholder: 'Tradovate username' }, { key: 'password', label: 'Password', placeholder: 'Tradovate password', secret: true }] },
-  { id: 'binance',   name: 'Binance',      category: 'Exchange', fields: [{ key: 'apiKey', label: 'API Key', placeholder: 'Your Binance API key' }, { key: 'apiSecret', label: 'API Secret', placeholder: 'Your Binance secret', secret: true }] },
-  { id: 'bybit',     name: 'Bybit',        category: 'Exchange', fields: [{ key: 'apiKey', label: 'API Key', placeholder: 'Your Bybit API key' }, { key: 'apiSecret', label: 'API Secret', placeholder: 'Your Bybit secret', secret: true }] },
-  { id: 'kraken',    name: 'Kraken',       category: 'Exchange', fields: [{ key: 'apiKey', label: 'API Key', placeholder: 'Your Kraken API key' }, { key: 'apiSecret', label: 'Private Key (base64)', placeholder: 'Your Kraken private key', secret: true }] },
-  { id: 'coinbase',  name: 'Coinbase',     category: 'Exchange', fields: [{ key: 'apiKey', label: 'API Key', placeholder: 'Your Coinbase API key' }, { key: 'apiSecret', label: 'API Secret', placeholder: 'Your Coinbase secret', secret: true }] },
+  {
+    id: 'mt5',
+    name: 'MetaTrader 5',
+    category: 'MT',
+    fields: [
+      { key: 'login', label: 'ACCOUNT LOGIN', placeholder: 'e.g. 12345678' },
+      { key: 'password', label: 'INVESTOR PASSWORD', placeholder: 'Investor (read-only) password', secret: true },
+      { key: 'server', label: 'BROKER SERVER', placeholder: 'e.g. ICMarketsSC-Demo' },
+    ],
+  },
+  {
+    id: 'mt4',
+    name: 'MetaTrader 4',
+    category: 'MT',
+    fields: [
+      { key: 'login', label: 'ACCOUNT LOGIN', placeholder: 'e.g. 12345678' },
+      { key: 'password', label: 'INVESTOR PASSWORD', placeholder: 'Investor (read-only) password', secret: true },
+      { key: 'server', label: 'BROKER SERVER', placeholder: 'e.g. ICMarkets-Demo' },
+    ],
+  },
 ];
 
 export function AuraConnectionProvider({ children }) {
@@ -28,26 +40,33 @@ export function AuraConnectionProvider({ children }) {
     const missing = err?.response?.data?.missing;
 
     if (code === 'TERMINALSYNC_CONFIG_MISSING' || code === 'TERMINALSYNC_WORKER_URL_NOT_CONFIGURED') {
-      return 'MT5 bridge service is not configured yet. Please contact support to enable live MT5 sync.';
+      return 'Connection service is not configured yet. Please contact support.';
     }
     if (code === 'TERMINALSYNC_UNAUTHORIZED_SECRET') {
-      return 'MT5 bridge authentication failed. Please try again shortly while we refresh service credentials.';
+      return 'Connection authentication failed. Please try again shortly.';
     }
     if (code === 'TERMINALSYNC_TIMEOUT') {
-      return 'MT5 bridge timed out. Please retry in a few moments.';
+      return 'Connection timed out. Please retry in a few moments.';
     }
     if (code === 'TERMINALSYNC_WORKER_URL_INVALID') {
-      return 'MT5 bridge configuration is invalid. Please contact support.';
+      return 'Connection configuration is invalid. Please contact support.';
     }
     if (apiError === 'MT5/MT4 credentials are incomplete') {
       if (Array.isArray(missing) && missing.length) {
         return `Please complete required fields: ${missing.join(', ')}`;
       }
-      return 'Please provide login, password, and broker server.';
+      return 'Please provide account login, investor password, and broker server.';
     }
-    if (apiError) return apiError;
-    if (err?.response?.status === 400) return 'Invalid MT5 credentials. Please verify login, password, and server.';
-    return err?.message || 'Connection failed';
+    const msg = String(apiError || '').trim();
+    const risky =
+      /password|secret|token|bearer|ECONNREFUSED|ENOTFOUND|certificate|SSL|html|undefined|null|stack|at\s+\w+\./i.test(
+        msg
+      );
+    if (msg && !risky && msg.length < 240) return msg;
+    if (err?.response?.status === 400) {
+      return 'Invalid credentials. Please verify account login, investor password, and broker server.';
+    }
+    return 'Connection failed. Please verify account login, investor password, and broker server.';
   }, []);
 
   // Load connections only when authenticated (avoids 401 to platform-connect on public pages like /login)
@@ -69,9 +88,14 @@ export function AuraConnectionProvider({ children }) {
 
   /** Connect a platform — calls backend with real credentials */
   const connectPlatform = useCallback(async (platformId, credentials) => {
+    const platformType = platformId === 'mt5' ? 'MT5' : platformId === 'mt4' ? 'MT4' : null;
+    const payload =
+      platformType && credentials && typeof credentials === 'object'
+        ? { ...credentials, platformType }
+        : credentials;
     let r;
     try {
-      r = await Api.connectAuraPlatform(platformId, credentials);
+      r = await Api.connectAuraPlatform(platformId, payload);
     } catch (err) {
       throw new Error(mapConnectError(err));
     }

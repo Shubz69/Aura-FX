@@ -300,7 +300,7 @@ function AppRoutes() {
                         } />
                         <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
                         <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
-                        {/* Aura Analysis = MT5 only (Connection Hub + dashboard). No Trade Validator. */}
+                        {/* Aura Analysis: Connection Hub (MT4/MT5 investor read-only) + dashboard. */}
                         <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
                             <Route index element={<Navigate to="/aura-analysis/ai" replace />} />
                             <Route path="ai" element={<ConnectionHub />} />
