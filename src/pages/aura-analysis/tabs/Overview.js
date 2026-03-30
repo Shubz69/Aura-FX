@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FaPlus } from 'react-icons/fa';
+import { FaPlus, FaTrashAlt } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Api from '../../../services/Api';
 import { useTradeValidatorAccount } from '../../../context/TradeValidatorAccountContext';
@@ -56,6 +56,7 @@ export default function Overview() {
     loading: accountsLoading,
     addAccount,
     patchAccountCurrency,
+    deleteAccount,
     error: accountsError,
   } = useTradeValidatorAccount();
   const [trades, setTrades] = useState([]);
@@ -64,6 +65,8 @@ export default function Overview() {
   const [viewDate, setViewDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [removeSubmitting, setRemoveSubmitting] = useState(false);
   const [newAccountName, setNewAccountName] = useState('');
   const [newAccountCurrency, setNewAccountCurrency] = useState('USD');
 
@@ -118,6 +121,14 @@ export default function Overview() {
     return a?.accountCurrency || 'USD';
   }, [accounts, selectedAccountId]);
 
+  const selectedAccountLabel = useMemo(() => {
+    const a = accounts.find((x) => Number(x.id) === Number(selectedAccountId));
+    if (!a) return '';
+    return (a.name || `Account ${a.id}`).trim();
+  }, [accounts, selectedAccountId]);
+
+  const canRemoveAccount = accounts.length >= 2 && selectedAccountId != null;
+
   const handleSelectedAccountCurrencyChange = async (e) => {
     if (!selectedAccountId) return;
     const ccy = e.target.value;
@@ -126,6 +137,20 @@ export default function Overview() {
       toast.success(`Account currency updated to ${ccy}.`);
     } catch (err) {
       toast.error(err?.response?.data?.message || err.message || 'Could not update account currency');
+    }
+  };
+
+  const handleConfirmRemoveAccount = async () => {
+    if (!selectedAccountId || !canRemoveAccount) return;
+    setRemoveSubmitting(true);
+    try {
+      await deleteAccount(selectedAccountId);
+      setShowRemoveModal(false);
+      toast.success('Account removed.');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || 'Could not remove account');
+    } finally {
+      setRemoveSubmitting(false);
     }
   };
 
@@ -246,17 +271,73 @@ export default function Overview() {
             ))}
           </select>
         </div>
-        <button
-          type="button"
-          className="aura-overview-account-add"
-          onClick={() => setShowAddModal(true)}
-          title="Add account"
-        >
-          <FaPlus aria-hidden />
-          <span>Add</span>
-        </button>
+        <div className="aura-overview-account-actions">
+          <button
+            type="button"
+            className="aura-overview-account-remove"
+            onClick={() => setShowRemoveModal(true)}
+            disabled={!canRemoveAccount || removeSubmitting}
+            title={
+              canRemoveAccount
+                ? 'Remove this account and its Trade Validator trades'
+                : 'Add another account before you can remove one'
+            }
+            aria-label="Remove selected account"
+          >
+            <FaTrashAlt aria-hidden />
+            <span>Remove</span>
+          </button>
+          <button
+            type="button"
+            className="aura-overview-account-add"
+            onClick={() => setShowAddModal(true)}
+            title="Add account"
+          >
+            <FaPlus aria-hidden />
+            <span>Add</span>
+          </button>
+        </div>
       </div>
       {accountsError && <p className="aura-overview-account-error">{accountsError}</p>}
+      {showRemoveModal && (
+        <div
+          className="aura-overview-modal-backdrop"
+          role="presentation"
+          onClick={() => !removeSubmitting && setShowRemoveModal(false)}
+        >
+          <div
+            className="aura-overview-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Remove account"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="aura-overview-modal-title">Remove account</h3>
+            <p className="aura-overview-modal-sub">
+              Remove <strong>{selectedAccountLabel || 'this account'}</strong>? All Trade Validator trades linked to it
+              will be permanently deleted. This cannot be undone.
+            </p>
+            <div className="aura-overview-modal-actions">
+              <button
+                type="button"
+                className="aura-overview-modal-btn"
+                onClick={() => setShowRemoveModal(false)}
+                disabled={removeSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="aura-overview-modal-btn aura-overview-modal-btn--danger"
+                onClick={handleConfirmRemoveAccount}
+                disabled={removeSubmitting}
+              >
+                {removeSubmitting ? 'Removing…' : 'Remove account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showAddModal && (
         <div className="aura-overview-modal-backdrop" role="presentation" onClick={() => setShowAddModal(false)}>
           <div className="aura-overview-modal" role="dialog" aria-modal="true" aria-label="Add account" onClick={(e) => e.stopPropagation()}>

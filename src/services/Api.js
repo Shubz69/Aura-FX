@@ -735,6 +735,13 @@ const Api = {
             headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         });
     },
+    deleteValidatorAccount: (id) => {
+        const token = localStorage.getItem('token');
+        const q = id != null ? `?id=${encodeURIComponent(String(id))}` : '';
+        return axios.delete(`${API_BASE_URL}/api/aura-analysis/validator-accounts${q}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
     verifyTradeOutcome: (tradeId, image, mimeType = 'image/png') => {
         const token = localStorage.getItem('token');
         return axios.post(

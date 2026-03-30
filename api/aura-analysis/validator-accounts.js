@@ -2,6 +2,7 @@
  * Trade Validator — multiple named accounts per user.
  * GET  /api/aura-analysis/validator-accounts — list (creates Primary + backfills trades if needed)
  * POST /api/aura-analysis/validator-accounts — body { name }
+ * DELETE /api/aura-analysis/validator-accounts?id= — removes account and linked trades (≥1 account must remain)
  */
 const { executeQuery, indexExists, addColumnIfNotExists } = require('../db');
 const { verifyToken } = require('../utils/auth');
@@ -83,7 +84,7 @@ async function ensureDefaultAccount(userId) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -196,6 +197,63 @@ module.exports = async (req, res) => {
     } catch (e) {
       console.error('[validator-accounts] PATCH', e);
       return res.status(500).json({ success: false, message: 'Failed to update account' });
+    }
+  }
+
+  if (req.method === 'DELETE') {
+    let accountId = null;
+    try {
+      const q = (req.url || '').split('?')[1] || '';
+      const idParam = new URLSearchParams(q).get('id');
+      accountId = idParam != null ? Number(idParam) : null;
+    } catch {
+      accountId = null;
+    }
+    const body = parseBody(req);
+    if (!accountId || !Number.isFinite(accountId)) {
+      accountId = Number(body.id ?? body.accountId);
+    }
+    if (!accountId || !Number.isFinite(accountId)) {
+      return res.status(400).json({ success: false, message: 'id is required' });
+    }
+    try {
+      const [all] = await executeQuery(
+        'SELECT id FROM trade_validator_accounts WHERE user_id = ? ORDER BY sort_order ASC, id ASC',
+        [userId]
+      );
+      if (!all?.length || all.length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: 'You must keep at least one Trade Validator account',
+        });
+      }
+      const [own] = await executeQuery('SELECT id FROM trade_validator_accounts WHERE id = ? AND user_id = ?', [
+        accountId,
+        userId,
+      ]);
+      if (!own?.length) {
+        return res.status(404).json({ success: false, message: 'Account not found' });
+      }
+      await executeQuery('DELETE FROM aura_analysis_trades WHERE user_id = ? AND validator_account_id = ?', [
+        userId,
+        accountId,
+      ]).catch(() => {});
+      await executeQuery('DELETE FROM trade_validator_accounts WHERE id = ? AND user_id = ?', [accountId, userId]);
+      const [list] = await executeQuery(
+        'SELECT id, name, sort_order, account_currency, created_at FROM trade_validator_accounts WHERE user_id = ? ORDER BY sort_order ASC, id ASC',
+        [userId]
+      );
+      const mapped = (list || []).map((a) => ({
+        id: a.id,
+        name: a.name,
+        sort_order: a.sort_order,
+        accountCurrency: (a.account_currency || 'USD').toString().toUpperCase(),
+        created_at: a.created_at,
+      }));
+      return res.status(200).json({ success: true, accounts: mapped });
+    } catch (e) {
+      console.error('[validator-accounts] DELETE', e);
+      return res.status(500).json({ success: false, message: 'Failed to remove account' });
     }
   }
 

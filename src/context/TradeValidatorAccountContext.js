@@ -75,6 +75,28 @@ export function TradeValidatorAccountProvider({ children }) {
     return accs;
   }, []);
 
+  const deleteAccount = useCallback(
+    async (accountId) => {
+      const res = await Api.deleteValidatorAccount(accountId);
+      const accs = res.data?.accounts ?? [];
+      setAccounts(accs);
+      setSelectedIdState((prev) => {
+        if (accs.some((a) => Number(a.id) === Number(prev))) return prev;
+        const next = accs[0]?.id ?? null;
+        if (storageKey && next != null && Number.isFinite(Number(next))) {
+          try {
+            localStorage.setItem(storageKey, String(next));
+          } catch {
+            /* ignore */
+          }
+        }
+        return next;
+      });
+      return accs;
+    },
+    [storageKey]
+  );
+
   const value = useMemo(
     () => ({
       accounts,
@@ -85,8 +107,19 @@ export function TradeValidatorAccountProvider({ children }) {
       refreshAccounts,
       addAccount,
       patchAccountCurrency,
+      deleteAccount,
     }),
-    [accounts, selectedAccountId, setSelectedAccountId, loading, error, refreshAccounts, addAccount, patchAccountCurrency]
+    [
+      accounts,
+      selectedAccountId,
+      setSelectedAccountId,
+      loading,
+      error,
+      refreshAccounts,
+      addAccount,
+      patchAccountCurrency,
+      deleteAccount,
+    ]
   );
 
   return (
@@ -106,6 +139,7 @@ export function useTradeValidatorAccount() {
       refreshAccounts: async () => {},
       addAccount: async () => null,
       patchAccountCurrency: async () => [],
+      deleteAccount: async () => [],
     };
   }
   return ctx;
