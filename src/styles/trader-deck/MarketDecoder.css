@@ -143,6 +143,52 @@
   margin-top: 10px;
 }
 
+.md-decoder-live {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  text-align: center;
+  font-size: 0.72rem;
+  color: rgba(200, 220, 245, 0.82);
+  margin-top: 12px;
+  letter-spacing: 0.04em;
+}
+
+.md-decoder-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6ee7a8;
+  box-shadow: 0 0 10px rgba(110, 231, 168, 0.65);
+  animation: md-live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes md-live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(0.92);
+  }
+}
+
+.md-decoder-live-time {
+  color: var(--md-muted);
+}
+
+.md-decoder-live-sync {
+  color: rgba(212, 175, 55, 0.85);
+}
+
+.md-decoder-rules-debug {
+  color: rgba(160, 170, 195, 0.55);
+}
+
 .md-decoder-error {
   margin: 16px auto 0;
   max-width: 520px;

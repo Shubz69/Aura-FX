@@ -1,10 +1,28 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Api from '../../services/Api';
 import { useAuth } from '../../context/AuthContext';
 import { isSuperAdmin } from '../../utils/roles';
 import '../../styles/trader-deck/MarketDecoder.css';
 
 const QUICK = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD', 'SPY', 'USDJPY'];
+/** Background refresh interval while a brief is shown (server still enforces MARKET_DECODER_CACHE_SEC unless refresh=1). */
+const LIVE_POLL_MS = Math.max(15000, parseInt(process.env.REACT_APP_MARKET_DECODER_POLL_MS || '30000', 10) || 30000);
+
+function formatGeneratedAt(iso) {
+  if (!iso || typeof iso !== 'string') return null;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return null;
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).format(new Date(t));
+  } catch {
+    return new Date(t).toISOString().slice(11, 19);
+  }
+}
 
 function formatPct(n) {
   if (n == null || Number.isNaN(Number(n))) {
@@ -62,32 +80,63 @@ export default function MarketDecoderView({ embedded }) {
   const [error, setError] = useState(null);
   const [brief, setBrief] = useState(null);
   const [cached, setCached] = useState(false);
+  const [liveRefreshing, setLiveRefreshing] = useState(false);
+  /** Symbol for the brief currently on screen (not the input draft). */
+  const [activeSymbol, setActiveSymbol] = useState(null);
+  const activeSymbolRef = useRef(null);
+  activeSymbolRef.current = activeSymbol;
 
-  const run = useCallback(
-    async (symbol, refresh = false) => {
-      const sym = String(symbol || '').trim();
-      if (!sym) return;
+  const run = useCallback(async (symbol, refresh = false, silent = false) => {
+    const sym = String(symbol || '').trim();
+    if (!sym) return;
+    if (!silent) {
       setLoading(true);
       setError(null);
-      try {
-        const res = await Api.getTraderDeckMarketDecoder(sym, { refresh });
-        const data = res.data;
-        if (!data.success) {
+    } else {
+      setLiveRefreshing(true);
+    }
+    try {
+      const res = await Api.getTraderDeckMarketDecoder(sym, { refresh });
+      const data = res.data;
+      if (!data.success) {
+        if (!silent) {
           setError(data.message || 'Could not decode this symbol.');
           setBrief(null);
-          return;
         }
-        setBrief(data.brief);
-        setCached(Boolean(data.cached));
-      } catch (e) {
+        return;
+      }
+      setBrief(data.brief);
+      setCached(Boolean(data.cached));
+      setActiveSymbol(sym);
+    } catch (e) {
+      if (!silent) {
         setError(e?.response?.data?.message || e.message || 'Request failed');
         setBrief(null);
-      } finally {
-        setLoading(false);
       }
-    },
-    []
-  );
+    } finally {
+      if (!silent) setLoading(false);
+      else setLiveRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!brief || !activeSymbol) return undefined;
+    const id = setInterval(() => {
+      const sym = activeSymbolRef.current;
+      if (sym) run(sym, true, true);
+    }, LIVE_POLL_MS);
+    return () => clearInterval(id);
+  }, [brief, activeSymbol, run]);
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState !== 'visible') return;
+      const sym = activeSymbolRef.current;
+      if (sym && brief) run(sym, true, true);
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [brief, run]);
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -126,6 +175,16 @@ export default function MarketDecoderView({ embedded }) {
         </div>
         {cached && brief && (
           <p className="md-decoder-meta">Served from cache — Decode again for a fresh pull.</p>
+        )}
+        {brief && (
+          <p className="md-decoder-live" role="status">
+            <span className="md-decoder-live-dot" aria-hidden />
+            Live refresh every {Math.round(LIVE_POLL_MS / 1000)}s
+            {formatGeneratedAt(brief.meta?.generatedAt) ? (
+              <span className="md-decoder-live-time"> · Last updated {formatGeneratedAt(brief.meta.generatedAt)}</span>
+            ) : null}
+            {liveRefreshing ? <span className="md-decoder-live-sync"> · Updating…</span> : null}
+          </p>
         )}
       </header>
 
@@ -453,8 +512,8 @@ export default function MarketDecoderView({ embedded }) {
               <p className="md-decoder-posture-detail-key">What would change this</p>
               <p className="md-decoder-posture-detail-val">→ {brief.finalOutput.whatWouldChangeThis ?? '—'}</p>
             </div>
-            {brief.meta && (
-              <p className="md-decoder-small" style={{ textAlign: 'center', marginTop: 14 }}>
+            {brief.meta && isSuperAdminUser && (
+              <p className="md-decoder-small md-decoder-rules-debug" style={{ textAlign: 'center', marginTop: 14 }}>
                 Rules engine: bull {brief.meta.bullScore} · bear {brief.meta.bearScore} · net {brief.meta.netScore}
                 {brief.meta.finnhubSymbol ? ` · ${brief.meta.finnhubSymbol}` : ''}
               </p>

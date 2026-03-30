@@ -28,6 +28,7 @@ function stripFeedDiagnosticsFromBrief(brief) {
   if (next.meta && typeof next.meta === 'object') {
     const meta = { ...next.meta };
     delete meta.dataHealth;
+    delete meta.finnhubSymbol;
     next.meta = meta;
   }
   return next;

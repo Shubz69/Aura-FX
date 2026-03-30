@@ -16,6 +16,13 @@ const {
 
 const TIMEOUT_MS = 9000;
 
+/** Both legs must look like ISO 4217 codes to route as FX on Finnhub (avoids OANDA:CUR_USD style mistakes). */
+const FX_CCY = new Set([
+  'USD', 'EUR', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'NZD', 'SEK', 'NOK', 'DKK', 'MXN', 'ZAR', 'TRY', 'PLN',
+  'CNH', 'CNY', 'SGD', 'HKD', 'HUF', 'CZK', 'ILS', 'INR', 'THB', 'KRW', 'BRL', 'RUB', 'IDR', 'MYR', 'PHP',
+  'TWD', 'CLP', 'COP', 'PEN', 'ARS', 'SAR', 'AED', 'QAR', 'KWD', 'BHD', 'OMR', 'JOD', 'LBP', 'EGP', 'NGN',
+]);
+
 /** @typedef {'FX'|'Crypto'|'Index'|'Commodity'|'Equity'} MarketType */
 
 /**
@@ -77,11 +84,19 @@ function resolveAsset(raw) {
   if (key.length === 6 && /^[A-Z]{6}$/.test(key)) {
     const a = key.slice(0, 3);
     const b = key.slice(3, 6);
+    if (FX_CCY.has(a) && FX_CCY.has(b)) {
+      return {
+        displaySymbol: key,
+        marketType: 'FX',
+        candleKind: 'forex',
+        finnhubSymbol: `OANDA:${a}_${b}`,
+      };
+    }
     return {
       displaySymbol: key,
-      marketType: 'FX',
-      candleKind: 'forex',
-      finnhubSymbol: `OANDA:${a}_${b}`,
+      marketType: 'Equity',
+      candleKind: 'stock',
+      finnhubSymbol: key,
     };
   }
 
@@ -892,6 +907,7 @@ async function runMarketDecoder(symbolInput) {
         dataHealth,
         finnhubSymbol,
         sparkline,
+        generatedAt: new Date().toISOString(),
       },
     },
   };
