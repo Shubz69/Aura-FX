@@ -39,6 +39,14 @@ function isBenignSchemaDuplicate(error) {
   return false;
 }
 
+/** INSERT race on unique run_key — handled by caller; avoid noisy error logs. */
+function isBriefRunsDuplicateInsert(error, query) {
+  if (!error) return false;
+  if (error.code !== 'ER_DUP_ENTRY' && Number(error.errno) !== 1062) return false;
+  const q = String(query || '').toLowerCase();
+  return q.includes('trader_deck_brief_runs') && q.includes('insert');
+}
+
 /**
  * Metadata reads (INFORMATION_SCHEMA / SHOW) can be blocked for restricted DB users.
  * Treat these as non-fatal for runtime schema helper paths.
@@ -220,7 +228,8 @@ const executeQuery = async (query, params = [], options = {}) => {
     return await run();
   } catch (error) {
     const benignDuplicate = isBenignSchemaDuplicate(error);
-    if (!benignDuplicate && !isMetadataAccessDenied(error)) {
+    const suppressDup = isBriefRunsDuplicateInsert(error, query);
+    if (!benignDuplicate && !isMetadataAccessDenied(error) && !suppressDup) {
       poolStats.failedQueries++;
       const errorInfo = {
         requestId,

@@ -4,6 +4,8 @@
  */
 
 const { fetchWithTimeout } = require('./fetchWithTimeout');
+const { getConfig } = require('../config');
+const { getQuote } = require('./finnhubService');
 
 const BRIEF_KIND_ORDER = ['general', 'stocks', 'indices', 'futures', 'forex', 'crypto', 'commodities', 'bonds', 'etfs'];
 
@@ -481,6 +483,124 @@ async function fetchTwelveDataQuoteExtended(symbol) {
   }
 }
 
+/** Finnhub symbols for automation universe tickers (Twelve Data / FMP use plain tickers). */
+const FINNHUB_AUTOMATION_SYMBOL = {
+  US500: '^GSPC',
+  NAS100: '^IXIC',
+  US30: '^DJI',
+  US2000: '^RUT',
+  GER40: 'DAX',
+  UK100: '^FTSE',
+  JP225: '^N225',
+  HK50: '^HSI',
+  STOXX50: '^STOXX50E',
+  CAC40: '^FCHI',
+  XAUUSD: 'OANDA:XAU_USD',
+  XAGUSD: 'OANDA:XAG_USD',
+  XPTUSD: 'OANDA:XPT_USD',
+  XPDUSD: 'OANDA:XPD_USD',
+  WTI: 'OANDA:USOIL_USD',
+  BRENT: 'OANDA:BRENT_USD',
+  US10Y: '^TNX',
+  US02Y: '^IRX',
+  US05Y: '^FVX',
+  US30Y: '^TYX',
+  BTCUSD: 'BINANCE:BTCUSDT',
+  ETHUSD: 'BINANCE:ETHUSDT',
+  SOLUSD: 'BINANCE:SOLUSDT',
+  XRPUSD: 'BINANCE:XRPUSDT',
+  ADAUSD: 'BINANCE:ADAUSDT',
+  DOGEUSD: 'BINANCE:DOGEUSDT',
+  AVAXUSD: 'BINANCE:AVAXUSDT',
+  DOTUSD: 'BINANCE:DOTUSDT',
+  LINKUSD: 'BINANCE:LINKUSDT',
+  LTCUSD: 'BINANCE:LTCUSDT',
+  NATGAS: 'OANDA:NATGAS_USD',
+  COPPER: 'OANDA:COPPER_USD',
+};
+
+function finnhubAutomationRouting(symbol) {
+  const u = String(symbol || '').toUpperCase().trim();
+  if (FINNHUB_AUTOMATION_SYMBOL[u]) return FINNHUB_AUTOMATION_SYMBOL[u];
+  if (/^[A-Z]{6}$/.test(u)) {
+    const base = u.slice(0, 3);
+    const quote = u.slice(3);
+    return `OANDA:${base}_${quote}`;
+  }
+  return u;
+}
+
+async function fetchFmpQuoteAutomation(symbol) {
+  const { fmpApiKey } = getConfig();
+  if (!fmpApiKey) return null;
+  const sym = String(symbol || '').trim();
+  if (!sym) return null;
+  try {
+    const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(sym)}?apikey=${encodeURIComponent(fmpApiKey)}`;
+    const res = await fetchWithTimeout(url, {}, 7000);
+    if (!res.ok) return null;
+    const arr = await res.json();
+    const row = Array.isArray(arr) ? arr[0] : arr;
+    if (!row || row.price == null) return null;
+    const c = Number(row.price);
+    const pc = row.previousClose != null ? Number(row.previousClose) : c;
+    const d = c - pc;
+    const dp = pc && pc !== 0 ? (d / Math.abs(pc)) * 100 : 0;
+    const volume = row.volume != null ? parseFloat(row.volume) : null;
+    const averageVolume = row.avgVolume != null ? parseFloat(row.avgVolume) : null;
+    return {
+      c,
+      pc,
+      d,
+      dp,
+      volume: Number.isFinite(volume) ? volume : null,
+      averageVolume: Number.isFinite(averageVolume) ? averageVolume : null,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+async function fetchFinnhubQuoteAutomation(symbol) {
+  const fhSym = finnhubAutomationRouting(symbol);
+  const q = await getQuote(fhSym);
+  if (!q.ok || !q.data || q.data.c == null) return null;
+  const c = Number(q.data.c);
+  if (!Number.isFinite(c) || c <= 0) return null;
+  let pc = c;
+  if (q.data.d != null && Number.isFinite(Number(q.data.d))) {
+    pc = c - Number(q.data.d);
+  } else if (q.data.dp != null && Number.isFinite(Number(q.data.dp))) {
+    const pdp = Number(q.data.dp);
+    pc = c / (1 + pdp / 100);
+  }
+  const dp =
+    q.data.dp != null && Number.isFinite(Number(q.data.dp))
+      ? Number(q.data.dp)
+      : pc && Math.abs(pc) > 1e-8
+        ? ((c - pc) / Math.abs(pc)) * 100
+        : 0;
+  return {
+    c,
+    pc,
+    d: c - pc,
+    dp,
+    volume: null,
+    averageVolume: null,
+  };
+}
+
+/**
+ * Twelve Data → FMP → Finnhub so auto-brief quote cache survives single-provider 403/missing keys.
+ */
+async function fetchAutomationQuoteWithFallback(symbol) {
+  const td = await fetchTwelveDataQuoteExtended(symbol);
+  if (td) return td;
+  const fmp = await fetchFmpQuoteAutomation(symbol);
+  if (fmp) return fmp;
+  return fetchFinnhubQuoteAutomation(symbol);
+}
+
 function calendarRelevantToSymbol(symU, cal, k) {
   return (cal || []).some((e) => {
     const ev = String(e.event || '').toLowerCase();
@@ -843,6 +963,7 @@ module.exports = {
   scoreAndSelectTopInstruments,
   buildQuoteCacheForSymbols,
   fetchTwelveDataQuoteExtended,
+  fetchAutomationQuoteWithFallback,
   buildInstrumentIntelligence,
   noteAnchoredToIntelligence,
   packDriverLine,

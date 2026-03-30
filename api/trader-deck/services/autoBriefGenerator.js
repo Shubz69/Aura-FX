@@ -22,6 +22,7 @@ const {
   GENERIC_BOILERPLATE_RE,
   CATEGORY_INTELLIGENCE_DIRECTIVES,
   fetchTwelveDataQuoteExtended,
+  fetchAutomationQuoteWithFallback,
 } = briefUniverse;
 const BRIEF_KIND_LABELS = {
   general: 'General Market Brief',
@@ -58,7 +59,7 @@ async function fetchLiveQuotesForSymbols(symbols) {
   const rows = await Promise.all(
     syms.map(async (symbol) => {
       try {
-        const q = (await fetchTwelveDataQuoteExtended(symbol)) || (await getTwelveDataQuote(symbol));
+        const q = (await fetchAutomationQuoteWithFallback(symbol)) || (await getTwelveDataQuote(symbol));
         if (!q || q.c == null) return null;
         return {
           symbol: String(symbol).toUpperCase(),
@@ -867,16 +868,57 @@ async function fetchEconomicCalendar() {
   }
 }
 
+function toSqlDateYmd(date) {
+  if (date == null) return '';
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+  if (date instanceof Date && !Number.isNaN(date.getTime())) return date.toISOString().slice(0, 10);
+  const s = String(date).trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : s.slice(0, 10);
+}
+
+/**
+ * Avoid INSERT duplicate-key noise: SELECT first, INSERT with explicit 4 params, catch race-only duplicates.
+ */
 async function reserveRun(runKey, period, date) {
+  const briefDate = toSqlDateYmd(date);
+  if (!briefDate) return false;
+
+  try {
+    const [existing] = await executeQuery(
+      'SELECT status FROM trader_deck_brief_runs WHERE run_key = ? LIMIT 1',
+      [runKey]
+    );
+    if (existing && existing[0]) {
+      const status = String(existing[0].status || '').toLowerCase();
+      if (status === 'failed') {
+        await executeQuery(
+          `UPDATE trader_deck_brief_runs
+           SET status = 'started', error_message = NULL, updated_at = CURRENT_TIMESTAMP
+           WHERE run_key = ?`,
+          [runKey]
+        );
+        return true;
+      }
+      return false;
+    }
+  } catch (e) {
+    console.warn('[brief-gen] reserveRun lookup failed:', e.message || e);
+    return false;
+  }
+
   try {
     await executeQuery(
       `INSERT INTO trader_deck_brief_runs (run_key, period, brief_date, status)
-       VALUES (?, ?, ?, 'started')`,
-      [runKey, period, date]
+       VALUES (?, ?, ?, ?)`,
+      [runKey, period, briefDate, 'started']
     );
     return true;
   } catch (err) {
-    // If already exists, allow retry only when previous run failed.
+    const dup = err && (err.code === 'ER_DUP_ENTRY' || Number(err.errno) === 1062);
+    if (!dup) {
+      console.warn('[brief-gen] reserveRun insert failed:', err.message || err);
+      throw err;
+    }
     try {
       const [rows] = await executeQuery(
         'SELECT status FROM trader_deck_brief_runs WHERE run_key = ? LIMIT 1',
@@ -893,7 +935,7 @@ async function reserveRun(runKey, period, date) {
         return true;
       }
     } catch (_) {
-      // fall through
+      /* ignore */
     }
     return false;
   }
@@ -1053,7 +1095,7 @@ async function generateAndStoreBrief({
     if (!quoteCache || typeof quoteCache.get !== 'function') {
       quoteCache = await buildQuoteCacheForSymbols(
         collectAllAutomationUniverseSymbols(),
-        fetchTwelveDataQuoteExtended
+        fetchAutomationQuoteWithFallback
       );
     }
 
@@ -1223,9 +1265,14 @@ async function generateAndStoreBriefSet({ period, timeZone = 'Europe/London', ru
   ]);
   const sharedQuoteCache = await buildQuoteCacheForSymbols(
     collectAllAutomationUniverseSymbols(),
-    fetchTwelveDataQuoteExtended
+    fetchAutomationQuoteWithFallback
   );
   console.info('[brief-gen] quote cache built', { symbols: sharedQuoteCache.size, period: normalizedPeriod, date });
+  if (sharedQuoteCache.size === 0) {
+    console.warn(
+      '[brief-gen] quote cache is empty — configure TWELVE_DATA_API_KEY and/or valid FMP_API_KEY and FINNHUB_API_KEY (403 usually means invalid key or plan).'
+    );
+  }
   const results = [];
   const existingBodies = [];
   const existingExcerpts = [];
@@ -1322,7 +1369,7 @@ async function generatePreviewBrief({
   ]);
   const qc = await buildQuoteCacheForSymbols(
     collectAllAutomationUniverseSymbols(),
-    fetchTwelveDataQuoteExtended
+    fetchAutomationQuoteWithFallback
   );
   const sel = await scoreAndSelectTopInstruments({
     briefKind: 'general',
