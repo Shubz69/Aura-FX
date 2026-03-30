@@ -39,8 +39,22 @@ function displayBriefTitle(title) {
   return t || 'Brief';
 }
 
-const BRIEF_KIND_ORDER = ['general', 'stocks', 'indices', 'futures', 'forex', 'crypto', 'commodities', 'bonds', 'etfs'];
+const BRIEF_KIND_ORDER = [
+  'aura_institutional_daily',
+  'aura_institutional_weekly',
+  'general',
+  'stocks',
+  'indices',
+  'futures',
+  'forex',
+  'crypto',
+  'commodities',
+  'bonds',
+  'etfs',
+];
 const BRIEF_KIND_LABEL = {
+  aura_institutional_daily: 'Institutional Daily',
+  aura_institutional_weekly: 'Institutional Weekly',
   general: 'General',
   stocks: 'Stocks',
   indices: 'Indices',
@@ -74,7 +88,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [uploadUrl, setUploadUrl] = useState('');
   const fileInputRef = useRef(null);
   const sortedBriefs = useMemo(() => {
-    const orderIndex = new Map(BRIEF_KIND_ORDER.map((k, i) => [k, i + 1]));
+    const orderIndex = new Map(BRIEF_KIND_ORDER.map((k, i) => [k, i]));
     return [...briefs].sort((a, b) => {
       const ak = String(a?.briefKind || 'general').toLowerCase();
       const bk = String(b?.briefKind || 'general').toLowerCase();

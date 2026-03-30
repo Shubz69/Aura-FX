@@ -241,6 +241,7 @@ const CALENDAR_HIGH_IMPACT = /\b(high|red)\b/i;
 
 function normalizeBriefKind(kind) {
   const k = String(kind || '').toLowerCase().trim();
+  if (k === 'aura_institutional_daily' || k === 'aura_institutional_weekly') return k;
   return BRIEF_KIND_ORDER.includes(k) ? k : 'general';
 }
 

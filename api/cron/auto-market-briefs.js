@@ -1,12 +1,12 @@
 /**
  * Cron Job: Automated Daily/Weekly market briefs.
- * Daily: ~00:00 UK — full outlook + brief set (brief date = new calendar day in London).
+ * Daily: 06:00 UK — outlook + Aura FX institutional daily brief (house structure + fixed instrument sleeve).
  * Daily prefetch: ~22:00 UK — per-instrument OpenAI research layer stored for the next day’s briefs.
- * Weekly: Sunday 18:00 UK (Europe/London).
+ * Weekly: Sunday 10:00 UK — institutional weekly brief.
  */
 const {
   generateAndStoreOutlook,
-  generateAndStoreBriefSet,
+  generateAndStoreInstitutionalBriefOnly,
   prefetchInstrumentResearchForDaily,
   shouldRunWindow,
   shouldPrefetchInstrumentResearchWindow,
@@ -73,12 +73,12 @@ module.exports = async (req, res) => {
       runDate: now,
       timeZone: 'Europe/London',
     });
-    const briefSet = await generateAndStoreBriefSet({
+    const institutional = await generateAndStoreInstitutionalBriefOnly({
       period,
       runDate: now,
       timeZone: 'Europe/London',
     });
-    out.push({ period, outlook, briefs: briefSet });
+    out.push({ period, outlook, institutional });
   }
 
   return res.status(200).json({

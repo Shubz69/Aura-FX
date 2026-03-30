@@ -6,6 +6,7 @@ const { fetchWithTimeout } = require('./fetchWithTimeout');
 const { enrichTraderDeckPayload } = require('../openaiTraderInsights');
 const briefUniverse = require('./briefInstrumentUniverse');
 const briefStructure = require('./briefStructureLock');
+const institutionalAuraBrief = require('./institutionalAuraBrief');
 const {
   SECTION_HEADINGS,
   SECTION_RULES,
@@ -34,6 +35,8 @@ const BRIEF_KIND_LABELS = {
   commodities: 'Commodities Brief',
   bonds: 'Bonds Brief',
   etfs: 'ETFs Brief',
+  aura_institutional_daily: 'Aura FX Institutional — Daily',
+  aura_institutional_weekly: 'Aura FX Institutional — Weekly',
 };
 const {
   filterHeadlinesForBriefKind,
@@ -1451,9 +1454,34 @@ function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' 
   const hh = Number(map.hour);
   const mm = Number(map.minute);
   const wd = String(map.weekday || '').toLowerCase();
-  /** Daily briefs publish just after midnight UK so the run date matches the new session day. */
-  if (normalizedPeriod === 'daily') return hh === 0 && mm < 20;
-  return wd.startsWith('sun') && hh === 18 && mm < 15;
+  /** Daily institutional brief: 06:00 UK (London open prep). */
+  if (normalizedPeriod === 'daily') return hh === 6 && mm < 20;
+  /** Weekly: Sunday 10:00 UK. */
+  return wd.startsWith('sun') && hh === 10 && mm < 20;
+}
+
+function getInstitutionalBriefDeps() {
+  return {
+    assertAutomationModelConfigured,
+    ensureAutomationTables,
+    reserveRun,
+    finalizeRun,
+    publishAutoBrief,
+    toYmdInTz,
+    normalizeOutlookDate,
+    normalizePeriod,
+    runEngine,
+    fetchUnifiedNewsSample,
+    buildQuoteCacheForSymbols,
+    fetchAutomationQuoteWithFallback,
+    stripSources,
+    assertNoSources,
+    getAutomationModel,
+  };
+}
+
+async function generateAndStoreInstitutionalBriefOnly(opts) {
+  return institutionalAuraBrief.generateAndStoreInstitutionalBrief(getInstitutionalBriefDeps(), opts);
 }
 
 /** Legacy cron hook: per-instrument OpenAI layer removed — briefs are narrative sections only. */
@@ -1473,6 +1501,7 @@ module.exports = {
   generateAndStoreOutlook,
   generateAndStoreBrief,
   generateAndStoreBriefSet,
+  generateAndStoreInstitutionalBriefOnly,
   generatePreviewBrief,
   publishManualBrief,
   prefetchInstrumentResearchForDaily,
