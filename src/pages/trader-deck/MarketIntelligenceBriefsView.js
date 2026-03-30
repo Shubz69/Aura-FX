@@ -4,6 +4,7 @@
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import ReactMarkdown from 'react-markdown';
 import Api from '../../services/Api';
 import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import { FaEye, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
@@ -68,7 +69,13 @@ const BRIEF_KIND_LABEL = {
 
 function isTextLikeMime(mime) {
   const m = (mime || '').toLowerCase();
-  return m.startsWith('text/') || m.includes('json') || m.includes('xml') || m.includes('javascript');
+  return (
+    m.startsWith('text/')
+    || m.includes('markdown')
+    || m.includes('json')
+    || m.includes('xml')
+    || m.includes('javascript')
+  );
 }
 
 export default function MarketIntelligenceBriefsView({ selectedDate, period, canEdit }) {
@@ -80,9 +87,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [previewId, setPreviewId] = useState(null);
   const [previewEmbedUrl, setPreviewEmbedUrl] = useState(null);
   const [previewBriefMeta, setPreviewBriefMeta] = useState(null);
-  const [typewriterEnabled, setTypewriterEnabled] = useState(false);
-  const [typewriterLoading, setTypewriterLoading] = useState(false);
-  const [typewriterText, setTypewriterText] = useState('');
+  const [textPreviewBody, setTextPreviewBody] = useState('');
+  const [textPreviewLoading, setTextPreviewLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadUrl, setUploadUrl] = useState('');
@@ -110,6 +116,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     setPreviewId(null);
     setPreviewEmbedUrl(null);
     setPreviewBriefMeta(null);
+    setTextPreviewBody('');
+    setTextPreviewLoading(false);
   }, []);
 
   useEffect(() => {
@@ -167,74 +175,45 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const previewIsPdf = isPdfMime(previewMime);
   const previewIsTextLike = isTextLikeMime(previewMime);
   const previewHasExternalUrl = /^https?:\/\//i.test((previewBriefMeta?.fileUrl || '').trim());
-  const previewCanIframe = Boolean(previewEmbedUrl || (!previewIsPpt && (previewIsPdf || storedPreviewSrc)));
+  const previewUseMarkdown = Boolean(
+    previewOpen && previewId && !previewEmbedUrl && storedPreviewSrc && previewIsTextLike
+  );
+  const previewCanIframe = Boolean(
+    previewEmbedUrl || (!previewIsPpt && (previewIsPdf || storedPreviewSrc) && !previewUseMarkdown)
+  );
   const previewDirectUrl = previewHasExternalUrl
     ? (previewBriefMeta?.fileUrl || '').trim()
     : (previewId ? Api.getTraderDeckBriefPreviewUrl(previewId) : null);
 
   useEffect(() => {
-    const shouldType =
-      previewOpen &&
-      Boolean(previewId) &&
-      !previewEmbedUrl &&
-      Boolean(storedPreviewSrc) &&
-      previewIsTextLike;
-    if (!shouldType) {
-      setTypewriterEnabled(false);
-      setTypewriterLoading(false);
-      setTypewriterText('');
+    if (!previewUseMarkdown) {
+      setTextPreviewBody('');
+      setTextPreviewLoading(false);
       return undefined;
     }
-
     let cancelled = false;
-    let timer = null;
     const controller = new AbortController();
-
-    const run = async () => {
-      try {
-        setTypewriterEnabled(true);
-        setTypewriterLoading(true);
-        setTypewriterText('');
-        const res = await fetch(storedPreviewSrc, { signal: controller.signal });
-        if (!res.ok) throw new Error(`Preview load failed (${res.status})`);
-        const raw = await res.text();
-        if (cancelled) return;
-        const content = String(raw || '').replace(/\r\n/g, '\n');
-        const total = content.length;
-        if (!total) {
-          setTypewriterText('');
-          setTypewriterLoading(false);
-          return;
-        }
-
-        let idx = 0;
-        const chunk = Math.max(1, Math.round(total / 420));
-        const tick = () => {
-          if (cancelled) return;
-          idx = Math.min(total, idx + chunk);
-          setTypewriterText(content.slice(0, idx));
-          if (idx < total) {
-            timer = window.setTimeout(tick, 16);
-            return;
-          }
-          setTypewriterLoading(false);
-        };
-        tick();
-      } catch (_) {
-        if (cancelled) return;
-        setTypewriterEnabled(false);
-        setTypewriterLoading(false);
-        setTypewriterText('');
-      }
-    };
-
-    run();
+    setTextPreviewLoading(true);
+    setTextPreviewBody('');
+    fetch(storedPreviewSrc, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(String(res.status));
+        return res.text();
+      })
+      .then((raw) => {
+        if (!cancelled) setTextPreviewBody(String(raw || '').replace(/\r\n/g, '\n'));
+      })
+      .catch(() => {
+        if (!cancelled) setTextPreviewBody('');
+      })
+      .finally(() => {
+        if (!cancelled) setTextPreviewLoading(false);
+      });
     return () => {
       cancelled = true;
       controller.abort();
-      if (timer) window.clearTimeout(timer);
     };
-  }, [previewOpen, previewId, previewEmbedUrl, storedPreviewSrc, previewIsTextLike]);
+  }, [previewUseMarkdown, storedPreviewSrc]);
 
   const handlePreview = (brief) => {
     setPreviewBriefMeta({
@@ -456,10 +435,23 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           </button>
         </div>
         <div className="td-intel-preview-frame-wrap">
-          {typewriterEnabled ? (
-            <div className="td-intel-preview-typewriter" aria-live="polite">
-              <pre className="td-intel-preview-typewriter-text">{typewriterText || (typewriterLoading ? '' : 'No text content available.')}</pre>
-              {typewriterLoading && <span className="td-intel-preview-typewriter-caret" aria-hidden />}
+          {previewUseMarkdown ? (
+            <div className="td-intel-preview-md-scroll" aria-busy={textPreviewLoading}>
+              {textPreviewLoading ? (
+                <p className="td-intel-preview-md-loading">Loading brief…</p>
+              ) : (
+                <div className="td-intel-brief-md">
+                  <ReactMarkdown
+                    components={{
+                      a: ({ node, ...props }) => (
+                        <a {...props} target="_blank" rel="noopener noreferrer" />
+                      ),
+                    }}
+                  >
+                    {textPreviewBody || '_No text content._'}
+                  </ReactMarkdown>
+                </div>
+              )}
             </div>
           ) : previewCanIframe ? (
             <iframe

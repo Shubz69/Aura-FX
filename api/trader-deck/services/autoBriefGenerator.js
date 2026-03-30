@@ -142,10 +142,12 @@ function weekRange(date, timeZone) {
 function stripSources(text) {
   const lines = String(text || '')
     .split(/\r?\n/)
-    .map((line) => line.replace(/\s+/g, ' ').trim())
-    .filter(Boolean)
-    .filter((line) => !SOURCE_MARKER_RE.test(line));
-  return lines.join('\n');
+    .map((line) => line.replace(/\s+/g, ' ').trim());
+  return lines
+    .filter((line) => line.length === 0 || !SOURCE_MARKER_RE.test(line))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function sanitizeSentence(text) {
@@ -997,9 +999,18 @@ async function getNextBriefVersion({ period, date, briefKind }) {
   return maxVersion + 1;
 }
 
-async function publishAutoBrief({ period, date, title, body, briefKind = 'general', generationMeta = null }) {
+async function publishAutoBrief({
+  period,
+  date,
+  title,
+  body,
+  briefKind = 'general',
+  generationMeta = null,
+  mimeType = 'text/plain; charset=utf-8',
+}) {
   const safeTitle = String(title || 'Market Brief').slice(0, 255);
   const normalizedKind = normalizeBriefKind(briefKind);
+  const safeMime = String(mimeType || 'text/plain; charset=utf-8').slice(0, 128);
   await addColumnIfNotExists('trader_deck_briefs', 'generation_meta', 'JSON NULL');
   const metaJson = generationMeta == null ? null : JSON.stringify(generationMeta);
   const [existing] = await executeQuery(
@@ -1013,17 +1024,17 @@ async function publishAutoBrief({ period, date, title, body, briefKind = 'genera
     const nextV = Number(row.brief_version || 0) + 1;
     await executeQuery(
       `UPDATE trader_deck_briefs
-       SET title = ?, file_data = ?, mime_type = 'text/plain; charset=utf-8', brief_version = ?, generation_meta = ?
+       SET title = ?, file_data = ?, mime_type = ?, brief_version = ?, generation_meta = ?
        WHERE id = ?`,
-      [safeTitle, Buffer.from(body, 'utf8'), nextV, metaJson, row.id]
+      [safeTitle, Buffer.from(body, 'utf8'), safeMime, nextV, metaJson, row.id]
     );
     return { insertId: row.id, briefVersion: nextV };
   }
   const briefVersion = 1;
   const [result] = await executeQuery(
     `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data, brief_kind, brief_version, generation_meta)
-     VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?, ?, ?, ?)`,
-    [date, period, safeTitle, Buffer.from(body, 'utf8'), normalizedKind, briefVersion, metaJson]
+     VALUES (?, ?, ?, NULL, ?, ?, ?, ?, ?)`,
+    [date, period, safeTitle, safeMime, Buffer.from(body, 'utf8'), normalizedKind, briefVersion, metaJson]
   );
   return { insertId: result.insertId, briefVersion };
 }
