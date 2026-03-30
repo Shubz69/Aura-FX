@@ -6,8 +6,32 @@
 
 require('../utils/suppress-warnings');
 
+const { verifyToken } = require('../utils/auth');
+const { isSuperAdminEmail } = require('../utils/entitlements');
 const { runMarketDecoder } = require('./marketDecoderEngine');
 const { polishMarketDecoderBrief } = require('./marketDecoderPolish');
+
+/** Feed diagnostics (provider names, statuses) — super admins only. */
+function requestIsSuperAdmin(req) {
+  const decoded = verifyToken(req.headers.authorization);
+  if (!decoded) return false;
+  const role = String(decoded.role || '').toUpperCase();
+  if (role === 'SUPER_ADMIN') return true;
+  const email = decoded.email != null ? String(decoded.email).trim().toLowerCase() : '';
+  if (email && isSuperAdminEmail({ email })) return true;
+  return false;
+}
+
+function stripFeedDiagnosticsFromBrief(brief) {
+  if (!brief || typeof brief !== 'object') return brief;
+  const next = { ...brief };
+  if (next.meta && typeof next.meta === 'object') {
+    const meta = { ...next.meta };
+    delete meta.dataHealth;
+    next.meta = meta;
+  }
+  return next;
+}
 
 const CACHE_SEC = Math.min(900, Math.max(120, parseInt(process.env.MARKET_DECODER_CACHE_SEC, 10) || 600));
 const CACHE_TTL_MS = CACHE_SEC * 1000;
@@ -43,11 +67,14 @@ module.exports = async (req, res) => {
   }
 
   const cacheKey = symbol.toUpperCase();
+  const showFeedDiagnostics = requestIsSuperAdmin(req);
+
   if (!refresh) {
     const hit = getCached(cacheKey);
     if (hit) {
       res.setHeader('Cache-Control', 'private, max-age=60');
-      return res.status(200).json({ success: true, ...hit, cached: true });
+      const briefOut = showFeedDiagnostics ? hit.brief : stripFeedDiagnosticsFromBrief(hit.brief);
+      return res.status(200).json({ success: true, ...hit, brief: briefOut, cached: true });
     }
   }
 
@@ -70,7 +97,8 @@ module.exports = async (req, res) => {
     const payload = { brief, cached: false, cacheTtlSec: CACHE_SEC };
     setCached(cacheKey, payload);
     res.setHeader('Cache-Control', 'private, max-age=60');
-    return res.status(200).json({ success: true, ...payload });
+    const briefOut = showFeedDiagnostics ? brief : stripFeedDiagnosticsFromBrief(brief);
+    return res.status(200).json({ success: true, brief: briefOut, cached: false, cacheTtlSec: CACHE_SEC });
   } catch (err) {
     console.error('[market-decoder]', err);
     return res.status(500).json({ success: false, message: err.message || 'Market Decoder failed' });

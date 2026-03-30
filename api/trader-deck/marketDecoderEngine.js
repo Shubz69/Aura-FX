@@ -295,7 +295,7 @@ function adaptiveSmas(closes) {
     return {
       sma50: null,
       sma200: null,
-      note50: 'Insufficient daily history for moving averages — feed returned fewer than two closes.',
+      note50: 'Insufficient daily history for moving averages — fewer than two closes in the loaded window.',
       note200: null,
     };
   }
@@ -387,7 +387,7 @@ function buildScenarioMapElite({ piv, bias, last, lev, eventHighImpactSoon }) {
   if (!hasPiv) {
     return {
       bullish: {
-        condition: 'Reclaim prior swing high with follow-through after data feed restores full OHLC.',
+        condition: 'Reclaim prior swing high with follow-through once full daily OHLC history is available.',
         outcome: 'Target next liquidity pocket above; trail stops on structure.',
       },
       bearish: {
@@ -747,7 +747,7 @@ async function runMarketDecoder(symbolInput) {
 
   const macroDriver =
     fred.status === 'failed' || fred.level == null
-      ? `US 10Y context unavailable (${fred.detail || 'FRED feed'}). Treat rates as unconfirmed: assume two-way risk until restored.`
+      ? 'US 10Y benchmark context unavailable. Treat rates as unconfirmed: assume two-way risk until restored.'
       : yieldsRising
         ? `US 10Y at ${fred.level.toFixed(2)}% and rising vs prior observation — discount-rate sensitivity and USD strength risk.`
         : `US 10Y at ${fred.level.toFixed(2)}% and easing vs prior observation — supports duration and growth proxies.`;
@@ -784,12 +784,12 @@ async function runMarketDecoder(symbolInput) {
   if (!events.length) {
     events = [
       {
-        title: 'No scored macro events returned from calendar feed in the next window',
+        title: 'No scored macro events in the next window',
         timeUntil: 'N/A',
         impact: 'Low',
         note: cal.ok
-          ? 'Calendar returned empty; verify FMP key and date range.'
-          : 'Economic calendar unavailable (FMP).',
+          ? 'Calendar returned empty for this range — widen the window or refresh later.'
+          : 'Economic calendar unavailable for this request.',
       },
     ];
   }
@@ -798,7 +798,7 @@ async function runMarketDecoder(symbolInput) {
     retailSentiment:
       marketType === 'Crypto' && fng
         ? `Crypto Fear & Greed ${fng.score} (${fng.label}) — rules use this as positioning overlay only.`
-        : 'Retail sentiment: not from a live feed for this asset class (crypto uses Fear & Greed when available).',
+        : 'Retail sentiment: not available for this asset class in this view (crypto uses a greed/fear index when available).',
     cot: 'COT positioning: not streamed in this build — use CFTC release for positioning if you require it.',
     crowdBias: crowdedLongCrypto
       ? 'Crowded long (contrarian caution) — crypto greed index elevated.'

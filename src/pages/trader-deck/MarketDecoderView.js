@@ -1,12 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import Api from '../../services/Api';
+import { useAuth } from '../../context/AuthContext';
+import { isSuperAdmin } from '../../utils/roles';
 import '../../styles/trader-deck/MarketDecoder.css';
 
 const QUICK = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD', 'SPY', 'USDJPY'];
 
 function formatPct(n) {
   if (n == null || Number.isNaN(Number(n))) {
-    return 'Session % pending — quote snapshot incomplete (check data health)';
+    return 'Session % pending — quote snapshot incomplete';
   }
   const v = Number(n);
   const sign = v > 0 ? '+' : '';
@@ -53,6 +55,8 @@ function biasPillClass(bias) {
 }
 
 export default function MarketDecoderView({ embedded }) {
+  const { user } = useAuth();
+  const isSuperAdminUser = isSuperAdmin(user);
   const [q, setQ] = useState('EURUSD');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -222,7 +226,7 @@ export default function MarketDecoderView({ embedded }) {
             )}
           </div>
 
-          {brief.meta?.dataHealth && (
+          {isSuperAdminUser && brief.meta?.dataHealth && (
             <div className="md-data-health" role="status">
               <strong>Feed status:</strong> {brief.meta.dataHealth.summary}
               {brief.meta.dataHealth.sparseSeries ? ' · Sparse series mode (quote-derived proxy)' : ''}
