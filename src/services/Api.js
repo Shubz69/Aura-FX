@@ -823,6 +823,20 @@ const Api = {
             params,
         });
     },
+
+    /** Rules-first asset decision brief (Trader Desk → Market Decoder). */
+    getTraderDeckMarketDecoder: (symbol, options = {}) => {
+        const sym = String(symbol || '').trim();
+        if (!sym) {
+            return Promise.reject(new Error('symbol required'));
+        }
+        const params = {
+            symbol: sym,
+            ...(options.refresh ? { refresh: '1' } : {}),
+            ...(options.noAi ? { noAi: '1' } : {}),
+        };
+        return axios.get(`${API_BASE_URL}/api/trader-deck/market-decoder`, { params });
+    },
     /**
      * Economic calendar. skipCache so actuals stay fresh.
      * Supports both legacy params (from/to/date/days) and range aliases (startDate/endDate),

@@ -587,6 +587,10 @@
       "destination": "/api/trader-deck/market-intelligence.js"
     },
     {
+      "source": "/api/trader-deck/market-decoder",
+      "destination": "/api/trader-deck/market-decoder.js"
+    },
+    {
       "source": "/api/trader-deck/content",
       "destination": "/api/trader-deck/content.js"
     },

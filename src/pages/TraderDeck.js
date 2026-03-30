@@ -10,6 +10,7 @@ import TraderDeckCalendarBar from '../components/trader-deck/TraderDeckCalendarB
 import TraderDeckWorldClocks from '../components/trader-deck/TraderDeckWorldClocks';
 import MarketOutlookView from './trader-deck/MarketOutlookView';
 import MarketIntelligenceBriefsView from './trader-deck/MarketIntelligenceBriefsView';
+import MarketDecoderView from './trader-deck/MarketDecoderView';
 import NewsHeadlines from '../components/NewsHeadlines';
 import '../styles/TraderDeckMarket.css';
 import '../styles/TraderDeckTabs.css';
@@ -82,6 +83,8 @@ export default function TraderDeck() {
   const canEdit = isAdmin(user);
 
   const [mainTab, setMainTab] = useState('outlook');
+  /** When viewing Market Intelligence: briefs (daily/weekly PDFs) vs rules-based Market Decoder. */
+  const [intelMode, setIntelMode] = useState('briefs');
   const [subTab, setSubTab] = useState('daily');
   const [selectedDate, setSelectedDate] = useState(today());
   const [calendarMonth, setCalendarMonth] = useState(today().slice(0, 7));
@@ -200,7 +203,9 @@ export default function TraderDeck() {
             <nav className="td-deck-header-right">
               <button
                 className={`td-deck-tab${mainTab === 'intelligence' ? ' td-deck-tab--active' : ''}`}
-                onClick={() => setMainTab('intelligence')}
+                onClick={() => {
+                  setMainTab('intelligence');
+                }}
               >
                 MARKET INTELLIGENCE
               </button>
@@ -229,20 +234,39 @@ export default function TraderDeck() {
           {/* Period Tabs + Sessions */}
           <div className="td-deck-below-header td-deck-period-stack">
             <div className="td-deck-period-row-main">
-              <nav className="td-deck-sub-tabs">
-                <button
-                  className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
-                  onClick={() => setSubTab('daily')}
-                >
-                  Daily
-                </button>
-                <button
-                  className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
-                  onClick={() => setSubTab('weekly')}
-                >
-                  Weekly
-                </button>
-              </nav>
+              {mainTab === 'intelligence' ? (
+                <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel" aria-label="Market Intelligence mode">
+                  <button
+                    type="button"
+                    className={`td-deck-sub-tab${intelMode === 'briefs' ? ' td-deck-sub-tab--active' : ''}`}
+                    onClick={() => setIntelMode('briefs')}
+                  >
+                    Briefs
+                  </button>
+                  <button
+                    type="button"
+                    className={`td-deck-sub-tab${intelMode === 'decoder' ? ' td-deck-sub-tab--active' : ''}`}
+                    onClick={() => setIntelMode('decoder')}
+                  >
+                    Market Decoder
+                  </button>
+                </nav>
+              ) : (
+                <nav className="td-deck-sub-tabs">
+                  <button
+                    className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
+                    onClick={() => setSubTab('daily')}
+                  >
+                    Daily
+                  </button>
+                  <button
+                    className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
+                    onClick={() => setSubTab('weekly')}
+                  >
+                    Weekly
+                  </button>
+                </nav>
+              )}
             </div>
 
             <MarketSessionsWithCountdowns />
@@ -264,12 +288,16 @@ export default function TraderDeck() {
                         />
                       )}
 
-                      {mainTab === 'intelligence' && (
+                      {mainTab === 'intelligence' && intelMode === 'briefs' && (
                         <MarketIntelligenceBriefsView
                           selectedDate={selectedDate}
                           period={subTab}
                           canEdit={canEdit}
                         />
+                      )}
+
+                      {mainTab === 'intelligence' && intelMode === 'decoder' && (
+                        <MarketDecoderView embedded />
                       )}
                     </div>
 

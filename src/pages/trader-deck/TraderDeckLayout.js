@@ -24,6 +24,7 @@ const OVERVIEW_SEMI = [
 const MI_SEMI = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'signals', label: 'Signals' },
+  { id: 'decoder', label: 'Market Decoder' },
 ];
 
 export default function TraderDeckLayout({ initialTab = 'overview', onBack }) {

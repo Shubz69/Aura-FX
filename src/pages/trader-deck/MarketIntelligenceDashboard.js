@@ -12,7 +12,9 @@ import ChangeList from '../../components/trader-deck/ChangeList';
 import FocusList from '../../components/trader-deck/FocusList';
 import RiskRadarList from '../../components/trader-deck/RiskRadarList';
 import { getMarketIntelligence, SEED_MARKET_INTELLIGENCE } from '../../data/marketIntelligence';
+import MarketDecoderView from './MarketDecoderView';
 import '../../styles/TraderDeckMarket.css';
+import '../../styles/trader-deck/MarketDecoder.css';
 
 const STORAGE_KEY = 'trader-deck-market-intelligence';
 
@@ -72,9 +74,11 @@ function saveToStorage(payload) {
   }
 }
 
-export default function MarketIntelligenceDashboard({ embedded }) {
+export default function MarketIntelligenceDashboard({ embedded, mode = 'dashboard' }) {
   const { user } = useAuth();
   const canEdit = isAdmin(user);
+  const [internalDecoder, setInternalDecoder] = useState(false);
+  const showDecoder = mode === 'decoder' || internalDecoder;
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -157,6 +161,21 @@ export default function MarketIntelligenceDashboard({ embedded }) {
     setEditMode(false);
     setEditDraft(null);
   };
+
+  if (showDecoder) {
+    return (
+      <div className="td-mi td-mi--embedded">
+        {internalDecoder && mode !== 'decoder' && (
+          <div className="td-mi-view-toolbar td-mi-view-toolbar--back">
+            <button type="button" className="td-mi-decoder-back" onClick={() => setInternalDecoder(false)}>
+              ← Dashboard
+            </button>
+          </div>
+        )}
+        <MarketDecoderView embedded />
+      </div>
+    );
+  }
 
   if (loading && !data) {
     if (embedded) {
@@ -427,6 +446,11 @@ export default function MarketIntelligenceDashboard({ embedded }) {
 
   const content = (
     <>
+      <div className="td-mi-view-toolbar">
+        <button type="button" className="td-mi-decoder-pill" onClick={() => setInternalDecoder(true)}>
+          Market Decoder
+        </button>
+      </div>
       {error && (
         <p className="td-mi-fallback-msg" role="status">
           {error}
