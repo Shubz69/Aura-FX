@@ -26,7 +26,7 @@ function isAuthorized(req) {
   return isVercelCronHeader || hasValidSecret || (isVercelCronUA && process.env.VERCEL);
 }
 
-module.exports = async (req, res) => {
+const handler = async (req, res) => {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
@@ -88,3 +88,10 @@ module.exports = async (req, res) => {
     results: out,
   });
 };
+
+/** Vercel: allow long-running automation (matches vercel.json `api/cron/*.js`). */
+handler.config = {
+  maxDuration: 300,
+};
+
+module.exports = handler;

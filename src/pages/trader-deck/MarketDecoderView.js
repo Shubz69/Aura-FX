@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Api from '../../services/Api';
 import { useAuth } from '../../context/AuthContext';
 import { isSuperAdmin } from '../../utils/roles';
+import MarketDecoderChart from './MarketDecoderChart';
 import '../../styles/trader-deck/MarketDecoder.css';
 
 const QUICK = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD', 'SPY', 'USDJPY'];
@@ -70,6 +71,22 @@ function biasPillClass(bias) {
   if (b === 'bullish') return 'md-decoder-pill md-decoder-pill--bull';
   if (b === 'bearish') return 'md-decoder-pill md-decoder-pill--bear';
   return 'md-decoder-pill md-decoder-pill--neutral';
+}
+
+function formatNewsTime(iso) {
+  if (!iso || typeof iso !== 'string') return '';
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return String(iso).slice(0, 19);
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(t));
+  } catch {
+    return new Date(t).toISOString().slice(0, 16);
+  }
 }
 
 export default function MarketDecoderView({ embedded }) {
@@ -283,6 +300,94 @@ export default function MarketDecoderView({ embedded }) {
                 )}
               </section>
             )}
+          </div>
+
+          <section className="md-decoder-card md-decoder-card--chart" aria-labelledby="md-h-chart">
+            <h3 id="md-h-chart" className="md-decoder-card-title md-terminal-title">
+              Price action
+            </h3>
+            <p className="md-chart-lede md-decoder-small">
+              Daily OHLC from the same series as the brief (candles, classic OHLC bars, or close-only line / area).
+            </p>
+            <MarketDecoderChart bars={brief.meta?.chartBars} />
+          </section>
+
+          <div className="md-decoder-anchor-grid">
+            <section className="md-decoder-card md-decoder-card--news" aria-labelledby="md-h-news">
+              <h3 id="md-h-news" className="md-decoder-card-title md-terminal-title">
+                Headlines · {brief.header.asset}
+              </h3>
+              {Array.isArray(brief.meta?.anchorNews) && brief.meta.anchorNews.length > 0 ? (
+                <ul className="md-anchor-news-list">
+                  {brief.meta.anchorNews.map((item, i) => {
+                    const href = String(item.url || '').trim();
+                    const safe = href && href !== '#';
+                    return (
+                      <li key={`${href}-${i}`}>
+                        {safe ? (
+                          <a
+                            className="md-anchor-news-link"
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {item.title || 'Open article'}
+                          </a>
+                        ) : (
+                          <span className="md-anchor-news-title">{item.title || 'Headline'}</span>
+                        )}
+                        <div className="md-anchor-news-meta">
+                          {item.source ? <span>{item.source}</span> : null}
+                          {item.datetime ? (
+                            <span className="md-anchor-news-time">{formatNewsTime(item.datetime)}</span>
+                          ) : null}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="md-decoder-small">
+                  No headlines matched this symbol with the configured keys — add Finnhub and/or FMP keys on the server for live
+                  article links.
+                </p>
+              )}
+            </section>
+
+            <section className="md-decoder-card md-decoder-card--meets" aria-labelledby="md-h-meets">
+              <h3 id="md-h-meets" className="md-decoder-card-title md-terminal-title">
+                Market meetings · {brief.header.asset}
+              </h3>
+              <p className="md-meets-scope md-decoder-small">
+                {brief.meta?.marketMeetingsScope === 'pair' &&
+                  'Economic releases filtered to currencies linked to this instrument.'}
+                {brief.meta?.marketMeetingsScope === 'global' &&
+                  'Pair-specific calendar rows were thin — showing the broader macro window for the same dates.'}
+                {brief.meta?.marketMeetingsScope === 'none' &&
+                  'Economic calendar did not return rows for this window.'}
+                {!['pair', 'global', 'none'].includes(brief.meta?.marketMeetingsScope) &&
+                  'Macro calendar context for upcoming releases.'}
+              </p>
+              {Array.isArray(brief.meta?.marketMeetings) && brief.meta.marketMeetings.length > 0 ? (
+                <ul className="md-meets-list">
+                  {brief.meta.marketMeetings.map((ev, i) => (
+                    <li key={`${ev.title}-${i}`}>
+                      <strong>{ev.title}</strong>
+                      {ev.timeUntil ? ` — ${ev.timeUntil}` : ''}
+                      {ev.impact ? (
+                        <span className={`md-meets-impact md-meets-impact--${String(ev.impact).toLowerCase()}`}>
+                          {' '}
+                          · {ev.impact}
+                        </span>
+                      ) : null}
+                      {ev.date ? <span className="md-meets-date"> · {ev.date}</span> : null}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="md-decoder-small">No upcoming releases parsed for this view.</p>
+              )}
+            </section>
           </div>
 
           {isSuperAdminUser && brief.meta?.dataHealth && (

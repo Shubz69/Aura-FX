@@ -12,6 +12,7 @@ const {
   fetchDailySeriesWithQuoteFallback,
   fetchQuoteWithLog,
   fetchCrossAssetQuotes,
+  fetchMarketDecoderContextNews,
 } = require('./marketDecoderData');
 
 const TIMEOUT_MS = 9000;
@@ -277,6 +278,122 @@ function pickEvents(calendarRows, limit = 6) {
     if (out.length >= limit) break;
   }
   return out;
+}
+
+const CCY_CAL_HINTS = {
+  USD: ['USD', 'US', 'UNITED STATES', 'FED', 'FOMC', 'NFP', 'PCE', 'TREASURY'],
+  EUR: ['EUR', 'EU', 'ECB', 'EMU', 'GERMANY', 'FRANCE', 'ITALY', 'SPAIN', 'EURO'],
+  GBP: ['GBP', 'UK', 'BOE', 'BRITAIN', 'ENGLAND'],
+  JPY: ['JPY', 'JP', 'JAPAN', 'BOJ'],
+  CHF: ['CHF', 'CH', 'SNB', 'SWITZ'],
+  AUD: ['AUD', 'AU', 'RBA', 'AUSTRALIA'],
+  CAD: ['CAD', 'CA', 'BOC', 'CANADA'],
+  NZD: ['NZD', 'NZ', 'RBNZ'],
+  XAU: ['XAU', 'GOLD', 'PRECIOUS'],
+  XAG: ['XAG', 'SILVER'],
+  BTC: ['BTC', 'BITCOIN'],
+  ETH: ['ETH', 'ETHEREUM'],
+};
+
+function calendarTokensForResolved(resolved) {
+  const u = String(resolved.displaySymbol || '').toUpperCase();
+  const { marketType } = resolved;
+  const tokens = new Set();
+  const addCcy = (c) => {
+    if (!c) return;
+    tokens.add(c);
+    (CCY_CAL_HINTS[c] || []).forEach((t) => tokens.add(t));
+  };
+  if (marketType === 'FX' && u.length === 6 && /^[A-Z]{6}$/.test(u)) {
+    addCcy(u.slice(0, 3));
+    addCcy(u.slice(3));
+    return [...tokens];
+  }
+  if (marketType === 'Crypto') {
+    const base = u.replace(/USDT|USD/g, '');
+    addCcy(base);
+    tokens.add('CRYPTO');
+    addCcy('USD');
+    return [...tokens];
+  }
+  if (marketType === 'Commodity' && (u.includes('XAU') || u.includes('GOLD'))) {
+    (CCY_CAL_HINTS.XAU || []).forEach((t) => tokens.add(t));
+    addCcy('USD');
+    return [...tokens];
+  }
+  if (marketType === 'Commodity' && (u.includes('XAG') || u.includes('SILVER'))) {
+    (CCY_CAL_HINTS.XAG || []).forEach((t) => tokens.add(t));
+    addCcy('USD');
+    return [...tokens];
+  }
+  addCcy('USD');
+  return [...tokens];
+}
+
+function calendarRowMatchesTokens(row, tokens) {
+  const country = String(row.country || '').toUpperCase();
+  const name = String(row.name || '').toUpperCase();
+  const curr = String((row.full && row.full.currency) || '').toUpperCase();
+  const blob = `${country}|${name}|${curr}`;
+  return tokens.some((t) => t && blob.includes(String(t).toUpperCase()));
+}
+
+/** Prefer releases tied to the instrument’s currencies; fall back to full calendar. */
+function pickEventsForAsset(calendarRows, resolved, limit = 8) {
+  const rows = calendarRows || [];
+  if (!rows.length) return { events: [], scope: 'none' };
+  const tokens = calendarTokensForResolved(resolved);
+  const matched = rows.filter((r) => calendarRowMatchesTokens(r, tokens));
+  const pool = matched.length >= 2 ? matched : rows;
+  const scope = matched.length >= 2 ? 'pair' : 'global';
+  return { events: pickEvents(pool, limit), scope };
+}
+
+function alignOpens(closes, opens) {
+  const n = closes.length;
+  if (!n) return [];
+  const o = opens && opens.length === n ? opens.map(Number) : null;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    if (o && o[i] != null && !Number.isNaN(o[i])) out.push(o[i]);
+    else out.push(i > 0 ? Number(closes[i - 1]) : Number(closes[i]));
+  }
+  return out;
+}
+
+/** Daily bars for TradingView lightweight-charts: `{ time, open, high, low, close }` in UTC seconds. */
+function buildChartBars(seriesPack, maxBars = 120) {
+  if (!seriesPack || !seriesPack.ok || !seriesPack.closes || seriesPack.closes.length < 2) return [];
+  const closes = seriesPack.closes.map(Number);
+  const highs = (seriesPack.highs || []).map(Number);
+  const lows = (seriesPack.lows || []).map(Number);
+  const times = seriesPack.times || [];
+  const dates = seriesPack.dates || [];
+  const opens = alignOpens(closes, seriesPack.opens);
+  const n = closes.length;
+  const start = Math.max(0, n - maxBars);
+  const byTime = new Map();
+  for (let i = start; i < n; i++) {
+    let t = times[i] != null && times[i] !== '' ? Number(times[i]) : null;
+    if (t == null || Number.isNaN(t)) {
+      const d = dates[i] ? String(dates[i]).slice(0, 10) : '';
+      if (d) t = Math.floor(new Date(`${d}T12:00:00.000Z`).getTime() / 1000);
+    }
+    if (t == null || Number.isNaN(t)) t = Math.floor(Date.now() / 1000) - 86400 * (n - 1 - i);
+    const hi = highs[i] != null && !Number.isNaN(highs[i]) ? highs[i] : closes[i];
+    const lo = lows[i] != null && !Number.isNaN(lows[i]) ? lows[i] : closes[i];
+    const bar = {
+      time: t,
+      open: opens[i],
+      high: Math.max(hi, lo, opens[i], closes[i]),
+      low: Math.min(hi, lo, opens[i], closes[i]),
+      close: closes[i],
+    };
+    byTime.set(bar.time, bar);
+  }
+  return [...byTime.keys()]
+    .sort((a, b) => a - b)
+    .map((k) => byTime.get(k));
 }
 
 function timeUntil(isoLike) {
@@ -626,13 +743,14 @@ async function runMarketDecoder(symbolInput) {
   const quoteRes = await fetchQuoteWithLog(finnhubSymbol, resolved);
   const q = quoteRes.ok && quoteRes.data ? quoteRes.data : {};
 
-  const [seriesPack, fred, dxy, fng, cal, crossBundle] = await Promise.all([
+  const [seriesPack, fred, dxy, fng, cal, crossBundle, anchorNews] = await Promise.all([
     fetchDailySeriesWithQuoteFallback(resolved, from, to, q),
     fetchTreasuryContextLogged(),
     fetchDxyProxy(),
     marketType === 'Crypto' ? fetchFearGreed() : Promise.resolve(null),
     getEconomicCalendar(),
     fetchCrossAssetQuotes(),
+    fetchMarketDecoderContextNews(resolved, 12),
   ]);
 
   const closes = seriesPack.ok ? seriesPack.closes : [];
@@ -664,8 +782,9 @@ async function runMarketDecoder(symbolInput) {
   if (!calRows.length) {
     console.warn('[market-decoder] FMP economic calendar empty — check FMP_API_KEY or calendar range');
   }
-  const eventsRaw = pickEvents(calRows, 8);
-  const eventHighImpactSoon = eventsRaw.some((e) => e.impact === 'High');
+  const eventsForScoring = pickEvents(calRows, 12);
+  const eventHighImpactSoon = eventsForScoring.some((e) => e.impact === 'High');
+  const pairMeetingsPick = pickEventsForAsset(calRows, resolved, 10);
 
   const { bull, bear, net } = scoreRules({
     last,
@@ -791,7 +910,7 @@ async function runMarketDecoder(symbolInput) {
     ? 'High-impact macro window in calendar window — gap and headline risk; reduce size into prints.'
     : 'Liquidity pockets around major fixes — size for slippage and avoid market orders in thin prints.';
 
-  let events = eventsRaw.slice(0, 4).map((e) => ({
+  let events = eventsForScoring.slice(0, 4).map((e) => ({
     title: e.title,
     timeUntil: timeUntil(e.date) || 'time TBC',
     impact: e.impact,
@@ -839,6 +958,13 @@ async function runMarketDecoder(symbolInput) {
   };
 
   const sparkline = closes.length ? closes.slice(-40).map((v) => Number(v)) : [];
+  const chartBars = buildChartBars(seriesPack, 120);
+  const marketMeetingsForPair = (pairMeetingsPick.events || []).map((e) => ({
+    title: e.title,
+    date: e.date,
+    impact: e.impact,
+    timeUntil: timeUntil(e.date) || 'time TBC',
+  }));
 
   return {
     success: true,
@@ -907,6 +1033,10 @@ async function runMarketDecoder(symbolInput) {
         dataHealth,
         finnhubSymbol,
         sparkline,
+        chartBars,
+        anchorNews: Array.isArray(anchorNews) ? anchorNews : [],
+        marketMeetings: marketMeetingsForPair,
+        marketMeetingsScope: pairMeetingsPick.scope,
         generatedAt: new Date().toISOString(),
       },
     },

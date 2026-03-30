@@ -53,11 +53,11 @@
     }
   ],
   "functions": {
+    "api/cron/*.js": {
+      "maxDuration": 300
+    },
     "api/**/*.js": {
       "maxDuration": 60
-    },
-    "api/cron/auto-market-briefs.js": {
-      "maxDuration": 300
     }
   },
   "rewrites": [
