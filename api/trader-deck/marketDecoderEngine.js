@@ -8,8 +8,12 @@ const { getConfig } = require('./config');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getQuote } = require('./services/finnhubService');
 const { getEconomicCalendar } = require('./services/fmpService');
+const {
+  fetchDailySeriesWithQuoteFallback,
+  fetchQuoteWithLog,
+  fetchCrossAssetQuotes,
+} = require('./marketDecoderData');
 
-const FINNHUB_BASE = 'https://finnhub.io/api/v1';
 const TIMEOUT_MS = 9000;
 
 /** @typedef {'FX'|'Crypto'|'Index'|'Commodity'|'Equity'} MarketType */
@@ -109,44 +113,29 @@ function sma(values, period) {
   return sum / period;
 }
 
-async function finnhubCandles(candleKind, symbol, fromSec, toSec) {
-  const { finnhubApiKey } = getConfig();
-  if (!finnhubApiKey) return { ok: false, closes: [], highs: [], lows: [], times: [], error: 'no_key' };
-  const path = candleKind === 'forex' ? 'forex/candle' : candleKind === 'crypto' ? 'crypto/candle' : 'stock/candle';
-  const url = `${FINNHUB_BASE}/${path}?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${fromSec}&to=${toSec}&token=${encodeURIComponent(finnhubApiKey)}`;
-  try {
-    const res = await fetchWithTimeout(url, {}, TIMEOUT_MS);
-    if (!res.ok) return { ok: false, closes: [], highs: [], lows: [], times: [], error: String(res.status) };
-    const j = await res.json();
-    if (!j || j.s !== 'ok' || !Array.isArray(j.c)) return { ok: false, closes: [], highs: [], lows: [], times: [], error: 'no_data' };
-    return {
-      ok: true,
-      closes: j.c.map(Number),
-      highs: (j.h || []).map(Number),
-      lows: (j.l || []).map(Number),
-      times: j.t || [],
-    };
-  } catch (e) {
-    return { ok: false, closes: [], highs: [], lows: [], times: [], error: e.message || 'err' };
-  }
-}
-
-async function fetchTreasuryContext() {
+async function fetchTreasuryContextLogged() {
   const { fredApiKey } = getConfig();
-  if (!fredApiKey) return { level: null, rising: null };
+  if (!fredApiKey) {
+    console.warn('[market-decoder] FRED DGS10: missing FRED_API_KEY — using neutral rates context');
+    return { level: null, rising: null, status: 'failed', detail: 'FRED_API_KEY missing' };
+  }
   try {
     const url = `https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&sort_order=desc&limit=5&file_type=json&api_key=${encodeURIComponent(fredApiKey)}`;
     const res = await fetchWithTimeout(url, {}, TIMEOUT_MS);
-    if (!res.ok) return { level: null, rising: null };
+    if (!res.ok) {
+      console.warn('[market-decoder] FRED DGS10 HTTP', res.status);
+      return { level: null, rising: null, status: 'failed', detail: `HTTP ${res.status}` };
+    }
     const j = await res.json();
     const obs = (j && j.observations) || [];
     const vals = obs.map((o) => Number(o.value)).filter((x) => !Number.isNaN(x));
-    if (vals.length < 2) return { level: vals[0] ?? null, rising: null };
+    if (vals.length < 2) return { level: vals[0] ?? null, rising: null, status: 'partial', detail: 'single observation' };
     const level = vals[0];
     const rising = vals[0] > vals[1];
-    return { level, rising };
-  } catch {
-    return { level: null, rising: null };
+    return { level, rising, status: 'ok' };
+  } catch (e) {
+    console.warn('[market-decoder] FRED DGS10 error:', e.message || e);
+    return { level: null, rising: null, status: 'failed', detail: e.message || 'error' };
   }
 }
 
@@ -285,31 +274,149 @@ function timeUntil(isoLike) {
   return `${Math.round(h / 24)}d`;
 }
 
-function crossAssetLines(asset, marketType, { dxyRising, yieldsRising, eurUsdDp }) {
-  const lines = [];
-  if (marketType === 'FX' && asset.includes('EUR')) {
-    if (eurUsdDp != null) {
-      lines.push(`EURUSD session % → ${eurUsdDp >= 0 ? 'supportive' : 'pressure'} for euro direction`);
-    }
-    if (dxyRising === true) lines.push('DXY firm → headwind for EURUSD');
-    else if (dxyRising === false) lines.push('DXY softer → tailwind for EURUSD');
-  } else {
-    if (dxyRising === true) lines.push('DXY bid → USD-positive cross-asset tone');
-    else if (dxyRising === false) lines.push('DXY offered → risk/commodity relief');
-  }
-  if (yieldsRising === true) lines.push('US10Y rising → pressure on duration & gold');
-  else if (yieldsRising === false) lines.push('US10Y softer → supports gold & growth proxies');
-  lines.push('SPX tone → risk appetite anchor for indices & crypto');
-  if (lines.length < 4) lines.push('Gold vs real yields → check XAU if trading metals');
-  return lines.slice(0, 4);
-}
-
 function formatLevelStr(x, marketType) {
   const n = Number(x);
-  if (x == null || Number.isNaN(n)) return '—';
+  if (x == null || Number.isNaN(n)) return null;
   if (marketType === 'FX' || marketType === 'Commodity') return n.toFixed(5);
   if (marketType === 'Crypto' && n > 200) return n.toFixed(2);
   return n.toFixed(n < 50 ? 4 : 2);
+}
+
+/** Always user-facing string — never a lone dash */
+function formatLevelDisplay(x, marketType, label) {
+  const s = formatLevelStr(x, marketType);
+  if (s != null) return s;
+  return `Unavailable (${label})`;
+}
+
+function adaptiveSmas(closes) {
+  const n = closes.length;
+  if (n < 2) {
+    return {
+      sma50: null,
+      sma200: null,
+      note50: 'Insufficient daily history for moving averages — feed returned fewer than two closes.',
+      note200: null,
+    };
+  }
+  const w50 = Math.min(50, Math.max(2, n - 1));
+  const w200 = n >= 200 ? 200 : null;
+  const s50 = sma(closes, w50);
+  const s200 = w200 ? sma(closes, w200) : null;
+  return {
+    sma50: s50,
+    sma200: s200,
+    note50:
+      n < 50
+        ? `Using ${w50}-session SMA (full 50-session MA requires more history; currently ${n} sessions).`
+        : null,
+    note200:
+      n < 200
+        ? `200-session MA not available (${n} sessions loaded).`
+        : null,
+  };
+}
+
+function buildCrossAssetFromBundle(bundle, marketType, displaySymbol) {
+  const lines = [];
+  const eur = bundle && bundle.eurusd;
+  const spy = bundle && bundle.spy;
+  const xau = bundle && bundle.xau;
+  const btc = bundle && bundle.btc;
+
+  if (eur && eur.dp != null) {
+    const dir = eur.dp >= 0 ? 'firming' : 'soft';
+    lines.push(`EURUSD ${eur.dp >= 0 ? '+' : ''}${eur.dp.toFixed(2)}% session → USD ${dir} vs euro`);
+  } else {
+    lines.push('EURUSD cross: quote unavailable — USD tone from primary pair only');
+  }
+
+  if (spy && spy.dp != null) {
+    lines.push(`SPY ${spy.dp >= 0 ? '+' : ''}${spy.dp.toFixed(2)}% → US equity risk tone ${spy.dp >= 0 ? 'supportive' : 'defensive'} for risk assets`);
+  } else {
+    lines.push('SPY: live % move unavailable — treat US equity tone as unconfirmed');
+  }
+
+  if (marketType === 'Commodity' || displaySymbol.includes('XAU')) {
+    if (xau && xau.dp != null) {
+      lines.push(`Gold ${xau.dp >= 0 ? '+' : ''}${xau.dp.toFixed(2)}% → real-yield sensitivity check for metals`);
+    } else {
+      lines.push('Gold session % unavailable — cross-check XAU separately before sizing metals');
+    }
+  } else if (xau && xau.dp != null) {
+    lines.push(`XAUUSD ${xau.dp >= 0 ? '+' : ''}${xau.dp.toFixed(2)}% → flight-to-quality bias ${xau.dp >= 0 ? 'on' : 'off'}`);
+  }
+
+  if (marketType === 'Crypto' || displaySymbol.includes('BTC')) {
+    if (btc && btc.dp != null) {
+      lines.push(`BTC ${btc.dp >= 0 ? '+' : ''}${btc.dp.toFixed(2)}% → crypto-beta liquidity cue`);
+    }
+  } else if (btc && btc.dp != null) {
+    lines.push(`BTC ${btc.dp >= 0 ? '+' : ''}${btc.dp.toFixed(2)}% → speculative risk appetite read-across`);
+  }
+
+  while (lines.length < 4) {
+    lines.push('Cross-asset: maintain awareness of USD index tone via EURUSD and rates');
+    if (lines.length >= 4) break;
+  }
+  return lines.slice(0, 4);
+}
+
+function decisionPressureText({ net, eventHighImpactSoon, conviction }) {
+  if (eventHighImpactSoon) return 'Elevated — reduce size until event passes';
+  if (conviction === 'High' && Math.abs(net) >= 2) return 'Directional — execute only at predefined levels';
+  if (conviction === 'Low') return 'Compressed — wait for cleaner structure';
+  return 'Balanced — confirmation required before commitment';
+}
+
+function convictionExplanationText({ conviction, net, bull, bear }) {
+  return `${bull} bullish vs ${bear} bearish rule checks (net ${net >= 0 ? '+' : ''}${net}) → ${conviction} conviction.`;
+}
+
+function whatChangedLine({ displaySymbol, last, pctDay, q, marketType }) {
+  const pct =
+    pctDay != null
+      ? `${pctDay >= 0 ? '+' : ''}${Number(pctDay).toFixed(2)}%`
+      : 'session % unavailable (using close vs prior when possible)';
+  const px = last != null ? formatLevelDisplay(last, marketType, 'last') : 'price pending';
+  return `${displaySymbol} last ${px} (${pct} vs prior close snapshot). Quote reflects live venue where available.`;
+}
+
+function buildScenarioMapElite({ piv, bias, last, lev, eventHighImpactSoon }) {
+  const hasPiv = piv && piv.r1 != null && piv.s1 != null;
+  if (!hasPiv) {
+    return {
+      bullish: {
+        condition: 'Reclaim prior swing high with follow-through after data feed restores full OHLC.',
+        outcome: 'Target next liquidity pocket above; trail stops on structure.',
+      },
+      bearish: {
+        condition: 'Lose prior swing low with expanding range.',
+        outcome: 'Target next support shelf; fade failed bounces.',
+      },
+      noTrade: {
+        when: eventHighImpactSoon
+          ? 'Binary headline risk — no mechanical edge until prices settle post-release'
+          : 'Incomplete level grid — stand down from size until daily pivots populate',
+      },
+    };
+  }
+  const above = last != null && last >= piv.pivot;
+  return {
+    bullish: {
+      condition: `Daily hold above pivot ${lev(piv.pivot)} and acceptance through ${lev(piv.r1)} (R1) on a closing basis`,
+      outcome: `Open route to ${lev(piv.r2)} (R2) while ${lev(piv.s1)} (S1) holds as intraday support`,
+    },
+    bearish: {
+      condition: `Rejection below ${lev(piv.pivot)} or failed reclaim of ${lev(piv.r1)} with momentum`,
+      outcome: `Initial target ${lev(piv.s1)} (S1), extension toward ${lev(piv.s2)} (S2) if flow accelerates`,
+    },
+    noTrade: {
+      when: above
+        ? `Chop between ${lev(piv.pivot)} and ${lev(piv.r1)} without a close outside — fade breakouts`
+        : `Two-sided trade between ${lev(piv.s1)} and ${lev(piv.r1)} until one side breaks on volume`,
+    },
+  };
 }
 
 /** Momentum: Rising / Weakening / Flat — rules from spec */
@@ -393,7 +500,7 @@ function computeEnvironmentLine({ tradeReadiness, pulseState, net }) {
 }
 
 function buildExecutionGuidance({ bias, last, sma50, piv, condition, conviction, marketType }) {
-  const lev = (x) => formatLevelStr(x, marketType);
+  const lev = (x, lab) => formatLevelDisplay(x, marketType, lab || 'level');
   const preferredDirection =
     bias === 'Bullish' ? 'Selective Long' : bias === 'Bearish' ? 'Selective Short' : 'Neutral Bias';
 
@@ -443,7 +550,7 @@ function buildExecutionGuidance({ bias, last, sma50, piv, condition, conviction,
 }
 
 function buildFinalPostureElite({ net, eventHighImpactSoon, conviction, bias, piv, last, marketType }) {
-  const lev = (x) => formatLevelStr(x, marketType);
+  const lev = (x, lab) => formatLevelDisplay(x, marketType, lab || 'level');
   let headline = 'WAIT FOR CONFIRMATION';
   let subtitle = 'Mixed signals — need a cleaner trigger';
 
@@ -497,39 +604,51 @@ async function runMarketDecoder(symbolInput) {
     };
   }
 
-  const { displaySymbol, marketType, candleKind, finnhubSymbol } = resolved;
+  const { displaySymbol, marketType, finnhubSymbol } = resolved;
   const to = Math.floor(Date.now() / 1000);
   const from = to - 86400 * 400;
 
-  const [candles, quoteRes, fred, dxy, fng, cal] = await Promise.all([
-    finnhubCandles(candleKind, finnhubSymbol, from, to),
-    getQuote(finnhubSymbol),
-    fetchTreasuryContext(),
+  const quoteRes = await fetchQuoteWithLog(finnhubSymbol, resolved);
+  const q = quoteRes.ok && quoteRes.data ? quoteRes.data : {};
+
+  const [seriesPack, fred, dxy, fng, cal, crossBundle] = await Promise.all([
+    fetchDailySeriesWithQuoteFallback(resolved, from, to, q),
+    fetchTreasuryContextLogged(),
     fetchDxyProxy(),
     marketType === 'Crypto' ? fetchFearGreed() : Promise.resolve(null),
     getEconomicCalendar(),
+    fetchCrossAssetQuotes(),
   ]);
 
-  const closes = candles.ok ? candles.closes : [];
-  const highs = candles.ok ? candles.highs : [];
-  const lows = candles.ok ? candles.lows : [];
+  const closes = seriesPack.ok ? seriesPack.closes : [];
+  const highs = seriesPack.ok ? seriesPack.highs : [];
+  const lows = seriesPack.ok ? seriesPack.lows : [];
+  const isSparse = Boolean(seriesPack.isSparse);
 
-  const last = closes.length ? closes[closes.length - 1] : null;
-  const prev = closes.length > 1 ? closes[closes.length - 2] : null;
-  const sma50 = sma(closes, 50);
-  const sma200 = sma(closes, 200);
+  const last =
+    closes.length > 0
+      ? closes[closes.length - 1]
+      : q.c != null
+        ? Number(q.c)
+        : null;
+  const prev = closes.length > 1 ? closes[closes.length - 2] : q.pc != null ? Number(q.pc) : null;
+
+  const { sma50, sma200, note50, note200 } = adaptiveSmas(closes);
   const mom5 = closes.length > 5 ? closes[closes.length - 1] - closes[closes.length - 6] : null;
   const momentumUp = mom5 == null ? null : mom5 > 0;
 
-  const q = quoteRes.ok && quoteRes.data ? quoteRes.data : {};
-  const pctDay = q.dp != null ? Number(q.dp) : prev && last ? ((last - prev) / prev) * 100 : null;
+  const pctDay =
+    q.dp != null ? Number(q.dp) : prev != null && last != null && prev !== 0 ? ((last - prev) / Math.abs(prev)) * 100 : null;
 
   const dxyRising = dxy.ok && dxy.eurUsdDp != null ? dxy.eurUsdDp < 0 : null;
 
   const yieldsRising = fred.rising === true;
   const crowdedLongCrypto = marketType === 'Crypto' && fng && fng.score >= 75;
 
-  const calRows = cal.ok ? cal.data : [];
+  let calRows = cal.ok ? cal.data : [];
+  if (!calRows.length) {
+    console.warn('[market-decoder] FMP economic calendar empty — check FMP_API_KEY or calendar range');
+  }
   const eventsRaw = pickEvents(calRows, 8);
   const eventHighImpactSoon = eventsRaw.some((e) => e.impact === 'High');
 
@@ -549,36 +668,28 @@ async function runMarketDecoder(symbolInput) {
   const condition = tradingCondition({ net, eventHighImpactSoon, yieldsRising });
   const approach = bestApproach({ bias, condition, last, sma50, sma200 });
 
-  let prevH = highs.length > 1 ? highs[highs.length - 2] : q.h;
-  let prevL = lows.length > 1 ? lows[lows.length - 2] : q.l;
-  const prevC = closes.length > 1 ? closes[closes.length - 2] : q.pc ?? q.o;
-  if (prevH == null) prevH = last;
-  if (prevL == null) prevL = last;
+  let prevH = highs.length > 1 ? highs[highs.length - 2] : q.h != null ? Number(q.h) : null;
+  let prevL = lows.length > 1 ? lows[lows.length - 2] : q.l != null ? Number(q.l) : null;
+  const prevC = closes.length > 1 ? closes[closes.length - 2] : q.pc != null ? Number(q.pc) : q.o != null ? Number(q.o) : null;
+  if (prevH == null && last != null) prevH = last;
+  if (prevL == null && last != null) prevL = last;
 
-  const piv = pivotLevels(prevH, prevL, prevC);
+  const piv =
+    prevH != null && prevL != null && prevC != null && !Number.isNaN(prevH + prevL + prevC)
+      ? pivotLevels(prevH, prevL, prevC)
+      : null;
   const wr = weeklyRange(highs, lows);
 
-  const scenarios = {
-    bullish: {
-      condition: 'Hold above S1 / rising 50-day smoothing',
-      outcome: piv ? `Target R1 ${piv.r1 != null ? piv.r1.toFixed(4) : '—'} then R2` : 'Target prior range high',
-    },
-    bearish: {
-      condition: 'Fail at R1 or lose S1 with momentum',
-      outcome: piv ? `Target S1 ${piv.s1 != null ? piv.s1.toFixed(4) : '—'} then S2` : 'Target prior range low',
-    },
-    noTrade: {
-      when: eventHighImpactSoon
-        ? 'High-impact macro window — spread widens, false breaks'
-        : 'Choppy tape with no follow-through after breaks',
-    },
-  };
-
-  const cross = crossAssetLines(displaySymbol, marketType, {
-    dxyRising,
-    yieldsRising,
-    eurUsdDp: dxy.eurUsdDp,
+  const lev = (x, lab) => formatLevelDisplay(x, marketType, lab || 'level');
+  const scenarios = buildScenarioMapElite({
+    piv,
+    bias,
+    last,
+    lev,
+    eventHighImpactSoon,
   });
+
+  const cross = buildCrossAssetFromBundle(crossBundle, marketType, displaySymbol);
 
   const momentum = computeMomentum(closes, sma50);
   const volLabel = volatilityLabel(highs, lows, closes);
@@ -604,10 +715,12 @@ async function runMarketDecoder(symbolInput) {
   const marketPulse = {
     biasScore: net,
     biasLabel: biasLabelFromNet(net),
+    convictionExplanation: convictionExplanationText({ conviction, net, bull, bear }),
     gaugePosition: gaugePositionFromNet(net),
     momentum,
     volatility: volLabel,
     marketState: pulseState,
+    decisionPressure: decisionPressureText({ net, eventHighImpactSoon, conviction }),
     tradeReadiness,
     environmentLine,
   };
@@ -632,34 +745,85 @@ async function runMarketDecoder(symbolInput) {
     marketType,
   });
 
-  const macroDriver = yieldsRising
-    ? 'Rates staying firm — USD & discount-rate sensitivity in focus'
-    : 'Rates easing bias — growth assets supported vs USD';
-  const technicalDriver =
-    last != null && sma50 != null
-      ? `Price vs 50/200 SMA (${last.toFixed(4)} vs ${sma50.toFixed(4)} / ${sma200 != null ? sma200.toFixed(4) : '—'})`
-      : 'MA stack unavailable — use range levels';
-  const riskDriver = eventHighImpactSoon
-    ? 'High-impact calendar cluster — gap risk'
-    : 'Liquidity pockets around NY fix — watch slippage';
+  const macroDriver =
+    fred.status === 'failed' || fred.level == null
+      ? `US 10Y context unavailable (${fred.detail || 'FRED feed'}). Treat rates as unconfirmed: assume two-way risk until restored.`
+      : yieldsRising
+        ? `US 10Y at ${fred.level.toFixed(2)}% and rising vs prior observation — discount-rate sensitivity and USD strength risk.`
+        : `US 10Y at ${fred.level.toFixed(2)}% and easing vs prior observation — supports duration and growth proxies.`;
 
-  const events = eventsRaw.slice(0, 4).map((e) => ({
+  const technicalParts = [];
+  if (last != null && sma50 != null) {
+    technicalParts.push(
+      `Last ${formatLevelDisplay(last, marketType, 'last')} vs SMA ${formatLevelDisplay(sma50, marketType, 'SMA50')}`
+    );
+    if (note50) technicalParts.push(note50);
+    if (sma200 != null) {
+      technicalParts.push(`200-session SMA ${formatLevelDisplay(sma200, marketType, 'SMA200')}`);
+    }
+    if (note200) technicalParts.push(note200);
+  } else {
+    technicalParts.push(
+      isSparse
+        ? 'Daily history compressed to snapshot — moving averages are indicative; wait for full history to anchor structure.'
+        : 'SMA stack not computed — insufficient overlapping closes in this series.'
+    );
+  }
+  if (isSparse) technicalParts.push('Sparse series flag: levels are proxy until full daily history returns.');
+  const technicalDriver = technicalParts.join(' ');
+
+  const riskDriver = eventHighImpactSoon
+    ? 'High-impact macro window in calendar window — gap and headline risk; reduce size into prints.'
+    : 'Liquidity pockets around major fixes — size for slippage and avoid market orders in thin prints.';
+
+  let events = eventsRaw.slice(0, 4).map((e) => ({
     title: e.title,
-    timeUntil: timeUntil(e.date),
+    timeUntil: timeUntil(e.date) || 'time TBC',
     impact: e.impact,
   }));
+  if (!events.length) {
+    events = [
+      {
+        title: 'No scored macro events returned from calendar feed in the next window',
+        timeUntil: 'N/A',
+        impact: 'Low',
+        note: cal.ok
+          ? 'Calendar returned empty; verify FMP key and date range.'
+          : 'Economic calendar unavailable (FMP).',
+      },
+    ];
+  }
 
   const positioning = {
-    retailSentiment: marketType === 'Crypto' && fng ? `${fng.score} (${fng.label})` : '—',
-    cot: 'Not wired (CFTC feed requires separate subscription)',
-    crowdBias: crowdedLongCrypto ? 'Crowded long (contrarian caution)' : 'Neutral / not crowded',
+    retailSentiment:
+      marketType === 'Crypto' && fng
+        ? `Crypto Fear & Greed ${fng.score} (${fng.label}) — rules use this as positioning overlay only.`
+        : 'Retail sentiment: not from a live feed for this asset class (crypto uses Fear & Greed when available).',
+    cot: 'COT positioning: not streamed in this build — use CFTC release for positioning if you require it.',
+    crowdBias: crowdedLongCrypto
+      ? 'Crowded long (contrarian caution) — crypto greed index elevated.'
+      : 'Crowd bias: neutral per available sentiment inputs.',
   };
 
-  const dataQuality = {
-    candles: candles.ok,
-    quote: quoteRes.ok,
-    calendar: cal.ok,
+  const providerLogMerged = [
+    ...(quoteRes.providerLog || []),
+    ...(seriesPack.providerLog || []),
+    ...(fred.status
+      ? [{ name: 'FRED DGS10', status: fred.status === 'ok' ? 'ok' : 'fallback', detail: fred.detail || '' }]
+      : []),
+    { name: 'FMP calendar', status: cal.ok ? 'ok' : 'failed', detail: cal.error || (cal.ok ? '' : 'empty') },
+  ];
+
+  const dataHealth = {
+    summary:
+      seriesPack.ok && quoteRes.ok && cal.ok
+        ? 'Primary feeds satisfied'
+        : 'One or more feeds used fallback — see providerLog',
+    sparseSeries: isSparse,
+    providerLog: providerLogMerged,
   };
+
+  const sparkline = closes.length ? closes.slice(-40).map((v) => Number(v)) : [];
 
   return {
     success: true,
@@ -670,6 +834,7 @@ async function runMarketDecoder(symbolInput) {
         changePercent: pctDay,
         marketType,
         quoteCurrency: 'USD',
+        whatChanged: whatChangedLine({ displaySymbol, last, pctDay, q, marketType }),
       },
       marketPulse,
       instantRead: {
@@ -692,6 +857,22 @@ async function runMarketDecoder(symbolInput) {
         previousDayLow: prevL,
         weeklyHigh: wr.wh,
         weeklyLow: wr.wl,
+        keyLevelsDisplay: {
+          resistance1: piv?.r1 != null ? `${lev(piv.r1, 'R1')} (classic R1)` : formatLevelDisplay(null, marketType, 'R1'),
+          resistance2: piv?.r2 != null ? `${lev(piv.r2, 'R2')} (classic R2)` : formatLevelDisplay(null, marketType, 'R2'),
+          support1: piv?.s1 != null ? `${lev(piv.s1, 'S1')} (classic S1)` : formatLevelDisplay(null, marketType, 'S1'),
+          support2: piv?.s2 != null ? `${lev(piv.s2, 'S2')} (classic S2)` : formatLevelDisplay(null, marketType, 'S2'),
+          previousDayHigh: prevH != null ? `${lev(prevH, 'PDH')} prior session high` : 'Prior high: not available from loaded bars',
+          previousDayLow: prevL != null ? `${lev(prevL, 'PDL')} prior session low` : 'Prior low: not available from loaded bars',
+          weeklyHigh:
+            wr.wh != null
+              ? `${lev(wr.wh, 'WkH')} high of last ${Math.min(5, highs.length)} sessions in window`
+              : 'Weekly high: not available from loaded bars',
+          weeklyLow:
+            wr.wl != null
+              ? `${lev(wr.wl, 'WkL')} low of last ${Math.min(5, lows.length)} sessions in window`
+              : 'Weekly low: not available from loaded bars',
+        },
       },
       scenarioMap: scenarios,
       crossAssetContext: cross,
@@ -708,8 +889,9 @@ async function runMarketDecoder(symbolInput) {
         bullScore: bull,
         bearScore: bear,
         netScore: net,
-        dataQuality,
+        dataHealth,
         finnhubSymbol,
+        sparkline,
       },
     },
   };

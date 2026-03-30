@@ -52,6 +52,7 @@ module.exports = async (req, res) => {
   }
 
   try {
+    console.info('[market-decoder] request', { symbol: symbol.toUpperCase(), refresh: Boolean(refresh), noAi: Boolean(skipAi) });
     const raw = await runMarketDecoder(symbol);
     if (!raw.success) {
       return res.status(400).json(raw);

@@ -5,18 +5,44 @@ import '../../styles/trader-deck/MarketDecoder.css';
 const QUICK = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD', 'SPY', 'USDJPY'];
 
 function formatPct(n) {
-  if (n == null || Number.isNaN(Number(n))) return '—';
+  if (n == null || Number.isNaN(Number(n))) {
+    return 'Session % pending — quote snapshot incomplete (check data health)';
+  }
   const v = Number(n);
   const sign = v > 0 ? '+' : '';
   return `${sign}${v.toFixed(2)}%`;
 }
 
 function formatLevel(v, marketType) {
-  if (v == null || Number.isNaN(Number(v))) return '—';
+  if (v == null || Number.isNaN(Number(v))) {
+    return 'Not available from loaded series';
+  }
   const n = Number(v);
   if (marketType === 'FX' || marketType === 'Commodity') return n.toFixed(5);
   if (marketType === 'Crypto' && n > 200) return n.toFixed(2);
   return n.toFixed(n < 50 ? 4 : 2);
+}
+
+function MiniSparkline({ values }) {
+  if (!values || values.length < 2) return null;
+  const w = 200;
+  const h = 48;
+  const pad = 4;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const pts = values
+    .map((v, i) => {
+      const x = pad + (i / (values.length - 1)) * (w - pad * 2);
+      const y = pad + (1 - (v - min) / span) * (h - pad * 2);
+      return `${x},${y}`;
+    })
+    .join(' ');
+  return (
+    <svg className="md-spark" viewBox={`0 0 ${w} ${h}`} aria-hidden>
+      <polyline fill="none" stroke="rgba(212,175,55,0.85)" strokeWidth="1.5" points={pts} />
+    </svg>
+  );
 }
 
 function biasPillClass(bias) {
@@ -107,36 +133,41 @@ export default function MarketDecoderView({ embedded }) {
 
       {brief && (
         <div className="md-decoder-stack">
-          <div className="md-decoder-top-grid">
-            {/* 1 Header */}
-            <section className="md-decoder-card" aria-labelledby="md-h-header">
-              <h3 id="md-h-header" className="md-decoder-card-title">
-                Header
+          <div className="md-decoder-top-grid md-terminal-split">
+            <section className="md-decoder-card md-terminal-instrument" aria-labelledby="md-h-header">
+              <h3 id="md-h-header" className="md-decoder-card-title md-terminal-title">
+                Instrument
               </h3>
-              <div className="md-decoder-header-grid">
-                <div className="md-decoder-kv">
-                  <span className="md-decoder-kv-label">Asset</span>
-                  <span className="md-decoder-kv-value md-decoder-kv-value--lg">{brief.header.asset}</span>
+              <div className="md-terminal-headline">
+                <span className="md-terminal-symbol">{brief.header.asset}</span>
+                <span className="md-terminal-type">{brief.header.marketType}</span>
+              </div>
+              <div className="md-terminal-price-row">
+                <div>
+                  <span className="md-terminal-eyebrow">Last</span>
+                  <span className="md-terminal-price">{formatLevel(brief.header.price, mt)}</span>
                 </div>
-                <div className="md-decoder-kv">
-                  <span className="md-decoder-kv-label">Price</span>
-                  <span className="md-decoder-kv-value">{formatLevel(brief.header.price, mt)}</span>
-                </div>
-                <div className="md-decoder-kv">
-                  <span className="md-decoder-kv-label">Daily %</span>
-                  <span className="md-decoder-kv-value">{formatPct(brief.header.changePercent)}</span>
-                </div>
-                <div className="md-decoder-kv">
-                  <span className="md-decoder-kv-label">Market type</span>
-                  <span className="md-decoder-kv-value">{brief.header.marketType}</span>
+                <div>
+                  <span className="md-terminal-eyebrow">Session</span>
+                  <span className={`md-terminal-chg ${brief.header.changePercent >= 0 ? 'md-terminal-chg--up' : 'md-terminal-chg--down'}`}>
+                    {formatPct(brief.header.changePercent)}
+                  </span>
                 </div>
               </div>
+              {brief.header.whatChanged && (
+                <p className="md-terminal-what-changed">{brief.header.whatChanged}</p>
+              )}
+              {brief.meta?.sparkline?.length > 2 && (
+                <div className="md-terminal-spark-wrap">
+                  <span className="md-terminal-eyebrow">Recent closes (last {brief.meta.sparkline.length})</span>
+                  <MiniSparkline values={brief.meta.sparkline} />
+                </div>
+              )}
             </section>
 
-            {/* Market Pulse — desk-style state module */}
             {brief.marketPulse && (
-              <section className="md-decoder-card md-decoder-card--pulse" aria-labelledby="md-h-pulse">
-                <h3 id="md-h-pulse" className="md-decoder-card-title">
+              <section className="md-decoder-card md-decoder-card--pulse md-terminal-pulse" aria-labelledby="md-h-pulse">
+                <h3 id="md-h-pulse" className="md-decoder-card-title md-terminal-title">
                   Market pulse
                 </h3>
                 <div className="md-pulse-gauge-wrap">
@@ -157,6 +188,9 @@ export default function MarketDecoderView({ embedded }) {
                     Bias: <strong>{brief.marketPulse.biasLabel}</strong>
                   </p>
                 </div>
+                {brief.marketPulse.convictionExplanation && (
+                  <p className="md-pulse-conviction">{brief.marketPulse.convictionExplanation}</p>
+                )}
                 <ul className="md-pulse-stats">
                   <li>
                     <span className="md-pulse-stat-label">Momentum</span>
@@ -171,6 +205,10 @@ export default function MarketDecoderView({ embedded }) {
                     <span className="md-pulse-stat-val">{brief.marketPulse.marketState}</span>
                   </li>
                   <li>
+                    <span className="md-pulse-stat-label">Decision pressure</span>
+                    <span className="md-pulse-stat-val">{brief.marketPulse.decisionPressure}</span>
+                  </li>
+                  <li>
                     <span className="md-pulse-stat-label">Trade readiness</span>
                     <span className="md-pulse-stat-val md-pulse-stat-val--gold">
                       {brief.marketPulse.tradeReadiness} / 10
@@ -183,6 +221,23 @@ export default function MarketDecoderView({ embedded }) {
               </section>
             )}
           </div>
+
+          {brief.meta?.dataHealth && (
+            <div className="md-data-health" role="status">
+              <strong>Feed status:</strong> {brief.meta.dataHealth.summary}
+              {brief.meta.dataHealth.sparseSeries ? ' · Sparse series mode (quote-derived proxy)' : ''}
+              {Array.isArray(brief.meta.dataHealth.providerLog) && brief.meta.dataHealth.providerLog.length > 0 && (
+                <ul className="md-data-health-list">
+                  {brief.meta.dataHealth.providerLog.map((p, i) => (
+                    <li key={i}>
+                      {p.name}: <span className={`md-ph md-ph--${p.status}`}>{p.status}</span>
+                      {p.detail ? ` — ${p.detail}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           {/* 2 Instant Read */}
           <section className="md-decoder-card md-decoder-card--instant" aria-labelledby="md-h-instant">
@@ -223,49 +278,30 @@ export default function MarketDecoderView({ embedded }) {
           </section>
 
           {/* 4 Key levels */}
-          <section className="md-decoder-card" aria-labelledby="md-h-levels">
+          <section className="md-decoder-card md-levels-card" aria-labelledby="md-h-levels">
             <h3 id="md-h-levels" className="md-decoder-card-title">
               Key levels
             </h3>
-            <div className="md-decoder-levels">
-              <div>
-                <div className="md-decoder-level-row">
-                  <span className="md-decoder-kv-label">Resistance 1</span>
-                  <span>{formatLevel(brief.keyLevels.resistance1, mt)}</span>
-                </div>
-                <div className="md-decoder-level-row">
-                  <span className="md-decoder-kv-label">Resistance 2</span>
-                  <span>{formatLevel(brief.keyLevels.resistance2, mt)}</span>
-                </div>
-              </div>
-              <div>
-                <div className="md-decoder-level-row">
-                  <span className="md-decoder-kv-label">Support 1</span>
-                  <span>{formatLevel(brief.keyLevels.support1, mt)}</span>
-                </div>
-                <div className="md-decoder-level-row">
-                  <span className="md-decoder-kv-label">Support 2</span>
-                  <span>{formatLevel(brief.keyLevels.support2, mt)}</span>
-                </div>
-              </div>
-              <div>
-                <div className="md-decoder-level-row">
-                  <span className="md-decoder-kv-label">Prior day high</span>
-                  <span>{formatLevel(brief.keyLevels.previousDayHigh, mt)}</span>
-                </div>
-                <div className="md-decoder-level-row">
-                  <span className="md-decoder-kv-label">Prior day low</span>
-                  <span>{formatLevel(brief.keyLevels.previousDayLow, mt)}</span>
-                </div>
-                <div className="md-decoder-level-row">
-                  <span className="md-decoder-kv-label">Weekly high</span>
-                  <span>{formatLevel(brief.keyLevels.weeklyHigh, mt)}</span>
-                </div>
-                <div className="md-decoder-level-row">
-                  <span className="md-decoder-kv-label">Weekly low</span>
-                  <span>{formatLevel(brief.keyLevels.weeklyLow, mt)}</span>
-                </div>
-              </div>
+            <div className="md-levels-grid">
+              {brief.keyLevels?.keyLevelsDisplay ? (
+                [
+                  ['resistance1', 'Resistance 1'],
+                  ['resistance2', 'Resistance 2'],
+                  ['support1', 'Support 1'],
+                  ['support2', 'Support 2'],
+                  ['previousDayHigh', 'Prior session high'],
+                  ['previousDayLow', 'Prior session low'],
+                  ['weeklyHigh', 'Weekly high'],
+                  ['weeklyLow', 'Weekly low'],
+                ].map(([key, label]) => (
+                  <div key={key} className="md-level-line">
+                    <span className="md-level-label">{label}</span>
+                    <span className="md-level-val">{brief.keyLevels.keyLevelsDisplay[key]}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="md-level-fallback">Level grid loading from server…</p>
+              )}
             </div>
           </section>
 
@@ -348,6 +384,7 @@ export default function MarketDecoderView({ embedded }) {
                   <li key={i}>
                     <strong>{ev.title}</strong>
                     {ev.timeUntil ? ` — ${ev.timeUntil}` : ''} · Impact: {ev.impact}
+                    {ev.note ? <span className="md-ev-note"> {ev.note}</span> : null}
                   </li>
                 ))}
               </ul>
