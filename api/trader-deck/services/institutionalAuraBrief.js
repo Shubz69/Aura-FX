@@ -403,15 +403,15 @@ function validateDailyInstrumentLanguageDiversity(blocks, universe = INSTITUTION
 }
 
 async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options = {}) {
-  const apiKey = String(process.env.OPENAI_API_KEY || '').trim();
-  if (!apiKey) return { ok: false, error: 'no_openai_key' };
+  const apiKey = String(process.env.PERPLEXITY_API_KEY || '').trim();
+  if (!apiKey) return { ok: false, error: 'no_perplexity_key' };
   const maxTokens = options.maxTokens ?? 10000;
   const timeoutMs = options.timeoutMs ?? 120000;
   const temperature = options.temperature ?? 0.28;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -439,7 +439,7 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
     return { ok: true, parsed };
   } catch (e) {
     clearTimeout(timeout);
-    return { ok: false, error: e.message || 'openai_error' };
+    return { ok: false, error: e.message || 'perplexity_error' };
   }
 }
 
@@ -1044,7 +1044,7 @@ async function generateAndStoreInstitutionalBrief(deps, { period, runDate = new 
         const r2a = await generateDailyPart2(factPack, sliceA, getAutomationModel, fix);
         const r2b = await generateDailyPart2(factPack, sliceB, getAutomationModel, fix);
         if (!r2a.ok || !r2a.parsed || !r2b.ok || !r2b.parsed) {
-          lastReasons = ['part2_openai_fail'];
+      lastReasons = ['part2_perplexity_fail'];
           continue;
         }
         b1 = r2a.parsed;
@@ -1090,7 +1090,7 @@ async function generateAndStoreInstitutionalBrief(deps, { period, runDate = new 
         const r1 = await generateWeeklyPart1(factPack, instrumentUniverse, getAutomationModel, fix);
         const r2 = await generateWeeklyPart2(factPack, instrumentUniverse, getAutomationModel, fix);
         if (!r1.ok || !r1.parsed || !r2.ok || !r2.parsed) {
-          lastReasons = [`weekly_openai_${r1.error || ''}_${r2.error || ''}`];
+      lastReasons = [`weekly_perplexity_${r1.error || ''}_${r2.error || ''}`];
           continue;
         }
         w1 = r1.parsed;

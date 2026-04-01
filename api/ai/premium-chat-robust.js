@@ -12,11 +12,13 @@
 const { getDbConnection, executeQuery } = require('../db');
 const { getCached, setCached } = require('../cache');
 const { isSuperAdminEmail } = require('../utils/entitlements');
+const { createChatCompletion } = require('./perplexity-client');
+const { getPerplexityModelForChat } = require('./perplexity-config');
 
 // ============= CONFIGURATION =============
 const CONFIG = {
   // Timeouts
-  OPENAI_TIMEOUT: 30000,        // 30 seconds for OpenAI
+  AI_TIMEOUT: 30000,            // 30 seconds for Perplexity
   DATA_FETCH_TIMEOUT: 5000,     // 5 seconds for external data
   DB_TIMEOUT: 3000,             // 3 seconds for DB operations
   TOTAL_REQUEST_TIMEOUT: 55000, // 55 seconds total (Vercel limit is 60s)
@@ -423,10 +425,6 @@ async function handlePremiumChat(req) {
     };
   }
   
-  // Initialize OpenAI
-  const OpenAI = require('openai');
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  
   // Build messages
   const systemPrompt = getSystemPrompt(user);
   const messages = buildConversationMessages(
@@ -437,27 +435,27 @@ async function handlePremiumChat(req) {
   );
   
   // Determine model (use vision model if images present)
-  const model = imageValidation.valid.length > 0 ? 'gpt-4o' : 'gpt-4o';
+  const model = getPerplexityModelForChat();
   
-  logger.log('info', 'Calling OpenAI', { 
+  logger.log('info', 'Calling Perplexity', {
     model, 
     messageCount: messages.length,
     hasImages: imageValidation.valid.length > 0
   });
   
-  const endOpenAI = logger.time('openai');
+  const endOpenAI = logger.time('ai');
   
   try {
-    // Call OpenAI with timeout
+    // Call Perplexity with timeout
     const completion = await Promise.race([
-      openai.chat.completions.create({
+      createChatCompletion({
         model,
         messages,
         temperature: 0.8,
         max_tokens: 1500
       }),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('OpenAI timeout')), CONFIG.OPENAI_TIMEOUT)
+        setTimeout(() => reject(new Error('Perplexity timeout')), CONFIG.AI_TIMEOUT)
       )
     ]);
     
@@ -466,7 +464,7 @@ async function handlePremiumChat(req) {
     const response = completion.choices[0]?.message?.content;
     
     if (!response || response.trim() === '') {
-      throw new Error('Empty response from OpenAI');
+      throw new Error('Empty response from Perplexity');
     }
     
     logger.log('info', 'Request completed', {
@@ -488,15 +486,15 @@ async function handlePremiumChat(req) {
     
   } catch (error) {
     endOpenAI();
-    logger.log('error', 'OpenAI call failed', { error: error.message });
+    logger.log('error', 'Perplexity call failed', { error: error.message });
     
     // Try fallback with simpler model
     try {
       logger.log('info', 'Attempting fallback');
       
       const fallbackCompletion = await Promise.race([
-        openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+        createChatCompletion({
+          model: getPerplexityModelForChat(),
           messages: [
             { role: 'system', content: 'You are a helpful trading assistant. Be concise and helpful.' },
             { role: 'user', content: message || 'Hello' }
@@ -519,7 +517,7 @@ async function handlePremiumChat(req) {
           body: {
             success: true,
             response: fallbackResponse,
-            model: 'gpt-4o-mini',
+            model: getPerplexityModelForChat(),
             fallback: true,
             requestId,
             timing: logger.getTimings().total
@@ -566,7 +564,7 @@ module.exports = async (req, res) => {
   }
   
   // Check API key
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.PERPLEXITY_API_KEY) {
     return res.status(500).json({
       success: false,
       message: 'AI service is not configured. Please contact support.'

@@ -11,7 +11,7 @@
 
 const { getDbConnection } = require('../db');
 const { getCached, setCached, getCacheStats } = require('../cache');
-const { getOpenAIModelForChat, getOpenAIModelForReports } = require('./openai-config');
+const { getPerplexityModelForChat, getPerplexityModelForReports } = require('./perplexity-config');
 
 // Try to load data service if available
 let dataService = null;
@@ -44,7 +44,7 @@ module.exports = async (req, res) => {
     version: '2.0.0', // Versioned health check
     environment: process.env.NODE_ENV || 'development',
     services: {
-      openai: { status: 'unknown', latency: null },
+      perplexity: { status: 'unknown', latency: null },
       database: { status: 'unknown', latency: null },
       cache: { status: 'unknown', stats: null },
       dataLayer: { status: 'unknown', adapters: {} }
@@ -67,40 +67,52 @@ module.exports = async (req, res) => {
     // Ignore memory errors
   }
 
-  // Check OpenAI connectivity
-  const openaiStartTime = Date.now();
+  // Check Perplexity connectivity
+  const aiStartTime = Date.now();
   try {
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    if (!OPENAI_API_KEY) {
-      healthStatus.services.openai = {
+    const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
+    if (!PERPLEXITY_API_KEY) {
+      healthStatus.services.perplexity = {
         status: 'error',
         message: 'API key not configured',
         latency: 0
       };
     } else {
-      const OpenAI = require('openai');
-      const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${PERPLEXITY_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: getPerplexityModelForChat(),
+          messages: [{ role: 'user', content: 'ping' }],
+          max_tokens: 1,
+          temperature: 0,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (!response.ok) {
+        throw new Error(`Perplexity HTTP ${response.status}`);
+      }
       
-      // Simple model list call to verify API connectivity
-      await Promise.race([
-        openai.models.list(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-      ]);
-      
-      healthStatus.services.openai = {
+      healthStatus.services.perplexity = {
         status: 'healthy',
-        latency: Date.now() - openaiStartTime,
+        latency: Date.now() - aiStartTime,
         models: {
-          chat: getOpenAIModelForChat(),
-          reports: getOpenAIModelForReports()
+          chat: getPerplexityModelForChat(),
+          reports: getPerplexityModelForReports()
         }
       };
     }
-  } catch (openaiError) {
-    healthStatus.services.openai = {
+  } catch (aiError) {
+    healthStatus.services.perplexity = {
       status: 'error',
-      message: openaiError.message || 'Connection failed',
-      latency: Date.now() - openaiStartTime
+      message: aiError.message || 'Connection failed',
+      latency: Date.now() - aiStartTime
     };
     healthStatus.status = 'degraded';
   }
@@ -200,7 +212,7 @@ module.exports = async (req, res) => {
   }
 
   // Determine overall status
-  const criticalServices = ['openai', 'database'];
+  const criticalServices = ['perplexity', 'database'];
   const criticalHealthy = criticalServices.every(
     s => healthStatus.services[s]?.status === 'healthy'
   );

@@ -53,10 +53,10 @@ module.exports = async (req, res) => {
   };
 
   try {
-    // Check for OpenAI API key
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    if (!OPENAI_API_KEY) {
-      console.error('OpenAI API key not configured');
+    // Check for Perplexity API key
+    const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
+    if (!PERPLEXITY_API_KEY) {
+      console.error('Perplexity API key not configured');
       return res.status(500).json({ 
         success: false, 
         message: 'AI service is not configured. Please contact support.' 
@@ -154,11 +154,17 @@ module.exports = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Message or image is required' });
       }
 
-      // Initialize OpenAI
-      const OpenAI = require('openai');
-      const openai = new OpenAI({
-        apiKey: OPENAI_API_KEY,
-      });
+      // Initialize Perplexity client (Perplexity endpoint)
+      const { createChatCompletion } = require('./perplexity-client');
+      const { getPerplexityModelForChat } = require('./perplexity-config');
+      const aiModel = getPerplexityModelForChat();
+      const aiClient = {
+        chat: {
+          completions: {
+            create: createChatCompletion,
+          },
+        },
+      };
 
       // Import tool router, logging, knowledge base, and TradingView
       const { detectIntent, determineRequiredTools, extractInstrument } = require('./tool-router');
@@ -265,7 +271,7 @@ Structure your response with these sections where relevant: **Key Levels**, **Ma
 **MARKET EDUCATION MODE**: If the user asks what something means (e.g. "What is a liquidity sweep?", "What is an order block?"), explain the concept clearly and concisely, then relate it to current context if relevant.`;
 
       // Build conversation context with system prompt - Ultimate Multi-Market Trading AI
-      const systemPrompt = `You are AURA AI, a professional trading assistant powered by GPT-4. You're knowledgeable, conversational, helpful, and engaging - just like ChatGPT. Your goal is to help traders succeed by providing clear analysis, actionable insights, and natural conversations.
+      const systemPrompt = `You are AURA AI, a professional trading assistant powered by Perplexity. You're knowledgeable, conversational, helpful, and engaging - just like ChatGPT. Your goal is to help traders succeed by providing clear analysis, actionable insights, and natural conversations.
 
 ${pricingInstructions}
 ${verifiedMarketContextBlock ? '\n\n' + verifiedMarketContextBlock : ''}
@@ -1072,7 +1078,7 @@ REMEMBER: You're a helpful trading assistant, like ChatGPT for trading. Be conve
 
 User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7FX Elite' : 'Premium'}`;
 
-      // Format conversation history for OpenAI
+      // Format conversation history for Perplexity
       const messages = [
         { role: 'system', content: systemPrompt },
         ...conversationHistory.map(msg => {
@@ -1318,13 +1324,13 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         }
       ];
 
-      // Call OpenAI API with function calling
+      // Call Perplexity API with function calling
       // Use gpt-4o for vision capabilities when images are present, otherwise use gpt-4o
       const hasImages = images && images.length > 0;
       let completion = null;
       try {
         const completionParams = {
-          model: 'gpt-4o', // GPT-4o supports vision
+          model: aiModel, // GPT-4o supports vision
           messages: messages,
           temperature: 0.9, // Higher temperature for more natural, conversational, ChatGPT-like responses
           max_tokens: 1500, // Increased for more comprehensive, natural responses
@@ -1351,14 +1357,14 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           completionParams.function_call = 'auto';
         }
 
-        // Add timeout to initial OpenAI call - Increased to 30s for better reliability
+        // Add timeout to initial Perplexity call - Increased to 30s for better reliability
         completion = await Promise.race([
-          openai.chat.completions.create(completionParams),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 30000)) // 30s timeout for better reliability
+          aiClient.chat.completions.create(completionParams),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Perplexity timeout')), 30000)) // 30s timeout for better reliability
         ]);
-      } catch (openaiError) {
-        // Handle OpenAI-specific errors
-        console.error('OpenAI API error:', openaiError);
+      } catch (aiError) {
+        // Handle Perplexity-specific errors
+        console.error('Perplexity API error:', aiError);
         
         // Release database connection
         if (db && typeof db.release === 'function') {
@@ -1366,18 +1372,18 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         }
         
         // Check for quota/rate limit errors
-        if (openaiError.status === 429 || openaiError.code === 'insufficient_quota' || openaiError.code === 'rate_limit_exceeded') {
-          const isQuotaError = openaiError.code === 'insufficient_quota';
-          console.error(`OpenAI ${isQuotaError ? 'quota' : 'rate limit'} error:`, {
-            code: openaiError.code,
-            message: openaiError.error?.message || openaiError.message,
-            status: openaiError.status
+        if (aiError.status === 429 || aiError.code === 'insufficient_quota' || aiError.code === 'rate_limit_exceeded') {
+          const isQuotaError = aiError.code === 'insufficient_quota';
+          console.error(`Perplexity ${isQuotaError ? 'quota' : 'rate limit'} error:`, {
+            code: aiError.code,
+            message: aiError.error?.message || aiError.message,
+            status: aiError.status
           });
           
           return res.status(429).json({ 
             success: false, 
             message: isQuotaError 
-              ? 'AI service quota has been exceeded. Please add credits to your OpenAI account or upgrade your plan. Contact support if you need assistance.'
+              ? 'AI service quota has been exceeded. Please add credits to your Perplexity account or upgrade your plan. Contact support if you need assistance.'
               : 'AI service is currently at capacity. Please try again in a few moments. If this issue persists, please contact support.',
             errorType: isQuotaError ? 'quota_exceeded' : 'rate_limit',
             requiresAction: isQuotaError
@@ -1385,7 +1391,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         }
         
         // Check for authentication errors
-        if (openaiError.status === 401 || openaiError.status === 403) {
+        if (aiError.status === 401 || aiError.status === 403) {
           return res.status(500).json({ 
             success: false, 
             message: 'AI service configuration error. Please contact support.',
@@ -1394,7 +1400,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         }
         
         // Check for timeout errors
-        if (openaiError.message && (openaiError.message.includes('timeout') || openaiError.message.includes('Timeout'))) {
+        if (aiError.message && (aiError.message.includes('timeout') || aiError.message.includes('Timeout'))) {
           return res.status(504).json({ 
             success: false, 
             message: 'The AI is taking longer than expected to respond. This can happen during high demand. Please try again in a moment.',
@@ -1402,9 +1408,9 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           });
         }
         
-        // Generic OpenAI error - provide more helpful message
-        const errorMsg = openaiError.error?.message || openaiError.message || 'Unknown error';
-        console.error('OpenAI generic error:', errorMsg);
+        // Generic Perplexity error - provide more helpful message
+        const errorMsg = aiError.error?.message || aiError.message || 'Unknown error';
+        console.error('Perplexity generic error:', errorMsg);
         
         // Check if it's a content filter or policy error
         if (errorMsg.includes('content_filter') || errorMsg.includes('policy')) {
@@ -1428,7 +1434,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         return res.status(500).json({ 
           success: false, 
           message: 'I apologize, but I encountered an issue processing your request. Please try again in a moment. If the problem persists, please contact support.',
-          errorType: 'openai_error'
+          errorType: 'perplexity_error'
         });
       }
 
@@ -1541,15 +1547,15 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             }
             
             const secondCompletion = await Promise.race([
-              openai.chat.completions.create({
-                model: 'gpt-4o',
+              aiClient.chat.completions.create({
+                model: aiModel,
                 messages: messages,
                 functions: functions,
                 function_call: 'auto',
                 temperature: 0.7, // Slightly lower for faster, more focused responses
                 max_tokens: 800, // Further reduced for faster generation
               }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 8000)) // Reduced to 8s for faster responses
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Perplexity timeout')), 8000)) // Reduced to 8s for faster responses
             ]);
 
             // Check if we got a response or another function call
@@ -1601,8 +1607,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                   } else {
                   
                   const thirdCompletion = await Promise.race([
-                    openai.chat.completions.create({
-                      model: 'gpt-4o',
+                    aiClient.chat.completions.create({
+                      model: aiModel,
                       messages: messages,
                       functions: functions,
                       function_call: 'none', // Force final response - no more function calls
@@ -1665,8 +1671,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                       });
                       
                       const finalCompletion = await Promise.race([
-                        openai.chat.completions.create({
-                          model: 'gpt-4o',
+                        aiClient.chat.completions.create({
+                          model: aiModel,
                           messages: messages,
                           functions: functions,
                           function_call: 'none', // Force final response
@@ -1705,8 +1711,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             });
 
             const errorCompletion = await Promise.race([
-              openai.chat.completions.create({
-                model: 'gpt-4o',
+              aiClient.chat.completions.create({
+                model: aiModel,
                 messages: messages,
                 temperature: 0.8,
                 max_tokens: 800,
@@ -1744,8 +1750,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             });
 
             const errorCompletion = await Promise.race([
-              openai.chat.completions.create({
-                model: 'gpt-4o',
+              aiClient.chat.completions.create({
+                model: aiModel,
                 messages: messages,
                 temperature: 0.8,
                 max_tokens: 800,
@@ -1798,8 +1804,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
               checkTimeout();
               const newsCompletion = await Promise.race([
-                openai.chat.completions.create({
-                  model: 'gpt-4o',
+                aiClient.chat.completions.create({
+                  model: aiModel,
                   messages: messages,
                   functions: functions,
                   function_call: 'auto',
@@ -1839,8 +1845,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               });
 
               const errorCompletion = await Promise.race([
-                openai.chat.completions.create({
-                  model: 'gpt-4o',
+                aiClient.chat.completions.create({
+                  model: aiModel,
                   messages: messages,
                   temperature: 0.8,
                   max_tokens: 800,
@@ -1891,8 +1897,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
             checkTimeout();
             const calendarCompletion = await Promise.race([
-              openai.chat.completions.create({
-                model: 'gpt-4o',
+              aiClient.chat.completions.create({
+                model: aiModel,
                 messages: messages,
                 functions: functions,
                 function_call: 'none', // Force response - no more calls
@@ -1932,8 +1938,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               });
 
               const errorCompletion = await Promise.race([
-                openai.chat.completions.create({
-                  model: 'gpt-4o',
+                aiClient.chat.completions.create({
+                  model: aiModel,
                   messages: messages,
                   temperature: 0.8,
                   max_tokens: 800,
@@ -1982,8 +1988,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
               checkTimeout();
               const calcCompletion = await Promise.race([
-                openai.chat.completions.create({
-                  model: 'gpt-4o',
+                aiClient.chat.completions.create({
+                  model: aiModel,
                   messages: messages,
                   functions: functions,
                   function_call: 'none', // Force response - no more calls
@@ -2043,8 +2049,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
             checkTimeout();
             const kbCompletion = await Promise.race([
-              openai.chat.completions.create({
-                model: 'gpt-4o',
+              aiClient.chat.completions.create({
+                model: aiModel,
                 messages: messages,
                 functions: functions,
                 function_call: 'auto',
@@ -2090,8 +2096,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
             checkTimeout();
             const alertsCompletion = await Promise.race([
-              openai.chat.completions.create({
-                model: 'gpt-4o',
+              aiClient.chat.completions.create({
+                model: aiModel,
                 messages: messages,
                 functions: functions,
                 function_call: 'none', // Force response - no more calls
@@ -2142,8 +2148,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
               checkTimeout();
               const fundamentalsCompletion = await Promise.race([
-                openai.chat.completions.create({
-                  model: 'gpt-4o',
+                aiClient.chat.completions.create({
+                  model: aiModel,
                   messages: messages,
                   functions: functions,
                   function_call: 'none', // Force response - no more calls
@@ -2190,8 +2196,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
             checkTimeout();
             const orderbookCompletion = await Promise.race([
-              openai.chat.completions.create({
-                model: 'gpt-4o',
+              aiClient.chat.completions.create({
+                model: aiModel,
                 messages: messages,
                 functions: functions,
                 function_call: 'auto',
@@ -2271,8 +2277,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
                 checkTimeout();
                 const priceActionCompletion = await Promise.race([
-                  openai.chat.completions.create({
-                    model: 'gpt-4o',
+                  aiClient.chat.completions.create({
+                    model: aiModel,
                     messages: messages,
                     functions: functions,
                     function_call: 'none', // Force response - no more calls
@@ -2304,8 +2310,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         // Try one more time with a simple, direct prompt - no function calls
         try {
           const fallbackCompletion = await Promise.race([
-            openai.chat.completions.create({
-              model: 'gpt-4o',
+            aiClient.chat.completions.create({
+              model: aiModel,
               messages: [
                 { role: 'system', content: 'You are AURA AI, a helpful trading assistant. Respond naturally and conversationally.' },
                 { role: 'user', content: message || 'Hello' }
@@ -2405,7 +2411,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       return res.status(200).json({
         success: true,
         response: validatedResponse,
-        model: completion?.model || 'gpt-4o',
+        model: completion?.model || aiModel,
         usage: completion?.usage || null,
         citations: (responseCitations && responseCitations.length > 0) ? responseCitations : undefined,
         quoteContext: quoteContext ? {

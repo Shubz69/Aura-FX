@@ -1,11 +1,12 @@
 /**
  * Cron Job: Automated Daily/Weekly market briefs.
- * Daily: 06:00 UK — outlook + Aura FX institutional daily brief (house structure + fixed instrument sleeve).
- * Daily prefetch: ~22:00 UK — per-instrument OpenAI research layer stored for the next day’s briefs.
- * Weekly: Sunday 10:00 UK — institutional weekly brief.
+ * Daily: 00:00 UK Mon-Fri — outlook + 8 category briefs + Aura FX institutional daily brief.
+ * Daily prefetch: ~22:00 UK — per-instrument Perplexity research layer stored for the next day’s briefs.
+ * Weekly: Monday 00:00 UK — 8 category briefs + institutional weekly brief.
  */
 const {
   generateAndStoreOutlook,
+  generateAndStoreBriefSet,
   generateAndStoreInstitutionalBriefOnly,
   prefetchInstrumentResearchForDaily,
   shouldRunWindow,
@@ -13,7 +14,7 @@ const {
 } = require('../trader-deck/services/autoBriefGenerator');
 
 function hasAutomationModelConfigured() {
-  return Boolean(String(process.env.OPENAI_AUTOMATION_MODEL || '').trim());
+  return Boolean(String(process.env.PERPLEXITY_AUTOMATION_MODEL || '').trim());
 }
 
 function isAuthorized(req) {
@@ -37,8 +38,8 @@ const handler = async (req, res) => {
   if (!hasAutomationModelConfigured()) {
     return res.status(503).json({
       success: false,
-      message: 'Automation blocked: OPENAI_AUTOMATION_MODEL is required.',
-      code: 'OPENAI_AUTOMATION_MODEL_REQUIRED',
+      message: 'Automation blocked: PERPLEXITY_AUTOMATION_MODEL is required.',
+      code: 'PERPLEXITY_AUTOMATION_MODEL_REQUIRED',
     });
   }
 
@@ -73,12 +74,17 @@ const handler = async (req, res) => {
       runDate: now,
       timeZone: 'Europe/London',
     });
+    const categoryBriefs = await generateAndStoreBriefSet({
+      period,
+      runDate: now,
+      timeZone: 'Europe/London',
+    });
     const institutional = await generateAndStoreInstitutionalBriefOnly({
       period,
       runDate: now,
       timeZone: 'Europe/London',
     });
-    out.push({ period, outlook, institutional });
+    out.push({ period, outlook, categoryBriefs, institutional });
   }
 
   return res.status(200).json({

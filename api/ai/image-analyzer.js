@@ -12,11 +12,10 @@
  * - Mistake detection (common errors)
  */
 
-const OpenAI = require('openai');
+const { createChatCompletion } = require('./perplexity-client');
+const { getPerplexityModelForVision } = require('./perplexity-config');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const PERPLEXITY_MODEL = getPerplexityModelForVision();
 
 // ============================================================================
 // CHART ANALYSIS PROMPTS
@@ -171,8 +170,8 @@ async function analyzeChart(imageBase64, context = {}) {
       enhancedPrompt += `\n\nUser's specific question: "${context.question}"`;
     }
     
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const response = await createChatCompletion({
+      model: PERPLEXITY_MODEL,
       messages: [
         {
           role: 'system',
@@ -211,7 +210,7 @@ async function analyzeChart(imageBase64, context = {}) {
       analysis,
       parsed,
       processingTime: duration,
-      model: 'gpt-4o',
+      model: PERPLEXITY_MODEL,
       dataLabel: 'Visual analysis from uploaded chart'
     };
     
@@ -233,8 +232,8 @@ async function analyzeBrokerScreenshot(imageBase64) {
   const requestId = `broker_${Date.now()}`;
   
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const response = await createChatCompletion({
+      model: PERPLEXITY_MODEL,
       messages: [
         { role: 'system', content: BROKER_SCREENSHOT_PROMPT },
         {
@@ -276,8 +275,8 @@ async function reviewTrade(imageBase64, notes = '') {
       prompt += `\n\nTrader's notes: "${notes}"`;
     }
     
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const response = await createChatCompletion({
+      model: PERPLEXITY_MODEL,
       messages: [
         { role: 'system', content: prompt },
         {

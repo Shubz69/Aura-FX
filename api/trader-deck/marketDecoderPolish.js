@@ -1,12 +1,12 @@
 /**
- * Optional OpenAI pass: tighten wording only. Does not change bias, scores, numbers, or posture enums.
+ * Optional Perplexity pass: tighten wording only. Does not change bias, scores, numbers, or posture enums.
  */
 
-const { getOpenAIModelForChat } = require('../ai/openai-config');
+const { getPerplexityModelForChat } = require('../ai/perplexity-config');
 
 function getModel() {
   return String(
-    process.env.OPENAI_AUTOMATION_MODEL || process.env.OPENAI_CHAT_MODEL || process.env.OPENAI_MODEL || getOpenAIModelForChat()
+    process.env.PERPLEXITY_AUTOMATION_MODEL || process.env.PERPLEXITY_CHAT_MODEL || process.env.PERPLEXITY_MODEL || getPerplexityModelForChat()
   ).trim();
 }
 
@@ -15,7 +15,7 @@ function getModel() {
  * @returns {Promise<object>}
  */
 async function polishMarketDecoderBrief(brief) {
-  const key = process.env.OPENAI_API_KEY && String(process.env.OPENAI_API_KEY).trim();
+  const key = process.env.PERPLEXITY_API_KEY && String(process.env.PERPLEXITY_API_KEY).trim();
   if (!key || !brief || typeof brief !== 'object') return brief;
 
   const payload = {
@@ -30,7 +30,7 @@ async function polishMarketDecoderBrief(brief) {
   const t = setTimeout(() => controller.abort(), 12000);
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

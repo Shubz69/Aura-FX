@@ -14,6 +14,7 @@
 
 const axios = require('axios');
 const { getWatchlistPayload } = require('./defaultWatchlist');
+const { toCanonical, forProvider, getAssetClass } = require('../ai/utils/symbol-registry');
 
 function buildSymbolDecimalsMap() {
   const out = {};
@@ -640,7 +641,8 @@ function formatPrice(price, symbol) {
  * Fetch from Yahoo Finance (primary provider)
  */
 async function fetchYahooPrice(symbol) {
-  const yahooSymbol = YAHOO_SYMBOLS[symbol] || symbol;
+  const canonical = toCanonical(symbol);
+  const yahooSymbol = forProvider(canonical, 'yahoo') || YAHOO_SYMBOLS[canonical] || canonical;
   
   try {
     const controller = new AbortController();
@@ -671,11 +673,11 @@ async function fetchYahooPrice(symbol) {
       const changePercent = previousClose ? ((change / previousClose) * 100) : 0;
       
       return {
-        symbol,
-        price: formatPrice(price, symbol),
+        symbol: canonical,
+        price: formatPrice(price, canonical),
         rawPrice: price,
-        previousClose: formatPrice(previousClose, symbol),
-        change: formatPrice(Math.abs(change), symbol),
+        previousClose: formatPrice(previousClose, canonical),
+        change: formatPrice(Math.abs(change), canonical),
         changeSign: change >= 0 ? '+' : '-',
         changePercent: Math.abs(changePercent).toFixed(2),
         isUp: change >= 0,
@@ -780,7 +782,8 @@ async function fetchFinnhubPrice(symbol) {
   const apiKey = process.env.FINNHUB_API_KEY;
   if (!apiKey) return null;
   
-  const finnhubSymbol = FINNHUB_SYMBOLS[symbol];
+  const canonical = toCanonical(symbol);
+  const finnhubSymbol = forProvider(canonical, 'finnhub') || FINNHUB_SYMBOLS[canonical];
   if (!finnhubSymbol) return null;
   
   try {
@@ -806,11 +809,11 @@ async function fetchFinnhubPrice(symbol) {
       const changePercent = previousClose ? ((change / previousClose) * 100) : 0;
       
       return {
-        symbol,
-        price: formatPrice(price, symbol),
+        symbol: canonical,
+        price: formatPrice(price, canonical),
         rawPrice: price,
-        previousClose: formatPrice(previousClose, symbol),
-        change: formatPrice(Math.abs(change), symbol),
+        previousClose: formatPrice(previousClose, canonical),
+        change: formatPrice(Math.abs(change), canonical),
         changeSign: change >= 0 ? '+' : '-',
         changePercent: Math.abs(changePercent).toFixed(2),
         isUp: change >= 0,
@@ -836,7 +839,8 @@ async function fetchTwelveDataPrice(symbol) {
   const apiKey = process.env.TWELVE_DATA_API_KEY;
   if (!apiKey) return null;
 
-  const tdSymbol = TWELVE_DATA_SYMBOLS[symbol];
+  const canonical = toCanonical(symbol);
+  const tdSymbol = forProvider(canonical, 'twelvedata') || TWELVE_DATA_SYMBOLS[canonical];
   if (!tdSymbol) return null;
 
   try {
@@ -858,10 +862,10 @@ async function fetchTwelveDataPrice(symbol) {
     if (!response.data?.price || isNaN(price) || price <= 0) return null;
 
     return {
-      symbol,
-      price: formatPrice(price, symbol),
+      symbol: canonical,
+      price: formatPrice(price, canonical),
       rawPrice: price,
-      previousClose: formatPrice(price, symbol),
+      previousClose: formatPrice(price, canonical),
       change: '0.00',
       changeSign: '+',
       changePercent: '0.00',
@@ -939,7 +943,8 @@ const POLYGON_SYMBOLS = {
 async function fetchPolygonPrice(symbol) {
   const apiKey = process.env.POLYGON_API_KEY;
   if (!apiKey) return null;
-  const polygonSymbol = POLYGON_SYMBOLS[symbol];
+  const canonical = toCanonical(symbol);
+  const polygonSymbol = POLYGON_SYMBOLS[canonical] || canonical;
   if (!polygonSymbol) return null;
   try {
     const controller = new AbortController();
@@ -960,11 +965,11 @@ async function fetchPolygonPrice(symbol) {
       const change = price - previousClose;
       const changePercent = previousClose ? ((change / previousClose) * 100) : 0;
       return {
-        symbol,
-        price: formatPrice(price, symbol),
+        symbol: canonical,
+        price: formatPrice(price, canonical),
         rawPrice: price,
-        previousClose: formatPrice(previousClose, symbol),
-        change: formatPrice(Math.abs(change), symbol),
+        previousClose: formatPrice(previousClose, canonical),
+        change: formatPrice(Math.abs(change), canonical),
         changeSign: change >= 0 ? '+' : '-',
         changePercent: Math.abs(changePercent).toFixed(2),
         isUp: change >= 0,
@@ -1107,65 +1112,67 @@ function getFallbackPrice(symbol) {
  */
 async function fetchPrice(symbol, options = {}) {
   const { stooqBySymbol = {} } = options;
+  const canonical = toCanonical(symbol);
   // Check fresh cache first
-  const cached = priceCache.get(symbol);
+  const cached = priceCache.get(canonical);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     healthStats.cacheHits++;
     return { ...cached, fromCache: true, delayed: false };
   }
 
-  const isSpot = SPOT_SYMBOLS.has(symbol);
+  const assetClass = getAssetClass(canonical);
+  const isSpot = assetClass === 'forex' || assetClass === 'commodity';
   let result = null;
 
-  if (CRYPTO_SYMBOLS.has(symbol)) {
+  if (assetClass === 'crypto') {
     // Crypto: CoinGecko (free) -> CoinMarketCap -> Finnhub -> Twelve Data -> Yahoo
-    result = await fetchCoinGeckoPrice(symbol);
-    if (!result) result = await fetchCoinMarketCapPrice(symbol);
-    if (!result) result = await fetchFinnhubPrice(symbol);
-    if (!result) result = await fetchTwelveDataPrice(symbol);
-    if (!result) result = await fetchYahooPrice(symbol);
+    result = await fetchCoinGeckoPrice(canonical);
+    if (!result) result = await fetchCoinMarketCapPrice(canonical);
+    if (!result) result = await fetchFinnhubPrice(canonical);
+    if (!result) result = await fetchTwelveDataPrice(canonical);
+    if (!result) result = await fetchYahooPrice(canonical);
   } else if (isSpot) {
     // Forex/metals: Finnhub (OANDA) -> Twelve Data -> Stooq spot (XAU/XAG + FX) -> Yahoo
-    result = await fetchFinnhubPrice(symbol);
-    if (!result) result = await fetchTwelveDataPrice(symbol);
-    if (!result && stooqBySymbol[symbol]) result = stooqBySymbol[symbol];
-    if (!result) result = await fetchYahooPrice(symbol);
+    result = await fetchFinnhubPrice(canonical);
+    if (!result) result = await fetchTwelveDataPrice(canonical);
+    if (!result && stooqBySymbol[canonical]) result = stooqBySymbol[canonical];
+    if (!result) result = await fetchYahooPrice(canonical);
     // Yahoo GC=F / SI=F can diverge from spot; prefer Stooq when Yahoo looks implausible
     if (
       result &&
-      (symbol === 'XAUUSD' || symbol === 'XAGUSD') &&
+      (canonical === 'XAUUSD' || canonical === 'XAGUSD') &&
       result.source === 'yahoo' &&
-      !isPlausibleSpotMetalPrice(symbol, result.rawPrice)
+      !isPlausibleSpotMetalPrice(canonical, result.rawPrice)
     ) {
-      const stooq = stooqBySymbol[symbol];
-      result = stooq && isPlausibleSpotMetalPrice(symbol, stooq.rawPrice) ? stooq : null;
+      const stooq = stooqBySymbol[canonical];
+      result = stooq && isPlausibleSpotMetalPrice(canonical, stooq.rawPrice) ? stooq : null;
     }
     if (
       result &&
-      (symbol === 'XAUUSD' || symbol === 'XAGUSD') &&
-      !isPlausibleSpotMetalPrice(symbol, result.rawPrice)
+      (canonical === 'XAUUSD' || canonical === 'XAGUSD') &&
+      !isPlausibleSpotMetalPrice(canonical, result.rawPrice)
     ) {
       result = null;
     }
   } else {
     // Stocks, indices, DXY, etc: Yahoo -> Polygon.io -> Finnhub -> Twelve Data
-    result = await fetchYahooPrice(symbol);
-    if (!result) result = await fetchPolygonPrice(symbol);
-    if (!result) result = await fetchFinnhubPrice(symbol);
-    if (!result) result = await fetchTwelveDataPrice(symbol);
+    result = await fetchYahooPrice(canonical);
+    if (!result) result = await fetchPolygonPrice(canonical);
+    if (!result) result = await fetchFinnhubPrice(canonical);
+    if (!result) result = await fetchTwelveDataPrice(canonical);
   }
 
   // Got fresh data
   if (result && result.rawPrice > 0) {
     healthStats.successfulFetches++;
     healthStats.lastSuccessTime = Date.now();
-    priceCache.set(symbol, result);
+    priceCache.set(canonical, result);
     return result;
   }
 
   // All providers failed - use fallback (NEVER return 0.00)
   healthStats.errors++;
-  return getFallbackPrice(symbol);
+  return getFallbackPrice(canonical);
 }
 
 function mergeSnapshotChunkResults(results, chunkSymbols) {

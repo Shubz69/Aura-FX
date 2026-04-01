@@ -15,9 +15,10 @@ const { detectInstruments } = require('./quote-snapshot');
 const { extractInstrument, detectIntent } = require('./tool-router');
 const { toCanonical } = require('./utils/symbol-registry');
 const { validateAndSanitize, generatePricingInstructions } = require('./price-validator');
-const { getOpenAIModelForChat } = require('./openai-config');
+const { getPerplexityModelForChat } = require('./perplexity-config');
 const { verifyToken } = require('../utils/auth');
 const { isSuperAdminEmail } = require('../utils/entitlements');
+const { PERPLEXITY_API_URL } = require('./perplexity-client');
 
 const marketDataAdapter = new MarketDataAdapter();
 
@@ -27,11 +28,11 @@ const marketDataAdapter = new MarketDataAdapter();
 
 const CONFIG = {
   ADAPTER_TIMEOUT: 10000,     // 10s — provider chain (Twelve Data → Finnhub → …) on cold start / DB
-  OPENAI_TIMEOUT: 45000,      // 45s for OpenAI streaming
+  AI_TIMEOUT: 45000,          // 45s for Perplexity streaming
   MAX_HISTORY: 6,             // Keep last 6 messages for context
   CACHE_TTL: 30000,           // 30s cache for market data
   MAX_TOKENS: 2500,           // Allow thorough, well-structured responses
-  MODEL: getOpenAIModelForChat(), // Override with OPENAI_MODEL or OPENAI_CHAT_MODEL (default gpt-4o)
+  MODEL: getPerplexityModelForChat(), // Override with PERPLEXITY_MODEL or PERPLEXITY_CHAT_MODEL
   TEMPERATURE: 0.55           // Slightly lower for factual adherence when live quotes are injected
 };
 
@@ -297,7 +298,7 @@ async function fetchAllData(message, conversationHistory, requestId) {
 // System Prompt (Concise for Speed)
 // ============================================================================
 
-const SYSTEM_PROMPT = `You are AURA AI, a professional trading assistant. Your reasoning uses OpenAI; live prices and headlines come only from the "Verified context" block appended to the user message (Twelve Data, Finnhub, Alpha Vantage, Yahoo Finance, or RSS — never invent numbers).
+const SYSTEM_PROMPT = `You are AURA AI, a professional trading assistant. Your reasoning uses Perplexity; live prices and headlines come only from the "Verified context" block appended to the user message (Twelve Data, Finnhub, Alpha Vantage, Yahoo Finance, or RSS — never invent numbers).
 
 Expertise: Forex, crypto, stocks, commodities, indices. You apply technical analysis (support/resistance, structure, patterns), fundamentals, and risk/reward clearly.
 
@@ -421,7 +422,7 @@ async function handler(req, res) {
   const conversationHistory = Array.isArray(body.conversationHistory) ? body.conversationHistory : [];
   const rawImages = Array.isArray(body.images) ? body.images : [];
 
-  // Normalize images: only valid data URLs or https URLs (OpenAI vision). Max 2, skip invalid or oversized.
+  // Normalize images: only valid data URLs or https URLs (Perplexity vision). Max 2, skip invalid or oversized.
   const MAX_IMAGE_URL_LENGTH = 5_000_000; // ~3.75MB base64 to avoid timeouts/limits
   const images = rawImages.slice(0, 2).map((img) => {
     const url = typeof img === 'string' ? img : (img && typeof img.url === 'string' ? img.url : null);
@@ -434,9 +435,9 @@ async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Message or at least one valid image required' });
   }
 
-  const openaiApiKey = process.env.OPENAI_API_KEY && String(process.env.OPENAI_API_KEY).trim();
-  if (!openaiApiKey) {
-    log(requestId, 'error', 'OPENAI_API_KEY missing or empty');
+  const perplexityApiKey = process.env.PERPLEXITY_API_KEY && String(process.env.PERPLEXITY_API_KEY).trim();
+  if (!perplexityApiKey) {
+    log(requestId, 'error', 'PERPLEXITY_API_KEY missing or empty');
     return res.status(503).json({ success: false, message: 'AI service not configured' });
   }
 
@@ -452,10 +453,10 @@ async function handler(req, res) {
   res.write(`data: ${JSON.stringify({ type: 'start', requestId })}\n\n`);
   
   try {
-    // Fetch data in parallel while preparing OpenAI call
+    // Fetch data in parallel while preparing Perplexity call
     const dataPromise = fetchAllData(message, conversationHistory, requestId);
     
-    // Trim conversation history (OpenAI expects string content for history)
+    // Trim conversation history (Perplexity expects string content for history)
     const trimmedHistory = conversationHistory.slice(-CONFIG.MAX_HISTORY).map(msg => ({
       role: msg.role,
       content: typeof msg.content === 'string' ? String(msg.content).slice(0, 1000) : ''
@@ -501,7 +502,7 @@ async function handler(req, res) {
     const pricingRules = generatePricingInstructions(quoteContext);
     const systemContent = `${SYSTEM_PROMPT}\n\n${pricingRules}`;
 
-    // Build messages for OpenAI (official Chat Completions API; key stays server-side only)
+    // Build messages for Perplexity (official Chat Completions API; key stays server-side only)
     const openaiMessages = [
       { role: 'system', content: systemContent },
       ...trimmedHistory,
@@ -525,16 +526,16 @@ async function handler(req, res) {
     }
     
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), CONFIG.OPENAI_TIMEOUT);
+    const timeout = setTimeout(() => controller.abort(), CONFIG.AI_TIMEOUT);
     
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    const openaiResponse = await fetch(PERPLEXITY_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiApiKey}`
+        'Authorization': `Bearer ${perplexityApiKey}`
       },
       body: JSON.stringify({
-        model: images.length > 0 ? 'gpt-4o' : CONFIG.MODEL,
+        model: CONFIG.MODEL,
         messages: openaiMessages,
         max_tokens: CONFIG.MAX_TOKENS,
         temperature: CONFIG.TEMPERATURE,
@@ -551,14 +552,14 @@ async function handler(req, res) {
         errorText = await openaiResponse.text();
         if (errorText.length > 2000) errorText = errorText.slice(0, 2000) + '…';
       } catch (_) {}
-      log(requestId, 'error', 'OpenAI error', { status: openaiResponse.status, error: errorText });
+      log(requestId, 'error', 'Perplexity error', { status: openaiResponse.status, error: errorText });
 
       if (openaiResponse.status === 429) {
         res.write(`data: ${JSON.stringify({ type: 'error', message: 'AI service is busy. Please try again in a moment.' })}\n\n`);
       } else if (openaiResponse.status === 400 && /image|content|invalid/i.test(errorText)) {
         res.write(`data: ${JSON.stringify({ type: 'error', message: 'Image could not be processed. Try a smaller or different image.' })}\n\n`);
       } else if (openaiResponse.status === 401 || openaiResponse.status === 403) {
-        log(requestId, 'error', 'OpenAI auth failed — check OPENAI_API_KEY');
+        log(requestId, 'error', 'Perplexity auth failed - check PERPLEXITY_API_KEY');
         res.write(`data: ${JSON.stringify({ type: 'error', message: 'AI service authentication failed' })}\n\n`);
       } else {
         res.write(`data: ${JSON.stringify({ type: 'error', message: 'AI service temporarily unavailable' })}\n\n`);

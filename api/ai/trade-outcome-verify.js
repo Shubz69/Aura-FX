@@ -2,7 +2,7 @@
  * POST /api/ai/trade-outcome-verify
  * Vision verification of broker / platform screenshots for trade outcome (anti-fraud).
  * Body: { tradeId, image: base64, mimeType }
- * Requires OPENAI_API_KEY. Updates trade when confidence is sufficient.
+ * Requires PERPLEXITY_API_KEY. Updates trade when confidence is sufficient.
  */
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
@@ -16,8 +16,8 @@ async function ensureOutcomeColumns() {
   } catch (_) {}
 }
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_MODEL = process.env.OPENAI_TRADE_VERIFY_MODEL || 'gpt-4o';
+const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
+const PERPLEXITY_MODEL = process.env.PERPLEXITY_TRADE_VERIFY_MODEL || 'sonar';
 
 function parseBody(req) {
   if (req.body == null) return {};
@@ -51,9 +51,9 @@ Return STRICT JSON only:
 Never invent numbers. If you cannot read P/L, set pnl null and result "unclear".`;
 
 async function callVision(base64, mimeType) {
-  const url = 'https://api.openai.com/v1/chat/completions';
+  const url = 'https://api.perplexity.ai/chat/completions';
   const body = {
-    model: OPENAI_MODEL,
+    model: PERPLEXITY_MODEL,
     max_tokens: 500,
     temperature: 0.05,
     response_format: { type: 'json_object' },
@@ -76,12 +76,12 @@ async function callVision(base64, mimeType) {
   };
   const response = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_API_KEY}` },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${PERPLEXITY_API_KEY}` },
     body: JSON.stringify(body),
   });
   if (!response.ok) {
     const t = await response.text();
-    throw new Error(`OpenAI ${response.status}: ${t}`);
+    throw new Error(`Perplexity ${response.status}: ${t}`);
   }
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content || '{}';
@@ -95,10 +95,10 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
-  if (!OPENAI_API_KEY) {
+  if (!PERPLEXITY_API_KEY) {
     return res.status(503).json({
       success: false,
-      message: 'Outcome verification is not configured (missing OPENAI_API_KEY).',
+      message: 'Outcome verification is not configured (missing PERPLEXITY_API_KEY).',
     });
   }
 
@@ -120,7 +120,7 @@ module.exports = async (req, res) => {
   try {
     analysis = await callVision(image.replace(/^data:image\/\w+;base64,/, ''), mimeType);
   } catch (e) {
-    console.error('[trade-outcome-verify] OpenAI', e.message);
+    console.error('[trade-outcome-verify] Perplexity', e.message);
     return res.status(502).json({ success: false, message: 'Vision analysis failed', detail: e.message });
   }
 

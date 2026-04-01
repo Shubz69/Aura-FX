@@ -1,11 +1,11 @@
 /**
- * Optional OpenAI layer for Trader DNA — interprets deterministic metrics only.
+ * Optional Perplexity layer for Trader DNA - interprets deterministic metrics only.
  */
 
-const { getOpenAIModelForDna } = require('../ai/openai-config');
+const { getPerplexityModelForDna } = require('../ai/perplexity-config');
 
 const DNA_AI_DISCLAIMER =
-  'AI interpretation is for educational self-reflection on trading behaviour only. Not medical, mental-health, or financial advice. Harsh feedback targets process and habits, not your worth. For concrete monthly action steps, use Performance & DNA → Monthly reports at /reports.';
+  'AI interpretation is for educational self-reflection on trading behaviour only. Not medical, mental-health, or financial advice. Harsh feedback targets process and habits, not your worth. For concrete monthly action steps, use Performance & DNA -> Monthly reports at /reports.';
 
 function compactForAi(payload) {
   return {
@@ -29,25 +29,25 @@ function compactForAi(payload) {
 }
 
 /**
- * @param {object} payload — full buildDnaPayload result
+ * @param {object} payload - full buildDnaPayload result
  * @returns {Promise<object>} payload with aiPsychologyLayer or unchanged on failure
  */
-async function enrichDnaPayloadWithOpenAI(payload) {
-  const apiKey = process.env.OPENAI_API_KEY;
+async function enrichDnaPayloadWithPerplexity(payload) {
+  const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey) return payload;
 
-  const model = getOpenAIModelForDna();
+  const model = getPerplexityModelForDna();
   const bundle = compactForAi(payload);
   let bundleStr = JSON.stringify(bundle);
   if (bundleStr.length > 32000) {
-    bundleStr = bundleStr.slice(0, 32000) + '…[truncated]';
+    bundleStr = bundleStr.slice(0, 32000) + '...[truncated]';
   }
 
   const systemMessage = `You are a clinical trading psychologist. Your output is JSON only.
 Rules:
 - Do not invent numbers. Every behavioural claim must map to fields in the bundle (scores, rates, streaks, weaknesses, alerts).
 - No compliments unless a metric objectively supports it (e.g. very low revenge rate).
-- Be harsh on trading discipline, impulse, and risk — never insult the person's character or health.
+- Be harsh on trading discipline, impulse, and risk - never insult the person's character or health.
 - traderTypeAsPerson and psychologyDeepDive describe how they show up under pressure when trading.
 - shadowTraits: at least 4 short labels (e.g. "Revenge sequencing", "Overconfidence after wins").
 - coachingNote must state that DNA is the identity mirror and Monthly Reports (/reports) are the improvement playbook.`;
@@ -67,7 +67,7 @@ Return strict JSON only:
 }`;
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ Return strict JSON only:
       }),
     });
     if (!res.ok) {
-      console.warn('[dnaOpenAi] OpenAI HTTP', res.status);
+      console.warn('[dnaPerplexity] Perplexity HTTP', res.status);
       return payload;
     }
     const data = await res.json();
@@ -93,12 +93,12 @@ Return strict JSON only:
     try {
       parsed = JSON.parse(clean);
     } catch {
-      console.warn('[dnaOpenAi] non-JSON response');
+      console.warn('[dnaPerplexity] non-JSON response');
       return payload;
     }
     const shadowTraits = Array.isArray(parsed.shadowTraits) ? parsed.shadowTraits.filter(Boolean) : [];
     while (shadowTraits.length < 4) {
-      shadowTraits.push('Unspecified pattern — log more trades to tighten DNA');
+      shadowTraits.push('Unspecified pattern - log more trades to tighten DNA');
     }
     return {
       ...payload,
@@ -115,9 +115,9 @@ Return strict JSON only:
       },
     };
   } catch (e) {
-    console.warn('[dnaOpenAi]', e.message);
+    console.warn('[dnaPerplexity]', e.message);
     return payload;
   }
 }
 
-module.exports = { enrichDnaPayloadWithOpenAI, DNA_AI_DISCLAIMER };
+module.exports = { enrichDnaPayloadWithPerplexity, DNA_AI_DISCLAIMER };

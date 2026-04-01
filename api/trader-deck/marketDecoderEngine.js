@@ -8,6 +8,7 @@ const { getConfig } = require('./config');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getQuote } = require('./services/finnhubService');
 const { getEconomicCalendar } = require('./services/fmpService');
+const { getResolvedSymbol, forProvider } = require('../ai/utils/symbol-registry');
 const {
   fetchDailySeriesWithQuoteFallback,
   fetchQuoteWithLog,
@@ -17,107 +18,21 @@ const {
 
 const TIMEOUT_MS = 9000;
 
-/** Both legs must look like ISO 4217 codes to route as FX on Finnhub (avoids OANDA:CUR_USD style mistakes). */
-const FX_CCY = new Set([
-  'USD', 'EUR', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'NZD', 'SEK', 'NOK', 'DKK', 'MXN', 'ZAR', 'TRY', 'PLN',
-  'CNH', 'CNY', 'SGD', 'HKD', 'HUF', 'CZK', 'ILS', 'INR', 'THB', 'KRW', 'BRL', 'RUB', 'IDR', 'MYR', 'PHP',
-  'TWD', 'CLP', 'COP', 'PEN', 'ARS', 'SAR', 'AED', 'QAR', 'KWD', 'BHD', 'OMR', 'JOD', 'LBP', 'EGP', 'NGN',
-]);
-
 /** @typedef {'FX'|'Crypto'|'Index'|'Commodity'|'Equity'} MarketType */
 
 /**
  * Normalize user input → display symbol + Finnhub routing.
  */
 function resolveAsset(raw) {
-  const u = String(raw || '')
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9^.-]/g, '');
-  if (!u) return null;
-
-  const aliases = {
-    SPX: 'SPY',
-    'S&P500': 'SPY',
-    SP500: 'SPY',
-    DXY: 'UUP',
-    USDX: 'UUP',
-    GOLD: 'XAUUSD',
-    XAU: 'XAUUSD',
-    SILVER: 'XAGUSD',
-    OIL: 'CL',
-    WTI: 'CL',
-    BTC: 'BTCUSD',
-    ETH: 'ETHUSD',
-    BITCOIN: 'BTCUSD',
-  };
-  const key = u.replace(/\^/g, '');
-  if (aliases[key]) return resolveAsset(aliases[key]);
-
-  if (u === 'XAUUSD' || key === 'XAUUSD')
-    return {
-      displaySymbol: 'XAUUSD',
-      marketType: 'Commodity',
-      candleKind: 'forex',
-      finnhubSymbol: 'OANDA:XAU_USD',
-    };
-  if (u === 'XAGUSD' || key === 'XAGUSD')
-    return {
-      displaySymbol: 'XAGUSD',
-      marketType: 'Commodity',
-      candleKind: 'forex',
-      finnhubSymbol: 'OANDA:XAG_USD',
-    };
-
-  if (/^BTC|^ETH|^SOL|^XRP|^ADA/i.test(key) && key.endsWith('USD')) {
-    const base = key.replace('USD', '');
-    const map = {
-      BTC: 'BINANCE:BTCUSDT',
-      ETH: 'BINANCE:ETHUSDT',
-      SOL: 'BINANCE:SOLUSDT',
-      XRP: 'BINANCE:XRPUSDT',
-      ADA: 'BINANCE:ADAUSDT',
-    };
-    const fh = map[base];
-    if (fh) return { displaySymbol: key, marketType: 'Crypto', candleKind: 'crypto', finnhubSymbol: fh };
-  }
-
-  if (key.length === 6 && /^[A-Z]{6}$/.test(key)) {
-    const a = key.slice(0, 3);
-    const b = key.slice(3, 6);
-    if (FX_CCY.has(a) && FX_CCY.has(b)) {
-      return {
-        displaySymbol: key,
-        marketType: 'FX',
-        candleKind: 'forex',
-        finnhubSymbol: `OANDA:${a}_${b}`,
-      };
-    }
-    return {
-      displaySymbol: key,
-      marketType: 'Equity',
-      candleKind: 'stock',
-      finnhubSymbol: key,
-    };
-  }
-
-  if (key === 'CL' || key === 'CL=F')
-    return { displaySymbol: 'WTI', marketType: 'Commodity', candleKind: 'stock', finnhubSymbol: 'CL' };
-
-  const indexEtfs = new Set(['SPY', 'QQQ', 'IWM', 'DIA', 'VTI']);
-  if (indexEtfs.has(key) || key.startsWith('^'))
-    return {
-      displaySymbol: key.replace('^', ''),
-      marketType: 'Index',
-      candleKind: 'stock',
-      finnhubSymbol: key.startsWith('^') ? 'SPY' : key,
-    };
-
+  const resolved = getResolvedSymbol(raw);
+  if (!resolved?.canonical) return null;
   return {
-    displaySymbol: key,
-    marketType: 'Equity',
-    candleKind: 'stock',
-    finnhubSymbol: key.split('.')[0],
+    displaySymbol: resolved.displaySymbol,
+    marketType: resolved.marketType,
+    candleKind: resolved.candleKind,
+    finnhubSymbol: resolved.finnhubSymbol,
+    canonicalSymbol: resolved.canonical,
+    decoderProxySymbol: resolved.decoderProxySymbol,
   };
 }
 
@@ -156,7 +71,7 @@ async function fetchTreasuryContextLogged() {
 }
 
 async function fetchDxyProxy() {
-  const q = await getQuote('OANDA:EUR_USD');
+  const q = await getQuote(forProvider('EURUSD', 'finnhub'));
   if (q.ok && q.data && q.data.dp != null) {
     return { eurUsdDp: Number(q.data.dp), ok: true };
   }
@@ -736,7 +651,7 @@ async function runMarketDecoder(symbolInput) {
     };
   }
 
-  const { displaySymbol, marketType, finnhubSymbol } = resolved;
+  const { displaySymbol, marketType, finnhubSymbol, canonicalSymbol } = resolved;
   const to = Math.floor(Date.now() / 1000);
   const from = to - 86400 * 400;
 
@@ -1032,6 +947,7 @@ async function runMarketDecoder(symbolInput) {
         netScore: net,
         dataHealth,
         finnhubSymbol,
+        canonicalSymbol,
         sparkline,
         chartBars,
         anchorNews: Array.isArray(anchorNews) ? anchorNews : [],

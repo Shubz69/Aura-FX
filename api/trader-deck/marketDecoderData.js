@@ -6,6 +6,7 @@
 const { getConfig } = require('./config');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getQuote } = require('./services/finnhubService');
+const { forProvider, getResolvedSymbol } = require('../ai/utils/symbol-registry');
 
 const FINNHUB_BASE = 'https://finnhub.io/api/v1';
 const FMP_BASE = 'https://financialmodelingprep.com';
@@ -87,9 +88,10 @@ async function fmpHistoricalDaily(fmpSymbol) {
 
 /** Map resolved asset to FMP symbol */
 function toFmpSymbol(resolved) {
-  const { displaySymbol, marketType } = resolved;
-  if (marketType === 'FX' || marketType === 'Crypto') return displaySymbol;
-  return displaySymbol.split('.')[0];
+  const { displaySymbol, marketType, canonicalSymbol } = resolved;
+  const symbol = canonicalSymbol || displaySymbol;
+  if (marketType === 'FX' || marketType === 'Crypto') return symbol;
+  return symbol.split('.')[0];
 }
 
 async function alphaVantageDaily(symbolForAv) {
@@ -482,14 +484,14 @@ async function fetchMarketDecoderContextNews(resolved, limit = 12) {
 
 async function fetchCrossAssetQuotes() {
   const symbols = [
-    { id: 'eurusd', fh: 'OANDA:EUR_USD', label: 'EURUSD' },
-    { id: 'spy', fh: 'SPY', label: 'SPY' },
-    { id: 'xau', fh: 'OANDA:XAU_USD', label: 'XAUUSD' },
-    { id: 'btc', fh: 'BINANCE:BTCUSDT', label: 'BTCUSD' },
+    { id: 'eurusd', symbol: 'EURUSD', label: 'EURUSD' },
+    { id: 'spy', symbol: 'SPY', label: 'SPY' },
+    { id: 'xau', symbol: 'XAUUSD', label: 'XAUUSD' },
+    { id: 'btc', symbol: 'BTCUSD', label: 'BTCUSD' },
   ];
   const out = {};
   for (const s of symbols) {
-    const q = await getQuote(s.fh);
+    const q = await getQuote(forProvider(s.symbol, 'finnhub'));
     if (q.ok && q.data) {
       out[s.id] = { label: s.label, dp: q.data.dp != null ? Number(q.data.dp) : null, ok: true };
     } else {

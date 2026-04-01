@@ -1,7 +1,7 @@
 /**
  * Trader DNA — deterministic behavioural / execution / performance / psychology
  * synthesis from aura_analysis_trades + journal_daily.
- * Optional OpenAI narrative layer is applied in api/trader-dna.js (dnaOpenAi.js).
+ * Optional Perplexity narrative layer is applied in api/trader-dna.js (`dnaPerplexity.js`).
  */
 
 const CYCLE_DAYS = 90;

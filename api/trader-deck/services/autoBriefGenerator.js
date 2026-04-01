@@ -1,12 +1,13 @@
 const { executeQuery, addColumnIfNotExists } = require('../../db');
 const { runEngine, getTwelveDataQuote } = require('../marketIntelligenceEngine');
 const { getTemplate, normalizePeriod, parseTemplateFromText } = require('./briefTemplateService');
-const { getOpenAIModelForChat } = require('../../ai/openai-config');
+const { getPerplexityAutomationModel } = require('../../ai/perplexity-config');
 const { fetchWithTimeout } = require('./fetchWithTimeout');
-const { enrichTraderDeckPayload } = require('../openaiTraderInsights');
+const { enrichTraderDeckPayload } = require('../perplexityTraderInsights');
 const briefUniverse = require('./briefInstrumentUniverse');
 const briefStructure = require('./briefStructureLock');
 const institutionalAuraBrief = require('./institutionalAuraBrief');
+const { PERPLEXITY_API_URL } = require('../../ai/perplexity-client');
 const {
   SECTION_HEADINGS,
   SECTION_RULES,
@@ -165,6 +166,10 @@ function orderedBriefKinds() {
   return [...BRIEF_KIND_ORDER];
 }
 
+function orderedAutomatedCategoryKinds() {
+  return BRIEF_KIND_ORDER.filter((kind) => kind !== 'general');
+}
+
 function frameworkHeadings(period, briefKind, fallbackSections = []) {
   const list = structureToSections(period);
   if (Array.isArray(list) && list.length > 0) return list;
@@ -254,16 +259,16 @@ function normalizeCalendarValue(v) {
 
 function getAutomationModel() {
   return String(
-    process.env.OPENAI_AUTOMATION_MODEL
-    || process.env.OPENAI_CHAT_MODEL
-    || process.env.OPENAI_MODEL
-    || getOpenAIModelForChat()
+    process.env.PERPLEXITY_AUTOMATION_MODEL
+    || process.env.PERPLEXITY_CHAT_MODEL
+    || process.env.PERPLEXITY_MODEL
+    || getPerplexityAutomationModel()
   ).trim();
 }
 
 function assertAutomationModelConfigured() {
-  if (!String(process.env.OPENAI_AUTOMATION_MODEL || '').trim()) {
-    throw new Error('OPENAI_AUTOMATION_MODEL is required for automated Trader Desk runs');
+  if (!String(process.env.PERPLEXITY_AUTOMATION_MODEL || '').trim()) {
+    throw new Error('PERPLEXITY_AUTOMATION_MODEL is required for automated Trader Desk runs');
   }
 }
 
@@ -406,6 +411,394 @@ function buildFactPack({
     liveQuotes: Array.isArray(liveQuotes) ? liveQuotes.slice(0, 5) : [],
     bannedPhrases: BANNED_PHRASES,
     updatedAt: new Date().toISOString(),
+  };
+}
+
+function ordinalDayNumber(n) {
+  const v = Number(n);
+  const j = v % 10;
+  const k = v % 100;
+  if (j === 1 && k !== 11) return `${v}st`;
+  if (j === 2 && k !== 12) return `${v}nd`;
+  if (j === 3 && k !== 13) return `${v}rd`;
+  return `${v}th`;
+}
+
+function formatDailySampleTitle(runDate, timeZone) {
+  const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone }).format(runDate);
+  const day = ordinalDayNumber(new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone }).format(runDate));
+  const month = new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone }).format(runDate);
+  const year = new Intl.DateTimeFormat('en-GB', { year: 'numeric', timeZone }).format(runDate);
+  return `Daily Brief - ${weekday} ${day} ${month} ${year}`;
+}
+
+function formatWeeklySampleTitle(runDate, timeZone) {
+  const ymd = toYmdInTz(runDate, timeZone);
+  const base = new Date(`${ymd}T12:00:00.000Z`);
+  const day = base.getUTCDay();
+  const mondayOffset = day === 0 ? 1 : 1 - day;
+  const monday = new Date(base);
+  monday.setUTCDate(base.getUTCDate() + mondayOffset);
+  const friday = new Date(monday);
+  friday.setUTCDate(monday.getUTCDate() + 4);
+  const mDay = ordinalDayNumber(new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone }).format(monday));
+  const fDay = ordinalDayNumber(new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone }).format(friday));
+  const month = new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone }).format(friday);
+  const year = new Intl.DateTimeFormat('en-GB', { year: 'numeric', timeZone }).format(friday);
+  return `WEEKLY FUNDAMENTAL ANALYSIS - (${mDay} - ${fDay} ${month} ${year})`;
+}
+
+async function getLatestWeeklyBriefExcerpt(briefKind, beforeDate) {
+  try {
+    const [rows] = await executeQuery(
+      `SELECT file_data, title, date
+       FROM trader_deck_briefs
+       WHERE period = 'weekly' AND brief_kind = ? AND date <= ?
+       ORDER BY date DESC, created_at DESC
+       LIMIT 1`,
+      [briefKind, beforeDate]
+    );
+    const raw = rows?.[0]?.file_data;
+    if (!raw) return null;
+    const text = Buffer.isBuffer(raw) ? raw.toString('utf8') : String(raw);
+    return {
+      title: String(rows[0].title || '').trim(),
+      date: String(rows[0].date || '').slice(0, 10),
+      excerpt: text.slice(0, 3500),
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+async function callPerplexityJson(systemPrompt, userPayload, options = {}) {
+  const apiKey = String(process.env.PERPLEXITY_API_KEY || '').trim();
+  if (!apiKey) return { ok: false, error: 'missing_perplexity_key' };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), options.timeoutMs || 30000);
+  try {
+    const res = await fetch(PERPLEXITY_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: getAutomationModel(),
+        temperature: options.temperature ?? 0.35,
+        max_tokens: options.maxTokens ?? 6000,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: JSON.stringify(userPayload) },
+        ],
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return { ok: false, error: `http_${res.status}` };
+    const json = await res.json();
+    const text = String(json.choices?.[0]?.message?.content || '').trim();
+    if (!text) return { ok: false, error: 'empty_response' };
+    const parsed = JSON.parse(text.replace(/^```json\s*|\s*```$/g, '').trim());
+    return { ok: true, parsed };
+  } catch (e) {
+    clearTimeout(timeout);
+    return { ok: false, error: e.message || 'perplexity_error' };
+  }
+}
+
+function renderCategoryDailyBrief({ title, parsed, runDate, timeZone }) {
+  const dayLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone }).format(runDate);
+  const lines = [];
+  lines.push(`# ${title}`);
+  lines.push('');
+  lines.push('By Aura FX AI');
+  lines.push('');
+  lines.push(`## ${dayLabel}`);
+  lines.push('');
+  lines.push(String(parsed.opening || '').trim());
+  lines.push('');
+  lines.push('## GLOBAL GEOPOLITICAL ENVIRONMENT');
+  lines.push('');
+  lines.push(String(parsed.globalGeopoliticalEnvironment || '').trim());
+  lines.push('');
+  lines.push(`## MACRO BACKDROP GOING INTO ${dayLabel.toUpperCase()}`);
+  lines.push('');
+  lines.push(String(parsed.macroBackdrop || '').trim());
+  lines.push('');
+  lines.push('## MARKET THEMES DOMINATING TODAY');
+  lines.push('');
+  lines.push(String(parsed.marketThemes || '').trim());
+  lines.push('');
+  const assets = Array.isArray(parsed.assetAnalyses) ? parsed.assetAnalyses : [];
+  for (const asset of assets) {
+    lines.push(`## ${String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase()} ANALYSIS`);
+    lines.push('');
+    lines.push(String(asset.fundamentalView || '').trim());
+    lines.push('');
+    lines.push(String(asset.technicalView || '').trim());
+    lines.push('');
+    lines.push('Key technical observations:');
+    const observations = Array.isArray(asset.keyTechnicalObservations) ? asset.keyTechnicalObservations : [];
+    observations.forEach((item) => lines.push(String(item || '').trim()));
+    lines.push('');
+    lines.push('Session bias:');
+    lines.push(`Asia: ${String(asset.sessionBias?.asia || '').trim()}`);
+    lines.push(`London: ${String(asset.sessionBias?.london || '').trim()}`);
+    lines.push(`New York: ${String(asset.sessionBias?.newYork || '').trim()}`);
+    lines.push(`Overall bias: ${String(asset.overallBias || '').trim()}`);
+    lines.push('');
+  }
+  lines.push('## OVERALL DAILY STRUCTURE');
+  lines.push('');
+  lines.push(String(parsed.overallDailyStructure || '').trim());
+  lines.push('');
+  return stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
+}
+
+function renderCategoryWeeklyBrief({ title, parsed }) {
+  const lines = [];
+  lines.push(`# ${title}`);
+  lines.push('');
+  lines.push('By Aura FX AI');
+  lines.push('');
+  lines.push('## Overview');
+  lines.push('');
+  lines.push(String(parsed.overview || '').trim());
+  lines.push('');
+  lines.push(`## SUMMARY FOR LAST WEEK (${String(parsed.previousWeekLabel || '').trim()})`);
+  lines.push('');
+  lines.push(String(parsed.summaryForLastWeek || '').trim());
+  lines.push('');
+  const howAssets = Array.isArray(parsed.assetPerformance) ? parsed.assetPerformance : [];
+  for (const asset of howAssets) {
+    lines.push(`## HOW ${String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase()} PERFORMED & WHY`);
+    lines.push('');
+    lines.push(String(asset.body || '').trim());
+    lines.push('');
+  }
+  lines.push('## WHAT MATTERS THIS WEEK STRUCTURALLY');
+  lines.push('');
+  lines.push(String(parsed.structuralWeeklyDrivers || '').trim());
+  lines.push('');
+  lines.push('## MONDAY & TUESDAY');
+  lines.push('');
+  lines.push(String(parsed.mondayTuesdayFocus || '').trim());
+  lines.push('');
+  lines.push('## WEDNESDAY');
+  lines.push('');
+  lines.push(String(parsed.wednesdayFocus || '').trim());
+  lines.push('');
+  lines.push('## THURSDAY & FRIDAY');
+  lines.push('');
+  lines.push(String(parsed.thursdayFridayFocus || '').trim());
+  lines.push('');
+  const outlooks = Array.isArray(parsed.assetOutlooks) ? parsed.assetOutlooks : [];
+  for (const asset of outlooks) {
+    lines.push(`## ${String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase()} OUTLOOK THIS WEEK`);
+    lines.push('');
+    lines.push(String(asset.body || '').trim());
+    lines.push('');
+  }
+  lines.push('## WEEK CONCLUSION');
+  lines.push('');
+  lines.push(String(parsed.weekConclusion || '').trim());
+  lines.push('');
+  lines.push('## SESSION-BY-SESSION WATCH');
+  lines.push('');
+  lines.push(`Asia: ${String(parsed.sessionWatch?.asia || '').trim()}`);
+  lines.push(`London: ${String(parsed.sessionWatch?.london || '').trim()}`);
+  lines.push(`New York: ${String(parsed.sessionWatch?.newYork || '').trim()}`);
+  lines.push('');
+  lines.push('## KEY SCENARIOS');
+  lines.push('');
+  const scenarios = Array.isArray(parsed.keyScenarios) ? parsed.keyScenarios : [];
+  scenarios.forEach((s) => lines.push(String(s || '').trim()));
+  lines.push('');
+  return stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
+}
+
+function validateSampleStructuredBrief(period, parsed, expectedAssets = []) {
+  const reasons = [];
+  if (!parsed || typeof parsed !== 'object') return { ok: false, reasons: ['missing_parsed'] };
+  if (period === 'daily') {
+    if (String(parsed.opening || '').trim().length < 250) reasons.push('daily_opening_thin');
+    if (String(parsed.globalGeopoliticalEnvironment || '').trim().length < 180) reasons.push('daily_geo_thin');
+    if (String(parsed.macroBackdrop || '').trim().length < 160) reasons.push('daily_macro_thin');
+    if (String(parsed.marketThemes || '').trim().length < 160) reasons.push('daily_themes_thin');
+    if (String(parsed.overallDailyStructure || '').trim().length < 180) reasons.push('daily_conclusion_thin');
+    const assets = Array.isArray(parsed.assetAnalyses) ? parsed.assetAnalyses : [];
+    if (assets.length < Math.min(4, expectedAssets.length)) reasons.push(`daily_assets_${assets.length}`);
+    for (const asset of assets) {
+      if (String(asset.fundamentalView || '').trim().length < 120) reasons.push(`daily_asset_fundamental_${asset.symbol || 'x'}`);
+      if (String(asset.technicalView || '').trim().length < 100) reasons.push(`daily_asset_technical_${asset.symbol || 'x'}`);
+      if (!Array.isArray(asset.keyTechnicalObservations) || asset.keyTechnicalObservations.length < 3) reasons.push(`daily_asset_obs_${asset.symbol || 'x'}`);
+      if (!asset.sessionBias || !asset.sessionBias.asia || !asset.sessionBias.london || !asset.sessionBias.newYork) reasons.push(`daily_asset_sessions_${asset.symbol || 'x'}`);
+    }
+  } else {
+    if (String(parsed.overview || '').trim().length < 220) reasons.push('weekly_overview_thin');
+    if (String(parsed.summaryForLastWeek || '').trim().length < 220) reasons.push('weekly_summary_thin');
+    if (String(parsed.structuralWeeklyDrivers || '').trim().length < 180) reasons.push('weekly_structural_thin');
+    if (String(parsed.mondayTuesdayFocus || '').trim().length < 120) reasons.push('weekly_mon_tue_thin');
+    if (String(parsed.wednesdayFocus || '').trim().length < 100) reasons.push('weekly_wed_thin');
+    if (String(parsed.thursdayFridayFocus || '').trim().length < 120) reasons.push('weekly_thu_fri_thin');
+    if (String(parsed.weekConclusion || '').trim().length < 220) reasons.push('weekly_conclusion_thin');
+    const assets1 = Array.isArray(parsed.assetPerformance) ? parsed.assetPerformance : [];
+    const assets2 = Array.isArray(parsed.assetOutlooks) ? parsed.assetOutlooks : [];
+    if (assets1.length < Math.min(4, expectedAssets.length)) reasons.push(`weekly_perf_assets_${assets1.length}`);
+    if (assets2.length < Math.min(4, expectedAssets.length)) reasons.push(`weekly_outlook_assets_${assets2.length}`);
+    if (!parsed.sessionWatch?.asia || !parsed.sessionWatch?.london || !parsed.sessionWatch?.newYork) reasons.push('weekly_session_watch_missing');
+    if (!Array.isArray(parsed.keyScenarios) || parsed.keyScenarios.length < 2) reasons.push('weekly_scenarios_missing');
+  }
+  return { ok: reasons.length === 0, reasons };
+}
+
+function validateRenderedSampleBody(body, period, expectedAssets = []) {
+  const reasons = [];
+  const text = String(body || '');
+  const headingChecks = period === 'daily'
+    ? [
+      /^## GLOBAL GEOPOLITICAL ENVIRONMENT$/m,
+      /^## MARKET THEMES DOMINATING TODAY$/m,
+      /^## OVERALL DAILY STRUCTURE$/m,
+    ]
+    : [
+      /^## Overview$/m,
+      /^## WHAT MATTERS THIS WEEK STRUCTURALLY$/m,
+      /^## WEEK CONCLUSION$/m,
+      /^## KEY SCENARIOS$/m,
+    ];
+  headingChecks.forEach((re, idx) => {
+    if (!re.test(text)) reasons.push(`missing_heading_${period}_${idx + 1}`);
+  });
+  const assetHeadingCount = (text.match(/^## .*?(ANALYSIS|OUTLOOK THIS WEEK|PERFORMED & WHY)$/gm) || []).length;
+  if (assetHeadingCount < Math.min(4, expectedAssets.length)) {
+    reasons.push(`asset_heading_count_${assetHeadingCount}`);
+  }
+  return { ok: reasons.length === 0, reasons };
+}
+
+async function generateSampleMatchedCategoryBrief({
+  period,
+  factPack,
+  briefKind,
+  runDate,
+  timeZone,
+  priorBodies = [],
+  existingExcerpts = [],
+  weeklyReference = null,
+}) {
+  const normalizedPeriod = normalizePeriod(period);
+  const normalizedKind = normalizeBriefKind(briefKind);
+  const expectedAssets = Array.isArray(factPack.topInstruments) ? factPack.topInstruments.slice(0, 5) : [];
+  const dayName = weekdayName(runDate, timeZone);
+  const userPayload = {
+    briefKind: normalizedKind,
+    briefKindLabel: factPack.briefKindLabel,
+    period: normalizedPeriod,
+    dayName,
+    topInstruments: expectedAssets,
+    factPack: {
+      marketRegime: factPack.marketRegime,
+      marketPulse: factPack.marketPulse,
+      macroSummary: factPack.macroSummary,
+      keyDrivers: factPack.keyDrivers,
+      crossAssetSignals: factPack.crossAssetSignals,
+      traderFocus: factPack.traderFocus,
+      riskRadar: factPack.riskRadar,
+      headlines: factPack.headlines,
+      calendar: factPack.calendar,
+      liveQuotes: factPack.liveQuotes,
+      symbolHeadlines: factPack.symbolHeadlines,
+      categoryWritingMandate: factPack.categoryWritingMandate,
+      categoryIntelligenceDirective: factPack.categoryIntelligenceDirective,
+    },
+    weeklyReference,
+    priorCategoryExcerpts: existingExcerpts.slice(0, 8),
+    priorCategoryBodies: priorBodies.slice(0, 4).map((x) => String(x).slice(0, 1200)),
+    rules: {
+      noDuplicatePhrasingAcrossBriefs: true,
+      noCopyPasteAcrossCategories: true,
+      keepInstitutionalTone: true,
+      retailFriendlyClarity: true,
+      alignWithWeeklyThesisUnlessMajorNewsOverrides: true,
+      explainWeeklyOverrideIfNeeded: true,
+    },
+  };
+
+  const systemPrompt = normalizedPeriod === 'daily'
+    ? `You are an institutional cross-asset strategist writing a DAILY BRIEF for one trading category only.
+Match this exact shape and density:
+1. Day opening
+2. GLOBAL GEOPOLITICAL ENVIRONMENT
+3. MACRO BACKDROP GOING INTO ${dayName.toUpperCase()}
+4. MARKET THEMES DOMINATING TODAY
+5. repeated [ASSET] ANALYSIS sections
+6. OVERALL DAILY STRUCTURE
+
+Each asset section must include:
+- a fundamental/macro explanation
+- a technical structure paragraph
+- key technical observations as short lines
+- session bias for Asia, London, New York
+- one overall bias
+
+Hard rules:
+- Use only provided factPack context; no fabricated numbers or events.
+- Do not copy phrases from priorCategoryExcerpts.
+- The thesis for this category must be distinct from the other category briefs.
+- Keep the style like a professional trader note that an informed retail trader can follow.
+- Return JSON only with keys: opening, globalGeopoliticalEnvironment, macroBackdrop, marketThemes, assetAnalyses, overallDailyStructure.`
+    : `You are an institutional cross-asset strategist writing a WEEKLY FUNDAMENTAL ANALYSIS for one trading category only.
+Match this exact shape and density:
+1. Overview
+2. Summary for last week
+3. repeated HOW [ASSET] PERFORMED & WHY sections
+4. What matters this week structurally
+5. Monday & Tuesday
+6. Wednesday
+7. Thursday & Friday
+8. repeated [ASSET] Outlook This Week sections
+9. Week Conclusion
+10. Session-by-Session Watch
+11. Key Scenarios
+
+Hard rules:
+- Analyze the NEW week, not the previous template.
+- Use only provided factPack context; no fabricated numbers or events.
+- Use weeklyReference only as alignment context, not as text to paraphrase.
+- No duplicated phrasing from priorCategoryExcerpts.
+- Each category must have its own thesis and transmission channel.
+- Return JSON only with keys: overview, previousWeekLabel, summaryForLastWeek, assetPerformance, structuralWeeklyDrivers, mondayTuesdayFocus, wednesdayFocus, thursdayFridayFocus, assetOutlooks, weekConclusion, sessionWatch, keyScenarios.`;
+
+  const ai = await callPerplexityJson(systemPrompt, userPayload, {
+    maxTokens: normalizedPeriod === 'daily' ? 7000 : 9000,
+    temperature: 0.42,
+    timeoutMs: 35000,
+  });
+  if (!ai.ok || !ai.parsed) return { ok: false, error: ai.error || 'generation_failed' };
+  const validation = validateSampleStructuredBrief(normalizedPeriod, ai.parsed, expectedAssets);
+  if (!validation.ok) return { ok: false, error: validation.reasons.join(',') };
+  const title = normalizedPeriod === 'daily'
+    ? formatDailySampleTitle(runDate, timeZone)
+    : formatWeeklySampleTitle(runDate, timeZone);
+  const body = normalizedPeriod === 'daily'
+    ? renderCategoryDailyBrief({ title, parsed: ai.parsed, runDate, timeZone })
+    : renderCategoryWeeklyBrief({ title, parsed: ai.parsed });
+  const renderedValidation = validateRenderedSampleBody(body, normalizedPeriod, expectedAssets);
+  if (!renderedValidation.ok) return { ok: false, error: renderedValidation.reasons.join(',') };
+  return {
+    ok: true,
+    title: normalizedKind === 'general' ? title : `${BRIEF_KIND_LABELS[normalizedKind]} - ${title}`,
+    body,
+    parsed: ai.parsed,
+    validation: {
+      ok: true,
+      reasons: [],
+      structured: validation,
+      rendered: renderedValidation,
+    },
   };
 }
 
@@ -581,7 +974,7 @@ function fallbackSectionBodyByKey(sectionKey, heading, factPack) {
 }
 
 async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorSectionBodies, options = {}) {
-  const apiKey = String(process.env.OPENAI_API_KEY || '').trim();
+  const apiKey = String(process.env.PERPLEXITY_API_KEY || '').trim();
   if (!apiKey) return null;
   const { uniquenessRetry = false, validationFix = false, existingExcerpts = [] } = options;
   const rules = SECTION_RULES[sectionKey] || { purpose: 'Write this section.', rules: [] };
@@ -617,7 +1010,7 @@ async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorS
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 24000);
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch(PERPLEXITY_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1148,91 +1541,124 @@ async function generateAndStoreBrief({
       : [];
     const contextBodies = Array.isArray(generationContext?.existingBodies) ? generationContext.existingBodies : [];
 
-    let generated = await generateBriefBySections(factPack, template, {
-      existingExcerpts,
-      uniquenessRetry: false,
-    });
-    if (generated) {
-      const sectionBlob = (generated.sections || []).map((s) => stripSources(s.body || '')).join('\n');
-      const maxOverlapSections = contextBodies.reduce((m, prev) => Math.max(m, similarityScore(sectionBlob, prev)), 0);
-      if (maxOverlapSections >= 0.55) {
+    let generated = null;
+    let title = '';
+    let body = '';
+    let validation = { ok: true, reasons: [] };
+    const weeklyReference = normalizedPeriod === 'daily'
+      ? await getLatestWeeklyBriefExcerpt(normalizedKind, date)
+      : null;
+
+    if (normalizedKind !== 'general') {
+      const sampleMatch = await generateSampleMatchedCategoryBrief({
+        period: normalizedPeriod,
+        factPack,
+        briefKind: normalizedKind,
+        runDate,
+        timeZone,
+        priorBodies: contextBodies,
+        existingExcerpts,
+        weeklyReference,
+      });
+      if (sampleMatch.ok) {
+        title = sampleMatch.title;
+        body = sampleMatch.body;
+        validation = {
+          ok: true,
+          reasons: [],
+          mode: 'sample-structured',
+          structuredValidation: sampleMatch.validation,
+        };
+      }
+    }
+
+    if (!body) {
+      generated = await generateBriefBySections(factPack, template, {
+        existingExcerpts,
+        uniquenessRetry: false,
+      });
+      if (generated) {
+        const sectionBlob = (generated.sections || []).map((s) => stripSources(s.body || '')).join('\n');
+        const maxOverlapSections = contextBodies.reduce((m, prev) => Math.max(m, similarityScore(sectionBlob, prev)), 0);
+        if (maxOverlapSections >= 0.55) {
+          const regen = await generateBriefBySections(factPack, template, {
+            existingExcerpts,
+            uniquenessRetry: true,
+          });
+          if (regen) generated = regen;
+        }
+      }
+      if (!generated) {
+        generated = fallbackGenerated(factPack, template, runDate, timeZone);
+      }
+      const titleBase = stripSources(computeTitle(template, runDate, timeZone));
+      title = normalizedKind === 'general'
+        ? titleBase
+        : `${BRIEF_KIND_LABELS[normalizedKind]} - ${titleBase}`;
+      body = renderBriefText({
+        title,
+        period: normalizedPeriod,
+        date,
+        generated,
+        template,
+        briefKind: normalizedKind,
+        topInstruments: selectedTop5,
+      });
+      validation = validateBriefBeforeSave({
+        body,
+        generated,
+        factPack,
+        priorBodies: contextBodies,
+      });
+      const maxOverlap = contextBodies.reduce((m, prev) => Math.max(m, similarityScore(body, prev)), 0);
+      if (!validation.ok) {
+        const sectionFixable = validation.reasons.some(
+          (r) =>
+            /^section_(thin|banned|scaffold|boilerplate|scenario_framing):/.test(r)
+            || /^adjacent_sections_similar:/.test(r),
+        );
+        if (sectionFixable) {
+          generated = await refineFailedSections(generated, factPack, validation, { existingExcerpts });
+          body = renderBriefText({
+            title,
+            period: normalizedPeriod,
+            date,
+            generated,
+            template,
+            briefKind: normalizedKind,
+            topInstruments: selectedTop5,
+          });
+          validation = validateBriefBeforeSave({ body, generated, factPack, priorBodies: contextBodies });
+        }
+      }
+      if (!validation.ok || containsBoilerplate(body) || maxOverlap >= 0.62) {
+        console.warn('[brief-gen] validation/overlap — full section regen', {
+          category: normalizedKind,
+          date,
+          reasons: validation.reasons,
+          maxOverlap,
+        });
         const regen = await generateBriefBySections(factPack, template, {
           existingExcerpts,
           uniquenessRetry: true,
+          validationFix: true,
         });
-        if (regen) generated = regen;
+        if (regen) {
+          generated = regen;
+          body = renderBriefText({
+            title,
+            period: normalizedPeriod,
+            date,
+            generated,
+            template,
+            briefKind: normalizedKind,
+            topInstruments: selectedTop5,
+          });
+          validation = validateBriefBeforeSave({ body, generated, factPack, priorBodies: contextBodies });
+        }
       }
+      body = diversifyBody(body);
     }
-    if (!generated) {
-      generated = fallbackGenerated(factPack, template, runDate, timeZone);
-    }
-    const titleBase = stripSources(computeTitle(template, runDate, timeZone));
-    const title = normalizedKind === 'general'
-      ? titleBase
-      : `${BRIEF_KIND_LABELS[normalizedKind]} - ${titleBase}`;
-    let body = renderBriefText({
-      title,
-      period: normalizedPeriod,
-      date,
-      generated,
-      template,
-      briefKind: normalizedKind,
-      topInstruments: selectedTop5,
-    });
-    let validation = validateBriefBeforeSave({
-      body,
-      generated,
-      factPack,
-      priorBodies: contextBodies,
-    });
-    const maxOverlap = contextBodies.reduce((m, prev) => Math.max(m, similarityScore(body, prev)), 0);
-    if (!validation.ok) {
-      const sectionFixable = validation.reasons.some(
-        (r) =>
-          /^section_(thin|banned|scaffold|boilerplate|scenario_framing):/.test(r)
-          || /^adjacent_sections_similar:/.test(r),
-      );
-      if (sectionFixable) {
-        generated = await refineFailedSections(generated, factPack, validation, { existingExcerpts });
-        body = renderBriefText({
-          title,
-          period: normalizedPeriod,
-          date,
-          generated,
-          template,
-          briefKind: normalizedKind,
-          topInstruments: selectedTop5,
-        });
-        validation = validateBriefBeforeSave({ body, generated, factPack, priorBodies: contextBodies });
-      }
-    }
-    if (!validation.ok || containsBoilerplate(body) || maxOverlap >= 0.62) {
-      console.warn('[brief-gen] validation/overlap — full section regen', {
-        category: normalizedKind,
-        date,
-        reasons: validation.reasons,
-        maxOverlap,
-      });
-      const regen = await generateBriefBySections(factPack, template, {
-        existingExcerpts,
-        uniquenessRetry: true,
-        validationFix: true,
-      });
-      if (regen) {
-        generated = regen;
-        body = renderBriefText({
-          title,
-          period: normalizedPeriod,
-          date,
-          generated,
-          template,
-          briefKind: normalizedKind,
-          topInstruments: selectedTop5,
-        });
-        validation = validateBriefBeforeSave({ body, generated, factPack, priorBodies: contextBodies });
-      }
-    }
-    body = diversifyBody(body);
     const generationMeta = {
       generatedAt: new Date().toISOString(),
       topInstruments: selectedTop5,
@@ -1240,6 +1666,8 @@ async function generateAndStoreBrief({
       partialDataMode,
       validationOk: validation.ok,
       validationReasons: validation.ok ? [] : validation.reasons,
+      generationMode: validation.mode || 'legacy-sections',
+      weeklyReferenceDate: weeklyReference?.date || null,
     };
     if (!validation.ok) {
       console.warn('[brief-gen] saved with validation warnings', { category: normalizedKind, reasons: validation.reasons });
@@ -1290,7 +1718,7 @@ async function generateAndStoreBriefSet({ period, timeZone = 'Europe/London', ru
   const results = [];
   const existingBodies = [];
   const existingExcerpts = [];
-  for (const briefKind of orderedBriefKinds()) {
+  for (const briefKind of orderedAutomatedCategoryKinds()) {
     // Keep category generations isolated so one failure does not block all.
     // eslint-disable-next-line no-await-in-loop
     const row = await generateAndStoreBrief({
@@ -1465,10 +1893,13 @@ function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' 
   const hh = Number(map.hour);
   const mm = Number(map.minute);
   const wd = String(map.weekday || '').toLowerCase();
-  /** Daily institutional brief: 06:00 UK (London open prep). */
-  if (normalizedPeriod === 'daily') return hh === 6 && mm < 20;
-  /** Weekly: Sunday 10:00 UK. */
-  return wd.startsWith('sun') && hh === 10 && mm < 20;
+  /** Daily brief set: every weekday at 00:00 UK. */
+  if (normalizedPeriod === 'daily') {
+    const isWeekday = ['mon', 'tue', 'wed', 'thu', 'fri'].some((x) => wd.startsWith(x));
+    return isWeekday && hh === 0 && mm < 20;
+  }
+  /** Weekly brief set: Monday 00:00 UK. */
+  return wd.startsWith('mon') && hh === 0 && mm < 20;
 }
 
 function getInstitutionalBriefDeps() {
@@ -1535,5 +1966,7 @@ module.exports = {
     similarityScore,
     containsBoilerplate,
     diversifyBody,
+    orderedAutomatedCategoryKinds,
   },
+  orderedAutomatedCategoryKinds,
 };

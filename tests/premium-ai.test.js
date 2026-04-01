@@ -45,11 +45,11 @@ console.log('\n=== Premium AI Tests ===\n');
 describe('Streaming API Configuration', () => {
   const CONFIG = {
     ADAPTER_TIMEOUT: 3000,
-    OPENAI_TIMEOUT: 45000,
+    AI_TIMEOUT: 45000,
     MAX_HISTORY: 6,
     CACHE_TTL: 30000,
     MAX_TOKENS: 1500,
-    MODEL: 'gpt-4o-mini',
+    MODEL: 'sonar',
     TEMPERATURE: 0.7
   };
 
@@ -57,9 +57,9 @@ describe('Streaming API Configuration', () => {
     assert.ok(CONFIG.ADAPTER_TIMEOUT <= 5000, 'Adapter timeout should be <= 5s');
   });
 
-  it('OpenAI timeout allows for streaming', () => {
-    assert.ok(CONFIG.OPENAI_TIMEOUT >= 30000, 'OpenAI timeout should be >= 30s for streaming');
-    assert.ok(CONFIG.OPENAI_TIMEOUT <= 60000, 'OpenAI timeout should be <= 60s');
+  it('AI timeout allows for streaming', () => {
+    assert.ok(CONFIG.AI_TIMEOUT >= 30000, 'AI timeout should be >= 30s for streaming');
+    assert.ok(CONFIG.AI_TIMEOUT <= 60000, 'AI timeout should be <= 60s');
   });
 
   it('Max history is trimmed for performance', () => {
@@ -76,7 +76,7 @@ describe('Streaming API Configuration', () => {
   });
 
   it('Uses fast model', () => {
-    assert.ok(CONFIG.MODEL.includes('mini') || CONFIG.MODEL.includes('3.5'), 'Should use a fast model');
+    assert.ok(CONFIG.MODEL.includes('sonar'), 'Should use a Perplexity model');
   });
 });
 

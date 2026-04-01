@@ -398,7 +398,7 @@ describe('Performance Tests', () => {
 
 describe('Error Recovery', () => {
   test('CONFIG has required fields', () => {
-    expect(CONFIG.OPENAI_TIMEOUT).toBeGreaterThan(0);
+    expect(CONFIG.AI_TIMEOUT || CONFIG.OPENAI_TIMEOUT).toBeGreaterThan(0);
     expect(CONFIG.MAX_CONVERSATION_TURNS).toBeGreaterThan(0);
     expect(CONFIG.MAX_MESSAGE_LENGTH).toBeGreaterThan(0);
     expect(CONFIG.MAX_IMAGES).toBeGreaterThan(0);

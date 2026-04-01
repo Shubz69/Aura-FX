@@ -4,10 +4,10 @@
  */
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
-const { getOpenAIModelForVision } = require('./openai-config');
+const { getPerplexityModelForVision } = require('./perplexity-config');
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_MODEL = getOpenAIModelForVision();
+const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
+const PERPLEXITY_MODEL = getPerplexityModelForVision();
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_IMAGES = 4;
@@ -515,7 +515,7 @@ async function callOpenAIVision(images, systemPrompt, userPrompt) {
   }));
 
   const baseBody = {
-    model: OPENAI_MODEL,
+    model: PERPLEXITY_MODEL,
     temperature: 0.05,
     seed: 7741,
     max_tokens: 3600,
@@ -533,11 +533,11 @@ async function callOpenAIVision(images, systemPrompt, userPrompt) {
         json_schema: buildJsonSchema(),
       },
     };
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${PERPLEXITY_API_KEY}`,
       },
       body: JSON.stringify(body),
     });
@@ -548,11 +548,11 @@ async function callOpenAIVision(images, systemPrompt, userPrompt) {
 
   const tryJsonObject = async () => {
     const body = { ...baseBody, response_format: { type: 'json_object' } };
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${PERPLEXITY_API_KEY}`,
       },
       body: JSON.stringify(body),
     });
@@ -902,7 +902,7 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
-  if (!OPENAI_API_KEY) {
+  if (!PERPLEXITY_API_KEY) {
     return res.status(500).json({ success: false, message: 'AI service not configured' });
   }
 

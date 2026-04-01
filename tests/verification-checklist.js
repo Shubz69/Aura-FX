@@ -86,9 +86,9 @@ if (premiumChat) {
 
 if (premiumChatRobust) {
   // Check for multi-stage fallback
-  const hasMultiStageFallback = premiumChatRobust.includes('gpt-4o-mini') && 
+  const hasMultiStageFallback = premiumChatRobust.includes('getPerplexityModelForChat') && 
     premiumChatRobust.includes('ultimate fallback');
-  check('Multi-stage fallback (GPT-4o → GPT-4o-mini → static)', hasMultiStageFallback);
+  check('Multi-stage fallback (Perplexity → static)', hasMultiStageFallback);
   
   // Check for unhandled error catch
   const hasOuterCatch = premiumChatRobust.includes('Unhandled error') && 
@@ -192,7 +192,7 @@ if (premiumChatRobust) {
   
   const hasImageContent = premiumChatRobust.includes("type: 'image_url'") && 
     premiumChatRobust.includes('image_url: { url:');
-  check('OpenAI multimodal format', hasImageContent);
+  check('Perplexity multimodal format', hasImageContent);
   
   const hasInvalidImageHandling = premiumChatRobust.includes('invalid.push');
   check('Invalid image graceful handling', hasInvalidImageHandling);
@@ -219,8 +219,8 @@ console.log(`\n${BOLD}[7] Health Endpoints${RESET}`);
 const healthFile = readFile(path.join(__dirname, '../api/ai/health.js'));
 if (healthFile) {
   const checksOpenAI = healthFile.includes("openai:") && 
-    healthFile.includes('OpenAI');
-  check('Health checks OpenAI', checksOpenAI);
+    healthFile.includes('Perplexity');
+  check('Health checks Perplexity', checksOpenAI);
   
   const checksDatabase = healthFile.includes("database:") && 
     healthFile.includes('getDbConnection');
@@ -310,15 +310,15 @@ if (testFile) {
 // 11. Check no other AI models
 console.log(`\n${BOLD}[11] Single Model System${RESET}`);
 if (premiumChat) {
-  const usesOnlyOpenAI = !premiumChat.includes('anthropic') && 
+  const usesOnlyPerplexity = !premiumChat.includes('anthropic') && 
     !premiumChat.includes('gemini') && 
     !premiumChat.includes('palm') &&
     !premiumChat.includes('cohere');
-  check('Uses only OpenAI (no other AI services)', usesOnlyOpenAI);
+  check('Uses only Perplexity (no other AI services)', usesOnlyPerplexity);
   
   const modelsUsed = [];
-  if (premiumChat.includes('gpt-4o')) modelsUsed.push('gpt-4o');
-  if (premiumChat.includes('gpt-4o-mini')) modelsUsed.push('gpt-4o-mini');
+  if (premiumChat.includes('sonar')) modelsUsed.push('sonar');
+  if (premiumChat.includes('PERPLEXITY_MODEL')) modelsUsed.push('perplexity-env-model');
   check(`Models used: ${modelsUsed.join(', ')}`, modelsUsed.length > 0);
 }
 

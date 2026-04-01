@@ -9,13 +9,13 @@
 
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
-const { getOpenAIModelForReports } = require('../ai/openai-config');
+const { getPerplexityModelForReports } = require('../ai/perplexity-config');
 const { getReportDataSpanDays } = require('./dataSpan');
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 const { effectiveReportsRole } = require('./resolveReportsRole');
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_MODEL = getOpenAIModelForReports();
+const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
+const PERPLEXITY_MODEL = getPerplexityModelForReports();
 const MIN_DATA_DAYS = 30;
 
 const DISCLAIMER_TEXT =
@@ -303,7 +303,7 @@ function ensureReportShape(parsed, fallbacks) {
   };
 }
 
-// ── OpenAI report generation ──────────────────────────────────────────────────
+// ── Perplexity report generation ──────────────────────────────────────────────────
 
 async function generateReportContent({
   role,
@@ -431,14 +431,14 @@ Return strict JSON only (no markdown). Schema:
   "disclaimer": ${JSON.stringify(DISCLAIMER_TEXT)}
 }`;
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      Authorization: `Bearer ${PERPLEXITY_API_KEY}`,
     },
     body: JSON.stringify({
-      model: OPENAI_MODEL,
+      model: PERPLEXITY_MODEL,
       max_tokens: 4500,
       messages: [
         { role: 'system', content: systemMessage },
@@ -447,7 +447,7 @@ Return strict JSON only (no markdown). Schema:
     }),
   });
 
-  if (!response.ok) throw new Error(`OpenAI error ${response.status}`);
+  if (!response.ok) throw new Error(`Perplexity error ${response.status}`);
   const data = await response.json();
   const raw = data.choices?.[0]?.message?.content || '';
   const clean = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -455,7 +455,7 @@ Return strict JSON only (no markdown). Schema:
   try {
     parsed = JSON.parse(clean);
   } catch {
-    throw new Error('OpenAI returned non-JSON');
+    throw new Error('Perplexity returned non-JSON');
   }
 
   const fallbackModes = buildFallbackFailureModes({
@@ -484,7 +484,7 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
-  if (!OPENAI_API_KEY) return res.status(500).json({ success: false, message: 'AI service not configured' });
+  if (!PERPLEXITY_API_KEY) return res.status(500).json({ success: false, message: 'AI service not configured' });
 
   const decoded = verifyToken(req.headers.authorization);
   if (!decoded?.id) return res.status(401).json({ success: false, message: 'Authentication required' });

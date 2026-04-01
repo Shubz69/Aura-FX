@@ -15,7 +15,7 @@ const {
   buildDnaPayload,
   addDaysIso,
 } = require('./trader-dna/dnaEngine');
-const { enrichDnaPayloadWithOpenAI } = require('./trader-dna/dnaOpenAi');
+const { enrichDnaPayloadWithPerplexity } = require('./trader-dna/dnaPerplexity');
 
 function parseBody(req) {
   if (req.body == null) return {};
@@ -381,9 +381,9 @@ module.exports = async (req, res) => {
 
       let payload = buildDnaPayload(trades, journal, previousPayload, new Date().toISOString());
       try {
-        payload = await enrichDnaPayloadWithOpenAI(payload);
+        payload = await enrichDnaPayloadWithPerplexity(payload);
       } catch (e) {
-        console.warn('[trader-dna] OpenAI enrich skipped:', e.message);
+        console.warn('[trader-dna] Perplexity enrich skipped:', e.message);
       }
 
       const nextEligibleAt = addDaysIso(new Date(), CYCLE_DAYS);

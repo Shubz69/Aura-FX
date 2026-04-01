@@ -1,14 +1,14 @@
 /**
  * GET /api/trader-deck/market-intelligence
  * Returns Trader Deck market intelligence (regime, pulse, drivers, cross-asset, market changes, trader focus, risk radar).
- * Optional OpenAI desk brief (aiSessionBrief, aiTradingPriorities) when OPENAI_API_KEY is set.
+ * Optional Perplexity desk brief (aiSessionBrief, aiTradingPriorities) when PERPLEXITY_API_KEY is set.
  * Cache: TRADER_DECK_MI_CACHE_SEC (default 90s). ?refresh=1 bypasses cache.
  */
 
 require('../utils/suppress-warnings');
 
 const { runEngine } = require('./marketIntelligenceEngine');
-const { enrichTraderDeckPayload } = require('./openaiTraderInsights');
+const { enrichTraderDeckPayload } = require('./perplexityTraderInsights');
 
 // Default 90s — override with TRADER_DECK_MI_CACHE_SEC (45–300)
 const CACHE_SEC = Math.min(300, Math.max(45, parseInt(process.env.TRADER_DECK_MI_CACHE_SEC, 10) || 90));

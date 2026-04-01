@@ -9,10 +9,11 @@
  * 5. All errors are gracefully handled
  */
 
-const OpenAI = require('openai');
 const dataService = require('./data-layer/data-service');
 const { executeQuery } = require('../db');
 const { getCached, setCached } = require('../cache');
+const { createChatCompletion } = require('./perplexity-client');
+const { getPerplexityModelForChat } = require('./perplexity-config');
 
 // Live quote snapshot and price validation modules
 const { 
@@ -30,7 +31,7 @@ const {
 const CONFIG = {
   MAX_CONVERSATION_TURNS: 20,  // Keep last 20 turns
   MAX_CONTEXT_TOKENS: 8000,     // Reserve tokens for context
-  OPENAI_TIMEOUT: 25000,        // 25 second timeout for OpenAI
+  AI_TIMEOUT: 25000,            // 25 second timeout for Perplexity
   DATA_FETCH_TIMEOUT: 5000,     // 5 second timeout for data
   MAX_IMAGE_SIZE: 10 * 1024 * 1024, // 10MB max image
   ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
@@ -411,9 +412,6 @@ async function generateResponse({
     ? fetchMarketContext(marketAnalysis.detectedSymbol, requestId)
     : Promise.resolve(null);
 
-  // Initialize OpenAI
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
   // Wait for legacy market context (for calendar/news)
   let marketContext = null;
   try {
@@ -430,28 +428,28 @@ async function generateResponse({
   const messages = buildMessages(systemPrompt, conversationHistory, message, validImages);
 
   // Determine model
-  const model = validImages.length > 0 ? 'gpt-4o' : 'gpt-4o';
+  const model = getPerplexityModelForChat();
 
-  logger.log('info', 'Calling OpenAI', { 
+  logger.log('info', 'Calling Perplexity', {
     model, 
     messageCount: messages.length,
     hasMarketContext: !!marketContext,
     hasQuoteContext: !!quoteContext?.available
   });
 
-  const endOpenAI = logger.time('openai');
+  const endOpenAI = logger.time('ai');
 
   try {
-    // Call OpenAI with timeout
+    // Call Perplexity with timeout
     const completion = await Promise.race([
-      openai.chat.completions.create({
+      createChatCompletion({
         model,
         messages,
         temperature: 0.7, // Lower temperature for more consistent pricing
         max_tokens: 1500
       }),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('OpenAI timeout')), CONFIG.OPENAI_TIMEOUT)
+        setTimeout(() => reject(new Error('Perplexity timeout')), CONFIG.AI_TIMEOUT)
       )
     ]);
 
@@ -460,7 +458,7 @@ async function generateResponse({
     let response = completion.choices[0]?.message?.content;
 
     if (!response) {
-      throw new Error('Empty response from OpenAI');
+      throw new Error('Empty response from Perplexity');
     }
 
     // ============= NEW: VALIDATE AND SANITIZE AI OUTPUT =============
@@ -511,7 +509,7 @@ async function generateResponse({
 
   } catch (error) {
     endOpenAI();
-    logger.log('error', 'OpenAI call failed', { error: error.message });
+    logger.log('error', 'Perplexity call failed', { error: error.message });
 
     // Try to generate a fallback response
     try {
@@ -520,8 +518,8 @@ async function generateResponse({
         ? `You are a helpful assistant. Be brief. Current prices: ${Object.entries(quoteContext.instruments).filter(([_,q]) => q.available).map(([s,q]) => `${s}: ${q.last}`).join(', ')}`
         : 'You are a helpful assistant. Be brief. Say "Live quote unavailable" if asked about prices.';
       
-      const fallbackCompletion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      const fallbackCompletion = await createChatCompletion({
+        model: getPerplexityModelForChat(),
         messages: [
           { role: 'system', content: fallbackSystemPrompt },
           { role: 'user', content: message || 'Hello' }
@@ -537,7 +535,7 @@ async function generateResponse({
         return {
           success: true,
           response: fallbackResponse,
-          model: 'gpt-4o-mini',
+          model: getPerplexityModelForChat(),
           fallback: true,
           requestId,
           timing: logger.summary().totalTime

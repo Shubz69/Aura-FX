@@ -1,18 +1,13 @@
 /**
- * OpenAI layer for Trader Desk: turns API-backed snapshot + headlines into a short desk brief.
+ * Perplexity layer for Trader Desk: turns API-backed snapshot + headlines into a short desk brief.
  * Facts must come only from the payload; no invented prices or events.
  */
 
-const { getOpenAIModelForChat } = require('../ai/openai-config');
+const { getPerplexityAutomationModel } = require('../ai/perplexity-config');
 const SOURCE_MARKER_RE = /(https?:\/\/|www\.|source\s*:|sources\s*:|according to|reuters|bloomberg|fmp|finnhub|forex factory|trading economics)/i;
 
 function getAutomationModel() {
-  return String(
-    process.env.OPENAI_AUTOMATION_MODEL
-    || process.env.OPENAI_CHAT_MODEL
-    || process.env.OPENAI_MODEL
-    || getOpenAIModelForChat()
-  ).trim();
+  return getPerplexityAutomationModel();
 }
 
 function stripStars(s) {
@@ -34,11 +29,11 @@ function assertNoSourceMarkers(text) {
 }
 
 /**
- * @param {object} payload — full object from marketIntelligenceEngine.buildPayload (includes headlineSample)
+ * @param {object} payload - full object from marketIntelligenceEngine.buildPayload (includes headlineSample)
  * @returns {Promise<{ aiSessionBrief: string, aiTradingPriorities: string[] } | null>}
  */
 async function enrichTraderDeckPayload(payload) {
-  const key = process.env.OPENAI_API_KEY && String(process.env.OPENAI_API_KEY).trim();
+  const key = process.env.PERPLEXITY_API_KEY && String(process.env.PERPLEXITY_API_KEY).trim();
   if (!key || !payload || typeof payload !== 'object') return null;
 
   const snapshot = {
@@ -61,7 +56,7 @@ async function enrichTraderDeckPayload(payload) {
   const t = setTimeout(() => controller.abort(), 14000);
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -76,7 +71,7 @@ async function enrichTraderDeckPayload(payload) {
           {
             role: 'system',
             content:
-              'You are an institutional trading desk analyst. Reply with valid JSON only: {"sessionBrief":"string (3-5 sentences)","tradingPriorities":["short string",...]} — 4 to 6 priorities. Cover cross-asset context from provided facts only. No markdown, no asterisks, no bullet symbols, no source attributions.',
+              'You are an institutional trading desk analyst. Reply with valid JSON only: {"sessionBrief":"string (3-5 sentences)","tradingPriorities":["short string",...]} - 4 to 6 priorities. Cover cross-asset context from provided facts only. No markdown, no asterisks, no bullet symbols, no source attributions.',
           },
           { role: 'user', content: userMsg },
         ],
@@ -111,7 +106,7 @@ async function enrichTraderDeckPayload(payload) {
   } catch (e) {
     clearTimeout(t);
     if (e.name !== 'AbortError') {
-      console.warn('[trader-deck] OpenAI enrich error:', e.message || e);
+      console.warn('[trader-deck] Perplexity enrich error:', e.message || e);
     }
     return null;
   }
