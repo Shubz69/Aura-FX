@@ -89,6 +89,14 @@ function formatNewsTime(iso) {
   }
 }
 
+function postureToneClass(posture) {
+  const text = String(posture || '').toLowerCase();
+  if (text.includes('bull')) return 'md-tone md-tone--bull';
+  if (text.includes('bear')) return 'md-tone md-tone--bear';
+  if (text.includes('wait') || text.includes('neutral') || text.includes('stand')) return 'md-tone md-tone--neutral';
+  return 'md-tone';
+}
+
 export default function MarketDecoderView({ embedded }) {
   const { user } = useAuth();
   const isSuperAdminUser = isSuperAdmin(user);
@@ -165,33 +173,49 @@ export default function MarketDecoderView({ embedded }) {
   return (
     <div className={`md-decoder ${embedded ? 'md-decoder--embedded' : ''}`}>
       <header className="md-decoder-hero">
-        <p className="md-decoder-hero-eyebrow">Aura Terminal</p>
-        <h2 className="md-decoder-hero-title">Market Decoder</h2>
-        <p className="md-decoder-hero-sub">
-          Rules-first decision brief per asset — structured like an institutional desk handoff. Enter a symbol to generate bias,
-          levels, scenarios, and execution context.
-        </p>
-        <form className="md-decoder-search" onSubmit={onSubmit} autoComplete="off">
-          <input
-            className="md-decoder-input"
-            value={q}
-            onChange={(e) => setQ(e.target.value.toUpperCase())}
-            placeholder="Symbol (e.g. EURUSD, XAUUSD, BTCUSD, SPY)"
-            aria-label="Asset symbol"
-          />
-          <button type="submit" className="md-decoder-submit" disabled={loading}>
-            {loading ? 'Decoding…' : 'Decode'}
-          </button>
-        </form>
-        <div className="md-decoder-chips" role="group" aria-label="Quick symbols">
-          {QUICK.map((s) => (
-            <button key={s} type="button" className="md-decoder-chip" onClick={() => { setQ(s); run(s, true); }}>
-              {s}
-            </button>
-          ))}
+        <div className="md-decoder-hero-grid">
+          <div className="md-decoder-hero-main">
+            <p className="md-decoder-hero-eyebrow">Aura Terminal</p>
+            <h2 className="md-decoder-hero-title">Market Decoder</h2>
+            <p className="md-decoder-hero-sub">
+              Rules-first decision brief per asset, designed to feel like an institutional desk handoff. Generate bias,
+              levels, scenarios, and execution context in one focused front-end view.
+            </p>
+            <form className="md-decoder-search" onSubmit={onSubmit} autoComplete="off">
+              <input
+                className="md-decoder-input"
+                value={q}
+                onChange={(e) => setQ(e.target.value.toUpperCase())}
+                placeholder="Symbol (e.g. EURUSD, XAUUSD, BTCUSD, SPY)"
+                aria-label="Asset symbol"
+              />
+              <button type="submit" className="md-decoder-submit" disabled={loading}>
+                {loading ? 'Decoding…' : 'Decode'}
+              </button>
+            </form>
+            <div className="md-decoder-chips" role="group" aria-label="Quick symbols">
+              {QUICK.map((s) => (
+                <button key={s} type="button" className="md-decoder-chip" onClick={() => { setQ(s); run(s, true); }}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <aside className="md-decoder-hero-rail">
+            <div className="md-hero-rail-card">
+              <span className="md-hero-rail-label">Workflow</span>
+              <strong>Read the bias, validate the levels, map the scenario, then execute only if the posture still holds.</strong>
+            </div>
+            <div className="md-hero-rail-card">
+              <span className="md-hero-rail-label">Best use</span>
+              <strong>Pre-trade filtering and decision support, not signal chasing.</strong>
+            </div>
+          </aside>
         </div>
+
         {cached && brief && (
-          <p className="md-decoder-meta">Served from cache — Decode again for a fresh pull.</p>
+          <p className="md-decoder-meta">Served from cache — decode again for a fresh pull.</p>
         )}
         {brief && (
           <p className="md-decoder-live" role="status">
@@ -213,6 +237,27 @@ export default function MarketDecoderView({ embedded }) {
 
       {brief && (
         <div className="md-decoder-stack">
+          <section className="md-decoder-summary-band" aria-label="Decoder summary">
+            <div className="md-summary-item">
+              <span className="md-summary-label">Bias</span>
+              <span className={biasPillClass(brief.instantRead?.bias || brief.marketPulse?.biasLabel)}>
+                {brief.instantRead?.bias || brief.marketPulse?.biasLabel || 'Neutral'}
+              </span>
+            </div>
+            <div className="md-summary-item">
+              <span className="md-summary-label">Conviction</span>
+              <strong className="md-summary-value">{brief.instantRead?.conviction || brief.marketPulse?.tradeReadiness || 'Pending'}</strong>
+            </div>
+            <div className="md-summary-item">
+              <span className="md-summary-label">Condition</span>
+              <strong className="md-summary-value">{brief.instantRead?.tradingCondition || brief.marketPulse?.marketState || 'Monitoring'}</strong>
+            </div>
+            <div className="md-summary-item">
+              <span className="md-summary-label">Posture</span>
+              <strong className={postureToneClass(brief.finalOutput?.currentPosture)}>{brief.finalOutput?.currentPosture || 'No posture yet'}</strong>
+            </div>
+          </section>
+
           <div className="md-decoder-top-grid md-terminal-split">
             <section className="md-decoder-card md-terminal-instrument" aria-labelledby="md-h-header">
               <h3 id="md-h-header" className="md-decoder-card-title md-terminal-title">
@@ -303,12 +348,17 @@ export default function MarketDecoderView({ embedded }) {
           </div>
 
           <section className="md-decoder-card md-decoder-card--chart" aria-labelledby="md-h-chart">
-            <h3 id="md-h-chart" className="md-decoder-card-title md-terminal-title">
-              Price action
-            </h3>
-            <p className="md-chart-lede md-decoder-small">
-              Daily OHLC from the same series as the brief (candles, classic OHLC bars, or close-only line / area).
-            </p>
+            <div className="md-decoder-card-head">
+              <div>
+                <h3 id="md-h-chart" className="md-decoder-card-title md-terminal-title">
+                  Price action
+                </h3>
+                <p className="md-chart-lede md-decoder-small">
+                  Daily OHLC from the same series as the brief, with quick mode switching so the market structure is easier to read.
+                </p>
+              </div>
+              <span className="md-chart-badge">Same source as brief</span>
+            </div>
             <MarketDecoderChart bars={brief.meta?.chartBars} />
           </section>
 
@@ -447,9 +497,14 @@ export default function MarketDecoderView({ embedded }) {
 
           {/* 4 Key levels */}
           <section className="md-decoder-card md-levels-card" aria-labelledby="md-h-levels">
-            <h3 id="md-h-levels" className="md-decoder-card-title">
-              Key levels
-            </h3>
+            <div className="md-decoder-card-head">
+              <div>
+                <h3 id="md-h-levels" className="md-decoder-card-title">
+                  Key levels
+                </h3>
+                <p className="md-decoder-small md-card-caption">Important reference points for structure, reaction, and invalidation.</p>
+              </div>
+            </div>
             <div className="md-levels-grid">
               {brief.keyLevels?.keyLevelsDisplay ? (
                 [
@@ -607,7 +662,9 @@ export default function MarketDecoderView({ embedded }) {
               Final output
             </h3>
             <p className="md-decoder-posture-label">Current posture</p>
-            <p className="md-decoder-posture-value">{brief.finalOutput.currentPosture}</p>
+            <p className={`md-decoder-posture-value ${postureToneClass(brief.finalOutput.currentPosture)}`}>
+              {brief.finalOutput.currentPosture}
+            </p>
             {brief.finalOutput.postureSubtitle && (
               <p className="md-decoder-posture-sub">→ {brief.finalOutput.postureSubtitle}</p>
             )}

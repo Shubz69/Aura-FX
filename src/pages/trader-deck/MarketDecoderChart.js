@@ -23,16 +23,16 @@ export default function MarketDecoderChart({ bars }) {
       width: el.clientWidth,
       height,
       layout: {
-        background: { type: ColorType.Solid, color: '#0a0e1a' },
+        background: { type: ColorType.Solid, color: '#07111f' },
         textColor: 'rgba(220, 225, 235, 0.88)',
         attributionLogo: true,
       },
       grid: {
-        vertLines: { color: 'rgba(212, 175, 55, 0.06)' },
-        horzLines: { color: 'rgba(212, 175, 55, 0.06)' },
+        vertLines: { color: 'rgba(140, 175, 255, 0.08)' },
+        horzLines: { color: 'rgba(140, 175, 255, 0.08)' },
       },
-      timeScale: { borderColor: 'rgba(212,175,55,0.18)' },
-      rightPriceScale: { borderColor: 'rgba(212,175,55,0.18)' },
+      timeScale: { borderColor: 'rgba(140,175,255,0.2)' },
+      rightPriceScale: { borderColor: 'rgba(140,175,255,0.2)' },
     });
     chartRef.current = chart;
 
@@ -48,29 +48,29 @@ export default function MarketDecoderChart({ bars }) {
 
     if (mode === 'candles') {
       const s = chart.addCandlestickSeries({
-        upColor: '#3dd68c',
-        downColor: '#ff6b6b',
-        borderUpColor: '#3dd68c',
-        borderDownColor: '#ff6b6b',
-        wickUpColor: '#3dd68c',
-        wickDownColor: '#ff6b6b',
+        upColor: '#56e3a7',
+        downColor: '#ff7e91',
+        borderUpColor: '#56e3a7',
+        borderDownColor: '#ff7e91',
+        wickUpColor: '#56e3a7',
+        wickDownColor: '#ff7e91',
       });
       s.setData(data);
     } else if (mode === 'bars') {
       const s = chart.addBarSeries({
-        upColor: '#3dd68c',
-        downColor: '#ff6b6b',
+        upColor: '#56e3a7',
+        downColor: '#ff7e91',
         thinBars: false,
       });
       s.setData(data);
     } else if (mode === 'line') {
-      const s = chart.addLineSeries({ color: '#d4af37', lineWidth: 2 });
+      const s = chart.addLineSeries({ color: '#8cafff', lineWidth: 2 });
       s.setData(lineData);
     } else {
       const s = chart.addAreaSeries({
-        lineColor: '#d4af37',
-        topColor: 'rgba(212, 175, 55, 0.32)',
-        bottomColor: 'rgba(10, 14, 26, 0.02)',
+        lineColor: '#8cafff',
+        topColor: 'rgba(140, 175, 255, 0.28)',
+        bottomColor: 'rgba(7, 17, 31, 0.04)',
         lineWidth: 2,
       });
       s.setData(lineData);
