@@ -8,7 +8,9 @@ import MarketTicker from "../components/MarketTicker";
 import {
     FaUsers, FaTrophy, FaGraduationCap, FaRocket,
     FaShieldAlt, FaClock, FaCoins, FaChartBar,
-    FaChartLine, FaGlobe,
+    FaChartLine, FaGlobe, FaArrowRight, FaBolt,
+    FaCompass, FaCalculator, FaBrain, FaPlayCircle,
+    FaLayerGroup, FaFlask,
 } from 'react-icons/fa';
 
 /* ══════════════════════════════════════════════════════════
@@ -447,7 +449,7 @@ const FloatingIPad = () => {
 ══════════════════════════════════════════════════════════ */
 const Home = () => {
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const [showContent, setShowContent] = useState(false);
     const [isLoading,   setIsLoading]   = useState(true);
 
@@ -457,6 +459,74 @@ const Home = () => {
     }, []);
 
     const handleStart = () => navigate(isAuthenticated ? '/community' : '/register');
+    const displayName = (user?.name || user?.username || '').trim();
+    const greeting = displayName ? `Welcome back, ${displayName}` : 'Welcome';
+
+    const quickStartSteps = [
+        {
+            title: 'Check your market picture',
+            text: 'Start in Trader Desk to see session context, market bias, and the information you need before making a decision.',
+        },
+        {
+            title: 'Validate or calculate the trade',
+            text: 'Use Trader Lab, the calculator, and validation tools to pressure-test the idea, size risk correctly, and avoid impulsive entries.',
+        },
+        {
+            title: 'Review, improve, and connect',
+            text: 'Use Aura Analysis for feedback and Community to stay accountable, learn faster, and keep momentum.',
+        },
+    ];
+
+    const featureHighlights = [
+        {
+            icon: <FaCompass />,
+            title: 'Trader Desk',
+            description: 'Your command center for market context, session awareness, and execution clarity before the trade.',
+            cta: 'Open Trader Desk',
+            path: '/trader-deck',
+            accent: 'Command Center',
+        },
+        {
+            icon: <FaFlask />,
+            title: 'Trader Lab',
+            description: 'Build and test the trade in your active thinking environment before execution, with session prep, validation, and review in one flow.',
+            cta: 'Open Trader Lab',
+            path: '/trader-lab',
+            accent: 'Active Thinking',
+        },
+        {
+            icon: <FaCalculator />,
+            title: 'Trade Calculator',
+            description: 'Calculate position size, risk, and reward quickly so every idea is grounded before execution.',
+            cta: 'Open Calculator',
+            path: '/trader-deck/trade-validator/calculator',
+            accent: 'Risk Precision',
+        },
+        {
+            icon: <FaBrain />,
+            title: 'Aura Analysis',
+            description: 'Connect your account and turn performance data into feedback, patterns, and next-step insight.',
+            cta: 'Open Aura Analysis',
+            path: '/aura-analysis',
+            accent: 'Performance Intelligence',
+        },
+        {
+            icon: <FaUsers />,
+            title: 'Community',
+            description: 'Stay connected to the environment, conversations, and accountability that keep standards high.',
+            cta: 'Open Community',
+            path: '/community',
+            accent: 'Accountability',
+        },
+        {
+            icon: <FaLayerGroup />,
+            title: 'Trade Validator',
+            description: 'Review setup quality through your existing validation flow and keep your process disciplined.',
+            cta: 'Open Validator',
+            path: '/trader-deck/trade-validator/overview',
+            accent: 'Execution Control',
+        },
+    ];
 
     return (
         <>
@@ -476,134 +546,295 @@ const Home = () => {
             <div className="home-container">
                 <CosmicBackground />
                 {showContent && (
-                    <div className="home-content">
-                        <div className="home-logo-section">
-                            <div className="hero-left">
-                                <div className="a7-logo-wrap" style={{ marginBottom:'1.4rem' }}><A7Logo /></div>
-                                <div className="hero-eyebrow">
-                                    <span className="hero-eyebrow-dot" />
-                                    <span className="hero-eyebrow-text">AI-Powered Trading Platform</span>
-                                </div>
-                                <div className="brand-name-container">
-                                    <h1 className="brand-name">
-                                        <span className="brand-name-line">Trade Smarter</span>
-                                        <span className="brand-name-line">With Aura Terminal</span>
-                                    </h1>
-                                    <p className="powered-by-glitch">powered by <strong>The Glitch</strong></p>
-                                </div>
-                                <div className="content-intro hero-intro">
-                                    <p className="intro-text">AI-Powered Trading Tools for Precision, Discipline and Consistent Performance</p>
-                                </div>
-                                <div className="home-cta-section hero-cta">
-                                    <button className="home-cta-button"      onClick={handleStart}>Get Started</button>
-                                    <button className="home-secondary-button" onClick={() => navigate('/explore')}>Explore Features</button>
-                                </div>
-                                <div className="hero-trust-badges">
-                                    {[{icon:'✓',label:'Real Time Data'},{icon:'🔒',label:'Secure & Private'},{icon:'⊙',label:'24/7 Support'}].map(b=>(
-                                        <div className="trust-badge" key={b.label}><div className="trust-badge-icon">{b.icon}</div>{b.label}</div>
-                                    ))}
-                                </div>
-                                <div className="partner-logos-row">
-                                    {[{icon:'📊',name:'TradingView'},{icon:'◈',name:'Binance'},{icon:'©',name:'Coinbase'},{icon:'◉',name:'Bloomberg'},{icon:'◎',name:'Reuters'}].map(p=>(
-                                        <div className="partner-logo" key={p.name}><span className="partner-logo-icon">{p.icon}</span>{p.name}</div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="hero-right"><FloatingIPad /></div>
-                        </div>
-
-                        <div className="home-main-content">
-                            <div className="market-ticker-wrapper">
-                                <MarketTicker compact={true} showTabs={false} showViewAll={true} autoScroll={true} />
-                            </div>
-                            <div className="cosmic-divider" />
-
-                            <div className="feature-cards-grid">
-                                {[
-                                    {icon:'📈',title:'Forex Trading',   desc:'Dominate currency markets with institutional-grade strategies and live market analysis'},
-                                    {icon:'💹',title:'Stock Trading',   desc:'Master equity markets with advanced analysis techniques and professional trading strategies'},
-                                    {icon:'₿', title:'Crypto Trading',  desc:'Capitalize on digital asset opportunities with cutting-edge strategies and market insights'},
-                                    {icon:'🎯',title:'1-to-1 Mentorship',desc:'Accelerate your success with personalized coaching from industry-leading trading experts'},
-                                ].map(c=>(
-                                    <div className="feature-card" key={c.title}>
-                                        <div className="feature-icon">{c.icon}</div>
-                                        <h3 className="feature-title">{c.title}</h3>
-                                        <p className="feature-description">{c.desc}</p>
+                    isAuthenticated ? (
+                        <div className="home-content home-content--dashboard">
+                            <div className="dashboard-home-shell">
+                                <section className="dashboard-home-hero glass-card">
+                                    <div className="dashboard-home-hero__content">
+                                        <div className="dashboard-home-kicker">
+                                            <span className="dashboard-home-kicker__dot" />
+                                            Logged-In Home
+                                        </div>
+                                        <h1 className="dashboard-home-title">{greeting}</h1>
+                                        <p className="dashboard-home-subtitle">
+                                            This is your Aura Terminal overview. Start here to understand the platform fast, move into the right tool, and keep your trading process structured from analysis to execution.
+                                        </p>
+                                        <div className="dashboard-home-actions">
+                                            <button className="home-cta-button" onClick={() => navigate('/trader-deck')}>
+                                                Start In Trader Desk
+                                            </button>
+                                            <button className="home-secondary-button" onClick={() => navigate('/community')}>
+                                                Go To Community
+                                            </button>
+                                        </div>
+                                        <div className="dashboard-home-highlights">
+                                            {[
+                                                { label: 'Workflow', value: 'Overview Of Your Tools' },
+                                                { label: 'Goal', value: 'Clarity Before Execution' },
+                                                { label: 'Focus', value: 'Discipline, Analysis, Growth' },
+                                            ].map((item) => (
+                                                <div className="dashboard-home-pill" key={item.label}>
+                                                    <span>{item.label}</span>
+                                                    <strong>{item.value}</strong>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
 
-                            <div className="stats-section">
-                                <div className="stats-grid">
-                                    <StatItem number="24.7%" label="Average ROI"     fill="82%"/>
-                                    <StatItem number="1,200+" label="Active Traders" fill="90%"/>
-                                    <StatItem number="85%"    label="Success Rate"   fill="85%"/>
-                                    <StatItem number="50+"    label="Expert Courses" fill="60%"/>
-                                </div>
-                            </div>
-                            <div className="cosmic-divider" />
-
-                            <div className="why-choose-section">
-                                <h2 className="section-title">Why Choose AURA TERMINAL</h2>
-                                <div className="why-grid">
-                                    {[
-                                        {title:'Elite Education',        text:'Learn from world-class professionals with decades of combined trading expertise'},
-                                        {title:'Proven Strategies',      text:'Access battle-tested trading methodologies that generate consistent profits'},
-                                        {title:'24/7 Support',           text:'Receive instant assistance from our thriving community and dedicated expert mentors'},
-                                        {title:'Comprehensive Resources',text:'Unlock unlimited access to our extensive library of premium courses, advanced tools, and exclusive trading materials'},
-                                    ].map(w=>(
-                                        <div className="why-item" key={w.title}>
-                                            <div className="why-icon">✓</div>
-                                            <h3 className="why-title">{w.title}</h3>
-                                            <p className="why-text">{w.text}</p>
+                                    <div className="dashboard-home-hero__panel">
+                                        <div className="dashboard-home-panel glass-card">
+                                            <div className="dashboard-home-panel__header">
+                                                <span className="dashboard-home-panel__eyebrow">Quick Start</span>
+                                                <span className="dashboard-home-panel__badge">
+                                                    <FaBolt /> 3 Simple Steps
+                                                </span>
+                                            </div>
+                                            <div className="dashboard-home-panel__steps">
+                                                {quickStartSteps.map((step, index) => (
+                                                    <div className="dashboard-home-step" key={step.title}>
+                                                        <div className="dashboard-home-step__number">0{index + 1}</div>
+                                                        <div className="dashboard-home-step__body">
+                                                            <h3>{step.title}</h3>
+                                                            <p>{step.text}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button
+                                                className="dashboard-home-panel__link"
+                                                onClick={() => navigate('/aura-analysis')}
+                                            >
+                                                Open Analysis Flow <FaArrowRight />
+                                            </button>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
+                                    </div>
+                                </section>
 
-                            <div className="trade-markets-section">
-                                <h2 className="trade-markets-section__title">Trade Multiple Markets</h2>
-                                <div className="trade-markets-section__grid">
-                                    {[
-                                        {icon:<FaChartLine/>,title:'Forex',      desc:'Major, minor, and exotic currency pairs'},
-                                        {icon:<FaGlobe/>,    title:'Futures',    desc:'Master futures contracts and commodity trading'},
-                                        {icon:<FaRocket/>,   title:'Crypto',     desc:'Bitcoin, Ethereum, and altcoins'},
-                                        {icon:<FaTrophy/>,   title:'Stocks',     desc:'US and international equity markets'},
-                                        {icon:<FaChartBar/>, title:'Indices',    desc:'S&P 500, NASDAQ, and more'},
-                                        {icon:<FaCoins/>,    title:'Commodities',desc:'Trade gold, oil, and valuable resources'},
-                                    ].map(m=>(
-                                        <div className="trade-markets-section__card" key={m.title}>
-                                            <div className="trade-markets-section__icon">{m.icon}</div>
-                                            <div className="trade-markets-section__card-body">
-                                                <h3 className="trade-markets-section__card-title">{m.title}</h3>
-                                                <p className="trade-markets-section__card-desc">{m.desc}</p>
+                                <section className="dashboard-home-ticker glass-card">
+                                    <div className="dashboard-home-section-head">
+                                        <div>
+                                            <p className="dashboard-home-section-label">Live Context</p>
+                                            <h2>Market awareness at a glance</h2>
+                                        </div>
+                                        <button
+                                            className="dashboard-home-inline-button"
+                                            onClick={() => navigate('/trader-deck')}
+                                        >
+                                            Open Desk <FaArrowRight />
+                                        </button>
+                                    </div>
+                                    <MarketTicker compact={true} showTabs={false} showViewAll={true} autoScroll={true} />
+                                </section>
+
+                                <section className="dashboard-home-overview">
+                                    <div className="dashboard-home-section-head">
+                                        <div>
+                                            <p className="dashboard-home-section-label">Platform Overview</p>
+                                            <h2>Everything important, from one place</h2>
+                                        </div>
+                                        <p className="dashboard-home-section-copy">
+                                            Each area below gives you a different part of the trading workflow so the whole platform feels easier to understand and faster to use.
+                                        </p>
+                                    </div>
+
+                                    <div className="dashboard-home-grid">
+                                        {featureHighlights.map((item) => (
+                                            <article className="dashboard-home-card glass-card" key={item.title}>
+                                                <div className="dashboard-home-card__top">
+                                                    <div className="dashboard-home-card__icon">{item.icon}</div>
+                                                    <span className="dashboard-home-card__accent">{item.accent}</span>
+                                                </div>
+                                                <h3>{item.title}</h3>
+                                                <p>{item.description}</p>
+                                                <button
+                                                    className="dashboard-home-card__button"
+                                                    onClick={() => navigate(item.path)}
+                                                >
+                                                    {item.cta} <FaArrowRight />
+                                                </button>
+                                            </article>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                <section className="dashboard-home-bottom">
+                                    <div className="dashboard-home-bottom__left glass-card">
+                                        <div className="dashboard-home-section-head">
+                                            <div>
+                                                <p className="dashboard-home-section-label">How To Use Aura</p>
+                                                <h2>A simple flow for new and returning users</h2>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
+                                        <div className="dashboard-home-flow">
+                                            {[
+                                                'Open Trader Desk to get your market picture.',
+                                                'Use Trader Lab and the calculator to pressure-test the setup before taking action.',
+                                                'Review progress in Aura Analysis and stay plugged into Community.',
+                                            ].map((item, index) => (
+                                                <div className="dashboard-home-flow__item" key={item}>
+                                                    <span className="dashboard-home-flow__index">{index + 1}</span>
+                                                    <p>{item}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
 
-                            <div className="key-features-section">
-                                <h2 className="section-title">What Sets Us Apart</h2>
-                                <div className="features-list">
-                                    {[
-                                        {icon:<FaShieldAlt/>,    title:'Bank-Level Security',  text:'Your data and privacy are safeguarded with military-grade encryption and enterprise security protocols'},
-                                        {icon:<FaClock/>,        title:'24/7 Premium Support', text:'Access round-the-clock assistance from our expert support team, available whenever you need guidance'},
-                                        {icon:<FaUsers/>,        title:'Thriving Community',   text:'Join over 1,200+ active traders sharing exclusive insights, strategies, and real-time market analysis'},
-                                        {icon:<FaGraduationCap/>,title:'Elite Mentors',        text:'Learn directly from industry legends with verified track records of consistent profitability and market success'},
-                                    ].map(f=>(
-                                        <div className="feature-item" key={f.title}>
-                                            <div className="feature-icon">{f.icon}</div>
-                                            <div className="feature-content">
-                                                <h3 className="feature-item-title">{f.title}</h3>
-                                                <p className="feature-item-text">{f.text}</p>
+                                    <div className="dashboard-home-bottom__right glass-card">
+                                        <div className="dashboard-home-section-head">
+                                            <div>
+                                                <p className="dashboard-home-section-label">Why It Matters</p>
+                                                <h2>This page is your launchpad</h2>
                                             </div>
                                         </div>
+                                        <div className="dashboard-home-reasons">
+                                            {[
+                                                { icon: <FaShieldAlt />, title: 'Stay structured', text: 'Move through the platform in an order that supports discipline instead of random clicking.' },
+                                                { icon: <FaClock />, title: 'Save time', text: 'Get to the right tool quickly without guessing where everything lives.' },
+                                                { icon: <FaPlayCircle />, title: 'Build momentum', text: 'Use the home page as a clean daily starting point before your session begins.' },
+                                            ].map((item) => (
+                                                <div className="dashboard-home-reason" key={item.title}>
+                                                    <div className="dashboard-home-reason__icon">{item.icon}</div>
+                                                    <div>
+                                                        <h3>{item.title}</h3>
+                                                        <p>{item.text}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="home-content">
+                            <div className="home-logo-section">
+                                <div className="hero-left">
+                                    <div className="a7-logo-wrap" style={{ marginBottom:'1.4rem' }}><A7Logo /></div>
+                                    <div className="hero-eyebrow">
+                                        <span className="hero-eyebrow-dot" />
+                                        <span className="hero-eyebrow-text">AI-Powered Trading Platform</span>
+                                    </div>
+                                    <div className="brand-name-container">
+                                        <h1 className="brand-name">
+                                            <span className="brand-name-line">Trade Smarter</span>
+                                            <span className="brand-name-line">With Aura Terminal</span>
+                                        </h1>
+                                        <p className="powered-by-glitch">powered by <strong>The Glitch</strong></p>
+                                    </div>
+                                    <div className="content-intro hero-intro">
+                                        <p className="intro-text">AI-Powered Trading Tools for Precision, Discipline and Consistent Performance</p>
+                                    </div>
+                                    <div className="home-cta-section hero-cta">
+                                        <button className="home-cta-button"      onClick={handleStart}>Get Started</button>
+                                        <button className="home-secondary-button" onClick={() => navigate('/explore')}>Explore Features</button>
+                                    </div>
+                                    <div className="hero-trust-badges">
+                                        {[{icon:'✓',label:'Real Time Data'},{icon:'🔒',label:'Secure & Private'},{icon:'⊙',label:'24/7 Support'}].map(b=>(
+                                            <div className="trust-badge" key={b.label}><div className="trust-badge-icon">{b.icon}</div>{b.label}</div>
+                                        ))}
+                                    </div>
+                                    <div className="partner-logos-row">
+                                        {[{icon:'📊',name:'TradingView'},{icon:'◈',name:'Binance'},{icon:'©',name:'Coinbase'},{icon:'◉',name:'Bloomberg'},{icon:'◎',name:'Reuters'}].map(p=>(
+                                            <div className="partner-logo" key={p.name}><span className="partner-logo-icon">{p.icon}</span>{p.name}</div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="hero-right"><FloatingIPad /></div>
+                            </div>
+
+                            <div className="home-main-content">
+                                <div className="market-ticker-wrapper">
+                                    <MarketTicker compact={true} showTabs={false} showViewAll={true} autoScroll={true} />
+                                </div>
+                                <div className="cosmic-divider" />
+
+                                <div className="feature-cards-grid">
+                                    {[
+                                        {icon:'📈',title:'Forex Trading',   desc:'Dominate currency markets with institutional-grade strategies and live market analysis'},
+                                        {icon:'💹',title:'Stock Trading',   desc:'Master equity markets with advanced analysis techniques and professional trading strategies'},
+                                        {icon:'₿', title:'Crypto Trading',  desc:'Capitalize on digital asset opportunities with cutting-edge strategies and market insights'},
+                                        {icon:'🎯',title:'1-to-1 Mentorship',desc:'Accelerate your success with personalized coaching from industry-leading trading experts'},
+                                    ].map(c=>(
+                                        <div className="feature-card" key={c.title}>
+                                            <div className="feature-icon">{c.icon}</div>
+                                            <h3 className="feature-title">{c.title}</h3>
+                                            <p className="feature-description">{c.desc}</p>
+                                        </div>
                                     ))}
+                                </div>
+
+                                <div className="stats-section">
+                                    <div className="stats-grid">
+                                        <StatItem number="24.7%" label="Average ROI"     fill="82%"/>
+                                        <StatItem number="1,200+" label="Active Traders" fill="90%"/>
+                                        <StatItem number="85%"    label="Success Rate"   fill="85%"/>
+                                        <StatItem number="50+"    label="Expert Courses" fill="60%"/>
+                                    </div>
+                                </div>
+                                <div className="cosmic-divider" />
+
+                                <div className="why-choose-section">
+                                    <h2 className="section-title">Why Choose AURA TERMINAL</h2>
+                                    <div className="why-grid">
+                                        {[
+                                            {title:'Elite Education',        text:'Learn from world-class professionals with decades of combined trading expertise'},
+                                            {title:'Proven Strategies',      text:'Access battle-tested trading methodologies that generate consistent profits'},
+                                            {title:'24/7 Support',           text:'Receive instant assistance from our thriving community and dedicated expert mentors'},
+                                            {title:'Comprehensive Resources',text:'Unlock unlimited access to our extensive library of premium courses, advanced tools, and exclusive trading materials'},
+                                        ].map(w=>(
+                                            <div className="why-item" key={w.title}>
+                                                <div className="why-icon">✓</div>
+                                                <h3 className="why-title">{w.title}</h3>
+                                                <p className="why-text">{w.text}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="trade-markets-section">
+                                    <h2 className="trade-markets-section__title">Trade Multiple Markets</h2>
+                                    <div className="trade-markets-section__grid">
+                                        {[
+                                            {icon:<FaChartLine/>,title:'Forex',      desc:'Major, minor, and exotic currency pairs'},
+                                            {icon:<FaGlobe/>,    title:'Futures',    desc:'Master futures contracts and commodity trading'},
+                                            {icon:<FaRocket/>,   title:'Crypto',     desc:'Bitcoin, Ethereum, and altcoins'},
+                                            {icon:<FaTrophy/>,   title:'Stocks',     desc:'US and international equity markets'},
+                                            {icon:<FaChartBar/>, title:'Indices',    desc:'S&P 500, NASDAQ, and more'},
+                                            {icon:<FaCoins/>,    title:'Commodities',desc:'Trade gold, oil, and valuable resources'},
+                                        ].map(m=>(
+                                            <div className="trade-markets-section__card" key={m.title}>
+                                                <div className="trade-markets-section__icon">{m.icon}</div>
+                                                <div className="trade-markets-section__card-body">
+                                                    <h3 className="trade-markets-section__card-title">{m.title}</h3>
+                                                    <p className="trade-markets-section__card-desc">{m.desc}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="key-features-section">
+                                    <h2 className="section-title">What Sets Us Apart</h2>
+                                    <div className="features-list">
+                                        {[
+                                            {icon:<FaShieldAlt/>,    title:'Bank-Level Security',  text:'Your data and privacy are safeguarded with military-grade encryption and enterprise security protocols'},
+                                            {icon:<FaClock/>,        title:'24/7 Premium Support', text:'Access round-the-clock assistance from our expert support team, available whenever you need guidance'},
+                                            {icon:<FaUsers/>,        title:'Thriving Community',   text:'Join over 1,200+ active traders sharing exclusive insights, strategies, and real-time market analysis'},
+                                            {icon:<FaGraduationCap/>,title:'Elite Mentors',        text:'Learn directly from industry legends with verified track records of consistent profitability and market success'},
+                                        ].map(f=>(
+                                            <div className="feature-item" key={f.title}>
+                                                <div className="feature-icon">{f.icon}</div>
+                                                <div className="feature-content">
+                                                    <h3 className="feature-item-title">{f.title}</h3>
+                                                    <p className="feature-item-text">{f.text}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    )
                 )}
             </div>
         </>

@@ -97,6 +97,9 @@ const ManualMetricsEntryPage = lazy(() => import('./pages/reports/ManualMetricsE
 const ManualMetricsProcessingPage = lazy(() => import('./pages/reports/ManualMetricsProcessingPage'));
 const ManualMetricsDashboardPage = lazy(() => import('./pages/reports/ManualMetricsDashboardPage'));
 const Affiliation = lazy(() => import('./pages/Affiliation'));
+const TraderLab = lazy(() => import('./pages/TraderLab'));
+const TraderReplay = lazy(() => import('./pages/TraderReplay'));
+const TraderPlaybook = lazy(() => import('./pages/TraderPlaybook'));
 
 /** Prefetch route chunks after initial load so navigation feels instant site-wide */
 function usePrefetchRoutes() {
@@ -335,6 +338,9 @@ function AppRoutes() {
                         <Route path="/reports/manual-metrics/processing" element={<AuthenticatedGuard><ManualMetricsProcessingPage /></AuthenticatedGuard>} />
                         <Route path="/reports/manual-metrics" element={<AuthenticatedGuard><ManualMetricsEntryPage /></AuthenticatedGuard>} />
                         <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />
+                        <Route path="/trader-lab" element={<AuthenticatedGuard><TraderLab /></AuthenticatedGuard>} />
+                        <Route path="/trader-replay" element={<AuthenticatedGuard><TraderReplay /></AuthenticatedGuard>} />
+                        <Route path="/trader-playbook" element={<AuthenticatedGuard><TraderPlaybook /></AuthenticatedGuard>} />
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
                         <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />
                         <Route path="/admin/inbox" element={<InboxGuard><AdminInbox /></InboxGuard>} />

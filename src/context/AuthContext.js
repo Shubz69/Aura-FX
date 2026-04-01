@@ -578,7 +578,7 @@ export const AuthProvider = ({ children }) => {
           });
         
         // ============= DETERMINISTIC ROUTING =============
-        // canAccessCommunity === true → /community (plan selected or admin)
+        // canAccessCommunity === true → / (logged-in home overview)
         // canAccessCommunity === false → /choose-plan (select Free/Premium/Elite)
         const redirectInfo = applyPostAuthRedirect();
         if (redirectInfo) {
@@ -586,8 +586,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         if (canAccessCommunity) {
-          armPostLoginTransition();
-          navigate('/community');
+          navigate('/');
         } else {
           navigate('/choose-plan');
         }

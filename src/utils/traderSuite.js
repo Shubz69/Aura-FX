@@ -1,0 +1,97 @@
+export const PLAYBOOK_SETUP_OPTIONS = [
+  'London Breakout',
+  'NY Reversal',
+  'Liquidity Sweep Reclaim',
+  'Range Fade',
+  'Trend Pullback Continuation',
+];
+
+export const MISTAKE_TAG_OPTIONS = [
+  'early entry',
+  'late exit',
+  'revenge trade',
+  'overtrading',
+  'ignored bias',
+  'sized too big',
+];
+
+export const REPLAY_PATTERN_OPTIONS = [
+  'You exit early in trending markets',
+  'You hesitate on continuation setups',
+  'You improve when bias is already defined',
+];
+
+export function safeNumber(value, fallback = 0) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
+
+export function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+export function calculateRiskReward(entry, stopLoss, target) {
+  const e = safeNumber(entry);
+  const s = safeNumber(stopLoss);
+  const t = safeNumber(target);
+  const risk = Math.abs(e - s);
+  const reward = Math.abs(t - e);
+  if (!risk || !reward) return 0;
+  return reward / risk;
+}
+
+export function formatRatio(value) {
+  if (!Number.isFinite(value) || value <= 0) return '0.00R';
+  return `${value.toFixed(2)}R`;
+}
+
+export function scoreFromChecks(checks = []) {
+  if (!checks.length) return 0;
+  const done = checks.filter(Boolean).length;
+  return Math.round((done / checks.length) * 100);
+}
+
+export function buildValidator({ setupValid, biasAligned, entryConfirmed, riskDefined }) {
+  const checks = [setupValid, biasAligned, entryConfirmed, riskDefined];
+  const score = scoreFromChecks(checks);
+  const passed = checks.every(Boolean);
+  return {
+    passed,
+    score,
+    label: passed ? 'Valid trade' : 'Conditions not met — avoid entry',
+  };
+}
+
+export function buildBehaviourSummary(form) {
+  const discipline = clamp(
+    Math.round(
+      (safeNumber(form.confidence, 50) * 0.25) +
+      (form.followedRules ? 25 : 8) +
+      (form.entryConfirmed ? 20 : 6) +
+      (form.biasAligned ? 20 : 6) +
+      (100 - Math.min(100, safeNumber(form.emotionalIntensity, 45))) * 0.1
+    ),
+    0,
+    100
+  );
+
+  const emotionalControl = clamp(
+    Math.round((100 - Math.min(100, safeNumber(form.emotionalIntensity, 45))) * 0.7 + (form.followedRules ? 20 : 8)),
+    0,
+    100
+  );
+
+  const issue = form.entryConfirmed
+    ? (form.followedRules ? 'Stayed structured through execution.' : 'Rules were bent after the idea was valid.')
+    : 'Entered before full confirmation.';
+
+  return {
+    discipline,
+    emotionalControl,
+    issue,
+  };
+}
+
+export function toYmd(date = new Date()) {
+  return new Date(date).toISOString().slice(0, 10);
+}

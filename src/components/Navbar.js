@@ -22,6 +22,8 @@ import {
   FaChartLine,
   FaLink,
   FaFileAlt,
+  FaFlask,
+  FaHistory,
 } from "react-icons/fa";
 import { isSuperAdmin, isAdmin, isPremium } from "../utils/roles";
 import A7Logo from "./A7Logo";
@@ -183,6 +185,15 @@ const Navbar = () => {
                       <p>{user.email}</p>
                       <Link to="/trader-deck" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaThLarge className="dropdown-icon" /> Trader Desk
+                      </Link>
+                      <Link to="/trader-lab" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                        <FaFlask className="dropdown-icon" /> Trader Lab
+                      </Link>
+                      <Link to="/trader-replay" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                        <FaHistory className="dropdown-icon" /> Trader Replay
+                      </Link>
+                      <Link to="/trader-playbook" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                        <FaBook className="dropdown-icon" /> Trader Playbook
                       </Link>
                       <Link to="/journal" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaBook className="dropdown-icon" /> Journal
