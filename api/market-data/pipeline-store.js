@@ -437,6 +437,38 @@ async function releaseRefreshLock(lockKey, ownerId) {
   );
 }
 
+async function listActiveRefreshLocks() {
+  const [rows] = await executeQuery(
+    `SELECT lock_key, owner_id, expires_at, updated_at
+     FROM ${TABLES.refreshLocks}
+     WHERE expires_at >= UTC_TIMESTAMP()
+     ORDER BY expires_at ASC`
+  );
+  return rows || [];
+}
+
+async function listLatestSnapshots(limit = 25) {
+  const [rows] = await executeQuery(
+    `SELECT snapshot_key, snapshot_type, timeframe, source, freshness_status, as_of_ts, updated_at, notes
+     FROM ${TABLES.snapshots}
+     ORDER BY updated_at DESC
+     LIMIT ?`,
+    [Math.max(1, Math.min(Number(limit) || 25, 100))]
+  );
+  return rows || [];
+}
+
+async function listLatestDecoderStates(limit = 25) {
+  const [rows] = await executeQuery(
+    `SELECT symbol, timeframe, source, freshness_status, generated_at, updated_at
+     FROM ${TABLES.decoderStates}
+     ORDER BY updated_at DESC
+     LIMIT ?`,
+    [Math.max(1, Math.min(Number(limit) || 25, 100))]
+  );
+  return rows || [];
+}
+
 async function getLatestSnapshot(snapshotKey, timeframe = 'daily') {
   const [rows] = await executeQuery(
     `SELECT snapshot_key, snapshot_type, timeframe, as_of_ts, source, freshness_status, payload, notes, updated_at
@@ -559,6 +591,9 @@ module.exports = {
   getProviderUsageSummary,
   acquireRefreshLock,
   releaseRefreshLock,
+  listActiveRefreshLocks,
+  listLatestSnapshots,
+  listLatestDecoderStates,
   getLatestSnapshot,
   getLatestAiContextPacket,
   getLatestDecoderState,
