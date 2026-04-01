@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Home.css";
 import { useAuth } from "../context/AuthContext";
 import CosmicBackground from "../components/CosmicBackground";
 import A7Logo from "../components/A7Logo";
 import MarketTicker from "../components/MarketTicker";
+import Api from "../services/Api";
 import {
     FaUsers, FaTrophy, FaGraduationCap, FaRocket,
     FaShieldAlt, FaClock, FaCoins, FaChartBar,
     FaChartLine, FaGlobe, FaArrowRight, FaBolt,
     FaCompass, FaCalculator, FaBrain, FaPlayCircle,
-    FaFlask, FaTimes, FaInfoCircle,
+    FaFlask, FaFileAlt, FaSignal, FaBullseye,
 } from 'react-icons/fa';
 
 /* ══════════════════════════════════════════════════════════
@@ -444,48 +445,498 @@ const FloatingIPad = () => {
     );
 };
 
-const TutorialCoachmark = ({
-    title,
-    text,
-    step,
-    total,
-    onNext,
-    onPrev,
-    onClose,
-    canPrev = true,
-    isLast = false,
-}) => (
-    <div className="dashboard-home-coachmark" role="dialog" aria-live="polite">
-        <div className="dashboard-home-coachmark__meta">Tutorial {step} / {total}</div>
-        <h3>{title}</h3>
-        <p>{text}</p>
-        <div className="dashboard-home-coachmark__actions">
-            <button type="button" className="dashboard-home-coachmark__ghost" onClick={onClose}>
-                Skip
-            </button>
-            <div className="dashboard-home-coachmark__nav">
-                <button type="button" className="dashboard-home-coachmark__ghost" onClick={onPrev} disabled={!canPrev}>
-                    Back
-                </button>
-                <button type="button" className="dashboard-home-coachmark__primary" onClick={onNext}>
-                    {isLast ? 'Finish' : 'Next'}
-                </button>
+const formatPercent = (value, digits = 1) => {
+    if (value == null || Number.isNaN(Number(value))) return '—';
+    return `${Number(value).toFixed(digits)}%`;
+};
+
+const formatSignedCurrency = (value) => {
+    if (value == null || Number.isNaN(Number(value))) return '—';
+    const numeric = Number(value);
+    const sign = numeric >= 0 ? '+' : '-';
+    return `${sign}$${Math.abs(numeric).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+const formatNumber = (value, digits = 2) => {
+    if (value == null || Number.isNaN(Number(value))) return '—';
+    return Number(value).toFixed(digits);
+};
+
+const toIsoDate = (date) => date.toISOString().slice(0, 10);
+
+const getWeekStartDate = (date) => {
+    const next = new Date(date);
+    const day = next.getDay();
+    const diff = next.getDate() - day + (day === 0 ? -6 : 1);
+    next.setDate(diff);
+    next.setHours(0, 0, 0, 0);
+    return next;
+};
+
+const computePerformanceKpis = (trades = [], pnlData = {}) => {
+    const totalTrades = trades.length;
+    const wins = trades.filter((trade) => (trade.result || '').toLowerCase() === 'win' || (Number(trade.pnl) || 0) > 0).length;
+    const losses = trades.filter((trade) => (trade.result || '').toLowerCase() === 'loss' || (Number(trade.pnl) || 0) < 0).length;
+    const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+    const totalPnL = pnlData.totalPnL != null ? pnlData.totalPnL : trades.reduce((sum, trade) => sum + (Number(trade.pnl) || 0), 0);
+    const averageR = totalTrades > 0
+        ? trades.reduce((sum, trade) => sum + (Number(trade.rMultiple) ?? Number(trade.rr) ?? 0), 0) / totalTrades
+        : 0;
+    const grossProfit = trades.filter((trade) => (Number(trade.pnl) || 0) > 0).reduce((sum, trade) => sum + Number(trade.pnl), 0);
+    const grossLoss = Math.abs(trades.filter((trade) => (Number(trade.pnl) || 0) < 0).reduce((sum, trade) => sum + Number(trade.pnl), 0));
+    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 99 : 0;
+    const checklistScores = trades
+        .map((trade) => trade.checklistPercent != null ? Number(trade.checklistPercent) : null)
+        .filter((score) => score != null);
+    const avgChecklistPct = checklistScores.length
+        ? checklistScores.reduce((sum, score) => sum + score, 0) / checklistScores.length
+        : null;
+
+    let runningPnL = 0;
+    let peakPnL = 0;
+    let maxDrawdown = 0;
+    let longestWin = 0;
+    let longestLoss = 0;
+    let currentWin = 0;
+    let currentLoss = 0;
+    const sortedTrades = [...trades].sort((a, b) => new Date(a.created_at || a.createdAt || a.date) - new Date(b.created_at || b.createdAt || b.date));
+
+    sortedTrades.forEach((trade) => {
+        runningPnL += Number(trade.pnl) || 0;
+        if (runningPnL > peakPnL) peakPnL = runningPnL;
+        maxDrawdown = Math.max(maxDrawdown, peakPnL - runningPnL);
+
+        const pnl = Number(trade.pnl) || 0;
+        if ((trade.result || '').toLowerCase() === 'win' || pnl > 0) {
+            currentWin += 1;
+            currentLoss = 0;
+            longestWin = Math.max(longestWin, currentWin);
+        } else if ((trade.result || '').toLowerCase() === 'loss' || pnl < 0) {
+            currentLoss += 1;
+            currentWin = 0;
+            longestLoss = Math.max(longestLoss, currentLoss);
+        } else {
+            currentWin = 0;
+            currentLoss = 0;
+        }
+    });
+
+    const pairTotals = {};
+    sortedTrades.forEach((trade) => {
+        const pair = trade.pair || '—';
+        pairTotals[pair] = (pairTotals[pair] || 0) + (Number(trade.pnl) || 0);
+    });
+    const pairEntries = Object.entries(pairTotals).map(([pair, pnl]) => ({ pair, pnl })).sort((a, b) => b.pnl - a.pnl);
+
+    return {
+        totalTrades,
+        wins,
+        losses,
+        winRate,
+        totalPnL,
+        averageR,
+        profitFactor,
+        avgChecklistPct,
+        maxDrawdown,
+        consistencyScore: totalTrades > 0 ? Math.round(Math.min(100, Math.max(0, 50 + (winRate - 50) * 0.4))) : 0,
+        longestWin,
+        longestLoss,
+        bestPair: pairEntries[0]?.pair || '—',
+        worstPair: pairEntries[pairEntries.length - 1]?.pair || '—',
+        recentTrades: sortedTrades.slice(-5).reverse(),
+    };
+};
+
+const computeJournalMetrics = (tasks = [], selectedDate = new Date(), journalDaily = null) => {
+    const todayIso = toIsoDate(selectedDate);
+    const weekStart = toIsoDate(getWeekStartDate(selectedDate));
+    const monthKey = todayIso.slice(0, 7);
+    const dayTasks = tasks.filter((task) => String(task.date).slice(0, 10) === todayIso);
+    const weekTasks = tasks.filter((task) => String(task.date).slice(0, 10) >= weekStart && String(task.date).slice(0, 10) <= todayIso);
+    const monthTasks = tasks.filter((task) => String(task.date).slice(0, 7) === monthKey);
+    const countCompleted = (list) => list.filter((task) => task.completed).length;
+    const percent = (done, total) => total > 0 ? Math.round((done / total) * 100) : null;
+
+    return {
+        dayPct: percent(countCompleted(dayTasks), dayTasks.length),
+        weekPct: percent(countCompleted(weekTasks), weekTasks.length),
+        monthPct: percent(countCompleted(monthTasks), monthTasks.length),
+        dayCompleted: countCompleted(dayTasks),
+        dayTotal: dayTasks.length,
+        weekCompleted: countCompleted(weekTasks),
+        weekTotal: weekTasks.length,
+        monthCompleted: countCompleted(monthTasks),
+        monthTotal: monthTasks.length,
+        noteLength: journalDaily?.notes?.trim()?.length || 0,
+        mood: journalDaily?.mood || null,
+    };
+};
+
+const computeLabMetrics = (sessions = []) => {
+    if (!Array.isArray(sessions) || sessions.length === 0) return null;
+    const persistedSessions = sessions.filter((session) => session?.id);
+    if (persistedSessions.length === 0) return null;
+    const latest = [...persistedSessions].sort((a, b) => new Date(b.sessionDate || b.updatedAt || b.createdAt || 0) - new Date(a.sessionDate || a.updatedAt || a.createdAt || 0))[0];
+    const validCount = persistedSessions.filter((session) => session.setupValid && session.biasAligned && session.entryConfirmed && session.riskDefined).length;
+    return {
+        sessionCount: persistedSessions.length,
+        latestSetup: latest.setupName || '—',
+        confidence: latest.confidence ?? latest.auraConfidence ?? null,
+        riskLevel: latest.riskLevel || '—',
+        resultR: latest.resultR ?? null,
+        validPct: Math.round((validCount / persistedSessions.length) * 100),
+    };
+};
+
+const getLeaderboardPosition = (leaderboard = [], userId) => {
+    if (!userId || !Array.isArray(leaderboard)) return null;
+    const index = leaderboard.findIndex((entry) => String(entry.id || entry.userId) === String(userId));
+    if (index === -1) return null;
+    return {
+        rank: index + 1,
+        xp: leaderboard[index].xp ?? null,
+        level: leaderboard[index].level ?? null,
+    };
+};
+
+const LoggedInDashboardHome = ({ user, token, navigate }) => {
+    const [dashboardLoading, setDashboardLoading] = useState(true);
+    const [dashboardData, setDashboardData] = useState({
+        auraTrades: [],
+        auraPnl: {},
+        journalTasks: [],
+        journalDaily: null,
+        leaderboard: [],
+        labSessions: [],
+        reportsEligibility: null,
+    });
+
+    useEffect(() => {
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        let mounted = true;
+        setDashboardLoading(true);
+
+        const reportsPromise = token
+            ? fetch(`${process.env.REACT_APP_API_URL || ''}/api/reports/eligibility`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+                .then((response) => response.json())
+                .then((data) => (data?.success ? data : null))
+                .catch(() => null)
+            : Promise.resolve(null);
+
+        Promise.allSettled([
+            Api.getAuraAnalysisTrades().then((response) => response.data?.trades ?? response.data?.data ?? []),
+            Api.getAuraAnalysisPnl().then((response) => ({
+                totalPnL: response.data?.totalPnL ?? response.data?.monthlyPnl ?? 0,
+                monthlyPnl: response.data?.monthlyPnl ?? 0,
+            })),
+            Api.getJournalTasks({ dateFrom: toIsoDate(monthStart), dateTo: toIsoDate(now) }).then((response) => response.data?.tasks ?? []),
+            Api.getJournalDaily(toIsoDate(now)).then((response) => response.data?.note ?? null),
+            Api.getLeaderboard('all-time').then((response) => response.data?.leaderboard ?? response.data?.users ?? response.data ?? []),
+            Api.getTraderLabSessions().then((response) => response.data?.sessions ?? []),
+            reportsPromise,
+        ]).then((results) => {
+            if (!mounted) return;
+            setDashboardData({
+                auraTrades: results[0].status === 'fulfilled' && Array.isArray(results[0].value) ? results[0].value : [],
+                auraPnl: results[1].status === 'fulfilled' ? results[1].value || {} : {},
+                journalTasks: results[2].status === 'fulfilled' && Array.isArray(results[2].value) ? results[2].value : [],
+                journalDaily: results[3].status === 'fulfilled' ? results[3].value : null,
+                leaderboard: results[4].status === 'fulfilled' && Array.isArray(results[4].value) ? results[4].value : [],
+                labSessions: results[5].status === 'fulfilled' && Array.isArray(results[5].value) ? results[5].value : [],
+                reportsEligibility: results[6].status === 'fulfilled' ? results[6].value : null,
+            });
+            setDashboardLoading(false);
+        });
+
+        return () => {
+            mounted = false;
+        };
+    }, [token]);
+
+    const analytics = useMemo(
+        () => computePerformanceKpis(dashboardData.auraTrades, dashboardData.auraPnl),
+        [dashboardData.auraTrades, dashboardData.auraPnl]
+    );
+    const journal = useMemo(
+        () => computeJournalMetrics(dashboardData.journalTasks, new Date(), dashboardData.journalDaily),
+        [dashboardData.journalTasks, dashboardData.journalDaily]
+    );
+    const lab = useMemo(() => computeLabMetrics(dashboardData.labSessions), [dashboardData.labSessions]);
+    const leaderboardPosition = useMemo(
+        () => getLeaderboardPosition(dashboardData.leaderboard, user?.id),
+        [dashboardData.leaderboard, user?.id]
+    );
+
+    const displayName = (user?.name || user?.username || '').trim();
+    const greeting = displayName ? `Welcome back, ${displayName}` : 'Welcome';
+    const level = user?.level ?? leaderboardPosition?.level ?? '—';
+    const xp = user?.xp ?? leaderboardPosition?.xp ?? '—';
+    const reportStatus = dashboardData.reportsEligibility?.isEligible ? 'Report-ready' : 'Building report readiness';
+
+    const heroMetrics = [
+        { label: 'Win Rate', value: formatPercent(analytics.winRate), source: 'Source: Aura Analysis' },
+        { label: 'Average R', value: formatNumber(analytics.averageR), source: 'Source: Aura Analysis' },
+        { label: 'Journal Streak', value: user?.login_streak ? `${user.login_streak} days` : '—', source: 'Source: Journal' },
+        { label: 'Trader Level', value: level, source: 'Source: User XP / Leaderboard' },
+    ];
+
+    const commandCards = [
+        { icon: <FaCompass />, title: 'Trader Desk', description: 'Read the market with context, structure, and timing before planning the trade.', action: 'Open Trader Desk', path: '/trader-deck', source: 'Source: Trader Desk workflow' },
+        { icon: <FaFlask />, title: 'Trader Lab', description: lab ? `Latest setup: ${lab.latestSetup} with ${lab.validPct}% valid workflow alignment.` : 'No saved lab sessions yet. Build your first active workspace and validate your process.', action: 'Open Trader Lab', path: '/trader-lab', source: lab ? 'Source: Trader Lab sessions' : 'Source: Trader Lab' },
+        { icon: <FaCalculator />, title: 'Trade Calculator', description: 'Move from idea to executable numbers with controlled position sizing and risk.', action: 'Open Calculator', path: '/trader-deck/trade-validator/calculator', source: 'Source: Trade Validator tools' },
+        { icon: <FaBrain />, title: 'Aura Analysis', description: analytics.totalTrades > 0 ? `Tracking ${analytics.totalTrades} validated trades with ${formatPercent(analytics.avgChecklistPct ?? 0)} average checklist quality.` : 'Connect more trade data to unlock deeper analysis, edge review, and consistency scoring.', action: 'Open Aura Analysis', path: '/aura-analysis', source: 'Source: Aura Analysis' },
+        { icon: <FaUsers />, title: 'Community', description: leaderboardPosition ? `You are currently ranked #${leaderboardPosition.rank} with ${xp} XP across the community.` : 'Join the environment, standards, and trader network that keeps performance accountability high.', action: 'Open Community', path: '/community', source: 'Source: Community leaderboard' },
+    ];
+
+    if (dashboardLoading) {
+        return (
+            <div className="institution-home">
+                <div className="institution-home__loading glass-card">
+                    <span className="institution-home__loading-kicker">Loading Dashboard</span>
+                    <h2>Preparing your trading command center...</h2>
+                    <p>Pulling live metrics from Aura Analysis, Journal, Reports, Leaderboard, and Trader Lab.</p>
+                </div>
             </div>
+        );
+    }
+
+    return (
+        <div className="institution-home">
+            <section className="institution-home__hero glass-card">
+                <div className="institution-home__hero-main">
+                    <div className="institution-home__eyebrow">Trader Operating Environment</div>
+                    <h1>{greeting}</h1>
+                    <p className="institution-home__hero-copy">
+                        This dashboard is built for serious retail and institutional-minded traders. It surfaces real performance, discipline, progression, and readiness data so you know exactly where you stand before you move.
+                    </p>
+                    <div className="institution-home__hero-actions">
+                        <button className="home-cta-button" onClick={() => navigate('/trader-deck')}>Open Trader Desk</button>
+                        <button className="home-secondary-button" onClick={() => navigate('/trader-lab')}>Open Trader Lab</button>
+                        <button className="home-secondary-button" onClick={() => navigate('/aura-analysis')}>Open Aura Analysis</button>
+                    </div>
+                </div>
+                <div className="institution-home__hero-rail">
+                    <div className="institution-home__status-card">
+                        <span className="institution-home__status-label">Profile Standing</span>
+                        <strong>{user?.role || 'Trader'}</strong>
+                        <p>Designed for traders who want structure, discipline, and measurable growth.</p>
+                    </div>
+                    <div className="institution-home__status-card">
+                        <span className="institution-home__status-label">Performance & DNA</span>
+                        <strong>{reportStatus}</strong>
+                        <p>{dashboardData.reportsEligibility?.isEligible ? 'Reports can be generated from your current data footprint.' : 'Keep logging activity to unlock full report generation.'}</p>
+                    </div>
+                </div>
+            </section>
+
+            <section className="institution-home__kpi-row">
+                {heroMetrics.map((item) => (
+                    <article className="institution-home__kpi glass-card" key={item.label}>
+                        <span className="institution-home__kpi-label">{item.label}</span>
+                        <strong className="institution-home__kpi-value">{item.value}</strong>
+                        <span className="institution-home__kpi-source">{item.source}</span>
+                    </article>
+                ))}
+            </section>
+
+            <section className="institution-home__main-grid">
+                <article className="institution-home__panel glass-card institution-home__panel--performance">
+                    <div className="institution-home__panel-head">
+                        <div>
+                            <span className="institution-home__panel-label">Performance Command</span>
+                            <h2>Validated trading performance</h2>
+                        </div>
+                        <span className="institution-home__source">Source: Aura Analysis</span>
+                    </div>
+                    <div className="institution-home__stats-grid">
+                        <div className="institution-home__stat">
+                            <span>Total PnL</span>
+                            <strong className={analytics.totalPnL >= 0 ? 'is-positive' : 'is-negative'}>{formatSignedCurrency(analytics.totalPnL)}</strong>
+                        </div>
+                        <div className="institution-home__stat">
+                            <span>Profit Factor</span>
+                            <strong>{analytics.profitFactor > 0 ? formatNumber(analytics.profitFactor) : '—'}</strong>
+                        </div>
+                        <div className="institution-home__stat">
+                            <span>Consistency Score</span>
+                            <strong>{analytics.consistencyScore || '—'}</strong>
+                        </div>
+                        <div className="institution-home__stat">
+                            <span>Max Drawdown</span>
+                            <strong className="is-negative">{formatSignedCurrency(-analytics.maxDrawdown)}</strong>
+                        </div>
+                    </div>
+                    <div className="institution-home__subgrid">
+                        <div className="institution-home__mini-panel">
+                            <span>Best Pair</span>
+                            <strong>{analytics.bestPair}</strong>
+                            <p>Worst pair: {analytics.worstPair}</p>
+                        </div>
+                        <div className="institution-home__mini-panel">
+                            <span>Streak Profile</span>
+                            <strong>{analytics.longestWin}W / {analytics.longestLoss}L</strong>
+                            <p>Longest win and loss streaks from validated trade history.</p>
+                        </div>
+                    </div>
+                </article>
+
+                <article className="institution-home__panel glass-card">
+                    <div className="institution-home__panel-head">
+                        <div>
+                            <span className="institution-home__panel-label">Discipline Layer</span>
+                            <h2>Journal execution discipline</h2>
+                        </div>
+                        <span className="institution-home__source">Source: Journal</span>
+                    </div>
+                    <div className="institution-home__discipline-list">
+                        <div className="institution-home__discipline-item">
+                            <span>Today</span>
+                            <strong>{journal.dayPct != null ? `${journal.dayPct}%` : 'No tasks yet'}</strong>
+                            <p>{journal.dayCompleted} / {journal.dayTotal} completed today</p>
+                        </div>
+                        <div className="institution-home__discipline-item">
+                            <span>This week</span>
+                            <strong>{journal.weekPct != null ? `${journal.weekPct}%` : 'No tasks yet'}</strong>
+                            <p>{journal.weekCompleted} / {journal.weekTotal} completed this week</p>
+                        </div>
+                        <div className="institution-home__discipline-item">
+                            <span>This month</span>
+                            <strong>{journal.monthPct != null ? `${journal.monthPct}%` : 'No tasks yet'}</strong>
+                            <p>{journal.monthCompleted} / {journal.monthTotal} completed this month</p>
+                        </div>
+                        <div className="institution-home__discipline-item">
+                            <span>Reflection status</span>
+                            <strong>{journal.noteLength > 0 ? 'Logged today' : 'No daily note yet'}</strong>
+                            <p>{journal.mood ? `Mood captured: ${journal.mood}` : 'Add today’s note to strengthen report quality.'}</p>
+                        </div>
+                    </div>
+                </article>
+
+                <article className="institution-home__panel glass-card">
+                    <div className="institution-home__panel-head">
+                        <div>
+                            <span className="institution-home__panel-label">Trader Identity</span>
+                            <h2>Position, XP, and report readiness</h2>
+                        </div>
+                        <span className="institution-home__source">Source: Leaderboard / Reports</span>
+                    </div>
+                    <div className="institution-home__identity-grid">
+                        <div className="institution-home__identity-card">
+                            <span>Community rank</span>
+                            <strong>{leaderboardPosition?.rank ? `#${leaderboardPosition.rank}` : 'Unranked'}</strong>
+                            <p>{leaderboardPosition ? 'Your current all-time leaderboard position.' : 'Trade and engage to appear on the leaderboard.'}</p>
+                        </div>
+                        <div className="institution-home__identity-card">
+                            <span>XP & Level</span>
+                            <strong>{xp} XP / L{level}</strong>
+                            <p>Current progression signal from your user profile and leaderboard state.</p>
+                        </div>
+                        <div className="institution-home__identity-card">
+                            <span>Report data days</span>
+                            <strong>{dashboardData.reportsEligibility?.dataDays ?? '—'}</strong>
+                            <p>{dashboardData.reportsEligibility?.isEligible ? 'Enough data to generate reports.' : `Need ${dashboardData.reportsEligibility?.minDataDays ?? 'more'} days for full readiness.`}</p>
+                        </div>
+                        <div className="institution-home__identity-card">
+                            <span>Trades logged</span>
+                            <strong>{dashboardData.reportsEligibility?.tradeCount ?? analytics.totalTrades}</strong>
+                            <p>Used by your report and oversight systems to measure trading activity.</p>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <section className="institution-home__secondary-grid">
+                <article className="institution-home__panel glass-card institution-home__panel--wide">
+                    <div className="institution-home__panel-head">
+                        <div>
+                            <span className="institution-home__panel-label">Action Center</span>
+                            <h2>Move through the platform like a serious operator</h2>
+                        </div>
+                    </div>
+                    <div className="institution-home__command-grid">
+                        {commandCards.map((item) => (
+                            <div className="institution-home__command-card" key={item.title}>
+                                <div className="institution-home__command-icon">{item.icon}</div>
+                                <div className="institution-home__command-body">
+                                    <div className="institution-home__command-top">
+                                        <h3>{item.title}</h3>
+                                        <span>{item.source}</span>
+                                    </div>
+                                    <p>{item.description}</p>
+                                    <button className="institution-home__command-button" onClick={() => navigate(item.path)}>
+                                        {item.action} <FaArrowRight />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </article>
+
+                <article className="institution-home__panel glass-card">
+                    <div className="institution-home__panel-head">
+                        <div>
+                            <span className="institution-home__panel-label">Trader Lab Status</span>
+                            <h2>Active thinking environment</h2>
+                        </div>
+                        <span className="institution-home__source">Source: Trader Lab sessions</span>
+                    </div>
+                    {lab ? (
+                        <div className="institution-home__lab-state">
+                            <div className="institution-home__mini-panel">
+                                <span>Saved sessions</span>
+                                <strong>{lab.sessionCount}</strong>
+                            </div>
+                            <div className="institution-home__mini-panel">
+                                <span>Latest setup</span>
+                                <strong>{lab.latestSetup}</strong>
+                            </div>
+                            <div className="institution-home__mini-panel">
+                                <span>Confidence</span>
+                                <strong>{lab.confidence != null ? `${lab.confidence}%` : '—'}</strong>
+                            </div>
+                            <div className="institution-home__mini-panel">
+                                <span>Workflow validity</span>
+                                <strong>{lab.validPct}%</strong>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="institution-home__empty-state">
+                            <FaFlask />
+                            <h3>No saved Trader Lab sessions yet</h3>
+                            <p>Build your first session to unlock real lab metrics on the home dashboard.</p>
+                            <button className="institution-home__command-button" onClick={() => navigate('/trader-lab')}>
+                                Open Trader Lab <FaArrowRight />
+                            </button>
+                        </div>
+                    )}
+                </article>
+            </section>
+
+            <section className="institution-home__ticker glass-card">
+                <div className="institution-home__panel-head">
+                    <div>
+                        <span className="institution-home__panel-label">Market Context</span>
+                        <h2>External context for today’s trading environment</h2>
+                    </div>
+                    <span className="institution-home__source">Source: Market ticker</span>
+                </div>
+                <MarketTicker compact={true} showTabs={false} showViewAll={true} autoScroll={true} />
+            </section>
         </div>
-    </div>
-);
+    );
+};
 
 /* ══════════════════════════════════════════════════════════
    HOME PAGE
 ══════════════════════════════════════════════════════════ */
 const Home = () => {
     const navigate = useNavigate();
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, token } = useAuth();
     const [showContent, setShowContent] = useState(false);
     const [isLoading,   setIsLoading]   = useState(true);
-    const [tutorialOpen, setTutorialOpen] = useState(true);
-    const [tutorialStep, setTutorialStep] = useState(0);
-    const [activeHint, setActiveHint] = useState('hero');
 
     useEffect(() => {
         const t = setTimeout(() => { setIsLoading(false); setShowContent(true); }, 3000);
@@ -493,122 +944,6 @@ const Home = () => {
     }, []);
 
     const handleStart = () => navigate(isAuthenticated ? '/community' : '/register');
-    const displayName = (user?.name || user?.username || '').trim();
-    const greeting = displayName ? `Welcome back, ${displayName}` : 'Welcome';
-    const tutorialSteps = [
-        {
-            target: 'hero',
-            title: 'Start from the welcome area',
-            text: 'This top section is your daily starting point. Use it to understand where to begin, then jump into the tool that matches your next move.',
-        },
-        {
-            target: 'desk',
-            title: 'Trader Desk shows your market picture',
-            text: 'Use Trader Desk first when you need context, structure, and session awareness before planning a trade.',
-        },
-        {
-            target: 'lab',
-            title: 'Trader Lab helps you think through the trade',
-            text: 'This is the active workspace for session prep, setup validation, live thinking, and post-trade review.',
-        },
-        {
-            target: 'analysis',
-            title: 'Aura Analysis helps you review performance',
-            text: 'Use it to connect data, review patterns, and turn your performance into clear next-step feedback.',
-        },
-        {
-            target: 'community',
-            title: 'Community keeps you accountable',
-            text: 'When you need conversation, support, and shared standards, this is where you stay connected to the environment.',
-        },
-    ];
-
-    const previewCards = [
-        {
-            key: 'desk',
-            icon: <FaCompass />,
-            title: 'Trader Desk',
-            description: 'See the market picture, session tone, and what matters before you act.',
-            path: '/trader-deck',
-            cta: 'Open Trader Desk',
-            accent: 'Command Center',
-            bullets: ['Session bias', 'Market context', 'Execution clarity'],
-            previewClass: 'dashboard-home-preview--desk',
-            previewStats: ['Bias: Bullish', 'London: Open', 'Focus: Pullbacks'],
-            hint: 'Best first click before planning anything else.',
-        },
-        {
-            key: 'lab',
-            icon: <FaFlask />,
-            title: 'Trader Lab',
-            description: 'Prepare the session, pressure-test the setup, and review behavior in one flow.',
-            path: '/trader-lab',
-            cta: 'Open Trader Lab',
-            accent: 'Active Thinking',
-            bullets: ['Session prep', 'Trade thinking', 'Behavior review'],
-            previewClass: 'dashboard-home-preview--lab',
-            previewStats: ['Confidence: 74%', 'R:R: 1:2.5', 'Status: Validating'],
-            hint: 'Use this when you want a more guided decision process.',
-        },
-        {
-            key: 'calculator',
-            icon: <FaCalculator />,
-            title: 'Trade Calculator',
-            description: 'Size risk, reward, and position details before execution.',
-            path: '/trader-deck/trade-validator/calculator',
-            cta: 'Open Calculator',
-            accent: 'Risk Precision',
-            bullets: ['Position sizing', 'Risk %, R:R', 'Fast planning'],
-            previewClass: 'dashboard-home-preview--calculator',
-            previewStats: ['Risk: 0.50%', 'Lot: 1.25', 'Target: 2.0R'],
-            hint: 'Use this anytime you need numbers before clicking buy or sell.',
-        },
-        {
-            key: 'analysis',
-            icon: <FaBrain />,
-            title: 'Aura Analysis',
-            description: 'Review performance, patterns, and growth opportunities using your data.',
-            path: '/aura-analysis',
-            cta: 'Open Aura Analysis',
-            accent: 'Performance Intelligence',
-            bullets: ['Performance review', 'Pattern spotting', 'Growth engine'],
-            previewClass: 'dashboard-home-preview--analysis',
-            previewStats: ['Win Rate: 62%', 'Risk Score: Stable', 'Edge: Improving'],
-            hint: 'Use this after sessions to understand what is improving and what needs work.',
-        },
-        {
-            key: 'community',
-            icon: <FaUsers />,
-            title: 'Community',
-            description: 'Stay connected to traders, updates, and accountability throughout the week.',
-            path: '/community',
-            cta: 'Open Community',
-            accent: 'Accountability',
-            bullets: ['Live channels', 'Shared feedback', 'Trading environment'],
-            previewClass: 'dashboard-home-preview--community',
-            previewStats: ['Welcome room', 'Mentor updates', 'Daily check-ins'],
-            hint: 'Go here when you want interaction, ideas, or support from the network.',
-        },
-    ];
-
-    const currentTutorial = tutorialSteps[tutorialStep];
-    const highlightedTarget = tutorialOpen ? currentTutorial?.target : null;
-    const setTutorialRef = () => () => {};
-    const showHint = (key) => activeHint === key;
-    const nextTutorialStep = () => {
-        if (tutorialStep >= tutorialSteps.length - 1) {
-            setTutorialOpen(false);
-            return;
-        }
-        setTutorialStep((prev) => prev + 1);
-        setActiveHint(tutorialSteps[tutorialStep + 1].target);
-    };
-    const prevTutorialStep = () => {
-        if (tutorialStep === 0) return;
-        setTutorialStep((prev) => prev - 1);
-        setActiveHint(tutorialSteps[tutorialStep - 1].target);
-    };
-    const closeTutorial = () => setTutorialOpen(false);
 
     return (
         <>
@@ -630,252 +965,7 @@ const Home = () => {
                 {showContent && (
                     isAuthenticated ? (
                         <div className="home-content home-content--dashboard">
-                            <div className="dashboard-home-shell">
-                                <section
-                                    ref={setTutorialRef('hero')}
-                                    className={`dashboard-home-hero glass-card${highlightedTarget === 'hero' ? ' dashboard-home-focus' : ''}`}
-                                >
-                                    <div className="dashboard-home-hero__content">
-                                        <div className="dashboard-home-kicker">
-                                            <span className="dashboard-home-kicker__dot" />
-                                            Logged-In Home
-                                        </div>
-                                        <h1 className="dashboard-home-title">{greeting}</h1>
-                                        <p className="dashboard-home-subtitle">
-                                            This is your Aura Terminal overview. Instead of dropping straight into Community, this page now walks you through the platform, shows what each area looks like, and helps you choose the right next step.
-                                        </p>
-                                        <div className="dashboard-home-actions">
-                                            <button
-                                                className="home-cta-button"
-                                                onClick={() => navigate('/trader-deck')}
-                                            >
-                                                Start In Trader Desk
-                                            </button>
-                                            <button
-                                                className="home-secondary-button"
-                                                onClick={() => {
-                                                    setTutorialOpen(true);
-                                                    setTutorialStep(0);
-                                                    setActiveHint('hero');
-                                                }}
-                                            >
-                                                Start Tutorial
-                                            </button>
-                                        </div>
-                                        <div className="dashboard-home-highlights">
-                                            {[
-                                                { label: 'Workflow', value: 'See The Platform First' },
-                                                { label: 'Goal', value: 'Know Where To Click Next' },
-                                                { label: 'Focus', value: 'Learn, Plan, Execute, Review' },
-                                            ].map((item) => (
-                                                <div className="dashboard-home-pill" key={item.label}>
-                                                    <span>{item.label}</span>
-                                                    <strong>{item.value}</strong>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        {tutorialOpen && highlightedTarget === 'hero' && (
-                                            <TutorialCoachmark
-                                                title={currentTutorial.title}
-                                                text={currentTutorial.text}
-                                                step={tutorialStep + 1}
-                                                total={tutorialSteps.length}
-                                                onNext={nextTutorialStep}
-                                                onPrev={prevTutorialStep}
-                                                onClose={closeTutorial}
-                                                canPrev={tutorialStep > 0}
-                                                isLast={tutorialStep === tutorialSteps.length - 1}
-                                            />
-                                        )}
-                                    </div>
-
-                                    <div className="dashboard-home-hero__panel">
-                                        <div className="dashboard-home-panel glass-card">
-                                            <div className="dashboard-home-panel__header">
-                                                <span className="dashboard-home-panel__eyebrow">Quick Start</span>
-                                                <span className="dashboard-home-panel__badge">
-                                                    <FaBolt /> Guided Tour
-                                                </span>
-                                            </div>
-                                            <div className="dashboard-home-panel__steps">
-                                                {tutorialSteps.map((step, index) => (
-                                                    <div className="dashboard-home-step" key={step.title}>
-                                                        <div className="dashboard-home-step__number">0{index + 1}</div>
-                                                        <div className="dashboard-home-step__body">
-                                                            <h3>{step.title}</h3>
-                                                            <p>{step.text}</p>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            <button
-                                                className="dashboard-home-panel__link"
-                                                onClick={() => {
-                                                    setTutorialOpen(true);
-                                                    setTutorialStep(0);
-                                                    setActiveHint('hero');
-                                                }}
-                                            >
-                                                Replay Tutorial <FaArrowRight />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <section className="dashboard-home-ticker glass-card">
-                                    <div className="dashboard-home-section-head">
-                                        <div>
-                                            <p className="dashboard-home-section-label">Live Context</p>
-                                            <h2>Market awareness at a glance</h2>
-                                        </div>
-                                        <button
-                                            className="dashboard-home-inline-button"
-                                            onClick={() => navigate('/trader-deck')}
-                                        >
-                                            Open Desk <FaArrowRight />
-                                        </button>
-                                    </div>
-                                    <MarketTicker compact={true} showTabs={false} showViewAll={true} autoScroll={true} />
-                                </section>
-
-                                <section className="dashboard-home-overview">
-                                    <div className="dashboard-home-section-head">
-                                        <div>
-                                            <p className="dashboard-home-section-label">Platform Overview</p>
-                                            <h2>See what the other pages actually do</h2>
-                                        </div>
-                                        <p className="dashboard-home-section-copy">
-                                            These are visual previews, not just boxes. Use the tutorial popups and examples below to understand how each major area of Aura Terminal helps you.
-                                        </p>
-                                    </div>
-
-                                    <div className="dashboard-home-grid">
-                                        {previewCards.map((item) => (
-                                            <article
-                                                ref={setTutorialRef(item.key)}
-                                                className={`dashboard-home-card glass-card${highlightedTarget === item.key ? ' dashboard-home-focus' : ''}`}
-                                                key={item.title}
-                                            >
-                                                <div className="dashboard-home-card__top">
-                                                    <div className="dashboard-home-card__meta">
-                                                        <div className="dashboard-home-card__icon">{item.icon}</div>
-                                                        <div className="dashboard-home-card__meta-copy">
-                                                            <span className="dashboard-home-card__accent">{item.accent}</span>
-                                                            <button
-                                                                type="button"
-                                                                className="dashboard-home-card__hint"
-                                                                onClick={() => setActiveHint(showHint(item.key) ? null : item.key)}
-                                                            >
-                                                                <FaInfoCircle /> How it works
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                    <div className={`dashboard-home-preview ${item.previewClass}`}>
-                                                        <div className="dashboard-home-preview__screen">
-                                                            <div className="dashboard-home-preview__topbar">
-                                                                <span />
-                                                                <span />
-                                                                <span />
-                                                            </div>
-                                                            <div className="dashboard-home-preview__hero" />
-                                                            <div className="dashboard-home-preview__tiles">
-                                                                {item.previewStats.map((stat) => (
-                                                                    <div className="dashboard-home-preview__tile" key={stat}>{stat}</div>
-                                                                ))}
-                                                            </div>
-                                                            <div className="dashboard-home-preview__footer" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <h3>{item.title}</h3>
-                                                <p>{item.description}</p>
-                                                <div className="dashboard-home-card__bullets">
-                                                    {item.bullets.map((bullet) => (
-                                                        <span key={bullet}>{bullet}</span>
-                                                    ))}
-                                                </div>
-                                                {showHint(item.key) && (
-                                                    <div className="dashboard-home-inline-tip">
-                                                        <div className="dashboard-home-inline-tip__header">
-                                                            <strong>{item.title}</strong>
-                                                            <button type="button" onClick={() => setActiveHint(null)}>
-                                                                <FaTimes />
-                                                            </button>
-                                                        </div>
-                                                        <p>{item.hint}</p>
-                                                    </div>
-                                                )}
-                                                {tutorialOpen && highlightedTarget === item.key && (
-                                                    <TutorialCoachmark
-                                                        title={currentTutorial.title}
-                                                        text={currentTutorial.text}
-                                                        step={tutorialStep + 1}
-                                                        total={tutorialSteps.length}
-                                                        onNext={nextTutorialStep}
-                                                        onPrev={prevTutorialStep}
-                                                        onClose={closeTutorial}
-                                                        canPrev={tutorialStep > 0}
-                                                        isLast={tutorialStep === tutorialSteps.length - 1}
-                                                    />
-                                                )}
-                                                <button
-                                                    className="dashboard-home-card__button"
-                                                    onClick={() => navigate(item.path)}
-                                                >
-                                                    {item.cta} <FaArrowRight />
-                                                </button>
-                                            </article>
-                                        ))}
-                                    </div>
-                                </section>
-
-                                <section className="dashboard-home-bottom">
-                                    <div className="dashboard-home-bottom__left glass-card">
-                                        <div className="dashboard-home-section-head">
-                                            <div>
-                                                <p className="dashboard-home-section-label">How To Use Aura</p>
-                                                <h2>A simple flow for new and returning users</h2>
-                                            </div>
-                                        </div>
-                                        <div className="dashboard-home-flow">
-                                            {[
-                                                'Start with Trader Desk when you need context and a clean picture of the market.',
-                                                'Move into Trader Lab or Trade Calculator when you need to think through execution and risk.',
-                                                'Use Aura Analysis after the session, then Community when you want accountability or updates.',
-                                            ].map((item, index) => (
-                                                <div className="dashboard-home-flow__item" key={item}>
-                                                    <span className="dashboard-home-flow__index">{index + 1}</span>
-                                                    <p>{item}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="dashboard-home-bottom__right glass-card">
-                                        <div className="dashboard-home-section-head">
-                                            <div>
-                                                <p className="dashboard-home-section-label">Why It Matters</p>
-                                                <h2>This page is your launchpad</h2>
-                                            </div>
-                                        </div>
-                                        <div className="dashboard-home-reasons">
-                                            {[
-                                                { icon: <FaShieldAlt />, title: 'Stay structured', text: 'Move through the platform in an order that supports discipline instead of random clicking.' },
-                                                { icon: <FaClock />, title: 'Save time', text: 'Get to the right tool quickly without guessing where everything lives.' },
-                                                { icon: <FaPlayCircle />, title: 'Build momentum', text: 'Use the home page as a clean daily starting point before your session begins.' },
-                                            ].map((item) => (
-                                                <div className="dashboard-home-reason" key={item.title}>
-                                                    <div className="dashboard-home-reason__icon">{item.icon}</div>
-                                                    <div>
-                                                        <h3>{item.title}</h3>
-                                                        <p>{item.text}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
+                            <LoggedInDashboardHome user={user} token={token} navigate={navigate} />
                         </div>
                     ) : (
                         <div className="home-content">
