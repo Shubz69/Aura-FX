@@ -507,21 +507,28 @@ async function callPerplexityJson(systemPrompt, userPayload, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs || 90000);
   try {
+    const requestBody = {
+      model: getAutomationModel(),
+      temperature: options.temperature ?? 0.35,
+      max_tokens: options.maxTokens ?? 6000,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: JSON.stringify(userPayload) },
+      ],
+    };
+    if (options.jsonSchema) {
+      requestBody.response_format = {
+        type: 'json_schema',
+        json_schema: options.jsonSchema,
+      };
+    }
     const res = await fetch(PERPLEXITY_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: getAutomationModel(),
-        temperature: options.temperature ?? 0.35,
-        max_tokens: options.maxTokens ?? 6000,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: JSON.stringify(userPayload) },
-        ],
-      }),
+      body: JSON.stringify(requestBody),
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -532,12 +539,110 @@ async function callPerplexityJson(systemPrompt, userPayload, options = {}) {
     const json = await res.json();
     const text = String(json.choices?.[0]?.message?.content || '').trim();
     if (!text) return { ok: false, error: 'empty_response' };
-    const parsed = JSON.parse(text.replace(/^```json\s*|\s*```$/g, '').trim());
+    let parsed;
+    try {
+      parsed = parseModelJson(text);
+    } catch (parseErr) {
+      const repaired = await repairModelJson(text, options.timeoutMs || 90000);
+      if (!repaired.ok) return { ok: false, error: parseErr.message || 'invalid_json' };
+      parsed = repaired.parsed;
+    }
     return { ok: true, parsed };
   } catch (e) {
     clearTimeout(timeout);
     return { ok: false, error: e.message || 'perplexity_error' };
   }
+}
+
+async function repairModelJson(rawText, timeoutMs) {
+  const apiKey = String(process.env.PERPLEXITY_API_KEY || '').trim();
+  if (!apiKey) return { ok: false, error: 'missing_perplexity_key' };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Math.min(timeoutMs || 90000, 45000));
+  try {
+    const res = await fetch(PERPLEXITY_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: getAutomationModel(),
+        temperature: 0,
+        max_tokens: 6000,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Repair malformed JSON. Return valid JSON only. Preserve the original data and field names as closely as possible. Do not add commentary.',
+          },
+          {
+            role: 'user',
+            content: rawText,
+          },
+        ],
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return { ok: false, error: `http_${res.status}` };
+    const json = await res.json();
+    const text = String(json.choices?.[0]?.message?.content || '').trim();
+    if (!text) return { ok: false, error: 'empty_repair_response' };
+    return { ok: true, parsed: parseModelJson(text) };
+  } catch (err) {
+    clearTimeout(timeout);
+    return { ok: false, error: err.message || 'repair_failed' };
+  }
+}
+
+function parseModelJson(text) {
+  const cleaned = String(text || '').replace(/^```json\s*|\s*```$/g, '').trim();
+  const extractBalancedObject = (input) => {
+    const start = input.indexOf('{');
+    if (start < 0) return input;
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    for (let i = start; i < input.length; i += 1) {
+      const ch = input[i];
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (ch === '\\') {
+          escaped = true;
+        } else if (ch === '"') {
+          inString = false;
+        }
+        continue;
+      }
+      if (ch === '"') {
+        inString = true;
+        continue;
+      }
+      if (ch === '{') depth += 1;
+      if (ch === '}') {
+        depth -= 1;
+        if (depth === 0) return input.slice(start, i + 1);
+      }
+    }
+    return input;
+  };
+  const attempts = [
+    cleaned,
+    cleaned.replace(/,\s*([}\]])/g, '$1'),
+    extractBalancedObject(cleaned),
+    extractBalancedObject(cleaned).replace(/,\s*([}\]])/g, '$1'),
+  ];
+  let lastError = null;
+  for (const candidate of attempts) {
+    try {
+      return JSON.parse(candidate);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError || new Error('invalid_json');
 }
 
 function renderCategoryDailyBrief({ title, parsed, runDate, timeZone }) {
@@ -651,8 +756,169 @@ function renderCategoryWeeklyBrief({ title, parsed }) {
   return stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
 }
 
+function buildDailySampleJsonSchema() {
+  return {
+    schema: {
+      type: 'object',
+      properties: {
+        opening: { type: 'string' },
+        globalGeopoliticalEnvironment: { type: 'string' },
+        macroBackdrop: { type: 'string' },
+        marketThemes: {
+          anyOf: [
+            { type: 'string' },
+            { type: 'array', items: { type: 'string' } },
+          ],
+        },
+        assetAnalyses: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              symbol: { type: 'string' },
+              instrument: { type: 'string' },
+              heading: { type: 'string' },
+              label: { type: 'string' },
+              fundamentalView: { type: 'string' },
+              fundamentalMacro: { type: 'string' },
+              macroView: { type: 'string' },
+              technicalView: { type: 'string' },
+              technicalStructure: { type: 'string' },
+              keyTechnicalObservations: { type: 'array', items: { type: 'string' } },
+              sessionBias: {
+                anyOf: [
+                  { type: 'string' },
+                  {
+                    type: 'object',
+                    properties: {
+                      asia: { type: 'string' },
+                      london: { type: 'string' },
+                      newYork: { type: 'string' },
+                    },
+                  },
+                ],
+              },
+              overallBias: { type: 'string' },
+            },
+            required: ['heading', 'overallBias'],
+          },
+        },
+        overallDailyStructure: { type: 'string' },
+      },
+      required: [
+        'opening',
+        'globalGeopoliticalEnvironment',
+        'macroBackdrop',
+        'marketThemes',
+        'assetAnalyses',
+        'overallDailyStructure',
+      ],
+    },
+  };
+}
+
+function buildWeeklySampleJsonSchema() {
+  return {
+    schema: {
+      type: 'object',
+      properties: {
+        overview: { type: 'string' },
+        previousWeekLabel: { type: 'string' },
+        summaryForLastWeek: { type: 'string' },
+        assetPerformance: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              symbol: { type: 'string' },
+              instrument: { type: 'string' },
+              heading: { type: 'string' },
+              label: { type: 'string' },
+              body: { type: 'string' },
+              summary: { type: 'string' },
+              analysis: { type: 'string' },
+            },
+            required: ['heading'],
+          },
+        },
+        structuralWeeklyDrivers: { type: 'string' },
+        mondayTuesdayFocus: { type: 'string' },
+        wednesdayFocus: { type: 'string' },
+        thursdayFridayFocus: { type: 'string' },
+        assetOutlooks: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              symbol: { type: 'string' },
+              instrument: { type: 'string' },
+              heading: { type: 'string' },
+              label: { type: 'string' },
+              body: { type: 'string' },
+              summary: { type: 'string' },
+              analysis: { type: 'string' },
+            },
+            required: ['heading'],
+          },
+        },
+        weekConclusion: { type: 'string' },
+        sessionWatch: {
+          anyOf: [
+            { type: 'string' },
+            {
+              type: 'object',
+              properties: {
+                asia: { type: 'string' },
+                london: { type: 'string' },
+                newYork: { type: 'string' },
+              },
+            },
+          ],
+        },
+        keyScenarios: {
+          type: 'array',
+          items: {
+            anyOf: [
+              { type: 'string' },
+              {
+                type: 'object',
+                properties: {
+                  title: { type: 'string' },
+                  label: { type: 'string' },
+                  name: { type: 'string' },
+                  condition: { type: 'string' },
+                  outcome: { type: 'string' },
+                  implication: { type: 'string' },
+                },
+              },
+            ],
+          },
+        },
+      },
+      required: [
+        'overview',
+        'previousWeekLabel',
+        'summaryForLastWeek',
+        'assetPerformance',
+        'structuralWeeklyDrivers',
+        'mondayTuesdayFocus',
+        'wednesdayFocus',
+        'thursdayFridayFocus',
+        'assetOutlooks',
+        'weekConclusion',
+        'sessionWatch',
+        'keyScenarios',
+      ],
+    },
+  };
+}
+
 function cleanInlineFormatting(text) {
-  return String(text || '').replace(/\*\*/g, '').trim();
+  return String(text || '')
+    .replace(/\*\*/g, '')
+    .replace(/\[\d+\]/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 function parseSessionBias(value) {
@@ -722,6 +988,18 @@ function normalizeDailyStructuredParsed(parsed) {
 }
 
 function normalizeWeeklyStructuredParsed(parsed) {
+  const normalizeScenario = (scenario) => {
+    if (typeof scenario === 'string') return cleanInlineFormatting(scenario);
+    if (scenario && typeof scenario === 'object') {
+      return [
+        scenario.title || scenario.label || scenario.name,
+        scenario.condition ? `Condition: ${scenario.condition}` : '',
+        scenario.outcome ? `Outcome: ${scenario.outcome}` : '',
+        scenario.implication ? `Implication: ${scenario.implication}` : '',
+      ].filter(Boolean).map(cleanInlineFormatting).join(' - ');
+    }
+    return '';
+  };
   const normalizeAssetBlock = (asset) => ({
     symbol: cleanInlineFormatting(asset?.symbol || asset?.instrument || asset?.label || ''),
     heading: cleanInlineFormatting(asset?.heading || asset?.symbol || asset?.instrument || asset?.label || ''),
@@ -740,7 +1018,7 @@ function normalizeWeeklyStructuredParsed(parsed) {
     weekConclusion: cleanInlineFormatting(parsed?.weekConclusion || ''),
     sessionWatch: parseSessionBias(parsed?.sessionWatch),
     keyScenarios: Array.isArray(parsed?.keyScenarios)
-      ? parsed.keyScenarios.map((x) => cleanInlineFormatting(x)).filter(Boolean)
+      ? parsed.keyScenarios.map((x) => normalizeScenario(x)).filter(Boolean)
       : [],
   };
 }
@@ -902,9 +1180,10 @@ Hard rules:
 - Return JSON only with keys: overview, previousWeekLabel, summaryForLastWeek, assetPerformance, structuralWeeklyDrivers, mondayTuesdayFocus, wednesdayFocus, thursdayFridayFocus, assetOutlooks, weekConclusion, sessionWatch, keyScenarios.`;
 
   const fetchStructured = async (payload) => callPerplexityJson(systemPrompt, payload, {
-    maxTokens: normalizedPeriod === 'daily' ? 7000 : 9000,
+    maxTokens: normalizedPeriod === 'daily' ? 7000 : 7500,
     temperature: 0.42,
-    timeoutMs: normalizedPeriod === 'daily' ? 90000 : 120000,
+    timeoutMs: normalizedPeriod === 'daily' ? 90000 : 180000,
+    jsonSchema: normalizedPeriod === 'daily' ? buildDailySampleJsonSchema() : buildWeeklySampleJsonSchema(),
   });
   let ai = await fetchStructured(basePayload);
   if (!ai.ok || !ai.parsed) return { ok: false, error: ai.error || 'generation_failed' };
