@@ -2,16 +2,23 @@
  * Comprehensive Health Check Endpoint for AURA AI Service
  * 
  * Checks:
- * - OpenAI API connectivity and quota
+ * - Perplexity API connectivity and model routing
  * - Database connectivity and connection pool health
  * - Data layer adapters (market data, calendar, news)
+ * - Twelve Data env readiness
  * - Cache system status
  * - System resources
  */
 
 const { getDbConnection } = require('../db');
 const { getCached, setCached, getCacheStats } = require('../cache');
-const { getPerplexityModelForChat, getPerplexityModelForReports } = require('./perplexity-config');
+const {
+  getPerplexityModelForChat,
+  getPerplexityModelForReports,
+  getPerplexityModelForDna,
+  getPerplexityModelForVision,
+  getPerplexityAutomationModel,
+} = require('./perplexity-config');
 
 // Try to load data service if available
 let dataService = null;
@@ -45,6 +52,7 @@ module.exports = async (req, res) => {
     environment: process.env.NODE_ENV || 'development',
     services: {
       perplexity: { status: 'unknown', latency: null },
+      twelveData: { status: 'unknown' },
       database: { status: 'unknown', latency: null },
       cache: { status: 'unknown', stats: null },
       dataLayer: { status: 'unknown', adapters: {} }
@@ -104,7 +112,10 @@ module.exports = async (req, res) => {
         latency: Date.now() - aiStartTime,
         models: {
           chat: getPerplexityModelForChat(),
-          reports: getPerplexityModelForReports()
+          reports: getPerplexityModelForReports(),
+          dna: getPerplexityModelForDna(),
+          vision: getPerplexityModelForVision(),
+          automation: getPerplexityAutomationModel(),
         }
       };
     }
@@ -116,6 +127,12 @@ module.exports = async (req, res) => {
     };
     healthStatus.status = 'degraded';
   }
+
+  const hasTwelveDataKey = String(process.env.TWELVE_DATA_API_KEY || '').trim().length > 0;
+  healthStatus.services.twelveData = {
+    status: hasTwelveDataKey ? 'healthy' : 'degraded',
+    configured: hasTwelveDataKey,
+  };
 
   // Check Database connectivity
   const dbStartTime = Date.now();
