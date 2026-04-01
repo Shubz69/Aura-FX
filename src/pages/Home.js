@@ -10,7 +10,7 @@ import {
     FaShieldAlt, FaClock, FaCoins, FaChartBar,
     FaChartLine, FaGlobe, FaArrowRight, FaBolt,
     FaCompass, FaCalculator, FaBrain, FaPlayCircle,
-    FaLayerGroup, FaFlask,
+    FaFlask, FaTimes, FaInfoCircle,
 } from 'react-icons/fa';
 
 /* ══════════════════════════════════════════════════════════
@@ -444,6 +444,37 @@ const FloatingIPad = () => {
     );
 };
 
+const TutorialCoachmark = ({
+    title,
+    text,
+    step,
+    total,
+    onNext,
+    onPrev,
+    onClose,
+    canPrev = true,
+    isLast = false,
+}) => (
+    <div className="dashboard-home-coachmark" role="dialog" aria-live="polite">
+        <div className="dashboard-home-coachmark__meta">Tutorial {step} / {total}</div>
+        <h3>{title}</h3>
+        <p>{text}</p>
+        <div className="dashboard-home-coachmark__actions">
+            <button type="button" className="dashboard-home-coachmark__ghost" onClick={onClose}>
+                Skip
+            </button>
+            <div className="dashboard-home-coachmark__nav">
+                <button type="button" className="dashboard-home-coachmark__ghost" onClick={onPrev} disabled={!canPrev}>
+                    Back
+                </button>
+                <button type="button" className="dashboard-home-coachmark__primary" onClick={onNext}>
+                    {isLast ? 'Finish' : 'Next'}
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
 /* ══════════════════════════════════════════════════════════
    HOME PAGE
 ══════════════════════════════════════════════════════════ */
@@ -452,6 +483,9 @@ const Home = () => {
     const { isAuthenticated, user } = useAuth();
     const [showContent, setShowContent] = useState(false);
     const [isLoading,   setIsLoading]   = useState(true);
+    const [tutorialOpen, setTutorialOpen] = useState(true);
+    const [tutorialStep, setTutorialStep] = useState(0);
+    const [activeHint, setActiveHint] = useState('hero');
 
     useEffect(() => {
         const t = setTimeout(() => { setIsLoading(false); setShowContent(true); }, 3000);
@@ -461,72 +495,120 @@ const Home = () => {
     const handleStart = () => navigate(isAuthenticated ? '/community' : '/register');
     const displayName = (user?.name || user?.username || '').trim();
     const greeting = displayName ? `Welcome back, ${displayName}` : 'Welcome';
-
-    const quickStartSteps = [
+    const tutorialSteps = [
         {
-            title: 'Check your market picture',
-            text: 'Start in Trader Desk to see session context, market bias, and the information you need before making a decision.',
+            target: 'hero',
+            title: 'Start from the welcome area',
+            text: 'This top section is your daily starting point. Use it to understand where to begin, then jump into the tool that matches your next move.',
         },
         {
-            title: 'Validate or calculate the trade',
-            text: 'Use Trader Lab, the calculator, and validation tools to pressure-test the idea, size risk correctly, and avoid impulsive entries.',
+            target: 'desk',
+            title: 'Trader Desk shows your market picture',
+            text: 'Use Trader Desk first when you need context, structure, and session awareness before planning a trade.',
         },
         {
-            title: 'Review, improve, and connect',
-            text: 'Use Aura Analysis for feedback and Community to stay accountable, learn faster, and keep momentum.',
+            target: 'lab',
+            title: 'Trader Lab helps you think through the trade',
+            text: 'This is the active workspace for session prep, setup validation, live thinking, and post-trade review.',
+        },
+        {
+            target: 'analysis',
+            title: 'Aura Analysis helps you review performance',
+            text: 'Use it to connect data, review patterns, and turn your performance into clear next-step feedback.',
+        },
+        {
+            target: 'community',
+            title: 'Community keeps you accountable',
+            text: 'When you need conversation, support, and shared standards, this is where you stay connected to the environment.',
         },
     ];
 
-    const featureHighlights = [
+    const previewCards = [
         {
+            key: 'desk',
             icon: <FaCompass />,
             title: 'Trader Desk',
-            description: 'Your command center for market context, session awareness, and execution clarity before the trade.',
-            cta: 'Open Trader Desk',
+            description: 'See the market picture, session tone, and what matters before you act.',
             path: '/trader-deck',
+            cta: 'Open Trader Desk',
             accent: 'Command Center',
+            bullets: ['Session bias', 'Market context', 'Execution clarity'],
+            previewClass: 'dashboard-home-preview--desk',
+            previewStats: ['Bias: Bullish', 'London: Open', 'Focus: Pullbacks'],
+            hint: 'Best first click before planning anything else.',
         },
         {
+            key: 'lab',
             icon: <FaFlask />,
             title: 'Trader Lab',
-            description: 'Build and test the trade in your active thinking environment before execution, with session prep, validation, and review in one flow.',
-            cta: 'Open Trader Lab',
+            description: 'Prepare the session, pressure-test the setup, and review behavior in one flow.',
             path: '/trader-lab',
+            cta: 'Open Trader Lab',
             accent: 'Active Thinking',
+            bullets: ['Session prep', 'Trade thinking', 'Behavior review'],
+            previewClass: 'dashboard-home-preview--lab',
+            previewStats: ['Confidence: 74%', 'R:R: 1:2.5', 'Status: Validating'],
+            hint: 'Use this when you want a more guided decision process.',
         },
         {
+            key: 'calculator',
             icon: <FaCalculator />,
             title: 'Trade Calculator',
-            description: 'Calculate position size, risk, and reward quickly so every idea is grounded before execution.',
-            cta: 'Open Calculator',
+            description: 'Size risk, reward, and position details before execution.',
             path: '/trader-deck/trade-validator/calculator',
+            cta: 'Open Calculator',
             accent: 'Risk Precision',
+            bullets: ['Position sizing', 'Risk %, R:R', 'Fast planning'],
+            previewClass: 'dashboard-home-preview--calculator',
+            previewStats: ['Risk: 0.50%', 'Lot: 1.25', 'Target: 2.0R'],
+            hint: 'Use this anytime you need numbers before clicking buy or sell.',
         },
         {
+            key: 'analysis',
             icon: <FaBrain />,
             title: 'Aura Analysis',
-            description: 'Connect your account and turn performance data into feedback, patterns, and next-step insight.',
-            cta: 'Open Aura Analysis',
+            description: 'Review performance, patterns, and growth opportunities using your data.',
             path: '/aura-analysis',
+            cta: 'Open Aura Analysis',
             accent: 'Performance Intelligence',
+            bullets: ['Performance review', 'Pattern spotting', 'Growth engine'],
+            previewClass: 'dashboard-home-preview--analysis',
+            previewStats: ['Win Rate: 62%', 'Risk Score: Stable', 'Edge: Improving'],
+            hint: 'Use this after sessions to understand what is improving and what needs work.',
         },
         {
+            key: 'community',
             icon: <FaUsers />,
             title: 'Community',
-            description: 'Stay connected to the environment, conversations, and accountability that keep standards high.',
-            cta: 'Open Community',
+            description: 'Stay connected to traders, updates, and accountability throughout the week.',
             path: '/community',
+            cta: 'Open Community',
             accent: 'Accountability',
-        },
-        {
-            icon: <FaLayerGroup />,
-            title: 'Trade Validator',
-            description: 'Review setup quality through your existing validation flow and keep your process disciplined.',
-            cta: 'Open Validator',
-            path: '/trader-deck/trade-validator/overview',
-            accent: 'Execution Control',
+            bullets: ['Live channels', 'Shared feedback', 'Trading environment'],
+            previewClass: 'dashboard-home-preview--community',
+            previewStats: ['Welcome room', 'Mentor updates', 'Daily check-ins'],
+            hint: 'Go here when you want interaction, ideas, or support from the network.',
         },
     ];
+
+    const currentTutorial = tutorialSteps[tutorialStep];
+    const highlightedTarget = tutorialOpen ? currentTutorial?.target : null;
+    const setTutorialRef = () => () => {};
+    const showHint = (key) => activeHint === key;
+    const nextTutorialStep = () => {
+        if (tutorialStep >= tutorialSteps.length - 1) {
+            setTutorialOpen(false);
+            return;
+        }
+        setTutorialStep((prev) => prev + 1);
+        setActiveHint(tutorialSteps[tutorialStep + 1].target);
+    };
+    const prevTutorialStep = () => {
+        if (tutorialStep === 0) return;
+        setTutorialStep((prev) => prev - 1);
+        setActiveHint(tutorialSteps[tutorialStep - 1].target);
+    };
+    const closeTutorial = () => setTutorialOpen(false);
 
     return (
         <>
@@ -549,7 +631,10 @@ const Home = () => {
                     isAuthenticated ? (
                         <div className="home-content home-content--dashboard">
                             <div className="dashboard-home-shell">
-                                <section className="dashboard-home-hero glass-card">
+                                <section
+                                    ref={setTutorialRef('hero')}
+                                    className={`dashboard-home-hero glass-card${highlightedTarget === 'hero' ? ' dashboard-home-focus' : ''}`}
+                                >
                                     <div className="dashboard-home-hero__content">
                                         <div className="dashboard-home-kicker">
                                             <span className="dashboard-home-kicker__dot" />
@@ -557,21 +642,31 @@ const Home = () => {
                                         </div>
                                         <h1 className="dashboard-home-title">{greeting}</h1>
                                         <p className="dashboard-home-subtitle">
-                                            This is your Aura Terminal overview. Start here to understand the platform fast, move into the right tool, and keep your trading process structured from analysis to execution.
+                                            This is your Aura Terminal overview. Instead of dropping straight into Community, this page now walks you through the platform, shows what each area looks like, and helps you choose the right next step.
                                         </p>
                                         <div className="dashboard-home-actions">
-                                            <button className="home-cta-button" onClick={() => navigate('/trader-deck')}>
+                                            <button
+                                                className="home-cta-button"
+                                                onClick={() => navigate('/trader-deck')}
+                                            >
                                                 Start In Trader Desk
                                             </button>
-                                            <button className="home-secondary-button" onClick={() => navigate('/community')}>
-                                                Go To Community
+                                            <button
+                                                className="home-secondary-button"
+                                                onClick={() => {
+                                                    setTutorialOpen(true);
+                                                    setTutorialStep(0);
+                                                    setActiveHint('hero');
+                                                }}
+                                            >
+                                                Start Tutorial
                                             </button>
                                         </div>
                                         <div className="dashboard-home-highlights">
                                             {[
-                                                { label: 'Workflow', value: 'Overview Of Your Tools' },
-                                                { label: 'Goal', value: 'Clarity Before Execution' },
-                                                { label: 'Focus', value: 'Discipline, Analysis, Growth' },
+                                                { label: 'Workflow', value: 'See The Platform First' },
+                                                { label: 'Goal', value: 'Know Where To Click Next' },
+                                                { label: 'Focus', value: 'Learn, Plan, Execute, Review' },
                                             ].map((item) => (
                                                 <div className="dashboard-home-pill" key={item.label}>
                                                     <span>{item.label}</span>
@@ -579,6 +674,19 @@ const Home = () => {
                                                 </div>
                                             ))}
                                         </div>
+                                        {tutorialOpen && highlightedTarget === 'hero' && (
+                                            <TutorialCoachmark
+                                                title={currentTutorial.title}
+                                                text={currentTutorial.text}
+                                                step={tutorialStep + 1}
+                                                total={tutorialSteps.length}
+                                                onNext={nextTutorialStep}
+                                                onPrev={prevTutorialStep}
+                                                onClose={closeTutorial}
+                                                canPrev={tutorialStep > 0}
+                                                isLast={tutorialStep === tutorialSteps.length - 1}
+                                            />
+                                        )}
                                     </div>
 
                                     <div className="dashboard-home-hero__panel">
@@ -586,11 +694,11 @@ const Home = () => {
                                             <div className="dashboard-home-panel__header">
                                                 <span className="dashboard-home-panel__eyebrow">Quick Start</span>
                                                 <span className="dashboard-home-panel__badge">
-                                                    <FaBolt /> 3 Simple Steps
+                                                    <FaBolt /> Guided Tour
                                                 </span>
                                             </div>
                                             <div className="dashboard-home-panel__steps">
-                                                {quickStartSteps.map((step, index) => (
+                                                {tutorialSteps.map((step, index) => (
                                                     <div className="dashboard-home-step" key={step.title}>
                                                         <div className="dashboard-home-step__number">0{index + 1}</div>
                                                         <div className="dashboard-home-step__body">
@@ -602,9 +710,13 @@ const Home = () => {
                                             </div>
                                             <button
                                                 className="dashboard-home-panel__link"
-                                                onClick={() => navigate('/aura-analysis')}
+                                                onClick={() => {
+                                                    setTutorialOpen(true);
+                                                    setTutorialStep(0);
+                                                    setActiveHint('hero');
+                                                }}
                                             >
-                                                Open Analysis Flow <FaArrowRight />
+                                                Replay Tutorial <FaArrowRight />
                                             </button>
                                         </div>
                                     </div>
@@ -630,22 +742,82 @@ const Home = () => {
                                     <div className="dashboard-home-section-head">
                                         <div>
                                             <p className="dashboard-home-section-label">Platform Overview</p>
-                                            <h2>Everything important, from one place</h2>
+                                            <h2>See what the other pages actually do</h2>
                                         </div>
                                         <p className="dashboard-home-section-copy">
-                                            Each area below gives you a different part of the trading workflow so the whole platform feels easier to understand and faster to use.
+                                            These are visual previews, not just boxes. Use the tutorial popups and examples below to understand how each major area of Aura Terminal helps you.
                                         </p>
                                     </div>
 
                                     <div className="dashboard-home-grid">
-                                        {featureHighlights.map((item) => (
-                                            <article className="dashboard-home-card glass-card" key={item.title}>
+                                        {previewCards.map((item) => (
+                                            <article
+                                                ref={setTutorialRef(item.key)}
+                                                className={`dashboard-home-card glass-card${highlightedTarget === item.key ? ' dashboard-home-focus' : ''}`}
+                                                key={item.title}
+                                            >
                                                 <div className="dashboard-home-card__top">
-                                                    <div className="dashboard-home-card__icon">{item.icon}</div>
-                                                    <span className="dashboard-home-card__accent">{item.accent}</span>
+                                                    <div className="dashboard-home-card__meta">
+                                                        <div className="dashboard-home-card__icon">{item.icon}</div>
+                                                        <div className="dashboard-home-card__meta-copy">
+                                                            <span className="dashboard-home-card__accent">{item.accent}</span>
+                                                            <button
+                                                                type="button"
+                                                                className="dashboard-home-card__hint"
+                                                                onClick={() => setActiveHint(showHint(item.key) ? null : item.key)}
+                                                            >
+                                                                <FaInfoCircle /> How it works
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`dashboard-home-preview ${item.previewClass}`}>
+                                                        <div className="dashboard-home-preview__screen">
+                                                            <div className="dashboard-home-preview__topbar">
+                                                                <span />
+                                                                <span />
+                                                                <span />
+                                                            </div>
+                                                            <div className="dashboard-home-preview__hero" />
+                                                            <div className="dashboard-home-preview__tiles">
+                                                                {item.previewStats.map((stat) => (
+                                                                    <div className="dashboard-home-preview__tile" key={stat}>{stat}</div>
+                                                                ))}
+                                                            </div>
+                                                            <div className="dashboard-home-preview__footer" />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <h3>{item.title}</h3>
                                                 <p>{item.description}</p>
+                                                <div className="dashboard-home-card__bullets">
+                                                    {item.bullets.map((bullet) => (
+                                                        <span key={bullet}>{bullet}</span>
+                                                    ))}
+                                                </div>
+                                                {showHint(item.key) && (
+                                                    <div className="dashboard-home-inline-tip">
+                                                        <div className="dashboard-home-inline-tip__header">
+                                                            <strong>{item.title}</strong>
+                                                            <button type="button" onClick={() => setActiveHint(null)}>
+                                                                <FaTimes />
+                                                            </button>
+                                                        </div>
+                                                        <p>{item.hint}</p>
+                                                    </div>
+                                                )}
+                                                {tutorialOpen && highlightedTarget === item.key && (
+                                                    <TutorialCoachmark
+                                                        title={currentTutorial.title}
+                                                        text={currentTutorial.text}
+                                                        step={tutorialStep + 1}
+                                                        total={tutorialSteps.length}
+                                                        onNext={nextTutorialStep}
+                                                        onPrev={prevTutorialStep}
+                                                        onClose={closeTutorial}
+                                                        canPrev={tutorialStep > 0}
+                                                        isLast={tutorialStep === tutorialSteps.length - 1}
+                                                    />
+                                                )}
                                                 <button
                                                     className="dashboard-home-card__button"
                                                     onClick={() => navigate(item.path)}
@@ -667,9 +839,9 @@ const Home = () => {
                                         </div>
                                         <div className="dashboard-home-flow">
                                             {[
-                                                'Open Trader Desk to get your market picture.',
-                                                'Use Trader Lab and the calculator to pressure-test the setup before taking action.',
-                                                'Review progress in Aura Analysis and stay plugged into Community.',
+                                                'Start with Trader Desk when you need context and a clean picture of the market.',
+                                                'Move into Trader Lab or Trade Calculator when you need to think through execution and risk.',
+                                                'Use Aura Analysis after the session, then Community when you want accountability or updates.',
                                             ].map((item, index) => (
                                                 <div className="dashboard-home-flow__item" key={item}>
                                                     <span className="dashboard-home-flow__index">{index + 1}</span>
