@@ -44,23 +44,6 @@ function normalizeSetup(setup = {}) {
   };
 }
 
-function SetupSummaryCard({ form }) {
-  return (
-    <div className="trader-suite-summary-card">
-      <span className="trader-suite-rail-label">Setup summary</span>
-      <h3>{form.name}</h3>
-      <p>
-        Best in {form.marketType} conditions during the {form.session} session, using {form.timeframes} across {form.assets}.
-      </p>
-      <div className="trader-suite-list" style={{ marginTop: 14 }}>
-        <li>Qualifies when: {form.structureRequirement}</li>
-        <li>Entry requires: {form.confirmationType} and {form.entryTrigger}</li>
-        <li>Risk stays capped at {form.maxRisk}% with invalidation defined before entry.</li>
-      </div>
-    </div>
-  );
-}
-
 export default function TraderPlaybook() {
   const [setups, setSetups] = useState([]);
   const [activeId, setActiveId] = useState(null);
@@ -153,14 +136,11 @@ export default function TraderPlaybook() {
 
   return (
     <TraderSuiteShell
-      eyebrow="Trader Workflow / Step 1"
-      title="Trader Playbook"
-      description="Build the rulebook first. This page should let a trader understand the setup in seconds, confirm what qualifies it, and push the idea directly into the live execution workflow."
+      variant="terminal"
+      eyebrow="Welcome, Samy"
+      title="AURA TERMINAL - TRADER PLAYBOOK"
+      description="Compact terminal-board layout for your strategy rules. The setup should be readable in one screen with clear conditions, entry logic, management, checklist, and hard blockers."
       stats={stats}
-      status={{
-        title: 'Playbook is the source of truth',
-        body: 'If the setup is not clear here, validation in Trader Lab and review in Trader Replay both become weaker.',
-      }}
       primaryAction={(
         <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={saveSetup} disabled={saving}>
           {saving ? 'Saving...' : 'Save playbook'}
@@ -173,245 +153,141 @@ export default function TraderPlaybook() {
           <Link to="/trader-replay" className="trader-suite-btn">View linked Replay</Link>
         </>
       )}
-      workflowSteps={[
-        { index: '1', label: 'Define setup', note: 'What this idea is and when it belongs.', active: true },
-        { index: '2', label: 'Qualify trade', note: 'What must be true before entry.' },
-        { index: '3', label: 'Execute rules', note: 'Risk, management, and hard filters.' },
-        { index: '4', label: 'Measure edge', note: 'Review how the setup actually performs.' },
-      ]}
-      railTitle="Operator note"
-      railContent={<SetupSummaryCard form={form} />}
     >
-      <div className="trader-suite-grid trader-suite-grid--2">
-        <section className="trader-suite-panel trader-suite-section">
-          <div className="trader-suite-section-header">
-            <div>
-              <div className="trader-suite-kicker">Setup Library</div>
-              <h2>Choose the strategy you are maintaining</h2>
-              <p>Start with setup selection so every rule below belongs to one specific trading pattern.</p>
-            </div>
-            <span className="trader-suite-badge">Structured rules</span>
-          </div>
-          <div className="trader-suite-tab-row">
-            {setups.map((setup) => (
-              <button
-                key={setup.id}
-                type="button"
-                className={`trader-suite-tab-btn${setup.id === activeId ? ' trader-suite-tab-btn--active' : ''}`}
-                onClick={() => {
-                  setActiveId(setup.id);
-                  setForm(normalizeSetup(setup));
-                }}
-              >
-                {setup.name}
-              </button>
-            ))}
-          </div>
-          {loading ? <div className="trader-suite-empty" style={{ marginTop: 16 }}>Loading your saved setups...</div> : null}
-          <div className="trader-suite-field-grid" style={{ marginTop: 18 }}>
-            <div className="trader-suite-field trader-suite-field--span-5">
-              <label>Strategy name</label>
-              <input className="trader-suite-input" value={form.name} onChange={(e) => handleChange('name', e.target.value)} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-3">
-              <label>Market type</label>
-              <select className="trader-suite-select" value={form.marketType} onChange={(e) => handleChange('marketType', e.target.value)}>
-                <option value="trend">Trend</option>
-                <option value="range">Range</option>
-                <option value="mixed">Mixed</option>
-                <option value="news">News-driven</option>
-              </select>
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-4">
-              <label>Session</label>
-              <input className="trader-suite-input" value={form.session} onChange={(e) => handleChange('session', e.target.value)} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-4">
-              <label>Timeframes</label>
-              <input className="trader-suite-input" value={form.timeframes} onChange={(e) => handleChange('timeframes', e.target.value)} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-8">
-              <label>Pairs / assets</label>
-              <input className="trader-suite-input" value={form.assets} onChange={(e) => handleChange('assets', e.target.value)} />
-            </div>
-          </div>
-        </section>
+      {loading ? <div className="trader-suite-empty">Loading your saved setups...</div> : null}
 
-        <section className="trader-suite-panel trader-suite-section">
-          <div className="trader-suite-section-header">
-            <div>
-              <div className="trader-suite-kicker">Qualification Snapshot</div>
-              <h2>What makes this setup valid?</h2>
-              <p>This should be scannable enough that a trader knows in seconds whether the idea belongs today or not.</p>
-            </div>
-          </div>
-          <div className="trader-suite-field-grid">
-            <div className="trader-suite-field trader-suite-field--span-12">
-              <label>Bias requirement</label>
-              <textarea className="trader-suite-textarea" value={form.biasRequirement} onChange={(e) => handleChange('biasRequirement', e.target.value)} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-12">
-              <label>Market structure required</label>
-              <textarea className="trader-suite-textarea" value={form.structureRequirement} onChange={(e) => handleChange('structureRequirement', e.target.value)} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-6">
-              <label>Volatility condition</label>
-              <textarea className="trader-suite-textarea" value={form.volatilityCondition} onChange={(e) => handleChange('volatilityCondition', e.target.value)} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-6">
-              <label>Session timing</label>
-              <textarea className="trader-suite-textarea" value={form.sessionTiming} onChange={(e) => handleChange('sessionTiming', e.target.value)} />
-            </div>
-          </div>
-        </section>
-      </div>
+      <div className="trader-playbook-terminal">
+        <div className="trader-playbook-terminal__board">
+          <div className="trader-playbook-terminal__col">
+            <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+              <div className="trader-suite-kicker">Strategy Overview</div>
+              <div className="trader-playbook-terminal__rows">
+                <div className="trader-playbook-terminal__row"><span>Strategy Name</span><strong>{form.name}</strong></div>
+                <div className="trader-playbook-terminal__row"><span>Market Type</span><strong>{form.marketType}</strong></div>
+                <div className="trader-playbook-terminal__row"><span>Timeframes</span><strong>{form.timeframes}</strong></div>
+                <div className="trader-playbook-terminal__row"><span>Assets</span><strong>{form.assets}</strong></div>
+                <div className="trader-playbook-terminal__row"><span>Session</span><strong>{form.session}</strong></div>
+              </div>
+            </section>
 
-      <div className="trader-suite-grid trader-suite-grid--2">
-        <section className="trader-suite-panel trader-suite-section">
-          <div className="trader-suite-section-header">
-            <div>
-              <div className="trader-suite-kicker">Entry Logic</div>
-              <h2>What must happen before you click?</h2>
-              <p>Separate the trigger from the confirmation so the setup is executable, not vague.</p>
-            </div>
-            <span className="trader-suite-badge trader-suite-badge--good">Feeds Trader Lab validation</span>
-          </div>
-          <div className="trader-suite-field-grid">
-            <div className="trader-suite-field trader-suite-field--span-6">
-              <label>Confirmation type</label>
-              <input className="trader-suite-input" value={form.confirmationType} onChange={(e) => handleChange('confirmationType', e.target.value)} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-6">
-              <label>Entry trigger</label>
-              <input className="trader-suite-input" value={form.entryTrigger} onChange={(e) => handleChange('entryTrigger', e.target.value)} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-12">
-              <label>Entry checklist</label>
-              <div className="trader-suite-note-list">
-                {form.entryChecklist.map((item, index) => (
-                  <div key={`check-${index}`} className="trader-suite-card-lite">
-                    <strong>Checklist item {index + 1}</strong>
-                    <input className="trader-suite-input" value={item} onChange={(e) => handleArrayChange('entryChecklist', index, e.target.value)} />
+            <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+              <div className="trader-suite-kicker">Best Conditions</div>
+              <div className="trader-playbook-terminal__rows">
+                <div className="trader-playbook-terminal__row"><span>Trend Phase</span><strong>{form.marketType}</strong></div>
+                <div className="trader-playbook-terminal__row"><span>Volatility</span><strong>{form.volatilityCondition}</strong></div>
+                <div className="trader-playbook-terminal__row"><span>Breakout Zone</span><strong>{form.structureRequirement}</strong></div>
+                <div className="trader-playbook-terminal__row"><span>News</span><strong>{form.sessionTiming}</strong></div>
+              </div>
+            </section>
+
+            <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+              <div className="trader-suite-kicker">Entry Rules</div>
+              <div className="trader-playbook-terminal__numbered">
+                {form.entryChecklist.slice(0, 3).map((item, index) => (
+                  <div key={item} className="trader-playbook-terminal__numbered-row">
+                    <span>{index + 1}</span>
+                    <strong>{item}</strong>
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-12">
-              <label>Checklist rule</label>
-              <textarea className="trader-suite-textarea" value={form.checklistNotes} onChange={(e) => handleChange('checklistNotes', e.target.value)} />
-            </div>
+            </section>
           </div>
-        </section>
 
-        <section className="trader-suite-panel trader-suite-section">
-          <div className="trader-suite-section-header">
-            <div>
-              <div className="trader-suite-kicker">Risk And Management</div>
-              <h2>How the trade is protected and managed</h2>
-              <p>This is the operating section: invalidation, risk cap, sizing, partials, and how the trade is held.</p>
-            </div>
-          </div>
-          <div className="trader-suite-field-grid">
-            <div className="trader-suite-field trader-suite-field--span-6">
-              <label>Stop placement</label>
-              <textarea className="trader-suite-textarea" value={form.stopPlacement} onChange={(e) => handleChange('stopPlacement', e.target.value)} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-3">
-              <label>Max risk %</label>
-              <input className="trader-suite-input" value={form.maxRisk} onChange={(e) => handleChange('maxRisk', e.target.value)} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-3">
-              <label>Position sizing</label>
-              <input className="trader-suite-input" value={form.positionSizing} onChange={(e) => handleChange('positionSizing', e.target.value)} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-6">
-              <label>Invalidation logic</label>
-              <textarea className="trader-suite-textarea" value={form.invalidationLogic} onChange={(e) => handleChange('invalidationLogic', e.target.value)} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-6">
-              <label>Management rules</label>
-              <textarea
-                className="trader-suite-textarea"
-                value={`${form.partialsRule}\n${form.trailingLogic}\n${form.holdVsExit}`}
-                onChange={(e) => {
-                  const [partialsRule = '', trailingLogic = '', holdVsExit = ''] = e.target.value.split('\n');
-                  setForm((prev) => ({ ...prev, partialsRule, trailingLogic, holdVsExit }));
-                }}
-              />
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <div className="trader-suite-grid trader-suite-grid--2">
-        <section className="trader-suite-panel trader-suite-section">
-          <div className="trader-suite-section-header">
-            <div>
-              <div className="trader-suite-kicker">Hard Filters</div>
-              <h2>Do not trade if</h2>
-              <p>These conditions should block the trade entirely, even if the setup usually works.</p>
-            </div>
-          </div>
-          <div className="trader-suite-note-list">
-            {form.doNotTrade.map((item, index) => (
-              <div key={`dont-${index}`} className="trader-suite-note">
-                <strong>Blocker {index + 1}</strong>
-                <input className="trader-suite-input" value={item} onChange={(e) => handleArrayChange('doNotTrade', index, e.target.value)} />
+          <div className="trader-playbook-terminal__col trader-playbook-terminal__col--wide">
+            <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+              <div className="trader-suite-section-header">
+                <div className="trader-suite-kicker">Setup Conditions</div>
+                <div className="trader-suite-tab-row">
+                  {setups.map((setup) => (
+                    <button
+                      key={setup.id}
+                      type="button"
+                      className={`trader-suite-tab-btn${setup.id === activeId ? ' trader-suite-tab-btn--active' : ''}`}
+                      onClick={() => {
+                        setActiveId(setup.id);
+                        setForm(normalizeSetup(setup));
+                      }}
+                    >
+                      {setup.name}
+                    </button>
+                  ))}
+                </div>
               </div>
+              <div className="trader-playbook-terminal__checkrows">
+                <div className="trader-playbook-terminal__checkrow"><span>Bias aligned</span><strong>{form.biasRequirement}</strong></div>
+                <div className="trader-playbook-terminal__checkrow"><span>Volatility present</span><strong>{form.volatilityCondition}</strong></div>
+                <div className="trader-playbook-terminal__checkrow"><span>Session active</span><strong>{form.sessionTiming}</strong></div>
+                <div className="trader-playbook-terminal__checkrow"><span>Structure clear</span><strong>{form.structureRequirement}</strong></div>
+              </div>
+            </section>
+
+            <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+              <div className="trader-suite-kicker">Entry Rules</div>
+              <div className="trader-playbook-terminal__numbered">
+                {[form.confirmationType, form.entryTrigger, form.checklistNotes].map((item, index) => (
+                  <div key={`${index}-${item}`} className="trader-playbook-terminal__numbered-row">
+                    <span>{index + 1}</span>
+                    <strong>{item}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+              <div className="trader-suite-kicker">Risk &amp; Trade Management</div>
+              <div className="trader-playbook-terminal__numbered">
+                {[form.stopPlacement, `Position Size: ${form.maxRisk}% risk per trade`, `${form.partialsRule} ${form.trailingLogic}`, form.holdVsExit].map((item, index) => (
+                  <div key={`${index}-${item}`} className="trader-playbook-terminal__numbered-row">
+                    <span>{index + 1}</span>
+                    <strong>{item}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <div className="trader-playbook-terminal__col">
+            <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+              <div className="trader-suite-kicker">Playbook Checklist</div>
+              <div className="trader-playbook-terminal__checkrows">
+                {form.entryChecklist.map((item) => (
+                  <div key={item} className="trader-playbook-terminal__checkrow">
+                    <span>{item}</span>
+                    <strong>Ready</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+              <div className="trader-suite-kicker">Common Mistakes</div>
+              <div className="trader-suite-pill-row">
+                {form.commonMistakes.map((item) => (
+                  <span key={item} className="trader-suite-pill">{item}</span>
+                ))}
+              </div>
+            </section>
+
+            <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+              <div className="trader-suite-kicker">Performance Stats</div>
+              <div className="trader-playbook-terminal__rows">
+                <div className="trader-playbook-terminal__row"><span>Win Rate</span><strong>{form.winRate}</strong></div>
+                <div className="trader-playbook-terminal__row"><span>Best Setup</span><strong>{form.name}</strong></div>
+                <div className="trader-playbook-terminal__row"><span>Discipline Score</span><strong>{form.avgR}</strong></div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <section className="trader-suite-panel trader-playbook-terminal__footer">
+          <div className="trader-playbook-terminal__footer-title">DO NOT TRADE IF:</div>
+          <div className="trader-playbook-terminal__footer-pills">
+            {form.doNotTrade.map((item) => (
+              <span key={item} className="trader-suite-pill">{item}</span>
             ))}
           </div>
         </section>
-
-        <section className="trader-suite-panel trader-suite-section">
-          <div className="trader-suite-section-header">
-            <div>
-              <div className="trader-suite-kicker">Known Leaks</div>
-              <h2>Recurring mistakes</h2>
-              <p>Keep the mistakes visible so replay can diagnose whether the setup failed or the execution did.</p>
-            </div>
-          </div>
-          <div className="trader-suite-note-list">
-            {form.commonMistakes.map((item, index) => (
-              <div key={`mistake-${index}`} className="trader-suite-note">
-                <strong>Mistake {index + 1}</strong>
-                <input className="trader-suite-input" value={item} onChange={(e) => handleArrayChange('commonMistakes', index, e.target.value)} />
-              </div>
-            ))}
-          </div>
-        </section>
       </div>
-
-      <section className="trader-suite-panel trader-suite-section">
-        <div className="trader-suite-section-header">
-          <div>
-            <div className="trader-suite-kicker">Performance Feedback</div>
-            <h2>How this setup actually performs</h2>
-            <p>The playbook stays alive only when review data flows back into it and sharpens the rules over time.</p>
-          </div>
-          <div className="trader-suite-cta-row">
-            <Link to="/trader-lab" className="trader-suite-btn trader-suite-btn--primary">Use this setup in Trader Lab</Link>
-            <Link to="/trader-replay" className="trader-suite-btn">Review this setup in Replay</Link>
-          </div>
-        </div>
-        <div className="trader-suite-metric-grid">
-          <div className="trader-suite-metric">
-            <h3>Win rate</h3>
-            <p>{form.winRate}</p>
-          </div>
-          <div className="trader-suite-metric">
-            <h3>Average R</h3>
-            <p>{form.avgR}</p>
-          </div>
-          <div className="trader-suite-metric">
-            <h3>Best performance</h3>
-            <p style={{ fontSize: '1rem' }}>{form.bestPerformance}</p>
-          </div>
-          <div className="trader-suite-metric">
-            <h3>Worst performance</h3>
-            <p style={{ fontSize: '1rem' }}>{form.worstPerformance}</p>
-          </div>
-        </div>
-      </section>
     </TraderSuiteShell>
   );
 }

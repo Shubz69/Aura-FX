@@ -135,14 +135,11 @@ export default function TraderReplay() {
 
   return (
     <TraderSuiteShell
-      eyebrow="Trader Workflow / Step 3"
-      title="Trader Replay"
-      description="Review the trade as a sequence: load the case, see the market context, compare the plan against reality, score execution, then decide the one improvement that should feed the next cycle."
+      variant="terminal"
+      eyebrow="Welcome, Samy"
+      title="TRADE REPLAY"
+      description="Terminal-style replay layout with a dominant chart area, left replay controls, a dense trade-info rail, and a bottom insight panel."
       stats={stats}
-      status={{
-        title: 'Replay is about the gap',
-        body: 'Playbook defines the standard and Trader Lab captures the plan. Replay shows where execution matched it and where it drifted.',
-      }}
       primaryAction={(
         <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={saveReplay} disabled={saving}>
           {saving ? 'Saving...' : 'Save replay'}
@@ -154,259 +151,103 @@ export default function TraderReplay() {
           <Link to="/trader-playbook" className="trader-suite-btn">Update Playbook from review</Link>
         </>
       )}
-      workflowSteps={[
-        { index: '1', label: 'Load case', note: 'Select the trade you are reviewing.', complete: true },
-        { index: '2', label: 'Rebuild context', note: 'What the market looked like at the time.', complete: true },
-        { index: '3', label: 'Planned vs actual', note: 'Compare the intended trade with what happened.', active: true },
-        { index: '4', label: 'Score execution', note: 'Timing, patience, discipline, and opportunity.' },
-        { index: '5', label: 'Carry forward', note: 'Turn the review into the next action.' },
-      ]}
-      railTitle="Review lens"
-      railContent={(
-        <div className="trader-suite-rail-stack">
-          <div className="trader-suite-summary-card">
-            <h3>{form.title}</h3>
-            <p>{form.outcome} on {form.asset} with {form.rResult}. The key question is whether the result came from correct execution or avoidable deviation.</p>
-          </div>
-          <div className="trader-suite-card-lite">
-            <strong>Improvement focus</strong>
-            <p>{form.insight}</p>
-          </div>
-        </div>
-      )}
     >
-      <div className="trader-suite-split">
-        <section className="trader-suite-panel trader-suite-section">
-          <div className="trader-suite-section-header">
-            <div>
-              <div className="trader-suite-kicker">Step 1</div>
-              <h2>Load the reviewed trade</h2>
-              <p>Select the trade first, then replay it in sequence instead of scanning disconnected analysis blocks.</p>
-            </div>
-            <span className="trader-suite-badge trader-suite-badge--good">Official TradingView widget</span>
-          </div>
-          <div className="trader-suite-tab-row">
-            {sessions.slice(0, 4).map((session) => (
-              <button
-                key={session.id}
-                type="button"
-                className={`trader-suite-tab-btn${session.id === activeId ? ' trader-suite-tab-btn--active' : ''}`}
-                onClick={() => {
-                  setActiveId(session.id);
-                  setForm(normalizeReplay(session));
-                }}
-              >
-                {session.title}
-              </button>
-            ))}
-          </div>
-          {loading ? <div className="trader-suite-empty">Loading replay sessions...</div> : null}
-          <div className="trader-suite-field-grid" style={{ marginTop: 18 }}>
-            <div className="trader-suite-field trader-suite-field--span-5">
-              <label>Replay title</label>
-              <input className="trader-suite-input" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-4">
-              <label>TradingView symbol</label>
-              <input className="trader-suite-input" value={form.symbol} onChange={(e) => setForm((prev) => ({ ...prev, symbol: e.target.value }))} />
-            </div>
-            <div className="trader-suite-field trader-suite-field--span-3">
-              <label>Interval</label>
-              <select className="trader-suite-select" value={form.interval} onChange={(e) => setForm((prev) => ({ ...prev, interval: e.target.value }))}>
-                <option value="5">5m</option>
-                <option value="15">15m</option>
-                <option value="60">1h</option>
-                <option value="240">4h</option>
-              </select>
-            </div>
-          </div>
-          <div className="trader-suite-metric-grid" style={{ marginTop: 18 }}>
-            <div className="trader-suite-metric">
-              <h3>Pair / asset</h3>
-              <p>{form.asset}</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>Direction</h3>
-              <p>{form.direction}</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>Outcome</h3>
-              <p>{form.outcome}</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>R result</h3>
-              <p>{form.rResult}</p>
-            </div>
-          </div>
-        </section>
+      {loading ? <div className="trader-suite-empty">Loading replay sessions...</div> : null}
+      <div className="trader-replay-terminal">
+        <aside className="trader-replay-terminal__nav">
+          <button type="button" className="trader-replay-terminal__nav-btn">Menu</button>
+          <button type="button" className="trader-replay-terminal__nav-btn">Home</button>
+          <button type="button" className="trader-replay-terminal__nav-btn">Desk</button>
+          <button type="button" className="trader-replay-terminal__nav-btn trader-replay-terminal__nav-btn--active">Replay</button>
+        </aside>
 
-        <aside className="trader-suite-stacked-sections">
-          <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
-            <div className="trader-suite-section-header">
-              <div>
-                <div className="trader-suite-kicker">Step 2</div>
-                <h2>Market context at the time</h2>
+        <div className="trader-replay-terminal__main">
+          <section className="trader-suite-panel trader-replay-terminal__chart">
+            <div className="trader-replay-terminal__chart-toolbar">
+              <div className="trader-suite-tab-row">
+                {sessions.slice(0, 4).map((session) => (
+                  <button
+                    key={session.id}
+                    type="button"
+                    className={`trader-suite-tab-btn${session.id === activeId ? ' trader-suite-tab-btn--active' : ''}`}
+                    onClick={() => {
+                      setActiveId(session.id);
+                      setForm(normalizeReplay(session));
+                    }}
+                  >
+                    {session.title}
+                  </button>
+                ))}
               </div>
             </div>
-            <div className="trader-suite-note-list">
-              <div className="trader-suite-note">
-                <strong>Levels</strong>
-                <p>Entry {form.entry} | Stop {form.stop} | Target {form.target} | Exit {form.exit}</p>
+
+            <TradingViewWidgetEmbed symbol={form.symbol} interval={form.interval} studies={['STD;RSI']} height={430} />
+
+            <div className="trader-replay-terminal__controls">
+              <div className="trader-replay-terminal__transport">
+                <button type="button" className="trader-suite-btn" onClick={() => setForm((prev) => ({ ...prev, replayStep: 0 }))}>Restart</button>
+                <button type="button" className="trader-suite-btn" onClick={() => changeStep(-1)}>Back</button>
+                <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={() => changeStep(1)}>Play</button>
+                <button type="button" className="trader-suite-btn" onClick={() => changeStep(1)}>Step</button>
               </div>
-              <div className="trader-suite-note">
-                <strong>Context</strong>
-                <p>{form.marketState} | Bias {form.biasAtTime} | Confidence {form.confidenceLevel}</p>
-              </div>
-              <div className="trader-suite-note">
-                <strong>Key drivers</strong>
-                <p>{form.keyDrivers}</p>
+              <div className="trader-replay-terminal__speed">
+                <span className="trader-suite-muted">Speed:</span>
+                <select className="trader-suite-select" value={form.interval} onChange={(e) => setForm((prev) => ({ ...prev, interval: e.target.value }))}>
+                  <option value="5">1x</option>
+                  <option value="15">2x</option>
+                  <option value="60">4x</option>
+                </select>
               </div>
             </div>
           </section>
-        </aside>
-      </div>
 
-      <div className="trader-suite-split">
-        <section className="trader-suite-panel trader-suite-section">
-          <div className="trader-suite-section-header">
-            <div>
-              <div className="trader-suite-kicker">Step 3</div>
-              <h2>Planned setup vs actual execution</h2>
-              <p>Keep the chart central, but make the review itself about whether the trade matched the intended plan.</p>
-            </div>
-          </div>
-          <TradingViewWidgetEmbed symbol={form.symbol} interval={form.interval} studies={['STD;RSI']} />
-          <div className="trader-suite-section-header" style={{ marginTop: 18, marginBottom: 12 }}>
-            <div>
-              <h2 style={{ margin: 0 }}>Replay controls</h2>
-              <p>Use the Aura controls to move through the decision timeline and check what changed from the original plan.</p>
-            </div>
-          </div>
-          <div className="trader-suite-toolbar">
-            <button type="button" className="trader-suite-btn" onClick={() => changeStep(-1)}>Step back</button>
-            <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={() => changeStep(1)}>Step forward</button>
-            <button type="button" className="trader-suite-btn" onClick={() => setForm((prev) => ({ ...prev, replayStep: 0 }))}>Restart</button>
-            <span className="trader-suite-badge">{selectedDecision.time}</span>
-          </div>
-          <div className="trader-suite-grid trader-suite-grid--2" style={{ marginTop: 18 }}>
+          <section className="trader-suite-panel trader-replay-terminal__insight">
+            <div className="trader-suite-kicker">Insight</div>
             <div className="trader-suite-note">
-              <strong>Planned setup</strong>
-              <p>{form.linkedPlaybook} with {form.biasAtTime.toLowerCase()} bias, confirmation, and defined invalidation.</p>
-            </div>
-            <div className="trader-suite-note">
-              <strong>Actual execution</strong>
-              <p>{form.verdict}</p>
-            </div>
-          </div>
-        </section>
-
-        <aside className="trader-suite-stacked-sections">
-          <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
-            <div className="trader-suite-section-header">
-              <div>
-                <div className="trader-suite-kicker">Decision timeline</div>
-                <h2>Moments that mattered</h2>
-              </div>
-            </div>
-            <div className="trader-suite-annotation-list">
-              {DECISION_POINTS.map((point, index) => (
-                <button
-                  key={point.id}
-                  type="button"
-                  className="trader-suite-annotation"
-                  style={{ textAlign: 'left', cursor: 'pointer' }}
-                  onClick={() => setForm((prev) => ({ ...prev, replayStep: index }))}
-                >
-                  <strong>{point.label}</strong>
-                  <small>{point.time}</small>
-                  <div className="trader-suite-copy">{point.note}</div>
-                </button>
-              ))}
-            </div>
-            <div className="trader-suite-annotation" style={{ marginTop: 12 }}>
               <strong>{selectedDecision.label}</strong>
-              <small>{selectedDecision.time}</small>
-              <div className="trader-suite-copy">{selectedDecision.note}</div>
+              <p>{form.insight}</p>
             </div>
           </section>
-        </aside>
-      </div>
+        </div>
 
-      <div className="trader-suite-split">
-        <section className="trader-suite-panel trader-suite-section">
-          <div className="trader-suite-section-header">
-            <div>
-              <div className="trader-suite-kicker">Step 4</div>
-              <h2>Execution scoring</h2>
-              <p>Score the trade as execution, not as outcome alone. Good PnL can still hide poor process.</p>
-            </div>
-            <span className="trader-suite-badge trader-suite-badge--warn">{form.verdict}</span>
-          </div>
-          <div className="trader-suite-metric-grid">
-            <div className="trader-suite-metric">
-              <h3>Entry timing</h3>
-              <p>{form.entryTiming}/10</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>Discipline</h3>
-              <p>{form.discipline}/10</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>Patience</h3>
-              <p>{form.patience}/10</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>Verdict</h3>
-              <p style={{ fontSize: '0.98rem' }}>{form.verdict}</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>MFE</h3>
-              <p>{form.mfe}</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>MAE</h3>
-              <p>{form.mae}</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>Missed R</h3>
-              <p>{form.missedR}</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>Actual R</h3>
-              <p>{form.actualR}</p>
-            </div>
-          </div>
-        </section>
-
-        <aside className="trader-suite-stacked-sections">
+        <aside className="trader-replay-terminal__rail">
           <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
-            <div className="trader-suite-section-header">
-              <div>
-                <div className="trader-suite-kicker">Step 5</div>
-                <h2>Lesson and improvement output</h2>
-              </div>
-            </div>
+            <div className="trader-suite-kicker">Trade Info</div>
             <div className="trader-suite-note-list">
-              <div className="trader-suite-note">
-                <strong>Primary insight</strong>
-                <p>{form.insight}</p>
-              </div>
-              <div className="trader-suite-note">
-                <strong>Pattern tracking</strong>
-                <p>{form.patternInsight}</p>
-              </div>
-              <div className="trader-suite-note">
-                <strong>Linked playbook</strong>
-                <p>{form.linkedPlaybook}</p>
-              </div>
-              <div className="trader-suite-note">
-                <strong>Linked lab session</strong>
-                <p>{form.linkedLabDate}</p>
+              <div className="trader-suite-card-lite">
+                <strong>{form.asset} | {form.direction} | {form.rResult}</strong>
+                <p>Entry: {form.entry} | Stop: {form.stop} | Target: {form.target}</p>
               </div>
             </div>
-            <div className="trader-suite-cta-row" style={{ marginTop: 16 }}>
-              <Link to="/trader-playbook" className="trader-suite-btn trader-suite-btn--primary">Update Playbook from this review</Link>
-              <Link to="/trader-lab" className="trader-suite-btn">Carry insight into next Lab session</Link>
+          </section>
+
+          <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+            <div className="trader-suite-kicker">Execution Score</div>
+            <div className="trader-replay-terminal__score-list">
+              <div className="trader-replay-terminal__score-row"><span>Entry</span><strong>{form.entryTiming} / 10</strong></div>
+              <div className="trader-replay-terminal__score-row"><span>Discipline</span><strong>{form.discipline} / 10</strong></div>
+              <div className="trader-replay-terminal__score-row"><span>Timing</span><strong>{form.patience} / 10</strong></div>
+              <div className="trader-replay-terminal__score-outcome">
+                <span>Outcome</span>
+                <strong>{form.verdict}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+            <div className="trader-suite-kicker">Market Context</div>
+            <div className="trader-replay-terminal__score-list">
+              <div className="trader-replay-terminal__score-row"><span>Trend</span><strong>{form.marketState}</strong></div>
+              <div className="trader-replay-terminal__score-row"><span>Confidence</span><strong>{form.confidenceLevel}</strong></div>
+            </div>
+          </section>
+
+          <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+            <div className="trader-suite-kicker">Performance</div>
+            <div className="trader-replay-terminal__score-list">
+              <div className="trader-replay-terminal__score-row"><span>MFE</span><strong>{form.mfe}</strong></div>
+              <div className="trader-replay-terminal__score-row"><span>MAE</span><strong>{form.mae}</strong></div>
+              <div className="trader-replay-terminal__score-row"><span>Missed R</span><strong>{form.missedR}</strong></div>
             </div>
           </section>
         </aside>
