@@ -161,6 +161,16 @@ const AdminApi = {
                 'Accept': 'application/json'
             }
         });
+    },
+
+    getPipelineHealth: () => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/market-data/health`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
     }
 };
 

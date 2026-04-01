@@ -24,6 +24,7 @@ import {
   FaFileAlt,
   FaFlask,
   FaHistory,
+  FaHeartbeat,
 } from "react-icons/fa";
 import { isSuperAdmin, isAdmin, isPremium } from "../utils/roles";
 import A7Logo from "./A7Logo";
@@ -225,6 +226,9 @@ const Navbar = () => {
                           </Link>
                           <Link to="/settings" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                             <FaSlidersH className="dropdown-icon" /> Settings
+                          </Link>
+                          <Link to="/admin/pipeline-health" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                            <FaHeartbeat className="dropdown-icon" /> Pipeline Monitor
                           </Link>
                           <Link to="/admin/messages" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                             <FaHeadset className="dropdown-icon" /> Contact Submissions
