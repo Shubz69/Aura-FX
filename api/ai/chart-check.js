@@ -547,7 +547,7 @@ async function callOpenAIVision(images, systemPrompt, userPrompt) {
   };
 
   const tryJsonObject = async () => {
-    const body = { ...baseBody, response_format: { type: 'json_object' } };
+    const body = { ...baseBody };
     const res = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {

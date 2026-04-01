@@ -176,6 +176,51 @@ class DataService {
     const rid = requestId || this.generateRequestId();
     const startTime = Date.now();
 
+    try {
+      const { getStoredSymbolBundle } = require('../../market-data/pipeline-service');
+      const stored = await getStoredSymbolBundle(symbol);
+      const hasStoredMarket = stored?.marketData && Number(stored.marketData.price) > 0;
+      const hasStoredNews = Array.isArray(stored?.news) && stored.news.length > 0;
+      const hasStoredCalendar = Array.isArray(stored?.calendar) && stored.calendar.length > 0;
+      if (hasStoredMarket || hasStoredNews || hasStoredCalendar) {
+        return {
+          marketData: hasStoredMarket
+            ? {
+                symbol,
+                price: Number(stored.marketData.price) || 0,
+                previousClose: Number(stored.marketData.previous_close) || null,
+                change: Number(stored.marketData.change_value) || null,
+                changePercent: Number(stored.marketData.change_percent) || null,
+                source: stored.marketData.source || 'mysql-pipeline',
+                cached: true,
+                storageFreshness: stored.freshness?.marketData || 'unknown',
+              }
+            : await this.getMarketData(symbol, rid),
+          calendar: hasStoredCalendar
+            ? {
+                events: stored.calendar,
+                source: 'mysql-pipeline',
+                cached: true,
+                storageFreshness: stored.freshness?.calendar || 'unknown',
+              }
+            : await this.getCalendar(null, null, rid),
+          news: hasStoredNews
+            ? {
+                news: stored.news,
+                source: 'mysql-pipeline',
+                cached: true,
+                storageFreshness: stored.freshness?.news || 'unknown',
+              }
+            : await this.getNews(symbol, 'general', 5, rid),
+          fetchDuration: Date.now() - startTime,
+          requestId: rid,
+          sourceOfTruth: 'mysql-pipeline',
+        };
+      }
+    } catch (error) {
+      console.warn('[data-service] stored symbol bundle read failed:', error.message || error);
+    }
+
     // Fetch all in parallel with individual timeouts
     const [marketData, calendar, news] = await Promise.all([
       this.getMarketData(symbol, rid),
@@ -261,6 +306,25 @@ class DataService {
       adapters,
       timestamp: new Date().toISOString()
     };
+  }
+
+  async getStoredAiContext(requestId = null) {
+    const rid = requestId || this.generateRequestId();
+    try {
+      const { getStoredAiContextPacket } = require('../../market-data/pipeline-service');
+      const stored = await getStoredAiContextPacket('global', 'daily');
+      if (!stored?.payload) return null;
+      return {
+        ...stored.payload,
+        requestId: rid,
+        source: stored.source || 'mysql-pipeline',
+        storageFreshness: stored.freshnessStatus || 'unknown',
+        storedUpdatedAt: stored.updatedAt || null,
+      };
+    } catch (error) {
+      console.warn('[data-service] stored AI context read failed:', error.message || error);
+      return null;
+    }
   }
 
   /**

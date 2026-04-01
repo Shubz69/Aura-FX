@@ -10,6 +10,7 @@ const { verifyToken } = require('../utils/auth');
 const { isSuperAdminEmail } = require('../utils/entitlements');
 const { runMarketDecoder } = require('./marketDecoderEngine');
 const { polishMarketDecoderBrief } = require('./marketDecoderPolish');
+const { getStoredDecoderState } = require('../market-data/pipeline-service');
 
 /** Feed diagnostics (provider names, statuses) — super admins only. */
 function requestIsSuperAdmin(req) {
@@ -76,6 +77,29 @@ module.exports = async (req, res) => {
       res.setHeader('Cache-Control', 'private, max-age=60');
       const briefOut = showFeedDiagnostics ? hit.brief : stripFeedDiagnosticsFromBrief(hit.brief);
       return res.status(200).json({ success: true, ...hit, brief: briefOut, cached: true });
+    }
+  }
+
+  if (!refresh) {
+    try {
+      const stored = await getStoredDecoderState(cacheKey, 'daily');
+      if (stored && stored.payload && stored.freshnessStatus !== 'expired') {
+        const payload = {
+          brief: stored.payload,
+          cached: true,
+          cacheTtlSec: CACHE_SEC,
+          sourceOfTruth: 'mysql-pipeline',
+          storedSource: stored.source,
+          storedUpdatedAt: stored.updatedAt,
+          storageFreshness: stored.freshnessStatus,
+        };
+        setCached(cacheKey, payload);
+        res.setHeader('Cache-Control', 'private, max-age=60');
+        const briefOut = showFeedDiagnostics ? payload.brief : stripFeedDiagnosticsFromBrief(payload.brief);
+        return res.status(200).json({ success: true, ...payload, brief: briefOut });
+      }
+    } catch (error) {
+      console.warn('[market-decoder] stored read failed:', error.message || error);
     }
   }
 

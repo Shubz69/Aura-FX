@@ -4,6 +4,7 @@ const { getTemplate, normalizePeriod, parseTemplateFromText } = require('./brief
 const { getPerplexityAutomationModel } = require('../../ai/perplexity-config');
 const { fetchWithTimeout } = require('./fetchWithTimeout');
 const { enrichTraderDeckPayload } = require('../perplexityTraderInsights');
+const { getStoredBriefInputs } = require('../../market-data/pipeline-service');
 const briefUniverse = require('./briefInstrumentUniverse');
 const briefStructure = require('./briefStructureLock');
 const institutionalAuraBrief = require('./institutionalAuraBrief');
@@ -76,6 +77,35 @@ async function fetchLiveQuotesForSymbols(symbols) {
     })
   );
   return rows.filter(Boolean);
+}
+
+async function getSharedBriefInputs(normalizedPeriod, date) {
+  try {
+    const stored = await getStoredBriefInputs({ timeframe: normalizedPeriod, date });
+    if (stored?.market && Array.isArray(stored.headlines) && stored.headlines.length > 0 && Array.isArray(stored.calendar) && stored.calendar.length > 0) {
+      return {
+        market: stored.market,
+        econ: stored.calendar,
+        news: stored.headlines,
+        sourceOfTruth: 'mysql-pipeline',
+      };
+    }
+  } catch (error) {
+    console.warn('[brief-gen] stored brief inputs unavailable:', error.message || error);
+  }
+
+  const [market, econ, news] = await Promise.all([
+    runEngine({ timeframe: normalizedPeriod, date }),
+    fetchEconomicCalendar(),
+    fetchUnifiedNewsSample(),
+  ]);
+
+  return {
+    market,
+    econ,
+    news,
+    sourceOfTruth: 'live-fallback',
+  };
 }
 
 const CATEGORY_LOGIC_RULES = {
@@ -475,7 +505,7 @@ async function callPerplexityJson(systemPrompt, userPayload, options = {}) {
   const apiKey = String(process.env.PERPLEXITY_API_KEY || '').trim();
   if (!apiKey) return { ok: false, error: 'missing_perplexity_key' };
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs || 30000);
+  const timeout = setTimeout(() => controller.abort(), options.timeoutMs || 90000);
   try {
     const res = await fetch(PERPLEXITY_API_URL, {
       method: 'POST',
@@ -487,7 +517,6 @@ async function callPerplexityJson(systemPrompt, userPayload, options = {}) {
         model: getAutomationModel(),
         temperature: options.temperature ?? 0.35,
         max_tokens: options.maxTokens ?? 6000,
-        response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: JSON.stringify(userPayload) },
@@ -496,7 +525,10 @@ async function callPerplexityJson(systemPrompt, userPayload, options = {}) {
       signal: controller.signal,
     });
     clearTimeout(timeout);
-    if (!res.ok) return { ok: false, error: `http_${res.status}` };
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      return { ok: false, error: `http_${res.status}:${errText.slice(0, 500)}` };
+    }
     const json = await res.json();
     const text = String(json.choices?.[0]?.message?.content || '').trim();
     if (!text) return { ok: false, error: 'empty_response' };
@@ -619,6 +651,100 @@ function renderCategoryWeeklyBrief({ title, parsed }) {
   return stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
 }
 
+function cleanInlineFormatting(text) {
+  return String(text || '').replace(/\*\*/g, '').trim();
+}
+
+function parseSessionBias(value) {
+  if (value && typeof value === 'object') {
+    return {
+      asia: cleanInlineFormatting(value.asia || ''),
+      london: cleanInlineFormatting(value.london || ''),
+      newYork: cleanInlineFormatting(value.newYork || value.newyork || ''),
+    };
+  }
+  const text = cleanInlineFormatting(value || '');
+  const pick = (label, fallback = '') => {
+    const re = new RegExp(`${label}\\s*:\\s*([\\s\\S]*?)(?=(?:Asia|London|New York)\\s*:|$)`, 'i');
+    const match = text.match(re);
+    return cleanInlineFormatting(match?.[1] || fallback);
+  };
+  return {
+    asia: pick('Asia'),
+    london: pick('London'),
+    newYork: pick('New York'),
+  };
+}
+
+function deriveObservationBullets(asset) {
+  const source = [
+    cleanInlineFormatting(asset?.technicalView || asset?.technicalStructure || ''),
+    cleanInlineFormatting(asset?.fundamentalView || asset?.fundamentalMacro || ''),
+  ].filter(Boolean).join(' ');
+  return source
+    .split(/(?<=[.!?])\s+/)
+    .map((x) => cleanInlineFormatting(x))
+    .filter((x) => x.length >= 35)
+    .slice(0, 4);
+}
+
+function normalizeDailyStructuredParsed(parsed) {
+  const assets = Array.isArray(parsed?.assetAnalyses) ? parsed.assetAnalyses : [];
+  return {
+    opening: cleanInlineFormatting(parsed?.opening || ''),
+    globalGeopoliticalEnvironment: cleanInlineFormatting(parsed?.globalGeopoliticalEnvironment || ''),
+    macroBackdrop: cleanInlineFormatting(parsed?.macroBackdrop || ''),
+    marketThemes: Array.isArray(parsed?.marketThemes)
+      ? parsed.marketThemes.map((x) => cleanInlineFormatting(x)).filter(Boolean)
+      : cleanInlineFormatting(parsed?.marketThemes || ''),
+    assetAnalyses: assets.map((asset) => {
+      const normalized = {
+        symbol: cleanInlineFormatting(asset?.symbol || asset?.instrument || asset?.label || ''),
+        heading: cleanInlineFormatting(asset?.heading || asset?.symbol || asset?.instrument || asset?.label || ''),
+        fundamentalView: cleanInlineFormatting(asset?.fundamentalView || asset?.fundamentalMacro || asset?.macroView || ''),
+        technicalView: cleanInlineFormatting(asset?.technicalView || asset?.technicalStructure || ''),
+        keyTechnicalObservations: Array.isArray(asset?.keyTechnicalObservations)
+          ? asset.keyTechnicalObservations.map((x) => cleanInlineFormatting(x)).filter(Boolean)
+          : [],
+        sessionBias: parseSessionBias(asset?.sessionBias),
+        overallBias: cleanInlineFormatting(asset?.overallBias || ''),
+      };
+      if (normalized.keyTechnicalObservations.length === 0) {
+        normalized.keyTechnicalObservations = deriveObservationBullets({
+          technicalView: normalized.technicalView,
+          fundamentalView: normalized.fundamentalView,
+        });
+      }
+      return normalized;
+    }),
+    overallDailyStructure: cleanInlineFormatting(parsed?.overallDailyStructure || ''),
+  };
+}
+
+function normalizeWeeklyStructuredParsed(parsed) {
+  const normalizeAssetBlock = (asset) => ({
+    symbol: cleanInlineFormatting(asset?.symbol || asset?.instrument || asset?.label || ''),
+    heading: cleanInlineFormatting(asset?.heading || asset?.symbol || asset?.instrument || asset?.label || ''),
+    body: cleanInlineFormatting(asset?.body || asset?.summary || asset?.analysis || ''),
+  });
+  return {
+    overview: cleanInlineFormatting(parsed?.overview || ''),
+    previousWeekLabel: cleanInlineFormatting(parsed?.previousWeekLabel || ''),
+    summaryForLastWeek: cleanInlineFormatting(parsed?.summaryForLastWeek || ''),
+    assetPerformance: (Array.isArray(parsed?.assetPerformance) ? parsed.assetPerformance : []).map(normalizeAssetBlock),
+    structuralWeeklyDrivers: cleanInlineFormatting(parsed?.structuralWeeklyDrivers || ''),
+    mondayTuesdayFocus: cleanInlineFormatting(parsed?.mondayTuesdayFocus || ''),
+    wednesdayFocus: cleanInlineFormatting(parsed?.wednesdayFocus || ''),
+    thursdayFridayFocus: cleanInlineFormatting(parsed?.thursdayFridayFocus || ''),
+    assetOutlooks: (Array.isArray(parsed?.assetOutlooks) ? parsed.assetOutlooks : []).map(normalizeAssetBlock),
+    weekConclusion: cleanInlineFormatting(parsed?.weekConclusion || ''),
+    sessionWatch: parseSessionBias(parsed?.sessionWatch),
+    keyScenarios: Array.isArray(parsed?.keyScenarios)
+      ? parsed.keyScenarios.map((x) => cleanInlineFormatting(x)).filter(Boolean)
+      : [],
+  };
+}
+
 function validateSampleStructuredBrief(period, parsed, expectedAssets = []) {
   const reasons = [];
   if (!parsed || typeof parsed !== 'object') return { ok: false, reasons: ['missing_parsed'] };
@@ -693,7 +819,7 @@ async function generateSampleMatchedCategoryBrief({
   const normalizedKind = normalizeBriefKind(briefKind);
   const expectedAssets = Array.isArray(factPack.topInstruments) ? factPack.topInstruments.slice(0, 5) : [];
   const dayName = weekdayName(runDate, timeZone);
-  const userPayload = {
+  const basePayload = {
     briefKind: normalizedKind,
     briefKindLabel: factPack.briefKindLabel,
     period: normalizedPeriod,
@@ -749,6 +875,8 @@ Hard rules:
 - Do not copy phrases from priorCategoryExcerpts.
 - The thesis for this category must be distinct from the other category briefs.
 - Keep the style like a professional trader note that an informed retail trader can follow.
+- Each assetAnalyses item MUST include non-empty keys: symbol, heading, fundamentalView, technicalView, keyTechnicalObservations (3-6 items), sessionBias {asia,london,newYork}, overallBias.
+- Do not leave any asset field blank.
 - Return JSON only with keys: opening, globalGeopoliticalEnvironment, macroBackdrop, marketThemes, assetAnalyses, overallDailyStructure.`
     : `You are an institutional cross-asset strategist writing a WEEKLY FUNDAMENTAL ANALYSIS for one trading category only.
 Match this exact shape and density:
@@ -770,29 +898,51 @@ Hard rules:
 - Use weeklyReference only as alignment context, not as text to paraphrase.
 - No duplicated phrasing from priorCategoryExcerpts.
 - Each category must have its own thesis and transmission channel.
+- Every asset block must include non-empty heading/body fields.
 - Return JSON only with keys: overview, previousWeekLabel, summaryForLastWeek, assetPerformance, structuralWeeklyDrivers, mondayTuesdayFocus, wednesdayFocus, thursdayFridayFocus, assetOutlooks, weekConclusion, sessionWatch, keyScenarios.`;
 
-  const ai = await callPerplexityJson(systemPrompt, userPayload, {
+  const fetchStructured = async (payload) => callPerplexityJson(systemPrompt, payload, {
     maxTokens: normalizedPeriod === 'daily' ? 7000 : 9000,
     temperature: 0.42,
-    timeoutMs: 35000,
+    timeoutMs: normalizedPeriod === 'daily' ? 90000 : 120000,
   });
+  let ai = await fetchStructured(basePayload);
   if (!ai.ok || !ai.parsed) return { ok: false, error: ai.error || 'generation_failed' };
-  const validation = validateSampleStructuredBrief(normalizedPeriod, ai.parsed, expectedAssets);
-  if (!validation.ok) return { ok: false, error: validation.reasons.join(',') };
+  const normalizedParsed = normalizedPeriod === 'daily'
+    ? normalizeDailyStructuredParsed(ai.parsed)
+    : normalizeWeeklyStructuredParsed(ai.parsed);
+  let validation = validateSampleStructuredBrief(normalizedPeriod, normalizedParsed, expectedAssets);
+  let parsedForUse = normalizedParsed;
+  if (!validation.ok) {
+    const retryPayload = {
+      ...basePayload,
+      validationFeedback: validation.reasons,
+      previousAttempt: parsedForUse,
+      rewriteInstruction:
+        'Rewrite the same brief structure, but fix every missing or thin field called out in validationFeedback. Keep the same market facts, but make each asset block complete and non-empty.',
+    };
+    const retry = await fetchStructured(retryPayload);
+    if (retry.ok && retry.parsed) {
+      parsedForUse = normalizedPeriod === 'daily'
+        ? normalizeDailyStructuredParsed(retry.parsed)
+        : normalizeWeeklyStructuredParsed(retry.parsed);
+      validation = validateSampleStructuredBrief(normalizedPeriod, parsedForUse, expectedAssets);
+    }
+  }
+  if (!validation.ok) return { ok: false, error: validation.reasons.join(','), parsed: parsedForUse };
   const title = normalizedPeriod === 'daily'
     ? formatDailySampleTitle(runDate, timeZone)
     : formatWeeklySampleTitle(runDate, timeZone);
   const body = normalizedPeriod === 'daily'
-    ? renderCategoryDailyBrief({ title, parsed: ai.parsed, runDate, timeZone })
-    : renderCategoryWeeklyBrief({ title, parsed: ai.parsed });
+    ? renderCategoryDailyBrief({ title, parsed: parsedForUse, runDate, timeZone })
+    : renderCategoryWeeklyBrief({ title, parsed: parsedForUse });
   const renderedValidation = validateRenderedSampleBody(body, normalizedPeriod, expectedAssets);
-  if (!renderedValidation.ok) return { ok: false, error: renderedValidation.reasons.join(',') };
+  if (!renderedValidation.ok) return { ok: false, error: renderedValidation.reasons.join(','), parsed: parsedForUse, body };
   return {
     ok: true,
     title: normalizedKind === 'general' ? title : `${BRIEF_KIND_LABELS[normalizedKind]} - ${title}`,
     body,
-    parsed: ai.parsed,
+    parsed: parsedForUse,
     validation: {
       ok: true,
       reasons: [],
@@ -1008,7 +1158,7 @@ async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorS
   };
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 24000);
+  const timeout = setTimeout(() => controller.abort(), 45000);
   try {
     const res = await fetch(PERPLEXITY_API_URL, {
       method: 'POST',
@@ -1020,7 +1170,6 @@ async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorS
         model: getAutomationModel(),
         temperature: uniquenessRetry || validationFix ? 0.42 : 0.22,
         max_tokens: 1400,
-        response_format: { type: 'json_object' },
         messages: [
           {
             role: 'system',
@@ -1488,14 +1637,10 @@ async function generateAndStoreBrief({
     let econ = sharedEcon;
     let news = sharedNews;
     if (!market || !Array.isArray(econ) || !Array.isArray(news)) {
-      const [m, e, n] = await Promise.all([
-        market ? Promise.resolve(market) : runEngine({ timeframe: normalizedPeriod, date }),
-        Array.isArray(econ) ? Promise.resolve(econ) : fetchEconomicCalendar(),
-        Array.isArray(news) ? Promise.resolve(news) : fetchUnifiedNewsSample(),
-      ]);
-      market = m;
-      econ = e;
-      news = n;
+      const shared = await getSharedBriefInputs(normalizedPeriod, date);
+      market = market || shared.market;
+      econ = Array.isArray(econ) ? econ : shared.econ;
+      news = Array.isArray(news) ? news : shared.news;
     }
 
     let quoteCache = sharedQuoteCache;
@@ -1700,11 +1845,7 @@ async function generateAndStoreBrief({
 async function generateAndStoreBriefSet({ period, timeZone = 'Europe/London', runDate = new Date() }) {
   const normalizedPeriod = normalizePeriod(period);
   const date = normalizeOutlookDate(normalizedPeriod, toYmdInTz(runDate, timeZone));
-  const [sharedMarket, sharedEcon, sharedNews] = await Promise.all([
-    runEngine({ timeframe: normalizedPeriod, date }),
-    fetchEconomicCalendar(),
-    fetchUnifiedNewsSample(),
-  ]);
+  const { market: sharedMarket, econ: sharedEcon, news: sharedNews } = await getSharedBriefInputs(normalizedPeriod, date);
   const sharedQuoteCache = await buildQuoteCacheForSymbols(
     collectAllAutomationUniverseSymbols(),
     fetchAutomationQuoteWithFallback
@@ -1763,7 +1904,8 @@ async function generateAndStoreOutlook({ period, timeZone = 'Europe/London', run
   }
 
   try {
-    const raw = await runEngine({ timeframe: normalizedPeriod, date });
+    const { market: storedMarket } = await getSharedBriefInputs(normalizedPeriod, date);
+    const raw = storedMarket || await runEngine({ timeframe: normalizedPeriod, date });
     let enriched = null;
     try {
       enriched = await enrichTraderDeckPayload(raw);
@@ -1804,11 +1946,7 @@ async function generatePreviewBrief({
   const template = templateText
     ? parseTemplateFromText(templateText, normalizedPeriod)
     : await getTemplate(normalizedPeriod);
-  const [market, econ, news] = await Promise.all([
-    runEngine({ timeframe: normalizedPeriod, date }),
-    fetchEconomicCalendar(),
-    fetchUnifiedNewsSample(),
-  ]);
+  const { market, econ, news } = await getSharedBriefInputs(normalizedPeriod, date);
   const qc = await buildQuoteCacheForSymbols(
     collectAllAutomationUniverseSymbols(),
     fetchAutomationQuoteWithFallback
@@ -1967,6 +2105,11 @@ module.exports = {
     containsBoilerplate,
     diversifyBody,
     orderedAutomatedCategoryKinds,
+    buildFactPack,
+    generateSampleMatchedCategoryBrief,
+    fetchUnifiedNewsSample,
+    fetchEconomicCalendar,
+    fetchLiveQuotesForSymbols,
   },
   orderedAutomatedCategoryKinds,
 };

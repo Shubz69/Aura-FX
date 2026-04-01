@@ -56,7 +56,6 @@ async function callVision(base64, mimeType) {
     model: PERPLEXITY_MODEL,
     max_tokens: 500,
     temperature: 0.05,
-    response_format: { type: 'json_object' },
     messages: [
       { role: 'system', content: SYSTEM },
       {

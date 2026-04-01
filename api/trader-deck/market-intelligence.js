@@ -9,6 +9,7 @@ require('../utils/suppress-warnings');
 
 const { runEngine } = require('./marketIntelligenceEngine');
 const { enrichTraderDeckPayload } = require('./perplexityTraderInsights');
+const { getStoredMarketIntelligence } = require('../market-data/pipeline-service');
 
 // Default 90s — override with TRADER_DECK_MI_CACHE_SEC (45–300)
 const CACHE_SEC = Math.min(300, Math.max(45, parseInt(process.env.TRADER_DECK_MI_CACHE_SEC, 10) || 90));
@@ -88,6 +89,25 @@ module.exports = async (req, res) => {
   if (fromCache) {
     res.setHeader('Cache-Control', 'private, max-age=30');
     return res.status(200).json({ success: true, ...fromCache, timeframe, date: date || null, cached: true });
+  }
+
+  if (!forceRefresh) {
+    try {
+      const stored = await getStoredMarketIntelligence({ timeframe, date });
+      if (stored && stored.payload && stored.freshnessStatus !== 'expired') {
+        const payload = {
+          ...stored.payload,
+          storedSource: stored.source,
+          storedUpdatedAt: stored.updatedAt,
+          storageFreshness: stored.freshnessStatus,
+        };
+        setCache(cacheKey, payload);
+        res.setHeader('Cache-Control', 'private, max-age=30');
+        return res.status(200).json({ success: true, ...payload, timeframe, date: date || null, cached: true, sourceOfTruth: 'mysql-pipeline' });
+      }
+    } catch (error) {
+      console.warn('[trader-deck] stored market-intelligence read failed:', error.message || error);
+    }
   }
 
   try {
