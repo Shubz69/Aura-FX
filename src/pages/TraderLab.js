@@ -181,42 +181,72 @@ export default function TraderLab() {
     { label: 'Mistake tags', value: form.mistakeTags.length || 0 },
   ];
 
+  const activePhase = validator.passed ? (form.outcome ? 5 : 4) : 3;
+
   return (
     <TraderSuiteShell
-      eyebrow="Trader Desk / Lab"
+      eyebrow="Trader Workflow / Step 2"
       title="Trader Lab"
-      description="This is the active thinking environment: prepare the session, pressure-test the setup, validate the risk, track the trade live, and close the loop with behavior scoring and immediate review."
+      description="Run the trade through a sequence: session context, setup thesis, validation, live management, then fast closeout. The dominant action should always be obvious."
       stats={stats}
-      highlight={{
-        title: validator.passed ? 'Valid trade workflow is active' : 'Validation is intentionally blocking this trade',
+      status={{
+        title: validator.passed ? 'Trade can move into execution' : 'Trade is intentionally blocked',
         body: validator.label,
       }}
-      actions={
+      primaryAction={(
+        <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={saveSession} disabled={saving}>
+          {saving ? 'Saving...' : activePhase < 4 ? 'Save plan' : activePhase === 4 ? 'Save live session' : 'Save closeout'}
+        </button>
+      )}
+      secondaryActions={(
         <>
-          <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={saveSession} disabled={saving}>
-            {saving ? 'Saving...' : 'Save session'}
-          </button>
-          <button type="button" className="trader-suite-btn" onClick={createFreshSession}>
-            New session
-          </button>
-          <Link to="/trader-playbook" className="trader-suite-btn">Open Playbook</Link>
-          <Link to="/trader-replay" className="trader-suite-btn">Open Replay</Link>
+          <button type="button" className="trader-suite-btn" onClick={createFreshSession}>New session</button>
+          <Link to="/trader-playbook" className="trader-suite-btn">Check rules in Playbook</Link>
+          <Link to="/trader-replay" className="trader-suite-btn">Send closed trade to Replay</Link>
         </>
-      }
+      )}
+      workflowSteps={[
+        { index: '1', label: 'Session context', note: 'Bias, focus, and session constraints.', complete: true },
+        { index: '2', label: 'Setup thesis', note: 'What you see and why it belongs.', complete: Boolean(form.whatDoISee) },
+        { index: '3', label: 'Validation', note: 'Checklist, risk, and R:R gate.', active: activePhase === 3 },
+        { index: '4', label: 'Live tracking', note: 'Monitor execution and psychology.', active: activePhase === 4 },
+        { index: '5', label: 'Closeout', note: 'Review, tags, and next action.', active: activePhase === 5 },
+      ]}
+      railTitle="Session guide"
+      railContent={(
+        <div className="trader-suite-rail-stack">
+          <div className="trader-suite-summary-card">
+            <h3>Current setup path</h3>
+            <p>
+              {form.setupName} with {form.marketBias.toLowerCase()} bias, {form.confidence}% trade confidence, and a planned {formatRatio(rr)} profile.
+            </p>
+          </div>
+          <div className="trader-suite-card-lite">
+            <strong>Next best action</strong>
+            <p>
+              {activePhase < 4
+                ? 'Finish validation before entering. Bias, confirmation, and risk must all be aligned.'
+                : activePhase === 4
+                  ? 'Stay process-focused while the trade is live. Track emotion and manage around the plan.'
+                  : 'Close the loop quickly, tag the mistake pattern, and route the trade into Replay.'}
+            </p>
+          </div>
+        </div>
+      )}
     >
       <section className="trader-suite-panel trader-suite-section">
         <div className="trader-suite-section-header">
           <div>
-            <div className="trader-suite-kicker">Session Setup</div>
-            <h2>Prepare before the first click</h2>
-            <p>Define bias, environment, focus, and session intent so execution stays intentional instead of reactive.</p>
+            <div className="trader-suite-kicker">Step 1</div>
+            <h2>Session context</h2>
+            <p>Start with the environment so your trade idea is grounded before you move into the thesis.</p>
           </div>
           <div className="trader-suite-toolbar">
             {sessions.slice(0, 4).map((session) => (
               <button
                 key={session.id}
                 type="button"
-                className={`trader-suite-btn${session.id === activeId ? ' trader-suite-btn--primary' : ''}`}
+                className={`trader-suite-tab-btn${session.id === activeId ? ' trader-suite-tab-btn--active' : ''}`}
                 onClick={() => {
                   setActiveId(session.id);
                   setForm(normalizeSession(session));
@@ -252,11 +282,11 @@ export default function TraderLab() {
               <span>{form.auraConfidence}%</span>
             </div>
           </div>
-          <div className="trader-suite-field trader-suite-field--span-6">
+          <div className="trader-suite-field trader-suite-field--span-5">
             <label>Today's focus</label>
             <textarea className="trader-suite-textarea" value={form.todaysFocus} onChange={(e) => updateField('todaysFocus', e.target.value)} />
           </div>
-          <div className="trader-suite-field trader-suite-field--span-4">
+          <div className="trader-suite-field trader-suite-field--span-5">
             <label>Session goal</label>
             <textarea className="trader-suite-textarea" value={form.sessionGoal} onChange={(e) => updateField('sessionGoal', e.target.value)} />
           </div>
@@ -267,13 +297,13 @@ export default function TraderLab() {
         </div>
       </section>
 
-      <div className="trader-suite-grid trader-suite-grid--2">
+      <div className="trader-suite-split">
         <section className="trader-suite-panel trader-suite-section">
           <div className="trader-suite-section-header">
             <div>
-              <div className="trader-suite-kicker">Pre-Trade Thinking</div>
-              <h2>Force the idea to make sense</h2>
-              <p>Structure your reasoning before you earn the right to click buy or sell.</p>
+              <div className="trader-suite-kicker">Step 2</div>
+              <h2>Setup selection and trade thesis</h2>
+              <p>Decide what setup this is, what you see, why it qualifies, and what confirmation gives you permission to act.</p>
             </div>
             <span className="trader-suite-badge">{form.setupName}</span>
           </div>
@@ -282,7 +312,7 @@ export default function TraderLab() {
               <label>What do I see?</label>
               <textarea className="trader-suite-textarea" value={form.whatDoISee} onChange={(e) => updateField('whatDoISee', e.target.value)} />
             </div>
-            <div className="trader-suite-field trader-suite-field--span-6">
+            <div className="trader-suite-field trader-suite-field--span-5">
               <label>Setup type</label>
               <select className="trader-suite-select" value={form.setupName} onChange={(e) => updateField('setupName', e.target.value)}>
                 {playbookSetups.map((setupName) => (
@@ -290,7 +320,7 @@ export default function TraderLab() {
                 ))}
               </select>
             </div>
-            <div className="trader-suite-field trader-suite-field--span-3">
+            <div className="trader-suite-field trader-suite-field--span-4">
               <label>Confidence</label>
               <div className="trader-suite-inline">
                 <input type="range" min="1" max="100" className="trader-suite-slider" value={form.confidence} onChange={(e) => updateField('confidence', safeNumber(e.target.value))} />
@@ -316,12 +346,51 @@ export default function TraderLab() {
           </div>
         </section>
 
+        <aside className="trader-suite-stacked-sections">
+          <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+            <div className="trader-suite-section-header">
+              <div>
+                <div className="trader-suite-kicker">Thesis summary</div>
+                <h2>Does the idea belong?</h2>
+              </div>
+            </div>
+            <div className="trader-suite-note-list">
+              <div className="trader-suite-note">
+                <strong>Setup</strong>
+                <p>{form.setupName}</p>
+              </div>
+              <div className="trader-suite-note">
+                <strong>Why valid</strong>
+                <p>{form.whyValid}</p>
+              </div>
+              <div className="trader-suite-note">
+                <strong>Confirmation</strong>
+                <p>{form.entryConfirmation}</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+            <div className="trader-suite-section-header">
+              <div>
+                <div className="trader-suite-kicker">Workflow handoff</div>
+                <h2>Rule reference</h2>
+              </div>
+            </div>
+            <div className="trader-suite-cta-row">
+              <Link to="/trader-playbook" className="trader-suite-btn">Open setup rules</Link>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <div className="trader-suite-split">
         <section className="trader-suite-panel trader-suite-section">
           <div className="trader-suite-section-header">
             <div>
-              <div className="trader-suite-kicker">Trade Plan Builder</div>
-              <h2>Validate the numbers</h2>
-              <p>Turn the idea into a measurable plan with clear invalidation and expected reward.</p>
+              <div className="trader-suite-kicker">Step 3</div>
+              <h2>Validation and risk plan</h2>
+              <p>Turn the thesis into a measurable trade and stop the entry if the plan is not properly defined.</p>
             </div>
             <span className={`trader-suite-badge${rr >= 2 ? ' trader-suite-badge--good' : rr >= 1.5 ? ' trader-suite-badge--warn' : ' trader-suite-badge--bad'}`}>
               {formatRatio(rr)}
@@ -345,69 +414,73 @@ export default function TraderLab() {
               <input className="trader-suite-input" type="number" step="0.1" value={form.riskPercent} onChange={(e) => updateField('riskPercent', e.target.value)} />
             </div>
           </div>
-          <div className="trader-suite-metric-grid" style={{ marginTop: 18 }}>
-            <div className="trader-suite-metric">
-              <h3>Playbook fit</h3>
-              <p>{form.setupValid ? 'Yes' : 'No'}</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>Risk warning</h3>
-              <p style={{ fontSize: '1rem' }}>{safeNumber(form.riskPercent) > 1 ? 'Above preferred rule' : 'Within preferred rule'}</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>Expected reward</h3>
-              <p>{formatRatio(rr)}</p>
-            </div>
-            <div className="trader-suite-metric">
-              <h3>Execution state</h3>
-              <p>{form.entryConfirmed ? 'Confirmed' : 'Waiting'}</p>
-            </div>
-          </div>
         </section>
+
+        <aside className="trader-suite-stacked-sections">
+          <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+            <div className="trader-suite-section-header">
+              <div>
+                <div className="trader-suite-kicker">Validator gate</div>
+                <h2>Only pass if all checks are true</h2>
+              </div>
+              <span className={`trader-suite-badge${validator.passed ? ' trader-suite-badge--good' : ' trader-suite-badge--bad'}`}>
+                {validator.score}%
+              </span>
+            </div>
+            <div className="trader-suite-checklist">
+              {[
+                ['Setup valid', 'setupValid'],
+                ['Bias aligned', 'biasAligned'],
+                ['Entry confirmed', 'entryConfirmed'],
+                ['Risk defined', 'riskDefined'],
+              ].map(([label, key]) => (
+                <label key={key} className="trader-suite-check">
+                  <input type="checkbox" checked={Boolean(form[key])} onChange={(e) => updateField(key, e.target.checked)} />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+            <div style={{ marginTop: 18 }}>
+              <div className="trader-suite-inline trader-suite-inline--between" style={{ marginBottom: 8 }}>
+                <strong>Checklist completion</strong>
+                <span>{validator.score}%</span>
+              </div>
+              <div className="trader-suite-progress">
+                <span style={{ width: `${validator.score}%` }} />
+              </div>
+            </div>
+          </section>
+
+          <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+            <div className="trader-suite-metric-grid">
+              <div className="trader-suite-metric">
+                <h3>Playbook fit</h3>
+                <p>{form.setupValid ? 'Yes' : 'No'}</p>
+              </div>
+              <div className="trader-suite-metric">
+                <h3>Risk warning</h3>
+                <p style={{ fontSize: '1rem' }}>{safeNumber(form.riskPercent) > 1 ? 'Above rule' : 'Within rule'}</p>
+              </div>
+              <div className="trader-suite-metric">
+                <h3>Reward</h3>
+                <p>{formatRatio(rr)}</p>
+              </div>
+              <div className="trader-suite-metric">
+                <h3>Entry state</h3>
+                <p>{form.entryConfirmed ? 'Confirmed' : 'Waiting'}</p>
+              </div>
+            </div>
+          </section>
+        </aside>
       </div>
 
-      <div className="trader-suite-grid trader-suite-grid--2">
+      <div className="trader-suite-split">
         <section className="trader-suite-panel trader-suite-section">
           <div className="trader-suite-section-header">
             <div>
-              <div className="trader-suite-kicker">Trade Validator</div>
-              <h2>Real-time entry filter</h2>
-              <p>This is where bad trades get stopped before they damage the session.</p>
-            </div>
-            <span className={`trader-suite-badge${validator.passed ? ' trader-suite-badge--good' : ' trader-suite-badge--bad'}`}>
-              {validator.label}
-            </span>
-          </div>
-          <div className="trader-suite-checklist">
-            {[
-              ['Setup valid', 'setupValid'],
-              ['Bias aligned', 'biasAligned'],
-              ['Entry confirmed', 'entryConfirmed'],
-              ['Risk defined', 'riskDefined'],
-            ].map(([label, key]) => (
-              <label key={key} className="trader-suite-check">
-                <input type="checkbox" checked={Boolean(form[key])} onChange={(e) => updateField(key, e.target.checked)} />
-                <span>{label}</span>
-              </label>
-            ))}
-          </div>
-          <div style={{ marginTop: 18 }}>
-            <div className="trader-suite-inline" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
-              <strong>Checklist completion</strong>
-              <span>{validator.score}%</span>
-            </div>
-            <div className="trader-suite-progress">
-              <span style={{ width: `${validator.score}%` }} />
-            </div>
-          </div>
-        </section>
-
-        <section className="trader-suite-panel trader-suite-section">
-          <div className="trader-suite-section-header">
-            <div>
-              <div className="trader-suite-kicker">Live Tracking</div>
-              <h2>Psychology plus execution</h2>
-              <p>Track the trade while it is open so execution and emotion stay connected.</p>
+              <div className="trader-suite-kicker">Step 4</div>
+              <h2>Live trade tracking</h2>
+              <p>Once the trade is active, track execution and psychology together instead of treating them as separate events.</p>
             </div>
             <span className="trader-suite-badge trader-suite-badge--warn">{form.livePnlR}R live</span>
           </div>
@@ -440,15 +513,31 @@ export default function TraderLab() {
             </div>
           </div>
         </section>
+
+        <aside className="trader-suite-stacked-sections">
+          <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+            <div className="trader-suite-section-header">
+              <div>
+                <div className="trader-suite-kicker">Execution state</div>
+                <h2>Stay aligned while live</h2>
+              </div>
+            </div>
+            <div className="trader-suite-list">
+              <li>Bias aligned: {form.biasAligned ? 'Yes' : 'No'}</li>
+              <li>Confirmation respected: {form.entryConfirmed ? 'Yes' : 'No'}</li>
+              <li>Risk defined before entry: {form.riskDefined ? 'Yes' : 'No'}</li>
+            </div>
+          </section>
+        </aside>
       </div>
 
-      <div className="trader-suite-grid trader-suite-grid--2">
+      <div className="trader-suite-split">
         <section className="trader-suite-panel trader-suite-section">
           <div className="trader-suite-section-header">
             <div>
-              <div className="trader-suite-kicker">Immediate Review</div>
-              <h2>Post-trade review</h2>
-              <p>Keep the closeout fast, sharp, and useful enough to feed replay later.</p>
+              <div className="trader-suite-kicker">Step 5</div>
+              <h2>Quick closeout review</h2>
+              <p>End with a fast review: result, process quality, behavior, mistake tags, and the next workflow handoff.</p>
             </div>
             <span className={`trader-suite-badge${form.outcome === 'win' ? ' trader-suite-badge--good' : form.outcome === 'loss' ? ' trader-suite-badge--bad' : ' trader-suite-badge--warn'}`}>
               {form.outcome.toUpperCase()}
@@ -497,7 +586,8 @@ export default function TraderLab() {
           </div>
         </section>
 
-        <section className="trader-suite-panel trader-suite-section">
+        <aside className="trader-suite-stacked-sections">
+          <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
           <div className="trader-suite-section-header">
             <div>
               <div className="trader-suite-kicker">Behavior Tracking</div>
@@ -538,7 +628,21 @@ export default function TraderLab() {
               </label>
             ))}
           </div>
-        </section>
+          </section>
+
+          <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">
+            <div className="trader-suite-section-header">
+              <div>
+                <div className="trader-suite-kicker">Workflow handoff</div>
+                <h2>Where this trade goes next</h2>
+              </div>
+            </div>
+            <div className="trader-suite-cta-row">
+              <Link to="/trader-replay" className="trader-suite-btn trader-suite-btn--primary">Send closed trade to Replay</Link>
+              <Link to="/trader-playbook" className="trader-suite-btn">Compare against Playbook</Link>
+            </div>
+          </section>
+        </aside>
       </div>
 
       <section className="trader-suite-panel trader-suite-section">
@@ -546,11 +650,11 @@ export default function TraderLab() {
           <div>
             <div className="trader-suite-kicker">Daily Summary</div>
             <h2>Close the loop</h2>
-            <p>Turn the session into one clear lesson and route the trade into replay or back to the playbook when needed.</p>
+            <p>Turn the session into one clear lesson, then push it into the next stage of the workflow.</p>
           </div>
           <div className="trader-suite-actions-row">
-            <Link to="/trader-replay" className="trader-suite-btn trader-suite-btn--primary">View in Replay</Link>
-            <Link to="/trader-playbook" className="trader-suite-btn">Compare to Playbook</Link>
+            <Link to="/trader-replay" className="trader-suite-btn trader-suite-btn--primary">Send trade to Replay</Link>
+            <Link to="/trader-playbook" className="trader-suite-btn">Return to Playbook rules</Link>
           </div>
         </div>
         <div className="trader-suite-metric-grid">

@@ -44,6 +44,23 @@ function normalizeSetup(setup = {}) {
   };
 }
 
+function SetupSummaryCard({ form }) {
+  return (
+    <div className="trader-suite-summary-card">
+      <span className="trader-suite-rail-label">Setup summary</span>
+      <h3>{form.name}</h3>
+      <p>
+        Best in {form.marketType} conditions during the {form.session} session, using {form.timeframes} across {form.assets}.
+      </p>
+      <div className="trader-suite-list" style={{ marginTop: 14 }}>
+        <li>Qualifies when: {form.structureRequirement}</li>
+        <li>Entry requires: {form.confirmationType} and {form.entryTrigger}</li>
+        <li>Risk stays capped at {form.maxRisk}% with invalidation defined before entry.</li>
+      </div>
+    </div>
+  );
+}
+
 export default function TraderPlaybook() {
   const [setups, setSetups] = useState([]);
   const [activeId, setActiveId] = useState(null);
@@ -84,10 +101,10 @@ export default function TraderPlaybook() {
 
   const stats = useMemo(
     () => [
-      { label: 'Active setup', value: form.name, note: form.session },
-      { label: 'Market type', value: form.marketType, note: form.timeframes },
-      { label: 'Max risk', value: `${form.maxRisk}%`, note: 'Per idea' },
-      { label: 'Average R', value: form.avgR, note: form.winRate },
+      { label: 'Setup', value: form.name, note: form.session },
+      { label: 'Market fit', value: form.marketType, note: form.timeframes },
+      { label: 'Risk cap', value: `${form.maxRisk}%`, note: 'Per idea' },
+      { label: 'Avg performance', value: form.avgR, note: form.winRate },
     ],
     [form]
   );
@@ -136,41 +153,51 @@ export default function TraderPlaybook() {
 
   return (
     <TraderSuiteShell
-      eyebrow="Trader Desk / Playbook"
+      eyebrow="Trader Workflow / Step 1"
       title="Trader Playbook"
-      description="Build your operating manual with exact setup conditions, risk logic, management rules, and the checklist that Trader Lab can validate against in real time."
+      description="Build the rulebook first. This page should let a trader understand the setup in seconds, confirm what qualifies it, and push the idea directly into the live execution workflow."
       stats={stats}
-      highlight={{
-        title: 'Rules become usable edge when they are structured',
-        body: 'This page is designed as a living strategy system. The tighter the playbook, the stronger the validation, replay review, and behavior coaching become everywhere else in Aura.',
+      status={{
+        title: 'Playbook is the source of truth',
+        body: 'If the setup is not clear here, validation in Trader Lab and review in Trader Replay both become weaker.',
       }}
-      actions={
+      primaryAction={(
+        <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={saveSetup} disabled={saving}>
+          {saving ? 'Saving...' : 'Save playbook'}
+        </button>
+      )}
+      secondaryActions={(
         <>
-          <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={saveSetup} disabled={saving}>
-            {saving ? 'Saving...' : 'Save playbook'}
-          </button>
-          <button type="button" className="trader-suite-btn" onClick={createNewSetup}>
-            New setup
-          </button>
-          <Link to="/trader-lab" className="trader-suite-btn">
-            Open Trader Lab
-          </Link>
+          <button type="button" className="trader-suite-btn" onClick={createNewSetup}>New setup</button>
+          <Link to="/trader-lab" className="trader-suite-btn">Use this setup in Trader Lab</Link>
+          <Link to="/trader-replay" className="trader-suite-btn">View linked Replay</Link>
         </>
-      }
+      )}
+      workflowSteps={[
+        { index: '1', label: 'Define setup', note: 'What this idea is and when it belongs.', active: true },
+        { index: '2', label: 'Qualify trade', note: 'What must be true before entry.' },
+        { index: '3', label: 'Execute rules', note: 'Risk, management, and hard filters.' },
+        { index: '4', label: 'Measure edge', note: 'Review how the setup actually performs.' },
+      ]}
+      railTitle="Operator note"
+      railContent={<SetupSummaryCard form={form} />}
     >
-      <section className="trader-suite-panel trader-suite-section">
-        <div className="trader-suite-section-header">
-          <div>
-            <div className="trader-suite-kicker">Strategy Overview</div>
-            <h2>Setup library</h2>
-            <p>Choose a playbook, update it, or create a new one for a different setup family.</p>
+      <div className="trader-suite-grid trader-suite-grid--2">
+        <section className="trader-suite-panel trader-suite-section">
+          <div className="trader-suite-section-header">
+            <div>
+              <div className="trader-suite-kicker">Setup Library</div>
+              <h2>Choose the strategy you are maintaining</h2>
+              <p>Start with setup selection so every rule below belongs to one specific trading pattern.</p>
+            </div>
+            <span className="trader-suite-badge">Structured rules</span>
           </div>
-          <div className="trader-suite-toolbar">
+          <div className="trader-suite-tab-row">
             {setups.map((setup) => (
               <button
                 key={setup.id}
                 type="button"
-                className={`trader-suite-btn${setup.id === activeId ? ' trader-suite-btn--primary' : ''}`}
+                className={`trader-suite-tab-btn${setup.id === activeId ? ' trader-suite-tab-btn--active' : ''}`}
                 onClick={() => {
                   setActiveId(setup.id);
                   setForm(normalizeSetup(setup));
@@ -180,52 +207,49 @@ export default function TraderPlaybook() {
               </button>
             ))}
           </div>
-        </div>
-        {loading ? <div className="trader-suite-empty">Loading your saved setups...</div> : null}
-        <div className="trader-suite-field-grid">
-          <div className="trader-suite-field trader-suite-field--span-4">
-            <label>Strategy name</label>
-            <input className="trader-suite-input" value={form.name} onChange={(e) => handleChange('name', e.target.value)} />
+          {loading ? <div className="trader-suite-empty" style={{ marginTop: 16 }}>Loading your saved setups...</div> : null}
+          <div className="trader-suite-field-grid" style={{ marginTop: 18 }}>
+            <div className="trader-suite-field trader-suite-field--span-5">
+              <label>Strategy name</label>
+              <input className="trader-suite-input" value={form.name} onChange={(e) => handleChange('name', e.target.value)} />
+            </div>
+            <div className="trader-suite-field trader-suite-field--span-3">
+              <label>Market type</label>
+              <select className="trader-suite-select" value={form.marketType} onChange={(e) => handleChange('marketType', e.target.value)}>
+                <option value="trend">Trend</option>
+                <option value="range">Range</option>
+                <option value="mixed">Mixed</option>
+                <option value="news">News-driven</option>
+              </select>
+            </div>
+            <div className="trader-suite-field trader-suite-field--span-4">
+              <label>Session</label>
+              <input className="trader-suite-input" value={form.session} onChange={(e) => handleChange('session', e.target.value)} />
+            </div>
+            <div className="trader-suite-field trader-suite-field--span-4">
+              <label>Timeframes</label>
+              <input className="trader-suite-input" value={form.timeframes} onChange={(e) => handleChange('timeframes', e.target.value)} />
+            </div>
+            <div className="trader-suite-field trader-suite-field--span-8">
+              <label>Pairs / assets</label>
+              <input className="trader-suite-input" value={form.assets} onChange={(e) => handleChange('assets', e.target.value)} />
+            </div>
           </div>
-          <div className="trader-suite-field trader-suite-field--span-2">
-            <label>Market type</label>
-            <select className="trader-suite-select" value={form.marketType} onChange={(e) => handleChange('marketType', e.target.value)}>
-              <option value="trend">Trend</option>
-              <option value="range">Range</option>
-              <option value="mixed">Mixed</option>
-              <option value="news">News-driven</option>
-            </select>
-          </div>
-          <div className="trader-suite-field trader-suite-field--span-3">
-            <label>Timeframes used</label>
-            <input className="trader-suite-input" value={form.timeframes} onChange={(e) => handleChange('timeframes', e.target.value)} />
-          </div>
-          <div className="trader-suite-field trader-suite-field--span-3">
-            <label>Pairs / assets</label>
-            <input className="trader-suite-input" value={form.assets} onChange={(e) => handleChange('assets', e.target.value)} />
-          </div>
-          <div className="trader-suite-field trader-suite-field--span-4">
-            <label>Session</label>
-            <input className="trader-suite-input" value={form.session} onChange={(e) => handleChange('session', e.target.value)} />
-          </div>
-          <div className="trader-suite-field trader-suite-field--span-8">
-            <label>Bias requirement</label>
-            <textarea className="trader-suite-textarea" value={form.biasRequirement} onChange={(e) => handleChange('biasRequirement', e.target.value)} />
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <div className="trader-suite-grid trader-suite-grid--2">
         <section className="trader-suite-panel trader-suite-section">
           <div className="trader-suite-section-header">
             <div>
-              <div className="trader-suite-kicker">Conditions</div>
-              <h2>Setup conditions</h2>
-              <p>Make the environment requirements explicit enough for the lab validator to check.</p>
+              <div className="trader-suite-kicker">Qualification Snapshot</div>
+              <h2>What makes this setup valid?</h2>
+              <p>This should be scannable enough that a trader knows in seconds whether the idea belongs today or not.</p>
             </div>
-            <span className="trader-suite-badge">Playbook-linked validation</span>
           </div>
           <div className="trader-suite-field-grid">
+            <div className="trader-suite-field trader-suite-field--span-12">
+              <label>Bias requirement</label>
+              <textarea className="trader-suite-textarea" value={form.biasRequirement} onChange={(e) => handleChange('biasRequirement', e.target.value)} />
+            </div>
             <div className="trader-suite-field trader-suite-field--span-12">
               <label>Market structure required</label>
               <textarea className="trader-suite-textarea" value={form.structureRequirement} onChange={(e) => handleChange('structureRequirement', e.target.value)} />
@@ -238,6 +262,21 @@ export default function TraderPlaybook() {
               <label>Session timing</label>
               <textarea className="trader-suite-textarea" value={form.sessionTiming} onChange={(e) => handleChange('sessionTiming', e.target.value)} />
             </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="trader-suite-grid trader-suite-grid--2">
+        <section className="trader-suite-panel trader-suite-section">
+          <div className="trader-suite-section-header">
+            <div>
+              <div className="trader-suite-kicker">Entry Logic</div>
+              <h2>What must happen before you click?</h2>
+              <p>Separate the trigger from the confirmation so the setup is executable, not vague.</p>
+            </div>
+            <span className="trader-suite-badge trader-suite-badge--good">Feeds Trader Lab validation</span>
+          </div>
+          <div className="trader-suite-field-grid">
             <div className="trader-suite-field trader-suite-field--span-6">
               <label>Confirmation type</label>
               <input className="trader-suite-input" value={form.confirmationType} onChange={(e) => handleChange('confirmationType', e.target.value)} />
@@ -246,25 +285,39 @@ export default function TraderPlaybook() {
               <label>Entry trigger</label>
               <input className="trader-suite-input" value={form.entryTrigger} onChange={(e) => handleChange('entryTrigger', e.target.value)} />
             </div>
+            <div className="trader-suite-field trader-suite-field--span-12">
+              <label>Entry checklist</label>
+              <div className="trader-suite-note-list">
+                {form.entryChecklist.map((item, index) => (
+                  <div key={`check-${index}`} className="trader-suite-card-lite">
+                    <strong>Checklist item {index + 1}</strong>
+                    <input className="trader-suite-input" value={item} onChange={(e) => handleArrayChange('entryChecklist', index, e.target.value)} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="trader-suite-field trader-suite-field--span-12">
+              <label>Checklist rule</label>
+              <textarea className="trader-suite-textarea" value={form.checklistNotes} onChange={(e) => handleChange('checklistNotes', e.target.value)} />
+            </div>
           </div>
         </section>
 
         <section className="trader-suite-panel trader-suite-section">
           <div className="trader-suite-section-header">
             <div>
-              <div className="trader-suite-kicker">Execution Rules</div>
-              <h2>Risk and management</h2>
-              <p>These rules become the guardrails used in Trader Lab and the benchmark used in Replay.</p>
+              <div className="trader-suite-kicker">Risk And Management</div>
+              <h2>How the trade is protected and managed</h2>
+              <p>This is the operating section: invalidation, risk cap, sizing, partials, and how the trade is held.</p>
             </div>
-            <span className="trader-suite-badge trader-suite-badge--good">Rules-first execution</span>
           </div>
           <div className="trader-suite-field-grid">
             <div className="trader-suite-field trader-suite-field--span-6">
-              <label>Stop placement rules</label>
+              <label>Stop placement</label>
               <textarea className="trader-suite-textarea" value={form.stopPlacement} onChange={(e) => handleChange('stopPlacement', e.target.value)} />
             </div>
             <div className="trader-suite-field trader-suite-field--span-3">
-              <label>Max % risk</label>
+              <label>Max risk %</label>
               <input className="trader-suite-input" value={form.maxRisk} onChange={(e) => handleChange('maxRisk', e.target.value)} />
             </div>
             <div className="trader-suite-field trader-suite-field--span-3">
@@ -276,11 +329,15 @@ export default function TraderPlaybook() {
               <textarea className="trader-suite-textarea" value={form.invalidationLogic} onChange={(e) => handleChange('invalidationLogic', e.target.value)} />
             </div>
             <div className="trader-suite-field trader-suite-field--span-6">
-              <label>Trade management</label>
-              <textarea className="trader-suite-textarea" value={`${form.partialsRule}\n${form.trailingLogic}\n${form.holdVsExit}`} onChange={(e) => {
-                const [partialsRule = '', trailingLogic = '', holdVsExit = ''] = e.target.value.split('\n');
-                setForm((prev) => ({ ...prev, partialsRule, trailingLogic, holdVsExit }));
-              }} />
+              <label>Management rules</label>
+              <textarea
+                className="trader-suite-textarea"
+                value={`${form.partialsRule}\n${form.trailingLogic}\n${form.holdVsExit}`}
+                onChange={(e) => {
+                  const [partialsRule = '', trailingLogic = '', holdVsExit = ''] = e.target.value.split('\n');
+                  setForm((prev) => ({ ...prev, partialsRule, trailingLogic, holdVsExit }));
+                }}
+              />
             </div>
           </div>
         </section>
@@ -290,15 +347,15 @@ export default function TraderPlaybook() {
         <section className="trader-suite-panel trader-suite-section">
           <div className="trader-suite-section-header">
             <div>
-              <div className="trader-suite-kicker">Protection Layer</div>
+              <div className="trader-suite-kicker">Hard Filters</div>
               <h2>Do not trade if</h2>
-              <p>Use hard filters so low-quality conditions are blocked before execution.</p>
+              <p>These conditions should block the trade entirely, even if the setup usually works.</p>
             </div>
           </div>
           <div className="trader-suite-note-list">
             {form.doNotTrade.map((item, index) => (
               <div key={`dont-${index}`} className="trader-suite-note">
-                <strong>Filter {index + 1}</strong>
+                <strong>Blocker {index + 1}</strong>
                 <input className="trader-suite-input" value={item} onChange={(e) => handleArrayChange('doNotTrade', index, e.target.value)} />
               </div>
             ))}
@@ -308,9 +365,9 @@ export default function TraderPlaybook() {
         <section className="trader-suite-panel trader-suite-section">
           <div className="trader-suite-section-header">
             <div>
-              <div className="trader-suite-kicker">Personal Leaks</div>
-              <h2>Common mistakes and checklist</h2>
-              <p>Keep the checklist actionable and the mistake list honest so replay can score against it later.</p>
+              <div className="trader-suite-kicker">Known Leaks</div>
+              <h2>Recurring mistakes</h2>
+              <p>Keep the mistakes visible so replay can diagnose whether the setup failed or the execution did.</p>
             </div>
           </div>
           <div className="trader-suite-note-list">
@@ -320,10 +377,6 @@ export default function TraderPlaybook() {
                 <input className="trader-suite-input" value={item} onChange={(e) => handleArrayChange('commonMistakes', index, e.target.value)} />
               </div>
             ))}
-            <div className="trader-suite-note">
-              <strong>Actionable checklist note</strong>
-              <textarea className="trader-suite-textarea" value={form.checklistNotes} onChange={(e) => handleChange('checklistNotes', e.target.value)} />
-            </div>
           </div>
         </section>
       </div>
@@ -331,11 +384,14 @@ export default function TraderPlaybook() {
       <section className="trader-suite-panel trader-suite-section">
         <div className="trader-suite-section-header">
           <div>
-            <div className="trader-suite-kicker">Performance Lens</div>
-            <h2>Performance stats</h2>
-            <p>The playbook should stay alive. Track how this setup actually performs, not how you hope it performs.</p>
+            <div className="trader-suite-kicker">Performance Feedback</div>
+            <h2>How this setup actually performs</h2>
+            <p>The playbook stays alive only when review data flows back into it and sharpens the rules over time.</p>
           </div>
-          <Link to="/trader-replay" className="trader-suite-btn">Open Replay</Link>
+          <div className="trader-suite-cta-row">
+            <Link to="/trader-lab" className="trader-suite-btn trader-suite-btn--primary">Use this setup in Trader Lab</Link>
+            <Link to="/trader-replay" className="trader-suite-btn">Review this setup in Replay</Link>
+          </div>
         </div>
         <div className="trader-suite-metric-grid">
           <div className="trader-suite-metric">

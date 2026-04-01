@@ -97,6 +97,29 @@ function postureToneClass(posture) {
   return 'md-tone';
 }
 
+const DECODER_FLOW = [
+  {
+    step: '1',
+    title: 'Read the brief',
+    note: 'Start with bias, conviction, and current posture.',
+  },
+  {
+    step: '2',
+    title: 'Inspect structure',
+    note: 'Use price action, levels, and scenario map.',
+  },
+  {
+    step: '3',
+    title: 'Check risk context',
+    note: 'Review macro calendar, headlines, and positioning.',
+  },
+  {
+    step: '4',
+    title: 'Decide execution',
+    note: 'Only act if the posture and trigger still align.',
+  },
+];
+
 export default function MarketDecoderView({ embedded }) {
   const { user } = useAuth();
   const isSuperAdminUser = isSuperAdmin(user);
@@ -200,16 +223,27 @@ export default function MarketDecoderView({ embedded }) {
                 </button>
               ))}
             </div>
+            <div className="md-decoder-flow" aria-label="Decoder workflow">
+              {DECODER_FLOW.map((item) => (
+                <div key={item.step} className="md-decoder-flow-step">
+                  <span className="md-decoder-flow-index">{item.step}</span>
+                  <span className="md-decoder-flow-copy">
+                    <strong>{item.title}</strong>
+                    <small>{item.note}</small>
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
           <aside className="md-decoder-hero-rail">
             <div className="md-hero-rail-card">
-              <span className="md-hero-rail-label">Workflow</span>
-              <strong>Read the bias, validate the levels, map the scenario, then execute only if the posture still holds.</strong>
+              <span className="md-hero-rail-label">What this page is for</span>
+              <strong>Turn scattered market context into one usable pre-trade brief, not a signal feed.</strong>
             </div>
             <div className="md-hero-rail-card">
               <span className="md-hero-rail-label">Best use</span>
-              <strong>Pre-trade filtering and decision support, not signal chasing.</strong>
+              <strong>Filter the asset, read the posture, check risks, then decide whether execution is justified.</strong>
             </div>
           </aside>
         </div>
@@ -255,6 +289,26 @@ export default function MarketDecoderView({ embedded }) {
             <div className="md-summary-item">
               <span className="md-summary-label">Posture</span>
               <strong className={postureToneClass(brief.finalOutput?.currentPosture)}>{brief.finalOutput?.currentPosture || 'No posture yet'}</strong>
+            </div>
+          </section>
+
+          <section className="md-decoder-decision-strip" aria-label="Decision strip">
+            <div className="md-decision-card md-decision-card--primary">
+              <span className="md-decision-label">Current desk posture</span>
+              <strong className={postureToneClass(brief.finalOutput?.currentPosture)}>
+                {brief.finalOutput?.currentPosture || 'No posture yet'}
+              </strong>
+              <p>
+                {brief.finalOutput?.postureSubtitle || brief.instantRead?.bestApproach || 'Wait for the structure to become clearer before acting.'}
+              </p>
+            </div>
+            <div className="md-decision-card">
+              <span className="md-decision-label">Best approach right now</span>
+              <p>{brief.instantRead?.bestApproach || 'Assess bias, levels, and scenario before planning execution.'}</p>
+            </div>
+            <div className="md-decision-card">
+              <span className="md-decision-label">What changes the read</span>
+              <p>{brief.finalOutput?.whatWouldChangeThis || 'A break in structure, macro catalyst, or invalidation around key levels.'}</p>
             </div>
           </section>
 
@@ -362,84 +416,6 @@ export default function MarketDecoderView({ embedded }) {
             <MarketDecoderChart bars={brief.meta?.chartBars} />
           </section>
 
-          <div className="md-decoder-anchor-grid">
-            <section className="md-decoder-card md-decoder-card--news" aria-labelledby="md-h-news">
-              <h3 id="md-h-news" className="md-decoder-card-title md-terminal-title">
-                Headlines · {brief.header.asset}
-              </h3>
-              {Array.isArray(brief.meta?.anchorNews) && brief.meta.anchorNews.length > 0 ? (
-                <ul className="md-anchor-news-list">
-                  {brief.meta.anchorNews.map((item, i) => {
-                    const href = String(item.url || '').trim();
-                    const safe = href && href !== '#';
-                    return (
-                      <li key={`${href}-${i}`}>
-                        {safe ? (
-                          <a
-                            className="md-anchor-news-link"
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {item.title || 'Open article'}
-                          </a>
-                        ) : (
-                          <span className="md-anchor-news-title">{item.title || 'Headline'}</span>
-                        )}
-                        <div className="md-anchor-news-meta">
-                          {item.source ? <span>{item.source}</span> : null}
-                          {item.datetime ? (
-                            <span className="md-anchor-news-time">{formatNewsTime(item.datetime)}</span>
-                          ) : null}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="md-decoder-small">
-                  No headlines matched this symbol with the configured keys — add Finnhub and/or FMP keys on the server for live
-                  article links.
-                </p>
-              )}
-            </section>
-
-            <section className="md-decoder-card md-decoder-card--meets" aria-labelledby="md-h-meets">
-              <h3 id="md-h-meets" className="md-decoder-card-title md-terminal-title">
-                Market meetings · {brief.header.asset}
-              </h3>
-              <p className="md-meets-scope md-decoder-small">
-                {brief.meta?.marketMeetingsScope === 'pair' &&
-                  'Economic releases filtered to currencies linked to this instrument.'}
-                {brief.meta?.marketMeetingsScope === 'global' &&
-                  'Pair-specific calendar rows were thin — showing the broader macro window for the same dates.'}
-                {brief.meta?.marketMeetingsScope === 'none' &&
-                  'Economic calendar did not return rows for this window.'}
-                {!['pair', 'global', 'none'].includes(brief.meta?.marketMeetingsScope) &&
-                  'Macro calendar context for upcoming releases.'}
-              </p>
-              {Array.isArray(brief.meta?.marketMeetings) && brief.meta.marketMeetings.length > 0 ? (
-                <ul className="md-meets-list">
-                  {brief.meta.marketMeetings.map((ev, i) => (
-                    <li key={`${ev.title}-${i}`}>
-                      <strong>{ev.title}</strong>
-                      {ev.timeUntil ? ` — ${ev.timeUntil}` : ''}
-                      {ev.impact ? (
-                        <span className={`md-meets-impact md-meets-impact--${String(ev.impact).toLowerCase()}`}>
-                          {' '}
-                          · {ev.impact}
-                        </span>
-                      ) : null}
-                      {ev.date ? <span className="md-meets-date"> · {ev.date}</span> : null}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="md-decoder-small">No upcoming releases parsed for this view.</p>
-              )}
-            </section>
-          </div>
-
           {isSuperAdminUser && brief.meta?.dataHealth && (
             <div className="md-data-health" role="status">
               <strong>Feed status:</strong> {brief.meta.dataHealth.summary}
@@ -457,230 +433,316 @@ export default function MarketDecoderView({ embedded }) {
             </div>
           )}
 
-          {/* 2 Instant Read */}
-          <section className="md-decoder-card md-decoder-card--instant" aria-labelledby="md-h-instant">
-            <h3 id="md-h-instant" className="md-decoder-card-title">
-              Instant read
-            </h3>
-            <div className="md-decoder-instant-grid">
-              <div className="md-decoder-kv">
-                <span className="md-decoder-kv-label">Bias</span>
-                <span className={biasPillClass(brief.instantRead.bias)}>{brief.instantRead.bias}</span>
-              </div>
-              <div className="md-decoder-kv">
-                <span className="md-decoder-kv-label">Conviction</span>
-                <span className="md-decoder-kv-value">{brief.instantRead.conviction}</span>
-              </div>
-              <div className="md-decoder-kv">
-                <span className="md-decoder-kv-label">Condition</span>
-                <span className="md-decoder-kv-value">{brief.instantRead.tradingCondition}</span>
-              </div>
-            </div>
-            <p className="md-decoder-approach">
-              <strong style={{ color: 'rgba(212,175,55,0.95)' }}>Best approach:</strong> {brief.instantRead.bestApproach}
-            </p>
-          </section>
-
-          {/* 3 What matters now */}
-          <section className="md-decoder-card" aria-labelledby="md-h-wmn">
-            <h3 id="md-h-wmn" className="md-decoder-card-title">
-              What matters now
-            </h3>
-            <ul className="md-decoder-bullets">
-              {(brief.whatMattersNow || []).map((item) => (
-                <li key={item.label}>
-                  <strong>{item.label}:</strong> {item.text}
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          {/* 4 Key levels */}
-          <section className="md-decoder-card md-levels-card" aria-labelledby="md-h-levels">
-            <div className="md-decoder-card-head">
-              <div>
-                <h3 id="md-h-levels" className="md-decoder-card-title">
-                  Key levels
-                </h3>
-                <p className="md-decoder-small md-card-caption">Important reference points for structure, reaction, and invalidation.</p>
-              </div>
-            </div>
-            <div className="md-levels-grid">
-              {brief.keyLevels?.keyLevelsDisplay ? (
-                [
-                  ['resistance1', 'Resistance 1'],
-                  ['resistance2', 'Resistance 2'],
-                  ['support1', 'Support 1'],
-                  ['support2', 'Support 2'],
-                  ['previousDayHigh', 'Prior session high'],
-                  ['previousDayLow', 'Prior session low'],
-                  ['weeklyHigh', 'Weekly high'],
-                  ['weeklyLow', 'Weekly low'],
-                ].map(([key, label]) => (
-                  <div key={key} className="md-level-line">
-                    <span className="md-level-label">{label}</span>
-                    <span className="md-level-val">{brief.keyLevels.keyLevelsDisplay[key]}</span>
+          <div className="md-decoder-workspace">
+            <div className="md-decoder-primary">
+              <section className="md-decoder-card md-decoder-card--instant" aria-labelledby="md-h-instant">
+                <div className="md-decoder-card-head">
+                  <div>
+                    <h3 id="md-h-instant" className="md-decoder-card-title">
+                      Decision brief
+                    </h3>
+                    <p className="md-decoder-small md-card-caption">This is the fast read a trader should understand first before going deeper.</p>
                   </div>
-                ))
-              ) : (
-                <p className="md-level-fallback">Level grid loading from server…</p>
-              )}
+                </div>
+                <div className="md-decoder-instant-grid">
+                  <div className="md-decoder-kv">
+                    <span className="md-decoder-kv-label">Bias</span>
+                    <span className={biasPillClass(brief.instantRead.bias)}>{brief.instantRead.bias}</span>
+                  </div>
+                  <div className="md-decoder-kv">
+                    <span className="md-decoder-kv-label">Conviction</span>
+                    <span className="md-decoder-kv-value">{brief.instantRead.conviction}</span>
+                  </div>
+                  <div className="md-decoder-kv">
+                    <span className="md-decoder-kv-label">Condition</span>
+                    <span className="md-decoder-kv-value">{brief.instantRead.tradingCondition}</span>
+                  </div>
+                </div>
+                <p className="md-decoder-approach">
+                  <strong>Best approach:</strong> {brief.instantRead.bestApproach}
+                </p>
+              </section>
+
+              <section className="md-decoder-card" aria-labelledby="md-h-wmn">
+                <h3 id="md-h-wmn" className="md-decoder-card-title">
+                  What matters now
+                </h3>
+                <ul className="md-decoder-bullets">
+                  {(brief.whatMattersNow || []).map((item) => (
+                    <li key={item.label}>
+                      <strong>{item.label}:</strong> {item.text}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="md-decoder-card md-levels-card" aria-labelledby="md-h-levels">
+                <div className="md-decoder-card-head">
+                  <div>
+                    <h3 id="md-h-levels" className="md-decoder-card-title">
+                      Key levels
+                    </h3>
+                    <p className="md-decoder-small md-card-caption">Important reference points for reaction, continuation, and invalidation.</p>
+                  </div>
+                </div>
+                <div className="md-levels-grid">
+                  {brief.keyLevels?.keyLevelsDisplay ? (
+                    [
+                      ['resistance1', 'Resistance 1'],
+                      ['resistance2', 'Resistance 2'],
+                      ['support1', 'Support 1'],
+                      ['support2', 'Support 2'],
+                      ['previousDayHigh', 'Prior session high'],
+                      ['previousDayLow', 'Prior session low'],
+                      ['weeklyHigh', 'Weekly high'],
+                      ['weeklyLow', 'Weekly low'],
+                    ].map(([key, label]) => (
+                      <div key={key} className="md-level-line">
+                        <span className="md-level-label">{label}</span>
+                        <span className="md-level-val">{brief.keyLevels.keyLevelsDisplay[key]}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="md-level-fallback">Level grid loading from server…</p>
+                  )}
+                </div>
+              </section>
+
+              <section className="md-decoder-card" aria-labelledby="md-h-scen">
+                <div className="md-decoder-card-head">
+                  <div>
+                    <h3 id="md-h-scen" className="md-decoder-card-title">
+                      Scenario map
+                    </h3>
+                    <p className="md-decoder-small md-card-caption">Read the market in branches so the next action is obvious if price confirms or fails.</p>
+                  </div>
+                </div>
+                <div className="md-decoder-scenario">
+                  <div className="md-decoder-scenario-block">
+                    <div className="md-decoder-scenario-label md-decoder-scenario-label--bull">Bullish scenario</div>
+                    <p className="md-decoder-small" style={{ marginTop: 0 }}>
+                      <strong>Condition:</strong> {brief.scenarioMap.bullish.condition}
+                    </p>
+                    <p className="md-decoder-small">
+                      <strong>Outcome:</strong> {brief.scenarioMap.bullish.outcome}
+                    </p>
+                  </div>
+                  <div className="md-decoder-scenario-block">
+                    <div className="md-decoder-scenario-label md-decoder-scenario-label--bear">Bearish scenario</div>
+                    <p className="md-decoder-small" style={{ marginTop: 0 }}>
+                      <strong>Condition:</strong> {brief.scenarioMap.bearish.condition}
+                    </p>
+                    <p className="md-decoder-small">
+                      <strong>Outcome:</strong> {brief.scenarioMap.bearish.outcome}
+                    </p>
+                  </div>
+                  <div className="md-decoder-scenario-block">
+                    <div className="md-decoder-scenario-label md-decoder-scenario-label--flat">No-trade scenario</div>
+                    <p className="md-decoder-small" style={{ marginTop: 0 }}>
+                      {brief.scenarioMap.noTrade.when}
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              <section className="md-decoder-card md-decoder-card--execution" aria-labelledby="md-h-ex">
+                <div className="md-decoder-card-head">
+                  <div>
+                    <h3 id="md-h-ex" className="md-decoder-card-title">
+                      Execution guidance
+                    </h3>
+                    <p className="md-decoder-small md-card-caption">Use this as the final execution filter, not as a shortcut to force a trade.</p>
+                  </div>
+                </div>
+                {(brief.executionGuidance || brief.executionNote) && (
+                  <div className="md-exec-grid">
+                    <div className="md-exec-row">
+                      <span className="md-exec-key">Preferred direction</span>
+                      <span className="md-exec-val">
+                        → {brief.executionGuidance?.preferredDirection ?? brief.executionNote?.preferredDirection}
+                      </span>
+                    </div>
+                    <div className="md-exec-row">
+                      <span className="md-exec-key">Entry condition</span>
+                      <span className="md-exec-val">
+                        → {brief.executionGuidance?.entryCondition ?? brief.executionNote?.confirmationNeeded}
+                      </span>
+                    </div>
+                    <div className="md-exec-row">
+                      <span className="md-exec-key">Invalidation</span>
+                      <span className="md-exec-val">
+                        → {brief.executionGuidance?.invalidation ?? brief.executionNote?.invalidation}
+                      </span>
+                    </div>
+                    <div className="md-exec-row">
+                      <span className="md-exec-key">Risk consideration</span>
+                      <span className="md-exec-val">
+                        → {brief.executionGuidance?.riskConsideration ?? '—'}
+                      </span>
+                    </div>
+                    <div className="md-exec-row md-exec-row--avoid">
+                      <span className="md-exec-key">Avoid this</span>
+                      <span className="md-exec-val">
+                        → {brief.executionGuidance?.avoidThis ?? brief.executionNote?.whatNotToDo}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </section>
             </div>
-          </section>
 
-          {/* 5 Scenario map */}
-          <section className="md-decoder-card" aria-labelledby="md-h-scen">
-            <h3 id="md-h-scen" className="md-decoder-card-title">
-              Scenario map
-            </h3>
-            <div className="md-decoder-scenario">
-              <div className="md-decoder-scenario-block">
-                <div className="md-decoder-scenario-label md-decoder-scenario-label--bull">Bullish scenario</div>
-                <p className="md-decoder-small" style={{ marginTop: 0 }}>
-                  <strong>Condition:</strong> {brief.scenarioMap.bullish.condition}
+            <aside className="md-decoder-rail">
+              <section className="md-decoder-card md-decoder-card--posture" aria-labelledby="md-h-posture">
+                <h3 id="md-h-posture" className="md-decoder-card-title">
+                  Final output
+                </h3>
+                <p className="md-decoder-posture-label">Current posture</p>
+                <p className={`md-decoder-posture-value ${postureToneClass(brief.finalOutput.currentPosture)}`}>
+                  {brief.finalOutput.currentPosture}
                 </p>
-                <p className="md-decoder-small">
-                  <strong>Outcome:</strong> {brief.scenarioMap.bullish.outcome}
+                {brief.finalOutput.postureSubtitle && (
+                  <p className="md-decoder-posture-sub">→ {brief.finalOutput.postureSubtitle}</p>
+                )}
+                <div className="md-decoder-posture-detail">
+                  <p className="md-decoder-posture-detail-key">Reason</p>
+                  <p className="md-decoder-posture-detail-val">→ {brief.finalOutput.reason ?? '—'}</p>
+                  <p className="md-decoder-posture-detail-key">What would change this</p>
+                  <p className="md-decoder-posture-detail-val">→ {brief.finalOutput.whatWouldChangeThis ?? '—'}</p>
+                </div>
+                {brief.meta && isSuperAdminUser && (
+                  <p className="md-decoder-small md-decoder-rules-debug" style={{ textAlign: 'center', marginTop: 14 }}>
+                    Rules engine: bull {brief.meta.bullScore} · bear {brief.meta.bearScore} · net {brief.meta.netScore}
+                    {brief.meta.finnhubSymbol ? ` · ${brief.meta.finnhubSymbol}` : ''}
+                  </p>
+                )}
+              </section>
+
+              <section className="md-decoder-card" aria-labelledby="md-h-ev">
+                <h3 id="md-h-ev" className="md-decoder-card-title">
+                  Event risk
+                </h3>
+                {(brief.eventRisk || []).length === 0 ? (
+                  <p className="md-decoder-small">No high-priority events parsed from calendar for this view.</p>
+                ) : (
+                  <ul className="md-decoder-line-list">
+                    {brief.eventRisk.map((ev, i) => (
+                      <li key={i}>
+                        <strong>{ev.title}</strong>
+                        {ev.timeUntil ? ` — ${ev.timeUntil}` : ''} · Impact: {ev.impact}
+                        {ev.note ? <span className="md-ev-note"> {ev.note}</span> : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              <section className="md-decoder-card md-decoder-card--meets" aria-labelledby="md-h-meets">
+                <h3 id="md-h-meets" className="md-decoder-card-title md-terminal-title">
+                  Market meetings · {brief.header.asset}
+                </h3>
+                <p className="md-meets-scope md-decoder-small">
+                  {brief.meta?.marketMeetingsScope === 'pair' &&
+                    'Economic releases filtered to currencies linked to this instrument.'}
+                  {brief.meta?.marketMeetingsScope === 'global' &&
+                    'Pair-specific calendar rows were thin — showing the broader macro window for the same dates.'}
+                  {brief.meta?.marketMeetingsScope === 'none' &&
+                    'Economic calendar did not return rows for this window.'}
+                  {!['pair', 'global', 'none'].includes(brief.meta?.marketMeetingsScope) &&
+                    'Macro calendar context for upcoming releases.'}
                 </p>
-              </div>
-              <div className="md-decoder-scenario-block">
-                <div className="md-decoder-scenario-label md-decoder-scenario-label--bear">Bearish scenario</div>
-                <p className="md-decoder-small" style={{ marginTop: 0 }}>
-                  <strong>Condition:</strong> {brief.scenarioMap.bearish.condition}
-                </p>
-                <p className="md-decoder-small">
-                  <strong>Outcome:</strong> {brief.scenarioMap.bearish.outcome}
-                </p>
-              </div>
-              <div className="md-decoder-scenario-block">
-                <div className="md-decoder-scenario-label md-decoder-scenario-label--flat">No-trade scenario</div>
-                <p className="md-decoder-small" style={{ marginTop: 0 }}>
-                  {brief.scenarioMap.noTrade.when}
-                </p>
-              </div>
-            </div>
-          </section>
+                {Array.isArray(brief.meta?.marketMeetings) && brief.meta.marketMeetings.length > 0 ? (
+                  <ul className="md-meets-list">
+                    {brief.meta.marketMeetings.map((ev, i) => (
+                      <li key={`${ev.title}-${i}`}>
+                        <strong>{ev.title}</strong>
+                        {ev.timeUntil ? ` — ${ev.timeUntil}` : ''}
+                        {ev.impact ? (
+                          <span className={`md-meets-impact md-meets-impact--${String(ev.impact).toLowerCase()}`}>
+                            {' '}
+                            · {ev.impact}
+                          </span>
+                        ) : null}
+                        {ev.date ? <span className="md-meets-date"> · {ev.date}</span> : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="md-decoder-small">No upcoming releases parsed for this view.</p>
+                )}
+              </section>
 
-          {/* 6 Cross-asset */}
-          <section className="md-decoder-card" aria-labelledby="md-h-cross">
-            <h3 id="md-h-cross" className="md-decoder-card-title">
-              Cross-asset context
-            </h3>
-            <ul className="md-decoder-line-list">
-              {(brief.crossAssetContext || []).map((line, i) => (
-                <li key={i}>{line}</li>
-              ))}
-            </ul>
-          </section>
+              <section className="md-decoder-card" aria-labelledby="md-h-news">
+                <h3 id="md-h-news" className="md-decoder-card-title md-terminal-title">
+                  Headlines · {brief.header.asset}
+                </h3>
+                {Array.isArray(brief.meta?.anchorNews) && brief.meta.anchorNews.length > 0 ? (
+                  <ul className="md-anchor-news-list">
+                    {brief.meta.anchorNews.map((item, i) => {
+                      const href = String(item.url || '').trim();
+                      const safe = href && href !== '#';
+                      return (
+                        <li key={`${href}-${i}`}>
+                          {safe ? (
+                            <a
+                              className="md-anchor-news-link"
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {item.title || 'Open article'}
+                            </a>
+                          ) : (
+                            <span className="md-anchor-news-title">{item.title || 'Headline'}</span>
+                          )}
+                          <div className="md-anchor-news-meta">
+                            {item.source ? <span>{item.source}</span> : null}
+                            {item.datetime ? (
+                              <span className="md-anchor-news-time">{formatNewsTime(item.datetime)}</span>
+                            ) : null}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="md-decoder-small">
+                    No headlines matched this symbol with the configured keys.
+                  </p>
+                )}
+              </section>
 
-          {/* 7 Positioning */}
-          <section className="md-decoder-card" aria-labelledby="md-h-pos">
-            <h3 id="md-h-pos" className="md-decoder-card-title">
-              Positioning
-            </h3>
-            <div className="md-decoder-levels">
-              <div className="md-decoder-level-row">
-                <span className="md-decoder-kv-label">Retail sentiment</span>
-                <span>{brief.positioning.retailSentiment}</span>
-              </div>
-              <div className="md-decoder-level-row">
-                <span className="md-decoder-kv-label">COT</span>
-                <span>{brief.positioning.cot}</span>
-              </div>
-              <div className="md-decoder-level-row">
-                <span className="md-decoder-kv-label">Crowd bias</span>
-                <span>{brief.positioning.crowdBias}</span>
-              </div>
-            </div>
-          </section>
+              <section className="md-decoder-card" aria-labelledby="md-h-cross">
+                <h3 id="md-h-cross" className="md-decoder-card-title">
+                  Cross-asset context
+                </h3>
+                <ul className="md-decoder-line-list">
+                  {(brief.crossAssetContext || []).map((line, i) => (
+                    <li key={i}>{line}</li>
+                  ))}
+                </ul>
+              </section>
 
-          {/* 8 Event risk */}
-          <section className="md-decoder-card" aria-labelledby="md-h-ev">
-            <h3 id="md-h-ev" className="md-decoder-card-title">
-              Event risk
-            </h3>
-            {(brief.eventRisk || []).length === 0 ? (
-              <p className="md-decoder-small">No high-priority events parsed from calendar (check data keys).</p>
-            ) : (
-              <ul className="md-decoder-line-list">
-                {brief.eventRisk.map((ev, i) => (
-                  <li key={i}>
-                    <strong>{ev.title}</strong>
-                    {ev.timeUntil ? ` — ${ev.timeUntil}` : ''} · Impact: {ev.impact}
-                    {ev.note ? <span className="md-ev-note"> {ev.note}</span> : null}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {/* 9 Execution guidance */}
-          <section className="md-decoder-card md-decoder-card--execution" aria-labelledby="md-h-ex">
-            <h3 id="md-h-ex" className="md-decoder-card-title">
-              Execution guidance
-            </h3>
-            {(brief.executionGuidance || brief.executionNote) && (
-              <div className="md-exec-grid">
-                <div className="md-exec-row">
-                  <span className="md-exec-key">Preferred direction</span>
-                  <span className="md-exec-val">
-                    → {brief.executionGuidance?.preferredDirection ?? brief.executionNote?.preferredDirection}
-                  </span>
+              <section className="md-decoder-card" aria-labelledby="md-h-pos">
+                <h3 id="md-h-pos" className="md-decoder-card-title">
+                  Positioning
+                </h3>
+                <div className="md-decoder-levels">
+                  <div className="md-decoder-level-row">
+                    <span className="md-decoder-kv-label">Retail sentiment</span>
+                    <span>{brief.positioning.retailSentiment}</span>
+                  </div>
+                  <div className="md-decoder-level-row">
+                    <span className="md-decoder-kv-label">COT</span>
+                    <span>{brief.positioning.cot}</span>
+                  </div>
+                  <div className="md-decoder-level-row">
+                    <span className="md-decoder-kv-label">Crowd bias</span>
+                    <span>{brief.positioning.crowdBias}</span>
+                  </div>
                 </div>
-                <div className="md-exec-row">
-                  <span className="md-exec-key">Entry condition</span>
-                  <span className="md-exec-val">
-                    →{' '}
-                    {brief.executionGuidance?.entryCondition ?? brief.executionNote?.confirmationNeeded}
-                  </span>
-                </div>
-                <div className="md-exec-row">
-                  <span className="md-exec-key">Invalidation</span>
-                  <span className="md-exec-val">
-                    → {brief.executionGuidance?.invalidation ?? brief.executionNote?.invalidation}
-                  </span>
-                </div>
-                <div className="md-exec-row">
-                  <span className="md-exec-key">Risk consideration</span>
-                  <span className="md-exec-val">
-                    → {brief.executionGuidance?.riskConsideration ?? '—'}
-                  </span>
-                </div>
-                <div className="md-exec-row md-exec-row--avoid">
-                  <span className="md-exec-key">Avoid this</span>
-                  <span className="md-exec-val">
-                    → {brief.executionGuidance?.avoidThis ?? brief.executionNote?.whatNotToDo}
-                  </span>
-                </div>
-              </div>
-            )}
-          </section>
-
-          {/* 10 Final posture */}
-          <section className="md-decoder-card md-decoder-card--posture" aria-labelledby="md-h-posture">
-            <h3 id="md-h-posture" className="md-decoder-card-title">
-              Final output
-            </h3>
-            <p className="md-decoder-posture-label">Current posture</p>
-            <p className={`md-decoder-posture-value ${postureToneClass(brief.finalOutput.currentPosture)}`}>
-              {brief.finalOutput.currentPosture}
-            </p>
-            {brief.finalOutput.postureSubtitle && (
-              <p className="md-decoder-posture-sub">→ {brief.finalOutput.postureSubtitle}</p>
-            )}
-            <div className="md-decoder-posture-detail">
-              <p className="md-decoder-posture-detail-key">Reason</p>
-              <p className="md-decoder-posture-detail-val">→ {brief.finalOutput.reason ?? '—'}</p>
-              <p className="md-decoder-posture-detail-key">What would change this</p>
-              <p className="md-decoder-posture-detail-val">→ {brief.finalOutput.whatWouldChangeThis ?? '—'}</p>
-            </div>
-            {brief.meta && isSuperAdminUser && (
-              <p className="md-decoder-small md-decoder-rules-debug" style={{ textAlign: 'center', marginTop: 14 }}>
-                Rules engine: bull {brief.meta.bullScore} · bear {brief.meta.bearScore} · net {brief.meta.netScore}
-                {brief.meta.finnhubSymbol ? ` · ${brief.meta.finnhubSymbol}` : ''}
-              </p>
-            )}
-          </section>
+              </section>
+            </aside>
+          </div>
         </div>
       )}
     </div>
