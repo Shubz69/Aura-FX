@@ -31,6 +31,20 @@ const MORNING_TTL_MS = 18 * 60 * 60 * 1000;
 const CALENDAR_TTL_MS = 6 * 60 * 60 * 1000;
 const DEFAULT_DECODER_SYMBOLS = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD', 'SPY'];
 
+let pipelineTablesReadyPromise = null;
+
+async function ensurePipelineTablesReady() {
+  if (!process.env.MYSQL_HOST) return false;
+  if (!pipelineTablesReadyPromise) {
+    pipelineTablesReadyPromise = ensurePipelineTables().catch((error) => {
+      pipelineTablesReadyPromise = null;
+      throw error;
+    });
+  }
+  await pipelineTablesReadyPromise;
+  return true;
+}
+
 function uniqueSymbolsFromWatchlist() {
   const watchlist = getWatchlistPayload();
   const seen = new Set();
@@ -68,6 +82,24 @@ function normalizePrice(symbol, marketData) {
   };
 }
 
+function toMySqlDateTime(value) {
+  if (!value) return null;
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null;
+    return value.toISOString().slice(0, 19).replace('T', ' ');
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString().slice(0, 19).replace('T', ' ');
+}
+
+function clampText(value, max) {
+  if (value == null) return null;
+  const text = String(value).trim();
+  if (!text) return null;
+  return text.slice(0, max);
+}
+
 function normalizeHeadlines(headlines, symbol = null) {
   const ingestedAt = new Date();
   return (headlines || []).map((item) => ({
@@ -78,28 +110,28 @@ function normalizeHeadlines(headlines, symbol = null) {
     category: item.category || 'market',
     relatedSymbol: symbol || item.relatedSymbol || null,
     freshnessStatus: 'fresh',
-    publishedAt: item.publishedAt || item.datetime || null,
-    ingestedAt,
+    publishedAt: toMySqlDateTime(item.publishedAt || item.datetime || null),
+    ingestedAt: toMySqlDateTime(ingestedAt),
     rawPayload: item,
   }));
 }
 
 function normalizeEconomicEvents(events) {
   return (events || []).map((item) => ({
-    providerEventId: item.providerEventId || item.id || null,
+    providerEventId: clampText(item.providerEventId || item.id || null, 120),
     eventDate: String(item.date || item.event_date || '').slice(0, 10),
-    eventTime: item.time || item.event_time || null,
-    eventTs: item.datetimeUtc || item.event_ts || item.timestamp || null,
-    title: item.title || item.event || 'Economic Event',
-    country: item.country || null,
-    currency: item.currency || null,
-    impact: item.impact || null,
-    actual: item.actual ?? null,
-    forecast: item.forecast ?? null,
-    previous: item.previous ?? null,
-    revised: item.revised ?? null,
-    unit: item.unit ?? null,
-    source: item.source || 'unknown',
+    eventTime: clampText(item.time || item.event_time || null, 32),
+    eventTs: toMySqlDateTime(item.datetimeUtc || item.event_ts || item.timestamp || null),
+    title: clampText(item.title || item.event || 'Economic Event', 255) || 'Economic Event',
+    country: clampText(item.country || null, 80),
+    currency: clampText(item.currency || null, 16),
+    impact: clampText(item.impact || null, 20),
+    actual: clampText(item.actual ?? null, 64),
+    forecast: clampText(item.forecast ?? null, 64),
+    previous: clampText(item.previous ?? null, 64),
+    revised: clampText(item.revised ?? null, 64),
+    unit: clampText(item.unit ?? null, 32),
+    source: clampText(item.source || 'unknown', 80) || 'unknown',
     freshnessStatus: 'fresh',
     rawPayload: item,
   })).filter((item) => item.eventDate);
@@ -277,7 +309,7 @@ async function buildAndStoreAiContextPacket() {
 }
 
 async function runMorningIngestion() {
-  await ensurePipelineTables();
+  await ensurePipelineTablesReady();
   const lockOwner = `ingest-${Date.now()}`;
   const lock = await acquireRefreshLock('market-data:morning-ingestion', lockOwner, 10 * 60 * 1000);
   if (!lock.acquired) {
@@ -316,6 +348,7 @@ async function runMorningIngestion() {
 }
 
 async function getStoredMarketIntelligence({ timeframe = 'daily', date = '' } = {}) {
+  await ensurePipelineTablesReady();
   const row = await getLatestSnapshot(`market-intelligence:${timeframe}:${date || 'live'}`, timeframe);
   if (!row) return null;
   return {
@@ -327,6 +360,7 @@ async function getStoredMarketIntelligence({ timeframe = 'daily', date = '' } = 
 }
 
 async function getStoredAiContextPacket(packetKey = 'global', timeframe = 'daily') {
+  await ensurePipelineTablesReady();
   const row = await getLatestAiContextPacket(packetKey, timeframe);
   if (!row) return null;
   return {
@@ -338,6 +372,7 @@ async function getStoredAiContextPacket(packetKey = 'global', timeframe = 'daily
 }
 
 async function getStoredSymbolBundle(symbol) {
+  await ensurePipelineTablesReady();
   const [prices, headlines] = await Promise.all([
     getLatestAssetPrices([symbol]),
     getRecentHeadlines({ symbol, limit: 10 }),
@@ -358,6 +393,7 @@ async function getStoredSymbolBundle(symbol) {
 }
 
 async function getStoredBriefInputs({ timeframe = 'daily', date = '' } = {}) {
+  await ensurePipelineTablesReady();
   const [market, headlines, calendar] = await Promise.all([
     getStoredMarketIntelligence({ timeframe, date }),
     getRecentHeadlines({ limit: 40 }),

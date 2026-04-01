@@ -448,23 +448,23 @@ async function listActiveRefreshLocks() {
 }
 
 async function listLatestSnapshots(limit = 25) {
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 25, 100));
   const [rows] = await executeQuery(
     `SELECT snapshot_key, snapshot_type, timeframe, source, freshness_status, as_of_ts, updated_at, notes
      FROM ${TABLES.snapshots}
      ORDER BY updated_at DESC
-     LIMIT ?`,
-    [Math.max(1, Math.min(Number(limit) || 25, 100))]
+     LIMIT ${safeLimit}`
   );
   return rows || [];
 }
 
 async function listLatestDecoderStates(limit = 25) {
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 25, 100));
   const [rows] = await executeQuery(
     `SELECT symbol, timeframe, source, freshness_status, generated_at, updated_at
      FROM ${TABLES.decoderStates}
      ORDER BY updated_at DESC
-     LIMIT ?`,
-    [Math.max(1, Math.min(Number(limit) || 25, 100))]
+     LIMIT ${safeLimit}`
   );
   return rows || [];
 }
@@ -536,13 +536,13 @@ async function getRecentHeadlines({ symbol = null, limit = 20 } = {}) {
     where = 'WHERE related_symbol = ?';
     params.push(symbol);
   }
-  params.push(Math.max(1, Math.min(Number(limit) || 20, 100)));
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 20, 100));
   const [rows] = await executeQuery(
     `SELECT headline, summary, url, source, category, related_symbol, freshness_status, published_at, updated_at, raw_payload
      FROM ${TABLES.headlines}
      ${where}
      ORDER BY COALESCE(published_at, updated_at) DESC
-     LIMIT ?`,
+     LIMIT ${safeLimit}`,
     params
   );
   return (rows || []).map((row) => ({
@@ -562,13 +562,13 @@ async function getRecentEconomicEvents({ fromDate = null, toDate = null, limit =
     clauses.push('event_date <= ?');
     params.push(toDate);
   }
-  params.push(Math.max(1, Math.min(Number(limit) || 200, 500)));
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 200, 500));
   const [rows] = await executeQuery(
     `SELECT provider_event_id, event_date, event_time, event_ts, title, country, currency, impact, actual_value, forecast_value, previous_value, revised_value, unit, source, freshness_status, updated_at, raw_payload
      FROM ${TABLES.events}
      ${clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''}
      ORDER BY COALESCE(event_ts, updated_at) ASC
-     LIMIT ?`,
+     LIMIT ${safeLimit}`,
     params
   );
   return (rows || []).map((row) => ({
