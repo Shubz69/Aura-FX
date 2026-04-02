@@ -3,6 +3,7 @@ MT5Instance — one portable terminal copy per login.
 
 Operations run in a subprocess (`python -m app.mt5_worker`) to avoid IPC collisions
 and Windows multiprocessing issues when handling multiple accounts.
+Per-login job serialization + global subprocess cap prevent overload and data races.
 """
 
 from __future__ import annotations
@@ -13,21 +14,35 @@ import random
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 import psutil
 
-from .config import INSTANCES_DIR, TEMPLATE_PATH, validate_mt5_template
+from .config import (
+    BUILD_TMP_SUFFIX,
+    INSTANCES_DIR,
+    INSTANCE_MARKER_NAME,
+    LAST_USED_NAME,
+    MT5_GLOBAL_JOB_ACQUIRE_TIMEOUT,
+    MT5_INSTANCE_LOCK_TIMEOUT,
+    MT5_MAX_CONCURRENT_JOBS,
+    TEMPLATE_PATH,
+    validate_mt5_template,
+)
 from .errors import WorkerError
 
 SUBPROCESS_TIMEOUT = 60
-INSTANCE_MARKER = ".aurasync_instance_ok"
-BUILD_SUFFIX = ".build.tmp"
-_LOCK_TIMEOUT_SEC = 180.0
 _STDOUT_SNIP = 800
 _STDERR_MAX = 16_000
+
+_global_job_sem = threading.BoundedSemaphore(MT5_MAX_CONCURRENT_JOBS)
+
+# Logins currently executing a subprocess (for idle sweeper — process-local).
+active_mt5_logins: Set[int] = set()
+active_mt5_guard = threading.Lock()
 
 
 def _snip(text: str, limit: int) -> str:
@@ -47,11 +62,15 @@ def _try_parse_worker_json(raw: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def _instance_lock_path(login: int) -> Path:
+def _instance_build_lock_path(login: int) -> Path:
     return INSTANCES_DIR / f".acc_{login}.instancelock"
 
 
-def _lock_is_stale(lock_path: Path) -> bool:
+def _instance_job_lock_path(login: int) -> Path:
+    return INSTANCES_DIR / f".acc_{login}.joblock"
+
+
+def _lock_stale(lock_path: Path) -> bool:
     try:
         pid_s = lock_path.read_text(encoding="utf-8", errors="replace").strip()
         pid = int(pid_s)
@@ -60,12 +79,16 @@ def _lock_is_stale(lock_path: Path) -> bool:
         return True
 
 
-def _acquire_instance_lock(login: int) -> Path:
-    lock_path = _instance_lock_path(login)
+def _acquire_lock_exclusive(
+    lock_path: Path,
+    deadline_sec: float,
+    busy_code: str,
+    busy_message: str,
+) -> Path:
     INSTANCES_DIR.mkdir(parents=True, exist_ok=True)
-    deadline = time.monotonic() + _LOCK_TIMEOUT_SEC
+    deadline = time.monotonic() + deadline_sec
     while time.monotonic() < deadline:
-        if lock_path.exists() and _lock_is_stale(lock_path):
+        if lock_path.exists() and _lock_stale(lock_path):
             try:
                 lock_path.unlink()
             except OSError:
@@ -80,14 +103,10 @@ def _acquire_instance_lock(login: int) -> Path:
             return lock_path
         except FileExistsError:
             time.sleep(0.05 + random.random() * 0.05)
-    raise WorkerError(
-        "MT5_INSTANCE_LOCK_TIMEOUT",
-        "Another request is preparing this account instance; retry later.",
-        http_status=503,
-    )
+    raise WorkerError(busy_code, busy_message, http_status=503)
 
 
-def _release_instance_lock(lock_path: Path) -> None:
+def _release_lock(lock_path: Path) -> None:
     try:
         lock_path.unlink(missing_ok=True)
     except OSError:
@@ -96,7 +115,7 @@ def _release_instance_lock(lock_path: Path) -> None:
 
 def _instance_looks_ready(path: Path) -> bool:
     exe = path / "terminal64.exe"
-    marker = path / INSTANCE_MARKER
+    marker = path / INSTANCE_MARKER_NAME
     return path.is_dir() and exe.is_file() and marker.is_file()
 
 
@@ -113,6 +132,15 @@ def _rmtree_quiet(target: Path) -> None:
         ) from e
 
 
+def _touch_last_used(instance_path: Path) -> None:
+    try:
+        p = instance_path / LAST_USED_NAME
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(str(int(time.time())), encoding="utf-8")
+    except OSError:
+        pass
+
+
 class MT5Instance:
     def __init__(self, login: int, password: str, server: str) -> None:
         self._login = login
@@ -126,7 +154,12 @@ class MT5Instance:
         if _instance_looks_ready(self.instance_path):
             return
 
-        lock_path = _acquire_instance_lock(self._login)
+        lock_path = _acquire_lock_exclusive(
+            _instance_build_lock_path(self._login),
+            float(MT5_INSTANCE_LOCK_TIMEOUT),
+            "MT5_INSTANCE_BUSY",
+            "This MetaTrader account is being prepared on the worker; try again shortly.",
+        )
         try:
             validate_mt5_template()
             if _instance_looks_ready(self.instance_path):
@@ -135,7 +168,7 @@ class MT5Instance:
             if self.instance_path.exists() and not _instance_looks_ready(self.instance_path):
                 _rmtree_quiet(self.instance_path)
 
-            build_dir = INSTANCES_DIR / f"acc_{self._login}{BUILD_SUFFIX}"
+            build_dir = INSTANCES_DIR / f"acc_{self._login}{BUILD_TMP_SUFFIX}"
             if build_dir.exists():
                 _rmtree_quiet(build_dir)
 
@@ -163,7 +196,7 @@ class MT5Instance:
                 )
 
             try:
-                (build_dir / INSTANCE_MARKER).write_text("ok\n", encoding="utf-8")
+                (build_dir / INSTANCE_MARKER_NAME).write_text("ok\n", encoding="utf-8")
             except OSError as e:
                 _rmtree_quiet(build_dir)
                 raise WorkerError(
@@ -192,7 +225,7 @@ class MT5Instance:
                     http_status=503,
                 )
         finally:
-            _release_instance_lock(lock_path)
+            _release_lock(lock_path)
 
     def _run(self, action: str) -> dict:
         if not _instance_looks_ready(self.instance_path):
@@ -202,78 +235,103 @@ class MT5Instance:
                 http_status=503,
             )
 
-        cmd = [
-            sys.executable,
-            "-m",
-            "app.mt5_worker",
-            str(self.instance_path.resolve()),
-            str(self._login),
-            self._password,
-            self._server,
-            action,
-        ]
-
+        job_lock = _acquire_lock_exclusive(
+            _instance_job_lock_path(self._login),
+            float(MT5_INSTANCE_LOCK_TIMEOUT),
+            "MT5_INSTANCE_BUSY",
+            f"A sync or positions request is already in progress for login {self._login}.",
+        )
+        acquired_sem = False
+        with active_mt5_guard:
+            active_mt5_logins.add(self._login)
         try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=SUBPROCESS_TIMEOUT,
-                cwd=str(INSTANCES_DIR.parent),
-                shell=False,
-            )
-        except subprocess.TimeoutExpired:
-            self._cleanup_orphaned_terminal()
-            raise WorkerError(
-                "MT5_SUBPROCESS_TIMEOUT",
-                f"MT5 operation '{action}' timed out after {SUBPROCESS_TIMEOUT}s "
-                f"(login={self._login}). Check broker server name and credentials.",
-                http_status=504,
-            )
+            acquired_sem = _global_job_sem.acquire(timeout=float(MT5_GLOBAL_JOB_ACQUIRE_TIMEOUT))
+            if not acquired_sem:
+                raise WorkerError(
+                    "MT5_WORKER_BUSY",
+                    "MetaTrader worker capacity is saturated; try again shortly.",
+                    http_status=503,
+                )
 
-        out = (result.stdout or "").strip()
-        err = (result.stderr or "").strip()
+            cmd = [
+                sys.executable,
+                "-m",
+                "app.mt5_worker",
+                str(self.instance_path.resolve()),
+                str(self._login),
+                self._password,
+                self._server,
+                action,
+            ]
 
-        parsed: Optional[Dict[str, Any]] = None
-        if out:
-            parsed = _try_parse_worker_json(out)
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=SUBPROCESS_TIMEOUT,
+                    cwd=str(INSTANCES_DIR.parent),
+                    shell=False,
+                )
+            except subprocess.TimeoutExpired:
+                self._cleanup_orphaned_terminal()
+                raise WorkerError(
+                    "MT5_SUBPROCESS_TIMEOUT",
+                    f"MT5 operation '{action}' timed out after {SUBPROCESS_TIMEOUT}s "
+                    f"(login={self._login}). Check broker server name and credentials.",
+                    http_status=504,
+                )
 
-        if result.returncode != 0:
-            if isinstance(parsed, dict) and parsed.get("ok") is False:
+            out = (result.stdout or "").strip()
+            err = (result.stderr or "").strip()
+
+            parsed: Optional[Dict[str, Any]] = None
+            if out:
+                parsed = _try_parse_worker_json(out)
+
+            if result.returncode != 0:
+                if isinstance(parsed, dict) and parsed.get("ok") is False:
+                    code = str(parsed.get("code") or "MT5_WORKER_ERROR")
+                    msg = str(parsed.get("error") or parsed.get("message") or "MT5 worker reported failure")
+                    raise WorkerError(code, f"[login={self._login} action={action}] {msg}", http_status=502)
+
+                hint = _snip(err or out, _STDERR_MAX)
+                raise WorkerError(
+                    "MT5_SUBPROCESS_FAILED",
+                    f"[login={self._login} action={action}] subprocess exit {result.returncode}: {hint or 'no output'}",
+                    http_status=502,
+                )
+
+            if not out:
+                stderr_bit = f" stderr={_snip(err, 500)!r}" if err else ""
+                raise WorkerError(
+                    "MT5_SUBPROCESS_NO_OUTPUT",
+                    f"[login={self._login} action={action}] empty stdout from worker{stderr_bit}",
+                    http_status=502,
+                )
+
+            if parsed is None:
+                raise WorkerError(
+                    "MT5_SUBPROCESS_BAD_JSON",
+                    f"[login={self._login} action={action}] invalid JSON on stdout: {_snip(out, _STDOUT_SNIP)!r}",
+                    http_status=502,
+                )
+
+            if not parsed.get("ok"):
                 code = str(parsed.get("code") or "MT5_WORKER_ERROR")
-                msg = str(parsed.get("error") or parsed.get("message") or "MT5 worker reported failure")
+                msg = str(parsed.get("error") or "UNKNOWN_ERROR")
                 raise WorkerError(code, f"[login={self._login} action={action}] {msg}", http_status=502)
 
-            hint = _snip(err or out, _STDERR_MAX)
-            raise WorkerError(
-                "MT5_SUBPROCESS_FAILED",
-                f"[login={self._login} action={action}] subprocess exit {result.returncode}: {hint or 'no output'}",
-                http_status=502,
-            )
-
-        if not out:
-            stderr_bit = f" stderr={_snip(err, 500)!r}" if err else ""
-            raise WorkerError(
-                "MT5_SUBPROCESS_NO_OUTPUT",
-                f"[login={self._login} action={action}] empty stdout from worker{stderr_bit}",
-                http_status=502,
-            )
-
-        if parsed is None:
-            raise WorkerError(
-                "MT5_SUBPROCESS_BAD_JSON",
-                f"[login={self._login} action={action}] invalid JSON on stdout: {_snip(out, _STDOUT_SNIP)!r}",
-                http_status=502,
-            )
-
-        if not parsed.get("ok"):
-            code = str(parsed.get("code") or "MT5_WORKER_ERROR")
-            msg = str(parsed.get("error") or "UNKNOWN_ERROR")
-            raise WorkerError(code, f"[login={self._login} action={action}] {msg}", http_status=502)
-
-        return parsed
+            _touch_last_used(self.instance_path)
+            return parsed
+        finally:
+            if acquired_sem:
+                _global_job_sem.release()
+            _release_lock(job_lock)
+            with active_mt5_guard:
+                active_mt5_logins.discard(self._login)
 
     def account_info(self) -> dict:
         return self._run("account_info")

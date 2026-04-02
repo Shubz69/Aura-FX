@@ -18,6 +18,25 @@ import MetaTrader5 as mt5
 ACTIONS = frozenset({"account_info", "positions"})
 
 
+def _classify_init_failure(last_err: object) -> tuple[str, str]:
+    """Map MetaTrader5 last_error() to stable codes (best-effort string heuristics)."""
+    raw = str(last_err)
+    low = raw.lower()
+    net_hints = (
+        "network", "host", "dns", "server", "unreachable", "cannot connect",
+        "no connection", "connection", "timed out", "timeout", "wsa", "socket",
+    )
+    auth_hints = (
+        "invalid account", "invalid password", "authentication", "authorize",
+        "auth failed", "not authorized", "wrong password",
+    )
+    if any(h in low for h in net_hints):
+        return "MT5_SERVER_INVALID", raw
+    if any(h in low for h in auth_hints):
+        return "MT5_LOGIN_FAILED", raw
+    return "MT5_INIT_FAILED", raw
+
+
 def _emit(payload: Dict[str, Any]) -> None:
     sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
     sys.stdout.flush()
@@ -81,7 +100,8 @@ def main() -> int:
             data_path=str(instance_path),
             timeout=60000,
         ):
-            return _fail("MT5_INIT_FAILED", str(mt5.last_error()))
+            code, msg = _classify_init_failure(mt5.last_error())
+            return _fail(code, msg)
 
         if action == "account_info":
             acc = mt5.account_info()

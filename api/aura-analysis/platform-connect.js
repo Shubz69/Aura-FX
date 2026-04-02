@@ -10,7 +10,10 @@ const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
-const { hasMtBridgeCredentials, syncAccount, BRIDGE_ERROR } = require('./mtSyncProvider');
+const { hasMtBridgeCredentials, BRIDGE_ERROR } = require('./mtSyncProvider');
+const { performMt5Operation } = require('./mtSyncService');
+const { resolveBrokerDisplayInfo } = require('./mtBrokerServers');
+const { ensurePlatformConnectionsColumns } = require('./platformConnectionMeta');
 const { setAuraCorsHeaders, safeJsonParse } = require('./cors');
 const { publicConnectError, safeMtLog } = require('./auraProductionUtils');
 
@@ -101,6 +104,8 @@ function resolveConnectErrorStatus(validation) {
   if (code === BRIDGE_ERROR.TIMEOUT) return 504;
   if (code === BRIDGE_ERROR.UNAUTHORIZED_SECRET) return 502;
   if (code === BRIDGE_ERROR.WORKER_URL_INVALID) return 500;
+  if (code === 'MT5_WORKER_BUSY' || code === 'MT5_INSTANCE_BUSY') return 503;
+  if (code === 'MT5_SERVER_INVALID' || code === 'MT5_LOGIN_FAILED') return 400;
   if (
     code === 'MT5_LOGIN_PASSWORD_SERVER_REQUIRED' ||
     error === 'MT5_LOGIN_PASSWORD_SERVER_REQUIRED'
@@ -184,7 +189,9 @@ async function validateCredentials(platformId, credentials) {
     case 'mt5':
     case 'mt4': {
       if (hasMtBridgeCredentials(credentials)) {
-        return syncAccount(credentials, platformId);
+        return performMt5Operation('account_snapshot', credentials, platformId, {
+          trigger: 'connect_validate',
+        });
       }
       const { accountId, token } = credentials;
       if (!safeString(accountId) || !safeString(token)) {
@@ -217,6 +224,14 @@ async function ensureTable() {
       UNIQUE KEY uq_user_platform (user_id, platform_id)
     )
   `);
+  await ensurePlatformConnectionsColumns(executeQuery);
+  try {
+    await executeQuery(
+      `UPDATE aura_platform_connections SET connection_status = status WHERE connection_status IS NULL`
+    );
+  } catch (_) {
+    /* optional until column exists */
+  }
 }
 
 // ── Handler ────────────────────────────────────────────────────────────────
@@ -238,7 +253,9 @@ module.exports = async (req, res) => {
   // ── GET — list connections ─────────────────────────────────────────────
   if (req.method === 'GET') {
     const [rows] = await executeQuery(
-      `SELECT platform_id, account_label, account_info, connected_at, last_sync, status
+      `SELECT platform_id, account_label, account_info, connected_at, last_sync, status,
+              broker_name, server_name, connection_status, last_sync_at, last_success_at,
+              last_error_code, last_error_message
        FROM aura_platform_connections WHERE user_id = ? AND status = 'active'`,
       [userId]
     );
@@ -251,6 +268,13 @@ module.exports = async (req, res) => {
         connectedAt: r.connected_at,
         lastSync: r.last_sync,
         status: r.status,
+        brokerName: r.broker_name || null,
+        serverName: r.server_name || null,
+        connectionStatus: r.connection_status || r.status || null,
+        lastSyncAt: r.last_sync_at || r.last_sync || null,
+        lastSuccessAt: r.last_success_at || null,
+        lastErrorCode: r.last_error_code || null,
+        lastErrorMessage: r.last_error_message || null,
       })),
     });
   }
@@ -310,17 +334,39 @@ module.exports = async (req, res) => {
       (credentials.apiKey ? credentials.apiKey.slice(0, 8) + '...' : null) ||
       platformId;
 
+    const brokerRow =
+      platformId === 'mt5' && hasMtBridgeCredentials(credentials)
+        ? resolveBrokerDisplayInfo(credentials.server)
+        : { brokerName: null, serverName: null };
+
     await executeQuery(
       `INSERT INTO aura_platform_connections
-         (user_id, platform_id, account_label, credentials_enc, account_info, status)
-       VALUES (?, ?, ?, ?, ?, 'active')
+         (user_id, platform_id, account_label, credentials_enc, account_info, status,
+          broker_name, server_name, connection_status, last_sync_at, last_success_at,
+          last_error_code, last_error_message)
+       VALUES (?, ?, ?, ?, ?, 'active', ?, ?, 'connected', NOW(), NOW(), NULL, NULL)
        ON DUPLICATE KEY UPDATE
          credentials_enc = VALUES(credentials_enc),
          account_info = VALUES(account_info),
          account_label = VALUES(account_label),
+         broker_name = VALUES(broker_name),
+         server_name = VALUES(server_name),
+         connection_status = VALUES(connection_status),
+         last_sync_at = NOW(),
+         last_success_at = NOW(),
+         last_error_code = NULL,
+         last_error_message = NULL,
          last_sync = NOW(),
          status = 'active'`,
-      [userId, platformId, label, credEnc, accountInfoJson]
+      [
+        userId,
+        platformId,
+        label,
+        credEnc,
+        accountInfoJson,
+        brokerRow.brokerName,
+        brokerRow.serverName || safeString(credentials.server) || null,
+      ]
     );
 
     return res.status(200).json({ success: true, accountInfo: validation.accountInfo });

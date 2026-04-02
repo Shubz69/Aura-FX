@@ -4,8 +4,8 @@
  * ============================================================================
  *
  * Environment (server-only, never sent to browser):
- *   - AURA_MT_SYNC_URL  (or TERMINALSYNC_WORKER_URL | PYTHON_WORKER_URL)
- *   - AURA_MT_SYNC_SECRET (or TERMINALSYNC_WORKER_SECRET | WORKER_SECRET)
+ *   - MT5_WORKER_URL (preferred) or AURA_MT_SYNC_URL | TERMINALSYNC_WORKER_URL | PYTHON_WORKER_URL
+ *   - WORKER_SECRET (preferred) or AURA_MT_SYNC_SECRET | TERMINALSYNC_WORKER_SECRET
  *   - Header on every request: x-worker-secret: <secret>
  *
  * --------------------------------------------------------------------------

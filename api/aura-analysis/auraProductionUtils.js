@@ -71,6 +71,9 @@ function publicHistoryError(code, internalMsg) {
     case CODES.REQUEST_FAILED:
     case CODES.POSITIONS_FAILED:
       return sanitizeWorkerMessageForClient(internalMsg, fb);
+    case 'MT5_WORKER_BUSY':
+    case 'MT5_INSTANCE_BUSY':
+      return 'MetaTrader service is busy. Please try again in a few seconds.';
     default:
       return sanitizeWorkerMessageForClient(internalMsg, fb);
   }
@@ -92,6 +95,16 @@ function publicAccountLiveError(code, internalMsg) {
     case CODES.SYNC_FAILED:
     case CODES.POSITIONS_FAILED:
       return sanitizeWorkerMessageForClient(internalMsg, fb);
+    case 'MT5_SERVER_INVALID':
+      return sanitizeWorkerMessageForClient(
+        internalMsg,
+        'Broker server name looks invalid. Use the exact server from MetaTrader 5.',
+      );
+    case 'MT5_LOGIN_FAILED':
+      return 'Login failed. Check account number and investor password.';
+    case 'MT5_WORKER_BUSY':
+    case 'MT5_INSTANCE_BUSY':
+      return 'MetaTrader service is busy. Please try again in a few seconds.';
     default:
       return sanitizeWorkerMessageForClient(internalMsg, fb);
   }
@@ -116,6 +129,16 @@ function publicConnectError(code, internalMsg) {
     case CODES.SYNC_FAILED:
     case CODES.REQUEST_FAILED:
       return sanitizeWorkerMessageForClient(internalMsg, fb);
+    case 'MT5_SERVER_INVALID':
+      return sanitizeWorkerMessageForClient(
+        internalMsg,
+        'Broker server name looks invalid. Use the exact server shown in your MetaTrader 5 terminal.',
+      );
+    case 'MT5_LOGIN_FAILED':
+      return 'Login failed. Check account number and investor password.';
+    case 'MT5_WORKER_BUSY':
+    case 'MT5_INSTANCE_BUSY':
+      return 'MetaTrader service is busy. Please try again in a few seconds.';
     default:
       return sanitizeWorkerMessageForClient(internalMsg, fb);
   }

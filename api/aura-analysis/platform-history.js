@@ -7,7 +7,8 @@ const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
-const { hasMtBridgeCredentials, getPositions } = require('./mtSyncProvider');
+const { hasMtBridgeCredentials } = require('./mtSyncProvider');
+const { performMt5Operation } = require('./mtSyncService');
 const { setAuraCorsHeaders } = require('./cors');
 const { upsertTradeCacheRows, loadCachedTradesForRange } = require('./auraPlatformTradeCache');
 const {
@@ -241,7 +242,10 @@ async function fetchHistoryForPlatform(platformId, creds, days) {
     case 'mt5':
     case 'mt4':
       if (hasMtBridgeCredentials(creds)) {
-        const result = await getPositions(creds, platformId, { days });
+        const result = await performMt5Operation('positions', creds, platformId, {
+          days,
+          trigger: 'history',
+        });
         if (!result.ok) return { ok: false, error: result.error, code: result.code };
         const rawTrades = Array.isArray(result.trades) ? result.trades : [];
         const inputRows = rawTrades.length;

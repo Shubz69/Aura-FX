@@ -7,7 +7,9 @@ const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
-const { hasMtBridgeCredentials, syncAccount } = require('./mtSyncProvider');
+const { hasMtBridgeCredentials } = require('./mtSyncProvider');
+const { performMt5Operation } = require('./mtSyncService');
+const { ensurePlatformConnectionsColumns, patchConnectionRow } = require('./platformConnectionMeta');
 const { setAuraCorsHeaders, safeJsonParse } = require('./cors');
 const { publicAccountLiveError, safeMtLog, isAuraDiagnosticsEnabled } = require('./auraProductionUtils');
 
@@ -146,7 +148,9 @@ async function fetchForPlatform(platformId, creds) {
     case 'mt5':
     case 'mt4':
       if (hasMtBridgeCredentials(creds)) {
-        const result = await syncAccount(creds, platformId);
+        const result = await performMt5Operation('account_snapshot', creds, platformId, {
+          trigger: 'platform_account_refresh',
+        });
         if (!result.ok) return { ok: false, error: result.error, code: result.code };
         return { ok: true, data: result.accountInfo };
       }
@@ -172,6 +176,12 @@ module.exports = async (req, res) => {
   const { platformId } = req.query || {};
   if (!platformId) return res.status(400).json({ success: false, error: 'platformId required' });
 
+  try {
+    await ensurePlatformConnectionsColumns(executeQuery);
+  } catch (e) {
+    console.error('platform-account column migrate:', e.message);
+  }
+
   const [rows] = await executeQuery(
     `SELECT credentials_enc, account_info FROM aura_platform_connections
      WHERE user_id = ? AND platform_id = ? AND status = 'active'`,
@@ -190,6 +200,16 @@ module.exports = async (req, res) => {
 
   if (!result.ok) {
     safeMtLog('account_live_fetch_failed', { platformId, code: result.code || null });
+    try {
+      await patchConnectionRow(executeQuery, decoded.id, platformId, {
+        last_sync_at: true,
+        last_error_code: result.code || 'unknown',
+        last_error_message: publicAccountLiveError(result.code, result.error).slice(0, 512),
+        connection_status: 'error',
+      });
+    } catch (e) {
+      console.error('platform-account patch error:', e.message);
+    }
     const cached = safeJsonParse(rows[0].account_info, null);
     if (cached) {
       const body = {
@@ -216,6 +236,15 @@ module.exports = async (req, res) => {
      WHERE user_id = ? AND platform_id = ?`,
     [JSON.stringify(result.data), decoded.id, platformId]
   );
+  try {
+    await patchConnectionRow(executeQuery, decoded.id, platformId, {
+      last_sync_at: true,
+      last_success_at: true,
+      connection_status: 'connected',
+    });
+  } catch (e) {
+    console.error('platform-account success patch:', e.message);
+  }
 
   return res.status(200).json({
     success: true,
