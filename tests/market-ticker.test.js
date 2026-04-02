@@ -22,7 +22,7 @@ const EXPECTED_SYMBOLS = {
   crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'ADAUSD', 'DOGEUSD', 'AVAXUSD', 'LINKUSD'],
   stocks: ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'META', 'TSLA', 'BRK-B'],
   forex: ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'EURJPY', 'GBPJPY'],
-  commodities: ['XAUUSD', 'XAGUSD', 'WTI', 'BRENT'],
+  commodities: ['XAUUSD', 'XAGUSD', 'USOIL', 'UKOIL', 'XNGUSD', 'CORN'],
   indices: ['SPX', 'NDX', 'DJI', 'RUT', 'VIX', 'DAX', 'FTSE', 'NIKKEI', 'CAC', 'HSI'],
   futures: ['ES', 'NQ', 'YM', 'NG', 'HG'],
   macro: ['DXY', 'US10Y'],
@@ -32,7 +32,15 @@ const DECIMALS = {
   'BTCUSD': 2, 'ETHUSD': 2, 'SOLUSD': 2, 'XRPUSD': 4, 'BNBUSD': 2,
   'ADAUSD': 4, 'DOGEUSD': 5, 'EURUSD': 4, 'GBPUSD': 4, 'USDJPY': 2,
   'USDCHF': 4, 'AUDUSD': 4, 'USDCAD': 4, 'NZDUSD': 4, 'XAUUSD': 2,
-  'XAGUSD': 2, 'WTI': 2, 'BRENT': 2, 'SPX': 2, 'NDX': 2, 'DJI': 2,
+  'XAGUSD': 3,
+  'USOIL': 2,
+  'UKOIL': 2,
+  'XNGUSD': 3,
+  'WTI': 2,
+  'BRENT': 2,
+  'SPX': 2,
+  'NDX': 2,
+  'DJI': 2,
   'DAX': 2, 'FTSE': 2, 'NIKKEI': 2, 'DXY': 3, 'US10Y': 3, 'VIX': 2
 };
 
@@ -138,10 +146,13 @@ test('Crypto pairs use correct decimal places', () => {
   assert.strictEqual(getDecimals('DOGEUSD'), 5);
 });
 
-// Test 7: Decimals are correct for commodities
-test('Commodities use 2 decimal places', () => {
+// Test 7: Decimals are correct for commodities (align with watchlist + instrumentRegistry)
+test('Commodities use expected decimal precision', () => {
   assert.strictEqual(getDecimals('XAUUSD'), 2);
-  assert.strictEqual(getDecimals('XAGUSD'), 2);
+  assert.strictEqual(getDecimals('XAGUSD'), 3);
+  assert.strictEqual(getDecimals('USOIL'), 2);
+  assert.strictEqual(getDecimals('UKOIL'), 2);
+  assert.strictEqual(getDecimals('XNGUSD'), 3);
   assert.strictEqual(getDecimals('WTI'), 2);
   assert.strictEqual(getDecimals('BRENT'), 2);
 });

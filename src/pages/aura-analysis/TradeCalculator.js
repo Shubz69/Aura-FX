@@ -83,19 +83,41 @@ export default function TradeCalculator() {
   }, []);
 
   const instrumentGroups = useMemo(() => {
-    if (!watchlistPayload?.groups) return FALLBACK_INSTRUMENTS_BY_CATEGORY;
+    const fallbackGroups = FALLBACK_INSTRUMENTS_BY_CATEGORY;
+    const commodityFallbackInst = fallbackGroups.find((g) => g.category === 'commodity')?.instruments || [];
+
+    if (!watchlistPayload?.groups) return fallbackGroups;
+
     const keys = Object.keys(watchlistPayload.groups).sort(
       (a, b) => (watchlistPayload.groups[a].order || 0) - (watchlistPayload.groups[b].order || 0)
     );
     return keys.map((key) => {
       const g = watchlistPayload.groups[key];
+      let instruments = (g.symbols || []).map((row) => ({
+        symbol: row.symbol,
+        displayName: row.displayName || row.symbol,
+      }));
+
+      // Full commodity universe for sizing (not all are on the live quote snapshot).
+      if (key === 'commodities' && commodityFallbackInst.length) {
+        const seen = new Set(instruments.map((i) => String(i.symbol).toUpperCase()));
+        for (const inst of commodityFallbackInst) {
+          const sym = String(inst.symbol).toUpperCase();
+          if (!seen.has(sym)) {
+            seen.add(sym);
+            instruments.push({
+              symbol: inst.symbol,
+              displayName: inst.displayName,
+            });
+          }
+        }
+        instruments.sort((a, b) => a.symbol.localeCompare(b.symbol));
+      }
+
       return {
         label: g.name || key,
         categoryKey: key,
-        instruments: (g.symbols || []).map((row) => ({
-          symbol: row.symbol,
-          displayName: row.displayName || row.symbol,
-        })),
+        instruments,
       };
     });
   }, [watchlistPayload]);
@@ -316,10 +338,17 @@ export default function TradeCalculator() {
   const riskPctNum = Number(form.riskPercent) || 0;
   const showHighRiskWarning = riskPctNum > RISK_WARNING_PCT;
 
+  const selectedInstrumentMeta = useMemo(() => getInstrumentForWatchlistSymbol(form.pair), [form.pair]);
+
   const priceExamples = useMemo(() => {
-    const inst = getInstrumentForWatchlistSymbol(form.pair);
-    return getPriceExamples(inst);
-  }, [form.pair]);
+    return getPriceExamples(selectedInstrumentMeta);
+  }, [selectedInstrumentMeta]);
+
+  const priceInputStep = useMemo(() => {
+    const t = selectedInstrumentMeta?.tickSize;
+    if (Number.isFinite(t) && t > 0) return t;
+    return 0.00001;
+  }, [selectedInstrumentMeta]);
 
   const handlePairSelect = (inst) => {
     setForm((f) => ({ ...f, pair: inst.symbol, pairLabel: inst.displayName }));
@@ -384,7 +413,7 @@ export default function TradeCalculator() {
       notes: (form.notes || '').trim() || null,
       session: form.session || null,
       assetClass: (() => {
-        const inst = getInstrumentForWatchlistSymbol(form.pair);
+        const inst = selectedInstrumentMeta;
         const m = inst.calculationMode;
         if (m === 'forex') return 'forex';
         if (m === 'commodity') return 'commodity';
@@ -616,7 +645,7 @@ export default function TradeCalculator() {
                 <label className="trade-calc-esp-label">Entry</label>
                 <input
                   type="number"
-                  step="0.00001"
+                  step={priceInputStep}
                   className="trade-calc-input"
                   value={form.entryPrice || ''}
                   placeholder={priceExamples.entryStr}
@@ -628,7 +657,7 @@ export default function TradeCalculator() {
                 <label className="trade-calc-esp-label">Stop loss</label>
                 <input
                   type="number"
-                  step="0.00001"
+                  step={priceInputStep}
                   className="trade-calc-input"
                   value={form.stopLoss || ''}
                   placeholder={priceExamples.slStr}
@@ -640,7 +669,7 @@ export default function TradeCalculator() {
                 <label className="trade-calc-esp-label">Take profit</label>
                 <input
                   type="number"
-                  step="0.00001"
+                  step={priceInputStep}
                   className="trade-calc-input"
                   value={form.takeProfit || ''}
                   placeholder={priceExamples.tpStr}

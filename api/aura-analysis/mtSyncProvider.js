@@ -7,7 +7,13 @@
  */
 const http = require('http');
 const https = require('https');
+const crypto = require('crypto');
 const { URL } = require('url');
+const {
+  recordMt5SyncAttempt,
+  recordMt5SyncFailure,
+} = require('../utils/systemMetrics');
+const ERROR_CODES = require('../utils/errorCodes');
 const {
   extractPositionsPayload,
   extractSyncAccountObject,
@@ -23,6 +29,7 @@ const {
   buildServerAttemptList,
   shouldAttemptServerFallback,
 } = require('./mtBrokerServers');
+const { MAX_HISTORY_LOOKBACK_DAYS } = require('./mtTradeNormalize');
 
 const DEFAULT_TIMEOUT_MS = 20000;
 
@@ -64,7 +71,17 @@ function getSyncConfigStatus() {
 }
 
 function syncFailure(code, message, extra = {}) {
-  return { ok: false, code, error: message || code, ...extra };
+  const errCode =
+    extra.errorCode ||
+    (String(code || '').includes('MT5_LOGIN') || code === 'MT5_LOGIN_FAILED'
+      ? ERROR_CODES.MT5_LOGIN_FAILED
+      : String(code || '').includes('SERVER') || code === 'MT5_SERVER_INVALID'
+        ? ERROR_CODES.MT5_SERVER_INVALID
+        : code === ERROR_CODES.MT5_NO_HISTORY
+          ? ERROR_CODES.MT5_NO_HISTORY
+          : code || ERROR_CODES.SYSTEM_ERROR);
+  const { errorCode: _ignored, ...rest } = extra;
+  return { ok: false, code, error: message || code, ...rest, errorCode: errCode };
 }
 
 function normalizeBaseUrl(baseUrl) {
@@ -90,7 +107,7 @@ function extractDetailMessage(detail) {
   return '';
 }
 
-function postJson(baseUrl, path, payload, workerSecret, timeoutMs = DEFAULT_TIMEOUT_MS) {
+function postJson(baseUrl, path, payload, workerSecret, timeoutMs = DEFAULT_TIMEOUT_MS, requestId = null) {
   return new Promise((resolve) => {
     const normalized = normalizeBaseUrl(baseUrl);
     if (!normalized) {
@@ -116,6 +133,12 @@ function postJson(baseUrl, path, payload, workerSecret, timeoutMs = DEFAULT_TIME
 
     const body = JSON.stringify(payload || {});
     const transport = endpoint.protocol === 'https:' ? https : http;
+    const headers = {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body),
+      'x-worker-secret': workerSecret || '',
+    };
+    if (requestId) headers['X-Request-ID'] = String(requestId);
     const req = transport.request(
       {
         hostname: endpoint.hostname,
@@ -123,11 +146,7 @@ function postJson(baseUrl, path, payload, workerSecret, timeoutMs = DEFAULT_TIME
         path: `${endpoint.pathname}${endpoint.search || ''}`,
         method: 'POST',
         timeout: timeoutMs,
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(body),
-          'x-worker-secret': workerSecret || '',
-        },
+        headers,
       },
       (res) => {
         let raw = '';
@@ -200,11 +219,18 @@ function postJson(baseUrl, path, payload, workerSecret, timeoutMs = DEFAULT_TIME
   });
 }
 
-async function postJsonWithRetry(baseUrl, path, payload, workerSecret, timeoutMs = DEFAULT_TIMEOUT_MS) {
-  let r = await postJson(baseUrl, path, payload, workerSecret, timeoutMs);
+async function postJsonWithRetry(
+  baseUrl,
+  path,
+  payload,
+  workerSecret,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  requestId = null,
+) {
+  let r = await postJson(baseUrl, path, payload, workerSecret, timeoutMs, requestId);
   if (r.ok || !r.transportRetryable) return r;
   safeMtLog('worker_transport_retry', { path: String(path || '') });
-  r = await postJson(baseUrl, path, payload, workerSecret, timeoutMs);
+  r = await postJson(baseUrl, path, payload, workerSecret, timeoutMs, requestId);
   if (r.transportRetryable) delete r.transportRetryable;
   return r;
 }
@@ -266,20 +292,23 @@ function safeFiniteNumber(v, fallback = 0) {
 
 /**
  * Validate investor credentials and return account snapshot fields for UI + cache.
+ * @param {object} [options] requestId for correlation; forwarded to worker as X-Request-ID
  */
-async function syncAccount(credentials, platformId = 'mt5') {
+async function syncAccount(credentials, platformId = 'mt5', options = {}) {
+  const requestId = options.requestId || crypto.randomUUID();
   const configStatus = getSyncConfigStatus();
   if (!configStatus.ok) {
     return syncFailure(
       MT_SYNC_ERROR.CONFIG_MISSING,
       'MetaTrader data service is not configured',
-      { missing: configStatus.missing },
+      { missing: configStatus.missing, requestId, errorCode: ERROR_CODES.SYSTEM_ERROR },
     );
   }
   if (!hasMtInvestorCredentials(credentials)) {
     return syncFailure(
       'MT5_LOGIN_PASSWORD_SERVER_REQUIRED',
       'Account login, investor password, and broker server are required',
+      { requestId, errorCode: ERROR_CODES.SYSTEM_ERROR },
     );
   }
 
@@ -287,15 +316,20 @@ async function syncAccount(credentials, platformId = 'mt5') {
   if (platformId === 'mt5') {
     const sv = validateMt5ServerInput(credentials.server);
     if (!sv.ok) {
-      return syncFailure('MT5_SERVER_INVALID', sv.error || 'Invalid broker server name.');
+      return syncFailure('MT5_SERVER_INVALID', sv.error || 'Invalid broker server name.', {
+        requestId,
+        errorCode: ERROR_CODES.MT5_SERVER_INVALID,
+      });
     }
     creds.server = sv.server;
     const lv = validateMt5NumericLogin(credentials.login);
     if (!lv.ok) {
-      return syncFailure('MT5_LOGIN_FAILED', lv.error);
+      return syncFailure('MT5_LOGIN_FAILED', lv.error, { requestId, errorCode: ERROR_CODES.MT5_LOGIN_FAILED });
     }
     creds.login = lv.loginStr;
   }
+
+  recordMt5SyncAttempt();
 
   const { baseUrl, workerSecret } = configStatus;
   const servers =
@@ -312,6 +346,8 @@ async function syncAccount(credentials, platformId = 'mt5') {
       '/api/v1/sync',
       payload,
       workerSecret,
+      DEFAULT_TIMEOUT_MS,
+      requestId,
     );
     lastResp = response;
     if (response.ok) {
@@ -328,6 +364,7 @@ async function syncAccount(credentials, platformId = 'mt5') {
   }
 
   if (!lastResp || !lastResp.ok) {
+    recordMt5SyncFailure();
     const outCode =
       lastResp?.workerCode || lastResp?.code || MT_SYNC_ERROR.SYNC_FAILED;
     return syncFailure(
@@ -336,7 +373,16 @@ async function syncAccount(credentials, platformId = 'mt5') {
         lastResp?.error,
         'Could not verify MetaTrader account',
       ),
-      { statusCode: lastResp?.statusCode || 0 },
+      {
+        statusCode: lastResp?.statusCode || 0,
+        requestId,
+        errorCode:
+          String(outCode).includes('LOGIN') || outCode === 'MT5_LOGIN_FAILED'
+            ? ERROR_CODES.MT5_LOGIN_FAILED
+            : String(outCode).includes('SERVER') || outCode === 'MT5_SERVER_INVALID'
+              ? ERROR_CODES.MT5_SERVER_INVALID
+              : ERROR_CODES.SYSTEM_ERROR,
+      },
     );
   }
 
@@ -364,6 +410,7 @@ async function syncAccount(credentials, platformId = 'mt5') {
       providerSource: 'mt-investor-sync',
       lastSyncedAt: new Date().toISOString(),
     },
+    requestId,
   };
 }
 
@@ -371,18 +418,20 @@ async function syncAccount(credentials, platformId = 'mt5') {
  * Fetch positions / deal history from sync service.
  */
 async function getPositions(credentials, platformId = 'mt5', options = {}) {
+  const requestId = options.requestId || crypto.randomUUID();
   const configStatus = getSyncConfigStatus();
   if (!configStatus.ok) {
     return syncFailure(
       MT_SYNC_ERROR.CONFIG_MISSING,
       'MetaTrader data service is not configured',
-      { missing: configStatus.missing },
+      { missing: configStatus.missing, requestId, errorCode: ERROR_CODES.SYSTEM_ERROR },
     );
   }
   if (!hasMtInvestorCredentials(credentials)) {
     return syncFailure(
       'MT5_LOGIN_PASSWORD_SERVER_REQUIRED',
       'Account login, investor password, and broker server are required',
+      { requestId, errorCode: ERROR_CODES.SYSTEM_ERROR },
     );
   }
 
@@ -390,15 +439,20 @@ async function getPositions(credentials, platformId = 'mt5', options = {}) {
   if (platformId === 'mt5') {
     const sv = validateMt5ServerInput(credentials.server);
     if (!sv.ok) {
-      return syncFailure('MT5_SERVER_INVALID', sv.error || 'Invalid broker server name.');
+      return syncFailure('MT5_SERVER_INVALID', sv.error || 'Invalid broker server name.', {
+        requestId,
+        errorCode: ERROR_CODES.MT5_SERVER_INVALID,
+      });
     }
     creds.server = sv.server;
     const lv = validateMt5NumericLogin(credentials.login);
     if (!lv.ok) {
-      return syncFailure('MT5_LOGIN_FAILED', lv.error);
+      return syncFailure('MT5_LOGIN_FAILED', lv.error, { requestId, errorCode: ERROR_CODES.MT5_LOGIN_FAILED });
     }
     creds.login = lv.loginStr;
   }
+
+  recordMt5SyncAttempt();
 
   const { baseUrl, workerSecret } = configStatus;
   const servers =
@@ -410,10 +464,17 @@ async function getPositions(credentials, platformId = 'mt5', options = {}) {
     const payload = {
       ...toServicePayload(creds, platformId, serverTry),
       ...(options.days != null && Number.isFinite(Number(options.days))
-        ? { days: Math.min(365, Math.max(1, Math.floor(Number(options.days)))) }
+        ? { days: Math.min(MAX_HISTORY_LOOKBACK_DAYS, Math.max(1, Math.floor(Number(options.days)))) }
         : {}),
     };
-    const response = await postJsonWithRetry(baseUrl, '/api/v1/positions', payload, workerSecret);
+    const response = await postJsonWithRetry(
+      baseUrl,
+      '/api/v1/positions',
+      payload,
+      workerSecret,
+      DEFAULT_TIMEOUT_MS,
+      requestId,
+    );
     lastResp = response;
     if (response.ok) break;
     const wc = response.workerCode || '';
@@ -426,11 +487,16 @@ async function getPositions(credentials, platformId = 'mt5', options = {}) {
   }
 
   if (!lastResp || !lastResp.ok) {
+    recordMt5SyncFailure();
     const outCode = lastResp?.workerCode || lastResp?.code || MT_SYNC_ERROR.POSITIONS_FAILED;
     return syncFailure(
       outCode,
       sanitizeWorkerMessageForClient(lastResp?.error, 'Could not load MetaTrader history'),
-      { statusCode: lastResp?.statusCode || 0 },
+      {
+        statusCode: lastResp?.statusCode || 0,
+        requestId,
+        errorCode: ERROR_CODES.SYSTEM_ERROR,
+      },
     );
   }
 
@@ -438,25 +504,27 @@ async function getPositions(credentials, platformId = 'mt5', options = {}) {
   if (isAuraDiagnosticsEnabled()) {
     warnings.forEach((w) => console.warn('[mt-worker]', w));
   }
-  return { ok: true, trades: rows };
+  return { ok: true, trades: rows, requestId };
 }
 
 /**
  * Fetch closed deal history (realized P&L) from POST /api/v1/history — not open positions.
  */
 async function getDealHistory(credentials, platformId = 'mt5', options = {}) {
+  const requestId = options.requestId || crypto.randomUUID();
   const configStatus = getSyncConfigStatus();
   if (!configStatus.ok) {
     return syncFailure(
       MT_SYNC_ERROR.CONFIG_MISSING,
       'MetaTrader data service is not configured',
-      { missing: configStatus.missing },
+      { missing: configStatus.missing, requestId, errorCode: ERROR_CODES.SYSTEM_ERROR },
     );
   }
   if (!hasMtInvestorCredentials(credentials)) {
     return syncFailure(
       'MT5_LOGIN_PASSWORD_SERVER_REQUIRED',
       'Account login, investor password, and broker server are required',
+      { requestId, errorCode: ERROR_CODES.SYSTEM_ERROR },
     );
   }
 
@@ -464,15 +532,20 @@ async function getDealHistory(credentials, platformId = 'mt5', options = {}) {
   if (platformId === 'mt5') {
     const sv = validateMt5ServerInput(credentials.server);
     if (!sv.ok) {
-      return syncFailure('MT5_SERVER_INVALID', sv.error || 'Invalid broker server name.');
+      return syncFailure('MT5_SERVER_INVALID', sv.error || 'Invalid broker server name.', {
+        requestId,
+        errorCode: ERROR_CODES.MT5_SERVER_INVALID,
+      });
     }
     creds.server = sv.server;
     const lv = validateMt5NumericLogin(credentials.login);
     if (!lv.ok) {
-      return syncFailure('MT5_LOGIN_FAILED', lv.error);
+      return syncFailure('MT5_LOGIN_FAILED', lv.error, { requestId, errorCode: ERROR_CODES.MT5_LOGIN_FAILED });
     }
     creds.login = lv.loginStr;
   }
+
+  recordMt5SyncAttempt();
 
   const { baseUrl, workerSecret } = configStatus;
   const servers =
@@ -484,10 +557,17 @@ async function getDealHistory(credentials, platformId = 'mt5', options = {}) {
     const payload = {
       ...toServicePayload(creds, platformId, serverTry),
       ...(options.days != null && Number.isFinite(Number(options.days))
-        ? { days: Math.min(365, Math.max(1, Math.floor(Number(options.days)))) }
+        ? { days: Math.min(MAX_HISTORY_LOOKBACK_DAYS, Math.max(1, Math.floor(Number(options.days)))) }
         : {}),
     };
-    const response = await postJsonWithRetry(baseUrl, '/api/v1/history', payload, workerSecret);
+    const response = await postJsonWithRetry(
+      baseUrl,
+      '/api/v1/history',
+      payload,
+      workerSecret,
+      DEFAULT_TIMEOUT_MS,
+      requestId,
+    );
     lastResp = response;
     if (response.ok) break;
     const wc = response.workerCode || '';
@@ -500,11 +580,16 @@ async function getDealHistory(credentials, platformId = 'mt5', options = {}) {
   }
 
   if (!lastResp || !lastResp.ok) {
+    recordMt5SyncFailure();
     const outCode = lastResp?.workerCode || lastResp?.code || MT_SYNC_ERROR.POSITIONS_FAILED;
     return syncFailure(
       outCode,
       sanitizeWorkerMessageForClient(lastResp?.error, 'Could not load MetaTrader deal history'),
-      { statusCode: lastResp?.statusCode || 0 },
+      {
+        statusCode: lastResp?.statusCode || 0,
+        requestId,
+        errorCode: ERROR_CODES.SYSTEM_ERROR,
+      },
     );
   }
 
@@ -515,7 +600,11 @@ async function getDealHistory(credentials, platformId = 'mt5', options = {}) {
   if (isAuraDiagnosticsEnabled() || String(process.env.AURA_HISTORY_PIPELINE_LOG || '').trim() === '1') {
     safeMtLog('history_worker_extract', { platformId, rowCount: rows.length });
   }
-  return { ok: true, trades: rows };
+  const out = { ok: true, trades: rows, requestId };
+  if (rows.length === 0) {
+    out.noticeCode = ERROR_CODES.MT5_NO_HISTORY;
+  }
+  return out;
 }
 
 module.exports = {

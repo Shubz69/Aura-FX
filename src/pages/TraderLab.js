@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import TradingViewWidgetEmbed from '../components/TradingViewWidgetEmbed';
+import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
+import { formatWelcomeEyebrow } from '../utils/welcomeUser';
 import {
   MISTAKE_TAG_OPTIONS,
   PLAYBOOK_SETUP_OPTIONS,
@@ -64,6 +66,7 @@ function normalizeSession(session = {}) {
 }
 
 export default function TraderLab() {
+  const { user } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [playbookSetups, setPlaybookSetups] = useState(PLAYBOOK_SETUP_OPTIONS);
   const [activeId, setActiveId] = useState(null);
@@ -167,7 +170,7 @@ export default function TraderLab() {
   return (
     <TraderSuiteShell
       variant="terminal"
-      eyebrow="Welcome, Samy"
+      eyebrow={formatWelcomeEyebrow(user)}
       title="Aura Terminal - Trader Lab"
       description="Terminal-style layout for the active trade workspace. Big chart first, compact decision panels beside it, and live metrics anchored underneath."
       stats={stats}

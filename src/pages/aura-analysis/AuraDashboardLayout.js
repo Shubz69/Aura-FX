@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuraAnalysisProvider, useAuraAnalysis, DATE_RANGE_OPTIONS } from '../../context/AuraAnalysisContext';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
@@ -17,13 +17,59 @@ const TABS = [
 const base = '/aura-analysis/dashboard';
 
 /** Filter + refresh bar — rendered inside the provider so it can read context */
+function ymdLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function AuraFilterBar() {
   const {
     daysFilter, setDaysFilter,
+    customRange, setCustomRange,
     symbolFilter, setSymbolFilter, symbolOptions,
     refreshing, lastUpdatedStr, refresh,
     activePlatformId, connections, setActivePlatformId,
   } = useAuraAnalysis();
+
+  const [customOpen, setCustomOpen] = useState(false);
+  const [draftFrom, setDraftFrom] = useState('');
+  const [draftTo, setDraftTo] = useState('');
+  const customWrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!customOpen) return undefined;
+    const onDoc = (e) => {
+      if (customWrapRef.current && !customWrapRef.current.contains(e.target)) {
+        setCustomOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [customOpen]);
+
+  const openCustomPanel = () => {
+    const to = new Date();
+    const from = new Date(to);
+    from.setDate(from.getDate() - 29);
+    if (customRange?.from && customRange?.to) {
+      setDraftFrom(customRange.from);
+      setDraftTo(customRange.to);
+    } else {
+      setDraftFrom(ymdLocal(from));
+      setDraftTo(ymdLocal(to));
+    }
+    setCustomOpen(true);
+  };
+
+  const applyCustom = () => {
+    if (!draftFrom || !draftTo || draftFrom > draftTo) return;
+    setCustomRange({ from: draftFrom, to: draftTo });
+    setCustomOpen(false);
+  };
+
+  const todayYmd = ymdLocal(new Date());
 
   return (
     <div className="aura-db-filterbar">
@@ -49,14 +95,62 @@ function AuraFilterBar() {
         <div className="aura-db-filter-pills">
           {DATE_RANGE_OPTIONS.map(opt => (
             <button
-              key={opt.days}
+              key={opt.label}
               type="button"
-              className={`aura-db-filter-pill${daysFilter === opt.days ? ' active' : ''}`}
-              onClick={() => setDaysFilter(opt.days)}
+              className={`aura-db-filter-pill${!customRange && daysFilter === opt.days ? ' active' : ''}`}
+              onClick={() => { setCustomRange(null); setDaysFilter(opt.days); }}
             >
               {opt.label}
             </button>
           ))}
+          <div className="aura-db-custom-range" ref={customWrapRef}>
+            <button
+              type="button"
+              className={`aura-db-filter-pill aura-db-filter-pill--custom${customRange ? ' active' : ''}${customOpen ? ' open' : ''}`}
+              onClick={() => (customOpen ? setCustomOpen(false) : openCustomPanel())}
+              aria-expanded={customOpen}
+            >
+              Custom
+            </button>
+            {customOpen && (
+              <div className="aura-db-custom-range-pop" role="dialog" aria-label="Custom date range">
+                <div className="aura-db-custom-range-fields">
+                  <label className="aura-db-custom-field">
+                    <span className="aura-db-custom-field-label">From</span>
+                    <input
+                      type="date"
+                      className="aura-db-custom-date-input"
+                      value={draftFrom}
+                      max={todayYmd}
+                      onChange={e => setDraftFrom(e.target.value)}
+                    />
+                  </label>
+                  <label className="aura-db-custom-field">
+                    <span className="aura-db-custom-field-label">To</span>
+                    <input
+                      type="date"
+                      className="aura-db-custom-date-input"
+                      value={draftTo}
+                      max={todayYmd}
+                      onChange={e => setDraftTo(e.target.value)}
+                    />
+                  </label>
+                </div>
+                <div className="aura-db-custom-range-actions">
+                  <button type="button" className="aura-db-custom-apply" onClick={applyCustom}>
+                    Apply
+                  </button>
+                  <button
+                    type="button"
+                    className="aura-db-custom-cancel"
+                    onClick={() => setCustomOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Symbol filter */}

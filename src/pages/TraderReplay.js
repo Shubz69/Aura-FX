@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import TradingViewWidgetEmbed from '../components/TradingViewWidgetEmbed';
+import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
+import { formatWelcomeEyebrow } from '../utils/welcomeUser';
 import { REPLAY_PATTERN_OPTIONS } from '../utils/traderSuite';
 
 const DECISION_POINTS = [
@@ -52,6 +54,7 @@ function normalizeReplay(session = {}) {
 }
 
 export default function TraderReplay() {
+  const { user } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [form, setForm] = useState(DEFAULT_REPLAY);
@@ -136,7 +139,7 @@ export default function TraderReplay() {
   return (
     <TraderSuiteShell
       variant="terminal"
-      eyebrow="Welcome, Samy"
+      eyebrow={formatWelcomeEyebrow(user)}
       title="TRADE REPLAY"
       description="Terminal-style replay layout with a dominant chart area, left replay controls, a dense trade-info rail, and a bottom insight panel."
       stats={stats}

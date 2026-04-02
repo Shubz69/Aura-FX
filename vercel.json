@@ -56,6 +56,9 @@
     "api/cron/*.js": {
       "maxDuration": 300
     },
+    "api/ai/chart-check.js": {
+      "maxDuration": 300
+    },
     "api/**/*.js": {
       "maxDuration": 60
     }
@@ -576,6 +579,18 @@
     {
       "source": "/api/market/watchlist",
       "destination": "/api/market/watchlist.js"
+    },
+    {
+      "source": "/api/system/instrument-integrity",
+      "destination": "/api/system/instrument-integrity.js"
+    },
+    {
+      "source": "/api/system/debug-instrument",
+      "destination": "/api/system/debug-instrument.js"
+    },
+    {
+      "source": "/api/system/metrics",
+      "destination": "/api/system/metrics.js"
     },
     {
       "source": "/api/market/prices",

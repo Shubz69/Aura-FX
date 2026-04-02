@@ -1,7 +1,9 @@
 /**
  * /api/aura-analysis/platform-history
  * GET — fetch trade history from a connected trading platform.
- * Query params: platformId, days (default 90)
+ * Query params: platformId, days (default 30, max MAX_HISTORY_LOOKBACK_DAYS)
+ * Optional: from, to (YYYY-MM-DD, both required together) — slice metrics to inclusive UTC calendar range;
+ *   lookback is expanded so data from `from` through today can be loaded.
  */
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
@@ -16,6 +18,8 @@ const {
   dedupeNormalizedTrades,
   filterTradesByDays,
   rollupNetPnl,
+  filterTradesByInclusiveDateRange,
+  MAX_HISTORY_LOOKBACK_DAYS,
 } = require('./mtTradeNormalize');
 const {
   publicHistoryError,
@@ -26,6 +30,47 @@ const {
 
 function isHistoryPipelineLogEnabled() {
   return isAuraDiagnosticsEnabled() || String(process.env.AURA_HISTORY_PIPELINE_LOG || '').trim() === '1';
+}
+
+function utcTodayYmd() {
+  const n = new Date();
+  const y = n.getUTCFullYear();
+  const m = String(n.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(n.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/** @returns {{ ok: true, range: { from: string, to: string } | null } | { ok: false, error: string }} */
+function parseUtcDateRangeQuery(fromQ, toQ) {
+  if ((fromQ == null || String(fromQ).trim() === '') && (toQ == null || String(toQ).trim() === '')) {
+    return { ok: true, range: null };
+  }
+  const fromStr = String(fromQ || '').trim().slice(0, 10);
+  const toStrRaw = String(toQ || '').trim().slice(0, 10);
+  if (!fromStr || !toStrRaw) {
+    return { ok: false, error: 'Both from and to are required (YYYY-MM-DD)' };
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fromStr) || !/^\d{4}-\d{2}-\d{2}$/.test(toStrRaw)) {
+    return { ok: false, error: 'from and to must be YYYY-MM-DD' };
+  }
+  const todayStr = utcTodayYmd();
+  const toStr = toStrRaw > todayStr ? todayStr : toStrRaw;
+  if (fromStr > toStr) {
+    return { ok: false, error: 'from must be on or before to' };
+  }
+  return { ok: true, range: { from: fromStr, to: toStr } };
+}
+
+function lookbackDaysFromFromYmd(fromYmd) {
+  const [y, m, d] = fromYmd.split('-').map((x) => parseInt(x, 10));
+  const fromMs = Date.UTC(y, m - 1, d);
+  const span = Math.ceil((Date.now() - fromMs) / 86400000) + 1;
+  return Math.min(MAX_HISTORY_LOOKBACK_DAYS, Math.max(1, span));
+}
+
+function applyOptionalDateSlice(trades, dateRange) {
+  if (!dateRange?.from || !dateRange?.to || !Array.isArray(trades)) return trades;
+  return filterTradesByInclusiveDateRange(trades, dateRange.from, dateRange.to);
 }
 
 function getEncKey() {
@@ -331,9 +376,17 @@ module.exports = async (req, res) => {
   const decoded = verifyToken(req.headers.authorization);
   if (!decoded) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-  const { platformId, days: daysParam } = req.query || {};
+  const { platformId, days: daysParam, from: fromQ, to: toQ } = req.query || {};
   if (!platformId) return res.status(400).json({ success: false, error: 'platformId required' });
-  const days = Math.min(365, Math.max(1, parseInt(daysParam, 10) || 30));
+
+  const parsedRange = parseUtcDateRangeQuery(fromQ, toQ);
+  if (!parsedRange.ok) return res.status(400).json({ success: false, error: parsedRange.error });
+  const dateRange = parsedRange.range;
+
+  let days = Math.min(MAX_HISTORY_LOOKBACK_DAYS, Math.max(1, parseInt(daysParam, 10) || 30));
+  if (dateRange) {
+    days = lookbackDaysFromFromYmd(dateRange.from);
+  }
 
   const [rows] = await executeQuery(
     `SELECT credentials_enc FROM aura_platform_connections
@@ -374,7 +427,7 @@ module.exports = async (req, res) => {
 
   if (!result.ok) {
     safeMtLog('history_live_failed', { platformId, code: result.code || null });
-    const stale = await loadCachedTradesForRange(decoded.id, platformId, days);
+    const stale = await loadCachedTradesForRange(decoded.id, platformId, days, dateRange);
     if (stale.length) {
       let openCount = 0;
       let closedCount = 0;
@@ -388,6 +441,7 @@ module.exports = async (req, res) => {
         count: stale.length,
         platformId,
         days,
+        ...(dateRange ? { dateFrom: dateRange.from, dateTo: dateRange.to } : {}),
         stale: true,
         dataSource: 'cache',
         cacheServedStale: true,
@@ -415,12 +469,14 @@ module.exports = async (req, res) => {
 
   await upsertTradeCacheRows(decoded.id, platformId, result.trades);
 
+  const slicedTrades = applyOptionalDateSlice(result.trades, dateRange);
   const body = {
     success: true,
-    trades: result.trades,
-    count: result.trades.length,
+    trades: slicedTrades,
+    count: slicedTrades.length,
     platformId,
     days,
+    ...(dateRange ? { dateFrom: dateRange.from, dateTo: dateRange.to } : {}),
     stale: false,
     dataSource: 'live',
     cacheServedStale: false,

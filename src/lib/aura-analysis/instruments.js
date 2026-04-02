@@ -3,7 +3,11 @@
  * Each instrument has metadata and a calculationMode so the engine uses the correct formula.
  */
 
-import { resolveCalculatorSymbol } from './watchlistSymbolAliases';
+import { resolveCalculatorSymbol, WATCHLIST_SYMBOL_ALIASES } from './watchlistSymbolAliases';
+import { buildMergedCommodityInstruments, applyInstrumentOverrides } from './instrumentMerge';
+import { buildBehaviourFromSpec } from './instrumentBehaviour';
+import { isInstrumentStrictMode, isInstrumentDebugEnabled } from './instrumentEnv';
+import { logInfo } from '../../utils/systemLogger';
 
 /**
  * @typedef {'forex'|'commodity'|'index'|'stock'|'future'|'crypto'} AssetClass
@@ -28,6 +32,13 @@ import { resolveCalculatorSymbol } from './watchlistSymbolAliases';
  * @property {boolean} [wholeContractsOnly]
  * @property {number} [minReasonablePrice]
  * @property {number} [maxReasonablePrice]
+ * @property {{ entry: number, sl: number, tp: number }} [examplePrices] — curated Trade Calculator placeholders (BUY: stop below entry, TP above)
+ * @property {boolean} [_registryFallback] — heuristic spec when validateInstrumentSymbol.valid is false
+ * @property {boolean} [_brokerOverridesApplied] — MT5/broker merge applied
+ * @property {{ symbol: string, source: string, fields: string[], values: Record<string, { from: number|null, to: number }>, timestamp: string }} [_instrumentOverrideLog]
+ * @property {{ symbolInput: string, normalized: string, canonical: string, source: 'registry'|'alias'|'fallback', hasOverrides: boolean, strictMode: boolean }} [_debugTrace]
+ * @property {'metal'|'energy'|'agriculture'|'softs'|'other'|undefined} [subCategory]
+ * @property {'decimal'|'points'|undefined} [priceFormat]
  */
 
 function spec(symbol, displayName, assetClass, calculationMode, opts = {}) {
@@ -297,75 +308,7 @@ const INSTRUMENTS = [
     minReasonablePrice: 150,
     maxReasonablePrice: 250,
   }),
-  // COMMODITIES
-  spec('XAUUSD', 'XAU/USD (Gold)', 'commodity', 'commodity', {
-    contractSize: 100,
-    tickSize: 0.01,
-    pointSize: 1,
-    pricePrecision: 2,
-    quoteCurrency: 'USD',
-    lotStep: 0.01,
-    minLot: 0.01,
-    maxLot: 100,
-    minReasonablePrice: 500,
-    maxReasonablePrice: 10000,
-  }),
-  spec('XAGUSD', 'XAG/USD (Silver)', 'commodity', 'commodity', {
-    contractSize: 5000,
-    tickSize: 0.001,
-    pointSize: 0.01,
-    pricePrecision: 3,
-    quoteCurrency: 'USD',
-    lotStep: 0.01,
-    minLot: 0.01,
-    maxLot: 100,
-    minReasonablePrice: 1,
-    maxReasonablePrice: 1000,
-  }),
-  spec('XTIUSD', 'WTI Crude Oil (USOIL)', 'commodity', 'commodity', {
-    contractSize: 1000,
-    tickSize: 0.01,
-    pricePrecision: 2,
-    quoteCurrency: 'USD',
-    lotStep: 0.01,
-    minLot: 0.01,
-    maxLot: 100,
-    minReasonablePrice: 20,
-    maxReasonablePrice: 200,
-  }),
-  spec('USOIL', 'WTI Crude Oil (USOIL)', 'commodity', 'commodity', {
-    contractSize: 1000,
-    tickSize: 0.01,
-    pricePrecision: 2,
-    quoteCurrency: 'USD',
-    lotStep: 0.01,
-    minLot: 0.01,
-    maxLot: 100,
-    minReasonablePrice: 20,
-    maxReasonablePrice: 200,
-  }),
-  spec('XBRUSD', 'Brent Crude Oil (UKOIL)', 'commodity', 'commodity', {
-    contractSize: 1000,
-    tickSize: 0.01,
-    pricePrecision: 2,
-    quoteCurrency: 'USD',
-    lotStep: 0.01,
-    minLot: 0.01,
-    maxLot: 100,
-    minReasonablePrice: 20,
-    maxReasonablePrice: 200,
-  }),
-  spec('UKOIL', 'Brent Crude Oil (UKOIL)', 'commodity', 'commodity', {
-    contractSize: 1000,
-    tickSize: 0.01,
-    pricePrecision: 2,
-    quoteCurrency: 'USD',
-    lotStep: 0.01,
-    minLot: 0.01,
-    maxLot: 100,
-    minReasonablePrice: 20,
-    maxReasonablePrice: 200,
-  }),
+  ...buildMergedCommodityInstruments(),
   // INDICES (CFD)
   spec('US30', 'US30 (Dow)', 'index', 'index_cfd', {
     contractSize: 1,
@@ -509,6 +452,149 @@ export function getInstrument(symbol) {
 }
 
 /**
+ * Symbols that appear more than once in the merged calculator instrument table (should be empty).
+ * @returns {{ symbol: string, count: number }[]}
+ */
+/**
+ * Trace for instrument resolution (debug / observability).
+ * @param {string} symbol
+ * @param {{ brokerOverrides?: object, mt5Overrides?: object, requestId?: string }} [options]
+ */
+export function getInstrumentResolutionDebugTrace(symbol, options = {}) {
+  const raw = String(symbol || '').trim();
+  const u = String(symbol || '').toUpperCase().trim();
+  const normalized = !u ? 'EURUSD' : u.replace(/\s+/g, '');
+  const canonical = resolveCalculatorSymbol(raw || 'EURUSD');
+  const hadAlias = Boolean(WATCHLIST_SYMBOL_ALIASES[normalized]);
+  const direct = getInstrument(canonical);
+  let source = /** @type {'registry'|'alias'|'fallback'} */ ('registry');
+  if (direct) {
+    source = hadAlias ? 'alias' : 'registry';
+  } else if (isInstrumentStrictMode()) {
+    source = 'registry';
+  } else {
+    source = 'fallback';
+  }
+  const bo = options && options.brokerOverrides;
+  const mo = options && options.mt5Overrides;
+  const hasOverrides = Boolean(
+    (bo && typeof bo === 'object' && Object.keys(bo).length) ||
+      (mo && typeof mo === 'object' && Object.keys(mo).length)
+  );
+  return {
+    symbolInput: raw || '(empty)',
+    normalized,
+    canonical,
+    source,
+    hasOverrides,
+    strictMode: isInstrumentStrictMode(),
+  };
+}
+
+export function getMergedInstrumentDuplicateReport() {
+  const counts = new Map();
+  for (const row of INSTRUMENTS) {
+    const s = String(row.symbol || '')
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '');
+    if (!s) continue;
+    counts.set(s, (counts.get(s) || 0) + 1);
+  }
+  return [...counts.entries()]
+    .filter(([, n]) => n > 1)
+    .map(([symbol, count]) => ({ symbol, count }));
+}
+
+/**
+ * Unified resolver: merged registry + commodities, optional broker/MT5 overrides.
+ * @param {string} symbol
+ * @param {{ brokerOverrides?: object, mt5Overrides?: object, requestId?: string }} [options]
+ * @returns {InstrumentSpec|null}
+ */
+export function getInstrumentSpec(symbol, options = {}) {
+  const canonical = resolveCalculatorSymbol(String(symbol || '').trim() || 'EURUSD');
+  let spec = getInstrument(canonical);
+  if (!spec) {
+    if (isInstrumentStrictMode()) {
+      logInfo('instrument', 'spec_unresolved', {
+        canonical,
+        strictMode: true,
+        ...(options.requestId ? { requestId: options.requestId } : {}),
+      });
+      return null;
+    }
+    spec = getInstrumentOrFallback(canonical);
+  }
+  const bo = options && options.brokerOverrides;
+  const mo = options && options.mt5Overrides;
+  const ov =
+    bo && mo && typeof bo === 'object' && typeof mo === 'object'
+      ? { ...mo, ...bo }
+      : bo || mo || null;
+  if (ov) spec = applyInstrumentOverrides({ ...spec }, ov, { requestId: options.requestId });
+  const trace = getInstrumentResolutionDebugTrace(symbol, options);
+  logInfo('instrument', 'spec_resolved', {
+    canonical: trace.canonical,
+    source: trace.source,
+    hasOverrides: trace.hasOverrides,
+    strictMode: trace.strictMode,
+    ...(options.requestId ? { requestId: options.requestId } : {}),
+  });
+  if (isInstrumentDebugEnabled() && spec) {
+    return { ...spec, _debugTrace: trace };
+  }
+  return spec;
+}
+
+/**
+ * Validate symbol against merged calculator universe (no silent "unknown OK").
+ * @param {string} raw
+ * @returns {{ valid: boolean, canonicalSymbol: string, spec: InstrumentSpec, warning: string|null, inferredCategory?: string }}
+ */
+export function validateInstrumentSymbol(raw) {
+  const canonical = resolveCalculatorSymbol(String(raw || '').trim() || 'EURUSD');
+  const direct = getInstrument(canonical);
+  if (direct) {
+    return {
+      valid: true,
+      canonicalSymbol: canonical,
+      spec: direct,
+      warning: null,
+      inferredCategory: direct.assetClass,
+    };
+  }
+  if (isInstrumentStrictMode()) {
+    return {
+      valid: false,
+      canonicalSymbol: canonical,
+      spec: null,
+      warning: 'Instrument not registered; strict mode disallows heuristic fallback.',
+      inferredCategory: 'unknown',
+    };
+  }
+  const spec = getInstrumentOrFallback(canonical);
+  const out = { ...spec, _registryFallback: true };
+  return {
+    valid: false,
+    canonicalSymbol: canonical,
+    spec: out,
+    warning: 'Unknown instrument — verify contract size and tick rules with your broker; sizing uses a heuristic template.',
+    inferredCategory: spec.assetClass,
+  };
+}
+
+/**
+ * Behaviour metadata for UI / future calculator hints (registry-backed).
+ * @param {string} symbol
+ */
+export function getInstrumentBehaviour(symbol) {
+  const canonical = resolveCalculatorSymbol(String(symbol || '').trim() || 'EURUSD');
+  const inst = getInstrument(canonical) || getInstrumentOrFallback(canonical);
+  return buildBehaviourFromSpec(inst, canonical);
+}
+
+/**
  * Round a number to the given decimal places (0 = integer).
  * @param {number} n
  * @param {number} decimals
@@ -531,6 +617,22 @@ function roundToPrecision(n, decimals) {
 export function getPriceExamples(instrument) {
   const fallback = { entry: 1.05, sl: 1.048, tp: 1.06, entryStr: '1.05', slStr: '1.048', tpStr: '1.06' };
   if (!instrument) return fallback;
+  const precEarly = Math.max(0, Math.min(8, Math.floor(Number(instrument.pricePrecision) || 2)));
+  const ex = instrument.examplePrices;
+  if (ex && Number.isFinite(Number(ex.entry)) && Number.isFinite(Number(ex.sl)) && Number.isFinite(Number(ex.tp))) {
+    const entry = roundToPrecision(Number(ex.entry), precEarly);
+    const sl = roundToPrecision(Number(ex.sl), precEarly);
+    const tp = roundToPrecision(Number(ex.tp), precEarly);
+    const toStrEarly = (n) => (precEarly === 0 ? String(Math.round(n)) : n.toFixed(precEarly));
+    return {
+      entry,
+      sl,
+      tp,
+      entryStr: toStrEarly(entry),
+      slStr: toStrEarly(sl),
+      tpStr: toStrEarly(tp),
+    };
+  }
   const min = Number(instrument.minReasonablePrice) || 0.5;
   const max = Number(instrument.maxReasonablePrice) || 3;
   const prec = Math.max(0, Math.min(8, Math.floor(Number(instrument.pricePrecision) || 2)));
@@ -621,9 +723,9 @@ export function getInstrumentOrFallback(symbol) {
   });
 }
 
-/** Market Watch symbol → calculator spec (aliases WTI→USOIL, SPX→SPX500, …). */
-export function getInstrumentForWatchlistSymbol(symbol) {
-  return getInstrumentOrFallback(resolveCalculatorSymbol(symbol));
+/** Market Watch symbol → calculator spec (aliases WTI→USOIL, SPX→SPX500, …). Unified merge + optional overrides. */
+export function getInstrumentForWatchlistSymbol(symbol, options) {
+  return getInstrumentSpec(symbol, options || {});
 }
 
 export function getAllInstruments() {

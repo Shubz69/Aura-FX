@@ -2,13 +2,14 @@
  * AI Chart Check Tab
  * Premium multi-timeframe analysis UI.
  */
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getInstrumentsByCategory } from '../../lib/aura-analysis/instruments';
+import { mergeWatchlistIntoInstrumentGroups } from '../../lib/aura-analysis/chartCheckPairs';
 import '../../styles/aura-analysis/AiChartCheck.css';
 
-const PAIR_GROUPS = getInstrumentsByCategory();
+const BASE_PAIR_GROUPS = getInstrumentsByCategory();
 const BASE_URL = process.env.REACT_APP_API_URL || '';
 
 const CHECKLIST_TYPES = [
@@ -257,6 +258,21 @@ function ResultPanel({ result, onReset }) {
 
 export default function AiChartCheckTab() {
   const { token } = useAuth();
+  const [pairGroups, setPairGroups] = useState(BASE_PAIR_GROUPS);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${BASE_URL}/api/market/watchlist`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data?.success || !data.watchlist) return;
+        setPairGroups(mergeWatchlistIntoInstrumentGroups(data.watchlist, BASE_PAIR_GROUPS));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Upload state — multi-slot
   const [slots, setSlots]               = useState(() => [makeSlot('1H')]);
@@ -489,7 +505,7 @@ export default function AiChartCheckTab() {
                 aria-label="Trading pair or symbol"
               >
                 <option value="">Select pair…</option>
-                {PAIR_GROUPS.map((g) => (
+                {pairGroups.map((g) => (
                   <optgroup key={g.category} label={g.label}>
                     {g.instruments.map((inst) => (
                       <option key={inst.symbol} value={inst.symbol}>

@@ -33,6 +33,10 @@
  * @property {number} potentialLoss
  * @property {number} rMultiple
  * @property {string[]} warnings
+ * @property {boolean} [calculationBlocked] — true when strict rejection or sanity guard blocked the calculation
+ * @property {string} [errorCode] — standard code e.g. INVALID_SYMBOL, CALCULATION_BLOCKED
+ * @property {string} [requestId] — correlation id when generated or passed in
+ * @property {object} [_debugCalculation] — present in dev or when DEBUG_MODE; safe snapshots only
  */
 
 export const CALCULATOR_TYPES = Object.freeze({});

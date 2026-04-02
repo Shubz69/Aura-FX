@@ -2,7 +2,11 @@
  * Idempotent cache for normalized MetaTrader trades per user + platform (dedupe on refresh).
  */
 const { executeQuery } = require('../db');
-const { dedupeNormalizedTrades, filterTradesByDays } = require('./mtTradeNormalize');
+const {
+  dedupeNormalizedTrades,
+  filterTradesByDays,
+  filterTradesByInclusiveDateRange,
+} = require('./mtTradeNormalize');
 
 const BATCH_SIZE = 45;
 
@@ -83,7 +87,7 @@ async function upsertTradeCacheRows(userId, platformId, trades) {
 /**
  * Last-resort history when live worker fails — filtered to requested window, deduped.
  */
-async function loadCachedTradesForRange(userId, platformId, days) {
+async function loadCachedTradesForRange(userId, platformId, days, dateRange = null) {
   if (!userId || !platformId) return [];
   try {
     await ensureTradeCacheTable();
@@ -102,7 +106,11 @@ async function loadCachedTradesForRange(userId, platformId, days) {
       } catch (_) { /* skip */ }
     }
     const deduped = dedupeNormalizedTrades(trades);
-    return filterTradesByDays(deduped, days);
+    let out = filterTradesByDays(deduped, days);
+    if (dateRange?.from && dateRange?.to) {
+      out = filterTradesByInclusiveDateRange(out, dateRange.from, dateRange.to);
+    }
+    return out;
   } catch (e) {
     console.warn('[aura-platform-trade-cache] load cache failed:', e.message);
     return [];

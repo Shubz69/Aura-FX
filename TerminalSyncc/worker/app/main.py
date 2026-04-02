@@ -1,10 +1,11 @@
 import logging
 import os
+import uuid
 from contextlib import asynccontextmanager
 from typing import Dict, Optional
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -12,6 +13,7 @@ from .config import WORKER_SECRET, validate_mt5_template
 from .errors import TemplateValidationError, WorkerError
 from .lifecycle import start_background_sweep, startup_cleanup, stop_background_sweep
 from .mt5_instance import MT5Instance, active_mt5_guard, active_mt5_logins
+from .observability import mt5_obs_log
 
 logger = logging.getLogger("terminalsync.worker")
 
@@ -41,7 +43,7 @@ class MT5Credentials(BaseModel):
     password: str
     server: str
     platform: Optional[str] = None
-    days: Optional[int] = Field(default=None, ge=1, le=365)
+    days: Optional[int] = Field(default=None, ge=1, le=3650)
 
     model_config = ConfigDict(extra="ignore")
 
@@ -144,11 +146,15 @@ def _http_from_worker_error(e: WorkerError) -> HTTPException:
 
 @app.post("/api/v1/sync")
 def sync_account(
+    request: Request,
     creds: MT5Credentials,
     x_worker_secret: str = Header(default=None),
 ):
     verify_internal_access(x_worker_secret)
     _reject_mt4_platform(creds.platform)
+
+    rid = (request.headers.get("x-request-id") or "").strip() or str(uuid.uuid4())
+    mt5_obs_log("mt5", "api_sync", login=creds.login, server=creds.server, request_id=rid)
 
     try:
         instance = _get_instance(app, creds)
@@ -168,11 +174,15 @@ def sync_account(
 
 @app.post("/api/v1/positions")
 def get_positions(
+    request: Request,
     creds: MT5Credentials,
     x_worker_secret: str = Header(default=None),
 ):
     verify_internal_access(x_worker_secret)
     _reject_mt4_platform(creds.platform)
+
+    rid = (request.headers.get("x-request-id") or "").strip() or str(uuid.uuid4())
+    mt5_obs_log("mt5", "api_positions", login=creds.login, server=creds.server, request_id=rid)
 
     try:
         instance = _get_instance(app, creds)
@@ -192,6 +202,7 @@ def get_positions(
 
 @app.post("/api/v1/history")
 def get_deal_history(
+    request: Request,
     creds: MT5Credentials,
     x_worker_secret: str = Header(default=None),
 ):
@@ -201,7 +212,16 @@ def get_deal_history(
 
     try:
         lookback = int(creds.days) if creds.days is not None else 90
-        lookback = max(1, min(365, lookback))
+        lookback = max(1, min(3650, lookback))
+        rid = (request.headers.get("x-request-id") or "").strip() or str(uuid.uuid4())
+        mt5_obs_log(
+            "mt5",
+            "api_history",
+            login=creds.login,
+            server=creds.server,
+            history_days=lookback,
+            request_id=rid,
+        )
         instance = _get_instance(app, creds)
         result = instance.deal_history(lookback)
         return {"status": "success", "trades": result["trades"]}

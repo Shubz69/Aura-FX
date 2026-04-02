@@ -1,15 +1,11 @@
 /**
- * Maps Market Watch symbols (api/market/defaultWatchlist) to calculator instrument keys
- * used by getInstrumentOrFallback in instruments.js.
+ * Maps Market Watch / legacy broker symbols → canonical calculator + registry keys.
+ * Data: src/data/instrumentRegistry.json (same aliases as api/market/instrumentRegistry.js).
  */
-export const WATCHLIST_SYMBOL_ALIASES = {
-  WTI: 'USOIL',
-  BRENT: 'UKOIL',
-  SPX: 'SPX500',
-  NDX: 'NAS100',
-  DJI: 'US30',
-  DAX: 'GER40',
-};
+import registry from '../../data/instrumentRegistry.json';
+
+/** @type {Record<string, string>} */
+export const WATCHLIST_SYMBOL_ALIASES = registry.symbolAliases || {};
 
 /**
  * @param {string} symbol

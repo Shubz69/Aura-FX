@@ -290,8 +290,11 @@ function dedupeNormalizedTrades(trades) {
 /**
  * Keep trades whose closing (or open) time falls within the last `days` calendar days.
  */
+/** Must match TerminalSync worker and platform-history max lookback. */
+const MAX_HISTORY_LOOKBACK_DAYS = 3650;
+
 function filterTradesByDays(trades, days) {
-  const d = Math.min(365, Math.max(1, Number(days) || 30));
+  const d = Math.min(MAX_HISTORY_LOOKBACK_DAYS, Math.max(1, Number(days) || 30));
   const cutoff = Date.now() - d * 86400000;
   return trades.filter((t) => {
     if (t.tradeStatus === 'open') {
@@ -308,6 +311,27 @@ function filterTradesByDays(trades, days) {
   });
 }
 
+/**
+ * Inclusive UTC calendar range (YYYY-MM-DD). Closed trades use closeTime; open uses openTime.
+ */
+function filterTradesByInclusiveDateRange(trades, fromYmd, toYmd) {
+  const fromM = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(fromYmd || '').trim());
+  const toM = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(toYmd || '').trim());
+  if (!fromM || !toM) return trades;
+  const fromMs = Date.UTC(+fromM[1], +fromM[2] - 1, +fromM[3]);
+  const toMs = Date.UTC(+toM[1], +toM[2] - 1, +toM[3], 23, 59, 59, 999);
+  if (fromMs > toMs) return trades;
+  return trades.filter((t) => {
+    const ref = t.tradeStatus === 'open'
+      ? (t.openTime || t.created_at)
+      : (t.closeTime || t.openTime || t.created_at);
+    if (!ref) return false;
+    const ms = new Date(ref).getTime();
+    if (!Number.isFinite(ms)) return false;
+    return ms >= fromMs && ms <= toMs;
+  });
+}
+
 module.exports = {
   finite,
   normalizeTimeValue,
@@ -319,5 +343,7 @@ module.exports = {
   normalizeMtRow,
   dedupeNormalizedTrades,
   filterTradesByDays,
+  filterTradesByInclusiveDateRange,
+  MAX_HISTORY_LOOKBACK_DAYS,
   tradeTimeMs,
 };

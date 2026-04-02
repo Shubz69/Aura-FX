@@ -327,9 +327,36 @@ class MT5Instance:
             if not parsed.get("ok"):
                 code = str(parsed.get("code") or "MT5_WORKER_ERROR")
                 msg = str(parsed.get("error") or "UNKNOWN_ERROR")
+                try:
+                    from .observability import mt5_obs_log
+
+                    mt5_obs_log(
+                        "mt5",
+                        "subprocess_error",
+                        login=self._login,
+                        action=action,
+                        error_code=code,
+                    )
+                except Exception:
+                    pass
                 raise WorkerError(code, f"[login={self._login} action={action}] {msg}", http_status=502)
 
             _touch_last_used(self.instance_path)
+            try:
+                from .observability import mt5_obs_log
+
+                result_count = None
+                if action in ("deal_history", "positions"):
+                    result_count = len(parsed.get("trades") or [])
+                mt5_obs_log(
+                    "mt5",
+                    "subprocess_ok",
+                    login=self._login,
+                    action=action,
+                    result_count=result_count,
+                )
+            except Exception:
+                pass
             return parsed
         finally:
             if acquired_sem:

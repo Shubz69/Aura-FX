@@ -5,7 +5,7 @@ Usage:
   python -m app.mt5_worker <instance_path> <login> <password> <server> <action> [history_days]
 
 - account_info / positions: 6 args
-- deal_history: optional 7th arg = lookback days (1–365), default 90
+- deal_history: optional 7th arg = lookback days (1–3650), default 90
 
 Prints a single JSON object on stdout and exits 0 on success, 1 on failure.
 """
@@ -19,6 +19,8 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 import MetaTrader5 as mt5
+
+from .observability import mt5_obs_log
 
 ACTIONS = frozenset({"account_info", "positions", "deal_history"})
 
@@ -118,9 +120,11 @@ def main() -> int:
     history_days = 90
     if action == "deal_history" and len(sys.argv) >= 7:
         try:
-            history_days = max(1, min(365, int(sys.argv[6])))
+            history_days = max(1, min(3650, int(sys.argv[6])))
         except ValueError:
             history_days = 90
+
+    mt5_obs_log("mt5_worker", "job_start", login=login, server=server, action=action, history_days=history_days)
 
     instance_path = Path(instance_raw).expanduser().resolve()
     terminal = instance_path / "terminal64.exe"
@@ -153,7 +157,10 @@ def main() -> int:
             timeout=60000,
         ):
             code, msg = _classify_init_failure(mt5.last_error())
+            mt5_obs_log("mt5_worker", "login_failed", login=login, server=server, error_code=code)
             return _fail(code, msg)
+
+        mt5_obs_log("mt5_worker", "terminal_initialized", login=login, server=server, action=action)
 
         if action == "account_info":
             acc = mt5.account_info()
@@ -173,9 +180,11 @@ def main() -> int:
                     }
                 }
             )
+            mt5_obs_log("mt5_worker", "account_info_ok", login=login)
         elif action == "positions":
             pos = mt5.positions_get()
             if pos is None:
+                mt5_obs_log("mt5_worker", "positions_error", login=login, error_code="POSITIONS_GET_FAILED")
                 return _fail("POSITIONS_GET_FAILED", str(mt5.last_error()))
 
             trades = [p._asdict() for p in pos]
@@ -183,12 +192,14 @@ def main() -> int:
                 for k, v in list(t.items()):
                     t[k] = _json_safe_value(v)
             exit_code = _ok({"trades": trades})
+            mt5_obs_log("mt5_worker", "positions_fetched", login=login, count=len(trades))
 
         elif action == "deal_history":
             utc_to = datetime.now()
             utc_from = utc_to - timedelta(days=history_days)
             deals = mt5.history_deals_get(utc_from, utc_to)
             if deals is None:
+                mt5_obs_log("mt5_worker", "history_error", login=login, error_code="DEAL_HISTORY_FAILED")
                 return _fail("DEAL_HISTORY_FAILED", str(mt5.last_error()))
 
             buy = getattr(mt5, "DEAL_TYPE_BUY", 0)
@@ -210,8 +221,16 @@ def main() -> int:
                     continue
 
             exit_code = _ok({"trades": trades_out})
+            mt5_obs_log(
+                "mt5_worker",
+                "history_fetched",
+                login=login,
+                count=len(trades_out),
+                history_days=history_days,
+            )
 
     except Exception as e:
+        mt5_obs_log("mt5_worker", "worker_exception", login=login, error_code="MT5_WORKER_EXCEPTION")
         return _fail("MT5_WORKER_EXCEPTION", str(e))
     finally:
         try:

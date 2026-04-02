@@ -11,6 +11,9 @@ const AuraAnalysisContext = createContext(null);
 
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
+/** Keep in sync with api/aura-analysis/mtTradeNormalize.js MAX_HISTORY_LOOKBACK_DAYS */
+const ALL_TIME_LOOKBACK_DAYS = 3650;
+
 const DATE_RANGE_OPTIONS = [
   { label: '1D',  days: 1   },
   { label: '1W',  days: 7   },
@@ -18,9 +21,10 @@ const DATE_RANGE_OPTIONS = [
   { label: '3M',  days: 90  },
   { label: '6M',  days: 180 },
   { label: '1Y',  days: 365 },
+  { label: 'ALL', days: ALL_TIME_LOOKBACK_DAYS },
 ];
 
-export { DATE_RANGE_OPTIONS };
+export { DATE_RANGE_OPTIONS, ALL_TIME_LOOKBACK_DAYS };
 
 export function AuraAnalysisProvider({ children }) {
   const { connections } = useAuraConnection();
@@ -44,6 +48,8 @@ export function AuraAnalysisProvider({ children }) {
 
   // ── Filters ───────────────────────────────────────────────────────────────
   const [daysFilter,   setDaysFilter]   = useState(30);
+  /** Inclusive YYYY-MM-DD (API uses UTC day bounds). Null when using preset ranges only. */
+  const [customRange, setCustomRange] = useState(null);
   const [symbolFilter, setSymbolFilter] = useState('ALL');
   const [sessionFilter, setSessionFilter] = useState('ALL');
   const [dirFilter,    setDirFilter]    = useState('ALL');
@@ -79,9 +85,14 @@ export function AuraAnalysisProvider({ children }) {
     else { setLoading(true); setError(null); }
 
     try {
+      const historyArg =
+        customRange?.from && customRange?.to
+          ? { from: customRange.from, to: customRange.to }
+          : daysFilter;
+
       const [accSettled, histSettled] = await Promise.allSettled([
         Api.getAuraPlatformAccount(activePlatformId),
-        Api.getAuraPlatformHistory(activePlatformId, daysFilter),
+        Api.getAuraPlatformHistory(activePlatformId, historyArg),
       ]);
 
       let gotAccount = false;
@@ -136,12 +147,12 @@ export function AuraAnalysisProvider({ children }) {
       if (background) setRefreshing(false);
       else setLoading(false);
     }
-  }, [activePlatformId, daysFilter]);
+  }, [activePlatformId, daysFilter, customRange?.from, customRange?.to]);
 
   // Initial + days/platform change
   useEffect(() => {
     if (activePlatformId) fetchData(false);
-  }, [activePlatformId, daysFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activePlatformId, daysFilter, customRange?.from, customRange?.to]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 10-min auto-refresh — clean up on unmount
   useEffect(() => {
@@ -194,6 +205,7 @@ export function AuraAnalysisProvider({ children }) {
 
     // Filters
     daysFilter,    setDaysFilter,
+    customRange,   setCustomRange,
     symbolFilter,  setSymbolFilter,
     sessionFilter, setSessionFilter,
     dirFilter,     setDirFilter,

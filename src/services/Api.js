@@ -797,10 +797,19 @@ const Api = {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
     },
-    getAuraPlatformHistory: (platformId, days = 30) => {
+    /** @param {number|{ days?: number, from?: string, to?: string }} daysOrOpts - preset window in days, or { from, to } YYYY-MM-DD (UTC range on API) */
+    getAuraPlatformHistory: (platformId, daysOrOpts = 30) => {
         const token = localStorage.getItem('token');
+        const params = { platformId };
+        if (typeof daysOrOpts === 'number') {
+            params.days = daysOrOpts;
+        } else if (daysOrOpts && typeof daysOrOpts === 'object') {
+            if (daysOrOpts.days != null) params.days = daysOrOpts.days;
+            if (daysOrOpts.from) params.from = daysOrOpts.from;
+            if (daysOrOpts.to) params.to = daysOrOpts.to;
+        }
         return axios.get(`${API_BASE_URL}/api/aura-analysis/platform-history`, {
-            params: { platformId, days },
+            params,
             headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
     },

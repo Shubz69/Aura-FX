@@ -1,7 +1,11 @@
 /**
  * Single source of truth for All Markets / ticker symbol groups and snapshot fetch list.
  * Used by GET /api/market/watchlist and GET /api/markets/snapshot (via getSnapshotSymbols).
+ *
+ * Commodities rows: canonical symbols from src/data/instrumentRegistry.json (metals, energy, ag, softs).
  */
+
+const INSTRUMENT_REGISTRY = require('../../src/data/instrumentRegistry.json');
 
 const GROUPS = {
   crypto: {
@@ -283,16 +287,7 @@ const GROUPS = {
     name: 'Commodities',
     icon: '🥇',
     order: 5,
-    symbols: [
-      { symbol: 'XAUUSD', displayName: 'GOLD', decimals: 2 },
-      { symbol: 'XAGUSD', displayName: 'SILVER', decimals: 2 },
-      { symbol: 'WTI', displayName: 'WTI Oil', decimals: 2 },
-      { symbol: 'BRENT', displayName: 'Brent', decimals: 2 },
-      { symbol: 'NATGAS', displayName: 'Nat Gas', decimals: 2 },
-      { symbol: 'COPPER', displayName: 'Copper', decimals: 2 },
-      { symbol: 'PLAT', displayName: 'Platinum', decimals: 2 },
-      { symbol: 'PALL', displayName: 'Palladium', decimals: 2 }
-    ]
+    symbols: [...(INSTRUMENT_REGISTRY.commoditiesWatchlist || [])],
   },
   indices: {
     name: 'Indices',
@@ -367,12 +362,18 @@ const SPECIAL_PROVIDER_MAPPING = {
   DXY: 'DX-Y.NYB',
   US10Y: '^TNX',
   US30Y: '^TYX',
-  WTI: 'CL=F',
-  BRENT: 'BZ=F',
-  NATGAS: 'NG=F',
-  COPPER: 'HG=F',
-  PLAT: 'PL=F',
-  PALL: 'PA=F',
+  USOIL: 'CL=F',
+  UKOIL: 'BZ=F',
+  XNGUSD: 'NG=F',
+  XCUUSD: 'HG=F',
+  XPTUSD: 'PL=F',
+  XPDUSD: 'PA=F',
+  CORN: 'ZC=F',
+  WHEAT: 'ZW=F',
+  SOYBEAN: 'ZS=F',
+  COFFEE: 'KC=F',
+  SUGAR: 'SB=F',
+  COCOA: 'CC=F',
   BTCUSD: 'BTC-USD',
   ETHUSD: 'ETH-USD',
   SOLUSD: 'SOL-USD',
@@ -444,5 +445,6 @@ module.exports = {
   getSnapshotSymbols,
   getWatchlistPayload,
   GROUPS,
-  BEGINNER_SET
+  BEGINNER_SET,
+  INSTRUMENT_REGISTRY,
 };

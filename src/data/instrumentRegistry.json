@@ -1,0 +1,360 @@
+{
+  "version": "1.1.0",
+  "description": "Canonical symbols, aliases, commodity watchlist, calculation anchors, behaviour profiles, MT5 override contract.",
+  "mt5BrokerOverrideContract": {
+    "description": "Future: merge these fields from MT5 symbol_info into specs via getInstrumentSpec(symbol, { brokerOverrides }).",
+    "allowedFields": ["contractSize", "tickSize", "tickValuePerLot", "valuePerPointPerLot", "pointSize", "pipSize", "lotStep", "minLot", "maxLot"]
+  },
+  "categoryBehaviour": {
+    "crypto": {
+      "volatilityProfile": "high",
+      "sessionBehaviour": "24/7; weekend gap risk; funding/perp basis on derivatives",
+      "spreadSensitivity": "wide on thin alts; slippage spikes on volatility",
+      "manipulationRisk": "stop-runs and wick spikes on low liquidity events",
+      "typicalStructureQuality": "trend spikes and range compression; BTC correlation on alts"
+    },
+    "forex": {
+      "volatilityProfile": "medium (majors lower, exotics higher)",
+      "sessionBehaviour": "London/NY liquidity peaks; Asia varies by pair",
+      "spreadSensitivity": "widens off-session and into news",
+      "manipulationRisk": "moderate around fixes and tier-1 news",
+      "typicalStructureQuality": "session-linked trends; mean reversion in ranges"
+    },
+    "commodities": {
+      "volatilityProfile": "high on energy; medium-high on metals; seasonal on ag/softs",
+      "sessionBehaviour": "pit/report calendars; gap risk vs equities",
+      "spreadSensitivity": "wider on thin CFD roots",
+      "manipulationRisk": "stop liquidity engineering common on metals and energy headlines",
+      "typicalStructureQuality": "impulse + mean-revert around reports; scale differs from FX pips"
+    },
+    "indices": {
+      "volatilityProfile": "medium-high",
+      "sessionBehaviour": "cash hours; gap opens; macro tape",
+      "spreadSensitivity": "moderate; wider into cash open",
+      "manipulationRisk": "gap and event baskets",
+      "typicalStructureQuality": "trend + pullback; points-based rhythm"
+    },
+    "stocks": {
+      "volatilityProfile": "equity-specific",
+      "sessionBehaviour": "RTH most liquid",
+      "spreadSensitivity": "wider outside RTH",
+      "manipulationRisk": "gap on news; halts",
+      "typicalStructureQuality": "levels, gaps, earnings drift"
+    },
+    "etfs": {
+      "volatilityProfile": "basket-dependent",
+      "sessionBehaviour": "follows underlying cash hours",
+      "spreadSensitivity": "generally moderate",
+      "manipulationRisk": "rebalance flows",
+      "typicalStructureQuality": "tracks index/sector"
+    },
+    "macro": {
+      "volatilityProfile": "instrument-specific",
+      "sessionBehaviour": "macro calendars (FOMC, CPI)",
+      "spreadSensitivity": "varies",
+      "manipulationRisk": "low vs single-name",
+      "typicalStructureQuality": "rates trend; VIX mean-revert tendencies"
+    },
+    "futures": {
+      "volatilityProfile": "contract-dependent",
+      "sessionBehaviour": "session times; roll weeks",
+      "spreadSensitivity": "tick size/value matter",
+      "manipulationRisk": "roll and spread dislocations",
+      "typicalStructureQuality": "points/ticks; not FX pips unless chart is FX"
+    },
+    "unknown": {
+      "volatilityProfile": "unknown — infer from chart only",
+      "sessionBehaviour": "unknown",
+      "spreadSensitivity": "unknown",
+      "manipulationRisk": "unknown",
+      "typicalStructureQuality": "use visible price action only"
+    }
+  },
+  "commoditySubCategoryBehaviour": {
+    "metal": {
+      "manipulationRisk": "elevated on liquidity sweeps around NY/London",
+      "typicalStructureQuality": "clean swings at size; false breaks on news"
+    },
+    "energy": {
+      "manipulationRisk": "inventory and headline stop-runs",
+      "typicalStructureQuality": "event volatility; gap risk"
+    },
+    "agriculture": {
+      "manipulationRisk": "report-driven gaps",
+      "typicalStructureQuality": "seasonal ranges and trend legs into WASDE-style events"
+    },
+    "softs": {
+      "manipulationRisk": "thin liquidity gaps",
+      "typicalStructureQuality": "weather and currency-driven trends"
+    },
+    "other": {
+      "manipulationRisk": "verify with broker symbol specs",
+      "typicalStructureQuality": "mixed"
+    }
+  },
+  "commodityCalculationSpecs": {
+    "XAUUSD": {
+      "displayName": "Gold",
+      "contractSize": 100,
+      "tickSize": 0.01,
+      "pointSize": 1,
+      "pricePrecision": 2,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "metal",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 1500,
+      "maxReasonablePrice": 4000,
+      "examplePrices": { "entry": 2650.5, "sl": 2624.0, "tp": 2708.0 }
+    },
+    "XAGUSD": {
+      "displayName": "Silver",
+      "contractSize": 5000,
+      "tickSize": 0.001,
+      "pointSize": 0.01,
+      "pricePrecision": 3,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "metal",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 15,
+      "maxReasonablePrice": 60,
+      "examplePrices": { "entry": 31.425, "sl": 30.85, "tp": 32.55 }
+    },
+    "XPTUSD": {
+      "displayName": "Platinum",
+      "contractSize": 100,
+      "tickSize": 0.01,
+      "pricePrecision": 2,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "metal",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 700,
+      "maxReasonablePrice": 1400,
+      "examplePrices": { "entry": 985.0, "sl": 968.0, "tp": 1025.0 }
+    },
+    "XPDUSD": {
+      "displayName": "Palladium",
+      "contractSize": 100,
+      "tickSize": 0.01,
+      "pricePrecision": 2,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "metal",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 800,
+      "maxReasonablePrice": 2500,
+      "examplePrices": { "entry": 1025.0, "sl": 998.0, "tp": 1088.0 }
+    },
+    "XCUUSD": {
+      "displayName": "Copper",
+      "contractSize": 25000,
+      "tickSize": 0.0001,
+      "pointSize": 0.0001,
+      "pricePrecision": 4,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "metal",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 3,
+      "maxReasonablePrice": 6,
+      "examplePrices": { "entry": 4.252, "sl": 4.172, "tp": 4.412 }
+    },
+    "USOIL": {
+      "displayName": "WTI / US Oil",
+      "contractSize": 1000,
+      "tickSize": 0.01,
+      "pricePrecision": 2,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "energy",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 40,
+      "maxReasonablePrice": 120,
+      "examplePrices": { "entry": 72.55, "sl": 71.05, "tp": 75.85 }
+    },
+    "UKOIL": {
+      "displayName": "Brent",
+      "contractSize": 1000,
+      "tickSize": 0.01,
+      "pricePrecision": 2,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "energy",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 45,
+      "maxReasonablePrice": 125,
+      "examplePrices": { "entry": 76.2, "sl": 74.7, "tp": 79.55 }
+    },
+    "XNGUSD": {
+      "displayName": "Natural Gas",
+      "contractSize": 10000,
+      "tickSize": 0.001,
+      "pricePrecision": 3,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "energy",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 1.5,
+      "maxReasonablePrice": 12,
+      "examplePrices": { "entry": 3.885, "sl": 3.652, "tp": 4.388 }
+    },
+    "CORN": {
+      "displayName": "Corn",
+      "contractSize": 5000,
+      "tickSize": 0.0025,
+      "pricePrecision": 2,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "agriculture",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 3,
+      "maxReasonablePrice": 8,
+      "examplePrices": { "entry": 4.485, "sl": 4.3525, "tp": 4.785 }
+    },
+    "WHEAT": {
+      "displayName": "Wheat",
+      "contractSize": 5000,
+      "tickSize": 0.0025,
+      "pricePrecision": 2,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "agriculture",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 4.5,
+      "maxReasonablePrice": 12,
+      "examplePrices": { "entry": 5.855, "sl": 5.7025, "tp": 6.215 }
+    },
+    "SOYBEAN": {
+      "displayName": "Soybeans",
+      "contractSize": 5000,
+      "tickSize": 0.0025,
+      "pricePrecision": 2,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "agriculture",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 9,
+      "maxReasonablePrice": 18,
+      "examplePrices": { "entry": 10.4525, "sl": 10.2225, "tp": 10.9425 }
+    },
+    "COFFEE": {
+      "displayName": "Coffee",
+      "contractSize": 37500,
+      "tickSize": 0.0001,
+      "pricePrecision": 2,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "softs",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 1.2,
+      "maxReasonablePrice": 3.5,
+      "examplePrices": { "entry": 1.845, "sl": 1.7925, "tp": 1.9575 }
+    },
+    "SUGAR": {
+      "displayName": "Sugar #11",
+      "contractSize": 112000,
+      "tickSize": 0.0001,
+      "pricePrecision": 2,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "softs",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 0.14,
+      "maxReasonablePrice": 0.36,
+      "examplePrices": { "entry": 0.1845, "sl": 0.1795, "tp": 0.1965 }
+    },
+    "COCOA": {
+      "displayName": "Cocoa",
+      "contractSize": 10,
+      "tickSize": 1,
+      "pricePrecision": 0,
+      "calculationMode": "commodity",
+      "priceFormat": "decimal",
+      "subCategory": "softs",
+      "lotStep": 0.01,
+      "minLot": 0.01,
+      "maxLot": 100,
+      "minReasonablePrice": 2800,
+      "maxReasonablePrice": 5200,
+      "examplePrices": { "entry": 3825, "sl": 3720, "tp": 4045 }
+    }
+  },
+  "symbolAliases": {
+    "WTI": "USOIL",
+    "XTIUSD": "USOIL",
+    "CRUDE": "USOIL",
+    "CL": "USOIL",
+    "BRENT": "UKOIL",
+    "XBRUSD": "UKOIL",
+    "UKOIL": "UKOIL",
+    "NATGAS": "XNGUSD",
+    "NG": "XNGUSD",
+    "NGAS": "XNGUSD",
+    "GAS": "XNGUSD",
+    "PLAT": "XPTUSD",
+    "PLATINUM": "XPTUSD",
+    "PALL": "XPDUSD",
+    "PALLADIUM": "XPDUSD",
+    "COPPER": "XCUUSD",
+    "HG": "XCUUSD",
+    "SPX": "SPX500",
+    "^GSPC": "SPX500",
+    "NDX": "NAS100",
+    "NASDAQ100": "NAS100",
+    "US100": "NAS100",
+    "USTEC": "NAS100",
+    "DJI": "US30",
+    "DOW": "US30",
+    "YM": "US30",
+    "DAX": "GER40",
+    "GER40": "GER40",
+    "SOYB": "SOYBEAN",
+    "ZC": "CORN",
+    "ZW": "WHEAT",
+    "ZS": "SOYBEAN"
+  },
+  "commoditiesWatchlist": [
+    { "symbol": "XAUUSD", "displayName": "Gold", "decimals": 2 },
+    { "symbol": "XAGUSD", "displayName": "Silver", "decimals": 3 },
+    { "symbol": "XPTUSD", "displayName": "Platinum", "decimals": 2 },
+    { "symbol": "XPDUSD", "displayName": "Palladium", "decimals": 2 },
+    { "symbol": "XCUUSD", "displayName": "Copper", "decimals": 4 },
+    { "symbol": "USOIL", "displayName": "WTI / US Oil", "decimals": 2 },
+    { "symbol": "UKOIL", "displayName": "Brent", "decimals": 2 },
+    { "symbol": "XNGUSD", "displayName": "Natural Gas", "decimals": 3 },
+    { "symbol": "CORN", "displayName": "Corn", "decimals": 2 },
+    { "symbol": "WHEAT", "displayName": "Wheat", "decimals": 2 },
+    { "symbol": "SOYBEAN", "displayName": "Soybeans", "decimals": 2 },
+    { "symbol": "COFFEE", "displayName": "Coffee", "decimals": 2 },
+    { "symbol": "SUGAR", "displayName": "Sugar #11", "decimals": 2 },
+    { "symbol": "COCOA", "displayName": "Cocoa", "decimals": 0 }
+  ]
+}

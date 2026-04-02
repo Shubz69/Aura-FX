@@ -24,7 +24,7 @@ const INSTRUMENT_UNIVERSE_BY_KIND = {
     'AUDJPY', 'EURAUD', 'EURCHF', 'GBPCHF', 'CADJPY', 'NZDJPY',
   ],
   crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'ADAUSD', 'DOGEUSD', 'AVAXUSD', 'DOTUSD', 'LINKUSD', 'LTCUSD'],
-  commodities: ['XAUUSD', 'XAGUSD', 'WTI', 'BRENT', 'NATGAS', 'COPPER', 'XPTUSD', 'XPDUSD'],
+  commodities: ['XAUUSD', 'XAGUSD', 'USOIL', 'UKOIL', 'XNGUSD', 'XCUUSD', 'XPTUSD', 'XPDUSD'],
   bonds: ['US02Y', 'US05Y', 'US10Y', 'US30Y', 'DE10Y', 'UK10Y', 'JP10Y', 'IT10Y'],
   etfs: ['SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT', 'HYG', 'LQD', 'XLE', 'XLK', 'SMH', 'XLV', 'XLF', 'XLI', 'EEM', 'VNQ', 'USO', 'UNG'],
 };
@@ -37,7 +37,7 @@ const FALLBACK_TOP5_BY_KIND = {
   futures: ['ES1!', 'NQ1!', 'CL1!', 'GC1!', 'ZN1!'],
   forex: ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCHF'],
   crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'ADAUSD'],
-  commodities: ['XAUUSD', 'XAGUSD', 'WTI', 'BRENT', 'NATGAS'],
+  commodities: ['XAUUSD', 'XAGUSD', 'USOIL', 'UKOIL', 'XNGUSD'],
   bonds: ['US02Y', 'US10Y', 'US30Y', 'DE10Y', 'UK10Y'],
   etfs: ['SPY', 'QQQ', 'IWM', 'GLD', 'TLT'],
 };

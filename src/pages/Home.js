@@ -8,6 +8,7 @@ import A7Logo from "../components/A7Logo";
 import MarketTicker from "../components/MarketTicker";
 import Api from "../services/Api";
 import { useLivePrices } from "../hooks/useLivePrices";
+import { formatWelcomeSentence } from "../utils/welcomeUser";
 import {
     FaUsers, FaTrophy, FaGraduationCap, FaRocket,
     FaShieldAlt, FaClock, FaCoins, FaChartBar,
@@ -803,9 +804,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     );
     const lab = useMemo(() => computeLabMetrics(dashboardData.labSessions), [dashboardData.labSessions]);
 
-    const displayName = (user?.name || user?.username || '').trim();
-    const firstName = displayName.split(/\s+/)[0] || 'Trader';
-    const welcomeShort = `Welcome, ${firstName}.`;
+    const welcomeShort = formatWelcomeSentence(user);
 
     const sentimentScore = useMemo(() => {
         if (analytics.totalTrades === 0) return 52;

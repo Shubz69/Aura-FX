@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
+import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
+import { formatWelcomeEyebrow } from '../utils/welcomeUser';
 import { PLAYBOOK_SETUP_OPTIONS } from '../utils/traderSuite';
 
 const DEFAULT_SETUP = {
@@ -45,6 +47,7 @@ function normalizeSetup(setup = {}) {
 }
 
 export default function TraderPlaybook() {
+  const { user } = useAuth();
   const [setups, setSetups] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [form, setForm] = useState(DEFAULT_SETUP);
@@ -137,7 +140,7 @@ export default function TraderPlaybook() {
   return (
     <TraderSuiteShell
       variant="terminal"
-      eyebrow="Welcome, Samy"
+      eyebrow={formatWelcomeEyebrow(user)}
       title="AURA TERMINAL - TRADER PLAYBOOK"
       description="Compact terminal-board layout for your strategy rules. The setup should be readable in one screen with clear conditions, entry logic, management, checklist, and hard blockers."
       stats={stats}

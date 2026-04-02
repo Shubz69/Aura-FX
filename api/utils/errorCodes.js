@@ -1,0 +1,12 @@
+/**
+ * Standard error codes for logs and API responses (no sensitive payloads).
+ */
+
+module.exports = {
+  MT5_LOGIN_FAILED: 'MT5_LOGIN_FAILED',
+  MT5_SERVER_INVALID: 'MT5_SERVER_INVALID',
+  MT5_NO_HISTORY: 'MT5_NO_HISTORY',
+  CALCULATION_BLOCKED: 'CALCULATION_BLOCKED',
+  INVALID_SYMBOL: 'INVALID_SYMBOL',
+  SYSTEM_ERROR: 'SYSTEM_ERROR',
+};
