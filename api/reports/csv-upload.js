@@ -13,13 +13,19 @@ const {
   isPeriodAfterCurrentMonth,
 } = require('./csvTradeSummary');
 
+/** Delimiters tried when locating the header row (PDF tools often emit TSV). */
+const HEADER_DELIMITERS = [',', ';', '\t', '|'];
+
 /**
  * Prefer semicolon when MT5 exports use EU locale (columns separated by ;).
+ * Used only as a hint when header detection did not pick a delimiter (legacy path).
  */
 function detectDelimiter(headerLine) {
   if (!headerLine || typeof headerLine !== 'string') return ',';
   const commaCols = headerLine.split(',').length;
   const semiCols = headerLine.split(';').length;
+  const tabCols = headerLine.split('\t').length;
+  if (tabCols > Math.max(commaCols, semiCols)) return '\t';
   if (semiCols > commaCols) return ';';
   if (semiCols === commaCols && headerLine.includes(';') && !headerLine.includes(',')) return ';';
   return ',';
@@ -42,25 +48,138 @@ function parseMoneyish(raw) {
 }
 
 function splitRow(line, delimiter) {
-  return line.split(delimiter).map((c) => c.trim().replace(/^"|"$/g, ''));
+  return splitCsvLine(line, delimiter);
+}
+
+/** Split one CSV/TSV line respecting double quotes (MT5 + many PDF converters). */
+function splitCsvLine(line, delimiter) {
+  if (line == null || typeof line !== 'string') return [];
+  const d = delimiter === '\t' ? '\t' : delimiter;
+  const out = [];
+  let cur = '';
+  let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      inQ = !inQ;
+      continue;
+    }
+    if (!inQ && d !== '' && line.substring(i, i + d.length) === d) {
+      out.push(cur.trim().replace(/^"|"$/g, ''));
+      cur = '';
+      i += d.length - 1;
+      continue;
+    }
+    cur += c;
+  }
+  out.push(cur.trim().replace(/^"|"$/g, ''));
+  return out;
 }
 
 /** Strip UTF-8 BOM so the first column is not corrupted. */
 function stripBom(s) {
   if (!s || typeof s !== 'string') return s;
-  return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
+  if (s.charCodeAt(0) === 0xfeff) return s.slice(1);
+  // UTF-8 BOM as raw bytes mis-decoded, or UTF-16 LE BOM appearing as�� in some pipelines
+  if (s.charCodeAt(0) === 0xfffe) return s.slice(1);
+  return s;
+}
+
+function normalizeHeaderCellForMatch(cell) {
+  return String(cell || '')
+    .toLowerCase()
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isTimeLikeHeader(n) {
+  if (!n) return false;
+  if (n === 'time' || n === 'date') return true;
+  if (n.includes('date/time') || n.includes('date time')) return true;
+  if (n.includes('time') && !n.includes('timeout') && !n.includes('lifetime')) return true;
+  if (n.includes('datum') || n.includes('zeit')) return true;
+  return false;
+}
+
+function isSymbolLikeHeader(n) {
+  if (!n) return false;
+  if (
+    n === 'symbol' ||
+    n === 'sym' ||
+    n === 'pair' ||
+    n === 'instrument' ||
+    n === 'item' ||
+    n === 'ticker' ||
+    n === 'forex' ||
+    n === 'security' ||
+    n === 'asset' ||
+    n === 'product'
+  ) {
+    return true;
+  }
+  if (n.includes('symbol')) return true;
+  if (n.includes('währung') || n.includes('wahrung')) return true;
+  if ((n.endsWith('pair') || n.includes(' pair')) && n.length <= 24) return true;
+  return false;
+}
+
+function isProfitLikeHeader(n) {
+  if (!n) return false;
+  if (n.includes('profit')) return true;
+  if (n.includes('gewinn') || n.includes('beneficio') || n.includes('profitto')) return true;
+  if (n.includes('commission')) return true;
+  if (n === 'pnl' || n === 'pl' || n.includes('nett') || n.includes('net p')) return true;
+  if (/\bp\s*[\/\\&]\s*l\b/.test(n) || n.includes('p/l') || n.includes('p&l')) return true;
+  if (n.includes('closed') && (n.includes('pl') || n.includes('pnl') || n.includes('profit'))) return true;
+  return false;
+}
+
+function scoreHeaderCells(cells) {
+  const norms = cells.map((c) => normalizeHeaderCellForMatch(c));
+  let hasT = 0;
+  let hasS = 0;
+  let hasP = 0;
+  for (const n of norms) {
+    if (isTimeLikeHeader(n)) hasT = 1;
+    if (isSymbolLikeHeader(n)) hasS = 1;
+    if (isProfitLikeHeader(n)) hasP = 1;
+  }
+  return hasT + hasS + hasP;
 }
 
 /**
- * MT5 "Save as Report" CSVs often have a multi-line preamble; the real header contains Symbol, Time, Profit/Commission.
+ * Find header row + delimiter. PDF-to-CSV tools often use tabs, "P/L" instead of "Profit", or "Sym" headers.
+ */
+function findHeaderRowAndDelimiter(lines) {
+  const maxScan = Math.min(lines.length, 120);
+  let best = null;
+  for (let i = 0; i < maxScan; i++) {
+    const line = lines[i];
+    if (!line || line.length < 4) continue;
+    for (const delim of HEADER_DELIMITERS) {
+      const cells = splitCsvLine(line, delim);
+      if (cells.length < 3) continue;
+      const sc = scoreHeaderCells(cells);
+      if (sc >= 3) {
+        const weight = sc * 100 + cells.length;
+        if (!best || weight > best.weight) best = { idx: i, delim, weight };
+      }
+    }
+  }
+  return best;
+}
+
+/**
+ * Legacy line scan: whole-line substring match (older MT5 reports).
  */
 function findHeaderRowIndex(lines) {
   for (let i = 0; i < lines.length; i++) {
     const lower = lines[i].toLowerCase();
     if (
-      lower.includes('symbol') &&
+      (lower.includes('symbol') || lower.includes('instrument')) &&
       lower.includes('time') &&
-      (lower.includes('profit') || lower.includes('commission'))
+      (lower.includes('profit') || lower.includes('commission') || lower.includes('p/l'))
     ) {
       return i;
     }
@@ -75,6 +194,7 @@ function normalizeHeaderNames(rawNames) {
     let base = String(raw || '')
       .toLowerCase()
       .replace(/[^a-z0-9_]/g, '_')
+      .replace(/_+/g, '_')
       .replace(/^_+|_+$/g, '');
     if (!base) base = 'col';
     counts[base] = (counts[base] || 0) + 1;
@@ -95,7 +215,16 @@ function parseMT5CSV(csvText) {
   const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   if (lines.length < 2) throw new Error('CSV has no data rows');
 
-  const headerIdx = findHeaderRowIndex(lines);
+  let headerIdx = -1;
+  let delimiter = ',';
+  const scored = findHeaderRowAndDelimiter(lines);
+  if (scored) {
+    headerIdx = scored.idx;
+    delimiter = scored.delim;
+  } else {
+    headerIdx = findHeaderRowIndex(lines);
+    if (headerIdx >= 0) delimiter = detectDelimiter(lines[headerIdx]);
+  }
   if (headerIdx < 0) {
     throw new Error(
       'Could not find a valid MT5 header row (expected columns like Time, Symbol, Profit). Export from MT5 as Report / CSV or remove extra rows above the table.'
@@ -103,10 +232,23 @@ function parseMT5CSV(csvText) {
   }
 
   const headerLine = lines[headerIdx];
-  const delimiter = detectDelimiter(headerLine);
   const rawHeaderCells = splitRow(headerLine, delimiter).map((h) => h.trim());
   const header = normalizeHeaderNames(rawHeaderCells);
   const trades = [];
+
+  function profitFromRow(row) {
+    const direct = row.net_profit ?? row.profit ?? row.pnl ?? row.p_l ?? row.pl ?? row.net_p_l;
+    if (direct !== undefined && direct !== '') return parseMoneyish(direct);
+    for (const [k, v] of Object.entries(row)) {
+      const nk = String(k).toLowerCase().replace(/_+/g, '_');
+      if (nk.includes('commission') || nk.includes('swap') || nk.includes('balance')) continue;
+      if ((nk.includes('profit') || nk.includes('gewinn')) && !nk.includes('factor')) return parseMoneyish(v);
+      if (nk === 'pnl' || nk === 'pl' || nk === 'p_l' || /\bp_l\b/.test(nk) || nk.endsWith('_p_l')) {
+        return parseMoneyish(v);
+      }
+    }
+    return 0;
+  }
 
   for (let i = headerIdx + 1; i < lines.length; i++) {
     const cols = splitRow(lines[i], delimiter);
@@ -117,8 +259,17 @@ function parseMT5CSV(csvText) {
     });
 
     // Normalise to a common shape
-    const profit = parseMoneyish(row.profit || row.pnl || row.net_profit || 0);
-    const symbol = row.symbol || row.pair || row.instrument || '';
+    const profit = profitFromRow(row);
+    const symbol =
+      row.symbol ||
+      row.pair ||
+      row.instrument ||
+      row.item ||
+      row.ticker ||
+      row.sym ||
+      row.asset ||
+      row.product ||
+      '';
     const type = (row.type || row.direction || '').toLowerCase();
     const volume = parseMoneyish(row.volume || row.lots || row.size || 0);
     const time = row.time || row.open_time || row.date || '';

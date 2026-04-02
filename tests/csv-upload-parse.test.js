@@ -37,6 +37,16 @@ async function run() {
   const { trades: t3 } = parseMT5CSV(withBom);
   assert(t3.length === 2, `BOM simple CSV expected 2 trades, got ${t3.length}`);
 
+  // PDF-style: tab-separated + "P/L" instead of "Profit" + "Sym" abbreviation
+  const pdfStyle = [
+    'Some junk line from pdf converter',
+    'Open Time\tSym\tType\tLots\tOpen\tClose\tP/L',
+    '2025.01.01 00:00:00\tEURUSD\tbuy\t0.1\t1.10000\t1.10100\t10.50',
+  ].join('\n');
+  const { trades: t4 } = parseMT5CSV(pdfStyle);
+  assert(t4.length === 1, `pdf-style TSV expected 1 trade, got ${t4.length}`);
+  assert(Math.abs(Number(t4[0].profit) - 10.5) < 0.01, `expected profit 10.5, got ${t4[0].profit}`);
+
   console.log('OK csv-upload-parse tests');
 }
 

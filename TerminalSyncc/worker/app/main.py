@@ -1,15 +1,32 @@
-import uvicorn
+import logging
 import os
-from typing import Optional
+from contextlib import asynccontextmanager
+from typing import Dict, Optional
 
+import uvicorn
 from fastapi import FastAPI, HTTPException, Header
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
+from .config import WORKER_SECRET, validate_mt5_template
+from .errors import TemplateValidationError, WorkerError
 from .mt5_instance import MT5Instance
-from .config import WORKER_SECRET
+
+logger = logging.getLogger("terminalsync.worker")
 
 
-app = FastAPI(title="TerminalSync Engine v1")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.template_error: Optional[Dict[str, str]] = None
+    try:
+        validate_mt5_template()
+    except TemplateValidationError as e:
+        app.state.template_error = {"code": e.code, "message": e.message}
+        logger.error("MT5 template validation failed: %s — %s", e.code, e.message)
+    yield
+
+
+app = FastAPI(title="TerminalSync Engine v1", lifespan=lifespan)
 
 
 # ================================
@@ -23,7 +40,6 @@ class MT5Credentials(BaseModel):
     platform: Optional[str] = None
     days: Optional[int] = Field(default=None, ge=1, le=365)
 
-    # Ignore unknown JSON keys from upstream (safe forward-compat).
     model_config = ConfigDict(extra="ignore")
 
 
@@ -31,12 +47,9 @@ class MT5Credentials(BaseModel):
 # SECURITY
 # ================================
 
-def verify_internal_access(secret: str | None):
+def verify_internal_access(secret: Optional[str]):
     if secret != WORKER_SECRET:
-        raise HTTPException(
-            403,
-            "UNAUTHORIZED_WORKER_ACCESS"
-        )
+        raise HTTPException(403, detail={"code": "UNAUTHORIZED_WORKER_ACCESS", "message": "Invalid worker secret."})
 
 
 # ================================
@@ -50,15 +63,26 @@ MT4_NOT_SUPPORTED_MSG = (
 
 
 def _reject_mt4_platform(platform: Optional[str]) -> None:
-    """Aura may send platform=MT4; this deployment is MT5-only."""
     if platform is None or not str(platform).strip():
         return
     if str(platform).strip().upper() == "MT4":
-        raise HTTPException(status_code=400, detail=MT4_NOT_SUPPORTED_MSG)
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "MT4_NOT_SUPPORTED", "message": MT4_NOT_SUPPORTED_MSG},
+        )
 
 
-def _get_instance(creds: MT5Credentials) -> MT5Instance:
-    """Create an MT5Instance and ensure the portable copy exists."""
+def _require_template_ready(app: FastAPI) -> None:
+    err = getattr(app.state, "template_error", None)
+    if err:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": err["code"], "message": err["message"]},
+        )
+
+
+def _get_instance(app: FastAPI, creds: MT5Credentials) -> MT5Instance:
+    _require_template_ready(app)
     instance = MT5Instance(
         login=creds.login,
         password=creds.password,
@@ -68,6 +92,13 @@ def _get_instance(creds: MT5Credentials) -> MT5Instance:
     return instance
 
 
+def _http_from_worker_error(e: WorkerError) -> HTTPException:
+    return HTTPException(
+        status_code=e.http_status,
+        detail={"code": e.code, "message": e.message},
+    )
+
+
 # ================================
 # ACCOUNT SNAPSHOT
 # ================================
@@ -75,13 +106,14 @@ def _get_instance(creds: MT5Credentials) -> MT5Instance:
 @app.post("/api/v1/sync")
 def sync_account(
     creds: MT5Credentials,
-    x_worker_secret: str = Header(default=None)
+    x_worker_secret: str = Header(default=None),
 ):
-
     verify_internal_access(x_worker_secret)
 
+    _reject_mt4_platform(creds.platform)
+
     try:
-        instance = _get_instance(creds)
+        instance = _get_instance(app, creds)
         result = instance.account_info()
 
         return {
@@ -89,8 +121,16 @@ def sync_account(
             "data": result["data"]
         }
 
-    except Exception as e:
-        raise HTTPException(500, str(e))
+    except HTTPException:
+        raise
+    except WorkerError as e:
+        raise _http_from_worker_error(e) from e
+    except Exception:
+        logger.exception("Unexpected error in /api/v1/sync (login=%s)", creds.login)
+        raise HTTPException(
+            status_code=500,
+            detail={"code": "INTERNAL_ERROR", "message": "Unexpected worker failure."},
+        ) from None
 
 
 # ================================
@@ -105,8 +145,10 @@ def get_positions(
 
     verify_internal_access(x_worker_secret)
 
+    _reject_mt4_platform(creds.platform)
+
     try:
-        instance = _get_instance(creds)
+        instance = _get_instance(app, creds)
         result = instance.positions()
 
         return {
@@ -116,13 +158,33 @@ def get_positions(
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(500, str(e))
+    except WorkerError as e:
+        raise _http_from_worker_error(e) from e
+    except Exception:
+        logger.exception("Unexpected error in /api/v1/positions (login=%s)", creds.login)
+        raise HTTPException(
+            status_code=500,
+            detail={"code": "INTERNAL_ERROR", "message": "Unexpected worker failure."},
+        ) from None
 
 
 @app.get("/health")
 def health():
-    return {"status": "TerminalSync Worker Running", "ok": True}
+    err = getattr(app.state, "template_error", None)
+    if err:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "ok": False,
+                "status": "TerminalSync worker degraded: MT5 template invalid",
+                "code": err["code"],
+                "message": err["message"],
+            },
+        )
+    return {
+        "ok": True,
+        "status": "TerminalSync Worker Running",
+    }
 
 
 if __name__ == "__main__":

@@ -1,63 +1,97 @@
 """
-Standalone subprocess script for MT5 operations.
+Subprocess entrypoint for MT5 (one shot per invocation).
 
-Run as: python -m app.mt5_worker <instance_path> <login> <password> <server> <action>
+Usage: python -m app.mt5_worker <instance_path> <login> <password> <server> <action>
 
-Outputs JSON to stdout. Exits cleanly after each operation.
-This file is invoked via subprocess.Popen from mt5_instance.py,
-so it never triggers multiprocessing re-import issues on Windows.
+Prints a single JSON object on stdout and exits 0 on success, 1 on failure.
 """
 
-import sys
+from __future__ import annotations
+
 import json
+import sys
+from pathlib import Path
+from typing import Any, Dict
+
 import MetaTrader5 as mt5
 
+ACTIONS = frozenset({"account_info", "positions"})
 
-def main():
+
+def _emit(payload: Dict[str, Any]) -> None:
+    sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
+    sys.stdout.flush()
+
+
+def _fail(code: str, message: str) -> int:
+    _emit({"ok": False, "code": code, "error": message})
+    return 1
+
+
+def _ok(payload: Dict[str, Any]) -> int:
+    body = {"ok": True, **payload}
+    _emit(body)
+    return 0
+
+
+def main() -> int:
     if len(sys.argv) != 6:
-        print(json.dumps({
-            "ok": False,
-            "error": "Usage: mt5_worker <instance_path> <login> <password> <server> <action>"
-        }))
-        sys.exit(1)
+        return _fail(
+            "MT5_WORKER_USAGE",
+            "Expected: mt5_worker <instance_path> <login> <password> <server> <action>",
+        )
 
-    instance_path = sys.argv[1]
-    login = int(sys.argv[2])
+    instance_raw = sys.argv[1]
+    try:
+        login = int(sys.argv[2])
+    except ValueError:
+        return _fail("MT5_WORKER_BAD_LOGIN", "Login must be an integer")
+
     password = sys.argv[3]
     server = sys.argv[4]
     action = sys.argv[5]
 
-    terminal = f"{instance_path}\\terminal64.exe"
+    instance_path = Path(instance_raw).expanduser().resolve()
+    terminal = instance_path / "terminal64.exe"
 
+    if not instance_path.is_dir():
+        return _fail(
+            "MT5_INSTANCE_INVALID",
+            f"Instance path is not a directory: {instance_path}",
+        )
+
+    if not terminal.is_file():
+        return _fail(
+            "MT5_TERMINAL_MISSING",
+            f"terminal64.exe not found at {terminal}",
+        )
+
+    exit_code = 1
     try:
-        # ── Initialize + Login in one step ───────────────
+        if action not in ACTIONS:
+            return _fail("UNKNOWN_ACTION", f"Unsupported action: {action!r}")
+
+        # Portable mode: terminal exe + data under the same instance root.
         if not mt5.initialize(
-            path=terminal,
+            path=str(terminal),
             login=login,
             password=password,
             server=server,
             portable=True,
-            data_path=instance_path,
-            timeout=60000  # 60 seconds inside MT5 to accommodate LiveUpdates
+            data_path=str(instance_path),
+            timeout=60000,
         ):
-            error = mt5.last_error()
-            print(json.dumps({
-                "ok": False,
-                "error": f"MT5_INIT_FAILED: {error}"
-            }))
-            return
+            return _fail("MT5_INIT_FAILED", str(mt5.last_error()))
 
-        # ── Perform Action ───────────────────────────────
         if action == "account_info":
             acc = mt5.account_info()
             if acc is None:
-                print(json.dumps({
-                    "ok": False,
-                    "error": "ACCOUNT_INFO_UNAVAILABLE"
-                }))
-            else:
-                print(json.dumps({
-                    "ok": True,
+                return _fail(
+                    "ACCOUNT_INFO_UNAVAILABLE",
+                    str(mt5.last_error()),
+                )
+            exit_code = _ok(
+                {
                     "data": {
                         "balance": acc.balance,
                         "equity": acc.equity,
@@ -65,47 +99,30 @@ def main():
                         "margin": acc.margin,
                         "currency": acc.currency,
                     }
-                }))
-
+                }
+            )
         elif action == "positions":
             pos = mt5.positions_get()
             if pos is None:
-                error = mt5.last_error()
-                print(json.dumps({
-                    "ok": False,
-                    "error": f"POSITIONS_GET_FAILED: {error}"
-                }))
-                return
+                return _fail("POSITIONS_GET_FAILED", str(mt5.last_error()))
 
             trades = [p._asdict() for p in pos]
-            # Convert any non-serializable types
             for t in trades:
-                for k, v in t.items():
+                for k, v in list(t.items()):
                     if not isinstance(v, (str, int, float, bool, type(None))):
                         t[k] = str(v)
-            print(json.dumps({
-                "ok": True,
-                "trades": trades
-            }))
-
-        else:
-            print(json.dumps({
-                "ok": False,
-                "error": f"UNKNOWN_ACTION: {action}"
-            }))
+            exit_code = _ok({"trades": trades})
 
     except Exception as e:
-        print(json.dumps({
-            "ok": False,
-            "error": str(e)
-        }))
-
+        return _fail("MT5_WORKER_EXCEPTION", str(e))
     finally:
         try:
             mt5.shutdown()
         except Exception:
             pass
 
+    return exit_code
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
