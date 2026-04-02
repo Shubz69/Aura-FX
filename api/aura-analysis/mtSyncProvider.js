@@ -41,7 +41,9 @@ function getSyncConfig() {
   const baseUrl =
     String(process.env.AURA_MT_SYNC_URL || '').trim()
     || String(process.env.TERMINALSYNC_WORKER_URL || '').trim()
-    || String(process.env.PYTHON_WORKER_URL || '').trim();
+    || String(process.env.PYTHON_WORKER_URL || '').trim()
+    // Fallback (requested): explicit worker host if env vars are not set.
+    || 'http://95.111.252.194:8000';
   const workerSecret =
     String(process.env.AURA_MT_SYNC_SECRET || '').trim()
     || String(process.env.TERMINALSYNC_WORKER_SECRET || '').trim()
