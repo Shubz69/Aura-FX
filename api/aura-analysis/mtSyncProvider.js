@@ -441,11 +441,86 @@ async function getPositions(credentials, platformId = 'mt5', options = {}) {
   return { ok: true, trades: rows };
 }
 
+/**
+ * Fetch closed deal history (realized P&L) from POST /api/v1/history — not open positions.
+ */
+async function getDealHistory(credentials, platformId = 'mt5', options = {}) {
+  const configStatus = getSyncConfigStatus();
+  if (!configStatus.ok) {
+    return syncFailure(
+      MT_SYNC_ERROR.CONFIG_MISSING,
+      'MetaTrader data service is not configured',
+      { missing: configStatus.missing },
+    );
+  }
+  if (!hasMtInvestorCredentials(credentials)) {
+    return syncFailure(
+      'MT5_LOGIN_PASSWORD_SERVER_REQUIRED',
+      'Account login, investor password, and broker server are required',
+    );
+  }
+
+  let creds = { ...credentials };
+  if (platformId === 'mt5') {
+    const sv = validateMt5ServerInput(credentials.server);
+    if (!sv.ok) {
+      return syncFailure('MT5_SERVER_INVALID', sv.error || 'Invalid broker server name.');
+    }
+    creds.server = sv.server;
+    const lv = validateMt5NumericLogin(credentials.login);
+    if (!lv.ok) {
+      return syncFailure('MT5_LOGIN_FAILED', lv.error);
+    }
+    creds.login = lv.loginStr;
+  }
+
+  const { baseUrl, workerSecret } = configStatus;
+  const servers =
+    platformId === 'mt5' ? buildServerAttemptList(creds.server) : [String(creds.server)];
+
+  let lastResp = null;
+  for (let i = 0; i < servers.length; i++) {
+    const serverTry = servers[i];
+    const payload = {
+      ...toServicePayload(creds, platformId, serverTry),
+      ...(options.days != null && Number.isFinite(Number(options.days))
+        ? { days: Math.min(365, Math.max(1, Math.floor(Number(options.days)))) }
+        : {}),
+    };
+    const response = await postJsonWithRetry(baseUrl, '/api/v1/history', payload, workerSecret);
+    lastResp = response;
+    if (response.ok) break;
+    const wc = response.workerCode || '';
+    const wm = `${response.workerMessage || ''} ${response.error || ''}`;
+    if (i < servers.length - 1 && shouldAttemptServerFallback(wc, wm)) {
+      safeMtLog('mt5_history_server_fallback', { attempt: i + 1, workerCode: wc || null });
+      continue;
+    }
+    break;
+  }
+
+  if (!lastResp || !lastResp.ok) {
+    const outCode = lastResp?.workerCode || lastResp?.code || MT_SYNC_ERROR.POSITIONS_FAILED;
+    return syncFailure(
+      outCode,
+      sanitizeWorkerMessageForClient(lastResp?.error, 'Could not load MetaTrader deal history'),
+      { statusCode: lastResp?.statusCode || 0 },
+    );
+  }
+
+  const { rows, warnings } = extractPositionsPayload(lastResp.data, platformId);
+  if (isAuraDiagnosticsEnabled()) {
+    warnings.forEach((w) => console.warn('[mt-worker]', w));
+  }
+  return { ok: true, trades: rows };
+}
+
 module.exports = {
   hasMtInvestorCredentials,
   hasMtBridgeCredentials,
   syncAccount,
   getPositions,
+  getDealHistory,
   BRIDGE_ERROR,
   MT_SYNC_ERROR,
   getSyncConfigStatus,

@@ -256,7 +256,7 @@ module.exports = async (req, res) => {
       `SELECT platform_id, account_label, account_info, connected_at, last_sync, status,
               broker_name, server_name, connection_status, last_sync_at, last_success_at,
               last_error_code, last_error_message
-       FROM aura_platform_connections WHERE user_id = ? AND status = 'active'`,
+       FROM aura_platform_connections WHERE user_id = ? AND status IN ('active', 'connected')`,
       [userId]
     );
     return res.status(200).json({

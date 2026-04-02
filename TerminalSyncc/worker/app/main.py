@@ -190,6 +190,33 @@ def get_positions(
         ) from None
 
 
+@app.post("/api/v1/history")
+def get_deal_history(
+    creds: MT5Credentials,
+    x_worker_secret: str = Header(default=None),
+):
+    """Closed deals / realized P&L from account history (not open positions)."""
+    verify_internal_access(x_worker_secret)
+    _reject_mt4_platform(creds.platform)
+
+    try:
+        lookback = int(creds.days) if creds.days is not None else 90
+        lookback = max(1, min(365, lookback))
+        instance = _get_instance(app, creds)
+        result = instance.deal_history(lookback)
+        return {"status": "success", "trades": result["trades"]}
+    except HTTPException:
+        raise
+    except WorkerError as e:
+        raise _http_from_worker_error(e) from e
+    except Exception:
+        logger.exception("Unexpected error in /api/v1/history (login=%s)", creds.login)
+        raise HTTPException(
+            status_code=500,
+            detail={"code": "INTERNAL_ERROR", "message": "Unexpected worker failure."},
+        ) from None
+
+
 @app.get("/health")
 def health():
     err = getattr(app.state, "template_error", None)

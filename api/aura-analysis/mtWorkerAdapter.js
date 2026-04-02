@@ -26,7 +26,18 @@
  *     currency | Currency, name | Name, leverage | Leverage, server (optional)
  *
  * --------------------------------------------------------------------------
- * POST /api/v1/positions — fetch deals / positions for analytics
+ * POST /api/v1/history — fetch closed deal history (realized P&L), MT5
+ * --------------------------------------------------------------------------
+ * Request body (JSON):
+ *   { login, password, server, platform: "MT5", days?: number }
+ *   `days` optional lookback (worker default e.g. 90).
+ *
+ * Response (2xx):
+ *   { status: "success", trades: RawRow[] }
+ *   Raw rows MUST be consumable by mtTradeNormalize.normalizeMtRow() (closed exits).
+ *
+ * --------------------------------------------------------------------------
+ * POST /api/v1/positions — open positions only (not substitute for history)
  * --------------------------------------------------------------------------
  * Request body (JSON):
  *   { login, password, server, platform, days?: number }

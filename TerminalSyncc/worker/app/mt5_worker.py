@@ -1,7 +1,11 @@
 """
 Subprocess entrypoint for MT5 (one shot per invocation).
 
-Usage: python -m app.mt5_worker <instance_path> <login> <password> <server> <action>
+Usage:
+  python -m app.mt5_worker <instance_path> <login> <password> <server> <action> [history_days]
+
+- account_info / positions: 6 args
+- deal_history: optional 7th arg = lookback days (1–365), default 90
 
 Prints a single JSON object on stdout and exits 0 on success, 1 on failure.
 """
@@ -10,12 +14,31 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import MetaTrader5 as mt5
 
-ACTIONS = frozenset({"account_info", "positions"})
+ACTIONS = frozenset({"account_info", "positions", "deal_history"})
+
+# Closed-leg deals carry realized P/L; skip account operations and opening legs.
+_DEAL_ENTRY_OUT = getattr(mt5, "DEAL_ENTRY_OUT", 1)
+_NON_TRADE_DEAL_TYPES = frozenset({
+    getattr(mt5, "DEAL_TYPE_BALANCE", 2),
+    getattr(mt5, "DEAL_TYPE_CREDIT", 3),
+    getattr(mt5, "DEAL_TYPE_CHARGE", 4),
+    getattr(mt5, "DEAL_TYPE_CORRECTION", 5),
+    getattr(mt5, "DEAL_TYPE_BONUS", 6),
+    getattr(mt5, "DEAL_TYPE_COMMISSION", 7),
+    getattr(mt5, "DEAL_TYPE_COMMISSION_DAILY", 8),
+    getattr(mt5, "DEAL_TYPE_COMMISSION_MONTHLY", 9),
+    getattr(mt5, "DEAL_TYPE_COMMISSION_AGENT_DAILY", 10),
+    getattr(mt5, "DEAL_TYPE_COMMISSION_AGENT_MONTHLY", 11),
+    getattr(mt5, "DEAL_TYPE_INTEREST", 12),
+    getattr(mt5, "DEAL_TYPE_BUY_CANCELED", 13),
+    getattr(mt5, "DEAL_TYPE_SELL_CANCELED", 14),
+})
 
 
 def _classify_init_failure(last_err: object) -> tuple[str, str]:
@@ -53,8 +76,30 @@ def _ok(payload: Dict[str, Any]) -> int:
     return 0
 
 
+def _json_safe_value(v: Any) -> Any:
+    if v is None or isinstance(v, (str, int, float, bool)):
+        return v
+    if isinstance(v, datetime):
+        return v.isoformat(sep=" ", timespec="seconds")
+    return str(v)
+
+
+def _deal_row(d: Any) -> Dict[str, Any]:
+    """TradeDeal → dict for Aura mtTradeNormalize (exit deals only)."""
+    dd = d._asdict()
+    out: Dict[str, Any] = {}
+    for k, v in dd.items():
+        out[k] = _json_safe_value(v)
+    # Help JS infer closed deals / direction
+    try:
+        out["entryType"] = "DEAL_ENTRY_OUT" if int(d.entry) == int(_DEAL_ENTRY_OUT) else f"DEAL_ENTRY_{int(d.entry)}"
+    except (TypeError, ValueError, AttributeError):
+        out["entryType"] = ""
+    return out
+
+
 def main() -> int:
-    if len(sys.argv) != 6:
+    if len(sys.argv) < 6:
         return _fail(
             "MT5_WORKER_USAGE",
             "Expected: mt5_worker <instance_path> <login> <password> <server> <action>",
@@ -69,6 +114,13 @@ def main() -> int:
     password = sys.argv[3]
     server = sys.argv[4]
     action = sys.argv[5]
+
+    history_days = 90
+    if action == "deal_history" and len(sys.argv) >= 7:
+        try:
+            history_days = max(1, min(365, int(sys.argv[6])))
+        except ValueError:
+            history_days = 90
 
     instance_path = Path(instance_raw).expanduser().resolve()
     terminal = instance_path / "terminal64.exe"
@@ -129,9 +181,35 @@ def main() -> int:
             trades = [p._asdict() for p in pos]
             for t in trades:
                 for k, v in list(t.items()):
-                    if not isinstance(v, (str, int, float, bool, type(None))):
-                        t[k] = str(v)
+                    t[k] = _json_safe_value(v)
             exit_code = _ok({"trades": trades})
+
+        elif action == "deal_history":
+            utc_to = datetime.now()
+            utc_from = utc_to - timedelta(days=history_days)
+            deals = mt5.history_deals_get(utc_from, utc_to)
+            if deals is None:
+                return _fail("DEAL_HISTORY_FAILED", str(mt5.last_error()))
+
+            buy = getattr(mt5, "DEAL_TYPE_BUY", 0)
+            sell = getattr(mt5, "DEAL_TYPE_SELL", 1)
+            trades_out: List[Dict[str, Any]] = []
+            for d in deals:
+                try:
+                    if d.type in _NON_TRADE_DEAL_TYPES:
+                        continue
+                    if d.type not in (buy, sell):
+                        continue
+                    if int(d.entry) != int(_DEAL_ENTRY_OUT):
+                        continue
+                    sym = str(getattr(d, "symbol", "") or "").strip()
+                    if not sym:
+                        continue
+                    trades_out.append(_deal_row(d))
+                except (TypeError, ValueError, AttributeError):
+                    continue
+
+            exit_code = _ok({"trades": trades_out})
 
     except Exception as e:
         return _fail("MT5_WORKER_EXCEPTION", str(e))

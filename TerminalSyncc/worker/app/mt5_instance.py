@@ -35,6 +35,7 @@ from .config import (
 from .errors import WorkerError
 
 SUBPROCESS_TIMEOUT = 60
+SUBPROCESS_TIMEOUT_LONG = 120  # deal history can return many rows
 _STDOUT_SNIP = 800
 _STDERR_MAX = 16_000
 
@@ -227,7 +228,7 @@ class MT5Instance:
         finally:
             _release_lock(lock_path)
 
-    def _run(self, action: str) -> dict:
+    def _run(self, action: str, history_days: Optional[int] = None) -> dict:
         if not _instance_looks_ready(self.instance_path):
             raise WorkerError(
                 "MT5_INSTANCE_INVALID",
@@ -263,6 +264,10 @@ class MT5Instance:
                 self._server,
                 action,
             ]
+            if action == "deal_history":
+                cmd.append(str(int(history_days) if history_days is not None else 90))
+
+            timeout_sec = SUBPROCESS_TIMEOUT_LONG if action == "deal_history" else SUBPROCESS_TIMEOUT
 
             try:
                 result = subprocess.run(
@@ -271,7 +276,7 @@ class MT5Instance:
                     text=True,
                     encoding="utf-8",
                     errors="replace",
-                    timeout=SUBPROCESS_TIMEOUT,
+                    timeout=timeout_sec,
                     cwd=str(INSTANCES_DIR.parent),
                     shell=False,
                 )
@@ -338,6 +343,9 @@ class MT5Instance:
 
     def positions(self) -> dict:
         return self._run("positions")
+
+    def deal_history(self, days: int = 90) -> dict:
+        return self._run("deal_history", history_days=days)
 
     def _cleanup_orphaned_terminal(self) -> None:
         target_path = str(self.instance_path.resolve()).lower()

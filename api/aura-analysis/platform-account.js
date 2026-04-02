@@ -184,7 +184,7 @@ module.exports = async (req, res) => {
 
   const [rows] = await executeQuery(
     `SELECT credentials_enc, account_info FROM aura_platform_connections
-     WHERE user_id = ? AND platform_id = ? AND status = 'active'`,
+     WHERE user_id = ? AND platform_id = ? AND status IN ('active', 'connected')`,
     [decoded.id, platformId]
   );
   if (!rows.length) return res.status(404).json({ success: false, error: 'Platform not connected' });

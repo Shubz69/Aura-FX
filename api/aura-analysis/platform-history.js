@@ -242,7 +242,7 @@ async function fetchHistoryForPlatform(platformId, creds, days) {
     case 'mt5':
     case 'mt4':
       if (hasMtBridgeCredentials(creds)) {
-        const result = await performMt5Operation('positions', creds, platformId, {
+        const result = await performMt5Operation('deal_history', creds, platformId, {
           days,
           trigger: 'history',
         });
@@ -321,16 +321,37 @@ module.exports = async (req, res) => {
 
   const [rows] = await executeQuery(
     `SELECT credentials_enc FROM aura_platform_connections
-     WHERE user_id = ? AND platform_id = ? AND status = 'active'`,
+     WHERE user_id = ? AND platform_id = ? AND status IN ('active', 'connected')`,
     [decoded.id, platformId]
   );
-  if (!rows.length) return res.status(404).json({ success: false, error: 'Platform not connected' });
+  if (!rows.length) {
+    return res.status(200).json({
+      success: true,
+      trades: [],
+      count: 0,
+      platformId,
+      days,
+      stale: false,
+      dataSource: 'none',
+      code: 'PLATFORM_NOT_CONNECTED',
+    });
+  }
 
   let creds;
   try {
     creds = JSON.parse(decrypt(rows[0].credentials_enc));
   } catch {
-    return res.status(500).json({ success: false, error: 'Credential decryption failed' });
+    safeMtLog('history_decrypt_failed', { platformId });
+    return res.status(200).json({
+      success: true,
+      trades: [],
+      count: 0,
+      platformId,
+      days,
+      stale: false,
+      dataSource: 'none',
+      code: 'CREDENTIAL_ERROR',
+    });
   }
 
   const result = await fetchHistoryForPlatform(platformId, creds, days);

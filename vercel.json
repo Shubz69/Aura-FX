@@ -314,7 +314,15 @@
       "destination": "/api/aura-analysis/platform-account.js"
     },
     {
+      "source": "/api/aura-analysis/platform-account/",
+      "destination": "/api/aura-analysis/platform-account.js"
+    },
+    {
       "source": "/api/aura-analysis/platform-history",
+      "destination": "/api/aura-analysis/platform-history.js"
+    },
+    {
+      "source": "/api/aura-analysis/platform-history/",
       "destination": "/api/aura-analysis/platform-history.js"
     },
     {
