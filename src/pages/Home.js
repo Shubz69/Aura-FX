@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/Home.css";
 import { useAuth } from "../context/AuthContext";
+import { useAuraConnection } from "../context/AuraConnectionContext";
 import CosmicBackground from "../components/CosmicBackground";
 import A7Logo from "../components/A7Logo";
 import MarketTicker from "../components/MarketTicker";
@@ -738,6 +739,7 @@ const TerminalWatchlist = () => {
 };
 
 const LoggedInDashboardHome = ({ user, token, navigate }) => {
+    const { hasAnyConnection, loading: auraConnectionsLoading } = useAuraConnection();
     const [dashboardLoading, setDashboardLoading] = useState(true);
     const [dashboardData, setDashboardData] = useState({
         auraTrades: [],
@@ -830,6 +832,9 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     }, [lab]);
 
     const riskLabel = lab?.riskLevel && String(lab.riskLevel).trim() ? lab.riskLevel : 'Moderate';
+
+    /** Live metrics reflect linked MT accounts; blur until at least one platform is connected. */
+    const liveMetricsLocked = auraConnectionsLoading || !hasAnyConnection;
 
     const biasDisplay = useMemo(() => {
         if (!lab?.marketBias) {
@@ -973,21 +978,49 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
 
                     <article className="terminal-card glass-card terminal-card--metrics">
                         <span className="terminal-card__label">Live metrics</span>
-                        <div className="terminal-metrics">
-                            <div>
-                                <span>P&amp;L</span>
-                                <strong className={monthlyPnL >= 0 ? 'is-positive' : 'is-negative'}>
-                                    {formatSignedCurrency(monthlyPnL)}
-                                </strong>
+                        <div className="terminal-metrics-shell">
+                            <div
+                                className={`terminal-metrics${liveMetricsLocked ? ' terminal-metrics--obscured' : ''}`}
+                                aria-hidden={liveMetricsLocked}
+                            >
+                                <div>
+                                    <span>P&amp;L</span>
+                                    <strong className={monthlyPnL >= 0 ? 'is-positive' : 'is-negative'}>
+                                        {formatSignedCurrency(monthlyPnL)}
+                                    </strong>
+                                </div>
+                                <div>
+                                    <span>Win rate</span>
+                                    <strong>{analytics.totalTrades ? formatPercent(analytics.winRate, 0) : '—'}</strong>
+                                </div>
+                                <div>
+                                    <span>Avg. R:R</span>
+                                    <strong>{analytics.totalTrades ? formatNumber(analytics.averageR, 1) : '—'}</strong>
+                                </div>
                             </div>
-                            <div>
-                                <span>Win rate</span>
-                                <strong>{analytics.totalTrades ? formatPercent(analytics.winRate, 0) : '—'}</strong>
-                            </div>
-                            <div>
-                                <span>Avg. R:R</span>
-                                <strong>{analytics.totalTrades ? formatNumber(analytics.averageR, 1) : '—'}</strong>
-                            </div>
+                            {liveMetricsLocked ? (
+                                <div
+                                    className="terminal-metrics-frost"
+                                    role="status"
+                                    aria-live="polite"
+                                >
+                                    <div className="terminal-metrics-frost__panel">
+                                        <p className="terminal-metrics-frost__title">
+                                            {auraConnectionsLoading ? 'Checking your link…' : 'Connect your account'}
+                                        </p>
+                                        <p className="terminal-metrics-frost__hint">
+                                            {auraConnectionsLoading
+                                                ? 'Verifying Aura Analysis connections.'
+                                                : 'Link your MetaTrader account in Aura Analysis to unlock live P&L, win rate, and average reward-to-risk.'}
+                                        </p>
+                                        {!auraConnectionsLoading ? (
+                                            <Link to="/aura-analysis/ai" className="terminal-metrics-frost__cta">
+                                                Connect in Aura Analysis <FaArrowRight aria-hidden />
+                                            </Link>
+                                        ) : null}
+                                    </div>
+                                </div>
+                            ) : null}
                         </div>
                     </article>
 

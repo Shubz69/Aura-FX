@@ -3120,6 +3120,87 @@ html, body {
     flex-shrink: 0;
 }
 
+/* Live metrics — optional frosted lock when no MT link (Aura Analysis) */
+.terminal-metrics-shell {
+    position: relative;
+    min-height: 5.5rem;
+}
+
+.terminal-metrics--obscured {
+    filter: blur(7px);
+    opacity: 0.42;
+    pointer-events: none;
+    user-select: none;
+}
+
+.terminal-metrics-frost {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    border-radius: 16px;
+    background: linear-gradient(
+        165deg,
+        rgba(8, 14, 32, 0.72) 0%,
+        rgba(12, 20, 44, 0.82) 50%,
+        rgba(8, 12, 28, 0.88) 100%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 rgba(234, 169, 96, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.terminal-metrics-frost__panel {
+    text-align: center;
+    max-width: 17rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.terminal-metrics-frost__title {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--eaa-core, #eab17a);
+    text-transform: none;
+}
+
+.terminal-metrics-frost__hint {
+    margin: 0;
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--text-muted, rgba(255, 255, 255, 0.72));
+}
+
+.terminal-metrics-frost__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.15rem;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: rgba(12, 16, 28, 0.95);
+    background: linear-gradient(180deg, #f0cf98 0%, #d9a066 45%, #c4894a 100%);
+    box-shadow: 0 2px 14px rgba(234, 169, 96, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.terminal-metrics-frost__cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 18px rgba(234, 169, 96, 0.45);
+    color: rgba(12, 16, 28, 1);
+}
+
 .terminal-metrics {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
