@@ -733,7 +733,8 @@ function validateDailyMarkdownFormat(md, universe = INSTITUTIONAL_INSTRUMENTS) {
   const fund = text.split(/^##\s+Fundamental analysis\s*$/im)[1]?.split(/^##\s+Technical analysis\s*$/im)[0] || '';
   const tech = text.split(/^##\s+Technical analysis\s*$/im)[1]?.split(/^##\s+Trades\s*$/im)[0] || '';
   let tradeRest = text.split(/^##\s+Trades\s*$/im)[1] || '';
-  tradeRest = tradeRest.split(/\n---\n\n\*End of brief/)[0] || tradeRest.split(/\*End of brief/)[0] || tradeRest;
+  // Some versions used a standalone '---' line before the end marker; strip regardless.
+  tradeRest = tradeRest.split(/\*End of brief/)[0] || tradeRest;
 
   const n = universe.length;
   const h3f = (fund.match(/^###\s+/gm) || []).length;
@@ -894,7 +895,6 @@ function assembleDailyMarkdown(titleLine, dateYmd, dayLongLabel, part1, blocks, 
     fmtLeg('Buy trade', ny.buy);
     lines.push('');
   }
-  lines.push('---');
   lines.push('');
   lines.push('*End of brief — saved to Trader Deck for this date. Regenerate from admin/cron replaces the stored version.*');
   return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
@@ -955,7 +955,6 @@ function assembleWeeklyMarkdown(titleLinePlain, dateYmd, weekRangeLabel, w1, w2)
   lines.push('');
   lines.push(String(w2.weekendAndOutlook || '').trim());
   lines.push('');
-  lines.push('---');
   lines.push('');
   lines.push('*End of weekly brief — saved to Trader Deck. Regenerate replaces the stored version for this week key.*');
   return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
@@ -1117,6 +1116,11 @@ async function generateAndStoreInstitutionalBrief(deps, { period, runDate = new 
     }
 
     body = stripSources(body);
+    // Remove Markdown horizontal rules / leaked separator markers.
+    body = String(body || '')
+      .replace(/^[ \t]*(-\s*){3,}[ \t]*$/gm, '')
+      .replace(/^[ \t]*---[ \t]*.*[ \t]*---[ \t]*$/gm, '')
+      .trim();
     assertNoSources(body);
     const postFmt = isWeekly
       ? validateWeeklyMarkdownFormat(body, instrumentUniverse)

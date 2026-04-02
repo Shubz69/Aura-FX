@@ -231,9 +231,19 @@ function containsBoilerplate(text) {
   return BANNED_PHRASES.some((p) => s.includes(String(p).toLowerCase()));
 }
 
+function removeDashSeparators(text) {
+  return String(text || '')
+    // Remove Markdown horizontal rules / separators
+    .replace(/^[ \t]*(-\s*){3,}[ \t]*$/gm, '')
+    // Remove leaked prompt markers like "--- part 1 ---"
+    .replace(/^[ \t]*---[ \t]*.*[ \t]*---[ \t]*$/gm, '');
+}
+
 /** Light structural tidy only — do not append meta filler (handled via regeneration). */
 function diversifyBody(body) {
-  return String(body || '').replace(/\n{3,}/g, '\n\n').trim();
+  return removeDashSeparators(body)
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function assertNoSources(text) {
@@ -2315,8 +2325,8 @@ function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' 
     const isWeekday = ['mon', 'tue', 'wed', 'thu', 'fri'].some((x) => wd.startsWith(x));
     return isWeekday && hh === 0 && mm < 20;
   }
-  /** Weekly brief set: Monday 00:00 UK. */
-  return wd.startsWith('mon') && hh === 0 && mm < 20;
+  /** Weekly brief set: Sunday 18:00-18:14 UK (aligns with weekly storage date). */
+  return wd.startsWith('sun') && hh === 18 && mm < 15;
 }
 
 function getInstitutionalBriefDeps() {

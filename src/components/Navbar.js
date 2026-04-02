@@ -183,7 +183,8 @@ const Navbar = () => {
                 {dropdownOpen && ReactDOM.createPortal(
                   <div className="user-dropdown-overlay" onClick={() => setDropdownOpen(false)}>
                     <div className="user-dropdown" onClick={(e) => e.stopPropagation()} style={dropdownPosition}>
-                      <p>{user.email}</p>
+                      {/* Prefer username for user-facing identity; fall back to name/email if missing. */}
+                      <p>{user?.username || user?.name || user?.email}</p>
                       <Link to="/trader-deck" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaThLarge className="dropdown-icon" /> Trader Desk
                       </Link>

@@ -563,6 +563,8 @@ export const AuthProvider = ({ children }) => {
             const meData = await meResponse.json();
             if (!meData?.success || !meData?.entitlements) return;
             writeMeEntitlementsSeed(meData);
+            // Keep `user.username` / `user.name` in sync for UI (Home welcome, Navbar dropdown, etc).
+            if (meData?.user) mergeUserPatch(meData.user);
             if (meData.entitlements.canAccessCommunity === true) {
               localStorage.setItem('hasActiveSubscription', 'true');
             } else {

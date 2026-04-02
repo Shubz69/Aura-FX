@@ -67,6 +67,31 @@ const BRIEF_KIND_LABEL = {
   etfs: 'ETFs',
 };
 
+const CATEGORY_BRIEF_KINDS = new Set([
+  'stocks',
+  'indices',
+  'futures',
+  'forex',
+  'crypto',
+  'commodities',
+  'bonds',
+  'etfs',
+]);
+
+function sanitizeBriefForPreview(text) {
+  return String(text || '')
+    // Remove Markdown horizontal rules or separator-like lines.
+    .replace(/^[ \t]*(-\s*){3,}[ \t]*$/gm, '')
+    // Remove leaked prompt markers like "--- part 1 ---"
+    .replace(/^[ \t]*---[ \t]*.*[ \t]*---[ \t]*$/gm, '')
+    .trim();
+}
+
+function filterToExpected8Briefs(items) {
+  if (!Array.isArray(items)) return [];
+  return items.filter((b) => CATEGORY_BRIEF_KINDS.has(String(b?.briefKind || '').toLowerCase()));
+}
+
 function isTextLikeMime(mime) {
   const m = (mime || '').toLowerCase();
   return (
@@ -144,7 +169,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     Api.getTraderDeckContent(type, dateStr)
       .then((res) => {
         if (cancelled) return;
-        setBriefs(Array.isArray(res.data?.briefs) ? res.data.briefs : []);
+        setBriefs(filterToExpected8Briefs(Array.isArray(res.data?.briefs) ? res.data.briefs : []));
       })
       .catch(() => {
         if (!cancelled) setBriefs([]);
@@ -201,7 +226,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         return res.text();
       })
       .then((raw) => {
-        if (!cancelled) setTextPreviewBody(String(raw || '').replace(/\r\n/g, '\n'));
+        if (!cancelled) setTextPreviewBody(sanitizeBriefForPreview(String(raw || '').replace(/\r\n/g, '\n')));
       })
       .catch(() => {
         if (!cancelled) setTextPreviewBody('');
@@ -256,7 +281,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         setTimeout(() => setAddSuccess(null), 4000);
         return Api.getTraderDeckContent(type, dateStr);
       })
-      .then((res) => setBriefs(Array.isArray(res.data?.briefs) ? res.data.briefs : []))
+      .then((res) => setBriefs(filterToExpected8Briefs(Array.isArray(res.data?.briefs) ? res.data.briefs : [])))
       .catch((err) => setError(err.response?.data?.message || err.message || 'Failed to add link'))
       .finally(() => setUploading(false));
   };
@@ -280,7 +305,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       setAddSuccess(`Saved for ${dateStr}. Use the calendar to pick that day anytime.`);
       setTimeout(() => setAddSuccess(null), 4000);
       const res = await Api.getTraderDeckContent(type, dateStr);
-      setBriefs(Array.isArray(res.data?.briefs) ? res.data.briefs : []);
+      setBriefs(filterToExpected8Briefs(Array.isArray(res.data?.briefs) ? res.data.briefs : []));
     } catch (err) {
       const st = err.response?.status;
       setError(
