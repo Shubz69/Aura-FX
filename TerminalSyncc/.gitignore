@@ -1,0 +1,45 @@
+# --- Security & Secrets ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# --- Node.js (Server & Client) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+build/
+.eslintcache
+
+# --- Python (Worker) ---
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+worker/MT5_TEMPLATE/*
+!worker/MT5_TEMPLATE/.gitkeep
+worker/mt5_instances/
+
+# --- Database ---
+*.sql
+*.sqlite
+
+# --- Operating System ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- MT5 Specific ---
+# Ignore local MT5 logs or temporary data if stored in worker folder
+MQL5/Logs/
+Terminal/logs/
