@@ -24,6 +24,10 @@ const {
   safeMtLog,
 } = require('./auraProductionUtils');
 
+function isHistoryPipelineLogEnabled() {
+  return isAuraDiagnosticsEnabled() || String(process.env.AURA_HISTORY_PIPELINE_LOG || '').trim() === '1';
+}
+
 function getEncKey() {
   const raw = process.env.PLATFORM_ENCRYPTION_KEY || process.env.JWT_SECRET || 'aura-fx-enc-key-pad-to-32chars!!';
   return crypto.createHash('sha256').update(raw).digest();
@@ -248,6 +252,9 @@ async function fetchHistoryForPlatform(platformId, creds, days) {
         });
         if (!result.ok) return { ok: false, error: result.error, code: result.code };
         const rawTrades = Array.isArray(result.trades) ? result.trades : [];
+        if (isHistoryPipelineLogEnabled()) {
+          safeMtLog('history_pipeline_worker_rows', { platformId, workerRowCount: rawTrades.length });
+        }
         const inputRows = rawTrades.length;
         const netPnlBreakdown = {
           explicit_net: 0,
@@ -259,7 +266,7 @@ async function fetchHistoryForPlatform(platformId, creds, days) {
         for (let i = 0; i < rawTrades.length; i++) {
           const p = rawTrades[i];
           try {
-            const hasSym = !!(p && (p.symbol || p.instrument || p.pair || p.s));
+            const hasSym = !!(p && (p.symbol || p.Symbol || p.SYMBOL || p.instrument || p.pair || p.s));
             if (!hasSym) {
               discardedRows++;
               continue;
@@ -277,6 +284,15 @@ async function fetchHistoryForPlatform(platformId, creds, days) {
         }
         const windowed = filterTradesByDays(mapped, days);
         const trades = dedupeNormalizedTrades(windowed);
+        if (isHistoryPipelineLogEnabled()) {
+          safeMtLog('history_pipeline_normalized', {
+            platformId,
+            mappedCount: mapped.length,
+            afterDayFilter: windowed.length,
+            afterDedupe: trades.length,
+            discardedRows,
+          });
+        }
         let openCount = 0;
         let closedCount = 0;
         for (let j = 0; j < trades.length; j++) {
@@ -419,6 +435,15 @@ module.exports = async (req, res) => {
       openCount: result.mtDiagnostics.openCount,
       closedCount: result.mtDiagnostics.closedCount,
       netPnlBreakdown: result.mtDiagnostics.netPnlBreakdown,
+    });
+  }
+
+  if (isHistoryPipelineLogEnabled()) {
+    safeMtLog('history_pipeline_response', {
+      platformId,
+      returnedTradeCount: body.count,
+      days,
+      dataSource: body.dataSource,
     });
   }
 

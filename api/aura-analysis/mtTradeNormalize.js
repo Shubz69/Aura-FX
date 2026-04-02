@@ -92,6 +92,10 @@ function inferTradeStatus(raw, openTime, closeTime) {
   if (raw.is_open === true || raw.isOpen === true) return 'open';
   if (raw.is_open === false || raw.isOpen === false) return 'closed';
 
+  // MT5 history deals: entry 1 = DEAL_ENTRY_OUT, 3 = OUT_BY (realized exit legs).
+  const entNum = Number(raw.entry);
+  if (entNum === 1 || entNum === 3) return 'closed';
+
   const et = String(raw.entryType || raw.entry_type || '').toUpperCase();
   if (et.includes('OUT') || et.includes('EXIT') || et.includes('DEAL_ENTRY_OUT')) return 'closed';
 
@@ -143,12 +147,35 @@ function rollupNetPnl(raw, gross, commission, swap) {
   return rollupNetPnlDetailed(raw, gross, commission, swap).amount;
 }
 
-function stableRowId(raw, sym, openTime, closeTime, platformId, seqIndex) {
-  const ticket =
-    raw.ticket ?? raw.order ?? raw.dealId ?? raw.id ?? raw.positionId ?? raw.identifier;
-  if (ticket != null && String(ticket).trim() !== '') {
-    return `${String(platformId)}_${String(ticket).trim()}`;
+/**
+ * Prefer a unique MT deal ticket / id. Note: JS (0 ?? x) === 0, so treat 0 as missing.
+ */
+function firstStableDealKey(raw) {
+  const candidates = [
+    raw.ticket,
+    raw.order,
+    raw.deal_id,
+    raw.dealId,
+    raw.id,
+    raw.position_id,
+    raw.positionId,
+    raw.external_id,
+    raw.identifier,
+  ];
+  for (let i = 0; i < candidates.length; i++) {
+    const v = candidates[i];
+    if (v == null || v === '') continue;
+    const n = Number(v);
+    if (Number.isFinite(n) && n > 0) return String(Math.trunc(n));
+    const s = String(v).trim();
+    if (s !== '' && s !== '0') return s.replace(/\s/g, '');
   }
+  return null;
+}
+
+function stableRowId(raw, sym, openTime, closeTime, platformId, seqIndex) {
+  const key = firstStableDealKey(raw);
+  if (key) return `${String(platformId)}_${key}`;
   const o = String(openTime || '').slice(0, 24);
   const c = String(closeTime || '').slice(0, 24);
   const symClean = String(sym || '').replace(/\W/g, '');
@@ -160,7 +187,8 @@ function stableRowId(raw, sym, openTime, closeTime, platformId, seqIndex) {
  * @param {object} [netStats] — optional mutator: increments keys explicit_net | gross_includes_fees | rollup_commission_swap per row (diagnostics only; do not persist).
  */
 function normalizeMtRow(raw, platformId, seqIndex = 0, netStats = null) {
-  const sym = raw.symbol || raw.instrument || raw.pair || raw.s || '—';
+  const sym =
+    raw.symbol || raw.Symbol || raw.SYMBOL || raw.instrument || raw.pair || raw.s || '—';
 
   const openRaw =
     raw.openTime || raw.timeSetup || raw.time_setup || raw.time || raw.open_time
@@ -190,8 +218,16 @@ function normalizeMtRow(raw, platformId, seqIndex = 0, netStats = null) {
   const tpNum = tpRaw != null && tpRaw !== '' ? finite(tpRaw, NaN) : NaN;
 
   const platLabel = platformId === 'mt4' ? 'MT4' : platformId === 'mt5' ? 'MT5' : String(platformId || 'MT');
-  const id = stableRowId(raw, sym, openTime, closeTime, platformId, seqIndex);
   const tradeStatus = inferTradeStatus(raw, openTime, closeTime);
+  // MT5 deal rows carry one execution timestamp in `time` → treat as close time for closed deals.
+  let openOut = openTime;
+  let closeOut = closeTime;
+  if (tradeStatus === 'closed') {
+    if (!closeOut && openOut) closeOut = openOut;
+    else if (!openOut && closeOut) openOut = closeOut;
+  }
+
+  const id = stableRowId(raw, sym, openOut, closeOut, platformId, seqIndex);
 
   return {
     id,
@@ -206,10 +242,10 @@ function normalizeMtRow(raw, platformId, seqIndex = 0, netStats = null) {
       raw.price_open ?? raw.priceOpen ?? raw.openPrice ?? raw.entryPrice ?? raw.price ?? 0
     ),
     closePrice: finite(
-      raw.price_current ?? raw.priceCurrent ?? raw.closePrice ?? raw.exitPrice ?? raw.avgPrice ?? 0
+      raw.price_current ?? raw.priceCurrent ?? raw.closePrice ?? raw.exitPrice ?? raw.avgPrice ?? raw.price ?? 0
     ),
-    openTime,
-    closeTime,
+    openTime: openOut,
+    closeTime: closeOut,
     commission,
     swap,
     stopLoss: Number.isFinite(slNum) && slNum !== 0 ? slNum : undefined,
@@ -220,7 +256,7 @@ function normalizeMtRow(raw, platformId, seqIndex = 0, netStats = null) {
     session: detectSession(openRaw || closeRaw),
     platform: platLabel,
     platformId,
-    created_at: closeTime || openTime || new Date().toISOString(),
+    created_at: closeOut || openOut || new Date().toISOString(),
   };
 }
 

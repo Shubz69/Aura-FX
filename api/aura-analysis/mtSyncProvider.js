@@ -512,6 +512,9 @@ async function getDealHistory(credentials, platformId = 'mt5', options = {}) {
   if (isAuraDiagnosticsEnabled()) {
     warnings.forEach((w) => console.warn('[mt-worker]', w));
   }
+  if (isAuraDiagnosticsEnabled() || String(process.env.AURA_HISTORY_PIPELINE_LOG || '').trim() === '1') {
+    safeMtLog('history_worker_extract', { platformId, rowCount: rows.length });
+  }
   return { ok: true, trades: rows };
 }
 

@@ -104,6 +104,15 @@ export function AuraAnalysisProvider({ children }) {
         const trades = payload?.trades;
         if (Array.isArray(trades)) {
           setRawTrades(trades);
+          if (process.env.NODE_ENV === 'development') {
+            // eslint-disable-next-line no-console
+            console.debug(
+              '[aura-history] platform-history trades',
+              trades.length,
+              'count field',
+              payload?.count
+            );
+          }
           gotTrades = true;
           const fromCache = !!payload?.stale || !!payload?.cacheServedStale;
           setHistoryStale(fromCache);
