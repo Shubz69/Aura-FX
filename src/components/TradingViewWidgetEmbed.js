@@ -76,8 +76,25 @@ export default function TradingViewWidgetEmbed({
   }, [interval, studies, symbol, theme, widgetId]);
 
   return (
-    <div className="trader-suite-chart-frame" style={{ minHeight: height }}>
-      <div id={widgetId} ref={containerRef} style={{ width: '100%', height: '100%' }} />
+    <div
+      className="trader-suite-chart-frame"
+      style={{
+        width: '100%',
+        height,
+        minHeight: height,
+        position: 'relative',
+      }}
+    >
+      <div
+        id={widgetId}
+        ref={containerRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+        }}
+      />
     </div>
   );
 }

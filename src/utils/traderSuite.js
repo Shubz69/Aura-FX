@@ -56,6 +56,16 @@ export function calculatePositionSizeUnits(accountSize, riskPercent, entry, stop
   return riskAmt / dist;
 }
 
+/** Rough lot size for display (XAU ≈ 100 oz/contract; FX majors ≈ 100k units/lot). */
+export function formatPositionLots(chartSymbol, units) {
+  if (!Number.isFinite(units) || units <= 0) return '—';
+  const s = String(chartSymbol || '');
+  if (/XAU|GOLD/i.test(s)) {
+    return `${(units / 100).toFixed(2)} lots`;
+  }
+  return `${(units / 100000).toFixed(2)} lots`;
+}
+
 export function formatRatio(value) {
   if (!Number.isFinite(value) || value <= 0) return '0.00R';
   return `${value.toFixed(2)}R`;

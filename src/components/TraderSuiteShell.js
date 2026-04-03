@@ -6,6 +6,10 @@ import '../styles/TraderSuite.css';
 export default function TraderSuiteShell({
   title,
   eyebrow,
+  /** Optional mark before the centered title (e.g. logo) — terminal variant only */
+  terminalTitlePrefix,
+  /** Shown under welcome / eyebrow on terminal variant (e.g. tagline) */
+  terminalSubtitle,
   description,
   stats = [],
   status,
@@ -27,8 +31,22 @@ export default function TraderSuiteShell({
         {variant === 'terminal' ? (
           <section className="trader-suite-panel trader-suite-shell trader-suite-shell--terminal">
             <div className="trader-suite-terminal-bar">
-              <div className="trader-suite-terminal-left">{eyebrow || 'Aura Terminal'}</div>
-              <div className="trader-suite-terminal-title">{title}</div>
+              <div className="trader-suite-terminal-left">
+                {eyebrow || 'Aura Terminal'}
+                {terminalSubtitle ? (
+                  <div className="trader-suite-terminal-subtitle">{terminalSubtitle}</div>
+                ) : null}
+              </div>
+              <div className="trader-suite-terminal-title">
+                {terminalTitlePrefix ? (
+                  <span className="trader-suite-terminal-title-inner">
+                    {terminalTitlePrefix}
+                    <span className="trader-suite-terminal-title-text">{title}</span>
+                  </span>
+                ) : (
+                  title
+                )}
+              </div>
               <div className="trader-suite-terminal-actions">
                 {primaryAction}
                 {secondaryActions}
@@ -39,7 +57,17 @@ export default function TraderSuiteShell({
                 {stats.map((stat) => (
                   <div className="trader-suite-terminal-stat" key={stat.label}>
                     <span>{stat.label}</span>
-                    <strong>{stat.value}</strong>
+                    <strong
+                      className={
+                        stat.tone === 'gold'
+                          ? 'trader-suite-terminal-stat__value--gold'
+                          : stat.tone === 'green'
+                            ? 'trader-suite-terminal-stat__value--green'
+                            : undefined
+                      }
+                    >
+                      {stat.value}
+                    </strong>
                   </div>
                 ))}
               </div>
