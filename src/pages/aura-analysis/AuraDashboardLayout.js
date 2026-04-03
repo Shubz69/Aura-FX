@@ -12,6 +12,7 @@ const TABS = [
   { path: 'execution-lab', label: 'Execution Lab', icon: 'fa-rocket' },
   { path: 'calendar',      label: 'Calendar',      icon: 'fa-calendar-alt' },
   { path: 'growth',        label: 'Growth',        icon: 'fa-seedling' },
+  { path: 'trader-replay', label: 'Trader Replay', icon: 'fa-history' },
 ];
 
 const base = '/aura-analysis/dashboard';

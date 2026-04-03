@@ -183,7 +183,7 @@ export default function TraderLab() {
         <>
           <button type="button" className="trader-suite-btn" onClick={createFreshSession}>New session</button>
           <Link to="/trader-deck/trade-validator/trader-playbook" className="trader-suite-btn">Playbook</Link>
-          <Link to="/trader-deck/trade-validator/trader-replay" className="trader-suite-btn">Replay</Link>
+          <Link to="/aura-analysis/dashboard/trader-replay" className="trader-suite-btn">Replay</Link>
         </>
       )}
     >
@@ -322,7 +322,7 @@ export default function TraderLab() {
             <div className="trader-suite-kicker">Live Trade Metrics</div>
             <div className="trader-suite-cta-row">
               <Link to="/trader-deck/trade-validator/trader-playbook" className="trader-suite-btn">Playbook</Link>
-              <Link to="/trader-deck/trade-validator/trader-replay" className="trader-suite-btn trader-suite-btn--primary">Replay</Link>
+              <Link to="/aura-analysis/dashboard/trader-replay" className="trader-suite-btn trader-suite-btn--primary">Replay</Link>
             </div>
           </div>
           <div className="trader-lab-terminal__footer-grid">

@@ -19,6 +19,8 @@ export default function TraderSuiteShell({
 }) {
   const { pathname } = useLocation();
   const embedInTradeValidator = pathname.startsWith('/trader-deck/trade-validator');
+  const embedInAuraDashboardReplay = /^\/aura-analysis\/dashboard\/trader-replay/.test(pathname);
+  const skipOuterTheme = embedInTradeValidator || embedInAuraDashboardReplay;
 
   const inner = (
       <div className="trader-suite-page trader-suite-stack">
@@ -112,6 +114,6 @@ export default function TraderSuiteShell({
       </div>
   );
 
-  if (embedInTradeValidator) return inner;
+  if (skipOuterTheme) return inner;
   return <AuraTerminalThemeShell>{inner}</AuraTerminalThemeShell>;
 }

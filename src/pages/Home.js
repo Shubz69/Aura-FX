@@ -878,19 +878,23 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     return (
         <div className="terminal-dashboard">
             <header className="terminal-dashboard__topbar glass-card">
-                <div className="terminal-dashboard__brand" aria-label="Aura Terminal">
-                    Aura Terminal
-                </div>
-                <div className="terminal-dashboard__top-actions">
-                    <Link to="/messages" className="terminal-dashboard__icon-btn" title="Messages" aria-label="Messages">
-                        <FaEnvelope />
-                    </Link>
-                    <Link to="/settings" className="terminal-dashboard__icon-btn" title="Settings" aria-label="Settings">
-                        <FaCog />
-                    </Link>
-                    <Link to="/contact" className="terminal-dashboard__icon-btn" title="Support" aria-label="Support">
-                        <FaHeadset />
-                    </Link>
+                <p className="terminal-dashboard__welcome">{welcomeShort}</p>
+                <div className="terminal-dashboard__top-right">
+                    <span className="terminal-dashboard__wordmark" aria-label="AURA TERMINAL">
+                        <span className="terminal-dashboard__wordmark-aura">AURA</span>
+                        <span className="terminal-dashboard__wordmark-terminal">TERMINAL</span>
+                    </span>
+                    <div className="terminal-dashboard__top-actions">
+                        <Link to="/messages" className="terminal-dashboard__icon-btn" title="Messages" aria-label="Messages">
+                            <FaEnvelope />
+                        </Link>
+                        <Link to="/settings" className="terminal-dashboard__icon-btn" title="Settings" aria-label="Settings">
+                            <FaCog />
+                        </Link>
+                        <Link to="/contact" className="terminal-dashboard__icon-btn" title="Support" aria-label="Support">
+                            <FaHeadset />
+                        </Link>
+                    </div>
                 </div>
             </header>
 
@@ -913,7 +917,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                 <div className="terminal-dashboard__grid">
                     <article className="terminal-card glass-card terminal-card--welcome">
                         <span className="terminal-card__label">Welcome</span>
-                        <h2 className="terminal-card__title">{welcomeShort}</h2>
+                        <p className="terminal-card__welcome-hint">How your execution mix is leaning this month.</p>
                         <SentimentGauge value={sentimentScore} />
                     </article>
 

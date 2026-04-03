@@ -120,6 +120,98 @@
   position: relative;
 }
 
+/* Centered title stack + Trader Lab / Playbook on the right */
+.trade-validator-shell .aura-shell-hero-inner.trade-validator-hero-inner {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(12px, 2.5vw, 22px);
+  width: 100%;
+  max-width: 1540px !important;
+  margin: 0 auto !important;
+}
+
+.trade-validator-shell .trade-validator-hero-spacer {
+  grid-column: 1;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.trade-validator-shell .trade-validator-hero-titles {
+  grid-column: 2;
+  text-align: center;
+  justify-self: center;
+  max-width: min(100%, 44rem);
+}
+
+.trade-validator-shell .trade-validator-hero-titles .aura-shell-title,
+.trade-validator-shell .trade-validator-hero-titles .aura-shell-sub {
+  text-align: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.trade-validator-shell .trade-validator-hero-suite {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.trade-validator-hero-suite-link {
+  display: inline-flex;
+  align-items: center;
+  padding: clamp(7px, 1.5vw, 10px) clamp(12px, 2vw, 18px);
+  font-size: clamp(0.68rem, 1.45vw, 0.8rem);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--text-muted) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 100px;
+  background: rgba(3, 2, 10, 0.55);
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+  white-space: nowrap;
+}
+
+.trade-validator-hero-suite-link:hover {
+  color: #fff !important;
+  border-color: rgba(234, 169, 96, 0.45);
+  background: rgba(234, 169, 96, 0.12);
+}
+
+.trade-validator-hero-suite-link--active {
+  color: #fff !important;
+  border-color: rgba(234, 169, 96, 0.65) !important;
+  background: rgba(234, 169, 96, 0.18) !important;
+  box-shadow: 0 0 20px rgba(234, 169, 96, 0.12);
+}
+
+@media (max-width: 768px) {
+  .trade-validator-shell .aura-shell-hero-inner.trade-validator-hero-inner {
+    grid-template-columns: 1fr !important;
+    justify-items: center;
+  }
+
+  .trade-validator-shell .trade-validator-hero-spacer {
+    display: none !important;
+  }
+
+  .trade-validator-shell .trade-validator-hero-titles {
+    grid-column: 1 !important;
+  }
+
+  .trade-validator-shell .trade-validator-hero-suite {
+    grid-column: 1 !important;
+    justify-self: center !important;
+    justify-content: center !important;
+  }
+}
+
 .trade-validator-shell .aura-shell-hero::after {
   content: '';
   position: absolute;
