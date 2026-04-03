@@ -40,6 +40,22 @@ export function calculateRiskReward(entry, stopLoss, target) {
   return reward / risk;
 }
 
+/** Risk amount in account currency: accountSize * (riskPercent / 100). */
+export function calculateRiskAmount(accountSize, riskPercent) {
+  return (safeNumber(accountSize) * safeNumber(riskPercent)) / 100;
+}
+
+/**
+ * Position size in instrument units (approximate): riskAmount / price distance to stop.
+ * Useful for FX/metals when entry/stop are in price terms.
+ */
+export function calculatePositionSizeUnits(accountSize, riskPercent, entry, stopLoss) {
+  const riskAmt = calculateRiskAmount(accountSize, riskPercent);
+  const dist = Math.abs(safeNumber(entry) - safeNumber(stopLoss));
+  if (!dist || !riskAmt) return 0;
+  return riskAmt / dist;
+}
+
 export function formatRatio(value) {
   if (!Number.isFinite(value) || value <= 0) return '0.00R';
   return `${value.toFixed(2)}R`;
@@ -89,6 +105,9 @@ export function buildBehaviourSummary(form) {
     discipline,
     emotionalControl,
     issue,
+    /** 0–10 scale for UI bars */
+    disciplineOutOf10: clamp(discipline / 10, 0, 10),
+    patienceOutOf10: clamp(emotionalControl / 10, 0, 10),
   };
 }
 

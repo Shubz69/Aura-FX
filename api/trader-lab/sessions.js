@@ -36,6 +36,23 @@ function toDateString(value) {
   return value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
 }
 
+async function ensureExtraColumns() {
+  const alters = [
+    ['chartSymbol', 'VARCHAR(64) DEFAULT NULL'],
+    ['accountSize', 'DECIMAL(16,2) DEFAULT NULL'],
+  ];
+  for (const [col, def] of alters) {
+    try {
+      await executeQuery(`ALTER TABLE trader_lab_sessions ADD COLUMN ${col} ${def}`);
+    } catch (e) {
+      const msg = String(e && e.message ? e.message : e);
+      if (!/Duplicate column/i.test(msg)) {
+        console.warn(`Trader lab ensureExtraColumns ${col}:`, msg);
+      }
+    }
+  }
+}
+
 async function ensureTable() {
   await executeQuery(`
     CREATE TABLE IF NOT EXISTS trader_lab_sessions (
@@ -79,6 +96,8 @@ async function ensureTable() {
       whatToChange TEXT DEFAULT NULL,
       emotionalIntensity INT DEFAULT NULL,
       mistakeTags JSON DEFAULT NULL,
+      chartSymbol VARCHAR(64) DEFAULT NULL,
+      accountSize DECIMAL(16,2) DEFAULT NULL,
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       INDEX idx_trader_lab_userId (userId),
@@ -130,6 +149,8 @@ function mapRow(row) {
     whatToChange: row.whatToChange || '',
     emotionalIntensity: row.emotionalIntensity != null ? Number(row.emotionalIntensity) : 0,
     mistakeTags: parseJsonField(row.mistakeTags),
+    chartSymbol: row.chartSymbol != null ? String(row.chartSymbol) : '',
+    accountSize: row.accountSize != null ? Number(row.accountSize) : '',
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -159,6 +180,7 @@ module.exports = async (req, res) => {
 
   try {
     await ensureTable();
+    await ensureExtraColumns();
   } catch (error) {
     console.error('Trader lab ensureTable error:', error);
     return res.status(500).json({ success: false, message: 'Database error' });
@@ -188,8 +210,8 @@ module.exports = async (req, res) => {
         whatDoISee, setupName, whyValid, entryConfirmation, confidence, riskLevel, entryPrice, stopLoss, targetPrice,
         riskPercent, rrRatio, setupValid, biasAligned, entryConfirmed, riskDefined, livePnlR, livePnlPercent, currentPrice,
         distanceToSl, distanceToTp, emotions, duringNotes, outcome, resultR, durationMinutes, followedRules, entryCorrect,
-        exitCorrect, whatToChange, emotionalIntensity, mistakeTags
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        exitCorrect, whatToChange, emotionalIntensity, mistakeTags, chartSymbol, accountSize
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         userId,
@@ -231,6 +253,8 @@ module.exports = async (req, res) => {
         body.whatToChange != null ? String(body.whatToChange).slice(0, 6000) : null,
         body.emotionalIntensity != null ? Number(body.emotionalIntensity) : null,
         JSON.stringify(Array.isArray(body.mistakeTags) ? body.mistakeTags : []),
+        body.chartSymbol != null ? String(body.chartSymbol).slice(0, 64) : null,
+        body.accountSize !== '' && body.accountSize != null ? Number(body.accountSize) : null,
       ]
     );
 
@@ -253,7 +277,8 @@ module.exports = async (req, res) => {
         whatDoISee = ?, setupName = ?, whyValid = ?, entryConfirmation = ?, confidence = ?, riskLevel = ?, entryPrice = ?, stopLoss = ?,
         targetPrice = ?, riskPercent = ?, rrRatio = ?, setupValid = ?, biasAligned = ?, entryConfirmed = ?, riskDefined = ?, livePnlR = ?,
         livePnlPercent = ?, currentPrice = ?, distanceToSl = ?, distanceToTp = ?, emotions = ?, duringNotes = ?, outcome = ?, resultR = ?,
-        durationMinutes = ?, followedRules = ?, entryCorrect = ?, exitCorrect = ?, whatToChange = ?, emotionalIntensity = ?, mistakeTags = ?
+        durationMinutes = ?, followedRules = ?, entryCorrect = ?, exitCorrect = ?, whatToChange = ?, emotionalIntensity = ?, mistakeTags = ?,
+        chartSymbol = ?, accountSize = ?
       WHERE id = ? AND userId = ?`,
       [
         String(body.sessionDate || '').slice(0, 10) || new Date().toISOString().slice(0, 10),
@@ -294,6 +319,8 @@ module.exports = async (req, res) => {
         body.whatToChange != null ? String(body.whatToChange).slice(0, 6000) : null,
         body.emotionalIntensity != null ? Number(body.emotionalIntensity) : null,
         JSON.stringify(Array.isArray(body.mistakeTags) ? body.mistakeTags : []),
+        body.chartSymbol != null ? String(body.chartSymbol).slice(0, 64) : null,
+        body.accountSize !== '' && body.accountSize != null ? Number(body.accountSize) : null,
         sessionId,
         userId,
       ]

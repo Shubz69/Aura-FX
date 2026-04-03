@@ -1014,15 +1014,701 @@
   gap: 10px;
 }
 
+/* ── Trader Lab v2 (reference layout: left rail · chart · right rail · footer) ── */
+.journal-page .trader-suite-page:has(.trader-lab-v2) {
+  max-width: min(1680px, calc(100% - 24px));
+}
+
+.journal-page .trader-lab-v2 {
+  --tlab-gold: rgba(234, 169, 96, 0.95);
+  --tlab-gold-dim: rgba(234, 169, 96, 0.45);
+  --tlab-gold-bg: rgba(234, 169, 96, 0.1);
+  --tlab-green: #64f3b0;
+  --tlab-line: rgba(140, 175, 255, 0.14);
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr) minmax(280px, 340px);
+  grid-template-rows: auto auto;
+  gap: 14px;
+  padding: 16px 18px 24px;
+  align-items: stretch;
+  min-height: min(78vh, 1100px);
+}
+
+.journal-page .trader-lab-v2__left,
+.journal-page .trader-lab-v2__right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.journal-page .trader-lab-v2__center {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.journal-page .trader-lab-v2__footer {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 20px 20px;
+  border-radius: 18px;
+  border: 1px solid rgba(140, 175, 255, 0.18);
+  background: linear-gradient(165deg, rgba(6, 10, 28, 0.92), rgba(4, 8, 20, 0.88));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.journal-page .tlab-card {
+  border-radius: 14px;
+  border: 1px solid var(--tlab-line);
+  background: rgba(3, 6, 18, 0.72);
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.journal-page .tlab-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.35), rgba(140, 175, 255, 0.2), transparent);
+  pointer-events: none;
+}
+
+.journal-page .tlab-card--chart {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 520px;
+  padding: 12px 14px 14px;
+}
+
+.journal-page .tlab-card__title {
+  margin: 0 0 12px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.journal-page .tlab-card__sub {
+  margin: 10px 0 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.journal-page .tlab-mc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.82rem;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+}
+
+.journal-page .tlab-mc-row strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.journal-page .tlab-bias-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.journal-page .tlab-bias-badge--bull {
+  color: var(--tlab-green);
+  border-color: rgba(100, 243, 176, 0.35);
+  background: rgba(100, 243, 176, 0.08);
+}
+
+.journal-page .tlab-bias-badge--bear {
+  color: #ff9db5;
+  border-color: rgba(255, 126, 145, 0.35);
+  background: rgba(255, 126, 145, 0.08);
+}
+
+.journal-page .tlab-bias-badge--neutral {
+  color: var(--text-muted);
+}
+
+.journal-page .tlab-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.journal-page .tlab-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(234, 169, 96, 0.25), var(--tlab-gold));
+}
+
+.journal-page .tlab-range {
+  width: 100%;
+  margin: 4px 0 8px;
+  accent-color: rgba(234, 169, 96, 0.9);
+}
+
+.journal-page .tlab-hint {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.journal-page .tlab-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+
+.journal-page .tlab-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.journal-page .tlab-table th,
+.journal-page .tlab-table td {
+  padding: 8px 6px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.journal-page .tlab-table th {
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.journal-page .tlab-table--compact td {
+  padding: 6px 0;
+}
+
+.journal-page .tlab-sent--pos { color: var(--tlab-green); font-weight: 600; }
+.journal-page .tlab-sent--neg { color: #ff8c9a; font-weight: 600; }
+.journal-page .tlab-sent--mid { color: var(--text-muted); }
+
+.journal-page .tlab-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+}
+
+.journal-page .tlab-pill--ok {
+  color: var(--tlab-green);
+  border-color: rgba(100, 243, 176, 0.35);
+  background: rgba(100, 243, 176, 0.06);
+}
+
+.journal-page .tlab-pill--warn {
+  color: #ffcb75;
+  border-color: rgba(255, 203, 117, 0.35);
+}
+
+.journal-page .tlab-textarea {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+  border-radius: 10px;
+  border: 1px solid rgba(140, 175, 255, 0.16);
+  background: rgba(0, 0, 0, 0.35);
+  color: #e8ecff;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  font-family: inherit;
+}
+
+.journal-page .tlab-textarea--tight {
+  min-height: 64px;
+}
+
+.journal-page .tlab-textarea--exec {
+  min-height: 140px;
+}
+
+.journal-page .tlab-chart-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.journal-page .tlab-chart-toolbar--second {
+  margin-bottom: 6px;
+}
+
+.journal-page .tlab-session-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.journal-page .tlab-session-tab {
+  border: 1px solid rgba(140, 175, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.journal-page .tlab-session-tab--active {
+  border-color: rgba(234, 169, 96, 0.45);
+  color: #fff;
+  background: rgba(234, 169, 96, 0.12);
+}
+
+.journal-page .tlab-valid-chip {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.journal-page .tlab-valid-chip--ok {
+  color: var(--tlab-green);
+  border-color: rgba(100, 243, 176, 0.4);
+  background: rgba(100, 243, 176, 0.08);
+}
+
+.journal-page .tlab-valid-chip--bad {
+  color: #ff9db5;
+  border-color: rgba(255, 126, 145, 0.35);
+}
+
+.journal-page .tlab-select {
+  border-radius: 10px;
+  border: 1px solid rgba(140, 175, 255, 0.22);
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  min-width: 120px;
+}
+
+.journal-page .tlab-tf-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.journal-page .tlab-tf {
+  border: 1px solid rgba(140, 175, 255, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.journal-page .tlab-tf--active {
+  border-color: rgba(234, 169, 96, 0.5);
+  color: #fff;
+  background: rgba(234, 169, 96, 0.12);
+}
+
+.journal-page .tlab-chart-host {
+  flex: 1;
+  min-height: 420px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+}
+
+.journal-page .tlab-level-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.journal-page .tlab-level-strip > div {
+  text-align: center;
+}
+
+.journal-page .tlab-level-label {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.journal-page .tlab-level-label--sl { color: #ff9db5; }
+.journal-page .tlab-level-label--tp { color: var(--tlab-green); }
+
+.journal-page .tlab-level-strip strong {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.journal-page .tlab-exec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.journal-page .tlab-exec-meta {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.journal-page .tlab-exec-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.journal-page .tlab-field {
+  margin-bottom: 10px;
+}
+
+.journal-page .tlab-field label {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.journal-page .tlab-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 10px;
+}
+
+.journal-page .tlab-field--span {
+  grid-column: 1 / -1;
+}
+
+.journal-page .tlab-input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(140, 175, 255, 0.2);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.journal-page .tlab-rr-big {
+  margin: 14px 0 12px;
+  padding: 14px;
+  text-align: center;
+  border-radius: 12px;
+  border: 1px solid rgba(234, 169, 96, 0.28);
+  background: linear-gradient(145deg, rgba(234, 169, 96, 0.12), rgba(8, 12, 32, 0.5));
+}
+
+.journal-page .tlab-rr-label {
+  display: block;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.journal-page .tlab-rr-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--tlab-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.journal-page .tlab-metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+.journal-page .tlab-metric-row strong {
+  color: #fff;
+  font-size: 0.88rem;
+}
+
+.journal-page .tlab-card--validator {
+  border-color: rgba(140, 175, 255, 0.2);
+}
+
+.journal-page .tlab-card--validator-pass {
+  border-color: rgba(100, 243, 176, 0.45);
+  box-shadow: 0 0 24px rgba(100, 243, 176, 0.08);
+}
+
+.journal-page .tlab-validator-banner {
+  text-align: center;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  font-size: 0.85rem;
+  padding: 12px;
+  margin: -4px -4px 10px;
+  border-radius: 10px;
+  background: rgba(100, 243, 176, 0.12);
+  color: var(--tlab-green);
+  border: 1px solid rgba(100, 243, 176, 0.25);
+}
+
+.journal-page .tlab-card--validator:not(.tlab-card--validator-pass) .tlab-validator-banner {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.journal-page .tlab-validator-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.journal-page .tlab-validator-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.journal-page .tlab-check {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.75rem;
+}
+
+.journal-page .tlab-check--ok {
+  color: var(--tlab-green);
+  border-color: rgba(100, 243, 176, 0.4);
+  background: rgba(100, 243, 176, 0.08);
+}
+
+.journal-page .tlab-check--no {
+  color: var(--text-dim);
+}
+
+.journal-page .tlab-beh-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+  color: var(--text-muted);
+}
+
+.journal-page .tlab-beh-row strong {
+  color: #fff;
+}
+
+.journal-page .tlab-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.journal-page .tlab-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(234, 169, 96, 0.2), var(--tlab-gold));
+}
+
+.journal-page .tlab-bar--amber span {
+  background: linear-gradient(90deg, rgba(255, 203, 117, 0.2), #ffcb75);
+}
+
+.journal-page .tlab-card--muted {
+  opacity: 0.98;
+}
+
+.journal-page .tlab-footer-checks {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.journal-page .tlab-footer-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(140, 175, 255, 0.14);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.journal-page .tlab-footer-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.journal-page .tlab-fc-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.journal-page .tlab-fc-icon--ok {
+  border-color: rgba(100, 243, 176, 0.45);
+  color: var(--tlab-green);
+  background: rgba(100, 243, 176, 0.1);
+}
+
+.journal-page .tlab-footer-check strong {
+  display: block;
+  color: #fff;
+  font-size: 0.82rem;
+  margin-bottom: 2px;
+}
+
+.journal-page .tlab-footer-check small {
+  display: block;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.journal-page .tlab-footer-cta {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.journal-page .tlab-btn-execute {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 28px;
+  border-radius: 999px;
+  border: 2px solid rgba(234, 169, 96, 0.55);
+  background: linear-gradient(165deg, rgba(234, 169, 96, 0.18), rgba(8, 12, 28, 0.9));
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+
+.journal-page .tlab-btn-execute:hover:not(:disabled) {
+  box-shadow: 0 0 28px rgba(234, 169, 96, 0.2);
+  transform: translateY(-1px);
+}
+
+.journal-page .tlab-btn-execute:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.journal-page .tlab-btn-execute__ring {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(234, 169, 96, 0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--tlab-gold);
+}
+
+.journal-page .tlab-tagline {
+  text-align: center;
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(234, 169, 96, 0.75);
+}
+
+.journal-page .tlab-welcome {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.journal-page .tlab-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #fff;
+  background: linear-gradient(145deg, rgba(234, 169, 96, 0.35), rgba(80, 110, 200, 0.35));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
 @media (max-width: 1180px) {
   .journal-page .trader-suite-shell-grid,
   .journal-page .trader-suite-split,
   .journal-page .trader-suite-grid--2,
   .journal-page .trader-suite-grid--3,
   .journal-page .trader-lab-terminal,
+  .journal-page .trader-lab-v2,
   .journal-page .trader-replay-terminal,
   .journal-page .trader-playbook-terminal__board {
     grid-template-columns: 1fr;
+  }
+
+  .journal-page .tlab-footer-checks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .journal-page .trader-suite-metric-grid,
