@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
-import TradingViewWidgetEmbed from '../components/TradingViewWidgetEmbed';
 import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
 import { formatWelcomeEyebrow, getUserFirstName } from '../utils/welcomeUser';
@@ -320,7 +319,7 @@ export default function TraderLab() {
       {loading ? <div className="trader-suite-empty">Loading lab sessions...</div> : null}
 
       {!loading ? (
-        <div className="trader-lab-v2 trader-lab-v2--gold">
+        <div className="trader-lab-v2 trader-lab-v2--gold trader-lab-v2--compact">
           <aside className="trader-lab-v2__left">
             <div className="tlab-card tlab-card--gold">
               <h3 className="tlab-card__title">Market context</h3>
@@ -491,12 +490,11 @@ export default function TraderLab() {
                   ))}
                 </div>
               </div>
-              <div className="tlab-chart-host">
-                <TradingViewWidgetEmbed symbol={form.chartSymbol} interval={chartInterval} height={520} studies={[]} />
-                <div className="tlab-chart-line-overlay" aria-hidden="true">
-                  <span className="tlab-chart-line tlab-chart-line--tp" />
-                  <span className="tlab-chart-line tlab-chart-line--entry" />
-                  <span className="tlab-chart-line tlab-chart-line--sl" />
+              <div className="tlab-chart-host tlab-chart-host--placeholder">
+                <div className="tlab-chart-placeholder" aria-label="Chart preview (TradingView embed coming soon)">
+                  <span className="tlab-chart-placeholder__badge">Chart</span>
+                  <p className="tlab-chart-placeholder__hint">TradingView widget will load here</p>
+                  <div className="tlab-chart-placeholder__mockline" aria-hidden />
                 </div>
               </div>
               <div className="tlab-level-strip">
@@ -511,6 +509,68 @@ export default function TraderLab() {
                 <div>
                   <span className="tlab-level-label tlab-level-label--tp">Target</span>
                   <strong>{form.targetPrice}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="tlab-center-split tlab-center-split--refined">
+              <div className="tlab-card tlab-card--gold tlab-card--exec">
+                <div className="tlab-exec-head">
+                  <h3 className="tlab-card__title">Execution notes</h3>
+                  <span className="tlab-exec-edit-icon" title="Edit notes" aria-hidden>
+                    <FaPen />
+                  </span>
+                </div>
+                <textarea
+                  className="tlab-textarea tlab-textarea--exec"
+                  value={form.entryConfirmation}
+                  onChange={(e) => updateField('entryConfirmation', e.target.value)}
+                  placeholder="Execution plan, invalidation, and notes..."
+                />
+                <div className="tlab-exec-foot">
+                  <span className="tlab-exec-meta">
+                    Last updated: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}
+                  </span>
+                  <button type="button" className="tlab-btn-save-notes" onClick={saveSession} disabled={saving}>
+                    {saving ? 'SAVING...' : 'SAVE NOTES'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="tlab-center-split__stack">
+                <div className="tlab-card tlab-card--gold tlab-card--checklist-mid">
+                  <h3 className="tlab-card__title">Checklist</h3>
+                  <div className="tlab-checklist-mid" role="group" aria-label="Pre-trade checklist">
+                    {TRADER_LAB_CHECKLIST_ROWS.map((row) => (
+                      <label key={row.key} className="tlab-checklist-mid__row">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(form[row.key])}
+                          onChange={(e) => updateField(row.key, e.target.checked)}
+                        />
+                        <span className={form[row.key] ? 'tlab-fc-icon tlab-fc-icon--ok' : 'tlab-fc-icon'}>{form[row.key] ? '✓' : ''}</span>
+                        <span className="tlab-checklist-mid__copy">
+                          <strong>{row.label}</strong>
+                          <small>{row.hint}</small>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="tlab-card tlab-card--gold tlab-ready-cta-card">
+                  <button
+                    type="button"
+                    className="tlab-ready-box"
+                    disabled={!readyToExecute}
+                    onClick={() => {
+                      saveSession();
+                      toast.success('Ready to execute — lab saved.');
+                    }}
+                  >
+                    <span className="tlab-ready-box__check">✓</span>
+                    <span className="tlab-ready-box__label">READY TO EXECUTE</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -639,66 +699,7 @@ export default function TraderLab() {
 
           </aside>
 
-          <footer className="trader-lab-v2__footer trader-lab-v2__footer--trio">
-            <div className="tlab-bottom-trio">
-              <div className="tlab-card tlab-card--gold tlab-card--exec">
-                <div className="tlab-exec-head">
-                  <h3 className="tlab-card__title">Execution notes</h3>
-                  <span className="tlab-exec-edit-icon" title="Edit notes" aria-hidden>
-                    <FaPen />
-                  </span>
-                </div>
-                <textarea
-                  className="tlab-textarea tlab-textarea--exec"
-                  value={form.entryConfirmation}
-                  onChange={(e) => updateField('entryConfirmation', e.target.value)}
-                  placeholder="Execution plan, invalidation, and notes..."
-                />
-                <div className="tlab-exec-foot">
-                  <span className="tlab-exec-meta">
-                    Last updated: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}
-                  </span>
-                  <button type="button" className="tlab-btn-save-notes" onClick={saveSession} disabled={saving}>
-                    {saving ? 'SAVING...' : 'SAVE NOTES'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="tlab-card tlab-card--gold tlab-card--checklist-mid">
-                <h3 className="tlab-card__title">Checklist</h3>
-                <div className="tlab-checklist-mid" role="group" aria-label="Pre-trade checklist">
-                  {TRADER_LAB_CHECKLIST_ROWS.map((row) => (
-                    <label key={row.key} className="tlab-checklist-mid__row">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(form[row.key])}
-                        onChange={(e) => updateField(row.key, e.target.checked)}
-                      />
-                      <span className={form[row.key] ? 'tlab-fc-icon tlab-fc-icon--ok' : 'tlab-fc-icon'}>{form[row.key] ? '✓' : ''}</span>
-                      <span className="tlab-checklist-mid__copy">
-                        <strong>{row.label}</strong>
-                        <small>{row.hint}</small>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="tlab-card tlab-card--gold tlab-ready-cta-card">
-                <button
-                  type="button"
-                  className="tlab-ready-box"
-                  disabled={!readyToExecute}
-                  onClick={() => {
-                    saveSession();
-                    toast.success('Ready to execute — lab saved.');
-                  }}
-                >
-                  <span className="tlab-ready-box__check">✓</span>
-                  <span className="tlab-ready-box__label">READY TO EXECUTE</span>
-                </button>
-              </div>
-            </div>
+          <footer className="trader-lab-v2__footer trader-lab-v2__footer--tagline-only">
             <p className="tlab-tagline">Trade with clarity. Execute with precision. Win with discipline.</p>
           </footer>
         </div>
