@@ -10,16 +10,28 @@ function isAuraDiagnosticsEnabled() {
   return String(process.env[DIAG_FLAG] || '').trim() === '1';
 }
 
-/** Safe internal log: event name + small structured fields (no payloads, no passwords). */
-function safeMtLog(event, fields = {}) {
+/**
+ * Safe internal log: event name + small structured fields (no payloads, no passwords).
+ * @param {'warn'|'info'|'error'|'debug'} [level='warn'] — use `info` for routine / diagnostic lines so hosts (e.g. Vercel) do not surface them as warnings.
+ */
+function safeMtLog(event, fields = {}, level = 'warn') {
   const safe = { ...fields };
   delete safe.password;
   delete safe.secret;
   delete safe.token;
+  const prefix = `[aura-mt] ${event}`;
   try {
-    console.warn(`[aura-mt] ${event}`, JSON.stringify(safe));
+    const payload = JSON.stringify(safe);
+    if (level === 'error') console.error(prefix, payload);
+    else if (level === 'info') console.info(prefix, payload);
+    else if (level === 'debug') {
+      if (typeof console.debug === 'function') console.debug(prefix, payload);
+      else console.log(prefix, payload);
+    } else console.warn(prefix, payload);
   } catch (_) {
-    console.warn(`[aura-mt] ${event}`);
+    if (level === 'error') console.error(prefix);
+    else if (level === 'info') console.info(prefix);
+    else console.warn(prefix);
   }
 }
 

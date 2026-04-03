@@ -40,8 +40,10 @@
   --grad-gold: linear-gradient(130deg, var(--gold-pale) 0%, var(--gold-bright) 35%, var(--gold) 65%, var(--gold-warm) 100%);
   --line-gold: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold-bright) 70%, transparent);
 
-  /* Nav offset — desktop default */
+  /* Nav offset — desktop default (inner padding below hero strip; page already has journal nav clearance) */
   --tv-nav-offset: calc(var(--nav-height, 62px) + env(safe-area-inset-top, 0px));
+  /* Extra gap between global navbar and this glass panel */
+  --tv-shell-page-gap: clamp(14px, 2.8vw, 28px);
 
   /* Overview / shared --aa-* chain */
   --aa-bg:           transparent;
@@ -75,6 +77,7 @@
   color: var(--text);
   font-family: 'Space Grotesk', sans-serif;
   box-sizing: border-box;
+  margin-top: var(--tv-shell-page-gap);
   padding-top: var(--tv-nav-offset);
   min-height: 100vh;
   animation: tvj-fadeIn 0.4s ease both;

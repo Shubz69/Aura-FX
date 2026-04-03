@@ -46,7 +46,10 @@ export function AuraConnectionProvider({ children }) {
       return 'Connection authentication failed. Please try again shortly.';
     }
     if (code === 'TERMINALSYNC_TIMEOUT') {
-      return 'Connection timed out. Please retry in a few moments.';
+      return 'Connection timed out. The MetaTrader bridge may be busy — wait a minute and try again, or verify your broker server name.';
+    }
+    if (err?.response?.status === 504) {
+      return 'Connection timed out before the server could finish. Please try again in a moment; if it keeps happening, check broker server spelling or try off-peak hours.';
     }
     if (code === 'TERMINALSYNC_WORKER_URL_INVALID') {
       return 'Connection configuration is invalid. Please contact support.';

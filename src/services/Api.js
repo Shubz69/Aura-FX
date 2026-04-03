@@ -780,7 +780,10 @@ const Api = {
         return axios.post(
             `${API_BASE_URL}/api/aura-analysis/platform-connect`,
             { platformId, credentials },
-            { headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
+            {
+                headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                timeout: 88000,
+            }
         );
     },
     disconnectAuraPlatform: (platformId) => {

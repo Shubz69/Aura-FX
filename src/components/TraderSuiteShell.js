@@ -26,55 +26,111 @@ export default function TraderSuiteShell({
   const embedInAuraDashboardReplay = /^\/aura-analysis\/dashboard\/trader-replay/.test(pathname);
   const skipOuterTheme = embedInTradeValidator || embedInAuraDashboardReplay;
 
-  const inner = (
-      <div className="trader-suite-page trader-suite-stack">
-        {variant === 'terminal' ? (
-          <section className="trader-suite-panel trader-suite-shell trader-suite-shell--terminal">
-            <div className="trader-suite-terminal-bar">
-              <div className="trader-suite-terminal-left">
-                {eyebrow || 'Aura Terminal'}
-                {terminalSubtitle ? (
-                  <div className="trader-suite-terminal-subtitle">{terminalSubtitle}</div>
-                ) : null}
-              </div>
-              <div className="trader-suite-terminal-title">
-                {terminalTitlePrefix ? (
-                  <span className="trader-suite-terminal-title-inner">
-                    {terminalTitlePrefix}
-                    <span className="trader-suite-terminal-title-text">{title}</span>
-                  </span>
-                ) : (
-                  title
-                )}
-              </div>
-              <div className="trader-suite-terminal-actions">
-                {primaryAction}
-                {secondaryActions}
-              </div>
+  const statToneClass = (tone) => {
+    if (tone === 'gold') return 'aura-db-replay-stat__value--gold';
+    if (tone === 'green') return 'aura-db-replay-stat__value--green';
+    return undefined;
+  };
+
+  const terminalChrome = (
+    <section className="trader-suite-panel trader-suite-shell trader-suite-shell--terminal">
+      <div className="trader-suite-terminal-bar">
+        <div className="trader-suite-terminal-left">
+          {eyebrow || 'Aura Terminal'}
+          {terminalSubtitle ? (
+            <div className="trader-suite-terminal-subtitle">{terminalSubtitle}</div>
+          ) : null}
+        </div>
+        <div className="trader-suite-terminal-title">
+          {terminalTitlePrefix ? (
+            <span className="trader-suite-terminal-title-inner">
+              {terminalTitlePrefix}
+              <span className="trader-suite-terminal-title-text">{title}</span>
+            </span>
+          ) : (
+            title
+          )}
+        </div>
+        <div className="trader-suite-terminal-actions">
+          {primaryAction}
+          {secondaryActions}
+        </div>
+      </div>
+      {stats.length ? (
+        <div className="trader-suite-terminal-stats">
+          {stats.map((stat) => (
+            <div className="trader-suite-terminal-stat" key={stat.label}>
+              <span>{stat.label}</span>
+              <strong
+                className={
+                  stat.tone === 'gold'
+                    ? 'trader-suite-terminal-stat__value--gold'
+                    : stat.tone === 'green'
+                      ? 'trader-suite-terminal-stat__value--green'
+                      : undefined
+                }
+              >
+                {stat.value}
+              </strong>
             </div>
-            {stats.length ? (
-              <div className="trader-suite-terminal-stats">
-                {stats.map((stat) => (
-                  <div className="trader-suite-terminal-stat" key={stat.label}>
-                    <span>{stat.label}</span>
-                    <strong
-                      className={
-                        stat.tone === 'gold'
-                          ? 'trader-suite-terminal-stat__value--gold'
-                          : stat.tone === 'green'
-                            ? 'trader-suite-terminal-stat__value--green'
-                            : undefined
-                      }
-                    >
-                      {stat.value}
-                    </strong>
-                  </div>
-                ))}
+          ))}
+        </div>
+      ) : null}
+      {description ? <p className="trader-suite-terminal-description">{description}</p> : null}
+      {children}
+    </section>
+  );
+
+  /** Aura dashboard: same page chrome as Overview / Performance — no nested Trader Suite glass panel */
+  const auraDashboardTerminal = (
+    <div className="aura-db-replay-page">
+      <header className="aura-db-replay-header">
+        <div className="aura-db-replay-header-top">
+          <div className="aura-db-replay-eyebrow">{eyebrow || 'Aura Terminal'}</div>
+          <h1 className="aura-db-replay-title">
+            {terminalTitlePrefix ? (
+              <span className="aura-db-replay-title-inner">
+                {terminalTitlePrefix}
+                <span className="aura-db-replay-title-text">{title}</span>
+              </span>
+            ) : (
+              title
+            )}
+          </h1>
+          <div className="aura-db-replay-actions">
+            {primaryAction}
+            {secondaryActions}
+          </div>
+        </div>
+        {terminalSubtitle ? (
+          <div className="aura-db-replay-subtitle">{terminalSubtitle}</div>
+        ) : null}
+        {stats.length ? (
+          <div className="aura-db-replay-stats">
+            {stats.map((stat) => (
+              <div className="aura-db-replay-stat" key={stat.label}>
+                <span>{stat.label}</span>
+                <strong className={statToneClass(stat.tone)}>{stat.value}</strong>
               </div>
-            ) : null}
-            {description ? <p className="trader-suite-terminal-description">{description}</p> : null}
-            {children}
-          </section>
+            ))}
+          </div>
+        ) : null}
+        {description ? <p className="aura-db-replay-desc">{description}</p> : null}
+      </header>
+      {children}
+    </div>
+  );
+
+  const inner = (
+      <div
+        className={
+          embedInAuraDashboardReplay
+            ? 'trader-suite-page trader-suite-stack trader-suite-page--aura-dashboard'
+            : 'trader-suite-page trader-suite-stack'
+        }
+      >
+        {variant === 'terminal' ? (
+          embedInAuraDashboardReplay ? auraDashboardTerminal : terminalChrome
         ) : (
           <section className="trader-suite-panel trader-suite-shell">
             <div className="trader-suite-shell-grid">

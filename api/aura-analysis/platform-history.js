@@ -298,7 +298,7 @@ async function fetchHistoryForPlatform(platformId, creds, days) {
         if (!result.ok) return { ok: false, error: result.error, code: result.code };
         const rawTrades = Array.isArray(result.trades) ? result.trades : [];
         if (isHistoryPipelineLogEnabled()) {
-          safeMtLog('history_pipeline_worker_rows', { platformId, workerRowCount: rawTrades.length });
+          safeMtLog('history_pipeline_worker_rows', { platformId, workerRowCount: rawTrades.length }, 'info');
         }
         const inputRows = rawTrades.length;
         const netPnlBreakdown = {
@@ -329,14 +329,35 @@ async function fetchHistoryForPlatform(platformId, creds, days) {
         }
         const windowed = filterTradesByDays(mapped, days);
         const trades = dedupeNormalizedTrades(windowed);
+        if (inputRows > 0 && mapped.length === 0) {
+          safeMtLog(
+            'history_pipeline_all_rows_discarded',
+            {
+              platformId,
+              inputRows,
+              discardedRows,
+            },
+            'warn',
+          );
+        } else if (inputRows > 0 && mapped.length > 0 && windowed.length === 0) {
+          safeMtLog(
+            'history_pipeline_day_window_empty',
+            { platformId, mappedBeforeWindow: mapped.length, days },
+            'info',
+          );
+        }
         if (isHistoryPipelineLogEnabled()) {
-          safeMtLog('history_pipeline_normalized', {
-            platformId,
-            mappedCount: mapped.length,
-            afterDayFilter: windowed.length,
-            afterDedupe: trades.length,
-            discardedRows,
-          });
+          safeMtLog(
+            'history_pipeline_normalized',
+            {
+              platformId,
+              mappedCount: mapped.length,
+              afterDayFilter: windowed.length,
+              afterDedupe: trades.length,
+              discardedRows,
+            },
+            'info',
+          );
         }
         let openCount = 0;
         let closedCount = 0;
@@ -495,12 +516,16 @@ module.exports = async (req, res) => {
   }
 
   if (isHistoryPipelineLogEnabled()) {
-    safeMtLog('history_pipeline_response', {
-      platformId,
-      returnedTradeCount: body.count,
-      days,
-      dataSource: body.dataSource,
-    });
+    safeMtLog(
+      'history_pipeline_response',
+      {
+        platformId,
+        returnedTradeCount: body.count,
+        days,
+        dataSource: body.dataSource,
+      },
+      'info',
+    );
   }
 
   return res.status(200).json(body);

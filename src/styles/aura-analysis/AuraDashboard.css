@@ -705,3 +705,169 @@ html {
 .aura-db-filterbar {
   pointer-events: auto;
 }
+
+/* ══════════════════════════════════════════════════════════
+   Trade Replay (TraderSuiteShell terminal) — align with other
+   dashboard routes: no nested Trader Suite “blue glass” shell
+   ══════════════════════════════════════════════════════════ */
+.journal-page .aura-dashboard .trader-suite-page--aura-dashboard {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 0 clamp(28px, 4vw, 44px);
+  gap: 0;
+}
+
+.aura-db-replay-page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2.2vw, 22px);
+}
+
+.aura-db-replay-header {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.aura-db-replay-header-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(12px, 2vw, 20px);
+}
+
+.aura-db-replay-eyebrow {
+  font-size: 0.88rem;
+  color: rgba(232, 235, 255, 0.86);
+  min-width: 0;
+}
+
+.aura-db-replay-title {
+  margin: 0;
+  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.25;
+  background: linear-gradient(
+    125deg,
+    #ffffff 0%,
+    rgba(252, 253, 255, 0.99) 28%,
+    rgba(200, 215, 255, 0.96) 58%,
+    rgba(212, 175, 55, 0.55) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.aura-db-replay-title-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.aura-db-replay-title-text {
+  color: rgba(212, 175, 55, 0.95);
+  -webkit-text-fill-color: rgba(212, 175, 55, 0.95);
+}
+
+.aura-db-replay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.aura-db-replay-actions .trader-suite-btn {
+  font-size: 0.72rem;
+}
+
+.aura-db-replay-subtitle {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(234, 169, 96, 0.78);
+  font-weight: 600;
+}
+
+.aura-db-replay-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.aura-db-replay-stat {
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  border-radius: 12px;
+  background: rgba(3, 5, 18, 0.42);
+  padding: 10px 12px;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.aura-db-replay-stat span {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.55);
+}
+
+.aura-db-replay-stat strong {
+  font-size: 0.92rem;
+  color: #fff;
+  font-weight: 600;
+}
+
+.aura-db-replay-stat__value--gold {
+  color: rgba(248, 195, 125, 0.95) !important;
+}
+
+.aura-db-replay-stat__value--green {
+  color: #64f3b0 !important;
+}
+
+.aura-db-replay-desc {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: rgba(200, 196, 232, 0.72);
+  max-width: 72ch;
+}
+
+@media (max-width: 960px) {
+  .aura-db-replay-header-top {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .aura-db-replay-title {
+    text-align: left;
+    justify-self: start;
+  }
+
+  .aura-db-replay-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .aura-db-replay-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .aura-db-replay-stats {
+    grid-template-columns: 1fr;
+  }
+}

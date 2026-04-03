@@ -15,7 +15,10 @@ const mt = require('./mtSyncProvider');
 async function performMt5Operation(operation, credentials, platformId = 'mt5', options = {}) {
   const trigger = options.trigger || 'api';
   if (operation === 'account_snapshot') {
-    const r = await mt.syncAccount(credentials, platformId);
+    const r = await mt.syncAccount(credentials, platformId, {
+      trigger,
+      requestId: options.requestId,
+    });
     return { ...r, trigger };
   }
   if (operation === 'positions') {

@@ -59,6 +59,9 @@
     "api/ai/chart-check.js": {
       "maxDuration": 300
     },
+    "api/aura-analysis/platform-connect.js": {
+      "maxDuration": 90
+    },
     "api/**/*.js": {
       "maxDuration": 60
     }

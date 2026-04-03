@@ -103,9 +103,10 @@ const PLATFORM_ICONS = {
   mt4: '📈',
 };
 
+/** Gold / amber accents only — matches Connection Hub cards (no purple/blue ring). */
 const PLATFORM_COLORS = {
-  mt5: '#8b5cf6',
-  mt4: '#6366f1',
+  mt5: 'rgba(248, 195, 125, 0.95)',
+  mt4: 'rgba(234, 169, 96, 0.88)',
 };
 
 /** Disconnected-card feature lines (MT4 & MT5). */
@@ -271,7 +272,7 @@ export default function ConnectionHub() {
                 className={`connection-card ${isConn ? 'connected' : ''}`}
                 onMouseEnter={() => setHoveredCard(p.id)}
                 onMouseLeave={() => setHoveredCard(null)}
-                style={{ '--platform-color': PLATFORM_COLORS[p.id] || '#8b5cf6' }}
+                style={{ '--platform-color': PLATFORM_COLORS[p.id] || 'rgba(248, 195, 125, 0.95)' }}
               >
                 <div className="connection-card-header">
                   <span className="connection-card-icon">{PLATFORM_ICONS[p.id] || '📊'}</span>

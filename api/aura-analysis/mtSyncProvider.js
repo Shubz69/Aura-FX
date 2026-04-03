@@ -32,6 +32,8 @@ const {
 const { MAX_HISTORY_LOOKBACK_DAYS } = require('./mtTradeNormalize');
 
 const DEFAULT_TIMEOUT_MS = 20000;
+/** Connection Hub validate — worker may need longer than default; avoid double-timeout retry (20s+20s). */
+const CONNECT_VALIDATE_TIMEOUT_MS = 48000;
 
 /** Client-facing codes — keep TERMINALSYNC_* strings for existing frontend error mapping. */
 const MT_SYNC_ERROR = {
@@ -201,7 +203,12 @@ function postJson(baseUrl, path, payload, workerSecret, timeoutMs = DEFAULT_TIME
     );
 
     req.on('error', (err) => {
-      safeMtLog('worker_transport_error', { code: err?.code || err?.name || 'error' });
+      const code = err?.code || err?.name || 'error';
+      // Transient network closes are common; retry may succeed — avoid warning noise in production logs.
+      const transient = ['ECONNRESET', 'ECONNABORTED', 'EPIPE', 'ECANCELED', 'ENETUNREACH'].includes(
+        String(code),
+      );
+      safeMtLog('worker_transport_error', { code }, transient ? 'info' : 'warn');
       resolve(syncFailure(
         MT_SYNC_ERROR.REQUEST_FAILED,
         'MetaTrader data service request failed',
@@ -226,10 +233,17 @@ async function postJsonWithRetry(
   workerSecret,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   requestId = null,
+  options = {},
 ) {
+  const { skipRetryOnTimeout = true } = options;
   let r = await postJson(baseUrl, path, payload, workerSecret, timeoutMs, requestId);
   if (r.ok || !r.transportRetryable) return r;
-  safeMtLog('worker_transport_retry', { path: String(path || '') });
+  /* Doubling 20s timeouts produced ~41s connects and 504s; retry transient sockets only. */
+  if (skipRetryOnTimeout && r.code === MT_SYNC_ERROR.TIMEOUT) {
+    delete r.transportRetryable;
+    return r;
+  }
+  safeMtLog('worker_transport_retry', { path: String(path || '') }, 'info');
   r = await postJson(baseUrl, path, payload, workerSecret, timeoutMs, requestId);
   if (r.transportRetryable) delete r.transportRetryable;
   return r;
@@ -296,6 +310,8 @@ function safeFiniteNumber(v, fallback = 0) {
  */
 async function syncAccount(credentials, platformId = 'mt5', options = {}) {
   const requestId = options.requestId || crypto.randomUUID();
+  const connectValidate = options.trigger === 'connect_validate';
+  const syncTimeoutMs = connectValidate ? CONNECT_VALIDATE_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
   const configStatus = getSyncConfigStatus();
   if (!configStatus.ok) {
     return syncFailure(
@@ -332,8 +348,10 @@ async function syncAccount(credentials, platformId = 'mt5', options = {}) {
   recordMt5SyncAttempt();
 
   const { baseUrl, workerSecret } = configStatus;
-  const servers =
+  const fullServerList =
     platformId === 'mt5' ? buildServerAttemptList(creds.server) : [String(creds.server)];
+  /* During connect, one attempt keeps total time under the serverless limit; user can retry with a different server. */
+  const servers = connectValidate ? fullServerList.slice(0, 1) : fullServerList;
 
   let lastResp = null;
   let usedServer = creds.server;
@@ -346,8 +364,9 @@ async function syncAccount(credentials, platformId = 'mt5', options = {}) {
       '/api/v1/sync',
       payload,
       workerSecret,
-      DEFAULT_TIMEOUT_MS,
+      syncTimeoutMs,
       requestId,
+      { skipRetryOnTimeout: true },
     );
     lastResp = response;
     if (response.ok) {
@@ -357,7 +376,7 @@ async function syncAccount(credentials, platformId = 'mt5', options = {}) {
     const wc = response.workerCode || '';
     const wm = `${response.workerMessage || ''} ${response.error || ''}`;
     if (i < servers.length - 1 && shouldAttemptServerFallback(wc, wm)) {
-      safeMtLog('mt5_server_fallback_attempt', { attempt: i + 1, workerCode: wc || null });
+      safeMtLog('mt5_server_fallback_attempt', { attempt: i + 1, workerCode: wc || null }, 'info');
       continue;
     }
     break;
@@ -480,7 +499,7 @@ async function getPositions(credentials, platformId = 'mt5', options = {}) {
     const wc = response.workerCode || '';
     const wm = `${response.workerMessage || ''} ${response.error || ''}`;
     if (i < servers.length - 1 && shouldAttemptServerFallback(wc, wm)) {
-      safeMtLog('mt5_positions_server_fallback', { attempt: i + 1, workerCode: wc || null });
+      safeMtLog('mt5_positions_server_fallback', { attempt: i + 1, workerCode: wc || null }, 'info');
       continue;
     }
     break;
@@ -502,7 +521,7 @@ async function getPositions(credentials, platformId = 'mt5', options = {}) {
 
   const { rows, warnings } = extractPositionsPayload(lastResp.data, platformId);
   if (isAuraDiagnosticsEnabled()) {
-    warnings.forEach((w) => console.warn('[mt-worker]', w));
+    warnings.forEach((w) => console.info('[mt-worker]', w));
   }
   return { ok: true, trades: rows, requestId };
 }
@@ -573,7 +592,7 @@ async function getDealHistory(credentials, platformId = 'mt5', options = {}) {
     const wc = response.workerCode || '';
     const wm = `${response.workerMessage || ''} ${response.error || ''}`;
     if (i < servers.length - 1 && shouldAttemptServerFallback(wc, wm)) {
-      safeMtLog('mt5_history_server_fallback', { attempt: i + 1, workerCode: wc || null });
+      safeMtLog('mt5_history_server_fallback', { attempt: i + 1, workerCode: wc || null }, 'info');
       continue;
     }
     break;
@@ -595,10 +614,10 @@ async function getDealHistory(credentials, platformId = 'mt5', options = {}) {
 
   const { rows, warnings } = extractPositionsPayload(lastResp.data, platformId);
   if (isAuraDiagnosticsEnabled()) {
-    warnings.forEach((w) => console.warn('[mt-worker]', w));
+    warnings.forEach((w) => console.info('[mt-worker]', w));
   }
   if (isAuraDiagnosticsEnabled() || String(process.env.AURA_HISTORY_PIPELINE_LOG || '').trim() === '1') {
-    safeMtLog('history_worker_extract', { platformId, rowCount: rows.length });
+    safeMtLog('history_worker_extract', { platformId, rowCount: rows.length }, 'info');
   }
   const out = { ok: true, trades: rows, requestId };
   if (rows.length === 0) {

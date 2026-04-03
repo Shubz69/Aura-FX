@@ -99,6 +99,12 @@ function extractPositionsPayload(parsedBody, platformId) {
     rows = data.deals;
   } else if (Array.isArray(data.history)) {
     rows = data.history;
+  } else if (Array.isArray(data.rows)) {
+    rows = data.rows;
+  } else if (Array.isArray(data.items)) {
+    rows = data.items;
+  } else if (Array.isArray(data.records)) {
+    rows = data.records;
   } else if (data.data != null) {
     const inner = data.data;
     if (Array.isArray(inner)) {
@@ -108,6 +114,9 @@ function extractPositionsPayload(parsedBody, platformId) {
       else if (Array.isArray(inner.positions)) rows = inner.positions;
       else if (Array.isArray(inner.deals)) rows = inner.deals;
       else if (Array.isArray(inner.history)) rows = inner.history;
+      else if (Array.isArray(inner.rows)) rows = inner.rows;
+      else if (Array.isArray(inner.items)) rows = inner.items;
+      else if (Array.isArray(inner.records)) rows = inner.records;
     }
   }
 
@@ -119,11 +128,34 @@ function extractPositionsPayload(parsedBody, platformId) {
   }
 
   const hint = summarizeEnvelopeKeys(parsedBody).join(',') || 'empty-keys';
+
   if (filtered.length === 0 && parsedBody && typeof parsedBody === 'object') {
-    if (isAuraDiagnosticsEnabled()) {
-      safeMtLog('positions_zero_rows', { envelopeHint: hint, platformId });
+    let payloadSample = '';
+    try {
+      payloadSample = JSON.stringify(parsedBody);
+      if (payloadSample.length > 120000) payloadSample = payloadSample.slice(0, 120000);
+    } catch (_) {
+      payloadSample = '';
     }
-    warnings.push('worker returned no trade/position rows (check worker mapping for this platform)');
+    /** Heuristic: response still contains typical deal/trade field names but we extracted 0 rows → mapping gap. */
+    const likelyTradePayload =
+      payloadSample.length > 0 &&
+      /"(symbol|Symbol|SYMBOL|volume|Volume|profit|Profit|deal|ticket|Ticket)"/i.test(payloadSample);
+
+    if (likelyTradePayload) {
+      safeMtLog(
+        'positions_envelope_unmapped',
+        { envelopeHint: hint, platformId, reason: 'trade_like_fields_but_zero_rows' },
+        'warn',
+      );
+      warnings.push(
+        'worker response looks like it contains deal/trade data under an unsupported JSON path — check worker envelope mapping',
+      );
+    } else {
+      if (isAuraDiagnosticsEnabled()) {
+        safeMtLog('positions_zero_rows', { envelopeHint: hint, platformId }, 'info');
+      }
+    }
   }
 
   return { rows: filtered, warnings, envelopeHint: hint };
