@@ -341,27 +341,52 @@
   padding-bottom: 0;
 }
 
-/* Biggest panel: frosted glass like Aura Analysis dashboard (cosmic bg shows through) */
+/*
+ * Trader Lab outer shell — match Aura Analysis dashboard glass (aura-dashboard.journal-glass-panel):
+ * same fill + border tokens as Journal.css, but softer rim/shadow so it reads as “blurred crystal”
+ * (full --journal-panel-outer-glow uses strong white rings that looked milky / “all white” here).
+ */
 .journal-page .trade-validator-shell.journal-glass-panel:has(.trader-lab-v2) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  background-image:
-    linear-gradient(
-      168deg,
-      rgba(4, 10, 32, 0.5) 0%,
-      rgba(3, 6, 22, 0.42) 45%,
-      rgba(2, 4, 14, 0.48) 100%
-    ),
-    var(--journal-panel-border) !important;
+  min-height: 0 !important;
+  /* Identical stack to .journal-page .journal-glass-panel (Aura dashboard big box) */
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
-  backdrop-filter: blur(36px) saturate(1.14) !important;
-  -webkit-backdrop-filter: blur(36px) saturate(1.14) !important;
-  box-shadow: var(--journal-panel-outer-glow);
-  /* Let the flex column fill the viewport instead of forcing a second vertical scroll via 100vh */
-  min-height: 0 !important;
+  /* Slightly stronger blur than base 12px so stars/cosmic diffuse through like crystal */
+  backdrop-filter: blur(22px) saturate(1.06) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.06) !important;
+  box-shadow:
+    0 22px 56px rgba(0, 0, 0, 0.58),
+    0 0 0 1px rgba(212, 175, 55, 0.14),
+    0 0 40px -14px rgba(55, 75, 150, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  isolation: isolate;
+  transform: translateZ(0);
+}
+
+/* Dim the stock rim highlights (bright white line + corner) — same structure as dashboard, less glare */
+.journal-page .trade-validator-shell.journal-glass-panel--rim:has(.trader-lab-v2)::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 175, 55, 0.28) 18%,
+    rgba(175, 195, 255, 0.22) 52%,
+    rgba(212, 175, 55, 0.18) 82%,
+    transparent 100%
+  ) !important;
+  opacity: 0.75;
+}
+
+.journal-page .trade-validator-shell.journal-glass-panel--rim:has(.trader-lab-v2)::after {
+  background: radial-gradient(
+    circle,
+    rgba(70, 95, 180, 0.14) 0%,
+    rgba(255, 255, 255, 0.02) 42%,
+    transparent 72%
+  ) !important;
 }
 
 .trade-validator-shell:has(.trader-lab-v2) .aura-shell-content {
@@ -371,21 +396,21 @@
   flex-direction: column;
 }
 
-/* Softer hero / tabs so one cohesive glass layer (not a second opaque “blue slab”) */
+/* Hero / tabs: dark navy tint only — no light grey wash (reads “white” on the glass) */
 .trade-validator-shell:has(.trader-lab-v2) .aura-shell-hero {
   background: linear-gradient(
     180deg,
-    rgba(14, 20, 48, 0.38) 0%,
-    rgba(6, 10, 26, 0.22) 60%,
+    rgba(4, 8, 22, 0.45) 0%,
+    rgba(3, 5, 14, 0.2) 55%,
     transparent 100%
   ) !important;
-  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+  border-bottom-color: rgba(212, 175, 55, 0.1) !important;
 }
 
 .trade-validator-shell:has(.trader-lab-v2) .aura-shell-tabs-wrap {
-  background: rgba(4, 8, 22, 0.52) !important;
-  backdrop-filter: blur(28px) saturate(1.1) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(1.1) !important;
+  background: rgba(3, 6, 18, 0.55) !important;
+  backdrop-filter: blur(20px) saturate(1.05) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.05) !important;
 }
 
 .journal-page .trade-validator-shell.journal-glass-panel--pad:has(.trader-lab-v2) {

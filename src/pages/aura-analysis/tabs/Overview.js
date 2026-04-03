@@ -10,6 +10,97 @@ import '../../../styles/aura-analysis/Overview.css';
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
+/** TradingView-style range toggles for the Trade Validator overview calendar */
+const CALENDAR_RANGE_OPTIONS = [
+  { id: '1D', label: '1D' },
+  { id: '1W', label: '1W' },
+  { id: '1M', label: '1M' },
+  { id: '3M', label: '3M' },
+  { id: '6M', label: '6M' },
+  { id: '1Y', label: '1Y' },
+  { id: 'ALL', label: 'ALL' },
+  { id: 'Custom', label: 'Custom' },
+];
+
+function startOfDayMs(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x.getTime();
+}
+
+function endOfDayMs(d) {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x.getTime();
+}
+
+/**
+ * @param {string} range
+ * @param {Date} viewDate — month shown in the calendar grid
+ * @returns {{ start: number | null, end: number | null }}
+ */
+function getCalendarRangeBounds(range, viewDate) {
+  const now = new Date();
+  const y = viewDate.getFullYear();
+  const m = viewDate.getMonth();
+  const lastDayOfMonth = new Date(y, m + 1, 0);
+
+  switch (range) {
+    case '1D': {
+      const d = new Date(now);
+      return { start: startOfDayMs(d), end: endOfDayMs(d) };
+    }
+    case '1W': {
+      const end = endOfDayMs(now);
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      start.setDate(start.getDate() - 6);
+      return { start: start.getTime(), end };
+    }
+    case '1M':
+      return {
+        start: startOfDayMs(new Date(y, m, 1)),
+        end: endOfDayMs(lastDayOfMonth),
+      };
+    case '3M':
+      return {
+        start: startOfDayMs(new Date(y, m - 2, 1)),
+        end: endOfDayMs(lastDayOfMonth),
+      };
+    case '6M':
+      return {
+        start: startOfDayMs(new Date(y, m - 5, 1)),
+        end: endOfDayMs(lastDayOfMonth),
+      };
+    case '1Y':
+      return {
+        start: startOfDayMs(new Date(y, m - 11, 1)),
+        end: endOfDayMs(lastDayOfMonth),
+      };
+    case 'ALL':
+    case 'Custom':
+      return { start: null, end: null };
+    default:
+      return {
+        start: startOfDayMs(new Date(y, m, 1)),
+        end: endOfDayMs(lastDayOfMonth),
+      };
+  }
+}
+
+function tradeTimestamp(t) {
+  const d = t.created_at || t.createdAt || t.date;
+  if (!d) return null;
+  const ms = new Date(d).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+function isTradeInRangeMs(ms, bounds) {
+  if (bounds.start == null || bounds.end == null) return true;
+  if (ms == null) return false;
+  return ms >= bounds.start && ms <= bounds.end;
+}
+
 function computeKpis(trades = [], pnlData = {}) {
   const totalTrades = trades.length;
   const wins = trades.filter((t) => (t.result || '').toLowerCase() === 'win' || (Number(t.pnl) || 0) > 0).length;
@@ -63,6 +154,8 @@ export default function Overview() {
   const [pnlData, setPnlData] = useState({});
   const [loading, setLoading] = useState(true);
   const [viewDate, setViewDate] = useState(() => new Date());
+  /** Calendar period filter (1D … Custom) — drives totals + day PnL in the grid */
+  const [calendarTimeRange, setCalendarTimeRange] = useState('1M');
   const [selectedDate, setSelectedDate] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
@@ -155,16 +248,21 @@ export default function Overview() {
   };
 
   const yearMonth = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}`;
-  const monthTrades = useMemo(
-    () =>
-      trades.filter((t) => {
-        const d = t.created_at || t.createdAt || t.date;
-        if (!d) return false;
-        const s = new Date(d).toISOString().slice(0, 7);
-        return s === yearMonth;
-      }),
-    [trades, yearMonth]
+
+  const calendarRangeBounds = useMemo(
+    () => getCalendarRangeBounds(calendarTimeRange, viewDate),
+    [calendarTimeRange, viewDate]
   );
+
+  const monthTrades = useMemo(() => {
+    return trades.filter((t) => {
+      const d = t.created_at || t.createdAt || t.date;
+      if (!d) return false;
+      const s = new Date(d).toISOString().slice(0, 7);
+      if (s !== yearMonth) return false;
+      return isTradeInRangeMs(tradeTimestamp(t), calendarRangeBounds);
+    });
+  }, [trades, yearMonth, calendarRangeBounds]);
   const monthWins = monthTrades.filter((t) => (Number(t.pnl) || 0) > 0).length;
   const monthLosses = monthTrades.filter((t) => (Number(t.pnl) || 0) < 0).length;
   const monthPnL = monthTrades.reduce((s, t) => s + (Number(t.pnl) || 0), 0);
@@ -223,9 +321,35 @@ export default function Overview() {
     return trades.filter((t) => {
       const d = t.created_at || t.createdAt || t.date;
       if (!d) return false;
-      return new Date(d).toISOString().slice(0, 10) === selectedDate;
+      if (new Date(d).toISOString().slice(0, 10) !== selectedDate) return false;
+      return isTradeInRangeMs(tradeTimestamp(t), calendarRangeBounds);
     });
-  }, [trades, selectedDate]);
+  }, [trades, selectedDate, calendarRangeBounds]);
+
+  const calendarPeriodLabel = useMemo(() => {
+    const mon = viewDate.toLocaleString('en-US', { month: 'long' }).toUpperCase();
+    const yr = viewDate.getFullYear();
+    switch (calendarTimeRange) {
+      case '1D':
+        return 'TODAY — PERIOD TOTAL';
+      case '1W':
+        return 'LAST 7 DAYS — PERIOD TOTAL';
+      case '1M':
+        return `${mon} ${yr} — MONTHLY TOTAL`;
+      case '3M':
+        return 'LAST 3 MONTHS — PERIOD TOTAL';
+      case '6M':
+        return 'LAST 6 MONTHS — PERIOD TOTAL';
+      case '1Y':
+        return 'LAST 12 MONTHS — PERIOD TOTAL';
+      case 'ALL':
+        return `${mon} ${yr} — ALL TRADES IN MONTH`;
+      case 'Custom':
+        return `${mon} ${yr} — PERIOD TOTAL`;
+      default:
+        return `${mon} ${yr} — MONTHLY TOTAL`;
+    }
+  }, [calendarTimeRange, viewDate]);
 
   if (accountsLoading || loading) {
     return (
@@ -418,12 +542,27 @@ export default function Overview() {
         </div>
       </div>
 
-      <section className="aura-overview-monthly">
+      <section className="aura-overview-monthly" aria-label="Trading calendar">
+        <div
+          className="aura-overview-cal-range-bar"
+          role="toolbar"
+          aria-label="Calendar time range"
+        >
+          {CALENDAR_RANGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              className={`aura-overview-cal-range-btn ${calendarTimeRange === opt.id ? 'aura-overview-cal-range-btn--active' : ''}`}
+              onClick={() => setCalendarTimeRange(opt.id)}
+              aria-pressed={calendarTimeRange === opt.id}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
         <div className="aura-overview-monthly-header">
           <div className="aura-overview-monthly-title-row">
-            <span className="aura-overview-monthly-label">
-              {viewDate.toLocaleString('en-US', { month: 'long' }).toUpperCase()} {viewDate.getFullYear()} — MONTHLY TOTAL
-            </span>
+            <span className="aura-overview-monthly-label">{calendarPeriodLabel}</span>
           </div>
           <div className="aura-overview-monthly-summary">
             <span className={`aura-overview-monthly-pnl ${monthPnL >= 0 ? 'aura-overview-kpi-value--green' : 'aura-overview-kpi-value--red'}`}>
