@@ -315,14 +315,44 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   TRADER LAB — full-width content rail (matches Aura Analysis dashboard)
-   #010008 + CosmicBackground; aa-card-style panels; no narrow 1200px column
+   TRADER LAB — true full width (~5px from viewport): journal-layout is 1320px
+   capped elsewhere; glass panel adds clamp padding — override both here.
    ═══════════════════════════════════════════════════════════════════════════ */
+.journal-page .journal-layout--terminal:has(.trader-lab-v2) {
+  max-width: none !important;
+  width: 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.journal-page .trade-validator-shell.journal-glass-panel--pad:has(.trader-lab-v2) {
+  padding-left: 5px !important;
+  padding-right: 5px !important;
+}
+
+.trade-validator-shell:has(.trader-lab-v2) .aura-shell-hero-inner.trade-validator-hero-inner {
+  max-width: none !important;
+}
+
+.trade-validator-shell:has(.trader-lab-v2) .aura-shell-hero {
+  padding-left: 5px !important;
+  padding-right: 5px !important;
+}
+
+.trade-validator-shell:has(.trader-lab-v2) .aura-shell-tabs-wrap {
+  padding-left: 5px !important;
+  padding-right: 5px !important;
+}
+
+.trade-validator-shell:has(.trader-lab-v2) .aura-shell-tabs-inner {
+  max-width: none !important;
+}
+
 .trade-validator-shell .aura-shell-content:has(.trader-lab-v2) {
   max-width: none !important;
-  width: calc(100% - 10px) !important;
-  margin-left: 5px !important;
-  margin-right: 5px !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
   padding-top: 10px !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
@@ -370,14 +400,20 @@
   border-right-color: rgba(212, 175, 55, 0.14) !important;
 }
 
-/* Dense grid — use horizontal space (~5px shell margin); fit viewport height better */
+/* Wider center column (chart); slightly tighter side rails */
 .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact {
   width: 100%;
-  grid-template-columns: minmax(210px, 0.92fr) minmax(0, 1.45fr) minmax(220px, 0.98fr) !important;
+  grid-template-columns: minmax(200px, 0.78fr) minmax(0, 1.92fr) minmax(200px, 0.85fr) !important;
   gap: 10px !important;
   padding: 6px 0 12px !important;
   min-height: 0 !important;
   align-content: start;
+}
+
+/* Larger chart placeholder area */
+.trade-validator-shell .trader-lab-v2 .tlab-chart-host--placeholder {
+  min-height: min(560px, 62vh) !important;
+  height: min(560px, 62vh) !important;
 }
 
 /* Match AuraShared `.aa-card` glass (dashboard outlet panels) */

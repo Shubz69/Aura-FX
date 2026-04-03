@@ -1875,8 +1875,8 @@
 }
 
 .journal-page .tlab-chart-host--placeholder {
-  min-height: min(320px, 36vh);
-  height: min(320px, 36vh);
+  min-height: min(560px, 62vh);
+  height: min(560px, 62vh);
   flex: 0 0 auto;
   display: flex;
   align-items: stretch;
