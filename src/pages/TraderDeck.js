@@ -201,7 +201,7 @@ export default function TraderDeck() {
               </button>
             </nav>
 
-            <h1 className="td-deck-page-title">Trader Desk</h1>
+            <h1 className="td-deck-page-title">TRADER DESK</h1>
 
             <nav className="td-deck-header-right">
               <button
@@ -236,37 +236,65 @@ export default function TraderDeck() {
 
           {/* Period Tabs + Sessions */}
           <div className="td-deck-below-header td-deck-period-stack">
-            <div className="td-deck-period-row-main">
+            <div
+              className={
+                mainTab === 'intelligence'
+                  ? 'td-deck-period-row-main td-deck-period-row--intel-three'
+                  : 'td-deck-period-row-main'
+              }
+            >
               {mainTab === 'intelligence' ? (
-                <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel" aria-label="Market Intelligence mode">
-                  <button
-                    type="button"
-                    className={`td-deck-sub-tab${intelMode === 'briefs' ? ' td-deck-sub-tab--active' : ''}`}
-                    onClick={() => setIntelMode('briefs')}
-                  >
-                    Briefs
-                  </button>
-                  <button
-                    type="button"
-                    className={`td-deck-sub-tab${intelMode === 'decoder' ? ' td-deck-sub-tab--active' : ''}`}
-                    onClick={() => setIntelMode('decoder')}
-                  >
-                    Market Decoder
-                  </button>
-                </nav>
+                <>
+                  <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-left" aria-label="Brief period">
+                    <button
+                      type="button"
+                      className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
+                      onClick={() => setSubTab('daily')}
+                    >
+                      DAILY
+                    </button>
+                    <button
+                      type="button"
+                      className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
+                      onClick={() => setSubTab('weekly')}
+                    >
+                      WEEKLY
+                    </button>
+                  </nav>
+                  <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-center" aria-label="Market intelligence format">
+                    <button
+                      type="button"
+                      className={`td-deck-sub-tab${intelMode === 'briefs' ? ' td-deck-sub-tab--active' : ''}`}
+                      onClick={() => setIntelMode('briefs')}
+                    >
+                      BRIEFS
+                    </button>
+                  </nav>
+                  <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-right" aria-label="Market decoder">
+                    <button
+                      type="button"
+                      className={`td-deck-sub-tab${intelMode === 'decoder' ? ' td-deck-sub-tab--active' : ''}`}
+                      onClick={() => setIntelMode('decoder')}
+                    >
+                      MARKET DECODER
+                    </button>
+                  </nav>
+                </>
               ) : (
                 <nav className="td-deck-sub-tabs">
                   <button
+                    type="button"
                     className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
                     onClick={() => setSubTab('daily')}
                   >
-                    Daily
+                    DAILY
                   </button>
                   <button
+                    type="button"
                     className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
                     onClick={() => setSubTab('weekly')}
                   >
-                    Weekly
+                    WEEKLY
                   </button>
                 </nav>
               )}

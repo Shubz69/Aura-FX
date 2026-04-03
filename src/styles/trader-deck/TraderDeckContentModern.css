@@ -194,6 +194,58 @@
   min-width: 0;
 }
 
+/* Market Intelligence: DAILY/WEEKLY (left) · BRIEFS (centre) · MARKET DECODER (right) */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main.td-deck-period-row--intel-three {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main .td-deck-sub-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-left {
+  justify-self: start;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-center {
+  justify-self: center;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-right {
+  justify-self: end;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main .td-deck-sub-tab {
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+@media (max-width: 640px) {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main.td-deck-period-row--intel-three {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-left,
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-center,
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-right {
+    justify-self: stretch;
+  }
+
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-left .td-deck-sub-tab,
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-center .td-deck-sub-tab,
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-right .td-deck-sub-tab {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}
+
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sessions-list--inline {
   flex: 1 1 92px;
   display: flex;
