@@ -25,10 +25,8 @@ const TABS = [
   { path: `${BASE}/leaderboard`,     label: 'Leaderboard' },
 ];
 
-const HERO_SUITE_LINKS = [
-  { path: `${BASE}/trader-lab`, label: 'Trader Lab' },
-  { path: `${BASE}/trader-playbook`, label: 'Trader Playbook' },
-];
+const HERO_TRADER_LAB = { path: `${BASE}/trader-lab`, label: 'Trader Lab' };
+const HERO_PLAYBOOK = { path: `${BASE}/trader-playbook`, label: 'Trader Playbook' };
 
 export default function TradeValidatorShell() {
   return (
@@ -37,23 +35,29 @@ export default function TradeValidatorShell() {
     <div className="aura-shell trade-validator-shell journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
       <header className="aura-shell-hero">
         <div className="aura-shell-hero-inner trade-validator-hero-inner">
-          <span className="trade-validator-hero-spacer" aria-hidden="true" />
+          <nav className="trade-validator-hero-suite trade-validator-hero-suite--left" aria-label="Trader Lab">
+            <NavLink
+              to={HERO_TRADER_LAB.path}
+              className={({ isActive }) =>
+                `trade-validator-hero-suite-link${isActive ? ' trade-validator-hero-suite-link--active' : ''}`
+              }
+            >
+              {HERO_TRADER_LAB.label}
+            </NavLink>
+          </nav>
           <div className="aura-shell-titles trade-validator-hero-titles">
             <h1 className="aura-shell-title">Trade Validator</h1>
             <p className="aura-shell-sub">Manual trade planning, validation and journaling tools</p>
           </div>
-          <nav className="trade-validator-hero-suite" aria-label="Trader Lab and Playbook">
-            {HERO_SUITE_LINKS.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) =>
-                  `trade-validator-hero-suite-link${isActive ? ' trade-validator-hero-suite-link--active' : ''}`
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
+          <nav className="trade-validator-hero-suite trade-validator-hero-suite--right" aria-label="Trader Playbook">
+            <NavLink
+              to={HERO_PLAYBOOK.path}
+              className={({ isActive }) =>
+                `trade-validator-hero-suite-link${isActive ? ' trade-validator-hero-suite-link--active' : ''}`
+              }
+            >
+              {HERO_PLAYBOOK.label}
+            </NavLink>
           </nav>
         </div>
       </header>
