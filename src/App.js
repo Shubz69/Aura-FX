@@ -331,6 +331,9 @@ function AppRoutes() {
                             <Route path="analytics" element={<AuraAnalytics />} />
                             <Route path="trader-cv" element={<TraderCVTab />} />
                             <Route path="leaderboard" element={<AuraLeaderboard />} />
+                            <Route path="trader-lab" element={<TraderLab />} />
+                            <Route path="trader-playbook" element={<TraderPlaybook />} />
+                            <Route path="trader-replay" element={<TraderReplay />} />
                         </Route>
                         <Route path="/reports" element={<AuthenticatedGuard><ReportsPage /></AuthenticatedGuard>} />
                         <Route path="/reports/dna" element={<AuthenticatedGuard><ReportsDnaPage /></AuthenticatedGuard>} />
@@ -339,9 +342,9 @@ function AppRoutes() {
                         <Route path="/reports/manual-metrics/processing" element={<AuthenticatedGuard><ManualMetricsProcessingPage /></AuthenticatedGuard>} />
                         <Route path="/reports/manual-metrics" element={<AuthenticatedGuard><ManualMetricsEntryPage /></AuthenticatedGuard>} />
                         <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />
-                        <Route path="/trader-lab" element={<AuthenticatedGuard><TraderLab /></AuthenticatedGuard>} />
-                        <Route path="/trader-replay" element={<AuthenticatedGuard><TraderReplay /></AuthenticatedGuard>} />
-                        <Route path="/trader-playbook" element={<AuthenticatedGuard><TraderPlaybook /></AuthenticatedGuard>} />
+                        <Route path="/trader-lab" element={<AuthenticatedGuard><Navigate to="/trader-deck/trade-validator/trader-lab" replace /></AuthenticatedGuard>} />
+                        <Route path="/trader-replay" element={<AuthenticatedGuard><Navigate to="/trader-deck/trade-validator/trader-replay" replace /></AuthenticatedGuard>} />
+                        <Route path="/trader-playbook" element={<AuthenticatedGuard><Navigate to="/trader-deck/trade-validator/trader-playbook" replace /></AuthenticatedGuard>} />
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
                         <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />
                         <Route path="/admin/inbox" element={<InboxGuard><AdminInbox /></InboxGuard>} />

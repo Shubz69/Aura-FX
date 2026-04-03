@@ -152,8 +152,8 @@ export default function TraderPlaybook() {
       secondaryActions={(
         <>
           <button type="button" className="trader-suite-btn" onClick={createNewSetup}>New setup</button>
-          <Link to="/trader-lab" className="trader-suite-btn">Use this setup in Trader Lab</Link>
-          <Link to="/trader-replay" className="trader-suite-btn">View linked Replay</Link>
+          <Link to="/trader-deck/trade-validator/trader-lab" className="trader-suite-btn">Use this setup in Trader Lab</Link>
+          <Link to="/trader-deck/trade-validator/trader-replay" className="trader-suite-btn">View linked Replay</Link>
         </>
       )}
     >

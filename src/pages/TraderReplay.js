@@ -150,8 +150,8 @@ export default function TraderReplay() {
       )}
       secondaryActions={(
         <>
-          <Link to="/trader-lab" className="trader-suite-btn">Open linked Lab session</Link>
-          <Link to="/trader-playbook" className="trader-suite-btn">Update Playbook from review</Link>
+          <Link to="/trader-deck/trade-validator/trader-lab" className="trader-suite-btn">Open linked Lab session</Link>
+          <Link to="/trader-deck/trade-validator/trader-playbook" className="trader-suite-btn">Update Playbook from review</Link>
         </>
       )}
     >

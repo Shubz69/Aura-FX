@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import AuraTerminalThemeShell from './AuraTerminalThemeShell';
 import '../styles/TraderSuite.css';
 
@@ -16,8 +17,10 @@ export default function TraderSuiteShell({
   variant,
   children,
 }) {
-  return (
-    <AuraTerminalThemeShell>
+  const { pathname } = useLocation();
+  const embedInTradeValidator = pathname.startsWith('/trader-deck/trade-validator');
+
+  const inner = (
       <div className="trader-suite-page trader-suite-stack">
         {variant === 'terminal' ? (
           <section className="trader-suite-panel trader-suite-shell trader-suite-shell--terminal">
@@ -107,6 +110,8 @@ export default function TraderSuiteShell({
 
         {variant === 'terminal' ? null : children}
       </div>
-    </AuraTerminalThemeShell>
   );
+
+  if (embedInTradeValidator) return inner;
+  return <AuraTerminalThemeShell>{inner}</AuraTerminalThemeShell>;
 }
