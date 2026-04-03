@@ -96,7 +96,7 @@ export default function MarketDecoderChart({ bars }) {
     return (
       <div className="md-chart-empty">
         <p className="md-decoder-small">
-          Not enough OHLC history to plot yet — decode again after price feeds return a longer daily series.
+          Not enough OHLC history to plot yet — run Decode again once more daily bars are available for this symbol.
         </p>
       </div>
     );

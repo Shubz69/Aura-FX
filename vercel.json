@@ -425,6 +425,10 @@
       "destination": "/api/admin/ai-debug.js"
     },
     {
+      "source": "/api/admin/market-decoder-diagnostics",
+      "destination": "/api/admin/market-decoder-diagnostics.js"
+    },
+    {
       "source": "/api/users/friends",
       "destination": "/api/users/friends.js"
     },

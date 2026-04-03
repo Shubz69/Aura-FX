@@ -95,7 +95,7 @@ export default function MarketIntelligenceDashboard({ embedded, mode = 'dashboar
         const saved = loadSaved();
         const todayStr = TODAY_STR();
         let data = saved || apiNormalized;
-        // Risk Radar: after midnight use fresh API (FMP) data; during the day use saved if same day
+        // Risk Radar: after midnight use fresh upstream data; during the day use saved if same day
         if (saved && saved.riskRadarDate && saved.riskRadarDate !== todayStr) {
           data = { ...data, riskRadar: apiNormalized.riskRadar || [], riskRadarDate: todayStr };
         } else if (saved && saved.riskRadar) {

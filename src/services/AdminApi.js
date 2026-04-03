@@ -171,7 +171,19 @@ const AdminApi = {
                 'Accept': 'application/json'
             }
         });
-    }
+    },
+
+    /** Admin-only Market Decoder feed diagnostics (same run as live decoder; includes internal provider log). */
+    getMarketDecoderDiagnostics: (symbol = 'EURUSD') => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/admin/market-decoder-diagnostics`, {
+            params: { symbol: String(symbol || 'EURUSD').trim() || 'EURUSD' },
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',
+            },
+        });
+    },
 };
 
 export default AdminApi; 

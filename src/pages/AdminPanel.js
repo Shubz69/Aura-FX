@@ -214,7 +214,7 @@ const AdminPanel = () => {
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: null, userEmail: null });
     const [channels, setChannels] = useState([]);
     const [channelsLoading, setChannelsLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('users'); // 'users' | 'channels' | 'brief-templates' | 'referral-payouts'
+    const [activeTab, setActiveTab] = useState('users'); // 'users' | 'channels' | 'referral-payouts' | 'market-decoder-feeds' | 'brief-templates'
     const [searchTerm, setSearchTerm] = useState(''); // Search filter for users
     const [accessModal, setAccessModal] = useState({
         open: false,
@@ -242,6 +242,10 @@ const AdminPanel = () => {
     const [recentReversals, setRecentReversals] = useState([]);
     const [reversalSourceFilter, setReversalSourceFilter] = useState('');
     const [reversalWindowDays, setReversalWindowDays] = useState('30');
+    const [feedDiagSymbol, setFeedDiagSymbol] = useState('EURUSD');
+    const [feedDiagLoading, setFeedDiagLoading] = useState(false);
+    const [feedDiagResult, setFeedDiagResult] = useState(null);
+    const [feedDiagErr, setFeedDiagErr] = useState(null);
 
     // Handle real-time online status updates from WebSocket
     const handleOnlineStatusUpdate = (data) => {
@@ -401,6 +405,21 @@ const AdminPanel = () => {
             setError(err?.response?.data?.message || `Failed to ${action} payout`);
         } finally {
             setPayoutActionBusyId(null);
+        }
+    };
+
+    const runFeedDiagnostics = async () => {
+        const sym = String(feedDiagSymbol || '').trim().toUpperCase() || 'EURUSD';
+        setFeedDiagLoading(true);
+        setFeedDiagErr(null);
+        setFeedDiagResult(null);
+        try {
+            const res = await AdminApi.getMarketDecoderDiagnostics(sym);
+            setFeedDiagResult(res.data);
+        } catch (err) {
+            setFeedDiagErr(err?.response?.data?.message || err.message || 'Diagnostics request failed');
+        } finally {
+            setFeedDiagLoading(false);
         }
     };
 
@@ -881,6 +900,12 @@ const AdminPanel = () => {
           >
             Referral payouts
           </button>
+          <button
+            className={`admin-tab-btn ${activeTab === 'market-decoder-feeds' ? 'active' : ''}`}
+            onClick={() => setActiveTab('market-decoder-feeds')}
+          >
+            Market Decoder feeds
+          </button>
           {isSuperAdminUser && briefToolsUnlocked && (
             <button
               className={`admin-tab-btn ${activeTab === 'brief-templates' ? 'active' : ''}`}
@@ -932,6 +957,11 @@ const AdminPanel = () => {
         {activeTab === 'brief-templates' && isSuperAdminUser && briefToolsUnlocked && (
           <div className="user-summary">
             <span>Manage daily/weekly AI brief structure</span>
+          </div>
+        )}
+        {activeTab === 'market-decoder-feeds' && (
+          <div className="user-summary">
+            <span>Internal feed diagnostics (admin only — not shown to traders)</span>
           </div>
         )}
       </div>
@@ -1281,6 +1311,94 @@ const AdminPanel = () => {
             </div>
           )}
         </>
+      )}
+
+      {activeTab === 'market-decoder-feeds' && (
+        <section className="admin-feed-diagnostics" style={{ padding: '0 1rem 2rem' }}>
+          <p className="brief-template-help" style={{ marginBottom: 16 }}>
+            Runs a live Market Decoder pass for the symbol below and returns provider-level status, rules-engine scores, and
+            mapping keys. Traders no longer see this on the public Market Decoder page.
+          </p>
+          <div className="search-container" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 20 }}>
+            <label htmlFor="feed-diag-symbol" className="ap-modal__label" style={{ margin: 0 }}>
+              Symbol
+            </label>
+            <input
+              id="feed-diag-symbol"
+              className="search-input"
+              style={{ maxWidth: 140 }}
+              value={feedDiagSymbol}
+              onChange={(e) => setFeedDiagSymbol(e.target.value.toUpperCase())}
+              placeholder="EURUSD"
+              autoComplete="off"
+            />
+            <button type="button" className="refresh-btn" onClick={runFeedDiagnostics} disabled={feedDiagLoading}>
+              {feedDiagLoading ? 'Running…' : 'Run diagnostics'}
+            </button>
+          </div>
+          {feedDiagErr && (
+            <div className="tdna-warn-banner tdna-warn-banner--strong" role="alert">
+              {feedDiagErr}
+            </div>
+          )}
+          {feedDiagResult?.success && (
+            <div style={{ marginTop: 16 }}>
+              <p style={{ margin: '0 0 8px', fontWeight: 600 }}>
+                {feedDiagResult.symbol}
+                {feedDiagResult.generatedAt ? (
+                  <span style={{ fontWeight: 400, opacity: 0.85, marginLeft: 8 }}>
+                    · {new Date(feedDiagResult.generatedAt).toLocaleString()}
+                  </span>
+                ) : null}
+              </p>
+              {feedDiagResult.rulesEngine && (
+                <p className="md-decoder-small" style={{ margin: '0 0 12px' }}>
+                  Rules engine: bull {feedDiagResult.rulesEngine.bullScore ?? '—'} · bear{' '}
+                  {feedDiagResult.rulesEngine.bearScore ?? '—'} · net {feedDiagResult.rulesEngine.netScore ?? '—'}
+                </p>
+              )}
+              {(feedDiagResult.internalSymbolKey || feedDiagResult.canonicalSymbol) && (
+                <p className="md-decoder-small" style={{ margin: '0 0 12px', opacity: 0.9 }}>
+                  {feedDiagResult.canonicalSymbol ? <>Canonical: {feedDiagResult.canonicalSymbol}</> : null}
+                  {feedDiagResult.internalSymbolKey ? (
+                    <>
+                      {feedDiagResult.canonicalSymbol ? ' · ' : null}
+                      Internal quote key: {feedDiagResult.internalSymbolKey}
+                    </>
+                  ) : null}
+                </p>
+              )}
+              {feedDiagResult.dataHealth?.summary && (
+                <p style={{ margin: '0 0 8px' }}>
+                  <strong>Summary:</strong> {feedDiagResult.dataHealth.summary}
+                  {feedDiagResult.dataHealth.sparseSeries ? ' · Sparse series mode' : ''}
+                </p>
+              )}
+              {Array.isArray(feedDiagResult.dataHealth?.providerLog) && feedDiagResult.dataHealth.providerLog.length > 0 ? (
+                <table className="admin-feed-diagnostics__table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: 12 }}>
+                  <thead>
+                    <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+                      <th style={{ padding: '8px 6px' }}>Feed step</th>
+                      <th style={{ padding: '8px 6px' }}>Status</th>
+                      <th style={{ padding: '8px 6px' }}>Detail</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {feedDiagResult.dataHealth.providerLog.map((p, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                        <td style={{ padding: '8px 6px', verticalAlign: 'top' }}>{p.name || '—'}</td>
+                        <td style={{ padding: '8px 6px', verticalAlign: 'top' }}>{p.status || '—'}</td>
+                        <td style={{ padding: '8px 6px', verticalAlign: 'top', wordBreak: 'break-word' }}>{p.detail || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                !feedDiagErr && <p className="md-decoder-small">No provider log entries returned.</p>
+              )}
+            </div>
+          )}
+        </section>
       )}
 
       {activeTab === 'brief-templates' && isSuperAdminUser && briefToolsUnlocked && (

@@ -1,7 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Api from '../../services/Api';
-import { useAuth } from '../../context/AuthContext';
-import { isSuperAdmin } from '../../utils/roles';
 import MarketDecoderChart from './MarketDecoderChart';
 import '../../styles/trader-deck/MarketDecoder.css';
 
@@ -121,8 +119,6 @@ const DECODER_FLOW = [
 ];
 
 export default function MarketDecoderView({ embedded }) {
-  const { user } = useAuth();
-  const isSuperAdminUser = isSuperAdmin(user);
   const [q, setQ] = useState('EURUSD');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -408,30 +404,13 @@ export default function MarketDecoderView({ embedded }) {
                   Price action
                 </h3>
                 <p className="md-chart-lede md-decoder-small">
-                  Daily OHLC from the same series as the brief, with quick mode switching so the market structure is easier to read.
+                  Daily OHLC aligned with this brief, with quick mode switching so the market structure is easier to read.
                 </p>
               </div>
-              <span className="md-chart-badge">Same source as brief</span>
+              <span className="md-chart-badge">Aligned with brief</span>
             </div>
             <MarketDecoderChart bars={brief.meta?.chartBars} />
           </section>
-
-          {isSuperAdminUser && brief.meta?.dataHealth && (
-            <div className="md-data-health" role="status">
-              <strong>Feed status:</strong> {brief.meta.dataHealth.summary}
-              {brief.meta.dataHealth.sparseSeries ? ' · Sparse series mode (quote-derived proxy)' : ''}
-              {Array.isArray(brief.meta.dataHealth.providerLog) && brief.meta.dataHealth.providerLog.length > 0 && (
-                <ul className="md-data-health-list">
-                  {brief.meta.dataHealth.providerLog.map((p, i) => (
-                    <li key={i}>
-                      {p.name}: <span className={`md-ph md-ph--${p.status}`}>{p.status}</span>
-                      {p.detail ? ` — ${p.detail}` : ''}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
 
           <div className="md-decoder-workspace">
             <div className="md-decoder-primary">
@@ -609,12 +588,6 @@ export default function MarketDecoderView({ embedded }) {
                   <p className="md-decoder-posture-detail-key">What would change this</p>
                   <p className="md-decoder-posture-detail-val">→ {brief.finalOutput.whatWouldChangeThis ?? '—'}</p>
                 </div>
-                {brief.meta && isSuperAdminUser && (
-                  <p className="md-decoder-small md-decoder-rules-debug" style={{ textAlign: 'center', marginTop: 14 }}>
-                    Rules engine: bull {brief.meta.bullScore} · bear {brief.meta.bearScore} · net {brief.meta.netScore}
-                    {brief.meta.finnhubSymbol ? ` · ${brief.meta.finnhubSymbol}` : ''}
-                  </p>
-                )}
               </section>
 
               <section className="md-decoder-card" aria-labelledby="md-h-ev">
