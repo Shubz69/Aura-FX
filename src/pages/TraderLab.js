@@ -6,14 +6,15 @@ import TradingViewWidgetEmbed from '../components/TradingViewWidgetEmbed';
 import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
 import { formatWelcomeEyebrow, getUserFirstName } from '../utils/welcomeUser';
+import { FaPen } from 'react-icons/fa';
 import {
-  MISTAKE_TAG_OPTIONS,
   PLAYBOOK_SETUP_OPTIONS,
   buildBehaviourSummary,
   buildValidator,
   calculateRiskAmount,
   calculatePositionSizeUnits,
   calculateRiskReward,
+  formatPositionLots,
   safeNumber,
   toYmd,
 } from '../utils/traderSuite';
@@ -33,23 +34,30 @@ const CHART_INTERVALS = [
   { label: '1D', value: '1D' },
 ];
 
+/** Footer checklist — label + hint line (matches reference layout) */
+const TRADER_LAB_CHECKLIST_ROWS = [
+  { key: 'biasAligned', label: 'Bias aligned', hint: 'Higher-timeframe bias supports the trade idea.' },
+  { key: 'setupValid', label: 'Setup valid', hint: 'Playbook criteria are clearly present on the chart.' },
+  { key: 'entryConfirmed', label: 'Confirmation', hint: 'Trigger and confirmation are satisfied.' },
+  { key: 'riskDefined', label: 'Risk defined', hint: 'Stop placement and position size are explicit.' },
+];
+
 const DEFAULT_FORM = {
   sessionDate: toYmd(),
   chartSymbol: 'OANDA:XAUUSD',
-  accountSize: 50000,
+  accountSize: 100000,
   marketBias: 'Bullish',
   marketState: 'Trending',
   auraConfidence: 72,
-  todaysFocus: 'U.S./China|Neutral\nEurope|Positive\nMiddle East|Negative',
+  todaysFocus: 'U.S. / China|Neutral\nEurope|Positive\nMiddle East|Negative',
   sessionGoal: 'Hold discipline on continuation entries; max 2 quality trades.',
   maxTradesAllowed: 3,
   whatDoISee:
-    '• Liquidity build above prior swing high\n• Dollar index rolling over intraday\n• Volatility expanding in NY session',
-  setupName: 'Trend Pullback Continuation',
-  whyValid:
-    '• GDP prints stable vs expectations\n• Inflation trajectory cooling in core basket\n• Sector strength in metals and energy',
+    'Strong U.S. economic data supporting risk tone\nInstitutional inflows into metals\nDXY softening into NY close',
+  setupName: 'London Breakout',
+  whyValid: 'GDP Growth: 3.2% YoY\nInflation cooling: 2.9% → 2.4%\nSector strength in metals and energy',
   entryConfirmation:
-    'Plan: scale in after bullish rejection on 1H. Target prior liquidity high. Stop below structure. Review after London fix.',
+    'Price respected the ascending channel. Wait for a bullish 1H close above local structure before scaling. Invalidation on acceptance back inside the range.',
   confidence: 72,
   riskLevel: 'Medium',
   entryPrice: 2235,
@@ -88,6 +96,13 @@ function normalizeSession(session = {}) {
   };
 }
 
+function linesToList(text) {
+  return String(text || '')
+    .split(/\n/)
+    .map((l) => l.replace(/^[•\-\*]\s*/, '').trim())
+    .filter(Boolean);
+}
+
 function parseGeopoliticalBlock(text) {
   const lines = String(text || '')
     .split(/\n/)
@@ -103,11 +118,19 @@ function parseGeopoliticalBlock(text) {
   });
 }
 
-function sentimentClass(s) {
+function sentimentPillClass(s) {
   const x = String(s).toLowerCase();
-  if (x.includes('positive') || x.includes('bull')) return 'tlab-sent--pos';
-  if (x.includes('negative') || x.includes('bear')) return 'tlab-sent--neg';
-  return 'tlab-sent--mid';
+  if (x.includes('positive') || x.includes('improv') || x.includes('bull')) return 'tlab-geo-pill tlab-geo-pill--pos';
+  if (x.includes('negative') || x.includes('bear')) return 'tlab-geo-pill tlab-geo-pill--neg';
+  return 'tlab-geo-pill tlab-geo-pill--mid';
+}
+
+function BiasPill({ bias }) {
+  const b = String(bias || '').toLowerCase();
+  let cls = 'tlab-pill-bias tlab-pill-bias--neutral';
+  if (b.includes('bull')) cls = 'tlab-pill-bias tlab-pill-bias--bull';
+  if (b.includes('bear')) cls = 'tlab-pill-bias tlab-pill-bias--bear';
+  return <span className={cls}>{String(bias || '—').toUpperCase()}</span>;
 }
 
 export default function TraderLab() {
@@ -170,48 +193,52 @@ export default function TraderLab() {
     [form.accountSize, form.riskPercent, form.entryPrice, form.stopLoss]
   );
 
+  const positionLotsLabel = useMemo(
+    () => formatPositionLots(form.chartSymbol, positionUnits),
+    [form.chartSymbol, positionUnits]
+  );
+
   const validator = useMemo(() => buildValidator(form), [form]);
   const behaviour = useMemo(() => buildBehaviourSummary(form), [form]);
   const rrOk = rr >= 1;
 
-  const tradeValidatorRows = useMemo(
-    () => [
-      { label: 'Trend alignment', ok: form.biasAligned },
-      { label: 'Risk / reward', ok: rrOk },
-      { label: 'Setup valid', ok: form.setupValid },
-      { label: 'Confirmation', ok: form.entryConfirmed },
-    ],
-    [form.biasAligned, form.setupValid, form.entryConfirmed, rrOk]
-  );
+  const tradeValidatorRows = useMemo(() => {
+    const rrStatus = rr >= 2 ? 'OPTIMAL' : rr >= 1 ? 'OK' : 'WEAK';
+    const conflictStatus = form.setupValid && form.riskDefined ? 'CLEAR' : 'REVIEW';
+    return [
+      { label: 'Trend alignment', status: form.biasAligned ? 'YES' : 'NO', ok: form.biasAligned },
+      { label: 'Risk / reward', status: rrStatus, ok: rr >= 1 },
+      { label: 'Entry confirmation', status: form.entryConfirmed ? 'VALID' : 'PENDING', ok: form.entryConfirmed },
+      { label: 'No major conflicts', status: conflictStatus, ok: form.setupValid && form.riskDefined },
+    ];
+  }, [form.biasAligned, form.setupValid, form.riskDefined, form.entryConfirmed, rr]);
 
   const validatorPanelOk = tradeValidatorRows.every((r) => r.ok);
 
   const stats = useMemo(
     () => [
-      { label: 'Market State', value: form.marketState },
+      { label: 'Market State', value: form.marketState || '—', tone: 'gold' },
       { label: 'Confidence', value: `${form.auraConfidence}%` },
-      { label: 'Bias', value: form.marketBias },
+      {
+        label: 'Bias',
+        value: form.marketBias,
+        tone: /bull/i.test(String(form.marketBias || '')) ? 'green' : undefined,
+      },
     ],
     [form.auraConfidence, form.marketBias, form.marketState]
   );
 
   const geoRows = useMemo(() => parseGeopoliticalBlock(form.todaysFocus), [form.todaysFocus]);
+  const driverLines = useMemo(() => linesToList(form.whatDoISee), [form.whatDoISee]);
+  const fundamentalLines = useMemo(() => linesToList(form.whyValid), [form.whyValid]);
 
   const newsRiskLabel = form.emotionalIntensity >= 55 ? 'Moderate' : 'Low';
   const volLabel =
     form.riskLevel === 'High' ? 'High' : form.riskLevel === 'Low' ? 'Low' : 'Moderate';
+  const eventRiskLabel = form.emotionalIntensity >= 40 ? 'Moderate' : 'Low';
 
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const toggleMistakeTag = (tag) => {
-    setForm((prev) => ({
-      ...prev,
-      mistakeTags: prev.mistakeTags.includes(tag)
-        ? prev.mistakeTags.filter((item) => item !== tag)
-        : [...prev.mistakeTags, tag],
-    }));
   };
 
   const saveSession = async () => {
@@ -262,6 +289,12 @@ export default function TraderLab() {
     <TraderSuiteShell
       variant="terminal"
       eyebrow={welcomeEyebrow}
+      terminalSubtitle="Focus. Execute. Profit."
+      terminalTitlePrefix={
+        <svg className="trader-suite-terminal-logo" width="22" height="22" viewBox="0 0 24 24" aria-hidden>
+          <path fill="currentColor" d="M12 2 22 20H2z" />
+        </svg>
+      }
       title="AURA TERMINAL — TRADER LAB"
       description={null}
       stats={stats}
@@ -287,15 +320,18 @@ export default function TraderLab() {
       {loading ? <div className="trader-suite-empty">Loading lab sessions...</div> : null}
 
       {!loading ? (
-        <div className="trader-lab-v2">
-          {/* Left column */}
+        <div className="trader-lab-v2 trader-lab-v2--gold">
           <aside className="trader-lab-v2__left">
-            <div className="tlab-card">
+            <div className="tlab-card tlab-card--gold">
               <h3 className="tlab-card__title">Market context</h3>
+              <div className="tlab-pill-row">
+                <BiasPill bias={form.marketBias} />
+                <span className="tlab-pill-confidence">{form.auraConfidence}%</span>
+              </div>
               <div className="tlab-field" style={{ marginBottom: 8 }}>
                 <label>Bias</label>
                 <select className="tlab-select" value={form.marketBias} onChange={(e) => updateField('marketBias', e.target.value)}>
-                  {['Bullish', 'Bearish', 'Neutral'].map((s) => (
+                  {['Bullish', 'Bearish', 'Neutral', 'Bullish intraday'].map((s) => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
@@ -325,27 +361,37 @@ export default function TraderLab() {
                 </select>
               </div>
               <div className="tlab-card__sub">Key drivers</div>
+              <ul className="tlab-ref-bullets">
+                {driverLines.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
               <textarea
                 className="tlab-textarea tlab-textarea--tight"
                 value={form.whatDoISee}
                 onChange={(e) => updateField('whatDoISee', e.target.value)}
-                placeholder="One bullet per line (what you see)..."
+                placeholder="One line per driver..."
                 aria-label="Key drivers"
               />
             </div>
 
-            <div className="tlab-card">
+            <div className="tlab-card tlab-card--gold">
               <h3 className="tlab-card__title">Fundamental backing</h3>
+              <ul className="tlab-ref-bullets">
+                {fundamentalLines.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
               <textarea
                 className="tlab-textarea tlab-textarea--tight"
                 value={form.whyValid}
                 onChange={(e) => updateField('whyValid', e.target.value)}
-                placeholder="One bullet per line..."
+                placeholder="One line per fundamental point..."
                 aria-label="Fundamental backing"
               />
             </div>
 
-            <div className="tlab-card">
+            <div className="tlab-card tlab-card--gold">
               <h3 className="tlab-card__title">Geopolitical backing</h3>
               <p className="tlab-hint">Region | Sentiment (one per line)</p>
               <div className="tlab-table-wrap">
@@ -360,7 +406,11 @@ export default function TraderLab() {
                     {geoRows.map((row) => (
                       <tr key={row.region}>
                         <td>{row.region}</td>
-                        <td><span className={sentimentClass(row.sentiment)}>{row.sentiment}</span></td>
+                        <td>
+                          <span className={sentimentPillClass(row.sentiment)}>
+                            {String(row.sentiment).toUpperCase()}
+                          </span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -374,7 +424,7 @@ export default function TraderLab() {
               />
             </div>
 
-            <div className="tlab-card">
+            <div className="tlab-card tlab-card--gold">
               <h3 className="tlab-card__title">Risk radar</h3>
               <table className="tlab-table tlab-table--compact">
                 <tbody>
@@ -387,17 +437,16 @@ export default function TraderLab() {
                     <td><span className="tlab-pill tlab-pill--ok">{newsRiskLabel}</span></td>
                   </tr>
                   <tr>
-                    <td>Session risk</td>
-                    <td><span className="tlab-pill">{form.riskLevel}</span></td>
+                    <td>Event risk</td>
+                    <td><span className="tlab-pill tlab-pill--ok">{eventRiskLabel}</span></td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </aside>
 
-          {/* Center */}
           <div className="trader-lab-v2__center">
-            <div className="tlab-card tlab-card--chart">
+            <div className="tlab-card tlab-card--chart tlab-card--gold">
               <div className="tlab-chart-toolbar">
                 <div className="tlab-session-tabs">
                   {sessions.slice(0, 6).map((session) => (
@@ -443,7 +492,12 @@ export default function TraderLab() {
                 </div>
               </div>
               <div className="tlab-chart-host">
-                <TradingViewWidgetEmbed symbol={form.chartSymbol} interval={chartInterval} height={480} studies={[]} />
+                <TradingViewWidgetEmbed symbol={form.chartSymbol} interval={chartInterval} height={520} studies={[]} />
+                <div className="tlab-chart-line-overlay" aria-hidden="true">
+                  <span className="tlab-chart-line tlab-chart-line--tp" />
+                  <span className="tlab-chart-line tlab-chart-line--entry" />
+                  <span className="tlab-chart-line tlab-chart-line--sl" />
+                </div>
               </div>
               <div className="tlab-level-strip">
                 <div>
@@ -460,34 +514,10 @@ export default function TraderLab() {
                 </div>
               </div>
             </div>
-
-            <div className="tlab-card">
-              <div className="tlab-exec-head">
-                <h3 className="tlab-card__title">Execution notes</h3>
-                <span className="tlab-exec-meta">
-                  Last updated:{' '}
-                  {lastSavedAt
-                    ? new Date(lastSavedAt).toLocaleString()
-                    : '—'}
-                </span>
-              </div>
-              <textarea
-                className="tlab-textarea tlab-textarea--exec"
-                value={form.entryConfirmation}
-                onChange={(e) => updateField('entryConfirmation', e.target.value)}
-                placeholder="Plan, invalidation, and execution notes..."
-              />
-              <div className="tlab-exec-actions">
-                <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={saveSession} disabled={saving}>
-                  Save notes
-                </button>
-              </div>
-            </div>
           </div>
 
-          {/* Right */}
           <aside className="trader-lab-v2__right">
-            <div className="tlab-card">
+            <div className="tlab-card tlab-card--gold">
               <h3 className="tlab-card__title">Trade plan builder</h3>
               <div className="tlab-field">
                 <label>Instrument</label>
@@ -539,7 +569,7 @@ export default function TraderLab() {
                   />
                 </div>
                 <div className="tlab-field tlab-field--span">
-                  <label>Account size</label>
+                  <label>Account size (USD)</label>
                   <input
                     className="tlab-input"
                     type="number"
@@ -559,7 +589,9 @@ export default function TraderLab() {
               </div>
               <div className="tlab-rr-big">
                 <span className="tlab-rr-label">R∶R ratio</span>
-                <span className="tlab-rr-value">1 ∶ {Number.isFinite(rr) && rr > 0 ? rr.toFixed(2) : '—'}</span>
+                <span className="tlab-rr-value">
+                  1 : {Number.isFinite(rr) && rr > 0 ? rr.toFixed(2) : '—'}
+                </span>
               </div>
               <div className="tlab-metric-row">
                 <span>Risk amount</span>
@@ -571,23 +603,23 @@ export default function TraderLab() {
               </div>
               <div className="tlab-metric-row">
                 <span>Position size (approx.)</span>
-                <strong>{positionUnits > 0 ? positionUnits.toFixed(4) : '—'}</strong>
+                <strong>{positionLotsLabel}</strong>
               </div>
             </div>
 
-            <div className={`tlab-card tlab-card--validator${validatorPanelOk ? ' tlab-card--validator-pass' : ''}`}>
+            <div className={`tlab-card tlab-card--gold tlab-card--validator${validatorPanelOk ? ' tlab-card--validator-pass' : ''}`}>
               <div className="tlab-validator-banner">{validatorPanelOk ? '✓ TRADE VALID' : 'CHECKLIST'}</div>
-              <ul className="tlab-validator-list">
+              <ul className="tlab-validator-list tlab-validator-list--status">
                 {tradeValidatorRows.map((row) => (
                   <li key={row.label}>
-                    <span className={row.ok ? 'tlab-check tlab-check--ok' : 'tlab-check tlab-check--no'}>{row.ok ? '✓' : '○'}</span>
-                    {row.label}
+                    <span className="tlab-vlabel">{row.label}</span>
+                    <span className={row.ok ? 'tlab-vstatus tlab-vstatus--ok' : 'tlab-vstatus'}>{row.status}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="tlab-card">
+            <div className="tlab-card tlab-card--gold">
               <h3 className="tlab-card__title">Behaviour pre-check</h3>
               <div className="tlab-beh-row">
                 <span>Discipline</span>
@@ -605,58 +637,67 @@ export default function TraderLab() {
               </div>
             </div>
 
-            <div className="tlab-card tlab-card--muted">
-              <h3 className="tlab-card__title">Session goal</h3>
-              <textarea className="tlab-textarea tlab-textarea--tight" value={form.sessionGoal} onChange={(e) => updateField('sessionGoal', e.target.value)} />
-              <h3 className="tlab-card__title" style={{ marginTop: 12 }}>Mistake tags</h3>
-              <div className="trader-suite-tag-row">
-                {MISTAKE_TAG_OPTIONS.map((tag) => (
-                  <label key={tag} className="trader-suite-tag">
-                    <input type="checkbox" checked={form.mistakeTags.includes(tag)} onChange={() => toggleMistakeTag(tag)} />
-                    <span>{tag}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
           </aside>
 
-          {/* Bottom bar */}
-          <footer className="trader-lab-v2__footer">
-            <div className="tlab-footer-checks">
-              {[
-                ['Bias aligned', 'biasAligned'],
-                ['Setup valid', 'setupValid'],
-                ['Confirmation', 'entryConfirmed'],
-                ['Risk defined', 'riskDefined'],
-              ].map(([label, key]) => (
-                <label key={key} className="tlab-footer-check">
-                  <input type="checkbox" checked={Boolean(form[key])} onChange={(e) => updateField(key, e.target.checked)} />
-                  <span className={form[key] ? 'tlab-fc-icon tlab-fc-icon--ok' : 'tlab-fc-icon'}>{form[key] ? '✓' : ''}</span>
-                  <span>
-                    <strong>{label}</strong>
-                    <small>
-                      {key === 'biasAligned' && 'Direction matches your read'}
-                      {key === 'setupValid' && 'Playbook criteria met'}
-                      {key === 'entryConfirmed' && 'Trigger and timeframe agree'}
-                      {key === 'riskDefined' && 'Stop and size defined'}
-                    </small>
+          <footer className="trader-lab-v2__footer trader-lab-v2__footer--trio">
+            <div className="tlab-bottom-trio">
+              <div className="tlab-card tlab-card--gold tlab-card--exec">
+                <div className="tlab-exec-head">
+                  <h3 className="tlab-card__title">Execution notes</h3>
+                  <span className="tlab-exec-edit-icon" title="Edit notes" aria-hidden>
+                    <FaPen />
                   </span>
-                </label>
-              ))}
-            </div>
-            <div className="tlab-footer-cta">
-              <button
-                type="button"
-                className="tlab-btn-execute"
-                disabled={!readyToExecute}
-                onClick={() => {
-                  saveSession();
-                  toast.success('Ready to execute — lab saved.');
-                }}
-              >
-                <span className="tlab-btn-execute__ring">✓</span>
-                Ready to execute
-              </button>
+                </div>
+                <textarea
+                  className="tlab-textarea tlab-textarea--exec"
+                  value={form.entryConfirmation}
+                  onChange={(e) => updateField('entryConfirmation', e.target.value)}
+                  placeholder="Execution plan, invalidation, and notes..."
+                />
+                <div className="tlab-exec-foot">
+                  <span className="tlab-exec-meta">
+                    Last updated: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}
+                  </span>
+                  <button type="button" className="tlab-btn-save-notes" onClick={saveSession} disabled={saving}>
+                    {saving ? 'SAVING...' : 'SAVE NOTES'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="tlab-card tlab-card--gold tlab-card--checklist-mid">
+                <h3 className="tlab-card__title">Checklist</h3>
+                <div className="tlab-checklist-mid" role="group" aria-label="Pre-trade checklist">
+                  {TRADER_LAB_CHECKLIST_ROWS.map((row) => (
+                    <label key={row.key} className="tlab-checklist-mid__row">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(form[row.key])}
+                        onChange={(e) => updateField(row.key, e.target.checked)}
+                      />
+                      <span className={form[row.key] ? 'tlab-fc-icon tlab-fc-icon--ok' : 'tlab-fc-icon'}>{form[row.key] ? '✓' : ''}</span>
+                      <span className="tlab-checklist-mid__copy">
+                        <strong>{row.label}</strong>
+                        <small>{row.hint}</small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="tlab-card tlab-card--gold tlab-ready-cta-card">
+                <button
+                  type="button"
+                  className="tlab-ready-box"
+                  disabled={!readyToExecute}
+                  onClick={() => {
+                    saveSession();
+                    toast.success('Ready to execute — lab saved.');
+                  }}
+                >
+                  <span className="tlab-ready-box__check">✓</span>
+                  <span className="tlab-ready-box__label">READY TO EXECUTE</span>
+                </button>
+              </div>
             </div>
             <p className="tlab-tagline">Trade with clarity. Execute with precision. Win with discipline.</p>
           </footer>

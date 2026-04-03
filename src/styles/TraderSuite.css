@@ -76,6 +76,19 @@
 .journal-page .trader-suite-terminal-left {
   color: var(--text-muted);
   font-size: 0.88rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.journal-page .trader-suite-terminal-subtitle {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(234, 169, 96, 0.75);
+  font-weight: 600;
 }
 
 .journal-page .trader-suite-terminal-title {
@@ -84,6 +97,36 @@
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 0.03em;
+}
+
+.journal-page .trader-suite-terminal-title-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.journal-page .trader-suite-terminal-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgba(212, 175, 55, 0.95);
+  filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.25));
+}
+
+.journal-page .trader-suite-terminal-title-text {
+  color: rgba(212, 175, 55, 0.95);
+  letter-spacing: 0.06em;
+  font-weight: 800;
+}
+
+.journal-page .trader-suite-terminal-stat__value--gold {
+  color: rgba(212, 175, 55, 0.95) !important;
+}
+
+.journal-page .trader-suite-terminal-stat__value--green {
+  color: #64f3b0 !important;
 }
 
 .journal-page .trader-suite-terminal-actions {
@@ -1015,8 +1058,16 @@
 }
 
 /* ── Trader Lab v2 (reference layout: left rail · chart · right rail · footer) ── */
+/* Width / centering for Trader Lab is handled in TradeValidatorJournalGlass (full Aura-dashboard rail) */
 .journal-page .trader-suite-page:has(.trader-lab-v2) {
-  max-width: min(1680px, calc(100% - 24px));
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 0 48px;
+}
+
+.journal-page .trader-suite-page:has(.trader-lab-v2) .trader-suite-terminal-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .journal-page .trader-lab-v2 {
@@ -1032,6 +1083,393 @@
   padding: 16px 18px 24px;
   align-items: stretch;
   min-height: min(78vh, 1100px);
+}
+
+/* Gold glass — match reference mock (thin gold rim, deep panel) */
+.journal-page .trader-lab-v2--gold {
+  --tlab-line: rgba(212, 175, 55, 0.28);
+}
+
+.journal-page .trader-lab-v2--gold .tlab-card--gold {
+  border-color: rgba(212, 175, 55, 0.32);
+  background: linear-gradient(165deg, rgba(8, 10, 22, 0.88), rgba(4, 6, 14, 0.92));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 12px 40px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px) saturate(1.05);
+  -webkit-backdrop-filter: blur(16px) saturate(1.05);
+}
+
+.journal-page .tlab-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.journal-page .tlab-pill-bias {
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.journal-page .tlab-pill-bias--bull {
+  color: #64f3b0;
+  border-color: rgba(100, 243, 176, 0.45);
+  background: rgba(100, 243, 176, 0.1);
+}
+
+.journal-page .tlab-pill-bias--bear {
+  color: #ff9db5;
+  border-color: rgba(255, 126, 145, 0.4);
+  background: rgba(255, 126, 145, 0.08);
+}
+
+.journal-page .tlab-pill-bias--neutral {
+  color: var(--text-muted);
+}
+
+.journal-page .tlab-pill-confidence {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: rgba(234, 169, 96, 0.95);
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(234, 169, 96, 0.4);
+  background: rgba(234, 169, 96, 0.1);
+}
+
+.journal-page .tlab-ref-bullets {
+  margin: 0 0 10px;
+  padding: 0 0 0 18px;
+  color: rgba(230, 232, 245, 0.88);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.journal-page .tlab-ref-bullets li {
+  margin-bottom: 6px;
+}
+
+.journal-page .tlab-geo-pill {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.journal-page .tlab-geo-pill--pos {
+  color: #64f3b0;
+  border-color: rgba(100, 243, 176, 0.4);
+}
+
+.journal-page .tlab-geo-pill--neg {
+  color: #ff9db5;
+  border-color: rgba(255, 126, 145, 0.4);
+}
+
+.journal-page .tlab-geo-pill--mid {
+  color: rgba(200, 205, 230, 0.85);
+}
+
+.journal-page .tlab-center-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.journal-page .tlab-card--exec {
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.journal-page .tlab-card--checklist-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.journal-page .tlab-btn-save-notes {
+  border: 1px solid rgba(234, 169, 96, 0.55);
+  background: transparent;
+  color: rgba(234, 169, 96, 0.95);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.journal-page .tlab-btn-save-notes:hover:not(:disabled) {
+  background: rgba(234, 169, 96, 0.12);
+  box-shadow: 0 0 20px rgba(234, 169, 96, 0.15);
+}
+
+.journal-page .tlab-inline-checks {
+  display: grid;
+  gap: 10px;
+  flex: 1;
+}
+
+.journal-page .tlab-inline-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.journal-page .tlab-inline-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.journal-page .tlab-ic-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  color: var(--text-dim);
+}
+
+.journal-page .tlab-ic-icon--ok {
+  border-color: rgba(100, 243, 176, 0.45);
+  color: #64f3b0;
+  background: rgba(100, 243, 176, 0.08);
+}
+
+.journal-page .tlab-validator-list--status li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.journal-page .tlab-validator-list--status li:last-child {
+  border-bottom: none;
+}
+
+.journal-page .tlab-vlabel {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.journal-page .tlab-vstatus {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: rgba(255, 200, 120, 0.85);
+}
+
+.journal-page .tlab-vstatus--ok {
+  color: #64f3b0;
+}
+
+/* Full-width bottom row: execution | checklist | ready (reference mock) */
+.journal-page .trader-lab-v2__footer--trio {
+  grid-column: 1 / -1;
+  padding: 8px 0 12px;
+  gap: 16px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.journal-page .tlab-bottom-trio {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.15fr) minmax(200px, 260px);
+  gap: clamp(12px, 1.5vw, 18px);
+  align-items: stretch;
+}
+
+.journal-page .tlab-checklist-mid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.journal-page .tlab-checklist-mid__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.journal-page .tlab-checklist-mid__row input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.journal-page .tlab-checklist-mid__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.journal-page .tlab-checklist-mid__copy strong {
+  color: #fff;
+  font-size: 0.84rem;
+}
+
+.journal-page .tlab-checklist-mid__copy small {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.journal-page .tlab-ready-cta-card {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 14px !important;
+  min-height: 200px;
+}
+
+.journal-page .tlab-ready-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 180px;
+  margin: 0;
+  padding: 20px 16px;
+  cursor: pointer;
+  border-radius: 12px;
+  border: 2px solid rgba(212, 175, 55, 0.55);
+  background: linear-gradient(165deg, rgba(234, 169, 96, 0.12), rgba(8, 10, 22, 0.95));
+  color: #fff;
+  font-family: inherit;
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+
+.journal-page .tlab-ready-box:hover:not(:disabled) {
+  box-shadow: 0 0 28px rgba(212, 175, 55, 0.18);
+  transform: translateY(-1px);
+}
+
+.journal-page .tlab-ready-box:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.journal-page .tlab-ready-box__check {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 2px solid rgba(212, 175, 55, 0.65);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  color: rgba(212, 175, 55, 0.95);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.journal-page .tlab-ready-box__label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.journal-page .tlab-exec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.journal-page .tlab-exec-head .tlab-card__title {
+  margin-bottom: 0;
+}
+
+.journal-page .tlab-exec-edit-icon {
+  color: rgba(212, 175, 55, 0.75);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.journal-page .tlab-chart-line-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.journal-page .tlab-chart-line {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 0;
+  border-top: 2px dashed;
+  opacity: 0.88;
+}
+
+.journal-page .tlab-chart-line--tp {
+  top: 22%;
+  border-color: rgba(248, 195, 125, 0.85);
+  box-shadow: 0 0 8px rgba(248, 195, 125, 0.15);
+}
+
+.journal-page .tlab-chart-line--entry {
+  top: 52%;
+  border-color: rgba(100, 243, 176, 0.85);
+}
+
+.journal-page .tlab-chart-line--sl {
+  top: 72%;
+  border-color: rgba(255, 126, 145, 0.88);
+}
+
+.journal-page .tlab-footer-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: stretch;
+  padding: 16px 18px;
+}
+
+.journal-page .trader-lab-v2--gold .tlab-footer-check {
+  border-color: rgba(212, 175, 55, 0.22);
+}
+
+.journal-page .tlab-exec-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
 }
 
 .journal-page .trader-lab-v2__left,
@@ -1247,7 +1685,12 @@
 }
 
 .journal-page .tlab-textarea--exec {
-  min-height: 140px;
+  min-height: 160px;
+}
+
+.journal-page .tlab-card--exec .tlab-textarea--exec {
+  flex: 1;
+  resize: vertical;
 }
 
 .journal-page .tlab-chart-toolbar {
@@ -1339,10 +1782,20 @@
 
 .journal-page .tlab-chart-host {
   flex: 1;
-  min-height: 420px;
+  min-height: 520px;
+  height: 520px;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  position: relative;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.journal-page .tlab-chart-host .trader-suite-chart-frame {
+  min-height: 520px !important;
+  height: 520px !important;
+  position: relative;
+  z-index: 1;
 }
 
 .journal-page .tlab-level-strip {
@@ -1373,14 +1826,6 @@
 .journal-page .tlab-level-strip strong {
   font-size: 1.05rem;
   font-variant-numeric: tabular-nums;
-}
-
-.journal-page .tlab-exec-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
 }
 
 .journal-page .tlab-exec-meta {
@@ -1709,6 +2154,22 @@
 
   .journal-page .tlab-footer-checks {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .journal-page .tlab-center-split {
+    grid-template-columns: 1fr;
+  }
+
+  .journal-page .tlab-bottom-trio {
+    grid-template-columns: 1fr;
+  }
+
+  .journal-page .tlab-ready-cta-card {
+    min-height: 0;
+  }
+
+  .journal-page .tlab-ready-box {
+    min-height: 140px;
   }
 
   .journal-page .trader-suite-metric-grid,

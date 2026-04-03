@@ -314,6 +314,126 @@
   padding: clamp(20px, 3vw, 32px) var(--shell-px) clamp(36px, 5vw, 56px) !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   TRADER LAB — full-width content rail (matches Aura Analysis dashboard)
+   #010008 + CosmicBackground; aa-card-style panels; no narrow 1200px column
+   ═══════════════════════════════════════════════════════════════════════════ */
+.trade-validator-shell .aura-shell-content:has(.trader-lab-v2) {
+  max-width: 1440px !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-top: clamp(14px, 2.2vw, 24px) !important;
+  padding-left: clamp(12px, 2vw, 22px) !important;
+  padding-right: clamp(12px, 2vw, 22px) !important;
+  padding-bottom: clamp(28px, 4vw, 48px) !important;
+}
+
+/* Drop the extra nested journal “frame”; inner cards define structure (like dashboard tabs) */
+.trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2) {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2)::after {
+  display: none !important;
+}
+
+.trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2):hover {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Header strip — same glass + gold rim language as Aura dashboard tab bar */
+.trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2) .trader-suite-terminal-bar {
+  border-radius: 12px !important;
+  border: 1px solid rgba(212, 175, 55, 0.22) !important;
+  background: rgba(7, 13, 24, 0.92) !important;
+  backdrop-filter: blur(24px) saturate(1.05) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.05) !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+.trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2) .trader-suite-terminal-stats {
+  background: rgba(8, 12, 22, 0.88) !important;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.18) !important;
+}
+
+.trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2) .trader-suite-terminal-stat {
+  border-right-color: rgba(212, 175, 55, 0.14) !important;
+}
+
+/* Wider proportional columns + vertical fill */
+.trade-validator-shell .trader-lab-v2 {
+  width: 100%;
+  grid-template-columns: minmax(252px, 0.95fr) minmax(0, 2.15fr) minmax(268px, 1.05fr) !important;
+  gap: clamp(12px, 1.4vw, 18px) !important;
+  padding: clamp(10px, 1.2vw, 16px) 0 clamp(18px, 2.5vw, 28px) !important;
+  min-height: min(calc(100vh - 200px), 1500px);
+  align-content: start;
+}
+
+/* Match AuraShared `.aa-card` glass (dashboard outlet panels) */
+.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold {
+  background: rgba(3, 2, 10, 0.72) !important;
+  border: 1px solid rgba(234, 169, 96, 0.12) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(18px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.03) inset !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(234, 169, 96, 0.5),
+    rgba(248, 195, 125, 0.35),
+    transparent
+  ) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold:hover {
+  border-color: rgba(234, 169, 96, 0.22) !important;
+  box-shadow: 0 0 30px rgba(234, 169, 96, 0.06) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-bottom-trio .tlab-card.tlab-card--gold {
+  background: rgba(3, 2, 10, 0.72) !important;
+  border: 1px solid rgba(234, 169, 96, 0.12) !important;
+  border-radius: 12px !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-ready-box {
+  border-color: rgba(212, 175, 55, 0.5) !important;
+  background: linear-gradient(165deg, rgba(234, 169, 96, 0.14), rgba(8, 10, 22, 0.92)) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .trader-lab-v2__footer {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-tagline {
+  color: rgba(232, 198, 88, 0.88) !important;
+}
+
+@media (max-width: 1180px) {
+  .trade-validator-shell .trader-lab-v2 {
+    grid-template-columns: 1fr !important;
+    min-height: 0 !important;
+  }
+}
+
 /* ── aa-page accent system ───────────────────────────────────────────────── */
 .trade-validator-shell .aa-page {
   --bg:           transparent;
