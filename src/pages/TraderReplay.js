@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
-import TradingViewWidgetEmbed from '../components/TradingViewWidgetEmbed';
+import TradingViewChartPanel from '../components/TradingViewChartPanel';
 import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
 import { formatWelcomeEyebrow } from '../utils/welcomeUser';
@@ -184,7 +184,7 @@ export default function TraderReplay() {
               </div>
             </div>
 
-            <TradingViewWidgetEmbed symbol={form.symbol} interval={form.interval} studies={['STD;RSI']} height={430} />
+            <TradingViewChartPanel symbol={form.symbol} interval={form.interval} studies={['STD;RSI']} height={430} />
 
             <div className="trader-replay-terminal__controls">
               <div className="trader-replay-terminal__transport">

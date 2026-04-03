@@ -30,6 +30,7 @@ export default function TradingViewWidgetEmbed({
   height = 440,
   theme = 'dark',
   studies = [],
+  className = 'trader-suite-chart-frame',
 }) {
   const containerRef = useRef(null);
   const widgetId = useMemo(
@@ -77,7 +78,7 @@ export default function TradingViewWidgetEmbed({
 
   return (
     <div
-      className="trader-suite-chart-frame"
+      className={className}
       style={{
         width: '100%',
         height,

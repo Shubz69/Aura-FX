@@ -53,6 +53,9 @@ ReportHistory*.xlsx
 server.js.backup
 _temp_aura_analysis/
 
+# TradingView charting-library-examples zip (clone the private repo or use scripts/copy-tradingview-charting-library.ps1)
+charting-library-examples-master/
+
 # Backup directories with secrets
 backend-backup/
 complete-backup/
