@@ -123,7 +123,7 @@ function ReportsDnaPageInner() {
   const remLabel = dna?.cooldown?.remaining?.label;
 
   return (
-    <div className="tdna-page journal-glass-panel journal-glass-panel--pad">
+    <div className="tdna-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
       {introOpen && <TraderDnaIntroSequence onComplete={handleIntroComplete} />}
 
       {resolving &&

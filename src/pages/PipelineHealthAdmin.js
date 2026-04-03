@@ -8,10 +8,10 @@ import { isSuperAdmin } from '../utils/roles';
 
 function toneForStatus(status) {
   const value = String(status || '').toLowerCase();
-  if (value === 'healthy' || value === 'ready' || value === 'fresh') return '#3ddc97';
-  if (value === 'degraded' || value === 'refreshing' || value === 'stale' || value === 'high') return '#f5c451';
-  if (value === 'critical' || value === 'error' || value === 'expired' || value === 'unhealthy') return '#ff6b6b';
-  return '#8fb8ff';
+  if (value === 'healthy' || value === 'ready' || value === 'fresh') return 'var(--green)';
+  if (value === 'degraded' || value === 'refreshing' || value === 'stale' || value === 'high') return 'var(--amber)';
+  if (value === 'critical' || value === 'error' || value === 'expired' || value === 'unhealthy') return 'var(--red)';
+  return 'var(--accent)';
 }
 
 function prettyLabel(value) {
@@ -23,54 +23,27 @@ function prettyLabel(value) {
 function StatCard({ title, value, subtitle, status }) {
   const color = toneForStatus(status);
   return (
-    <div style={{
-      background: 'rgba(15, 23, 42, 0.72)',
-      border: `1px solid ${color}33`,
-      borderRadius: 18,
-      padding: '18px 20px',
-      boxShadow: '0 20px 60px rgba(2, 6, 23, 0.28)',
-      backdropFilter: 'blur(16px)',
-    }}>
-      <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, marginBottom: 8 }}>{title}</div>
-      <div style={{ color, fontSize: 28, fontWeight: 700, lineHeight: 1.1 }}>{value}</div>
-      {subtitle ? <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 12, marginTop: 8 }}>{subtitle}</div> : null}
+    <div className="aa-kpi">
+      <div className="aa-kpi-label">{title}</div>
+      <div className="aa-kpi-value" style={{ color }}>{value}</div>
+      {subtitle ? <div className="aa-kpi-sub">{subtitle}</div> : null}
     </div>
   );
 }
 
 function DataTable({ title, rows, columns, emptyText = 'No data found.' }) {
   return (
-    <section style={{
-      background: 'rgba(15, 23, 42, 0.72)',
-      border: '1px solid rgba(143,184,255,0.18)',
-      borderRadius: 18,
-      padding: 20,
-      boxShadow: '0 20px 60px rgba(2, 6, 23, 0.24)',
-      overflow: 'hidden',
-    }}>
-      <h3 style={{ color: '#fff', fontSize: 18, margin: '0 0 14px' }}>{title}</h3>
+    <section className="aa-card pipeline-data-table">
+      <h3 className="pipeline-data-table__title">{title}</h3>
       {rows.length === 0 ? (
-        <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 14 }}>{emptyText}</div>
+        <div className="aa--muted" style={{ fontSize: '0.85rem' }}>{emptyText}</div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
+          <table className="pipeline-table">
             <thead>
               <tr>
                 {columns.map((column) => (
-                  <th
-                    key={column.key}
-                    style={{
-                      textAlign: 'left',
-                      padding: '0 0 10px',
-                      fontSize: 12,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: 'rgba(255,255,255,0.48)',
-                      borderBottom: '1px solid rgba(255,255,255,0.08)',
-                    }}
-                  >
-                    {column.label}
-                  </th>
+                  <th key={column.key}>{column.label}</th>
                 ))}
               </tr>
             </thead>
@@ -83,13 +56,7 @@ function DataTable({ title, rows, columns, emptyText = 'No data found.' }) {
                     return (
                       <td
                         key={column.key}
-                        style={{
-                          padding: '12px 0',
-                          fontSize: 13,
-                          color: column.statusKey ? toneForStatus(status) : 'rgba(255,255,255,0.85)',
-                          borderBottom: '1px solid rgba(255,255,255,0.06)',
-                          verticalAlign: 'top',
-                        }}
+                        style={column.statusKey ? { color: toneForStatus(status) } : undefined}
                       >
                         {raw == null || raw === '' ? '—' : raw}
                       </td>
@@ -166,7 +133,10 @@ export default function PipelineHealthAdmin() {
 
   return (
     <AuraTerminalThemeShell>
-      <div style={{ maxWidth: 1320, margin: '0 auto', padding: '32px 20px 56px' }}>
+      <div
+        className="pipeline-health-page aa-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim pipeline-data-table-wrap"
+        style={{ maxWidth: 1320, margin: '0 auto', padding: '24px 20px 48px' }}
+      >
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -174,36 +144,27 @@ export default function PipelineHealthAdmin() {
           gap: 16,
           flexWrap: 'wrap',
           marginBottom: 24,
-        }}>
+        }}
+        >
           <div>
-            <div style={{ color: 'rgba(143,184,255,0.82)', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Super Admin
-            </div>
-            <h1 style={{ color: '#fff', margin: 0, fontSize: 34, lineHeight: 1.1 }}>Market Data Pipeline Monitor</h1>
-            <p style={{ color: 'rgba(255,255,255,0.7)', maxWidth: 760, margin: '10px 0 0', lineHeight: 1.6 }}>
+            <div className="aa-section-title" style={{ marginBottom: 8 }}>Super Admin</div>
+            <h1 style={{ color: 'var(--text)', margin: 0, fontSize: '1.85rem', lineHeight: 1.1, fontWeight: 700 }}>
+              Market Data Pipeline Monitor
+            </h1>
+            <p className="aa--muted" style={{ maxWidth: 760, margin: '10px 0 0', lineHeight: 1.6, fontSize: '0.92rem' }}>
               Track launch ingestion freshness, active refresh locks, decoder coverage, and provider usage pressure from one internal dashboard.
             </p>
             <div style={{ marginTop: 12 }}>
-              <Link to="/admin" style={{ color: '#8fb8ff', textDecoration: 'none', fontSize: 14 }}>
+              <Link to="/admin" className="aa--accent" style={{ textDecoration: 'none', fontSize: '0.88rem', fontWeight: 600 }}>
                 Back to Admin Panel
               </Link>
             </div>
           </div>
           <button
             type="button"
+            className="pipeline-health-refresh"
             onClick={() => load(true)}
             disabled={refreshing}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 10,
-              border: '1px solid rgba(143,184,255,0.28)',
-              background: 'rgba(17, 24, 39, 0.82)',
-              color: '#fff',
-              padding: '12px 16px',
-              borderRadius: 12,
-              cursor: refreshing ? 'default' : 'pointer',
-            }}
           >
             <FaSyncAlt style={{ opacity: refreshing ? 0.55 : 1 }} />
             {refreshing ? 'Refreshing...' : 'Refresh'}
@@ -211,45 +172,29 @@ export default function PipelineHealthAdmin() {
         </div>
 
         {error ? (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            marginBottom: 20,
-            background: 'rgba(127, 29, 29, 0.35)',
-            border: '1px solid rgba(255,107,107,0.28)',
-            color: '#ffd1d1',
-            padding: '14px 16px',
-            borderRadius: 14,
-          }}>
+          <div className="pipeline-health-error-banner" role="alert">
             <FaExclamationTriangle />
             <span>{error}</span>
           </div>
         ) : null}
 
         {loading && !payload ? (
-          <div style={{ color: 'rgba(255,255,255,0.7)', padding: '24px 4px' }}>Loading pipeline health...</div>
+          <div className="aa-grid-4" style={{ marginBottom: 12 }}>
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="aa-skeleton aa-skeleton-kpi" />
+            ))}
+          </div>
         ) : null}
 
         {payload ? (
           <>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: 16,
-              marginBottom: 22,
-            }}>
+            <div className="aa-grid-4" style={{ marginBottom: 22 }}>
               {summaryCards.map((card) => (
                 <StatCard key={card.title} {...card} />
               ))}
             </div>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: 16,
-              marginBottom: 22,
-            }}>
+            <div className="aa-grid-4" style={{ marginBottom: 22 }}>
               <StatCard
                 title="AI Context Packet"
                 value={prettyLabel(payload.freshness?.aiContext?.status || 'missing')}
@@ -328,22 +273,21 @@ export default function PipelineHealthAdmin() {
               />
             </div>
 
-            <section style={{
-              background: 'rgba(15, 23, 42, 0.72)',
-              border: '1px solid rgba(143,184,255,0.18)',
-              borderRadius: 18,
-              padding: 20,
-              boxShadow: '0 20px 60px rgba(2, 6, 23, 0.24)',
-            }}>
-              <h3 style={{ color: '#fff', fontSize: 18, margin: '0 0 14px' }}>Freshness Breakdown</h3>
+            <section className="aa-card pipeline-freshness-grid">
+              <h3 className="pipeline-data-table__title">Freshness Breakdown</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
                 {Object.entries(payload.freshness || {}).filter(([key]) => key !== 'aiContext').map(([key, value]) => (
-                  <div key={key} style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16 }}>
-                    <div style={{ color: '#fff', fontWeight: 600, marginBottom: 10 }}>{prettyLabel(key)}</div>
+                  <div key={key} className="aa-card">
+                    <div style={{ color: 'var(--text)', fontWeight: 600, marginBottom: 10, fontSize: '0.88rem' }}>{prettyLabel(key)}</div>
                     {Object.entries(value || {}).map(([bucket, count]) => (
-                      <div key={bucket} style={{ display: 'flex', justifyContent: 'space-between', color: bucket === 'fresh' ? '#3ddc97' : bucket === 'stale' ? '#f5c451' : bucket === 'expired' ? '#ff6b6b' : 'rgba(255,255,255,0.68)', fontSize: 13, padding: '3px 0' }}>
+                      <div key={bucket} className="pipeline-freshness-row">
                         <span>{prettyLabel(bucket)}</span>
-                        <span>{count}</span>
+                        <span style={{
+                          color: bucket === 'fresh' ? 'var(--green)' : bucket === 'stale' ? 'var(--amber)' : bucket === 'expired' ? 'var(--red)' : 'var(--text-muted)',
+                        }}
+                        >
+                          {count}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -351,14 +295,16 @@ export default function PipelineHealthAdmin() {
               </div>
             </section>
 
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              marginTop: 18,
-              color: 'rgba(255,255,255,0.58)',
-              fontSize: 12,
-            }}>
+            <div
+              className="aa--dim"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                marginTop: 18,
+                fontSize: '0.72rem',
+              }}
+            >
               <FaDatabase />
               <span>Endpoint: `/api/market-data/health`</span>
               <FaLock style={{ marginLeft: 8 }} />

@@ -358,7 +358,7 @@ const Settings = () => {
     return (
       <AuraTerminalThemeShell>
       <div className="settings-page">
-        <div className="settings-loading journal-glass-panel journal-glass-panel--pad">Loading...</div>
+        <div className="settings-loading journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">Loading...</div>
       </div>
       </AuraTerminalThemeShell>
     );
@@ -371,7 +371,7 @@ const Settings = () => {
   return (
     <AuraTerminalThemeShell>
     <div className="settings-page">
-    <div className="settings-container journal-glass-panel journal-glass-panel--pad">
+    <div className="settings-container journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
       <div className="settings-header">
         <h1>Admin Panel</h1>
         {superAdmin && (

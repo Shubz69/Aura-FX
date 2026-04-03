@@ -34,7 +34,7 @@ export default function TradeValidatorShell() {
   return (
     <TradeValidatorAccountProvider>
     <AuraTerminalThemeShell>
-    <div className="aura-shell trade-validator-shell journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
+    <div className="aura-shell trade-validator-shell journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
       <header className="aura-shell-hero">
         <div className="aura-shell-hero-inner trade-validator-hero-inner">
           <span className="trade-validator-hero-spacer" aria-hidden="true" />

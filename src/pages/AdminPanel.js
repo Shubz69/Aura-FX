@@ -875,7 +875,7 @@ const AdminPanel = () => {
     return (
   <AuraTerminalThemeShell>
   <div className="admin-panel-container">
-    <div className="admin-panel journal-glass-panel journal-glass-panel--pad">
+    <div className="admin-panel journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
       <div className="admin-header">
         <h1 className="admin-title">ADMIN PANEL</h1>
         <div className="admin-tabs">

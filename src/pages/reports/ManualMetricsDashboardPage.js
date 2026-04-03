@@ -208,7 +208,7 @@ function ManualMetricsDashboardInner() {
 
   if (loading) {
     return (
-      <div className="aa-page journal-glass-panel journal-glass-panel--pad">
+      <div className="aa-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
         <ReportsHubSubNav role={role} year={navYear} month={navMonth} />
         <div className="m5dash-loading">Loading manual metrics…</div>
       </div>
@@ -217,7 +217,7 @@ function ManualMetricsDashboardInner() {
 
   if (error && forbiddenCode) {
     return (
-      <div className="aa-page journal-glass-panel journal-glass-panel--pad">
+      <div className="aa-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
         <ReportsHubSubNav role={role} year={navYear} month={navMonth} />
         <div className="m5dash-error">
           <p>{error}</p>
@@ -235,7 +235,7 @@ function ManualMetricsDashboardInner() {
 
   if (error) {
     return (
-      <div className="aa-page journal-glass-panel journal-glass-panel--pad">
+      <div className="aa-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
         <ReportsHubSubNav role={role} year={navYear} month={navMonth} />
         <div className="m5dash-error">
           <p>{error}</p>
@@ -252,7 +252,7 @@ function ManualMetricsDashboardInner() {
       ? `${MONTH_NAMES[payload.period.month - 1]} ${payload.period.year}`
       : periodLabel || 'this period';
     return (
-      <div className="aa-page journal-glass-panel journal-glass-panel--pad">
+      <div className="aa-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
         <ReportsHubSubNav role={role} year={subNavYear} month={subNavMonth} />
         <div className="m5dash-empty">
           {payload?.periodIsFuture && (
@@ -279,7 +279,7 @@ function ManualMetricsDashboardInner() {
   const dataSpan = payload.dataSpan;
 
   return (
-    <div className="aa-page m5dash journal-glass-panel journal-glass-panel--pad">
+    <div className="aa-page m5dash journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
       <ReportsHubSubNav role={role} year={subNavYear} month={subNavMonth} />
       <Link to="/reports" className="m5dash-back">← Performance &amp; DNA</Link>
 

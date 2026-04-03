@@ -395,7 +395,7 @@ export default function Affiliation() {
           </button>
         </div>
       )}
-      <div className="aff-content journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
+      <div className="aff-content journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
         <header className="aff-hero">
           <div className="aff-hero__eyebrow">Referral programme</div>
           <h1 className="aff-hero__title">Refer &amp; earn</h1>

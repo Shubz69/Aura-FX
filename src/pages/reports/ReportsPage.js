@@ -463,7 +463,7 @@ function ReportsPageInner() {
 
   if (loading) {
     return (
-      <div className="rp-loading journal-glass-panel journal-glass-panel--pad">
+      <div className="rp-loading journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
         <span className="rp-spinner" />
         <span>Loading reports…</span>
       </div>
@@ -472,7 +472,7 @@ function ReportsPageInner() {
 
   if (error) {
     return (
-      <div className="rp-error-state journal-glass-panel journal-glass-panel--pad">
+      <div className="rp-error-state journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
         <p>{error}</p>
         <button className="rp-btn rp-btn--secondary" onClick={reload} type="button">Retry</button>
       </div>
@@ -485,7 +485,7 @@ function ReportsPageInner() {
 
   // Free users
   if (role === 'free') return (
-    <div className="rp-page journal-glass-panel journal-glass-panel--pad">
+    <div className="rp-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
       <FreeLockedView />
     </div>
   );
@@ -495,14 +495,14 @@ function ReportsPageInner() {
 
   if (viewingReport) {
     return (
-      <div className="rp-page journal-glass-panel journal-glass-panel--pad">
+      <div className="rp-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
         <ReportViewer report={viewingReport} onClose={() => setViewingReport(null)} />
       </div>
     );
   }
 
   return (
-    <div className="rp-page journal-glass-panel journal-glass-panel--pad">
+    <div className="rp-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
       <div className="rp-header">
         <div className="rp-header-stack">
           <p className="rp-eyebrow">Performance intelligence</p>

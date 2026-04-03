@@ -529,7 +529,7 @@ useEffect(() => {
 
   return (
     <AuraTerminalThemeShell>
-      <div className="admin-inbox-page journal-glass-panel journal-glass-panel--pad">
+      <div className="admin-inbox-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
         <div className="admin-inbox-layout">
 
           {/* ── Sidebar ── */}

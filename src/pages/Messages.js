@@ -187,7 +187,7 @@ const Messages = () => {
 
     return (
         <AuraTerminalThemeShell>
-            <div className="messages-page-container journal-glass-panel journal-glass-panel--pad">
+            <div className="messages-page-container journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
                 <div className="messages-page-header">
                     <button className="back-button" onClick={() => navigate(-1)}>
                         <FaArrowLeft /> Back

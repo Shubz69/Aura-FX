@@ -566,6 +566,8 @@
 .journal-page .tdna-page,
 .journal-page .aff-page,
 .journal-page .admin-inbox-page,
+.journal-page .admin-messages-container,
+.journal-page .pipeline-health-page,
 .journal-page .trade-validator-page {
   background: transparent !important;
   min-height: 0;

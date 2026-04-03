@@ -142,7 +142,7 @@ function ManualMetricsEntryInner() {
 
   if (loading || !token) {
     return (
-      <div className="rp-loading journal-glass-panel journal-glass-panel--pad mm-entry">
+      <div className="rp-loading journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page mm-entry">
         <span className="rp-spinner" />
         <span>Loading…</span>
       </div>
@@ -151,7 +151,7 @@ function ManualMetricsEntryInner() {
 
   if (error) {
     return (
-      <div className="rp-error-state journal-glass-panel journal-glass-panel--pad mm-entry">
+      <div className="rp-error-state journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page mm-entry">
         <p>{error}</p>
         <Link to="/reports" className="rp-btn rp-btn--secondary">Back to Performance &amp; DNA</Link>
       </div>
@@ -165,7 +165,7 @@ function ManualMetricsEntryInner() {
   }
 
   return (
-    <div className="rp-page journal-glass-panel journal-glass-panel--pad mm-entry">
+    <div className="rp-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page mm-entry">
       <div className="rp-header mm-entry-head">
         <div className="rp-header-stack">
           <p className="rp-eyebrow">Performance &amp; DNA</p>

@@ -148,7 +148,10 @@ export default function TraderDeck() {
 
  return (
   <AuraTerminalThemeShell>
-    <div className="td-layout-page td-deck-with-tabs" id="td-deck-top">
+    <div
+      className="td-layout-page td-deck-with-tabs journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page"
+      id="td-deck-top"
+    >
 
       {/* ✅ Overlay (tumhara feature) */}
       {calendarOverlayOpen && (
@@ -274,7 +277,7 @@ export default function TraderDeck() {
 
           {/* Main Content */}
           <div className="td-deck-content td-deck-content--modern">
-            <div className="td-deck-content-box journal-glass-panel">
+            <div className="td-deck-content-box journal-glass-panel journal-glass-panel--rim">
               <div className="td-deck-body">
                 <main className="td-deck-main">
                   <div className="td-deck-main-inner">

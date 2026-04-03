@@ -826,7 +826,7 @@ if (!avatarToSave && avatarColor) {
         return (
             <AuraTerminalThemeShell>
             <div className="pf-container">
-                <div className="pf-loading journal-glass-panel journal-glass-panel--pad">
+                <div className="pf-loading journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
                     <div className="pf-spinner"></div>
                     <span className="pf-loading-text">Loading Profile</span>
                 </div>
@@ -838,7 +838,7 @@ if (!avatarToSave && avatarColor) {
     return (
         <AuraTerminalThemeShell>
         <div className="pf-container">
-            <div className="pf-content journal-glass-panel journal-glass-panel--pad">
+            <div className="pf-content journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
                 {/* Banner section */}
                 <div className="pf-banner-wrap">
                     {bannerPreview || formData.banner ? (

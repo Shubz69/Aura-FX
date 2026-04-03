@@ -40,7 +40,7 @@ function ManualMetricsProcessingInner() {
 
   if (!valid) {
     return (
-      <div className="mm-process journal-glass-panel journal-glass-panel--pad">
+      <div className="mm-process journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
         <p>Invalid period.</p>
         <Link to="/reports/manual-metrics" className="rp-btn rp-btn--secondary">Manual metrics</Link>
       </div>
@@ -51,7 +51,7 @@ function ManualMetricsProcessingInner() {
   const phase = tick % 4;
 
   return (
-    <div className="mm-process journal-glass-panel journal-glass-panel--pad">
+    <div className="mm-process journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
       <ReportsHubSubNav role="premium" year={year} month={month} />
       <div className="mm-process-inner">
         <div className="mm-process-ring" aria-hidden>

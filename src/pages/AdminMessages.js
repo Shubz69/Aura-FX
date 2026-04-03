@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import '../styles/AdminMessages.css';
 import AdminApi from '../services/AdminApi';
 import Api from '../services/Api';
+import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 
 const KNOWN_ROLES = ['free', 'premium', 'elite', 'a7fx', 'admin', 'super_admin'];
 
@@ -91,12 +92,14 @@ const AdminMessages = () => {
 
     if (!user || !isAdmin) {
         return (
-            <div className="admin-messages-container">
+            <AuraTerminalThemeShell>
+            <div className="admin-messages-container journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
                 <div className="access-denied">
                     <h1 className="glitch-title">ACCESS DENIED</h1>
                     <p>You must be an admin to view this page.</p>
                 </div>
             </div>
+            </AuraTerminalThemeShell>
         );
     }
 
@@ -107,7 +110,8 @@ const AdminMessages = () => {
     });
 
     return (
-        <div className="admin-messages-container">
+        <AuraTerminalThemeShell>
+        <div className="admin-messages-container journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
             <div className="admin-messages-content">
                 <div className="admin-header">
                     <h1 className="glitch-title">CONTACT SUBMISSIONS</h1>
@@ -221,6 +225,7 @@ const AdminMessages = () => {
                 )}
             </div>
         </div>
+        </AuraTerminalThemeShell>
     );
 };
 

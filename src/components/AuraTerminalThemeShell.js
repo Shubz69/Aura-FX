@@ -1,5 +1,7 @@
 import React from 'react';
 import '../styles/Journal.css';
+import '../styles/aura-analysis/AuraShared.css';
+import '../styles/TerminalPagesAuraSkin.css';
 import '../styles/TerminalRoutesNavyGlass.css';
 import CosmicBackground from '../components/CosmicBackground';
 
