@@ -114,10 +114,13 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [previewBriefMeta, setPreviewBriefMeta] = useState(null);
   const [textPreviewBody, setTextPreviewBody] = useState('');
   const [textPreviewLoading, setTextPreviewLoading] = useState(false);
+  /** Character count while “typing” markdown source; full length ⇒ show rendered brief. */
+  const [typewriterIndex, setTypewriterIndex] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadUrl, setUploadUrl] = useState('');
   const fileInputRef = useRef(null);
+  const typewriterScrollRef = useRef(null);
   const sortedBriefs = useMemo(() => {
     const orderIndex = new Map(BRIEF_KIND_ORDER.map((k, i) => [k, i]));
     return [...briefs].sort((a, b) => {
@@ -143,6 +146,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     setPreviewBriefMeta(null);
     setTextPreviewBody('');
     setTextPreviewLoading(false);
+    setTypewriterIndex(0);
   }, []);
 
   useEffect(() => {
@@ -239,6 +243,52 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       controller.abort();
     };
   }, [previewUseMarkdown, storedPreviewSrc]);
+
+  useEffect(() => {
+    if (!previewUseMarkdown || textPreviewLoading) {
+      setTypewriterIndex(0);
+      return undefined;
+    }
+    const full = textPreviewBody;
+    if (!full) {
+      setTypewriterIndex(0);
+      return undefined;
+    }
+
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      setTypewriterIndex(full.length);
+      return undefined;
+    }
+
+    setTypewriterIndex(0);
+    const n = full.length;
+    const TICK_MS = 16;
+    const MAX_MS = 42000;
+    const maxTicks = Math.max(1, Math.floor(MAX_MS / TICK_MS));
+    const charsPerTick = Math.max(1, Math.ceil(n / maxTicks));
+    let current = 0;
+    const id = setInterval(() => {
+      current = Math.min(n, current + charsPerTick);
+      setTypewriterIndex(current);
+      if (current >= n) clearInterval(id);
+    }, TICK_MS);
+    return () => clearInterval(id);
+  }, [previewUseMarkdown, textPreviewLoading, textPreviewBody]);
+
+  const typewriterActive =
+    previewUseMarkdown &&
+    !textPreviewLoading &&
+    textPreviewBody.length > 0 &&
+    typewriterIndex < textPreviewBody.length;
+
+  useEffect(() => {
+    if (!typewriterActive || !typewriterScrollRef.current) return;
+    const el = typewriterScrollRef.current;
+    el.scrollTop = el.scrollHeight;
+  }, [typewriterActive, typewriterIndex]);
 
   const handlePreview = (brief) => {
     setPreviewBriefMeta({
@@ -461,9 +511,23 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         </div>
         <div className="td-intel-preview-frame-wrap">
           {previewUseMarkdown ? (
-            <div className="td-intel-preview-md-scroll" aria-busy={textPreviewLoading}>
+            <div
+              className="td-intel-preview-md-scroll"
+              aria-busy={textPreviewLoading || typewriterActive}
+            >
               {textPreviewLoading ? (
                 <p className="td-intel-preview-md-loading">Loading brief…</p>
+              ) : typewriterActive ? (
+                <div
+                  ref={typewriterScrollRef}
+                  className="td-intel-preview-typewriter"
+                  aria-live="off"
+                >
+                  <span className="td-intel-preview-typewriter-text">
+                    {textPreviewBody.slice(0, typewriterIndex)}
+                  </span>
+                  <span className="td-intel-preview-typewriter-caret" aria-hidden />
+                </div>
               ) : (
                 <div className="td-intel-brief-md">
                   <ReactMarkdown
