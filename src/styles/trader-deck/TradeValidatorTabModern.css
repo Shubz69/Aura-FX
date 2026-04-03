@@ -57,20 +57,18 @@
   flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-start;
-  gap: 4px !important;
+  gap: 2px !important;
   width: max-content;
   min-width: 100%;
   margin: 0 auto !important;
-  padding: 6px 8px !important;
+  padding: 4px 0 !important;
   box-sizing: border-box;
-  border-radius: 16px !important;
-  background: rgba(3, 2, 10, 0.58) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(18px) saturate(1.06) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(1.06) !important;
-  box-shadow:
-    0 10px 32px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .trade-validator-shell .aura-shell-tab--validator {

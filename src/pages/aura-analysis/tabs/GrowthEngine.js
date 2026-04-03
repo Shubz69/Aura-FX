@@ -50,14 +50,14 @@ function GrowthCurve({ curve, height = 160 }) {
       {milestones.map(({ pct, yPos }) => (
         <g key={pct}>
           <line x1={pad.l} y1={yPos} x2={W - pad.r} y2={yPos}
-            stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="4 4" />
-          <text x={W - pad.r - 2} y={yPos - 3} fontSize="9" fill="rgba(255,255,255,0.2)" textAnchor="end">+{pct}%</text>
+            stroke="rgba(255,255,255,0.14)" strokeWidth="1" strokeDasharray="4 4" />
+          <text x={W - pad.r - 2} y={yPos - 3} fontSize="9" fill="rgba(255,245,230,0.5)" textAnchor="end">+{pct}%</text>
         </g>
       ))}
       <path d={area} fill="url(#gr-area)" />
-      <path d={line} fill="none" stroke={col} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={line} fill="none" stroke={col} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       {/* Start + end markers */}
-      <circle cx={xs[0]} cy={ys[0]} r="3.5" fill="rgba(255,255,255,0.3)" />
+      <circle cx={xs[0]} cy={ys[0]} r="3.5" fill="rgba(255,245,230,0.55)" />
       <circle cx={xs[xs.length-1]} cy={ys[ys.length-1]} r="4" fill={col} />
     </svg>
   );
@@ -91,18 +91,56 @@ function MonthBars({ byMonth }) {
 /* ── Milestone card ───────────────────────────────────────── */
 function Milestone({ icon, label, value, color, achieved }) {
   return (
-    <div style={{
-      background: achieved ? `${color}12` : 'rgba(255,255,255,0.025)',
-      border: `1px solid ${achieved ? color + '30' : 'rgba(255,255,255,0.07)'}`,
-      borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12,
-      opacity: achieved ? 1 : 0.45,
-    }}>
-      <div style={{ width: 32, height: 32, borderRadius: 8, background: `${color}18`, border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, fontSize: '0.9rem', flexShrink: 0 }}>
+    <div
+      className={achieved ? 'aa-milestone aa-milestone--done' : 'aa-milestone aa-milestone--pending'}
+      style={{
+        background: achieved ? `${color}14` : 'rgba(255,255,255,0.055)',
+        border: `1px solid ${achieved ? `${color}44` : 'rgba(255,255,255,0.12)'}`,
+        borderRadius: 10,
+        padding: '12px 14px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+      }}
+    >
+      <div
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 8,
+          background: achieved ? `${color}22` : 'rgba(255,255,255,0.08)',
+          border: `1px solid ${achieved ? `${color}40` : 'rgba(248,195,125,0.22)'}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: achieved ? color : 'rgba(248,195,125,0.72)',
+          fontSize: '0.9rem',
+          flexShrink: 0,
+        }}
+      >
         <i className={`fas ${icon}`} />
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: achieved ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)' }}>{label}</div>
-        <div style={{ fontSize: '0.62rem', color: achieved ? color : 'rgba(255,255,255,0.25)', marginTop: 2 }}>{value}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: '0.72rem',
+            fontWeight: 700,
+            color: achieved ? 'rgba(255,255,255,0.95)' : 'rgba(255,248,240,0.82)',
+            letterSpacing: '0.02em',
+          }}
+        >
+          {label}
+        </div>
+        <div
+          style={{
+            fontSize: '0.65rem',
+            color: achieved ? color : 'rgba(232,225,210,0.68)',
+            marginTop: 3,
+            lineHeight: 1.35,
+          }}
+        >
+          {value}
+        </div>
       </div>
       {achieved && <i className="fas fa-check-circle" style={{ color, fontSize: '0.85rem', flexShrink: 0 }} />}
     </div>
@@ -159,7 +197,7 @@ export default function GrowthEngine() {
   const fmtBal = v => new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(v || 0);
 
   return (
-    <div className="aa-page">
+    <div className="aa-page aa-page--growth-readability">
 
       {/* ── Growth KPIs ── */}
       <div className="aa-grid-4" style={{ marginBottom: 16 }}>
@@ -197,7 +235,7 @@ export default function GrowthEngine() {
         {projection ? (
           <div className="aa-card">
             <div className="aa-section-title">Compound Projection</div>
-            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginBottom: 14, lineHeight: 1.5 }}>
+            <div style={{ fontSize: '0.74rem', color: 'rgba(235,232,220,0.78)', marginBottom: 14, lineHeight: 1.55 }}>
               Based on avg monthly return of{' '}
               <span style={{ color: projection.avgMonthlyPct >= 0 ? '#f8c37d' : '#9a8f84', fontWeight: 700 }}>
                 {fmtPct(projection.avgMonthlyPct)}%
@@ -209,18 +247,18 @@ export default function GrowthEngine() {
               { label: '6 Months',  value: fmtBal(projection.months6),  chg: projection.months6  - cur },
               { label: '12 Months', value: fmtBal(projection.months12), chg: projection.months12 - cur },
             ].map(({ label, value, chg }) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>{label}</span>
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <span style={{ fontSize: '0.76rem', color: 'rgba(240,236,228,0.78)', fontWeight: 600 }}>{label}</span>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'rgba(255,255,255,0.85)', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+                  <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'rgba(255,255,255,0.94)', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
                   <div style={{ fontSize: '0.65rem', color: chg >= 0 ? '#f8c37d' : '#9a8f84', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                     {fmtPnl(chg)}
                   </div>
                 </div>
               </div>
             ))}
-            <div style={{ marginTop: 12, padding: '8px 12px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 8 }}>
-              <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>
+            <div style={{ marginTop: 12, padding: '8px 12px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(234,169,96,0.22)', borderRadius: 8 }}>
+              <span style={{ fontSize: '0.65rem', color: 'rgba(232,228,218,0.62)', lineHeight: 1.55 }}>
                 Projection assumes constant returns. Past performance does not guarantee future results.
               </span>
             </div>

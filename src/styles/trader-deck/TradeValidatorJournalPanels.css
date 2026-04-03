@@ -1,269 +1,274 @@
 /* =============================================================================
-   Trade Validator — final pass under .journal-page (import LAST in shell).
-   Matches Journal.css panel fill, gradient border, rim line, and tab chrome.
+   Trade Validator — Aura Analysis visual parity (Growth / dashboard / Reports)
+   Same card language as AuraShared .aa-card: gold hairline, blur, readable type.
+   Import AFTER AuraShared.css + other TV styles so these rules win.
    ============================================================================= */
 
-/* Outer shell: Journal.css clears .aura-shell background; restore journal glass */
+/* ── Tokens: match AuraShared .aa-page for anything using var(--text-muted) ─ */
+.journal-page .trade-validator-shell.aa-page {
+  --text-muted: rgba(200, 198, 190, 0.78);
+  --text-dim: rgba(255, 255, 255, 0.45);
+  --aa-text-muted: rgba(200, 198, 190, 0.78);
+  --aa-bg-card: rgba(3, 2, 10, 0.72);
+  --aa-border: rgba(255, 255, 255, 0.06);
+}
+
+/* Outer shell — lighter glass so starfield reads like Aura dashboard content */
 .journal-page .trade-validator-shell.journal-glass-panel {
-  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
-  background-origin: padding-box, border-box !important;
-  background-clip: padding-box, border-box !important;
-  border: 1px solid transparent !important;
-  box-shadow: var(--journal-panel-outer-glow) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+  background: rgba(3, 2, 10, 0.34) !important;
+  background-image: none !important;
+  border: 1px solid rgba(234, 169, 96, 0.14) !important;
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.48),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset !important;
+  backdrop-filter: blur(22px) saturate(1.06) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.06) !important;
 }
 
 .journal-page .trade-validator-shell .aura-shell-hero {
   background: transparent !important;
-  border-bottom-color: var(--border) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-.journal-page .trade-validator-shell .aura-shell-title {
-  filter: none !important;
-}
-
+/* Tab overrides (JournalPanels wins over Glass blue pill from older TV theme) */
 .journal-page .trade-validator-shell .aura-shell-tabs-wrap {
-  background: rgba(4, 5, 18, 0.88) !important;
-  border-bottom: 1px solid var(--border) !important;
-  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.5) !important;
+  background: rgba(4, 5, 18, 0.55) !important;
+  border-bottom: 1px solid rgba(234, 169, 96, 0.12) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35) !important;
 }
 
 .journal-page .trade-validator-shell .aura-shell-tab:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(160, 185, 240, 0.28) !important;
-  color: var(--text) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: transparent !important;
 }
 
 .journal-page .trade-validator-shell .aura-shell-tab.active {
   color: #fff !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(160, 185, 240, 0.42) !important;
+  background: transparent !important;
+  border: none !important;
   font-weight: 600 !important;
-  box-shadow:
-    0 0 18px rgba(70, 100, 190, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
 }
 
-/* Overview / shared aura cards */
-.journal-page .trade-validator-shell .aura-card {
-  background: none !important;
-  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
-  background-origin: padding-box, border-box !important;
-  background-clip: padding-box, border-box !important;
-  border: 1px solid transparent !important;
-  box-shadow: var(--journal-panel-outer-glow) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-}
-
-.journal-page .trade-validator-shell .aura-card::before {
+.journal-page .trade-validator-shell .aura-shell-tab.active::after {
+  display: block !important;
   content: '' !important;
   position: absolute !important;
-  top: 0 !important;
-  left: 4% !important;
-  right: 14% !important;
-  height: 1px !important;
-  background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.48) 32%,
-    rgba(175, 200, 255, 0.42) 58%,
-    rgba(212, 175, 55, 0.14) 88%,
-    transparent 100%
+  left: 10px !important;
+  right: 10px !important;
+  bottom: 5px !important;
+  height: 2px !important;
+  border-radius: 99px !important;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(234, 169, 96, 0.35),
+    #eaa960,
+    rgba(248, 195, 125, 0.95),
+    #eaa960,
+    rgba(234, 169, 96, 0.35),
+    transparent
   ) !important;
-  opacity: 1 !important;
-  transition: opacity 0.28s ease !important;
+  box-shadow: 0 0 12px rgba(234, 169, 96, 0.35) !important;
 }
 
-.journal-page .trade-validator-shell .aura-card::after {
-  content: '' !important;
-  position: absolute !important;
-  top: -30px !important;
-  right: -30px !important;
-  width: 110px !important;
-  height: 110px !important;
-  background: radial-gradient(circle, rgba(85, 118, 205, 0.12) 0%, rgba(255, 255, 255, 0.04) 45%, transparent 70%) !important;
-  opacity: 1 !important;
-  pointer-events: none !important;
-  border-radius: 50% !important;
-  transition: opacity 0.28s ease !important;
-}
-
-.journal-page .trade-validator-shell .aura-card:hover {
-  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover) !important;
-  box-shadow: var(--journal-panel-outer-glow-hover) !important;
-  border-color: transparent !important;
-  transform: translateY(-2px);
-}
-
-/* Trade calculator + analytics KPIs */
-.journal-page .trade-validator-shell .trade-calc-panel,
-.journal-page .trade-validator-shell .aura-analytics-kpi-card {
-  background: none !important;
-  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
-  background-origin: padding-box, border-box !important;
-  background-clip: padding-box, border-box !important;
-  border: 1px solid transparent !important;
-  box-shadow: var(--journal-panel-outer-glow) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-}
-
-/* Overview tab — at-a-glance metric boxes (same journal glass stack as .aura-card) */
-.journal-page .trade-validator-shell .aura-overview-kpi-card {
+.journal-page .trade-validator-shell .aura-shell-tab {
   position: relative !important;
-  overflow: hidden !important;
-  background: none !important;
-  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
-  background-origin: padding-box, border-box !important;
-  background-clip: padding-box, border-box !important;
-  border: 1px solid transparent !important;
-  box-shadow: var(--journal-panel-outer-glow) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
 }
 
-.journal-page .trade-validator-shell .aura-overview-kpi-card::before {
+/* ── Shared “aa-card” surface (all inner boxes) ─────────────────────────── */
+.journal-page .trade-validator-shell .aura-card,
+.journal-page .trade-validator-shell .aura-overview-kpi-card,
+.journal-page .trade-validator-shell .aura-overview-monthly,
+.journal-page .trade-validator-shell .aura-overview-account-bar,
+.journal-page .trade-validator-shell .trade-calc-panel,
+.journal-page .trade-validator-shell .aura-analytics-kpi-card,
+.journal-page .trade-validator-shell .td-journal-table-wrap,
+.journal-page .trade-validator-shell .trade-validator-inner,
+.journal-page .trade-validator-shell .tv-score-card,
+.journal-page .trade-validator-shell .tv-section-card,
+.journal-page .trade-validator-shell .tv-checklist-tab-card,
+.journal-page .trade-validator-shell .tv-setup-section,
+.journal-page .trade-validator-shell .trader-cv-hero,
+.journal-page .trade-validator-shell .acc-card,
+.journal-page .trade-validator-shell .acc-section-card,
+.journal-page .trade-validator-shell .acc-config-card,
+.journal-page .trade-validator-shell .aura-leaderboard-table-wrap {
+  background: var(--bg-card, rgba(3, 2, 10, 0.72)) !important;
+  background-image: none !important;
+  border: 1px solid rgba(234, 169, 96, 0.12) !important;
+  border-radius: var(--radius, 12px) !important;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.03) inset !important;
+  backdrop-filter: blur(18px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+}
+
+.journal-page .trade-validator-shell .aura-card::before,
+.journal-page .trade-validator-shell .aura-overview-kpi-card::before,
+.journal-page .trade-validator-shell .aura-overview-monthly::before,
+.journal-page .trade-validator-shell .aura-overview-account-bar::before,
+.journal-page .trade-validator-shell .trade-calc-panel::before,
+.journal-page .trade-validator-shell .aura-analytics-kpi-card::before,
+.journal-page .trade-validator-shell .td-journal-table-wrap::before,
+.journal-page .trade-validator-shell .trade-validator-inner::before,
+.journal-page .trade-validator-shell .tv-score-card::before,
+.journal-page .trade-validator-shell .tv-section-card::before,
+.journal-page .trade-validator-shell .tv-checklist-tab-card::before,
+.journal-page .trade-validator-shell .tv-setup-section::before,
+.journal-page .trade-validator-shell .trader-cv-hero::before,
+.journal-page .trade-validator-shell .acc-card::before,
+.journal-page .trade-validator-shell .acc-section-card::before,
+.journal-page .trade-validator-shell .acc-config-card::before,
+.journal-page .trade-validator-shell .aura-leaderboard-table-wrap::before {
   content: '' !important;
   position: absolute !important;
   top: 0 !important;
-  left: 4% !important;
-  right: 14% !important;
+  left: 0 !important;
+  right: 0 !important;
   height: 1px !important;
-  background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.48) 32%,
-    rgba(175, 200, 255, 0.42) 58%,
-    rgba(212, 175, 55, 0.14) 88%,
-    transparent 100%
-  ) !important;
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent) !important;
   pointer-events: none !important;
   z-index: 2 !important;
 }
 
-.journal-page .trade-validator-shell .aura-overview-kpi-card::after {
-  content: '' !important;
-  position: absolute !important;
-  top: -30px !important;
-  right: -30px !important;
-  width: 110px !important;
-  height: 110px !important;
-  background: radial-gradient(circle, rgba(85, 118, 205, 0.12) 0%, rgba(255, 255, 255, 0.04) 45%, transparent 70%) !important;
-  pointer-events: none !important;
-  border-radius: 50% !important;
-  z-index: 0 !important;
+.journal-page .trade-validator-shell .aura-card::after,
+.journal-page .trade-validator-shell .aura-overview-kpi-card::after,
+.journal-page .trade-validator-shell .aura-overview-monthly::after,
+.journal-page .trade-validator-shell .trade-calc-panel::after,
+.journal-page .trade-validator-shell .tv-section-card::after,
+.journal-page .trade-validator-shell .tv-checklist-tab-card::after,
+.journal-page .trade-validator-shell .tv-setup-section::after,
+.journal-page .trade-validator-shell .acc-card::after {
+  content: none !important;
 }
 
-.journal-page .trade-validator-shell .aura-overview-kpi-card .aura-overview-kpi-label,
-.journal-page .trade-validator-shell .aura-overview-kpi-card .aura-overview-kpi-value {
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-.journal-page .trade-validator-shell .aura-overview-kpi-card:hover {
-  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover) !important;
-  box-shadow: var(--journal-panel-outer-glow-hover) !important;
-  border-color: transparent !important;
-  transform: translateY(-2px);
-}
-
-.journal-page .trade-validator-shell .aura-overview-kpi-card:focus-within {
-  border-color: transparent !important;
-  box-shadow: var(--journal-panel-outer-glow-hover), var(--journal-focus-ring) !important;
-}
-
-.journal-page .trade-validator-shell .trade-calc-banner--linked {
-  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
-  background-origin: padding-box, border-box !important;
-  background-clip: padding-box, border-box !important;
-  border: 1px solid transparent !important;
-  box-shadow: var(--journal-panel-outer-glow) !important;
-}
-
+.journal-page .trade-validator-shell .aura-card,
+.journal-page .trade-validator-shell .aura-overview-kpi-card,
+.journal-page .trade-validator-shell .aura-overview-monthly,
+.journal-page .trade-validator-shell .aura-overview-account-bar,
+.journal-page .trade-validator-shell .trade-calc-panel,
+.journal-page .trade-validator-shell .aura-analytics-kpi-card,
 .journal-page .trade-validator-shell .td-journal-table-wrap,
-.journal-page .trade-validator-shell .trade-validator-inner {
-  background: none !important;
-  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
-  background-origin: padding-box, border-box !important;
-  background-clip: padding-box, border-box !important;
-  border: 1px solid transparent !important;
-  box-shadow: var(--journal-panel-outer-glow) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-}
-
-.journal-page .trade-validator-shell .tv-tab-btn-active,
-.journal-page .trade-validator-shell .tv-tab-btn-active:hover {
-  color: #fff !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(160, 185, 240, 0.4) !important;
-  box-shadow:
-    0 0 14px rgba(70, 100, 190, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-}
-
+.journal-page .trade-validator-shell .trade-validator-inner,
 .journal-page .trade-validator-shell .tv-score-card,
 .journal-page .trade-validator-shell .tv-section-card,
 .journal-page .trade-validator-shell .tv-checklist-tab-card,
-.journal-page .trade-validator-shell .tv-setup-section {
-  background: none !important;
-  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
-  background-origin: padding-box, border-box !important;
-  background-clip: padding-box, border-box !important;
-  border: 1px solid transparent !important;
-  box-shadow: var(--journal-panel-outer-glow) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+.journal-page .trade-validator-shell .tv-setup-section,
+.journal-page .trade-validator-shell .trader-cv-hero,
+.journal-page .trade-validator-shell .acc-card,
+.journal-page .trade-validator-shell .acc-section-card,
+.journal-page .trade-validator-shell .acc-config-card,
+.journal-page .trade-validator-shell .aura-leaderboard-table-wrap {
+  position: relative !important;
+  overflow: hidden !important;
 }
 
+.journal-page .trade-validator-shell .aura-card:hover,
+.journal-page .trade-validator-shell .aura-overview-kpi-card:hover,
+.journal-page .trade-validator-shell .aura-overview-monthly:hover,
+.journal-page .trade-validator-shell .trade-calc-panel:hover,
+.journal-page .trade-validator-shell .aura-analytics-kpi-card:hover,
+.journal-page .trade-validator-shell .td-journal-table-wrap:hover,
+.journal-page .trade-validator-shell .trade-validator-inner:hover,
+.journal-page .trade-validator-shell .tv-score-card:hover,
 .journal-page .trade-validator-shell .tv-section-card:hover,
 .journal-page .trade-validator-shell .tv-checklist-tab-card:hover,
-.journal-page .trade-validator-shell .tv-setup-section:hover {
-  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover) !important;
-  box-shadow: var(--journal-panel-outer-glow-hover) !important;
-  border-color: transparent !important;
+.journal-page .trade-validator-shell .tv-setup-section:hover,
+.journal-page .trade-validator-shell .acc-card:hover {
+  border-color: rgba(234, 169, 96, 0.2) !important;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
+    0 0 28px rgba(234, 169, 96, 0.07) !important;
+  transform: none !important;
 }
 
-.journal-page .trade-validator-shell .tv-section-card-icon {
-  background: rgba(58, 86, 165, 0.14) !important;
-  border: 1px solid var(--border-h) !important;
-}
-
-.journal-page .trade-validator-shell .tv-setup-chart {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid var(--border) !important;
-}
-
-.journal-page .trade-validator-shell .trader-cv-hero {
-  background: none !important;
-  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
-  background-origin: padding-box, border-box !important;
-  background-clip: padding-box, border-box !important;
-  border: 1px solid transparent !important;
-  box-shadow: var(--journal-panel-outer-glow) !important;
+.journal-page .trade-validator-shell .trade-calc-banner--linked {
+  background: rgba(3, 2, 10, 0.55) !important;
+  background-image: none !important;
+  border: 1px solid rgba(234, 169, 96, 0.14) !important;
+  border-radius: var(--radius, 12px) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
 }
 
+/* Checklist / legacy TV tabs — gold active (no blue) */
+.journal-page .trade-validator-shell .tv-tab-btn-active,
+.journal-page .trade-validator-shell .tv-tab-btn-active:hover {
+  color: #fff !important;
+  background: rgba(234, 169, 96, 0.14) !important;
+  border: 1px solid rgba(234, 169, 96, 0.4) !important;
+  box-shadow: 0 0 16px rgba(234, 169, 96, 0.12) !important;
+}
+
+.journal-page .trade-validator-shell .tv-section-card-icon {
+  background: rgba(234, 169, 96, 0.1) !important;
+  border: 1px solid rgba(234, 169, 96, 0.22) !important;
+}
+
+.journal-page .trade-validator-shell .tv-setup-chart {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(234, 169, 96, 0.1) !important;
+}
+
 .journal-page .trade-validator-shell .aura-leaderboard-order-btn {
-  background: rgba(58, 86, 165, 0.16) !important;
-  border-color: rgba(160, 185, 240, 0.38) !important;
+  background: rgba(234, 169, 96, 0.1) !important;
+  border-color: rgba(234, 169, 96, 0.28) !important;
+  color: rgba(255, 248, 240, 0.9) !important;
 }
 
-/* AI Chart Check — same glass stack as journal cards */
-.journal-page .trade-validator-shell .acc-card {
-  background: none !important;
-  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
-  background-origin: padding-box, border-box !important;
-  background-clip: padding-box, border-box !important;
-  border: 1px solid transparent !important;
-  box-shadow: var(--journal-panel-outer-glow) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+/* Overview copy — same contrast as Growth aa-kpi-label / value */
+.journal-page .trade-validator-shell .aura-overview-glance-title,
+.journal-page .trade-validator-shell .aura-overview-muted {
+  color: rgba(255, 248, 240, 0.62) !important;
 }
 
-.journal-page .trade-validator-shell .acc-card:hover {
-  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover) !important;
-  border-color: transparent !important;
-  box-shadow: var(--journal-panel-outer-glow-hover) !important;
+.journal-page .trade-validator-shell .aura-overview-kpi-label {
+  color: rgba(255, 245, 235, 0.58) !important;
+}
+
+.journal-page .trade-validator-shell .aura-overview-kpi-value {
+  color: rgba(255, 255, 255, 0.96) !important;
+}
+
+.journal-page .trade-validator-shell .aura-overview-account-bar-label,
+.journal-page .trade-validator-shell .aura-overview-account-currency-label {
+  color: rgba(255, 245, 235, 0.55) !important;
+}
+
+.journal-page .trade-validator-shell .aura-overview-monthly-header,
+.journal-page .trade-validator-shell .aura-overview-calendar-day-header {
+  color: rgba(255, 245, 235, 0.55) !important;
+}
+
+.journal-page .trade-validator-shell .aura-overview-calendar-cell-day {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.journal-page .trade-validator-shell .aura-overview-calendar-cell-pnl {
+  color: rgba(232, 228, 218, 0.72) !important;
+}
+
+/* TraderSuite panels (Trader Lab terminal, etc.) */
+.journal-page .trade-validator-shell .trader-suite-panel {
+  background: var(--bg-card, rgba(3, 2, 10, 0.72)) !important;
+  background-image: none !important;
+  border: 1px solid rgba(234, 169, 96, 0.12) !important;
+  border-radius: var(--radius, 12px) !important;
+  backdrop-filter: blur(18px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.03) inset !important;
+}
+
+.journal-page .trade-validator-shell .trader-suite-panel::after {
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.45), rgba(248, 195, 125, 0.3), transparent) !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 1px !important;
+}
+
+.journal-page .trade-validator-shell .trader-suite-panel:hover {
+  background-image: none !important;
+  background: rgba(5, 4, 18, 0.78) !important;
+  border-color: rgba(234, 169, 96, 0.2) !important;
 }

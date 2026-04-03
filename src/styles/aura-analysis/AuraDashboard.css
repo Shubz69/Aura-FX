@@ -132,6 +132,8 @@ html, body, #root {
   flex: 1;
   overflow-x: auto;
   scrollbar-width: none;
+  align-items: stretch;
+  padding: 0 4px;
 }
 .aura-dashboard-tabs::-webkit-scrollbar { display: none; }
 
@@ -191,46 +193,61 @@ html, body, #root {
 }
 .aura-dashboard-tab-select-wrap::after { display: none; }
 
-/* ── Individual tab ───────────────────────────────────────── */
+/* ── Individual tab — text-only rail, gold underline active (no icon boxes / no pill chrome) */
 .aura-dashboard-tab {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 13px;          /* slightly tighter top/bottom */
-  font-size: 0.78rem;
-  font-weight: 400;
+  justify-content: center;
+  padding: 10px 12px 12px;
+  margin: 0 1px;
+  font-size: 0.76rem;
+  font-weight: 500;
   font-family: 'Space Grotesk', sans-serif;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 245, 230, 0.55);
   text-decoration: none;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  letter-spacing: 0.03em;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  letter-spacing: 0.04em;
+  text-transform: none;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: color 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition: color 0.18s ease, background 0.18s ease;
   position: relative;
+  -webkit-tap-highlight-color: transparent;
 }
-.aura-dashboard-tab i { font-size: 0.72rem; opacity: 0.7; transition: opacity 0.2s; }
-.aura-dashboard-tab:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.05); }
-.aura-dashboard-tab:hover i { opacity: 1; }
+
+.aura-dashboard-tab:hover {
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.04);
+}
 
 .aura-dashboard-tab.active {
-  color: #ffffff;
-  background: rgba(15, 27, 56, 0.65);
-  border-color: rgba(212, 175, 55, 0.5);
+  color: #fff;
   font-weight: 600;
-  box-shadow: 0 0 20px rgba(212,175,55,0.12), inset 0 1px 0 rgba(255,255,255,0.08);
+  background: transparent;
+  text-shadow: 0 0 20px rgba(234, 169, 96, 0.15);
 }
-.aura-dashboard-tab.active i { opacity: 1; color: rgba(232, 198, 88, 0.95); }
-.aura-dashboard-tab.active::before {
+
+.aura-dashboard-tab.active::after {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: 8px;
-  background: linear-gradient(135deg,
-    rgba(255,255,255,0.06) 0%,
-    rgba(212,175,55,0.08) 55%,
-    rgba(15,27,56,0.2) 100%);
+  left: 10px;
+  right: 10px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 99px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(234, 169, 96, 0.35),
+    #eaa960,
+    rgba(248, 195, 125, 0.95),
+    #eaa960,
+    rgba(234, 169, 96, 0.35),
+    transparent
+  );
+  box-shadow: 0 0 14px rgba(234, 169, 96, 0.4);
   pointer-events: none;
 }
 
@@ -562,11 +579,10 @@ html, body, #root {
     min-height: 42px;
   }
   .aura-dashboard-tab {
-    font-size: 0.72rem;
-    padding: 5px 9px;
-    gap: 5px;
+    font-size: 0.68rem;
+    padding: 8px 8px 10px;
+    letter-spacing: 0.04em;
   }
-  .aura-dashboard-tab i { display: none; }
   .aura-db-brand-name { display: none; }
   .aura-db-time { font-size: 0.8rem; }
   .aura-db-date { font-size: 0.63rem; color: rgba(255,245,230,0.78); }
@@ -599,7 +615,7 @@ html, body, #root {
 /* ── ≤480px — small mobile ────────────────────────────────── */
 @media (max-width: 480px) {
   .aura-dashboard-tabs-inner { padding: 4px 10px; min-height: 40px; }
-  .aura-dashboard-tab { font-size: 0.66rem; padding: 4px 8px; }
+  .aura-dashboard-tab { font-size: 0.62rem; padding: 6px 6px 8px; letter-spacing: 0.03em; }
   .aura-db-filterbar-inner { padding: 4px 10px; min-height: 34px; }
   .aura-dashboard-content { padding: 10px 8px 24px; }
 }
@@ -870,4 +886,121 @@ html {
   .aura-db-replay-stats {
     grid-template-columns: 1fr;
   }
+}
+
+/* Trade Replay body — match Overview / other tabs: glass over starfield (no blue Trader Suite slabs) */
+.journal-page .aura-dashboard .aura-db-replay-page .trader-replay-terminal {
+  padding: 0;
+  gap: clamp(10px, 1.8vw, 14px);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-panel {
+  background: rgba(3, 2, 10, 0.36) !important;
+  background-image: none !important;
+  border: 1px solid rgba(234, 169, 96, 0.14) !important;
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
+    0 12px 40px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(22px) saturate(1.06);
+  -webkit-backdrop-filter: blur(22px) saturate(1.06);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-panel::after {
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(234, 169, 96, 0.45),
+    rgba(248, 195, 125, 0.32),
+    transparent
+  );
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-panel:hover {
+  background: rgba(5, 4, 18, 0.44) !important;
+  background-image: none !important;
+  border-color: rgba(234, 169, 96, 0.22) !important;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.05) inset,
+    0 0 32px rgba(234, 169, 96, 0.07);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-replay-terminal__nav-btn {
+  border: 1px solid rgba(234, 169, 96, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(232, 235, 255, 0.75);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-replay-terminal__nav-btn--active {
+  border-color: rgba(234, 169, 96, 0.45);
+  background: rgba(234, 169, 96, 0.12);
+  color: #fff;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-btn,
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-btn:visited {
+  border-color: rgba(234, 169, 96, 0.22);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-btn:hover {
+  border-color: rgba(234, 169, 96, 0.35);
+  background: rgba(234, 169, 96, 0.1);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-btn--primary {
+  background: linear-gradient(
+    135deg,
+    rgba(212, 175, 55, 0.45),
+    rgba(234, 169, 96, 0.32)
+  );
+  border-color: rgba(248, 195, 125, 0.4);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4), 0 0 20px rgba(234, 169, 96, 0.12);
+  color: #0a0814;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-tab-btn {
+  border: 1px solid rgba(234, 169, 96, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-tab-btn--active {
+  border-color: rgba(234, 169, 96, 0.4);
+  background: rgba(234, 169, 96, 0.12);
+  color: #fff;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-kicker {
+  color: rgba(248, 195, 125, 0.88);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-kicker::before {
+  color: rgba(234, 169, 96, 0.75);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-select {
+  border-color: rgba(234, 169, 96, 0.22);
+  background: rgba(3, 2, 10, 0.5);
+  color: #fff;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-note,
+.journal-page .aura-dashboard .aura-db-replay-page .trader-suite-card-lite {
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .trader-replay-terminal__score-row,
+.journal-page .aura-dashboard .aura-db-replay-page .trader-replay-terminal__score-outcome {
+  border-bottom-color: rgba(234, 169, 96, 0.1);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-db-replay-stat {
+  background: rgba(3, 2, 10, 0.32);
+  border-color: rgba(234, 169, 96, 0.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }

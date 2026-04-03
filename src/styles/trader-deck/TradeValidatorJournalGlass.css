@@ -30,8 +30,9 @@
   --gold-glow:      rgba(234, 169, 96, 0.18);
   --gold-glass:     rgba(234, 169, 96, 0.06);
   --text:           #FFFFFF;
-  --text-muted:     rgba(200, 196, 232, 0.65);
-  --text-dim:       rgba(178, 175, 218, 0.38);
+  /* Align with AuraShared .aa-page for dashboard parity */
+  --text-muted:     rgba(200, 198, 190, 0.78);
+  --text-dim:       rgba(255, 255, 255, 0.45);
   --green:          #0FD98A;
   --glass-shadow:
     0 8px 32px rgba(0, 0, 0, 0.65),
@@ -55,7 +56,7 @@
   --aa-accent-soft:  rgba(234, 169, 96, 0.14);
   --aa-accent-blue:  rgba(140, 175, 255, 0.78);
   --aa-text:         #ffffff;
-  --aa-text-muted:   rgba(200, 196, 232, 0.65);
+  --aa-text-muted:   rgba(200, 198, 190, 0.78);
   --aa-border-accent:rgba(234, 169, 96, 0.42);
   --aa-radius:       12px;
   --aa-radius-lg:    18px;
@@ -301,28 +302,17 @@
 }
 
 .trade-validator-shell .aura-shell-tab:hover {
-  color: var(--text) !important;
-  background: var(--gold-glass) !important;
-  border-color: var(--border-gold) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: transparent !important;
 }
 
+/* Active state finalized in TradeValidatorJournalPanels.css (gold underline, Aura-dashboard style) */
 .trade-validator-shell .aura-shell-tab.active {
-  color: #0a0704 !important;
-  background: linear-gradient(
-    135deg,
-    rgba(248, 195, 125, 0.95) 0%,
-    rgba(234, 169, 96, 0.92) 50%,
-    rgba(212, 141, 68, 0.88) 100%
-  ) !important;
-  border: 1px solid rgba(234, 169, 96, 0.5) !important;
-  font-weight: 600 !important;
-  box-shadow:
-    0 0 18px rgba(234, 169, 96, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
-}
-
-.trade-validator-shell .aura-shell-tab.active::after {
-  display: none !important;
+  color: #fff !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 /* ── Main content ────────────────────────────────────────────────────────── */

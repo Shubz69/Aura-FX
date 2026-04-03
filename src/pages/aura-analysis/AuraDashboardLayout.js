@@ -5,14 +5,14 @@ import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
 import '../../styles/aura-analysis/AuraDashboard.css';
 
 const TABS = [
-  { path: 'overview',      label: 'Overview',      icon: 'fa-th-large' },
-  { path: 'performance',   label: 'Performance',   icon: 'fa-chart-line' },
-  { path: 'risk-lab',      label: 'Risk Lab',      icon: 'fa-shield-alt' },
-  { path: 'edge-analyzer', label: 'Edge Analyzer', icon: 'fa-bolt' },
-  { path: 'execution-lab', label: 'Execution Lab', icon: 'fa-rocket' },
-  { path: 'calendar',      label: 'Calendar',      icon: 'fa-calendar-alt' },
-  { path: 'growth',        label: 'Growth',        icon: 'fa-seedling' },
-  { path: 'trader-replay', label: 'Trader Replay', icon: 'fa-history' },
+  { path: 'overview',      label: 'Overview' },
+  { path: 'performance',   label: 'Performance' },
+  { path: 'risk-lab',      label: 'Risk Lab' },
+  { path: 'edge-analyzer', label: 'Edge Analyzer' },
+  { path: 'execution-lab', label: 'Execution Lab' },
+  { path: 'calendar',      label: 'Calendar' },
+  { path: 'growth',        label: 'Growth' },
+  { path: 'trader-replay', label: 'Trader Replay' },
 ];
 
 const base = '/aura-analysis/dashboard';
@@ -217,15 +217,14 @@ function AuraDashboardInner() {
           </Link>
 
           <nav className="aura-dashboard-tabs" aria-label="Aura Analysis dashboard sections">
-            {TABS.map(({ path, label, icon }) => (
+            {TABS.map(({ path, label }) => (
               <NavLink
                 key={path}
                 to={`${base}/${path}`}
                 className={({ isActive }) => `aura-dashboard-tab${isActive ? ' active' : ''}`}
                 end={path === 'overview'}
               >
-                <i className={`fas ${icon}`} aria-hidden="true" />
-                <span>{label}</span>
+                {label}
               </NavLink>
             ))}
           </nav>

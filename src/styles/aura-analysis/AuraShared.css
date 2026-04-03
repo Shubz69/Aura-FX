@@ -783,3 +783,39 @@
   fill: rgba(248, 195, 125, 0.8);
   stroke: #f8c37d;
 }
+
+/* ── Growth tab: stronger contrast for inactive milestones & secondary copy ─ */
+.aa-page--growth-readability .aa-section-title,
+.aa-page--growth-readability .aa-section-title-lg {
+  color: rgba(255, 248, 240, 0.58);
+}
+
+.aa-page--growth-readability .aa-chart-title {
+  color: rgba(255, 245, 235, 0.62);
+}
+
+.aa-page--growth-readability .aa-empty {
+  color: rgba(235, 232, 220, 0.84);
+}
+
+.aa-page--growth-readability .aa-bar-meta {
+  color: rgba(255, 245, 235, 0.58);
+}
+
+.aa-page--growth-readability .aa-kpi-label {
+  color: rgba(255, 245, 235, 0.52);
+}
+
+.aa-page--growth-readability .aa-kpi-sub {
+  color: rgba(232, 228, 218, 0.76);
+}
+
+.aa-page--growth-readability .aa-chart-wrap {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(234, 169, 96, 0.16);
+}
+
+.aa-milestone--pending:hover {
+  border-color: rgba(234, 169, 96, 0.22) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
