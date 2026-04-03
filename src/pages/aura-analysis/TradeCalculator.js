@@ -10,6 +10,7 @@ import {
   getPriceExamples,
 } from '../../lib/aura-analysis/instruments';
 import { calculateRisk, deriveStopLossFromRiskAndPositionSize } from '../../lib/aura-analysis/calculators/calculateRisk';
+import { projectPnLAtLots } from '../../lib/aura-analysis/calculators/projectPnLAtLots';
 import { forexPairNeedsUsdJpy } from '../../lib/aura-analysis/calculators/forexPipValueUsd';
 import { buildFxRatesFromPriceMap } from '../../lib/aura-analysis/calculators/accountCurrency';
 import { formatMoneyAccount, ACCOUNT_CURRENCY_OPTIONS } from '../../lib/aura-analysis/formatAccountCurrency';
@@ -297,15 +298,30 @@ export default function TradeCalculator() {
     return result.positionSize;
   }, [form.positionSize, result.positionSize]);
 
+  /** P/L at displayed size when auto-size failed (blocked sanity, validation, missing pip USD, etc.). */
+  const projectedPnL = useMemo(() => {
+    const lots = positionSizeUsed;
+    if (lots <= 0) return null;
+    return projectPnLAtLots(form.pair, calcInput, lots);
+  }, [form.pair, calcInput, positionSizeUsed]);
+
+  /** Only substitute projected values when the engine did not produce a sized position — keeps legacy scaling for normal flows. */
+  const useProjectedPnL = Boolean(
+    projectedPnL &&
+      (result.positionSize <= 0 || result.calculationBlocked === true)
+  );
+
   const potentialProfitDisplay = useMemo(() => {
+    if (useProjectedPnL) return projectedPnL.potentialProfit;
     if (result.positionSize <= 0) return 0;
     return result.potentialProfit * (positionSizeUsed / result.positionSize);
-  }, [result.potentialProfit, result.positionSize, positionSizeUsed]);
+  }, [useProjectedPnL, projectedPnL, result.potentialProfit, result.positionSize, positionSizeUsed]);
 
   const potentialLossDisplay = useMemo(() => {
-    if (result.positionSize <= 0) return result.riskAmount;
+    if (useProjectedPnL) return projectedPnL.potentialLoss;
+    if (result.positionSize <= 0) return positionSizeUsed > 0 ? 0 : result.riskAmount;
     return result.potentialLoss * (positionSizeUsed / result.positionSize);
-  }, [result.potentialLoss, result.positionSize, result.riskAmount, positionSizeUsed]);
+  }, [useProjectedPnL, projectedPnL, result.potentialLoss, result.positionSize, positionSizeUsed, result.riskAmount]);
 
   const hasEntrySlTp =
     (Number(form.entryPrice) || 0) > 0 &&
@@ -320,7 +336,7 @@ export default function TradeCalculator() {
   }, [form.accountBalance, form.riskPercent]);
 
   const riskRoundingNote = useMemo(() => {
-    if (!hasEntrySlTp || positionSizeUsed <= 0 || result.potentialLoss <= 0) return null;
+    if (!hasEntrySlTp || positionSizeUsed <= 0 || potentialLossDisplay <= 0) return null;
     const target = riskAmountFromBalance;
     const diff = Math.abs(potentialLossDisplay - target);
     const tol = accountCurrency === 'JPY' ? 1 : 0.5;
@@ -329,7 +345,6 @@ export default function TradeCalculator() {
   }, [
     hasEntrySlTp,
     positionSizeUsed,
-    result.potentialLoss,
     riskAmountFromBalance,
     potentialLossDisplay,
     accountCurrency,
@@ -401,8 +416,18 @@ export default function TradeCalculator() {
       takeProfitPips: result.takeProfitDistanceAlt ?? result.takeProfitDistancePrice,
       rr: Number(result.riskReward.toFixed(2)),
       positionSize: positionSizeUsed,
-      potentialProfit: result.potentialProfit * (positionSizeUsed / Math.max(result.positionSize, 1e-9)),
-      potentialLoss: result.potentialLoss * (positionSizeUsed / Math.max(result.positionSize, 1e-9)),
+      potentialProfit:
+        useProjectedPnL && projectedPnL
+          ? projectedPnL.potentialProfit
+          : result.positionSize > 0
+            ? result.potentialProfit * (positionSizeUsed / result.positionSize)
+            : 0,
+      potentialLoss:
+        useProjectedPnL && projectedPnL
+          ? projectedPnL.potentialLoss
+          : result.positionSize > 0
+            ? result.potentialLoss * (positionSizeUsed / result.positionSize)
+            : 0,
       result: 'open',
       pnl: 0,
       rMultiple: 0,

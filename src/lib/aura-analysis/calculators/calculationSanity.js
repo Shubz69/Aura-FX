@@ -14,17 +14,6 @@ export function collectPreCalculationSanityErrors(spec, input) {
   if (!Number.isFinite(stop) || !Number.isFinite(takeProfit)) errs.push('Stop and take-profit must be valid numbers.');
   const stopDist = Math.abs(entry - stop);
   if (!Number.isFinite(stopDist) || stopDist <= 0) errs.push('Stop distance is invalid or zero.');
-  const minP = spec.minReasonablePrice;
-  const maxP = spec.maxReasonablePrice;
-  if (Number.isFinite(minP) && Number.isFinite(maxP) && maxP > minP) {
-    const span = maxP - minP;
-    const pad = Math.max(span * 0.05, Math.abs(entry) * 1e-6, 1e-9);
-    if (entry < minP - pad || entry > maxP + pad) {
-      errs.push(
-        `Entry price looks outside the typical range for this instrument (${minP}–${maxP}). Check symbol and price.`
-      );
-    }
-  }
   const mode = spec.calculationMode;
   if (mode === 'forex') {
     const pip = spec.pipSize ?? 0.0001;
@@ -83,6 +72,28 @@ export function collectResultSanityErrors(res) {
     e.push('Profit/loss projection is invalid.');
   }
   return e;
+}
+
+/**
+ * Non-blocking hint when entry is outside typical quote range (still calculate P/L).
+ * @param {import('../instruments').InstrumentSpec} spec
+ * @param {import('./types').CalculatorInput} input
+ * @returns {string[]}
+ */
+export function getEntryPriceRangeWarnings(spec, input) {
+  const entry = input.entry;
+  if (!Number.isFinite(entry) || entry <= 0) return [];
+  const minP = spec.minReasonablePrice;
+  const maxP = spec.maxReasonablePrice;
+  if (!Number.isFinite(minP) || !Number.isFinite(maxP) || maxP <= minP) return [];
+  const span = maxP - minP;
+  const pad = Math.max(span * 0.05, Math.abs(entry) * 1e-6, 1e-9);
+  if (entry < minP - pad || entry > maxP + pad) {
+    return [
+      `Entry price looks outside the typical range for this instrument (${minP}–${maxP}). Check symbol and price.`,
+    ];
+  }
+  return [];
 }
 
 /**

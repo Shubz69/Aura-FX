@@ -10,6 +10,7 @@ import {
   buildBlockedCalculationResult,
   collectPreCalculationSanityErrors,
   collectResultSanityErrors,
+  getEntryPriceRangeWarnings,
 } from './calculationSanity';
 import { sanitizeCalculatorInput, sanitizeInstrumentSpecForDebug } from './calculationDebug';
 import { logInfo } from '../../../utils/systemLogger';
@@ -187,6 +188,14 @@ export function calculateRisk(symbol, input, calcOptions = {}) {
     default:
       result = calculateForex(input, spec);
       break;
+  }
+
+  const priceRangeWarnings = getEntryPriceRangeWarnings(spec, input);
+  if (priceRangeWarnings.length) {
+    result = {
+      ...result,
+      warnings: [...(result.warnings || []), ...priceRangeWarnings],
+    };
   }
 
   const postErrors = collectResultSanityErrors(result);
