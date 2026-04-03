@@ -1063,7 +1063,18 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 0 0 20px;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Was CSS grid — switch to flex so the terminal section can grow with the outer glass shell */
+.journal-page .trader-suite-page:has(.trader-lab-v2).trader-suite-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .journal-page .trader-suite-page:has(.trader-lab-v2) .trader-suite-terminal-stats {
