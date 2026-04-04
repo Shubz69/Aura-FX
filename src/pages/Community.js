@@ -1526,6 +1526,12 @@ useEffect(() => {
         return true;
     }, []);
 
+    const channelIdsMatch = useCallback((a, b) => {
+      if (a == null || b == null) return false;
+      if (String(a) === String(b)) return true;
+      return String(a).toLowerCase() === String(b).toLowerCase();
+    }, []);
+
    // In your useWebSocket callback, replace the message handling section with this:
 const { 
   isConnected, 
@@ -1542,8 +1548,7 @@ const {
       const { messageId, channelId: deletedChannelId } = message;
       
       // Update messages if it's for current channel
-      if (selectedChannel?.id && 
-          (String(deletedChannelId) === String(selectedChannel.id))) {
+      if (selectedChannel?.id && channelIdsMatch(deletedChannelId, selectedChannel.id)) {
         setMessages(prev => 
           prev.map(msg => 
             String(msg.id) === String(messageId) 
@@ -1565,10 +1570,8 @@ const {
       return;
     }
     
-    // Check if message is for current channel
-    const isCurrentChannel = selectedChannel?.id && 
-      (String(message.channelId) === String(selectedChannel.id) || 
-       String(message.channel_id) === String(selectedChannel.id));
+    // Subscribed only to `/topic/chat/${selectedChannel.id}` — frame is always for this open channel.
+    const isCurrentChannel = Boolean(selectedChannel?.id);
     
     // Check if message mentions current user
     const currentUsername = storedUser?.username || storedUser?.name || '';
@@ -3516,8 +3519,9 @@ useEffect(() => {
     if (pollingActiveRef.current) return;
     pollingActiveRef.current = true;
 
-    const POLL_MS_WS_UP = 12000;
-    const POLL_MS_WS_DOWN = 3000;
+    // Shorter fallback when WS reports connected (realtime should carry load); faster catch-up if Pusher/WS miss an event
+    const POLL_MS_WS_UP = 6000;
+    const POLL_MS_WS_DOWN = 3500;
     const pollInterval = isConnected ? POLL_MS_WS_UP : POLL_MS_WS_DOWN;
 
         const pollMessages = async () => {
@@ -3550,8 +3554,8 @@ useEffect(() => {
                         const sel = selectedChannelRef.current;
                         if (!sel || String(sel.id) !== String(channelId)) return prev;
 
-                        const existingIds = new Set(prev.map((m) => m.id));
-                        const newMessages = apiMessages.filter((m) => !existingIds.has(m.id));
+                        const existingIds = new Set(prev.map((m) => String(m.id)));
+                        const newMessages = apiMessages.filter((m) => !existingIds.has(String(m.id)));
 
                         if (newMessages.length > 0) {
                             const currentUsername = storedUser?.username || storedUser?.name || '';
@@ -3668,8 +3672,9 @@ useEffect(() => {
         return () => {
             document.removeEventListener('visibilitychange', onPollVis);
             if (pollTimer) clearInterval(pollTimer);
+            pollingActiveRef.current = false;
         };
-    }, [selectedChannel?.id, isAuthenticated, storedUser, userId, updateChannelBadge]);
+    }, [selectedChannel?.id, isAuthenticated, storedUser, userId, updateChannelBadge, isConnected]);
 
     // Pusher realtime subscription (production - when configured)
     useEffect(() => {
@@ -3683,7 +3688,7 @@ useEffect(() => {
             pusher = new Pusher(key, { cluster });
             channel = pusher.subscribe(`channel-${selectedChannel.id}`);
             channel.bind('new-message', (data) => {
-                if (!data || String(data.channelId || data.channel_id) !== String(selectedChannel.id)) return;
+                if (!data) return;
                 setMessages(prev => {
                     const existingIds = new Set(prev.map(m => String(m.id || '')));
                     if (data.id && existingIds.has(String(data.id))) return prev;

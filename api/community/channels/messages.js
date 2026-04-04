@@ -827,7 +827,8 @@ module.exports = async (req, res) => {
               const uname = r.username || r.name || (r.email ? r.email.split('@')[0] : 'Anonymous');
               const msg = {
                 id: r.id,
-                channelId: r.channel_id,
+                channelId: channelId,
+                channel_id: channelId,
                 userId: r.sender_id,
                 username: uname,
                 content: r.content,
@@ -1034,7 +1035,9 @@ module.exports = async (req, res) => {
         const message = {
           id: newMessage.id,
           sequence: newMessage.id,
-          channelId: newMessage.channel_id,
+          // Always use canonical channels.id for realtime (Pusher + WS + UI). Row channel_id may be numeric legacy.
+          channelId: channelId,
+          channel_id: channelId,
           userId: newMessage.sender_id,
           username: senderUsername,
           content: newMessage.content,
