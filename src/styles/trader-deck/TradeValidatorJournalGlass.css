@@ -292,6 +292,7 @@
 .trade-validator-shell .aura-shell-tab {
   display: inline-flex !important;
   align-items: center !important;
+  position: relative !important;
   color: var(--text-muted) !important;
   font-weight: 500 !important;
   border-radius: 100px !important;
@@ -303,6 +304,38 @@
   transition: background 0.18s, color 0.18s, border-color 0.18s;
   white-space: nowrap !important;
   flex-shrink: 0 !important;
+}
+
+/* Only the active tab shows the gold glow line (scoped to Trade Validator shell; wins over generic AuraAnalysisShell tab ::after). */
+.trade-validator-shell .aura-shell-tab:not(.active)::after {
+  content: none !important;
+  display: none !important;
+}
+
+.trade-validator-shell .aura-shell-tab.active::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  left: 10px !important;
+  right: 10px !important;
+  bottom: 4px !important;
+  width: auto !important;
+  height: 2px !important;
+  transform: none !important;
+  border-radius: 99px !important;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(234, 169, 96, 0.35),
+    #eaa960,
+    rgba(248, 195, 125, 0.95),
+    #eaa960,
+    rgba(234, 169, 96, 0.35),
+    transparent
+  ) !important;
+  box-shadow: 0 0 12px rgba(234, 169, 96, 0.4) !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
 }
 
 .trade-validator-shell .aura-shell-tab:hover {

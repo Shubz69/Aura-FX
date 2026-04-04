@@ -69,7 +69,7 @@ export default function TradeValidatorShell() {
               <NavLink
                 key={tab.path}
                 to={tab.path}
-                end={tab.path === `${BASE}/checklist`}
+                end
                 className={({ isActive }) => `aura-shell-tab aura-shell-tab--validator ${isActive ? 'active' : ''}`}
               >
                 {tab.label}
