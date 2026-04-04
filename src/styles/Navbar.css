@@ -44,16 +44,16 @@
   /* ── Navbar-specific ── */
   --nav-height:    62px;
 
-  /* ── PREMIUM GLASS — near-black veil + subtle navy (backdrop still reads through blur) ── */
-  --nav-light-black:   rgba(10, 12, 20, 0.78);
-  --nav-navy-shine:    rgba(28, 52, 98, 0.36);
-  --nav-navy-deep:     rgba(8, 22, 48, 0.55);
-  --nav-navy-edge:     rgba(32, 58, 112, 0.22);
+  /* ── GLASS — transparent veil so page/starfield shows through blur (classic frosted bar) ── */
+  --nav-light-black:   rgba(8, 10, 20, 0.36);
+  --nav-navy-shine:    rgba(28, 52, 98, 0.22);
+  --nav-navy-deep:     rgba(8, 22, 48, 0.28);
+  --nav-navy-edge:     rgba(32, 58, 112, 0.14);
   --glass-bg:          var(--nav-light-black);
-  --glass-border-top:  rgba(255, 255, 255, 0.09);
-  --glass-border-bot:  rgba(234, 169, 96, 0.12);
-  --glass-tint:        rgba(234, 169, 96, 0.04);
-  --glass-blur:        saturate(1.25) blur(22px);
+  --glass-border-top:  rgba(255, 255, 255, 0.12);
+  --glass-border-bot:  rgba(234, 169, 96, 0.14);
+  --glass-tint:        rgba(234, 169, 96, 0.05);
+  --glass-blur:        saturate(1.2) blur(26px);
 
   --nav-border:    rgba(234, 169, 96, 0.14);
   --surface-hover: rgba(234, 169, 96, 0.07);
@@ -87,38 +87,35 @@ body.loading-active .navbar {
   overflow-x: clip;
   overflow-y: visible;
 
-  /* ── Glass stack: deep veil + navy tint (blur still picks up nebula; bar reads much darker) ── */
+  /* ── Glass stack: light tint + blur — content behind remains visible ── */
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.018) 0%,
-      rgba(120, 145, 210, 0.04) 42%,
-      transparent 78%
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(120, 145, 210, 0.07) 45%,
+      transparent 82%
     ),
     radial-gradient(ellipse 130% 100% at 50% -20%, var(--nav-navy-shine), transparent 58%),
     radial-gradient(ellipse 85% 70% at 100% 50%, var(--nav-navy-edge), transparent 52%),
     radial-gradient(ellipse 85% 70% at 0% 50%, var(--nav-navy-deep), transparent 55%),
-    linear-gradient(180deg, rgba(12, 14, 24, 0.88) 0%, rgba(4, 6, 14, 0.92) 100%);
+    linear-gradient(180deg, rgba(8, 10, 22, 0.38) 0%, rgba(4, 5, 14, 0.48) 100%);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
 
-  /* Top: frost · bottom: warm gold + cool edge (navy/gold hybrid) */
   border-top:    1px solid var(--glass-border-top);
-  border-bottom: 1px solid rgba(165, 155, 140, 0.14);
+  border-bottom: 1px solid rgba(234, 169, 96, 0.1);
 
   z-index: 1000;
   height: calc(var(--nav-height) + env(safe-area-inset-top, 0));
   min-height: var(--nav-height);
 
-  /* Depth — heavier edge shadow so strip feels anchored */
   box-shadow:
-    0 1px 0  rgba(255, 255, 255, 0.045),
-    0 4px 32px rgba(0, 0, 0, 0.62),
-    0 14px 56px rgba(0, 0, 0, 0.45),
-    0 0 90px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    inset 0 -1px 0 rgba(90, 110, 160, 0.07),
-    inset 0 -2px 14px rgba(234, 169, 96, 0.04);
+    0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 32px rgba(0, 0, 0, 0.28),
+    0 2px 12px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(90, 110, 160, 0.06),
+    inset 0 -2px 20px rgba(234, 169, 96, 0.05);
 
   transition:
     box-shadow var(--transition),
@@ -126,29 +123,28 @@ body.loading-active .navbar {
     backdrop-filter var(--transition);
 }
 
-/* Scrolled — near-opaque strip; navy tint only at highlights */
+/* Scrolled — slightly more readable, still frosted (not solid) */
 .navbar.scrolled {
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.012) 0%,
-      rgba(100, 130, 200, 0.05) 40%,
-      transparent 78%
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(100, 130, 200, 0.06) 42%,
+      transparent 80%
     ),
-    radial-gradient(ellipse 120% 90% at 50% -25%, rgba(32, 58, 108, 0.42), transparent 60%),
-    radial-gradient(ellipse 80% 65% at 92% 40%, rgba(28, 50, 96, 0.28), transparent 50%),
-    radial-gradient(ellipse 80% 65% at 8% 60%, rgba(10, 28, 58, 0.42), transparent 52%),
-    linear-gradient(180deg, rgba(8, 10, 20, 0.93) 0%, rgba(2, 4, 10, 0.96) 100%);
-  backdrop-filter: saturate(1.2) blur(20px);
-  -webkit-backdrop-filter: saturate(1.2) blur(20px);
+    radial-gradient(ellipse 120% 90% at 50% -25%, rgba(32, 58, 108, 0.28), transparent 60%),
+    radial-gradient(ellipse 80% 65% at 92% 40%, rgba(28, 50, 96, 0.18), transparent 50%),
+    radial-gradient(ellipse 80% 65% at 8% 60%, rgba(10, 28, 58, 0.26), transparent 52%),
+    linear-gradient(180deg, rgba(6, 8, 18, 0.58) 0%, rgba(3, 4, 12, 0.68) 100%);
+  backdrop-filter: saturate(1.15) blur(24px);
+  -webkit-backdrop-filter: saturate(1.15) blur(24px);
   box-shadow:
-    0 1px 0  rgba(255, 255, 255, 0.04),
-    0 6px 40px rgba(0, 0, 0, 0.65),
-    0 20px 80px rgba(0, 0, 0, 0.48),
-    0 0 120px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
-    inset 0 -1px 0 rgba(80, 100, 150, 0.09),
-    inset 0 -2px 16px rgba(234, 169, 96, 0.055);
+    0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 36px rgba(0, 0, 0, 0.32),
+    0 4px 16px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(80, 100, 150, 0.08),
+    inset 0 -2px 18px rgba(234, 169, 96, 0.06);
 }
 
 /* Top gold streak removed — was .navbar::before prismatic line */
@@ -170,7 +166,7 @@ body.loading-active .navbar {
   animation: navScan 14s ease-in-out infinite;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.32;
+  opacity: 0.45;
 }
 
 @keyframes navScan {
@@ -1276,13 +1272,12 @@ body.loading-active .navbar {
     padding-left: 2.3rem;
     padding-right: 2.3rem;
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.04),
-      0 4px 26px rgba(0, 0, 0, 0.58),
-      0 8px 44px rgba(0, 0, 0, 0.40),
-      0 0 80px rgba(0, 0, 0, 0.22),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 1px 0 rgba(255, 255, 255, 0.06),
+      0 8px 28px rgba(0, 0, 0, 0.26),
+      0 2px 12px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
       inset 0 -1px 0 rgba(90, 110, 160, 0.06),
-      inset 0 -2px 10px rgba(234, 169, 96, 0.035);
+      inset 0 -2px 16px rgba(234, 169, 96, 0.045);
   }
   .logo-container { justify-self: start; }
   .nav-links {
