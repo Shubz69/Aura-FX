@@ -2,9 +2,24 @@
  * Shared signup checks — avoid sending verifications if user already exists.
  */
 
+/** Collapse +44 0… (common UK mistake) into +447… for E.164 */
+function collapseUkTrunkAfter44(digits) {
+  if (digits.startsWith('44') && digits.length >= 12 && digits[2] === '0') {
+    return `44${digits.slice(3)}`;
+  }
+  return digits;
+}
+
 function normalizePhoneE164(phone) {
   if (!phone || typeof phone !== 'string') return '';
-  const digits = phone.replace(/\D/g, '');
+  const trimmed = phone.trim();
+  let digits;
+  if (trimmed.startsWith('+')) {
+    digits = trimmed.slice(1).replace(/\D/g, '');
+  } else {
+    digits = trimmed.replace(/\D/g, '');
+  }
+  digits = collapseUkTrunkAfter44(digits);
   if (digits.length < 10) return '';
   if (digits.length === 10) return `+1${digits}`;
   return `+${digits}`;

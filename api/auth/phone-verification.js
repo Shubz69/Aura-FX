@@ -4,15 +4,14 @@
  */
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
-const { checkPhoneAlreadyRegistered } = require('../utils/signupEligibility');
+const { checkPhoneAlreadyRegistered, normalizePhoneE164 } = require('../utils/signupEligibility');
 
-const normalizePhone = (phone) => {
-  if (!phone || typeof phone !== 'string') return '';
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length < 10) return '';
-  if (digits.length === 10) return `+1${digits}`;
-  return `+${digits}`;
-};
+function isTwilioFriendlyNameRejected(err) {
+  const code = err && (err.code || err.status);
+  if (code === 60248 || code === 54053) return true;
+  const m = ((err && err.message) || '').toLowerCase();
+  return m.includes('friendly name') || m.includes('custom friendly');
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
@@ -46,7 +45,10 @@ module.exports = async (req, res) => {
       if (!raw || raw.replace(/\D/g, '').length < 10) {
         return res.status(400).json({ success: false, message: 'Valid phone number is required' });
       }
-      const phoneE164 = normalizePhone(raw);
+      const phoneE164 = normalizePhoneE164(raw);
+      if (!phoneE164) {
+        return res.status(400).json({ success: false, message: 'Valid phone number is required' });
+      }
 
       let dbConn = null;
       try {
@@ -57,7 +59,7 @@ module.exports = async (req, res) => {
             message: 'Unable to verify signup eligibility. Please try again.',
           });
         }
-        const taken = await checkPhoneAlreadyRegistered(dbConn, raw);
+        const taken = await checkPhoneAlreadyRegistered(dbConn, phoneE164);
         if (taken) {
           return res.status(409).json({
             success: false,
@@ -82,15 +84,23 @@ module.exports = async (req, res) => {
       try {
         const twilio = require('twilio');
         const client = twilio(sid, token);
-        // Overrides Verify Service friendly name in the SMS (otherwise Twilio may show e.g. "Aura FX").
-        const smsBrand = (process.env.TWILIO_VERIFY_SMS_BRAND || 'Aura Terminal').trim().slice(0, 30) || 'Aura Terminal';
-        await client.verify.v2
-          .services(serviceSid)
-          .verifications.create({
-            to: phoneE164,
-            channel: 'sms',
-            customFriendlyName: smsBrand,
-          });
+        const svc = client.verify.v2.services(serviceSid);
+        // Many accounts reject customFriendlyName (Twilio 400). Optional: set TWILIO_VERIFY_SMS_BRAND
+        // in Vercel; we retry without it so SMS still sends. Prefer setting the Verify Service
+        // friendly name in Twilio Console for consistent branding.
+        const smsBrand = (process.env.TWILIO_VERIFY_SMS_BRAND || '').trim().slice(0, 30);
+        const base = { to: phoneE164, channel: 'sms' };
+        if (smsBrand) {
+          try {
+            await svc.verifications.create({ ...base, customFriendlyName: smsBrand });
+          } catch (brandErr) {
+            if (!isTwilioFriendlyNameRejected(brandErr)) throw brandErr;
+            console.warn('Twilio Verify: customFriendlyName not allowed, sending without it:', brandErr.message);
+            await svc.verifications.create(base);
+          }
+        } else {
+          await svc.verifications.create(base);
+        }
       } catch (twilioErr) {
         console.error('Twilio Verify error:', twilioErr.message);
         const codeNum = twilioErr.code || twilioErr.status || 0;
@@ -116,7 +126,10 @@ module.exports = async (req, res) => {
       if (!raw || !codeTrimmed) {
         return res.status(400).json({ success: false, message: 'Phone and code are required' });
       }
-      const phoneE164 = normalizePhone(raw);
+      const phoneE164 = normalizePhoneE164(raw);
+      if (!phoneE164) {
+        return res.status(400).json({ success: false, message: 'Valid phone number is required' });
+      }
 
       try {
         const twilio = require('twilio');

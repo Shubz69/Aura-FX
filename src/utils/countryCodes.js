@@ -210,7 +210,12 @@ export const COUNTRY_CODES = [
 /** Build E.164 full number from country code and national number digits */
 export const toE164 = (countryCode, nationalNumber) => {
     const codeDigits = (countryCode || '').replace(/\D/g, '');
-    const numDigits = (nationalNumber || '').replace(/\D/g, '');
+    let numDigits = (nationalNumber || '').replace(/\D/g, '');
     if (!codeDigits || !numDigits) return '';
+    // Drop national trunk 0 (e.g. UK 07706… with +44 → +447706…, not +4407706…)
+    if (codeDigits !== '1' && numDigits.startsWith('0')) {
+        numDigits = numDigits.replace(/^0+/, '');
+    }
+    if (!numDigits) return '';
     return `+${codeDigits}${numDigits}`;
 };
