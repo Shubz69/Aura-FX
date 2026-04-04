@@ -14,6 +14,7 @@ import Footer from './components/Footer';
 import CommunityRouteBoundary from './components/CommunityRouteBoundary';
 import { consumePostLoginTransition } from './utils/postLoginTransition';
 import { ensureWebPushSubscription } from './utils/ensureWebPushSubscription';
+import JournalReminderScheduler from './components/JournalReminderScheduler';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/Courses.css';
@@ -244,7 +245,8 @@ function AppRoutes() {
             {showGDPR && <GDPRModal onAgree={handleAgreeGDPR} />}
 
             <Navbar />
-            
+            {user?.id ? <JournalReminderScheduler /> : null}
+
             {/* Main content area - page-wrapper now only contains the route content */}
             <main className={`page-wrapper${postLoginTransitionActive ? ' post-login-transition-surface' : ''}`}>
                 <Suspense fallback={<PageLoadFallback />}>

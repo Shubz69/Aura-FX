@@ -1,14 +1,20 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, useReducer } from 'react';
 import { toast } from 'react-toastify';
 import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
 import { getStoredUser } from '../utils/storage';
 import { isAdmin } from '../utils/roles';
 import { getJournalTodayForUser } from '../utils/journalDate';
+import {
+  getReminderForTask,
+  upsertReminder,
+  removeReminderByTask,
+  JOURNAL_REMINDERS_CHANGED,
+} from '../utils/journalTaskReminders';
 import '../styles/Journal.css';
 import {
   FaPlus, FaTrash, FaCheck, FaCircle, FaEdit, FaSave,
-  FaCamera, FaFire, FaBolt, FaTimes, FaChevronLeft, FaChevronRight,
+  FaCamera, FaFire, FaBolt, FaTimes, FaChevronLeft, FaChevronRight, FaBell,
 } from 'react-icons/fa';
 
 const MOOD_OPTIONS = [
@@ -61,6 +67,37 @@ const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 function isCanceledError(err) {
   return Boolean(err && (err.code === 'ERR_CANCELED' || err.name === 'CanceledError'));
+}
+
+const REMINDER_MAX_MS = 1000 * 60 * 60 * 24 * 30;
+
+function formatReminderRelative(fireAt) {
+  const ms = Number(fireAt) - Date.now();
+  if (!Number.isFinite(ms)) return '';
+  if (ms < 45_000) return 'in a moment';
+  const mins = Math.round(ms / 60_000);
+  if (mins < 60) return `in ${mins} min`;
+  const hrs = Math.round(ms / 3_600_000);
+  if (hrs < 48) return `in ~${hrs} h`;
+  const days = Math.round(ms / 86_400_000);
+  return `in ~${days} day${days === 1 ? '' : 's'}`;
+}
+
+function tomorrowAtNineLocalMs() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(9, 0, 0, 0);
+  return d.getTime();
+}
+
+async function ensureNotificationPermission() {
+  if (typeof Notification === 'undefined') return;
+  if (Notification.permission === 'granted') return;
+  if (Notification.permission === 'denied') {
+    toast.info('Turn on notifications in your browser settings if you want desktop alerts.', { autoClose: 6000 });
+    return;
+  }
+  await Notification.requestPermission();
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -174,6 +211,12 @@ export default function Journal() {
   // Lightbox
   const [lightbox, setLightbox] = useState(null);
 
+  const journalUserId = authUser?.id;
+  const [reminderMenuTaskId, setReminderMenuTaskId] = useState(null);
+  const [reminderCustomDt, setReminderCustomDt] = useState('');
+  const reminderWrapRef = useRef(null);
+  const [, bumpReminders] = useReducer((n) => n + 1, 0);
+
   // Note editing
   const [editingNoteId, setEditingNoteId]     = useState(null);
   const [editingNoteText, setEditingNoteText] = useState('');
@@ -190,6 +233,34 @@ export default function Journal() {
   const canEditJournal = true;
 
   useEffect(() => { setCompletionBannerDismissed(false); }, [selectedDate]);
+
+  useEffect(() => {
+    const sync = () => bumpReminders();
+    window.addEventListener(JOURNAL_REMINDERS_CHANGED, sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener(JOURNAL_REMINDERS_CHANGED, sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!reminderMenuTaskId) return;
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    setReminderCustomDt(d.toISOString().slice(0, 16));
+  }, [reminderMenuTaskId]);
+
+  useEffect(() => {
+    if (!reminderMenuTaskId) return;
+    const el = reminderWrapRef.current;
+    if (!el) return;
+    const onDown = (e) => {
+      if (!el.contains(e.target)) setReminderMenuTaskId(null);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [reminderMenuTaskId]);
 
   useEffect(() => {
     setJournalToday(getJournalTodayForUser(authUser));
@@ -428,12 +499,43 @@ export default function Journal() {
     if (!canEditJournal) return;
     try {
       await Api.deleteJournalTask(id);
+      if (journalUserId) removeReminderByTask(journalUserId, id);
       setMonthTasks((prev) => prev.filter((t) => t.id !== id));
       setProofPhotos((prev) => { const n = { ...prev }; delete n[id]; return n; });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete task.');
     }
   };
+
+  const applyJournalReminder = useCallback(async (task, fireAtMs) => {
+    if (!journalUserId) {
+      toast.error('Sign in to use reminders.');
+      return;
+    }
+    const t = Number(fireAtMs);
+    if (!Number.isFinite(t) || t <= Date.now()) {
+      toast.error('Choose a future time.');
+      return;
+    }
+    if (t - Date.now() > REMINDER_MAX_MS) {
+      toast.error('Reminders can be at most 30 days ahead.');
+      return;
+    }
+    await ensureNotificationPermission();
+    upsertReminder({
+      userId: journalUserId,
+      taskId: task.id,
+      taskTitle: task.title,
+      fireAtMs: t,
+    });
+    toast.success('Reminder set. You will get a notice when it is due.');
+    setReminderMenuTaskId(null);
+  }, [journalUserId]);
+
+  const applyCustomReminder = useCallback((task) => {
+    const t = new Date(reminderCustomDt).getTime();
+    applyJournalReminder(task, t);
+  }, [reminderCustomDt, applyJournalReminder]);
 
   const handleEditStart  = (task) => { setEditingTaskId(task.id); setEditTitle(task.title); };
   const handleEditCancel = ()     => { setEditingTaskId(null); setEditTitle(''); };
@@ -638,6 +740,7 @@ export default function Journal() {
     const isEditing = canEditJournal && editingTaskId === task.id;
     const isDone    = task.completed;
     const isMand    = task.isMandatory;
+    const existingReminder = journalUserId ? getReminderForTask(journalUserId, task.id) : null;
 
     return (
       <li
@@ -706,6 +809,92 @@ export default function Journal() {
             <div className="journal-task-card-footer">
               <div className="journal-task-actions">
                 {renderProofBtn(task.id)}
+                {journalUserId && (
+                  <div
+                    className="journal-reminder-wrap"
+                    ref={reminderMenuTaskId === task.id ? reminderWrapRef : null}
+                  >
+                    <button
+                      type="button"
+                      className={[
+                        'journal-task-remind-btn',
+                        existingReminder ? 'journal-task-remind-btn--active' : '',
+                      ].filter(Boolean).join(' ')}
+                      onClick={() => setReminderMenuTaskId(reminderMenuTaskId === task.id ? null : task.id)}
+                      title="Set reminder"
+                      aria-label="Set reminder"
+                    >
+                      <FaBell />
+                    </button>
+                    {reminderMenuTaskId === task.id && (
+                      <div className="journal-reminder-popover" role="dialog" aria-label="Task reminder">
+                        <div className="journal-reminder-popover-title">Remind me</div>
+                        {existingReminder && (
+                          <p className="journal-reminder-scheduled">
+                            Scheduled {formatReminderRelative(existingReminder.fireAt)}
+                          </p>
+                        )}
+                        <div className="journal-reminder-presets">
+                          {[
+                            { label: '1 hour', ms: 60 * 60 * 1000 },
+                            { label: '3 hours', ms: 3 * 60 * 60 * 1000 },
+                            { label: '6 hours', ms: 6 * 60 * 60 * 1000 },
+                            { label: '1 day', ms: 24 * 60 * 60 * 1000 },
+                            { label: '2 days', ms: 2 * 24 * 60 * 60 * 1000 },
+                          ].map((p) => (
+                            <button
+                              key={p.label}
+                              type="button"
+                              className="journal-reminder-preset"
+                              onClick={() => applyJournalReminder(task, Date.now() + p.ms)}
+                            >
+                              {p.label}
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            className="journal-reminder-preset"
+                            onClick={() => applyJournalReminder(task, tomorrowAtNineLocalMs())}
+                          >
+                            Tomorrow 9:00
+                          </button>
+                        </div>
+                        <div className="journal-reminder-custom">
+                          <label className="journal-reminder-custom-label" htmlFor={`journal-reminder-dt-${task.id}`}>
+                            Custom time
+                          </label>
+                          <input
+                            id={`journal-reminder-dt-${task.id}`}
+                            type="datetime-local"
+                            className="journal-reminder-datetime"
+                            value={reminderCustomDt}
+                            onChange={(e) => setReminderCustomDt(e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            className="journal-reminder-apply"
+                            onClick={() => applyCustomReminder(task)}
+                          >
+                            Set
+                          </button>
+                        </div>
+                        {existingReminder && (
+                          <button
+                            type="button"
+                            className="journal-reminder-clear"
+                            onClick={() => {
+                              removeReminderByTask(journalUserId, task.id);
+                              toast.success('Reminder removed');
+                              setReminderMenuTaskId(null);
+                            }}
+                          >
+                            Clear reminder
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {canEditJournal && !isMand && (
                   <button type="button" className="journal-task-edit-icon"
                     onClick={(e) => { e.stopPropagation(); handleEditStart(task); }}

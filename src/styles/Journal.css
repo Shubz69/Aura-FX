@@ -2095,6 +2095,156 @@
   white-space: nowrap;
 }
 
+/* Task reminder (bell + popover) */
+.journal-reminder-wrap {
+  position: relative;
+}
+
+.journal-task-remind-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  transition: all var(--transition-s);
+}
+
+.journal-task-remind-btn:hover {
+  color: rgba(230, 238, 255, 0.95);
+  background: rgba(55, 80, 150, 0.28);
+  border-color: rgba(140, 170, 235, 0.35);
+}
+
+.journal-task-remind-btn--active {
+  color: rgba(255, 214, 120, 0.95);
+  border-color: rgba(255, 200, 80, 0.35);
+  background: rgba(255, 200, 80, 0.08);
+}
+
+.journal-reminder-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 40;
+  min-width: 220px;
+  max-width: min(92vw, 280px);
+  padding: 10px 12px 12px;
+  border-radius: 12px;
+  background: rgba(18, 22, 38, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.journal-reminder-popover-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(230, 236, 255, 0.75);
+  margin-bottom: 8px;
+}
+
+.journal-reminder-scheduled {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  color: rgba(255, 214, 120, 0.9);
+  line-height: 1.4;
+}
+
+.journal-reminder-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.journal-reminder-preset {
+  padding: 5px 8px;
+  font-size: 0.68rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all var(--transition-s);
+}
+
+.journal-reminder-preset:hover {
+  color: rgba(230, 238, 255, 0.95);
+  border-color: rgba(140, 170, 235, 0.4);
+  background: rgba(55, 80, 150, 0.25);
+}
+
+.journal-reminder-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.journal-reminder-custom-label {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+.journal-reminder-datetime {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-family: inherit;
+}
+
+.journal-reminder-apply {
+  align-self: flex-start;
+  padding: 5px 14px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: rgba(15, 217, 138, 0.22);
+  color: rgba(180, 255, 220, 0.95);
+  transition: background var(--transition-s);
+}
+
+.journal-reminder-apply:hover {
+  background: rgba(15, 217, 138, 0.32);
+}
+
+.journal-reminder-clear {
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px;
+  font-size: 0.68rem;
+  border-radius: 8px;
+  border: 1px solid rgba(240, 61, 95, 0.25);
+  background: transparent;
+  color: var(--red);
+  cursor: pointer;
+  transition: all var(--transition-s);
+}
+
+.journal-reminder-clear:hover {
+  background: var(--red-glass);
+}
+
 .journal-task-proof-btn:hover {
   background: rgba(45, 68, 135, 0.35);
   border-color: rgba(160, 190, 255, 0.45);
