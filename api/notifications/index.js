@@ -188,9 +188,11 @@ async function createNotification(data) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [id, userId, type, title, body, channelId, messageId, fromUserId, friendRequestId, actionStatus, scheduledForUTC, localDate, metaStr]);
 
+  // Do not await web push — it can take seconds per device and was blocking community POST
+  // (Vercel 60s timeout). In-app notification row is already persisted.
   try {
     const { sendWebPushForNotification } = require('../push/webPushNotify');
-    await sendWebPushForNotification({
+    void sendWebPushForNotification({
       userId,
       notificationId: id,
       type,
@@ -198,6 +200,8 @@ async function createNotification(data) {
       body: body || '',
       meta,
       channelId
+    }).catch((pushErr) => {
+      console.warn('[notifications] web push:', pushErr.message);
     });
   } catch (pushErr) {
     console.warn('[notifications] web push:', pushErr.message);

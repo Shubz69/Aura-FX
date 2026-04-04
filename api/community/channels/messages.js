@@ -17,6 +17,43 @@ const SCHEMA_CHECK_TTL_MS = 10 * 60 * 1000;
 // Suppress url.parse() deprecation warnings from dependencies
 require('../../utils/suppress-warnings');
 
+/** Hard caps so a single POST cannot run 60s+ on Vercel (notifications + slow outbound fetch). */
+const WS_BROADCAST_TIMEOUT_MS = Number(process.env.COMMUNITY_WS_BROADCAST_TIMEOUT_MS) || 2800;
+const PUSHER_TRIGGER_TIMEOUT_MS = Number(process.env.COMMUNITY_PUSHER_TIMEOUT_MS) || 4000;
+const MAX_MENTION_NOTIFICATIONS_PER_MESSAGE = Number(process.env.COMMUNITY_MAX_MENTION_PUSH) || 120;
+const MAX_CHANNEL_ACTIVITY_NOTIFICATIONS = Number(process.env.COMMUNITY_MAX_CHANNEL_ACTIVITY_PUSH) || 40;
+const NOTIFICATION_CONCURRENCY = Number(process.env.COMMUNITY_NOTIF_CONCURRENCY) || 12;
+
+async function fetchWithTimeout(url, init, timeoutMs) {
+  const ms = Math.max(500, Math.min(timeoutMs || 3000, 15000));
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), ms);
+  try {
+    if (typeof fetch === 'undefined') return null;
+    return await fetch(url, { ...init, signal: ac.signal });
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function triggerNewMessageBounded(channelId, message, timeoutMs) {
+  const ms = Math.max(500, Math.min(timeoutMs || 4000, 10000));
+  await Promise.race([
+    triggerNewMessage(channelId, message),
+    new Promise((resolve) => setTimeout(resolve, ms)),
+  ]).catch(() => {});
+}
+
+async function runInBatches(items, concurrency, fn) {
+  const n = Math.max(1, Math.min(concurrency || 8, 50));
+  for (let i = 0; i < items.length; i += n) {
+    const chunk = items.slice(i, i + n);
+    await Promise.allSettled(chunk.map((item, j) => fn(item, i + j)));
+  }
+}
+
 /** Opt-in channel message push (throttled per user+channel in DB) */
 let channelPushPrefsTableReady = false;
 async function ensureChannelPushPrefsTable() {
@@ -63,9 +100,16 @@ async function notifyChannelActivityOptIn(db, params) {
        AND (last_push_at IS NULL OR last_push_at < DATE_SUB(NOW(), INTERVAL 10 MINUTE))`,
       [channelIdStr, senderId]
     );
-    for (const row of rows || []) {
+    const capped = (rows || [])
+      .filter((row) => {
+        const uid = row.user_id;
+        if (!uid || excludeUserIds?.has(uid)) return false;
+        return true;
+      })
+      .slice(0, MAX_CHANNEL_ACTIVITY_NOTIFICATIONS);
+
+    await runInBatches(capped, NOTIFICATION_CONCURRENCY, async (row) => {
       const uid = row.user_id;
-      if (excludeUserIds && excludeUserIds.has(uid)) continue;
       try {
         await cn({
           userId: uid,
@@ -80,13 +124,138 @@ async function notifyChannelActivityOptIn(db, params) {
       } catch (err) {
         console.warn('Channel activity notification create failed:', err.message);
       }
-      await db.execute(
-        'UPDATE channel_push_prefs SET last_push_at = NOW() WHERE user_id = ? AND channel_id = ?',
-        [uid, channelIdStr]
-      );
-    }
+      try {
+        await db.execute(
+          'UPDATE channel_push_prefs SET last_push_at = NOW() WHERE user_id = ? AND channel_id = ?',
+          [uid, channelIdStr]
+        );
+      } catch (_) { /* non-fatal */ }
+    });
   } catch (e) {
     console.warn('Channel activity notify:', e.message);
+  }
+}
+
+/**
+ * Runs after HTTP response so POST returns quickly (Pusher + WS only on critical path).
+ * Uses a fresh pool connection; safe if Vercel freezes the isolate after respond (best-effort).
+ */
+async function runCommunityMessageNotificationSideEffects(payload) {
+  const {
+    createNotification: cn,
+    messageContent,
+    newMessageId,
+    channelRow,
+    channelId,
+    channelIdValue,
+    senderId,
+    senderUsername,
+  } = payload;
+  if (!cn || !messageContent || newMessageId == null) return;
+
+  let db;
+  try {
+    db = await getDbConnection();
+    if (!db) return;
+
+    const channelName = channelRow?.name || (typeof channelId === 'string' ? channelId : `channel-${channelId}`);
+    const bodySnippet = messageContent.length > 80 ? messageContent.substring(0, 77) + '...' : messageContent;
+    const mentionTitle = 'You were mentioned';
+    const mentionBodyText = `${senderUsername} mentioned you in #${channelName}: ${bodySnippet}`;
+    const numericChannelId = (typeof channelId === 'number' && !isNaN(channelId)) ? channelId : (parseInt(channelId, 10));
+    const channelIdForDb = (typeof numericChannelId === 'number' && !isNaN(numericChannelId)) ? numericChannelId : null;
+    const notifMeta = { channelId, channelName };
+
+    const userIdsToNotify = new Set();
+
+    const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+    const matches = [...messageContent.matchAll(mentionRegex)];
+    const mentionedUsernames = [...new Set(matches.map(m => (m[1] || '').toLowerCase()).filter(Boolean))];
+    const isEveryoneMention = mentionedUsernames.some(u => u === 'everyone' || u === 'all');
+    for (const uname of mentionedUsernames) {
+      if (uname === 'everyone' || uname === 'all') continue;
+      if (uname === 'admin') {
+        const [adminRows] = await db.execute(
+          'SELECT id FROM users WHERE role IN (?, ?)',
+          ['admin', 'super_admin']
+        );
+        (adminRows || []).forEach(r => { if (r.id && r.id !== senderId) userIdsToNotify.add(r.id); });
+      } else {
+        const [uRows] = await db.execute(
+          'SELECT id FROM users WHERE LOWER(TRIM(username)) = ? OR LOWER(TRIM(name)) = ? LIMIT 1',
+          [uname, uname]
+        );
+        if (uRows && uRows[0] && uRows[0].id !== senderId) userIdsToNotify.add(uRows[0].id);
+      }
+    }
+
+    if (isEveryoneMention) {
+      try {
+        const cap = Math.min(250, MAX_MENTION_NOTIFICATIONS_PER_MESSAGE);
+        const [allUserRows] = await db.execute(
+          `SELECT id FROM users WHERE id != ? ORDER BY id LIMIT ${cap}`,
+          [senderId]
+        );
+        (allUserRows || []).forEach(r => { if (r.id) userIdsToNotify.add(r.id); });
+      } catch (e) {
+        console.warn('@everyone notification lookup failed:', e.message);
+      }
+    }
+
+    const mentionIds = [...userIdsToNotify].slice(0, MAX_MENTION_NOTIFICATIONS_PER_MESSAGE);
+    if (userIdsToNotify.size > MAX_MENTION_NOTIFICATIONS_PER_MESSAGE) {
+      console.warn('[community/messages] mention notifications capped', {
+        requested: userIdsToNotify.size,
+        cap: MAX_MENTION_NOTIFICATIONS_PER_MESSAGE
+      });
+    }
+
+    try {
+      await runInBatches(mentionIds, NOTIFICATION_CONCURRENCY, async (targetUserId) => {
+        try {
+          await cn({
+            userId: targetUserId,
+            type: 'MENTION',
+            title: mentionTitle,
+            body: mentionBodyText,
+            channelId: channelIdForDb,
+            messageId: newMessageId,
+            fromUserId: senderId,
+            meta: notifMeta
+          });
+        } catch (err) {
+          console.warn('Mention notification create failed:', err.message);
+        }
+      });
+    } catch (mentionErr) {
+      console.warn('Mention notification create failed:', mentionErr.message);
+    }
+
+    try {
+      await notifyChannelActivityOptIn(db, {
+        createNotification: cn,
+        channelIdStr: String(channelIdValue),
+        channelIdForDb,
+        channelName,
+        senderId,
+        senderUsername,
+        bodySnippet,
+        messageId: newMessageId,
+        notifMeta,
+        excludeUserIds: userIdsToNotify
+      });
+    } catch (chActErr) {
+      console.warn('Channel activity notification:', chActErr.message);
+    }
+  } catch (e) {
+    console.warn('[community/messages] deferred notifications failed:', e.message);
+  } finally {
+    if (db) {
+      try {
+        if (typeof db.release === 'function') db.release();
+        else if (typeof db.end === 'function') await db.end();
+      } catch (_) { /* ignore */ }
+    }
   }
 }
 
@@ -850,97 +1019,51 @@ module.exports = async (req, res) => {
         const senderUsername = newMessage.username || newMessage.name || (newMessage.email ? newMessage.email.split('@')[0] : 'Anonymous');
         const senderAvatar = newMessage.avatar ?? null;
         const senderRole = newMessage.role || 'USER';
-        
-        // Create notifications for @mentioned users and @everyone (before releasing db)
-        const channelName = channelRow?.name || (typeof channelId === 'string' ? channelId : `channel-${channelId}`);
-        const bodySnippet = messageContent.length > 80 ? messageContent.substring(0, 77) + '...' : messageContent;
-        const mentionTitle = 'You were mentioned';
-        const mentionBodyText = `${senderUsername} mentioned you in #${channelName}: ${bodySnippet}`;
-        const numericChannelId = (typeof channelId === 'number' && !isNaN(channelId)) ? channelId : (parseInt(channelId, 10));
-        const channelIdForDb = (typeof numericChannelId === 'number' && !isNaN(numericChannelId)) ? numericChannelId : null;
-        const notifMeta = { channelId: channelId, channelName: channelName };
 
-        if (createNotification && messageContent) {
-          const userIdsToNotify = new Set();
-
-          // @username mentions
-          const mentionRegex = /@([a-zA-Z0-9_]+)/g;
-          const matches = [...messageContent.matchAll(mentionRegex)];
-          const mentionedUsernames = [...new Set(matches.map(m => (m[1] || '').toLowerCase()).filter(Boolean))];
-          const isEveryoneMention = mentionedUsernames.some(u => u === 'everyone' || u === 'all');
-          for (const uname of mentionedUsernames) {
-            if (uname === 'everyone' || uname === 'all') continue; // handled below
-            if (uname === 'admin') {
-              const [adminRows] = await db.execute(
-                'SELECT id FROM users WHERE role IN (?, ?)',
-                ['admin', 'super_admin']
-              );
-              (adminRows || []).forEach(r => { if (r.id && r.id !== senderId) userIdsToNotify.add(r.id); });
-            } else {
-              const [uRows] = await db.execute(
-                'SELECT id FROM users WHERE LOWER(TRIM(username)) = ? OR LOWER(TRIM(name)) = ? LIMIT 1',
-                [uname, uname]
-              );
-              if (uRows && uRows[0] && uRows[0].id !== senderId) userIdsToNotify.add(uRows[0].id);
-            }
-          }
-
-          // @everyone / @all: only admins can send; notify all users who can see the channel (cap to avoid overload)
-          if (isEveryoneMention) {
-            try {
-              const [allUserRows] = await db.execute(
-                'SELECT id FROM users WHERE id != ? ORDER BY id LIMIT 500',
-                [senderId]
-              );
-              (allUserRows || []).forEach(r => { if (r.id) userIdsToNotify.add(r.id); });
-            } catch (e) {
-              console.warn('@everyone notification lookup failed:', e.message);
-            }
-          }
-
+        let fileData = null;
+        if (newMessage.file_data) {
           try {
-            await Promise.all(
-              [...userIdsToNotify].map(async (targetUserId) => {
-                try {
-                  await createNotification({
-                    userId: targetUserId,
-                    type: 'MENTION',
-                    title: mentionTitle,
-                    body: mentionBodyText,
-                    channelId: channelIdForDb,
-                    messageId: newMessage.id,
-                    fromUserId: senderId,
-                    meta: notifMeta
-                  });
-                } catch (err) {
-                  console.warn('Mention notification create failed:', err.message);
-                }
-              })
-            );
-          } catch (mentionErr) {
-            console.warn('Mention notification create failed:', mentionErr.message);
-          }
-
-          // Opt-in channel activity (throttled; excludes @mention recipients for this message)
-          try {
-            await notifyChannelActivityOptIn(db, {
-              createNotification,
-              channelIdStr: String(channelIdValue),
-              channelIdForDb,
-              channelName,
-              senderId,
-              senderUsername,
-              bodySnippet,
-              messageId: newMessage.id,
-              notifMeta,
-              excludeUserIds: userIdsToNotify
-            });
-          } catch (chActErr) {
-            console.warn('Channel activity notification:', chActErr.message);
+            fileData = typeof newMessage.file_data === 'string'
+              ? JSON.parse(newMessage.file_data)
+              : newMessage.file_data;
+          } catch (parseError) {
+            console.warn('Could not parse file_data:', parseError);
           }
         }
-        
-        // Release connection back to pool
+
+        const message = {
+          id: newMessage.id,
+          sequence: newMessage.id,
+          channelId: newMessage.channel_id,
+          userId: newMessage.sender_id,
+          username: senderUsername,
+          content: newMessage.content,
+          createdAt: newMessage.timestamp,
+          timestamp: newMessage.timestamp,
+          file: fileData,
+          sender: {
+            id: newMessage.sender_id,
+            username: senderUsername,
+            avatar: senderAvatar,
+            role: senderRole
+          }
+        };
+
+        // Realtime first — bounded so a dead Railway / Pusher never hits Vercel 60s timeout
+        await triggerNewMessageBounded(channelId, message, PUSHER_TRIGGER_TIMEOUT_MS);
+        const wsServerUrl = process.env.WEBSOCKET_SERVER_URL || 'https://aura-fx-production.up.railway.app';
+        const wsBroadcastUrl = `${wsServerUrl.replace(/\/$/, '')}/api/broadcast-new-message`;
+        await fetchWithTimeout(
+          wsBroadcastUrl,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channelId, message })
+          },
+          WS_BROADCAST_TIMEOUT_MS
+        );
+
+        // Release connection back to pool before responding (notifications use their own connection).
         try {
           if (db && typeof db.release === 'function') {
             db.release();
@@ -951,55 +1074,21 @@ module.exports = async (req, res) => {
           console.warn('Error releasing database connection:', releaseError.message);
         }
 
-        // Parse file_data if present
-        let fileData = null;
-        if (newMessage.file_data) {
-            try {
-                fileData = typeof newMessage.file_data === 'string' 
-                    ? JSON.parse(newMessage.file_data) 
-                    : newMessage.file_data;
-            } catch (parseError) {
-                console.warn('Could not parse file_data:', parseError);
-            }
+        res.status(201).json(message);
+
+        if (createNotification && messageContent) {
+          void runCommunityMessageNotificationSideEffects({
+            createNotification,
+            messageContent,
+            newMessageId: newMessage.id,
+            channelRow,
+            channelId,
+            channelIdValue,
+            senderId,
+            senderUsername,
+          }).catch((e) => console.error('[community/messages] deferred notifications:', e.message));
         }
-        
-        // Map to frontend format (include sequence for message:ack / cursor sync)
-        const message = {
-          id: newMessage.id,
-          sequence: newMessage.id,
-          channelId: newMessage.channel_id,
-          userId: newMessage.sender_id, // Actual column is sender_id
-          username: senderUsername,
-          content: newMessage.content,
-          createdAt: newMessage.timestamp, // Actual column is timestamp
-          timestamp: newMessage.timestamp,
-          file: fileData, // Include file data if present
-          sender: {
-            id: newMessage.sender_id,
-            username: senderUsername,
-            avatar: senderAvatar,
-            role: senderRole
-          }
-        };
-
-        // Broadcast to all connected clients via Pusher (production realtime)
-        triggerNewMessage(channelId, message).catch(() => {});
-
-        // Broadcast to WebSocket subscribers (Railway WS server) - ensures messages reach
-        // all devices including same user on different devices, even when Pusher is down
-        const wsServerUrl = process.env.WEBSOCKET_SERVER_URL || 'https://aura-fx-production.up.railway.app';
-        const wsBroadcastUrl = `${wsServerUrl.replace(/\/$/, '')}/api/broadcast-new-message`;
-        try {
-          if (typeof fetch !== 'undefined') {
-            await fetch(wsBroadcastUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ channelId, message })
-            }).catch(() => {});
-          }
-        } catch (_) { /* non-fatal */ }
-
-        return res.status(201).json(message);
+        return;
       } catch (dbError) {
         console.error('Database error creating message:', dbError);
         console.error('Error details:', {
