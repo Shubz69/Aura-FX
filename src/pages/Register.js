@@ -97,6 +97,7 @@ const Register = () => {
             return;
         }
         setIsLoading(true);
+        let emailStepOk = false;
         try {
             // Email + username + phone uniqueness are checked here before any SMS is sent.
             const result = await Api.sendSignupVerificationEmail(formData.email, formData.username, formData.phone);
@@ -105,9 +106,13 @@ const Register = () => {
                 setIsLoading(false);
                 return;
             }
+            emailStepOk = true;
             const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
             if (!sendRes?.success) {
-                setError(sendRes?.message || "Could not send phone code. Please try again.");
+                setError(
+                    sendRes?.message ||
+                        "Could not send phone code. If an email code was already sent, check your inbox—you can fix your mobile number and tap Send verification codes again."
+                );
                 setIsLoading(false);
                 return;
             }
@@ -118,6 +123,8 @@ const Register = () => {
             let errorMsg = serverMsg;
             if (serverMsg.includes("not configured") || serverMsg.includes("temporarily unavailable")) {
                 errorMsg = "Email service is temporarily unavailable. Please try again later.";
+            } else if (emailStepOk) {
+                errorMsg = `${serverMsg} If an email code was already sent, check your inbox—you can fix your mobile number and tap Send verification codes again.`;
             }
             setError(errorMsg);
         } finally {

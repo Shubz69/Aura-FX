@@ -5,12 +5,20 @@
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
 const { checkPhoneAlreadyRegistered, normalizePhoneE164 } = require('../utils/signupEligibility');
+const {
+  userFacingTwilioSendError,
+  userFacingTwilioCheckError,
+} = require('../utils/twilioVerifyUserMessage');
 
 function isTwilioFriendlyNameRejected(err) {
-  const code = err && (err.code || err.status);
+  const code = Number(err && err.code != null ? err.code : 0) || 0;
   if (code === 60248 || code === 54053) return true;
   const m = ((err && err.message) || '').toLowerCase();
-  return m.includes('friendly name') || m.includes('custom friendly');
+  return (
+    m.includes('friendly name') ||
+    m.includes('custom friendly') ||
+    m.includes('custom friendly name not allowed')
+  );
 }
 
 module.exports = async (req, res) => {
@@ -102,19 +110,14 @@ module.exports = async (req, res) => {
           await svc.verifications.create(base);
         }
       } catch (twilioErr) {
-        console.error('Twilio Verify error:', twilioErr.message);
-        const codeNum = twilioErr.code || twilioErr.status || 0;
-        const msg = (twilioErr.message || '').toLowerCase();
-        if (codeNum === 21608 || msg.includes('unverified') || msg.includes('trial')) {
-          return res.status(400).json({
-            success: false,
-            message: 'Twilio trial: verify this number at twilio.com/console/phone-numbers/verified or upgrade your account.'
-          });
-        }
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to send SMS. Please check your phone number and try again.'
+        console.error('Twilio Verify send error:', {
+          code: twilioErr.code,
+          status: twilioErr.status,
+          message: twilioErr.message,
+          moreInfo: twilioErr.moreInfo,
         });
+        const mapped = userFacingTwilioSendError(twilioErr);
+        return res.status(mapped.status).json({ success: false, message: mapped.message });
       }
 
       return res.status(200).json({ success: true, message: 'Verification code sent' });
@@ -143,7 +146,14 @@ module.exports = async (req, res) => {
         }
         return res.status(400).json({ success: false, message: 'Invalid or expired code' });
       } catch (twilioErr) {
-        console.error('Twilio Verify check error:', twilioErr.message);
+        console.error('Twilio Verify check error:', {
+          code: twilioErr.code,
+          message: twilioErr.message,
+        });
+        const mapped = userFacingTwilioCheckError(twilioErr);
+        if (mapped) {
+          return res.status(400).json({ success: false, message: mapped.message });
+        }
         return res.status(400).json({ success: false, message: 'Invalid or expired code' });
       }
     }

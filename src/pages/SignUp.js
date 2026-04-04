@@ -90,6 +90,7 @@ function SignUp() {
         setIsLoading(true);
         setError("");
         setSuccess("");
+        let emailStepOk = false;
         try {
             const result = await Api.sendSignupVerificationEmail(formData.email, formData.username, formData.phone);
             if (result !== true && result !== undefined) {
@@ -97,9 +98,13 @@ function SignUp() {
                 setIsLoading(false);
                 return;
             }
+            emailStepOk = true;
             const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
             if (!sendRes?.success) {
-                setError(sendRes?.message || "Could not send phone code. Please try again.");
+                setError(
+                    sendRes?.message ||
+                        "Could not send phone code. If an email code was already sent, check your inbox—you can fix your mobile number and tap Send verification codes again."
+                );
                 setIsLoading(false);
                 return;
             }
@@ -110,6 +115,8 @@ function SignUp() {
             let msg = serverMsg;
             if (serverMsg.includes("not configured") || serverMsg.includes("temporarily unavailable")) {
                 msg = "Email service is temporarily unavailable. Please try again later.";
+            } else if (emailStepOk) {
+                msg = `${serverMsg} If an email code was already sent, check your inbox—you can fix your mobile number and tap Send verification codes again.`;
             }
             setError(msg);
         } finally {

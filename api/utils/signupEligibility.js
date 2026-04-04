@@ -21,8 +21,10 @@ function normalizePhoneE164(phone) {
   }
   digits = collapseUkTrunkAfter44(digits);
   if (digits.length < 10) return '';
-  if (digits.length === 10) return `+1${digits}`;
-  return `+${digits}`;
+  const e164 = digits.length === 10 ? `+1${digits}` : `+${digits}`;
+  const len = e164.replace(/\D/g, '').length;
+  if (len < 10 || len > 15) return '';
+  return e164;
 }
 
 /**

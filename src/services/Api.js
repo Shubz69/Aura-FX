@@ -38,6 +38,7 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 const LOGIN_REQUEST_TIMEOUT_MS = 12000;
+const VERIFY_REQUEST_TIMEOUT_MS = 28000;
 
 /** Raw file size above this uses chunked POSTs so each request stays under Vercel ~4.5MB body limit. */
 const BRIEF_SINGLE_UPLOAD_MAX_RAW = 2 * 1024 * 1024;
@@ -1441,12 +1442,20 @@ const Api = {
             if (phone != null && String(phone).trim()) {
                 payload.phone = String(phone).trim();
             }
-            const response = await axios.post(`${API_BASE_URL}/api/auth/signup-verification`, payload);
+            const response = await axios.post(`${API_BASE_URL}/api/auth/signup-verification`, payload, {
+                timeout: VERIFY_REQUEST_TIMEOUT_MS,
+            });
             return response.data.success;
         } catch (error) {
             console.error('Error sending signup verification email:', error);
             if (error.response?.data?.message) {
                 throw new Error(error.response.data.message);
+            }
+            if (error.code === 'ECONNABORTED' || String(error.message || '').toLowerCase().includes('timeout')) {
+                throw new Error('Request timed out. Check your connection and try again.');
+            }
+            if (!error.response) {
+                throw new Error('Could not reach the server. Check your connection and try again.');
             }
             throw error;
         }
@@ -1480,10 +1489,20 @@ const Api = {
 
     sendPhoneVerificationCode: async (phone) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/phone-verification`, { action: 'send', phone });
+            const response = await axios.post(
+                `${API_BASE_URL}/api/auth/phone-verification`,
+                { action: 'send', phone },
+                { timeout: VERIFY_REQUEST_TIMEOUT_MS }
+            );
             return response.data;
         } catch (error) {
             if (error.response?.data?.message) throw new Error(error.response.data.message);
+            if (error.code === 'ECONNABORTED' || String(error.message || '').toLowerCase().includes('timeout')) {
+                throw new Error('SMS request timed out. Check your connection and try again.');
+            }
+            if (!error.response) {
+                throw new Error('Could not reach the server. Check your connection and try again.');
+            }
             throw error;
         }
     },
