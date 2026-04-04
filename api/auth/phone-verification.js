@@ -81,9 +81,15 @@ module.exports = async (req, res) => {
       try {
         const twilio = require('twilio');
         const client = twilio(sid, token);
+        // Overrides Verify Service friendly name in the SMS (otherwise Twilio may show e.g. "Aura FX").
+        const smsBrand = (process.env.TWILIO_VERIFY_SMS_BRAND || 'Aura Terminal').trim().slice(0, 30) || 'Aura Terminal';
         await client.verify.v2
           .services(serviceSid)
-          .verifications.create({ to: phoneE164, channel: 'sms' });
+          .verifications.create({
+            to: phoneE164,
+            channel: 'sms',
+            customFriendlyName: smsBrand,
+          });
       } catch (twilioErr) {
         console.error('Twilio Verify error:', twilioErr.message);
         const codeNum = twilioErr.code || twilioErr.status || 0;

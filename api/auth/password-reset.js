@@ -137,12 +137,12 @@ module.exports = async (req, res) => {
         }
 
         const mailOptions = {
-          from: process.env.EMAIL_USER,
+          from: `"Aura Terminal" <${process.env.EMAIL_USER.trim()}>`,
           to: emailLower,
-          subject: 'AURA TERMINAL - Password Reset Code',
+          subject: 'Aura Terminal — Password reset code',
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #ffffff;">AURA TERMINAL - Password Reset</h2>
+              <h2 style="color: #ffffff;">Aura Terminal — Password reset</h2>
               <p>You requested to reset your password. Your reset code is:</p>
               <div style="background: #1a1a1a; color: #ffffff; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; border-radius: 8px; border: 1px solid #ffffff;">
                 ${resetCode}
