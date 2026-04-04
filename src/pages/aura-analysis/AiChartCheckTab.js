@@ -363,11 +363,27 @@ export default function AiChartCheckTab() {
           note: note.trim() || undefined,
         }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message || 'Analysis failed');
+      let data = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
+      }
+      if (!res.ok || !data.success) {
+        let msg = data.message || `Analysis failed (${res.status})`;
+        if (data.code === 'UPSTREAM_TIMEOUT') {
+          msg += ' The request timed out — try fewer or smaller chart images, then run again.';
+        } else if (data.code === 'CHART_CHECK_ERROR' || res.status >= 500) {
+          msg += ' Try refreshing the page (a new app version may be available), then run the check again.';
+        }
+        throw new Error(msg);
+      }
       setResult(data.result);
     } catch (err) {
-      setError(err.message || 'Analysis failed. Please try again.');
+      const m = err.message || 'Analysis failed. Please try again.';
+      setError(/Failed to fetch|NetworkError|Load failed/i.test(m)
+        ? `${m} Check your connection or refresh the page.`
+        : m);
     } finally {
       setLoading(false);
     }

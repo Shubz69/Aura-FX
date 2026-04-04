@@ -1,6 +1,9 @@
 /**
  * POST /api/ai/chart-check
  * Premium multi-timeframe AI analysis engine.
+ *
+ * Optional env: PERPLEXITY_CHART_CHECK_MAX_TOKENS (vision output cap),
+ * PERPLEXITY_CHART_REPAIR_MAX_TOKENS (text-only JSON repair cap).
  */
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
@@ -45,7 +48,7 @@ function normalizeAssistantContent(content) {
   }
 }
 
-async function perplexityChatCompletion(body, timeoutMs) {
+async function perplexityRequest(body, timeoutMs) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -66,10 +69,18 @@ async function perplexityChatCompletion(body, timeoutMs) {
     } catch {
       throw new Error('Invalid JSON from Perplexity');
     }
-    return normalizeAssistantContent(data.choices?.[0]?.message?.content);
+    const choice = data.choices?.[0];
+    const finishReason = choice?.finish_reason || '';
+    const content = normalizeAssistantContent(choice?.message?.content);
+    return { content, finishReason };
   } finally {
     clearTimeout(t);
   }
+}
+
+async function perplexityChatCompletion(body, timeoutMs) {
+  const { content } = await perplexityRequest(body, timeoutMs);
+  return content;
 }
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
@@ -1248,7 +1259,7 @@ async function callOpenAIVision(images, systemPrompt, userPrompt) {
     'Do not use single quotes for JSON.';
 
   const envTok = Number(process.env.PERPLEXITY_CHART_CHECK_MAX_TOKENS);
-  const fromEnv = Number.isFinite(envTok) && envTok >= 512 ? envTok : 8192;
+  const fromEnv = Number.isFinite(envTok) && envTok >= 512 ? envTok : 10000;
   const maxOut = Math.min(16384, Math.max(4096, fromEnv));
 
   const baseBody = {
@@ -1262,12 +1273,16 @@ async function callOpenAIVision(images, systemPrompt, userPrompt) {
   };
 
   // Perplexity rejects response_format json_schema / json_object when the request includes images.
-  return perplexityChatCompletion({ ...baseBody }, 240000);
+  const { content, finishReason } = await perplexityRequest({ ...baseBody }, 240000);
+  if (finishReason === 'length') {
+    console.warn('[chart-check] vision completion truncated (finish_reason=length); JSON repair may run');
+  }
+  return content;
 }
 
 /**
  * Text-only follow-up when vision output is not valid JSON (malformed, truncated, or prose).
- * Uses chat model — no images — so structured modes are avoided; still plain JSON text out.
+ * Tries response_format json_object first (supported for text-only); falls back to plain completion.
  */
 async function callTextOnlyJsonRepair(brokenRaw) {
   const snippet = safeString(brokenRaw).slice(0, 100000);
@@ -1276,7 +1291,7 @@ async function callTextOnlyJsonRepair(brokenRaw) {
     16384,
     Math.max(4096, Number.isFinite(envRepair) && envRepair >= 512 ? envRepair : 12000)
   );
-  const body = {
+  const baseBody = {
     model: PERPLEXITY_TEXT_MODEL,
     temperature: 0,
     max_tokens: repairMax,
@@ -1296,7 +1311,23 @@ async function callTextOnlyJsonRepair(brokenRaw) {
       },
     ],
   };
-  return perplexityChatCompletion(body, 120000);
+  try {
+    const { content, finishReason } = await perplexityRequest(
+      { ...baseBody, response_format: { type: 'json_object' } },
+      120000
+    );
+    if (finishReason === 'length') {
+      console.warn('[chart-check] repair (json_object) truncated (finish_reason=length)');
+    }
+    if (safeString(content).trim()) return content;
+  } catch (e) {
+    console.warn('[chart-check] repair json_object mode failed, using plain:', e.message?.slice(0, 240) || e);
+  }
+  const { content, finishReason } = await perplexityRequest(baseBody, 120000);
+  if (finishReason === 'length') {
+    console.warn('[chart-check] repair (plain) truncated (finish_reason=length)');
+  }
+  return content;
 }
 
 /** First complete top-level `{ ... }` using brace depth, respecting strings (not naive lastIndexOf `}`). */
@@ -1345,6 +1376,8 @@ function normalizeAiJsonText(raw) {
   const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fence) t = fence[1].trim();
   else t = t.replace(/```json/gi, '').replace(/```/g, '').trim();
+  // Curly/smart double quotes break JSON.parse — normalize to ASCII "
+  t = t.replace(/\u201C/g, '"').replace(/\u201D/g, '"');
   return stripJsonTrailingCommas(t);
 }
 
@@ -1713,14 +1746,28 @@ async function runAiAnalysisPipeline({ rubric, context, images }) {
   const systemPrompt = buildSystemPrompt({ rubric, context, images, buckets });
   const userPrompt = buildUserInstruction(images, buckets);
   const raw = await callOpenAIVision(images, systemPrompt, userPrompt);
+  if (!safeString(raw).trim()) {
+    throw new Error('Empty response from vision model');
+  }
   let parsed = tryParseChartCheckJson(raw);
   if (parsed) return parsed;
   console.warn('[chart-check] vision JSON parse failed; running text-only repair pass');
+  let repaired = '';
   try {
-    const repaired = await callTextOnlyJsonRepair(raw);
+    repaired = await callTextOnlyJsonRepair(raw);
     parsed = tryParseChartCheckJson(repaired);
   } catch (e) {
     console.warn('[chart-check] JSON repair request failed:', e.message);
+  }
+  if (parsed) return parsed;
+  if (safeString(repaired).trim()) {
+    try {
+      console.warn('[chart-check] second JSON repair pass (re-parsing repair output)');
+      const repaired2 = await callTextOnlyJsonRepair(repaired);
+      parsed = tryParseChartCheckJson(repaired2);
+    } catch (e2) {
+      console.warn('[chart-check] second JSON repair failed:', e2.message);
+    }
   }
   if (parsed) return parsed;
   throw new Error('AI returned non-JSON response');
