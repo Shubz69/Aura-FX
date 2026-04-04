@@ -11,6 +11,7 @@ const {
   maybeNotifyReferralSignupMilestonesLight,
   upsertReferralAttributionLight,
 } = require('../referral/referralService');
+const { checkPhoneAlreadyRegistered } = require('../utils/signupEligibility');
 
 async function ensureUsersTable(conn) {
   await conn.execute(`
@@ -95,20 +96,27 @@ module.exports = async (req, res) => {
 
       await ensureUsersTable(db);
 
-      // Check if email or username already exists
-      const [emailCheck] = await db.execute('SELECT id FROM users WHERE email = ?', [emailLower]);
+      const [emailCheck] = await db.execute(
+        'SELECT id FROM users WHERE LOWER(TRIM(COALESCE(email, \'\'))) = ? LIMIT 1',
+        [emailLower]
+      );
       if (emailCheck && emailCheck.length > 0) {
         return res.status(409).json({
           success: false,
-          message: 'An account with this email already exists. Please sign in instead.'
+          message: 'This email is already in use. Please use a different email or sign in.',
+          field: 'email',
         });
       }
 
-      const [usernameCheck] = await db.execute('SELECT id FROM users WHERE username = ?', [usernameLower]);
+      const [usernameCheck] = await db.execute(
+        'SELECT id FROM users WHERE LOWER(TRIM(COALESCE(username, \'\'))) = ? LIMIT 1',
+        [usernameLower]
+      );
       if (usernameCheck && usernameCheck.length > 0) {
         return res.status(409).json({
           success: false,
-          message: 'Username already taken. Please choose a different username.'
+          message: 'This username is already taken. Please choose a different username.',
+          field: 'username',
         });
       }
 
@@ -117,6 +125,15 @@ module.exports = async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
       const phoneClean = (phone || '').toString().trim();
+      const phoneTaken = await checkPhoneAlreadyRegistered(db, phoneClean);
+      if (phoneTaken) {
+        return res.status(409).json({
+          success: false,
+          message: 'This phone number is already in use. Please use a different number or sign in.',
+          field: 'phone',
+        });
+      }
+
       // Insert new user (phone column may not exist on older schemas - try with phone first)
       let result;
       try {
@@ -309,9 +326,31 @@ module.exports = async (req, res) => {
       console.error('Database error during registration:', dbError);
 
       if (dbError.code === 'ER_DUP_ENTRY') {
+        const m = (dbError.sqlMessage || '').toLowerCase();
+        if (m.includes('phone')) {
+          return res.status(409).json({
+            success: false,
+            message: 'This phone number is already in use. Please use a different number or sign in.',
+            field: 'phone',
+          });
+        }
+        if (m.includes('email')) {
+          return res.status(409).json({
+            success: false,
+            message: 'This email is already in use. Please use a different email or sign in.',
+            field: 'email',
+          });
+        }
+        if (m.includes('username')) {
+          return res.status(409).json({
+            success: false,
+            message: 'This username is already taken. Please choose a different username.',
+            field: 'username',
+          });
+        }
         return res.status(409).json({
           success: false,
-          message: 'Email or username already exists. Please sign in instead.'
+          message: 'An account with these details already exists. Please sign in or use a different email, phone, or username.',
         });
       }
 

@@ -98,25 +98,27 @@ const Register = () => {
         }
         setIsLoading(true);
         try {
-            const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
-            if (!sendRes?.success) {
-                setError(sendRes?.message || "Could not send phone code. Please try again.");
-                setIsLoading(false);
-                return;
-            }
+            // Email + username + phone uniqueness are checked here before any SMS is sent.
             const result = await Api.sendSignupVerificationEmail(formData.email, formData.username, formData.phone);
             if (result !== true && result !== undefined) {
                 setError("Failed to send verification email. Please try again.");
                 setIsLoading(false);
                 return;
             }
+            const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
+            if (!sendRes?.success) {
+                setError(sendRes?.message || "Could not send phone code. Please try again.");
+                setIsLoading(false);
+                return;
+            }
             setCodesSent(true);
             setSuccess("Codes sent! Enter the 6-digit codes from your email and phone.");
         } catch (err) {
-            let errorMsg = err.message || "Failed to send verification.";
-            if (err.message && err.message.includes("already exists")) errorMsg = "An account with this email already exists. Please sign in.";
-            if (err.message && err.message.includes("already taken")) errorMsg = "This username is already taken.";
-            if (err.message && err.message.includes("not configured")) errorMsg = "Email service is temporarily unavailable. Please try again later.";
+            const serverMsg = err.response?.data?.message || err.message || "Failed to send verification.";
+            let errorMsg = serverMsg;
+            if (serverMsg.includes("not configured") || serverMsg.includes("temporarily unavailable")) {
+                errorMsg = "Email service is temporarily unavailable. Please try again later.";
+            }
             setError(errorMsg);
         } finally {
             setIsLoading(false);
@@ -176,8 +178,13 @@ const Register = () => {
             }
         } catch (err) {
             setSuccess("");
-            let errorMsg = err.message || "Could not finish sign-up. If your SMS code was already used, tap Resend phone code and try again.";
-            if (err.message && (err.message.includes('already exists') || err.message.includes('already taken'))) {
+            const serverMsg = err.response?.data?.message || err.message || "";
+            let errorMsg = serverMsg || "Could not finish sign-up. If your SMS code was already used, tap Resend phone code and try again.";
+            const dup =
+                serverMsg.includes("already in use") ||
+                serverMsg.includes("already taken") ||
+                serverMsg.includes("already exists");
+            if (dup) {
                 setCodesSent(false);
                 setEmailCode('');
                 setPhoneCode('');

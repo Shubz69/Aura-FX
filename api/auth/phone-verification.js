@@ -61,7 +61,8 @@ module.exports = async (req, res) => {
         if (taken) {
           return res.status(409).json({
             success: false,
-            message: 'An account with this phone number already exists. Please sign in.',
+            message: 'This phone number is already in use. Please use a different number or sign in.',
+            field: 'phone',
           });
         }
       } catch (eligErr) {

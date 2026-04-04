@@ -69,10 +69,16 @@ async function ensureSignupVerificationTable(conn) {
 }
 
 async function loadSendSignupState(conn, emailLower, usernameLower) {
-  const [emailRows] = await conn.execute('SELECT id FROM users WHERE email = ? LIMIT 1', [emailLower]);
+  const [emailRows] = await conn.execute(
+    'SELECT id FROM users WHERE LOWER(TRIM(COALESCE(email, \'\'))) = ? LIMIT 1',
+    [emailLower]
+  );
   if (emailRows.length > 0) return { blocked: 'email_exists' };
   if (usernameLower) {
-    const [uRows] = await conn.execute('SELECT id FROM users WHERE username = ? LIMIT 1', [usernameLower]);
+    const [uRows] = await conn.execute(
+      'SELECT id FROM users WHERE LOWER(TRIM(COALESCE(username, \'\'))) = ? LIMIT 1',
+      [usernameLower]
+    );
     if (uRows.length > 0) return { blocked: 'username_taken' };
   }
   return { ok: true };
@@ -120,9 +126,15 @@ module.exports = async (req, res) => {
         });
       }
 
-      const emailLower = email.toLowerCase();
-      const usernameLower = body.username ? body.username.toLowerCase() : null;
+      const emailLower = String(email).trim().toLowerCase();
+      const usernameLower = body.username ? String(body.username).trim().toLowerCase() : null;
       const rawPhone = body.phone != null && String(body.phone).trim() ? String(body.phone).trim() : '';
+      if (!rawPhone || rawPhone.replace(/\D/g, '').length < 10) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid phone number is required so we can check it is not already registered.',
+        });
+      }
 
       const verificationCode = generateVerificationCode();
       const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes expiration
@@ -151,13 +163,15 @@ module.exports = async (req, res) => {
         if (state.blocked === 'email_exists') {
           return res.status(409).json({
             success: false,
-            message: 'An account with this email already exists. Please sign in instead.'
+            message: 'This email is already in use. Please use a different email or sign in.',
+            field: 'email',
           });
         }
         if (state.blocked === 'username_taken') {
           return res.status(409).json({
             success: false,
-            message: 'This username is already taken. Please choose a different username.'
+            message: 'This username is already taken. Please choose a different username.',
+            field: 'username',
           });
         }
 
@@ -166,7 +180,8 @@ module.exports = async (req, res) => {
           if (phoneTaken) {
             return res.status(409).json({
               success: false,
-              message: 'An account with this phone number already exists. Please sign in instead.'
+              message: 'This phone number is already in use. Please use a different number or sign in.',
+              field: 'phone',
             });
           }
         }
