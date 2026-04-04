@@ -6,6 +6,11 @@ import { consumePostAuthRedirect } from '../utils/postAuthRedirect';
 import { armPostLoginTransition } from '../utils/postLoginTransition';
 import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/userLocalStorage';
 import { isConfiguredSuperAdminEmail, isAdmin } from '../utils/roles';
+import {
+  prepareStorageForUserSwitch,
+  clearPerAccountLocalCaches,
+  installCrossTabAuthSync,
+} from '../utils/singleDeviceSession';
 
 /** Session handoff: login writes /api/me JSON here so EntitlementsProvider can render /community without a second loading gate. */
 const ME_ENTITLEMENTS_SEED_KEY = 'aura_me_entitlements_seed';
@@ -51,6 +56,7 @@ export const AuthProvider = ({ children }) => {
   }, [navigate]);
 
   const clearSession = useCallback(() => {
+    clearPerAccountLocalCaches();
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('mfaVerified');
@@ -59,6 +65,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('hasActiveSubscription');
     localStorage.removeItem('pendingSubscription');
     localStorage.removeItem('subscriptionSkipped');
+    localStorage.removeItem('accessType');
+    localStorage.removeItem('subscriptionExpiry');
     setToken(null);
   }, []);
 
@@ -177,6 +185,13 @@ export const AuthProvider = ({ children }) => {
     if (mfaVerifiedStatus === 'true') {
       setMfaVerified(true);
     }
+  }, []);
+
+  // Other tabs: one account per browser — token user change or logout triggers full reload
+  useEffect(() => {
+    return installCrossTabAuthSync(() => {
+      window.location.reload();
+    });
   }, []);
 
   // Logout function defined using useCallback
@@ -394,6 +409,7 @@ export const AuthProvider = ({ children }) => {
         const token = emailOrToken;
         const role = passwordOrRole;
 
+        prepareStorageForUserSwitch(userData.id ?? userData.userId, token);
         persistTokens(token, localStorage.getItem('refreshToken'));
         localStorage.setItem('mfaVerified', 'true');
         setMfaVerified(true);
@@ -445,7 +461,8 @@ export const AuthProvider = ({ children }) => {
         if (!data.token) {
           throw new Error('Login failed: Invalid response from server');
         }
-        
+
+        prepareStorageForUserSwitch(data.id ?? data.userId, data.token);
         persistTokens(data.token, data.refreshToken);
         persistUser(data);
         
@@ -659,7 +676,8 @@ export const AuthProvider = ({ children }) => {
         });
         return;
       }
-      
+
+      prepareStorageForUserSwitch(data.id ?? data.userId, data.token);
       persistTokens(data.token, data.refreshToken);
       const userInfo = persistUser(data);
       
