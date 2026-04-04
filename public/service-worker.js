@@ -2,7 +2,7 @@
    Handles: push notifications, background sync, offline caching
 */
 
-const CACHE_NAME = 'aura-terminal-v3';
+const CACHE_NAME = 'aura-terminal-v4';
 const OFFLINE_URLS = ['/'];
 
 // ── INSTALL: cache offline shell

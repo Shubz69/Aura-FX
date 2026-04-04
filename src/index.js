@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 
-const CHUNK_RELOAD_KEY = "aura_chunk_reload_v1";
+const CHUNK_RELOAD_KEY = "aura_chunk_reload_v2";
 
 /**
  * After a new deploy, a cached main.*.js may still request removed chunk files → 404 (often text/plain) → MIME / ChunkLoadError.
@@ -11,14 +11,31 @@ const CHUNK_RELOAD_KEY = "aura_chunk_reload_v1";
  */
 function scheduleChunkLoadRecovery() {
   if (typeof window === "undefined" || typeof sessionStorage === "undefined") return;
+  let n = 0;
   try {
-    const n = parseInt(sessionStorage.getItem(CHUNK_RELOAD_KEY) || "0", 10);
-    if (n >= 2) return;
+    n = parseInt(sessionStorage.getItem(CHUNK_RELOAD_KEY) || "0", 10);
+    if (n >= 4) return;
     sessionStorage.setItem(CHUNK_RELOAD_KEY, String(n + 1));
   } catch {
     return;
   }
-  window.location.reload();
+  // First try normal reload; later attempts bust caches (some browsers reuse entry script from HTTP cache).
+  if (n === 0) {
+    window.location.reload();
+    return;
+  }
+  try {
+    const u = new URL(window.location.href);
+    u.searchParams.set("_chunk_retry", String(Date.now()));
+    window.location.replace(u.toString());
+  } catch {
+    window.location.reload();
+  }
+}
+
+function isChunkScriptUrl(src) {
+  if (!src || typeof src !== "string") return false;
+  return /\/static\/js\/[^/]+\.chunk\.js(\?|$)/i.test(src) || /\/static\/js\/main\.[^/]+\.js(\?|$)/i.test(src);
 }
 
 function isChunkLoadFailure(err, message) {
@@ -29,14 +46,33 @@ function isChunkLoadFailure(err, message) {
     msg.includes("ChunkLoadError") ||
     msg.includes("Loading chunk") ||
     msg.includes("Failed to fetch dynamically imported module") ||
-    msg.includes("Importing a module script failed")
+    msg.includes("Importing a module script failed") ||
+    (msg.includes("text/plain") && msg.includes("MIME type"))
   );
 }
 
 if (typeof window !== "undefined") {
+  try {
+    const u = new URL(window.location.href);
+    if (u.searchParams.has("_chunk_retry")) {
+      u.searchParams.delete("_chunk_retry");
+      const next = `${u.pathname}${u.search}${u.hash}`;
+      window.history.replaceState({}, "", next);
+    }
+  } catch {
+    /* ignore */
+  }
+
   window.addEventListener(
     "error",
     (event) => {
+      const t = event.target;
+      const scriptSrc = t && t.tagName === "SCRIPT" && t.src ? String(t.src) : "";
+      if (scriptSrc && isChunkScriptUrl(scriptSrc)) {
+        event.preventDefault();
+        scheduleChunkLoadRecovery();
+        return;
+      }
       if (isChunkLoadFailure(event.error, event.message)) {
         event.preventDefault();
         scheduleChunkLoadRecovery();
