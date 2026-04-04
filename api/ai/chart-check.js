@@ -1187,13 +1187,18 @@ async function callOpenAIVision(images, systemPrompt, userPrompt) {
   }));
 
   const jsonOnlyReminder =
-    '\n\nRespond with a single JSON object exactly matching the OUTPUT SHAPE contract. No markdown fences or commentary outside JSON.';
+    '\n\nRespond with a single valid JSON object exactly matching the OUTPUT SHAPE contract. ' +
+    'No markdown code fences, no commentary before or after the JSON. Use double quotes for all keys and strings. ' +
+    'No trailing commas. Escape any double quotes inside string values as \\".';
+
+  const envTok = Number(process.env.PERPLEXITY_CHART_CHECK_MAX_TOKENS);
+  const fromEnv = Number.isFinite(envTok) && envTok >= 512 ? envTok : 8192;
+  const maxOut = Math.min(16384, Math.max(4096, fromEnv));
 
   const baseBody = {
     model: PERPLEXITY_MODEL,
     temperature: 0.05,
-    seed: 7741,
-    max_tokens: 3200,
+    max_tokens: maxOut,
     messages: [
       { role: 'system', content: systemPrompt + jsonOnlyReminder },
       { role: 'user', content: [...imageContent, { type: 'text', text: userPrompt }] },
@@ -1228,58 +1233,89 @@ async function callOpenAIVision(images, systemPrompt, userPrompt) {
     }
   };
 
-  const tryStrict = async () =>
-    fetchCompletion(
-      {
-        ...baseBody,
-        response_format: {
-          type: 'json_schema',
-          json_schema: buildJsonSchema(),
-        },
-      },
-      240000
-    );
+  // Perplexity rejects response_format json_schema / json_object when the request includes images.
+  // Always use plain completions and parse JSON in parseAIJson.
+  return fetchCompletion({ ...baseBody }, 240000);
+}
 
-  const tryJsonObject = async () =>
-    fetchCompletion(
-      {
-        ...baseBody,
-        response_format: { type: 'json_object' },
-      },
-      240000
-    );
-
-  const tryPlain = async () => fetchCompletion({ ...baseBody }, 240000);
-
-  try {
-    const out = await tryStrict();
-    if (out) return out;
-  } catch (e) {
-    console.warn('[chart-check] json_schema path failed:', e.message);
+/** First complete top-level `{ ... }` using brace depth, respecting strings (not naive lastIndexOf `}`). */
+function extractBalancedJsonObject(str) {
+  const start = str.indexOf('{');
+  if (start < 0) return null;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = start; i < str.length; i += 1) {
+    const c = str[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (inString) {
+      if (c === '\\') escape = true;
+      else if (c === '"') inString = false;
+      continue;
+    }
+    if (c === '"') {
+      inString = true;
+      continue;
+    }
+    if (c === '{') depth += 1;
+    else if (c === '}') {
+      depth -= 1;
+      if (depth === 0) return str.slice(start, i + 1);
+    }
   }
-  try {
-    const out = await tryJsonObject();
-    if (out) return out;
-  } catch (e) {
-    console.warn('[chart-check] json_object path failed:', e.message);
-  }
-  return tryPlain();
+  return null;
+}
+
+function stripJsonTrailingCommas(s) {
+  let out = s;
+  let prev;
+  do {
+    prev = out;
+    out = out.replace(/,\s*([}\]])/g, '$1');
+  } while (out !== prev);
+  return out;
+}
+
+function normalizeAiJsonText(raw) {
+  let t = safeString(raw).replace(/^\uFEFF/, '').trim();
+  const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) t = fence[1].trim();
+  else t = t.replace(/```json/gi, '').replace(/```/g, '').trim();
+  return stripJsonTrailingCommas(t);
 }
 
 function parseAIJson(raw) {
-  let cleaned = safeString(raw).replace(/^\uFEFF/, '').replace(/```json/gi, '').replace(/```/g, '').trim();
-  if (!cleaned) throw new Error('Empty AI response');
-  try {
-    return JSON.parse(cleaned);
-  } catch (_) {
-    const start = cleaned.indexOf('{');
-    const end = cleaned.lastIndexOf('}');
-    if (start >= 0 && end > start) {
-      const slice = cleaned.slice(start, end + 1);
-      return JSON.parse(slice);
+  const normalized = normalizeAiJsonText(raw);
+  if (!normalized) throw new Error('Empty AI response');
+
+  const tryParse = (s) => {
+    try {
+      return JSON.parse(s);
+    } catch {
+      return null;
     }
-    throw new Error('AI returned non-JSON response');
+  };
+
+  let parsed = tryParse(normalized);
+  if (parsed) return parsed;
+
+  const balanced = extractBalancedJsonObject(normalized);
+  if (balanced) {
+    parsed = tryParse(stripJsonTrailingCommas(balanced));
+    if (parsed) return parsed;
   }
+
+  const start = normalized.indexOf('{');
+  const end = normalized.lastIndexOf('}');
+  if (start >= 0 && end > start) {
+    parsed = tryParse(stripJsonTrailingCommas(normalized.slice(start, end + 1)));
+    if (parsed) return parsed;
+  }
+
+  throw new Error('AI returned non-JSON response');
 }
 
 function normalizeCriteriaResults(criteriaResults, fallbackCriteria) {
