@@ -133,6 +133,14 @@ function postureToneClass(posture) {
   return 'md-tone';
 }
 
+function readinessToneClass(readiness) {
+  const n = Number(readiness);
+  if (Number.isNaN(n)) return 'md-readiness-tone md-readiness-tone--mid';
+  if (n >= 7) return 'md-readiness-tone md-readiness-tone--high';
+  if (n >= 5) return 'md-readiness-tone md-readiness-tone--mid';
+  return 'md-readiness-tone md-readiness-tone--low';
+}
+
 const DECODER_FLOW = [
   {
     step: '1',
@@ -253,6 +261,9 @@ export default function MarketDecoderView({ embedded }) {
 
   const instrumentHeadlines = headlinePack.items;
   const showingFallbackHeadlines = headlinePack.scope === 'fallback' || headlinePack.scope === 'none';
+  const netScore = Number(brief?.meta?.netScore ?? 0);
+  const netScorePct = Math.max(0, Math.min(100, Math.round(((netScore + 6) / 12) * 100)));
+  const tradeReadiness = Number(brief?.marketPulse?.tradeReadiness ?? 0);
 
   const exportJson = useCallback(() => {
     if (!brief) return;
@@ -483,7 +494,68 @@ export default function MarketDecoderView({ embedded }) {
                 </p>
               </div>
             </div>
+            <div className="md-executive-impact-grid">
+              <div className="md-impact-card">
+                <span className="md-impact-label">Signal Strength</span>
+                <strong className="md-impact-value">
+                  {netScore >= 0 ? '+' : ''}
+                  {netScore} net
+                </strong>
+                <div className="md-impact-meter" aria-hidden>
+                  <span className="md-impact-meter-fill" style={{ width: `${netScorePct}%` }} />
+                </div>
+              </div>
+              <div className="md-impact-card">
+                <span className="md-impact-label">Trade Readiness</span>
+                <strong className={`md-impact-value ${readinessToneClass(tradeReadiness)}`}>
+                  {brief.marketPulse?.tradeReadiness != null ? `${brief.marketPulse.tradeReadiness}/10` : '—'}
+                </strong>
+                <p className="md-impact-note">{brief.marketPulse?.environmentLine || 'Environment not available yet.'}</p>
+              </div>
+              <div className="md-impact-card">
+                <span className="md-impact-label">Immediate Focus</span>
+                <strong className="md-impact-value md-impact-value--small">{brief.instantRead?.bestApproach || '—'}</strong>
+              </div>
+            </div>
           </section>
+
+          {instrumentHeadlines.length > 0 && (
+            <section className="md-decoder-headline-strip" aria-label="Top headlines">
+              <div className="md-decoder-card-head">
+                <div>
+                  <h3 className="md-decoder-card-title md-terminal-title">Top Headlines · {brief.header.asset}</h3>
+                  <p className="md-decoder-small">
+                    {headlinePack.scope === 'none'
+                      ? 'No headlines returned for this decode.'
+                      : showingFallbackHeadlines
+                        ? `Showing broader macro context from ${headlinePack.total} headlines.`
+                        : `Showing ${Math.min(3, instrumentHeadlines.length)} strongest instrument-relevant headlines.`}
+                  </p>
+                </div>
+              </div>
+              <div className="md-headline-strip-grid">
+                {instrumentHeadlines.slice(0, 3).map((item, i) => {
+                  const href = String(item.url || '').trim();
+                  const safe = href && href !== '#';
+                  return (
+                    <article key={`${href}-${i}`} className="md-headline-card">
+                      {safe ? (
+                        <a className="md-headline-card-link" href={href} target="_blank" rel="noopener noreferrer">
+                          {item.title || 'Open article'}
+                        </a>
+                      ) : (
+                        <span className="md-headline-card-title">{item.title || 'Headline'}</span>
+                      )}
+                      <div className="md-headline-card-meta">
+                        {item.source ? <span>{item.source}</span> : null}
+                        {item.datetime ? <span>{formatNewsTime(item.datetime)}</span> : null}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           <div className="md-decoder-top-grid md-terminal-split">
             <section className="md-decoder-card md-terminal-instrument" aria-labelledby="md-h-header">
