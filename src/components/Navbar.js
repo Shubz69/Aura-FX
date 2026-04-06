@@ -74,7 +74,7 @@ const Navbar = () => {
           <p className="mobile-menu-section-label">Menu</p>
           <ul className="mobile-nav-links mobile-nav-links-primary">
             <li><Link to="/" onClick={closeMobileMenu} className={location.pathname === '/' ? 'active' : ''}>Home</Link></li>
-            <li><Link to="/community" onClick={closeMobileMenu} className={isActive('/community') ? 'active' : ''}>Community</Link></li>
+            <li><Link to="/community" onClick={closeMobileMenu} className={isActive('/community') ? 'active' : ''}>Network</Link></li>
             <li>
               <Link
                 to={auraAiHref}
@@ -131,7 +131,7 @@ const Navbar = () => {
           {user ? (
             <>
               <li><Link to="/" className={location.pathname === "/" ? "active" : ""}>Home</Link></li>
-              <li><Link to="/community" className={isActive("/community") ? "active" : ""}>Community</Link></li>
+              <li><Link to="/community" className={isActive("/community") ? "active" : ""}>Network</Link></li>
               <li>
                 <Link
                   to={auraAiHref}

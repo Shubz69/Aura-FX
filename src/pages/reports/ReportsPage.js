@@ -537,19 +537,14 @@ function ReportsPageInner() {
             )}
           </div>
 
-          {/* Premium — MT5 CSV lives under Manual metrics (separate from Aura Analysis) */}
+          {/* CSV/manual metrics entry is now centered in Aura Analysis → Connection Hub */}
           {role === 'premium' && (
-            <div className="rp-manual-metrics-cta">
+            <div className="rp-auto-notice">
+              <span className="rp-auto-icon">📄</span>
               <p>
-                Add MT5 performance to your PDF: upload your broker CSV under <strong>Manual metrics</strong> for{' '}
-                {MONTH_NAMES[month - 1]} {year}. Your snapshot dashboard opens there too — separate from Elite Aura Analysis.
+                CSV upload moved to <strong>Aura Analysis → Connection Hub</strong>. Use <strong>Connect with CSV</strong> there,
+                then open the CSV dashboard for this period.
               </p>
-              <Link
-                to={`/reports/manual-metrics?year=${year}&month=${month}`}
-                className="rp-btn rp-btn--secondary"
-              >
-                Manual metrics — upload CSV
-              </Link>
             </div>
           )}
 

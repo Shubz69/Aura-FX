@@ -3745,7 +3745,7 @@ useEffect(() => {
         const welcomeMessage = {
             id: 'welcome-message',
             channelId: selectedChannel.id,
-            content: `🎉 Welcome to Aura Terminal community! 🎉
+            content: `🎉 Welcome to Aura Terminal Network! 🎉
 
 Welcome to the most elite trading and wealth-building community on the planet! We're thrilled to have you join us on this incredible journey toward financial freedom and generational wealth.
 

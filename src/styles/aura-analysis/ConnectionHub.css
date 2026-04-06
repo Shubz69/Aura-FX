@@ -375,6 +375,11 @@
   animation: chFadeInUp 1s ease-out 0.4s both;
 }
 
+.connection-hub-grid--single {
+  grid-template-columns: minmax(clamp(260px, 50vw, 460px), min(560px, 100%));
+  justify-content: center;
+}
+
 
 /* ── Connection card ──────────────────────────────────────── */
 .connection-card {
@@ -769,6 +774,40 @@
 }
 
 .connection-card-disconnect:hover::before { opacity: 1; }
+
+.csv-connection-card {
+  border-color: rgba(234, 169, 96, 0.2);
+}
+
+.csv-connection-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.csv-dashboard-btn {
+  border-color: rgba(16, 185, 129, 0.28);
+  color: rgba(16, 185, 129, 0.95);
+}
+
+.csv-dashboard-btn:hover {
+  background: rgba(16, 185, 129, 0.07);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: rgba(16, 185, 129, 1);
+}
+
+.chub-inline-warning {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  border-radius: 8px;
+  padding: 9px 11px;
+  margin: -4px 0 12px;
+  color: #fca5a5;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 
 /* ── Enter section ────────────────────────────────────────── */

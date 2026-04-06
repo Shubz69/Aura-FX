@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuraConnection, useCanEnterAuraDashboard } from '../../context/AuraConnectionContext';
 import { isSuperAdmin } from '../../utils/roles';
+import { useReportsEligibility } from '../reports/useReportsEligibility';
 import CosmicBackground from '../../components/CosmicBackground';
 import AuraEnterTransition from '../../components/aura-analysis/AuraEnterTransition';
 import '../../styles/aura-analysis/ConnectionHub.css';
@@ -116,6 +117,11 @@ const META_CARD_FEATURES = [
   { icon: 'fa-chart-line', text: 'Analytics and performance insights' },
 ];
 
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
 // Particles component for background effect
 const Particles = () => {
   const particlesRef = useRef(null);
@@ -146,10 +152,11 @@ const Particles = () => {
 
 export default function ConnectionHub() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { platforms, connections, getConnection, connectPlatform, disconnectPlatform } = useAuraConnection();
   const canEnter = useCanEnterAuraDashboard(user);
   const superAdmin = user && isSuperAdmin(user);
+  const { eligibility: reportsEligibility } = useReportsEligibility(token);
   const [modalPlatform, setModalPlatform] = useState(null);
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState('');
@@ -157,8 +164,60 @@ export default function ConnectionHub() {
   const [hoveredCard, setHoveredCard] = useState(null);
   const [successPlatform, setSuccessPlatform] = useState(null);
   const [disconnecting, setDisconnecting] = useState(null);
+  const [csvStatus, setCsvStatus] = useState(null);
+  const [csvLoading, setCsvLoading] = useState(false);
+  const [csvError, setCsvError] = useState('');
 
   const connectedCount = connections.length;
+  const reportsRole = (reportsEligibility?.role || '').toLowerCase();
+  const csvEnabled = superAdmin || ['premium', 'elite', 'admin'].includes(reportsRole);
+  const now = new Date();
+  const csvYear = reportsEligibility?.currentPeriod?.year || now.getFullYear();
+  const csvMonth = reportsEligibility?.currentPeriod?.month || (now.getMonth() + 1);
+  const csvPeriodLabel = `${MONTH_NAMES[(csvMonth || 1) - 1] || MONTH_NAMES[0]} ${csvYear}`;
+  const isCsvConnected = !!(csvStatus && (csvStatus.tradeCount || 0) > 0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadCsvStatus = async () => {
+      if (!token || !csvEnabled || !csvYear || !csvMonth) {
+        setCsvStatus(null);
+        return;
+      }
+      setCsvLoading(true);
+      setCsvError('');
+      try {
+        const apiBase = process.env.REACT_APP_API_URL || '';
+        const res = await fetch(
+          `${apiBase}/api/reports/csv-metrics?year=${csvYear}&month=${csvMonth}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        if (data.success && data.hasData) {
+          setCsvStatus({
+            tradeCount: Number(data.trade_count ?? data.summary?.tradeCount ?? 0) || 0,
+            uploadedAt: data.uploaded_at || null,
+            periodYear: Number(data.period?.year || csvYear),
+            periodMonth: Number(data.period?.month || csvMonth),
+          });
+        } else {
+          setCsvStatus(null);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setCsvStatus(null);
+          setCsvError('Could not check CSV snapshot right now.');
+        }
+      } finally {
+        if (!cancelled) setCsvLoading(false);
+      }
+    };
+    loadCsvStatus();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, csvEnabled, csvYear, csvMonth]);
 
   const openModal = (platform) => {
     if (platform?.id !== 'mt5' && platform?.id !== 'mt4') return;
@@ -204,6 +263,12 @@ export default function ConnectionHub() {
 
   const fmt$ = (value, currency = 'USD') =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+  const fmtDateTime = (v) => {
+    if (!v) return '—';
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString();
+  };
 
   return (
     <div className="connection-hub-page">
@@ -361,6 +426,91 @@ export default function ConnectionHub() {
               </div>
             );
           })}
+        </section>
+
+        <div className="connection-hub-section-label">
+          <span>Manual Metrics</span>
+        </div>
+
+        <section className="connection-hub-grid connection-hub-grid--single">
+          <div
+            className={`connection-card csv-connection-card ${isCsvConnected ? 'connected' : ''}`}
+            style={{ '--platform-color': 'rgba(248, 195, 125, 0.95)' }}
+          >
+            <div className="connection-card-header">
+              <span className="connection-card-icon">📄</span>
+              <span className="connection-card-name">CSV Snapshot</span>
+              <span className="connection-card-badge">Manual metrics</span>
+            </div>
+
+            <div className="connection-card-status">
+              <span className={`status-dot ${isCsvConnected ? 'ok' : 'off'}`} />
+              <span>
+                {csvLoading
+                  ? 'Checking snapshot…'
+                  : isCsvConnected
+                    ? `Connected for ${csvPeriodLabel}`
+                    : csvEnabled
+                      ? 'Ready to connect with CSV'
+                      : 'Upgrade required'}
+              </span>
+            </div>
+
+            <div className="connection-card-meta">
+              <span><i className="fas fa-calendar-alt" /> Period: {csvPeriodLabel}</span>
+              {isCsvConnected ? (
+                <>
+                  <span><i className="fas fa-list-ol" /> Trades: {csvStatus.tradeCount}</span>
+                  <span><i className="fas fa-clock" /> Uploaded: {fmtDateTime(csvStatus.uploadedAt)}</span>
+                  <span><i className="fas fa-chart-pie" /> Dashboard: CSV-only performance profile</span>
+                </>
+              ) : (
+                <>
+                  <span><i className="fas fa-upload" /> Connect with CSV from your broker export</span>
+                  <span><i className="fas fa-shield-alt" /> No trading access — analysis only</span>
+                  <span><i className="fas fa-chart-area" /> Opens dedicated CSV dashboard (MT-style layout)</span>
+                </>
+              )}
+            </div>
+
+            {csvError && (
+              <div className="chub-inline-warning">
+                <i className="fas fa-exclamation-triangle" /> {csvError}
+              </div>
+            )}
+
+            {csvEnabled ? (
+              <div className="csv-connection-actions">
+                <button
+                  type="button"
+                  className="connection-card-connect"
+                  onClick={() => navigate(`/reports/manual-metrics?year=${csvYear}&month=${csvMonth}`)}
+                >
+                  <i className="fas fa-link" style={{ marginRight: 8 }} />
+                  Connect with CSV
+                </button>
+                {isCsvConnected && (
+                  <button
+                    type="button"
+                    className="connection-card-disconnect csv-dashboard-btn"
+                    onClick={() => navigate(`/reports/manual-metrics/dashboard?year=${csvYear}&month=${csvMonth}`)}
+                  >
+                    <i className="fas fa-chart-line" style={{ marginRight: 8 }} />
+                    Open CSV Dashboard
+                  </button>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="connection-card-connect"
+                onClick={() => navigate('/choose-plan')}
+              >
+                <i className="fas fa-crown" style={{ marginRight: 8 }} />
+                Upgrade to Connect CSV
+              </button>
+            )}
+          </div>
         </section>
 
         <section className="connection-hub-enter">
