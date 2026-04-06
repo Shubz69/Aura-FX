@@ -87,6 +87,36 @@ function formatNewsTime(iso) {
   }
 }
 
+const INSTRUMENT_NEWS_KEYS = {
+  EURUSD: ['eur', 'euro', 'usd', 'dollar', 'ecb', 'fed', 'europe', 'us'],
+  GBPUSD: ['gbp', 'pound', 'boe', 'uk', 'britain', 'usd', 'dollar', 'fed'],
+  USDJPY: ['usd', 'dollar', 'jpy', 'yen', 'boj', 'japan', 'fed'],
+  XAUUSD: ['gold', 'xau', 'bullion', 'usd', 'dollar', 'fed', 'real yield', 'treasury'],
+  BTCUSD: ['btc', 'bitcoin', 'crypto', 'digital asset', 'usd', 'dollar'],
+  SPY: ['spy', 's&p', 'sp500', 'equity', 'stocks', 'fed', 'earnings'],
+};
+
+function normalizeHeadlineText(value) {
+  return String(value || '').toLowerCase();
+}
+
+function buildHeadlineBuckets(asset, list) {
+  const items = Array.isArray(list) ? list : [];
+  const keys = INSTRUMENT_NEWS_KEYS[String(asset || '').toUpperCase()] || [String(asset || '').toLowerCase()];
+  const scored = items.map((item) => {
+    const hay = `${normalizeHeadlineText(item.title)} ${normalizeHeadlineText(item.source)}`;
+    const score = keys.reduce((acc, key) => (hay.includes(key) ? acc + 1 : acc), 0);
+    return { item, score };
+  });
+  const relevant = scored.filter((x) => x.score > 0).sort((a, b) => b.score - a.score).map((x) => x.item);
+  const fallback = scored.filter((x) => x.score === 0).map((x) => x.item);
+  return {
+    relevant: relevant.slice(0, 6),
+    fallback: fallback.slice(0, 4),
+    total: items.length,
+  };
+}
+
 function postureToneClass(posture) {
   const text = String(posture || '').toLowerCase();
   if (text.includes('bull')) return 'md-tone md-tone--bull';
@@ -127,6 +157,7 @@ export default function MarketDecoderView({ embedded }) {
   const [liveRefreshing, setLiveRefreshing] = useState(false);
   /** Symbol for the brief currently on screen (not the input draft). */
   const [activeSymbol, setActiveSymbol] = useState(null);
+  const [previewMode, setPreviewMode] = useState(false);
   const activeSymbolRef = useRef(null);
   activeSymbolRef.current = activeSymbol;
 
@@ -188,9 +219,86 @@ export default function MarketDecoderView({ embedded }) {
   };
 
   const mt = brief?.header?.marketType || 'FX';
+  const headlineBuckets = buildHeadlineBuckets(brief?.header?.asset, brief?.meta?.anchorNews);
+  const instrumentHeadlines = headlineBuckets.relevant.length ? headlineBuckets.relevant : headlineBuckets.fallback;
+  const showingFallbackHeadlines = headlineBuckets.relevant.length === 0;
+
+  const exportJson = useCallback(() => {
+    if (!brief) return;
+    try {
+      const blob = new Blob([JSON.stringify(brief, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const symbol = (brief?.header?.asset || q || 'market').toString().toUpperCase();
+      const stamp = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `market-decoder-${symbol}-${stamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {}
+  }, [brief, q]);
+
+  const exportPreviewPdf = useCallback(() => {
+    if (!brief) return;
+    const symbol = (brief?.header?.asset || q || 'Market').toString().toUpperCase();
+    const generatedAt = formatGeneratedAt(brief?.meta?.generatedAt) || '—';
+    const html = `
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Market Decoder ${symbol}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; color: #111; }
+            h1 { margin: 0 0 8px; font-size: 22px; }
+            .meta { margin-bottom: 16px; color: #444; font-size: 12px; }
+            .row { margin-bottom: 12px; }
+            .label { font-size: 11px; text-transform: uppercase; color: #666; margin-bottom: 4px; }
+            .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+            ul { margin: 6px 0 0; padding-left: 18px; }
+          </style>
+        </head>
+        <body>
+          <h1>Market Decoder Preview · ${symbol}</h1>
+          <div class="meta">Generated: ${generatedAt}</div>
+          <div class="card">
+            <div class="label">Current posture</div>
+            <strong>${brief?.finalOutput?.currentPosture || 'No posture yet'}</strong>
+            <div class="row">${brief?.finalOutput?.postureSubtitle || brief?.instantRead?.bestApproach || ''}</div>
+          </div>
+          <div class="card">
+            <div class="label">Bias & conviction</div>
+            <div>${brief?.instantRead?.bias || 'Neutral'} · ${brief?.instantRead?.conviction || '—'}</div>
+          </div>
+          <div class="card">
+            <div class="label">What matters now</div>
+            <ul>${(brief?.whatMattersNow || []).map((x) => `<li><strong>${x.label}:</strong> ${x.text}</li>`).join('')}</ul>
+          </div>
+          <div class="card">
+            <div class="label">Execution guidance</div>
+            <ul>
+              <li><strong>Preferred direction:</strong> ${brief?.executionGuidance?.preferredDirection || '—'}</li>
+              <li><strong>Entry condition:</strong> ${brief?.executionGuidance?.entryCondition || '—'}</li>
+              <li><strong>Invalidation:</strong> ${brief?.executionGuidance?.invalidation || '—'}</li>
+              <li><strong>Avoid:</strong> ${brief?.executionGuidance?.avoidThis || '—'}</li>
+            </ul>
+          </div>
+        </body>
+      </html>
+    `;
+    const w = window.open('', '_blank', 'noopener,noreferrer');
+    if (!w) return;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 120);
+  }, [brief, q]);
 
   return (
-    <div className={`md-decoder ${embedded ? 'md-decoder--embedded' : ''}`}>
+    <div className={`md-decoder ${embedded ? 'md-decoder--embedded' : ''} ${previewMode ? 'md-decoder--preview' : ''}`}>
       <header className="md-decoder-hero">
         <div className="md-decoder-hero-grid">
           <div className="md-decoder-hero-main">
@@ -256,6 +364,19 @@ export default function MarketDecoderView({ embedded }) {
             ) : null}
             {liveRefreshing ? <span className="md-decoder-live-sync"> · Updating…</span> : null}
           </p>
+        )}
+        {brief && (
+          <div className="md-decoder-actions">
+            <button type="button" className="md-decoder-action-btn" onClick={() => setPreviewMode((v) => !v)}>
+              {previewMode ? 'Standard View' : 'Preview Style'}
+            </button>
+            <button type="button" className="md-decoder-action-btn" onClick={exportPreviewPdf}>
+              Export PDF
+            </button>
+            <button type="button" className="md-decoder-action-btn" onClick={exportJson}>
+              Export JSON
+            </button>
+          </div>
         )}
       </header>
 
@@ -648,9 +769,15 @@ export default function MarketDecoderView({ embedded }) {
                 <h3 id="md-h-news" className="md-decoder-card-title md-terminal-title">
                   Headlines · {brief.header.asset}
                 </h3>
-                {Array.isArray(brief.meta?.anchorNews) && brief.meta.anchorNews.length > 0 ? (
+                {instrumentHeadlines.length > 0 ? (
+                  <>
+                    <p className="md-meets-scope md-decoder-small">
+                      {showingFallbackHeadlines
+                        ? `No strong ${brief.header.asset} keyword match in ${headlineBuckets.total} headlines. Showing closest macro headlines.`
+                        : `Showing ${instrumentHeadlines.length} instrument-relevant headlines matched to ${brief.header.asset}.`}
+                    </p>
                   <ul className="md-anchor-news-list">
-                    {brief.meta.anchorNews.map((item, i) => {
+                    {instrumentHeadlines.map((item, i) => {
                       const href = String(item.url || '').trim();
                       const safe = href && href !== '#';
                       return (
@@ -677,6 +804,7 @@ export default function MarketDecoderView({ embedded }) {
                       );
                     })}
                   </ul>
+                  </>
                 ) : (
                   <p className="md-decoder-small">
                     No headlines matched this symbol with the configured keys.

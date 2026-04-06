@@ -230,6 +230,34 @@
   color: rgba(212, 175, 55, 0.85);
 }
 
+.md-decoder-actions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.md-decoder-action-btn {
+  border: 1px solid rgba(140, 175, 255, 0.22);
+  background: rgba(140, 175, 255, 0.08);
+  color: #eef4ff;
+  border-radius: 999px;
+  height: 34px;
+  padding: 0 14px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+}
+
+.md-decoder-action-btn:hover {
+  border-color: rgba(140, 175, 255, 0.45);
+  background: rgba(140, 175, 255, 0.16);
+  transform: translateY(-1px);
+}
+
 .md-decoder-rules-debug {
   color: rgba(160, 170, 195, 0.55);
 }
@@ -1017,6 +1045,24 @@
   font-size: 0.78rem;
   color: var(--md-muted);
   margin-top: 8px;
+}
+
+.md-decoder--preview .md-decoder-hero {
+  border-color: rgba(212, 175, 55, 0.28);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(212, 175, 55, 0.1) inset;
+}
+
+.md-decoder--preview .md-decoder-card,
+.md-decoder--preview .md-summary-item,
+.md-decoder--preview .md-decision-card {
+  border-color: rgba(212, 175, 55, 0.22);
+  background: linear-gradient(175deg, rgba(20, 19, 14, 0.9), rgba(9, 10, 18, 0.94));
+}
+
+.md-decoder--preview .md-decoder-card-title,
+.md-decoder--preview .md-summary-label,
+.md-decoder--preview .md-decision-label {
+  color: rgba(250, 220, 135, 0.92);
 }
 
 /* Trader Deck dashboard — launch Market Decoder from MI panel */
