@@ -2772,6 +2772,19 @@ html, body {
     gap: 1.15rem;
 }
 
+/* Tablet (e.g. iPad): same 3-column desk as desktop, slightly scaled to fit */
+@media (min-width: 768px) and (max-width: 1100px) and (min-height: 600px) {
+    .terminal-dashboard {
+        zoom: 0.88;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 767px) and (min-height: 600px) {
+    .terminal-dashboard {
+        zoom: 0.82;
+    }
+}
+
 /* Framed main canvas: gold rail + stacks command strip, tape, snapshot, grid */
 .terminal-dashboard__atlas {
     position: relative;
@@ -4314,23 +4327,8 @@ html, body {
     color: var(--text-muted);
 }
 
-@media (max-width: 1100px) {
-    .home-desk2__cols {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .home-desk2__col--right {
-        grid-column: 1 / -1;
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-
-    .home-desk2__col--right .desk2-card {
-        flex: 1 1 240px;
-    }
-}
-
-@media (max-width: 720px) {
+/* Keep 3-column desk through tablet; stack + simplify only on narrow phones */
+@media (max-width: 480px) {
     .home-desk2__cols {
         grid-template-columns: 1fr;
     }
