@@ -8,7 +8,7 @@ const MODES = [
   { id: 'area', label: 'Area' },
 ];
 
-export default function MarketDecoderChart({ bars }) {
+export default function MarketDecoderChart({ bars, compact = false }) {
   const wrapRef = useRef(null);
   const chartRef = useRef(null);
   const [mode, setMode] = useState('candles');
@@ -17,7 +17,8 @@ export default function MarketDecoderChart({ bars }) {
     const el = wrapRef.current;
     if (!el || !bars || bars.length < 2) return undefined;
 
-    const height = Math.min(400, Math.max(260, Math.floor(typeof window !== 'undefined' ? window.innerHeight * 0.28 : 320)));
+    const baseH = typeof window !== 'undefined' ? window.innerHeight * (compact ? 0.2 : 0.28) : compact ? 220 : 320;
+    const height = Math.min(compact ? 260 : 400, Math.max(compact ? 180 : 260, Math.floor(baseH)));
 
     const chart = createChart(el, {
       width: el.clientWidth,
@@ -90,7 +91,7 @@ export default function MarketDecoderChart({ bars }) {
       chart.remove();
       chartRef.current = null;
     };
-  }, [bars, mode]);
+  }, [bars, mode, compact]);
 
   if (!bars || bars.length < 2) {
     return (

@@ -27,6 +27,27 @@ const CACHE_SEC = Math.min(900, Math.max(120, parseInt(process.env.MARKET_DECODE
 const CACHE_TTL_MS = CACHE_SEC * 1000;
 const cacheStore = new Map();
 
+/** @returns {{ ok: true, symbol: string } | { ok: false, code: string, message: string }} */
+function normalizeDecoderQuerySymbol(raw) {
+  const s0 = String(raw || '').trim();
+  if (!s0) return { ok: false, code: 'SYMBOL_REQUIRED', message: 'symbol is required' };
+  if (s0.length > 48) {
+    return { ok: false, code: 'SYMBOL_TOO_LONG', message: 'Symbol is too long (maximum 48 characters).' };
+  }
+  if (/[\r\n\x00]/.test(s0)) {
+    return { ok: false, code: 'INVALID_SYMBOL', message: 'Symbol contains invalid characters.' };
+  }
+  const s = s0.toUpperCase();
+  if (!/^[\w.:\-]{2,48}$/.test(s)) {
+    return {
+      ok: false,
+      code: 'INVALID_SYMBOL',
+      message: 'Use letters, numbers, and . : - only (e.g. EURUSD, XAUUSD, SPY).',
+    };
+  }
+  return { ok: true, symbol: s };
+}
+
 function getCached(key) {
   const e = cacheStore.get(key);
   if (e && Date.now() - e.at < CACHE_TTL_MS) return e.payload;
@@ -35,6 +56,11 @@ function getCached(key) {
 
 function setCached(key, payload) {
   cacheStore.set(key, { at: Date.now(), payload });
+}
+
+function setDecoderEngineHeader(res, brief) {
+  const v = brief && brief.meta && brief.meta.decoderEngineVersion;
+  if (v != null) res.setHeader('X-Market-Decoder-Engine', String(v));
 }
 
 module.exports = async (req, res) => {
@@ -48,21 +74,27 @@ module.exports = async (req, res) => {
   }
 
   const q = req.query || {};
-  const symbol = (q.symbol || q.q || '').toString().trim();
+  const rawSymbol = (q.symbol || q.q || '').toString();
+  const normalized = normalizeDecoderQuerySymbol(rawSymbol);
+  if (!normalized.ok) {
+    return res.status(400).json({
+      success: false,
+      code: normalized.code,
+      message: normalized.message,
+    });
+  }
+  const symbol = normalized.symbol;
   const refresh = q.refresh === '1' || q.refresh === 'true';
   const skipAi = q.noAi === '1' || q.noAi === 'true';
 
-  if (!symbol) {
-    return res.status(400).json({ success: false, message: 'symbol is required' });
-  }
-
-  const cacheKey = symbol.toUpperCase();
+  const cacheKey = symbol;
 
   if (!refresh) {
     const hit = getCached(cacheKey);
     if (hit) {
       res.setHeader('Cache-Control', 'private, max-age=60');
       const briefOut = stripFeedDiagnosticsFromBrief(hit.brief);
+      setDecoderEngineHeader(res, briefOut);
       return res.status(200).json({ success: true, ...hit, brief: briefOut, cached: true });
     }
   }
@@ -83,6 +115,7 @@ module.exports = async (req, res) => {
         setCached(cacheKey, payload);
         res.setHeader('Cache-Control', 'private, max-age=60');
         const briefOut = stripFeedDiagnosticsFromBrief(payload.brief);
+        setDecoderEngineHeader(res, briefOut);
         return res.status(200).json({ success: true, ...payload, brief: briefOut });
       }
     } catch (error) {
@@ -94,7 +127,11 @@ module.exports = async (req, res) => {
     console.info('[market-decoder] request', { symbol: symbol.toUpperCase(), refresh: Boolean(refresh), noAi: Boolean(skipAi) });
     const raw = await runMarketDecoder(symbol);
     if (!raw.success) {
-      return res.status(400).json(raw);
+      return res.status(400).json({
+        success: false,
+        code: raw.code || 'DECODE_FAILED',
+        message: raw.message || 'Could not decode this symbol.',
+      });
     }
 
     let brief = raw.brief;
@@ -110,6 +147,7 @@ module.exports = async (req, res) => {
     setCached(cacheKey, payload);
     res.setHeader('Cache-Control', 'private, max-age=60');
     const briefOut = stripFeedDiagnosticsFromBrief(brief);
+    setDecoderEngineHeader(res, briefOut);
     return res.status(200).json({ success: true, brief: briefOut, cached: false, cacheTtlSec: CACHE_SEC });
   } catch (err) {
     console.error('[market-decoder]', err);

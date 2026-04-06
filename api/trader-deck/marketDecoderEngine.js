@@ -15,6 +15,9 @@ const {
   fetchCrossAssetQuotes,
   fetchMarketDecoderContextNews,
 } = require('./marketDecoderData');
+const { rankInstrumentHeadlines } = require('./instrumentHeadlines');
+
+const DECODER_ENGINE_VERSION = 2;
 
 const TIMEOUT_MS = 9000;
 
@@ -647,6 +650,7 @@ async function runMarketDecoder(symbolInput) {
   if (!resolved) {
     return {
       success: false,
+      code: 'UNKNOWN_SYMBOL',
       message: 'Enter a valid symbol (e.g. EURUSD, XAUUSD, BTCUSD, SPY).',
     };
   }
@@ -881,6 +885,9 @@ async function runMarketDecoder(symbolInput) {
     timeUntil: timeUntil(e.date) || 'time TBC',
   }));
 
+  const anchorList = Array.isArray(anchorNews) ? anchorNews : [];
+  const headlineRank = rankInstrumentHeadlines(resolved, displaySymbol, anchorList, { maxRelevant: 6, maxFallback: 4 });
+
   return {
     success: true,
     brief: {
@@ -948,9 +955,13 @@ async function runMarketDecoder(symbolInput) {
         dataHealth,
         finnhubSymbol,
         canonicalSymbol,
+        decoderEngineVersion: DECODER_ENGINE_VERSION,
         sparkline,
         chartBars,
-        anchorNews: Array.isArray(anchorNews) ? anchorNews : [],
+        anchorNews: anchorList,
+        instrumentHeadlines: headlineRank.items,
+        headlineScope: headlineRank.scope,
+        headlineTotal: headlineRank.total,
         marketMeetings: marketMeetingsForPair,
         marketMeetingsScope: pairMeetingsPick.scope,
         generatedAt: new Date().toISOString(),

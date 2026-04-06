@@ -1291,6 +1291,280 @@
   color: var(--md-muted);
 }
 
+/* ── Compact desk layout (default) + executive strip ── */
+.md-decoder--compact {
+  max-width: 1120px;
+  padding: 0 4px 28px;
+}
+
+.md-decoder--compact .md-decoder-hero {
+  padding: 14px 16px 12px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+}
+
+.md-decoder-hero-compact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  justify-content: space-between;
+}
+
+.md-decoder-hero-brand .md-decoder-hero-title {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.2vw, 1.85rem);
+}
+
+.md-decoder-hero-brand .md-decoder-hero-eyebrow {
+  margin-bottom: 2px;
+}
+
+.md-decoder-search--toolbar {
+  margin-top: 0;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: min(100%, 360px);
+}
+
+.md-decoder--compact .md-decoder-chips {
+  margin-top: 8px;
+}
+
+.md-decoder-details {
+  margin-top: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(140, 175, 255, 0.12);
+  background: rgba(0, 0, 0, 0.15);
+  padding: 0 12px;
+}
+
+.md-decoder-details-summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--md-accent);
+  font-weight: 700;
+  padding: 10px 0;
+}
+
+.md-decoder-details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.md-decoder-details[open] > .md-decoder-details-summary {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 10px;
+}
+
+.md-decoder-hero-grid--nested {
+  padding-bottom: 12px;
+}
+
+.md-decoder-details--panel {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0 0 10px;
+}
+
+.md-decoder-details-summary--panel {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(140, 175, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.md-decoder-details--panel[open] .md-decoder-details-summary--panel {
+  border-radius: 12px 12px 0 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.md-decoder-card--details-inner {
+  border-radius: 0 0 12px 12px;
+  border-top: none !important;
+  margin-top: 0;
+}
+
+.md-decoder-stack-nested {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 0 12px;
+}
+
+.md-decoder-executive {
+  border-radius: 16px;
+  border: 1px solid rgba(140, 175, 255, 0.18);
+  background: linear-gradient(175deg, rgba(12, 18, 36, 0.95), rgba(7, 11, 24, 0.92));
+  padding: 14px 16px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22);
+}
+
+.md-decoder-executive-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.md-exec-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.md-exec-kpi .md-summary-label {
+  margin-bottom: 0;
+}
+
+.md-exec-kpi-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.md-decoder-executive-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.md-exec-lead-label {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--md-muted);
+  margin-bottom: 4px;
+}
+
+.md-exec-posture {
+  display: block;
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.md-exec-posture-sub {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: rgba(230, 235, 250, 0.88);
+}
+
+.md-exec-aside-line {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: rgba(225, 230, 245, 0.9);
+}
+
+.md-exec-aside-line--muted {
+  color: var(--md-muted);
+}
+
+.md-decoder--compact .md-decoder-stack {
+  gap: 12px;
+}
+
+.md-decoder--compact .md-decoder-card {
+  padding: 14px 16px;
+  border-radius: 14px;
+}
+
+.md-decoder--compact .md-terminal-symbol {
+  font-size: 1.55rem;
+}
+
+.md-decoder--compact .md-pulse-gauge {
+  max-width: 180px;
+  height: 90px;
+}
+
+.md-decoder--compact .md-pulse-gauge-track {
+  height: 90px;
+}
+
+.md-decoder--compact .md-pulse-needle {
+  height: 72px;
+}
+
+.md-decoder--compact .md-chart-canvas-wrap {
+  min-height: 180px;
+}
+
+.md-decoder--compact .md-chart-toolbar {
+  margin-bottom: 8px;
+}
+
+.md-decoder-hero-sub--block {
+  margin: 8px 0 0;
+  max-width: 720px;
+}
+
+.md-decoder--comfortable .md-decoder-hero {
+  padding: 24px 22px 20px;
+  border-radius: 22px;
+}
+
+.md-decoder--comfortable .md-decoder-hero-title {
+  font-size: clamp(1.6rem, 2.6vw, 2.55rem);
+}
+
+.md-decoder--comfortable .md-decoder-stack {
+  gap: 18px;
+}
+
+.md-decoder--comfortable .md-decoder-card {
+  padding: 18px 20px;
+  border-radius: 18px;
+}
+
+.md-decoder--comfortable .md-pulse-gauge {
+  max-width: 220px;
+  height: 110px;
+}
+
+.md-decoder--comfortable .md-pulse-gauge-track {
+  height: 110px;
+}
+
+.md-decoder--comfortable .md-pulse-needle {
+  height: 88px;
+}
+
+.md-decoder--comfortable .md-chart-canvas-wrap {
+  min-height: 260px;
+}
+
+.md-decoder--preview .md-decoder-executive {
+  border-color: rgba(212, 175, 55, 0.24);
+  background: linear-gradient(175deg, rgba(20, 19, 14, 0.9), rgba(9, 10, 18, 0.94));
+}
+
+@media (max-width: 820px) {
+  .md-decoder-executive-body {
+    grid-template-columns: 1fr;
+  }
+
+  .md-decoder-hero-compact {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .md-decoder-search--toolbar {
+    justify-content: stretch;
+  }
+}
+
 @media (max-width: 600px) {
   .md-decoder-hero-title {
     font-size: 1.15rem;
