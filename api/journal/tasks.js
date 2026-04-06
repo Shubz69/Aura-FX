@@ -133,6 +133,8 @@ async function ensureTasksTable() {
   await addColumnIfNotExists('journal_tasks', 'is_mandatory', 'TINYINT(1) DEFAULT 0');
   await addColumnIfNotExists('journal_tasks', 'mandatory_key', 'VARCHAR(64) DEFAULT NULL');
   await addColumnIfNotExists('journal_tasks', 'description', 'TEXT DEFAULT NULL');
+  await addColumnIfNotExists('journal_tasks', 'reminder_at', 'DATETIME NULL');
+  await addColumnIfNotExists('journal_tasks', 'reminder_sent_at', 'DATETIME NULL');
   try {
     await executeQuery(`
       DELETE t1 FROM journal_tasks t1
@@ -293,6 +295,8 @@ function mapRow(row) {
     isMandatory: Boolean(row.is_mandatory),
     mandatoryKey: row.mandatory_key || null,
     description: row.description || null,
+    reminderAt: row.reminder_at ? new Date(row.reminder_at).toISOString() : null,
+    reminderSentAt: row.reminder_sent_at ? new Date(row.reminder_sent_at).toISOString() : null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -494,6 +498,20 @@ module.exports = async (req, res) => {
       const proof = rawProof ? rawProof.slice(0, 10485760) : null;
       updates.push('proof_image = ?');
       params.push(proof);
+    }
+    if (body.reminderAt !== undefined) {
+      if (body.reminderAt === null || body.reminderAt === '') {
+        updates.push('reminder_at = NULL');
+        updates.push('reminder_sent_at = NULL');
+      } else {
+        const dt = new Date(body.reminderAt);
+        if (Number.isNaN(dt.getTime())) {
+          return res.status(400).json({ success: false, message: 'Invalid reminder time.' });
+        }
+        updates.push('reminder_at = ?');
+        updates.push('reminder_sent_at = NULL');
+        params.push(dt.toISOString().slice(0, 19).replace('T', ' '));
+      }
     }
 
     if (updates.length === 0) {

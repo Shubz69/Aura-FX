@@ -14,6 +14,7 @@ import '../styles/NotificationsDropdown.css';
 const TYPE_ICONS = {
   MENTION: FaAt,
   REPLY: FaReply,
+  CHANNEL_ACTIVITY: FaComments,
   FRIEND_REQUEST: FaUserPlus,
   FRIEND_ACCEPTED: FaUserCheck,
   FRIEND_DECLINED: FaUserTimes,
@@ -25,6 +26,7 @@ const TYPE_ICONS = {
 const TYPE_COLORS = {
   MENTION: '#5865F2',
   REPLY: '#00B894',
+  CHANNEL_ACTIVITY: '#eaa960',
   FRIEND_REQUEST: '#FFB800',
   FRIEND_ACCEPTED: '#23A55A',
   FRIEND_DECLINED: '#ED4245',
@@ -245,6 +247,15 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
     if (notification.type === 'FRIEND_REQUEST') {
       onClose();
       navigate('/friends');
+      return;
+    }
+    if (notification.type === 'CHANNEL_ACTIVITY') {
+      onClose();
+      if (notification.channelId) {
+        navigate(`/community?channel=${notification.channelId}&jump=${notification.messageId || ''}&focus=1`);
+      } else {
+        navigate('/community');
+      }
       return;
     }
     // Handle message-type notifications (jump to message)

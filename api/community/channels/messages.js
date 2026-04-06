@@ -21,7 +21,7 @@ require('../../utils/suppress-warnings');
 const WS_BROADCAST_TIMEOUT_MS = Number(process.env.COMMUNITY_WS_BROADCAST_TIMEOUT_MS) || 2800;
 const PUSHER_TRIGGER_TIMEOUT_MS = Number(process.env.COMMUNITY_PUSHER_TIMEOUT_MS) || 4000;
 const MAX_MENTION_NOTIFICATIONS_PER_MESSAGE = Number(process.env.COMMUNITY_MAX_MENTION_PUSH) || 120;
-const MAX_CHANNEL_ACTIVITY_NOTIFICATIONS = Number(process.env.COMMUNITY_MAX_CHANNEL_ACTIVITY_PUSH) || 40;
+const MAX_CHANNEL_ACTIVITY_NOTIFICATIONS = Number(process.env.COMMUNITY_MAX_CHANNEL_ACTIVITY_PUSH) || 2000;
 const NOTIFICATION_CONCURRENCY = Number(process.env.COMMUNITY_NOTIF_CONCURRENCY) || 12;
 
 async function fetchWithTimeout(url, init, timeoutMs) {
@@ -54,7 +54,7 @@ async function runInBatches(items, concurrency, fn) {
   }
 }
 
-/** Opt-in channel message push (throttled per user+channel in DB) */
+/** Per-channel push preferences (enabled=0 means muted by user). */
 let channelPushPrefsTableReady = false;
 async function ensureChannelPushPrefsTable() {
   if (channelPushPrefsTableReady) return;
@@ -76,11 +76,12 @@ async function ensureChannelPushPrefsTable() {
   }
 }
 
-async function notifyChannelActivityOptIn(db, params) {
+async function notifyChannelActivityBroadcast(db, params) {
   const {
     createNotification: cn,
     channelIdStr,
     channelIdForDb,
+    channelRow,
     channelName,
     senderId,
     senderUsername,
@@ -94,22 +95,36 @@ async function notifyChannelActivityOptIn(db, params) {
   const activityTitle = 'New activity';
   const activityBody = `${senderUsername} in #${channelName}: ${bodySnippet}`;
   try {
-    const [rows] = await db.execute(
-      `SELECT user_id FROM channel_push_prefs
-       WHERE channel_id = ? AND enabled = 1 AND user_id != ?
-       AND (last_push_at IS NULL OR last_push_at < DATE_SUB(NOW(), INTERVAL 10 MINUTE))`,
-      [channelIdStr, senderId]
+    // Default behavior: everyone with channel access is eligible, unless they muted this channel.
+    const [users] = await db.execute(
+      `SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed,
+              onboarding_accepted, onboarding_subscription_snapshot
+         FROM users
+        WHERE id != ?`,
+      [senderId]
     );
-    const capped = (rows || [])
-      .filter((row) => {
-        const uid = row.user_id;
-        if (!uid || excludeUserIds?.has(uid)) return false;
-        return true;
+    const [prefRows] = await db.execute(
+      'SELECT user_id, enabled FROM channel_push_prefs WHERE channel_id = ?',
+      [channelIdStr]
+    );
+    const muted = new Set(
+      (prefRows || [])
+        .filter((r) => Number(r.enabled) === 0)
+        .map((r) => Number(r.user_id))
+        .filter((x) => Number.isFinite(x) && x > 0)
+    );
+
+    const recipients = (users || [])
+      .filter((u) => {
+        const uid = Number(u.id);
+        if (!uid || muted.has(uid) || excludeUserIds?.has(uid)) return false;
+        const ent = getEntitlements(u);
+        return canAccessChannel(ent, channelIdStr, [channelRow]);
       })
       .slice(0, MAX_CHANNEL_ACTIVITY_NOTIFICATIONS);
 
-    await runInBatches(capped, NOTIFICATION_CONCURRENCY, async (row) => {
-      const uid = row.user_id;
+    await runInBatches(recipients, NOTIFICATION_CONCURRENCY, async (row) => {
+      const uid = Number(row.id);
       try {
         await cn({
           userId: uid,
@@ -124,15 +139,9 @@ async function notifyChannelActivityOptIn(db, params) {
       } catch (err) {
         console.warn('Channel activity notification create failed:', err.message);
       }
-      try {
-        await db.execute(
-          'UPDATE channel_push_prefs SET last_push_at = NOW() WHERE user_id = ? AND channel_id = ?',
-          [uid, channelIdStr]
-        );
-      } catch (_) { /* non-fatal */ }
     });
   } catch (e) {
-    console.warn('Channel activity notify:', e.message);
+    console.warn('Channel activity broadcast notify:', e.message);
   }
 }
 
@@ -164,7 +173,11 @@ async function runCommunityMessageNotificationSideEffects(payload) {
     const mentionBodyText = `${senderUsername} mentioned you in #${channelName}: ${bodySnippet}`;
     const numericChannelId = (typeof channelId === 'number' && !isNaN(channelId)) ? channelId : (parseInt(channelId, 10));
     const channelIdForDb = (typeof numericChannelId === 'number' && !isNaN(numericChannelId)) ? numericChannelId : null;
-    const notifMeta = { channelId, channelName };
+    const notifMeta = {
+      channelId,
+      channelName,
+      url: `/community?channel=${encodeURIComponent(String(channelId))}&jump=${newMessageId}&focus=1`,
+    };
 
     const userIdsToNotify = new Set();
 
@@ -232,10 +245,16 @@ async function runCommunityMessageNotificationSideEffects(payload) {
     }
 
     try {
-      await notifyChannelActivityOptIn(db, {
+      await notifyChannelActivityBroadcast(db, {
         createNotification: cn,
         channelIdStr: String(channelIdValue),
         channelIdForDb,
+        channelRow: {
+          id: channelId,
+          name: channelName,
+          access_level: channelRow?.access_level,
+          permission_type: channelRow?.permission_type,
+        },
         channelName,
         senderId,
         senderUsername,

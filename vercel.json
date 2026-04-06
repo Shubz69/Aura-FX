@@ -484,6 +484,10 @@
       "destination": "/api/cron/journal-wellness-alerts.js"
     },
     {
+      "source": "/api/cron/journal-task-reminders",
+      "destination": "/api/cron/journal-task-reminders.js"
+    },
+    {
       "source": "/api/cron/auto-market-briefs",
       "destination": "/api/cron/auto-market-briefs.js"
     },
@@ -692,6 +696,10 @@
     {
       "path": "/api/cron/journal-wellness-alerts",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/journal-task-reminders",
+      "schedule": "* * * * *"
     },
     {
       "path": "/api/cron/auto-market-briefs",

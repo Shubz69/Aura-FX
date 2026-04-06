@@ -119,8 +119,11 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [uploading, setUploading] = useState(false);
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadUrl, setUploadUrl] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selectedKinds, setSelectedKinds] = useState(() => new Set(BRIEF_KIND_ORDER));
   const fileInputRef = useRef(null);
   const typewriterScrollRef = useRef(null);
+  const filterPopoverRef = useRef(null);
   const sortedBriefs = useMemo(() => {
     const orderIndex = new Map(BRIEF_KIND_ORDER.map((k, i) => [k, i]));
     return [...briefs].sort((a, b) => {
@@ -138,6 +141,28 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     });
   }, [briefs]);
 
+  const kindsPresent = useMemo(() => {
+    const seen = new Set(sortedBriefs.map((b) => String(b?.briefKind || 'general').toLowerCase()));
+    return BRIEF_KIND_ORDER.filter((k) => seen.has(k));
+  }, [sortedBriefs]);
+
+  useEffect(() => {
+    if (!kindsPresent.length) return;
+    setSelectedKinds((prev) => {
+      const next = new Set();
+      kindsPresent.forEach((k) => {
+        if (prev.has(k)) next.add(k);
+      });
+      if (!next.size) kindsPresent.forEach((k) => next.add(k));
+      return next;
+    });
+  }, [kindsPresent]);
+
+  const displayedBriefs = useMemo(() => {
+    if (!sortedBriefs.length) return [];
+    return sortedBriefs.filter((b) => selectedKinds.has(String(b?.briefKind || 'general').toLowerCase()));
+  }, [sortedBriefs, selectedKinds]);
+
   const previewOpen = Boolean(previewId || previewEmbedUrl);
 
   const closePreview = useCallback(() => {
@@ -148,6 +173,16 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     setTextPreviewLoading(false);
     setTypewriterIndex(0);
   }, []);
+
+  useEffect(() => {
+    if (!filtersOpen) return undefined;
+    const onDown = (e) => {
+      const node = filterPopoverRef.current;
+      if (node && !node.contains(e.target)) setFiltersOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [filtersOpen]);
 
   useEffect(() => {
     if (!previewOpen) return undefined;
@@ -375,6 +410,24 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       .catch((err) => setError(err.response?.data?.message || 'Delete failed'));
   };
 
+  const toggleKindFilter = (kind) => {
+    setSelectedKinds((prev) => {
+      const next = new Set(prev);
+      if (next.has(kind)) {
+        if (next.size === 1) return next; // keep at least one active
+        next.delete(kind);
+      } else {
+        next.add(kind);
+      }
+      return next;
+    });
+  };
+
+  const clearFilters = () => {
+    const fallback = kindsPresent.length ? kindsPresent : BRIEF_KIND_ORDER;
+    setSelectedKinds(new Set(fallback));
+  };
+
   if (loading) {
     return (
       <div className="td-mi-loading td-mi-loading--page">
@@ -461,13 +514,46 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           <section className="td-deck-mi-tile td-deck-mi-tile--list" aria-labelledby="intel-list-heading">
             <div className="td-deck-mi-tile-head">
               <h2 id="intel-list-heading" className="td-deck-mi-tile-title">Briefs</h2>
-              <span className="td-deck-mi-tile-badge">{briefs.length}</span>
+              <div className="td-deck-mi-head-tools">
+                <div className="td-deck-mi-filter-wrap" ref={filterPopoverRef}>
+                  <button
+                    type="button"
+                    className="td-mi-btn td-mi-btn-small td-mi-btn-filter"
+                    onClick={() => setFiltersOpen((v) => !v)}
+                  >
+                    Filter
+                  </button>
+                  {filtersOpen && (
+                    <div className="td-deck-mi-filter-popover" role="dialog" aria-label="Brief filters">
+                      <div className="td-deck-mi-filter-head">
+                        <span>Show brief types</span>
+                        <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
+                          Reset
+                        </button>
+                      </div>
+                      <div className="td-deck-mi-filter-list">
+                        {(kindsPresent.length ? kindsPresent : BRIEF_KIND_ORDER).map((kind) => (
+                          <label key={kind} className="td-deck-mi-filter-item">
+                            <input
+                              type="checkbox"
+                              checked={selectedKinds.has(kind)}
+                              onChange={() => toggleKindFilter(kind)}
+                            />
+                            <span>{BRIEF_KIND_LABEL[kind] || kind}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <span className="td-deck-mi-tile-badge">{displayedBriefs.length}</span>
+              </div>
             </div>
             <ul className="td-deck-mi-brief-cards">
-              {briefs.length === 0 ? (
+              {displayedBriefs.length === 0 ? (
                 <li className="td-deck-mi-brief-empty">No briefs for this date. {canEdit && 'Pick the date above, then add a file or link.'}</li>
               ) : (
-                sortedBriefs.map((b) => (
+                displayedBriefs.map((b) => (
                   <li key={b.id} className="td-deck-mi-brief-card">
                     <span className="td-deck-mi-brief-card-title">
                       [{BRIEF_KIND_LABEL[String(b?.briefKind || 'general').toLowerCase()] || 'General'}] {displayBriefTitle(b.title)}{Number(b?.briefVersion || 1) > 1 ? ` (v${Number(b.briefVersion)})` : ''}

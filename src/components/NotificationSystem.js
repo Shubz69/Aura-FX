@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaBell, FaTimes, FaEnvelope, FaAt } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { ensureWebPushSubscription } from '../utils/ensureWebPushSubscription';
 import '../styles/NotificationSystem.css';
 
 /**
@@ -16,6 +17,8 @@ export async function requestCommunityMessageAlerts() {
     try {
         const result = await Notification.requestPermission();
         if (result === 'granted') {
+            // Permission alone is not enough — ensure subscription is registered server-side.
+            await ensureWebPushSubscription();
             toast.success('Alerts enabled — you will get system notifications for new messages (muted channels stay silent).');
         } else if (result === 'denied') {
             toast.warn('Notifications are blocked. Enable them in your browser or device settings for AURA TERMINAL.');

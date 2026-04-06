@@ -1,3 +1,67 @@
+/* Brief filters (Market Intelligence list) */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-head-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-filter-wrap {
+  position: relative;
+}
+
+.td-deck-with-tabs.td-layout-page .td-mi-btn-filter {
+  min-width: 88px;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-filter-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(280px, 82vw);
+  background: rgba(6, 8, 12, 0.94);
+  border: 1px solid rgba(248, 195, 125, 0.28);
+  border-radius: 10px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 60;
+  padding: 10px;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-filter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-filter-list {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.78rem;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-filter-item input {
+  accent-color: #f8c37d;
+}
 /* =============================================================================
    TRADER DECK PAGE — Fully Responsive (all devices)
    src/pages/TraderDeck.js  ·  scoped to .td-deck-with-tabs.td-layout-page

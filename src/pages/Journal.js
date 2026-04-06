@@ -528,6 +528,12 @@ export default function Journal() {
       taskTitle: task.title,
       fireAtMs: t,
     });
+    try {
+      await Api.updateJournalTask(task.id, { reminderAt: new Date(t).toISOString() });
+    } catch (e) {
+      // Keep local reminder fallback even if server sync fails.
+      console.warn('Server reminder sync failed:', e?.response?.data?.message || e?.message);
+    }
     toast.success('Reminder set. You will get a notice when it is due.');
     setReminderMenuTaskId(null);
   }, [journalUserId]);
@@ -882,8 +888,13 @@ export default function Journal() {
                           <button
                             type="button"
                             className="journal-reminder-clear"
-                            onClick={() => {
+                            onClick={async () => {
                               removeReminderByTask(journalUserId, task.id);
+                              try {
+                                await Api.updateJournalTask(task.id, { reminderAt: null });
+                              } catch (e) {
+                                console.warn('Server reminder clear failed:', e?.response?.data?.message || e?.message);
+                              }
                               toast.success('Reminder removed');
                               setReminderMenuTaskId(null);
                             }}

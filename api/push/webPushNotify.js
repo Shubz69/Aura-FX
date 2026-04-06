@@ -41,8 +41,12 @@ function resolveOpenUrl(type, meta, channelId) {
     }
   }
   if (!m || typeof m !== 'object') m = {};
+  if (typeof m.url === 'string' && m.url.trim()) return m.url.trim();
   if (type === 'DAILY_JOURNAL') return '/journal';
-  if (type === 'SYSTEM') return '/';
+  if (type === 'SYSTEM') {
+    if (m.kind === 'JOURNAL_TASK_DUE') return '/journal';
+    return '/';
+  }
   // Thread DMs use REPLY with channel_id 0 — not community channels
   if (type === 'REPLY' && (channelId === 0 || channelId == null)) return '/messages';
   if (type === 'CHANNEL_ACTIVITY') return '/community';
