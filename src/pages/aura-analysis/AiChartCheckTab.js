@@ -116,7 +116,7 @@ function HeadlineResult({ result }) {
   );
 }
 
-function ResultPanel({ result, onReset }) {
+function ResultPanel({ result, onReset, embedded = false }) {
   const navigate = useNavigate();
   const scores = result.scores || {};
   const tf = result.timeframeAnalysis || {};
@@ -248,15 +248,27 @@ function ResultPanel({ result, onReset }) {
         <button className="acc-btn acc-btn--secondary acc-reset-btn" onClick={onReset} type="button">
           ↺ Analyse Another Chart
         </button>
-        <button className="acc-btn acc-btn--primary acc-go-checklist" onClick={() => navigate('/trader-deck/trade-validator/checklist')} type="button">
-          📋 Go To Checklist
-        </button>
+        {embedded ? (
+          <button
+            className="acc-btn acc-btn--primary acc-go-checklist"
+            onClick={() => {
+              if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            type="button"
+          >
+            ↑ Back To Checklist
+          </button>
+        ) : (
+          <button className="acc-btn acc-btn--primary acc-go-checklist" onClick={() => navigate('/trader-deck/trade-validator/checklist')} type="button">
+            📋 Go To Checklist
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
-export default function AiChartCheckTab() {
+export default function AiChartCheckTab({ embedded = false }) {
   const { token } = useAuth();
   const [pairGroups, setPairGroups] = useState(BASE_PAIR_GROUPS);
 
@@ -401,24 +413,25 @@ export default function AiChartCheckTab() {
 
   const filledCount = slots.filter(s => s.image).length;
 
-  if (result) return <ResultPanel result={result} onReset={handleReset} />;
+  if (result) return <ResultPanel result={result} onReset={handleReset} embedded={embedded} />;
 
   return (
-    <div className="acc-page">
-      {/* Header */}
-      <div className="acc-header">
-        <div className="acc-header-text">
-          <h2 className="acc-title">
-            <span className="acc-title-icon">🤖</span>
-            AI Chart Check
-          </h2>
-          <p className="acc-subtitle">
-            Upload your chart and the AI will assess it against the Trade Validator checklist —
-            giving you a structured score and breakdown.{' '}
-            <strong>You must still complete the checklist manually before taking any trade.</strong>
-          </p>
+    <div className={`acc-page ${embedded ? 'acc-page--embedded' : ''}`}>
+      {!embedded && (
+        <div className="acc-header">
+          <div className="acc-header-text">
+            <h2 className="acc-title">
+              <span className="acc-title-icon">🤖</span>
+              AI Chart Check
+            </h2>
+            <p className="acc-subtitle">
+              Upload your chart and the AI will assess it against the Trade Validator checklist —
+              giving you a structured score and breakdown.{' '}
+              <strong>You must still complete the checklist manually before taking any trade.</strong>
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="acc-layout">
         {/* Multi-image upload grid */}

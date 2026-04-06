@@ -11,6 +11,7 @@ import {
 import { CHECKLIST_SECTIONS, getSectionScore } from '../../lib/aura-analysis/validator/checklistSections';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import { VALIDATOR_CHECKLIST_PENDING_KEY } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
+import AiChartCheckTab from './AiChartCheckTab';
 import '../../styles/TradeValidatorView.css';
 
 const STORAGE_KEY_CHECKED = 'aura-trade-validator-checked-by-tab';
@@ -340,6 +341,14 @@ export default function TradeValidatorView() {
             </div>
           </section>
         )}
+
+        <section className="tv-block tv-ai-check-embed" id="ai-chart-check">
+          <h2 className="tv-block-title">AI CHART CHECK</h2>
+          <p className="tv-block-sub">
+            Upload your chart for an AI second opinion, then validate manually with the checklist above before execution.
+          </p>
+          <AiChartCheckTab embedded />
+        </section>
 
         {exampleOverlay && (
           <div

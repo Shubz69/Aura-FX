@@ -415,6 +415,25 @@
   color: var(--tv-muted);
 }
 
+/* Embedded AI Chart Check inside checklist page */
+.tv-ai-check-embed .acc-page {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.tv-ai-check-embed .acc-header {
+  margin-bottom: 18px;
+}
+
+.tv-ai-check-embed .acc-title {
+  font-size: 1.2rem;
+}
+
+.tv-ai-check-embed .acc-subtitle {
+  max-width: none;
+}
+
 .tv-score-grade {
   font-size: 0.9rem;
   font-weight: 700;

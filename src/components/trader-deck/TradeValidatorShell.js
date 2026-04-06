@@ -17,7 +17,6 @@ const BASE = '/trader-deck/trade-validator';
 const TABS = [
   { path: `${BASE}/overview`,        label: 'Overview' },
   { path: `${BASE}/checklist`,       label: 'Checklist' },
-  { path: `${BASE}/ai-chart-check`,  label: 'AI Chart Check' },
   { path: `${BASE}/calculator`,      label: 'Trade Calculator' },
   { path: `${BASE}/journal`,         label: 'Trade Journal' },
   { path: `${BASE}/analytics`,       label: 'Analytics' },

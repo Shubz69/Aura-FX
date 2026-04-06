@@ -92,7 +92,6 @@ const AuraAnalytics = lazy(() => import('./pages/aura-analysis/AuraAnalytics'));
 const AuraLeaderboard = lazy(() => import('./pages/aura-analysis/AuraLeaderboard'));
 const TraderCVTab = lazy(() => import('./pages/aura-analysis/TraderCVTab'));
 const TraderDeckTradeJournal = lazy(() => import('./pages/trader-deck/TraderDeckTradeJournal'));
-const AiChartCheckTab = lazy(() => import('./pages/aura-analysis/AiChartCheckTab'));
 const ReportsPage = lazy(() => import('./pages/reports/ReportsPage'));
 const ReportsDnaPage = lazy(() => import('./pages/reports/ReportsDnaPage'));
 const ManualMetricsEntryPage = lazy(() => import('./pages/reports/ManualMetricsEntryPage'));
@@ -330,7 +329,7 @@ function AppRoutes() {
                             <Route path="overview" element={<AuraOverview />} />
                             <Route path="calculator" element={<TradeCalculator />} />
                             <Route path="journal" element={<TraderDeckTradeJournal />} />
-                            <Route path="ai-chart-check" element={<AiChartCheckTab />} />
+                            <Route path="ai-chart-check" element={<Navigate to="/trader-deck/trade-validator/checklist#ai-chart-check" replace />} />
                             <Route path="analytics" element={<AuraAnalytics />} />
                             <Route path="trader-cv" element={<TraderCVTab />} />
                             <Route path="leaderboard" element={<AuraLeaderboard />} />
