@@ -13,7 +13,7 @@ import {
     FaUsers, FaTrophy, FaGraduationCap, FaRocket,
     FaShieldAlt, FaClock, FaCoins, FaChartBar,
     FaChartLine, FaGlobe, FaArrowRight, FaBolt,
-    FaEnvelope, FaCog, FaHeadset, FaSun, FaBriefcase, FaLock, FaTruck,
+    FaEnvelope, FaCog, FaHeadset, FaSun, FaBriefcase, FaLock,
     FaArrowUp, FaArrowDown, FaCheck,
     FaFire, FaBook, FaFileAlt, FaClipboardList, FaUserTag,
 } from 'react-icons/fa';
@@ -827,6 +827,19 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
 
     const welcomeShort = formatWelcomeSentence(user);
 
+    const sessionDateLine = useMemo(() => {
+        try {
+            return new Intl.DateTimeFormat(undefined, {
+                weekday: 'long',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+            }).format(new Date());
+        } catch {
+            return new Date().toDateString();
+        }
+    }, []);
+
     const sentimentScore = useMemo(() => {
         if (analytics.totalTrades === 0) return 52;
         return Math.round(
@@ -996,6 +1009,13 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
         behaviourScore,
     ]);
 
+    const reportsPillVal = useMemo(() => {
+        const rep = dashboardData.reportsEligibility;
+        if (!rep) return '—';
+        if (rep.isEligible) return 'Ready';
+        return `${rep.dataDays ?? 0}/${rep.minDataDays ?? '—'}d`;
+    }, [dashboardData.reportsEligibility]);
+
     if (dashboardLoading) {
         return (
             <div className="terminal-dashboard">
@@ -1030,6 +1050,70 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                     </div>
                 </div>
             </header>
+
+            <div className="terminal-dashboard__atlas">
+                <section className="terminal-dashboard__command glass-card" aria-label="Session overview">
+                    <div className="terminal-dashboard__command-head">
+                        <div className="terminal-dashboard__command-intro">
+                            <span className="terminal-dashboard__command-kicker">Command center</span>
+                            <p className="terminal-dashboard__command-date">{sessionDateLine}</p>
+                            <p className="terminal-dashboard__command-hint">
+                                Linked-account metrics stay live; snapshot tiles below jump to each workspace.
+                            </p>
+                        </div>
+                        <div className="terminal-dashboard__sentiment-badge" aria-label="Desk sentiment score">
+                            <span className="terminal-dashboard__sentiment-label">Desk mix</span>
+                            <strong className="terminal-dashboard__sentiment-value">{sentimentScore}</strong>
+                            <span className="terminal-dashboard__sentiment-sublabel">sentiment index</span>
+                        </div>
+                    </div>
+                    <div className="terminal-dashboard__command-kpis" role="list">
+                        <Link
+                            role="listitem"
+                            to="/aura-analysis/ai"
+                            className={`terminal-kpi-pill${liveMetricsLocked ? ' terminal-kpi-pill--muted' : ''}`}
+                        >
+                            <span className="terminal-kpi-pill__lab">Month P&amp;L</span>
+                            <strong
+                                className={`terminal-kpi-pill__val${
+                                    monthlyPnL >= 0 ? ' terminal-kpi-pill__val--up' : ' terminal-kpi-pill__val--down'
+                                }`}
+                            >
+                                {liveMetricsLocked ? '—' : formatSignedCurrency(monthlyPnL)}
+                            </strong>
+                        </Link>
+                        <Link role="listitem" to="/aura-analysis/ai" className="terminal-kpi-pill">
+                            <span className="terminal-kpi-pill__lab">Win rate</span>
+                            <strong className="terminal-kpi-pill__val">
+                                {liveMetricsLocked ? '—' : analytics.totalTrades ? formatPercent(analytics.winRate, 0) : '—'}
+                            </strong>
+                        </Link>
+                        <Link role="listitem" to="/aura-analysis/ai" className="terminal-kpi-pill">
+                            <span className="terminal-kpi-pill__lab">Trades</span>
+                            <strong className="terminal-kpi-pill__val">{analytics.totalTrades ?? 0}</strong>
+                        </Link>
+                        <Link role="listitem" to="/journal" className="terminal-kpi-pill">
+                            <span className="terminal-kpi-pill__lab">Journal (month)</span>
+                            <strong className="terminal-kpi-pill__val">{dashboardData.journalTasks.length}</strong>
+                        </Link>
+                        <Link role="listitem" to="/trader-deck" className="terminal-kpi-pill">
+                            <span className="terminal-kpi-pill__lab">Lab sessions</span>
+                            <strong className="terminal-kpi-pill__val">{lab?.sessionCount ?? 0}</strong>
+                        </Link>
+                        <Link role="listitem" to="/reports" className="terminal-kpi-pill">
+                            <span className="terminal-kpi-pill__lab">Reports</span>
+                            <strong className="terminal-kpi-pill__val">{reportsPillVal}</strong>
+                        </Link>
+                    </div>
+                </section>
+
+                <div className="terminal-dashboard__ticker glass-card" aria-label="Live markets">
+                    <div className="terminal-dashboard__ticker-head">
+                        <span className="terminal-dashboard__ticker-kicker">Live tape</span>
+                        <span className="terminal-dashboard__ticker-hint">Prices update while you navigate Aura Terminal</span>
+                    </div>
+                    <MarketTicker compact showTabs={false} showViewAll autoScroll />
+                </div>
 
             <section className="home-logged-metrics glass-card" aria-label="Your Aura Terminal snapshot">
                 <div className="home-logged-metrics__head">
@@ -1071,8 +1155,8 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                     <Link to="/profile" className="terminal-dashboard__rail-btn" title="Account">
                         <FaLock />
                     </Link>
-                    <Link to="/community" className="terminal-dashboard__rail-btn" title="Community">
-                        <FaTruck />
+                    <Link to="/community" className="terminal-dashboard__rail-btn" title="Network">
+                        <FaUsers />
                     </Link>
                 </nav>
 
@@ -1232,6 +1316,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                         <TerminalEquityChart points={analytics.equityCurve} />
                     </article>
                 </div>
+            </div>
             </div>
         </div>
     );
