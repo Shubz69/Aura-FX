@@ -5,7 +5,6 @@
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
-const { effectiveReportsRole } = require('./resolveReportsRole');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -23,12 +22,6 @@ module.exports = async (req, res) => {
   try {
     const user = await applyScheduledDowngrade(userId);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    const role = effectiveReportsRole(user);
-
-    if (role === 'free') {
-      return res.status(403).json({ success: false, code: 'FREE_PLAN', message: 'Reports are a Premium/Elite feature.' });
-    }
-
     const reportId = req.query?.id;
 
     // DELETE single report (user can remove their own)

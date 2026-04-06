@@ -8,7 +8,7 @@ const { getReportDataSpanDays } = require('./dataSpan');
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 const { effectiveReportsRole } = require('./resolveReportsRole');
 
-const MIN_DATA_DAYS = 30;
+const MIN_DATA_DAYS = 3;
 
 /** mysql2 may return BIGINT for COUNT/DATEDIFF — JSON.stringify throws on BigInt → 500. */
 function jsonNumber(v, fallback = 0) {

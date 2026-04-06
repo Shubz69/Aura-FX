@@ -20,50 +20,6 @@ const MONTH_NAMES = [
   'July','August','September','October','November','December',
 ];
 
-/* ── Locked view for free users ────────────────────────────────────── */
-function FreeLockedView() {
-  return (
-    <div className="rp-locked">
-      <div className="rp-locked-icon">📊</div>
-      <p className="rp-eyebrow rp-eyebrow--center">Premium feature</p>
-      <h2 className="rp-locked-title">Performance &amp; DNA</h2>
-      <Link to="/reports/dna" className="rp-btn rp-btn--secondary rp-dna-enter">
-        Enter Your DNA
-      </Link>
-      <p className="rp-locked-sub">
-        Monthly reports are deliberately blunt: failure modes, what regressed vs last month, and measurable checks.
-        Trader DNA (Elite) is your 90-day identity mirror; the monthly report is your fix list. Not medical advice —
-        feedback targets trading behaviour only.
-      </p>
-      <div className="rp-locked-cards">
-        <div className="rp-locked-card rp-locked-card--premium">
-          <div className="rp-locked-card-badge">Premium</div>
-          <h4>Platform Report</h4>
-          <ul>
-            <li>Full platform data analysis</li>
-            <li>Trade performance breakdown</li>
-            <li>Discipline & journal review</li>
-            <li>MT5 sections via Manual metrics (CSV)</li>
-            <li>Downloadable PDF</li>
-          </ul>
-        </div>
-        <div className="rp-locked-card rp-locked-card--elite">
-          <div className="rp-locked-card-badge">Elite</div>
-          <h4>Automated Full Report</h4>
-          <ul>
-            <li>Everything in Premium</li>
-            <li>Fully automated — no CSV needed</li>
-            <li>MT5 data pulled automatically</li>
-            <li>AI deep-dive on execution quality</li>
-            <li>Priority generation</li>
-          </ul>
-        </div>
-      </div>
-      <a className="rp-btn rp-btn--primary" href="/choose-plan">Upgrade to Premium or Elite →</a>
-    </div>
-  );
-}
-
 /* ── Eligibility status bar ─────────────────────────────────────────── */
 function EligibilityBar({ eligibility }) {
   const { dataDays, isEligible, minDataDays, tradeCount, chartCheckCount } = eligibility;
@@ -90,57 +46,6 @@ function EligibilityBar({ eligibility }) {
         <div className="rp-progress-wrap">
           <div className="rp-progress-bar" style={{ width: `${pct}%` }} />
         </div>
-      )}
-    </div>
-  );
-}
-
-/* ── Generate button + status ───────────────────────────────────────── */
-function GenerateSection({ token, year, month, existingReport, onGenerated, role }) {
-  const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleGenerate = async () => {
-    setGenerating(true);
-    setError('');
-    try {
-      const res = await fetch(`${BASE_URL}/api/reports/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ year, month }),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message);
-      onGenerated?.(data.report);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  if (existingReport?.status === 'ready') return null;
-
-  return (
-    <div className="rp-generate-section">
-      {error && <div className="rp-error-box">{error}</div>}
-      <button
-        className="rp-btn rp-btn--primary"
-        onClick={handleGenerate}
-        disabled={generating}
-        type="button"
-      >
-        {generating ? (
-          <><span className="rp-spinner" /> Generating report… (30–60s)</>
-        ) : (
-          <>✦ Generate {MONTH_NAMES[month - 1]} {year} Report</>
-        )}
-      </button>
-      {generating && (
-        <p className="rp-generating-hint">
-          AI is collating your {role === 'premium' ? 'platform' : 'full'} data and writing your report.
-          This usually takes 30–60 seconds.
-        </p>
       )}
     </div>
   );
@@ -408,7 +313,7 @@ function ReportViewer({ report, onClose }) {
 }
 
 /* ── Report history list ─────────────────────────────────────────────── */
-function ReportHistoryList({ token, reports, onView }) {
+function ReportHistoryList({ reports, onView }) {
   if (!reports?.length) {
     return (
       <div className="rp-empty-card">
@@ -482,13 +387,6 @@ function ReportsPageInner() {
   if (!eligibility) return null;
 
   const { role } = eligibility;
-
-  // Free users
-  if (role === 'free') return (
-    <div className="rp-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
-      <FreeLockedView />
-    </div>
-  );
 
   const { currentPeriod, currentMonthReport, reports, isEligible } = eligibility;
   const { year, month } = currentPeriod;
@@ -573,23 +471,19 @@ function ReportsPageInner() {
               </button>
             </div>
           ) : (
-            <GenerateSection
-              token={token}
-              year={year}
-              month={month}
-              existingReport={currentMonthReport}
-              role={role}
-              onGenerated={(report) => {
-                reload();
-              }}
-            />
+            <div className="rp-auto-notice">
+              <span className="rp-auto-icon">🧾</span>
+              <p>
+                Monthly statements are generated automatically once your account has enough trading data
+                (usually a few days). We start from your first active month and keep all statements in your history.
+              </p>
+            </div>
           )}
         </div>
       )}
 
       {/* History */}
       <ReportHistoryList
-        token={token}
         reports={reports}
         onView={handleViewReport}
       />

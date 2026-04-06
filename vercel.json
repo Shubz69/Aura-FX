@@ -492,6 +492,10 @@
       "destination": "/api/cron/auto-market-briefs.js"
     },
     {
+      "source": "/api/cron/auto-monthly-reports",
+      "destination": "/api/cron/auto-monthly-reports.js"
+    },
+    {
       "source": "/api/seed/demo-leaderboard",
       "destination": "/api/seed/demo-leaderboard.js"
     },
@@ -704,6 +708,10 @@
     {
       "path": "/api/cron/auto-market-briefs",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/auto-monthly-reports",
+      "schedule": "15 2 * * *"
     }
   ]
 }

@@ -493,6 +493,17 @@ const generateWeightedOnlineCount = () => {
     }
 };
 
+const formatCommunityRoleLabel = (role) => {
+    const raw = String(role || '').trim();
+    if (!raw) return 'Member';
+    return raw
+        .replace(/_/g, ' ')
+        .split(' ')
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(' ');
+};
+
 /** Community uses UUID client ids until the server returns a numeric DB id — only the latter exists in MySQL. */
 function isPersistedCommunityMessageId(messageId) {
     if (messageId == null || messageId === '') return false;
@@ -6376,6 +6387,11 @@ if (!isAuthenticated && !hasToken) {
                                 gap: '6px',
                                 alignItems: 'center'
                             }}>
+                                <span style={{
+                                    fontWeight: 600,
+                                    color: '#E9D5FF'
+                                }}>{formatCommunityRoleLabel(storedUser?.role)}</span>
+                                <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>•</span>
                                 <span style={{ 
                                     fontWeight: 600,
                                     color: '#C4B5FD'
