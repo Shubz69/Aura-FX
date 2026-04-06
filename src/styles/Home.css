@@ -1778,9 +1778,12 @@ html, body {
    LOGGED-IN DASHBOARD HOME
 ══════════════════════════════════════════════ */
 .home-content--dashboard {
-    max-width: 1680px;
-    padding-top: 78px;
-    padding-bottom: 220px;
+    max-width: min(100%, 1920px);
+    width: 100%;
+    padding-top: 72px;
+    padding-bottom: 200px;
+    padding-left: clamp(0.85rem, 2.2vw, 2.75rem);
+    padding-right: clamp(0.85rem, 2.2vw, 2.75rem);
     align-items: stretch;
 }
 
@@ -2302,6 +2305,14 @@ html, body {
     font-size: 1rem;
 }
 
+@media (min-width: 1600px) {
+    .home-content--dashboard {
+        max-width: min(100%, 1960px);
+        padding-left: clamp(1.5rem, 3vw, 3.25rem);
+        padding-right: clamp(1.5rem, 3vw, 3.25rem);
+    }
+}
+
 @media (max-width: 1440px) {
     .home-content--dashboard {
         padding-left: 2.4rem;
@@ -2755,9 +2766,10 @@ html, body {
 ══════════════════════════════════════════════ */
 .terminal-dashboard {
     width: 100%;
+    max-width: none;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.15rem;
 }
 
 /* Framed main canvas: gold rail + stacks command strip, tape, snapshot, grid */
@@ -2991,7 +3003,7 @@ html, body {
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 0.65rem 1rem;
-    padding: 0.85rem 1.25rem;
+    padding: clamp(0.85rem, 1.2vw, 1.05rem) clamp(1rem, 2vw, 1.5rem);
     border-radius: var(--radius-lg);
     background:
         radial-gradient(circle at top right, rgba(234, 169, 96, 0.1), transparent 35%),
@@ -3748,9 +3760,9 @@ html, body {
 ══════════════════════════════════════════════ */
 .home-desk2 {
     width: 100%;
-    max-width: 1360px;
-    margin: 0 auto;
-    padding: 0.45rem 0.5rem 0.85rem;
+    max-width: none;
+    margin: 0;
+    padding: 0.65rem 0.65rem 1rem;
     border-radius: var(--radius-lg);
     background:
         radial-gradient(ellipse 90% 80% at 50% 0%, rgba(234, 169, 96, 0.06), transparent 50%),
@@ -3761,20 +3773,20 @@ html, body {
 
 .home-desk2__cols {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr);
-    gap: 0.5rem;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.55fr) minmax(0, 1.05fr);
+    gap: clamp(0.55rem, 1.2vw, 1rem);
     align-items: start;
 }
 
 .home-desk2__col {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
+    gap: clamp(0.45rem, 0.9vw, 0.65rem);
     min-width: 0;
 }
 
 .desk2-card {
-    padding: 0.42rem 0.5rem 0.48rem;
+    padding: 0.5rem 0.62rem 0.55rem;
     border-radius: 11px;
     border: 1px solid rgba(255, 255, 255, 0.055);
     background: linear-gradient(165deg, rgba(16, 18, 34, 0.94), rgba(8, 10, 22, 0.9));
@@ -3786,18 +3798,18 @@ html, body {
 }
 
 .desk2-card--chart .terminal-equity {
-    min-height: 0;
+    min-height: 140px;
     margin-top: 0.15rem;
 }
 
 .desk2-card--chart .terminal-equity__svg {
-    height: 118px;
-    min-height: 96px;
+    height: clamp(140px, 22vh, 220px);
+    min-height: 120px;
 }
 
 .desk2-card__label {
     display: block;
-    font-size: 0.56rem;
+    font-size: 0.62rem;
     font-weight: 700;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -3858,7 +3870,7 @@ html, body {
 
 .desk2-pulse__readout {
     margin: 0.2rem 0 0;
-    font-size: 0.82rem;
+    font-size: clamp(0.85rem, 1.25vw, 1rem);
     font-weight: 700;
     color: var(--text);
 }
@@ -3873,7 +3885,7 @@ html, body {
 
 /* Watchlist */
 .desk2-wl {
-    font-size: 0.72rem;
+    font-size: clamp(0.72rem, 1.1vw, 0.82rem);
 }
 
 .desk2-wl__head,
