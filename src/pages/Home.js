@@ -12,10 +12,9 @@ import { formatWelcomeSentence } from "../utils/welcomeUser";
 import {
     FaUsers, FaTrophy, FaGraduationCap, FaRocket,
     FaShieldAlt, FaClock, FaCoins, FaChartBar,
-    FaChartLine, FaGlobe, FaArrowRight, FaBolt,
-    FaEnvelope, FaCog, FaHeadset, FaSun, FaBriefcase, FaLock,
-    FaArrowUp, FaArrowDown, FaCheck,
-    FaFire, FaBook, FaFileAlt, FaClipboardList, FaUserTag,
+    FaChartLine, FaGlobe, FaArrowRight,
+    FaEnvelope, FaCog, FaHeadset,
+    FaCheck, FaTimes,
 } from 'react-icons/fa';
 
 /* ══════════════════════════════════════════════════════════
@@ -586,26 +585,6 @@ const computeJournalMetrics = (tasks = [], selectedDate = new Date(), journalDai
     };
 };
 
-const formatHomeRole = (role) => {
-    const raw = String(role || '').trim();
-    if (!raw) return 'Member';
-    return raw
-        .replace(/_/g, ' ')
-        .split(' ')
-        .filter(Boolean)
-        .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
-        .join(' ');
-};
-
-const formatXpCompact = (xp) => {
-    const n = Number(xp);
-    if (!Number.isFinite(n)) return '0';
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 10_000) return `${Math.round(n / 1000)}K`;
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-    return String(Math.round(n));
-};
-
 const computeLabMetrics = (sessions = []) => {
     if (!Array.isArray(sessions) || sessions.length === 0) return null;
     const persistedSessions = sessions.filter((session) => session?.id);
@@ -630,38 +609,147 @@ const computeLabMetrics = (sessions = []) => {
     };
 };
 
-const SentimentGauge = ({ value = 52 }) => {
-    const v = Math.min(100, Math.max(0, Number(value) || 0));
-    const rot = -180 + (v / 100) * 180;
+/** Semi-circular desk pulse: bearish → bullish (matches condensed terminal mock). */
+const DeskPulseGauge = ({ biasLabel = 'Neutral' }) => {
+    const b = String(biasLabel || '').toLowerCase();
+    let pct = 50;
+    if (b.includes('bull')) pct = 78;
+    else if (b.includes('bear')) pct = 22;
+    const rot = -180 + (pct / 100) * 180;
     return (
-        <div className="terminal-gauge">
-            <svg viewBox="0 0 220 130" className="terminal-gauge__svg" aria-hidden>
+        <div className="desk2-pulse">
+            <span className="desk2-pulse__kicker">Market pulse</span>
+            <svg viewBox="0 0 200 118" className="desk2-pulse__svg" aria-hidden>
                 <defs>
-                    <linearGradient id="terminalGaugeArc" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="rgba(240,61,95,0.75)" />
-                        <stop offset="50%" stopColor="rgba(234,169,96,0.45)" />
-                        <stop offset="100%" stopColor="rgba(15,217,138,0.85)" />
+                    <linearGradient id="desk2PulseArc" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="rgba(255,107,129,0.9)" />
+                        <stop offset="50%" stopColor="rgba(150,150,160,0.35)" />
+                        <stop offset="100%" stopColor="rgba(61,214,140,0.95)" />
                     </linearGradient>
                 </defs>
                 <path
-                    d="M 30 110 A 80 80 0 0 1 190 110"
+                    d="M 24 102 A 76 76 0 0 1 176 102"
                     fill="none"
-                    stroke="url(#terminalGaugeArc)"
-                    strokeWidth="9"
+                    stroke="url(#desk2PulseArc)"
+                    strokeWidth="8"
                     strokeLinecap="round"
-                    opacity="0.42"
+                    opacity="0.5"
                 />
-                <g transform={`translate(110,110) rotate(${rot})`}>
-                    <line x1="0" y1="0" x2="0" y2="-68" stroke="var(--eaa-bright)" strokeWidth="2.5" strokeLinecap="round" />
-                    <circle cx="0" cy="0" r="5" fill="var(--eaa-core)" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+                <g transform="translate(100,102)">
+                    <g transform={`rotate(${rot})`}>
+                        <line x1="0" y1="0" x2="0" y2="-62" stroke="#e8c15a" strokeWidth="2.2" strokeLinecap="round" />
+                        <circle cx="0" cy="0" r="4.5" fill="#1a1520" stroke="rgba(232,193,90,0.6)" strokeWidth="1.2" />
+                    </g>
                 </g>
             </svg>
-            <div className="terminal-gauge__labels">
-                <span>Fear</span>
+            <div className="desk2-pulse__labels">
+                <span>Bearish</span>
                 <span>Neutral</span>
-                <span>Greed</span>
+                <span>Bullish</span>
             </div>
-            <p className="terminal-gauge__readout">Sentiment: {v}</p>
+            <p className={`desk2-pulse__readout ${b.includes('bull') ? 'is-bull' : b.includes('bear') ? 'is-bear' : ''}`}>{biasLabel}</p>
+        </div>
+    );
+};
+
+const headlineTimeAgo = (iso) => {
+    if (!iso) return '';
+    const t = new Date(iso).getTime();
+    if (Number.isNaN(t)) return '';
+    const m = Math.floor((Date.now() - t) / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 48) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+};
+
+const WatchlistRowSpark = ({ up }) => {
+    const base = up
+        ? [0.35, 0.4, 0.38, 0.52, 0.48, 0.62, 0.58, 0.72, 0.68, 0.8]
+        : [0.75, 0.7, 0.68, 0.55, 0.52, 0.45, 0.42, 0.38, 0.35, 0.32];
+    const W = 72;
+    const H = 28;
+    const coords = base.map((p, i) => `${(i / (base.length - 1)) * W},${H - p * (H - 6) - 3}`).join(' ');
+    const stroke = up ? 'rgba(61,214,140,0.9)' : 'rgba(255,107,129,0.9)';
+    return (
+        <svg className="desk2-wl-spark" viewBox={`0 0 ${W} ${H}`} width={W} height={H} aria-hidden>
+            <polyline fill="none" stroke={stroke} strokeWidth="1.4" strokeLinejoin="round" points={coords} />
+        </svg>
+    );
+};
+
+const DeskWatchlist = () => {
+    const { getPricesArray } = useLivePrices({ beginnerMode: true });
+    const rows = getPricesArray().slice(0, 4);
+
+    return (
+        <div className="desk2-wl">
+            <div className="desk2-wl__head">
+                <span>Market</span>
+                <span>Price</span>
+                <span>Chg%</span>
+                <span />
+            </div>
+            {rows.map((row) => {
+                const pct = row.changePercent != null ? Number(row.changePercent) : null;
+                const up = pct != null && !Number.isNaN(pct) ? pct >= 0 : row.isUp !== false;
+                const loading = row.loading || !row.price;
+                return (
+                    <div className="desk2-wl__row" key={row.symbol}>
+                        <span className="desk2-wl__sym">{row.displayName || row.symbol}</span>
+                        <span className="desk2-wl__px">{loading ? '—' : row.price}</span>
+                        <span className={`desk2-wl__chg ${up ? 'is-up' : 'is-down'}`}>
+                            {loading ? '—' : `${up ? '+' : ''}${formatPercent(pct, 2)}`}
+                        </span>
+                        <WatchlistRowSpark up={up} />
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
+const MiniEquitySpark = ({ points = [] }) => {
+    const series = !points.length ? [] : points.length === 1 ? [points[0], points[0]] : points;
+    const W = 280;
+    const H = 48;
+    const pad = 4;
+    if (!series.length) {
+        return <div className="desk2-mini-equity desk2-mini-equity--empty">No equity series yet</div>;
+    }
+    const vals = series.map((p) => p.y);
+    const minY = Math.min(...vals, 0);
+    const maxY = Math.max(...vals, 0);
+    const span = Math.max(maxY - minY, 1e-6);
+    const coords = series.map((p, i) => {
+        const x = pad + (i / Math.max(series.length - 1, 1)) * (W - pad * 2);
+        const y = pad + (1 - (p.y - minY) / span) * (H - pad * 2);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    return (
+        <svg className="desk2-mini-equity" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden>
+            <polyline
+                fill="none"
+                points={coords.join(' ')}
+                stroke="rgba(232,193,90,0.85)"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+};
+
+const ScoreRing = ({ label, value }) => {
+    const v = Math.min(100, Math.max(0, Number(value) || 0));
+    return (
+        <div className="desk2-ring">
+            <div className="desk2-ring__track" style={{ '--ring-pct': v }}>
+                <div className="desk2-ring__inner">
+                    <strong>{Number.isFinite(Number(value)) ? Math.round(Number(value)) : '—'}</strong>
+                </div>
+            </div>
+            <span className="desk2-ring__lab">{label}</span>
         </div>
     );
 };
@@ -731,35 +819,6 @@ const TerminalEquityChart = ({ points = [] }) => {
     );
 };
 
-const TerminalWatchlist = () => {
-    const { getPricesArray } = useLivePrices({ beginnerMode: true });
-    const rows = getPricesArray().slice(0, 5);
-
-    return (
-        <div className="terminal-watchlist">
-            <div className="terminal-watchlist__head">
-                <span>Market</span>
-                <span>Price</span>
-                <span>Chg</span>
-            </div>
-            {rows.map((row) => {
-                const pct = row.changePercent != null ? Number(row.changePercent) : null;
-                const up = pct != null && !Number.isNaN(pct) ? pct >= 0 : row.isUp !== false;
-                const loading = row.loading || !row.price;
-                return (
-                    <div className="terminal-watchlist__row" key={row.symbol}>
-                        <span className="terminal-watchlist__name">{row.displayName || row.symbol}</span>
-                        <span className="terminal-watchlist__price">{loading ? '—' : row.price}</span>
-                        <span className={`terminal-watchlist__chg ${up ? 'is-up' : 'is-down'}`}>
-                            {loading ? '—' : `${up ? '+' : ''}${formatPercent(pct, 2)}`}
-                        </span>
-                    </div>
-                );
-            })}
-        </div>
-    );
-};
-
 const LoggedInDashboardHome = ({ user, token, navigate }) => {
     const { hasAnyConnection, loading: auraConnectionsLoading } = useAuraConnection();
     const [dashboardLoading, setDashboardLoading] = useState(true);
@@ -770,6 +829,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
         journalDaily: null,
         labSessions: [],
         reportsEligibility: null,
+        headlines: [],
     });
 
     useEffect(() => {
@@ -797,6 +857,9 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
             Api.getJournalDaily(toIsoDate(now)).then((response) => response.data?.note ?? null),
             Api.getTraderLabSessions().then((response) => response.data?.sessions ?? []),
             reportsPromise,
+            Api.getTraderDeckNews(false)
+                .then((response) => (Array.isArray(response.data?.articles) ? response.data.articles : []))
+                .catch(() => []),
         ]).then((results) => {
             if (!mounted) return;
             setDashboardData({
@@ -806,6 +869,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                 journalDaily: results[3].status === 'fulfilled' ? results[3].value : null,
                 labSessions: results[4].status === 'fulfilled' && Array.isArray(results[4].value) ? results[4].value : [],
                 reportsEligibility: results[5].status === 'fulfilled' ? results[5].value : null,
+                headlines: results[6].status === 'fulfilled' && Array.isArray(results[6].value) ? results[6].value : [],
             });
             setDashboardLoading(false);
         });
@@ -826,31 +890,6 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     const lab = useMemo(() => computeLabMetrics(dashboardData.labSessions), [dashboardData.labSessions]);
 
     const welcomeShort = formatWelcomeSentence(user);
-
-    const sessionDateLine = useMemo(() => {
-        try {
-            return new Intl.DateTimeFormat(undefined, {
-                weekday: 'long',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-            }).format(new Date());
-        } catch {
-            return new Date().toDateString();
-        }
-    }, []);
-
-    const sentimentScore = useMemo(() => {
-        if (analytics.totalTrades === 0) return 52;
-        return Math.round(
-            Math.min(100, Math.max(0, 50 + (analytics.winRate - 50) * 0.55 + (analytics.consistencyScore - 50) * 0.35))
-        );
-    }, [analytics]);
-
-    const reflectionCount = useMemo(
-        () => dashboardData.journalTasks.filter((t) => /reflect/i.test(String(t.title || ''))).length,
-        [dashboardData.journalTasks]
-    );
 
     const monthlyPnL =
         dashboardData.auraPnl.monthlyPnl != null ? Number(dashboardData.auraPnl.monthlyPnl) : analytics.totalPnL;
@@ -897,124 +936,48 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
         analytics.consistencyScore != null ? analytics.consistencyScore : disciplineScore
     );
 
-    const homeSnapshotMetrics = useMemo(() => {
-        const level = Math.max(1, parseInt(user?.level, 10) || 1);
-        const xpStr = formatXpCompact(user?.xp);
-        const streak = Number(user?.login_streak ?? user?.loginStreak ?? 0);
-        const rep = dashboardData.reportsEligibility;
-        let reportsVal = '—';
-        let reportsHint = 'Reports';
-        if (rep) {
-            if (rep.isEligible) {
-                reportsVal = 'Unlocked';
-                reportsHint = 'Monthly statements';
-            } else {
-                reportsVal = `${rep.dataDays}/${rep.minDataDays}d`;
-                reportsHint = 'Building history';
-            }
+    const convictionDisplay = useMemo(() => {
+        if (lab?.confidence != null && lab.confidence !== '' && !Number.isNaN(Number(lab.confidence))) {
+            return formatNumber(Number(lab.confidence), 1);
         }
-        const journalToday =
-            journal.dayTotal > 0
-                ? `${journal.dayCompleted}/${journal.dayTotal}${journal.dayPct != null ? ` (${journal.dayPct}%)` : ''}`
-                : 'No tasks';
-        const journalWeek = journal.weekPct != null ? `${journal.weekPct}%` : '—';
-        const mood = journal.mood ? String(journal.mood).slice(0, 12) : null;
-        const labSessions = lab?.sessionCount ?? 0;
-        const checklistAvg =
-            analytics.avgChecklistPct != null ? `${Math.round(analytics.avgChecklistPct)}%` : '—';
+        if (lab?.resultR != null && !Number.isNaN(Number(lab.resultR))) {
+            return formatNumber(Number(lab.resultR), 1);
+        }
+        if (analytics.averageR > 0) return formatNumber(analytics.averageR * 10, 1);
+        if (analytics.totalTrades) return formatNumber(Math.min(99, analytics.winRate * 0.65), 1);
+        return '—';
+    }, [lab, analytics]);
 
-        return [
-            {
-                key: 'level',
-                icon: FaBolt,
-                label: 'Level & XP',
-                value: `Lv ${level}`,
-                sub: `${xpStr} XP`,
-                to: '/profile',
-            },
-            {
-                key: 'role',
-                icon: FaUserTag,
-                label: 'Role',
-                value: formatHomeRole(user?.role),
-                sub: 'On Aura Terminal',
-                to: '/profile',
-            },
-            {
-                key: 'streak',
-                icon: FaFire,
-                label: 'Login streak',
-                value: `${Number.isFinite(streak) && streak > 0 ? streak : 0}d`,
-                sub: 'Keep the chain',
-                to: '/profile',
-            },
-            {
-                key: 'journal',
-                icon: FaBook,
-                label: 'Journal',
-                value: journalToday,
-                sub: mood ? `Mood: ${mood} · Week ${journalWeek}` : `Week done ${journalWeek}`,
-                to: '/journal',
-            },
-            {
-                key: 'trades',
-                icon: FaChartLine,
-                label: 'Aura trades',
-                value: String(analytics.totalTrades ?? 0),
-                sub: analytics.totalTrades ? `Win ${formatPercent(analytics.winRate, 0)}` : 'Log on platform',
-                to: '/aura-analysis/ai',
-            },
-            {
-                key: 'checklist',
-                icon: FaClipboardList,
-                label: 'Avg checklist',
-                value: checklistAvg,
-                sub: 'Trade Validator',
-                to: '/trader-deck/trade-validator',
-            },
-            {
-                key: 'lab',
-                icon: FaBriefcase,
-                label: 'Trader Lab',
-                value: `${labSessions}`,
-                sub: labSessions === 1 ? 'session' : 'sessions',
-                to: '/trader-deck',
-            },
-            {
-                key: 'scores',
-                icon: FaChartBar,
-                label: 'Scores',
-                value: `${disciplineScore}`,
-                sub: `Discipline · Beh ${behaviourScore}`,
-                to: '/journal',
-            },
-            {
-                key: 'reports',
-                icon: FaFileAlt,
-                label: 'Reports',
-                value: reportsVal,
-                sub: reportsHint,
-                to: '/reports',
-            },
-        ];
-    }, [
-        user,
-        dashboardData.reportsEligibility,
-        journal,
-        analytics.totalTrades,
-        analytics.winRate,
-        analytics.avgChecklistPct,
-        lab,
-        disciplineScore,
-        behaviourScore,
-    ]);
+    const rewardOrVolatilityLabel =
+        rewardLabel && rewardLabel !== '—' && rewardLabel !== 'TBD' ? rewardLabel : 'Moderate';
 
-    const reportsPillVal = useMemo(() => {
-        const rep = dashboardData.reportsEligibility;
-        if (!rep) return '—';
-        if (rep.isEligible) return 'Ready';
-        return `${rep.dataDays ?? 0}/${rep.minDataDays ?? '—'}d`;
-    }, [dashboardData.reportsEligibility]);
+    const consistencyRing = Math.round(
+        journal.monthPct != null ? journal.monthPct : analytics.winRate || disciplineScore
+    );
+
+    const avoidValidatorHint = useMemo(() => {
+        const r = String(riskLabel || '').toLowerCase();
+        if (r.includes('high') || r.includes('elev')) return 'Elevated risk — size down';
+        if (biasDisplay === 'Bullish') return 'Overbought / extension risk';
+        if (biasDisplay === 'Bearish') return 'Oversold / bounce risk';
+        return 'Conditions not ideal — wait';
+    }, [riskLabel, biasDisplay]);
+
+    const journalBullets = useMemo(() => {
+        const out = [];
+        const raw = dashboardData.journalDaily?.notes;
+        const n = raw != null ? String(raw).trim() : '';
+        if (n) {
+            n.split(/\n+/)
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .slice(0, 4)
+                .forEach((x) => out.push(x.length > 100 ? `${x.slice(0, 97)}…` : x));
+        }
+        scenarioLines.slice(0, Math.max(0, 3 - out.length)).forEach((x) => out.push(x));
+        if (out.length === 0) out.push('Add journal notes to see a qualitative read-through here.');
+        return out.slice(0, 4);
+    }, [dashboardData.journalDaily, scenarioLines]);
 
     if (dashboardLoading) {
         return (
@@ -1051,272 +1014,222 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                 </div>
             </header>
 
-            <div className="terminal-dashboard__atlas">
-                <section className="terminal-dashboard__command glass-card" aria-label="Session overview">
-                    <div className="terminal-dashboard__command-head">
-                        <div className="terminal-dashboard__command-intro">
-                            <span className="terminal-dashboard__command-kicker">Command center</span>
-                            <p className="terminal-dashboard__command-date">{sessionDateLine}</p>
-                            <p className="terminal-dashboard__command-hint">
-                                Linked-account metrics stay live; snapshot tiles below jump to each workspace.
-                            </p>
-                        </div>
-                        <div className="terminal-dashboard__sentiment-badge" aria-label="Desk sentiment score">
-                            <span className="terminal-dashboard__sentiment-label">Desk mix</span>
-                            <strong className="terminal-dashboard__sentiment-value">{sentimentScore}</strong>
-                            <span className="terminal-dashboard__sentiment-sublabel">sentiment index</span>
-                        </div>
-                    </div>
-                    <div className="terminal-dashboard__command-kpis" role="list">
-                        <Link
-                            role="listitem"
-                            to="/aura-analysis/ai"
-                            className={`terminal-kpi-pill${liveMetricsLocked ? ' terminal-kpi-pill--muted' : ''}`}
-                        >
-                            <span className="terminal-kpi-pill__lab">Month P&amp;L</span>
-                            <strong
-                                className={`terminal-kpi-pill__val${
-                                    monthlyPnL >= 0 ? ' terminal-kpi-pill__val--up' : ' terminal-kpi-pill__val--down'
-                                }`}
-                            >
-                                {liveMetricsLocked ? '—' : formatSignedCurrency(monthlyPnL)}
-                            </strong>
-                        </Link>
-                        <Link role="listitem" to="/aura-analysis/ai" className="terminal-kpi-pill">
-                            <span className="terminal-kpi-pill__lab">Win rate</span>
-                            <strong className="terminal-kpi-pill__val">
-                                {liveMetricsLocked ? '—' : analytics.totalTrades ? formatPercent(analytics.winRate, 0) : '—'}
-                            </strong>
-                        </Link>
-                        <Link role="listitem" to="/aura-analysis/ai" className="terminal-kpi-pill">
-                            <span className="terminal-kpi-pill__lab">Trades</span>
-                            <strong className="terminal-kpi-pill__val">{analytics.totalTrades ?? 0}</strong>
-                        </Link>
-                        <Link role="listitem" to="/journal" className="terminal-kpi-pill">
-                            <span className="terminal-kpi-pill__lab">Journal (month)</span>
-                            <strong className="terminal-kpi-pill__val">{dashboardData.journalTasks.length}</strong>
-                        </Link>
-                        <Link role="listitem" to="/trader-deck" className="terminal-kpi-pill">
-                            <span className="terminal-kpi-pill__lab">Lab sessions</span>
-                            <strong className="terminal-kpi-pill__val">{lab?.sessionCount ?? 0}</strong>
-                        </Link>
-                        <Link role="listitem" to="/reports" className="terminal-kpi-pill">
-                            <span className="terminal-kpi-pill__lab">Reports</span>
-                            <strong className="terminal-kpi-pill__val">{reportsPillVal}</strong>
-                        </Link>
-                    </div>
-                </section>
-
-                <div className="terminal-dashboard__ticker glass-card" aria-label="Live markets">
-                    <div className="terminal-dashboard__ticker-head">
-                        <span className="terminal-dashboard__ticker-kicker">Live tape</span>
-                        <span className="terminal-dashboard__ticker-hint">Prices update while you navigate Aura Terminal</span>
-                    </div>
-                    <MarketTicker compact showTabs={false} showViewAll autoScroll />
-                </div>
-
-            <section className="home-logged-metrics glass-card" aria-label="Your Aura Terminal snapshot">
-                <div className="home-logged-metrics__head">
-                    <span className="home-logged-metrics__title">Your snapshot</span>
-                    <span className="home-logged-metrics__hint">
-                        Your data on Aura Terminal only — tap a tile to jump there
-                    </span>
-                </div>
-                <div className="home-logged-metrics__track" role="list">
-                    {homeSnapshotMetrics.map((m) => {
-                        const Icon = m.icon;
-                        return (
-                            <Link
-                                key={m.key}
-                                to={m.to}
-                                className="home-logged-metrics__cell"
-                                role="listitem"
-                            >
-                                <span className="home-logged-metrics__ico" aria-hidden>
-                                    <Icon />
-                                </span>
-                                <span className="home-logged-metrics__lab">{m.label}</span>
-                                <span className="home-logged-metrics__val">{m.value}</span>
-                                <span className="home-logged-metrics__sub">{m.sub}</span>
-                            </Link>
-                        );
-                    })}
-                </div>
-            </section>
-
-            <div className="terminal-dashboard__body">
-                <nav className="terminal-dashboard__rail glass-card" aria-label="Quick navigation">
-                    <Link to="/settings" className="terminal-dashboard__rail-btn" title="Appearance">
-                        <FaSun />
-                    </Link>
-                    <Link to="/trader-deck" className="terminal-dashboard__rail-btn" title="Trader Desk">
-                        <FaBriefcase />
-                    </Link>
-                    <Link to="/profile" className="terminal-dashboard__rail-btn" title="Account">
-                        <FaLock />
-                    </Link>
-                    <Link to="/community" className="terminal-dashboard__rail-btn" title="Network">
-                        <FaUsers />
-                    </Link>
-                </nav>
-
-                <div className="terminal-dashboard__grid">
-                    <article className="terminal-card glass-card terminal-card--welcome">
-                        <span className="terminal-card__label">Welcome</span>
-                        <p className="terminal-card__welcome-hint">How your execution mix is leaning this month.</p>
-                        <SentimentGauge value={sentimentScore} />
-                    </article>
-
-                    <article className="terminal-card glass-card terminal-card--desk">
-                        <span className="terminal-card__label">Trader Desk</span>
-                        <div className="terminal-desk__bias">
-                            <span>Bias</span>
-                            <strong
-                                className={
-                                    biasDisplay === 'Bearish'
-                                        ? 'is-bear'
-                                        : biasDisplay === 'Bullish'
-                                          ? 'is-bull'
-                                          : ''
-                                }
-                            >
-                                {biasDisplay}{' '}
-                                {biasDisplay === 'Bullish' ? <FaArrowUp aria-hidden /> : null}
-                                {biasDisplay === 'Bearish' ? <FaArrowDown aria-hidden /> : null}
-                            </strong>
-                        </div>
-                        <div className="terminal-desk__scenarios">
-                            <span className="terminal-desk__scenarios-label">Scenarios</span>
-                            <ul>
-                                {scenarioLines.map((line) => (
-                                    <li key={line}>{line}</li>
-                                ))}
-                            </ul>
-                        </div>
-                        <button type="button" className="terminal-card__linkish" onClick={() => navigate('/trader-deck')}>
-                            Open desk <FaArrowRight />
-                        </button>
-                    </article>
-
-                    <article className="terminal-card glass-card terminal-card--watch">
-                        <span className="terminal-card__label">Watchlist</span>
-                        <TerminalWatchlist />
-                    </article>
-
-                    <article className="terminal-card glass-card terminal-card--validator">
-                        <span className="terminal-card__label">Trade Validator</span>
-                        <ul className="terminal-checklist">
-                            <li>
-                                <FaCheck aria-hidden /> Setup {lab?.setupValid ? 'Valid' : 'Pending'}
-                            </li>
-                            <li>
-                                <FaCheck aria-hidden /> Risk: {riskLabel}
-                            </li>
-                            <li>
-                                <FaCheck aria-hidden /> Reward: {rewardLabel}
-                            </li>
-                        </ul>
-                        <button
-                            type="button"
-                            className="terminal-card__linkish"
-                            onClick={() => navigate('/trader-deck/trade-validator/calculator')}
-                        >
-                            Validator <FaArrowRight />
-                        </button>
-                    </article>
-
-                    <article className="terminal-card glass-card terminal-card--metrics">
-                        <span className="terminal-card__label">Live metrics</span>
-                        <div className="terminal-metrics-shell">
-                            <div
-                                className={`terminal-metrics${liveMetricsLocked ? ' terminal-metrics--obscured' : ''}`}
-                                aria-hidden={liveMetricsLocked}
-                            >
-                                <div>
-                                    <span>P&amp;L</span>
-                                    <strong className={monthlyPnL >= 0 ? 'is-positive' : 'is-negative'}>
-                                        {formatSignedCurrency(monthlyPnL)}
-                                    </strong>
-                                </div>
-                                <div>
-                                    <span>Win rate</span>
-                                    <strong>{analytics.totalTrades ? formatPercent(analytics.winRate, 0) : '—'}</strong>
-                                </div>
-                                <div>
-                                    <span>Avg. R:R</span>
-                                    <strong>{analytics.totalTrades ? formatNumber(analytics.averageR, 1) : '—'}</strong>
-                                </div>
-                            </div>
-                            {liveMetricsLocked ? (
+            <div className="home-desk2" aria-label="Aura Terminal desk">
+                <div className="home-desk2__cols">
+                    <aside className="home-desk2__col home-desk2__col--left">
+                        <section className="desk2-card desk2-card--pulse glass-card">
+                            <DeskPulseGauge biasLabel={biasDisplay} />
+                        </section>
+                        <section className="desk2-card glass-card">
+                            <span className="desk2-card__label">Watchlist</span>
+                            <DeskWatchlist />
+                        </section>
+                        <section className="desk2-card glass-card">
+                            <span className="desk2-card__label">Live metrics</span>
+                            <div className="desk2-metrics-shell">
                                 <div
-                                    className="terminal-metrics-frost"
-                                    role="status"
-                                    aria-live="polite"
+                                    className={`desk2-metrics-grid${liveMetricsLocked ? ' desk2-metrics-grid--muted' : ''}`}
+                                    aria-hidden={liveMetricsLocked}
                                 >
-                                    <div className="terminal-metrics-frost__panel">
-                                        <p className="terminal-metrics-frost__title">
-                                            {auraConnectionsLoading ? 'Checking your link…' : 'Connect your account'}
-                                        </p>
-                                        <p className="terminal-metrics-frost__hint">
-                                            {auraConnectionsLoading
-                                                ? 'Verifying Aura Analysis connections.'
-                                                : 'Link your MetaTrader account in Aura Analysis to unlock live P&L, win rate, and average reward-to-risk.'}
+                                    <div>
+                                        <span>P&amp;L</span>
+                                        <strong className={monthlyPnL >= 0 ? 'is-positive' : 'is-negative'}>
+                                            {liveMetricsLocked ? '—' : formatSignedCurrency(monthlyPnL)}
+                                        </strong>
+                                    </div>
+                                    <div>
+                                        <span>Win rate</span>
+                                        <strong>
+                                            {liveMetricsLocked
+                                                ? '—'
+                                                : analytics.totalTrades
+                                                  ? formatPercent(analytics.winRate, 0)
+                                                  : '—'}
+                                        </strong>
+                                    </div>
+                                    <div>
+                                        <span>Win streak</span>
+                                        <strong>{liveMetricsLocked ? '—' : analytics.activeWinStreak ?? 0}</strong>
+                                    </div>
+                                </div>
+                                {liveMetricsLocked ? (
+                                    <div className="desk2-frost" role="status">
+                                        <p className="desk2-frost__t">
+                                            {auraConnectionsLoading ? 'Checking link…' : 'Connect Aura Analysis'}
                                         </p>
                                         {!auraConnectionsLoading ? (
-                                            <Link to="/aura-analysis/ai" className="terminal-metrics-frost__cta">
-                                                Connect in Aura Analysis <FaArrowRight aria-hidden />
+                                            <Link to="/aura-analysis/ai" className="desk2-frost__a">
+                                                Unlock <FaArrowRight aria-hidden />
                                             </Link>
                                         ) : null}
                                     </div>
+                                ) : null}
+                                <MiniEquitySpark points={analytics.equityCurve} />
+                            </div>
+                        </section>
+                    </aside>
+
+                    <main className="home-desk2__col home-desk2__col--center">
+                        <section className="desk2-card glass-card">
+                            <span className="desk2-card__label">Trader desk</span>
+                            <div className="desk2-trio">
+                                <div className="desk2-trio__cell">
+                                    <span>Bias</span>
+                                    <strong
+                                        className={
+                                            biasDisplay === 'Bearish'
+                                                ? 'is-bear'
+                                                : biasDisplay === 'Bullish'
+                                                  ? 'is-bull'
+                                                  : ''
+                                        }
+                                    >
+                                        {biasDisplay}
+                                    </strong>
                                 </div>
+                                <div className="desk2-trio__cell">
+                                    <span>Conviction</span>
+                                    <strong>{convictionDisplay}</strong>
+                                </div>
+                                <div className="desk2-trio__cell">
+                                    <span>Volatility</span>
+                                    <strong>{rewardOrVolatilityLabel}</strong>
+                                </div>
+                            </div>
+                            <div className="desk2-scen">
+                                <span className="desk2-scen__lab">Scenarios</span>
+                                <ul>
+                                    {scenarioLines.map((line) => (
+                                        <li key={line}>{line}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <button type="button" className="desk2-cta" onClick={() => navigate('/trader-deck')}>
+                                Open desk <FaArrowRight aria-hidden />
+                            </button>
+                        </section>
+
+                        <section className="desk2-card glass-card">
+                            <span className="desk2-card__label">Latest headlines</span>
+                            <ul className="desk2-news">
+                                {(dashboardData.headlines || []).slice(0, 4).map((a, i) => (
+                                    <li key={`${a.headline || i}-${i}`}>
+                                        {a.url ? (
+                                            <a href={a.url} target="_blank" rel="noopener noreferrer" className="desk2-news__link">
+                                                {a.headline || 'Article'}
+                                            </a>
+                                        ) : (
+                                            <span className="desk2-news__text">{a.headline || '—'}</span>
+                                        )}
+                                        <span className="desk2-news__time">{headlineTimeAgo(a.publishedAt)}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                            {!dashboardData.headlines?.length ? (
+                                <p className="desk2-muted">Market headlines will load when the news feed is available.</p>
                             ) : null}
-                        </div>
-                    </article>
+                        </section>
 
-                    <div className="terminal-mini-grid">
-                        <div className="terminal-mini glass-card">
-                            <span>Discipline score</span>
-                            <strong>{Number.isFinite(disciplineScore) ? disciplineScore : '—'}</strong>
-                        </div>
-                        <div className="terminal-mini glass-card">
-                            <span>Behaviour score</span>
-                            <strong>{Number.isFinite(behaviourScore) ? behaviourScore : '—'}</strong>
-                        </div>
-                        <div className="terminal-mini glass-card">
-                            <span>Win streak</span>
-                            <strong>{analytics.activeWinStreak ?? 0}</strong>
-                        </div>
-                        <div className="terminal-mini glass-card">
-                            <span>Loss streak</span>
-                            <strong>{analytics.activeLossStreak ?? 0}</strong>
-                        </div>
-                    </div>
-
-                    <article className="terminal-card glass-card terminal-card--journal">
-                        <span className="terminal-card__label">Journal summary</span>
-                        <div className="terminal-journal-lines">
-                            <div>
-                                <span>Entries</span>
-                                <strong>{dashboardData.journalTasks.length}</strong>
+                        <section className="desk2-card glass-card">
+                            <span className="desk2-card__label">Trade validator</span>
+                            <div className="desk2-val-strip">
+                                <div className="desk2-val-strip__ok">
+                                    <FaCheck aria-hidden />
+                                    <span>{lab?.setupValid ? 'Entry signal confirmed' : 'Entry signal pending'}</span>
+                                </div>
+                                <div className="desk2-val-strip__bad">
+                                    <FaTimes aria-hidden />
+                                    <span>{avoidValidatorHint}</span>
+                                </div>
                             </div>
-                            <div className="terminal-journal-lines__rule" />
-                            <div>
-                                <span>Reflections</span>
-                                <strong>{reflectionCount}</strong>
-                            </div>
-                        </div>
-                        <button type="button" className="terminal-card__linkish" onClick={() => navigate('/journal')}>
-                            Journal <FaArrowRight />
-                        </button>
-                    </article>
+                            <button
+                                type="button"
+                                className="desk2-cta desk2-cta--ghost"
+                                onClick={() => navigate('/trader-deck/trade-validator/calculator')}
+                            >
+                                Open calculator <FaArrowRight aria-hidden />
+                            </button>
+                        </section>
 
-                    <article className="terminal-card glass-card terminal-card--performance">
-                        <span className="terminal-card__label">Performance</span>
-                        <h3 className="terminal-performance__title">Equity curve</h3>
-                        <TerminalEquityChart points={analytics.equityCurve} />
-                    </article>
+                        <section className="desk2-card desk2-card--chart glass-card">
+                            <span className="desk2-card__label">Performance</span>
+                            <TerminalEquityChart points={analytics.equityCurve} />
+                        </section>
+                    </main>
+
+                    <aside className="home-desk2__col home-desk2__col--right">
+                        <section className="desk2-card glass-card">
+                            <span className="desk2-card__label">Desk posture</span>
+                            <div className="desk2-postures">
+                                <Link
+                                    to="/trader-deck"
+                                    className={`desk2-posture ${biasDisplay === 'Bullish' ? 'is-active' : ''}`}
+                                >
+                                    <span className="desk2-posture__tag">Bullish</span>
+                                    <span className="desk2-posture__sub">Setups identified</span>
+                                </Link>
+                                <Link
+                                    to="/trader-deck"
+                                    className={`desk2-posture ${biasDisplay === 'Bearish' ? 'is-active' : ''}`}
+                                >
+                                    <span className="desk2-posture__tag">Bearish</span>
+                                    <span className="desk2-posture__sub">Wait for confirmation</span>
+                                </Link>
+                                <Link
+                                    to="/trader-deck/trade-validator"
+                                    className={`desk2-posture ${
+                                        biasDisplay !== 'Bullish' && biasDisplay !== 'Bearish' ? 'is-active' : ''
+                                    }`}
+                                >
+                                    <span className="desk2-posture__tag">No trade</span>
+                                    <span className="desk2-posture__sub">Stay on sidelines</span>
+                                </Link>
+                            </div>
+                        </section>
+
+                        <section className="desk2-card glass-card">
+                            <span className="desk2-card__label">Behaviour &amp; discipline</span>
+                            <div className="desk2-rings">
+                                <ScoreRing label="Discipline" value={disciplineScore} />
+                                <ScoreRing label="Consistency" value={consistencyRing} />
+                                <ScoreRing label="Behaviour" value={behaviourScore} />
+                            </div>
+                        </section>
+
+                        <section className="desk2-card glass-card">
+                            <span className="desk2-card__label">Journal snapshot</span>
+                            <ul className="desk2-trades">
+                                {(analytics.recentTrades || []).slice(0, 3).map((t, i) => {
+                                    const pnl = Number(t.pnl);
+                                    const win = (t.result || '').toLowerCase() === 'win' || pnl > 0;
+                                    const tag = pnl > 0 || win ? 'Win' : pnl < 0 ? 'Loss' : 'Trade';
+                                    return (
+                                        <li key={`${t.pair}-${i}`}>
+                                            <span>
+                                                {tag} · {t.pair || '—'}
+                                            </span>
+                                            <span className={pnl >= 0 ? 'is-up' : 'is-down'}>
+                                                {Number.isFinite(pnl) ? formatSignedCurrency(pnl) : '—'}
+                                            </span>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                            {!analytics.recentTrades?.length ? (
+                                <p className="desk2-muted">Log trades in Aura Analysis to populate recent activity.</p>
+                            ) : null}
+                            <span className="desk2-card__sublabel">Notes</span>
+                            <ul className="desk2-notes">
+                                {journalBullets.map((line) => (
+                                    <li key={line}>{line}</li>
+                                ))}
+                            </ul>
+                            <button type="button" className="desk2-cta desk2-cta--ghost" onClick={() => navigate('/journal')}>
+                                Journal <FaArrowRight aria-hidden />
+                            </button>
+                        </section>
+                    </aside>
                 </div>
-            </div>
             </div>
         </div>
     );
