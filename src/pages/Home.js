@@ -15,6 +15,7 @@ import {
     FaChartLine, FaGlobe, FaArrowRight, FaBolt,
     FaEnvelope, FaCog, FaHeadset, FaSun, FaBriefcase, FaLock, FaTruck,
     FaArrowUp, FaArrowDown, FaCheck,
+    FaFire, FaBook, FaFileAlt, FaClipboardList, FaUserTag,
 } from 'react-icons/fa';
 
 /* ══════════════════════════════════════════════════════════
@@ -585,6 +586,26 @@ const computeJournalMetrics = (tasks = [], selectedDate = new Date(), journalDai
     };
 };
 
+const formatHomeRole = (role) => {
+    const raw = String(role || '').trim();
+    if (!raw) return 'Member';
+    return raw
+        .replace(/_/g, ' ')
+        .split(' ')
+        .filter(Boolean)
+        .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+        .join(' ');
+};
+
+const formatXpCompact = (xp) => {
+    const n = Number(xp);
+    if (!Number.isFinite(n)) return '0';
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 10_000) return `${Math.round(n / 1000)}K`;
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+    return String(Math.round(n));
+};
+
 const computeLabMetrics = (sessions = []) => {
     if (!Array.isArray(sessions) || sessions.length === 0) return null;
     const persistedSessions = sessions.filter((session) => session?.id);
@@ -863,6 +884,118 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
         analytics.consistencyScore != null ? analytics.consistencyScore : disciplineScore
     );
 
+    const homeSnapshotMetrics = useMemo(() => {
+        const level = Math.max(1, parseInt(user?.level, 10) || 1);
+        const xpStr = formatXpCompact(user?.xp);
+        const streak = Number(user?.login_streak ?? user?.loginStreak ?? 0);
+        const rep = dashboardData.reportsEligibility;
+        let reportsVal = '—';
+        let reportsHint = 'Reports';
+        if (rep) {
+            if (rep.isEligible) {
+                reportsVal = 'Unlocked';
+                reportsHint = 'Monthly statements';
+            } else {
+                reportsVal = `${rep.dataDays}/${rep.minDataDays}d`;
+                reportsHint = 'Building history';
+            }
+        }
+        const journalToday =
+            journal.dayTotal > 0
+                ? `${journal.dayCompleted}/${journal.dayTotal}${journal.dayPct != null ? ` (${journal.dayPct}%)` : ''}`
+                : 'No tasks';
+        const journalWeek = journal.weekPct != null ? `${journal.weekPct}%` : '—';
+        const mood = journal.mood ? String(journal.mood).slice(0, 12) : null;
+        const labSessions = lab?.sessionCount ?? 0;
+        const checklistAvg =
+            analytics.avgChecklistPct != null ? `${Math.round(analytics.avgChecklistPct)}%` : '—';
+
+        return [
+            {
+                key: 'level',
+                icon: FaBolt,
+                label: 'Level & XP',
+                value: `Lv ${level}`,
+                sub: `${xpStr} XP`,
+                to: '/profile',
+            },
+            {
+                key: 'role',
+                icon: FaUserTag,
+                label: 'Role',
+                value: formatHomeRole(user?.role),
+                sub: 'On Aura Terminal',
+                to: '/profile',
+            },
+            {
+                key: 'streak',
+                icon: FaFire,
+                label: 'Login streak',
+                value: `${Number.isFinite(streak) && streak > 0 ? streak : 0}d`,
+                sub: 'Keep the chain',
+                to: '/profile',
+            },
+            {
+                key: 'journal',
+                icon: FaBook,
+                label: 'Journal',
+                value: journalToday,
+                sub: mood ? `Mood: ${mood} · Week ${journalWeek}` : `Week done ${journalWeek}`,
+                to: '/journal',
+            },
+            {
+                key: 'trades',
+                icon: FaChartLine,
+                label: 'Aura trades',
+                value: String(analytics.totalTrades ?? 0),
+                sub: analytics.totalTrades ? `Win ${formatPercent(analytics.winRate, 0)}` : 'Log on platform',
+                to: '/aura-analysis/ai',
+            },
+            {
+                key: 'checklist',
+                icon: FaClipboardList,
+                label: 'Avg checklist',
+                value: checklistAvg,
+                sub: 'Trade Validator',
+                to: '/trader-deck/trade-validator',
+            },
+            {
+                key: 'lab',
+                icon: FaBriefcase,
+                label: 'Trader Lab',
+                value: `${labSessions}`,
+                sub: labSessions === 1 ? 'session' : 'sessions',
+                to: '/trader-deck',
+            },
+            {
+                key: 'scores',
+                icon: FaChartBar,
+                label: 'Scores',
+                value: `${disciplineScore}`,
+                sub: `Discipline · Beh ${behaviourScore}`,
+                to: '/journal',
+            },
+            {
+                key: 'reports',
+                icon: FaFileAlt,
+                label: 'Reports',
+                value: reportsVal,
+                sub: reportsHint,
+                to: '/reports',
+            },
+        ];
+    }, [
+        user,
+        dashboardData.reportsEligibility,
+        journal,
+        analytics.totalTrades,
+        analytics.winRate,
+        analytics.avgChecklistPct,
+        lab,
+        disciplineScore,
+        behaviourScore,
+    ]);
+
     if (dashboardLoading) {
         return (
             <div className="terminal-dashboard">
@@ -897,6 +1030,35 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                     </div>
                 </div>
             </header>
+
+            <section className="home-logged-metrics glass-card" aria-label="Your Aura Terminal snapshot">
+                <div className="home-logged-metrics__head">
+                    <span className="home-logged-metrics__title">Your snapshot</span>
+                    <span className="home-logged-metrics__hint">
+                        Your data on Aura Terminal only — tap a tile to jump there
+                    </span>
+                </div>
+                <div className="home-logged-metrics__track" role="list">
+                    {homeSnapshotMetrics.map((m) => {
+                        const Icon = m.icon;
+                        return (
+                            <Link
+                                key={m.key}
+                                to={m.to}
+                                className="home-logged-metrics__cell"
+                                role="listitem"
+                            >
+                                <span className="home-logged-metrics__ico" aria-hidden>
+                                    <Icon />
+                                </span>
+                                <span className="home-logged-metrics__lab">{m.label}</span>
+                                <span className="home-logged-metrics__val">{m.value}</span>
+                                <span className="home-logged-metrics__sub">{m.sub}</span>
+                            </Link>
+                        );
+                    })}
+                </div>
+            </section>
 
             <div className="terminal-dashboard__body">
                 <nav className="terminal-dashboard__rail glass-card" aria-label="Quick navigation">
