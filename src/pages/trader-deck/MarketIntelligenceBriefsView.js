@@ -86,13 +86,47 @@ const ALLOWED_BRIEF_KINDS = new Set([
   ...CATEGORY_BRIEF_KINDS,
 ]);
 
+const BY_AURA_TERMINAL = 'By AURA TERMINAL';
+
+/** Plain-language preview: no markdown hashes/list dashes up top; footer attribution only. */
 function sanitizeBriefForPreview(text) {
-  return String(text || '')
-    // Remove Markdown horizontal rules or separator-like lines.
+  let t = String(text || '').replace(/\r\n/g, '\n');
+
+  t = t.replace(/^\s*By\s+Aura\s+FX\s+AI\s*$/gim, '');
+  t = t.replace(/^\s*By\s+AURA\s+TERMINAL\s*$/gim, '');
+
+  t = t
+    .split('\n')
+    .map((line) => {
+      let s = line.replace(/^#{1,6}\s+/, '');
+      s = s.replace(/#/g, '');
+      s = s.replace(/^\s*[-*+]\s+/, '');
+      return s;
+    })
+    .join('\n');
+
+  t = t.replace(/\*\*([^*]+)\*\*/g, '$1');
+  t = t.replace(/\*([^*\n]+)\*/g, '$1');
+  t = t.replace(/([a-zA-Z])-([a-zA-Z])/g, '$1 $2');
+  t = t
+    .split('\n')
+    .map((line) => line.replace(/^\s*-\s+/, ''))
+    .join('\n');
+
+  t = t
     .replace(/^[ \t]*(-\s*){3,}[ \t]*$/gm, '')
-    // Remove leaked prompt markers like "--- part 1 ---"
     .replace(/^[ \t]*---[ \t]*.*[ \t]*---[ \t]*$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
+
+  const endsWithFooter = new RegExp(
+    `${BY_AURA_TERMINAL.replace(/\s+/g, '\\s+')}\\s*$`,
+    'i'
+  ).test(t);
+  if (!endsWithFooter) {
+    t = `${t}\n\n${BY_AURA_TERMINAL}`;
+  }
+  return t;
 }
 
 function filterToAllowedBriefKinds(items) {

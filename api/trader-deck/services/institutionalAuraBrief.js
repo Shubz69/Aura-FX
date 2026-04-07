@@ -803,8 +803,6 @@ function assembleDailyMarkdown(titleLine, dateYmd, dayLongLabel, part1, blocks, 
   const lines = [];
   lines.push(`# ${titleLine.trim()}`);
   lines.push('');
-  lines.push('By Aura FX AI');
-  lines.push('');
   lines.push('Period: daily');
   lines.push(`Date: ${dateYmd}`);
   lines.push('Category: General Market Brief');
@@ -897,14 +895,14 @@ function assembleDailyMarkdown(titleLine, dateYmd, dayLongLabel, part1, blocks, 
   }
   lines.push('');
   lines.push('*End of brief — saved to Trader Deck for this date. Regenerate from admin/cron replaces the stored version.*');
+  lines.push('');
+  lines.push('By AURA TERMINAL');
   return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 function assembleWeeklyMarkdown(titleLinePlain, dateYmd, weekRangeLabel, w1, w2) {
   const lines = [];
   lines.push(`# ${String(titleLinePlain || '').trim()}`);
-  lines.push('');
-  lines.push('By Aura FX AI');
   lines.push('');
   lines.push('Period: weekly');
   lines.push(`Date: ${dateYmd}`);
@@ -957,6 +955,8 @@ function assembleWeeklyMarkdown(titleLinePlain, dateYmd, weekRangeLabel, w1, w2)
   lines.push('');
   lines.push('');
   lines.push('*End of weekly brief — saved to Trader Deck. Regenerate replaces the stored version for this week key.*');
+  lines.push('');
+  lines.push('By AURA TERMINAL');
   return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 

@@ -658,29 +658,27 @@ function parseModelJson(text) {
 function renderCategoryDailyBrief({ title, parsed, runDate, timeZone }) {
   const dayLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone }).format(runDate);
   const lines = [];
-  lines.push(`# ${title}`);
+  lines.push(String(title || '').trim());
   lines.push('');
-  lines.push('By Aura FX AI');
-  lines.push('');
-  lines.push(`## ${dayLabel}`);
+  lines.push(String(dayLabel || '').trim());
   lines.push('');
   lines.push(String(parsed.opening || '').trim());
   lines.push('');
-  lines.push('## GLOBAL GEOPOLITICAL ENVIRONMENT');
+  lines.push('GLOBAL GEOPOLITICAL ENVIRONMENT');
   lines.push('');
   lines.push(String(parsed.globalGeopoliticalEnvironment || '').trim());
   lines.push('');
-  lines.push(`## MACRO BACKDROP GOING INTO ${dayLabel.toUpperCase()}`);
+  lines.push(`MACRO BACKDROP GOING INTO ${dayLabel.toUpperCase()}`);
   lines.push('');
   lines.push(String(parsed.macroBackdrop || '').trim());
   lines.push('');
-  lines.push('## MARKET THEMES DOMINATING TODAY');
+  lines.push('MARKET THEMES DOMINATING TODAY');
   lines.push('');
   lines.push(String(parsed.marketThemes || '').trim());
   lines.push('');
   const assets = Array.isArray(parsed.assetAnalyses) ? parsed.assetAnalyses : [];
   for (const asset of assets) {
-    lines.push(`## ${String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase()} ANALYSIS`);
+    lines.push(`${String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase()} ANALYSIS`);
     lines.push('');
     lines.push(String(asset.fundamentalView || '').trim());
     lines.push('');
@@ -697,72 +695,72 @@ function renderCategoryDailyBrief({ title, parsed, runDate, timeZone }) {
     lines.push(`Overall bias: ${String(asset.overallBias || '').trim()}`);
     lines.push('');
   }
-  lines.push('## OVERALL DAILY STRUCTURE');
+  lines.push('OVERALL DAILY STRUCTURE');
   lines.push('');
   lines.push(String(parsed.overallDailyStructure || '').trim());
   lines.push('');
+  lines.push('By AURA TERMINAL');
   return stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
 }
 
 function renderCategoryWeeklyBrief({ title, parsed }) {
   const lines = [];
-  lines.push(`# ${title}`);
+  lines.push(String(title || '').trim());
   lines.push('');
-  lines.push('By Aura FX AI');
-  lines.push('');
-  lines.push('## Overview');
+  lines.push('Overview');
   lines.push('');
   lines.push(String(parsed.overview || '').trim());
   lines.push('');
-  lines.push(`## SUMMARY FOR LAST WEEK (${String(parsed.previousWeekLabel || '').trim()})`);
+  lines.push(`SUMMARY FOR LAST WEEK (${String(parsed.previousWeekLabel || '').trim()})`);
   lines.push('');
   lines.push(String(parsed.summaryForLastWeek || '').trim());
   lines.push('');
   const howAssets = Array.isArray(parsed.assetPerformance) ? parsed.assetPerformance : [];
   for (const asset of howAssets) {
-    lines.push(`## HOW ${String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase()} PERFORMED & WHY`);
+    lines.push(`HOW ${String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase()} PERFORMED & WHY`);
     lines.push('');
     lines.push(String(asset.body || '').trim());
     lines.push('');
   }
-  lines.push('## WHAT MATTERS THIS WEEK STRUCTURALLY');
+  lines.push('WHAT MATTERS THIS WEEK STRUCTURALLY');
   lines.push('');
   lines.push(String(parsed.structuralWeeklyDrivers || '').trim());
   lines.push('');
-  lines.push('## MONDAY & TUESDAY');
+  lines.push('MONDAY & TUESDAY');
   lines.push('');
   lines.push(String(parsed.mondayTuesdayFocus || '').trim());
   lines.push('');
-  lines.push('## WEDNESDAY');
+  lines.push('WEDNESDAY');
   lines.push('');
   lines.push(String(parsed.wednesdayFocus || '').trim());
   lines.push('');
-  lines.push('## THURSDAY & FRIDAY');
+  lines.push('THURSDAY & FRIDAY');
   lines.push('');
   lines.push(String(parsed.thursdayFridayFocus || '').trim());
   lines.push('');
   const outlooks = Array.isArray(parsed.assetOutlooks) ? parsed.assetOutlooks : [];
   for (const asset of outlooks) {
-    lines.push(`## ${String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase()} OUTLOOK THIS WEEK`);
+    lines.push(`${String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase()} OUTLOOK THIS WEEK`);
     lines.push('');
     lines.push(String(asset.body || '').trim());
     lines.push('');
   }
-  lines.push('## WEEK CONCLUSION');
+  lines.push('WEEK CONCLUSION');
   lines.push('');
   lines.push(String(parsed.weekConclusion || '').trim());
   lines.push('');
-  lines.push('## SESSION-BY-SESSION WATCH');
+  lines.push('SESSION-BY-SESSION WATCH');
   lines.push('');
   lines.push(`Asia: ${String(parsed.sessionWatch?.asia || '').trim()}`);
   lines.push(`London: ${String(parsed.sessionWatch?.london || '').trim()}`);
   lines.push(`New York: ${String(parsed.sessionWatch?.newYork || '').trim()}`);
   lines.push('');
-  lines.push('## KEY SCENARIOS');
+  lines.push('KEY SCENARIOS');
   lines.push('');
   const scenarios = Array.isArray(parsed.keyScenarios) ? parsed.keyScenarios : [];
   scenarios.forEach((s) => lines.push(String(s || '').trim()));
   lines.push('');
+  lines.push('By AURA TERMINAL');
   return stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
 }
 
