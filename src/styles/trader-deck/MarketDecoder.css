@@ -1070,7 +1070,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin: 0 0 14px;
+  margin: 0 0 8px;
 }
 
 .td-mi-view-toolbar--back {
@@ -1722,8 +1722,8 @@
 /* ——— Reference terminal layout (gold / cyan cyberpunk desk) ——— */
 
 .md-decoder--reference {
-  max-width: 1280px;
-  padding: 0 6px 28px;
+  max-width: 1240px;
+  padding: 0 4px 18px;
   --ref-gold: rgba(244, 236, 220, 0.95);
   --ref-gold-dim: rgba(234, 169, 96, 0.88);
   --ref-cyan: rgba(234, 169, 96, 0.95);
@@ -1980,22 +1980,22 @@
 
 .md-ref-grid {
   display: grid;
-  grid-template-columns: minmax(196px, 0.92fr) minmax(260px, 1.45fr) minmax(196px, 0.92fr);
-  gap: 10px;
+  grid-template-columns: minmax(180px, 0.9fr) minmax(240px, 1.4fr) minmax(180px, 0.9fr);
+  gap: 7px;
   align-items: start;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .md-ref-col {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
 .md-ref-panel {
-  border-radius: 14px;
-  padding: 10px 12px 10px;
+  border-radius: 12px;
+  padding: 8px 10px 8px;
   background: var(--ref-panel-bg);
   border: 1px solid rgba(255, 255, 255, 0.072);
   backdrop-filter: blur(6px) saturate(1.04);

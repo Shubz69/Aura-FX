@@ -1184,6 +1184,12 @@ const Api = {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
     },
+    getTraderReplaySession: (id) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/trader-replay/sessions/${id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
     createTraderReplaySession: (body) => {
         const token = localStorage.getItem('token');
         return axios.post(`${API_BASE_URL}/api/trader-replay/sessions`, body, {

@@ -815,7 +815,7 @@ html {
 
 .aura-db-replay-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 10px;
 }
 
@@ -1003,4 +1003,1208 @@ html {
   border-color: rgba(234, 169, 96, 0.18);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+}
+
+/* ── Trader Replay (premium hub + workspace) ───────────────── */
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-loading,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-error {
+  padding: 24px;
+  text-align: center;
+  color: rgba(200, 196, 232, 0.8);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-error {
+  color: #ff9c9c;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-muted {
+  color: rgba(200, 196, 232, 0.62);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-muted.small {
+  font-size: 0.76rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-empty {
+  margin: 0;
+  font-size: 0.84rem;
+  color: rgba(200, 196, 232, 0.55);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2vw, 20px);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub-continue {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: clamp(16px, 2vw, 22px);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub-continue-title {
+  margin: 4px 0 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub-continue-meta {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: rgba(200, 196, 232, 0.7);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub-dot {
+  opacity: 0.5;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 18px);
+}
+
+@media (max-width: 1024px) {
+  .journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mode-card {
+  padding: clamp(18px, 2.2vw, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 220px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mode-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mode-card p {
+  margin: 0;
+  flex: 1;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: rgba(200, 196, 232, 0.72);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mode-card .trader-suite-btn {
+  align-self: flex-start;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mode-eyebrow {
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(248, 195, 125, 0.85);
+  font-weight: 600;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub-footer {
+  padding: clamp(16px, 2vw, 22px);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub-footer-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub-footer-title {
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-recent-btn {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(234, 169, 96, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-recent-btn:hover {
+  border-color: rgba(234, 169, 96, 0.35);
+  background: rgba(234, 169, 96, 0.08);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-recent-btn strong {
+  display: block;
+  font-size: 0.88rem;
+  margin-bottom: 4px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-recent-btn span {
+  font-size: 0.78rem;
+  color: rgba(200, 196, 232, 0.65);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub-sort {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-hub-sort .trader-suite-select {
+  min-width: 140px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-recent-btn-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-recent-meta {
+  display: block;
+  font-size: 0.74rem;
+  color: rgba(200, 196, 232, 0.62);
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-recent-lesson {
+  display: block;
+  font-size: 0.72rem;
+  color: rgba(248, 195, 125, 0.75);
+  margin-top: 6px;
+  line-height: 1.35;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-why {
+  margin: 6px 0 0;
+  font-size: 0.72rem;
+  color: rgba(248, 195, 125, 0.78);
+  line-height: 1.35;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-scenario-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-chip.subtle {
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  padding: 4px 8px;
+  text-transform: none;
+  opacity: 0.92;
+  border-color: rgba(200, 196, 232, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-demo-row {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(234, 169, 96, 0.12);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-title {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.55);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-field--inline {
+  max-width: 280px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-field-hint {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.78rem;
+  color: rgba(200, 196, 232, 0.5);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-list--scroll {
+  max-height: 420px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-item {
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(234, 169, 96, 0.14);
+  background: rgba(3, 2, 10, 0.28);
+  color: #fff;
+  cursor: pointer;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-item:hover {
+  border-color: rgba(234, 169, 96, 0.32);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-item span {
+  font-size: 0.78rem;
+  color: rgba(200, 196, 232, 0.6);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: clamp(12px, 2vw, 18px);
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .journal-page .aura-dashboard .aura-db-replay-page .aura-tr-workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-workspace-main {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 1.8vw, 16px);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-workspace-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-chart-card {
+  padding: clamp(14px, 2vw, 18px);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-chip {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(234, 169, 96, 0.3);
+  background: rgba(234, 169, 96, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-chip.muted {
+  opacity: 0.75;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-chip.gold {
+  border-color: rgba(248, 195, 125, 0.45);
+  background: rgba(212, 175, 55, 0.12);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-status-pill {
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-status-pill.live {
+  border-color: rgba(100, 243, 176, 0.35);
+  color: #64f3b0;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-status-pill.done {
+  border-color: rgba(234, 169, 96, 0.35);
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-controls {
+  margin-top: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-transport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-control-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: rgba(232, 235, 255, 0.78);
+  cursor: pointer;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-toggle input {
+  accent-color: rgba(234, 169, 96, 0.9);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-timeline {
+  position: relative;
+  padding: 12px 4px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-timeline--horizontal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-timeline-track {
+  display: none;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-dot {
+  flex: 1 1 120px;
+  min-width: 100px;
+  text-align: left;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(3, 2, 10, 0.35);
+  color: rgba(200, 196, 232, 0.55);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-dot--done {
+  color: rgba(200, 196, 232, 0.82);
+  border-color: rgba(100, 243, 176, 0.2);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-dot--active {
+  border-color: rgba(234, 169, 96, 0.45);
+  background: rgba(234, 169, 96, 0.1);
+  color: #fff;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-dot__num {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  margin-bottom: 4px;
+  color: rgba(248, 195, 125, 0.85);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-dot__lbl {
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-timeline--vertical {
+  display: grid;
+  gap: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-node {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(3, 2, 10, 0.35);
+  color: rgba(200, 196, 232, 0.65);
+  cursor: pointer;
+  text-align: left;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-node--active {
+  border-color: rgba(234, 169, 96, 0.4);
+  background: rgba(234, 169, 96, 0.08);
+  color: #fff;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-node--done {
+  color: rgba(200, 196, 232, 0.88);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-node__idx {
+  font-weight: 700;
+  color: rgba(248, 195, 125, 0.9);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-node__label {
+  font-size: 0.82rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-node__time {
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-insight {
+  padding: clamp(16px, 2vw, 20px);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-insight-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-insight-time {
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.55);
+  margin: 8px 0 4px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-insight-title {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-insight-body {
+  margin: 0 0 12px;
+  line-height: 1.55;
+  color: rgba(232, 235, 255, 0.82);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-badge {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(234, 169, 96, 0.35);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-badge--mistake {
+  border-color: rgba(255, 120, 120, 0.4);
+  color: #ffb1b1;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-badge--invalidation {
+  border-color: rgba(140, 175, 255, 0.4);
+  color: #b8c8ff;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-callout {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(234, 169, 96, 0.22);
+  background: rgba(212, 175, 55, 0.08);
+  margin-bottom: 12px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-callout strong {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-callout p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-insight-foot p {
+  margin: 4px 0 10px;
+  line-height: 1.45;
+  font-size: 0.84rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-confidence {
+  font-size: 0.84rem;
+  color: rgba(248, 195, 125, 0.9);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-notes {
+  padding: clamp(16px, 2vw, 20px);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-note-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.55);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-textarea {
+  resize: vertical;
+  min-height: 72px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-rail-block {
+  padding: 14px 16px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-rail-hero strong {
+  font-size: 0.95rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-rail-hero p {
+  margin: 6px 0;
+  font-size: 0.82rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-demo-banner {
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed rgba(248, 195, 125, 0.35);
+  font-size: 0.78rem;
+  color: rgba(248, 195, 125, 0.88);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-metric-grid > div {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(234, 169, 96, 0.1);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-metric-grid span {
+  display: block;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.5);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-metric-grid strong {
+  font-size: 0.84rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-metric-verdict {
+  font-weight: 500;
+  font-size: 0.78rem !important;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-related {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-related .trader-suite-btn {
+  justify-content: center;
+  text-align: center;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(1, 0, 8, 0.72);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal {
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 20px 22px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-title {
+  font-weight: 600;
+  margin: 8px 0 16px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-grid {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-grid p {
+  margin: 4px 0 0;
+  line-height: 1.45;
+  font-size: 0.86rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-scores {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-scores--dual {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-scores > div {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(234, 169, 96, 0.18);
+  background: rgba(3, 2, 10, 0.4);
+  text-align: center;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-scores strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.05rem;
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-score-hint,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-score-signal,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-score-gap {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: rgba(200, 196, 232, 0.62);
+  text-align: left;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-score-gap {
+  color: rgba(248, 195, 125, 0.75);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-takeaways {
+  margin-bottom: 14px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-takeaways ul {
+  margin: 6px 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-next-action {
+  margin-bottom: 14px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-next-reason {
+  margin: 6px 0 10px;
+  font-size: 0.8rem;
+  color: rgba(200, 196, 232, 0.75);
+  line-height: 1.4;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-learning-badge {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(248, 195, 125, 0.9);
+  padding: 8px 10px;
+  border: 1px solid rgba(234, 169, 96, 0.28);
+  border-radius: 8px;
+  align-self: center;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-rail-scores {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(234, 169, 96, 0.12);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-rail-scores > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-rail-scores span:first-child {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.6);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-rail-scores strong {
+  font-size: 1.05rem;
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-rail-hint,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-rail-gap {
+  font-size: 0.66rem;
+  line-height: 1.35;
+  color: rgba(200, 196, 232, 0.55);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-rail-gap {
+  color: rgba(248, 195, 125, 0.72);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-insight-meta {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.55);
+  margin-bottom: 6px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-callout--soft {
+  border-color: rgba(200, 196, 232, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* —— Trader Replay hardening: header, focus, disabled, mobile —— */
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-btn--disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: not-allowed;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-chart-frame {
+  width: 100%;
+  min-height: 260px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-insight-body,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-grid p {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-db-replay-actions .trader-suite-btn:focus-visible,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-controls .trader-suite-btn:focus-visible,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-node:focus-visible,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tl-dot:focus-visible,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-recent-btn:focus-visible,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-item:focus-visible {
+  outline: 2px solid rgba(234, 169, 96, 0.65);
+  outline-offset: 2px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-backdrop {
+  padding: max(16px, env(safe-area-inset-bottom));
+  align-items: flex-start;
+  padding-top: max(24px, env(safe-area-inset-top));
+}
+
+@media (max-width: 600px) {
+  .journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-scores {
+    grid-template-columns: 1fr;
+  }
+
+  .journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal {
+    max-height: calc(100vh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* —— Trader Replay: retention & premium pass —— */
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-habit-strip {
+  padding: clamp(14px, 2vw, 18px);
+  margin-bottom: 14px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-habit-strip--compact {
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-habit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-habit-label {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.55);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-habit-value {
+  display: block;
+  font-size: 1.05rem;
+  margin-top: 4px;
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-habit-meta {
+  display: block;
+  font-size: 0.68rem;
+  color: rgba(200, 196, 232, 0.55);
+  margin-top: 2px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-habit-nudge {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: rgba(248, 195, 125, 0.82);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tier-ribbon {
+  margin: 0 0 14px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: rgba(200, 196, 232, 0.65);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mode-card--locked {
+  opacity: 0.92;
+  border-style: dashed;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mode-card--elite {
+  border-color: rgba(248, 195, 125, 0.35);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-elite-hint {
+  font-size: 0.75rem;
+  margin: 0 0 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-locked-chip {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(200, 196, 232, 0.55);
+  padding: 8px 10px;
+  border: 1px dashed rgba(234, 169, 96, 0.28);
+  border-radius: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-premium-nudge {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: rgba(200, 196, 232, 0.7);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-premium-nudge-link {
+  color: rgba(248, 195, 125, 0.95);
+  text-decoration: none;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-premium-nudge-link:hover {
+  text-decoration: underline;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-chip--example {
+  border-color: rgba(124, 220, 176, 0.35);
+  background: rgba(46, 120, 90, 0.15);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-rail-signals {
+  margin: 6px 0 0;
+  padding-left: 1rem;
+  font-size: 0.65rem;
+  line-height: 1.35;
+  color: rgba(200, 196, 232, 0.6);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mentor-block {
+  padding-bottom: 12px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mentor-grid {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 0.78rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mentor-tight {
+  margin: 8px 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-learning-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-followup-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-followup-link {
+  display: block;
+  font-size: 0.8rem;
+  color: rgba(248, 195, 125, 0.95);
+  text-decoration: none;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-followup-link:hover {
+  text-decoration: underline;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-followup-reason {
+  display: block;
+  font-size: 0.68rem;
+  color: rgba(200, 196, 232, 0.58);
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-mentor {
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(234, 169, 96, 0.2);
+  background: rgba(3, 2, 10, 0.35);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-mentor-grid p {
+  margin: 6px 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-followups {
+  margin-bottom: 12px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-followups ul {
+  margin: 6px 0 0;
+  padding-left: 1rem;
+  font-size: 0.8rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-followups a {
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-upsell {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(234, 169, 96, 0.12);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-meta {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  color: rgba(200, 196, 232, 0.58);
+  line-height: 1.35;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-group-label {
+  list-style: none;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(248, 195, 125, 0.75);
+  padding: 8px 4px 4px;
+  grid-column: 1 / -1;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-field--check {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-field--check input {
+  width: auto;
 }

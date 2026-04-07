@@ -554,13 +554,70 @@
   gap: 10px !important;
   padding: 6px 0 12px !important;
   min-height: 0 !important;
+  max-height: calc(100dvh - 200px) !important;
   align-content: start;
+  align-items: start !important;
 }
 
-/* Larger chart placeholder area */
+/* Chart: ~30vh cap so the desk fits on one screen */
 .trade-validator-shell .trader-lab-v2 .tlab-chart-host--placeholder {
-  min-height: min(560px, 62vh) !important;
-  height: min(560px, 62vh) !important;
+  min-height: clamp(200px, 30vh, 320px) !important;
+  height: clamp(200px, 30vh, 320px) !important;
+  flex: 0 0 auto !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-center-split--refined {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 10px !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-decision-mini {
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-decision-mini__cell {
+  min-height: 0 !important;
+  padding: 12px 14px !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-decision-checks {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-conviction__seg {
+  width: 100% !important;
+  justify-content: stretch !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-conviction-btn {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  padding: 10px 8px !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-execute-btn {
+  width: 100% !important;
+  margin-top: 2px !important;
+  padding: 14px 16px !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-card--session-rail {
+  flex: 1 1 auto !important;
+  min-height: 120px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.trade-validator-shell .trader-lab-v2__left,
+.trade-validator-shell .trader-lab-v2__right,
+.trade-validator-shell .trader-lab-v2__center {
+  max-height: calc(100dvh - 200px) !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  min-height: 0 !important;
 }
 
 /* Match AuraShared `.aa-card` glass (dashboard outlet panels) */

@@ -101,7 +101,7 @@ export default function RiskRadarList({ items = [], riskEngine = null, summaryOn
   return (
     <div className="rr-table-wrap">
       {riskEngine && (
-        <div className="td-mi-pulse-meta" style={{ marginBottom: 12 }}>
+        <div className="td-mi-pulse-meta td-mi-pulse-meta--risk">
           <p><strong>Market Risk Score:</strong> {Number(riskEngine.score || 0)}/100</p>
           <p><strong>Risk Level:</strong> <span className={levelClass}>{riskEngine.level || 'Moderate'}</span></p>
           {breakdown && (

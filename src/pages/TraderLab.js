@@ -813,6 +813,33 @@ export default function TraderLab() {
               </ul>
             </div>
 
+            <div className="tlab-card tlab-card--gold tlab-card--session-rail">
+              <h3 className="tlab-card__title">Session focus</h3>
+              <div className="tlab-field">
+                <label htmlFor="tlab-session-goal">Today&apos;s goal</label>
+                <textarea
+                  id="tlab-session-goal"
+                  className="tlab-textarea tlab-textarea--tight"
+                  rows={3}
+                  value={form.sessionGoal}
+                  onChange={(e) => updateField('sessionGoal', e.target.value)}
+                  placeholder="What you are optimizing this session for…"
+                />
+              </div>
+              <div className="tlab-field" style={{ marginTop: 8 }}>
+                <label htmlFor="tlab-max-trades">Max trades</label>
+                <input
+                  id="tlab-max-trades"
+                  className="tlab-input"
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={form.maxTradesAllowed}
+                  onChange={(e) => updateField('maxTradesAllowed', safeNumber(e.target.value, DEFAULT_FORM.maxTradesAllowed))}
+                />
+              </div>
+            </div>
+
           </aside>
 
           <footer className="trader-lab-v2__footer trader-lab-v2__footer--tagline-only">
