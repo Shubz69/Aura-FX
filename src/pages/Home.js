@@ -831,16 +831,48 @@ const TerminalEquityChart = ({ points = [] }) => {
     const d = coords.length
         ? coords.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`).join(' ')
         : '';
+    const startY = series[0]?.y ?? 0;
+    const endY = series[series.length - 1]?.y ?? 0;
+    const net = endY - startY;
+    const toneClass = net >= 0 ? 'is-up' : 'is-down';
+    const lastPt = coords[coords.length - 1];
 
     return (
         <div className="terminal-equity">
+            <div className="terminal-equity__meta">
+                <span className="terminal-equity__meta-label">Net curve</span>
+                <strong className={toneClass}>{formatSignedCurrency(net)}</strong>
+            </div>
             <svg viewBox={`0 0 ${W} ${H}`} className="terminal-equity__svg" preserveAspectRatio="none" role="img" aria-label="Equity curve">
                 <defs>
                     <linearGradient id="terminalEquityFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="rgba(234,169,96,0.35)" />
                         <stop offset="100%" stopColor="rgba(234,169,96,0)" />
                     </linearGradient>
+                    <linearGradient id="terminalEquityStroke" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="rgba(131, 167, 255, 0.65)" />
+                        <stop offset="55%" stopColor="rgba(234,169,96,0.95)" />
+                        <stop offset="100%" stopColor="rgba(255, 226, 164, 0.95)" />
+                    </linearGradient>
+                    <filter id="terminalEquityGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="2.2" result="blur" />
+                        <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
                 </defs>
+                {[0.16, 0.33, 0.5, 0.66, 0.83].map((f) => (
+                    <line
+                        key={`v-${f}`}
+                        x1={pad + f * (W - pad * 2)}
+                        y1={pad}
+                        x2={pad + f * (W - pad * 2)}
+                        y2={H - pad}
+                        stroke="rgba(255,255,255,0.035)"
+                        strokeWidth="1"
+                    />
+                ))}
                 {[0.25, 0.5, 0.75].map((f) => (
                     <line
                         key={f}
@@ -861,8 +893,14 @@ const TerminalEquityChart = ({ points = [] }) => {
                     />
                 )}
                 {d && (
-                    <path d={d} fill="none" stroke="var(--eaa-core)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+                    <path d={d} fill="none" stroke="url(#terminalEquityStroke)" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" filter="url(#terminalEquityGlow)" />
                 )}
+                {lastPt ? (
+                    <>
+                        <circle cx={lastPt[0]} cy={lastPt[1]} r="5.2" fill="rgba(234,169,96,0.2)" />
+                        <circle cx={lastPt[0]} cy={lastPt[1]} r="2.6" fill="rgba(255,230,164,0.95)" />
+                    </>
+                ) : null}
             </svg>
         </div>
     );

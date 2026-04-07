@@ -81,6 +81,27 @@ const DEFAULT_FORM = {
   mistakeTags: [],
 };
 
+const TRADER_LAB_LOCAL_DRAFT_KEY = 'aura_trader_lab_last_draft_v1';
+
+function readLocalDraft() {
+  try {
+    const raw = localStorage.getItem(TRADER_LAB_LOCAL_DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalDraft(payload) {
+  try {
+    localStorage.setItem(TRADER_LAB_LOCAL_DRAFT_KEY, JSON.stringify(payload || {}));
+  } catch {
+    // ignore storage failures
+  }
+}
+
 function normalizeSession(session = {}) {
   const merged = {
     ...DEFAULT_FORM,
@@ -163,6 +184,11 @@ export default function TraderLab() {
           setSessions(nextSessions);
           setActiveId(nextSessions[0].id);
           setForm(nextSessions[0]);
+        } else {
+          const localDraft = readLocalDraft();
+          if (localDraft) {
+            setForm(normalizeSession(localDraft));
+          }
         }
 
         if (nextSetups.length) {
@@ -259,6 +285,7 @@ export default function TraderLab() {
         const saved = normalizeSession(res?.data?.session || { ...payload, id: activeId });
         setSessions((prev) => prev.map((item) => (item.id === activeId ? saved : item)));
         setForm(saved);
+        writeLocalDraft(saved);
         setLastSavedAt(new Date().toISOString());
       } else {
         const res = await Api.createTraderLabSession(payload);
@@ -266,12 +293,16 @@ export default function TraderLab() {
         setSessions((prev) => [saved, ...prev]);
         setActiveId(saved.id);
         setForm(saved);
+        writeLocalDraft(saved);
         setLastSavedAt(new Date().toISOString());
       }
       toast.success('Trader Lab saved');
     } catch (error) {
       console.error(error);
-      toast.error('Could not save Trader Lab yet');
+      const fallback = normalizeSession({ ...form, rrRatio: rr });
+      writeLocalDraft(fallback);
+      setLastSavedAt(new Date().toISOString());
+      toast.warning('Cloud save failed. Saved locally on this device.');
     } finally {
       setSaving(false);
     }
@@ -319,6 +350,7 @@ export default function TraderLab() {
       navigate('/trader-deck/trade-validator/checklist', { state: { fromTraderLab: true } });
     } catch (error) {
       console.error(error);
+      writeLocalDraft(normalizeSession({ ...form, rrRatio: rr }));
       toast.error('Could not execute this trade plan yet.');
     } finally {
       setSaving(false);

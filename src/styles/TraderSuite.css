@@ -1207,6 +1207,7 @@
 .journal-page .tlab-center-split--refined {
   gap: 10px;
   align-items: stretch;
+  grid-template-columns: 1fr;
 }
 
 .journal-page .tlab-center-split__stack {
@@ -1567,7 +1568,7 @@
 .journal-page .trader-lab-v2__center {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -1590,6 +1591,7 @@
 .journal-page .trader-lab-v2__decision {
   grid-column: 2 / 3;
   padding: 0;
+  margin-top: -2px;
 }
 
 .journal-page .tlab-thesis-grid {
@@ -1597,10 +1599,15 @@
   gap: 8px;
 }
 
+.journal-page .tlab-thesis-grid .tlab-textarea--tight {
+  min-height: 62px;
+  max-height: 96px;
+}
+
 .journal-page .tlab-decision-mini {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
   margin-top: 2px;
 }
 
