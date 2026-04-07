@@ -229,10 +229,12 @@ const Settings = () => {
         loadAdmins();
       }
 
-      toast.success('User role and capabilities updated successfully!', {
-        position: "bottom-right",
-        autoClose: 3000,
-      });
+      toast.success(
+        selectedRole === 'super_admin'
+          ? 'Super Admin assigned. Ask them to sign out and sign in so their session picks up full access.'
+          : 'User role and capabilities updated successfully!',
+        { position: 'bottom-right', autoClose: selectedRole === 'super_admin' ? 5000 : 3000 }
+      );
       setSelectedUser(null);
     } catch (error) {
       console.error('Error updating user:', error);

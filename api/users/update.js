@@ -499,6 +499,15 @@ const [updatedRows] = await db.execute(
         
         // Return user data with formatted dates (mysql2 may return bigint for id/xp/level)
         const xpNum = jsonNumber(user.xp, 0);
+        const subPlan =
+          user.subscription_plan != null && String(user.subscription_plan).trim() !== ''
+            ? String(user.subscription_plan).trim().toLowerCase()
+            : undefined;
+        const subStatus =
+          user.subscription_status != null && String(user.subscription_status).trim() !== ''
+            ? String(user.subscription_status).trim().toLowerCase()
+            : undefined;
+
         const responseData = {
           id: jsonNumber(user.id),
           username: user.username || user.name || 'User',
@@ -514,6 +523,8 @@ const [updatedRows] = await db.execute(
           createdAt: user.created_at,
           login_streak: jsonNumber(user.login_streak, 0),
           last_seen: lastSeenValue,
+          ...(subPlan !== undefined ? { subscription_plan: subPlan } : {}),
+          ...(subStatus !== undefined ? { subscription_status: subStatus } : {}),
           stats: {
             reputation: Math.floor(xpNum / 100),
             totalTrades: 0,

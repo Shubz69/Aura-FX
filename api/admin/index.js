@@ -3,7 +3,7 @@ require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
 const nodemailer = require('nodemailer');
 const { verifyToken } = require('../utils/auth');
-const { isSuperAdminEmail, getSuperAdminEmailsLower } = require('../utils/entitlements');
+const { isSuperAdminEmail } = require('../utils/entitlements');
 const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
 
 /** Cryptographic JWT + DB role super_admin or env SUPER_ADMIN_EMAIL match. */
@@ -824,27 +824,14 @@ module.exports = async (req, res) => {
           return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        const userEmail = (userRows[0].email || '').toString().trim().toLowerCase();
         const targetDbRole = (userRows[0].role || '').toString().trim().toLowerCase();
-        const superEmails = getSuperAdminEmailsLower();
 
         if ((targetDbRole === 'super_admin' || isSuperAdminEmail(userRows[0])) && role !== 'super_admin') {
           db.release();
           return res.status(403).json({ success: false, message: 'Cannot change Super Admin role' });
         }
-        if (role === 'super_admin') {
-          if (!superEmails.length) {
-            db.release();
-            return res.status(403).json({
-              success: false,
-              message: 'Set SUPER_ADMIN_EMAIL in server environment to assign super_admin role'
-            });
-          }
-          if (!superEmails.includes(userEmail)) {
-            db.release();
-            return res.status(403).json({ success: false, message: 'Super Admin is restricted to configured super-admin accounts' });
-          }
-        }
+        /* Granting super_admin: caller already passed assertSuperAdminDb (DB super_admin or env-listed email).
+           Target need not be pre-listed in SUPER_ADMIN_EMAIL — that list is for recognition / bootstrap only. */
 
         // Update user role
         await db.execute('UPDATE users SET role = ? WHERE id = ?', [role, userId]);

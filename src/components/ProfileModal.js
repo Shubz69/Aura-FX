@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
     getRankTitle,
@@ -20,7 +20,45 @@ import {
 import { toast } from 'react-toastify';
 import { resolveAvatarUrl, getPlaceholderColor, isValidDataUrl } from '../utils/avatar';
 import Api from '../services/Api';
+import {
+    formatMembershipLabel,
+    normalizeRoleKey,
+    hasActivePaidPlan,
+    isSuperAdmin
+} from '../utils/roles';
 import '../styles/ProfileModal.css';
+
+function inferTierUpperFromProfile(user) {
+    if (hasActivePaidPlan(user)) {
+        const pl = normalizeRoleKey(user.subscription_plan);
+        if (['a7fx', 'elite'].includes(pl)) return 'A7FX';
+        if (['aura', 'premium'].includes(pl)) return 'PREMIUM';
+    }
+    const r = normalizeRoleKey(user.role);
+    if (r === 'a7fx' || r === 'elite') return 'A7FX';
+    if (r === 'premium') return 'PREMIUM';
+    return 'FREE';
+}
+
+function planProductLabel(plan) {
+    const pl = normalizeRoleKey(plan);
+    if (pl === 'aura') return 'AURA TERMINAL';
+    if (pl === 'a7fx' || pl === 'elite') return 'A7FX Elite';
+    if (pl === 'premium') return 'Premium';
+    if (pl === 'free') return 'Free';
+    return pl ? pl.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '';
+}
+
+function subscriptionStatusLabel(status) {
+    const s = normalizeRoleKey(status);
+    if (s === 'active') return 'Active';
+    if (s === 'trialing') return 'Trialing';
+    if (s === 'past_due') return 'Past due';
+    if (s === 'cancelled' || s === 'canceled') return 'Cancelled';
+    if (s === 'expired') return 'Expired';
+    if (s === 'inactive') return 'Inactive';
+    return s ? s.replace(/_/g, ' ') : '';
+}
 
 const getModalRoot = () => {
     let modalRoot = document.getElementById('profile-modal-root');
@@ -99,6 +137,17 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     const isOwnProfile = userId === storedUser.id || userId === currentUserId;
     const token = localStorage.getItem('token');
     const isSystemUser = userId && String(userId).toLowerCase() === 'system';
+
+    const displayProfile = useMemo(() => {
+        if (!profile) return null;
+        if (!isOwnProfile) return profile;
+        return {
+            ...profile,
+            subscription_plan: profile.subscription_plan ?? storedUser.subscription_plan,
+            subscription_status: profile.subscription_status ?? storedUser.subscription_status,
+            email: profile.email ?? storedUser.email
+        };
+    }, [profile, isOwnProfile, storedUser]);
 
     const fetchProfile = useCallback(async () => {
         if (!userId || isSystemUser) return;
@@ -422,19 +471,34 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         );
     }
 
-    const level = profile.level || 1;
-    const xp = profile.xp || 0;
+    const level = displayProfile.level || 1;
+    const xp = displayProfile.xp || 0;
     const xpProgress = getXPProgress(xp, level);
     const rankTitle = getRankTitle(level);
     const tierName = getTierName(level);
     const tierColor = getTierColor(level);
     const nextMilestone = getNextRankMilestone(level);
-    const loginStreak = profile.login_streak || 0;
+    const loginStreak = displayProfile.login_streak || 0;
     const xpForNext = getXPForNextLevel(level);
     const achievements = getAchievements(level, loginStreak, stats?.ai_chats_count || 0, stats?.community_messages || 0);
     const unlockedCount = achievements.filter(a => a.unlocked).length;
     const bannerAccent = getBannerAccent(level);
-    const bio = profile.bio || ''; // Get bio from profile data
+    const bio = displayProfile.bio || '';
+
+    const membershipSubject = {
+        role: displayProfile.role,
+        email: displayProfile.email,
+        subscription_plan: displayProfile.subscription_plan,
+        subscription_status: displayProfile.subscription_status
+    };
+    const subjectIsSuperAdmin = isSuperAdmin(membershipSubject);
+    const subjectIsAdmin = normalizeRoleKey(displayProfile.role) === 'admin';
+    const tierUpper = inferTierUpperFromProfile(membershipSubject);
+    const membershipHeadline = formatMembershipLabel(displayProfile.role, tierUpper);
+    const subStatusNorm = normalizeRoleKey(displayProfile.subscription_status);
+    const activeSub = ['active', 'trialing'].includes(subStatusNorm);
+    const planName = planProductLabel(displayProfile.subscription_plan);
+    const statusPretty = subscriptionStatusLabel(displayProfile.subscription_status);
 
     const SettingsModal = () => (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(20px)', zIndex: 100001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', pointerEvents: 'auto' }} onClick={() => setShowSettings(false)}>
@@ -588,9 +652,9 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     height: 'clamp(120px, 20vw, 170px)',
                     background: getBannerGradient(level), borderRadius: '22px 22px 0 0', overflow: 'hidden', flexShrink: 0
                 }}>
-                    {profile.banner && (profile.banner.startsWith('http') || (profile.banner.startsWith('data:image') && isValidDataUrl(profile.banner))) && (
+                    {displayProfile.banner && (displayProfile.banner.startsWith('http') || (displayProfile.banner.startsWith('data:image') && isValidDataUrl(displayProfile.banner))) && (
                         <img 
-                            src={profile.banner} 
+                            src={displayProfile.banner} 
                             alt="Banner" 
                             style={{
                                 position: 'absolute',
@@ -637,7 +701,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 }}>
                     <AvatarWithFallback
                         size={typeof window !== 'undefined' && window.innerWidth < 480 ? 84 : 112}
-                        tierColor={tierColor} isOnline={isOnline} avatar={profile?.avatar} userId={profile?.id ?? profile?.username}
+                        tierColor={tierColor} isOnline={isOnline} avatar={displayProfile?.avatar} userId={displayProfile?.id ?? displayProfile?.username}
                     />
                 </div>
 
@@ -646,12 +710,12 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     <div style={{ flex: 1, minWidth: '180px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '7px', flexWrap: 'wrap' }}>
                             <h1 style={{ fontSize: 'clamp(1.1rem, 4vw, 1.9rem)', fontWeight: 200, color: 'white', margin: 0, textTransform: 'uppercase', letterSpacing: '0.22em', fontFamily: "'Space Grotesk', sans-serif", textShadow: `0 0 40px ${tierColor}30` }}>
-                                {profile.username || profile.name || 'User'}
+                                {displayProfile.username || displayProfile.name || 'User'}
                             </h1>
-                            {['admin', 'super_admin'].includes((profile.role || '').toString().toLowerCase()) && (
+                            {(subjectIsSuperAdmin || subjectIsAdmin) && (
                                 <FaCrown style={{ color: '#FFD700', fontSize: '1.1rem', filter: 'drop-shadow(0 0 8px #FFD70060)' }} />
                             )}
-                            {profile.subscription_status === 'active' && <FaCheckCircle style={{ color: '#eaa960', fontSize: '1rem' }} />}
+                            {activeSub && <FaCheckCircle style={{ color: '#eaa960', fontSize: '1rem' }} title={statusPretty || 'Subscribed'} />}
                         </div>
                         {/* Rank pill */}
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '5px 14px', background: `${tierColor}12`, border: `1px solid ${tierColor}30`, borderRadius: '99px' }}>
@@ -778,43 +842,135 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
                     {/* OVERVIEW TAB */}
                     {activeTab === 'overview' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {/* Role & subscription */}
+                            <div style={{
+                                padding: '14px 16px',
+                                background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+                                borderRadius: '14px',
+                                border: `1px solid ${tierColor}22`,
+                                position: 'relative',
+                                overflow: 'hidden'
+                            }}>
+                                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}55, transparent)` }} />
+                                <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase', letterSpacing: '0.32em', marginBottom: '10px', fontFamily: "'Space Grotesk', sans-serif" }}>Account</div>
+                                {subjectIsSuperAdmin ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{
+                                                padding: '6px 12px',
+                                                borderRadius: '99px',
+                                                background: 'linear-gradient(135deg, rgba(255,215,0,0.12) 0%, rgba(234,169,96,0.08) 100%)',
+                                                border: '1px solid rgba(255,215,0,0.35)',
+                                                color: '#FFD700',
+                                                fontSize: '0.68rem',
+                                                fontWeight: 600,
+                                                letterSpacing: '0.14em',
+                                                textTransform: 'uppercase',
+                                                fontFamily: "'Space Grotesk', sans-serif"
+                                            }}>Super Admin</span>
+                                            {subjectIsAdmin && (
+                                                <span style={{
+                                                    padding: '5px 10px',
+                                                    borderRadius: '99px',
+                                                    background: `${tierColor}14`,
+                                                    border: `1px solid ${tierColor}40`,
+                                                    color: tierColor,
+                                                    fontSize: '0.62rem',
+                                                    fontWeight: 500,
+                                                    letterSpacing: '0.12em',
+                                                    textTransform: 'uppercase',
+                                                    fontFamily: "'Space Grotesk', sans-serif"
+                                                }}>Admin</span>
+                                            )}
+                                            {activeSub && planName && (
+                                                <span style={{
+                                                    padding: '5px 10px',
+                                                    borderRadius: '99px',
+                                                    background: 'rgba(255,255,255,0.04)',
+                                                    border: '1px solid rgba(255,255,255,0.1)',
+                                                    color: 'rgba(255,255,255,0.85)',
+                                                    fontSize: '0.62rem',
+                                                    letterSpacing: '0.1em',
+                                                    fontFamily: "'Space Grotesk', sans-serif"
+                                                }}>{planName}</span>
+                                            )}
+                                            {statusPretty && (
+                                                <span style={{
+                                                    padding: '5px 10px',
+                                                    borderRadius: '99px',
+                                                    background: activeSub ? 'rgba(35,165,90,0.12)' : 'rgba(255,255,255,0.04)',
+                                                    border: `1px solid ${activeSub ? 'rgba(35,165,90,0.35)' : 'rgba(255,255,255,0.08)'}`,
+                                                    color: activeSub ? '#7dffb3' : 'rgba(255,255,255,0.45)',
+                                                    fontSize: '0.58rem',
+                                                    letterSpacing: '0.12em',
+                                                    textTransform: 'uppercase',
+                                                    fontFamily: "'Space Grotesk', sans-serif"
+                                                }}>{statusPretty}</span>
+                                            )}
+                                        </div>
+                                        <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '0.04em', lineHeight: 1.45 }}>
+                                            Subscription view: <span style={{ color: tierColor }}>{formatMembershipLabel('USER', tierUpper)}</span>
+                                            {tierName ? <span style={{ color: 'rgba(255,255,255,0.35)' }}> · XP rank {tierName}</span> : null}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <div style={{ fontSize: '1.05rem', fontWeight: 300, color: 'white', letterSpacing: '0.06em', fontFamily: "'Space Grotesk', sans-serif", marginBottom: '6px' }}>{membershipHeadline}</div>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+                                            {activeSub && planName && (
+                                                <span style={{
+                                                    padding: '4px 10px',
+                                                    borderRadius: '99px',
+                                                    background: `${tierColor}12`,
+                                                    border: `1px solid ${tierColor}35`,
+                                                    color: tierColor,
+                                                    fontSize: '0.6rem',
+                                                    letterSpacing: '0.1em',
+                                                    fontFamily: "'Space Grotesk', sans-serif"
+                                                }}>{planName}</span>
+                                            )}
+                                            {statusPretty && (
+                                                <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '0.08em' }}>{statusPretty}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Journal stats rings */}
-                            {profile.journalStats && (
-                                <div style={{ display: 'flex', justifyContent: 'center', gap: '28px', flexWrap: 'wrap', padding: '20px', background: 'rgba(255,255,255,0.015)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    {[{ pct: profile.journalStats.todayPct, label: 'Today' }, { pct: profile.journalStats.weekPct, label: 'This Week' }, { pct: profile.journalStats.monthPct, label: 'This Month' }].map((item, i) => (
-                                        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: 54, height: 54, borderRadius: '50%', background: `conic-gradient(${tierColor} 0deg, #f8c37d ${(item.pct ?? 0) * 3.6}deg, rgba(255,255,255,0.05) ${(item.pct ?? 0) * 3.6}deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                                                <div style={{ position: 'absolute', inset: 4, borderRadius: '50%', background: '#0a0a12' }} />
-                                                <span style={{ position: 'relative', zIndex: 1, fontSize: '0.75rem', fontWeight: 500, color: '#fff', fontFamily: "'Space Grotesk', sans-serif" }}>{item.pct != null ? `${item.pct}%` : '—'}</span>
+                            {displayProfile.journalStats && (
+                                <div style={{ display: 'flex', justifyContent: 'space-around', gap: '12px', flexWrap: 'wrap', padding: '12px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                    {[{ pct: displayProfile.journalStats.todayPct, label: 'Today' }, { pct: displayProfile.journalStats.weekPct, label: 'This Week' }, { pct: displayProfile.journalStats.monthPct, label: 'This Month' }].map((item, i) => (
+                                        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', minWidth: '72px' }}>
+                                            <div style={{ width: 48, height: 48, borderRadius: '50%', background: `conic-gradient(${tierColor} 0deg, #f8c37d ${(item.pct ?? 0) * 3.6}deg, rgba(255,255,255,0.06) ${(item.pct ?? 0) * 3.6}deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                                                <div style={{ position: 'absolute', inset: 3, borderRadius: '50%', background: '#0a0a12' }} />
+                                                <span style={{ position: 'relative', zIndex: 1, fontSize: '0.7rem', fontWeight: 500, color: '#fff', fontFamily: "'Space Grotesk', sans-serif" }}>{item.pct != null ? `${item.pct}%` : '—'}</span>
                                             </div>
-                                            <span style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.22em', fontFamily: "'Space Grotesk', sans-serif" }}>{item.label}</span>
+                                            <span style={{ fontSize: '0.52rem', color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase', letterSpacing: '0.18em', fontFamily: "'Space Grotesk', sans-serif" }}>{item.label}</span>
                                         </div>
                                     ))}
                                 </div>
                             )}
 
-                            {/* Stat cards grid */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+                            {/* Stat cards — no duplicate power level (shown in header) */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(104px, 1fr))', gap: '8px' }}>
                                 {[
-                                    { icon: '⚡', label: 'Power Level', value: level, color: tierColor },
                                     { icon: '✨', label: 'Total XP', value: xp.toLocaleString(), color: '#FFD700' },
                                     { icon: '🔥', label: 'Streak', value: `${loginStreak}d`, color: '#f59e0b' },
                                     { icon: '🎖️', label: 'Achievements', value: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, color: '#eaa960' }
                                 ].map((stat, i) => (
-                                    <div key={i} style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', overflow: 'hidden', transition: 'border-color 0.22s' }}>
-                                        <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: '2px', background: `linear-gradient(180deg, transparent, ${stat.color}80, transparent)`, borderRadius: '2px' }} />
-                                        <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>{stat.icon}</span>
-                                        <div>
-                                            <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.22em', marginBottom: '3px', fontFamily: "'Space Grotesk', sans-serif" }}>{stat.label}</div>
-                                            <div style={{ fontSize: '1.15rem', fontWeight: 300, color: stat.color, letterSpacing: '0.04em', fontFamily: "'Space Grotesk', sans-serif", filter: `drop-shadow(0 0 8px ${stat.color}40)` }}>{stat.value}</div>
-                                        </div>
+                                    <div key={i} style={{ padding: '12px 10px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '6px', position: 'relative', overflow: 'hidden', transition: 'border-color 0.22s' }}>
+                                        <div style={{ position: 'absolute', top: 0, left: '25%', right: '25%', height: '2px', background: `linear-gradient(90deg, transparent, ${stat.color}50, transparent)`, borderRadius: '2px' }} />
+                                        <span style={{ fontSize: '1.15rem', lineHeight: 1 }}>{stat.icon}</span>
+                                        <div style={{ fontSize: '0.5rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.18em', fontFamily: "'Space Grotesk', sans-serif" }}>{stat.label}</div>
+                                        <div style={{ fontSize: '0.95rem', fontWeight: 300, color: stat.color, letterSpacing: '0.03em', fontFamily: "'Space Grotesk', sans-serif", filter: `drop-shadow(0 0 6px ${stat.color}35)` }}>{stat.value}</div>
                                     </div>
                                 ))}
                             </div>
 
                             {/* Visible trading stats chosen by the user */}
-                            {profile.visibleStats && Object.keys(profile.visibleStats).length > 0 && (() => {
+                            {displayProfile.visibleStats && Object.keys(displayProfile.visibleStats).length > 0 && (() => {
                                 const STAT_META = {
                                     discipline_score: { icon: '🎯', label: 'Discipline', color: '#f8c37d', fmt: v => `${v}%` },
                                     journal_score:    { icon: '📓', label: 'Journal',    color: '#f8c37d', fmt: v => `${v}%` },
@@ -823,7 +979,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                     total_trades:     { icon: '📊', label: 'Trades',     color: '#eaa960', fmt: v => String(v) },
                                     login_streak:     { icon: '🔥', label: 'Streak',     color: '#f97316', fmt: v => `${v}d` },
                                 };
-                                const entries = Object.entries(profile.visibleStats).filter(([k]) => STAT_META[k]);
+                                const entries = Object.entries(displayProfile.visibleStats).filter(([k]) => STAT_META[k]);
                                 if (entries.length === 0) return null;
                                 return (
                                     <div style={{ padding: '18px 20px', background: 'rgba(255,255,255,0.015)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -850,16 +1006,16 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
                             {/* Next Milestone */}
                             {nextMilestone && (
-                                <div style={{ padding: '18px 22px', background: `${tierColor}08`, border: `1px solid ${tierColor}20`, borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', overflow: 'hidden' }}>
+                                <div style={{ padding: '14px 18px', background: `${tierColor}08`, border: `1px solid ${tierColor}20`, borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '14px', position: 'relative', overflow: 'hidden' }}>
                                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}60, transparent)` }} />
-                                    <div style={{ fontSize: '1.8rem' }}>🏆</div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.28em', marginBottom: '3px', fontFamily: "'Space Grotesk', sans-serif" }}>Next Milestone</div>
-                                        <div style={{ fontSize: '1.1rem', fontWeight: 300, color: tierColor, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif" }}>{nextMilestone.title}</div>
+                                    <div style={{ fontSize: '1.5rem' }}>🏆</div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.28em', marginBottom: '3px', fontFamily: "'Space Grotesk', sans-serif" }}>Next Milestone</div>
+                                        <div style={{ fontSize: '0.95rem', fontWeight: 300, color: tierColor, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif", lineHeight: 1.25 }}>{nextMilestone.title}</div>
                                     </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <div style={{ fontSize: '1.4rem', fontWeight: 200, color: 'rgba(255,255,255,0.6)', fontFamily: "'Space Grotesk', sans-serif" }}>{nextMilestone.level - level}</div>
-                                        <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.2em', fontFamily: "'Space Grotesk', sans-serif" }}>levels</div>
+                                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 200, color: 'rgba(255,255,255,0.6)', fontFamily: "'Space Grotesk', sans-serif" }}>{nextMilestone.level - level}</div>
+                                        <div style={{ fontSize: '0.52rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.2em', fontFamily: "'Space Grotesk', sans-serif" }}>levels</div>
                                     </div>
                                 </div>
                             )}

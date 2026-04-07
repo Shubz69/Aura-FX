@@ -131,6 +131,8 @@ function buildUserSelectFields(columnSet) {
   if (columnSet.has('banner')) parts.push('banner');
   if (columnSet.has('avatarColor')) parts.push('avatarColor');
   if (columnSet.has('last_seen')) parts.push('last_seen');
+  if (columnSet.has('subscription_plan')) parts.push('subscription_plan');
+  if (columnSet.has('subscription_status')) parts.push('subscription_status');
   return {
     selectFields: parts.join(', '),
     hasBanner: columnSet.has('banner'),
