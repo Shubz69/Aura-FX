@@ -7,18 +7,28 @@ import MarketDecoderChart from './MarketDecoderChart';
 
 function formatPct(n) {
   if (n == null || Number.isNaN(Number(n))) {
-    return 'Session % pending — quote snapshot incomplete';
+    return null;
   }
   const v = Number(n);
   const sign = v > 0 ? '+' : '';
   return `${sign}${v.toFixed(2)}%`;
 }
 
+function parseNumberLoose(v) {
+  if (v == null) return null;
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  const m = String(v).match(/-?\d+(?:\.\d+)?/);
+  if (!m) return null;
+  const out = Number(m[0]);
+  return Number.isFinite(out) ? out : null;
+}
+
 function formatLevel(v, marketType) {
-  if (v == null || Number.isNaN(Number(v))) {
-    return 'Not available from loaded series';
+  const parsed = parseNumberLoose(v);
+  if (parsed == null) {
+    return '—';
   }
-  const n = Number(v);
+  const n = parsed;
   if (marketType === 'FX' || marketType === 'Commodity') return n.toFixed(5);
   if (marketType === 'Crypto' && n > 200) return n.toFixed(2);
   return n.toFixed(n < 50 ? 4 : 2);
@@ -211,6 +221,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
   if (!brief) return null;
 
   const mt = brief?.header?.marketType || 'FX';
+  const changePct = parseNumberLoose(brief.header?.changePercent);
   const instrumentHeadlines = headlinePack.items;
   const showingFallbackHeadlines = headlinePack.scope === 'fallback' || headlinePack.scope === 'none';
 
@@ -277,21 +288,15 @@ export default function MarketDecoderBriefContent({ brief, q }) {
               <span className="md-ref-last">{formatLevel(brief.header.price, mt)}</span>
               <span
                 className={
-                  brief.header.changePercent != null &&
-                  !Number.isNaN(Number(brief.header.changePercent)) &&
-                  Number(brief.header.changePercent) >= 0
+                  changePct != null && changePct >= 0
                     ? 'md-ref-pct md-ref-pct--up'
-                    : 'md-ref-pct md-ref-pct--down'
+                    : changePct != null
+                      ? 'md-ref-pct md-ref-pct--down'
+                      : 'md-ref-pct'
                 }
               >
-                {formatPct(brief.header.changePercent)}
-                {brief.header.changePercent != null &&
-                !Number.isNaN(Number(brief.header.changePercent)) &&
-                Number(brief.header.changePercent) >= 0 ? (
-                  ' ▲'
-                ) : (
-                  ' ▼'
-                )}
+                {formatPct(changePct) || 'Session snapshot pending'}
+                {changePct != null ? (changePct >= 0 ? ' ▲' : ' ▼') : ''}
               </span>
             </div>
             <MarketDecoderChart bars={brief.meta?.chartBars} compact={false} referenceStyle />

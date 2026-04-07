@@ -146,7 +146,7 @@ export default function MarketDecoderChart({ bars, compact = false, referenceSty
     return (
       <div className={`md-chart-empty${referenceStyle ? ' md-chart-empty--ref' : ''}`}>
         <p className="md-decoder-small">
-          Not enough OHLC history to plot yet — run Decode again once more daily bars are available for this symbol.
+          Chart history is still loading for this symbol. The rest of the brief is valid; rerun Decode shortly for full OHLC view.
         </p>
       </div>
     );
