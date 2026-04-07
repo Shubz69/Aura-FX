@@ -166,7 +166,11 @@ export default function MarketDecoderView({ embedded }) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch {}
+      toast.success('Brief downloaded as JSON.');
+    } catch (e) {
+      console.warn(e);
+      toast.error('Could not download JSON. Try again.');
+    }
   }, [brief, q]);
 
   const exportPreviewPdf = useCallback(() => {
@@ -229,7 +233,10 @@ export default function MarketDecoderView({ embedded }) {
       </html>
     `;
     const w = window.open('', '_blank', 'noopener,noreferrer');
-    if (!w) return;
+    if (!w) {
+      toast.error('Allow pop-ups for this site to use Print / PDF.');
+      return;
+    }
     w.document.open();
     w.document.write(html);
     w.document.close();
@@ -395,7 +402,9 @@ export default function MarketDecoderView({ embedded }) {
                   </div>
                   <div className="td-intel-preview-frame-wrap md-decoder-intel-frame">
                     <div className="md-decoder-intel-scroll">
-                      <MarketDecoderBriefContent brief={brief} />
+                      <div className="md-decoder md-decoder--reference md-decoder--intel-preview-inner">
+                        <MarketDecoderBriefContent brief={brief} />
+                      </div>
                     </div>
                     <footer className="md-decoder-intel-footer">
                       <div className="md-preview-footer-extras">

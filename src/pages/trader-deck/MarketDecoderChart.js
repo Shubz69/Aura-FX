@@ -10,6 +10,9 @@ const MODES = [
 
 const TIMEFRAMES_REF = ['1H', '4H', '1D', '1W', '1M'];
 
+/** Approximate zoom on daily OHLC bars (tabs = visible window from the right). */
+const TF_VISIBLE_BARS = { '1H': 8, '4H': 16, '1D': 32, '1W': 72, '1M': 400 };
+
 function smaFromCandles(candles, period) {
   if (!candles.length || period < 2) return [];
   const out = [];
@@ -126,7 +129,18 @@ export default function MarketDecoderChart({ bars, compact = false, referenceSty
       s.setData(lineData);
     }
 
-    chart.timeScale().fitContent();
+    if (referenceStyle && data.length > 0) {
+      const zoomBars = TF_VISIBLE_BARS[activeTf] ?? 32;
+      const right = data.length - 1;
+      const from = Math.max(0, right - zoomBars + 1);
+      try {
+        chart.timeScale().setVisibleLogicalRange({ from, to: right });
+      } catch {
+        chart.timeScale().fitContent();
+      }
+    } else {
+      chart.timeScale().fitContent();
+    }
 
     const ro = new ResizeObserver(() => {
       if (wrapRef.current && chartRef.current) {
@@ -140,7 +154,7 @@ export default function MarketDecoderChart({ bars, compact = false, referenceSty
       chart.remove();
       chartRef.current = null;
     };
-  }, [bars, mode, compact, referenceStyle]);
+  }, [bars, mode, compact, referenceStyle, activeTf]);
 
   if (!bars || bars.length < 2) {
     return (

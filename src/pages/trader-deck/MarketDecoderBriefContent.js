@@ -1,7 +1,7 @@
 /**
  * Full Market Decoder brief panels — shared layout for embedded page or preview modal.
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import { FiChevronRight, FiArrowUpRight, FiArrowDownRight } from 'react-icons/fi';
 import MarketDecoderChart from './MarketDecoderChart';
 
@@ -197,6 +197,27 @@ function CrossArrow({ tone, diag }) {
 }
 
 export default function MarketDecoderBriefContent({ brief, q }) {
+  const moreDetailsRef = useRef(null);
+  const [execChecked, setExecChecked] = useState(() => [true, true, true]);
+
+  const toggleExec = useCallback((idx) => {
+    setExecChecked((prev) => {
+      const next = [...prev];
+      next[idx] = !next[idx];
+      return next;
+    });
+  }, []);
+
+  const openScenarioDetails = useCallback(() => {
+    const el = moreDetailsRef.current;
+    if (el) {
+      el.open = true;
+      requestAnimationFrame(() => {
+        document.getElementById('md-decoder-scenario-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }, []);
+
   const headlinePack = useMemo(() => {
     const meta = brief?.meta;
     if (Array.isArray(meta?.instrumentHeadlines) && meta.instrumentHeadlines.length > 0) {
@@ -217,6 +238,11 @@ export default function MarketDecoderBriefContent({ brief, q }) {
   const refTimeline = useMemo(() => (brief ? buildTimeline(brief) : []), [brief]);
   const refCross = useMemo(() => (brief ? crossAssetCardsFromLines(brief.crossAssetContext) : []), [brief]);
   const refChecklist = useMemo(() => (brief ? checklistFromBrief(brief) : []), [brief]);
+
+  useEffect(() => {
+    if (refChecklist.length === 0) return;
+    setExecChecked(Array(refChecklist.length).fill(true));
+  }, [brief?.header?.asset, brief?.meta?.generatedAt, refChecklist.length]);
 
   if (!brief) return null;
 
@@ -347,12 +373,12 @@ export default function MarketDecoderBriefContent({ brief, q }) {
 
           <section className="md-ref-panel">
             <h2 className="md-ref-panel-h">Scenario Map</h2>
-            <button type="button" className="md-ref-scen-row">
+            <button type="button" className="md-ref-scen-row md-ref-scen-row--action" onClick={openScenarioDetails}>
               <span className="md-ref-scen-k">Upside Target</span>
               <span className="md-ref-scen-v">{levelShort(brief.keyLevels?.keyLevelsDisplay?.resistance1)}</span>
               <FiChevronRight className="md-ref-scen-chev" aria-hidden />
             </button>
-            <button type="button" className="md-ref-scen-row">
+            <button type="button" className="md-ref-scen-row md-ref-scen-row--action" onClick={openScenarioDetails}>
               <span className="md-ref-scen-k">Downside Risk</span>
               <span className="md-ref-scen-v">{levelShort(brief.keyLevels?.keyLevelsDisplay?.support1)}</span>
               <FiChevronRight className="md-ref-scen-chev" aria-hidden />
@@ -362,13 +388,21 @@ export default function MarketDecoderBriefContent({ brief, q }) {
           <section className="md-ref-panel">
             <h2 className="md-ref-panel-h">Execution Guidance</h2>
             <ul className="md-ref-exec-list">
-              {refChecklist.map((it) => (
-                <li key={it.title} className="md-ref-exec-item">
-                  <span className="md-ref-exec-check" aria-hidden />
-                  <span className="md-ref-exec-body">
-                    <span className="md-ref-exec-title">{it.title}</span>
-                    <span className="md-ref-exec-sub">{it.sub}</span>
-                  </span>
+              {refChecklist.map((it, idx) => (
+                <li key={it.title} className="md-ref-exec-item md-ref-exec-item--interactive">
+                  <button
+                    type="button"
+                    className={`md-ref-exec-check-btn${execChecked[idx] ? ' md-ref-exec-check-btn--on' : ''}`}
+                    aria-pressed={execChecked[idx]}
+                    aria-label={`Toggle: ${it.title}`}
+                    onClick={() => toggleExec(idx)}
+                  />
+                  <button type="button" className="md-ref-exec-hit" onClick={() => toggleExec(idx)}>
+                    <span className="md-ref-exec-body">
+                      <span className="md-ref-exec-title">{it.title}</span>
+                      <span className="md-ref-exec-sub">{it.sub}</span>
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -382,7 +416,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
         </span>
       </footer>
 
-      <details className="md-ref-more">
+      <details ref={moreDetailsRef} className="md-ref-more">
         <summary className="md-ref-more-sum">More context — headlines, calendar, scenarios</summary>
         <div className="md-ref-more-inner">
           <section className="md-ref-panel md-ref-panel--flat">
@@ -396,7 +430,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
             </ul>
           </section>
           {brief.scenarioMap ? (
-            <section className="md-ref-panel md-ref-panel--flat">
+            <section id="md-decoder-scenario-detail" className="md-ref-panel md-ref-panel--flat">
               <h3 className="md-ref-subh">Scenario detail</h3>
               <div className="md-decoder-scenario">
                 <div className="md-decoder-scenario-block">

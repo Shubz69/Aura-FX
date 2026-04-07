@@ -1733,7 +1733,14 @@
     rgba(12, 14, 32, 0.58) 100%
   );
   --ref-ink: rgba(245, 247, 255, 0.94);
-  --ref-muted: rgba(210, 215, 228, 0.58);
+  --ref-muted: rgba(210, 215, 228, 0.72);
+}
+
+/* Nested inside fullscreen preview portal — keep tokens but avoid double padding / max-width */
+.md-decoder--reference.md-decoder--intel-preview-inner {
+  max-width: none;
+  padding: 0;
+  margin: 0;
 }
 
 .md-ref-top {
@@ -2383,6 +2390,17 @@
   opacity: 0.7;
 }
 
+.md-ref-scen-row--action {
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.md-ref-scen-row--action:hover {
+  border-color: rgba(140, 175, 255, 0.38);
+  background: rgba(140, 175, 255, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22) inset;
+}
+
 .md-ref-exec-list {
   list-style: none;
   margin: 0;
@@ -2437,6 +2455,66 @@
   line-height: 1.45;
 }
 
+.md-ref-exec-item--interactive {
+  align-items: flex-start;
+}
+
+.md-ref-exec-check-btn {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid rgba(140, 175, 255, 0.45);
+  background: linear-gradient(145deg, rgba(140, 175, 255, 0.12), rgba(32, 48, 96, 0.28));
+  box-shadow: none;
+  cursor: pointer;
+  position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+}
+
+.md-ref-exec-check-btn:hover {
+  border-color: rgba(140, 175, 255, 0.65);
+}
+
+.md-ref-exec-check-btn--on {
+  background: linear-gradient(145deg, rgba(140, 175, 255, 0.34), rgba(32, 48, 96, 0.5));
+  box-shadow: 0 0 10px rgba(140, 175, 255, 0.28);
+}
+
+.md-ref-exec-check-btn--on::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--ref-gold);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.md-ref-exec-hit {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 4px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.md-ref-exec-hit:hover {
+  background: rgba(140, 175, 255, 0.06);
+}
+
 .md-ref-footer {
   margin-top: 8px;
   padding: 22px 20px;
@@ -2453,13 +2531,13 @@
 }
 
 .md-ref-footer-cap {
-  font-size: clamp(1.1rem, 2.6vw, 1.65rem);
-  font-weight: 900;
+  font-size: clamp(1.05rem, 2.4vw, 1.5rem);
+  font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--ref-gold);
   text-shadow:
-    0 0 24px rgba(140, 175, 255, 0.55),
-    0 0 48px rgba(140, 175, 255, 0.25);
+    0 0 18px rgba(234, 169, 96, 0.35),
+    0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 .md-ref-more {
@@ -2770,9 +2848,9 @@
 .md-decoder-intel-chrome-sub {
   margin: 6px 0 0;
   max-width: 520px;
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(226, 232, 245, 0.82);
   line-height: 1.45;
   letter-spacing: 0.02em;
   text-transform: none;
@@ -2845,7 +2923,7 @@
 }
 
 .md-decoder-intel-footer .md-preview-linkish {
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(230, 235, 248, 0.72);
 }
 
 .md-decoder-intel-footer .md-preview-linkish:hover {
