@@ -78,6 +78,14 @@ const CATEGORY_BRIEF_KINDS = new Set([
   'etfs',
 ]);
 
+/** All brief kinds we load and show (institutional + desk + eight asset sleeves). */
+const ALLOWED_BRIEF_KINDS = new Set([
+  'aura_institutional_daily',
+  'aura_institutional_weekly',
+  'general',
+  ...CATEGORY_BRIEF_KINDS,
+]);
+
 function sanitizeBriefForPreview(text) {
   return String(text || '')
     // Remove Markdown horizontal rules or separator-like lines.
@@ -87,9 +95,9 @@ function sanitizeBriefForPreview(text) {
     .trim();
 }
 
-function filterToExpected8Briefs(items) {
+function filterToAllowedBriefKinds(items) {
   if (!Array.isArray(items)) return [];
-  return items.filter((b) => CATEGORY_BRIEF_KINDS.has(String(b?.briefKind || '').toLowerCase()));
+  return items.filter((b) => ALLOWED_BRIEF_KINDS.has(String(b?.briefKind || '').toLowerCase()));
 }
 
 function isTextLikeMime(mime) {
@@ -141,23 +149,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     });
   }, [briefs]);
 
-  const kindsPresent = useMemo(() => {
-    const seen = new Set(sortedBriefs.map((b) => String(b?.briefKind || 'general').toLowerCase()));
-    return BRIEF_KIND_ORDER.filter((k) => seen.has(k));
-  }, [sortedBriefs]);
-
-  useEffect(() => {
-    if (!kindsPresent.length) return;
-    setSelectedKinds((prev) => {
-      const next = new Set();
-      kindsPresent.forEach((k) => {
-        if (prev.has(k)) next.add(k);
-      });
-      if (!next.size) kindsPresent.forEach((k) => next.add(k));
-      return next;
-    });
-  }, [kindsPresent]);
-
   const displayedBriefs = useMemo(() => {
     if (!sortedBriefs.length) return [];
     return sortedBriefs.filter((b) => selectedKinds.has(String(b?.briefKind || 'general').toLowerCase()));
@@ -204,11 +195,12 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     setLoading(true);
     setError(null);
     setAddSuccess(null);
+    setSelectedKinds(new Set(BRIEF_KIND_ORDER));
     const dateStr = String(selectedDate).trim().slice(0, 10);
     Api.getTraderDeckContent(type, dateStr)
       .then((res) => {
         if (cancelled) return;
-        setBriefs(filterToExpected8Briefs(Array.isArray(res.data?.briefs) ? res.data.briefs : []));
+        setBriefs(filterToAllowedBriefKinds(Array.isArray(res.data?.briefs) ? res.data.briefs : []));
       })
       .catch(() => {
         if (!cancelled) setBriefs([]);
@@ -366,7 +358,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         setTimeout(() => setAddSuccess(null), 4000);
         return Api.getTraderDeckContent(type, dateStr);
       })
-      .then((res) => setBriefs(filterToExpected8Briefs(Array.isArray(res.data?.briefs) ? res.data.briefs : [])))
+      .then((res) => setBriefs(filterToAllowedBriefKinds(Array.isArray(res.data?.briefs) ? res.data.briefs : [])))
       .catch((err) => setError(err.response?.data?.message || err.message || 'Failed to add link'))
       .finally(() => setUploading(false));
   };
@@ -390,7 +382,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       setAddSuccess(`Saved for ${dateStr}. Use the calendar to pick that day anytime.`);
       setTimeout(() => setAddSuccess(null), 4000);
       const res = await Api.getTraderDeckContent(type, dateStr);
-      setBriefs(filterToExpected8Briefs(Array.isArray(res.data?.briefs) ? res.data.briefs : []));
+      setBriefs(filterToAllowedBriefKinds(Array.isArray(res.data?.briefs) ? res.data.briefs : []));
     } catch (err) {
       const st = err.response?.status;
       setError(
@@ -424,8 +416,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   };
 
   const clearFilters = () => {
-    const fallback = kindsPresent.length ? kindsPresent : BRIEF_KIND_ORDER;
-    setSelectedKinds(new Set(fallback));
+    setSelectedKinds(new Set(BRIEF_KIND_ORDER));
   };
 
   if (loading) {
@@ -532,7 +523,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                         </button>
                       </div>
                       <div className="td-deck-mi-filter-list">
-                        {(kindsPresent.length ? kindsPresent : BRIEF_KIND_ORDER).map((kind) => (
+                        {BRIEF_KIND_ORDER.map((kind) => (
                           <label key={kind} className="td-deck-mi-filter-item">
                             <input
                               type="checkbox"
