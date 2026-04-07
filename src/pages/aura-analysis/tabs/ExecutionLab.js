@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum, fmtDuration } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
+import { AuraPnlHistogram, AuraHourOfDayStrip } from '../../../components/aura-analysis/AuraPerformanceCharts';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
@@ -112,13 +113,9 @@ export default function ExecutionLab() {
   const overtradingFlag = a.avgTradesPerWeek > 25;
   const highActivityFlag = a.avgTradesPerWeek > 15;
 
-  /* ── Holding-time vs outcome ── */
-  const winDurations  = trades.filter(t => (Number(t.pnl) || 0) > 0 && t.openTime && t.closeTime)
-    .map(t => new Date(t.closeTime).getTime() - new Date(t.openTime).getTime());
-  const lossDurations = trades.filter(t => (Number(t.pnl) || 0) < 0 && t.openTime && t.closeTime)
-    .map(t => new Date(t.closeTime).getTime() - new Date(t.openTime).getTime());
-  const avgWinDur  = winDurations.length  > 0 ? winDurations.reduce((s, v) => s + v, 0)  / winDurations.length  : 0;
-  const avgLossDur = lossDurations.length > 0 ? lossDurations.reduce((s, v) => s + v, 0) / lossDurations.length : 0;
+  /* ── Holding-time vs outcome (prefer analytics engine for consistency) ── */
+  const avgWinDur = a.avgWinDurationMs;
+  const avgLossDur = a.avgLossDurationMs;
 
   return (
     <div className="aa-page">
@@ -155,7 +152,9 @@ export default function ExecutionLab() {
             { l: 'Avg Duration',  v: fmtDuration(a.avgDurationMs),       c: 'rgba(255,255,255,0.75)' },
             { l: 'Avg Win Dur',   v: fmtDuration(avgWinDur),              c: '#f8c37d' },
             { l: 'Avg Loss Dur',  v: fmtDuration(avgLossDur),             c: avgLossDur > avgWinDur ? '#9a8f84' : 'rgba(255,255,255,0.75)' },
+            { l: 'Behavior vol.', v: String(a.behaviorVolatilityScore) + '/100', c: a.behaviorVolatilityScore > 55 ? '#c9a05c' : 'rgba(255,255,255,0.75)' },
             { l: 'Avg Per Week',  v: fmtNum(a.avgTradesPerWeek, 1) + 'T', c: overtradingFlag ? '#9a8f84' : 'rgba(255,255,255,0.75)' },
+            { l: 'Revenge-style', v: fmtPct(a.revengeStyleRate),          c: a.revengeStyleRate > 25 ? '#9a8f84' : '#f8c37d' },
           ].map(({ l, v, c }) => (
             <div key={l}>
               <div style={{ fontSize: '0.58rem', fontWeight: 600, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{l}</div>
@@ -210,6 +209,20 @@ export default function ExecutionLab() {
             sub={a.maxLossStreak >= 5 ? 'High — add daily loss limit' : 'Acceptable'} />
           <MetricRow label="Win Rate"  value={fmtPct(a.winRate) + '%'}  color={a.winRate >= 50 ? '#f8c37d' : '#9a8f84'} />
           <MetricRow label="Breakeven" value={String(a.breakeven)} color="rgba(255,255,255,0.5)" />
+        </div>
+      </div>
+
+      <div className="aa-grid-2" style={{ marginBottom: 16 }}>
+        <div className="aa-card">
+          <div className="aa-section-title">Emotional timing (UTC)</div>
+          <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.38)', margin: '0 0 10px', lineHeight: 1.45 }}>
+            Dense clusters after losses often flag impulse re-entries — compare with your revenge-rate above.
+          </p>
+          <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
+        </div>
+        <div className="aa-card">
+          <div className="aa-section-title">Outcome distribution</div>
+          <AuraPnlHistogram bins={a.pnlHistogram} height={118} />
         </div>
       </div>
 

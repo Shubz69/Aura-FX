@@ -1,38 +1,15 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
+import {
+  AuraEquityAreaChart,
+  AuraHourOfDayStrip,
+  AuraPnlHistogram,
+} from '../../../components/aura-analysis/AuraPerformanceCharts';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
-
-/* ── SVG mini equity chart ───────────────────────────────── */
-function MiniEquity({ curve, height = 100 }) {
-  if (!curve || curve.length < 2) return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem' }}>No data</div>;
-  const W = 600; const H = height;
-  const vals = curve.map(p => p.balance);
-  const mn = Math.min(...vals); const mx = Math.max(...vals);
-  const range = mx - mn || 1;
-  const pad = { t: 8, b: 20, l: 4, r: 4 };
-  const xs = curve.map((_, i) => pad.l + (i / (curve.length - 1)) * (W - pad.l - pad.r));
-  const ys = vals.map(v => pad.t + (1 - (v - mn) / range) * (H - pad.t - pad.b));
-  const line = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
-  const area = `${line} L${xs[xs.length-1].toFixed(1)},${H-pad.b} L${xs[0].toFixed(1)},${H-pad.b} Z`;
-  const isUp = vals[vals.length - 1] >= vals[0];
-  const col = isUp ? '#f8c37d' : '#9a8f84';
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height, display: 'block' }}>
-      <defs>
-        <linearGradient id="perf-eq" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={col} stopOpacity="0.2" />
-          <stop offset="100%" stopColor={col} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill="url(#perf-eq)" />
-      <path d={line} fill="none" stroke={col} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 /* ── Monthly bar chart ───────────────────────────────────── */
 function MonthlyBars({ byMonth }) {
@@ -92,7 +69,7 @@ export default function PerformanceAnalytics() {
     <div className="aa-page">
 
       {/* ── KPI row ── */}
-      <div className="aa-grid-5" style={{ marginBottom: 16 }}>
+      <div className="aa-grid-5" style={{ marginBottom: 12 }}>
         {[
           { label: 'Total Trades',  value: a.totalTrades, sub: `${a.wins}W · ${a.losses}L` },
           { label: 'Win Rate',      value: fmtPct(a.winRate), cls: a.winRate >= 50 ? 'aa--green' : 'aa--red' },
@@ -108,11 +85,30 @@ export default function PerformanceAnalytics() {
         ))}
       </div>
 
+      <div className="aa-grid-5" style={{ marginBottom: 16 }}>
+        {[
+          { label: 'Recovery F.', value: a.recoveryFactor > 0 && a.recoveryFactor < 900 ? fmtNum(a.recoveryFactor, 2) : a.recoveryFactor >= 900 ? '∞' : '—', cls: a.recoveryFactor >= 2 ? 'aa--green' : '', sub: 'Net ÷ max DD' },
+          { label: 'Calmar', value: a.calmarRatio > 0 ? fmtNum(a.calmarRatio, 2) : '—', cls: a.calmarRatio >= 1.5 ? 'aa--green' : '', sub: 'CAGR ÷ DD%' },
+          { label: 'SQN', value: fmtNum(a.sqn, 2), cls: a.sqn >= 3 ? 'aa--green' : '', sub: `${a.totalTrades} trades` },
+          { label: 'σ P/L', value: a.pnlStdDev > 0 ? fmtNum(a.pnlStdDev, 2) : '—', cls: '', sub: 'Dispersion' },
+          { label: 'Ret / DD', value: a.returnToMaxDrawdown > 0 ? fmtNum(a.returnToMaxDrawdown, 2) : '—', cls: '', sub: 'Total % ÷ max DD%' },
+        ].map(({ label, value, sub, cls }) => (
+          <div key={label} className="aa-kpi">
+            <span className="aa-kpi-label">{label}</span>
+            <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
+            {sub && <span className="aa-kpi-sub">{sub}</span>}
+          </div>
+        ))}
+      </div>
+
       {/* ── Equity + Monthly bars ── */}
       <div className="aa-grid-2" style={{ marginBottom: 16 }}>
-        <div className="aa-chart-wrap">
-          <div className="aa-chart-title">Equity Curve</div>
-          <MiniEquity curve={a.equityCurve} height={120} />
+        <div>
+          <AuraEquityAreaChart curve={a.equityCurve} height={132} title="Equity curve" />
+          <div className="aa-section-title" style={{ margin: '12px 0 8px' }}>Intraday footprint (UTC)</div>
+          <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
+          <div className="aa-section-title" style={{ margin: '14px 0 8px' }}>P/L histogram</div>
+          <AuraPnlHistogram bins={a.pnlHistogram} height={100} />
         </div>
         <div className="aa-card">
           <div className="aa-section-title">Monthly P/L</div>

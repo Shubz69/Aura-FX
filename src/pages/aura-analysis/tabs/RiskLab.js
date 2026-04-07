@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
+import { AuraDrawdownAreaChart, AuraPnlHistogram } from '../../../components/aura-analysis/AuraPerformanceCharts';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
@@ -16,30 +17,6 @@ function ScoreRing({ score, color, size = 110 }) {
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="7"
         strokeDasharray={`${filled} ${circ}`} strokeLinecap="round"
         style={{ transition: 'stroke-dasharray 0.8s ease' }} />
-    </svg>
-  );
-}
-
-function DrawdownChart({ curve, height = 120 }) {
-  if (!curve || curve.length < 2) return null;
-  const W = 600; const H = height;
-  const vals = curve.map(p => p.ddPct);
-  const mx = Math.max(...vals, 0.1);
-  const pad = { t: 8, b: 20, l: 4, r: 4 };
-  const xs = curve.map((_, i) => pad.l + (i / (curve.length - 1)) * (W - pad.l - pad.r));
-  const ys = vals.map(v => pad.t + (v / mx) * (H - pad.t - pad.b));
-  const line = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
-  const area = `${line} L${xs[xs.length-1].toFixed(1)},${H-pad.b} L${xs[0].toFixed(1)},${H-pad.b} Z`;
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height, display: 'block' }}>
-      <defs>
-        <linearGradient id="rl-dd" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#9a8f84" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#9a8f84" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill="url(#rl-dd)" />
-      <path d={line} fill="none" stroke="#9a8f84" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -88,7 +65,6 @@ export default function RiskLab() {
   }
 
   const riskColor = a.riskScore < 25 ? '#f8c37d' : a.riskScore < 50 ? '#c9a05c' : '#9a8f84';
-  const maxDD = Math.max(a.maxDrawdownPct, a.currentDrawdownPct, 1);
 
   /* Risk-of-ruin estimate: simplified Kelly formula */
   const rorPct = a.winRate > 0 && a.avgWin > 0 && a.avgLoss > 0
@@ -134,9 +110,8 @@ export default function RiskLab() {
       </div>
 
       {/* ── Drawdown chart ── */}
-      <div className="aa-chart-wrap" style={{ marginBottom: 16 }}>
-        <div className="aa-chart-title">Drawdown Over Time (%)</div>
-        <DrawdownChart curve={a.drawdownCurve} height={130} />
+      <div style={{ marginBottom: 16 }}>
+        <AuraDrawdownAreaChart curve={a.drawdownCurve} height={136} title="Drawdown over time (%)" />
       </div>
 
       {/* ── Risk metrics grid ── */}
@@ -174,6 +149,27 @@ export default function RiskLab() {
 
         <div className="aa-card">
           <div className="aa-section-title">Execution Risk</div>
+          {[
+            { label: 'Recovery factor', value: a.recoveryFactor > 0 && a.recoveryFactor < 900 ? fmtNum(a.recoveryFactor, 2) : a.recoveryFactor >= 900 ? '∞' : '—', color: a.recoveryFactor >= 2 ? '#f8c37d' : 'rgba(255,255,255,0.65)' },
+            { label: 'Calmar (est.)', value: a.calmarRatio > 0 ? fmtNum(a.calmarRatio, 2) : '—', color: 'rgba(255,255,255,0.65)' },
+            { label: 'Max consec. loss $', value: a.maxConsecLossSum > 0 ? '-$' + fmtNum(a.maxConsecLossSum) : '—', color: '#c49b7c' },
+            { label: 'Largest loss % of GL', value: a.largestLossPctOfGross > 0 ? fmtPct(a.largestLossPctOfGross) : '—', color: a.largestLossPctOfGross > 40 ? '#c9a05c' : 'rgba(255,255,255,0.65)' },
+          ].map(({ label, value, color }) => (
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>{label}</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>{value}</span>
+            </div>
+          ))}
+          {a.kellyOptimalFraction !== 0 && (
+            <div style={{ marginTop: 10, padding: '10px 12px', background: 'rgba(234,169,96,0.08)', border: '1px solid rgba(234,169,96,0.2)', borderRadius: 8 }}>
+              <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Kelly hint</div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#f8c37d' }}>
+                Full Kelly ≈ {fmtPct(a.kellyOptimalFraction * 100, 1)} of balance / trade (use a fraction in live trading).
+              </div>
+            </div>
+          )}
+          <div style={{ marginTop: 12 }} className="aa-section-title">P/L tail risk</div>
+          <AuraPnlHistogram bins={a.pnlHistogram} height={96} />
           <RiskBar label="SL Coverage"  value={a.pctWithSL} max={100} color={a.pctWithSL < 70 ? '#c9a05c' : '#f8c37d'} fmt={v => fmtPct(v) + '%'} />
           <RiskBar label="TP Coverage"  value={a.pctWithTP} max={100} color="#eaa960" fmt={v => fmtPct(v) + '%'} />
           {rorPct != null && (

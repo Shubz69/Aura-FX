@@ -11,6 +11,7 @@ const TABS = [
   { path: 'edge-analyzer', label: 'Edge Analyzer' },
   { path: 'execution-lab', label: 'Execution Lab' },
   { path: 'calendar',      label: 'Calendar' },
+  { path: 'psychology',    label: 'Psychology' },
   { path: 'growth',        label: 'Growth' },
   { path: 'trader-replay', label: 'Trader Replay' },
 ];

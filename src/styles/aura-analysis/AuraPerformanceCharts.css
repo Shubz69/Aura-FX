@@ -1,0 +1,132 @@
+/* Aura Analysis — shared performance charts (apc-*) */
+
+.apc-chart.apc-chart {
+  position: relative;
+}
+
+.apc-svg {
+  width: 100%;
+  display: block;
+  border-radius: 10px;
+}
+
+.apc-grid-line {
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 1;
+  stroke-dasharray: 4 6;
+}
+
+.apc-grid-line--muted {
+  stroke: rgba(255, 255, 255, 0.05);
+}
+
+.apc-axis-lbl {
+  font-size: 9px;
+  fill: rgba(245, 238, 228, 0.42);
+  font-weight: 600;
+}
+
+.apc-legend {
+  font-size: 8px;
+  fill: rgba(245, 238, 228, 0.28);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.apc-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.22);
+  font-size: 0.8rem;
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.apc-empty--sm {
+  min-height: 72px;
+  font-size: 0.72rem;
+}
+
+.apc-hour-strip {
+  margin-top: 6px;
+}
+
+.apc-hour-strip__label {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.28);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.apc-hour-cells {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.apc-hour-cell {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 2px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.apc-hour-cell--on:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.apc-hour-cell--pos.apc-hour-cell--on {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.35), rgba(16, 185, 129, 0.08));
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.apc-hour-cell--neg.apc-hour-cell--on {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.06));
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
+.apc-hour-cell:not(.apc-hour-cell--on) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.apc-hour-num {
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1;
+}
+
+.apc-histo-wrap {
+  margin-top: 4px;
+}
+
+.apc-histo-bar--pos {
+  fill: rgba(248, 195, 125, 0.82);
+}
+
+.apc-histo-bar--neg {
+  fill: rgba(154, 143, 132, 0.85);
+}
+
+.apc-histo-lbl {
+  font-size: 8px;
+  fill: rgba(255, 255, 255, 0.28);
+  font-weight: 600;
+}
+
+.apc-histo-cap {
+  font-size: 0.58rem;
+  color: rgba(255, 255, 255, 0.28);
+  text-align: center;
+  margin-top: 4px;
+  letter-spacing: 0.04em;
+}

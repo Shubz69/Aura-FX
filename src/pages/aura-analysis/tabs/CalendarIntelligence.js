@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
+import { AuraHourOfDayStrip } from '../../../components/aura-analysis/AuraPerformanceCharts';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
@@ -79,7 +80,7 @@ export default function CalendarIntelligence() {
     <div className="aa-page">
 
       {/* ── Month summary stats ── */}
-      <div className="aa-grid-4" style={{ marginBottom: 16 }}>
+      <div className="aa-grid-4" style={{ marginBottom: 12 }}>
         {[
           { label: 'Month P/L',    value: monthStats ? fmtPnl(monthStats.pnl)              : '—',  cls: monthStats ? pnlCls(monthStats.pnl) : '' },
           { label: 'Month Trades', value: monthStats ? String(monthStats.trades)            : '0',  cls: '' },
@@ -91,6 +92,27 @@ export default function CalendarIntelligence() {
             <span className={`aa-kpi-value ${cls}`}>{value}</span>
           </div>
         ))}
+      </div>
+
+      <div className="aa-grid-4" style={{ marginBottom: 16 }}>
+        {(() => {
+          const dayKeys = Object.keys(a.byDay || {});
+          const profDays = dayKeys.filter(k => (a.byDay[k]?.pnl ?? 0) > 0).length;
+          const lossDays = dayKeys.filter(k => (a.byDay[k]?.pnl ?? 0) < 0).length;
+          const denom = profDays + lossDays;
+          return [
+            { label: 'CAGR (est.)', value: a.periodYears > 0.05 ? fmtPct(a.cagrPct) : '—', cls: a.cagrPct >= 0 ? 'aa--green' : 'aa--red' },
+            { label: 'Calmar', value: a.calmarRatio > 0 ? fmtNum(a.calmarRatio, 2) : '—', cls: a.calmarRatio >= 1 ? 'aa--green' : '' },
+            { label: 'Green day rate', value: denom > 0 ? fmtPct((profDays / denom) * 100) : '—', cls: denom > 0 && profDays >= lossDays ? 'aa--green' : 'aa--red', sub: 'Days + vs −' },
+            { label: 'Period range', value: a.periodYears > 0 ? `${fmtNum(a.periodYears, 2)} yrs` : '—', cls: '', sub: 'First→last trade' },
+          ].map(({ label, value, cls, sub }) => (
+            <div key={label} className="aa-kpi">
+              <span className="aa-kpi-label">{label}</span>
+              <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
+              {sub && <span className="aa-kpi-sub">{sub}</span>}
+            </div>
+          ));
+        })()}
       </div>
 
       <div className="aa-grid-2" style={{ marginBottom: 16, alignItems: 'start' }}>
@@ -240,6 +262,11 @@ export default function CalendarIntelligence() {
             )}
           </div>
         </div>
+      </div>
+
+      <div className="aa-card" style={{ marginBottom: 16 }}>
+        <div className="aa-section-title">When you bank P/L (UTC)</div>
+        <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
       </div>
 
       {/* ── Weekly overview ── */}

@@ -54,6 +54,59 @@ function medianSorted(arr) {
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
+/** Population standard deviation (analytics sample = full filtered set). */
+function populationStdDev(arr) {
+  if (!arr.length) return 0;
+  if (arr.length === 1) return 0;
+  const mean = arr.reduce((s, v) => s + v, 0) / arr.length;
+  const variance = arr.reduce((s, v) => s + (v - mean) ** 2, 0) / arr.length;
+  return Math.sqrt(variance);
+}
+
+/**
+ * Van Tharp-style SQN: sqrt(N) * (mean R / std R). R from broker rMultiple when present,
+ * else PnL normalized by average loss size (1R proxy).
+ */
+function computeSqn(sorted, pnls, avgLossAmount) {
+  if (!sorted.length || avgLossAmount < 1e-9) return { sqn: 0, expectancyR: 0, rStd: 0 };
+  const rMultiples = sorted.map((t, i) => {
+    const ex = Number(t.rMultiple);
+    if (Number.isFinite(ex) && Math.abs(ex) > 1e-9) return ex;
+    return pnls[i] / avgLossAmount;
+  });
+  const meanR = rMultiples.reduce((s, v) => s + v, 0) / rMultiples.length;
+  const rStd = populationStdDev(rMultiples);
+  const sqn = rStd > 1e-9 ? Math.sqrt(sorted.length) * (meanR / rStd) : 0;
+  return { sqn, expectancyR: meanR, rStd };
+}
+
+/** Histogram of closed-trade PnL for distribution charts. */
+function buildPnlHistogram(pnls, maxBins = 14) {
+  if (!pnls.length) return [];
+  const mn = Math.min(...pnls);
+  const mx = Math.max(...pnls);
+  if (Math.abs(mx - mn) < 1e-9) {
+    const sum = pnls.reduce((s, v) => s + v, 0);
+    return [{ from: mn, to: mx, count: pnls.length, pnlSum: sum }];
+  }
+  const n = Math.min(maxBins, Math.max(6, Math.ceil(Math.sqrt(pnls.length))));
+  const step = (mx - mn) / n;
+  const bins = Array.from({ length: n }, (_, i) => ({
+    from: mn + i * step,
+    to: mn + (i + 1) * step,
+    count: 0,
+    pnlSum: 0,
+  }));
+  pnls.forEach(p => {
+    let i = Math.floor((p - mn) / step);
+    if (i >= n) i = n - 1;
+    if (i < 0) i = 0;
+    bins[i].count += 1;
+    bins[i].pnlSum += p;
+  });
+  return bins;
+}
+
 export function computeAnalytics(trades = [], account = null) {
   const deduped = dedupeAnalyticsTrades(trades);
   if (!deduped.length) return emptyAnalytics(account);
@@ -189,6 +242,27 @@ export function computeAnalytics(trades = [], account = null) {
   });
   byWeekday.forEach(w => { w.winRate = w.trades > 0 ? (w.wins / w.trades) * 100 : 0; });
 
+  // ── By hour (UTC) — optimal window / heatmaps (TradeZella-style time slicing) ─
+  const byHourUtc = Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    pnl: 0,
+    trades: 0,
+    wins: 0,
+    winRate: 0,
+  }));
+  sorted.forEach(t => {
+    const d = tradeDate(t);
+    if (!d) return;
+    const h = new Date(d).getUTCHours();
+    const p = tradeNetPnl(t);
+    byHourUtc[h].pnl += p;
+    byHourUtc[h].trades += 1;
+    if (p > 0) byHourUtc[h].wins += 1;
+  });
+  byHourUtc.forEach(h => {
+    h.winRate = h.trades > 0 ? (h.wins / h.trades) * 100 : 0;
+  });
+
   // ── By direction ─────────────────────────────────────────────────────────
   const dirStats = (arr) => {
     const p  = arr.reduce((s, t) => s + tradeNetPnl(t), 0);
@@ -258,6 +332,19 @@ export function computeAnalytics(trades = [], account = null) {
   const avgDurationMs = durations.length > 0
     ? durations.reduce((s, v) => s + v, 0) / durations.length : 0;
   const medianDurationMs = medianSorted(durations);
+
+  const winDurMs = sorted
+    .filter((t, i) => pnls[i] > 0 && t.openTime && t.closeTime)
+    .map(t => new Date(t.closeTime).getTime() - new Date(t.openTime).getTime())
+    .filter(d => d >= 0);
+  const lossDurMs = sorted
+    .filter((t, i) => pnls[i] < 0 && t.openTime && t.closeTime)
+    .map(t => new Date(t.closeTime).getTime() - new Date(t.openTime).getTime())
+    .filter(d => d >= 0);
+  const avgWinDurationMs = winDurMs.length > 0
+    ? winDurMs.reduce((s, v) => s + v, 0) / winDurMs.length : 0;
+  const avgLossDurationMs = lossDurMs.length > 0
+    ? lossDurMs.reduce((s, v) => s + v, 0) / lossDurMs.length : 0;
 
   // ── Execution ────────────────────────────────────────────────────────────
   const withSL = sorted.filter(t => t.sl || t.stopLoss).length;
@@ -332,6 +419,62 @@ export function computeAnalytics(trades = [], account = null) {
 
   const realisedPnl = totalPnl;
 
+  // ── Advanced metrics (recovery, SQN, distribution, streak $) ─────────────
+  const pnlStdDev = populationStdDev(pnls);
+  const pnlMean = sorted.length > 0 ? totalPnl / sorted.length : 0;
+  const sharpeLike = pnlStdDev > 1e-9 ? pnlMean / pnlStdDev : 0;
+  const losingPnls = pnls.filter(p => p < 0);
+  const downsideStdDev = populationStdDev(losingPnls.length ? losingPnls : [0]);
+  const sortinoLike = downsideStdDev > 1e-9 ? pnlMean / downsideStdDev : 0;
+
+  const recoveryFactor = maxDrawdown > 1e-6 ? totalPnl / maxDrawdown : (totalPnl > 0 ? 999 : 0);
+
+  const tFirst = new Date(tradeDate(sorted[0]) || 0).getTime();
+  const tLast = new Date(tradeDate(sorted[sorted.length - 1]) || 0).getTime();
+  const periodYears = Math.max(tLast - tFirst, 86400000) / (365.25 * 86400000);
+  const cagrPct = periodYears > 0 && startBalance > 0 && finalBal > 0
+    ? (Math.pow(finalBal / startBalance, 1 / periodYears) - 1) * 100
+    : totalReturnPct;
+  const calmarRatio = maxDrawdownPct > 0.05 ? safeRatio(cagrPct, maxDrawdownPct, 0) : 0;
+  const returnToMaxDrawdown = maxDrawdownPct > 0.05 ? safeRatio(totalReturnPct, maxDrawdownPct, 0) : 0;
+
+  const largestWinPctOfGross = grossProfit > 1e-6 ? safeRatio(bestTrade, grossProfit, 0) * 100 : 0;
+  const largestLossPctOfGross = grossLoss > 1e-6 ? safeRatio(Math.abs(worstTrade), grossLoss, 0) * 100 : 0;
+
+  let maxConsecWinSum = 0;
+  let maxConsecLossSum = 0;
+  let runW = 0;
+  let runL = 0;
+  pnls.forEach(p => {
+    if (p > 0) {
+      runW += p;
+      runL = 0;
+      if (runW > maxConsecWinSum) maxConsecWinSum = runW;
+    } else if (p < 0) {
+      runL += p;
+      runW = 0;
+      if (Math.abs(runL) > maxConsecLossSum) maxConsecLossSum = Math.abs(runL);
+    } else {
+      runW = 0;
+      runL = 0;
+    }
+  });
+
+  const lossUnitForR = avgLoss > 1e-9 ? avgLoss : (lossArr.length > 0 ? grossLoss / lossArr.length : 0);
+  const { sqn, expectancyR, rStd } = computeSqn(sorted, pnls, lossUnitForR || 1);
+
+  const kellyOptimalFraction = payoffRatio > 1e-6 && winRate > 0 && winRate < 100
+    ? (winRate / 100) - safeRatio(1 - winRate / 100, payoffRatio, 0)
+    : 0;
+
+  const pnlHistogram = buildPnlHistogram(pnls);
+
+  const behaviorVolatilityScore = Math.min(100, Math.round(
+    safeRatio(pnlStdDev, Math.abs(pnlMean) + 1, 0) * 18
+    + safeRatio(rStd, 1, 0) * 12
+    + Math.min(revengeStyleRate, 40)
+  ));
+
   // ── Risk score ───────────────────────────────────────────────────────────
   const riskScore = calcRiskScore({
     maxDrawdownPct, currentDrawdownPct, pctWithSL, maxLossStreak,
@@ -347,6 +490,10 @@ export function computeAnalytics(trades = [], account = null) {
     accountBalance: liveBal,
     curveIsApproximation: true,
     openPositionsCount: openPositions.length,
+    sqn,
+    kellyOptimalFraction,
+    calmarRatio,
+    largestWinPctOfGross,
   });
 
   return {
@@ -360,9 +507,11 @@ export function computeAnalytics(trades = [], account = null) {
     avgWin, avgLoss, bestTrade, worstTrade, bestTradeFull, worstTradeFull, avgRR,
     equityCurve, drawdownCurve, maxDrawdown, maxDrawdownPct, currentDrawdown, currentDrawdownPct,
     startBalance, currentBalance: finalBal,
-    bySymbol, bySession, byWeekday, byDirection, byMonth, byDay, byWeek,
+    bySymbol, bySession, byWeekday, byHourUtc, byDirection, byMonth, byDay, byWeek,
     currentStreak, streakType, maxWinStreak, maxLossStreak,
-    avgDurationMs, medianDurationMs, pctWithSL, pctWithTP, pctNoSL, pctNoTP,
+    avgDurationMs, medianDurationMs,
+    avgWinDurationMs, avgLossDurationMs,
+    pctWithSL, pctWithTP, pctNoSL, pctNoTP,
     avgTimeBetweenMs, avgTradesPerWeek,
     lotSizeCv, oversizedTradeCount, topSymbolConcentrationPct: topSymShare,
     revengeStyleRate,
@@ -371,6 +520,24 @@ export function computeAnalytics(trades = [], account = null) {
     insights,
     equityCurveMethod: 'closed_trade_sequential',
     equityCurveIsApproximation: true,
+    pnlStdDev,
+    sharpeLike,
+    sortinoLike,
+    recoveryFactor,
+    calmarRatio,
+    cagrPct,
+    periodYears,
+    returnToMaxDrawdown,
+    largestWinPctOfGross,
+    largestLossPctOfGross,
+    maxConsecWinSum,
+    maxConsecLossSum,
+    sqn,
+    expectancyR,
+    rStd,
+    kellyOptimalFraction,
+    pnlHistogram,
+    behaviorVolatilityScore,
   };
 }
 
@@ -400,6 +567,10 @@ function buildInsights({
   accountBalance = null,
   curveIsApproximation = false,
   openPositionsCount = 0,
+  sqn = 0,
+  kellyOptimalFraction = 0,
+  calmarRatio = 0,
+  largestWinPctOfGross = 0,
 }) {
   const out = [];
   const fmt$  = v => '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -478,7 +649,25 @@ function buildInsights({
     out.push('Very short average hold times — ensure you are not over-scalping without a defined edge.');
   }
 
-  return out.slice(0, 8);
+  if (sampleSize >= 30 && sqn >= 3) {
+    out.push(`System quality (SQN-style) reads strong at ${sqn.toFixed(2)} on ${sampleSize} trades — edge is statistically structured.`);
+  } else if (sampleSize >= 15 && sqn < 0.5 && sqn !== 0) {
+    out.push('Low R-multiple consistency (SQN) — average outcome per unit risk is noisy; refine execution or sample size.');
+  }
+
+  if (kellyOptimalFraction > 0.25 && sampleSize >= 20) {
+    out.push(`Full Kelly sizing would imply ~${(kellyOptimalFraction * 100).toFixed(0)}% of capital per trade — professionals typically use a fraction (e.g. ¼ Kelly) to survive variance.`);
+  }
+
+  if (calmarRatio > 3 && maxDrawdownPct > 3) {
+    out.push(`Return vs max drawdown (Calmar-style) is favourable (${calmarRatio.toFixed(2)}) — growth has been efficient relative to worst peak-to-trough.`);
+  }
+
+  if (largestWinPctOfGross > 45) {
+    out.push('A large share of gross profit comes from one winner — results may be less robust if that setup disappears.');
+  }
+
+  return out.slice(0, 10);
 }
 
 export function fmtDuration(ms) {
@@ -554,15 +743,36 @@ function emptyAnalytics(account) {
     startBalance: account?.balance ?? 0, currentBalance: account?.balance ?? 0,
     bySymbol: [], bySession: [],
     byWeekday: Array(7).fill(null).map((_, i) => ({ day: WEEKDAY_NAMES[i], dayIndex: i, pnl: 0, trades: 0, wins: 0, winRate: 0 })),
+    byHourUtc: Array.from({ length: 24 }, (_, hour) => ({ hour, pnl: 0, trades: 0, wins: 0, winRate: 0 })),
     byDirection: { buy: emptyDir, sell: emptyDir },
     byMonth: [], byDay: {}, byWeek: [],
     currentStreak: 0, streakType: 'none', maxWinStreak: 0, maxLossStreak: 0,
-    avgDurationMs: 0, medianDurationMs: 0, pctWithSL: 0, pctWithTP: 0, pctNoSL: 0, pctNoTP: 0,
+    avgDurationMs: 0, medianDurationMs: 0,
+    avgWinDurationMs: 0, avgLossDurationMs: 0,
+    pctWithSL: 0, pctWithTP: 0, pctNoSL: 0, pctNoTP: 0,
     avgTimeBetweenMs: 0, avgTradesPerWeek: 0,
     lotSizeCv: 0, oversizedTradeCount: 0, topSymbolConcentrationPct: 0, revengeStyleRate: 0,
     totalReturn: 0, totalReturnPct: 0, bestMonth: null, worstMonth: null, profitableMonths: 0,
     riskScore: 0, riskLabel: 'Controlled', insights: [],
     equityCurveMethod: 'none',
     equityCurveIsApproximation: false,
+    pnlStdDev: 0,
+    sharpeLike: 0,
+    sortinoLike: 0,
+    recoveryFactor: 0,
+    calmarRatio: 0,
+    cagrPct: 0,
+    periodYears: 0,
+    returnToMaxDrawdown: 0,
+    largestWinPctOfGross: 0,
+    largestLossPctOfGross: 0,
+    maxConsecWinSum: 0,
+    maxConsecLossSum: 0,
+    sqn: 0,
+    expectancyR: 0,
+    rStd: 0,
+    kellyOptimalFraction: 0,
+    pnlHistogram: [],
+    behaviorVolatilityScore: 0,
   };
 }

@@ -30,6 +30,10 @@ describe('computeAnalytics closed vs open', () => {
     expect(a.totalTrades).toBe(1);
     expect(a.wins).toBe(1);
     expect(a.equityCurveIsApproximation).toBe(true);
+    expect(Array.isArray(a.byHourUtc)).toBe(true);
+    expect(a.byHourUtc.length).toBe(24);
+    expect(typeof a.sqn).toBe('number');
+    expect(Array.isArray(a.pnlHistogram)).toBe(true);
   });
 
   test('open-only window returns dedicated branch', () => {

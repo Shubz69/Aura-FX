@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
+import { AuraHourOfDayStrip, AuraEquityAreaChart } from '../../../components/aura-analysis/AuraPerformanceCharts';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
@@ -96,7 +97,7 @@ export default function EdgeAnalyzer() {
     <div className="aa-page">
 
       {/* ── Edge summary KPIs ── */}
-      <div className="aa-grid-4" style={{ marginBottom: 16 }}>
+      <div className="aa-grid-4" style={{ marginBottom: 12 }}>
         {[
           { label: 'Best Pair',    value: bestSymbol?.pair   || '—', sub: bestSymbol  ? fmtPnl(bestSymbol.pnl)  : '', cls: 'aa--green' },
           { label: 'Worst Pair',   value: worstSymbol?.pair  || '—', sub: worstSymbol ? fmtPnl(worstSymbol.pnl) : '', cls: 'aa--red' },
@@ -109,6 +110,31 @@ export default function EdgeAnalyzer() {
             {sub && <span className="aa-kpi-sub">{sub}</span>}
           </div>
         ))}
+      </div>
+
+      <div className="aa-grid-4" style={{ marginBottom: 16 }}>
+        {[
+          { label: 'SQN', value: fmtNum(a.sqn, 2), cls: a.sqn >= 2.5 ? 'aa--green' : '', sub: 'System quality' },
+          { label: 'Expectancy R', value: fmtNum(a.expectancyR, 2), cls: pnlCls(a.expectancyR), sub: 'Per 1R' },
+          { label: 'Recovery F.', value: a.recoveryFactor > 0 && a.recoveryFactor < 900 ? fmtNum(a.recoveryFactor, 2) : a.recoveryFactor >= 900 ? '∞' : '—', cls: a.recoveryFactor >= 2 ? 'aa--green' : '', sub: 'Net ÷ max DD' },
+          { label: 'Largest win % GP', value: a.largestWinPctOfGross > 0 ? fmtPct(a.largestWinPctOfGross) : '—', cls: a.largestWinPctOfGross > 45 ? 'aa--amber' : '', sub: 'Concentration' },
+        ].map(({ label, value, sub, cls }) => (
+          <div key={label} className="aa-kpi">
+            <span className="aa-kpi-label">{label}</span>
+            <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
+            {sub && <span className="aa-kpi-sub">{sub}</span>}
+          </div>
+        ))}
+      </div>
+
+      <div className="aa-grid-2" style={{ marginBottom: 16 }}>
+        <div className="aa-card">
+          <div className="aa-section-title">Edge vs time (UTC)</div>
+          <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
+        </div>
+        <div>
+          <AuraEquityAreaChart curve={a.equityCurve} height={128} title="Equity context" />
+        </div>
       </div>
 
       {/* ── Pair + Session ranked lists ── */}

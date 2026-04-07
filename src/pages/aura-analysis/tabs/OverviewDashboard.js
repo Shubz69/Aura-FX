@@ -2,6 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum, fmtDuration } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
+import {
+  AuraEquityAreaChart,
+  AuraDrawdownAreaChart,
+  AuraHourOfDayStrip,
+  AuraPnlHistogram,
+} from '../../../components/aura-analysis/AuraPerformanceCharts';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 /* ── Helpers ──────────────────────────────────────────────── */
@@ -9,72 +15,6 @@ function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted
 function fmtBal(v, cur = 'USD') {
   if (v == null) return '—';
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, maximumFractionDigits: 2 }).format(v);
-}
-
-/* ── SVG equity curve ─────────────────────────────────────── */
-function EquityCurve({ curve, height = 140 }) {
-  if (!curve || curve.length < 2) return (
-    <div className="aa-chart-wrap" style={{ height }}>
-      <div className="aa-empty" style={{ padding: '30px 0' }}>No equity data yet</div>
-    </div>
-  );
-  const W = 600; const H = height;
-  const vals = curve.map(p => p.balance);
-  const mn = Math.min(...vals); const mx = Math.max(...vals);
-  const range = mx - mn || 1;
-  const pad = { t: 12, b: 24, l: 4, r: 4 };
-  const xs = curve.map((_, i) => pad.l + (i / (curve.length - 1)) * (W - pad.l - pad.r));
-  const ys = vals.map(v => pad.t + (1 - (v - mn) / range) * (H - pad.t - pad.b));
-  const linePath = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
-  const areaPath = `${linePath} L${xs[xs.length - 1].toFixed(1)},${H - pad.b} L${xs[0].toFixed(1)},${H - pad.b} Z`;
-  const isUp = vals[vals.length - 1] >= vals[0];
-  const col = isUp ? '#f8c37d' : '#9a8f84';
-  const gradId = `ec-${isUp ? 'g' : 'r'}`;
-
-  return (
-    <div className="aa-chart-wrap">
-      <div className="aa-chart-title">Equity Curve</div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="aa-svg-chart" style={{ height }}>
-        <defs>
-          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={col} stopOpacity="0.22" />
-            <stop offset="100%" stopColor={col} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d={areaPath} fill={`url(#${gradId})`} />
-        <path d={linePath} fill="none" stroke={col} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx={xs[xs.length - 1]} cy={ys[ys.length - 1]} r="3" fill={col} />
-      </svg>
-    </div>
-  );
-}
-
-/* ── Drawdown chart ───────────────────────────────────────── */
-function DrawdownChart({ curve, height = 90 }) {
-  if (!curve || curve.length < 2) return null;
-  const W = 600; const H = height;
-  const vals = curve.map(p => p.ddPct);
-  const mx = Math.max(...vals, 0.1);
-  const pad = { t: 6, b: 18, l: 4, r: 4 };
-  const xs = curve.map((_, i) => pad.l + (i / (curve.length - 1)) * (W - pad.l - pad.r));
-  const ys = vals.map(v => pad.t + (v / mx) * (H - pad.t - pad.b));
-  const linePath = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
-  const areaPath = `${linePath} L${xs[xs.length - 1].toFixed(1)},${H - pad.b} L${xs[0].toFixed(1)},${H - pad.b} Z`;
-  return (
-    <div className="aa-chart-wrap" style={{ marginTop: 10 }}>
-      <div className="aa-chart-title">Drawdown %</div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="aa-svg-chart" style={{ height }}>
-        <defs>
-          <linearGradient id="dd-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#9a8f84" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#9a8f84" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d={areaPath} fill="url(#dd-grad)" />
-        <path d={linePath} fill="none" stroke="#9a8f84" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
-  );
 }
 
 /* ── Score ring ───────────────────────────────────────────── */
@@ -224,7 +164,7 @@ export default function OverviewDashboard() {
       )}
 
       {/* ── KPI grid (8 cards) ── */}
-      <div className="aa-grid-4" style={{ marginBottom: 16 }}>
+      <div className="aa-grid-4" style={{ marginBottom: 12 }}>
         {[
           { label: 'Total Trades',   value: a.totalTrades, sub: `${a.wins}W · ${a.losses}L` },
           { label: 'Win Rate',       value: fmtPct(a.winRate), cls: a.winRate >= 50 ? 'aa--green' : 'aa--red', sub: `${a.wins} wins` },
@@ -243,11 +183,40 @@ export default function OverviewDashboard() {
         ))}
       </div>
 
+      {a.totalTrades > 0 && (
+        <div className="aa-grid-4" style={{ marginBottom: 16 }}>
+          {[
+            { label: 'Recovery factor', value: a.recoveryFactor > 0 && a.recoveryFactor < 900 ? fmtNum(a.recoveryFactor, 2) : a.recoveryFactor >= 900 ? '∞' : '—', cls: a.recoveryFactor >= 2 ? 'aa--green' : 'aa--muted', sub: 'Net ÷ max DD $' },
+            { label: 'Calmar (est.)', value: a.calmarRatio > 0 ? fmtNum(a.calmarRatio, 2) : '—', cls: a.calmarRatio >= 1 ? 'aa--green' : 'aa--muted', sub: 'CAGR ÷ max DD %' },
+            { label: 'SQN (R-based)', value: a.totalTrades >= 2 ? fmtNum(a.sqn, 2) : '—', cls: a.sqn >= 3 ? 'aa--green' : a.sqn >= 1.6 ? 'aa--amber' : '', sub: 'Van Tharp style' },
+            { label: 'Avg R / trade', value: a.expectancyR !== 0 ? fmtNum(a.expectancyR, 2) : '—', cls: pnlCls(a.expectancyR), sub: '1R = avg loss' },
+            { label: 'Payoff ratio', value: a.payoffRatio > 0 ? fmtNum(a.payoffRatio, 2) + 'x' : '—', cls: a.payoffRatio >= 1 ? 'aa--green' : 'aa--red', sub: 'Avg win ÷ avg loss' },
+            { label: 'Sharpe (trade)', value: a.sharpeLike !== 0 ? fmtNum(a.sharpeLike, 2) : '—', cls: '', sub: 'Mean ÷ σ P/L' },
+            { label: 'Sortino (trade)', value: a.sortinoLike !== 0 ? fmtNum(a.sortinoLike, 2) : '—', cls: '', sub: 'Mean ÷ downside σ' },
+            { label: 'Full Kelly (est.)', value: a.kellyOptimalFraction !== 0 ? fmtPct(Math.abs(a.kellyOptimalFraction) * 100, 1) : '—', cls: Math.abs(a.kellyOptimalFraction) > 0.2 ? 'aa--amber' : 'aa--muted', sub: 'Theoretical max / trade' },
+          ].map(({ label, value, sub, cls }) => (
+            <div key={label} className="aa-kpi">
+              <span className="aa-kpi-label">{label}</span>
+              <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
+              {sub && <span className="aa-kpi-sub">{sub}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* ── Equity + Risk snapshot ── */}
       <div className="aa-grid-2" style={{ marginBottom: 16 }}>
         <div>
-          <EquityCurve curve={a.equityCurve} height={140} />
-          <DrawdownChart curve={a.drawdownCurve} height={80} />
+          <AuraEquityAreaChart curve={a.equityCurve} height={150} title="Equity curve" />
+          <AuraDrawdownAreaChart curve={a.drawdownCurve} height={92} title="Underwater drawdown %" />
+          {a.totalTrades > 0 && (
+            <>
+              <div className="aa-section-title" style={{ margin: '14px 0 8px' }}>When you trade (UTC)</div>
+              <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
+              <div className="aa-section-title" style={{ margin: '16px 0 8px' }}>Realized P/L distribution</div>
+              <AuraPnlHistogram bins={a.pnlHistogram} height={112} />
+            </>
+          )}
         </div>
 
         <div className="aa-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

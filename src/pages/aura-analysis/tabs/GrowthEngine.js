@@ -2,66 +2,10 @@ import React, { useMemo } from 'react';
 import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
+import { AuraEquityAreaChart, AuraDrawdownAreaChart } from '../../../components/aura-analysis/AuraPerformanceCharts';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
-
-/* ── Growth curve SVG ─────────────────────────────────────── */
-function GrowthCurve({ curve, height = 160 }) {
-  if (!curve || curve.length < 2) return (
-    <div className="aa-empty" style={{ padding: '40px 0' }}>No growth data yet</div>
-  );
-  const W = 600; const H = height;
-  const vals = curve.map(p => p.balance);
-  const mn = Math.min(...vals); const mx = Math.max(...vals);
-  const range = mx - mn || 1;
-  const pad = { t: 16, b: 28, l: 4, r: 4 };
-  const xs = curve.map((_, i) => pad.l + (i / (curve.length - 1)) * (W - pad.l - pad.r));
-  const ys = vals.map(v => pad.t + (1 - (v - mn) / range) * (H - pad.t - pad.b));
-
-  /* 0-line */
-  const zeroY = pad.t + (1 - (vals[0] - mn) / range) * (H - pad.t - pad.b);
-
-  const line = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
-  const area = `${line} L${xs[xs.length-1].toFixed(1)},${H-pad.b} L${xs[0].toFixed(1)},${H-pad.b} Z`;
-  const isUp = vals[vals.length - 1] >= vals[0];
-  const col  = isUp ? '#f8c37d' : '#9a8f84';
-
-  /* Milestone ticks (every 10% return) */
-  const startBal = vals[0];
-  const milestones = [];
-  [10, 20, 50, 100].forEach(pct => {
-    const target = startBal * (1 + pct / 100);
-    if (target <= mx) {
-      const yPos = pad.t + (1 - (target - mn) / range) * (H - pad.t - pad.b);
-      milestones.push({ pct, yPos });
-    }
-  });
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height, display: 'block' }}>
-      <defs>
-        <linearGradient id="gr-area" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={col} stopOpacity="0.25" />
-          <stop offset="100%" stopColor={col} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {/* Milestone reference lines */}
-      {milestones.map(({ pct, yPos }) => (
-        <g key={pct}>
-          <line x1={pad.l} y1={yPos} x2={W - pad.r} y2={yPos}
-            stroke="rgba(255,255,255,0.14)" strokeWidth="1" strokeDasharray="4 4" />
-          <text x={W - pad.r - 2} y={yPos - 3} fontSize="9" fill="rgba(255,245,230,0.5)" textAnchor="end">+{pct}%</text>
-        </g>
-      ))}
-      <path d={area} fill="url(#gr-area)" />
-      <path d={line} fill="none" stroke={col} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Start + end markers */}
-      <circle cx={xs[0]} cy={ys[0]} r="3.5" fill="rgba(255,245,230,0.55)" />
-      <circle cx={xs[xs.length-1]} cy={ys[ys.length-1]} r="4" fill={col} />
-    </svg>
-  );
-}
 
 /* ── Monthly progression bars ─────────────────────────────── */
 function MonthBars({ byMonth }) {
@@ -204,11 +148,14 @@ export default function GrowthEngine() {
         {[
           { label: 'Total Return',    value: fmtPnl(a.totalReturn),           cls: pnlCls(a.totalReturn), sub: `from ${fmtBal(start)}` },
           { label: 'Return %',        value: fmtPct(a.totalReturnPct),        cls: a.totalReturnPct >= 0 ? 'aa--green' : 'aa--red', sub: 'overall' },
+          { label: 'CAGR (est.)',   value: a.periodYears > 0.05 ? fmtPct(a.cagrPct) : '—', cls: a.cagrPct >= 0 ? 'aa--green' : 'aa--red', sub: 'From trade span' },
+          { label: 'Calmar (est.)', value: a.calmarRatio > 0 ? fmtNum(a.calmarRatio, 2) : '—', cls: a.calmarRatio >= 1.5 ? 'aa--green' : '', sub: 'Return eff. vs DD' },
           { label: 'Best Month',      value: a.bestMonth  ? fmtPnl(a.bestMonth.pnl)  : '—', cls: 'aa--green', sub: a.bestMonth?.month },
           { label: 'Worst Month',     value: a.worstMonth ? fmtPnl(a.worstMonth.pnl) : '—', cls: 'aa--red',   sub: a.worstMonth?.month },
           { label: 'Profitable Mons', value: String(a.profitableMonths),      cls: a.profitableMonths >= 2 ? 'aa--green' : 'aa--muted', sub: 'consecutive' },
           { label: 'Win Months',      value: String(a.byMonth.filter(m => m.pnl > 0).length) + ' / ' + a.byMonth.length, cls: '' },
           { label: 'Avg Monthly P/L', value: a.byMonth.length > 0 ? fmtPnl(a.byMonth.reduce((s, m) => s + m.pnl, 0) / a.byMonth.length) : '—', cls: pnlCls(a.byMonth.length > 0 ? a.byMonth.reduce((s, m) => s + m.pnl, 0) / a.byMonth.length : 0) },
+          { label: 'Recovery factor', value: a.recoveryFactor > 0 && a.recoveryFactor < 900 ? fmtNum(a.recoveryFactor, 2) : a.recoveryFactor >= 900 ? '∞' : '—', cls: a.recoveryFactor >= 2 ? 'aa--green' : '', sub: 'Net ÷ max DD' },
           { label: 'Current Balance', value: fmtBal(cur), cls: '', sub: currency },
         ].map(({ label, value, cls, sub }) => (
           <div key={label} className="aa-kpi">
@@ -220,9 +167,9 @@ export default function GrowthEngine() {
       </div>
 
       {/* ── Growth curve ── */}
-      <div className="aa-chart-wrap" style={{ marginBottom: 16 }}>
-        <div className="aa-chart-title">Account Growth Curve</div>
-        <GrowthCurve curve={a.equityCurve} height={160} />
+      <div className="aa-grid-2" style={{ marginBottom: 16 }}>
+        <AuraEquityAreaChart curve={a.equityCurve} height={168} title="Account growth curve" />
+        <AuraDrawdownAreaChart curve={a.drawdownCurve} height={168} title="Drawdown % (risk context)" />
       </div>
 
       {/* ── Monthly bars + Projections ── */}
