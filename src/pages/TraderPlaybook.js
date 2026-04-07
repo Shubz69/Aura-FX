@@ -22,6 +22,8 @@ import {
   buildWizardReviewSnapshot,
   LIST_SECTION_LABELS,
 } from '../lib/trader-playbook/rulesCopy';
+import { MID, METRIC_LABEL } from '../lib/trader-playbook/metricDefinitions';
+import { MetricLabel } from '../lib/trader-playbook/MetricTooltip';
 import '../styles/aura-analysis/AuraDashboard.css';
 import '../styles/TraderPlaybookPremium.css';
 
@@ -347,19 +349,25 @@ export default function TraderPlaybook() {
     if (!summary) return [];
     const bs = summary.playbooksByStatus || {};
     return [
-      { label: 'Playbooks', value: String(summary.playbooksTotal ?? 0) },
-      { label: 'Active', value: String(bs.active ?? summary.playbooksActive ?? 0) },
-      { label: 'Drafts', value: String(bs.draft ?? 0) },
-      { label: 'Tagged', value: String(summary.taggedTrades ?? 0) },
-      { label: 'Off-plan fills', value: String(summary.noSetupTrades ?? 0) },
-      { label: 'Missed', value: String(summary.missedTrades ?? 0) },
+      { label: 'Playbooks', value: String(summary.playbooksTotal ?? 0), metricId: MID.PLAYBOOKS_TOTAL },
+      { label: 'Active', value: String(bs.active ?? summary.playbooksActive ?? 0), metricId: MID.PLAYBOOKS_ACTIVE },
+      { label: 'Drafts', value: String(bs.draft ?? 0), metricId: MID.PLAYBOOKS_DRAFT },
+      { label: METRIC_LABEL.ON_BOOK_EXECUTIONS, value: String(summary.taggedTrades ?? 0), metricId: MID.ON_BOOK_EXECUTIONS_GLOBAL },
+      { label: `${METRIC_LABEL.OFF_PLAN} (count)`, value: String(summary.noSetupTrades ?? 0), metricId: MID.OFF_PLAN_EXECUTIONS_GLOBAL },
+      { label: METRIC_LABEL.MISSED_LOG, value: String(summary.missedTrades ?? 0), metricId: MID.MISSED_LOG },
       {
-        label: 'Leading edge',
+        label: 'Leading setup',
         value: summary.bestPlaybook?.name?.slice(0, 26) || '—',
         tone: 'green',
+        metricId: MID.LEADING_SETUP,
       },
-      { label: 'Win rate (tagged)', value: fmtPct(summary.globalWinRate), tone: 'gold' },
-      { label: 'Profit factor', value: fmtPF(summary.globalProfitFactor), tone: 'gold' },
+      { label: 'Win rate (book-wide)', value: fmtPct(summary.globalWinRate), tone: 'gold', metricId: MID.GLOBAL_WIN_RATE },
+      {
+        label: `${METRIC_LABEL.PROFIT_FACTOR} (book-wide)`,
+        value: fmtPF(summary.globalProfitFactor),
+        tone: 'gold',
+        metricId: MID.GLOBAL_PROFIT_FACTOR,
+      },
     ];
   }, [summary, loading]);
 
@@ -558,34 +566,46 @@ export default function TraderPlaybook() {
           </div>
           <div className="tp-discipline-strip__metrics">
             <div className="tp-disc-metric">
-              <span>On-book share (classified)</span>
+              <span>
+                <MetricLabel metricId={MID.ON_BOOK_SHARE_CLASSIFIED}>On-book share (classified)</MetricLabel>
+              </span>
               <strong>{adhere}</strong>
-              <small>tagged to a playbook vs off-plan</small>
+              <small>on-book ÷ (on-book + off-plan); unclassified excluded</small>
             </div>
             <div className="tp-disc-metric">
-              <span>Classification coverage</span>
+              <span>
+                <MetricLabel metricId={MID.CLASSIFICATION_COVERAGE}>Classification coverage</MetricLabel>
+              </span>
               <strong>{tagPct}</strong>
-              <small>tagged vs all activity in view</small>
+              <small>on-book ÷ all rows in validator + journal rollup</small>
             </div>
             <div className="tp-disc-metric tp-disc-metric--alert">
-              <span>Off-plan rate</span>
+              <span>
+                <MetricLabel metricId={MID.OFF_PLAN_RATE_CLASSIFIED}>Off-plan rate (classified)</MetricLabel>
+              </span>
               <strong>{noSetupPct}</strong>
-              <small>no-setup / discipline leakage</small>
+              <small>off-plan ÷ (on-book + off-plan)</small>
             </div>
             <div className="tp-disc-metric">
-              <span>Unclassified</span>
+              <span>
+                <MetricLabel metricId={MID.UNCLASSIFIED}>{METRIC_LABEL.UNCLASSIFIED}</MetricLabel>
+              </span>
               <strong>{disc.unclassifiedTrades ?? 0}</strong>
-              <small>hidden risk in the book</small>
+              <small>still unknown in the book — tag or mark off-plan</small>
             </div>
             <div className="tp-disc-metric">
-              <span>Missed / mis-execution</span>
+              <span>
+                <MetricLabel metricId={MID.MISSED_LOG}>Missed / mis-execution log</MetricLabel>
+              </span>
               <strong>{disc.missedTrades ?? 0}</strong>
-              <small>opportunity log</small>
+              <small>logged opportunities for review</small>
             </div>
             <div className="tp-disc-metric">
-              <span>Leading setup</span>
+              <span>
+                <MetricLabel metricId={MID.LEADING_SETUP}>Leading setup</MetricLabel>
+              </span>
               <strong className="tp-disc-metric__ellipsis">{disc.bestPlaybook?.name?.slice(0, 22) || '—'}</strong>
-              <small>by sample on book</small>
+              <small>by expectancy in current sample</small>
             </div>
           </div>
           {disc.processGapLabel ? <p className="tp-process-gap">{disc.processGapLabel}</p> : null}
@@ -631,6 +651,7 @@ export default function TraderPlaybook() {
 
           {filteredSetups.map((s) => {
             const pm = metricsByPlaybook[s.id] || {};
+            const pmClosed = (pm.wins || 0) + (pm.losses || 0) + (pm.breakevens || 0);
             const st = (s.status || 'active').toLowerCase();
             const assetChips = (s.assets || '')
               .split(',')
@@ -664,15 +685,24 @@ export default function TraderPlaybook() {
                 </div>
                 <div className="tp-metrics-grid tp-metrics-grid--prior">
                   <div className="tp-metric-priority">
-                    <span>Win rate</span>
+                    <span>
+                      <MetricLabel metricId={MID.WIN_RATE_PLAYBOOK}>{METRIC_LABEL.WIN_RATE}</MetricLabel>
+                      {pmClosed > 0 ? <span className="tp-metric-sample"> · {pmClosed} closes</span> : null}
+                    </span>
                     <strong>{pm.winRate != null ? fmtPct(pm.winRate) : '—'}</strong>
                   </div>
                   <div>
-                    <span>Profit factor</span>
+                    <span>
+                      <MetricLabel metricId={MID.PROFIT_FACTOR_PLAYBOOK}>
+                        {METRIC_LABEL.PROFIT_FACTOR} (V)
+                      </MetricLabel>
+                    </span>
                     <strong>{fmtPF(pm.profitFactor)}</strong>
                   </div>
                   <div>
-                    <span>Tagged</span>
+                    <span>
+                      <MetricLabel metricId={MID.ON_BOOK_EXECUTIONS_PLAYBOOK}>{METRIC_LABEL.ON_BOOK_EXECUTIONS}</MetricLabel>
+                    </span>
                     <strong>{pm.taggedTrades ?? 0}</strong>
                   </div>
                 </div>
@@ -708,7 +738,7 @@ export default function TraderPlaybook() {
             </p>
             <ul className="tp-empty__list">
               <li>New playbook — codify context, trigger, risk</li>
-              <li>Classify trades — link executions or flag no-setup honestly</li>
+              <li>Classify trades — link executions or mark off-plan honestly</li>
               <li>Log missed setups — capture what the process failed to deliver</li>
             </ul>
           </div>
@@ -727,6 +757,9 @@ export default function TraderPlaybook() {
     const readinessMeta = CHECKLIST_READINESS[checklistProgress.readiness] || CHECKLIST_READINESS.NO_ITEMS;
     const globalTagged = summary?.taggedTrades ?? 0;
     const thisTagged = detailMetrics.taggedTrades ?? vSum.count + jSum.count;
+    const detailClosed =
+      (detailMetrics.wins || 0) + (detailMetrics.losses || 0) + (detailMetrics.breakevens || 0);
+    const onBookExecCount = detailMetrics.taggedTrades != null ? detailMetrics.taggedTrades : vSum.count + jSum.count;
     const oppNotes = [];
     if (globalTagged >= 12 && thisTagged <= 3) {
       oppNotes.push(
@@ -806,10 +839,11 @@ export default function TraderPlaybook() {
                   </p>
                 </div>
                 <div className="tp-hero-snap">
-                  <span className="tp-hero-snap__k">Tape (tagged)</span>
+                  <span className="tp-hero-snap__k">Tape (on-book)</span>
                   <p>
-                    Win rate {fmtPct(detailMetrics.winRate ?? vSum.winRate)} · PF {fmtPF(detailMetrics.profitFactor ?? vSum.profitFactor)} ·{' '}
-                    {detailMetrics.taggedTrades ?? vSum.count + jSum.count} n
+                    {METRIC_LABEL.WIN_RATE} {fmtPct(detailMetrics.winRate ?? vSum.winRate)}
+                    {detailClosed > 0 ? ` · ${detailClosed} closes (V+J)` : ''} · {METRIC_LABEL.PROFIT_FACTOR} (V){' '}
+                    {fmtPF(detailMetrics.profitFactor ?? vSum.profitFactor)} · {onBookExecCount} {METRIC_LABEL.ON_BOOK_EXECUTIONS.toLowerCase()}
                   </p>
                 </div>
               </div>
@@ -819,19 +853,33 @@ export default function TraderPlaybook() {
                   <strong>{fmtDt(form.lastUsedAt)}</strong>
                 </div>
                 <div>
-                  <span>Tagged trades</span>
-                  <strong>{detailMetrics.taggedTrades ?? vSum.count + jSum.count}</strong>
+                  <span>
+                    <MetricLabel metricId={MID.ON_BOOK_EXECUTIONS_PLAYBOOK}>{METRIC_LABEL.ON_BOOK_EXECUTIONS}</MetricLabel>
+                  </span>
+                  <strong>{onBookExecCount}</strong>
                 </div>
                 <div>
-                  <span>Win rate (V)</span>
+                  <span>
+                    <MetricLabel metricId={MID.WIN_RATE_VALIDATOR_PLAYBOOK}>
+                      {METRIC_LABEL.WIN_RATE} (validator)
+                    </MetricLabel>
+                    {vSum.count > 0 ? <span className="tp-metric-sample"> · {vSum.count} closes</span> : null}
+                  </span>
                   <strong>{fmtPct(detailMetrics.winRate ?? vSum.winRate)}</strong>
                 </div>
                 <div>
-                  <span>Profit factor</span>
+                  <span>
+                    <MetricLabel metricId={MID.PROFIT_FACTOR_VALIDATOR_PLAYBOOK}>
+                      {METRIC_LABEL.PROFIT_FACTOR} (validator)
+                    </MetricLabel>
+                  </span>
                   <strong>{fmtPF(detailMetrics.profitFactor ?? vSum.profitFactor)}</strong>
                 </div>
                 <div>
-                  <span>Expectancy $</span>
+                  <span>
+                    <MetricLabel metricId={MID.EXPECTANCY_DOLLAR_VALIDATOR_PLAYBOOK}>Expectancy $ (validator)</MetricLabel>
+                    {vSum.count > 0 ? <span className="tp-metric-sample"> · n={vSum.count}</span> : null}
+                  </span>
                   <strong>{vSum.expectancy != null ? vSum.expectancy.toFixed(2) : '—'}</strong>
                 </div>
               </div>
@@ -1233,77 +1281,129 @@ export default function TraderPlaybook() {
                 </button>
               </div>
 
+              <div className="tp-analytics-readme">
+                <p className="tp-analytics-readme__lede">
+                  Everything here is tied to real executions you have classified — no projections. Read top to bottom: edge and sample size first,
+                  then global discipline (honest off-plan tags), then rhythm. When something breaks, log it under Refine so the playbook and your
+                  behaviour stay linked.
+                </p>
+              </div>
+
               <section className="tp-analytics-section">
                 <h3 className="tp-analytics-section__title">Edge quality — is this setup worth trading?</h3>
-                <p className="tp-analytics-section__lede">Validator closes plus journal R — only rows tagged to this playbook.</p>
+                <p className="tp-analytics-section__lede">
+                  Validator $ and journal R for rows tagged <strong>PLAYBOOK</strong> to this setup only.
+                </p>
                 <div className="tp-stat-grid tp-stat-grid--analytics">
                   <div className="tp-stat-card tp-stat-card--emph">
-                    <span>Sample (V+J tagged)</span>
+                    <span>
+                      <MetricLabel metricId={MID.SAMPLE_VJ_TAGGED_PLAYBOOK}>Sample depth (V+J)</MetricLabel>
+                    </span>
                     <strong>{vSum.count + jSum.count}</strong>
+                    <small className="tp-stat-secondary">
+                      {vSum.count} validator closes (win/loss/BE) · {jSum.count} journal rows on this playbook
+                    </small>
                   </div>
                   <div className="tp-stat-card">
-                    <span>Win rate (validator)</span>
+                    <span>
+                      <MetricLabel metricId={MID.WIN_RATE_VALIDATOR_PLAYBOOK}>Win rate (validator)</MetricLabel>
+                    </span>
                     <strong>{fmtPct(vSum.winRate)}</strong>
+                    {vSum.count > 0 ? <small className="tp-stat-secondary">Based on {vSum.count} closed validator trades</small> : null}
                   </div>
                   <div className="tp-stat-card">
-                    <span>Profit factor</span>
+                    <span>
+                      <MetricLabel metricId={MID.PROFIT_FACTOR_VALIDATOR_PLAYBOOK}>{METRIC_LABEL.PROFIT_FACTOR} (validator)</MetricLabel>
+                    </span>
                     <strong>{fmtPF(vSum.profitFactor)}</strong>
+                    {vSum.count > 0 ? <small className="tp-stat-secondary">Gross $ wins ÷ gross $|loss| on this sample</small> : null}
                   </div>
                   <div className="tp-stat-card">
-                    <span>$ expectancy (V)</span>
+                    <span>
+                      <MetricLabel metricId={MID.EXPECTANCY_DOLLAR_VALIDATOR_PLAYBOOK}>Expectancy $ (validator)</MetricLabel>
+                    </span>
                     <strong>{vSum.expectancy != null ? vSum.expectancy.toFixed(2) : '—'}</strong>
+                    {vSum.count > 0 ? <small className="tp-stat-secondary">n = {vSum.count} closes</small> : null}
                   </div>
                   <div className="tp-stat-card">
-                    <span>Avg R (V)</span>
+                    <span>
+                      <MetricLabel metricId={MID.AVG_R_VALIDATOR_PLAYBOOK}>Avg R (validator)</MetricLabel>
+                    </span>
                     <strong>{vSum.avgR != null ? vSum.avgR.toFixed(2) : '—'}</strong>
                   </div>
                   <div className="tp-stat-card">
-                    <span>R expectancy (J)</span>
+                    <span>
+                      <MetricLabel metricId={MID.EXPECTANCY_R_JOURNAL_PLAYBOOK}>Expectancy (R · journal)</MetricLabel>
+                    </span>
                     <strong>{jSum.expectancyR != null ? jSum.expectancyR.toFixed(2) : '—'}</strong>
+                    {jSum.count > 0 ? <small className="tp-stat-secondary">Based on {jSum.count} journal rows</small> : null}
                   </div>
                   <div className="tp-stat-card">
-                    <span>Net $ (V)</span>
+                    <span>
+                      <MetricLabel metricId={MID.NET_PNL_VALIDATOR_PLAYBOOK}>Net $ (validator)</MetricLabel>
+                    </span>
                     <strong>{vSum.totalPnl != null ? vSum.totalPnl.toFixed(2) : '—'}</strong>
                   </div>
                   <div className="tp-stat-card">
-                    <span>Best / worst $ (V)</span>
+                    <span>
+                      <MetricLabel metricId={MID.BEST_WORST_VALIDATOR_PLAYBOOK}>Best / worst $ (validator)</MetricLabel>
+                    </span>
                     <strong>
                       {vSum.best != null ? vSum.best.toFixed(2) : '—'} / {vSum.worst != null ? vSum.worst.toFixed(2) : '—'}
                     </strong>
                   </div>
                 </div>
                 {!vSum.count && !jSum.count ? (
-                  <p className="tp-analytics-empty">No tagged book on this setup yet — classify executions so these numbers describe behaviour, not hope.</p>
+                  <p className="tp-analytics-empty">
+                    No validator or journal rows are tagged to this playbook yet. Open <strong>Classify executions</strong>, link fills to this setup,
+                    then revisit — without tags, win rate and expectancy cannot mean anything here.
+                  </p>
                 ) : null}
               </section>
 
               <section className="tp-analytics-section">
                 <h3 className="tp-analytics-section__title">Discipline — are you staying on plan?</h3>
-                <p className="tp-analytics-section__lede">Global book: compares on-playbook rows vs honest off-plan tags across everything you have classified.</p>
+                <p className="tp-analytics-section__lede">
+                  Global book: same summary as the hub — on-book vs off-plan among <strong>classified</strong> rows, plus what is still unclassified.
+                </p>
                 <div className="tp-stat-grid tp-stat-grid--analytics">
                   <div className="tp-stat-card tp-stat-card--emph">
-                    <span>On-book rate (class.)</span>
+                    <span>
+                      <MetricLabel metricId={MID.ON_BOOK_SHARE_CLASSIFIED}>On-book share (classified)</MetricLabel>
+                    </span>
                     <strong>{summary?.adherenceRate != null ? fmtPct(summary.adherenceRate) : '—'}</strong>
                   </div>
                   <div className="tp-stat-card tp-stat-card--alert">
-                    <span>Off-plan rate</span>
+                    <span>
+                      <MetricLabel metricId={MID.OFF_PLAN_RATE_CLASSIFIED}>Off-plan rate (classified)</MetricLabel>
+                    </span>
                     <strong>{summary?.noSetupRate != null ? fmtPct(summary.noSetupRate) : '—'}</strong>
                   </div>
                   <div className="tp-stat-card">
-                    <span>Unclassified</span>
+                    <span>
+                      <MetricLabel metricId={MID.UNCLASSIFIED}>{METRIC_LABEL.UNCLASSIFIED}</MetricLabel>
+                    </span>
                     <strong>{summary?.unclassifiedTrades ?? '—'}</strong>
                   </div>
                   <div className="tp-stat-card">
-                    <span>Missed / mis-ex log</span>
+                    <span>
+                      <MetricLabel metricId={MID.MISSED_LOG}>{METRIC_LABEL.MISSED_LOG}</MetricLabel>
+                    </span>
                     <strong>{mPatterns.total}</strong>
+                    <small className="tp-stat-secondary">Entries scoped to this playbook in the missed log</small>
                   </div>
                   <div className="tp-stat-card tp-stat-card--wide">
-                    <span>Top miss label</span>
+                    <span>
+                      <MetricLabel metricId={MID.TOP_MISS_PATTERN_PLAYBOOK}>Top miss label</MetricLabel>
+                    </span>
                     <strong>
                       {mPatterns.topMissTypes?.length ? `${mPatterns.topMissTypes[0][0]} (${mPatterns.topMissTypes[0][1]})` : '—'}
                     </strong>
                   </div>
                 </div>
+                {!summary ? (
+                  <p className="tp-analytics-empty">Summary not loaded — refresh the hub. Discipline rates need the server rollup.</p>
+                ) : null}
               </section>
 
               <section className="tp-analytics-section tp-analytics-section--insights">
@@ -1347,8 +1447,12 @@ export default function TraderPlaybook() {
               </section>
 
               <section className="tp-analytics-section">
-                <h3 className="tp-analytics-section__title">Execution rhythm</h3>
-                <p className="tp-analytics-section__lede">Where repetition shows up — day, session, symbol, streaks.</p>
+                <h3 className="tp-analytics-section__title">
+                  <MetricLabel metricId={MID.EXECUTION_RHYTHM_PLAYBOOK}>Execution rhythm</MetricLabel>
+                </h3>
+                <p className="tp-analytics-section__lede">
+                  Where tagged executions cluster — day, session, symbol; streaks from chronological win/loss runs.
+                </p>
                 {breakdown.sampleSize ? (
                   <div className="tp-breakdown-grid">
                     <div>
@@ -1389,7 +1493,10 @@ export default function TraderPlaybook() {
                     </div>
                   </div>
                 ) : (
-                  <p className="tp-analytics-empty">Need more tagged executions on this playbook before rhythm is visible.</p>
+                  <p className="tp-analytics-empty">
+                    No tagged sample yet for rhythm — link validator and journal rows to this playbook. Breakdowns appear once those rows exist with
+                    day/session/pair fields.
+                  </p>
                 )}
               </section>
 
@@ -1404,7 +1511,8 @@ export default function TraderPlaybook() {
                   </ul>
                 ) : (
                   <p className="tp-analytics-empty">
-                    Once you classify more of the book and log misses, this block surfaces over-use, under-use, and execution gaps.
+                    Not enough contrast yet between this playbook and your global book — keep classifying executions and log missed setups so
+                    under-use / over-use signals can surface.
                   </p>
                 )}
               </section>

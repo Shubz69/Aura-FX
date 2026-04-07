@@ -1125,6 +1125,12 @@
   color: rgba(212, 175, 55, 0.78);
 }
 
+.tp-analytics-section__title .tp-metric-label,
+.tp-analytics-section__title .tp-metric-tip__btn {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 .tp-analytics-section__lede {
   margin: -6px 0 14px;
   font-size: 0.82rem;
@@ -1846,4 +1852,166 @@
   .tp-note-type-picker {
     grid-template-columns: 1fr;
   }
+}
+
+/* Metric (i) tooltips — shell header + playbook surfaces */
+.aura-db-replay-stat__label,
+.trader-suite-terminal-stat__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tp-metric-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.tp-metric-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 1px;
+}
+
+.tp-metric-tip__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 50%;
+  font-size: 0.58rem;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  cursor: help;
+  color: rgba(212, 175, 55, 0.92);
+  background: rgba(212, 175, 55, 0.12);
+  box-shadow: 0 0 0 0.5px rgba(212, 175, 55, 0.28);
+}
+
+.tp-metric-tip__btn:hover,
+.tp-metric-tip__btn:focus-visible {
+  color: #fff;
+  background: rgba(212, 175, 55, 0.28);
+  outline: none;
+}
+
+.tp-metric-tip__panel {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  width: min(280px, 70vw);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(234, 169, 96, 0.22);
+  background: rgba(10, 12, 28, 0.97);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: rgba(230, 228, 248, 0.92);
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 2000;
+  transition: opacity 0.12s ease, visibility 0.12s ease;
+}
+
+.tp-metric-tip:hover .tp-metric-tip__panel,
+.tp-metric-tip:focus-within .tp-metric-tip__panel {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tp-metric-tip__title {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(212, 175, 55, 0.9);
+}
+
+.tp-metric-tip__line {
+  margin: 0 0 6px;
+}
+
+.tp-metric-tip__line:last-child {
+  margin-bottom: 0;
+}
+
+.tp-metric-tip__line--muted {
+  color: rgba(200, 196, 232, 0.78);
+}
+
+.tp-metric-tip__line--hint {
+  color: rgba(180, 210, 190, 0.85);
+}
+
+.tp-metric-tip__k {
+  display: block;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.45);
+  margin-bottom: 2px;
+}
+
+.tp-metric-sample {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: rgba(200, 196, 232, 0.48);
+  letter-spacing: 0.02em;
+}
+
+.tp-stat-secondary {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.68rem;
+  color: rgba(200, 196, 232, 0.52);
+  font-weight: 500;
+}
+
+.tp-analytics-readme {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.tp-analytics-readme__lede {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: rgba(200, 196, 232, 0.78);
+}
+
+.tp-stat-card .tp-metric-label {
+  align-items: flex-start;
+}
+
+.tp-disc-metric > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.tp-detail-hero__stats > div > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
 }

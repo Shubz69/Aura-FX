@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import AuraTerminalThemeShell from './AuraTerminalThemeShell';
+import MetricTooltip from '../lib/trader-playbook/MetricTooltip';
 import '../styles/TraderSuite.css';
 
 export default function TraderSuiteShell({
@@ -62,7 +63,10 @@ export default function TraderSuiteShell({
         <div className="trader-suite-terminal-stats">
           {stats.map((stat) => (
             <div className="trader-suite-terminal-stat" key={stat.label}>
-              <span>{stat.label}</span>
+              <span className="trader-suite-terminal-stat__label">
+                {stat.label}
+                {stat.metricId ? <MetricTooltip metricId={stat.metricId} /> : null}
+              </span>
               <strong
                 className={
                   stat.tone === 'gold'
@@ -111,7 +115,10 @@ export default function TraderSuiteShell({
           <div className="aura-db-replay-stats">
             {stats.map((stat) => (
               <div className="aura-db-replay-stat" key={stat.label}>
-                <span>{stat.label}</span>
+                <span className="aura-db-replay-stat__label">
+                  {stat.label}
+                  {stat.metricId ? <MetricTooltip metricId={stat.metricId} /> : null}
+                </span>
                 <strong className={statToneClass(stat.tone)}>{stat.value}</strong>
               </div>
             ))}
