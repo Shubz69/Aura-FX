@@ -271,44 +271,51 @@ export default function TradeValidatorView() {
           </header>
         )}
 
-        <div className="tv-tab-rail">
-          <div className="tv-tab-row tv-tab-row--segmented" role="tablist" aria-label="Execution style">
-            {CHECKLIST_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === tab.id}
-                className={`tv-tab-btn ${activeTab === tab.id ? 'tv-tab-btn-active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
+        <div className="tv-checklist-topdeck">
+          <div className="tv-checklist-topdeck__tabs">
+            <div className="tv-tab-rail">
+              <div className="tv-tab-row tv-tab-row--segmented" role="tablist" aria-label="Execution style">
+                {CHECKLIST_TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === tab.id}
+                    className={`tv-tab-btn ${activeTab === tab.id ? 'tv-tab-btn-active' : ''}`}
+                    onClick={() => setActiveTab(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+
+          <section className="tv-score-card tv-score-card--compact" aria-label="Confluence score">
+            <div className="tv-score-left">
+              <span className="tv-score-label">Trade score</span>
+              <div className="tv-score-pct-row">
+                <span className="tv-score-value tv-score-pct-main">{combinedScore}%</span>
+                <span className="tv-score-grade tv-score-grade--inline">{scoreGrade}</span>
+              </div>
+              <span className="tv-score-sub">
+                {checklistScore} / {maxPointsActive} pts · {CHECKLIST_TABS.find((t) => t.id === activeTab)?.label}
+                {setupFormationScore > 0 && (
+                  <span className="tv-score-bonus"> + {setupFormationScore}% setup</span>
+                )}
+              </span>
+            </div>
+            <div className="tv-score-bar-wrap" role="presentation">
+              <div className="tv-score-bar" style={{ width: `${Math.min(combinedScore / 2, 100)}%` }} />
+            </div>
+          </section>
         </div>
 
-        <section className="tv-score-card">
-          <div className="tv-score-left">
-            <span className="tv-score-label">Trade score</span>
-            <span className="tv-score-value tv-score-pct-main">{combinedScore}%</span>
-            <span className="tv-score-sub">
-              {checklistScore} / {maxPointsActive} pts · {CHECKLIST_TABS.find((t) => t.id === activeTab)?.label}
-              {setupFormationScore > 0 && (
-                <span className="tv-score-bonus"> + {setupFormationScore}% setup bonus</span>
-              )}
-            </span>
-            <span className="tv-score-status">Status</span>
-            <span className="tv-score-grade">{scoreGrade}</span>
-          </div>
-          <div className="tv-score-bar-wrap">
-            <div className="tv-score-bar" style={{ width: `${Math.min(combinedScore / 2, 100)}%` }} />
-          </div>
-        </section>
-
-        <section className="tv-block tv-checklist-tab-content">
-          <h2 className="tv-block-title">{meta.title}</h2>
-          <p className="tv-block-sub">{meta.subtitle}</p>
+        <section className="tv-block tv-checklist-tab-content tv-checklist-body">
+          <header className="tv-checklist-section-head">
+            <h2 className="tv-block-title">{meta.title}</h2>
+            <p className="tv-block-sub">{meta.subtitle}</p>
+          </header>
           <div className="tv-cards-grid tv-checklist-tab-cards">
             {tabCards.map((card) => (
               <ChecklistCard

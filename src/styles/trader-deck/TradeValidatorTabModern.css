@@ -389,22 +389,64 @@
    ============================================================ */
 
 .trade-validator-shell .trade-validator-inner.tv-new-layout {
-  max-width: 1180px;
+  max-width: min(1480px, calc(100vw - 24px));
   margin: 0 auto;
-  padding: clamp(14px, 2.5vw, 22px) clamp(12px, 2.5vw, 22px) clamp(18px, 2.5vw, 28px) !important;
+  padding: clamp(12px, 2vw, 18px) clamp(14px, 2.2vw, 22px) clamp(16px, 2.2vw, 24px) !important;
   border-radius: 18px !important;
   box-sizing: border-box;
 }
 
 .trade-validator-shell .tv-header {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+}
+
+/* ── Top deck: execution tabs + score strip (wide / compact) ───────────── */
+.trade-validator-shell .tv-checklist-topdeck {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.trade-validator-shell .tv-checklist-topdeck .tv-tab-row--segmented {
+  margin-bottom: 0 !important;
+}
+
+@media (min-width: 960px) {
+  .trade-validator-shell .tv-checklist-topdeck {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+
+  .trade-validator-shell .tv-checklist-topdeck__tabs {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .trade-validator-shell .tv-checklist-topdeck .tv-tab-rail {
+    margin-bottom: 0 !important;
+    width: 100%;
+  }
+
+  .trade-validator-shell .tv-checklist-topdeck .tv-tab-row--segmented {
+    margin-bottom: 0 !important;
+  }
+
+  .trade-validator-shell .tv-checklist-topdeck .tv-score-card {
+    flex: 0 0 clamp(240px, 32%, 360px);
+    margin-bottom: 0 !important;
+  }
 }
 
 .trade-validator-shell .tv-tab-rail {
   display: flex;
   justify-content: center;
   width: 100%;
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 /* Segmented tab row */
@@ -414,10 +456,10 @@
   align-items: stretch;
   justify-content: center;
   gap: 0 !important;
-  margin: 0 auto 18px !important;
-  padding: 5px !important;
+  margin: 0 auto 0 !important;
+  padding: 4px !important;
   width: 100%;
-  max-width: 560px;
+  max-width: none;
   border-radius: 14px !important;
   background: rgba(3, 2, 10, 0.55) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -432,8 +474,8 @@
   min-width: 0;
   max-width: none !important;
   margin: 0 !important;
-  padding: clamp(9px, 1.5vw, 12px) 8px !important;
-  font-size: clamp(0.7rem, 1.6vw, 0.82rem) !important;
+  padding: clamp(8px, 1.4vw, 11px) 10px !important;
+  font-size: clamp(0.68rem, 1.5vw, 0.8rem) !important;
   font-weight: 600 !important;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -464,41 +506,202 @@
 /* Score card */
 .trade-validator-shell .tv-score-card {
   border-radius: 14px !important;
-  padding: clamp(14px, 2vw, 20px) clamp(14px, 2.2vw, 22px) !important;
-  margin-bottom: 18px !important;
+  padding: clamp(12px, 1.8vw, 16px) clamp(12px, 2vw, 18px) !important;
+  margin-bottom: 14px !important;
 }
 
-/* Checklist cards grid */
+.trade-validator-shell .tv-score-card--compact {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+}
+
+.trade-validator-shell .tv-score-card--compact .tv-score-left {
+  gap: 4px !important;
+}
+
+.trade-validator-shell .tv-score-pct-row {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 14px;
+}
+
+.trade-validator-shell .tv-score-card--compact .tv-score-value {
+  font-size: clamp(1.45rem, 3.5vw, 1.85rem) !important;
+  line-height: 1 !important;
+}
+
+.trade-validator-shell .tv-score-grade--inline {
+  font-size: clamp(0.68rem, 1.5vw, 0.78rem) !important;
+  padding: 4px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(234, 169, 96, 0.12) !important;
+  border: 1px solid rgba(234, 169, 96, 0.28) !important;
+}
+
+.trade-validator-shell .tv-score-card--compact .tv-score-sub {
+  font-size: clamp(0.65rem, 1.4vw, 0.75rem) !important;
+  line-height: 1.35 !important;
+  opacity: 0.92;
+}
+
+.trade-validator-shell .tv-score-card--compact .tv-score-bar-wrap {
+  height: 7px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+/* Section intro — single tight band */
+.trade-validator-shell .tv-checklist-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(234, 169, 96, 0.14);
+}
+
+@media (min-width: 720px) {
+  .trade-validator-shell .tv-checklist-section-head {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 20px;
+  }
+
+  .trade-validator-shell .tv-checklist-section-head .tv-block-sub {
+    margin: 0 !important;
+    flex: 1 1 180px;
+    text-align: right;
+    max-width: 52ch;
+    line-height: 1.35 !important;
+  }
+
+  .trade-validator-shell .tv-checklist-section-head .tv-block-title {
+    margin: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+  }
+}
+
+.trade-validator-shell .tv-checklist-body {
+  margin-bottom: 20px !important;
+}
+
+.trade-validator-shell .tv-checklist-body .tv-block-title {
+  font-size: clamp(0.82rem, 1.8vw, 0.95rem) !important;
+  letter-spacing: 0.06em !important;
+  padding-bottom: 0 !important;
+  border-bottom: none !important;
+}
+
+.trade-validator-shell .tv-checklist-body .tv-block-sub {
+  font-size: clamp(0.72rem, 1.55vw, 0.82rem) !important;
+  margin: 0 !important;
+  color: rgba(200, 196, 232, 0.68) !important;
+}
+
+/* Checklist cards grid — denser, true 3-col on wide screens */
 .trade-validator-shell .tv-cards-grid.tv-checklist-tab-cards {
   display: grid !important;
-  gap: 12px !important;
+  gap: 10px !important;
   grid-template-columns: 1fr !important;
+  margin-bottom: 0 !important;
 }
 
-@media (min-width: 560px) {
+@media (min-width: 640px) {
   .trade-validator-shell .tv-cards-grid.tv-checklist-tab-cards {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 14px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1180px) {
   .trade-validator-shell .tv-cards-grid.tv-checklist-tab-cards {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
-    gap: 16px !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
   }
+}
+
+.trade-validator-shell .tv-checklist-tab-card .tv-section-card-icon {
+  display: none !important;
+}
+
+.trade-validator-shell .tv-checklist-tab-card .tv-section-card-title {
+  font-size: clamp(0.78rem, 1.5vw, 0.88rem) !important;
+  margin-bottom: 6px !important;
+  letter-spacing: 0.04em;
+}
+
+.trade-validator-shell .tv-checklist-tab-card .tv-section-score {
+  font-size: 0.72rem !important;
+  margin-top: 6px !important;
+  padding-top: 8px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.trade-validator-shell .tv-checklist-tab-card .tv-checklist-item {
+  padding: 8px 10px !important;
+  margin: 0 -10px !important;
+  gap: 10px !important;
+  font-size: clamp(0.76rem, 1.45vw, 0.84rem) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+.trade-validator-shell .tv-checklist-tab-card .tv-checklist-item:hover {
+  transform: none !important;
+}
+
+.trade-validator-shell .tv-checklist-tab-card .tv-item-pct {
+  font-size: 0.65rem !important;
+  padding: 2px 7px !important;
+}
+
+.trade-validator-shell .tv-checklist-tab-card .tv-example-thumb {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 7px !important;
 }
 
 .trade-validator-shell .tv-section-card {
   border-radius: 13px !important;
-  padding: clamp(14px, 2vw, 18px) clamp(14px, 2vw, 18px) clamp(12px, 1.8vw, 16px) !important;
+  padding: clamp(10px, 1.6vw, 14px) clamp(12px, 1.8vw, 14px) clamp(8px, 1.4vw, 12px) !important;
   height: 100%;
   box-sizing: border-box;
 }
 
 .trade-validator-shell .tv-setup-block {
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+.trade-validator-shell .tv-setup-block .tv-block-title {
+  font-size: clamp(0.8rem, 1.7vw, 0.92rem) !important;
+}
+
+.trade-validator-shell .tv-setup-block .tv-block-sub {
+  font-size: clamp(0.72rem, 1.5vw, 0.8rem) !important;
+  margin-bottom: 12px !important;
+}
+
+.trade-validator-shell .tv-bottom-bar {
+  margin-top: 16px !important;
+  padding: 14px 16px !important;
+  gap: 12px !important;
+  border-radius: 14px !important;
+}
+
+.trade-validator-shell .tv-bottom-msg {
+  font-size: 0.8rem !important;
+}
+
+.trade-validator-shell .tv-btn-calc,
+.trade-validator-shell .tv-btn-save {
+  padding: 10px 20px !important;
+  font-size: 0.8rem !important;
+  border-radius: 11px !important;
 }
 
 /* ============================================================
@@ -506,7 +709,7 @@
    ============================================================ */
 
 .trade-validator-shell .acc-page {
-  max-width: 1220px;
+  max-width: min(1480px, 100%);
   margin: 0 auto;
   box-sizing: border-box;
 }
@@ -884,7 +1087,6 @@
   .trade-validator-shell .tv-tab-row--segmented {
     max-width: 100%;
     border-radius: 12px !important;
-    margin-bottom: 14px !important;
   }
 
   .trade-validator-shell .tv-tab-row--segmented .tv-tab-btn {
@@ -1047,7 +1249,7 @@
   }
 
   .trade-validator-shell .tv-cards-grid.tv-checklist-tab-cards {
-    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
   .trade-validator-shell .acc-type-pills {
@@ -1067,6 +1269,14 @@
   }
 }
 
+/* 2-col checklist between tablet and 1180px (3-col kicks in globally above 1180) */
+@media (min-width: 768px) and (max-width: 1179px) {
+  .trade-validator-shell .tv-cards-grid.tv-checklist-tab-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
+
 /* ── lg: 1024–1279px (small laptops) ── */
 @media (min-width: 1024px) and (max-width: 1279px) {
   .trade-validator-shell .aura-shell-content {
@@ -1076,10 +1286,6 @@
 
   .trade-validator-shell .aura-overview-kpi-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-  }
-
-  .trade-validator-shell .tv-cards-grid.tv-checklist-tab-cards {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
   }
 
   .trade-validator-shell .acc-layout {
@@ -1111,7 +1317,8 @@
   }
 
   .trade-validator-shell .tv-cards-grid.tv-checklist-tab-cards {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
   }
 
   .trade-validator-shell .acc-insights-grid {

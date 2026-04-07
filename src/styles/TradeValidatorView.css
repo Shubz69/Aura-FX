@@ -79,8 +79,8 @@
    MAIN PANEL — Premium Glass Card
    ═══════════════════════════════════════════════════════════════════ */
 .trade-validator-inner {
-  max-width: 1060px;
-  width: min(1060px, calc(100% - 1cm));
+  max-width: min(1420px, calc(100% - 24px));
+  width: min(1420px, calc(100% - 1cm));
   margin: 0 auto;
   position: relative;
   z-index: 10;
@@ -88,7 +88,7 @@
   background: var(--tv-card) !important;
   border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius-lg);
-  padding: 32px 28px 36px;
+  padding: 26px 24px 30px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   transition: border-color var(--tv-transition), box-shadow var(--tv-transition);
   backdrop-filter: blur(12px);
@@ -222,6 +222,55 @@
 /* ═══════════════════════════════════════════════════════════════════
    TAB ROW — Premium Pill Style
    ═══════════════════════════════════════════════════════════════════ */
+/* Checklist top deck — tabs + score (compact layout; shell overrides in TradeValidatorTabModern) */
+.tv-checklist-topdeck {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.tv-checklist-topdeck .tv-tab-row--segmented,
+.trade-validator-inner .tv-tab-row.tv-tab-row--segmented {
+  max-width: none;
+  width: 100%;
+}
+
+.tv-checklist-section-head {
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(234, 169, 96, 0.14);
+}
+
+.tv-checklist-body .tv-block-title {
+  margin-bottom: 4px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.tv-checklist-body .tv-block-sub {
+  margin-bottom: 0;
+}
+
+.tv-score-pct-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 14px;
+}
+
+.tv-score-grade--inline {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(234, 169, 96, 0.12);
+  border: 1px solid rgba(234, 169, 96, 0.28);
+}
+
+.tv-score-card--compact .tv-score-bar-wrap {
+  height: 7px;
+}
+
 .tv-tab-row {
   display: flex;
   align-items: center;
@@ -595,12 +644,16 @@
 /* ═══════════════════════════════════════════════════════════════════
    CHECKLIST ITEMS
    ═══════════════════════════════════════════════════════════════════ */
+.tv-checklist-tab-card .tv-section-card-icon {
+  display: none;
+}
+
 .tv-checklist-item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 12px 14px;
-  margin: 0 -14px;
+  gap: 10px;
+  padding: 9px 12px;
+  margin: 0 -12px;
   cursor: pointer;
   border-radius: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -739,23 +792,23 @@
    ═══════════════════════════════════════════════════════════════════ */
 .tv-cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-bottom: 32px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1179px) {
   .tv-cards-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 }
 
 @media (max-width: 640px) {
   .tv-cards-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
-    margin-bottom: 28px;
+    gap: 10px;
+    margin-bottom: 20px;
   }
 }
 
@@ -763,7 +816,7 @@
   background: var(--tv-card);
   border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
-  padding: 22px;
+  padding: 14px 16px 12px;
   transition: all var(--tv-transition);
   position: relative;
   overflow: hidden;
