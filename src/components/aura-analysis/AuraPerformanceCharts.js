@@ -1,4 +1,4 @@
-import React, { useMemo, useId } from 'react';
+import React, { useMemo, useId, memo } from 'react';
 import '../../styles/aura-analysis/AuraPerformanceCharts.css';
 
 /**
@@ -15,7 +15,7 @@ function fmtAxisMoney(v) {
 }
 
 /** Closed-trade sequential equity curve (balance points). */
-export function AuraEquityAreaChart({ curve, height = 160, title = 'Equity curve' }) {
+function AuraEquityAreaChartBase({ curve, height = 160, title = 'Equity curve' }) {
   const gid = useId().replace(/:/g, '');
   if (!curve || curve.length < 2) {
     return (
@@ -83,7 +83,7 @@ export function AuraEquityAreaChart({ curve, height = 160, title = 'Equity curve
 }
 
 /** Underwater / drawdown % curve */
-export function AuraDrawdownAreaChart({ curve, height = 100, title = 'Drawdown %' }) {
+function AuraDrawdownAreaChartBase({ curve, height = 100, title = 'Drawdown %' }) {
   const gid = useId().replace(/:/g, '');
   if (!curve || curve.length < 2) return null;
 
@@ -128,7 +128,7 @@ export function AuraDrawdownAreaChart({ curve, height = 100, title = 'Drawdown %
 }
 
 /** UTC hour-of-day contribution (0–23). */
-export function AuraHourOfDayStrip({ byHourUtc, emptyHint = 'No time distribution' }) {
+function AuraHourOfDayStripBase({ byHourUtc, emptyHint = 'No time distribution' }) {
   const active = useMemo(
     () => (byHourUtc || []).filter(h => h.trades > 0),
     [byHourUtc]
@@ -168,7 +168,7 @@ export function AuraHourOfDayStrip({ byHourUtc, emptyHint = 'No time distributio
 }
 
 /** Histogram from analytics.pnlHistogram */
-export function AuraPnlHistogram({ bins, height = 120 }) {
+function AuraPnlHistogramBase({ bins, height = 120 }) {
   if (!bins || !bins.length) {
     return <div className="apc-empty apc-empty--sm">Not enough trades for a distribution</div>;
   }
@@ -210,3 +210,209 @@ export function AuraPnlHistogram({ bins, height = 120 }) {
     </div>
   );
 }
+
+/** Rolling per-trade expectancy (windowed mean P/L). */
+function AuraRollingExpectancyChartBase({ series, height = 96, title = 'Rolling expectancy ($/trade)' }) {
+  if (!series?.length) {
+    return (
+      <div className="aa-chart-wrap">
+        {title && <div className="aa-chart-title">{title}</div>}
+        <div className="apc-empty apc-empty--sm" style={{ height }}>Need more trades for a rolling window</div>
+      </div>
+    );
+  }
+  const W = 640;
+  const H = height;
+  const pad = { t: 14, b: 22, l: 48, r: 12 };
+  const innerW = W - pad.l - pad.r;
+  const innerH = H - pad.t - pad.b;
+  const vals = series.map((p) => p.expectancy);
+  const mn = Math.min(...vals, 0);
+  const mx = Math.max(...vals, 0);
+  const range = Math.max(mx - mn, 1e-6);
+  const n = series.length;
+  const xs = series.map((_, i) => pad.l + (n <= 1 ? innerW / 2 : (i / (n - 1)) * innerW));
+  const ys = vals.map((v) => pad.t + (1 - (v - mn) / range) * innerH);
+  const pathD = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  const zeroY = pad.t + (1 - (0 - mn) / range) * innerH;
+  return (
+    <div className="aa-chart-wrap apc-chart">
+      {title && <div className="aa-chart-title">{title}</div>}
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" className="apc-svg" style={{ height }}>
+        <line x1={pad.l} y1={zeroY} x2={W - pad.r} y2={zeroY} className="apc-grid-line" />
+        <path d={pathD} fill="none" stroke="#f8c37d" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+/** R-multiple histogram from institutional.rMultipleDistribution.bins */
+function AuraRMultipleHistogramBase({ bins, height = 100 }) {
+  if (!bins?.length) {
+    return <div className="apc-empty apc-empty--sm">No R-multiple distribution</div>;
+  }
+  const maxCount = Math.max(...bins.map((b) => b.count), 1);
+  const W = 640;
+  const H = height;
+  const pad = { t: 10, b: 24, l: 10, r: 10 };
+  const barAreaW = W - pad.l - pad.r;
+  const barAreaH = H - pad.t - pad.b;
+  const bw = barAreaW / bins.length - 2;
+  return (
+    <div className="apc-histo-wrap">
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" className="apc-svg" style={{ height }}>
+        {bins.map((b, i) => {
+          const h = (b.count / maxCount) * barAreaH;
+          const x = pad.l + i * (barAreaW / bins.length) + 1;
+          const y = pad.t + barAreaH - h;
+          return (
+            <g key={i}>
+              <rect x={x} y={y} width={Math.max(2, bw)} height={Math.max(h, 1)} rx={2} className="apc-histo-bar apc-histo-bar--pos" />
+            </g>
+          );
+        })}
+      </svg>
+      <div className="apc-histo-cap">R-multiple distribution (count)</div>
+    </div>
+  );
+}
+
+/** Trade index vs P/L and R (opacity by |R|). */
+function AuraScatterTradePnRBase({ points, height = 120 }) {
+  if (!points?.length) {
+    return <div className="apc-empty apc-empty--sm">No scatter data</div>;
+  }
+  const W = 640;
+  const H = height;
+  const pad = { t: 14, b: 26, l: 44, r: 14 };
+  const innerW = W - pad.l - pad.r;
+  const innerH = H - pad.t - pad.b;
+  const pnls = points.map((p) => p.pnl);
+  const rs = points.map((p) => p.r);
+  const minP = Math.min(...pnls);
+  const maxP = Math.max(...pnls);
+  const pR = Math.max(maxP - minP, 1e-6);
+  const maxR = Math.max(Math.abs(Math.min(...rs)), Math.abs(Math.max(...rs)), 1e-6);
+  return (
+    <div className="aa-chart-wrap apc-chart">
+      <div className="aa-chart-title">P/L vs trade sequence</div>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" className="apc-svg" style={{ height }}>
+        {[0, 0.5, 1].map((t) => {
+          const gy = pad.t + t * innerH;
+          return <line key={t} x1={pad.l} y1={gy} x2={W - pad.r} y2={gy} className="apc-grid-line apc-grid-line--muted" />;
+        })}
+        {points.map((p) => {
+          const xi = pad.l + (points.length <= 1 ? innerW / 2 : (p.i / Math.max(points.length - 1, 1)) * innerW);
+          const yi = pad.t + (1 - (p.pnl - minP) / pR) * innerH;
+          const op = 0.35 + Math.min(0.55, (Math.abs(p.r) / maxR) * 0.5);
+          const col = p.pnl >= 0 ? 'rgba(248,195,125,' : 'rgba(196,155,124,';
+          return <circle key={p.i} cx={xi} cy={yi} r={3.2} fill={`${col}${op})`} stroke="rgba(255,255,255,0.12)" strokeWidth="0.5" />;
+        })}
+      </svg>
+    </div>
+  );
+}
+
+/** Smoothed PnL density (normalized). `stableKey` should be analytics.institutionalInputFingerprint when available. */
+function AuraPnlDensityLineBase({ curve, height = 90, stableKey = '' }) {
+  const model = useMemo(() => {
+    if (!curve?.length) return null;
+    const W = 640;
+    const H = height;
+    const pad = { t: 10, b: 20, l: 40, r: 10 };
+    const innerW = W - pad.l - pad.r;
+    const innerH = H - pad.t - pad.b;
+    const xs = curve.map((c) => c.x);
+    const ys = curve.map((c) => c.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const rX = Math.max(maxX - minX, 1e-9);
+    const maxY = Math.max(...ys, 1e-9);
+    const pathPts = curve.map((c, i) => {
+      const x = pad.l + ((c.x - minX) / rX) * innerW;
+      const y = pad.t + innerH - (c.y / maxY) * innerH;
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    const d = `${pathPts.join(' ')} L${pad.l + innerW},${pad.t + innerH} L${pad.l},${pad.t + innerH} Z`;
+    return { d, W, H };
+  }, [stableKey, curve, height]);
+
+  if (!model) {
+    return <div className="apc-empty apc-empty--sm">No density curve</div>;
+  }
+  return (
+    <div className="aa-chart-wrap apc-chart">
+      <div className="aa-chart-title">P/L density (normalized)</div>
+      <svg viewBox={`0 0 ${model.W} ${model.H}`} preserveAspectRatio="xMidYMid meet" className="apc-svg" style={{ height }}>
+        <path d={model.d} fill="rgba(248,195,125,0.18)" stroke="#f8c37d" strokeWidth="1.25" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+/** 7×24 UTC behaviour grid (weekday × hour). */
+function AuraWeekdayHourHeatmapBase({ behaviour, height = 160 }) {
+  const grid = behaviour?.grid;
+  if (!grid?.length) {
+    return <div className="apc-empty apc-empty--sm">No behaviour grid</div>;
+  }
+  const labels = behaviour.labels || ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const flat = [];
+  let maxAbs = 1;
+  grid.forEach((row, wd) => {
+    row.forEach((cell, h) => {
+      if (cell.trades > 0) maxAbs = Math.max(maxAbs, Math.abs(cell.pnl));
+      flat.push({ wd, h, ...cell });
+    });
+  });
+  const cellH = Math.max(6, (height - 22) / 7 - 2);
+  const cellW = 12;
+  return (
+    <div className="aa-chart-wrap apc-chart" style={{ overflow: 'auto' }}>
+      <div className="aa-chart-title">Weekday × hour P/L (UTC)</div>
+      <svg width={24 * (cellW + 2) + 22} height={7 * (cellH + 2) + 16} className="apc-svg" style={{ height: 'auto', maxWidth: '100%' }}>
+        {labels.map((lb, wd) => (
+          <text key={lb} x={0} y={18 + wd * (cellH + 2) + cellH / 2} className="apc-axis-lbl" fontSize="8">
+            {lb}
+          </text>
+        ))}
+        {flat.map(({ wd, h, pnl, trades }) => {
+          const int = trades > 0 ? Math.abs(pnl) / maxAbs : 0;
+          const fill =
+            trades === 0
+              ? 'rgba(255,255,255,0.03)'
+              : pnl >= 0
+                ? `rgba(248,195,125,${0.12 + int * 0.55})`
+                : `rgba(196,155,124,${0.12 + int * 0.55})`;
+          const x = 20 + h * (cellW + 2);
+          const y = 10 + wd * (cellH + 2);
+          return (
+            <rect
+              key={`${wd}-${h}`}
+              x={x}
+              y={y}
+              width={cellW}
+              height={cellH}
+              rx={2}
+              fill={fill}
+              stroke="rgba(255,255,255,0.05)"
+              strokeWidth="0.5"
+            >
+              <title>{`${labels[wd]} ${h}:00 UTC · ${trades}T · ${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}`}</title>
+            </rect>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+export const AuraEquityAreaChart = memo(AuraEquityAreaChartBase);
+export const AuraDrawdownAreaChart = memo(AuraDrawdownAreaChartBase);
+export const AuraHourOfDayStrip = memo(AuraHourOfDayStripBase);
+export const AuraPnlHistogram = memo(AuraPnlHistogramBase);
+export const AuraRollingExpectancyChart = memo(AuraRollingExpectancyChartBase);
+export const AuraRMultipleHistogram = memo(AuraRMultipleHistogramBase);
+export const AuraScatterTradePnR = memo(AuraScatterTradePnRBase);
+export const AuraPnlDensityLine = memo(AuraPnlDensityLineBase);
+export const AuraWeekdayHourHeatmap = memo(AuraWeekdayHourHeatmapBase);

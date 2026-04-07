@@ -474,19 +474,47 @@ const getWeekStartDate = (date) => {
     return next;
 };
 
+const isSettledTrade = (trade) => {
+    const r = String(trade?.result || '').toLowerCase();
+    return r === 'win' || r === 'loss' || r === 'breakeven';
+};
+
 const computePerformanceKpis = (trades = [], pnlData = {}) => {
+    const settled = trades.filter(isSettledTrade);
     const totalTrades = trades.length;
-    const wins = trades.filter((trade) => (trade.result || '').toLowerCase() === 'win' || (Number(trade.pnl) || 0) > 0).length;
-    const losses = trades.filter((trade) => (trade.result || '').toLowerCase() === 'loss' || (Number(trade.pnl) || 0) < 0).length;
-    const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+    const wins = settled.filter((trade) => (trade.result || '').toLowerCase() === 'win' || (Number(trade.pnl) || 0) > 0).length;
+    const losses = settled.filter((trade) => (trade.result || '').toLowerCase() === 'loss' || (Number(trade.pnl) || 0) < 0).length;
+    const winRate = settled.length > 0 ? (wins / settled.length) * 100 : 0;
     const totalPnL = pnlData.totalPnL != null ? pnlData.totalPnL : trades.reduce((sum, trade) => sum + (Number(trade.pnl) || 0), 0);
-    const averageR = totalTrades > 0
-        ? trades.reduce((sum, trade) => sum + (Number(trade.rMultiple) ?? Number(trade.rr) ?? 0), 0) / totalTrades
+    const averageR = settled.length > 0
+        ? settled.reduce((sum, trade) => sum + (Number(trade.rMultiple) ?? Number(trade.rr) ?? 0), 0) / settled.length
         : 0;
-    const grossProfit = trades.filter((trade) => (Number(trade.pnl) || 0) > 0).reduce((sum, trade) => sum + Number(trade.pnl), 0);
-    const grossLoss = Math.abs(trades.filter((trade) => (Number(trade.pnl) || 0) < 0).reduce((sum, trade) => sum + Number(trade.pnl), 0));
-    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 99 : 0;
-    const checklistScores = trades
+    const grossProfit = settled.filter((trade) => (Number(trade.pnl) || 0) > 0).reduce((sum, trade) => sum + Number(trade.pnl), 0);
+    const grossLoss = Math.abs(settled.filter((trade) => (Number(trade.pnl) || 0) < 0).reduce((sum, trade) => sum + Number(trade.pnl), 0));
+    let profitFactor = null;
+    let profitFactorDisplay = '—';
+    if (settled.length) {
+        if (grossLoss > 0) {
+            profitFactor = grossProfit / grossLoss;
+            profitFactorDisplay = Number.isFinite(profitFactor) ? profitFactor.toFixed(2) : '—';
+        } else if (grossProfit > 0) {
+            profitFactorDisplay = '∞';
+        } else {
+            profitFactorDisplay = '0.00';
+            profitFactor = 0;
+        }
+    }
+
+    const now = new Date();
+    const y = now.getFullYear();
+    const mo = now.getMonth();
+    const monthToDatePnl = settled.reduce((sum, trade) => {
+        const d = new Date(trade.createdAt || trade.created_at || trade.date);
+        if (Number.isNaN(d.getTime())) return sum;
+        if (d.getFullYear() === y && d.getMonth() === mo) return sum + (Number(trade.pnl) || 0);
+        return sum;
+    }, 0);
+    const checklistScores = settled
         .map((trade) => trade.checklistPercent != null ? Number(trade.checklistPercent) : null)
         .filter((score) => score != null);
     const avgChecklistPct = checklistScores.length
@@ -530,7 +558,7 @@ const computePerformanceKpis = (trades = [], pnlData = {}) => {
     }, []);
 
     const pairTotals = {};
-    sortedTrades.forEach((trade) => {
+    sortedTrades.filter(isSettledTrade).forEach((trade) => {
         const pair = trade.pair || '—';
         pairTotals[pair] = (pairTotals[pair] || 0) + (Number(trade.pnl) || 0);
     });
@@ -544,9 +572,12 @@ const computePerformanceKpis = (trades = [], pnlData = {}) => {
         totalPnL,
         averageR,
         profitFactor,
+        profitFactorDisplay,
+        settledTrades: settled.length,
+        monthToDatePnl,
         avgChecklistPct,
         maxDrawdown,
-        consistencyScore: totalTrades > 0 ? Math.round(Math.min(100, Math.max(0, 50 + (winRate - 50) * 0.4))) : 0,
+        consistencyScore: settled.length > 0 ? Math.round(Math.min(100, Math.max(0, 50 + (winRate - 50) * 0.4))) : 0,
         longestWin,
         longestLoss,
         activeWinStreak: currentWin,
@@ -915,6 +946,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
         journalTasks: [],
         journalDaily: null,
         labSessions: [],
+        validatorAccounts: [],
         reportsEligibility: null,
         headlines: [],
     });
@@ -939,10 +971,15 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
             Api.getAuraAnalysisPnl().then((response) => ({
                 totalPnL: response.data?.totalPnL ?? response.data?.monthlyPnl ?? 0,
                 monthlyPnl: response.data?.monthlyPnl ?? 0,
+                dailyPnl: response.data?.dailyPnl,
+                weeklyPnl: response.data?.weeklyPnl,
             })),
             Api.getJournalTasks({ dateFrom: toIsoDate(monthStart), dateTo: toIsoDate(now) }).then((response) => response.data?.tasks ?? []),
             Api.getJournalDaily(toIsoDate(now)).then((response) => response.data?.note ?? null),
             Api.getTraderLabSessions().then((response) => response.data?.sessions ?? []),
+            Api.getValidatorAccounts()
+                .then((response) => (Array.isArray(response.data?.accounts) ? response.data.accounts : []))
+                .catch(() => []),
             reportsPromise,
             Api.getTraderDeckNews(false)
                 .then((response) => (Array.isArray(response.data?.articles) ? response.data.articles : []))
@@ -955,8 +992,9 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                 journalTasks: results[2].status === 'fulfilled' && Array.isArray(results[2].value) ? results[2].value : [],
                 journalDaily: results[3].status === 'fulfilled' ? results[3].value : null,
                 labSessions: results[4].status === 'fulfilled' && Array.isArray(results[4].value) ? results[4].value : [],
-                reportsEligibility: results[5].status === 'fulfilled' ? results[5].value : null,
-                headlines: results[6].status === 'fulfilled' && Array.isArray(results[6].value) ? results[6].value : [],
+                validatorAccounts: results[5].status === 'fulfilled' && Array.isArray(results[5].value) ? results[5].value : [],
+                reportsEligibility: results[6].status === 'fulfilled' ? results[6].value : null,
+                headlines: results[7].status === 'fulfilled' && Array.isArray(results[7].value) ? results[7].value : [],
             });
             setDashboardLoading(false);
         });
@@ -978,8 +1016,13 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
 
     const welcomeShort = formatWelcomeSentence(user);
 
-    const monthlyPnL =
-        dashboardData.auraPnl.monthlyPnl != null ? Number(dashboardData.auraPnl.monthlyPnl) : analytics.totalPnL;
+    /** MT-linked: API month P&L. Otherwise: sum of closed trades this month (validator / Aura Analysis). */
+    const liveDeskPnl = useMemo(() => {
+        if (hasAnyConnection && dashboardData.auraPnl.monthlyPnl != null && !Number.isNaN(Number(dashboardData.auraPnl.monthlyPnl))) {
+            return Number(dashboardData.auraPnl.monthlyPnl);
+        }
+        return analytics.monthToDatePnl;
+    }, [hasAnyConnection, dashboardData.auraPnl.monthlyPnl, analytics.monthToDatePnl]);
 
     const rewardLabel = useMemo(() => {
         if (!lab) return '—';
@@ -992,8 +1035,12 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
 
     const riskLabel = lab?.riskLevel && String(lab.riskLevel).trim() ? lab.riskLevel : 'Moderate';
 
-    /** Live metrics reflect linked MT accounts; blur until at least one platform is connected. */
-    const liveMetricsLocked = auraConnectionsLoading || !hasAnyConnection;
+    /**
+     * Live P&L from MetaTrader when linked; otherwise show month-to-date from logged Aura Analysis trades.
+     * Frost overlay only when we have neither a broker link nor any logged trades.
+     */
+    const liveMetricsLocked =
+        auraConnectionsLoading || (!hasAnyConnection && analytics.totalTrades === 0);
 
     const deskBias = useMemo(() => normalizeDeskBias(lab, analytics), [lab, analytics]);
     const biasDisplay = deskBias.label;
@@ -1042,11 +1089,11 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     }, [lab]);
 
     const expectancyHint = useMemo(() => {
-        if (!analytics.totalTrades) return 'Start logging trades to compute expectancy.';
-        if (analytics.averageR >= 0.8) return 'Strong expectancy profile.';
-        if (analytics.averageR >= 0.2) return 'Positive edge, improve selectivity.';
-        if (analytics.averageR >= 0) return 'Edge is flat, tighten invalidations.';
-        return 'Negative expectancy, reduce risk and review setup quality.';
+        if (!analytics.settledTrades) return 'Log closed trades in Aura Analysis to measure edge and R-multiples.';
+        if (analytics.averageR >= 0.8) return 'Strong average R profile on closed trades.';
+        if (analytics.averageR >= 0.2) return 'Positive R-multiple trend — refine selectivity.';
+        if (analytics.averageR >= 0) return 'Flat average R — tighten invalidations.';
+        return 'Negative R profile — reduce size and review setups.';
     }, [analytics]);
 
     const journalBullets = useMemo(() => {
@@ -1105,8 +1152,8 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                 >
                                     <div>
                                         <span>P&amp;L</span>
-                                        <strong className={monthlyPnL >= 0 ? 'is-positive' : 'is-negative'}>
-                                            {liveMetricsLocked ? '—' : formatSignedCurrency(monthlyPnL)}
+                                        <strong className={liveDeskPnl >= 0 ? 'is-positive' : 'is-negative'}>
+                                            {liveMetricsLocked ? '—' : formatSignedCurrency(liveDeskPnl)}
                                         </strong>
                                     </div>
                                     <div>
@@ -1149,20 +1196,20 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                 </div>
                                 <div>
                                     <span>Profit factor</span>
-                                    <strong>
-                                        {analytics.totalTrades ? formatNumber(analytics.profitFactor, 2) : '—'}
-                                    </strong>
+                                    <strong>{analytics.settledTrades ? analytics.profitFactorDisplay : '—'}</strong>
                                 </div>
                                 <div>
                                     <span>Avg R</span>
                                     <strong>
-                                        {analytics.totalTrades ? formatNumber(analytics.averageR, 2) : '—'}
+                                        {analytics.settledTrades ? formatNumber(analytics.averageR, 2) : '—'}
                                     </strong>
                                 </div>
                                 <div>
                                     <span>Max drawdown</span>
                                     <strong>
-                                        {analytics.totalTrades ? formatSignedCurrency(-Math.abs(analytics.maxDrawdown || 0)) : '—'}
+                                        {analytics.settledTrades
+                                            ? formatSignedCurrency(-Math.abs(analytics.maxDrawdown || 0))
+                                            : '—'}
                                     </strong>
                                 </div>
                             </div>
@@ -1174,6 +1221,10 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                 <div>
                                     <span>Worst pair</span>
                                     <strong>{analytics.worstPair || '—'}</strong>
+                                </div>
+                                <div>
+                                    <span>Validator accounts</span>
+                                    <strong>{dashboardData.validatorAccounts?.length ?? '—'}</strong>
                                 </div>
                             </div>
                             <Link to="/aura-analysis/dashboard/overview" className="desk2-inline-link">
@@ -1250,16 +1301,20 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                             <span className="desk2-card__label">Edge snapshot</span>
                             <div className="desk2-mini-metrics">
                                 <div>
-                                    <span>Setup quality</span>
-                                    <strong>{analytics.totalTrades ? `${Math.max(0, Math.round(analytics.winRate))}/100` : '—'}</strong>
+                                    <span>Checklist avg</span>
+                                    <strong>
+                                        {analytics.avgChecklistPct != null
+                                            ? `${Math.round(analytics.avgChecklistPct)}%`
+                                            : '—'}
+                                    </strong>
                                 </div>
                                 <div>
-                                    <span>Expectancy</span>
-                                    <strong>{analytics.totalTrades ? `${formatNumber(analytics.averageR, 2)}R` : '—'}</strong>
+                                    <span>Avg R</span>
+                                    <strong>{analytics.settledTrades ? `${formatNumber(analytics.averageR, 2)}R` : '—'}</strong>
                                 </div>
                                 <div>
                                     <span>Loss streak</span>
-                                    <strong>{analytics.totalTrades ? analytics.activeLossStreak : '—'}</strong>
+                                    <strong>{analytics.settledTrades ? analytics.activeLossStreak : '—'}</strong>
                                 </div>
                                 <div>
                                     <span>Valid setups</span>

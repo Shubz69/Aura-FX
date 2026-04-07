@@ -1,8 +1,9 @@
-import React from 'react';
-import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
+import React, { memo } from 'react';
+import { useAuraAnalysisData, useAuraAnalysisMetrics } from '../../../context/AuraAnalysisContext';
 import { fmtPct, fmtNum, fmtDuration } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
-import { AuraPnlHistogram, AuraHourOfDayStrip } from '../../../components/aura-analysis/AuraPerformanceCharts';
+import { AuraPnlHistogram, AuraHourOfDayStrip, AuraWeekdayHourHeatmap } from '../../../components/aura-analysis/AuraPerformanceCharts';
+import { useAuraPerfSection, useIdleDeferredReady, useInViewOnce } from '../auraTabPerf';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function Ring({ score, label, color }) {
@@ -28,43 +29,11 @@ function Ring({ score, label, color }) {
  * Behavioral analytics from MT history — mirrors journal-style metrics (TradeZella-adjacent)
  * without requiring manual mood tags.
  */
-export default function PsychologyDiscipline() {
-  const { analytics: a, trades, loading, error, activePlatformId, connections } = useAuraAnalysis();
-  const needsConnection = !connections?.length || !activePlatformId;
-
-  if (loading) {
-    return (
-      <div className="aa-page">
-        <div className="aa-grid-3" style={{ marginBottom: 12 }}>{[...Array(3)].map((_, i) => <div key={i} className="aa-skeleton aa-skeleton-kpi" />)}</div>
-        <div className="aa-skeleton aa-skeleton-chart" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="aa-page">
-        <div className="aa-error"><i className="fas fa-exclamation-circle aa-error-icon" />{error}</div>
-      </div>
-    );
-  }
-
-  if (!trades.length) {
-    return (
-      <div className="aa-page">
-        <AuraAnalysisEmptyState
-          icon="mt5"
-          variant={needsConnection ? 'connect' : 'data'}
-          title={needsConnection ? 'Connect for behavioural analytics' : 'No trades in this period'}
-          description={
-            needsConnection
-              ? 'Link MetaTrader from the Connection Hub to score discipline, revenge-style entries, and sizing consistency from your history.'
-              : 'Psychology metrics are derived from closed trades in the selected range.'
-          }
-        />
-      </div>
-    );
-  }
+const PsychologyDisciplineMain = memo(function PsychologyDisciplineMain() {
+  const { analytics: a, analyticsDataKey } = useAuraAnalysisMetrics();
+  useAuraPerfSection('PsychologyDiscipline.main');
+  const deferHeavy = useIdleDeferredReady(analyticsDataKey || '');
+  const [coachRef, coachVis] = useInViewOnce({ rootMargin: '200px' });
 
   const disciplineScore = Math.max(0, Math.min(100, Math.round(
     100
@@ -103,6 +72,8 @@ export default function PsychologyDiscipline() {
           { label: 'Largest win % GP', value: a.largestWinPctOfGross > 0 ? fmtPct(a.largestWinPctOfGross) : '—', cls: a.largestWinPctOfGross > 45 ? 'aa--amber' : '', sub: 'Hope vs process' },
           { label: 'Concentration', value: fmtPct(a.topSymbolConcentrationPct), cls: a.topSymbolConcentrationPct > 55 ? 'aa--amber' : '', sub: 'Trades in top symbol' },
           { label: 'Streak (current)', value: a.currentStreak > 0 ? `${a.currentStreak} ${a.streakType}` : '—', cls: a.streakType === 'loss' ? 'aa--red' : a.streakType === 'win' ? 'aa--green' : '' },
+          { label: 'Mistake cost', value: (a.institutional?.behavioural?.mistakeCost?.totalMistakeCost ?? 0) > 0 ? `-$${fmtNum(a.institutional.behavioural.mistakeCost.totalMistakeCost)}` : '—', cls: 'aa--amber', sub: 'SL + revenge tail' },
+          { label: 'Loss clusters', value: String(a.institutional?.behavioural?.mistakeClustering?.lossBurstClusters ?? '—'), cls: '', sub: '≥3 losses' },
         ].map(({ label, value, sub, cls }) => (
           <div key={label} className="aa-kpi">
             <span className="aa-kpi-label">{label}</span>
@@ -118,20 +89,41 @@ export default function PsychologyDiscipline() {
           <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.38)', margin: '0 0 10px', lineHeight: 1.5 }}>
             Hours with abnormal activity after red days often correlate with rule breaks — compare against your revenge-rate.
           </p>
-          <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
+          {deferHeavy ? (
+            <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
+          ) : (
+            <div className="aa-skeleton" style={{ height: 64, borderRadius: 8 }} aria-hidden />
+          )}
         </div>
         <div className="aa-card">
           <div className="aa-section-title">Emotional outcome spread</div>
-          <AuraPnlHistogram bins={a.pnlHistogram} height={128} />
+          {deferHeavy ? (
+            <AuraPnlHistogram bins={a.pnlHistogram} height={128} />
+          ) : (
+            <div className="aa-skeleton aa-skeleton-chart" style={{ height: 128 }} aria-hidden />
+          )}
         </div>
       </div>
 
-      <div className="aa-card">
+      {a.institutional?.behavioural?.weekdayHourBehaviour?.grid?.length > 0 && (
+        <div className="aa-card" style={{ marginBottom: 16 }}>
+          {deferHeavy ? (
+            <AuraWeekdayHourHeatmap behaviour={a.institutional.behavioural.weekdayHourBehaviour} height={168} />
+          ) : (
+            <div className="aa-skeleton aa-skeleton-chart" style={{ height: 168 }} aria-hidden />
+          )}
+        </div>
+      )}
+
+      <div className="aa-card" ref={coachRef}>
         <div className="aa-section-title-lg" style={{ marginBottom: 12 }}>
           <span className="aa-title-dot" />
           Automated coaching notes
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {!coachVis ? (
+          <div className="aa-skeleton" style={{ minHeight: 120, borderRadius: 10 }} aria-hidden />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {a.revengeStyleRate >= 20 && (
             <div className="aa-warning">
               <i className="fas fa-bolt aa-warning-icon" style={{ color: '#c9a05c' }} />
@@ -168,9 +160,51 @@ export default function PsychologyDiscipline() {
               <span>{txt}</span>
             </div>
           ))}
-        </div>
+          </div>
+        )}
       </div>
 
     </div>
   );
+});
+
+export default function PsychologyDiscipline() {
+  const { trades, loading, error, activePlatformId, connections } = useAuraAnalysisData();
+  const needsConnection = !connections?.length || !activePlatformId;
+
+  if (loading) {
+    return (
+      <div className="aa-page">
+        <div className="aa-grid-3" style={{ marginBottom: 12 }}>{[...Array(3)].map((_, i) => <div key={i} className="aa-skeleton aa-skeleton-kpi" />)}</div>
+        <div className="aa-skeleton aa-skeleton-chart" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="aa-page">
+        <div className="aa-error"><i className="fas fa-exclamation-circle aa-error-icon" />{error}</div>
+      </div>
+    );
+  }
+
+  if (!trades.length) {
+    return (
+      <div className="aa-page">
+        <AuraAnalysisEmptyState
+          icon="mt5"
+          variant={needsConnection ? 'connect' : 'data'}
+          title={needsConnection ? 'Connect for behavioural analytics' : 'No trades in this period'}
+          description={
+            needsConnection
+              ? 'Link MetaTrader from the Connection Hub to score discipline, revenge-style entries, and sizing consistency from your history.'
+              : 'Psychology metrics are derived from closed trades in the selected range.'
+          }
+        />
+      </div>
+    );
+  }
+
+  return <PsychologyDisciplineMain />;
 }

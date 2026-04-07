@@ -2770,6 +2770,25 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 1.15rem;
+    /* Ensure desk copy never inherits dark body text — match gold / white terminal theme */
+    --text: #f4f5fb;
+    --text-muted: rgba(235, 236, 245, 0.78);
+    --text-dim: rgba(232, 210, 175, 0.58);
+    color: var(--text);
+}
+
+.terminal-dashboard .desk2-news__time {
+    color: rgba(248, 195, 125, 0.82);
+    letter-spacing: 0.04em;
+}
+
+.terminal-dashboard .desk2-news__text {
+    color: rgba(244, 245, 251, 0.88);
+}
+
+.terminal-dashboard .desk2-notes li,
+.terminal-dashboard .desk2-trades li span:first-child {
+    color: rgba(244, 245, 251, 0.85);
 }
 
 /* Tablet (e.g. iPad): same 3-column desk as desktop, slightly scaled to fit */

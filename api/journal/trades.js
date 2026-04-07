@@ -7,6 +7,7 @@ const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const { getJournalContext, assertJournalWritableDate, normalizeYyyyMmDd } = require('../utils/journalWriteGuard');
+const { touchPlaybookLastUsed } = require('../trader-playbook/schema');
 
 function getPathname(req) {
   if (!req.url) return '';
@@ -47,6 +48,20 @@ async function ensureJournalTable() {
       INDEX idx_journal_userId_date (userId, date)
     )
   `);
+  try {
+    await executeQuery('ALTER TABLE journal_trades ADD COLUMN playbook_setup_id CHAR(36) DEFAULT NULL');
+  } catch (_) {}
+  try {
+    await executeQuery('ALTER TABLE journal_trades ADD COLUMN setup_tag_type VARCHAR(20) DEFAULT NULL');
+  } catch (_) {}
+  try {
+    await executeQuery(
+      'ALTER TABLE journal_trades ADD INDEX idx_journal_pb_tag (userId, setup_tag_type, playbook_setup_id)'
+    );
+  } catch (_) {}
+  try {
+    await executeQuery('ALTER TABLE journal_trades ADD COLUMN no_setup_reason VARCHAR(48) DEFAULT NULL');
+  } catch (_) {}
 }
 
 function mapRow(row) {
@@ -64,6 +79,9 @@ function mapRow(row) {
     followedRules: Boolean(row.followedRules),
     notes: row.notes ?? null,
     emotional: row.emotional != null ? Number(row.emotional) : null,
+    playbookSetupId: row.playbook_setup_id ?? null,
+    setupTagType: row.setup_tag_type ?? null,
+    noSetupReason: row.no_setup_reason ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -178,10 +196,25 @@ module.exports = async (req, res) => {
     const followedRules = body.followedRules === false || body.followedRules === 'false' ? 0 : 1;
     const notes = body.notes != null ? String(body.notes).trim().slice(0, 4096) : null;
 
+    let playbookSetupId = body.playbookSetupId ?? body.playbook_setup_id ?? null;
+    playbookSetupId = playbookSetupId ? String(playbookSetupId).trim().slice(0, 36) : null;
+    let setupTagType = body.setupTagType ?? body.setup_tag_type ?? null;
+    if (setupTagType != null) {
+      const st = String(setupTagType).toUpperCase().slice(0, 20);
+      setupTagType = st === 'PLAYBOOK' || st === 'NO_SETUP' ? st : null;
+    }
+    if (playbookSetupId && setupTagType !== 'NO_SETUP' && !setupTagType) setupTagType = 'PLAYBOOK';
+    if (setupTagType === 'PLAYBOOK' && !playbookSetupId) setupTagType = null;
+    let noSetupReason =
+      body.noSetupReason != null || body.no_setup_reason != null
+        ? String(body.noSetupReason ?? body.no_setup_reason).trim().slice(0, 48)
+        : null;
+    if (setupTagType !== 'NO_SETUP') noSetupReason = null;
+
     await executeQuery(
-      `INSERT INTO journal_trades (id, userId, date, pair, tradeType, session, riskPct, rResult, dollarResult, followedRules, notes, emotional)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, userId, date, pair, tradeType, session, riskPct, rNum, dollarResult, followedRules, notes, emotional]
+      `INSERT INTO journal_trades (id, userId, date, pair, tradeType, session, riskPct, rResult, dollarResult, followedRules, notes, emotional, playbook_setup_id, setup_tag_type, no_setup_reason)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, userId, date, pair, tradeType, session, riskPct, rNum, dollarResult, followedRules, notes, emotional, playbookSetupId, setupTagType, noSetupReason]
     );
 
     const [rows] = await executeQuery('SELECT * FROM journal_trades WHERE id = ?', [id]);
@@ -282,6 +315,23 @@ module.exports = async (req, res) => {
       updates.push('emotional = ?');
       params.push(emotional);
     }
+    if (body.playbookSetupId !== undefined || body.playbook_setup_id !== undefined) {
+      const pid = body.playbookSetupId ?? body.playbook_setup_id;
+      updates.push('playbook_setup_id = ?');
+      params.push(pid ? String(pid).trim().slice(0, 36) : null);
+    }
+    if (body.setupTagType !== undefined || body.setup_tag_type !== undefined) {
+      const raw = String(body.setupTagType ?? body.setup_tag_type ?? '').trim();
+      const st = raw.toUpperCase().slice(0, 20);
+      const normalized = st === 'PLAYBOOK' || st === 'NO_SETUP' ? st : null;
+      updates.push('setup_tag_type = ?');
+      params.push(normalized);
+    }
+    if (body.noSetupReason !== undefined || body.no_setup_reason !== undefined) {
+      const ns = body.noSetupReason ?? body.no_setup_reason;
+      updates.push('no_setup_reason = ?');
+      params.push(ns != null && ns !== '' ? String(ns).trim().slice(0, 48) : null);
+    }
 
     if (updates.length === 0) {
       const [rows] = await executeQuery('SELECT * FROM journal_trades WHERE id = ?', [tradeId]);
@@ -295,7 +345,11 @@ module.exports = async (req, res) => {
     );
 
     const [rows] = await executeQuery('SELECT * FROM journal_trades WHERE id = ?', [tradeId]);
-    return res.status(200).json({ success: true, trade: mapRow(rows[0]) });
+    const updated = mapRow(rows[0]);
+    if (updated.playbookSetupId && updated.setupTagType === 'PLAYBOOK') {
+      touchPlaybookLastUsed(userId, updated.playbookSetupId).catch(() => {});
+    }
+    return res.status(200).json({ success: true, trade: updated });
   }
 
   return res.status(405).json({ success: false, message: 'Method not allowed' });

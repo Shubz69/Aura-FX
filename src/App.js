@@ -132,6 +132,30 @@ function usePrefetchRoutes() {
     }, []);
 }
 
+/** Warm Aura dashboard tab chunks during idle time while user is on any dashboard route */
+function usePrefetchAuraDashboardTabChunks() {
+    const { pathname } = useLocation();
+    useEffect(() => {
+        if (!pathname.startsWith('/aura-analysis/dashboard')) return undefined;
+        const prefetchTabs = () => {
+            import('./pages/aura-analysis/tabs/PerformanceAnalytics');
+            import('./pages/aura-analysis/tabs/RiskLab');
+            import('./pages/aura-analysis/tabs/EdgeAnalyzer');
+            import('./pages/aura-analysis/tabs/ExecutionLab');
+            import('./pages/aura-analysis/tabs/CalendarIntelligence');
+            import('./pages/aura-analysis/tabs/PsychologyDiscipline');
+            import('./pages/aura-analysis/tabs/GrowthEngine');
+            import('./pages/TraderReplay');
+        };
+        if (typeof requestIdleCallback !== 'undefined') {
+            const id = requestIdleCallback(prefetchTabs, { timeout: 2400 });
+            return () => cancelIdleCallback(id);
+        }
+        const t = setTimeout(prefetchTabs, 500);
+        return () => clearTimeout(t);
+    }, [pathname]);
+}
+
 /** Lightweight fallback while a route chunk loads (memoized to avoid re-renders) */
 const PageLoadFallback = React.memo(function PageLoadFallback() {
     return (
@@ -165,6 +189,7 @@ function AppRoutes() {
     const [postLoginLoadingActive, setPostLoginLoadingActive] = useState(() => postLoginGateArmed);
 
     usePrefetchRoutes();
+    usePrefetchAuraDashboardTabChunks();
 
     /** Re-register Web Push when permission already granted (DMs, @mentions → device) */
     useEffect(() => {

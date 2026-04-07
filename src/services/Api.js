@@ -1066,6 +1066,12 @@ const Api = {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
     },
+    getTraderPlaybookSetup: (id) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/trader-playbook/setups/${id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
     createTraderPlaybookSetup: (body) => {
         const token = localStorage.getItem('token');
         return axios.post(`${API_BASE_URL}/api/trader-playbook/setups`, body, {
@@ -1081,6 +1087,70 @@ const Api = {
     deleteTraderPlaybookSetup: (id) => {
         const token = localStorage.getItem('token');
         return axios.delete(`${API_BASE_URL}/api/trader-playbook/setups/${id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
+    touchTraderPlaybookSetup: (id) => {
+        const token = localStorage.getItem('token');
+        return axios.post(
+            `${API_BASE_URL}/api/trader-playbook/setups/${id}/touch`,
+            {},
+            { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        );
+    },
+    getTraderPlaybookSummary: () => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/trader-playbook/summary`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
+    getTraderPlaybookMTrades: (params = {}) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/trader-playbook/m-trades`, {
+            params,
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
+    createTraderPlaybookMTrade: (body) => {
+        const token = localStorage.getItem('token');
+        return axios.post(`${API_BASE_URL}/api/trader-playbook/m-trades`, body, {
+            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        });
+    },
+    updateTraderPlaybookMTrade: (id, body) => {
+        const token = localStorage.getItem('token');
+        return axios.put(`${API_BASE_URL}/api/trader-playbook/m-trades/${id}`, body, {
+            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        });
+    },
+    deleteTraderPlaybookMTrade: (id) => {
+        const token = localStorage.getItem('token');
+        return axios.delete(`${API_BASE_URL}/api/trader-playbook/m-trades/${id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
+    getTraderPlaybookReviewNotes: (playbookId) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/trader-playbook/review-notes`, {
+            params: { playbookId },
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
+    createTraderPlaybookReviewNote: (body) => {
+        const token = localStorage.getItem('token');
+        return axios.post(`${API_BASE_URL}/api/trader-playbook/review-notes`, body, {
+            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        });
+    },
+    updateTraderPlaybookReviewNote: (id, body) => {
+        const token = localStorage.getItem('token');
+        return axios.put(`${API_BASE_URL}/api/trader-playbook/review-notes/${id}`, body, {
+            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        });
+    },
+    deleteTraderPlaybookReviewNote: (id) => {
+        const token = localStorage.getItem('token');
+        return axios.delete(`${API_BASE_URL}/api/trader-playbook/review-notes/${id}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
     },

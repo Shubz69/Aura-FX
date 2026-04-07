@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useAuraAnalysisData, useAuraAnalysisMetrics } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum, fmtDuration } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import {
@@ -7,6 +7,8 @@ import {
   AuraDrawdownAreaChart,
   AuraHourOfDayStrip,
   AuraPnlHistogram,
+  AuraRollingExpectancyChart,
+  AuraPnlDensityLine,
 } from '../../../components/aura-analysis/AuraPerformanceCharts';
 import '../../../styles/aura-analysis/AuraShared.css';
 
@@ -69,11 +71,36 @@ function metaTraderLine(account, activePlatformId) {
 }
 
 /* ── Main ─────────────────────────────────────────────────── */
+function useIdleDeferredCharts(dataKey) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setReady(false);
+    let cancelled = false;
+    const markReady = () => { if (!cancelled) setReady(true); };
+    if (typeof requestIdleCallback !== 'undefined') {
+      const id = requestIdleCallback(markReady, { timeout: 420 });
+      return () => {
+        cancelled = true;
+        cancelIdleCallback(id);
+      };
+    }
+    const t = setTimeout(markReady, 32);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [dataKey]);
+  return ready;
+}
+
 export default function OverviewDashboard() {
-  const { analytics, account, trades, loading, error, activePlatformId, connections } = useAuraAnalysis();
+  const { account, trades, loading, error, activePlatformId, connections } = useAuraAnalysisData();
+  const { analytics, analyticsDataKey } = useAuraAnalysisMetrics();
   const needsConnection = !connections?.length || !activePlatformId;
   const [calMonth, setCalMonth] = useState(() => new Date());
   const [selDay, setSelDay] = useState(null);
+
+  const deferHeavyCharts = useIdleDeferredCharts(analyticsDataKey || '');
 
   const currency = account?.currency || 'USD';
 
@@ -214,7 +241,32 @@ export default function OverviewDashboard() {
               <div className="aa-section-title" style={{ margin: '14px 0 8px' }}>When you trade (UTC)</div>
               <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
               <div className="aa-section-title" style={{ margin: '16px 0 8px' }}>Realized P/L distribution</div>
-              <AuraPnlHistogram bins={a.pnlHistogram} height={112} />
+              {deferHeavyCharts ? (
+                <AuraPnlHistogram bins={a.pnlHistogram} height={112} />
+              ) : (
+                <div className="aa-skeleton aa-skeleton-chart" style={{ height: 112 }} aria-hidden />
+              )}
+              {a.institutional?.rollingExpectancy?.series?.length > 0 && (
+                <div className="aa-section-title" style={{ margin: '14px 0 8px' }}>Rolling expectancy</div>
+              )}
+              {a.institutional?.rollingExpectancy?.series?.length > 0 && (
+                deferHeavyCharts ? (
+                  <AuraRollingExpectancyChart
+                    series={a.institutional.rollingExpectancy.series}
+                    height={96}
+                    title=""
+                  />
+                ) : (
+                  <div className="aa-skeleton aa-skeleton-chart" style={{ height: 96 }} aria-hidden />
+                )
+              )}
+              {a.institutional?.distribution?.pnlDensityCurve?.length > 0 && (
+                deferHeavyCharts ? (
+                  <AuraPnlDensityLine curve={a.institutional.distribution.pnlDensityCurve} height={88} stableKey={a.institutionalInputFingerprint} />
+                ) : (
+                  <div className="aa-skeleton aa-skeleton-chart" style={{ height: 88 }} aria-hidden />
+                )
+              )}
             </>
           )}
         </div>
@@ -269,6 +321,36 @@ export default function OverviewDashboard() {
           </div>
         </div>
       </div>
+
+      {a.totalTrades > 0 && a.institutional && (
+        <div className="aa-card" style={{ marginBottom: 16 }}>
+          <div className="aa-section-title">Institutional signature</div>
+          <div className="aa-grid-4" style={{ marginBottom: 4 }}>
+            {[
+              { label: 'Aurax composite', value: String(a.institutional.signature?.auraxComposite ?? '—'), sub: '/100', cls: (a.institutional.signature?.auraxComposite ?? 0) >= 60 ? 'aa--green' : '' },
+              { label: 'Edge confidence', value: String(a.institutional.signature?.edgeConfidenceScore ?? '—'), sub: '/100', cls: '' },
+              { label: 'Consistency', value: String(a.institutional.signature?.consistencyScore ?? '—'), sub: '/100', cls: '' },
+              { label: 'Adaptability', value: String(a.institutional.signature?.adaptabilityScore ?? '—'), sub: '/100', cls: '' },
+              { label: 'Edge stability', value: String(a.institutional.edgeStabilityScore ?? '—'), sub: '/100', cls: '' },
+              { label: 'Hist. VaR 95%', value: fmtPnl(a.institutional.riskEngine?.historicalVaR95 ?? 0), cls: 'aa--red', sub: 'per trade' },
+              { label: 'CVaR 95%', value: fmtPnl(a.institutional.riskEngine?.historicalCVaR95 ?? 0), cls: 'aa--red', sub: 'expected shortfall' },
+              { label: 'MC ruin ≈', value: a.institutional.riskEngine?.monteCarlo?.ruinProbApprox != null ? fmtPct(a.institutional.riskEngine.monteCarlo.ruinProbApprox * 100, 1) : '—', cls: '', sub: `${a.institutional.riskEngine?.monteCarlo?.runs ?? 0} paths` },
+            ].map(({ label, value, sub, cls }) => (
+              <div key={label} className="aa-kpi">
+                <span className="aa-kpi-label">{label}</span>
+                <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
+                {sub && <span className="aa-kpi-sub">{sub}</span>}
+              </div>
+            ))}
+          </div>
+          {a.institutional.edgeDecay?.decayFlag && (
+            <div className="aa-warning" style={{ marginTop: 8 }}>
+              <i className="fas fa-chart-line aa-warning-icon" style={{ color: '#c9a05c' }} />
+              Edge decay detected — second-half expectancy vs first-half is materially lower.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Session · Direction · Top Symbols ── */}
       <div className="aa-grid-3" style={{ marginBottom: 16 }}>

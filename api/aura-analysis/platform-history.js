@@ -20,6 +20,7 @@ const {
   rollupNetPnl,
   filterTradesByInclusiveDateRange,
   MAX_HISTORY_LOOKBACK_DAYS,
+  extractExcursionFields,
 } = require('./mtTradeNormalize');
 const {
   publicHistoryError,
@@ -150,6 +151,7 @@ function normaliseTrade(raw, platformId) {
     session: detectSession(openRaw || closeRaw),
     platform: platLabel,
     created_at: closeTime || openTime || new Date().toISOString(),
+    ...extractExcursionFields(raw),
   };
 }
 

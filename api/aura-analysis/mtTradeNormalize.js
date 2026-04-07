@@ -182,6 +182,74 @@ function stableRowId(raw, sym, openTime, closeTime, platformId, seqIndex) {
   return `gen_${platformId}_${symClean}_${o}_${c}_${seqIndex}`;
 }
 
+function pickFiniteExcursion(...candidates) {
+  for (let i = 0; i < candidates.length; i++) {
+    const v = candidates[i];
+    if (v == null || v === '') continue;
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+  return undefined;
+}
+
+/**
+ * Map raw broker / worker excursion fields onto normalized trade properties.
+ * Omits keys when unknown — Aura Analysis treats missing path data as null metrics.
+ * When excursionUnit is "points"|"pips", numeric mfe/mae go to mfePoints/maePoints only (not USD).
+ */
+function extractExcursionFields(raw) {
+  const unit = String(raw.excursionUnit ?? raw.mfeUnit ?? raw.excursion_kind ?? '').toLowerCase();
+  const isPoints = unit === 'points' || unit === 'pips' || unit === 'pip';
+
+  const mfeUsdExplicit = pickFiniteExcursion(
+    raw.mfeUsd,
+    raw.maxFavorableExcursionUsd,
+    raw.max_favorable_excursion_usd,
+    raw.MfeUsd
+  );
+  const maeUsdExplicit = pickFiniteExcursion(
+    raw.maeUsd,
+    raw.maxAdverseExcursionUsd,
+    raw.max_adverse_excursion_usd,
+    raw.MaeUsd
+  );
+
+  const mfeR = pickFiniteExcursion(raw.mfeR, raw.mfe_r, raw.mfe_in_r, raw.excursionMfeR);
+  const maeR = pickFiniteExcursion(raw.maeR, raw.mae_r, raw.mae_in_r, raw.excursionMaeR);
+
+  const mfeTime = normalizeTimeValue(raw.mfeTime ?? raw.mfeAt ?? raw.maxFavorableTime ?? raw.mfe_time);
+  const maeTime = normalizeTimeValue(raw.maeTime ?? raw.maeAt ?? raw.maxAdverseTime ?? raw.mae_time);
+
+  let mfeUsd = mfeUsdExplicit;
+  let maeUsd = maeUsdExplicit;
+
+  const mfeGeneric = pickFiniteExcursion(
+    raw.mfe,
+    raw.MFE,
+    raw.maxFavorableExcursion,
+    raw.max_favorable_excursion
+  );
+  const maeGeneric = pickFiniteExcursion(raw.mae, raw.MAE, raw.maxAdverseExcursion, raw.max_adverse_excursion);
+
+  if (!isPoints) {
+    if (mfeUsd == null && mfeGeneric != null) mfeUsd = mfeGeneric;
+    if (maeUsd == null && maeGeneric != null) maeUsd = maeGeneric;
+  }
+
+  const out = {};
+  if (mfeUsd != null) out.mfeUsd = Math.abs(mfeUsd);
+  if (maeUsd != null) out.maeUsd = Math.abs(maeUsd);
+  if (mfeR != null) out.mfeR = mfeR;
+  if (maeR != null) out.maeR = maeR;
+  if (mfeTime) out.mfeTime = mfeTime;
+  if (maeTime) out.maeTime = maeTime;
+  if (isPoints) {
+    if (mfeGeneric != null) out.mfePoints = Math.abs(mfeGeneric);
+    if (maeGeneric != null) out.maePoints = Math.abs(maeGeneric);
+  }
+  return out;
+}
+
 /**
  * Map one raw deal/position from sync worker → normalized trade row.
  * @param {object} [netStats] — optional mutator: increments keys explicit_net | gross_includes_fees | rollup_commission_swap per row (diagnostics only; do not persist).
@@ -257,6 +325,7 @@ function normalizeMtRow(raw, platformId, seqIndex = 0, netStats = null) {
     platform: platLabel,
     platformId,
     created_at: closeOut || openOut || new Date().toISOString(),
+    ...extractExcursionFields(raw),
   };
 }
 
@@ -341,6 +410,7 @@ module.exports = {
   rollupNetPnl,
   rollupNetPnlDetailed,
   normalizeMtRow,
+  extractExcursionFields,
   dedupeNormalizedTrades,
   filterTradesByDays,
   filterTradesByInclusiveDateRange,

@@ -5,6 +5,7 @@
 
 const { getDbConnection } = require('../db');
 const { verifyToken } = require('../utils/auth');
+const { touchPlaybookLastUsed } = require('../trader-playbook/schema');
 
 function parseBody(req) {
   if (req.body == null) return {};
@@ -88,6 +89,20 @@ async function ensureTradesTable(db) {
       'ALTER TABLE aura_analysis_trades ADD INDEX idx_aa_trades_validator_account (user_id, validator_account_id)'
     );
   } catch (_) {}
+  try {
+    await db.execute('ALTER TABLE aura_analysis_trades ADD COLUMN playbook_setup_id CHAR(36) DEFAULT NULL');
+  } catch (_) {}
+  try {
+    await db.execute('ALTER TABLE aura_analysis_trades ADD COLUMN setup_tag_type VARCHAR(20) DEFAULT NULL');
+  } catch (_) {}
+  try {
+    await db.execute(
+      'ALTER TABLE aura_analysis_trades ADD INDEX idx_aa_pb_tag (user_id, setup_tag_type, playbook_setup_id)'
+    );
+  } catch (_) {}
+  try {
+    await db.execute('ALTER TABLE aura_analysis_trades ADD COLUMN no_setup_reason VARCHAR(48) DEFAULT NULL');
+  } catch (_) {}
 }
 
 function mapRow(r) {
@@ -132,6 +147,9 @@ function mapRow(r) {
     validatorAccountId: r.validator_account_id != null ? Number(r.validator_account_id) : null,
     outcomeVerificationStatus: r.outcome_verification_status ?? 'none',
     outcomeVerification,
+    playbookSetupId: r.playbook_setup_id ?? null,
+    setupTagType: r.setup_tag_type ?? null,
+    noSetupReason: r.no_setup_reason ?? null,
   };
 }
 
@@ -193,6 +211,24 @@ module.exports = async (req, res) => {
         updates.push('outcome_verification_json = NULL');
       }
 
+      if (body.playbookSetupId !== undefined || body.playbook_setup_id !== undefined) {
+        const pid = body.playbookSetupId ?? body.playbook_setup_id;
+        updates.push('playbook_setup_id = ?');
+        params.push(pid ? String(pid).trim().slice(0, 36) : null);
+      }
+      if (body.setupTagType !== undefined || body.setup_tag_type !== undefined) {
+        const raw = String(body.setupTagType ?? body.setup_tag_type ?? '').trim();
+        const st = raw.toUpperCase().slice(0, 20);
+        const normalized = st === 'PLAYBOOK' || st === 'NO_SETUP' ? st : raw === '' ? null : null;
+        updates.push('setup_tag_type = ?');
+        params.push(normalized);
+      }
+      if (body.noSetupReason !== undefined || body.no_setup_reason !== undefined) {
+        const ns = body.noSetupReason ?? body.no_setup_reason;
+        updates.push('no_setup_reason = ?');
+        params.push(ns != null && ns !== '' ? String(ns).trim().slice(0, 48) : null);
+      }
+
       if (updates.length === 0) {
         const [rows] = await db.execute('SELECT * FROM aura_analysis_trades WHERE id = ?', [tradeId]);
         db.release && db.release();
@@ -202,7 +238,11 @@ module.exports = async (req, res) => {
       await db.execute(`UPDATE aura_analysis_trades SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`, [...params, userId]);
       const [rows] = await db.execute('SELECT * FROM aura_analysis_trades WHERE id = ?', [tradeId]);
       db.release && db.release();
-      return res.status(200).json({ success: true, trade: mapRow(rows[0]) });
+      const updated = mapRow(rows[0]);
+      if (updated.playbookSetupId && updated.setupTagType === 'PLAYBOOK') {
+        touchPlaybookLastUsed(userId, updated.playbookSetupId).catch(() => {});
+      }
+      return res.status(200).json({ success: true, trade: updated });
     }
 
     // DELETE /api/aura-analysis/trades/:id
@@ -333,13 +373,28 @@ module.exports = async (req, res) => {
         return res.status(400).json({ success: false, message: 'pair, accountBalance, and entryPrice are required' });
       }
 
+      let playbookSetupId = body.playbookSetupId ?? body.playbook_setup_id ?? null;
+      playbookSetupId = playbookSetupId ? String(playbookSetupId).trim().slice(0, 36) : null;
+      let setupTagType = body.setupTagType ?? body.setup_tag_type ?? null;
+      if (setupTagType != null) {
+        const st = String(setupTagType).toUpperCase().slice(0, 20);
+        setupTagType = st === 'PLAYBOOK' || st === 'NO_SETUP' ? st : null;
+      }
+      if (playbookSetupId && setupTagType !== 'NO_SETUP' && !setupTagType) setupTagType = 'PLAYBOOK';
+      if (setupTagType === 'PLAYBOOK' && !playbookSetupId) setupTagType = null;
+      let noSetupReason =
+        body.noSetupReason != null || body.no_setup_reason != null
+          ? String(body.noSetupReason ?? body.no_setup_reason).trim().slice(0, 48)
+          : null;
+      if (setupTagType !== 'NO_SETUP') noSetupReason = null;
+
       const [insertResult] = await db.execute(
         `INSERT INTO aura_analysis_trades (
           user_id, validator_account_id, pair, asset_class, direction, session, account_balance, risk_percent, risk_amount,
           entry_price, stop_loss, take_profit, stop_loss_pips, take_profit_pips, rr, position_size,
           potential_profit, potential_loss, result, pnl, r_multiple, checklist_score, checklist_total,
-          checklist_percent, trade_grade, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          checklist_percent, trade_grade, notes, playbook_setup_id, setup_tag_type, no_setup_reason
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId,
           validatorAccountId,
@@ -367,12 +422,19 @@ module.exports = async (req, res) => {
           checklistPercent,
           tradeGrade,
           notes,
+          playbookSetupId,
+          setupTagType,
+          noSetupReason,
         ]
       );
       const insertId = insertResult.insertId;
       const [rows] = await db.execute('SELECT * FROM aura_analysis_trades WHERE id = ?', [insertId]);
       db.release && db.release();
-      return res.status(201).json({ success: true, trade: mapRow(rows[0]) });
+      const created = mapRow(rows[0]);
+      if (created.playbookSetupId && created.setupTagType === 'PLAYBOOK') {
+        touchPlaybookLastUsed(userId, created.playbookSetupId).catch(() => {});
+      }
+      return res.status(201).json({ success: true, trade: created });
     }
 
     if (db.release) db.release();

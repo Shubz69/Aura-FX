@@ -19,6 +19,8 @@ export default function TraderSuiteShell({
   railTitle,
   railContent,
   variant,
+  /** When variant is terminal, use Aura Analysis–style header (premium dashboard) instead of compact terminal bar */
+  terminalPresentation = 'classic',
   children,
 }) {
   const { pathname } = useLocation();
@@ -130,7 +132,7 @@ export default function TraderSuiteShell({
         }
       >
         {variant === 'terminal' ? (
-          embedInAuraDashboardReplay ? auraDashboardTerminal : terminalChrome
+          embedInAuraDashboardReplay || terminalPresentation === 'aura-dashboard' ? auraDashboardTerminal : terminalChrome
         ) : (
           <section className="trader-suite-panel trader-suite-shell">
             <div className="trader-suite-shell-grid">

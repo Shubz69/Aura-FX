@@ -52,6 +52,8 @@
  *   - { data: RawRow[] | { trades?, positions?, deals? } }
  *
  * RawRow: broker-specific; must be consumable by mtTradeNormalize.normalizeMtRow().
+ * Optional excursion enrichment (account currency): mfeUsd, maeUsd, mfeR, maeR,
+ * mfeTime / maeAt (epoch or ISO). Use excursionUnit: "points" only with mfePoints/maePoints semantics.
  * For accurate open vs closed classification, workers SHOULD send one of:
  *   state/status ("open"|"closed"), is_open boolean, entryType (e.g. DEAL_ENTRY_OUT),
  *   or distinct open vs close timestamps (close > open by >2s).

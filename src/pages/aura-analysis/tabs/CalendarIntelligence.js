@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
+import React, { useState, useMemo, memo } from 'react';
+import { useAuraAnalysisData, useAuraAnalysisMetrics } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
-import { AuraHourOfDayStrip } from '../../../components/aura-analysis/AuraPerformanceCharts';
+import { AuraHourOfDayStrip, AuraWeekdayHourHeatmap } from '../../../components/aura-analysis/AuraPerformanceCharts';
+import { useAuraPerfSection, useIdleDeferredReady, useInViewOnce } from '../auraTabPerf';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
@@ -10,9 +11,11 @@ function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const WEEKDAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-export default function CalendarIntelligence() {
-  const { analytics: a, trades, loading, error, activePlatformId, connections } = useAuraAnalysis();
-  const needsConnection = !connections?.length || !activePlatformId;
+const CalendarIntelligenceMain = memo(function CalendarIntelligenceMain() {
+  const { analytics: a, analyticsDataKey } = useAuraAnalysisMetrics();
+  useAuraPerfSection('CalendarIntelligence.main');
+  const deferCharts = useIdleDeferredReady(analyticsDataKey || '');
+  const [weeklyRef, weeklyVis] = useInViewOnce({ rootMargin: '240px' });
   const [viewDate, setViewDate] = useState(() => new Date());
   const [selDay, setSelDay]     = useState(null);
 
@@ -49,32 +52,6 @@ export default function CalendarIntelligence() {
 
   const calLabel = `${MONTHS[m]} ${y}`;
   const today = new Date().toISOString().slice(0, 10);
-
-  if (loading) return (
-    <div className="aa-page">
-      <div className="aa-skeleton" style={{ height: 380, borderRadius: 14, marginBottom: 12 }} />
-      <div className="aa-grid-3">{[...Array(3)].map((_, i) => <div key={i} className="aa-skeleton aa-skeleton-kpi" />)}</div>
-    </div>
-  );
-
-  if (error) return <div className="aa-page"><div className="aa-error"><i className="fas fa-exclamation-circle aa-error-icon" />{error}</div></div>;
-
-  if (!trades.length) {
-    return (
-      <div className="aa-page">
-        <AuraAnalysisEmptyState
-          icon="mt5"
-          variant={needsConnection ? 'connect' : 'data'}
-          title={needsConnection ? 'Connect to fill your calendar' : 'No trades in this period'}
-          description={
-            needsConnection
-              ? 'Connect MetaTrader from the Connection Hub to colour daily P/L and see which days you trade best.'
-              : 'Calendar insights appear when closed trades exist in the selected history window.'
-          }
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="aa-page">
@@ -266,36 +243,89 @@ export default function CalendarIntelligence() {
 
       <div className="aa-card" style={{ marginBottom: 16 }}>
         <div className="aa-section-title">When you bank P/L (UTC)</div>
-        <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
+        {deferCharts ? (
+          <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
+        ) : (
+          <div className="aa-skeleton" style={{ height: 64, borderRadius: 8 }} aria-hidden />
+        )}
+      </div>
+
+      <div className="aa-card" style={{ marginBottom: 16 }}>
+        <div className="aa-section-title">Weekday × hour (UTC)</div>
+        <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.38)', margin: '0 0 10px', lineHeight: 1.5 }}>
+          Institutional time-grid: aggregate P/L by session slot. News/volatility overlays can attach here when market data is wired (<code style={{ opacity: 0.7 }}>institutional.marketContext</code>).
+        </p>
+        {deferCharts ? (
+          <AuraWeekdayHourHeatmap behaviour={a.institutional?.behavioural?.weekdayHourBehaviour} height={168} />
+        ) : (
+          <div className="aa-skeleton aa-skeleton-chart" style={{ height: 168 }} aria-hidden />
+        )}
       </div>
 
       {/* ── Weekly overview ── */}
       {a.byWeek.length > 0 && (
-        <div className="aa-card">
+        <div className="aa-card" ref={weeklyRef}>
           <div className="aa-section-title">Weekly P/L History</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {(() => {
-              const recent = [...a.byWeek].reverse().slice(0, 8);
-              const maxAbs = Math.max(...recent.map(w => Math.abs(w.pnl)), 1);
-              return recent.map(w => {
-                const bWidth = Math.abs(w.pnl) / maxAbs * 100;
-                const wLabel = new Date(w.week + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                return (
-                  <div key={w.week} className="aa-bar-row">
-                    <span className="aa-bar-label">Wk {wLabel}</span>
-                    <div className="aa-bar-track">
-                      <div className={`aa-bar-fill ${w.pnl >= 0 ? 'aa-bar-fill--green' : 'aa-bar-fill--red'}`} style={{ width: `${bWidth}%` }} />
+          {!weeklyVis ? (
+            <div className="aa-skeleton" style={{ height: 200, borderRadius: 10 }} aria-hidden />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {(() => {
+                const recent = [...a.byWeek].reverse().slice(0, 8);
+                const maxAbs = Math.max(...recent.map(w => Math.abs(w.pnl)), 1);
+                return recent.map(w => {
+                  const bWidth = Math.abs(w.pnl) / maxAbs * 100;
+                  const wLabel = new Date(w.week + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  return (
+                    <div key={w.week} className="aa-bar-row">
+                      <span className="aa-bar-label">Wk {wLabel}</span>
+                      <div className="aa-bar-track">
+                        <div className={`aa-bar-fill ${w.pnl >= 0 ? 'aa-bar-fill--green' : 'aa-bar-fill--red'}`} style={{ width: `${bWidth}%` }} />
+                      </div>
+                      <span className={`aa-bar-val ${pnlCls(w.pnl)}`}>{fmtPnl(w.pnl)}</span>
+                      <span className="aa-bar-meta">{w.trades}T</span>
                     </div>
-                    <span className={`aa-bar-val ${pnlCls(w.pnl)}`}>{fmtPnl(w.pnl)}</span>
-                    <span className="aa-bar-meta">{w.trades}T</span>
-                  </div>
-                );
-              });
-            })()}
-          </div>
+                  );
+                });
+              })()}
+            </div>
+          )}
         </div>
       )}
 
     </div>
   );
+});
+
+export default function CalendarIntelligence() {
+  const { trades, loading, error, activePlatformId, connections } = useAuraAnalysisData();
+  const needsConnection = !connections?.length || !activePlatformId;
+
+  if (loading) return (
+    <div className="aa-page">
+      <div className="aa-skeleton" style={{ height: 380, borderRadius: 14, marginBottom: 12 }} />
+      <div className="aa-grid-3">{[...Array(3)].map((_, i) => <div key={i} className="aa-skeleton aa-skeleton-kpi" />)}</div>
+    </div>
+  );
+
+  if (error) return <div className="aa-page"><div className="aa-error"><i className="fas fa-exclamation-circle aa-error-icon" />{error}</div></div>;
+
+  if (!trades.length) {
+    return (
+      <div className="aa-page">
+        <AuraAnalysisEmptyState
+          icon="mt5"
+          variant={needsConnection ? 'connect' : 'data'}
+          title={needsConnection ? 'Connect to fill your calendar' : 'No trades in this period'}
+          description={
+            needsConnection
+              ? 'Connect MetaTrader from the Connection Hub to colour daily P/L and see which days you trade best.'
+              : 'Calendar insights appear when closed trades exist in the selected history window.'
+          }
+        />
+      </div>
+    );
+  }
+
+  return <CalendarIntelligenceMain />;
 }

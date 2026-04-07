@@ -1,11 +1,14 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { FiSearch, FiMic } from 'react-icons/fi';
 import { FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
+import CosmicBackground from '../../components/CosmicBackground';
 import MarketDecoderBriefContent from './MarketDecoderBriefContent';
 import { MARKET_DECODER_LAB_HANDOFF_KEY } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
+import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import '../../styles/trader-deck/MarketDecoder.css';
 
 const QUICK = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD', 'SPY', 'USDJPY'];
@@ -186,7 +189,7 @@ export default function MarketDecoderView({ embedded }) {
       <html>
         <head>
           <meta charset="utf-8" />
-          <title>Market Decoder ${escapeHtml(symbol)}</title>
+          <title>MARKET DECODER ${escapeHtml(symbol)}</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 24px; color: #111; }
             h1 { margin: 0 0 8px; font-size: 22px; }
@@ -198,7 +201,7 @@ export default function MarketDecoderView({ embedded }) {
           </style>
         </head>
         <body>
-          <h1>Market Decoder Preview · ${escapeHtml(symbol)}</h1>
+          <h1>MARKET DECODER preview · ${escapeHtml(symbol)}</h1>
           <div class="meta">Generated: ${escapeHtml(generatedAt)}</div>
           <div class="card">
             <div class="label">Current posture</div>
@@ -351,52 +354,66 @@ export default function MarketDecoderView({ embedded }) {
         </div>
       ) : null}
 
-      {brief && previewOpen ? (
-        <div className="md-preview-overlay" role="presentation" onClick={() => setPreviewOpen(false)}>
-          <div
-            className="md-preview-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="md-preview-title"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <header className="md-preview-bar">
-              <div className="md-preview-bar-text">
-                <h2 id="md-preview-title" className="md-preview-title">
-                  Market Decoder · {pairLabel || activeSymbol}
-                </h2>
-                <p className="md-preview-subtitle">Review the brief, then Export to continue in Trader Lab with this context.</p>
-              </div>
-              <button
-                type="button"
-                className="md-preview-close"
-                aria-label="Close preview"
+      {typeof document !== 'undefined' && brief && previewOpen
+        ? createPortal(
+            <>
+              <CosmicBackground />
+              <div
+                className="td-intel-preview-overlay md-decoder-intel-overlay"
+                role="presentation"
                 onClick={() => setPreviewOpen(false)}
               >
-                <FaTimes />
-              </button>
-            </header>
-            <div className="md-preview-scroll">
-              <div className="md-preview-brief-inner">
-                <MarketDecoderBriefContent brief={brief} />
+                <div
+                  className="td-intel-preview-box td-intel-preview-box--fullscreen td-intel-preview-box--protected"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="md-preview-title"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="td-intel-preview-chrome--minimal md-decoder-intel-chrome">
+                    <div className="md-decoder-intel-chrome-text">
+                      <p id="md-preview-title" className="td-intel-preview-title-bar">
+                        Market Decoder — {pairLabel || activeSymbol}
+                      </p>
+                      <p className="md-decoder-intel-chrome-sub">
+                        Review the brief, then Export to continue in Trader Lab with this context.
+                      </p>
+                    </div>
+                    <div className="md-decoder-intel-actions">
+                      <button type="button" className="md-decoder-intel-export" onClick={exportToTraderLab}>
+                        Export
+                      </button>
+                      <button
+                        type="button"
+                        className="td-intel-preview-close--floating"
+                        aria-label="Close preview"
+                        onClick={() => setPreviewOpen(false)}
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="td-intel-preview-frame-wrap md-decoder-intel-frame">
+                    <div className="md-decoder-intel-scroll">
+                      <MarketDecoderBriefContent brief={brief} />
+                    </div>
+                    <footer className="md-decoder-intel-footer">
+                      <div className="md-preview-footer-extras">
+                        <button type="button" className="md-preview-linkish" onClick={exportPreviewPdf}>
+                          Print / PDF
+                        </button>
+                        <button type="button" className="md-preview-linkish" onClick={exportJson}>
+                          Download JSON
+                        </button>
+                      </div>
+                    </footer>
+                  </div>
+                </div>
               </div>
-            </div>
-            <footer className="md-preview-footer">
-              <div className="md-preview-footer-extras">
-                <button type="button" className="md-preview-linkish" onClick={exportPreviewPdf}>
-                  Print / PDF
-                </button>
-                <button type="button" className="md-preview-linkish" onClick={exportJson}>
-                  Download JSON
-                </button>
-              </div>
-              <button type="button" className="md-preview-export-primary" onClick={exportToTraderLab}>
-                Export
-              </button>
-            </footer>
-          </div>
-        </div>
-      ) : null}
+            </>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

@@ -1,7 +1,19 @@
-import { computeAnalytics } from '../analytics';
+jest.mock('../monteCarloRunner', () => {
+  const { monteCarloRiskFixed, MC_DEFAULT_RUNS } = require('../analytics/monteCarloRisk');
+  return {
+    runMonteCarloOffMainThread: (pnls, startBalance, opts = {}) =>
+      Promise.resolve(monteCarloRiskFixed(pnls, startBalance, opts.runs ?? MC_DEFAULT_RUNS)),
+  };
+});
+
+import { computeAnalytics, invalidateAuraAnalyticsCache } from '../analytics';
 
 describe('computeAnalytics closed vs open', () => {
-  test('uses closed rows only for totalTrades and win stats', () => {
+  beforeEach(() => {
+    invalidateAuraAnalyticsCache();
+  });
+
+  test('uses closed rows only for totalTrades and win stats', async () => {
     const closed = {
       id: 'mt5_1',
       tradeStatus: 'closed',
@@ -23,7 +35,7 @@ describe('computeAnalytics closed vs open', () => {
       direction: 'sell',
       session: 'London',
     };
-    const a = computeAnalytics([closed, open], { balance: 1000, equity: 995 });
+    const a = await computeAnalytics([closed, open], { balance: 1000, equity: 995 });
     expect(a.closedTradesCount).toBe(1);
     expect(a.openPositionsCount).toBe(1);
     expect(a.tradeRowsTotal).toBe(2);
@@ -34,10 +46,16 @@ describe('computeAnalytics closed vs open', () => {
     expect(a.byHourUtc.length).toBe(24);
     expect(typeof a.sqn).toBe('number');
     expect(Array.isArray(a.pnlHistogram)).toBe(true);
+    expect(a.institutional).toBeDefined();
+    expect(a.institutional.institutionalVersion).toBe(2);
+    expect(typeof a.institutionalInputFingerprint).toBe('string');
+    expect(a.institutional.riskEngine.historicalVaR95).toBeDefined();
+    expect(Array.isArray(a.institutional.rollingExpectancy.series)).toBe(true);
+    expect(a.bySymbol[0].expectancy).toBeDefined();
   });
 
-  test('open-only window returns dedicated branch', () => {
-    const a = computeAnalytics(
+  test('open-only window returns dedicated branch', async () => {
+    const a = await computeAnalytics(
       [{ id: 'o1', tradeStatus: 'open', pair: 'XAUUSD', pnl: 1, openTime: '2024-01-01T00:00:00.000Z' }],
       { balance: 500, equity: 501 }
     );

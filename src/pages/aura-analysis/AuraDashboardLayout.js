@@ -1,6 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { NavLink, Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { AuraAnalysisProvider, useAuraAnalysis, DATE_RANGE_OPTIONS } from '../../context/AuraAnalysisContext';
+import {
+  AuraAnalysisProvider,
+  useAuraAnalysisData,
+  useAuraAnalysisMetrics,
+  DATE_RANGE_OPTIONS,
+} from '../../context/AuraAnalysisContext';
+import {
+  isAuraAnalysisDevPerfEnabled,
+  auraAnalysisDevPerfRenderMarkOnce,
+} from '../../lib/aura-analysis/auraAnalysisDevPerf';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
 import '../../styles/aura-analysis/AuraDashboard.css';
 
@@ -33,7 +42,7 @@ function AuraFilterBar() {
     symbolFilter, setSymbolFilter, symbolOptions,
     refreshing, lastUpdatedStr, refresh,
     activePlatformId, connections, setActivePlatformId,
-  } = useAuraAnalysis();
+  } = useAuraAnalysisData();
 
   const [customOpen, setCustomOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState('');
@@ -196,6 +205,34 @@ function AuraDashboardInner() {
   const [time, setTime] = useState(new Date());
   const location = useLocation();
   const navigate = useNavigate();
+  const {
+    loading,
+    error,
+    account,
+    rawTrades,
+  } = useAuraAnalysisData();
+  const { analyticsDataKey } = useAuraAnalysisMetrics();
+  const prevLoadingPerfRef = useRef(/** @type {boolean | null} */ (null));
+  const tabPerfKeyRef = useRef('');
+
+  useLayoutEffect(() => {
+    if (!isAuraAnalysisDevPerfEnabled()) return;
+    const was = prevLoadingPerfRef.current;
+    const now = loading;
+    if (was !== false && now === false && !error && (account != null || rawTrades.length > 0)) {
+      auraAnalysisDevPerfRenderMarkOnce('render.firstUsable');
+    }
+    prevLoadingPerfRef.current = now;
+  }, [loading, error, account, rawTrades.length]);
+
+  useLayoutEffect(() => {
+    if (!isAuraAnalysisDevPerfEnabled() || loading) return;
+    const tab = location.pathname.replace(`${base}/`, '') || 'overview';
+    const k = `${tab}|${analyticsDataKey}`;
+    if (tabPerfKeyRef.current === k) return;
+    tabPerfKeyRef.current = k;
+    auraAnalysisDevPerfRenderMarkOnce('render.activeTab', { tab });
+  }, [location.pathname, loading, analyticsDataKey]);
 
   useEffect(() => {
     const id = setInterval(() => setTime(new Date()), 60000);

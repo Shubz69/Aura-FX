@@ -568,6 +568,38 @@
       "destination": "/api/journal/trades.js"
     },
     {
+      "source": "/api/trader-playbook/setups/:id/touch",
+      "destination": "/api/trader-playbook/setups.js"
+    },
+    {
+      "source": "/api/trader-playbook/setups/:id",
+      "destination": "/api/trader-playbook/setups.js"
+    },
+    {
+      "source": "/api/trader-playbook/setups",
+      "destination": "/api/trader-playbook/setups.js"
+    },
+    {
+      "source": "/api/trader-playbook/summary",
+      "destination": "/api/trader-playbook/summary.js"
+    },
+    {
+      "source": "/api/trader-playbook/m-trades/:id",
+      "destination": "/api/trader-playbook/m-trades.js"
+    },
+    {
+      "source": "/api/trader-playbook/m-trades",
+      "destination": "/api/trader-playbook/m-trades.js"
+    },
+    {
+      "source": "/api/trader-playbook/review-notes/:id",
+      "destination": "/api/trader-playbook/review-notes.js"
+    },
+    {
+      "source": "/api/trader-playbook/review-notes",
+      "destination": "/api/trader-playbook/review-notes.js"
+    },
+    {
       "source": "/api/journal/tasks",
       "destination": "/api/journal/tasks.js"
     },

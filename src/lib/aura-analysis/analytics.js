@@ -3,6 +3,14 @@
  * No React, no side-effects. All calculations derived from linked MetaTrader trade data (MT4/MT5).
  */
 
+import { buildInstitutionalMetrics, emptyInstitutionalMetrics } from './analytics/institutionalMetrics';
+import { runMonteCarloOffMainThread } from './monteCarloRunner';
+import { institutionalInputFingerprint } from './institutionalInputFingerprint';
+import {
+  isAuraAnalysisDevPerfEnabled,
+  auraAnalysisDevPerfSetLastAnalyticsStages,
+} from './auraAnalysisDevPerf';
+
 const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function detectSession(timeVal) {
@@ -107,15 +115,54 @@ function buildPnlHistogram(pnls, maxBins = 14) {
   return bins;
 }
 
-export function computeAnalytics(trades = [], account = null) {
+/**
+ * Stable key for closed-trade analytics + institutional heavy work (matches computeAnalytics ordering).
+ */
+export function auraAnalysisClosedDataKey(trades = [], account = null) {
   const deduped = dedupeAnalyticsTrades(trades);
-  if (!deduped.length) return emptyAnalytics(account);
+  const closedPool = deduped.filter((t) => t.tradeStatus !== 'open');
+  if (closedPool.length === 0) {
+    const liveBal = account?.balance != null ? finiteNum(account.balance) : null;
+    return `open_${deduped.length}_${liveBal ?? ''}_${account?.equity ?? ''}`;
+  }
+  const sorted = [...closedPool].sort((a, b) => {
+    const ta = new Date(tradeDate(a) || 0).getTime();
+    const tb = new Date(tradeDate(b) || 0).getTime();
+    return ta - tb;
+  });
+  const pnls = sorted.map(tradeNetPnl);
+  const totalPnl = pnls.reduce((s, v) => s + v, 0);
+  const liveBal = account?.balance != null ? finiteNum(account.balance) : null;
+  const startBalance = liveBal != null ? liveBal - totalPnl : 10000;
+  return institutionalInputFingerprint(sorted, pnls, startBalance);
+}
+
+async function computeAnalyticsImpl(trades = [], account = null) {
+  const devPerf = isAuraAnalysisDevPerfEnabled();
+  const tAnalytics0 = devPerf && typeof performance !== 'undefined' ? performance.now() : 0;
+  const markDone = (extra = {}) => {
+    if (!devPerf || typeof performance === 'undefined') return;
+    const ms = performance.now() - tAnalytics0;
+    auraAnalysisDevPerfSetLastAnalyticsStages({
+      ...extra,
+      'analytics.compute': Math.round(ms * 10) / 10,
+    });
+  };
+
+  const deduped = dedupeAnalyticsTrades(trades);
+  if (!deduped.length) {
+    const out = emptyAnalytics(account);
+    markDone({ 'analytics.path': 'empty' });
+    return out;
+  }
 
   const openPositions = deduped.filter((t) => t.tradeStatus === 'open');
   const closedPool = deduped.filter((t) => t.tradeStatus !== 'open');
 
   if (closedPool.length === 0) {
-    return analyticsOpenPositionsOnly(account, openPositions, deduped);
+    const out = analyticsOpenPositionsOnly(account, openPositions, deduped);
+    markDone({ 'analytics.path': 'openOnly' });
+    return out;
   }
 
   const sorted = [...closedPool].sort((a, b) => {
@@ -127,31 +174,48 @@ export function computeAnalytics(trades = [], account = null) {
   const pnls = sorted.map(tradeNetPnl);
   const totalPnl = pnls.reduce((s, v) => s + v, 0);
 
-  const winArr  = sorted.filter((_, i) => pnls[i] > 0);
-  const lossArr = sorted.filter((_, i) => pnls[i] < 0);
-  const beArr   = sorted.filter((_, i) => pnls[i] === 0);
+  let winCount = 0;
+  let lossCount = 0;
+  let beCount = 0;
+  let grossProfit = 0;
+  let grossLoss = 0;
+  for (let i = 0; i < pnls.length; i++) {
+    const p = pnls[i];
+    if (p > 0) {
+      winCount++;
+      grossProfit += p;
+    } else if (p < 0) {
+      lossCount++;
+      grossLoss += -p;
+    } else {
+      beCount++;
+    }
+  }
 
-  const grossProfit = winArr.reduce((s, t) => s + tradeNetPnl(t), 0);
-  const grossLoss   = Math.abs(lossArr.reduce((s, t) => s + tradeNetPnl(t), 0));
   const profitFactorRaw = safeRatio(grossProfit, grossLoss, 0);
   const profitFactor = grossLoss > 0
     ? Math.min(999, profitFactorRaw)
     : grossProfit > 0
       ? 999
       : 0;
-  const winRate = sorted.length > 0 ? safeRatio(winArr.length, sorted.length, 0) * 100 : 0;
-  const lossRate = sorted.length > 0 ? safeRatio(lossArr.length, sorted.length, 0) * 100 : 0;
-  const avgWin  = winArr.length  > 0 ? grossProfit / winArr.length  : 0;
-  const avgLoss = lossArr.length > 0 ? grossLoss   / lossArr.length : 0;
+  const winRate = sorted.length > 0 ? safeRatio(winCount, sorted.length, 0) * 100 : 0;
+  const lossRate = sorted.length > 0 ? safeRatio(lossCount, sorted.length, 0) * 100 : 0;
+  const avgWin  = winCount  > 0 ? grossProfit / winCount  : 0;
+  const avgLoss = lossCount > 0 ? grossLoss   / lossCount : 0;
   const payoffRatio = avgLoss > 0 ? safeRatio(avgWin, avgLoss, 0) : 0;
   const expectancy = (winRate / 100) * avgWin - ((100 - winRate) / 100) * avgLoss;
   const bestTrade  = pnls.length ? Math.max(...pnls) : 0;
   const worstTrade = pnls.length ? Math.min(...pnls) : 0;
   const avgRR = sorted.reduce((s, t) => s + (Number(t.rMultiple) || 0), 0) / sorted.length;
 
-  const sortedByPnl = [...sorted].sort((a, b) => tradeNetPnl(b) - tradeNetPnl(a));
-  const bestTradeFull  = sortedByPnl[0] || null;
-  const worstTradeFull = sortedByPnl[sortedByPnl.length - 1] || null;
+  let bestIdx = 0;
+  let worstIdx = 0;
+  for (let i = 1; i < pnls.length; i++) {
+    if (pnls[i] > pnls[bestIdx]) bestIdx = i;
+    if (pnls[i] < pnls[worstIdx]) worstIdx = i;
+  }
+  const bestTradeFull  = pnls.length ? sorted[bestIdx] : null;
+  const worstTradeFull = pnls.length ? sorted[worstIdx] : null;
 
   // ── Equity curve ────────────────────────────────────────────────────────
   const currentBalance = account?.balance ?? null;
@@ -204,6 +268,7 @@ export function computeAnalytics(trades = [], account = null) {
     losses:  d.trades - d.wins,
     winRate: d.trades > 0 ? (d.wins / d.trades) * 100 : 0,
     avgPnl:  d.trades > 0 ? d.pnl / d.trades : 0,
+    expectancy: d.trades > 0 ? d.pnl / d.trades : 0,
     pf:      d.gl > 0 ? Math.min(999, d.gp / d.gl) : d.gp > 0 ? 999 : 0,
   })).sort((a, b) => b.pnl - a.pnl);
 
@@ -224,6 +289,7 @@ export function computeAnalytics(trades = [], account = null) {
     trades:  d.trades,
     wins:    d.wins,
     winRate: d.trades > 0 ? (d.wins / d.trades) * 100 : 0,
+    expectancy: d.trades > 0 ? d.pnl / d.trades : 0,
     pf:      d.gl > 0 ? Math.min(999, d.gp / d.gl) : d.gp > 0 ? 999 : 0,
   })).sort((a, b) => b.pnl - a.pnl);
 
@@ -271,9 +337,17 @@ export function computeAnalytics(trades = [], account = null) {
     const gl = Math.abs(arr.filter(t => tradeNetPnl(t) < 0).reduce((s, t) => s + tradeNetPnl(t), 0));
     return { trades: arr.length, pnl: p, wins: w, losses: arr.length - w, winRate: arr.length > 0 ? (w / arr.length) * 100 : 0, pf: gl > 0 ? Math.min(999, gp / gl) : gp > 0 ? 999 : 0 };
   };
+  const buyTrades = [];
+  const sellTrades = [];
+  for (let i = 0; i < sorted.length; i++) {
+    const t = sorted[i];
+    const dr = (t.direction || '').toLowerCase();
+    if (dr === 'buy') buyTrades.push(t);
+    else if (dr === 'sell') sellTrades.push(t);
+  }
   const byDirection = {
-    buy:  dirStats(sorted.filter(t => (t.direction || '').toLowerCase() === 'buy')),
-    sell: dirStats(sorted.filter(t => (t.direction || '').toLowerCase() === 'sell')),
+    buy:  dirStats(buyTrades),
+    sell: dirStats(sellTrades),
   };
 
   // ── By month ─────────────────────────────────────────────────────────────
@@ -347,10 +421,15 @@ export function computeAnalytics(trades = [], account = null) {
     ? lossDurMs.reduce((s, v) => s + v, 0) / lossDurMs.length : 0;
 
   // ── Execution ────────────────────────────────────────────────────────────
-  const withSL = sorted.filter(t => t.sl || t.stopLoss).length;
-  const withTP = sorted.filter(t => t.tp || t.takeProfit).length;
-  const pctWithSL = sorted.length > 0 ? safeRatio(withSL, sorted.length, 0) * 100 : 0;
-  const pctWithTP = sorted.length > 0 ? safeRatio(withTP, sorted.length, 0) * 100 : 0;
+  let withSLCount = 0;
+  let withTPCount = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const t = sorted[i];
+    if (t.sl || t.stopLoss) withSLCount++;
+    if (t.tp || t.takeProfit) withTPCount++;
+  }
+  const pctWithSL = sorted.length > 0 ? safeRatio(withSLCount, sorted.length, 0) * 100 : 0;
+  const pctWithTP = sorted.length > 0 ? safeRatio(withTPCount, sorted.length, 0) * 100 : 0;
   const pctNoSL = sorted.length > 0 ? Math.max(0, 100 - pctWithSL) : 0;
   const pctNoTP = sorted.length > 0 ? Math.max(0, 100 - pctWithTP) : 0;
 
@@ -460,7 +539,7 @@ export function computeAnalytics(trades = [], account = null) {
     }
   });
 
-  const lossUnitForR = avgLoss > 1e-9 ? avgLoss : (lossArr.length > 0 ? grossLoss / lossArr.length : 0);
+  const lossUnitForR = avgLoss > 1e-9 ? avgLoss : (lossCount > 0 ? grossLoss / lossCount : 0);
   const { sqn, expectancyR, rStd } = computeSqn(sorted, pnls, lossUnitForR || 1);
 
   const kellyOptimalFraction = payoffRatio > 1e-6 && winRate > 0 && winRate < 100
@@ -496,12 +575,55 @@ export function computeAnalytics(trades = [], account = null) {
     largestWinPctOfGross,
   });
 
+  const institutionalFp = institutionalInputFingerprint(sorted, pnls, startBalance);
+  const tMonte0 =
+    devPerf && typeof performance !== 'undefined' ? performance.now() : 0;
+  const syncMs =
+    devPerf && typeof performance !== 'undefined' ? tMonte0 - tAnalytics0 : 0;
+  const monteCarlo = await runMonteCarloOffMainThread(pnls, startBalance, {
+    cacheKey: institutionalFp,
+  });
+  const tInst0 =
+    devPerf && typeof performance !== 'undefined' ? performance.now() : 0;
+  const monteMs = devPerf && typeof performance !== 'undefined' ? tInst0 - tMonte0 : 0;
+
+  const institutional = buildInstitutionalMetrics({
+    sorted,
+    pnls,
+    lossUnitForR: lossUnitForR || 1,
+    startBalance,
+    byMonth,
+    drawdownCurve,
+    revengeStyleRate,
+    pctWithSL,
+    behaviorVolatilityScore,
+    sqn,
+    expectancyR,
+    payoffRatio,
+    winRate,
+    pnlStdDev,
+    byHourUtc,
+    monteCarloOverride: monteCarlo,
+  });
+  if (devPerf && typeof performance !== 'undefined') {
+    const tDone = performance.now();
+    const instMs = tDone - tInst0;
+    const totalMs = tDone - tAnalytics0;
+    auraAnalysisDevPerfSetLastAnalyticsStages({
+      'analytics.path': 'closedTrades',
+      'analytics.sync': Math.round(syncMs * 10) / 10,
+      'analytics.monteCarlo': Math.round(monteMs * 10) / 10,
+      'analytics.institutional': Math.round(instMs * 10) / 10,
+      'analytics.compute': Math.round(totalMs * 10) / 10,
+    });
+  }
+
   return {
     totalTrades: sorted.length,
     openPositionsCount: openPositions.length,
     closedTradesCount: sorted.length,
     tradeRowsTotal: deduped.length,
-    wins: winArr.length, losses: lossArr.length, breakeven: beArr.length,
+    wins: winCount, losses: lossCount, breakeven: beCount,
     winRate, lossRate, totalPnl, realisedPnl, floatingPnl,
     grossProfit, grossLoss, profitFactor, payoffRatio, expectancy,
     avgWin, avgLoss, bestTrade, worstTrade, bestTradeFull, worstTradeFull, avgRR,
@@ -538,7 +660,47 @@ export function computeAnalytics(trades = [], account = null) {
     kellyOptimalFraction,
     pnlHistogram,
     behaviorVolatilityScore,
+    institutionalInputFingerprint: institutionalFp,
+    institutional,
   };
+}
+
+/** Same fingerprint → same object; avoids duplicate work on polling / strict-mode / rapid re-entry. */
+let __analyticsResultCache = { key: '', value: /** @type {any} */ (null) };
+const __analyticsInflight = new Map();
+
+/** Call when switching platform or after logout so a new account cannot reuse cache. */
+export function invalidateAuraAnalyticsCache() {
+  __analyticsResultCache = { key: '', value: null };
+  __analyticsInflight.clear();
+}
+
+export async function computeAnalytics(trades = [], account = null) {
+  const key = auraAnalysisClosedDataKey(trades, account);
+  if (__analyticsResultCache.key === key && __analyticsResultCache.value) {
+    if (isAuraAnalysisDevPerfEnabled()) {
+      auraAnalysisDevPerfSetLastAnalyticsStages({
+        'analytics.cacheHit': true,
+        'analytics.compute': 0,
+      });
+    }
+    return __analyticsResultCache.value;
+  }
+  const existing = __analyticsInflight.get(key);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    try {
+      const result = await computeAnalyticsImpl(trades, account);
+      __analyticsResultCache = { key, value: result };
+      return result;
+    } finally {
+      __analyticsInflight.delete(key);
+    }
+  })();
+
+  __analyticsInflight.set(key, promise);
+  return promise;
 }
 
 function calcRiskScore({ maxDrawdownPct, currentDrawdownPct, pctWithSL, maxLossStreak, marginLevel, winRate }) {
@@ -720,10 +882,11 @@ function analyticsOpenPositionsOnly(account, openPositions, allRows) {
         ? ['Account banner balance vs equity reflects live floating P/L until closed deals are in range.']
         : []),
     ],
+    institutionalInputFingerprint: '',
   };
 }
 
-function emptyAnalytics(account) {
+export function emptyAnalytics(account) {
   const emptyDir = { trades: 0, pnl: 0, wins: 0, losses: 0, winRate: 0, pf: 0 };
   const bal = account?.balance != null ? finiteNum(account.balance) : NaN;
   const eq = account?.equity != null ? finiteNum(account.equity) : NaN;
@@ -774,5 +937,7 @@ function emptyAnalytics(account) {
     kellyOptimalFraction: 0,
     pnlHistogram: [],
     behaviorVolatilityScore: 0,
+    institutionalInputFingerprint: '',
+    institutional: emptyInstitutionalMetrics(),
   };
 }

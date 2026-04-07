@@ -59,4 +59,23 @@ const openRow = normalizeMtRow(
 );
 assert.strictEqual(openRow.tradeStatus, 'open');
 
+const exc = normalizeMtRow(
+  {
+    symbol: 'XAUUSD',
+    profit: 5,
+    entryType: 'DEAL_ENTRY_OUT',
+    time: Date.now() / 1000,
+    mfeUsd: 12.5,
+    maeUsd: 3,
+    mfeR: 0.8,
+    maeTime: Date.now() / 1000,
+  },
+  'mt5',
+  2
+);
+assert.strictEqual(exc.mfeUsd, 12.5);
+assert.strictEqual(exc.maeUsd, 3);
+assert.strictEqual(exc.mfeR, 0.8);
+assert.ok(typeof exc.maeTime === 'string');
+
 console.log('aura-analysis-mt-adapter.test.js: all assertions passed');

@@ -524,6 +524,39 @@ export default function TraderLab() {
                 </tbody>
               </table>
             </div>
+
+            <div className="tlab-card tlab-card--gold">
+              <h3 className="tlab-card__title">Trader thesis</h3>
+              <div className="tlab-thesis-grid">
+                <div className="tlab-field">
+                  <label>1. What do I see?</label>
+                  <textarea
+                    className="tlab-textarea tlab-textarea--tight"
+                    value={form.whatDoISee}
+                    onChange={(e) => updateField('whatDoISee', e.target.value)}
+                    placeholder="Structure, flow, context..."
+                  />
+                </div>
+                <div className="tlab-field">
+                  <label>2. Why is this valid?</label>
+                  <textarea
+                    className="tlab-textarea tlab-textarea--tight"
+                    value={form.whyValid}
+                    onChange={(e) => updateField('whyValid', e.target.value)}
+                    placeholder="Confluence and backing..."
+                  />
+                </div>
+                <div className="tlab-field">
+                  <label>3. What confirms entry?</label>
+                  <textarea
+                    className="tlab-textarea tlab-textarea--tight"
+                    value={form.entryConfirmation}
+                    onChange={(e) => updateField('entryConfirmation', e.target.value)}
+                    placeholder="Trigger and invalidation..."
+                  />
+                </div>
+              </div>
+            </div>
           </aside>
 
           <div className="trader-lab-v2__center">
@@ -605,9 +638,9 @@ export default function TraderLab() {
                 </div>
                 <textarea
                   className="tlab-textarea tlab-textarea--exec"
-                  value={form.entryConfirmation}
-                  onChange={(e) => updateField('entryConfirmation', e.target.value)}
-                  placeholder="Execution plan, invalidation, and notes..."
+                  value={form.duringNotes}
+                  onChange={(e) => updateField('duringNotes', e.target.value)}
+                  placeholder="Live execution plan, scaling, and desk notes (separate from entry confirmation in Trader thesis)..."
                 />
                 <div className="tlab-exec-foot">
                   <span className="tlab-exec-meta">
@@ -616,6 +649,62 @@ export default function TraderLab() {
                   <button type="button" className="tlab-btn-save-notes" onClick={saveSession} disabled={saving}>
                     {saving ? 'SAVING...' : 'SAVE NOTES'}
                   </button>
+                </div>
+              </div>
+
+              <div className="tlab-card tlab-card--gold tlab-card--decision-panel" aria-label="Decision engine">
+                <div className="tlab-decision-mini">
+                  <div className="tlab-decision-mini__cell">
+                    <span className="tlab-level-label">Decision checks</span>
+                    <div className="tlab-decision-checks" role="list">
+                      {[
+                        { key: 'biasAligned', label: 'Bias aligned' },
+                        { key: 'setupValid', label: 'Setup valid' },
+                        { key: 'entryConfirmed', label: 'Confirmation' },
+                        { key: 'riskDefined', label: 'Risk valid' },
+                      ].map(({ key, label }) => (
+                        <label key={key} className="tlab-decision-check">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(form[key])}
+                            onChange={(e) => updateField(key, e.target.checked)}
+                          />
+                          <span className="tlab-decision-check__ui" aria-hidden />
+                          <span className="tlab-decision-check__label">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="tlab-decision-mini__cell">
+                    <span className="tlab-level-label">Conviction</span>
+                    <div className="tlab-conviction__seg">
+                      {[
+                        { id: 'low', label: 'Low' },
+                        { id: 'medium', label: 'Medium' },
+                        { id: 'high', label: 'High' },
+                      ].map(({ id, label }) => (
+                        <button
+                          key={id}
+                          type="button"
+                          className={`tlab-conviction-btn${form.conviction === id ? ' tlab-conviction-btn--active' : ''}`}
+                          onClick={() => updateField('conviction', id)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="tlab-decision-mini__cell">
+                    <span className="tlab-level-label">Decision engine</span>
+                    <button
+                      type="button"
+                      className="tlab-execute-btn"
+                      disabled={!readyToExecute || saving}
+                      onClick={handleExecute}
+                    >
+                      {saving ? '…' : 'EXECUTE'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -724,96 +813,7 @@ export default function TraderLab() {
               </ul>
             </div>
 
-            <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Trader thesis</h3>
-              <div className="tlab-thesis-grid">
-                <div className="tlab-field">
-                  <label>1. What do I see?</label>
-                  <textarea
-                    className="tlab-textarea tlab-textarea--tight"
-                    value={form.whatDoISee}
-                    onChange={(e) => updateField('whatDoISee', e.target.value)}
-                    placeholder="Structure, flow, context..."
-                  />
-                </div>
-                <div className="tlab-field">
-                  <label>2. Why is this valid?</label>
-                  <textarea
-                    className="tlab-textarea tlab-textarea--tight"
-                    value={form.whyValid}
-                    onChange={(e) => updateField('whyValid', e.target.value)}
-                    placeholder="Confluence and backing..."
-                  />
-                </div>
-                <div className="tlab-field">
-                  <label>3. What confirms entry?</label>
-                  <textarea
-                    className="tlab-textarea tlab-textarea--tight"
-                    value={form.entryConfirmation}
-                    onChange={(e) => updateField('entryConfirmation', e.target.value)}
-                    placeholder="Trigger and invalidation..."
-                  />
-                </div>
-              </div>
-            </div>
-
           </aside>
-
-          <div className="trader-lab-v2__decision" aria-label="Decision engine">
-            <div className="tlab-decision-mini">
-              <div className="tlab-decision-mini__cell">
-                <span className="tlab-level-label">Decision checks</span>
-                <div className="tlab-decision-checks" role="list">
-                  {[
-                    { key: 'biasAligned', label: 'Bias aligned' },
-                    { key: 'setupValid', label: 'Setup valid' },
-                    { key: 'entryConfirmed', label: 'Confirmation' },
-                    { key: 'riskDefined', label: 'Risk valid' },
-                  ].map(({ key, label }) => (
-                    <label key={key} className="tlab-decision-check">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(form[key])}
-                        onChange={(e) => updateField(key, e.target.checked)}
-                      />
-                      <span className="tlab-decision-check__ui" aria-hidden />
-                      <span className="tlab-decision-check__label">{label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div className="tlab-decision-mini__cell">
-                <span className="tlab-level-label">Conviction</span>
-                <div className="tlab-conviction__seg">
-                  {[
-                    { id: 'low', label: 'Low' },
-                    { id: 'medium', label: 'Medium' },
-                    { id: 'high', label: 'High' },
-                  ].map(({ id, label }) => (
-                    <button
-                      key={id}
-                      type="button"
-                      className={`tlab-conviction-btn${form.conviction === id ? ' tlab-conviction-btn--active' : ''}`}
-                      onClick={() => updateField('conviction', id)}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="tlab-decision-mini__cell">
-                <span className="tlab-level-label">Decision engine</span>
-                <button
-                  type="button"
-                  className="tlab-execute-btn"
-                  disabled={!readyToExecute || saving}
-                  onClick={handleExecute}
-                >
-                  {saving ? '…' : 'EXECUTE'}
-                </button>
-              </div>
-            </div>
-          </div>
 
           <footer className="trader-lab-v2__footer trader-lab-v2__footer--tagline-only">
             <p className="tlab-tagline">Trade with clarity. Execute with precision. Win with discipline.</p>

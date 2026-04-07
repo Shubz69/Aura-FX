@@ -1305,21 +1305,28 @@
   overflow: hidden;
 }
 
+.td-outlook-panel > .td-mi-panel-title {
+  margin: 0 0 6px;
+  padding: 11px 16px 6px;
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+}
+
 .td-outlook-panel .td-mi-panel-body {
-  padding: 18px 20px 22px;
-  font-size: 0.88rem;
-  line-height: 1.54;
+  padding: 8px 16px 12px;
+  font-size: 0.82rem;
+  line-height: 1.42;
   color: rgba(255,255,255,0.92);
   position: relative;
   z-index: 1;
 }
 
-.td-outlook-panel .td-mi-regime-label  { color: rgba(232,235,255,0.60); font-size: 0.80rem; font-weight: 500; }
-.td-outlook-panel .td-mi-regime-value  { font-weight: 700; color: #fff; font-size: 0.88rem; }
-.td-outlook-panel .td-mi-regime-row    { padding: 10px 0; border-bottom: 1px solid rgba(107,143,232,0.08); }
+.td-outlook-panel .td-mi-regime-label  { color: rgba(232,235,255,0.62); font-size: 0.74rem; font-weight: 500; }
+.td-outlook-panel .td-mi-regime-value  { font-weight: 700; color: #fff; font-size: 0.82rem; }
+.td-outlook-panel .td-mi-regime-row    { padding: 5px 0; border-bottom: 1px solid rgba(107,143,232,0.08); }
 .td-outlook-panel .td-mi-regime-row:last-child { border-bottom: none; }
 .td-outlook-panel .td-mi-list-item,
-.td-outlook-panel .td-mi-panel-body .td-mi-bullet-item { padding: 9px 0 9px 20px; font-size: 0.88rem; }
+.td-outlook-panel .td-mi-panel-body .td-mi-bullet-item { padding: 6px 0 6px 18px; font-size: 0.82rem; }
 .td-outlook-panel .td-mi-panel-body .td-mi-bullet-item::before { color: rgba(140,175,255,0.85); opacity: 0.90; }
 .td-outlook-panel .td-mi-list-main   { color: rgba(255,255,255,0.92); }
 .td-outlook-panel .td-mi-source      { font-size: 0.66rem; margin-bottom: 10px; color: var(--text-dim); }
@@ -1331,42 +1338,42 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 16px 0 12px;
+  padding: 6px 0 8px;
   width: 100%;
 }
 
 .td-outlook-panel--pulse .td-mi-gauge {
-  width: 180px; height: 100px;
-  margin: 0 auto 12px;
+  width: 176px; height: 88px;
+  margin: 0 auto 8px;
   flex-shrink: 0;
 }
 
 .td-outlook-panel--pulse .td-mi-gauge-arc-bg {
-  width: 180px; height: 90px;
-  border-radius: 180px 180px 0 0;
+  width: 176px; height: 88px;
+  border-radius: 176px 176px 0 0;
 }
 
 .td-outlook-panel--pulse .td-mi-gauge-arc-glow {
-  width: 172px; height: 86px;
-  border-radius: 172px 172px 0 0;
+  width: 168px; height: 84px;
+  border-radius: 168px 168px 0 0;
   left: 4px; top: 4px;
 }
 
 .td-outlook-panel--pulse .td-mi-gauge-needle {
-  height: 68px; bottom: 4px;
+  height: 58px; bottom: 4px;
 }
 
 .td-outlook-panel--pulse .td-mi-gauge-axis-labels {
-  width: 180px; font-size: 0.58rem;
-  margin-bottom: 12px; letter-spacing: 0.14em;
+  width: 176px; font-size: 0.55rem;
+  margin-bottom: 8px; letter-spacing: 0.12em;
   color: var(--text-dim);
 }
 
 .td-outlook-panel--pulse .td-mi-gauge-badge {
-  padding: 10px 22px;
-  font-size: 0.74rem;
+  padding: 7px 16px;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
   border-radius: var(--radius);
 }
 

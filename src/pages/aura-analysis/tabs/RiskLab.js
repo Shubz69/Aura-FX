@@ -1,8 +1,9 @@
-import React from 'react';
-import { useAuraAnalysis } from '../../../context/AuraAnalysisContext';
+import React, { memo } from 'react';
+import { useAuraAnalysisData, useAuraAnalysisMetrics } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import { AuraDrawdownAreaChart, AuraPnlHistogram } from '../../../components/aura-analysis/AuraPerformanceCharts';
+import { useAuraPerfSection, useIdleDeferredReady } from '../auraTabPerf';
 import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
@@ -13,13 +14,15 @@ function ScoreRing({ score, color, size = 110 }) {
   const filled = circ * Math.min(score / 100, 1);
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="7"
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth="7"
         strokeDasharray={`${filled} ${circ}`} strokeLinecap="round"
         style={{ transition: 'stroke-dasharray 0.8s ease' }} />
     </svg>
   );
 }
+
+const riskBarFmtPct = (v) => `${fmtPct(v)}%`;
 
 function RiskBar({ label, value, max, color, fmt }) {
   const w = Math.min(Math.abs(value) / max * 100, 100);
@@ -34,46 +37,33 @@ function RiskBar({ label, value, max, color, fmt }) {
   );
 }
 
-export default function RiskLab() {
-  const { analytics: a, account, trades, loading, error, activePlatformId, connections } = useAuraAnalysis();
-  const needsConnection = !connections?.length || !activePlatformId;
-
-  if (loading) return (
-    <div className="aa-page">
-      <div className="aa-grid-4" style={{ marginBottom: 12 }}>{[...Array(4)].map((_, i) => <div key={i} className="aa-skeleton aa-skeleton-kpi" />)}</div>
-      <div className="aa-skeleton aa-skeleton-chart" />
+const RiskLabAccountMargin = memo(function RiskLabAccountMargin() {
+  const { account } = useAuraAnalysisData();
+  if (account?.marginLevel == null) return null;
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>Margin Level</span>
+        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: account.marginLevel < 150 ? '#9a8f84' : account.marginLevel < 300 ? '#c9a05c' : '#f8c37d', fontVariantNumeric: 'tabular-nums' }}>
+          {fmtNum(account.marginLevel, 1)}%
+        </span>
+      </div>
     </div>
   );
+});
 
-  if (error) return <div className="aa-page"><div className="aa-error"><i className="fas fa-exclamation-circle aa-error-icon" />{error}</div></div>;
-
-  if (!trades.length) {
-    return (
-      <div className="aa-page">
-        <AuraAnalysisEmptyState
-          icon="mt5"
-          variant={needsConnection ? 'connect' : 'data'}
-          title={needsConnection ? 'Connect to analyse risk' : 'No trades in this period'}
-          description={
-            needsConnection
-              ? 'Link MetaTrader from the Connection Hub to see drawdown, streaks, stop-loss usage, and risk scores.'
-              : 'Risk metrics need closed trades in the selected range. Widen the date filter or refresh data.'
-          }
-        />
-      </div>
-    );
-  }
+const RiskLabContent = memo(function RiskLabContent() {
+  const { analytics: a, analyticsDataKey } = useAuraAnalysisMetrics();
+  useAuraPerfSection('RiskLab.content');
+  const deferHeavy = useIdleDeferredReady(analyticsDataKey || '');
 
   const riskColor = a.riskScore < 25 ? '#f8c37d' : a.riskScore < 50 ? '#c9a05c' : '#9a8f84';
-
-  /* Risk-of-ruin estimate: simplified Kelly formula */
   const rorPct = a.winRate > 0 && a.avgWin > 0 && a.avgLoss > 0
     ? Math.max(0, 100 - (a.winRate * 1.1)) : null;
 
   return (
     <div className="aa-page">
 
-      {/* ── Risk score banner ── */}
       <div className="aa-card aa-card--accent" style={{ marginBottom: 16, display: 'flex', gap: 28, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', width: 110, height: 110, flexShrink: 0 }}>
           <ScoreRing score={a.riskScore} color={riskColor} size={110} />
@@ -96,10 +86,12 @@ export default function RiskLab() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px' }}>
           {[
-            { l: 'Max Drawdown',     v: fmtPct(a.maxDrawdownPct),     c: a.maxDrawdownPct > 20 ? '#9a8f84' : '#f8c37d' },
-            { l: 'Current DD',       v: fmtPct(a.currentDrawdownPct), c: a.currentDrawdownPct > 10 ? '#9a8f84' : '#f8c37d' },
-            { l: 'Max Loss Streak',  v: String(a.maxLossStreak),      c: a.maxLossStreak >= 5 ? '#9a8f84' : 'rgba(255,255,255,0.75)' },
-            { l: 'SL Coverage',      v: fmtPct(a.pctWithSL),         c: a.pctWithSL < 70 ? '#c9a05c' : '#f8c37d' },
+            { l: 'Max Drawdown', v: fmtPct(a.maxDrawdownPct), c: a.maxDrawdownPct > 20 ? '#9a8f84' : '#f8c37d' },
+            { l: 'Current DD', v: fmtPct(a.currentDrawdownPct), c: a.currentDrawdownPct > 10 ? '#9a8f84' : '#f8c37d' },
+            { l: 'Max Loss Streak', v: String(a.maxLossStreak), c: a.maxLossStreak >= 5 ? '#9a8f84' : 'rgba(255,255,255,0.75)' },
+            { l: 'SL Coverage', v: fmtPct(a.pctWithSL), c: a.pctWithSL < 70 ? '#c9a05c' : '#f8c37d' },
+            { l: 'VaR 95% (hist)', v: fmtPnl(a.institutional?.riskEngine?.historicalVaR95 ?? 0), c: '#9a8f84' },
+            { l: 'CVaR 95%', v: fmtPnl(a.institutional?.riskEngine?.historicalCVaR95 ?? 0), c: '#9a8f84' },
           ].map(({ l, v, c }) => (
             <div key={l}>
               <div style={{ fontSize: '0.58rem', fontWeight: 600, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{l}</div>
@@ -109,20 +101,18 @@ export default function RiskLab() {
         </div>
       </div>
 
-      {/* ── Drawdown chart ── */}
       <div style={{ marginBottom: 16 }}>
         <AuraDrawdownAreaChart curve={a.drawdownCurve} height={136} title="Drawdown over time (%)" />
       </div>
 
-      {/* ── Risk metrics grid ── */}
       <div className="aa-grid-3" style={{ marginBottom: 16 }}>
         <div className="aa-card">
           <div className="aa-section-title">Drawdown Metrics</div>
           {[
-            { label: 'Max Drawdown $',    value: '-$' + fmtNum(a.maxDrawdown),         color: '#9a8f84' },
-            { label: 'Max Drawdown %',    value: fmtPct(a.maxDrawdownPct),             color: a.maxDrawdownPct > 20 ? '#9a8f84' : '#c9a05c' },
-            { label: 'Current DD $',      value: '-$' + fmtNum(a.currentDrawdown),     color: '#9a8f84' },
-            { label: 'Current DD %',      value: fmtPct(a.currentDrawdownPct),         color: a.currentDrawdownPct > 10 ? '#9a8f84' : '#f8c37d' },
+            { label: 'Max Drawdown $', value: '-$' + fmtNum(a.maxDrawdown), color: '#9a8f84' },
+            { label: 'Max Drawdown %', value: fmtPct(a.maxDrawdownPct), color: a.maxDrawdownPct > 20 ? '#9a8f84' : '#c9a05c' },
+            { label: 'Current DD $', value: '-$' + fmtNum(a.currentDrawdown), color: '#9a8f84' },
+            { label: 'Current DD %', value: fmtPct(a.currentDrawdownPct), color: a.currentDrawdownPct > 10 ? '#9a8f84' : '#f8c37d' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
               <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>{label}</span>
@@ -134,11 +124,11 @@ export default function RiskLab() {
         <div className="aa-card">
           <div className="aa-section-title">Streak & Consistency</div>
           {[
-            { label: 'Max Win Streak',  value: String(a.maxWinStreak),  color: '#f8c37d' },
+            { label: 'Max Win Streak', value: String(a.maxWinStreak), color: '#f8c37d' },
             { label: 'Max Loss Streak', value: String(a.maxLossStreak), color: a.maxLossStreak >= 5 ? '#9a8f84' : 'rgba(255,255,255,0.75)' },
-            { label: 'Current Streak',  value: `${a.currentStreak} ${a.streakType}`, color: a.streakType === 'win' ? '#f8c37d' : a.streakType === 'loss' ? '#9a8f84' : 'rgba(255,255,255,0.4)' },
-            { label: 'Gross Profit',    value: '+$' + fmtNum(a.grossProfit), color: '#f8c37d' },
-            { label: 'Gross Loss',      value: '-$' + fmtNum(a.grossLoss),   color: '#9a8f84' },
+            { label: 'Current Streak', value: `${a.currentStreak} ${a.streakType}`, color: a.streakType === 'win' ? '#f8c37d' : a.streakType === 'loss' ? '#9a8f84' : 'rgba(255,255,255,0.4)' },
+            { label: 'Gross Profit', value: '+$' + fmtNum(a.grossProfit), color: '#f8c37d' },
+            { label: 'Gross Loss', value: '-$' + fmtNum(a.grossLoss), color: '#9a8f84' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
               <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>{label}</span>
@@ -169,30 +159,43 @@ export default function RiskLab() {
             </div>
           )}
           <div style={{ marginTop: 12 }} className="aa-section-title">P/L tail risk</div>
-          <AuraPnlHistogram bins={a.pnlHistogram} height={96} />
-          <RiskBar label="SL Coverage"  value={a.pctWithSL} max={100} color={a.pctWithSL < 70 ? '#c9a05c' : '#f8c37d'} fmt={v => fmtPct(v) + '%'} />
-          <RiskBar label="TP Coverage"  value={a.pctWithTP} max={100} color="#eaa960" fmt={v => fmtPct(v) + '%'} />
-          {rorPct != null && (
+          {deferHeavy ? (
+            <AuraPnlHistogram bins={a.pnlHistogram} height={96} />
+          ) : (
+            <div className="aa-skeleton aa-skeleton-chart" style={{ height: 96 }} aria-hidden />
+          )}
+          <RiskBar label="SL Coverage" value={a.pctWithSL} max={100} color={a.pctWithSL < 70 ? '#c9a05c' : '#f8c37d'} fmt={riskBarFmtPct} />
+          <RiskBar label="TP Coverage" value={a.pctWithTP} max={100} color="#eaa960" fmt={riskBarFmtPct} />
+          {deferHeavy && a.institutional?.riskEngine?.monteCarlo?.ruinProbApprox != null && (
+            <div style={{ marginTop: 12, padding: '10px 12px', background: a.institutional.riskEngine.monteCarlo.ruinProbApprox > 0.2 ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.08)', border: `1px solid ${a.institutional.riskEngine.monteCarlo.ruinProbApprox > 0.2 ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}`, borderRadius: 8 }}>
+              <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>MC risk-of-ruin (bootstrap)</div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: a.institutional.riskEngine.monteCarlo.ruinProbApprox > 0.2 ? '#9a8f84' : '#f8c37d' }}>{fmtPct(a.institutional.riskEngine.monteCarlo.ruinProbApprox * 100, 1)}</div>
+              <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>Share of paths breaching 50% draw from start — {a.institutional.riskEngine.monteCarlo.runs} runs</div>
+            </div>
+          )}
+          {deferHeavy && a.institutional?.riskEngine?.monteCarlo?.ruinProbApprox == null && rorPct != null && (
             <div style={{ marginTop: 12, padding: '10px 12px', background: rorPct > 30 ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.08)', border: `1px solid ${rorPct > 30 ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}`, borderRadius: 8 }}>
               <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Risk-of-Ruin Est.</div>
               <div style={{ fontSize: '0.9rem', fontWeight: 700, color: rorPct > 30 ? '#9a8f84' : '#f8c37d' }}>{fmtPct(rorPct, 1)}</div>
-              <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>Probability of substantial account damage</div>
+              <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>Heuristic fallback — connect full history for MC</div>
             </div>
           )}
-          {account?.marginLevel != null && (
+          {!deferHeavy && (a.institutional?.riskEngine?.monteCarlo?.ruinProbApprox != null || (a.institutional?.riskEngine?.monteCarlo?.ruinProbApprox == null && rorPct != null)) && (
+            <div className="aa-skeleton" style={{ height: 72, marginTop: 12, borderRadius: 8 }} aria-hidden />
+          )}
+          {deferHeavy && a.institutional?.riskEngine?.drawdownDistribution?.length > 0 && (
             <div style={{ marginTop: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>Margin Level</span>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: account.marginLevel < 150 ? '#9a8f84' : account.marginLevel < 300 ? '#c9a05c' : '#f8c37d', fontVariantNumeric: 'tabular-nums' }}>
-                  {fmtNum(account.marginLevel, 1)}%
-                </span>
-              </div>
+              <div className="aa-section-title">Simulated max DD % (MC)</div>
+              <AuraPnlHistogram bins={a.institutional.riskEngine.drawdownDistribution.map((b) => ({ ...b, pnlSum: b.count }))} height={80} />
             </div>
           )}
+          {!deferHeavy && a.institutional?.riskEngine?.drawdownDistribution?.length > 0 && (
+            <div className="aa-skeleton aa-skeleton-chart" style={{ height: 80, marginTop: 10 }} aria-hidden />
+          )}
+          <RiskLabAccountMargin />
         </div>
       </div>
 
-      {/* ── Compliance warnings ── */}
       <div className="aa-card">
         <div className="aa-section-title-lg" style={{ marginBottom: 12 }}>
           <span className="aa-title-dot" style={{ background: a.riskScore > 50 ? '#9a8f84' : '#f8c37d' }} />
@@ -201,7 +204,7 @@ export default function RiskLab() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {a.maxDrawdownPct > 10 ? (
             <div className={`aa-warning ${a.maxDrawdownPct > 20 ? 'aa-warning--red' : ''}`}>
-              <i className={`fas fa-exclamation-triangle aa-warning-icon`} style={{ color: a.maxDrawdownPct > 20 ? '#9a8f84' : '#c9a05c' }} />
+              <i className="fas fa-exclamation-triangle aa-warning-icon" style={{ color: a.maxDrawdownPct > 20 ? '#9a8f84' : '#c9a05c' }} />
               Max drawdown of {fmtPct(a.maxDrawdownPct)} is {a.maxDrawdownPct > 20 ? 'dangerously high' : 'elevated'}. Most prop firms allow 5-10% max.
             </div>
           ) : (
@@ -245,4 +248,37 @@ export default function RiskLab() {
 
     </div>
   );
+});
+
+export default function RiskLab() {
+  const { trades, loading, error, activePlatformId, connections } = useAuraAnalysisData();
+  const needsConnection = !connections?.length || !activePlatformId;
+
+  if (loading) return (
+    <div className="aa-page">
+      <div className="aa-grid-4" style={{ marginBottom: 12 }}>{[...Array(4)].map((_, i) => <div key={i} className="aa-skeleton aa-skeleton-kpi" />)}</div>
+      <div className="aa-skeleton aa-skeleton-chart" />
+    </div>
+  );
+
+  if (error) return <div className="aa-page"><div className="aa-error"><i className="fas fa-exclamation-circle aa-error-icon" />{error}</div></div>;
+
+  if (!trades.length) {
+    return (
+      <div className="aa-page">
+        <AuraAnalysisEmptyState
+          icon="mt5"
+          variant={needsConnection ? 'connect' : 'data'}
+          title={needsConnection ? 'Connect to analyse risk' : 'No trades in this period'}
+          description={
+            needsConnection
+              ? 'Link MetaTrader from the Connection Hub to see drawdown, streaks, stop-loss usage, and risk scores.'
+              : 'Risk metrics need closed trades in the selected range. Widen the date filter or refresh data.'
+          }
+        />
+      </div>
+    );
+  }
+
+  return <RiskLabContent />;
 }
