@@ -585,6 +585,45 @@ const computeJournalMetrics = (tasks = [], selectedDate = new Date(), journalDai
     };
 };
 
+/** Single source of truth for desk bias label + gauge position (0–100, bearish left → bullish right). */
+const normalizeDeskBias = (lab, analytics) => {
+    const raw = lab?.marketBias != null ? String(lab.marketBias).trim() : '';
+    const lower = raw.toLowerCase();
+    let label = 'Neutral';
+    let pct = 50;
+
+    if (/\bbull|long\b|buy side|risk on/i.test(lower)) {
+        label = raw.length && !/^bullish$/i.test(raw) && !/^bearish$/i.test(raw) ? raw.charAt(0).toUpperCase() + raw.slice(1) : 'Bullish';
+        pct = 78;
+    } else if (/\bbear|short\b|sell side|risk off/i.test(lower)) {
+        label = raw.length && !/^bullish$/i.test(raw) && !/^bearish$/i.test(raw) ? raw.charAt(0).toUpperCase() + raw.slice(1) : 'Bearish';
+        pct = 22;
+    } else if (lab) {
+        if (lab.validPct != null && !Number.isNaN(Number(lab.validPct))) {
+            const v = Number(lab.validPct);
+            pct = Math.round(12 + (v / 100) * 76);
+            if (v >= 58) label = 'Bullish';
+            else if (v <= 42) label = 'Bearish';
+            else label = 'Neutral';
+        } else if (raw) {
+            label = raw.charAt(0).toUpperCase() + raw.slice(1);
+            pct = 50;
+        }
+    } else if (analytics?.totalTrades > 0 && analytics.winRate != null) {
+        const wr = Number(analytics.winRate);
+        if (wr >= 56) {
+            label = 'Bullish';
+            pct = 68;
+        } else if (wr <= 44) {
+            label = 'Bearish';
+            pct = 32;
+        }
+    }
+
+    pct = Math.max(6, Math.min(94, pct));
+    return { label, pct };
+};
+
 const computeLabMetrics = (sessions = []) => {
     if (!Array.isArray(sessions) || sessions.length === 0) return null;
     const persistedSessions = sessions.filter((session) => session?.id);
@@ -609,13 +648,20 @@ const computeLabMetrics = (sessions = []) => {
     };
 };
 
-/** Semi-circular desk pulse: bearish → bullish (matches condensed terminal mock). */
-const DeskPulseGauge = ({ biasLabel = 'Neutral' }) => {
-    const b = String(biasLabel || '').toLowerCase();
-    let pct = 50;
-    if (b.includes('bull')) pct = 78;
-    else if (b.includes('bear')) pct = 22;
-    const rot = -180 + (pct / 100) * 180;
+/** Semi-circular desk pulse: needle sweeps left (bearish) → up (neutral) → right (bullish). */
+const DeskPulseGauge = ({ biasLabel = 'Neutral', pulsePct }) => {
+    let pct =
+        typeof pulsePct === 'number' && Number.isFinite(pulsePct) ? pulsePct : null;
+    if (pct == null) {
+        const b = String(biasLabel || '').toLowerCase();
+        if (/\bbull|long\b/i.test(b)) pct = 78;
+        else if (/\bbear|short\b/i.test(b)) pct = 22;
+        else pct = 50;
+    }
+    pct = Math.max(0, Math.min(100, pct));
+    /* Default needle points up (12 o'clock). -90° → left (bear), 0° → up (neutral), +90° → right (bull). */
+    const rot = -90 + (pct / 100) * 180;
+    const toneClass = pct >= 58 ? 'is-bull' : pct <= 42 ? 'is-bear' : '';
     return (
         <div className="desk2-pulse">
             <span className="desk2-pulse__kicker">Market pulse</span>
@@ -647,7 +693,9 @@ const DeskPulseGauge = ({ biasLabel = 'Neutral' }) => {
                 <span>Neutral</span>
                 <span>Bullish</span>
             </div>
-            <p className={`desk2-pulse__readout ${b.includes('bull') ? 'is-bull' : b.includes('bear') ? 'is-bear' : ''}`}>{biasLabel}</p>
+            <p className={`desk2-pulse__readout${toneClass ? ` ${toneClass}` : ''}`}>
+                {biasLabel}
+            </p>
         </div>
     );
 };
@@ -908,16 +956,8 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     /** Live metrics reflect linked MT accounts; blur until at least one platform is connected. */
     const liveMetricsLocked = auraConnectionsLoading || !hasAnyConnection;
 
-    const biasDisplay = useMemo(() => {
-        if (!lab?.marketBias) {
-            if (!lab) return 'Neutral';
-            return lab.validPct >= 55 ? 'Bullish' : lab.validPct <= 45 ? 'Bearish' : 'Neutral';
-        }
-        const b = lab.marketBias.toLowerCase();
-        if (b.includes('bull')) return 'Bullish';
-        if (b.includes('bear')) return 'Bearish';
-        return lab.marketBias;
-    }, [lab]);
+    const deskBias = useMemo(() => normalizeDeskBias(lab, analytics), [lab, analytics]);
+    const biasDisplay = deskBias.label;
 
     const scenarioLines = useMemo(() => {
         const lines = [];
@@ -947,9 +987,6 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
         if (analytics.totalTrades) return formatNumber(Math.min(99, analytics.winRate * 0.65), 1);
         return '—';
     }, [lab, analytics]);
-
-    const rewardOrVolatilityLabel =
-        rewardLabel && rewardLabel !== '—' && rewardLabel !== 'TBD' ? rewardLabel : 'Moderate';
 
     const consistencyRing = Math.round(
         journal.monthPct != null ? journal.monthPct : analytics.winRate || disciplineScore
@@ -1018,7 +1055,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                 <div className="home-desk2__cols">
                     <aside className="home-desk2__col home-desk2__col--left">
                         <section className="desk2-card desk2-card--pulse glass-card">
-                            <DeskPulseGauge biasLabel={biasDisplay} />
+                            <DeskPulseGauge biasLabel={biasDisplay} pulsePct={deskBias.pct} />
                         </section>
                         <section className="desk2-card glass-card">
                             <span className="desk2-card__label">Watchlist</span>
@@ -1055,17 +1092,50 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                 {liveMetricsLocked ? (
                                     <div className="desk2-frost" role="status">
                                         <p className="desk2-frost__t">
-                                            {auraConnectionsLoading ? 'Checking link…' : 'Connect Aura Analysis'}
+                                            {auraConnectionsLoading ? 'Checking link…' : 'Connect MetaTrader (Aura Analysis)'}
                                         </p>
                                         {!auraConnectionsLoading ? (
                                             <Link to="/aura-analysis/ai" className="desk2-frost__a">
-                                                Unlock <FaArrowRight aria-hidden />
+                                                Connection Hub <FaArrowRight aria-hidden />
                                             </Link>
                                         ) : null}
                                     </div>
                                 ) : null}
                                 <MiniEquitySpark points={analytics.equityCurve} />
                             </div>
+                        </section>
+
+                        <section className="desk2-card desk2-card--fill desk2-card--metrics-extra glass-card">
+                            <span className="desk2-card__label">Validator depth</span>
+                            <div className="desk2-mini-metrics">
+                                <div>
+                                    <span>Total trades</span>
+                                    <strong>{analytics.totalTrades || '—'}</strong>
+                                </div>
+                                <div>
+                                    <span>Profit factor</span>
+                                    <strong>
+                                        {analytics.totalTrades ? formatNumber(analytics.profitFactor, 2) : '—'}
+                                    </strong>
+                                </div>
+                                <div>
+                                    <span>Avg R</span>
+                                    <strong>
+                                        {analytics.totalTrades ? formatNumber(analytics.averageR, 2) : '—'}
+                                    </strong>
+                                </div>
+                                <div>
+                                    <span>Checklist</span>
+                                    <strong>
+                                        {analytics.avgChecklistPct != null
+                                            ? formatPercent(analytics.avgChecklistPct, 0)
+                                            : '—'}
+                                    </strong>
+                                </div>
+                            </div>
+                            <Link to="/aura-analysis/dashboard/overview" className="desk2-inline-link">
+                                Aura Analysis overview <FaArrowRight aria-hidden />
+                            </Link>
                         </section>
                     </aside>
 
@@ -1092,8 +1162,11 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     <strong>{convictionDisplay}</strong>
                                 </div>
                                 <div className="desk2-trio__cell">
-                                    <span>Volatility</span>
-                                    <strong>{rewardOrVolatilityLabel}</strong>
+                                    <span>Risk</span>
+                                    <strong>{riskLabel}</strong>
+                                    {rewardLabel && rewardLabel !== '—' && rewardLabel !== 'TBD' ? (
+                                        <span className="desk2-trio__hint">R-profile: {rewardLabel}</span>
+                                    ) : null}
                                 </div>
                             </div>
                             <div className="desk2-scen">
@@ -1196,7 +1269,45 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                             </div>
                         </section>
 
-                        <section className="desk2-card glass-card">
+                        <section className="desk2-card desk2-card--fill glass-card">
+                            <span className="desk2-card__label">Reports &amp; DNA</span>
+                            <div className="desk2-insight-grid">
+                                <div>
+                                    <span>Report data</span>
+                                    <strong>
+                                        {dashboardData.reportsEligibility?.dataDays != null
+                                            ? `${dashboardData.reportsEligibility.dataDays}d`
+                                            : '—'}
+                                    </strong>
+                                </div>
+                                <div>
+                                    <span>Chart checks</span>
+                                    <strong>
+                                        {dashboardData.reportsEligibility?.chartCheckCount != null
+                                            ? dashboardData.reportsEligibility.chartCheckCount
+                                            : '—'}
+                                    </strong>
+                                </div>
+                                <div>
+                                    <span>Month tasks</span>
+                                    <strong>
+                                        {journal.monthTotal != null ? `${journal.monthCompleted}/${journal.monthTotal}` : '—'}
+                                    </strong>
+                                </div>
+                                <div>
+                                    <span>Plan</span>
+                                    <strong className="desk2-insight-plan">
+                                        {String(dashboardData.reportsEligibility?.role || '—')}
+                                    </strong>
+                                </div>
+                            </div>
+                            <div className="desk2-insight-links">
+                                <Link to="/reports">Monthly reports</Link>
+                                <Link to="/reports/dna">Trader DNA</Link>
+                            </div>
+                        </section>
+
+                        <section className="desk2-card desk2-card--fill glass-card">
                             <span className="desk2-card__label">Journal snapshot</span>
                             <ul className="desk2-trades">
                                 {(analytics.recentTrades || []).slice(0, 3).map((t, i) => {

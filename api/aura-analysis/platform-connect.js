@@ -232,6 +232,13 @@ async function ensureTable() {
   } catch (_) {
     /* optional until column exists */
   }
+  try {
+    await executeQuery(
+      `UPDATE aura_platform_connections SET status = 'active' WHERE status = 'error'`
+    );
+  } catch (_) {
+    /* heal legacy rows where failed sync hid the connection from listings */
+  }
 }
 
 // ── Handler ────────────────────────────────────────────────────────────────
@@ -256,7 +263,7 @@ module.exports = async (req, res) => {
       `SELECT platform_id, account_label, account_info, connected_at, last_sync, status,
               broker_name, server_name, connection_status, last_sync_at, last_success_at,
               last_error_code, last_error_message
-       FROM aura_platform_connections WHERE user_id = ? AND status IN ('active', 'connected')`,
+       FROM aura_platform_connections WHERE user_id = ? AND status IN ('active', 'connected', 'error')`,
       [userId]
     );
     return res.status(200).json({

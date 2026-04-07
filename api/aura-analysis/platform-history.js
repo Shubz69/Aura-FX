@@ -411,7 +411,7 @@ module.exports = async (req, res) => {
 
   const [rows] = await executeQuery(
     `SELECT credentials_enc FROM aura_platform_connections
-     WHERE user_id = ? AND platform_id = ? AND status IN ('active', 'connected')`,
+     WHERE user_id = ? AND platform_id = ? AND status IN ('active', 'connected', 'error')`,
     [decoded.id, platformId]
   );
   if (!rows.length) {

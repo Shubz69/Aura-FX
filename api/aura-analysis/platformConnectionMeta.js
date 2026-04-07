@@ -48,12 +48,8 @@ async function patchConnectionRow(executeQuery, userId, platformId, patch) {
     const s = String(p.connection_status).slice(0, 32);
     updates.push('connection_status = ?');
     args.push(s);
-    // Keep legacy `status` as link lifecycle: active | disconnected | error — do not set it to "connected"
-    // so queries using status='active' keep working after a successful account refresh.
-    if (s === 'error') {
-      updates.push('status = ?');
-      args.push('error');
-    }
+    // Link lifecycle: only user-facing DELETE sets status='disconnected'. Transient sync/API failures
+    // update connection_status only so MT accounts stay "connected" in the app until the user disconnects.
   }
   if (p.last_sync_at === true) {
     updates.push('last_sync_at = NOW()');
