@@ -46,7 +46,10 @@ export default function TradeValidatorShell() {
           </nav>
           <div className="aura-shell-titles trade-validator-hero-titles">
             <h1 className="aura-shell-title">Trade Validator</h1>
-            <p className="aura-shell-sub">Manual trade planning, validation and journaling tools</p>
+            <p className="aura-shell-sub">
+              One workspace: Trader Lab (plan), Playbook (rules), then Checklist, Calculator, and Journal. Import context from
+              Trader Desk → Market Decoder → Export.
+            </p>
           </div>
           <nav className="trade-validator-hero-suite trade-validator-hero-suite--right" aria-label="Trader Playbook">
             <NavLink

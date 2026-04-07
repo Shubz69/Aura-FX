@@ -4,6 +4,7 @@ export const PLAYBOOK_SETUP_OPTIONS = [
   'Liquidity Sweep Reclaim',
   'Range Fade',
   'Trend Pullback Continuation',
+  'Market Decoder',
 ];
 
 export const MISTAKE_TAG_OPTIONS = [
@@ -83,6 +84,99 @@ export function chartSymbolToPair(chartSymbol) {
   if (!s) return 'EURUSD';
   const i = s.lastIndexOf(':');
   return i >= 0 ? s.slice(i + 1).trim() : s;
+}
+
+/** Map Market Decoder asset code to a TradingView-style symbol the lab dropdown understands. */
+export function assetToChartSymbolFromDecoder(asset) {
+  const raw = String(asset || '').trim().toUpperCase();
+  const a = raw.replace(/[^A-Z0-9]/g, '');
+  if (!a) return 'OANDA:EURUSD';
+  if (a === 'BTCUSD' || a === 'BTC') return 'COINBASE:BTCUSD';
+  if (a === 'SPY') return 'AMEX:SPY';
+  if (a.length === 6 && /^[A-Z]{6}$/.test(a)) return `OANDA:${a}`;
+  return `OANDA:${a}`;
+}
+
+function parseLevelDisplayString(str) {
+  const m = String(str || '').match(/[\d.]+/);
+  return m ? Number(m[0]) : null;
+}
+
+/**
+ * Partial Trader Lab form fields derived from a Market Decoder API brief.
+ * Merge with DEFAULT_FORM in TraderLab.
+ */
+export function buildLabFormPatchFromMarketDecoderBrief(brief) {
+  if (!brief || typeof brief !== 'object') return {};
+  const asset = brief.header?.asset || 'EURUSD';
+  const chartSymbol = assetToChartSymbolFromDecoder(asset);
+  const price = safeNumber(brief.header?.price, 0);
+  const r1 = parseLevelDisplayString(brief.keyLevels?.keyLevelsDisplay?.resistance1);
+  const s1 = parseLevelDisplayString(brief.keyLevels?.keyLevelsDisplay?.support1);
+  const biasRaw = String(brief.instantRead?.bias || brief.marketPulse?.biasLabel || 'Neutral').trim();
+  const biasCap = biasRaw ? biasRaw.charAt(0).toUpperCase() + biasRaw.slice(1).toLowerCase() : 'Neutral';
+  const bearish = /^bearish$/i.test(biasRaw);
+
+  let entryPrice = price || (bearish ? r1 : s1) || safeNumber(safeNumber(price, 0) || 0, 2235);
+  let stopLoss = bearish ? (r1 ?? entryPrice * 1.002) : (s1 ?? entryPrice * 0.998);
+  let targetPrice = bearish ? (s1 ?? entryPrice * 0.99) : (r1 ?? entryPrice * 1.01);
+  if (!Number.isFinite(entryPrice)) entryPrice = 1;
+  if (!Number.isFinite(stopLoss)) stopLoss = entryPrice * (bearish ? 1.01 : 0.99);
+  if (!Number.isFinite(targetPrice)) targetPrice = entryPrice * (bearish ? 0.99 : 1.01);
+
+  const conviction = String(brief.instantRead?.conviction || 'medium').toLowerCase();
+  const convNorm = conviction === 'high' || conviction === 'low' ? conviction : 'medium';
+  const confidence = convictionToConfidence(convNorm);
+
+  const wmn = (brief.whatMattersNow || [])
+    .map((x) => `${x.label}: ${x.text}`)
+    .join('\n');
+  const posture = brief.finalOutput?.currentPosture || '';
+  const sub = brief.finalOutput?.postureSubtitle || brief.instantRead?.bestApproach || '';
+  const whatDoISee = [posture && `Posture: ${posture}`, sub && sub !== posture && sub, wmn && `Context:\n${wmn}`].filter(Boolean).join('\n\n');
+
+  const ex = brief.executionGuidance || {};
+  const bull = brief.scenarioMap?.bullish;
+  const bear = brief.scenarioMap?.bearish;
+  const whyValid = [
+    ex.preferredDirection && `Preferred: ${ex.preferredDirection}`,
+    ex.entryCondition && `Entry: ${ex.entryCondition}`,
+    bull?.condition && `Bull case: ${bull.condition}`,
+    bear?.condition && `Bear case: ${bear.condition}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const entryConfirmation = [ex.invalidation, ex.avoidThis].filter(Boolean).join('\n');
+
+  const tradingCond = brief.instantRead?.tradingCondition || brief.marketPulse?.marketState || '—';
+  const sessionGoal = [brief.instantRead?.bestApproach, ex.preferredDirection].filter(Boolean).join(' · ') || '';
+
+  return {
+    chartSymbol,
+    marketBias: biasCap,
+    marketState: /range|chop|sideways/i.test(tradingCond)
+      ? 'Ranging'
+      : /trend/i.test(tradingCond)
+        ? 'Trending'
+        : String(tradingCond).slice(0, 32) || 'Trending',
+    auraConfidence: confidence,
+    confidence,
+    conviction: convNorm,
+    whatDoISee: whatDoISee || `Market Decoder import — ${asset}. Review levels and thesis.`,
+    whyValid: whyValid || 'Imported from Market Decoder execution guidance.',
+    entryConfirmation: entryConfirmation || ex.riskConsideration || 'Define invalidation from decoder or structure.',
+    sessionGoal: sessionGoal || 'Plan from Market Decoder brief; confirm before entry.',
+    todaysFocus: wmn || (Array.isArray(brief.crossAssetContext) ? brief.crossAssetContext.join('\n') : '') || '',
+    entryPrice,
+    stopLoss,
+    targetPrice,
+    setupName: 'Market Decoder',
+    biasAligned: true,
+    setupValid: true,
+    entryConfirmed: false,
+    riskDefined: true,
+  };
 }
 
 export function convictionToConfidence(conviction) {

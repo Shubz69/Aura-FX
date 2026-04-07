@@ -969,6 +969,62 @@
   padding: 18px;
 }
 
+.journal-page .trader-playbook-terminal__inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(140, 175, 255, 0.18);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.journal-page .trader-playbook-terminal__btn {
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid rgba(140, 175, 255, 0.26);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.journal-page .trader-playbook-terminal__btn:hover:not(:disabled) {
+  border-color: rgba(234, 169, 96, 0.4);
+  color: #fff;
+}
+
+.journal-page .trader-playbook-terminal__btn--primary {
+  background: rgba(74, 108, 240, 0.28);
+  color: #e8ecff;
+  border-color: rgba(140, 175, 255, 0.4);
+}
+
+.journal-page .trader-playbook-terminal__btn--primary:hover:not(:disabled) {
+  background: rgba(74, 108, 240, 0.42);
+}
+
+.journal-page .trader-playbook-terminal__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.journal-page .trader-playbook-terminal__flow-hint {
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.journal-page .trader-playbook-terminal__flow-hint strong {
+  color: rgba(234, 169, 96, 0.95);
+}
+
 .journal-page .trader-playbook-terminal__board {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr) minmax(260px, 0.68fr);
@@ -2069,6 +2125,39 @@
 .journal-page .tlab-valid-chip--bad {
   color: #ff9db5;
   border-color: rgba(255, 126, 145, 0.35);
+}
+
+.journal-page .tlab-toolbar-save,
+.journal-page .tlab-toolbar-ghost {
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 7px 14px;
+  cursor: pointer;
+  border: 1px solid rgba(140, 175, 255, 0.28);
+  background: rgba(74, 108, 240, 0.22);
+  color: #e8ecff;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.journal-page .tlab-toolbar-save:hover:not(:disabled) {
+  background: rgba(74, 108, 240, 0.35);
+  border-color: rgba(140, 175, 255, 0.45);
+}
+
+.journal-page .tlab-toolbar-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.journal-page .tlab-toolbar-ghost {
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text-muted);
+}
+
+.journal-page .tlab-toolbar-ghost:hover {
+  border-color: rgba(234, 169, 96, 0.35);
+  color: #fff;
 }
 
 .journal-page .tlab-select {

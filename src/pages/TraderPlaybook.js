@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import { useAuth } from '../context/AuthContext';
@@ -144,22 +143,23 @@ export default function TraderPlaybook() {
       title="AURA TERMINAL - TRADER PLAYBOOK"
       description="Compact terminal-board layout for your strategy rules. The setup should be readable in one screen with clear conditions, entry logic, management, checklist, and hard blockers."
       stats={stats}
-      primaryAction={(
-        <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={saveSetup} disabled={saving}>
-          {saving ? 'Saving...' : 'Save playbook'}
-        </button>
-      )}
-      secondaryActions={(
-        <>
-          <button type="button" className="trader-suite-btn" onClick={createNewSetup}>New setup</button>
-          <Link to="/trader-deck/trade-validator/trader-lab" className="trader-suite-btn">Use this setup in Trader Lab</Link>
-          <Link to="/aura-analysis/dashboard/trader-replay" className="trader-suite-btn">View linked Replay</Link>
-        </>
-      )}
+      primaryAction={null}
+      secondaryActions={null}
     >
       {loading ? <div className="trader-suite-empty">Loading your saved setups...</div> : null}
 
       <div className="trader-playbook-terminal">
+        <div className="trader-playbook-terminal__inline-actions" role="toolbar" aria-label="Playbook actions">
+          <button type="button" className="trader-playbook-terminal__btn trader-playbook-terminal__btn--primary" onClick={saveSetup} disabled={saving}>
+            {saving ? 'Saving…' : 'Save playbook'}
+          </button>
+          <button type="button" className="trader-playbook-terminal__btn" onClick={createNewSetup}>
+            New setup
+          </button>
+          <p className="trader-playbook-terminal__flow-hint">
+            Start from <strong>Trader Desk → Market Intelligence → Market Decoder</strong>, then <strong>Export</strong> to Trader Lab. Replay stays under Aura Analysis.
+          </p>
+        </div>
         <div className="trader-playbook-terminal__board">
           <div className="trader-playbook-terminal__col">
             <section className="trader-suite-panel trader-suite-section trader-suite-section--compact">

@@ -1,17 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
 import { formatWelcomeEyebrow, getUserFirstName } from '../utils/welcomeUser';
 import { FaPlay } from 'react-icons/fa';
-import { TRADER_LAB_HANDOFF_KEY } from '../lib/aura-analysis/validator/validatorChecklistStorage';
+import { TRADER_LAB_HANDOFF_KEY, MARKET_DECODER_LAB_HANDOFF_KEY } from '../lib/aura-analysis/validator/validatorChecklistStorage';
 import {
   PLAYBOOK_SETUP_OPTIONS,
   buildBehaviourSummary,
   buildValidator,
   buildTraderLabHandoff,
+  buildLabFormPatchFromMarketDecoderBrief,
+  chartSymbolToPair,
   clamp,
   calculateRiskAmount,
   calculatePositionSizeUnits,
@@ -121,32 +123,59 @@ export default function TraderLab() {
 
   useEffect(() => {
     let active = true;
-    Promise.allSettled([Api.getTraderLabSessions(), Api.getTraderPlaybookSetups()])
-      .then(([sessionsRes, playbookRes]) => {
-        if (!active) return;
 
-        const nextSessions =
-          sessionsRes.status === 'fulfilled' && Array.isArray(sessionsRes.value?.data?.sessions)
-            ? sessionsRes.value.data.sessions.map(normalizeSession)
-            : [];
-        const nextSetups =
-          playbookRes.status === 'fulfilled' && Array.isArray(playbookRes.value?.data?.setups)
-            ? playbookRes.value.data.setups.map((item) => item.name).filter(Boolean)
-            : [];
-
-        if (nextSessions.length) {
-          setSessions(nextSessions);
-          setActiveId(nextSessions[0].id);
-          setForm(nextSessions[0]);
+    (async () => {
+      let loadedFromDecoder = false;
+      try {
+        const raw = sessionStorage.getItem(MARKET_DECODER_LAB_HANDOFF_KEY);
+        if (raw) {
+          const data = JSON.parse(raw);
+          sessionStorage.removeItem(MARKET_DECODER_LAB_HANDOFF_KEY);
+          if (data?.brief && active) {
+            const patch = buildLabFormPatchFromMarketDecoderBrief(data.brief);
+            const merged = normalizeSession({ ...DEFAULT_FORM, ...patch, sessionDate: toYmd() });
+            setActiveId(null);
+            setForm(merged);
+            setLastSavedAt(null);
+            loadedFromDecoder = true;
+            toast.success('Market Decoder context loaded — refine your plan, then EXECUTE to the checklist.');
+          }
         }
+      } catch (e) {
+        console.warn(e);
+      }
 
-        if (nextSetups.length) {
-          setPlaybookSetups(nextSetups);
-        }
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+      if (!active) return;
+
+      Promise.allSettled([Api.getTraderLabSessions(), Api.getTraderPlaybookSetups()])
+        .then(([sessionsRes, playbookRes]) => {
+          if (!active) return;
+
+          const nextSessions =
+            sessionsRes.status === 'fulfilled' && Array.isArray(sessionsRes.value?.data?.sessions)
+              ? sessionsRes.value.data.sessions.map(normalizeSession)
+              : [];
+          const nextSetups =
+            playbookRes.status === 'fulfilled' && Array.isArray(playbookRes.value?.data?.setups)
+              ? playbookRes.value.data.setups.map((item) => item.name).filter(Boolean)
+              : [];
+
+          if (nextSessions.length) {
+            setSessions(nextSessions);
+            if (!loadedFromDecoder) {
+              setActiveId(nextSessions[0].id);
+              setForm(nextSessions[0]);
+            }
+          }
+
+          if (nextSetups.length) {
+            setPlaybookSetups(nextSetups);
+          }
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    })();
 
     return () => {
       active = false;
@@ -204,6 +233,14 @@ export default function TraderLab() {
   };
 
   const entryBounds = useMemo(() => priceSliderBounds(form.entryPrice), [form.entryPrice]);
+
+  const instrumentOptions = useMemo(() => {
+    const base = [...INSTRUMENTS];
+    if (form.chartSymbol && !base.some((o) => o.value === form.chartSymbol)) {
+      base.unshift({ label: chartSymbolToPair(form.chartSymbol), value: form.chartSymbol });
+    }
+    return base;
+  }, [form.chartSymbol]);
 
   const saveSession = async () => {
     setSaving(true);
@@ -302,24 +339,8 @@ export default function TraderLab() {
       title="AURA TERMINAL — TRADER LAB"
       description={null}
       stats={stats}
-      primaryAction={
-        <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={saveSession} disabled={saving}>
-          {saving ? 'Saving...' : 'Save lab'}
-        </button>
-      }
-      secondaryActions={
-        <>
-          <button type="button" className="trader-suite-btn" onClick={createFreshSession}>
-            New session
-          </button>
-          <Link to="/trader-deck/trade-validator/trader-playbook" className="trader-suite-btn">
-            Playbook
-          </Link>
-          <Link to="/aura-analysis/dashboard/trader-replay" className="trader-suite-btn">
-            Replay
-          </Link>
-        </>
-      }
+      primaryAction={null}
+      secondaryActions={null}
     >
       {loading ? <div className="trader-suite-empty">Loading lab sessions...</div> : null}
 
@@ -390,6 +411,12 @@ export default function TraderLab() {
                 <span className={`tlab-valid-chip${validator.passed && rrOk ? ' tlab-valid-chip--ok' : ' tlab-valid-chip--bad'}`}>
                   {validator.passed && rrOk ? 'Valid trade' : 'Blocked'}
                 </span>
+                <button type="button" className="tlab-toolbar-save" onClick={saveSession} disabled={saving}>
+                  {saving ? 'Saving…' : 'Save'}
+                </button>
+                <button type="button" className="tlab-toolbar-ghost" onClick={createFreshSession}>
+                  New session
+                </button>
               </div>
               <div className="tlab-chart-toolbar tlab-chart-toolbar--second">
                 <select
@@ -398,7 +425,7 @@ export default function TraderLab() {
                   onChange={(e) => updateField('chartSymbol', e.target.value)}
                   aria-label="Instrument"
                 >
-                  {INSTRUMENTS.map((opt) => (
+                  {instrumentOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
@@ -445,7 +472,7 @@ export default function TraderLab() {
               <div className="tlab-field">
                 <label>Instrument</label>
                 <select className="tlab-select" value={form.chartSymbol} onChange={(e) => updateField('chartSymbol', e.target.value)}>
-                  {INSTRUMENTS.map((opt) => (
+                  {instrumentOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
@@ -648,7 +675,8 @@ export default function TraderLab() {
                   {saving ? '…' : 'EXECUTE'}
                 </button>
                 <p className="tlab-decision-hint">
-                  Saves your lab, then opens the Trade Validator checklist. Thesis notes flow to the calculator.
+                  Flow: Market Decoder → Export → refine here → EXECUTE opens the checklist; thesis carries to the calculator.
+                  Use the Trade Validator tabs for Playbook rules and Replay review.
                 </p>
                 <p className="tlab-decision-meta">
                   Last saved: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}

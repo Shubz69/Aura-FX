@@ -2536,6 +2536,188 @@
   padding: 20px;
 }
 
+/* Preview modal — Export → Trader Lab */
+.md-ref-flow-note {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(140, 175, 255, 0.2);
+  background: rgba(8, 14, 30, 0.55);
+  font-size: 0.82rem;
+  color: var(--ref-muted, rgba(170, 195, 220, 0.65));
+  line-height: 1.55;
+}
+
+.md-ref-flow-note strong {
+  color: var(--ref-gold, #e8c15a);
+}
+
+.md-ref-link-btn--emphasis {
+  border-color: rgba(140, 175, 255, 0.45) !important;
+  color: var(--md-accent-bright, #dce7ff) !important;
+  font-weight: 600;
+}
+
+.md-ref-placeholder--brief-ready {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.md-preview-open-btn {
+  padding: 12px 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 193, 90, 0.45);
+  background: linear-gradient(135deg, rgba(140, 175, 255, 0.2), rgba(232, 193, 90, 0.15));
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.md-preview-open-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.md-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  background: rgba(3, 6, 14, 0.82);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: max(12px, env(safe-area-inset-top, 0)) 12px 12px;
+  backdrop-filter: blur(8px);
+}
+
+.md-preview-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(1280px, 100%);
+  max-height: calc(100vh     - 24px);
+  border-radius: 20px;
+  border: 1px solid rgba(140, 175, 255, 0.22);
+  background: linear-gradient(165deg, rgba(12, 18, 36, 0.98), rgba(5, 8, 18, 0.99));
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.md-preview-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid rgba(140, 175, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.md-preview-bar-text {
+  min-width: 0;
+}
+
+.md-preview-title {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ref-gold, #e8c15a);
+  line-height: 1.25;
+}
+
+.md-preview-subtitle {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--ref-muted);
+  line-height: 1.4;
+}
+
+.md-preview-close {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.md-preview-close:hover {
+  background: rgba(220, 100, 100, 0.2);
+  color: #fff;
+}
+
+.md-preview-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 12px 20px;
+}
+
+.md-preview-brief-inner {
+  padding-bottom: 8px;
+}
+
+.md-preview-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-top: 1px solid rgba(140, 175, 255, 0.12);
+  background: rgba(5, 8, 18, 0.92);
+  flex-shrink: 0;
+}
+
+.md-preview-footer-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.md-preview-linkish {
+  border: none;
+  background: none;
+  color: var(--ref-muted);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.md-preview-linkish:hover {
+  color: var(--md-accent-bright);
+}
+
+.md-preview-export-primary {
+  margin-left: auto;
+  padding: 12px 32px;
+  border-radius: 999px;
+  border: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: linear-gradient(135deg, #6b8cff, #4a6cf0);
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(74, 108, 240, 0.35);
+  transition: filter 0.15s, transform 0.15s;
+}
+
+.md-preview-export-primary:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
 @media (max-width: 1080px) {
   .md-ref-grid {
     grid-template-columns: 1fr;
@@ -2543,5 +2725,15 @@
 
   .md-ref-tl-cap--end {
     margin-left: 0;
+  }
+
+  .md-preview-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .md-preview-export-primary {
+    margin-left: 0;
+    width: 100%;
   }
 }
