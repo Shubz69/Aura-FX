@@ -2,14 +2,22 @@ const { executeQuery } = require('../db');
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 const { effectiveReportsRole } = require('../reports/resolveReportsRole');
 const { generateMonthlyReportForUser, MIN_DATA_DAYS } = require('../reports/generate');
+const { ensureReportSchema } = require('../reports/ensureReportSchema');
 
-function monthKey(year, month) {
-  return `${year}-${String(month).padStart(2, '0')}`;
+function monthKey(year, month, phase) {
+  const ph = phase === 'month_open' ? 'month_open' : 'month_close';
+  return `${year}-${String(month).padStart(2, '0')}:${ph}`;
 }
 
 function nextMonth(year, month) {
   if (month === 12) return { year: year + 1, month: 1 };
   return { year, month: month + 1 };
+}
+
+/** Calendar month strictly before (a.year, a.month) */
+function prevCalendarMonth(year, month) {
+  if (month <= 1) return { year: year - 1, month: 12 };
+  return { year, month: month - 1 };
 }
 
 function toYMD(d) {
@@ -20,23 +28,25 @@ function toYMD(d) {
   return { year: y, month: m, day };
 }
 
-async function ensureReportsSchema() {
-  await executeQuery(`
-    CREATE TABLE IF NOT EXISTS monthly_reports (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id INT NOT NULL,
-      period_year INT NOT NULL,
-      period_month INT NOT NULL,
-      report_type VARCHAR(20) NOT NULL COMMENT 'free|premium|elite|admin',
-      status VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT 'pending|generating|ready|failed',
-      content_json LONGTEXT,
-      generated_at TIMESTAMP NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE KEY uq_user_period (user_id, period_year, period_month),
-      INDEX idx_user_id (user_id),
-      INDEX idx_status (status)
-    )
-  `).catch(() => {});
+function lastDayOfCalendarMonth(year, month) {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+function monthBeforeOrEqual(a, b) {
+  return a.year < b.year || (a.year === b.year && a.month <= b.month);
+}
+
+async function getExistingReportKeys(userId) {
+  const [rows] = await executeQuery(
+    `SELECT period_year, period_month, report_phase, status FROM monthly_reports WHERE user_id = ?`,
+    [userId]
+  ).catch(() => [[]]);
+  const map = new Map();
+  for (const r of rows || []) {
+    const ph = r.report_phase && String(r.report_phase).trim() === 'month_open' ? 'month_open' : 'month_close';
+    map.set(monthKey(Number(r.period_year), Number(r.period_month), ph), String(r.status || ''));
+  }
+  return map;
 }
 
 async function getUsersWithFirstActivity() {
@@ -97,7 +107,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    await ensureReportsSchema();
+    await ensureReportSchema(executeQuery);
     const users = await getUsersWithFirstActivity();
     const now = new Date();
     const nowParts = toYMD(now);
@@ -107,6 +117,8 @@ module.exports = async (req, res) => {
     const skipped = [];
     let budgetUsed = 0;
 
+    const endBackfill = prevCalendarMonth(nowParts.year, nowParts.month);
+
     for (const row of users) {
       if (budgetUsed >= maxReportsPerRun) break;
       const userId = Number(row.user_id);
@@ -115,25 +127,15 @@ module.exports = async (req, res) => {
       const first = toYMD(row.first_activity_date);
       let cursor = { year: first.year, month: first.month };
 
-      const [existingRows] = await executeQuery(
-        `SELECT period_year, period_month, status
-         FROM monthly_reports
-         WHERE user_id = ?`,
-        [userId]
-      ).catch(() => [[]]);
-      const existingMap = new Map(
-        (existingRows || []).map((r) => [monthKey(Number(r.period_year), Number(r.period_month)), String(r.status || '')])
-      );
+      const existingMap = await getExistingReportKeys(userId);
 
       const user = await applyScheduledDowngrade(userId);
       if (!user) continue;
       const role = effectiveReportsRole(user);
 
-      while (
-        budgetUsed < maxReportsPerRun &&
-        (cursor.year < nowParts.year || (cursor.year === nowParts.year && cursor.month <= nowParts.month))
-      ) {
-        const key = monthKey(cursor.year, cursor.month);
+      // Backfill: month_close only for completed calendar months before the current month
+      while (budgetUsed < maxReportsPerRun && monthBeforeOrEqual(cursor, endBackfill)) {
+        const key = monthKey(cursor.year, cursor.month, 'month_close');
         const status = existingMap.get(key);
         if (status !== 'ready' && status !== 'generating') {
           const result = await generateMonthlyReportForUser({
@@ -142,16 +144,89 @@ module.exports = async (req, res) => {
             user,
             year: cursor.year,
             month: cursor.month,
+            phase: 'month_close',
             forceRegenerate: false,
           });
           budgetUsed += 1;
           if (result?.success) {
-            generated.push({ userId, year: cursor.year, month: cursor.month });
+            existingMap.set(key, 'ready');
+            generated.push({ userId, year: cursor.year, month: cursor.month, phase: 'month_close' });
           } else {
-            skipped.push({ userId, year: cursor.year, month: cursor.month, code: result?.code || 'SKIPPED' });
+            skipped.push({
+              userId,
+              year: cursor.year,
+              month: cursor.month,
+              phase: 'month_close',
+              code: result?.code || 'SKIPPED',
+            });
           }
         }
         cursor = nextMonth(cursor.year, cursor.month);
+      }
+
+      if (budgetUsed >= maxReportsPerRun) continue;
+
+      // Month opener for the current calendar month (data = previous month). Prefer the 1st; retry daily if still pending/failed or user became eligible mid-month.
+      {
+        const kOpen = monthKey(nowParts.year, nowParts.month, 'month_open');
+        const stOpen = existingMap.get(kOpen);
+        if (stOpen !== 'ready' && stOpen !== 'generating') {
+          const result = await generateMonthlyReportForUser({
+            userId,
+            role,
+            user,
+            year: nowParts.year,
+            month: nowParts.month,
+            phase: 'month_open',
+            forceRegenerate: false,
+          });
+          budgetUsed += 1;
+          if (result?.success) {
+            existingMap.set(kOpen, 'ready');
+            generated.push({ userId, year: nowParts.year, month: nowParts.month, phase: 'month_open' });
+          } else {
+            skipped.push({
+              userId,
+              year: nowParts.year,
+              month: nowParts.month,
+              phase: 'month_open',
+              code: result?.code || 'SKIPPED',
+            });
+          }
+        }
+      }
+
+      if (budgetUsed >= maxReportsPerRun) continue;
+
+      // Last calendar day: month close for the current month
+      const lastDay = lastDayOfCalendarMonth(nowParts.year, nowParts.month);
+      if (nowParts.day === lastDay) {
+        const kClose = monthKey(nowParts.year, nowParts.month, 'month_close');
+        const stClose = existingMap.get(kClose);
+        if (stClose !== 'ready' && stClose !== 'generating') {
+          const result = await generateMonthlyReportForUser({
+            userId,
+            role,
+            user,
+            year: nowParts.year,
+            month: nowParts.month,
+            phase: 'month_close',
+            forceRegenerate: false,
+          });
+          budgetUsed += 1;
+          if (result?.success) {
+            existingMap.set(kClose, 'ready');
+            generated.push({ userId, year: nowParts.year, month: nowParts.month, phase: 'month_close' });
+          } else {
+            skipped.push({
+              userId,
+              year: nowParts.year,
+              month: nowParts.month,
+              phase: 'month_close',
+              code: result?.code || 'SKIPPED',
+            });
+          }
+        }
       }
     }
 
@@ -170,4 +245,3 @@ module.exports = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to auto-generate monthly reports' });
   }
 };
-

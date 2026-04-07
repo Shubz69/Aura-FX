@@ -20,6 +20,11 @@ const MONTH_NAMES = [
   'July','August','September','October','November','December',
 ];
 
+function reportPhaseLabel(phase) {
+  if (phase === 'month_open') return 'Month opener';
+  return 'Month close';
+}
+
 /* ── Eligibility status bar ─────────────────────────────────────────── */
 function EligibilityBar({ eligibility }) {
   const { dataDays, isEligible, minDataDays, tradeCount, chartCheckCount } = eligibility;
@@ -71,7 +76,8 @@ function ReportViewer({ report, onClose }) {
       </style>
     </head><body>
       <h1>${c.coverTitle || 'Monthly Trading Report'}</h1>
-      <p>Trader: ${c.traderName || ''} &nbsp;|&nbsp; Period: ${c.period || ''} &nbsp;|&nbsp; Generated: ${c.generatedDate || ''}</p>
+      <p>Trader: ${c.traderName || ''} &nbsp;|&nbsp; Period: ${c.period || ''} &nbsp;|&nbsp; ${c.dataWindowLabel ? `Data window: ${c.dataWindowLabel} · ` : ''}Generated: ${c.generatedDate || ''}</p>
+      ${c.reportPhase ? `<p><strong>${c.reportPhase === 'month_open' ? 'Month opener' : 'Month close'}</strong>${c.systemUsage?.summary ? ` — ${c.systemUsage.summary}` : ''}</p>` : ''}
 
       ${c.brutalHonesty ? `<div class="section"><h2>Blunt read</h2><p>${c.brutalHonesty}</p></div>` : ''}
       ${(c.failureModeInventory || []).length ? `<div class="section"><h2>Failure modes</h2><ul>${(c.failureModeInventory || []).map(f => `<li>${f}</li>`).join('')}</ul></div>` : ''}
@@ -123,7 +129,18 @@ function ReportViewer({ report, onClose }) {
       <div className="rp-viewer-toolbar">
         <div>
           <h3 className="rp-viewer-title">{c.coverTitle || 'Monthly Report'}</h3>
-          <p className="rp-viewer-meta">{c.period} · {c.reportType?.toUpperCase()} · Generated {c.generatedDate}</p>
+          <p className="rp-viewer-meta">
+            {c.period} · {c.reportType?.toUpperCase()}
+            {c.dataWindowLabel ? ` · Data: ${c.dataWindowLabel}` : ''} · Generated {c.generatedDate}
+          </p>
+          {(c.reportPhase || c.systemUsage?.summary) && (
+            <p className="rp-viewer-phase">
+              {c.reportPhase && (
+                <span className="rp-phase-pill">{c.reportPhase === 'month_open' ? 'Month opener' : 'Month close'}</span>
+              )}
+              {c.systemUsage?.summary && <span className="rp-viewer-usage"> {c.systemUsage.summary}</span>}
+            </p>
+          )}
         </div>
         <div className="rp-viewer-actions">
           <button className="rp-btn rp-btn--secondary rp-btn--sm" onClick={handlePrint} type="button">
@@ -134,6 +151,15 @@ function ReportViewer({ report, onClose }) {
       </div>
 
       <div className="rp-viewer-body">
+        {(c.reportPhase || c.systemUsage?.summary) && (
+          <div className="rp-section rp-phase-banner">
+            {c.reportPhase && (
+              <span className="rp-phase-pill">{c.reportPhase === 'month_open' ? 'Month opener' : 'Month close'}</span>
+            )}
+            {c.systemUsage?.summary && <p className="rp-section-text rp-viewer-usage">{c.systemUsage.summary}</p>}
+          </div>
+        )}
+
         {c.brutalHonesty && (
           <div className="rp-section rp-brutal-box">
             <p className="rp-brutal-label">Blunt read</p>
@@ -328,7 +354,10 @@ function ReportHistoryList({ reports, onView }) {
         {reports.map(r => (
           <div key={r.id} className={`rp-history-item rp-history-item--${r.status}`}>
             <div className="rp-history-left">
-              <span className="rp-history-period">{MONTH_NAMES[r.period_month - 1]} {r.period_year}</span>
+              <span className="rp-history-period">
+                {MONTH_NAMES[r.period_month - 1]} {r.period_year}
+                <span className="rp-history-phase"> · {reportPhaseLabel(r.report_phase)}</span>
+              </span>
               <span className={`rp-history-status rp-history-status--${r.status}`}>
                 {r.status === 'ready' ? '✓ Ready' : r.status === 'generating' ? '⟳ Generating…' : '✗ Failed'}
               </span>
@@ -388,8 +417,10 @@ function ReportsPageInner() {
 
   const { role } = eligibility;
 
-  const { currentPeriod, currentMonthReport, reports, isEligible } = eligibility;
+  const { currentPeriod, currentMonthReports, reports, isEligible } = eligibility;
   const { year, month } = currentPeriod;
+  const openRow = currentMonthReports?.month_open;
+  const closeRow = currentMonthReports?.month_close;
 
   if (viewingReport) {
     return (
@@ -428,9 +459,9 @@ function ReportsPageInner() {
         <div className="rp-current-period">
           <div className="rp-current-period-header">
             <h3 className="rp-current-title">
-              {MONTH_NAMES[month - 1]} {year} Report
+              {MONTH_NAMES[month - 1]} {year} — monthly reports
             </h3>
-            {currentMonthReport?.status === 'ready' && (
+            {(openRow?.status === 'ready' || closeRow?.status === 'ready') && (
               <span className="rp-badge rp-badge--ready">✓ Ready</span>
             )}
           </div>
@@ -454,28 +485,61 @@ function ReportsPageInner() {
             </div>
           )}
 
-          {currentMonthReport?.status === 'ready' ? (
-            <div className="rp-report-ready">
-              <span className="rp-report-ready-icon">✓</span>
-              <div>
-                <p className="rp-report-ready-title">{MONTH_NAMES[month - 1]} {year} report is ready</p>
-                <p className="rp-report-ready-hint">Generated {new Date(currentMonthReport.generated_at).toLocaleDateString()}</p>
+          <div className="rp-current-split">
+            <div className="rp-report-ready rp-report-ready--phase">
+              <div className="rp-report-ready-main">
+                <span className="rp-phase-pill">Month opener</span>
+                <p className="rp-report-ready-hint">
+                  Targets the <strong>1st</strong> (last month’s data): priorities and what to fix this month. If you become eligible mid-month, it appears once generation succeeds.
+                </p>
               </div>
-              <button
-                className="rp-btn rp-btn--primary rp-btn--sm"
-                onClick={() => handleViewReport(currentMonthReport.id)}
-                disabled={viewLoading}
-                type="button"
-              >
-                {viewLoading ? 'Loading…' : 'View Report'}
-              </button>
+              {openRow?.status === 'ready' ? (
+                <>
+                  <p className="rp-report-ready-title">Ready · {new Date(openRow.generated_at).toLocaleDateString()}</p>
+                  <button
+                    className="rp-btn rp-btn--primary rp-btn--sm"
+                    onClick={() => handleViewReport(openRow.id)}
+                    disabled={viewLoading}
+                    type="button"
+                  >
+                    {viewLoading ? 'Loading…' : 'View opener'}
+                  </button>
+                </>
+              ) : (
+                <p className="rp-report-pending">Not ready yet — usually from the 1st, or after you meet data requirements.</p>
+              )}
             </div>
-          ) : (
+
+            <div className="rp-report-ready rp-report-ready--phase">
+              <div className="rp-report-ready-main">
+                <span className="rp-phase-pill rp-phase-pill--close">Month close</span>
+                <p className="rp-report-ready-hint">
+                  Drops on the <strong>last day</strong>: full review of this month vs your opener — improvement, stall, or drift.
+                </p>
+              </div>
+              {closeRow?.status === 'ready' ? (
+                <>
+                  <p className="rp-report-ready-title">Ready · {new Date(closeRow.generated_at).toLocaleDateString()}</p>
+                  <button
+                    className="rp-btn rp-btn--primary rp-btn--sm"
+                    onClick={() => handleViewReport(closeRow.id)}
+                    disabled={viewLoading}
+                    type="button"
+                  >
+                    {viewLoading ? 'Loading…' : 'View close'}
+                  </button>
+                </>
+              ) : (
+                <p className="rp-report-pending">Not generated yet (runs on the last calendar day).</p>
+              )}
+            </div>
+          </div>
+
+          {!openRow && !closeRow && (
             <div className="rp-auto-notice">
               <span className="rp-auto-icon">🧾</span>
               <p>
-                Monthly statements are generated automatically once your account has enough trading data
-                (usually a few days). We start from your first active month and keep all statements in your history.
+                You have two statements each calendar month once you have enough data. We start from your first active month and keep everything in history.
               </p>
             </div>
           )}

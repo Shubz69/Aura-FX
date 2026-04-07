@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
     // GET single report
     if (reportId) {
       const [rows] = await executeQuery(
-        `SELECT id, period_year, period_month, report_type, status, content_json, generated_at
+        `SELECT id, period_year, period_month, report_phase, report_type, status, content_json, generated_at
          FROM monthly_reports WHERE id = ? AND user_id = ?`,
         [reportId, userId]
       );
@@ -48,8 +48,11 @@ module.exports = async (req, res) => {
 
     // GET list
     const [rows] = await executeQuery(
-      `SELECT id, period_year, period_month, report_type, status, generated_at
-       FROM monthly_reports WHERE user_id = ? ORDER BY period_year DESC, period_month DESC LIMIT 24`,
+      `SELECT id, period_year, period_month, report_phase, report_type, status, generated_at
+       FROM monthly_reports WHERE user_id = ?
+       ORDER BY period_year DESC, period_month DESC,
+         FIELD(COALESCE(NULLIF(TRIM(report_phase), ''), 'month_close'), 'month_close', 'month_open')
+       LIMIT 48`,
       [userId]
     );
     return res.status(200).json({ success: true, reports: rows || [] });

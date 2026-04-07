@@ -7,6 +7,7 @@ const { executeQuery } = require('../db');
 const { getReportDataSpanDays } = require('./dataSpan');
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 const { effectiveReportsRole } = require('./resolveReportsRole');
+const { ensureReportSchema } = require('./ensureReportSchema');
 
 const MIN_DATA_DAYS = 3;
 
@@ -20,34 +21,19 @@ function jsonNumber(v, fallback = 0) {
 
 function serializeReportRow(r) {
   if (!r) return null;
+  const phase = r.report_phase && String(r.report_phase).trim() ? String(r.report_phase).trim() : 'month_close';
   return {
     id: jsonNumber(r.id),
     period_year: jsonNumber(r.period_year),
     period_month: jsonNumber(r.period_month),
+    report_phase: phase,
     report_type: r.report_type,
     status: r.status,
     generated_at: r.generated_at,
   };
 }
 
-async function ensureSchema() {
-  await executeQuery(`
-    CREATE TABLE IF NOT EXISTS monthly_reports (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id INT NOT NULL,
-      period_year INT NOT NULL,
-      period_month INT NOT NULL,
-      report_type VARCHAR(20) NOT NULL COMMENT 'free|premium|elite|admin',
-      status VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT 'pending|generating|ready|failed',
-      content_json LONGTEXT,
-      generated_at TIMESTAMP NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE KEY uq_user_period (user_id, period_year, period_month),
-      INDEX idx_user_id (user_id),
-      INDEX idx_status (status)
-    )
-  `).catch(() => {});
-
+async function ensureCsvUploadsTable() {
   await executeQuery(`
     CREATE TABLE IF NOT EXISTS report_csv_uploads (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -79,7 +65,8 @@ module.exports = async (req, res) => {
   }
 
   try {
-    await ensureSchema();
+    await ensureReportSchema(executeQuery);
+    await ensureCsvUploadsTable();
 
     const user = await applyScheduledDowngrade(userId);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
@@ -101,10 +88,12 @@ module.exports = async (req, res) => {
     ).catch(() => [[{ cnt: 0 }]]);
     const chartCheckCount = jsonNumber(chartCheckRows?.[0]?.cnt, 0);
 
-    // Existing reports for this user
+    // Existing reports for this user (month close listed before month open for same calendar month)
     const [reports] = await executeQuery(
-      `SELECT id, period_year, period_month, report_type, status, generated_at
-       FROM monthly_reports WHERE user_id = ? ORDER BY period_year DESC, period_month DESC`,
+      `SELECT id, period_year, period_month, report_phase, report_type, status, generated_at
+       FROM monthly_reports WHERE user_id = ?
+       ORDER BY period_year DESC, period_month DESC,
+         FIELD(COALESCE(NULLIF(TRIM(report_phase), ''), 'month_close'), 'month_close', 'month_open')`,
       [userId]
     ).catch(() => [[]]);
 
@@ -115,9 +104,23 @@ module.exports = async (req, res) => {
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
 
-    const currentMonthReport = reportsSafe.find(
-      (r) => r.period_year === currentYear && r.period_month === currentMonth
+    const currentMonthOpen = reportsSafe.find(
+      (r) =>
+        r.period_year === currentYear &&
+        r.period_month === currentMonth &&
+        r.report_phase === 'month_open'
     );
+    const currentMonthClose = reportsSafe.find(
+      (r) =>
+        r.period_year === currentYear &&
+        r.period_month === currentMonth &&
+        r.report_phase === 'month_close'
+    );
+    const currentMonthReports = {
+      month_open: currentMonthOpen || null,
+      month_close: currentMonthClose || null,
+    };
+    const currentMonthReport = currentMonthClose || currentMonthOpen || null;
 
     // Check CSV upload for current month (premium)
     let csvStatus = null;
@@ -146,6 +149,7 @@ module.exports = async (req, res) => {
       minDataDays: MIN_DATA_DAYS,
       currentPeriod: { year: currentYear, month: currentMonth },
       currentMonthReport: currentMonthReport || null,
+      currentMonthReports,
       csvStatus,
       reports: reportsSafe,
     });

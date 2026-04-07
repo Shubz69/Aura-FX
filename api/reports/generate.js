@@ -1,7 +1,7 @@
 /**
  * POST /api/reports/generate
  * Generates a monthly AI report for the authenticated user.
- * Body: { year: number, month: number, csvData?: object (premium only) }
+ * Body: { year: number, month: number, phase?: 'month_open' | 'month_close' (default month_close), csvData?: object (premium only) }
  *
  * Data: journal_trades + journal_daily + ai_chart_checks + aura_analysis_trades (Trade Validator)
  * Tone: clinical, harsh-on-behaviour coaching; mandatory negatives; DNA vs monthly split explained.
@@ -13,6 +13,7 @@ const { getPerplexityModelForReports } = require('../ai/perplexity-config');
 const { getReportDataSpanDays } = require('./dataSpan');
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 const { effectiveReportsRole } = require('./resolveReportsRole');
+const { ensureReportSchema } = require('./ensureReportSchema');
 
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 const PERPLEXITY_MODEL = getPerplexityModelForReports();
@@ -36,6 +37,15 @@ function monthName(m) {
     'November',
     'December',
   ][m - 1];
+}
+
+function prevCalendarMonth(year, month) {
+  if (month <= 1) return { year: year - 1, month: 12 };
+  return { year, month: month - 1 };
+}
+
+function lastDayOfCalendarMonth(year, month) {
+  return new Date(year, month, 0).getDate();
 }
 
 // ── Data aggregation ──────────────────────────────────────────────────────────
@@ -105,6 +115,7 @@ async function loadPriorReportDigest(userId, year, month) {
   const [rows] = await executeQuery(
     `SELECT content_json, period_year, period_month FROM monthly_reports
      WHERE user_id = ? AND status = 'ready' AND period_year = ? AND period_month = ?
+       AND (report_phase = 'month_close' OR report_phase IS NULL OR report_phase = '')
      LIMIT 1`,
     [userId, py, pm]
   ).catch(() => [[]]);
@@ -126,6 +137,81 @@ async function loadPriorReportDigest(userId, year, month) {
     failureModesCount: Array.isArray(c.failureModeInventory) ? c.failureModeInventory.length : 0,
   };
   return { found: true, periodLabel: `${monthName(pm)} ${py}`, digest };
+}
+
+/** Month opener row for the same calendar month (for month-close comparison). */
+async function loadMonthOpenDigest(userId, year, month) {
+  const [rows] = await executeQuery(
+    `SELECT content_json FROM monthly_reports
+     WHERE user_id = ? AND status = 'ready' AND period_year = ? AND period_month = ? AND report_phase = 'month_open'
+     LIMIT 1`,
+    [userId, year, month]
+  ).catch(() => [[]]);
+  const row = rows?.[0];
+  if (!row?.content_json) return { found: false, digest: null };
+  let c;
+  try {
+    c = JSON.parse(row.content_json);
+  } catch {
+    return { found: false, digest: null };
+  }
+  return {
+    found: true,
+    digest: {
+      executiveSummary: c.executiveSummary || null,
+      keyFocus: c.executiveSummary?.keyFocus || null,
+      improvementPlan: (c.improvementPlan || []).slice(0, 8),
+      brutalHonesty: c.brutalHonesty || null,
+    },
+  };
+}
+
+async function countReadyReports(userId) {
+  const [rows] = await executeQuery(
+    `SELECT COUNT(*) AS c FROM monthly_reports WHERE user_id = ? AND status = 'ready'`,
+    [userId]
+  ).catch(() => [[{ c: 0 }]]);
+  return Number(rows?.[0]?.c || 0);
+}
+
+async function computeEngagementSignals(userId, year, month) {
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+  const [jt] = await executeQuery(
+    `SELECT COUNT(*) AS c FROM journal_trades WHERE userId = ? AND date BETWEEN ? AND ?`,
+    [userId, startDate, endDate]
+  ).catch(() => [[{ c: 0 }]]);
+  const [jd] = await executeQuery(
+    `SELECT COUNT(DISTINCT date) AS c FROM journal_daily WHERE userId = ? AND date BETWEEN ? AND ?`,
+    [userId, startDate, endDate]
+  ).catch(() => [[{ c: 0 }]]);
+  const [ac] = await executeQuery(
+    `SELECT COUNT(*) AS c FROM ai_chart_checks WHERE user_id = ? AND DATE(created_at) BETWEEN ? AND ?`,
+    [userId, startDate, endDate]
+  ).catch(() => [[{ c: 0 }]]);
+  const [au] = await executeQuery(
+    `SELECT COUNT(*) AS c FROM aura_analysis_trades
+     WHERE user_id = ? AND result IN ('win','loss','breakeven') AND DATE(created_at) BETWEEN ? AND ?`,
+    [userId, startDate, endDate]
+  ).catch(() => [[{ c: 0 }]]);
+  const trades = Number(jt?.[0]?.c || 0);
+  const journalDays = Number(jd?.[0]?.c || 0);
+  const chartChecks = Number(ac?.[0]?.c || 0);
+  const validatorTrades = Number(au?.[0]?.c || 0);
+  const compositeScore = trades + journalDays * 2 + chartChecks + validatorTrades * 2;
+  let level = 'absent';
+  if (compositeScore >= 28) level = 'active';
+  else if (compositeScore >= 8) level = 'passive';
+  const usingSystem = compositeScore >= 8;
+  return {
+    trades,
+    journalDays,
+    chartChecks,
+    validatorTrades,
+    compositeScore,
+    level,
+    usingSystem,
+  };
 }
 
 // ── Metric summaries ──────────────────────────────────────────────────────────
@@ -280,6 +366,13 @@ function ensureReportShape(parsed, fallbacks) {
     period: base.period || fallbacks.period,
     reportType: base.reportType || fallbacks.reportType,
     generatedDate: base.generatedDate || fallbacks.generatedDate,
+    reportPhase: base.reportPhase || fallbacks.reportPhase,
+    reportDepth: base.reportDepth || fallbacks.reportDepth,
+    dataWindowLabel: base.dataWindowLabel || fallbacks.dataWindowLabel,
+    systemUsage:
+      base.systemUsage && typeof base.systemUsage === 'object'
+        ? { ...fallbacks.systemUsage, ...base.systemUsage }
+        : fallbacks.systemUsage,
     brutalHonesty: base.brutalHonesty || 'Data was insufficient for a full blunt read — log every trade and journal daily.',
     failureModeInventory: mergedFm,
     changeVsPriorMonth:
@@ -310,15 +403,23 @@ async function generateReportContent({
   user,
   year,
   month,
+  phase,
+  reportDepth,
   tradeSummary,
   validatorSummary,
   disciplineSummary,
   chartCheckSummary,
   csvSummary,
   priorReportDigest,
+  monthOpenDigest,
+  engagement,
+  dataPeriodLabel,
+  calendarPeriodLabel,
 }) {
-  const period = `${monthName(month)} ${year}`;
   const name = user.name || user.username || 'Trader';
+  const isOpen = phase === 'month_open';
+  const fmMin =
+    reportDepth === 'brief' && !isOpen ? 3 : reportDepth === 'onboarding' || isOpen ? 5 : 5;
 
   const dataSections = [];
 
@@ -363,52 +464,92 @@ ${typeof csvSummary === 'string' ? csvSummary : JSON.stringify(csvSummary, null,
     dataSections.push('No significant data was found for this period.');
   }
 
-  let priorBlock = 'No prior month report JSON on file.';
+  let priorBlock = 'No prior month close report JSON on file.';
   if (priorReportDigest?.found && priorReportDigest.digest) {
-    priorBlock = `PRIOR MONTH DIGEST (${priorReportDigest.periodLabel}): ${JSON.stringify(priorReportDigest.digest)}`;
+    priorBlock = `PRIOR MONTH CLOSE DIGEST (${priorReportDigest.periodLabel}): ${JSON.stringify(priorReportDigest.digest)}`;
   }
+
+  let openerBlock = '';
+  if (!isOpen && monthOpenDigest?.found && monthOpenDigest.digest) {
+    openerBlock = `MONTH OPENER YOU GAVE AT THE START OF ${calendarPeriodLabel} (hold yourself accountable): ${JSON.stringify(monthOpenDigest.digest)}`;
+  } else if (!isOpen) {
+    openerBlock = 'No month-opener report on file for this calendar month — month-close cannot grade against opening goals.';
+  }
+
+  const engBlock = `PLATFORM USAGE (${dataPeriodLabel}): level=${engagement.level}, composite=${engagement.compositeScore}, journalDays=${engagement.journalDays}, trades=${engagement.trades}, chartChecks=${engagement.chartChecks}, validatorTrades=${engagement.validatorTrades}. usingSystem=${engagement.usingSystem}. If level is absent, state clearly that the trader is not engaging with the workspace and conclusions are limited.`;
+
+  const depthBlock =
+    reportDepth === 'onboarding'
+      ? `DEPTH=ONBOARDING: First or early reporting cycle — explain how Aura Terminal logs work (journal, Trade Validator, AI chart checks). 6–10 improvement items if data supports; teach, do not assume prior knowledge.`
+      : reportDepth === 'brief'
+        ? `DEPTH=BRIEF: Trader is engaged and trending better — cap failureModeInventory at 3 items, improvementPlan at 3 items; tight prose. Still be harsh if stagnation or platform abandonment shows in numbers.`
+        : `DEPTH=STANDARD: Balanced coaching density.`;
+
+  const phaseBlock = isOpen
+    ? `REPORT TYPE=MONTH OPENER (runs on 1st of ${calendarPeriodLabel}). Analyze ONLY the data window ${dataPeriodLabel} (previous calendar month). Deliver: (1) blunt read of last month, (2) what to fix this month, (3) ranked priorities and measurable checks for ${calendarPeriodLabel}. This is NOT a full-month review of ${calendarPeriodLabel}.`
+    : `REPORT TYPE=MONTH CLOSE (end of ${calendarPeriodLabel}). Analyze the full data window ${dataPeriodLabel} (this calendar month). Compare to prior month AND to the month-opener goals. Answer: did they improve, stall, or ignore the process?`;
 
   const systemMessage = `You are a clinical trading performance coach. Your job is developmental, not supportive. Rules:
 - Do not flatter. Do not say "great job" unless numbers objectively justify it.
-- Every report MUST expose failure modes and self-deception patterns common in retail traders when data hints at them.
 - Ground every claim in the numbers provided. If data is thin, say so bluntly — do not invent trades or metrics.
 - Harshness applies to trading behaviour and process only — not insults about the person.
 - You must output valid JSON only matching the user's schema exactly.
-- improvementPlan items MUST include "measurableCheck" — a concrete metric or rule to verify next month.
-- failureModeInventory: at least 5 items when any trade or validator data exists; each item must tie to a metric or observable pattern.`;
+- improvementPlan items MUST include "measurableCheck" — a concrete metric or rule.
+- failureModeInventory: at least ${fmMin} items when trade or validator data exists (fewer only if reportDepth is brief and data is thin).
+${phaseBlock}
+${depthBlock}`;
 
-  const userPrompt = `Generate the monthly development report for "${name}" (${role} plan). Period: ${period}.
+  const defaultTitle = isOpen
+    ? `${calendarPeriodLabel} — Month opener`
+    : `${calendarPeriodLabel} — Month close`;
+
+  const userPrompt = `Generate the report for "${name}" (${role} plan).
+
+Calendar month (this report row): ${calendarPeriodLabel}
+Data analyzed (trades/journal/charts): ${dataPeriodLabel}
+
+${phaseBlock}
 
 ${priorBlock}
 
-AVAILABLE DATA:
+${isOpen ? '' : `${openerBlock}\n`}
+
+${engBlock}
+
 ${dataSections.join('\n\n')}
 
 Return strict JSON only (no markdown). Schema:
 {
-  "coverTitle": "${period} Monthly Trading Report",
+  "coverTitle": "${defaultTitle}",
   "traderName": "${name}",
-  "period": "${period}",
+  "period": "${calendarPeriodLabel}",
+  "reportPhase": "${phase}",
+  "reportDepth": "${reportDepth}",
+  "dataWindowLabel": "${dataPeriodLabel}",
   "reportType": "${role}",
   "generatedDate": "${new Date().toISOString().split('T')[0]}",
-  "brutalHonesty": "<1-3 sentences, zero hedging, cite at least one number if any data exists>",
-  "failureModeInventory": ["<specific negative tied to data>", "... at least 5 when trade or validator data exists ..."],
-  "changeVsPriorMonth": {
-    "better": ["<what improved vs prior digest, or say 'no prior report'>"],
-    "worse": ["<what regressed>"],
-    "unchanged": ["<what stayed weak>"]
+  "systemUsage": {
+    "level": "${engagement.level}",
+    "summary": "<1-3 sentences: are they using the platform meaningfully?>"
   },
-  "dnaHandoff": "<2-4 sentences: DNA = 90-day identity/psychology at /reports/dna; this report = monthly change plan. Tell them to read DNA for who they are and this report for what to do next.>",
+  "brutalHonesty": "<1-4 sentences, zero hedging, cite numbers>",
+  "failureModeInventory": ["<${fmMin}+ items when data exists — tie to metrics>"],
+  "changeVsPriorMonth": {
+    "better": ["<improved vs prior digest / opener — use N/A strings if none>"],
+    "worse": ["<regressed>"],
+    "unchanged": ["<still weak>"]
+  },
+  "dnaHandoff": "<2-4 sentences: DNA at /reports/dna vs this report>",
   "executiveSummary": {
-    "overallAssessment": "<2-3 sentences, blunt>",
-    "strongestArea": "<one specific strength or 'none evident from data'>",
-    "weakestArea": "<one specific weakness>",
-    "keyFocus": "<one measurable focus>"
+    "overallAssessment": "<2-4 sentences, blunt>",
+    "strongestArea": "<specific or 'none evident'>",
+    "weakestArea": "<specific>",
+    "keyFocus": "<measurable>"
   },
   "performanceSummary": {
-    "headline": "<1 sentence>",
+    "headline": "<1-2 sentences>",
     "keyMetrics": [{"label": "...", "value": "..."}],
-    "insights": ["<insight>", "<insight>", "<insight>"]
+    "insights": ["<insight>", "<insight>"]
   },
   "disciplineReview": {
     "headline": "<1 sentence>",
@@ -424,12 +565,12 @@ Return strict JSON only (no markdown). Schema:
   },
   "mt5Review": ${csvSummary ? `{"headline": "<...>", "insights": ["<...>"]}` : 'null'},
   "improvementPlan": [
-    {"area": "<area>", "action": "<step>", "priority": "high|medium|low", "measurableCheck": "<how you know it worked>"},
-    {"area": "<area>", "action": "<step>", "priority": "high|medium|low", "measurableCheck": "<...>"},
-    {"area": "<area>", "action": "<step>", "priority": "high|medium|low", "measurableCheck": "<...>"}
+    {"area": "<area>", "action": "<step>", "priority": "high|medium|low", "measurableCheck": "<verify next month>"}
   ],
   "disclaimer": ${JSON.stringify(DISCLAIMER_TEXT)}
 }`;
+
+  const maxTokens = reportDepth === 'onboarding' ? 5000 : 4500;
 
   const response = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
@@ -439,7 +580,7 @@ Return strict JSON only (no markdown). Schema:
     },
     body: JSON.stringify({
       model: PERPLEXITY_MODEL,
-      max_tokens: 4500,
+      max_tokens: maxTokens,
       messages: [
         { role: 'system', content: systemMessage },
         { role: 'user', content: userPrompt },
@@ -466,12 +607,24 @@ Return strict JSON only (no markdown). Schema:
   });
 
   return ensureReportShape(parsed, {
-    coverTitle: `${period} Monthly Trading Report`,
+    coverTitle: defaultTitle,
     traderName: name,
-    period,
+    period: calendarPeriodLabel,
     reportType: role,
     generatedDate: new Date().toISOString().split('T')[0],
     failureModes: fallbackModes,
+    reportPhase: phase,
+    reportDepth,
+    dataWindowLabel: dataPeriodLabel,
+    systemUsage: {
+      level: engagement.level,
+      summary:
+        engagement.level === 'absent'
+          ? 'Platform usage this window is too low to treat feedback as representative — engage journal, Trade Validator, and chart checks consistently.'
+          : engagement.usingSystem
+            ? 'You are actively using core Aura Terminal workflows this month; feedback below is grounded in that activity.'
+            : 'Engagement is partial — conclusions are directional until logging and checks become habitual.',
+    },
   });
 }
 
@@ -483,8 +636,11 @@ async function generateMonthlyReportForUser({
   user,
   year,
   month,
+  phase = 'month_close',
   forceRegenerate = false,
 }) {
+  await ensureReportSchema(executeQuery);
+
   const dataDays = await getReportDataSpanDays(userId, executeQuery);
   if (dataDays < MIN_DATA_DAYS) {
     return {
@@ -496,9 +652,19 @@ async function generateMonthlyReportForUser({
     };
   }
 
+  const safePhase = phase === 'month_open' ? 'month_open' : 'month_close';
+  const readyCount = await countReadyReports(userId);
+  const isFirstEver = readyCount === 0;
+
+  const calendarPeriodLabel = `${monthName(month)} ${year}`;
+  const dataWindow = safePhase === 'month_open' ? prevCalendarMonth(year, month) : { year, month };
+  const dy = dataWindow.year;
+  const dm = dataWindow.month;
+  const dataPeriodLabel = `${monthName(dm)} ${dy}`;
+
   const [existing] = await executeQuery(
-    'SELECT id, status FROM monthly_reports WHERE user_id = ? AND period_year = ? AND period_month = ?',
-    [userId, year, month]
+    'SELECT id, status FROM monthly_reports WHERE user_id = ? AND period_year = ? AND period_month = ? AND report_phase = ?',
+    [userId, year, month, safePhase]
   ).catch(() => [[]]);
   if (!forceRegenerate && existing?.[0]?.status === 'ready') {
     return {
@@ -510,30 +676,48 @@ async function generateMonthlyReportForUser({
   }
 
   await executeQuery(
-    `INSERT INTO monthly_reports (user_id, period_year, period_month, report_type, status)
-      VALUES (?, ?, ?, ?, 'generating')
+    `INSERT INTO monthly_reports (user_id, period_year, period_month, report_phase, report_type, status)
+      VALUES (?, ?, ?, ?, ?, 'generating')
       ON DUPLICATE KEY UPDATE status = 'generating', generated_at = NULL, report_type = VALUES(report_type)`,
-    [userId, year, month, role]
+    [userId, year, month, safePhase, role]
   );
 
-  const [trades, auraRows, dailyEntries, chartChecks, priorReportDigest] = await Promise.all([
-    aggregateJournalTrades(userId, year, month),
-    aggregateAuraAnalysisTrades(userId, year, month),
-    aggregateJournalDaily(userId, year, month),
-    aggregateAIChartChecks(userId, year, month),
-    loadPriorReportDigest(userId, year, month),
-  ]);
+  const [trades, auraRows, dailyEntries, chartChecks, priorReportDigest, monthOpenDigest, engagement] =
+    await Promise.all([
+      aggregateJournalTrades(userId, dy, dm),
+      aggregateAuraAnalysisTrades(userId, dy, dm),
+      aggregateJournalDaily(userId, dy, dm),
+      aggregateAIChartChecks(userId, dy, dm),
+      loadPriorReportDigest(userId, dy, dm),
+      safePhase === 'month_close' ? loadMonthOpenDigest(userId, year, month) : Promise.resolve({ found: false }),
+      computeEngagementSignals(userId, dy, dm),
+    ]);
 
   const tradeSummary = summariseTrades(trades);
   const validatorSummary = summariseValidatorTrades(auraRows);
   const disciplineSummary = summariseDiscipline(dailyEntries);
   const chartCheckSummary = summariseChartChecks(chartChecks);
 
+  let reportDepth = 'standard';
+  if (isFirstEver) {
+    reportDepth = 'onboarding';
+  } else if (
+    safePhase === 'month_close' &&
+    readyCount >= 4 &&
+    engagement.level === 'active' &&
+    engagement.usingSystem
+  ) {
+    reportDepth = 'brief';
+  }
+  if (engagement.level === 'absent' && safePhase === 'month_close') {
+    reportDepth = 'standard';
+  }
+
   let csvSummary = null;
   if (role === 'premium') {
     const [csvRows] = await executeQuery(
       'SELECT upload_json FROM report_csv_uploads WHERE user_id = ? AND period_year = ? AND period_month = ?',
-      [userId, year, month]
+      [userId, dy, dm]
     ).catch(() => [[]]);
     if (csvRows?.[0]?.upload_json) {
       try {
@@ -549,22 +733,28 @@ async function generateMonthlyReportForUser({
     user,
     year,
     month,
+    phase: safePhase,
+    reportDepth,
     tradeSummary,
     validatorSummary,
     disciplineSummary,
     chartCheckSummary,
     csvSummary,
     priorReportDigest,
+    monthOpenDigest: safePhase === 'month_close' ? monthOpenDigest : { found: false },
+    engagement,
+    dataPeriodLabel,
+    calendarPeriodLabel,
   });
 
   await executeQuery(
     `UPDATE monthly_reports
       SET status = 'ready', content_json = ?, generated_at = NOW()
-      WHERE user_id = ? AND period_year = ? AND period_month = ?`,
-    [JSON.stringify(reportContent), userId, year, month]
+      WHERE user_id = ? AND period_year = ? AND period_month = ? AND report_phase = ?`,
+    [JSON.stringify(reportContent), userId, year, month, safePhase]
   );
 
-  return { success: true, report: reportContent, year, month };
+  return { success: true, report: reportContent, year, month, phase: safePhase };
 }
 
 async function generateHandler(req, res) {
@@ -580,16 +770,25 @@ async function generateHandler(req, res) {
   if (!decoded?.id) return res.status(401).json({ success: false, message: 'Authentication required' });
   const userId = decoded.id;
 
-  const { year, month } = req.body || {};
+  const { year, month, phase: phaseBody } = req.body || {};
   if (!year || !month || month < 1 || month > 12) {
     return res.status(400).json({ success: false, message: 'year and month (1–12) are required' });
   }
+  const phase = phaseBody === 'month_open' ? 'month_open' : 'month_close';
 
   try {
     const user = await applyScheduledDowngrade(userId);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     const role = effectiveReportsRole(user);
-    const out = await generateMonthlyReportForUser({ userId, role, user, year, month, forceRegenerate: false });
+    const out = await generateMonthlyReportForUser({
+      userId,
+      role,
+      user,
+      year,
+      month,
+      phase,
+      forceRegenerate: false,
+    });
     if (!out.success) {
       if (out.code === 'ALREADY_EXISTS') return res.status(409).json(out);
       if (out.code === 'INSUFFICIENT_DATA') return res.status(403).json(out);
@@ -598,9 +797,10 @@ async function generateHandler(req, res) {
     return res.status(200).json(out);
   } catch (err) {
     console.error('[reports/generate]', err.message);
+    const ph = req.body?.phase === 'month_open' ? 'month_open' : 'month_close';
     await executeQuery(
-      `UPDATE monthly_reports SET status = 'failed' WHERE user_id = ? AND period_year = ? AND period_month = ?`,
-      [userId, year, month]
+      `UPDATE monthly_reports SET status = 'failed' WHERE user_id = ? AND period_year = ? AND period_month = ? AND report_phase = ?`,
+      [userId, year, month, ph]
     ).catch(() => {});
     return res.status(500).json({ success: false, message: 'Report generation failed. Please try again.' });
   }
