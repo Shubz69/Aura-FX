@@ -13,7 +13,6 @@ import {
     FaUsers, FaTrophy, FaGraduationCap, FaRocket,
     FaShieldAlt, FaClock, FaCoins, FaChartBar,
     FaChartLine, FaGlobe, FaArrowRight,
-    FaCheck, FaTimes,
 } from 'react-icons/fa';
 
 /* ══════════════════════════════════════════════════════════
@@ -642,6 +641,9 @@ const computeLabMetrics = (sessions = []) => {
         todaysFocus: latest.todaysFocus || '',
         whatDoISee: latest.whatDoISee || '',
         setupValid: Boolean(latest.setupValid),
+        biasAligned: Boolean(latest.biasAligned),
+        entryConfirmed: Boolean(latest.entryConfirmed),
+        riskDefined: Boolean(latest.riskDefined),
         rrRatio: latest.rrRatio,
         resultR: latest.resultR !== '' && latest.resultR != null ? Number(latest.resultR) : null,
     };
@@ -991,13 +993,23 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
         journal.monthPct != null ? journal.monthPct : analytics.winRate || disciplineScore
     );
 
-    const avoidValidatorHint = useMemo(() => {
-        const r = String(riskLabel || '').toLowerCase();
-        if (r.includes('high') || r.includes('elev')) return 'Elevated risk — size down';
-        if (biasDisplay === 'Bullish') return 'Overbought / extension risk';
-        if (biasDisplay === 'Bearish') return 'Oversold / bounce risk';
-        return 'Conditions not ideal — wait';
-    }, [riskLabel, biasDisplay]);
+    const validatorCompletion = useMemo(() => {
+        const checks = [lab?.setupValid, lab?.biasAligned, lab?.entryConfirmed, lab?.riskDefined];
+        const completed = checks.filter(Boolean).length;
+        return {
+            completed,
+            total: checks.length,
+            pct: Math.round((completed / checks.length) * 100),
+        };
+    }, [lab]);
+
+    const expectancyHint = useMemo(() => {
+        if (!analytics.totalTrades) return 'Start logging trades to compute expectancy.';
+        if (analytics.averageR >= 0.8) return 'Strong expectancy profile.';
+        if (analytics.averageR >= 0.2) return 'Positive edge, improve selectivity.';
+        if (analytics.averageR >= 0) return 'Edge is flat, tighten invalidations.';
+        return 'Negative expectancy, reduce risk and review setup quality.';
+    }, [analytics]);
 
     const journalBullets = useMemo(() => {
         const out = [];
@@ -1091,7 +1103,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                         </section>
 
                         <section className="desk2-card desk2-card--fill desk2-card--metrics-extra glass-card">
-                            <span className="desk2-card__label">Validator depth</span>
+                            <span className="desk2-card__label">Execution metrics</span>
                             <div className="desk2-mini-metrics">
                                 <div>
                                     <span>Total trades</span>
@@ -1110,12 +1122,20 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     </strong>
                                 </div>
                                 <div>
-                                    <span>Checklist</span>
+                                    <span>Max drawdown</span>
                                     <strong>
-                                        {analytics.avgChecklistPct != null
-                                            ? formatPercent(analytics.avgChecklistPct, 0)
-                                            : '—'}
+                                        {analytics.totalTrades ? formatSignedCurrency(-Math.abs(analytics.maxDrawdown || 0)) : '—'}
                                     </strong>
+                                </div>
+                            </div>
+                            <div className="desk2-mini-metrics">
+                                <div>
+                                    <span>Best pair</span>
+                                    <strong>{analytics.bestPair || '—'}</strong>
+                                </div>
+                                <div>
+                                    <span>Worst pair</span>
+                                    <strong>{analytics.worstPair || '—'}</strong>
                                 </div>
                             </div>
                             <Link to="/aura-analysis/dashboard/overview" className="desk2-inline-link">
@@ -1189,17 +1209,26 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                         </section>
 
                         <section className="desk2-card glass-card">
-                            <span className="desk2-card__label">Trade validator</span>
-                            <div className="desk2-val-strip">
-                                <div className="desk2-val-strip__ok">
-                                    <FaCheck aria-hidden />
-                                    <span>{lab?.setupValid ? 'Entry signal confirmed' : 'Entry signal pending'}</span>
+                            <span className="desk2-card__label">Edge snapshot</span>
+                            <div className="desk2-mini-metrics">
+                                <div>
+                                    <span>Setup quality</span>
+                                    <strong>{analytics.totalTrades ? `${Math.max(0, Math.round(analytics.winRate))}/100` : '—'}</strong>
                                 </div>
-                                <div className="desk2-val-strip__bad">
-                                    <FaTimes aria-hidden />
-                                    <span>{avoidValidatorHint}</span>
+                                <div>
+                                    <span>Expectancy</span>
+                                    <strong>{analytics.totalTrades ? `${formatNumber(analytics.averageR, 2)}R` : '—'}</strong>
+                                </div>
+                                <div>
+                                    <span>Loss streak</span>
+                                    <strong>{analytics.totalTrades ? analytics.activeLossStreak : '—'}</strong>
+                                </div>
+                                <div>
+                                    <span>Valid setups</span>
+                                    <strong>{lab ? `${validatorCompletion.pct}%` : '—'}</strong>
                                 </div>
                             </div>
+                            <p className="desk2-muted">{expectancyHint}</p>
                             <button
                                 type="button"
                                 className="desk2-cta desk2-cta--ghost"
