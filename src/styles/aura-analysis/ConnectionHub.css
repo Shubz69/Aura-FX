@@ -365,6 +365,11 @@
   background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.18), rgba(255, 255, 255, 0.06), transparent);
 }
 
+/* Manual Metrics section — sits below Enter Dashboard */
+.connection-hub-section-label--manual-below {
+  margin-top: clamp(4px, 1.5vw, 12px);
+}
+
 
 /* ── Platform grid ────────────────────────────────────────── */
 .connection-hub-grid {
@@ -378,6 +383,11 @@
 .connection-hub-grid--single {
   grid-template-columns: minmax(clamp(260px, 50vw, 460px), min(560px, 100%));
   justify-content: center;
+}
+
+/* CSV block at end of page — keep comfortable footer space */
+.connection-hub-grid--csv-tail {
+  margin-bottom: clamp(8px, 2vw, 20px);
 }
 
 
@@ -824,6 +834,12 @@
   gap: 0;
 }
 
+/* Primary CTA directly under MetaTrader row — tighter vertical rhythm */
+.connection-hub-enter--after-mt {
+  padding-top: clamp(10px, 2vw, 18px);
+  padding-bottom: clamp(18px, 3vw, 28px);
+}
+
 /* Separator line */
 .connection-hub-enter::before {
   content: '';
@@ -840,6 +856,10 @@
     transparent
   );
   margin: 0 auto 36px;
+}
+
+.connection-hub-enter.connection-hub-enter--after-mt::before {
+  margin-bottom: clamp(22px, 3.5vw, 30px);
 }
 
 /* Warm glow behind CTA */

@@ -428,11 +428,46 @@ export default function ConnectionHub() {
           })}
         </section>
 
-        <div className="connection-hub-section-label">
+        <section className="connection-hub-enter connection-hub-enter--after-mt">
+          {superAdmin && connectedCount === 0 && (
+            <div className="connection-hub-bypass-note">
+              <i className="fas fa-crown" />
+              <span>Super Admin: test mode — bypass MetaTrader connection requirement</span>
+            </div>
+          )}
+          
+          <button
+            type="button"
+            className="connection-hub-enter-btn"
+            onClick={handleEnterDashboard}
+            disabled={!canEnter}
+          >
+            <i className="fas fa-rocket" style={{ marginRight: 12 }} />
+            Enter Dashboard
+            <i className="fas fa-arrow-right" style={{ marginLeft: 12 }} />
+          </button>
+          
+          {!canEnter && !superAdmin && (
+            <p className="connection-hub-enter-hint">
+              <i className="fas fa-lock" />
+              Connect a MetaTrader account to unlock analytics
+              <i className="fas fa-chart-bar" style={{ marginLeft: 6 }} />
+            </p>
+          )}
+          
+          {canEnter && (
+            <p className="connection-hub-enter-hint">
+              <i className="fas fa-check-circle" style={{ color: '#10b981' }} />
+              Ready to analyze — {connectedCount} account{connectedCount !== 1 ? 's' : ''} connected
+            </p>
+          )}
+        </section>
+
+        <div className="connection-hub-section-label connection-hub-section-label--manual-below">
           <span>Manual Metrics</span>
         </div>
 
-        <section className="connection-hub-grid connection-hub-grid--single">
+        <section className="connection-hub-grid connection-hub-grid--single connection-hub-grid--csv-tail">
           <div
             className={`connection-card csv-connection-card ${isCsvConnected ? 'connected' : ''}`}
             style={{ '--platform-color': 'rgba(248, 195, 125, 0.95)' }}
@@ -511,41 +546,6 @@ export default function ConnectionHub() {
               </button>
             )}
           </div>
-        </section>
-
-        <section className="connection-hub-enter">
-          {superAdmin && connectedCount === 0 && (
-            <div className="connection-hub-bypass-note">
-              <i className="fas fa-crown" />
-              <span>Super Admin: test mode — bypass MetaTrader connection requirement</span>
-            </div>
-          )}
-          
-          <button
-            type="button"
-            className="connection-hub-enter-btn"
-            onClick={handleEnterDashboard}
-            disabled={!canEnter}
-          >
-            <i className="fas fa-rocket" style={{ marginRight: 12 }} />
-            Enter Dashboard
-            <i className="fas fa-arrow-right" style={{ marginLeft: 12 }} />
-          </button>
-          
-          {!canEnter && !superAdmin && (
-            <p className="connection-hub-enter-hint">
-              <i className="fas fa-lock" />
-              Connect a MetaTrader account to unlock analytics
-              <i className="fas fa-chart-bar" style={{ marginLeft: 6 }} />
-            </p>
-          )}
-          
-          {canEnter && (
-            <p className="connection-hub-enter-hint">
-              <i className="fas fa-check-circle" style={{ color: '#10b981' }} />
-              Ready to analyze — {connectedCount} account{connectedCount !== 1 ? 's' : ''} connected
-            </p>
-          )}
         </section>
       </div>
     </div>
