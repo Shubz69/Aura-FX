@@ -8,7 +8,6 @@ import { formatWelcomeEyebrow, getUserFirstName } from '../utils/welcomeUser';
 import { FaPen } from 'react-icons/fa';
 import {
   PLAYBOOK_SETUP_OPTIONS,
-  buildBehaviourSummary,
   buildTraderLabHandoff,
   buildValidator,
   calculateRiskAmount,
@@ -200,7 +199,6 @@ export default function TraderLab() {
   );
 
   const validator = useMemo(() => buildValidator(form), [form]);
-  const behaviour = useMemo(() => buildBehaviourSummary(form), [form]);
   const rrOk = rr >= 1;
 
   const tradeValidatorRows = useMemo(() => {
@@ -588,21 +586,6 @@ export default function TraderLab() {
                   </button>
                 </div>
               </div>
-
-              <div className="tlab-card tlab-card--gold tlab-ready-cta-card">
-                <button
-                  type="button"
-                  className="tlab-ready-box"
-                  disabled={!readyToExecute}
-                  onClick={() => {
-                    saveSession();
-                    toast.success('Ready to execute — lab saved.');
-                  }}
-                >
-                  <span className="tlab-ready-box__check">✓</span>
-                  <span className="tlab-ready-box__label">READY TO EXECUTE</span>
-                </button>
-              </div>
             </div>
           </div>
 
@@ -710,49 +693,65 @@ export default function TraderLab() {
             </div>
 
             <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Behaviour pre-check</h3>
-              <div className="tlab-beh-row">
-                <span>Discipline</span>
-                <strong>{behaviour.disciplineOutOf10.toFixed(1)} / 10</strong>
-              </div>
-              <div className="tlab-bar">
-                <span style={{ width: `${behaviour.discipline}%` }} />
-              </div>
-              <div className="tlab-beh-row">
-                <span>Patience</span>
-                <strong>{behaviour.patienceOutOf10.toFixed(1)} / 10</strong>
-              </div>
-              <div className="tlab-bar tlab-bar--amber">
-                <span style={{ width: `${behaviour.emotionalControl}%` }} />
+              <h3 className="tlab-card__title">Trader thesis</h3>
+              <div className="tlab-thesis-grid">
+                <div className="tlab-field">
+                  <label>1. What do I see?</label>
+                  <textarea
+                    className="tlab-textarea tlab-textarea--tight"
+                    value={form.whatDoISee}
+                    onChange={(e) => updateField('whatDoISee', e.target.value)}
+                    placeholder="Structure, flow, context..."
+                  />
+                </div>
+                <div className="tlab-field">
+                  <label>2. Why is this valid?</label>
+                  <textarea
+                    className="tlab-textarea tlab-textarea--tight"
+                    value={form.whyValid}
+                    onChange={(e) => updateField('whyValid', e.target.value)}
+                    placeholder="Confluence and backing..."
+                  />
+                </div>
+                <div className="tlab-field">
+                  <label>3. What confirms entry?</label>
+                  <textarea
+                    className="tlab-textarea tlab-textarea--tight"
+                    value={form.entryConfirmation}
+                    onChange={(e) => updateField('entryConfirmation', e.target.value)}
+                    placeholder="Trigger and invalidation..."
+                  />
+                </div>
               </div>
             </div>
 
           </aside>
 
-          <div className="trader-lab-v2__decision tlab-card tlab-card--gold" aria-label="Decision engine">
-            <h3 className="tlab-decision-heading">Decision Engine</h3>
-            <div className="tlab-decision-bar">
-              <div className="tlab-decision-checks" role="list">
-                {[
-                  { key: 'biasAligned', label: 'Bias aligned' },
-                  { key: 'setupValid', label: 'Setup valid' },
-                  { key: 'entryConfirmed', label: 'Confirmation' },
-                  { key: 'riskDefined', label: 'Risk valid' },
-                ].map(({ key, label }) => (
-                  <label key={key} className="tlab-decision-check">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(form[key])}
-                      onChange={(e) => updateField(key, e.target.checked)}
-                    />
-                    <span className="tlab-decision-check__ui" aria-hidden />
-                    <span className="tlab-decision-check__label">{label}</span>
-                  </label>
-                ))}
+          <div className="trader-lab-v2__decision" aria-label="Decision engine">
+            <div className="tlab-decision-mini">
+              <div className="tlab-decision-mini__cell">
+                <span className="tlab-level-label">Decision checks</span>
+                <div className="tlab-decision-checks" role="list">
+                  {[
+                    { key: 'biasAligned', label: 'Bias aligned' },
+                    { key: 'setupValid', label: 'Setup valid' },
+                    { key: 'entryConfirmed', label: 'Confirmation' },
+                    { key: 'riskDefined', label: 'Risk valid' },
+                  ].map(({ key, label }) => (
+                    <label key={key} className="tlab-decision-check">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(form[key])}
+                        onChange={(e) => updateField(key, e.target.checked)}
+                      />
+                      <span className="tlab-decision-check__ui" aria-hidden />
+                      <span className="tlab-decision-check__label">{label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-
-              <div className="tlab-conviction" role="group" aria-label="Conviction">
-                <span className="tlab-conviction__legend">Conviction</span>
+              <div className="tlab-decision-mini__cell">
+                <span className="tlab-level-label">Conviction</span>
                 <div className="tlab-conviction__seg">
                   {[
                     { id: 'low', label: 'Low' },
@@ -770,8 +769,8 @@ export default function TraderLab() {
                   ))}
                 </div>
               </div>
-
-              <div className="tlab-decision-execute-wrap">
+              <div className="tlab-decision-mini__cell">
+                <span className="tlab-level-label">Decision engine</span>
                 <button
                   type="button"
                   className="tlab-execute-btn"
@@ -780,12 +779,6 @@ export default function TraderLab() {
                 >
                   {saving ? '…' : 'EXECUTE'}
                 </button>
-                <p className="tlab-decision-hint">
-                  Flow: refine thesis here, then execute to checklist and calculator handoff.
-                </p>
-                <p className="tlab-decision-meta">
-                  Last saved: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}
-                </p>
               </div>
             </div>
           </div>

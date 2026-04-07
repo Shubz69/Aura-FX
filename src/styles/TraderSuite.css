@@ -1588,8 +1588,31 @@
 }
 
 .journal-page .trader-lab-v2__decision {
-  grid-column: 1 / -1;
-  padding: 16px 18px 18px;
+  grid-column: 2 / 3;
+  padding: 0;
+}
+
+.journal-page .tlab-thesis-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.journal-page .tlab-decision-mini {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.journal-page .tlab-decision-mini__cell {
+  border: 1px solid rgba(140, 175, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  padding: 10px 10px 12px;
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .journal-page .tlab-decision-heading {
@@ -1613,8 +1636,9 @@
 .journal-page .tlab-decision-checks {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px 18px;
-  align-items: center;
+  gap: 8px 10px;
+  align-items: flex-start;
+  margin-top: 6px;
 }
 
 .journal-page .tlab-decision-check {
@@ -1622,7 +1646,7 @@
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: rgba(230, 232, 245, 0.92);
   user-select: none;
@@ -1636,8 +1660,8 @@
 }
 
 .journal-page .tlab-decision-check__ui {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border-radius: 6px;
   border: 1px solid rgba(100, 243, 176, 0.35);
   background: rgba(0, 0, 0, 0.25);
@@ -1683,13 +1707,14 @@
   gap: 4px;
   background: rgba(0, 0, 0, 0.22);
   border: 1px solid rgba(140, 175, 255, 0.14);
+  margin-top: 6px;
 }
 
 .journal-page .tlab-conviction-btn {
   border: none;
   border-radius: 8px;
-  padding: 10px 16px;
-  font-size: 0.72rem;
+  padding: 8px 10px;
+  font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1718,8 +1743,8 @@
 .journal-page .tlab-execute-btn {
   border: none;
   border-radius: 12px;
-  padding: 16px 22px;
-  font-size: 0.85rem;
+  padding: 12px 14px;
+  font-size: 0.74rem;
   font-weight: 900;
   letter-spacing: 0.16em;
   color: #04120a;
@@ -1729,6 +1754,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
   cursor: pointer;
   transition: filter 0.15s ease, opacity 0.15s ease;
+  margin-top: 6px;
 }
 
 .journal-page .tlab-execute-btn:disabled {
@@ -2481,6 +2507,14 @@
   .journal-page .trader-lab-terminal__footer-grid,
   .journal-page .trader-suite-terminal-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .journal-page .trader-lab-v2__decision {
+    grid-column: 1 / -1;
+  }
+
+  .journal-page .tlab-decision-mini {
+    grid-template-columns: 1fr;
   }
 }
 
