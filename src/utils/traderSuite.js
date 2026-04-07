@@ -77,6 +77,64 @@ export function scoreFromChecks(checks = []) {
   return Math.round((done / checks.length) * 100);
 }
 
+/** Map TradingView-style symbol e.g. OANDA:EURUSD → EURUSD for calculator / journal. */
+export function chartSymbolToPair(chartSymbol) {
+  const s = String(chartSymbol || '').trim();
+  if (!s) return 'EURUSD';
+  const i = s.lastIndexOf(':');
+  return i >= 0 ? s.slice(i + 1).trim() : s;
+}
+
+export function convictionToConfidence(conviction) {
+  const c = String(conviction || '').toLowerCase();
+  if (c === 'high') return 85;
+  if (c === 'low') return 40;
+  return 65;
+}
+
+export function confidenceToConviction(confidence) {
+  const n = safeNumber(confidence, 65);
+  if (n >= 72) return 'high';
+  if (n >= 52) return 'medium';
+  return 'low';
+}
+
+/** Persisted payload for sessionStorage handoff to Trade Calculator */
+export function buildTraderLabHandoff(form, rrRatio, sessionId) {
+  const pair = chartSymbolToPair(form.chartSymbol);
+  return {
+    version: 1,
+    sessionId: sessionId || null,
+    savedAt: new Date().toISOString(),
+    pair,
+    chartSymbol: form.chartSymbol,
+    entryPrice: safeNumber(form.entryPrice, 0),
+    stopLoss: safeNumber(form.stopLoss, 0),
+    takeProfit: safeNumber(form.targetPrice, 0),
+    riskPercent: safeNumber(form.riskPercent, 0),
+    accountBalance: safeNumber(form.accountSize, 0),
+    thesisWhy: form.whatDoISee || '',
+    thesisConfirms: form.whyValid || '',
+    thesisInvalidates: form.entryConfirmation || '',
+    conviction: form.conviction || confidenceToConviction(form.confidence),
+    setupName: form.setupName || '',
+    marketBias: form.marketBias || '',
+    rrRatio: safeNumber(rrRatio, 0),
+    direction: 'buy',
+  };
+}
+
+export function formatThesisNotesForJournal(h) {
+  if (!h) return '';
+  const lines = [];
+  if (h.thesisWhy) lines.push(`Why this trade?\n${h.thesisWhy}`);
+  if (h.thesisConfirms) lines.push(`What confirms it?\n${h.thesisConfirms}`);
+  if (h.thesisInvalidates) lines.push(`What invalidates it?\n${h.thesisInvalidates}`);
+  if (h.conviction) lines.push(`Conviction: ${String(h.conviction).toUpperCase()}`);
+  if (h.setupName) lines.push(`Setup: ${h.setupName}`);
+  return lines.join('\n\n');
+}
+
 export function buildValidator({ setupValid, biasAligned, entryConfirmed, riskDefined }) {
   const checks = [setupValid, biasAligned, entryConfirmed, riskDefined];
   const score = scoreFromChecks(checks);

@@ -1587,6 +1587,235 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+.journal-page .trader-lab-v2__decision {
+  grid-column: 1 / -1;
+  padding: 16px 18px 18px;
+}
+
+.journal-page .tlab-decision-heading {
+  margin: 0 0 14px;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(230, 232, 245, 0.75);
+}
+
+.journal-page .tlab-decision-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 20px;
+}
+
+.journal-page .tlab-decision-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: center;
+}
+
+.journal-page .tlab-decision-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(230, 232, 245, 0.92);
+  user-select: none;
+}
+
+.journal-page .tlab-decision-check input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.journal-page .tlab-decision-check__ui {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid rgba(100, 243, 176, 0.35);
+  background: rgba(0, 0, 0, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.journal-page .tlab-decision-check input:checked + .tlab-decision-check__ui {
+  background: rgba(100, 243, 176, 0.2);
+  border-color: rgba(100, 243, 176, 0.85);
+  box-shadow: 0 0 14px rgba(100, 243, 176, 0.35);
+}
+
+.journal-page .tlab-decision-check input:checked + .tlab-decision-check__ui::after {
+  content: '✓';
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: #64f3b0;
+}
+
+.journal-page .tlab-conviction {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: min(280px, 100%);
+}
+
+.journal-page .tlab-conviction__legend {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.journal-page .tlab-conviction__seg {
+  display: flex;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(140, 175, 255, 0.14);
+}
+
+.journal-page .tlab-conviction-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(200, 205, 230, 0.75);
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.journal-page .tlab-conviction-btn--active {
+  color: #f4e4a6;
+  background: rgba(212, 175, 55, 0.12);
+  box-shadow:
+    0 0 18px rgba(212, 175, 55, 0.35),
+    inset 0 0 0 1px rgba(212, 175, 55, 0.45);
+}
+
+.journal-page .tlab-decision-execute-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: min(220px, 100%);
+}
+
+.journal-page .tlab-execute-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 16px 22px;
+  font-size: 0.85rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: #04120a;
+  background: linear-gradient(180deg, #7dffc8, #3bdc96 55%, #24a56c);
+  box-shadow:
+    0 0 24px rgba(100, 243, 176, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: filter 0.15s ease, opacity 0.15s ease;
+}
+
+.journal-page .tlab-execute-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+  box-shadow: none;
+}
+
+.journal-page .tlab-execute-btn:not(:disabled):hover {
+  filter: brightness(1.06);
+}
+
+.journal-page .tlab-decision-hint {
+  margin: 0;
+  font-size: 0.65rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.journal-page .tlab-decision-meta {
+  margin: 0;
+  font-size: 0.65rem;
+  color: rgba(234, 169, 96, 0.75);
+}
+
+.journal-page .tlab-thesis-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.journal-page .tlab-thesis-play {
+  font-size: 0.55rem;
+  color: rgba(140, 175, 255, 0.9);
+}
+
+.journal-page .tlab-textarea--thesis {
+  min-height: 72px;
+  resize: vertical;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.journal-page .tlab-builder-slider-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 10px 0 14px;
+}
+
+.journal-page .tlab-builder-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.journal-page .tlab-builder-row-head label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.journal-page .tlab-input--inline {
+  width: 7.5rem;
+  text-align: right;
+  padding: 6px 8px;
+  font-weight: 700;
+}
+
+.journal-page .tlab-range--blue {
+  width: 100%;
+  accent-color: rgba(100, 190, 255, 0.95);
+}
+
+.journal-page .tlab-range--risk {
+  width: 100%;
+  accent-color: #64f3b0;
+  background: linear-gradient(90deg, rgba(100, 243, 176, 0.35), rgba(234, 196, 80, 0.55));
+  height: 6px;
+  border-radius: 3px;
+}
+
 .journal-page .tlab-card {
   border-radius: 14px;
   border: 1px solid var(--tlab-line);
