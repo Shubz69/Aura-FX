@@ -253,13 +253,27 @@
   min-width: 0;
 }
 
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main--with-eco {
+  justify-content: flex-start;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main__intel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-eco-cal-trigger {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
 .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main .td-deck-period-segment {
   flex: 0 1 auto;
   min-width: 0;
 }
 
 /* Market Intelligence: DAILY/WEEKLY (left) · BRIEFS (centre) · MARKET DECODER (right) */
-.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main.td-deck-period-row--intel-three {
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main__intel.td-deck-period-row--intel-three {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
@@ -291,7 +305,7 @@
 }
 
 @media (max-width: 640px) {
-  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main.td-deck-period-row--intel-three {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main__intel.td-deck-period-row--intel-three {
     grid-template-columns: 1fr;
     justify-items: stretch;
   }
@@ -306,6 +320,12 @@
   .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-center .td-deck-sub-tab,
   .journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-right .td-deck-sub-tab {
     flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-eco-cal-trigger {
+    margin-left: 0;
+    width: 100%;
     text-align: center;
   }
 }
@@ -5032,4 +5052,158 @@ background: radial-gradient(circle at 38% 35%,
   top: 10px !important;
   color: rgba(107, 143, 232, 0.7) !important;
   font-size: 0.7rem !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TRADER DESK (journal shell) — full width between 1cm gutters + denser layout
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.journal-page .journal-layout--terminal:has(.td-deck-with-tabs.td-layout-page) {
+  max-width: none;
+  width: 100%;
+  padding-left: 1cm;
+  padding-right: 1cm;
+  box-sizing: border-box;
+}
+
+.journal-page .journal-layout--terminal:has(.td-deck-with-tabs.td-layout-page) .journal-terminal-body {
+  padding-bottom: 20px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page {
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: calc(var(--nav-height, 70px) + env(safe-area-inset-top, 0px) + 4px);
+  padding-bottom: 28px;
+}
+
+.journal-page .td-deck-with-tabs .td-deck-layout {
+  max-width: none;
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page.journal-glass-panel--pad {
+  padding: clamp(10px, 1.75vw, 16px);
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
+  margin-bottom: 12px;
+  padding: 12px 12px 10px;
+  border-radius: 14px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-header--tab-zone {
+  padding-bottom: 10px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  gap: 12px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-page-title {
+  font-size: clamp(1rem, 2.4vw, 1.28rem);
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar {
+  margin-top: 2px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-stack {
+  gap: 8px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main {
+  gap: 8px 12px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main__intel.td-deck-period-row--intel-three {
+  gap: 8px 12px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main .td-deck-sub-tabs {
+  gap: 8px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab {
+  padding: 8px 18px;
+  font-size: 0.8rem;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tab {
+  padding: 7px 14px;
+  font-size: 0.72rem;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-rail {
+  margin-bottom: 10px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-world-clocks.td-deck-world-clocks--top {
+  gap: clamp(6px, 1.5vw, 18px);
+  padding: 6px 2px 10px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern {
+  padding: 14px 16px 18px !important;
+  border-radius: 16px !important;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
+  gap: 14px;
+}
+
+@media (min-width: 1100px) {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-main-inner--modern {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 272px);
+  }
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook .td-outlook-unified-grid.td-deck-mo-bento {
+  gap: 10px !important;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-mi-panel {
+  padding: 14px 16px;
+  min-height: 120px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-mi-panel:hover {
+  transform: translateY(-3px);
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-mi-panel-title {
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  font-size: 0.62rem;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-mi-panel-body {
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-sessions-row {
+  border-radius: 12px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-tile {
+  min-width: 118px;
+  padding: 8px 12px;
+  gap: 6px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-tile:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-tile:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
 }

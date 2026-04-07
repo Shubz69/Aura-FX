@@ -13,7 +13,6 @@ import SignalList from '../../components/trader-deck/SignalList';
 import ChangeList from '../../components/trader-deck/ChangeList';
 import FocusList from '../../components/trader-deck/FocusList';
 import RiskRadarList from '../../components/trader-deck/RiskRadarList';
-import ForexFactoryNews from '../../components/trader-deck/ForexFactoryNews';
 
 function normalizeForUI(data) {
   if (!data) return null;
@@ -495,12 +494,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               </DashboardPanel>
             </div>
           </div>
-          {/* Live economic calendar — daily view only */}
-          {period !== 'weekly' && (
-            <div className="td-outlook-ff-section td-deck-mo-ff">
-              <ForexFactoryNews date={selectedDate} />
-            </div>
-          )}
       </div>
     </>
   );

@@ -12,6 +12,8 @@ import MarketOutlookView from './trader-deck/MarketOutlookView';
 import MarketIntelligenceBriefsView from './trader-deck/MarketIntelligenceBriefsView';
 import MarketDecoderView from './trader-deck/MarketDecoderView';
 import NewsHeadlines from '../components/NewsHeadlines';
+import ForexFactoryNews from '../components/trader-deck/ForexFactoryNews';
+import { FaTimes } from 'react-icons/fa';
 import '../styles/TraderDeckMarket.css';
 import '../styles/TraderDeckTabs.css';
 import '../styles/TraderDeckNews.css';
@@ -89,6 +91,7 @@ export default function TraderDeck() {
   const [selectedDate, setSelectedDate] = useState(today());
   const [calendarMonth, setCalendarMonth] = useState(today().slice(0, 7));
   const [calendarOverlayOpen, setCalendarOverlayOpen] = useState(false);
+  const [economicCalendarOpen, setEconomicCalendarOpen] = useState(false);
 
   const datePickerBounds = useMemo(() => {
     const t = today();
@@ -146,6 +149,15 @@ export default function TraderDeck() {
     setCalendarMonth(date.slice(0, 7));
   }, []);
 
+  useEffect(() => {
+    if (!economicCalendarOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setEconomicCalendarOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [economicCalendarOpen]);
+
  return (
   <AuraTerminalThemeShell>
     <div
@@ -174,6 +186,39 @@ export default function TraderDeck() {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {economicCalendarOpen && (
+        <div
+          className="td-deck-eco-cal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="td-deck-eco-cal-title"
+        >
+          <div
+            className="td-deck-eco-cal-overlay-backdrop"
+            onClick={() => setEconomicCalendarOpen(false)}
+            aria-hidden
+          />
+          <div className="td-deck-eco-cal-overlay-panel journal-glass-panel journal-glass-panel--rim">
+            <div className="td-deck-eco-cal-overlay-head">
+              <h2 id="td-deck-eco-cal-title" className="td-deck-eco-cal-overlay-title">
+                Economic calendar
+              </h2>
+              <button
+                type="button"
+                className="td-deck-eco-cal-overlay-x"
+                onClick={() => setEconomicCalendarOpen(false)}
+                aria-label="Close economic calendar"
+              >
+                <FaTimes aria-hidden />
+              </button>
+            </div>
+            <div className="td-deck-eco-cal-overlay-body">
+              <ForexFactoryNews date={selectedDate} />
+            </div>
           </div>
         </div>
       )}
@@ -236,16 +281,53 @@ export default function TraderDeck() {
 
           {/* Period Tabs + Sessions */}
           <div className="td-deck-below-header td-deck-period-stack">
-            <div
-              className={
-                mainTab === 'intelligence'
-                  ? 'td-deck-period-row-main td-deck-period-row--intel-three'
-                  : 'td-deck-period-row-main'
-              }
-            >
-              {mainTab === 'intelligence' ? (
-                <>
-                  <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-left" aria-label="Brief period">
+            <div className="td-deck-period-row-main td-deck-period-row-main--with-eco">
+              <div
+                className={
+                  mainTab === 'intelligence'
+                    ? 'td-deck-period-row-main__intel td-deck-period-row--intel-three'
+                    : 'td-deck-period-row-main__intel'
+                }
+              >
+                {mainTab === 'intelligence' ? (
+                  <>
+                    <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-left" aria-label="Brief period">
+                      <button
+                        type="button"
+                        className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
+                        onClick={() => setSubTab('daily')}
+                      >
+                        DAILY
+                      </button>
+                      <button
+                        type="button"
+                        className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
+                        onClick={() => setSubTab('weekly')}
+                      >
+                        WEEKLY
+                      </button>
+                    </nav>
+                    <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-center" aria-label="Market intelligence format">
+                      <button
+                        type="button"
+                        className={`td-deck-sub-tab${intelMode === 'briefs' ? ' td-deck-sub-tab--active' : ''}`}
+                        onClick={() => setIntelMode('briefs')}
+                      >
+                        BRIEFS
+                      </button>
+                    </nav>
+                    <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-right" aria-label="Market decoder">
+                      <button
+                        type="button"
+                        className={`td-deck-sub-tab${intelMode === 'decoder' ? ' td-deck-sub-tab--active' : ''}`}
+                        onClick={() => setIntelMode('decoder')}
+                      >
+                        MARKET DECODER
+                      </button>
+                    </nav>
+                  </>
+                ) : (
+                  <nav className="td-deck-sub-tabs">
                     <button
                       type="button"
                       className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
@@ -261,43 +343,15 @@ export default function TraderDeck() {
                       WEEKLY
                     </button>
                   </nav>
-                  <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-center" aria-label="Market intelligence format">
-                    <button
-                      type="button"
-                      className={`td-deck-sub-tab${intelMode === 'briefs' ? ' td-deck-sub-tab--active' : ''}`}
-                      onClick={() => setIntelMode('briefs')}
-                    >
-                      BRIEFS
-                    </button>
-                  </nav>
-                  <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-right" aria-label="Market decoder">
-                    <button
-                      type="button"
-                      className={`td-deck-sub-tab${intelMode === 'decoder' ? ' td-deck-sub-tab--active' : ''}`}
-                      onClick={() => setIntelMode('decoder')}
-                    >
-                      MARKET DECODER
-                    </button>
-                  </nav>
-                </>
-              ) : (
-                <nav className="td-deck-sub-tabs">
-                  <button
-                    type="button"
-                    className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
-                    onClick={() => setSubTab('daily')}
-                  >
-                    DAILY
-                  </button>
-                  <button
-                    type="button"
-                    className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
-                    onClick={() => setSubTab('weekly')}
-                  >
-                    WEEKLY
-                  </button>
-                </nav>
-              )}
+                )}
+              </div>
+              <button
+                type="button"
+                className="td-deck-sub-tab td-deck-eco-cal-trigger"
+                onClick={() => setEconomicCalendarOpen(true)}
+              >
+                Economic calendar
+              </button>
             </div>
 
             <MarketSessionsWithCountdowns />
