@@ -202,3 +202,18 @@ export function getChecklistItemLabel(id) {
   }
   return null;
 }
+
+/** Sub-sections under setup-formation for template picker + budgets. */
+export function getSetupFormationSubTemplates() {
+  const sec = CHECKLIST_SECTIONS.find((s) => s.id === 'setup-formation');
+  if (!sec?.subPatterns) return [];
+  return sec.subPatterns.map((sub) => ({
+    id: sub.id,
+    title: sub.title,
+    budget: sub.items.reduce((s, it) => s + it.points, 0),
+    templateItems: sub.items.map((it) => ({
+      label: it.label,
+      ...(it.exampleImageSrc ? { exampleImageSrc: it.exampleImageSrc } : {}),
+    })),
+  }));
+}

@@ -7,6 +7,8 @@
  * When set, a small thumbnail appears left of the points; click opens a larger preview.
  */
 
+import { sumCheckedPoints } from './checklistAllocate';
+
 export const CHECKLIST_TABS = [
   { id: 'scalp', label: 'Scalp' },
   { id: 'intraDay', label: 'Intra Day' },
@@ -119,8 +121,40 @@ export const CHECKLIST_BY_TAB = {
   ],
 };
 
+/** Max points for a tab when every section has at least one line (template budget totals 100 per tab). */
 export function getMaxPointsForTab(tabId) {
   const cards = CHECKLIST_BY_TAB[tabId];
   if (!cards) return 0;
   return cards.reduce((sum, card) => sum + card.items.reduce((s, i) => s + i.points, 0), 0);
+}
+
+/**
+ * Execution tab max for the lines the user actually added (only sections with items count).
+ */
+export function getExecutionTabMaxForUserItems(tabId, itemsByTab) {
+  const cards = CHECKLIST_BY_TAB[tabId];
+  if (!cards) return 0;
+  const state = itemsByTab[tabId] || {};
+  let sum = 0;
+  for (const card of cards) {
+    const list = state[card.id];
+    if (list && list.length > 0) {
+      sum += card.items.reduce((s, i) => s + i.points, 0);
+    }
+  }
+  return sum;
+}
+
+export function getExecutionTabEarnedScore(tabId, itemsByTab, checkedSet) {
+  const cards = CHECKLIST_BY_TAB[tabId];
+  if (!cards) return 0;
+  const state = itemsByTab[tabId] || {};
+  let total = 0;
+  for (const card of cards) {
+    const list = state[card.id];
+    if (!list || list.length === 0) continue;
+    const budget = card.items.reduce((s, i) => s + i.points, 0);
+    total += sumCheckedPoints(list, checkedSet, budget);
+  }
+  return total;
 }

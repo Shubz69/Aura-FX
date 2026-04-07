@@ -18,6 +18,8 @@ import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator
 import {
   VALIDATOR_CHECKLIST_PENDING_KEY,
   TRADER_LAB_HANDOFF_KEY,
+  TV_V3_CHECKED_KEY,
+  TV_V3_FORMATION_CHECKED_KEY,
 } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import { formatThesisNotesForJournal } from '../../utils/traderSuite';
 import '../../styles/aura-analysis/TradeCalculator.css';
@@ -500,6 +502,8 @@ export default function TradeCalculator() {
       try {
         sessionStorage.removeItem(VALIDATOR_CHECKLIST_PENDING_KEY);
         localStorage.removeItem('aura-trade-validator-checked-by-tab');
+        localStorage.removeItem(TV_V3_CHECKED_KEY);
+        localStorage.removeItem(TV_V3_FORMATION_CHECKED_KEY);
       } catch {}
       setPendingChecklist(null);
       navigate('/trader-deck/trade-validator/journal');
