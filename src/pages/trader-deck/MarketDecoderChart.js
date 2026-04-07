@@ -36,15 +36,15 @@ export default function MarketDecoderChart({ bars, compact = false, referenceSty
 
     const baseH =
       typeof window !== 'undefined'
-        ? window.innerHeight * (referenceStyle ? 0.26 : compact ? 0.2 : 0.28)
+        ? window.innerHeight * (referenceStyle ? 0.17 : compact ? 0.2 : 0.28)
         : referenceStyle
-          ? 320
+          ? 260
           : compact
             ? 220
             : 320;
     const height = Math.min(
-      referenceStyle ? 420 : compact ? 260 : 400,
-      Math.max(referenceStyle ? 300 : compact ? 180 : 260, Math.floor(baseH))
+      referenceStyle ? 300 : compact ? 260 : 400,
+      Math.max(referenceStyle ? 210 : compact ? 180 : 260, Math.floor(baseH))
     );
 
     const bg = referenceStyle ? '#0b0e14' : '#07111f';

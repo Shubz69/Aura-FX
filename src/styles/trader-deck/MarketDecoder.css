@@ -1722,8 +1722,8 @@
 /* ——— Reference terminal layout (gold / cyan cyberpunk desk) ——— */
 
 .md-decoder--reference {
-  max-width: 1320px;
-  padding: 0 8px 48px;
+  max-width: 1280px;
+  padding: 0 6px 28px;
   --ref-gold: rgba(244, 236, 220, 0.95);
   --ref-gold-dim: rgba(234, 169, 96, 0.88);
   --ref-cyan: rgba(234, 169, 96, 0.95);
@@ -1745,9 +1745,9 @@
 
 .md-ref-top {
   text-align: center;
-  margin-bottom: 28px;
-  padding: 28px 20px 22px;
-  border-radius: 24px;
+  margin-bottom: 18px;
+  padding: 20px 16px 16px;
+  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.072);
   background:
     radial-gradient(ellipse at 15% 0%, rgba(234, 169, 96, 0.09) 0%, transparent 52%),
@@ -1980,30 +1980,30 @@
 
 .md-ref-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 0.95fr) minmax(320px, 1.5fr) minmax(220px, 0.95fr);
-  gap: 16px;
+  grid-template-columns: minmax(196px, 0.92fr) minmax(260px, 1.45fr) minmax(196px, 0.92fr);
+  gap: 10px;
   align-items: start;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .md-ref-col {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
   min-width: 0;
 }
 
 .md-ref-panel {
-  border-radius: 18px;
-  padding: 16px 16px 14px;
+  border-radius: 14px;
+  padding: 10px 12px 10px;
   background: var(--ref-panel-bg);
   border: 1px solid rgba(255, 255, 255, 0.072);
   backdrop-filter: blur(6px) saturate(1.04);
   -webkit-backdrop-filter: blur(6px) saturate(1.04);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.055) inset,
-    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
-    0 14px 36px rgba(0, 0, 0, 0.28);
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 0 0 0.5px rgba(255, 255, 255, 0.035) inset,
+    0 10px 28px rgba(0, 0, 0, 0.24);
   position: relative;
   overflow: hidden;
 }
@@ -2025,41 +2025,41 @@
 }
 
 .md-ref-panel--chart {
-  padding-top: 14px;
+  padding-top: 8px;
 }
 
 .md-ref-panel-h {
-  margin: 0 0 12px;
-  font-size: 0.72rem;
+  margin: 0 0 7px;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ref-gold);
   text-shadow: 0 0 12px rgba(234, 169, 96, 0.2);
 }
 
 .md-ref-subh {
-  margin: 0 0 10px;
-  font-size: 0.85rem;
+  margin: 0 0 6px;
+  font-size: 0.8rem;
   color: var(--ref-gold-dim);
 }
 
 .md-ref-rows {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
 }
 
 .md-ref-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
   background: rgba(0, 0, 0, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) inset;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.18) inset;
 }
 
 .md-ref-row--gold {
@@ -2067,14 +2067,14 @@
 }
 
 .md-ref-k {
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   color: var(--ref-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .md-ref-v {
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--ref-ink);
   text-align: right;
@@ -2102,16 +2102,16 @@
 .md-ref-cross-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 5px;
 }
 
 .md-ref-cross-tile {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 8px;
-  border-radius: 12px;
+  gap: 3px;
+  padding: 7px 5px;
+  border-radius: 10px;
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -2186,12 +2186,12 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 14px 22px;
-  margin-bottom: 10px;
+  gap: 6px 12px;
+  margin-bottom: 6px;
 }
 
 .md-ref-pair {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: var(--ref-gold);
   letter-spacing: 0.02em;
@@ -2199,7 +2199,7 @@
 }
 
 .md-ref-last {
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--ref-gold);
 }
@@ -2229,11 +2229,11 @@
 }
 
 .md-ref-tl-cap {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ref-cyan);
-  padding-top: 22px;
+  padding-top: 12px;
 }
 
 .md-ref-tl-cap--end {
@@ -2244,11 +2244,11 @@
   flex: 1;
   display: flex;
   justify-content: space-between;
-  gap: 8px;
-  min-width: 200px;
-  padding: 8px 0 4px;
+  gap: 6px;
+  min-width: 160px;
+  padding: 4px 0 2px;
   border-top: 1px dashed rgba(140, 175, 255, 0.35);
-  margin-top: 18px;
+  margin-top: 10px;
   position: relative;
 }
 
@@ -2262,12 +2262,12 @@
 }
 
 .md-ref-tl-node {
-  width: 10px;
-  height: 10px;
-  margin-top: -15px;
+  width: 9px;
+  height: 9px;
+  margin-top: -13px;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #ffffff, var(--ref-gold-dim));
-  box-shadow: 0 0 12px rgba(140, 175, 255, 0.72);
+  box-shadow: 0 0 10px rgba(140, 175, 255, 0.65);
 }
 
 .md-ref-tl-label {
@@ -2330,19 +2330,19 @@
   left: 50%;
   bottom: 2px;
   width: 3px;
-  height: 76px;
+  height: 62px;
   margin-left: -1px;
   border-radius: 2px;
   background: linear-gradient(180deg, var(--ref-gold), #7a5c16);
   transform-origin: bottom center;
-  box-shadow: 0 0 14px rgba(140, 175, 255, 0.7);
+  box-shadow: 0 0 12px rgba(140, 175, 255, 0.65);
   z-index: 2;
 }
 
 .md-ref-pulse-caption {
-  margin: 10px 0 0;
+  margin: 6px 0 0;
   text-align: center;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--ref-ink);
 }
@@ -2357,9 +2357,9 @@
   display: flex;
   align-items: center;
   width: 100%;
-  margin-bottom: 8px;
-  padding: 12px 12px;
-  border-radius: 12px;
+  margin-bottom: 5px;
+  padding: 7px 10px;
+  border-radius: 10px;
   border: 1px solid rgba(140, 175, 255, 0.2);
   background: rgba(0, 0, 0, 0.2);
   color: inherit;
@@ -2401,6 +2401,10 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22) inset;
 }
 
+.md-ref-scen-row:last-child {
+  margin-bottom: 0;
+}
+
 .md-ref-exec-list {
   list-style: none;
   margin: 0;
@@ -2409,8 +2413,8 @@
 
 .md-ref-exec-item {
   display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 7px;
 }
 
 .md-ref-exec-check {
@@ -2440,23 +2444,27 @@
 .md-ref-exec-body {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .md-ref-exec-title {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--ref-gold);
 }
 
 .md-ref-exec-sub {
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   color: var(--ref-muted);
-  line-height: 1.45;
+  line-height: 1.32;
 }
 
 .md-ref-exec-item--interactive {
   align-items: flex-start;
+}
+
+.md-ref-exec-item:last-child {
+  margin-bottom: 0;
 }
 
 .md-ref-exec-check-btn {
@@ -2516,10 +2524,10 @@
 }
 
 .md-ref-footer {
-  margin-top: 8px;
-  padding: 22px 20px;
+  margin-top: 6px;
+  padding: 12px 14px;
   text-align: center;
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1px solid rgba(140, 175, 255, 0.35);
   background:
     radial-gradient(800px 120px at 50% 0%, rgba(140, 175, 255, 0.16), transparent 60%),
@@ -2541,24 +2549,24 @@
 }
 
 .md-ref-more {
-  margin-top: 20px;
-  border-radius: 14px;
+  margin-top: 12px;
+  border-radius: 12px;
   border: 1px solid rgba(94, 231, 255, 0.1);
-  padding: 4px 14px 14px;
+  padding: 2px 10px 10px;
   background: rgba(6, 10, 20, 0.65);
 }
 
 .md-ref-more-sum {
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   color: var(--ref-muted);
-  padding: 10px 0;
+  padding: 8px 0;
 }
 
 .md-ref-more-inner {
   display: grid;
-  gap: 14px;
-  padding-top: 8px;
+  gap: 10px;
+  padding-top: 6px;
 }
 
 .md-ref-placeholder {
@@ -2582,21 +2590,21 @@
 }
 
 .md-chart-root--ref {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .md-chart-tf {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   justify-content: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .md-chart-tf-btn {
-  min-width: 42px;
-  padding: 6px 10px;
-  border-radius: 8px;
+  min-width: 38px;
+  padding: 4px 8px;
+  border-radius: 7px;
   border: 1px solid rgba(140, 175, 255, 0.22);
   background: rgba(0, 0, 0, 0.35);
   color: var(--ref-muted, rgba(170, 195, 220, 0.55));
@@ -2619,10 +2627,10 @@
 }
 
 .md-chart-empty--ref {
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid rgba(140, 175, 255, 0.14);
   background: #0b0e14;
-  padding: 20px;
+  padding: 12px 14px;
 }
 
 /* Preview modal — Export → Trader Lab */
@@ -2904,7 +2912,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: clamp(10px, 2vw, 18px);
+  padding: clamp(6px, 1.2vw, 12px);
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(234, 169, 96, 0.35) rgba(255, 255, 255, 0.04);
