@@ -23,7 +23,6 @@ import {
   FaLink,
   FaFileAlt,
   FaHeartbeat,
-  FaUpload,
 } from "react-icons/fa";
 import { isSuperAdmin, isAdmin, isPremium } from "../utils/roles";
 import A7Logo from "./A7Logo";
@@ -200,9 +199,6 @@ const Navbar = () => {
                         <>
                           <Link to="/reports" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                             <FaFileAlt className="dropdown-icon" /> Performance & DNA
-                          </Link>
-                          <Link to="/manual-metrics" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                            <FaUpload className="dropdown-icon" /> Manual metrics (CSV)
                           </Link>
                         </>
                       )}
