@@ -736,7 +736,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             display: 'flex',
                             alignItems: 'flex-start',
                             gap: '12px',
-                            padding: '16px 20px',
+                            padding: '12px 16px',
                             background: 'linear-gradient(135deg, rgba(234,169,96,0.05) 0%, rgba(248,195,125,0.02) 100%)',
                             border: '1px solid rgba(234,169,96,0.15)',
                             borderRadius: '14px',
@@ -746,10 +746,11 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             {/* Decorative quote mark */}
                             <div style={{
                                 position: 'absolute',
-                                top: '-10px',
-                                right: '10px',
-                                fontSize: '6rem',
-                                color: `${tierColor}10`,
+                                top: '-4px',
+                                right: '8px',
+                                fontSize: 'clamp(2.5rem, 8vw, 3.25rem)',
+                                lineHeight: 1,
+                                color: `${tierColor}12`,
                                 fontFamily: 'Georgia, serif',
                                 pointerEvents: 'none',
                                 userSelect: 'none'
@@ -757,21 +758,25 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 &ldquo;
                             </div>
                             
-                            {/* Quote icon */}
+                            {/* Quote icon — fixed circle (avoid stretched oval from flex) */}
                             <div style={{
                                 flexShrink: 0,
-                                width: '32px',
-                                height: '32px',
+                                width: 32,
+                                height: 32,
+                                minWidth: 32,
+                                minHeight: 32,
+                                aspectRatio: '1',
                                 borderRadius: '50%',
                                 background: `${tierColor}15`,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 color: tierColor,
-                                fontSize: '0.9rem',
-                                border: `1px solid ${tierColor}30`
+                                fontSize: '0.75rem',
+                                border: `1px solid ${tierColor}30`,
+                                boxSizing: 'border-box'
                             }}>
-                                <FaQuoteRight />
+                                <FaQuoteRight style={{ display: 'block' }} />
                             </div>
                             
                             {/* Bio text */}
@@ -838,7 +843,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 </div>
 
                 {/* ─── TAB CONTENT ────────────────────────────────────── */}
-                <div style={{ padding: 'clamp(16px, 3vw, 24px) clamp(16px, 4vw, 32px) clamp(20px, 4vw, 32px)', minHeight: '220px' }}>
+                <div style={{ padding: 'clamp(12px, 2.5vw, 20px) clamp(16px, 4vw, 32px) clamp(16px, 3vw, 24px)', minHeight: '0' }}>
 
                     {/* OVERVIEW TAB */}
                     {activeTab === 'overview' && (
@@ -953,18 +958,47 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 </div>
                             )}
 
-                            {/* Stat cards — no duplicate power level (shown in header) */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(104px, 1fr))', gap: '8px' }}>
+                            {/* Stat tiles — compact horizontal rows, no stretched grid cells */}
+                            <div
+                                className="pm-overview-stat-grid"
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                                    gap: '10px',
+                                    alignItems: 'start',
+                                }}
+                            >
                                 {[
                                     { icon: '✨', label: 'Total XP', value: xp.toLocaleString(), color: '#FFD700' },
                                     { icon: '🔥', label: 'Streak', value: `${loginStreak}d`, color: '#f59e0b' },
                                     { icon: '🎖️', label: 'Achievements', value: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, color: '#eaa960' }
                                 ].map((stat, i) => (
-                                    <div key={i} style={{ padding: '12px 10px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '6px', position: 'relative', overflow: 'hidden', transition: 'border-color 0.22s' }}>
-                                        <div style={{ position: 'absolute', top: 0, left: '25%', right: '25%', height: '2px', background: `linear-gradient(90deg, transparent, ${stat.color}50, transparent)`, borderRadius: '2px' }} />
-                                        <span style={{ fontSize: '1.15rem', lineHeight: 1 }}>{stat.icon}</span>
-                                        <div style={{ fontSize: '0.5rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.18em', fontFamily: "'Space Grotesk', sans-serif" }}>{stat.label}</div>
-                                        <div style={{ fontSize: '0.95rem', fontWeight: 300, color: stat.color, letterSpacing: '0.03em', fontFamily: "'Space Grotesk', sans-serif", filter: `drop-shadow(0 0 6px ${stat.color}35)` }}>{stat.value}</div>
+                                    <div
+                                        key={i}
+                                        className="pm-overview-stat-tile"
+                                        style={{
+                                            padding: '10px 12px',
+                                            background: 'rgba(255,255,255,0.02)',
+                                            border: '1px solid rgba(255,255,255,0.06)',
+                                            borderRadius: '12px',
+                                            display: 'flex',
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            gap: '10px',
+                                            textAlign: 'left',
+                                            position: 'relative',
+                                            overflow: 'hidden',
+                                            transition: 'border-color 0.22s',
+                                            minHeight: 0,
+                                            height: 'auto',
+                                        }}
+                                    >
+                                        <div style={{ position: 'absolute', top: 0, left: '12%', right: '12%', height: '2px', background: `linear-gradient(90deg, transparent, ${stat.color}50, transparent)`, borderRadius: '2px' }} />
+                                        <span style={{ fontSize: '1.2rem', lineHeight: 1, flexShrink: 0 }} aria-hidden>{stat.icon}</span>
+                                        <div style={{ minWidth: 0, flex: 1 }}>
+                                            <div style={{ fontSize: '0.5rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.16em', fontFamily: "'Space Grotesk', sans-serif", marginBottom: '3px' }}>{stat.label}</div>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 500, color: stat.color, letterSpacing: '0.02em', fontFamily: "'Space Grotesk', sans-serif", filter: `drop-shadow(0 0 6px ${stat.color}30)`, lineHeight: 1.25, wordBreak: 'break-word' }}>{stat.value}</div>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -982,20 +1016,22 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 const entries = Object.entries(displayProfile.visibleStats).filter(([k]) => STAT_META[k]);
                                 if (entries.length === 0) return null;
                                 return (
-                                    <div style={{ padding: '18px 20px', background: 'rgba(255,255,255,0.015)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                                    <div style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.015)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                                             <span style={{ fontSize: '0.85rem', color: tierColor }}>📊</span>
                                             <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.32em', fontFamily: "'Space Grotesk', sans-serif" }}>Trader Stats</span>
                                         </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '10px' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', alignItems: 'start' }}>
                                             {entries.map(([key, value]) => {
                                                 const meta = STAT_META[key];
                                                 return (
-                                                    <div key={key} style={{ padding: '14px 10px', background: `${meta.color}08`, border: `1px solid ${meta.color}22`, borderRadius: '12px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+                                                    <div key={key} style={{ padding: '10px 12px', background: `${meta.color}08`, border: `1px solid ${meta.color}22`, borderRadius: '12px', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', textAlign: 'left', position: 'relative', overflow: 'hidden', minHeight: 0 }}>
                                                         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${meta.color}70, transparent)` }} />
-                                                        <div style={{ fontSize: '1.3rem', marginBottom: '6px' }}>{meta.icon}</div>
-                                                        <div style={{ fontSize: '1.2rem', fontWeight: 300, color: meta.color, letterSpacing: '0.04em', fontFamily: "'Space Grotesk', sans-serif", filter: `drop-shadow(0 0 6px ${meta.color}40)` }}>{meta.fmt(value)}</div>
-                                                        <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: '4px', fontFamily: "'Space Grotesk', sans-serif" }}>{meta.label}</div>
+                                                        <span style={{ fontSize: '1.15rem', flexShrink: 0 }} aria-hidden>{meta.icon}</span>
+                                                        <div style={{ minWidth: 0, flex: 1 }}>
+                                                            <div style={{ fontSize: '1.05rem', fontWeight: 500, color: meta.color, letterSpacing: '0.03em', fontFamily: "'Space Grotesk', sans-serif", filter: `drop-shadow(0 0 6px ${meta.color}35)`, lineHeight: 1.2 }}>{meta.fmt(value)}</div>
+                                                            <div style={{ fontSize: '0.52rem', color: 'rgba(255,255,255,0.32)', textTransform: 'uppercase', letterSpacing: '0.18em', marginTop: '4px', fontFamily: "'Space Grotesk', sans-serif" }}>{meta.label}</div>
+                                                        </div>
                                                     </div>
                                                 );
                                             })}
@@ -1097,6 +1133,11 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     #profile-modal-root ::-webkit-scrollbar { width: 4px; }
                     #profile-modal-root ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
                     #profile-modal-root ::-webkit-scrollbar-thumb { background: rgba(234,169,96,0.3); border-radius: 99px; }
+
+                    .pm-overview-stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+                    @media (max-width: 520px) {
+                        .pm-overview-stat-grid { grid-template-columns: 1fr !important; }
+                    }
 
                     /* ── Mobile: ≤ 480px ─────────────────────────────── */
                     @media (max-width: 480px) {

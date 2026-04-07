@@ -939,8 +939,14 @@ body.community-page-active {
     right: 16px !important;
     bottom: calc(28px + env(safe-area-inset-bottom, 0px)) !important;
     top: auto !important; left: auto !important;
-    width: 52px !important; height: 52px !important;
-    border-radius: 16px !important;
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    min-height: 52px !important;
+    aspect-ratio: 1 !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
     background: linear-gradient(135deg, #283d68 0%, #3a5490 50%, #5a7ed8 100%) !important;
     border: none !important; color: #fff !important; font-size: 20px !important;
     cursor: pointer !important;
@@ -963,6 +969,9 @@ body.community-page-active {
 .journal-floating-btn:hover::before { opacity: 1 !important; }
 .journal-floating-btn:hover {
     border-radius: 50% !important;
+    width: 52px !important;
+    height: 52px !important;
+    aspect-ratio: 1 !important;
     box-shadow:
         0 0 0 1px rgba(255,255,255,0.22) inset,
         0 12px 36px rgba(90,125,220,0.60),
@@ -2009,9 +2018,17 @@ body.sidebar-open-mobile {
     .chat-input-btn { width: 27px !important; height: 27px !important; font-size: 0.88rem !important; }
     .send-btn { height: 48px !important; padding: 0 16px !important; font-size: 0.875rem !important; border-radius: 12px !important; }
     .journal-floating-btn {
-        position: fixed !important; width: 46px !important; height: 46px !important;
-        right: 14px !important; bottom: calc(25px + env(safe-area-inset-bottom, 0px)) !important;
-        font-size: 17px !important; border-radius: 14px !important;
+        position: fixed !important;
+        width: 46px !important;
+        height: 46px !important;
+        min-width: 46px !important;
+        min-height: 46px !important;
+        aspect-ratio: 1 !important;
+        right: 14px !important;
+        bottom: calc(25px + env(safe-area-inset-bottom, 0px)) !important;
+        font-size: 17px !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
     }
     .journal-modal-content { max-width: 400px; height: min(80vh, 620px); max-height: min(80vh, 620px) !important; }
 }
@@ -2134,7 +2151,10 @@ body.sidebar-open-mobile {
         bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
         top: auto !important; left: auto !important;
         width: 48px !important; height: 48px !important;
-        font-size: 18px !important; border-radius: 14px !important;
+        min-width: 48px !important; min-height: 48px !important;
+        aspect-ratio: 1 !important;
+        font-size: 18px !important; border-radius: 50% !important;
+        padding: 0 !important;
         z-index: 100 !important; visibility: visible !important; opacity: 1 !important;
         animation: jm-float 4s ease-in-out infinite !important;
     }
@@ -2157,7 +2177,18 @@ body.sidebar-open-mobile {
     .chat-input-buttons { right: 8px !important; bottom: 8px !important; }
     .chat-input-btn { width: 28px !important; height: 28px !important; font-size: 0.85rem !important; }
     .send-btn { width: 44px !important; height: 44px !important; font-size: 1.1rem !important; }
-    .journal-floating-btn { width: 46px !important; height: 46px !important; right: 12px !important; bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important; font-size: 17px !important; }
+    .journal-floating-btn {
+        width: 46px !important;
+        height: 46px !important;
+        min-width: 46px !important;
+        min-height: 46px !important;
+        aspect-ratio: 1 !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
+        right: 12px !important;
+        bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+        font-size: 17px !important;
+    }
     .channel-push-toggle__label { max-width: 72px; overflow: hidden; text-overflow: ellipsis; }
 }
 

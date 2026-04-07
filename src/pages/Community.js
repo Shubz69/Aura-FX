@@ -8827,14 +8827,17 @@ if (!isAuthenticated && !hasToken) {
                     navigate('/profile');
                 }}
             />
-            {/* Floating Journal Button */}
-<button
-    className="journal-floating-btn"
-    onClick={() => setShowJournalModal(true)}
-    title="Quick Journal"
->
-    <FaBook />
-</button>
+            {/* Floating Journal Button — hide while profile modal open to avoid overlap / odd shapes */}
+            {!showProfileModal ? (
+                <button
+                    type="button"
+                    className="journal-floating-btn"
+                    onClick={() => setShowJournalModal(true)}
+                    title="Quick Journal"
+                >
+                    <FaBook />
+                </button>
+            ) : null}
 
 {/* Mini Journal Modal */}
 <MiniJournalModal
