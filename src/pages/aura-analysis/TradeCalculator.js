@@ -15,7 +15,11 @@ import { forexPairNeedsUsdJpy } from '../../lib/aura-analysis/calculators/forexP
 import { buildFxRatesFromPriceMap } from '../../lib/aura-analysis/calculators/accountCurrency';
 import { formatMoneyAccount, ACCOUNT_CURRENCY_OPTIONS } from '../../lib/aura-analysis/formatAccountCurrency';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
-import { VALIDATOR_CHECKLIST_PENDING_KEY } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
+import {
+  VALIDATOR_CHECKLIST_PENDING_KEY,
+  TRADER_LAB_HANDOFF_KEY,
+} from '../../lib/aura-analysis/validator/validatorChecklistStorage';
+import { formatThesisNotesForJournal } from '../../utils/traderSuite';
 import '../../styles/aura-analysis/TradeCalculator.css';
 
 const FALLBACK_INSTRUMENTS_BY_CATEGORY = getInstrumentsByCategory();
@@ -66,6 +70,40 @@ export default function TradeCalculator() {
       if (raw) setPendingChecklist(JSON.parse(raw));
     } catch {
       setPendingChecklist(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(TRADER_LAB_HANDOFF_KEY);
+      if (!raw) return;
+      const h = JSON.parse(raw);
+      if (!h || Number(h.version) !== 1) return;
+      const pair = String(h.pair || '').trim() || 'EURUSD';
+      const meta = getInstrumentForWatchlistSymbol(pair);
+      const pairLabel = meta?.displayName || pair;
+      const noteBlock = formatThesisNotesForJournal(h);
+      setForm((f) => ({
+        ...f,
+        pair,
+        pairLabel,
+        direction: h.direction === 'sell' ? 'sell' : 'buy',
+        entryPrice: h.entryPrice != null ? String(h.entryPrice) : f.entryPrice,
+        stopLoss: h.stopLoss != null ? String(h.stopLoss) : f.stopLoss,
+        takeProfit: h.takeProfit != null ? String(h.takeProfit) : f.takeProfit,
+        riskPercent: h.riskPercent != null ? String(h.riskPercent) : f.riskPercent,
+        accountBalance: h.accountBalance != null ? String(h.accountBalance) : f.accountBalance,
+        notes: (() => {
+          const prev = String(f.notes || '').trim();
+          const next = String(noteBlock || '').trim();
+          if (next && prev) return `${prev}\n\n${next}`;
+          return next || prev || f.notes;
+        })(),
+      }));
+      sessionStorage.removeItem(TRADER_LAB_HANDOFF_KEY);
+      toast.success('Trader Lab plan loaded — review sizing, then save to your journal.');
+    } catch (e) {
+      console.warn(e);
     }
   }, []);
 

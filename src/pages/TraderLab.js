@@ -1,18 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
 import { formatWelcomeEyebrow, getUserFirstName } from '../utils/welcomeUser';
-import { FaPen } from 'react-icons/fa';
+import { FaPlay } from 'react-icons/fa';
+import { TRADER_LAB_HANDOFF_KEY } from '../lib/aura-analysis/validator/validatorChecklistStorage';
 import {
   PLAYBOOK_SETUP_OPTIONS,
   buildBehaviourSummary,
   buildValidator,
+  buildTraderLabHandoff,
+  clamp,
   calculateRiskAmount,
   calculatePositionSizeUnits,
   calculateRiskReward,
+  confidenceToConviction,
+  convictionToConfidence,
   formatPositionLots,
   safeNumber,
   toYmd,
@@ -43,13 +48,13 @@ const DEFAULT_FORM = {
   todaysFocus: 'U.S. / China|Neutral\nEurope|Positive\nMiddle East|Negative',
   sessionGoal: 'Hold discipline on continuation entries; max 2 quality trades.',
   maxTradesAllowed: 3,
-  whatDoISee:
-    'Strong U.S. economic data supporting risk tone\nInstitutional inflows into metals\nDXY softening into NY close',
+  /** Trade thesis (also persisted via whatDoISee / whyValid / entryConfirmation columns) */
+  whatDoISee: '',
   setupName: 'London Breakout',
-  whyValid: 'GDP Growth: 3.2% YoY\nInflation cooling: 2.9% → 2.4%\nSector strength in metals and energy',
-  entryConfirmation:
-    'Price respected the ascending channel. Wait for a bullish 1H close above local structure before scaling. Invalidation on acceptance back inside the range.',
-  confidence: 72,
+  whyValid: '',
+  entryConfirmation: '',
+  conviction: 'medium',
+  confidence: 65,
   riskLevel: 'Medium',
   entryPrice: 2235,
   stopLoss: 2218,
@@ -78,53 +83,32 @@ const DEFAULT_FORM = {
 };
 
 function normalizeSession(session = {}) {
-  return {
+  const merged = {
     ...DEFAULT_FORM,
     ...session,
     mistakeTags: Array.isArray(session.mistakeTags) ? session.mistakeTags : DEFAULT_FORM.mistakeTags,
     chartSymbol: session.chartSymbol || DEFAULT_FORM.chartSymbol,
     accountSize: session.accountSize !== '' && session.accountSize != null ? Number(session.accountSize) : DEFAULT_FORM.accountSize,
   };
+  if (!session.conviction && session.confidence != null) {
+    merged.conviction = confidenceToConviction(session.confidence);
+  }
+  merged.confidence = convictionToConfidence(merged.conviction);
+  merged.auraConfidence = merged.confidence;
+  return merged;
 }
 
-function linesToList(text) {
-  return String(text || '')
-    .split(/\n/)
-    .map((l) => l.replace(/^[•\-\*]\s*/, '').trim())
-    .filter(Boolean);
-}
-
-function parseGeopoliticalBlock(text) {
-  const lines = String(text || '')
-    .split(/\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
-  return lines.map((line) => {
-    const pipe = line.indexOf('|');
-    if (pipe === -1) return { region: line, sentiment: '—' };
-    return {
-      region: line.slice(0, pipe).trim(),
-      sentiment: line.slice(pipe + 1).trim(),
-    };
-  });
-}
-
-function sentimentPillClass(s) {
-  const x = String(s).toLowerCase();
-  if (x.includes('positive') || x.includes('improv') || x.includes('bull')) return 'tlab-geo-pill tlab-geo-pill--pos';
-  if (x.includes('negative') || x.includes('bear')) return 'tlab-geo-pill tlab-geo-pill--neg';
-  return 'tlab-geo-pill tlab-geo-pill--mid';
-}
-
-function BiasPill({ bias }) {
-  const b = String(bias || '').toLowerCase();
-  let cls = 'tlab-pill-bias tlab-pill-bias--neutral';
-  if (b.includes('bull')) cls = 'tlab-pill-bias tlab-pill-bias--bull';
-  if (b.includes('bear')) cls = 'tlab-pill-bias tlab-pill-bias--bear';
-  return <span className={cls}>{String(bias || '—').toUpperCase()}</span>;
+function priceSliderBounds(entry) {
+  const e = safeNumber(entry, 0);
+  if (!e) return { min: 0, max: 1, step: 0.0001 };
+  const span = Math.max(Math.abs(e) * 0.12, 0.0005);
+  const step =
+    Math.abs(e) >= 1000 ? 0.1 : Math.abs(e) >= 10 ? 0.0001 : 0.00001;
+  return { min: e - span, max: e + span, step };
 }
 
 export default function TraderLab() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [playbookSetups, setPlaybookSetups] = useState(PLAYBOOK_SETUP_OPTIONS);
@@ -190,21 +174,7 @@ export default function TraderLab() {
   );
 
   const validator = useMemo(() => buildValidator(form), [form]);
-  const behaviour = useMemo(() => buildBehaviourSummary(form), [form]);
   const rrOk = rr >= 1;
-
-  const tradeValidatorRows = useMemo(() => {
-    const rrStatus = rr >= 2 ? 'OPTIMAL' : rr >= 1 ? 'OK' : 'WEAK';
-    const conflictStatus = form.setupValid && form.riskDefined ? 'CLEAR' : 'REVIEW';
-    return [
-      { label: 'Trend alignment', status: form.biasAligned ? 'YES' : 'NO', ok: form.biasAligned },
-      { label: 'Risk / reward', status: rrStatus, ok: rr >= 1 },
-      { label: 'Entry confirmation', status: form.entryConfirmed ? 'VALID' : 'PENDING', ok: form.entryConfirmed },
-      { label: 'No major conflicts', status: conflictStatus, ok: form.setupValid && form.riskDefined },
-    ];
-  }, [form.biasAligned, form.setupValid, form.riskDefined, form.entryConfirmed, rr]);
-
-  const validatorPanelOk = tradeValidatorRows.every((r) => r.ok);
 
   const stats = useMemo(
     () => [
@@ -219,18 +189,21 @@ export default function TraderLab() {
     [form.auraConfidence, form.marketBias, form.marketState]
   );
 
-  const geoRows = useMemo(() => parseGeopoliticalBlock(form.todaysFocus), [form.todaysFocus]);
-  const driverLines = useMemo(() => linesToList(form.whatDoISee), [form.whatDoISee]);
-  const fundamentalLines = useMemo(() => linesToList(form.whyValid), [form.whyValid]);
-
-  const newsRiskLabel = form.emotionalIntensity >= 55 ? 'Moderate' : 'Low';
-  const volLabel =
-    form.riskLevel === 'High' ? 'High' : form.riskLevel === 'Low' ? 'Low' : 'Moderate';
-  const eventRiskLabel = form.emotionalIntensity >= 40 ? 'Moderate' : 'Low';
-
   const updateField = (key, value) => {
+    if (key === 'conviction') {
+      const conf = convictionToConfidence(value);
+      setForm((prev) => ({
+        ...prev,
+        conviction: value,
+        confidence: conf,
+        auraConfidence: conf,
+      }));
+      return;
+    }
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  const entryBounds = useMemo(() => priceSliderBounds(form.entryPrice), [form.entryPrice]);
 
   const saveSession = async () => {
     setSaving(true);
@@ -266,6 +239,46 @@ export default function TraderLab() {
   };
 
   const readyToExecute = validator.passed && rrOk;
+
+  const handleExecute = async () => {
+    if (!readyToExecute) {
+      toast.warning('Complete the Decision Engine (all checks) and ensure reward:risk is at least 1:1.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = { ...form, rrRatio: rr };
+      let nextId = activeId;
+      if (activeId) {
+        const res = await Api.updateTraderLabSession(activeId, payload);
+        const saved = normalizeSession(res?.data?.session || { ...payload, id: activeId });
+        setSessions((prev) => prev.map((item) => (item.id === activeId ? saved : item)));
+        setForm(saved);
+        nextId = saved.id;
+      } else {
+        const res = await Api.createTraderLabSession(payload);
+        const saved = normalizeSession(res?.data?.session || payload);
+        setSessions((prev) => [saved, ...prev]);
+        setActiveId(saved.id);
+        setForm(saved);
+        nextId = saved.id;
+      }
+      setLastSavedAt(new Date().toISOString());
+      const handoff = buildTraderLabHandoff({ ...form, ...payload }, rr, nextId);
+      try {
+        sessionStorage.setItem(TRADER_LAB_HANDOFF_KEY, JSON.stringify(handoff));
+      } catch (e) {
+        console.warn(e);
+      }
+      toast.success('Saved. Next: Trade Validator checklist → Trade Calculator.');
+      navigate('/trader-deck/trade-validator/checklist', { state: { fromTraderLab: true } });
+    } catch (error) {
+      console.error(error);
+      toast.error('Could not save your plan.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const welcomeEyebrow = (
     <span className="tlab-welcome">
@@ -313,126 +326,46 @@ export default function TraderLab() {
       {!loading ? (
         <div className="trader-lab-v2 trader-lab-v2--gold trader-lab-v2--compact">
           <aside className="trader-lab-v2__left">
-            <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Market context</h3>
-              <div className="tlab-pill-row">
-                <BiasPill bias={form.marketBias} />
-                <span className="tlab-pill-confidence">{form.auraConfidence}%</span>
+            <div className="tlab-card tlab-card--gold tlab-card--thesis">
+              <h3 className="tlab-card__title tlab-thesis-title">
+                <FaPlay className="tlab-thesis-play" aria-hidden />
+                Trade Thesis
+              </h3>
+              <div className="tlab-thesis-fields">
+                <div className="tlab-field">
+                  <label htmlFor="tlab-thesis-why">Why this trade?</label>
+                  <textarea
+                    id="tlab-thesis-why"
+                    className="tlab-textarea tlab-textarea--thesis"
+                    value={form.whatDoISee}
+                    onChange={(e) => updateField('whatDoISee', e.target.value)}
+                    placeholder="Your narrative..."
+                    rows={4}
+                  />
+                </div>
+                <div className="tlab-field">
+                  <label htmlFor="tlab-thesis-confirm">What confirms it?</label>
+                  <textarea
+                    id="tlab-thesis-confirm"
+                    className="tlab-textarea tlab-textarea--thesis"
+                    value={form.whyValid}
+                    onChange={(e) => updateField('whyValid', e.target.value)}
+                    placeholder="Signals, structure, confluence..."
+                    rows={4}
+                  />
+                </div>
+                <div className="tlab-field">
+                  <label htmlFor="tlab-thesis-invalidate">What invalidates it?</label>
+                  <textarea
+                    id="tlab-thesis-invalidate"
+                    className="tlab-textarea tlab-textarea--thesis"
+                    value={form.entryConfirmation}
+                    onChange={(e) => updateField('entryConfirmation', e.target.value)}
+                    placeholder="Levels or conditions that void the idea..."
+                    rows={4}
+                  />
+                </div>
               </div>
-              <div className="tlab-field" style={{ marginBottom: 8 }}>
-                <label>Bias</label>
-                <select className="tlab-select" value={form.marketBias} onChange={(e) => updateField('marketBias', e.target.value)}>
-                  {['Bullish', 'Bearish', 'Neutral', 'Bullish intraday'].map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="tlab-mc-row">
-                <span>Confidence</span>
-                <strong>{form.auraConfidence}%</strong>
-              </div>
-              <input
-                type="range"
-                min={1}
-                max={100}
-                className="tlab-range"
-                value={form.auraConfidence}
-                onChange={(e) => updateField('auraConfidence', safeNumber(e.target.value))}
-                aria-label="Aura confidence"
-              />
-              <div className="tlab-progress">
-                <span style={{ width: `${safeNumber(form.auraConfidence, 0)}%` }} />
-              </div>
-              <div className="tlab-field" style={{ marginTop: 10 }}>
-                <label>Market state</label>
-                <select className="tlab-select" value={form.marketState} onChange={(e) => updateField('marketState', e.target.value)}>
-                  {['Trending', 'Ranging', 'Volatile', 'Quiet'].map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="tlab-card__sub">Key drivers</div>
-              <ul className="tlab-ref-bullets">
-                {driverLines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-              <textarea
-                className="tlab-textarea tlab-textarea--tight"
-                value={form.whatDoISee}
-                onChange={(e) => updateField('whatDoISee', e.target.value)}
-                placeholder="One line per driver..."
-                aria-label="Key drivers"
-              />
-            </div>
-
-            <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Fundamental backing</h3>
-              <ul className="tlab-ref-bullets">
-                {fundamentalLines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-              <textarea
-                className="tlab-textarea tlab-textarea--tight"
-                value={form.whyValid}
-                onChange={(e) => updateField('whyValid', e.target.value)}
-                placeholder="One line per fundamental point..."
-                aria-label="Fundamental backing"
-              />
-            </div>
-
-            <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Geopolitical backing</h3>
-              <p className="tlab-hint">Region | Sentiment (one per line)</p>
-              <div className="tlab-table-wrap">
-                <table className="tlab-table">
-                  <thead>
-                    <tr>
-                      <th>Region</th>
-                      <th>Sentiment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {geoRows.map((row) => (
-                      <tr key={row.region}>
-                        <td>{row.region}</td>
-                        <td>
-                          <span className={sentimentPillClass(row.sentiment)}>
-                            {String(row.sentiment).toUpperCase()}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <textarea
-                className="tlab-textarea tlab-textarea--tight"
-                value={form.todaysFocus}
-                onChange={(e) => updateField('todaysFocus', e.target.value)}
-                aria-label="Geopolitical backing"
-              />
-            </div>
-
-            <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Risk radar</h3>
-              <table className="tlab-table tlab-table--compact">
-                <tbody>
-                  <tr>
-                    <td>Volatility</td>
-                    <td><span className="tlab-pill tlab-pill--warn">{volLabel}</span></td>
-                  </tr>
-                  <tr>
-                    <td>News risk</td>
-                    <td><span className="tlab-pill tlab-pill--ok">{newsRiskLabel}</span></td>
-                  </tr>
-                  <tr>
-                    <td>Event risk</td>
-                    <td><span className="tlab-pill tlab-pill--ok">{eventRiskLabel}</span></td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </aside>
 
@@ -504,51 +437,11 @@ export default function TraderLab() {
                 </div>
               </div>
             </div>
-
-            <div className="tlab-center-split tlab-center-split--refined">
-              <div className="tlab-card tlab-card--gold tlab-card--exec">
-                <div className="tlab-exec-head">
-                  <h3 className="tlab-card__title">Execution notes</h3>
-                  <span className="tlab-exec-edit-icon" title="Edit notes" aria-hidden>
-                    <FaPen />
-                  </span>
-                </div>
-                <textarea
-                  className="tlab-textarea tlab-textarea--exec"
-                  value={form.entryConfirmation}
-                  onChange={(e) => updateField('entryConfirmation', e.target.value)}
-                  placeholder="Execution plan, invalidation, and notes..."
-                />
-                <div className="tlab-exec-foot">
-                  <span className="tlab-exec-meta">
-                    Last updated: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}
-                  </span>
-                  <button type="button" className="tlab-btn-save-notes" onClick={saveSession} disabled={saving}>
-                    {saving ? 'SAVING...' : 'SAVE NOTES'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="tlab-card tlab-card--gold tlab-ready-cta-card">
-                <button
-                  type="button"
-                  className="tlab-ready-box"
-                  disabled={!readyToExecute}
-                  onClick={() => {
-                    saveSession();
-                    toast.success('Ready to execute — lab saved.');
-                  }}
-                >
-                  <span className="tlab-ready-box__check">✓</span>
-                  <span className="tlab-ready-box__label">READY TO EXECUTE</span>
-                </button>
-              </div>
-            </div>
           </div>
 
           <aside className="trader-lab-v2__right">
-            <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Trade plan builder</h3>
+            <div className="tlab-card tlab-card--gold tlab-card--builder">
+              <h3 className="tlab-card__title">Trade Builder</h3>
               <div className="tlab-field">
                 <label>Instrument</label>
                 <select className="tlab-select" value={form.chartSymbol} onChange={(e) => updateField('chartSymbol', e.target.value)}>
@@ -557,47 +450,111 @@ export default function TraderLab() {
                   ))}
                 </select>
               </div>
-              <div className="tlab-field-grid">
-                <div className="tlab-field">
-                  <label>Entry</label>
+
+              <div className="tlab-builder-slider-block">
+                <div className="tlab-builder-row">
+                  <div className="tlab-builder-row-head">
+                    <label htmlFor="tlab-entry-num">Entry</label>
+                    <input
+                      id="tlab-entry-num"
+                      className="tlab-input tlab-input--inline"
+                      type="number"
+                      step={entryBounds.step}
+                      value={form.entryPrice}
+                      onChange={(e) => updateField('entryPrice', e.target.value)}
+                    />
+                  </div>
                   <input
-                    className="tlab-input"
-                    type="number"
-                    step="any"
-                    value={form.entryPrice}
-                    onChange={(e) => updateField('entryPrice', e.target.value)}
+                    type="range"
+                    className="tlab-range tlab-range--blue"
+                    min={entryBounds.min}
+                    max={entryBounds.max}
+                    step={entryBounds.step}
+                    value={clamp(safeNumber(form.entryPrice), entryBounds.min, entryBounds.max)}
+                    onChange={(e) =>
+                      updateField('entryPrice', clamp(safeNumber(e.target.value), entryBounds.min, entryBounds.max))
+                    }
+                    aria-label="Entry price"
                   />
                 </div>
-                <div className="tlab-field">
-                  <label>Stop loss</label>
+                <div className="tlab-builder-row">
+                  <div className="tlab-builder-row-head">
+                    <label htmlFor="tlab-stop-num">Stop</label>
+                    <input
+                      id="tlab-stop-num"
+                      className="tlab-input tlab-input--inline"
+                      type="number"
+                      step={entryBounds.step}
+                      value={form.stopLoss}
+                      onChange={(e) => updateField('stopLoss', e.target.value)}
+                    />
+                  </div>
                   <input
-                    className="tlab-input"
-                    type="number"
-                    step="any"
-                    value={form.stopLoss}
-                    onChange={(e) => updateField('stopLoss', e.target.value)}
+                    type="range"
+                    className="tlab-range tlab-range--blue"
+                    min={entryBounds.min}
+                    max={entryBounds.max}
+                    step={entryBounds.step}
+                    value={clamp(safeNumber(form.stopLoss), entryBounds.min, entryBounds.max)}
+                    onChange={(e) =>
+                      updateField('stopLoss', clamp(safeNumber(e.target.value), entryBounds.min, entryBounds.max))
+                    }
+                    aria-label="Stop loss"
                   />
                 </div>
-                <div className="tlab-field">
-                  <label>Target</label>
+                <div className="tlab-builder-row">
+                  <div className="tlab-builder-row-head">
+                    <label htmlFor="tlab-target-num">Target</label>
+                    <input
+                      id="tlab-target-num"
+                      className="tlab-input tlab-input--inline"
+                      type="number"
+                      step={entryBounds.step}
+                      value={form.targetPrice}
+                      onChange={(e) => updateField('targetPrice', e.target.value)}
+                    />
+                  </div>
                   <input
-                    className="tlab-input"
-                    type="number"
-                    step="any"
-                    value={form.targetPrice}
-                    onChange={(e) => updateField('targetPrice', e.target.value)}
+                    type="range"
+                    className="tlab-range tlab-range--blue"
+                    min={entryBounds.min}
+                    max={entryBounds.max}
+                    step={entryBounds.step}
+                    value={clamp(safeNumber(form.targetPrice), entryBounds.min, entryBounds.max)}
+                    onChange={(e) =>
+                      updateField('targetPrice', clamp(safeNumber(e.target.value), entryBounds.min, entryBounds.max))
+                    }
+                    aria-label="Take profit target"
                   />
                 </div>
-                <div className="tlab-field">
-                  <label>Risk %</label>
+                <div className="tlab-builder-row">
+                  <div className="tlab-builder-row-head">
+                    <label htmlFor="tlab-risk-num">Risk %</label>
+                    <input
+                      id="tlab-risk-num"
+                      className="tlab-input tlab-input--inline"
+                      type="number"
+                      step="0.1"
+                      min="0.1"
+                      max="5"
+                      value={form.riskPercent}
+                      onChange={(e) => updateField('riskPercent', clamp(safeNumber(e.target.value, 1), 0.1, 5))}
+                    />
+                  </div>
                   <input
-                    className="tlab-input"
-                    type="number"
-                    step="0.1"
-                    value={form.riskPercent}
-                    onChange={(e) => updateField('riskPercent', e.target.value)}
+                    type="range"
+                    className="tlab-range tlab-range--risk"
+                    min={0.1}
+                    max={5}
+                    step={0.1}
+                    value={clamp(safeNumber(form.riskPercent, 1), 0.1, 5)}
+                    onChange={(e) => updateField('riskPercent', clamp(safeNumber(e.target.value), 0.1, 5))}
+                    aria-label="Risk percent"
                   />
                 </div>
+              </div>
+
+              <div className="tlab-field-grid tlab-field-grid--builder-extras">
                 <div className="tlab-field tlab-field--span">
                   <label>Account size (USD)</label>
                   <input
@@ -617,10 +574,11 @@ export default function TraderLab() {
                   </select>
                 </div>
               </div>
-              <div className="tlab-rr-big">
-                <span className="tlab-rr-label">R∶R ratio</span>
+
+              <div className="tlab-rr-big tlab-rr-big--reward-first">
+                <span className="tlab-rr-label">R∶R</span>
                 <span className="tlab-rr-value">
-                  1 : {Number.isFinite(rr) && rr > 0 ? rr.toFixed(2) : '—'}
+                  {Number.isFinite(rr) && rr > 0 ? `${rr.toFixed(1)} : 1` : '—'}
                 </span>
               </div>
               <div className="tlab-metric-row">
@@ -636,38 +594,68 @@ export default function TraderLab() {
                 <strong>{positionLotsLabel}</strong>
               </div>
             </div>
-
-            <div className={`tlab-card tlab-card--gold tlab-card--validator${validatorPanelOk ? ' tlab-card--validator-pass' : ''}`}>
-              <div className="tlab-validator-banner">{validatorPanelOk ? '✓ TRADE VALID' : 'BLOCKED'}</div>
-              <ul className="tlab-validator-list tlab-validator-list--status">
-                {tradeValidatorRows.map((row) => (
-                  <li key={row.label}>
-                    <span className="tlab-vlabel">{row.label}</span>
-                    <span className={row.ok ? 'tlab-vstatus tlab-vstatus--ok' : 'tlab-vstatus'}>{row.status}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Behaviour pre-check</h3>
-              <div className="tlab-beh-row">
-                <span>Discipline</span>
-                <strong>{behaviour.disciplineOutOf10.toFixed(1)} / 10</strong>
-              </div>
-              <div className="tlab-bar">
-                <span style={{ width: `${behaviour.discipline}%` }} />
-              </div>
-              <div className="tlab-beh-row">
-                <span>Patience</span>
-                <strong>{behaviour.patienceOutOf10.toFixed(1)} / 10</strong>
-              </div>
-              <div className="tlab-bar tlab-bar--amber">
-                <span style={{ width: `${behaviour.emotionalControl}%` }} />
-              </div>
-            </div>
-
           </aside>
+
+          <div className="trader-lab-v2__decision tlab-card tlab-card--gold" aria-label="Decision engine">
+            <h3 className="tlab-decision-heading">Decision Engine</h3>
+            <div className="tlab-decision-bar">
+              <div className="tlab-decision-checks" role="list">
+                {[
+                  { key: 'biasAligned', label: 'Bias aligned' },
+                  { key: 'setupValid', label: 'Setup valid' },
+                  { key: 'entryConfirmed', label: 'Confirmation' },
+                  { key: 'riskDefined', label: 'Risk valid' },
+                ].map(({ key, label }) => (
+                  <label key={key} className="tlab-decision-check">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(form[key])}
+                      onChange={(e) => updateField(key, e.target.checked)}
+                    />
+                    <span className="tlab-decision-check__ui" aria-hidden />
+                    <span className="tlab-decision-check__label">{label}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="tlab-conviction" role="group" aria-label="Conviction">
+                <span className="tlab-conviction__legend">Conviction</span>
+                <div className="tlab-conviction__seg">
+                  {[
+                    { id: 'low', label: 'Low' },
+                    { id: 'medium', label: 'Medium' },
+                    { id: 'high', label: 'High' },
+                  ].map(({ id, label }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className={`tlab-conviction-btn${form.conviction === id ? ' tlab-conviction-btn--active' : ''}`}
+                      onClick={() => updateField('conviction', id)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="tlab-decision-execute-wrap">
+                <button
+                  type="button"
+                  className="tlab-execute-btn"
+                  disabled={!readyToExecute || saving}
+                  onClick={handleExecute}
+                >
+                  {saving ? '…' : 'EXECUTE'}
+                </button>
+                <p className="tlab-decision-hint">
+                  Saves your lab, then opens the Trade Validator checklist. Thesis notes flow to the calculator.
+                </p>
+                <p className="tlab-decision-meta">
+                  Last saved: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}
+                </p>
+              </div>
+            </div>
+          </div>
 
           <footer className="trader-lab-v2__footer trader-lab-v2__footer--tagline-only">
             <p className="tlab-tagline">Trade with clarity. Execute with precision. Win with discipline.</p>

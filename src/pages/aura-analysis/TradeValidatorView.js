@@ -118,6 +118,15 @@ export default function TradeValidatorView() {
 
   const closeExample = useCallback(() => setExampleOverlay(null), []);
 
+  const fromTraderLabNotified = useRef(false);
+  useEffect(() => {
+    if (!location.state?.fromTraderLab || fromTraderLabNotified.current) return;
+    fromTraderLabNotified.current = true;
+    toast.info(
+      'Trader Lab plan saved. Complete this checklist, then use the Trade Calculator — your thesis notes will carry over.'
+    );
+  }, [location.state?.fromTraderLab]);
+
   useEffect(() => {
     if (!exampleOverlay) return undefined;
     const onKey = (e) => {
