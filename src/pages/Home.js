@@ -1459,13 +1459,23 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
 const Home = () => {
     const navigate = useNavigate();
     const { isAuthenticated, user, token } = useAuth();
-    const [showContent, setShowContent] = useState(false);
-    const [isLoading,   setIsLoading]   = useState(true);
+    // Cinematic intro only for visitors who are not signed in (normal landing).
+    // After login (or any authenticated session), skip the delay so the dashboard is immediate.
+    const [showContent, setShowContent] = useState(() => isAuthenticated);
+    const [isLoading, setIsLoading] = useState(() => !isAuthenticated);
 
     useEffect(() => {
-        const t = setTimeout(() => { setIsLoading(false); setShowContent(true); }, 3000);
+        if (isAuthenticated) {
+            setIsLoading(false);
+            setShowContent(true);
+            return undefined;
+        }
+        const t = setTimeout(() => {
+            setIsLoading(false);
+            setShowContent(true);
+        }, 3000);
         return () => clearTimeout(t);
-    }, []);
+    }, [isAuthenticated]);
 
     const handleStart = () => navigate(isAuthenticated ? '/community' : '/register');
 

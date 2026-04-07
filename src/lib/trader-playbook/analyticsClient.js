@@ -157,6 +157,7 @@ export function ruleBasedInsights(ctx = {}) {
   const g = ctx.globalSummary || {};
   const m = ctx.mPatterns || { total: 0, topMissTypes: [] };
   const bd = ctx.breakdowns || { sampleSize: 0 };
+  const book = ctx.playbookName ? String(ctx.playbookName).trim() : '';
 
   const working = [];
   const hurting = [];
@@ -166,63 +167,93 @@ export function ruleBasedInsights(ctx = {}) {
   const closedJ = j.count || 0;
 
   if (closedV >= 8 && v.winRate != null && v.winRate >= 0.52 && (v.profitFactor == null || v.profitFactor >= 1.15)) {
-    working.push(`Edge quality (validator): ${(v.winRate * 100).toFixed(1)}% win rate over ${closedV} closed trades with workable profit factor.`);
+    working.push(
+      `Measured edge is holding: ${(v.winRate * 100).toFixed(1)}% win rate over ${closedV} closed validator trades${
+        v.profitFactor != null ? `, profit factor ${v.profitFactor.toFixed(2)}` : ''
+      } — treat this as your sizing baseline until regime shifts.`
+    );
   } else if (closedV >= 4 && closedV < 8 && v.winRate != null && v.winRate >= 0.55) {
-    working.push(`Early validator sample (${closedV}) skews favourable — add trades before resizing conviction.`);
+    working.push(
+      `Early sample (${closedV} closes) leans positive — keep tagging before you resize; one bad week should not rewrite rules yet.`
+    );
   }
 
   if (closedJ >= 8 && j.expectancyR != null && j.expectancyR > 0.08) {
-    working.push(`Journal R-expectancy ${j.expectancyR.toFixed(2)}R per trade across ${closedJ} executions — size and process are translating.`);
+    working.push(
+      `Journal expectancy ${j.expectancyR.toFixed(2)}R per trade across ${closedJ} executions — the process is paying when you stay on book.`
+    );
   }
 
   if (bd.sampleSize >= 10 && bd.byPair.length) {
     const [topPair, topN] = bd.byPair[0];
-    working.push(`Highest execution frequency on ${topPair} (${topN} tagged) — consider standardising parameters for that instrument.`);
+    working.push(
+      `Execution clusters on ${topPair} (${topN} tagged) — codify any symbol-specific tweaks in Rules so the edge stays repeatable.`
+    );
   }
 
   if (closedV >= 6 && v.winRate != null && v.winRate < 0.42) {
-    hurting.push(`Win rate ${(v.winRate * 100).toFixed(1)}% on ${closedV} validator trades — entry or invalidation is likely too loose for current conditions.`);
+    hurting.push(
+      `Win rate ${(v.winRate * 100).toFixed(1)}% across ${closedV} validator closes — either conditions are outside regime or entries/invalidations are too loose for this book.`
+    );
   }
 
   if (closedV >= 6 && v.profitFactor != null && v.profitFactor < 1) {
-    hurting.push(`Profit factor ${v.profitFactor.toFixed(2)} — losers are not compensated by winners at current parameters.`);
+    hurting.push(
+      `Profit factor ${v.profitFactor.toFixed(2)} — average loss is winning the arithmetic; do not add size until payoff structure is fixed.`
+    );
   }
 
   if (closedV >= 5 && v.expectancy != null && v.expectancy < 0) {
-    hurting.push(`Negative dollar expectancy (${v.expectancy.toFixed(2)} per trade) — halt scaling until the playbook is refined or retagged.`);
+    hurting.push(
+      `Negative $ expectancy (${v.expectancy.toFixed(2)} per trade) — stand down on size${book ? ` for “${book}”` : ''} until rules or tags are corrected.`
+    );
   }
 
   const noSetupRate = g.noSetupRate;
   const tagged = g.taggedTrades ?? 0;
   const noS = g.noSetupTrades ?? 0;
   if (noSetupRate != null && noSetupRate > 0.22 && tagged + noS >= 12) {
-    hurting.push(`No-setup rate ${(noSetupRate * 100).toFixed(1)}% of classified executions — discipline leakage versus defined playbooks.`);
+    hurting.push(
+      `${(noSetupRate * 100).toFixed(1)}% of classified fills are off-plan (no setup) — that is direct leakage against anything you measure on playbook rows.`
+    );
   }
 
   const uncl = g.unclassifiedTrades ?? 0;
   if (uncl >= 8 && uncl > (tagged + noS) * 0.35) {
-    hurting.push(`${uncl} executions remain untagged — the book cannot measure adherence until the log is closed.`);
+    hurting.push(
+      `${uncl} rows still untagged — discipline and edge metrics are understated until every close is classified.`
+    );
   }
 
   if (m.total >= 4 && tagged >= 10 && m.total / tagged > 0.35) {
-    hurting.push(`Missed / mis-execution count (${m.total}) is material relative to tagged trades — review prep and timing rules.`);
+    hurting.push(
+      `Missed / mis-execution log (${m.total}) is heavy vs ${tagged} on-book trades — tighten prep, timing, or thresholds; the opportunity cost is real.`
+    );
   }
 
   if (m.topMissTypes.length && m.total >= 3) {
     const [t1, c1] = m.topMissTypes[0];
-    refine.push(`Most frequent miss label: “${t1}” (${c1}) — promote one concrete guardrail from those logs into Rules.`);
+    refine.push(
+      `Dominant miss pattern: “${t1}” (${c1}×) — pick one countermeasure and write it into Stand down or Checklist this week.`
+    );
   }
 
   if (closedV < 5 && closedJ < 5 && bd.sampleSize < 5) {
-    refine.push('Insufficient tagged history — priorities: classify open P&L, tag entries, then revisit expectancy.');
+    refine.push(
+      'Not enough tagged history to judge this book — close the log: classify every fill, then revisit edge and expectancy with a clean denominator.'
+    );
   }
 
   if (bd.maxLossStreak >= 4 && closedV + closedJ >= 15) {
-    refine.push(`Loss streak reached ${bd.maxLossStreak} — validate whether regime-shift filters in Context need tightening.`);
+    refine.push(
+      `${bd.maxLossStreak}-loss streak in sample — if structure was valid each time, tighten context filters; if not, this is execution drift.`
+    );
   }
 
   if (v.count >= 12 && v.profitFactor != null && v.profitFactor >= 1.4 && v.winRate != null && v.winRate < 0.5) {
-    refine.push('High profit factor with sub-50% win rate suggests payoff asymmetry — document what drives outsized winners in Review notes.');
+    refine.push(
+      'High payoff asymmetry (strong profit factor, sub-50% win rate) — document the exact conditions of your largest winners in Refinement so you do not dilute them.'
+    );
   }
 
   return { working, hurting, refine };

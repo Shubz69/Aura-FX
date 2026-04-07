@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import { useAuth } from '../context/AuthContext';
@@ -13,7 +13,15 @@ import {
   computeExecutionBreakdowns,
   summarizeMissedPatterns,
 } from '../lib/trader-playbook/analyticsClient';
-import { RULE_GROUPS, OVERVIEW_FIELDS, NO_SETUP_REASONS } from '../lib/trader-playbook/rulesCopy';
+import {
+  RULE_GROUPS,
+  OVERVIEW_FIELDS,
+  NO_SETUP_REASONS,
+  WIZARD_FLOW,
+  WIZARD_BASICS_FIELDS,
+  buildWizardReviewSnapshot,
+  LIST_SECTION_LABELS,
+} from '../lib/trader-playbook/rulesCopy';
 import '../styles/aura-analysis/AuraDashboard.css';
 import '../styles/TraderPlaybookPremium.css';
 
@@ -21,10 +29,10 @@ const TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'rules', label: 'Rules' },
   { id: 'checklist', label: 'Checklist' },
-  { id: 'trades', label: 'Execution log' },
+  { id: 'trades', label: 'Executions' },
   { id: 'missed', label: 'Missed' },
-  { id: 'analytics', label: 'Analytics' },
-  { id: 'review', label: 'Refinement' },
+  { id: 'analytics', label: 'Performance' },
+  { id: 'review', label: 'Refine' },
 ];
 
 function rulesFieldPatch(form, bucket, key, value) {
@@ -47,6 +55,16 @@ function rulesFieldPatch(form, bucket, key, value) {
     if (key === 'positionSizingRule') patch.positionSizing = value;
   }
   return patch;
+}
+
+function applyWizardField(wd, bucket, key, value) {
+  return normalizeSetup({ ...wd, ...rulesFieldPatch(wd, bucket, key, value) });
+}
+
+function clipText(s, max = 180) {
+  if (!s || !String(s).trim()) return '';
+  const t = String(s).replace(/\s+/g, ' ').trim();
+  return t.length > max ? `${t.slice(0, max)}…` : t;
 }
 
 function fmtPct(x) {
@@ -76,15 +94,6 @@ const CHECKLIST_READINESS = {
   WEAK: { label: 'Not ready — revisit checklist items', tone: 'bad' },
 };
 
-const WIZARD_STEP_LABELS = [
-  'Basics',
-  'Context & regime',
-  'Trigger & entry',
-  'Management & risk',
-  'Avoid conditions',
-  'Merge presets & finish',
-];
-
 export default function TraderPlaybook() {
   const { user } = useAuth();
   const [setups, setSetups] = useState([]);
@@ -113,6 +122,7 @@ export default function TraderPlaybook() {
 
   const [checklistMode, setChecklistMode] = useState('builder');
   const [checklistTick, setChecklistTick] = useState({});
+  const manageMenuRef = useRef(null);
 
   const loadCore = useCallback(async ({ showLoading = true } = {}) => {
     if (showLoading) setLoading(true);
@@ -138,6 +148,26 @@ export default function TraderPlaybook() {
   useEffect(() => {
     loadCore();
   }, [loadCore]);
+
+  useEffect(() => {
+    if (!drawer) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setDrawer(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [drawer]);
+
+  useEffect(() => {
+    if (!detailMenuOpen) return undefined;
+    const onDown = (e) => {
+      if (manageMenuRef.current && !manageMenuRef.current.contains(e.target)) {
+        setDetailMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [detailMenuOpen]);
 
   const refreshTrades = useCallback(async () => {
     try {
@@ -321,7 +351,7 @@ export default function TraderPlaybook() {
       { label: 'Active', value: String(bs.active ?? summary.playbooksActive ?? 0) },
       { label: 'Drafts', value: String(bs.draft ?? 0) },
       { label: 'Tagged', value: String(summary.taggedTrades ?? 0) },
-      { label: 'No setup', value: String(summary.noSetupTrades ?? 0) },
+      { label: 'Off-plan fills', value: String(summary.noSetupTrades ?? 0) },
       { label: 'Missed', value: String(summary.missedTrades ?? 0) },
       {
         label: 'Leading edge',
@@ -348,9 +378,20 @@ export default function TraderPlaybook() {
         globalSummary: summary,
         mPatterns,
         breakdowns: breakdown,
+        playbookName: form.name,
       }),
-    [vSum, jSum, summary, mPatterns, breakdown]
+    [vSum, jSum, summary, mPatterns, breakdown, form.name]
   );
+
+  const processCostHint = useMemo(() => {
+    const disc = summary || {};
+    const ns = disc.noSetupRate;
+    const classified = (disc.taggedTrades ?? 0) + (disc.noSetupTrades ?? 0);
+    if (ns != null && ns > 0.2 && classified >= 10) {
+      return `${(ns * 100).toFixed(0)}% of classified executions are off-plan — that portion of the book cannot be attributed to any measured edge.`;
+    }
+    return null;
+  }, [summary]);
 
   const latestReview = useMemo(() => {
     const list = [...(reviewNotes || [])].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
@@ -447,7 +488,7 @@ export default function TraderPlaybook() {
       } else {
         await Api.updateJournalTrade(row.id, base);
       }
-      toast.success(tagType === 'NO_SETUP' ? 'Classified outside playbook' : 'Linked to playbook');
+      toast.success(tagType === 'NO_SETUP' ? 'Marked off-plan' : 'Linked to playbook');
       await refreshTrades();
       await loadCore({ showLoading: false });
       if (view === 'detail' && selectedId) loadDetailData(selectedId);
@@ -509,44 +550,46 @@ export default function TraderPlaybook() {
       <div className="tp-root">
         <section className="tp-discipline-strip" aria-label="Discipline overview">
           <div className="tp-discipline-strip__intro">
-            <span className="tp-discipline-strip__title">Execution discipline</span>
+            <span className="tp-discipline-strip__title">Process &amp; discipline</span>
             <p className="tp-discipline-strip__desc">
-              Classify validator and journal rows so analytics reflect real adherence — not intentions.
+              Every fill is either on a defined playbook or it is process noise. Classify validator and journal rows so win rate and expectancy
+              describe your real behaviour — not your best days.
             </p>
           </div>
           <div className="tp-discipline-strip__metrics">
             <div className="tp-disc-metric">
-              <span>Tagged share</span>
-              <strong>{tagPct}</strong>
-              <small>of classified activity</small>
+              <span>On-book share (classified)</span>
+              <strong>{adhere}</strong>
+              <small>tagged to a playbook vs off-plan</small>
             </div>
             <div className="tp-disc-metric">
-              <span>Playbook adherence</span>
-              <strong>{adhere}</strong>
-              <small>vs no-setup (classified)</small>
+              <span>Classification coverage</span>
+              <strong>{tagPct}</strong>
+              <small>tagged vs all activity in view</small>
             </div>
             <div className="tp-disc-metric tp-disc-metric--alert">
-              <span>No-setup rate</span>
+              <span>Off-plan rate</span>
               <strong>{noSetupPct}</strong>
-              <small>outside defined playbooks</small>
+              <small>no-setup / discipline leakage</small>
             </div>
             <div className="tp-disc-metric">
               <span>Unclassified</span>
               <strong>{disc.unclassifiedTrades ?? 0}</strong>
-              <small>awaiting tag</small>
+              <small>hidden risk in the book</small>
             </div>
             <div className="tp-disc-metric">
-              <span>Missed / M</span>
+              <span>Missed / mis-execution</span>
               <strong>{disc.missedTrades ?? 0}</strong>
-              <small>logged for review</small>
+              <small>opportunity log</small>
             </div>
             <div className="tp-disc-metric">
               <span>Leading setup</span>
               <strong className="tp-disc-metric__ellipsis">{disc.bestPlaybook?.name?.slice(0, 22) || '—'}</strong>
-              <small>by expectancy sample</small>
+              <small>by sample on book</small>
             </div>
           </div>
           {disc.processGapLabel ? <p className="tp-process-gap">{disc.processGapLabel}</p> : null}
+          {processCostHint ? <p className="tp-process-gap tp-process-gap--hint">{processCostHint}</p> : null}
         </section>
 
         <div className="tp-hub-section-label">Library</div>
@@ -577,13 +620,13 @@ export default function TraderPlaybook() {
             className="tp-discipline-panel"
             onClick={() => setDrawer('noSetup')}
           >
-            <div className="tp-discipline-panel__label">Discipline review</div>
-            <h3 className="tp-discipline-panel__title">No-setup &amp; rule breaks</h3>
+            <div className="tp-discipline-panel__label">Behavioural book</div>
+            <h3 className="tp-discipline-panel__title">Off-plan executions &amp; discipline</h3>
             <p className="tp-discipline-panel__body">
-              {summary?.noSetupTrades ?? 0} outside-plan · {summary?.missedTrades ?? 0} missed logged ·{' '}
-              {summary?.unclassifiedTrades ?? 0} still unclassified
+              <strong>{summary?.noSetupTrades ?? 0}</strong> classified off-plan · <strong>{summary?.missedTrades ?? 0}</strong> missed logged ·{' '}
+              <strong>{summary?.unclassifiedTrades ?? 0}</strong> still open in the log
             </p>
-            <span className="tp-discipline-panel__cta">Open panel</span>
+            <span className="tp-discipline-panel__cta">Inspect off-plan rows</span>
           </button>
 
           {filteredSetups.map((s) => {
@@ -687,15 +730,17 @@ export default function TraderPlaybook() {
     const oppNotes = [];
     if (globalTagged >= 12 && thisTagged <= 3) {
       oppNotes.push(
-        'Low tagging volume on this playbook versus your classified book — confirm it remains a primary edge or fold it into another definition.'
+        'This playbook is lightly used versus your classified book — either it is a niche edge or it should be merged into a broader definition before you trust the stats.'
       );
     }
     if (mPatterns.total >= 4) {
-      oppNotes.push(`${mPatterns.total} missed / mis-execution entries — review pre-trade gates and session filters.`);
+      oppNotes.push(
+        `${mPatterns.total} missed / mis-execution entries on file — if the setup was valid, that is execution tax; if not, tighten qualification in Rules.`
+      );
     }
     if (breakdown.sampleSize >= 10 && breakdown.byDow.length) {
       const [d, n] = breakdown.byDow[0];
-      oppNotes.push(`Tagged activity concentrates on ${d} (${n} trades) — plan reviews after those sessions.`);
+      oppNotes.push(`Execution clusters on ${d} (${n} tagged) — schedule review right after that session block while memory is fresh.`);
     }
 
     return (
@@ -725,7 +770,7 @@ export default function TraderPlaybook() {
               </div>
               <p className="tp-detail-hero__desc">{form.description || 'Describe the thesis, regime, and non‑negotiables for this edge.'}</p>
               <div className="tp-detail-hero__meta-row">
-                {[form.setupType, form.marketType, form.session].filter(Boolean).join(' · ') || 'Complete operational context in Overview'}
+                {[form.setupType, form.marketType, form.session].filter(Boolean).join(' · ') || 'Session and regime live in Overview'}
                 {form.assets ? (
                   <>
                     {' · '}
@@ -738,6 +783,35 @@ export default function TraderPlaybook() {
                     <span>{form.timeframes}</span>
                   </>
                 ) : null}
+              </div>
+              <div className="tp-detail-hero__snapshot" aria-label="Strategy snapshot">
+                <div className="tp-hero-snap">
+                  <span className="tp-hero-snap__k">Rotation</span>
+                  <p>{st === 'archived' ? 'Archived — not in active rotation' : st === 'draft' ? 'Draft — define rules before live use' : 'Active in rotation'}</p>
+                </div>
+                <div className="tp-hero-snap">
+                  <span className="tp-hero-snap__k">When it trades</span>
+                  <p>
+                    {clipText(form.overviewBlocks?.worksBest, 160) ||
+                      [form.session, form.timeframes].filter(Boolean).join(' · ') ||
+                      'Define regime in Overview → When this edge is live'}
+                  </p>
+                </div>
+                <div className="tp-hero-snap">
+                  <span className="tp-hero-snap__k">Execution model</span>
+                  <p>
+                    {clipText(form.overviewBlocks?.entryModelSummary, 160) ||
+                      clipText(form.entryRules?.entryTrigger, 160) ||
+                      'Capture trigger and confirmation in Rules or Overview'}
+                  </p>
+                </div>
+                <div className="tp-hero-snap">
+                  <span className="tp-hero-snap__k">Tape (tagged)</span>
+                  <p>
+                    Win rate {fmtPct(detailMetrics.winRate ?? vSum.winRate)} · PF {fmtPF(detailMetrics.profitFactor ?? vSum.profitFactor)} ·{' '}
+                    {detailMetrics.taggedTrades ?? vSum.count + jSum.count} n
+                  </p>
+                </div>
               </div>
               <div className="tp-detail-hero__stats">
                 <div>
@@ -780,7 +854,10 @@ export default function TraderPlaybook() {
             <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={() => saveSetup(false)} disabled={saving}>
               {saving ? 'Saving…' : 'Lock in changes'}
             </button>
-            <div className={`tp-detail-overflow${detailMenuOpen ? ' tp-detail-overflow--open' : ''}`}>
+            <div
+              ref={manageMenuRef}
+              className={`tp-detail-overflow${detailMenuOpen ? ' tp-detail-overflow--open' : ''}`}
+            >
               <button
                 type="button"
                 className="trader-suite-btn"
@@ -836,95 +913,112 @@ export default function TraderPlaybook() {
 
         <div className="tp-tab-panel">
           {detailTab === 'overview' ? (
-            <div className="tp-detail-split">
-              <div className="tp-panel tp-panel--tight">
-                <div className="trader-suite-kicker">Identity &amp; deployment</div>
-                <div className="tp-field-grid">
-                  <div className="tp-field">
-                    <label>Name</label>
-                    <input className="tp-input" value={form.name} onChange={(e) => applyChange({ name: e.target.value })} />
-                  </div>
-                  <div className="tp-field">
-                    <label>Icon</label>
-                    <input className="tp-input" value={form.icon} onChange={(e) => applyChange({ icon: e.target.value })} maxLength={8} />
-                  </div>
-                  <div className="tp-field">
-                    <label>Accent</label>
-                    <input
-                      className="tp-input"
-                      value={form.color || ''}
-                      onChange={(e) => applyChange({ color: e.target.value })}
-                      placeholder="#c9a962 or css color"
-                    />
-                  </div>
-                  <div className="tp-field">
-                    <label>Status</label>
-                    <select className="tp-select" value={form.status} onChange={(e) => applyChange({ status: e.target.value })}>
-                      <option value="active">Active</option>
-                      <option value="draft">Draft</option>
-                      <option value="archived">Archived</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="tp-field" style={{ marginTop: 12 }}>
-                  <label>Thesis / scope</label>
-                  <textarea className="tp-textarea" value={form.description} onChange={(e) => applyChange({ description: e.target.value })} />
-                </div>
-                <div className="tp-field-grid" style={{ marginTop: 12 }}>
-                  <div className="tp-field">
-                    <label>Market type</label>
-                    <input className="tp-input" value={form.marketType} onChange={(e) => applyChange({ marketType: e.target.value })} />
-                  </div>
-                  <div className="tp-field">
-                    <label>Setup type</label>
-                    <input className="tp-input" value={form.setupType} onChange={(e) => applyChange({ setupType: e.target.value })} />
-                  </div>
-                  <div className="tp-field">
-                    <label>Session</label>
-                    <input className="tp-input" value={form.session} onChange={(e) => applyChange({ session: e.target.value })} />
-                  </div>
-                  <div className="tp-field">
-                    <label>Timeframes</label>
-                    <input className="tp-input" value={form.timeframes} onChange={(e) => applyChange({ timeframes: e.target.value })} />
-                  </div>
-                  <div className="tp-field" style={{ gridColumn: '1 / -1' }}>
-                    <label>Assets</label>
-                    <input className="tp-input" value={form.assets} onChange={(e) => applyChange({ assets: e.target.value })} />
-                  </div>
-                </div>
-              </div>
-              <div className="tp-panel tp-panel--tight tp-panel--summary">
-                <div className="trader-suite-kicker">Operational summary</div>
-                <p className="tp-summary-lede">
-                  Narrative blocks below are what you read before risk goes on — keep them tight and falsifiable.
+            <div className="tp-overview-stack">
+              <section className="tp-panel tp-panel--glance" aria-label="Playbook at a glance">
+                <div className="trader-suite-kicker">At a glance</div>
+                <p className="tp-summary-lede tp-summary-lede--tight">
+                  Read this block before size — it should match your Rules tab and pre-trade checklist.
                 </p>
-                <div className="tp-field-grid">
-                  {OVERVIEW_FIELDS.map(({ key, label, hint }) => (
-                    <div key={key} className="tp-field">
-                      <label>{label}</label>
-                      <p className="tp-field-hint">{hint}</p>
-                      <textarea
-                        className="tp-textarea"
-                        value={form.overviewBlocks?.[key] || ''}
-                        onChange={(e) =>
-                          applyChange({
-                            overviewBlocks: { ...form.overviewBlocks, [key]: e.target.value },
-                          })
-                        }
-                      />
+                <dl className="tp-glance-board">
+                  {OVERVIEW_FIELDS.map(({ key, boardLabel }) => (
+                    <div key={key} className="tp-glance-board__row">
+                      <dt>{boardLabel}</dt>
+                      <dd>{clipText(form.overviewBlocks?.[key], 320) || '—'}</dd>
                     </div>
                   ))}
+                </dl>
+                <div className="tp-glance-foot">
+                  <div>
+                    <span className="tp-glance-foot__k">Mistake chips</span>
+                    <p>{form.commonMistakes?.length ? form.commonMistakes.join(', ') : 'Add tags under Rules → Common execution mistakes'}</p>
+                  </div>
+                  <div>
+                    <span className="tp-glance-foot__k">Stand-down chips</span>
+                    <p>{form.doNotTrade?.length ? form.doNotTrade.join(', ') : 'Add discrete guardrails under Rules'}</p>
+                  </div>
                 </div>
-                <div className="tp-board-preview">
-                  <div className="trader-suite-kicker">One-screen board</div>
-                  <dl className="tp-board-dl">
-                    <dt>When live</dt>
-                    <dd>{form.overviewBlocks?.worksBest || form.marketType || '—'}</dd>
-                    <dt>Stand down</dt>
-                    <dd>{form.overviewBlocks?.avoid || form.doNotTrade?.join(', ') || '—'}</dd>
-                    <dt>Mistake watchlist</dt>
-                    <dd>{form.commonMistakes?.join(', ') || '—'}</dd>
-                  </dl>
+              </section>
+
+              <div className="tp-detail-split">
+                <div className="tp-panel tp-panel--tight">
+                  <div className="trader-suite-kicker">Identity &amp; deployment</div>
+                  <div className="tp-field-grid">
+                    <div className="tp-field">
+                      <label>Playbook name</label>
+                      <input className="tp-input" value={form.name} onChange={(e) => applyChange({ name: e.target.value })} />
+                    </div>
+                    <div className="tp-field">
+                      <label>Mark</label>
+                      <input className="tp-input" value={form.icon} onChange={(e) => applyChange({ icon: e.target.value })} maxLength={8} />
+                    </div>
+                    <div className="tp-field">
+                      <label>Accent</label>
+                      <input
+                        className="tp-input"
+                        value={form.color || ''}
+                        onChange={(e) => applyChange({ color: e.target.value })}
+                        placeholder="#c9a962 or css color"
+                      />
+                    </div>
+                    <div className="tp-field">
+                      <label>Rotation</label>
+                      <select className="tp-select" value={form.status} onChange={(e) => applyChange({ status: e.target.value })}>
+                        <option value="active">Active</option>
+                        <option value="draft">Draft</option>
+                        <option value="archived">Archived</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="tp-field" style={{ marginTop: 12 }}>
+                    <label>Thesis</label>
+                    <p className="tp-field-hint">One paragraph: what you are trying to exploit and why it exists in the market.</p>
+                    <textarea className="tp-textarea" value={form.description} onChange={(e) => applyChange({ description: e.target.value })} />
+                  </div>
+                  <div className="tp-field-grid" style={{ marginTop: 12 }}>
+                    <div className="tp-field">
+                      <label>Market type</label>
+                      <input className="tp-input" value={form.marketType} onChange={(e) => applyChange({ marketType: e.target.value })} />
+                    </div>
+                    <div className="tp-field">
+                      <label>Setup type</label>
+                      <input className="tp-input" value={form.setupType} onChange={(e) => applyChange({ setupType: e.target.value })} />
+                    </div>
+                    <div className="tp-field">
+                      <label>Primary session</label>
+                      <input className="tp-input" value={form.session} onChange={(e) => applyChange({ session: e.target.value })} />
+                    </div>
+                    <div className="tp-field">
+                      <label>Timeframe stack</label>
+                      <input className="tp-input" value={form.timeframes} onChange={(e) => applyChange({ timeframes: e.target.value })} />
+                    </div>
+                    <div className="tp-field" style={{ gridColumn: '1 / -1' }}>
+                      <label>Primary instruments</label>
+                      <input className="tp-input" value={form.assets} onChange={(e) => applyChange({ assets: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+                <div className="tp-panel tp-panel--tight tp-panel--summary">
+                  <div className="trader-suite-kicker">Refine the narrative</div>
+                  <p className="tp-summary-lede">
+                    Tight, falsifiable lines — if it cannot be proven wrong by the chart, it is not a rule.
+                  </p>
+                  <div className="tp-field-grid">
+                    {OVERVIEW_FIELDS.map(({ key, label, hint }) => (
+                      <div key={key} className="tp-field">
+                        <label>{label}</label>
+                        <p className="tp-field-hint">{hint}</p>
+                        <textarea
+                          className="tp-textarea"
+                          value={form.overviewBlocks?.[key] || ''}
+                          onChange={(e) =>
+                            applyChange({
+                              overviewBlocks: { ...form.overviewBlocks, [key]: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -933,7 +1027,8 @@ export default function TraderPlaybook() {
           {detailTab === 'rules' ? (
             <div className="tp-panel tp-panel--rules">
               <p className="tp-rules-intro">
-                Structure mirrors a discretionary workflow — context before trigger, confirmation before risk, management before psychology.
+                Built like a desk playbook: regime and bias first, then trigger and proof, then risk and management — only then psychology and
+                stand-down rules.
               </p>
               {RULE_GROUPS.map((grp) => (
                 <section key={grp.id} className="tp-rule-group">
@@ -963,20 +1058,22 @@ export default function TraderPlaybook() {
               ))}
               <section className="tp-rule-group">
                 <header className="tp-rule-group__head">
-                  <h3 className="tp-rule-group__title">Tags &amp; discrete lists</h3>
-                  <p className="tp-rule-group__subtitle">Fast filters for search and boards — pair with narrative guardrails above.</p>
+                  <h3 className="tp-rule-group__title">Tags &amp; execution chips</h3>
+                  <p className="tp-rule-group__subtitle">{LIST_SECTION_LABELS.tags.hint}</p>
                 </header>
                 <div className="tp-field">
-                  <label>Playbook tags</label>
+                  <label>{LIST_SECTION_LABELS.tags.label}</label>
                   <TagEditor tags={form.tags} onChange={(tags) => applyChange({ tags })} />
                 </div>
                 <div className="tp-field-grid" style={{ marginTop: 14 }}>
                   <div className="tp-field">
-                    <label>Do not trade (chips)</label>
+                    <label>{LIST_SECTION_LABELS.doNotTrade.label}</label>
+                    <p className="tp-field-hint">{LIST_SECTION_LABELS.doNotTrade.hint}</p>
                     <ChipList items={form.doNotTrade} onChange={(doNotTrade) => applyChange({ doNotTrade })} />
                   </div>
                   <div className="tp-field">
-                    <label>Common mistakes (chips)</label>
+                    <label>{LIST_SECTION_LABELS.commonMistakes.label}</label>
+                    <p className="tp-field-hint">{LIST_SECTION_LABELS.commonMistakes.hint}</p>
                     <ChipList items={form.commonMistakes} onChange={(commonMistakes) => applyChange({ commonMistakes })} />
                   </div>
                 </div>
@@ -1113,8 +1210,11 @@ export default function TraderPlaybook() {
             <div className="tp-panel tp-analytics">
               <div className="tp-analytics__head">
                 <div>
-                  <h2 className="tp-analytics__title">Playbook analytics</h2>
-                  <p className="tp-analytics__sub">Weekly-grade view — built only from tagged validator and journal rows.</p>
+                  <h2 className="tp-analytics__title">Performance desk</h2>
+                  <p className="tp-analytics__sub">
+                    Same data as always — ordered for decisions: is the edge real, is process intact, where is rhythm breaking, are you leaving valid
+                    trades on the table.
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -1129,15 +1229,16 @@ export default function TraderPlaybook() {
                     setDetailTab('review');
                   }}
                 >
-                  Log refinement from insights
+                  Send to Refine
                 </button>
               </div>
 
               <section className="tp-analytics-section">
-                <h3 className="tp-analytics-section__title">Performance</h3>
+                <h3 className="tp-analytics-section__title">Edge quality — is this setup worth trading?</h3>
+                <p className="tp-analytics-section__lede">Validator closes plus journal R — only rows tagged to this playbook.</p>
                 <div className="tp-stat-grid tp-stat-grid--analytics">
                   <div className="tp-stat-card tp-stat-card--emph">
-                    <span>Tagged (V+J closed sample)</span>
+                    <span>Sample (V+J tagged)</span>
                     <strong>{vSum.count + jSum.count}</strong>
                   </div>
                   <div className="tp-stat-card">
@@ -1149,7 +1250,7 @@ export default function TraderPlaybook() {
                     <strong>{fmtPF(vSum.profitFactor)}</strong>
                   </div>
                   <div className="tp-stat-card">
-                    <span>Expectancy $</span>
+                    <span>$ expectancy (V)</span>
                     <strong>{vSum.expectancy != null ? vSum.expectancy.toFixed(2) : '—'}</strong>
                   </div>
                   <div className="tp-stat-card">
@@ -1157,42 +1258,47 @@ export default function TraderPlaybook() {
                     <strong>{vSum.avgR != null ? vSum.avgR.toFixed(2) : '—'}</strong>
                   </div>
                   <div className="tp-stat-card">
-                    <span>Expectancy R (J)</span>
+                    <span>R expectancy (J)</span>
                     <strong>{jSum.expectancyR != null ? jSum.expectancyR.toFixed(2) : '—'}</strong>
                   </div>
                   <div className="tp-stat-card">
-                    <span>Net $ (V sample)</span>
+                    <span>Net $ (V)</span>
                     <strong>{vSum.totalPnl != null ? vSum.totalPnl.toFixed(2) : '—'}</strong>
                   </div>
                   <div className="tp-stat-card">
-                    <span>Best / worst $</span>
+                    <span>Best / worst $ (V)</span>
                     <strong>
                       {vSum.best != null ? vSum.best.toFixed(2) : '—'} / {vSum.worst != null ? vSum.worst.toFixed(2) : '—'}
                     </strong>
                   </div>
                 </div>
                 {!vSum.count && !jSum.count ? (
-                  <p className="tp-analytics-empty">Insufficient tagged trades — classify validator and journal executions on this playbook.</p>
+                  <p className="tp-analytics-empty">No tagged book on this setup yet — classify executions so these numbers describe behaviour, not hope.</p>
                 ) : null}
               </section>
 
               <section className="tp-analytics-section">
-                <h3 className="tp-analytics-section__title">Discipline</h3>
+                <h3 className="tp-analytics-section__title">Discipline — are you staying on plan?</h3>
+                <p className="tp-analytics-section__lede">Global book: compares on-playbook rows vs honest off-plan tags across everything you have classified.</p>
                 <div className="tp-stat-grid tp-stat-grid--analytics">
-                  <div className="tp-stat-card">
-                    <span>No-setup rate (global)</span>
+                  <div className="tp-stat-card tp-stat-card--emph">
+                    <span>On-book rate (class.)</span>
+                    <strong>{summary?.adherenceRate != null ? fmtPct(summary.adherenceRate) : '—'}</strong>
+                  </div>
+                  <div className="tp-stat-card tp-stat-card--alert">
+                    <span>Off-plan rate</span>
                     <strong>{summary?.noSetupRate != null ? fmtPct(summary.noSetupRate) : '—'}</strong>
                   </div>
                   <div className="tp-stat-card">
-                    <span>Adherence (classified)</span>
-                    <strong>{summary?.adherenceRate != null ? fmtPct(summary.adherenceRate) : '—'}</strong>
+                    <span>Unclassified</span>
+                    <strong>{summary?.unclassifiedTrades ?? '—'}</strong>
                   </div>
                   <div className="tp-stat-card">
-                    <span>Missed log count</span>
+                    <span>Missed / mis-ex log</span>
                     <strong>{mPatterns.total}</strong>
                   </div>
                   <div className="tp-stat-card tp-stat-card--wide">
-                    <span>Top miss pattern</span>
+                    <span>Top miss label</span>
                     <strong>
                       {mPatterns.topMissTypes?.length ? `${mPatterns.topMissTypes[0][0]} (${mPatterns.topMissTypes[0][1]})` : '—'}
                     </strong>
@@ -1200,12 +1306,53 @@ export default function TraderPlaybook() {
                 </div>
               </section>
 
+              <section className="tp-analytics-section tp-analytics-section--insights">
+                <h3 className="tp-analytics-section__title">Desk read — edge · execution · next move</h3>
+                <p className="tp-analytics-section__lede">Rule-based only — no fabricated stats.</p>
+                <div className="tp-insight-cols">
+                  <div>
+                    <h4 className="tp-insight-heading">What is working</h4>
+                    <ul className="tp-insight-list tp-insight-list--ok">
+                      {(insights.working.length
+                        ? insights.working
+                        : ['Not enough closed tagged trades to judge whether this book is structurally sound.']
+                      ).map((x) => (
+                        <li key={x}>{x}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="tp-insight-heading">What is weakening the edge</h4>
+                    <ul className="tp-insight-list tp-insight-list--bad">
+                      {(insights.hurting.length
+                        ? insights.hurting
+                        : ['No supported drag in the current sample — keep tagging so this stays honest.']
+                      ).map((x) => (
+                        <li key={x}>{x}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="tp-insight-heading">What to tighten next</h4>
+                    <ul className="tp-insight-list tp-insight-list--gold">
+                      {(insights.refine.length
+                        ? insights.refine
+                        : ['Keep a short Refine note after each weekly review — rules drift without paper.']
+                      ).map((x) => (
+                        <li key={x}>{x}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </section>
+
               <section className="tp-analytics-section">
-                <h3 className="tp-analytics-section__title">Consistency</h3>
+                <h3 className="tp-analytics-section__title">Execution rhythm</h3>
+                <p className="tp-analytics-section__lede">Where repetition shows up — day, session, symbol, streaks.</p>
                 {breakdown.sampleSize ? (
                   <div className="tp-breakdown-grid">
                     <div>
-                      <div className="trader-suite-kicker">Day of week</div>
+                      <div className="trader-suite-kicker">Day</div>
                       <ul className="tp-breakdown-list">
                         {breakdown.byDow.map(([k, v]) => (
                           <li key={k}>
@@ -1225,7 +1372,7 @@ export default function TraderPlaybook() {
                       </ul>
                     </div>
                     <div>
-                      <div className="trader-suite-kicker">Asset</div>
+                      <div className="trader-suite-kicker">Symbol</div>
                       <ul className="tp-breakdown-list">
                         {breakdown.byPair.slice(0, 6).map(([k, v]) => (
                           <li key={k}>
@@ -1235,19 +1382,20 @@ export default function TraderPlaybook() {
                       </ul>
                     </div>
                     <div>
-                      <div className="trader-suite-kicker">Streaks (W / L)</div>
+                      <div className="trader-suite-kicker">Streaks</div>
                       <p className="tp-breakdown-streaks">
                         <strong>{breakdown.maxWinStreak}</strong> max win · <strong>{breakdown.maxLossStreak}</strong> max loss
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <p className="tp-analytics-empty">No consistency breakdown yet — needs a broader tagged sample.</p>
+                  <p className="tp-analytics-empty">Need more tagged executions on this playbook before rhythm is visible.</p>
                 )}
               </section>
 
               <section className="tp-analytics-section">
-                <h3 className="tp-analytics-section__title">Opportunity</h3>
+                <h3 className="tp-analytics-section__title">Deployment &amp; missed opportunity</h3>
+                <p className="tp-analytics-section__lede">Under-used setups, heavy miss logs, and clustering hints — all from real counts.</p>
                 {oppNotes.length ? (
                   <ul className="tp-insight-list tp-insight-list--neutral">
                     {oppNotes.map((x, idx) => (
@@ -1255,40 +1403,10 @@ export default function TraderPlaybook() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="tp-analytics-empty">Opportunity signals appear once global tagging and missed logs accumulate.</p>
+                  <p className="tp-analytics-empty">
+                    Once you classify more of the book and log misses, this block surfaces over-use, under-use, and execution gaps.
+                  </p>
                 )}
-              </section>
-
-              <section className="tp-analytics-section tp-analytics-section--insights">
-                <div className="tp-insight-cols">
-                  <div>
-                    <h4 className="tp-insight-heading">What is working</h4>
-                    <ul className="tp-insight-list tp-insight-list--ok">
-                      {(insights.working.length
-                        ? insights.working
-                        : ['Not enough closed tagged trades to stress-test edge quality yet.']
-                      ).map((x) => (
-                        <li key={x}>{x}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="tp-insight-heading">What is dragging</h4>
-                    <ul className="tp-insight-list tp-insight-list--bad">
-                      {(insights.hurting.length ? insights.hurting : ['No statistically supported drag from current sample.']).map((x) => (
-                        <li key={x}>{x}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="tp-insight-heading">Refine next</h4>
-                    <ul className="tp-insight-list tp-insight-list--gold">
-                      {(insights.refine.length ? insights.refine : ['Maintain weekly refinement notes as tagging grows.']).map((x) => (
-                        <li key={x}>{x}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
               </section>
             </div>
           ) : null}
@@ -1298,7 +1416,10 @@ export default function TraderPlaybook() {
               <ReviewPanel
                 notes={reviewNotes}
                 playbookId={selectedId}
-                onRefresh={() => loadDetailData(selectedId)}
+                onRefresh={() => {
+                  loadDetailData(selectedId);
+                  loadCore({ showLoading: false });
+                }}
                 prefill={reviewPrefill}
                 onPrefillConsumed={() => setReviewPrefill(null)}
               />
@@ -1314,135 +1435,150 @@ export default function TraderPlaybook() {
     const wd = wizardDraft;
     const step = wizardStep;
     const setWd = (p) => setWizardDraft((prev) => normalizeSetup({ ...prev, ...p }));
+    const flowStep = WIZARD_FLOW[step] || WIZARD_FLOW[0];
+    const reviewSnap = flowStep.kind === 'review' ? buildWizardReviewSnapshot(wd) : null;
+
+    const renderWizardGroupFields = (groupId) => {
+      const grp = RULE_GROUPS.find((g) => g.id === groupId);
+      if (!grp) return null;
+      return (
+        <section key={groupId} className="tp-wizard-section">
+          <header className="tp-wizard-section__head">
+            <h3 className="tp-wizard-section__title">{grp.title}</h3>
+            <p className="tp-wizard-section__subtitle">{grp.subtitle}</p>
+          </header>
+          <div className="tp-field-grid">
+            {grp.fields.map((f) => {
+              const bucket = wd[f.bucket] || {};
+              const val = bucket[f.key] ?? '';
+              return (
+                <div key={`${f.bucket}-${f.key}`} className="tp-field">
+                  <label>{f.label}</label>
+                  <p className="tp-field-hint">{f.hint}</p>
+                  {f.multiline === false ? (
+                    <input
+                      className="tp-input"
+                      value={val}
+                      placeholder={f.placeholder || ''}
+                      onChange={(e) =>
+                        setWizardDraft((prev) => applyWizardField(prev, f.bucket, f.key, e.target.value))
+                      }
+                    />
+                  ) : (
+                    <textarea
+                      className="tp-textarea"
+                      value={val}
+                      placeholder={f.placeholder || ''}
+                      onChange={(e) =>
+                        setWizardDraft((prev) => applyWizardField(prev, f.bucket, f.key, e.target.value))
+                      }
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      );
+    };
 
     return (
-      <div className="tp-drawer-overlay" role="dialog" aria-modal onClick={() => setDrawer(null)}>
-        <div className="tp-drawer tp-drawer--wizard" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="tp-wizard-title">
+      <div className="tp-drawer-overlay" role="presentation" onClick={() => setDrawer(null)}>
+        <div
+          className="tp-drawer tp-drawer--wizard"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tp-wizard-title"
+        >
           <div className="tp-drawer__head">
-            <h2 id="tp-wizard-title">New playbook</h2>
-            <p className="tp-drawer__intro">Step through context, execution, and guardrails — presets merge at the end without overwriting your edits.</p>
+            <h2 id="tp-wizard-title">Build a playbook</h2>
+            <p className="tp-drawer__intro">
+              You are defining a live strategy: regime, trigger, risk, and stand-down rules. Optional presets merge on the last step — your text wins
+              on conflicts.
+            </p>
+          </div>
+          <div className="tp-wizard-step-banner">
+            <span className="tp-wizard-step-banner__n">
+              Step {step + 1} / {WIZARD_FLOW.length}
+            </span>
+            <h3 className="tp-wizard-step-banner__title">{flowStep.title}</h3>
+            <p className="tp-wizard-step-banner__sub">{flowStep.subtitle}</p>
           </div>
           <div className="tp-pill-row tp-wizard-steps">
-            {WIZARD_STEP_LABELS.map((l, i) => (
-              <span key={l} className={`tp-pill${i === step ? ' tp-pill--status-draft' : ''}`}>
-                {i + 1}. {l}
+            {WIZARD_FLOW.map((s, i) => (
+              <span key={s.pill} className={`tp-pill${i === step ? ' tp-pill--status-draft' : ''}`}>
+                {i + 1}. {s.pill}
               </span>
             ))}
           </div>
-          {step === 0 ? (
+          {flowStep.kind === 'basics' ? (
             <div className="tp-field-grid">
-              <div className="tp-field">
-                <label>Name</label>
-                <input className="tp-input" value={wd.name} onChange={(e) => setWd({ name: e.target.value })} />
-              </div>
-              <div className="tp-field">
-                <label>Icon</label>
-                <input className="tp-input" value={wd.icon} onChange={(e) => setWd({ icon: e.target.value })} />
-              </div>
-              <div className="tp-field">
-                <label>Market type</label>
-                <input className="tp-input" value={wd.marketType} onChange={(e) => setWd({ marketType: e.target.value })} />
-              </div>
-              <div className="tp-field">
-                <label>Assets</label>
-                <input className="tp-input" value={wd.assets} onChange={(e) => setWd({ assets: e.target.value })} />
-              </div>
-              <div className="tp-field">
-                <label>Session</label>
-                <input className="tp-input" value={wd.session} onChange={(e) => setWd({ session: e.target.value })} />
-              </div>
-              <div className="tp-field">
-                <label>Timeframes</label>
-                <input className="tp-input" value={wd.timeframes} onChange={(e) => setWd({ timeframes: e.target.value })} />
-              </div>
-            </div>
-          ) : null}
-          {step === 1 ? (
-            <div className="tp-field-grid">
-              {Object.keys(wd.marketConditions || {}).map((k) => (
-                <div key={k} className="tp-field">
-                  <label>{k}</label>
-                  <textarea
-                    className="tp-textarea"
-                    value={wd.marketConditions[k] || ''}
-                    onChange={(e) => setWd({ marketConditions: { ...wd.marketConditions, [k]: e.target.value } })}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : null}
-          {step === 2 ? (
-            <div className="tp-field-grid">
-              {Object.keys(wd.entryRules || {}).map((k) => (
-                <div key={k} className="tp-field">
-                  <label>{k}</label>
-                  <textarea
-                    className="tp-textarea"
-                    value={wd.entryRules[k] || ''}
-                    onChange={(e) => setWd({ entryRules: { ...wd.entryRules, [k]: e.target.value } })}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : null}
-          {step === 3 ? (
-            <div className="tp-field-grid">
-              {Object.keys(wd.exitRules || {}).map((k) => (
-                <div key={k} className="tp-field">
-                  <label>{k}</label>
-                  <textarea
-                    className="tp-textarea"
-                    value={wd.exitRules[k] || ''}
-                    onChange={(e) => setWd({ exitRules: { ...wd.exitRules, [k]: e.target.value } })}
-                  />
-                </div>
-              ))}
-              {Object.keys(wd.riskRules || {}).map((k) => (
-                <div key={k} className="tp-field">
-                  <label>{k}</label>
+              {WIZARD_BASICS_FIELDS.map((f) => (
+                <div key={f.key} className="tp-field">
+                  <label>{f.label}</label>
+                  <p className="tp-field-hint">{f.hint}</p>
                   <input
                     className="tp-input"
-                    value={wd.riskRules[k] || ''}
-                    onChange={(e) => setWd({ riskRules: { ...wd.riskRules, [k]: e.target.value } })}
+                    value={wd[f.key] || ''}
+                    placeholder={f.placeholder || ''}
+                    onChange={(e) => setWd({ [f.key]: e.target.value })}
                   />
                 </div>
               ))}
             </div>
           ) : null}
-          {step === 4 ? (
-            <div className="tp-field-grid">
-              {Object.keys(wd.guardrails || {}).map((k) => (
-                <div key={k} className="tp-field">
-                  <label>{k}</label>
-                  <textarea
-                    className="tp-textarea"
-                    value={wd.guardrails[k] || ''}
-                    onChange={(e) => setWd({ guardrails: { ...wd.guardrails, [k]: e.target.value } })}
-                  />
-                </div>
-              ))}
-            </div>
+          {flowStep.kind === 'groups' ? (
+            <div className="tp-wizard-groups">{flowStep.groupIds.map((id) => renderWizardGroupFields(id))}</div>
           ) : null}
-          {step === 5 ? (
-            <div className="tp-wizard-finish">
-              <p className="tp-wizard-finish__copy">
-                Merge a preset into this draft — fields you already filled win on conflict. Review the Rules tab before locking in.
-              </p>
-              <div className="tp-hub-actions">
-                {Object.keys(PLAYBOOK_PRESETS).map((k) => (
-                  <button
-                    key={k}
-                    type="button"
-                    className="trader-suite-btn"
-                    onClick={() => setWizardDraft((prev) => normalizeSetup({ ...prev, ...PLAYBOOK_PRESETS[k] }))}
-                  >
-                    Load {k} preset
-                  </button>
-                ))}
+          {flowStep.kind === 'review' && reviewSnap ? (
+            <div className="tp-wizard-review">
+              <div className="tp-wizard-review__card">
+                <h4 className="tp-wizard-review__title">Strategy snapshot</h4>
+                <p className="tp-wizard-review__identity">{reviewSnap.identity}</p>
+                <dl className="tp-wizard-review__dl">
+                  <div>
+                    <dt>When this edge is live</dt>
+                    <dd>{reviewSnap.liveEdge || '— Add narrative in Overview after save'}</dd>
+                  </div>
+                  <div>
+                    <dt>Execution model</dt>
+                    <dd>{reviewSnap.execution || '—'}</dd>
+                  </div>
+                  <div>
+                    <dt>Risk model</dt>
+                    <dd>{reviewSnap.risk || '—'}</dd>
+                  </div>
+                  <div>
+                    <dt>Stand down</dt>
+                    <dd>{reviewSnap.standDown || '—'}</dd>
+                  </div>
+                </dl>
+                <p className="tp-wizard-review__checklist">{reviewSnap.checklistLine}</p>
+                <p className="tp-wizard-review__save-hint">
+                  Continue to the editor to finish the Overview board and checklist — then lock in when the definition matches how you actually trade.
+                </p>
+              </div>
+              <div className="tp-wizard-finish">
+                <p className="tp-wizard-finish__copy">
+                  Optional: merge a preset skeleton. Fields you already wrote are preserved when keys overlap.
+                </p>
+                <div className="tp-hub-actions tp-hub-actions--wrap">
+                  {Object.keys(PLAYBOOK_PRESETS).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      className="trader-suite-btn"
+                      onClick={() => setWizardDraft((prev) => normalizeSetup({ ...prev, ...PLAYBOOK_PRESETS[k] }))}
+                    >
+                      Merge “{k}” preset
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           ) : null}
-          <div className="tp-hub-actions">
+          <div className="tp-hub-actions tp-wizard-actions">
             <button
               type="button"
               className="trader-suite-btn"
@@ -1451,7 +1587,7 @@ export default function TraderPlaybook() {
             >
               Back
             </button>
-            {step < WIZARD_STEP_LABELS.length - 1 ? (
+            {step < WIZARD_FLOW.length - 1 ? (
               <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={() => setWizardStep((s) => s + 1)}>
                 Next
               </button>
@@ -1466,10 +1602,10 @@ export default function TraderPlaybook() {
                   setView('detail');
                   setDrawer(null);
                   setDetailTab('overview');
-                  toast.success('Review Overview and Rules, then lock in.');
+                  toast.success('Draft ready in editor — refine Overview and Rules, then lock in.');
                 }}
               >
-                Open in editor
+                Open playbook editor
               </button>
             )}
             <button type="button" className="trader-suite-btn" onClick={() => setDrawer(null)}>
@@ -1487,7 +1623,7 @@ export default function TraderPlaybook() {
       terminalPresentation="aura-dashboard"
       eyebrow={formatWelcomeEyebrow(user)}
       title="Trader Playbook"
-      description="Codify edges, execute against checklists, classify validator and journal trades honestly, and close the loop with missed logs and refinements."
+      description="Turn discretionary edge into documented playbooks: checklists, classified executions, missed-setup logs, and refinements that compound."
       stats={view === 'hub' && !loading ? hubStats : []}
       primaryAction={view === 'hub' ? hubPrimary : null}
       secondaryActions={null}
@@ -1817,7 +1953,7 @@ function TradesTable({ vTrades, jTrades, playbookId }) {
 
   return (
     <div>
-      <p className="tp-trades-lede">On-setup executions only — the sample your analytics use for this playbook.</p>
+      <p className="tp-trades-lede">Rows tagged to this playbook only — this is the denominator for Performance on this setup.</p>
       <div className="tp-table-wrap">
         <table className="tp-table">
           <thead>
@@ -2011,7 +2147,9 @@ function ReviewPanel({ notes, playbookId, onRefresh, prefill, onPrefillConsumed 
         Timeline
       </div>
       {!sorted.length ? (
-        <div className="tp-empty tp-empty--compact">No refinements yet — codify what you learned from analytics or missed trades.</div>
+        <div className="tp-empty tp-empty--compact">
+          No refinement notes on file — when analytics or missed setups change a rule, commit it here so the playbook and the chart stay aligned.
+        </div>
       ) : (
         <ul className="tp-review-timeline">
           {sorted.map((n) => {
@@ -2064,8 +2202,8 @@ function TagDrawer({ trades, setups, onClose, onTag }) {
         <div className="tp-drawer__head">
           <h2 id="tp-tag-drawer-title">Classify executions</h2>
           <p className="tp-drawer__intro">
-            Validator fills carry fill quality; journal carries narrative — both should reflect <strong>on-setup</strong>, <strong>off-plan</strong>, or
-            honest <strong>no-setup</strong> classification.
+            Every close should be <strong>on playbook</strong> or honestly <strong>off-plan</strong>. Unclassified rows hide the true cost of discretion — close the
+            log before trusting any stat.
           </p>
         </div>
         <div className="tp-field-grid">
@@ -2081,7 +2219,7 @@ function TagDrawer({ trades, setups, onClose, onTag }) {
             </select>
           </div>
           <div className="tp-field">
-            <label>No-setup reason</label>
+            <label>Off-plan reason</label>
             <select className="tp-select" value={noSetupReason} onChange={(e) => setNoSetupReason(e.target.value)}>
               {NO_SETUP_REASONS.map((r) => (
                 <option key={r.value} value={r.value}>
@@ -2100,7 +2238,7 @@ function TagDrawer({ trades, setups, onClose, onTag }) {
             { id: 'needs_attention', label: 'Needs attention' },
             { id: 'all', label: 'All' },
             { id: 'playbook', label: 'On playbook' },
-            { id: 'no_setup', label: 'No setup' },
+            { id: 'no_setup', label: 'Off-plan' },
           ].map((x) => (
             <button
               key={x.id}
@@ -2147,7 +2285,7 @@ function TagDrawer({ trades, setups, onClose, onTag }) {
                           <span className="tp-pill tp-pill--status-active">On playbook</span>
                         ) : isNo ? (
                           <span className="tp-pill tp-pill--status-archived">
-                            No setup{r.noSetupReason ? ` · ${reasonLabel(r.noSetupReason)}` : ''}
+                            Off-plan{r.noSetupReason ? ` · ${reasonLabel(r.noSetupReason)}` : ''}
                           </span>
                         ) : (
                           <span className="tp-pill tp-pill--status-draft">Unclassified</span>
@@ -2159,7 +2297,7 @@ function TagDrawer({ trades, setups, onClose, onTag }) {
                             Link
                           </button>
                           <button type="button" className="tp-btn-ghost tp-btn-ghost--danger" onClick={() => onTag(r, null, 'NO_SETUP', noSetupReason)}>
-                            No setup
+                            Mark off-plan
                           </button>
                         </div>
                       </td>
@@ -2221,9 +2359,12 @@ function MissedDrawer({ setups, onClose, onSaved }) {
   };
 
   return (
-    <div className="tp-drawer-overlay" onClick={onClose}>
-      <div className="tp-drawer" onClick={(e) => e.stopPropagation()}>
-        <h2>Log missed / mis trade</h2>
+    <div className="tp-drawer-overlay" onClick={onClose} role="presentation">
+      <div className="tp-drawer tp-drawer--wide" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="tp-missed-drawer-title">
+        <div className="tp-drawer__head">
+          <h2 id="tp-missed-drawer-title">Log missed setup</h2>
+          <p className="tp-drawer__intro">Capture valid process, failure to execute, or mis-execution — this feed powers opportunity analytics.</p>
+        </div>
         <div className="tp-field">
           <label>Playbook (optional)</label>
           <select className="tp-select" value={playbookId} onChange={(e) => setPlaybookId(e.target.value)}>
@@ -2297,9 +2438,9 @@ function MissedDrawer({ setups, onClose, onSaved }) {
           <label>Screenshot URL (optional)</label>
           <input className="tp-input" value={screenshotUrl} onChange={(e) => setScreenshotUrl(e.target.value)} />
         </div>
-        <div className="tp-hub-actions">
+        <div className="tp-drawer__footer tp-hub-actions">
           <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={save}>
-            Save
+            Save entry
           </button>
           <button type="button" className="trader-suite-btn" onClick={onClose}>
             Cancel
@@ -2317,13 +2458,14 @@ function NoSetupDrawer({ summary, trades, setups, onClose, onTag }) {
     <div className="tp-drawer-overlay" onClick={onClose} role="presentation">
       <div className="tp-drawer tp-drawer--wide" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="tp-drawer__head">
-          <h2>No-setup &amp; discipline</h2>
+          <h2>Off-plan discipline</h2>
           <p className="tp-drawer__intro">
-            These executions were classified <strong>outside</strong> your playbooks. The breakdown matters: impulse, unplanned, or valid idea wrong book —
-            keep reasons honest for adherence stats.
+            Off-plan fills are behavioural data: impulse, unplanned clicks, or the right idea in the wrong book. Honest reasons keep your adherence line
+            credible.
           </p>
           <p className="tp-discipline-banner">
-            Global no-setup rows: <strong>{summary?.noSetupTrades ?? 0}</strong> · Still unclassified: <strong>{summary?.unclassifiedTrades ?? 0}</strong>
+            Classified off-plan (global): <strong>{summary?.noSetupTrades ?? 0}</strong> · Unclassified (still blind):{' '}
+            <strong>{summary?.unclassifiedTrades ?? 0}</strong>
           </p>
         </div>
         <div className="tp-table-wrap tp-table-wrap--drawer">
