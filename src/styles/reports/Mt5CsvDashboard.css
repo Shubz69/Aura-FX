@@ -17,6 +17,25 @@
   text-decoration: underline;
 }
 
+.m5dash-back-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 20px;
+}
+.m5dash-back-row .m5dash-back {
+  margin-bottom: 0;
+}
+.m5dash-back-sep {
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 0.85rem;
+  user-select: none;
+}
+.m5dash-back--secondary {
+  color: rgba(200, 198, 190, 0.78);
+}
+
 .m5dash-head {
   margin-bottom: 24px;
 }

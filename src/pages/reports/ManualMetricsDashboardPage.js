@@ -5,8 +5,6 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
-import ReportsHubSubNav from '../../components/reports/ReportsHubSubNav';
-import { useReportsEligibility } from './useReportsEligibility';
 import '../../styles/aura-analysis/AuraShared.css';
 import '../../styles/reports/ReportsPage.css';
 import '../../styles/reports/Mt5CsvDashboard.css';
@@ -136,9 +134,6 @@ function ManualMetricsDashboardInner() {
   const [error, setError] = useState('');
   const [forbiddenCode, setForbiddenCode] = useState('');
   const [payload, setPayload] = useState(null);
-  const { eligibility: elig } = useReportsEligibility(token);
-  const role = elig?.role || 'premium';
-
   const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -209,7 +204,6 @@ function ManualMetricsDashboardInner() {
   if (loading) {
     return (
       <div className="aa-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
-        <ReportsHubSubNav role={role} year={navYear} month={navMonth} />
         <div className="m5dash-loading">Loading manual metrics…</div>
       </div>
     );
@@ -218,15 +212,14 @@ function ManualMetricsDashboardInner() {
   if (error && forbiddenCode) {
     return (
       <div className="aa-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
-        <ReportsHubSubNav role={role} year={navYear} month={navMonth} />
         <div className="m5dash-error">
           <p>{error}</p>
           <p style={{ marginTop: 12, color: 'rgba(200,198,190,0.85)' }}>
-            <Link to="/reports/manual-metrics">Manual metrics</Link>
+            <Link to="/manual-metrics">Manual metrics</Link>
             {' · '}
             <Link to="/subscription">Plans</Link>
             {' · '}
-            <Link to="/aura-analysis/ai">Aura Analysis</Link>
+            <Link to="/aura-analysis/ai">Connection Hub</Link>
           </p>
         </div>
       </div>
@@ -236,11 +229,10 @@ function ManualMetricsDashboardInner() {
   if (error) {
     return (
       <div className="aa-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
-        <ReportsHubSubNav role={role} year={navYear} month={navMonth} />
         <div className="m5dash-error">
           <p>{error}</p>
-          <Link to="/reports" className="rp-btn rp-btn--secondary" style={{ marginTop: 16, display: 'inline-block' }}>
-            Back to Performance &amp; DNA
+          <Link to="/manual-metrics" className="rp-btn rp-btn--secondary" style={{ marginTop: 16, display: 'inline-block' }}>
+            Back to Manual metrics
           </Link>
         </div>
       </div>
@@ -253,7 +245,6 @@ function ManualMetricsDashboardInner() {
       : periodLabel || 'this period';
     return (
       <div className="aa-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
-        <ReportsHubSubNav role={role} year={subNavYear} month={subNavMonth} />
         <div className="m5dash-empty">
           {payload?.periodIsFuture && (
             <div className="mm-dash-banner mm-dash-banner--warn" role="status">
@@ -262,10 +253,10 @@ function ManualMetricsDashboardInner() {
           )}
           <h2 className="m5dash-title" style={{ marginBottom: 12 }}>No CSV for {pl}</h2>
           <p>
-            Upload your MT5 trade history under <strong>Manual metrics</strong> for this month.
+            Upload your MT5 trade history for this month (Connection Hub or Manual metrics home).
           </p>
-          <Link to={`/reports/manual-metrics?year=${subNavYear}&month=${subNavMonth}`} className="rp-btn rp-btn--primary">
-            Go to Manual metrics
+          <Link to={`/manual-metrics?year=${subNavYear}&month=${subNavMonth}`} className="rp-btn rp-btn--primary">
+            Upload CSV
           </Link>
         </div>
       </div>
@@ -280,8 +271,11 @@ function ManualMetricsDashboardInner() {
 
   return (
     <div className="aa-page m5dash journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
-      <ReportsHubSubNav role={role} year={subNavYear} month={subNavMonth} />
-      <Link to="/reports" className="m5dash-back">← Performance &amp; DNA</Link>
+      <div className="m5dash-back-row">
+        <Link to="/aura-analysis/ai" className="m5dash-back">← Connection Hub</Link>
+        <span className="m5dash-back-sep" aria-hidden>·</span>
+        <Link to="/manual-metrics" className="m5dash-back m5dash-back--secondary">Manual metrics home</Link>
+      </div>
 
       <header className="m5dash-head">
         <p className="m5dash-kicker">Manual metrics · CSV snapshot</p>

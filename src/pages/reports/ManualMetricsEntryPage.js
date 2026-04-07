@@ -6,7 +6,6 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
-import ReportsHubSubNav from '../../components/reports/ReportsHubSubNav';
 import CsvUploadSection from '../../components/reports/CsvUploadSection';
 import { useReportsEligibility } from './useReportsEligibility';
 import '../../styles/reports/ReportsPage.css';
@@ -153,7 +152,7 @@ function ManualMetricsEntryInner() {
     return (
       <div className="rp-error-state journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page mm-entry">
         <p>{error}</p>
-        <Link to="/reports" className="rp-btn rp-btn--secondary">Back to Performance &amp; DNA</Link>
+        <Link to="/aura-analysis/ai" className="rp-btn rp-btn--secondary">Back to Connection Hub</Link>
       </div>
     );
   }
@@ -168,16 +167,15 @@ function ManualMetricsEntryInner() {
     <div className="rp-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page mm-entry">
       <div className="rp-header mm-entry-head">
         <div className="rp-header-stack">
-          <p className="rp-eyebrow">Performance &amp; DNA</p>
+          <p className="rp-eyebrow">MT5 CSV snapshot</p>
           <h2 className="rp-title">Manual metrics</h2>
           <p className="rp-subtitle">
             Upload your MT5 trade history CSV for the month you select. After upload, your snapshot opens on the manual
-            metrics dashboard. Elite plans also include Aura Analysis for live MT5 — separate from this CSV flow.
+            metrics dashboard. Elite plans also include Aura Analysis for live MT5 — separate from this CSV flow. You can
+            also reach this page from <strong>Aura Analysis → Connection Hub</strong>.
           </p>
         </div>
       </div>
-
-      <ReportsHubSubNav role={role} year={year} month={month} />
 
       {periodIsFuture && (
         <div className="mm-dash-banner mm-dash-banner--warn mm-entry-banner" role="status">
@@ -224,11 +222,13 @@ function ManualMetricsEntryInner() {
       />
 
       <p className="mm-entry-footer">
-        <Link to={`/reports/manual-metrics/dashboard?year=${year}&month=${month}`} className="mm-link-dashboard">
+        <Link to={`/manual-metrics/dashboard?year=${year}&month=${month}`} className="mm-link-dashboard">
           Open dashboard for {MONTH_NAMES[month - 1]} {year}
         </Link>
         {' · '}
-        <Link to="/reports">Monthly report</Link>
+        <Link to="/aura-analysis/ai">Connection Hub</Link>
+        {' · '}
+        <Link to="/reports">Performance &amp; DNA</Link>
       </p>
     </div>
   );

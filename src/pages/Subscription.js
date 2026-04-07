@@ -675,8 +675,10 @@ const Subscription = () => {
                         padding: '0 12px'
                     }}>
                         <strong style={{ color: 'rgba(234,169,96,0.95)' }}>Reports &amp; metrics:</strong>{' '}
-                        <strong>Premium</strong> includes <strong>monthly report PDFs</strong> with optional <strong>MT5 CSV upload</strong> on{' '}
-                        <a href="/reports" style={{ color: '#f8c37d', textDecoration: 'underline' }}>Performance &amp; DNA</a> for broker sections in your PDF.
+                        <strong>Premium</strong> includes <strong>monthly report PDFs</strong> (<a href="/reports" style={{ color: '#f8c37d', textDecoration: 'underline' }}>Performance &amp; DNA</a>)
+                        {' '}and optional <strong>MT5 CSV snapshot</strong> under{' '}
+                        <a href="/manual-metrics" style={{ color: '#f8c37d', textDecoration: 'underline' }}>Manual metrics</a> or{' '}
+                        <a href="/aura-analysis/ai" style={{ color: '#f8c37d', textDecoration: 'underline' }}>Connection Hub</a> for broker sections in your PDF.
                         {' '}<strong>Elite (A7FX)</strong> adds <strong>Aura Analysis</strong> with <strong>automatic</strong> platform + MT5-linked metrics — no CSV for live analysis — and <strong>fully automated</strong> monthly reports.
                     </p>
                 </div>

@@ -14,7 +14,7 @@ export default function CsvUploadSection({
   onUploaded,
 }) {
   const navigate = useNavigate();
-  const dashboardHref = `/reports/manual-metrics/dashboard?year=${year}&month=${month}`;
+  const dashboardHref = `/manual-metrics/dashboard?year=${year}&month=${month}`;
   const [csv, setCsv] = useState('');
   const [fileName, setFileName] = useState('');
   const [uploading, setUploading] = useState(false);

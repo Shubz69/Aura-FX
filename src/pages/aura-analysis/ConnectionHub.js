@@ -484,7 +484,7 @@ export default function ConnectionHub() {
                 <button
                   type="button"
                   className="connection-card-connect"
-                  onClick={() => navigate(`/reports/manual-metrics?year=${csvYear}&month=${csvMonth}`)}
+                  onClick={() => navigate(`/manual-metrics?year=${csvYear}&month=${csvMonth}`)}
                 >
                   <i className="fas fa-link" style={{ marginRight: 8 }} />
                   Connect with CSV
@@ -493,7 +493,7 @@ export default function ConnectionHub() {
                   <button
                     type="button"
                     className="connection-card-disconnect csv-dashboard-btn"
-                    onClick={() => navigate(`/reports/manual-metrics/dashboard?year=${csvYear}&month=${csvMonth}`)}
+                    onClick={() => navigate(`/manual-metrics/dashboard?year=${csvYear}&month=${csvMonth}`)}
                   >
                     <i className="fas fa-chart-line" style={{ marginRight: 8 }} />
                     Open CSV Dashboard

@@ -5,7 +5,6 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
-import ReportsHubSubNav from '../../components/reports/ReportsHubSubNav';
 import '../../styles/reports/ManualMetricsPages.css';
 import '../../styles/reports/ReportsPage.css';
 
@@ -30,7 +29,7 @@ function ManualMetricsProcessingInner() {
     if (!valid || !token) return;
     const t = setInterval(() => setTick((x) => x + 1), 400);
     const done = setTimeout(() => {
-      navigate(`/reports/manual-metrics/dashboard?year=${year}&month=${month}`, { replace: true });
+      navigate(`/manual-metrics/dashboard?year=${year}&month=${month}`, { replace: true });
     }, PROCESS_MS);
     return () => {
       clearInterval(t);
@@ -42,7 +41,7 @@ function ManualMetricsProcessingInner() {
     return (
       <div className="mm-process journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
         <p>Invalid period.</p>
-        <Link to="/reports/manual-metrics" className="rp-btn rp-btn--secondary">Manual metrics</Link>
+        <Link to="/manual-metrics" className="rp-btn rp-btn--secondary">Manual metrics</Link>
       </div>
     );
   }
@@ -52,7 +51,6 @@ function ManualMetricsProcessingInner() {
 
   return (
     <div className="mm-process journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
-      <ReportsHubSubNav role="premium" year={year} month={month} />
       <div className="mm-process-inner">
         <div className="mm-process-ring" aria-hidden>
           <div className={`mm-process-dot mm-process-dot--${phase}`} />
@@ -62,7 +60,7 @@ function ManualMetricsProcessingInner() {
           Parsing <strong>{label}</strong> export and building your snapshot metrics…
         </p>
         <p className="mm-process-hint">You’ll be taken to your manual metrics dashboard in a moment.</p>
-        <Link to={`/reports/manual-metrics/dashboard?year=${year}&month=${month}`} className="mm-process-skip">
+        <Link to={`/manual-metrics/dashboard?year=${year}&month=${month}`} className="mm-process-skip">
           Skip to dashboard
         </Link>
       </div>

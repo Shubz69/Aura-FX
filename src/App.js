@@ -22,7 +22,13 @@ import './styles/AuraPageTitle.css';
 
 function Mt5MetricsLegacyRedirect() {
     const location = useLocation();
-    return <Navigate to={`/reports/manual-metrics/dashboard${location.search}`} replace />;
+    return <Navigate to={`/manual-metrics/dashboard${location.search}`} replace />;
+}
+
+/** Old bookmarks: /reports/manual-metrics → standalone manual metrics */
+function LegacyManualMetricsRedirect({ suffix = '' }) {
+    const location = useLocation();
+    return <Navigate to={`/manual-metrics${suffix}${location.search}`} replace />;
 }
 
 /* Lazy-load pages so each route loads only when visited (faster initial load) */
@@ -340,9 +346,12 @@ function AppRoutes() {
                         <Route path="/reports" element={<AuthenticatedGuard><ReportsPage /></AuthenticatedGuard>} />
                         <Route path="/reports/dna" element={<AuthenticatedGuard><ReportsDnaPage /></AuthenticatedGuard>} />
                         <Route path="/reports/mt5-metrics" element={<Mt5MetricsLegacyRedirect />} />
-                        <Route path="/reports/manual-metrics/dashboard" element={<AuthenticatedGuard><ManualMetricsDashboardPage /></AuthenticatedGuard>} />
-                        <Route path="/reports/manual-metrics/processing" element={<AuthenticatedGuard><ManualMetricsProcessingPage /></AuthenticatedGuard>} />
-                        <Route path="/reports/manual-metrics" element={<AuthenticatedGuard><ManualMetricsEntryPage /></AuthenticatedGuard>} />
+                        <Route path="/reports/manual-metrics/dashboard" element={<LegacyManualMetricsRedirect suffix="/dashboard" />} />
+                        <Route path="/reports/manual-metrics/processing" element={<LegacyManualMetricsRedirect suffix="/processing" />} />
+                        <Route path="/reports/manual-metrics" element={<LegacyManualMetricsRedirect />} />
+                        <Route path="/manual-metrics/dashboard" element={<AuthenticatedGuard><ManualMetricsDashboardPage /></AuthenticatedGuard>} />
+                        <Route path="/manual-metrics/processing" element={<AuthenticatedGuard><ManualMetricsProcessingPage /></AuthenticatedGuard>} />
+                        <Route path="/manual-metrics" element={<AuthenticatedGuard><ManualMetricsEntryPage /></AuthenticatedGuard>} />
                         <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />
                         <Route path="/trader-lab" element={<AuthenticatedGuard><Navigate to="/trader-deck/trade-validator/trader-lab" replace /></AuthenticatedGuard>} />
                         <Route path="/trader-replay" element={<AuthenticatedGuard><Navigate to="/aura-analysis/dashboard/trader-replay" replace /></AuthenticatedGuard>} />

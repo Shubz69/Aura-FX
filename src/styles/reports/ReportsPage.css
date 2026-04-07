@@ -106,7 +106,7 @@
   min-width: 0;
 }
 
-/* ── Hub sub-navigation (Monthly report | DNA | Manual metrics) ─── */
+/* ── Hub sub-navigation (Monthly report | DNA) — Manual metrics is /manual-metrics ─── */
 .rp-subnav {
   display: flex;
   flex-wrap: wrap;

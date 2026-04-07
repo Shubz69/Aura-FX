@@ -23,6 +23,7 @@ import {
   FaLink,
   FaFileAlt,
   FaHeartbeat,
+  FaUpload,
 } from "react-icons/fa";
 import { isSuperAdmin, isAdmin, isPremium } from "../utils/roles";
 import A7Logo from "./A7Logo";
@@ -196,9 +197,14 @@ const Navbar = () => {
                         <FaChartLine className="dropdown-icon" /> Aura Analysis
                       </Link>
                       {isPremium(user) && (
-                        <Link to="/reports" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                          <FaFileAlt className="dropdown-icon" /> Performance & DNA
-                        </Link>
+                        <>
+                          <Link to="/reports" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                            <FaFileAlt className="dropdown-icon" /> Performance & DNA
+                          </Link>
+                          <Link to="/manual-metrics" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                            <FaUpload className="dropdown-icon" /> Manual metrics (CSV)
+                          </Link>
+                        </>
                       )}
                       <Link to="/profile" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaUserCircle className="dropdown-icon" /> Profile

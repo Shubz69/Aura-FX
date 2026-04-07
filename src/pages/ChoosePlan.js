@@ -196,8 +196,8 @@ const ChoosePlan = () => {
           }}
         >
           <strong style={{ color: '#eaa960' }}>Reports &amp; broker metrics:</strong>{' '}
-          <strong>Premium (AURA TERMINAL)</strong> includes monthly report PDFs — add your MT5 trade history by uploading a CSV on{' '}
-          <strong>Performance &amp; DNA</strong> (<code style={{ fontSize: '13px', opacity: 0.9 }}>/reports</code>).{' '}
+          <strong>Premium (AURA TERMINAL)</strong> includes monthly report PDFs (<strong>Performance &amp; DNA</strong>, <code style={{ fontSize: '13px', opacity: 0.9 }}>/reports</code>) — add your MT5 trade history via CSV on{' '}
+          <strong>Manual metrics</strong> (<code style={{ fontSize: '13px', opacity: 0.9 }}>/manual-metrics</code>) or <strong>Aura Analysis → Connection Hub</strong>.{' '}
           <strong>Elite (A7FX)</strong> gets <strong>Aura Analysis</strong> with live, automatic platform metrics (no CSV for analysis), and monthly reports are compiled automatically — no CSV upload.
         </p>
 
