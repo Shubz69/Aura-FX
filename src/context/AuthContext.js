@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Api from '../services/Api';
 import { jwtDecode } from 'jwt-decode';
 import { consumePostAuthRedirect } from '../utils/postAuthRedirect';
-import { armPostLoginTransition } from '../utils/postLoginTransition';
+import { armPostLoginTransition, isPostLoginTransitionExcludedPath } from '../utils/postLoginTransition';
 import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/userLocalStorage';
 import { isConfiguredSuperAdminEmail, isAdmin } from '../utils/roles';
 import {
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     const nextPath = redirectInfo.next.startsWith('/') ? redirectInfo.next : `/${redirectInfo.next}`;
-    if (nextPath.startsWith('/community')) {
+    if (!isPostLoginTransitionExcludedPath(nextPath)) {
       armPostLoginTransition();
     }
     navigate(nextPath, { replace: true });
@@ -605,8 +605,10 @@ export const AuthProvider = ({ children }) => {
         }
 
         if (canAccessCommunity) {
+          armPostLoginTransition();
           navigate('/');
         } else {
+          armPostLoginTransition();
           navigate('/choose-plan');
         }
         return data;
@@ -691,6 +693,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('newSignup');
         const redirectInfo = applyPostAuthRedirect();
         if (!redirectInfo) {
+          armPostLoginTransition();
           navigate('/choose-plan');
         }
         return data;

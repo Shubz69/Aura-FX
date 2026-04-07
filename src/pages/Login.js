@@ -6,6 +6,7 @@ import { RiTerminalBoxFill } from 'react-icons/ri';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRedirect';
+import { armPostLoginTransition } from '../utils/postLoginTransition';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -240,6 +241,7 @@ const Login = () => {
                     }
                 );
                 
+                armPostLoginTransition();
                 navigate('/');
             } else {
                 throw new Error("Invalid response from server");

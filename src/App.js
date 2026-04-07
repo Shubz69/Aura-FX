@@ -12,7 +12,7 @@ import AuraDashboardGuard from './pages/aura-analysis/AuraDashboardGuard';
 import GDPRModal from './components/GDPRModal';
 import Footer from './components/Footer';
 import CommunityRouteBoundary from './components/CommunityRouteBoundary';
-import { consumePostLoginTransition } from './utils/postLoginTransition';
+import { consumePostLoginTransition, isPostLoginTransitionExcludedPath } from './utils/postLoginTransition';
 import { ensureWebPushSubscription } from './utils/ensureWebPushSubscription';
 import JournalReminderScheduler from './components/JournalReminderScheduler';
 import { ToastContainer } from "react-toastify";
@@ -157,9 +157,10 @@ function AppRoutes() {
     const isHomePage = location.pathname === '/';
 
     const [showGDPR, setShowGDPR] = useState(false);
-    const [postLoginGateArmed, setPostLoginGateArmed] = useState(() => (
-        location.pathname.startsWith('/community') && consumePostLoginTransition()
-    ));
+    const [postLoginGateArmed, setPostLoginGateArmed] = useState(() => {
+        if (isPostLoginTransitionExcludedPath(location.pathname)) return false;
+        return consumePostLoginTransition();
+    });
     const [postLoginTransitionActive, setPostLoginTransitionActive] = useState(() => postLoginGateArmed);
     const [postLoginLoadingActive, setPostLoginLoadingActive] = useState(() => postLoginGateArmed);
 
@@ -213,7 +214,7 @@ function AppRoutes() {
     }, [isHomePage]);
 
     useLayoutEffect(() => {
-        if (!location.pathname.startsWith('/community')) {
+        if (isPostLoginTransitionExcludedPath(location.pathname)) {
             setPostLoginGateArmed(false);
             setPostLoginTransitionActive(false);
             setPostLoginLoadingActive(false);

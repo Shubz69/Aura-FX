@@ -1,5 +1,18 @@
 const POST_LOGIN_TRANSITION_KEY = 'aura_post_login_transition';
 
+/** Routes where we should not run (or consume) the post-login handoff overlay. */
+export function isPostLoginTransitionExcludedPath(pathname) {
+  const p = pathname == null ? '' : String(pathname);
+  return (
+    p.startsWith('/login') ||
+    p.startsWith('/register') ||
+    p.startsWith('/signup') ||
+    p.startsWith('/forgot-password') ||
+    p.startsWith('/reset-password') ||
+    p.startsWith('/verify-mfa')
+  );
+}
+
 export function armPostLoginTransition() {
   try {
     sessionStorage.setItem(POST_LOGIN_TRANSITION_KEY, '1');

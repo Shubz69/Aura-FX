@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { armPostLoginTransition } from "../utils/postLoginTransition";
 import { isAdmin } from "../utils/roles";
 import "../styles/VerifyMFA.css";
 import CosmicBackground from '../components/CosmicBackground';
@@ -47,8 +48,10 @@ const VerifyMFA = () => {
             const hasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
             const pendingSubscription = localStorage.getItem('pendingSubscription') === 'true';
             if (!isAdmin(user) && !hasActiveSubscription && !pendingSubscription) {
+                armPostLoginTransition();
                 navigate('/subscription');
             } else {
+                armPostLoginTransition();
                 navigate(location.state?.returnUrl || "/community");
             }
             return;
@@ -137,9 +140,10 @@ const VerifyMFA = () => {
                 const staffUser = isAdmin({ role: res.data.role });
 
                 if (!staffUser && !hasActiveSubscription && !pendingSubscription) {
+                    armPostLoginTransition();
                     navigate('/subscription');
                 } else {
-                    // Navigate to returnUrl if provided, otherwise to community
+                    armPostLoginTransition();
                     navigate(location.state?.returnUrl || "/community");
                 }
             } else {
