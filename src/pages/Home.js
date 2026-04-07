@@ -13,7 +13,6 @@ import {
     FaUsers, FaTrophy, FaGraduationCap, FaRocket,
     FaShieldAlt, FaClock, FaCoins, FaChartBar,
     FaChartLine, FaGlobe, FaArrowRight,
-    FaEnvelope, FaCog, FaHeadset,
     FaCheck, FaTimes,
 } from 'react-icons/fa';
 
@@ -1033,21 +1032,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
             <header className="terminal-dashboard__topbar glass-card">
                 <p className="terminal-dashboard__welcome">{welcomeShort}</p>
                 <div className="terminal-dashboard__top-right">
-                    <span className="terminal-dashboard__wordmark" aria-label="AURA TERMINAL">
-                        <span className="terminal-dashboard__wordmark-aura">AURA</span>
-                        <span className="terminal-dashboard__wordmark-terminal">TERMINAL</span>
-                    </span>
-                    <div className="terminal-dashboard__top-actions">
-                        <Link to="/messages" className="terminal-dashboard__icon-btn" title="Messages" aria-label="Messages">
-                            <FaEnvelope />
-                        </Link>
-                        <Link to="/settings" className="terminal-dashboard__icon-btn" title="Settings" aria-label="Settings">
-                            <FaCog />
-                        </Link>
-                        <Link to="/contact" className="terminal-dashboard__icon-btn" title="Support" aria-label="Support">
-                            <FaHeadset />
-                        </Link>
-                    </div>
+                    <span className="terminal-dashboard__wordmark">AURA TERMINAL</span>
                 </div>
             </header>
 

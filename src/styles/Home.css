@@ -3030,47 +3030,31 @@ html, body {
     font-size: clamp(1.02rem, 2.4vw, 1.28rem);
     font-weight: 600;
     color: var(--text);
-    letter-spacing: 0.02em;
+    letter-spacing: 0.06em;
     line-height: 1.25;
     min-width: 0;
+    text-transform: uppercase;
 }
 
 .terminal-dashboard__top-right {
     display: flex;
     align-items: center;
-    gap: clamp(0.75rem, 3vw, 1.35rem);
+    justify-content: flex-end;
     margin-left: auto;
+    flex-shrink: 0;
 }
 
 /* Match main nav wordmark: Space Grotesk, all caps */
 .terminal-dashboard__wordmark {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.35em;
+    display: block;
     font-family: var(--font);
-    font-size: clamp(0.7rem, 1.75vw, 0.84rem);
-    letter-spacing: 0.22em;
+    font-size: clamp(0.72rem, 1.85vw, 0.88rem);
+    font-weight: 700;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.96);
     white-space: nowrap;
     line-height: 1;
-}
-
-.terminal-dashboard__wordmark-aura {
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.96);
-}
-
-.terminal-dashboard__wordmark-terminal {
-    font-weight: 400;
-    color: rgba(245, 245, 247, 0.92);
-    letter-spacing: 0.2em;
-}
-
-.terminal-dashboard__top-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    flex-shrink: 0;
 }
 
 .terminal-card__welcome-hint {
@@ -3080,25 +3064,6 @@ html, body {
     font-weight: 500;
     color: var(--text-muted);
     line-height: 1.45;
-}
-
-.terminal-dashboard__icon-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    color: var(--eaa-soft);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.03);
-    transition: background var(--transition-s), color var(--transition-s), border-color var(--transition-s);
-}
-
-.terminal-dashboard__icon-btn:hover {
-    color: var(--eaa-bright);
-    border-color: rgba(234, 169, 96, 0.22);
-    background: rgba(234, 169, 96, 0.08);
 }
 
 .terminal-dashboard__body {
