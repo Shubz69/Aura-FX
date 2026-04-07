@@ -3,6 +3,7 @@
  * data flow: state here + Api.* in MarketOutlookView / MarketIntelligenceBriefsView.
  */
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../utils/roles';
@@ -158,6 +159,19 @@ export default function TraderDeck() {
     return () => window.removeEventListener('keydown', onKey);
   }, [economicCalendarOpen]);
 
+  useEffect(() => {
+    if (mainTab !== 'outlook') setEconomicCalendarOpen(false);
+  }, [mainTab]);
+
+  useEffect(() => {
+    if (!economicCalendarOpen) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [economicCalendarOpen]);
+
  return (
   <AuraTerminalThemeShell>
     <div
@@ -190,38 +204,40 @@ export default function TraderDeck() {
         </div>
       )}
 
-      {economicCalendarOpen && (
-        <div
-          className="td-deck-eco-cal-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="td-deck-eco-cal-title"
-        >
+      {economicCalendarOpen &&
+        createPortal(
           <div
-            className="td-deck-eco-cal-overlay-backdrop"
-            onClick={() => setEconomicCalendarOpen(false)}
-            aria-hidden
-          />
-          <div className="td-deck-eco-cal-overlay-panel journal-glass-panel journal-glass-panel--rim">
-            <div className="td-deck-eco-cal-overlay-head">
-              <h2 id="td-deck-eco-cal-title" className="td-deck-eco-cal-overlay-title">
-                Economic calendar
-              </h2>
-              <button
-                type="button"
-                className="td-deck-eco-cal-overlay-x"
-                onClick={() => setEconomicCalendarOpen(false)}
-                aria-label="Close economic calendar"
-              >
-                <FaTimes aria-hidden />
-              </button>
+            className="td-deck-eco-cal-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="td-deck-eco-cal-title"
+          >
+            <div
+              className="td-deck-eco-cal-overlay-backdrop"
+              onClick={() => setEconomicCalendarOpen(false)}
+              aria-hidden
+            />
+            <div className="td-deck-eco-cal-overlay-panel">
+              <div className="td-deck-eco-cal-overlay-head">
+                <h2 id="td-deck-eco-cal-title" className="td-deck-eco-cal-overlay-title">
+                  Economic calendar
+                </h2>
+                <button
+                  type="button"
+                  className="td-deck-eco-cal-overlay-x"
+                  onClick={() => setEconomicCalendarOpen(false)}
+                  aria-label="Close economic calendar"
+                >
+                  <FaTimes aria-hidden />
+                </button>
+              </div>
+              <div className="td-deck-eco-cal-overlay-body">
+                <ForexFactoryNews date={selectedDate} />
+              </div>
             </div>
-            <div className="td-deck-eco-cal-overlay-body">
-              <ForexFactoryNews date={selectedDate} />
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       {/* ✅ Main Layout */}
       <div className="td-deck-layout">
@@ -281,7 +297,11 @@ export default function TraderDeck() {
 
           {/* Period Tabs + Sessions */}
           <div className="td-deck-below-header td-deck-period-stack">
-            <div className="td-deck-period-row-main td-deck-period-row-main--with-eco">
+            <div
+              className={`td-deck-period-row-main${
+                mainTab === 'outlook' ? ' td-deck-period-row-main--with-eco' : ''
+              }`}
+            >
               <div
                 className={
                   mainTab === 'intelligence'
@@ -345,13 +365,15 @@ export default function TraderDeck() {
                   </nav>
                 )}
               </div>
-              <button
-                type="button"
-                className="td-deck-sub-tab td-deck-eco-cal-trigger"
-                onClick={() => setEconomicCalendarOpen(true)}
-              >
-                Economic calendar
-              </button>
+              {mainTab === 'outlook' && (
+                <button
+                  type="button"
+                  className="td-deck-sub-tab td-deck-eco-cal-trigger"
+                  onClick={() => setEconomicCalendarOpen(true)}
+                >
+                  Economic calendar
+                </button>
+              )}
             </div>
 
             <MarketSessionsWithCountdowns />

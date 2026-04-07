@@ -942,6 +942,17 @@
   to { opacity: 1; }
 }
 
+@keyframes td-eco-cal-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    ECONOMIC CALENDAR — full preview (live ForexFactoryNews; not a new route)
 ═══════════════════════════════════════════════════════════════════════════ */
@@ -953,6 +964,9 @@
   align-items: center;
   justify-content: center;
   padding: clamp(12px, 3vw, 28px);
+  padding-top: max(clamp(12px, 3vw, 28px), env(safe-area-inset-top, 0));
+  padding-bottom: max(clamp(12px, 3vw, 28px), env(safe-area-inset-bottom, 0));
+  box-sizing: border-box;
   animation: td-overlay-fade 0.2s ease;
 }
 
@@ -967,18 +981,42 @@
 .td-deck-eco-cal-overlay-panel {
   position: relative;
   z-index: 1;
-  width: min(1100px, 100%);
-  max-height: min(92vh, 900px);
+  width: min(1200px, 100%);
+  height: min(88vh, 880px);
+  max-height: min(92vh, 920px);
+  min-height: min(420px, 85vh);
   display: flex;
   flex-direction: column;
   border-radius: var(--td-root-radius-xl);
-  border: 1px solid rgba(107, 143, 232, 0.28);
-  background: linear-gradient(168deg, rgba(4, 5, 18, 0.96) 0%, rgba(5, 6, 20, 0.94) 100%);
+  border: 1px solid rgba(107, 143, 232, 0.35);
+  background: linear-gradient(168deg, rgba(4, 5, 18, 0.97) 0%, rgba(2, 4, 16, 0.96) 55%, rgba(5, 6, 22, 0.94) 100%);
+  backdrop-filter: blur(20px) saturate(1.06);
+  -webkit-backdrop-filter: blur(20px) saturate(1.06);
   box-shadow:
-    0 28px 80px rgba(0, 0, 0, 0.65),
-    0 0 0 1px rgba(107, 143, 232, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 28px 80px rgba(0, 0, 0, 0.72),
+    0 0 0 1px rgba(107, 143, 232, 0.14),
+    0 0 56px -12px rgba(70, 100, 190, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   overflow: hidden;
+  animation: td-eco-cal-panel-in 0.32s cubic-bezier(0.2, 0.9, 0.35, 1) both;
+}
+
+.td-deck-eco-cal-overlay-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 5%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(140, 175, 255, 0.65),
+    rgba(107, 143, 232, 0.45),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 3;
 }
 
 .td-deck-eco-cal-overlay-head {
@@ -987,19 +1025,25 @@
   justify-content: space-between;
   gap: 12px;
   flex-shrink: 0;
-  padding: 14px 16px 12px;
-  border-bottom: 1px solid rgba(107, 143, 232, 0.18);
-  background: rgba(3, 6, 18, 0.65);
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid rgba(107, 143, 232, 0.2);
+  background: linear-gradient(180deg, rgba(8, 12, 32, 0.75) 0%, rgba(4, 6, 18, 0.45) 100%);
+  position: relative;
+  z-index: 2;
 }
 
 .td-deck-eco-cal-overlay-title {
   margin: 0;
   font-family: var(--td-root-font);
-  font-size: clamp(0.78rem, 1.8vw, 0.9rem);
+  font-size: clamp(0.82rem, 1.9vw, 0.95rem);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #fff;
+  background: linear-gradient(125deg, #fff 0%, rgba(200, 215, 255, 0.92) 55%, rgba(107, 143, 232, 0.85) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .td-deck-eco-cal-overlay-x {
@@ -1027,9 +1071,47 @@
 .td-deck-eco-cal-overlay-body {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
-  padding: 12px 14px 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px 18px;
+  background: rgba(1, 2, 12, 0.35);
   -webkit-overflow-scrolling: touch;
+}
+
+/* Fill the modal: ForexFactory card + table scroll inside */
+.td-deck-eco-cal-overlay-body .td-ff-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: calc(var(--td-root-radius-xl) - 6px);
+}
+
+.td-deck-eco-cal-overlay-body .td-ff-header {
+  flex-shrink: 0;
+}
+
+.td-deck-eco-cal-overlay-body .td-ff-filter-panel {
+  flex-shrink: 0;
+}
+
+.td-deck-eco-cal-overlay-body .td-ff-loading,
+.td-deck-eco-cal-overlay-body .td-ff-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.td-deck-eco-cal-overlay-body .td-ff-table-wrap {
+  flex: 1;
+  min-height: 220px;
+  max-height: none;
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
 /* Brief header already shows title — hide duplicate h3 inside widget */
