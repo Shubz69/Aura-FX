@@ -33,14 +33,6 @@ const CHART_INTERVALS = [
   { label: '1D', value: '1D' },
 ];
 
-/** Footer checklist — label + hint line (matches reference layout) */
-const TRADER_LAB_CHECKLIST_ROWS = [
-  { key: 'biasAligned', label: 'Bias aligned', hint: 'Higher-timeframe bias supports the trade idea.' },
-  { key: 'setupValid', label: 'Setup valid', hint: 'Playbook criteria are clearly present on the chart.' },
-  { key: 'entryConfirmed', label: 'Confirmation', hint: 'Trigger and confirmation are satisfied.' },
-  { key: 'riskDefined', label: 'Risk defined', hint: 'Stop placement and position size are explicit.' },
-];
-
 const DEFAULT_FORM = {
   sessionDate: toYmd(),
   chartSymbol: 'OANDA:XAUUSD',
@@ -537,41 +529,19 @@ export default function TraderLab() {
                 </div>
               </div>
 
-              <div className="tlab-center-split__stack">
-                <div className="tlab-card tlab-card--gold tlab-card--checklist-mid">
-                  <h3 className="tlab-card__title">Checklist</h3>
-                  <div className="tlab-checklist-mid" role="group" aria-label="Pre-trade checklist">
-                    {TRADER_LAB_CHECKLIST_ROWS.map((row) => (
-                      <label key={row.key} className="tlab-checklist-mid__row">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(form[row.key])}
-                          onChange={(e) => updateField(row.key, e.target.checked)}
-                        />
-                        <span className={form[row.key] ? 'tlab-fc-icon tlab-fc-icon--ok' : 'tlab-fc-icon'}>{form[row.key] ? '✓' : ''}</span>
-                        <span className="tlab-checklist-mid__copy">
-                          <strong>{row.label}</strong>
-                          <small>{row.hint}</small>
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="tlab-card tlab-card--gold tlab-ready-cta-card">
-                  <button
-                    type="button"
-                    className="tlab-ready-box"
-                    disabled={!readyToExecute}
-                    onClick={() => {
-                      saveSession();
-                      toast.success('Ready to execute — lab saved.');
-                    }}
-                  >
-                    <span className="tlab-ready-box__check">✓</span>
-                    <span className="tlab-ready-box__label">READY TO EXECUTE</span>
-                  </button>
-                </div>
+              <div className="tlab-card tlab-card--gold tlab-ready-cta-card">
+                <button
+                  type="button"
+                  className="tlab-ready-box"
+                  disabled={!readyToExecute}
+                  onClick={() => {
+                    saveSession();
+                    toast.success('Ready to execute — lab saved.');
+                  }}
+                >
+                  <span className="tlab-ready-box__check">✓</span>
+                  <span className="tlab-ready-box__label">READY TO EXECUTE</span>
+                </button>
               </div>
             </div>
           </div>
@@ -668,7 +638,7 @@ export default function TraderLab() {
             </div>
 
             <div className={`tlab-card tlab-card--gold tlab-card--validator${validatorPanelOk ? ' tlab-card--validator-pass' : ''}`}>
-              <div className="tlab-validator-banner">{validatorPanelOk ? '✓ TRADE VALID' : 'CHECKLIST'}</div>
+              <div className="tlab-validator-banner">{validatorPanelOk ? '✓ TRADE VALID' : 'BLOCKED'}</div>
               <ul className="tlab-validator-list tlab-validator-list--status">
                 {tradeValidatorRows.map((row) => (
                   <li key={row.label}>

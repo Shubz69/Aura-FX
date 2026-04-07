@@ -359,8 +359,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   TRADER LAB — true full width (~5px from viewport): journal-layout is 1320px
-   capped elsewhere; glass panel adds clamp padding — override both here.
+   TRADER LAB — inset from viewport (~1cm gutter on left/right) so starfield shows.
    ═══════════════════════════════════════════════════════════════════════════ */
 .journal-page:has(.trader-lab-v2) {
   /* Tighten bottom breathing room so the glass panel sits closer to the site footer */
@@ -370,8 +369,9 @@
 .journal-page .journal-layout--terminal:has(.trader-lab-v2) {
   max-width: none !important;
   width: 100% !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+  padding-left: 1cm !important;
+  padding-right: 1cm !important;
+  box-sizing: border-box !important;
   min-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
@@ -458,8 +458,8 @@
 }
 
 .journal-page .trade-validator-shell.journal-glass-panel--pad:has(.trader-lab-v2) {
-  padding-left: 5px !important;
-  padding-right: 5px !important;
+  padding-left: clamp(8px, 1vw, 14px) !important;
+  padding-right: clamp(8px, 1vw, 14px) !important;
   padding-top: clamp(10px, 2vw, 18px) !important;
   padding-bottom: 10px !important;
 }
@@ -469,15 +469,15 @@
 }
 
 .trade-validator-shell:has(.trader-lab-v2) .aura-shell-hero {
-  padding-left: 5px !important;
-  padding-right: 5px !important;
+  padding-left: clamp(8px, 1vw, 14px) !important;
+  padding-right: clamp(8px, 1vw, 14px) !important;
   padding-top: clamp(8px, 1.8vw, 16px) !important;
   padding-bottom: clamp(10px, 1.8vw, 18px) !important;
 }
 
 .trade-validator-shell:has(.trader-lab-v2) .aura-shell-tabs-wrap {
-  padding-left: 5px !important;
-  padding-right: 5px !important;
+  padding-left: clamp(8px, 1vw, 14px) !important;
+  padding-right: clamp(8px, 1vw, 14px) !important;
 }
 
 .trade-validator-shell:has(.trader-lab-v2) .aura-shell-tabs-inner {
