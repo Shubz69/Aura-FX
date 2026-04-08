@@ -58,6 +58,34 @@ function stringifyJson(v) {
   }
 }
 
+async function listTableColumns(tableName) {
+  const [rows] = await executeQuery(
+    `SELECT COLUMN_NAME
+       FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = ?`,
+    [tableName]
+  );
+  return new Set((rows || []).map((r) => String(r.COLUMN_NAME || r.column_name || '')));
+}
+
+async function insertWithExistingColumns(tableName, valuesByColumn) {
+  const existing = await listTableColumns(tableName);
+  const cols = [];
+  const vals = [];
+  Object.keys(valuesByColumn).forEach((col) => {
+    if (!existing.has(col)) return;
+    cols.push(col);
+    vals.push(valuesByColumn[col]);
+  });
+  if (!cols.length) throw new Error(`No matching columns for ${tableName}`);
+  const placeholders = cols.map(() => '?').join(',');
+  await executeQuery(
+    `INSERT INTO ${tableName} (${cols.join(', ')}) VALUES (${placeholders})`,
+    vals
+  );
+}
+
 function mapSessionRow(row) {
   if (!row) return null;
   return {
@@ -648,41 +676,33 @@ module.exports = async (req, res) => {
       const startedAt = saveDraft ? null : new Date();
       const lastReplayAt = dateStart ? `${dateStart}T00:00:00.000Z` : null;
 
-      await executeQuery(
-        `INSERT INTO backtest_sessions (
-          id, userId, sessionName, description, status, marketType, instrumentsJson, playbookId, playbookName,
-          initialBalance, currentBalance, riskModel, dateStart, dateEnd, replayTimeframe, replayGranularity,
-          tradingHoursMode, objective, objectiveDetail, strategyContextJson, draftFormJson, chartPrefsJson,
-          startedAt, lastReplayAt, lastActiveInstrument
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-        [
-          id,
-          userId,
-          sessionName,
-          description,
-          status,
-          marketType,
-          stringifyJson(instruments),
-          playbookId,
-          playbookName,
-          initialBalance,
-          initialBalance,
-          riskModel,
-          dateStart,
-          dateEnd,
-          replayTimeframe,
-          replayGranularity,
-          tradingHoursMode,
-          objective,
-          objectiveDetail,
-          stringifyJson(strategyContext),
-          draftFormJson ? stringifyJson(draftFormJson) : null,
-          stringifyJson(chartPrefs),
-          startedAt,
-          lastReplayAt,
-          instruments[0] || null,
-        ]
-      );
+      await insertWithExistingColumns('backtest_sessions', {
+        id,
+        userId,
+        sessionName,
+        description,
+        status,
+        marketType,
+        instrumentsJson: stringifyJson(instruments),
+        playbookId,
+        playbookName,
+        initialBalance,
+        currentBalance: initialBalance,
+        riskModel,
+        dateStart,
+        dateEnd,
+        replayTimeframe,
+        replayGranularity,
+        tradingHoursMode,
+        objective,
+        objectiveDetail,
+        strategyContextJson: stringifyJson(strategyContext),
+        draftFormJson: draftFormJson ? stringifyJson(draftFormJson) : null,
+        chartPrefsJson: stringifyJson(chartPrefs),
+        startedAt,
+        lastReplayAt,
+        lastActiveInstrument: instruments[0] || null,
+      });
 
       const row = await loadSessionForUser(id, userId);
       return res.status(201).json({ success: true, session: mapSessionRow(row) });
