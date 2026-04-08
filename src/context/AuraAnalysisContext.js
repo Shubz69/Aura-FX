@@ -38,6 +38,9 @@ const AuraAnalysisAnalyticsContext = createContext(null);
 const AuraAnalysisContext = createContext(null);
 
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+const LAST_GOOD_STATE_VERSION = 1;
+const LAST_GOOD_ENGINE_VERSION = 'computeAnalytics-v1';
+const LAST_GOOD_KEY_PREFIX = 'aura_analysis_last_good_dashboard_state_v1';
 
 /** Keep in sync with api/aura-analysis/mtTradeNormalize.js MAX_HISTORY_LOOKBACK_DAYS */
 const ALL_TIME_LOOKBACK_DAYS = 3650;
@@ -53,6 +56,47 @@ const DATE_RANGE_OPTIONS = [
 ];
 
 export { DATE_RANGE_OPTIONS, ALL_TIME_LOOKBACK_DAYS };
+
+function pickDefaultPlatformId(connections = []) {
+  const mt5 = connections.find(c => c.platformId === 'mt5' || c.platformId === 'mt4');
+  return mt5?.platformId || connections[0]?.platformId || null;
+}
+
+function lastGoodStorageKey(platformId) {
+  return `${LAST_GOOD_KEY_PREFIX}:${String(platformId || '')}`;
+}
+
+function readLastGoodDashboardState(platformId) {
+  if (!platformId || typeof window === 'undefined' || !window.localStorage) return null;
+  try {
+    const raw = window.localStorage.getItem(lastGoodStorageKey(platformId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.v !== LAST_GOOD_STATE_VERSION) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeLastGoodDashboardState(platformId, nextState) {
+  if (!platformId || typeof window === 'undefined' || !window.localStorage || !nextState) return;
+  try {
+    window.localStorage.setItem(lastGoodStorageKey(platformId), JSON.stringify(nextState));
+  } catch {
+    /* ignore storage quota / private mode */
+  }
+}
+
+function auraPerfLog(event, fields = {}) {
+  if (!isAuraAnalysisDevPerfEnabled()) return;
+  try {
+    // eslint-disable-next-line no-console
+    console.info(`[aura-analysis-perf] ${event}`, fields);
+  } catch {
+    /* noop */
+  }
+}
 
 /** Cheap fingerprint so polling that returns identical rows does not touch React state. */
 function tradesPayloadFingerprint(arr) {
@@ -92,11 +136,12 @@ function AuraAnalysisPerfFlushBridge() {
 
 export function AuraAnalysisProvider({ children }) {
   const { connections } = useAuraConnection();
+  const initialPlatformId = pickDefaultPlatformId(connections);
+  const initialLastGood = readLastGoodDashboardState(initialPlatformId);
 
   const defaultPlatformId = useRef(null);
   const [activePlatformId, setActivePlatformId] = useState(() => {
-    const mt5 = connections.find(c => c.platformId === 'mt5' || c.platformId === 'mt4');
-    return mt5?.platformId || connections[0]?.platformId || null;
+    return initialPlatformId;
   });
 
   useEffect(() => {
@@ -114,17 +159,21 @@ export function AuraAnalysisProvider({ children }) {
   const [sessionFilter, setSessionFilter] = useState('ALL');
   const [dirFilter,    setDirFilter]    = useState('ALL');
 
-  const [account,   setAccount]   = useState(null);
-  const [rawTrades, setRawTrades] = useState([]);
+  const [account,   setAccount]   = useState(initialLastGood?.account || null);
+  const [rawTrades, setRawTrades] = useState(
+    Array.isArray(initialLastGood?.rawTrades) ? initialLastGood.rawTrades : []
+  );
 
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(
+    initialLastGood?.updatedAt ? new Date(initialLastGood.updatedAt) : null
+  );
   const [refreshing,  setRefreshing]  = useState(false);
-  const [historyStale, setHistoryStale] = useState(false);
-  const [historyDataSource, setHistoryDataSource] = useState(null);
-  const [accountStale, setAccountStale] = useState(false);
-  const [accountDataSource, setAccountDataSource] = useState(null);
+  const [historyStale, setHistoryStale] = useState(!!initialLastGood);
+  const [historyDataSource, setHistoryDataSource] = useState(initialLastGood ? 'last_good' : null);
+  const [accountStale, setAccountStale] = useState(!!initialLastGood);
+  const [accountDataSource, setAccountDataSource] = useState(initialLastGood ? 'last_good' : null);
 
   const isFetching = useRef(false);
   const intervalRef = useRef(null);
@@ -133,7 +182,12 @@ export function AuraAnalysisProvider({ children }) {
   const lastTradesFpRef = useRef('');
   const lastAccountFpRef = useRef('');
   /** Server computeAnalytics payload + fingerprint (stale-while-revalidate fast path). */
-  const pendingServerPrecomputedRef = useRef(null);
+  const pendingServerPrecomputedRef = useRef(
+    initialLastGood?.analytics && initialLastGood?.analyticsFingerprint
+      ? { fingerprint: String(initialLastGood.analyticsFingerprint), payload: initialLastGood.analytics }
+      : null
+  );
+  const instantRenderLoggedRef = useRef(false);
 
   useEffect(() => {
     rawTradesRef.current = rawTrades;
@@ -147,6 +201,56 @@ export function AuraAnalysisProvider({ children }) {
     lastTradesFpRef.current = '';
     lastAccountFpRef.current = '';
     pendingServerPrecomputedRef.current = null;
+  }, [activePlatformId]);
+
+  useEffect(() => {
+    if (!activePlatformId) return;
+    const cached = readLastGoodDashboardState(activePlatformId);
+    if (cached) {
+      const nextTrades = Array.isArray(cached.rawTrades) ? cached.rawTrades : [];
+      const nextAccount = cached.account || null;
+      rawTradesRef.current = nextTrades;
+      accountRef.current = nextAccount;
+      lastTradesFpRef.current = tradesPayloadFingerprint(nextTrades);
+      lastAccountFpRef.current = accountPayloadFingerprint(nextAccount);
+      setRawTrades(nextTrades);
+      setAccount(nextAccount);
+      setAnalytics(cached.analytics || emptyAnalytics(nextAccount));
+      setLastUpdated(cached.updatedAt ? new Date(cached.updatedAt) : new Date());
+      setHistoryStale(true);
+      setAccountStale(true);
+      setHistoryDataSource('last_good');
+      setAccountDataSource('last_good');
+      setLoading(false);
+      setError(null);
+      if (cached.analytics && cached.analyticsFingerprint) {
+        pendingServerPrecomputedRef.current = {
+          fingerprint: String(cached.analyticsFingerprint),
+          payload: cached.analytics,
+        };
+      }
+      if (!instantRenderLoggedRef.current) {
+        auraPerfLog('instant_render', {
+          platformId: activePlatformId,
+          hasAccount: !!nextAccount,
+          tradeCount: nextTrades.length,
+          updatedAt: cached.updatedAt || null,
+        });
+        instantRenderLoggedRef.current = true;
+      }
+      return;
+    }
+    setRawTrades([]);
+    setAccount(null);
+    setAnalytics(emptyAnalytics(null));
+    rawTradesRef.current = [];
+    accountRef.current = null;
+    setLastUpdated(null);
+    setHistoryStale(false);
+    setAccountStale(false);
+    setHistoryDataSource(null);
+    setAccountDataSource(null);
+    setError(null);
   }, [activePlatformId]);
 
   const fetchData = useCallback(async (background = false) => {
@@ -163,10 +267,23 @@ export function AuraAnalysisProvider({ children }) {
       setError(null);
       if (!hasCachedData) setLoading(true);
       else setRefreshing(true);
+      if (hasCachedData) {
+        auraPerfLog('background_refresh_start', {
+          platformId: activePlatformId,
+          via: 'cached_bootstrap',
+        });
+      }
     } else {
       setRefreshing(true);
+      auraPerfLog('background_refresh_start', {
+        platformId: activePlatformId,
+        via: 'interval_or_revalidate',
+      });
     }
 
+    let gotAccount = false;
+    let gotTrades = false;
+    let usedLiveFallback = false;
     try {
       const historyArg =
         customRange?.from && customRange?.to
@@ -187,9 +304,6 @@ export function AuraAnalysisProvider({ children }) {
       const [accSettled, histSettled] = await Promise.allSettled([accP, histP]);
       if (devPerfFetch) auraAnalysisDevPerfPipelineStageMs('fetch.parallel', performance.now() - tParallel0);
 
-      let gotAccount = false;
-      let gotTrades = false;
-
       if (accSettled.status === 'fulfilled') {
         const accRes = accSettled.value;
         if (accRes?.data?.success || accRes?.data?.account) {
@@ -203,6 +317,7 @@ export function AuraAnalysisProvider({ children }) {
           setAccountDataSource(
             accRes.data.dataSource === 'cache' ? 'cache' : accRes.data.dataSource === 'live' ? 'live' : null
           );
+          if (accRes.data.dataSource === 'live') usedLiveFallback = true;
           gotAccount = true;
         }
       }
@@ -220,6 +335,7 @@ export function AuraAnalysisProvider({ children }) {
           const fromCache = !!payload?.stale || !!payload?.cacheServedStale;
           setHistoryStale(fromCache);
           setHistoryDataSource(payload?.dataSource === 'cache' ? 'cache' : payload?.dataSource === 'live' ? 'live' : null);
+          if (payload?.dataSource === 'live') usedLiveFallback = true;
           if (payload?.precomputedAnalytics && payload?.analyticsInputFingerprint) {
             pendingServerPrecomputedRef.current = {
               fingerprint: String(payload.analyticsInputFingerprint),
@@ -258,6 +374,14 @@ export function AuraAnalysisProvider({ children }) {
     } catch {
       if (!background) setError('Unable to load account data. Check your connection.');
     } finally {
+      if (usedLiveFallback) {
+        auraPerfLog('live_fallback_used', { platformId: activePlatformId });
+      }
+      auraPerfLog('background_refresh_complete', {
+        platformId: activePlatformId,
+        gotAccount,
+        gotTrades,
+      });
       isFetching.current = false;
       setLoading(false);
       setRefreshing(false);
@@ -303,7 +427,7 @@ export function AuraAnalysisProvider({ children }) {
   const filtersAtDefault =
     symbolFilter === 'ALL' && sessionFilter === 'ALL' && dirFilter === 'ALL';
 
-  const [analytics, setAnalytics] = useState(() => emptyAnalytics(null));
+  const [analytics, setAnalytics] = useState(() => initialLastGood?.analytics || emptyAnalytics(initialLastGood?.account || null));
   const [analyticsFlushTick, setAnalyticsFlushTick] = useState(0);
 
   useLayoutEffect(() => {
@@ -358,6 +482,29 @@ export function AuraAnalysisProvider({ children }) {
       cancelled = true;
     };
   }, [analyticsDataKeyRaw, filtersAtDefault, trades, account, symbolFilter, sessionFilter, dirFilter]);
+
+  useEffect(() => {
+    if (!activePlatformId || !filtersAtDefault) return;
+    const existing = readLastGoodDashboardState(activePlatformId) || {};
+    const nextAccount = account || existing.account || null;
+    const nextTrades = rawTrades.length ? rawTrades : (Array.isArray(existing.rawTrades) ? existing.rawTrades : []);
+    const nextAnalytics = analytics || existing.analytics || null;
+    if (!nextAccount && nextTrades.length === 0) return;
+    const nextFingerprint = auraAnalysisClosedDataKey(nextTrades, nextAccount);
+    const safeNext = {
+      v: LAST_GOOD_STATE_VERSION,
+      platformId: activePlatformId,
+      account: nextAccount,
+      rawTrades: nextTrades,
+      analytics: nextAnalytics,
+      analyticsFingerprint: nextFingerprint,
+      analyticsEngineVersion: LAST_GOOD_ENGINE_VERSION,
+      updatedAt: new Date().toISOString(),
+      accountUpdatedAt: nextAccount ? new Date().toISOString() : existing.accountUpdatedAt || null,
+      historyUpdatedAt: nextTrades.length ? new Date().toISOString() : existing.historyUpdatedAt || null,
+    };
+    writeLastGoodDashboardState(activePlatformId, safeNext);
+  }, [activePlatformId, filtersAtDefault, account, rawTrades, analytics]);
 
   const lastUpdatedStr = useMemo(() => {
     if (!lastUpdated) return null;
