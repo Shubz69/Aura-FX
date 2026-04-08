@@ -12,6 +12,13 @@ import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import '../../styles/trader-deck/MarketDecoder.css';
 
 const QUICK = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD', 'SPY', 'USDJPY'];
+const DECODER_SYMBOL_UNIVERSE = [
+  'EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'NZDUSD', 'USDCAD', 'USDCHF', 'EURJPY', 'GBPJPY', 'EURGBP',
+  'XAUUSD', 'XAGUSD', 'USOIL', 'UKOIL', 'XNGUSD',
+  'BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'ADAUSD',
+  'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'TLT',
+  'US500', 'NAS100', 'US30', 'DXY', 'VIX',
+];
 const LIVE_POLL_MS = Math.max(15000, parseInt(process.env.REACT_APP_MARKET_DECODER_POLL_MS || '30000', 10) || 30000);
 
 function formatGeneratedAt(iso) {
@@ -246,24 +253,20 @@ export default function MarketDecoderView({ embedded }) {
 
   const exportToTraderLab = useCallback(() => {
     if (!brief) return;
-    const briefLight = {
-      header: brief?.header || {},
-      meta: brief?.meta || {},
-      instantRead: brief?.instantRead || {},
-      finalOutput: brief?.finalOutput || {},
-      whatMattersNow: Array.isArray(brief?.whatMattersNow) ? brief.whatMattersNow : [],
-      executionGuidance: brief?.executionGuidance || {},
-    };
+    const symbol = String(activeSymbol || brief?.header?.asset || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     const payload = {
-      version: 3,
+      version: 4,
       exportedAt: new Date().toISOString(),
-      symbol: activeSymbol || brief?.header?.asset,
+      symbol,
+      decodedSymbol: symbol,
+      source: 'market_decoder',
+      symbolUniverse: DECODER_SYMBOL_UNIVERSE,
       summary: {
         posture: brief?.finalOutput?.currentPosture || null,
         bias: brief?.instantRead?.bias || null,
         conviction: brief?.instantRead?.conviction || null,
       },
-      brief: briefLight,
+      brief, // Keep full decoded brief so Trader Lab receives the exact decoded context.
     };
     try {
       sessionStorage.setItem(MARKET_DECODER_LAB_HANDOFF_KEY, JSON.stringify(payload));

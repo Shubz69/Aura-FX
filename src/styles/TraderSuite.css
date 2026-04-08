@@ -2145,6 +2145,90 @@
   z-index: 1;
 }
 
+.journal-page .tlab-card--saved-labs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.journal-page .tlab-saved-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.journal-page .tlab-saved-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(234, 169, 96, 0.35);
+  color: rgba(255, 220, 168, 0.95);
+  background: rgba(234, 169, 96, 0.12);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.journal-page .tlab-saved-empty {
+  margin: 6px 0 0;
+  color: var(--text-dim);
+  font-size: 0.74rem;
+}
+
+.journal-page .tlab-saved-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.journal-page .tlab-saved-item {
+  border: 1px solid rgba(140, 175, 255, 0.18);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(245, 248, 255, 0.92);
+  border-radius: 10px;
+  padding: 8px 10px;
+  text-align: left;
+  display: grid;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.journal-page .tlab-saved-item:hover {
+  border-color: rgba(234, 169, 96, 0.4);
+  background: rgba(234, 169, 96, 0.1);
+}
+
+.journal-page .tlab-saved-item--active {
+  border-color: rgba(234, 169, 96, 0.55);
+  background: rgba(234, 169, 96, 0.14);
+}
+
+.journal-page .tlab-saved-item__date {
+  font-size: 0.69rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.journal-page .tlab-saved-item__setup {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.journal-page .tlab-saved-item__symbol {
+  font-size: 0.7rem;
+  color: rgba(212, 175, 55, 0.9);
+}
+
 .journal-page .tlab-level-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

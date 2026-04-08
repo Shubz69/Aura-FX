@@ -15,6 +15,7 @@ export default function TradingViewChartPanel({
   studies = [],
   height = 430,
   className = 'trader-suite-chart-frame',
+  suppressLoadingText = false,
 }) {
   const [engine, setEngine] = useState('checking'); // checking | cl | widget
 
@@ -45,7 +46,7 @@ export default function TradingViewChartPanel({
           fontSize: 14,
         }}
       >
-        Loading chart…
+        {suppressLoadingText ? '' : 'Loading chart…'}
       </div>
     );
   }

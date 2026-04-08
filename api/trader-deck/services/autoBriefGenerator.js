@@ -1716,18 +1716,54 @@ function toSqlDateYmd(date) {
 async function reserveRun(runKey, period, date) {
   const briefDate = toSqlDateYmd(date);
   if (!briefDate) return false;
+  const RUN_STALE_MINUTES = 45;
 
   try {
     const [existing] = await executeQuery(
-      'SELECT status FROM trader_deck_brief_runs WHERE run_key = ? LIMIT 1',
+      `SELECT status, brief_id, updated_at
+       FROM trader_deck_brief_runs
+       WHERE run_key = ?
+       LIMIT 1`,
       [runKey]
     );
     if (existing && existing[0]) {
-      const status = String(existing[0].status || '').toLowerCase();
+      const row = existing[0];
+      const status = String(row.status || '').toLowerCase();
+      const updatedAtMs = new Date(row.updated_at || 0).getTime();
+      const ageMs = Number.isFinite(updatedAtMs) ? Date.now() - updatedAtMs : Number.POSITIVE_INFINITY;
+      const isStaleStarted = status === 'started' && ageMs > RUN_STALE_MINUTES * 60 * 1000;
+      const briefId = Number(row.brief_id || 0);
+
+      if (status === 'success' && briefId > 0) {
+        // If a "success" lock points to a deleted/missing brief row, allow regeneration.
+        const [briefRows] = await executeQuery(
+          'SELECT id FROM trader_deck_briefs WHERE id = ? LIMIT 1',
+          [briefId]
+        );
+        if (!briefRows?.[0]?.id) {
+          await executeQuery(
+            `UPDATE trader_deck_brief_runs
+             SET status = 'started', brief_id = NULL, error_message = 'recovered_missing_brief_row', updated_at = CURRENT_TIMESTAMP
+             WHERE run_key = ?`,
+            [runKey]
+          );
+          return true;
+        }
+      }
+
       if (status === 'failed') {
         await executeQuery(
           `UPDATE trader_deck_brief_runs
            SET status = 'started', error_message = NULL, updated_at = CURRENT_TIMESTAMP
+           WHERE run_key = ?`,
+          [runKey]
+        );
+        return true;
+      }
+      if (isStaleStarted) {
+        await executeQuery(
+          `UPDATE trader_deck_brief_runs
+           SET status = 'started', error_message = 'recovered_stale_started_lock', updated_at = CURRENT_TIMESTAMP
            WHERE run_key = ?`,
           [runKey]
         );

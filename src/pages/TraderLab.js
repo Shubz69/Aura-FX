@@ -19,6 +19,7 @@ import {
   safeNumber,
   toYmd,
 } from '../utils/traderSuite';
+import TradingViewChartPanel from '../components/TradingViewChartPanel';
 import {
   TRADER_LAB_HANDOFF_KEY,
   MARKET_DECODER_LAB_HANDOFF_KEY,
@@ -26,11 +27,39 @@ import {
 
 const INSTRUMENTS = [
   { label: 'XAUUSD', value: 'OANDA:XAUUSD' },
+  { label: 'XAGUSD', value: 'OANDA:XAGUSD' },
   { label: 'EURUSD', value: 'OANDA:EURUSD' },
   { label: 'GBPUSD', value: 'OANDA:GBPUSD' },
   { label: 'USDJPY', value: 'OANDA:USDJPY' },
+  { label: 'AUDUSD', value: 'OANDA:AUDUSD' },
+  { label: 'NZDUSD', value: 'OANDA:NZDUSD' },
+  { label: 'USDCAD', value: 'OANDA:USDCAD' },
+  { label: 'USDCHF', value: 'OANDA:USDCHF' },
+  { label: 'EURJPY', value: 'OANDA:EURJPY' },
+  { label: 'GBPJPY', value: 'OANDA:GBPJPY' },
+  { label: 'EURGBP', value: 'OANDA:EURGBP' },
+  { label: 'US500', value: 'OANDA:SPX500USD' },
+  { label: 'NAS100', value: 'OANDA:NAS100USD' },
+  { label: 'US30', value: 'OANDA:US30USD' },
+  { label: 'SPY', value: 'AMEX:SPY' },
+  { label: 'QQQ', value: 'NASDAQ:QQQ' },
+  { label: 'IWM', value: 'AMEX:IWM' },
+  { label: 'DIA', value: 'AMEX:DIA' },
+  { label: 'GLD', value: 'AMEX:GLD' },
+  { label: 'TLT', value: 'NASDAQ:TLT' },
+  { label: 'USOIL', value: 'TVC:USOIL' },
+  { label: 'UKOIL', value: 'TVC:UKOIL' },
+  { label: 'XNGUSD', value: 'TVC:NATGASUSD' },
   { label: 'BTCUSD', value: 'COINBASE:BTCUSD' },
+  { label: 'ETHUSD', value: 'COINBASE:ETHUSD' },
+  { label: 'SOLUSD', value: 'BINANCE:SOLUSDT' },
+  { label: 'XRPUSD', value: 'BINANCE:XRPUSDT' },
+  { label: 'ADAUSD', value: 'BINANCE:ADAUSDT' },
+  { label: 'DXY', value: 'TVC:DXY' },
+  { label: 'VIX', value: 'TVC:VIX' },
 ];
+const INSTRUMENT_VALUE_SET = new Set(INSTRUMENTS.map((x) => x.value));
+const INSTRUMENT_LABEL_TO_VALUE = new Map(INSTRUMENTS.map((x) => [x.label, x.value]));
 
 const CHART_INTERVALS = [
   { label: '15m', value: '15' },
@@ -148,6 +177,33 @@ function sentimentPillClass(s) {
   return 'tlab-geo-pill tlab-geo-pill--mid';
 }
 
+function parseLevel(value) {
+  if (value == null) return null;
+  const m = String(value).match(/-?\d+(?:\.\d+)?/);
+  if (!m) return null;
+  const n = Number(m[0]);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normalizeDecodedSymbol(value) {
+  return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+function chartSymbolFromDecoded(decodedSymbol) {
+  const s = normalizeDecodedSymbol(decodedSymbol);
+  if (!s) return DEFAULT_FORM.chartSymbol;
+  if (INSTRUMENT_LABEL_TO_VALUE.has(s)) return INSTRUMENT_LABEL_TO_VALUE.get(s);
+  if (/^[A-Z]{6}$/.test(s)) return `OANDA:${s}`;
+  return s;
+}
+
+function displaySymbolFromChartSymbol(chartSymbol) {
+  const raw = String(chartSymbol || '');
+  if (!raw) return '—';
+  const token = raw.includes(':') ? raw.split(':')[1] : raw;
+  return token || raw;
+}
+
 function BiasPill({ bias }) {
   const b = String(bias || '').toLowerCase();
   let cls = 'tlab-pill-bias tlab-pill-bias--neutral';
@@ -161,6 +217,7 @@ export default function TraderLab() {
   const { user } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [playbookSetups, setPlaybookSetups] = useState(PLAYBOOK_SETUP_OPTIONS);
+  const [instrumentOptions, setInstrumentOptions] = useState(INSTRUMENTS);
   const [activeId, setActiveId] = useState(null);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [loading, setLoading] = useState(true);
@@ -232,14 +289,38 @@ export default function TraderLab() {
     }
     if (!parsed?.brief) return;
     const brief = parsed.brief || {};
-    const symbol = String(parsed.symbol || brief?.header?.asset || '').toUpperCase();
+    const symbol = normalizeDecodedSymbol(parsed.decodedSymbol || parsed.symbol || brief?.header?.asset || '');
+    const symbolUniverse = Array.isArray(parsed?.symbolUniverse)
+      ? parsed.symbolUniverse.map((x) => normalizeDecodedSymbol(x)).filter(Boolean)
+      : [];
+    if (symbolUniverse.length > 0) {
+      const merged = [...INSTRUMENTS];
+      const seen = new Set(merged.map((x) => x.label));
+      symbolUniverse.forEach((sym) => {
+        if (seen.has(sym)) return;
+        seen.add(sym);
+        merged.push({ label: sym, value: chartSymbolFromDecoded(sym) });
+      });
+      setInstrumentOptions(merged);
+    }
+    const bias = String(brief?.instantRead?.bias || '').toLowerCase();
+    const resistance = parseLevel(brief?.keyLevels?.keyLevelsDisplay?.resistance1);
+    const support = parseLevel(brief?.keyLevels?.keyLevelsDisplay?.support1);
+    const spot = parseLevel(brief?.header?.price);
+    const entry = spot ?? DEFAULT_FORM.entryPrice;
+    const isBear = bias.includes('bear');
+    const stop = isBear ? (resistance ?? DEFAULT_FORM.stopLoss) : (support ?? DEFAULT_FORM.stopLoss);
+    const target = isBear ? (support ?? DEFAULT_FORM.targetPrice) : (resistance ?? DEFAULT_FORM.targetPrice);
     const mapped = normalizeSession({
       ...DEFAULT_FORM,
       sessionDate: toYmd(),
       setupName: symbol ? `Market Decoder · ${symbol}` : DEFAULT_FORM.setupName,
-      chartSymbol: symbol ? `OANDA:${symbol.replace('/', '')}` : DEFAULT_FORM.chartSymbol,
+      chartSymbol: chartSymbolFromDecoded(symbol),
       marketBias: brief?.instantRead?.bias || DEFAULT_FORM.marketBias,
       marketState: brief?.finalOutput?.currentPosture || DEFAULT_FORM.marketState,
+      entryPrice: entry,
+      stopLoss: stop,
+      targetPrice: target,
       sessionGoal:
         brief?.finalOutput?.currentPosture
         || brief?.finalOutput?.postureSubtitle
@@ -262,8 +343,10 @@ export default function TraderLab() {
         symbol,
         exportedAt: parsed.exportedAt || new Date().toISOString(),
         source: 'market_decoder',
+        handoffVersion: parsed.version || null,
         generatedAt: brief?.meta?.generatedAt || null,
         posture: brief?.finalOutput?.currentPosture || null,
+        brief,
       },
     });
     decoderImportAppliedRef.current = true;
@@ -336,6 +419,16 @@ export default function TraderLab() {
   const geoRows = useMemo(() => parseGeopoliticalBlock(form.todaysFocus), [form.todaysFocus]);
   const driverLines = useMemo(() => linesToList(form.whatDoISee), [form.whatDoISee]);
   const fundamentalLines = useMemo(() => linesToList(form.whyValid), [form.whyValid]);
+  const savedLabRows = useMemo(() => {
+    return [...sessions]
+      .sort((a, b) => String(b.sessionDate || '').localeCompare(String(a.sessionDate || '')))
+      .map((session) => ({
+        id: session.id,
+        date: session.sessionDate || '—',
+        setupName: session.setupName || 'Untitled lab',
+        symbol: displaySymbolFromChartSymbol(session.chartSymbol),
+      }));
+  }, [sessions]);
 
   const newsRiskLabel = form.emotionalIntensity >= 55 ? 'Moderate' : 'Low';
   const volLabel =
@@ -392,6 +485,13 @@ export default function TraderLab() {
     setActiveId(null);
     setForm({ ...DEFAULT_FORM, sessionDate: toYmd() });
     setLastSavedAt(null);
+  };
+
+  const openSavedLab = (sessionId) => {
+    const session = sessions.find((s) => s.id === sessionId);
+    if (!session) return;
+    setActiveId(session.id);
+    setForm(normalizeSession(session));
   };
 
   const readyToExecute = validator.passed && rrOk;
@@ -469,12 +569,6 @@ export default function TraderLab() {
           <button type="button" className="trader-suite-btn" onClick={createFreshSession}>
             New session
           </button>
-          <Link to="/trader-deck/trade-validator/trader-playbook" className="trader-suite-btn">
-            Playbook
-          </Link>
-          <Link to="/aura-analysis/dashboard/trader-replay" className="trader-suite-btn">
-            Replay
-          </Link>
         </>
       }
     >
@@ -668,7 +762,7 @@ export default function TraderLab() {
                   onChange={(e) => updateField('chartSymbol', e.target.value)}
                   aria-label="Instrument"
                 >
-                  {INSTRUMENTS.map((opt) => (
+                  {instrumentOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
@@ -685,12 +779,14 @@ export default function TraderLab() {
                   ))}
                 </div>
               </div>
-              <div className="tlab-chart-host tlab-chart-host--placeholder">
-                <div className="tlab-chart-placeholder" aria-label="Chart preview (TradingView embed coming soon)">
-                  <span className="tlab-chart-placeholder__badge">Chart</span>
-                  <p className="tlab-chart-placeholder__hint">TradingView widget will load here</p>
-                  <div className="tlab-chart-placeholder__mockline" aria-hidden />
-                </div>
+              <div className="tlab-chart-host">
+                <TradingViewChartPanel
+                  symbol={form.chartSymbol}
+                  interval={chartInterval}
+                  height={320}
+                  className="trader-suite-chart-frame"
+                  suppressLoadingText
+                />
               </div>
               <div className="tlab-level-strip">
                 <div>
@@ -796,7 +892,7 @@ export default function TraderLab() {
               <div className="tlab-field">
                 <label>Instrument</label>
                 <select className="tlab-select" value={form.chartSymbol} onChange={(e) => updateField('chartSymbol', e.target.value)}>
-                  {INSTRUMENTS.map((opt) => (
+                  {instrumentOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
@@ -918,6 +1014,31 @@ export default function TraderLab() {
                   onChange={(e) => updateField('maxTradesAllowed', safeNumber(e.target.value, DEFAULT_FORM.maxTradesAllowed))}
                 />
               </div>
+            </div>
+
+            <div className="tlab-card tlab-card--gold tlab-card--saved-labs">
+              <div className="tlab-saved-head">
+                <h3 className="tlab-card__title">Saved labs</h3>
+                <span className="tlab-saved-count">{savedLabRows.length}</span>
+              </div>
+              {!savedLabRows.length ? (
+                <p className="tlab-saved-empty">No saved labs yet. Save a session to build your archive.</p>
+              ) : (
+                <div className="tlab-saved-list" role="list" aria-label="Saved Trader Lab sessions">
+                  {savedLabRows.map((row) => (
+                    <button
+                      key={row.id}
+                      type="button"
+                      className={`tlab-saved-item${activeId === row.id ? ' tlab-saved-item--active' : ''}`}
+                      onClick={() => openSavedLab(row.id)}
+                    >
+                      <span className="tlab-saved-item__date">{row.date}</span>
+                      <span className="tlab-saved-item__setup">{row.setupName}</span>
+                      <span className="tlab-saved-item__symbol">{row.symbol}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
           </aside>
