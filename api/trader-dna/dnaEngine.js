@@ -284,7 +284,48 @@ function computeExtendedSignals(w, decided) {
 /**
  * Full DNA profile for persistence + UI.
  */
-function buildDnaPayload(trades, journalRows, previousPayload, windowEndDate) {
+function buildCrossPlatformSignals(sourceSummaries = {}, sourceHealth = {}) {
+  const replay = sourceSummaries.replay || {};
+  const playbook = sourceSummaries.playbook || {};
+  const traderLab = sourceSummaries.traderLab || {};
+  const backtesting = sourceSummaries.backtesting || {};
+  const tdj = sourceSummaries.traderDeckJournal || {};
+
+  const priorities = [];
+  if ((replay.completedSessions || 0) >= 3 && (replay.completedWithLessons || 0) < Math.ceil((replay.completedSessions || 0) * 0.6)) {
+    priorities.push('Replay close rate is fine, but written lessons are thin — complete lesson fields on each finished replay.');
+  }
+  if ((playbook.reviewNotesCount || 0) < 2 && (playbook.setupCount || 0) > 0) {
+    priorities.push('Playbook exists but refinement notes are sparse — convert recurring misses into explicit rule updates.');
+  }
+  if ((traderLab.sessionCount || 0) >= 3 && traderLab.avgConfidence != null && Number(traderLab.avgConfidence) >= 75 && (tdj.closedTaggedTradeCount || 0) < 3) {
+    priorities.push('Trader Lab conviction is high, but tagged closes are low — close and classify more executions to validate conviction.');
+  }
+  if ((backtesting.tradeCount || 0) >= 10 && backtesting.winRatePct != null && Number(backtesting.winRatePct) < 45) {
+    priorities.push('Backtesting win rate is soft — tighten pre-trade filters before promoting those conditions to live risk.');
+  }
+  if ((tdj.taggedTradeCount || 0) >= 8 && (tdj.closedTaggedTradeCount || 0) / Math.max(1, tdj.taggedTradeCount) < 0.7) {
+    priorities.push('A meaningful share of tagged trades are not closed outcomes yet — outcome hygiene is suppressing reliable edge reads.');
+  }
+
+  const sourceCoverage = {
+    validator: { ok: true, used: true },
+    journal: { ok: true, used: true },
+    replay: { ok: Boolean(sourceHealth.replay?.ok), used: Boolean(sourceHealth.replay?.ok) },
+    playbook: { ok: Boolean(sourceHealth.playbook?.ok), used: Boolean(sourceHealth.playbook?.ok) },
+    traderLab: { ok: Boolean(sourceHealth.traderLab?.ok), used: Boolean(sourceHealth.traderLab?.ok) },
+    backtesting: { ok: Boolean(sourceHealth.backtesting?.ok), used: Boolean(sourceHealth.backtesting?.ok) },
+    traderDeckJournal: { ok: Boolean(sourceHealth.traderDeckJournal?.ok), used: Boolean(sourceHealth.traderDeckJournal?.ok) },
+  };
+
+  return {
+    sourceCoverage,
+    sourceSummaries,
+    priorities: priorities.slice(0, 3),
+  };
+}
+
+function buildDnaPayload(trades, journalRows, previousPayload, windowEndDate, externalData = {}) {
   const w = filterWindowTrades(trades, ANALYSIS_DAYS);
   const closed = closedTrades(w);
   const decided = w.filter((t) => t.result === 'win' || t.result === 'loss');
@@ -629,6 +670,13 @@ function buildDnaPayload(trades, journalRows, previousPayload, windowEndDate) {
   const windowStart = w.length ? toDateKey(w[0].createdAt) : null;
   const windowEnd = windowEndDate || (w.length ? toDateKey(w[w.length - 1].createdAt) : null);
 
+  const crossPlatform = buildCrossPlatformSignals(
+    externalData.sourceSummaries || {},
+    externalData.sourceHealth || {}
+  );
+
+  const mergedImprovementPriority = crossPlatform.priorities[0] || actionPlan.topPriority;
+
   return {
     version: 1,
     generatedAt: new Date().toISOString(),
@@ -655,7 +703,7 @@ function buildDnaPayload(trades, journalRows, previousPayload, windowEndDate) {
       discipline: ratingLabel(disciplineScore),
       behavioural: ratingLabel(behaviourScore),
     },
-    improvementPriority: actionPlan.topPriority,
+    improvementPriority: mergedImprovementPriority,
     strengths,
     weaknesses,
     patternRecognition: patterns,
@@ -665,6 +713,7 @@ function buildDnaPayload(trades, journalRows, previousPayload, windowEndDate) {
     sessionInstrumentInsights,
     aiInterpretation: aiNarrative.paragraphs,
     actionPlan,
+    crossPlatform,
     evolution,
     alerts,
     behaviouralMetrics: {

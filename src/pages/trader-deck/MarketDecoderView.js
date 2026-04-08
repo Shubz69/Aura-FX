@@ -250,9 +250,14 @@ export default function MarketDecoderView({ embedded }) {
       sessionStorage.setItem(
         MARKET_DECODER_LAB_HANDOFF_KEY,
         JSON.stringify({
-          version: 1,
+          version: 2,
           exportedAt: new Date().toISOString(),
           symbol: activeSymbol || brief?.header?.asset,
+          summary: {
+            posture: brief?.finalOutput?.currentPosture || null,
+            bias: brief?.instantRead?.bias || null,
+            conviction: brief?.instantRead?.conviction || null,
+          },
           brief,
         })
       );

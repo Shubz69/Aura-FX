@@ -87,6 +87,137 @@ async function loadJournal(userId) {
   return rows || [];
 }
 
+async function loadReplaySummary(userId) {
+  const [rows] = await executeQuery(
+    `SELECT replayStatus, learningExample, lessonSummary, updatedAt
+       FROM trader_replay_sessions
+      WHERE userId = ? AND updatedAt >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 120 DAY)`,
+    [userId]
+  );
+  const list = rows || [];
+  const completed = list.filter((r) => String(r.replayStatus || '').toLowerCase() === 'completed');
+  const learningTagged = list.filter((r) => Number(r.learningExample) === 1).length;
+  const withLessons = completed.filter((r) => String(r.lessonSummary || '').trim().length > 0).length;
+  return {
+    totalSessions: list.length,
+    completedSessions: completed.length,
+    learningTagged,
+    completedWithLessons: withLessons,
+  };
+}
+
+async function loadPlaybookSummary(userId) {
+  const [[setupsRow], [mTradesRow], [reviewNotesRow]] = await Promise.all([
+    executeQuery('SELECT COUNT(*) AS c FROM trader_playbook_setups WHERE userId = ?', [userId]).then((r) => r[0] || [{}]),
+    executeQuery(
+      `SELECT COUNT(*) AS c,
+              SUM(CASE WHEN lower(COALESCE(decisionQuality,'')) IN ('good','very_good','excellent') THEN 1 ELSE 0 END) AS strong
+         FROM trader_playbook_m_trades
+        WHERE userId = ? AND createdAt >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 120 DAY)`,
+      [userId]
+    ).then((r) => r[0] || [{}]),
+    executeQuery(
+      'SELECT COUNT(*) AS c FROM trader_playbook_review_notes WHERE userId = ? AND createdAt >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 120 DAY)',
+      [userId]
+    ).then((r) => r[0] || [{}]),
+  ]);
+  return {
+    setupCount: Number(setupsRow?.c || 0),
+    missedTradesLogged: Number(mTradesRow?.c || 0),
+    strongDecisionsLogged: Number(mTradesRow?.strong || 0),
+    reviewNotesCount: Number(reviewNotesRow?.c || 0),
+  };
+}
+
+async function loadTraderLabSummary(userId) {
+  const [rows] = await executeQuery(
+    `SELECT confidence, auraConfidence, followedRules, resultR, updatedAt
+       FROM trader_lab_sessions
+      WHERE userId = ? AND updatedAt >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 120 DAY)`,
+    [userId]
+  );
+  const list = rows || [];
+  const confidenceVals = list
+    .map((r) => Number(r.confidence ?? r.auraConfidence))
+    .filter((x) => Number.isFinite(x));
+  const rulesFollowed = list.filter((r) => Number(r.followedRules) === 1).length;
+  const avgConfidence = confidenceVals.length
+    ? Math.round(confidenceVals.reduce((a, b) => a + b, 0) / confidenceVals.length)
+    : null;
+  return {
+    sessionCount: list.length,
+    avgConfidence,
+    rulesFollowedCount: rulesFollowed,
+  };
+}
+
+async function loadBacktestingSummary(userId) {
+  const [[sessionsRow], [tradesRow]] = await Promise.all([
+    executeQuery(
+      `SELECT COUNT(*) AS c,
+              SUM(CASE WHEN lower(COALESCE(status,'')) IN ('completed','complete') THEN 1 ELSE 0 END) AS completed
+         FROM backtest_sessions
+        WHERE userId = ? AND updatedAt >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 120 DAY)`,
+      [userId]
+    ).then((r) => r[0] || [{}]),
+    executeQuery(
+      `SELECT COUNT(*) AS c,
+              SUM(CASE WHEN lower(COALESCE(resultType,'')) = 'win' THEN 1 ELSE 0 END) AS wins
+         FROM backtest_trades
+        WHERE userId = ? AND updatedAt >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 120 DAY)`,
+      [userId]
+    ).then((r) => r[0] || [{}]),
+  ]);
+  const totalTrades = Number(tradesRow?.c || 0);
+  const wins = Number(tradesRow?.wins || 0);
+  return {
+    sessionCount: Number(sessionsRow?.c || 0),
+    completedSessionCount: Number(sessionsRow?.completed || 0),
+    tradeCount: totalTrades,
+    winRatePct: totalTrades > 0 ? Math.round((wins / totalTrades) * 1000) / 10 : null,
+  };
+}
+
+async function loadTraderDeckJournalSummary(userId) {
+  const [rows] = await executeQuery(
+    `SELECT result, created_at
+       FROM aura_analysis_trades
+      WHERE user_id = ? AND setup_tag_type = 'PLAYBOOK' AND created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 120 DAY)`,
+    [userId]
+  );
+  const list = rows || [];
+  const closed = list.filter((r) => ['win', 'loss', 'breakeven'].includes(String(r.result || '').toLowerCase())).length;
+  return {
+    taggedTradeCount: list.length,
+    closedTaggedTradeCount: closed,
+  };
+}
+
+async function loadExtendedSourceSummaries(userId) {
+  const sourceDefs = [
+    { key: 'replay', load: () => loadReplaySummary(userId) },
+    { key: 'playbook', load: () => loadPlaybookSummary(userId) },
+    { key: 'traderLab', load: () => loadTraderLabSummary(userId) },
+    { key: 'backtesting', load: () => loadBacktestingSummary(userId) },
+    { key: 'traderDeckJournal', load: () => loadTraderDeckJournalSummary(userId) },
+  ];
+  const settled = await Promise.allSettled(sourceDefs.map((s) => s.load()));
+  const summaries = {};
+  const health = {};
+  for (let i = 0; i < sourceDefs.length; i += 1) {
+    const key = sourceDefs[i].key;
+    const row = settled[i];
+    if (row.status === 'fulfilled') {
+      summaries[key] = row.value || {};
+      health[key] = { ok: true };
+    } else {
+      summaries[key] = {};
+      health[key] = { ok: false, message: 'Source unavailable in this environment.' };
+    }
+  }
+  return { summaries, health };
+}
+
 function formatRemaining(nextEligible) {
   const t = new Date(nextEligible).getTime();
   const now = Date.now();
@@ -147,7 +278,7 @@ module.exports = async (req, res) => {
     const entitled = await assertTraderDnaEntitlement(userId, res);
     if (!entitled) return;
     try {
-      const dataHealth = { tradesOk: true, journalOk: true, errors: [] };
+      const dataHealth = { tradesOk: true, journalOk: true, extendedSourcesOk: true, errors: [] };
 
       let trades = [];
       try {
@@ -170,6 +301,18 @@ module.exports = async (req, res) => {
         dataHealth.errors.push({
           source: 'journal',
           message: 'We could not load your journal entries. Psychology metrics may be incomplete.',
+        });
+      }
+
+      const { summaries: extendedSourceSummaries, health: extendedSourceHealth } = await loadExtendedSourceSummaries(userId);
+      const extendedFailures = Object.entries(extendedSourceHealth).filter(([, s]) => !s?.ok);
+      if (extendedFailures.length) {
+        dataHealth.extendedSourcesOk = false;
+        extendedFailures.forEach(([key]) => {
+          dataHealth.errors.push({
+            source: key,
+            message: `${key} data could not be loaded; DNA used remaining sources.`,
+          });
         });
       }
 
@@ -273,6 +416,8 @@ module.exports = async (req, res) => {
         progress,
         qualificationGaps,
         dataHealth,
+        extendedSourceHealth,
+        extendedSourceSummaries,
         dataLookbackDays,
         snapshotCorrupt,
         persistenceNote: 'Each successful synthesis is saved to your account for the active cycle.',
@@ -379,7 +524,17 @@ module.exports = async (req, res) => {
         }
       }
 
-      let payload = buildDnaPayload(trades, journal, previousPayload, new Date().toISOString());
+      const { summaries: extendedSourceSummaries, health: extendedSourceHealth } = await loadExtendedSourceSummaries(userId);
+      let payload = buildDnaPayload(
+        trades,
+        journal,
+        previousPayload,
+        new Date().toISOString(),
+        {
+          sourceSummaries: extendedSourceSummaries,
+          sourceHealth: extendedSourceHealth,
+        }
+      );
       try {
         payload = await enrichDnaPayloadWithPerplexity(payload);
       } catch (e) {

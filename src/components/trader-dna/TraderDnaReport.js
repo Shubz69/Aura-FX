@@ -133,6 +133,29 @@ export default function TraderDnaReport({ report, nextEligibleAt, cycleDays = 90
         )}
       </Section>
 
+      {(report.crossPlatform?.sourceCoverage || report.crossPlatform?.priorities?.length) && (
+        <Section title="Platform-wide signal coverage">
+          <div className="tdna-ratings-bar">
+            {Object.entries(report.crossPlatform?.sourceCoverage || {}).map(([k, v]) => (
+              <span key={k}>
+                {k}: {v?.ok ? 'Connected' : 'Unavailable'}
+              </span>
+            ))}
+          </div>
+          {(report.crossPlatform?.priorities || []).length ? (
+            <ul className="tdna-list tdna-list--warn">
+              {(report.crossPlatform?.priorities || []).map((line, i) => (
+                <li key={i}>{line}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="tdna-priority">
+              Cross-platform sources are connected; keep logging consistently so these signals remain measurable.
+            </p>
+          )}
+        </Section>
+      )}
+
       {report.aiPsychologyLayer && (
         <Section title="Psychological mirror (AI)" className="tdna-sec--psych-ai">
           <p className="tdna-harsh-lead">{report.aiPsychologyLayer.harshTruthSummary}</p>

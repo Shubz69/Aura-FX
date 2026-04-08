@@ -19,7 +19,10 @@ import {
   safeNumber,
   toYmd,
 } from '../utils/traderSuite';
-import { TRADER_LAB_HANDOFF_KEY } from '../lib/aura-analysis/validator/validatorChecklistStorage';
+import {
+  TRADER_LAB_HANDOFF_KEY,
+  MARKET_DECODER_LAB_HANDOFF_KEY,
+} from '../lib/aura-analysis/validator/validatorChecklistStorage';
 
 const INSTRUMENTS = [
   { label: 'XAUUSD', value: 'OANDA:XAUUSD' },
@@ -164,6 +167,7 @@ export default function TraderLab() {
   const [saving, setSaving] = useState(false);
   const [chartInterval, setChartInterval] = useState('60');
   const [lastSavedAt, setLastSavedAt] = useState(null);
+  const decoderImportAppliedRef = React.useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -203,6 +207,70 @@ export default function TraderLab() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (loading || decoderImportAppliedRef.current) return;
+    let raw = '';
+    try {
+      raw = sessionStorage.getItem(MARKET_DECODER_LAB_HANDOFF_KEY) || '';
+    } catch {
+      raw = '';
+    }
+    if (!raw) return;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = null;
+    }
+    if (!parsed?.brief) return;
+    const brief = parsed.brief || {};
+    const symbol = String(parsed.symbol || brief?.header?.asset || '').toUpperCase();
+    const mapped = normalizeSession({
+      ...DEFAULT_FORM,
+      sessionDate: toYmd(),
+      setupName: symbol ? `Market Decoder · ${symbol}` : DEFAULT_FORM.setupName,
+      chartSymbol: symbol ? `OANDA:${symbol.replace('/', '')}` : DEFAULT_FORM.chartSymbol,
+      marketBias: brief?.instantRead?.bias || DEFAULT_FORM.marketBias,
+      marketState: brief?.finalOutput?.currentPosture || DEFAULT_FORM.marketState,
+      sessionGoal:
+        brief?.finalOutput?.currentPosture
+        || brief?.finalOutput?.postureSubtitle
+        || DEFAULT_FORM.sessionGoal,
+      whatDoISee: Array.isArray(brief?.whatMattersNow)
+        ? brief.whatMattersNow
+          .map((x) => `${x?.label || 'Signal'}: ${x?.text || ''}`.trim())
+          .filter(Boolean)
+          .join('\n')
+        : DEFAULT_FORM.whatDoISee,
+      entryConfirmation:
+        brief?.executionGuidance?.entryCondition
+        || brief?.executionGuidance?.preferredDirection
+        || DEFAULT_FORM.entryConfirmation,
+      whyValid:
+        brief?.finalOutput?.whyThisPosture
+        || brief?.executionGuidance?.invalidation
+        || DEFAULT_FORM.whyValid,
+      decoderContext: {
+        symbol,
+        exportedAt: parsed.exportedAt || new Date().toISOString(),
+        source: 'market_decoder',
+        generatedAt: brief?.meta?.generatedAt || null,
+        posture: brief?.finalOutput?.currentPosture || null,
+      },
+    });
+    decoderImportAppliedRef.current = true;
+    setActiveId(null);
+    setForm(mapped);
+    writeLocalDraft(mapped);
+    setLastSavedAt(null);
+    try {
+      sessionStorage.removeItem(MARKET_DECODER_LAB_HANDOFF_KEY);
+    } catch {
+      // ignore
+    }
+    toast.success('Market Decoder context imported into Trader Lab. Save to keep it.');
+  }, [loading]);
 
   const rr = useMemo(
     () => calculateRiskReward(form.entryPrice, form.stopLoss, form.targetPrice),

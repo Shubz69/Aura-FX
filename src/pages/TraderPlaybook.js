@@ -85,6 +85,11 @@ function fmtPF(x) {
   return x >= 10 ? `${x.toFixed(1)}` : `${Math.round(x * 100) / 100}`;
 }
 
+function fmtFixed(x, digits = 2) {
+  const n = Number(x);
+  return Number.isFinite(n) ? n.toFixed(digits) : '—';
+}
+
 function fmtDt(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -908,7 +913,7 @@ export default function TraderPlaybook() {
                     <MetricLabel metricId={MID.EXPECTANCY_DOLLAR_VALIDATOR_PLAYBOOK}>Expectancy $ (validator)</MetricLabel>
                     {vSum.count > 0 ? <span className="tp-metric-sample"> · n={vSum.count}</span> : null}
                   </span>
-                  <strong>{vSum.expectancy != null ? vSum.expectancy.toFixed(2) : '—'}</strong>
+                  <strong>{fmtFixed(vSum.expectancy, 2)}</strong>
                 </div>
               </div>
               {latestReview ? (
@@ -1350,34 +1355,34 @@ export default function TraderPlaybook() {
                     <span>
                       <MetricLabel metricId={MID.EXPECTANCY_DOLLAR_VALIDATOR_PLAYBOOK}>Expectancy $ (validator)</MetricLabel>
                     </span>
-                    <strong>{vSum.expectancy != null ? vSum.expectancy.toFixed(2) : '—'}</strong>
+                    <strong>{fmtFixed(vSum.expectancy, 2)}</strong>
                     {vSum.count > 0 ? <small className="tp-stat-secondary">n = {vSum.count} closes</small> : null}
                   </div>
                   <div className="tp-stat-card">
                     <span>
                       <MetricLabel metricId={MID.AVG_R_VALIDATOR_PLAYBOOK}>Avg R (validator)</MetricLabel>
                     </span>
-                    <strong>{vSum.avgR != null ? vSum.avgR.toFixed(2) : '—'}</strong>
+                    <strong>{fmtFixed(vSum.avgR, 2)}</strong>
                   </div>
                   <div className="tp-stat-card">
                     <span>
                       <MetricLabel metricId={MID.EXPECTANCY_R_JOURNAL_PLAYBOOK}>Expectancy (R · journal)</MetricLabel>
                     </span>
-                    <strong>{jSum.expectancyR != null ? jSum.expectancyR.toFixed(2) : '—'}</strong>
+                    <strong>{fmtFixed(jSum.expectancyR, 2)}</strong>
                     {jSum.count > 0 ? <small className="tp-stat-secondary">Based on {jSum.count} journal rows</small> : null}
                   </div>
                   <div className="tp-stat-card">
                     <span>
                       <MetricLabel metricId={MID.NET_PNL_VALIDATOR_PLAYBOOK}>Net $ (validator)</MetricLabel>
                     </span>
-                    <strong>{vSum.totalPnl != null ? vSum.totalPnl.toFixed(2) : '—'}</strong>
+                    <strong>{fmtFixed(vSum.totalPnl, 2)}</strong>
                   </div>
                   <div className="tp-stat-card">
                     <span>
                       <MetricLabel metricId={MID.BEST_WORST_VALIDATOR_PLAYBOOK}>Best / worst $ (validator)</MetricLabel>
                     </span>
                     <strong>
-                      {vSum.best != null ? vSum.best.toFixed(2) : '—'} / {vSum.worst != null ? vSum.worst.toFixed(2) : '—'}
+                      {fmtFixed(vSum.best, 2)} / {fmtFixed(vSum.worst, 2)}
                     </strong>
                   </div>
                 </div>
