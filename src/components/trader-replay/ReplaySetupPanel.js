@@ -373,6 +373,8 @@ export default function ReplaySetupPanel({
     const lessonSnip = (s.lessonSummary || s.insight || '').slice(0, 72);
     const exLabel = formatLearningExampleLabel(s.learningExample, s.learningExampleKind);
     const hints = getReplayLibraryRowHints(s, identitySummary);
+    const augment = getLibraryMentorRowAugment(s, identitySummary);
+    const rowChips = [...(hints?.chips || []), ...(augment?.chips || [])];
     const setupHint =
       s.replayStatus === REPLAY_STATUSES.completed && (Number(s.entryTiming) || 0) >= 7
         ? 'Setup read: strong self-rated timing'
