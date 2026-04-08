@@ -1,12 +1,16 @@
 import React, { memo } from 'react';
 import { useAuraAnalysisData, useAuraAnalysisMetrics } from '../../../context/AuraAnalysisContext';
-import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
+import { fmtPnl, fmtPct, fmtNum, fmtDuration } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import { AuraDrawdownAreaChart, AuraPnlHistogram } from '../../../components/aura-analysis/AuraPerformanceCharts';
 import { useAuraPerfSection, useIdleDeferredReady } from '../auraTabPerf';
 import '../../../styles/aura-analysis/AuraShared.css';
 
-function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
+function pnlColor(v) {
+  if (v > 0) return '#f8c37d';
+  if (v < 0) return '#9a8f84';
+  return 'rgba(255,255,255,0.65)';
+}
 
 function ScoreRing({ score, color, size = 110 }) {
   const r = size / 2 - 7;
@@ -144,10 +148,28 @@ const RiskLabContent = memo(function RiskLabContent() {
             { label: 'Max Drawdown %', value: fmtPct(a.maxDrawdownPct), color: a.maxDrawdownPct > 20 ? '#9a8f84' : '#c9a05c' },
             { label: 'Current DD $', value: '-$' + fmtNum(a.currentDrawdown), color: '#9a8f84' },
             { label: 'Current DD %', value: fmtPct(a.currentDrawdownPct), color: a.currentDrawdownPct > 10 ? '#9a8f84' : '#f8c37d' },
-          ].map(({ label, value, color }) => (
-            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-              <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>{label}</span>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>{value}</span>
+            { label: 'Net P/L (range)', value: fmtPnl(a.totalPnl), color: pnlColor(a.totalPnl) },
+            { label: 'Total return %', value: a.startBalance > 0 ? fmtPct(a.totalReturnPct) : '—', color: a.totalReturnPct >= 0 ? '#f8c37d' : '#9a8f84' },
+            {
+              label: 'Start → current bal.',
+              value: a.startBalance > 0 ? `$${fmtNum(a.startBalance)} → $${fmtNum(a.currentBalance)}` : '—',
+              color: 'rgba(255,255,255,0.75)',
+            },
+            { label: 'Return / max DD %', value: a.returnToMaxDrawdown > 0 ? fmtNum(a.returnToMaxDrawdown, 2) : '—', color: 'rgba(255,255,255,0.65)', sub: 'Efficiency' },
+            { label: 'Recovery factor', value: a.recoveryFactor > 0 && a.recoveryFactor < 900 ? fmtNum(a.recoveryFactor, 2) : a.recoveryFactor >= 900 ? '∞' : '—', color: a.recoveryFactor >= 2 ? '#f8c37d' : 'rgba(255,255,255,0.65)', sub: 'Net ÷ max DD $' },
+            { label: 'Worst single trade', value: a.totalTrades > 0 ? fmtPnl(a.worstTrade) : '—', color: pnlColor(a.worstTrade) },
+            { label: 'Best single trade', value: a.totalTrades > 0 ? fmtPnl(a.bestTrade) : '—', color: pnlColor(a.bestTrade) },
+            { label: 'Sharpe (trade)', value: a.sharpeLike !== 0 ? fmtNum(a.sharpeLike, 2) : '—', color: 'rgba(255,255,255,0.65)', sub: 'Mean ÷ σ P/L' },
+            { label: 'Sortino (trade)', value: a.sortinoLike !== 0 ? fmtNum(a.sortinoLike, 2) : '—', color: 'rgba(255,255,255,0.65)', sub: 'Downside σ' },
+            { label: 'Trade P/L σ', value: a.pnlStdDev > 0 ? fmtNum(a.pnlStdDev, 2) : '—', color: 'rgba(255,255,255,0.65)', sub: 'Per close' },
+            { label: 'CAGR (est.)', value: a.periodYears > 0.05 ? fmtPct(a.cagrPct) : '—', color: a.cagrPct >= 0 ? '#c9a05c' : '#9a8f84', sub: 'From span' },
+          ].map(({ label, value, color, sub }) => (
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.35 }}>
+                {label}
+                {sub && <span style={{ display: 'block', fontSize: '0.58rem', color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>{sub}</span>}
+              </span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', textAlign: 'right', flexShrink: 0 }}>{value}</span>
             </div>
           ))}
         </div>
@@ -160,10 +182,25 @@ const RiskLabContent = memo(function RiskLabContent() {
             { label: 'Current Streak', value: `${a.currentStreak} ${a.streakType}`, color: a.streakType === 'win' ? '#f8c37d' : a.streakType === 'loss' ? '#9a8f84' : 'rgba(255,255,255,0.4)' },
             { label: 'Gross Profit', value: '+$' + fmtNum(a.grossProfit), color: '#f8c37d' },
             { label: 'Gross Loss', value: '-$' + fmtNum(a.grossLoss), color: '#9a8f84' },
-          ].map(({ label, value, color }) => (
-            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-              <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>{label}</span>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>{value}</span>
+            { label: 'Win rate', value: fmtPct(a.winRate), color: a.winRate >= 50 ? '#f8c37d' : '#9a8f84', sub: `${a.wins}W / ${a.losses}L` },
+            { label: 'Loss rate', value: fmtPct(a.lossRate), color: 'rgba(255,255,255,0.65)', sub: 'Of closes' },
+            { label: 'Profit factor', value: a.profitFactor > 0 ? fmtNum(a.profitFactor, 2) : '—', color: a.profitFactor >= 1.2 ? '#f8c37d' : a.profitFactor >= 1 ? '#c9a05c' : '#9a8f84' },
+            { label: 'Expectancy / trade', value: a.expectancy !== 0 ? fmtPnl(a.expectancy) : '—', color: pnlColor(a.expectancy) },
+            { label: 'Payoff (avg W/L)', value: a.payoffRatio > 0 ? fmtNum(a.payoffRatio, 2) + 'x' : '—', color: a.payoffRatio >= 1 ? '#f8c37d' : '#9a8f84' },
+            { label: 'Breakeven trades', value: String(a.breakeven ?? 0), color: 'rgba(255,255,255,0.5)' },
+            { label: 'Avg trades / week', value: fmtNum(a.avgTradesPerWeek, 1), color: a.avgTradesPerWeek > 20 ? '#c9a05c' : 'rgba(255,255,255,0.75)' },
+            { label: 'Revenge-style %', value: fmtPct(a.revengeStyleRate), color: a.revengeStyleRate > 25 ? '#9a8f84' : a.revengeStyleRate > 15 ? '#c9a05c' : '#f8c37d', sub: 'Loss → trade ≤5m' },
+            { label: 'Behaviour vol.', value: `${a.behaviorVolatilityScore}/100`, color: a.behaviorVolatilityScore > 55 ? '#c9a05c' : 'rgba(255,255,255,0.75)' },
+            { label: 'Largest win % GP', value: a.largestWinPctOfGross > 0 ? fmtPct(a.largestWinPctOfGross) : '—', color: a.largestWinPctOfGross > 45 ? '#c9a05c' : 'rgba(255,255,255,0.65)', sub: 'Concentration' },
+            { label: 'Avg hold time', value: a.avgDurationMs > 0 ? fmtDuration(a.avgDurationMs) : '—', color: 'rgba(255,255,255,0.65)', sub: 'All closes' },
+            { label: 'SQN (R-based)', value: a.totalTrades >= 2 ? fmtNum(a.sqn, 2) : '—', color: a.sqn >= 1.6 ? '#f8c37d' : 'rgba(255,255,255,0.65)' },
+          ].map(({ label, value, color, sub }) => (
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.35 }}>
+                {label}
+                {sub && <span style={{ display: 'block', fontSize: '0.58rem', color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>{sub}</span>}
+              </span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', textAlign: 'right', flexShrink: 0 }}>{value}</span>
             </div>
           ))}
         </div>

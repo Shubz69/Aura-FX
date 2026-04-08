@@ -241,8 +241,20 @@ function AuraFilterBar() {
                 setPresetDraft('');
               }
             }}
-            title="Enter a name and press Enter to save current filters + date range"
+            title="Name this filter set, then Save or press Enter"
           />
+          <button
+            type="button"
+            className="aura-db-refresh-btn"
+            style={{ width: 'auto', minWidth: 44, padding: '0 10px', fontSize: '0.62rem', fontWeight: 700 }}
+            onClick={() => {
+              saveCurrentFilterPreset(presetDraft);
+              setPresetDraft('');
+            }}
+            title="Save current filters and date range"
+          >
+            Save
+          </button>
           {filterPresets?.length > 0 && (
             <select
               className="aura-db-filter-select"
@@ -325,7 +337,9 @@ function AuraDashboardInner() {
 
   const timeStr = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   const dateStr = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const activeTabPath = location.pathname.replace(`${base}/`, '') || 'overview';
+  const rawTab = location.pathname.replace(`${base}/`, '') || 'overview';
+  const tabSeg = rawTab.split('/')[0] || 'overview';
+  const activeTabPath = TABS.some((t) => t.path === tabSeg) ? tabSeg : 'overview';
 
   return (
     <div className="aura-dashboard journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">

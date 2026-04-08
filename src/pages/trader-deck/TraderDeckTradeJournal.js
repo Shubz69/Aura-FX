@@ -2,7 +2,9 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
+import { useAuth } from '../../context/AuthContext';
 import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
+import { mergeTradeMetadataRowMulti } from '../../lib/aura-analysis/tradeMetadataStorage';
 import { formatSignedPnL } from '../../lib/aura-analysis/formatAccountCurrency';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import { stripReplayHandoffParams, TR_HANDOFF } from '../../lib/trader-replay/replayToolHandoff';
@@ -51,6 +53,67 @@ function readFileAsDataUrl(file) {
   });
 }
 
+const JOURNAL_COL_META = [
+  { id: 'date', label: 'Date', defaultOn: true },
+  { id: 'pair', label: 'Pair', defaultOn: true },
+  { id: 'asset', label: 'Asset', defaultOn: true },
+  { id: 'dir', label: 'Dir', defaultOn: true },
+  { id: 'entry', label: 'Entry', defaultOn: true },
+  { id: 'sl', label: 'SL', defaultOn: true },
+  { id: 'tp', label: 'TP', defaultOn: true },
+  { id: 'risk', label: 'Risk %', defaultOn: true },
+  { id: 'result', label: 'Result', defaultOn: true },
+  { id: 'pnl', label: 'PnL', defaultOn: true },
+  { id: 'roiRisk', label: 'Return on risk %', defaultOn: false },
+  { id: 'proof', label: 'Proof', defaultOn: true },
+  { id: 'r', label: 'R', defaultOn: true },
+  { id: 'session', label: 'Session', defaultOn: true },
+  { id: 'grade', label: 'Grade', defaultOn: true },
+  { id: 'duration', label: 'Hold time', defaultOn: false },
+  { id: 'notes', label: 'Notes', defaultOn: false },
+  { id: 'setup', label: 'Setup', defaultOn: true },
+  { id: 'checklist', label: 'Checklist %', defaultOn: false },
+  { id: 'rating', label: 'Rating', defaultOn: false },
+  { id: 'action', label: 'Action', defaultOn: true, required: true },
+];
+
+const COL_VIS_KEY = 'td-journal-column-visibility-v2';
+
+function readColumnVisibility() {
+  const base = {};
+  JOURNAL_COL_META.forEach((c) => { base[c.id] = c.defaultOn; });
+  if (typeof window === 'undefined' || !window.localStorage) return base;
+  try {
+    const raw = window.localStorage.getItem(COL_VIS_KEY);
+    if (!raw) return base;
+    const o = JSON.parse(raw);
+    if (!o || typeof o !== 'object') return base;
+    return { ...base, ...o };
+  } catch {
+    return base;
+  }
+}
+
+function returnOnRiskPct(t) {
+  const pnl = Number(t?.pnl);
+  const risk = Math.abs(Number(t?.potentialLoss ?? t?.potential_loss ?? 0));
+  if (!Number.isFinite(pnl) || risk < 1e-9) return null;
+  return (pnl / risk) * 100;
+}
+
+function holdDurationLabel(t) {
+  const o = t.openTime || t.open_time || t.createdAt || t.created_at;
+  const c = t.closeTime || t.close_time;
+  if (!o || !c) return null;
+  const ms = new Date(c).getTime() - new Date(o).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return null;
+  const m = Math.round(ms / 60000);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  const rem = m % 60;
+  return rem ? `${h}h ${rem}m` : `${h}h`;
+}
+
 function getPnlForResult(trade, result) {
   if (!trade) return '';
   const profit = trade.potentialProfit ?? trade.potential_profit;
@@ -70,6 +133,7 @@ function getPnlForResult(trade, result) {
 }
 
 export default function TraderDeckTradeJournal() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const replayDeckConsumedRef = useRef(false);
   const [replayContext, setReplayContext] = useState(null);
@@ -95,6 +159,79 @@ export default function TraderDeckTradeJournal() {
   const [verifyTrade, setVerifyTrade] = useState(null);
   const [verifyFile, setVerifyFile] = useState(null);
   const [verifyBusy, setVerifyBusy] = useState(false);
+  const [colVis, setColVis] = useState(() => readColumnVisibility());
+  const [columnsOpen, setColumnsOpen] = useState(false);
+  const colPopRef = useRef(null);
+  const colVisSaveTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    let cancelled = false;
+    Api.getUserSettings()
+      .then((res) => {
+        const remote = res.data?.settings?.trading_ui_prefs?.tradeJournalColumns;
+        if (cancelled || !remote || typeof remote !== 'object') return;
+        const base = {};
+        JOURNAL_COL_META.forEach((c) => {
+          base[c.id] = c.defaultOn;
+        });
+        const merged = { ...base, ...remote };
+        setColVis(merged);
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.setItem(COL_VIS_KEY, JSON.stringify(merged));
+          }
+        } catch {
+          /* noop */
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  useEffect(
+    () => () => {
+      if (colVisSaveTimerRef.current) {
+        clearTimeout(colVisSaveTimerRef.current);
+      }
+    },
+    []
+  );
+
+  const persistColVis = useCallback((next) => {
+    setColVis(next);
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(COL_VIS_KEY, JSON.stringify(next));
+      }
+    } catch {
+      /* noop */
+    }
+    if (colVisSaveTimerRef.current) clearTimeout(colVisSaveTimerRef.current);
+    colVisSaveTimerRef.current = setTimeout(() => {
+      colVisSaveTimerRef.current = null;
+      Api.putUserSettings({ trading_ui_prefs: { tradeJournalColumns: next } }).catch(() => {});
+    }, 600);
+  }, []);
+
+  const toggleColumn = useCallback(
+    (id, required) => {
+      if (required) return;
+      persistColVis({ ...colVis, [id]: !colVis[id] });
+    },
+    [colVis, persistColVis]
+  );
+
+  useEffect(() => {
+    if (!columnsOpen) return undefined;
+    const onDoc = (e) => {
+      if (colPopRef.current && !colPopRef.current.contains(e.target)) setColumnsOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [columnsOpen]);
 
   const loadTrades = useCallback(async () => {
     const params =
@@ -103,8 +240,20 @@ export default function TraderDeckTradeJournal() {
         : {};
     const r = await Api.getAuraAnalysisTrades(params);
     const list = r.data?.trades ?? r.data?.data ?? [];
-    setTrades(Array.isArray(list) ? list : []);
-  }, [selectedAccountId]);
+    const arr = Array.isArray(list) ? list : [];
+    const platformIds = [
+      selectedAccountId != null && Number.isFinite(Number(selectedAccountId))
+        ? `validator-${selectedAccountId}`
+        : null,
+      'mt5',
+      'mt4',
+      'default',
+    ].filter(Boolean);
+    const merged = user?.id
+      ? arr.map((t) => mergeTradeMetadataRowMulti(user.id, platformIds, t))
+      : arr;
+    setTrades(merged);
+  }, [selectedAccountId, user?.id]);
 
   useEffect(() => {
     if (accountsLoading) return;
@@ -190,6 +339,64 @@ export default function TraderDeckTradeJournal() {
       return true;
     });
   }, [trades, search, filterPair, filterResult, filterAsset, filterGrade, filterSession]);
+
+  const visibleColMeta = useMemo(
+    () => JOURNAL_COL_META.filter((c) => colVis[c.id] !== false),
+    [colVis]
+  );
+
+  const exportCsv = useCallback(() => {
+    const dataCols = visibleColMeta.filter((c) => c.id !== 'action');
+    const esc = (v) => {
+      const s = v == null ? '' : String(v);
+      if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+    const lineFor = (t) => {
+      const res = (t.result || '').toLowerCase();
+      const isWin = res === 'win' || (Number(t.pnl) > 0 && res !== 'loss');
+      const isLoss = res === 'loss' || (Number(t.pnl) < 0 && res !== 'win');
+      const resultLabel = res === 'breakeven' ? 'BREAKEVEN' : isWin ? 'WIN' : isLoss ? 'LOSS' : '—';
+      const roi = returnOnRiskPct(t);
+      const ver = getVerificationMeta(t);
+      const map = {
+        date: formatDate(t.createdAt || t.created_at),
+        pair: t.pair || '',
+        asset: (t.assetClass || t.asset_class || '').toLowerCase(),
+        dir: (t.direction || '').toLowerCase(),
+        entry: formatNum(t.entryPrice ?? t.entry_price, 2),
+        sl: formatNum(t.stopLoss ?? t.stop_loss, 2),
+        tp: formatNum(t.takeProfit ?? t.take_profit, 2),
+        risk: t.riskPercent != null ? `${Number(t.riskPercent)}%` : '',
+        result: resultLabel,
+        pnl: formatSignedPnL(t.pnl, journalCurrency),
+        roiRisk: roi != null && Number.isFinite(roi) ? `${roi.toFixed(1)}%` : '',
+        proof: ver.label,
+        r: t.rMultiple != null ? formatNum(t.rMultiple, 2) : t.rr != null ? formatNum(t.rr, 2) : '',
+        session: t.session || '',
+        grade: getDisplayGrade(t),
+        duration: holdDurationLabel(t) || '',
+        notes: [t.notes, t.userNote].filter(Boolean).join(' ').slice(0, 500),
+        setup: t.userSetupKey || '',
+        checklist:
+          t.checklistPercent != null && Number.isFinite(Number(t.checklistPercent))
+            ? `${formatNum(Number(t.checklistPercent), 1)}%`
+            : '',
+        rating: t.userRating != null ? String(t.userRating) : '',
+      };
+      return dataCols.map((c) => esc(map[c.id] ?? '')).join(',');
+    };
+    const header = dataCols.map((c) => esc(c.label)).join(',');
+    const blob = new Blob([[header, ...filtered.map(lineFor)].join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `aura-trade-log-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, [filtered, visibleColMeta, journalCurrency]);
 
   const openEdit = (t) => {
     const result = (t.result || 'open').toLowerCase();
@@ -363,6 +570,41 @@ export default function TraderDeckTradeJournal() {
             ))}
           </select>
         </div>
+        <div className="td-journal-toolbar-actions">
+          <div className="td-journal-columns-wrap" ref={colPopRef}>
+            <button
+              type="button"
+              className="td-journal-tool-btn"
+              onClick={() => setColumnsOpen((o) => !o)}
+              aria-expanded={columnsOpen}
+            >
+              Columns
+            </button>
+            {columnsOpen ? (
+              <div className="td-journal-columns-pop" role="dialog" aria-label="Choose columns">
+                <div className="td-journal-columns-pop-title">Visible columns</div>
+                <ul className="td-journal-columns-list">
+                  {JOURNAL_COL_META.map((c) => (
+                    <li key={c.id}>
+                      <label className={c.required ? 'td-journal-col-lock' : ''}>
+                        <input
+                          type="checkbox"
+                          checked={colVis[c.id] !== false}
+                          disabled={!!c.required}
+                          onChange={() => toggleColumn(c.id, c.required)}
+                        />
+                        {c.label}
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+          <button type="button" className="td-journal-tool-btn" onClick={exportCsv} disabled={!filtered.length}>
+            Export CSV
+          </button>
+        </div>
       </div>
 
       <div className="td-journal-table-wrap">
@@ -370,46 +612,17 @@ export default function TraderDeckTradeJournal() {
           <p className="td-journal-loading">Loading trades…</p>
         ) : (
           <table className="td-journal-table">
-            <colgroup>
-              <col className="td-journal-col td-journal-col--date" />
-              <col className="td-journal-col td-journal-col--pair" />
-              <col className="td-journal-col td-journal-col--asset" />
-              <col className="td-journal-col td-journal-col--dir" />
-              <col className="td-journal-col td-journal-col--num" />
-              <col className="td-journal-col td-journal-col--num" />
-              <col className="td-journal-col td-journal-col--num" />
-              <col className="td-journal-col td-journal-col--risk" />
-              <col className="td-journal-col td-journal-col--result" />
-              <col className="td-journal-col td-journal-col--pnl" />
-              <col className="td-journal-col td-journal-col--proof" />
-              <col className="td-journal-col td-journal-col--r" />
-              <col className="td-journal-col td-journal-col--session" />
-              <col className="td-journal-col td-journal-col--grade" />
-              <col className="td-journal-col td-journal-col--action" />
-            </colgroup>
             <thead>
               <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Pair</th>
-                <th scope="col">Asset</th>
-                <th scope="col">Dir</th>
-                <th scope="col">Entry</th>
-                <th scope="col">SL</th>
-                <th scope="col">TP</th>
-                <th scope="col">Risk</th>
-                <th scope="col">Result</th>
-                <th scope="col">PnL</th>
-                <th scope="col">Proof</th>
-                <th scope="col">R</th>
-                <th scope="col">Session</th>
-                <th scope="col">Grade</th>
-                <th scope="col">Action</th>
+                {visibleColMeta.map((c) => (
+                  <th key={c.id} scope="col">{c.label}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={15} className="td-journal-empty">No trades match your filters.</td>
+                  <td colSpan={Math.max(visibleColMeta.length, 1)} className="td-journal-empty">No trades match your filters.</td>
                 </tr>
               ) : (
                 filtered.map((t) => {
@@ -419,31 +632,47 @@ export default function TraderDeckTradeJournal() {
                   const resultLabel = res === 'breakeven' ? 'BREAKEVEN' : isWin ? 'WIN' : isLoss ? 'LOSS' : '—';
                   const pnlNum = t.pnl != null ? Number(t.pnl) : null;
                   const ver = getVerificationMeta(t);
-                  return (
-                    <tr key={t.id}>
-                      <td>{formatDate(t.createdAt || t.created_at)}</td>
-                      <td>{t.pair || '—'}</td>
-                      <td>{(t.assetClass || t.asset_class || '—').toLowerCase()}</td>
-                      <td>{(t.direction || '—').toLowerCase()}</td>
-                      <td>{formatNum(t.entryPrice ?? t.entry_price, 2)}</td>
-                      <td>{formatNum(t.stopLoss ?? t.stop_loss, 2)}</td>
-                      <td>{formatNum(t.takeProfit ?? t.take_profit, 2)}</td>
-                      <td>{t.riskPercent != null ? `${Number(t.riskPercent)}%` : '—'}</td>
-                      <td>
-                        <span className={`td-journal-badge ${isWin ? 'win' : isLoss ? 'loss' : ''}`}>
-                          {resultLabel}
-                        </span>
-                      </td>
-                      <td className={pnlNum != null && pnlNum < 0 ? 'td-journal-pnl-neg' : pnlNum != null && pnlNum > 0 ? 'td-journal-pnl-pos' : ''}>
+                  const roi = returnOnRiskPct(t);
+                  const noteText = [t.notes, t.userNote].filter(Boolean).join(' — ').trim();
+                  const cells = {
+                    date: formatDate(t.createdAt || t.created_at),
+                    pair: t.pair || '—',
+                    asset: (t.assetClass || t.asset_class || '—').toLowerCase(),
+                    dir: (t.direction || '—').toLowerCase(),
+                    entry: formatNum(t.entryPrice ?? t.entry_price, 2),
+                    sl: formatNum(t.stopLoss ?? t.stop_loss, 2),
+                    tp: formatNum(t.takeProfit ?? t.take_profit, 2),
+                    risk: t.riskPercent != null ? `${Number(t.riskPercent)}%` : '—',
+                    result: (
+                      <span className={`td-journal-badge ${isWin ? 'win' : isLoss ? 'loss' : ''}`}>
+                        {resultLabel}
+                      </span>
+                    ),
+                    pnl: (
+                      <span
+                        className={[
+                          pnlNum != null && pnlNum < 0 ? 'td-journal-pnl-neg' : '',
+                          pnlNum != null && pnlNum > 0 ? 'td-journal-pnl-pos' : '',
+                        ].filter(Boolean).join(' ')}
+                      >
                         {formatSignedPnL(t.pnl, journalCurrency)}
-                      </td>
-                      <td>
-                        <span className={['td-journal-verify-badge', ver.cls].filter(Boolean).join(' ')}>{ver.label}</span>
-                      </td>
-                      <td>{t.rMultiple != null ? formatNum(t.rMultiple, 2) : t.rr != null ? formatNum(t.rr, 2) : '—'}</td>
-                      <td>{t.session || '—'}</td>
-                      <td>{getDisplayGrade(t)}</td>
-                      <td className="td-journal-actions">
+                      </span>
+                    ),
+                    roiRisk: roi != null && Number.isFinite(roi) ? `${roi.toFixed(1)}%` : '—',
+                    proof: <span className={['td-journal-verify-badge', ver.cls].filter(Boolean).join(' ')}>{ver.label}</span>,
+                    r: t.rMultiple != null ? formatNum(t.rMultiple, 2) : t.rr != null ? formatNum(t.rr, 2) : '—',
+                    session: t.session || '—',
+                    grade: getDisplayGrade(t),
+                    duration: holdDurationLabel(t) || '—',
+                    notes: noteText ? <span title={noteText}>{noteText.length > 56 ? `${noteText.slice(0, 54)}…` : noteText}</span> : '—',
+                    setup: t.userSetupKey ? <span title={t.userSetupKey}>{t.userSetupKey}</span> : '—',
+                    checklist:
+                      t.checklistPercent != null && Number.isFinite(Number(t.checklistPercent))
+                        ? `${formatNum(Number(t.checklistPercent), 1)}%`
+                        : '—',
+                    rating: t.userRating != null ? String(t.userRating) : '—',
+                    action: (
+                      <div className="td-journal-actions">
                         <button type="button" className="td-journal-action-link" onClick={() => setVerifyTrade(t)}>
                           Verify screenshot
                         </button>
@@ -460,7 +689,14 @@ export default function TraderDeckTradeJournal() {
                         >
                           {deletingId === t.id ? 'Deleting…' : 'Delete'}
                         </button>
-                      </td>
+                      </div>
+                    ),
+                  };
+                  return (
+                    <tr key={t.id}>
+                      {visibleColMeta.map((c) => (
+                        <td key={c.id}>{cells[c.id]}</td>
+                      ))}
                     </tr>
                   );
                 })

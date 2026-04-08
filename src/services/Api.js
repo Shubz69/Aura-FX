@@ -619,6 +619,16 @@ const Api = {
     getUserProfile: (userId) => {
         return axios.get(`${API_BASE_URL}/api/users/${userId}`);
     },
+
+    getUserSettings: () => {
+        return axios.get(`${API_BASE_URL}/api/users/settings`);
+    },
+
+    putUserSettings: (body) => {
+        return axios.put(`${API_BASE_URL}/api/users/settings`, body, {
+            headers: { 'Content-Type': 'application/json' },
+        });
+    },
     
     updateUserProfile: (userId, profileData) => {
         return axios.put(`${API_BASE_URL}/api/users/${userId}`, profileData);

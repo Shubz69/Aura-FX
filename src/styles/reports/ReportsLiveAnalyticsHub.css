@@ -1,0 +1,110 @@
+/* Live analytics hub — table of contents for reports + Aura dashboard */
+
+.rlah-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.rlah-header {
+  margin-bottom: 20px;
+}
+
+.rlah-eyebrow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(212, 175, 55, 0.75);
+  margin: 0 0 8px;
+}
+
+.rlah-title {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: rgba(255, 248, 240, 0.95);
+}
+
+.rlah-lede {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.48);
+  margin: 0;
+  max-width: 720px;
+}
+
+.rlah-loading,
+.rlah-error {
+  padding: 24px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.rlah-retry {
+  margin-top: 12px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.1);
+  color: #e8c658;
+  cursor: pointer;
+}
+
+.rlah-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-top: 8px;
+}
+
+.rlah-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: rgba(255, 245, 230, 0.92);
+}
+
+.rlah-section-desc {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.42);
+  margin: 0 0 14px;
+}
+
+.rlah-link-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.rlah-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(3, 2, 12, 0.55);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.rlah-card:hover {
+  border-color: rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.06);
+}
+
+.rlah-card-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f8c37d;
+}
+
+.rlah-card-tag {
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.35);
+}

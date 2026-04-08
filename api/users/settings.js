@@ -10,8 +10,11 @@ let settingsTableCreated = false;
 
 // Ensure user_settings table exists
 async function ensureSettingsTable() {
-  if (settingsTableCreated) return true;
-  
+  if (settingsTableCreated) {
+    await ensureTradingUiPrefsColumn();
+    return true;
+  }
+
   try {
     await executeQuery(`
       CREATE TABLE IF NOT EXISTS user_settings (
@@ -41,11 +44,27 @@ async function ensureSettingsTable() {
     `);
     settingsTableCreated = true;
     console.log('User settings table ready');
+    await ensureTradingUiPrefsColumn();
     return true;
   } catch (error) {
     console.log('Settings table check:', error.code || error.message);
     settingsTableCreated = true;
+    await ensureTradingUiPrefsColumn();
     return true;
+  }
+}
+
+async function ensureTradingUiPrefsColumn() {
+  try {
+    await executeQuery(`
+      ALTER TABLE user_settings
+      ADD COLUMN trading_ui_prefs JSON NULL COMMENT 'Client UI state (e.g. trade log columns)'
+    `);
+  } catch (e) {
+    const msg = e.message || String(e);
+    if (!/Duplicate column name/i.test(msg)) {
+      console.warn('trading_ui_prefs column:', msg);
+    }
   }
 }
 
@@ -153,6 +172,14 @@ module.exports = async (req, res) => {
             try { settingsData.trading_sessions = JSON.parse(settingsData.trading_sessions); } 
             catch (e) { settingsData.trading_sessions = defaultSettings.trading_sessions; }
           }
+          if (settingsData.trading_ui_prefs != null) {
+            if (typeof settingsData.trading_ui_prefs === 'string') {
+              try { settingsData.trading_ui_prefs = JSON.parse(settingsData.trading_ui_prefs); }
+              catch (e) { settingsData.trading_ui_prefs = {}; }
+            }
+          } else {
+            settingsData.trading_ui_prefs = {};
+          }
         }
       } catch (tableErr) {
         // Table might not exist, use defaults
@@ -243,6 +270,7 @@ module.exports = async (req, res) => {
 
       // Try to save to database if table exists
       try {
+        await ensureTradingUiPrefsColumn();
         // Allowed fields for update (user_settings only; timezone handled above)
         const allowedFields = [
           'preferred_markets', 'trading_sessions', 'risk_profile', 'trading_style',
@@ -264,6 +292,28 @@ module.exports = async (req, res) => {
               values.push(value);
             }
           }
+        }
+
+        if (updates.trading_ui_prefs !== undefined && updates.trading_ui_prefs !== null && typeof updates.trading_ui_prefs === 'object') {
+          let prev = {};
+          try {
+            const existingResult = await executeQuery(
+              'SELECT trading_ui_prefs FROM user_settings WHERE user_id = ?',
+              [userId]
+            );
+            const row = getRows(existingResult)[0];
+            if (row?.trading_ui_prefs) {
+              prev = typeof row.trading_ui_prefs === 'string'
+                ? JSON.parse(row.trading_ui_prefs)
+                : row.trading_ui_prefs;
+              if (!prev || typeof prev !== 'object') prev = {};
+            }
+          } catch (e) {
+            prev = {};
+          }
+          const merged = { ...prev, ...updates.trading_ui_prefs };
+          setClauses.push('trading_ui_prefs = ?');
+          values.push(JSON.stringify(merged));
         }
 
         if (setClauses.length > 0) {

@@ -100,6 +100,7 @@ const AuraLeaderboard = lazy(() => import('./pages/aura-analysis/AuraLeaderboard
 const TraderCVTab = lazy(() => import('./pages/aura-analysis/TraderCVTab'));
 const TraderDeckTradeJournal = lazy(() => import('./pages/trader-deck/TraderDeckTradeJournal'));
 const ReportsPage = lazy(() => import('./pages/reports/ReportsPage'));
+const ReportsLiveAnalyticsHub = lazy(() => import('./pages/reports/ReportsLiveAnalyticsHub'));
 const ReportsDnaPage = lazy(() => import('./pages/reports/ReportsDnaPage'));
 const ManualMetricsEntryPage = lazy(() => import('./pages/reports/ManualMetricsEntryPage'));
 const ManualMetricsProcessingPage = lazy(() => import('./pages/reports/ManualMetricsProcessingPage'));
@@ -379,6 +380,7 @@ function AppRoutes() {
                             <Route path="trader-replay" element={<Navigate to="/aura-analysis/dashboard/trader-replay" replace />} />
                         </Route>
                         <Route path="/reports" element={<AuthenticatedGuard><ReportsPage /></AuthenticatedGuard>} />
+                        <Route path="/reports/live" element={<AuthenticatedGuard><ReportsLiveAnalyticsHub /></AuthenticatedGuard>} />
                         <Route path="/reports/dna" element={<AuthenticatedGuard><ReportsDnaPage /></AuthenticatedGuard>} />
                         <Route path="/reports/mt5-metrics" element={<Mt5MetricsLegacyRedirect />} />
                         <Route path="/reports/manual-metrics/dashboard" element={<LegacyManualMetricsRedirect suffix="/dashboard" />} />

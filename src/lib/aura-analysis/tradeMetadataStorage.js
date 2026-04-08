@@ -74,3 +74,23 @@ export function mergeTradeMetadataRow(userId, platformId, trade) {
     scaleInFlag: meta.scaleIn === true,
   };
 }
+
+/**
+ * Merge local trade metadata from several platform keys (validator journal + MT dashboards).
+ * First non-empty field wins so Aura Habits (mt5/mt4) and deck-specific keys can coexist.
+ */
+export function mergeTradeMetadataRowMulti(userId, platformIds, trade) {
+  if (!trade || trade.id == null) return trade;
+  const ids = (platformIds || []).filter(Boolean);
+  if (!userId || !ids.length) return trade;
+  let t = { ...trade };
+  for (const pid of ids) {
+    const meta = getTradeMetadata(userId, pid, trade.id);
+    if (!meta) continue;
+    if (t.userRating == null && meta.rating != null) t.userRating = meta.rating;
+    if (!t.userSetupKey && meta.setupKey) t.userSetupKey = String(meta.setupKey);
+    if (!t.userNote && meta.note) t.userNote = String(meta.note);
+    if (!t.scaleInFlag && meta.scaleIn === true) t.scaleInFlag = true;
+  }
+  return t;
+}

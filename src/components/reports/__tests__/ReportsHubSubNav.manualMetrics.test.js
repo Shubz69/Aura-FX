@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import ReportsHubSubNav from '../ReportsHubSubNav';
 
 describe('ReportsHubSubNav (Performance & DNA)', () => {
-  it('shows only Monthly report and DNA — Manual metrics moved to /manual-metrics', () => {
+  it('shows Live analytics, Monthly report, and DNA — Manual metrics moved to /manual-metrics', () => {
     render(
       <MemoryRouter initialEntries={['/reports']}>
         <ReportsHubSubNav role="elite" year={2026} month={4} />
@@ -12,17 +12,19 @@ describe('ReportsHubSubNav (Performance & DNA)', () => {
     );
 
     expect(screen.getByRole('navigation', { name: /performance and dna sections/i })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /live analytics/i })).toBeTruthy();
     expect(screen.getByRole('link', { name: /monthly report/i })).toBeTruthy();
     expect(screen.getByRole('link', { name: /^dna$/i })).toBeTruthy();
     expect(screen.queryByRole('link', { name: /manual metrics/i })).toBeNull();
   });
 
-  it('same two tabs for premium role', () => {
+  it('includes live hub for premium role', () => {
     render(
       <MemoryRouter>
         <ReportsHubSubNav role="premium" year={2026} month={4} />
       </MemoryRouter>
     );
+    expect(screen.getByRole('link', { name: /live analytics/i })).toBeTruthy();
     expect(screen.queryByRole('link', { name: /manual metrics/i })).toBeNull();
   });
 });

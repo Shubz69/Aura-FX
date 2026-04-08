@@ -77,6 +77,7 @@ function isCanceledError(err) {
 }
 
 const REMINDER_MAX_MS = 1000 * 60 * 60 * 24 * 30;
+const JOURNAL_DAY_IMAGES_MAX = 8;
 
 function formatReminderRelative(fireAt) {
   const ms = Number(fireAt) - Date.now();
@@ -220,6 +221,9 @@ export default function Journal() {
   const [proofPhotos, setProofPhotos]     = useState({});
   const proofInputRef                     = useRef(null);
   const pendingProofTaskId                = useRef(null);
+  /** Per-day reflection screenshots (same persistence pattern as task proof images). */
+  const [dayImages, setDayImages]         = useState([]);
+  const dayImagesInputRef                 = useRef(null);
 
   // Lightbox
   const [lightbox, setLightbox] = useState(null);
@@ -328,6 +332,8 @@ export default function Journal() {
       setDailyNotes(noteText);
       lastSavedDiaryRef.current = noteText;
       setDailyMood(dailyRes.data?.note?.mood ?? null);
+      const di = dailyRes.data?.note?.dayImages;
+      setDayImages(Array.isArray(di) ? di.filter((x) => typeof x === 'string' && x.trim()) : []);
       setDailyNotesList(Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : []);
       setDiarySaveStatus('idle');
       skipDiaryAutosaveRef.current = false;
@@ -462,7 +468,10 @@ export default function Journal() {
   const mandatoryTabCount  = dayMandatoryTasks.length;
   const personalTabCount   = dayRegularTasks.length;
   const reflectionTabCount =
-    dailyNotesList.length + (dailyNotes.trim() ? 1 : 0) + (dailyMood ? 1 : 0);
+    dailyNotesList.length
+    + (dailyNotes.trim() ? 1 : 0)
+    + (dailyMood ? 1 : 0)
+    + dayImages.length;
   const weekTasks          = monthTasks.filter((t) => t.date >= weekStart && t.date <= weekEnd);
   const monthTasksForMonth = monthTasks.filter((t) => t.date >= monthStart && t.date <= monthEnd);
 
@@ -641,6 +650,70 @@ export default function Journal() {
     });
   };
 
+  const handleDayImagesClick = () => {
+    if (!canEditJournal) return;
+    dayImagesInputRef.current?.click();
+  };
+
+  const handleDayImagesFilesChange = (e) => {
+    if (!canEditJournal) return;
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (!files.length) return;
+    const valid = files.filter((f) => f.type.startsWith('image/'));
+    if (!valid.length) return;
+
+    Promise.all(
+      valid.map(
+        (file) =>
+          new Promise((resolve) => {
+            const r = new FileReader();
+            r.onload = (ev) => resolve(ev.target.result);
+            r.readAsDataURL(file);
+          })
+      )
+    ).then((newUrls) => {
+      setDayImages((prev) => {
+        const room = JOURNAL_DAY_IMAGES_MAX - prev.length;
+        if (room <= 0) {
+          toast.info(`At most ${JOURNAL_DAY_IMAGES_MAX} screenshots per day.`);
+          return prev;
+        }
+        const capped = newUrls.slice(0, room);
+        const merged = [...prev, ...capped];
+        const snapshot = prev;
+        Api.updateJournalDaily({ date: selectedDate, dayImages: merged })
+          .then((res) => {
+            const saved = res.data?.note?.dayImages;
+            if (Array.isArray(saved)) setDayImages(saved.filter((x) => typeof x === 'string'));
+          })
+          .catch(() => {
+            setError('Failed to save day screenshots.');
+            setDayImages(snapshot);
+          });
+        return merged;
+      });
+    });
+  };
+
+  const handleRemoveDayImage = (idx) => {
+    if (!canEditJournal) return;
+    setDayImages((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      const snapshot = prev;
+      Api.updateJournalDaily({ date: selectedDate, dayImages: next })
+        .then((res) => {
+          const saved = res.data?.note?.dayImages;
+          if (Array.isArray(saved)) setDayImages(saved.filter((x) => typeof x === 'string'));
+        })
+        .catch(() => {
+          setError('Failed to remove screenshot.');
+          setDayImages(snapshot);
+        });
+      return next;
+    });
+  };
+
   /* ── Notes CRUD ──────────────────────────────────────── */
   const handleAddNote = async (e) => {
     e.preventDefault();
@@ -740,6 +813,48 @@ export default function Journal() {
   const isMandatoryRestDay = isJournalSaturdayUTC(selectedDate);
 
   /* ── Proof strip renderer ────────────────────────────── */
+  const renderDayImagesStrip = () => {
+    if (!dayImages.length && !canEditJournal) return null;
+    return (
+      <div className="journal-proof-strip journal-day-images-strip">
+        {dayImages.map((src, i) => (
+          <div
+            key={i}
+            className="journal-proof-thumb"
+            onClick={() => setLightbox({ photos: dayImages, index: i })}
+            title="Tap to view"
+            role="presentation"
+          >
+            <img src={src} alt={`Day screenshot ${i + 1}`} loading="lazy" />
+            {canEditJournal && (
+              <button
+                type="button"
+                className="journal-proof-thumb-remove"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveDayImage(i);
+                }}
+                title="Remove"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        ))}
+        {canEditJournal && dayImages.length < JOURNAL_DAY_IMAGES_MAX && (
+          <button
+            type="button"
+            className="journal-proof-add-more"
+            onClick={handleDayImagesClick}
+            title="Add screenshot"
+          >
+            +
+          </button>
+        )}
+      </div>
+    );
+  };
+
   const renderProofStrip = (taskId) => {
     const photos = proofPhotos[taskId] || [];
     if (!photos.length) return null;
@@ -1264,6 +1379,30 @@ export default function Journal() {
                   </button>
                 )}
               </div>
+            </section>
+
+            <section className="journal-glass-card journal-day-images-section">
+              <h3 className="journal-subsection-title">
+                <FaCamera className="journal-reflection-icon" aria-hidden /> Day screenshots
+              </h3>
+              <p className="journal-diary-hint">
+                Optional charts or notes as images for this date. Saved separately from your diary text (up to{' '}
+                {JOURNAL_DAY_IMAGES_MAX}).
+              </p>
+              {renderDayImagesStrip()}
+              {canEditJournal && dayImages.length === 0 && (
+                <button type="button" className="journal-task-proof-btn" onClick={handleDayImagesClick}>
+                  <FaCamera /> Add screenshot
+                </button>
+              )}
+              <input
+                ref={dayImagesInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="journal-proof-input-hidden"
+                onChange={handleDayImagesFilesChange}
+              />
             </section>
 
             <section className="journal-glass-card journal-mood-section">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuraConnection, useCanEnterAuraDashboard } from '../../context/AuraConnectionContext';
@@ -251,15 +251,15 @@ export default function ConnectionHub() {
     }
   };
 
-  const handleEnterDashboard = () => {
-    if (!canEnter) return;
-    setTransitioning(true);
-  };
-
-  const handleTransitionComplete = () => {
+  const handleTransitionComplete = useCallback(() => {
     setTransitioning(false);
     navigate('/aura-analysis/dashboard/overview', { state: { fromTransition: true } });
-  };
+  }, [navigate]);
+
+  const handleEnterDashboard = useCallback(() => {
+    if (!canEnter) return;
+    setTransitioning(true);
+  }, [canEnter]);
 
   const fmt$ = (value, currency = 'USD') =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);

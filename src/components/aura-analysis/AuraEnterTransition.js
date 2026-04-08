@@ -362,9 +362,14 @@ export default function AuraEnterTransition({ onComplete, label }) {
   const canvasRef = useRef(null);
   const galaxyRef = useRef(null);
   const suckRef = useRef(0);
+  const onCompleteRef = useRef(onComplete);
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState('loading'); // loading | sucking | flash | exiting
   const phaseRef = useRef('loading');
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   // Inject CSS once
   useEffect(() => {
@@ -391,12 +396,16 @@ export default function AuraEnterTransition({ onComplete, label }) {
     return () => window.removeEventListener('resize', fit);
   }, []);
 
-  // Progress ramp: 0→100 in 4s (ease-out-cubic), then suck + fade
+  // Progress ramp: 0→100 in 4s (ease-out-cubic), then suck + fade.
+  // onComplete is read from a ref so parent re-renders cannot restart this timeline.
   useEffect(() => {
+    let cancelled = false;
+    let rafId = 0;
+    const timeouts = [];
     const start = performance.now();
     const dur = 4000;
-    let rafId;
     const tick = (now) => {
+      if (cancelled) return;
       const raw = Math.min((now - start) / dur, 1);
       const eased = 1 - Math.pow(1 - raw, 3);
       const val = Math.round(eased * 100);
@@ -404,21 +413,28 @@ export default function AuraEnterTransition({ onComplete, label }) {
       if (val < 100) {
         rafId = requestAnimationFrame(tick);
       } else {
-        setTimeout(() => {
+        timeouts.push(setTimeout(() => {
+          if (cancelled) return;
           phaseRef.current = 'sucking';
           setPhase('sucking');
-          // After suck, fade out smoothly — onComplete fires mid-fade so next screen is already visible
-          setTimeout(() => {
+          timeouts.push(setTimeout(() => {
+            if (cancelled) return;
             phaseRef.current = 'exiting';
             setPhase('exiting');
-            setTimeout(() => onComplete?.(), 600);
-          }, 1150);
-        }, 180);
+            timeouts.push(setTimeout(() => {
+              onCompleteRef.current?.();
+            }, 600));
+          }, 1150));
+        }, 180));
       }
     };
     rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, [onComplete]);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+      timeouts.forEach(clearTimeout);
+    };
+  }, []);
 
   // RAF: update suck ramp + draw
   useRAF(useCallback((dt) => {
