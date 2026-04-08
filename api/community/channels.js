@@ -562,7 +562,7 @@ module.exports = async (req, res) => {
                 };
               });
             // Single source of truth: add per-channel permission flags from entitlements (effectiveTier)
-            let entitlements = { role: 'USER', tier: 'FREE', effectiveTier: 'FREE', allowedChannelSlugs: [] };
+            let entitlements = { role: 'USER', tier: 'ACCESS', effectiveTier: 'ACCESS', allowedChannelSlugs: [] };
             try {
               const userId = decoded.id != null ? String(decoded.id) : null;
               // Pass same DB connection — pool is often size 1 on Vercel; nested executeQuery() deadlocks → 504

@@ -155,17 +155,17 @@ function determineCommunityAccess(user) {
   const isCanceledButActive = (user.subscription_status === 'canceled' || user.subscription_status === 'cancelled') && expiryDate && expiryDate > now;
   
   // Also check role-based access for legacy premium/elite users
-  const hasRoleAccess = ['premium', 'elite', 'a7fx'].includes(user.role) && expiryDate && expiryDate > now;
+  const hasRoleAccess = ['premium', 'pro', 'elite', 'a7fx'].includes(user.role) && expiryDate && expiryDate > now;
   
   if (isActive || isCanceledButActive || hasRoleAccess) {
     const planId = user.subscription_plan || user.role;
     
     if (['a7fx', 'elite', 'A7FX'].includes(planId) || user.role === 'elite' || user.role === 'a7fx') {
-      return { hasAccess: true, accessType: 'A7FX_ELITE_ACTIVE', error: null };
+      return { hasAccess: true, accessType: 'ELITE_ACTIVE', error: null };
     }
     
-    if (['aura', 'premium'].includes(planId) || user.role === 'premium') {
-      return { hasAccess: true, accessType: 'AURA_FX_ACTIVE', error: null };
+    if (['aura', 'premium', 'pro'].includes(planId) || user.role === 'premium' || user.role === 'pro') {
+      return { hasAccess: true, accessType: 'PRO_ACTIVE', error: null };
     }
   }
   
@@ -212,13 +212,13 @@ describe('Access Determination - Active Subscriptions', () => {
   it('Aura FX active subscription grants community access', () => {
     const result = determineCommunityAccess(MOCK_USERS.auraFxActive);
     expect(result.hasAccess).toBeTrue();
-    expect(result.accessType).toBe('AURA_FX_ACTIVE');
+    expect(result.accessType).toBe('PRO_ACTIVE');
   });
 
   it('A7FX Elite active subscription grants community access', () => {
     const result = determineCommunityAccess(MOCK_USERS.a7fxEliteActive);
     expect(result.hasAccess).toBeTrue();
-    expect(result.accessType).toBe('A7FX_ELITE_ACTIVE');
+    expect(result.accessType).toBe('ELITE_ACTIVE');
   });
 
   it('Admin always has community access', () => {
@@ -259,7 +259,7 @@ describe('Access Determination - Edge Cases', () => {
   it('Canceled but still in period has access until expiry', () => {
     const result = determineCommunityAccess(MOCK_USERS.canceled);
     expect(result.hasAccess).toBeTrue();
-    expect(result.accessType).toBe('AURA_FX_ACTIVE');
+    expect(result.accessType).toBe('PRO_ACTIVE');
   });
 });
 

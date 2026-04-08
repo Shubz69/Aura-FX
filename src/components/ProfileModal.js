@@ -31,21 +31,21 @@ import '../styles/ProfileModal.css';
 function inferTierUpperFromProfile(user) {
     if (hasActivePaidPlan(user)) {
         const pl = normalizeRoleKey(user.subscription_plan);
-        if (['a7fx', 'elite'].includes(pl)) return 'A7FX';
-        if (['aura', 'premium'].includes(pl)) return 'PREMIUM';
+        if (['a7fx', 'elite'].includes(pl)) return 'ELITE';
+        if (['aura', 'premium', 'pro'].includes(pl)) return 'PRO';
     }
     const r = normalizeRoleKey(user.role);
-    if (r === 'a7fx' || r === 'elite') return 'A7FX';
-    if (r === 'premium') return 'PREMIUM';
-    return 'FREE';
+    if (r === 'a7fx' || r === 'elite') return 'ELITE';
+    if (r === 'premium' || r === 'pro') return 'PRO';
+    return 'ACCESS';
 }
 
 function planProductLabel(plan) {
     const pl = normalizeRoleKey(plan);
-    if (pl === 'aura') return 'AURA TERMINAL';
-    if (pl === 'a7fx' || pl === 'elite') return 'A7FX Elite';
-    if (pl === 'premium') return 'Premium';
-    if (pl === 'free') return 'Free';
+    if (pl === 'aura' || pl === 'pro') return 'AURA TERMINAL';
+    if (pl === 'a7fx' || pl === 'elite') return 'Elite';
+    if (pl === 'premium') return 'Pro';
+    if (pl === 'free' || pl === 'access') return 'Access';
     return pl ? pl.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '';
 }
 

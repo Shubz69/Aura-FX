@@ -103,7 +103,7 @@ function ManualMetricsEntryInner() {
   }, [year, month, setSearchParams]);
 
   const role = eligibility?.role;
-  const manualMetricsCsvEnabled = ['premium', 'elite', 'admin'].includes(role);
+  const manualMetricsCsvEnabled = ['premium', 'pro', 'elite', 'admin'].includes(role);
 
   const { csvStatus, loadingCsv } = useCsvPeriodSnapshot(
     token,
@@ -159,7 +159,7 @@ function ManualMetricsEntryInner() {
 
   if (!eligibility) return null;
 
-  if (role === 'free') {
+  if (role === 'free' || role === 'access') {
     return <Navigate to="/reports" replace />;
   }
 

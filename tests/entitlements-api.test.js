@@ -3,7 +3,7 @@
  * Run: node tests/entitlements-api.test.js
  */
 
-const { getEntitlements } = require('../api/utils/entitlements');
+const { getEntitlements, ENTITLEMENT_TIER } = require('../api/utils/entitlements');
 const { setCached, getCached, invalidateEntitlementsCache } = require('../api/cache');
 
 let passed = 0, failed = 0;
@@ -18,7 +18,7 @@ const expect = (actual) => ({
 });
 
 describe('Entitlements Logic', () => {
-  it('returns tier FREE for free user', () => {
+  it('returns tier ACCESS for free user', () => {
     const user = {
       id: 1,
       role: 'user',
@@ -28,11 +28,11 @@ describe('Entitlements Logic', () => {
       payment_failed: false
     };
     const ent = getEntitlements(user);
-    expect(ent.tier).toBe('FREE');
+    expect(ent.tier).toBe(ENTITLEMENT_TIER.ACCESS);
     expect(ent.canAccessAI).toBe(false);
   });
 
-  it('returns tier PREMIUM for aura subscriber', () => {
+  it('returns tier PRO for aura subscriber', () => {
     const user = {
       id: 2,
       role: 'user',
@@ -42,11 +42,11 @@ describe('Entitlements Logic', () => {
       payment_failed: false
     };
     const ent = getEntitlements(user);
-    expect(ent.tier).toBe('PREMIUM');
+    expect(ent.tier).toBe(ENTITLEMENT_TIER.PRO);
     expect(ent.canAccessAI).toBe(true);
   });
 
-  it('returns tier A7FX for a7fx subscriber', () => {
+  it('returns tier ELITE for a7fx subscriber', () => {
     const user = {
       id: 3,
       role: 'user',
@@ -56,15 +56,28 @@ describe('Entitlements Logic', () => {
       payment_failed: false
     };
     const ent = getEntitlements(user);
-    expect(ent.tier).toBe('A7FX');
+    expect(ent.tier).toBe(ENTITLEMENT_TIER.ELITE);
     expect(ent.canAccessAI).toBe(true);
+  });
+
+  it('returns tier PRO for legacy DB role aura (no active paid-through window)', () => {
+    const user = {
+      id: 4,
+      role: 'aura',
+      subscription_plan: '',
+      subscription_status: 'inactive',
+      subscription_expiry: null,
+      payment_failed: false
+    };
+    const ent = getEntitlements(user);
+    expect(ent.tier).toBe(ENTITLEMENT_TIER.PRO);
   });
 });
 
 describe('Entitlements Cache', () => {
   it('invalidateEntitlementsCache removes cached entitlements', () => {
-    setCached('entitlements:999', { tier: 'FREE' }, 60000);
-    expect(getCached('entitlements:999', 60000)).toEqual({ tier: 'FREE' });
+    setCached('entitlements:999', { tier: 'ACCESS' }, 60000);
+    expect(getCached('entitlements:999', 60000)).toEqual({ tier: 'ACCESS' });
     invalidateEntitlementsCache(999);
     expect(getCached('entitlements:999', 60000)).toBeNull();
   });

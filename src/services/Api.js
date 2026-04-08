@@ -81,10 +81,10 @@ const normalizePlanHint = (plan) => {
         return null;
     }
     const normalized = plan.toLowerCase();
-    if (normalized === 'aura') return 'premium';
+    if (normalized === 'aura' || normalized === 'premium') return 'pro';
     if (normalized === 'a7fx') return 'elite';
-    if (['free', 'premium', 'elite'].includes(normalized)) {
-        return normalized;
+    if (['free', 'access', 'pro', 'elite'].includes(normalized)) {
+        return normalized === 'free' ? 'access' : normalized;
     }
     return null;
 };
@@ -686,6 +686,31 @@ const Api = {
     deleteJournalTrade: (id) => {
         return axios.delete(`${API_BASE_URL}/api/journal/trades/${id}`);
     },
+
+    /** Aura Backtesting — sessions, trades, notebook, reports */
+    getBacktestingSummary: () => axios.get(`${API_BASE_URL}/api/backtesting/summary`),
+    getBacktestingSessions: (params = {}) => axios.get(`${API_BASE_URL}/api/backtesting/sessions`, { params }),
+    createBacktestingSession: (body) => axios.post(`${API_BASE_URL}/api/backtesting/sessions`, body),
+    getBacktestingSession: (id) => axios.get(`${API_BASE_URL}/api/backtesting/sessions/${id}`),
+    patchBacktestingSession: (id, body) => axios.patch(`${API_BASE_URL}/api/backtesting/sessions/${id}`, body),
+    deleteBacktestingSession: (id) => axios.delete(`${API_BASE_URL}/api/backtesting/sessions/${id}`),
+    completeBacktestingSession: (id) => axios.post(`${API_BASE_URL}/api/backtesting/sessions/${id}/complete`),
+    archiveBacktestingSession: (id) => axios.post(`${API_BASE_URL}/api/backtesting/sessions/${id}/archive`),
+    resumeBacktestingSession: (id) => axios.post(`${API_BASE_URL}/api/backtesting/sessions/${id}/resume`),
+    pauseBacktestingSession: (id, body = {}) => axios.post(`${API_BASE_URL}/api/backtesting/sessions/${id}/pause`, body),
+    duplicateBacktestingSession: (id) => axios.post(`${API_BASE_URL}/api/backtesting/sessions/${id}/duplicate`),
+    getBacktestingSessionTrades: (sessionId) => axios.get(`${API_BASE_URL}/api/backtesting/sessions/${sessionId}/trades`),
+    createBacktestingTrade: (sessionId, body) => axios.post(`${API_BASE_URL}/api/backtesting/sessions/${sessionId}/trades`, body),
+    getBacktestingTrades: (params = {}) => axios.get(`${API_BASE_URL}/api/backtesting/trades`, { params }),
+    getBacktestingTrade: (tradeId) => axios.get(`${API_BASE_URL}/api/backtesting/trades/${tradeId}`),
+    patchBacktestingTrade: (tradeId, body) => axios.patch(`${API_BASE_URL}/api/backtesting/trades/${tradeId}`, body),
+    deleteBacktestingTrade: (tradeId) => axios.delete(`${API_BASE_URL}/api/backtesting/trades/${tradeId}`),
+    getBacktestingNotebook: (sessionId) => axios.get(`${API_BASE_URL}/api/backtesting/sessions/${sessionId}/notebook`),
+    putBacktestingNotebook: (sessionId, notebook) =>
+        axios.put(`${API_BASE_URL}/api/backtesting/sessions/${sessionId}/notebook`, { notebook }),
+    getBacktestingSessionReports: (sessionId) => axios.get(`${API_BASE_URL}/api/backtesting/sessions/${sessionId}/reports`),
+    getBacktestingReportsOverview: (params = {}) => axios.get(`${API_BASE_URL}/api/backtesting/reports/overview`, { params }),
+    getBacktestingReportsBreakdowns: (params = {}) => axios.get(`${API_BASE_URL}/api/backtesting/reports/breakdowns`, { params }),
 
     getJournalTasks: (params = {}) => {
         return axios.get(`${API_BASE_URL}/api/journal/tasks`, { params });

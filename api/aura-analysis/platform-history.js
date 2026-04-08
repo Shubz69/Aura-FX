@@ -5,14 +5,25 @@
  * Optional: from, to (YYYY-MM-DD, both required together) — slice metrics to inclusive UTC calendar range;
  *   lookback is expanded so data from `from` through today can be loaded.
  */
+const path = require('path');
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
 const { hasMtBridgeCredentials } = require('./mtSyncProvider');
 const { performMt5Operation } = require('./mtSyncService');
-const { setAuraCorsHeaders } = require('./cors');
+const { setAuraCorsHeaders, safeJsonParse } = require('./cors');
 const { upsertTradeCacheRows, loadCachedTradesForRange } = require('./auraPlatformTradeCache');
+const { ensurePlatformConnectionsColumns } = require('./platformConnectionMeta');
+const {
+  scheduleMt5BridgeBackgroundSync,
+  schedulePresetWarmAfterDbSync,
+} = require('./mtSyncCoordinator');
+const {
+  getPresetEntry,
+  safeParsePresetBlob,
+  ANALYTICS_PRESET_ENGINE_VERSION,
+} = require('./auraAnalyticsPresets');
 const {
   normalizeMtRow,
   dedupeNormalizedTrades,
@@ -31,6 +42,25 @@ const {
 
 function isHistoryPipelineLogEnabled() {
   return isAuraDiagnosticsEnabled() || String(process.env.AURA_HISTORY_PIPELINE_LOG || '').trim() === '1';
+}
+
+const HISTORY_STALE_MS = Math.max(
+  180000,
+  Math.min(7200000, parseInt(process.env.AURA_HISTORY_CACHE_STALE_MS || '720000', 10) || 720000),
+);
+
+function closedHistoryDataKey(trades, account) {
+  const m = require(path.join(__dirname, '__analytics_node.cjs'));
+  return m.auraAnalysisClosedDataKey(trades, account);
+}
+
+function historyCacheStale(mtSyncStateRaw) {
+  const o = safeJsonParse(mtSyncStateRaw, {});
+  const raw = o?.lastHistorySyncAt;
+  if (!raw) return true;
+  const ms = new Date(raw).getTime();
+  if (!Number.isFinite(ms)) return true;
+  return Date.now() - ms > HISTORY_STALE_MS;
 }
 
 function utcTodayYmd() {
@@ -399,8 +429,19 @@ module.exports = async (req, res) => {
   const decoded = verifyToken(req.headers.authorization);
   if (!decoded) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-  const { platformId, days: daysParam, from: fromQ, to: toQ } = req.query || {};
+  const { platformId, days: daysParam, from: fromQ, to: toQ, live: liveQ } = req.query || {};
   if (!platformId) return res.status(400).json({ success: false, error: 'platformId required' });
+
+  const forceLive =
+    liveQ === '1'
+    || liveQ === 'true'
+    || String(req.query?.refresh || '').toLowerCase() === 'live';
+
+  try {
+    await ensurePlatformConnectionsColumns(executeQuery);
+  } catch (e) {
+    console.error('platform-history column migrate:', e.message);
+  }
 
   const parsedRange = parseUtcDateRangeQuery(fromQ, toQ);
   if (!parsedRange.ok) return res.status(400).json({ success: false, error: parsedRange.error });
@@ -412,9 +453,10 @@ module.exports = async (req, res) => {
   }
 
   const [rows] = await executeQuery(
-    `SELECT credentials_enc FROM aura_platform_connections
+    `SELECT credentials_enc, account_info, analytics_presets_json, mt_sync_state_json
+     FROM aura_platform_connections
      WHERE user_id = ? AND platform_id = ? AND status IN ('active', 'connected', 'error')`,
-    [decoded.id, platformId]
+    [decoded.id, platformId],
   );
   if (!rows.length) {
     return res.status(200).json({
@@ -444,6 +486,76 @@ module.exports = async (req, res) => {
       dataSource: 'none',
       code: 'CREDENTIAL_ERROR',
     });
+  }
+
+  const connRow = rows[0];
+  const isMtBridge =
+    (platformId === 'mt5' || platformId === 'mt4') && hasMtBridgeCredentials(creds);
+
+  if (isMtBridge && !forceLive) {
+    const cachedTrades = await loadCachedTradesForRange(decoded.id, platformId, days, dateRange);
+    if (cachedTrades.length > 0) {
+      const account = safeJsonParse(connRow.account_info, null);
+      const analyticsInputFingerprint = closedHistoryDataKey(cachedTrades, account);
+      const presetBlob = safeParsePresetBlob(connRow.analytics_presets_json);
+      const precomputedAnalytics = getPresetEntry(
+        presetBlob,
+        analyticsInputFingerprint,
+        ANALYTICS_PRESET_ENGINE_VERSION,
+      );
+      const revalidating = scheduleMt5BridgeBackgroundSync(
+        executeQuery,
+        decoded.id,
+        platformId,
+        creds,
+      );
+      if (!precomputedAnalytics) {
+        schedulePresetWarmAfterDbSync(executeQuery, decoded.id, platformId, {
+          reason: 'cache_fast_path_preset_miss',
+        });
+      }
+      const stale = historyCacheStale(connRow.mt_sync_state_json);
+      const body = {
+        success: true,
+        trades: cachedTrades,
+        count: cachedTrades.length,
+        platformId,
+        days,
+        ...(dateRange ? { dateFrom: dateRange.from, dateTo: dateRange.to } : {}),
+        stale,
+        dataSource: 'cache',
+        cacheServedStale: stale,
+        revalidating,
+        precomputedAnalytics: precomputedAnalytics || undefined,
+        analyticsInputFingerprint,
+      };
+      if (isAuraDiagnosticsEnabled()) {
+        body.diagnostics = buildHistoryDiagnostics({
+          dataSource: 'cache',
+          stale,
+          normalizedRowCount: cachedTrades.length,
+          validTradeRows: cachedTrades.length,
+          discardedRows: 0,
+          openCount: cachedTrades.filter((t) => t.tradeStatus === 'open').length,
+          closedCount: cachedTrades.filter((t) => t.tradeStatus !== 'open').length,
+          netPnlBreakdown: {},
+        });
+      }
+      if (isHistoryPipelineLogEnabled()) {
+        safeMtLog(
+          'history_pipeline_response',
+          {
+            platformId,
+            returnedTradeCount: body.count,
+            days,
+            dataSource: 'cache',
+            revalidating,
+          },
+          'info',
+        );
+      }
+      return res.status(200).json(body);
+    }
   }
 
   const result = await fetchHistoryForPlatform(platformId, creds, days);
@@ -491,6 +603,12 @@ module.exports = async (req, res) => {
   }
 
   await upsertTradeCacheRows(decoded.id, platformId, result.trades);
+
+  if (isMtBridge) {
+    schedulePresetWarmAfterDbSync(executeQuery, decoded.id, platformId, {
+      reason: 'platform_history_live_ok',
+    });
+  }
 
   const slicedTrades = applyOptionalDateSlice(result.trades, dateRange);
   const body = {

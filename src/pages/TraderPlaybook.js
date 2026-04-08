@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +25,11 @@ import {
 } from '../lib/trader-playbook/rulesCopy';
 import { MID, METRIC_LABEL } from '../lib/trader-playbook/metricDefinitions';
 import { MetricLabel } from '../lib/trader-playbook/MetricTooltip';
+import {
+  buildPlaybookReviewPrefillFromSearchParams,
+  stripReplayHandoffParams,
+  TR_HANDOFF,
+} from '../lib/trader-replay/replayToolHandoff';
 import '../styles/aura-analysis/AuraDashboard.css';
 import '../styles/TraderPlaybookPremium.css';
 
@@ -112,6 +118,8 @@ export default function TraderPlaybook() {
   const [hubFilter, setHubFilter] = useState('all');
   const [detailMenuOpen, setDetailMenuOpen] = useState(false);
   const [reviewPrefill, setReviewPrefill] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const replayPlaybookConsumedRef = useRef(false);
 
   const [vTrades, setVTrades] = useState([]);
   const [jTrades, setJTrades] = useState([]);
@@ -150,6 +158,26 @@ export default function TraderPlaybook() {
   useEffect(() => {
     loadCore();
   }, [loadCore]);
+
+  useEffect(() => {
+    if (replayPlaybookConsumedRef.current || loading || !setups.length) return;
+    if (!searchParams.get(TR_HANDOFF.origin) && !searchParams.get('replaySessionId')) return;
+    const hint = (searchParams.get('replayHint') || '').trim().toLowerCase();
+    const row = hint
+      ? setups.find((s) => (s.name || '').trim().toLowerCase() === hint)
+      : null;
+    if (!row?.id) {
+      replayPlaybookConsumedRef.current = true;
+      setSearchParams(stripReplayHandoffParams(searchParams), { replace: true });
+      return;
+    }
+    const tab = searchParams.get(TR_HANDOFF.detailTab) === 'review' ? 'review' : 'overview';
+    const prefill = buildPlaybookReviewPrefillFromSearchParams(searchParams);
+    replayPlaybookConsumedRef.current = true;
+    void openDetail(row.id, tab, prefill);
+    setSearchParams(stripReplayHandoffParams(searchParams), { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot Trader Replay deep-link
+  }, [loading, setups, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!drawer) return undefined;

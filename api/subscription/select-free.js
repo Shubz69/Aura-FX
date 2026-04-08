@@ -1,6 +1,6 @@
 /**
  * POST /api/subscription/select-free (auth required)
- * FREE plan bypasses Stripe: sets user tier to FREE in DB and returns updated entitlements.
+ * Access plan bypasses Stripe: sets user to ACCESS tier in DB and returns updated entitlements.
  * Frontend should then refreshEntitlements() and navigate('/community').
  */
 
@@ -9,8 +9,8 @@ const { generateRequestId, createLogger } = require('../utils/logger');
 const { verifyToken } = require('../utils/auth');
 const { invalidateEntitlementsCache } = require('../cache');
 
-const PLAN_NAMES = { free: 'Free' };
-const PLAN_PRICES = { free: { amount: 0, currency: 'GBP', interval: 'month' } };
+const PLAN_NAMES = { access: 'Access', free: 'Access' };
+const PLAN_PRICES = { access: { amount: 0, currency: 'GBP', interval: 'month' }, free: { amount: 0, currency: 'GBP', interval: 'month' } };
 
 module.exports = async (req, res) => {
   const requestId = generateRequestId('sub');
@@ -32,18 +32,16 @@ module.exports = async (req, res) => {
   }
 
   const userId = decoded.id;
-  logger.info('Select FREE tier', { userId });
+  logger.info('Select ACCESS tier', { userId });
 
   try {
-    const now = new Date();
-    // Free tier: no Stripe, no expiry. Immediate downgrade (clear any Stripe refs).
     await executeQuery(
       `UPDATE users SET
-        subscription_plan = 'free',
+        subscription_plan = 'access',
         subscription_status = 'active',
         subscription_expiry = NULL,
         subscription_started = COALESCE(subscription_started, NOW()),
-        role = 'user',
+        role = 'access',
         payment_failed = FALSE,
         onboarding_accepted = FALSE
        WHERE id = ?`,
@@ -61,11 +59,11 @@ module.exports = async (req, res) => {
 
     const user = rows[0];
     const subscription = {
-      tier: 'FREE',
+      tier: 'ACCESS',
       status: 'active',
       hasCommunityAccess: true,
-      planId: 'free',
-      planName: PLAN_NAMES.free,
+      planId: 'access',
+      planName: PLAN_NAMES.access,
       isActive: true,
       accessType: 'NONE',
       renewsAt: null,
@@ -74,12 +72,12 @@ module.exports = async (req, res) => {
       startedAt: user.subscription_started ? new Date(user.subscription_started).toISOString() : null,
       expiresAt: null,
       daysRemaining: null,
-      price: PLAN_PRICES.free,
+      price: PLAN_PRICES.access,
       paymentFailed: false,
       hasUsedFreeTrial: false
     };
 
-    logger.info('FREE tier activated', { userId, planId: 'free' });
+    logger.info('ACCESS tier activated', { userId, planId: 'access' });
     invalidateEntitlementsCache(userId);
 
     return res.status(200).json({
@@ -88,11 +86,11 @@ module.exports = async (req, res) => {
       requestId
     });
   } catch (error) {
-    logger.error('Select FREE error', { error: error.message, userId });
+    logger.error('Select Access error', { error: error.message, userId });
     return res.status(500).json({
       success: false,
       errorCode: 'SERVER_ERROR',
-      message: 'Failed to set FREE tier. Please try again.',
+      message: 'Failed to set Access tier. Please try again.',
       requestId
     });
   }

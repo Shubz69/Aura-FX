@@ -714,7 +714,7 @@ async function generateMonthlyReportForUser({
   }
 
   let csvSummary = null;
-  if (role === 'premium') {
+  if (role === 'premium' || role === 'pro') {
     const [csvRows] = await executeQuery(
       'SELECT upload_json FROM report_csv_uploads WHERE user_id = ? AND period_year = ? AND period_month = ?',
       [userId, dy, dm]

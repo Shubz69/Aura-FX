@@ -73,7 +73,7 @@ export const SubscriptionProvider = ({ children }) => {
         const hasAccess = isAdmin ? true : (sub.hasCommunityAccess !== false);
         setSubscription({
           ...sub,
-          tier: sub.tier || 'FREE',
+          tier: sub.tier || 'ACCESS',
           status: sub.status || (sub.isActive ? 'active' : 'inactive'),
           hasCommunityAccess: hasAccess,
           accessType: isAdmin ? 'ADMIN' : (sub.accessType || 'NONE')
@@ -84,17 +84,17 @@ export const SubscriptionProvider = ({ children }) => {
         const userEmail = (user?.email || '').toString().trim().toLowerCase();
         const isAdmin =
           isConfiguredSuperAdminEmail(userEmail) || ['admin', 'super_admin'].includes(userRole);
-        const isPremiumRole = ['premium', 'elite', 'a7fx'].includes(userRole);
+        const isProOrEliteRole = ['premium', 'pro', 'elite', 'a7fx'].includes(userRole);
         const paidFromClient = hasActivePaidPlan(user);
 
-        if (isAdmin || isPremiumRole || paidFromClient) {
+        if (isAdmin || isProOrEliteRole || paidFromClient) {
           const eliteLike =
             userRole === 'elite' ||
             userRole === 'a7fx' ||
             ['a7fx', 'elite'].includes((user?.subscription_plan || '').toString().toLowerCase());
           setSubscription({
             hasCommunityAccess: true,
-            accessType: isAdmin ? 'ADMIN' : eliteLike ? 'A7FX_ELITE_ACTIVE' : 'AURA_FX_ACTIVE',
+            accessType: isAdmin ? 'ADMIN' : eliteLike ? 'ELITE_ACTIVE' : 'PRO_ACTIVE',
             isActive: true,
             status: 'active',
             _roleBasedAccess: true
@@ -118,7 +118,7 @@ export const SubscriptionProvider = ({ children }) => {
       const userEmail = (user?.email || '').toString().trim().toLowerCase();
       const isAdmin =
         isConfiguredSuperAdminEmail(userEmail) || ['admin', 'super_admin'].includes(userRole);
-      const isPremiumRole = ['premium', 'elite', 'a7fx'].includes(userRole);
+      const isProOrEliteRole = ['premium', 'pro', 'elite', 'a7fx'].includes(userRole);
       const paidFromClient = hasActivePaidPlan(user);
 
       if (isAdmin) {
@@ -129,14 +129,14 @@ export const SubscriptionProvider = ({ children }) => {
           status: 'active',
           _fallback: true
         });
-      } else if (isPremiumRole || paidFromClient) {
+      } else if (isProOrEliteRole || paidFromClient) {
         const eliteLike =
           userRole === 'elite' ||
           userRole === 'a7fx' ||
           ['a7fx', 'elite'].includes((user?.subscription_plan || '').toString().toLowerCase());
         setSubscription({
           hasCommunityAccess: true,
-          accessType: eliteLike ? 'A7FX_ELITE_ACTIVE' : 'AURA_FX_ACTIVE',
+          accessType: eliteLike ? 'ELITE_ACTIVE' : 'PRO_ACTIVE',
           isActive: true,
           status: 'active',
           _fallback: true
@@ -167,11 +167,13 @@ export const SubscriptionProvider = ({ children }) => {
   
   // Entitlements (single source for RouteGuards and API filters)
   const hasCommunityAccess = subscription?.hasCommunityAccess === true;
-  const tier = subscription?.tier || 'FREE';
+  const tier = subscription?.tier || 'ACCESS';
   const status = subscription?.status || 'inactive';
   const accessType = subscription?.accessType || 'NONE';
-  const hasAuraFX = accessType === 'AURA_FX_ACTIVE';
-  const hasA7FXElite = accessType === 'A7FX_ELITE_ACTIVE';
+  const hasProActive = accessType === 'PRO_ACTIVE' || accessType === 'AURA_FX_ACTIVE';
+  const hasEliteActive = accessType === 'ELITE_ACTIVE' || accessType === 'A7FX_ELITE_ACTIVE';
+  const hasAuraFX = hasProActive;
+  const hasA7FXElite = hasEliteActive;
   const isAdmin = accessType === 'ADMIN';
 
   const value = {
@@ -182,6 +184,8 @@ export const SubscriptionProvider = ({ children }) => {
     tier,
     status,
     accessType,
+    hasProActive,
+    hasEliteActive,
     hasAuraFX,
     hasA7FXElite,
     isAdmin,

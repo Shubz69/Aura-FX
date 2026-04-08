@@ -12,6 +12,28 @@ const { performMt5Operation } = require('./mtSyncService');
 const { ensurePlatformConnectionsColumns, patchConnectionRow } = require('./platformConnectionMeta');
 const { setAuraCorsHeaders, safeJsonParse } = require('./cors');
 const { publicAccountLiveError, safeMtLog, isAuraDiagnosticsEnabled } = require('./auraProductionUtils');
+const {
+  scheduleMt5BridgeBackgroundSync,
+  schedulePresetWarmAfterDbSync,
+} = require('./mtSyncCoordinator');
+
+const ACCOUNT_STALE_MS = Math.max(
+  120000,
+  Math.min(3600000, parseInt(process.env.AURA_ACCOUNT_CACHE_STALE_MS || '600000', 10) || 600000),
+);
+
+function accountSnapshotStale(row) {
+  const raw = row?.last_success_at || row?.last_sync_at || row?.last_sync;
+  if (!raw) return true;
+  const ms = new Date(raw).getTime();
+  if (!Number.isFinite(ms)) return true;
+  return Date.now() - ms > ACCOUNT_STALE_MS;
+}
+
+function isUsableAccountSnapshot(obj) {
+  if (!obj || typeof obj !== 'object') return false;
+  return obj.balance != null || obj.equity != null || obj.currency != null;
+}
 
 function getEncKey() {
   const raw = process.env.PLATFORM_ENCRYPTION_KEY || process.env.JWT_SECRET || 'aura-fx-enc-key-pad-to-32chars!!';
@@ -173,8 +195,12 @@ module.exports = async (req, res) => {
   const decoded = verifyToken(req.headers.authorization);
   if (!decoded) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-  const { platformId } = req.query || {};
+  const { platformId, live: liveQ } = req.query || {};
   if (!platformId) return res.status(400).json({ success: false, error: 'platformId required' });
+  const forceLive =
+    liveQ === '1'
+    || liveQ === 'true'
+    || String(req.query?.refresh || '').toLowerCase() === 'live';
 
   try {
     await ensurePlatformConnectionsColumns(executeQuery);
@@ -183,9 +209,10 @@ module.exports = async (req, res) => {
   }
 
   const [rows] = await executeQuery(
-    `SELECT credentials_enc, account_info FROM aura_platform_connections
+    `SELECT credentials_enc, account_info, last_success_at, last_sync_at, last_sync
+     FROM aura_platform_connections
      WHERE user_id = ? AND platform_id = ? AND status IN ('active', 'connected', 'error')`,
-    [decoded.id, platformId]
+    [decoded.id, platformId],
   );
   if (!rows.length) return res.status(404).json({ success: false, error: 'Platform not connected' });
 
@@ -194,6 +221,27 @@ module.exports = async (req, res) => {
     creds = JSON.parse(decrypt(rows[0].credentials_enc));
   } catch {
     return res.status(500).json({ success: false, error: 'Credential decryption failed' });
+  }
+
+  const row0 = rows[0];
+  const cachedAccount = safeJsonParse(row0.account_info, null);
+  const isMtBridge =
+    (platformId === 'mt5' || platformId === 'mt4') && hasMtBridgeCredentials(creds);
+
+  if (isMtBridge && !forceLive && isUsableAccountSnapshot(cachedAccount)) {
+    const revalidating = scheduleMt5BridgeBackgroundSync(executeQuery, decoded.id, platformId, creds);
+    const stale = accountSnapshotStale(row0);
+    const body = {
+      success: true,
+      account: cachedAccount,
+      stale,
+      dataSource: 'cache',
+      revalidating,
+    };
+    if (isAuraDiagnosticsEnabled()) {
+      body.diagnostics = { context: 'platform-account', dataSource: 'cache', stale, revalidating };
+    }
+    return res.status(200).json(body);
   }
 
   const result = await fetchForPlatform(platformId, creds);
@@ -244,6 +292,12 @@ module.exports = async (req, res) => {
     });
   } catch (e) {
     console.error('platform-account success patch:', e.message);
+  }
+
+  if (isMtBridge) {
+    schedulePresetWarmAfterDbSync(executeQuery, decoded.id, platformId, {
+      reason: 'platform_account_live_ok',
+    });
   }
 
   return res.status(200).json({

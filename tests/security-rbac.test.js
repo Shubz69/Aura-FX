@@ -6,7 +6,7 @@
  * Run: node tests/security-rbac.test.js
  */
 
-const { getEntitlements, getTier } = require('../api/utils/entitlements');
+const { getEntitlements, getTier, ENTITLEMENT_TIER } = require('../api/utils/entitlements');
 
 let passed = 0, failed = 0;
 function describe(name, fn) { console.log('\n' + name); fn(); }
@@ -51,29 +51,29 @@ const ELITE_USER = {
 };
 
 describe('RBAC - Tier Detection', () => {
-  it('FREE user has tier FREE', () => {
+  it('Access user has tier ACCESS', () => {
     const tier = getTier(FREE_USER);
-    expect(tier).toBe('FREE');
+    expect(tier).toBe(ENTITLEMENT_TIER.ACCESS);
   });
 
-  it('PREMIUM user has tier PREMIUM', () => {
+  it('Pro (aura) user has tier PRO', () => {
     const tier = getTier(PREMIUM_USER);
-    expect(tier).toBe('PREMIUM');
+    expect(tier).toBe(ENTITLEMENT_TIER.PRO);
   });
 
-  it('A7FX subscription plan maps to tier A7FX', () => {
+  it('Legacy a7fx subscription plan maps to tier ELITE', () => {
     const tier = getTier(ELITE_USER);
-    expect(tier).toBe('A7FX');
+    expect(tier).toBe(ENTITLEMENT_TIER.ELITE);
   });
 });
 
 describe('RBAC - canAccessAI', () => {
-  it('FREE user cannot access AI', () => {
+  it('Access user cannot access AI', () => {
     const ent = getEntitlements(FREE_USER);
     expect(ent.canAccessAI).toBe(false);
   });
 
-  it('PREMIUM user can access AI', () => {
+  it('Pro user can access AI', () => {
     const ent = getEntitlements(PREMIUM_USER);
     expect(ent.canAccessAI).toBe(true);
   });
@@ -85,12 +85,12 @@ describe('RBAC - canAccessAI', () => {
 });
 
 describe('RBAC - canAccessCommunity', () => {
-  it('FREE user with plan selected can access community', () => {
+  it('Access user with plan selected can access community', () => {
     const ent = getEntitlements(FREE_USER);
     expect(ent.canAccessCommunity).toBe(true);
   });
 
-  it('PREMIUM user can access community', () => {
+  it('Pro user can access community', () => {
     const ent = getEntitlements(PREMIUM_USER);
     expect(ent.canAccessCommunity).toBe(true);
   });

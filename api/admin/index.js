@@ -5,6 +5,21 @@ const nodemailer = require('nodemailer');
 const { verifyToken } = require('../utils/auth');
 const { isSuperAdminEmail } = require('../utils/entitlements');
 const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
+const { canonicalStoredPlanFromAny, normalizeKey } = require('../utils/subscriptionNormalize');
+const {
+  permissionRoleFromUserRow,
+  canonicalSubscriptionPlanForResponse
+} = require('../utils/userResponseNormalize');
+
+/** Map admin-submitted tier aliases to canonical stored roles (admin / super_admin unchanged). */
+function normalizeAdminTierRoleWrite(role) {
+  const r = (role || '').toString().trim().toLowerCase();
+  if (r === 'super_admin' || r === 'admin') return r;
+  if (r === 'free' || r === 'access') return 'access';
+  if (r === 'premium' || r === 'aura' || r === 'pro') return 'pro';
+  if (r === 'a7fx' || r === 'elite') return 'elite';
+  return 'access';
+}
 
 /** Cryptographic JWT + DB role super_admin or env SUPER_ADMIN_EMAIL match. */
 async function assertSuperAdminDb(db, authHeader) {
@@ -178,7 +193,11 @@ module.exports = async (req, res) => {
         const user = rows[0];
         const userRole = (user.role || '').toLowerCase();
         const isAdmin = userRole === 'admin' || userRole === 'super_admin' || userRole === 'ADMIN';
-        const isPremium = userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite';
+        const isPremium =
+          userRole === 'premium' ||
+          userRole === 'pro' ||
+          userRole === 'a7fx' ||
+          userRole === 'elite';
         
         // CRITICAL: Admins ALWAYS have access - no subscription required, no payment checks
         if (isAdmin) {
@@ -203,7 +222,7 @@ module.exports = async (req, res) => {
             isPremium: true,
             paymentFailed: false,
             expiry: user.subscription_expiry || null,
-            subscription_plan: user.subscription_plan || 'premium',
+            subscriptionPlan: canonicalSubscriptionPlanForResponse(user),
             message: 'Premium role access granted'
           });
         }
@@ -232,7 +251,7 @@ module.exports = async (req, res) => {
               isAdmin: false,
               paymentFailed: false,
               expiry: user.subscription_expiry,
-              subscription_plan: user.subscription_plan || 'aura'
+              subscriptionPlan: canonicalSubscriptionPlanForResponse(user)
             });
           } else {
             return res.status(200).json({
@@ -241,7 +260,7 @@ module.exports = async (req, res) => {
               isAdmin: false,
               paymentFailed: false,
               expiry: user.subscription_expiry,
-              subscription_plan: user.subscription_plan,
+              subscriptionPlan: canonicalSubscriptionPlanForResponse(user),
               message: 'Your subscription has expired. Please renew to continue using the community.'
             });
           }
@@ -300,10 +319,13 @@ module.exports = async (req, res) => {
         try { await db.execute('SELECT username FROM users LIMIT 1'); hasUsername = true; } catch (_) {}
         try { await db.execute('SELECT name FROM users LIMIT 1'); hasName = true; } catch (_) {}
         try { await db.execute('SELECT avatar FROM users LIMIT 1'); hasAvatar = true; } catch (_) {}
+        let hasSubscriptionPlanCol = false;
+        try { await db.execute('SELECT subscription_plan FROM users LIMIT 1'); hasSubscriptionPlanCol = true; } catch (_) {}
         let selectCols = 'id, email, role, last_seen, created_at';
         if (hasUsername) selectCols += ', username';
         if (hasName) selectCols += ', name';
         if (hasAvatar) selectCols += ', avatar';
+        if (hasSubscriptionPlanCol) selectCols += ', subscription_plan';
 
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
         const [rows] = await db.execute(
@@ -317,13 +339,14 @@ module.exports = async (req, res) => {
         const [allUsers] = await db.execute('SELECT COUNT(*) as total FROM users');
         db.release();
 
-        const onlineUsers = rows.map(row => ({
+        const onlineUsers = rows.map((row) => ({
           id: row.id,
           username: hasUsername ? (row.username || '') : (row.name || ''),
           email: row.email || '',
           name: hasName ? (row.name || '') : (row.username || ''),
           avatar: hasAvatar ? (row.avatar ?? null) : null,
-          role: row.role || 'free',
+          role: permissionRoleFromUserRow(row),
+          subscriptionPlan: hasSubscriptionPlanCol ? canonicalSubscriptionPlanForResponse(row) : null,
           lastSeen: row.last_seen
         }));
 
@@ -724,20 +747,17 @@ module.exports = async (req, res) => {
 
         const [users] = await db.execute(query);
 
-        const formattedUsers = users.map(user => {
-          const rawRole = (user.role || 'free').toString();
-          const emailRow = { email: user.email || '' };
-          const effectiveRole = isSuperAdminEmail(emailRow) ? 'super_admin' : rawRole;
+        const formattedUsers = users.map((user) => {
           const formatted = {
             id: jsonNumber(user.id),
             email: user.email || '',
             username: user.username || user.name || '',
-            role: effectiveRole,
+            role: permissionRoleFromUserRow(user),
             capabilities: [],
             xp: hasXP ? jsonNumber(user.xp, 0) : 0,
             level: hasLevel ? jsonNumber(user.level ?? 1, 1) : 1,
             subscription_status: hasSubscriptionStatus ? (user.subscription_status || 'inactive') : 'inactive',
-            subscription_plan: hasSubscriptionPlan ? (user.subscription_plan || null) : null,
+            subscriptionPlan: hasSubscriptionPlan ? canonicalSubscriptionPlanForResponse(user) : null,
             subscription_expiry: hasSubscriptionExpiry ? (user.subscription_expiry || null) : null
           };
 
@@ -798,8 +818,8 @@ module.exports = async (req, res) => {
       }
 
       // Validate role
-      const validRoles = ['free', 'premium', 'a7fx', 'elite', 'admin', 'super_admin'];
-      if (!validRoles.includes(role)) {
+      const validRoleKeys = ['free', 'access', 'premium', 'aura', 'pro', 'a7fx', 'elite', 'admin', 'super_admin'];
+      if (!validRoleKeys.includes(normalizeKey(role))) {
         return res.status(400).json({ success: false, message: 'Invalid role' });
       }
 
@@ -826,15 +846,16 @@ module.exports = async (req, res) => {
 
         const targetDbRole = (userRows[0].role || '').toString().trim().toLowerCase();
 
-        if ((targetDbRole === 'super_admin' || isSuperAdminEmail(userRows[0])) && role !== 'super_admin') {
+        const storedTierRole = normalizeAdminTierRoleWrite(role);
+        if ((targetDbRole === 'super_admin' || isSuperAdminEmail(userRows[0])) && storedTierRole !== 'super_admin') {
           db.release();
           return res.status(403).json({ success: false, message: 'Cannot change Super Admin role' });
         }
         /* Granting super_admin: caller already passed assertSuperAdminDb (DB super_admin or env-listed email).
            Target need not be pre-listed in SUPER_ADMIN_EMAIL — that list is for recognition / bootstrap only. */
 
-        // Update user role
-        await db.execute('UPDATE users SET role = ? WHERE id = ?', [role, userId]);
+        // Update user role (canonical tier strings)
+        await db.execute('UPDATE users SET role = ? WHERE id = ?', [storedTierRole, userId]);
 
         // Update capabilities in metadata JSON field
         if (capabilities && Array.isArray(capabilities)) {
@@ -973,10 +994,10 @@ module.exports = async (req, res) => {
       }
 
       try {
-        // Revoke access by setting subscription to inactive and role to free
+        // Revoke access: inactive + access tier (canonical)
         await db.execute(
-          'UPDATE users SET subscription_status = ?, payment_failed = TRUE, role = ? WHERE id = ?',
-          ['inactive', 'free', userId]
+          'UPDATE users SET subscription_status = ?, payment_failed = TRUE, role = ?, subscription_plan = ? WHERE id = ?',
+          ['inactive', 'access', 'access', userId]
         );
 
         db.release();
@@ -1036,16 +1057,18 @@ module.exports = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid subscription status' });
       }
 
-      // Validate subscription plan
-      const validPlans = ['aura', 'a7fx', 'elite', null];
-      if (subscription_plan !== undefined && !validPlans.includes(subscription_plan)) {
+      const allowedPlanKeys = new Set(['aura', 'a7fx', 'elite', 'premium', 'pro', 'access', 'free']);
+      if (
+        subscription_plan !== undefined &&
+        subscription_plan !== null &&
+        !allowedPlanKeys.has(normalizeKey(subscription_plan))
+      ) {
         db.release();
         return res.status(400).json({ success: false, message: 'Invalid subscription plan' });
       }
 
-      // Validate role if provided
-      const validRoles = ['free', 'premium', 'a7fx', 'elite', 'admin', 'super_admin'];
-      if (role && !validRoles.includes(role)) {
+      const subValidRoleKeys = ['free', 'access', 'premium', 'aura', 'pro', 'a7fx', 'elite', 'admin', 'super_admin'];
+      if (role && !subValidRoleKeys.includes(normalizeKey(role))) {
         db.release();
         return res.status(400).json({ success: false, message: 'Invalid role' });
       }
@@ -1058,7 +1081,11 @@ module.exports = async (req, res) => {
       }
 
       const targetRoleRow = (userRows[0].role || '').toString().trim().toLowerCase();
-      if ((targetRoleRow === 'super_admin' || isSuperAdminEmail(userRows[0])) && role && role !== 'super_admin') {
+      if (
+        (targetRoleRow === 'super_admin' || isSuperAdminEmail(userRows[0])) &&
+        role &&
+        normalizeKey(role) !== 'super_admin'
+      ) {
         db.release();
         return res.status(403).json({ success: false, message: 'Cannot change Super Admin role' });
       }
@@ -1074,7 +1101,9 @@ module.exports = async (req, res) => {
 
       if (subscription_plan !== undefined) {
         updates.push('subscription_plan = ?');
-        values.push(subscription_plan);
+        values.push(
+          subscription_plan === null ? null : canonicalStoredPlanFromAny(subscription_plan) || null
+        );
       }
 
       if (subscription_expiry !== undefined) {
@@ -1085,21 +1114,18 @@ module.exports = async (req, res) => {
       // Auto-update role based on subscription if role not explicitly provided
       if (role !== undefined) {
         updates.push('role = ?');
-        values.push(role);
+        values.push(normalizeAdminTierRoleWrite(role));
       } else if (subscription_status === 'active' && subscription_plan) {
-        // Auto-assign role based on plan
-        let autoRole = 'free';
-        if (subscription_plan === 'a7fx' || subscription_plan === 'elite') {
-          autoRole = 'elite'; // A7FX purchases get Elite role
-        } else if (subscription_plan === 'aura') {
-          autoRole = 'premium';
-        }
+        const sp = canonicalStoredPlanFromAny(subscription_plan);
+        let autoRole = 'access';
+        if (sp === 'elite') autoRole = 'elite';
+        else if (sp === 'pro') autoRole = 'pro';
+        else if (sp === 'access') autoRole = 'access';
         updates.push('role = ?');
         values.push(autoRole);
       } else if (subscription_status === 'inactive' || subscription_status === 'cancelled' || subscription_status === 'expired') {
-        // Auto-downgrade to free if subscription is inactive
         updates.push('role = ?');
-        values.push('free');
+        values.push('access');
       }
 
       if (updates.length === 0) {
@@ -1118,10 +1144,18 @@ module.exports = async (req, res) => {
       );
 
       db.release();
+      const u = updatedRows[0];
       return res.status(200).json({
         success: true,
         message: 'Subscription updated successfully',
-        user: updatedRows[0]
+        user: {
+          id: u.id,
+          email: u.email,
+          role: permissionRoleFromUserRow(u),
+          subscriptionPlan: canonicalSubscriptionPlanForResponse(u),
+          subscription_status: u.subscription_status,
+          subscription_expiry: u.subscription_expiry
+        }
       });
     } catch (error) {
       console.error('Error updating subscription:', error);
@@ -1167,7 +1201,7 @@ module.exports = async (req, res) => {
           return res.status(401).json({ success: false, message: 'User not found' });
         }
         const role = (roleRows[0].role || '').toString().toLowerCase().trim();
-        const allowedRoles = ['admin', 'super_admin', 'a7fx', 'elite'];
+        const allowedRoles = ['admin', 'super_admin', 'pro', 'premium', 'aura', 'a7fx', 'elite'];
         if (!allowedRoles.includes(role)) {
           db.release();
           return res.status(403).json({ success: false, message: 'Admin only' });
@@ -1362,7 +1396,7 @@ module.exports = async (req, res) => {
         const [roleRows] = await db.execute('SELECT role FROM users WHERE id = ?', [requesterId]);
         if (roleRows.length === 0) { db.release(); return res.status(401).json({ success: false, message: 'User not found' }); }
         const role = (roleRows[0].role || '').toString().toLowerCase().trim();
-        if (!['admin', 'super_admin', 'a7fx', 'elite'].includes(role)) {
+        if (!['admin', 'super_admin', 'pro', 'premium', 'aura', 'a7fx', 'elite'].includes(role)) {
           db.release();
           return res.status(403).json({ success: false, message: 'Admin only' });
         }

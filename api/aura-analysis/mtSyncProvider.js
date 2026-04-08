@@ -578,6 +578,13 @@ async function getDealHistory(credentials, platformId = 'mt5', options = {}) {
       ...(options.days != null && Number.isFinite(Number(options.days))
         ? { days: Math.min(MAX_HISTORY_LOOKBACK_DAYS, Math.max(1, Math.floor(Number(options.days)))) }
         : {}),
+      /*
+       * Optional incremental hint: worker may return only deals closed after this epoch (ms).
+       * Unknown workers ignore the field; full-window fetch still works via merge + dedupe.
+       */
+      ...(options.sinceCloseTimeMs != null && Number.isFinite(Number(options.sinceCloseTimeMs))
+        ? { sinceCloseTimeMs: Math.floor(Number(options.sinceCloseTimeMs)) }
+        : {}),
     };
     const response = await postJsonWithRetry(
       baseUrl,

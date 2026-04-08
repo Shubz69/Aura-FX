@@ -7,6 +7,19 @@
 
 const { getDbConnection } = require('../db');
 const { getTier } = require('../utils/entitlements');
+const { canonicalStoredPlanFromAny, canonicalSubscriptionRoleFromDb } = require('../utils/subscriptionNormalize');
+
+/** Persist canonical access | pro | elite only; `needsOnboardingReaccept` + `subscriptionSnapshotMatchesCurrent` accept legacy reads. */
+function onboardingSnapshotCanonical(user) {
+  const plan = (user.subscription_plan || '').toString().trim();
+  if (plan) {
+    const c = canonicalStoredPlanFromAny(plan);
+    if (c) return c;
+  }
+  const fromRole = canonicalSubscriptionRoleFromDb(user.role);
+  if (fromRole) return fromRole;
+  return 'access';
+}
 
 function decodeToken(authHeader) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
@@ -55,7 +68,7 @@ module.exports = async (req, res) => {
 
       const user = userRows[0];
       const tier = getTier(user);
-      const snapshot = (user.subscription_plan || user.role || 'free').toString().toLowerCase();
+      const snapshot = onboardingSnapshotCanonical(user);
 
       await db.execute(
         'UPDATE users SET onboarding_accepted = TRUE, onboarding_accepted_at = NOW(), onboarding_subscription_snapshot = ? WHERE id = ?',

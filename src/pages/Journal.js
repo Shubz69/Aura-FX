@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, useReducer } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +17,12 @@ import {
   FaPlus, FaTrash, FaCheck, FaCircle, FaEdit, FaSave,
   FaCamera, FaFire, FaBolt, FaTimes, FaChevronLeft, FaChevronRight, FaBell,
 } from 'react-icons/fa';
+import {
+  buildJournalDraftFromSearchParams,
+  readReplayDateFromWindow,
+  stripReplayHandoffParams,
+  TR_HANDOFF,
+} from '../lib/trader-replay/replayToolHandoff';
 
 const MOOD_OPTIONS = [
   { value: 'great', label: 'Great', emoji: '😊' },
@@ -183,8 +190,11 @@ export default function Journal() {
   const userAdmin = useMemo(() => isAdmin(authUser), [authUser]);
 
   const [journalToday, setJournalToday] = useState(() => getJournalTodayForUser(null));
-  const [selectedDate, setSelectedDate]   = useState(() => getJournalTodayForUser(null));
-  const [calendarMonth, setCalendarMonth] = useState(() => getJournalTodayForUser(null).slice(0, 7));
+  const [selectedDate, setSelectedDate]   = useState(() => readReplayDateFromWindow() || getJournalTodayForUser(null));
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const base = readReplayDateFromWindow() || getJournalTodayForUser(null);
+    return base.slice(0, 7);
+  });
   const [monthTasks, setMonthTasks]       = useState([]);
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState(null);
@@ -202,6 +212,9 @@ export default function Journal() {
   const [addingNote, setAddingNote]           = useState(false);
   const [completionBannerDismissed, setCompletionBannerDismissed] = useState(false);
   const [journalTab, setJournalTab] = useState('mandatory');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [replayReturnHref, setReplayReturnHref] = useState(null);
+  const replayHandoffConsumedRef = useRef(false);
 
   // Multi-photo proof: { [taskId]: string[] }
   const [proofPhotos, setProofPhotos]     = useState({});
@@ -342,6 +355,28 @@ export default function Journal() {
       })
       .catch(() => {});
   }, [loading, selectedDate]);
+
+  /* ── Trader Replay handoff (prefill diary + reflection tab) ─────────────── */
+  useEffect(() => {
+    if (loading || replayHandoffConsumedRef.current) return;
+    if (!searchParams.get(TR_HANDOFF.origin) && !searchParams.get('replaySessionId')) return;
+    const ret = searchParams.get(TR_HANDOFF.returnToReplay);
+    if (ret) setReplayReturnHref(ret);
+    const draft = buildJournalDraftFromSearchParams(searchParams);
+    const marker = `[tr-replay:${searchParams.get('replaySessionId') || 'session'}]`;
+    if (draft.trim()) {
+      setDailyNotes((prev) => {
+        if (prev.includes(marker)) return prev;
+        return (prev.trim() ? `${prev}\n\n` : '') + `---\n${draft}\n${marker}`;
+      });
+    }
+    setJournalTab('reflection');
+    replayHandoffConsumedRef.current = true;
+    const next = stripReplayHandoffParams(searchParams);
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [loading, searchParams, setSearchParams]);
 
   /* ── Save daily note (immediate; clears pending debounced save) ───────── */
   const saveDailyNote = useCallback(async (overrides = {}) => {
@@ -1180,6 +1215,14 @@ export default function Journal() {
             <p className="journal-tab-lede">
               Everything here is saved per day, just for you — diary entry, mood, and short reflection notes.
             </p>
+            {replayReturnHref ? (
+              <div className="journal-replay-handoff">
+                <span className="journal-replay-chip">From Trader Replay</span>
+                <Link to={replayReturnHref} className="journal-replay-back">
+                  Back to replay
+                </Link>
+              </div>
+            ) : null}
 
             <section className="journal-glass-card journal-diary-section">
               <h3 className="journal-subsection-title">Daily diary</h3>

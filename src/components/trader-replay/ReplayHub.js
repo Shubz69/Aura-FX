@@ -2,8 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { REPLAY_MODES, REPLAY_STATUSES } from '../../lib/trader-replay/replayDefaults';
 import { normalizeReplay, computeReplayQualityScore, computeReviewCompletenessScore } from '../../lib/trader-replay/replayNormalizer';
 import { deriveCoaching } from '../../lib/trader-replay/replayCoachingEngine';
+import { buildReplayIdentitySummary } from '../../lib/trader-replay/replayIdentityEngine';
+import { buildReplayContributionProfile } from '../../lib/trader-replay/replayContributionEngine';
+import { buildReplayBehaviorArchetypeProfile } from '../../lib/trader-replay/replayBehaviorArchetypeEngine';
 import { formatLearningExampleLabel } from '../../lib/trader-replay/replayEntitlements';
 import ReplayPremiumNudge from './ReplayPremiumNudge';
+import ReplayPackagePrep from './ReplayPackagePrep';
+import ReplayNarrativePrep from './ReplayNarrativePrep';
+import ReplayMonthlyCoachingPack from './ReplayMonthlyCoachingPack';
 
 const HUB_SORTS = [
   { id: 'newest', label: 'Recent' },
@@ -19,6 +25,14 @@ function tieBreak(a, b) {
   return String(b.id || '').localeCompare(String(a.id || ''));
 }
 
+function evidenceShort(conf) {
+  if (conf === 'insufficient_evidence') return 'Thin evidence';
+  if (conf === 'emerging') return 'Emerging evidence';
+  if (conf === 'moderate') return 'Moderate evidence';
+  if (conf === 'strong') return 'Strong evidence';
+  return '';
+}
+
 export default function ReplayHub({
   sessionsCount,
   continueSession,
@@ -29,10 +43,33 @@ export default function ReplayHub({
   sessions,
   onOpenSession,
   habitStats,
-  replayTier = 'FREE',
+  replayTier = 'ACCESS',
   replayFlags,
 }) {
   const [hubSort, setHubSort] = useState('newest');
+  const [identityPeriod, setIdentityPeriod] = useState('last30d');
+
+  const identitySummary = useMemo(() => buildReplayIdentitySummary(sessions || []), [sessions]);
+  const rollingWindows = identitySummary.rolling;
+  const windowSnapshot = rollingWindows[identityPeriod] || rollingWindows.last30d;
+  const contributionProfile = useMemo(
+    () => buildReplayContributionProfile(sessions || [], habitStats || null),
+    [sessions, habitStats]
+  );
+  const behaviorArchetype = useMemo(
+    () => buildReplayBehaviorArchetypeProfile(sessions || [], habitStats || null, contributionProfile),
+    [sessions, habitStats, contributionProfile]
+  );
+  const disc = contributionProfile.discipline;
+  const beh = contributionProfile.behavior;
+  const trendShort =
+    disc.replayDisciplineTrend === 'improving'
+      ? 'Improving'
+      : disc.replayDisciplineTrend === 'slipping'
+        ? 'Slipping'
+        : disc.replayDisciplineTrend === 'insufficient_evidence'
+          ? '—'
+          : 'Stable';
 
   const sortedRecent = useMemo(() => {
     const list = (sessions || []).map((r) => normalizeReplay(r));
@@ -103,10 +140,144 @@ export default function ReplayHub({
         </section>
       )}
 
+      <section className="trader-suite-panel aura-tr-identity-strip" aria-label="Replay identity snapshot">
+        <div className="aura-tr-identity-head">
+          <span className="trader-suite-kicker">Trader identity · replays</span>
+          <label className="aura-tr-identity-period">
+            <span className="aura-tr-muted">Window</span>
+            <select
+              className="trader-suite-select"
+              value={identityPeriod}
+              onChange={(e) => setIdentityPeriod(e.target.value)}
+              aria-label="Replay identity time window"
+            >
+              <option value="last7d">Last 7 days</option>
+              <option value="last30d">Last 30 days</option>
+              <option value="calendarMonth">This month</option>
+              <option value="previousMonth">Previous month</option>
+              <option value="allTime">All time</option>
+            </select>
+          </label>
+        </div>
+        <div className="aura-tr-identity-grid">
+          <div>
+            <span className="aura-tr-identity-label">Completed</span>
+            <strong className="aura-tr-identity-value">{windowSnapshot?.completedCount ?? 0}</strong>
+            <span className="aura-tr-identity-meta">in selected window</span>
+          </div>
+          <div>
+            <span className="aura-tr-identity-label">Avg Q / Rv</span>
+            <strong className="aura-tr-identity-value">
+              {windowSnapshot?.avgReplayQuality != null ? windowSnapshot.avgReplayQuality : '—'}
+              {' · '}
+              {windowSnapshot?.avgReviewCompleteness != null ? `${windowSnapshot.avgReviewCompleteness}%` : '—'}
+            </strong>
+            <span className="aura-tr-identity-meta">replay quality · review depth</span>
+          </div>
+          <div>
+            <span className="aura-tr-identity-label">Examples</span>
+            <strong className="aura-tr-identity-value">{windowSnapshot?.learningExamples ?? 0}</strong>
+            <span className="aura-tr-identity-meta">model + caution</span>
+          </div>
+          <div>
+            <span className="aura-tr-identity-label">Open loops</span>
+            <strong className="aura-tr-identity-value">{windowSnapshot?.incompleteReviewsRemaining ?? '—'}</strong>
+            <span className="aura-tr-identity-meta">not finished</span>
+          </div>
+        </div>
+        <p className="aura-tr-identity-focus">
+          <strong>{identitySummary.developmentFocus?.label || 'Focus'}</strong>
+          {' · '}
+          {identitySummary.developmentFocus?.detail || 'Complete more replays to unlock grounded patterns.'}
+        </p>
+        {identitySummary.evidence.uncertaintyNotes?.[0] &&
+        identitySummary.evidence.signalStrength !== 'strong' ? (
+          <p className="aura-tr-muted aura-tr-identity-note">{identitySummary.evidence.uncertaintyNotes[0]}</p>
+        ) : null}
+        {identitySummary.patterns.recurringMistakeTheme ? (
+          <p className="aura-tr-identity-pattern">
+            {identitySummary.patterns.recurringMistakeTheme.level === 'established' ? 'Established theme' : 'Emerging theme'}
+            {' · '}
+            {identitySummary.patterns.recurringMistakeTheme.label} · {identitySummary.patterns.recurringMistakeTheme.count}× in completed reviews
+          </p>
+        ) : null}
+        {behaviorArchetype.visible ? (
+          <div className="aura-tr-behavior-pattern" aria-label="Replay behaviour pattern">
+            <div className="aura-tr-behavior-pattern-head">
+              <span className="aura-tr-behavior-pattern-kicker">Behaviour pattern</span>
+              {behaviorArchetype.showArchetypeLabel && behaviorArchetype.primaryReplayArchetype ? (
+                <span className="aura-tr-chip aura-tr-chip--archetype">{behaviorArchetype.primaryReplayArchetype.label}</span>
+              ) : null}
+              {evidenceShort(behaviorArchetype.archetypeConfidence) ? (
+                <span className="aura-tr-behavior-pattern-evidence">{evidenceShort(behaviorArchetype.archetypeConfidence)}</span>
+              ) : null}
+            </div>
+            <p className="aura-tr-behavior-pattern-line">{behaviorArchetype.psychologyLines.patternLine}</p>
+          </div>
+        ) : null}
+        {identitySummary.developmentGuidance?.topGrowthPriority?.practiceNext ? (
+          <p className="aura-tr-muted aura-tr-identity-note">
+            <strong>Practice · </strong>
+            {identitySummary.developmentGuidance.topGrowthPriority.practiceNext}
+          </p>
+        ) : null}
+        {identitySummary.developmentGuidance?.focusAreas?.[0]?.practiceNext ? (
+          <p className="aura-tr-muted aura-tr-identity-note">
+            <strong>Also target · </strong>
+            {identitySummary.developmentGuidance.focusAreas[0].practiceNext}
+          </p>
+        ) : null}
+        {identitySummary.developmentGuidance?.strengths?.[0]?.maintain ? (
+          <p className="aura-tr-identity-pattern">
+            <strong>Maintain · </strong>
+            {identitySummary.developmentGuidance.strengths[0].maintain}
+          </p>
+        ) : null}
+      </section>
+
+      <section className="trader-suite-panel aura-tr-contribution-strip" aria-label="Replay profile contribution">
+        <div className="aura-tr-contribution-head">
+          <span className="trader-suite-kicker">Profile contribution · replay signal</span>
+          <span className="aura-tr-contribution-note">Adds context for discipline/behavior — not your full Aurax Score</span>
+        </div>
+        <div className="aura-tr-contribution-grid">
+          <div>
+            <span className="aura-tr-identity-label">Discipline index</span>
+            <strong className="aura-tr-identity-value">{disc.replayDisciplineContribution ?? '—'}</strong>
+            <span className="aura-tr-identity-meta">{disc.replayDisciplineConfidence} confidence</span>
+          </div>
+          <div>
+            <span className="aura-tr-identity-label">Behavior index</span>
+            <strong className="aura-tr-identity-value">{beh.replayBehaviorContribution ?? '—'}</strong>
+            <span className="aura-tr-identity-meta">{beh.replayBehaviorConfidence} confidence</span>
+          </div>
+          <div>
+            <span className="aura-tr-identity-label">Discipline trend</span>
+            <strong className="aura-tr-identity-value">{trendShort}</strong>
+            <span className="aura-tr-identity-meta">last 7d vs prior week</span>
+          </div>
+        </div>
+        {contributionProfile.scoreContributionExplanations[0] ? (
+          <p className="aura-tr-contribution-expl">{contributionProfile.scoreContributionExplanations[0]}</p>
+        ) : null}
+        {contributionProfile.developmentActions[0] ? (
+          <p className="aura-tr-contribution-action">
+            <span className="aura-tr-muted">Next · </span>
+            {contributionProfile.developmentActions[0]}
+          </p>
+        ) : null}
+      </section>
+
+      <ReplayPackagePrep sessions={sessions} habitStats={habitStats} variant="hub" />
+
+      <ReplayNarrativePrep sessions={sessions} habitStats={habitStats} variant="hub" />
+
+      <ReplayMonthlyCoachingPack sessions={sessions} habitStats={habitStats} />
+
       <p className="aura-tr-tier-ribbon" data-tier={replayTier}>
         {replayTier === 'ELITE' ? 'Elite desk · mentor-ready summaries & advanced library' : null}
-        {replayTier === 'PREMIUM' ? 'Premium · scenario drills & learning library' : null}
-        {replayTier === 'FREE' ? 'Free · single-trade replay & core reflections' : null}
+        {replayTier === 'PRO' ? 'Pro · scenario drills & learning library' : null}
+        {replayTier === 'ACCESS' ? 'Access · single-trade replay & core reflections' : null}
       </p>
 
       {continueSession ? (

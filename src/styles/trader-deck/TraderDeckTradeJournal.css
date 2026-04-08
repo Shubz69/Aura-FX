@@ -32,6 +32,44 @@
   margin: 0 0 22px;
 }
 
+.td-journal-replay-handoff {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--tj-border-gold);
+  background: rgba(3, 2, 10, 0.6);
+}
+.td-journal-replay-chip {
+  display: inline-block;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tj-gold-bright);
+  margin-right: 10px;
+}
+.td-journal-replay-meta {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+.td-journal-replay-lesson {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.82);
+}
+.td-journal-replay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+.td-journal-replay-link {
+  font-size: 0.82rem;
+  color: var(--tj-gold-bright);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .td-journal-toolbar {
   display: flex;
   flex-wrap: wrap;

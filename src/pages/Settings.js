@@ -518,7 +518,7 @@ const Settings = () => {
                         </span>
                         {u.subscription_status === 'active' && (
                           <span className="subscription-badge active">
-                            {u.subscription_plan === 'a7fx' ? 'A7FX' : u.subscription_plan === 'aura' ? 'Premium' : 'Active'}
+                            {u.subscription_plan === 'a7fx' ? 'Elite' : u.subscription_plan === 'aura' || u.subscription_plan === 'pro' ? 'Pro' : 'Active'}
                           </span>
                         )}
                         {u.username && (

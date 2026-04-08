@@ -133,14 +133,18 @@ module.exports = async (req, res) => {
             
             if (users && users.length > 0) {
               const user = users[0];
-              const isPremium = 
-                user.role === 'premium' || 
-                user.role === 'a7fx' || 
-                user.role === 'elite' ||
-                user.role === 'admin' ||
-                user.role === 'super_admin' ||
-                (user.subscription_status === 'active' && 
-                 (user.subscription_plan === 'aura' || user.subscription_plan === 'a7fx'));
+              const ur = (user.role || '').toString().toLowerCase();
+              const ss = (user.subscription_status || '').toString().toLowerCase();
+              const sp = (user.subscription_plan || '').toString().toLowerCase();
+              const isPremium =
+                ur === 'premium' ||
+                ur === 'pro' ||
+                ur === 'a7fx' ||
+                ur === 'elite' ||
+                ur === 'admin' ||
+                ur === 'super_admin' ||
+                ((ss === 'active' || ss === 'trialing') &&
+                  (sp === 'aura' || sp === 'premium' || sp === 'pro' || sp === 'a7fx' || sp === 'elite'));
               
               setCached(cacheKey, isPremium, 60000);
               return isPremium;

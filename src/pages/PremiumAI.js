@@ -218,11 +218,13 @@ const PremiumAI = () => {
   /* auth guard */
   useEffect(() => {
     if (!isAuthenticated) { navigate('/login'); return; }
-    const { role = 'free', subscription_status: ss = 'inactive', subscription_plan: sp, email = '' } = user || {};
+    const { role = 'access', subscription_status: ss = 'inactive', subscription_plan: sp, email = '' } = user || {};
+    const r = (role || '').toString().toLowerCase();
+    const spLow = (sp || '').toString().toLowerCase();
     const ok = isSuperAdmin(user)
-      || ['premium','a7fx','elite','admin','super_admin','SUPER_ADMIN'].includes(role)
-      || (ss === 'active' && ['aura','a7fx'].includes(sp));
-    if (!ok) { toast.error('Premium subscription required'); navigate('/subscription'); }
+      || ['premium', 'pro', 'a7fx', 'elite', 'admin', 'super_admin'].includes(r)
+      || (ss === 'active' && ['aura', 'a7fx', 'elite', 'pro'].includes(spLow));
+    if (!ok) { toast.error('Pro or Elite subscription required'); navigate('/subscription'); }
   }, [isAuthenticated, user, navigate]);
 
   /* persist messages */
@@ -483,7 +485,11 @@ const PremiumAI = () => {
   const isEmpty = !messages.length && !isLoading && !isStreaming;
   const tierUpper = (entitlements?.effectiveTier || entitlements?.tier || '').toString().toUpperCase();
   const badge =
-    tierUpper === 'ELITE' || tierUpper === 'A7FX' ? 'Elite' : 'Premium';
+    tierUpper === 'ELITE' || tierUpper === 'A7FX'
+      ? 'Elite'
+      : tierUpper === 'PRO' || tierUpper === 'PREMIUM'
+        ? 'Pro'
+        : 'Access';
 
   /* ─────────────── RENDER ─────────────── */
   return (

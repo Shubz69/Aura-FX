@@ -13,12 +13,12 @@
  * {
  *   success: true,
  *   subscription: {
- *     tier: 'FREE' | 'AURA_FX' | 'A7FX',       // Channel access: FREE=General only, AURA_FX=premium, A7FX=elite
+ *     tier: 'ACCESS' | 'PRO' | 'ELITE',
  *     status: 'inactive' | 'trialing' | 'active',
  *     hasCommunityAccess: boolean,
- *     planId: 'aura' | 'a7fx' | 'free' | null,
+ *     planId: canonical or legacy Stripe id (aura, pro, elite, access, …),
  *     planName: string | null,
- *     accessType: 'AURA_FX_ACTIVE' | 'A7FX_ELITE_ACTIVE' | 'ADMIN' | 'NONE',
+ *     accessType: 'PRO_ACTIVE' | 'ELITE_ACTIVE' | 'ADMIN' | 'NONE' (legacy AURA_FX_ACTIVE / A7FX_ELITE_ACTIVE still accepted client-side),
  *     renewsAt, trialEndsAt, canceledAt, startedAt, isActive, daysRemaining, ...
  *   }
  * }
@@ -30,6 +30,15 @@ const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 const { jsonSafeDeep } = require('../utils/jsonSafe');
 const { isSuperAdminEmail } = require('../utils/entitlements');
+const { isProPlanId, isElitePlanId, canonicalStoredPlanFromAny } = require('../utils/subscriptionNormalize');
+
+/** Expose canonical plan ids (access | pro | elite) in API; unknown strings pass through lowercased. */
+function outboundPlanId(planIdRaw) {
+  if (planIdRaw == null || planIdRaw === '') return planIdRaw;
+  const key = String(planIdRaw).trim().toLowerCase();
+  const c = canonicalStoredPlanFromAny(key);
+  return c !== '' ? c : key;
+}
 
 // Decode JWT token
 function decodeToken(authHeader) {
@@ -51,22 +60,26 @@ function decodeToken(authHeader) {
   }
 }
 
-// Plan display names
+// Plan display names (canonical + legacy ids)
 const PLAN_NAMES = {
-  'aura': 'Aura Terminal Standard',
-  'a7fx': 'A7FX Elite',
-  'A7FX': 'A7FX Elite',
-  'elite': 'A7FX Elite',
-  'free': 'Free',
-  'premium': 'Aura Terminal Standard'
+  aura: 'Aura Terminal Standard',
+  pro: 'Aura Terminal Standard',
+  a7fx: 'Elite',
+  A7FX: 'Elite',
+  elite: 'Elite',
+  free: 'Access',
+  access: 'Access',
+  premium: 'Aura Terminal Standard'
 };
 
 // Plan prices
 const PLAN_PRICES = {
-  'aura': { amount: 99, currency: 'GBP', interval: 'month' },
-  'a7fx': { amount: 250, currency: 'GBP', interval: 'month' },
-  'elite': { amount: 250, currency: 'GBP', interval: 'month' },
-  'free': { amount: 0, currency: 'GBP', interval: 'month' }
+  aura: { amount: 99, currency: 'GBP', interval: 'month' },
+  pro: { amount: 99, currency: 'GBP', interval: 'month' },
+  a7fx: { amount: 250, currency: 'GBP', interval: 'month' },
+  elite: { amount: 250, currency: 'GBP', interval: 'month' },
+  free: { amount: 0, currency: 'GBP', interval: 'month' },
+  access: { amount: 0, currency: 'GBP', interval: 'month' }
 };
 
 module.exports = async (req, res) => {
@@ -182,7 +195,7 @@ module.exports = async (req, res) => {
       // Admins ALWAYS have access, regardless of payment status
       isActive = true;
       status = 'active';
-      planId = planId || 'a7fx';
+      planId = planId || 'elite';
       logger.info('Admin user detected - granting full access', { userId, role: userRole });
     }
     // Check payment failed state (but NOT for admins)
@@ -216,7 +229,7 @@ module.exports = async (req, res) => {
     }
     // Stale role in DB must not grant paid access without live billing (Stripe webhooks + expiry align DB)
     else if (
-      ['premium', 'elite', 'a7fx'].includes(userRole) &&
+      ['premium', 'pro', 'elite', 'a7fx'].includes(userRole) &&
       !user.payment_failed &&
       expiryDate &&
       expiryDate > now &&
@@ -224,7 +237,7 @@ module.exports = async (req, res) => {
     ) {
       isActive = true;
       status = 'active';
-      planId = planId || (userRole === 'elite' || userRole === 'a7fx' ? 'a7fx' : 'aura');
+      planId = planId || (userRole === 'elite' || userRole === 'a7fx' ? 'elite' : 'pro');
     }
     // Expired
     else if (expiryDate && expiryDate <= now) {
@@ -233,55 +246,58 @@ module.exports = async (req, res) => {
     }
 
     // ============= ENTITLEMENTS: tier + status + hasCommunityAccess =============
-    // tier: FREE | AURA_FX | A7FX (channel visibility). status: inactive | trialing | active.
+    // tier: ACCESS | PRO | ELITE. status: inactive | trialing | active.
     // Trialing behaves identical to paid (tier grants access).
     let hasCommunityAccess = false;
     let accessType = 'NONE';
-    let tier = 'FREE';
+    let tier = 'ACCESS';
 
-    // 1. ADMIN - full access, tier A7FX
+    // 1. ADMIN - full access, tier ELITE
     if (isAdminRole) {
       hasCommunityAccess = true;
       accessType = 'ADMIN';
-      tier = 'A7FX';
+      tier = 'ELITE';
       logger.info('Access granted: ADMIN', { userId, role: userRole });
     }
-    // 2. A7FX Elite role or subscription (£250)
-    else if (['elite', 'a7fx'].includes(userRole) || 
-             (isActive && ['a7fx', 'elite'].includes(userPlan))) {
+    // 2. Elite role or subscription (£250) — legacy a7fx plan id maps here
+    else if (['elite', 'a7fx'].includes(userRole) || (isActive && isElitePlanId(userPlan))) {
       hasCommunityAccess = true;
-      accessType = 'A7FX_ELITE_ACTIVE';
-      tier = 'A7FX';
-      logger.info('Access granted: A7FX_ELITE_ACTIVE', { userId, role: userRole, plan: userPlan });
+      accessType = 'ELITE_ACTIVE';
+      tier = 'ELITE';
+      logger.info('Access granted: ELITE_ACTIVE', { userId, role: userRole, plan: userPlan });
     }
-    // 3. Aura Terminal role or subscription (£99)
-    else if (userRole === 'premium' || 
-             (isActive && ['aura', 'premium'].includes(userPlan))) {
+    // 3. Pro role or subscription (£99) — legacy aura / premium
+    else if (userRole === 'premium' || userRole === 'pro' || (isActive && isProPlanId(userPlan))) {
       hasCommunityAccess = true;
-      accessType = 'AURA_FX_ACTIVE';
-      tier = 'AURA_FX';
-      logger.info('Access granted: AURA_FX_ACTIVE', { userId, role: userRole, plan: userPlan });
+      accessType = 'PRO_ACTIVE';
+      tier = 'PRO';
+      logger.info('Access granted: PRO_ACTIVE', { userId, role: userRole, plan: userPlan });
     }
-    // 4. FREE - community access ONLY when user has selected a plan (subscription_plan set, e.g. 'free')
+    // 4. Access — community only when user has selected a plan (subscription_plan set)
     else {
       const planSelected = !!(user.subscription_plan && String(user.subscription_plan).trim().length > 0);
       hasCommunityAccess = planSelected;
       accessType = 'NONE';
-      tier = 'FREE';
-      logger.info('Access: FREE tier', { userId, role: userRole, planSelected, hasCommunityAccess });
+      tier = 'ACCESS';
+      logger.info('Access: ACCESS tier', { userId, role: userRole, planSelected, hasCommunityAccess });
     }
 
     // Normalize status for entitlements: inactive | trialing | active
     const entitlementsStatus = status === 'trialing' ? 'trialing' 
       : (isActive ? 'active' : 'inactive');
 
+    const canonicalPlanId = outboundPlanId(planId);
+    const canonicalDowngradeId = user.downgrade_to_plan
+      ? outboundPlanId(user.downgrade_to_plan)
+      : null;
+
     // Build response (entitlements used by RouteGuards and API filters)
     const subscription = {
       tier,
       status: entitlementsStatus,
       hasCommunityAccess,
-      planId,
-      planName: PLAN_NAMES[planId] || null,
+      planId: canonicalPlanId,
+      planName: PLAN_NAMES[canonicalPlanId] || PLAN_NAMES[planId] || null,
       isActive,
       accessType,
       renewsAt,
@@ -290,11 +306,11 @@ module.exports = async (req, res) => {
       startedAt: user.subscription_started ? new Date(user.subscription_started).toISOString() : null,
       expiresAt: expiryDate ? expiryDate.toISOString() : null,
       daysRemaining: daysRemaining > 0 ? daysRemaining : null,
-      price: PLAN_PRICES[planId] || null,
+      price: PLAN_PRICES[canonicalPlanId] || PLAN_PRICES[planId] || null,
       paymentFailed: !!user.payment_failed,
       hasUsedFreeTrial: !!user.has_used_free_trial,
       cancelAtPeriodEnd: !!(user.cancel_at_period_end === true || user.cancel_at_period_end === 1),
-      downgradeToPlanId: (user.downgrade_to_plan || '').toString().trim() || null
+      downgradeToPlanId: canonicalDowngradeId || null
     };
 
     logger.info('Subscription status fetched', { 

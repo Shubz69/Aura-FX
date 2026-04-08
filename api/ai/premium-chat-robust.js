@@ -258,9 +258,13 @@ async function verifyUser(userId, logger) {
 // ============= ACCESS CHECK =============
 function checkAccess(user) {
   const isSuperAdmin = isSuperAdminEmail(user);
-  const hasRole = ['premium', 'a7fx', 'elite', 'admin', 'super_admin'].includes(user.role);
-  const hasSubscription = user.subscription_status === 'active' && 
-    ['aura', 'a7fx', 'premium', 'elite'].includes(user.subscription_plan);
+  const r = (user.role || '').toString().toLowerCase();
+  const hasRole = ['premium', 'pro', 'a7fx', 'elite', 'admin', 'super_admin'].includes(r);
+  const st = (user.subscription_status || '').toString().toLowerCase();
+  const p = (user.subscription_plan || '').toString().toLowerCase();
+  const hasSubscription =
+    (st === 'active' || st === 'trialing') &&
+    ['aura', 'a7fx', 'premium', 'elite', 'pro'].includes(p);
   
   return isSuperAdmin || hasRole || hasSubscription;
 }
@@ -321,7 +325,10 @@ function buildConversationMessages(systemPrompt, history, currentMessage, validI
 
 // ============= SYSTEM PROMPT =============
 function getSystemPrompt(user) {
-  const tier = user.subscription_plan === 'a7fx' || user.role === 'elite' ? 'A7FX Elite' : 'Premium';
+  const role = (user.role || '').toString().toLowerCase();
+  const plan = (user.subscription_plan || '').toString().toLowerCase();
+  const tier =
+    plan === 'a7fx' || plan === 'elite' || role === 'elite' || role === 'a7fx' ? 'Elite' : 'Pro';
   
   return `You are AURA AI, a professional trading assistant. You're knowledgeable, conversational, helpful, and engaging - just like ChatGPT.
 

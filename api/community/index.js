@@ -16,6 +16,10 @@ const { generateRequestId, createLogger } = require('../utils/logger');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { safeLimit, positiveInt, safeSearchQuery } = require('../utils/validators');
 const { checkCommunityAccess } = require('../middleware/subscription-guard');
+const {
+  permissionRoleFromUserRow,
+  canonicalSubscriptionPlanForResponse
+} = require('../utils/userResponseNormalize');
 
 // Schema migration flag
 let schemaMigrated = false;
@@ -177,7 +181,7 @@ async function handleGetUsers(req, res, requestId, logger, startTime) {
     if (searchQuery) {
       // Search query - use LIKE with escaped wildcards
       const [result] = await executeQuery(
-        `SELECT id, username, email, name, avatar, role, created_at, last_seen 
+        `SELECT id, username, email, name, avatar, role, subscription_plan, created_at, last_seen 
          FROM users 
          WHERE (is_demo IS NULL OR is_demo = FALSE)
            AND (email IS NULL OR email NOT LIKE '%@aurafx.demo')
@@ -190,7 +194,7 @@ async function handleGetUsers(req, res, requestId, logger, startTime) {
     } else {
       // Full list
       const [result] = await executeQuery(
-        `SELECT id, username, email, name, avatar, role, created_at, last_seen 
+        `SELECT id, username, email, name, avatar, role, subscription_plan, created_at, last_seen 
          FROM users 
          WHERE (is_demo IS NULL OR is_demo = FALSE)
            AND (email IS NULL OR email NOT LIKE '%@aurafx.demo')
@@ -202,13 +206,14 @@ async function handleGetUsers(req, res, requestId, logger, startTime) {
 
     logger.endTimer('db_query');
 
-    const users = (rows || []).map(row => ({
+    const users = (rows || []).map((row) => ({
       id: row.id,
       username: row.username,
       email: row.email,
       name: row.name,
       avatar: row.avatar ?? null,
-      role: row.role,
+      role: permissionRoleFromUserRow(row),
+      subscriptionPlan: canonicalSubscriptionPlanForResponse(row),
       createdAt: row.created_at,
       lastSeen: row.last_seen
     }));

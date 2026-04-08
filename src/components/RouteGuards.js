@@ -99,7 +99,11 @@ export const SubscriptionPageGuard = ({ children }) => {
     return <Navigate to="/choose-plan" replace />;
   }
   const tier = entitlements?.tier;
-  const paidTier = tier === 'PREMIUM' || tier === 'ELITE' || tier === 'A7FX';
+  const paidTier =
+    tier === 'PRO' ||
+    tier === 'PREMIUM' ||
+    tier === 'ELITE' ||
+    tier === 'A7FX';
   if (paidTier && !isManageMode) return <Navigate to="/community" replace />;
   return children;
 };

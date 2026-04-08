@@ -401,9 +401,11 @@ async function handler(req, res) {
     const subStatus = (user.subscription_status || '').toLowerCase();
     const subPlan = (user.subscription_plan || '').toLowerCase();
 
-    const hasAccess = isSuperAdmin ||
-      ['premium', 'a7fx', 'elite', 'admin', 'super_admin'].includes(role) ||
-      (subStatus === 'active' && ['aura', 'a7fx'].includes(subPlan));
+    const hasAccess =
+      isSuperAdmin ||
+      ['premium', 'pro', 'a7fx', 'elite', 'admin', 'super_admin'].includes(role) ||
+      ((subStatus === 'active' || subStatus === 'trialing') &&
+        ['aura', 'a7fx', 'premium', 'elite', 'pro'].includes(subPlan));
 
     if (!hasAccess) {
       if (db.release) db.release();

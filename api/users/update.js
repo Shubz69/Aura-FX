@@ -3,6 +3,10 @@ require('../utils/suppress-warnings');
 const { getDbConnection, executeQuery, getDbPool } = require('../db');
 const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
 const { ensureUsersSchema, buildUserSelectFields } = require('../utils/ensure-users-schema');
+const {
+  permissionRoleFromUserRow,
+  canonicalSubscriptionPlanForResponse
+} = require('../utils/userResponseNormalize');
 
 // Use shared pool from api/db.js – do not create new connections (causes "Too many connections")
 // Always release with connection.release() when done (never .end())
@@ -309,11 +313,9 @@ if (req.body.banner !== undefined) {
         const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
         await db.execute(query, values);
 
-       // Fetch updated user data (include last_username_change and avatarColor)
-const [updatedRows] = await db.execute(
-  'SELECT id, username, email, name, phone, address, bio, avatar, banner, role, level, xp, last_username_change, avatarColor FROM users WHERE id = ?',
-  [userId]
-);
+        const columnSet = await ensureUsersSchema();
+        const { selectFields } = buildUserSelectFields(columnSet);
+        const [updatedRows] = await db.execute(`SELECT ${selectFields} FROM users WHERE id = ?`, [userId]);
 
         releaseDb(db);
 
@@ -321,10 +323,31 @@ const [updatedRows] = await db.execute(
           return res.status(404).json({ success: false, message: 'User not found' });
         }
 
+        const u = updatedRows[0];
+        const userPayload = {
+          id: jsonNumber(u.id),
+          username: u.username,
+          email: u.email,
+          name: u.name,
+          phone: u.phone,
+          address: u.address,
+          bio: u.bio,
+          avatar: u.avatar,
+          banner: u.banner ?? null,
+          role: permissionRoleFromUserRow(u),
+          subscriptionPlan: canonicalSubscriptionPlanForResponse(u),
+          level: jsonNumber(u.level ?? 1, 1),
+          xp: jsonNumber(u.xp, 0),
+          last_username_change: u.last_username_change ?? null,
+          avatarColor: u.avatarColor ?? null,
+          created_at: u.created_at
+        };
+        if (columnSet.has('login_streak')) userPayload.login_streak = jsonNumber(u.login_streak, 0);
+        if (columnSet.has('last_seen')) userPayload.last_seen = u.last_seen;
         return res.status(200).json({
           success: true,
           message: 'Profile updated successfully',
-          user: updatedRows[0]
+          user: userPayload
         });
       } catch (dbError) {
         console.error('Database error updating user:', dbError);
@@ -499,10 +522,6 @@ const [updatedRows] = await db.execute(
         
         // Return user data with formatted dates (mysql2 may return bigint for id/xp/level)
         const xpNum = jsonNumber(user.xp, 0);
-        const subPlan =
-          user.subscription_plan != null && String(user.subscription_plan).trim() !== ''
-            ? String(user.subscription_plan).trim().toLowerCase()
-            : undefined;
         const subStatus =
           user.subscription_status != null && String(user.subscription_status).trim() !== ''
             ? String(user.subscription_status).trim().toLowerCase()
@@ -516,14 +535,14 @@ const [updatedRows] = await db.execute(
           avatar: user.avatar ?? null,
           banner: (hasBanner && user.banner) ? user.banner : '',
           avatarColor: user.avatarColor || null,
-          role: user.role || 'free',
+          role: permissionRoleFromUserRow(user),
+          subscriptionPlan: canonicalSubscriptionPlanForResponse(user),
           level: jsonNumber(user.level ?? 1, 1),
           xp: xpNum,
           joinDate: user.created_at,
           createdAt: user.created_at,
           login_streak: jsonNumber(user.login_streak, 0),
           last_seen: lastSeenValue,
-          ...(subPlan !== undefined ? { subscription_plan: subPlan } : {}),
           ...(subStatus !== undefined ? { subscription_status: subStatus } : {}),
           stats: {
             reputation: Math.floor(xpNum / 100),

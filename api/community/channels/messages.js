@@ -1,6 +1,10 @@
 const { getDbConnection, executeQuery } = require('../../db');
 const { jsonSafeDeep } = require('../../utils/jsonSafe');
 const { getEntitlements, getChannelPermissions, canAccessChannel, isSuperAdminEmail } = require('../../utils/entitlements');
+const {
+  permissionRoleFromUserRow,
+  canonicalSubscriptionPlanForResponse
+} = require('../../utils/userResponseNormalize');
 const { triggerNewMessage } = require('../../utils/pusher');
 
 let createNotification;
@@ -590,7 +594,7 @@ module.exports = async (req, res) => {
             ? 'ORDER BY m.id ASC LIMIT 200'
             : 'ORDER BY m.timestamp DESC LIMIT 200';
           [rows] = await db.execute(
-            `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
+            `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan 
              FROM messages m 
              LEFT JOIN users u ON m.sender_id = u.id 
              WHERE ${whereClause}
@@ -603,7 +607,7 @@ module.exports = async (req, res) => {
           const numericChannelId = parseInt(channelId);
           if (!isNaN(numericChannelId)) {
             [rows] = await db.execute(
-              `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
+              `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan 
                FROM messages m 
                LEFT JOIN users u ON m.sender_id = u.id 
                WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
@@ -617,7 +621,7 @@ module.exports = async (req, res) => {
             // If channelId is not numeric and query failed, try ordering by id
             try {
               [rows] = await db.execute(
-                `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
+                `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan 
                  FROM messages m 
                  LEFT JOIN users u ON m.sender_id = u.id 
                  WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
@@ -630,7 +634,7 @@ module.exports = async (req, res) => {
             } catch (fallbackError) {
               if (!isNaN(numericChannelId)) {
                 [rows] = await db.execute(
-                  `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
+                  `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan 
                    FROM messages m 
                    LEFT JOIN users u ON m.sender_id = u.id 
                    WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
@@ -666,8 +670,7 @@ module.exports = async (req, res) => {
           // Get avatar from user table, fallback to default
           const avatar = row.avatar ?? null;
           
-          // Get role from user table
-          const role = row.role || 'USER';
+          const senderRow = { role: row.role, email: row.email, subscription_plan: row.subscription_plan };
           
           // Parse file_data if present
           let fileData = null;
@@ -700,7 +703,8 @@ module.exports = async (req, res) => {
               id: row.sender_id,
               username: username,
               avatar: avatar,
-              role: role
+              role: permissionRoleFromUserRow(senderRow),
+              subscriptionPlan: canonicalSubscriptionPlanForResponse(senderRow)
             }
           };
         });
@@ -787,8 +791,11 @@ module.exports = async (req, res) => {
         // @everyone: only admins can use it
         const contentLower = (content || '').toString().toLowerCase();
         if (/@everyone\b/.test(contentLower) || /@all\b/.test(contentLower)) {
-          const senderRole = (userRows[0]?.role || decoded.role || '').toString().toUpperCase();
-          if (senderRole !== 'ADMIN' && senderRole !== 'SUPER_ADMIN') {
+          const senderPerm =
+            userRows[0] != null
+              ? permissionRoleFromUserRow(userRows[0])
+              : (decoded.role || 'USER').toString().toUpperCase();
+          if (senderPerm !== 'ADMIN' && senderPerm !== 'SUPER_ADMIN') {
             return res.status(403).json({
               success: false,
               errorCode: 'FORBIDDEN',
@@ -838,12 +845,13 @@ module.exports = async (req, res) => {
         if (clientMessageId && senderId) {
           try {
             const [existing] = await db.execute(
-              'SELECT m.*, u.username, u.name, u.email, u.avatar, u.role FROM messages m LEFT JOIN users u ON m.sender_id = u.id WHERE m.sender_id = ? AND m.client_message_id = ? LIMIT 1',
+              'SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan FROM messages m LEFT JOIN users u ON m.sender_id = u.id WHERE m.sender_id = ? AND m.client_message_id = ? LIMIT 1',
               [senderId, String(clientMessageId).substring(0, 64)]
             );
             if (existing && existing.length > 0) {
               const r = existing[0];
               const uname = r.username || r.name || (r.email ? r.email.split('@')[0] : 'Anonymous');
+              const dupSender = { role: r.role, email: r.email, subscription_plan: r.subscription_plan };
               const msg = {
                 id: r.id,
                 channelId: channelId,
@@ -854,7 +862,13 @@ module.exports = async (req, res) => {
                 createdAt: r.timestamp,
                 timestamp: r.timestamp,
                 file: r.file_data ? (typeof r.file_data === 'string' ? JSON.parse(r.file_data) : r.file_data) : null,
-                sender: { id: r.sender_id, username: uname, avatar: r.avatar ?? null, role: r.role || 'USER' },
+                sender: {
+                  id: r.sender_id,
+                  username: uname,
+                  avatar: r.avatar ?? null,
+                  role: permissionRoleFromUserRow(dupSender),
+                  subscriptionPlan: canonicalSubscriptionPlanForResponse(dupSender)
+                },
                 sequence: r.id
               };
               return res.status(200).json(msg);
@@ -1027,7 +1041,7 @@ module.exports = async (req, res) => {
 
         // Fetch the newly created message with user info - execute returns [rows, fields]
         const [newMessageRows] = await db.execute(
-          `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
+          `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan 
            FROM messages m 
            LEFT JOIN users u ON m.sender_id = u.id 
            WHERE m.id = ?`, 
@@ -1038,7 +1052,11 @@ module.exports = async (req, res) => {
         // Get username and avatar from joined user table
         const senderUsername = newMessage.username || newMessage.name || (newMessage.email ? newMessage.email.split('@')[0] : 'Anonymous');
         const senderAvatar = newMessage.avatar ?? null;
-        const senderRole = newMessage.role || 'USER';
+        const newSenderRow = {
+          role: newMessage.role,
+          email: newMessage.email,
+          subscription_plan: newMessage.subscription_plan
+        };
 
         let fileData = null;
         if (newMessage.file_data) {
@@ -1067,7 +1085,8 @@ module.exports = async (req, res) => {
             id: newMessage.sender_id,
             username: senderUsername,
             avatar: senderAvatar,
-            role: senderRole
+            role: permissionRoleFromUserRow(newSenderRow),
+            subscriptionPlan: canonicalSubscriptionPlanForResponse(newSenderRow)
           }
         };
 

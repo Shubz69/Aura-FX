@@ -1160,3 +1160,126 @@
 .trader-cv-passport-card--capture .trader-cv-passport-chip-pulse {
   animation: none !important;
 }
+
+/* Trader Replay identity (CV integration) */
+.trader-cv-replay-identity {
+  padding: 16px 18px;
+  border-radius: var(--radius-md, 14px);
+  border: 1px solid rgba(234, 169, 96, 0.18);
+  background: linear-gradient(168deg, rgba(8, 10, 22, 0.72) 0%, rgba(5, 6, 16, 0.88) 100%);
+}
+
+.trader-cv-replay-line {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.trader-cv-replay-line strong {
+  color: rgba(248, 195, 125, 0.95);
+  font-weight: 600;
+}
+
+.trader-cv-replay-focus,
+.trader-cv-replay-growth,
+.trader-cv-replay-attention {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: rgba(200, 205, 230, 0.82);
+}
+
+.trader-cv-replay-growth {
+  color: rgba(124, 220, 176, 0.82);
+}
+
+.trader-cv-replay-attention {
+  color: rgba(248, 195, 125, 0.78);
+}
+
+.trader-cv-replay-narrative-wrap {
+  margin-top: 14px;
+}
+
+.trader-cv-replay-narrative-wrap .trader-cv-replay-subtitle {
+  margin-bottom: 8px;
+}
+
+.trader-cv-replay-contribution {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(234, 169, 96, 0.12);
+}
+
+.trader-cv-replay-subtitle {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(248, 195, 125, 0.88);
+}
+
+.trader-cv-replay-micro {
+  margin: 0 0 12px;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: rgba(200, 205, 230, 0.55);
+}
+
+.trader-cv-replay-contrib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.trader-cv-replay-contrib-card {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.trader-cv-replay-contrib-label {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(200, 205, 230, 0.5);
+  margin-bottom: 4px;
+}
+
+.trader-cv-replay-contrib-value {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.trader-cv-replay-contrib-meta {
+  display: block;
+  font-size: 0.68rem;
+  color: rgba(200, 205, 230, 0.45);
+  margin-top: 2px;
+}
+
+.trader-cv-replay-line--tight {
+  margin-bottom: 6px;
+  font-size: 0.82rem;
+}
+
+.trader-cv-replay-expl {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: rgba(200, 205, 230, 0.78);
+}
+
+.trader-cv-replay-dev {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: rgba(124, 220, 176, 0.82);
+}

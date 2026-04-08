@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { FaArrowLeft, FaCheckSquare, FaImage, FaPlus, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import {
@@ -532,8 +532,10 @@ function FormationSubBlock({
 export default function TradeValidatorView() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isEmbedded = location.pathname.startsWith('/trader-deck/trade-validator');
   const below70WarnedRef = useRef(false);
+  const replayToastRef = useRef(false);
 
   const [activeTab, setActiveTab] = useState('scalp');
   const [itemsByTab, setItemsByTab] = useState(() => parseItemsByTab(localStorage.getItem(STORAGE_ITEMS)));
@@ -560,6 +562,19 @@ export default function TradeValidatorView() {
       'Trader Lab plan saved. Complete this checklist, then use the Trade Calculator — your thesis notes will carry over.'
     );
   }, [location.state?.fromTraderLab]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tvChecklistTab');
+    if (tab && ['scalp', 'intraDay', 'swing'].includes(tab)) {
+      setActiveTab(tab);
+    }
+    if (searchParams.get('trFromReplay') === '1' && !replayToastRef.current) {
+      replayToastRef.current = true;
+      toast.info(
+        'Context from Trader Replay — checklist tab matches your replay timeframe when available. Use your replay notes alongside each line.'
+      );
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!exampleOverlay) return undefined;

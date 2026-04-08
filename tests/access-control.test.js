@@ -47,7 +47,7 @@ describe('Community Access Control', () => {
       const result = await checkCommunityAccess(1);
 
       expect(result.hasAccess).toBe(true);
-      expect(result.accessType).toBe('AURA_FX_ACTIVE');
+      expect(result.accessType).toBe('PRO_ACTIVE');
     });
 
     it('should grant community access to user with premium role', async () => {
@@ -66,7 +66,7 @@ describe('Community Access Control', () => {
       const result = await checkCommunityAccess(2);
 
       expect(result.hasAccess).toBe(true);
-      expect(result.accessType).toBe('AURA_FX_ACTIVE');
+      expect(result.accessType).toBe('PRO_ACTIVE');
     });
   });
 
@@ -88,7 +88,7 @@ describe('Community Access Control', () => {
       const result = await checkCommunityAccess(3);
 
       expect(result.hasAccess).toBe(true);
-      expect(result.accessType).toBe('A7FX_ELITE_ACTIVE');
+      expect(result.accessType).toBe('ELITE_ACTIVE');
     });
 
     it('should grant community access to user with elite role', async () => {
@@ -107,7 +107,7 @@ describe('Community Access Control', () => {
       const result = await checkCommunityAccess(4);
 
       expect(result.hasAccess).toBe(true);
-      expect(result.accessType).toBe('A7FX_ELITE_ACTIVE');
+      expect(result.accessType).toBe('ELITE_ACTIVE');
     });
   });
 
@@ -250,8 +250,8 @@ describe('Routing Rules', () => {
   
   describe('Login Redirect Logic', () => {
     it('should redirect paid Aura FX user to /community after login', () => {
-      // User with AURA_FX_ACTIVE should be redirected to /community
-      const accessType = 'AURA_FX_ACTIVE';
+      // User with PRO_ACTIVE should be redirected to /community
+      const accessType = 'PRO_ACTIVE';
       const hasCommunityAccess = true;
       
       const expectedRedirect = hasCommunityAccess ? '/community' : '/subscription';
@@ -259,7 +259,7 @@ describe('Routing Rules', () => {
     });
 
     it('should redirect paid A7FX Elite user to /community after login', () => {
-      const accessType = 'A7FX_ELITE_ACTIVE';
+      const accessType = 'ELITE_ACTIVE';
       const hasCommunityAccess = true;
       
       const expectedRedirect = hasCommunityAccess ? '/community' : '/subscription';
@@ -330,8 +330,8 @@ describe('Complete Scenario Verification', () => {
    */
   describe('Paid User Never Lands on Subscription', () => {
     const paidUserScenarios = [
-      { accessType: 'AURA_FX_ACTIVE', description: 'Aura FX subscriber' },
-      { accessType: 'A7FX_ELITE_ACTIVE', description: 'A7FX Elite subscriber' },
+      { accessType: 'PRO_ACTIVE', description: 'Pro (Aura Terminal) subscriber' },
+      { accessType: 'ELITE_ACTIVE', description: 'Elite subscriber' },
       { accessType: 'ADMIN', description: 'Admin user' }
     ];
 

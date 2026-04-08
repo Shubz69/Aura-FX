@@ -107,6 +107,13 @@ const Affiliation = lazy(() => import('./pages/Affiliation'));
 const TraderLab = lazy(() => import('./pages/TraderLab'));
 const TraderReplay = lazy(() => import('./pages/TraderReplay'));
 const TraderPlaybook = lazy(() => import('./pages/TraderPlaybook'));
+const BacktestingLayout = lazy(() => import('./pages/backtesting/BacktestingLayout'));
+const BacktestingHub = lazy(() => import('./pages/backtesting/BacktestingHub'));
+const BacktestingNewSession = lazy(() => import('./pages/backtesting/BacktestingNewSession'));
+const BacktestingWorkspace = lazy(() => import('./pages/backtesting/BacktestingWorkspace'));
+const BacktestingSessions = lazy(() => import('./pages/backtesting/BacktestingSessions'));
+const BacktestingTrades = lazy(() => import('./pages/backtesting/BacktestingTrades'));
+const BacktestingReports = lazy(() => import('./pages/backtesting/BacktestingReports'));
 
 /** Prefetch route chunks after initial load so navigation feels instant site-wide */
 function usePrefetchRoutes() {
@@ -383,6 +390,14 @@ function AppRoutes() {
                         <Route path="/trader-replay" element={<AuthenticatedGuard><Navigate to="/aura-analysis/dashboard/trader-replay" replace /></AuthenticatedGuard>} />
                         <Route path="/trader-playbook" element={<AuthenticatedGuard><Navigate to="/trader-deck/trade-validator/trader-playbook" replace /></AuthenticatedGuard>} />
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
+                        <Route path="/backtesting" element={<AuthenticatedGuard><BacktestingLayout /></AuthenticatedGuard>}>
+                            <Route index element={<BacktestingHub />} />
+                            <Route path="new" element={<BacktestingNewSession />} />
+                            <Route path="sessions" element={<BacktestingSessions />} />
+                            <Route path="trades" element={<BacktestingTrades />} />
+                            <Route path="reports" element={<BacktestingReports />} />
+                            <Route path="session/:sessionId/*" element={<BacktestingWorkspace />} />
+                        </Route>
                         <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />
                         <Route path="/admin/inbox" element={<InboxGuard><AdminInbox /></InboxGuard>} />
                         <Route path="/admin" element={<AdminGuard><AdminPanel /></AdminGuard>} />

@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef } from 'react';
 
 const SCRIPT_ID = 'tradingview-widget-script';
 
-function ensureTradingViewScript() {
+/** Single shared tv.js load — safe for multiple embeds (Backtesting, Trader Replay, etc.). */
+export function ensureTradingViewScript() {
   if (typeof window === 'undefined') return Promise.resolve();
   if (window.TradingView && window.TradingView.widget) return Promise.resolve();
 
@@ -31,11 +32,16 @@ export default function TradingViewWidgetEmbed({
   theme = 'dark',
   studies = [],
   className = 'trader-suite-chart-frame',
+  allowSymbolChange = true,
+  onError,
 }) {
   const containerRef = useRef(null);
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
   const widgetId = useMemo(
-    () => `tradingview-widget-${symbol.replace(/[^a-z0-9]/gi, '').toLowerCase()}-${Math.random().toString(36).slice(2, 8)}`,
-    [symbol]
+    () =>
+      `tradingview-widget-${symbol.replace(/[^a-z0-9]/gi, '').toLowerCase()}-${String(interval)}-${Math.random().toString(36).slice(2, 8)}`,
+    [symbol, interval]
   );
 
   useEffect(() => {
@@ -43,38 +49,51 @@ export default function TradingViewWidgetEmbed({
 
     ensureTradingViewScript()
       .then(() => {
-        if (!active || !containerRef.current || !window.TradingView?.widget) return;
+        if (!active || !containerRef.current || !window.TradingView?.widget) {
+          if (active) onErrorRef.current?.(new Error('TradingView API not available'));
+          return;
+        }
         containerRef.current.innerHTML = '';
-        // Official TradingView embeddable widget. This does not require the paid Charting Library.
-        // It gives us a polished live chart while app-driven replay insights remain in Aura UI.
-        // eslint-disable-next-line no-new
-        new window.TradingView.widget({
-          autosize: true,
-          symbol,
-          interval,
-          timezone: 'Etc/UTC',
-          theme,
-          style: '1',
-          locale: 'en',
-          enable_publishing: false,
-          allow_symbol_change: true,
-          hide_top_toolbar: false,
-          hide_legend: false,
-          withdateranges: true,
-          save_image: false,
-          studies,
-          container_id: widgetId,
-        });
+        try {
+          // Official TradingView embeddable widget. This does not require the paid Charting Library.
+          // eslint-disable-next-line no-new
+          new window.TradingView.widget({
+            autosize: true,
+            symbol,
+            interval,
+            timezone: 'Etc/UTC',
+            theme,
+            style: '1',
+            locale: 'en',
+            enable_publishing: false,
+            allow_symbol_change: allowSymbolChange,
+            hide_top_toolbar: false,
+            hide_legend: false,
+            withdateranges: true,
+            save_image: false,
+            studies,
+            container_id: widgetId,
+          });
+        } catch (e) {
+          if (active) {
+            console.error('TradingView widget failed to construct', e);
+            onErrorRef.current?.(e);
+          }
+        }
       })
       .catch((error) => {
         if (!active) return;
         console.error('TradingView widget failed to load', error);
+        onErrorRef.current?.(error);
       });
 
     return () => {
       active = false;
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
     };
-  }, [interval, studies, symbol, theme, widgetId]);
+  }, [allowSymbolChange, interval, studies, symbol, theme, widgetId]);
 
   return (
     <div

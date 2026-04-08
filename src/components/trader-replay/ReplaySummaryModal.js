@@ -1,19 +1,21 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import {
   computeReplayQualityScore,
   computeReviewCompletenessScore,
 } from '../../lib/trader-replay/replayNormalizer';
-import {
-  deriveCoaching,
-  deriveSuggestedNextAction,
-  mergeReplayDestination,
-} from '../../lib/trader-replay/replayCoachingEngine';
+import { deriveCoaching, deriveSuggestedNextAction } from '../../lib/trader-replay/replayCoachingEngine';
+import { mergeReplayDestination, buildDefaultReturnToReplayPath } from '../../lib/trader-replay/replayToolHandoff';
 import { buildFollowUpActions } from '../../lib/trader-replay/replayFollowup';
-import { buildMentorSummaryText } from '../../lib/trader-replay/replayMentorSummary';
+import { buildMentorCoachContext, getLearningExampleMentorFraming } from '../../lib/trader-replay/replayMentorReviewEngine';
 import { formatLearningExampleLabel } from '../../lib/trader-replay/replayEntitlements';
+import ReplayCopyExportBar from './ReplayCopyExportBar';
+import { getReplayFinishPatternCallout } from '../../lib/trader-replay/replayIdentityEngine';
+import { computeReplayHabitStats } from '../../lib/trader-replay/replayHabit';
+import { buildReplayContributionProfile } from '../../lib/trader-replay/replayContributionEngine';
 import ReplayPremiumNudge from './ReplayPremiumNudge';
+import ReplayPackagePrep from './ReplayPackagePrep';
+import ReplayNarrativePrep from './ReplayNarrativePrep';
 
 export default function ReplaySummaryModal({
   session,
@@ -23,6 +25,7 @@ export default function ReplaySummaryModal({
   onClearLearningExample,
   replayFlags = {},
   allSessions = [],
+  habitStats = null,
 }) {
   const closeBtnRef = useRef(null);
 
@@ -44,6 +47,19 @@ export default function ReplaySummaryModal({
   const coaching = useMemo(() => deriveCoaching(session), [session]);
   const suggested = useMemo(() => deriveSuggestedNextAction(session), [session]);
   const followUps = useMemo(() => buildFollowUpActions(session, allSessions).slice(0, replayFlags.followUpExpanded ? 6 : 3), [session, allSessions, replayFlags.followUpExpanded]);
+  const identityCallout = useMemo(() => getReplayFinishPatternCallout(session, allSessions), [session, allSessions]);
+  const replayContribution = useMemo(() => {
+    const habit = computeReplayHabitStats(allSessions);
+    return buildReplayContributionProfile(allSessions, habit);
+  }, [allSessions]);
+  const mentorCoachCtx = useMemo(
+    () => buildMentorCoachContext(session || {}, allSessions),
+    [session, allSessions]
+  );
+  const exampleMentorFrame = useMemo(
+    () => getLearningExampleMentorFraming(session || {}),
+    [session]
+  );
 
   if (!session) return null;
 
@@ -53,11 +69,19 @@ export default function ReplaySummaryModal({
   const execShown = execSignals.slice(0, signalDepth);
   const reviewShown = reviewSignals.slice(0, signalDepth);
 
-  const playbookTo = mergeReplayDestination('/trader-deck/trade-validator/trader-playbook', session, coaching);
-  const journalTo = mergeReplayDestination('/trader-deck/trade-validator/journal', session, coaching);
-  const validatorTo = mergeReplayDestination('/trader-deck/trade-validator/overview', session, coaching);
-  const checklistTo = mergeReplayDestination('/trader-deck/trade-validator/checklist', session, coaching);
-  const suggestedTo = mergeReplayDestination(suggested.href, session, coaching);
+  const hb = { returnPath: buildDefaultReturnToReplayPath(session) };
+  const playbookTo = mergeReplayDestination('/trader-deck/trade-validator/trader-playbook', session, coaching, {
+    destination: 'playbook',
+    ...hb,
+  });
+  const journalTo = mergeReplayDestination('/journal', session, coaching, { destination: 'journal', ...hb });
+  const tradeJournalTo = mergeReplayDestination('/trader-deck/trade-validator/journal', session, coaching, hb);
+  const validatorTo = mergeReplayDestination('/trader-deck/trade-validator/overview', session, coaching, hb);
+  const checklistTo = mergeReplayDestination('/trader-deck/trade-validator/checklist', session, coaching, {
+    destination: 'checklist',
+    ...hb,
+  });
+  const suggestedTo = suggested.href;
 
   const exLabel = formatLearningExampleLabel(session.learningExample, session.learningExampleKind);
   const showMentor = replayFlags.mentorSummaryCopy;
@@ -102,28 +126,87 @@ export default function ReplaySummaryModal({
           </div>
         </div>
 
+        {replayFlags.mentorSummaryCopy ? (
+          <div className="aura-tr-modal-coach-context" aria-label="Coach review context">
+            <span className="aura-tr-coach-context-kicker">Coach review</span>
+            <p className="aura-tr-coach-priority-line">
+              <span className="aura-tr-chip subtle aura-tr-chip--priority">{mentorCoachCtx.reviewPriority}</span>
+              {mentorCoachCtx.priorityHint}
+            </p>
+            <ul className="aura-tr-coach-bullet-list">
+              {mentorCoachCtx.bullets.slice(0, 4).map((b) => (
+                <li key={b.key}>{b.text}</li>
+              ))}
+            </ul>
+            <p className="aura-tr-coach-next-inline">
+              <span className="aura-tr-muted">Assign · </span>
+              <strong>{mentorCoachCtx.nextAction.label}</strong>
+              <span className="aura-tr-muted"> — {mentorCoachCtx.nextAction.reason}</span>
+            </p>
+          </div>
+        ) : null}
+
+        {identityCallout.line ? (
+          <p className="aura-tr-modal-identity-callout" role="status">
+            <span className="aura-tr-muted">Evidence-backed · </span>
+            {identityCallout.line}
+          </p>
+        ) : null}
+        {identityCallout.uncertaintyNote ? (
+          <p className="aura-tr-muted aura-tr-modal-identity-uncertainty" role="note">
+            {identityCallout.uncertaintyNote}
+          </p>
+        ) : null}
+        {identityCallout.nextReplayFocus ? (
+          <p className="aura-tr-modal-identity-callout" role="status">
+            <span className="aura-tr-muted">Next replay · </span>
+            {identityCallout.nextReplayFocus}
+          </p>
+        ) : null}
+        {identityCallout.strengthLine ? (
+          <p className="aura-tr-muted aura-tr-modal-identity-uncertainty" role="note">
+            <span className="aura-tr-muted">Maintain · </span>
+            {identityCallout.strengthLine}
+          </p>
+        ) : null}
+        {identityCallout.weaknessLine ? (
+          <p className="aura-tr-muted aura-tr-modal-identity-uncertainty" role="note">
+            <span className="aura-tr-muted">Address · </span>
+            {identityCallout.weaknessLine}
+          </p>
+        ) : null}
+        {replayContribution.scoreContributionExplanations[0] ? (
+          <p className="aura-tr-modal-contribution-callout" role="status">
+            <span className="aura-tr-muted">Profile contribution · </span>
+            {replayContribution.scoreContributionExplanations[0]}
+          </p>
+        ) : null}
+        {replayContribution.developmentActions[0] ? (
+          <p className="aura-tr-modal-devaction-callout" role="status">
+            <span className="aura-tr-muted">Development · </span>
+            {replayContribution.developmentActions[0]}
+          </p>
+        ) : null}
+
         {showMentor ? (
           <div className="aura-tr-modal-mentor">
             <span className="aura-tr-muted">Mentor / desk handoff</span>
+            {session.learningExample && exampleMentorFrame.headline && exampleMentorFrame.mentorLine ? (
+              <p className="aura-tr-modal-example-mentor-frame">
+                <strong className={session.learningExampleKind === 'caution' ? 'aura-tr-example--caution' : 'aura-tr-example--model'}>
+                  {exampleMentorFrame.headline}
+                </strong>
+                <span>{exampleMentorFrame.mentorLine}</span>
+              </p>
+            ) : null}
             <div className={replayFlags.mentorFullLayout ? 'aura-tr-modal-mentor-grid' : ''}>
               <p><strong>Lesson</strong> · {coaching.mainLesson}</p>
               <p><strong>Mistake</strong> · {coaching.biggestMistake}</p>
               <p><strong>Best moment</strong> · {coaching.bestMoment}</p>
               <p><strong>Plan</strong> · {session.improvementPlan || coaching.nextSessionFocus || '—'}</p>
-              <p><strong>Learning asset</strong> · {exLabel || 'Not flagged'}</p>
+              <p><strong>Learning vault</strong> · {exLabel || 'Not flagged'}{session.learningExampleKind === 'model' ? ' — repeat this process' : session.learningExampleKind === 'caution' ? ' — correct this behaviour' : ''}</p>
             </div>
-            <button
-              type="button"
-              className="trader-suite-btn"
-              onClick={() => {
-                navigator.clipboard.writeText(buildMentorSummaryText(session)).then(
-                  () => toast.success('Copied summary'),
-                  () => toast.error('Copy failed')
-                );
-              }}
-            >
-              Copy summary text
-            </button>
+            <p className="aura-tr-muted aura-tr-modal-mentor-copyhint">Use Copy / share above for standard, mentor, chat, or internal formats.</p>
           </div>
         ) : null}
 
@@ -177,12 +260,28 @@ export default function ReplaySummaryModal({
           </Link>
         </div>
 
+        <div className="aura-tr-modal-copy-prep">
+          <ReplayCopyExportBar
+            session={session}
+            allSessions={allSessions}
+            replayFlags={replayFlags}
+            variant="modal"
+            librarySessions={allSessions}
+            habitStats={habitStats}
+          />
+          <ReplayPackagePrep sessions={allSessions} habitStats={habitStats} variant="compact" />
+          <ReplayNarrativePrep sessions={allSessions} habitStats={habitStats} variant="compact" />
+        </div>
+
         <div className="aura-tr-modal-actions">
           <Link to={playbookTo} className="trader-suite-btn">
             Playbook
           </Link>
           <Link to={journalTo} className="trader-suite-btn">
-            Journal
+            Daily Journal
+          </Link>
+          <Link to={tradeJournalTo} className="trader-suite-btn">
+            Trade Journal
           </Link>
           <Link to={validatorTo} className="trader-suite-btn">
             Trade Validator

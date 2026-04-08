@@ -29,8 +29,9 @@
  * POST /api/v1/history — fetch closed deal history (realized P&L), MT5
  * --------------------------------------------------------------------------
  * Request body (JSON):
- *   { login, password, server, platform: "MT5", days?: number }
+ *   { login, password, server, platform: "MT5", days?: number, sinceCloseTimeMs?: number }
  *   `days` optional lookback (worker default e.g. 90).
+ *   Optional `sinceCloseTimeMs` (epoch ms) hints incremental deal fetch; workers may ignore.
  *
  * Response (2xx):
  *   { status: "success", trades: RawRow[] }

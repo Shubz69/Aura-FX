@@ -8,6 +8,8 @@ import {
 } from '../../lib/trader-replay/replayNormalizer';
 import { dayReviewShellMarkers } from '../../lib/trader-replay/replayMarkerFactory';
 import { deriveCoaching } from '../../lib/trader-replay/replayCoachingEngine';
+import { buildReplayIdentitySummary, getReplayLibraryRowHints } from '../../lib/trader-replay/replayIdentityEngine';
+import { getLibraryMentorRowAugment } from '../../lib/trader-replay/replayMentorReviewEngine';
 import { formatLearningExampleLabel } from '../../lib/trader-replay/replayEntitlements';
 import ReplayPremiumNudge from './ReplayPremiumNudge';
 
@@ -15,6 +17,17 @@ function ymdToday() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+
+/** Filter presets for coach / mentor review (grounded in stored replay fields). */
+const MENTOR_PRESET_DEFS = [
+  { id: '', label: 'All' },
+  { id: 'needs_attention', label: 'Needs review', title: 'Incomplete replays or completed reviews under 55% depth' },
+  { id: 'mentor_queue', label: 'Coach queue', title: 'Completed replays with solid review depth or any learning example' },
+  { id: 'models', label: 'Models', title: 'Model learning examples only', needsLearning: true },
+  { id: 'cautions', label: 'Cautions', title: 'Caution learning examples only', needsLearning: true },
+  { id: 'strong_teaching', label: 'Teaching picks', title: 'Model examples or strong reviewed arcs', needsLearning: true },
+  { id: 'recent_cautions', label: 'Recent cautions', title: 'Caution examples from the last 30 days', needsLearning: true },
+];
 
 const LIBRARY_SORTS = [
   { id: 'newest', label: 'Newest' },
@@ -54,7 +67,7 @@ export default function ReplaySetupPanel({
   onCreateFromDraft,
   onOpenSession,
   replayFlags,
-  replayTier = 'FREE',
+  replayTier = 'ACCESS',
   initialLearningExamplesFilter = false,
   onConsumedLearningExamplesFilter,
 }) {
@@ -73,6 +86,7 @@ export default function ReplaySetupPanel({
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [groupByMode, setGroupByMode] = useState(false);
+  const [mentorLibraryPreset, setMentorLibraryPreset] = useState('');
 
   const advancedLib = replayFlags?.libraryAdvancedFilters === true;
   const premiumSorts = replayFlags?.libraryPremiumSorts === true;
@@ -147,6 +161,40 @@ export default function ReplaySetupPanel({
       });
     }
 
+    if (mentorLibraryPreset === 'needs_attention') {
+      list = list.filter((s) => {
+        const rv = computeReviewCompletenessScore(s).score;
+        return s.replayStatus !== REPLAY_STATUSES.completed || rv < 55;
+      });
+    } else if (mentorLibraryPreset === 'mentor_queue') {
+      list = list.filter((s) => {
+        if (s.replayStatus !== REPLAY_STATUSES.completed) return false;
+        const rv = computeReviewCompletenessScore(s).score;
+        return rv >= 55 || Boolean(s.learningExample);
+      });
+    } else if (mentorLibraryPreset === 'models') {
+      list = list.filter((s) => s.learningExample && s.learningExampleKind === 'model');
+    } else if (mentorLibraryPreset === 'cautions') {
+      list = list.filter((s) => s.learningExample && s.learningExampleKind === 'caution');
+    } else if (mentorLibraryPreset === 'strong_teaching') {
+      list = list.filter((s) => {
+        if (s.replayStatus !== REPLAY_STATUSES.completed || !s.learningExample) return false;
+        const rv = computeReviewCompletenessScore(s).score;
+        const ex = computeReplayQualityScore(s).score;
+        if (s.learningExampleKind === 'model') return true;
+        return rv >= 65 && ex >= 50;
+      });
+    } else if (mentorLibraryPreset === 'recent_cautions') {
+      const lim = new Date();
+      lim.setDate(lim.getDate() - 29);
+      const limY = lim.toISOString().slice(0, 10);
+      list = list.filter((s) => {
+        if (!s.learningExample || s.learningExampleKind !== 'caution') return false;
+        const d = s.replayDate || s.sourceDate || (s.updatedAt ? String(s.updatedAt).slice(0, 10) : '');
+        return d && d >= limY;
+      });
+    }
+
     const scored = list.map((s) => ({
       s,
       exec: computeReplayQualityScore(s).score,
@@ -193,7 +241,10 @@ export default function ReplaySetupPanel({
     filterScenarioType,
     filterDateFrom,
     filterDateTo,
+    mentorLibraryPreset,
   ]);
+
+  const identitySummary = useMemo(() => buildReplayIdentitySummary(sessions || []), [sessions]);
 
   const tradeGrouped = useMemo(() => {
     if (!advancedLib || !groupByMode || !tradeFiltered.length) return null;
@@ -321,6 +372,7 @@ export default function ReplaySetupPanel({
     const coach = deriveCoaching(s);
     const lessonSnip = (s.lessonSummary || s.insight || '').slice(0, 72);
     const exLabel = formatLearningExampleLabel(s.learningExample, s.learningExampleKind);
+    const hints = getReplayLibraryRowHints(s, identitySummary);
     const setupHint =
       s.replayStatus === REPLAY_STATUSES.completed && (Number(s.entryTiming) || 0) >= 7
         ? 'Setup read: strong self-rated timing'
@@ -335,6 +387,13 @@ export default function ReplaySetupPanel({
             {s.mode || 'trade'} · {s.asset} · {s.outcome || '—'} · Q{ex} · Rv{rv}
             {exLabel ? ` · ${exLabel}` : ''}
           </span>
+          {rowChips.length ? (
+            <div className="aura-tr-library-hint-chips">
+              {rowChips.map((c) => (
+                <span key={c} className="aura-tr-chip subtle aura-tr-chip--identity-hint">{c}</span>
+              ))}
+            </div>
+          ) : null}
           {s.learningExample ? (
             <>
               {coach.mainLesson && coach.mainLesson !== '—' ? (
@@ -351,6 +410,8 @@ export default function ReplaySetupPanel({
           ) : (
             lessonSnip ? <p className="aura-tr-setup-why">{lessonSnip}{((s.lessonSummary || s.insight || '').length > 72) ? '…' : ''}</p> : null
           )}
+          {hints.footline ? <p className="aura-tr-setup-meta aura-tr-setup-meta--identity">{hints.footline}</p> : null}
+          {augment.reviewCue ? <p className="aura-tr-setup-meta aura-tr-setup-meta--mentor-cue">{augment.reviewCue}</p> : null}
         </button>
       </li>
     );
@@ -367,6 +428,27 @@ export default function ReplaySetupPanel({
           Advanced filters, example vault sort, and missed-R ranking ship with Premium.
         </ReplayPremiumNudge>
       ) : null}
+      <div className="aura-tr-mentor-presets" role="group" aria-label="Coach and review filters">
+        <span className="aura-tr-mentor-presets-kicker">Review focus</span>
+        <div className="aura-tr-mentor-presets-row">
+          {MENTOR_PRESET_DEFS.map((p) => {
+            const disabled = p.needsLearning && !replayFlags?.learningExamples;
+            const active = mentorLibraryPreset === p.id;
+            return (
+              <button
+                key={p.id || 'all'}
+                type="button"
+                className={`aura-tr-preset-pill${active ? ' aura-tr-preset-pill--active' : ''}`}
+                disabled={disabled}
+                title={disabled ? 'Learning examples require Premium' : (p.title || p.label)}
+                onClick={() => setMentorLibraryPreset(p.id)}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
       <div className="aura-tr-setup-grid">
         <label className="aura-tr-field">
           <span>Search</span>

@@ -2,6 +2,7 @@ require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
 const { verifyPasswordWithOptionalRehash } = require('../utils/loginPassword');
 const { normalizeRole, isSuperAdminEmail } = require('../utils/entitlements');
+const { canonicalSubscriptionPlanForResponse } = require('../utils/userResponseNormalize');
 const { signToken } = require('../utils/auth');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 
@@ -210,7 +211,7 @@ module.exports = async (req, res) => {
 
       let subscriptionStatus = user.subscription_status || 'inactive';
       let subscriptionExpiry = user.subscription_expiry || null;
-      const subscriptionPlan = user.subscription_plan || '';
+      const canonicalSubPlan = canonicalSubscriptionPlanForResponse(user);
       if (subscriptionStatus === 'active' && subscriptionExpiry) {
         const expiryDate = new Date(subscriptionExpiry);
         if (expiryDate < new Date()) {
@@ -249,9 +250,9 @@ module.exports = async (req, res) => {
         subscription: {
           status: subscriptionStatus,
           expiry: subscriptionExpiry,
-          plan: subscriptionPlan
+          plan: canonicalSubPlan
         },
-        subscriptionPlan
+        subscriptionPlan: canonicalSubPlan
       });
     } catch (dbError) {
       console.error('Database error during login:', dbError);

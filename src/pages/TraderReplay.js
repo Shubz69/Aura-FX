@@ -477,6 +477,7 @@ export default function TraderReplay() {
           onSave={saveReplay}
           saving={saving}
           sessions={sessions}
+          habitStats={habitStats}
           replayFlags={replayFlags}
           onPersistFields={persistReplayFields}
         />
@@ -487,6 +488,7 @@ export default function TraderReplay() {
           session={normalizeReplay(finishedSnapshot)}
           replayFlags={replayFlags}
           allSessions={sessions}
+          habitStats={habitStats}
           onClose={() => { setSummaryOpen(false); }}
           onReplayAnother={() => { setSummaryOpen(false); goHub(); }}
           onApplyLearningExample={

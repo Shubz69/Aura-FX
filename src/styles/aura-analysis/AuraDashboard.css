@@ -1831,6 +1831,57 @@ html {
   color: rgba(248, 195, 125, 0.75);
 }
 
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-identity-callout {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: rgba(200, 196, 232, 0.82);
+  border: 1px solid rgba(124, 220, 176, 0.18);
+  background: rgba(46, 120, 90, 0.08);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-contribution-callout {
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: rgba(200, 196, 232, 0.82);
+  border: 1px solid rgba(120, 140, 220, 0.2);
+  background: rgba(30, 40, 90, 0.12);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-devaction-callout {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: rgba(248, 195, 125, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  background: rgba(212, 175, 55, 0.06);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-library-hint-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 4px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-chip--identity-hint {
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  border-color: rgba(212, 175, 55, 0.22);
+  color: rgba(248, 195, 125, 0.85);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-meta--identity {
+  color: rgba(124, 220, 176, 0.72);
+}
+
 .journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-takeaways {
   margin-bottom: 14px;
 }
@@ -2033,6 +2084,173 @@ html {
   color: rgba(248, 195, 125, 0.82);
 }
 
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-identity-strip {
+  padding: clamp(12px, 1.8vw, 16px);
+  margin-bottom: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(212, 175, 55, 0.14);
+  background: linear-gradient(145deg, rgba(212, 175, 55, 0.05) 0%, rgba(3, 2, 14, 0.55) 55%);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-identity-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-identity-period {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-identity-period .trader-suite-select {
+  min-width: 140px;
+  font-size: 0.75rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-identity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-identity-label {
+  display: block;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.5);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-identity-value {
+  display: block;
+  font-size: 0.95rem;
+  margin-top: 2px;
+  color: rgba(248, 195, 125, 0.92);
+  font-weight: 600;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-identity-meta {
+  display: block;
+  font-size: 0.65rem;
+  color: rgba(200, 196, 232, 0.48);
+  margin-top: 2px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-identity-focus {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: rgba(200, 196, 232, 0.78);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-identity-focus strong {
+  color: rgba(248, 195, 125, 0.88);
+  font-weight: 600;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-identity-pattern {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: rgba(124, 220, 176, 0.75);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-behavior-pattern {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(168, 180, 255, 0.12);
+  background: rgba(3, 2, 10, 0.35);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-behavior-pattern-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-behavior-pattern-kicker {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.45);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-chip--archetype {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(168, 180, 255, 0.28);
+  background: rgba(100, 108, 200, 0.12);
+  color: rgba(210, 214, 255, 0.92);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-behavior-pattern-evidence {
+  font-size: 0.58rem;
+  color: rgba(200, 196, 232, 0.42);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-behavior-pattern-line {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: rgba(200, 196, 232, 0.78);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-contribution-strip {
+  padding: clamp(12px, 1.8vw, 16px);
+  margin-bottom: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(120, 140, 220, 0.14);
+  background: rgba(6, 8, 22, 0.55);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-contribution-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-contribution-note {
+  font-size: 0.65rem;
+  color: rgba(200, 196, 232, 0.45);
+  max-width: 280px;
+  line-height: 1.35;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-contribution-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-contribution-expl,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-contribution-action {
+  margin: 6px 0 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: rgba(200, 196, 232, 0.78);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-contribution-action {
+  color: rgba(248, 195, 125, 0.82);
+}
+
 .journal-page .aura-dashboard .aura-db-replay-page .aura-tr-tier-ribbon {
   margin: 0 0 14px;
   font-size: 0.72rem;
@@ -2207,4 +2425,721 @@ html {
 
 .journal-page .aura-dashboard .aura-db-replay-page .aura-tr-field--check input {
   width: auto;
+}
+
+/* Mentor / coach review — presets, context blocks, library cues */
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mentor-presets {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(120, 140, 220, 0.18);
+  background: rgba(20, 18, 40, 0.35);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mentor-presets-kicker {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.45);
+  margin-bottom: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-mentor-presets-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-preset-pill {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(232, 228, 248, 0.82);
+  cursor: pointer;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-preset-pill:hover:not(:disabled) {
+  border-color: rgba(234, 169, 96, 0.28);
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-preset-pill--active {
+  border-color: rgba(234, 169, 96, 0.42);
+  background: rgba(234, 169, 96, 0.1);
+  color: rgba(248, 195, 125, 0.98);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-preset-pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-setup-meta--mentor-cue {
+  color: rgba(248, 195, 125, 0.78);
+  font-weight: 600;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-coach-context {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(100, 120, 200, 0.22);
+  background: rgba(26, 24, 56, 0.4);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coach-context-kicker {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.5);
+  margin-bottom: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coach-priority-line {
+  margin: 0 0 8px;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: rgba(200, 196, 232, 0.82);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coach-priority-line--rail {
+  font-size: 0.72rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-chip--priority {
+  text-transform: uppercase;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coach-bullet-list {
+  margin: 0 0 8px;
+  padding-left: 1.1rem;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: rgba(200, 196, 232, 0.78);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coach-bullet-list--rail {
+  font-size: 0.7rem;
+  margin-bottom: 6px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coach-next-inline {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: rgba(200, 196, 232, 0.75);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coach-next-rail {
+  margin: 0;
+  font-size: 0.68rem;
+  color: rgba(248, 195, 125, 0.88);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coach-context-block {
+  padding-bottom: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-example-mentor-frame,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-learning-mentor-frame {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(234, 169, 96, 0.15);
+  background: rgba(3, 2, 10, 0.25);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: rgba(200, 196, 232, 0.85);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-example-mentor-frame strong,
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-learning-mentor-frame strong {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-example--model {
+  color: rgba(124, 220, 176, 0.92);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-example--caution {
+  color: rgba(234, 169, 96, 0.92);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-copy-bar {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(234, 169, 96, 0.16);
+  background: rgba(3, 2, 10, 0.38);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-copy-bar--rail {
+  margin: 0;
+  padding: 8px 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-copy-bar-wrap {
+  padding-bottom: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-copy-bar-label {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(200, 196, 232, 0.48);
+  margin-bottom: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-copy-bar-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-copy-btn {
+  padding: 5px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-copy-btn--file {
+  border-style: dashed;
+  opacity: 0.92;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-mentor-copyhint {
+  margin: 10px 0 0;
+  font-size: 0.68rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-copy-prep {
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-modal-copy-prep .aura-tr-copy-bar {
+  margin-bottom: 0;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-prep {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-prep-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-prep-note {
+  font-size: 0.68rem;
+  color: rgba(200, 196, 232, 0.55);
+  line-height: 1.45;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-tab {
+  padding: 5px 10px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  border: 1px solid rgba(234, 169, 96, 0.18);
+  background: rgba(3, 2, 10, 0.35);
+  color: rgba(200, 196, 232, 0.72);
+  cursor: pointer;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-tab--active {
+  border-color: rgba(234, 169, 96, 0.45);
+  color: rgba(244, 240, 255, 0.92);
+  background: rgba(124, 220, 176, 0.08);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-summary {
+  margin: 0;
+  padding: 0 0 0 18px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: rgba(200, 196, 232, 0.82);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-summary li {
+  margin-bottom: 4px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-k {
+  font-weight: 700;
+  color: rgba(234, 169, 96, 0.85);
+  margin-right: 6px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-plain {
+  margin: 0;
+  padding: 10px 12px;
+  max-height: 200px;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.62rem;
+  line-height: 1.45;
+  color: rgba(200, 196, 232, 0.78);
+  border-radius: 8px;
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  background: rgba(3, 2, 10, 0.5);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-copy {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-compact {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  accent-color: rgba(124, 220, 176, 0.5);
+  border-radius: 10px;
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  background: rgba(3, 2, 10, 0.28);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-compact .aura-tr-copy-bar-label {
+  margin-bottom: 6px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-compact .aura-tr-copy-bar-btns {
+  gap: 5px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-package-compact .aura-tr-copy-btn {
+  font-size: 0.62rem;
+  padding: 4px 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-prep {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-summary {
+  margin: 0;
+  padding: 0 0 0 18px;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: rgba(200, 196, 232, 0.82);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-summary li {
+  margin-bottom: 5px;
+  list-style: disc;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-tag--reinforce {
+  color: rgba(124, 220, 176, 0.95);
+  border: 1px solid rgba(124, 220, 176, 0.35);
+  background: rgba(124, 220, 176, 0.08);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-tag--correct {
+  color: rgba(234, 169, 96, 0.95);
+  border: 1px solid rgba(234, 169, 96, 0.35);
+  background: rgba(234, 169, 96, 0.08);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-tag--revisit {
+  color: rgba(168, 180, 255, 0.92);
+  border: 1px solid rgba(168, 180, 255, 0.28);
+  background: rgba(100, 108, 200, 0.12);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-tag--monitor {
+  color: rgba(200, 196, 232, 0.75);
+  border: 1px solid rgba(200, 196, 232, 0.2);
+  background: rgba(3, 2, 10, 0.35);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-plain {
+  max-height: 220px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-compact {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(168, 180, 255, 0.14);
+  background: rgba(3, 2, 10, 0.22);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-compact .aura-tr-copy-bar-label {
+  margin-bottom: 6px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-compact .aura-tr-copy-bar-btns {
+  gap: 5px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-narrative-compact .aura-tr-copy-btn {
+  font-size: 0.62rem;
+  padding: 4px 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-compact {
+  margin: 8px 0 0;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-note {
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: rgba(200, 196, 232, 0.5);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__priority {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(200, 196, 232, 0.2);
+  color: rgba(200, 196, 232, 0.75);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__priority--high {
+  border-color: rgba(234, 169, 96, 0.45);
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__priority--mid {
+  border-color: rgba(168, 180, 255, 0.25);
+  color: rgba(200, 205, 255, 0.85);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__priority--low {
+  opacity: 0.85;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__chip--archive {
+  border-color: rgba(160, 190, 255, 0.42);
+  background: rgba(70, 110, 200, 0.12);
+  color: rgba(200, 220, 255, 0.95);
+  font-size: 0.72rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__chip {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 220, 176, 0.25);
+  background: rgba(124, 220, 176, 0.06);
+  color: rgba(124, 220, 176, 0.9);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-focus {
+  margin: 0 0 10px;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: rgba(200, 196, 232, 0.88);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 560px) {
+  .journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-k {
+  display: block;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(234, 169, 96, 0.75);
+  margin-bottom: 4px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-v {
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: rgba(200, 196, 232, 0.82);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-examples ul {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: rgba(200, 196, 232, 0.75);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-evidence {
+  margin: 0 0 8px;
+  font-size: 0.65rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-plain {
+  max-height: 240px;
+  margin-top: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-tabs {
+  margin-bottom: 10px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-movement {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-move {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 196, 232, 0.18);
+  color: rgba(200, 196, 232, 0.75);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-move--improving {
+  border-color: rgba(124, 220, 176, 0.35);
+  color: rgba(124, 220, 176, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-move--slip {
+  border-color: rgba(234, 169, 96, 0.4);
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-move--repeat {
+  border-color: rgba(168, 180, 255, 0.35);
+  color: rgba(200, 205, 255, 0.9);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-delta {
+  margin: 0 0 10px;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-delta .aura-tr-coaching-pack-v {
+  display: block;
+  margin-top: 4px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__scope--recurring {
+  border-color: rgba(234, 169, 96, 0.4);
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__scope--emerging {
+  border-color: rgba(168, 180, 255, 0.35);
+  color: rgba(200, 205, 255, 0.88);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__scope--isolated {
+  border-color: rgba(200, 196, 232, 0.22);
+  color: rgba(200, 196, 232, 0.72);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__scope--thin {
+  opacity: 0.85;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__reflection {
+  border-color: rgba(186, 200, 255, 0.35);
+  background: rgba(120, 140, 255, 0.07);
+  color: rgba(210, 215, 255, 0.92);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-reflection-note {
+  font-size: 0.62rem;
+  margin-left: 4px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-focus--narrow {
+  font-size: 0.7rem;
+  margin-bottom: 8px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-ex-kind {
+  font-size: 0.55rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(234, 169, 96, 0.75);
+  margin-right: 6px;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-move--rehearse {
+  border-color: rgba(124, 220, 176, 0.35);
+  color: rgba(124, 220, 176, 0.92);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-move--correct {
+  border-color: rgba(234, 169, 96, 0.4);
+  color: rgba(248, 195, 125, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-move--revisit {
+  border-color: rgba(168, 180, 255, 0.35);
+  color: rgba(200, 205, 255, 0.88);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__reflection--monthly {
+  border-color: rgba(200, 196, 232, 0.28);
+  background: rgba(200, 196, 232, 0.06);
+  color: rgba(220, 218, 240, 0.9);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-move--refine {
+  border-color: rgba(186, 160, 255, 0.35);
+  color: rgba(210, 195, 255, 0.9);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack__reflection--horizon {
+  border-color: rgba(140, 200, 255, 0.32);
+  background: rgba(80, 140, 220, 0.08);
+  color: rgba(200, 225, 255, 0.92);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-move--keep {
+  border-color: rgba(124, 220, 176, 0.35);
+  color: rgba(124, 220, 176, 0.92);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-move--eliminate {
+  border-color: rgba(220, 120, 120, 0.38);
+  color: rgba(255, 170, 160, 0.92);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-horizon-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0.65rem;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-horizon-preset-chip {
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(140, 200, 255, 0.22);
+  background: rgba(20, 28, 42, 0.55);
+  color: rgba(200, 220, 245, 0.82);
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-horizon-preset-chip:hover {
+  border-color: rgba(160, 210, 255, 0.4);
+  color: rgba(220, 235, 255, 0.95);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-horizon-preset-chip--active {
+  border-color: rgba(120, 190, 255, 0.55);
+  background: rgba(80, 140, 220, 0.18);
+  color: rgba(210, 230, 255, 0.98);
+}
+
+.journal-page .aura-dashboard .aura-db-replay-page .aura-tr-coaching-pack-anchor-hint {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
 }

@@ -15,15 +15,14 @@ const ME_SEED_MAX_AGE_MS = 120_000;
 /** Map /api/me user + entitlements into auth user fields (role, tier as subscription_plan for legacy UI). */
 function userPatchFromMe(meUser, ent) {
   if (!meUser || !ent) return null;
-  const tier = (ent.effectiveTier || ent.tier || 'FREE').toString().toUpperCase();
+  const tier = (ent.effectiveTier || ent.tier || 'ACCESS').toString().toUpperCase();
   const st = (ent.status || 'none').toString().toLowerCase();
   const paidish = st === 'active' || st === 'trialing';
 
   let subscription_plan;
-  if (tier === 'PREMIUM' && paidish) subscription_plan = 'aura';
-  else if (tier === 'ELITE' && paidish) subscription_plan = 'elite';
-  else if (tier === 'A7FX' && paidish) subscription_plan = 'a7fx';
-  else if (tier === 'FREE') subscription_plan = 'free';
+  if ((tier === 'PRO' || tier === 'PREMIUM') && paidish) subscription_plan = 'pro';
+  else if ((tier === 'ELITE' || tier === 'A7FX') && paidish) subscription_plan = 'elite';
+  else if (tier === 'ACCESS' || tier === 'FREE') subscription_plan = 'access';
 
   const subscription_status =
     st === 'active'

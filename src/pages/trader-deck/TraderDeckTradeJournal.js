@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
 import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
 import { formatSignedPnL } from '../../lib/aura-analysis/formatAccountCurrency';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
+import { stripReplayHandoffParams, TR_HANDOFF } from '../../lib/trader-replay/replayToolHandoff';
 import '../../styles/trader-deck/TraderDeckTradeJournal.css';
 
 function formatDate(d) {
@@ -68,6 +70,9 @@ function getPnlForResult(trade, result) {
 }
 
 export default function TraderDeckTradeJournal() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const replayDeckConsumedRef = useRef(false);
+  const [replayContext, setReplayContext] = useState(null);
   const { accounts, selectedAccountId, loading: accountsLoading } = useTradeValidatorAccount();
   const journalCurrency = useMemo(() => {
     const a = accounts.find((x) => Number(x.id) === Number(selectedAccountId));
@@ -108,6 +113,23 @@ export default function TraderDeckTradeJournal() {
       .catch(() => setTrades([]))
       .finally(() => setLoading(false));
   }, [accountsLoading, loadTrades]);
+
+  useEffect(() => {
+    if (replayDeckConsumedRef.current) return;
+    if (!searchParams.get(TR_HANDOFF.origin) && !searchParams.get('replaySessionId')) return;
+    replayDeckConsumedRef.current = true;
+    setReplayContext({
+      symbol: searchParams.get('symbol') || '',
+      lesson: (searchParams.get('mainLesson') || '').slice(0, 200),
+      returnTo: searchParams.get(TR_HANDOFF.returnToReplay) || '',
+    });
+    setSearchParams(stripReplayHandoffParams(searchParams), { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (!replayContext?.symbol || !pairs.length) return;
+    if (pairs.includes(replayContext.symbol)) setFilterPair(replayContext.symbol);
+  }, [pairs, replayContext]);
 
   const closeVerify = () => {
     setVerifyTrade(null);
@@ -250,6 +272,30 @@ export default function TraderDeckTradeJournal() {
       {selectedAccountName && (
         <p className="td-journal-account-line">Account: {selectedAccountName}</p>
       )}
+      {replayContext ? (
+        <div className="td-journal-replay-handoff" role="status">
+          <span className="td-journal-replay-chip">From Trader Replay</span>
+          {replayContext.symbol ? (
+            <span className="td-journal-replay-meta">Symbol filter: {replayContext.symbol}</span>
+          ) : null}
+          {replayContext.lesson ? (
+            <p className="td-journal-replay-lesson">{replayContext.lesson}</p>
+          ) : null}
+          <div className="td-journal-replay-actions">
+            {replayContext.returnTo ? (
+              <Link to={replayContext.returnTo} className="td-journal-replay-link">
+                Back to replay
+              </Link>
+            ) : null}
+            <Link
+              to="/journal"
+              className="td-journal-replay-link"
+            >
+              Daily Journal (reflection)
+            </Link>
+          </div>
+        </div>
+      ) : null}
 
       <div className="td-journal-toolbar" role="search" aria-label="Journal filters">
         <input

@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import TradingViewChartPanel from '../TradingViewChartPanel';
 import ReplayControls from './ReplayControls';
 import ReplayTimeline from './ReplayTimeline';
@@ -12,11 +11,15 @@ import {
   computeReviewCompletenessScore,
 } from '../../lib/trader-replay/replayNormalizer';
 import { REPLAY_STATUSES } from '../../lib/trader-replay/replayDefaults';
-import { deriveCoaching, mergeReplayDestination } from '../../lib/trader-replay/replayCoachingEngine';
+import { deriveCoaching } from '../../lib/trader-replay/replayCoachingEngine';
+import { mergeReplayDestination, buildDefaultReturnToReplayPath } from '../../lib/trader-replay/replayToolHandoff';
 import { buildFollowUpActions } from '../../lib/trader-replay/replayFollowup';
-import { buildMentorSummaryText } from '../../lib/trader-replay/replayMentorSummary';
+import { buildMentorCoachContext, getLearningExampleMentorFraming } from '../../lib/trader-replay/replayMentorReviewEngine';
 import { formatLearningExampleLabel } from '../../lib/trader-replay/replayEntitlements';
 import ReplayPremiumNudge from './ReplayPremiumNudge';
+import ReplayCopyExportBar from './ReplayCopyExportBar';
+import ReplayPackagePrep from './ReplayPackagePrep';
+import ReplayNarrativePrep from './ReplayNarrativePrep';
 
 function executionAverage(s) {
   const a = Number(s.entryTiming) || 0;
@@ -36,6 +39,7 @@ export default function ReplayWorkspace({
   onSave,
   saving,
   sessions = [],
+  habitStats = null,
   replayFlags = {},
   onPersistFields,
 }) {
@@ -73,18 +77,32 @@ export default function ReplayWorkspace({
     () => ({ ...session, id: activeId || session.id }),
     [session, activeId]
   );
+  const returnReplay = buildDefaultReturnToReplayPath(sessionForLinks);
+  const hb = returnReplay ? { returnPath: returnReplay } : {};
   const playbookTo = mergeReplayDestination(
     '/trader-deck/trade-validator/trader-playbook',
     sessionForLinks,
-    coaching
+    coaching,
+    { destination: 'playbook', ...hb }
   );
   const labHref = session.linkedLabDate
     ? `/trader-deck/trade-validator/trader-lab?date=${encodeURIComponent(session.linkedLabDate)}`
     : null;
-  const labTo = labHref ? mergeReplayDestination(labHref, sessionForLinks, coaching) : null;
-  const journalTo = mergeReplayDestination('/trader-deck/trade-validator/journal', sessionForLinks, coaching);
-  const validatorTo = mergeReplayDestination('/trader-deck/trade-validator/overview', sessionForLinks, coaching);
-  const checklistTo = mergeReplayDestination('/trader-deck/trade-validator/checklist', sessionForLinks, coaching);
+  const labTo = labHref ? mergeReplayDestination(labHref, sessionForLinks, coaching, hb) : null;
+  const journalTo = mergeReplayDestination('/journal', sessionForLinks, coaching, { destination: 'journal', ...hb });
+  const tradeJournalTo = mergeReplayDestination(
+    '/trader-deck/trade-validator/journal',
+    sessionForLinks,
+    coaching,
+    hb
+  );
+  const validatorTo = mergeReplayDestination('/trader-deck/trade-validator/overview', sessionForLinks, coaching, hb);
+  const checklistTo = mergeReplayDestination(
+    '/trader-deck/trade-validator/checklist',
+    sessionForLinks,
+    coaching,
+    { destination: 'checklist', ...hb }
+  );
 
   const signalDepth = replayFlags.coachingSignalDepth ?? 1;
   const qualityLines = qualitySignals.signals.slice(0, signalDepth);
@@ -95,6 +113,8 @@ export default function ReplayWorkspace({
   }, [session, sessions, replayFlags.followUpExpanded]);
 
   const exampleLabel = formatLearningExampleLabel(session.learningExample, session.learningExampleKind);
+  const mentorCoachCtx = useMemo(() => buildMentorCoachContext(session, sessions), [session, sessions]);
+  const exampleMentorFrame = useMemo(() => getLearningExampleMentorFraming(session), [session]);
 
   return (
     <div className="aura-tr-workspace">
@@ -244,6 +264,40 @@ export default function ReplayWorkspace({
           </div>
         </section>
 
+        {isLiveSession ? (
+          <section className="trader-suite-panel aura-tr-rail-block aura-tr-copy-bar-wrap" aria-label="Copy and share replay">
+            <ReplayCopyExportBar
+              session={session}
+              allSessions={sessions}
+              replayFlags={replayFlags}
+              variant="rail"
+              librarySessions={sessions}
+              habitStats={habitStats}
+            />
+            <ReplayPackagePrep sessions={sessions} habitStats={habitStats} variant="compact" />
+            <ReplayNarrativePrep sessions={sessions} habitStats={habitStats} variant="compact" />
+          </section>
+        ) : null}
+
+        {isLiveSession && replayFlags.mentorSummaryCopy ? (
+          <section className="trader-suite-panel aura-tr-rail-block aura-tr-coach-context-block" aria-label="Coach review context">
+            <div className="trader-suite-kicker">Coach review</div>
+            <p className="aura-tr-coach-priority-line aura-tr-coach-priority-line--rail">
+              <span className="aura-tr-chip subtle aura-tr-chip--priority">{mentorCoachCtx.reviewPriority}</span>
+              {mentorCoachCtx.priorityHint}
+            </p>
+            <ul className="aura-tr-coach-bullet-list aura-tr-coach-bullet-list--rail">
+              {mentorCoachCtx.bullets.slice(0, 3).map((b) => (
+                <li key={b.key}>{b.text}</li>
+              ))}
+            </ul>
+            <p className="aura-tr-coach-next-rail">
+              <span className="aura-tr-muted">Next · </span>
+              {mentorCoachCtx.nextAction.label}
+            </p>
+          </section>
+        ) : null}
+
         {session.replayStatus === REPLAY_STATUSES.completed && replayFlags.mentorSummaryCopy ? (
           <section className={`trader-suite-panel aura-tr-rail-block aura-tr-mentor-block ${replayFlags.mentorFullLayout ? 'aura-tr-mentor-block--elite' : ''}`}>
             <div className="trader-suite-kicker">Mentor summary</div>
@@ -260,18 +314,7 @@ export default function ReplayWorkspace({
             ) : (
               <p className="aura-tr-mentor-tight">{coaching.mainLesson}</p>
             )}
-            <button
-              type="button"
-              className="trader-suite-btn"
-              onClick={() => {
-                navigator.clipboard.writeText(buildMentorSummaryText(session)).then(
-                  () => toast.success('Summary copied for desk / mentor'),
-                  () => toast.error('Copy failed')
-                );
-              }}
-            >
-              Copy desk summary
-            </button>
+            <p className="aura-tr-muted small">Desk copy: use Copy / share → Mentor or .txt bundle.</p>
           </section>
         ) : null}
 
@@ -299,6 +342,14 @@ export default function ReplayWorkspace({
             ) : (
               <div className="aura-tr-learning-actions">
                 <span className="aura-tr-chip subtle aura-tr-chip--example">{exampleLabel}</span>
+                {exampleMentorFrame.headline && exampleMentorFrame.mentorLine ? (
+                  <p className="aura-tr-learning-mentor-frame">
+                    <strong className={session.learningExampleKind === 'caution' ? 'aura-tr-example--caution' : 'aura-tr-example--model'}>
+                      {exampleMentorFrame.headline}
+                    </strong>
+                    <span>{exampleMentorFrame.mentorLine}</span>
+                  </p>
+                ) : null}
                 <button
                   type="button"
                   className="trader-suite-btn"
@@ -349,7 +400,10 @@ export default function ReplayWorkspace({
               </span>
             )}
             <Link to={journalTo} className="trader-suite-btn">
-              {session.lessonSummary ? 'Add Journal lesson' : 'Open Journal'}
+              {session.lessonSummary ? 'Daily Journal · lesson' : 'Daily Journal'}
+            </Link>
+            <Link to={tradeJournalTo} className="trader-suite-btn">
+              Trade Journal
             </Link>
             <Link to={validatorTo} className="trader-suite-btn">
               Trade Validator

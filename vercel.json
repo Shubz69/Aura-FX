@@ -624,6 +624,66 @@
       "destination": "/api/journal/notes.js"
     },
     {
+      "source": "/api/backtesting/summary",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/reports/overview",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/reports/breakdowns",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/trades",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/trades/:tradeId",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/sessions",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/sessions/:sessionId/complete",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/sessions/:sessionId/archive",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/sessions/:sessionId/resume",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/sessions/:sessionId/pause",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/sessions/:sessionId/duplicate",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/sessions/:sessionId/trades",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/sessions/:sessionId/notebook",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/sessions/:sessionId/reports",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/sessions/:sessionId",
+      "destination": "/api/backtesting.js"
+    },
+    {
       "source": "/api/market/watchlist",
       "destination": "/api/market/watchlist.js"
     },

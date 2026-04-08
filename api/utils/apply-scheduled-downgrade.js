@@ -107,7 +107,18 @@ async function applyScheduledDowngrade(userId, dbConn = null) {
     return user;
   }
 
-  const newRole = downgradeTo === 'free' ? 'user' : (downgradeTo === 'a7fx' ? 'elite' : 'premium');
+  let newPlan = downgradeTo;
+  let newRole = 'access';
+  if (downgradeTo === 'free' || downgradeTo === 'access') {
+    newPlan = 'access';
+    newRole = 'access';
+  } else if (downgradeTo === 'aura' || downgradeTo === 'premium' || downgradeTo === 'pro') {
+    newPlan = 'pro';
+    newRole = 'pro';
+  } else if (downgradeTo === 'a7fx' || downgradeTo === 'elite') {
+    newPlan = 'elite';
+    newRole = 'elite';
+  }
   await runUserSql(
     dbConn,
     `UPDATE users SET
@@ -119,7 +130,7 @@ async function applyScheduledDowngrade(userId, dbConn = null) {
        downgrade_to_plan = NULL,
        onboarding_accepted = FALSE
      WHERE id = ?`,
-    [downgradeTo, newRole, id]
+    [newPlan, newRole, id]
   );
 
   const [updated] = await runUserSql(dbConn, 'SELECT * FROM users WHERE id = ?', [id]);

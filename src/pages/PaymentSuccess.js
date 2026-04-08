@@ -111,7 +111,7 @@ const PaymentSuccess = () => {
                                     if (verifiedPlan === 'a7fx' || verifiedPlan === 'A7FX' || verifiedPlan === 'elite') {
                                         user.role = 'elite';
                                     } else {
-                                        user.role = 'premium';
+                                        user.role = 'pro';
                                     }
                                     user.subscription_status = 'active';
                                     user.subscription_plan = verifiedPlan;
@@ -160,7 +160,7 @@ const PaymentSuccess = () => {
                                         if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
                                             user.role = 'elite'; // A7FX purchases get Elite role
                                         } else {
-                                            user.role = 'premium'; // Default to premium for 'aura' or any other plan
+                                            user.role = 'pro'; // Default to premium for 'aura' or any other plan
                                         }
                                         user.subscription_status = 'active';
                                         user.subscription_plan = planParam || 'aura';
@@ -195,7 +195,7 @@ const PaymentSuccess = () => {
                                 if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
                                     user.role = 'elite'; // A7FX purchases get Elite role
                                 } else {
-                                    user.role = 'premium';
+                                    user.role = 'pro';
                                 }
                                 user.subscription_status = 'active';
                                 user.subscription_plan = planParam || 'aura';
@@ -216,7 +216,7 @@ const PaymentSuccess = () => {
                             if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
                                 user.role = 'elite'; // A7FX purchases get Elite role
                             } else {
-                                user.role = 'premium';
+                                user.role = 'pro';
                             }
                             user.subscription_status = 'active';
                             user.subscription_plan = planParam || 'aura';
@@ -238,7 +238,7 @@ const PaymentSuccess = () => {
                         if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
                             user.role = 'elite'; // A7FX purchases get Elite role
                         } else {
-                            user.role = 'premium';
+                            user.role = 'pro';
                         }
                         user.subscription_status = 'active';
                         user.subscription_plan = planParam || 'aura';

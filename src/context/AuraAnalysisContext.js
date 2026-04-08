@@ -132,6 +132,8 @@ export function AuraAnalysisProvider({ children }) {
   const accountRef = useRef(null);
   const lastTradesFpRef = useRef('');
   const lastAccountFpRef = useRef('');
+  /** Server computeAnalytics payload + fingerprint (stale-while-revalidate fast path). */
+  const pendingServerPrecomputedRef = useRef(null);
 
   useEffect(() => {
     rawTradesRef.current = rawTrades;
@@ -144,6 +146,7 @@ export function AuraAnalysisProvider({ children }) {
     invalidateAuraAnalyticsCache();
     lastTradesFpRef.current = '';
     lastAccountFpRef.current = '';
+    pendingServerPrecomputedRef.current = null;
   }, [activePlatformId]);
 
   const fetchData = useCallback(async (background = false) => {
@@ -217,10 +220,33 @@ export function AuraAnalysisProvider({ children }) {
           const fromCache = !!payload?.stale || !!payload?.cacheServedStale;
           setHistoryStale(fromCache);
           setHistoryDataSource(payload?.dataSource === 'cache' ? 'cache' : payload?.dataSource === 'live' ? 'live' : null);
+          if (payload?.precomputedAnalytics && payload?.analyticsInputFingerprint) {
+            pendingServerPrecomputedRef.current = {
+              fingerprint: String(payload.analyticsInputFingerprint),
+              payload: payload.precomputedAnalytics,
+            };
+          } else {
+            pendingServerPrecomputedRef.current = null;
+          }
+        } else {
+          pendingServerPrecomputedRef.current = null;
         }
+      } else {
+        pendingServerPrecomputedRef.current = null;
       }
 
       setLastUpdated(new Date());
+
+      const accRevalidate = accSettled.status === 'fulfilled' && accSettled.value?.data?.revalidating;
+      const histRevalidate = histSettled.status === 'fulfilled' && histSettled.value?.data?.revalidating;
+      if (!background && (accRevalidate || histRevalidate)) {
+        window.setTimeout(() => {
+          fetchData(true);
+        }, 4000);
+        window.setTimeout(() => {
+          fetchData(true);
+        }, 12000);
+      }
 
       if (!background) {
         if (!gotAccount && !gotTrades) {
@@ -269,6 +295,14 @@ export function AuraAnalysisProvider({ children }) {
     () => auraAnalysisClosedDataKey(trades, account),
     [trades, account]
   );
+  /** Same trade window as API + server preset cache (unfiltered rawTrades). */
+  const analyticsDataKeyRaw = useMemo(
+    () => auraAnalysisClosedDataKey(rawTrades, account),
+    [rawTrades, account]
+  );
+  const filtersAtDefault =
+    symbolFilter === 'ALL' && sessionFilter === 'ALL' && dirFilter === 'ALL';
+
   const [analytics, setAnalytics] = useState(() => emptyAnalytics(null));
   const [analyticsFlushTick, setAnalyticsFlushTick] = useState(0);
 
@@ -276,6 +310,41 @@ export function AuraAnalysisProvider({ children }) {
     let cancelled = false;
     if (isAuraAnalysisDevPerfEnabled()) {
       auraAnalysisDevPerfEnsurePipeline({ trigger: 'analyticsKey' });
+    }
+    const pending = pendingServerPrecomputedRef.current;
+
+    if (!filtersAtDefault) {
+      if (pending) pendingServerPrecomputedRef.current = null;
+      computeAnalytics(trades, account).then((a) => {
+        if (!cancelled) {
+          setAnalytics(a);
+          if (isAuraAnalysisDevPerfEnabled()) {
+            setAnalyticsFlushTick((n) => n + 1);
+          }
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (
+      pending
+      && pending.fingerprint === analyticsDataKeyRaw
+      && pending.payload
+      && typeof pending.payload === 'object'
+    ) {
+      pendingServerPrecomputedRef.current = null;
+      setAnalytics(pending.payload);
+      if (isAuraAnalysisDevPerfEnabled()) {
+        setAnalyticsFlushTick((n) => n + 1);
+      }
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (pending && pending.fingerprint !== analyticsDataKeyRaw) {
+      pendingServerPrecomputedRef.current = null;
     }
     computeAnalytics(trades, account).then((a) => {
       if (!cancelled) {
@@ -288,7 +357,7 @@ export function AuraAnalysisProvider({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [analyticsDataKey]);
+  }, [analyticsDataKeyRaw, filtersAtDefault, trades, account, symbolFilter, sessionFilter, dirFilter]);
 
   const lastUpdatedStr = useMemo(() => {
     if (!lastUpdated) return null;

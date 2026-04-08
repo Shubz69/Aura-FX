@@ -1,7 +1,7 @@
 /**
  * POST /api/subscription/downgrade (auth required)
  * Downgrade to a lower plan: either immediately (no refund) or at period end.
- * Body: { targetPlanId: 'free' | 'aura', when: 'now' | 'period_end' }
+ * Body: { targetPlanId: 'access' | 'aura' | legacy 'free' | 'premium', when: 'now' | 'period_end' }
  */
 
 const { executeQuery } = require('../db');
@@ -9,13 +9,14 @@ const { verifyToken } = require('../utils/auth');
 const { invalidateEntitlementsCache } = require('../cache');
 const { ensureDowngradeColumns } = require('../utils/apply-scheduled-downgrade');
 
-const PLAN_ORDER = { free: 0, aura: 1, a7fx: 2 };
+const PLAN_ORDER = { access: 0, free: 0, aura: 1, pro: 1, premium: 1, a7fx: 2, elite: 2 };
 
-/** DB may store elite/premium; normalize for ordering */
+/** DB may store elite/premium/pro/access; normalize for ordering */
 function normalizePlanId(plan) {
   const p = (plan || '').toString().trim().toLowerCase();
-  if (p === 'elite') return 'a7fx';
-  if (p === 'premium') return 'aura';
+  if (p === 'elite' || p === 'a7fx') return 'a7fx';
+  if (p === 'premium' || p === 'pro' || p === 'aura') return 'aura';
+  if (p === 'free' || p === 'access') return 'access';
   return p;
 }
 
@@ -36,11 +37,16 @@ module.exports = async (req, res) => {
 
   const userId = decoded.id;
   const body = typeof req.body === 'string' ? (() => { try { return JSON.parse(req.body); } catch { return {}; } })() : (req.body || {});
-  const targetPlanId = (body.targetPlanId || '').toString().toLowerCase();
+  let targetPlanId = (body.targetPlanId || '').toString().toLowerCase();
+  if (targetPlanId === 'free') targetPlanId = 'access';
+  if (targetPlanId === 'premium') targetPlanId = 'aura';
   const when = (body.when || '').toString().toLowerCase();
 
-  if (!['free', 'aura'].includes(targetPlanId)) {
-    return res.status(400).json({ success: false, message: 'Invalid targetPlanId. Use "free" or "aura".' });
+  if (!['access', 'aura'].includes(targetPlanId)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid targetPlanId. Use "access" (or legacy "free") or "aura".'
+    });
   }
   if (!['now', 'period_end'].includes(when)) {
     return res.status(400).json({ success: false, message: 'Invalid when. Use "now" or "period_end".' });
@@ -59,7 +65,7 @@ module.exports = async (req, res) => {
     }
 
     const currentPlan = normalizePlanId(user.subscription_plan);
-    if (!currentPlan || currentPlan === 'free') {
+    if (!currentPlan || currentPlan === 'access') {
       return res.status(400).json({ success: false, message: 'No active paid subscription to downgrade.' });
     }
 
@@ -70,7 +76,8 @@ module.exports = async (req, res) => {
     }
 
     if (when === 'now') {
-      const newRole = targetPlanId === 'free' ? 'user' : 'premium';
+      const newPlan = targetPlanId === 'access' ? 'access' : 'pro';
+      const newRole = targetPlanId === 'access' ? 'access' : 'pro';
       await executeQuery(
         `UPDATE users SET
            subscription_plan = ?,
@@ -81,26 +88,33 @@ module.exports = async (req, res) => {
            downgrade_to_plan = NULL,
            onboarding_accepted = FALSE
          WHERE id = ?`,
-        [targetPlanId, newRole, userId]
+        [newPlan, newRole, userId]
       );
       invalidateEntitlementsCache(userId);
       return res.status(200).json({
         success: true,
-        message: 'Subscription changed immediately. You now have access for the plan you switched to. No refunds are given for the unused period.',
-        subscription: { planId: targetPlanId, applied: 'now' }
+        message:
+          'Subscription changed immediately. You now have access for the plan you switched to. No refunds are given for the unused period.',
+        subscription: { planId: newPlan, applied: 'now' }
       });
     }
 
     if (when === 'period_end') {
-      await executeQuery(
-        `UPDATE users SET cancel_at_period_end = TRUE, downgrade_to_plan = ? WHERE id = ?`,
-        [targetPlanId, userId]
-      );
+      const storedTarget = targetPlanId === 'access' ? 'access' : 'pro';
+      await executeQuery(`UPDATE users SET cancel_at_period_end = TRUE, downgrade_to_plan = ? WHERE id = ?`, [
+        storedTarget,
+        userId
+      ]);
       invalidateEntitlementsCache(userId);
+      const responsePlanId =
+        currentPlan === 'a7fx' ? 'elite' : currentPlan === 'aura' ? 'pro' : currentPlan;
       return res.status(200).json({
         success: true,
-        message: 'Your subscription will switch to ' + (targetPlanId === 'free' ? 'Free' : 'Aura Terminal') + ' at the end of your current period. You keep your current access until then.',
-        subscription: { planId: currentPlan, downgradeToPlanId: targetPlanId, atPeriodEnd: true }
+        message:
+          'Your subscription will switch to ' +
+          (targetPlanId === 'access' ? 'Access' : 'Pro') +
+          ' at the end of your current period. You keep your current access until then.',
+        subscription: { planId: responsePlanId, downgradeToPlanId: storedTarget, atPeriodEnd: true }
       });
     }
   } catch (err) {

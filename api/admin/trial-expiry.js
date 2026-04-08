@@ -1,7 +1,7 @@
 /**
  * Trial Expiry Auto-Downgrade
  * Called by a cron job or manually: checks for expired subscriptions,
- * downgrades users to 'free', and sends notification emails.
+ * downgrades users to access tier, and sends notification emails.
  */
 
 const { getDbConnection } = require('../db');
@@ -89,14 +89,17 @@ module.exports = async (req, res) => {
     try { await db.execute('SELECT subscription_status FROM users LIMIT 1'); } catch {
       await db.execute('ALTER TABLE users ADD COLUMN subscription_status VARCHAR(50) DEFAULT NULL');
     }
+    try { await db.execute('SELECT subscription_plan FROM users LIMIT 1'); } catch {
+      await db.execute('ALTER TABLE users ADD COLUMN subscription_plan VARCHAR(64) DEFAULT NULL');
+    }
 
-    // Find expired users: role is premium/elite/a7fx AND subscription_expiry has passed
+    // Find expired users: paid tier roles AND subscription_expiry has passed
     const [expiredUsers] = await db.execute(`
       SELECT id, email, username, name, role, subscription_expiry
       FROM users
       WHERE subscription_expiry IS NOT NULL
         AND subscription_expiry < NOW()
-        AND role IN ('premium', 'elite', 'a7fx')
+        AND role IN ('premium', 'pro', 'elite', 'a7fx')
         AND (is_demo IS NULL OR is_demo = FALSE)
     `);
 
@@ -111,7 +114,7 @@ module.exports = async (req, res) => {
     for (const u of expiredUsers) {
       try {
         await db.execute(
-          `UPDATE users SET role = 'free', subscription_status = 'expired' WHERE id = ?`,
+          `UPDATE users SET role = 'access', subscription_status = 'expired', subscription_plan = 'access' WHERE id = ?`,
           [u.id]
         );
         downgradedCount++;
@@ -123,12 +126,12 @@ module.exports = async (req, res) => {
       }
     }
 
-    console.log(`Trial expiry: downgraded ${downgradedCount} users to free.`);
+    console.log(`Trial expiry: downgraded ${downgradedCount} users to access.`);
     release();
 
     return res.status(200).json({
       success: true,
-      message: `Downgraded ${downgradedCount} expired subscription(s) to free.`,
+      message: `Downgraded ${downgradedCount} expired subscription(s) to access.`,
       downgraded: downgradedCount,
       users: downgradedUsers
     });

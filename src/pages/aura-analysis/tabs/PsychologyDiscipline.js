@@ -1,7 +1,10 @@
 import React, { memo } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuraAnalysisData, useAuraAnalysisMetrics } from '../../../context/AuraAnalysisContext';
+import { useReplayContributionProfile } from '../../../hooks/useReplayContributionProfile';
 import { fmtPct, fmtNum, fmtDuration } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
+import ReplayNarrativeBridgePanel from '../../../components/aura-analysis/ReplayNarrativeBridgePanel';
 import { AuraPnlHistogram, AuraHourOfDayStrip, AuraWeekdayHourHeatmap } from '../../../components/aura-analysis/AuraPerformanceCharts';
 import { useAuraPerfSection, useIdleDeferredReady, useInViewOnce } from '../auraTabPerf';
 import '../../../styles/aura-analysis/AuraShared.css';
@@ -31,6 +34,7 @@ function Ring({ score, label, color }) {
  */
 const PsychologyDisciplineMain = memo(function PsychologyDisciplineMain() {
   const { analytics: a, analyticsDataKey } = useAuraAnalysisMetrics();
+  const { scoreSurface, narrativeBridge } = useReplayContributionProfile();
   useAuraPerfSection('PsychologyDiscipline.main');
   const deferHeavy = useIdleDeferredReady(analyticsDataKey || '');
   const [coachRef, coachVis] = useInViewOnce({ rootMargin: '200px' });
@@ -59,6 +63,35 @@ const PsychologyDisciplineMain = memo(function PsychologyDisciplineMain() {
             These scores use your actual closes: quick re-entries after losses, P/L variance vs mean, oversized lots vs your own average,
             and stop usage. They approximate what proprietary journals surface as “psychology” without manual journaling.
           </p>
+          {scoreSurface.visible && (
+            <div className="aa-replay-score-surface aa-replay-score-surface--compact" aria-label="Replay-derived profile signal">
+              <div className="aa-replay-score-surface__head">
+                <span className="aa-replay-score-surface__label">Replay-derived signal</span>
+                <span
+                  className={
+                    scoreSurface.chipText === 'Watch'
+                      ? 'aa-replay-score-surface__chip aa-replay-score-surface__chip--watch'
+                      : 'aa-replay-score-surface__chip'
+                  }
+                >
+                  {scoreSurface.chipText}
+                </span>
+                {scoreSurface.trendChip && (
+                  <span className="aa-replay-score-surface__trend">{scoreSurface.trendChip}</span>
+                )}
+              </div>
+              <p className="aa-replay-score-surface__line">{scoreSurface.supportingLine}</p>
+              <div className="aa-replay-score-surface__foot">
+                <span className="aa-replay-score-surface__disclaimer">{scoreSurface.disclaimer}</span>
+                <Link className="aa-replay-score-surface__link" to={scoreSurface.moreHref}>
+                  {scoreSurface.moreLabel}
+                </Link>
+              </div>
+            </div>
+          )}
+          {narrativeBridge.visible ? (
+            <ReplayNarrativeBridgePanel bridge={narrativeBridge} variant="psychology" />
+          ) : null}
         </div>
       </div>
 

@@ -1,5 +1,18 @@
 import { normalizeReplay } from './replayNormalizer';
 import { computeReplayQualityScore, computeReviewCompletenessScore } from './replayScoreEngine';
+import { mergeReplayDestination, buildDefaultReturnToReplayPath } from './replayToolHandoff';
+
+export {
+  mergeReplayDestination,
+  buildReplayIntegrationParams,
+  buildCompactReplaySummary,
+  inferValidatorChecklistTab,
+  buildJournalDraftFromSearchParams,
+  buildPlaybookReviewPrefillFromSearchParams,
+  stripReplayHandoffParams,
+  readReplayDateFromWindow,
+  TR_HANDOFF,
+} from './replayToolHandoff';
 
 function firstSentence(text, max = 220) {
   const t = String(text || '').trim();
@@ -120,7 +133,10 @@ export function deriveSuggestedNextAction(session) {
   if (cq < 42) {
     return {
       label: 'Complete review checklist',
-      href: '/trader-deck/trade-validator/checklist',
+      href: mergeReplayDestination('/trader-deck/trade-validator/checklist', s, coaching, {
+        destination: 'checklist',
+        returnPath: buildDefaultReturnToReplayPath(s),
+      }),
       reason: missingHints[0] || 'Reflection fields will compound value from this replay.',
     };
   }
@@ -128,7 +144,10 @@ export function deriveSuggestedNextAction(session) {
   if (disc <= 4 || /revenge|bored|fomo/i.test(`${s.emotionalState} ${s.verdict}`)) {
     return {
       label: 'Journal · discipline reflection',
-      href: '/trader-deck/trade-validator/journal',
+      href: mergeReplayDestination('/journal', s, coaching, {
+        destination: 'journal',
+        returnPath: buildDefaultReturnToReplayPath(s),
+      }),
       reason: 'Discipline or emotional tells flagged — log context while it is fresh.',
     };
   }
@@ -136,7 +155,9 @@ export function deriveSuggestedNextAction(session) {
   if (rq < 45 || Number(s.entryTiming) <= 4) {
     return {
       label: 'Trade Validator · setup check',
-      href: '/trader-deck/trade-validator/overview',
+      href: mergeReplayDestination('/trader-deck/trade-validator/overview', s, coaching, {
+        returnPath: buildDefaultReturnToReplayPath(s),
+      }),
       reason: 'Execution read is weak — stress-test the next setup in Validator.',
     };
   }
@@ -144,7 +165,11 @@ export function deriveSuggestedNextAction(session) {
   if (missed >= 0.45) {
     return {
       label: 'Playbook · management rules',
-      href: '/trader-deck/trade-validator/trader-playbook',
+      href: mergeReplayDestination('/trader-deck/trade-validator/trader-playbook', s, coaching, {
+        destination: 'playbook',
+        openReviewTab: true,
+        returnPath: buildDefaultReturnToReplayPath(s),
+      }),
       reason: 'High missed R — tighten management / scale-out language in Playbook.',
     };
   }
@@ -152,54 +177,21 @@ export function deriveSuggestedNextAction(session) {
   if (rq >= 68 && cq >= 55) {
     return {
       label: 'Save as learning example',
-      href: '/trader-deck/trade-validator/trader-playbook',
+      href: mergeReplayDestination('/trader-deck/trade-validator/trader-playbook', s, coaching, {
+        destination: 'playbook',
+        openReviewTab: true,
+        returnPath: buildDefaultReturnToReplayPath(s),
+      }),
       reason: 'Strong replay arc — pin this as a reference case in Playbook.',
     };
   }
 
   return {
     label: 'Open Journal with lesson',
-    href: '/trader-deck/trade-validator/journal',
+    href: mergeReplayDestination('/journal', s, coaching, {
+      destination: 'journal',
+      returnPath: buildDefaultReturnToReplayPath(s),
+    }),
     reason: coaching.mainLesson !== '—' ? firstSentence(coaching.mainLesson, 120) : 'Solid review — archive the takeaway in Journal.',
   };
-}
-
-/** Merge integration params onto an internal route (preserves any existing query). */
-export function mergeReplayDestination(href, session, coaching) {
-  const integration = buildReplayIntegrationParams(session, coaching || deriveCoaching(session));
-  const [path, exist] = href.split('?');
-  const m = new URLSearchParams(exist || '');
-  integration.forEach((v, k) => {
-    if (v != null && String(v) !== '') m.set(k, String(v));
-  });
-  const q = m.toString();
-  return q ? `${path}?${q}` : path;
-}
-
-/** Build query params for cross-tool navigation (destinations may ignore unknown keys). */
-export function buildReplayIntegrationParams(session, coaching) {
-  const s = normalizeReplay(session);
-  const { score: replayQuality } = computeReplayQualityScore(s);
-  const { score: reviewCompleteness } = computeReviewCompletenessScore(s);
-  const c = coaching || deriveCoaching(s);
-
-  const p = new URLSearchParams();
-  if (s.id) p.set('replaySessionId', s.id);
-  if (s.linkedPlaybook) p.set('replayHint', s.linkedPlaybook);
-  if (c.mainLesson && c.mainLesson !== '—') p.set('mainLesson', c.mainLesson.slice(0, 400));
-  if (c.biggestMistake && c.biggestMistake !== '—') p.set('biggestMistake', c.biggestMistake.slice(0, 400));
-  if (c.nextSessionFocus) p.set('improvementPlan', c.nextSessionFocus.slice(0, 400));
-  p.set('replayQuality', String(replayQuality));
-  p.set('reviewCompleteness', String(reviewCompleteness));
-  if (s.lessonSummary) p.set('replayLesson', s.lessonSummary.slice(0, 280));
-  if (s.asset || s.symbol) p.set('symbol', (s.asset || s.symbol || '').slice(0, 32));
-  if (s.biasAtTime) p.set('bias', s.biasAtTime.slice(0, 80));
-  if (s.verdict) p.set('verdict', s.verdict.slice(0, 200));
-  const d = s.replayDate || s.sourceDate;
-  if (d) p.set('replayDate', String(d).slice(0, 10));
-  if (s.learningExample) p.set('learningExample', '1');
-  if (s.learningExampleKind === 'model' || s.learningExampleKind === 'caution') {
-    p.set('learningExampleKind', s.learningExampleKind);
-  }
-  return p;
 }

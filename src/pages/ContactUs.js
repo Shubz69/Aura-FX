@@ -9,8 +9,26 @@ import { useAuth } from '../context/AuthContext';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { getClientAccessTier } from '../utils/roles';
 
-const TIER_LABEL = { free: 'Free', premium: 'Premium', a7fx: 'Elite', admin: 'Admin', super_admin: 'Super Admin' };
-const TIER_COLOR = { free: '#6b7280', premium: '#8b5cf6', a7fx: '#ec4899', admin: '#10b981', super_admin: '#ef4444' };
+const TIER_LABEL = {
+  access: 'Access',
+  free: 'Access',
+  pro: 'Pro',
+  premium: 'Pro',
+  elite: 'Elite',
+  a7fx: 'Elite',
+  admin: 'Admin',
+  super_admin: 'Super Admin'
+};
+const TIER_COLOR = {
+  access: '#6b7280',
+  free: '#6b7280',
+  pro: '#8b5cf6',
+  premium: '#8b5cf6',
+  elite: '#ec4899',
+  a7fx: '#ec4899',
+  admin: '#10b981',
+  super_admin: '#ef4444'
+};
 
 const ContactUs = () => {
     const location = useLocation();

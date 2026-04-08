@@ -10,26 +10,26 @@
  */
 
 function resolveNominalReportsRole(user) {
-  if (!user) return 'free';
+  if (!user) return 'access';
   const role = (user.role || '').toString().trim().toLowerCase();
   const plan = (user.subscription_plan || '').toString().trim().toLowerCase();
   // JWT/API permission roles (USER) never imply paid tier — use subscription_plan
   if (['admin', 'super_admin'].includes(role)) return 'admin';
   if (['elite', 'a7fx'].includes(role) || ['elite', 'a7fx'].includes(plan)) return 'elite';
-  if (['premium', 'aura'].includes(role) || ['premium', 'aura'].includes(plan)) return 'premium';
-  return 'free';
+  if (['premium', 'pro', 'aura'].includes(role) || ['premium', 'aura', 'pro'].includes(plan)) return 'pro';
+  return 'access';
 }
 
 /**
  * Tier for reports + billing-sensitive APIs: inactive / expired / failed payment → free.
  */
 function effectiveReportsRole(user) {
-  if (!user) return 'free';
+  if (!user) return 'access';
   const role = (user.role || '').toString().trim().toLowerCase();
   if (['admin', 'super_admin'].includes(role)) return 'admin';
 
   const failed = user.payment_failed === 1 || user.payment_failed === true;
-  if (failed) return 'free';
+  if (failed) return 'access';
 
   const status = (user.subscription_status || '').toLowerCase();
   const expiry = user.subscription_expiry ? new Date(user.subscription_expiry) : null;
@@ -43,13 +43,13 @@ function effectiveReportsRole(user) {
     (status === 'active' || status === 'trialing') &&
     expiryOk;
 
-  if (!billingActive) return 'free';
+  if (!billingActive) return 'access';
 
   const nominal = resolveNominalReportsRole(user);
   if (nominal === 'admin') return 'admin';
   if (nominal === 'elite') return 'elite';
-  if (nominal === 'premium') return 'premium';
-  return 'free';
+  if (nominal === 'pro') return 'pro';
+  return 'access';
 }
 
 /** Trader DNA is Elite-only; staff roles may still open the tool. */

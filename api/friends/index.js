@@ -30,6 +30,10 @@ const { getCached, setCached, deleteCached, invalidatePattern, DEFAULT_TTLS } = 
 const { generateRequestId, createLogger } = require('../utils/logger');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { positiveInt, isValidUUID } = require('../utils/validators');
+const {
+  permissionRoleFromUserRow,
+  canonicalSubscriptionPlanForResponse
+} = require('../utils/userResponseNormalize');
 
 // Import notification creator if available
 let createNotification;
@@ -230,7 +234,7 @@ module.exports = async (req, res) => {
         // Include rows where we are either user_id or friend_id (legacy data sometimes had only one direction)
         const result = await executeQueryWithTimeout(`
           SELECT 
-            u.id, u.username, u.avatar, u.level, u.xp, u.role,
+            u.id, u.username, u.avatar, u.level, u.xp, u.role, u.email, u.subscription_plan,
             u.last_seen,
             MAX(f.created_at) as friends_since,
             MAX(COALESCE(s.show_online_status, 1)) as show_online_status
@@ -238,7 +242,7 @@ module.exports = async (req, res) => {
           JOIN users u ON u.id = IF(f.user_id = ?, f.friend_id, f.user_id)
           LEFT JOIN user_settings s ON s.user_id = u.id
           WHERE f.user_id = ? OR f.friend_id = ?
-          GROUP BY u.id, u.username, u.avatar, u.level, u.xp, u.role, u.last_seen
+          GROUP BY u.id, u.username, u.avatar, u.level, u.xp, u.role, u.email, u.subscription_plan, u.last_seen
           ORDER BY u.last_seen DESC
         `, [userId, userId, userId], 10000, requestId);
         logger.endTimer('db_query');
@@ -246,13 +250,15 @@ module.exports = async (req, res) => {
         friends = rows.map(f => {
           const showOnline = f.show_online_status !== 0 && f.show_online_status !== false;
           const actuallyOnline = f.last_seen && new Date(f.last_seen) >= new Date(Date.now() - 5 * 60 * 1000);
+          const friendRow = { role: f.role, email: f.email, subscription_plan: f.subscription_plan };
           return {
             id: jsonNumber(f.id),
             username: f.username,
             avatar: f.avatar,
             level: jsonNumber(f.level, 1),
             xp: jsonNumber(f.xp, 0),
-            role: f.role,
+            role: permissionRoleFromUserRow(friendRow),
+            subscriptionPlan: canonicalSubscriptionPlanForResponse(friendRow),
             isOnline: showOnline && actuallyOnline,
             lastSeen: showOnline ? f.last_seen : null,
             friendsSince: f.friends_since
@@ -263,26 +269,30 @@ module.exports = async (req, res) => {
         try {
           const result = await executeQueryWithTimeout(`
             SELECT 
-              u.id, u.username, u.avatar, u.level, u.xp, u.role,
+              u.id, u.username, u.avatar, u.level, u.xp, u.role, u.email, u.subscription_plan,
               u.last_seen, MAX(f.created_at) as friends_since
             FROM friendships f
             JOIN users u ON u.id = IF(f.user_id = ?, f.friend_id, f.user_id)
             WHERE f.user_id = ? OR f.friend_id = ?
-            GROUP BY u.id, u.username, u.avatar, u.level, u.xp, u.role, u.last_seen
+            GROUP BY u.id, u.username, u.avatar, u.level, u.xp, u.role, u.email, u.subscription_plan, u.last_seen
             ORDER BY u.last_seen DESC
           `, [userId, userId, userId], 10000, requestId);
           const rows = getRows(result);
-          friends = rows.map(f => ({
-            id: jsonNumber(f.id),
-            username: f.username,
-            avatar: f.avatar,
-            level: jsonNumber(f.level, 1),
-            xp: jsonNumber(f.xp, 0),
-            role: f.role,
-            isOnline: f.last_seen && new Date(f.last_seen) >= new Date(Date.now() - 5 * 60 * 1000),
-            lastSeen: f.last_seen,
-            friendsSince: f.friends_since
-          }));
+          friends = rows.map((f) => {
+            const friendRow = { role: f.role, email: f.email, subscription_plan: f.subscription_plan };
+            return {
+              id: jsonNumber(f.id),
+              username: f.username,
+              avatar: f.avatar,
+              level: jsonNumber(f.level, 1),
+              xp: jsonNumber(f.xp, 0),
+              role: permissionRoleFromUserRow(friendRow),
+              subscriptionPlan: canonicalSubscriptionPlanForResponse(friendRow),
+              isOnline: f.last_seen && new Date(f.last_seen) >= new Date(Date.now() - 5 * 60 * 1000),
+              lastSeen: f.last_seen,
+              friendsSince: f.friends_since
+            };
+          });
         } catch (e2) {
           const result = await executeQueryWithTimeout(
             `SELECT u.id, u.username, MAX(f.created_at) as friends_since
@@ -296,13 +306,14 @@ module.exports = async (req, res) => {
             requestId
           );
           const rows = getRows(result);
-          friends = rows.map(f => ({
+          friends = rows.map((f) => ({
             id: jsonNumber(f.id),
             username: f.username || '',
             avatar: null,
             level: 1,
             xp: 0,
-            role: 'free',
+            role: 'USER',
+            subscriptionPlan: null,
             isOnline: false,
             lastSeen: null,
             friendsSince: f.friends_since

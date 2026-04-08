@@ -7,15 +7,22 @@
  * and permission_type. Category is NEVER used for access—only for grouping in the sidebar.
  *
  * ROLES (from DB): USER | ADMIN | SUPER_ADMIN
- * TIERS (from entitlements/subscription): FREE | PREMIUM | ELITE
+ * TIERS (from entitlements/subscription): ACCESS | PRO | ELITE (legacy free/premium/a7fx map on read)
  *
  * RULES:
  * 1) Admin override: role ADMIN or SUPER_ADMIN → canSee/canRead true for all; canWrite true unless read-only.
- * 2) FREE (role USER): hard allowlist—only channel ids general, welcome, announcements. All others canSee=false.
- * 3) PREMIUM (role USER): canSee where access_level in open, free, read-only, premium, support, staff. Not a7fx/elite/admin-only.
- * 4) ELITE (role USER): same as PREMIUM plus access_level a7fx, elite. Still no admin-only unless admin role.
+ * 2) ACCESS (role USER): hard allowlist—only channel ids general, welcome, announcements. All others canSee=false.
+ * 3) PRO (role USER): canSee where access_level in open, free, read-only, premium, support, staff. Not a7fx/elite/admin-only.
+ * 4) ELITE (role USER): PRO visibility plus access_level a7fx, elite (legacy A7FX tier merged into ELITE).
  * 5) Write: canWrite = false if permission_type === 'read-only' OR access_level === 'read-only'; else true when canSee.
  */
+const {
+  ENTITLEMENT_TIER,
+  isProPlanId,
+  isElitePlanId,
+  subscriptionSnapshotMatchesCurrent
+} = require('./subscriptionNormalize');
+
 const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels', 'notifications']);
 
 /**
@@ -67,15 +74,15 @@ function normalizeRole(dbRole) {
 }
 
 /**
- * Compute tier from user row: FREE | PREMIUM | ELITE.
+ * Compute tier from user row: ACCESS | PRO | ELITE only (legacy DB values mapped on read).
  * Super admin by email gets ELITE. ADMIN/SUPER_ADMIN get full access via role override.
  * Downgrades: effective tier is current DB state (immediate downgrade when plan/role updated).
  */
 function getTier(userRow) {
-  if (!userRow) return 'FREE';
-  if (isSuperAdminEmail(userRow)) return 'ELITE';
+  if (!userRow) return ENTITLEMENT_TIER.ACCESS;
+  if (isSuperAdminEmail(userRow)) return ENTITLEMENT_TIER.ELITE;
   const adminRole = normalizeRole(userRow.role);
-  if (adminRole === 'ADMIN' || adminRole === 'SUPER_ADMIN') return 'ELITE';
+  if (adminRole === 'ADMIN' || adminRole === 'SUPER_ADMIN') return ENTITLEMENT_TIER.ELITE;
   const role = (userRow.role || '').toLowerCase();
   const plan = (userRow.subscription_plan || '').toLowerCase();
   const status = (userRow.subscription_status || '').toLowerCase();
@@ -85,10 +92,17 @@ function getTier(userRow) {
     expiry &&
     expiry > new Date() &&
     !userRow.payment_failed;
-  if (paidThrough && plan === 'a7fx') return 'A7FX';
-  if (['elite', 'a7fx'].includes(role) || (paidThrough && plan === 'elite')) return 'ELITE';
-  if (role === 'premium' || (paidThrough && ['aura', 'premium'].includes(plan))) return 'PREMIUM';
-  return 'FREE';
+  if (paidThrough && isElitePlanId(plan)) return ENTITLEMENT_TIER.ELITE;
+  if (['elite', 'a7fx'].includes(role) || (paidThrough && isElitePlanId(plan))) return ENTITLEMENT_TIER.ELITE;
+  if (
+    role === 'premium' ||
+    role === 'pro' ||
+    role === 'aura' ||
+    (paidThrough && isProPlanId(plan))
+  ) {
+    return ENTITLEMENT_TIER.PRO;
+  }
+  return ENTITLEMENT_TIER.ACCESS;
 }
 
 /** Effective tier for gating: same as tier (immediate downgrade model). Use this for channel/message access. */
@@ -137,25 +151,29 @@ function needsOnboardingReaccept(userRow) {
   if (!accepted) return true;
   const snapshot = (userRow.onboarding_subscription_snapshot || '').toString().toLowerCase();
   const tier = getTier(userRow);
-  if (tier === 'ELITE' && !['elite', 'a7fx', 'admin', 'super_admin'].includes(snapshot)) return true;
-  if (tier === 'A7FX' && !['a7fx', 'admin', 'super_admin'].includes(snapshot)) return true;
-  if (tier === 'PREMIUM' && !['premium', 'aura', 'elite', 'a7fx', 'admin', 'super_admin'].includes(snapshot)) return true;
-  if (tier === 'FREE' && !['free', 'open', ''].includes(snapshot)) return true;
-  const current = (userRow.subscription_plan || userRow.role || 'free').toString().toLowerCase();
-  return snapshot !== current;
+  if (tier === ENTITLEMENT_TIER.ELITE && !['elite', 'a7fx', 'admin', 'super_admin'].includes(snapshot)) return true;
+  if (
+    tier === ENTITLEMENT_TIER.PRO &&
+    !['premium', 'aura', 'pro', 'elite', 'a7fx', 'admin', 'super_admin'].includes(snapshot)
+  ) {
+    return true;
+  }
+  if (tier === ENTITLEMENT_TIER.ACCESS && !['free', 'open', 'access', ''].includes(snapshot)) return true;
+  if (!subscriptionSnapshotMatchesCurrent(snapshot, userRow)) return true;
+  return false;
 }
 
 /**
  * Entitlements from a single user row (no DB in this function).
- * canAccessCommunity: true only when plan is selected (FREE/PREMIUM/ELITE) or admin—blocks until /choose-plan.
+ * canAccessCommunity: true only when plan is selected (ACCESS/PRO/ELITE) or admin—blocks until /choose-plan.
  * Channel gating uses effectiveTier only (no stale cached tier).
  */
 function getEntitlements(userRow) {
   if (!userRow) {
     return {
       role: 'USER',
-      tier: 'FREE',
-      effectiveTier: 'FREE',
+      tier: ENTITLEMENT_TIER.ACCESS,
+      effectiveTier: ENTITLEMENT_TIER.ACCESS,
       pendingTier: null,
       periodEnd: null,
       status: 'none',
@@ -185,7 +203,7 @@ function getEntitlements(userRow) {
     periodEnd,
     status,
     canAccessCommunity: isAdmin || planSelected,
-    canAccessAI: isAdmin || tier === 'PREMIUM' || tier === 'ELITE' || tier === 'A7FX',
+    canAccessAI: isAdmin || tier === ENTITLEMENT_TIER.PRO || tier === ENTITLEMENT_TIER.ELITE,
     allowedChannelSlugs: [],
     onboardingAccepted: isAdmin || onboardingAccepted,
     needsOnboardingReaccept: needsReaccept,
@@ -194,7 +212,7 @@ function getEntitlements(userRow) {
 }
 
 /**
- * Normalize channel name for FREE allowlist match (avoid general vs general-chat).
+ * Normalize channel name for ACCESS-tier allowlist match (avoid general vs general-chat).
  */
 function freeChannelNameKey(name) {
   if (name == null) return '';
@@ -222,7 +240,7 @@ function getAllowedChannelSlugs(entitlements, channels) {
       return id === 'welcome' || id === 'announcements' || id === 'levels';
     }).map(toId).filter(Boolean);
   }
-  // Single source of truth: must match getChannelPermissions (fixes PREMIUM missing general/open, etc.)
+  // Single source of truth: must match getChannelPermissions (fixes PRO missing general/open, etc.)
   return channels
     .filter((c) => {
       const perm = getChannelPermissions(entitlements, {
@@ -303,7 +321,7 @@ function getChannelPermissions(entitlements, channel) {
     return { canSee, canRead, canWrite, locked };
   }
 
-  if (tier === 'FREE') {
+  if (tier === ENTITLEMENT_TIER.ACCESS) {
     const nameKey = freeChannelNameKey(channel?.name);
     const nameLower = (channel?.name || '').toString().toLowerCase();
     canSee = FREE_CHANNEL_ALLOWLIST.has(id) || (nameKey && FREE_CHANNEL_ALLOWLIST.has(nameKey)) || FREE_CHANNEL_ALLOWLIST.has(nameLower);
@@ -316,12 +334,14 @@ function getChannelPermissions(entitlements, channel) {
   const category = (channel?.category || '').toString().toLowerCase();
   const ALWAYS_VISIBLE_IDS = new Set(['welcome', 'announcements', 'levels', 'notifications', 'general']);
 
-  if (tier === 'PREMIUM') {
+  if (tier === ENTITLEMENT_TIER.PRO) {
     canSee = ALWAYS_VISIBLE_IDS.has(id) || ACCESS_LEVELS_PREMIUM.has(accessLevel) || accessLevel === 'premium' || category === 'premium';
-  } else if (tier === 'A7FX') {
-    canSee = ALWAYS_VISIBLE_IDS.has(id) || ACCESS_LEVELS_ELITE.has(accessLevel) || accessLevel === 'a7fx' || category === 'a7fx';
-  } else if (tier === 'ELITE') {
-    canSee = ALWAYS_VISIBLE_IDS.has(id) || ACCESS_LEVELS_ELITE.has(accessLevel);
+  } else if (tier === ENTITLEMENT_TIER.ELITE) {
+    canSee =
+      ALWAYS_VISIBLE_IDS.has(id) ||
+      ACCESS_LEVELS_ELITE.has(accessLevel) ||
+      accessLevel === 'a7fx' ||
+      category === 'a7fx';
   } else {
     canSee = false;
   }
@@ -347,7 +367,7 @@ function canAccessChannel(entitlements, channelId, channels) {
     return entitlements.allowedChannelSlugs.some((s) => s.toLowerCase() === slug);
   }
   const tier = entitlements.effectiveTier != null ? entitlements.effectiveTier : entitlements.tier;
-  if (tier === 'FREE') return FREE_CHANNEL_ALLOWLIST.has(slug);
+  if (tier === ENTITLEMENT_TIER.ACCESS) return FREE_CHANNEL_ALLOWLIST.has(slug);
   const channel = Array.isArray(channels) ? channels.find((c) => (c.id || c.name || '').toString().toLowerCase() === slug) : null;
   if (!channel) return false;
   const perm = getChannelPermissions(entitlements, channel);
@@ -355,6 +375,7 @@ function canAccessChannel(entitlements, channelId, channels) {
 }
 
 module.exports = {
+  ENTITLEMENT_TIER,
   FREE_CHANNEL_ALLOWLIST,
   getSuperAdminEmailLower,
   getSuperAdminEmailsLower,

@@ -1,18 +1,18 @@
 /**
  * Journal Tasks API – per-user task journal (add tasks, tick done, calendar).
- * Mandatory tasks are subscription-tier daily tasks (FREE / PREMIUM / ELITE); same list and percentage system.
+ * Mandatory tasks are subscription-tier daily tasks (ACCESS / PRO / ELITE); same list and percentage system.
  */
 
 const { executeQuery, addColumnIfNotExists } = require('../db');
 const { verifyToken } = require('../utils/auth');
-const { getTier, normalizeRole } = require('../utils/entitlements');
+const { getTier, normalizeRole, ENTITLEMENT_TIER } = require('../utils/entitlements');
 const crypto = require('crypto');
 const { XP, awardOnce } = require('./xp-helper');
 const { getJournalContext, assertJournalWritableDate, normalizeYyyyMmDd } = require('../utils/journalWriteGuard');
 
-/** Mandatory tasks per tier: key, title, description. A7FX + ADMIN + SUPER_ADMIN → ELITE set. */
+/** Mandatory tasks per tier: key, title, description. Elite paid + ADMIN + SUPER_ADMIN → ELITE set. */
 const MANDATORY_TASKS = {
-  FREE: [
+  ACCESS: [
     {
       key: 'free_plan',
       title: 'Plan Before You Trade',
@@ -39,7 +39,7 @@ const MANDATORY_TASKS = {
       description: 'Before sleep, write one specific mistake you made today (in trading or thinking) and one concrete action you will take tomorrow to fix it. Vague reflections do not count.'
     },
   ],
-  PREMIUM: [
+  PRO: [
     {
       key: 'premium_morning',
       title: 'Pre-Market Mental Routine',
@@ -158,17 +158,17 @@ async function ensureTasksTable() {
 }
 
 function getMandatoryTemplatesForTier(tier) {
-  const t = (tier || 'FREE').toUpperCase();
+  const t = (tier || ENTITLEMENT_TIER.ACCESS).toString().toUpperCase();
   if (t === 'A7FX' || t === 'ELITE') return MANDATORY_TASKS.ELITE || [];
-  if (t === 'PREMIUM') return MANDATORY_TASKS.PREMIUM || [];
-  return MANDATORY_TASKS.FREE || [];
+  if (t === 'PREMIUM' || t === 'PRO') return MANDATORY_TASKS.PRO || [];
+  return MANDATORY_TASKS.ACCESS || [];
 }
 
 /** Tier string used only for which mandatory task templates to seed. Admins always get Elite list. */
 function getMandatoryTaskTier(userRow) {
-  if (!userRow) return 'FREE';
+  if (!userRow) return ENTITLEMENT_TIER.ACCESS;
   const nr = normalizeRole(userRow.role);
-  if (nr === 'ADMIN' || nr === 'SUPER_ADMIN') return 'ELITE';
+  if (nr === 'ADMIN' || nr === 'SUPER_ADMIN') return ENTITLEMENT_TIER.ELITE;
   return getTier(userRow);
 }
 

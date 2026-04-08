@@ -376,6 +376,13 @@ module.exports = async (req, res) => {
       ]
     );
 
+    if (hasMtBridgeCredentials(credentials)) {
+      const { scheduleMt5BridgeBackgroundSync } = require('./mtSyncCoordinator');
+      scheduleMt5BridgeBackgroundSync(executeQuery, userId, platformId, credentials, {
+        bypassCooldown: true,
+      });
+    }
+
     return res.status(200).json({ success: true, accountInfo: validation.accountInfo });
   }
 

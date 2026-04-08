@@ -170,11 +170,11 @@ module.exports = async (req, res) => {
 
       if (!isAdmin) {
         // Non-admin: only allow DMs with friends, and only for Premium/Elite/Admin/SuperAdmin
-        const allowedRoles = ['premium', 'elite', 'a7fx', 'admin', 'super_admin'];
+        const allowedRoles = ['premium', 'pro', 'elite', 'a7fx', 'admin', 'super_admin'];
         const myRole = (decoded.role || '').toString().toLowerCase();
         if (!allowedRoles.includes(myRole)) {
           db.release && db.release();
-          return res.status(403).json({ success: false, message: 'Friends messaging is for Premium, Elite, or Admin only' });
+          return res.status(403).json({ success: false, message: 'Friends messaging is for Pro, Elite, or Admin only' });
         }
         if (parseInt(adminUserId, 10) !== parseInt(decoded.id, 10)) {
           db.release && db.release();

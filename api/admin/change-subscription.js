@@ -2,6 +2,7 @@
 
 const { getDbConnection } = require('../db');
 const { isSuperAdminEmail } = require('../utils/entitlements');
+const { canonicalStoredPlanFromAny, normalizeKey } = require('../utils/subscriptionNormalize');
 require('../utils/suppress-warnings');
 
 const log = (level, message, data = {}) => {
@@ -59,12 +60,12 @@ module.exports = async (req, res) => {
       });
     }
 
-    const validPlans = ['free', 'premium', 'aura', 'a7fx', 'elite'];
+    const validPlans = ['free', 'access', 'premium', 'aura', 'pro', 'a7fx', 'elite'];
 
-    if (!validPlans.includes(plan)) {
+    if (!validPlans.includes(normalizeKey(plan))) {
       return res.status(400).json({
         success: false,
-        message: "Invalid plan. Use free, premium, aura, a7fx, elite"
+        message: 'Invalid plan. Use access, pro, elite (or legacy: free, premium, aura, a7fx)'
       });
     }
 
@@ -164,16 +165,18 @@ module.exports = async (req, res) => {
     }
 
     const userEmail = userCheck[0].email;
-    const oldPlan = userCheck[0].subscription_plan || "free";
+    const oldPlan = userCheck[0].subscription_plan || 'access';
 
-    /* ---------------- PLAN + DURATION ---------------- */
+    /* ---------------- PLAN + DURATION (canonical writes) ---------------- */
 
-    let newRole = "free";
-    if (plan === "premium" || plan === "aura") newRole = "premium";
-    if (plan === "a7fx" || plan === "elite") newRole = "a7fx";
+    const canonPlan = canonicalStoredPlanFromAny(plan);
+    const storedPlan = canonPlan || 'access';
+    const storedRole =
+      storedPlan === 'elite' ? 'elite' : storedPlan === 'pro' ? 'pro' : 'access';
+    const isAccessTier = storedPlan === 'access';
 
     let durationDays = 90;
-    if (plan !== "free") {
+    if (!isAccessTier) {
       const parsed = parseInt(durationRaw, 10);
       if (Number.isFinite(parsed) && parsed >= 1) {
         durationDays = Math.min(3650, parsed);
@@ -181,12 +184,12 @@ module.exports = async (req, res) => {
     }
 
     let expiryDate = null;
-    if (plan !== "free") {
+    if (!isAccessTier) {
       expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + durationDays);
     }
 
-    const subscriptionStatus = plan === "free" ? "inactive" : "active";
+    const subscriptionStatus = isAccessTier ? 'inactive' : 'active';
     /* Clear payment_failed when admin sets access (same as successful Stripe path). */
     const paymentFailed = 0;
 
@@ -201,8 +204,8 @@ module.exports = async (req, res) => {
            payment_failed = ?
        WHERE id = ?`,
       [
-        plan,
-        newRole,
+        storedPlan,
+        storedRole,
         subscriptionStatus,
         expiryDate,
         paymentFailed,
@@ -215,23 +218,22 @@ module.exports = async (req, res) => {
       userEmail,
       oldPlan,
       newPlan: plan,
-      durationDays: plan === "free" ? null : durationDays,
+      durationDays: isAccessTier ? null : durationDays,
       expiry: expiryDate ? expiryDate.toISOString() : null
     });
 
     return res.status(200).json({
       success: true,
-      message:
-        plan === "free"
-          ? `Subscription set to free`
-          : `Subscription set to ${plan} for ${durationDays} day(s)`,
+      message: isAccessTier
+        ? 'Subscription set to access'
+        : `Subscription set to ${storedPlan} for ${durationDays} day(s)`,
       user: {
         id: userId,
         email: userEmail,
         oldPlan,
-        newPlan: plan,
-        role: newRole,
-        durationDays: plan === "free" ? null : durationDays,
+        newPlan: storedPlan,
+        role: storedRole,
+        durationDays: isAccessTier ? null : durationDays,
         subscription_expiry: expiryDate ? expiryDate.toISOString() : null
       }
     });

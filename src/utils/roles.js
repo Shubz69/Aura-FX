@@ -31,9 +31,8 @@ export const SUPER_ADMIN_EMAIL =
   '';
 
 export const ROLES = {
-  FREE: 'free',
-  PREMIUM: 'premium',
-  A7FX: 'a7fx',
+  ACCESS: 'access',
+  PRO: 'pro',
   ELITE: 'elite',
   ADMIN: 'admin',
   SUPER_ADMIN: 'super_admin'
@@ -109,29 +108,29 @@ export const DEFAULT_ADMIN_CAPABILITIES = [
   ADMIN_CAPABILITIES.CLOSE_TICKETS
 ];
 
-// Get user role from localStorage or user object
+// Get user role from localStorage or user object (permission role USER/ADMIN or stored tier role)
 export const getUserRole = (user) => {
   if (!user) {
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    return storedUser.role || ROLES.FREE;
+    return storedUser.role || ROLES.ACCESS;
   }
-  return user.role || ROLES.FREE;
+  return user.role || ROLES.ACCESS;
 };
 
 /**
  * Human-readable membership for profile UI.
  * apiRole: USER | ADMIN | SUPER_ADMIN from /api/me (permission role).
- * tier: FREE | PREMIUM | ELITE | A7FX from entitlements.
+ * tier: ACCESS | PRO | ELITE from entitlements (legacy FREE/PREMIUM/A7FX normalized upstream).
  */
 export function formatMembershipLabel(apiRole, tier) {
   const r = (apiRole || 'USER').toString().toUpperCase();
   if (r === 'SUPER_ADMIN') return 'Super Admin';
   if (r === 'ADMIN') return 'Admin';
-  const t = (tier || 'FREE').toString().toUpperCase();
-  if (t === 'A7FX') return 'A7FX Elite';
-  if (t === 'ELITE') return 'Elite';
-  if (t === 'PREMIUM') return 'Premium';
-  return 'Free';
+  const t = (tier || 'ACCESS').toString().toUpperCase();
+  if (t === 'ELITE' || t === 'A7FX') return 'Elite';
+  if (t === 'PRO' || t === 'PREMIUM') return 'Pro';
+  if (t === 'ACCESS' || t === 'FREE') return 'Access';
+  return 'Access';
 }
 
 /** Lowercase trim for role/plan/status comparisons (JWT may use SUPER_ADMIN; DB may use mixed case). */
@@ -147,7 +146,7 @@ export function hasActivePaidPlan(user = null) {
   const st = normalizeRoleKey(u.subscription_status);
   if (!['active', 'trialing'].includes(st)) return false;
   const pl = normalizeRoleKey(u.subscription_plan);
-  return ['aura', 'a7fx', 'elite', 'premium'].includes(pl);
+  return ['aura', 'a7fx', 'elite', 'premium', 'pro'].includes(pl);
 }
 
 // Check if user is admin (handles both uppercase and lowercase role from API/AuthContext)
@@ -179,66 +178,80 @@ export const isSuperAdmin = (user = null) => {
   return list.length > 0 && list.includes(email);
 };
 
-// Check if user has premium subscription (premium or a7fx)
-export const isPremium = (user = null) => {
+// Pro / Elite paid access (legacy name: isPremium). Admins included.
+export const isPro = (user = null) => {
   const norm = normalizeRoleKey;
   if (!user) {
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const role = norm(storedUser.role || ROLES.FREE);
+    const role = norm(storedUser.role || ROLES.ACCESS);
     const subscriptionStatus = norm(storedUser.subscription_status || 'inactive');
     const subscriptionPlan = norm(storedUser.subscription_plan);
 
     return (
-      role === ROLES.PREMIUM ||
-      role === ROLES.A7FX ||
+      role === ROLES.PRO ||
+      role === 'premium' ||
       role === ROLES.ELITE ||
+      role === 'a7fx' ||
       role === ROLES.ADMIN ||
       role === ROLES.SUPER_ADMIN ||
       (['active', 'trialing'].includes(subscriptionStatus) &&
-        (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx' || subscriptionPlan === 'elite' || subscriptionPlan === 'premium'))
+        (subscriptionPlan === 'aura' ||
+          subscriptionPlan === 'a7fx' ||
+          subscriptionPlan === 'elite' ||
+          subscriptionPlan === 'premium' ||
+          subscriptionPlan === 'pro'))
     );
   }
 
-  const role = norm(user.role || ROLES.FREE);
+  const role = norm(user.role || ROLES.ACCESS);
   const subscriptionStatus = norm(user.subscription_status || 'inactive');
   const subscriptionPlan = norm(user.subscription_plan);
 
   return (
-    role === ROLES.PREMIUM ||
-    role === ROLES.A7FX ||
+    role === ROLES.PRO ||
+    role === 'premium' ||
     role === ROLES.ELITE ||
+    role === 'a7fx' ||
     role === ROLES.ADMIN ||
     role === ROLES.SUPER_ADMIN ||
     (['active', 'trialing'].includes(subscriptionStatus) &&
-      (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx' || subscriptionPlan === 'elite' || subscriptionPlan === 'premium'))
+      (subscriptionPlan === 'aura' ||
+        subscriptionPlan === 'a7fx' ||
+        subscriptionPlan === 'elite' ||
+        subscriptionPlan === 'premium' ||
+        subscriptionPlan === 'pro'))
   );
 };
 
+/** @deprecated Use isPro — alias kept for existing imports */
+export const isPremium = isPro;
+
 /**
  * Single client slug for gates, Community channel tier, My Courses, badges.
- * free | premium | a7fx | admin | super_admin
+ * access | pro | elite | admin | super_admin (legacy free/premium/a7fx still read from DB)
  * Prefer /api/me entitlements; fall back to subscription_* on user (EntitlementsContext merge).
  */
 export function getClientAccessTier(user, entitlements = null) {
-  if (!user || typeof user !== 'object') return 'free';
+  if (!user || typeof user !== 'object') return 'access';
   if (isSuperAdmin(user)) return 'super_admin';
   if (isAdmin(user)) return 'admin';
 
   const tier = (entitlements?.effectiveTier || entitlements?.tier || '').toString().toUpperCase();
-  if (tier === 'A7FX' || tier === 'ELITE') return 'a7fx';
-  if (tier === 'PREMIUM') return 'premium';
+  if (tier === 'ELITE' || tier === 'A7FX') return 'elite';
+  if (tier === 'PRO' || tier === 'PREMIUM') return 'pro';
 
   if (hasActivePaidPlan(user)) {
     const pl = normalizeRoleKey(user.subscription_plan);
-    if (['a7fx', 'elite'].includes(pl)) return 'a7fx';
-    if (['aura', 'premium'].includes(pl)) return 'premium';
+    if (['a7fx', 'elite'].includes(pl)) return 'elite';
+    if (['aura', 'premium', 'pro'].includes(pl)) return 'pro';
   }
 
   const r = normalizeRoleKey(user.role);
-  if (r === 'premium') return 'premium';
-  if (r === 'a7fx' || r === 'elite') return 'a7fx';
+  if (r === 'premium' || r === 'pro') return 'pro';
+  if (r === 'a7fx' || r === 'elite') return 'elite';
+  if (r === 'free' || r === 'access') return 'access';
 
-  return 'free';
+  return 'access';
 }
 
 // Get user's capabilities

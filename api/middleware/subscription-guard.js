@@ -66,24 +66,29 @@ async function checkCommunityAccess(authHeader) {
     const isPaidWindow =
       (subStatus === 'active' || subStatus === 'trialing') && expiryDate && expiryDate > now;
 
-    const hasRoleAccess = ['premium', 'elite', 'a7fx'].includes(dbRole);
+    const hasRoleAccess = ['premium', 'pro', 'elite', 'a7fx'].includes(dbRole);
 
     if (isPaidWindow || hasRoleAccess) {
       const planId = planLower || dbRole;
 
       if (['a7fx', 'elite'].includes(planId) || dbRole === 'elite' || dbRole === 'a7fx') {
-        return { hasAccess: true, accessType: 'A7FX_ELITE_ACTIVE', userId, error: null };
+        return { hasAccess: true, accessType: 'ELITE_ACTIVE', userId, error: null };
       }
 
-      if (['aura', 'premium'].includes(planId) || dbRole === 'premium') {
-        return { hasAccess: true, accessType: 'AURA_FX_ACTIVE', userId, error: null };
+      if (['aura', 'premium', 'pro'].includes(planId) || dbRole === 'premium' || dbRole === 'pro') {
+        return { hasAccess: true, accessType: 'PRO_ACTIVE', userId, error: null };
       }
     }
     
-    // Plan selected (including Free): grant community access (FREE = allowlist only; server enforces channels)
+    // Plan selected (including Access): grant community access (ACCESS = allowlist only; server enforces channels)
     const plan = (user.subscription_plan || '').toString().trim().toLowerCase();
     if (plan.length > 0) {
-      return { hasAccess: true, accessType: plan === 'free' ? 'FREE' : 'NONE', userId, error: null };
+      return {
+        hasAccess: true,
+        accessType: plan === 'free' || plan === 'access' ? 'ACCESS' : 'NONE',
+        userId,
+        error: null
+      };
     }
     
     // No plan selected yet
@@ -148,7 +153,7 @@ function getErrorMessage(errorCode) {
     case 'USER_NOT_FOUND':
       return 'User account not found.';
     case 'NO_SUBSCRIPTION':
-      return 'An active Aura Terminal or A7FX Elite subscription is required to access the Community.';
+      return 'An active Pro or Elite subscription is required to access the Community.';
     case 'PAYMENT_FAILED':
       return 'Your subscription payment has failed. Please update your payment method.';
     case 'SERVER_ERROR':

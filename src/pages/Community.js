@@ -450,14 +450,14 @@ const getCategoryIcon = (category) => {
 const formatCategoryName = (category) => {
     const c = normalizeCategorySlug(category);
     switch(c) {
-        case 'a7fx': return 'A7FX';
+        case 'a7fx': return 'Elite';
         case 'announcements': return 'ANNOUNCEMENTS';
         case 'staff': return 'STAFF';
         case 'forums': return 'FORUMS';
         case 'trading': return 'TRADING';
         case 'general': return 'GENERAL';
         case 'support': return 'SUPPORT';
-        case 'premium': return 'PREMIUM';
+        case 'premium': return 'PRO';
         default: return (category || '').toUpperCase();
     }
 };

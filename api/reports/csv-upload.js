@@ -305,8 +305,8 @@ module.exports = async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     const role = effectiveReportsRole(user);
 
-    if (role === 'free') {
-      return res.status(403).json({ success: false, code: 'FREE_PLAN', message: 'CSV upload requires a Premium plan.' });
+    if (role === 'free' || role === 'access') {
+      return res.status(403).json({ success: false, code: 'FREE_PLAN', message: 'CSV upload requires a Pro plan.' });
     }
 
     const { year, month } = req.body || {};

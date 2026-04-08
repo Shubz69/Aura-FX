@@ -819,3 +819,288 @@
   border-color: rgba(234, 169, 96, 0.22) !important;
   background: rgba(255, 255, 255, 0.07) !important;
 }
+
+/* ── Replay-derived signal (thin Aurax-adjacent; not a duplicate score) ─ */
+.aa-replay-score-surface {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(120, 140, 220, 0.18);
+  background: rgba(30, 32, 60, 0.35);
+}
+
+.aa-replay-score-surface--compact {
+  margin-top: 10px;
+  padding: 8px 10px;
+}
+
+.aa-replay-score-surface__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.aa-replay-score-surface__label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.aa-replay-score-surface__chip {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(234, 169, 96, 0.12);
+  border: 1px solid rgba(234, 169, 96, 0.22);
+  color: var(--accent);
+}
+
+.aa-replay-score-surface__chip--watch {
+  border-color: rgba(201, 160, 92, 0.35);
+  color: var(--amber);
+  background: rgba(201, 160, 92, 0.1);
+}
+
+.aa-replay-score-surface__trend {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.aa-replay-score-surface__line {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.58);
+  margin: 0 0 8px;
+}
+
+.aa-replay-score-surface__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  justify-content: space-between;
+}
+
+.aa-replay-score-surface__disclaimer {
+  font-size: 0.58rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.32);
+  max-width: 100%;
+}
+
+.aa-replay-score-surface__link {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.aa-replay-score-surface__link:hover {
+  text-decoration: underline;
+  color: #fcd9a8;
+}
+
+/* ── Replay narrative bridge (Psychology / CV — week vs month) ─ */
+.aa-replay-narrative-bridge {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(168, 180, 255, 0.16);
+  background: rgba(22, 24, 48, 0.42);
+}
+
+.aa-replay-narrative-bridge--cv {
+  margin-top: 14px;
+}
+
+.aa-replay-narrative-bridge__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.aa-replay-narrative-bridge__label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.aa-replay-narrative-bridge__hint {
+  font-size: 0.62rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.aa-replay-narrative-bridge__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.aa-replay-narrative-bridge__tab {
+  padding: 4px 10px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+}
+
+.aa-replay-narrative-bridge__tab--on {
+  border-color: rgba(234, 169, 96, 0.35);
+  color: var(--accent);
+  background: rgba(234, 169, 96, 0.08);
+}
+
+.aa-replay-narrative-bridge__trend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.aa-replay-narrative-bridge__chip {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(120, 140, 220, 0.12);
+  border: 1px solid rgba(120, 140, 220, 0.28);
+  color: rgba(200, 205, 255, 0.9);
+}
+
+.aa-replay-narrative-bridge__trend-detail {
+  font-size: 0.65rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.48);
+  flex: 1;
+  min-width: 140px;
+}
+
+.aa-replay-narrative-bridge__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aa-replay-narrative-bridge__list li {
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.aa-replay-narrative-bridge__snap {
+  font-size: 0.62rem !important;
+  color: rgba(255, 255, 255, 0.38) !important;
+  font-style: italic;
+}
+
+.aa-replay-narrative-bridge__k {
+  display: inline-block;
+  min-width: 5.2rem;
+  margin-right: 6px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(234, 169, 96, 0.75);
+  vertical-align: top;
+}
+
+.aa-replay-narrative-bridge__evidence {
+  margin: 8px 0 0;
+  font-size: 0.6rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.aa-replay-narrative-bridge__foot {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.aa-replay-narrative-bridge__link {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.aa-replay-narrative-bridge__link:hover {
+  text-decoration: underline;
+  color: #fcd9a8;
+}
+
+/* ── Behaviour pattern strip (archetype — replay evidence only) ─ */
+.aa-replay-behavior-pattern {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(168, 180, 255, 0.14);
+  background: rgba(18, 20, 44, 0.4);
+}
+
+.aa-replay-behavior-pattern__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.aa-replay-behavior-pattern__label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.aa-replay-behavior-pattern__chip {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(168, 180, 255, 0.3);
+  background: rgba(100, 108, 200, 0.12);
+  color: rgba(210, 214, 255, 0.92);
+}
+
+.aa-replay-behavior-pattern__conf {
+  font-size: 0.58rem;
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.aa-replay-behavior-pattern__line {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.aa-replay-behavior-pattern__secondary {
+  margin: 6px 0 0;
+  font-size: 0.62rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.4);
+}

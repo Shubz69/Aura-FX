@@ -10,6 +10,13 @@ import { computeBehaviourBreakdown } from '../../lib/aura-analysis/trader-cv/beh
 import { getAverageTradeQuality } from '../../lib/aura-analysis/trader-cv/tradeQualityCalculator';
 import { computeStreaks } from '../../lib/aura-analysis/trader-cv/streakEngine';
 import { getBestConditions, getReviewSummary, getMonthlyReviewStats } from '../../lib/aura-analysis/trader-cv/traderInsightsEngine';
+import { normalizeReplay } from '../../lib/trader-replay/replayNormalizer';
+import { buildReplayCvSnapshot } from '../../lib/trader-replay/replayIdentityEngine';
+import { computeReplayHabitStats } from '../../lib/trader-replay/replayHabit';
+import { buildReplayContributionProfile } from '../../lib/trader-replay/replayContributionEngine';
+import { buildReplayNarrativeBridgeForUi } from '../../lib/trader-replay/replayNarrativeBridge';
+import ReplayNarrativeBridgePanel from '../../components/aura-analysis/ReplayNarrativeBridgePanel';
+import '../../styles/aura-analysis/AuraShared.css';
 import { resolveAvatarUrlForUi } from '../../utils/avatar';
 import { setTraderPassportShare } from '../../utils/traderPassportShare';
 import '../../styles/aura-analysis/TraderCV.css';
@@ -36,6 +43,7 @@ export default function TraderCVTab() {
   const passportExportRef = useRef(null);
   const [passportBusy, setPassportBusy] = useState(false);
   const [trades, setTrades] = useState([]);
+  const [replaySessions, setReplaySessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -47,11 +55,16 @@ export default function TraderCVTab() {
       selectedAccountId != null && Number.isFinite(Number(selectedAccountId))
         ? { validatorAccountId: selectedAccountId }
         : {};
-    Promise.all([Api.getAuraAnalysisTrades(params).catch(() => ({ data: { trades: [] } }))])
-      .then(([tradesRes]) => {
+    Promise.all([
+      Api.getAuraAnalysisTrades(params).catch(() => ({ data: { trades: [] } })),
+      Api.getTraderReplaySessions().catch(() => ({ data: { sessions: [] } })),
+    ])
+      .then(([tradesRes, replayRes]) => {
         if (cancelled) return;
         const list = tradesRes.data?.trades ?? [];
         setTrades(Array.isArray(list) ? list : []);
+        const rs = replayRes?.data?.sessions ?? replayRes?.data?.data;
+        setReplaySessions(Array.isArray(rs) ? rs : []);
       })
       .catch((err) => {
         if (!cancelled) setError(err.message || 'Failed to load data');
@@ -85,6 +98,26 @@ export default function TraderCVTab() {
     conditions
   ), [behaviour, conditions]);
   const monthlyStats = useMemo(() => getMonthlyReviewStats(trades), [trades]);
+
+  const normalizedReplaySessions = useMemo(
+    () => replaySessions.map((r) => normalizeReplay(r)),
+    [replaySessions]
+  );
+  const replayCvSnapshot = useMemo(() => buildReplayCvSnapshot(normalizedReplaySessions), [normalizedReplaySessions]);
+  const replayHabitStats = useMemo(() => computeReplayHabitStats(normalizedReplaySessions), [normalizedReplaySessions]);
+  const replayContribution = useMemo(
+    () => buildReplayContributionProfile(normalizedReplaySessions, replayHabitStats),
+    [normalizedReplaySessions, replayHabitStats]
+  );
+  const replayNarrativeBridge = useMemo(
+    () =>
+      buildReplayNarrativeBridgeForUi(
+        normalizedReplaySessions,
+        replayHabitStats,
+        replayContribution
+      ),
+    [normalizedReplaySessions, replayHabitStats, replayContribution]
+  );
 
   const summaryLine = useMemo(() => {
     if (auraxScore >= 80) return 'Disciplined trader with strong risk control and improving consistency.';
@@ -351,6 +384,134 @@ export default function TraderCVTab() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+      </section>
+
+      {/* Replay-derived identity (Trader Replay) */}
+      <section className="trader-cv-section">
+        <h3 className="trader-cv-section-title">Replay review identity</h3>
+        {replayCvSnapshot.completedReplayCount === 0 ? (
+          <div className="trader-cv-empty">
+            Complete replays in Trader Replay to accumulate a grounded review identity alongside your trade statistics.
+          </div>
+        ) : (
+          <div className="trader-cv-replay-identity">
+            <p className="trader-cv-replay-line">
+              <strong>{replayCvSnapshot.completedReplayCount}</strong> completed replays · avg replay Q{' '}
+              <strong>{replayCvSnapshot.averageReplayQuality ?? '—'}</strong> · avg review depth{' '}
+              <strong>{replayCvSnapshot.averageReviewCompleteness ?? '—'}%</strong>
+              {replayCvSnapshot.learningExampleCount > 0 ? (
+                <>
+                  {' '}
+                  · <strong>{replayCvSnapshot.modelExampleCount}</strong> model /{' '}
+                  <strong>{replayCvSnapshot.cautionExampleCount}</strong> caution examples
+                </>
+              ) : null}
+            </p>
+            {replayCvSnapshot.evidenceLabel ? (
+              <p className="trader-cv-replay-micro">{replayCvSnapshot.evidenceLabel}</p>
+            ) : null}
+            {replayCvSnapshot.explainabilitySummary ? (
+              <p className="trader-cv-replay-expl">{replayCvSnapshot.explainabilitySummary}</p>
+            ) : null}
+            {replayCvSnapshot.developmentProfile?.strongestTrait ? (
+              <p className="trader-cv-replay-line trader-cv-replay-line--tight">
+                <strong>Replay strength · </strong>
+                {replayCvSnapshot.developmentProfile.strongestTrait.label}: {replayCvSnapshot.developmentProfile.strongestTrait.line}
+              </p>
+            ) : null}
+            {replayCvSnapshot.developmentProfile?.highestRiskTrait ? (
+              <p className="trader-cv-replay-line trader-cv-replay-line--tight">
+                <strong>Highest-risk pattern · </strong>
+                {replayCvSnapshot.developmentProfile.highestRiskTrait.label}: {replayCvSnapshot.developmentProfile.highestRiskTrait.line}
+              </p>
+            ) : null}
+            {replayCvSnapshot.developmentProfile?.evidenceConfidenceLine ? (
+              <p className="trader-cv-replay-micro">{replayCvSnapshot.developmentProfile.evidenceConfidenceLine}</p>
+            ) : null}
+            {replayCvSnapshot.currentDevelopmentFocus?.detail ? (
+              <p className="trader-cv-replay-focus">{replayCvSnapshot.currentDevelopmentFocus.detail}</p>
+            ) : null}
+            {replayCvSnapshot.developmentProfile?.developmentPractice ? (
+              <p className="trader-cv-replay-micro">
+                <strong>Next · </strong>
+                {replayCvSnapshot.developmentProfile.developmentPractice}
+              </p>
+            ) : null}
+            {replayCvSnapshot.developmentProfile?.stopDoing && replayCvSnapshot.developmentProfile.guidanceMode !== 'gather_evidence' ? (
+              <p className="trader-cv-replay-micro">
+                <strong>Stop · </strong>
+                {replayCvSnapshot.developmentProfile.stopDoing}
+              </p>
+            ) : null}
+            {replayCvSnapshot.recentGrowthSignal ? (
+              <p className="trader-cv-replay-growth">{replayCvSnapshot.recentGrowthSignal}</p>
+            ) : null}
+            {replayCvSnapshot.attentionNeededSignal ? (
+              <p className="trader-cv-replay-attention">{replayCvSnapshot.attentionNeededSignal}</p>
+            ) : null}
+
+            {replayNarrativeBridge.visible ? (
+              <div className="trader-cv-replay-narrative-wrap">
+                <h4 className="trader-cv-replay-subtitle">Recent replay review narrative</h4>
+                <ReplayNarrativeBridgePanel bridge={replayNarrativeBridge} variant="cv" />
+              </div>
+            ) : null}
+
+            <div className="trader-cv-replay-contribution">
+              <h4 className="trader-cv-replay-subtitle">Replay discipline &amp; behavior contribution</h4>
+              <p className="trader-cv-replay-micro">
+                One input to your wider profile — not a replacement for Aurax. Indices are 0–100 from completed replays only.
+              </p>
+              <div className="trader-cv-replay-contrib-grid">
+                <div className="trader-cv-replay-contrib-card">
+                  <span className="trader-cv-replay-contrib-label">Discipline index</span>
+                  <span className="trader-cv-replay-contrib-value">
+                    {replayContribution.discipline.replayDisciplineContribution ?? '—'}
+                  </span>
+                  <span className="trader-cv-replay-contrib-meta">{replayContribution.discipline.replayDisciplineConfidence}</span>
+                </div>
+                <div className="trader-cv-replay-contrib-card">
+                  <span className="trader-cv-replay-contrib-label">Behavior index</span>
+                  <span className="trader-cv-replay-contrib-value">
+                    {replayContribution.behavior.replayBehaviorContribution ?? '—'}
+                  </span>
+                  <span className="trader-cv-replay-contrib-meta">{replayContribution.behavior.replayBehaviorConfidence}</span>
+                </div>
+                <div className="trader-cv-replay-contrib-card">
+                  <span className="trader-cv-replay-contrib-label">7d discipline trend</span>
+                  <span className="trader-cv-replay-contrib-value">
+                    {replayContribution.discipline.replayDisciplineTrend === 'improving'
+                      ? '↑ Improving'
+                      : replayContribution.discipline.replayDisciplineTrend === 'slipping'
+                        ? '↓ Softer'
+                        : replayContribution.discipline.replayDisciplineTrend === 'insufficient_evidence'
+                          ? '—'
+                          : '→ Stable'}
+                  </span>
+                  <span className="trader-cv-replay-contrib-meta">vs prior week</span>
+                </div>
+              </div>
+              {replayContribution.behavior.strengths[0] ? (
+                <p className="trader-cv-replay-line trader-cv-replay-line--tight">
+                  <strong>Strength ·</strong> {replayContribution.behavior.strengths[0]}
+                </p>
+              ) : null}
+              {replayContribution.behavior.cautions[0] ? (
+                <p className="trader-cv-replay-line trader-cv-replay-line--tight">
+                  <strong>Caution ·</strong> {replayContribution.behavior.cautions[0]}
+                </p>
+              ) : null}
+              {replayContribution.scoreContributionExplanations.slice(0, 2).map((line, i) => (
+                <p key={`replay-expl-${i}`} className="trader-cv-replay-expl">{line}</p>
+              ))}
+              {replayContribution.developmentActions[0] ? (
+                <p className="trader-cv-replay-dev">
+                  <strong>Development ·</strong> {replayContribution.developmentActions[0]}
+                </p>
+              ) : null}
+            </div>
           </div>
         )}
       </section>

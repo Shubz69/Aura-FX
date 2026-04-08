@@ -74,22 +74,22 @@ async function checkCommunityAccess(userId) {
       expiryDate > now;
     const isExpired = !!(expiryDate && expiryDate <= now);
     
-    // A7FX Elite check (£250)
+    // Elite check (£250) — legacy a7fx plan id
     if (isSubscriptionActive && ['a7fx', 'elite'].includes(plan)) {
-      return { hasAccess: true, accessType: 'A7FX_ELITE_ACTIVE', reason: 'A7FX Elite subscription active' };
+      return { hasAccess: true, accessType: 'ELITE_ACTIVE', reason: 'Elite subscription active' };
     }
     
-    // Aura Terminal check (£99)
-    if (isSubscriptionActive && ['aura', 'premium'].includes(plan)) {
-      return { hasAccess: true, accessType: 'AURA_FX_ACTIVE', reason: 'Aura Terminal subscription active' };
+    // Pro check (£99) — legacy aura / premium
+    if (isSubscriptionActive && ['aura', 'premium', 'pro'].includes(plan)) {
+      return { hasAccess: true, accessType: 'PRO_ACTIVE', reason: 'Aura Terminal subscription active' };
     }
     // Legacy role-based fallback for migrated users without expiry rows.
     // Never allow role-only fallback for explicitly expired users.
     if (!isExpired && ['elite', 'a7fx'].includes(role)) {
-      return { hasAccess: true, accessType: 'A7FX_ELITE_ACTIVE', reason: 'Legacy elite role fallback' };
+      return { hasAccess: true, accessType: 'ELITE_ACTIVE', reason: 'Legacy elite role fallback' };
     }
-    if (!isExpired && role === 'premium') {
-      return { hasAccess: true, accessType: 'AURA_FX_ACTIVE', reason: 'Legacy premium role fallback' };
+    if (!isExpired && (role === 'premium' || role === 'pro')) {
+      return { hasAccess: true, accessType: 'PRO_ACTIVE', reason: 'Legacy pro role fallback' };
     }
     
     // No valid subscription or role

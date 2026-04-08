@@ -124,7 +124,7 @@ module.exports = async (req, res) => {
 
     // Check CSV upload for current month (premium)
     let csvStatus = null;
-    if (role === 'premium') {
+    if (role === 'premium' || role === 'pro') {
       const [csv] = await executeQuery(
         'SELECT id, trade_count, uploaded_at FROM report_csv_uploads WHERE user_id = ? AND period_year = ? AND period_month = ?',
         [userId, currentYear, currentMonth]

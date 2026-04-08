@@ -147,7 +147,7 @@ module.exports = async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     const role = effectiveReportsRole(user);
 
-    if (role === 'free') {
+    if (role === 'free' || role === 'access') {
       return res.status(403).json({
         success: false,
         message: 'MT5 CSV metrics require an active subscription.',

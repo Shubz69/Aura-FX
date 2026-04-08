@@ -12,7 +12,7 @@ const MyCourses = () => {
     const { user } = useAuth();
     const { entitlements } = useEntitlements();
     const [courses, setCourses] = useState([]);
-    const accessTier = user ? getClientAccessTier(user, entitlements) : 'free';
+    const accessTier = user ? getClientAccessTier(user, entitlements) : 'access';
     const showAdminHeader = isAdmin(user);
     const isPaidMember = isPremium(user);
     const [error, setError] = useState('');
@@ -166,7 +166,7 @@ const MyCourses = () => {
                     ) : (
                         <div className="no-courses-message">
                             <p>
-                                {!isPaidMember && accessTier === 'free'
+                                {!isPaidMember && accessTier === 'access'
                                     ? 'You need to upgrade to Premium to access courses.'
                                     : showAdminHeader
                                     ? 'No courses available. Courses will appear here once they are added to the system.'
@@ -177,10 +177,10 @@ const MyCourses = () => {
                 </div>
             )}
             
-            {!isPaidMember && accessTier === 'free' && (
+            {!isPaidMember && accessTier === 'access' && (
                 <div className="upgrade-container">
-                    <h3>Want access to premium courses?</h3>
-                    <p>Upgrade your account to unlock all trading courses and premium features. Start mastering the markets today with our expert-led trading curriculum.</p>
+                    <h3>Want access to Pro courses?</h3>
+                    <p>Upgrade your account to unlock all trading courses and Pro features. Start mastering the markets today with our expert-led trading curriculum.</p>
                     <button className="upgrade-btn">Upgrade to Premium</button>
                 </div>
             )}

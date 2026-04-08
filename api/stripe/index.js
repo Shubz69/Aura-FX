@@ -5,6 +5,7 @@ const Stripe = require('stripe');
 require('../utils/suppress-warnings');
 const { invalidateEntitlementsCache } = require('../cache');
 const { getDbConnection } = require('../db');
+const { canonicalStoredPlanFromAny } = require('../utils/subscriptionNormalize');
 
 // Validate Stripe secret key (backend only – never expose sk_ in frontend)
 function getStripeClient() {
@@ -287,38 +288,33 @@ module.exports = async (req, res) => {
           }
         }
 
+        const rawPlan = String(planType || 'aura').toLowerCase();
+        let dbPlan = rawPlan;
+        if (rawPlan === 'aura' || rawPlan === 'premium' || rawPlan === 'pro') dbPlan = 'pro';
+        else if (rawPlan === 'a7fx' || rawPlan === 'elite') dbPlan = 'elite';
+        else if (rawPlan === 'free') dbPlan = 'access';
+
         // Calculate expiry date based on plan type and free trial usage
         const expiryDate = new Date();
         let subscriptionDays = 30; // Default 1 month
         let markFreeTrialUsed = hasUsedFreeTrial; // Track if we should mark free trial as used
-        
-        if (planType === 'free') {
-          // Free monthly subscription - always 30 days, doesn't affect free trial tracking
+
+        if (dbPlan === 'access') {
           subscriptionDays = 30;
-          // Don't mark free trial as used for free monthly
-        } else if (planType === 'aura' || planType === 'a7fx' || planType === 'A7FX' || planType === 'elite') {
-          // Paid subscriptions (Premium or Elite)
+        } else if (dbPlan === 'pro' || dbPlan === 'elite') {
           if (!hasUsedFreeTrial) {
-            // First time using a paid plan - give 90 days (3 months free trial)
             subscriptionDays = 90;
-            markFreeTrialUsed = true; // Mark that they've used their free trial
+            markFreeTrialUsed = true;
           } else {
-            // They've already used a free trial before - only 30 days (no free trial)
             subscriptionDays = 30;
           }
         }
-        
+
         expiryDate.setDate(expiryDate.getDate() + subscriptionDays);
 
-        // Determine role based on plan type. Free = allowlist only (use /api/subscription/select-free for Free).
-        let userRole = 'premium';
-        if (planType === 'a7fx' || planType === 'A7FX' || planType === 'elite') {
-          userRole = 'elite';
-        } else if (planType === 'free') {
-          userRole = 'user'; // Free tier: allowlist only (General, Welcome, Announcements)
-        } else if (planType === 'aura' || planType === 'Aura Terminal') {
-          userRole = 'premium';
-        }
+        let userRole = 'pro';
+        if (dbPlan === 'elite') userRole = 'elite';
+        else if (dbPlan === 'access') userRole = 'access';
 
         // CRITICAL: Update subscription status AND role based on plan
         // This ensures users get both role-based AND subscription-based access
@@ -334,14 +330,14 @@ module.exports = async (req, res) => {
                has_used_free_trial = ?,
                onboarding_accepted = FALSE
            WHERE id = ?`,
-          [expiryDate, sessionId || null, userRole, planType, markFreeTrialUsed, userId]
+          [expiryDate, sessionId || null, userRole, dbPlan, markFreeTrialUsed, userId]
         );
-        
+
         // Log the role update for debugging
-        console.log(`✅ Subscription activated for user ${userId}: role=${userRole}, plan=${planType}, expiry=${expiryDate}`);
+        console.log(`✅ Subscription activated for user ${userId}: role=${userRole}, plan=${dbPlan}, expiry=${expiryDate}`);
         invalidateEntitlementsCache(userId);
 
-        if (planType !== 'free') {
+        if (dbPlan !== 'access') {
           try {
             const { recordReferralConversion } = require('../referral/referralService');
             await recordReferralConversion(Number(userId), 'subscription', {
@@ -350,7 +346,7 @@ module.exports = async (req, res) => {
               grossAmountPence: Math.max(0, Math.round(Number(req.body?.amount_pence || req.body?.amountPence || 0))),
               netAmountPence: Math.max(0, Math.round(Number(req.body?.amount_pence || req.body?.amountPence || 0))),
               currency: String(req.body?.currency || 'GBP').toUpperCase(),
-              metadata: { planType, flow: 'subscription-success' },
+              metadata: { planType: dbPlan, flow: 'subscription-success' },
             });
           } catch (refErr) {
             console.warn('Referral subscription attribution:', refErr.message);
@@ -458,22 +454,26 @@ module.exports = async (req, res) => {
                 if (planMatch) planType = planMatch[1].toLowerCase();
                 if (session?.metadata?.plan) planType = String(session.metadata.plan).toLowerCase();
                 if (planType === 'elite' || planType === 'premium') planType = planType === 'elite' ? 'a7fx' : 'aura';
-                
+
+                let dbPlan = planType;
+                if (planType === 'aura' || planType === 'premium' || planType === 'pro') dbPlan = 'pro';
+                else if (planType === 'a7fx' || planType === 'elite') dbPlan = 'elite';
+
                 const expiryDate = new Date();
                 let subscriptionDays = 30;
                 let markFreeTrialUsed = hasUsedFreeTrial;
-                
-                if (planType === 'aura' || planType === 'a7fx') {
+
+                if (dbPlan === 'pro' || dbPlan === 'elite') {
                   if (!hasUsedFreeTrial) {
                     subscriptionDays = 90;
                     markFreeTrialUsed = true;
                   }
                 }
                 expiryDate.setDate(expiryDate.getDate() + subscriptionDays);
-                
-                const userRole = (planType === 'a7fx' || planType === 'elite') ? 'elite' : 'premium';
+
+                const userRole = dbPlan === 'elite' ? 'elite' : 'pro';
                 const expiryStr = expiryDate.toISOString().slice(0, 19).replace('T', ' ');
-                
+
                 await db.execute(
                   `UPDATE users 
                    SET subscription_status = 'active',
@@ -485,9 +485,9 @@ module.exports = async (req, res) => {
                        subscription_plan = ?,
                        has_used_free_trial = ?
                    WHERE id = ?`,
-                  [expiryStr, session?.id || null, userRole, planType, markFreeTrialUsed, userId]
+                  [expiryStr, session?.id || null, userRole, dbPlan, markFreeTrialUsed, userId]
                 );
-                console.log(`✅ Webhook: Subscription activated for ${customerEmail} (user ${userId}): role=${userRole}, plan=${planType}`);
+                console.log(`✅ Webhook: Subscription activated for ${customerEmail} (user ${userId}): role=${userRole}, plan=${dbPlan}`);
                 invalidateEntitlementsCache(userId);
                 try {
                   const { recordReferralConversion } = require('../referral/referralService');
@@ -551,10 +551,10 @@ module.exports = async (req, res) => {
             
             // Immediate downgrade: set FREE tier so effectiveTier is FREE (no carry-over)
             await db.execute(
-              'UPDATE users SET payment_failed = TRUE, subscription_status = \'inactive\', role = \'user\', subscription_plan = \'free\', subscription_expiry = NULL, onboarding_accepted = FALSE WHERE id = ?',
+              "UPDATE users SET payment_failed = TRUE, subscription_status = 'inactive', role = 'access', subscription_plan = 'access', subscription_expiry = NULL, onboarding_accepted = FALSE WHERE id = ?",
               [userId]
             );
-            console.log('Immediate downgrade to FREE for user:', userId);
+            console.log('Immediate downgrade to ACCESS for user:', userId);
             invalidateEntitlementsCache(userId);
 
             // Send email notification
@@ -614,8 +614,10 @@ module.exports = async (req, res) => {
               'SELECT subscription_plan FROM users WHERE id = ?',
               [userId]
             );
-            const subscriptionPlan = userRows[0]?.subscription_plan || 'aura';
-            const userRole = (subscriptionPlan === 'a7fx' || subscriptionPlan === 'A7FX' || subscriptionPlan === 'elite') ? 'elite' : 'premium';
+            const planRaw = (userRows[0]?.subscription_plan || '').toString().trim().toLowerCase();
+            const canonPlan = planRaw ? canonicalStoredPlanFromAny(planRaw) : '';
+            const userRole =
+              canonPlan === 'elite' ? 'elite' : canonPlan === 'pro' ? 'pro' : 'access';
             
             // Renewals always get 30 days (no free trial on renewals)
             const expiryDate = new Date();

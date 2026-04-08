@@ -18,6 +18,8 @@ async function ensurePlatformConnectionsColumns(executeQuery) {
     'ADD COLUMN last_success_at TIMESTAMP NULL',
     'ADD COLUMN last_error_code VARCHAR(80) NULL',
     'ADD COLUMN last_error_message VARCHAR(512) NULL',
+    'ADD COLUMN analytics_presets_json LONGTEXT NULL',
+    'ADD COLUMN mt_sync_state_json LONGTEXT NULL',
   ];
   for (const frag of fragments) {
     try {

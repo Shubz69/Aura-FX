@@ -1,5 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuraAnalysisData, useAuraAnalysisMetrics } from '../../../context/AuraAnalysisContext';
+import { useReplayContributionProfile } from '../../../hooks/useReplayContributionProfile';
 import { fmtPnl, fmtPct, fmtNum, fmtDuration } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import {
@@ -96,6 +98,7 @@ function useIdleDeferredCharts(dataKey) {
 export default function OverviewDashboard() {
   const { account, trades, loading, error, activePlatformId, connections } = useAuraAnalysisData();
   const { analytics, analyticsDataKey } = useAuraAnalysisMetrics();
+  const { scoreSurface } = useReplayContributionProfile();
   const needsConnection = !connections?.length || !activePlatformId;
   const [calMonth, setCalMonth] = useState(() => new Date());
   const [selDay, setSelDay] = useState(null);
@@ -343,6 +346,32 @@ export default function OverviewDashboard() {
               </div>
             ))}
           </div>
+          {scoreSurface.visible && (
+            <div className="aa-replay-score-surface" aria-label="Replay-derived profile signal">
+              <div className="aa-replay-score-surface__head">
+                <span className="aa-replay-score-surface__label">Replay-derived signal</span>
+                <span
+                  className={
+                    scoreSurface.chipText === 'Watch'
+                      ? 'aa-replay-score-surface__chip aa-replay-score-surface__chip--watch'
+                      : 'aa-replay-score-surface__chip'
+                  }
+                >
+                  {scoreSurface.chipText}
+                </span>
+                {scoreSurface.trendChip && (
+                  <span className="aa-replay-score-surface__trend">{scoreSurface.trendChip}</span>
+                )}
+              </div>
+              <p className="aa-replay-score-surface__line">{scoreSurface.supportingLine}</p>
+              <div className="aa-replay-score-surface__foot">
+                <span className="aa-replay-score-surface__disclaimer">{scoreSurface.disclaimer}</span>
+                <Link className="aa-replay-score-surface__link" to={scoreSurface.moreHref}>
+                  {scoreSurface.moreLabel}
+                </Link>
+              </div>
+            </div>
+          )}
           {a.institutional.edgeDecay?.decayFlag && (
             <div className="aa-warning" style={{ marginTop: 8 }}>
               <i className="fas fa-chart-line aa-warning-icon" style={{ color: '#c9a05c' }} />

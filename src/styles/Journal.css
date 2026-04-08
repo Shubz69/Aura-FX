@@ -3406,3 +3406,30 @@
     transform: none;
   }
 }
+
+/* Trader Replay → Journal handoff */
+.journal-replay-handoff {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.journal-replay-chip {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.journal-replay-back {
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 0.95;
+}
+.journal-replay-back:hover {
+  opacity: 1;
+}

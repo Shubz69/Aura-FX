@@ -5,6 +5,7 @@ const { getDbConnection } = require('../db');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { signToken } = require('../utils/auth');
 const { enforceTrustedOrigin } = require('../utils/csrf');
+const { permissionRoleFromUserRow } = require('../utils/userResponseNormalize');
 
 // Function to create email transporter
 const createEmailTransporter = () => {
@@ -254,11 +255,12 @@ module.exports = async (req, res) => {
           });
         }
 
+        const apiRole = permissionRoleFromUserRow(userInfo);
         const token = signToken({
           id: userInfo.id,
           email: userInfo.email,
           username: userInfo.username,
-          role: userInfo.role || 'USER'
+          role: apiRole
         }, '24h');
 
         return res.status(200).json({
@@ -270,7 +272,7 @@ module.exports = async (req, res) => {
           email: userInfo.email,
           name: userInfo.name,
           avatar: userInfo.avatar ?? null,
-          role: userInfo.role || 'USER',
+          role: apiRole,
           mfaVerified: true
         });
       } catch (dbError) {

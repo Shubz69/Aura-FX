@@ -14,9 +14,9 @@ const STRIPE_PAYMENT_LINK_A7FX = process.env.REACT_APP_STRIPE_PAYMENT_LINK_A7FX 
 
 // Plan configurations
 const PLANS = {
-    free: {
-        id: 'free',
-        name: 'Free',
+    access: {
+        id: 'access',
+        name: 'Access',
         badge: 'Current',
         price: 0,
         currency: '£',
@@ -52,7 +52,7 @@ const PLANS = {
     },
     a7fx: {
         id: 'a7fx',
-        name: 'A7FX',
+        name: 'Elite',
         badge: 'ELITE',
         price: 250,
         currency: '£',
@@ -75,11 +75,23 @@ const PLANS = {
 };
 
 const PLAN_ALIAS = {
+    access: 'access',
+    free: 'access',
     premium: 'aura',
+    pro: 'aura',
     aura: 'aura',
     elite: 'a7fx',
     a7fx: 'a7fx'
 };
+
+/** Map DB / API plan ids to PLANS keys (access | aura | a7fx). */
+function normalizePlanKeyForUi(planId) {
+    const p = (planId || '').toString().toLowerCase();
+    if (p === 'free' || p === 'access') return 'access';
+    if (p === 'pro' || p === 'premium' || p === 'aura') return 'aura';
+    if (p === 'elite' || p === 'a7fx') return 'a7fx';
+    return p;
+}
 
 const Subscription = () => {
     const navigate = useNavigate();
@@ -148,16 +160,17 @@ const Subscription = () => {
 
     // Determine button state for a plan
     const getButtonState = useCallback((planId) => {
-        if (planId === 'free') {
+        if (planId === 'access' || planId === 'free') {
             return { type: 'current', disabled: true };
         }
         if (!subscriptionStatus) {
             return { type: 'select', disabled: false };
         }
 
-        const currentPlanId = subscriptionStatus.planId;
+        const currentPlanId = normalizePlanKeyForUi(subscriptionStatus.planId);
         const status = subscriptionStatus.status;
         const isActive = subscriptionStatus.isActive;
+        const normalizedTarget = normalizePlanKeyForUi(planId);
 
         // Payment failed - show update payment
         if (subscriptionStatus.paymentFailed) {
@@ -165,7 +178,7 @@ const Subscription = () => {
         }
 
         // User has this exact plan active
-        if (currentPlanId === planId && isActive) {
+        if (currentPlanId === normalizedTarget && isActive) {
             if (status === 'canceled') {
                 return { type: 'active_until', disabled: true };
             }
@@ -173,10 +186,10 @@ const Subscription = () => {
         }
 
         // User has a different plan active
-        if (currentPlanId && currentPlanId !== planId && isActive) {
+        if (currentPlanId && currentPlanId !== normalizedTarget && isActive) {
             // Determine if upgrade or downgrade
             const currentPrice = PLANS[currentPlanId]?.price || 0;
-            const targetPrice = PLANS[planId]?.price || 0;
+            const targetPrice = PLANS[normalizedTarget]?.price || 0;
             
             if (targetPrice > currentPrice) {
                 return { type: 'upgrade', disabled: false };
@@ -191,7 +204,7 @@ const Subscription = () => {
 
     // Get button text based on state
     const getButtonText = (planId, buttonState) => {
-        if (planId === 'free') return 'GENERAL CHAT ONLY';
+        if (planId === 'access' || planId === 'free') return 'GENERAL CHAT ONLY';
         if (processingPlan === planId) {
             return 'PROCESSING...';
         }
@@ -217,10 +230,10 @@ const Subscription = () => {
     const getStatusBadge = (planId) => {
         if (!subscriptionStatus) return null;
 
-        const currentPlanId = subscriptionStatus.planId;
+        const currentPlanId = normalizePlanKeyForUi(subscriptionStatus.planId);
         const isActive = subscriptionStatus.isActive;
 
-        if (currentPlanId === planId && isActive) {
+        if (currentPlanId === normalizePlanKeyForUi(planId) && isActive) {
             if (subscriptionStatus.status === 'canceled' || subscriptionStatus.cancelAtPeriodEnd) {
                 return <div className="plan-status-badge canceled">Canceling</div>;
             }
@@ -237,10 +250,10 @@ const Subscription = () => {
     const getRenewalInfo = (planId) => {
         if (!subscriptionStatus) return null;
 
-        const currentPlanId = subscriptionStatus.planId;
+        const currentPlanId = normalizePlanKeyForUi(subscriptionStatus.planId);
         const isActive = subscriptionStatus.isActive;
 
-        if (currentPlanId !== planId || !isActive) return null;
+        if (currentPlanId !== normalizePlanKeyForUi(planId) || !isActive) return null;
 
         if (subscriptionStatus.paymentFailed) {
             return (
@@ -252,7 +265,13 @@ const Subscription = () => {
 
         if ((subscriptionStatus.status === 'canceled' || subscriptionStatus.cancelAtPeriodEnd) && subscriptionStatus.expiresAt) {
             const expiryDate = new Date(subscriptionStatus.expiresAt);
-            const targetName = subscriptionStatus.downgradeToPlanId === 'free' ? 'Free' : (subscriptionStatus.downgradeToPlanId === 'aura' ? 'AURA TERMINAL' : '');
+            const dPid = (subscriptionStatus.downgradeToPlanId || '').toLowerCase();
+            const targetName =
+                dPid === 'free' || dPid === 'access'
+                    ? 'Access'
+                    : dPid === 'aura' || dPid === 'pro' || dPid === 'premium'
+                      ? 'AURA TERMINAL'
+                      : '';
             return (
                 <div className="plan-renewal-info canceled">
                     Active until {expiryDate.toLocaleDateString('en-GB', { 
@@ -353,7 +372,7 @@ const Subscription = () => {
     }, [downgradeTargetPlanId, downgradeSubmitting, fetchSubscriptionStatus, refreshEntitlements]);
 
     const handlePayWithCard = (planType) => {
-        if (planType === 'free') return;
+        if (planType === 'free' || planType === 'access') return;
         setCardPaymentError('');
         setPlanForCard(planType);
         setShowCardForm(true);
@@ -642,7 +661,7 @@ const Subscription = () => {
                 >
                     {buttonText}
                 </button>
-                {plan.id !== 'free' && !buttonState.disabled && (
+                {plan.id !== 'access' && plan.id !== 'free' && !buttonState.disabled && (
                     <button
                         type="button"
                         className="plan-select-button pay-with-card-button"
@@ -661,7 +680,7 @@ const Subscription = () => {
             <CosmicBackground />
             <div className="subscription-card">
                 <div className="subscription-header">
-                    <h1>🔒 PREMIUM COMMUNITY ACCESS</h1>
+                    <h1>🔒 PRO COMMUNITY ACCESS</h1>
                     <p className="subscription-subtitle">Join 1,200+ Elite Traders and Unlock Your Path to Financial Freedom</p>
                     <p className="subscription-reports-note" style={{
                         marginTop: '16px',
@@ -675,11 +694,11 @@ const Subscription = () => {
                         padding: '0 12px'
                     }}>
                         <strong style={{ color: 'rgba(234,169,96,0.95)' }}>Reports &amp; metrics:</strong>{' '}
-                        <strong>Premium</strong> includes <strong>monthly report PDFs</strong> (<a href="/reports" style={{ color: '#f8c37d', textDecoration: 'underline' }}>Performance &amp; DNA</a>)
+                        <strong>Pro</strong> includes <strong>monthly report PDFs</strong> (<a href="/reports" style={{ color: '#f8c37d', textDecoration: 'underline' }}>Performance &amp; DNA</a>)
                         {' '}and optional <strong>MT5 CSV snapshot</strong> under{' '}
                         <a href="/manual-metrics" style={{ color: '#f8c37d', textDecoration: 'underline' }}>Manual metrics</a> or{' '}
                         <a href="/aura-analysis/ai" style={{ color: '#f8c37d', textDecoration: 'underline' }}>Connection Hub</a> for broker sections in your PDF.
-                        {' '}<strong>Elite (A7FX)</strong> adds <strong>Aura Analysis</strong> with <strong>automatic</strong> platform + MT5-linked metrics — no CSV for live analysis — and <strong>fully automated</strong> monthly reports.
+                        {' '}<strong>Elite</strong> adds <strong>Aura Analysis</strong> with <strong>automatic</strong> platform + MT5-linked metrics — no CSV for live analysis — and <strong>fully automated</strong> monthly reports.
                     </p>
                 </div>
 
@@ -691,7 +710,7 @@ const Subscription = () => {
                         </div>
                     ) : (
                         <div className="subscription-plans">
-                            {renderPlanCard(PLANS.free)}
+                            {renderPlanCard(PLANS.access)}
                             {renderPlanCard(PLANS.aura)}
                             {renderPlanCard(PLANS.a7fx)}
                         </div>
@@ -709,7 +728,7 @@ const Subscription = () => {
                                 </p>
                                 <ul className="downgrade-modal-list">
                                     <li><strong>End now</strong> – Your subscription ends immediately. No refund for the unused period. You will have access only to the plan you switch to.</li>
-                                    <li><strong>At end of period</strong> – Keep your current access until your subscription end date, then switch automatically to {downgradeTargetPlanId === 'free' ? 'Free' : 'AURA TERMINAL'}.</li>
+                                    <li><strong>At end of period</strong> – Keep your current access until your subscription end date, then switch automatically to {(downgradeTargetPlanId === 'free' || downgradeTargetPlanId === 'access') ? 'Access' : 'AURA TERMINAL'}.</li>
                                 </ul>
                                 {downgradeError && <div className="downgrade-modal-error" role="alert">{downgradeError}</div>}
                                 {downgradeSubmitting && <p className="downgrade-modal-message" style={{ marginBottom: 8 }}>Processing...</p>}
