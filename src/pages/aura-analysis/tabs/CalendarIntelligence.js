@@ -94,6 +94,28 @@ const CalendarIntelligenceMain = memo(function CalendarIntelligenceMain() {
         })()}
       </div>
 
+      <div className="aa-grid-2" style={{ marginBottom: 16 }}>
+        <div className="aa-card">
+          <div className="aa-section-title">When you bank P/L (UTC)</div>
+          {deferCharts ? (
+            <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
+          ) : (
+            <div className="aa-skeleton" style={{ height: 64, borderRadius: 8 }} aria-hidden />
+          )}
+        </div>
+        <div className="aa-card">
+          <div className="aa-section-title">Weekday × hour (UTC)</div>
+          <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.38)', margin: '0 0 10px', lineHeight: 1.5 }}>
+            Institutional time-grid: aggregate P/L by session slot. News/volatility overlays can attach here when market data is wired (<code style={{ opacity: 0.7 }}>institutional.marketContext</code>).
+          </p>
+          {deferCharts ? (
+            <AuraWeekdayHourHeatmap behaviour={a.institutional?.behavioural?.weekdayHourBehaviour} height={168} />
+          ) : (
+            <div className="aa-skeleton aa-skeleton-chart" style={{ height: 168 }} aria-hidden />
+          )}
+        </div>
+      </div>
+
       <div className="aa-grid-2" style={{ marginBottom: 16, alignItems: 'start' }}>
 
         {/* ── Full calendar ── */}
@@ -241,27 +263,6 @@ const CalendarIntelligenceMain = memo(function CalendarIntelligenceMain() {
             )}
           </div>
         </div>
-      </div>
-
-      <div className="aa-card" style={{ marginBottom: 16 }}>
-        <div className="aa-section-title">When you bank P/L (UTC)</div>
-        {deferCharts ? (
-          <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
-        ) : (
-          <div className="aa-skeleton" style={{ height: 64, borderRadius: 8 }} aria-hidden />
-        )}
-      </div>
-
-      <div className="aa-card" style={{ marginBottom: 16 }}>
-        <div className="aa-section-title">Weekday × hour (UTC)</div>
-        <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.38)', margin: '0 0 10px', lineHeight: 1.5 }}>
-          Institutional time-grid: aggregate P/L by session slot. News/volatility overlays can attach here when market data is wired (<code style={{ opacity: 0.7 }}>institutional.marketContext</code>).
-        </p>
-        {deferCharts ? (
-          <AuraWeekdayHourHeatmap behaviour={a.institutional?.behavioural?.weekdayHourBehaviour} height={168} />
-        ) : (
-          <div className="aa-skeleton aa-skeleton-chart" style={{ height: 168 }} aria-hidden />
-        )}
       </div>
 
       {/* ── Weekly overview ── */}

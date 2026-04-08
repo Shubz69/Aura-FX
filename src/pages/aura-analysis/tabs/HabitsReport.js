@@ -25,18 +25,6 @@ const HabitsReportMain = memo(function HabitsReportMain() {
 
   return (
     <div className="aa-page">
-      <div className="aa-card aa-card--accent" style={{ marginBottom: 16 }}>
-        <div className="aa-section-title-lg" style={{ marginBottom: 8 }}>
-          <span className="aa-title-dot" />
-          Habits &amp; strengths
-        </div>
-        <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.52)', margin: 0, lineHeight: 1.65, maxWidth: 720 }}>
-          This report mirrors journal-style coaching: it combines automated insights, behaviour clustering, and execution path
-          stats when available — no manual mood tags required. Tag setups and rate trades below to unlock expectancy-by-setup
-          (TradeZella-style attribution).
-        </p>
-      </div>
-
       <div className="aa-grid-2" style={{ marginBottom: 16 }}>
         <div className="aa-card">
           <div className="aa-section-title">Top strengths</div>
@@ -193,6 +181,18 @@ const HabitsReportMain = memo(function HabitsReportMain() {
             </table>
           </div>
         )}
+      </div>
+
+      <div className="aa-card aa-card--accent" style={{ marginBottom: 0 }}>
+        <div className="aa-section-title-lg" style={{ marginBottom: 8 }}>
+          <span className="aa-title-dot" />
+          Habits &amp; strengths
+        </div>
+        <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.52)', margin: 0, lineHeight: 1.65, maxWidth: 720 }}>
+          This report mirrors journal-style coaching: it combines automated insights, behaviour clustering, and execution path
+          stats when available — no manual mood tags required. Tag setups and rate trades below to unlock expectancy-by-setup
+          (TradeZella-style attribution).
+        </p>
       </div>
     </div>
   );

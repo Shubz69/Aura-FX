@@ -195,31 +195,6 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
         ))}
       </div>
 
-      {a.institutional?.distribution?.pnlQuantiles && a.totalTrades > 0 && (
-        <div className="aa-card" style={{ marginBottom: 16 }}>
-          <div className="aa-section-title">Realized P/L quantiles</div>
-          <div className="aa-grid-5">
-            {[
-              { k: 'p1', label: 'P1' },
-              { k: 'p5', label: 'P5' },
-              { k: 'p50', label: 'P50' },
-              { k: 'p95', label: 'P95' },
-              { k: 'p99', label: 'P99' },
-            ].map(({ k, label }) => {
-              const raw = a.institutional.distribution.pnlQuantiles[k];
-              const v = raw != null && Number.isFinite(Number(raw)) ? fmtPnl(Number(raw)) : '—';
-              return (
-                <div key={k} className="aa-kpi">
-                  <span className="aa-kpi-label">{label}</span>
-                  <span className="aa-kpi-value">{v}</span>
-                  <span className="aa-kpi-sub">Per trade $</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       <div className="aa-grid-2" style={{ marginBottom: 16 }}>
         <div>
           <AuraEquityAreaChart curve={a.equityCurve} height={132} title="Equity curve" />
@@ -265,6 +240,31 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
           <MonthlyBars byMonth={a.byMonth} />
         </div>
       </div>
+
+      {a.institutional?.distribution?.pnlQuantiles && a.totalTrades > 0 && (
+        <div className="aa-card" style={{ marginBottom: 16 }}>
+          <div className="aa-section-title">Realized P/L quantiles</div>
+          <div className="aa-grid-5">
+            {[
+              { k: 'p1', label: 'P1' },
+              { k: 'p5', label: 'P5' },
+              { k: 'p50', label: 'P50' },
+              { k: 'p95', label: 'P95' },
+              { k: 'p99', label: 'P99' },
+            ].map(({ k, label }) => {
+              const raw = a.institutional.distribution.pnlQuantiles[k];
+              const v = raw != null && Number.isFinite(Number(raw)) ? fmtPnl(Number(raw)) : '—';
+              return (
+                <div key={k} className="aa-kpi">
+                  <span className="aa-kpi-label">{label}</span>
+                  <span className="aa-kpi-value">{v}</span>
+                  <span className="aa-kpi-sub">Per trade $</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div ref={lowerRef}>
         {!lowerVis ? (

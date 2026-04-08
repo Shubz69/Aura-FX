@@ -156,6 +156,28 @@ const EdgeAnalyzerBody = memo(function EdgeAnalyzerBody({ trades }) {
         </div>
       </div>
 
+      <div className="aa-card" style={{ marginBottom: 16 }}>
+        <div className="aa-section-title">Weekday P/L Heatmap</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+          {a.byWeekday.map(w => (
+            <HeatCell key={w.day} value={w.trades > 0 ? w.pnl : 0} maxAbs={wdMaxAbs}
+              label={w.day} sub={w.trades > 0 ? `${w.trades}T · ${fmtPct(w.winRate)}%` : '—'} />
+          ))}
+        </div>
+      </div>
+
+      {a.bySession.length > 0 && (
+        <div className="aa-card" style={{ marginBottom: 16 }}>
+          <div className="aa-section-title">Session Performance Grid</div>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(a.bySession.length, 4)}, 1fr)`, gap: 6 }}>
+            {a.bySession.map(s => (
+              <HeatCell key={s.session} value={s.pnl} maxAbs={sessMaxAbs}
+                label={s.session} sub={`${s.trades}T · ${fmtPct(s.winRate)}%`} />
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="aa-grid-2" style={{ marginBottom: 16 }}>
         <div className="aa-card">
           <RankedList items={a.bySymbol} labelKey="pair" title="Best Performing Pairs" />
@@ -194,28 +216,6 @@ const EdgeAnalyzerBody = memo(function EdgeAnalyzerBody({ trades }) {
           </div>
         </div>
       </div>
-
-      <div className="aa-card" style={{ marginBottom: 16 }}>
-        <div className="aa-section-title">Weekday P/L Heatmap</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
-          {a.byWeekday.map(w => (
-            <HeatCell key={w.day} value={w.trades > 0 ? w.pnl : 0} maxAbs={wdMaxAbs}
-              label={w.day} sub={w.trades > 0 ? `${w.trades}T · ${fmtPct(w.winRate)}%` : '—'} />
-          ))}
-        </div>
-      </div>
-
-      {a.bySession.length > 0 && (
-        <div className="aa-card" style={{ marginBottom: 16 }}>
-          <div className="aa-section-title">Session Performance Grid</div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(a.bySession.length, 4)}, 1fr)`, gap: 6 }}>
-            {a.bySession.map(s => (
-              <HeatCell key={s.session} value={s.pnl} maxAbs={sessMaxAbs}
-                label={s.session} sub={`${s.trades}T · ${fmtPct(s.winRate)}%`} />
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="aa-card" ref={fullRef}>
         <div className="aa-section-title-lg" style={{ marginBottom: 12 }}>

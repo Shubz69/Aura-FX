@@ -52,49 +52,6 @@ const PsychologyDisciplineMain = memo(function PsychologyDisciplineMain() {
   return (
     <div className="aa-page">
 
-      <div className="aa-card aa-card--accent" style={{ marginBottom: 16, display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-          <Ring score={disciplineScore} label="Discipline" color={discColor} />
-          <Ring score={a.behaviorVolatilityScore} label="Volatility" color={a.behaviorVolatilityScore < 45 ? '#f8c37d' : '#c49b7c'} />
-        </div>
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <div style={{ fontSize: '0.95rem', fontWeight: 700, color: discColor, marginBottom: 6 }}>Behaviour profile</div>
-          <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.52)', lineHeight: 1.65, margin: 0 }}>
-            These scores use your actual closes: quick re-entries after losses, P/L variance vs mean, oversized lots vs your own average,
-            and stop usage. They approximate what proprietary journals surface as “psychology” without manual journaling.
-          </p>
-          {scoreSurface.visible && (
-            <div className="aa-replay-score-surface aa-replay-score-surface--compact" aria-label="Replay-derived profile signal">
-              <div className="aa-replay-score-surface__head">
-                <span className="aa-replay-score-surface__label">Replay-derived signal</span>
-                <span
-                  className={
-                    scoreSurface.chipText === 'Watch'
-                      ? 'aa-replay-score-surface__chip aa-replay-score-surface__chip--watch'
-                      : 'aa-replay-score-surface__chip'
-                  }
-                >
-                  {scoreSurface.chipText}
-                </span>
-                {scoreSurface.trendChip && (
-                  <span className="aa-replay-score-surface__trend">{scoreSurface.trendChip}</span>
-                )}
-              </div>
-              <p className="aa-replay-score-surface__line">{scoreSurface.supportingLine}</p>
-              <div className="aa-replay-score-surface__foot">
-                <span className="aa-replay-score-surface__disclaimer">{scoreSurface.disclaimer}</span>
-                <Link className="aa-replay-score-surface__link" to={scoreSurface.moreHref}>
-                  {scoreSurface.moreLabel}
-                </Link>
-              </div>
-            </div>
-          )}
-          {narrativeBridge.visible ? (
-            <ReplayNarrativeBridgePanel bridge={narrativeBridge} variant="psychology" />
-          ) : null}
-        </div>
-      </div>
-
       <div className="aa-grid-4" style={{ marginBottom: 16 }}>
         {[
           { label: 'Revenge-style rate', value: fmtPct(a.revengeStyleRate), cls: a.revengeStyleRate > 25 ? 'aa--red' : 'aa--green', sub: 'Loss → trade ≤5m' },
@@ -148,6 +105,49 @@ const PsychologyDisciplineMain = memo(function PsychologyDisciplineMain() {
           )}
         </div>
       )}
+
+      <div className="aa-card aa-card--accent" style={{ marginBottom: 16, display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          <Ring score={disciplineScore} label="Discipline" color={discColor} />
+          <Ring score={a.behaviorVolatilityScore} label="Volatility" color={a.behaviorVolatilityScore < 45 ? '#f8c37d' : '#c49b7c'} />
+        </div>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={{ fontSize: '0.95rem', fontWeight: 700, color: discColor, marginBottom: 6 }}>Behaviour profile</div>
+          <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.52)', lineHeight: 1.65, margin: 0 }}>
+            These scores use your actual closes: quick re-entries after losses, P/L variance vs mean, oversized lots vs your own average,
+            and stop usage. They approximate what proprietary journals surface as “psychology” without manual journaling.
+          </p>
+          {scoreSurface.visible && (
+            <div className="aa-replay-score-surface aa-replay-score-surface--compact" aria-label="Replay-derived profile signal">
+              <div className="aa-replay-score-surface__head">
+                <span className="aa-replay-score-surface__label">Replay-derived signal</span>
+                <span
+                  className={
+                    scoreSurface.chipText === 'Watch'
+                      ? 'aa-replay-score-surface__chip aa-replay-score-surface__chip--watch'
+                      : 'aa-replay-score-surface__chip'
+                  }
+                >
+                  {scoreSurface.chipText}
+                </span>
+                {scoreSurface.trendChip && (
+                  <span className="aa-replay-score-surface__trend">{scoreSurface.trendChip}</span>
+                )}
+              </div>
+              <p className="aa-replay-score-surface__line">{scoreSurface.supportingLine}</p>
+              <div className="aa-replay-score-surface__foot">
+                <span className="aa-replay-score-surface__disclaimer">{scoreSurface.disclaimer}</span>
+                <Link className="aa-replay-score-surface__link" to={scoreSurface.moreHref}>
+                  {scoreSurface.moreLabel}
+                </Link>
+              </div>
+            </div>
+          )}
+          {narrativeBridge.visible ? (
+            <ReplayNarrativeBridgePanel bridge={narrativeBridge} variant="psychology" />
+          ) : null}
+        </div>
+      </div>
 
       <div className="aa-card" ref={coachRef}>
         <div className="aa-section-title-lg" style={{ marginBottom: 12 }}>

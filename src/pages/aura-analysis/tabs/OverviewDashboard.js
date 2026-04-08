@@ -194,50 +194,7 @@ export default function OverviewDashboard() {
         </div>
       )}
 
-      <AuraDnaOverviewCard />
-
-      <div className="aa-card" style={{ marginBottom: 16 }}>
-        <div className="aa-section-title">Trading suite (journal · replay · research)</div>
-        <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.42)', margin: '0 0 12px', lineHeight: 1.55, maxWidth: 720 }}>
-          Parity with all-in-one journals: link MetaTrader analytics here to depth tools — daily diary, validator trade log
-          (custom columns and CSV export), session replay, playbooks, backtests, and cross-platform DNA reports.
-        </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-          {[
-            { to: '/journal', label: 'Daily journal', sub: 'Notes, mood, tasks' },
-            { to: '/trader-deck/trade-validator/journal', label: 'Trade log', sub: 'Rows, filters, export' },
-            { to: '/aura-analysis/dashboard/trader-replay', label: 'Trader Replay', sub: 'Session review' },
-            { to: '/trader-deck/trade-validator/trader-playbook', label: 'Playbook', sub: 'Setups & rules' },
-            { to: '/backtesting', label: 'Backtesting', sub: 'Sessions & reports' },
-            { to: '/reports/live', label: 'Live analytics', sub: 'Reports hub index' },
-            { to: '/reports/dna', label: 'Reports / DNA', sub: 'Cross-product insights' },
-            { to: '/manual-metrics', label: 'Manual / CSV', sub: 'Broker uploads' },
-            { to: '/trader-deck/trade-validator/analytics', label: 'Deck analytics', sub: 'Validator KPIs' },
-          ].map(({ to, label, sub }) => (
-            <Link
-              key={to}
-              to={to}
-              className="aa-pill"
-              style={{
-                textDecoration: 'none',
-                display: 'inline-flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                padding: '10px 14px',
-                borderRadius: 10,
-                border: '1px solid rgba(212,175,55,0.28)',
-                background: 'rgba(255,255,255,0.03)',
-                minWidth: 140,
-              }}
-            >
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f8c37d' }}>{label}</span>
-              <span style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.38)', marginTop: 4 }}>{sub}</span>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* ── KPI grid (8 cards) ── */}
+      {/* ── KPI grid (8 cards) — above the fold with charts ── */}
       <div className="aa-grid-4" style={{ marginBottom: 12 }}>
         {[
           { label: 'Total Trades',   value: a.totalTrades, sub: `${a.wins}W · ${a.losses}L` },
@@ -665,6 +622,49 @@ export default function OverviewDashboard() {
             </table>
           </div>
         )}
+      </div>
+
+      <AuraDnaOverviewCard />
+
+      <div className="aa-card" style={{ marginBottom: 16 }}>
+        <div className="aa-section-title">Trading suite (journal · replay · research)</div>
+        <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.42)', margin: '0 0 12px', lineHeight: 1.55, maxWidth: 720 }}>
+          Parity with all-in-one journals: link MetaTrader analytics here to depth tools — daily diary, validator trade log
+          (custom columns and CSV export), session replay, playbooks, backtests, and cross-platform DNA reports.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+          {[
+            { to: '/journal', label: 'Daily journal', sub: 'Notes, mood, tasks' },
+            { to: '/trader-deck/trade-validator/journal', label: 'Trade log', sub: 'Rows, filters, export' },
+            { to: '/aura-analysis/dashboard/trader-replay', label: 'Trader Replay', sub: 'Session review' },
+            { to: '/trader-deck/trade-validator/trader-playbook', label: 'Playbook', sub: 'Setups & rules' },
+            { to: '/backtesting', label: 'Backtesting', sub: 'Sessions & reports' },
+            { to: '/reports/live', label: 'Live analytics', sub: 'Reports hub index' },
+            { to: '/reports/dna', label: 'Reports / DNA', sub: 'Cross-product insights' },
+            { to: '/manual-metrics', label: 'Manual / CSV', sub: 'Broker uploads' },
+            { to: '/trader-deck/trade-validator/analytics', label: 'Deck analytics', sub: 'Validator KPIs' },
+          ].map(({ to, label, sub }) => (
+            <Link
+              key={to}
+              to={to}
+              className="aa-pill"
+              style={{
+                textDecoration: 'none',
+                display: 'inline-flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                padding: '10px 14px',
+                borderRadius: 10,
+                border: '1px solid rgba(212,175,55,0.28)',
+                background: 'rgba(255,255,255,0.03)',
+                minWidth: 140,
+              }}
+            >
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f8c37d' }}>{label}</span>
+              <span style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.38)', marginTop: 4 }}>{sub}</span>
+            </Link>
+          ))}
+        </div>
       </div>
 
     </div>

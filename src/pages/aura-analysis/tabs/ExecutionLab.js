@@ -151,6 +151,28 @@ const ExecutionLabBody = memo(function ExecutionLabBody({ trades }) {
         </div>
       </div>
 
+      <div className="aa-grid-2" style={{ marginBottom: 16 }}>
+        <div className="aa-card">
+          <div className="aa-section-title">Emotional timing (UTC)</div>
+          <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.38)', margin: '0 0 10px', lineHeight: 1.45 }}>
+            Dense clusters after losses often flag impulse re-entries — compare with your revenge-rate above.
+          </p>
+          {deferLower ? (
+            <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
+          ) : (
+            <div className="aa-skeleton" style={{ height: 64, borderRadius: 8 }} aria-hidden />
+          )}
+        </div>
+        <div className="aa-card">
+          <div className="aa-section-title">Outcome distribution</div>
+          {deferLower ? (
+            <AuraPnlHistogram bins={a.pnlHistogram} height={118} />
+          ) : (
+            <div className="aa-skeleton aa-skeleton-chart" style={{ height: 118 }} aria-hidden />
+          )}
+        </div>
+      </div>
+
       <div className="aa-grid-3" style={{ marginBottom: 16 }}>
 
         <div className="aa-card">
@@ -294,28 +316,6 @@ const ExecutionLabBody = memo(function ExecutionLabBody({ trades }) {
                 )}
               </div>
             )}
-
-            <div className="aa-grid-2" style={{ marginBottom: 16 }}>
-              <div className="aa-card">
-                <div className="aa-section-title">Emotional timing (UTC)</div>
-                <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.38)', margin: '0 0 10px', lineHeight: 1.45 }}>
-                  Dense clusters after losses often flag impulse re-entries — compare with your revenge-rate above.
-                </p>
-                {deferLower ? (
-                  <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
-                ) : (
-                  <div className="aa-skeleton" style={{ height: 64, borderRadius: 8 }} aria-hidden />
-                )}
-              </div>
-              <div className="aa-card">
-                <div className="aa-section-title">Outcome distribution</div>
-                {deferLower ? (
-                  <AuraPnlHistogram bins={a.pnlHistogram} height={118} />
-                ) : (
-                  <div className="aa-skeleton aa-skeleton-chart" style={{ height: 118 }} aria-hidden />
-                )}
-              </div>
-            </div>
 
             <div className="aa-card">
               <div className="aa-section-title-lg" style={{ marginBottom: 12 }}>
