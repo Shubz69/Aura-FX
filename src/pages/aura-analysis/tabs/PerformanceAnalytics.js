@@ -175,26 +175,6 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
         ))}
       </div>
 
-      <div className="aa-grid-5" style={{ marginBottom: 16 }}>
-        {[
-          { label: 'Recovery F.', value: a.recoveryFactor > 0 && a.recoveryFactor < 900 ? fmtNum(a.recoveryFactor, 2) : a.recoveryFactor >= 900 ? '∞' : '—', cls: a.recoveryFactor >= 2 ? 'aa--green' : '', sub: 'Net ÷ max DD' },
-          { label: 'Calmar', value: a.calmarRatio > 0 ? fmtNum(a.calmarRatio, 2) : '—', cls: a.calmarRatio >= 1.5 ? 'aa--green' : '', sub: 'CAGR ÷ DD%' },
-          { label: 'SQN', value: fmtNum(a.sqn, 2), cls: a.sqn >= 3 ? 'aa--green' : '', sub: `${a.totalTrades} trades` },
-          { label: 'σ P/L', value: a.pnlStdDev > 0 ? fmtNum(a.pnlStdDev, 2) : '—', cls: '', sub: 'Dispersion' },
-          { label: 'Ret / DD', value: a.returnToMaxDrawdown > 0 ? fmtNum(a.returnToMaxDrawdown, 2) : '—', cls: '', sub: 'Total % ÷ max DD%' },
-          { label: 'Skew', value: a.institutional?.distribution ? fmtNum(a.institutional.distribution.skewness, 2) : '—', cls: '', sub: 'P/L' },
-          { label: 'Kurtosis', value: a.institutional?.distribution ? fmtNum(a.institutional.distribution.excessKurtosis, 2) : '—', cls: '', sub: 'excess' },
-          { label: 'R σ', value: a.totalTrades >= 2 ? fmtNum(a.rStd, 3) : '—', cls: '', sub: 'R multiples' },
-          { label: 'Max win run ($)', value: a.maxConsecWinSum > 0 ? fmtPnl(a.maxConsecWinSum) : '—', cls: 'aa--green', sub: 'Consecutive closes' },
-        ].map(({ label, value, sub, cls }) => (
-          <div key={label} className="aa-kpi">
-            <span className="aa-kpi-label">{label}</span>
-            <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
-            {sub && <span className="aa-kpi-sub">{sub}</span>}
-          </div>
-        ))}
-      </div>
-
       <div className="aa-grid-2" style={{ marginBottom: 16 }}>
         <div>
           <AuraEquityAreaChart curve={a.equityCurve} height={132} title="Equity curve" />
@@ -239,6 +219,26 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
           <div className="aa-section-title">Monthly P/L</div>
           <MonthlyBars byMonth={a.byMonth} />
         </div>
+      </div>
+
+      <div className="aa-grid-5" style={{ marginBottom: 16 }}>
+        {[
+          { label: 'Recovery F.', value: a.recoveryFactor > 0 && a.recoveryFactor < 900 ? fmtNum(a.recoveryFactor, 2) : a.recoveryFactor >= 900 ? '∞' : '—', cls: a.recoveryFactor >= 2 ? 'aa--green' : '', sub: 'Net ÷ max DD' },
+          { label: 'Calmar', value: a.calmarRatio > 0 ? fmtNum(a.calmarRatio, 2) : '—', cls: a.calmarRatio >= 1.5 ? 'aa--green' : '', sub: 'CAGR ÷ DD%' },
+          { label: 'SQN', value: fmtNum(a.sqn, 2), cls: a.sqn >= 3 ? 'aa--green' : '', sub: `${a.totalTrades} trades` },
+          { label: 'σ P/L', value: a.pnlStdDev > 0 ? fmtNum(a.pnlStdDev, 2) : '—', cls: '', sub: 'Dispersion' },
+          { label: 'Ret / DD', value: a.returnToMaxDrawdown > 0 ? fmtNum(a.returnToMaxDrawdown, 2) : '—', cls: '', sub: 'Total % ÷ max DD%' },
+          { label: 'Skew', value: a.institutional?.distribution ? fmtNum(a.institutional.distribution.skewness, 2) : '—', cls: '', sub: 'P/L' },
+          { label: 'Kurtosis', value: a.institutional?.distribution ? fmtNum(a.institutional.distribution.excessKurtosis, 2) : '—', cls: '', sub: 'excess' },
+          { label: 'R σ', value: a.totalTrades >= 2 ? fmtNum(a.rStd, 3) : '—', cls: '', sub: 'R multiples' },
+          { label: 'Max win run ($)', value: a.maxConsecWinSum > 0 ? fmtPnl(a.maxConsecWinSum) : '—', cls: 'aa--green', sub: 'Consecutive closes' },
+        ].map(({ label, value, sub, cls }) => (
+          <div key={label} className="aa-kpi">
+            <span className="aa-kpi-label">{label}</span>
+            <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
+            {sub && <span className="aa-kpi-sub">{sub}</span>}
+          </div>
+        ))}
       </div>
 
       {a.institutional?.distribution?.pnlQuantiles && a.totalTrades > 0 && (

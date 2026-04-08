@@ -52,28 +52,6 @@ const PsychologyDisciplineMain = memo(function PsychologyDisciplineMain() {
   return (
     <div className="aa-page">
 
-      <div className="aa-grid-4" style={{ marginBottom: 16 }}>
-        {[
-          { label: 'Revenge-style rate', value: fmtPct(a.revengeStyleRate), cls: a.revengeStyleRate > 25 ? 'aa--red' : 'aa--green', sub: 'Loss → trade ≤5m' },
-          { label: 'Lot CV (consistency)', value: a.lotSizeCv > 0 ? fmtNum(a.lotSizeCv, 2) : '—', cls: a.lotSizeCv > 0.45 ? 'aa--amber' : '', sub: 'Lower = calmer sizing' },
-          { label: 'Oversized trades', value: String(a.oversizedTradeCount), cls: a.oversizedTradeCount > 0 ? 'aa--amber' : '', sub: '&gt; μ + 2σ lots' },
-          { label: 'Max loss run ($)', value: a.maxConsecLossSum > 0 ? '-$' + fmtNum(a.maxConsecLossSum) : '—', cls: 'aa--red', sub: 'Consecutive closes' },
-          { label: 'Max win run ($)', value: a.maxConsecWinSum > 0 ? fmtPnl(a.maxConsecWinSum) : '—', cls: 'aa--green', sub: 'Consecutive closes' },
-          { label: 'Win / loss hold', value: a.avgWinDurationMs > 0 && a.avgLossDurationMs > 0 ? fmtDuration(a.avgWinDurationMs) + ' / ' + fmtDuration(a.avgLossDurationMs) : '—', cls: a.avgLossDurationMs > a.avgWinDurationMs * 1.25 ? 'aa--amber' : '', sub: 'Avg duration' },
-          { label: 'Largest win % GP', value: a.largestWinPctOfGross > 0 ? fmtPct(a.largestWinPctOfGross) : '—', cls: a.largestWinPctOfGross > 45 ? 'aa--amber' : '', sub: 'Hope vs process' },
-          { label: 'Concentration', value: fmtPct(a.topSymbolConcentrationPct), cls: a.topSymbolConcentrationPct > 55 ? 'aa--amber' : '', sub: 'Trades in top symbol' },
-          { label: 'Streak (current)', value: a.currentStreak > 0 ? `${a.currentStreak} ${a.streakType}` : '—', cls: a.streakType === 'loss' ? 'aa--red' : a.streakType === 'win' ? 'aa--green' : '' },
-          { label: 'Mistake cost', value: (a.institutional?.behavioural?.mistakeCost?.totalMistakeCost ?? 0) > 0 ? `-$${fmtNum(a.institutional.behavioural.mistakeCost.totalMistakeCost)}` : '—', cls: 'aa--amber', sub: 'SL + revenge tail' },
-          { label: 'Loss clusters', value: String(a.institutional?.behavioural?.mistakeClustering?.lossBurstClusters ?? '—'), cls: '', sub: '≥3 losses' },
-        ].map(({ label, value, sub, cls }) => (
-          <div key={label} className="aa-kpi">
-            <span className="aa-kpi-label">{label}</span>
-            <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
-            {sub && <span className="aa-kpi-sub">{sub}</span>}
-          </div>
-        ))}
-      </div>
-
       <div className="aa-grid-2" style={{ marginBottom: 16 }}>
         <div className="aa-card">
           <div className="aa-section-title">Impulse timing (UTC)</div>
@@ -105,6 +83,28 @@ const PsychologyDisciplineMain = memo(function PsychologyDisciplineMain() {
           )}
         </div>
       )}
+
+      <div className="aa-grid-4" style={{ marginBottom: 16 }}>
+        {[
+          { label: 'Revenge-style rate', value: fmtPct(a.revengeStyleRate), cls: a.revengeStyleRate > 25 ? 'aa--red' : 'aa--green', sub: 'Loss → trade ≤5m' },
+          { label: 'Lot CV (consistency)', value: a.lotSizeCv > 0 ? fmtNum(a.lotSizeCv, 2) : '—', cls: a.lotSizeCv > 0.45 ? 'aa--amber' : '', sub: 'Lower = calmer sizing' },
+          { label: 'Oversized trades', value: String(a.oversizedTradeCount), cls: a.oversizedTradeCount > 0 ? 'aa--amber' : '', sub: '&gt; μ + 2σ lots' },
+          { label: 'Max loss run ($)', value: a.maxConsecLossSum > 0 ? '-$' + fmtNum(a.maxConsecLossSum) : '—', cls: 'aa--red', sub: 'Consecutive closes' },
+          { label: 'Max win run ($)', value: a.maxConsecWinSum > 0 ? fmtPnl(a.maxConsecWinSum) : '—', cls: 'aa--green', sub: 'Consecutive closes' },
+          { label: 'Win / loss hold', value: a.avgWinDurationMs > 0 && a.avgLossDurationMs > 0 ? fmtDuration(a.avgWinDurationMs) + ' / ' + fmtDuration(a.avgLossDurationMs) : '—', cls: a.avgLossDurationMs > a.avgWinDurationMs * 1.25 ? 'aa--amber' : '', sub: 'Avg duration' },
+          { label: 'Largest win % GP', value: a.largestWinPctOfGross > 0 ? fmtPct(a.largestWinPctOfGross) : '—', cls: a.largestWinPctOfGross > 45 ? 'aa--amber' : '', sub: 'Hope vs process' },
+          { label: 'Concentration', value: fmtPct(a.topSymbolConcentrationPct), cls: a.topSymbolConcentrationPct > 55 ? 'aa--amber' : '', sub: 'Trades in top symbol' },
+          { label: 'Streak (current)', value: a.currentStreak > 0 ? `${a.currentStreak} ${a.streakType}` : '—', cls: a.streakType === 'loss' ? 'aa--red' : a.streakType === 'win' ? 'aa--green' : '' },
+          { label: 'Mistake cost', value: (a.institutional?.behavioural?.mistakeCost?.totalMistakeCost ?? 0) > 0 ? `-$${fmtNum(a.institutional.behavioural.mistakeCost.totalMistakeCost)}` : '—', cls: 'aa--amber', sub: 'SL + revenge tail' },
+          { label: 'Loss clusters', value: String(a.institutional?.behavioural?.mistakeClustering?.lossBurstClusters ?? '—'), cls: '', sub: '≥3 losses' },
+        ].map(({ label, value, sub, cls }) => (
+          <div key={label} className="aa-kpi">
+            <span className="aa-kpi-label">{label}</span>
+            <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
+            {sub && <span className="aa-kpi-sub">{sub}</span>}
+          </div>
+        ))}
+      </div>
 
       <div className="aa-card aa-card--accent" style={{ marginBottom: 16, display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>

@@ -118,6 +118,11 @@ const GrowthEngineBody = memo(function GrowthEngineBody({ currency }) {
   return (
     <div className="aa-page aa-page--growth-readability">
 
+      <div className="aa-grid-2" style={{ marginBottom: 16 }}>
+        <AuraEquityAreaChart curve={a.equityCurve} height={168} title="Account growth curve" />
+        <AuraDrawdownAreaChart curve={a.drawdownCurve} height={168} title="Drawdown % (risk context)" />
+      </div>
+
       <div className="aa-grid-4" style={{ marginBottom: 16 }}>
         {[
           { label: 'Total Return', value: fmtPnl(a.totalReturn), cls: pnlCls(a.totalReturn), sub: `from ${fmtBal(start)}` },
@@ -142,11 +147,6 @@ const GrowthEngineBody = memo(function GrowthEngineBody({ currency }) {
             {sub && <span className="aa-kpi-sub">{sub}</span>}
           </div>
         ))}
-      </div>
-
-      <div className="aa-grid-2" style={{ marginBottom: 16 }}>
-        <AuraEquityAreaChart curve={a.equityCurve} height={168} title="Account growth curve" />
-        <AuraDrawdownAreaChart curve={a.drawdownCurve} height={168} title="Drawdown % (risk context)" />
       </div>
 
       {deferLower ? (

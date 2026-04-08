@@ -194,65 +194,7 @@ export default function OverviewDashboard() {
         </div>
       )}
 
-      {/* ── KPI grid (8 cards) — above the fold with charts ── */}
-      <div className="aa-grid-4" style={{ marginBottom: 12 }}>
-        {[
-          { label: 'Total Trades',   value: a.totalTrades, sub: `${a.wins}W · ${a.losses}L` },
-          { label: 'Win Rate',       value: fmtPct(a.winRate), cls: a.winRate >= 50 ? 'aa--green' : 'aa--red', sub: `${a.wins} wins` },
-          { label: 'Net P/L',        value: fmtPnl(a.totalPnl), cls: pnlCls(a.totalPnl), sub: `${a.totalTrades} trades` },
-          { label: 'Profit Factor',  value: a.profitFactor > 0 ? fmtNum(a.profitFactor) : '—', cls: a.profitFactor >= 1 ? 'aa--green' : 'aa--red', sub: 'GP / GL' },
-          { label: 'Expectancy',     value: a.expectancy !== 0 ? fmtPnl(a.expectancy) : '—', cls: pnlCls(a.expectancy), sub: 'per trade' },
-          { label: 'Avg Win',        value: a.avgWin > 0 ? fmtPnl(a.avgWin) : '—', cls: 'aa--green', sub: `${a.wins} trades` },
-          { label: 'Avg Loss',       value: a.avgLoss > 0 ? '-$' + fmtNum(a.avgLoss) : '—', cls: 'aa--red', sub: `${a.losses} trades` },
-          { label: 'Max Drawdown',   value: a.maxDrawdownPct > 0 ? fmtPct(a.maxDrawdownPct) : '—', cls: a.maxDrawdownPct > 15 ? 'aa--red' : a.maxDrawdownPct > 8 ? 'aa--amber' : 'aa--green', sub: '-$' + fmtNum(a.maxDrawdown) },
-        ].map(({ label, value, sub, cls }) => (
-          <div key={label} className="aa-kpi">
-            <span className="aa-kpi-label">{label}</span>
-            <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
-            {sub && <span className="aa-kpi-sub">{sub}</span>}
-          </div>
-        ))}
-      </div>
-
-      {a.totalTrades > 0 && (
-        <div className="aa-grid-4" style={{ marginBottom: 16 }}>
-          {[
-            { label: 'Recovery factor', value: a.recoveryFactor > 0 && a.recoveryFactor < 900 ? fmtNum(a.recoveryFactor, 2) : a.recoveryFactor >= 900 ? '∞' : '—', cls: a.recoveryFactor >= 2 ? 'aa--green' : 'aa--muted', sub: 'Net ÷ max DD $' },
-            { label: 'Calmar (est.)', value: a.calmarRatio > 0 ? fmtNum(a.calmarRatio, 2) : '—', cls: a.calmarRatio >= 1 ? 'aa--green' : 'aa--muted', sub: 'CAGR ÷ max DD %' },
-            { label: 'SQN (R-based)', value: a.totalTrades >= 2 ? fmtNum(a.sqn, 2) : '—', cls: a.sqn >= 3 ? 'aa--green' : a.sqn >= 1.6 ? 'aa--amber' : '', sub: 'Van Tharp style' },
-            { label: 'Avg R / trade', value: a.expectancyR !== 0 ? fmtNum(a.expectancyR, 2) : '—', cls: pnlCls(a.expectancyR), sub: '1R = avg loss' },
-            { label: 'Payoff ratio', value: a.payoffRatio > 0 ? fmtNum(a.payoffRatio, 2) + 'x' : '—', cls: a.payoffRatio >= 1 ? 'aa--green' : 'aa--red', sub: 'Avg win ÷ avg loss' },
-            { label: 'Sharpe (trade)', value: a.sharpeLike !== 0 ? fmtNum(a.sharpeLike, 2) : '—', cls: '', sub: 'Mean ÷ σ P/L' },
-            { label: 'Sortino (trade)', value: a.sortinoLike !== 0 ? fmtNum(a.sortinoLike, 2) : '—', cls: '', sub: 'Mean ÷ downside σ' },
-            { label: 'Full Kelly (est.)', value: a.kellyOptimalFraction !== 0 ? fmtPct(Math.abs(a.kellyOptimalFraction) * 100, 1) : '—', cls: Math.abs(a.kellyOptimalFraction) > 0.2 ? 'aa--amber' : 'aa--muted', sub: 'Theoretical max / trade' },
-          ].map(({ label, value, sub, cls }) => (
-            <div key={label} className="aa-kpi">
-              <span className="aa-kpi-label">{label}</span>
-              <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
-              {sub && <span className="aa-kpi-sub">{sub}</span>}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {a.totalTrades > 0 && (
-        <div className="aa-grid-4" style={{ marginBottom: 16 }}>
-          {[
-            { label: 'R σ (multiples)', value: a.totalTrades >= 2 ? fmtNum(a.rStd, 3) : '—', cls: '', sub: 'R-multiple dispersion' },
-            { label: 'Max win run ($)', value: a.maxConsecWinSum > 0 ? fmtPnl(a.maxConsecWinSum) : '—', cls: 'aa--green', sub: 'Consecutive closes' },
-            { label: 'CAGR (est.)', value: a.periodYears > 0.05 ? fmtPct(a.cagrPct) : '—', cls: a.cagrPct >= 0 ? 'aa--green' : 'aa--red', sub: 'From trade span' },
-            { label: 'Ret / DD', value: a.returnToMaxDrawdown > 0 ? fmtNum(a.returnToMaxDrawdown, 2) : '—', cls: '', sub: 'Total % ÷ max DD%' },
-          ].map(({ label, value, sub, cls }) => (
-            <div key={label} className="aa-kpi">
-              <span className="aa-kpi-label">{label}</span>
-              <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
-              {sub && <span className="aa-kpi-sub">{sub}</span>}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── Equity + Risk snapshot ── */}
+      {/* ── Equity + risk charts first (scroll priority) ── */}
       <div className="aa-grid-2" style={{ marginBottom: 16 }}>
         <div>
           <AuraEquityAreaChart curve={a.equityCurve} height={150} title="Equity curve" />
@@ -317,7 +259,6 @@ export default function OverviewDashboard() {
             </div>
           </div>
 
-          {/* Current streak */}
           {a.currentStreak > 0 && (
             <div className={`aa-pill ${a.streakType === 'win' ? 'aa-pill--green' : 'aa-pill--red'}`} style={{ alignSelf: 'flex-start' }}>
               <i className={`fas ${a.streakType === 'win' ? 'fa-fire' : 'fa-snowflake'}`} />
@@ -325,7 +266,6 @@ export default function OverviewDashboard() {
             </div>
           )}
 
-          {/* Compliance warnings */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {a.maxDrawdownPct > 20 && (
               <div className="aa-warning aa-warning--red">
@@ -342,6 +282,64 @@ export default function OverviewDashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── KPI grid (8 cards) ── */}
+      <div className="aa-grid-4" style={{ marginBottom: 12 }}>
+        {[
+          { label: 'Total Trades',   value: a.totalTrades, sub: `${a.wins}W · ${a.losses}L` },
+          { label: 'Win Rate',       value: fmtPct(a.winRate), cls: a.winRate >= 50 ? 'aa--green' : 'aa--red', sub: `${a.wins} wins` },
+          { label: 'Net P/L',        value: fmtPnl(a.totalPnl), cls: pnlCls(a.totalPnl), sub: `${a.totalTrades} trades` },
+          { label: 'Profit Factor',  value: a.profitFactor > 0 ? fmtNum(a.profitFactor) : '—', cls: a.profitFactor >= 1 ? 'aa--green' : 'aa--red', sub: 'GP / GL' },
+          { label: 'Expectancy',     value: a.expectancy !== 0 ? fmtPnl(a.expectancy) : '—', cls: pnlCls(a.expectancy), sub: 'per trade' },
+          { label: 'Avg Win',        value: a.avgWin > 0 ? fmtPnl(a.avgWin) : '—', cls: 'aa--green', sub: `${a.wins} trades` },
+          { label: 'Avg Loss',       value: a.avgLoss > 0 ? '-$' + fmtNum(a.avgLoss) : '—', cls: 'aa--red', sub: `${a.losses} trades` },
+          { label: 'Max Drawdown',   value: a.maxDrawdownPct > 0 ? fmtPct(a.maxDrawdownPct) : '—', cls: a.maxDrawdownPct > 15 ? 'aa--red' : a.maxDrawdownPct > 8 ? 'aa--amber' : 'aa--green', sub: '-$' + fmtNum(a.maxDrawdown) },
+        ].map(({ label, value, sub, cls }) => (
+          <div key={label} className="aa-kpi">
+            <span className="aa-kpi-label">{label}</span>
+            <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
+            {sub && <span className="aa-kpi-sub">{sub}</span>}
+          </div>
+        ))}
+      </div>
+
+      {a.totalTrades > 0 && (
+        <div className="aa-grid-4" style={{ marginBottom: 16 }}>
+          {[
+            { label: 'Recovery factor', value: a.recoveryFactor > 0 && a.recoveryFactor < 900 ? fmtNum(a.recoveryFactor, 2) : a.recoveryFactor >= 900 ? '∞' : '—', cls: a.recoveryFactor >= 2 ? 'aa--green' : 'aa--muted', sub: 'Net ÷ max DD $' },
+            { label: 'Calmar (est.)', value: a.calmarRatio > 0 ? fmtNum(a.calmarRatio, 2) : '—', cls: a.calmarRatio >= 1 ? 'aa--green' : 'aa--muted', sub: 'CAGR ÷ max DD %' },
+            { label: 'SQN (R-based)', value: a.totalTrades >= 2 ? fmtNum(a.sqn, 2) : '—', cls: a.sqn >= 3 ? 'aa--green' : a.sqn >= 1.6 ? 'aa--amber' : '', sub: 'Van Tharp style' },
+            { label: 'Avg R / trade', value: a.expectancyR !== 0 ? fmtNum(a.expectancyR, 2) : '—', cls: pnlCls(a.expectancyR), sub: '1R = avg loss' },
+            { label: 'Payoff ratio', value: a.payoffRatio > 0 ? fmtNum(a.payoffRatio, 2) + 'x' : '—', cls: a.payoffRatio >= 1 ? 'aa--green' : 'aa--red', sub: 'Avg win ÷ avg loss' },
+            { label: 'Sharpe (trade)', value: a.sharpeLike !== 0 ? fmtNum(a.sharpeLike, 2) : '—', cls: '', sub: 'Mean ÷ σ P/L' },
+            { label: 'Sortino (trade)', value: a.sortinoLike !== 0 ? fmtNum(a.sortinoLike, 2) : '—', cls: '', sub: 'Mean ÷ downside σ' },
+            { label: 'Full Kelly (est.)', value: a.kellyOptimalFraction !== 0 ? fmtPct(Math.abs(a.kellyOptimalFraction) * 100, 1) : '—', cls: Math.abs(a.kellyOptimalFraction) > 0.2 ? 'aa--amber' : 'aa--muted', sub: 'Theoretical max / trade' },
+          ].map(({ label, value, sub, cls }) => (
+            <div key={label} className="aa-kpi">
+              <span className="aa-kpi-label">{label}</span>
+              <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
+              {sub && <span className="aa-kpi-sub">{sub}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {a.totalTrades > 0 && (
+        <div className="aa-grid-4" style={{ marginBottom: 16 }}>
+          {[
+            { label: 'R σ (multiples)', value: a.totalTrades >= 2 ? fmtNum(a.rStd, 3) : '—', cls: '', sub: 'R-multiple dispersion' },
+            { label: 'Max win run ($)', value: a.maxConsecWinSum > 0 ? fmtPnl(a.maxConsecWinSum) : '—', cls: 'aa--green', sub: 'Consecutive closes' },
+            { label: 'CAGR (est.)', value: a.periodYears > 0.05 ? fmtPct(a.cagrPct) : '—', cls: a.cagrPct >= 0 ? 'aa--green' : 'aa--red', sub: 'From trade span' },
+            { label: 'Ret / DD', value: a.returnToMaxDrawdown > 0 ? fmtNum(a.returnToMaxDrawdown, 2) : '—', cls: '', sub: 'Total % ÷ max DD%' },
+          ].map(({ label, value, sub, cls }) => (
+            <div key={label} className="aa-kpi">
+              <span className="aa-kpi-label">{label}</span>
+              <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
+              {sub && <span className="aa-kpi-sub">{sub}</span>}
+            </div>
+          ))}
+        </div>
+      )}
 
       {a.totalTrades > 0 && a.institutional && (
         <div className="aa-card" style={{ marginBottom: 16 }}>

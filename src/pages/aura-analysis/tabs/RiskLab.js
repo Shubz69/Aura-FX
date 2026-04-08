@@ -68,6 +68,10 @@ const RiskLabContent = memo(function RiskLabContent() {
   return (
     <div className="aa-page">
 
+      <div style={{ marginBottom: 16 }}>
+        <AuraDrawdownAreaChart curve={a.drawdownCurve} height={136} title="Drawdown over time (%)" />
+      </div>
+
       <div className="aa-card aa-card--accent" style={{ marginBottom: 16, display: 'flex', gap: 28, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', width: 110, height: 110, flexShrink: 0 }}>
           <ScoreRing score={a.riskScore} color={riskColor} size={110} />
@@ -103,10 +107,6 @@ const RiskLabContent = memo(function RiskLabContent() {
             </div>
           ))}
         </div>
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
-        <AuraDrawdownAreaChart curve={a.drawdownCurve} height={136} title="Drawdown over time (%)" />
       </div>
 
       {a.totalTrades > 0 && a.propRiskPack && (

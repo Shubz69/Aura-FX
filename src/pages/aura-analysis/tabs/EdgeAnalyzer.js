@@ -107,6 +107,20 @@ const EdgeAnalyzerBody = memo(function EdgeAnalyzerBody({ trades }) {
   return (
     <div className="aa-page">
 
+      <div className="aa-grid-2" style={{ marginBottom: 16 }}>
+        <div className="aa-card">
+          <div className="aa-section-title">Edge vs time (UTC)</div>
+          {deferMid ? (
+            <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
+          ) : (
+            <div className="aa-skeleton" style={{ height: 64, borderRadius: 8 }} aria-hidden />
+          )}
+        </div>
+        <div>
+          <AuraEquityAreaChart curve={a.equityCurve} height={128} title="Equity context" />
+        </div>
+      </div>
+
       <div className="aa-grid-4" style={{ marginBottom: 12 }}>
         {[
           { label: 'Best Pair', value: bestSymbol?.pair || '—', sub: bestSymbol ? fmtPnl(bestSymbol.pnl) : '', cls: 'aa--green' },
@@ -140,20 +154,6 @@ const EdgeAnalyzerBody = memo(function EdgeAnalyzerBody({ trades }) {
             {sub && <span className="aa-kpi-sub">{sub}</span>}
           </div>
         ))}
-      </div>
-
-      <div className="aa-grid-2" style={{ marginBottom: 16 }}>
-        <div className="aa-card">
-          <div className="aa-section-title">Edge vs time (UTC)</div>
-          {deferMid ? (
-            <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
-          ) : (
-            <div className="aa-skeleton" style={{ height: 64, borderRadius: 8 }} aria-hidden />
-          )}
-        </div>
-        <div>
-          <AuraEquityAreaChart curve={a.equityCurve} height={128} title="Equity context" />
-        </div>
       </div>
 
       <div className="aa-card" style={{ marginBottom: 16 }}>

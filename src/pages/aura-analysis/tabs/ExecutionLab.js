@@ -107,6 +107,28 @@ const ExecutionLabBody = memo(function ExecutionLabBody({ trades }) {
   return (
     <div className="aa-page">
 
+      <div className="aa-grid-2" style={{ marginBottom: 16 }}>
+        <div className="aa-card">
+          <div className="aa-section-title">Emotional timing (UTC)</div>
+          <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.38)', margin: '0 0 10px', lineHeight: 1.45 }}>
+            Dense clusters after losses often flag impulse re-entries — compare with your revenge-rate (below).
+          </p>
+          {deferLower ? (
+            <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
+          ) : (
+            <div className="aa-skeleton" style={{ height: 64, borderRadius: 8 }} aria-hidden />
+          )}
+        </div>
+        <div className="aa-card">
+          <div className="aa-section-title">Outcome distribution</div>
+          {deferLower ? (
+            <AuraPnlHistogram bins={a.pnlHistogram} height={118} />
+          ) : (
+            <div className="aa-skeleton aa-skeleton-chart" style={{ height: 118 }} aria-hidden />
+          )}
+        </div>
+      </div>
+
       <div className="aa-card aa-card--accent" style={{ marginBottom: 16, display: 'flex', gap: 28, alignItems: 'center', flexWrap: 'wrap' }}>
         <ScoreGauge score={execScore} label={execLabel} color={execColor} />
         <div style={{ flex: 1 }}>
@@ -148,28 +170,6 @@ const ExecutionLabBody = memo(function ExecutionLabBody({ trades }) {
               <div style={{ fontSize: '0.88rem', fontWeight: 700, color: c, fontVariantNumeric: 'tabular-nums' }}>{v}</div>
             </div>
           ))}
-        </div>
-      </div>
-
-      <div className="aa-grid-2" style={{ marginBottom: 16 }}>
-        <div className="aa-card">
-          <div className="aa-section-title">Emotional timing (UTC)</div>
-          <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.38)', margin: '0 0 10px', lineHeight: 1.45 }}>
-            Dense clusters after losses often flag impulse re-entries — compare with your revenge-rate above.
-          </p>
-          {deferLower ? (
-            <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
-          ) : (
-            <div className="aa-skeleton" style={{ height: 64, borderRadius: 8 }} aria-hidden />
-          )}
-        </div>
-        <div className="aa-card">
-          <div className="aa-section-title">Outcome distribution</div>
-          {deferLower ? (
-            <AuraPnlHistogram bins={a.pnlHistogram} height={118} />
-          ) : (
-            <div className="aa-skeleton aa-skeleton-chart" style={{ height: 118 }} aria-hidden />
-          )}
         </div>
       </div>
 
