@@ -165,26 +165,6 @@ export default function TraderPlaybook() {
   }, [loadCore]);
 
   useEffect(() => {
-    if (replayPlaybookConsumedRef.current || loading || !setups.length) return;
-    if (!searchParams.get(TR_HANDOFF.origin) && !searchParams.get('replaySessionId')) return;
-    const hint = (searchParams.get('replayHint') || '').trim().toLowerCase();
-    const row = hint
-      ? setups.find((s) => (s.name || '').trim().toLowerCase() === hint)
-      : null;
-    if (!row?.id) {
-      replayPlaybookConsumedRef.current = true;
-      setSearchParams(stripReplayHandoffParams(searchParams), { replace: true });
-      return;
-    }
-    const tab = searchParams.get(TR_HANDOFF.detailTab) === 'review' ? 'review' : 'overview';
-    const prefill = buildPlaybookReviewPrefillFromSearchParams(searchParams);
-    replayPlaybookConsumedRef.current = true;
-    void openDetail(row.id, tab, prefill);
-    setSearchParams(stripReplayHandoffParams(searchParams), { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot Trader Replay deep-link
-  }, [loading, setups, searchParams, setSearchParams]);
-
-  useEffect(() => {
     if (!drawer) return undefined;
     const onKey = (e) => {
       if (e.key === 'Escape') setDrawer(null);
@@ -263,6 +243,25 @@ export default function TraderPlaybook() {
     setReviewPrefill(prefill != null ? prefill : null);
     loadDetailData(id);
   };
+
+  useEffect(() => {
+    if (replayPlaybookConsumedRef.current || loading || !setups.length) return;
+    if (!searchParams.get(TR_HANDOFF.origin) && !searchParams.get('replaySessionId')) return;
+    const hint = (searchParams.get('replayHint') || '').trim().toLowerCase();
+    const row = hint
+      ? setups.find((s) => (s.name || '').trim().toLowerCase() === hint)
+      : null;
+    if (!row?.id) {
+      replayPlaybookConsumedRef.current = true;
+      setSearchParams(stripReplayHandoffParams(searchParams), { replace: true });
+      return;
+    }
+    const tab = searchParams.get(TR_HANDOFF.detailTab) === 'review' ? 'review' : 'overview';
+    const prefill = buildPlaybookReviewPrefillFromSearchParams(searchParams);
+    replayPlaybookConsumedRef.current = true;
+    void openDetail(row.id, tab, prefill);
+    setSearchParams(stripReplayHandoffParams(searchParams), { replace: true });
+  }, [loading, setups, searchParams, setSearchParams, openDetail]);
 
   const applyChange = (patch) => setForm((prev) => normalizeSetup({ ...prev, ...patch }));
 

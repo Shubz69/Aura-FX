@@ -17,6 +17,14 @@ export default function MarketPulseGauge({ score = 50, label = 'NEUTRAL', recomm
 
   const badgeClass =
     normalized <= 33 ? 'risk-off' : normalized <= 66 ? 'neutral' : 'risk-on';
+  const volatility =
+    normalized >= 72 ? 'Elevated' : normalized <= 34 ? 'Low' : 'Moderate';
+  const directionalClarity =
+    normalized >= 70 || normalized <= 30 ? 'Defined' : 'Mixed';
+  const riskTone =
+    normalized >= 67 ? 'Risk-on' : normalized <= 33 ? 'Risk-off' : 'Balanced';
+  const posture =
+    normalized >= 67 ? 'Lean with trend' : normalized <= 33 ? 'Defensive' : 'Selective';
 
   return (
     <div className="td-mi-gauge-wrap">
@@ -36,12 +44,18 @@ export default function MarketPulseGauge({ score = 50, label = 'NEUTRAL', recomm
       <div className={`td-mi-gauge-badge td-mi-gauge-badge--${badgeClass}`}>
         {label}
       </div>
+      <div className="td-mi-pulse-snapshot">
+        <p><span>State</span><strong>{label}</strong></p>
+        <p><span>Confidence</span><strong>{normalized}%</strong></p>
+        <p><span>Volatility</span><strong>{volatility}</strong></p>
+        <p><span>Directional Clarity</span><strong>{directionalClarity}</strong></p>
+        <p><span>Risk Tone</span><strong>{riskTone}</strong></p>
+        <p><span>Posture</span><strong>{posture}</strong></p>
+      </div>
       <div className="td-mi-pulse-meta">
-        <p><strong>Market State:</strong> {label}</p>
-        <p><strong>Confidence:</strong> {normalized}%</p>
         {Array.isArray(recommendedAction) && recommendedAction.length > 0 && (
           <>
-            <p><strong>Recommended Action:</strong></p>
+            <p><strong>Action items:</strong></p>
             <ul className="td-mi-bullets">
               {recommendedAction.slice(0, 3).map((line, idx) => (
                 <li key={idx} className="td-mi-bullet-item">{line}</li>

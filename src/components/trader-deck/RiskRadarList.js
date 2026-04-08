@@ -97,25 +97,32 @@ export default function RiskRadarList({ items = [], riskEngine = null, summaryOn
   const parsed = hasList ? items.map(parseItem).slice(0, 8) : [];
   const breakdown = riskEngine?.breakdown || null;
   const levelClass = riskLevelTone(riskEngine?.level);
+  const riskStats = [
+    ['Market Risk Score', Number(riskEngine?.score || 0)],
+    ['Risk Level', riskEngine?.level || 'Moderate'],
+    ['Volatility', breakdown?.volatility ?? '—'],
+    ['Liquidity', breakdown?.liquidity ?? '—'],
+    ['Clustering', breakdown?.clustering ?? '—'],
+    ['Geo Risk', breakdown?.geopoliticalRisk ?? '—'],
+    ['Macro Pressure', breakdown?.eventRisk ?? '—'],
+  ];
 
   return (
     <div className="rr-table-wrap">
       {riskEngine && (
-        <div className="td-mi-pulse-meta td-mi-pulse-meta--risk">
-          <p><strong>Market Risk Score:</strong> {Number(riskEngine.score || 0)}/100</p>
-          <p><strong>Risk Level:</strong> <span className={levelClass}>{riskEngine.level || 'Moderate'}</span></p>
-          {breakdown && (
-            <p>
-              <strong>Risk Pillars:</strong>{' '}
-              Event {breakdown.eventRisk ?? '—'} ·
-              Geopolitical {breakdown.geopoliticalRisk ?? '—'} ·
-              Volatility {breakdown.volatility ?? '—'} ·
-              Liquidity {breakdown.liquidity ?? '—'} ·
-              Clustering {breakdown.clustering ?? '—'}
-            </p>
-          )}
+        <div className="td-mi-pulse-meta td-mi-pulse-meta--risk td-mi-risk-engine-meta">
+          <div className="td-mi-risk-engine-stats">
+            {riskStats.map(([k, v]) => (
+              <p key={k}>
+                <span>{k}</span>
+                <strong className={k === 'Risk Level' ? levelClass : ''}>
+                  {k === 'Market Risk Score' ? `${v}/100` : v}
+                </strong>
+              </p>
+            ))}
+          </div>
           {Number.isFinite(riskEngine.nextRiskEventInMins) && (
-            <p><strong>Next Risk Window:</strong> in {riskEngine.nextRiskEventInMins} mins</p>
+            <p className="td-mi-risk-engine-next"><strong>Next Risk Window:</strong> in {riskEngine.nextRiskEventInMins} mins</p>
           )}
         </div>
       )}

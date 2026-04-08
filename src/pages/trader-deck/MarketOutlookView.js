@@ -430,6 +430,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     return isNaN(d.getTime()) ? selectedDate : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   })();
   const mainTitle = `Market Outlook — ${periodLabel} (${displayDate})`;
+  const hasDeskIntel = !editMode && (aiSessionBrief || (aiTradingPriorities && aiTradingPriorities.length > 0));
 
   return (
     <>
@@ -454,19 +455,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               </div>
             )}
           </header>
-          {!editMode && (aiSessionBrief || (aiTradingPriorities && aiTradingPriorities.length > 0)) && (
-            <section className="td-deck-ai-desk-brief td-deck-mo-ai-brief" aria-label="Live desk intelligence">
-              <p className="td-deck-mo-eyebrow">Live desk intelligence</p>
-              {aiSessionBrief ? <p className="td-deck-ai-brief-body">{aiSessionBrief}</p> : null}
-              {Array.isArray(aiTradingPriorities) && aiTradingPriorities.length > 0 ? (
-                <ol className="td-deck-ai-priorities">
-                  {aiTradingPriorities.map((line, idx) => (
-                    <li key={idx}>{line}</li>
-                  ))}
-                </ol>
-              ) : null}
-            </section>
-          )}
           <div className="td-outlook-dashboard td-outlook-dashboard--unified td-deck-mo-outlook-dash">
             <div className="td-outlook-unified-grid td-deck-mo-bento">
               <DashboardPanel title="▲ Aurax Market Regime" className="td-outlook-panel td-outlook-panel--regime">{renderRegime()}</DashboardPanel>
@@ -492,6 +480,20 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                   )
                 )}
               </DashboardPanel>
+              {hasDeskIntel && (
+                <DashboardPanel title="Headlines / Intelligence Feed" className="td-outlook-panel td-outlook-panel--headlines">
+                  <section className="td-deck-ai-desk-brief td-deck-mo-ai-brief" aria-label="Live desk intelligence">
+                    {aiSessionBrief ? <p className="td-deck-ai-brief-body">{aiSessionBrief}</p> : null}
+                    {Array.isArray(aiTradingPriorities) && aiTradingPriorities.length > 0 ? (
+                      <ol className="td-deck-ai-priorities">
+                        {aiTradingPriorities.map((line, idx) => (
+                          <li key={idx}>{line}</li>
+                        ))}
+                      </ol>
+                    ) : null}
+                  </section>
+                </DashboardPanel>
+              )}
             </div>
           </div>
       </div>
