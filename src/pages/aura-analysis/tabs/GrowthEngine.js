@@ -133,6 +133,8 @@ const GrowthEngineBody = memo(function GrowthEngineBody({ currency }) {
           { label: 'Current Balance', value: fmtBal(cur), cls: '', sub: currency },
           { label: 'Skew (P/L)', value: a.institutional?.distribution ? fmtNum(a.institutional.distribution.skewness, 2) : '—', cls: '', sub: 'sample' },
           { label: 'Kurtosis', value: a.institutional?.distribution ? fmtNum(a.institutional.distribution.excessKurtosis, 2) : '—', cls: '', sub: 'excess' },
+          { label: 'R σ', value: a.totalTrades >= 2 ? fmtNum(a.rStd, 3) : '—', cls: '', sub: 'R multiples' },
+          { label: 'Max win run ($)', value: a.maxConsecWinSum > 0 ? fmtPnl(a.maxConsecWinSum) : '—', cls: 'aa--green', sub: 'Consecutive closes' },
         ].map(({ label, value, cls, sub }) => (
           <div key={label} className="aa-kpi">
             <span className="aa-kpi-label">{label}</span>

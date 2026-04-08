@@ -125,6 +125,7 @@ const EdgeAnalyzerBody = memo(function EdgeAnalyzerBody({ trades }) {
       <div className="aa-grid-4" style={{ marginBottom: 16 }}>
         {[
           { label: 'SQN', value: fmtNum(a.sqn, 2), cls: a.sqn >= 2.5 ? 'aa--green' : '', sub: 'System quality' },
+          { label: 'R σ', value: a.totalTrades >= 2 ? fmtNum(a.rStd, 3) : '—', cls: '', sub: 'R multiples' },
           { label: 'Expectancy R', value: fmtNum(a.expectancyR, 2), cls: pnlCls(a.expectancyR), sub: 'Per 1R' },
           { label: 'Recovery F.', value: a.recoveryFactor > 0 && a.recoveryFactor < 900 ? fmtNum(a.recoveryFactor, 2) : a.recoveryFactor >= 900 ? '∞' : '—', cls: a.recoveryFactor >= 2 ? 'aa--green' : '', sub: 'Net ÷ max DD' },
           { label: 'Largest win % GP', value: a.largestWinPctOfGross > 0 ? fmtPct(a.largestWinPctOfGross) : '—', cls: a.largestWinPctOfGross > 45 ? 'aa--amber' : '', sub: 'Concentration' },

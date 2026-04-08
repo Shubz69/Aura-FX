@@ -17,6 +17,9 @@ import React, {
 } from 'react';
 import Api from '../services/Api';
 import { useAuraConnection } from './AuraConnectionContext';
+import { useAuth } from './AuthContext';
+import { mergeTradeMetadataRow, upsertTradeMetadata } from '../lib/aura-analysis/tradeMetadataStorage';
+import { readFilterPresets, writeFilterPresets } from '../lib/aura-analysis/filterPresetsStorage';
 import {
   computeAnalytics,
   auraAnalysisClosedDataKey,
@@ -39,7 +42,7 @@ const AuraAnalysisContext = createContext(null);
 
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 const LAST_GOOD_STATE_VERSION = 1;
-const LAST_GOOD_ENGINE_VERSION = 'computeAnalytics-v1';
+const LAST_GOOD_ENGINE_VERSION = 'computeAnalytics-v2-propRiskPack';
 const LAST_GOOD_KEY_PREFIX = 'aura_analysis_last_good_dashboard_state_v1';
 
 /** Keep in sync with api/aura-analysis/mtTradeNormalize.js MAX_HISTORY_LOOKBACK_DAYS */
@@ -135,6 +138,8 @@ function AuraAnalysisPerfFlushBridge() {
 }
 
 export function AuraAnalysisProvider({ children }) {
+  const { user } = useAuth();
+  const userId = user?.id != null ? user.id : null;
   const { connections } = useAuraConnection();
   const initialPlatformId = pickDefaultPlatformId(connections);
   const initialLastGood = readLastGoodDashboardState(initialPlatformId);
@@ -174,6 +179,8 @@ export function AuraAnalysisProvider({ children }) {
   const [historyDataSource, setHistoryDataSource] = useState(initialLastGood ? 'last_good' : null);
   const [accountStale, setAccountStale] = useState(!!initialLastGood);
   const [accountDataSource, setAccountDataSource] = useState(initialLastGood ? 'last_good' : null);
+  const [tradeMetaTick, setTradeMetaTick] = useState(0);
+  const [filterPresetTick, setFilterPresetTick] = useState(0);
 
   const isFetching = useRef(false);
   const intervalRef = useRef(null);
@@ -402,13 +409,13 @@ export function AuraAnalysisProvider({ children }) {
   const trades = useMemo(() => {
     const devPerfMemo = isAuraAnalysisDevPerfEnabled() && auraAnalysisDevPerfIsPipelineActive();
     const t0 = devPerfMemo ? performance.now() : 0;
-    let t = rawTrades;
+    let t = rawTrades.map((row) => mergeTradeMetadataRow(userId, activePlatformId, row));
     if (symbolFilter  !== 'ALL') t = t.filter(x => (x.pair || x.symbol) === symbolFilter);
     if (sessionFilter !== 'ALL') t = t.filter(x => x.session === sessionFilter);
     if (dirFilter     !== 'ALL') t = t.filter(x => (x.direction || '').toLowerCase() === dirFilter.toLowerCase());
     if (devPerfMemo) auraAnalysisDevPerfPipelineStageMs('normalize.trades', performance.now() - t0);
     return t;
-  }, [rawTrades, symbolFilter, sessionFilter, dirFilter]);
+  }, [rawTrades, symbolFilter, sessionFilter, dirFilter, userId, activePlatformId, tradeMetaTick]);
 
   const symbolOptions = useMemo(() => {
     const s = new Set(rawTrades.map(t => t.pair || t.symbol).filter(Boolean));
@@ -426,6 +433,48 @@ export function AuraAnalysisProvider({ children }) {
   );
   const filtersAtDefault =
     symbolFilter === 'ALL' && sessionFilter === 'ALL' && dirFilter === 'ALL';
+
+  const filterPresets = useMemo(() => readFilterPresets(userId), [userId, filterPresetTick]);
+
+  const patchTradeMetadata = useCallback((tradeId, patch) => {
+    upsertTradeMetadata(userId, activePlatformId, tradeId, patch);
+    setTradeMetaTick((n) => n + 1);
+  }, [userId, activePlatformId]);
+
+  const saveCurrentFilterPreset = useCallback((name) => {
+    const label = String(name || '').trim();
+    if (!label) return;
+    const existing = readFilterPresets(userId).filter((p) => p.name !== label);
+    existing.push({
+      name: label,
+      symbolFilter,
+      sessionFilter,
+      dirFilter,
+      daysFilter,
+      customRange: customRange ? { from: customRange.from, to: customRange.to } : null,
+    });
+    writeFilterPresets(userId, existing);
+    setFilterPresetTick((n) => n + 1);
+  }, [userId, symbolFilter, sessionFilter, dirFilter, daysFilter, customRange]);
+
+  const applyFilterPreset = useCallback((preset) => {
+    if (!preset || typeof preset !== 'object') return;
+    setSymbolFilter(preset.symbolFilter || 'ALL');
+    setSessionFilter(preset.sessionFilter || 'ALL');
+    setDirFilter(preset.dirFilter || 'ALL');
+    if (preset.customRange?.from && preset.customRange?.to) {
+      setCustomRange({ from: preset.customRange.from, to: preset.customRange.to });
+    } else if (preset.daysFilter != null && !Number.isNaN(Number(preset.daysFilter))) {
+      setCustomRange(null);
+      setDaysFilter(Number(preset.daysFilter));
+    }
+  }, []);
+
+  const removeFilterPreset = useCallback((name) => {
+    const next = readFilterPresets(userId).filter((p) => p.name !== name);
+    writeFilterPresets(userId, next);
+    setFilterPresetTick((n) => n + 1);
+  }, [userId]);
 
   const [analytics, setAnalytics] = useState(() => initialLastGood?.analytics || emptyAnalytics(initialLastGood?.account || null));
   const [analyticsFlushTick, setAnalyticsFlushTick] = useState(0);
@@ -534,6 +583,11 @@ export function AuraAnalysisProvider({ children }) {
       setDirFilter,
       symbolOptions,
       dateRangeOptions: DATE_RANGE_OPTIONS,
+      filterPresets,
+      saveCurrentFilterPreset,
+      applyFilterPreset,
+      removeFilterPreset,
+      patchTradeMetadata,
       loading,
       error,
       refreshing,
@@ -557,6 +611,11 @@ export function AuraAnalysisProvider({ children }) {
       sessionFilter,
       dirFilter,
       symbolOptions,
+      filterPresets,
+      saveCurrentFilterPreset,
+      applyFilterPreset,
+      removeFilterPreset,
+      patchTradeMetadata,
       loading,
       error,
       refreshing,

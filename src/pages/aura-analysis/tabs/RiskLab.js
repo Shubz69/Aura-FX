@@ -105,6 +105,37 @@ const RiskLabContent = memo(function RiskLabContent() {
         <AuraDrawdownAreaChart curve={a.drawdownCurve} height={136} title="Drawdown over time (%)" />
       </div>
 
+      {a.totalTrades > 0 && a.propRiskPack && (
+        <div className="aa-card" style={{ marginBottom: 16 }}>
+          <div className="aa-section-title">Prop-style risk lens</div>
+          <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.38)', margin: '0 0 12px', lineHeight: 1.5 }}>
+            Worst-day and rolling windows use <strong>trading days that had fills</strong> in this filter (not full calendar blanks).
+            Compare to your firm’s daily loss limit.
+          </p>
+          <div className="aa-grid-4">
+            {[
+              { label: 'Worst day P/L', value: a.propRiskPack.worstDayKey != null ? fmtPnl(a.propRiskPack.worstDayPnl) : '—', sub: a.propRiskPack.worstDayKey || '' },
+              { label: 'Best day P/L', value: a.propRiskPack.bestDayKey != null ? fmtPnl(a.propRiskPack.bestDayPnl) : '—', sub: a.propRiskPack.bestDayKey || '' },
+              { label: 'Worst 5-day roll', value: a.propRiskPack.worstRolling5TradingDaysPnl != null ? fmtPnl(a.propRiskPack.worstRolling5TradingDaysPnl) : '—', sub: 'Trading days' },
+              { label: 'Worst 7-day roll', value: a.propRiskPack.worstRolling7TradingDaysPnl != null ? fmtPnl(a.propRiskPack.worstRolling7TradingDaysPnl) : '—', sub: 'Trading days' },
+              { label: 'Max red days row', value: String(a.propRiskPack.maxConsecutiveRedDays), sub: 'Consecutive loss days' },
+              {
+                label: 'Recover after max DD',
+                value: a.propRiskPack.recoveryTradesAfterWorstDd != null ? `${a.propRiskPack.recoveryTradesAfterWorstDd} trades` : '—',
+                sub: 'To new equity peak',
+              },
+              { label: 'Trading days N', value: String(a.propRiskPack.tradingDaysObserved), sub: 'In range' },
+            ].map(({ label, value, sub }) => (
+              <div key={label} className="aa-kpi">
+                <span className="aa-kpi-label">{label}</span>
+                <span className="aa-kpi-value">{value}</span>
+                {sub && <span className="aa-kpi-sub">{sub}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="aa-grid-3" style={{ marginBottom: 16 }}>
         <div className="aa-card">
           <div className="aa-section-title">Drawdown Metrics</div>
@@ -143,6 +174,7 @@ const RiskLabContent = memo(function RiskLabContent() {
             { label: 'Recovery factor', value: a.recoveryFactor > 0 && a.recoveryFactor < 900 ? fmtNum(a.recoveryFactor, 2) : a.recoveryFactor >= 900 ? '∞' : '—', color: a.recoveryFactor >= 2 ? '#f8c37d' : 'rgba(255,255,255,0.65)' },
             { label: 'Calmar (est.)', value: a.calmarRatio > 0 ? fmtNum(a.calmarRatio, 2) : '—', color: 'rgba(255,255,255,0.65)' },
             { label: 'Max consec. loss $', value: a.maxConsecLossSum > 0 ? '-$' + fmtNum(a.maxConsecLossSum) : '—', color: '#c49b7c' },
+            { label: 'Max consec. win $', value: a.maxConsecWinSum > 0 ? fmtPnl(a.maxConsecWinSum) : '—', color: '#f8c37d' },
             { label: 'Largest loss % of GL', value: a.largestLossPctOfGross > 0 ? fmtPct(a.largestLossPctOfGross) : '—', color: a.largestLossPctOfGross > 40 ? '#c9a05c' : 'rgba(255,255,255,0.65)' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
@@ -164,6 +196,29 @@ const RiskLabContent = memo(function RiskLabContent() {
           ) : (
             <div className="aa-skeleton aa-skeleton-chart" style={{ height: 96 }} aria-hidden />
           )}
+          {a.institutional?.distribution?.pnlQuantiles && a.totalTrades > 0 && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>P/L quantiles (sample)</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+                {[
+                  { k: 'p1', lab: 'P1' },
+                  { k: 'p5', lab: 'P5' },
+                  { k: 'p50', lab: 'P50' },
+                  { k: 'p95', lab: 'P95' },
+                  { k: 'p99', lab: 'P99' },
+                ].map(({ k, lab }) => {
+                  const raw = a.institutional.distribution.pnlQuantiles[k];
+                  const show = raw != null && Number.isFinite(Number(raw)) ? fmtPnl(Number(raw)) : '—';
+                  return (
+                    <div key={k} style={{ textAlign: 'center', padding: '8px 4px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)' }}>{lab}</div>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#f8c37d', marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>{show}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <RiskBar label="SL Coverage" value={a.pctWithSL} max={100} color={a.pctWithSL < 70 ? '#c9a05c' : '#f8c37d'} fmt={riskBarFmtPct} />
           <RiskBar label="TP Coverage" value={a.pctWithTP} max={100} color="#eaa960" fmt={riskBarFmtPct} />
           {deferHeavy && a.institutional?.riskEngine?.monteCarlo?.ruinProbApprox != null && (
@@ -171,6 +226,20 @@ const RiskLabContent = memo(function RiskLabContent() {
               <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>MC risk-of-ruin (bootstrap)</div>
               <div style={{ fontSize: '0.9rem', fontWeight: 700, color: a.institutional.riskEngine.monteCarlo.ruinProbApprox > 0.2 ? '#9a8f84' : '#f8c37d' }}>{fmtPct(a.institutional.riskEngine.monteCarlo.ruinProbApprox * 100, 1)}</div>
               <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>Share of paths breaching 50% draw from start — {a.institutional.riskEngine.monteCarlo.runs} runs</div>
+            </div>
+          )}
+          {a.institutional?.riskEngine?.riskOfRuinParametric && a.totalTrades > 0 && (
+            <div style={{ marginTop: 12, padding: '10px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}>
+              <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Parametric ruin (2-outcome bound)</div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#c9a05c', fontVariantNumeric: 'tabular-nums' }}>
+                {fmtPct(Math.min(1, Math.max(0, a.institutional.riskEngine.riskOfRuinParametric.prob ?? 0)) * 100, 1)}
+              </div>
+              <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
+                Edge / risk unit: <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>{fmtNum(a.institutional.riskEngine.riskOfRuinParametric.edgePerTrade ?? 0, 4)}</span>
+              </div>
+              <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.32)', marginTop: 6, lineHeight: 1.45 }}>
+                {a.institutional.riskEngine.riskOfRuinParametric.assumptions || 'Simplified bound — compare with Monte Carlo above.'}
+              </div>
             </div>
           )}
           {deferHeavy && a.institutional?.riskEngine?.monteCarlo?.ruinProbApprox == null && rorPct != null && (

@@ -4,6 +4,7 @@
  */
 
 import { buildInstitutionalMetrics, emptyInstitutionalMetrics } from './analytics/institutionalMetrics';
+import { computePropRiskPack } from './propRiskPack';
 import { runMonteCarloOffMainThread } from './monteCarloRunner';
 import { institutionalInputFingerprint } from './institutionalInputFingerprint';
 import {
@@ -618,6 +619,8 @@ async function computeAnalyticsImpl(trades = [], account = null) {
     });
   }
 
+  const propRiskPack = computePropRiskPack({ byDay, equityCurve, drawdownCurve });
+
   return {
     totalTrades: sorted.length,
     openPositionsCount: openPositions.length,
@@ -662,6 +665,7 @@ async function computeAnalyticsImpl(trades = [], account = null) {
     behaviorVolatilityScore,
     institutionalInputFingerprint: institutionalFp,
     institutional,
+    propRiskPack,
   };
 }
 
@@ -939,5 +943,17 @@ export function emptyAnalytics(account) {
     behaviorVolatilityScore: 0,
     institutionalInputFingerprint: '',
     institutional: emptyInstitutionalMetrics(),
+    propRiskPack: {
+      tradingDaysObserved: 0,
+      worstDayPnl: 0,
+      worstDayKey: null,
+      bestDayPnl: 0,
+      bestDayKey: null,
+      worstRolling5TradingDaysPnl: null,
+      worstRolling5TradingDaysEnd: null,
+      worstRolling7TradingDaysPnl: null,
+      maxConsecutiveRedDays: 0,
+      recoveryTradesAfterWorstDd: null,
+    },
   };
 }

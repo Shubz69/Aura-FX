@@ -21,6 +21,7 @@ const TABS = [
   { path: 'execution-lab', label: 'Execution Lab' },
   { path: 'calendar',      label: 'Calendar' },
   { path: 'psychology',    label: 'Psychology' },
+  { path: 'habits',        label: 'Habits' },
   { path: 'growth',        label: 'Growth' },
   { path: 'trader-replay', label: 'Trader Replay' },
 ];
@@ -35,11 +36,16 @@ function ymdLocal(d) {
   return `${y}-${m}-${day}`;
 }
 
+const SESSION_FILTER_OPTIONS = ['ALL', 'Asian', 'London', 'New York', 'NY Close', 'Unknown'];
+
 function AuraFilterBar() {
   const {
     daysFilter, setDaysFilter,
     customRange, setCustomRange,
     symbolFilter, setSymbolFilter, symbolOptions,
+    sessionFilter, setSessionFilter,
+    dirFilter, setDirFilter,
+    filterPresets, saveCurrentFilterPreset, applyFilterPreset, removeFilterPreset,
     refreshing, lastUpdatedStr, refresh,
     activePlatformId, connections, setActivePlatformId,
   } = useAuraAnalysisData();
@@ -47,6 +53,7 @@ function AuraFilterBar() {
   const [customOpen, setCustomOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState('');
   const [draftTo, setDraftTo] = useState('');
+  const [presetDraft, setPresetDraft] = useState('');
   const customWrapRef = useRef(null);
 
   useEffect(() => {
@@ -177,6 +184,83 @@ function AuraFilterBar() {
             ))}
           </select>
         )}
+
+        <select
+          className="aura-db-filter-select"
+          value={sessionFilter}
+          onChange={(e) => setSessionFilter(e.target.value)}
+          title="Filter by session (UTC)"
+        >
+          {SESSION_FILTER_OPTIONS.map((s) => (
+            <option key={s} value={s}>{s === 'ALL' ? 'Session · All' : s}</option>
+          ))}
+        </select>
+
+        <select
+          className="aura-db-filter-select"
+          value={dirFilter}
+          onChange={(e) => setDirFilter(e.target.value)}
+          title="Filter by direction"
+        >
+          <option value="ALL">Dir · All</option>
+          <option value="buy">Long</option>
+          <option value="sell">Short</option>
+        </select>
+
+        {filterPresets?.length > 0 && (
+          <select
+            className="aura-db-filter-select"
+            defaultValue=""
+            onChange={(e) => {
+              const name = e.target.value;
+              if (!name) return;
+              const p = filterPresets.find((x) => x.name === name);
+              if (p) applyFilterPreset(p);
+              e.target.value = '';
+            }}
+            title="Apply saved filter view"
+          >
+            <option value="">Saved views…</option>
+            {filterPresets.map((p) => (
+              <option key={p.name} value={p.name}>{p.name}</option>
+            ))}
+          </select>
+        )}
+
+        <div className="aura-db-filter-preset-save" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <input
+            type="text"
+            className="aura-db-filter-select"
+            style={{ width: 120, maxWidth: '28vw' }}
+            placeholder="Save view as…"
+            value={presetDraft}
+            onChange={(e) => setPresetDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                saveCurrentFilterPreset(presetDraft);
+                setPresetDraft('');
+              }
+            }}
+            title="Enter a name and press Enter to save current filters + date range"
+          />
+          {filterPresets?.length > 0 && (
+            <select
+              className="aura-db-filter-select"
+              defaultValue=""
+              onChange={(e) => {
+                const name = e.target.value;
+                if (name) removeFilterPreset(name);
+                e.target.value = '';
+              }}
+              title="Delete a saved view"
+            >
+              <option value="">Delete view…</option>
+              {filterPresets.map((p) => (
+                <option key={`del-${p.name}`} value={p.name}>{p.name}</option>
+              ))}
+            </select>
+          )}
+        </div>
 
         {/* Refresh + last-updated */}
         <div className="aura-db-refresh-group">

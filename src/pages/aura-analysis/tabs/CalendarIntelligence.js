@@ -71,17 +71,19 @@ const CalendarIntelligenceMain = memo(function CalendarIntelligenceMain() {
         ))}
       </div>
 
-      <div className="aa-grid-4" style={{ marginBottom: 16 }}>
+      <div className="aa-grid-5" style={{ marginBottom: 16 }}>
         {(() => {
           const dayKeys = Object.keys(a.byDay || {});
           const profDays = dayKeys.filter(k => (a.byDay[k]?.pnl ?? 0) > 0).length;
           const lossDays = dayKeys.filter(k => (a.byDay[k]?.pnl ?? 0) < 0).length;
           const denom = profDays + lossDays;
+          const hourSig = a.institutional?.marketContext?.performanceVsSessionVolatility?.hourPnlDispersion;
           return [
             { label: 'CAGR (est.)', value: a.periodYears > 0.05 ? fmtPct(a.cagrPct) : '—', cls: a.cagrPct >= 0 ? 'aa--green' : 'aa--red' },
             { label: 'Calmar', value: a.calmarRatio > 0 ? fmtNum(a.calmarRatio, 2) : '—', cls: a.calmarRatio >= 1 ? 'aa--green' : '' },
             { label: 'Green day rate', value: denom > 0 ? fmtPct((profDays / denom) * 100) : '—', cls: denom > 0 && profDays >= lossDays ? 'aa--green' : 'aa--red', sub: 'Days + vs −' },
             { label: 'Period range', value: a.periodYears > 0 ? `${fmtNum(a.periodYears, 2)} yrs` : '—', cls: '', sub: 'First→last trade' },
+            { label: 'Hour P/L σ', value: hourSig != null && Number.isFinite(Number(hourSig)) ? fmtNum(hourSig, 2) : '—', cls: '', sub: 'UTC hour slots' },
           ].map(({ label, value, cls, sub }) => (
             <div key={label} className="aa-kpi">
               <span className="aa-kpi-label">{label}</span>

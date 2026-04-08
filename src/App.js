@@ -91,6 +91,7 @@ const AuraEdgeAnalyzer = lazy(() => import('./pages/aura-analysis/tabs/EdgeAnaly
 const AuraExecutionLab = lazy(() => import('./pages/aura-analysis/tabs/ExecutionLab'));
 const AuraCalendar = lazy(() => import('./pages/aura-analysis/tabs/CalendarIntelligence'));
 const AuraPsychology = lazy(() => import('./pages/aura-analysis/tabs/PsychologyDiscipline'));
+const AuraHabitsReport = lazy(() => import('./pages/aura-analysis/tabs/HabitsReport'));
 const AuraGrowth = lazy(() => import('./pages/aura-analysis/tabs/GrowthEngine'));
 const AuraAnalysisPlaceholder = lazy(() => import('./pages/aura-analysis/AuraAnalysisPlaceholder'));
 const TradeCalculator = lazy(() => import('./pages/aura-analysis/TradeCalculator'));
@@ -358,6 +359,7 @@ function AppRoutes() {
                                 <Route path="execution-lab" element={<AuraExecutionLab />} />
                                 <Route path="calendar" element={<AuraCalendar />} />
                                 <Route path="psychology" element={<AuraPsychology />} />
+                                <Route path="habits" element={<AuraHabitsReport />} />
                                 <Route path="growth" element={<AuraGrowth />} />
                                 <Route path="trader-replay" element={<TraderReplay />} />
                             </Route>

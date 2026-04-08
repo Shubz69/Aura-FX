@@ -184,6 +184,8 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
           { label: 'Ret / DD', value: a.returnToMaxDrawdown > 0 ? fmtNum(a.returnToMaxDrawdown, 2) : '—', cls: '', sub: 'Total % ÷ max DD%' },
           { label: 'Skew', value: a.institutional?.distribution ? fmtNum(a.institutional.distribution.skewness, 2) : '—', cls: '', sub: 'P/L' },
           { label: 'Kurtosis', value: a.institutional?.distribution ? fmtNum(a.institutional.distribution.excessKurtosis, 2) : '—', cls: '', sub: 'excess' },
+          { label: 'R σ', value: a.totalTrades >= 2 ? fmtNum(a.rStd, 3) : '—', cls: '', sub: 'R multiples' },
+          { label: 'Max win run ($)', value: a.maxConsecWinSum > 0 ? fmtPnl(a.maxConsecWinSum) : '—', cls: 'aa--green', sub: 'Consecutive closes' },
         ].map(({ label, value, sub, cls }) => (
           <div key={label} className="aa-kpi">
             <span className="aa-kpi-label">{label}</span>
@@ -192,6 +194,31 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
           </div>
         ))}
       </div>
+
+      {a.institutional?.distribution?.pnlQuantiles && a.totalTrades > 0 && (
+        <div className="aa-card" style={{ marginBottom: 16 }}>
+          <div className="aa-section-title">Realized P/L quantiles</div>
+          <div className="aa-grid-5">
+            {[
+              { k: 'p1', label: 'P1' },
+              { k: 'p5', label: 'P5' },
+              { k: 'p50', label: 'P50' },
+              { k: 'p95', label: 'P95' },
+              { k: 'p99', label: 'P99' },
+            ].map(({ k, label }) => {
+              const raw = a.institutional.distribution.pnlQuantiles[k];
+              const v = raw != null && Number.isFinite(Number(raw)) ? fmtPnl(Number(raw)) : '—';
+              return (
+                <div key={k} className="aa-kpi">
+                  <span className="aa-kpi-label">{label}</span>
+                  <span className="aa-kpi-value">{v}</span>
+                  <span className="aa-kpi-sub">Per trade $</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="aa-grid-2" style={{ marginBottom: 16 }}>
         <div>

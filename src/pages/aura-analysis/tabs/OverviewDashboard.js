@@ -4,6 +4,7 @@ import { useAuraAnalysisData, useAuraAnalysisMetrics } from '../../../context/Au
 import { useReplayContributionProfile } from '../../../hooks/useReplayContributionProfile';
 import { fmtPnl, fmtPct, fmtNum, fmtDuration } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
+import AuraDnaOverviewCard from '../../../components/aura-analysis/AuraDnaOverviewCard';
 import {
   AuraEquityAreaChart,
   AuraDrawdownAreaChart,
@@ -193,6 +194,8 @@ export default function OverviewDashboard() {
         </div>
       )}
 
+      <AuraDnaOverviewCard />
+
       {/* ── KPI grid (8 cards) ── */}
       <div className="aa-grid-4" style={{ marginBottom: 12 }}>
         {[
@@ -224,6 +227,23 @@ export default function OverviewDashboard() {
             { label: 'Sharpe (trade)', value: a.sharpeLike !== 0 ? fmtNum(a.sharpeLike, 2) : '—', cls: '', sub: 'Mean ÷ σ P/L' },
             { label: 'Sortino (trade)', value: a.sortinoLike !== 0 ? fmtNum(a.sortinoLike, 2) : '—', cls: '', sub: 'Mean ÷ downside σ' },
             { label: 'Full Kelly (est.)', value: a.kellyOptimalFraction !== 0 ? fmtPct(Math.abs(a.kellyOptimalFraction) * 100, 1) : '—', cls: Math.abs(a.kellyOptimalFraction) > 0.2 ? 'aa--amber' : 'aa--muted', sub: 'Theoretical max / trade' },
+          ].map(({ label, value, sub, cls }) => (
+            <div key={label} className="aa-kpi">
+              <span className="aa-kpi-label">{label}</span>
+              <span className={`aa-kpi-value ${cls || ''}`}>{value}</span>
+              {sub && <span className="aa-kpi-sub">{sub}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {a.totalTrades > 0 && (
+        <div className="aa-grid-4" style={{ marginBottom: 16 }}>
+          {[
+            { label: 'R σ (multiples)', value: a.totalTrades >= 2 ? fmtNum(a.rStd, 3) : '—', cls: '', sub: 'R-multiple dispersion' },
+            { label: 'Max win run ($)', value: a.maxConsecWinSum > 0 ? fmtPnl(a.maxConsecWinSum) : '—', cls: 'aa--green', sub: 'Consecutive closes' },
+            { label: 'CAGR (est.)', value: a.periodYears > 0.05 ? fmtPct(a.cagrPct) : '—', cls: a.cagrPct >= 0 ? 'aa--green' : 'aa--red', sub: 'From trade span' },
+            { label: 'Ret / DD', value: a.returnToMaxDrawdown > 0 ? fmtNum(a.returnToMaxDrawdown, 2) : '—', cls: '', sub: 'Total % ÷ max DD%' },
           ].map(({ label, value, sub, cls }) => (
             <div key={label} className="aa-kpi">
               <span className="aa-kpi-label">{label}</span>

@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuraAnalysisData, useAuraAnalysisMetrics } from '../../../context/AuraAnalysisContext';
 import { useReplayContributionProfile } from '../../../hooks/useReplayContributionProfile';
-import { fmtPct, fmtNum, fmtDuration } from '../../../lib/aura-analysis/analytics';
+import { fmtPnl, fmtPct, fmtNum, fmtDuration } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import ReplayNarrativeBridgePanel from '../../../components/aura-analysis/ReplayNarrativeBridgePanel';
 import { AuraPnlHistogram, AuraHourOfDayStrip, AuraWeekdayHourHeatmap } from '../../../components/aura-analysis/AuraPerformanceCharts';
@@ -101,6 +101,7 @@ const PsychologyDisciplineMain = memo(function PsychologyDisciplineMain() {
           { label: 'Lot CV (consistency)', value: a.lotSizeCv > 0 ? fmtNum(a.lotSizeCv, 2) : '—', cls: a.lotSizeCv > 0.45 ? 'aa--amber' : '', sub: 'Lower = calmer sizing' },
           { label: 'Oversized trades', value: String(a.oversizedTradeCount), cls: a.oversizedTradeCount > 0 ? 'aa--amber' : '', sub: '&gt; μ + 2σ lots' },
           { label: 'Max loss run ($)', value: a.maxConsecLossSum > 0 ? '-$' + fmtNum(a.maxConsecLossSum) : '—', cls: 'aa--red', sub: 'Consecutive closes' },
+          { label: 'Max win run ($)', value: a.maxConsecWinSum > 0 ? fmtPnl(a.maxConsecWinSum) : '—', cls: 'aa--green', sub: 'Consecutive closes' },
           { label: 'Win / loss hold', value: a.avgWinDurationMs > 0 && a.avgLossDurationMs > 0 ? fmtDuration(a.avgWinDurationMs) + ' / ' + fmtDuration(a.avgLossDurationMs) : '—', cls: a.avgLossDurationMs > a.avgWinDurationMs * 1.25 ? 'aa--amber' : '', sub: 'Avg duration' },
           { label: 'Largest win % GP', value: a.largestWinPctOfGross > 0 ? fmtPct(a.largestWinPctOfGross) : '—', cls: a.largestWinPctOfGross > 45 ? 'aa--amber' : '', sub: 'Hope vs process' },
           { label: 'Concentration', value: fmtPct(a.topSymbolConcentrationPct), cls: a.topSymbolConcentrationPct > 55 ? 'aa--amber' : '', sub: 'Trades in top symbol' },

@@ -10,7 +10,7 @@ const MAX_ENTRIES = 20;
  * Bump when computeAnalytics output shape/semantics change for the same fingerprint
  * (invalidates stored rows without matching engineVersion).
  */
-const ANALYTICS_PRESET_ENGINE_VERSION = 1;
+const ANALYTICS_PRESET_ENGINE_VERSION = 2;
 
 /** Day windows aligned with AuraAnalysisContext DATE_RANGE_OPTIONS + ALL. */
 const PRESET_DAY_WINDOWS = [1, 7, 30, 90, 180, 365, 3650];

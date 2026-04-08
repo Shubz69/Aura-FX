@@ -166,11 +166,21 @@ const ExecutionLabBody = memo(function ExecutionLabBody({ trades }) {
           <MetricRow label="Missed profit (avg)" value={eq?.missedProfitPctAvg != null ? fmtPct(eq.missedProfitPctAvg) : '—'} color="#c9a05c" sub="Winners: vs peak MFE" />
           <MetricRow label="Avoidable drawdown (avg)" value={eq?.avoidableDrawdownPctAvg != null ? fmtPct(eq.avoidableDrawdownPctAvg) : '—'} color="#c9a05c" sub="Path-based heat" />
           <MetricRow label="Premature exit rate" value={eq?.prematureExitRate != null ? fmtPct(eq.prematureExitRate) : '—'} color="#c9a05c" sub={eq?.prematureExitRatePath != null ? 'MFE path' : 'TP / geometry'} />
+          {eq?.prematureExitRatePath != null && eq?.prematureExitRateProxy != null && (
+            <MetricRow label="Premature exit (TP proxy)" value={fmtPct(eq.prematureExitRateProxy)} color="#9a8f84" sub="Side-by-side with MFE path" />
+          )}
           <MetricRow label="Overstayed (wins)" value={eq?.overstayedTradeRate != null ? fmtPct(eq.overstayedTradeRate) : '—'} color="#c9a05c" sub="Deep MAE vs MFE" />
           <MetricRow label="RR capture ratio" value={eq?.rrCaptureRatioAvg != null ? fmtNum(eq.rrCaptureRatioAvg, 2) + '×' : '—'} color="#f8c37d" sub="Realized ÷ available R" />
           <MetricRow label="Realized R (avg)" value={eq?.realizedRRAvg != null ? fmtNum(eq.realizedRRAvg, 2) : '—'} color="rgba(255,255,255,0.75)" sub="Per trade vs avg loss unit" />
           <MetricRow label="Available R (avg)" value={eq?.availableRRAvg != null ? fmtNum(eq.availableRRAvg, 2) : '—'} color="rgba(255,255,255,0.75)" sub="MFE ÷ R unit" />
-          <MetricRow label="MFE coverage" value={eq?.mfeMaeTradeCoverage ? `${eq.mfeMaeTradeCoverage.mfe}/${eq.mfeMaeTradeCoverage.total} trades` : '—'} color="rgba(255,255,255,0.5)" sub="Rows with path data" />
+          <MetricRow
+            label="MFE / MAE coverage"
+            value={eq?.mfeMaeTradeCoverage ? `${eq.mfeMaeTradeCoverage.mfe} MFE · ${eq.mfeMaeTradeCoverage.mae} MAE · ${eq.mfeMaeTradeCoverage.total} trades` : '—'}
+            color="rgba(255,255,255,0.5)"
+            sub="Rows with excursion data"
+          />
+          <MetricRow label="Avg MFE ($)" value={eq?.mfeAvg != null && Number.isFinite(eq.mfeAvg) ? fmtPnl(eq.mfeAvg) : '—'} color="#eaa960" sub="Mean favorable excursion" />
+          <MetricRow label="Avg MAE ($)" value={eq?.maeAvg != null && Number.isFinite(eq.maeAvg) ? fmtPnl(-Math.abs(eq.maeAvg)) : '—'} color="#c9a05c" sub="Mean adverse excursion" />
         </div>
 
         <div className="aa-card">
