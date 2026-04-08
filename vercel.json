@@ -799,7 +799,7 @@
     },
     {
       "path": "/api/cron/auto-market-briefs",
-      "schedule": "*/15 * * * *"
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/cron/auto-monthly-reports",

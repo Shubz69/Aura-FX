@@ -2354,10 +2354,10 @@ function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' 
   const hh = Number(map.hour);
   const mm = Number(map.minute);
   const wd = String(map.weekday || '').toLowerCase();
-  /** Daily brief set: every weekday at 00:00 UK. */
+  /** Daily brief set: every weekday at 00:00 UK (tight window for deterministic midnight generation). */
   if (normalizedPeriod === 'daily') {
     const isWeekday = ['mon', 'tue', 'wed', 'thu', 'fri'].some((x) => wd.startsWith(x));
-    return isWeekday && hh === 0 && mm < 20;
+    return isWeekday && hh === 0 && mm < 6;
   }
   /** Weekly brief set: Sunday 18:00-18:14 UK (aligns with weekly storage date). */
   return wd.startsWith('sun') && hh === 18 && mm < 15;
