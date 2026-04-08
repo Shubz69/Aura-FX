@@ -1,50 +1,22 @@
 /**
- * Idempotent schema for monthly_reports: two phases per calendar month (opener + close).
+ * Read-only schema guard for monthly_reports index state.
+ * This must never mutate schema during request handling.
  */
 async function ensureReportSchema(executeQuery) {
-  await executeQuery(`
-    CREATE TABLE IF NOT EXISTS monthly_reports (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id INT NOT NULL,
-      period_year INT NOT NULL,
-      period_month INT NOT NULL,
-      report_type VARCHAR(20) NOT NULL COMMENT 'free|premium|elite|admin',
-      status VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT 'pending|generating|ready|failed',
-      content_json LONGTEXT,
-      generated_at TIMESTAMP NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      INDEX idx_user_id (user_id),
-      INDEX idx_status (status)
-    )
-  `).catch(() => {});
+  const [indexRows] = await executeQuery(
+    `SELECT INDEX_NAME
+       FROM information_schema.STATISTICS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'monthly_reports'
+        AND INDEX_NAME IN ('uq_user_period', 'uq_user_period_phase')
+      GROUP BY INDEX_NAME`
+  ).catch(() => [[]]);
 
-  try {
-    await executeQuery(
-      `ALTER TABLE monthly_reports ADD COLUMN report_phase VARCHAR(24) NOT NULL DEFAULT 'month_close'`
-    );
-  } catch (e) {
-    if (!/Duplicate column name/i.test(String(e.message))) throw e;
-  }
-
-  await executeQuery(
-    `UPDATE monthly_reports SET report_phase = 'month_close' WHERE report_phase IS NULL OR report_phase = ''`
-  ).catch(() => {});
-
-  try {
-    await executeQuery(`ALTER TABLE monthly_reports DROP INDEX uq_user_period`);
-  } catch (e) {
-    if (!/check that column/i.test(String(e.message)) && !/Can't DROP/i.test(String(e.message))) {
-      /* ignore missing index */
-    }
-  }
-
-  try {
-    await executeQuery(
-      `ALTER TABLE monthly_reports ADD UNIQUE KEY uq_user_period_phase (user_id, period_year, period_month, report_phase)`
-    );
-  } catch (e) {
-    if (!/Duplicate key name/i.test(String(e.message))) throw e;
-  }
+  const indexNames = new Set((indexRows || []).map((row) => String(row.INDEX_NAME || row.index_name || '')));
+  return {
+    hasLegacyUserPeriodIndex: indexNames.has('uq_user_period'),
+    hasPhaseAwareUniqueIndex: indexNames.has('uq_user_period_phase'),
+  };
 }
 
 module.exports = { ensureReportSchema };

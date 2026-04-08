@@ -14,7 +14,7 @@ const { hasMtBridgeCredentials } = require('./mtSyncProvider');
 const { performMt5Operation } = require('./mtSyncService');
 const { setAuraCorsHeaders, safeJsonParse } = require('./cors');
 const { upsertTradeCacheRows, loadCachedTradesForRange } = require('./auraPlatformTradeCache');
-const { ensurePlatformConnectionsColumns } = require('./platformConnectionMeta');
+const { listPlatformConnectionColumns, selectOrNull } = require('./platformConnectionMeta');
 const {
   scheduleMt5BridgeBackgroundSync,
   schedulePresetWarmAfterDbSync,
@@ -437,11 +437,7 @@ module.exports = async (req, res) => {
     || liveQ === 'true'
     || String(req.query?.refresh || '').toLowerCase() === 'live';
 
-  try {
-    await ensurePlatformConnectionsColumns(executeQuery);
-  } catch (e) {
-    console.error('platform-history column migrate:', e.message);
-  }
+  const existingColumns = await listPlatformConnectionColumns(executeQuery).catch(() => new Set());
 
   const parsedRange = parseUtcDateRangeQuery(fromQ, toQ);
   if (!parsedRange.ok) return res.status(400).json({ success: false, error: parsedRange.error });
@@ -453,7 +449,10 @@ module.exports = async (req, res) => {
   }
 
   const [rows] = await executeQuery(
-    `SELECT credentials_enc, account_info, analytics_presets_json, mt_sync_state_json
+    `SELECT ${selectOrNull(existingColumns, 'credentials_enc')},
+            ${selectOrNull(existingColumns, 'account_info')},
+            ${selectOrNull(existingColumns, 'analytics_presets_json')},
+            ${selectOrNull(existingColumns, 'mt_sync_state_json')}
      FROM aura_platform_connections
      WHERE user_id = ? AND platform_id = ? AND status IN ('active', 'connected', 'error')`,
     [decoded.id, platformId],

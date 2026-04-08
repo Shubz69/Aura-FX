@@ -9,7 +9,7 @@ const crypto = require('crypto');
 const https = require('https');
 const { hasMtBridgeCredentials } = require('./mtSyncProvider');
 const { performMt5Operation } = require('./mtSyncService');
-const { ensurePlatformConnectionsColumns, patchConnectionRow } = require('./platformConnectionMeta');
+const { listPlatformConnectionColumns, selectOrNull, patchConnectionRow } = require('./platformConnectionMeta');
 const { setAuraCorsHeaders, safeJsonParse } = require('./cors');
 const { publicAccountLiveError, safeMtLog, isAuraDiagnosticsEnabled } = require('./auraProductionUtils');
 const {
@@ -202,14 +202,14 @@ module.exports = async (req, res) => {
     || liveQ === 'true'
     || String(req.query?.refresh || '').toLowerCase() === 'live';
 
-  try {
-    await ensurePlatformConnectionsColumns(executeQuery);
-  } catch (e) {
-    console.error('platform-account column migrate:', e.message);
-  }
+  const existingColumns = await listPlatformConnectionColumns(executeQuery).catch(() => new Set());
 
   const [rows] = await executeQuery(
-    `SELECT credentials_enc, account_info, last_success_at, last_sync_at, last_sync
+    `SELECT ${selectOrNull(existingColumns, 'credentials_enc')},
+            ${selectOrNull(existingColumns, 'account_info')},
+            ${selectOrNull(existingColumns, 'last_success_at')},
+            ${selectOrNull(existingColumns, 'last_sync_at')},
+            ${selectOrNull(existingColumns, 'last_sync')}
      FROM aura_platform_connections
      WHERE user_id = ? AND platform_id = ? AND status IN ('active', 'connected', 'error')`,
     [decoded.id, platformId],

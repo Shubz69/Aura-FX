@@ -30,6 +30,21 @@ async function ensurePlatformConnectionsColumns(executeQuery) {
   }
 }
 
+async function listPlatformConnectionColumns(executeQuery) {
+  const [rows] = await executeQuery(
+    `SELECT COLUMN_NAME
+       FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'aura_platform_connections'`
+  );
+  return new Set((rows || []).map((r) => String(r.COLUMN_NAME || r.column_name || '')));
+}
+
+function selectOrNull(existingColumns, columnName) {
+  if (existingColumns.has(columnName)) return columnName;
+  return `NULL AS ${columnName}`;
+}
+
 /**
  * Patch connection tracking row (only supplied fields). Server-side only.
  */
@@ -87,5 +102,7 @@ async function patchConnectionRow(executeQuery, userId, platformId, patch) {
 
 module.exports = {
   ensurePlatformConnectionsColumns,
+  listPlatformConnectionColumns,
+  selectOrNull,
   patchConnectionRow,
 };
