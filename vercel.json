@@ -600,6 +600,10 @@
       "destination": "/api/trader-playbook/review-notes.js"
     },
     {
+      "source": "/api/trader-lab/sessions/:sessionId",
+      "destination": "/api/trader-lab/sessions.js"
+    },
+    {
       "source": "/api/journal/tasks",
       "destination": "/api/journal/tasks.js"
     },

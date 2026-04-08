@@ -58,6 +58,35 @@ function stringifyJson(v) {
   }
 }
 
+/**
+ * MySQL DATETIME/TIMESTAMP reject ISO strings with `T`/`Z` under common strict modes (ER_TRUNCATED_WRONG_VALUE).
+ * Bind `YYYY-MM-DD HH:MM:SS` using UTC calendar components so replay anchors stay aligned with prior ISO-UTC semantics.
+ */
+function toMysqlDatetimeUtc(value) {
+  if (value == null || value === '') return null;
+  let dt;
+  if (value instanceof Date) {
+    dt = value;
+  } else {
+    const s = String(value).trim();
+    if (!s) return null;
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s)) return s;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      dt = new Date(`${s}T00:00:00.000Z`);
+    } else {
+      dt = new Date(s);
+    }
+  }
+  if (Number.isNaN(dt.getTime())) return null;
+  const y = dt.getUTCFullYear();
+  const mo = String(dt.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(dt.getUTCDate()).padStart(2, '0');
+  const h = String(dt.getUTCHours()).padStart(2, '0');
+  const mi = String(dt.getUTCMinutes()).padStart(2, '0');
+  const sec = String(dt.getUTCSeconds()).padStart(2, '0');
+  return `${y}-${mo}-${d} ${h}:${mi}:${sec}`;
+}
+
 async function listTableColumns(tableName) {
   const [rows] = await executeQuery(
     `SELECT COLUMN_NAME
@@ -69,8 +98,27 @@ async function listTableColumns(tableName) {
   return new Set((rows || []).map((r) => String(r.COLUMN_NAME || r.column_name || '')));
 }
 
+/** Short TTL cache: cuts information_schema traffic on hot session-create path (helps under DB load). */
+let backtestSessionsColumnsCache = null;
+let backtestSessionsColumnsCacheAt = 0;
+const BACKTEST_SESSION_COL_CACHE_MS = 120000;
+
+async function listTableColumnsForInsert(tableName) {
+  if (tableName === 'backtest_sessions') {
+    const now = Date.now();
+    if (backtestSessionsColumnsCache && now - backtestSessionsColumnsCacheAt < BACKTEST_SESSION_COL_CACHE_MS) {
+      return backtestSessionsColumnsCache;
+    }
+    const set = await listTableColumns(tableName);
+    backtestSessionsColumnsCache = set;
+    backtestSessionsColumnsCacheAt = now;
+    return set;
+  }
+  return listTableColumns(tableName);
+}
+
 async function insertWithExistingColumns(tableName, valuesByColumn) {
-  const existing = await listTableColumns(tableName);
+  const existing = await listTableColumnsForInsert(tableName);
   const cols = [];
   const vals = [];
   Object.keys(valuesByColumn).forEach((col) => {
@@ -84,6 +132,46 @@ async function insertWithExistingColumns(tableName, valuesByColumn) {
     `INSERT INTO ${tableName} (${cols.join(', ')}) VALUES (${placeholders})`,
     vals
   );
+}
+
+async function insertBacktestSessionResilient(valuesByColumn) {
+  try {
+    await insertWithExistingColumns('backtest_sessions', valuesByColumn);
+    return;
+  } catch (err) {
+    const msg = String(err?.message || '');
+    // Unknown-column drift should never block session creation; retry with a strict minimal shape.
+    if (!/unknown column/i.test(msg) && !/ER_BAD_FIELD_ERROR/i.test(msg)) throw err;
+  }
+
+  const minimal = {
+    id: valuesByColumn.id,
+    userId: valuesByColumn.userId,
+    sessionName: valuesByColumn.sessionName || 'Untitled session',
+    status: valuesByColumn.status || 'draft',
+    initialBalance: valuesByColumn.initialBalance ?? 100000,
+    currentBalance: valuesByColumn.currentBalance ?? valuesByColumn.initialBalance ?? 100000,
+    dateStart: valuesByColumn.dateStart || null,
+    dateEnd: valuesByColumn.dateEnd || null,
+    replayTimeframe: valuesByColumn.replayTimeframe || 'M15',
+    replayGranularity: valuesByColumn.replayGranularity || 'candle',
+    tradingHoursMode: valuesByColumn.tradingHoursMode || 'all',
+    riskModel: valuesByColumn.riskModel || 'fixed_percent',
+    marketType: valuesByColumn.marketType || null,
+    instrumentsJson: valuesByColumn.instrumentsJson || '[]',
+    playbookId: valuesByColumn.playbookId || null,
+    playbookName: valuesByColumn.playbookName || null,
+    objective: valuesByColumn.objective || null,
+    objectiveDetail: valuesByColumn.objectiveDetail || '',
+    strategyContextJson: valuesByColumn.strategyContextJson || '{}',
+    draftFormJson: valuesByColumn.draftFormJson || null,
+    chartPrefsJson: valuesByColumn.chartPrefsJson || '{}',
+    startedAt: valuesByColumn.startedAt || null,
+    lastReplayAt: valuesByColumn.lastReplayAt || null,
+    lastActiveInstrument: valuesByColumn.lastActiveInstrument || null,
+  };
+
+  await insertWithExistingColumns('backtest_sessions', minimal);
 }
 
 function mapSessionRow(row) {
@@ -673,10 +761,10 @@ module.exports = async (req, res) => {
       }
 
       const status = saveDraft ? 'draft' : 'active';
-      const startedAt = saveDraft ? null : new Date();
-      const lastReplayAt = dateStart ? `${dateStart}T00:00:00.000Z` : null;
+      const startedAt = saveDraft ? null : toMysqlDatetimeUtc(new Date());
+      const lastReplayAt = dateStart ? toMysqlDatetimeUtc(new Date(`${dateStart}T00:00:00.000Z`)) : null;
 
-      await insertWithExistingColumns('backtest_sessions', {
+      await insertBacktestSessionResilient({
         id,
         userId,
         sessionName,
@@ -782,7 +870,9 @@ module.exports = async (req, res) => {
             stringifyJson(next.strategyContext || {}),
             stringifyJson(next.chartPrefs || {}),
             next.notes,
-            next.lastReplayAt ? new Date(next.lastReplayAt) : row.lastReplayAt,
+            body.lastReplayAt !== undefined
+              ? toMysqlDatetimeUtc(next.lastReplayAt)
+              : toMysqlDatetimeUtc(row.lastReplayAt),
             next.lastActiveInstrument,
             next.replaySpeed,
             next.timeSpentSeconds != null ? next.timeSpentSeconds : row.timeSpentSeconds,

@@ -2,13 +2,15 @@ import React from 'react';
 
 /**
  * Pre-embed or fallback state — session time and transport remain authoritative.
- * @param {'default'|'embed-failed'} [variant]
+ * @param {'default'|'embed-failed'|'no-feed'} [variant]
  */
 export default function BacktestingChartPlaceholder({ replayAtLabel, session, variant = 'default' }) {
   const completed = session?.status === 'completed';
   const lead =
     variant === 'embed-failed'
       ? 'The embedded chart could not load (network or provider). Replay controls, session logging, notebook, and reports still work.'
+      : variant === 'no-feed'
+        ? 'Chart feed is unavailable for this symbol/provider state. Replay controls, trade logging, notebook, and reports remain fully usable.'
       : 'Simulated session time is driven by the transport below. Keep logging executions and journaling as you step — the chart mount above stays independent of Aura replay state.';
   return (
     <div className={`bt-chart-stage__placeholder${completed ? ' bt-chart-stage__placeholder--archived' : ''}`}>
@@ -19,7 +21,7 @@ export default function BacktestingChartPlaceholder({ replayAtLabel, session, va
         <span />
       </div>
       <div className="bt-chart-stage__placeholder-copy">
-        <p className="bt-chart-stage__placeholder-title">{variant === 'embed-failed' ? 'Chart unavailable' : 'Replay surface'}</p>
+        <p className="bt-chart-stage__placeholder-title">{variant === 'default' ? 'Replay surface' : 'Chart unavailable'}</p>
         <p className="bt-chart-stage__placeholder-lead">{lead}</p>
         <p className="bt-chart-stage__placeholder-meta">
           <span className="bt-chart-stage__placeholder-time">{replayAtLabel}</span>

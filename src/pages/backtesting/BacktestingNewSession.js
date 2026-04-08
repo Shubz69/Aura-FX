@@ -70,6 +70,26 @@ export default function BacktestingNewSession() {
   const [strategyContext, setStrategyContext] = useState(defaultStrategyContext);
   const [stepError, setStepError] = useState('');
 
+  const stepBlockers = useCallback((stepToValidate) => {
+    const blockers = [];
+    const inst = instruments.map((x) => String(x || '').trim()).filter(Boolean);
+    const hasBadInstrumentRows = instruments.some((x) => String(x || '').trim() === '');
+
+    if (stepToValidate >= 1) {
+      if (!sessionName.trim()) blockers.push('Session name is required.');
+      if (!objective) blockers.push('Choose what you are testing (objective).');
+    }
+
+    if (stepToValidate >= 2) {
+      if (!inst.length) blockers.push('Add at least one instrument.');
+      if (hasBadInstrumentRows) blockers.push('Remove or fill empty instrument rows.');
+      if (!dateStart || !dateEnd) blockers.push('Set both date start and date end.');
+      if (dateStart && dateEnd && dateStart > dateEnd) blockers.push('Date start must be before or equal to date end.');
+    }
+
+    return blockers;
+  }, [sessionName, objective, instruments, dateStart, dateEnd]);
+
   const loadPlaybooks = useCallback(async () => {
     try {
       const res = await Api.getTraderPlaybookSetups();
@@ -183,8 +203,9 @@ export default function BacktestingNewSession() {
   };
 
   const createSession = async () => {
-    if (!canCreate()) {
-      toast.error('Complete name, objective, instruments, and date range before launching.');
+    const blockers = stepBlockers(4);
+    if (blockers.length > 0) {
+      toast.error(`Cannot create session yet: ${blockers[0]}`);
       return;
     }
     setSaving(true);
@@ -213,26 +234,12 @@ export default function BacktestingNewSession() {
   };
 
   const next = () => {
+    const blockers = stepBlockers(step);
+    if (blockers.length > 0) {
+      setStepError(blockers[0]);
+      return;
+    }
     setStepError('');
-    if (step === 1 && !sessionName.trim()) {
-      setStepError('Name this session so you can find it in the manager and reports.');
-      return;
-    }
-    if (step === 1 && !objective) {
-      setStepError('Pick what you are testing — it drives recap and insight copy.');
-      return;
-    }
-    if (step === 2) {
-      const inst = instruments.filter(Boolean);
-      if (!inst.length) {
-        setStepError('Add at least one instrument (up to five).');
-        return;
-      }
-      if (!dateStart || !dateEnd || dateStart > dateEnd) {
-        setStepError('Choose a valid date range for replay.');
-        return;
-      }
-    }
     setStep((s) => Math.min(4, s + 1));
   };
   const back = () => {
@@ -240,10 +247,9 @@ export default function BacktestingNewSession() {
     setStep((s) => Math.max(1, s - 1));
   };
 
-  const canCreate = () => {
-    const inst = instruments.filter(Boolean);
-    return sessionName.trim() && objective && inst.length > 0 && dateStart && dateEnd && dateStart <= dateEnd;
-  };
+  const canCreate = () => stepBlockers(4).length === 0;
+
+  const currentStepBlockers = stepBlockers(step);
 
   const addInstrument = () => {
     if (instruments.length >= 5) return;
@@ -536,13 +542,19 @@ export default function BacktestingNewSession() {
       )}
 
       <div className="bt-actions" style={{ marginTop: 8 }}>
+        {currentStepBlockers.length > 0 && (
+          <p className="bt-inline-err" role="status" aria-live="polite">
+            {step < 4 ? 'Complete these before Next: ' : 'Complete these before Create session: '}
+            {currentStepBlockers.join(' ')}
+          </p>
+        )}
         {step > 1 && (
           <button type="button" className="bt-btn bt-btn--ghost" onClick={back}>
             Back
           </button>
         )}
             {step < 4 && (
-          <button type="button" className="bt-btn bt-btn--primary" onClick={next}>
+          <button type="button" className="bt-btn bt-btn--primary" onClick={next} disabled={currentStepBlockers.length > 0}>
             Next
           </button>
         )}

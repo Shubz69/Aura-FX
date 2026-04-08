@@ -30,6 +30,9 @@ export default function BacktestingTradingViewChart({ bridge, session, replayAtL
   if (embedFailed) {
     return <BacktestingChartPlaceholder replayAtLabel={replayAtLabel} session={session} variant="embed-failed" />;
   }
+  if (!tvSymbol || tvSymbol === '—') {
+    return <BacktestingChartPlaceholder replayAtLabel={replayAtLabel} session={session} variant="no-feed" />;
+  }
 
   return (
     <div className={`bt-chart-stage__tv-wrap${readOnlyChart ? ' bt-chart-stage__tv-wrap--archived' : ''}`}>

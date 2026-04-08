@@ -594,10 +594,23 @@ module.exports = async (req, res) => {
       }
       return res.status(200).json(body);
     }
-    return res.status(502).json({
-      success: false,
+    const revalidatingEmpty =
+      isMtBridge &&
+      scheduleMt5BridgeBackgroundSync(executeQuery, decoded.id, platformId, creds);
+    safeMtLog('history_live_empty_fallback', { platformId, code: result.code || null });
+    return res.status(200).json({
+      success: true,
+      trades: [],
+      count: 0,
+      platformId,
+      days,
+      ...(dateRange ? { dateFrom: dateRange.from, dateTo: dateRange.to } : {}),
+      stale: true,
+      dataSource: 'unavailable',
+      cacheServedStale: false,
+      revalidating: revalidatingEmpty,
+      code: result.code || 'HISTORY_UNAVAILABLE',
       error: publicHistoryError(result.code, result.error),
-      code: result.code || null,
     });
   }
 
