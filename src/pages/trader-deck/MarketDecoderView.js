@@ -246,25 +246,37 @@ export default function MarketDecoderView({ embedded }) {
 
   const exportToTraderLab = useCallback(() => {
     if (!brief) return;
+    const briefLight = {
+      header: brief?.header || {},
+      meta: brief?.meta || {},
+      instantRead: brief?.instantRead || {},
+      finalOutput: brief?.finalOutput || {},
+      whatMattersNow: Array.isArray(brief?.whatMattersNow) ? brief.whatMattersNow : [],
+      executionGuidance: brief?.executionGuidance || {},
+    };
+    const payload = {
+      version: 3,
+      exportedAt: new Date().toISOString(),
+      symbol: activeSymbol || brief?.header?.asset,
+      summary: {
+        posture: brief?.finalOutput?.currentPosture || null,
+        bias: brief?.instantRead?.bias || null,
+        conviction: brief?.instantRead?.conviction || null,
+      },
+      brief: briefLight,
+    };
     try {
-      sessionStorage.setItem(
-        MARKET_DECODER_LAB_HANDOFF_KEY,
-        JSON.stringify({
-          version: 2,
-          exportedAt: new Date().toISOString(),
-          symbol: activeSymbol || brief?.header?.asset,
-          summary: {
-            posture: brief?.finalOutput?.currentPosture || null,
-            bias: brief?.instantRead?.bias || null,
-            conviction: brief?.instantRead?.conviction || null,
-          },
-          brief,
-        })
-      );
+      sessionStorage.setItem(MARKET_DECODER_LAB_HANDOFF_KEY, JSON.stringify(payload));
     } catch (e) {
-      console.warn(e);
-      toast.error('Could not prepare export. Try again.');
-      return;
+      // sessionStorage can fail on quota/privacy settings; fall back to localStorage.
+      try {
+        localStorage.setItem(MARKET_DECODER_LAB_HANDOFF_KEY, JSON.stringify(payload));
+      } catch (e2) {
+        console.warn(e);
+        console.warn(e2);
+        toast.error('Could not export this brief to Trader Lab. Try again.');
+        return;
+      }
     }
     setPreviewOpen(false);
     toast.info('Opening Trader Lab with your Market Decoder context.');

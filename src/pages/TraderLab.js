@@ -216,6 +216,13 @@ export default function TraderLab() {
     } catch {
       raw = '';
     }
+    if (!raw) {
+      try {
+        raw = localStorage.getItem(MARKET_DECODER_LAB_HANDOFF_KEY) || '';
+      } catch {
+        raw = '';
+      }
+    }
     if (!raw) return;
     let parsed = null;
     try {
@@ -266,6 +273,11 @@ export default function TraderLab() {
     setLastSavedAt(null);
     try {
       sessionStorage.removeItem(MARKET_DECODER_LAB_HANDOFF_KEY);
+    } catch {
+      // ignore
+    }
+    try {
+      localStorage.removeItem(MARKET_DECODER_LAB_HANDOFF_KEY);
     } catch {
       // ignore
     }

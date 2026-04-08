@@ -127,9 +127,10 @@ export default function TraderDeckTradeJournal() {
   }, [searchParams, setSearchParams]);
 
   useEffect(() => {
-    if (!replayContext?.symbol || !pairs.length) return;
-    if (pairs.includes(replayContext.symbol)) setFilterPair(replayContext.symbol);
-  }, [pairs, replayContext]);
+    if (!replayContext?.symbol || !trades.length) return;
+    const pairSet = new Set(trades.map((t) => t.pair || '').filter(Boolean));
+    if (pairSet.has(replayContext.symbol)) setFilterPair(replayContext.symbol);
+  }, [trades, replayContext]);
 
   const closeVerify = () => {
     setVerifyTrade(null);
