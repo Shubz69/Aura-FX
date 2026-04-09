@@ -1,3 +1,5 @@
+const { recordOutboundRequest } = require('../utils/providerRequestMeter');
+
 const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
 
 function getPerplexityApiKey() {
@@ -13,6 +15,9 @@ async function createChatCompletion(params, options = {}) {
   const controller = options.signal ? null : new AbortController();
   const signal = options.signal || controller.signal;
 
+  try {
+    recordOutboundRequest(PERPLEXITY_API_URL, 1);
+  } catch (_) {}
   const res = await fetch(PERPLEXITY_API_URL, {
     method: 'POST',
     headers: {

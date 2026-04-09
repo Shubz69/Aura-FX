@@ -1,3 +1,8 @@
+const {
+  recordOutboundRequest,
+  resetProviderRequestMeter,
+  logProviderRequestMeter,
+} = require('../../utils/providerRequestMeter');
 const { executeQuery, addColumnIfNotExists } = require('../../db');
 const { runEngine, getTwelveDataQuote } = require('../marketIntelligenceEngine');
 const { getTemplate, normalizePeriod, parseTemplateFromText } = require('./briefTemplateService');
@@ -632,6 +637,9 @@ async function callPerplexityJson(systemPrompt, userPayload, options = {}) {
         json_schema: options.jsonSchema,
       };
     }
+    try {
+      recordOutboundRequest(PERPLEXITY_API_URL, 1);
+    } catch (_) {}
     const res = await fetch(PERPLEXITY_API_URL, {
       method: 'POST',
       headers: {
@@ -670,6 +678,9 @@ async function repairModelJson(rawText, timeoutMs) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), Math.min(timeoutMs || 90000, 45000));
   try {
+    try {
+      recordOutboundRequest(PERPLEXITY_API_URL, 1);
+    } catch (_) {}
     const res = await fetch(PERPLEXITY_API_URL, {
       method: 'POST',
       headers: {
@@ -1555,6 +1566,9 @@ async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorS
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45000);
   try {
+    try {
+      recordOutboundRequest(PERPLEXITY_API_URL, 1);
+    } catch (_) {}
     const res = await fetch(PERPLEXITY_API_URL, {
       method: 'POST',
       headers: {
@@ -2290,7 +2304,14 @@ async function generateAndStoreBrief({
   }
 }
 
-async function generateAndStoreBriefSet({ period, timeZone = 'Europe/London', runDate = new Date() }) {
+async function generateAndStoreBriefSet({
+  period,
+  timeZone = 'Europe/London',
+  runDate = new Date(),
+  /** When true (e.g. on-demand from content API), reset meter at start and log+reset at end so logs show this run only. */
+  isolateOutboundMeter = false,
+} = {}) {
+  if (isolateOutboundMeter) resetProviderRequestMeter();
   const normalizedPeriod = normalizePeriod(period);
   const date = normalizeOutlookDate(normalizedPeriod, toYmdInTz(runDate, timeZone));
   const { market: sharedMarket, econ: sharedEcon, news: sharedNews } = await getSharedBriefInputs(normalizedPeriod, date);
@@ -2357,7 +2378,15 @@ async function generateAndStoreBriefSet({ period, timeZone = 'Europe/London', ru
     }
     results.push(row);
   }
-  return { success: results.some((r) => r && r.success), period: normalizedPeriod, results };
+  const payload = { success: results.some((r) => r && r.success), period: normalizedPeriod, results };
+  if (isolateOutboundMeter) {
+    logProviderRequestMeter('[brief-gen] generateAndStoreBriefSet outbound HTTP (isolated window)', {
+      period: normalizedPeriod,
+      date,
+    });
+    resetProviderRequestMeter();
+  }
+  return payload;
 }
 
 async function generateAndStoreOutlook({ period, timeZone = 'Europe/London', runDate = new Date() }) {

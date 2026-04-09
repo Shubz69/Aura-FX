@@ -13,6 +13,7 @@ const {
   shouldPrefetchInstrumentResearchWindow,
   isTraderDeskAutomationConfigured,
 } = require('../trader-deck/services/autoBriefGenerator');
+const { resetProviderRequestMeter, logProviderRequestMeter } = require('../utils/providerRequestMeter');
 
 function isAuthorized(req) {
   const authHeader = req.headers.authorization;
@@ -39,6 +40,8 @@ const handler = async (req, res) => {
       code: 'PERPLEXITY_API_KEY_REQUIRED',
     });
   }
+
+  resetProviderRequestMeter();
 
   const force = req.query?.force === '1' || req.query?.force === 'true';
   const forcePrefetch = req.query?.prefetch === '1' || req.query?.prefetch === 'true';
@@ -71,18 +74,23 @@ const handler = async (req, res) => {
       runDate: now,
       timeZone: 'Europe/London',
     });
+    logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after outlook', { period });
     const categoryBriefs = await generateAndStoreBriefSet({
       period,
       runDate: now,
       timeZone: 'Europe/London',
     });
+    logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after category brief set', { period });
     const institutional = await generateAndStoreInstitutionalBriefOnly({
       period,
       runDate: now,
       timeZone: 'Europe/London',
     });
+    logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after institutional brief', { period });
     out.push({ period, outlook, categoryBriefs, institutional });
   }
+
+  logProviderRequestMeter('[cron-auto-market-briefs] invocation total outbound HTTP (since cron start)');
 
   return res.status(200).json({
     success: true,
