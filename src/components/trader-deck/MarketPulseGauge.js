@@ -63,9 +63,9 @@ export default function MarketPulseGauge({ score = 50, label = 'NEUTRAL', recomm
       {outlook ? (
         <>
           <div className="td-mi-pulse-snapshot td-mi-pulse-snapshot--compact">
-            <p><span>State</span><strong>{label}</strong></p>
+            <p><span>State</span><strong>{label} ({normalized}%)</strong></p>
             <p><span>Volatility</span><strong>{volatility}</strong></p>
-            <p><span>Risk tone</span><strong>{riskTone}</strong></p>
+            <p><span>Risk tone</span><strong>{posture}</strong></p>
           </div>
           {Array.isArray(recommendedAction) && recommendedAction.length > 0 && (
             <div className="td-mi-pulse-meta td-mi-pulse-meta--actions">

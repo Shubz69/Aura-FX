@@ -52,7 +52,13 @@ export const SEED_MARKET_INTELLIGENCE = {
     { asset: 'DXY RSI', direction: 'neutral', label: 'Neutral zone' },
   ],
   marketChangesToday: ['USD strength increased after macro repricing', 'Gold reacted to real-yield and risk tone', 'Equities lost momentum into later sessions', 'Crypto stayed defensive versus risk benchmarks'],
-  traderFocus: ['Avoid adding risk before high-impact events', 'Watch bond yields for equity/gold inflections', 'Expect volatility into session opens', 'Reduce risk when events cluster', 'Use confirmation-based entries'],
+  traderFocus: [
+    { title: 'Avoid adding risk before high-impact events', reason: 'Event-risk control' },
+    { title: 'Watch bond yields for equity/gold inflections', reason: 'Primary macro driver' },
+    { title: 'Expect volatility into session opens', reason: 'Liquidity windows' },
+    { title: 'Reduce risk when events cluster', reason: 'Volatility management' },
+    { title: 'Use confirmation-based entries', reason: 'Execution discipline' },
+  ],
   riskRadar: [
     {
       title: 'US CPI y/y',
@@ -88,6 +94,11 @@ export const SEED_MARKET_INTELLIGENCE = {
     breakdown: { eventRisk: 62, geopoliticalRisk: 54, volatility: 60, liquidity: 46, clustering: 51 },
     nextRiskEventInMins: 45,
   },
+  headlineSample: [
+    'Rates narrative and liquidity expectations continued to drive cross-asset repricing',
+    'USD tone remained a key filter for majors and commodities',
+    'Volatility clustered around scheduled macro releases',
+  ],
 };
 
 function capitalize(s) {
@@ -178,8 +189,17 @@ function mapBackendToDashboard(apiData) {
       ? m.map((x) => (typeof x === 'string' ? x : x.title || x.description || ''))
       : SEED_MARKET_INTELLIGENCE.marketChangesToday,
     traderFocus: Array.isArray(t)
-      ? t.map((x) => (typeof x === 'string' ? x : x.title || x.text || ''))
-      : SEED_MARKET_INTELLIGENCE.traderFocus,
+      ? t.map((x) =>
+          typeof x === 'string'
+            ? { title: x, reason: '' }
+            : {
+                title: x.title || x.text || '',
+                reason: typeof x.reason === 'string' ? x.reason : '',
+              },
+        )
+      : SEED_MARKET_INTELLIGENCE.traderFocus.map((x) =>
+          typeof x === 'string' ? { title: x, reason: '' } : x,
+        ),
     riskRadar: Array.isArray(rr)
       ? rr.map(normalizeRiskRadarItem).filter((x) => x !== '')
       : SEED_MARKET_INTELLIGENCE.riskRadar,
@@ -189,6 +209,9 @@ function mapBackendToDashboard(apiData) {
     updatedAt: apiData.updatedAt || null,
     aiSessionBrief: typeof apiData.aiSessionBrief === 'string' ? apiData.aiSessionBrief : '',
     aiTradingPriorities: Array.isArray(apiData.aiTradingPriorities) ? apiData.aiTradingPriorities : [],
+    headlineSample: Array.isArray(apiData.headlineSample)
+      ? apiData.headlineSample.map((h) => String(h || '').trim()).filter(Boolean)
+      : SEED_MARKET_INTELLIGENCE.headlineSample || [],
   };
 }
 

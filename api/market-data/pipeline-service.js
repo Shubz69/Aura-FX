@@ -219,9 +219,8 @@ async function buildAndStoreMarketSnapshot({ timeframe = 'daily', date = '' } = 
   } catch (error) {
     console.warn('[market-data/pipeline] enrichTraderDeckPayload failed:', error.message || error);
   }
-  const { headlineSample: _headlineSample, ...rest } = raw || {};
   const payload = {
-    ...rest,
+    ...(raw || {}),
     ...(enriched || {}),
     generatedFor: date || null,
     timeframe,

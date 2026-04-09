@@ -118,9 +118,8 @@ module.exports = async (req, res) => {
     } catch (e) {
       console.warn('[trader-deck] enrichTraderDeckPayload:', e.message || e);
     }
-    const { headlineSample: _hs, ...rest } = raw;
     const payload = {
-      ...rest,
+      ...raw,
       ...(enriched || {}),
     };
     setCache(cacheKey, payload);
