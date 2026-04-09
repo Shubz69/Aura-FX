@@ -699,7 +699,12 @@ async function runMarketDecoder(symbolInput) {
 
   let calRows = cal.ok ? cal.data : [];
   if (!calRows.length) {
-    console.warn('[market-decoder] FMP economic calendar empty — check FMP_API_KEY or calendar range');
+    const fmpErr = cal && cal.error ? String(cal.error) : '';
+    if (fmpErr.includes('429') || fmpErr.includes('403')) {
+      console.info('[market-decoder] economic calendar empty (provider rate limit or auth — check FMP plan / keys)');
+    } else {
+      console.info('[market-decoder] economic calendar empty — check FMP_API_KEY or calendar range');
+    }
   }
   const eventsForScoring = pickEvents(calRows, 12);
   const eventHighImpactSoon = eventsForScoring.some((e) => e.impact === 'High');

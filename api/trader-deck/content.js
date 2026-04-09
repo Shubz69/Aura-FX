@@ -97,6 +97,21 @@ function normalizeStorageDateByType(type, date) {
   return date;
 }
 
+/** Safe snapshot for the app when the brief list is empty (no secrets). */
+function buildIntelDiagnosticsSnapshot() {
+  const hasPpx = Boolean(String(process.env.PERPLEXITY_AUTOMATION_MODEL || '').trim());
+  const hasQuote =
+    Boolean(String(process.env.TWELVE_DATA_API_KEY || '').trim()) ||
+    Boolean(String(process.env.FMP_API_KEY || '').trim()) ||
+    Boolean(String(process.env.FINNHUB_API_KEY || '').trim());
+  const hasFred = Boolean(String(process.env.FRED_API_KEY || '').trim());
+  return {
+    automationModelConfigured: hasPpx,
+    quoteProviderConfigured: hasQuote,
+    fredConfigured: hasFred,
+  };
+}
+
 function periodDateToRunDate(period, dateStr) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr || ''))) return new Date();
   if (period === 'weekly') {
@@ -350,7 +365,14 @@ module.exports = async (req, res) => {
         mimeType: r.mime_type || null,
         createdAt: r.created_at,
       }));
-      const payload = { success: true, briefs, date, type, briefsSourceDate: briefsDate };
+      const payload = {
+        success: true,
+        briefs,
+        date,
+        type,
+        briefsSourceDate: briefsDate,
+        intelDiagnostics: buildIntelDiagnosticsSnapshot(),
+      };
       if (weekendFallback) payload.weekendFallback = true;
       return res.status(200).json(payload);
     }

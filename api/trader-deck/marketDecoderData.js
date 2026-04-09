@@ -14,8 +14,16 @@ const TIMEOUT_MS = 11000;
 
 function logProvider(tag, status, detail) {
   const msg = `[market-decoder-data] ${tag} ${status}${detail ? `: ${detail}` : ''}`;
-  if (status === 'failed' || status === 'fallback') console.warn(msg);
-  else console.info(msg);
+  if (status === 'failed' || status === 'fallback') {
+    const code = String(detail || '');
+    if (code === '403' || code === '429') {
+      console.info(msg);
+      return;
+    }
+    console.warn(msg);
+    return;
+  }
+  console.info(msg);
 }
 
 /**

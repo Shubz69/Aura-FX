@@ -2139,6 +2139,18 @@
   font-size: 0.8rem;
 }
 
+.td-deck-with-tabs.td-layout-page .td-deck-mi-intel-diagnostics {
+  margin-top: 12px;
+  padding: 12px 14px;
+  max-width: min(52ch, 100%);
+  border-radius: 10px;
+  background: rgba(232, 168, 107, 0.09);
+  border: 1px solid rgba(232, 168, 107, 0.35);
+  color: rgba(255, 224, 198, 0.92);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
 .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat {
   text-align: right;
   padding: 12px 18px;
