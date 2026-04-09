@@ -20,7 +20,14 @@ function badgeClassFromLabelAndScore(label, normalized) {
   return 'risk-on';
 }
 
-export default function MarketPulseGauge({ score = 50, label = 'NEUTRAL', recommendedAction = [], variant = 'default' }) {
+export default function MarketPulseGauge({
+  score = 50,
+  label = 'NEUTRAL',
+  recommendedAction = [],
+  variant = 'default',
+  /** Short regime line from Market Regime (e.g. currentRegime); outlook only */
+  regimeDescriptor = '',
+}) {
   const normalized = Math.max(0, Math.min(100, Number(score)));
   // Needle: 0 = left (Risk Off), 100 = right (Risk On). Semi-circle = 180°; we use -90° to +90° (left to right)
   const rotation = -90 + (normalized / 100) * 180;
@@ -65,11 +72,14 @@ export default function MarketPulseGauge({ score = 50, label = 'NEUTRAL', recomm
           <div className="td-mi-pulse-snapshot td-mi-pulse-snapshot--compact">
             <p><span>State</span><strong>{label} ({normalized}%)</strong></p>
             <p><span>Volatility</span><strong>{volatility}</strong></p>
+            {regimeDescriptor ? (
+              <p><span>Regime</span><strong>{regimeDescriptor}</strong></p>
+            ) : null}
             <p><span>Risk tone</span><strong>{posture}</strong></p>
           </div>
           {Array.isArray(recommendedAction) && recommendedAction.length > 0 && (
             <div className="td-mi-pulse-meta td-mi-pulse-meta--actions">
-              <p className="td-mi-pulse-actions-label">Action focus</p>
+              <p className="td-mi-pulse-actions-label">Action items</p>
               <ul className="td-mi-bullets td-mi-pulse-actions-list">
                 {recommendedAction.slice(0, 3).map((line, idx) => (
                   <li key={idx} className="td-mi-bullet-item">{line}</li>

@@ -5,7 +5,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Api from '../../services/Api';
 import { getMarketIntelligence, SEED_MARKET_INTELLIGENCE } from '../../data/marketIntelligence';
-import DashboardPanel from '../../components/trader-deck/DashboardPanel';
 import RegimeRows from '../../components/trader-deck/RegimeRows';
 import MarketPulseGauge from '../../components/trader-deck/MarketPulseGauge';
 import DriverList from '../../components/trader-deck/DriverList';
@@ -315,6 +314,15 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     return <RegimeRows regime={marketRegime} />;
   };
 
+  const pulseRegimeDescriptor = (() => {
+    const r = showing.marketRegime;
+    if (!r || typeof r !== 'object') return '';
+    const a = String(r.currentRegime || '').trim();
+    const b = String(r.bias || '').trim();
+    if (a && b) return `${a} · ${b}`;
+    return a || b || '';
+  })();
+
   const renderPulse = () => {
     if (editMode && editDraft) {
       const p = editDraft.marketPulse || { score: 50, label: 'NEUTRAL' };
@@ -337,6 +345,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
         label={marketPulse.label}
         recommendedAction={marketPulse.recommendedAction}
         variant="outlook"
+        regimeDescriptor={pulseRegimeDescriptor}
       />
     );
   };
@@ -452,133 +461,138 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     <>
       {error && <p className="td-mi-fallback-msg" role="status">{error}</p>}
       {saveSuccess && <p className="td-mi-save-success" role="status">{saveSuccess}</p>}
-      <div className="td-deck-mo-root td-deck-mo-outlook td-deck-mo-outlook--terminal">
-          <header className="td-outlook-unified-header td-deck-mo-outlook-hero">
+      <div className="td-deck-mo-root td-deck-mo-outlook td-deck-mo-outlook--concept">
+          <header className="td-outlook-unified-header td-deck-mo-outlook-hero td-outlook-concept-page-header">
             <div className="td-deck-mo-outlook-hero-text">
               <p className="td-deck-mo-eyebrow">Aura Terminal</p>
-              <h1 className="td-outlook-main-title">{mainTitle}</h1>
+              <h1 className="td-outlook-main-title td-outlook-concept-page-title">{mainTitle}</h1>
             </div>
-            {canEdit && (
+            {canEdit && editMode ? (
               <div className="td-mi-shell-actions td-deck-mo-outlook-actions">
-                {!editMode ? (
-                  <button type="button" className="td-mi-btn td-mi-btn-edit" onClick={handleEditToggle} aria-label="Edit content">Edit</button>
-                ) : (
-                  <>
-                    <button type="button" className="td-mi-btn td-mi-btn-save" onClick={handleSave}>Save</button>
-                    <button type="button" className="td-mi-btn td-mi-btn-cancel" onClick={handleCancel}>Cancel</button>
-                  </>
-                )}
+                <button type="button" className="td-mi-btn td-mi-btn-save" onClick={handleSave}>Save</button>
+                <button type="button" className="td-mi-btn td-mi-btn-cancel" onClick={handleCancel}>Cancel</button>
               </div>
-            )}
+            ) : null}
           </header>
           <div className="td-outlook-dashboard td-outlook-dashboard--unified td-deck-mo-outlook-dash">
-            <div className="td-outlook-terminal-frame">
+            <div className="td-outlook-terminal-frame td-outlook-concept-shell">
               <div className="td-outlook-terminal-inner">
-                <div className="td-outlook-terminal-grid">
-                  <div className="td-outlook-terminal-col td-outlook-terminal-col--main">
-                    <section
-                      className="td-outlook-panel td-outlook-panel--intel-mega"
-                      aria-label="Aura market regime, drivers, cross-asset signals, and trader focus"
-                    >
-                      <div className="td-outlook-intel-stack">
-                        <div className="td-outlook-intel-block td-outlook-intel-block--regime">
-                          <h2 className="td-mi-panel-title td-outlook-intel-title">Aura Market Regime</h2>
-                          <div className="td-mi-panel-body td-outlook-intel-body">{renderRegime()}</div>
-                        </div>
-                        <div className="td-outlook-intel-divider td-outlook-intel-divider--horiz" aria-hidden />
-                        <div className="td-outlook-intel-split">
-                          <div className="td-outlook-intel-block td-outlook-intel-block--drivers">
-                            <h2 className="td-mi-panel-title td-outlook-intel-title">Key Market Drivers</h2>
-                            <div className="td-mi-panel-body td-outlook-intel-body">
-                              {editMode && editDraft ? renderDriversEdit() : <DriverList drivers={keyDrivers} />}
-                            </div>
-                          </div>
-                          <div className="td-outlook-intel-divider td-outlook-intel-divider--vert" aria-hidden />
-                          <div className="td-outlook-intel-block td-outlook-intel-block--signals">
-                            <h2 className="td-mi-panel-title td-outlook-intel-title">Cross-Asset Signals</h2>
-                            <div className="td-mi-panel-body td-outlook-intel-body">
-                              {editMode && editDraft ? renderSignalsEdit() : <SignalList signals={crossAssetSignals} />}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="td-outlook-intel-divider td-outlook-intel-divider--horiz" aria-hidden />
-                        <div className="td-outlook-intel-block td-outlook-intel-block--changes">
-                          <h2 className="td-mi-panel-title td-outlook-intel-title">{changesTitle}</h2>
-                          <div className="td-mi-panel-body td-outlook-intel-body">
-                            {editMode && editDraft ? (
-                              renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', 'Theme')
-                            ) : marketChangesToday && marketChangesToday.length > 0 ? (
-                              <ChangeList items={marketChangesToday} />
-                            ) : (
-                              <p className="td-outlook-empty">No themes recorded. Use Edit to add.</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="td-outlook-intel-divider td-outlook-intel-divider--horiz" aria-hidden />
-                        <div className="td-outlook-intel-block td-outlook-intel-block--focus">
-                          <h2 className="td-mi-panel-title td-outlook-intel-title">Trader Focus</h2>
-                          <div className="td-mi-panel-body td-outlook-intel-body">
-                            {editMode && editDraft ? (
-                              renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item')
-                            ) : traderFocus && traderFocus.length > 0 ? (
-                              <FocusList items={traderFocus} />
-                            ) : (
-                              <p className="td-outlook-empty">No focus items. Use Edit to add.</p>
-                            )}
-                          </div>
-                        </div>
+                <div className="td-outlook-concept-grid">
+                  <section
+                    className="td-outlook-concept-card td-outlook-concept-card--regime"
+                    aria-label="Aura market regime"
+                  >
+                    <h2 className="td-outlook-concept-card__title">Aura Market Regime</h2>
+                    <div className="td-outlook-concept-card__body">{renderRegime()}</div>
+                  </section>
+
+                  <div className="td-outlook-concept-dual" aria-label="Key drivers and cross-asset signals">
+                    <section className="td-outlook-concept-card td-outlook-concept-card--drivers">
+                      <h2 className="td-outlook-concept-card__title">Key Market Drivers</h2>
+                      <div className="td-outlook-concept-card__body">
+                        {editMode && editDraft ? renderDriversEdit() : <DriverList drivers={keyDrivers} />}
+                      </div>
+                    </section>
+                    <section className="td-outlook-concept-card td-outlook-concept-card--signals">
+                      <h2 className="td-outlook-concept-card__title">Cross-Asset Signals</h2>
+                      <div className="td-outlook-concept-card__body">
+                        {editMode && editDraft ? renderSignalsEdit() : <SignalList signals={crossAssetSignals} />}
                       </div>
                     </section>
                   </div>
 
-                  <div className="td-outlook-terminal-col td-outlook-terminal-col--rail">
-                    <DashboardPanel title="Aura Market Pulse" className="td-outlook-panel td-outlook-panel--pulse td-outlook-panel--pulse-feature">
+                  <section className="td-outlook-concept-card td-outlook-concept-card--changes" aria-label={changesTitle}>
+                    <h2 className="td-outlook-concept-card__title">{changesTitle}</h2>
+                    <div className="td-outlook-concept-card__body">
+                      {editMode && editDraft ? (
+                        renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', 'Theme')
+                      ) : marketChangesToday && marketChangesToday.length > 0 ? (
+                        <ChangeList items={marketChangesToday} />
+                      ) : (
+                        <p className="td-outlook-empty">No themes recorded. Use Edit to add.</p>
+                      )}
+                    </div>
+                  </section>
+
+                  <section
+                    className="td-outlook-concept-card td-outlook-concept-card--pulse td-outlook-concept-pulse"
+                    aria-label="Aura market pulse"
+                  >
+                    <header className="td-outlook-concept-card__head">
+                      <h2 className="td-outlook-concept-card__title">Aura Market Pulse</h2>
+                      {canEdit && !editMode ? (
+                        <button
+                          type="button"
+                          className="td-mi-btn td-mi-btn-edit td-outlook-concept-pulse-edit"
+                          onClick={handleEditToggle}
+                          aria-label="Edit content"
+                        >
+                          Edit
+                        </button>
+                      ) : null}
+                    </header>
+                    <div className="td-outlook-concept-card__body td-outlook-concept-pulse__body">
                       {renderPulse()}
-                    </DashboardPanel>
-                    <section className="td-outlook-panel td-outlook-panel--risk-standalone" aria-label="Market risk engine">
-                      <h2 className="td-mi-panel-title td-outlook-intel-title">Market Risk Engine</h2>
-                      <div className="td-mi-panel-body td-outlook-intel-body">
-                        {editMode && editDraft ? (
-                          renderListEdit(editDraft.riskRadar, 'riskRadar', 'Risk factor', { preserveObject: true })
-                        ) : (riskRadar && riskRadar.length > 0) || riskEngine ? (
-                          <RiskRadarList items={riskRadar || []} riskEngine={riskEngine} summaryOnly={period === 'daily'} />
-                        ) : (
-                          <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
-                        )}
-                      </div>
-                    </section>
-                  </div>
+                    </div>
+                  </section>
 
-                  <div className="td-outlook-terminal-headlines">
-                    <section className="td-outlook-panel td-outlook-panel--headlines td-outlook-headlines-bar" aria-label="Market headlines">
-                      <header className="td-outlook-headlines-bar-header">
-                        <h2 className="td-outlook-headlines-bar-title">Market headlines</h2>
-                        {headlinesFreshness ? (
-                          <span className="td-outlook-headlines-bar-meta">{headlinesFreshness}</span>
-                        ) : null}
-                      </header>
-                      <div className="td-outlook-headlines-bar-body">
-                        {aiSessionBrief ? <p className="td-outlook-headlines-lead">{aiSessionBrief}</p> : null}
-                        {Array.isArray(aiTradingPriorities) && aiTradingPriorities.length > 0 ? (
-                          <ol className="td-outlook-headlines-priorities">
-                            {aiTradingPriorities.map((line, idx) => (
-                              <li key={idx}>{line}</li>
-                            ))}
-                          </ol>
-                        ) : null}
-                        {headlineSample.length > 0 ? (
-                          <ul className="td-outlook-headlines-feed">
-                            {headlineSample.map((line, idx) => (
-                              <li key={idx}>{line}</li>
-                            ))}
-                          </ul>
-                        ) : null}
-                        {!aiSessionBrief && (!aiTradingPriorities || aiTradingPriorities.length === 0) && headlineSample.length === 0 ? (
-                          <p className="td-outlook-empty td-outlook-headlines-empty">Headlines will appear when the intelligence feed updates.</p>
-                        ) : null}
-                      </div>
-                    </section>
-                  </div>
+                  <section className="td-outlook-concept-card td-outlook-concept-card--focus" aria-label="Trader focus">
+                    <h2 className="td-outlook-concept-card__title">Trader Focus</h2>
+                    <div className="td-outlook-concept-card__body">
+                      {editMode && editDraft ? (
+                        renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item')
+                      ) : traderFocus && traderFocus.length > 0 ? (
+                        <FocusList items={traderFocus} />
+                      ) : (
+                        <p className="td-outlook-empty">No focus items. Use Edit to add.</p>
+                      )}
+                    </div>
+                  </section>
+
+                  <section className="td-outlook-concept-card td-outlook-concept-card--risk" aria-label="Market risk engine">
+                    <h2 className="td-outlook-concept-card__title">Market Risk Engine</h2>
+                    <div className="td-outlook-concept-card__body td-outlook-concept-risk__body">
+                      {editMode && editDraft ? (
+                        renderListEdit(editDraft.riskRadar, 'riskRadar', 'Risk factor', { preserveObject: true })
+                      ) : (riskRadar && riskRadar.length > 0) || riskEngine ? (
+                        <RiskRadarList items={riskRadar || []} riskEngine={riskEngine} summaryOnly={period === 'daily'} />
+                      ) : (
+                        <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
+                      )}
+                    </div>
+                  </section>
+
+                  <section
+                    className="td-outlook-concept-headlines td-outlook-panel td-outlook-panel--headlines td-outlook-headlines-bar"
+                    aria-label="Market headlines"
+                  >
+                    <header className="td-outlook-headlines-bar-header">
+                      <h2 className="td-outlook-headlines-bar-title">Market headlines</h2>
+                      {headlinesFreshness ? (
+                        <span className="td-outlook-headlines-bar-meta">{headlinesFreshness}</span>
+                      ) : null}
+                    </header>
+                    <div className="td-outlook-headlines-bar-body">
+                      {aiSessionBrief ? <p className="td-outlook-headlines-lead">{aiSessionBrief}</p> : null}
+                      {Array.isArray(aiTradingPriorities) && aiTradingPriorities.length > 0 ? (
+                        <ol className="td-outlook-headlines-priorities">
+                          {aiTradingPriorities.map((line, idx) => (
+                            <li key={idx}>{line}</li>
+                          ))}
+                        </ol>
+                      ) : null}
+                      {headlineSample.length > 0 ? (
+                        <ul className="td-outlook-headlines-feed">
+                          {headlineSample.map((line, idx) => (
+                            <li key={idx}>{line}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {!aiSessionBrief && (!aiTradingPriorities || aiTradingPriorities.length === 0) && headlineSample.length === 0 ? (
+                        <p className="td-outlook-empty td-outlook-headlines-empty">Headlines will appear when the intelligence feed updates.</p>
+                      ) : null}
+                    </div>
+                  </section>
                 </div>
               </div>
             </div>
