@@ -2601,6 +2601,11 @@
   justify-items: stretch;
 }
 
+/* FX (etc.): eurusd leg dropped → 3 tiles; span bottom tile so layout isn’t a broken 2×2 hole */
+.md-ref-cross-grid--tiles.md-ref-cross-grid--tiles-3 .md-ref-cross-tile:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
 .md-ref-cross-tile {
   display: flex;
   flex-direction: column;
@@ -2715,6 +2720,16 @@
   color: var(--aura-bear, #f07d91);
   font-weight: 700;
   text-shadow: 0 0 14px var(--aura-bear-dim, rgba(200, 85, 105, 0.3));
+}
+
+.md-ref-pct--na {
+  font-weight: 650;
+  color: rgba(165, 195, 240, 0.72);
+}
+
+.md-ref-pct-na-mark {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.88;
 }
 
 .md-ref-panel--timeline {
@@ -3589,11 +3604,20 @@
   width: 100%;
 }
 
+/* Let brief height follow content so <details> grows the scroll area instead of shrinking the chart grid */
 .md-decoder-intel-scroll > .md-decoder--intel-preview-inner {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  /* block: height expands with brief; flex+flex:1 child would clip instead of growing parent */
+  display: block;
+}
+
+.md-decoder--intel-preview-inner .md-ref-brief-layout {
+  /* At least fill the preview scrollport; grow taller when “More context” opens */
+  min-height: 100%;
 }
 
 .md-ref-grid--dense {
@@ -3602,6 +3626,12 @@
   flex: 1 1 auto;
   min-height: 0;
   margin-bottom: 3px;
+}
+
+/* Preview: never shrink the main decoder grid when "More context" opens — user scrolls down for the extra panels */
+.md-decoder--intel-preview-inner .md-ref-grid--dense {
+  flex-shrink: 0;
+  min-height: 0;
 }
 
 .md-ref-grid--dense .md-ref-col {
@@ -3629,6 +3659,13 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+/* Cross-asset is last on the left; don't flex-shrink it away (clips tiles / 4th leg) */
+.md-ref-unified-rail--left .md-ref-unified-section:last-of-type:has(.md-ref-cross-grid--tiles) {
+  flex-shrink: 0;
+  min-height: min-content;
+  overflow: visible;
 }
 
 .md-ref-unified-rail--left .md-ref-cross-grid {
@@ -4188,6 +4225,7 @@
   min-height: 4.85rem;
   box-sizing: border-box;
   overflow: hidden;
+  align-self: stretch;
   align-items: stretch;
   text-align: left;
   padding: 8px 8px 7px;

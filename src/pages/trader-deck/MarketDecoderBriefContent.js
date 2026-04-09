@@ -271,6 +271,8 @@ export default function MarketDecoderBriefContent({ brief, q }) {
     : null;
   const pulseBias = pulseDirectionLabel(brief);
   const pulseSub = pulseContextLine(brief);
+  const changePctUnavailableTitle =
+    'Session change % is not available for this snapshot. Common causes: degraded quote, missing session change field, or no daily bars yet (see the desk / quote line under the header).';
 
   return (
     <div className="md-ref-brief-layout">
@@ -347,7 +349,11 @@ export default function MarketDecoderBriefContent({ brief, q }) {
             <div className="md-ref-unified-section">
               <h2 className="md-ref-unified-h">Cross-Asset Context</h2>
               {crossTiles ? (
-              <div className="md-ref-cross-grid md-ref-cross-grid--tiles">
+              <div
+                className={`md-ref-cross-grid md-ref-cross-grid--tiles${
+                  crossTiles.length === 3 ? ' md-ref-cross-grid--tiles-3' : ''
+                }`}
+              >
                 {crossTiles.map((t) => (
                   <div
                     key={t.id}
@@ -402,12 +408,21 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                       ? 'md-ref-pct md-ref-pct--up'
                       : changePct != null
                         ? 'md-ref-pct md-ref-pct--down'
-                        : 'md-ref-pct'
+                        : 'md-ref-pct md-ref-pct--na'
                   }
-                title={changePct == null ? 'Session change % unavailable from this snapshot' : undefined}
+                  title={changePct == null ? changePctUnavailableTitle : undefined}
+                  aria-label={changePct == null ? 'Session change percent not available' : undefined}
                 >
-                  {formatPct(changePct) ?? 'Δ n/a'}
-                  {changePct != null ? (changePct >= 0 ? ' ▲' : ' ▼') : ''}
+                  {changePct != null ? (
+                    <>
+                      {formatPct(changePct)}
+                      {changePct >= 0 ? ' ▲' : ' ▼'}
+                    </>
+                  ) : (
+                    <>
+                      Δ <span className="md-ref-pct-na-mark">—</span>
+                    </>
+                  )}
                 </span>
               </div>
               <div className="md-mse-meta">
