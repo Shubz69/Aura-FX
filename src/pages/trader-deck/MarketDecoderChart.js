@@ -13,6 +13,16 @@ const TIMEFRAMES_REF = ['1H', '4H', '1D', '1W', '1M'];
 /** Approximate zoom on daily OHLC bars (tabs = visible window from the right). */
 const TF_VISIBLE_BARS = { '1H': 8, '4H': 16, '1D': 32, '1W': 72, '1M': 400 };
 
+/** Reference terminal: height follows flex slot; clamp for readability. */
+function computeReferenceChartHeight(el) {
+  const ch = el?.clientHeight;
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+  if (ch && ch >= 200) {
+    return Math.min(580, Math.max(300, ch));
+  }
+  return Math.min(520, Math.max(300, Math.floor(vh * 0.3)));
+}
+
 function smaFromCandles(candles, period) {
   if (!candles.length || period < 2) return [];
   const out = [];
@@ -42,18 +52,14 @@ export default function MarketDecoderChart({ bars, compact = false, referenceSty
     const el = wrapRef.current;
     if (!el || !bars || bars.length < 2) return undefined;
 
-    const baseH =
-      typeof window !== 'undefined'
-        ? window.innerHeight * (referenceStyle ? 0.14 : compact ? 0.2 : 0.28)
-        : referenceStyle
-          ? 240
-          : compact
-            ? 220
-            : 320;
-    const height = Math.min(
-      referenceStyle ? 268 : compact ? 260 : 400,
-      Math.max(referenceStyle ? 188 : compact ? 180 : 260, Math.floor(baseH))
-    );
+    let height;
+    if (referenceStyle) {
+      height = computeReferenceChartHeight(el);
+    } else {
+      const baseH =
+        typeof window !== 'undefined' ? window.innerHeight * (compact ? 0.2 : 0.28) : compact ? 220 : 320;
+      height = Math.min(compact ? 260 : 400, Math.max(compact ? 180 : 260, Math.floor(baseH)));
+    }
 
     const bg = referenceStyle ? '#0b0e14' : '#07111f';
     const gridGold = referenceStyle ? 'rgba(212, 175, 55, 0.07)' : 'rgba(140, 175, 255, 0.08)';
@@ -168,8 +174,13 @@ export default function MarketDecoderChart({ bars, compact = false, referenceSty
     }
 
     const ro = new ResizeObserver(() => {
-      if (wrapRef.current && chartRef.current) {
-        chartRef.current.applyOptions({ width: wrapRef.current.clientWidth });
+      if (!wrapRef.current || !chartRef.current) return;
+      const w = wrapRef.current.clientWidth;
+      if (referenceStyle) {
+        const h = computeReferenceChartHeight(wrapRef.current);
+        chartRef.current.applyOptions({ width: w, height: h });
+      } else {
+        chartRef.current.applyOptions({ width: w });
       }
     });
     ro.observe(el);
@@ -192,7 +203,7 @@ export default function MarketDecoderChart({ bars, compact = false, referenceSty
   }
 
   return (
-    <div className={`md-chart-root${referenceStyle ? ' md-chart-root--ref' : ''}`}>
+    <div className={`md-chart-root${referenceStyle ? ' md-chart-root--ref md-chart-root--ref-fill' : ''}`}>
       {!referenceStyle ? (
         <div className="md-chart-toolbar" role="toolbar" aria-label="Chart display mode">
           {MODES.map((x) => (
@@ -223,7 +234,10 @@ export default function MarketDecoderChart({ bars, compact = false, referenceSty
           ))}
         </div>
       )}
-      <div ref={wrapRef} className="md-chart-canvas-wrap" />
+      <div
+        ref={wrapRef}
+        className={`md-chart-canvas-wrap${referenceStyle ? ' md-chart-canvas-wrap--ref-fill' : ''}`}
+      />
       <p className="md-chart-attrib">
         <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer">
           Lightweight Charts

@@ -40,7 +40,7 @@ export function DecoderSessionFlowStrip({ flow }) {
   );
 }
 
-export function DecoderReadinessBlock({ readiness, insights }) {
+export function DecoderReadinessBlock({ readiness }) {
   if (!readiness) return null;
   return (
     <div className="md-ref-readiness">
@@ -66,19 +66,63 @@ export function DecoderReadinessBlock({ readiness, insights }) {
           <span className="md-ref-readiness-v">{readiness.volatilitySuitability || '—'}</span>
         </div>
       </div>
-      {insights ? (
-        <div className="md-ref-insights-compact">
-          {insights.rsi != null ? (
-            <span>
-              RSI {insights.rsi} · {insights.rsiState || '—'}
-            </span>
-          ) : (
-            <span>RSI n/a</span>
-          )}
-          {insights.atrPercent != null ? <span>ADR {insights.atrPercent}%</span> : <span>ADR n/a</span>}
-          {insights.momentum ? <span>Momentum · {insights.momentum}</span> : null}
+    </div>
+  );
+}
+
+/** Dense desk row: only fields present on the decoder brief / OHLC (no invented values). */
+export function DecoderDeskIntelStrip({ brief }) {
+  if (!brief) return null;
+  const checks = Array.isArray(brief.confirmationEngine?.checks) ? brief.confirmationEngine.checks : [];
+  const verdict = (id) => {
+    const c = checks.find((x) => x.id === id);
+    return c?.verdict || null;
+  };
+  const bars = brief.meta?.chartBars;
+  let rangeVsAdr = null;
+  if (bars?.length) {
+    const last = bars[bars.length - 1];
+    const h = Number(last.high);
+    const l = Number(last.low);
+    const c = Number(last.close);
+    if ([h, l, c].every(Number.isFinite) && c !== 0) {
+      const todayPct = Math.round(((h - l) / c) * 10000) / 100;
+      const adr = brief.insights?.adrPercent;
+      if (adr != null && Number.isFinite(Number(adr)) && Number(adr) > 0) {
+        const ratio = todayPct / Number(adr);
+        const tag = ratio >= 1 ? '≥1× ADR' : '<1× ADR';
+        rangeVsAdr = `${todayPct}% today · ${adr}% ADR · ${tag}`;
+      } else {
+        rangeVsAdr = `${todayPct}% (last bar range)`;
+      }
+    }
+  }
+  if (!rangeVsAdr && brief.insights?.adrPercent != null) {
+    rangeVsAdr = `ADR ${brief.insights.adrPercent}% of spot`;
+  }
+  const vol =
+    brief.insights?.volatilityRegime ||
+    (brief.marketPulse?.volatility ? String(brief.marketPulse.volatility) : null);
+  const cells = [
+    { k: 'Vol regime', v: vol || '—' },
+    { k: 'Range vs ADR', v: rangeVsAdr || '—' },
+    { k: 'Session bias', v: brief.instantRead?.bias || brief.marketPulse?.biasLabel || '—' },
+    { k: 'Structure', v: brief.insights?.structureState || '—' },
+    { k: 'Liquidity', v: verdict('liquidity') || '—' },
+    {
+      k: 'Event risk',
+      v: brief.eventRiskSummary?.state ? String(brief.eventRiskSummary.state).toUpperCase() : '—',
+    },
+    { k: 'Cross-market', v: verdict('correlation') || '—' },
+  ];
+  return (
+    <div className="md-ref-desk-intel" aria-label="Desk intelligence">
+      {cells.map((cell) => (
+        <div key={cell.k} className="md-ref-desk-intel-cell">
+          <span className="md-ref-desk-intel-k">{cell.k}</span>
+          <span className="md-ref-desk-intel-v">{cell.v}</span>
         </div>
-      ) : null}
+      ))}
     </div>
   );
 }

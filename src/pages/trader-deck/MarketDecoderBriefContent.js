@@ -8,6 +8,7 @@ import {
   DecoderSessionBadge,
   DecoderSessionFlowStrip,
   DecoderReadinessBlock,
+  DecoderDeskIntelStrip,
   DecoderConfirmationFooter,
   DecoderSmartAlerts,
   DecoderEventRiskHeader,
@@ -382,13 +383,16 @@ export default function MarketDecoderBriefContent({ brief, q }) {
               </span>
             </div>
             <DecoderSessionBadge flow={brief.sessionFlow} overlayNote={brief.chartOverlay?.note} />
-            <MarketDecoderChart
-              bars={brief.meta?.chartBars}
-              compact={false}
-              referenceStyle
-              overlays={brief.chartOverlay}
-            />
-            <DecoderSessionFlowStrip flow={brief.sessionFlow} />
+            <div className="md-ref-chart-body">
+              <MarketDecoderChart
+                bars={brief.meta?.chartBars}
+                compact={false}
+                referenceStyle
+                overlays={brief.chartOverlay}
+              />
+              <DecoderSessionFlowStrip flow={brief.sessionFlow} />
+              <DecoderDeskIntelStrip brief={brief} />
+            </div>
           </section>
 
           <section className="md-ref-panel md-ref-panel--timeline md-ref-panel--glass">
@@ -440,7 +444,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
 
           <section className="md-ref-panel md-ref-panel--glass md-ref-panel--anchor md-ref-panel--readiness">
             <h2 className="md-ref-panel-h">Trade Readiness</h2>
-            <DecoderReadinessBlock readiness={brief.readiness} insights={brief.insights} />
+            <DecoderReadinessBlock readiness={brief.readiness} />
           </section>
 
           <section className="md-ref-panel md-ref-panel--glass">

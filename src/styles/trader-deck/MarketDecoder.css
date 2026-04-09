@@ -1722,8 +1722,8 @@
 /* ——— Reference terminal layout (blue & white desk) ——— */
 
 .md-decoder--reference {
-  max-width: 1240px;
-  padding: 0 4px 14px;
+  max-width: 1360px;
+  padding: 0 4px 10px;
   --ref-gold: rgba(240, 246, 255, 0.96);
   --ref-gold-dim: rgba(160, 195, 255, 0.92);
   --ref-cyan: rgba(130, 178, 255, 0.95);
@@ -2000,28 +2000,28 @@
 
 .md-ref-grid {
   display: grid;
-  grid-template-columns: minmax(180px, 0.9fr) minmax(240px, 1.4fr) minmax(180px, 0.9fr);
-  gap: 7px;
+  grid-template-columns: minmax(168px, 0.72fr) minmax(300px, 1.56fr) minmax(168px, 0.72fr);
+  gap: 5px;
   align-items: start;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
 }
 
 .md-ref-col {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 }
 
 .md-decoder--reference .md-ref-scen-row {
-  margin-bottom: 4px;
-  padding: 5px 8px;
-  border-radius: 8px;
+  margin-bottom: 3px;
+  padding: 4px 7px;
+  border-radius: 7px;
 }
 
 .md-ref-panel {
-  border-radius: 12px;
-  padding: 8px 10px 8px;
+  border-radius: 11px;
+  padding: 6px 8px 6px;
   background: var(--ref-panel-bg);
   border: 1px solid rgba(255, 255, 255, 0.072);
   backdrop-filter: blur(6px) saturate(1.04);
@@ -2051,11 +2051,11 @@
 }
 
 .md-ref-panel--chart {
-  padding-top: 8px;
+  padding-top: 6px;
 }
 
 .md-ref-panel-h {
-  margin: 0 0 7px;
+  margin: 0 0 5px;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -2073,16 +2073,16 @@
 .md-ref-rows {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 3px;
 }
 
 .md-ref-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 10px;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 8px;
   background: rgba(0, 0, 0, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.04);
   box-shadow: 0 1px 8px rgba(0, 0, 0, 0.18) inset;
@@ -2093,14 +2093,14 @@
 }
 
 .md-ref-k {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--ref-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .md-ref-v {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--ref-ink);
   text-align: right;
@@ -2245,6 +2245,8 @@
 
 .md-ref-panel--timeline {
   margin-top: 0;
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
 .md-ref-timeline {
@@ -2255,11 +2257,11 @@
 }
 
 .md-ref-tl-cap {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ref-cyan);
-  padding-top: 12px;
+  padding-top: 6px;
 }
 
 .md-ref-tl-cap--end {
@@ -2270,11 +2272,11 @@
   flex: 1;
   display: flex;
   justify-content: space-between;
-  gap: 6px;
+  gap: 5px;
   min-width: 160px;
-  padding: 4px 0 2px;
+  padding: 3px 0 2px;
   border-top: 1px dashed rgba(140, 175, 255, 0.35);
-  margin-top: 10px;
+  margin-top: 5px;
   position: relative;
 }
 
@@ -2288,9 +2290,9 @@
 }
 
 .md-ref-tl-node {
-  width: 9px;
-  height: 9px;
-  margin-top: -13px;
+  width: 8px;
+  height: 8px;
+  margin-top: -11px;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #ffffff, var(--ref-gold-dim));
   box-shadow: 0 0 10px rgba(140, 175, 255, 0.65);
@@ -2383,9 +2385,9 @@
   display: flex;
   align-items: center;
   width: 100%;
-  margin-bottom: 5px;
-  padding: 7px 10px;
-  border-radius: 10px;
+  margin-bottom: 3px;
+  padding: 5px 8px;
+  border-radius: 8px;
   border: 1px solid rgba(140, 175, 255, 0.2);
   background: rgba(0, 0, 0, 0.2);
   color: inherit;
@@ -2550,8 +2552,8 @@
 }
 
 .md-ref-footer {
-  margin-top: 6px;
-  padding: 12px 14px;
+  margin-top: 2px;
+  padding: 10px 12px;
   text-align: center;
   border-radius: 14px;
   border: 1px solid rgba(140, 175, 255, 0.35);
@@ -2575,7 +2577,7 @@
 }
 
 .md-ref-more {
-  margin-top: 12px;
+  margin-top: 6px;
   border-radius: 12px;
   border: 1px solid rgba(94, 231, 255, 0.1);
   padding: 2px 10px 10px;
@@ -2617,6 +2619,19 @@
 
 .md-chart-root--ref {
   margin-top: 2px;
+}
+
+.md-chart-root--ref-fill {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.md-chart-canvas-wrap--ref-fill {
+  flex: 1 1 auto;
+  min-height: clamp(260px, 30vh, 520px);
+  width: 100%;
 }
 
 .md-chart-tf {
@@ -2987,20 +3002,20 @@
 }
 
 .md-ref-grid--dense {
-  gap: 6px;
+  gap: 4px;
   align-items: start;
-  margin-bottom: 8px;
+  margin-bottom: 3px;
 }
 
 .md-ref-grid--dense .md-ref-col {
-  gap: 5px;
+  gap: 4px;
 }
 
 /* Support panels: quiet glass, tight */
 .md-ref-panel--glass {
   position: relative;
-  padding: 7px 9px 8px;
-  border-radius: 12px;
+  padding: 5px 7px 6px;
+  border-radius: 11px;
   border: 1px solid transparent;
   background:
     linear-gradient(rgba(8, 12, 26, 0.88), rgba(5, 8, 18, 0.92)) padding-box,
@@ -3020,8 +3035,8 @@
 }
 
 .md-ref-panel--glass .md-ref-panel-h {
-  margin-bottom: 5px;
-  font-size: 0.58rem;
+  margin-bottom: 4px;
+  font-size: 0.56rem;
   letter-spacing: 0.18em;
   font-weight: 700;
   color: rgba(200, 215, 245, 0.72);
@@ -3030,8 +3045,8 @@
 /* Anchors: pulse, readiness — elevated hierarchy + subtle aura */
 .md-ref-panel--anchor {
   isolation: isolate;
-  padding: 9px 11px 10px;
-  border-radius: 13px;
+  padding: 6px 8px 7px;
+  border-radius: 12px;
   background:
     linear-gradient(168deg, rgba(12, 18, 38, 0.94) 0%, rgba(6, 9, 20, 0.97) 100%) padding-box,
     var(--md-anchor-edge) border-box;
@@ -3063,8 +3078,8 @@
 .md-ref-panel--anchor .md-ref-panel-h {
   position: relative;
   z-index: 1;
-  margin-bottom: 7px;
-  font-size: 0.64rem;
+  margin-bottom: 4px;
+  font-size: 0.6rem;
   letter-spacing: 0.22em;
   font-weight: 800;
   color: rgba(236, 242, 255, 0.95);
@@ -3072,8 +3087,8 @@
 }
 
 .md-ref-panel--anchor-pulse .md-ref-gauge {
-  margin: 2px 0 0;
-  height: 112px;
+  margin: 0;
+  height: 96px;
   filter: drop-shadow(0 6px 28px rgba(90, 140, 240, 0.12));
 }
 
@@ -3083,30 +3098,98 @@
     0 0 24px rgba(100, 160, 255, 0.06);
 }
 
+.md-ref-panel--anchor-pulse .md-ref-gauge-track {
+  height: 78px;
+  max-width: 200px;
+}
+
+.md-ref-panel--anchor-pulse .md-ref-g-needle {
+  height: 52px;
+}
+
 .md-ref-panel--anchor-pulse .md-ref-pulse-caption {
-  margin-top: 4px;
-  font-size: 0.9rem;
+  margin-top: 3px;
+  font-size: 0.84rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   color: rgba(248, 250, 255, 0.96);
 }
 
 .md-ref-panel--readiness .md-ref-readiness-num {
-  font-size: 2.05rem;
+  font-size: 1.82rem;
   font-weight: 800;
   filter: drop-shadow(0 0 18px rgba(140, 180, 255, 0.2));
 }
 
 .md-ref-panel--readiness .md-ref-readiness-meta {
-  gap: 5px 8px;
+  gap: 3px 6px;
 }
 
 .md-ref-panel--chart.md-ref-panel--glass {
-  padding: 7px 9px 7px;
+  padding: 5px 7px 6px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+@media (min-width: 1081px) {
+  .md-ref-panel--chart.md-ref-panel--glass {
+    min-height: clamp(380px, 50vh, 820px);
+  }
+}
+
+.md-ref-chart-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.md-ref-desk-intel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px 5px;
+  padding: 4px 5px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(140, 175, 255, 0.1);
+}
+
+.md-ref-desk-intel-cell {
+  min-width: 0;
+  padding: 3px 4px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.035);
+}
+
+.md-ref-desk-intel-k {
+  display: block;
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(165, 182, 218, 0.42);
+  margin-bottom: 1px;
+}
+
+.md-ref-desk-intel-v {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.28;
+  color: rgba(232, 238, 252, 0.9);
+}
+
+@media (max-width: 1080px) {
+  .md-ref-desk-intel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .md-ref-panel--chart .md-ref-chart-head {
   margin-bottom: 2px;
+  flex-shrink: 0;
 }
 
 .md-ref-panel--chart .md-ref-pair {
@@ -3274,9 +3357,10 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 10px;
-  margin: 2px 0 5px;
-  padding: 4px 8px;
+  gap: 4px 8px;
+  margin: 0 0 3px;
+  padding: 3px 7px;
+  flex-shrink: 0;
   border-radius: 8px;
   background: rgba(130, 168, 255, 0.07);
   border: 1px solid rgba(140, 175, 255, 0.16);
@@ -3298,12 +3382,13 @@
 .md-ref-session-flow {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
-  margin-top: 6px;
+  gap: 3px;
+  margin-top: 0;
+  flex-shrink: 0;
 }
 
 .md-ref-session-flow-cell {
-  padding: 5px 6px;
+  padding: 4px 5px;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.26);
   border: 1px solid rgba(255, 255, 255, 0.04);
@@ -3311,34 +3396,34 @@
 
 .md-ref-session-flow-name {
   display: block;
-  font-size: 0.58rem;
+  font-size: 0.54rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(180, 195, 230, 0.55);
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .md-ref-session-flow-phase {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: rgba(240, 245, 255, 0.94);
 }
 
 .md-ref-session-flow-detail {
   display: block;
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   color: rgba(185, 200, 230, 0.5);
-  line-height: 1.25;
-  margin-top: 2px;
+  line-height: 1.22;
+  margin-top: 1px;
 }
 
 .md-ref-event-risk-cap {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 5px;
-  padding: 4px 7px;
+  gap: 5px;
+  margin-bottom: 3px;
+  padding: 3px 6px;
   border-radius: 8px;
   font-size: 0.66rem;
   font-weight: 600;
@@ -3371,7 +3456,7 @@
 
 .md-ref-readiness {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .md-ref-readiness-score {
@@ -3382,7 +3467,7 @@
 }
 
 .md-ref-readiness-num {
-  font-size: 1.85rem;
+  font-size: 1.68rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   background: linear-gradient(90deg, #fff, #dce7ff 55%, rgba(232, 208, 128, 0.95));
@@ -3429,11 +3514,11 @@
 .md-ref-insights-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px 6px;
+  gap: 3px 4px;
 }
 
 .md-ref-insights-cell {
-  padding: 4px 6px;
+  padding: 3px 5px;
   border-radius: 7px;
   background: rgba(0, 0, 0, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.035);
@@ -3449,7 +3534,7 @@
 }
 
 .md-ref-insights-v {
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   font-weight: 600;
   color: rgba(240, 244, 255, 0.94);
   line-height: 1.22;
@@ -3508,8 +3593,8 @@
 }
 
 .md-ref-footer--engine-wrap {
-  padding: 10px 11px 11px;
-  margin-top: 8px;
+  padding: 8px 9px 9px;
+  margin-top: 2px;
 }
 
 .md-ref-footer--engine-wrap.md-ref-footer--anchor {
@@ -3528,7 +3613,7 @@
 .md-ref-footer-engine {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(188px, 0.72fr);
-  gap: 10px 14px;
+  gap: 6px 10px;
   align-items: stretch;
 }
 
@@ -3600,8 +3685,8 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 11px 10px;
-  border-radius: 12px;
+  padding: 8px 8px;
+  border-radius: 10px;
   background: linear-gradient(168deg, rgba(16, 24, 48, 0.94) 0%, rgba(6, 10, 22, 0.98) 100%);
   border: 1px solid rgba(140, 175, 255, 0.2);
   box-shadow:
