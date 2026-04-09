@@ -1290,22 +1290,21 @@
 
 /* ── Aura Terminal — reference layout (~70/30 + headlines under frame) ─ */
 .td-deck-mo-outlook--terminal .td-outlook-terminal-frame {
-  border-radius: 18px;
-  padding: 1.5px;
+  border-radius: 16px;
+  padding: 1px;
   background: linear-gradient(
     145deg,
-    rgba(212, 175, 125, 0.5) 0%,
-    rgba(165, 138, 82, 0.22) 20%,
-    rgba(100, 140, 220, 0.32) 45%,
-    rgba(140, 175, 255, 0.28) 62%,
-    rgba(212, 175, 125, 0.38) 85%,
-    rgba(230, 195, 130, 0.42) 100%
+    rgba(140, 175, 255, 0.22) 0%,
+    rgba(212, 175, 125, 0.28) 24%,
+    rgba(90, 120, 200, 0.18) 48%,
+    rgba(140, 175, 255, 0.2) 72%,
+    rgba(212, 175, 125, 0.24) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(212, 175, 125, 0.14) inset,
-    0 26px 70px rgba(0, 0, 0, 0.58),
-    0 0 88px -28px rgba(107, 143, 232, 0.38),
-    0 0 120px -48px rgba(212, 175, 125, 0.14);
+    0 0 0 1px rgba(140, 175, 255, 0.1) inset,
+    0 20px 56px rgba(0, 0, 0, 0.52),
+    0 0 72px -26px rgba(107, 143, 232, 0.42),
+    0 0 96px -40px rgba(212, 175, 125, 0.08);
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-terminal-inner {
@@ -1316,10 +1315,10 @@
 
 .td-deck-mo-outlook--terminal .td-outlook-terminal-grid {
   display: grid;
-  gap: 11px;
+  gap: 8px;
   width: 100%;
   min-width: 0;
-  padding: 12px;
+  padding: 9px 10px 8px;
   box-sizing: border-box;
   grid-template-columns: 1fr;
 }
@@ -1327,7 +1326,7 @@
 @media (min-width: 960px) {
   .td-deck-mo-outlook--terminal .td-outlook-terminal-grid {
     grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: 1fr auto;
     align-items: stretch;
   }
 
@@ -1335,17 +1334,22 @@
     grid-column: 1;
     grid-row: 1;
     min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
+    align-self: stretch;
   }
 
   .td-deck-mo-outlook--terminal .td-outlook-terminal-col--rail {
     grid-column: 2;
     grid-row: 1;
     min-width: 0;
+    min-height: 0;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 7px;
+    align-self: stretch;
   }
 
   .td-deck-mo-outlook--terminal .td-outlook-terminal-headlines {
@@ -1355,17 +1359,38 @@
   }
 }
 
-.td-deck-mo-outlook--terminal .td-outlook-terminal-col--rail .td-outlook-panel--pulse-feature {
+.td-deck-mo-outlook--terminal .td-outlook-terminal-col--rail > .td-outlook-panel--pulse-feature {
   flex: 0 0 auto;
 }
 
-.td-deck-mo-outlook--terminal .td-outlook-terminal-col--rail .td-outlook-panel--risk-standalone {
+.td-deck-mo-outlook--terminal .td-outlook-terminal-col--rail > .td-outlook-panel--risk-standalone {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--risk-standalone > .td-outlook-intel-body {
   flex: 1 1 auto;
   min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-panel--intel-mega {
+  flex: 1 1 auto;
+  min-height: 0;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  box-shadow:
+    var(--panel-shadow),
+    0 0 0 1px rgba(140, 175, 255, 0.09) inset,
+    0 0 0 1px rgba(212, 175, 125, 0.05) inset,
+    0 12px 36px rgba(0, 0, 0, 0.42),
+    0 0 56px -24px rgba(107, 143, 232, 0.3);
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-intel-block--regime {
@@ -1378,9 +1403,9 @@
   position: absolute;
   top: 0;
   left: 0;
-  right: 12%;
-  height: 2px;
-  background: linear-gradient(90deg, rgba(255, 220, 150, 0.95), rgba(212, 175, 125, 0.45), transparent);
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(140, 175, 255, 0.75), rgba(212, 175, 125, 0.35), transparent);
   pointer-events: none;
   z-index: 2;
 }
@@ -1388,16 +1413,18 @@
 .td-deck-mo-outlook--terminal .td-outlook-intel-title,
 .td-deck-mo-outlook--terminal .td-outlook-panel--pulse-feature > .td-mi-panel-title,
 .td-deck-mo-outlook--terminal .td-outlook-panel--risk-standalone > .td-mi-panel-title {
-  color: rgba(224, 195, 125, 0.94) !important;
-  -webkit-text-fill-color: rgba(224, 195, 125, 0.94) !important;
+  color: rgba(218, 228, 255, 0.9) !important;
+  -webkit-text-fill-color: rgba(218, 228, 255, 0.9) !important;
   font-weight: 700 !important;
-  letter-spacing: 0.26em !important;
+  letter-spacing: 0.22em !important;
   text-transform: uppercase !important;
-  border-bottom-color: rgba(212, 175, 125, 0.22) !important;
+  border-bottom-color: rgba(140, 175, 255, 0.16) !important;
+  padding: 5px 10px 4px !important;
+  font-size: 0.58rem !important;
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-intel-block .td-outlook-intel-title::after {
-  background: linear-gradient(90deg, rgba(255, 214, 140, 0.85), rgba(140, 175, 255, 0.4), transparent) !important;
+  background: linear-gradient(90deg, rgba(140, 175, 255, 0.75), rgba(212, 175, 125, 0.28), transparent) !important;
 }
 
 .td-deck-mo-outlook--terminal .td-mi-gauge--outlook .td-mi-gauge-arc-bg {
@@ -1415,11 +1442,13 @@
 
 .td-deck-mo-outlook--terminal .td-outlook-headlines-bar {
   margin: 0;
-  border-radius: 0 0 14px 14px;
-  border: 1px solid rgba(212, 175, 125, 0.2);
-  border-top: 1px solid rgba(212, 175, 125, 0.35);
-  background: linear-gradient(180deg, rgba(10, 14, 30, 0.92) 0%, rgba(4, 6, 16, 0.98) 100%);
-  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+  border-radius: 0 0 12px 12px;
+  border: 1px solid rgba(140, 175, 255, 0.12);
+  border-top: 1px solid rgba(140, 175, 255, 0.2);
+  background: linear-gradient(180deg, rgba(9, 13, 28, 0.94) 0%, rgba(4, 6, 14, 0.99) 100%);
+  box-shadow:
+    0 -1px 0 rgba(212, 175, 125, 0.12) inset,
+    0 -8px 32px rgba(0, 0, 0, 0.32);
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-headlines-bar-header {
@@ -1427,18 +1456,18 @@
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px 16px;
-  padding: 10px 14px 8px;
-  border-bottom: 1px solid rgba(107, 143, 232, 0.12);
+  gap: 6px 12px;
+  padding: 7px 12px 6px;
+  border-bottom: 1px solid rgba(107, 143, 232, 0.1);
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-headlines-bar-title {
   margin: 0;
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
-  color: rgba(224, 195, 125, 0.95);
+  color: rgba(210, 222, 255, 0.88);
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-headlines-bar-meta {
@@ -1448,25 +1477,25 @@
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-headlines-bar-body {
-  padding: 10px 14px 14px;
+  padding: 7px 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 7px;
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-headlines-lead {
   margin: 0;
-  font-size: 0.82rem;
-  line-height: 1.55;
-  color: rgba(235, 238, 255, 0.88);
+  font-size: 0.78rem;
+  line-height: 1.48;
+  color: rgba(235, 238, 255, 0.86);
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-headlines-priorities {
   margin: 0;
-  padding-left: 1.1rem;
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: rgba(200, 212, 248, 0.82);
+  padding-left: 1rem;
+  font-size: 0.73rem;
+  line-height: 1.42;
+  color: rgba(198, 210, 245, 0.8);
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-headlines-feed {
@@ -1475,18 +1504,18 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-headlines-feed li {
   position: relative;
-  padding: 8px 10px 8px 28px;
-  font-size: 0.76rem;
-  line-height: 1.45;
-  color: rgba(210, 218, 248, 0.78);
-  background: rgba(4, 8, 22, 0.55);
-  border-radius: 10px;
-  border: 1px solid rgba(107, 143, 232, 0.1);
+  padding: 6px 8px 6px 26px;
+  font-size: 0.72rem;
+  line-height: 1.38;
+  color: rgba(208, 216, 248, 0.76);
+  background: rgba(4, 8, 22, 0.52);
+  border-radius: 8px;
+  border: 1px solid rgba(107, 143, 232, 0.09);
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-headlines-feed li::before {
@@ -1507,16 +1536,16 @@
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-intel-block--changes .td-mi-bullets {
-  gap: 6px !important;
+  gap: 4px !important;
 }
 
 .td-deck-mo-outlook--terminal .td-outlook-intel-block--changes .td-mi-bullet-item {
-  padding: 8px 10px 8px 26px !important;
-  font-size: 0.76rem !important;
-  line-height: 1.45 !important;
+  padding: 5px 8px 5px 22px !important;
+  font-size: 0.73rem !important;
+  line-height: 1.34 !important;
   background: rgba(4, 8, 22, 0.48) !important;
-  border-radius: 10px !important;
-  border-left: 2px solid rgba(212, 175, 125, 0.4) !important;
+  border-radius: 8px !important;
+  border-left: 2px solid rgba(140, 175, 255, 0.35) !important;
 }
 
 .td-outlook-panel--risk-standalone {
@@ -2575,4 +2604,256 @@
   .td-mi-gauge-arc-bg { width: 160px; height: 80px; border-radius: 160px 160px 0 0; }
   .td-mi-gauge-needle { height: 60px; }
   .td-mi-gauge-axis-labels { width: 160px; }
+}
+
+/* ══════════════════════════════════════════════
+   Market Outlook terminal — precision spacing, rail fill, row rhythm
+   (scoped; does not alter non-terminal outlook layouts)
+══════════════════════════════════════════════ */
+.td-deck-mo-outlook--terminal .td-outlook-terminal-col--main > .td-outlook-panel--intel-mega {
+  align-self: stretch;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-intel-stack {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--intel-mega .td-outlook-intel-split {
+  flex: 0 0 auto !important;
+  min-height: 0;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-intel-block--regime,
+.td-deck-mo-outlook--terminal .td-outlook-intel-block--changes {
+  flex: 0 0 auto;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-intel-block--focus {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-intel-block--focus > .td-mi-panel-body.td-outlook-intel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-intel-block .td-outlook-intel-body {
+  padding: 4px 10px 6px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-intel-divider--horiz {
+  margin: 1px 10px 0;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--intel-mega .td-mi-regime-row {
+  padding: 2px 0 !important;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--intel-mega .td-mi-regime-label {
+  font-size: 0.66rem !important;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--intel-mega .td-mi-regime-value {
+  font-size: 0.76rem !important;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--intel-mega .td-mi-list,
+.td-deck-mo-outlook--terminal .td-outlook-panel--intel-mega .td-mi-list--signals {
+  gap: 4px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--intel-mega .td-mi-list-item {
+  padding: 5px 8px !important;
+  border-radius: 8px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--intel-mega .td-mi-list-meta {
+  font-size: 0.71rem !important;
+  line-height: 1.3 !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-bullets--focus {
+  gap: 4px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-bullet-item--focus {
+  padding: 5px 8px 5px 22px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-bullet-item--focus::before {
+  top: 9px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-focus-title {
+  font-size: 0.76rem !important;
+  line-height: 1.28 !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-focus-reason {
+  font-size: 0.67rem !important;
+  line-height: 1.3 !important;
+}
+
+/* Right rail: pulse stays compact; risk panel absorbs vertical slack */
+.td-deck-mo-outlook--terminal .td-outlook-terminal-col--rail > .td-mi-panel.td-outlook-panel--pulse-feature {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-height: 0;
+  border-radius: 12px;
+  box-shadow:
+    var(--panel-shadow),
+    0 0 0 1px rgba(140, 175, 255, 0.1) inset,
+    0 0 48px -20px rgba(107, 143, 232, 0.38);
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--pulse-feature .td-mi-panel-body {
+  flex: 0 1 auto !important;
+  min-height: 0 !important;
+  padding: 3px 8px 6px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-gauge-wrap--outlook {
+  flex: 0 0 auto !important;
+  padding: 2px 6px 0 !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-gauge--outlook {
+  width: min(198px, 100%);
+  height: 102px;
+  margin-bottom: 4px;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-gauge--outlook .td-mi-gauge-arc-bg {
+  height: 92px;
+  max-width: 198px;
+  border-radius: 198px 198px 0 0;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-gauge--outlook .td-mi-gauge-arc-glow {
+  max-width: 190px;
+  height: 88px;
+  border-radius: 190px 190px 0 0;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-gauge--outlook .td-mi-gauge-needle {
+  height: 72px;
+  bottom: 7px;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--pulse-feature .td-mi-gauge-axis-labels {
+  width: min(198px, 100%);
+  margin-bottom: 4px;
+  font-size: 0.54rem;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-pulse-snapshot--compact {
+  gap: 3px !important;
+  margin-top: 2px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-pulse-snapshot--compact p {
+  padding: 4px 7px !important;
+  font-size: 0.68rem !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-pulse-meta--actions {
+  margin-top: 5px !important;
+  padding-top: 5px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-pulse-actions-list .td-mi-bullet-item {
+  padding: 4px 7px 4px 20px !important;
+  font-size: 0.7rem !important;
+  line-height: 1.3 !important;
+}
+
+@media (min-width: 1200px) {
+  .td-deck-mo-outlook--terminal .td-outlook-panel--pulse-feature .td-mi-panel-body {
+    min-height: 0 !important;
+  }
+}
+
+/* Risk rail — match intel shell; body scrolls when content is long */
+.td-deck-mo-outlook--terminal .td-outlook-panel--risk-standalone {
+  border-radius: 12px;
+  box-shadow:
+    var(--panel-shadow),
+    0 0 0 1px rgba(140, 175, 255, 0.09) inset,
+    0 0 0 1px rgba(212, 175, 125, 0.04) inset,
+    0 12px 36px rgba(0, 0, 0, 0.4),
+    0 0 52px -22px rgba(107, 143, 232, 0.28);
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--risk-standalone::before {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.14), rgba(140, 175, 255, 0.22), transparent);
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--risk-standalone > .td-mi-panel-title {
+  padding: 5px 10px 4px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--risk-standalone > .td-outlook-intel-body {
+  padding: 4px 10px 6px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-panel--risk-standalone .rr-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-risk-engine-stats {
+  gap: 2px 6px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-risk-engine-stats p {
+  padding: 2px 5px !important;
+  border-radius: 5px !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-risk-engine-stats span {
+  font-size: 0.58rem !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-risk-engine-stats strong {
+  font-size: 0.64rem !important;
+}
+
+.td-deck-mo-outlook--terminal .td-mi-pulse-meta--risk {
+  margin-bottom: 0 !important;
+}
+
+.td-deck-mo-outlook--terminal .rr-risk-item {
+  padding: 3px 0 !important;
+}
+
+.td-deck-mo-outlook--terminal .rr-risk-item-title {
+  font-size: 0.71rem !important;
+  margin-bottom: 2px !important;
+}
+
+.td-deck-mo-outlook--terminal .rr-risk-item-meta {
+  font-size: 0.62rem !important;
+  line-height: 1.28 !important;
+}
+
+.td-deck-mo-outlook--terminal .rr-risk-item-metrics {
+  margin-top: 2px !important;
+  font-size: 0.6rem !important;
+}
+
+.td-deck-mo-outlook--terminal.td-deck-mo-outlook .td-outlook-dashboard--unified {
+  gap: 8px;
+}
+
+.td-deck-mo-outlook--terminal .td-outlook-unified-header {
+  padding-bottom: 8px;
 }
