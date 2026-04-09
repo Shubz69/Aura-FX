@@ -108,6 +108,102 @@ async function getSharedBriefInputs(normalizedPeriod, date) {
   };
 }
 
+/** When quote/calendar/news feeds are thin (e.g. FMP 429), add one Perplexity JSON supplement per brief-set run. */
+function needsLlmDataSupplement(quoteCache, econ, news) {
+  const qSize = quoteCache && typeof quoteCache.size === 'number' ? quoteCache.size : 0;
+  const econN = Array.isArray(econ) ? econ.length : 0;
+  const newsN = Array.isArray(news) ? news.length : 0;
+  return qSize < 8 || econN < 3 || newsN < 3;
+}
+
+function sanitizeLlmDataSupplement(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const clean = (s) => stripSources(String(s || '').trim()).slice(0, 2400);
+  const themes = Array.isArray(raw.headlineThemes)
+    ? raw.headlineThemes
+    : Array.isArray(raw.themes)
+      ? raw.themes
+      : [];
+  const macro = Array.isArray(raw.upcomingMacro) ? raw.upcomingMacro : [];
+  const assets = Array.isArray(raw.assetSnapshot) ? raw.assetSnapshot : [];
+  const out = {
+    regime: clean(raw.regime),
+    pulse: clean(raw.pulse),
+    headlineThemes: themes.map((x) => clean(x)).filter(Boolean).slice(0, 14),
+    upcomingMacro: macro.slice(0, 8).map((e) => ({
+      label: clean(e?.label || e?.event || ''),
+      window: clean(e?.window || e?.approxTimeWindow || ''),
+    })).filter((e) => e.label),
+    assetSnapshot: assets.slice(0, 20).map((a) => {
+      const sym = String(a?.symbol || '').toUpperCase().replace(/[^A-Z0-9._]/g, '').slice(0, 24);
+      const pct = a?.changePctDayApprox;
+      const pNum = pct != null && Number.isFinite(Number(pct)) ? Math.round(Number(pct) * 10) / 10 : null;
+      return {
+        symbol: sym,
+        changePctDayApprox: pNum,
+        levelOrRangeHint: clean(a?.levelOrRangeHint || '').slice(0, 160),
+        note: clean(a?.note || '').slice(0, 500),
+      };
+    }).filter((a) => a.symbol),
+    caveat: clean(raw.caveat || 'Approximate desk synthesis when live price feeds were thin.'),
+  };
+  if (!out.regime && !out.pulse && out.headlineThemes.length === 0 && out.assetSnapshot.length === 0) return null;
+  return out;
+}
+
+async function fetchLlmBriefDataSupplementGlobal({
+  period,
+  dateStr,
+  timeZone,
+  market,
+  econ,
+  news,
+  symbolSample,
+}) {
+  if (!isTraderDeskAutomationConfigured()) return null;
+  const systemPrompt =
+    'You fill gaps for an automated trading desk when live REST market APIs are missing, rate-limited, or empty.\n'
+    + 'Return a single JSON object only (no markdown). Fields:\n'
+    + '- regime: string, one sentence cross-asset regime for that calendar date.\n'
+    + '- pulse: string, one sentence risk tone / liquidity read.\n'
+    + '- headlineThemes: string array, up to 12 short theme lines (no URLs, no publisher names).\n'
+    + '- upcomingMacro: array of up to 8 { "label": string, "window": string } macro events relevant to the desk date (approx timing OK).\n'
+    + '- assetSnapshot: array of up to 18 { "symbol": string, "changePctDayApprox": number or null, "levelOrRangeHint": string or null, "note": string or null } covering the watchSymbols list — best-effort public session context for that date; round % to one decimal.\n'
+    + '- caveat: string, one line that figures are approximate synthesis.\n'
+    + 'Rules: no URLs, no citations, no "according to". If unsure, use qualitative wording and null numbers.';
+
+  const userPayload = {
+    period: String(period || 'daily'),
+    deskDate: String(dateStr || '').slice(0, 10),
+    timeZone: String(timeZone || 'Europe/London'),
+    watchSymbols: (Array.isArray(symbolSample) ? symbolSample : []).map((s) => String(s).toUpperCase().trim()).filter(Boolean).slice(0, 20),
+    partialFeeds: {
+      marketRegime: market?.marketRegime ?? null,
+      marketPulse: market?.marketPulse ?? null,
+      headlineSample: Array.isArray(market?.headlineSample) ? market.headlineSample.slice(0, 10) : [],
+      economicEventsSample: Array.isArray(econ)
+        ? econ.slice(0, 6).map((e) => ({
+            event: e?.event || e?.title,
+            time: e?.time,
+            currency: e?.currency,
+          }))
+        : [],
+      newsHeadlinesSample: Array.isArray(news) ? news.slice(0, 8) : [],
+    },
+  };
+
+  const res = await callPerplexityJson(systemPrompt, userPayload, {
+    maxTokens: 3200,
+    temperature: 0.28,
+    timeoutMs: 75000,
+  });
+  if (!res.ok || !res.parsed) {
+    console.warn('[brief-gen] LLM data supplement failed:', res.error || 'unknown');
+    return null;
+  }
+  return sanitizeLlmDataSupplement(res.parsed);
+}
+
 const CATEGORY_LOGIC_RULES = {
   stocks: 'Focus on earnings revisions, sector breadth, options positioning and stock-specific catalyst windows.',
   indices: 'Focus on index breadth, correlation shifts, dispersion, volatility term structure and macro beta.',
@@ -1109,6 +1205,9 @@ async function generateSampleMatchedCategoryBrief({
   const normalizedKind = normalizeBriefKind(briefKind);
   const expectedAssets = Array.isArray(factPack.topInstruments) ? factPack.topInstruments.slice(0, 5) : [];
   const dayName = weekdayName(runDate, timeZone);
+  const dataContextRule = factPack.llmDataSupplement
+    ? 'Use factPack and optional llmDataSupplement together when the latter is present (backup synthesis when automated REST feeds were thin or rate-limited). Prefer alignment with liveQuotes and headlines when those exist. No URLs or citations.'
+    : 'Use only provided factPack context; no fabricated numbers or events.';
   const basePayload = {
     briefKind: normalizedKind,
     briefKindLabel: factPack.briefKindLabel,
@@ -1129,6 +1228,7 @@ async function generateSampleMatchedCategoryBrief({
       symbolHeadlines: factPack.symbolHeadlines,
       categoryWritingMandate: factPack.categoryWritingMandate,
       categoryIntelligenceDirective: factPack.categoryIntelligenceDirective,
+      llmDataSupplement: factPack.llmDataSupplement || null,
     },
     weeklyReference,
     priorCategoryExcerpts: existingExcerpts.slice(0, 8),
@@ -1161,7 +1261,7 @@ Each asset section must include:
 - one overall bias
 
 Hard rules:
-- Use only provided factPack context; no fabricated numbers or events.
+- ${dataContextRule}
 - Do not copy phrases from priorCategoryExcerpts.
 - The thesis for this category must be distinct from the other category briefs.
 - Keep the style like a professional trader note that an informed retail trader can follow.
@@ -1184,7 +1284,7 @@ Match this exact shape and density:
 
 Hard rules:
 - Analyze the NEW week, not the previous template.
-- Use only provided factPack context; no fabricated numbers or events.
+- ${dataContextRule}
 - Use weeklyReference only as alignment context, not as text to paraphrase.
 - No duplicated phrasing from priorCategoryExcerpts.
 - Each category must have its own thesis and transmission channel.
@@ -1369,6 +1469,7 @@ function slimFactPackForSections(factPack) {
     marketPulse: factPack.marketPulse,
     bannedPhrases: factPack.bannedPhrases || BANNED_PHRASES,
     categoryLogicRule: CATEGORY_LOGIC_RULES[factPack.briefKind] || CATEGORY_LOGIC_RULES.general,
+    llmDataSupplement: factPack.llmDataSupplement || null,
     narrativeInstrumentRule:
       'Macro-first narrative: mention tickers or spot levels only when they clarify cross-asset or macro transmission (e.g. US10Y dragging risk, DXY skew). '
       + 'Do not enumerate a watchlist, do not use one-paragraph-per-symbol structure, do not fabricate parallel “templates” across names.',
@@ -1431,6 +1532,7 @@ async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorS
       ? `Already written earlier in THIS brief (do not repeat sentences; advance the narrative):\n${priorSectionBodies.map((p, i) => `--- part ${i + 1} ---\n${p.slice(0, 500)}`).join('\n')}`
       : '';
 
+  const hasLlmSup = Boolean(factPack.llmDataSupplement);
   const userPayload = {
     sectionKey,
     displayHeading: heading,
@@ -1444,7 +1546,9 @@ async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorS
     bannedSubstrings: factPack.bannedPhrases || BANNED_PHRASES,
     rewriteNote:
       uniquenessRetry || validationFix
-        ? 'Prior attempt failed validation: change wording and openings; keep facts from factPack only.'
+        ? hasLlmSup
+          ? 'Prior attempt failed validation: change wording; use factPack plus llmDataSupplement when needed — still no URLs.'
+          : 'Prior attempt failed validation: change wording and openings; keep facts from factPack only.'
         : null,
   };
 
@@ -1471,6 +1575,7 @@ async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorS
               + 'FORBIDDEN anywhere in body: numbered scenarios (Scenario 1/2/3), pathway labels, "catalyst trigger", "invalidation", "position sizing", '
               + '"base and surprise", playbook templates, or one-paragraph-per-ticker blocks. '
               + 'No sources, URLs, or citations. '
+              + 'If factPack.llmDataSupplement is non-null, it is backup desk synthesis when live price feeds were thin — you may use it with the rest of factPack; prefer agreement with liveQuotes/headlines when both exist. '
               + 'Obey bannedSubstrings exactly (no substring matches in body). '
               + 'Return valid JSON: {"body":"..."} only.',
           },
@@ -2008,6 +2113,22 @@ async function generateAndStoreBrief({
       instrumentScoreRows: selection.scoreRows,
       quoteCache,
     });
+    let llmSup = null;
+    if (generationContext?.briefSetRun) {
+      llmSup = generationContext.sharedLlmDataSupplement || null;
+    } else if (needsLlmDataSupplement(quoteCache, econ, news) && isTraderDeskAutomationConfigured()) {
+      llmSup = await fetchLlmBriefDataSupplementGlobal({
+        period: normalizedPeriod,
+        dateStr: date,
+        timeZone,
+        market,
+        econ,
+        news,
+        symbolSample: collectAllAutomationUniverseSymbols(),
+      });
+    }
+    if (llmSup) factPack.llmDataSupplement = llmSup;
+
     const existingExcerpts = Array.isArray(generationContext?.existingExcerpts)
       ? generationContext.existingExcerpts
       : [];
@@ -2183,6 +2304,22 @@ async function generateAndStoreBriefSet({ period, timeZone = 'Europe/London', ru
       '[brief-gen] quote cache is empty — configure TWELVE_DATA_API_KEY and/or valid FMP_API_KEY and FINNHUB_API_KEY (403 usually means invalid key or plan).'
     );
   }
+  const thinFeeds = needsLlmDataSupplement(sharedQuoteCache, sharedEcon, sharedNews);
+  let sharedLlmDataSupplement = null;
+  if (thinFeeds) {
+    sharedLlmDataSupplement = await fetchLlmBriefDataSupplementGlobal({
+      period: normalizedPeriod,
+      dateStr: date,
+      timeZone,
+      market: sharedMarket,
+      econ: sharedEcon,
+      news: sharedNews,
+      symbolSample: collectAllAutomationUniverseSymbols(),
+    });
+    if (sharedLlmDataSupplement) {
+      console.info('[brief-gen] shared LLM data supplement applied (thin REST feeds)');
+    }
+  }
   const results = [];
   const existingBodies = [];
   const existingExcerpts = [];
@@ -2198,7 +2335,12 @@ async function generateAndStoreBriefSet({ period, timeZone = 'Europe/London', ru
       sharedEcon,
       sharedNews,
       sharedQuoteCache,
-      generationContext: { existingBodies, existingExcerpts },
+      generationContext: {
+        existingBodies,
+        existingExcerpts,
+        briefSetRun: true,
+        sharedLlmDataSupplement,
+      },
     });
     if (row && row.success && row.briefId) {
       // eslint-disable-next-line no-await-in-loop
@@ -2301,6 +2443,18 @@ async function generatePreviewBrief({
     instrumentScoreRows: sel.scoreRows,
     quoteCache: qc,
   });
+  if (needsLlmDataSupplement(qc, econ, news) && isTraderDeskAutomationConfigured()) {
+    const llmSup = await fetchLlmBriefDataSupplementGlobal({
+      period: normalizedPeriod,
+      dateStr: date,
+      timeZone,
+      market,
+      econ,
+      news,
+      symbolSample: collectAllAutomationUniverseSymbols(),
+    });
+    if (llmSup) factPack.llmDataSupplement = llmSup;
+  }
   let generated = await generateBriefBySections(factPack, template, {
     existingExcerpts: [],
     uniquenessRetry: false,
