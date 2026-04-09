@@ -257,9 +257,10 @@ export default function MarketDecoderBriefContent({ brief, q }) {
     <>
       <div className="md-ref-grid md-ref-grid--dense">
         <aside className="md-ref-col md-ref-col--left">
-          <section className="md-ref-panel md-ref-panel--soft">
-            <h2 className="md-ref-panel-h">Instant Read</h2>
-            <div className="md-ref-rows">
+          <div className="md-ref-unified-rail md-ref-unified-rail--left">
+            <div className="md-ref-unified-section">
+              <h2 className="md-ref-unified-h">Instant Read</h2>
+              <div className="md-ref-rows">
               <div className="md-ref-row">
                 <span className="md-ref-k">Bias</span>
                 <span className={biasValueClass(brief.instantRead?.bias || brief.marketPulse?.biasLabel)}>
@@ -288,11 +289,11 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                 <span className="md-ref-v md-ref-v--gold">{brief.instantRead?.bestApproach || '—'}</span>
               </div>
             </div>
-          </section>
+            </div>
 
-          <section className="md-ref-panel md-ref-panel--soft">
-            <h2 className="md-ref-panel-h">Key Levels</h2>
-            <div className="md-ref-levels-dense">
+            <div className="md-ref-unified-section">
+              <h2 className="md-ref-unified-h">Key Levels</h2>
+              <div className="md-ref-levels-dense">
               {levelRows.length ? (
                 levelRows.map((row) => (
                   <div key={row.key} className="md-ref-level-line">
@@ -320,11 +321,11 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                 </div>
               )}
             </div>
-          </section>
+            </div>
 
-          <section className="md-ref-panel md-ref-panel--soft">
-            <h2 className="md-ref-panel-h">Cross-Asset Context</h2>
-            {crossTiles ? (
+            <div className="md-ref-unified-section">
+              <h2 className="md-ref-unified-h">Cross-Asset Context</h2>
+              {crossTiles ? (
               <div className="md-ref-cross-grid md-ref-cross-grid--tiles">
                 {crossTiles.map((t) => (
                   <div
@@ -359,7 +360,8 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                 ))}
               </div>
             )}
-          </section>
+            </div>
+          </div>
         </aside>
 
         <div className="md-ref-col md-ref-col--center">
@@ -400,8 +402,8 @@ export default function MarketDecoderBriefContent({ brief, q }) {
             </div>
           </section>
 
-          <section className="md-ref-panel md-ref-panel--soft md-ref-panel--timeline-compact">
-            <h2 className="md-ref-panel-h">Event Risk</h2>
+          <section className="md-ref-panel md-ref-panel--surface md-ref-panel--timeline-compact">
+            <h2 className="md-ref-unified-h md-ref-unified-h--inline">Event Risk</h2>
             <DecoderEventRiskHeader summary={brief.eventRiskSummary} scopeLabel={eventScopeLabel} />
             <div className="md-ref-timeline">
               <span className="md-ref-tl-cap">Today</span>
@@ -420,9 +422,10 @@ export default function MarketDecoderBriefContent({ brief, q }) {
         </div>
 
         <aside className="md-ref-col md-ref-col--right md-ref-col--rail">
-          <div className="md-ref-rail-grid">
-            <section className="md-ref-panel md-ref-panel--soft md-ref-panel--anchor md-ref-panel--anchor-pulse md-ref-panel--rail-half">
-              <h2 className="md-ref-panel-h">Market Pulse</h2>
+          <div className="md-ref-unified-rail md-ref-unified-rail--right">
+            <div className="md-ref-rail-grid">
+              <div className="md-ref-rail-cell md-ref-rail-cell--anchor md-ref-rail-cell--pulse">
+              <h2 className="md-ref-unified-h">Market Pulse</h2>
               {brief.marketPulse ? (
                 <>
                   <div className="md-ref-gauge md-ref-gauge--rail" aria-hidden>
@@ -446,15 +449,15 @@ export default function MarketDecoderBriefContent({ brief, q }) {
               ) : (
                 <p className="md-ref-muted">Pulse n/a</p>
               )}
-            </section>
+              </div>
 
-            <section className="md-ref-panel md-ref-panel--soft md-ref-panel--anchor md-ref-panel--readiness md-ref-panel--rail-half">
-              <h2 className="md-ref-panel-h">Trade Readiness</h2>
+              <div className="md-ref-rail-cell md-ref-rail-cell--anchor md-ref-rail-cell--readiness">
+              <h2 className="md-ref-unified-h">Trade Readiness</h2>
               <DecoderReadinessBlock readiness={brief.readiness} />
-            </section>
+              </div>
 
-            <section className="md-ref-panel md-ref-panel--soft md-ref-panel--rail-half">
-              <h2 className="md-ref-panel-h">Market Insights</h2>
+              <div className="md-ref-rail-cell">
+              <h2 className="md-ref-unified-h">Market Insights</h2>
               <div className="md-ref-insights-grid md-ref-insights-grid--rail">
                 <div className="md-ref-insights-cell">
                   <span className="md-ref-insights-k">RSI (14)</span>
@@ -477,10 +480,10 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                   <span className="md-ref-insights-v">{brief.insights?.structureState || '—'}</span>
                 </div>
               </div>
-            </section>
+              </div>
 
-            <section className="md-ref-panel md-ref-panel--soft md-ref-panel--rail-half">
-              <h2 className="md-ref-panel-h">Scenario Map</h2>
+              <div className="md-ref-rail-cell">
+              <h2 className="md-ref-unified-h">Scenario Map</h2>
               <button type="button" className="md-ref-scen-row md-ref-scen-row--action md-ref-scen-row--dense" onClick={openScenarioDetails}>
                 <span className="md-ref-scen-k">Upside</span>
                 <span className="md-ref-scen-v">{formatPriceOrDash(scenario.upsideTarget, mt)}</span>
@@ -504,16 +507,17 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                   Tone · <strong>{scenario.tone}</strong>
                 </div>
               ) : null}
-            </section>
-          </div>
+              </div>
+            </div>
 
-          <section className="md-ref-panel md-ref-panel--soft md-ref-panel--alerts-rail">
-            <h2 className="md-ref-panel-h">Smart Alerts</h2>
-            <DecoderSmartAlerts alerts={brief.smartAlerts} />
-            {brief.executionGuidance?.riskConsideration ? (
-              <p className="md-ref-exec-risknote">{brief.executionGuidance.riskConsideration}</p>
-            ) : null}
-          </section>
+            <div className="md-ref-unified-section md-ref-unified-section--alerts">
+              <h2 className="md-ref-unified-h">Smart Alerts</h2>
+              <DecoderSmartAlerts alerts={brief.smartAlerts} />
+              {brief.executionGuidance?.riskConsideration ? (
+                <p className="md-ref-exec-risknote">{brief.executionGuidance.riskConsideration}</p>
+              ) : null}
+            </div>
+          </div>
         </aside>
       </div>
 
