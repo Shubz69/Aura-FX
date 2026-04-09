@@ -405,6 +405,23 @@ export default function MarketDecoderView({ embedded }) {
                       <p className="md-decoder-intel-chrome-sub">
                         Review the brief, then Export to continue in Trader Lab with this context.
                       </p>
+                      {brief?.meta?.generatedAt ? (
+                        <p className="md-decoder-intel-generated" title={brief.meta.generatedAt}>
+                          Last updated ·{' '}
+                          {(() => {
+                            const t = Date.parse(brief.meta.generatedAt);
+                            if (Number.isNaN(t)) return brief.meta.generatedAt;
+                            try {
+                              return new Intl.DateTimeFormat(undefined, {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              }).format(new Date(t));
+                            } catch {
+                              return brief.meta.generatedAt;
+                            }
+                          })()}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="md-decoder-intel-actions">
                       <button type="button" className="md-decoder-intel-export" onClick={exportToTraderLab}>

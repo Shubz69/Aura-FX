@@ -24,7 +24,15 @@ function smaFromCandles(candles, period) {
   return out;
 }
 
-export default function MarketDecoderChart({ bars, compact = false, referenceStyle = false }) {
+const OVERLAY_COLORS = {
+  pivot: 'rgba(232, 208, 128, 0.92)',
+  resistance: 'rgba(255, 120, 140, 0.78)',
+  support: 'rgba(80, 210, 140, 0.78)',
+  session: 'rgba(140, 175, 255, 0.82)',
+  htf: 'rgba(186, 170, 255, 0.72)',
+};
+
+export default function MarketDecoderChart({ bars, compact = false, referenceStyle = false, overlays = null }) {
   const wrapRef = useRef(null);
   const chartRef = useRef(null);
   const [mode, setMode] = useState('candles');
@@ -87,11 +95,28 @@ export default function MarketDecoderChart({ bars, compact = false, referenceSty
         wickDownColor: '#ff6b81',
       });
       s.setData(data);
+      if (overlays?.horizontalLevels?.length) {
+        overlays.horizontalLevels.forEach((lv) => {
+          if (lv.price == null || Number.isNaN(Number(lv.price))) return;
+          try {
+            s.createPriceLine({
+              price: Number(lv.price),
+              title: String(lv.label || ''),
+              color: OVERLAY_COLORS[lv.kind] || 'rgba(140, 175, 255, 0.55)',
+              lineWidth: lv.kind === 'pivot' ? 2 : 1,
+              lineStyle: lv.kind === 'session' ? 2 : 0,
+              axisLabelVisible: true,
+            });
+          } catch {
+            /* ignore overlay errors */
+          }
+        });
+      }
       if (data.length >= 5) {
         const ma = smaFromCandles(data, Math.min(21, Math.max(5, Math.floor(data.length / 4))));
         if (ma.length) {
           const maSeries = chart.addLineSeries({
-            color: '#d4af37',
+            color: 'rgba(140, 175, 255, 0.75)',
             lineWidth: 2,
             priceLineVisible: false,
             lastValueVisible: true,
@@ -154,7 +179,7 @@ export default function MarketDecoderChart({ bars, compact = false, referenceSty
       chart.remove();
       chartRef.current = null;
     };
-  }, [bars, mode, compact, referenceStyle, activeTf]);
+  }, [bars, mode, compact, referenceStyle, activeTf, overlays]);
 
   if (!bars || bars.length < 2) {
     return (

@@ -1,0 +1,483 @@
+/**
+ * Market Decoder — composed UI/decision payloads (rules-only, no invented prices).
+ * Used by marketDecoderEngine; keeps the main engine file smaller.
+ */
+
+function formatPx(x, marketType) {
+  const n = Number(x);
+  if (x == null || Number.isNaN(n)) return null;
+  if (marketType === 'FX' || marketType === 'Commodity') return n.toFixed(5);
+  if (marketType === 'Crypto' && n > 200) return n.toFixed(2);
+  return n.toFixed(n < 50 ? 4 : 2);
+}
+
+function relDistPct(a, b) {
+  if (a == null || b == null || !Number.isFinite(a) || !Number.isFinite(b) || b === 0) return null;
+  return Math.abs(a - b) / Math.abs(b);
+}
+
+/** Last bar OHLC for liquidity tagging */
+function lastBarRange(highs, lows) {
+  if (!highs.length || !lows.length) return { hi: null, lo: null };
+  const hi = highs[highs.length - 1];
+  const lo = lows[lows.length - 1];
+  return { hi: Number(hi), lo: Number(lo) };
+}
+
+/**
+ * @param {'resistance'|'support'} side
+ * @returns {'untapped'|'tested'|'swept'|null}
+ */
+function liquidityState(side, level, last, barHi, barLo, marketType) {
+  if (level == null || last == null || !Number.isFinite(level) || !Number.isFinite(last)) return null;
+  const touchTol = marketType === 'FX' || marketType === 'Commodity' ? 0.00025 : 0.003;
+  const d = relDistPct(last, level);
+  if (side === 'resistance') {
+    if (barHi != null && barHi >= level * (1 - touchTol)) return 'swept';
+    if (d != null && d < touchTol * 2) return 'tested';
+    return 'untapped';
+  }
+  if (barLo != null && barLo <= level * (1 + touchTol)) return 'swept';
+  if (d != null && d < touchTol * 2) return 'tested';
+  return 'untapped';
+}
+
+function rsiLast(closes, period = 14) {
+  if (!Array.isArray(closes) || closes.length < period + 1) return null;
+  let gains = 0;
+  let losses = 0;
+  const start = closes.length - period;
+  for (let i = start; i < closes.length; i += 1) {
+    const ch = Number(closes[i]) - Number(closes[i - 1]);
+    if (ch >= 0) gains += ch;
+    else losses -= ch;
+  }
+  const ag = gains / period;
+  const al = losses / period;
+  if (al === 0) return ag === 0 ? 50 : 100;
+  const rs = ag / al;
+  return Math.round((100 - 100 / (1 + rs)) * 10) / 10;
+}
+
+function rsiStateLabel(rsi) {
+  if (rsi == null) return { label: 'N/A', tone: 'neutral' };
+  if (rsi >= 70) return { label: 'Overbought', tone: 'bear' };
+  if (rsi <= 30) return { label: 'Oversold', tone: 'bull' };
+  if (rsi >= 55) return { label: 'Bullish bias', tone: 'bull' };
+  if (rsi <= 45) return { label: 'Bearish bias', tone: 'bear' };
+  return { label: 'Neutral', tone: 'neutral' };
+}
+
+function averageDailyRangePercent(highs, lows, closes, sessions = 5) {
+  const n = Math.min(sessions, highs.length, lows.length, closes.length);
+  if (n < 2) return null;
+  let sum = 0;
+  let c = 0;
+  for (let i = highs.length - n; i < highs.length; i += 1) {
+    const hi = Number(highs[i]);
+    const lo = Number(lows[i]);
+    const cl = Number(closes[i]);
+    if (!Number.isFinite(hi) || !Number.isFinite(lo) || !Number.isFinite(cl) || cl === 0) continue;
+    sum += (hi - lo) / cl;
+    c += 1;
+  }
+  if (!c) return null;
+  return Math.round(sum * 100 * 100 / c) / 100;
+}
+
+/** Detect near-equal highs/lows in recent daily window */
+function equalLiquidityNotes(highs, lows, marketType, window = 14) {
+  const n = Math.min(window, highs.length, lows.length);
+  if (n < 5) return { equalHighs: null, equalLows: null };
+  const tol =
+    marketType === 'FX' || marketType === 'Commodity'
+      ? 0.00012
+      : marketType === 'Crypto'
+        ? 0.004
+        : 0.002;
+  const hSeg = highs.slice(-n).map(Number).filter(Number.isFinite);
+  const lSeg = lows.slice(-n).map(Number).filter(Number.isFinite);
+  const maxH = Math.max(...hSeg);
+  const minL = Math.min(...lSeg);
+  const hiTouches = hSeg.filter((x) => relDistPct(x, maxH) != null && relDistPct(x, maxH) < tol).length;
+  const loTouches = lSeg.filter((x) => relDistPct(x, minL) != null && relDistPct(x, minL) < tol).length;
+  const out = { equalHighs: null, equalLows: null };
+  if (hiTouches >= 2 && maxH != null) {
+    out.equalHighs = { price: maxH, touches: hiTouches, note: 'Clustered session highs — liquidity above' };
+  }
+  if (loTouches >= 2 && minL != null) {
+    out.equalLows = { price: minL, touches: loTouches, note: 'Clustered session lows — liquidity below' };
+  }
+  return out;
+}
+
+function instrumentContext(resolved) {
+  const display = String(resolved.displaySymbol || '').toUpperCase();
+  const u = display.replace(/[^A-Z]/g, '');
+  let base = null;
+  let quote = 'USD';
+  let assetClass = resolved.marketType === 'FX' ? 'fx' : resolved.marketType.toLowerCase();
+  if (resolved.marketType === 'FX' && u.length === 6 && /^[A-Z]{6}$/.test(u)) {
+    base = u.slice(0, 3);
+    quote = u.slice(3);
+  } else if (u.includes('XAU')) {
+    base = 'XAU';
+    quote = 'USD';
+    assetClass = 'commodity';
+  } else if (u.includes('XAG')) {
+    base = 'XAG';
+    quote = 'USD';
+    assetClass = 'commodity';
+  } else if (u.includes('BTC')) {
+    base = 'BTC';
+    quote = 'USD';
+    assetClass = 'crypto';
+  }
+  let pricePrecision = 5;
+  if (resolved.marketType === 'Crypto') pricePrecision = 2;
+  if (resolved.marketType === 'Index' || resolved.marketType === 'Equity') pricePrecision = 2;
+  return {
+    raw: resolved.displaySymbol,
+    canonical: resolved.canonicalSymbol || display,
+    display,
+    assetClass,
+    marketType: resolved.marketType,
+    base,
+    quote,
+    pricePrecision,
+  };
+}
+
+/** UTC hour 0–23 */
+function utcSessionWindow() {
+  const h = new Date().getUTCHours();
+  if (h >= 0 && h < 7) return { active: 'Asia', label: 'Asia' };
+  if (h >= 7 && h < 13) return { active: 'London', label: 'London' };
+  if (h >= 13 && h < 21) return { active: 'New York', label: 'New York' };
+  return { active: 'Asia', label: 'Asia (late)' };
+}
+
+function phaseForSession(name, condition, volLabel, net, activeName) {
+  const isActive = name === activeName;
+  if (condition === 'Event Risk') return { behavior: 'Caution', detail: 'Macro headline risk' };
+  if (condition === 'Trend' || (Math.abs(net) >= 3 && volLabel !== 'Low')) {
+    if (isActive) return { behavior: 'Expansion', detail: 'Volatility & trend cues' };
+    return { behavior: 'Follow-through', detail: 'Prior session impulse' };
+  }
+  if (condition === 'Choppy' || (Math.abs(net) <= 1 && volLabel === 'Low')) {
+    return { behavior: 'Range', detail: 'Two-way, mean-reversion prone' };
+  }
+  if (volLabel === 'High') {
+    if (isActive) return { behavior: 'Expansion', detail: 'Wide daily ranges' };
+    return { behavior: 'Reversal', detail: 'Late session mean-revert risk' };
+  }
+  return { behavior: 'Range', detail: 'Balanced flow' };
+}
+
+function buildSessionFlow(condition, volLabel, net) {
+  const { active, label } = utcSessionWindow();
+  const mk = (name) => ({ session: name, ...phaseForSession(name, condition, volLabel, net, active) });
+  return {
+    currentSession: label,
+    utcNote: 'Phases derived from daily structure + volatility regime (not intraday OHLC).',
+    asia: mk('Asia'),
+    london: mk('London'),
+    newYork: mk('New York'),
+  };
+}
+
+function sessionAlignmentLabel(activeLabel, bias) {
+  const b = String(bias || '');
+  if (b === 'Neutral') return 'Weak';
+  if (activeLabel === 'London' && (b === 'Bullish' || b === 'Bearish')) return 'Moderate';
+  if (activeLabel === 'New York' && (b === 'Bullish' || b === 'Bearish')) return 'Moderate';
+  if (activeLabel === 'Asia') return b === 'Neutral' ? 'Weak' : 'Moderate';
+  return 'Weak';
+}
+
+function structureQualityLabel(net, pivOk, sparse) {
+  if (sparse) return 'Provisional';
+  if (!pivOk) return 'Incomplete';
+  if (Math.abs(net) >= 3) return 'Clean';
+  if (Math.abs(net) >= 1) return 'Mixed';
+  return 'Balanced';
+}
+
+function computeReadinessScore100({ conviction, momentum, eventSoon, pulseState, net, pivOk, sparse }) {
+  let score = 52;
+  if (eventSoon) score -= 28;
+  if (conviction === 'High') score += 14;
+  if (conviction === 'Low') score -= 12;
+  if (momentum === 'Rising') score += 10;
+  if (momentum === 'Weakening') score -= 6;
+  if (pulseState === 'Trending Clean') score += 12;
+  if (pulseState === 'Choppy') score -= 14;
+  if (pulseState === 'Event Driven') score -= 22;
+  if (pulseState === 'Unstable') score -= 16;
+  score += Number(net) * 5;
+  if (!pivOk) score -= 14;
+  if (sparse) score -= 12;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function checkStatus(ok, pending, invalid) {
+  if (invalid) return 'invalid';
+  if (pending) return 'pending';
+  if (ok) return 'valid';
+  return 'pending';
+}
+
+function buildConfirmationEngine({
+  net,
+  piv,
+  last,
+  eventHighImpactSoon,
+  conviction,
+  condition,
+  readiness100,
+  sparse,
+  volLabel,
+  calOk,
+  pairMeetingCount,
+}) {
+  const pivOk = piv && piv.r1 != null && piv.s1 != null;
+  const structureOk = pivOk && Math.abs(net) >= 2;
+  const liquidityOk = pivOk && last != null;
+  const sessionOk = condition !== 'Event Risk' && conviction !== 'Low';
+  const volatilityOk = volLabel !== 'High' || conviction === 'High';
+  const eventOk = !eventHighImpactSoon;
+  const correlationOk = calOk !== false;
+
+  const checks = [
+    {
+      id: 'structure',
+      label: 'Structure',
+      status: checkStatus(structureOk, !pivOk || Math.abs(net) < 2, false),
+      verdict: !pivOk ? 'Pivot grid incomplete' : Math.abs(net) < 2 ? 'No clean directional lean' : 'Rules align with lean',
+    },
+    {
+      id: 'liquidity',
+      label: 'Liquidity',
+      status: checkStatus(liquidityOk, !pivOk, false),
+      verdict: pivOk ? 'Classic levels active' : 'Wait for level grid',
+    },
+    {
+      id: 'session',
+      label: 'Session',
+      status: checkStatus(sessionOk, condition === 'Choppy' && conviction === 'Low', eventHighImpactSoon),
+      verdict: eventHighImpactSoon ? 'High-impact window' : `${condition} · ${conviction} conviction`,
+    },
+    {
+      id: 'volatility',
+      label: 'Volatility',
+      status: checkStatus(volatilityOk, volLabel === 'Moderate' && conviction === 'Low', false),
+      verdict: `${volLabel} daily range regime`,
+    },
+    {
+      id: 'eventRisk',
+      label: 'Event risk',
+      status: checkStatus(eventOk, !calOk && !eventHighImpactSoon, eventHighImpactSoon),
+      verdict: eventHighImpactSoon ? 'Elevated into data' : calOk ? 'Calendar online' : 'Calendar degraded',
+    },
+    {
+      id: 'correlation',
+      label: 'Correlation',
+      status: checkStatus(correlationOk, false, false),
+      verdict: pairMeetingCount > 0 ? `${pairMeetingCount} pair-scoped releases queued` : 'Cross-market context from rules stack',
+    },
+  ];
+
+  let finalAction = 'WAIT';
+  if (eventHighImpactSoon) finalAction = 'CAUTION';
+  else if (readiness100 >= 78 && structureOk && eventOk) finalAction = 'EXECUTE';
+  else if (readiness100 >= 62 && pivOk && !eventHighImpactSoon) finalAction = 'READY';
+  else if (readiness100 < 38 || eventHighImpactSoon) finalAction = 'CAUTION';
+
+  return { checks, finalAction, readinessScore: readiness100 };
+}
+
+function buildSmartAlerts({ piv, last, bias, marketType, equalNotes }) {
+  const alerts = [];
+  const px = (x) => (x == null ? null : formatPx(x, marketType));
+  if (piv?.r1 != null && last != null) {
+    alerts.push({
+      type: 'breakout',
+      text: `Break and close above ${px(piv.r1)} (R1) for continuation toward ${px(piv.r2)}`,
+    });
+  }
+  if (piv?.s1 != null && last != null) {
+    alerts.push({
+      type: 'sweep',
+      text: `Sweep below ${px(piv.s1)} (S1) then reclaim for reversal trap; sustained break confirms weakness`,
+    });
+  }
+  if (piv?.pivot != null && last != null) {
+    alerts.push({
+      type: 'pivot',
+      text: `Daily pivot ${px(piv.pivot)} — bias flips if auction holds wrong side into close`,
+    });
+  }
+  if (equalNotes?.equalHighs?.price != null) {
+    alerts.push({
+      type: 'liquidity',
+      text: `Equal highs ~${px(equalNotes.equalHighs.price)} — stops cluster; breakout or fade failed breaks`,
+    });
+  }
+  if (equalNotes?.equalLows?.price != null) {
+    alerts.push({
+      type: 'liquidity',
+      text: `Equal lows ~${px(equalNotes.equalLows.price)} — downside liquidity pool`,
+    });
+  }
+  if (bias === 'Neutral' && alerts.length === 0) {
+    alerts.push({
+      type: 'wait',
+      text: 'No mechanical trigger until structure breaks a defined level',
+    });
+  }
+  return alerts.slice(0, 6);
+}
+
+function buildChartOverlayPlan({ piv, prevH, prevL, wr, marketType, last }) {
+  const levels = [];
+  const add = (price, label, kind) => {
+    if (price == null || !Number.isFinite(Number(price))) return;
+    levels.push({ price: Number(price), label, kind });
+  };
+  if (piv) {
+    add(piv.pivot, 'Pivot', 'pivot');
+    add(piv.r1, 'R1', 'resistance');
+    add(piv.r2, 'R2', 'resistance');
+    add(piv.s1, 'S1', 'support');
+    add(piv.s2, 'S2', 'support');
+  }
+  add(prevH, 'Prior H', 'session');
+  add(prevL, 'Prior L', 'session');
+  if (wr?.wh != null) add(wr.wh, 'Wk high', 'htf');
+  if (wr?.wl != null) add(wr.wl, 'Wk low', 'htf');
+  return {
+    horizontalLevels: levels,
+    lastPrice: last != null ? Number(last) : null,
+    note: 'Daily OHLC — intraday session boxes require intraday feed.',
+  };
+}
+
+function eventRiskState(events, eventHighImpactSoon, scope) {
+  if (eventHighImpactSoon) return { state: 'elevated', scope: scope || 'calendar' };
+  const hi = (events || []).some((e) => e.impact === 'High');
+  if (hi) return { state: 'moderate', scope: scope || 'calendar' };
+  return { state: 'low', scope: scope || 'calendar' };
+}
+
+function scenarioToneFromBias(bias, net) {
+  if (Math.abs(net) >= 3) return 'continuation';
+  if (Math.abs(net) <= 1) return 'mean reversion';
+  return 'wait';
+}
+
+function buildCrossAssetTiles(bundle, resolved) {
+  const display = String(resolved.displaySymbol || '').toUpperCase().replace(/[^A-Z]/g, '');
+  const rows = [];
+  const add = (key, label, symbol, relation) => {
+    const raw = bundle && bundle[key];
+    if (!raw) return;
+    const price = raw.c != null && Number.isFinite(Number(raw.c)) ? Number(raw.c) : null;
+    const changePercent = raw.dp != null && Number.isFinite(Number(raw.dp)) ? Number(raw.dp) : null;
+    const available = Boolean(raw.ok && (price != null || changePercent != null));
+    rows.push({ id: key, label, symbol, price, changePercent, relation, available });
+  };
+  add('eurusd', 'EUR/USD', 'EURUSD', display === 'EURUSD' ? 'This pair' : 'USD ↔ EUR');
+  add('spy', 'S&P (SPY)', 'SPY', 'US risk');
+  if (resolved.marketType === 'Commodity' || display.includes('XAU')) {
+    add('xau', 'Gold', 'XAUUSD', 'Real-yield / USD');
+  } else {
+    add('xau', 'Gold', 'XAUUSD', 'Flight to quality');
+  }
+  if (resolved.marketType === 'Crypto' || display.includes('BTC')) {
+    add('btc', 'Bitcoin', 'BTCUSD', 'Crypto beta');
+  } else {
+    add('btc', 'Bitcoin', 'BTCUSD', 'Risk appetite');
+  }
+  const filtered = rows.filter((r) => !(display === 'EURUSD' && r.id === 'eurusd'));
+  return (filtered.length ? filtered : rows).slice(0, 4);
+}
+
+function enrichKeyLevels({
+  piv,
+  prevH,
+  prevL,
+  last,
+  highs,
+  lows,
+  marketType,
+  wr,
+}) {
+  const bar = lastBarRange(highs, lows);
+  const equalNotes = equalLiquidityNotes(highs, lows, marketType);
+  const rows = [];
+  const pushRow = (key, label, price, side) => {
+    if (price == null || !Number.isFinite(Number(price))) {
+      rows.push({ key, label, price: null, display: '—', liquidity: null, distancePct: null });
+      return;
+    }
+    const p = Number(price);
+    const liq = side ? liquidityState(side, p, last, bar.hi, bar.lo, marketType) : null;
+    const d = last != null ? relDistPct(last, p) : null;
+    rows.push({
+      key,
+      label,
+      price: p,
+      display: formatPx(p, marketType),
+      liquidity: liq,
+      distancePct: d != null ? Math.round(d * 10000) / 100 : null,
+    });
+  };
+  pushRow('r1', 'Resistance (R1)', piv?.r1, 'resistance');
+  pushRow('s1', 'Support (S1)', piv?.s1, 'support');
+  pushRow('pdh', 'Prior session high', prevH, 'resistance');
+  pushRow('pdl', 'Prior session low', prevL, 'support');
+  pushRow('wh', 'Week range high', wr?.wh, 'resistance');
+  pushRow('wl', 'Week range low', wr?.wl, 'support');
+  if (equalNotes.equalHighs) {
+    rows.push({
+      key: 'eqh',
+      label: 'Liquidity (equal highs)',
+      price: equalNotes.equalHighs.price,
+      display: formatPx(equalNotes.equalHighs.price, marketType),
+      liquidity: 'untapped',
+      distancePct: last != null ? Math.round(relDistPct(last, equalNotes.equalHighs.price) * 10000) / 100 : null,
+      note: equalNotes.equalHighs.note,
+    });
+  }
+  if (equalNotes.equalLows) {
+    rows.push({
+      key: 'eql',
+      label: 'Liquidity (equal lows)',
+      price: equalNotes.equalLows.price,
+      display: formatPx(equalNotes.equalLows.price, marketType),
+      liquidity: 'untapped',
+      distancePct: last != null ? Math.round(relDistPct(last, equalNotes.equalLows.price) * 10000) / 100 : null,
+      note: equalNotes.equalLows.note,
+    });
+  }
+  return { rows, equalLiquidity: equalNotes };
+}
+
+module.exports = {
+  instrumentContext,
+  rsiLast,
+  rsiStateLabel,
+  averageDailyRangePercent,
+  buildSessionFlow,
+  sessionAlignmentLabel,
+  structureQualityLabel,
+  computeReadinessScore100,
+  buildConfirmationEngine,
+  buildSmartAlerts,
+  buildChartOverlayPlan,
+  eventRiskState,
+  scenarioToneFromBias,
+  buildCrossAssetTiles,
+  enrichKeyLevels,
+  utcSessionWindow,
+};

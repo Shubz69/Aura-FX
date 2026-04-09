@@ -1,9 +1,17 @@
 /**
  * Full Market Decoder brief panels — shared layout for embedded page or preview modal.
  */
-import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
+import React, { useMemo, useRef, useCallback } from 'react';
 import { FiChevronRight, FiArrowUpRight, FiArrowDownRight } from 'react-icons/fi';
 import MarketDecoderChart from './MarketDecoderChart';
+import {
+  DecoderSessionBadge,
+  DecoderSessionFlowStrip,
+  DecoderReadinessBlock,
+  DecoderConfirmationFooter,
+  DecoderSmartAlerts,
+  DecoderEventRiskHeader,
+} from './MarketDecoderBriefEnhancements';
 
 function formatPct(n) {
   if (n == null || Number.isNaN(Number(n))) {
@@ -100,10 +108,19 @@ function formatPairLabel(asset) {
   return raw || '—';
 }
 
-function levelShort(displayStr) {
-  if (displayStr == null) return '—';
-  const m = String(displayStr).match(/[\d]+(?:\.\d+)?/);
-  return m ? m[0] : '—';
+/** Prefer numeric level fields — avoids parsing "Unavailable (R1)" as "1". */
+function formatPriceOrDash(rawNum, mt) {
+  if (rawNum != null && Number.isFinite(Number(rawNum))) return formatLevel(rawNum, mt);
+  return '—';
+}
+
+function liquidityLabel(state) {
+  if (!state) return null;
+  const s = String(state);
+  if (s === 'untapped') return 'Untapped';
+  if (s === 'tested') return 'Tested';
+  if (s === 'swept') return 'Swept';
+  return s;
 }
 
 function crossAssetCardsFromLines(lines) {
@@ -154,29 +171,6 @@ function buildTimeline(brief) {
   return out.slice(0, 3);
 }
 
-function checklistFromBrief(brief) {
-  const ex = brief?.executionGuidance || {};
-  const note = brief?.executionNote || {};
-  return [
-    {
-      title: 'Set alerts at key levels',
-      sub: ex.preferredDirection || note.preferredDirection || 'Anchor risk around the cited resistance/support grid.',
-    },
-    {
-      title: 'Use tight stops',
-      sub: ex.invalidation || note.invalidation || ex.riskConsideration || 'Invalidation should be explicit — no open-ended loss.',
-    },
-    {
-      title: 'Watch for breakouts',
-      sub:
-        ex.entryCondition ||
-        note.confirmationNeeded ||
-        brief?.scenarioMap?.bullish?.condition ||
-        'Confirmation matters — let structure break before adding.',
-    },
-  ];
-}
-
 function pulseDeskLabel(brief) {
   const bias = brief?.instantRead?.bias || brief?.marketPulse?.biasLabel || 'Neutral';
   const conv = String(brief?.instantRead?.conviction || '').toLowerCase();
@@ -198,15 +192,6 @@ function CrossArrow({ tone, diag }) {
 
 export default function MarketDecoderBriefContent({ brief, q }) {
   const moreDetailsRef = useRef(null);
-  const [execChecked, setExecChecked] = useState(() => [true, true, true]);
-
-  const toggleExec = useCallback((idx) => {
-    setExecChecked((prev) => {
-      const next = [...prev];
-      next[idx] = !next[idx];
-      return next;
-    });
-  }, []);
 
   const openScenarioDetails = useCallback(() => {
     const el = moreDetailsRef.current;
@@ -236,13 +221,8 @@ export default function MarketDecoderBriefContent({ brief, q }) {
   }, [brief]);
 
   const refTimeline = useMemo(() => (brief ? buildTimeline(brief) : []), [brief]);
-  const refCross = useMemo(() => (brief ? crossAssetCardsFromLines(brief.crossAssetContext) : []), [brief]);
-  const refChecklist = useMemo(() => (brief ? checklistFromBrief(brief) : []), [brief]);
-
-  useEffect(() => {
-    if (refChecklist.length === 0) return;
-    setExecChecked(Array(refChecklist.length).fill(true));
-  }, [brief?.header?.asset, brief?.meta?.generatedAt, refChecklist.length]);
+  const refCrossLegacy = useMemo(() => (brief ? crossAssetCardsFromLines(brief.crossAssetContext) : []), [brief]);
+  const crossTiles = brief?.crossAssetTiles?.length ? brief.crossAssetTiles : null;
 
   if (!brief) return null;
 
@@ -250,12 +230,35 @@ export default function MarketDecoderBriefContent({ brief, q }) {
   const changePct = parseNumberLoose(brief.header?.changePercent);
   const instrumentHeadlines = headlinePack.items;
   const showingFallbackHeadlines = headlinePack.scope === 'fallback' || headlinePack.scope === 'none';
+  const levelRows = Array.isArray(brief.keyLevels?.detailRows) ? brief.keyLevels.detailRows : [];
+  const conv = brief.instantRead?.conviction || '';
+  const convFill = conv === 'High' ? 100 : conv === 'Medium' ? 66 : conv === 'Low' ? 33 : 0;
+  const tc = brief.instantRead?.tradingCondition || brief.marketPulse?.marketState || '';
+  const tcClass =
+    String(tc)
+      .toLowerCase()
+      .includes('event')
+      ? 'md-regime-pill--event'
+      : String(tc).toLowerCase().includes('chop')
+        ? 'md-regime-pill--chop'
+        : String(tc).toLowerCase().includes('trend')
+          ? 'md-regime-pill--trend'
+          : String(tc).toLowerCase().includes('range')
+            ? 'md-regime-pill--range'
+            : 'md-regime-pill--neutral';
+  const scenario = brief.decoderScenario || {};
+  const eventScopeLabel =
+    brief.eventRiskSummary?.scope === 'pair'
+      ? 'Pair-scoped calendar'
+      : brief.eventRiskSummary?.scope === 'global'
+        ? 'Global calendar'
+        : '';
 
   return (
     <>
-      <div className="md-ref-grid">
+      <div className="md-ref-grid md-ref-grid--dense">
         <aside className="md-ref-col md-ref-col--left">
-          <section className="md-ref-panel">
+          <section className="md-ref-panel md-ref-panel--glass">
             <h2 className="md-ref-panel-h">Instant Read</h2>
             <div className="md-ref-rows">
               <div className="md-ref-row">
@@ -266,49 +269,102 @@ export default function MarketDecoderBriefContent({ brief, q }) {
               </div>
               <div className="md-ref-row">
                 <span className="md-ref-k">Conviction</span>
-                <span className="md-ref-v">{brief.instantRead?.conviction || '—'}</span>
+                <span className="md-ref-v md-ref-v--convict">
+                  {conv || '—'}
+                  {conv ? (
+                    <span className="md-convict-bar" aria-hidden>
+                      <span className="md-convict-bar-fill" style={{ width: `${convFill}%` }} />
+                    </span>
+                  ) : null}
+                </span>
               </div>
               <div className="md-ref-row">
                 <span className="md-ref-k">Trading Condition</span>
-                <span className="md-ref-v">{brief.instantRead?.tradingCondition || brief.marketPulse?.marketState || '—'}</span>
+                <span className="md-ref-v md-ref-v--regime">
+                  <span className={`md-regime-pill ${tcClass}`}>{tc || '—'}</span>
+                </span>
               </div>
-              <div className="md-ref-row md-ref-row--gold">
+              <div className="md-ref-row md-ref-row--gold md-ref-row--approach">
                 <span className="md-ref-k">Best Approach</span>
                 <span className="md-ref-v md-ref-v--gold">{brief.instantRead?.bestApproach || '—'}</span>
               </div>
             </div>
           </section>
 
-          <section className="md-ref-panel">
+          <section className="md-ref-panel md-ref-panel--glass">
             <h2 className="md-ref-panel-h">Key Levels</h2>
-            <div className="md-ref-rows">
-              <div className="md-ref-row">
-                <span className="md-ref-k">Resistance</span>
-                <span className="md-ref-v">{levelShort(brief.keyLevels?.keyLevelsDisplay?.resistance1)}</span>
-              </div>
-              <div className="md-ref-row">
-                <span className="md-ref-k">Support</span>
-                <span className="md-ref-v">{levelShort(brief.keyLevels?.keyLevelsDisplay?.support1)}</span>
-              </div>
+            <div className="md-ref-levels-dense">
+              {levelRows.length ? (
+                levelRows.map((row) => (
+                  <div key={row.key} className="md-ref-level-line">
+                    <div className="md-ref-level-line-main">
+                      <span className="md-ref-level-label">{row.label}</span>
+                      <span className="md-ref-level-price">{row.display || '—'}</span>
+                    </div>
+                    <div className="md-ref-level-meta">
+                      {row.liquidity ? <span className="md-liq-tag">{liquidityLabel(row.liquidity)}</span> : null}
+                      {row.distancePct != null ? <span>{row.distancePct}% from spot</span> : null}
+                      {row.note ? <span className="md-ref-level-note">{row.note}</span> : null}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="md-ref-rows">
+                  <div className="md-ref-row">
+                    <span className="md-ref-k">Resistance (R1)</span>
+                    <span className="md-ref-v">{formatPriceOrDash(brief.keyLevels?.resistance1, mt)}</span>
+                  </div>
+                  <div className="md-ref-row">
+                    <span className="md-ref-k">Support (S1)</span>
+                    <span className="md-ref-v">{formatPriceOrDash(brief.keyLevels?.support1, mt)}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 
-          <section className="md-ref-panel">
+          <section className="md-ref-panel md-ref-panel--glass">
             <h2 className="md-ref-panel-h">Cross-Asset Context</h2>
-            <div className="md-ref-cross-grid">
-              {refCross.map((card) => (
-                <div key={card.label} className={`md-ref-cross-tile md-ref-cross-tile--${card.tone}`}>
-                  <span className={`md-ref-cross-ico md-ref-cross-ico--${card.icon}`} aria-hidden />
-                  <span className="md-ref-cross-name">{card.label}</span>
-                  <CrossArrow tone={card.tone} diag={card.icon === 'spy'} />
-                </div>
-              ))}
-            </div>
+            {crossTiles ? (
+              <div className="md-ref-cross-grid md-ref-cross-grid--tiles">
+                {crossTiles.map((t) => (
+                  <div
+                    key={t.id}
+                    className={`md-ref-cross-tile md-ref-cross-tile--${
+                      (t.changePercent ?? 0) > 0 ? 'up' : (t.changePercent ?? 0) < 0 ? 'down' : 'flat'
+                    }`}
+                  >
+                    <span className="md-ref-cross-name">{t.label}</span>
+                    <span className="md-ref-cross-price">
+                      {t.price != null && Number.isFinite(t.price) ? formatLevel(t.price, mt) : '—'}
+                    </span>
+                    <span className="md-ref-cross-rel">{t.relation}</span>
+                    <span className="md-ref-cross-chg">
+                      {t.changePercent != null && Number.isFinite(t.changePercent) ? formatPct(t.changePercent) : '—'}
+                    </span>
+                    <CrossArrow
+                      tone={(t.changePercent ?? 0) > 0 ? 'up' : (t.changePercent ?? 0) < 0 ? 'down' : 'flat'}
+                      diag={t.id === 'spy'}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="md-ref-cross-grid">
+                {refCrossLegacy.map((card) => (
+                  <div key={card.label} className={`md-ref-cross-tile md-ref-cross-tile--${card.tone}`}>
+                    <span className={`md-ref-cross-ico md-ref-cross-ico--${card.icon}`} aria-hidden />
+                    <span className="md-ref-cross-name">{card.label}</span>
+                    <CrossArrow tone={card.tone} diag={card.icon === 'spy'} />
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </aside>
 
         <div className="md-ref-col md-ref-col--center">
-          <section className="md-ref-panel md-ref-panel--chart">
+          <section className="md-ref-panel md-ref-panel--chart md-ref-panel--glass">
             <div className="md-ref-chart-head">
               <span className="md-ref-pair">{formatPairLabel(brief.header.asset)}</span>
               <span className="md-ref-last">{formatLevel(brief.header.price, mt)}</span>
@@ -325,11 +381,19 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                 {changePct != null ? (changePct >= 0 ? ' ▲' : ' ▼') : ''}
               </span>
             </div>
-            <MarketDecoderChart bars={brief.meta?.chartBars} compact={false} referenceStyle />
+            <DecoderSessionBadge flow={brief.sessionFlow} overlayNote={brief.chartOverlay?.note} />
+            <MarketDecoderChart
+              bars={brief.meta?.chartBars}
+              compact={false}
+              referenceStyle
+              overlays={brief.chartOverlay}
+            />
+            <DecoderSessionFlowStrip flow={brief.sessionFlow} />
           </section>
 
-          <section className="md-ref-panel md-ref-panel--timeline">
+          <section className="md-ref-panel md-ref-panel--timeline md-ref-panel--glass">
             <h2 className="md-ref-panel-h">Event Risk</h2>
+            <DecoderEventRiskHeader summary={brief.eventRiskSummary} scopeLabel={eventScopeLabel} />
             <div className="md-ref-timeline">
               <span className="md-ref-tl-cap">Today</span>
               <div className="md-ref-tl-track">
@@ -347,7 +411,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
         </div>
 
         <aside className="md-ref-col md-ref-col--right">
-          <section className="md-ref-panel">
+          <section className="md-ref-panel md-ref-panel--glass md-ref-panel--anchor md-ref-panel--anchor-pulse">
             <h2 className="md-ref-panel-h">Market Pulse</h2>
             {brief.marketPulse ? (
               <>
@@ -365,55 +429,95 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                   />
                 </div>
                 <p className="md-ref-pulse-caption">{pulseDeskLabel(brief)}</p>
+                {brief.marketPulse.volatility ? (
+                  <p className="md-ref-pulse-sub">Volatility · {brief.marketPulse.volatility}</p>
+                ) : null}
               </>
             ) : (
               <p className="md-ref-muted">Pulse data not available.</p>
             )}
           </section>
 
-          <section className="md-ref-panel">
+          <section className="md-ref-panel md-ref-panel--glass md-ref-panel--anchor md-ref-panel--readiness">
+            <h2 className="md-ref-panel-h">Trade Readiness</h2>
+            <DecoderReadinessBlock readiness={brief.readiness} insights={brief.insights} />
+          </section>
+
+          <section className="md-ref-panel md-ref-panel--glass">
+            <h2 className="md-ref-panel-h">Market Insights</h2>
+            <div className="md-ref-insights-grid">
+              <div className="md-ref-insights-cell">
+                <span className="md-ref-insights-k">RSI (14)</span>
+                <span className="md-ref-insights-v">
+                  {brief.insights?.rsi != null ? `${brief.insights.rsi} · ${brief.insights.rsiState || ''}` : '—'}
+                </span>
+              </div>
+              <div className="md-ref-insights-cell">
+                <span className="md-ref-insights-k">ADR (5d avg)</span>
+                <span className="md-ref-insights-v">
+                  {brief.insights?.adrPercent != null ? `${brief.insights.adrPercent}% of spot` : '—'}
+                </span>
+              </div>
+              <div className="md-ref-insights-cell">
+                <span className="md-ref-insights-k">Momentum</span>
+                <span className="md-ref-insights-v">{brief.insights?.momentum || '—'}</span>
+              </div>
+              <div className="md-ref-insights-cell">
+                <span className="md-ref-insights-k">Structure</span>
+                <span className="md-ref-insights-v">{brief.insights?.structureState || '—'}</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="md-ref-panel md-ref-panel--glass">
             <h2 className="md-ref-panel-h">Scenario Map</h2>
             <button type="button" className="md-ref-scen-row md-ref-scen-row--action" onClick={openScenarioDetails}>
               <span className="md-ref-scen-k">Upside Target</span>
-              <span className="md-ref-scen-v">{levelShort(brief.keyLevels?.keyLevelsDisplay?.resistance1)}</span>
+              <span className="md-ref-scen-v">{formatPriceOrDash(scenario.upsideTarget, mt)}</span>
               <FiChevronRight className="md-ref-scen-chev" aria-hidden />
             </button>
             <button type="button" className="md-ref-scen-row md-ref-scen-row--action" onClick={openScenarioDetails}>
               <span className="md-ref-scen-k">Downside Risk</span>
-              <span className="md-ref-scen-v">{levelShort(brief.keyLevels?.keyLevelsDisplay?.support1)}</span>
+              <span className="md-ref-scen-v">{formatPriceOrDash(scenario.downsideRisk, mt)}</span>
               <FiChevronRight className="md-ref-scen-chev" aria-hidden />
             </button>
+            <div className="md-ref-scen-row">
+              <span className="md-ref-scen-k">Invalidation</span>
+              <span className="md-ref-scen-v">{formatPriceOrDash(scenario.invalidation, mt)}</span>
+            </div>
+            <div className="md-ref-scen-row">
+              <span className="md-ref-scen-k">Pivot / trigger</span>
+              <span className="md-ref-scen-v">{formatPriceOrDash(scenario.trigger, mt)}</span>
+            </div>
+            {scenario.tone ? (
+              <div className="md-ref-scen-tone">
+                Scenario tone · <strong>{scenario.tone}</strong>
+              </div>
+            ) : null}
           </section>
 
-          <section className="md-ref-panel">
-            <h2 className="md-ref-panel-h">Execution Guidance</h2>
-            <ul className="md-ref-exec-list">
-              {refChecklist.map((it, idx) => (
-                <li key={it.title} className="md-ref-exec-item md-ref-exec-item--interactive">
-                  <button
-                    type="button"
-                    className={`md-ref-exec-check-btn${execChecked[idx] ? ' md-ref-exec-check-btn--on' : ''}`}
-                    aria-pressed={execChecked[idx]}
-                    aria-label={`Toggle: ${it.title}`}
-                    onClick={() => toggleExec(idx)}
-                  />
-                  <button type="button" className="md-ref-exec-hit" onClick={() => toggleExec(idx)}>
-                    <span className="md-ref-exec-body">
-                      <span className="md-ref-exec-title">{it.title}</span>
-                      <span className="md-ref-exec-sub">{it.sub}</span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+          <section className="md-ref-panel md-ref-panel--glass">
+            <h2 className="md-ref-panel-h">Smart Alerts</h2>
+            <DecoderSmartAlerts alerts={brief.smartAlerts} />
+            {brief.executionGuidance?.riskConsideration ? (
+              <p className="md-ref-exec-risknote">{brief.executionGuidance.riskConsideration}</p>
+            ) : null}
           </section>
         </aside>
       </div>
 
-      <footer className="md-ref-footer">
-        <span className="md-ref-footer-cap">
-          {String(brief.finalOutput?.currentPosture || 'WAIT FOR CONFIRMATION').toUpperCase()}
-        </span>
+      <footer className="md-ref-footer md-ref-footer--engine-wrap md-ref-footer--anchor">
+        {brief.confirmationEngine?.checks?.length ? (
+          <DecoderConfirmationFooter
+            confirmation={brief.confirmationEngine}
+            postureHeadline={brief.finalOutput?.currentPosture}
+            postureSub={brief.finalOutput?.postureSubtitle}
+          />
+        ) : (
+          <span className="md-ref-footer-cap">
+            {String(brief.finalOutput?.currentPosture || 'WAIT FOR CONFIRMATION').toUpperCase()}
+          </span>
+        )}
       </footer>
 
       <details ref={moreDetailsRef} className="md-ref-more">

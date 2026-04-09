@@ -16,8 +16,9 @@ const {
   fetchMarketDecoderContextNews,
 } = require('./marketDecoderData');
 const { rankInstrumentHeadlines } = require('./instrumentHeadlines');
+const compose = require('./marketDecoderCompose');
 
-const DECODER_ENGINE_VERSION = 2;
+const DECODER_ENGINE_VERSION = 3;
 
 const TIMEOUT_MS = 9000;
 
@@ -374,6 +375,14 @@ function buildCrossAssetFromBundle(bundle, marketType, displaySymbol) {
   const xau = bundle && bundle.xau;
   const btc = bundle && bundle.btc;
 
+  const pxLine = (label, c, dp) => {
+    if (c == null || Number.isNaN(Number(c))) return null;
+    const pct = dp != null && Number.isFinite(Number(dp)) ? `${dp >= 0 ? '+' : ''}${Number(dp).toFixed(2)}%` : '';
+    const px = Number(c);
+    const pxStr = marketType === 'FX' || marketType === 'Commodity' ? px.toFixed(5) : px.toFixed(2);
+    return pct ? `${label} ${pxStr} (${pct})` : `${label} ${pxStr}`;
+  };
+
   if (eur && eur.dp != null) {
     const dir = eur.dp >= 0 ? 'firming' : 'soft';
     lines.push(`EURUSD ${eur.dp >= 0 ? '+' : ''}${eur.dp.toFixed(2)}% session → USD ${dir} vs euro`);
@@ -381,28 +390,49 @@ function buildCrossAssetFromBundle(bundle, marketType, displaySymbol) {
     lines.push('EURUSD cross: quote unavailable — USD tone from primary pair only');
   }
 
-  if (spy && spy.dp != null) {
+  const spyPx = pxLine('SPY', spy && spy.c, spy && spy.dp);
+  if (spyPx) {
+    lines.push(
+      `${spyPx} → US equity risk tone ${spy && spy.dp >= 0 ? 'supportive' : 'defensive'} for risk assets`
+    );
+  } else if (spy && spy.dp != null) {
     lines.push(`SPY ${spy.dp >= 0 ? '+' : ''}${spy.dp.toFixed(2)}% → US equity risk tone ${spy.dp >= 0 ? 'supportive' : 'defensive'} for risk assets`);
   } else {
     lines.push('SPY: live % move unavailable — treat US equity tone as unconfirmed');
   }
 
   if (marketType === 'Commodity' || displaySymbol.includes('XAU')) {
-    if (xau && xau.dp != null) {
+    const gPx = pxLine('Gold', xau && xau.c, xau && xau.dp);
+    if (gPx) {
+      lines.push(`${gPx} → real-yield sensitivity check for metals`);
+    } else if (xau && xau.dp != null) {
       lines.push(`Gold ${xau.dp >= 0 ? '+' : ''}${xau.dp.toFixed(2)}% → real-yield sensitivity check for metals`);
     } else {
       lines.push('Gold session % unavailable — cross-check XAU separately before sizing metals');
     }
-  } else if (xau && xau.dp != null) {
-    lines.push(`XAUUSD ${xau.dp >= 0 ? '+' : ''}${xau.dp.toFixed(2)}% → flight-to-quality bias ${xau.dp >= 0 ? 'on' : 'off'}`);
+  } else if (xau && (xau.c != null || xau.dp != null)) {
+    const gPx = pxLine('XAUUSD', xau.c, xau.dp);
+    if (gPx) {
+      lines.push(`${gPx} → flight-to-quality bias ${xau.dp >= 0 ? 'on' : 'off'}`);
+    } else {
+      lines.push(`XAUUSD ${xau.dp >= 0 ? '+' : ''}${xau.dp.toFixed(2)}% → flight-to-quality bias ${xau.dp >= 0 ? 'on' : 'off'}`);
+    }
   }
 
   if (marketType === 'Crypto' || displaySymbol.includes('BTC')) {
-    if (btc && btc.dp != null) {
+    const bPx = pxLine('BTC', btc && btc.c, btc && btc.dp);
+    if (bPx) {
+      lines.push(`${bPx} → crypto-beta liquidity cue`);
+    } else if (btc && btc.dp != null) {
       lines.push(`BTC ${btc.dp >= 0 ? '+' : ''}${btc.dp.toFixed(2)}% → crypto-beta liquidity cue`);
     }
-  } else if (btc && btc.dp != null) {
-    lines.push(`BTC ${btc.dp >= 0 ? '+' : ''}${btc.dp.toFixed(2)}% → speculative risk appetite read-across`);
+  } else if (btc && (btc.c != null || btc.dp != null)) {
+    const bPx = pxLine('BTC', btc.c, btc.dp);
+    if (bPx) {
+      lines.push(`${bPx} → speculative risk appetite read-across`);
+    } else if (btc.dp != null) {
+      lines.push(`BTC ${btc.dp >= 0 ? '+' : ''}${btc.dp.toFixed(2)}% → speculative risk appetite read-across`);
+    }
   }
 
   while (lines.length < 4) {
@@ -893,15 +923,118 @@ async function runMarketDecoder(symbolInput) {
   const anchorList = Array.isArray(anchorNews) ? anchorNews : [];
   const headlineRank = rankInstrumentHeadlines(resolved, displaySymbol, anchorList, { maxRelevant: 6, maxFallback: 4 });
 
+  const instrument = compose.instrumentContext(resolved);
+  const rsiVal = compose.rsiLast(closes);
+  const rsiPack = compose.rsiStateLabel(rsiVal);
+  const adrPct = compose.averageDailyRangePercent(highs, lows, closes, 5);
+  const pivOk = piv && piv.r1 != null && piv.s1 != null;
+  const readiness100 = compose.computeReadinessScore100({
+    conviction,
+    momentum,
+    eventSoon: eventHighImpactSoon,
+    pulseState,
+    net,
+    pivOk,
+    sparse: isSparse,
+  });
+  const sessionFlow = compose.buildSessionFlow(condition, volLabel, net);
+  const { rows: levelDetailRows, equalLiquidity } = compose.enrichKeyLevels({
+    piv,
+    prevH,
+    prevL,
+    last,
+    highs,
+    lows,
+    marketType,
+    wr,
+  });
+  const crossAssetTiles = compose.buildCrossAssetTiles(crossBundle, resolved);
+  const chartOverlay = compose.buildChartOverlayPlan({
+    piv,
+    prevH,
+    prevL,
+    wr,
+    marketType,
+    last,
+  });
+  const confirmationEngine = compose.buildConfirmationEngine({
+    net,
+    piv,
+    last,
+    eventHighImpactSoon,
+    conviction,
+    condition,
+    readiness100,
+    sparse: isSparse,
+    volLabel,
+    calOk: cal.ok,
+    pairMeetingCount: (pairMeetingsPick.events || []).length,
+  });
+  const smartAlerts = compose.buildSmartAlerts({
+    piv,
+    last,
+    bias,
+    marketType,
+    equalNotes: equalLiquidity,
+  });
+  const eventRiskSummary = compose.eventRiskState(events, eventHighImpactSoon, pairMeetingsPick.scope);
+  const scenarioTone = compose.scenarioToneFromBias(bias, net);
+  const activeSess = compose.utcSessionWindow();
+  const readiness = {
+    score: readiness100,
+    confidence: conviction,
+    sessionAlignment: compose.sessionAlignmentLabel(activeSess.label, bias),
+    structureQuality: compose.structureQualityLabel(net, pivOk, isSparse),
+    volatilitySuitability: volLabel,
+  };
+  const insights = {
+    adrPercent: adrPct,
+    atrPercent: adrPct,
+    rsi: rsiVal,
+    rsiState: rsiPack.label,
+    rsiTone: rsiPack.tone,
+    momentum,
+    volatilityRegime: volLabel,
+    structureState: readiness.structureQuality,
+    note:
+      adrPct != null
+        ? `Average daily range ≈ ${adrPct}% of spot (last five completed sessions).`
+        : null,
+  };
+  const decoderScenario = {
+    upsideTarget: piv?.r1 ?? null,
+    downsideRisk: piv?.s1 ?? null,
+    invalidation:
+      bias === 'Bullish' && piv?.s1 != null
+        ? piv.s1
+        : bias === 'Bearish' && piv?.r1 != null
+          ? piv.r1
+          : piv?.pivot ?? null,
+    trigger: piv?.pivot ?? null,
+    tone: scenarioTone,
+  };
+
+  if (process.env.NODE_ENV !== 'production' || process.env.AURA_DECODER_DEBUG === '1') {
+    console.info('[market-decoder] composed', {
+      canonical: instrument.canonical,
+      display: instrument.display,
+      readiness: readiness100,
+      pivOk,
+      sparse: isSparse,
+    });
+  }
+
   return {
     success: true,
     brief: {
+      instrument,
       header: {
         asset: displaySymbol,
         price: last != null ? last : q.c ?? null,
         changePercent: pctDay,
         marketType,
-        quoteCurrency: 'USD',
+        quoteCurrency: instrument.quote || 'USD',
+        baseCurrency: instrument.base,
         whatChanged: whatChangedLine({ displaySymbol, last, pctDay, q, marketType }),
       },
       marketPulse,
@@ -925,6 +1058,8 @@ async function runMarketDecoder(symbolInput) {
         previousDayLow: prevL,
         weeklyHigh: wr.wh,
         weeklyLow: wr.wl,
+        detailRows: levelDetailRows,
+        equalLiquidity,
         keyLevelsDisplay: {
           resistance1: piv?.r1 != null ? `${lev(piv.r1, 'R1')} (classic R1)` : formatLevelDisplay(null, marketType, 'R1'),
           resistance2: piv?.r2 != null ? `${lev(piv.r2, 'R2')} (classic R2)` : formatLevelDisplay(null, marketType, 'R2'),
@@ -943,7 +1078,16 @@ async function runMarketDecoder(symbolInput) {
         },
       },
       scenarioMap: scenarios,
+      decoderScenario,
       crossAssetContext: cross,
+      crossAssetTiles,
+      sessionFlow,
+      chartOverlay,
+      insights,
+      readiness,
+      confirmationEngine,
+      smartAlerts,
+      eventRiskSummary,
       positioning,
       eventRisk: events,
       executionGuidance: exec,
@@ -952,6 +1096,7 @@ async function runMarketDecoder(symbolInput) {
         postureSubtitle: postureElite.subtitle,
         reason: postureElite.reason,
         whatWouldChangeThis: postureElite.whatWouldChangeThis,
+        deckAction: confirmationEngine.finalAction,
       },
       meta: {
         bullScore: bull,

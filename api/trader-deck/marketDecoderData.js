@@ -501,9 +501,14 @@ async function fetchCrossAssetQuotes() {
   for (const s of symbols) {
     const q = await getQuote(forProvider(s.symbol, 'finnhub'));
     if (q.ok && q.data) {
-      out[s.id] = { label: s.label, dp: q.data.dp != null ? Number(q.data.dp) : null, ok: true };
+      out[s.id] = {
+        label: s.label,
+        c: q.data.c != null ? Number(q.data.c) : null,
+        dp: q.data.dp != null ? Number(q.data.dp) : null,
+        ok: true,
+      };
     } else {
-      out[s.id] = { label: s.label, dp: null, ok: false };
+      out[s.id] = { label: s.label, c: null, dp: null, ok: false };
     }
   }
   return out;
