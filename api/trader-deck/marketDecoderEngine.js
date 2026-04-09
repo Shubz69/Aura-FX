@@ -18,6 +18,12 @@ const {
 const { rankInstrumentHeadlines } = require('./instrumentHeadlines');
 const compose = require('./marketDecoderCompose');
 const { computeWeightedMarketPulse } = require('./marketDecoderPulse');
+const {
+  formatDecoderPriceForInstrument,
+  formatDecoderMetricPercent,
+  formatDecoderPriceRaw,
+  crossTileContext,
+} = require('../../src/utils/decoderDisplayFormat');
 
 const DECODER_ENGINE_VERSION = 5;
 
@@ -354,17 +360,9 @@ function timeUntil(isoLike) {
   return `${Math.round(h / 24)}d`;
 }
 
-function formatLevelStr(x, marketType) {
-  const n = Number(x);
-  if (x == null || Number.isNaN(n)) return null;
-  if (marketType === 'FX' || marketType === 'Commodity') return n.toFixed(5);
-  if (marketType === 'Crypto' && n > 200) return n.toFixed(2);
-  return n.toFixed(n < 50 ? 4 : 2);
-}
-
 /** Always user-facing string — never a lone dash */
-function formatLevelDisplay(x, marketType, label) {
-  const s = formatLevelStr(x, marketType);
+function formatLevelDisplayInstr(x, instrument, label) {
+  const s = formatDecoderPriceForInstrument(x, instrument);
   if (s != null) return s;
   return `Unavailable (${label})`;
 }
@@ -404,63 +402,78 @@ function buildCrossAssetFromBundle(bundle, marketType, displaySymbol) {
   const xau = bundle && bundle.xau;
   const btc = bundle && bundle.btc;
 
-  const pxLine = (label, c, dp) => {
+  const pxLine = (label, c, dp, legId) => {
     if (c == null || Number.isNaN(Number(c))) return null;
-    const pct = dp != null && Number.isFinite(Number(dp)) ? `${dp >= 0 ? '+' : ''}${Number(dp).toFixed(2)}%` : '';
-    const px = Number(c);
-    const pxStr = marketType === 'FX' || marketType === 'Commodity' ? px.toFixed(5) : px.toFixed(2);
+    const pct =
+      dp != null && Number.isFinite(Number(dp))
+        ? `${dp >= 0 ? '+' : ''}${formatDecoderMetricPercent(Number(dp), 2)}%`
+        : '';
+    const pxStr = formatDecoderPriceRaw(Number(c), crossTileContext(legId));
+    if (pxStr == null) return null;
     return pct ? `${label} ${pxStr} (${pct})` : `${label} ${pxStr}`;
   };
 
   if (eur && eur.dp != null) {
     const dir = eur.dp >= 0 ? 'firming' : 'soft';
-    lines.push(`EURUSD ${eur.dp >= 0 ? '+' : ''}${eur.dp.toFixed(2)}% session → USD ${dir} vs euro`);
+    lines.push(
+      `EURUSD ${eur.dp >= 0 ? '+' : ''}${formatDecoderMetricPercent(Number(eur.dp), 2)}% session → USD ${dir} vs euro`,
+    );
   } else {
     lines.push('EURUSD cross: quote unavailable — USD tone from primary pair only');
   }
 
-  const spyPx = pxLine('SPY', spy && spy.c, spy && spy.dp);
+  const spyPx = pxLine('SPY', spy && spy.c, spy && spy.dp, 'spy');
   if (spyPx) {
     lines.push(
-      `${spyPx} → US equity risk tone ${spy && spy.dp >= 0 ? 'supportive' : 'defensive'} for risk assets`
+      `${spyPx} → US equity risk tone ${spy && spy.dp >= 0 ? 'supportive' : 'defensive'} for risk assets`,
     );
   } else if (spy && spy.dp != null) {
-    lines.push(`SPY ${spy.dp >= 0 ? '+' : ''}${spy.dp.toFixed(2)}% → US equity risk tone ${spy.dp >= 0 ? 'supportive' : 'defensive'} for risk assets`);
+    lines.push(
+      `SPY ${spy.dp >= 0 ? '+' : ''}${formatDecoderMetricPercent(Number(spy.dp), 2)}% → US equity risk tone ${spy.dp >= 0 ? 'supportive' : 'defensive'} for risk assets`,
+    );
   } else {
     lines.push('SPY: live % move unavailable — treat US equity tone as unconfirmed');
   }
 
   if (marketType === 'Commodity' || displaySymbol.includes('XAU')) {
-    const gPx = pxLine('Gold', xau && xau.c, xau && xau.dp);
+    const gPx = pxLine('Gold', xau && xau.c, xau && xau.dp, 'xau');
     if (gPx) {
       lines.push(`${gPx} → real-yield sensitivity check for metals`);
     } else if (xau && xau.dp != null) {
-      lines.push(`Gold ${xau.dp >= 0 ? '+' : ''}${xau.dp.toFixed(2)}% → real-yield sensitivity check for metals`);
+      lines.push(
+        `Gold ${xau.dp >= 0 ? '+' : ''}${formatDecoderMetricPercent(Number(xau.dp), 2)}% → real-yield sensitivity check for metals`,
+      );
     } else {
       lines.push('Gold session % unavailable — cross-check XAU separately before sizing metals');
     }
   } else if (xau && (xau.c != null || xau.dp != null)) {
-    const gPx = pxLine('XAUUSD', xau.c, xau.dp);
+    const gPx = pxLine('XAUUSD', xau.c, xau.dp, 'xau');
     if (gPx) {
       lines.push(`${gPx} → flight-to-quality bias ${xau.dp >= 0 ? 'on' : 'off'}`);
     } else {
-      lines.push(`XAUUSD ${xau.dp >= 0 ? '+' : ''}${xau.dp.toFixed(2)}% → flight-to-quality bias ${xau.dp >= 0 ? 'on' : 'off'}`);
+      lines.push(
+        `XAUUSD ${xau.dp >= 0 ? '+' : ''}${formatDecoderMetricPercent(Number(xau.dp), 2)}% → flight-to-quality bias ${xau.dp >= 0 ? 'on' : 'off'}`,
+      );
     }
   }
 
   if (marketType === 'Crypto' || displaySymbol.includes('BTC')) {
-    const bPx = pxLine('BTC', btc && btc.c, btc && btc.dp);
+    const bPx = pxLine('BTC', btc && btc.c, btc && btc.dp, 'btc');
     if (bPx) {
       lines.push(`${bPx} → crypto-beta liquidity cue`);
     } else if (btc && btc.dp != null) {
-      lines.push(`BTC ${btc.dp >= 0 ? '+' : ''}${btc.dp.toFixed(2)}% → crypto-beta liquidity cue`);
+      lines.push(
+        `BTC ${btc.dp >= 0 ? '+' : ''}${formatDecoderMetricPercent(Number(btc.dp), 2)}% → crypto-beta liquidity cue`,
+      );
     }
   } else if (btc && (btc.c != null || btc.dp != null)) {
-    const bPx = pxLine('BTC', btc.c, btc.dp);
+    const bPx = pxLine('BTC', btc.c, btc.dp, 'btc');
     if (bPx) {
       lines.push(`${bPx} → speculative risk appetite read-across`);
     } else if (btc.dp != null) {
-      lines.push(`BTC ${btc.dp >= 0 ? '+' : ''}${btc.dp.toFixed(2)}% → speculative risk appetite read-across`);
+      lines.push(
+        `BTC ${btc.dp >= 0 ? '+' : ''}${formatDecoderMetricPercent(Number(btc.dp), 2)}% → speculative risk appetite read-across`,
+      );
     }
   }
 
@@ -482,12 +495,12 @@ function convictionExplanationText({ conviction, net, bull, bear }) {
   return `${bull} bullish vs ${bear} bearish rule checks (net ${net >= 0 ? '+' : ''}${net}) → ${conviction} conviction.`;
 }
 
-function whatChangedLine({ displaySymbol, last, pctDay, q, marketType }) {
+function whatChangedLine({ displaySymbol, last, pctDay, q, instrument }) {
   const pct =
     pctDay != null
-      ? `${pctDay >= 0 ? '+' : ''}${Number(pctDay).toFixed(2)}%`
+      ? `${pctDay >= 0 ? '+' : ''}${formatDecoderMetricPercent(Number(pctDay), 2)}%`
       : 'session % unavailable (using close vs prior when possible)';
-  const px = last != null ? formatLevelDisplay(last, marketType, 'last') : 'price pending';
+  const px = last != null ? formatLevelDisplayInstr(last, instrument, 'last') : 'price pending';
   return `${displaySymbol} last ${px} (${pct} vs prior close snapshot). Quote reflects live venue where available.`;
 }
 
@@ -602,8 +615,8 @@ function computeEnvironmentLine({ tradeReadiness, pulseState, net }) {
   return 'Environment: Caution — clarity is limited';
 }
 
-function buildExecutionGuidance({ bias, last, sma50, piv, condition, conviction, marketType }) {
-  const lev = (x, lab) => formatLevelDisplay(x, marketType, lab || 'level');
+function buildExecutionGuidance({ bias, last, sma50, piv, condition, conviction, instrument }) {
+  const lev = (x, lab) => formatLevelDisplayInstr(x, instrument, lab || 'level');
   const preferredDirection =
     bias === 'Bullish' ? 'Selective Long' : bias === 'Bearish' ? 'Selective Short' : 'Neutral Bias';
 
@@ -652,8 +665,8 @@ function buildExecutionGuidance({ bias, last, sma50, piv, condition, conviction,
   };
 }
 
-function buildFinalPostureElite({ net, eventHighImpactSoon, conviction, bias, piv, last, marketType }) {
-  const lev = (x, lab) => formatLevelDisplay(x, marketType, lab || 'level');
+function buildFinalPostureElite({ net, eventHighImpactSoon, conviction, bias, piv, last, instrument }) {
+  const lev = (x, lab) => formatLevelDisplayInstr(x, instrument, lab || 'level');
   let headline = 'WAIT FOR CONFIRMATION';
   let subtitle = 'Mixed signals — need a cleaner trigger';
 
@@ -710,6 +723,7 @@ async function runMarketDecoder(symbolInput) {
   }
 
   const { displaySymbol, marketType, finnhubSymbol, canonicalSymbol } = resolved;
+  const instrument = compose.instrumentContext(resolved, requestRaw);
   const to = Math.floor(Date.now() / 1000);
   const from = to - 86400 * 400;
 
@@ -792,7 +806,7 @@ async function runMarketDecoder(symbolInput) {
       : null;
   const wr = weeklyRange(highs, lows);
 
-  const lev = (x, lab) => formatLevelDisplay(x, marketType, lab || 'level');
+  const lev = (x, lab) => formatLevelDisplayInstr(x, instrument, lab || 'level');
   const scenarios = buildScenarioMapElite({
     piv,
     bias,
@@ -831,7 +845,7 @@ async function runMarketDecoder(symbolInput) {
     piv,
     condition,
     conviction,
-    marketType,
+    instrument,
   });
 
   const postureElite = buildFinalPostureElite({
@@ -841,7 +855,7 @@ async function runMarketDecoder(symbolInput) {
     bias,
     piv,
     last,
-    marketType,
+    instrument,
   });
 
   const macroDriver =
@@ -854,11 +868,11 @@ async function runMarketDecoder(symbolInput) {
   const technicalParts = [];
   if (last != null && sma50 != null) {
     technicalParts.push(
-      `Last ${formatLevelDisplay(last, marketType, 'last')} vs SMA ${formatLevelDisplay(sma50, marketType, 'SMA50')}`
+      `Last ${formatLevelDisplayInstr(last, instrument, 'last')} vs SMA ${formatLevelDisplayInstr(sma50, instrument, 'SMA50')}`
     );
     if (note50) technicalParts.push(note50);
     if (sma200 != null) {
-      technicalParts.push(`200-session SMA ${formatLevelDisplay(sma200, marketType, 'SMA200')}`);
+      technicalParts.push(`200-session SMA ${formatLevelDisplayInstr(sma200, instrument, 'SMA200')}`);
     }
     if (note200) technicalParts.push(note200);
   } else {
@@ -934,7 +948,6 @@ async function runMarketDecoder(symbolInput) {
   const anchorList = Array.isArray(anchorNews) ? anchorNews : [];
   const headlineRank = rankInstrumentHeadlines(resolved, displaySymbol, anchorList, { maxRelevant: 6, maxFallback: 4 });
 
-  const instrument = compose.instrumentContext(resolved, requestRaw);
   const rsiVal = compose.rsiLast(closes);
   const rsiPack = compose.rsiStateLabel(rsiVal);
 
@@ -995,6 +1008,7 @@ async function runMarketDecoder(symbolInput) {
     highs,
     lows,
     marketType,
+    instrument,
     wr,
   });
   const crossAssetTiles = compose.buildCrossAssetTiles(crossBundle, resolved);
@@ -1025,6 +1039,7 @@ async function runMarketDecoder(symbolInput) {
     last,
     bias,
     marketType,
+    instrument,
     equalNotes: equalLiquidity,
     eventHighImpactSoon,
     rsiVal,
@@ -1099,7 +1114,7 @@ async function runMarketDecoder(symbolInput) {
         marketType,
         quoteCurrency: instrument.quote || 'USD',
         baseCurrency: instrument.base,
-        whatChanged: whatChangedLine({ displaySymbol, last, pctDay, q, marketType }),
+        whatChanged: whatChangedLine({ displaySymbol, last, pctDay, q, instrument }),
       },
       marketPulse,
       instantRead: {
@@ -1125,10 +1140,10 @@ async function runMarketDecoder(symbolInput) {
         detailRows: levelDetailRows,
         equalLiquidity,
         keyLevelsDisplay: {
-          resistance1: piv?.r1 != null ? `${lev(piv.r1, 'R1')} (classic R1)` : formatLevelDisplay(null, marketType, 'R1'),
-          resistance2: piv?.r2 != null ? `${lev(piv.r2, 'R2')} (classic R2)` : formatLevelDisplay(null, marketType, 'R2'),
-          support1: piv?.s1 != null ? `${lev(piv.s1, 'S1')} (classic S1)` : formatLevelDisplay(null, marketType, 'S1'),
-          support2: piv?.s2 != null ? `${lev(piv.s2, 'S2')} (classic S2)` : formatLevelDisplay(null, marketType, 'S2'),
+          resistance1: piv?.r1 != null ? `${lev(piv.r1, 'R1')} (classic R1)` : formatLevelDisplayInstr(null, instrument, 'R1'),
+          resistance2: piv?.r2 != null ? `${lev(piv.r2, 'R2')} (classic R2)` : formatLevelDisplayInstr(null, instrument, 'R2'),
+          support1: piv?.s1 != null ? `${lev(piv.s1, 'S1')} (classic S1)` : formatLevelDisplayInstr(null, instrument, 'S1'),
+          support2: piv?.s2 != null ? `${lev(piv.s2, 'S2')} (classic S2)` : formatLevelDisplayInstr(null, instrument, 'S2'),
           previousDayHigh: prevH != null ? `${lev(prevH, 'PDH')} prior session high` : 'Prior high: not available from loaded bars',
           previousDayLow: prevL != null ? `${lev(prevL, 'PDL')} prior session low` : 'Prior low: not available from loaded bars',
           weeklyHigh:

@@ -3,12 +3,10 @@
  * Used by marketDecoderEngine; keeps the main engine file smaller.
  */
 
-function formatPx(x, marketType) {
-  const n = Number(x);
-  if (x == null || Number.isNaN(n)) return null;
-  if (marketType === 'FX' || marketType === 'Commodity') return n.toFixed(5);
-  if (marketType === 'Crypto' && n > 200) return n.toFixed(2);
-  return n.toFixed(n < 50 ? 4 : 2);
+const { formatDecoderPriceForInstrument } = require('../../src/utils/decoderDisplayFormat');
+
+function formatPx(x, instrument) {
+  return formatDecoderPriceForInstrument(x, instrument);
 }
 
 function relDistPct(a, b) {
@@ -344,13 +342,14 @@ function buildSmartAlerts({
   last,
   bias,
   marketType,
+  instrument,
   equalNotes,
   eventHighImpactSoon,
   rsiVal,
   volLabel,
 }) {
   const alerts = [];
-  const px = (x) => (x == null ? null : formatPx(x, marketType));
+  const px = (x) => (x == null ? null : formatPx(x, instrument || { marketType }));
   if (eventHighImpactSoon) {
     alerts.push({
       type: 'event',
@@ -491,6 +490,7 @@ function enrichKeyLevels({
   highs,
   lows,
   marketType,
+  instrument,
   wr,
 }) {
   const bar = lastBarRange(highs, lows);
@@ -508,7 +508,7 @@ function enrichKeyLevels({
       key,
       label,
       price: p,
-      display: formatPx(p, marketType),
+      display: formatPx(p, instrument || { marketType }),
       liquidity: liq,
       distancePct: d != null ? Math.round(d * 10000) / 100 : null,
     });
@@ -524,7 +524,7 @@ function enrichKeyLevels({
       key: 'eqh',
       label: 'Liquidity (equal highs)',
       price: equalNotes.equalHighs.price,
-      display: formatPx(equalNotes.equalHighs.price, marketType),
+      display: formatPx(equalNotes.equalHighs.price, instrument || { marketType }),
       liquidity: 'untapped',
       distancePct: last != null ? Math.round(relDistPct(last, equalNotes.equalHighs.price) * 10000) / 100 : null,
       note: equalNotes.equalHighs.note,
@@ -535,7 +535,7 @@ function enrichKeyLevels({
       key: 'eql',
       label: 'Liquidity (equal lows)',
       price: equalNotes.equalLows.price,
-      display: formatPx(equalNotes.equalLows.price, marketType),
+      display: formatPx(equalNotes.equalLows.price, instrument || { marketType }),
       liquidity: 'untapped',
       distancePct: last != null ? Math.round(relDistPct(last, equalNotes.equalLows.price) * 10000) / 100 : null,
       note: equalNotes.equalLows.note,

@@ -12,6 +12,13 @@ import {
   DecoderEventRiskHeader,
 } from './MarketDecoderBriefEnhancements';
 
+const {
+  buildDecoderPriceContext,
+  formatDecoderPriceOrDash,
+  formatCrossTilePrice,
+  formatDecoderMetricPercent,
+} = require('../../utils/decoderDisplayFormat');
+
 function formatPct(n) {
   if (n == null || Number.isNaN(Number(n))) {
     return null;
@@ -28,17 +35,6 @@ function parseNumberLoose(v) {
   if (!m) return null;
   const out = Number(m[0]);
   return Number.isFinite(out) ? out : null;
-}
-
-function formatLevel(v, marketType) {
-  const parsed = parseNumberLoose(v);
-  if (parsed == null) {
-    return '—';
-  }
-  const n = parsed;
-  if (marketType === 'FX' || marketType === 'Commodity') return n.toFixed(5);
-  if (marketType === 'Crypto' && n > 200) return n.toFixed(2);
-  return n.toFixed(n < 50 ? 4 : 2);
 }
 
 function formatNewsTime(iso) {
@@ -107,12 +103,6 @@ function formatPairLabel(asset) {
   return raw || '—';
 }
 
-/** Prefer numeric level fields — avoids parsing "Unavailable (R1)" as "1". */
-function formatPriceOrDash(rawNum, mt) {
-  if (rawNum != null && Number.isFinite(Number(rawNum))) return formatLevel(rawNum, mt);
-  return '—';
-}
-
 function liquidityLabel(state) {
   if (!state) return null;
   const s = String(state);
@@ -175,13 +165,22 @@ function buildTimeline(brief) {
   return trimmed;
 }
 
-function pulseDeskLabel(brief) {
-  const bias = brief?.instantRead?.bias || brief?.marketPulse?.biasLabel || 'Neutral';
-  const conv = String(brief?.instantRead?.conviction || '').toLowerCase();
-  if (conv === 'high') return `Strong ${bias}`;
-  if (conv === 'medium') return `Moderate ${bias}`;
-  if (conv === 'low') return `Tentative ${bias}`;
-  return bias;
+/** At-a-glance direction only — matches Instant Read, not the granular pulse score label. */
+function pulseDirectionLabel(brief) {
+  const direct = brief?.instantRead?.bias;
+  if (direct) return direct;
+  const raw = brief?.marketPulse?.biasLabel || 'Neutral';
+  const s = String(raw).toLowerCase();
+  if (s.includes('bull')) return 'Bullish';
+  if (s.includes('bear')) return 'Bearish';
+  return 'Neutral';
+}
+
+function pulseContextLine(brief) {
+  const state = brief?.marketPulse?.marketState || brief?.instantRead?.tradingCondition || '';
+  const s = String(state).trim();
+  if (!s || s.length > 72) return '';
+  return s;
 }
 
 function CrossArrow({ tone, diag }) {
@@ -227,6 +226,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
   const refTimeline = useMemo(() => (brief ? buildTimeline(brief) : []), [brief]);
   const refCrossLegacy = useMemo(() => (brief ? crossAssetCardsFromLines(brief.crossAssetContext) : []), [brief]);
   const crossTiles = brief?.crossAssetTiles?.length ? brief.crossAssetTiles : null;
+  const priceCtx = useMemo(() => (brief ? buildDecoderPriceContext(brief) : null), [brief]);
 
   if (!brief) return null;
 
@@ -262,6 +262,8 @@ export default function MarketDecoderBriefContent({ brief, q }) {
   const sparseHint = brief.meta?.sparseSeries
     ? 'Sparse history — MAs / pivots are indicative until full daily load.'
     : null;
+  const pulseBias = pulseDirectionLabel(brief);
+  const pulseSub = pulseContextLine(brief);
 
   return (
     <div className="md-ref-brief-layout">
@@ -313,7 +315,9 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                     </div>
                     <div className="md-ref-level-meta">
                       {row.liquidity ? <span className="md-liq-tag">{liquidityLabel(row.liquidity)}</span> : null}
-                      {row.distancePct != null ? <span>{row.distancePct}% from spot</span> : null}
+                      {row.distancePct != null ? (
+                        <span>{formatDecoderMetricPercent(row.distancePct)}% from spot</span>
+                      ) : null}
                       {row.note ? <span className="md-ref-level-note">{row.note}</span> : null}
                     </div>
                   </div>
@@ -322,11 +326,11 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                 <div className="md-ref-rows">
                   <div className="md-ref-row">
                     <span className="md-ref-k">Resistance (R1)</span>
-                    <span className="md-ref-v">{formatPriceOrDash(brief.keyLevels?.resistance1, mt)}</span>
+                    <span className="md-ref-v">{formatDecoderPriceOrDash(brief.keyLevels?.resistance1, priceCtx)}</span>
                   </div>
                   <div className="md-ref-row">
                     <span className="md-ref-k">Support (S1)</span>
-                    <span className="md-ref-v">{formatPriceOrDash(brief.keyLevels?.support1, mt)}</span>
+                    <span className="md-ref-v">{formatDecoderPriceOrDash(brief.keyLevels?.support1, priceCtx)}</span>
                   </div>
                 </div>
               )}
@@ -346,7 +350,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                   >
                     <span className="md-ref-cross-name">{t.label}</span>
                     <span className="md-ref-cross-price">
-                      {t.price != null && Number.isFinite(t.price) ? formatLevel(t.price, mt) : '—'}
+                      {t.price != null && Number.isFinite(t.price) ? formatCrossTilePrice(t.price, t.id) : '—'}
                     </span>
                     <span className="md-ref-cross-rel">{t.relation}</span>
                     <span className="md-ref-cross-chg">
@@ -380,7 +384,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
             <div className="md-mse-top">
               <div className="md-ref-chart-head md-mse-head">
                 <span className="md-ref-pair">{formatPairLabel(assetLabel)}</span>
-                <span className="md-ref-last">{formatLevel(brief.header.price, mt)}</span>
+                <span className="md-ref-last">{formatDecoderPriceOrDash(brief.header.price, priceCtx)}</span>
                 <span
                   className={
                     changePct != null && changePct >= 0
@@ -450,7 +454,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
               <h2 className="md-ref-unified-h">Market Pulse</h2>
               {brief.marketPulse ? (
                 <>
-                  <div className="md-ref-pulse-hero">
+                  <div className="md-ref-pulse-hero md-ref-pulse-hero--simple">
                     <div className="md-ref-gauge md-ref-gauge--rail md-ref-gauge--premium" aria-hidden>
                       <div className="md-ref-gauge-backdrop" />
                       <div className="md-ref-gauge-track md-ref-gauge-track--premium">
@@ -466,36 +470,9 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                       />
                       <span className="md-ref-gauge-hub" aria-hidden />
                     </div>
-                    {brief.marketPulse.compositeScore != null && Number.isFinite(Number(brief.marketPulse.compositeScore)) ? (
-                      <div className="md-ref-pulse-score-chip" title="Composite pulse score (0–100)">
-                        <span className="md-ref-pulse-score-chip__v">{Math.round(Number(brief.marketPulse.compositeScore))}</span>
-                        <span className="md-ref-pulse-score-chip__k">Pulse</span>
-                      </div>
-                    ) : null}
                   </div>
-                  <p className="md-ref-pulse-caption md-ref-pulse-caption--rail md-ref-pulse-caption--primary">{pulseDeskLabel(brief)}</p>
-                  {brief.marketPulse.signalBrief ? (
-                    <p className="md-ref-pulse-signal">{brief.marketPulse.signalBrief}</p>
-                  ) : null}
-                  {Array.isArray(brief.marketPulse.pulseDrivers) && brief.marketPulse.pulseDrivers.length ? (
-                    <ul className="md-ref-pulse-drivers">
-                      {brief.marketPulse.pulseDrivers.slice(0, 4).map((d) => (
-                        <li key={`${d.key}-${d.label}`} className="md-ref-pulse-driver">
-                          <span className="md-ref-pulse-driver__k">{d.label}</span>
-                          <span className="md-ref-pulse-driver__v">{d.detail}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {brief.marketPulse.crossAlignment && brief.marketPulse.crossAlignment.checked > 0 ? (
-                    <p className="md-ref-pulse-cross">
-                      Cross-asset · {brief.marketPulse.crossAlignment.aligned} agree with session dir ·{' '}
-                      {brief.marketPulse.crossAlignment.misaligned} disagree ({brief.marketPulse.crossAlignment.checked} legs)
-                    </p>
-                  ) : null}
-                  {brief.marketPulse.volatility ? (
-                    <p className="md-ref-pulse-sub md-ref-pulse-sub--rail">Vol regime · {brief.marketPulse.volatility}</p>
-                  ) : null}
+                  <p className={`md-ref-pulse-bias md-ref-pulse-bias--${String(pulseBias).toLowerCase()}`}>{pulseBias}</p>
+                  {pulseSub ? <p className="md-ref-pulse-context">{pulseSub}</p> : null}
                 </>
               ) : (
                 <p className="md-ref-muted">Pulse n/a</p>
@@ -513,13 +490,15 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                 <div className="md-ref-insights-cell">
                   <span className="md-ref-insights-k">RSI (14)</span>
                   <span className="md-ref-insights-v">
-                    {brief.insights?.rsi != null ? `${brief.insights.rsi} · ${brief.insights.rsiState || ''}` : '—'}
+                    {brief.insights?.rsi != null
+                      ? `${formatDecoderMetricPercent(brief.insights.rsi, 1) ?? brief.insights.rsi} · ${brief.insights.rsiState || ''}`
+                      : '—'}
                   </span>
                 </div>
                 <div className="md-ref-insights-cell">
                   <span className="md-ref-insights-k">ADR (5d)</span>
                   <span className="md-ref-insights-v">
-                    {brief.insights?.adrPercent != null ? `${brief.insights.adrPercent}%` : '—'}
+                    {brief.insights?.adrPercent != null ? `${formatDecoderMetricPercent(brief.insights.adrPercent)}%` : '—'}
                   </span>
                 </div>
                 <div className="md-ref-insights-cell">
@@ -540,21 +519,21 @@ export default function MarketDecoderBriefContent({ brief, q }) {
               <h2 className="md-ref-unified-h">Scenario Map</h2>
               <button type="button" className="md-ref-scen-row md-ref-scen-row--action md-ref-scen-row--dense" onClick={openScenarioDetails}>
                 <span className="md-ref-scen-k">Upside</span>
-                <span className="md-ref-scen-v">{formatPriceOrDash(scenario.upsideTarget, mt)}</span>
+                <span className="md-ref-scen-v">{formatDecoderPriceOrDash(scenario.upsideTarget, priceCtx)}</span>
                 <FiChevronRight className="md-ref-scen-chev" aria-hidden />
               </button>
               <button type="button" className="md-ref-scen-row md-ref-scen-row--action md-ref-scen-row--dense" onClick={openScenarioDetails}>
                 <span className="md-ref-scen-k">Downside</span>
-                <span className="md-ref-scen-v">{formatPriceOrDash(scenario.downsideRisk, mt)}</span>
+                <span className="md-ref-scen-v">{formatDecoderPriceOrDash(scenario.downsideRisk, priceCtx)}</span>
                 <FiChevronRight className="md-ref-scen-chev" aria-hidden />
               </button>
               <div className="md-ref-scen-row md-ref-scen-row--dense">
                 <span className="md-ref-scen-k">Invalidation</span>
-                <span className="md-ref-scen-v">{formatPriceOrDash(scenario.invalidation, mt)}</span>
+                <span className="md-ref-scen-v">{formatDecoderPriceOrDash(scenario.invalidation, priceCtx)}</span>
               </div>
               <div className="md-ref-scen-row md-ref-scen-row--dense">
                 <span className="md-ref-scen-k">Pivot</span>
-                <span className="md-ref-scen-v">{formatPriceOrDash(scenario.trigger, mt)}</span>
+                <span className="md-ref-scen-v">{formatDecoderPriceOrDash(scenario.trigger, priceCtx)}</span>
               </div>
               {scenario.tone ? (
                 <div className="md-ref-scen-tone md-ref-scen-tone--dense">
