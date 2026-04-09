@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
 
 const MODES = [
@@ -18,9 +18,64 @@ function computeReferenceChartHeight(el) {
   const ch = el?.clientHeight;
   const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
   if (ch && ch >= 200) {
-    return Math.min(580, Math.max(300, ch));
+    return Math.min(680, Math.max(340, ch));
   }
-  return Math.min(520, Math.max(300, Math.floor(vh * 0.3)));
+  return Math.min(620, Math.max(340, Math.floor(vh * 0.36)));
+}
+
+function ReferenceChartPlaceholder({ sparkline }) {
+  const blurId = useId().replace(/:/g, '');
+  const hasSpark = Array.isArray(sparkline) && sparkline.length >= 3;
+  let pathD = '';
+  if (hasSpark) {
+    const vals = sparkline.map((v) => Number(v)).filter((v) => Number.isFinite(v));
+    if (vals.length >= 3) {
+      const min = Math.min(...vals);
+      const max = Math.max(...vals);
+      const span = max - min || 1;
+      pathD = vals
+        .map((v, i) => {
+          const x = (i / (vals.length - 1 || 1)) * 100;
+          const y = 8 + (1 - (v - min) / span) * 84;
+          return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+        })
+        .join(' ');
+    }
+  }
+  return (
+    <div className="md-chart-root md-chart-root--ref md-chart-root--ref-fill md-chart-root--placeholder">
+      <div className="md-chart-tf md-chart-tf--disabled" aria-hidden>
+        {TIMEFRAMES_REF.map((tf) => (
+          <span key={tf} className="md-chart-tf-btn md-chart-tf-btn--ghost">
+            {tf}
+          </span>
+        ))}
+      </div>
+      <div className="md-chart-canvas-wrap md-chart-canvas-wrap--ref-fill md-chart-canvas-wrap--placeholder">
+        <div className="md-chart-ph-shimmer" aria-hidden />
+        {pathD ? (
+          <div className="md-chart-ph-spark-wrap">
+            <svg className="md-chart-ph-spark" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+              <defs>
+                <filter id={`md-ph-blur-${blurId}`} x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" />
+                </filter>
+              </defs>
+              <path
+                d={pathD}
+                fill="none"
+                stroke="rgba(140, 175, 255, 0.45)"
+                strokeWidth="2"
+                filter={`url(#md-ph-blur-${blurId})`}
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
+          </div>
+        ) : null}
+        <p className="md-chart-ph-cap">OHLC loading — desk feed connecting</p>
+      </div>
+    </div>
+  );
 }
 
 function smaFromCandles(candles, period) {
@@ -42,7 +97,13 @@ const OVERLAY_COLORS = {
   htf: 'rgba(186, 170, 255, 0.72)',
 };
 
-export default function MarketDecoderChart({ bars, compact = false, referenceStyle = false, overlays = null }) {
+export default function MarketDecoderChart({
+  bars,
+  compact = false,
+  referenceStyle = false,
+  overlays = null,
+  placeholderSparkline = null,
+}) {
   const wrapRef = useRef(null);
   const chartRef = useRef(null);
   const [mode, setMode] = useState('candles');
@@ -193,6 +254,9 @@ export default function MarketDecoderChart({ bars, compact = false, referenceSty
   }, [bars, mode, compact, referenceStyle, activeTf, overlays]);
 
   if (!bars || bars.length < 2) {
+    if (referenceStyle) {
+      return <ReferenceChartPlaceholder sparkline={placeholderSparkline} />;
+    }
     return (
       <div className={`md-chart-empty${referenceStyle ? ' md-chart-empty--ref' : ''}`}>
         <p className="md-decoder-small">

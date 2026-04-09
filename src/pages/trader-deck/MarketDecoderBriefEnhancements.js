@@ -70,90 +70,135 @@ export function DecoderReadinessBlock({ readiness }) {
   );
 }
 
-/** Dense desk row: only fields present on the decoder brief / OHLC (no invented values). */
-export function DecoderDeskIntelStrip({ brief }) {
+/** Bottom overlay on chart: session flow + vol / structure / liquidity (real brief fields only). */
+export function DecoderMarketStateOverlay({ brief }) {
   if (!brief) return null;
+  const flow = brief.sessionFlow;
   const checks = Array.isArray(brief.confirmationEngine?.checks) ? brief.confirmationEngine.checks : [];
-  const verdict = (id) => {
-    const c = checks.find((x) => x.id === id);
-    return c?.verdict || null;
-  };
-  const bars = brief.meta?.chartBars;
-  let rangeVsAdr = null;
-  if (bars?.length) {
-    const last = bars[bars.length - 1];
-    const h = Number(last.high);
-    const l = Number(last.low);
-    const c = Number(last.close);
-    if ([h, l, c].every(Number.isFinite) && c !== 0) {
-      const todayPct = Math.round(((h - l) / c) * 10000) / 100;
-      const adr = brief.insights?.adrPercent;
-      if (adr != null && Number.isFinite(Number(adr)) && Number(adr) > 0) {
-        const ratio = todayPct / Number(adr);
-        const tag = ratio >= 1 ? '≥1× ADR' : '<1× ADR';
-        rangeVsAdr = `${todayPct}% today · ${adr}% ADR · ${tag}`;
-      } else {
-        rangeVsAdr = `${todayPct}% (last bar range)`;
-      }
-    }
-  }
-  if (!rangeVsAdr && brief.insights?.adrPercent != null) {
-    rangeVsAdr = `ADR ${brief.insights.adrPercent}% of spot`;
-  }
+  const liqV = checks.find((x) => x.id === 'liquidity')?.verdict || '—';
   const vol =
     brief.insights?.volatilityRegime ||
-    (brief.marketPulse?.volatility ? String(brief.marketPulse.volatility) : null);
-  const cells = [
-    { k: 'Vol regime', v: vol || '—' },
-    { k: 'Range vs ADR', v: rangeVsAdr || '—' },
-    { k: 'Session bias', v: brief.instantRead?.bias || brief.marketPulse?.biasLabel || '—' },
-    { k: 'Structure', v: brief.insights?.structureState || '—' },
-    { k: 'Liquidity', v: verdict('liquidity') || '—' },
-    {
-      k: 'Event risk',
-      v: brief.eventRiskSummary?.state ? String(brief.eventRiskSummary.state).toUpperCase() : '—',
-    },
-    { k: 'Cross-market', v: verdict('correlation') || '—' },
-  ];
+    (brief.marketPulse?.volatility ? String(brief.marketPulse.volatility) : '—');
+  const structure = brief.insights?.structureState || '—';
+  const sessions = flow
+    ? [
+        { key: 'asia', t: 'Asia', b: flow.asia },
+        { key: 'london', t: 'London', b: flow.london },
+        { key: 'ny', t: 'NY', b: flow.newYork },
+      ]
+    : [];
   return (
-    <div className="md-ref-desk-intel" aria-label="Desk intelligence">
-      {cells.map((cell) => (
-        <div key={cell.k} className="md-ref-desk-intel-cell">
-          <span className="md-ref-desk-intel-k">{cell.k}</span>
-          <span className="md-ref-desk-intel-v">{cell.v}</span>
+    <div className="md-mse-overlay" aria-label="Market state">
+      <div className="md-mse-overlay-sessions">
+        {sessions.length
+          ? sessions.map(({ key, t, b }) => (
+              <div key={key} className="md-mse-sess">
+                <span className="md-mse-sess-name">{t}</span>
+                <span className="md-mse-sess-phase">{b?.behavior || '—'}</span>
+              </div>
+            ))
+          : null}
+      </div>
+      <div className="md-mse-overlay-mid" aria-hidden />
+      <div className="md-mse-overlay-states">
+        <div className="md-mse-state">
+          <span className="md-mse-state-k">Vol</span>
+          <span className="md-mse-state-v">{vol}</span>
         </div>
-      ))}
+        <div className="md-mse-state">
+          <span className="md-mse-state-k">Structure</span>
+          <span className="md-mse-state-v">{structure}</span>
+        </div>
+        <div className="md-mse-state">
+          <span className="md-mse-state-k">Liquidity</span>
+          <span className="md-mse-state-v md-mse-state-v--clip" title={liqV}>
+            {liqV}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
 
-export function DecoderConfirmationFooter({ confirmation, postureHeadline, postureSub }) {
-  if (!confirmation?.checks?.length) return null;
-  const action = String(confirmation.finalAction || 'WAIT').toUpperCase();
+const DECISION_IDS = ['structure', 'liquidity', 'session', 'volatility', 'correlation'];
+
+/** Full-width horizontal decision strip (replaces tall confirmation card). */
+export function DecoderDecisionBar({ confirmation, postureHeadline, postureSub, fallbackAction }) {
+  const action = String(
+    confirmation?.finalAction || fallbackAction || briefFallbackAction(postureHeadline) || 'WAIT',
+  ).toUpperCase();
+  const byId = {};
+  (confirmation?.checks || []).forEach((c) => {
+    byId[c.id] = c;
+  });
+  const slots = DECISION_IDS.map((id) => {
+    const c = byId[id];
+    return {
+      id,
+      label: c?.label || id.charAt(0).toUpperCase() + id.slice(1),
+      status: c?.status || 'pending',
+      short: shortenVerdict(c?.verdict, id),
+    };
+  });
   return (
-    <div className="md-ref-footer-engine">
-      <div className="md-ref-footer-checks">
-        {confirmation.checks.map((c) => (
-          <div key={c.id} className={`md-ref-footer-check md-ref-footer-check--${c.status}`}>
-            <StatusGlyph status={c.status} />
-            <div className="md-ref-footer-check-text">
-              <span className="md-ref-footer-check-label">{c.label}</span>
-              <span className="md-ref-footer-check-verdict">{c.verdict}</span>
+    <div className="md-decision-bar" role="region" aria-label="Confirmation engine">
+      <div className="md-decision-bar-slots">
+        {slots.map((s) => (
+          <div key={s.id} className={`md-decision-slot md-decision-slot--${s.status}`}>
+            <StatusGlyph status={s.status} />
+            <div className="md-decision-slot-text">
+              <span className="md-decision-slot-label">{s.label}</span>
+              <span className="md-decision-slot-verdict">{s.short}</span>
             </div>
           </div>
         ))}
       </div>
-      <div className="md-ref-footer-action">
-        <span className="md-ref-footer-action-cap">{action}</span>
-        {postureHeadline ? <span className="md-ref-footer-action-posture">{postureHeadline}</span> : null}
-        {postureSub ? <span className="md-ref-footer-action-sub">{postureSub}</span> : null}
+      <div className={`md-decision-bar-action md-decision-bar-action--${actionToClass(action)}`}>
+        <span className="md-decision-bar-action-cap">{action}</span>
+        {postureHeadline ? <span className="md-decision-bar-action-posture">{postureHeadline}</span> : null}
+        {postureSub ? <span className="md-decision-bar-action-sub">{postureSub}</span> : null}
       </div>
     </div>
   );
 }
 
+function briefFallbackAction(headline) {
+  const h = String(headline || '').toLowerCase();
+  if (h.includes('wait')) return 'WAIT';
+  if (h.includes('caution')) return 'CAUTION';
+  return null;
+}
+
+function actionToClass(a) {
+  if (a === 'EXECUTE') return 'execute';
+  if (a === 'READY') return 'ready';
+  if (a === 'CAUTION') return 'caution';
+  return 'wait';
+}
+
+function shortenVerdict(verdict, id) {
+  if (!verdict) return '—';
+  const v = String(verdict);
+  if (v.length <= 42) return v;
+  if (id === 'correlation') return v.split('·')[0]?.trim() || v.slice(0, 40) + '…';
+  return `${v.slice(0, 40)}…`;
+}
+
+export function DecoderConfirmationFooter({ confirmation, postureHeadline, postureSub }) {
+  if (!confirmation?.checks?.length) return null;
+  return (
+    <DecoderDecisionBar
+      confirmation={confirmation}
+      postureHeadline={postureHeadline}
+      postureSub={postureSub}
+    />
+  );
+}
+
 export function DecoderSmartAlerts({ alerts }) {
-  if (!alerts || !alerts.length) return null;
+  if (!alerts || !alerts.length) {
+    return <p className="md-ref-alerts-empty">No active mechanical alerts for this decode.</p>;
+  }
   return (
     <ul className="md-ref-alerts-list">
       {alerts.map((a, i) => (

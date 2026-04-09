@@ -5,11 +5,9 @@ import React, { useMemo, useRef, useCallback } from 'react';
 import { FiChevronRight, FiArrowUpRight, FiArrowDownRight } from 'react-icons/fi';
 import MarketDecoderChart from './MarketDecoderChart';
 import {
-  DecoderSessionBadge,
-  DecoderSessionFlowStrip,
   DecoderReadinessBlock,
-  DecoderDeskIntelStrip,
-  DecoderConfirmationFooter,
+  DecoderMarketStateOverlay,
+  DecoderDecisionBar,
   DecoderSmartAlerts,
   DecoderEventRiskHeader,
 } from './MarketDecoderBriefEnhancements';
@@ -259,7 +257,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
     <>
       <div className="md-ref-grid md-ref-grid--dense">
         <aside className="md-ref-col md-ref-col--left">
-          <section className="md-ref-panel md-ref-panel--glass">
+          <section className="md-ref-panel md-ref-panel--soft">
             <h2 className="md-ref-panel-h">Instant Read</h2>
             <div className="md-ref-rows">
               <div className="md-ref-row">
@@ -292,7 +290,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
             </div>
           </section>
 
-          <section className="md-ref-panel md-ref-panel--glass">
+          <section className="md-ref-panel md-ref-panel--soft">
             <h2 className="md-ref-panel-h">Key Levels</h2>
             <div className="md-ref-levels-dense">
               {levelRows.length ? (
@@ -324,7 +322,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
             </div>
           </section>
 
-          <section className="md-ref-panel md-ref-panel--glass">
+          <section className="md-ref-panel md-ref-panel--soft">
             <h2 className="md-ref-panel-h">Cross-Asset Context</h2>
             {crossTiles ? (
               <div className="md-ref-cross-grid md-ref-cross-grid--tiles">
@@ -365,37 +363,44 @@ export default function MarketDecoderBriefContent({ brief, q }) {
         </aside>
 
         <div className="md-ref-col md-ref-col--center">
-          <section className="md-ref-panel md-ref-panel--chart md-ref-panel--glass">
-            <div className="md-ref-chart-head">
-              <span className="md-ref-pair">{formatPairLabel(brief.header.asset)}</span>
-              <span className="md-ref-last">{formatLevel(brief.header.price, mt)}</span>
-              <span
-                className={
-                  changePct != null && changePct >= 0
-                    ? 'md-ref-pct md-ref-pct--up'
-                    : changePct != null
-                      ? 'md-ref-pct md-ref-pct--down'
-                      : 'md-ref-pct'
-                }
-              >
-                {formatPct(changePct) || 'Session snapshot pending'}
-                {changePct != null ? (changePct >= 0 ? ' ▲' : ' ▼') : ''}
-              </span>
+          <section className="md-mse md-ref-panel md-ref-panel--unified md-ref-panel--chart">
+            <div className="md-mse-top">
+              <div className="md-ref-chart-head md-mse-head">
+                <span className="md-ref-pair">{formatPairLabel(brief.header.asset)}</span>
+                <span className="md-ref-last">{formatLevel(brief.header.price, mt)}</span>
+                <span
+                  className={
+                    changePct != null && changePct >= 0
+                      ? 'md-ref-pct md-ref-pct--up'
+                      : changePct != null
+                        ? 'md-ref-pct md-ref-pct--down'
+                        : 'md-ref-pct'
+                  }
+                >
+                  {formatPct(changePct) || 'Session snapshot pending'}
+                  {changePct != null ? (changePct >= 0 ? ' ▲' : ' ▼') : ''}
+                </span>
+              </div>
+              <div className="md-mse-meta">
+                {brief.sessionFlow?.currentSession ? (
+                  <span className="md-mse-desk">Desk · {brief.sessionFlow.currentSession}</span>
+                ) : null}
+                {brief.chartOverlay?.note ? <span className="md-mse-note">{brief.chartOverlay.note}</span> : null}
+              </div>
             </div>
-            <DecoderSessionBadge flow={brief.sessionFlow} overlayNote={brief.chartOverlay?.note} />
-            <div className="md-ref-chart-body">
+            <div className="md-mse-chart-shell">
               <MarketDecoderChart
                 bars={brief.meta?.chartBars}
                 compact={false}
                 referenceStyle
                 overlays={brief.chartOverlay}
+                placeholderSparkline={brief.meta?.sparkline}
               />
-              <DecoderSessionFlowStrip flow={brief.sessionFlow} />
-              <DecoderDeskIntelStrip brief={brief} />
+              <DecoderMarketStateOverlay brief={brief} />
             </div>
           </section>
 
-          <section className="md-ref-panel md-ref-panel--timeline md-ref-panel--glass">
+          <section className="md-ref-panel md-ref-panel--soft md-ref-panel--timeline-compact">
             <h2 className="md-ref-panel-h">Event Risk</h2>
             <DecoderEventRiskHeader summary={brief.eventRiskSummary} scopeLabel={eventScopeLabel} />
             <div className="md-ref-timeline">
@@ -414,93 +419,95 @@ export default function MarketDecoderBriefContent({ brief, q }) {
           </section>
         </div>
 
-        <aside className="md-ref-col md-ref-col--right">
-          <section className="md-ref-panel md-ref-panel--glass md-ref-panel--anchor md-ref-panel--anchor-pulse">
-            <h2 className="md-ref-panel-h">Market Pulse</h2>
-            {brief.marketPulse ? (
-              <>
-                <div className="md-ref-gauge" aria-hidden>
-                  <div className="md-ref-gauge-track">
-                    <span className="md-ref-g-l md-ref-g-l--bear">Bearish</span>
-                    <span className="md-ref-g-l md-ref-g-l--mid">Neutral</span>
-                    <span className="md-ref-g-l md-ref-g-l--bull">Bullish</span>
+        <aside className="md-ref-col md-ref-col--right md-ref-col--rail">
+          <div className="md-ref-rail-grid">
+            <section className="md-ref-panel md-ref-panel--soft md-ref-panel--anchor md-ref-panel--anchor-pulse md-ref-panel--rail-half">
+              <h2 className="md-ref-panel-h">Market Pulse</h2>
+              {brief.marketPulse ? (
+                <>
+                  <div className="md-ref-gauge md-ref-gauge--rail" aria-hidden>
+                    <div className="md-ref-gauge-track">
+                      <span className="md-ref-g-l md-ref-g-l--bear">Bear</span>
+                      <span className="md-ref-g-l md-ref-g-l--mid">Neu</span>
+                      <span className="md-ref-g-l md-ref-g-l--bull">Bull</span>
+                    </div>
+                    <div
+                      className="md-ref-g-needle"
+                      style={{
+                        transform: `rotate(${-90 + (Number(brief.marketPulse.gaugePosition ?? 50) / 100) * 180}deg)`,
+                      }}
+                    />
                   </div>
-                  <div
-                    className="md-ref-g-needle"
-                    style={{
-                      transform: `rotate(${-90 + (Number(brief.marketPulse.gaugePosition ?? 50) / 100) * 180}deg)`,
-                    }}
-                  />
+                  <p className="md-ref-pulse-caption md-ref-pulse-caption--rail">{pulseDeskLabel(brief)}</p>
+                  {brief.marketPulse.volatility ? (
+                    <p className="md-ref-pulse-sub">Vol · {brief.marketPulse.volatility}</p>
+                  ) : null}
+                </>
+              ) : (
+                <p className="md-ref-muted">Pulse n/a</p>
+              )}
+            </section>
+
+            <section className="md-ref-panel md-ref-panel--soft md-ref-panel--anchor md-ref-panel--readiness md-ref-panel--rail-half">
+              <h2 className="md-ref-panel-h">Trade Readiness</h2>
+              <DecoderReadinessBlock readiness={brief.readiness} />
+            </section>
+
+            <section className="md-ref-panel md-ref-panel--soft md-ref-panel--rail-half">
+              <h2 className="md-ref-panel-h">Market Insights</h2>
+              <div className="md-ref-insights-grid md-ref-insights-grid--rail">
+                <div className="md-ref-insights-cell">
+                  <span className="md-ref-insights-k">RSI (14)</span>
+                  <span className="md-ref-insights-v">
+                    {brief.insights?.rsi != null ? `${brief.insights.rsi} · ${brief.insights.rsiState || ''}` : '—'}
+                  </span>
                 </div>
-                <p className="md-ref-pulse-caption">{pulseDeskLabel(brief)}</p>
-                {brief.marketPulse.volatility ? (
-                  <p className="md-ref-pulse-sub">Volatility · {brief.marketPulse.volatility}</p>
-                ) : null}
-              </>
-            ) : (
-              <p className="md-ref-muted">Pulse data not available.</p>
-            )}
-          </section>
+                <div className="md-ref-insights-cell">
+                  <span className="md-ref-insights-k">ADR (5d)</span>
+                  <span className="md-ref-insights-v">
+                    {brief.insights?.adrPercent != null ? `${brief.insights.adrPercent}%` : '—'}
+                  </span>
+                </div>
+                <div className="md-ref-insights-cell">
+                  <span className="md-ref-insights-k">Momentum</span>
+                  <span className="md-ref-insights-v">{brief.insights?.momentum || '—'}</span>
+                </div>
+                <div className="md-ref-insights-cell">
+                  <span className="md-ref-insights-k">Structure</span>
+                  <span className="md-ref-insights-v">{brief.insights?.structureState || '—'}</span>
+                </div>
+              </div>
+            </section>
 
-          <section className="md-ref-panel md-ref-panel--glass md-ref-panel--anchor md-ref-panel--readiness">
-            <h2 className="md-ref-panel-h">Trade Readiness</h2>
-            <DecoderReadinessBlock readiness={brief.readiness} />
-          </section>
+            <section className="md-ref-panel md-ref-panel--soft md-ref-panel--rail-half">
+              <h2 className="md-ref-panel-h">Scenario Map</h2>
+              <button type="button" className="md-ref-scen-row md-ref-scen-row--action md-ref-scen-row--dense" onClick={openScenarioDetails}>
+                <span className="md-ref-scen-k">Upside</span>
+                <span className="md-ref-scen-v">{formatPriceOrDash(scenario.upsideTarget, mt)}</span>
+                <FiChevronRight className="md-ref-scen-chev" aria-hidden />
+              </button>
+              <button type="button" className="md-ref-scen-row md-ref-scen-row--action md-ref-scen-row--dense" onClick={openScenarioDetails}>
+                <span className="md-ref-scen-k">Downside</span>
+                <span className="md-ref-scen-v">{formatPriceOrDash(scenario.downsideRisk, mt)}</span>
+                <FiChevronRight className="md-ref-scen-chev" aria-hidden />
+              </button>
+              <div className="md-ref-scen-row md-ref-scen-row--dense">
+                <span className="md-ref-scen-k">Invalidation</span>
+                <span className="md-ref-scen-v">{formatPriceOrDash(scenario.invalidation, mt)}</span>
+              </div>
+              <div className="md-ref-scen-row md-ref-scen-row--dense">
+                <span className="md-ref-scen-k">Pivot</span>
+                <span className="md-ref-scen-v">{formatPriceOrDash(scenario.trigger, mt)}</span>
+              </div>
+              {scenario.tone ? (
+                <div className="md-ref-scen-tone md-ref-scen-tone--dense">
+                  Tone · <strong>{scenario.tone}</strong>
+                </div>
+              ) : null}
+            </section>
+          </div>
 
-          <section className="md-ref-panel md-ref-panel--glass">
-            <h2 className="md-ref-panel-h">Market Insights</h2>
-            <div className="md-ref-insights-grid">
-              <div className="md-ref-insights-cell">
-                <span className="md-ref-insights-k">RSI (14)</span>
-                <span className="md-ref-insights-v">
-                  {brief.insights?.rsi != null ? `${brief.insights.rsi} · ${brief.insights.rsiState || ''}` : '—'}
-                </span>
-              </div>
-              <div className="md-ref-insights-cell">
-                <span className="md-ref-insights-k">ADR (5d avg)</span>
-                <span className="md-ref-insights-v">
-                  {brief.insights?.adrPercent != null ? `${brief.insights.adrPercent}% of spot` : '—'}
-                </span>
-              </div>
-              <div className="md-ref-insights-cell">
-                <span className="md-ref-insights-k">Momentum</span>
-                <span className="md-ref-insights-v">{brief.insights?.momentum || '—'}</span>
-              </div>
-              <div className="md-ref-insights-cell">
-                <span className="md-ref-insights-k">Structure</span>
-                <span className="md-ref-insights-v">{brief.insights?.structureState || '—'}</span>
-              </div>
-            </div>
-          </section>
-
-          <section className="md-ref-panel md-ref-panel--glass">
-            <h2 className="md-ref-panel-h">Scenario Map</h2>
-            <button type="button" className="md-ref-scen-row md-ref-scen-row--action" onClick={openScenarioDetails}>
-              <span className="md-ref-scen-k">Upside Target</span>
-              <span className="md-ref-scen-v">{formatPriceOrDash(scenario.upsideTarget, mt)}</span>
-              <FiChevronRight className="md-ref-scen-chev" aria-hidden />
-            </button>
-            <button type="button" className="md-ref-scen-row md-ref-scen-row--action" onClick={openScenarioDetails}>
-              <span className="md-ref-scen-k">Downside Risk</span>
-              <span className="md-ref-scen-v">{formatPriceOrDash(scenario.downsideRisk, mt)}</span>
-              <FiChevronRight className="md-ref-scen-chev" aria-hidden />
-            </button>
-            <div className="md-ref-scen-row">
-              <span className="md-ref-scen-k">Invalidation</span>
-              <span className="md-ref-scen-v">{formatPriceOrDash(scenario.invalidation, mt)}</span>
-            </div>
-            <div className="md-ref-scen-row">
-              <span className="md-ref-scen-k">Pivot / trigger</span>
-              <span className="md-ref-scen-v">{formatPriceOrDash(scenario.trigger, mt)}</span>
-            </div>
-            {scenario.tone ? (
-              <div className="md-ref-scen-tone">
-                Scenario tone · <strong>{scenario.tone}</strong>
-              </div>
-            ) : null}
-          </section>
-
-          <section className="md-ref-panel md-ref-panel--glass">
+          <section className="md-ref-panel md-ref-panel--soft md-ref-panel--alerts-rail">
             <h2 className="md-ref-panel-h">Smart Alerts</h2>
             <DecoderSmartAlerts alerts={brief.smartAlerts} />
             {brief.executionGuidance?.riskConsideration ? (
@@ -510,18 +517,13 @@ export default function MarketDecoderBriefContent({ brief, q }) {
         </aside>
       </div>
 
-      <footer className="md-ref-footer md-ref-footer--engine-wrap md-ref-footer--anchor">
-        {brief.confirmationEngine?.checks?.length ? (
-          <DecoderConfirmationFooter
-            confirmation={brief.confirmationEngine}
-            postureHeadline={brief.finalOutput?.currentPosture}
-            postureSub={brief.finalOutput?.postureSubtitle}
-          />
-        ) : (
-          <span className="md-ref-footer-cap">
-            {String(brief.finalOutput?.currentPosture || 'WAIT FOR CONFIRMATION').toUpperCase()}
-          </span>
-        )}
+      <footer className="md-ref-footer-decision">
+        <DecoderDecisionBar
+          confirmation={brief.confirmationEngine}
+          postureHeadline={brief.finalOutput?.currentPosture}
+          postureSub={brief.finalOutput?.postureSubtitle}
+          fallbackAction={brief.finalOutput?.deckAction}
+        />
       </footer>
 
       <details ref={moreDetailsRef} className="md-ref-more">
