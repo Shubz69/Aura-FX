@@ -13,6 +13,7 @@ import SignalList from '../../components/trader-deck/SignalList';
 import ChangeList from '../../components/trader-deck/ChangeList';
 import FocusList from '../../components/trader-deck/FocusList';
 import RiskRadarList from '../../components/trader-deck/RiskRadarList';
+import { getTraderDeckIntelStorageYmd } from '../../lib/trader-deck/deskDates';
 
 function normalizeForUI(data) {
   if (!data) return null;
@@ -62,21 +63,6 @@ function hasDetailedRiskRadarRows(items) {
   });
 }
 
-function getWeekEndingSunday(dateStr) {
-  const s = String(dateStr || '').slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  const d = new Date(`${s}T12:00:00.000Z`);
-  if (isNaN(d.getTime())) return s;
-  const day = d.getUTCDay();
-  const add = day === 0 ? 0 : (7 - day);
-  d.setUTCDate(d.getUTCDate() + add);
-  return d.toISOString().slice(0, 10);
-}
-
-function getStorageDateByPeriod(dateStr, period) {
-  return period === 'weekly' ? getWeekEndingSunday(dateStr) : String(dateStr || '').slice(0, 10);
-}
-
 function mergeManualOverrides(botPayload, manualOverrides, overrideKeys = []) {
   const base = botPayload && typeof botPayload === 'object' ? { ...botPayload } : {};
   const overrides = manualOverrides && typeof manualOverrides === 'object' ? manualOverrides : {};
@@ -109,7 +95,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     setError(null);
     setSaveSuccess(null);
     dataSourceRef.current = 'loading';
-    const dateStr = getStorageDateByPeriod(selectedDate, period);
+    const dateStr = getTraderDeckIntelStorageYmd(selectedDate, period);
     Api.getTraderDeckContent(type, dateStr)
       .then((res) => {
         if (cancelled) return;
@@ -176,7 +162,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       if (dataSourceRef.current !== 'live') return;
       if (liveRefreshInFlightRef.current) return;
       liveRefreshInFlightRef.current = true;
-      const dateStr = getStorageDateByPeriod(selectedDate, period);
+      const dateStr = getTraderDeckIntelStorageYmd(selectedDate, period);
       getMarketIntelligence({ refresh: true, timeframe: period, date: dateStr })
         .then((raw) => {
           const normalized = normalizeForUI(raw);
@@ -217,7 +203,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
 
   const handleSave = () => {
     if (!editDraft) return;
-    const dateStr = getStorageDateByPeriod(selectedDate, period);
+    const dateStr = getTraderDeckIntelStorageYmd(selectedDate, period);
     const manualOverrides = {
       marketRegime: editDraft.marketRegime,
       marketPulse: { score: editDraft.marketPulse.score, label: editDraft.marketPulse.label },

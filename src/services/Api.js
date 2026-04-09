@@ -946,10 +946,12 @@ const Api = {
         return dedupeGet(`${API_BASE_URL}/api/trader-deck/news`, { params });
     },
 
-    getTraderDeckContent: (type, date) => {
+    getTraderDeckContent: (type, date, opts = {}) => {
         const token = localStorage.getItem('token');
+        const params = { type, date };
+        if (opts && opts.cacheBust) params._ = String(Date.now());
         return axios.get(`${API_BASE_URL}/api/trader-deck/content`, {
-            params: { type, date },
+            params,
             headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
     },

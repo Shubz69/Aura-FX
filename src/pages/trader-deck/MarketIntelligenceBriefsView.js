@@ -2,13 +2,14 @@
  * Market Intelligence briefs for Trader Deck – date-scoped Daily or Weekly.
  * Preview in a fullscreen body portal (no new tab / no direct download flow). Admin: upload, delete.
  */
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import Api from '../../services/Api';
 import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import { FaEye, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 import CosmicBackground from '../../components/CosmicBackground';
+import { getTraderDeckIntelStorageYmd } from '../../lib/trader-deck/deskDates';
 
 /** Client cap (DB LONGBLOB); large files use chunked uploads to avoid HTTP 413 on Vercel. */
 const MAX_UPLOAD_BYTES = 48 * 1024 * 1024;
@@ -134,6 +135,19 @@ function filterToAllowedBriefKinds(items) {
   return items.filter((b) => ALLOWED_BRIEF_KINDS.has(String(b?.briefKind || '').toLowerCase()));
 }
 
+const BRIEF_POLL_MS = 3000;
+const BRIEF_POLL_MAX = 15;
+
+function briefsPayloadFromContentResponse(res, fallbackStorageDate) {
+  const list = filterToAllowedBriefKinds(Array.isArray(res.data?.briefs) ? res.data.briefs : []);
+  const weekendFallback = Boolean(res.data?.weekendFallback);
+  const src = String(res.data?.briefsSourceDate || fallbackStorageDate).trim().slice(0, 10);
+  return {
+    list,
+    weekendNote: weekendFallback ? { sourceDate: src } : null,
+  };
+}
+
 function isTextLikeMime(mime) {
   const m = (mime || '').toLowerCase();
   return (
@@ -147,6 +161,10 @@ function isTextLikeMime(mime) {
 
 export default function MarketIntelligenceBriefsView({ selectedDate, period, canEdit }) {
   const type = period === 'weekly' ? 'intel-weekly' : 'intel-daily';
+  const storageDateStr = useMemo(
+    () => getTraderDeckIntelStorageYmd(selectedDate, period),
+    [selectedDate, period]
+  );
   const [briefs, setBriefs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -162,10 +180,15 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadUrl, setUploadUrl] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filterMenuPos, setFilterMenuPos] = useState(null);
   const [selectedKinds, setSelectedKinds] = useState(() => new Set(BRIEF_KIND_ORDER));
+  /** UK weekend daily view: server serves previous weekday’s briefs */
+  const [weekendBriefsNote, setWeekendBriefsNote] = useState(null);
   const fileInputRef = useRef(null);
   const typewriterScrollRef = useRef(null);
-  const filterPopoverRef = useRef(null);
+  const filterWrapRef = useRef(null);
+  const filterButtonRef = useRef(null);
+  const filterMenuRef = useRef(null);
   const sortedBriefs = useMemo(() => {
     const orderIndex = new Map(BRIEF_KIND_ORDER.map((k, i) => [k, i]));
     return [...briefs].sort((a, b) => {
@@ -188,6 +211,19 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     return sortedBriefs.filter((b) => selectedKinds.has(String(b?.briefKind || 'general').toLowerCase()));
   }, [sortedBriefs, selectedKinds]);
 
+  const weekendSourceLabel = useMemo(() => {
+    const iso = weekendBriefsNote?.sourceDate;
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || '';
+    const d = new Date(`${iso}T12:00:00`);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  }, [weekendBriefsNote]);
+
   const previewOpen = Boolean(previewId || previewEmbedUrl);
 
   const closePreview = useCallback(() => {
@@ -202,12 +238,43 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   useEffect(() => {
     if (!filtersOpen) return undefined;
     const onDown = (e) => {
-      const node = filterPopoverRef.current;
-      if (node && !node.contains(e.target)) setFiltersOpen(false);
+      const wrap = filterWrapRef.current;
+      const menu = filterMenuRef.current;
+      const t = e.target;
+      if (wrap?.contains(t) || menu?.contains(t)) return;
+      setFiltersOpen(false);
     };
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
   }, [filtersOpen]);
+
+  const updateFilterMenuPosition = useCallback(() => {
+    const btn = filterButtonRef.current;
+    if (!btn) return;
+    const r = btn.getBoundingClientRect();
+    const width = Math.min(280, Math.max(200, window.innerWidth - 16));
+    const left = Math.max(8, r.right - width);
+    const estH = 360;
+    let top = r.bottom + 8;
+    if (top + estH > window.innerHeight - 12) {
+      top = Math.max(8, r.top - estH - 8);
+    }
+    setFilterMenuPos({ top, left, width });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!filtersOpen) {
+      setFilterMenuPos(null);
+      return undefined;
+    }
+    updateFilterMenuPosition();
+    window.addEventListener('resize', updateFilterMenuPosition);
+    window.addEventListener('scroll', updateFilterMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateFilterMenuPosition);
+      window.removeEventListener('scroll', updateFilterMenuPosition, true);
+    };
+  }, [filtersOpen, updateFilterMenuPosition]);
 
   useEffect(() => {
     if (!previewOpen) return undefined;
@@ -224,24 +291,66 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     };
   }, [previewOpen]);
 
+  const fetchBriefsPayload = useCallback(
+    (cacheBust) =>
+      Api.getTraderDeckContent(type, storageDateStr, cacheBust ? { cacheBust: true } : {}).then((res) =>
+        briefsPayloadFromContentResponse(res, storageDateStr)
+      ),
+    [type, storageDateStr]
+  );
+
   useEffect(() => {
     let cancelled = false;
+    let pollTimer = null;
+    let pollCount = 0;
     setLoading(true);
     setError(null);
     setAddSuccess(null);
     setSelectedKinds(new Set(BRIEF_KIND_ORDER));
-    const dateStr = String(selectedDate).trim().slice(0, 10);
-    Api.getTraderDeckContent(type, dateStr)
-      .then((res) => {
+    setWeekendBriefsNote(null);
+
+    const finishLoading = () => {
+      if (!cancelled) setLoading(false);
+    };
+
+    fetchBriefsPayload(false)
+      .then((payload) => {
         if (cancelled) return;
-        setBriefs(filterToAllowedBriefKinds(Array.isArray(res.data?.briefs) ? res.data.briefs : []));
+        setBriefs(payload.list);
+        setWeekendBriefsNote(payload.weekendNote);
+        if (payload.list.length > 0) return;
+
+        pollTimer = setInterval(() => {
+          if (cancelled) return;
+          pollCount += 1;
+          if (pollCount > BRIEF_POLL_MAX) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+            return;
+          }
+          fetchBriefsPayload(true)
+            .then((nextPayload) => {
+              if (cancelled || !nextPayload.list.length) return;
+              setBriefs(nextPayload.list);
+              setWeekendBriefsNote(nextPayload.weekendNote);
+              if (pollTimer) clearInterval(pollTimer);
+              pollTimer = null;
+            })
+            .catch(() => {});
+        }, BRIEF_POLL_MS);
       })
       .catch(() => {
-        if (!cancelled) setBriefs([]);
+        if (cancelled) return;
+        setBriefs([]);
         setError('Failed to load briefs');
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
-  }, [type, selectedDate]);
+      .finally(finishLoading);
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
+    };
+  }, [type, storageDateStr, fetchBriefsPayload]);
 
   const storedPreviewSrc = useMemo(() => {
     if (!previewId) return null;
@@ -380,19 +489,22 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     const url = (uploadUrl || '').trim();
     const title = (uploadTitle || 'Brief').trim() || 'Brief';
     if (!url) return;
-    const dateStr = String(selectedDate).trim().slice(0, 10);
     setUploading(true);
     setError(null);
     setAddSuccess(null);
-    Api.uploadTraderDeckBrief({ date: dateStr, period, title, fileUrl: url })
+    Api.uploadTraderDeckBrief({ date: storageDateStr, period, title, fileUrl: url })
       .then(() => {
         setUploadTitle('');
         setUploadUrl('');
-        setAddSuccess(`Saved for ${dateStr}. Open this date on the calendar to see it.`);
+        setAddSuccess(`Saved for ${storageDateStr}. Open this date on the calendar to see it.`);
         setTimeout(() => setAddSuccess(null), 4000);
-        return Api.getTraderDeckContent(type, dateStr);
+        return Api.getTraderDeckContent(type, storageDateStr);
       })
-      .then((res) => setBriefs(filterToAllowedBriefKinds(Array.isArray(res.data?.briefs) ? res.data.briefs : [])))
+      .then((res) => {
+        const p = briefsPayloadFromContentResponse(res, storageDateStr);
+        setBriefs(p.list);
+        setWeekendBriefsNote(p.weekendNote);
+      })
       .catch((err) => setError(err.response?.data?.message || err.message || 'Failed to add link'))
       .finally(() => setUploading(false));
   };
@@ -406,17 +518,18 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       return;
     }
     const title = uploadTitle.trim() || file.name.replace(/\.[^/.]+$/, '') || 'Brief';
-    const dateStr = String(selectedDate).trim().slice(0, 10);
     setUploading(true);
     setError(null);
     setAddSuccess(null);
     try {
-      await Api.uploadTraderDeckBriefFile(file, { date: dateStr, period, title });
+      await Api.uploadTraderDeckBriefFile(file, { date: storageDateStr, period, title });
       setUploadTitle('');
-      setAddSuccess(`Saved for ${dateStr}. Use the calendar to pick that day anytime.`);
+      setAddSuccess(`Saved for ${storageDateStr}. Use the calendar to pick that day anytime.`);
       setTimeout(() => setAddSuccess(null), 4000);
-      const res = await Api.getTraderDeckContent(type, dateStr);
-      setBriefs(filterToAllowedBriefKinds(Array.isArray(res.data?.briefs) ? res.data.briefs : []));
+      const res = await Api.getTraderDeckContent(type, storageDateStr);
+      const p = briefsPayloadFromContentResponse(res, storageDateStr);
+      setBriefs(p.list);
+      setWeekendBriefsNote(p.weekendNote);
     } catch (err) {
       const st = err.response?.status;
       setError(
@@ -462,7 +575,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     );
   }
 
-  const mainTitle = `Market Intelligence — ${period === 'weekly' ? 'Weekly' : 'Daily'} (${selectedDate})`;
+  const mainTitle = `Market Intelligence — ${period === 'weekly' ? 'Weekly' : 'Daily'} (${storageDateStr})`;
 
   return (
     <>
@@ -476,11 +589,21 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
             <p className="td-deck-mi-modern-sub">
               Briefs are stored per calendar date (daily or weekly mode). Preview opens as a fullscreen overlay with a blurred backdrop — scroll inside the document; copying is discouraged and downloads are not linked from the list.
             </p>
+            {period === 'daily' && weekendBriefsNote && (
+              <p className="td-deck-mi-modern-sub td-deck-mi-weekend-note" role="note">
+                Daily automated briefs run on UK business days (Monday–Friday) only. Showing the latest available
+                pack from <strong>{weekendSourceLabel}</strong>.
+              </p>
+            )}
           </div>
           {briefs.length > 0 && (
             <div className="td-deck-mi-modern-stat" aria-hidden>
               <span className="td-deck-mi-modern-stat-value">{briefs.length}</span>
-              <span className="td-deck-mi-modern-stat-label">brief{briefs.length !== 1 ? 's' : ''} this date</span>
+              <span className="td-deck-mi-modern-stat-label">
+                {weekendBriefsNote
+                  ? `brief${briefs.length !== 1 ? 's' : ''} (latest weekday)`
+                  : `brief${briefs.length !== 1 ? 's' : ''} this date`}
+              </span>
             </div>
           )}
         </header>
@@ -489,7 +612,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           {canEdit && (
             <section className="td-deck-mi-tile td-deck-mi-tile--upload" aria-labelledby="intel-upload-heading">
               <h2 id="intel-upload-heading" className="td-deck-mi-tile-title">Add brief</h2>
-              <p className="td-deck-mi-tile-hint">Assigns to <strong>{String(selectedDate).trim().slice(0, 10)}</strong> — change the desk calendar date before upload if needed.</p>
+              <p className="td-deck-mi-tile-hint">Assigns to <strong>{storageDateStr}</strong> — change the desk calendar date before upload if needed.</p>
               <div className="td-deck-mi-upload-stack">
                 <input
                   type="text"
@@ -540,36 +663,17 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
             <div className="td-deck-mi-tile-head">
               <h2 id="intel-list-heading" className="td-deck-mi-tile-title">Briefs</h2>
               <div className="td-deck-mi-head-tools">
-                <div className="td-deck-mi-filter-wrap" ref={filterPopoverRef}>
+                <div className="td-deck-mi-filter-wrap" ref={filterWrapRef}>
                   <button
+                    ref={filterButtonRef}
                     type="button"
                     className="td-mi-btn td-mi-btn-small td-mi-btn-filter"
                     onClick={() => setFiltersOpen((v) => !v)}
+                    aria-expanded={filtersOpen}
+                    aria-haspopup="dialog"
                   >
                     Filter
                   </button>
-                  {filtersOpen && (
-                    <div className="td-deck-mi-filter-popover" role="dialog" aria-label="Brief filters">
-                      <div className="td-deck-mi-filter-head">
-                        <span>Show brief types</span>
-                        <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
-                          Reset
-                        </button>
-                      </div>
-                      <div className="td-deck-mi-filter-list">
-                        {BRIEF_KIND_ORDER.map((kind) => (
-                          <label key={kind} className="td-deck-mi-filter-item">
-                            <input
-                              type="checkbox"
-                              checked={selectedKinds.has(kind)}
-                              onChange={() => toggleKindFilter(kind)}
-                            />
-                            <span>{BRIEF_KIND_LABEL[kind] || kind}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
                 <span className="td-deck-mi-tile-badge">{displayedBriefs.length}</span>
               </div>
@@ -600,6 +704,40 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           </section>
         </div>
       </div>
+
+      {typeof document !== 'undefined' && filtersOpen && filterMenuPos && createPortal(
+        <div
+          ref={filterMenuRef}
+          className="td-deck-mi-filter-popover td-deck-mi-filter-popover--portal"
+          style={{
+            top: filterMenuPos.top,
+            left: filterMenuPos.left,
+            width: filterMenuPos.width,
+          }}
+          role="dialog"
+          aria-label="Brief filters"
+        >
+          <div className="td-deck-mi-filter-head">
+            <span>Show brief types</span>
+            <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
+              Reset
+            </button>
+          </div>
+          <div className="td-deck-mi-filter-list">
+            {BRIEF_KIND_ORDER.map((kind) => (
+              <label key={kind} className="td-deck-mi-filter-item">
+                <input
+                  type="checkbox"
+                  checked={selectedKinds.has(kind)}
+                  onChange={() => toggleKindFilter(kind)}
+                />
+                <span>{BRIEF_KIND_LABEL[kind] || kind}</span>
+              </label>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
 
  {typeof document !== 'undefined' && previewOpen && iframeSrc && createPortal(
   <>
