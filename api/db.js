@@ -114,7 +114,8 @@ const getDbPool = () => {
   let queueLimit = Math.max(1, parseInt(process.env.MYSQL_QUEUE_LIMIT, 10) || defaultQueue);
   if (process.env.VERCEL) {
     connectionLimit = 1;
-    queueLimit = Math.min(Math.max(queueLimit, 16), 80);
+    // Single connection serializes work; allow a deeper queue so bursts (e.g.Trader Deck) don't hit "Queue limit reached".
+    queueLimit = Math.min(Math.max(queueLimit, 24), 200);
   }
 
   pool = mysql.createPool({

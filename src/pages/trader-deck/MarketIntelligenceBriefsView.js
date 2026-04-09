@@ -194,6 +194,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [selectedKinds, setSelectedKinds] = useState(() => new Set(BRIEF_KIND_ORDER));
   /** UK weekend daily view: server serves previous weekday’s briefs */
   const [weekendBriefsNote, setWeekendBriefsNote] = useState(null);
+  const [intelDiagnostics, setIntelDiagnostics] = useState(null);
   const fileInputRef = useRef(null);
   const typewriterScrollRef = useRef(null);
   const filterWrapRef = useRef(null);
@@ -317,9 +318,11 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
 
   const fetchBriefsPayload = useCallback(
     (cacheBust) =>
-      Api.getTraderDeckContent(type, storageDateStr, cacheBust ? { cacheBust: true } : {}).then((res) =>
-        briefsPayloadFromContentResponse(res, storageDateStr)
-      ),
+      Api.getTraderDeckContent(type, storageDateStr, {
+        cacheBust: !!cacheBust,
+        /** Polling must not re-fire background brief generation (DB queue storm on serverless). */
+        autogen: !cacheBust,
+      }).then((res) => briefsPayloadFromContentResponse(res, storageDateStr)),
     [type, storageDateStr]
   );
 

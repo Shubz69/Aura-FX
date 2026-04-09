@@ -950,6 +950,7 @@ const Api = {
         const token = localStorage.getItem('token');
         const params = { type, date };
         if (opts && opts.cacheBust) params._ = String(Date.now());
+        if (opts && opts.autogen === false) params.autogen = '0';
         return axios.get(`${API_BASE_URL}/api/trader-deck/content`, {
             params,
             headers: token ? { Authorization: `Bearer ${token}` } : {}
