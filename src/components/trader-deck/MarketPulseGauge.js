@@ -10,13 +10,22 @@ function ArrowIcon({ direction }) {
   return <span className="td-mi-arrow td-mi-arrow--neutral" aria-hidden>↔</span>;
 }
 
-export default function MarketPulseGauge({ score = 50, label = 'NEUTRAL', recommendedAction = [] }) {
+function badgeClassFromLabelAndScore(label, normalized) {
+  const u = String(label || '').toUpperCase();
+  if (/\bRISK\s*ON\b|\bBULLISH\b/.test(u)) return 'risk-on';
+  if (/\bRISK\s*OFF\b|\bBEARISH\b/.test(u)) return 'risk-off';
+  if (/\bMIXED\b|\bNEUTRAL\b/.test(u)) return 'neutral';
+  if (normalized <= 33) return 'risk-off';
+  if (normalized <= 66) return 'neutral';
+  return 'risk-on';
+}
+
+export default function MarketPulseGauge({ score = 50, label = 'NEUTRAL', recommendedAction = [], variant = 'default' }) {
   const normalized = Math.max(0, Math.min(100, Number(score)));
   // Needle: 0 = left (Risk Off), 100 = right (Risk On). Semi-circle = 180°; we use -90° to +90° (left to right)
   const rotation = -90 + (normalized / 100) * 180;
 
-  const badgeClass =
-    normalized <= 33 ? 'risk-off' : normalized <= 66 ? 'neutral' : 'risk-on';
+  const badgeClass = badgeClassFromLabelAndScore(label, normalized);
   const volatility =
     normalized >= 72 ? 'Elevated' : normalized <= 34 ? 'Low' : 'Moderate';
   const directionalClarity =
@@ -26,10 +35,17 @@ export default function MarketPulseGauge({ score = 50, label = 'NEUTRAL', recomm
   const posture =
     normalized >= 67 ? 'Lean with trend' : normalized <= 33 ? 'Defensive' : 'Selective';
 
+  const outlook = variant === 'outlook';
+
   return (
-    <div className="td-mi-gauge-wrap">
-      <div className="td-mi-gauge" role="img" aria-label={`Market pulse ${label}, score ${normalized}`}>
+    <div className={`td-mi-gauge-wrap${outlook ? ' td-mi-gauge-wrap--outlook' : ''}`}>
+      <div
+        className={`td-mi-gauge${outlook ? ' td-mi-gauge--outlook' : ''}`}
+        role="img"
+        aria-label={`Market pulse ${label}, score ${normalized}`}
+      >
         <div className="td-mi-gauge-arc-bg" aria-hidden />
+        {outlook ? <div className="td-mi-gauge-arc-glow" aria-hidden /> : null}
         <div className="td-mi-gauge-arc-fill" aria-hidden />
         <div
           className="td-mi-gauge-needle"
@@ -38,32 +54,54 @@ export default function MarketPulseGauge({ score = 50, label = 'NEUTRAL', recomm
         />
       </div>
       <div className="td-mi-gauge-axis-labels">
-        <span>RISK OFF</span>
-        <span>RISK ON</span>
+        <span>{outlook ? 'Risk off' : 'RISK OFF'}</span>
+        <span>{outlook ? 'Risk on' : 'RISK ON'}</span>
       </div>
       <div className={`td-mi-gauge-badge td-mi-gauge-badge--${badgeClass}`}>
         {label}
       </div>
-      <div className="td-mi-pulse-snapshot">
-        <p><span>State</span><strong>{label}</strong></p>
-        <p><span>Confidence</span><strong>{normalized}%</strong></p>
-        <p><span>Volatility</span><strong>{volatility}</strong></p>
-        <p><span>Directional Clarity</span><strong>{directionalClarity}</strong></p>
-        <p><span>Risk Tone</span><strong>{riskTone}</strong></p>
-        <p><span>Posture</span><strong>{posture}</strong></p>
-      </div>
-      <div className="td-mi-pulse-meta">
-        {Array.isArray(recommendedAction) && recommendedAction.length > 0 && (
-          <>
-            <p><strong>Action items:</strong></p>
-            <ul className="td-mi-bullets">
-              {recommendedAction.slice(0, 3).map((line, idx) => (
-                <li key={idx} className="td-mi-bullet-item">{line}</li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
+      {outlook ? (
+        <>
+          <div className="td-mi-pulse-snapshot td-mi-pulse-snapshot--compact">
+            <p><span>State</span><strong>{label}</strong></p>
+            <p><span>Volatility</span><strong>{volatility}</strong></p>
+            <p><span>Risk tone</span><strong>{riskTone}</strong></p>
+          </div>
+          {Array.isArray(recommendedAction) && recommendedAction.length > 0 && (
+            <div className="td-mi-pulse-meta td-mi-pulse-meta--actions">
+              <p className="td-mi-pulse-actions-label">Action focus</p>
+              <ul className="td-mi-bullets td-mi-pulse-actions-list">
+                {recommendedAction.slice(0, 3).map((line, idx) => (
+                  <li key={idx} className="td-mi-bullet-item">{line}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="td-mi-pulse-snapshot">
+            <p><span>State</span><strong>{label}</strong></p>
+            <p><span>Confidence</span><strong>{normalized}%</strong></p>
+            <p><span>Volatility</span><strong>{volatility}</strong></p>
+            <p><span>Directional Clarity</span><strong>{directionalClarity}</strong></p>
+            <p><span>Risk Tone</span><strong>{riskTone}</strong></p>
+            <p><span>Posture</span><strong>{posture}</strong></p>
+          </div>
+          <div className="td-mi-pulse-meta">
+            {Array.isArray(recommendedAction) && recommendedAction.length > 0 && (
+              <>
+                <p><strong>Action items:</strong></p>
+                <ul className="td-mi-bullets">
+                  {recommendedAction.slice(0, 3).map((line, idx) => (
+                    <li key={idx} className="td-mi-bullet-item">{line}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1268,29 +1268,384 @@
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
-  .td-outlook-panel--regime  { grid-column: 1; grid-row: 1; }
-  .td-outlook-panel--pulse   { grid-column: 2; grid-row: 1; }
-  .td-outlook-panel--drivers { grid-column: 1; grid-row: 2; }
-  .td-outlook-panel--signals { grid-column: 2; grid-row: 2; }
-  .td-outlook-panel--changes { grid-column: 1; grid-row: 3; }
-  .td-outlook-panel--focus   { grid-column: 1; grid-row: 3; }
-  .td-outlook-panel--radar   { grid-column: 2; grid-row: 3; }
-  .td-outlook-panel--headlines { grid-column: 1 / -1; grid-row: 4; }
+  .td-outlook-panel--intel-mega { grid-column: 1 / -1; grid-row: auto; }
+  .td-outlook-panel--pulse { grid-column: 1 / -1; grid-row: auto; }
+  .td-outlook-panel--changes { grid-column: 1 / -1; grid-row: auto; }
+  .td-outlook-panel--execution-mega { grid-column: 1 / -1; grid-row: auto; }
+  .td-outlook-panel--headlines { grid-column: 1 / -1; grid-row: auto; }
 }
 
 @media (min-width: 1200px) {
   .td-outlook-unified-grid {
     grid-template-columns: repeat(12, 1fr);
-    gap: 12px;
+    gap: 10px;
+    align-items: stretch;
   }
-  .td-outlook-panel--regime  { grid-column: 1 / span 8;  grid-row: 1; }
-  .td-outlook-panel--pulse   { grid-column: 9 / span 4;  grid-row: 1; }
-  .td-outlook-panel--drivers { grid-column: 1 / span 4;  grid-row: 2; }
-  .td-outlook-panel--signals { grid-column: 5 / span 4;  grid-row: 2; }
-  .td-outlook-panel--changes { grid-column: 9 / span 4;  grid-row: 2; }
-  .td-outlook-panel--focus   { grid-column: 1 / span 7;  grid-row: 3; }
-  .td-outlook-panel--radar   { grid-column: 8 / span 5;  grid-row: 3; }
-  .td-outlook-panel--headlines { grid-column: 1 / -1; grid-row: 4; }
+  .td-outlook-panel--intel-mega { grid-column: 1 / span 8; grid-row: 1 / span 2; align-self: stretch; }
+  .td-outlook-panel--pulse { grid-column: 9 / span 4; grid-row: 1 / span 2; align-self: stretch; }
+  .td-outlook-panel--changes { grid-column: 1 / -1; grid-row: 3; }
+  .td-outlook-panel--execution-mega { grid-column: 1 / -1; grid-row: 4; }
+  .td-outlook-panel--headlines { grid-column: 1 / -1; grid-row: 5; }
+}
+
+/* ── Market Outlook: unified intelligence + execution blocks ───────────── */
+.td-outlook-panel--intel-mega,
+.td-outlook-panel--execution-mega {
+  background-image:
+    linear-gradient(165deg, rgba(12, 20, 42, 0.94) 0%, rgba(6, 10, 26, 0.97) 50%, rgba(3, 5, 16, 0.99) 100%),
+    linear-gradient(135deg, rgba(140, 175, 255, 0.07) 0%, transparent 38%),
+    var(--panel-border);
+  box-shadow:
+    var(--panel-shadow),
+    0 0 0 1px rgba(140, 175, 255, 0.06) inset,
+    0 0 72px -28px rgba(107, 143, 232, 0.35);
+}
+
+.td-outlook-panel--intel-mega::before,
+.td-outlook-panel--execution-mega::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 56%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), rgba(212, 175, 125, 0.25), transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.td-outlook-intel-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  position: relative;
+  z-index: 1;
+}
+
+@media (min-width: 1200px) {
+  .td-outlook-panel--intel-mega .td-outlook-intel-split {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+.td-outlook-intel-block .td-outlook-intel-title {
+  position: relative;
+  margin: 0 !important;
+  padding: 7px 12px 6px !important;
+  border-bottom: 1px solid rgba(107, 143, 232, 0.14);
+  font-size: 0.6rem !important;
+  letter-spacing: 0.24em !important;
+  color: rgba(220, 228, 255, 0.78) !important;
+  -webkit-text-fill-color: rgba(220, 228, 255, 0.78) !important;
+}
+
+.td-outlook-intel-block .td-outlook-intel-title::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 12px;
+  width: 36px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(212, 175, 125, 0.55), rgba(140, 175, 255, 0.35), transparent);
+  box-shadow: 0 0 10px rgba(140, 175, 255, 0.25);
+}
+
+.td-outlook-intel-body {
+  padding: 6px 12px 8px !important;
+}
+
+.td-outlook-intel-divider--horiz {
+  height: 1px;
+  margin: 2px 12px 0;
+  background: linear-gradient(90deg, transparent, rgba(140, 175, 255, 0.16), transparent);
+  flex-shrink: 0;
+}
+
+.td-outlook-intel-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+@media (min-width: 560px) {
+  .td-outlook-intel-split {
+    grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .td-outlook-intel-divider--vert {
+    width: 1px;
+    margin: 0;
+    background: linear-gradient(180deg, transparent 6%, rgba(140, 175, 255, 0.14) 42%, rgba(140, 175, 255, 0.1) 58%, transparent 94%);
+    align-self: stretch;
+  }
+}
+
+@media (max-width: 559px) {
+  .td-outlook-intel-divider--vert {
+    display: none;
+  }
+
+  .td-outlook-intel-block--signals {
+    border-top: 1px solid rgba(107, 143, 232, 0.1);
+  }
+}
+
+.td-outlook-execution-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+}
+
+@media (min-width: 880px) {
+  .td-outlook-execution-grid {
+    grid-template-columns: minmax(0, 7fr) 1px minmax(0, 5fr);
+    align-items: stretch;
+  }
+
+  .td-outlook-intel-divider--exec {
+    display: block;
+    width: 1px;
+    margin: 0;
+    background: linear-gradient(180deg, transparent 5%, rgba(140, 175, 255, 0.13) 45%, rgba(140, 175, 255, 0.09) 55%, transparent 95%);
+    align-self: stretch;
+  }
+}
+
+@media (max-width: 879px) {
+  .td-outlook-intel-divider--exec {
+    display: none;
+  }
+
+  .td-outlook-intel-block--radar {
+    border-top: 1px solid rgba(107, 143, 232, 0.1);
+  }
+}
+
+.td-outlook-panel--intel-mega .td-mi-list-item,
+.td-outlook-panel--intel-mega .td-mi-list {
+  gap: 5px;
+}
+
+.td-outlook-panel--intel-mega .td-mi-list-item {
+  padding: 6px 8px !important;
+  border-radius: 10px !important;
+  background: rgba(4, 8, 22, 0.48) !important;
+  border: 1px solid rgba(107, 143, 232, 0.1) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.td-outlook-panel--intel-mega .td-mi-regime-row {
+  padding: 4px 0 !important;
+}
+
+.td-outlook-panel--intel-mega .td-mi-regime-value {
+  font-size: 0.8rem !important;
+}
+
+/* Aura Market Pulse — hero treatment on outlook */
+.td-outlook-panel--pulse-feature {
+  background-image:
+    linear-gradient(168deg, rgba(10, 16, 38, 0.96) 0%, rgba(5, 8, 22, 0.99) 55%, rgba(2, 4, 14, 1) 100%),
+    linear-gradient(125deg, rgba(140, 175, 255, 0.12) 0%, transparent 45%, rgba(212, 175, 125, 0.06) 100%),
+    var(--panel-border);
+  box-shadow:
+    var(--panel-shadow),
+    0 0 0 1px rgba(140, 175, 255, 0.09) inset,
+    0 0 56px -14px rgba(107, 143, 232, 0.5),
+    0 0 90px -36px rgba(212, 175, 125, 0.1);
+}
+
+.td-outlook-panel--pulse-feature::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(140, 175, 255, 0.05) inset;
+  z-index: 0;
+}
+
+.td-outlook-panel--pulse-feature .td-mi-panel-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-bottom: 10px !important;
+}
+
+@media (min-width: 1200px) {
+  .td-outlook-panel--pulse-feature .td-mi-panel-body {
+    min-height: 100%;
+  }
+}
+
+.td-mi-gauge-wrap--outlook {
+  width: 100%;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 4px 8px 0;
+  min-height: 0;
+}
+
+.td-mi-gauge--outlook {
+  width: min(220px, 100%);
+  height: 110px;
+  margin-bottom: 6px;
+}
+
+.td-mi-gauge--outlook .td-mi-gauge-arc-bg {
+  width: 100%;
+  height: 100px;
+  max-width: 220px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 220px 220px 0 0;
+  opacity: 0.95;
+  box-shadow: 0 -6px 28px rgba(107, 143, 232, 0.22);
+}
+
+.td-mi-gauge--outlook .td-mi-gauge-arc-bg::after {
+  top: 14px;
+  left: 14px;
+  right: 14px;
+}
+
+.td-mi-gauge--outlook .td-mi-gauge-arc-glow {
+  width: calc(100% - 8px);
+  max-width: 212px;
+  height: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 4px;
+  border-radius: 212px 212px 0 0;
+}
+
+.td-mi-gauge--outlook .td-mi-gauge-needle {
+  height: 78px;
+  bottom: 8px;
+  width: 2px;
+  box-shadow:
+    0 0 14px rgba(255, 255, 255, 0.45),
+    0 0 22px rgba(140, 175, 255, 0.55);
+}
+
+.td-outlook-panel--pulse-feature .td-mi-gauge-axis-labels {
+  width: min(220px, 100%);
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  margin-bottom: 6px;
+  color: rgba(200, 212, 245, 0.55);
+  text-transform: uppercase;
+}
+
+.td-mi-pulse-snapshot--compact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  width: 100%;
+  max-width: 280px;
+  margin-top: 4px;
+}
+
+.td-mi-pulse-snapshot--compact p {
+  padding: 5px 8px !important;
+  font-size: 0.7rem !important;
+  border-radius: 8px !important;
+}
+
+.td-mi-pulse-meta--actions {
+  margin-top: 8px;
+  width: 100%;
+  max-width: 280px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(107, 143, 232, 0.12);
+}
+
+.td-mi-pulse-actions-label {
+  margin: 0 0 5px !important;
+  font-size: 0.58rem !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  color: rgba(140, 175, 255, 0.65) !important;
+}
+
+.td-mi-pulse-actions-list {
+  gap: 4px !important;
+  margin: 0 !important;
+}
+
+.td-mi-pulse-actions-list .td-mi-bullet-item {
+  padding: 5px 8px 5px 22px !important;
+  font-size: 0.72rem !important;
+  line-height: 1.35 !important;
+  background: rgba(4, 8, 22, 0.55) !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(107, 143, 232, 0.08) !important;
+}
+
+.td-mi-pulse-actions-list .td-mi-bullet-item::before {
+  left: 8px !important;
+  font-size: 0.65rem !important;
+  color: rgba(212, 175, 125, 0.75) !important;
+}
+
+/* Trader focus — title + reason */
+.td-mi-bullets--focus {
+  gap: 5px !important;
+}
+
+.td-mi-bullet-item--focus {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  position: relative;
+  padding: 7px 10px 7px 26px !important;
+}
+
+.td-mi-bullet-item--focus::before {
+  content: '⬢';
+  position: absolute;
+  left: 8px;
+  top: 11px;
+  color: rgba(212, 175, 125, 0.58);
+  font-size: 0.55rem;
+  line-height: 1;
+}
+
+.td-mi-focus-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.94);
+  line-height: 1.35;
+}
+
+.td-mi-focus-reason {
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: rgba(185, 200, 245, 0.72);
+  letter-spacing: 0.02em;
+}
+
+.td-outlook-panel--execution-mega .td-mi-bullet-item--focus {
+  background: rgba(4, 8, 22, 0.42) !important;
+  border: 1px solid rgba(107, 143, 232, 0.08) !important;
+  border-radius: 10px !important;
 }
 
 /* ── Unified panels — premium glass edition ─────────────────────────────── */

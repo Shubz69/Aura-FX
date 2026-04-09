@@ -9,12 +9,17 @@ export default function FocusList({ items = [] }) {
     );
   }
   return (
-    <ul className="td-mi-bullets">
-      {items.map((item, i) => (
-        <li key={i} className="td-mi-bullet-item">
-          {typeof item === 'string' ? item : item.title || item.text || '—'}
-        </li>
-      ))}
+    <ul className="td-mi-bullets td-mi-bullets--focus">
+      {items.map((item, i) => {
+        const title = typeof item === 'string' ? item : item.title || item.text || '—';
+        const reason = typeof item === 'object' && item && item.reason ? String(item.reason) : '';
+        return (
+          <li key={i} className="td-mi-bullet-item td-mi-bullet-item--focus">
+            <span className="td-mi-focus-title">{title}</span>
+            {reason ? <span className="td-mi-focus-reason">{reason}</span> : null}
+          </li>
+        );
+      })}
     </ul>
   );
 }

@@ -308,7 +308,14 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
         </div>
       );
     }
-    return <MarketPulseGauge score={marketPulse.score} label={marketPulse.label} recommendedAction={marketPulse.recommendedAction} />;
+    return (
+      <MarketPulseGauge
+        score={marketPulse.score}
+        label={marketPulse.label}
+        recommendedAction={marketPulse.recommendedAction}
+        variant="outlook"
+      />
+    );
   };
 
   const renderListEdit = (list, key, placeholder, options = {}) => (
@@ -443,29 +450,81 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
           </header>
           <div className="td-outlook-dashboard td-outlook-dashboard--unified td-deck-mo-outlook-dash">
             <div className="td-outlook-unified-grid td-deck-mo-bento">
-              <DashboardPanel title="▲ Aurax Market Regime" className="td-outlook-panel td-outlook-panel--regime">{renderRegime()}</DashboardPanel>
-              <DashboardPanel title="Aurax Market Pulse" className="td-outlook-panel td-outlook-panel--pulse">{renderPulse()}</DashboardPanel>
-              <DashboardPanel title="Key Market Drivers" className="td-outlook-panel td-outlook-panel--drivers">
-                {editMode && editDraft ? renderDriversEdit() : <DriverList drivers={keyDrivers} />}
+              <section
+                className="td-outlook-panel td-outlook-panel--intel-mega"
+                aria-label="Aura market regime, drivers, and cross-asset signals"
+              >
+                <div className="td-outlook-intel-stack">
+                  <div className="td-outlook-intel-block td-outlook-intel-block--regime">
+                    <h2 className="td-mi-panel-title td-outlook-intel-title">Aura Market Regime</h2>
+                    <div className="td-mi-panel-body td-outlook-intel-body">{renderRegime()}</div>
+                  </div>
+                  <div className="td-outlook-intel-divider td-outlook-intel-divider--horiz" aria-hidden />
+                  <div className="td-outlook-intel-split">
+                    <div className="td-outlook-intel-block td-outlook-intel-block--drivers">
+                      <h2 className="td-mi-panel-title td-outlook-intel-title">Key Market Drivers</h2>
+                      <div className="td-mi-panel-body td-outlook-intel-body">
+                        {editMode && editDraft ? renderDriversEdit() : <DriverList drivers={keyDrivers} />}
+                      </div>
+                    </div>
+                    <div className="td-outlook-intel-divider td-outlook-intel-divider--vert" aria-hidden />
+                    <div className="td-outlook-intel-block td-outlook-intel-block--signals">
+                      <h2 className="td-mi-panel-title td-outlook-intel-title">Cross-Asset Signals</h2>
+                      <div className="td-mi-panel-body td-outlook-intel-body">
+                        {editMode && editDraft ? renderSignalsEdit() : <SignalList signals={crossAssetSignals} />}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <DashboardPanel title="Aura Market Pulse" className="td-outlook-panel td-outlook-panel--pulse td-outlook-panel--pulse-feature">
+                {renderPulse()}
               </DashboardPanel>
-              <DashboardPanel title="Cross-Asset Signals" className="td-outlook-panel td-outlook-panel--signals">
-                {editMode && editDraft ? renderSignalsEdit() : <SignalList signals={crossAssetSignals} />}
-              </DashboardPanel>
-              <DashboardPanel title={period === 'weekly' ? 'Market Change This Week' : 'Market Change Today'} className="td-outlook-panel td-outlook-panel--changes">
-                {editMode && editDraft ? renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', 'Theme') : (marketChangesToday && marketChangesToday.length > 0 ? <ChangeList items={marketChangesToday} /> : <p className="td-outlook-empty">No themes recorded. Use Edit to add.</p>)}
-              </DashboardPanel>
-              <DashboardPanel title="Trader Focus" className="td-outlook-panel td-outlook-panel--focus">
-                {editMode && editDraft ? renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item') : (traderFocus && traderFocus.length > 0 ? <FocusList items={traderFocus} /> : <p className="td-outlook-empty">No focus items. Use Edit to add.</p>)}
-              </DashboardPanel>
-              <DashboardPanel title="Market Risk Engine" className="td-outlook-panel td-outlook-panel--radar">
-                {editMode && editDraft ? renderListEdit(editDraft.riskRadar, 'riskRadar', 'Risk factor', { preserveObject: true }) : (
-                  (riskRadar && riskRadar.length > 0) || riskEngine ? (
-                    <RiskRadarList items={riskRadar || []} riskEngine={riskEngine} summaryOnly={period === 'daily'} />
-                  ) : (
-                    <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
-                  )
+
+              <DashboardPanel
+                title={period === 'weekly' ? 'Market Change This Week' : 'Market Change Today'}
+                className="td-outlook-panel td-outlook-panel--changes"
+              >
+                {editMode && editDraft ? (
+                  renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', 'Theme')
+                ) : marketChangesToday && marketChangesToday.length > 0 ? (
+                  <ChangeList items={marketChangesToday} />
+                ) : (
+                  <p className="td-outlook-empty">No themes recorded. Use Edit to add.</p>
                 )}
               </DashboardPanel>
+
+              <section className="td-outlook-panel td-outlook-panel--execution-mega" aria-label="Trader focus and market risk">
+                <div className="td-outlook-execution-grid">
+                  <div className="td-outlook-intel-block td-outlook-intel-block--focus">
+                    <h2 className="td-mi-panel-title td-outlook-intel-title">Trader Focus</h2>
+                    <div className="td-mi-panel-body td-outlook-intel-body">
+                      {editMode && editDraft ? (
+                        renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item')
+                      ) : traderFocus && traderFocus.length > 0 ? (
+                        <FocusList items={traderFocus} />
+                      ) : (
+                        <p className="td-outlook-empty">No focus items. Use Edit to add.</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="td-outlook-intel-divider td-outlook-intel-divider--exec" aria-hidden />
+                  <div className="td-outlook-intel-block td-outlook-intel-block--radar">
+                    <h2 className="td-mi-panel-title td-outlook-intel-title">Market Risk Engine</h2>
+                    <div className="td-mi-panel-body td-outlook-intel-body">
+                      {editMode && editDraft ? (
+                        renderListEdit(editDraft.riskRadar, 'riskRadar', 'Risk factor', { preserveObject: true })
+                      ) : (riskRadar && riskRadar.length > 0) || riskEngine ? (
+                        <RiskRadarList items={riskRadar || []} riskEngine={riskEngine} summaryOnly={period === 'daily'} />
+                      ) : (
+                        <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               {hasDeskIntel && (
                 <DashboardPanel title="Headlines / Intelligence Feed" className="td-outlook-panel td-outlook-panel--headlines">
                   <section className="td-deck-ai-desk-brief td-deck-mo-ai-brief" aria-label="Live desk intelligence">

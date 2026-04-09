@@ -74,6 +74,16 @@ function riskLevelTone(level) {
   return 'rr-level--medium';
 }
 
+/** Human-readable label for 0–100 risk sub-scores from the intelligence engine. */
+function formatRiskDimension(score) {
+  if (score == null || score === '') return '—';
+  const n = Number(score);
+  if (!Number.isFinite(n)) return String(score);
+  const rounded = Math.round(n);
+  const tone = n >= 70 ? 'Elevated' : n >= 45 ? 'Moderate' : 'Contained';
+  return `${tone} (${rounded})`;
+}
+
 /**
  * @param {boolean} [summaryOnly] - When true, only show riskEngine summary (no per-event list).
  *   Use on Market Outlook daily where the full Economic Calendar sits below to avoid duplicate “calendars”.
@@ -100,11 +110,11 @@ export default function RiskRadarList({ items = [], riskEngine = null, summaryOn
   const riskStats = [
     ['Market Risk Score', Number(riskEngine?.score || 0)],
     ['Risk Level', riskEngine?.level || 'Moderate'],
-    ['Volatility', breakdown?.volatility ?? '—'],
-    ['Liquidity', breakdown?.liquidity ?? '—'],
-    ['Clustering', breakdown?.clustering ?? '—'],
-    ['Geo Risk', breakdown?.geopoliticalRisk ?? '—'],
-    ['Macro Pressure', breakdown?.eventRisk ?? '—'],
+    ['Volatility', formatRiskDimension(breakdown?.volatility)],
+    ['Liquidity', formatRiskDimension(breakdown?.liquidity)],
+    ['Clustering', formatRiskDimension(breakdown?.clustering)],
+    ['Geo Risk', formatRiskDimension(breakdown?.geopoliticalRisk)],
+    ['Macro Pressure', formatRiskDimension(breakdown?.eventRisk)],
   ];
 
   return (
