@@ -51,7 +51,7 @@ function normalizeDecoderQuerySymbol(raw) {
 
 function getCached(key) {
   const e = cacheStore.get(key);
-  if (e && Date.now() - e.at < CACHE_TTL_MS) return e.payload;
+  if (e && Date.now() - e.at < CACHE_TTL_MS) return { payload: e.payload, storedAtMs: e.at };
   return null;
 }
 
@@ -94,9 +94,17 @@ module.exports = async (req, res) => {
     const hit = getCached(cacheKey);
     if (hit) {
       res.setHeader('Cache-Control', 'private, max-age=60');
-      const briefOut = stripFeedDiagnosticsFromBrief(hit.brief);
+      const briefOut = stripFeedDiagnosticsFromBrief(hit.payload.brief);
       setDecoderEngineHeader(res, briefOut);
-      return res.status(200).json({ success: true, ...hit, brief: briefOut, cached: true });
+      const ageSec = Math.max(0, Math.round((Date.now() - hit.storedAtMs) / 1000));
+      return res.status(200).json({
+        success: true,
+        ...hit.payload,
+        brief: briefOut,
+        cached: true,
+        cacheAgeSec: ageSec,
+        cacheTtlSec: CACHE_SEC,
+      });
     }
   }
 
@@ -117,7 +125,19 @@ module.exports = async (req, res) => {
         res.setHeader('Cache-Control', 'private, max-age=60');
         const briefOut = stripFeedDiagnosticsFromBrief(payload.brief);
         setDecoderEngineHeader(res, briefOut);
-        return res.status(200).json({ success: true, ...payload, brief: briefOut });
+        let cacheAgeSec = null;
+        if (stored.updatedAt) {
+          const t = Date.parse(String(stored.updatedAt));
+          if (!Number.isNaN(t)) {
+            cacheAgeSec = Math.max(0, Math.round((Date.now() - t) / 1000));
+          }
+        }
+        return res.status(200).json({
+          success: true,
+          ...payload,
+          brief: briefOut,
+          ...(cacheAgeSec != null ? { cacheAgeSec } : {}),
+        });
       }
     } catch (error) {
       console.warn('[market-decoder] stored read failed:', error.message || error);

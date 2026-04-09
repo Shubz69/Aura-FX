@@ -258,6 +258,7 @@ function buildConfirmationEngine({
   volLabel,
   calOk,
   pairMeetingCount,
+  crossAlignment,
 }) {
   const pivOk = piv && piv.r1 != null && piv.s1 != null;
   const structureOk = pivOk && Math.abs(net) >= 2;
@@ -265,7 +266,30 @@ function buildConfirmationEngine({
   const sessionOk = condition !== 'Event Risk' && conviction !== 'Low';
   const volatilityOk = volLabel !== 'High' || conviction === 'High';
   const eventOk = !eventHighImpactSoon;
-  const correlationOk = calOk !== false;
+
+  const crossChecked = crossAlignment && Number(crossAlignment.checked) > 0;
+  let correlationOk = calOk !== false;
+  let correlationPending = false;
+  let correlationVerdict =
+    pairMeetingCount > 0
+      ? `${pairMeetingCount} pair-scoped releases queued`
+      : 'Calendar + cross-asset context from rules stack';
+  if (crossChecked) {
+    const { aligned, misaligned, checked } = crossAlignment;
+    if (misaligned > aligned) {
+      correlationOk = false;
+      correlationPending = true;
+      correlationVerdict = `Cross legs diverge (${aligned} align / ${misaligned} oppose of ${checked} sampled)`;
+    } else if (aligned > misaligned) {
+      correlationVerdict = `Cross legs supportive (${aligned}/${checked} match session direction)`;
+    } else {
+      correlationPending = aligned === 0 && misaligned === 0;
+      correlationVerdict =
+        aligned === 0 && misaligned === 0
+          ? `${checked} cross quotes loaded — directional match n/a (flat primary)`
+          : `Cross legs mixed (${checked} sampled)`;
+    }
+  }
 
   const checks = [
     {
@@ -301,8 +325,8 @@ function buildConfirmationEngine({
     {
       id: 'correlation',
       label: 'Correlation',
-      status: checkStatus(correlationOk, false, false),
-      verdict: pairMeetingCount > 0 ? `${pairMeetingCount} pair-scoped releases queued` : 'Cross-market context from rules stack',
+      status: checkStatus(correlationOk, correlationPending, false),
+      verdict: correlationVerdict,
     },
   ];
 
@@ -315,9 +339,24 @@ function buildConfirmationEngine({
   return { checks, finalAction, readinessScore: readiness100 };
 }
 
-function buildSmartAlerts({ piv, last, bias, marketType, equalNotes }) {
+function buildSmartAlerts({
+  piv,
+  last,
+  bias,
+  marketType,
+  equalNotes,
+  eventHighImpactSoon,
+  rsiVal,
+  volLabel,
+}) {
   const alerts = [];
   const px = (x) => (x == null ? null : formatPx(x, marketType));
+  if (eventHighImpactSoon) {
+    alerts.push({
+      type: 'event',
+      text: 'High-impact macro window — cut size and avoid new exposure into the print unless your plan explicitly trades the release',
+    });
+  }
   if (piv?.r1 != null && last != null) {
     alerts.push({
       type: 'breakout',
@@ -348,13 +387,33 @@ function buildSmartAlerts({ piv, last, bias, marketType, equalNotes }) {
       text: `Equal lows ~${px(equalNotes.equalLows.price)} — downside liquidity pool`,
     });
   }
+  if (rsiVal != null && Number.isFinite(Number(rsiVal))) {
+    const r = Number(rsiVal);
+    if (r >= 72) {
+      alerts.push({
+        type: 'rsi',
+        text: `RSI ${r} stretched — mean-reversion risk on fresh longs; wait for pullback or break confirmation`,
+      });
+    } else if (r <= 28) {
+      alerts.push({
+        type: 'rsi',
+        text: `RSI ${r} washed — short-cover / bounce risk; do not blindly fade without structure break`,
+      });
+    }
+  }
+  if (volLabel === 'High' && piv?.pivot != null && last != null) {
+    alerts.push({
+      type: 'vol',
+      text: `High last-session range — use wider stops or smaller size around ${px(piv.pivot)} pivot`,
+    });
+  }
   if (bias === 'Neutral' && alerts.length === 0) {
     alerts.push({
       type: 'wait',
       text: 'No mechanical trigger until structure breaks a defined level',
     });
   }
-  return alerts.slice(0, 6);
+  return alerts.slice(0, 7);
 }
 
 function buildChartOverlayPlan({ piv, prevH, prevL, wr, marketType, last }) {

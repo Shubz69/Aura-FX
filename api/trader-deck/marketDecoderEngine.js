@@ -17,8 +17,9 @@ const {
 } = require('./marketDecoderData');
 const { rankInstrumentHeadlines } = require('./instrumentHeadlines');
 const compose = require('./marketDecoderCompose');
+const { computeWeightedMarketPulse } = require('./marketDecoderPulse');
 
-const DECODER_ENGINE_VERSION = 4;
+const DECODER_ENGINE_VERSION = 5;
 
 const TIMEOUT_MS = 9000;
 
@@ -569,12 +570,6 @@ function biasLabelFromNet(net) {
   return 'Neutral';
 }
 
-/** Needle 0–100 from net score (~ -6 … +6) */
-function gaugePositionFromNet(net) {
-  const t = (Number(net) + 6) / 12;
-  return Math.max(0, Math.min(100, Math.round(t * 100)));
-}
-
 function computePulseMarketState({ eventSoon, conviction, volLabel, net }) {
   if (eventSoon) return 'Event Driven';
   if (volLabel === 'High' && conviction === 'Low') return 'Unstable';
@@ -829,19 +824,6 @@ async function runMarketDecoder(symbolInput) {
     net,
   });
 
-  const marketPulse = {
-    biasScore: net,
-    biasLabel: biasLabelFromNet(net),
-    convictionExplanation: convictionExplanationText({ conviction, net, bull, bear }),
-    gaugePosition: gaugePositionFromNet(net),
-    momentum,
-    volatility: volLabel,
-    marketState: pulseState,
-    decisionPressure: decisionPressureText({ net, eventHighImpactSoon, conviction }),
-    tradeReadiness,
-    environmentLine,
-  };
-
   const exec = buildExecutionGuidance({
     bias,
     last,
@@ -955,6 +937,44 @@ async function runMarketDecoder(symbolInput) {
   const instrument = compose.instrumentContext(resolved, requestRaw);
   const rsiVal = compose.rsiLast(closes);
   const rsiPack = compose.rsiStateLabel(rsiVal);
+
+  const pulseWeighted = computeWeightedMarketPulse({
+    net,
+    bull,
+    bear,
+    bias,
+    rsiVal,
+    rsiTone: rsiPack.tone,
+    volLabel,
+    pulseState,
+    last,
+    piv,
+    eventSoon: eventHighImpactSoon,
+    isSparse,
+    crossBundle,
+    pctDay,
+    marketType,
+    displaySymbol,
+    momentum,
+  });
+
+  const marketPulse = {
+    biasScore: net,
+    biasLabel: biasLabelFromNet(net),
+    convictionExplanation: convictionExplanationText({ conviction, net, bull, bear }),
+    gaugePosition: pulseWeighted.gaugePosition,
+    compositeScore: pulseWeighted.compositeScore,
+    pulseDrivers: pulseWeighted.drivers,
+    crossAlignment: pulseWeighted.crossAlignment,
+    signalBrief: pulseWeighted.signalBrief,
+    momentum,
+    volatility: volLabel,
+    marketState: pulseState,
+    decisionPressure: decisionPressureText({ net, eventHighImpactSoon, conviction }),
+    tradeReadiness,
+    environmentLine,
+  };
+
   const adrPct = compose.averageDailyRangePercent(highs, lows, closes, 5);
   const pivOk = piv && piv.r1 != null && piv.s1 != null;
   const readiness100 = compose.computeReadinessScore100({
@@ -998,6 +1018,7 @@ async function runMarketDecoder(symbolInput) {
     volLabel,
     calOk: cal.ok,
     pairMeetingCount: (pairMeetingsPick.events || []).length,
+    crossAlignment: pulseWeighted.crossAlignment,
   });
   const smartAlerts = compose.buildSmartAlerts({
     piv,
@@ -1005,6 +1026,9 @@ async function runMarketDecoder(symbolInput) {
     bias,
     marketType,
     equalNotes: equalLiquidity,
+    eventHighImpactSoon,
+    rsiVal,
+    volLabel,
   });
   const eventRiskSummary = compose.eventRiskState(events, eventHighImpactSoon, pairMeetingsPick.scope);
   const scenarioTone = compose.scenarioToneFromBias(bias, net);
@@ -1029,6 +1053,12 @@ async function runMarketDecoder(symbolInput) {
       adrPct != null
         ? `Average daily range ≈ ${adrPct}% of spot (last five completed sessions).`
         : null,
+    stateSummary: [
+      rsiVal != null ? `RSI ${rsiVal} (${rsiPack.label})` : 'RSI n/a',
+      `${volLabel} range regime`,
+      readiness.structureQuality,
+      readiness.sessionAlignment !== 'Weak' ? `Session fit ${readiness.sessionAlignment}` : 'Session fit weak vs bias',
+    ].join(' · '),
   };
   const decoderScenario = {
     upsideTarget: piv?.r1 ?? null,
@@ -1053,6 +1083,8 @@ async function runMarketDecoder(symbolInput) {
       pivOk,
       sparse: isSparse,
       crossAssetLegsOk: crossOk,
+      pulseGauge: pulseWeighted.gaugePosition,
+      crossAlignDelta: pulseWeighted.crossAlignment?.deltaApplied,
     });
   }
 
@@ -1148,6 +1180,12 @@ async function runMarketDecoder(symbolInput) {
         marketMeetings: marketMeetingsForPair,
         marketMeetingsScope: pairMeetingsPick.scope,
         sparseSeries: isSparse,
+        freshness: {
+          quoteOk: quoteRes.ok,
+          quoteSource: (quoteRes.providerLog && quoteRes.providerLog[0] && quoteRes.providerLog[0].name) || null,
+          dailyBarCount: closes.length,
+          sparseSeries: isSparse,
+        },
         generatedAt: new Date().toISOString(),
       },
     },

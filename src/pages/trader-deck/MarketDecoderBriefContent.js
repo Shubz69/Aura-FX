@@ -399,6 +399,15 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                 {brief.sessionFlow?.currentSession ? (
                   <span className="md-mse-desk">Desk · {brief.sessionFlow.currentSession}</span>
                 ) : null}
+                {brief.meta?.freshness ? (
+                  <span
+                    className={`md-mse-note${brief.meta.freshness.quoteOk ? '' : ' md-mse-note--warn'}`}
+                    title="Underlying quote + daily series state for this decode"
+                  >
+                    {brief.meta.freshness.quoteOk ? 'Quote ok' : 'Quote degraded'}
+                    {brief.meta.freshness.dailyBarCount != null ? ` · ${brief.meta.freshness.dailyBarCount}d bars` : ''}
+                  </span>
+                ) : null}
                 {sparseHint ? <span className="md-mse-note md-mse-note--warn">{sparseHint}</span> : null}
                 {brief.chartOverlay?.note ? <span className="md-mse-note">{brief.chartOverlay.note}</span> : null}
               </div>
@@ -441,22 +450,51 @@ export default function MarketDecoderBriefContent({ brief, q }) {
               <h2 className="md-ref-unified-h">Market Pulse</h2>
               {brief.marketPulse ? (
                 <>
-                  <div className="md-ref-gauge md-ref-gauge--rail" aria-hidden>
-                    <div className="md-ref-gauge-track">
-                      <span className="md-ref-g-l md-ref-g-l--bear">Bear</span>
-                      <span className="md-ref-g-l md-ref-g-l--mid">Neu</span>
-                      <span className="md-ref-g-l md-ref-g-l--bull">Bull</span>
+                  <div className="md-ref-pulse-hero">
+                    <div className="md-ref-gauge md-ref-gauge--rail md-ref-gauge--premium" aria-hidden>
+                      <div className="md-ref-gauge-backdrop" />
+                      <div className="md-ref-gauge-track md-ref-gauge-track--premium">
+                        <span className="md-ref-g-l md-ref-g-l--bear">Bear</span>
+                        <span className="md-ref-g-l md-ref-g-l--mid">Neu</span>
+                        <span className="md-ref-g-l md-ref-g-l--bull">Bull</span>
+                      </div>
+                      <div
+                        className="md-ref-g-needle md-ref-g-needle--premium"
+                        style={{
+                          transform: `rotate(${-90 + (Number(brief.marketPulse.gaugePosition ?? 50) / 100) * 180}deg)`,
+                        }}
+                      />
+                      <span className="md-ref-gauge-hub" aria-hidden />
                     </div>
-                    <div
-                      className="md-ref-g-needle"
-                      style={{
-                        transform: `rotate(${-90 + (Number(brief.marketPulse.gaugePosition ?? 50) / 100) * 180}deg)`,
-                      }}
-                    />
+                    {brief.marketPulse.compositeScore != null && Number.isFinite(Number(brief.marketPulse.compositeScore)) ? (
+                      <div className="md-ref-pulse-score-chip" title="Composite pulse score (0–100)">
+                        <span className="md-ref-pulse-score-chip__v">{Math.round(Number(brief.marketPulse.compositeScore))}</span>
+                        <span className="md-ref-pulse-score-chip__k">Pulse</span>
+                      </div>
+                    ) : null}
                   </div>
-                  <p className="md-ref-pulse-caption md-ref-pulse-caption--rail">{pulseDeskLabel(brief)}</p>
+                  <p className="md-ref-pulse-caption md-ref-pulse-caption--rail md-ref-pulse-caption--primary">{pulseDeskLabel(brief)}</p>
+                  {brief.marketPulse.signalBrief ? (
+                    <p className="md-ref-pulse-signal">{brief.marketPulse.signalBrief}</p>
+                  ) : null}
+                  {Array.isArray(brief.marketPulse.pulseDrivers) && brief.marketPulse.pulseDrivers.length ? (
+                    <ul className="md-ref-pulse-drivers">
+                      {brief.marketPulse.pulseDrivers.slice(0, 4).map((d) => (
+                        <li key={`${d.key}-${d.label}`} className="md-ref-pulse-driver">
+                          <span className="md-ref-pulse-driver__k">{d.label}</span>
+                          <span className="md-ref-pulse-driver__v">{d.detail}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {brief.marketPulse.crossAlignment && brief.marketPulse.crossAlignment.checked > 0 ? (
+                    <p className="md-ref-pulse-cross">
+                      Cross-asset · {brief.marketPulse.crossAlignment.aligned} agree with session dir ·{' '}
+                      {brief.marketPulse.crossAlignment.misaligned} disagree ({brief.marketPulse.crossAlignment.checked} legs)
+                    </p>
+                  ) : null}
                   {brief.marketPulse.volatility ? (
-                    <p className="md-ref-pulse-sub">Vol · {brief.marketPulse.volatility}</p>
+                    <p className="md-ref-pulse-sub md-ref-pulse-sub--rail">Vol regime · {brief.marketPulse.volatility}</p>
                   ) : null}
                 </>
               ) : (
@@ -469,7 +507,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
               <DecoderReadinessBlock readiness={brief.readiness} />
               </div>
 
-              <div className="md-ref-rail-cell">
+              <div className="md-ref-rail-cell md-ref-rail-cell--insights">
               <h2 className="md-ref-unified-h">Market Insights</h2>
               <div className="md-ref-insights-grid md-ref-insights-grid--rail">
                 <div className="md-ref-insights-cell">
@@ -493,9 +531,12 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                   <span className="md-ref-insights-v">{brief.insights?.structureState || '—'}</span>
                 </div>
               </div>
+              {brief.insights?.stateSummary ? (
+                <p className="md-ref-insights-summary">{brief.insights.stateSummary}</p>
+              ) : null}
               </div>
 
-              <div className="md-ref-rail-cell">
+              <div className="md-ref-rail-cell md-ref-rail-cell--scen">
               <h2 className="md-ref-unified-h">Scenario Map</h2>
               <button type="button" className="md-ref-scen-row md-ref-scen-row--action md-ref-scen-row--dense" onClick={openScenarioDetails}>
                 <span className="md-ref-scen-k">Upside</span>
@@ -543,7 +584,17 @@ export default function MarketDecoderBriefContent({ brief, q }) {
         />
       </footer>
 
-      <details ref={moreDetailsRef} className="md-ref-more">
+      <details
+        ref={moreDetailsRef}
+        className="md-ref-more"
+        onToggle={(e) => {
+          const el = e.currentTarget;
+          if (!el.open) return;
+          requestAnimationFrame(() => {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+        }}
+      >
         <summary className="md-ref-more-sum">More context — headlines, calendar, scenarios</summary>
         <div className="md-ref-more-inner">
           <section className="md-ref-panel md-ref-panel--flat">

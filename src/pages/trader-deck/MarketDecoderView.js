@@ -72,6 +72,7 @@ export default function MarketDecoderView({ embedded }) {
   const [error, setError] = useState(null);
   const [brief, setBrief] = useState(null);
   const [cached, setCached] = useState(false);
+  const [cacheSnapshot, setCacheSnapshot] = useState({ ageSec: null, ttlSec: null });
   const [liveRefreshing, setLiveRefreshing] = useState(false);
   const [activeSymbol, setActiveSymbol] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -92,6 +93,8 @@ export default function MarketDecoderView({ embedded }) {
       const res = await Api.getTraderDeckMarketDecoder(sym, { refresh });
       const data = res.data;
       if (!data.success) {
+        setCached(false);
+        setCacheSnapshot({ ageSec: null, ttlSec: null });
         if (!silent) {
           const msg = data.message || 'Could not decode this symbol.';
           const code = data.code ? `${data.code}: ` : '';
@@ -103,12 +106,18 @@ export default function MarketDecoderView({ embedded }) {
       }
       setBrief(data.brief);
       setCached(Boolean(data.cached));
+      setCacheSnapshot({
+        ageSec: typeof data.cacheAgeSec === 'number' ? data.cacheAgeSec : null,
+        ttlSec: typeof data.cacheTtlSec === 'number' ? data.cacheTtlSec : null,
+      });
       const canon = data.brief?.instrument?.canonical || data.brief?.meta?.canonicalSymbol;
       setActiveSymbol(canon || String(sym).trim().toUpperCase());
       if (!silent) {
         setPreviewOpen(true);
       }
     } catch (e) {
+      setCached(false);
+      setCacheSnapshot({ ageSec: null, ttlSec: null });
       if (!silent) {
         const d = e?.response?.data;
         const code = d?.code ? `${d.code}: ` : '';
@@ -318,7 +327,13 @@ export default function MarketDecoderView({ embedded }) {
           ))}
         </div>
         <div className="md-ref-meta-row">
-          {cached && brief ? <span className="md-ref-cache-note">Cached brief — decode again to refresh</span> : null}
+          {cached && brief ? (
+            <span className="md-ref-cache-note">
+              Cached snapshot
+              {cacheSnapshot.ageSec != null ? ` · ${cacheSnapshot.ageSec}s old` : ''}
+              {cacheSnapshot.ttlSec != null ? ` · TTL ~${cacheSnapshot.ttlSec}s` : ''} — Decode again for live refresh
+            </span>
+          ) : null}
           {brief ? (
             <span className="md-ref-live" role="status">
               <span className="md-ref-live-dot" aria-hidden />
