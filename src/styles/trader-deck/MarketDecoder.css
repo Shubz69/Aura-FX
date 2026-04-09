@@ -2596,8 +2596,9 @@
 /* 2×2 tile layout (four cross legs) — do not inherit 3 columns */
 .md-ref-cross-grid--tiles {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  gap: 8px 10px;
   align-items: stretch;
+  justify-items: stretch;
 }
 
 .md-ref-cross-tile {
@@ -3064,8 +3065,8 @@
   background: rgba(6, 10, 20, 0.65);
   position: relative;
   z-index: 0;
-  scroll-margin-top: 16px;
-  scroll-margin-bottom: 24px;
+  scroll-margin: 0;
+  overflow-anchor: none;
 }
 
 .md-ref-more[open] {
@@ -3082,6 +3083,7 @@
   font-size: 0.76rem;
   color: var(--ref-muted);
   padding: 8px 0;
+  scroll-margin: 0;
 }
 
 .md-ref-more-inner {
@@ -3532,6 +3534,8 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(140, 175, 255, 0.35) rgba(255, 255, 255, 0.04);
+  /* Avoid scroll-position "corrections" when <details> adds height below the fold (felt like content jumping up). */
+  overflow-anchor: none;
 }
 
 .md-decoder-intel-footer {
@@ -3627,9 +3631,14 @@
   min-height: 0;
 }
 
-.md-ref-unified-rail--left .md-ref-cross-grid,
-.md-ref-unified-rail--left .md-ref-cross-grid--tiles {
+.md-ref-unified-rail--left .md-ref-cross-grid {
   flex: 1 1 auto;
+  align-content: start;
+}
+
+/* Tile grid: natural height only — avoids a stretched grid + ragged rows when one leg has a long hint */
+.md-ref-unified-rail--left .md-ref-cross-grid--tiles {
+  flex: 0 0 auto;
   align-content: start;
 }
 
@@ -4176,12 +4185,14 @@
 .md-ref-cross-grid--tiles .md-ref-cross-tile {
   min-width: 0;
   width: 100%;
+  min-height: 4.85rem;
   box-sizing: border-box;
   overflow: hidden;
   align-items: stretch;
   text-align: left;
-  padding: 6px 7px;
-  gap: 3px;
+  padding: 8px 8px 7px;
+  gap: 4px;
+  justify-content: flex-start;
 }
 
 .md-ref-cross-grid--tiles .md-ref-cross-name,
@@ -4197,6 +4208,14 @@
   overflow-wrap: anywhere;
   word-break: break-word;
   hyphens: auto;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  line-height: 1.28;
+  flex-shrink: 0;
+  cursor: default;
 }
 
 /* Pin direction icon to bottom of tile for even visual weight */

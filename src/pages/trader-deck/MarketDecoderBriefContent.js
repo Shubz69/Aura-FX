@@ -363,7 +363,11 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                     <span className="md-ref-cross-chg">
                       {t.changePercent != null && Number.isFinite(t.changePercent) ? formatPct(t.changePercent) : '—'}
                     </span>
-                    {t.hint && !t.available ? <span className="md-ref-cross-hint">{t.hint}</span> : null}
+                    {t.hint && !t.available ? (
+                      <span className="md-ref-cross-hint" title={t.hint}>
+                        {t.hint}
+                      </span>
+                    ) : null}
                     <CrossArrow
                       tone={(t.changePercent ?? 0) > 0 ? 'up' : (t.changePercent ?? 0) < 0 ? 'down' : 'flat'}
                       diag={t.id === 'spy'}
@@ -570,26 +574,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
         />
       </footer>
 
-      <details
-        ref={moreDetailsRef}
-        className="md-ref-more"
-        onToggle={(e) => {
-          const el = e.currentTarget;
-          if (!el.open) return;
-          requestAnimationFrame(() => {
-            const scrollRoot = el.closest('.md-decoder-intel-scroll');
-            const inner = el.querySelector('.md-ref-more-inner');
-            if (scrollRoot && inner) {
-              const rootRect = scrollRoot.getBoundingClientRect();
-              const innerRect = inner.getBoundingClientRect();
-              const pad = 12;
-              if (innerRect.bottom > rootRect.bottom - pad) {
-                scrollRoot.scrollTop += innerRect.bottom - rootRect.bottom + pad;
-              }
-            }
-          });
-        }}
-      >
+      <details ref={moreDetailsRef} className="md-ref-more">
         <summary className="md-ref-more-sum">More context — headlines, calendar, scenarios</summary>
         <div className="md-ref-more-inner">
           <section className="md-ref-panel md-ref-panel--flat">
