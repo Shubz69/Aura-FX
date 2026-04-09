@@ -103,7 +103,8 @@ export default function MarketDecoderView({ embedded }) {
       }
       setBrief(data.brief);
       setCached(Boolean(data.cached));
-      setActiveSymbol(sym);
+      const canon = data.brief?.instrument?.canonical || data.brief?.meta?.canonicalSymbol;
+      setActiveSymbol(canon || String(sym).trim().toUpperCase());
       if (!silent) {
         setPreviewOpen(true);
       }

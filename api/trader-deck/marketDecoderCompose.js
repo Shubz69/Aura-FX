@@ -111,7 +111,16 @@ function equalLiquidityNotes(highs, lows, marketType, window = 14) {
   return out;
 }
 
-function instrumentContext(resolved) {
+function pipSizeForFx(display, marketType) {
+  if (marketType !== 'FX') return null;
+  const u = String(display || '').toUpperCase().replace(/[^A-Z]/g, '');
+  if (u.length === 6 && /^[A-Z]{6}$/.test(u)) {
+    return u.slice(3, 6) === 'JPY' ? 0.01 : 0.0001;
+  }
+  return null;
+}
+
+function instrumentContext(resolved, requestRaw = null) {
   const display = String(resolved.displaySymbol || '').toUpperCase();
   const u = display.replace(/[^A-Z]/g, '');
   let base = null;
@@ -132,19 +141,29 @@ function instrumentContext(resolved) {
     base = 'BTC';
     quote = 'USD';
     assetClass = 'crypto';
+  } else if (u.includes('ETH')) {
+    base = 'ETH';
+    quote = 'USD';
+    assetClass = 'crypto';
   }
   let pricePrecision = 5;
   if (resolved.marketType === 'Crypto') pricePrecision = 2;
   if (resolved.marketType === 'Index' || resolved.marketType === 'Equity') pricePrecision = 2;
+  const canonical = resolved.canonicalSymbol || display;
   return {
+    requestRaw: requestRaw != null && String(requestRaw).trim() ? String(requestRaw).trim() : null,
     raw: resolved.displaySymbol,
-    canonical: resolved.canonicalSymbol || display,
+    canonical,
     display,
     assetClass,
     marketType: resolved.marketType,
     base,
     quote,
     pricePrecision,
+    pipSize: pipSizeForFx(display, resolved.marketType),
+    finnhubSymbol: resolved.finnhubSymbol || null,
+    yahooSymbol: resolved.yahooSymbol || null,
+    watchlistGroup: resolved.watchlistGroup || null,
   };
 }
 
@@ -384,7 +403,10 @@ function buildCrossAssetTiles(bundle, resolved) {
     const price = raw.c != null && Number.isFinite(Number(raw.c)) ? Number(raw.c) : null;
     const changePercent = raw.dp != null && Number.isFinite(Number(raw.dp)) ? Number(raw.dp) : null;
     const available = Boolean(raw.ok && (price != null || changePercent != null));
-    rows.push({ id: key, label, symbol, price, changePercent, relation, available });
+    const quoteStatus = available ? 'ok' : raw.ok === false ? 'offline' : 'pending';
+    const hint =
+      available ? null : quoteStatus === 'offline' ? 'No live quote (check API keys / limits)' : 'Price pending';
+    rows.push({ id: key, label, symbol, price, changePercent, relation, available, quoteStatus, hint });
   };
   add('eurusd', 'EUR/USD', 'EURUSD', display === 'EURUSD' ? 'This pair' : 'USD ↔ EUR');
   add('spy', 'S&P (SPY)', 'SPY', 'US risk');

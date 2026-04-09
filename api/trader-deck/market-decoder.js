@@ -9,6 +9,7 @@ require('../utils/suppress-warnings');
 const { runMarketDecoder } = require('./marketDecoderEngine');
 const { polishMarketDecoderBrief } = require('./marketDecoderPolish');
 const { getStoredDecoderState } = require('../market-data/pipeline-service');
+const { toCanonical } = require('../ai/utils/symbol-registry');
 
 /** Never expose feed/provider diagnostics on the public Market Decoder API (admin uses /api/admin/market-decoder-diagnostics). */
 function stripFeedDiagnosticsFromBrief(brief) {
@@ -83,7 +84,7 @@ module.exports = async (req, res) => {
       message: normalized.message,
     });
   }
-  const symbol = normalized.symbol;
+  const symbol = toCanonical(normalized.symbol) || normalized.symbol;
   const refresh = q.refresh === '1' || q.refresh === 'true';
   const skipAi = q.noAi === '1' || q.noAi === 'true';
 

@@ -6,7 +6,47 @@
 const { getConfig } = require('./config');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getQuote } = require('./services/finnhubService');
-const { forProvider, getResolvedSymbol } = require('../ai/utils/symbol-registry');
+const { getResolvedSymbol } = require('../ai/utils/symbol-registry');
+
+/** Finnhub → FMP fallback quote for any resolved symbol (shared by primary + cross-asset). */
+async function fetchQuoteNumbersForResolved(resolved) {
+  /** @type {{ name: string, status: string, detail?: string }[]} */
+  const log = [];
+  const q = await getQuote(resolved.finnhubSymbol);
+  if (q.ok && q.data && (q.data.c != null || q.data.pc != null)) {
+    log.push({ name: 'Finnhub quote', status: 'ok' });
+    return { ok: true, data: q.data, providerLog: log };
+  }
+  log.push({ name: 'Finnhub quote', status: 'failed', detail: q.error || 'empty' });
+
+  const fmpSym = toFmpSymbol(resolved);
+  const { fmpApiKey } = getConfig();
+  if (fmpApiKey) {
+    try {
+      const url = `${FMP_BASE}/api/v3/quote/${encodeURIComponent(fmpSym)}?apikey=${encodeURIComponent(fmpApiKey)}`;
+      const res = await fetchWithTimeout(url, {}, TIMEOUT_MS);
+      if (res.ok) {
+        const arr = await res.json();
+        const row = Array.isArray(arr) ? arr[0] : arr;
+        if (row && row.price != null) {
+          const c = Number(row.price);
+          const pc = row.previousClose != null ? Number(row.previousClose) : c;
+          const dp = pc && pc !== 0 ? ((c - pc) / Math.abs(pc)) * 100 : 0;
+          log.push({ name: 'FMP quote', status: 'fallback', detail: fmpSym });
+          return {
+            ok: true,
+            data: { c, pc, dp, h: row.dayHigh, l: row.dayLow, o: row.open, d: c - pc },
+            providerLog: log,
+          };
+        }
+      }
+    } catch (e) {
+      log.push({ name: 'FMP quote', status: 'failed', detail: e.message || String(e) });
+    }
+  }
+
+  return { ok: false, data: {}, providerLog: log };
+}
 
 const FINNHUB_BASE = 'https://finnhub.io/api/v1';
 const FMP_BASE = 'https://financialmodelingprep.com';
@@ -96,8 +136,8 @@ async function fmpHistoricalDaily(fmpSymbol) {
 
 /** Map resolved asset to FMP symbol */
 function toFmpSymbol(resolved) {
-  const { displaySymbol, marketType, canonicalSymbol } = resolved;
-  const symbol = canonicalSymbol || displaySymbol;
+  const { displaySymbol, marketType, canonicalSymbol, canonical } = resolved;
+  const symbol = canonicalSymbol || canonical || displaySymbol;
   if (marketType === 'FX' || marketType === 'Crypto') return symbol;
   return symbol.split('.')[0];
 }
@@ -277,42 +317,8 @@ async function fetchDailySeriesWithQuoteFallback(resolved, fromSec, toSec, quote
 }
 
 async function fetchQuoteWithLog(finnhubSymbol, resolved) {
-  /** @type {ProviderEntry[]} */
-  const log = [];
-  const q = await getQuote(finnhubSymbol);
-  if (q.ok && q.data && (q.data.c != null || q.data.pc != null)) {
-    log.push({ name: 'Finnhub quote', status: 'ok' });
-    return { ok: true, data: q.data, providerLog: log };
-  }
-  log.push({ name: 'Finnhub quote', status: 'failed', detail: q.error || 'empty' });
-
-  const fmpSym = toFmpSymbol(resolved);
-  const { fmpApiKey } = getConfig();
-  if (fmpApiKey) {
-    try {
-      const url = `${FMP_BASE}/api/v3/quote/${encodeURIComponent(fmpSym)}?apikey=${encodeURIComponent(fmpApiKey)}`;
-      const res = await fetchWithTimeout(url, {}, TIMEOUT_MS);
-      if (res.ok) {
-        const arr = await res.json();
-        const row = Array.isArray(arr) ? arr[0] : arr;
-        if (row && row.price != null) {
-          const c = Number(row.price);
-          const pc = row.previousClose != null ? Number(row.previousClose) : c;
-          const dp = pc && pc !== 0 ? ((c - pc) / Math.abs(pc)) * 100 : 0;
-          log.push({ name: 'FMP quote', status: 'fallback', detail: fmpSym });
-          return {
-            ok: true,
-            data: { c, pc, dp, h: row.dayHigh, l: row.dayLow, o: row.open, d: c - pc },
-            providerLog: log,
-          };
-        }
-      }
-    } catch (e) {
-      log.push({ name: 'FMP quote', status: 'failed', detail: e.message || String(e) });
-    }
-  }
-
-  return { ok: false, data: {}, providerLog: log };
+  void finnhubSymbol;
+  return fetchQuoteNumbersForResolved(resolved);
 }
 
 /**
@@ -490,26 +496,38 @@ async function fetchMarketDecoderContextNews(resolved, limit = 12) {
   return merged.slice(0, cap);
 }
 
+/** Parallel cross-asset quotes with Finnhub → FMP fallback per leg (same path as primary quote). */
 async function fetchCrossAssetQuotes() {
-  const symbols = [
-    { id: 'eurusd', symbol: 'EURUSD', label: 'EURUSD' },
-    { id: 'spy', symbol: 'SPY', label: 'SPY' },
-    { id: 'xau', symbol: 'XAUUSD', label: 'XAUUSD' },
-    { id: 'btc', symbol: 'BTCUSD', label: 'BTCUSD' },
+  const specs = [
+    { id: 'eurusd', canonical: 'EURUSD' },
+    { id: 'spy', canonical: 'SPY' },
+    { id: 'xau', canonical: 'XAUUSD' },
+    { id: 'btc', canonical: 'BTCUSD' },
   ];
-  const out = {};
-  for (const s of symbols) {
-    const q = await getQuote(forProvider(s.symbol, 'finnhub'));
-    if (q.ok && q.data) {
-      out[s.id] = {
-        label: s.label,
-        c: q.data.c != null ? Number(q.data.c) : null,
-        dp: q.data.dp != null ? Number(q.data.dp) : null,
-        ok: true,
+  const settled = await Promise.all(
+    specs.map(async (s) => {
+      const r = getResolvedSymbol(s.canonical);
+      const pack = await fetchQuoteNumbersForResolved(r);
+      const d = pack.data || {};
+      const c = d.c != null ? Number(d.c) : null;
+      const dp = d.dp != null ? Number(d.dp) : null;
+      const usable = pack.ok && (c != null || (dp != null && Number.isFinite(dp)));
+      return {
+        id: s.id,
+        label: s.canonical,
+        c: usable ? c : null,
+        dp: dp != null && Number.isFinite(dp) ? dp : null,
+        ok: usable,
       };
-    } else {
-      out[s.id] = { label: s.label, c: null, dp: null, ok: false };
-    }
+    })
+  );
+  const out = {};
+  for (const row of settled) {
+    out[row.id] = { label: row.label, c: row.c, dp: row.dp, ok: row.ok };
+  }
+  if (process.env.AURA_DECODER_DEBUG === '1') {
+    const miss = settled.filter((x) => !x.ok).map((x) => x.id);
+    if (miss.length) console.info('[market-decoder-data] cross-asset quote gaps', { legs: miss });
   }
   return out;
 }
@@ -518,6 +536,7 @@ module.exports = {
   fetchDailySeries,
   fetchDailySeriesWithQuoteFallback,
   fetchQuoteWithLog,
+  fetchQuoteNumbersForResolved,
   fetchCrossAssetQuotes,
   fetchMarketDecoderContextNews,
   finnhubCandles,

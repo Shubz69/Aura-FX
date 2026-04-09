@@ -2260,7 +2260,7 @@
   display: grid;
   grid-template-columns: minmax(160px, 0.7fr) minmax(320px, 1.6fr) minmax(200px, 0.78fr);
   gap: 3px;
-  align-items: start;
+  align-items: stretch;
   margin-bottom: 2px;
 }
 
@@ -2269,6 +2269,7 @@
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  min-height: 0;
 }
 
 .md-ref-col--rail {
@@ -3330,6 +3331,8 @@
 }
 
 .md-decoder-intel-scroll {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -3381,14 +3384,91 @@
   text-transform: uppercase;
 }
 
+/* Brief body: fill preview viewport, stretch rails, chart consumes flex space */
+.md-ref-brief-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.md-decoder-intel-scroll > .md-decoder--intel-preview-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .md-ref-grid--dense {
   gap: 4px;
-  align-items: start;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
   margin-bottom: 3px;
 }
 
 .md-ref-grid--dense .md-ref-col {
   gap: 4px;
+  min-height: 0;
+}
+
+.md-ref-col--center {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.md-ref-unified-rail--left,
+.md-ref-unified-rail--right {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.md-ref-unified-rail--left .md-ref-unified-section:last-of-type {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.md-ref-unified-rail--left .md-ref-cross-grid,
+.md-ref-unified-rail--left .md-ref-cross-grid--tiles {
+  flex: 1 1 auto;
+  align-content: start;
+}
+
+.md-ref-unified-rail--right .md-ref-rail-grid {
+  flex: 0 0 auto;
+}
+
+.md-ref-unified-section--alerts {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.md-ref-unified-section--alerts .md-ref-alerts-list,
+.md-ref-unified-section--alerts .md-ref-alerts-empty {
+  flex: 1 1 auto;
+}
+
+.md-ref-cross-hint {
+  width: 100%;
+  font-size: 0.58rem;
+  line-height: 1.25;
+  color: rgba(160, 185, 225, 0.55);
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+.md-mse-note--warn {
+  color: rgba(230, 200, 130, 0.78) !important;
+  font-weight: 600;
 }
 
 /* Support panels: quiet glass, tight */
@@ -3590,7 +3670,8 @@
 
 @media (min-width: 1081px) {
   .md-mse {
-    min-height: clamp(400px, 54vh, 880px);
+    flex: 1 1 min(520px, 52vh);
+    min-height: min(360px, 38vh);
   }
 }
 
@@ -4261,11 +4342,17 @@
 
 /* ——— Horizontal decision engine ——— */
 .md-ref-footer-decision {
-  margin-top: 2px;
+  margin-top: 4px;
+  flex-shrink: 0;
   padding: 0;
   border: none;
   background: transparent;
   box-shadow: none;
+}
+
+.md-ref-brief-layout .md-ref-more {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .md-decision-bar {

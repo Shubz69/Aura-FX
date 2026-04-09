@@ -152,8 +152,10 @@ function buildTimeline(brief) {
   const out = [];
   const er = brief?.eventRisk;
   if (Array.isArray(er)) {
-    er.slice(0, 3).forEach((e) => {
-      out.push({ title: e.title || 'Event', hint: e.timeUntil || e.impact || '' });
+    er.forEach((e) => {
+      const title = e.title || 'Event';
+      if (/no scored macro events/i.test(title)) return;
+      out.push({ title, hint: e.timeUntil || e.impact || '' });
     });
   }
   const mm = brief?.meta?.marketMeetings;
@@ -166,8 +168,11 @@ function buildTimeline(brief) {
       }
     });
   }
-  while (out.length < 3) out.push({ title: '—', hint: '' });
-  return out.slice(0, 3);
+  const trimmed = out.slice(0, 3);
+  if (!trimmed.length) {
+    return [{ title: 'No scored prints in this window', hint: 'Calendar may be empty or pair scope missed overlap' }];
+  }
+  return trimmed;
 }
 
 function pulseDeskLabel(brief) {
@@ -211,7 +216,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
         total: typeof meta.headlineTotal === 'number' ? meta.headlineTotal : meta.instrumentHeadlines.length,
       };
     }
-    const b = buildHeadlineBuckets(brief?.header?.asset, brief?.meta?.anchorNews);
+    const b = buildHeadlineBuckets(brief?.instrument?.display || brief?.header?.asset, brief?.meta?.anchorNews);
     return {
       items: b.relevant.length ? b.relevant : b.fallback,
       scope: b.relevant.length ? 'relevant' : 'fallback',
@@ -225,7 +230,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
 
   if (!brief) return null;
 
-  const mt = brief?.header?.marketType || 'FX';
+  const mt = brief?.instrument?.marketType || brief?.header?.marketType || 'FX';
   const changePct = parseNumberLoose(brief.header?.changePercent);
   const instrumentHeadlines = headlinePack.items;
   const showingFallbackHeadlines = headlinePack.scope === 'fallback' || headlinePack.scope === 'none';
@@ -253,8 +258,13 @@ export default function MarketDecoderBriefContent({ brief, q }) {
         ? 'Global calendar'
         : '';
 
+  const assetLabel = brief.instrument?.display || brief.header?.asset;
+  const sparseHint = brief.meta?.sparseSeries
+    ? 'Sparse history — MAs / pivots are indicative until full daily load.'
+    : null;
+
   return (
-    <>
+    <div className="md-ref-brief-layout">
       <div className="md-ref-grid md-ref-grid--dense">
         <aside className="md-ref-col md-ref-col--left">
           <div className="md-ref-unified-rail md-ref-unified-rail--left">
@@ -342,6 +352,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                     <span className="md-ref-cross-chg">
                       {t.changePercent != null && Number.isFinite(t.changePercent) ? formatPct(t.changePercent) : '—'}
                     </span>
+                    {t.hint && !t.available ? <span className="md-ref-cross-hint">{t.hint}</span> : null}
                     <CrossArrow
                       tone={(t.changePercent ?? 0) > 0 ? 'up' : (t.changePercent ?? 0) < 0 ? 'down' : 'flat'}
                       diag={t.id === 'spy'}
@@ -368,7 +379,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
           <section className="md-mse md-ref-panel md-ref-panel--unified md-ref-panel--chart">
             <div className="md-mse-top">
               <div className="md-ref-chart-head md-mse-head">
-                <span className="md-ref-pair">{formatPairLabel(brief.header.asset)}</span>
+                <span className="md-ref-pair">{formatPairLabel(assetLabel)}</span>
                 <span className="md-ref-last">{formatLevel(brief.header.price, mt)}</span>
                 <span
                   className={
@@ -378,8 +389,9 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                         ? 'md-ref-pct md-ref-pct--down'
                         : 'md-ref-pct'
                   }
+                title={changePct == null ? 'Session change % unavailable from this snapshot' : undefined}
                 >
-                  {formatPct(changePct) || 'Session snapshot pending'}
+                  {formatPct(changePct) ?? 'Δ n/a'}
                   {changePct != null ? (changePct >= 0 ? ' ▲' : ' ▼') : ''}
                 </span>
               </div>
@@ -387,6 +399,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                 {brief.sessionFlow?.currentSession ? (
                   <span className="md-mse-desk">Desk · {brief.sessionFlow.currentSession}</span>
                 ) : null}
+                {sparseHint ? <span className="md-mse-note md-mse-note--warn">{sparseHint}</span> : null}
                 {brief.chartOverlay?.note ? <span className="md-mse-note">{brief.chartOverlay.note}</span> : null}
               </div>
             </div>
@@ -591,7 +604,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
             )}
           </section>
           <section className="md-ref-panel md-ref-panel--flat">
-            <h3 className="md-ref-subh">Headlines · {brief.header.asset}</h3>
+            <h3 className="md-ref-subh">Headlines · {assetLabel}</h3>
             {instrumentHeadlines.length > 0 ? (
               <>
                 <p className="md-meets-scope md-decoder-small">
@@ -599,7 +612,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
                     ? 'No headlines returned for this decode.'
                     : showingFallbackHeadlines
                       ? `Broader macro context from ${headlinePack.total} headlines.`
-                      : `${instrumentHeadlines.length} headlines ranked for ${brief.header.asset}.`}
+                      : `${instrumentHeadlines.length} headlines ranked for ${assetLabel}.`}
                 </p>
                 <ul className="md-anchor-news-list">
                   {instrumentHeadlines.map((item, i) => {
@@ -646,6 +659,6 @@ export default function MarketDecoderBriefContent({ brief, q }) {
           </section>
         </div>
       </details>
-    </>
+    </div>
   );
 }

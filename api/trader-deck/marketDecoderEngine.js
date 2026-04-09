@@ -18,25 +18,30 @@ const {
 const { rankInstrumentHeadlines } = require('./instrumentHeadlines');
 const compose = require('./marketDecoderCompose');
 
-const DECODER_ENGINE_VERSION = 3;
+const DECODER_ENGINE_VERSION = 4;
 
 const TIMEOUT_MS = 9000;
 
 /** @typedef {'FX'|'Crypto'|'Index'|'Commodity'|'Equity'} MarketType */
 
 /**
- * Normalize user input → display symbol + Finnhub routing.
+ * Normalize user input → single resolved context for the whole decoder (quotes, calendar, tiles, UI).
  */
 function resolveAsset(raw) {
-  const resolved = getResolvedSymbol(raw);
-  if (!resolved?.canonical) return null;
+  const r = getResolvedSymbol(raw);
+  if (!r?.canonical) return null;
   return {
-    displaySymbol: resolved.displaySymbol,
-    marketType: resolved.marketType,
-    candleKind: resolved.candleKind,
-    finnhubSymbol: resolved.finnhubSymbol,
-    canonicalSymbol: resolved.canonical,
-    decoderProxySymbol: resolved.decoderProxySymbol,
+    displaySymbol: r.displaySymbol,
+    marketType: r.marketType,
+    candleKind: r.candleKind,
+    finnhubSymbol: r.finnhubSymbol,
+    canonicalSymbol: r.canonical,
+    decoderProxySymbol: r.decoderProxySymbol,
+    yahooSymbol: r.yahooSymbol,
+    twelveDataSymbol: r.twelveDataSymbol,
+    alphaVantageSymbol: r.alphaVantageSymbol,
+    assetClass: r.assetClass,
+    watchlistGroup: r.watchlistGroup,
   };
 }
 
@@ -243,6 +248,29 @@ function calendarTokensForResolved(resolved) {
   if (marketType === 'Commodity' && (u.includes('XAG') || u.includes('SILVER'))) {
     (CCY_CAL_HINTS.XAG || []).forEach((t) => tokens.add(t));
     addCcy('USD');
+    return [...tokens];
+  }
+  if (marketType === 'Index' || marketType === 'Equity') {
+    addCcy('USD');
+    [
+      'FED',
+      'FOMC',
+      'CPI',
+      'NFP',
+      'GDP',
+      'PMI',
+      'RETAIL',
+      'EARNINGS',
+      'RATE',
+      'TREASURY',
+      'INFLATION',
+      'UNEMPLOYMENT',
+      'ECB',
+      'BOE',
+      'BOJ',
+      'STOCK',
+      'INDEX',
+    ].forEach((t) => tokens.add(t));
     return [...tokens];
   }
   addCcy('USD');
@@ -676,6 +704,7 @@ function whatMattersTemplate({ macro, technical, risk }) {
  * Build full Market Decoder brief (rules-only text; API may polish).
  */
 async function runMarketDecoder(symbolInput) {
+  const requestRaw = symbolInput != null ? String(symbolInput).trim() : '';
   const resolved = resolveAsset(symbolInput);
   if (!resolved) {
     return {
@@ -923,7 +952,7 @@ async function runMarketDecoder(symbolInput) {
   const anchorList = Array.isArray(anchorNews) ? anchorNews : [];
   const headlineRank = rankInstrumentHeadlines(resolved, displaySymbol, anchorList, { maxRelevant: 6, maxFallback: 4 });
 
-  const instrument = compose.instrumentContext(resolved);
+  const instrument = compose.instrumentContext(resolved, requestRaw);
   const rsiVal = compose.rsiLast(closes);
   const rsiPack = compose.rsiStateLabel(rsiVal);
   const adrPct = compose.averageDailyRangePercent(highs, lows, closes, 5);
@@ -1015,12 +1044,15 @@ async function runMarketDecoder(symbolInput) {
   };
 
   if (process.env.NODE_ENV !== 'production' || process.env.AURA_DECODER_DEBUG === '1') {
+    const crossOk = ['eurusd', 'spy', 'xau', 'btc'].filter((k) => crossBundle && crossBundle[k] && crossBundle[k].ok).length;
     console.info('[market-decoder] composed', {
+      requestRaw: instrument.requestRaw || null,
       canonical: instrument.canonical,
       display: instrument.display,
       readiness: readiness100,
       pivOk,
       sparse: isSparse,
+      crossAssetLegsOk: crossOk,
     });
   }
 
@@ -1105,6 +1137,7 @@ async function runMarketDecoder(symbolInput) {
         dataHealth,
         finnhubSymbol,
         canonicalSymbol,
+        requestSymbolRaw: requestRaw || null,
         decoderEngineVersion: DECODER_ENGINE_VERSION,
         sparkline,
         chartBars,
@@ -1114,6 +1147,7 @@ async function runMarketDecoder(symbolInput) {
         headlineTotal: headlineRank.total,
         marketMeetings: marketMeetingsForPair,
         marketMeetingsScope: pairMeetingsPick.scope,
+        sparseSeries: isSparse,
         generatedAt: new Date().toISOString(),
       },
     },
