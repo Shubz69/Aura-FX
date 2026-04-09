@@ -198,12 +198,19 @@ export default function MarketDecoderBriefContent({ brief, q }) {
 
   const openScenarioDetails = useCallback(() => {
     const el = moreDetailsRef.current;
-    if (el) {
-      el.open = true;
-      requestAnimationFrame(() => {
-        document.getElementById('md-decoder-scenario-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    }
+    if (!el) return;
+    el.open = true;
+    requestAnimationFrame(() => {
+      const target = document.getElementById('md-decoder-scenario-detail');
+      const scrollRoot = el.closest('.md-decoder-intel-scroll');
+      if (!scrollRoot || !target) return;
+      const rootRect = scrollRoot.getBoundingClientRect();
+      const tRect = target.getBoundingClientRect();
+      const pad = 12;
+      if (tRect.bottom > rootRect.bottom - pad) {
+        scrollRoot.scrollTop += tRect.bottom - rootRect.bottom + pad;
+      }
+    });
   }, []);
 
   const headlinePack = useMemo(() => {
@@ -570,7 +577,16 @@ export default function MarketDecoderBriefContent({ brief, q }) {
           const el = e.currentTarget;
           if (!el.open) return;
           requestAnimationFrame(() => {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const scrollRoot = el.closest('.md-decoder-intel-scroll');
+            const inner = el.querySelector('.md-ref-more-inner');
+            if (scrollRoot && inner) {
+              const rootRect = scrollRoot.getBoundingClientRect();
+              const innerRect = inner.getBoundingClientRect();
+              const pad = 12;
+              if (innerRect.bottom > rootRect.bottom - pad) {
+                scrollRoot.scrollTop += innerRect.bottom - rootRect.bottom + pad;
+              }
+            }
           });
         }}
       >

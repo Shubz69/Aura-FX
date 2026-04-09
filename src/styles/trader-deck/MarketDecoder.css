@@ -2587,8 +2587,17 @@
 
 .md-ref-cross-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 5px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 2×2 tile layout (four cross legs) — do not inherit 3 columns */
+.md-ref-cross-grid--tiles {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  align-items: stretch;
 }
 
 .md-ref-cross-tile {
@@ -3054,7 +3063,7 @@
   padding: 2px 10px 10px;
   background: rgba(6, 10, 20, 0.65);
   position: relative;
-  z-index: 2;
+  z-index: 0;
   scroll-margin-top: 16px;
   scroll-margin-bottom: 24px;
 }
@@ -4165,10 +4174,35 @@
 }
 
 .md-ref-cross-grid--tiles .md-ref-cross-tile {
-  align-items: flex-start;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  align-items: stretch;
   text-align: left;
-  padding: 5px 6px;
-  gap: 1px;
+  padding: 6px 7px;
+  gap: 3px;
+}
+
+.md-ref-cross-grid--tiles .md-ref-cross-name,
+.md-ref-cross-grid--tiles .md-ref-cross-price,
+.md-ref-cross-grid--tiles .md-ref-cross-rel,
+.md-ref-cross-grid--tiles .md-ref-cross-chg {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.md-ref-cross-grid--tiles .md-ref-cross-hint {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* Pin direction icon to bottom of tile for even visual weight */
+.md-ref-cross-grid--tiles .md-ref-cross-tile > .md-ref-cross-arrow-ico {
+  margin-top: auto;
+  align-self: flex-end;
 }
 
 .md-ref-cross-price {
@@ -4606,7 +4640,7 @@
   flex: 1 1 0;
   min-width: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 5px;
   padding: 6px 7px;
   border-radius: 10px;
