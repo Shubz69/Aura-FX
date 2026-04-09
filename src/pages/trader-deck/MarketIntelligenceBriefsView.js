@@ -142,19 +142,9 @@ function briefsPayloadFromContentResponse(res, fallbackStorageDate) {
   const list = filterToAllowedBriefKinds(Array.isArray(res.data?.briefs) ? res.data.briefs : []);
   const weekendFallback = Boolean(res.data?.weekendFallback);
   const src = String(res.data?.briefsSourceDate || fallbackStorageDate).trim().slice(0, 10);
-  const d = res.data?.intelDiagnostics;
-  const intelDiagnostics =
-    d && typeof d === 'object'
-      ? {
-          automationModelConfigured: Boolean(d.automationModelConfigured),
-          quoteProviderConfigured: Boolean(d.quoteProviderConfigured),
-          fredConfigured: Boolean(d.fredConfigured),
-        }
-      : null;
   return {
     list,
     weekendNote: weekendFallback ? { sourceDate: src } : null,
-    intelDiagnostics,
   };
 }
 
@@ -194,7 +184,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [selectedKinds, setSelectedKinds] = useState(() => new Set(BRIEF_KIND_ORDER));
   /** UK weekend daily view: server serves previous weekday’s briefs */
   const [weekendBriefsNote, setWeekendBriefsNote] = useState(null);
-  const [intelDiagnostics, setIntelDiagnostics] = useState(null);
   const fileInputRef = useRef(null);
   const typewriterScrollRef = useRef(null);
   const filterWrapRef = useRef(null);
@@ -234,20 +223,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       year: 'numeric',
     });
   }, [weekendBriefsNote]);
-
-  const emptyBriefsServerHint = useMemo(() => {
-    if (!intelDiagnostics || briefs.length > 0) return null;
-    if (!intelDiagnostics.automationModelConfigured) {
-      return 'Automated briefs need PERPLEXITY_AUTOMATION_MODEL in your server environment (for example Vercel project env vars). Without it, the seven category packs and institutional brief are never generated.';
-    }
-    if (!intelDiagnostics.quoteProviderConfigured) {
-      return 'Add at least one live quote key: TWELVE_DATA_API_KEY, FMP_API_KEY, or FINNHUB_API_KEY. Otherwise quote caches stay empty and generation is unreliable.';
-    }
-    if (!intelDiagnostics.fredConfigured) {
-      return 'FRED_API_KEY is not set — yields and some macro context are missing; briefs may still be thin.';
-    }
-    return 'Env keys look present. If logs show Finnhub 403, the key or plan is blocking that API. FMP 429 means rate limits — add TWELVE_DATA_API_KEY or upgrade FMP. Market Decoder and automated briefs both use these market data providers.';
-  }, [intelDiagnostics, briefs.length]);
 
   const previewOpen = Boolean(previewId || previewEmbedUrl);
 
@@ -335,7 +310,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     setAddSuccess(null);
     setSelectedKinds(new Set(BRIEF_KIND_ORDER));
     setWeekendBriefsNote(null);
-    setIntelDiagnostics(null);
 
     const finishLoading = () => {
       if (!cancelled) setLoading(false);
@@ -346,7 +320,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         if (cancelled) return;
         setBriefs(payload.list);
         setWeekendBriefsNote(payload.weekendNote);
-        setIntelDiagnostics(payload.intelDiagnostics);
         if (payload.list.length > 0) return;
 
         pollTimer = setInterval(() => {
@@ -362,7 +335,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               if (cancelled || !nextPayload.list.length) return;
               setBriefs(nextPayload.list);
               setWeekendBriefsNote(nextPayload.weekendNote);
-              setIntelDiagnostics(nextPayload.intelDiagnostics);
               if (pollTimer) clearInterval(pollTimer);
               pollTimer = null;
             })
@@ -534,7 +506,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         const p = briefsPayloadFromContentResponse(res, storageDateStr);
         setBriefs(p.list);
         setWeekendBriefsNote(p.weekendNote);
-        setIntelDiagnostics(p.intelDiagnostics);
       })
       .catch((err) => setError(err.response?.data?.message || err.message || 'Failed to add link'))
       .finally(() => setUploading(false));
@@ -624,11 +595,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               <p className="td-deck-mi-modern-sub td-deck-mi-weekend-note" role="note">
                 Daily automated briefs run on UK business days (Monday–Friday) only. Showing the latest available
                 pack from <strong>{weekendSourceLabel}</strong>.
-              </p>
-            )}
-            {!loading && !error && briefs.length === 0 && emptyBriefsServerHint && (
-              <p className="td-deck-mi-modern-sub td-deck-mi-intel-diagnostics" role="status">
-                {emptyBriefsServerHint}
               </p>
             )}
           </div>

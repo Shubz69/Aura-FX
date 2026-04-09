@@ -11,11 +11,8 @@ const {
   prefetchInstrumentResearchForDaily,
   shouldRunWindow,
   shouldPrefetchInstrumentResearchWindow,
+  isTraderDeskAutomationConfigured,
 } = require('../trader-deck/services/autoBriefGenerator');
-
-function hasAutomationModelConfigured() {
-  return Boolean(String(process.env.PERPLEXITY_AUTOMATION_MODEL || '').trim());
-}
 
 function isAuthorized(req) {
   const authHeader = req.headers.authorization;
@@ -35,11 +32,11 @@ const handler = async (req, res) => {
   if (!isAuthorized(req) && process.env.NODE_ENV === 'production') {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
-  if (!hasAutomationModelConfigured()) {
+  if (!isTraderDeskAutomationConfigured()) {
     return res.status(503).json({
       success: false,
-      message: 'Automation blocked: PERPLEXITY_AUTOMATION_MODEL is required.',
-      code: 'PERPLEXITY_AUTOMATION_MODEL_REQUIRED',
+      message: 'Automation blocked: PERPLEXITY_API_KEY is required.',
+      code: 'PERPLEXITY_API_KEY_REQUIRED',
     });
   }
 

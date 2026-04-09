@@ -306,9 +306,13 @@ function getAutomationModel() {
   ).trim();
 }
 
+function isTraderDeskAutomationConfigured() {
+  return Boolean(String(process.env.PERPLEXITY_API_KEY || '').trim());
+}
+
 function assertAutomationModelConfigured() {
-  if (!String(process.env.PERPLEXITY_AUTOMATION_MODEL || '').trim()) {
-    throw new Error('PERPLEXITY_AUTOMATION_MODEL is required for automated Trader Desk runs');
+  if (!isTraderDeskAutomationConfigured()) {
+    throw new Error('PERPLEXITY_API_KEY is required for automated Trader Desk runs');
   }
 }
 
@@ -2410,6 +2414,7 @@ module.exports = {
   prefetchInstrumentResearchForDaily,
   shouldRunWindow,
   shouldPrefetchInstrumentResearchWindow,
+  isTraderDeskAutomationConfigured,
   stripSources,
   assertNoSources,
   _test: {
