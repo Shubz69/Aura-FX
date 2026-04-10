@@ -375,14 +375,21 @@
   min-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
+  flex: 0 0 auto;
 }
 
 .journal-page .journal-terminal-body:has(.trader-lab-v2) {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding-bottom: 0;
+  padding-bottom: 24px;
+  overflow: visible;
+}
+
+.journal-page .trader-suite-page:has(.trader-lab-v2) {
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 /*
@@ -390,8 +397,14 @@
  * same fill + border tokens as Journal.css, but softer rim/shadow so it reads as “blurred crystal”
  * (full --journal-panel-outer-glow uses strong white rings that looked milky / “all white” here).
  */
+/* Rim panels default overflow:hidden — clips Trader Lab below the fold; allow vertical paint-out for page scroll */
+.journal-page .trade-validator-shell.journal-glass-panel--rim:has(.trader-lab-v2) {
+  overflow-x: hidden;
+  overflow-y: visible !important;
+}
+
 .journal-page .trade-validator-shell.journal-glass-panel:has(.trader-lab-v2) {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   min-height: 0 !important;
@@ -434,10 +447,11 @@
 }
 
 .trade-validator-shell:has(.trader-lab-v2) .aura-shell-content {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: visible;
 }
 
 /* Hero / tabs: dark navy tint only — no light grey wash (reads “white” on the glass) */
@@ -505,15 +519,17 @@
   background-image: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: visible;
 }
 
 .trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2) > .trader-lab-v2 {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
+  overflow: visible;
 }
 
 .trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2)::after {
@@ -611,12 +627,13 @@
   flex-direction: column !important;
 }
 
+/* Page scrolls (journal-page); avoid nested max-height traps that hide thesis / footer / saved labs */
 .trade-validator-shell .trader-lab-v2__left,
 .trade-validator-shell .trader-lab-v2__right,
 .trade-validator-shell .trader-lab-v2__center {
-  max-height: calc(100dvh - 200px) !important;
-  overflow-y: auto !important;
-  scrollbar-width: thin !important;
+  max-height: none !important;
+  overflow-x: hidden;
+  overflow-y: visible !important;
   min-height: 0 !important;
 }
 
@@ -693,6 +710,7 @@
 @media (max-width: 1180px) {
   .trade-validator-shell .trader-lab-v2 {
     grid-template-columns: 1fr !important;
+    grid-template-rows: auto !important;
     min-height: 0 !important;
   }
 }

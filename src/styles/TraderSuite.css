@@ -1089,10 +1089,11 @@
   --tlab-line: rgba(140, 175, 255, 0.14);
   display: grid;
   grid-template-columns: minmax(252px, 300px) minmax(0, 1fr) minmax(268px, 328px);
-  grid-template-rows: minmax(0, 1fr) auto;
+  /* auto rows: let rails + chart define height; 1fr was shrinking content inside fixed-height flex parents */
+  grid-template-rows: auto auto;
   gap: 10px 12px;
   padding: 12px 14px 16px;
-  align-items: stretch;
+  align-items: start;
   min-height: 0;
 }
 
@@ -1608,8 +1609,13 @@
 }
 
 .journal-page .tlab-thesis-grid .tlab-textarea--tight {
-  min-height: 58px;
-  max-height: 110px;
+  min-height: 92px;
+  max-height: none;
+  resize: vertical;
+  box-sizing: border-box;
+  padding-top: 11px;
+  padding-bottom: 11px;
+  line-height: 1.5;
 }
 
 .journal-page .tlab-decision-mini {
@@ -2626,7 +2632,7 @@
 @media (max-width: 900px) {
   .journal-page .trader-lab-v2 {
     grid-template-columns: 1fr;
-    grid-template-rows: auto;
+    grid-template-rows: auto auto;
     min-height: 0;
     padding: 8px 0 12px;
   }
