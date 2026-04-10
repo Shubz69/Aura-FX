@@ -12,7 +12,9 @@ import SignalList from '../../components/trader-deck/SignalList';
 import ChangeList from '../../components/trader-deck/ChangeList';
 import FocusList from '../../components/trader-deck/FocusList';
 import RiskRadarList from '../../components/trader-deck/RiskRadarList';
+import SessionContextPanel from '../../components/trader-deck/SessionContextPanel';
 import { getTraderDeckIntelStorageYmd } from '../../lib/trader-deck/deskDates';
+import { formatRelativeFreshness } from '../../lib/trader-deck/marketOutlookDisplayFormatters';
 
 function normalizeForUI(data) {
   if (!data) return null;
@@ -53,6 +55,7 @@ function normalizeForUI(data) {
     aiSessionBrief: data.aiSessionBrief || '',
     aiTradingPriorities: Array.isArray(data.aiTradingPriorities) ? data.aiTradingPriorities : [],
     headlineSample: Array.isArray(data.headlineSample) ? data.headlineSample.map((h) => String(h || '').trim()).filter(Boolean) : [],
+    sessionContext: data.sessionContext && typeof data.sessionContext === 'object' ? data.sessionContext : null,
   };
 }
 
@@ -267,12 +270,15 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     riskEngine,
   } = showing;
 
+  const sessionContextLive = (data && data.sessionContext) || ui.sessionContext || null;
+  const headlineFeed = (data && data.headlineSample) || ui.headlineSample || [];
+
   const renderRegime = () => {
     if (editMode && editDraft) {
       const r = editDraft.marketRegime || {};
       return (
         <div className="td-mi-regime-rows td-mi-edit">
-          {['currentRegime', 'bias', 'primaryDriver', 'secondaryDriver', 'marketSentiment', 'tradeEnvironment'].map((key) => (
+          {['currentRegime', 'bias', 'primaryDriver', 'secondaryDriver', 'marketSentiment', 'tradeEnvironment', 'biasStrength', 'convictionClarity'].map((key) => (
             <div key={key} className="td-mi-regime-row">
               <label className="td-mi-regime-label">
                 {key === 'currentRegime' && 'Regime'}
@@ -281,6 +287,8 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                 {key === 'secondaryDriver' && 'Secondary Driver'}
                 {key === 'marketSentiment' && 'Global Sentiment'}
                 {key === 'tradeEnvironment' && 'Trade Environment'}
+                {key === 'biasStrength' && 'Bias strength'}
+                {key === 'convictionClarity' && 'Conviction / clarity'}
               </label>
               <input
                 type="text"
@@ -461,29 +469,43 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               <div className="td-outlook-terminal-inner">
                 <div className="td-outlook-concept-grid">
                   <section
-                    className="td-outlook-concept-card td-outlook-concept-card--regime"
+                    className="td-outlook-concept-card td-outlook-concept-card--regime mo-card-shell"
                     aria-label="Aura market regime"
                   >
                     <h2 className="td-outlook-concept-card__title">Aura Market Regime</h2>
                     <div className="td-outlook-concept-card__body">{renderRegime()}</div>
                   </section>
 
-                  <div className="td-outlook-concept-dual" aria-label="Key drivers and cross-asset signals">
-                    <section className="td-outlook-concept-card td-outlook-concept-card--drivers">
-                      <h2 className="td-outlook-concept-card__title">Key Market Drivers</h2>
-                      <div className="td-outlook-concept-card__body">
-                        {editMode && editDraft ? renderDriversEdit() : <DriverList drivers={keyDrivers} />}
-                      </div>
-                    </section>
-                    <section className="td-outlook-concept-card td-outlook-concept-card--signals">
-                      <h2 className="td-outlook-concept-card__title">Cross-Asset Signals</h2>
-                      <div className="td-outlook-concept-card__body">
-                        {editMode && editDraft ? renderSignalsEdit() : <SignalList signals={crossAssetSignals} />}
-                      </div>
-                    </section>
+                  <div className="td-outlook-concept-intel mo-grid-gap-sm" aria-label="Session context, drivers, and cross-asset signals">
+                    <div className="td-outlook-concept-intel-col td-outlook-concept-intel-col--left">
+                      <section className="td-outlook-concept-card td-outlook-concept-card--session mo-card-shell" aria-label="Session context">
+                        <h2 className="td-outlook-concept-card__title mo-section-header">Session Context</h2>
+                        <div className="td-outlook-concept-card__body td-outlook-concept-card__body--session">
+                          {sessionContextLive ? (
+                            <SessionContextPanel sessionContext={sessionContextLive} />
+                          ) : (
+                            <p className="td-outlook-empty mo-terminal-feed__empty">Session context loads with live intelligence.</p>
+                          )}
+                        </div>
+                      </section>
+                      <section className="td-outlook-concept-card td-outlook-concept-card--drivers mo-card-shell">
+                        <h2 className="td-outlook-concept-card__title">Key Market Drivers</h2>
+                        <div className="td-outlook-concept-card__body">
+                          {editMode && editDraft ? renderDriversEdit() : <DriverList drivers={keyDrivers} />}
+                        </div>
+                      </section>
+                    </div>
+                    <div className="td-outlook-concept-intel-col td-outlook-concept-intel-col--right">
+                      <section className="td-outlook-concept-card td-outlook-concept-card--signals mo-card-shell">
+                        <h2 className="td-outlook-concept-card__title">Cross-Asset Signals</h2>
+                        <div className="td-outlook-concept-card__body">
+                          {editMode && editDraft ? renderSignalsEdit() : <SignalList signals={crossAssetSignals} />}
+                        </div>
+                      </section>
+                    </div>
                   </div>
 
-                  <section className="td-outlook-concept-card td-outlook-concept-card--changes" aria-label={changesTitle}>
+                  <section className="td-outlook-concept-card td-outlook-concept-card--changes mo-card-shell" aria-label={changesTitle}>
                     <h2 className="td-outlook-concept-card__title">{changesTitle}</h2>
                     <div className="td-outlook-concept-card__body">
                       {editMode && editDraft ? (
@@ -497,7 +519,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                   </section>
 
                   <section
-                    className="td-outlook-concept-card td-outlook-concept-card--pulse td-outlook-concept-pulse"
+                    className="td-outlook-concept-card td-outlook-concept-card--pulse td-outlook-concept-pulse mo-card-shell mo-card-shell--focal"
                     aria-label="Aura market pulse"
                   >
                     <header className="td-outlook-concept-card__head">
@@ -518,7 +540,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     </div>
                   </section>
 
-                  <section className="td-outlook-concept-card td-outlook-concept-card--focus" aria-label="Trader focus">
+                  <section className="td-outlook-concept-card td-outlook-concept-card--focus mo-card-shell" aria-label="Trader focus">
                     <h2 className="td-outlook-concept-card__title">Trader Focus</h2>
                     <div className="td-outlook-concept-card__body">
                       {editMode && editDraft ? (
@@ -531,7 +553,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     </div>
                   </section>
 
-                  <section className="td-outlook-concept-card td-outlook-concept-card--risk" aria-label="Market risk engine">
+                  <section className="td-outlook-concept-card td-outlook-concept-card--risk mo-card-shell" aria-label="Market risk engine">
                     <h2 className="td-outlook-concept-card__title">Market Risk Engine</h2>
                     <div className="td-outlook-concept-card__body td-outlook-concept-risk__body">
                       {editMode && editDraft ? (
@@ -541,6 +563,29 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                       ) : (
                         <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
                       )}
+                    </div>
+                  </section>
+
+                  <section className="td-outlook-concept-card td-outlook-concept-card--headlines mo-card-shell" aria-label="Market headlines">
+                    <header className="td-outlook-concept-card__head td-outlook-concept-card__head--headlines">
+                      <h2 className="td-outlook-concept-card__title">Market Headlines</h2>
+                      <span className="mo-meta" title={ui.updatedAt || ''}>
+                        {formatRelativeFreshness(ui.updatedAt)}
+                      </span>
+                    </header>
+                    <div className="td-outlook-concept-card__body td-outlook-concept-card__body--headlines">
+                      {headlineFeed.length > 0 ? (
+                        <ul className="mo-terminal-feed">
+                          {headlineFeed.slice(0, 5).map((line, i) => (
+                            <li key={i} className="mo-terminal-feed__row">
+                              <span className="mo-terminal-feed__text">{line}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="td-outlook-empty mo-terminal-feed__empty">No headline snapshot yet. Refresh intelligence.</p>
+                      )}
+                      <p className="mo-terminal-feed__note">Event detail in the Economic Calendar below.</p>
                     </div>
                   </section>
                 </div>

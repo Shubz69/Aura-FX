@@ -13,6 +13,8 @@ export const DEFAULT_MARKET_REGIME = {
   secondaryDriver: '',
   marketSentiment: '',
   tradeEnvironment: '',
+  biasStrength: '',
+  convictionClarity: '',
 };
 
 export const DEFAULT_MARKET_PULSE = { value: 50, label: 'NEUTRAL' };
@@ -25,6 +27,8 @@ export const SEED_MARKET_INTELLIGENCE = {
     secondaryDriver: 'Macro Data + Commodities + Cross-asset flows',
     marketSentiment: 'Neutral / Mixed',
     tradeEnvironment: 'Event-Driven',
+    biasStrength: 'Moderate',
+    convictionClarity: 'Mixed',
   },
   marketPulse: {
     value: 50,
@@ -99,11 +103,94 @@ export const SEED_MARKET_INTELLIGENCE = {
     'USD tone remained a key filter for majors and commodities',
     'Volatility clustered around scheduled macro releases',
   ],
+  sessionContext: {
+    currentSession: 'overlap',
+    sessions: {
+      asia: {
+        state: 'range_bound',
+        confidence: 0.72,
+        tags: ['mean reversion'],
+        summary: 'Realized drift small versus recent vol; mean-reversion bias until range breaks with volume.',
+        liquidityBias: 'building',
+        volatilityState: 'normal',
+        eventRisk: 'moderate',
+        updatedAt: null,
+      },
+      london: {
+        state: 'expansion_likely',
+        confidence: 0.78,
+        tags: ['correlation aligned'],
+        summary: 'Yields/FX impulse building; watch VIX for follow-through quality.',
+        liquidityBias: 'normal',
+        volatilityState: 'normal',
+        eventRisk: 'moderate',
+        updatedAt: null,
+      },
+      newYork: {
+        state: 'event_sensitive',
+        confidence: 0.84,
+        tags: ['high-impact window'],
+        summary: 'Next major release window approaching; reduce initiative into the print.',
+        liquidityBias: 'normal',
+        volatilityState: 'normal',
+        eventRisk: 'high',
+        updatedAt: null,
+      },
+    },
+  },
 };
 
 function capitalize(s) {
   if (!s || typeof s !== 'string') return s;
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+const SESSION_STATE_LABELS = {
+  range_bound: 'Range-bound',
+  expansion_likely: 'Expansion likely',
+  trend_continuation: 'Trend continuation',
+  reversal_risk: 'Reversal risk',
+  compressed: 'Compressed',
+  choppy: 'Choppy',
+  event_sensitive: 'Event-sensitive',
+  liquidity_build: 'Liquidity build',
+  inactive: 'Inactive',
+};
+
+function normalizeSessionRow(r) {
+  if (!r || typeof r !== 'object') return null;
+  return {
+    state: typeof r.state === 'string' ? r.state : 'range_bound',
+    confidence: typeof r.confidence === 'number' && Number.isFinite(r.confidence) ? r.confidence : null,
+    tags: Array.isArray(r.tags) ? r.tags.map((t) => String(t || '').trim()).filter(Boolean).slice(0, 2) : [],
+    summary: typeof r.summary === 'string' ? r.summary : '',
+    liquidityBias: r.liquidityBias != null ? String(r.liquidityBias) : '',
+    volatilityState: r.volatilityState != null ? String(r.volatilityState) : '',
+    eventRisk: r.eventRisk != null ? String(r.eventRisk) : '',
+    updatedAt: r.updatedAt != null ? String(r.updatedAt) : null,
+  };
+}
+
+function normalizeSessionContext(sc) {
+  if (!sc || typeof sc !== 'object') return null;
+  const sessions = sc.sessions || {};
+  const asia = normalizeSessionRow(sessions.asia);
+  const london = normalizeSessionRow(sessions.london);
+  const newYork = normalizeSessionRow(sessions.newYork);
+  if (!asia && !london && !newYork) return null;
+  return {
+    currentSession: typeof sc.currentSession === 'string' ? sc.currentSession : 'closed',
+    sessions: {
+      asia: asia || { state: 'inactive', confidence: null, tags: [], summary: '', liquidityBias: '', volatilityState: '', eventRisk: '', updatedAt: null },
+      london: london || { state: 'inactive', confidence: null, tags: [], summary: '', liquidityBias: '', volatilityState: '', eventRisk: '', updatedAt: null },
+      newYork: newYork || { state: 'inactive', confidence: null, tags: [], summary: '', liquidityBias: '', volatilityState: '', eventRisk: '', updatedAt: null },
+    },
+  };
+}
+
+export function sessionStateDisplayLabel(stateKey) {
+  if (!stateKey || typeof stateKey !== 'string') return '—';
+  return SESSION_STATE_LABELS[stateKey] || stateKey.replace(/_/g, ' ');
 }
 
 /** Preserve API risk radar rows (time, impact, actuals); legacy strings become minimal objects. */
@@ -161,6 +248,8 @@ function mapBackendToDashboard(apiData) {
           secondaryDriver: r.secondaryDriver || '',
           marketSentiment: r.marketSentiment || 'Neutral / Mixed',
           tradeEnvironment: r.tradeEnvironment || '',
+          biasStrength: r.biasStrength != null ? String(r.biasStrength) : '',
+          convictionClarity: r.convictionClarity != null ? String(r.convictionClarity) : '',
         }
       : SEED_MARKET_INTELLIGENCE.marketRegime,
     marketPulse: p
@@ -212,6 +301,7 @@ function mapBackendToDashboard(apiData) {
     headlineSample: Array.isArray(apiData.headlineSample)
       ? apiData.headlineSample.map((h) => String(h || '').trim()).filter(Boolean)
       : SEED_MARKET_INTELLIGENCE.headlineSample || [],
+    sessionContext: normalizeSessionContext(apiData.sessionContext),
   };
 }
 

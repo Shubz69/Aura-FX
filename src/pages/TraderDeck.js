@@ -409,7 +409,7 @@ export default function TraderDeck() {
                     </div>
 
                     <aside className="td-deck-rail">
-                      <NewsHeadlines selectedDate={selectedDate} />
+                      {mainTab !== 'outlook' ? <NewsHeadlines selectedDate={selectedDate} /> : null}
                     </aside>
 
                   </div>

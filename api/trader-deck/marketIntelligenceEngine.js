@@ -7,6 +7,10 @@ const { getFinnhubData } = require('./services/finnhubService');
 const { getFmpData } = require('./services/fmpService');
 const { getFredData } = require('./services/fredService');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
+const {
+  buildSessionContext,
+  alignPulseRecommendedActions,
+} = require('./marketOutlookSessionContext');
 
 async function getTwelveDataQuote(symbol) {
   const apiKey = process.env.TWELVE_DATA_API_KEY;
@@ -139,6 +143,14 @@ function buildMarketRegime(fred, finnhub, fmp, spxQuote, fng, options = {}) {
         : hasRates && treasury > 4.4
           ? 'Event-Driven'
           : 'Choppy';
+  const absSkew = Math.abs(pulseScore - 50);
+  const biasStrength = absSkew >= 22 ? 'Strong' : absSkew >= 12 ? 'Moderate' : 'Soft';
+  const convictionClarity =
+    tradeEnvironment === 'Volatile' || tradeEnvironment === 'Choppy'
+      ? 'Low'
+      : absSkew >= 18
+        ? 'Clear'
+        : 'Mixed';
   return {
     currentRegime: regime,
     bias,
@@ -146,6 +158,8 @@ function buildMarketRegime(fred, finnhub, fmp, spxQuote, fng, options = {}) {
     secondaryDriver: secondary,
     marketSentiment,
     tradeEnvironment,
+    biasStrength,
+    convictionClarity,
   };
 }
 
@@ -410,23 +424,120 @@ function summarizeWeeklyMarketChanges(keyDrivers, crossAssetSignals, riskRadar) 
   return items.slice(0, 6);
 }
 
-// --- Trader Focus ---
+function crossAssetAlignmentLabel(signals) {
+  if (!Array.isArray(signals)) return 'mixed';
+  let up = 0;
+  let down = 0;
+  for (const s of signals) {
+    if (!s || !s.asset || s.asset === 'Volatility' || s.asset === 'DXY RSI') continue;
+    if (s.direction === 'up') up += 1;
+    else if (s.direction === 'down') down += 1;
+  }
+  if (up >= 3 && down <= 1) return 'aligned_up';
+  if (down >= 3 && up <= 1) return 'aligned_down';
+  return 'mixed';
+}
+
+function dedupeFocus(items) {
+  const seen = new Set();
+  const out = [];
+  for (const x of items) {
+    const t = String(x.title || '').trim().toLowerCase();
+    if (!t || seen.has(t)) continue;
+    seen.add(t);
+    out.push(x);
+  }
+  return out;
+}
+
+// --- Trader Focus (session + risk + cross-asset; rule-based) ---
 function buildTraderFocus(fred, finnhub, keyDrivers, crossAssetSignals, options = {}) {
   const focus = [];
-  if (fred.treasury10y != null) focus.push({ title: 'Watch bond yields for equity and gold reaction pivots', reason: 'Primary macro driver' });
+  const sc = options.sessionContext;
+  const align = options.crossAlign || crossAssetAlignmentLabel(crossAssetSignals);
+  const ny = sc && sc.sessions && sc.sessions.newYork;
+  const ld = sc && sc.sessions && sc.sessions.london;
+  const as = sc && sc.sessions && sc.sessions.asia;
+  const clustering = options.clustering != null ? Number(options.clustering) : null;
+
+  if (ny && ny.state === 'event_sensitive') {
+    focus.push({
+      title: 'Avoid initiating new risk into the next NY high-impact window',
+      reason: 'Session context · NY event risk',
+    });
+  } else if (ld && ld.state === 'event_sensitive') {
+    focus.push({
+      title: 'Wait for London-window prints to clear before adding directional risk',
+      reason: 'Session context · EU/UK events',
+    });
+  }
+
+  if (ny && ny.state === 'reversal_risk') {
+    focus.push({
+      title: 'Require failed break / acceptance before fading an extended trend day',
+      reason: 'Session context · reversal tone',
+    });
+  }
+
+  if ((as && as.state === 'choppy') || (ny && ny.state === 'choppy') || (ld && ld.state === 'choppy')) {
+    focus.push({
+      title: 'Prioritize confirmation-based entries — chop punishes early conviction',
+      reason: 'Session context · choppy',
+    });
+  }
+
+  if (ny && ny.state === 'trend_continuation' && align !== 'mixed') {
+    focus.push({
+      title: 'Let trend setups work while cross-asset tape stays directionally aligned',
+      reason: 'Session + cross-asset alignment',
+    });
+  }
+
+  if (as && as.state === 'liquidity_build' && ny && ny.state === 'range_bound') {
+    focus.push({
+      title: 'Expect false breaks — wait for NY participation to validate range breaks',
+      reason: 'Asia liquidity build vs NY balance',
+    });
+  }
+
+  if (clustering != null && clustering > 62) {
+    focus.push({
+      title: 'Reduce risk when macro releases cluster inside one session',
+      reason: 'Risk engine · clustering',
+    });
+  }
+
+  if (fred.treasury10y != null) {
+    focus.push({ title: 'Watch bond yields for equity and gold reaction pivots', reason: 'Primary macro driver' });
+  }
   const usdSignal = (crossAssetSignals || []).find((s) => s.asset === 'USD');
-  if (usdSignal && usdSignal.direction !== 'neutral') focus.push({ title: 'Treat USD trend as directional filter for majors', reason: 'FX sensitivity' });
-  focus.push({ title: 'Avoid new positions immediately ahead of high-impact events', reason: 'Event-risk control' });
-  focus.push({ title: 'Reduce risk when releases cluster within a single session window', reason: 'Volatility management' });
-  focus.push({ title: 'Prioritize confirmation-based entries over predictive entries', reason: 'Execution discipline' });
-  if ((keyDrivers || []).some((d) => d.name === 'Bond Yields' && d.direction === 'up')) focus.push({ title: 'Keep size conservative in rate-sensitive instruments', reason: 'Yields rising' });
+  if (usdSignal && usdSignal.direction !== 'neutral') {
+    focus.push({ title: 'Treat USD trend as directional filter for majors', reason: 'FX sensitivity' });
+  }
+
+  if (!(ny && ny.state === 'event_sensitive')) {
+    focus.push({
+      title: 'Avoid new positions immediately ahead of high-impact events',
+      reason: 'Event-risk control',
+    });
+  }
+
+  focus.push({
+    title: 'Prioritize confirmation-based entries over predictive entries',
+    reason: 'Execution discipline',
+  });
+
+  if ((keyDrivers || []).some((d) => d.name === 'Bond Yields' && d.direction === 'up')) {
+    focus.push({ title: 'Keep size conservative in rate-sensitive instruments', reason: 'Yields rising' });
+  }
   if (options.timeframe === 'weekly') {
     focus.push({ title: 'Map the week’s major risk windows before adding swing exposure', reason: 'Weekly planning' });
   }
   if (String(options.riskLevel || '').toLowerCase() === 'high' || String(options.riskLevel || '').toLowerCase() === 'extreme') {
     focus.push({ title: 'Trade defensive until risk score normalizes', reason: 'Risk engine state' });
   }
-  return focus.slice(0, 5);
+
+  return dedupeFocus(focus).slice(0, 6);
 }
 
 // --- Risk Radar: high-signal calendar + headline “watch” lines (deduped, capped) ---
@@ -696,6 +807,8 @@ function buildRiskRadar(fmp, options = {}) {
     },
     nextRiskEventInMins,
     items: radarItems,
+    /** Internal only — stripped before API payload; used for session context rules */
+    _calendarRows: rows,
   };
 }
 
@@ -717,26 +830,65 @@ function collectHeadlineSample(finnhub, fmp) {
 // --- Main engine ---
 function buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi, options = {}) {
   const timeframe = options.timeframe === 'weekly' ? 'weekly' : 'daily';
-  const riskRadar = buildRiskRadar(fmp, { timeframe, referenceDate: options.date });
-  const marketPulse = buildMarketPulse(fred, finnhub, fmp, spxQuote, fng, {
+  const riskRadarRaw = buildRiskRadar(fmp, { timeframe, referenceDate: options.date });
+  const calendarRows = riskRadarRaw._calendarRows || [];
+  const riskRadar = {
+    score: riskRadarRaw.score,
+    level: riskRadarRaw.level,
+    breakdown: riskRadarRaw.breakdown,
+    nextRiskEventInMins: riskRadarRaw.nextRiskEventInMins,
+    items: riskRadarRaw.items || [],
+  };
+
+  const marketPulseBase = buildMarketPulse(fred, finnhub, fmp, spxQuote, fng, {
     riskScore: riskRadar.score,
     timeframe,
   });
-  const marketRegime = buildMarketRegime(fred, finnhub, fmp, spxQuote, fng, { pulseScore: marketPulse.score });
+  const marketRegime = buildMarketRegime(fred, finnhub, fmp, spxQuote, fng, { pulseScore: marketPulseBase.score });
   const keyDrivers = buildKeyDrivers(fred, finnhub, fmp, spxQuote);
   const crossAssetSignals = buildCrossAssetSignals(fred, finnhub, fmp, spxQuote, rsi);
+  const crossAlign = crossAssetAlignmentLabel(crossAssetSignals);
+  const refMs = resolveReferenceDateMs(options.date);
+  const vix = fmp && fmp.vix != null ? Number(fmp.vix) : null;
+  const spxDp = spxQuote && spxQuote.dp != null ? Number(spxQuote.dp) : null;
+  const yieldRecent = getTreasuryRecentDirection(fred);
+
+  let sessionContext = buildSessionContext({
+    referenceMs: refMs,
+    marketPulse: marketPulseBase,
+    pulseState: marketPulseBase.state,
+    riskEngine: {
+      level: riskRadar.level,
+      breakdown: riskRadar.breakdown,
+      score: riskRadar.score,
+    },
+    crossAssetSignals,
+    calendarRows,
+    vix,
+    spxDp,
+    yieldRecent,
+  });
+
+  sessionContext = gateTrendStatesForRiskOff(sessionContext, marketPulseBase.state);
+
+  let marketPulse = alignPulseRecommendedActions(marketPulseBase, sessionContext);
+
   const marketChangesToday = timeframe === 'weekly'
     ? summarizeWeeklyMarketChanges(keyDrivers, crossAssetSignals, riskRadar)
     : buildMarketChangesToday(finnhub, fmp);
   const traderFocus = buildTraderFocus(fred, finnhub, keyDrivers, crossAssetSignals, {
     timeframe,
     riskLevel: riskRadar.level,
+    sessionContext,
+    crossAlign,
+    clustering: riskRadar.breakdown && riskRadar.breakdown.clustering,
   });
   const headlineSample = collectHeadlineSample(finnhub, fmp);
 
   return {
     marketRegime,
     marketPulse,
+    sessionContext,
     keyDrivers,
     crossAssetSignals,
     marketChangesToday,
@@ -752,6 +904,23 @@ function buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi, options = {}) {
     timeframe,
     updatedAt: new Date().toISOString(),
   };
+}
+
+/** If pulse is Risk Off, downgrade trend_continuation rows to range_bound for consistency */
+function gateTrendStatesForRiskOff(sessionContext, pulseState) {
+  if (!sessionContext || !sessionContext.sessions || pulseState !== 'Risk Off') return sessionContext;
+  const sessions = { ...sessionContext.sessions };
+  for (const key of ['asia', 'london', 'newYork']) {
+    const row = sessions[key];
+    if (!row || row.state !== 'trend_continuation') continue;
+    sessions[key] = {
+      ...row,
+      state: 'range_bound',
+      tags: Array.from(new Set([...(row.tags || []), 'mean reversion'])).slice(0, 2),
+      summary: `Risk-off pulse caps follow-through; ${row.summary || ''}`.trim(),
+    };
+  }
+  return { ...sessionContext, sessions };
 }
 
 async function runEngine(options = {}) {

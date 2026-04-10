@@ -29,14 +29,53 @@ function setCache(cacheKey, data) {
 
 /** Fallback payload when APIs fail */
 function fallbackPayload() {
+  const now = new Date().toISOString();
   return {
     marketRegime: {
       currentRegime: 'Mixed',
       primaryDriver: 'Macro Data',
       secondaryDriver: 'US Economic Data',
       marketSentiment: 'Neutral',
+      tradeEnvironment: 'Choppy',
+      biasStrength: 'Soft',
+      convictionClarity: 'Low',
     },
-    marketPulse: { state: 'Neutral', score: 50, label: 'NEUTRAL' },
+    marketPulse: { state: 'Neutral', score: 50, label: 'NEUTRAL', recommendedAction: [] },
+    sessionContext: {
+      currentSession: 'closed',
+      sessions: {
+        asia: {
+          state: 'inactive',
+          confidence: 0.5,
+          tags: [],
+          summary: 'Session diagnostics require live calendar and cross-asset data.',
+          liquidityBias: 'normal',
+          volatilityState: 'unknown',
+          eventRisk: 'low',
+          updatedAt: now,
+        },
+        london: {
+          state: 'inactive',
+          confidence: 0.5,
+          tags: [],
+          summary: 'Session diagnostics require live calendar and cross-asset data.',
+          liquidityBias: 'normal',
+          volatilityState: 'unknown',
+          eventRisk: 'low',
+          updatedAt: now,
+        },
+        newYork: {
+          state: 'inactive',
+          confidence: 0.5,
+          tags: [],
+          summary: 'Session diagnostics require live calendar and cross-asset data.',
+          liquidityBias: 'normal',
+          volatilityState: 'unknown',
+          eventRisk: 'low',
+          updatedAt: now,
+        },
+      },
+    },
     keyDrivers: [
       { name: 'Bond Yields', direction: 'neutral', impact: 'high', biasLabel: '—' },
       { name: 'US Dollar', direction: 'neutral', impact: 'medium', biasLabel: '—' },
@@ -61,6 +100,12 @@ function fallbackPayload() {
       { title: 'Fed speakers this week', severity: 'medium', category: 'US' },
       { title: 'Geopolitical tensions', severity: 'medium', category: 'Global' },
     ],
+    riskEngine: {
+      score: 50,
+      level: 'Moderate',
+      breakdown: { eventRisk: 40, geopoliticalRisk: 40, volatility: 45, liquidity: 46, clustering: 45 },
+      nextRiskEventInMins: null,
+    },
     updatedAt: new Date().toISOString(),
   };
 }
