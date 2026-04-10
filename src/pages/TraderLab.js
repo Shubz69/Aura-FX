@@ -633,7 +633,7 @@ export default function TraderLab() {
       {loading ? <div className="trader-suite-empty">Loading lab sessions...</div> : null}
 
       {!loading ? (
-        <div className="trader-lab-v2 trader-lab-v2--gold trader-lab-v2--compact trader-lab-v2--workspace">
+        <div className="trader-lab-v2 trader-lab-v2--gold trader-lab-v2--compact trader-lab-v2--workspace trader-lab-v2--terminal-desktop">
           <aside className="trader-lab-v2__left">
             <div className="tlab-card tlab-card--gold tlab-card--bias-rail">
               <h3 className="tlab-card__title">Trade bias</h3>
@@ -688,6 +688,22 @@ export default function TraderLab() {
                 onChange={(e) => updateField('keyDrivers', e.target.value)}
                 placeholder="One line per driver…"
                 aria-label="Key drivers"
+              />
+            </div>
+
+            <div className="tlab-card tlab-card--gold tlab-card--fundamental-rail">
+              <h3 className="tlab-card__title">Fundamental backing</h3>
+              <ul className="tlab-ref-bullets tlab-ref-bullets--rail-compact">
+                {fundamentalLines.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+              <textarea
+                className="tlab-textarea tlab-textarea--tight"
+                value={form.fundamentalBacking}
+                onChange={(e) => updateField('fundamentalBacking', e.target.value)}
+                placeholder="One line per fundamental point…"
+                aria-label="Fundamental backing"
               />
             </div>
 
@@ -757,29 +773,50 @@ export default function TraderLab() {
           <div className="trader-lab-v2__center">
             <div className="tlab-center-stack">
             <div className="tlab-card tlab-card--chart tlab-card--gold tlab-card--focal">
-              <div className="tlab-chart-toolbar tlab-chart-toolbar--second">
-                <select
-                  className="tlab-select"
-                  value={form.chartSymbol}
-                  onChange={(e) => updateField('chartSymbol', e.target.value)}
-                  aria-label="Instrument"
-                >
-                  {instrumentOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <div className="tlab-tf-group" role="group" aria-label="Timeframe">
-                  {CHART_INTERVALS.map((tf) => (
-                    <button
-                      key={tf.value}
-                      type="button"
-                      className={`tlab-tf${chartInterval === tf.value ? ' tlab-tf--active' : ''}`}
-                      onClick={() => setChartInterval(tf.value)}
-                    >
-                      {tf.label}
-                    </button>
-                  ))}
+              <div className="tlab-chart-toolbar tlab-chart-toolbar--terminal">
+                <div className="tlab-chart-toolbar__primary">
+                  <select
+                    className="tlab-select"
+                    value={form.chartSymbol}
+                    onChange={(e) => updateField('chartSymbol', e.target.value)}
+                    aria-label="Instrument"
+                  >
+                    {instrumentOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <div className="tlab-tf-group" role="group" aria-label="Timeframe">
+                    {CHART_INTERVALS.map((tf) => (
+                      <button
+                        key={tf.value}
+                        type="button"
+                        className={`tlab-tf${chartInterval === tf.value ? ' tlab-tf--active' : ''}`}
+                        onClick={() => setChartInterval(tf.value)}
+                      >
+                        {tf.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+                {sessions.length ? (
+                  <div className="tlab-session-tabs-inline" role="tablist" aria-label="Recent saved sessions">
+                    {sessions.slice(0, 5).map((session) => (
+                      <button
+                        key={session.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={session.id === activeId}
+                        className={`tlab-session-tab${session.id === activeId ? ' tlab-session-tab--active' : ''}`}
+                        onClick={() => {
+                          setActiveId(session.id);
+                          setForm(normalizeSession(session));
+                        }}
+                      >
+                        {session.sessionDate}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="tlab-chart-host tlab-chart-host--fill">
                 <TradingViewChartPanel
@@ -804,45 +841,10 @@ export default function TraderLab() {
                   <strong>{formatLabLevel(form.targetPrice)}</strong>
                 </div>
               </div>
-              {sessions.length ? (
-                <div className="tlab-session-tabs-bar" role="tablist" aria-label="Recent saved sessions">
-                  {sessions.slice(0, 6).map((session) => (
-                    <button
-                      key={session.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={session.id === activeId}
-                      className={`tlab-session-tab${session.id === activeId ? ' tlab-session-tab--active' : ''}`}
-                      onClick={() => {
-                        setActiveId(session.id);
-                        setForm(normalizeSession(session));
-                      }}
-                    >
-                      {session.sessionDate}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
             </div>
 
-            <div className="tlab-center-quad">
-              <div className="tlab-card tlab-card--gold tlab-card--quad tlab-card--fundamental-center">
-                <h3 className="tlab-card__title">Fundamental backing</h3>
-                <ul className="tlab-ref-bullets tlab-ref-bullets--compact">
-                  {fundamentalLines.map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ul>
-                <textarea
-                  className="tlab-textarea tlab-textarea--tight tlab-textarea--quad"
-                  value={form.fundamentalBacking}
-                  onChange={(e) => updateField('fundamentalBacking', e.target.value)}
-                  placeholder="One line per fundamental point…"
-                  aria-label="Fundamental backing"
-                />
-              </div>
-
-              <div className="tlab-card tlab-card--gold tlab-card--quad tlab-card--exec">
+            <div className="tlab-center-dock">
+              <div className="tlab-card tlab-card--gold tlab-card--dock-exec">
                 <div className="tlab-exec-head">
                   <h3 className="tlab-card__title">Execution notes</h3>
                   <span className="tlab-exec-edit-icon" title="Edit notes" aria-hidden>
@@ -850,7 +852,7 @@ export default function TraderLab() {
                   </span>
                 </div>
                 <textarea
-                  className="tlab-textarea tlab-textarea--exec tlab-textarea--quad-exec"
+                  className="tlab-textarea tlab-textarea--exec tlab-textarea--dock"
                   value={form.duringNotes}
                   onChange={(e) => updateField('duringNotes', e.target.value)}
                   placeholder="Live execution plan, scaling, desk notes…"
@@ -865,9 +867,9 @@ export default function TraderLab() {
                 </div>
               </div>
 
-              <div className="tlab-card tlab-card--gold tlab-card--quad" aria-label="Decision checks">
+              <div className="tlab-card tlab-card--gold tlab-card--dock-decision" aria-label="Decision engine">
                 <h3 className="tlab-card__title">Decision checks</h3>
-                <div className="tlab-decision-checks tlab-decision-checks--quad" role="list">
+                <div className="tlab-decision-checks tlab-decision-checks--dock" role="list">
                   {[
                     { key: 'biasAligned', label: 'Bias aligned' },
                     { key: 'setupValid', label: 'Setup valid' },
@@ -885,38 +887,34 @@ export default function TraderLab() {
                     </label>
                   ))}
                 </div>
-              </div>
-
-              <div className="tlab-card tlab-card--gold tlab-card--quad" aria-label="Conviction">
-                <h3 className="tlab-card__title">Conviction</h3>
-                <div className="tlab-conviction__seg tlab-conviction__seg--quad">
-                  {[
-                    { id: 'low', label: 'LOW' },
-                    { id: 'medium', label: 'MEDIUM' },
-                    { id: 'high', label: 'HIGH' },
-                  ].map(({ id, label }) => (
-                    <button
-                      key={id}
-                      type="button"
-                      className={`tlab-conviction-btn${form.conviction === id ? ' tlab-conviction-btn--active' : ''}`}
-                      onClick={() => updateField('conviction', id)}
-                    >
-                      {label}
-                    </button>
-                  ))}
+                <div className="tlab-dock-conviction">
+                  <span className="tlab-level-label">Conviction</span>
+                  <div className="tlab-conviction__seg tlab-conviction__seg--dock">
+                    {[
+                      { id: 'low', label: 'LOW' },
+                      { id: 'medium', label: 'MEDIUM' },
+                      { id: 'high', label: 'HIGH' },
+                    ].map(({ id, label }) => (
+                      <button
+                        key={id}
+                        type="button"
+                        className={`tlab-conviction-btn${form.conviction === id ? ' tlab-conviction-btn--active' : ''}`}
+                        onClick={() => updateField('conviction', id)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  className="tlab-execute-btn tlab-execute-btn--dock"
+                  disabled={!readyToExecute || saving}
+                  onClick={handleExecute}
+                >
+                  {saving ? '…' : 'EXECUTE'}
+                </button>
               </div>
-            </div>
-
-            <div className="tlab-center-execute-bar">
-              <button
-                type="button"
-                className="tlab-execute-btn tlab-execute-btn--wide"
-                disabled={!readyToExecute || saving}
-                onClick={handleExecute}
-              >
-                {saving ? '…' : 'EXECUTE'}
-              </button>
             </div>
 
             {form.decoderContext ? (
@@ -1109,7 +1107,7 @@ export default function TraderLab() {
 
           </aside>
 
-          <footer className="trader-lab-v2__footer trader-lab-v2__footer--tagline-only">
+          <footer className="trader-lab-v2__footer trader-lab-v2__footer--tagline-only trader-lab-v2__footer--terminal-mobile">
             <p className="tlab-tagline">Trade with clarity. Execute with precision. Win with discipline.</p>
           </footer>
         </div>

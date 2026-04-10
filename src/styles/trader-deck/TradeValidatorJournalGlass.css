@@ -532,6 +532,86 @@
   overflow: visible;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   TRADER LAB — desktop terminal viewport: fill main area, internal scroll on rails
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1181px) {
+  .journal-page:has(.trader-lab-v2--terminal-desktop) {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .journal-page:has(.trader-lab-v2--terminal-desktop) .journal-layout--terminal {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .journal-page .journal-layout--terminal:has(.trader-lab-v2--terminal-desktop) {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  .journal-page .journal-terminal-body:has(.trader-lab-v2--terminal-desktop) {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 8px;
+  }
+
+  .journal-page .trade-validator-shell.journal-glass-panel:has(.trader-lab-v2--terminal-desktop) {
+    flex: 1 1 auto;
+    min-height: 0 !important;
+    max-height: none;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .journal-page .trade-validator-shell.aa-page:has(.trader-lab-v2--terminal-desktop) {
+    min-height: 0 !important;
+    flex: 1 1 auto;
+  }
+
+  .trade-validator-shell:has(.trader-lab-v2--terminal-desktop) .aura-shell-content {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding-top: 6px !important;
+    padding-bottom: 10px !important;
+  }
+
+  .journal-page .trader-suite-page:has(.trader-lab-v2--terminal-desktop) {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2--terminal-desktop) {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2--terminal-desktop) > .trader-lab-v2 {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+}
+
 .trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2)::after {
   display: none !important;
 }
@@ -573,6 +653,20 @@
   max-height: calc(100dvh - 200px) !important;
   align-content: start;
   align-items: start !important;
+}
+
+/* Terminal desktop: height comes from flex parent, not a capped max-height */
+.trade-validator-shell .trader-lab-v2.trader-lab-v2--compact.trader-lab-v2--terminal-desktop {
+  max-height: none !important;
+  height: 100% !important;
+  align-items: stretch !important;
+  align-content: stretch !important;
+}
+
+@media (min-width: 1181px) {
+  .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact.trader-lab-v2--terminal-desktop {
+    padding: 6px 0 8px !important;
+  }
 }
 
 /* Chart: ~30vh cap so the desk fits on one screen */
@@ -627,7 +721,7 @@
   flex-direction: column !important;
 }
 
-/* Page scrolls (journal-page); avoid nested max-height traps that hide thesis / footer / saved labs */
+/* Page scrolls on small screens; desktop terminal uses internal rail scroll (see block above) */
 .trade-validator-shell .trader-lab-v2__left,
 .trade-validator-shell .trader-lab-v2__right,
 .trade-validator-shell .trader-lab-v2__center {
@@ -635,6 +729,23 @@
   overflow-x: hidden;
   overflow-y: visible !important;
   min-height: 0 !important;
+}
+
+@media (min-width: 1181px) {
+  .trade-validator-shell .trader-lab-v2.trader-lab-v2--terminal-desktop .trader-lab-v2__left,
+  .trade-validator-shell .trader-lab-v2.trader-lab-v2--terminal-desktop .trader-lab-v2__right {
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain;
+    align-self: stretch !important;
+  }
+
+  .trade-validator-shell .trader-lab-v2.trader-lab-v2--terminal-desktop .trader-lab-v2__center {
+    max-height: 100% !important;
+    overflow: hidden !important;
+    align-self: stretch !important;
+  }
 }
 
 /* Match AuraShared `.aa-card` glass (dashboard outlet panels) */

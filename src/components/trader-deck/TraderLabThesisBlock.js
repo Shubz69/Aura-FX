@@ -24,7 +24,7 @@ const FIELDS = [
 export default function TraderLabThesisBlock({ form, onFieldChange }) {
   return (
     <div className="tl-card-shell tl-card-shell--thesis">
-      <h3 className="tl-card-header">Trader thesis</h3>
+      <h3 className="tl-card-header">TRADER THESIS</h3>
       {FIELDS.map(({ key, label, placeholder }) => (
         <div key={key} className="tl-thesis-q">
           <label className="tl-thesis-q__label" htmlFor={`tl-thesis-${key}`}>
@@ -36,7 +36,7 @@ export default function TraderLabThesisBlock({ form, onFieldChange }) {
             value={form[key] ?? ''}
             onChange={(e) => onFieldChange(key, e.target.value)}
             placeholder={placeholder}
-            rows={4}
+            rows={2}
             spellCheck
           />
         </div>
