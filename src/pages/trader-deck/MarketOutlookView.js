@@ -14,19 +14,6 @@ import FocusList from '../../components/trader-deck/FocusList';
 import RiskRadarList from '../../components/trader-deck/RiskRadarList';
 import { getTraderDeckIntelStorageYmd } from '../../lib/trader-deck/deskDates';
 
-function formatRelativeFreshness(iso) {
-  if (!iso) return '';
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return '';
-  const sec = Math.max(0, Math.round((Date.now() - t) / 1000));
-  if (sec < 45) return 'Just now';
-  const mins = Math.round(sec / 60);
-  if (mins < 60) return `${mins} minute${mins === 1 ? '' : 's'} ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 36) return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
-  return new Date(t).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-}
-
 function normalizeForUI(data) {
   if (!data) return null;
   const regime = data.marketRegime;
@@ -278,12 +265,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     traderFocus,
     riskRadar,
     riskEngine,
-    aiSessionBrief,
-    aiTradingPriorities,
   } = showing;
-
-  const headlineSample = ui.headlineSample || [];
-  const headlinesFreshness = formatRelativeFreshness(ui.updatedAt);
 
   const renderRegime = () => {
     if (editMode && editDraft) {
@@ -559,38 +541,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                       ) : (
                         <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
                       )}
-                    </div>
-                  </section>
-
-                  <section
-                    className="td-outlook-concept-headlines td-outlook-panel td-outlook-panel--headlines td-outlook-headlines-bar"
-                    aria-label="Market headlines"
-                  >
-                    <header className="td-outlook-headlines-bar-header">
-                      <h2 className="td-outlook-headlines-bar-title">Market headlines</h2>
-                      {headlinesFreshness ? (
-                        <span className="td-outlook-headlines-bar-meta">{headlinesFreshness}</span>
-                      ) : null}
-                    </header>
-                    <div className="td-outlook-headlines-bar-body">
-                      {aiSessionBrief ? <p className="td-outlook-headlines-lead">{aiSessionBrief}</p> : null}
-                      {Array.isArray(aiTradingPriorities) && aiTradingPriorities.length > 0 ? (
-                        <ol className="td-outlook-headlines-priorities">
-                          {aiTradingPriorities.map((line, idx) => (
-                            <li key={idx}>{line}</li>
-                          ))}
-                        </ol>
-                      ) : null}
-                      {headlineSample.length > 0 ? (
-                        <ul className="td-outlook-headlines-feed">
-                          {headlineSample.map((line, idx) => (
-                            <li key={idx}>{line}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                      {!aiSessionBrief && (!aiTradingPriorities || aiTradingPriorities.length === 0) && headlineSample.length === 0 ? (
-                        <p className="td-outlook-empty td-outlook-headlines-empty">Headlines will appear when the intelligence feed updates.</p>
-                      ) : null}
                     </div>
                   </section>
                 </div>

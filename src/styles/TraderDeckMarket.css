@@ -1288,7 +1288,7 @@
   .td-outlook-panel--headlines { grid-column: 1 / -1; grid-row: 5; }
 }
 
-/* ── Market Outlook — concept shell (framed terminal + headlines strip) ─ */
+/* ── Market Outlook — concept shell (framed terminal) ─ */
 .td-deck-mo-outlook--concept .td-outlook-terminal-frame {
   border-radius: 16px;
   padding: 1px;
@@ -1324,101 +1324,6 @@
     #ca8a04 180deg
   ) !important;
   filter: saturate(1.1);
-}
-
-.td-deck-mo-outlook--concept .td-outlook-headlines-bar {
-  margin: 0;
-  border-radius: 0 0 11px 11px;
-  border: 1px solid rgba(140, 175, 255, 0.11);
-  border-top: 1px solid rgba(140, 175, 255, 0.22);
-  background: linear-gradient(180deg, rgba(8, 12, 26, 0.96) 0%, rgba(3, 5, 12, 1) 100%);
-  box-shadow:
-    0 -1px 0 rgba(212, 175, 125, 0.1) inset,
-    0 -6px 28px rgba(0, 0, 0, 0.35);
-}
-
-.td-deck-mo-outlook--concept .td-outlook-headlines-bar-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 5px 10px;
-  padding: 5px 10px 4px;
-  border-bottom: 1px solid rgba(107, 143, 232, 0.1);
-}
-
-.td-deck-mo-outlook--concept .td-outlook-headlines-bar-title {
-  margin: 0;
-  font-size: 0.56rem;
-  font-weight: 700;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: rgba(208, 220, 255, 0.9);
-}
-
-.td-deck-mo-outlook--concept .td-outlook-headlines-bar-meta {
-  font-size: 0.65rem;
-  color: rgba(180, 198, 240, 0.52);
-  letter-spacing: 0.04em;
-}
-
-.td-deck-mo-outlook--concept .td-outlook-headlines-bar-body {
-  padding: 5px 10px 7px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.td-deck-mo-outlook--concept .td-outlook-headlines-lead {
-  margin: 0;
-  font-size: 0.76rem;
-  line-height: 1.45;
-  color: rgba(235, 238, 255, 0.86);
-}
-
-.td-deck-mo-outlook--concept .td-outlook-headlines-priorities {
-  margin: 0;
-  padding-left: 0.95rem;
-  font-size: 0.71rem;
-  line-height: 1.38;
-  color: rgba(196, 208, 245, 0.78);
-}
-
-.td-deck-mo-outlook--concept .td-outlook-headlines-feed {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.td-deck-mo-outlook--concept .td-outlook-headlines-feed li {
-  position: relative;
-  padding: 5px 8px 5px 24px;
-  font-size: 0.7rem;
-  line-height: 1.34;
-  color: rgba(206, 214, 248, 0.75);
-  background: rgba(4, 8, 22, 0.5);
-  border-radius: 7px;
-  border: 1px solid rgba(107, 143, 232, 0.08);
-}
-
-.td-deck-mo-outlook--concept .td-outlook-headlines-feed li::before {
-  content: '';
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: rgba(96, 165, 250, 0.88);
-  box-shadow: 0 0 8px rgba(96, 165, 250, 0.4);
-}
-
-.td-deck-mo-outlook--concept .td-outlook-headlines-empty {
-  margin: 0;
 }
 
 .td-outlook-panel--risk-standalone {
@@ -2511,21 +2416,19 @@
     'dual'
     'changes'
     'focus'
-    'risk'
-    'headlines';
+    'risk';
 }
 
 @media (min-width: 960px) {
   .td-outlook-concept-grid {
     grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
-    grid-template-rows: auto auto auto 1fr auto;
+    grid-template-rows: auto auto auto 1fr;
     min-height: min(74vh, 820px);
     grid-template-areas:
       'regime pulse'
       'dual pulse'
       'changes pulse'
-      'focus risk'
-      'headlines headlines';
+      'focus risk';
     align-items: stretch;
     row-gap: 6px;
     column-gap: 8px;
@@ -2569,7 +2472,6 @@
   min-height: 0;
 }
 .td-outlook-concept-card--risk { grid-area: risk; }
-.td-outlook-concept-headlines { grid-area: headlines; }
 
 @media (max-width: 559px) {
   .td-outlook-concept-dual {
@@ -2949,22 +2851,4 @@
   background: rgba(4, 8, 22, 0.52) !important;
   border-radius: 7px !important;
   border: 1px solid rgba(107, 143, 232, 0.07) !important;
-}
-
-.td-outlook-concept-headlines.td-outlook-panel {
-  padding: 0 !important;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-}
-
-.td-outlook-concept-headlines.td-outlook-panel::before,
-.td-outlook-concept-headlines.td-outlook-panel::after {
-  display: none;
-}
-
-@media (min-width: 960px) {
-  .td-outlook-concept-headlines {
-    margin-top: -2px;
-  }
 }
