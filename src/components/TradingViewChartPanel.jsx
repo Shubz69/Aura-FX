@@ -21,7 +21,7 @@ export default function TradingViewChartPanel({
 }) {
   const [engine, setEngine] = useState('checking'); // checking | cl | widget
   const resolvedHeight = fillParent ? '100%' : height;
-  const loadingMinH = fillParent ? 280 : height;
+  const loadingMinH = fillParent ? 0 : height;
 
   useEffect(() => {
     let active = true;

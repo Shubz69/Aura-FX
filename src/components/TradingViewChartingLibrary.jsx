@@ -85,7 +85,7 @@ export default function TradingViewChartingLibrary({
   }, [symbol, interval, datafeedUrl, libraryPath, theme, height, fillParent]);
 
   const boxHeight = height === '100%' || fillParent ? '100%' : height;
-  const boxMin = fillParent || height === '100%' ? 'min(520px, 52vh)' : height;
+  const boxMin = fillParent ? 0 : height === '100%' ? 'min(520px, 52vh)' : height;
 
   if (error) {
     return (

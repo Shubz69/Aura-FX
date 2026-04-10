@@ -19,7 +19,7 @@
 /* ── Desktop terminal canvas: one row, fills parent height (see TradeValidatorJournalGlass) ── */
 @media (min-width: 1181px) {
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop {
-    grid-template-columns: minmax(200px, 0.24fr) minmax(320px, 1fr) minmax(200px, 0.26fr);
+    grid-template-columns: minmax(196px, 0.22fr) minmax(360px, 1.14fr) minmax(196px, 0.24fr);
     grid-template-rows: 1fr;
     grid-template-areas: 'tl-left tl-center tl-right';
     align-items: stretch;
@@ -87,7 +87,8 @@
   color: rgba(200, 210, 240, 0.72);
 }
 
-.trader-lab-v2--workspace .tl-thesis-block-wrap {
+.trader-lab-v2--workspace .tl-thesis-block-wrap,
+.trader-lab-v2--workspace .tl-thesis-stack {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -316,6 +317,17 @@
   margin-right: 8px;
 }
 
+.trader-lab-v2--workspace .tlab-decoder-strip--idle {
+  opacity: 0.92;
+  border-style: dashed;
+  border-color: rgba(140, 175, 255, 0.1);
+}
+
+.trader-lab-v2--workspace .tlab-decoder-strip__idle {
+  color: rgba(155, 175, 215, 0.42);
+  font-style: normal;
+}
+
 .trader-lab-v2--workspace .trader-lab-v2__left,
 .trader-lab-v2--workspace .trader-lab-v2__right {
   gap: var(--tl-gap);
@@ -421,4 +433,342 @@
     flex: 0 0 auto !important;
     min-height: 0 !important;
   }
+}
+
+/* ── Loading skeleton: same glass framing as live panels ── */
+@keyframes tlab-skel-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trader-lab-v2--loading-skeleton .tlab-skel-line,
+  .trader-lab-v2--loading-skeleton .tlab-skel-chart,
+  .trader-lab-v2--loading-skeleton .tlab-skel-textarea {
+    animation: none !important;
+  }
+}
+
+.tlab-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.trader-lab-v2--workspace.trader-lab-v2--loading-skeleton .tlab-skel-card {
+  pointer-events: none;
+}
+
+@media (min-width: 1181px) {
+  .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop.trader-lab-v2--loading-skeleton .trader-lab-v2__left,
+  .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop.trader-lab-v2--loading-skeleton .trader-lab-v2__right {
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    max-height: 100%;
+  }
+}
+
+.trader-lab-v2--workspace .tlab-skel-line,
+.trader-lab-v2--workspace .tlab-skel-chart,
+.trader-lab-v2--workspace .tlab-skel-textarea {
+  background: linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0.035) 0%,
+    rgba(255, 255, 255, 0.1) 45%,
+    rgba(255, 255, 255, 0.035) 90%
+  );
+  background-size: 220% 100%;
+  animation: tlab-skel-shimmer 1.45s ease-in-out infinite;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line {
+  height: 10px;
+  border-radius: 7px;
+  margin: 5px 0;
+  max-width: 100%;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--title {
+  width: 52%;
+  height: 11px;
+  margin-bottom: 10px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--thesis-title {
+  width: 48%;
+  height: 11px;
+  margin-bottom: 8px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--q {
+  width: 72%;
+  height: 9px;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--pill {
+  width: 64px;
+  height: 26px;
+  border-radius: 999px;
+  margin: 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--pill-narrow {
+  width: 44px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-row--pills {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--field {
+  max-width: 100%;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--slider {
+  height: 6px;
+  border-radius: 999px;
+  margin-top: 10px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--select {
+  width: 140px;
+  height: 30px;
+  border-radius: 10px;
+  margin: 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-tf {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--tf {
+  width: 36px;
+  height: 26px;
+  border-radius: 8px;
+  margin: 0;
+}
+
+.trader-lab-v2--workspace .tlab-session-tabs-inline .tlab-skel-line--tab {
+  width: 56px;
+  height: 24px;
+  border-radius: 8px;
+  margin: 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-textarea {
+  min-height: 48px;
+  border-radius: var(--tl-radius-input);
+  margin-top: 4px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-textarea--short {
+  min-height: 36px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-textarea--thesis {
+  min-height: 40px;
+  margin-bottom: 2px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-textarea--dock {
+  min-height: 56px;
+  flex: 1 1 auto;
+}
+
+.trader-lab-v2--workspace .tlab-skel-textarea--session {
+  min-height: 44px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-exec-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--meta {
+  flex: 1 1 auto;
+  max-width: 55%;
+  margin: 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--btn {
+  width: 96px;
+  height: 28px;
+  border-radius: 8px;
+  margin: 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--check {
+  height: 14px;
+  max-width: 88%;
+  margin: 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--conv-label {
+  width: 40%;
+  height: 9px;
+  margin: 6px 0 4px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-conviction {
+  display: flex;
+  gap: 6px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--conv {
+  flex: 1 1 0;
+  height: 30px;
+  border-radius: 8px;
+  margin: 0;
+  min-width: 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--execute {
+  width: 100%;
+  height: 34px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--rr {
+  height: 28px;
+  border-radius: 10px;
+  margin: 10px 0 6px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--metric {
+  height: 12px;
+  max-width: 70%;
+  margin: 4px 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--valid {
+  height: 36px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-valid-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-saved-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--count {
+  width: 28px;
+  height: 20px;
+  border-radius: 8px;
+  margin: 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--saved {
+  height: 32px;
+  border-radius: 10px;
+  margin: 5px 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--decoder {
+  height: 12px;
+  max-width: 92%;
+  margin: 0 auto;
+}
+
+.trader-lab-v2--workspace .tlab-skel-chart {
+  flex: 1 1 auto;
+  min-height: 120px;
+  width: 100%;
+  border-radius: 10px;
+  margin: 0;
+}
+
+.trader-lab-v2--terminal-desktop .tlab-skel-chart {
+  min-height: 0;
+}
+
+.trader-lab-v2--workspace .tlab-level-strip--skeleton {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.trader-lab-v2--workspace .tlab-skel-level {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--lvl-label {
+  width: 56px;
+  height: 8px;
+  margin: 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-line--lvl-val {
+  width: 72px;
+  height: 16px;
+  margin: 0;
+}
+
+.trader-lab-v2--workspace .tlab-skel-thesis.tl-card-shell--thesis {
+  min-height: 0;
+}
+
+.trader-lab-v2--workspace .tlab-decoder-strip--skeleton {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

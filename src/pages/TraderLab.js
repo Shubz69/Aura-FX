@@ -21,6 +21,7 @@ import {
 } from '../utils/traderSuite';
 import TradingViewChartPanel from '../components/TradingViewChartPanel';
 import TraderLabThesisBlock from '../components/trader-deck/TraderLabThesisBlock';
+import TraderLabLoadingShell from '../components/trader-deck/TraderLabLoadingShell';
 import { formatLabLevel } from '../lib/trader-deck/traderLabFormatters';
 import {
   TRADER_LAB_HANDOFF_KEY,
@@ -71,6 +72,12 @@ const CHART_INTERVALS = [
   { label: '1D', value: '1D' },
 ];
 
+const LOADING_TERMINAL_STATS = [
+  { label: 'Market State', value: '…', tone: 'gold' },
+  { label: 'Confidence', value: '…' },
+  { label: 'Bias', value: '…' },
+];
+
 const DEFAULT_FORM = {
   sessionDate: toYmd(),
   chartSymbol: 'OANDA:XAUUSD',
@@ -86,8 +93,8 @@ const DEFAULT_FORM = {
   fundamentalBacking: 'GDP Growth: 3.2% YoY\nInflation cooling: 2.9% → 2.4%\nSector strength in metals and energy',
   whatDoISee: '',
   setupName: 'London Breakout',
-  whyValid: '',
-  entryConfirmation: '',
+  whyIsThisValid: '',
+  whatConfirmsEntry: '',
   conviction: 'medium',
   confidence: 72,
   riskLevel: 'Medium',
@@ -140,7 +147,19 @@ function writeLocalDraft(payload) {
 }
 
 function normalizeSession(session = {}) {
-  const { traderThesis: _nestedThesis, ...raw } = session;
+  const { traderThesis: _nestedThesis, whyValid: _legacyWhy, entryConfirmation: _legacyEntry, ...raw } = session;
+  const whyIsThisValid =
+    raw.whyIsThisValid != null
+      ? String(raw.whyIsThisValid)
+      : _legacyWhy != null
+        ? String(_legacyWhy)
+        : DEFAULT_FORM.whyIsThisValid;
+  const whatConfirmsEntry =
+    raw.whatConfirmsEntry != null
+      ? String(raw.whatConfirmsEntry)
+      : _legacyEntry != null
+        ? String(_legacyEntry)
+        : DEFAULT_FORM.whatConfirmsEntry;
   const merged = {
     ...DEFAULT_FORM,
     ...raw,
@@ -151,14 +170,25 @@ function normalizeSession(session = {}) {
     fundamentalBacking:
       raw.fundamentalBacking != null ? String(raw.fundamentalBacking) : DEFAULT_FORM.fundamentalBacking,
     whatDoISee: raw.whatDoISee != null ? String(raw.whatDoISee) : DEFAULT_FORM.whatDoISee,
-    whyValid: raw.whyValid != null ? String(raw.whyValid) : DEFAULT_FORM.whyValid,
-    entryConfirmation: raw.entryConfirmation != null ? String(raw.entryConfirmation) : DEFAULT_FORM.entryConfirmation,
+    whyIsThisValid,
+    whatConfirmsEntry,
     traderThesisUpdatedAt: raw.traderThesisUpdatedAt != null ? raw.traderThesisUpdatedAt : DEFAULT_FORM.traderThesisUpdatedAt,
   };
   if (!raw.conviction && raw.confidence != null) {
     merged.conviction = confidenceToConviction(raw.confidence);
   }
   return merged;
+}
+
+/** API + local draft still use column names whyValid / entryConfirmation */
+function toTraderLabPersistPayload(form, extras = {}) {
+  const { whyIsThisValid, whatConfirmsEntry, ...rest } = form;
+  return {
+    ...rest,
+    ...extras,
+    whyValid: whyIsThisValid,
+    entryConfirmation: whatConfirmsEntry,
+  };
 }
 
 function linesToList(text) {
@@ -346,14 +376,14 @@ export default function TraderLab() {
         : DEFAULT_FORM.keyDrivers,
       whatDoISee:
         [brief?.finalOutput?.currentPosture, brief?.instantRead?.bestApproach].filter(Boolean).join('\n') || '',
-      entryConfirmation:
+      whatConfirmsEntry:
         brief?.executionGuidance?.entryCondition
         || brief?.executionGuidance?.preferredDirection
-        || DEFAULT_FORM.entryConfirmation,
-      whyValid:
+        || DEFAULT_FORM.whatConfirmsEntry,
+      whyIsThisValid:
         brief?.finalOutput?.whyThisPosture
         || brief?.executionGuidance?.invalidation
-        || DEFAULT_FORM.whyValid,
+        || DEFAULT_FORM.whyIsThisValid,
       fundamentalBacking:
         [
           brief?.executionGuidance?.preferredDirection && `Preferred: ${brief.executionGuidance.preferredDirection}`,
@@ -484,7 +514,7 @@ export default function TraderLab() {
   const saveSession = async () => {
     setSaving(true);
     try {
-      const payload = { ...form, rrRatio: rr };
+      const payload = toTraderLabPersistPayload(form, { rrRatio: rr });
       if (activeId) {
         const res = await Api.updateTraderLabSession(activeId, payload);
         const saved = normalizeSession(res?.data?.session || { ...payload, id: activeId });
@@ -561,7 +591,7 @@ export default function TraderLab() {
     }
     setSaving(true);
     try {
-      const payload = { ...form, rrRatio: rr };
+      const payload = toTraderLabPersistPayload(form, { rrRatio: rr });
       let nextId = activeId;
       if (activeId) {
         const res = await Api.updateTraderLabSession(activeId, payload);
@@ -616,21 +646,26 @@ export default function TraderLab() {
       }
       title="AURA TERMINAL — TRADER LAB"
       description={null}
-      stats={stats}
+      stats={loading ? LOADING_TERMINAL_STATS : stats}
       primaryAction={
-        <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={saveSession} disabled={saving}>
+        <button
+          type="button"
+          className="trader-suite-btn trader-suite-btn--primary"
+          onClick={saveSession}
+          disabled={saving || loading}
+        >
           {saving ? 'Saving...' : 'Save lab'}
         </button>
       }
       secondaryActions={
         <>
-          <button type="button" className="trader-suite-btn" onClick={createFreshSession}>
+          <button type="button" className="trader-suite-btn" onClick={createFreshSession} disabled={loading}>
             New session
           </button>
         </>
       }
     >
-      {loading ? <div className="trader-suite-empty">Loading lab sessions...</div> : null}
+      {loading ? <TraderLabLoadingShell /> : null}
 
       {!loading ? (
         <div className="trader-lab-v2 trader-lab-v2--gold trader-lab-v2--compact trader-lab-v2--workspace trader-lab-v2--terminal-desktop">
@@ -760,7 +795,7 @@ export default function TraderLab() {
               </table>
             </div>
 
-            <div className="tl-thesis-block-wrap">
+            <div className="tl-thesis-stack">
               <TraderLabThesisBlock form={form} onFieldChange={updateField} />
               {thesisMeta ? (
                 <p className="tl-thesis-meta-external" aria-live="polite">
@@ -917,9 +952,12 @@ export default function TraderLab() {
               </div>
             </div>
 
-            {form.decoderContext ? (
-              <div className="tlab-decoder-strip" role="status">
-                <span className="tlab-decoder-strip__k">Market Decoder</span>
+            <div
+              className={`tlab-decoder-strip${form.decoderContext ? '' : ' tlab-decoder-strip--idle'}`}
+              role={form.decoderContext ? 'status' : undefined}
+            >
+              <span className="tlab-decoder-strip__k">Market Decoder</span>
+              {form.decoderContext ? (
                 <span>
                   {form.decoderContext.symbol ? `${form.decoderContext.symbol} · ` : ''}
                   {form.decoderContext.posture || 'Context imported'}
@@ -927,8 +965,10 @@ export default function TraderLab() {
                     ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(form.decoderContext.generatedAt))}`
                     : ''}
                 </span>
-              </div>
-            ) : null}
+              ) : (
+                <span className="tlab-decoder-strip__idle">No linked brief — export from Market Decoder to attach context.</span>
+              )}
+            </div>
             </div>
           </div>
 

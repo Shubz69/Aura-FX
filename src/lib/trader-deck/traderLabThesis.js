@@ -6,8 +6,18 @@
 export function traderThesisFromSession(session = {}) {
   return {
     whatDoISee: session.whatDoISee != null ? String(session.whatDoISee) : '',
-    whyIsThisValid: session.whyValid != null ? String(session.whyValid) : '',
-    whatConfirmsEntry: session.entryConfirmation != null ? String(session.entryConfirmation) : '',
+    whyIsThisValid:
+      session.whyIsThisValid != null
+        ? String(session.whyIsThisValid)
+        : session.whyValid != null
+          ? String(session.whyValid)
+          : '',
+    whatConfirmsEntry:
+      session.whatConfirmsEntry != null
+        ? String(session.whatConfirmsEntry)
+        : session.entryConfirmation != null
+          ? String(session.entryConfirmation)
+          : '',
     updatedAt: session.traderThesisUpdatedAt || session.updatedAt || null,
   };
 }
@@ -22,7 +32,11 @@ export function attachTraderThesisToSession(session) {
 }
 
 export function thesisFieldsDirty(prev, next) {
-  const a = (k) => String(prev?.[k] ?? '');
-  const b = (k) => String(next?.[k] ?? '');
-  return a('whatDoISee') !== b('whatDoISee') || a('whyValid') !== b('whyValid') || a('entryConfirmation') !== b('entryConfirmation');
+  const why = (s) => String(s?.whyIsThisValid ?? s?.whyValid ?? '');
+  const entry = (s) => String(s?.whatConfirmsEntry ?? s?.entryConfirmation ?? '');
+  return (
+    String(prev?.whatDoISee ?? '') !== String(next?.whatDoISee ?? '') ||
+    why(prev) !== why(next) ||
+    entry(prev) !== entry(next)
+  );
 }

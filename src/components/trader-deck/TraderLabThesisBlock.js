@@ -7,12 +7,12 @@ const FIELDS = [
     placeholder: 'Structure, flow, and context you observe…',
   },
   {
-    key: 'whyValid',
+    key: 'whyIsThisValid',
     label: '2. WHY IS THIS VALID?',
     placeholder: 'Confluence, levels, and backing for the idea…',
   },
   {
-    key: 'entryConfirmation',
+    key: 'whatConfirmsEntry',
     label: '3. WHAT CONFIRMS ENTRY?',
     placeholder: 'Trigger, confirmation, and invalidation…',
   },

@@ -148,8 +148,8 @@ export function buildLabFormPatchFromMarketDecoderBrief(brief) {
     .filter(Boolean)
     .join('\n');
 
-  const whyValid = fundamentalBacking || 'Imported from Market Decoder execution guidance.';
-  const entryConfirmation = [ex.invalidation, ex.avoidThis].filter(Boolean).join('\n');
+  const whyIsThisValid = fundamentalBacking || 'Imported from Market Decoder execution guidance.';
+  const whatConfirmsEntry = [ex.invalidation, ex.avoidThis].filter(Boolean).join('\n');
 
   const tradingCond = brief.instantRead?.tradingCondition || brief.marketPulse?.marketState || '—';
   const sessionGoal = [brief.instantRead?.bestApproach, ex.preferredDirection].filter(Boolean).join(' · ') || '';
@@ -168,8 +168,8 @@ export function buildLabFormPatchFromMarketDecoderBrief(brief) {
     keyDrivers: keyDrivers || `Market Decoder context — ${asset}. Add drivers per line.`,
     fundamentalBacking: fundamentalBacking || 'Imported from Market Decoder execution guidance.',
     whatDoISee: whatDoISee || `What you see structurally for ${asset}.`,
-    whyValid,
-    entryConfirmation: entryConfirmation || ex.riskConsideration || 'Define invalidation from decoder or structure.',
+    whyIsThisValid,
+    whatConfirmsEntry: whatConfirmsEntry || ex.riskConsideration || 'Define invalidation from decoder or structure.',
     sessionGoal: sessionGoal || 'Plan from Market Decoder brief; confirm before entry.',
     todaysFocus: wmn || (Array.isArray(brief.crossAssetContext) ? brief.crossAssetContext.join('\n') : '') || '',
     entryPrice,
@@ -212,8 +212,8 @@ export function buildTraderLabHandoff(form, rrRatio, sessionId) {
     riskPercent: safeNumber(form.riskPercent, 0),
     accountBalance: safeNumber(form.accountSize, 0),
     thesisWhy: form.whatDoISee || '',
-    thesisConfirms: form.whyValid || '',
-    thesisInvalidates: form.entryConfirmation || '',
+    thesisConfirms: form.whyIsThisValid ?? form.whyValid ?? '',
+    thesisInvalidates: form.whatConfirmsEntry ?? form.entryConfirmation ?? '',
     conviction: form.conviction || confidenceToConviction(form.confidence),
     setupName: form.setupName || '',
     marketBias: form.marketBias || '',
