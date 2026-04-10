@@ -200,3 +200,191 @@
     order: 3;
   }
 }
+
+/* Concept desk: session strip under chart, four-card center row, full-width execute */
+
+.trader-lab-v2--workspace .tlab-session-tabs-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.trader-lab-v2--workspace .tlab-center-quad {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--tl-gap);
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.trader-lab-v2--workspace .tlab-card--quad {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 12px 14px !important;
+}
+
+.trader-lab-v2--workspace .tlab-card--quad .tlab-card__title {
+  margin-bottom: 8px;
+}
+
+.trader-lab-v2--workspace .tlab-ref-bullets--compact {
+  margin-bottom: 8px;
+  max-height: 72px;
+  overflow: auto;
+}
+
+.trader-lab-v2--workspace .tlab-textarea--quad {
+  flex: 1 1 auto;
+  min-height: 64px;
+  max-height: 120px;
+  resize: vertical;
+}
+
+.trader-lab-v2--workspace .tlab-card--quad.tlab-card--exec {
+  min-height: 0;
+  max-height: none;
+}
+
+.trader-lab-v2--workspace .tlab-card--quad.tlab-card--exec .tlab-textarea--quad-exec {
+  min-height: 72px;
+  flex: 1 1 auto;
+  max-height: 140px;
+  resize: vertical;
+}
+
+.trader-lab-v2--workspace .tlab-card--quad.tlab-card--exec .tlab-exec-foot {
+  margin-top: auto;
+}
+
+.trader-lab-v2--workspace .tlab-decision-checks--quad {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  flex: 1 1 auto;
+}
+
+.trader-lab-v2--workspace .tlab-conviction__seg--quad {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 4px;
+  flex: 1 1 auto;
+  margin-top: 6px;
+  align-items: stretch;
+}
+
+.trader-lab-v2--workspace .tlab-conviction__seg--quad .tlab-conviction-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 4px;
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+}
+
+.journal-page .trade-validator-shell .trader-lab-v2--workspace .tlab-conviction__seg--quad {
+  flex-direction: row !important;
+}
+
+.journal-page .trade-validator-shell .trader-lab-v2--workspace .tlab-conviction__seg--quad .tlab-conviction-btn {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+
+.trader-lab-v2--workspace .tlab-center-execute-bar {
+  width: 100%;
+}
+
+.trader-lab-v2--workspace .tlab-execute-btn--wide {
+  width: 100%;
+  margin-top: 0;
+  padding: 14px 16px;
+  font-size: 0.78rem;
+}
+
+.trader-lab-v2--workspace .tlab-validator-banner--plan {
+  margin: 12px 0 0;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  font-size: 0.8rem;
+  padding: 12px 10px;
+  border-radius: 12px;
+}
+
+.trader-lab-v2--workspace .tlab-validator-banner--plan.tlab-validator-banner--ok {
+  background: rgba(100, 243, 176, 0.14);
+  color: #64f3b0;
+  border: 1px solid rgba(100, 243, 176, 0.35);
+}
+
+.trader-lab-v2--workspace .tlab-validator-banner--plan.tlab-validator-banner--bad {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(200, 210, 230, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trader-lab-v2--workspace .tlab-card--validator-metrics .tlab-validator-list {
+  margin-top: 4px;
+}
+
+.trader-lab-v2--workspace .tlab-saved-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
+}
+
+.trader-lab-v2--workspace .tlab-saved-row .tlab-saved-item {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.trader-lab-v2--workspace .tlab-saved-row--active .tlab-saved-item {
+  border-color: rgba(234, 169, 96, 0.55);
+  background: rgba(234, 169, 96, 0.14);
+}
+
+.trader-lab-v2--workspace .tlab-saved-remove {
+  flex: 0 0 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 120, 140, 0.35);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 170, 180, 0.9);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.trader-lab-v2--workspace .tlab-saved-remove:hover {
+  background: rgba(255, 90, 110, 0.12);
+  border-color: rgba(255, 140, 155, 0.55);
+}
+
+.journal-page .trade-validator-shell .trader-lab-v2--workspace .tlab-center-quad {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+@media (max-width: 1320px) {
+  .journal-page .trade-validator-shell .trader-lab-v2--workspace .tlab-center-quad {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .journal-page .trade-validator-shell .trader-lab-v2--workspace .tlab-center-quad {
+    grid-template-columns: 1fr !important;
+  }
+}

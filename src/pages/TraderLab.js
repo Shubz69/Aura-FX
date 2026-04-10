@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
 import { formatWelcomeEyebrow, getUserFirstName } from '../utils/welcomeUser';
-import { FaPen } from 'react-icons/fa';
+import { FaPen, FaTimes } from 'react-icons/fa';
 import {
   PLAYBOOK_SETUP_OPTIONS,
   buildTraderLabHandoff,
@@ -526,6 +526,32 @@ export default function TraderLab() {
     setForm(normalizeSession(session));
   };
 
+  const deleteSavedLab = async (sessionId, event) => {
+    event?.stopPropagation?.();
+    if (!sessionId) return;
+    const ok = window.confirm('Remove this saved lab from your archive?');
+    if (!ok) return;
+    const nextList = sessions.filter((s) => s.id !== sessionId);
+    try {
+      await Api.deleteTraderLabSession(sessionId);
+      setSessions(nextList);
+      if (activeId === sessionId) {
+        if (nextList.length) {
+          setActiveId(nextList[0].id);
+          setForm(normalizeSession(nextList[0]));
+        } else {
+          setActiveId(null);
+          setForm({ ...DEFAULT_FORM, sessionDate: toYmd() });
+          setLastSavedAt(null);
+        }
+      }
+      toast.success('Lab removed');
+    } catch (err) {
+      console.error(err);
+      toast.error('Could not remove lab');
+    }
+  };
+
   const readyToExecute = validator.passed && rrOk;
 
   const handleExecute = async () => {
@@ -609,8 +635,8 @@ export default function TraderLab() {
       {!loading ? (
         <div className="trader-lab-v2 trader-lab-v2--gold trader-lab-v2--compact trader-lab-v2--workspace">
           <aside className="trader-lab-v2__left">
-            <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Market read</h3>
+            <div className="tlab-card tlab-card--gold tlab-card--bias-rail">
+              <h3 className="tlab-card__title">Trade bias</h3>
               <div className="tlab-pill-row">
                 <BiasPill bias={form.marketBias} />
                 <span className="tlab-pill-confidence">{form.auraConfidence}%</span>
@@ -647,7 +673,10 @@ export default function TraderLab() {
                   ))}
                 </select>
               </div>
-              <div className="tlab-card__sub">Key drivers</div>
+            </div>
+
+            <div className="tlab-card tlab-card--gold tlab-card--key-drivers-rail">
+              <h3 className="tlab-card__title">Key drivers</h3>
               <ul className="tlab-ref-bullets">
                 {driverLines.map((line) => (
                   <li key={line}>{line}</li>
@@ -659,22 +688,6 @@ export default function TraderLab() {
                 onChange={(e) => updateField('keyDrivers', e.target.value)}
                 placeholder="One line per driver…"
                 aria-label="Key drivers"
-              />
-            </div>
-
-            <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Fundamental backing</h3>
-              <ul className="tlab-ref-bullets">
-                {fundamentalLines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-              <textarea
-                className="tlab-textarea tlab-textarea--tight"
-                value={form.fundamentalBacking}
-                onChange={(e) => updateField('fundamentalBacking', e.target.value)}
-                placeholder="One line per fundamental point…"
-                aria-label="Fundamental backing"
               />
             </div>
 
@@ -744,26 +757,6 @@ export default function TraderLab() {
           <div className="trader-lab-v2__center">
             <div className="tlab-center-stack">
             <div className="tlab-card tlab-card--chart tlab-card--gold tlab-card--focal">
-              <div className="tlab-chart-toolbar">
-                <div className="tlab-session-tabs">
-                  {sessions.slice(0, 6).map((session) => (
-                    <button
-                      key={session.id}
-                      type="button"
-                      className={`tlab-session-tab${session.id === activeId ? ' tlab-session-tab--active' : ''}`}
-                      onClick={() => {
-                        setActiveId(session.id);
-                        setForm(normalizeSession(session));
-                      }}
-                    >
-                      {session.sessionDate}
-                    </button>
-                  ))}
-                </div>
-                <span className={`tlab-valid-chip${validator.passed && rrOk ? ' tlab-valid-chip--ok' : ' tlab-valid-chip--bad'}`}>
-                  {validator.passed && rrOk ? 'Valid trade' : 'Blocked'}
-                </span>
-              </div>
               <div className="tlab-chart-toolbar tlab-chart-toolbar--second">
                 <select
                   className="tlab-select"
@@ -811,10 +804,45 @@ export default function TraderLab() {
                   <strong>{formatLabLevel(form.targetPrice)}</strong>
                 </div>
               </div>
+              {sessions.length ? (
+                <div className="tlab-session-tabs-bar" role="tablist" aria-label="Recent saved sessions">
+                  {sessions.slice(0, 6).map((session) => (
+                    <button
+                      key={session.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={session.id === activeId}
+                      className={`tlab-session-tab${session.id === activeId ? ' tlab-session-tab--active' : ''}`}
+                      onClick={() => {
+                        setActiveId(session.id);
+                        setForm(normalizeSession(session));
+                      }}
+                    >
+                      {session.sessionDate}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
 
-            <div className="tlab-center-split tlab-center-split--refined">
-              <div className="tlab-card tlab-card--gold tlab-card--exec">
+            <div className="tlab-center-quad">
+              <div className="tlab-card tlab-card--gold tlab-card--quad tlab-card--fundamental-center">
+                <h3 className="tlab-card__title">Fundamental backing</h3>
+                <ul className="tlab-ref-bullets tlab-ref-bullets--compact">
+                  {fundamentalLines.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+                <textarea
+                  className="tlab-textarea tlab-textarea--tight tlab-textarea--quad"
+                  value={form.fundamentalBacking}
+                  onChange={(e) => updateField('fundamentalBacking', e.target.value)}
+                  placeholder="One line per fundamental point…"
+                  aria-label="Fundamental backing"
+                />
+              </div>
+
+              <div className="tlab-card tlab-card--gold tlab-card--quad tlab-card--exec">
                 <div className="tlab-exec-head">
                   <h3 className="tlab-card__title">Execution notes</h3>
                   <span className="tlab-exec-edit-icon" title="Edit notes" aria-hidden>
@@ -822,14 +850,14 @@ export default function TraderLab() {
                   </span>
                 </div>
                 <textarea
-                  className="tlab-textarea tlab-textarea--exec"
+                  className="tlab-textarea tlab-textarea--exec tlab-textarea--quad-exec"
                   value={form.duringNotes}
                   onChange={(e) => updateField('duringNotes', e.target.value)}
-                  placeholder="Live execution plan, scaling, and desk notes (separate from entry confirmation in Trader thesis)..."
+                  placeholder="Live execution plan, scaling, desk notes…"
                 />
                 <div className="tlab-exec-foot">
                   <span className="tlab-exec-meta">
-                    Last updated: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}
+                    {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}
                   </span>
                   <button type="button" className="tlab-btn-save-notes" onClick={saveSession} disabled={saving}>
                     {saving ? 'SAVING...' : 'SAVE NOTES'}
@@ -837,61 +865,58 @@ export default function TraderLab() {
                 </div>
               </div>
 
-              <div className="tlab-card tlab-card--gold tlab-card--decision-panel" aria-label="Decision engine">
-                <div className="tlab-decision-mini">
-                  <div className="tlab-decision-mini__cell">
-                    <span className="tlab-level-label">Decision checks</span>
-                    <div className="tlab-decision-checks" role="list">
-                      {[
-                        { key: 'biasAligned', label: 'Bias aligned' },
-                        { key: 'setupValid', label: 'Setup valid' },
-                        { key: 'entryConfirmed', label: 'Confirmation' },
-                        { key: 'riskDefined', label: 'Risk valid' },
-                      ].map(({ key, label }) => (
-                        <label key={key} className="tlab-decision-check">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(form[key])}
-                            onChange={(e) => updateField(key, e.target.checked)}
-                          />
-                          <span className="tlab-decision-check__ui" aria-hidden />
-                          <span className="tlab-decision-check__label">{label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="tlab-decision-mini__cell">
-                    <span className="tlab-level-label">Conviction</span>
-                    <div className="tlab-conviction__seg">
-                      {[
-                        { id: 'low', label: 'Low' },
-                        { id: 'medium', label: 'Medium' },
-                        { id: 'high', label: 'High' },
-                      ].map(({ id, label }) => (
-                        <button
-                          key={id}
-                          type="button"
-                          className={`tlab-conviction-btn${form.conviction === id ? ' tlab-conviction-btn--active' : ''}`}
-                          onClick={() => updateField('conviction', id)}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="tlab-decision-mini__cell">
-                    <span className="tlab-level-label">Decision engine</span>
-                    <button
-                      type="button"
-                      className="tlab-execute-btn"
-                      disabled={!readyToExecute || saving}
-                      onClick={handleExecute}
-                    >
-                      {saving ? '…' : 'EXECUTE'}
-                    </button>
-                  </div>
+              <div className="tlab-card tlab-card--gold tlab-card--quad" aria-label="Decision checks">
+                <h3 className="tlab-card__title">Decision checks</h3>
+                <div className="tlab-decision-checks tlab-decision-checks--quad" role="list">
+                  {[
+                    { key: 'biasAligned', label: 'Bias aligned' },
+                    { key: 'setupValid', label: 'Setup valid' },
+                    { key: 'entryConfirmed', label: 'Confirmation' },
+                    { key: 'riskDefined', label: 'Risk valid' },
+                  ].map(({ key, label }) => (
+                    <label key={key} className="tlab-decision-check">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(form[key])}
+                        onChange={(e) => updateField(key, e.target.checked)}
+                      />
+                      <span className="tlab-decision-check__ui" aria-hidden />
+                      <span className="tlab-decision-check__label">{label}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
+
+              <div className="tlab-card tlab-card--gold tlab-card--quad" aria-label="Conviction">
+                <h3 className="tlab-card__title">Conviction</h3>
+                <div className="tlab-conviction__seg tlab-conviction__seg--quad">
+                  {[
+                    { id: 'low', label: 'LOW' },
+                    { id: 'medium', label: 'MEDIUM' },
+                    { id: 'high', label: 'HIGH' },
+                  ].map(({ id, label }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className={`tlab-conviction-btn${form.conviction === id ? ' tlab-conviction-btn--active' : ''}`}
+                      onClick={() => updateField('conviction', id)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="tlab-center-execute-bar">
+              <button
+                type="button"
+                className="tlab-execute-btn tlab-execute-btn--wide"
+                disabled={!readyToExecute || saving}
+                onClick={handleExecute}
+              >
+                {saving ? '…' : 'EXECUTE'}
+              </button>
             </div>
 
             {form.decoderContext ? (
@@ -910,7 +935,7 @@ export default function TraderLab() {
           </div>
 
           <aside className="trader-lab-v2__right">
-            <div className="tlab-card tlab-card--gold">
+            <div className="tlab-card tlab-card--gold tlab-card--plan-rail">
               <h3 className="tlab-card__title">Trade plan builder</h3>
               <div className="tlab-field">
                 <label>Instrument</label>
@@ -998,10 +1023,16 @@ export default function TraderLab() {
                 <span>Position size (approx.)</span>
                 <strong>{positionLotsLabel}</strong>
               </div>
+              <div
+                className={`tlab-validator-banner tlab-validator-banner--plan${validatorPanelOk ? ' tlab-validator-banner--ok' : ' tlab-validator-banner--bad'}`}
+                role="status"
+              >
+                {validatorPanelOk ? '✓ TRADE VALID' : 'BLOCKED — review checks'}
+              </div>
             </div>
 
-            <div className={`tlab-card tlab-card--gold tlab-card--validator${validatorPanelOk ? ' tlab-card--validator-pass' : ''}`}>
-              <div className="tlab-validator-banner">{validatorPanelOk ? '✓ TRADE VALID' : 'BLOCKED'}</div>
+            <div className={`tlab-card tlab-card--gold tlab-card--validator tlab-card--validator-metrics${validatorPanelOk ? ' tlab-card--validator-pass' : ''}`}>
+              <h3 className="tlab-card__title">Validation</h3>
               <ul className="tlab-validator-list tlab-validator-list--status">
                 {tradeValidatorRows.map((row) => (
                   <li key={row.label}>
@@ -1041,7 +1072,7 @@ export default function TraderLab() {
 
             <div className="tlab-card tlab-card--gold tlab-card--saved-labs">
               <div className="tlab-saved-head">
-                <h3 className="tlab-card__title">Saved labs</h3>
+                <h3 className="tlab-card__title">My trades</h3>
                 <span className="tlab-saved-count">{savedLabRows.length}</span>
               </div>
               {!savedLabRows.length ? (
@@ -1049,16 +1080,28 @@ export default function TraderLab() {
               ) : (
                 <div className="tlab-saved-list" role="list" aria-label="Saved Trader Lab sessions">
                   {savedLabRows.map((row) => (
-                    <button
+                    <div
                       key={row.id}
-                      type="button"
-                      className={`tlab-saved-item${activeId === row.id ? ' tlab-saved-item--active' : ''}`}
-                      onClick={() => openSavedLab(row.id)}
+                      className={`tlab-saved-row${activeId === row.id ? ' tlab-saved-row--active' : ''}`}
                     >
-                      <span className="tlab-saved-item__date">{row.date}</span>
-                      <span className="tlab-saved-item__setup">{row.setupName}</span>
-                      <span className="tlab-saved-item__symbol">{row.symbol}</span>
-                    </button>
+                      <button
+                        type="button"
+                        className="tlab-saved-item"
+                        onClick={() => openSavedLab(row.id)}
+                      >
+                        <span className="tlab-saved-item__date">{row.date}</span>
+                        <span className="tlab-saved-item__setup">{row.setupName}</span>
+                        <span className="tlab-saved-item__symbol">{row.symbol}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="tlab-saved-remove"
+                        aria-label={`Remove ${row.setupName}`}
+                        onClick={(e) => deleteSavedLab(row.id, e)}
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
