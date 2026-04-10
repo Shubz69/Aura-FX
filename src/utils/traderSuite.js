@@ -133,12 +133,13 @@ export function buildLabFormPatchFromMarketDecoderBrief(brief) {
     .join('\n');
   const posture = brief.finalOutput?.currentPosture || '';
   const sub = brief.finalOutput?.postureSubtitle || brief.instantRead?.bestApproach || '';
-  const whatDoISee = [posture && `Posture: ${posture}`, sub && sub !== posture && sub, wmn && `Context:\n${wmn}`].filter(Boolean).join('\n\n');
+  const keyDrivers = wmn || (Array.isArray(brief.crossAssetContext) ? brief.crossAssetContext.join('\n') : '') || '';
+  const whatDoISee = [posture && `Posture: ${posture}`, sub && sub !== posture && sub].filter(Boolean).join('\n\n');
 
   const ex = brief.executionGuidance || {};
   const bull = brief.scenarioMap?.bullish;
   const bear = brief.scenarioMap?.bearish;
-  const whyValid = [
+  const fundamentalBacking = [
     ex.preferredDirection && `Preferred: ${ex.preferredDirection}`,
     ex.entryCondition && `Entry: ${ex.entryCondition}`,
     bull?.condition && `Bull case: ${bull.condition}`,
@@ -147,6 +148,7 @@ export function buildLabFormPatchFromMarketDecoderBrief(brief) {
     .filter(Boolean)
     .join('\n');
 
+  const whyValid = fundamentalBacking || 'Imported from Market Decoder execution guidance.';
   const entryConfirmation = [ex.invalidation, ex.avoidThis].filter(Boolean).join('\n');
 
   const tradingCond = brief.instantRead?.tradingCondition || brief.marketPulse?.marketState || '—';
@@ -163,8 +165,10 @@ export function buildLabFormPatchFromMarketDecoderBrief(brief) {
     auraConfidence: confidence,
     confidence,
     conviction: convNorm,
-    whatDoISee: whatDoISee || `Market Decoder import — ${asset}. Review levels and thesis.`,
-    whyValid: whyValid || 'Imported from Market Decoder execution guidance.',
+    keyDrivers: keyDrivers || `Market Decoder context — ${asset}. Add drivers per line.`,
+    fundamentalBacking: fundamentalBacking || 'Imported from Market Decoder execution guidance.',
+    whatDoISee: whatDoISee || `What you see structurally for ${asset}.`,
+    whyValid,
     entryConfirmation: entryConfirmation || ex.riskConsideration || 'Define invalidation from decoder or structure.',
     sessionGoal: sessionGoal || 'Plan from Market Decoder brief; confirm before entry.',
     todaysFocus: wmn || (Array.isArray(brief.crossAssetContext) ? brief.crossAssetContext.join('\n') : '') || '',

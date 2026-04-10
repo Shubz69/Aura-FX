@@ -29,6 +29,7 @@ export default function TradingViewWidgetEmbed({
   symbol = 'OANDA:EURUSD',
   interval = '60',
   height = 440,
+  fillParent = false,
   theme = 'dark',
   studies = [],
   className = 'trader-suite-chart-frame',
@@ -95,13 +96,18 @@ export default function TradingViewWidgetEmbed({
     };
   }, [allowSymbolChange, interval, studies, symbol, theme, widgetId]);
 
+  const h = height === '100%' || fillParent ? '100%' : height;
+  const minH = h === '100%' ? 'min(520px, 52vh)' : height;
+
   return (
     <div
       className={className}
       style={{
         width: '100%',
-        height,
-        minHeight: height,
+        height: h,
+        minHeight: minH,
+        flex: fillParent ? '1 1 auto' : undefined,
+        minWidth: 0,
         position: 'relative',
       }}
     >

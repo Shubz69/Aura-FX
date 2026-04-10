@@ -20,10 +20,13 @@ import {
   toYmd,
 } from '../utils/traderSuite';
 import TradingViewChartPanel from '../components/TradingViewChartPanel';
+import TraderLabThesisBlock from '../components/trader-deck/TraderLabThesisBlock';
+import { formatLabLevel } from '../lib/trader-deck/traderLabFormatters';
 import {
   TRADER_LAB_HANDOFF_KEY,
   MARKET_DECODER_LAB_HANDOFF_KEY,
 } from '../lib/aura-analysis/validator/validatorChecklistStorage';
+import '../styles/trader-deck/TraderLabLayout.css';
 
 const INSTRUMENTS = [
   { label: 'XAUUSD', value: 'OANDA:XAUUSD' },
@@ -78,12 +81,13 @@ const DEFAULT_FORM = {
   todaysFocus: 'U.S. / China|Neutral\nEurope|Positive\nMiddle East|Negative',
   sessionGoal: 'Hold discipline on continuation entries; max 2 quality trades.',
   maxTradesAllowed: 3,
-  whatDoISee:
+  keyDrivers:
     'Strong U.S. economic data supporting risk tone\nInstitutional inflows into metals\nDXY softening into NY close',
+  fundamentalBacking: 'GDP Growth: 3.2% YoY\nInflation cooling: 2.9% → 2.4%\nSector strength in metals and energy',
+  whatDoISee: '',
   setupName: 'London Breakout',
-  whyValid: 'GDP Growth: 3.2% YoY\nInflation cooling: 2.9% → 2.4%\nSector strength in metals and energy',
-  entryConfirmation:
-    'Price respected the ascending channel. Wait for a bullish 1H close above local structure before scaling. Invalidation on acceptance back inside the range.',
+  whyValid: '',
+  entryConfirmation: '',
   conviction: 'medium',
   confidence: 72,
   riskLevel: 'Medium',
@@ -111,6 +115,7 @@ const DEFAULT_FORM = {
   whatToChange: '',
   emotionalIntensity: 30,
   mistakeTags: [],
+  traderThesisUpdatedAt: null,
 };
 
 const TRADER_LAB_LOCAL_DRAFT_KEY = 'aura_trader_lab_last_draft_v1';
@@ -135,15 +140,23 @@ function writeLocalDraft(payload) {
 }
 
 function normalizeSession(session = {}) {
+  const { traderThesis: _nestedThesis, ...raw } = session;
   const merged = {
     ...DEFAULT_FORM,
-    ...session,
-    mistakeTags: Array.isArray(session.mistakeTags) ? session.mistakeTags : DEFAULT_FORM.mistakeTags,
-    chartSymbol: session.chartSymbol || DEFAULT_FORM.chartSymbol,
-    accountSize: session.accountSize !== '' && session.accountSize != null ? Number(session.accountSize) : DEFAULT_FORM.accountSize,
+    ...raw,
+    mistakeTags: Array.isArray(raw.mistakeTags) ? raw.mistakeTags : DEFAULT_FORM.mistakeTags,
+    chartSymbol: raw.chartSymbol || DEFAULT_FORM.chartSymbol,
+    accountSize: raw.accountSize !== '' && raw.accountSize != null ? Number(raw.accountSize) : DEFAULT_FORM.accountSize,
+    keyDrivers: raw.keyDrivers != null ? String(raw.keyDrivers) : DEFAULT_FORM.keyDrivers,
+    fundamentalBacking:
+      raw.fundamentalBacking != null ? String(raw.fundamentalBacking) : DEFAULT_FORM.fundamentalBacking,
+    whatDoISee: raw.whatDoISee != null ? String(raw.whatDoISee) : DEFAULT_FORM.whatDoISee,
+    whyValid: raw.whyValid != null ? String(raw.whyValid) : DEFAULT_FORM.whyValid,
+    entryConfirmation: raw.entryConfirmation != null ? String(raw.entryConfirmation) : DEFAULT_FORM.entryConfirmation,
+    traderThesisUpdatedAt: raw.traderThesisUpdatedAt != null ? raw.traderThesisUpdatedAt : DEFAULT_FORM.traderThesisUpdatedAt,
   };
-  if (!session.conviction && session.confidence != null) {
-    merged.conviction = confidenceToConviction(session.confidence);
+  if (!raw.conviction && raw.confidence != null) {
+    merged.conviction = confidenceToConviction(raw.confidence);
   }
   return merged;
 }
@@ -325,12 +338,14 @@ export default function TraderLab() {
         brief?.finalOutput?.currentPosture
         || brief?.finalOutput?.postureSubtitle
         || DEFAULT_FORM.sessionGoal,
-      whatDoISee: Array.isArray(brief?.whatMattersNow)
+      keyDrivers: Array.isArray(brief?.whatMattersNow)
         ? brief.whatMattersNow
-          .map((x) => `${x?.label || 'Signal'}: ${x?.text || ''}`.trim())
-          .filter(Boolean)
-          .join('\n')
-        : DEFAULT_FORM.whatDoISee,
+            .map((x) => `${x?.label || 'Signal'}: ${x?.text || ''}`.trim())
+            .filter(Boolean)
+            .join('\n')
+        : DEFAULT_FORM.keyDrivers,
+      whatDoISee:
+        [brief?.finalOutput?.currentPosture, brief?.instantRead?.bestApproach].filter(Boolean).join('\n') || '',
       entryConfirmation:
         brief?.executionGuidance?.entryCondition
         || brief?.executionGuidance?.preferredDirection
@@ -339,6 +354,14 @@ export default function TraderLab() {
         brief?.finalOutput?.whyThisPosture
         || brief?.executionGuidance?.invalidation
         || DEFAULT_FORM.whyValid,
+      fundamentalBacking:
+        [
+          brief?.executionGuidance?.preferredDirection && `Preferred: ${brief.executionGuidance.preferredDirection}`,
+          brief?.scenarioMap?.bullish?.condition && `Bull case: ${brief.scenarioMap.bullish.condition}`,
+          brief?.scenarioMap?.bearish?.condition && `Bear case: ${brief.scenarioMap.bearish.condition}`,
+        ]
+          .filter(Boolean)
+          .join('\n') || DEFAULT_FORM.fundamentalBacking,
       decoderContext: {
         symbol,
         exportedAt: parsed.exportedAt || new Date().toISOString(),
@@ -417,8 +440,17 @@ export default function TraderLab() {
   );
 
   const geoRows = useMemo(() => parseGeopoliticalBlock(form.todaysFocus), [form.todaysFocus]);
-  const driverLines = useMemo(() => linesToList(form.whatDoISee), [form.whatDoISee]);
-  const fundamentalLines = useMemo(() => linesToList(form.whyValid), [form.whyValid]);
+  const driverLines = useMemo(() => linesToList(form.keyDrivers), [form.keyDrivers]);
+  const fundamentalLines = useMemo(() => linesToList(form.fundamentalBacking), [form.fundamentalBacking]);
+  const thesisMeta = useMemo(() => {
+    const at = form.traderThesisUpdatedAt;
+    if (!at) return null;
+    try {
+      return `Thesis saved · ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(at))}`;
+    } catch {
+      return 'Thesis saved';
+    }
+  }, [form.traderThesisUpdatedAt]);
   const savedLabRows = useMemo(() => {
     return [...sessions]
       .sort((a, b) => String(b.sessionDate || '').localeCompare(String(a.sessionDate || '')))
@@ -575,10 +607,10 @@ export default function TraderLab() {
       {loading ? <div className="trader-suite-empty">Loading lab sessions...</div> : null}
 
       {!loading ? (
-        <div className="trader-lab-v2 trader-lab-v2--gold trader-lab-v2--compact">
+        <div className="trader-lab-v2 trader-lab-v2--gold trader-lab-v2--compact trader-lab-v2--workspace">
           <aside className="trader-lab-v2__left">
             <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Trade thesis</h3>
+              <h3 className="tlab-card__title">Market read</h3>
               <div className="tlab-pill-row">
                 <BiasPill bias={form.marketBias} />
                 <span className="tlab-pill-confidence">{form.auraConfidence}%</span>
@@ -623,9 +655,9 @@ export default function TraderLab() {
               </ul>
               <textarea
                 className="tlab-textarea tlab-textarea--tight"
-                value={form.whatDoISee}
-                onChange={(e) => updateField('whatDoISee', e.target.value)}
-                placeholder="One line per driver..."
+                value={form.keyDrivers}
+                onChange={(e) => updateField('keyDrivers', e.target.value)}
+                placeholder="One line per driver…"
                 aria-label="Key drivers"
               />
             </div>
@@ -639,9 +671,9 @@ export default function TraderLab() {
               </ul>
               <textarea
                 className="tlab-textarea tlab-textarea--tight"
-                value={form.whyValid}
-                onChange={(e) => updateField('whyValid', e.target.value)}
-                placeholder="One line per fundamental point..."
+                value={form.fundamentalBacking}
+                onChange={(e) => updateField('fundamentalBacking', e.target.value)}
+                placeholder="One line per fundamental point…"
                 aria-label="Fundamental backing"
               />
             </div>
@@ -699,42 +731,19 @@ export default function TraderLab() {
               </table>
             </div>
 
-            <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Trader thesis</h3>
-              <div className="tlab-thesis-grid">
-                <div className="tlab-field">
-                  <label>1. What do I see?</label>
-                  <textarea
-                    className="tlab-textarea tlab-textarea--tight"
-                    value={form.whatDoISee}
-                    onChange={(e) => updateField('whatDoISee', e.target.value)}
-                    placeholder="Structure, flow, context..."
-                  />
-                </div>
-                <div className="tlab-field">
-                  <label>2. Why is this valid?</label>
-                  <textarea
-                    className="tlab-textarea tlab-textarea--tight"
-                    value={form.whyValid}
-                    onChange={(e) => updateField('whyValid', e.target.value)}
-                    placeholder="Confluence and backing..."
-                  />
-                </div>
-                <div className="tlab-field">
-                  <label>3. What confirms entry?</label>
-                  <textarea
-                    className="tlab-textarea tlab-textarea--tight"
-                    value={form.entryConfirmation}
-                    onChange={(e) => updateField('entryConfirmation', e.target.value)}
-                    placeholder="Trigger and invalidation..."
-                  />
-                </div>
-              </div>
+            <div className="tl-thesis-block-wrap">
+              <TraderLabThesisBlock form={form} onFieldChange={updateField} />
+              {thesisMeta ? (
+                <p className="tl-thesis-meta-external" aria-live="polite">
+                  {thesisMeta}
+                </p>
+              ) : null}
             </div>
           </aside>
 
           <div className="trader-lab-v2__center">
-            <div className="tlab-card tlab-card--chart tlab-card--gold">
+            <div className="tlab-center-stack">
+            <div className="tlab-card tlab-card--chart tlab-card--gold tlab-card--focal">
               <div className="tlab-chart-toolbar">
                 <div className="tlab-session-tabs">
                   {sessions.slice(0, 6).map((session) => (
@@ -779,11 +788,11 @@ export default function TraderLab() {
                   ))}
                 </div>
               </div>
-              <div className="tlab-chart-host">
+              <div className="tlab-chart-host tlab-chart-host--fill">
                 <TradingViewChartPanel
                   symbol={form.chartSymbol}
                   interval={chartInterval}
-                  height={320}
+                  fillParent
                   className="trader-suite-chart-frame"
                   suppressLoadingText
                 />
@@ -791,15 +800,15 @@ export default function TraderLab() {
               <div className="tlab-level-strip">
                 <div>
                   <span className="tlab-level-label">Entry</span>
-                  <strong>{form.entryPrice}</strong>
+                  <strong>{formatLabLevel(form.entryPrice)}</strong>
                 </div>
                 <div>
                   <span className="tlab-level-label tlab-level-label--sl">Stop loss</span>
-                  <strong>{form.stopLoss}</strong>
+                  <strong>{formatLabLevel(form.stopLoss)}</strong>
                 </div>
                 <div>
                   <span className="tlab-level-label tlab-level-label--tp">Target</span>
-                  <strong>{form.targetPrice}</strong>
+                  <strong>{formatLabLevel(form.targetPrice)}</strong>
                 </div>
               </div>
             </div>
@@ -883,6 +892,20 @@ export default function TraderLab() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {form.decoderContext ? (
+              <div className="tlab-decoder-strip" role="status">
+                <span className="tlab-decoder-strip__k">Market Decoder</span>
+                <span>
+                  {form.decoderContext.symbol ? `${form.decoderContext.symbol} · ` : ''}
+                  {form.decoderContext.posture || 'Context imported'}
+                  {form.decoderContext.generatedAt
+                    ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(form.decoderContext.generatedAt))}`
+                    : ''}
+                </span>
+              </div>
+            ) : null}
             </div>
           </div>
 

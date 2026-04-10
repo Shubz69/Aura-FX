@@ -14,10 +14,14 @@ export default function TradingViewChartPanel({
   interval,
   studies = [],
   height = 430,
+  /** When true, height fills the flex parent; parent must set min-height */
+  fillParent = false,
   className = 'trader-suite-chart-frame',
   suppressLoadingText = false,
 }) {
   const [engine, setEngine] = useState('checking'); // checking | cl | widget
+  const resolvedHeight = fillParent ? '100%' : height;
+  const loadingMinH = fillParent ? 280 : height;
 
   useEffect(() => {
     let active = true;
@@ -38,7 +42,9 @@ export default function TradingViewChartPanel({
       <div
         className={className}
         style={{
-          minHeight: height,
+          minHeight: loadingMinH,
+          height: fillParent ? '100%' : undefined,
+          flex: fillParent ? '1 1 auto' : undefined,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -56,7 +62,8 @@ export default function TradingViewChartPanel({
       <TradingViewChartingLibrary
         symbol={symbol}
         interval={String(interval)}
-        height={height}
+        height={resolvedHeight}
+        fillParent={fillParent}
         className={className}
         theme="dark"
       />
@@ -68,7 +75,8 @@ export default function TradingViewChartPanel({
       symbol={symbol}
       interval={interval}
       studies={studies}
-      height={height}
+      height={resolvedHeight}
+      fillParent={fillParent}
       className={className}
     />
   );

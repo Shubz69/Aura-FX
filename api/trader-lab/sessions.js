@@ -40,6 +40,9 @@ async function ensureExtraColumns() {
   const alters = [
     ['chartSymbol', 'VARCHAR(64) DEFAULT NULL'],
     ['accountSize', 'DECIMAL(16,2) DEFAULT NULL'],
+    ['keyDrivers', 'TEXT DEFAULT NULL'],
+    ['fundamentalBacking', 'TEXT DEFAULT NULL'],
+    ['traderThesisUpdatedAt', 'DATETIME(3) DEFAULT NULL'],
   ];
   for (const [col, def] of alters) {
     try {
@@ -106,6 +109,19 @@ async function ensureTable() {
   `);
 }
 
+function anyThesisText(body) {
+  return [body?.whatDoISee, body?.whyValid, body?.entryConfirmation].some((x) => String(x || '').trim().length > 0);
+}
+
+function thesisChangedFromPrev(prev, body) {
+  if (!prev) return anyThesisText(body);
+  return (
+    String(prev.whatDoISee ?? '') !== String(body.whatDoISee ?? '') ||
+    String(prev.whyValid ?? '') !== String(body.whyValid ?? '') ||
+    String(prev.entryConfirmation ?? '') !== String(body.entryConfirmation ?? '')
+  );
+}
+
 function mapRow(row) {
   if (!row) return null;
   return {
@@ -151,8 +167,21 @@ function mapRow(row) {
     mistakeTags: parseJsonField(row.mistakeTags),
     chartSymbol: row.chartSymbol != null ? String(row.chartSymbol) : '',
     accountSize: row.accountSize != null ? Number(row.accountSize) : '',
+    keyDrivers: row.keyDrivers != null ? String(row.keyDrivers) : '',
+    fundamentalBacking: row.fundamentalBacking != null ? String(row.fundamentalBacking) : '',
+    traderThesisUpdatedAt: row.traderThesisUpdatedAt ? new Date(row.traderThesisUpdatedAt).toISOString() : null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    traderThesis: {
+      whatDoISee: row.whatDoISee != null ? String(row.whatDoISee) : '',
+      whyIsThisValid: row.whyValid != null ? String(row.whyValid) : '',
+      whatConfirmsEntry: row.entryConfirmation != null ? String(row.entryConfirmation) : '',
+      updatedAt: row.traderThesisUpdatedAt
+        ? new Date(row.traderThesisUpdatedAt).toISOString()
+        : row.updatedAt
+          ? new Date(row.updatedAt).toISOString()
+          : null,
+    },
   };
 }
 
@@ -204,14 +233,16 @@ module.exports = async (req, res) => {
 
   if (req.method === 'POST' && !sessionId) {
     const id = crypto.randomUUID();
+    const thesisStamp = anyThesisText(body) ? new Date() : null;
     await executeQuery(
       `INSERT INTO trader_lab_sessions (
         id, userId, sessionDate, marketBias, marketState, auraConfidence, todaysFocus, sessionGoal, maxTradesAllowed,
         whatDoISee, setupName, whyValid, entryConfirmation, confidence, riskLevel, entryPrice, stopLoss, targetPrice,
         riskPercent, rrRatio, setupValid, biasAligned, entryConfirmed, riskDefined, livePnlR, livePnlPercent, currentPrice,
         distanceToSl, distanceToTp, emotions, duringNotes, outcome, resultR, durationMinutes, followedRules, entryCorrect,
-        exitCorrect, whatToChange, emotionalIntensity, mistakeTags, chartSymbol, accountSize
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        exitCorrect, whatToChange, emotionalIntensity, mistakeTags, chartSymbol, accountSize,
+        keyDrivers, fundamentalBacking, traderThesisUpdatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         userId,
@@ -255,6 +286,9 @@ module.exports = async (req, res) => {
         JSON.stringify(Array.isArray(body.mistakeTags) ? body.mistakeTags : []),
         body.chartSymbol != null ? String(body.chartSymbol).slice(0, 64) : null,
         body.accountSize !== '' && body.accountSize != null ? Number(body.accountSize) : null,
+        body.keyDrivers != null ? String(body.keyDrivers).slice(0, 6000) : null,
+        body.fundamentalBacking != null ? String(body.fundamentalBacking).slice(0, 6000) : null,
+        thesisStamp,
       ]
     );
 
@@ -263,13 +297,24 @@ module.exports = async (req, res) => {
   }
 
   if ((req.method === 'PUT' || req.method === 'DELETE') && sessionId) {
-    const [existing] = await executeQuery('SELECT id FROM trader_lab_sessions WHERE id = ? AND userId = ?', [sessionId, userId]);
-    if (!existing.length) return res.status(404).json({ success: false, message: 'Session not found' });
+    const [existingRows] = await executeQuery('SELECT * FROM trader_lab_sessions WHERE id = ? AND userId = ?', [
+      sessionId,
+      userId,
+    ]);
+    if (!existingRows.length) return res.status(404).json({ success: false, message: 'Session not found' });
+    const prevRow = existingRows[0];
 
     if (req.method === 'DELETE') {
       await executeQuery('DELETE FROM trader_lab_sessions WHERE id = ? AND userId = ?', [sessionId, userId]);
       return res.status(200).json({ success: true, deleted: true });
     }
+
+    const thesisBump = thesisChangedFromPrev(prevRow, body);
+    const nextThesisAt = thesisBump
+      ? new Date()
+      : prevRow.traderThesisUpdatedAt
+        ? new Date(prevRow.traderThesisUpdatedAt)
+        : null;
 
     await executeQuery(
       `UPDATE trader_lab_sessions SET
@@ -278,7 +323,7 @@ module.exports = async (req, res) => {
         targetPrice = ?, riskPercent = ?, rrRatio = ?, setupValid = ?, biasAligned = ?, entryConfirmed = ?, riskDefined = ?, livePnlR = ?,
         livePnlPercent = ?, currentPrice = ?, distanceToSl = ?, distanceToTp = ?, emotions = ?, duringNotes = ?, outcome = ?, resultR = ?,
         durationMinutes = ?, followedRules = ?, entryCorrect = ?, exitCorrect = ?, whatToChange = ?, emotionalIntensity = ?, mistakeTags = ?,
-        chartSymbol = ?, accountSize = ?
+        chartSymbol = ?, accountSize = ?, keyDrivers = ?, fundamentalBacking = ?, traderThesisUpdatedAt = ?
       WHERE id = ? AND userId = ?`,
       [
         String(body.sessionDate || '').slice(0, 10) || new Date().toISOString().slice(0, 10),
@@ -321,6 +366,9 @@ module.exports = async (req, res) => {
         JSON.stringify(Array.isArray(body.mistakeTags) ? body.mistakeTags : []),
         body.chartSymbol != null ? String(body.chartSymbol).slice(0, 64) : null,
         body.accountSize !== '' && body.accountSize != null ? Number(body.accountSize) : null,
+        body.keyDrivers != null ? String(body.keyDrivers).slice(0, 6000) : null,
+        body.fundamentalBacking != null ? String(body.fundamentalBacking).slice(0, 6000) : null,
+        nextThesisAt,
         sessionId,
         userId,
       ]

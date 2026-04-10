@@ -22,6 +22,7 @@ export default function TradingViewChartingLibrary({
   datafeedUrl = DEFAULT_DATAFEED,
   libraryPath = `${PUBLIC}/charting_library/`,
   height = 430,
+  fillParent = false,
   className = '',
   theme = 'dark',
 }) {
@@ -81,14 +82,18 @@ export default function TradingViewChartingLibrary({
         widgetRef.current = null;
       }
     };
-  }, [symbol, interval, datafeedUrl, libraryPath, theme, height]);
+  }, [symbol, interval, datafeedUrl, libraryPath, theme, height, fillParent]);
+
+  const boxHeight = height === '100%' || fillParent ? '100%' : height;
+  const boxMin = fillParent || height === '100%' ? 'min(520px, 52vh)' : height;
 
   if (error) {
     return (
       <div
         className={className}
         style={{
-          minHeight: height,
+          minHeight: boxMin,
+          height: fillParent ? '100%' : undefined,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -118,7 +123,13 @@ export default function TradingViewChartingLibrary({
     <div
       ref={containerRef}
       className={className}
-      style={{ minHeight: height, width: '100%' }}
+      style={{
+        minHeight: boxMin,
+        height: boxHeight,
+        width: '100%',
+        flex: fillParent ? '1 1 auto' : undefined,
+        minWidth: 0,
+      }}
     />
   );
 }
