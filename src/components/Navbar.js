@@ -196,17 +196,17 @@ const Navbar = () => {
                       <Link to="/trader-deck/trade-validator/overview" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaCheckSquare className="dropdown-icon" /> Trade Validator
                       </Link>
+                      {entitlements?.canAccessSurveillance ? (
+                        <Link to="/surveillance" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                          <FaGlobe className="dropdown-icon" /> Surveillance
+                        </Link>
+                      ) : null}
                       <Link to="/aura-analysis" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaChartLine className="dropdown-icon" /> Aura Analysis
                       </Link>
                       <Link to="/backtesting" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaHistory className="dropdown-icon" /> Backtesting
                       </Link>
-                      {entitlements?.canAccessSurveillance && (
-                        <Link to="/surveillance" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                          <FaGlobe className="dropdown-icon" /> Surveillance
-                        </Link>
-                      )}
                       {isPremium(user) && (
                         <>
                           <Link to="/reports" className="dropdown-item" onClick={() => setDropdownOpen(false)}>

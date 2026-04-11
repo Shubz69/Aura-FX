@@ -575,12 +575,15 @@ const Settings = () => {
                     onChange={(e) => handleRoleChange(e.target.value)}
                     disabled={isConfiguredSuperAdminEmail(selectedUser.email)}
                   >
-                    <option value="free">Free</option>
+                    <option value="free">Free / Access</option>
                     <option value="premium">Premium (AURA TERMINAL)</option>
-                    <option value="a7fx">A7FX Elite</option>
+                    <option value="a7fx">Elite / A7FX</option>
                     <option value="admin">Admin</option>
                     {superAdmin && <option value="super_admin">Super Admin</option>}
                   </select>
+                  <p className="help-text">
+                    Surveillance is available only to active Elite billing (Elite or A7FX plan with a valid paid subscription) and to Admin or Super Admin staff. Premium and Access do not include Surveillance.
+                  </p>
                   {isConfiguredSuperAdminEmail(selectedUser.email) && (
                     <p className="help-text">Super Admin role cannot be changed</p>
                   )}

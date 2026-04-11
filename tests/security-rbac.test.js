@@ -60,6 +60,16 @@ const ADMIN_USER = {
   payment_failed: false
 };
 
+const SUPER_ADMIN_USER = {
+  id: 5,
+  email: 'super@test.com',
+  role: 'super_admin',
+  subscription_plan: 'free',
+  subscription_status: 'inactive',
+  subscription_expiry: null,
+  payment_failed: false
+};
+
 describe('RBAC - Tier Detection', () => {
   it('Access user has tier ACCESS', () => {
     const tier = getTier(FREE_USER);
@@ -112,6 +122,11 @@ describe('RBAC - canAccessSurveillance', () => {
 
   it('Admin user can access Surveillance', () => {
     const ent = getEntitlements(ADMIN_USER);
+    expect(ent.canAccessSurveillance).toBe(true);
+  });
+
+  it('Super Admin user can access Surveillance', () => {
+    const ent = getEntitlements(SUPER_ADMIN_USER);
     expect(ent.canAccessSurveillance).toBe(true);
   });
 });

@@ -186,7 +186,7 @@ function SubscriptionAccessModal({ open, title, userEmail, initialPlan, onClose,
           />
           <p className="ap-modal__hint">
             {needsDuration
-              ? 'Access expires at the end of this many days from right now. Paid plans stay active until that date.'
+              ? 'Access expires at the end of this many days from right now. Paid plans stay active until that date. Surveillance is included only on Elite or A7FX plans (not Premium or Aura). Admins and super admins always have Surveillance for support.'
               : 'Free plan clears paid expiry and deactivates subscription billing state for this user.'}
           </p>
 
@@ -634,7 +634,7 @@ const AdminPanel = () => {
     };
 
     const handleGrantAdminAccess = async (userId, userEmail) => {
-        if (!window.confirm(`Grant admin access to ${userEmail}? This will give them admin privileges.`)) {
+        if (!window.confirm(`Grant admin access to ${userEmail}? They will get admin privileges, including Surveillance (staff-only tool; Elite subscribers get it via active Elite/A7FX billing).`)) {
             return;
         }
 
@@ -662,7 +662,7 @@ const AdminPanel = () => {
             if (result.success) {
                 fetchUsers();
                 setError(null);
-                alert(`✅ Admin access granted to ${userEmail}!\n\nThey now have admin privileges.`);
+                alert(`✅ Admin access granted to ${userEmail}!\n\nThey now have admin privileges, including Surveillance for support.`);
             } else {
                 throw new Error(result.message || 'Failed to grant admin access');
             }
