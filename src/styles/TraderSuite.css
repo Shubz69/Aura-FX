@@ -1081,7 +1081,8 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.journal-page .trader-lab-v2 {
+/* Legacy grid — v2 workspace (.trader-lab-v2--workspace) overrides in TraderLabLayout.css */
+.journal-page .trader-lab-v2:not(.trader-lab-v2--workspace) {
   --tlab-gold: rgba(234, 169, 96, 0.95);
   --tlab-gold-dim: rgba(234, 169, 96, 0.45);
   --tlab-gold-bg: rgba(234, 169, 96, 0.1);
@@ -1089,12 +1090,19 @@
   --tlab-line: rgba(140, 175, 255, 0.14);
   display: grid;
   grid-template-columns: minmax(252px, 300px) minmax(0, 1fr) minmax(268px, 328px);
-  /* auto rows: let rails + chart define height; 1fr was shrinking content inside fixed-height flex parents */
   grid-template-rows: auto auto;
   gap: 10px 12px;
   padding: 12px 14px 16px;
   align-items: start;
   min-height: 0;
+}
+
+.journal-page .trader-lab-v2.trader-lab-v2--workspace {
+  --tlab-gold: rgba(255, 159, 67, 0.96);
+  --tlab-gold-dim: rgba(255, 159, 67, 0.5);
+  --tlab-gold-bg: rgba(255, 159, 67, 0.12);
+  --tlab-green: #64f3b0;
+  --tlab-line: rgba(212, 175, 55, 0.22);
 }
 
 .journal-page .trader-lab-v2.trader-lab-v2--compact {
@@ -2590,8 +2598,8 @@
     grid-template-columns: 1fr;
   }
 
-  /* iPad / small laptop: keep Trader Lab 3-column desk layout (was incorrectly forced to 1 col) */
-  .journal-page .trader-lab-v2 {
+  /* iPad / small laptop: legacy non-workspace Trader Lab grid only */
+  .journal-page .trader-lab-v2:not(.trader-lab-v2--workspace) {
     grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(232px, 300px);
     gap: 8px 10px;
     padding: 10px 12px 14px;
@@ -2630,9 +2638,9 @@
 
 }
 
-/* Phone / narrow tablet: stack rails; chart stays first */
+/* Phone / narrow tablet: stack rails; chart stays first (legacy non-workspace) */
 @media (max-width: 900px) {
-  .journal-page .trader-lab-v2 {
+  .journal-page .trader-lab-v2:not(.trader-lab-v2--workspace) {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;
     min-height: 0;
