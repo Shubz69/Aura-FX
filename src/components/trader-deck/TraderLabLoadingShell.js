@@ -37,29 +37,6 @@ export default function TraderLabLoadingShell() {
           <SkelLine style={{ width: '85%' }} />
           <div className="tlab-skel-textarea" />
         </div>
-        <div className="tlab-card tlab-card--gold tlab-skel-card">
-          <SkelTitle />
-          <SkelLine style={{ width: '88%' }} />
-          <SkelLine style={{ width: '70%' }} />
-          <div className="tlab-skel-textarea tlab-skel-textarea--short" />
-        </div>
-        <div className="tlab-card tlab-card--gold tlab-skel-card">
-          <SkelTitle />
-          <div className="tlab-skel-table">
-            <SkelLine />
-            <SkelLine />
-            <SkelLine style={{ width: '65%' }} />
-          </div>
-          <div className="tlab-skel-textarea tlab-skel-textarea--short" />
-        </div>
-        <div className="tlab-card tlab-card--gold tlab-skel-card">
-          <SkelTitle />
-          <div className="tlab-skel-table">
-            <SkelLine />
-            <SkelLine />
-            <SkelLine />
-          </div>
-        </div>
         <div className="tl-card-shell tl-card-shell--thesis tlab-skel-thesis">
           <SkelLine className="tlab-skel-line--thesis-title" />
           <SkelLine className="tlab-skel-line--q" />
@@ -109,7 +86,11 @@ export default function TraderLabLoadingShell() {
             </div>
           </div>
 
-          <div className="tlab-center-dock">
+          <div className="tlab-center-dock tlab-center-dock--trio">
+            <div className="tlab-card tlab-card--gold tlab-card--dock-fundamental tlab-skel-card">
+              <SkelTitle />
+              <div className="tlab-skel-textarea tlab-skel-textarea--short" />
+            </div>
             <div className="tlab-card tlab-card--gold tlab-card--dock-exec tlab-skel-card">
               <SkelTitle />
               <div className="tlab-skel-textarea tlab-skel-textarea--dock" />
@@ -136,8 +117,12 @@ export default function TraderLabLoadingShell() {
             </div>
           </div>
 
-          <div className="tlab-decoder-strip tlab-decoder-strip--skeleton" role="presentation">
-            <SkelLine className="tlab-skel-line--decoder" />
+          <div className="tlab-decoder-strip tlab-decoder-strip--log tlab-decoder-strip--skeleton" role="presentation">
+            <div className="tlab-decoder-strip__head">
+              <SkelLine className="tlab-skel-line--decoder" />
+            </div>
+            <SkelLine className="tlab-skel-line--decoder" style={{ width: '92%' }} />
+            <SkelLine className="tlab-skel-line--decoder" style={{ width: '78%' }} />
           </div>
         </div>
       </div>
@@ -179,6 +164,18 @@ export default function TraderLabLoadingShell() {
           <SkelLine className="tlab-skel-line--saved" />
           <SkelLine className="tlab-skel-line--saved" />
           <SkelLine className="tlab-skel-line--saved" style={{ width: '80%' }} />
+        </div>
+        <div className="tlab-card tlab-card--gold tlab-card--desk-context tlab-skel-card">
+          <SkelTitle />
+          <div className="tlab-skel-table">
+            <SkelLine />
+            <SkelLine />
+          </div>
+          <div className="tlab-skel-textarea tlab-skel-textarea--short" />
+          <div className="tlab-skel-table">
+            <SkelLine />
+            <SkelLine />
+          </div>
         </div>
       </aside>
 

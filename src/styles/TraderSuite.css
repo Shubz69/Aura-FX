@@ -1822,7 +1822,8 @@
   pointer-events: none;
 }
 
-.journal-page .tlab-card--chart {
+/* Non-focal chart cards only — focal Lab chart must flex-grow inside the center column */
+.journal-page .tlab-card--chart:not(.tlab-card--focal) {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
@@ -1830,7 +1831,7 @@
   padding: 12px 14px 12px;
 }
 
-.journal-page .trader-lab-v2--compact .tlab-card--chart {
+.journal-page .trader-lab-v2--compact .tlab-card--chart:not(.tlab-card--focal) {
   flex: 0 0 auto;
   min-height: 0;
   padding: 10px 12px 10px;
@@ -2144,7 +2145,8 @@
   box-shadow: 0 0 12px rgba(212, 175, 55, 0.12);
 }
 
-.journal-page .tlab-chart-host .trader-suite-chart-frame {
+/* Fixed chart height for legacy layouts — Trader Lab fill mode uses flex + % height instead */
+.journal-page .tlab-chart-host:not(.tlab-chart-host--fill) .trader-suite-chart-frame {
   min-height: 520px !important;
   height: 520px !important;
   position: relative;
@@ -2653,7 +2655,7 @@
     grid-template-columns: 1fr;
   }
 
-  .journal-page .tlab-card--chart {
+  .journal-page .tlab-card--chart:not(.tlab-card--focal) {
     min-height: clamp(260px, 44vh, 420px);
   }
 

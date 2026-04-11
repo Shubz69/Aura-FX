@@ -492,6 +492,28 @@ export default function TraderLab() {
       }));
   }, [sessions]);
 
+  const decoderLogRows = useMemo(() => {
+    const rows = [];
+    if (form.decoderContext) {
+      const sym = form.decoderContext.symbol ? `${form.decoderContext.symbol} · ` : '';
+      const posture = form.decoderContext.posture || 'Context linked';
+      const when = form.decoderContext.generatedAt
+        ? new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(form.decoderContext.generatedAt))
+        : '';
+      rows.push({ key: 'decoder', text: `${sym}${posture}${when ? ` · ${when}` : ''}` });
+    }
+    savedLabRows.slice(0, 5).forEach((row) => {
+      rows.push({
+        key: `lab-${row.id}`,
+        text: `${row.setupName} · ${row.symbol} · ${row.date}`,
+      });
+    });
+    if (rows.length === 0) {
+      rows.push({ key: 'empty', text: 'No linked brief — export from Market Decoder. Saved labs appear here as a timeline.' });
+    }
+    return rows;
+  }, [form.decoderContext, savedLabRows]);
+
   const newsRiskLabel = form.emotionalIntensity >= 55 ? 'Moderate' : 'Low';
   const volLabel =
     form.riskLevel === 'High' ? 'High' : form.riskLevel === 'Low' ? 'Low' : 'Moderate';
@@ -671,7 +693,7 @@ export default function TraderLab() {
         <div className="trader-lab-v2 trader-lab-v2--gold trader-lab-v2--compact trader-lab-v2--workspace trader-lab-v2--terminal-desktop">
           <aside className="trader-lab-v2__left">
             <div className="tlab-card tlab-card--gold tlab-card--bias-rail">
-              <h3 className="tlab-card__title">Trade bias</h3>
+              <h3 className="tlab-card__title">Trade thesis</h3>
               <div className="tlab-pill-row">
                 <BiasPill bias={form.marketBias} />
                 <span className="tlab-pill-confidence">{form.auraConfidence}%</span>
@@ -724,75 +746,6 @@ export default function TraderLab() {
                 placeholder="One line per driver…"
                 aria-label="Key drivers"
               />
-            </div>
-
-            <div className="tlab-card tlab-card--gold tlab-card--fundamental-rail">
-              <h3 className="tlab-card__title">Fundamental backing</h3>
-              <ul className="tlab-ref-bullets tlab-ref-bullets--rail-compact">
-                {fundamentalLines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-              <textarea
-                className="tlab-textarea tlab-textarea--tight"
-                value={form.fundamentalBacking}
-                onChange={(e) => updateField('fundamentalBacking', e.target.value)}
-                placeholder="One line per fundamental point…"
-                aria-label="Fundamental backing"
-              />
-            </div>
-
-            <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Geopolitical backing</h3>
-              <p className="tlab-hint">Region | Sentiment (one per line)</p>
-              <div className="tlab-table-wrap">
-                <table className="tlab-table">
-                  <thead>
-                    <tr>
-                      <th>Region</th>
-                      <th>Sentiment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {geoRows.map((row) => (
-                      <tr key={row.region}>
-                        <td>{row.region}</td>
-                        <td>
-                          <span className={sentimentPillClass(row.sentiment)}>
-                            {String(row.sentiment).toUpperCase()}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <textarea
-                className="tlab-textarea tlab-textarea--tight"
-                value={form.todaysFocus}
-                onChange={(e) => updateField('todaysFocus', e.target.value)}
-                aria-label="Geopolitical backing"
-              />
-            </div>
-
-            <div className="tlab-card tlab-card--gold">
-              <h3 className="tlab-card__title">Risk radar</h3>
-              <table className="tlab-table tlab-table--compact">
-                <tbody>
-                  <tr>
-                    <td>Volatility</td>
-                    <td><span className="tlab-pill tlab-pill--warn">{volLabel}</span></td>
-                  </tr>
-                  <tr>
-                    <td>News risk</td>
-                    <td><span className="tlab-pill tlab-pill--ok">{newsRiskLabel}</span></td>
-                  </tr>
-                  <tr>
-                    <td>Event risk</td>
-                    <td><span className="tlab-pill tlab-pill--ok">{eventRiskLabel}</span></td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
 
             <div className="tl-thesis-stack">
@@ -878,7 +831,23 @@ export default function TraderLab() {
               </div>
             </div>
 
-            <div className="tlab-center-dock">
+            <div className="tlab-center-dock tlab-center-dock--trio">
+              <div className="tlab-card tlab-card--gold tlab-card--dock-fundamental">
+                <h3 className="tlab-card__title">Fundamental backing</h3>
+                <ul className="tlab-ref-bullets tlab-ref-bullets--dock-fundamental">
+                  {fundamentalLines.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+                <textarea
+                  className="tlab-textarea tlab-textarea--tight tlab-textarea--dock-fundamental"
+                  value={form.fundamentalBacking}
+                  onChange={(e) => updateField('fundamentalBacking', e.target.value)}
+                  placeholder="One line per fundamental point…"
+                  aria-label="Fundamental backing"
+                />
+              </div>
+
               <div className="tlab-card tlab-card--gold tlab-card--dock-exec">
                 <div className="tlab-exec-head">
                   <h3 className="tlab-card__title">Execution notes</h3>
@@ -953,21 +922,21 @@ export default function TraderLab() {
             </div>
 
             <div
-              className={`tlab-decoder-strip${form.decoderContext ? '' : ' tlab-decoder-strip--idle'}`}
-              role={form.decoderContext ? 'status' : undefined}
+              className={`tlab-decoder-strip tlab-decoder-strip--log${form.decoderContext ? '' : ' tlab-decoder-strip--idle'}`}
+              role="region"
+              aria-label="Market Decoder and recent labs"
             >
-              <span className="tlab-decoder-strip__k">Market Decoder</span>
-              {form.decoderContext ? (
-                <span>
-                  {form.decoderContext.symbol ? `${form.decoderContext.symbol} · ` : ''}
-                  {form.decoderContext.posture || 'Context imported'}
-                  {form.decoderContext.generatedAt
-                    ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(form.decoderContext.generatedAt))}`
-                    : ''}
-                </span>
-              ) : (
-                <span className="tlab-decoder-strip__idle">No linked brief — export from Market Decoder to attach context.</span>
-              )}
+              <div className="tlab-decoder-strip__head">
+                <span className="tlab-decoder-strip__k">Market Decoder</span>
+                <span className="tlab-decoder-strip__sub">Desk log</span>
+              </div>
+              <ul className="tlab-decoder-log">
+                {decoderLogRows.map((row) => (
+                  <li key={row.key} className="tlab-decoder-log__row">
+                    {row.text}
+                  </li>
+                ))}
+              </ul>
             </div>
             </div>
           </div>
@@ -1143,6 +1112,55 @@ export default function TraderLab() {
                   ))}
                 </div>
               )}
+            </div>
+
+            <div className="tlab-card tlab-card--gold tlab-card--desk-context">
+              <h3 className="tlab-card__title">Risk & geopolitical</h3>
+              <p className="tlab-hint tlab-hint--tight">Region | sentiment (one per line)</p>
+              <div className="tlab-table-wrap tlab-table-wrap--compact">
+                <table className="tlab-table tlab-table--compact">
+                  <thead>
+                    <tr>
+                      <th>Region</th>
+                      <th>Sentiment</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {geoRows.map((row) => (
+                      <tr key={row.region}>
+                        <td>{row.region}</td>
+                        <td>
+                          <span className={sentimentPillClass(row.sentiment)}>
+                            {String(row.sentiment).toUpperCase()}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <textarea
+                className="tlab-textarea tlab-textarea--tight tlab-textarea--geo-inline"
+                value={form.todaysFocus}
+                onChange={(e) => updateField('todaysFocus', e.target.value)}
+                aria-label="Geopolitical backing lines"
+              />
+              <table className="tlab-table tlab-table--compact tlab-table--risk-inline">
+                <tbody>
+                  <tr>
+                    <td>Volatility</td>
+                    <td><span className="tlab-pill tlab-pill--warn">{volLabel}</span></td>
+                  </tr>
+                  <tr>
+                    <td>News risk</td>
+                    <td><span className="tlab-pill tlab-pill--ok">{newsRiskLabel}</span></td>
+                  </tr>
+                  <tr>
+                    <td>Event risk</td>
+                    <td><span className="tlab-pill tlab-pill--ok">{eventRiskLabel}</span></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
           </aside>

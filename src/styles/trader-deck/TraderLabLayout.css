@@ -1,16 +1,16 @@
 /* Trader Lab — workspace (scoped). Keeps Aura tokens; does not change page background. */
 
 .trader-lab-v2.trader-lab-v2--workspace {
-  --tl-gap: 10px;
-  --tl-radius-card: 14px;
-  --tl-radius-input: 11px;
+  --tl-gap: 6px;
+  --tl-radius-card: 12px;
+  --tl-radius-input: 10px;
   --tl-line: rgba(212, 175, 55, 0.22);
   --tl-surface: linear-gradient(165deg, rgba(8, 10, 22, 0.92), rgba(4, 6, 14, 0.96));
   display: grid;
-  grid-template-columns: minmax(248px, 292px) minmax(380px, 1fr) minmax(268px, 312px);
+  grid-template-columns: minmax(220px, 0.22fr) minmax(360px, 1.18fr) minmax(220px, 0.24fr);
   grid-template-rows: auto auto;
-  gap: var(--tl-gap) 12px;
-  padding: 10px 12px 14px;
+  gap: var(--tl-gap) 8px;
+  padding: 6px 6px 8px;
   align-items: stretch;
   width: 100%;
   box-sizing: border-box;
@@ -19,15 +19,15 @@
 /* ── Desktop terminal canvas: one row, fills parent height (see TradeValidatorJournalGlass) ── */
 @media (min-width: 1181px) {
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop {
-    grid-template-columns: minmax(196px, 0.22fr) minmax(360px, 1.14fr) minmax(196px, 0.24fr);
+    grid-template-columns: minmax(188px, 0.2fr) minmax(380px, 1.22fr) minmax(188px, 0.22fr);
     grid-template-rows: 1fr;
     grid-template-areas: 'tl-left tl-center tl-right';
     align-items: stretch;
     height: 100%;
     min-height: 0;
     max-height: 100%;
-    padding: 8px 6px 10px;
-    gap: 10px 12px;
+    padding: 6px 4px 8px;
+    gap: 6px 8px;
   }
 
   .trader-lab-v2--terminal-desktop .trader-lab-v2__left {
@@ -48,9 +48,9 @@
 }
 
 .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--compact {
-  grid-template-columns: minmax(200px, 0.82fr) minmax(0, 1.92fr) minmax(200px, 0.85fr) !important;
-  gap: 10px 12px !important;
-  padding: 8px 4px 12px !important;
+  grid-template-columns: minmax(188px, 0.2fr) minmax(0, 1.24fr) minmax(188px, 0.22fr) !important;
+  gap: 6px 8px !important;
+  padding: 6px 4px 8px !important;
   align-items: stretch !important;
   align-content: stretch !important;
 }
@@ -91,7 +91,7 @@
 .trader-lab-v2--workspace .tl-thesis-stack {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .trader-lab-v2--workspace .tl-thesis-meta-external {
@@ -105,8 +105,8 @@
 .trader-lab-v2--workspace .tl-thesis-q {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: 3px;
+  margin-bottom: 6px;
 }
 
 .trader-lab-v2--workspace .tl-thesis-q:last-child {
@@ -173,7 +173,7 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  padding: 10px 12px !important;
+  padding: 8px 10px !important;
 }
 
 .trader-lab-v2--terminal-desktop .tlab-card--focal {
@@ -186,8 +186,9 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 5px;
+  flex-shrink: 0;
 }
 
 .trader-lab-v2--workspace .tlab-chart-toolbar__primary {
@@ -236,7 +237,27 @@
   max-height: none !important;
 }
 
-/* Bottom dock: execution + decision (no dead center gap) */
+/* Win over .journal-page .trader-suite-chart-frame (460px) and any legacy chart height rules */
+.journal-page .trader-lab-v2--workspace .tlab-chart-host--fill .trader-suite-chart-frame {
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: none !important;
+  flex: 1 1 auto !important;
+}
+
+.journal-page .trader-lab-v2--workspace .tlab-chart-host--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.trader-lab-v2--workspace .tlab-level-strip {
+  margin-top: 4px;
+  padding-top: 7px;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Bottom dock: fundamental | execution | decision (reference layout, minimal gutter) */
 .trader-lab-v2--workspace .tlab-center-dock {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(200px, 0.85fr);
@@ -247,20 +268,46 @@
   min-width: 0;
 }
 
+.trader-lab-v2--workspace .tlab-center-dock--trio {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  align-items: stretch;
+}
+
+.trader-lab-v2--workspace .tlab-card--dock-fundamental,
 .trader-lab-v2--workspace .tlab-card--dock-exec,
 .trader-lab-v2--workspace .tlab-card--dock-decision {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: 10px 12px !important;
+  padding: 8px 10px !important;
+}
+
+.trader-lab-v2--workspace .tlab-ref-bullets--dock-fundamental {
+  margin: 0 0 5px;
+  padding-left: 1.1rem;
+  max-height: 72px;
+  overflow: auto;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  flex-shrink: 0;
+}
+
+.trader-lab-v2--workspace .tlab-textarea--dock-fundamental {
+  flex: 1 1 auto;
+  min-height: 48px;
+  max-height: 96px;
+  resize: vertical;
+  font-size: 0.74rem;
+  padding: 7px 9px;
 }
 
 .trader-lab-v2--workspace .tlab-card--dock-exec .tlab-textarea--dock {
   flex: 1 1 auto;
-  min-height: 56px;
-  max-height: 120px;
+  min-height: 52px;
+  max-height: 112px;
   resize: vertical;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
 }
 
 .trader-lab-v2--workspace .tlab-card--dock-exec .tlab-exec-foot {
@@ -270,12 +317,12 @@
 .trader-lab-v2--workspace .tlab-decision-checks--dock {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: 3px;
+  margin-bottom: 6px;
 }
 
 .trader-lab-v2--workspace .tlab-dock-conviction {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .trader-lab-v2--workspace .tlab-conviction__seg--dock {
@@ -300,13 +347,27 @@
 
 .trader-lab-v2--workspace .tlab-decoder-strip {
   flex: 0 0 auto;
-  padding: 8px 12px;
+  padding: 6px 10px 7px;
   border-radius: var(--tl-radius-card);
   border: 1px solid rgba(140, 175, 255, 0.12);
   background: rgba(3, 5, 14, 0.75);
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   color: rgba(195, 210, 245, 0.72);
-  line-height: 1.45;
+  line-height: 1.4;
+}
+
+.trader-lab-v2--workspace .tlab-decoder-strip--log {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trader-lab-v2--workspace .tlab-decoder-strip__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .trader-lab-v2--workspace .tlab-decoder-strip__k {
@@ -314,7 +375,37 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(234, 169, 96, 0.75);
-  margin-right: 8px;
+  margin-right: 0;
+}
+
+.trader-lab-v2--workspace .tlab-decoder-strip__sub {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(160, 180, 220, 0.38);
+}
+
+.trader-lab-v2--workspace .tlab-decoder-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 5.4rem;
+  overflow: auto;
+}
+
+.trader-lab-v2--workspace .tlab-decoder-log__row {
+  margin: 0;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(107, 143, 232, 0.08);
+  font-size: 0.64rem;
+  line-height: 1.35;
+  color: rgba(225, 232, 255, 0.82);
 }
 
 .trader-lab-v2--workspace .tlab-decoder-strip--idle {
@@ -333,8 +424,43 @@
   gap: var(--tl-gap);
 }
 
+.trader-lab-v2--workspace .tlab-card--desk-context {
+  padding: 8px 10px !important;
+}
+
+.trader-lab-v2--workspace .tlab-card--desk-context .tlab-hint--tight {
+  margin: 0 0 4px;
+  font-size: 0.55rem;
+}
+
+.trader-lab-v2--workspace .tlab-table-wrap--compact {
+  margin-bottom: 4px;
+  max-height: 5.5rem;
+  overflow: auto;
+}
+
+.trader-lab-v2--workspace .tlab-textarea--geo-inline {
+  min-height: 36px;
+  max-height: 52px;
+  margin-bottom: 4px;
+  padding: 5px 8px;
+  font-size: 0.7rem;
+  resize: vertical;
+}
+
+.trader-lab-v2--workspace .tlab-table--risk-inline {
+  margin-top: 0;
+}
+
+.trader-lab-v2--workspace .tlab-card .tlab-card__title {
+  margin-bottom: 6px;
+  padding-bottom: 0;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+}
+
 .trader-lab-v2--workspace .tlab-validator-banner--plan {
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   width: 100%;
   box-sizing: border-box;
   text-align: center;
@@ -405,7 +531,8 @@
     max-height: none;
   }
 
-  .trader-lab-v2--workspace .tlab-center-dock {
+  .trader-lab-v2--workspace .tlab-center-dock,
+  .trader-lab-v2--workspace .tlab-center-dock--trio {
     grid-template-columns: 1fr;
   }
 }
