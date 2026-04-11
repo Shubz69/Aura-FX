@@ -64,9 +64,6 @@
     },
     "api/**/*.js": {
       "maxDuration": 60
-    },
-    "api/surveillance/stream.js": {
-      "maxDuration": 60
     }
   },
   "rewrites": [
