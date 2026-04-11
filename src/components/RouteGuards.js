@@ -140,6 +140,8 @@ export const SurveillanceGuard = ({ children }) => {
   if (!user || !token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
+  // Staff + env-listed super admins: same bypass as Community (JWT/seed can lag behind /api/me).
+  if (isAdmin(user) || isSuperAdmin(user)) return children;
   if (authLoading || entLoading) {
     return <LoadingSpinner />;
   }

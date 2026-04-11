@@ -165,6 +165,26 @@ function needsOnboardingReaccept(userRow) {
 }
 
 /**
+ * User shape for reports/resolveReportsRole (Surveillance, Trader DNA).
+ * Must treat SUPER_ADMIN_EMAIL / fallback list like normalize entitlements.role.
+ */
+function buildSurveillanceGateUser(userRow) {
+  if (!userRow) return null;
+  const normalized = isSuperAdminEmail(userRow) ? 'SUPER_ADMIN' : normalizeRole(userRow.role);
+  let roleForGate;
+  if (normalized === 'SUPER_ADMIN') roleForGate = 'super_admin';
+  else if (normalized === 'ADMIN') roleForGate = 'admin';
+  else roleForGate = userRow.role || 'user';
+  return {
+    role: roleForGate,
+    subscription_plan: userRow.subscription_plan,
+    subscription_status: userRow.subscription_status,
+    subscription_expiry: userRow.subscription_expiry,
+    payment_failed: userRow.payment_failed,
+  };
+}
+
+/**
  * Entitlements from a single user row (no DB in this function).
  * canAccessCommunity: true only when plan is selected (ACCESS/PRO/ELITE) or admin—blocks until /choose-plan.
  * Channel gating uses effectiveTier only (no stale cached tier).
@@ -198,13 +218,8 @@ function getEntitlements(userRow) {
   const needsReaccept = !isAdmin && needsOnboardingReaccept(userRow);
 
   const isSuperAdminUser = isSuperAdminEmail(userRow);
-  const surveillanceUser = {
-    role: userRow.role,
-    subscription_plan: userRow.subscription_plan,
-    subscription_status: userRow.subscription_status,
-    subscription_expiry: userRow.subscription_expiry,
-    payment_failed: userRow.payment_failed,
-  };
+  /** Same staff recognition as `role` above — raw DB role alone misses env-listed super admins. */
+  const surveillanceUser = buildSurveillanceGateUser(userRow);
   return {
     role,
     tier,
@@ -397,6 +412,7 @@ module.exports = {
   getStatus,
   hasPlanSelected,
   getEntitlements,
+  buildSurveillanceGateUser,
   getAllowedChannelSlugs,
   getChannelPermissions,
   canAccessChannel

@@ -502,11 +502,14 @@
   border: 1px solid var(--ap-border);
 }
 
-.admin-panel-container .user-plan__value--free {
+.admin-panel-container .user-plan__value--free,
+.admin-panel-container .user-plan__value--access {
   color: var(--ap-muted);
 }
 
-.admin-panel-container .user-plan__value--premium {
+.admin-panel-container .user-plan__value--pro,
+.admin-panel-container .user-plan__value--premium,
+.admin-panel-container .user-plan__value--aura {
   color: var(--ap-gold-bright);
   border-color: rgba(234, 169, 96, 0.35);
   background: rgba(234, 169, 96, 0.08);

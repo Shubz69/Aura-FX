@@ -411,6 +411,31 @@
   width: 100%;
 }
 
+/* Gated feature: visible to everyone, opens upgrade path when not entitled */
+button.dropdown-item.dropdown-item--locked {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  opacity: 0.72;
+}
+
+button.dropdown-item.dropdown-item--locked:hover {
+  opacity: 1;
+  color: var(--gold-soft, #eabb80);
+}
+
+.dropdown-lock-label {
+  margin-left: auto;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim, rgba(178, 175, 218, 0.45));
+  font-weight: 600;
+}
+
 /* ── Badge ─────────────────────────────────────────────────── */
 .dropdown-badge {
   position: absolute;

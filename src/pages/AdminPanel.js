@@ -26,18 +26,31 @@ function isRowSuperAdminOrAdmin(userItem) {
 }
 
 const PLAN_OPTIONS = [
-  { value: 'free', label: 'Free', needsDuration: false },
-  { value: 'aura', label: 'Premium · Aura', needsDuration: true },
-  { value: 'premium', label: 'Premium', needsDuration: true },
-  { value: 'a7fx', label: 'A7FX Elite', needsDuration: true },
+  { value: 'access', label: 'Access', needsDuration: false },
+  { value: 'pro', label: 'Pro', needsDuration: true },
   { value: 'elite', label: 'Elite', needsDuration: true },
+  { value: 'admin', label: 'Admin', needsDuration: false },
+  { value: 'super_admin', label: 'Super Admin', needsDuration: false },
 ];
 
 function normalizePlanForSelect(raw) {
-  const p = (raw || 'free').toLowerCase();
+  const p = (raw || 'access').toLowerCase();
   if (PLAN_OPTIONS.some((o) => o.value === p)) return p;
-  if (p === 'user') return 'free';
-  return 'aura';
+  if (p === 'free' || p === 'user' || p === 'open') return 'access';
+  if (p === 'aura' || p === 'premium') return 'pro';
+  if (p === 'a7fx' || p === 'elite') return 'elite';
+  if (p === 'admin') return 'admin';
+  if (p === 'super_admin' || p === 'superadmin') return 'super_admin';
+  return 'access';
+}
+
+/** Initial <select> value: staff roles from DB role; else map legacy subscription_plan → tier. */
+function initialAccessPlanSelect(userItem) {
+  const r = (userItem?.role || '').toString().toLowerCase();
+  if (r === 'super_admin') return 'super_admin';
+  if (r === 'admin') return 'admin';
+  const plan = userItem?.subscription_plan;
+  return normalizePlanForSelect(plan);
 }
 
 function analyzeTemplateDraft(draft, period) {
@@ -113,20 +126,29 @@ function analyzeTemplateDraft(draft, period) {
   };
 }
 
-/** Modal: set subscription plan + duration (paid plans). */
-function SubscriptionAccessModal({ open, title, userEmail, initialPlan, onClose, onConfirm, submitting }) {
-  const [plan, setPlan] = useState('aura');
+const STAFF_PLAN_VALUES = new Set(['admin', 'super_admin']);
+
+/** Modal: set subscription plan + duration (paid plans), or staff role when allowed. */
+function SubscriptionAccessModal({ open, title, userEmail, initialPlan, includeStaffRoles, onClose, onConfirm, submitting }) {
+  const [plan, setPlan] = useState('access');
   const [days, setDays] = useState('90');
+
+  const planChoices = useMemo(
+    () => (includeStaffRoles ? PLAN_OPTIONS : PLAN_OPTIONS.filter((o) => !STAFF_PLAN_VALUES.has(o.value))),
+    [includeStaffRoles]
+  );
 
   useEffect(() => {
     if (!open) return;
-    setPlan(normalizePlanForSelect(initialPlan));
+    let next = normalizePlanForSelect(initialPlan);
+    if (!includeStaffRoles && STAFF_PLAN_VALUES.has(next)) next = 'access';
+    setPlan(next);
     setDays('90');
-  }, [open, initialPlan]);
+  }, [open, initialPlan, includeStaffRoles]);
 
   if (!open) return null;
 
-  const needsDuration = plan !== 'free';
+  const needsDuration = planChoices.some((o) => o.value === plan && o.needsDuration);
   const handleSubmit = (e) => {
     e.preventDefault();
     const d = parseInt(days, 10);
@@ -163,7 +185,7 @@ function SubscriptionAccessModal({ open, title, userEmail, initialPlan, onClose,
             value={plan}
             onChange={(e) => setPlan(e.target.value)}
           >
-            {PLAN_OPTIONS.map((o) => (
+            {planChoices.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
@@ -185,9 +207,11 @@ function SubscriptionAccessModal({ open, title, userEmail, initialPlan, onClose,
             placeholder="90"
           />
           <p className="ap-modal__hint">
-            {needsDuration
-              ? 'Access expires at the end of this many days from right now. Paid plans stay active until that date. Surveillance is included only on Elite or A7FX plans (not Premium or Aura). Admins and super admins always have Surveillance for support.'
-              : 'Free plan clears paid expiry and deactivates subscription billing state for this user.'}
+            {plan === 'admin' || plan === 'super_admin'
+              ? 'Sets the account permission role (Super Admin only for this action). Does not set a paid subscription window; use Pro or Elite for timed product access.'
+              : needsDuration
+                ? 'Access expires after this many days from now. Pro and Elite stay active until that date. Surveillance follows product entitlements; admins always have staff tools for support.'
+                : 'Access tier clears paid expiry and deactivates subscription billing state for this user.'}
           </p>
 
           <div className="ap-modal__actions">
@@ -220,7 +244,7 @@ const AdminPanel = () => {
         open: false,
         userId: null,
         userEmail: null,
-        initialPlan: 'free',
+        initialPlan: 'access',
         title: 'Set access',
     });
     const [accessSubmitting, setAccessSubmitting] = useState(false);
@@ -530,7 +554,7 @@ const AdminPanel = () => {
             open: true,
             userId: userItem.id,
             userEmail: userItem.email,
-            initialPlan: userItem.subscription_plan || 'free',
+            initialPlan: initialAccessPlanSelect(userItem),
             title: 'Grant access',
         });
     };
@@ -540,7 +564,7 @@ const AdminPanel = () => {
             open: true,
             userId: userItem.id,
             userEmail: userItem.email,
-            initialPlan: userItem.subscription_plan || 'free',
+            initialPlan: initialAccessPlanSelect(userItem),
             title: 'Change plan',
         });
     };
@@ -558,17 +582,37 @@ const AdminPanel = () => {
             setError(null);
             try {
                 const token = localStorage.getItem('token');
+                const headers = {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                };
+
+                if (plan === 'admin' || plan === 'super_admin') {
+                    const res = await fetch(`${Api.getBaseUrl() || ''}/api/admin/users/${userId}/role`, {
+                        method: 'PUT',
+                        headers,
+                        body: JSON.stringify({ role: plan, capabilities: [] }),
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.message || 'Failed to update role (Super Admin required for staff roles).');
+                    }
+                    const label = plan === 'super_admin' ? 'Super Admin' : 'Admin';
+                    alert(`✅ Set ${userEmail} to ${label}.`);
+                    setAccessModal((m) => ({ ...m, open: false }));
+                    fetchUsers();
+                    return;
+                }
+
+                const needsPaidWindow = plan === 'pro' || plan === 'elite';
                 const body = {
                     userId,
                     plan,
-                    ...(plan !== 'free' ? { durationDays: durationDays ?? 90 } : {}),
+                    ...(needsPaidWindow ? { durationDays: durationDays ?? 90 } : {}),
                 };
                 const res = await fetch(`${Api.getBaseUrl() || ''}/api/admin/change-subscription`, {
                     method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
+                    headers,
                     body: JSON.stringify(body),
                 });
                 const data = await res.json().catch(() => ({}));
@@ -578,10 +622,11 @@ const AdminPanel = () => {
                 const exp = data.user?.subscription_expiry
                     ? new Date(data.user.subscription_expiry).toLocaleString()
                     : null;
+                const tierLabel = plan === 'access' ? 'Access' : plan === 'pro' ? 'Pro' : plan === 'elite' ? 'Elite' : plan;
                 const msg =
-                    plan === 'free'
-                        ? `Set ${userEmail} to Free.`
-                        : `Set ${userEmail} to ${plan.toUpperCase()} for ${data.user?.durationDays ?? durationDays} days.${exp ? `\nExpires: ${exp}` : ''}`;
+                    plan === 'access'
+                        ? `Set ${userEmail} to Access.`
+                        : `Set ${userEmail} to ${tierLabel} for ${data.user?.durationDays ?? durationDays} days.${exp ? `\nExpires: ${exp}` : ''}`;
                 alert(`✅ ${msg}`);
                 setAccessModal((m) => ({ ...m, open: false }));
                 fetchUsers();
@@ -1045,7 +1090,9 @@ const AdminPanel = () => {
                       >
                         {userItem.subscription_plan || 'free'}
                       </span>
-                      {userItem.subscription_expiry && userItem.subscription_plan !== 'free' && (
+                      {userItem.subscription_expiry &&
+                        userItem.subscription_plan !== 'free' &&
+                        userItem.subscription_plan !== 'access' && (
                         <span className="user-plan__expiry">
                           Expires {new Date(userItem.subscription_expiry).toLocaleDateString()}
                         </span>
@@ -1485,6 +1532,7 @@ const AdminPanel = () => {
       title={accessModal.title}
       userEmail={accessModal.userEmail}
       initialPlan={accessModal.initialPlan}
+      includeStaffRoles={isSuperAdminUser}
       onClose={closeAccessModal}
       onConfirm={submitAccessModal}
       submitting={accessSubmitting}

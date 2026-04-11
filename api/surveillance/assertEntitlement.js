@@ -1,5 +1,6 @@
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 const { canAccessSurveillance } = require('../reports/resolveReportsRole');
+const { buildSurveillanceGateUser } = require('../utils/entitlements');
 
 async function assertSurveillanceEntitlement(userId, res) {
   const user = await applyScheduledDowngrade(userId);
@@ -7,13 +8,7 @@ async function assertSurveillanceEntitlement(userId, res) {
     res.status(404).json({ success: false, message: 'User not found' });
     return null;
   }
-  const gateUser = {
-    role: user.role,
-    subscription_plan: user.subscription_plan,
-    subscription_status: user.subscription_status,
-    subscription_expiry: user.subscription_expiry,
-    payment_failed: user.payment_failed,
-  };
+  const gateUser = buildSurveillanceGateUser(user);
   if (!canAccessSurveillance(gateUser)) {
     res.status(403).json({
       success: false,

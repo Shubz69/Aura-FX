@@ -70,6 +70,17 @@ const SUPER_ADMIN_USER = {
   payment_failed: false
 };
 
+/** Matches api/utils/entitlements SUPER_ADMIN_EMAIL_FALLBACK_LOWER — DB role USER, staff by email list */
+const SUPER_ADMIN_BY_EMAIL_ROW = {
+  id: 6,
+  email: 'shubzfx@gmail.com',
+  role: 'user',
+  subscription_plan: 'free',
+  subscription_status: 'inactive',
+  subscription_expiry: null,
+  payment_failed: false
+};
+
 describe('RBAC - Tier Detection', () => {
   it('Access user has tier ACCESS', () => {
     const tier = getTier(FREE_USER);
@@ -127,6 +138,11 @@ describe('RBAC - canAccessSurveillance', () => {
 
   it('Super Admin user can access Surveillance', () => {
     const ent = getEntitlements(SUPER_ADMIN_USER);
+    expect(ent.canAccessSurveillance).toBe(true);
+  });
+
+  it('Env-listed super-admin email with USER DB role can access Surveillance', () => {
+    const ent = getEntitlements(SUPER_ADMIN_BY_EMAIL_ROW);
     expect(ent.canAccessSurveillance).toBe(true);
   });
 });

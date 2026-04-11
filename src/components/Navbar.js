@@ -200,7 +200,20 @@ const Navbar = () => {
                         <Link to="/surveillance" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                           <FaGlobe className="dropdown-icon" /> Surveillance
                         </Link>
-                      ) : null}
+                      ) : (
+                        <button
+                          type="button"
+                          className="dropdown-item dropdown-item--locked"
+                          title="Surveillance is included with Elite (active Elite/A7FX billing) or Admin / Super Admin accounts."
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            navigate('/choose-plan', { state: { feature: 'surveillance' } });
+                          }}
+                        >
+                          <FaGlobe className="dropdown-icon" /> Surveillance
+                          <span className="dropdown-lock-label" aria-hidden>Locked</span>
+                        </button>
+                      )}
                       <Link to="/aura-analysis" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaChartLine className="dropdown-icon" /> Aura Analysis
                       </Link>
