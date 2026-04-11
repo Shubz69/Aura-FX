@@ -1,0 +1,572 @@
+/**
+ * Surveillance pure logic — no network/DB.
+ * Run: node tests/surveillance-pure.test.js
+ */
+
+const { buildDedupeKeys, contentHash, normalizeDedupeText } = require('../api/surveillance/dedupe');
+const {
+  listingHtmlFingerprint,
+  listingFingerprintDrift,
+  summarizeListingHealth,
+} = require('../api/surveillance/adapterResilience');
+const { buildIntelDigest } = require('../api/surveillance/intelDigest');
+const { buildMarketWatchNarrative } = require('../api/surveillance/marketWatchNarrative');
+const { bodySnippetFromHtml } = require('../api/surveillance/normalize');
+const { scoreMarkets, inferRiskBias, buildWhyMatters } = require('../api/surveillance/marketImpact');
+const { classifyRecord } = require('../api/surveillance/classify');
+const { computeRankScore, disruptionBoostFromRecord } = require('../api/surveillance/scoring');
+const {
+  adapterRegion,
+  feedMixFromSourceCounts,
+  underCoveredRegions,
+  familyUnderperformance,
+} = require('../api/surveillance/adapterFamilies');
+const { normalizeTopic } = require('../api/surveillance/topic');
+const {
+  storySignatureFromPayload,
+  affiliationScore,
+  clusterIndices,
+  clusterIndicesForTape,
+} = require('../api/surveillance/storyline');
+const { bucketAdapterRecency } = require('../api/surveillance/adapterState');
+
+let passed = 0;
+let failed = 0;
+function describe(name, fn) {
+  console.log(`\n${name}`);
+  fn();
+}
+function it(name, fn) {
+  try {
+    fn();
+    passed++;
+    console.log(`  ✅ ${name}`);
+  } catch (e) {
+    failed++;
+    console.log(`  ❌ ${name}: ${e.message}`);
+  }
+}
+const expect = (actual) => ({
+  toBe: (expected) => {
+    if (actual !== expected) throw new Error(`Expected ${expected}, got ${actual}`);
+  },
+  toContain: (sub) => {
+    if (!String(actual).includes(sub)) throw new Error(`Expected ${actual} to contain ${sub}`);
+  },
+  toBeGreaterThan: (n) => {
+    if (!(actual > n)) throw new Error(`Expected ${actual} > ${n}`);
+  },
+  toBeLessThan: (n) => {
+    if (!(actual < n)) throw new Error(`Expected ${actual} < ${n}`);
+  },
+});
+
+describe('Dedupe', () => {
+  it('stable content hash for same keys', () => {
+    const a = buildDedupeKeys({ url: 'https://x.org/a', title: 'Hello', publishedAt: '2024-01-02' });
+    const b = buildDedupeKeys({ url: 'https://x.org/a', title: 'Hello', publishedAt: '2024-01-02' });
+    expect(contentHash(a)).toBe(contentHash(b));
+  });
+
+  it('different hash when title changes', () => {
+    const a = buildDedupeKeys({ url: 'https://x.org/a', title: 'Hello', publishedAt: '2024-01-02' });
+    const b = buildDedupeKeys({ url: 'https://x.org/a', title: 'World', publishedAt: '2024-01-02' });
+    if (contentHash(a) === contentHash(b)) throw new Error('hash should differ');
+  });
+
+  it('same content hash when URL differs only by tracking params', () => {
+    const a = buildDedupeKeys({
+      url: 'https://gov.example/news/item?utm_source=x&utm_medium=y',
+      title: 'Policy notice',
+      publishedAt: '2026-01-02',
+    });
+    const b = buildDedupeKeys({
+      url: 'https://gov.example/news/item?utm_campaign=z',
+      title: 'Policy notice',
+      publishedAt: '2026-01-02',
+    });
+    expect(contentHash(a)).toBe(contentHash(b));
+  });
+
+  it('normalizeDedupeText strips noise', () => {
+    const n = normalizeDedupeText('  Hello — World!!  ');
+    expect(n).toContain('hello');
+    expect(n).toContain('world');
+  });
+});
+
+describe('Normalize HTML', () => {
+  it('bodySnippetFromHtml truncates', () => {
+    const html = '<p>' + 'word '.repeat(200) + '</p>';
+    const s = bodySnippetFromHtml(html, 80);
+    expect(s.endsWith('…')).toBe(true);
+    expect(s.length <= 81).toBe(true);
+  });
+});
+
+describe('Market impact', () => {
+  it('flags oil and DXY for energy/Fed headline', () => {
+    const mk = scoreMarkets({
+      title: 'Federal Reserve holds rates; oil jumps on supply risk',
+      summary: '',
+      body_snippet: '',
+      tags: [],
+      countries: [],
+    });
+    const syms = mk.map((m) => m.symbol);
+    if (!syms.includes('WTI')) throw new Error('expected WTI');
+    if (!syms.includes('DXY')) throw new Error('expected DXY');
+  });
+
+  it('maps Brent, ETH, USDCHF keywords', () => {
+    const a = scoreMarkets({
+      title: 'Brent futures jump on North Sea outage',
+      summary: '',
+      body_snippet: '',
+      tags: [],
+      countries: [],
+    });
+    if (!a.some((m) => m.symbol === 'BRENT')) throw new Error('expected BRENT');
+    const b = scoreMarkets({
+      title: 'Ethereum spot volumes spike',
+      summary: '',
+      body_snippet: '',
+      tags: [],
+      countries: [],
+    });
+    if (!b.some((m) => m.symbol === 'ETH')) throw new Error('expected ETH');
+    const c = scoreMarkets({
+      title: 'Swiss franc surges on SNB commentary',
+      summary: '',
+      body_snippet: '',
+      tags: [],
+      countries: [],
+    });
+    if (!c.some((m) => m.symbol === 'USDCHF')) throw new Error('expected USDCHF');
+  });
+
+  it('inferRiskBias reads conflict tone', () => {
+    const t = 'invasion and sanctions escalate near the border';
+    expect(inferRiskBias(t, [])).toBe('risk_off');
+  });
+
+  it('buildWhyMatters mentions watchlist symbols', () => {
+    const s = buildWhyMatters(
+      { event_type: 'macro' },
+      [{ symbol: 'SPX', score: 40, direction: 'bullish_risk' }],
+      'neutral'
+    );
+    expect(s).toContain('SPX');
+    expect(s).toContain('Watchlist');
+  });
+});
+
+describe('Scoring', () => {
+  it('computeRankScore rises with trust', () => {
+    const low = computeRankScore({
+      trust_score: 40,
+      novelty_score: 50,
+      freshness_score: 50,
+      severity_score: 50,
+      market_impact_score: 50,
+    });
+    const high = computeRankScore({
+      trust_score: 95,
+      novelty_score: 50,
+      freshness_score: 50,
+      severity_score: 50,
+      market_impact_score: 50,
+    });
+    expect(high).toBeGreaterThan(low);
+  });
+
+  it('computeRankScore rises with corroboration and distinct sources', () => {
+    const base = computeRankScore({
+      trust_score: 60,
+      novelty_score: 55,
+      freshness_score: 55,
+      severity_score: 50,
+      market_impact_score: 50,
+      corroboration_count: 0,
+      distinct_source_count: 1,
+    });
+    const boosted = computeRankScore({
+      trust_score: 60,
+      novelty_score: 55,
+      freshness_score: 55,
+      severity_score: 50,
+      market_impact_score: 50,
+      corroboration_count: 4,
+      distinct_source_count: 4,
+    });
+    expect(boosted).toBeGreaterThan(base);
+  });
+
+  it('computeRankScore nudges upward with disruption_boost', () => {
+    const base = computeRankScore({
+      trust_score: 70,
+      novelty_score: 55,
+      freshness_score: 55,
+      severity_score: 50,
+      market_impact_score: 45,
+      disruption_boost: 0,
+    });
+    const up = computeRankScore({
+      trust_score: 70,
+      novelty_score: 55,
+      freshness_score: 55,
+      severity_score: 50,
+      market_impact_score: 45,
+      disruption_boost: 8,
+    });
+    expect(up).toBeGreaterThan(base);
+  });
+
+  it('computeRankScore applies repetition penalty', () => {
+    const clean = computeRankScore({
+      trust_score: 70,
+      novelty_score: 60,
+      freshness_score: 60,
+      severity_score: 55,
+      market_impact_score: 55,
+      repetition_penalty: 0,
+    });
+    const penalized = computeRankScore({
+      trust_score: 70,
+      novelty_score: 60,
+      freshness_score: 60,
+      severity_score: 55,
+      market_impact_score: 55,
+      repetition_penalty: 25,
+    });
+    expect(penalized).toBeLessThan(clean);
+  });
+
+  it('corroborated multi-source vector beats repetitive low-novelty wall', () => {
+    const wall = computeRankScore({
+      trust_score: 78,
+      novelty_score: 38,
+      freshness_score: 62,
+      severity_score: 48,
+      market_impact_score: 42,
+      corroboration_count: 0,
+      distinct_source_count: 1,
+      repetition_penalty: 22,
+    });
+    const anchor = computeRankScore({
+      trust_score: 76,
+      novelty_score: 72,
+      freshness_score: 64,
+      severity_score: 55,
+      market_impact_score: 58,
+      corroboration_count: 5,
+      distinct_source_count: 5,
+      repetition_penalty: 0,
+    });
+    expect(anchor).toBeGreaterThan(wall);
+  });
+});
+
+describe('Adapter resilience helpers', () => {
+  it('listingHtmlFingerprint is stable for identical HTML', () => {
+    const html = '<html><a href="1"></a><a href="2"></a><body>x</body></html>';
+    expect(listingHtmlFingerprint(html)).toBe(listingHtmlFingerprint(html));
+  });
+
+  it('listingFingerprintDrift detects fingerprint change', () => {
+    const a = listingHtmlFingerprint('<a></a><a></a>');
+    const b = listingHtmlFingerprint('<a></a>'.repeat(40));
+    expect(listingFingerprintDrift(a, b)).toBe(true);
+  });
+
+  it('summarizeListingHealth flags stale markup risk', () => {
+    const h = summarizeListingHealth({
+      linksFound: 8,
+      usedLinkFallback: true,
+      parseFallbackCount: 2,
+      zeroExtract: true,
+    });
+    if (!h.stale_markup_risk) throw new Error('expected stale_markup_risk');
+    if (!h.used_link_filter_fallback) throw new Error('expected fallback flag');
+  });
+});
+
+describe('Adapter regions & feed mix', () => {
+  it('adapterRegion defaults unknown ids to global', () => {
+    expect(adapterRegion('unknown_adapter_xyz')).toBe('global');
+  });
+
+  it('feedMixFromSourceCounts groups by region and family', () => {
+    const mix = feedMixFromSourceCounts({ federal_reserve_press: 10, imo_media: 5 }, 15);
+    if (!mix.byRegion.na) throw new Error('expected na region');
+    if (!mix.byFamily.central_bank) throw new Error('expected central_bank family');
+  });
+
+  it('underCoveredRegions flags low-adapter regions', () => {
+    const rollup = { sa: { total: 0, fresh: 0 }, na: { total: 10, fresh: 9 } };
+    const gaps = underCoveredRegions(rollup, { sa: { pctOfWindow: 0 }, na: { pctOfWindow: 80 } });
+    if (!gaps.some((g) => g.region === 'sa')) throw new Error('expected sa gap');
+  });
+
+  it('familyUnderperformance surfaces weak adapter ratios', () => {
+    const states = [
+      { adapter_id: 'sec_press', last_success_at: null, consecutive_failures: 0 },
+      { adapter_id: 'cftc_press', last_success_at: null, consecutive_failures: 3 },
+      { adapter_id: 'finra_news_releases', last_success_at: null, consecutive_failures: 3 },
+    ];
+    const fams = familyUnderperformance(states);
+    if (!fams.length) throw new Error('expected at least one weak family');
+  });
+});
+
+describe('Storyline', () => {
+  const iso = '2026-04-10T14:00:00.000Z';
+
+  it('storySignatureFromPayload is stable for same semantic input', () => {
+    const a = storySignatureFromPayload({
+      title: 'Energy export curbs tighten on key trading routes',
+      countries: ['US', 'EU'],
+      event_type: 'sanctions',
+    });
+    const b = storySignatureFromPayload({
+      title: 'Energy export curbs tighten on key trading routes',
+      countries: ['EU', 'US'],
+      event_type: 'sanctions',
+    });
+    expect(a).toBe(b);
+  });
+
+  it('affiliationScore links overlapping geo and headline variants', () => {
+    const e1 = {
+      title: 'Sanctions package announced against trading entities',
+      countries: '["EU","US"]',
+      event_type: 'sanctions',
+      normalized_topic: 'topic_sanctions_x',
+      impacted_markets: '[]',
+      published_at: iso,
+      detected_at: iso,
+    };
+    const e2 = {
+      title: 'Sanctions announced on trading entities in new package',
+      countries: '["US","EU"]',
+      event_type: 'sanctions',
+      normalized_topic: 'topic_sanctions_x',
+      impacted_markets: '[]',
+      published_at: iso,
+      detected_at: iso,
+    };
+    expect(affiliationScore(e1, e2)).toBeGreaterThan(0.39);
+    const clusters = clusterIndices([e1, e2]);
+    if (clusters.length !== 1 || clusters[0].length !== 2) {
+      throw new Error('expected one cluster of two events');
+    }
+  });
+
+  it('affiliationScore cross-domain bridge lifts sanctions + maritime with shared strait and symbols', () => {
+    const e1 = {
+      title: 'US and EU widen sanctions on Hormuz strait oil shipping networks',
+      countries: '["SA","AE"]',
+      event_type: 'sanctions',
+      normalized_topic: 'nt_sanctions_hormuz',
+      impacted_markets: [{ symbol: 'WTI', score: 50 }],
+      region: 'SA',
+      published_at: iso,
+      detected_at: iso,
+    };
+    const e2 = {
+      title: 'Maritime traffic advisory warns of delays through Hormuz strait',
+      countries: '["AE","SA"]',
+      event_type: 'maritime',
+      normalized_topic: 'nt_maritime_hormuz',
+      impacted_markets: [{ symbol: 'WTI', score: 40 }],
+      region: 'SA',
+      published_at: iso,
+      detected_at: iso,
+    };
+    expect(affiliationScore(e1, e2)).toBeGreaterThan(0.39);
+    const clusters = clusterIndices([e1, e2]);
+    if (clusters.length !== 1 || clusters[0].length !== 2) throw new Error('expected cross-domain cluster merge');
+  });
+
+  it('affiliationScore stays low for disjoint narratives', () => {
+    const a = {
+      title: 'Central bank leaves benchmark rates unchanged',
+      countries: '["JP"]',
+      event_type: 'macro',
+      normalized_topic: 'topic_macro_jp',
+      impacted_markets: '[]',
+      published_at: iso,
+      detected_at: iso,
+    };
+    const b = {
+      title: 'Port congestion delays container shipping schedules',
+      countries: '["CN"]',
+      event_type: 'logistics',
+      normalized_topic: 'topic_logistics_cn',
+      impacted_markets: '[]',
+      published_at: iso,
+      detected_at: iso,
+    };
+    expect(affiliationScore(a, b)).toBeLessThan(0.4);
+  });
+
+  it('clusterIndicesForTape keeps same-signature items together on a noisy tape', () => {
+    const iso = '2026-05-01T10:00:00.000Z';
+    const mk = (title, rank, id) => ({
+      id,
+      title,
+      countries: '["US"]',
+      event_type: 'macro',
+      normalized_topic: 'nt',
+      impacted_markets: '[]',
+      published_at: iso,
+      detected_at: iso,
+      rank_score: rank,
+    });
+    const core = [
+      mk('Same institutional headline for tape clustering', 100, 1),
+      mk('Same institutional headline for tape clustering', 99, 2),
+      mk('Same institutional headline for tape clustering', 98, 3),
+    ];
+    const noise = Array.from({ length: 28 }, (_, i) =>
+      mk(`Unrelated flash headline number ${i} for noise floor`, 12 + (i % 4), 100 + i)
+    );
+    const rows = [...noise, ...core].sort(() => Math.random() - 0.5);
+    const clusters = clusterIndicesForTape(rows, 220);
+    const big = clusters.reduce((m, c) => Math.max(m, c.length), 0);
+    if (big < 3) throw new Error('expected a 3+ cluster from identical signatures');
+  });
+});
+
+describe('Intel digest + narrative', () => {
+  it('buildIntelDigest attaches instruments and summary', () => {
+    const events = [
+      {
+        id: '1',
+        story_id: 's1',
+        title: 'Oil supply risk rises',
+        rank_score: 90,
+        market_impact_score: 60,
+        corroboration_count: 0,
+        verification_state: 'unverified',
+        region: 'MENA',
+        impacted_markets: [{ symbol: 'WTI', score: 70 }],
+        updated_at: '2026-01-01T00:00:00Z',
+        event_type: 'energy',
+      },
+      {
+        id: '2',
+        story_id: 's1',
+        title: 'Follow-on oil supply risk',
+        rank_score: 85,
+        market_impact_score: 55,
+        corroboration_count: 0,
+        verification_state: 'unverified',
+        region: 'MENA',
+        impacted_markets: [{ symbol: 'BRENT', score: 50 }],
+        updated_at: '2026-01-01T00:00:00Z',
+        event_type: 'energy',
+      },
+    ];
+    const d = buildIntelDigest(events, { limitStories: 3, limitImpact: 3, limitCorr: 3, limitRegions: 3 });
+    if (!d.summary || d.summary.tape_events !== 2) throw new Error('summary tape_events');
+    if (!Array.isArray(d.aviationAlerts) || !Array.isArray(d.maritimeLogistics)) {
+      throw new Error('expected aviation and maritime digest arrays');
+    }
+    if (!d.developingStories[0].instruments || !d.developingStories[0].instruments.includes('WTI')) {
+      throw new Error('expected instruments on developing story');
+    }
+    const agg = {
+      marketWatch: [
+        { symbol: 'WTI', flowScore: 10 },
+        { symbol: 'DXY', flowScore: 8 },
+      ],
+    };
+    const nar = buildMarketWatchNarrative(events, agg, d);
+    if (!nar || nar.length < 2) throw new Error('expected narrative groups');
+  });
+
+  it('buildIntelDigest fills aviation and maritime-logistics strips', () => {
+    const events = [
+      {
+        id: 'a1',
+        story_id: null,
+        title: 'NOTAM airspace closure extended west',
+        rank_score: 82,
+        event_type: 'aviation',
+        impacted_markets: [{ symbol: 'US30', score: 30 }],
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+      {
+        id: 'm1',
+        story_id: null,
+        title: 'Panama canal transit delays for container queue',
+        rank_score: 71,
+        event_type: 'logistics',
+        impacted_markets: [{ symbol: 'SHIPPING', score: 40 }],
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+    ];
+    const d = buildIntelDigest(events, { limitAviation: 5, limitMarLog: 5 });
+    if (!d.aviationAlerts?.some((x) => x.id === 'a1')) throw new Error('expected aviation strip item');
+    if (!d.maritimeLogistics?.some((x) => x.id === 'm1')) throw new Error('expected maritime strip item');
+  });
+});
+
+describe('Adapter recency bucket', () => {
+  it('bucketAdapterRecency maps age to fresh / warm / cold / stale', () => {
+    const fixed = Date.UTC(2026, 3, 10, 12, 0, 0);
+    const orig = Date.now;
+    Date.now = () => fixed;
+    try {
+      expect(bucketAdapterRecency(new Date(fixed - 20 * 60 * 1000).toISOString())).toBe('fresh');
+      expect(bucketAdapterRecency(new Date(fixed - 3 * 3600000).toISOString())).toBe('warm');
+      expect(bucketAdapterRecency(new Date(fixed - 12 * 3600000).toISOString())).toBe('cold');
+      expect(bucketAdapterRecency(new Date(fixed - 30 * 3600000).toISOString())).toBe('stale');
+      expect(bucketAdapterRecency(null)).toBe('never');
+    } finally {
+      Date.now = orig;
+    }
+  });
+});
+
+describe('Topic normalize', () => {
+  it('stable for same title and countries', () => {
+    const a = normalizeTopic('Central Bank Holds Rates Steady', ['US', 'DE']);
+    const b = normalizeTopic('Central Bank Holds Rates Steady', ['DE', 'US']);
+    expect(a).toBe(b);
+  });
+});
+
+describe('Classify', () => {
+  it('detects sanctions language', () => {
+    const r = classifyRecord({
+      title: 'OFAC sanctions designation',
+      summary: '',
+      body_snippet: '',
+    });
+    expect(r.event_type).toBe('sanctions');
+  });
+
+  it('detects logistics from supply chain language', () => {
+    const r = classifyRecord({
+      title: 'Port congestion and freight index spike on Asia routes',
+      summary: '',
+      body_snippet: '',
+    });
+    expect(r.event_type).toBe('logistics');
+  });
+
+  it('disruptionBoostFromRecord responds to aviation closure phrasing', () => {
+    expect(
+      disruptionBoostFromRecord({
+        event_type: 'aviation',
+        title: 'Temporary airspace closure and diversions',
+        summary: '',
+      })
+    ).toBeGreaterThan(0);
+  });
+});
+
+console.log(`\nResults: ${passed} passed, ${failed} failed`);
+process.exit(failed > 0 ? 1 : 0);

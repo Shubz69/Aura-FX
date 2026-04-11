@@ -130,6 +130,26 @@ export const PremiumAIGuard = ({ children }) => {
 };
 
 /**
+ * SurveillanceGuard — Elite-only (same billing rules as Trader DNA). Non-elite → /choose-plan.
+ */
+export const SurveillanceGuard = ({ children }) => {
+  const { user, token, loading: authLoading } = useAuth();
+  const { entitlements, loading: entLoading } = useEntitlements();
+  const location = useLocation();
+
+  if (!user || !token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  if (authLoading || entLoading) {
+    return <LoadingSpinner />;
+  }
+  if (entitlements && entitlements.canAccessSurveillance === false) {
+    return <Navigate to="/choose-plan" replace />;
+  }
+  return children;
+};
+
+/**
  * AuthenticatedGuard - Simple auth check (no subscription check)
  * For routes that require login but not subscription (like /leaderboard, /profile)
  */
@@ -231,6 +251,7 @@ export const InboxGuard = ({ children }) => {
 const RouteGuards = {
   CommunityGuard,
   SubscriptionPageGuard,
+  SurveillanceGuard,
   AuthenticatedGuard,
   AdminGuard,
   InboxGuard

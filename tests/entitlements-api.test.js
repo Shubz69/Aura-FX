@@ -30,6 +30,7 @@ describe('Entitlements Logic', () => {
     const ent = getEntitlements(user);
     expect(ent.tier).toBe(ENTITLEMENT_TIER.ACCESS);
     expect(ent.canAccessAI).toBe(false);
+    expect(ent.canAccessSurveillance).toBe(false);
   });
 
   it('returns tier PRO for aura subscriber', () => {
@@ -44,6 +45,7 @@ describe('Entitlements Logic', () => {
     const ent = getEntitlements(user);
     expect(ent.tier).toBe(ENTITLEMENT_TIER.PRO);
     expect(ent.canAccessAI).toBe(true);
+    expect(ent.canAccessSurveillance).toBe(false);
   });
 
   it('returns tier ELITE for a7fx subscriber', () => {
@@ -58,6 +60,7 @@ describe('Entitlements Logic', () => {
     const ent = getEntitlements(user);
     expect(ent.tier).toBe(ENTITLEMENT_TIER.ELITE);
     expect(ent.canAccessAI).toBe(true);
+    expect(ent.canAccessSurveillance).toBe(true);
   });
 
   it('returns tier PRO for legacy DB role aura (no active paid-through window)', () => {

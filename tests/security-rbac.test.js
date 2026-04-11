@@ -50,6 +50,16 @@ const ELITE_USER = {
   payment_failed: false
 };
 
+const ADMIN_USER = {
+  id: 4,
+  email: 'admin@test.com',
+  role: 'ADMIN',
+  subscription_plan: '',
+  subscription_status: 'inactive',
+  subscription_expiry: null,
+  payment_failed: false
+};
+
 describe('RBAC - Tier Detection', () => {
   it('Access user has tier ACCESS', () => {
     const tier = getTier(FREE_USER);
@@ -81,6 +91,28 @@ describe('RBAC - canAccessAI', () => {
   it('ELITE user can access AI', () => {
     const ent = getEntitlements(ELITE_USER);
     expect(ent.canAccessAI).toBe(true);
+  });
+});
+
+describe('RBAC - canAccessSurveillance', () => {
+  it('Access user cannot access Surveillance', () => {
+    const ent = getEntitlements(FREE_USER);
+    expect(ent.canAccessSurveillance).toBe(false);
+  });
+
+  it('Pro user cannot access Surveillance', () => {
+    const ent = getEntitlements(PREMIUM_USER);
+    expect(ent.canAccessSurveillance).toBe(false);
+  });
+
+  it('Elite user can access Surveillance', () => {
+    const ent = getEntitlements(ELITE_USER);
+    expect(ent.canAccessSurveillance).toBe(true);
+  });
+
+  it('Admin user can access Surveillance', () => {
+    const ent = getEntitlements(ADMIN_USER);
+    expect(ent.canAccessSurveillance).toBe(true);
   });
 });
 

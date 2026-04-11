@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useEntitlements } from "../context/EntitlementsContext";
 import "../styles/Navbar.css";
 import "../styles/UserDropdown.css";
 import {
@@ -24,6 +25,7 @@ import {
   FaFileAlt,
   FaHeartbeat,
   FaHistory,
+  FaGlobe,
 } from "react-icons/fa";
 import { isSuperAdmin, isAdmin, isPremium } from "../utils/roles";
 import A7Logo from "./A7Logo";
@@ -32,6 +34,7 @@ import NavbarNotifications from "./NavbarNotifications";
 
 const Navbar = () => {
   const { user, loading, logout } = useAuth();
+  const { entitlements } = useEntitlements();
   const showSuperAdminLinks = !loading && user && isSuperAdmin(user);
   const navigate = useNavigate();
   const location = useLocation();
@@ -199,6 +202,11 @@ const Navbar = () => {
                       <Link to="/backtesting" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaHistory className="dropdown-icon" /> Backtesting
                       </Link>
+                      {entitlements?.canAccessSurveillance && (
+                        <Link to="/surveillance" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                          <FaGlobe className="dropdown-icon" /> Surveillance
+                        </Link>
+                      )}
                       {isPremium(user) && (
                         <>
                           <Link to="/reports" className="dropdown-item" onClick={() => setDropdownOpen(false)}>

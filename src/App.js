@@ -5,7 +5,7 @@ import { SubscriptionProvider } from './context/SubscriptionContext';
 import { EntitlementsProvider } from './context/EntitlementsContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { AuraConnectionProvider } from './context/AuraConnectionContext';
-import { CommunityGuard, SubscriptionPageGuard, PremiumAIGuard, AdminGuard, AuthenticatedGuard, InboxGuard } from './components/RouteGuards';
+import { CommunityGuard, SubscriptionPageGuard, PremiumAIGuard, SurveillanceGuard, AdminGuard, AuthenticatedGuard, InboxGuard } from './components/RouteGuards';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
 import AuraDashboardGuard from './pages/aura-analysis/AuraDashboardGuard';
@@ -116,6 +116,7 @@ const BacktestingWorkspace = lazy(() => import('./pages/backtesting/BacktestingW
 const BacktestingSessions = lazy(() => import('./pages/backtesting/BacktestingSessions'));
 const BacktestingTrades = lazy(() => import('./pages/backtesting/BacktestingTrades'));
 const BacktestingReports = lazy(() => import('./pages/backtesting/BacktestingReports'));
+const SurveillancePage = lazy(() => import('./pages/surveillance/SurveillancePage'));
 
 /** Prefetch route chunks after initial load so navigation feels instant site-wide */
 function usePrefetchRoutes() {
@@ -394,6 +395,7 @@ function AppRoutes() {
                         <Route path="/trader-replay" element={<AuthenticatedGuard><Navigate to="/aura-analysis/dashboard/trader-replay" replace /></AuthenticatedGuard>} />
                         <Route path="/trader-playbook" element={<AuthenticatedGuard><Navigate to="/trader-deck/trade-validator/trader-playbook" replace /></AuthenticatedGuard>} />
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
+                        <Route path="/surveillance" element={<AuthenticatedGuard><SurveillanceGuard><SurveillancePage /></SurveillanceGuard></AuthenticatedGuard>} />
                         <Route path="/backtesting" element={<AuthenticatedGuard><BacktestingLayout /></AuthenticatedGuard>}>
                             <Route index element={<BacktestingHub />} />
                             <Route path="new" element={<BacktestingNewSession />} />

@@ -64,6 +64,9 @@
     },
     "api/**/*.js": {
       "maxDuration": 60
+    },
+    "api/surveillance/stream.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
@@ -778,6 +781,34 @@
     {
       "source": "/api/trader-dna",
       "destination": "/api/trader-dna.js"
+    },
+    {
+      "source": "/api/cron/surveillance-ingest",
+      "destination": "/api/cron/surveillance-ingest.js"
+    },
+    {
+      "source": "/api/surveillance/feed",
+      "destination": "/api/surveillance/feed.js"
+    },
+    {
+      "source": "/api/surveillance/event",
+      "destination": "/api/surveillance/event.js"
+    },
+    {
+      "source": "/api/surveillance/bootstrap",
+      "destination": "/api/surveillance/bootstrap.js"
+    },
+    {
+      "source": "/api/surveillance/intro-seen",
+      "destination": "/api/surveillance/intro-seen.js"
+    },
+    {
+      "source": "/api/surveillance/stream",
+      "destination": "/api/surveillance/stream.js"
+    },
+    {
+      "source": "/api/surveillance/admin-diagnostics",
+      "destination": "/api/surveillance/admin-diagnostics.js"
     }
   ],
   "crons": [
@@ -808,6 +839,10 @@
     {
       "path": "/api/cron/auto-monthly-reports",
       "schedule": "15 2 * * *"
+    },
+    {
+      "path": "/api/cron/surveillance-ingest",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

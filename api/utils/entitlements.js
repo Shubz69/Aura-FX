@@ -22,6 +22,7 @@ const {
   isElitePlanId,
   subscriptionSnapshotMatchesCurrent
 } = require('./subscriptionNormalize');
+const { canAccessSurveillance: reportsCanAccessSurveillance } = require('../reports/resolveReportsRole');
 
 const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels', 'notifications']);
 
@@ -179,9 +180,11 @@ function getEntitlements(userRow) {
       status: 'none',
       canAccessCommunity: false,
       canAccessAI: false,
+      canAccessSurveillance: false,
       allowedChannelSlugs: [],
       onboardingAccepted: false,
-      needsOnboardingReaccept: true
+      needsOnboardingReaccept: true,
+      isSuperAdminUser: false
     };
   }
   const role = isSuperAdminEmail(userRow) ? 'SUPER_ADMIN' : normalizeRole(userRow.role);
@@ -195,6 +198,13 @@ function getEntitlements(userRow) {
   const needsReaccept = !isAdmin && needsOnboardingReaccept(userRow);
 
   const isSuperAdminUser = isSuperAdminEmail(userRow);
+  const surveillanceUser = {
+    role: userRow.role,
+    subscription_plan: userRow.subscription_plan,
+    subscription_status: userRow.subscription_status,
+    subscription_expiry: userRow.subscription_expiry,
+    payment_failed: userRow.payment_failed,
+  };
   return {
     role,
     tier,
@@ -204,6 +214,7 @@ function getEntitlements(userRow) {
     status,
     canAccessCommunity: isAdmin || planSelected,
     canAccessAI: isAdmin || tier === ENTITLEMENT_TIER.PRO || tier === ENTITLEMENT_TIER.ELITE,
+    canAccessSurveillance: reportsCanAccessSurveillance(surveillanceUser),
     allowedChannelSlugs: [],
     onboardingAccepted: isAdmin || onboardingAccepted,
     needsOnboardingReaccept: needsReaccept,

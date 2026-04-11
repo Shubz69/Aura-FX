@@ -23,7 +23,9 @@ const OPTIONAL_COLS = [
   ['email', 'VARCHAR(255)'],
   ['phone', 'VARCHAR(50)'],
   ['address', 'TEXT'],
-  ['bio', 'TEXT']
+  ['bio', 'TEXT'],
+  ['surveillance_intro_seen_utc_date', 'DATE DEFAULT NULL'],
+  ['surveillance_last_briefing_at', 'DATETIME DEFAULT NULL'],
 ];
 
 async function fetchColumnSet() {
@@ -133,6 +135,10 @@ function buildUserSelectFields(columnSet) {
   if (columnSet.has('last_seen')) parts.push('last_seen');
   if (columnSet.has('subscription_plan')) parts.push('subscription_plan');
   if (columnSet.has('subscription_status')) parts.push('subscription_status');
+  if (columnSet.has('subscription_expiry')) parts.push('subscription_expiry');
+  if (columnSet.has('payment_failed')) parts.push('payment_failed');
+  if (columnSet.has('surveillance_intro_seen_utc_date')) parts.push('surveillance_intro_seen_utc_date');
+  if (columnSet.has('surveillance_last_briefing_at')) parts.push('surveillance_last_briefing_at');
   return {
     selectFields: parts.join(', '),
     hasBanner: columnSet.has('banner'),

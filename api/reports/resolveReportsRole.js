@@ -5,6 +5,7 @@
  * - effectiveReportsRole(user): use for gating paid features — requires active/trialing
  *   subscription, future expiry, and no payment_failed. Admins always "admin".
  * - canAccessTraderDna(user): Elite-only product rule (+ admin/super_admin for support).
+ * - canAccessSurveillance(user): same rule as Trader DNA (Elite terminal).
  *
  * Keeping this in one module avoids the four copies of resolveRole drifting apart.
  */
@@ -60,8 +61,14 @@ function canAccessTraderDna(user) {
   return effectiveReportsRole(user) === 'elite';
 }
 
+/** Surveillance terminal: same billing-aware Elite gate as Trader DNA. */
+function canAccessSurveillance(user) {
+  return canAccessTraderDna(user);
+}
+
 module.exports = {
   resolveNominalReportsRole,
   effectiveReportsRole,
   canAccessTraderDna,
+  canAccessSurveillance,
 };
