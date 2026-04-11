@@ -50,6 +50,17 @@ const ELITE_USER = {
   payment_failed: false
 };
 
+/** Elite with Stripe/admin row missing expiry — still entitled when status is active */
+const ELITE_USER_ACTIVE_NO_EXPIRY = {
+  id: 30,
+  email: 'elite-no-expiry@test.com',
+  role: 'user',
+  subscription_plan: 'elite',
+  subscription_status: 'active',
+  subscription_expiry: null,
+  payment_failed: false
+};
+
 const ADMIN_USER = {
   id: 4,
   email: 'admin@test.com',
@@ -96,6 +107,11 @@ describe('RBAC - Tier Detection', () => {
     const tier = getTier(ELITE_USER);
     expect(tier).toBe(ENTITLEMENT_TIER.ELITE);
   });
+
+  it('Elite plan active with null expiry maps to tier ELITE', () => {
+    const tier = getTier(ELITE_USER_ACTIVE_NO_EXPIRY);
+    expect(tier).toBe(ENTITLEMENT_TIER.ELITE);
+  });
 });
 
 describe('RBAC - canAccessAI', () => {
@@ -113,6 +129,11 @@ describe('RBAC - canAccessAI', () => {
     const ent = getEntitlements(ELITE_USER);
     expect(ent.canAccessAI).toBe(true);
   });
+
+  it('ELITE user with active status and null expiry can access AI', () => {
+    const ent = getEntitlements(ELITE_USER_ACTIVE_NO_EXPIRY);
+    expect(ent.canAccessAI).toBe(true);
+  });
 });
 
 describe('RBAC - canAccessSurveillance', () => {
@@ -128,6 +149,11 @@ describe('RBAC - canAccessSurveillance', () => {
 
   it('Elite user can access Surveillance', () => {
     const ent = getEntitlements(ELITE_USER);
+    expect(ent.canAccessSurveillance).toBe(true);
+  });
+
+  it('Elite user with active status and null subscription_expiry can access Surveillance', () => {
+    const ent = getEntitlements(ELITE_USER_ACTIVE_NO_EXPIRY);
     expect(ent.canAccessSurveillance).toBe(true);
   });
 

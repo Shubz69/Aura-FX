@@ -88,10 +88,11 @@ function getTier(userRow) {
   const plan = (userRow.subscription_plan || '').toLowerCase();
   const status = (userRow.subscription_status || '').toLowerCase();
   const expiry = userRow.subscription_expiry ? new Date(userRow.subscription_expiry) : null;
+  const hasExpiry = Boolean(expiry && !Number.isNaN(expiry.getTime()));
+  const expiryOk = !hasExpiry || expiry > new Date();
   const paidThrough =
     (status === 'active' || status === 'trialing') &&
-    expiry &&
-    expiry > new Date() &&
+    expiryOk &&
     !userRow.payment_failed;
   if (paidThrough && isElitePlanId(plan)) return ENTITLEMENT_TIER.ELITE;
   if (['elite', 'a7fx'].includes(role) || (paidThrough && isElitePlanId(plan))) return ENTITLEMENT_TIER.ELITE;

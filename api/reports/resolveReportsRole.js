@@ -3,7 +3,8 @@
  *
  * - resolveNominalReportsRole(user): role/plan columns only (ignores payment & dates).
  * - effectiveReportsRole(user): use for gating paid features — requires active/trialing
- *   subscription, future expiry, and no payment_failed. Admins always "admin".
+ *   subscription, no payment_failed, and either a future expiry or no expiry set (ongoing / lifetime rows).
+ *   Admins always "admin".
  * - canAccessTraderDna(user): Elite-only product rule (+ admin/super_admin for support).
  * - canAccessSurveillance(user): same rule as Trader DNA (Elite terminal).
  *
@@ -35,10 +36,9 @@ function effectiveReportsRole(user) {
   const status = (user.subscription_status || '').toLowerCase();
   const expiry = user.subscription_expiry ? new Date(user.subscription_expiry) : null;
   const now = Date.now();
-  const expiryOk =
-    expiry &&
-    !Number.isNaN(expiry.getTime()) &&
-    expiry.getTime() > now;
+  const hasExpiry = Boolean(expiry && !Number.isNaN(expiry.getTime()));
+  /** Active/trialing with no end date (null expiry) still counts as paid-through — matches many Elite / admin-grant rows. */
+  const expiryOk = !hasExpiry || expiry.getTime() > now;
 
   const billingActive =
     (status === 'active' || status === 'trialing') &&
