@@ -35,14 +35,14 @@ module.exports = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Admin access required' });
     }
 
-    const limit = Math.min(80, Math.max(5, Number(req.query?.limit) || 40));
+    const limit = Math.min(80, Math.max(5, Math.floor(Number(req.query?.limit)) || 40));
     const [adapterRows] = await executeQuery(`SELECT * FROM surveillance_adapter_state ORDER BY adapter_id ASC`, []);
     const [runs] = await executeQuery(
       `SELECT id, adapter_id, started_at, finished_at, items_in, items_out, error_code, duration_ms
        FROM surveillance_ingest_runs
        ORDER BY id DESC
-       LIMIT ?`,
-      [limit]
+       LIMIT ${limit}`,
+      []
     );
     const [storyCount] = await executeQuery(`SELECT COUNT(*) AS c FROM surveillance_stories`, []);
     const stories = storyCount && storyCount[0] ? Number(storyCount[0].c) : 0;

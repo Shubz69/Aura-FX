@@ -305,30 +305,32 @@ async function queryFeed({
     sql += ` AND source = ?`;
     params.push(source);
   }
-  sql += ` ORDER BY rank_score DESC, updated_at DESC, COALESCE(published_at, detected_at) DESC LIMIT ?`;
-  params.push(Math.min(250, Number(limit) || 150));
+  const lim = Math.max(1, Math.min(250, Math.floor(Number(limit)) || 150));
+  sql += ` ORDER BY rank_score DESC, updated_at DESC, COALESCE(published_at, detected_at) DESC LIMIT ${lim}`;
   const [rows] = await executeQuery(sql, params);
   return (rows || []).map(rowToEvent);
 }
 
 async function queryTopForBriefing(limit = 12) {
+  const lim = Math.max(1, Math.min(250, Math.floor(Number(limit)) || 12));
   const [rows] = await executeQuery(
     `SELECT * FROM surveillance_events
      ORDER BY rank_score DESC, updated_at DESC
-     LIMIT ?`,
-    [limit]
+     LIMIT ${lim}`,
+    []
   );
   return (rows || []).map(rowToEvent);
 }
 
 async function queryDeltaSince(sinceIso, limit = 20) {
   if (!sinceIso) return [];
+  const lim = Math.max(1, Math.min(250, Math.floor(Number(limit)) || 20));
   const [rows] = await executeQuery(
     `SELECT * FROM surveillance_events
      WHERE updated_at > ?
      ORDER BY rank_score DESC, updated_at DESC
-     LIMIT ?`,
-    [sinceIso, limit]
+     LIMIT ${lim}`,
+    [sinceIso]
   );
   return (rows || []).map(rowToEvent);
 }
@@ -368,13 +370,14 @@ async function getStoryBundleForEvent(ev) {
 async function relatedEvents(ev, limit = 8) {
   if (!ev) return [];
   const sid = ev.story_id;
+  const lim = Math.max(1, Math.min(100, Math.floor(Number(limit)) || 8));
   if (sid) {
     const [storyRows] = await executeQuery(
       `SELECT * FROM surveillance_events
        WHERE id != ? AND story_id = ?
        ORDER BY rank_score DESC
-       LIMIT ?`,
-      [ev.id, sid, limit]
+       LIMIT ${lim}`,
+      [ev.id, sid]
     );
     if (storyRows && storyRows.length) return storyRows.map(rowToEvent);
   }

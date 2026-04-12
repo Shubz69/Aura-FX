@@ -47,12 +47,14 @@ async function ensureAdapterRows(adapters) {
  * @returns {string[]} adapter_ids due to run
  */
 async function pickDueAdapterIds(max = 10) {
+  /** MySQL prepared statements reject `LIMIT ?` (ER_WRONG_ARGUMENTS) — use a clamped integer literal. */
+  const lim = Math.max(1, Math.min(100, Math.floor(Number(max)) || 10));
   const [rows] = await executeQuery(
     `SELECT adapter_id FROM surveillance_adapter_state
      WHERE next_run_at IS NULL OR next_run_at <= UTC_TIMESTAMP()
      ORDER BY (next_run_at IS NULL) DESC, next_run_at ASC
-     LIMIT ?`,
-    [max]
+     LIMIT ${lim}`,
+    []
   );
   return (rows || []).map((r) => r.adapter_id);
 }

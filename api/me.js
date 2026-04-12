@@ -118,6 +118,8 @@ const user = {
           effectiveTier: ent.effectiveTier ?? ent.tier,
           canAccessCommunity: ent.canAccessCommunity,
           canAccessAI: ent.canAccessAI,
+          canAccessSurveillance: ent.canAccessSurveillance,
+          isSuperAdminUser: ent.isSuperAdminUser,
           allowedChannelSlugs: ent.allowedChannelSlugs,
           onboardingAccepted: ent.onboardingAccepted,
           needsOnboardingReaccept: ent.needsOnboardingReaccept,
