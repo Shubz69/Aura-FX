@@ -1,9 +1,39 @@
 import React, { useMemo, useRef, useEffect, useState, Suspense, lazy, useCallback } from 'react';
-import { SURV_ISO_CENTROID, eventMatchesFocus, cameraTargetForFocus } from './surveillanceRegionUtils';
+import {
+  SURV_ISO_CENTROID,
+  eventMatchesFocus,
+  cameraTargetForFocus,
+  surveillanceCountriesGeoJsonUrl,
+  polygonsAndCentroidsFromCountriesGeoJSON,
+  normalizeRegionKey,
+} from './surveillanceRegionUtils';
 
 const Globe = lazy(() => import('react-globe.gl').then((m) => ({ default: m.default })));
 
 const GLOBE_TEXTURE = 'https://unpkg.com/three-globe/example/img/earth-night.jpg';
+
+let neGeoJsonCache = null;
+let neGeoJsonPromise = null;
+
+function loadCountriesGeoJson() {
+  if (neGeoJsonCache) return Promise.resolve(neGeoJsonCache);
+  if (!neGeoJsonPromise) {
+    neGeoJsonPromise = fetch(surveillanceCountriesGeoJsonUrl(), { cache: 'force-cache' })
+      .then((r) => {
+        if (!r.ok) throw new Error('geojson');
+        return r.json();
+      })
+      .then((j) => {
+        neGeoJsonCache = j;
+        return j;
+      })
+      .catch(() => {
+        neGeoJsonPromise = null;
+        return null;
+      });
+  }
+  return neGeoJsonPromise;
+}
 
 function clusterEvents(events, precision = 1) {
   const buckets = new Map();
@@ -76,16 +106,41 @@ export default function SurveillanceGlobe({
   selectedId,
   focusRegion,
   onSelectEvent,
+  onCountryFocus,
+  onGlobeBackground,
   reducedMotion,
 }) {
   const wrapRef = useRef(null);
   const globeRef = useRef(null);
+  const surfacePickAtRef = useRef(0);
   const [dims, setDims] = useState({ w: 320, h: 320 });
   const [pulse, setPulse] = useState(0);
   const [hoveredId, setHoveredId] = useState(null);
   const [globeReveal, setGlobeReveal] = useState(false);
+  const [polygonsData, setPolygonsData] = useState([]);
+  const [loadedIsoCentroids, setLoadedIsoCentroids] = useState({});
+  const [hoveredIso, setHoveredIso] = useState(null);
 
-  const useHex = !reducedMotion && !focusRegion && events.length > 52;
+  const focusIso = useMemo(() => {
+    if (!focusRegion) return null;
+    const f = normalizeRegionKey(focusRegion);
+    return /^[A-Z]{2}$/.test(f) ? f : null;
+  }, [focusRegion]);
+
+  const centroidLookup = useMemo(() => ({ ...SURV_ISO_CENTROID, ...loadedIsoCentroids }), [loadedIsoCentroids]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadCountriesGeoJson().then((geojson) => {
+      if (cancelled || !geojson) return;
+      const { polygonsData: rows, isoCentroids } = polygonsAndCentroidsFromCountriesGeoJSON(geojson);
+      setPolygonsData(rows);
+      setLoadedIsoCentroids(isoCentroids);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -116,6 +171,8 @@ export default function SurveillanceGlobe({
     id = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(id);
   }, [reducedMotion]);
+
+  const useHex = !reducedMotion && !focusRegion && events.length > 52;
 
   const rawPoints = useMemo(() => {
     return events
@@ -188,27 +245,88 @@ export default function SurveillanceGlobe({
     });
   }, [events, selectedId, hoveredId, reducedMotion, pulse, focusRegion]);
 
+  const polygonCapColor = useCallback(
+    (d) => {
+      const iso = d.iso;
+      if (focusIso) {
+        if (iso === focusIso) return 'rgba(255, 214, 170, 0.42)';
+        return 'rgba(6, 8, 14, 0.5)';
+      }
+      if (hoveredIso === iso) return 'rgba(248, 195, 125, 0.18)';
+      return 'rgba(255, 255, 255, 0.04)';
+    },
+    [focusIso, hoveredIso]
+  );
+
+  const polygonSideColor = useCallback(
+    (d) => {
+      if (focusIso && d.iso !== focusIso) return 'rgba(3, 4, 8, 0.62)';
+      if (hoveredIso === d.iso) return 'rgba(248, 195, 125, 0.14)';
+      return 'rgba(255, 255, 255, 0.035)';
+    },
+    [focusIso, hoveredIso]
+  );
+
+  const polygonStrokeColor = useCallback(
+    (d) => {
+      if (focusIso && d.iso === focusIso) return 'rgba(255, 224, 186, 0.88)';
+      if (hoveredIso === d.iso) return 'rgba(248, 195, 125, 0.42)';
+      return 'rgba(255, 255, 255, 0.055)';
+    },
+    [focusIso, hoveredIso]
+  );
+
+  const polygonAltitude = useCallback(
+    (d) => {
+      if (focusIso && d.iso === focusIso) return 0.018;
+      if (hoveredIso === d.iso) return 0.01;
+      return 0.0035;
+    },
+    [focusIso, hoveredIso]
+  );
+
+  const polygonLabel = useCallback((d) => {
+    const nm = d.name || d.iso;
+    return `<div style="font:12px system-ui;padding:4px 8px;background:rgba(0,0,0,.75);border:1px solid rgba(248,195,125,.35);border-radius:6px">${nm}</div>`;
+  }, []);
+
   const moveCameraToSelection = useCallback(() => {
     const g = globeRef.current;
     if (!g || typeof g.pointOfView !== 'function') return;
     const sel = events.find((e) => String(e.id) === String(selectedId));
     if (sel && sel.lat != null && sel.lng != null) {
-      g.pointOfView({ lat: sel.lat, lng: sel.lng, altitude: 1.42 }, reducedMotion ? 0 : 1100);
+      g.pointOfView({ lat: sel.lat, lng: sel.lng, altitude: 1.36 }, reducedMotion ? 0 : 1050);
       return;
     }
-    const tgt = cameraTargetForFocus(focusRegion, events);
+    const tgt = cameraTargetForFocus(focusRegion, events, centroidLookup);
     if (tgt) {
-      g.pointOfView(tgt, reducedMotion ? 0 : 1200);
+      const alt = focusIso ? Math.min(tgt.altitude, 1.14) : tgt.altitude;
+      g.pointOfView({ ...tgt, altitude: alt }, reducedMotion ? 0 : 1380);
     }
-  }, [events, selectedId, focusRegion, reducedMotion]);
+  }, [events, selectedId, focusRegion, focusIso, reducedMotion, centroidLookup]);
 
   useEffect(() => {
     moveCameraToSelection();
   }, [moveCameraToSelection]);
 
+  const markSurfacePick = useCallback(() => {
+    surfacePickAtRef.current = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  }, []);
+
+  const handleGlobeClick = useCallback(
+    (_coords, event) => {
+      if (!onGlobeBackground) return;
+      const t = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (t - surfacePickAtRef.current < 420) return;
+      if (event?.defaultPrevented) return;
+      onGlobeBackground();
+    },
+    [onGlobeBackground]
+  );
+
   return (
     <div
-      className={`sv-globe-wrap ${globeReveal ? 'sv-globe-wrap--ready' : ''}`}
+      className={`sv-globe-wrap ${globeReveal ? 'sv-globe-wrap--ready' : ''} ${polygonsData.length ? 'sv-globe-wrap--countries' : ''}`}
       ref={wrapRef}
     >
       <div className="sv-globe-vignette" aria-hidden />
@@ -231,6 +349,7 @@ export default function SurveillanceGlobe({
           showAtmosphere
           atmosphereColor="rgba(248, 195, 125, 0.14)"
           atmosphereAltitude={reducedMotion ? 0.1 : 0.16}
+          onGlobeClick={handleGlobeClick}
           heatmapsData={heatmapLayer}
           heatmapPoints={(d) => d.points}
           heatmapPointLat="lat"
@@ -256,6 +375,22 @@ export default function SurveillanceGlobe({
           arcColor={() => ['rgba(248, 195, 125, 0.22)', 'rgba(255, 120, 120, 0.38)']}
           arcAltitude={0.24}
           arcStroke={0.42}
+          polygonsData={polygonsData}
+          polygonGeoJsonGeometry="geo"
+          polygonCapColor={polygonCapColor}
+          polygonSideColor={polygonSideColor}
+          polygonStrokeColor={polygonStrokeColor}
+          polygonAltitude={polygonAltitude}
+          polygonCapCurvatureResolution={2}
+          polygonsTransitionDuration={reducedMotion ? 0 : 220}
+          polygonLabel={polygonLabel}
+          onPolygonHover={(poly) => {
+            setHoveredIso(poly && poly.iso ? poly.iso : null);
+          }}
+          onPolygonClick={(poly) => {
+            markSurfacePick();
+            if (poly && poly.iso && onCountryFocus) onCountryFocus(poly.iso);
+          }}
           pointsData={useHex ? [] : points}
           pointLat="lat"
           pointLng="lng"
@@ -266,6 +401,7 @@ export default function SurveillanceGlobe({
           pointsMerge={false}
           pointResolution={reducedMotion ? 8 : 12}
           onPointClick={(pt) => {
+            markSurfacePick();
             if (pt && pt.eventId) onSelectEvent(pt.eventId);
           }}
           onPointHover={(pt) => {

@@ -7,6 +7,7 @@ import IntelSidePanel from './IntelSidePanel';
 import IntroOverlay from './IntroOverlay';
 import {
   buildEventsById,
+  eventMatchesFocus,
   filterDigestByFocus,
   filterEventsByFocus,
   focusSummaryFromEvents,
@@ -219,7 +220,7 @@ export default function SurveillancePage() {
   useEffect(() => {
     if (prevIntroRef.current && !showIntro) {
       setTerminalHandoff(true);
-      const t = setTimeout(() => setTerminalHandoff(false), 1100);
+      const t = setTimeout(() => setTerminalHandoff(false), 1180);
       prevIntroRef.current = showIntro;
       return () => clearTimeout(t);
     }
@@ -304,6 +305,14 @@ export default function SurveillancePage() {
     },
     [eventsById, openDrawer]
   );
+
+  const onGlobeCountryFocus = useCallback((iso2) => {
+    setFocusRegion(normalizeRegionKey(iso2));
+  }, []);
+
+  const onGlobeBackground = useCallback(() => {
+    clearFocusRegion();
+  }, [clearFocusRegion]);
 
   const closeDrawer = useCallback(() => {
     setSelectedId(null);
@@ -433,12 +442,16 @@ export default function SurveillancePage() {
                 selectedId={selectedId}
                 focusRegion={focusRegion}
                 onSelectEvent={onGlobeSelectEvent}
+                onCountryFocus={onGlobeCountryFocus}
+                onGlobeBackground={onGlobeBackground}
                 reducedMotion={reducedMotion}
               />
             </div>
             <div className="sv-globe-chrome">
               <span className="sv-globe-chrome-tag">Operating picture</span>
-              <p className="sv-globe-chrome-hint">Select markers to open detail · sector lens follows geography</p>
+              <p className="sv-globe-chrome-hint">
+                Click countries for sector lens · markers open intelligence detail
+              </p>
             </div>
           </div>
           <aside
@@ -451,6 +464,7 @@ export default function SurveillancePage() {
               handoff={terminalHandoff}
               focusRegion={focusRegion}
               focusSummary={focusSummary}
+              tapeCount={tapeEvents.length}
               onClearFocus={clearFocusRegion}
               onSetFocusRegion={setFocusFromHeat}
             />
@@ -521,7 +535,9 @@ export default function SurveillancePage() {
         </div>
 
         <section
-          className={`sv-tape-dock ${tapeRefreshGlow ? 'sv-tape-dock--refresh' : ''}`}
+          className={`sv-tape-dock ${tapeRefreshGlow ? 'sv-tape-dock--refresh' : ''} ${
+            focusRegion ? 'sv-tape-dock--lensed' : ''
+          }`}
           aria-label="Event stream"
         >
           <div className="sv-tape-head">
@@ -529,7 +545,7 @@ export default function SurveillancePage() {
               <h2 className="sv-tape-title">Tape</h2>
               {focusRegion ? (
                 <span className="sv-tape-lens">
-                  Sector lens · <strong>{focusSummary?.label || focusRegion}</strong>
+                  Geography · <strong>{focusSummary?.label || focusRegion}</strong>
                   <button type="button" className="sv-tape-lens-clear" onClick={clearFocusRegion}>
                     Clear
                   </button>
@@ -540,46 +556,45 @@ export default function SurveillancePage() {
               {sseOk ? 'Live' : 'Poll'}
             </span>
           </div>
-          <ul className="sv-event-list">
-            {tapeEvents.map((e) => (
-              <li key={e.id}>
-                <button
-                  type="button"
-                  className={`sv-event-row ${String(selectedId) === String(e.id) ? 'sv-event-row--active' : ''}`}
-                  onClick={() => openDrawer(e.id)}
-                >
-                  <span className="sv-sev" data-sev={e.severity}>
-                    {e.severity}
-                  </span>
-                  <span className="sv-ev-rank" title="Rank score">
-                    {e.rank_score != null ? Math.round(e.rank_score) : '—'}
-                  </span>
-                  <span className="sv-ev-trust" title="Trust score">
-                    T{e.trust_score != null ? Math.round(e.trust_score) : '—'}
-                  </span>
-                  {e.risk_bias && e.risk_bias !== 'neutral' ? (
-                    <span className={`sv-ev-bias sv-ev-bias--${e.risk_bias}`}>{e.risk_bias.replace('_', ' ')}</span>
-                  ) : (
-                    <span className="sv-ev-bias sv-ev-bias--neutral">neutral</span>
-                  )}
-                  <span className="sv-ev-corr" title="Corroboration">
-                    {e.corroboration_count > 0 ? `✓${e.corroboration_count}` : '·'}
-                  </span>
-                  {e.story_id ? (
-                    <span className="sv-ev-story" title="Part of a storyline">
-                      ⧉
+          <ul className="sv-event-list sv-event-list--tape">
+            {tapeEvents.map((e) => {
+              const metaBits = [
+                e.risk_bias && e.risk_bias !== 'neutral' ? e.risk_bias.replace('_', ' ') : null,
+                e.corroboration_count > 0 ? `${e.corroboration_count}× corroboration` : null,
+                e.story_id ? 'Storyline' : null,
+              ].filter(Boolean);
+              const detailTitle = metaBits.length ? `${e.title} — ${metaBits.join(' · ')}` : e.title;
+              return (
+                <li key={e.id}>
+                  <button
+                    type="button"
+                    className={`sv-event-row sv-event-row--tape ${String(selectedId) === String(e.id) ? 'sv-event-row--active' : ''} ${
+                      focusRegion && eventMatchesFocus(e, focusRegion) ? 'sv-event-row--in-lens' : ''
+                    }`}
+                    title={detailTitle}
+                    onClick={() => openDrawer(e.id)}
+                  >
+                    <span className="sv-sev" data-sev={e.severity}>
+                      {e.severity}
                     </span>
-                  ) : (
-                    <span className="sv-ev-story sv-ev-story--empty" aria-hidden>
-                      ·
+                    <span className="sv-ev-rank" title="Rank score">
+                      {e.rank_score != null ? Math.round(e.rank_score) : '—'}
                     </span>
-                  )}
-                  <span className="sv-ev-type">{e.event_type}</span>
-                  <span className="sv-ev-title">{e.title}</span>
-                  <span className="sv-ev-src">{e.source}</span>
-                </button>
-              </li>
-            ))}
+                    <span className="sv-ev-trust" title="Trust score">
+                      T{e.trust_score != null ? Math.round(e.trust_score) : '—'}
+                    </span>
+                    {e.risk_bias && e.risk_bias !== 'neutral' ? (
+                      <span className={`sv-ev-bias sv-ev-bias--${e.risk_bias}`}>{e.risk_bias.replace('_', ' ')}</span>
+                    ) : null}
+                    <span className="sv-ev-type" title="Event type">
+                      {e.event_type}
+                    </span>
+                    <span className="sv-ev-title">{e.title}</span>
+                    <span className="sv-ev-src">{e.source}</span>
+                  </button>
+                </li>
+              );
+            })}
             {!tapeEvents.length ? (
               <li className="sv-muted sv-stream-empty">
                 {focusRegion ? 'No tape nodes in this sector for the current filters.' : 'No events ingested yet.'}

@@ -37,11 +37,97 @@ export const SURV_ISO_CENTROID = {
   AE: [23.4241, 53.8478],
 };
 
+/**
+ * Same-origin GeoJSON (ships from `public/ne_110m_admin_0_countries.geojson`).
+ * Honors CRA `PUBLIC_URL` for subpath deployments.
+ */
+export function surveillanceCountriesGeoJsonUrl() {
+  const base = (process.env.PUBLIC_URL || '').replace(/\/$/, '');
+  return `${base}/ne_110m_admin_0_countries.geojson`;
+}
+
 export function normalizeRegionKey(v) {
   return String(v ?? '')
     .trim()
     .toUpperCase()
     .replace(/\s+/g, '_');
+}
+
+export function iso2FromNeProperties(props) {
+  if (!props) return null;
+  const iso = String(props.ISO_A2 || props.WB_A2 || '').trim().toUpperCase();
+  if (iso.length === 2 && iso !== '-99') return iso;
+  return null;
+}
+
+function ringCentroid(ring) {
+  if (!ring?.length) return null;
+  let slat = 0;
+  let slng = 0;
+  let n = 0;
+  for (const pair of ring) {
+    const lng = Number(pair[0]);
+    const lat = Number(pair[1]);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      slat += lat;
+      slng += lng;
+      n += 1;
+    }
+  }
+  return n ? { lat: slat / n, lng: slng / n } : null;
+}
+
+export function centroidFromGeoJsonGeometry(geom) {
+  if (!geom?.coordinates) return null;
+  if (geom.type === 'Polygon') {
+    return ringCentroid(geom.coordinates[0]);
+  }
+  if (geom.type === 'MultiPolygon') {
+    let best = null;
+    let bestN = -1;
+    for (const poly of geom.coordinates) {
+      const outer = poly[0];
+      const c = ringCentroid(outer);
+      if (!c) continue;
+      const len = outer.length;
+      if (len > bestN) {
+        bestN = len;
+        best = c;
+      }
+    }
+    return best;
+  }
+  return null;
+}
+
+/** @returns {{ polygonsData: Array<{ iso: string, name: string, geo: object }>, isoCentroids: Record<string, [number, number]> }} */
+export function polygonsAndCentroidsFromCountriesGeoJSON(geojson) {
+  const features = geojson?.type === 'FeatureCollection' ? geojson.features : [];
+  const isoCentroids = {};
+  const polygonsData = [];
+  for (const f of features) {
+    const iso = iso2FromNeProperties(f.properties);
+    if (!iso) continue;
+    const geom = f.geometry;
+    if (!geom || (geom.type !== 'Polygon' && geom.type !== 'MultiPolygon')) continue;
+    const c = centroidFromGeoJsonGeometry(geom);
+    if (c) isoCentroids[iso] = [c.lat, c.lng];
+    polygonsData.push({
+      iso,
+      name: String(f.properties.NAME || f.properties.ADMIN || iso),
+      geo: geom,
+    });
+  }
+  return { polygonsData, isoCentroids };
+}
+
+export function displayNameForIso2(iso) {
+  if (!iso || !/^[A-Z]{2}$/.test(String(iso).toUpperCase())) return null;
+  try {
+    return new Intl.DisplayNames(['en'], { type: 'region' }).of(String(iso).toUpperCase());
+  } catch {
+    return String(iso).toUpperCase();
+  }
 }
 
 export function primaryCountryFromEvent(e) {
@@ -128,17 +214,21 @@ export function focusSummaryFromEvents(focusKey, events) {
   const f = normalizeRegionKey(focusKey);
   const matched = (events || []).filter((e) => eventMatchesFocus(e, f));
   if (!matched.length) {
+    const isoOnly = /^[A-Z]{2}$/.test(f) ? f : null;
     return {
       key: f,
-      label: f.replace(/_/g, ' '),
-      isoHint: /^[A-Z]{2}$/.test(f) ? f : null,
+      label: (isoOnly && displayNameForIso2(isoOnly)) || f.replace(/_/g, ' '),
+      isoHint: isoOnly,
       count: 0,
       maxRank: 0,
       maxSev: 0,
     };
   }
   const iso = /^[A-Z]{2}$/.test(f) ? f : primaryCountryFromEvent(matched[0]) || null;
-  const label = iso && iso === f ? f : matched[0]?.region || f;
+  const label =
+    iso && iso === f
+      ? displayNameForIso2(iso) || iso
+      : matched[0]?.region || (iso && displayNameForIso2(iso)) || f;
   const maxRank = matched.reduce((m, e) => Math.max(m, Number(e.rank_score) || 0), 0);
   const maxSev = matched.reduce((m, e) => Math.max(m, Number(e.severity) || 0), 0);
   return {
