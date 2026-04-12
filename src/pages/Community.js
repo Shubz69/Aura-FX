@@ -1344,12 +1344,12 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
         if (subSt === 'active') {
             if (plan === 'free' || plan === '') {
                 if (r === 'a7fx' || r === 'elite') return 'a7fx';
-                if (r === 'premium') return 'premium';
+                if (r === 'premium' || r === 'pro') return 'premium';
                 return 'free';
             }
             if (plan === 'a7fx' || plan === 'elite') return 'a7fx';
-            if (plan === 'aura' || plan === 'premium') return 'premium';
-            if (r === 'a7fx' || r === 'elite' || r === 'premium') return r;
+            if (plan === 'aura' || plan === 'premium' || plan === 'pro') return 'premium';
+            if (r === 'a7fx' || r === 'elite' || r === 'premium' || r === 'pro') return r === 'pro' ? 'premium' : r;
             return 'free';
         }
         return r || 'free';
