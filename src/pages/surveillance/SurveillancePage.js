@@ -220,7 +220,7 @@ export default function SurveillancePage() {
   useEffect(() => {
     if (prevIntroRef.current && !showIntro) {
       setTerminalHandoff(true);
-      const t = setTimeout(() => setTerminalHandoff(false), 1180);
+      const t = setTimeout(() => setTerminalHandoff(false), 1040);
       prevIntroRef.current = showIntro;
       return () => clearTimeout(t);
     }
@@ -333,21 +333,30 @@ export default function SurveillancePage() {
     return (
       <div className="sv-page sv-page--loading sv-page--boot">
         <div className="sv-boot" aria-busy="true" aria-label="Loading surveillance">
-          <div className="sv-boot-brand">
-            <span className="sv-boot-mark" />
-            <div>
-              <p className="sv-boot-kicker">Elite · Surveillance</p>
-              <p className="sv-boot-title">Initializing grid</p>
+          <div className="sv-boot-bg" aria-hidden />
+          <div className="sv-boot-inner">
+            <header className="sv-boot-masthead">
+              <div className="sv-boot-masthead-top">
+                <span className="sv-boot-session">Elite · secured channel</span>
+                <span className="sv-boot-state">Loading</span>
+              </div>
+              <div className="sv-boot-wordmark" aria-hidden>
+                <span className="sv-boot-wordmark-aura">Aura</span>
+                <span className="sv-boot-wordmark-divider" />
+                <span className="sv-boot-wordmark-sv">Surveillance</span>
+              </div>
+              <p className="sv-boot-headline">Establishing live terminal</p>
+              <p className="sv-boot-sub">Authenticating and pulling the latest normalized feed from official public sources.</p>
+              <div className="sv-boot-progress" aria-hidden>
+                <span className="sv-boot-progress-track">
+                  <span className="sv-boot-progress-fill" />
+                </span>
+              </div>
+            </header>
+            <div className="sv-boot-footer">
+              <div className="sv-spinner sv-spinner--boot" aria-hidden />
+              <span className="sv-boot-footer-copy">Synchronizing grid…</span>
             </div>
-          </div>
-          <div className="sv-boot-grid">
-            <div className="sv-boot-shimmer sv-boot-shimmer--hero" />
-            <div className="sv-boot-shimmer sv-boot-shimmer--rail" />
-            <div className="sv-boot-shimmer sv-boot-shimmer--tape" />
-          </div>
-          <div className="sv-boot-footer">
-            <div className="sv-spinner sv-spinner--boot" aria-hidden />
-            <span>Syncing official sources…</span>
           </div>
         </div>
       </div>
@@ -562,6 +571,7 @@ export default function SurveillancePage() {
                 e.risk_bias && e.risk_bias !== 'neutral' ? e.risk_bias.replace('_', ' ') : null,
                 e.corroboration_count > 0 ? `${e.corroboration_count}× corroboration` : null,
                 e.story_id ? 'Storyline' : null,
+                e.trust_score != null ? `Trust ${Math.round(e.trust_score)}` : null,
               ].filter(Boolean);
               const detailTitle = metaBits.length ? `${e.title} — ${metaBits.join(' · ')}` : e.title;
               return (
@@ -579,9 +589,6 @@ export default function SurveillancePage() {
                     </span>
                     <span className="sv-ev-rank" title="Rank score">
                       {e.rank_score != null ? Math.round(e.rank_score) : '—'}
-                    </span>
-                    <span className="sv-ev-trust" title="Trust score">
-                      T{e.trust_score != null ? Math.round(e.trust_score) : '—'}
                     </span>
                     {e.risk_bias && e.risk_bias !== 'neutral' ? (
                       <span className={`sv-ev-bias sv-ev-bias--${e.risk_bias}`}>{e.risk_bias.replace('_', ' ')}</span>

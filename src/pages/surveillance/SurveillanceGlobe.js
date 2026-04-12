@@ -10,7 +10,8 @@ import {
 
 const Globe = lazy(() => import('react-globe.gl').then((m) => ({ default: m.default })));
 
-const GLOBE_TEXTURE = 'https://unpkg.com/three-globe/example/img/earth-night.jpg';
+/* Pinned build for stable caching; 715KB asset reads sharper than tiny placeholder maps. */
+const GLOBE_TEXTURE = 'https://unpkg.com/three-globe@2.45.2/example/img/earth-night.jpg';
 
 let neGeoJsonCache = null;
 let neGeoJsonPromise = null;
@@ -162,6 +163,29 @@ export default function SurveillanceGlobe({
   }, [dims.w, dims.h, reducedMotion]);
 
   useEffect(() => {
+    if (reducedMotion || dims.w < 200) return undefined;
+    let cancelled = false;
+    let frames = 0;
+    const applySharpRenderer = () => {
+      if (cancelled) return;
+      const g = globeRef.current;
+      const renderer = g && typeof g.renderer === 'function' ? g.renderer() : null;
+      if (renderer && typeof renderer.setPixelRatio === 'function') {
+        const pr = Math.min(2, typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
+        renderer.setPixelRatio(pr);
+      }
+      frames += 1;
+      if (frames < 24 && (!renderer || typeof renderer.setPixelRatio !== 'function')) {
+        requestAnimationFrame(applySharpRenderer);
+      }
+    };
+    applySharpRenderer();
+    return () => {
+      cancelled = true;
+    };
+  }, [dims.w, dims.h, reducedMotion]);
+
+  useEffect(() => {
     if (reducedMotion) return undefined;
     let id;
     const loop = (t) => {
@@ -302,7 +326,9 @@ export default function SurveillanceGlobe({
     if (tgt) {
       const alt = focusIso ? Math.min(tgt.altitude, 1.14) : tgt.altitude;
       g.pointOfView({ ...tgt, altitude: alt }, reducedMotion ? 0 : 1380);
+      return;
     }
+    g.pointOfView({ lat: 18, lng: -32, altitude: 2.2 }, reducedMotion ? 0 : 640);
   }, [events, selectedId, focusRegion, focusIso, reducedMotion, centroidLookup]);
 
   useEffect(() => {
@@ -346,17 +372,22 @@ export default function SurveillanceGlobe({
           backgroundColor="rgba(0,0,0,0)"
           globeImageUrl={GLOBE_TEXTURE}
           bumpImageUrl={null}
+          rendererConfig={{
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance',
+          }}
           showAtmosphere
-          atmosphereColor="rgba(248, 195, 125, 0.14)"
-          atmosphereAltitude={reducedMotion ? 0.1 : 0.16}
+          atmosphereColor="rgba(175, 198, 255, 0.09)"
+          atmosphereAltitude={reducedMotion ? 0.08 : 0.11}
           onGlobeClick={handleGlobeClick}
           heatmapsData={heatmapLayer}
           heatmapPoints={(d) => d.points}
           heatmapPointLat="lat"
           heatmapPointLng="lng"
           heatmapPointWeight="weight"
-          heatmapBandwidth={2.2}
-          heatmapColorFn={() => 'rgba(234, 169, 96, 0.65)'}
+          heatmapBandwidth={1.55}
+          heatmapColorFn={() => 'rgba(234, 169, 96, 0.58)'}
           heatmapBaseAltitude={0.01}
           heatmapTopAltitude={0.04}
           hexBinPointsData={useHex ? hexPoints : []}
@@ -381,7 +412,7 @@ export default function SurveillanceGlobe({
           polygonSideColor={polygonSideColor}
           polygonStrokeColor={polygonStrokeColor}
           polygonAltitude={polygonAltitude}
-          polygonCapCurvatureResolution={2}
+          polygonCapCurvatureResolution={3}
           polygonsTransitionDuration={reducedMotion ? 0 : 220}
           polygonLabel={polygonLabel}
           onPolygonHover={(poly) => {

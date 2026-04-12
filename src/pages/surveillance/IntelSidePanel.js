@@ -47,6 +47,11 @@ export default function IntelSidePanel({
         lensActive ? 'sv-intel-rail--lensed' : ''
       }`}
     >
+      <div className="sv-rail-chrome" aria-hidden>
+        <span className="sv-rail-chrome-title">Command rail</span>
+        <span className="sv-rail-chrome-meta">Intel digest</span>
+      </div>
+
       {lensActive && focusSummary ? (
         <div
           className={`sv-rail-focus ${focusSummary.isoHint ? 'sv-rail-focus--geo' : ''}`}
