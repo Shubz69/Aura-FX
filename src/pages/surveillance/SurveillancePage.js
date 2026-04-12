@@ -5,6 +5,14 @@ import EventDrawer from './EventDrawer';
 import MarketWatchStrip from './MarketWatchStrip';
 import IntelSidePanel from './IntelSidePanel';
 import IntroOverlay from './IntroOverlay';
+import {
+  buildEventsById,
+  filterDigestByFocus,
+  filterEventsByFocus,
+  focusSummaryFromEvents,
+  normalizeRegionKey,
+  primaryCountryFromEvent,
+} from './surveillanceRegionUtils';
 import './SurveillancePage.css';
 
 const TABS = [
@@ -53,6 +61,7 @@ export default function SurveillancePage() {
   const [pageEntered, setPageEntered] = useState(false);
   const [terminalHandoff, setTerminalHandoff] = useState(false);
   const [tapeRefreshGlow, setTapeRefreshGlow] = useState(false);
+  const [focusRegion, setFocusRegion] = useState(null);
   const loadFeedRef = useRef(null);
   const prevIntroRef = useRef(showIntro);
   const tapeSigRef = useRef('');
@@ -130,6 +139,23 @@ export default function SurveillancePage() {
 
   loadFeedRef.current = loadFeed;
 
+  const eventsById = useMemo(() => buildEventsById(events), [events]);
+
+  const filteredDigest = useMemo(
+    () => filterDigestByFocus(intelDigest, focusRegion, eventsById),
+    [intelDigest, focusRegion, eventsById]
+  );
+
+  const tapeEvents = useMemo(() => filterEventsByFocus(events, focusRegion), [events, focusRegion]);
+
+  const focusSummary = useMemo(() => focusSummaryFromEvents(focusRegion, events), [focusRegion, events]);
+
+  const clearFocusRegion = useCallback(() => setFocusRegion(null), []);
+
+  const setFocusFromHeat = useCallback((region) => {
+    setFocusRegion(normalizeRegionKey(region));
+  }, []);
+
   useEffect(() => {
     loadBootstrap();
   }, [loadBootstrap]);
@@ -186,16 +212,14 @@ export default function SurveillancePage() {
 
   useEffect(() => {
     if (loading) return undefined;
-    const id = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setPageEntered(true));
-    });
+    const id = requestAnimationFrame(() => setPageEntered(true));
     return () => cancelAnimationFrame(id);
   }, [loading]);
 
   useEffect(() => {
     if (prevIntroRef.current && !showIntro) {
       setTerminalHandoff(true);
-      const t = setTimeout(() => setTerminalHandoff(false), 1300);
+      const t = setTimeout(() => setTerminalHandoff(false), 1100);
       prevIntroRef.current = showIntro;
       return () => clearTimeout(t);
     }
@@ -203,7 +227,7 @@ export default function SurveillancePage() {
   }, [showIntro]);
 
   useEffect(() => {
-    const sig = events
+    const sig = tapeEvents
       .slice(0, 6)
       .map((e) => `${e.id}:${e.rank_score ?? ''}`)
       .join('|');
@@ -216,11 +240,11 @@ export default function SurveillancePage() {
     if (tapeSigRef.current !== sig) {
       tapeSigRef.current = sig;
       setTapeRefreshGlow(true);
-      const t = setTimeout(() => setTapeRefreshGlow(false), 720);
+      const t = setTimeout(() => setTapeRefreshGlow(false), 480);
       return () => clearTimeout(t);
     }
     return undefined;
-  }, [events]);
+  }, [tapeEvents]);
 
   const markIntroSeen = useCallback(async () => {
     setShowIntro(false);
@@ -269,6 +293,16 @@ export default function SurveillancePage() {
       openDrawer(id);
     },
     [markIntroSeen, openDrawer]
+  );
+
+  const onGlobeSelectEvent = useCallback(
+    (id) => {
+      const ev = eventsById.get(String(id));
+      const key = primaryCountryFromEvent(ev) || (ev?.region ? normalizeRegionKey(ev.region) : null);
+      if (key) setFocusRegion(key);
+      openDrawer(id);
+    },
+    [eventsById, openDrawer]
   );
 
   const closeDrawer = useCallback(() => {
@@ -331,7 +365,9 @@ export default function SurveillancePage() {
 
   return (
     <div
-      className={`sv-page ${pageEntered ? 'sv-page--entered' : ''} ${terminalHandoff ? 'sv-page--handoff' : ''}`}
+      className={`sv-page sv-page--terminal ${pageEntered ? 'sv-page--entered' : ''} ${
+        terminalHandoff ? 'sv-page--handoff' : ''
+      }`}
     >
       {showIntro && (
         <IntroOverlay
@@ -343,185 +379,215 @@ export default function SurveillancePage() {
         />
       )}
 
-      {systemHealth && (
-        <div
-          className={`sv-health-strip ${systemHealth.degraded ? 'sv-health-strip--degraded' : ''} ${
-            systemHealth.warmingUp ? 'sv-health-strip--warm' : ''
-          }`}
-          role="status"
-        >
-          {systemHealth.warmingUp ? (
-            <span>Warming up — first ingest pass is filling the grid.</span>
-          ) : null}
-          {systemHealth.degraded ? (
-            <span>Degraded — several sources are failing or ingest is stale.</span>
-          ) : null}
-          {!systemHealth.warmingUp && !systemHealth.degraded ? (
-            <span>Sources nominal</span>
-          ) : null}
-          {systemHealth.lastIngestSuccessAt ? (
-            <span className="sv-health-time">
-              Last ingest {new Date(systemHealth.lastIngestSuccessAt).toLocaleString()}
-            </span>
-          ) : (
-            <span className="sv-health-time">No successful ingest yet</span>
-          )}
-          {systemHealth.adapterRecencyBuckets?.stale > 0 ? (
-            <span className="sv-health-stale">{systemHealth.adapterRecencyBuckets.stale} adapters stale</span>
-          ) : null}
-          {sseOk ? <span className="sv-health-sse">Live stream</span> : <span className="sv-health-sse">Polling</span>}
-        </div>
-      )}
-
-      <header className="sv-header">
-        <div>
-          <h1 className="sv-title">Surveillance</h1>
-          <p className="sv-sub">Institutional OSINT grid · Elite</p>
-        </div>
-        <div className="sv-chips">
-          {chips.map((c) => (
-            <div key={c.label} className="sv-chip">
-              <span className="sv-chip-label">{c.label}</span>
-              <span className="sv-chip-value">{c.value}</span>
+      <div className="sv-terminal-canvas">
+        <header className="sv-terminal-top">
+          <div className="sv-terminal-brand">
+            <span className="sv-terminal-mark" aria-hidden />
+            <div>
+              <h1 className="sv-terminal-title">Surveillance</h1>
+              <p className="sv-terminal-sub">Live global OSINT terminal · Elite</p>
             </div>
-          ))}
-        </div>
-      </header>
+          </div>
+          <div className="sv-terminal-metrics" aria-label="Grid status">
+            {chips.map((c) => (
+              <div key={c.label} className="sv-terminal-chip">
+                <span className="sv-terminal-chip-label">{c.label}</span>
+                <span className="sv-terminal-chip-value">{c.value}</span>
+              </div>
+            ))}
+          </div>
+          <div className="sv-terminal-mw">
+            <MarketWatchStrip variant="compact" narrative={marketWatchNarrative} items={agg.marketWatch || []} />
+          </div>
+        </header>
 
-      <MarketWatchStrip narrative={marketWatchNarrative} items={agg.marketWatch || []} />
+        {systemHealth ? (
+          <div
+            className={`sv-health-inline ${systemHealth.degraded ? 'sv-health-inline--degraded' : ''} ${
+              systemHealth.warmingUp ? 'sv-health-inline--warm' : ''
+            }`}
+            role="status"
+          >
+            {systemHealth.warmingUp ? <span>Warming — first ingest pass</span> : null}
+            {systemHealth.degraded ? <span>Degraded ingest / sources</span> : null}
+            {!systemHealth.warmingUp && !systemHealth.degraded ? <span>Sources nominal</span> : null}
+            {systemHealth.lastIngestSuccessAt ? (
+              <span className="sv-health-inline-time">
+                {new Date(systemHealth.lastIngestSuccessAt).toLocaleString()}
+              </span>
+            ) : (
+              <span className="sv-health-inline-time">No ingest yet</span>
+            )}
+            {systemHealth.adapterRecencyBuckets?.stale > 0 ? (
+              <span className="sv-health-inline-stale">{systemHealth.adapterRecencyBuckets.stale} stale</span>
+            ) : null}
+            {sseOk ? <span className="sv-health-inline-sse">LIVE</span> : <span className="sv-health-inline-sse">POLL</span>}
+          </div>
+        ) : null}
 
-      <div className="sv-toolbar">
-        <div className="sv-tabs" role="tablist" aria-label="Event categories">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={tab === t.id}
-              className={`sv-tab ${tab === t.id ? 'sv-tab--active' : ''}`}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="sv-terminal-hero">
+          <div className={`sv-globe-stage ${terminalHandoff ? 'sv-globe-stage--handoff' : ''}`}>
+            <div className={`sv-globe-panel ${terminalHandoff ? 'sv-globe-panel--handoff' : ''}`}>
+              <SurveillanceGlobe
+                events={events}
+                selectedId={selectedId}
+                focusRegion={focusRegion}
+                onSelectEvent={onGlobeSelectEvent}
+                reducedMotion={reducedMotion}
+              />
+            </div>
+            <div className="sv-globe-chrome">
+              <span className="sv-globe-chrome-tag">Operating picture</span>
+              <p className="sv-globe-chrome-hint">Select markers to open detail · sector lens follows geography</p>
+            </div>
+          </div>
+          <aside
+            className={`sv-command-rail sv-intel-panel ${terminalHandoff ? 'sv-intel-panel--handoff' : ''}`}
+            aria-label="Intelligence command rail"
+          >
+            <IntelSidePanel
+              digest={filteredDigest}
+              onOpenEvent={openDrawer}
+              handoff={terminalHandoff}
+              focusRegion={focusRegion}
+              focusSummary={focusSummary}
+              onClearFocus={clearFocusRegion}
+              onSetFocusRegion={setFocusFromHeat}
+            />
+            <details className="sv-rail-accordion">
+              <summary>Type mix</summary>
+              <ul className="sv-type-list sv-type-list--compact">
+                {Object.entries(agg.countsByType || {}).map(([k, v]) => (
+                  <li key={k}>
+                    <span>{k}</span>
+                    <span>{v}</span>
+                  </li>
+                ))}
+                {!agg.countsByType || !Object.keys(agg.countsByType).length ? (
+                  <li className="sv-muted">Awaiting ingest</li>
+                ) : null}
+              </ul>
+            </details>
+          </aside>
         </div>
-        <div className="sv-filters">
-          <label className="sv-filter">
-            <span>Severity ≥</span>
-            <select
-              value={severityMin}
-              onChange={(e) => setSeverityMin(e.target.value)}
-              aria-label="Minimum severity"
-            >
-              <option value="">Any</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </label>
-          <label className="sv-filter">
-            <span>Source</span>
-            <select
-              value={sourceFilter}
-              onChange={(e) => setSourceFilter(e.target.value)}
-              aria-label="Filter by source"
-            >
-              <option value="">All sources</option>
-              {sources.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </div>
 
-      <div className="sv-main">
-        <div className={`sv-globe-panel ${terminalHandoff ? 'sv-globe-panel--handoff' : ''}`}>
-          <SurveillanceGlobe
-            events={events}
-            selectedId={selectedId}
-            onSelectEvent={openDrawer}
-            reducedMotion={reducedMotion}
-          />
-          <p className="sv-globe-hint">Tap markers for intelligence detail</p>
+        <div className="sv-terminal-dock">
+          <div className="sv-tabs" role="tablist" aria-label="Event categories">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.id}
+                className={`sv-tab ${tab === t.id ? 'sv-tab--active' : ''}`}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div className="sv-dock-filters">
+            <label className="sv-filter sv-filter--inline">
+              <span>Sev</span>
+              <select
+                value={severityMin}
+                onChange={(e) => setSeverityMin(e.target.value)}
+                aria-label="Minimum severity"
+              >
+                <option value="">Any</option>
+                <option value="1">1+</option>
+                <option value="2">2+</option>
+                <option value="3">3+</option>
+                <option value="4">4+</option>
+                <option value="5">5</option>
+              </select>
+            </label>
+            <label className="sv-filter sv-filter--inline">
+              <span>Src</span>
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                aria-label="Filter by source"
+              >
+                <option value="">All</option>
+                {sources.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
-        <aside
-          className={`sv-intel-panel ${terminalHandoff ? 'sv-intel-panel--handoff' : ''}`}
-          aria-label="Live intelligence"
+
+        <section
+          className={`sv-tape-dock ${tapeRefreshGlow ? 'sv-tape-dock--refresh' : ''}`}
+          aria-label="Event stream"
         >
-          <IntelSidePanel digest={intelDigest} onOpenEvent={openDrawer} handoff={terminalHandoff} />
-          <h2 className="sv-panel-title sv-panel-title--sub">Type mix</h2>
-          <ul className="sv-type-list sv-type-list--compact">
-            {Object.entries(agg.countsByType || {}).map(([k, v]) => (
-              <li key={k}>
-                <span>{k}</span>
-                <span>{v}</span>
+          <div className="sv-tape-head">
+            <div className="sv-tape-head-left">
+              <h2 className="sv-tape-title">Tape</h2>
+              {focusRegion ? (
+                <span className="sv-tape-lens">
+                  Sector lens · <strong>{focusSummary?.label || focusRegion}</strong>
+                  <button type="button" className="sv-tape-lens-clear" onClick={clearFocusRegion}>
+                    Clear
+                  </button>
+                </span>
+              ) : null}
+            </div>
+            <span className="sv-stream-live" data-live={sseOk ? 'on' : 'off'}>
+              {sseOk ? 'Live' : 'Poll'}
+            </span>
+          </div>
+          <ul className="sv-event-list">
+            {tapeEvents.map((e) => (
+              <li key={e.id}>
+                <button
+                  type="button"
+                  className={`sv-event-row ${String(selectedId) === String(e.id) ? 'sv-event-row--active' : ''}`}
+                  onClick={() => openDrawer(e.id)}
+                >
+                  <span className="sv-sev" data-sev={e.severity}>
+                    {e.severity}
+                  </span>
+                  <span className="sv-ev-rank" title="Rank score">
+                    {e.rank_score != null ? Math.round(e.rank_score) : '—'}
+                  </span>
+                  <span className="sv-ev-trust" title="Trust score">
+                    T{e.trust_score != null ? Math.round(e.trust_score) : '—'}
+                  </span>
+                  {e.risk_bias && e.risk_bias !== 'neutral' ? (
+                    <span className={`sv-ev-bias sv-ev-bias--${e.risk_bias}`}>{e.risk_bias.replace('_', ' ')}</span>
+                  ) : (
+                    <span className="sv-ev-bias sv-ev-bias--neutral">neutral</span>
+                  )}
+                  <span className="sv-ev-corr" title="Corroboration">
+                    {e.corroboration_count > 0 ? `✓${e.corroboration_count}` : '·'}
+                  </span>
+                  {e.story_id ? (
+                    <span className="sv-ev-story" title="Part of a storyline">
+                      ⧉
+                    </span>
+                  ) : (
+                    <span className="sv-ev-story sv-ev-story--empty" aria-hidden>
+                      ·
+                    </span>
+                  )}
+                  <span className="sv-ev-type">{e.event_type}</span>
+                  <span className="sv-ev-title">{e.title}</span>
+                  <span className="sv-ev-src">{e.source}</span>
+                </button>
               </li>
             ))}
-            {!agg.countsByType || !Object.keys(agg.countsByType).length ? (
-              <li className="sv-muted">Run ingestion to populate the tape</li>
+            {!tapeEvents.length ? (
+              <li className="sv-muted sv-stream-empty">
+                {focusRegion ? 'No tape nodes in this sector for the current filters.' : 'No events ingested yet.'}
+              </li>
             ) : null}
           </ul>
-        </aside>
+        </section>
       </div>
-
-      <section
-        className={`sv-stream ${tapeRefreshGlow ? 'sv-stream--refresh' : ''}`}
-        aria-label="Event stream"
-      >
-        <div className="sv-stream-head">
-          <h2 className="sv-stream-title">Tape</h2>
-          <span className="sv-stream-live" data-live={sseOk ? 'on' : 'off'}>
-            {sseOk ? 'Live' : 'Polling'}
-          </span>
-        </div>
-        <ul className="sv-event-list">
-          {events.map((e) => (
-            <li key={e.id}>
-              <button
-                type="button"
-                className={`sv-event-row ${String(selectedId) === String(e.id) ? 'sv-event-row--active' : ''}`}
-                onClick={() => openDrawer(e.id)}
-              >
-                <span className="sv-sev" data-sev={e.severity}>
-                  {e.severity}
-                </span>
-                <span className="sv-ev-rank" title="Rank score">
-                  {e.rank_score != null ? Math.round(e.rank_score) : '—'}
-                </span>
-                <span className="sv-ev-trust" title="Trust score">
-                  T{e.trust_score != null ? Math.round(e.trust_score) : '—'}
-                </span>
-                {e.risk_bias && e.risk_bias !== 'neutral' ? (
-                  <span className={`sv-ev-bias sv-ev-bias--${e.risk_bias}`}>{e.risk_bias.replace('_', ' ')}</span>
-                ) : (
-                  <span className="sv-ev-bias sv-ev-bias--neutral">neutral</span>
-                )}
-                <span className="sv-ev-corr" title="Corroboration">
-                  {e.corroboration_count > 0 ? `✓${e.corroboration_count}` : '·'}
-                </span>
-                {e.story_id ? (
-                  <span className="sv-ev-story" title="Part of a storyline">
-                    ⧉
-                  </span>
-                ) : (
-                  <span className="sv-ev-story sv-ev-story--empty" aria-hidden>
-                    ·
-                  </span>
-                )}
-                <span className="sv-ev-type">{e.event_type}</span>
-                <span className="sv-ev-title">{e.title}</span>
-                <span className="sv-ev-src">{e.source}</span>
-              </button>
-            </li>
-          ))}
-          {!events.length ? <li className="sv-muted sv-stream-empty">No events ingested yet.</li> : null}
-        </ul>
-      </section>
 
       <EventDrawer
         event={drawerEvent}

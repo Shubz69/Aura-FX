@@ -1,29 +1,9 @@
 import React, { useMemo, useRef, useEffect, useState, Suspense, lazy, useCallback } from 'react';
+import { SURV_ISO_CENTROID, eventMatchesFocus, cameraTargetForFocus } from './surveillanceRegionUtils';
 
 const Globe = lazy(() => import('react-globe.gl').then((m) => ({ default: m.default })));
 
 const GLOBE_TEXTURE = 'https://unpkg.com/three-globe/example/img/earth-night.jpg';
-
-/** ISO2 → centroid for cross-border arcs (approximate). */
-const ISO_CENTROID = {
-  US: [39.8283, -98.5795],
-  CN: [35.8617, 104.1954],
-  RU: [61.524, 105.3188],
-  UA: [48.3794, 31.1656],
-  EU: [50.1109, 8.6821],
-  DE: [51.1657, 10.4515],
-  FR: [46.2276, 2.2137],
-  GB: [55.3781, -3.436],
-  JP: [36.2048, 138.2529],
-  IR: [32.4279, 53.688],
-  IL: [31.0461, 34.8516],
-  IN: [20.5937, 78.9629],
-  BR: [-14.235, -51.9253],
-  CA: [56.1304, -106.3468],
-  MX: [23.6345, -102.5528],
-  SA: [23.8859, 45.0792],
-  VE: [6.4238, -66.5897],
-};
 
 function clusterEvents(events, precision = 1) {
   const buckets = new Map();
@@ -54,6 +34,7 @@ function clusterEvents(events, precision = 1) {
     lat: b.lat,
     lng: b.lng,
     eventId: b.ids[0],
+    eventIds: b.ids,
     count: b.count,
     maxSev: b.maxSev,
     maxSevScore: b.maxSevScore,
@@ -66,8 +47,8 @@ function buildArcs(events) {
   for (const ev of events) {
     const cc = ev.countries || [];
     if (cc.length < 2) continue;
-    const a = ISO_CENTROID[cc[0]];
-    const b = ISO_CENTROID[cc[1]];
+    const a = SURV_ISO_CENTROID[cc[0]];
+    const b = SURV_ISO_CENTROID[cc[1]];
     if (!a || !b) continue;
     out.push({
       startLat: a[0],
@@ -81,13 +62,30 @@ function buildArcs(events) {
   return out;
 }
 
-export default function SurveillanceGlobe({ events, selectedId, onSelectEvent, reducedMotion }) {
+function clusterTouchesFocus(pt, events, focusRegion) {
+  if (!focusRegion || !pt.eventIds?.length) return false;
+  for (const id of pt.eventIds) {
+    const ev = events.find((e) => String(e.id) === String(id));
+    if (ev && eventMatchesFocus(ev, focusRegion)) return true;
+  }
+  return false;
+}
+
+export default function SurveillanceGlobe({
+  events,
+  selectedId,
+  focusRegion,
+  onSelectEvent,
+  reducedMotion,
+}) {
   const wrapRef = useRef(null);
   const globeRef = useRef(null);
   const [dims, setDims] = useState({ w: 320, h: 320 });
   const [pulse, setPulse] = useState(0);
   const [hoveredId, setHoveredId] = useState(null);
   const [globeReveal, setGlobeReveal] = useState(false);
+
+  const useHex = !reducedMotion && !focusRegion && events.length > 52;
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -104,7 +102,7 @@ export default function SurveillanceGlobe({ events, selectedId, onSelectEvent, r
 
   useEffect(() => {
     if (dims.w < 200) return undefined;
-    const t = setTimeout(() => setGlobeReveal(true), reducedMotion ? 0 : 120);
+    const t = setTimeout(() => setGlobeReveal(true), reducedMotion ? 0 : 70);
     return () => clearTimeout(t);
   }, [dims.w, dims.h, reducedMotion]);
 
@@ -112,14 +110,12 @@ export default function SurveillanceGlobe({ events, selectedId, onSelectEvent, r
     if (reducedMotion) return undefined;
     let id;
     const loop = (t) => {
-      setPulse(0.5 + 0.5 * Math.sin(t / 520));
+      setPulse(0.5 + 0.5 * Math.sin(t / 680));
       id = requestAnimationFrame(loop);
     };
     id = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(id);
   }, [reducedMotion]);
-
-  const useHex = !reducedMotion && events.length > 52;
 
   const rawPoints = useMemo(() => {
     return events
@@ -155,17 +151,25 @@ export default function SurveillanceGlobe({ events, selectedId, onSelectEvent, r
       const pulseBoost = !reducedMotion && hot ? pulse * 0.022 : 0;
       const isSel = String(p.eventId) === String(selectedId);
       const isHover = hoveredId != null && String(p.eventId) === String(hoveredId);
-      return {
-        ...p,
-        color: isSel
-          ? '#ffd9a8'
-          : isHover
-            ? '#fff0d4'
+      const inFocus = clusterTouchesFocus(p, events, focusRegion);
+      const lens = !!focusRegion;
+      const muted = lens && !inFocus && !isSel;
+      const color = isSel
+        ? '#ffd9a8'
+        : isHover
+          ? '#fff0d4'
+          : muted
+            ? 'rgba(120, 120, 130, 0.28)'
             : p.maxSev >= 4
               ? '#ff8585'
               : p.maxSev >= 3
                 ? '#f0b870'
-                : 'rgba(234,169,96,0.52)',
+                : lens && inFocus
+                  ? 'rgba(255, 214, 160, 0.92)'
+                  : 'rgba(234,169,96,0.52)';
+      return {
+        ...p,
+        color,
         radius: Math.min(
           1.05,
           0.28 +
@@ -173,24 +177,34 @@ export default function SurveillanceGlobe({ events, selectedId, onSelectEvent, r
             p.maxSev * 0.05 +
             (hot ? pulse * 0.06 : 0) +
             (isSel ? 0.14 : 0) +
-            (isHover ? 0.08 : 0)
+            (isHover ? 0.08 : 0) +
+            (lens && inFocus ? 0.1 : 0)
         ),
-        altitude: 0.012 + Math.min(0.065, p.count * 0.004 + pulseBoost + (isSel ? 0.018 : 0) + (isHover ? 0.01 : 0)),
+        altitude:
+          0.012 +
+          Math.min(0.065, p.count * 0.004 + pulseBoost + (isSel ? 0.018 : 0) + (isHover ? 0.01 : 0)) +
+          (lens && inFocus ? 0.02 : 0),
       };
     });
-  }, [events, selectedId, hoveredId, reducedMotion, pulse]);
+  }, [events, selectedId, hoveredId, reducedMotion, pulse, focusRegion]);
 
-  const moveCamera = useCallback(() => {
+  const moveCameraToSelection = useCallback(() => {
     const g = globeRef.current;
     if (!g || typeof g.pointOfView !== 'function') return;
     const sel = events.find((e) => String(e.id) === String(selectedId));
-    if (!sel || sel.lat == null || sel.lng == null) return;
-    g.pointOfView({ lat: sel.lat, lng: sel.lng, altitude: 1.52 }, reducedMotion ? 0 : 1400);
-  }, [events, selectedId, reducedMotion]);
+    if (sel && sel.lat != null && sel.lng != null) {
+      g.pointOfView({ lat: sel.lat, lng: sel.lng, altitude: 1.42 }, reducedMotion ? 0 : 1100);
+      return;
+    }
+    const tgt = cameraTargetForFocus(focusRegion, events);
+    if (tgt) {
+      g.pointOfView(tgt, reducedMotion ? 0 : 1200);
+    }
+  }, [events, selectedId, focusRegion, reducedMotion]);
 
   useEffect(() => {
-    moveCamera();
-  }, [moveCamera]);
+    moveCameraToSelection();
+  }, [moveCameraToSelection]);
 
   return (
     <div
@@ -215,8 +229,8 @@ export default function SurveillanceGlobe({ events, selectedId, onSelectEvent, r
           globeImageUrl={GLOBE_TEXTURE}
           bumpImageUrl={null}
           showAtmosphere
-          atmosphereColor="rgba(248, 195, 125, 0.2)"
-          atmosphereAltitude={reducedMotion ? 0.12 : 0.2}
+          atmosphereColor="rgba(248, 195, 125, 0.14)"
+          atmosphereAltitude={reducedMotion ? 0.1 : 0.16}
           heatmapsData={heatmapLayer}
           heatmapPoints={(d) => d.points}
           heatmapPointLat="lat"

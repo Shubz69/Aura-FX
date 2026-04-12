@@ -1,19 +1,19 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 
-const AUTO_MS = 3200;
-const EXIT_MS = 780;
+const AUTO_MS_NO_BRIEF = 2200;
+const EXIT_MS = 720;
 
 function BriefList({ title, items, onPick }) {
   if (!items || !items.length) return null;
   return (
-    <section className="sv-intro-section">
-      <h2 className="sv-intro-section-title">{title}</h2>
-      <ul className="sv-intro-list">
+    <section className="sv-intro-deck-block">
+      <h2 className="sv-intro-deck-block-title">{title}</h2>
+      <ul className="sv-intro-deck-list">
         {items.map((e) => (
           <li key={e.id}>
-            <button type="button" className="sv-intro-item" onClick={() => onPick?.(e.id)}>
-              <span className="sv-intro-item-rank">{e.rank_score != null ? Math.round(e.rank_score) : '—'}</span>
-              <span className="sv-intro-item-text">{e.title}</span>
+            <button type="button" className="sv-intro-deck-item" onClick={() => onPick?.(e.id)}>
+              <span className="sv-intro-deck-rank">{e.rank_score != null ? Math.round(e.rank_score) : '—'}</span>
+              <span className="sv-intro-deck-text">{e.title}</span>
             </button>
           </li>
         ))}
@@ -24,6 +24,7 @@ function BriefList({ title, items, onPick }) {
 
 export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickStory, reducedMotion }) {
   const [exiting, setExiting] = useState(false);
+  const [revealed, setRevealed] = useState(reducedMotion);
   const exitTimer = useRef(null);
 
   const runExit = useCallback(
@@ -49,6 +50,14 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
     []
   );
 
+  useEffect(() => {
+    if (reducedMotion) return undefined;
+    const id = requestAnimationFrame(() => {
+      setTimeout(() => setRevealed(true), 40);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [reducedMotion]);
+
   const hasBrief =
     briefing &&
     (briefing.topStories?.length ||
@@ -60,42 +69,48 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
     if (hasBrief) return undefined;
     const t = setTimeout(() => {
       runExit(onComplete);
-    }, AUTO_MS);
+    }, AUTO_MS_NO_BRIEF);
     return () => clearTimeout(t);
   }, [hasBrief, onComplete, runExit]);
 
   return (
     <div
-      className={`sv-intro-overlay ${exiting ? 'sv-intro-overlay--exiting' : ''}`}
+      className={`sv-intro-shell ${exiting ? 'sv-intro-shell--exiting' : ''} ${revealed ? 'sv-intro-shell--revealed' : ''}`}
       role="dialog"
       aria-modal="true"
       aria-label="Surveillance briefing"
     >
       <div className="sv-intro-backdrop" />
-      <div className={`sv-intro-card ${hasBrief ? 'sv-intro-card--wide' : ''} ${exiting ? 'sv-intro-card--exiting' : ''}`}>
-        <div className="sv-intro-scanline" aria-hidden />
-        <p className="sv-intro-kicker">Elite terminal</p>
-        <h1 className="sv-intro-title">{briefing?.headline || 'Surveillance'}</h1>
+      <div className="sv-intro-vignette" aria-hidden />
+      <div className="sv-intro-gridlines" aria-hidden />
+      <div className="sv-intro-glow-orb" aria-hidden />
+
+      <div className={`sv-intro-stage ${hasBrief ? 'sv-intro-stage--wide' : ''}`}>
+        <div className="sv-intro-orbit" aria-hidden />
+        <div className="sv-intro-brand">
+          <span className="sv-intro-mark" aria-hidden />
+          <div>
+            <p className="sv-intro-eyebrow">Elite intelligence terminal</p>
+            <h1 className="sv-intro-display">{briefing?.headline || 'Surveillance'}</h1>
+          </div>
+        </div>
+
         {!hasBrief ? (
-          <p className="sv-intro-copy">
-            Live geopolitical and macro flow, normalized from official public channels. One globe. One tape.
+          <p className="sv-intro-lede">
+            Live global OSINT grid — normalized from official public channels. One operating picture. One command surface.
           </p>
         ) : (
-          <div className="sv-intro-briefing">
-            <BriefList
-              title="Top ranked"
-              items={briefing.topStories}
-              onPick={(id) => runExit(() => onPickStory?.(id))}
-            />
+          <div className="sv-intro-deck">
+            <BriefList title="Top ranked" items={briefing.topStories} onPick={(id) => runExit(() => onPickStory?.(id))} />
             <BriefList
               title="Since last briefing"
               items={briefing.sinceLastVisit}
               onPick={(id) => runExit(() => onPickStory?.(id))}
             />
             {briefing.regionsUnderTension?.length ? (
-              <section className="sv-intro-section">
-                <h2 className="sv-intro-section-title">Regional tension</h2>
-                <ul className="sv-intro-pills">
+              <section className="sv-intro-deck-block">
+                <h2 className="sv-intro-deck-block-title">Regional pressure</h2>
+                <ul className="sv-intro-deck-pills">
                   {briefing.regionsUnderTension.map((r) => (
                     <li key={r.region}>
                       <span className="sv-intro-pill">{r.region}</span>
@@ -106,9 +121,9 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
               </section>
             ) : null}
             {briefing.marketWatch?.length ? (
-              <section className="sv-intro-section">
-                <h2 className="sv-intro-section-title">Market watch</h2>
-                <ul className="sv-intro-pills">
+              <section className="sv-intro-deck-block">
+                <h2 className="sv-intro-deck-block-title">Market watch</h2>
+                <ul className="sv-intro-deck-pills">
                   {briefing.marketWatch.map((m) => (
                     <li key={m.symbol}>
                       <span className="sv-intro-pill">{m.symbol}</span>
@@ -119,16 +134,15 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
               </section>
             ) : null}
             {briefing.tapeFreshness ? (
-              <p className="sv-intro-freshness">
-                Last ingest: {new Date(briefing.tapeFreshness).toLocaleString()}
-              </p>
+              <p className="sv-intro-deck-foot">Last ingest · {new Date(briefing.tapeFreshness).toLocaleString()}</p>
             ) : null}
           </div>
         )}
+
         <div className="sv-intro-actions">
           {hasBrief ? (
             <button type="button" className="sv-intro-primary" onClick={() => runExit(onComplete)}>
-              Enter terminal
+              Enter live terminal
             </button>
           ) : null}
           <button type="button" className="sv-intro-skip" onClick={() => runExit(onDismiss)}>

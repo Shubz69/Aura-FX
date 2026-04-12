@@ -6,8 +6,28 @@ function confidenceClass(c) {
   return 'sv-mw-conf--low';
 }
 
-export default function MarketWatchStrip({ narrative, items }) {
+export default function MarketWatchStrip({ narrative, items, variant = 'default' }) {
+  const compact = variant === 'compact';
+
   if (narrative && narrative.length) {
+    if (compact) {
+      return (
+        <div className="sv-strip sv-strip--compact sv-strip--narrative-compact" role="region" aria-label="Market watch narrative">
+          <span className="sv-strip-label">Markets</span>
+          <div className="sv-strip-compact-scroll">
+            {narrative.map((g) => (
+              <div key={g.groupId} className="sv-mw-compact-card" title={g.implication}>
+                <div className="sv-mw-compact-head">
+                  <strong className="sv-mw-label">{g.label}</strong>
+                  <span className={`sv-mw-conf ${confidenceClass(g.confidence)}`}>{g.confidence}</span>
+                </div>
+                <p className="sv-mw-impl-compact">{g.implication}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="sv-strip sv-strip--narrative" role="region" aria-label="Market watch narrative">
         <span className="sv-strip-label">Market watch</span>
@@ -35,12 +55,29 @@ export default function MarketWatchStrip({ narrative, items }) {
 
   if (!items || !items.length) {
     return (
-      <div className="sv-strip sv-strip--empty">
-        <span className="sv-strip-label">Market watch</span>
-        <span className="sv-strip-muted">Awaiting flow signals from the current tape</span>
+      <div className={`sv-strip sv-strip--empty ${compact ? 'sv-strip--compact' : ''}`}>
+        <span className="sv-strip-label">{compact ? 'Mkts' : 'Market watch'}</span>
+        <span className="sv-strip-muted">{compact ? 'Flow pending' : 'Awaiting flow signals from the current tape'}</span>
       </div>
     );
   }
+
+  if (compact) {
+    return (
+      <div className="sv-strip sv-strip--compact" role="region" aria-label="Market watch impact">
+        <span className="sv-strip-label">Mkts</span>
+        <div className="sv-strip-compact-scroll sv-strip-compact-scroll--chips">
+          {items.map((x) => (
+            <span key={x.symbol} className="sv-strip-chip sv-strip-chip--tight" title={`Implied attention: ${x.flowScore}`}>
+              <strong>{x.symbol}</strong>
+              <span className="sv-strip-score">{x.flowScore}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="sv-strip" role="region" aria-label="Market watch impact">
       <span className="sv-strip-label">Market watch</span>
