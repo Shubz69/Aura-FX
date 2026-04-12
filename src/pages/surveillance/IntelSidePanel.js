@@ -19,6 +19,7 @@ export default function IntelSidePanel({
   handoff,
   focusRegion,
   focusSummary,
+  tapeCount,
   onClearFocus,
   onSetFocusRegion,
 }) {
@@ -41,16 +42,33 @@ export default function IntelSidePanel({
   const lensActive = !!focusRegion;
 
   return (
-    <div className={`sv-intel-rail ${handoff ? 'sv-intel-rail--handoff' : ''}`}>
+    <div
+      className={`sv-intel-rail ${handoff ? 'sv-intel-rail--handoff' : ''} ${
+        lensActive ? 'sv-intel-rail--lensed' : ''
+      }`}
+    >
       {lensActive && focusSummary ? (
-        <div className="sv-rail-focus" role="region" aria-label="Sector focus">
+        <div
+          className={`sv-rail-focus ${focusSummary.isoHint ? 'sv-rail-focus--geo' : ''}`}
+          role="region"
+          aria-label="Geography focus"
+        >
           <div className="sv-rail-focus-top">
-            <span className="sv-rail-focus-label">Sector lens</span>
+            <span className="sv-rail-focus-label">Geography focus</span>
+            {focusSummary.isoHint ? (
+              <span className="sv-rail-focus-iso" title="Country code">
+                {focusSummary.isoHint}
+              </span>
+            ) : null}
             <button type="button" className="sv-rail-focus-clear" onClick={onClearFocus}>
               Clear
             </button>
           </div>
           <p className="sv-rail-focus-name">{focusSummary.label}</p>
+          <p className="sv-rail-focus-scope">
+            Tape + rail filtered
+            {typeof tapeCount === 'number' ? ` · ${tapeCount} row${tapeCount === 1 ? '' : 's'} on tape` : ''}
+          </p>
           <dl className="sv-rail-focus-stats">
             <div>
               <dt>Nodes</dt>

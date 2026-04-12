@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 const AUTO_MS_NO_BRIEF = 2200;
-const EXIT_MS = 720;
+const EXIT_MS = 760;
 
 function BriefList({ title, items, onPick }) {
   if (!items || !items.length) return null;
@@ -150,6 +150,7 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
           </button>
         </div>
       </div>
+      <div className={`sv-intro-handoff ${exiting ? 'sv-intro-handoff--on' : ''}`} aria-hidden />
     </div>
   );
 }
