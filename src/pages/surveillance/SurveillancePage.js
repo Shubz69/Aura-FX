@@ -218,6 +218,15 @@ export default function SurveillancePage() {
   }, [loading]);
 
   useEffect(() => {
+    if (!showIntro) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [showIntro]);
+
+  useEffect(() => {
     if (prevIntroRef.current && !showIntro) {
       setTerminalHandoff(true);
       const t = setTimeout(() => setTerminalHandoff(false), 1040);

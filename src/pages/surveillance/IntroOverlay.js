@@ -1,18 +1,28 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 
 const AUTO_MS_NO_BRIEF = 2800;
 const EXIT_MS = 880;
+const PREVIEW_TOP = 4;
+const PREVIEW_SINCE = 2;
+const PREVIEW_REGIONS = 5;
+const PREVIEW_MARKETS = 4;
 
-function BriefList({ title, items, onPick }) {
+function BriefList({ title, hint, items, onPick, rankCaption }) {
   if (!items || !items.length) return null;
   return (
     <section className="sv-intro-brief-block">
-      <h2 className="sv-intro-brief-block-title">{title}</h2>
+      <div className="sv-intro-brief-block-head">
+        <h2 className="sv-intro-brief-block-title">{title}</h2>
+        {hint ? <p className="sv-intro-brief-hint">{hint}</p> : null}
+      </div>
       <ul className="sv-intro-brief-list">
         {items.map((e) => (
           <li key={e.id}>
             <button type="button" className="sv-intro-brief-item" onClick={() => onPick?.(e.id)}>
-              <span className="sv-intro-brief-rank">{e.rank_score != null ? Math.round(e.rank_score) : '—'}</span>
+              <div className="sv-intro-brief-rank-col" aria-hidden>
+                <span className="sv-intro-brief-rank-label">{rankCaption}</span>
+                <span className="sv-intro-brief-rank">{e.rank_score != null ? Math.round(e.rank_score) : '—'}</span>
+              </div>
               <span className="sv-intro-brief-text">{e.title}</span>
             </button>
           </li>
@@ -20,6 +30,26 @@ function BriefList({ title, items, onPick }) {
       </ul>
     </section>
   );
+}
+
+function buildPreview(briefing) {
+  if (!briefing) return { top: [], since: [], regions: [], markets: [], moreTop: 0, moreSince: 0 };
+  const topAll = briefing.topStories || [];
+  const top = topAll.slice(0, PREVIEW_TOP);
+  const topIds = new Set(top.map((e) => String(e.id)));
+  const sinceAll = briefing.sinceLastVisit || [];
+  const sinceFiltered = sinceAll.filter((e) => !topIds.has(String(e.id)));
+  const since = sinceFiltered.slice(0, PREVIEW_SINCE);
+  const regions = (briefing.regionsUnderTension || []).slice(0, PREVIEW_REGIONS);
+  const markets = (briefing.marketWatch || []).slice(0, PREVIEW_MARKETS);
+  return {
+    top,
+    since,
+    regions,
+    markets,
+    moreTop: Math.max(0, topAll.length - top.length),
+    moreSince: Math.max(0, sinceFiltered.length - since.length),
+  };
 }
 
 export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickStory, reducedMotion }) {
@@ -65,6 +95,8 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
       briefing.regionsUnderTension?.length ||
       briefing.marketWatch?.length);
 
+  const preview = useMemo(() => buildPreview(briefing), [briefing]);
+
   useEffect(() => {
     if (hasBrief) return undefined;
     const t = setTimeout(() => {
@@ -109,6 +141,17 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
             </div>
           </header>
 
+          {hasBrief ? (
+            <div className="sv-intro-actions sv-intro-actions--top">
+              <button type="button" className="sv-intro-primary" onClick={() => runExit(onComplete)}>
+                Enter live terminal
+              </button>
+              <button type="button" className="sv-intro-skip" onClick={() => runExit(onDismiss)}>
+                Skip
+              </button>
+            </div>
+          ) : null}
+
           {!hasBrief ? (
             <p className="sv-intro-lede">
               You are entering the live terminal. Use the tape and rail to prioritize; use the globe to establish geographic
@@ -116,33 +159,68 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
             </p>
           ) : (
             <div className="sv-intro-brief">
-              <BriefList title="Top ranked" items={briefing.topStories} onPick={(id) => runExit(() => onPickStory?.(id))} />
+              <p className="sv-intro-brief-lede">
+                Snapshot only — the full digest, tape, and globe load inside the terminal. Scores below are how the grid
+                prioritizes items right now (not prices).
+              </p>
               <BriefList
-                title="Since last briefing"
-                items={briefing.sinceLastVisit}
+                title="Highest priority on tape"
+                hint="Tape rank (R): 0–100, higher = surfaced first on the live feed."
+                rankCaption="Rank"
+                items={preview.top}
                 onPick={(id) => runExit(() => onPickStory?.(id))}
               />
-              {briefing.regionsUnderTension?.length ? (
+              {preview.since.length ? (
+                <BriefList
+                  title="New since your last session"
+                  hint="Same R scale — only items not already shown above."
+                  rankCaption="Rank"
+                  items={preview.since}
+                  onPick={(id) => runExit(() => onPickStory?.(id))}
+                />
+              ) : null}
+              {(preview.moreTop > 0 || preview.moreSince > 0) && (
+                <p className="sv-intro-brief-more">
+                  {[
+                    preview.moreTop > 0 ? `${preview.moreTop} more ranked on tape` : null,
+                    preview.moreSince > 0 ? `${preview.moreSince} more since last visit` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}{' '}
+                  in terminal
+                </p>
+              )}
+              {preview.regions.length ? (
                 <section className="sv-intro-brief-block">
-                  <h2 className="sv-intro-brief-block-title">Regional pressure</h2>
+                  <div className="sv-intro-brief-block-head">
+                    <h2 className="sv-intro-brief-block-title">Regional pressure</h2>
+                    <p className="sv-intro-brief-hint">Heat index vs global baseline — higher = more clustered tape nodes.</p>
+                  </div>
                   <ul className="sv-intro-brief-pills">
-                    {briefing.regionsUnderTension.map((r) => (
+                    {preview.regions.map((r) => (
                       <li key={r.region}>
                         <span className="sv-intro-pill">{r.region}</span>
-                        <span className="sv-intro-pill-score">{r.score}</span>
+                        <span className="sv-intro-pill-score" title="Regional pressure index">
+                          {r.score}
+                        </span>
                       </li>
                     ))}
                   </ul>
                 </section>
               ) : null}
-              {briefing.marketWatch?.length ? (
+              {preview.markets.length ? (
                 <section className="sv-intro-brief-block">
-                  <h2 className="sv-intro-brief-block-title">Market watch</h2>
+                  <div className="sv-intro-brief-block-head">
+                    <h2 className="sv-intro-brief-block-title">Market watch</h2>
+                    <p className="sv-intro-brief-hint">Flow score from tape + narrative — higher = more cross-cutting headlines.</p>
+                  </div>
                   <ul className="sv-intro-brief-pills">
-                    {briefing.marketWatch.map((m) => (
+                    {preview.markets.map((m) => (
                       <li key={m.symbol}>
                         <span className="sv-intro-pill">{m.symbol}</span>
-                        <span className="sv-intro-pill-score">{m.flowScore}</span>
+                        <span className="sv-intro-pill-score" title="Flow score">
+                          {m.flowScore}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -154,16 +232,13 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
             </div>
           )}
 
-          <div className="sv-intro-actions">
-            {hasBrief ? (
-              <button type="button" className="sv-intro-primary" onClick={() => runExit(onComplete)}>
-                Enter live terminal
+          {!hasBrief ? (
+            <div className="sv-intro-actions">
+              <button type="button" className="sv-intro-skip" onClick={() => runExit(onDismiss)}>
+                Skip
               </button>
-            ) : null}
-            <button type="button" className="sv-intro-skip" onClick={() => runExit(onDismiss)}>
-              Skip
-            </button>
-          </div>
+            </div>
+          ) : null}
         </div>
 
         {!reducedMotion ? (
