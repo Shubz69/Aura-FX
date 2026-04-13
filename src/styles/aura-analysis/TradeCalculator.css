@@ -7,15 +7,15 @@
   --tc-gold-dim: #d48d44;
   --tc-bg-deep: rgba(3, 2, 10, 0.92);
   --tc-bg-input: rgba(255, 255, 255, 0.045);
-  --tc-border: rgba(255, 255, 255, 0.08);
-  --tc-border-gold: rgba(234, 169, 96, 0.32);
-  --tc-glow: rgba(234, 169, 96, 0.14);
-  --tc-sell: rgba(240, 64, 96, 0.88);
-  --tc-sell-soft: rgba(240, 64, 96, 0.22);
+  --tc-border: var(--at-border-hairline, rgba(255, 255, 255, 0.08));
+  --tc-border-gold: rgba(234, 169, 96, 0.28);
+  --tc-glow: rgba(234, 169, 96, 0.12);
+  --tc-sell: rgba(230, 100, 118, 0.88);
+  --tc-sell-soft: rgba(230, 100, 118, 0.2);
 
   font-family: 'Space Grotesk', sans-serif;
   color: rgba(255, 255, 255, 0.92);
-  padding: 28px 16px 48px;
+  padding: 24px 16px 44px;
   max-width: 100%;
   box-sizing: border-box;
 }

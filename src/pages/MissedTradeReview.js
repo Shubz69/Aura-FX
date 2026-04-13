@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import { useAuth } from '../context/AuthContext';
@@ -10,9 +10,12 @@ import { summarizeMissedPatterns } from '../lib/trader-playbook/analyticsClient'
 import { MID } from '../lib/trader-playbook/metricDefinitions';
 import { MetricLabel } from '../lib/trader-playbook/MetricTooltip';
 import { NO_SETUP_REASONS } from '../lib/trader-playbook/rulesCopy';
+import '../styles/TraderPlaybookTerminalTokens.css';
 import '../styles/aura-analysis/AuraDashboard.css';
 import '../styles/TraderPlaybookPremium.css';
 import '../styles/MissedTradeReview.css';
+
+const TV_BASE = '/trader-deck/trade-validator';
 
 function clipText(s, max = 200) {
   if (!s || !String(s).trim()) return '';
@@ -375,7 +378,7 @@ export default function MissedTradeReview() {
     if (mainTab === 'offplan' && selectedOff) {
       return (
         <>
-          <section className="tp-panel" aria-labelledby="mtr-diag-off">
+          <section className="tp-panel mtr-diag-shell mtr-diag-shell--offplan" aria-labelledby="mtr-diag-off">
             <span className="mtr-kicker" id="mtr-diag-off">
               Off-plan review
             </span>
@@ -414,7 +417,7 @@ export default function MissedTradeReview() {
     const chips = [missTypeLabel(selectedM.missType), selectedM.session, selectedM.asset].filter(Boolean);
     return (
       <>
-        <section className="tp-panel" aria-labelledby="mtr-reason-title">
+        <section className="tp-panel mtr-diag-shell" aria-labelledby="mtr-reason-title">
           <span className="mtr-kicker">Reason missed</span>
           <h2 className="mtr-diag-title" id="mtr-reason-title">
             {primaryHeadline}
@@ -440,7 +443,7 @@ export default function MissedTradeReview() {
           ) : null}
         </section>
 
-        <section className="tp-panel" aria-label="Pattern recognition">
+        <section className="tp-panel mtr-panel-tight" aria-label="Pattern recognition">
           <span className="mtr-kicker">Pattern recognition</span>
           <div className="mtr-chip-row" style={{ marginTop: 8 }}>
             {chips.map((c) => (
@@ -461,7 +464,7 @@ export default function MissedTradeReview() {
           ) : null}
         </section>
 
-        <section className="tp-panel" aria-label="Improvement steps">
+        <section className="tp-panel mtr-panel-tight" aria-label="Improvement steps">
           <span className="mtr-kicker">Improvement steps</span>
           {improvementBullets.length ? (
             <ul className="mtr-improve-list" style={{ marginTop: 8 }}>
@@ -476,7 +479,7 @@ export default function MissedTradeReview() {
           )}
         </section>
 
-        <section className="tp-panel" aria-label="Add refinement note">
+        <section className="tp-panel mtr-panel-tight" aria-label="Add refinement note">
           <span className="mtr-kicker">Add note</span>
           <div className="mtr-note-form" style={{ marginTop: 8 }}>
             <input className="tp-input" placeholder="Headline" value={noteTitle} onChange={(e) => setNoteTitle(e.target.value)} />
@@ -550,19 +553,24 @@ export default function MissedTradeReview() {
             </div>
           </dl>
         </section>
-        <section className="tp-panel">
-          <span className="mtr-kicker">Improvement summary</span>
-          {improvementBullets.length ? (
-            <ul className="mtr-improve-list" style={{ marginTop: 8 }}>
-              {improvementBullets.map((line, i) => (
-                <li key={`r-${i}`}>{line}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="tp-detail-glance-empty" style={{ marginTop: 8 }}>
-              Capture lessons on each miss to build a behavioural checklist.
-            </p>
-          )}
+        <section className="tp-panel mtr-panel-tight" aria-label="Next moves">
+          <span className="mtr-kicker">Next moves</span>
+          <p className="mtr-next-moves-lead">
+            {improvementBullets.length
+              ? 'Centre column lists your captured lessons — use these actions to close the loop in the live workspace.'
+              : 'Add lesson text on the miss log so this column can mirror concrete fixes; meanwhile, jump to classification or the journal.'}
+          </p>
+          <div className="mtr-next-moves-actions">
+            <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={() => navigate(`${TV_BASE}/trader-playbook`)}>
+              Classify executions
+            </button>
+            <button type="button" className="trader-suite-btn" onClick={() => navigate(`${TV_BASE}/checklist`)}>
+              Pre-trade checklist
+            </button>
+            <Link to={`${TV_BASE}/journal`} className="trader-suite-btn mtr-next-moves-link">
+              Trade journal
+            </Link>
+          </div>
         </section>
         <section className="tp-panel">
           <span className="mtr-kicker">Refinement notes</span>
@@ -617,6 +625,26 @@ export default function MissedTradeReview() {
         ) : (
           <>
             {statsStrip}
+            <nav className="tp-terminal-flow tp-terminal-flow--compact" aria-label="Execution workspace">
+              <span className="tp-terminal-flow__label">Workspace</span>
+              <div className="tp-terminal-flow__links">
+                <Link to={`${TV_BASE}/trader-playbook`} className="tp-terminal-flow__link">
+                  Playbook
+                </Link>
+                <span className="tp-terminal-flow__sep" aria-hidden>
+                  ·
+                </span>
+                <Link to={`${TV_BASE}/checklist`} className="tp-terminal-flow__link">
+                  Checklist
+                </Link>
+                <span className="tp-terminal-flow__sep" aria-hidden>
+                  ·
+                </span>
+                <Link to={`${TV_BASE}/calculator`} className="tp-terminal-flow__link">
+                  Calculator
+                </Link>
+              </div>
+            </nav>
             <div className="mtr-grid">
               <div className="mtr-col">
                 <div className="mtr-tabs" role="tablist" aria-label="Review scope">

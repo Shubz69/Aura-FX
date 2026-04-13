@@ -4,6 +4,60 @@
   margin: 0 auto;
 }
 
+.mtr-diag-shell {
+  border-left: 3px solid rgba(212, 175, 55, 0.42);
+  background: linear-gradient(100deg, rgba(212, 175, 55, 0.07), transparent 52%);
+}
+
+.mtr-diag-shell--offplan {
+  border-left-color: rgba(220, 120, 100, 0.4);
+  background: linear-gradient(100deg, rgba(220, 100, 90, 0.08), transparent 52%);
+}
+
+.mtr-panel-tight {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.mtr-next-moves-lead {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--at-text-muted, rgba(200, 196, 232, 0.62));
+}
+
+.mtr-next-moves-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mtr-next-moves-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: var(--at-radius-sm, 10px);
+  border: 1px solid rgba(234, 169, 96, 0.28);
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(248, 220, 180, 0.95);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    border-color var(--at-transition, 0.16s ease),
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.mtr-next-moves-link:hover {
+  border-color: rgba(234, 169, 96, 0.45);
+  background: rgba(234, 169, 96, 0.08);
+  transform: translateY(-1px);
+}
+
 .mtr-hero {
   display: flex;
   flex-wrap: wrap;
@@ -42,10 +96,11 @@
   gap: 10px 18px;
   align-items: center;
   padding: 10px 14px;
-  margin-bottom: 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 10px;
+  border-radius: var(--at-radius-md, 12px);
+  border: 1px solid var(--at-border-hairline, rgba(255, 255, 255, 0.06));
   background: rgba(0, 0, 0, 0.2);
+  box-shadow: var(--at-shadow-card, none);
 }
 
 .mtr-stat-chip {
@@ -294,9 +349,9 @@
   font-size: 0.72rem;
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(100, 243, 176, 0.25);
-  color: rgba(160, 245, 200, 0.95);
-  background: rgba(20, 40, 30, 0.35);
+  border: 1px solid var(--at-positive, rgba(96, 200, 152, 0.22));
+  color: var(--at-positive-strong, rgba(150, 220, 185, 0.92));
+  background: rgba(16, 36, 28, 0.4);
 }
 
 .mtr-chip--neutral {

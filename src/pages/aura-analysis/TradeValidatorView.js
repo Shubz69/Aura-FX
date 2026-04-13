@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { FaArrowLeft, FaCheckSquare, FaImage, FaPlus, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import {
@@ -18,7 +18,10 @@ import {
   TV_V3_FORMATION_CHECKED_KEY,
 } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import AiChartCheckTab from './AiChartCheckTab';
+import '../../styles/TraderPlaybookTerminalTokens.css';
 import '../../styles/TradeValidatorView.css';
+
+const TV_BASE = '/trader-deck/trade-validator';
 
 const STORAGE_ITEMS = 'aura-tv-v3-items';
 const STORAGE_CHECKED = TV_V3_CHECKED_KEY;
@@ -794,6 +797,45 @@ export default function TradeValidatorView() {
             <p className="tv-subtitle">Confluence scoring engine confirms your setup before execution.</p>
           </header>
         )}
+
+        {isEmbedded ? (
+          <nav className="tv-flow-rail" aria-label="Playbook workspace">
+            <NavLink
+              to={`${TV_BASE}/trader-playbook`}
+              className={({ isActive }) => `tv-flow-rail__link${isActive ? ' tv-flow-rail__link--active' : ''}`}
+            >
+              Playbook
+            </NavLink>
+            <span className="tv-flow-rail__sep" aria-hidden>
+              →
+            </span>
+            <NavLink
+              end
+              to={`${TV_BASE}/checklist`}
+              className={({ isActive }) => `tv-flow-rail__link${isActive ? ' tv-flow-rail__link--active' : ''}`}
+            >
+              Checklist
+            </NavLink>
+            <span className="tv-flow-rail__sep" aria-hidden>
+              →
+            </span>
+            <NavLink
+              to={`${TV_BASE}/calculator`}
+              className={({ isActive }) => `tv-flow-rail__link${isActive ? ' tv-flow-rail__link--active' : ''}`}
+            >
+              Calculator
+            </NavLink>
+            <span className="tv-flow-rail__sep" aria-hidden>
+              →
+            </span>
+            <NavLink
+              to={`${TV_BASE}/missed-trade-review`}
+              className={({ isActive }) => `tv-flow-rail__link${isActive ? ' tv-flow-rail__link--active' : ''}`}
+            >
+              Missed review
+            </NavLink>
+          </nav>
+        ) : null}
 
         <div className="tv-checklist-topdeck">
           <div className="tv-checklist-topdeck__tabs">

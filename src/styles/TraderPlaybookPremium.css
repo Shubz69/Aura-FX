@@ -1,17 +1,15 @@
 /* Trader Playbook — premium panels aligned with Aura dashboard language */
 .tp-root {
-  --tp-accent: rgba(212, 175, 55, 0.92);
-  --tp-border: rgba(234, 169, 96, 0.16);
-  --tp-glass: rgba(3, 5, 18, 0.42);
+  --tp-accent: var(--at-accent, rgba(212, 175, 55, 0.92));
+  --tp-border: var(--at-border-subtle, rgba(234, 169, 96, 0.16));
+  --tp-glass: var(--at-glass, rgba(3, 5, 18, 0.42));
 }
 
 .tp-panel {
   border: 1px solid var(--tp-border);
-  border-radius: 14px;
+  border-radius: var(--at-radius-lg, 14px);
   background: var(--tp-glass);
-  box-shadow:
-    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
-    0 12px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--at-shadow-card, 0 0 0 0.5px rgba(255, 255, 255, 0.04) inset, 0 12px 40px rgba(0, 0, 0, 0.35));
   backdrop-filter: blur(22px) saturate(1.06);
   -webkit-backdrop-filter: blur(22px) saturate(1.06);
   padding: clamp(14px, 2vw, 18px);
@@ -334,12 +332,15 @@
 }
 
 .tp-empty {
-  padding: 28px 16px;
+  padding: 24px 20px;
   text-align: center;
-  color: rgba(200, 196, 232, 0.6);
-  font-size: 0.88rem;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
+  color: var(--at-text-muted, rgba(200, 196, 232, 0.6));
+  font-size: 0.86rem;
+  line-height: 1.5;
+  border: 1px solid var(--at-border-hairline, rgba(255, 255, 255, 0.08));
+  border-radius: var(--at-radius-md, 12px);
+  background: linear-gradient(165deg, rgba(8, 10, 28, 0.55), rgba(4, 6, 18, 0.35));
+  box-shadow: var(--at-shadow-card);
 }
 
 .tp-drawer-overlay {
@@ -652,6 +653,43 @@
 .tp-empty--compact p {
   margin: 8px 0 0;
   line-height: 1.5;
+}
+
+.tp-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+  justify-content: flex-start;
+}
+
+.tp-empty--hero .tp-empty__actions {
+  justify-content: flex-start;
+}
+
+.tp-empty__link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--at-radius-sm, 10px);
+  border: 1px solid rgba(234, 169, 96, 0.28);
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(248, 220, 180, 0.95);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    border-color var(--at-transition, 0.16s ease),
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.tp-empty__link-btn:hover {
+  border-color: rgba(234, 169, 96, 0.45);
+  background: rgba(234, 169, 96, 0.08);
+  transform: translateY(-1px);
 }
 
 /* ——— Detail hero & operations layout ——— */
@@ -1415,6 +1453,15 @@
   padding: 6px 12px;
   font-size: 0.75rem;
   cursor: pointer;
+  transition:
+    border-color var(--at-transition, 0.16s ease),
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.tp-filter-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(234, 169, 96, 0.22);
 }
 
 .tp-filter-chip--active {
@@ -2037,27 +2084,28 @@
 }
 
 .tp-hub-discipline-cards {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
   gap: 10px;
+  align-items: stretch;
 }
 
 .tp-hub-disc-card {
-  flex: 1 1 140px;
-  min-width: 118px;
-  max-width: 220px;
+  min-width: 0;
+  max-width: none;
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 12px 14px;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+  transition:
+    transform var(--at-transition, 0.16s ease),
+    box-shadow var(--at-transition, 0.16s ease),
+    border-color 0.16s ease;
 }
 
 .tp-hub-disc-card:hover {
   transform: translateY(-2px);
-  box-shadow:
-    0 0 0 0.5px rgba(255, 255, 255, 0.06) inset,
-    0 14px 36px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--at-shadow-hover, 0 0 0 0.5px rgba(255, 255, 255, 0.06) inset, 0 14px 36px rgba(0, 0, 0, 0.4));
 }
 
 .tp-hub-disc-card__label {

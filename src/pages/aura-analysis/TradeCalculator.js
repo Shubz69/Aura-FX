@@ -22,7 +22,10 @@ import {
   TV_V3_FORMATION_CHECKED_KEY,
 } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import { formatThesisNotesForJournal } from '../../utils/traderSuite';
+import '../../styles/TraderPlaybookTerminalTokens.css';
 import '../../styles/aura-analysis/TradeCalculator.css';
+
+const TV_BASE = '/trader-deck/trade-validator';
 
 const FALLBACK_INSTRUMENTS_BY_CATEGORY = getInstrumentsByCategory();
 
@@ -517,6 +520,27 @@ export default function TradeCalculator() {
   return (
     <div className="trade-calc-page">
       <h1 className="trade-calc-title">Trade Calculator</h1>
+
+      <nav className="tp-terminal-flow tp-terminal-flow--compact trade-calc-flow" aria-label="Execution workspace">
+        <span className="tp-terminal-flow__label">Workspace</span>
+        <div className="tp-terminal-flow__links">
+          <Link to={`${TV_BASE}/trader-playbook`} className="tp-terminal-flow__link">
+            Playbook
+          </Link>
+          <span className="tp-terminal-flow__sep" aria-hidden>
+            ·
+          </span>
+          <Link to={`${TV_BASE}/checklist`} className="tp-terminal-flow__link">
+            Checklist
+          </Link>
+          <span className="tp-terminal-flow__sep" aria-hidden>
+            ·
+          </span>
+          <Link to={`${TV_BASE}/missed-trade-review`} className="tp-terminal-flow__link">
+            Missed review
+          </Link>
+        </div>
+      </nav>
 
       <div className={`trade-calc-banner${pendingChecklist ? ' trade-calc-banner--linked' : ''}`}>
         {pendingChecklist ? (

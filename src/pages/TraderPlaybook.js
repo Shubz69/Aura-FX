@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +31,7 @@ import {
   stripReplayHandoffParams,
   TR_HANDOFF,
 } from '../lib/trader-replay/replayToolHandoff';
+import '../styles/TraderPlaybookTerminalTokens.css';
 import '../styles/aura-analysis/AuraDashboard.css';
 import '../styles/TraderPlaybookPremium.css';
 
@@ -152,6 +153,8 @@ function bulletListFromText(raw, maxItems = 7) {
   if (bySemi.length > 1) return bySemi.slice(0, maxItems);
   return t.length > 200 ? [clipText(t, 240)] : [t];
 }
+
+const TV_BASE = '/trader-deck/trade-validator';
 
 const CHECKLIST_THRESHOLD = 0.85;
 
@@ -743,6 +746,27 @@ export default function TraderPlaybook() {
           {hubDisciplineInsight ? null : processCostHint ? <p className="tp-hub-discipline-insight tp-hub-discipline-insight--muted">{processCostHint}</p> : null}
         </section>
 
+        <nav className="tp-terminal-flow" aria-label="Execution workspace">
+          <span className="tp-terminal-flow__label">Workspace</span>
+          <div className="tp-terminal-flow__links">
+            <Link to={`${TV_BASE}/checklist`} className="tp-terminal-flow__link">
+              Checklist
+            </Link>
+            <span className="tp-terminal-flow__sep" aria-hidden>
+              ·
+            </span>
+            <Link to={`${TV_BASE}/calculator`} className="tp-terminal-flow__link">
+              Trade calculator
+            </Link>
+            <span className="tp-terminal-flow__sep" aria-hidden>
+              ·
+            </span>
+            <Link to={`${TV_BASE}/missed-trade-review`} className="tp-terminal-flow__link">
+              Missed review
+            </Link>
+          </div>
+        </nav>
+
         <div className="tp-hub-command-grid">
           <div className="tp-hub-col tp-hub-col--left">
             <div className="tp-hub-col-head">
@@ -1035,6 +1059,20 @@ export default function TraderPlaybook() {
               <li>Classify trades — link executions or mark off-plan honestly</li>
               <li>Log missed setups — capture what the process failed to deliver</li>
             </ul>
+            <div className="tp-empty__actions">
+              <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={startNewWizard}>
+                New playbook
+              </button>
+              <button type="button" className="trader-suite-btn" onClick={() => openTagDrawer()}>
+                Classify trades
+              </button>
+              <button type="button" className="trader-suite-btn" onClick={() => setDrawer('missed')}>
+                Log missed setup
+              </button>
+              <Link to={`${TV_BASE}/checklist`} className="trader-suite-btn tp-empty__link-btn">
+                Pre-trade checklist
+              </Link>
+            </div>
           </div>
         ) : null}
         {setups.length > 0 && !filteredSetups.length ? (
@@ -1206,6 +1244,27 @@ export default function TraderPlaybook() {
         <p className="tp-detail-hero-subline">
           Last used {fmtShortDate(form.lastUsedAt)} — {detailExecThisMonth} executions this month
         </p>
+
+        <nav className="tp-terminal-flow tp-terminal-flow--detail" aria-label="Execution workspace">
+          <span className="tp-terminal-flow__label">Flow</span>
+          <div className="tp-terminal-flow__links">
+            <Link to={`${TV_BASE}/checklist`} className="tp-terminal-flow__link">
+              Checklist
+            </Link>
+            <span className="tp-terminal-flow__sep" aria-hidden>
+              ·
+            </span>
+            <Link to={`${TV_BASE}/calculator`} className="tp-terminal-flow__link">
+              Calculator
+            </Link>
+            <span className="tp-terminal-flow__sep" aria-hidden>
+              ·
+            </span>
+            <Link to={`${TV_BASE}/missed-trade-review`} className="tp-terminal-flow__link">
+              Missed review
+            </Link>
+          </div>
+        </nav>
 
         <section className="tp-detail-prismetrics" aria-label="Primary playbook metrics">
           <div className="tp-panel tp-detail-pri-card tp-detail-pri-card--wr">
@@ -2854,7 +2913,7 @@ function TagDrawer({ trades, setups, onClose, onTag }) {
         <div className="tp-drawer__head">
           <h2 id="tp-tag-drawer-title">Classify executions</h2>
           <p className="tp-drawer__intro">
-            Every close should be <strong>on playbook</strong> or honestly <strong>off-plan</strong>. Unclassified rows hide the true cost of discretion — close the
+            Every close should be <strong>on-book</strong> (linked to a playbook) or honestly <strong>off-plan</strong>. Unclassified rows hide the true cost of discretion — close the
             log before trusting any stat.
           </p>
         </div>
@@ -2889,7 +2948,7 @@ function TagDrawer({ trades, setups, onClose, onTag }) {
           {[
             { id: 'needs_attention', label: 'Needs attention' },
             { id: 'all', label: 'All' },
-            { id: 'playbook', label: 'On playbook' },
+            { id: 'playbook', label: 'On-book' },
             { id: 'no_setup', label: 'Off-plan' },
           ].map((x) => (
             <button
@@ -2934,7 +2993,7 @@ function TagDrawer({ trades, setups, onClose, onTag }) {
                       <td>{r.label}</td>
                       <td>
                         {isPlaybook ? (
-                          <span className="tp-pill tp-pill--status-active">On playbook</span>
+                          <span className="tp-pill tp-pill--status-active">On-book</span>
                         ) : isNo ? (
                           <span className="tp-pill tp-pill--status-archived">
                             Off-plan{r.noSetupReason ? ` · ${reasonLabel(r.noSetupReason)}` : ''}
