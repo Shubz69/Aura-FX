@@ -249,8 +249,9 @@
     min-height: 0;
   }
 
+  /* Top-align; chart grows to fill row — avoids a dead gap above/below a short chart */
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-desk-col--chart {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-desk-col--left .tlab-card--dock-fundamental {
@@ -269,21 +270,79 @@
     flex: 0 0 auto;
   }
 
-  /* Chart fills the middle column (no side gutters); height ~ mini tablet */
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-desk-col--chart .tlab-card--focal {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     align-self: stretch;
     width: 100%;
     max-width: none;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-desk-col--chart .tlab-chart-host--fill {
-    flex: 0 0 auto !important;
+    flex: 1 1 auto !important;
     width: 100%;
-    height: clamp(340px, 45dvh, 540px);
-    min-height: 300px;
-    max-height: min(540px, 52dvh);
+    min-height: 260px;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Right rail: stop Session focus from flex-growing and shoving My trades / Risk to the floor */
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .trader-lab-v2__right .tlab-card--session-rail {
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+  }
+
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .trader-lab-v2__right .tlab-card--plan-rail {
+    flex: 0 1 auto;
+    max-height: min(48dvh, 520px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  /* Thesis stack: scroll instead of stretching the whole left rail */
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .trader-lab-v2__left .tl-thesis-stack {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: min(40dvh, 400px);
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  /* Win over TradeValidatorJournalGlass .tlab-card--session-rail { flex: 1 1 auto !important } */
+  .journal-page
+    .trade-validator-shell
+    .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
+    .trader-lab-v2__right
+    .tlab-card--session-rail {
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+  }
+
+  .journal-page
+    .trade-validator-shell
+    .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
+    .trader-lab-v2__right
+    .tlab-card--plan-rail {
+    flex: 0 1 auto !important;
+    max-height: min(48dvh, 520px) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    min-height: 0 !important;
+  }
+
+  .journal-page
+    .trade-validator-shell
+    .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
+    .trader-lab-v2__left
+    .tl-thesis-stack {
+    flex: 0 1 auto !important;
+    min-height: 0 !important;
+    max-height: min(40dvh, 400px) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
   }
 }
 
@@ -318,10 +377,13 @@
     .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
     .tlab-center-desk-col--chart
     .tlab-card--focal {
-    flex: 0 0 auto !important;
+    flex: 1 1 auto !important;
     align-self: stretch !important;
     width: 100% !important;
     max-width: none !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .journal-page
@@ -329,11 +391,11 @@
     .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
     .tlab-center-desk-col--chart
     .tlab-chart-host--fill {
-    flex: 0 0 auto !important;
+    flex: 1 1 auto !important;
     width: 100% !important;
-    height: clamp(340px, 45dvh, 540px) !important;
-    min-height: 300px !important;
-    max-height: min(540px, 52dvh) !important;
+    min-height: 260px !important;
+    height: auto !important;
+    max-height: none !important;
   }
 }
 
