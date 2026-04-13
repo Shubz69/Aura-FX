@@ -10,12 +10,11 @@ import { summarizeMissedPatterns } from '../lib/trader-playbook/analyticsClient'
 import { MID } from '../lib/trader-playbook/metricDefinitions';
 import { MetricLabel } from '../lib/trader-playbook/MetricTooltip';
 import { NO_SETUP_REASONS } from '../lib/trader-playbook/rulesCopy';
+import { TRADE_VALIDATOR_BASE as TV_BASE, PLAYBOOK_HUB_PATH } from '../lib/trader-playbook/playbookPaths';
 import '../styles/TraderPlaybookTerminalTokens.css';
 import '../styles/aura-analysis/AuraDashboard.css';
 import '../styles/TraderPlaybookPremium.css';
 import '../styles/MissedTradeReview.css';
-
-const TV_BASE = '/trader-deck/trade-validator';
 
 function clipText(s, max = 200) {
   if (!s || !String(s).trim()) return '';
@@ -400,7 +399,7 @@ export default function MissedTradeReview() {
             <p className="tp-detail-glance-empty" style={{ marginTop: 8 }}>
               Re-tag to the correct playbook from Classify trades, or keep as honest off-plan process data.
             </p>
-            <button type="button" className="trader-suite-btn" style={{ marginTop: 10 }} onClick={() => navigate('/trader-deck/trade-validator/trader-playbook')}>
+            <button type="button" className="trader-suite-btn" style={{ marginTop: 10 }} onClick={() => navigate(PLAYBOOK_HUB_PATH)}>
               Open playbook workspace
             </button>
           </section>
@@ -561,7 +560,7 @@ export default function MissedTradeReview() {
               : 'Add lesson text on the miss log so this column can mirror concrete fixes; meanwhile, jump to classification or the journal.'}
           </p>
           <div className="mtr-next-moves-actions">
-            <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={() => navigate(`${TV_BASE}/trader-playbook`)}>
+            <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={() => navigate(PLAYBOOK_HUB_PATH)}>
               Classify executions
             </button>
             <button type="button" className="trader-suite-btn" onClick={() => navigate(`${TV_BASE}/checklist`)}>
@@ -589,7 +588,7 @@ export default function MissedTradeReview() {
                     type="button"
                     className="tp-inline-link"
                     style={{ marginTop: 4 }}
-                    onClick={() => navigate('/trader-deck/trade-validator/trader-playbook')}
+                    onClick={() => navigate(PLAYBOOK_HUB_PATH)}
                   >
                     Revisit in playbook
                   </button>
@@ -615,9 +614,14 @@ export default function MissedTradeReview() {
           Review next miss
         </button>
       }
-      secondaryActions={null}
+      secondaryActions={
+        <Link to={PLAYBOOK_HUB_PATH} className="trader-suite-btn">
+          Playbook hub
+        </Link>
+      }
     >
       <div className="tp-root mtr-root">
+        <div className="tp-hub-max">
         {loading ? (
           <p className="tp-loading-caption" aria-busy="true">
             Loading misses, executions, and playbook context…
@@ -628,7 +632,7 @@ export default function MissedTradeReview() {
             <nav className="tp-terminal-flow tp-terminal-flow--compact" aria-label="Execution workspace">
               <span className="tp-terminal-flow__label">Workspace</span>
               <div className="tp-terminal-flow__links">
-                <Link to={`${TV_BASE}/trader-playbook`} className="tp-terminal-flow__link">
+                <Link to={PLAYBOOK_HUB_PATH} className="tp-terminal-flow__link">
                   Playbook
                 </Link>
                 <span className="tp-terminal-flow__sep" aria-hidden>
@@ -701,7 +705,7 @@ export default function MissedTradeReview() {
                 ) : null}
                 {mainTab === 'offplan' ? (
                   !offPlanRows.length ? (
-                    <div className="mtr-empty tp-panel">No off-plan rows in the loaded validator + journal sample.</div>
+                    <div className="mtr-empty mtr-empty--line">No off-plan rows in the loaded validator + journal sample.</div>
                   ) : (
                     <ul className="mtr-list" role="listbox" aria-label="Off-plan trades">
                       {offPlanRows.map((r) => (
@@ -727,7 +731,7 @@ export default function MissedTradeReview() {
                     </ul>
                   )
                 ) : !mFiltered.length ? (
-                  <div className="mtr-empty tp-panel">
+                  <div className="mtr-empty mtr-empty--line">
                     No rows for this filter. Log misses from the playbook hub or widen the filter.
                   </div>
                 ) : (
@@ -779,7 +783,7 @@ export default function MissedTradeReview() {
                       </div>
                     </dl>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
-                      <button type="button" className="trader-suite-btn" onClick={() => navigate('/trader-deck/trade-validator/trader-playbook')}>
+                      <button type="button" className="trader-suite-btn" onClick={() => navigate(PLAYBOOK_HUB_PATH)}>
                         Classify in playbook
                       </button>
                     </div>
@@ -807,7 +811,7 @@ export default function MissedTradeReview() {
                       </div>
                     </dl>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
-                      <button type="button" className="trader-suite-btn" onClick={() => navigate('/trader-deck/trade-validator/trader-playbook')}>
+                      <button type="button" className="trader-suite-btn" onClick={() => navigate(PLAYBOOK_HUB_PATH)}>
                         Open playbook
                       </button>
                       <button type="button" className="trader-suite-btn" onClick={() => navigate('/trader-deck/trade-validator/journal')}>
@@ -824,6 +828,7 @@ export default function MissedTradeReview() {
             </div>
           </>
         )}
+        </div>
       </div>
     </TraderSuiteShell>
   );

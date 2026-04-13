@@ -31,6 +31,7 @@ import {
   stripReplayHandoffParams,
   TR_HANDOFF,
 } from '../lib/trader-replay/replayToolHandoff';
+import { TRADE_VALIDATOR_BASE as TV_BASE, PLAYBOOK_MISSED_REVIEW_PATH } from '../lib/trader-playbook/playbookPaths';
 import '../styles/TraderPlaybookTerminalTokens.css';
 import '../styles/aura-analysis/AuraDashboard.css';
 import '../styles/TraderPlaybookPremium.css';
@@ -153,8 +154,6 @@ function bulletListFromText(raw, maxItems = 7) {
   if (bySemi.length > 1) return bySemi.slice(0, maxItems);
   return t.length > 200 ? [clipText(t, 240)] : [t];
 }
-
-const TV_BASE = '/trader-deck/trade-validator';
 
 const CHECKLIST_THRESHOLD = 0.85;
 
@@ -654,6 +653,7 @@ export default function TraderPlaybook() {
     if (loading) {
       return (
         <div className="tp-root tp-root--loading" aria-busy="true" aria-label="Loading playbooks">
+          <div className="tp-hub-max">
           <div className="tp-hub-skel-strip">
             {[0, 1, 2, 3, 4].map((i) => (
               <div key={i} className="tp-skeleton tp-skeleton--hub-stat" />
@@ -666,6 +666,7 @@ export default function TraderPlaybook() {
             <div className="tp-skeleton tp-skeleton--hub-col" />
           </div>
           <p className="tp-loading-caption">Loading playbooks and execution sample…</p>
+          </div>
         </div>
       );
     }
@@ -689,6 +690,7 @@ export default function TraderPlaybook() {
 
     return (
       <div className="tp-root tp-root--hub">
+        <div className="tp-hub-max">
         <section className="tp-hub-discipline-strip" aria-label="Discipline overview">
           <div className="tp-hub-discipline-cards">
             <div className="tp-panel tp-hub-disc-card tp-hub-disc-card--onbook">
@@ -761,7 +763,7 @@ export default function TraderPlaybook() {
             <span className="tp-terminal-flow__sep" aria-hidden>
               ·
             </span>
-            <Link to={`${TV_BASE}/missed-trade-review`} className="tp-terminal-flow__link">
+            <Link to={PLAYBOOK_MISSED_REVIEW_PATH} className="tp-terminal-flow__link">
               Missed review
             </Link>
           </div>
@@ -819,45 +821,48 @@ export default function TraderPlaybook() {
                     className={`tp-playbook-card tp-playbook-card--${st} tp-playbook-card--hub${isSpotlight ? ' tp-playbook-card--hub-spotlight' : ''}`}
                     onClick={() => openDetail(s.id)}
                   >
-                    <div className="tp-playbook-card__head">
-                      <span className="tp-playbook-card__badge" style={{ color: s.color || undefined }} aria-hidden>
+                    <div className="tp-playbook-card__title-row tp-playbook-card__title-row--hub">
+                      <span className="tp-playbook-card__badge tp-playbook-card__badge--hub" style={{ color: s.color || undefined }} aria-hidden>
                         {s.icon || '📘'}
                       </span>
+                      <h3 className="tp-playbook-card__title tp-playbook-card__title--hub">{s.name}</h3>
                       <span className={`tp-pill tp-pill--status-${st === 'archived' ? 'archived' : st === 'draft' ? 'draft' : 'active'}`}>
                         {st === 'archived' ? 'Archived' : st === 'draft' ? 'Draft' : 'Active'}
                       </span>
                     </div>
-                    <h3 className="tp-playbook-card__title">{s.name}</h3>
-                    <div className="tp-playbook-card__meta">
+                    <p className="tp-playbook-card__meta-line tp-playbook-card__meta-line--hub">
                       {[s.setupType, s.marketType, s.session].filter(Boolean).join(' · ') || 'Complete context in Rules'}
-                    </div>
-                    <div className="tp-playbook-card__timestamps">
-                      <span>Updated {fmtDt(s.updatedAt)}</span>
-                      <span>Last used {fmtDt(s.lastUsedAt)}</span>
-                    </div>
-                    <div className="tp-pill-row">
+                      <span className="tp-playbook-card__meta-sep" aria-hidden>
+                        {' '}
+                        ·{' '}
+                      </span>
+                      <span className="tp-playbook-card__meta-dates">
+                        Upd {fmtDt(s.updatedAt)} · Used {fmtDt(s.lastUsedAt)}
+                      </span>
+                    </p>
+                    <div className="tp-pill-row tp-pill-row--hub-tight">
                       {(assetChips.length ? assetChips : ['Define assets']).map((x, i) => (
                         <span key={`${s.id}-chip-${i}`} className="tp-pill tp-pill--asset">
                           {x}
                         </span>
                       ))}
                     </div>
-                    <div className="tp-metrics-grid tp-metrics-grid--prior tp-metrics-grid--hub-tight">
-                      <div className="tp-metric-priority">
-                        <span>
+                    <div className="tp-playbook-card__metric-strip" role="group" aria-label="Playbook metrics">
+                      <div className="tp-playbook-card__metric-cell">
+                        <span className="tp-playbook-card__metric-label">
                           <MetricLabel metricId={MID.WIN_RATE_PLAYBOOK}>{METRIC_LABEL.WIN_RATE}</MetricLabel>
-                          {pmClosed > 0 ? <span className="tp-metric-sample"> · {pmClosed}</span> : null}
+                          {pmClosed > 0 ? <span className="tp-metric-sample"> · n={pmClosed}</span> : null}
                         </span>
                         <strong>{pm.winRate != null ? fmtPct(pm.winRate) : '—'}</strong>
                       </div>
-                      <div>
-                        <span>
-                          <MetricLabel metricId={MID.PROFIT_FACTOR_PLAYBOOK}>{METRIC_LABEL.PROFIT_FACTOR} (V)</MetricLabel>
+                      <div className="tp-playbook-card__metric-cell">
+                        <span className="tp-playbook-card__metric-label">
+                          <MetricLabel metricId={MID.PROFIT_FACTOR_PLAYBOOK}>{METRIC_LABEL.PROFIT_FACTOR}</MetricLabel> (V)
                         </span>
                         <strong>{fmtPF(pm.profitFactor)}</strong>
                       </div>
-                      <div>
-                        <span>
+                      <div className="tp-playbook-card__metric-cell">
+                        <span className="tp-playbook-card__metric-label">
                           <MetricLabel metricId={MID.ON_BOOK_EXECUTIONS_PLAYBOOK}>{METRIC_LABEL.ON_BOOK_EXECUTIONS}</MetricLabel>
                         </span>
                         <strong>{pm.taggedTrades ?? 0}</strong>
@@ -987,6 +992,9 @@ export default function TraderPlaybook() {
           <div className="tp-hub-col tp-hub-col--right">
             <div className="tp-hub-col-head">
               <span className="tp-kicker">Recent missed setups</span>
+              <Link to={PLAYBOOK_MISSED_REVIEW_PATH} className="tp-hub-col-head__link">
+                Full review →
+              </Link>
             </div>
             <div className="tp-panel tp-hub-side-card">
               {hubRecentMissed.length ? (
@@ -1076,13 +1084,14 @@ export default function TraderPlaybook() {
           </div>
         ) : null}
         {setups.length > 0 && !filteredSetups.length ? (
-          <div className="tp-empty">
+          <div className="tp-empty tp-empty--inline">
             Nothing matches this filter.{' '}
             <button type="button" className="tp-inline-link" onClick={() => { setHubFilter('all'); setSearch(''); }}>
               Reset filters
             </button>
           </div>
         ) : null}
+        </div>
       </div>
     );
   };
@@ -1141,6 +1150,7 @@ export default function TraderPlaybook() {
 
     return (
       <div className="tp-root tp-root--detail-command">
+        <div className="tp-hub-max">
         <button
           type="button"
           className="tp-detail-back"
@@ -1260,7 +1270,7 @@ export default function TraderPlaybook() {
             <span className="tp-terminal-flow__sep" aria-hidden>
               ·
             </span>
-            <Link to={`${TV_BASE}/missed-trade-review`} className="tp-terminal-flow__link">
+            <Link to={PLAYBOOK_MISSED_REVIEW_PATH} className="tp-terminal-flow__link">
               Missed review
             </Link>
           </div>
@@ -2137,6 +2147,7 @@ export default function TraderPlaybook() {
             </div>
           ) : null}
         </div>
+        </div>
       </div>
     );
   };
@@ -2337,7 +2348,13 @@ export default function TraderPlaybook() {
       description="Build, execute, and refine your trading edge"
       stats={[]}
       primaryAction={null}
-      secondaryActions={null}
+      secondaryActions={
+        view === 'hub' ? (
+          <Link to={PLAYBOOK_MISSED_REVIEW_PATH} className="trader-suite-btn">
+            Missed review
+          </Link>
+        ) : null
+      }
     >
       {view === 'hub' ? renderHub() : renderDetail()}
       {drawer === 'wizard' ? renderWizard() : null}

@@ -26,7 +26,6 @@ const TABS = [
 
 const HERO_TRADER_LAB = { path: `${BASE}/trader-lab`, label: 'Trader Lab' };
 const HERO_PLAYBOOK = { path: `${BASE}/trader-playbook`, label: 'Trader Playbook' };
-const HERO_MISSED = { path: `${BASE}/missed-trade-review`, label: 'Missed Review' };
 
 export default function TradeValidatorShell() {
   return (
@@ -52,7 +51,7 @@ export default function TradeValidatorShell() {
               Trader Desk → Market Decoder → Export.
             </p>
           </div>
-          <nav className="trade-validator-hero-suite trade-validator-hero-suite--right" aria-label="Playbook and review">
+          <nav className="trade-validator-hero-suite trade-validator-hero-suite--right" aria-label="Trader Playbook">
             <NavLink
               to={HERO_PLAYBOOK.path}
               className={({ isActive }) =>
@@ -60,14 +59,6 @@ export default function TradeValidatorShell() {
               }
             >
               {HERO_PLAYBOOK.label}
-            </NavLink>
-            <NavLink
-              to={HERO_MISSED.path}
-              className={({ isActive }) =>
-                `trade-validator-hero-suite-link${isActive ? ' trade-validator-hero-suite-link--active' : ''}`
-              }
-            >
-              {HERO_MISSED.label}
             </NavLink>
           </nav>
         </div>

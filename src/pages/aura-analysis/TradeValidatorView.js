@@ -18,10 +18,9 @@ import {
   TV_V3_FORMATION_CHECKED_KEY,
 } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import AiChartCheckTab from './AiChartCheckTab';
+import { TRADE_VALIDATOR_BASE as TV_BASE, PLAYBOOK_MISSED_REVIEW_PATH } from '../../lib/trader-playbook/playbookPaths';
 import '../../styles/TraderPlaybookTerminalTokens.css';
 import '../../styles/TradeValidatorView.css';
-
-const TV_BASE = '/trader-deck/trade-validator';
 
 const STORAGE_ITEMS = 'aura-tv-v3-items';
 const STORAGE_CHECKED = TV_V3_CHECKED_KEY;
@@ -829,7 +828,7 @@ export default function TradeValidatorView() {
               →
             </span>
             <NavLink
-              to={`${TV_BASE}/missed-trade-review`}
+              to={PLAYBOOK_MISSED_REVIEW_PATH}
               className={({ isActive }) => `tv-flow-rail__link${isActive ? ' tv-flow-rail__link--active' : ''}`}
             >
               Missed review

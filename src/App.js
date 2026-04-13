@@ -13,6 +13,7 @@ import GDPRModal from './components/GDPRModal';
 import Footer from './components/Footer';
 import CommunityRouteBoundary from './components/CommunityRouteBoundary';
 import { consumePostLoginTransition, isPostLoginTransitionExcludedPath } from './utils/postLoginTransition';
+import { LEGACY_MISSED_TRADE_REVIEW_PATH, PLAYBOOK_MISSED_REVIEW_PATH } from './lib/trader-playbook/playbookPaths';
 import { ensureWebPushSubscription } from './utils/ensureWebPushSubscription';
 import JournalReminderScheduler from './components/JournalReminderScheduler';
 import { ToastContainer } from "react-toastify";
@@ -110,6 +111,7 @@ const TraderLab = lazy(() => import('./pages/TraderLab'));
 const TraderReplay = lazy(() => import('./pages/TraderReplay'));
 const TraderPlaybook = lazy(() => import('./pages/TraderPlaybook'));
 const MissedTradeReview = lazy(() => import('./pages/MissedTradeReview'));
+const PlaybookRouteOutlet = lazy(() => import('./pages/PlaybookRouteOutlet'));
 const BacktestingLayout = lazy(() => import('./pages/backtesting/BacktestingLayout'));
 const BacktestingHub = lazy(() => import('./pages/backtesting/BacktestingHub'));
 const BacktestingNewSession = lazy(() => import('./pages/backtesting/BacktestingNewSession'));
@@ -378,8 +380,11 @@ function AppRoutes() {
                             <Route path="trader-cv" element={<TraderCVTab />} />
                             <Route path="leaderboard" element={<AuraLeaderboard />} />
                             <Route path="trader-lab" element={<TraderLab />} />
-                            <Route path="trader-playbook" element={<TraderPlaybook />} />
-                            <Route path="missed-trade-review" element={<MissedTradeReview />} />
+                            <Route path="missed-trade-review" element={<Navigate to={PLAYBOOK_MISSED_REVIEW_PATH} replace />} />
+                            <Route path="trader-playbook" element={<PlaybookRouteOutlet />}>
+                                <Route index element={<TraderPlaybook />} />
+                                <Route path="missed-review" element={<MissedTradeReview />} />
+                            </Route>
                             <Route path="trader-replay" element={<Navigate to="/aura-analysis/dashboard/trader-replay" replace />} />
                         </Route>
                         <Route path="/reports" element={<AuthenticatedGuard><ReportsPage /></AuthenticatedGuard>} />
@@ -396,6 +401,7 @@ function AppRoutes() {
                         <Route path="/trader-lab" element={<AuthenticatedGuard><Navigate to="/trader-deck/trade-validator/trader-lab" replace /></AuthenticatedGuard>} />
                         <Route path="/trader-replay" element={<AuthenticatedGuard><Navigate to="/aura-analysis/dashboard/trader-replay" replace /></AuthenticatedGuard>} />
                         <Route path="/trader-playbook" element={<AuthenticatedGuard><Navigate to="/trader-deck/trade-validator/trader-playbook" replace /></AuthenticatedGuard>} />
+                        <Route path="/trader-playbook/missed-review" element={<AuthenticatedGuard><Navigate to={PLAYBOOK_MISSED_REVIEW_PATH} replace /></AuthenticatedGuard>} />
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
                         <Route path="/surveillance" element={<AuthenticatedGuard><SurveillanceGuard><SurveillancePage /></SurveillanceGuard></AuthenticatedGuard>} />
                         <Route path="/backtesting" element={<AuthenticatedGuard><BacktestingLayout /></AuthenticatedGuard>}>

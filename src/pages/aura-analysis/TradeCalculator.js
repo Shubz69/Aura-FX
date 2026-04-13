@@ -22,10 +22,9 @@ import {
   TV_V3_FORMATION_CHECKED_KEY,
 } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import { formatThesisNotesForJournal } from '../../utils/traderSuite';
+import { TRADE_VALIDATOR_BASE as TV_BASE, PLAYBOOK_MISSED_REVIEW_PATH } from '../../lib/trader-playbook/playbookPaths';
 import '../../styles/TraderPlaybookTerminalTokens.css';
 import '../../styles/aura-analysis/TradeCalculator.css';
-
-const TV_BASE = '/trader-deck/trade-validator';
 
 const FALLBACK_INSTRUMENTS_BY_CATEGORY = getInstrumentsByCategory();
 
@@ -536,7 +535,7 @@ export default function TradeCalculator() {
           <span className="tp-terminal-flow__sep" aria-hidden>
             ·
           </span>
-          <Link to={`${TV_BASE}/missed-trade-review`} className="tp-terminal-flow__link">
+          <Link to={PLAYBOOK_MISSED_REVIEW_PATH} className="tp-terminal-flow__link">
             Missed review
           </Link>
         </div>
