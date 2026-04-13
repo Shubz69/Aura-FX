@@ -1,5 +1,5 @@
-# Use Node 20 LTS (Debian) - native deps (bcrypt, mysql2) build without extra tools
-FROM node:20-bookworm-slim AS builder
+# Node 20 LTS (Debian) — ECR mirror avoids Docker Hub network issues on some CI hosts (e.g. Railway)
+FROM public.ecr.aws/docker/library/node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN if grep -q '"build"' package.json; then npm run build; else mkdir -p build; 
 RUN [ -f server.js ] || touch server.js; [ -f index.js ] || touch index.js
 
 # Production image
-FROM node:20-bookworm-slim AS runner
+FROM public.ecr.aws/docker/library/node:20-bookworm-slim AS runner
 
 WORKDIR /app
 

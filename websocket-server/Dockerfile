@@ -1,5 +1,5 @@
-# Node 20 - no Nixpacks (avoids NIXPACKS_PATH / Node 18 EOL)
-FROM node:20-bookworm-slim
+# Node 20 — AWS Public ECR mirror of Docker Official Images (avoids Docker Hub IPv6/registry failures on Railway)
+FROM public.ecr.aws/docker/library/node:20-bookworm-slim
 
 WORKDIR /app
 
