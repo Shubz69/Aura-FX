@@ -459,7 +459,8 @@ export default function SurveillancePage() {
             <div className="sv-globe-chrome">
               <span className="sv-globe-chrome-tag">Operating picture</span>
               <p className="sv-globe-chrome-hint">
-                Click countries for sector lens · markers open intelligence detail
+                Scroll to zoom — stars and moon frame the picture when you pull back. Click countries for a sector lens;
+                markers open detail.
               </p>
             </div>
           </div>

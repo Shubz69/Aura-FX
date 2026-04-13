@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useEffect, useState, Suspense, lazy, useCallback } from 'react';
+import * as THREE from 'three';
 import {
   SURV_ISO_CENTROID,
   eventMatchesFocus,
@@ -10,8 +11,9 @@ import {
 
 const Globe = lazy(() => import('react-globe.gl').then((m) => ({ default: m.default })));
 
-/* Pinned build for stable caching; 715KB asset reads sharper than tiny placeholder maps. */
-const GLOBE_TEXTURE = 'https://unpkg.com/three-globe@2.45.2/example/img/earth-night.jpg';
+const GLOBE_BASE = 'https://unpkg.com/three-globe@2.45.2/example/img';
+const GLOBE_TEXTURE = `${GLOBE_BASE}/earth-night.jpg`;
+const NIGHT_SKY_BG = `${GLOBE_BASE}/night-sky.png`;
 
 let neGeoJsonCache = null;
 let neGeoJsonPromise = null;
@@ -115,6 +117,7 @@ export default function SurveillanceGlobe({
   const globeRef = useRef(null);
   const surfacePickAtRef = useRef(0);
   const [dims, setDims] = useState({ w: 320, h: 320 });
+  const [povAltitude, setPovAltitude] = useState(2.48);
   const [pulse, setPulse] = useState(0);
   const [hoveredId, setHoveredId] = useState(null);
   const [globeReveal, setGlobeReveal] = useState(false);
@@ -129,6 +132,29 @@ export default function SurveillanceGlobe({
   }, [focusRegion]);
 
   const centroidLookup = useMemo(() => ({ ...SURV_ISO_CENTROID, ...loadedIsoCentroids }), [loadedIsoCentroids]);
+
+  const moonGeometry = useMemo(() => new THREE.SphereGeometry(0.052, 22, 22), []);
+  const moonMaterial = useMemo(
+    () =>
+      new THREE.MeshPhongMaterial({
+        color: 0xd4d6e8,
+        emissive: 0x080810,
+        shininess: 18,
+        specular: 0x444458,
+      }),
+    []
+  );
+
+  const moonObjectsData = useMemo(() => {
+    if (reducedMotion) return [];
+    if (povAltitude < 1.62) return [];
+    return [{ id: 'moon', lat: 9, lng: -98, alt: 0.88 }];
+  }, [povAltitude, reducedMotion]);
+
+  const objectThreeObject = useCallback(
+    () => new THREE.Mesh(moonGeometry, moonMaterial),
+    [moonGeometry, moonMaterial]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -149,7 +175,8 @@ export default function SurveillanceGlobe({
     const ro = new ResizeObserver((entries) => {
       const cr = entries[0]?.contentRect;
       if (cr && cr.width > 0 && cr.height > 0) {
-        setDims({ w: Math.floor(cr.width), h: Math.floor(cr.height) });
+        const side = Math.floor(Math.min(cr.width, cr.height));
+        setDims({ w: Math.max(side, 200), h: Math.max(side, 200) });
       }
     });
     ro.observe(el);
@@ -171,11 +198,12 @@ export default function SurveillanceGlobe({
       const g = globeRef.current;
       const renderer = g && typeof g.renderer === 'function' ? g.renderer() : null;
       if (renderer && typeof renderer.setPixelRatio === 'function') {
-        const pr = Math.min(2, typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
+        const raw = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+        const pr = Math.min(2.5, Math.max(1, raw));
         renderer.setPixelRatio(pr);
       }
       frames += 1;
-      if (frames < 24 && (!renderer || typeof renderer.setPixelRatio !== 'function')) {
+      if (frames < 28 && (!renderer || typeof renderer.setPixelRatio !== 'function')) {
         requestAnimationFrame(applySharpRenderer);
       }
     };
@@ -195,6 +223,12 @@ export default function SurveillanceGlobe({
     id = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(id);
   }, [reducedMotion]);
+
+  const handleZoom = useCallback((pov) => {
+    if (pov && typeof pov.altitude === 'number' && Number.isFinite(pov.altitude)) {
+      setPovAltitude(pov.altitude);
+    }
+  }, []);
 
   const useHex = !reducedMotion && !focusRegion && events.length > 52;
 
@@ -320,15 +354,18 @@ export default function SurveillanceGlobe({
     const sel = events.find((e) => String(e.id) === String(selectedId));
     if (sel && sel.lat != null && sel.lng != null) {
       g.pointOfView({ lat: sel.lat, lng: sel.lng, altitude: 1.36 }, reducedMotion ? 0 : 1050);
+      setPovAltitude(1.36);
       return;
     }
     const tgt = cameraTargetForFocus(focusRegion, events, centroidLookup);
     if (tgt) {
       const alt = focusIso ? Math.min(tgt.altitude, 1.14) : tgt.altitude;
       g.pointOfView({ ...tgt, altitude: alt }, reducedMotion ? 0 : 1380);
+      setPovAltitude(alt);
       return;
     }
-    g.pointOfView({ lat: 18, lng: -32, altitude: 2.2 }, reducedMotion ? 0 : 640);
+    g.pointOfView({ lat: 16, lng: -38, altitude: 2.48 }, reducedMotion ? 0 : 720);
+    setPovAltitude(2.48);
   }, [events, selectedId, focusRegion, focusIso, reducedMotion, centroidLookup]);
 
   useEffect(() => {
@@ -369,7 +406,9 @@ export default function SurveillanceGlobe({
           ref={globeRef}
           width={dims.w}
           height={dims.h}
-          backgroundColor="rgba(0,0,0,0)"
+          backgroundColor="#03030f"
+          backgroundImageUrl={NIGHT_SKY_BG}
+          waitForGlobeReady
           globeImageUrl={GLOBE_TEXTURE}
           bumpImageUrl={null}
           rendererConfig={{
@@ -378,16 +417,17 @@ export default function SurveillanceGlobe({
             powerPreference: 'high-performance',
           }}
           showAtmosphere
-          atmosphereColor="rgba(175, 198, 255, 0.09)"
-          atmosphereAltitude={reducedMotion ? 0.08 : 0.11}
+          atmosphereColor="rgba(160, 195, 255, 0.14)"
+          atmosphereAltitude={reducedMotion ? 0.09 : 0.13}
           onGlobeClick={handleGlobeClick}
+          onZoom={handleZoom}
           heatmapsData={heatmapLayer}
           heatmapPoints={(d) => d.points}
           heatmapPointLat="lat"
           heatmapPointLng="lng"
           heatmapPointWeight="weight"
-          heatmapBandwidth={1.55}
-          heatmapColorFn={() => 'rgba(234, 169, 96, 0.58)'}
+          heatmapBandwidth={1.45}
+          heatmapColorFn={() => 'rgba(234, 169, 96, 0.52)'}
           heatmapBaseAltitude={0.01}
           heatmapTopAltitude={0.04}
           hexBinPointsData={useHex ? hexPoints : []}
@@ -430,7 +470,7 @@ export default function SurveillanceGlobe({
           pointAltitude="altitude"
           pointLabel="label"
           pointsMerge={false}
-          pointResolution={reducedMotion ? 8 : 12}
+          pointResolution={reducedMotion ? 10 : 16}
           onPointClick={(pt) => {
             markSurfacePick();
             if (pt && pt.eventId) onSelectEvent(pt.eventId);
@@ -438,6 +478,12 @@ export default function SurveillanceGlobe({
           onPointHover={(pt) => {
             setHoveredId(pt && pt.eventId ? pt.eventId : null);
           }}
+          objectsData={moonObjectsData}
+          objectLat="lat"
+          objectLng="lng"
+          objectAltitude="alt"
+          objectThreeObject={objectThreeObject}
+          objectsTransitionDuration={reducedMotion ? 0 : 400}
         />
       </Suspense>
     </div>

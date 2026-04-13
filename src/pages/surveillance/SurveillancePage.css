@@ -82,10 +82,11 @@
 }
 
 .sv-terminal-sub {
-  margin: 2px 0 0;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.38);
-  letter-spacing: 0.06em;
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.58);
+  letter-spacing: 0.04em;
+  line-height: 1.35;
 }
 
 .sv-terminal-metrics {
@@ -105,14 +106,14 @@
 
 .sv-terminal-chip-label {
   display: block;
-  font-size: 0.58rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .sv-terminal-chip-value {
-  font-size: 0.92rem;
+  font-size: 1.02rem;
   font-weight: 600;
   color: #f8c37d;
   font-variant-numeric: tabular-nums;
@@ -127,9 +128,9 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 14px;
-  padding: 6px 16px;
-  font-size: 0.68rem;
-  color: rgba(255, 255, 255, 0.45);
+  padding: 8px 18px;
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.62);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   background: rgba(0, 0, 0, 0.18);
 }
@@ -163,8 +164,8 @@
   flex: 1;
   display: grid;
   grid-template-columns: 1fr var(--sv-terminal-rail);
-  min-height: min(78vh, 920px);
-  max-height: min(88vh, 1000px);
+  min-height: min(72vh, 880px);
+  max-height: min(92vh, 1080px);
   align-items: stretch;
 }
 
@@ -182,11 +183,14 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   min-height: 0;
+  padding: 12px 10px 14px;
   border-right: 1px solid rgba(255, 255, 255, 0.045);
   background:
-    radial-gradient(ellipse 88% 72% at 50% 38%, rgba(32, 36, 48, 0.5), transparent 58%),
-    linear-gradient(165deg, #0a0b10 0%, #050506 55%, #030304 100%);
+    radial-gradient(ellipse 92% 88% at 50% 50%, rgba(22, 26, 42, 0.55), transparent 62%),
+    linear-gradient(165deg, #06070e 0%, #03040a 55%, #020208 100%);
 }
 
 @media (max-width: 960px) {
@@ -220,8 +224,10 @@
 
 .sv-globe-chrome-hint {
   margin: 0;
-  font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.58);
+  max-width: 52ch;
 }
 
 .sv-command-rail.sv-intel-panel {
@@ -434,18 +440,18 @@
 }
 
 .sv-rail-chrome-title {
-  font-size: 0.58rem;
+  font-size: 0.62rem;
   font-weight: 600;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(248, 195, 125, 0.78);
+  color: rgba(248, 195, 125, 0.88);
 }
 
 .sv-rail-chrome-meta {
-  font-size: 0.55rem;
-  letter-spacing: 0.12em;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.42);
 }
 
 .sv-intel-rail--lensed {
@@ -601,8 +607,8 @@
 }
 
 .sv-rail-section-kicker {
-  font-size: 0.58rem;
-  color: rgba(255, 255, 255, 0.28);
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.42);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -638,23 +644,23 @@
 }
 
 .sv-rail-row-eyebrow {
-  font-size: 0.58rem;
+  font-size: 0.62rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.32);
+  color: rgba(255, 255, 255, 0.48);
 }
 
 .sv-rail-row-title {
-  font-size: 0.8rem;
-  line-height: 1.35;
-  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.95);
   letter-spacing: 0.01em;
 }
 
 .sv-rail-row-meta {
-  font-size: 0.62rem;
-  color: rgba(255, 255, 255, 0.32);
-  letter-spacing: 0.04em;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.48);
+  letter-spacing: 0.03em;
 }
 
 .sv-rail-row-ledger {
@@ -669,10 +675,10 @@
 }
 
 .sv-rail-empty {
-  padding: 5px 0 3px;
-  font-size: 0.68rem;
-  line-height: 1.35;
-  color: rgba(255, 255, 255, 0.3);
+  padding: 8px 0 4px;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.48);
 }
 
 .sv-rail-heat {
@@ -1022,14 +1028,14 @@
 }
 
 .sv-tab {
-  padding: 8px 12px;
+  padding: 9px 14px;
   border-radius: 8px;
   border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 0.72rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   cursor: pointer;
 }
 
@@ -1081,9 +1087,14 @@
 
 .sv-globe-panel {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
   min-height: 0;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
   border: none;
   border-radius: 0;
   background: transparent;
@@ -1092,21 +1103,31 @@
 .sv-globe-wrap {
   position: relative;
   z-index: 0;
-  width: 100%;
-  height: 100%;
-  min-height: min(62vh, 720px);
+  width: min(100%, min(76vh, 92vw));
+  max-width: min(900px, calc(100vw - 320px));
+  aspect-ratio: 1;
+  height: auto;
+  margin: 0 auto;
+  flex-shrink: 0;
   transition: opacity 0.34s var(--sv-ease-out), filter 0.34s ease;
 }
 
 .sv-globe-wrap--countries .sv-globe-vignette {
   box-shadow:
-    inset 0 0 100px rgba(0, 0, 0, 0.55),
-    inset 0 -40px 70px rgba(248, 195, 125, 0.04);
+    inset 0 0 72px rgba(0, 0, 0, 0.45),
+    inset 0 -32px 56px rgba(248, 195, 125, 0.03);
+}
+
+@media (max-width: 960px) {
+  .sv-globe-wrap {
+    width: min(100%, 88vw);
+    max-width: none;
+  }
 }
 
 @media (max-width: 600px) {
   .sv-globe-wrap {
-    min-height: 280px;
+    width: min(100%, 92vw);
   }
 }
 
@@ -1408,8 +1429,8 @@
   flex-wrap: nowrap;
   align-items: center;
   gap: 8px 10px;
-  padding: 7px 10px;
-  font-size: 0.8rem;
+  padding: 9px 12px;
+  font-size: 0.86rem;
 }
 
 .sv-event-list--tape .sv-sev {
@@ -1447,15 +1468,15 @@
 .sv-event-list--tape .sv-ev-title {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 0.8rem;
+  font-size: 0.86rem;
 }
 
 .sv-event-list--tape .sv-ev-src {
   flex: 0 0 clamp(72px, 16vw, 104px);
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 0.72rem;
-  opacity: 0.68;
+  font-size: 0.76rem;
+  opacity: 0.78;
 }
 
 @media (max-width: 720px) {
@@ -2510,8 +2531,8 @@
   z-index: 1;
   border-radius: inherit;
   box-shadow:
-    inset 0 0 48px rgba(0, 0, 0, 0.42),
-    inset 0 -24px 40px rgba(248, 195, 125, 0.02);
+    inset 0 0 40px rgba(0, 0, 0, 0.32),
+    inset 0 -20px 36px rgba(248, 195, 125, 0.02);
 }
 
 .sv-globe-wrap--ready {
