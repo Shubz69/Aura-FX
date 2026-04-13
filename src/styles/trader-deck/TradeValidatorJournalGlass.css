@@ -651,7 +651,7 @@
 /* Wider center column (chart); slightly tighter side rails */
 .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact {
   width: 100%;
-  grid-template-columns: minmax(200px, 0.26fr) minmax(0, 1.12fr) minmax(200px, 0.26fr) !important;
+  grid-template-columns: minmax(188px, 0.2fr) minmax(0, 1.24fr) minmax(188px, 0.22fr) !important;
   gap: 6px 8px !important;
   padding: 6px 0 8px !important;
   min-height: 0 !important;
