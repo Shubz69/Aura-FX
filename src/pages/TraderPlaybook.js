@@ -12,6 +12,7 @@ import {
   summarizeJournalTrades,
   ruleBasedInsights,
   computeExecutionBreakdowns,
+  computeExecutionBreakdownsTaggedAll,
   summarizeMissedPatterns,
 } from '../lib/trader-playbook/analyticsClient';
 import {
@@ -97,6 +98,61 @@ function fmtDt(iso) {
   return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+function fmtShortDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso).slice(0, 10);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+const DOW_CHART_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DOW_AXIS_LABEL = { Mon: 'Mo', Tue: 'Tu', Wed: 'We', Thu: 'Th', Fri: 'Fr', Sat: 'Sa', Sun: 'Su' };
+
+function countPlaybookExecutionsThisMonth(vTrades, jTrades, playbookId) {
+  if (!playbookId) return 0;
+  const now = new Date();
+  const y = now.getFullYear();
+  const mo = now.getMonth();
+  const inMonth = (iso) => {
+    const d = iso ? new Date(iso) : null;
+    return d && !Number.isNaN(d.getTime()) && d.getFullYear() === y && d.getMonth() === mo;
+  };
+  let n = 0;
+  (vTrades || []).forEach((t) => {
+    if (
+      t.playbookSetupId === playbookId &&
+      String(t.setupTagType || '').toUpperCase() === 'PLAYBOOK' &&
+      inMonth(t.createdAt)
+    ) {
+      n += 1;
+    }
+  });
+  (jTrades || []).forEach((t) => {
+    if (
+      t.playbookSetupId === playbookId &&
+      String(t.setupTagType || '').toUpperCase() === 'PLAYBOOK' &&
+      inMonth(t.date)
+    ) {
+      n += 1;
+    }
+  });
+  return n;
+}
+
+/** Turn freeform overview / rule text into short bullet lines (no fabrication). */
+function bulletListFromText(raw, maxItems = 7) {
+  if (!raw || !String(raw).trim()) return [];
+  const t = String(raw).replace(/\r\n/g, '\n').trim();
+  const byBullet = t
+    .split(/\n+/)
+    .map((s) => s.replace(/^\s*[•\-*]\s*/, '').trim())
+    .filter(Boolean);
+  if (byBullet.length > 1) return byBullet.slice(0, maxItems);
+  const bySemi = t.split(/;+/).map((s) => s.trim()).filter(Boolean);
+  if (bySemi.length > 1) return bySemi.slice(0, maxItems);
+  return t.length > 200 ? [clipText(t, 240)] : [t];
+}
+
 const CHECKLIST_THRESHOLD = 0.85;
 
 const CHECKLIST_READINESS = {
@@ -138,11 +194,21 @@ export default function TraderPlaybook() {
   const [checklistMode, setChecklistMode] = useState('builder');
   const [checklistTick, setChecklistTick] = useState({});
   const manageMenuRef = useRef(null);
+  const viewRef = useRef(view);
+  viewRef.current = view;
 
-  const loadCore = useCallback(async ({ showLoading = true } = {}) => {
+  const loadCore = useCallback(async ({ showLoading = true, hubTradeSamples = false } = {}) => {
     if (showLoading) setLoading(true);
     try {
-      const [sr, sumr] = await Promise.allSettled([Api.getTraderPlaybookSetups(), Api.getTraderPlaybookSummary()]);
+      const onHub = viewRef.current === 'hub' || hubTradeSamples;
+      const settled = await Promise.allSettled([
+        Api.getTraderPlaybookSetups(),
+        Api.getTraderPlaybookSummary(),
+        Api.getAuraAnalysisTrades({}),
+        Api.getJournalTrades({}),
+        ...(onHub ? [Api.getTraderPlaybookMTrades({})] : []),
+      ]);
+      const [sr, sumr, vr, jr, mr] = settled;
       if (sr.status === 'fulfilled' && sr.value?.data?.setups) {
         setSetups(sr.value.data.setups.map((s) => normalizeSetup(s)));
       } else {
@@ -152,6 +218,11 @@ export default function TraderPlaybook() {
         setSummary(sumr.value.data.summary);
       } else {
         setSummary(null);
+      }
+      if (vr.status === 'fulfilled' && Array.isArray(vr.value?.data?.trades)) setVTrades(vr.value.data.trades);
+      if (jr.status === 'fulfilled' && Array.isArray(jr.value?.data?.trades)) setJTrades(jr.value.data.trades);
+      if (onHub && mr && mr.status === 'fulfilled' && Array.isArray(mr.value?.data?.mTrades)) {
+        setMTrades(mr.value.data.mTrades);
       }
     } catch {
       toast.error('Could not load playbook data');
@@ -376,32 +447,62 @@ export default function TraderPlaybook() {
     return list;
   }, [setups, search, sortKey, hubFilter]);
 
-  const hubStats = useMemo(() => {
-    if (loading) return [];
-    if (!summary) return [];
-    const bs = summary.playbooksByStatus || {};
-    return [
-      { label: 'Playbooks', value: String(summary.playbooksTotal ?? 0), metricId: MID.PLAYBOOKS_TOTAL },
-      { label: 'Active', value: String(bs.active ?? summary.playbooksActive ?? 0), metricId: MID.PLAYBOOKS_ACTIVE },
-      { label: 'Drafts', value: String(bs.draft ?? 0), metricId: MID.PLAYBOOKS_DRAFT },
-      { label: METRIC_LABEL.ON_BOOK_EXECUTIONS, value: String(summary.taggedTrades ?? 0), metricId: MID.ON_BOOK_EXECUTIONS_GLOBAL },
-      { label: `${METRIC_LABEL.OFF_PLAN} (count)`, value: String(summary.noSetupTrades ?? 0), metricId: MID.OFF_PLAN_EXECUTIONS_GLOBAL },
-      { label: METRIC_LABEL.MISSED_LOG, value: String(summary.missedTrades ?? 0), metricId: MID.MISSED_LOG },
-      {
-        label: 'Leading setup',
-        value: summary.bestPlaybook?.name?.slice(0, 26) || '—',
-        tone: 'green',
-        metricId: MID.LEADING_SETUP,
-      },
-      { label: 'Win rate (book-wide)', value: fmtPct(summary.globalWinRate), tone: 'gold', metricId: MID.GLOBAL_WIN_RATE },
-      {
-        label: `${METRIC_LABEL.PROFIT_FACTOR} (book-wide)`,
-        value: fmtPF(summary.globalProfitFactor),
-        tone: 'gold',
-        metricId: MID.GLOBAL_PROFIT_FACTOR,
-      },
-    ];
-  }, [summary, loading]);
+  const hubVSum = useMemo(() => summarizeValidatorTrades(vTrades, null, { allTaggedPlaybooks: true }), [vTrades]);
+  const hubJSum = useMemo(() => summarizeJournalTrades(jTrades, null, { allTaggedPlaybooks: true }), [jTrades]);
+  const hubBreakdown = useMemo(() => computeExecutionBreakdownsTaggedAll(vTrades, jTrades), [vTrades, jTrades]);
+  const hubMPatternsAll = useMemo(() => summarizeMissedPatterns(mTrades, null), [mTrades]);
+  const hubInsights = useMemo(
+    () =>
+      ruleBasedInsights({
+        validatorSummary: hubVSum,
+        journalSummary: hubJSum,
+        globalSummary: summary,
+        mPatterns: hubMPatternsAll,
+        breakdowns: hubBreakdown,
+        playbookName: '',
+      }),
+    [hubVSum, hubJSum, summary, hubMPatternsAll, hubBreakdown]
+  );
+
+  const hubTopIssues = useMemo(() => {
+    const { hurting = [], refine = [], working = [] } = hubInsights;
+    return [...hurting, ...refine, ...working].slice(0, 5);
+  }, [hubInsights]);
+
+  const hubSpotlightPlaybookId = useMemo(() => {
+    const rows = setups.filter((s) => {
+      const st = String(s.status || 'active').toLowerCase();
+      return st !== 'draft' && st !== 'archived';
+    });
+    const pool = rows.length ? rows : setups;
+    if (!pool.length) return null;
+    return [...pool].sort((a, b) => String(b.lastUsedAt || '').localeCompare(String(a.lastUsedAt || '')))[0].id;
+  }, [setups]);
+
+  const playbookNameById = useMemo(() => {
+    const m = {};
+    (setups || []).forEach((s) => {
+      if (s?.id) m[s.id] = s.name || 'Playbook';
+    });
+    return m;
+  }, [setups]);
+
+  const hubRecentMissed = useMemo(() => {
+    return [...(mTrades || [])]
+      .sort((a, b) => String(b.occurredAt || b.createdAt || '').localeCompare(String(a.occurredAt || a.createdAt || '')))
+      .slice(0, 8);
+  }, [mTrades]);
+
+  const hubDisciplineInsight = useMemo(() => {
+    const disc = summary || {};
+    if (disc.processGapLabel) return disc.processGapLabel;
+    const ns = disc.noSetupRate;
+    const classified = (disc.taggedTrades ?? 0) + (disc.noSetupTrades ?? 0);
+    if (ns != null && classified >= 8 && ns >= 0.12) {
+      return `Discipline pressure — ${(ns * 100).toFixed(0)}% of classified executions are ${METRIC_LABEL.OFF_PLAN.toLowerCase()}.`;
+    }
+    return null;
+  }, [summary]);
 
   const vSum = useMemo(() => summarizeValidatorTrades(vTrades, selectedId), [vTrades, selectedId]);
   const jSum = useMemo(() => summarizeJournalTrades(jTrades, selectedId), [jTrades, selectedId]);
@@ -537,46 +638,31 @@ export default function TraderPlaybook() {
     }
   };
 
-  const hubPrimary = (
-    <>
-      <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={startNewWizard}>
-        New playbook
-      </button>
-      <button type="button" className="trader-suite-btn" onClick={() => openTagDrawer()}>
-        Classify trades
-      </button>
-      <button type="button" className="trader-suite-btn" onClick={() => setDrawer('missed')}>
-        Log missed setup
-      </button>
-      <button
-        type="button"
-        className="trader-suite-btn"
-        onClick={() => {
-          if (!setups.length) {
-            toast.info('Create a playbook first to view analytics in context.');
-            return;
-          }
-          const active = setups.find((s) => String(s.status || 'active').toLowerCase() !== 'archived') || setups[0];
-          openDetail(active.id, 'analytics');
-        }}
-      >
-        View analytics
-      </button>
-    </>
-  );
+  const openHubAnalytics = () => {
+    const active = setups.find((s) => String(s.status || 'active').toLowerCase() !== 'archived') || setups[0];
+    if (!active) {
+      toast.info('Create a playbook first to view analytics in context.');
+      return;
+    }
+    openDetail(active.id, 'analytics');
+  };
 
   const renderHub = () => {
     if (loading) {
       return (
         <div className="tp-root tp-root--loading" aria-busy="true" aria-label="Loading playbooks">
-          <div className="tp-skeleton tp-skeleton--strip" />
-          <div className="tp-skeleton tp-skeleton--toolbar" />
-          <div className="tp-playbook-grid tp-playbook-grid--hub">
-            <div className="tp-skeleton tp-skeleton--card" />
-            <div className="tp-skeleton tp-skeleton--card" />
-            <div className="tp-skeleton tp-skeleton--card" />
+          <div className="tp-hub-skel-strip">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className="tp-skeleton tp-skeleton--hub-stat" />
+            ))}
           </div>
-          <p className="tp-loading-caption">Loading library and discipline metrics…</p>
+          <div className="tp-skeleton tp-skeleton--insight" />
+          <div className="tp-hub-command-grid tp-hub-command-grid--skeleton">
+            <div className="tp-skeleton tp-skeleton--hub-col" />
+            <div className="tp-skeleton tp-skeleton--hub-col" />
+            <div className="tp-skeleton tp-skeleton--hub-col" />
+          </div>
+          <p className="tp-loading-caption">Loading playbooks and execution sample…</p>
         </div>
       );
     }
@@ -585,180 +671,356 @@ export default function TraderPlaybook() {
     const tagPct = disc.disciplineTaggedVsAll != null ? fmtPct(disc.disciplineTaggedVsAll) : '—';
     const noSetupPct = disc.noSetupRate != null ? fmtPct(disc.noSetupRate) : '—';
     const adhere = disc.adherenceRate != null ? fmtPct(disc.adherenceRate) : '—';
+    const taggedN = disc.taggedTrades ?? 0;
+    const noSetupN = disc.noSetupTrades ?? 0;
+    const classifiedPair = taggedN + noSetupN > 0 ? `${taggedN} / ${taggedN + noSetupN}` : '—';
+    const dowMap = Object.fromEntries(hubBreakdown.byDow || []);
+    const dowMax = Math.max(1, ...DOW_CHART_ORDER.map((d) => dowMap[d] || 0));
+    const vb = disc.validatorBreakdown || {};
+    const jb = disc.journalBreakdown || {};
+    const onBookV = vb.tagged ?? 0;
+    const onBookJ = jb.tagged ?? 0;
+    const onBookSplitDen = Math.max(1, onBookV + onBookJ);
+    const totalRollup = (vb.sampleSize ?? 0) + (jb.sampleSize ?? 0);
+    const classifiedBook = taggedN + noSetupN + (disc.unclassifiedTrades ?? 0);
 
     return (
-      <div className="tp-root">
-        <section className="tp-discipline-strip" aria-label="Discipline overview">
-          <div className="tp-discipline-strip__intro">
-            <span className="tp-discipline-strip__title">Process &amp; discipline</span>
-            <p className="tp-discipline-strip__desc">
-              Every fill is either on a defined playbook or it is process noise. Classify validator and journal rows so win rate and expectancy
-              describe your real behaviour — not your best days.
-            </p>
+      <div className="tp-root tp-root--hub">
+        <section className="tp-hub-discipline-strip" aria-label="Discipline overview">
+          <div className="tp-hub-discipline-cards">
+            <div className="tp-panel tp-hub-disc-card tp-hub-disc-card--onbook">
+              <span className="tp-hub-disc-card__label">
+                <MetricLabel metricId={MID.ON_BOOK_SHARE_CLASSIFIED}>On-book</MetricLabel>
+              </span>
+              <strong className="tp-hub-disc-card__value">{adhere}</strong>
+              <small className="tp-hub-disc-card__hint">{METRIC_LABEL.ON_BOOK_EXECUTIONS} · {classifiedPair}</small>
+              {disc.adherenceRate != null ? (
+                <div className="tp-hub-microbar tp-hub-microbar--green" aria-hidden>
+                  <span style={{ width: `${Math.min(100, Math.round(disc.adherenceRate * 100))}%` }} />
+                </div>
+              ) : null}
+            </div>
+            <div className="tp-panel tp-hub-disc-card tp-hub-disc-card--offplan">
+              <span className="tp-hub-disc-card__label">
+                <MetricLabel metricId={MID.OFF_PLAN_RATE_CLASSIFIED}>{METRIC_LABEL.OFF_PLAN}</MetricLabel>
+              </span>
+              <strong className="tp-hub-disc-card__value">{noSetupPct}</strong>
+              <small className="tp-hub-disc-card__hint">of classified executions</small>
+              {disc.noSetupRate != null ? (
+                <div className="tp-hub-microbar tp-hub-microbar--red" aria-hidden>
+                  <span style={{ width: `${Math.min(100, Math.round(disc.noSetupRate * 100))}%` }} />
+                </div>
+              ) : null}
+            </div>
+            <div className="tp-panel tp-hub-disc-card tp-hub-disc-card--missed">
+              <span className="tp-hub-disc-card__label">
+                <MetricLabel metricId={MID.MISSED_LOG}>Missed</MetricLabel>
+              </span>
+              <strong className="tp-hub-disc-card__value">{disc.missedTrades ?? 0}</strong>
+              <small className="tp-hub-disc-card__hint">logged setups</small>
+            </div>
+            <div className="tp-panel tp-hub-disc-card tp-hub-disc-card--coverage">
+              <span className="tp-hub-disc-card__label">
+                <MetricLabel metricId={MID.CLASSIFICATION_COVERAGE}>Coverage</MetricLabel>
+              </span>
+              <strong className="tp-hub-disc-card__value">{tagPct}</strong>
+              <small className="tp-hub-disc-card__hint">on-book vs full rollup</small>
+              {disc.disciplineTaggedVsAll != null ? (
+                <div className="tp-hub-microbar tp-hub-microbar--blue" aria-hidden>
+                  <span style={{ width: `${Math.min(100, Math.round(disc.disciplineTaggedVsAll * 100))}%` }} />
+                </div>
+              ) : null}
+            </div>
+            <div className="tp-panel tp-hub-disc-card tp-hub-disc-card--best">
+              <span className="tp-hub-disc-card__label">
+                <MetricLabel metricId={MID.LEADING_SETUP}>Best playbook</MetricLabel>
+              </span>
+              <strong className="tp-hub-disc-card__value tp-hub-disc-card__value--text">{disc.bestPlaybook?.name?.slice(0, 28) || '—'}</strong>
+              <small className="tp-hub-disc-card__hint">by sample expectancy</small>
+            </div>
           </div>
-          <div className="tp-discipline-strip__metrics">
-            <div className="tp-disc-metric">
-              <span>
-                <MetricLabel metricId={MID.ON_BOOK_SHARE_CLASSIFIED}>On-book share (classified)</MetricLabel>
-              </span>
-              <strong>{adhere}</strong>
-              <small>on-book ÷ (on-book + off-plan); unclassified excluded</small>
-            </div>
-            <div className="tp-disc-metric">
-              <span>
-                <MetricLabel metricId={MID.CLASSIFICATION_COVERAGE}>Classification coverage</MetricLabel>
-              </span>
-              <strong>{tagPct}</strong>
-              <small>on-book ÷ all rows in validator + journal rollup</small>
-            </div>
-            <div className="tp-disc-metric tp-disc-metric--alert">
-              <span>
-                <MetricLabel metricId={MID.OFF_PLAN_RATE_CLASSIFIED}>Off-plan rate (classified)</MetricLabel>
-              </span>
-              <strong>{noSetupPct}</strong>
-              <small>off-plan ÷ (on-book + off-plan)</small>
-            </div>
-            <div className="tp-disc-metric">
-              <span>
-                <MetricLabel metricId={MID.UNCLASSIFIED}>{METRIC_LABEL.UNCLASSIFIED}</MetricLabel>
-              </span>
-              <strong>{disc.unclassifiedTrades ?? 0}</strong>
-              <small>still unknown in the book — tag or mark off-plan</small>
-            </div>
-            <div className="tp-disc-metric">
-              <span>
-                <MetricLabel metricId={MID.MISSED_LOG}>Missed / mis-execution log</MetricLabel>
-              </span>
-              <strong>{disc.missedTrades ?? 0}</strong>
-              <small>logged opportunities for review</small>
-            </div>
-            <div className="tp-disc-metric">
-              <span>
-                <MetricLabel metricId={MID.LEADING_SETUP}>Leading setup</MetricLabel>
-              </span>
-              <strong className="tp-disc-metric__ellipsis">{disc.bestPlaybook?.name?.slice(0, 22) || '—'}</strong>
-              <small>by expectancy in current sample</small>
-            </div>
-          </div>
-          {disc.processGapLabel ? <p className="tp-process-gap">{disc.processGapLabel}</p> : null}
-          {processCostHint ? <p className="tp-process-gap tp-process-gap--hint">{processCostHint}</p> : null}
+          {hubDisciplineInsight ? <p className="tp-hub-discipline-insight">{hubDisciplineInsight}</p> : null}
+          {hubDisciplineInsight ? null : processCostHint ? <p className="tp-hub-discipline-insight tp-hub-discipline-insight--muted">{processCostHint}</p> : null}
         </section>
 
-        <div className="tp-hub-section-label">Library</div>
-        <div className="tp-toolbar tp-toolbar--elevated">
-          <input
-            className="tp-search"
-            placeholder="Find a playbook…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label="Search playbooks"
-          />
-          <select className="trader-suite-select" value={hubFilter} onChange={(e) => setHubFilter(e.target.value)} aria-label="Filter by status">
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="draft">Drafts</option>
-            <option value="archived">Archived</option>
-          </select>
-          <select className="trader-suite-select" value={sortKey} onChange={(e) => setSortKey(e.target.value)} aria-label="Sort playbooks">
-            <option value="updated">Recently updated</option>
-            <option value="lastUsed">Last used</option>
-            <option value="name">Name A–Z</option>
-          </select>
-        </div>
+        <div className="tp-hub-command-grid">
+          <div className="tp-hub-col tp-hub-col--left">
+            <div className="tp-hub-col-head">
+              <span className="tp-kicker">Your playbooks</span>
+            </div>
+            <div className="tp-toolbar tp-toolbar--elevated tp-toolbar--hub">
+              <input
+                className="tp-search"
+                placeholder="Find a playbook…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                aria-label="Search playbooks"
+              />
+              <select className="trader-suite-select" value={hubFilter} onChange={(e) => setHubFilter(e.target.value)} aria-label="Filter by status">
+                <option value="all">All statuses</option>
+                <option value="active">Active</option>
+                <option value="draft">Drafts</option>
+                <option value="archived">Archived</option>
+              </select>
+              <select className="trader-suite-select" value={sortKey} onChange={(e) => setSortKey(e.target.value)} aria-label="Sort playbooks">
+                <option value="updated">Recently updated</option>
+                <option value="lastUsed">Last used</option>
+                <option value="name">Name A–Z</option>
+              </select>
+            </div>
 
-        <div className="tp-playbook-grid tp-playbook-grid--hub">
-          <button
-            type="button"
-            className="tp-discipline-panel"
-            onClick={() => setDrawer('noSetup')}
-          >
-            <div className="tp-discipline-panel__label">Behavioural book</div>
-            <h3 className="tp-discipline-panel__title">Off-plan executions &amp; discipline</h3>
-            <p className="tp-discipline-panel__body">
-              <strong>{summary?.noSetupTrades ?? 0}</strong> classified off-plan · <strong>{summary?.missedTrades ?? 0}</strong> missed logged ·{' '}
-              <strong>{summary?.unclassifiedTrades ?? 0}</strong> still open in the log
-            </p>
-            <span className="tp-discipline-panel__cta">Inspect off-plan rows</span>
-          </button>
+            <div className="tp-hub-playbook-stack">
+              {filteredSetups.map((s) => {
+                const pm = metricsByPlaybook[s.id] || {};
+                const pmClosed = (pm.wins || 0) + (pm.losses || 0) + (pm.breakevens || 0);
+                const st = (s.status || 'active').toLowerCase();
+                const assetChips = (s.assets || '')
+                  .split(',')
+                  .map((x) => x.trim())
+                  .filter(Boolean)
+                  .slice(0, 4);
+                const isSpotlight = hubSpotlightPlaybookId && s.id === hubSpotlightPlaybookId;
+                const wrBar = pm.winRate != null ? Math.round(pm.winRate * 100) : 0;
+                return (
+                  <article
+                    key={s.id}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openDetail(s.id);
+                      }
+                    }}
+                    className={`tp-playbook-card tp-playbook-card--${st} tp-playbook-card--hub${isSpotlight ? ' tp-playbook-card--hub-spotlight' : ''}`}
+                    onClick={() => openDetail(s.id)}
+                  >
+                    <div className="tp-playbook-card__head">
+                      <span className="tp-playbook-card__badge" style={{ color: s.color || undefined }} aria-hidden>
+                        {s.icon || '📘'}
+                      </span>
+                      <span className={`tp-pill tp-pill--status-${st === 'archived' ? 'archived' : st === 'draft' ? 'draft' : 'active'}`}>
+                        {st === 'archived' ? 'Archived' : st === 'draft' ? 'Draft' : 'Active'}
+                      </span>
+                    </div>
+                    <h3 className="tp-playbook-card__title">{s.name}</h3>
+                    <div className="tp-playbook-card__meta">
+                      {[s.setupType, s.marketType, s.session].filter(Boolean).join(' · ') || 'Complete context in Rules'}
+                    </div>
+                    <div className="tp-playbook-card__timestamps">
+                      <span>Updated {fmtDt(s.updatedAt)}</span>
+                      <span>Last used {fmtDt(s.lastUsedAt)}</span>
+                    </div>
+                    <div className="tp-pill-row">
+                      {(assetChips.length ? assetChips : ['Define assets']).map((x, i) => (
+                        <span key={`${s.id}-chip-${i}`} className="tp-pill tp-pill--asset">
+                          {x}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="tp-metrics-grid tp-metrics-grid--prior tp-metrics-grid--hub-tight">
+                      <div className="tp-metric-priority">
+                        <span>
+                          <MetricLabel metricId={MID.WIN_RATE_PLAYBOOK}>{METRIC_LABEL.WIN_RATE}</MetricLabel>
+                          {pmClosed > 0 ? <span className="tp-metric-sample"> · {pmClosed}</span> : null}
+                        </span>
+                        <strong>{pm.winRate != null ? fmtPct(pm.winRate) : '—'}</strong>
+                      </div>
+                      <div>
+                        <span>
+                          <MetricLabel metricId={MID.PROFIT_FACTOR_PLAYBOOK}>{METRIC_LABEL.PROFIT_FACTOR} (V)</MetricLabel>
+                        </span>
+                        <strong>{fmtPF(pm.profitFactor)}</strong>
+                      </div>
+                      <div>
+                        <span>
+                          <MetricLabel metricId={MID.ON_BOOK_EXECUTIONS_PLAYBOOK}>{METRIC_LABEL.ON_BOOK_EXECUTIONS}</MetricLabel>
+                        </span>
+                        <strong>{pm.taggedTrades ?? 0}</strong>
+                      </div>
+                    </div>
+                    {pm.winRate != null ? (
+                      <div className="tp-hub-wr-hint" aria-hidden>
+                        <span style={{ width: `${wrBar}%` }} />
+                      </div>
+                    ) : null}
+                    <div className="tp-card-actions tp-card-actions--split" onClick={(e) => e.stopPropagation()}>
+                      <div className="tp-card-actions__primary">
+                        <button type="button" className="tp-btn-ghost tp-btn-ghost--emphasis" onClick={() => openDetail(s.id)}>
+                          Open playbook
+                        </button>
+                      </div>
+                      <div className="tp-card-actions__menu">
+                        <button type="button" className="tp-btn-ghost" onClick={() => duplicatePlaybook(s.id)}>
+                          Duplicate
+                        </button>
+                        <button type="button" className="tp-btn-ghost" onClick={() => archivePlaybook(s.id)}>
+                          Archive
+                        </button>
+                        <button type="button" className="tp-btn-ghost tp-btn-ghost--danger" onClick={() => deletePlaybook(s.id)}>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
 
-          {filteredSetups.map((s) => {
-            const pm = metricsByPlaybook[s.id] || {};
-            const pmClosed = (pm.wins || 0) + (pm.losses || 0) + (pm.breakevens || 0);
-            const st = (s.status || 'active').toLowerCase();
-            const assetChips = (s.assets || '')
-              .split(',')
-              .map((x) => x.trim())
-              .filter(Boolean)
-              .slice(0, 4);
-            return (
-              <article key={s.id} className={`tp-playbook-card tp-playbook-card--${st}`}>
-                <div className="tp-playbook-card__head">
-                  <span className="tp-playbook-card__badge" style={{ color: s.color || undefined }} aria-hidden>
-                    {s.icon || '📘'}
+            <div className="tp-hub-col-cta">
+              <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={startNewWizard}>
+                New playbook
+              </button>
+              <button type="button" className="trader-suite-btn" onClick={() => openTagDrawer()}>
+                Classify trades
+              </button>
+              <button type="button" className="trader-suite-btn" onClick={() => setDrawer('missed')}>
+                Log missed setup
+              </button>
+            </div>
+          </div>
+
+          <div className="tp-hub-col tp-hub-col--mid">
+            <div className="tp-hub-col-head">
+              <span className="tp-kicker">Performance</span>
+            </div>
+            <div className="tp-panel tp-hub-mid-card">
+              <div className="tp-hub-mid-metrics">
+                <div>
+                  <span className="tp-hub-mid-k">
+                    <MetricLabel metricId={MID.GLOBAL_WIN_RATE}>{METRIC_LABEL.WIN_RATE}</MetricLabel> (book-wide)
                   </span>
-                  <span className={`tp-pill tp-pill--status-${st === 'archived' ? 'archived' : st === 'draft' ? 'draft' : 'active'}`}>
-                    {st === 'archived' ? 'Archived' : st === 'draft' ? 'Draft' : 'Active'}
+                  <strong>{fmtPct(disc.globalWinRate)}</strong>
+                </div>
+                <div>
+                  <span className="tp-hub-mid-k">
+                    <MetricLabel metricId={MID.GLOBAL_PROFIT_FACTOR}>{METRIC_LABEL.PROFIT_FACTOR}</MetricLabel> (V, book-wide)
                   </span>
+                  <strong>{fmtPF(disc.globalProfitFactor)}</strong>
                 </div>
-                <h3 className="tp-playbook-card__title">{s.name}</h3>
-                <div className="tp-playbook-card__meta">
-                  {[s.setupType, s.marketType, s.session].filter(Boolean).join(' · ') || 'Complete context in Rules'}
+              </div>
+              <div className="tp-hub-mid-divider" />
+              <div className="tp-hub-mid-metrics tp-hub-mid-metrics--compact">
+                <div>
+                  <span className="tp-hub-mid-k">
+                    <MetricLabel metricId={MID.OFF_PLAN_RATE_CLASSIFIED}>{METRIC_LABEL.OFF_PLAN}</MetricLabel>
+                  </span>
+                  <strong>{noSetupPct}</strong>
                 </div>
-                <div className="tp-playbook-card__timestamps">
-                  <span>Updated {fmtDt(s.updatedAt)}</span>
-                  <span>Last used {fmtDt(s.lastUsedAt)}</span>
+                <div>
+                  <span className="tp-hub-mid-k">
+                    <MetricLabel metricId={MID.MISSED_LOG}>Missed</MetricLabel>
+                  </span>
+                  <strong>{disc.missedTrades ?? 0}</strong>
                 </div>
-                <div className="tp-pill-row">
-                  {(assetChips.length ? assetChips : ['Define assets']).map((x, i) => (
-                    <span key={`${s.id}-chip-${i}`} className="tp-pill tp-pill--asset">
-                      {x}
-                    </span>
+              </div>
+              <button type="button" className="tp-hub-link-analytics tp-inline-link" onClick={openHubAnalytics}>
+                Open performance tab
+              </button>
+            </div>
+
+            <div className="tp-hub-col-head tp-hub-col-head--tight">
+              <span className="tp-kicker">Top issues</span>
+            </div>
+            <div className="tp-panel tp-hub-mid-card tp-hub-issues">
+              {hubTopIssues.length ? (
+                <ul className="tp-hub-issue-list">
+                  {hubTopIssues.map((line, i) => (
+                    <li key={`issue-${i}`}>{clipText(line, 220)}</li>
                   ))}
+                </ul>
+              ) : (
+                <p className="tp-hub-muted">Classify more executions to surface rule-based insights.</p>
+              )}
+            </div>
+
+            <div className="tp-hub-col-head tp-hub-col-head--tight">
+              <span className="tp-kicker">Trading rhythm</span>
+              <span className="tp-hub-rhythm-caption">{hubBreakdown.sampleSize} on-book fills in client sample</span>
+            </div>
+            <div className="tp-panel tp-hub-mid-card tp-hub-rhythm">
+              {hubBreakdown.sampleSize > 0 ? (
+                <div className="tp-hub-dow-bars" aria-label="Tagged executions by weekday">
+                  {DOW_CHART_ORDER.map((d) => {
+                    const c = dowMap[d] || 0;
+                    const h = Math.round((c / dowMax) * 100);
+                    return (
+                      <div key={d} className="tp-hub-dow-cell">
+                        <div className="tp-hub-dow-bar-wrap">
+                          <span className="tp-hub-dow-bar" style={{ height: `${h}%` }} title={`${d}: ${c}`} />
+                        </div>
+                        <span className="tp-hub-dow-label">{DOW_AXIS_LABEL[d] || d}</span>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="tp-metrics-grid tp-metrics-grid--prior">
-                  <div className="tp-metric-priority">
-                    <span>
-                      <MetricLabel metricId={MID.WIN_RATE_PLAYBOOK}>{METRIC_LABEL.WIN_RATE}</MetricLabel>
-                      {pmClosed > 0 ? <span className="tp-metric-sample"> · {pmClosed} closes</span> : null}
-                    </span>
-                    <strong>{pm.winRate != null ? fmtPct(pm.winRate) : '—'}</strong>
+              ) : (
+                <p className="tp-hub-muted">No tagged playbook executions in the loaded validator + journal sample yet.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="tp-hub-col tp-hub-col--right">
+            <div className="tp-hub-col-head">
+              <span className="tp-kicker">Recent missed setups</span>
+            </div>
+            <div className="tp-panel tp-hub-side-card">
+              {hubRecentMissed.length ? (
+                <ul className="tp-hub-missed-list">
+                  {hubRecentMissed.map((m) => (
+                    <li key={m.id} className="tp-hub-missed-row">
+                      <span className="tp-hub-missed-dot" aria-hidden />
+                      <div className="tp-hub-missed-main">
+                        <span className="tp-hub-missed-name">{playbookNameById[m.playbookId] || 'Unlinked'}</span>
+                        <span className="tp-hub-missed-date">{fmtShortDate(m.occurredAt || m.createdAt)}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="tp-hub-muted">No missed setups logged yet.</p>
+              )}
+            </div>
+
+            <div className="tp-hub-col-head tp-hub-col-head--tight">
+              <span className="tp-kicker">Sample depth</span>
+            </div>
+            <div className="tp-panel tp-hub-side-card tp-hub-depth">
+              <div className="tp-hub-depth-line">
+                <span className="tp-hub-mid-k">Rows in rollup</span>
+                <strong>{totalRollup}</strong>
+              </div>
+              <div className="tp-hub-depth-line">
+                <span className="tp-hub-mid-k">Classified book</span>
+                <strong>{classifiedBook}</strong>
+              </div>
+              <div className="tp-hub-depth-line">
+                <span className="tp-hub-mid-k">
+                  <MetricLabel metricId={MID.ON_BOOK_EXECUTIONS_GLOBAL}>{METRIC_LABEL.ON_BOOK_EXECUTIONS}</MetricLabel>
+                </span>
+                <strong>{taggedN}</strong>
+              </div>
+              <div className="tp-hub-depth-bars" aria-label="Validator versus journal on-book split">
+                <div className="tp-hub-depth-bar-row">
+                  <span>Validator</span>
+                  <div className="tp-hub-split-bar">
+                    <span className="tp-hub-split-bar__fill tp-hub-split-bar__fill--v" style={{ width: `${Math.round((onBookV / onBookSplitDen) * 100)}%` }} />
                   </div>
-                  <div>
-                    <span>
-                      <MetricLabel metricId={MID.PROFIT_FACTOR_PLAYBOOK}>
-                        {METRIC_LABEL.PROFIT_FACTOR} (V)
-                      </MetricLabel>
-                    </span>
-                    <strong>{fmtPF(pm.profitFactor)}</strong>
-                  </div>
-                  <div>
-                    <span>
-                      <MetricLabel metricId={MID.ON_BOOK_EXECUTIONS_PLAYBOOK}>{METRIC_LABEL.ON_BOOK_EXECUTIONS}</MetricLabel>
-                    </span>
-                    <strong>{pm.taggedTrades ?? 0}</strong>
-                  </div>
+                  <span>{onBookV}</span>
                 </div>
-                <div className="tp-card-actions tp-card-actions--split">
-                  <div className="tp-card-actions__primary">
-                    <button type="button" className="tp-btn-ghost tp-btn-ghost--emphasis" onClick={() => openDetail(s.id)}>
-                      Open playbook
-                    </button>
+                <div className="tp-hub-depth-bar-row">
+                  <span>Journal</span>
+                  <div className="tp-hub-split-bar">
+                    <span className="tp-hub-split-bar__fill tp-hub-split-bar__fill--j" style={{ width: `${Math.round((onBookJ / onBookSplitDen) * 100)}%` }} />
                   </div>
-                  <div className="tp-card-actions__menu">
-                    <button type="button" className="tp-btn-ghost" onClick={() => duplicatePlaybook(s.id)}>
-                      Duplicate
-                    </button>
-                    <button type="button" className="tp-btn-ghost" onClick={() => archivePlaybook(s.id)}>
-                      Archive
-                    </button>
-                    <button type="button" className="tp-btn-ghost tp-btn-ghost--danger" onClick={() => deletePlaybook(s.id)}>
-                      Delete
-                    </button>
-                  </div>
+                  <span>{onBookJ}</span>
                 </div>
-              </article>
-            );
-          })}
+              </div>
+              <button type="button" className="tp-hub-link-analytics tp-inline-link" onClick={() => setDrawer('noSetup')}>
+                Inspect off-plan rows
+              </button>
+            </div>
+          </div>
         </div>
 
         {!setups.length ? (
@@ -777,7 +1039,10 @@ export default function TraderPlaybook() {
         ) : null}
         {setups.length > 0 && !filteredSetups.length ? (
           <div className="tp-empty">
-            Nothing matches this filter. <button type="button" className="tp-inline-link" onClick={() => { setHubFilter('all'); setSearch(''); }}>Reset filters</button>
+            Nothing matches this filter.{' '}
+            <button type="button" className="tp-inline-link" onClick={() => { setHubFilter('all'); setSearch(''); }}>
+              Reset filters
+            </button>
           </div>
         ) : null}
       </div>
@@ -808,38 +1073,68 @@ export default function TraderPlaybook() {
       oppNotes.push(`Execution clusters on ${d} (${n} tagged) — schedule review right after that session block while memory is fresh.`);
     }
 
+    const detailExecThisMonth = countPlaybookExecutionsThisMonth(vTrades, jTrades, selectedId);
+    const detailWinRate = detailMetrics.winRate ?? vSum.winRate;
+    const detailPF = detailMetrics.profitFactor ?? vSum.profitFactor;
+    const covPct = summary?.disciplineTaggedVsAll != null ? fmtPct(summary.disciplineTaggedVsAll) : '—';
+    const detailTopIssueLines = [...(insights.hurting || []), ...(insights.refine || [])].filter(Boolean).slice(0, 6);
+    const dowMapD = Object.fromEntries(breakdown.byDow || []);
+    const dowMaxD = Math.max(1, ...DOW_CHART_ORDER.map((d) => dowMapD[d] || 0));
+    const useJournalExpectancy = jSum.count >= 3 && jSum.expectancyR != null && Number.isFinite(jSum.expectancyR);
+    const expDisplay = useJournalExpectancy
+      ? `${jSum.expectancyR >= 0 ? '+' : ''}${fmtFixed(jSum.expectancyR, 2)}R`
+      : fmtFixed(vSum.expectancy, 2);
+    const bestBullets = bulletListFromText(form.overviewBlocks?.worksBest);
+    const avoidFromText = bulletListFromText(form.overviewBlocks?.avoid);
+    const avoidChips = (form.doNotTrade || []).filter(Boolean).slice(0, 6);
+    const avoidBullets = [...avoidFromText, ...avoidChips.map((c) => `Do not trade: ${c}`)];
+    const entryBullets = bulletListFromText(
+      [form.overviewBlocks?.entryModelSummary, form.entryRules?.entryTrigger, form.entryRules?.confirmationType].filter(Boolean).join('\n')
+    );
+    const stopBullets = bulletListFromText([form.exitRules?.stopPlacement, form.exitRules?.invalidationLogic].filter(Boolean).join('\n'));
+    const exitBullets = bulletListFromText(
+      [form.exitRules?.scaleOutRule, form.exitRules?.trailingLogic, form.exitRules?.holdVsExit].filter(Boolean).join('\n')
+    );
+    const sortedReviewNotes = [...(reviewNotes || [])].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    const compactNotes = sortedReviewNotes.slice(0, 3);
+    const isLeadingPlaybook = summary?.bestPlaybook?.id === selectedId;
+    const winsShow = detailMetrics.wins ?? 0;
+    const lossesShow = detailMetrics.losses ?? 0;
+
     return (
-      <div className="tp-root">
+      <div className="tp-root tp-root--detail-command">
         <button
           type="button"
           className="tp-detail-back"
           onClick={() => {
             setView('hub');
-            loadCore();
+            loadCore({ hubTradeSamples: true, showLoading: false });
           }}
         >
           ← Back to hub
         </button>
 
-        <header className="tp-detail-hero">
-          <div className="tp-detail-hero__identity">
-            <span className="tp-detail-hero__icon" style={{ color: form.color || undefined }} aria-hidden>
+        <header className="tp-detail-command-hero">
+          <div className="tp-detail-command-hero__left">
+            <span className="tp-detail-command-hero__icon" style={{ color: form.color || undefined }} aria-hidden>
               {form.icon || '📘'}
             </span>
-            <div className="tp-detail-hero__titles">
-              <div className="tp-detail-hero__title-row">
-                <h1 className="tp-detail-hero__name">{form.name}</h1>
+            <div className="tp-detail-command-hero__copy">
+              <div className="tp-detail-command-hero__title-row">
+                <h1 className="tp-detail-command-hero__name">{form.name}</h1>
                 <span className={`tp-pill tp-pill--status-${st === 'archived' ? 'archived' : st === 'draft' ? 'draft' : 'active'}`}>
                   {st === 'archived' ? 'Archived' : st === 'draft' ? 'Draft' : 'Active'}
                 </span>
               </div>
-              <p className="tp-detail-hero__desc">{form.description || 'Describe the thesis, regime, and non‑negotiables for this edge.'}</p>
-              <div className="tp-detail-hero__meta-row">
+              <p className="tp-detail-command-hero__desc">
+                {form.description || 'Describe the thesis, regime, and non‑negotiables for this edge.'}
+              </p>
+              <p className="tp-detail-command-hero__context">
                 {[form.setupType, form.marketType, form.session].filter(Boolean).join(' · ') || 'Session and regime live in Overview'}
                 {form.assets ? (
                   <>
                     {' · '}
-                    <span className="tp-detail-hero__assets">{form.assets}</span>
+                    <span>{form.assets}</span>
                   </>
                 ) : null}
                 {form.timeframes ? (
@@ -848,92 +1143,10 @@ export default function TraderPlaybook() {
                     <span>{form.timeframes}</span>
                   </>
                 ) : null}
-              </div>
-              <div className="tp-detail-hero__snapshot" aria-label="Strategy snapshot">
-                <div className="tp-hero-snap">
-                  <span className="tp-hero-snap__k">Rotation</span>
-                  <p>{st === 'archived' ? 'Archived — not in active rotation' : st === 'draft' ? 'Draft — define rules before live use' : 'Active in rotation'}</p>
-                </div>
-                <div className="tp-hero-snap">
-                  <span className="tp-hero-snap__k">When it trades</span>
-                  <p>
-                    {clipText(form.overviewBlocks?.worksBest, 160) ||
-                      [form.session, form.timeframes].filter(Boolean).join(' · ') ||
-                      'Define regime in Overview → When this edge is live'}
-                  </p>
-                </div>
-                <div className="tp-hero-snap">
-                  <span className="tp-hero-snap__k">Execution model</span>
-                  <p>
-                    {clipText(form.overviewBlocks?.entryModelSummary, 160) ||
-                      clipText(form.entryRules?.entryTrigger, 160) ||
-                      'Capture trigger and confirmation in Rules or Overview'}
-                  </p>
-                </div>
-                <div className="tp-hero-snap">
-                  <span className="tp-hero-snap__k">Tape (on-book)</span>
-                  <p>
-                    {METRIC_LABEL.WIN_RATE} {fmtPct(detailMetrics.winRate ?? vSum.winRate)}
-                    {detailClosed > 0 ? ` · ${detailClosed} closes (V+J)` : ''} · {METRIC_LABEL.PROFIT_FACTOR} (V){' '}
-                    {fmtPF(detailMetrics.profitFactor ?? vSum.profitFactor)} · {onBookExecCount} {METRIC_LABEL.ON_BOOK_EXECUTIONS.toLowerCase()}
-                  </p>
-                </div>
-              </div>
-              <div className="tp-detail-hero__stats">
-                <div>
-                  <span>Last used</span>
-                  <strong>{fmtDt(form.lastUsedAt)}</strong>
-                </div>
-                <div>
-                  <span>
-                    <MetricLabel metricId={MID.ON_BOOK_EXECUTIONS_PLAYBOOK}>{METRIC_LABEL.ON_BOOK_EXECUTIONS}</MetricLabel>
-                  </span>
-                  <strong>{onBookExecCount}</strong>
-                </div>
-                <div>
-                  <span>
-                    <MetricLabel metricId={MID.WIN_RATE_VALIDATOR_PLAYBOOK}>
-                      {METRIC_LABEL.WIN_RATE} (validator)
-                    </MetricLabel>
-                    {vSum.count > 0 ? <span className="tp-metric-sample"> · {vSum.count} closes</span> : null}
-                  </span>
-                  <strong>{fmtPct(detailMetrics.winRate ?? vSum.winRate)}</strong>
-                </div>
-                <div>
-                  <span>
-                    <MetricLabel metricId={MID.PROFIT_FACTOR_VALIDATOR_PLAYBOOK}>
-                      {METRIC_LABEL.PROFIT_FACTOR} (validator)
-                    </MetricLabel>
-                  </span>
-                  <strong>{fmtPF(detailMetrics.profitFactor ?? vSum.profitFactor)}</strong>
-                </div>
-                <div>
-                  <span>
-                    <MetricLabel metricId={MID.EXPECTANCY_DOLLAR_VALIDATOR_PLAYBOOK}>Expectancy $ (validator)</MetricLabel>
-                    {vSum.count > 0 ? <span className="tp-metric-sample"> · n={vSum.count}</span> : null}
-                  </span>
-                  <strong>{fmtFixed(vSum.expectancy, 2)}</strong>
-                </div>
-              </div>
-              {latestReview ? (
-                <div className="tp-detail-hero__review-hint">
-                  <span className="tp-kicker-inline">Latest refinement</span>
-                  <strong>{latestReview.title || 'Review note'}</strong>
-                  <span className="tp-detail-hero__review-meta">
-                    {fmtDt(latestReview.createdAt)} · {String(latestReview.noteType || '').replace(/_/g, ' ')}
-                  </span>
-                </div>
-              ) : (
-                <p className="tp-detail-hero__review-hint tp-detail-hero__review-hint--empty">
-                  No refinement notes yet — capture rule changes after reviews.
-                </p>
-              )}
+              </p>
             </div>
           </div>
-          <div className="tp-detail-hero__actions">
-            <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={() => saveSetup(false)} disabled={saving}>
-              {saving ? 'Saving…' : 'Lock in changes'}
-            </button>
+          <div className="tp-detail-command-hero__actions">
             <div
               ref={manageMenuRef}
               className={`tp-detail-overflow${detailMenuOpen ? ' tp-detail-overflow--open' : ''}`}
@@ -944,36 +1157,116 @@ export default function TraderPlaybook() {
                 aria-expanded={detailMenuOpen}
                 onClick={() => setDetailMenuOpen((o) => !o)}
               >
-                Manage
+                Manage playbook
               </button>
               {detailMenuOpen ? (
                 <div className="tp-detail-overflow__menu" role="menu">
-                  <button type="button" className="tp-overflow-item" onClick={() => saveSetup(true)} disabled={saving}>
+                  <button type="button" className="tp-overflow-item tp-overflow-item--accent" onClick={() => { setDetailMenuOpen(false); saveSetup(false); }} disabled={saving}>
+                    {saving ? 'Saving…' : 'Save & lock in'}
+                  </button>
+                  <button type="button" className="tp-overflow-item" onClick={() => { setDetailMenuOpen(false); saveSetup(true); }} disabled={saving}>
                     Save as draft
                   </button>
-                  <button type="button" className="tp-overflow-item" onClick={resetLocal}>
+                  <button type="button" className="tp-overflow-item" onClick={() => { setDetailMenuOpen(false); resetLocal(); }}>
                     Revert unsaved edits
                   </button>
                   {selectedId ? (
-                    <button type="button" className="tp-overflow-item" onClick={() => duplicatePlaybook(selectedId)}>
+                    <button type="button" className="tp-overflow-item" onClick={() => { setDetailMenuOpen(false); duplicatePlaybook(selectedId); }}>
                       Duplicate playbook
                     </button>
                   ) : null}
                   {selectedId ? (
-                    <button type="button" className="tp-overflow-item" onClick={() => archivePlaybook(selectedId)}>
+                    <button type="button" className="tp-overflow-item" onClick={() => { setDetailMenuOpen(false); archivePlaybook(selectedId); }}>
                       Archive
                     </button>
                   ) : null}
                   {selectedId ? (
-                    <button type="button" className="tp-overflow-item tp-overflow-item--danger" onClick={() => deletePlaybook(selectedId)}>
+                    <button type="button" className="tp-overflow-item tp-overflow-item--danger" onClick={() => { setDetailMenuOpen(false); deletePlaybook(selectedId); }}>
                       Delete
                     </button>
                   ) : null}
                 </div>
               ) : null}
             </div>
+            <button type="button" className="trader-suite-btn" onClick={() => setDetailTab('trades')}>
+              Add trade
+            </button>
+            <button
+              type="button"
+              className="trader-suite-btn trader-suite-btn--primary"
+              onClick={() => {
+                void openTagDrawer();
+              }}
+            >
+              Classify trades
+            </button>
           </div>
         </header>
+
+        <p className="tp-detail-hero-subline">
+          Last used {fmtShortDate(form.lastUsedAt)} — {detailExecThisMonth} executions this month
+        </p>
+
+        <section className="tp-detail-prismetrics" aria-label="Primary playbook metrics">
+          <div className="tp-panel tp-detail-pri-card tp-detail-pri-card--wr">
+            <span className="tp-detail-pri-card__label">
+              <MetricLabel metricId={MID.WIN_RATE_PLAYBOOK}>{METRIC_LABEL.WIN_RATE}</MetricLabel>
+            </span>
+            <strong className="tp-detail-pri-card__value">{fmtPct(detailWinRate)}</strong>
+            <small className="tp-detail-pri-card__sub">
+              {detailClosed > 0 ? `${detailClosed} closes (V+J)` : `${vSum.count + jSum.count} tagged rows`}
+            </small>
+            {detailWinRate != null ? (
+              <div className="tp-detail-pri-bar tp-detail-pri-bar--green" aria-hidden>
+                <span style={{ width: `${Math.min(100, Math.round(detailWinRate * 100))}%` }} />
+              </div>
+            ) : null}
+          </div>
+          <div className="tp-panel tp-detail-pri-card tp-detail-pri-card--pf">
+            <span className="tp-detail-pri-card__label">
+              <MetricLabel metricId={MID.PROFIT_FACTOR_PLAYBOOK}>{METRIC_LABEL.PROFIT_FACTOR}</MetricLabel> (V)
+            </span>
+            <strong className="tp-detail-pri-card__value">{fmtPF(detailPF)}</strong>
+            <small className="tp-detail-pri-card__sub">{vSum.count > 0 ? `${vSum.count} validator closes` : 'No validator sample'}</small>
+            {vSum.count > 0 && detailPF != null && Number.isFinite(detailPF) ? (
+              <div className="tp-detail-pri-bar tp-detail-pri-bar--purple" aria-hidden>
+                <span style={{ width: `${Math.min(100, Math.round((Number(detailPF) / 3) * 50))}%` }} />
+              </div>
+            ) : null}
+          </div>
+          <div className="tp-panel tp-detail-pri-card tp-detail-pri-card--exp">
+            <span className="tp-detail-pri-card__label">
+              {useJournalExpectancy ? (
+                <MetricLabel metricId={MID.EXPECTANCY_R_JOURNAL_PLAYBOOK}>Expectancy (R · journal)</MetricLabel>
+              ) : (
+                <MetricLabel metricId={MID.EXPECTANCY_DOLLAR_VALIDATOR_PLAYBOOK}>Expectancy $ (validator)</MetricLabel>
+              )}
+            </span>
+            <strong className="tp-detail-pri-card__value">{expDisplay}</strong>
+            <small className="tp-detail-pri-card__sub">
+              {useJournalExpectancy ? `${jSum.count} journal rows` : `${vSum.count} validator closes`}
+            </small>
+          </div>
+          <div className="tp-panel tp-detail-pri-card tp-detail-pri-card--cov">
+            <span className="tp-detail-pri-card__label">
+              <MetricLabel metricId={MID.CLASSIFICATION_COVERAGE}>Coverage</MetricLabel>
+            </span>
+            <strong className="tp-detail-pri-card__value">{covPct}</strong>
+            <small className="tp-detail-pri-card__sub">Full validator + journal rollup</small>
+            {summary?.disciplineTaggedVsAll != null ? (
+              <div className="tp-detail-pri-bar tp-detail-pri-bar--blue" aria-hidden>
+                <span style={{ width: `${Math.min(100, Math.round(summary.disciplineTaggedVsAll * 100))}%` }} />
+              </div>
+            ) : null}
+          </div>
+          <div className="tp-panel tp-detail-pri-card tp-detail-pri-card--total">
+            <span className="tp-detail-pri-card__label">
+              <MetricLabel metricId={MID.ON_BOOK_EXECUTIONS_PLAYBOOK}>{METRIC_LABEL.ON_BOOK_EXECUTIONS}</MetricLabel>
+            </span>
+            <strong className="tp-detail-pri-card__value">{onBookExecCount}</strong>
+            <small className="tp-detail-pri-card__sub">This playbook · merged summary</small>
+          </div>
+        </section>
 
         <div className="tp-tabs trader-suite-tab-row tp-tabs--detail">
           {TABS.map((t) => (
@@ -994,32 +1287,250 @@ export default function TraderPlaybook() {
         <div className="tp-tab-panel">
           {detailTab === 'overview' ? (
             <div className="tp-overview-stack">
-              <section className="tp-panel tp-panel--glance" aria-label="Playbook at a glance">
-                <div className="trader-suite-kicker">At a glance</div>
-                <p className="tp-summary-lede tp-summary-lede--tight">
-                  Read this block before size — it should match your Rules tab and pre-trade checklist.
-                </p>
-                <dl className="tp-glance-board">
-                  {OVERVIEW_FIELDS.map(({ key, boardLabel }) => (
-                    <div key={key} className="tp-glance-board__row">
-                      <dt>{boardLabel}</dt>
-                      <dd>{clipText(form.overviewBlocks?.[key], 320) || '—'}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <div className="tp-glance-foot">
-                  <div>
-                    <span className="tp-glance-foot__k">Mistake chips</span>
-                    <p>{form.commonMistakes?.length ? form.commonMistakes.join(', ') : 'Add tags under Rules → Common execution mistakes'}</p>
+              <div className="tp-detail-layout-grid">
+                <div className="tp-detail-layout-col tp-detail-layout-col--strategy">
+                  <div className="tp-kicker tp-detail-layout-kicker">At a glance</div>
+                  <div className="tp-detail-at-glance-split">
+                    <section className="tp-panel tp-detail-glance-card tp-detail-glance-card--best" aria-label="Best conditions">
+                      <h3 className="tp-detail-glance-card__title">Best conditions</h3>
+                      {bestBullets.length ? (
+                        <ul className="tp-detail-bullet-list">
+                          {bestBullets.map((line, i) => (
+                            <li key={`b-${i}`}>{line}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="tp-detail-glance-empty">Define when this edge is live in Overview → When this edge is live.</p>
+                      )}
+                    </section>
+                    <section className="tp-panel tp-detail-glance-card tp-detail-glance-card--avoid" aria-label="Avoid conditions">
+                      <h3 className="tp-detail-glance-card__title">Avoid conditions</h3>
+                      {avoidBullets.length ? (
+                        <ul className="tp-detail-bullet-list tp-detail-bullet-list--avoid">
+                          {avoidBullets.map((line, i) => (
+                            <li key={`a-${i}`}>{line}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="tp-detail-glance-empty">Add stand-down narrative or do-not-trade chips under Rules.</p>
+                      )}
+                    </section>
                   </div>
-                  <div>
-                    <span className="tp-glance-foot__k">Stand-down chips</span>
-                    <p>{form.doNotTrade?.length ? form.doNotTrade.join(', ') : 'Add discrete guardrails under Rules'}</p>
-                  </div>
-                </div>
-              </section>
 
-              <div className="tp-detail-split">
+                  <section className="tp-panel tp-detail-exec-model" aria-label="Execution model">
+                    <h3 className="tp-detail-glance-card__title">Execution model</h3>
+                    <div className="tp-detail-exec-block">
+                      <span className="tp-detail-exec-k">Entry</span>
+                      {entryBullets.length ? (
+                        <ul className="tp-detail-bullet-list">
+                          {entryBullets.map((line, i) => (
+                            <li key={`e-${i}`}>{line}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="tp-detail-glance-empty">Capture trigger and confirmation in Rules or Overview.</p>
+                      )}
+                    </div>
+                    <div className="tp-detail-exec-block">
+                      <span className="tp-detail-exec-k">Stop / invalidation</span>
+                      {stopBullets.length ? (
+                        <ul className="tp-detail-bullet-list">
+                          {stopBullets.map((line, i) => (
+                            <li key={`s-${i}`}>{line}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="tp-detail-glance-empty">Define stop placement and invalidation in Rules.</p>
+                      )}
+                    </div>
+                    <div className="tp-detail-exec-block">
+                      <span className="tp-detail-exec-k">Exit / management</span>
+                      {exitBullets.length ? (
+                        <ul className="tp-detail-bullet-list">
+                          {exitBullets.map((line, i) => (
+                            <li key={`x-${i}`}>{line}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="tp-detail-glance-empty">Add scale-out and trailing logic under Rules.</p>
+                      )}
+                    </div>
+                  </section>
+
+                  <section className="tp-panel tp-detail-notes-compact" aria-label="Recent review notes">
+                    <h3 className="tp-detail-glance-card__title">Review notes (compact)</h3>
+                    {compactNotes.length ? (
+                      <ul className="tp-detail-compact-notes">
+                        {compactNotes.map((n) => (
+                          <li key={n.id}>
+                            <span className="tp-detail-compact-notes__date">{fmtShortDate(n.createdAt)}</span>
+                            <span className="tp-detail-compact-notes__title">{n.title || 'Note'}</span>
+                            <span className="tp-detail-compact-notes__body">{clipText(n.body || '', 100)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="tp-detail-glance-empty">No notes yet — open the Refine tab to add one.</p>
+                    )}
+                    <button type="button" className="tp-inline-link tp-detail-notes-link" onClick={() => setDetailTab('review')}>
+                      Open full refine tab
+                    </button>
+                  </section>
+                </div>
+
+                <div className="tp-detail-layout-col tp-detail-layout-col--performance">
+                  <div className="tp-kicker tp-detail-layout-kicker">Performance insights</div>
+                  <div className="tp-detail-perf-mini-grid">
+                    <div className="tp-panel tp-detail-perf-mini">
+                      <span className="tp-detail-perf-mini__k">
+                        <MetricLabel metricId={MID.WIN_RATE_PLAYBOOK}>{METRIC_LABEL.WIN_RATE}</MetricLabel>
+                      </span>
+                      <strong>{fmtPct(detailWinRate)}</strong>
+                    </div>
+                    <div className="tp-panel tp-detail-perf-mini">
+                      <span className="tp-detail-perf-mini__k">
+                        <MetricLabel metricId={MID.PROFIT_FACTOR_PLAYBOOK}>{METRIC_LABEL.PROFIT_FACTOR}</MetricLabel> (V)
+                      </span>
+                      <strong>{fmtPF(detailPF)}</strong>
+                    </div>
+                    <div className="tp-panel tp-detail-perf-mini">
+                      <span className="tp-detail-perf-mini__k">
+                        <MetricLabel metricId={MID.OFF_PLAN_RATE_CLASSIFIED}>{METRIC_LABEL.OFF_PLAN}</MetricLabel> (book)
+                      </span>
+                      <strong>{summary?.noSetupRate != null ? fmtPct(summary.noSetupRate) : '—'}</strong>
+                    </div>
+                    <div className="tp-panel tp-detail-perf-mini">
+                      <span className="tp-detail-perf-mini__k">
+                        <MetricLabel metricId={MID.MISSED_LOG}>Missed</MetricLabel>
+                      </span>
+                      <strong>{mPatterns.total}</strong>
+                    </div>
+                  </div>
+
+                  <section className="tp-panel tp-detail-top-issues" aria-label="Top issues">
+                    <h3 className="tp-detail-glance-card__title">Top issues</h3>
+                    {detailTopIssueLines.length ? (
+                      <ul className="tp-detail-bullet-list tp-detail-bullet-list--issues">
+                        {detailTopIssueLines.map((line, i) => (
+                          <li key={`iss-${i}`}>{clipText(line, 200)}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="tp-detail-glance-empty">Classify more executions to surface desk insights.</p>
+                    )}
+                    <button type="button" className="tp-inline-link tp-detail-notes-link" onClick={() => setDetailTab('analytics')}>
+                      Open performance tab
+                    </button>
+                  </section>
+
+                  <section className="tp-panel tp-detail-notes-expanded" aria-label="Review notes expanded">
+                    <h3 className="tp-detail-glance-card__title">Review notes (expanded)</h3>
+                    {sortedReviewNotes.length ? (
+                      <ul className="tp-detail-expanded-notes">
+                        {sortedReviewNotes.map((n) => (
+                          <li key={n.id}>
+                            <div className="tp-detail-expanded-notes__head">
+                              <span className="tp-detail-expanded-notes__date">{fmtShortDate(n.createdAt)}</span>
+                              <span className="tp-detail-expanded-notes__type">{String(n.noteType || '').replace(/_/g, ' ')}</span>
+                            </div>
+                            <strong className="tp-detail-expanded-notes__title">{n.title || 'Note'}</strong>
+                            <p className="tp-detail-expanded-notes__body">{clipText(n.body || '', 400)}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="tp-detail-glance-empty">No refinement notes on file for this playbook.</p>
+                    )}
+                  </section>
+                </div>
+
+                <div className="tp-detail-layout-col tp-detail-layout-col--side">
+                  <div className="tp-kicker tp-detail-layout-kicker">Analytics snapshot</div>
+                  <section className="tp-panel tp-detail-side-card" aria-label="Performance breakdown">
+                    <h3 className="tp-detail-glance-card__title">Performance breakdown</h3>
+                    <p className="tp-detail-side-leading">
+                      {isLeadingPlaybook ? (
+                        <span className="tp-detail-side-badge">Leading setup</span>
+                      ) : (
+                        <span className="tp-detail-side-muted">Book leader: {summary?.bestPlaybook?.name || '—'}</span>
+                      )}
+                    </p>
+                    <dl className="tp-detail-side-dl">
+                      <div>
+                        <dt>
+                          <MetricLabel metricId={MID.WIN_RATE_PLAYBOOK}>{METRIC_LABEL.WIN_RATE}</MetricLabel>
+                        </dt>
+                        <dd>{fmtPct(detailWinRate)}</dd>
+                      </div>
+                      <div>
+                        <dt>Wins / losses</dt>
+                        <dd>
+                          {winsShow} / {lossesShow}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>
+                          <MetricLabel metricId={MID.ON_BOOK_EXECUTIONS_PLAYBOOK}>Tagged sample</MetricLabel>
+                        </dt>
+                        <dd>{onBookExecCount}</dd>
+                      </div>
+                    </dl>
+                  </section>
+
+                  <section className="tp-panel tp-detail-side-card" aria-label="Win rate rhythm">
+                    <h3 className="tp-detail-glance-card__title">
+                      <MetricLabel metricId={MID.WIN_RATE_PLAYBOOK}>{METRIC_LABEL.WIN_RATE}</MetricLabel> rhythm
+                    </h3>
+                    {breakdown.sampleSize > 0 ? (
+                      <div className="tp-detail-trend-bars" aria-hidden>
+                        {DOW_CHART_ORDER.map((d) => {
+                          const c = dowMapD[d] || 0;
+                          const h = Math.round((c / dowMaxD) * 100);
+                          return (
+                            <div key={d} className="tp-detail-trend-cell">
+                              <div className="tp-detail-trend-wrap">
+                                <span className="tp-detail-trend-bar tp-detail-trend-bar--wr" style={{ height: `${h}%` }} title={`${d}: ${c}`} />
+                              </div>
+                              <span className="tp-detail-trend-label">{DOW_AXIS_LABEL[d]}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="tp-detail-glance-empty">No weekday sample for this playbook yet.</p>
+                    )}
+                  </section>
+
+                  <section className="tp-panel tp-detail-side-card" aria-label="Profit factor context">
+                    <h3 className="tp-detail-glance-card__title">
+                      <MetricLabel metricId={MID.PROFIT_FACTOR_PLAYBOOK}>{METRIC_LABEL.PROFIT_FACTOR}</MetricLabel> (V) context
+                    </h3>
+                    {breakdown.sampleSize > 0 ? (
+                      <div className="tp-detail-trend-bars" aria-hidden>
+                        {DOW_CHART_ORDER.map((d) => {
+                          const c = dowMapD[d] || 0;
+                          const h = Math.round((c / dowMaxD) * 100);
+                          return (
+                            <div key={`pf-${d}`} className="tp-detail-trend-cell">
+                              <div className="tp-detail-trend-wrap">
+                                <span className="tp-detail-trend-bar tp-detail-trend-bar--pf" style={{ height: `${h}%` }} title={`${d}: ${c}`} />
+                              </div>
+                              <span className="tp-detail-trend-label">{DOW_AXIS_LABEL[d]}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="tp-detail-glance-empty">Tag validator fills to see activity by day.</p>
+                    )}
+                    <p className="tp-detail-side-foot">Bars reflect execution count by weekday — not PF by day.</p>
+                  </section>
+                </div>
+              </div>
+
+              <div className="tp-detail-editor-block">
+                <div className="tp-kicker tp-detail-layout-kicker">Definitions &amp; editor</div>
+                <div className="tp-detail-split">
                 <div className="tp-panel tp-panel--tight">
                   <div className="trader-suite-kicker">Identity &amp; deployment</div>
                   <div className="tp-field-grid">
@@ -1100,6 +1611,7 @@ export default function TraderPlaybook() {
                     ))}
                   </div>
                 </div>
+              </div>
               </div>
             </div>
           ) : null}
@@ -1762,10 +2274,10 @@ export default function TraderPlaybook() {
       variant="terminal"
       terminalPresentation="aura-dashboard"
       eyebrow={formatWelcomeEyebrow(user)}
-      title="Trader Playbook"
-      description="Turn discretionary edge into documented playbooks: checklists, classified executions, missed-setup logs, and refinements that compound."
-      stats={view === 'hub' && !loading ? hubStats : []}
-      primaryAction={view === 'hub' ? hubPrimary : null}
+      title="Playbook"
+      description="Build, execute, and refine your trading edge"
+      stats={[]}
+      primaryAction={null}
       secondaryActions={null}
     >
       {view === 'hub' ? renderHub() : renderDetail()}

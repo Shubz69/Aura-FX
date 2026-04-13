@@ -5,13 +5,16 @@ function n(x) {
 
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export function summarizeValidatorTrades(trades, playbookId) {
-  const list = (trades || []).filter(
-    (t) =>
-      t.playbookSetupId === playbookId &&
+export function summarizeValidatorTrades(trades, playbookId, options = {}) {
+  const allTagged = options.allTaggedPlaybooks === true;
+  const list = (trades || []).filter((t) => {
+    const playbookMatch = allTagged ? !!t.playbookSetupId : t.playbookSetupId === playbookId;
+    return (
+      playbookMatch &&
       String(t.setupTagType || '').toUpperCase() === 'PLAYBOOK' &&
       ['win', 'loss', 'breakeven'].includes(String(t.result || '').toLowerCase())
-  );
+    );
+  });
   const wins = list.filter((t) => String(t.result).toLowerCase() === 'win').length;
   const losses = list.filter((t) => String(t.result).toLowerCase() === 'loss').length;
   const be = list.filter((t) => String(t.result).toLowerCase() === 'breakeven').length;
@@ -39,10 +42,12 @@ export function summarizeValidatorTrades(trades, playbookId) {
   };
 }
 
-export function summarizeJournalTrades(trades, playbookId) {
-  const list = (trades || []).filter(
-    (t) => t.playbookSetupId === playbookId && String(t.setupTagType || '').toUpperCase() === 'PLAYBOOK'
-  );
+export function summarizeJournalTrades(trades, playbookId, options = {}) {
+  const allTagged = options.allTaggedPlaybooks === true;
+  const list = (trades || []).filter((t) => {
+    const playbookMatch = allTagged ? !!t.playbookSetupId : t.playbookSetupId === playbookId;
+    return playbookMatch && String(t.setupTagType || '').toUpperCase() === 'PLAYBOOK';
+  });
   const rs = list.map((t) => n(t.rResult));
   if (!rs.length)
     return { count: 0, wins: 0, losses: 0, breakevens: 0, winRate: null, totalR: 0, expectancyR: null };
@@ -69,35 +74,12 @@ function topEntries(obj, nMax = 4) {
     .slice(0, nMax);
 }
 
-/** Breakdowns for current playbook tagged trades only — honest counts from client data. */
-export function computeExecutionBreakdowns(vTrades, jTrades, playbookId) {
-  const v = (vTrades || []).filter(
-    (t) => t.playbookSetupId === playbookId && String(t.setupTagType || '').toUpperCase() === 'PLAYBOOK'
-  );
-  const j = (jTrades || []).filter(
-    (t) => t.playbookSetupId === playbookId && String(t.setupTagType || '').toUpperCase() === 'PLAYBOOK'
-  );
-
+function executionBreakdownFromCombined(combined) {
   const byDow = {};
   const bySession = {};
   const byPair = {};
   let maxWinStreak = 0;
   let maxLossStreak = 0;
-
-  const combined = [
-    ...v.map((t) => ({
-      at: t.createdAt,
-      pair: (t.pair || '').toUpperCase(),
-      session: (t.session || '').trim() || '—',
-      result: String(t.result || '').toLowerCase(),
-    })),
-    ...j.map((t) => ({
-      at: t.date,
-      pair: (t.pair || '').toUpperCase(),
-      session: (t.session || '').trim() || '—',
-      result: n(t.rResult) > 0 ? 'win' : n(t.rResult) < 0 ? 'loss' : 'breakeven',
-    })),
-  ].sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
 
   combined.forEach((row) => {
     const d = row.at ? new Date(row.at) : null;
@@ -135,6 +117,45 @@ export function computeExecutionBreakdowns(vTrades, jTrades, playbookId) {
     maxLossStreak,
     sampleSize: combined.length,
   };
+}
+
+function toCombinedExecutionRows(v, j) {
+  return [
+    ...v.map((t) => ({
+      at: t.createdAt,
+      pair: (t.pair || '').toUpperCase(),
+      session: (t.session || '').trim() || '—',
+      result: String(t.result || '').toLowerCase(),
+    })),
+    ...j.map((t) => ({
+      at: t.date,
+      pair: (t.pair || '').toUpperCase(),
+      session: (t.session || '').trim() || '—',
+      result: n(t.rResult) > 0 ? 'win' : n(t.rResult) < 0 ? 'loss' : 'breakeven',
+    })),
+  ].sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+}
+
+/** Breakdowns for current playbook tagged trades only — honest counts from client data. */
+export function computeExecutionBreakdowns(vTrades, jTrades, playbookId) {
+  const v = (vTrades || []).filter(
+    (t) => t.playbookSetupId === playbookId && String(t.setupTagType || '').toUpperCase() === 'PLAYBOOK'
+  );
+  const j = (jTrades || []).filter(
+    (t) => t.playbookSetupId === playbookId && String(t.setupTagType || '').toUpperCase() === 'PLAYBOOK'
+  );
+  return executionBreakdownFromCombined(toCombinedExecutionRows(v, j));
+}
+
+/** All PLAYBOOK-tagged executions (any playbook) — hub trading rhythm / pair clusters. */
+export function computeExecutionBreakdownsTaggedAll(vTrades, jTrades) {
+  const v = (vTrades || []).filter(
+    (t) => !!t.playbookSetupId && String(t.setupTagType || '').toUpperCase() === 'PLAYBOOK'
+  );
+  const j = (jTrades || []).filter(
+    (t) => !!t.playbookSetupId && String(t.setupTagType || '').toUpperCase() === 'PLAYBOOK'
+  );
+  return executionBreakdownFromCombined(toCombinedExecutionRows(v, j));
 }
 
 /** Missed-trade pattern summary for this playbook */

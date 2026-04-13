@@ -109,6 +109,7 @@ const Affiliation = lazy(() => import('./pages/Affiliation'));
 const TraderLab = lazy(() => import('./pages/TraderLab'));
 const TraderReplay = lazy(() => import('./pages/TraderReplay'));
 const TraderPlaybook = lazy(() => import('./pages/TraderPlaybook'));
+const MissedTradeReview = lazy(() => import('./pages/MissedTradeReview'));
 const BacktestingLayout = lazy(() => import('./pages/backtesting/BacktestingLayout'));
 const BacktestingHub = lazy(() => import('./pages/backtesting/BacktestingHub'));
 const BacktestingNewSession = lazy(() => import('./pages/backtesting/BacktestingNewSession'));
@@ -378,6 +379,7 @@ function AppRoutes() {
                             <Route path="leaderboard" element={<AuraLeaderboard />} />
                             <Route path="trader-lab" element={<TraderLab />} />
                             <Route path="trader-playbook" element={<TraderPlaybook />} />
+                            <Route path="missed-trade-review" element={<MissedTradeReview />} />
                             <Route path="trader-replay" element={<Navigate to="/aura-analysis/dashboard/trader-replay" replace />} />
                         </Route>
                         <Route path="/reports" element={<AuthenticatedGuard><ReportsPage /></AuthenticatedGuard>} />
