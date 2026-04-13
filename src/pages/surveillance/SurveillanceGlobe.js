@@ -12,8 +12,8 @@ import {
 const Globe = lazy(() => import('react-globe.gl').then((m) => ({ default: m.default })));
 
 const GLOBE_BASE = 'https://unpkg.com/three-globe@2.45.2/example/img';
-const GLOBE_TEXTURE = `${GLOBE_BASE}/earth-night.jpg`;
-const NIGHT_SKY_BG = `${GLOBE_BASE}/night-sky.png`;
+/** Higher-resolution source than earth-night.jpg; tinted in refineGlobeSurface for a dark institutional read. */
+const GLOBE_TEXTURE = `${GLOBE_BASE}/earth-blue-marble.jpg`;
 
 let neGeoJsonCache = null;
 let neGeoJsonPromise = null;
@@ -156,6 +156,25 @@ export default function SurveillanceGlobe({
     [moonGeometry, moonMaterial]
   );
 
+  const refineGlobeSurface = useCallback(() => {
+    const g = globeRef.current;
+    if (!g || typeof g.globeMaterial !== 'function' || typeof g.renderer !== 'function') return false;
+    const mat = g.globeMaterial();
+    const renderer = g.renderer();
+    if (!mat || !mat.map || !renderer) return false;
+    const cap = renderer.capabilities?.getMaxAnisotropy?.() ?? 8;
+    mat.map.anisotropy = Math.min(16, Math.max(4, cap));
+    mat.map.minFilter = THREE.LinearMipmapLinearFilter;
+    mat.map.magFilter = THREE.LinearFilter;
+    mat.map.generateMipmaps = true;
+    mat.map.needsUpdate = true;
+    mat.color = new THREE.Color(0x5a5f72);
+    mat.shininess = 4;
+    mat.specular = new THREE.Color(0x101014);
+    mat.needsUpdate = true;
+    return true;
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     loadCountriesGeoJson().then((geojson) => {
@@ -190,28 +209,46 @@ export default function SurveillanceGlobe({
   }, [dims.w, dims.h, reducedMotion]);
 
   useEffect(() => {
-    if (reducedMotion || dims.w < 200) return undefined;
+    if (dims.w < 200) return undefined;
     let cancelled = false;
     let frames = 0;
-    const applySharpRenderer = () => {
+    const syncRendererToDims = () => {
       if (cancelled) return;
       const g = globeRef.current;
       const renderer = g && typeof g.renderer === 'function' ? g.renderer() : null;
       if (renderer && typeof renderer.setPixelRatio === 'function') {
         const raw = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-        const pr = Math.min(2.5, Math.max(1, raw));
+        const pr = reducedMotion ? Math.min(1.25, Math.max(1, raw)) : Math.min(2, Math.max(1, raw));
         renderer.setPixelRatio(pr);
+        if (typeof renderer.setSize === 'function') {
+          renderer.setSize(dims.w, dims.h, true);
+        }
       }
       frames += 1;
-      if (frames < 28 && (!renderer || typeof renderer.setPixelRatio !== 'function')) {
-        requestAnimationFrame(applySharpRenderer);
+      if (frames < 36 && (!renderer || typeof renderer.setPixelRatio !== 'function')) {
+        requestAnimationFrame(syncRendererToDims);
       }
     };
-    applySharpRenderer();
+    syncRendererToDims();
     return () => {
       cancelled = true;
     };
   }, [dims.w, dims.h, reducedMotion]);
+
+  useEffect(() => {
+    if (!globeReveal || dims.w < 200) return undefined;
+    let cancelled = false;
+    let n = 0;
+    const tick = () => {
+      if (cancelled) return;
+      if (refineGlobeSurface() || n++ > 48) return;
+      requestAnimationFrame(tick);
+    };
+    tick();
+    return () => {
+      cancelled = true;
+    };
+  }, [globeReveal, dims.w, dims.h, refineGlobeSurface]);
 
   useEffect(() => {
     if (reducedMotion) return undefined;
@@ -407,9 +444,10 @@ export default function SurveillanceGlobe({
           width={dims.w}
           height={dims.h}
           backgroundColor="#03030f"
-          backgroundImageUrl={NIGHT_SKY_BG}
+          backgroundImageUrl={null}
           waitForGlobeReady
           globeImageUrl={GLOBE_TEXTURE}
+          globeCurvatureResolution={reducedMotion ? 4 : 2.4}
           bumpImageUrl={null}
           rendererConfig={{
             antialias: true,
@@ -417,8 +455,8 @@ export default function SurveillanceGlobe({
             powerPreference: 'high-performance',
           }}
           showAtmosphere
-          atmosphereColor="rgba(160, 195, 255, 0.14)"
-          atmosphereAltitude={reducedMotion ? 0.09 : 0.13}
+          atmosphereColor="rgba(42, 58, 88, 0.07)"
+          atmosphereAltitude={reducedMotion ? 0.065 : 0.09}
           onGlobeClick={handleGlobeClick}
           onZoom={handleZoom}
           heatmapsData={heatmapLayer}
