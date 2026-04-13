@@ -7,7 +7,7 @@
   --tl-line: rgba(212, 175, 55, 0.22);
   --tl-surface: linear-gradient(165deg, rgba(8, 10, 22, 0.92), rgba(4, 6, 14, 0.96));
   display: grid;
-  grid-template-columns: minmax(220px, 0.22fr) minmax(360px, 1.18fr) minmax(220px, 0.24fr);
+  grid-template-columns: minmax(232px, 0.26fr) minmax(360px, 1.12fr) minmax(232px, 0.26fr);
   grid-template-rows: auto auto;
   gap: var(--tl-gap) 8px;
   padding: 6px 6px 8px;
@@ -19,7 +19,7 @@
 /* ── Desktop terminal canvas: one row, fills parent height (see TradeValidatorJournalGlass) ── */
 @media (min-width: 1181px) {
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop {
-    grid-template-columns: minmax(188px, 0.2fr) minmax(380px, 1.22fr) minmax(188px, 0.22fr);
+    grid-template-columns: minmax(212px, 0.26fr) minmax(360px, 1.08fr) minmax(212px, 0.26fr);
     grid-template-rows: 1fr;
     grid-template-areas: 'tl-left tl-center tl-right';
     align-items: stretch;
@@ -48,7 +48,7 @@
 }
 
 .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--compact {
-  grid-template-columns: minmax(188px, 0.2fr) minmax(0, 1.24fr) minmax(188px, 0.22fr) !important;
+  grid-template-columns: minmax(212px, 0.26fr) minmax(0, 1.08fr) minmax(212px, 0.26fr) !important;
   gap: 6px 8px !important;
   padding: 6px 4px 8px !important;
   align-items: stretch !important;
@@ -167,6 +167,16 @@
   flex: 1 1 auto;
 }
 
+/* Center desk row: fundamental | chart | execution + decision */
+.trader-lab-v2--workspace .tlab-center-desk-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-gap);
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
 /* Chart card: grow; no fixed min-height that forces page scroll */
 .trader-lab-v2--workspace .tlab-card--focal {
   display: flex;
@@ -175,8 +185,6 @@
   min-height: 0;
   padding: 8px 10px !important;
 }
-
-/* Terminal desktop: chart is a centered mini-tablet; trio dock stays compact below (see 1181px block). */
 
 .trader-lab-v2--workspace .tlab-chart-toolbar--terminal {
   display: flex;
@@ -223,41 +231,59 @@
 }
 
 @media (min-width: 1181px) {
-  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-card--focal {
-    flex: 0 0 auto;
-    align-self: center;
-    width: min(100%, 720px);
-    max-width: 100%;
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-desk-rail {
+    display: grid;
+    grid-template-columns: minmax(200px, 1fr) minmax(280px, 1.45fr) minmax(200px, 1fr);
+    gap: 6px 8px;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    align-items: stretch;
+  }
+
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-desk-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tl-gap);
+    min-width: 0;
     min-height: 0;
   }
 
-  /* ~iPad mini footprint on desktop: readable chart without eating the whole viewport */
-  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-chart-host--fill {
-    flex: 0 0 auto !important;
-    height: clamp(340px, 45dvh, 540px);
-    min-height: 300px;
-    max-height: min(540px, 52dvh);
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-desk-col--chart {
+    justify-content: center;
   }
 
-  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-dock--trio {
-    align-items: start;
-    flex: 0 0 auto;
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-desk-col--left .tlab-card--dock-fundamental {
+    flex: 1 1 auto;
     min-height: 0;
-  }
-
-  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-dock--trio > .tlab-card--dock-fundamental,
-  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-dock--trio > .tlab-card--dock-exec {
-    height: auto;
-    min-height: 0;
-    max-height: min(260px, 36vh);
     overflow: auto;
   }
 
-  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-dock--trio > .tlab-card--dock-decision {
-    height: auto;
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-desk-col--right .tlab-card--dock-exec {
+    flex: 1 1 0;
     min-height: 0;
-    max-height: none;
-    overflow: visible;
+    overflow: auto;
+  }
+
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-desk-col--right .tlab-card--dock-decision {
+    flex: 0 0 auto;
+  }
+
+  /* Chart fills the middle column (no side gutters); height ~ mini tablet */
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-desk-col--chart .tlab-card--focal {
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+  }
+
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-desk-col--chart .tlab-chart-host--fill {
+    flex: 0 0 auto !important;
+    width: 100%;
+    height: clamp(340px, 45dvh, 540px);
+    min-height: 300px;
+    max-height: min(540px, 52dvh);
   }
 }
 
@@ -290,18 +316,21 @@
   .journal-page
     .trade-validator-shell
     .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
+    .tlab-center-desk-col--chart
     .tlab-card--focal {
     flex: 0 0 auto !important;
-    align-self: center !important;
-    width: min(100%, 720px) !important;
-    max-width: 100% !important;
+    align-self: stretch !important;
+    width: 100% !important;
+    max-width: none !important;
   }
 
   .journal-page
     .trade-validator-shell
     .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
+    .tlab-center-desk-col--chart
     .tlab-chart-host--fill {
     flex: 0 0 auto !important;
+    width: 100% !important;
     height: clamp(340px, 45dvh, 540px) !important;
     min-height: 300px !important;
     max-height: min(540px, 52dvh) !important;
@@ -592,6 +621,10 @@
   .trader-lab-v2--workspace .tlab-center-dock,
   .trader-lab-v2--workspace .tlab-center-dock--trio {
     grid-template-columns: 1fr;
+  }
+
+  .trader-lab-v2--workspace .tlab-center-desk-col--chart {
+    order: -1;
   }
 }
 
@@ -1025,7 +1058,7 @@
 
 @media (min-width: 1181px) {
   .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop {
-    grid-template-columns: minmax(196px, 0.2fr) minmax(400px, 1.32fr) minmax(196px, 0.22fr) !important;
+    grid-template-columns: minmax(212px, 0.26fr) minmax(360px, 1.08fr) minmax(212px, 0.26fr) !important;
     grid-template-rows: 1fr !important;
     grid-template-areas: 'tl-left tl-center tl-right' !important;
     gap: 6px 8px !important;
@@ -1041,54 +1074,36 @@
     display: none !important;
   }
 
-  .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .tlab-center-dock--trio {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 6px !important;
-    align-items: start !important;
+  .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .tlab-center-desk-rail {
+    gap: 6px 8px !important;
     min-height: 0 !important;
-    flex: 0 0 auto !important;
+    flex: 1 1 auto !important;
   }
 
   .journal-page
     .trade-validator-shell
     .trader-lab-v2.trader-lab-v2--workspace
-    .tlab-center-dock--trio
-    > .tlab-card--dock-fundamental,
+    .tlab-center-desk-col--left
+    .tlab-card--dock-fundamental,
   .journal-page
     .trade-validator-shell
     .trader-lab-v2.trader-lab-v2--workspace
-    .tlab-center-dock--trio
-    > .tlab-card--dock-exec {
-    height: auto !important;
-    min-height: 0;
-    max-height: min(260px, 36vh) !important;
-    overflow: auto;
-    align-self: stretch;
-  }
-
-  .journal-page
-    .trade-validator-shell
-    .trader-lab-v2.trader-lab-v2--workspace
-    .tlab-center-dock--trio
-    > .tlab-card--dock-decision {
-    height: auto !important;
-    min-height: 0;
+    .tlab-center-desk-col--right
+    .tlab-card--dock-exec {
     max-height: none !important;
-    overflow: visible;
-    align-self: stretch;
   }
 
   .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .tlab-ref-bullets--dock-fundamental {
-    max-height: min(72px, 14vh);
+    max-height: min(88px, 16vh);
   }
 
   .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .tlab-textarea--dock-fundamental {
-    max-height: min(96px, 18vh);
+    max-height: min(120px, 22vh);
     min-height: 48px;
   }
 
   .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .tlab-card--dock-exec .tlab-textarea--dock {
-    max-height: min(104px, 20vh);
+    max-height: min(120px, 22vh);
     min-height: 52px;
   }
 }
