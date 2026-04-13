@@ -50,70 +50,75 @@ export default function TraderLabLoadingShell() {
 
       <div className="trader-lab-v2__center">
         <div className="tlab-center-stack">
-          <div className="tlab-card tlab-card--chart tlab-card--gold tlab-card--focal tlab-skel-card">
-            <div className="tlab-chart-toolbar tlab-chart-toolbar--terminal">
-              <div className="tlab-chart-toolbar__primary">
-                <SkelLine className="tlab-skel-line--select" />
-                <div className="tlab-skel-tf">
-                  <SkelLine className="tlab-skel-line--tf" />
-                  <SkelLine className="tlab-skel-line--tf" />
-                  <SkelLine className="tlab-skel-line--tf" />
-                  <SkelLine className="tlab-skel-line--tf" />
+          <div className="tlab-center-rail-grid">
+            <div className="tlab-center-rail tlab-center-rail--left">
+              <div className="tlab-card tlab-card--gold tlab-card--dock-fundamental tlab-skel-card">
+                <SkelTitle />
+                <div className="tlab-skel-textarea tlab-skel-textarea--short" />
+              </div>
+            </div>
+            <div className="tlab-center-rail tlab-center-rail--chart">
+              <div className="tlab-card tlab-card--chart tlab-card--gold tlab-card--focal tlab-skel-card">
+                <div className="tlab-chart-toolbar tlab-chart-toolbar--terminal">
+                  <div className="tlab-chart-toolbar__primary">
+                    <SkelLine className="tlab-skel-line--select" />
+                    <div className="tlab-skel-tf">
+                      <SkelLine className="tlab-skel-line--tf" />
+                      <SkelLine className="tlab-skel-line--tf" />
+                      <SkelLine className="tlab-skel-line--tf" />
+                      <SkelLine className="tlab-skel-line--tf" />
+                    </div>
+                  </div>
+                  <div className="tlab-session-tabs-inline">
+                    <SkelLine className="tlab-skel-line--tab" />
+                    <SkelLine className="tlab-skel-line--tab" />
+                    <SkelLine className="tlab-skel-line--tab" />
+                  </div>
+                </div>
+                <div className="tlab-chart-host tlab-chart-host--fill">
+                  <div className="tlab-skel-chart" />
+                </div>
+                <div className="tlab-level-strip tlab-level-strip--skeleton">
+                  <div className="tlab-skel-level">
+                    <SkelLine className="tlab-skel-line--lvl-label" />
+                    <SkelLine className="tlab-skel-line--lvl-val" />
+                  </div>
+                  <div className="tlab-skel-level">
+                    <SkelLine className="tlab-skel-line--lvl-label" />
+                    <SkelLine className="tlab-skel-line--lvl-val" />
+                  </div>
+                  <div className="tlab-skel-level">
+                    <SkelLine className="tlab-skel-line--lvl-label" />
+                    <SkelLine className="tlab-skel-line--lvl-val" />
+                  </div>
                 </div>
               </div>
-              <div className="tlab-session-tabs-inline">
-                <SkelLine className="tlab-skel-line--tab" />
-                <SkelLine className="tlab-skel-line--tab" />
-                <SkelLine className="tlab-skel-line--tab" />
-              </div>
             </div>
-            <div className="tlab-chart-host tlab-chart-host--fill">
-              <div className="tlab-skel-chart" />
-            </div>
-            <div className="tlab-level-strip tlab-level-strip--skeleton">
-              <div className="tlab-skel-level">
-                <SkelLine className="tlab-skel-line--lvl-label" />
-                <SkelLine className="tlab-skel-line--lvl-val" />
+            <div className="tlab-center-rail tlab-center-rail--right">
+              <div className="tlab-card tlab-card--gold tlab-card--dock-exec tlab-skel-card">
+                <SkelTitle />
+                <div className="tlab-skel-textarea tlab-skel-textarea--dock" />
+                <div className="tlab-skel-exec-foot">
+                  <SkelLine className="tlab-skel-line--meta" />
+                  <SkelLine className="tlab-skel-line--btn" />
+                </div>
               </div>
-              <div className="tlab-skel-level">
-                <SkelLine className="tlab-skel-line--lvl-label" />
-                <SkelLine className="tlab-skel-line--lvl-val" />
+              <div className="tlab-card tlab-card--gold tlab-card--dock-decision tlab-skel-card">
+                <SkelTitle />
+                <div className="tlab-skel-checks">
+                  <SkelLine className="tlab-skel-line--check" />
+                  <SkelLine className="tlab-skel-line--check" />
+                  <SkelLine className="tlab-skel-line--check" />
+                  <SkelLine className="tlab-skel-line--check" />
+                </div>
+                <SkelLine className="tlab-skel-line--conv-label" />
+                <div className="tlab-skel-conviction">
+                  <SkelLine className="tlab-skel-line--conv" />
+                  <SkelLine className="tlab-skel-line--conv" />
+                  <SkelLine className="tlab-skel-line--conv" />
+                </div>
+                <SkelLine className="tlab-skel-line--execute" />
               </div>
-              <div className="tlab-skel-level">
-                <SkelLine className="tlab-skel-line--lvl-label" />
-                <SkelLine className="tlab-skel-line--lvl-val" />
-              </div>
-            </div>
-          </div>
-
-          <div className="tlab-center-dock tlab-center-dock--trio">
-            <div className="tlab-card tlab-card--gold tlab-card--dock-fundamental tlab-skel-card">
-              <SkelTitle />
-              <div className="tlab-skel-textarea tlab-skel-textarea--short" />
-            </div>
-            <div className="tlab-card tlab-card--gold tlab-card--dock-exec tlab-skel-card">
-              <SkelTitle />
-              <div className="tlab-skel-textarea tlab-skel-textarea--dock" />
-              <div className="tlab-skel-exec-foot">
-                <SkelLine className="tlab-skel-line--meta" />
-                <SkelLine className="tlab-skel-line--btn" />
-              </div>
-            </div>
-            <div className="tlab-card tlab-card--gold tlab-card--dock-decision tlab-skel-card">
-              <SkelTitle />
-              <div className="tlab-skel-checks">
-                <SkelLine className="tlab-skel-line--check" />
-                <SkelLine className="tlab-skel-line--check" />
-                <SkelLine className="tlab-skel-line--check" />
-                <SkelLine className="tlab-skel-line--check" />
-              </div>
-              <SkelLine className="tlab-skel-line--conv-label" />
-              <div className="tlab-skel-conviction">
-                <SkelLine className="tlab-skel-line--conv" />
-                <SkelLine className="tlab-skel-line--conv" />
-                <SkelLine className="tlab-skel-line--conv" />
-              </div>
-              <SkelLine className="tlab-skel-line--execute" />
             </div>
           </div>
 
