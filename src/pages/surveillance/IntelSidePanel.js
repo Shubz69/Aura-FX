@@ -1,9 +1,9 @@
 import React from 'react';
 import { normalizeRegionKey } from './surveillanceRegionUtils';
 
-function Section({ title, kicker, children }) {
+function Section({ title, kicker, children, priority }) {
   return (
-    <section className="sv-rail-section">
+    <section className={`sv-rail-section ${priority ? 'sv-rail-section--priority' : ''}`}>
       <header className="sv-rail-section-head">
         <h2 className="sv-rail-section-title">{title}</h2>
         {kicker ? <span className="sv-rail-section-kicker">{kicker}</span> : null}
@@ -15,6 +15,7 @@ function Section({ title, kicker, children }) {
 
 export default function IntelSidePanel({
   digest,
+  situationHeadline,
   onOpenEvent,
   handoff,
   focusRegion,
@@ -23,7 +24,7 @@ export default function IntelSidePanel({
   onClearFocus,
   onSetFocusRegion,
 }) {
-  if (!digest) return null;
+  const d = digest || {};
   const {
     summary,
     developingStories = [],
@@ -33,7 +34,7 @@ export default function IntelSidePanel({
     corroboratedAlerts = [],
     majorRegions = [],
     regionPressure = [],
-  } = digest;
+  } = d;
 
   const pressure = regionPressure.length
     ? regionPressure
@@ -47,10 +48,25 @@ export default function IntelSidePanel({
         lensActive ? 'sv-intel-rail--lensed' : ''
       }`}
     >
-      <div className="sv-rail-chrome" aria-hidden>
-        <span className="sv-rail-chrome-title">Command rail</span>
-        <span className="sv-rail-chrome-meta">Intel digest</span>
-      </div>
+      <header className="sv-rail-masthead">
+        <div className="sv-rail-masthead-titles">
+          <span className="sv-rail-masthead-eyebrow">Side intelligence</span>
+          <p className="sv-rail-masthead-title">Command rail</p>
+          <p className="sv-rail-masthead-sub">Digest · ranked picks · regional pressure</p>
+        </div>
+      </header>
+
+      {situationHeadline ? (
+        <div className="sv-rail-situation" role="status">
+          <span className="sv-rail-situation-label">Top signal</span>
+          <p className="sv-rail-situation-text">{situationHeadline}</p>
+        </div>
+      ) : (
+        <div className="sv-rail-situation sv-rail-situation--empty" role="status">
+          <span className="sv-rail-situation-label">Top signal</span>
+          <p className="sv-rail-situation-text">Awaiting a clear lead storyline from the current tape.</p>
+        </div>
+      )}
 
       {lensActive && focusSummary ? (
         <div
@@ -59,7 +75,7 @@ export default function IntelSidePanel({
           aria-label="Geography focus"
         >
           <div className="sv-rail-focus-top">
-            <span className="sv-rail-focus-label">Geography focus</span>
+            <span className="sv-rail-focus-label">Active lens</span>
             {focusSummary.isoHint ? (
               <span className="sv-rail-focus-iso" title="Country code">
                 {focusSummary.isoHint}
@@ -69,9 +85,9 @@ export default function IntelSidePanel({
               Clear
             </button>
           </div>
-          <p className="sv-rail-focus-name">{focusSummary.label}</p>
+          <p className="sv-rail-focus-name">{focusSummary.label || focusRegion}</p>
           <p className="sv-rail-focus-scope">
-            Tape + rail filtered
+            Tape + digest filtered to this geography
             {typeof tapeCount === 'number' ? ` · ${tapeCount} row${tapeCount === 1 ? '' : 's'} on tape` : ''}
           </p>
           <dl className="sv-rail-focus-stats">
@@ -92,20 +108,30 @@ export default function IntelSidePanel({
       ) : null}
 
       {summary ? (
-        <div className="sv-rail-kpis" role="status">
-          <span>
-            Tape <strong>{summary.tape_events}</strong>
-          </span>
-          <span>
-            Stories <strong>{summary.multi_source_stories}</strong>
-          </span>
-          <span>
-            Corr <strong>{summary.corroborated_hits}</strong>
-          </span>
+        <div className="sv-rail-kpi-grid" role="status" aria-label="Digest summary">
+          <div className="sv-rail-kpi">
+            <span className="sv-rail-kpi-label">Tape</span>
+            <span className="sv-rail-kpi-value">{summary.tape_events}</span>
+            <span className="sv-rail-kpi-hint">live nodes</span>
+          </div>
+          <div className="sv-rail-kpi">
+            <span className="sv-rail-kpi-label">Stories</span>
+            <span className="sv-rail-kpi-value">{summary.multi_source_stories}</span>
+            <span className="sv-rail-kpi-hint">multi-source</span>
+          </div>
+          <div className="sv-rail-kpi">
+            <span className="sv-rail-kpi-label">Corr</span>
+            <span className="sv-rail-kpi-value">{summary.corroborated_hits}</span>
+            <span className="sv-rail-kpi-hint">cross-source</span>
+          </div>
         </div>
-      ) : null}
+      ) : (
+        <div className="sv-rail-kpi-grid sv-rail-kpi-grid--empty" role="status">
+          <p className="sv-rail-empty-summary">Summary metrics will populate after the first ingest pass.</p>
+        </div>
+      )}
 
-      <Section title="Developing" kicker="Storylines">
+      <Section title="Developing" kicker="Storylines" priority>
         <ul className="sv-rail-list">
           {developingStories.length ? (
             developingStories.map((s) => (
@@ -113,15 +139,14 @@ export default function IntelSidePanel({
                 <button type="button" className="sv-rail-row" onClick={() => onOpenEvent(s.top_event_id)}>
                   <span className="sv-rail-row-title">{s.headline}</span>
                   <span className="sv-rail-row-meta">
-                    {s.item_count} evt · {s.sources?.length || 0} src · R{' '}
-                    {s.rank_score != null ? Math.round(s.rank_score) : '—'}
+                    {s.item_count} events · {s.sources?.length || 0} sources · rank {s.rank_score != null ? Math.round(s.rank_score) : '—'}
                   </span>
                   {s.trade_line ? <span className="sv-rail-row-ledger">{s.trade_line}</span> : null}
                 </button>
               </li>
             ))
           ) : (
-            <li className="sv-rail-empty">{lensActive ? 'No storylines in this sector' : 'No multi-source storylines'}</li>
+            <li className="sv-rail-empty">{lensActive ? 'No storylines in this sector' : 'No multi-source storylines yet'}</li>
           )}
         </ul>
       </Section>
@@ -140,7 +165,7 @@ export default function IntelSidePanel({
               </li>
             ))
           ) : (
-            <li className="sv-rail-empty">{lensActive ? 'No high-impact items here' : 'No high market-impact hits'}</li>
+            <li className="sv-rail-empty">{lensActive ? 'No high-impact items in this lens' : 'No high market-impact hits'}</li>
           )}
         </ul>
       </Section>
@@ -202,8 +227,7 @@ export default function IntelSidePanel({
         <ul className="sv-rail-heat">
           {pressure.length ? (
             pressure.map((r) => {
-              const active =
-                focusRegion && normalizeRegionKey(r.region) === normalizeRegionKey(focusRegion);
+              const active = focusRegion && normalizeRegionKey(r.region) === normalizeRegionKey(focusRegion);
               return (
                 <li key={r.region}>
                   <button

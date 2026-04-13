@@ -151,6 +151,18 @@ export default function SurveillancePage() {
 
   const focusSummary = useMemo(() => focusSummaryFromEvents(focusRegion, events), [focusRegion, events]);
 
+  const situationHeadline = useMemo(() => {
+    const d = filteredDigest;
+    if (!d) return null;
+    const lead = d.developingStories?.[0]?.headline;
+    if (lead && String(lead).trim()) return String(lead).trim();
+    if (d.summary) {
+      const { tape_events: te, multi_source_stories: ms, corroborated_hits: ch } = d.summary;
+      return `${te} live nodes · ${ms} multi-source narratives · ${ch} corroborated tracks on the grid.`;
+    }
+    return null;
+  }, [filteredDigest]);
+
   const clearFocusRegion = useCallback(() => setFocusRegion(null), []);
 
   const setFocusFromHeat = useCallback((region) => {
@@ -407,48 +419,71 @@ export default function SurveillancePage() {
       )}
 
       <div className="sv-terminal-canvas">
-        <header className="sv-terminal-top">
-          <div className="sv-terminal-brand">
-            <span className="sv-terminal-mark" aria-hidden />
-            <div>
-              <h1 className="sv-terminal-title">Surveillance</h1>
-              <p className="sv-terminal-sub">Live global OSINT terminal · Elite</p>
+        <header className="sv-terminal-masthead" aria-labelledby="sv-terminal-heading">
+          <div className="sv-masthead-grid">
+            <div className="sv-masthead-brand-block">
+              <span className="sv-terminal-mark" aria-hidden />
+              <div className="sv-masthead-titles">
+                <p className="sv-masthead-eyebrow">Elite · secured grid</p>
+                <h1 id="sv-terminal-heading" className="sv-terminal-title">
+                  Surveillance
+                </h1>
+                <p className="sv-terminal-sub">Global OSINT terminal — live ingest, ranked tape, sector lens</p>
+              </div>
+            </div>
+            <div className="sv-masthead-instruments" aria-label="Grid status">
+              {chips.map((c) => (
+                <div key={c.label} className="sv-instrument">
+                  <span className="sv-instrument-label">{c.label}</span>
+                  <span className="sv-instrument-value">{c.value}</span>
+                </div>
+              ))}
+            </div>
+            <div className="sv-masthead-markets">
+              <MarketWatchStrip variant="compact" narrative={marketWatchNarrative} items={agg.marketWatch || []} />
             </div>
           </div>
-          <div className="sv-terminal-metrics" aria-label="Grid status">
-            {chips.map((c) => (
-              <div key={c.label} className="sv-terminal-chip">
-                <span className="sv-terminal-chip-label">{c.label}</span>
-                <span className="sv-terminal-chip-value">{c.value}</span>
+          {systemHealth ? (
+            <div
+              className={`sv-masthead-status ${systemHealth.degraded ? 'sv-masthead-status--degraded' : ''} ${
+                systemHealth.warmingUp ? 'sv-masthead-status--warm' : ''
+              }`}
+              role="status"
+            >
+              <div className="sv-masthead-status-main">
+                {systemHealth.warmingUp ? <span>Warming — first ingest pass</span> : null}
+                {systemHealth.degraded ? <span>Degraded ingest / sources</span> : null}
+                {!systemHealth.warmingUp && !systemHealth.degraded ? <span>Sources nominal</span> : null}
+                {systemHealth.lastIngestSuccessAt ? (
+                  <span className="sv-masthead-status-time">
+                    Last ingest · {new Date(systemHealth.lastIngestSuccessAt).toLocaleString()}
+                  </span>
+                ) : (
+                  <span className="sv-masthead-status-time">No ingest yet</span>
+                )}
+                {systemHealth.adapterRecencyBuckets?.stale > 0 ? (
+                  <span className="sv-masthead-status-stale">{systemHealth.adapterRecencyBuckets.stale} stale adapters</span>
+                ) : null}
               </div>
-            ))}
-          </div>
-          <div className="sv-terminal-mw">
-            <MarketWatchStrip variant="compact" narrative={marketWatchNarrative} items={agg.marketWatch || []} />
-          </div>
+              <span className="sv-masthead-feed-pill" data-live={sseOk ? 'on' : 'off'}>
+                {sseOk ? 'Live stream' : 'Polling'}
+              </span>
+            </div>
+          ) : null}
         </header>
 
-        {systemHealth ? (
-          <div
-            className={`sv-health-inline ${systemHealth.degraded ? 'sv-health-inline--degraded' : ''} ${
-              systemHealth.warmingUp ? 'sv-health-inline--warm' : ''
-            }`}
-            role="status"
-          >
-            {systemHealth.warmingUp ? <span>Warming — first ingest pass</span> : null}
-            {systemHealth.degraded ? <span>Degraded ingest / sources</span> : null}
-            {!systemHealth.warmingUp && !systemHealth.degraded ? <span>Sources nominal</span> : null}
-            {systemHealth.lastIngestSuccessAt ? (
-              <span className="sv-health-inline-time">
-                {new Date(systemHealth.lastIngestSuccessAt).toLocaleString()}
+        {focusRegion && focusSummary ? (
+          <div className="sv-hero-context" aria-live="polite">
+            <span className="sv-hero-context-label">Sector lens</span>
+            <span className="sv-hero-context-name">{focusSummary.label || focusRegion}</span>
+            {focusSummary.isoHint ? (
+              <span className="sv-hero-context-iso" title="Country code">
+                {focusSummary.isoHint}
               </span>
-            ) : (
-              <span className="sv-health-inline-time">No ingest yet</span>
-            )}
-            {systemHealth.adapterRecencyBuckets?.stale > 0 ? (
-              <span className="sv-health-inline-stale">{systemHealth.adapterRecencyBuckets.stale} stale</span>
             ) : null}
-            {sseOk ? <span className="sv-health-inline-sse">LIVE</span> : <span className="sv-health-inline-sse">POLL</span>}
+            <button type="button" className="sv-hero-context-clear" onClick={clearFocusRegion}>
+              Clear lens
+            </button>
           </div>
         ) : null}
 
@@ -468,8 +503,8 @@ export default function SurveillancePage() {
             <div className="sv-globe-chrome">
               <span className="sv-globe-chrome-tag">Operating picture</span>
               <p className="sv-globe-chrome-hint">
-                Scroll to zoom — stars and moon frame the picture when you pull back. Click countries for a sector lens;
-                markers open detail.
+                Zoom to frame the theatre. Select a country for a sector lens; markers and tape stay linked to the same
+                geography.
               </p>
             </div>
           </div>
@@ -479,6 +514,7 @@ export default function SurveillancePage() {
           >
             <IntelSidePanel
               digest={filteredDigest}
+              situationHeadline={situationHeadline}
               onOpenEvent={openDrawer}
               handoff={terminalHandoff}
               focusRegion={focusRegion}
@@ -504,78 +540,93 @@ export default function SurveillancePage() {
           </aside>
         </div>
 
-        <div className="sv-terminal-dock">
-          <div className="sv-tabs" role="tablist" aria-label="Event categories">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                aria-selected={tab === t.id}
-                className={`sv-tab ${tab === t.id ? 'sv-tab--active' : ''}`}
-                onClick={() => setTab(t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <div className="sv-dock-filters">
-            <label className="sv-filter sv-filter--inline">
-              <span>Sev</span>
-              <select
-                value={severityMin}
-                onChange={(e) => setSeverityMin(e.target.value)}
-                aria-label="Minimum severity"
-              >
-                <option value="">Any</option>
-                <option value="1">1+</option>
-                <option value="2">2+</option>
-                <option value="3">3+</option>
-                <option value="4">4+</option>
-                <option value="5">5</option>
-              </select>
-            </label>
-            <label className="sv-filter sv-filter--inline">
-              <span>Src</span>
-              <select
-                value={sourceFilter}
-                onChange={(e) => setSourceFilter(e.target.value)}
-                aria-label="Filter by source"
-              >
-                <option value="">All</option>
-                {sources.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </label>
+        <div className="sv-control-deck">
+          <div className="sv-control-deck-inner">
+            <div className="sv-control-deck-label">
+              <span className="sv-control-eyebrow">Filters</span>
+              <span className="sv-control-title">Category and tape constraints</span>
+            </div>
+            <div className="sv-pill-tabs" role="tablist" aria-label="Event categories">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.id}
+                  className={`sv-pill-tab ${tab === t.id ? 'sv-pill-tab--active' : ''}`}
+                  onClick={() => setTab(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <div className="sv-control-filters">
+              <label className="sv-field">
+                <span className="sv-field-label">Severity floor</span>
+                <select
+                  className="sv-field-select"
+                  value={severityMin}
+                  onChange={(e) => setSeverityMin(e.target.value)}
+                  aria-label="Minimum severity"
+                >
+                  <option value="">Any</option>
+                  <option value="1">1+</option>
+                  <option value="2">2+</option>
+                  <option value="3">3+</option>
+                  <option value="4">4+</option>
+                  <option value="5">5</option>
+                </select>
+              </label>
+              <label className="sv-field">
+                <span className="sv-field-label">Source</span>
+                <select
+                  className="sv-field-select"
+                  value={sourceFilter}
+                  onChange={(e) => setSourceFilter(e.target.value)}
+                  aria-label="Filter by source"
+                >
+                  <option value="">All sources</option>
+                  {sources.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
         </div>
 
         <section
-          className={`sv-tape-dock ${tapeRefreshGlow ? 'sv-tape-dock--refresh' : ''} ${
-            focusRegion ? 'sv-tape-dock--lensed' : ''
+          className={`sv-tape-deck ${tapeRefreshGlow ? 'sv-tape-deck--refresh' : ''} ${
+            focusRegion ? 'sv-tape-deck--lensed' : ''
           }`}
-          aria-label="Event stream"
+          aria-label="Ranked event tape"
         >
-          <div className="sv-tape-head">
-            <div className="sv-tape-head-left">
-              <h2 className="sv-tape-title">Tape</h2>
+          <header className="sv-tape-deck-head">
+            <div className="sv-tape-deck-head-text">
+              <p className="sv-tape-eyebrow">Live stream</p>
+              <h2 className="sv-tape-heading">Tape</h2>
+              <p className="sv-tape-deck-hint">Ranked rows · select to open dossier · lens highlights in-sector nodes</p>
+            </div>
+            <div className="sv-tape-deck-meta">
+              <span className="sv-stream-live sv-stream-live--tape" data-live={sseOk ? 'on' : 'off'}>
+                {sseOk ? 'Live' : 'Poll'}
+              </span>
+              <span className="sv-tape-count">{tapeEvents.length} visible</span>
               {focusRegion ? (
-                <span className="sv-tape-lens">
-                  Geography · <strong>{focusSummary?.label || focusRegion}</strong>
+                <span className="sv-tape-lens-inline">
+                  Lens · <strong>{focusSummary?.label || focusRegion}</strong>
                   <button type="button" className="sv-tape-lens-clear" onClick={clearFocusRegion}>
                     Clear
                   </button>
                 </span>
-              ) : null}
+              ) : (
+                <span className="sv-tape-lens-inline sv-tape-lens-inline--muted">Global tape</span>
+              )}
             </div>
-            <span className="sv-stream-live" data-live={sseOk ? 'on' : 'off'}>
-              {sseOk ? 'Live' : 'Poll'}
-            </span>
-          </div>
-          <ul className="sv-event-list sv-event-list--tape">
+          </header>
+          <ul className="sv-tape-list">
             {tapeEvents.map((e) => {
               const metaBits = [
                 e.risk_bias && e.risk_bias !== 'neutral' ? e.risk_bias.replace('_', ' ') : null,
@@ -588,32 +639,39 @@ export default function SurveillancePage() {
                 <li key={e.id}>
                   <button
                     type="button"
-                    className={`sv-event-row sv-event-row--tape ${String(selectedId) === String(e.id) ? 'sv-event-row--active' : ''} ${
-                      focusRegion && eventMatchesFocus(e, focusRegion) ? 'sv-event-row--in-lens' : ''
+                    className={`sv-tape-row ${String(selectedId) === String(e.id) ? 'sv-tape-row--active' : ''} ${
+                      focusRegion && eventMatchesFocus(e, focusRegion) ? 'sv-tape-row--in-lens' : ''
                     }`}
                     title={detailTitle}
                     onClick={() => openDrawer(e.id)}
                   >
-                    <span className="sv-sev" data-sev={e.severity}>
-                      {e.severity}
+                    <span className="sv-tape-cell sv-tape-cell--sev">
+                      <span className="sv-sev" data-sev={e.severity}>
+                        {e.severity}
+                      </span>
                     </span>
-                    <span className="sv-ev-rank" title="Rank score">
+                    <span className="sv-tape-cell sv-tape-cell--rank" title="Rank score">
+                      <span className="sv-tape-rank-label">R</span>
                       {e.rank_score != null ? Math.round(e.rank_score) : '—'}
                     </span>
                     {e.risk_bias && e.risk_bias !== 'neutral' ? (
-                      <span className={`sv-ev-bias sv-ev-bias--${e.risk_bias}`}>{e.risk_bias.replace('_', ' ')}</span>
-                    ) : null}
-                    <span className="sv-ev-type" title="Event type">
+                      <span className={`sv-tape-cell sv-tape-cell--risk sv-ev-bias sv-ev-bias--${e.risk_bias}`}>
+                        {e.risk_bias.replace('_', ' ')}
+                      </span>
+                    ) : (
+                      <span className="sv-tape-cell sv-tape-cell--risk sv-tape-cell--muted">—</span>
+                    )}
+                    <span className="sv-tape-cell sv-tape-cell--type" title="Event type">
                       {e.event_type}
                     </span>
-                    <span className="sv-ev-title">{e.title}</span>
-                    <span className="sv-ev-src">{e.source}</span>
+                    <span className="sv-tape-cell sv-tape-cell--title">{e.title}</span>
+                    <span className="sv-tape-cell sv-tape-cell--src">{e.source}</span>
                   </button>
                 </li>
               );
             })}
             {!tapeEvents.length ? (
-              <li className="sv-muted sv-stream-empty">
+              <li className="sv-muted sv-tape-empty">
                 {focusRegion ? 'No tape nodes in this sector for the current filters.' : 'No events ingested yet.'}
               </li>
             ) : null}
