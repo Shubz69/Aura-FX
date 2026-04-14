@@ -361,6 +361,57 @@
   color: #f8c37d;
 }
 
+.sv-hero-context-urgency {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.42);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.sv-hero-context-urgency.sv-urgency--critical {
+  color: rgba(255, 200, 190, 0.95);
+  border-color: rgba(210, 72, 68, 0.42);
+  background: rgba(120, 32, 28, 0.22);
+}
+
+.sv-hero-context-urgency.sv-urgency--elevated {
+  color: rgba(255, 210, 175, 0.94);
+  border-color: rgba(210, 118, 58, 0.4);
+  background: rgba(110, 52, 22, 0.2);
+}
+
+.sv-hero-context-urgency.sv-urgency--watch {
+  color: rgba(255, 232, 175, 0.92);
+  border-color: rgba(190, 155, 48, 0.38);
+  background: rgba(72, 58, 14, 0.22);
+}
+
+.sv-hero-context-urgency.sv-urgency--routine {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+/* Shared severity read — color tokens (pills use compound rules below) */
+.sv-urgency--critical {
+  color: rgba(255, 172, 158, 0.95);
+}
+
+.sv-urgency--elevated {
+  color: rgba(255, 188, 140, 0.94);
+}
+
+.sv-urgency--watch {
+  color: rgba(240, 215, 120, 0.92);
+}
+
+.sv-urgency--routine {
+  color: rgba(255, 255, 255, 0.38);
+}
+
 /* Three-column band: context | globe (height anchor) | rail — shared fixed row height */
 .sv-terminal-hero {
   flex: 0 0 auto;
@@ -467,6 +518,11 @@
   background:
     radial-gradient(ellipse 96% 88% at 50% 48%, rgba(16, 18, 34, 0.42), transparent 52%),
     linear-gradient(165deg, #05060c 0%, #03040a 52%, #020208 100%);
+}
+
+/* Slightly more vertical reserve when zoomed — keeps the sphere inside the stage read */
+.sv-globe-stage--lensed {
+  --sv-globe-chrome-reserve: 1.42rem;
 }
 
 .sv-globe-stage::before {
@@ -812,6 +868,7 @@
   align-items: center;
   padding: 11px 14px;
   border: none;
+  border-left: 2px solid transparent;
   border-bottom: 1px solid rgba(255, 255, 255, 0.055);
   background: transparent;
   color: inherit;
@@ -820,7 +877,20 @@
   font-size: 0.82rem;
   transition:
     background 0.18s ease,
-    box-shadow 0.18s ease;
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.sv-tape-row[data-urgency='critical'] {
+  border-left-color: rgba(210, 72, 68, 0.55);
+}
+
+.sv-tape-row[data-urgency='elevated'] {
+  border-left-color: rgba(210, 118, 58, 0.48);
+}
+
+.sv-tape-row[data-urgency='watch'] {
+  border-left-color: rgba(175, 145, 48, 0.42);
 }
 
 .sv-tape-row:last-child {
@@ -1034,9 +1104,59 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
+.sv-rail-situation-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.sv-rail-situation-sev {
+  flex-shrink: 0;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.sv-rail-situation-sev.sv-urgency--critical {
+  border-color: rgba(210, 72, 68, 0.45);
+  background: rgba(120, 32, 28, 0.2);
+}
+
+.sv-rail-situation-sev.sv-urgency--elevated {
+  border-color: rgba(200, 110, 52, 0.42);
+  background: rgba(92, 44, 18, 0.2);
+}
+
+.sv-rail-situation-sev.sv-urgency--watch {
+  border-color: rgba(175, 145, 48, 0.4);
+  background: rgba(58, 48, 12, 0.22);
+}
+
+.sv-rail-situation[data-signal-urgency='critical'] {
+  border-color: rgba(200, 72, 68, 0.22);
+}
+
+.sv-rail-situation[data-signal-urgency='elevated'] {
+  border-color: rgba(200, 118, 58, 0.2);
+}
+
+.sv-rail-situation[data-signal-urgency='watch'] {
+  border-color: rgba(175, 145, 48, 0.18);
+}
+
 .sv-rail-situation--empty {
   border-style: dashed;
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+.sv-rail-situation--empty .sv-rail-situation-label {
+  margin-bottom: 6px;
 }
 
 .sv-rail-situation-label {
@@ -1046,7 +1166,7 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(248, 195, 125, 0.78);
-  margin-bottom: 6px;
+  margin-bottom: 0;
 }
 
 .sv-rail-situation-text {
@@ -1220,6 +1340,19 @@
   font-variant-numeric: tabular-nums;
 }
 
+.sv-rail-focus[data-lens-urgency='critical'] {
+  border-color: rgba(200, 82, 74, 0.38);
+  box-shadow: 0 0 32px rgba(180, 48, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.sv-rail-focus[data-lens-urgency='elevated'] {
+  border-color: rgba(210, 120, 62, 0.34);
+}
+
+.sv-rail-focus[data-lens-urgency='watch'] {
+  border-color: rgba(190, 155, 58, 0.32);
+}
+
 .sv-rail-section {
   padding-bottom: 4px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.045);
@@ -1266,12 +1399,13 @@
 }
 
 .sv-rail-row {
+  position: relative;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  padding: 10px 2px 10px 0;
+  padding: 10px 2px 10px 8px;
   border: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   background: transparent;
@@ -1279,6 +1413,31 @@
   text-align: left;
   cursor: pointer;
   font: inherit;
+}
+
+.sv-rail-row[data-urgency='critical']::before,
+.sv-rail-row[data-urgency='elevated']::before,
+.sv-rail-row[data-urgency='watch']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 9px;
+  bottom: 9px;
+  width: 2px;
+  border-radius: 2px;
+  opacity: 0.85;
+}
+
+.sv-rail-row[data-urgency='critical']::before {
+  background: linear-gradient(180deg, rgba(232, 88, 78, 0.95), rgba(160, 42, 38, 0.75));
+}
+
+.sv-rail-row[data-urgency='elevated']::before {
+  background: linear-gradient(180deg, rgba(232, 140, 72, 0.9), rgba(150, 72, 32, 0.7));
+}
+
+.sv-rail-row[data-urgency='watch']::before {
+  background: linear-gradient(180deg, rgba(212, 184, 74, 0.88), rgba(120, 98, 28, 0.65));
 }
 
 .sv-rail-row:last-child {
@@ -2207,6 +2366,18 @@
 .sv-sev {
   font-weight: 700;
   color: #f8c37d;
+}
+
+.sv-sev--critical {
+  color: rgba(255, 168, 152, 0.96);
+}
+
+.sv-sev--elevated {
+  color: rgba(255, 188, 132, 0.94);
+}
+
+.sv-sev--watch {
+  color: rgba(236, 210, 118, 0.92);
 }
 
 .sv-ev-rank {

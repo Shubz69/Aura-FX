@@ -209,6 +209,41 @@ export function cameraTargetForFocus(focusKey, events, isoCentroidMap = SURV_ISO
   return { lat, lng, altitude: 1.52 };
 }
 
+/** 0 routine · 1 watch (yellow) · 2 elevated (orange) · 3 critical (red) */
+export function severityUrgencyTier(severity) {
+  const s = Number(severity);
+  if (!Number.isFinite(s) || s < 1) return 0;
+  if (s >= 5) return 3;
+  if (s >= 4) return 2;
+  if (s >= 3) return 1;
+  return 0;
+}
+
+export function severityUrgencyClass(severity) {
+  const t = severityUrgencyTier(severity);
+  if (t === 3) return 'sv-urgency--critical';
+  if (t === 2) return 'sv-urgency--elevated';
+  if (t === 1) return 'sv-urgency--watch';
+  return 'sv-urgency--routine';
+}
+
+export function severityUrgencyLabel(severity) {
+  const t = severityUrgencyTier(severity);
+  if (t === 3) return 'Critical';
+  if (t === 2) return 'Elevated';
+  if (t === 1) return 'Watch';
+  return 'Routine';
+}
+
+/** For `data-urgency` / BEM modifiers */
+export function severityUrgencySlug(severity) {
+  const t = severityUrgencyTier(severity);
+  if (t === 3) return 'critical';
+  if (t === 2) return 'elevated';
+  if (t === 1) return 'watch';
+  return 'routine';
+}
+
 export function focusSummaryFromEvents(focusKey, events) {
   if (!focusKey) return null;
   const f = normalizeRegionKey(focusKey);
@@ -222,6 +257,8 @@ export function focusSummaryFromEvents(focusKey, events) {
       count: 0,
       maxRank: 0,
       maxSev: 0,
+      urgencyClass: 'sv-urgency--routine',
+      urgencyLabel: 'Routine',
     };
   }
   const iso = /^[A-Z]{2}$/.test(f) ? f : primaryCountryFromEvent(matched[0]) || null;
@@ -238,5 +275,7 @@ export function focusSummaryFromEvents(focusKey, events) {
     count: matched.length,
     maxRank,
     maxSev,
+    urgencyClass: severityUrgencyClass(maxSev),
+    urgencyLabel: severityUrgencyLabel(maxSev),
   };
 }

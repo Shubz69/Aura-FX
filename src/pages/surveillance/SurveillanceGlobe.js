@@ -115,16 +115,17 @@ function buildArcs(events) {
       endLat: b[0],
       endLng: b[1],
       eventId: ev.id,
+      sev: Number(ev.severity) || 1,
     });
     if (out.length >= 26) break;
   }
   return out;
 }
 
-function clusterTouchesFocus(pt, events, focusRegion) {
+function clusterTouchesFocus(pt, idMap, focusRegion) {
   if (!focusRegion || !pt.eventIds?.length) return false;
   for (const id of pt.eventIds) {
-    const ev = events.find((e) => String(e.id) === String(id));
+    const ev = idMap.get(String(id));
     if (ev && eventMatchesFocus(ev, focusRegion)) return true;
   }
   return false;
@@ -156,6 +157,9 @@ export default function SurveillanceGlobe({
   const [polygonsData, setPolygonsData] = useState([]);
   const [loadedIsoCentroids, setLoadedIsoCentroids] = useState({});
   const [hoveredIso, setHoveredIso] = useState(null);
+
+  const eventsRef = useRef(events);
+  eventsRef.current = events;
 
   const focusIso = useMemo(() => {
     if (!focusRegion) return null;
@@ -521,14 +525,24 @@ export default function SurveillanceGlobe({
 
   const arcs = useMemo(() => (useHex ? [] : buildArcs(events)), [events, useHex]);
 
+  const arcColor = useCallback((d) => {
+    const s = d.sev != null ? Number(d.sev) : 1;
+    if (s >= 5) return ['rgba(255, 140, 120, 0.16)', 'rgba(220, 72, 72, 0.38)'];
+    if (s >= 4) return ['rgba(255, 170, 110, 0.14)', 'rgba(210, 110, 58, 0.32)'];
+    if (s >= 3) return ['rgba(240, 210, 100, 0.12)', 'rgba(180, 150, 48, 0.26)'];
+    return ['rgba(248, 195, 125, 0.18)', 'rgba(120, 140, 180, 0.22)'];
+  }, []);
+
   const points = useMemo(() => {
+    const idMap = new Map();
+    for (const e of events) idMap.set(String(e.id), e);
     const list = clusterEvents(events, reducedMotion ? 0 : 1);
     return list.map((p) => {
       const hot = p.maxSev >= 4 || p.maxSevScore >= 72;
       const pulseBoost = !reducedMotion && hot ? pulse * 0.022 : 0;
       const isSel = String(p.eventId) === String(selectedId);
       const isHover = hoveredId != null && String(p.eventId) === String(hoveredId);
-      const inFocus = clusterTouchesFocus(p, events, focusRegion);
+      const inFocus = clusterTouchesFocus(p, idMap, focusRegion);
       const lens = !!focusRegion;
       const muted = lens && !inFocus && !isSel;
       const color = isSel
@@ -537,13 +551,15 @@ export default function SurveillanceGlobe({
           ? '#fff0d4'
           : muted
             ? 'rgba(120, 120, 130, 0.28)'
-            : p.maxSev >= 4
-              ? '#ff8585'
-              : p.maxSev >= 3
-                ? '#f0b870'
-                : lens && inFocus
-                  ? 'rgba(255, 214, 160, 0.92)'
-                  : 'rgba(234,169,96,0.52)';
+            : p.maxSev >= 5
+              ? '#e86868'
+              : p.maxSev >= 4
+                ? '#e8945c'
+                : p.maxSev >= 3
+                  ? '#d4b84a'
+                  : lens && inFocus
+                    ? 'rgba(255, 214, 160, 0.92)'
+                    : 'rgba(234,169,96,0.52)';
       return {
         ...p,
         color,
@@ -613,22 +629,23 @@ export default function SurveillanceGlobe({
   const moveCameraToSelection = useCallback(() => {
     const g = globeRef.current;
     if (!g || typeof g.pointOfView !== 'function') return;
-    const sel = events.find((e) => String(e.id) === String(selectedId));
+    const evs = eventsRef.current || [];
+    const sel = evs.find((e) => String(e.id) === String(selectedId));
     if (sel && sel.lat != null && sel.lng != null) {
       g.pointOfView({ lat: sel.lat, lng: sel.lng, altitude: 1.36 }, reducedMotion ? 0 : 1050);
       setPovAltitude(1.36);
       return;
     }
-    const tgt = cameraTargetForFocus(focusRegion, events, centroidLookup);
+    const tgt = cameraTargetForFocus(focusRegion, evs, centroidLookup);
     if (tgt) {
-      const alt = focusIso ? Math.min(tgt.altitude, 1.14) : tgt.altitude;
-      g.pointOfView({ ...tgt, altitude: alt }, reducedMotion ? 0 : 1380);
+      const alt = focusIso ? Math.min(tgt.altitude, 1.26) : tgt.altitude;
+      g.pointOfView({ ...tgt, altitude: alt }, reducedMotion ? 0 : 1180);
       setPovAltitude(alt);
       return;
     }
     g.pointOfView({ lat: 16, lng: -38, altitude: 2.48 }, reducedMotion ? 0 : 720);
     setPovAltitude(2.48);
-  }, [events, selectedId, focusRegion, focusIso, reducedMotion, centroidLookup]);
+  }, [selectedId, focusRegion, focusIso, reducedMotion, centroidLookup]);
 
   useEffect(() => {
     moveCameraToSelection();
@@ -707,7 +724,7 @@ export default function SurveillanceGlobe({
           arcStartLng="startLng"
           arcEndLat="endLat"
           arcEndLng="endLng"
-          arcColor={() => ['rgba(248, 195, 125, 0.22)', 'rgba(255, 120, 120, 0.38)']}
+          arcColor={arcColor}
           arcAltitude={0.24}
           arcStroke={0.42}
           polygonsData={polygonsData}
@@ -717,7 +734,9 @@ export default function SurveillanceGlobe({
           polygonStrokeColor={polygonStrokeColor}
           polygonAltitude={polygonAltitude}
           polygonCapCurvatureResolution={3}
-          polygonsTransitionDuration={reducedMotion ? 0 : 220}
+          polygonsTransitionDuration={
+            reducedMotion ? 0 : focusIso ? 95 : focusRegion ? 150 : 220
+          }
           polygonLabel={polygonLabel}
           onPolygonHover={(poly) => {
             setHoveredIso(poly && poly.iso ? poly.iso : null);

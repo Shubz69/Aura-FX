@@ -1,5 +1,5 @@
 import React from 'react';
-import { normalizeRegionKey } from './surveillanceRegionUtils';
+import { normalizeRegionKey, severityUrgencyClass, severityUrgencySlug } from './surveillanceRegionUtils';
 
 function Section({ title, kicker, children, priority }) {
   return (
@@ -13,7 +13,7 @@ function Section({ title, kicker, children, priority }) {
   );
 }
 
-export default function IntelSidePanel({
+function IntelSidePanel({
   digest,
   situationHeadline,
   onOpenEvent,
@@ -21,6 +21,8 @@ export default function IntelSidePanel({
   focusRegion,
   focusSummary,
   tapeCount,
+  eventsById,
+  topTapeSeverity,
   onClearFocus,
   onSetFocusRegion,
 }) {
@@ -41,6 +43,7 @@ export default function IntelSidePanel({
     : majorRegions.map((r, i) => ({ ...r, rank: i + 1, label: i === 0 ? 'Hot' : 'Watch' }));
 
   const lensActive = !!focusRegion;
+  const idLookup = eventsById instanceof Map ? eventsById : null;
 
   return (
     <div
@@ -57,8 +60,24 @@ export default function IntelSidePanel({
       </header>
 
       {situationHeadline ? (
-        <div className="sv-rail-situation" role="status">
-          <span className="sv-rail-situation-label">Top signal</span>
+        <div
+          className="sv-rail-situation"
+          role="status"
+          data-signal-urgency={
+            topTapeSeverity != null && topTapeSeverity !== '' ? severityUrgencySlug(topTapeSeverity) : undefined
+          }
+        >
+          <div className="sv-rail-situation-top">
+            <span className="sv-rail-situation-label">Top signal</span>
+            {topTapeSeverity != null && topTapeSeverity !== '' ? (
+              <span
+                className={`sv-rail-situation-sev ${severityUrgencyClass(topTapeSeverity)}`}
+                title="Lead tape row severity"
+              >
+                S{topTapeSeverity}
+              </span>
+            ) : null}
+          </div>
           <p className="sv-rail-situation-text">{situationHeadline}</p>
         </div>
       ) : (
@@ -73,6 +92,7 @@ export default function IntelSidePanel({
           className={`sv-rail-focus ${focusSummary.isoHint ? 'sv-rail-focus--geo' : ''}`}
           role="region"
           aria-label="Geography focus"
+          data-lens-urgency={severityUrgencySlug(focusSummary.maxSev)}
         >
           <div className="sv-rail-focus-top">
             <span className="sv-rail-focus-label">Active lens</span>
@@ -101,7 +121,11 @@ export default function IntelSidePanel({
             </div>
             <div>
               <dt>Sev</dt>
-              <dd>{focusSummary.maxSev || '—'}</dd>
+              <dd>
+                <span className={focusSummary.urgencyClass || severityUrgencyClass(focusSummary.maxSev)}>
+                  {focusSummary.maxSev || '—'}
+                </span>
+              </dd>
             </div>
           </dl>
         </div>
@@ -134,17 +158,26 @@ export default function IntelSidePanel({
       <Section title="Developing" kicker="Storylines" priority>
         <ul className="sv-rail-list">
           {developingStories.length ? (
-            developingStories.map((s) => (
-              <li key={s.story_id}>
-                <button type="button" className="sv-rail-row" onClick={() => onOpenEvent(s.top_event_id)}>
-                  <span className="sv-rail-row-title">{s.headline}</span>
-                  <span className="sv-rail-row-meta">
-                    {s.item_count} events · {s.sources?.length || 0} sources · rank {s.rank_score != null ? Math.round(s.rank_score) : '—'}
-                  </span>
-                  {s.trade_line ? <span className="sv-rail-row-ledger">{s.trade_line}</span> : null}
-                </button>
-              </li>
-            ))
+            developingStories.map((s) => {
+              const leadSev = idLookup?.get(String(s.top_event_id))?.severity;
+              return (
+                <li key={s.story_id}>
+                  <button
+                    type="button"
+                    className="sv-rail-row"
+                    data-urgency={severityUrgencySlug(leadSev)}
+                    onClick={() => onOpenEvent(s.top_event_id)}
+                  >
+                    <span className="sv-rail-row-title">{s.headline}</span>
+                    <span className="sv-rail-row-meta">
+                      {s.item_count} events · {s.sources?.length || 0} sources · rank{' '}
+                      {s.rank_score != null ? Math.round(s.rank_score) : '—'}
+                    </span>
+                    {s.trade_line ? <span className="sv-rail-row-ledger">{s.trade_line}</span> : null}
+                  </button>
+                </li>
+              );
+            })
           ) : (
             <li className="sv-rail-empty">{lensActive ? 'No storylines in this sector' : 'No multi-source storylines yet'}</li>
           )}
@@ -156,7 +189,12 @@ export default function IntelSidePanel({
           {highMarketImpact.length ? (
             highMarketImpact.map((e) => (
               <li key={e.id}>
-                <button type="button" className="sv-rail-row" onClick={() => onOpenEvent(e.id)}>
+                <button
+                  type="button"
+                  className="sv-rail-row"
+                  data-urgency={severityUrgencySlug(e.severity)}
+                  onClick={() => onOpenEvent(e.id)}
+                >
                   <span className="sv-rail-row-eyebrow">
                     MKT {e.market_impact_score != null ? Math.round(e.market_impact_score) : '—'}
                   </span>
@@ -175,7 +213,12 @@ export default function IntelSidePanel({
           {aviationAlerts.length ? (
             aviationAlerts.map((e) => (
               <li key={e.id}>
-                <button type="button" className="sv-rail-row" onClick={() => onOpenEvent(e.id)}>
+                <button
+                  type="button"
+                  className="sv-rail-row"
+                  data-urgency={severityUrgencySlug(e.severity)}
+                  onClick={() => onOpenEvent(e.id)}
+                >
                   <span className="sv-rail-row-eyebrow">{e.event_type || 'aviation'}</span>
                   <span className="sv-rail-row-title">{e.title}</span>
                   {e.observability ? <span className="sv-rail-row-note">{e.observability}</span> : null}
@@ -193,7 +236,12 @@ export default function IntelSidePanel({
           {maritimeLogistics.length ? (
             maritimeLogistics.map((e) => (
               <li key={e.id}>
-                <button type="button" className="sv-rail-row" onClick={() => onOpenEvent(e.id)}>
+                <button
+                  type="button"
+                  className="sv-rail-row"
+                  data-urgency={severityUrgencySlug(e.severity)}
+                  onClick={() => onOpenEvent(e.id)}
+                >
                   <span className="sv-rail-row-eyebrow">{e.event_type || 'maritime'}</span>
                   <span className="sv-rail-row-title">{e.title}</span>
                   {e.observability ? <span className="sv-rail-row-note">{e.observability}</span> : null}
@@ -211,7 +259,12 @@ export default function IntelSidePanel({
           {corroboratedAlerts.length ? (
             corroboratedAlerts.map((e) => (
               <li key={e.id}>
-                <button type="button" className="sv-rail-row" onClick={() => onOpenEvent(e.id)}>
+                <button
+                  type="button"
+                  className="sv-rail-row"
+                  data-urgency={severityUrgencySlug(e.severity)}
+                  onClick={() => onOpenEvent(e.id)}
+                >
                   <span className="sv-rail-row-eyebrow">✓{e.corroboration_count || 0}</span>
                   <span className="sv-rail-row-title">{e.title}</span>
                 </button>
@@ -252,3 +305,5 @@ export default function IntelSidePanel({
     </div>
   );
 }
+
+export default React.memo(IntelSidePanel);

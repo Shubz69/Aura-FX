@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import SurveillanceGlobe from './SurveillanceGlobe';
 import EventDrawer from './EventDrawer';
@@ -13,6 +13,7 @@ import {
   focusSummaryFromEvents,
   normalizeRegionKey,
   primaryCountryFromEvent,
+  severityUrgencySlug,
 } from './surveillanceRegionUtils';
 import './SurveillancePage.css';
 
@@ -166,7 +167,7 @@ export default function SurveillancePage() {
   const clearFocusRegion = useCallback(() => setFocusRegion(null), []);
 
   const setFocusFromHeat = useCallback((region) => {
-    setFocusRegion(normalizeRegionKey(region));
+    startTransition(() => setFocusRegion(normalizeRegionKey(region)));
   }, []);
 
   useEffect(() => {
@@ -321,14 +322,14 @@ export default function SurveillancePage() {
     (id) => {
       const ev = eventsById.get(String(id));
       const key = primaryCountryFromEvent(ev) || (ev?.region ? normalizeRegionKey(ev.region) : null);
-      if (key) setFocusRegion(key);
+      if (key) startTransition(() => setFocusRegion(key));
       openDrawer(id);
     },
     [eventsById, openDrawer]
   );
 
   const onGlobeCountryFocus = useCallback((iso2) => {
-    setFocusRegion(normalizeRegionKey(iso2));
+    startTransition(() => setFocusRegion(normalizeRegionKey(iso2)));
   }, []);
 
   const onGlobeBackground = useCallback(() => {
@@ -481,6 +482,15 @@ export default function SurveillancePage() {
                 {focusSummary.isoHint}
               </span>
             ) : null}
+            {focusSummary.count > 0 ? (
+              <span
+                className={`sv-hero-context-urgency ${focusSummary.urgencyClass || ''}`}
+                title="Peak severity in this lens"
+              >
+                {focusSummary.urgencyLabel}
+                {focusSummary.maxSev ? ` · S${focusSummary.maxSev}` : ''}
+              </span>
+            ) : null}
             <button type="button" className="sv-hero-context-clear" onClick={clearFocusRegion}>
               Clear lens
             </button>
@@ -505,7 +515,11 @@ export default function SurveillancePage() {
               ))}
             </div>
           </div>
-          <div className={`sv-globe-stage ${terminalHandoff ? 'sv-globe-stage--handoff' : ''}`}>
+          <div
+            className={`sv-globe-stage ${focusRegion ? 'sv-globe-stage--lensed' : ''} ${
+              terminalHandoff ? 'sv-globe-stage--handoff' : ''
+            }`}
+          >
             <div className={`sv-globe-panel ${terminalHandoff ? 'sv-globe-panel--handoff' : ''}`}>
               <SurveillanceGlobe
                 events={events}
@@ -537,6 +551,8 @@ export default function SurveillancePage() {
               focusRegion={focusRegion}
               focusSummary={focusSummary}
               tapeCount={tapeEvents.length}
+              eventsById={eventsById}
+              topTapeSeverity={tapeEvents[0]?.severity}
               onClearFocus={clearFocusRegion}
               onSetFocusRegion={setFocusFromHeat}
             />
@@ -631,6 +647,7 @@ export default function SurveillancePage() {
           </header>
           <ul className="sv-tape-list">
             {tapeEvents.map((e) => {
+              const urgSlug = severityUrgencySlug(e.severity);
               const metaBits = [
                 e.risk_bias && e.risk_bias !== 'neutral' ? e.risk_bias.replace('_', ' ') : null,
                 e.corroboration_count > 0 ? `${e.corroboration_count}× corroboration` : null,
@@ -642,6 +659,7 @@ export default function SurveillancePage() {
                 <li key={e.id}>
                   <button
                     type="button"
+                    data-urgency={urgSlug}
                     className={`sv-tape-row ${String(selectedId) === String(e.id) ? 'sv-tape-row--active' : ''} ${
                       focusRegion && eventMatchesFocus(e, focusRegion) ? 'sv-tape-row--in-lens' : ''
                     }`}
@@ -649,7 +667,10 @@ export default function SurveillancePage() {
                     onClick={() => openDrawer(e.id)}
                   >
                     <span className="sv-tape-cell sv-tape-cell--sev">
-                      <span className="sv-sev" data-sev={e.severity}>
+                      <span
+                        className={`sv-sev ${urgSlug !== 'routine' ? `sv-sev--${urgSlug}` : ''}`}
+                        data-sev={e.severity}
+                      >
                         {e.severity}
                       </span>
                     </span>
