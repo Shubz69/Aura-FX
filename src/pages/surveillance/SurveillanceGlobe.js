@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect, useState, Suspense, lazy, useCallback } from 'react';
+import React, { useMemo, useRef, useEffect, useLayoutEffect, useState, Suspense, lazy, useCallback } from 'react';
 import * as THREE from 'three';
 import {
   SURV_ISO_CENTROID,
@@ -17,6 +17,32 @@ const GLOBE_TEXTURE = `${GLOBE_BASE}/earth-blue-marble.jpg`;
 
 let neGeoJsonCache = null;
 let neGeoJsonPromise = null;
+
+function mulberry32(seed) {
+  return function rand() {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** 0 = day-ish, 1 = night — local clock, understated for atmosphere only */
+function nightFactorFromLocalTime(d = new Date()) {
+  const t = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+  if (t >= 20.5 || t <= 4.5) return 1;
+  if (t >= 9 && t <= 16.5) return 0;
+  if (t > 16.5 && t < 20.5) return (t - 16.5) / 4;
+  if (t > 4.5 && t < 9) return 1 - (t - 4.5) / 4.5;
+  return 0.2;
+}
+
+function hexLerpColor(hexA, hexB, t) {
+  const a = new THREE.Color(hexA);
+  const b = new THREE.Color(hexB);
+  const u = Math.max(0, Math.min(1, t));
+  return `#${a.lerp(b, u).getHexString()}`;
+}
 
 function loadCountriesGeoJson() {
   if (neGeoJsonCache) return Promise.resolve(neGeoJsonCache);
@@ -116,8 +142,14 @@ export default function SurveillanceGlobe({
   const wrapRef = useRef(null);
   const globeRef = useRef(null);
   const surfacePickAtRef = useRef(0);
+  const povAltitudeRef = useRef(2.48);
+  const nightFactorRef = useRef(nightFactorFromLocalTime());
+  const reducedMotionRef = useRef(!!reducedMotion);
+  const spaceAnimRef = useRef(0);
+  const spaceBackdropRef = useRef(null);
   const [dims, setDims] = useState({ w: 320, h: 320 });
   const [povAltitude, setPovAltitude] = useState(2.48);
+  const [nightFactor, setNightFactor] = useState(() => nightFactorFromLocalTime());
   const [pulse, setPulse] = useState(0);
   const [hoveredId, setHoveredId] = useState(null);
   const [globeReveal, setGlobeReveal] = useState(false);
@@ -133,7 +165,7 @@ export default function SurveillanceGlobe({
 
   const centroidLookup = useMemo(() => ({ ...SURV_ISO_CENTROID, ...loadedIsoCentroids }), [loadedIsoCentroids]);
 
-  const moonGeometry = useMemo(() => new THREE.SphereGeometry(0.052, 22, 22), []);
+  const moonGeometry = useMemo(() => new THREE.SphereGeometry(0.056, 22, 22), []);
   const moonMaterial = useMemo(
     () =>
       new THREE.MeshPhongMaterial({
@@ -145,16 +177,72 @@ export default function SurveillanceGlobe({
     []
   );
 
-  const moonObjectsData = useMemo(() => {
-    if (reducedMotion) return [];
-    if (povAltitude < 1.62) return [];
-    return [{ id: 'moon', lat: 9, lng: -98, alt: 0.88 }];
-  }, [povAltitude, reducedMotion]);
+  const rockyPlanetGeometry = useMemo(() => new THREE.SphereGeometry(0.026, 14, 14), []);
+  const gasPlanetGeometry = useMemo(() => new THREE.SphereGeometry(0.034, 14, 14), []);
+  const rockyPlanetMaterial = useMemo(
+    () =>
+      new THREE.MeshPhongMaterial({
+        color: 0x5c4a42,
+        emissive: 0x0a0806,
+        shininess: 6,
+        specular: 0x222018,
+      }),
+    []
+  );
+  const gasPlanetMaterial = useMemo(
+    () =>
+      new THREE.MeshPhongMaterial({
+        color: 0x354050,
+        emissive: 0x06080c,
+        shininess: 22,
+        specular: 0x303848,
+        transparent: true,
+        opacity: 0.82,
+      }),
+    []
+  );
+
+  const celestialObjectsData = useMemo(() => {
+    if (povAltitude < 1.26) return [];
+    const nf = nightFactor;
+    const moonAlt = 0.82 + Math.min(0.14, (povAltitude - 1.26) * 0.12) + nf * 0.08;
+    const bodies = [{ id: 'moon', kind: 'moon', lat: 10, lng: -100, alt: Math.min(1.06, moonAlt) }];
+    if (povAltitude > 1.42) {
+      bodies.push(
+        { id: 'rocky', kind: 'rocky', lat: -20, lng: 128, alt: 1.08 + (povAltitude - 1.42) * 0.06 },
+        { id: 'gas', kind: 'gas', lat: 46, lng: -162, alt: 1.22 + (povAltitude - 1.42) * 0.05 }
+      );
+    }
+    return bodies;
+  }, [povAltitude, nightFactor]);
 
   const objectThreeObject = useCallback(
-    () => new THREE.Mesh(moonGeometry, moonMaterial),
-    [moonGeometry, moonMaterial]
+    (d) => {
+      if (d.kind === 'rocky') {
+        return new THREE.Mesh(rockyPlanetGeometry, rockyPlanetMaterial.clone());
+      }
+      if (d.kind === 'gas') {
+        return new THREE.Mesh(gasPlanetGeometry, gasPlanetMaterial.clone());
+      }
+      return new THREE.Mesh(moonGeometry, moonMaterial);
+    },
+    [moonGeometry, moonMaterial, rockyPlanetGeometry, rockyPlanetMaterial, gasPlanetGeometry, gasPlanetMaterial]
   );
+
+  const sceneBackground = useMemo(
+    () => hexLerpColor('#0a0c18', '#03040e', nightFactor * 0.72),
+    [nightFactor]
+  );
+
+  const atmosphereColor = useMemo(() => {
+    const r = Math.round(38 + nightFactor * 6);
+    const g = Math.round(52 + nightFactor * 8);
+    const b = Math.round(78 + nightFactor * 12);
+    const a = 0.072 + nightFactor * 0.038;
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }, [nightFactor]);
+
+  const atmosphereAltitude = useMemo(() => 0.078 + nightFactor * 0.032, [nightFactor]);
 
   const refineGlobeSurface = useCallback(() => {
     const g = globeRef.current;
@@ -266,6 +354,131 @@ export default function SurveillanceGlobe({
       setPovAltitude(pov.altitude);
     }
   }, []);
+
+  useEffect(() => {
+    moonMaterial.emissive.lerpColors(
+      new THREE.Color(0x070810),
+      new THREE.Color(0x141c2a),
+      nightFactor * 0.75
+    );
+    moonMaterial.needsUpdate = true;
+  }, [nightFactor, moonMaterial]);
+
+  useEffect(() => {
+    const refresh = () => setNightFactor(nightFactorFromLocalTime());
+    refresh();
+    const id = window.setInterval(refresh, 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  const teardownSpaceBackdrop = useCallback(() => {
+    if (spaceAnimRef.current) {
+      cancelAnimationFrame(spaceAnimRef.current);
+      spaceAnimRef.current = 0;
+    }
+    const g = globeRef.current;
+    if (g && typeof g.scene === 'function') {
+      const scene = g.scene();
+      const backdrop = scene.getObjectByName('svSpaceBackdrop');
+      if (backdrop) {
+        backdrop.traverse((ch) => {
+          if (ch.geometry) ch.geometry.dispose?.();
+          const m = ch.material;
+          if (m) {
+            if (Array.isArray(m)) m.forEach((x) => x.dispose?.());
+            else m.dispose?.();
+          }
+        });
+        scene.remove(backdrop);
+      }
+    }
+    spaceBackdropRef.current = null;
+  }, []);
+
+  const installSpaceBackdrop = useCallback(() => {
+    teardownSpaceBackdrop();
+    const g = globeRef.current;
+    if (!g || typeof g.scene !== 'function') return;
+
+    const scene = g.scene();
+    const globeR = typeof g.getGlobeRadius === 'function' ? g.getGlobeRadius() : 100;
+    const shellR = globeR * 4.65;
+    const count = reducedMotionRef.current ? 780 : 1650;
+    const positions = new Float32Array(count * 3);
+    const rnd = mulberry32(0x5c3e91d2);
+    for (let i = 0; i < count; i++) {
+      const u = rnd();
+      const v = rnd();
+      const theta = 2 * Math.PI * u;
+      const phi = Math.acos(2 * v - 1);
+      const r = shellR * (0.962 + 0.038 * rnd());
+      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      positions[i * 3 + 2] = r * Math.cos(phi);
+    }
+    const starGeo = new THREE.BufferGeometry();
+    starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const starMat = new THREE.PointsMaterial({
+      color: 0xc2c6d4,
+      size: reducedMotionRef.current ? 0.031 : 0.039,
+      transparent: true,
+      opacity: 0.48,
+      depthWrite: false,
+      sizeAttenuation: true,
+    });
+    const stars = new THREE.Points(starGeo, starMat);
+    stars.name = 'svStarfield';
+    stars.frustumCulled = false;
+    stars.renderOrder = -450;
+
+    const group = new THREE.Group();
+    group.name = 'svSpaceBackdrop';
+    group.add(stars);
+    scene.add(group);
+    spaceBackdropRef.current = group;
+
+    const controls = typeof g.controls === 'function' ? g.controls() : null;
+
+    const tick = () => {
+      if (!spaceBackdropRef.current) return;
+      const alt = povAltitudeRef.current;
+      const nf = nightFactorRef.current;
+      const rm = reducedMotionRef.current;
+      const zoomReveal = Math.max(0, Math.min(1, (alt - 1.04) / 1.05));
+      starMat.opacity = Math.min(0.72, (0.18 + nf * 0.48) * zoomReveal + (rm ? 0.07 : 0.03));
+
+      let drift = 0;
+      if (!rm && alt > 1.18) {
+        drift = performance.now() * 0.0000092;
+      }
+      let az = 0;
+      let pol = Math.PI / 2;
+      try {
+        if (controls?.getAzimuthalAngle) az = controls.getAzimuthalAngle();
+        if (controls?.getPolarAngle) pol = controls.getPolarAngle();
+      } catch {
+        /* ignore */
+      }
+      group.rotation.set((pol - Math.PI / 2) * 0.047, drift + az * 0.055, 0, 'YXZ');
+
+      spaceAnimRef.current = requestAnimationFrame(tick);
+    };
+    tick();
+  }, [teardownSpaceBackdrop]);
+
+  useEffect(() => () => teardownSpaceBackdrop(), [teardownSpaceBackdrop]);
+
+  const onGlobeReady = useCallback(() => {
+    requestAnimationFrame(() => {
+      installSpaceBackdrop();
+    });
+  }, [installSpaceBackdrop]);
+
+  useLayoutEffect(() => {
+    povAltitudeRef.current = povAltitude;
+    reducedMotionRef.current = !!reducedMotion;
+    nightFactorRef.current = nightFactor;
+  }, [povAltitude, reducedMotion, nightFactor]);
 
   const useHex = !reducedMotion && !focusRegion && events.length > 52;
 
@@ -443,9 +656,10 @@ export default function SurveillanceGlobe({
           ref={globeRef}
           width={dims.w}
           height={dims.h}
-          backgroundColor="#03030f"
+          backgroundColor={sceneBackground}
           backgroundImageUrl={null}
           waitForGlobeReady
+          onGlobeReady={onGlobeReady}
           globeImageUrl={GLOBE_TEXTURE}
           globeCurvatureResolution={reducedMotion ? 4 : 2.4}
           bumpImageUrl={null}
@@ -455,8 +669,8 @@ export default function SurveillanceGlobe({
             powerPreference: 'high-performance',
           }}
           showAtmosphere
-          atmosphereColor="rgba(42, 58, 88, 0.07)"
-          atmosphereAltitude={reducedMotion ? 0.065 : 0.09}
+          atmosphereColor={atmosphereColor}
+          atmosphereAltitude={reducedMotion ? atmosphereAltitude * 0.82 : atmosphereAltitude}
           onGlobeClick={handleGlobeClick}
           onZoom={handleZoom}
           heatmapsData={heatmapLayer}
@@ -516,7 +730,7 @@ export default function SurveillanceGlobe({
           onPointHover={(pt) => {
             setHoveredId(pt && pt.eventId ? pt.eventId : null);
           }}
-          objectsData={moonObjectsData}
+          objectsData={celestialObjectsData}
           objectLat="lat"
           objectLng="lng"
           objectAltitude="alt"
