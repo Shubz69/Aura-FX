@@ -240,18 +240,6 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
             </div>
           ) : null}
         </div>
-
-        {!reducedMotion ? (
-          <aside className="sv-intro-signal" aria-hidden>
-            <div className="sv-intro-signal-line" />
-            <ul className="sv-intro-signal-ticks">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <li key={i} className="sv-intro-signal-tick" style={{ animationDelay: `${120 + i * 70}ms` }} />
-              ))}
-            </ul>
-            <p className="sv-intro-signal-caption">Signal integrity nominal</p>
-          </aside>
-        ) : null}
       </div>
 
       <div className={`sv-intro-handoff ${exiting ? 'sv-intro-handoff--on' : ''}`} aria-hidden />

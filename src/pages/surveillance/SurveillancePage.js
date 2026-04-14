@@ -488,6 +488,23 @@ export default function SurveillancePage() {
         ) : null}
 
         <div className="sv-terminal-hero">
+          <div className="sv-terminal-side" aria-label="Event categories">
+            <span className="sv-side-eyebrow">Categories</span>
+            <div className="sv-pill-tabs sv-pill-tabs--stack" role="tablist" aria-label="Event categories">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.id}
+                  className={`sv-pill-tab ${tab === t.id ? 'sv-pill-tab--active' : ''}`}
+                  onClick={() => setTab(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className={`sv-globe-stage ${terminalHandoff ? 'sv-globe-stage--handoff' : ''}`}>
             <div className={`sv-globe-panel ${terminalHandoff ? 'sv-globe-panel--handoff' : ''}`}>
               <SurveillanceGlobe
@@ -541,24 +558,10 @@ export default function SurveillancePage() {
         </div>
 
         <div className="sv-control-deck">
-          <div className="sv-control-deck-inner">
+          <div className="sv-control-deck-inner sv-control-deck-inner--compact">
             <div className="sv-control-deck-label">
-              <span className="sv-control-eyebrow">Filters</span>
-              <span className="sv-control-title">Category and tape constraints</span>
-            </div>
-            <div className="sv-pill-tabs" role="tablist" aria-label="Event categories">
-              {TABS.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={tab === t.id}
-                  className={`sv-pill-tab ${tab === t.id ? 'sv-pill-tab--active' : ''}`}
-                  onClick={() => setTab(t.id)}
-                >
-                  {t.label}
-                </button>
-              ))}
+              <span className="sv-control-eyebrow">Tape</span>
+              <span className="sv-control-title">Severity and source</span>
             </div>
             <div className="sv-control-filters">
               <label className="sv-field">
