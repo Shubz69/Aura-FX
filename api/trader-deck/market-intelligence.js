@@ -133,7 +133,15 @@ module.exports = async (req, res) => {
   const fromCache = forceRefresh ? null : getCached(cacheKey);
   if (fromCache) {
     res.setHeader('Cache-Control', 'private, max-age=30');
-    return res.status(200).json({ success: true, ...fromCache, timeframe, date: date || null, cached: true });
+    return res.status(200).json({
+      success: true,
+      ...fromCache,
+      deskTimeframe: timeframe,
+      deskReferenceDate: date || fromCache.deskReferenceDate || null,
+      timeframe,
+      date: date || null,
+      cached: true,
+    });
   }
 
   if (!forceRefresh) {
@@ -145,6 +153,8 @@ module.exports = async (req, res) => {
           storedSource: stored.source,
           storedUpdatedAt: stored.updatedAt,
           storageFreshness: stored.freshnessStatus,
+          deskTimeframe: timeframe,
+          deskReferenceDate: date || null,
         };
         setCache(cacheKey, payload);
         res.setHeader('Cache-Control', 'private, max-age=30');
@@ -166,6 +176,8 @@ module.exports = async (req, res) => {
     const payload = {
       ...raw,
       ...(enriched || {}),
+      deskTimeframe: timeframe,
+      deskReferenceDate: date || null,
     };
     setCache(cacheKey, payload);
     res.setHeader('Cache-Control', 'private, max-age=30');

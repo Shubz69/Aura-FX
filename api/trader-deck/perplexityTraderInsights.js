@@ -48,6 +48,8 @@ async function enrichTraderDeckPayload(payload) {
     ),
     headlines: (payload.headlineSample || []).slice(0, 14),
     updatedAt: payload.updatedAt,
+    deskTimeframe: payload.deskTimeframe || null,
+    deskReferenceDate: payload.deskReferenceDate || null,
   };
 
   const userMsg = `Desk snapshot (JSON). Interpret for active traders. Do not invent prices, times, or events not present.\n\n${JSON.stringify(snapshot)}`;

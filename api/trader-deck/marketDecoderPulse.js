@@ -133,6 +133,19 @@ function computeWeightedMarketPulse(p) {
     }
   }
 
+  if (pctDay != null && Number.isFinite(Number(pctDay))) {
+    const pd = Number(pctDay);
+    const nudge = clamp(Math.round(pd * 2.2), -12, 12);
+    if (nudge !== 0) {
+      pos += nudge;
+      drivers.push({
+        key: 'sessionPct',
+        label: 'Session change',
+        detail: `${pd >= 0 ? '+' : ''}${pd.toFixed(2)}% vs reference close`,
+      });
+    }
+  }
+
   if (piv != null && last != null && Number.isFinite(Number(last))) {
     const pv = Number(piv.pivot);
     if (Number.isFinite(pv) && pv !== 0) {

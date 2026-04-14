@@ -295,8 +295,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     (cacheBust) =>
       Api.getTraderDeckContent(type, storageDateStr, {
         cacheBust: !!cacheBust,
-        /** Polling must not re-fire background brief generation (DB queue storm on serverless). */
-        autogen: !cacheBust,
+        /** Never autogen on list reads — cron fills briefs; `autogen=1` is reserved for explicit operator backfill. */
+        autogen: false,
       }).then((res) => briefsPayloadFromContentResponse(res, storageDateStr)),
     [type, storageDateStr]
   );

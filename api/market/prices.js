@@ -1467,56 +1467,15 @@ async function fetchPrice(symbol, options = {}) {
   return getFallbackPrice(canonical);
 }
 
-function mergeSnapshotChunkResults(results, chunkSymbols) {
-  const prices = {};
-  results.forEach((result, index) => {
-    const symbol = chunkSymbols[index];
-    if (result.status === 'fulfilled' && result.value) {
-      const priceData = result.value;
-      if (!priceData.price || priceData.price === '0.00' || parseFloat(priceData.price) === 0) {
-        const fallback = getFallbackPrice(symbol);
-        if (fallback) prices[symbol] = fallback;
-      } else {
-        prices[symbol] = priceData;
-      }
-    } else {
-      const fallback = getFallbackPrice(symbol);
-      if (fallback) prices[symbol] = fallback;
-    }
-  });
-  return prices;
-}
-
 /**
  * Fetch prices for multiple symbols (used by /api/markets/snapshot).
- * Pre-fetches crypto from CoinGecko, Stooq batch for FX/metals, then chunked parallel fetches.
+ * Delegates to market-data/liveHotSnapshot: TD quote DTO first, shared legacy row mapping, then full chain.
  */
 async function fetchPricesForSymbols(symbols) {
   if (!symbols || symbols.length === 0) return { prices: {}, timestamp: Date.now() };
-  const REQUEST_TIMEOUT_MS = 7000;
-  const CHUNK = 35;
-
-  const stooqSymbols = symbols.filter((s) => STOOQ_FOREX_METALS.has(s));
-  const stooqBySymbol = stooqSymbols.length > 0 ? await fetchStooqBatchMap(stooqSymbols) : {};
-
-  // TD-first: do not pre-seed crypto from CoinGecko (would bypass Twelve Data via short cache TTL).
-
-  const prices = {};
-  for (let i = 0; i < symbols.length; i += CHUNK) {
-    const chunk = symbols.slice(i, i + CHUNK);
-    const results = await Promise.allSettled(
-      chunk.map((symbol) =>
-        Promise.race([
-          fetchPrice(symbol, { stooqBySymbol }),
-          new Promise((resolve) =>
-            setTimeout(() => resolve(getFallbackPrice(symbol)), REQUEST_TIMEOUT_MS + 1000)
-          )
-        ])
-      )
-    );
-    Object.assign(prices, mergeSnapshotChunkResults(results, chunk));
-  }
-  return { prices, timestamp: Date.now() };
+  const { buildLiveHotSnapshot } = require('../market-data/liveHotSnapshot');
+  const out = await buildLiveHotSnapshot(symbols);
+  return { prices: out.prices, timestamp: out.timestamp };
 }
 
 module.exports = async (req, res) => {
@@ -1630,3 +1589,8 @@ module.exports = async (req, res) => {
 };
 
 module.exports.fetchPricesForSymbols = fetchPricesForSymbols;
+module.exports.legacyPriceRowFromQuoteDto = legacyPriceRowFromQuoteDto;
+module.exports.fetchStooqBatchMap = fetchStooqBatchMap;
+module.exports.STOOQ_FOREX_METALS = STOOQ_FOREX_METALS;
+module.exports.fetchPrice = fetchPrice;
+module.exports.getFallbackPrice = getFallbackPrice;

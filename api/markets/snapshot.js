@@ -7,6 +7,8 @@
 
 const { getCached, setCached } = require('../cache');
 const { getSnapshotSymbols } = require('../market/defaultWatchlist');
+const { buildLiveHotSnapshot } = require('../market-data/liveHotSnapshot');
+const { snapshot: tdMetricsSnapshot } = require('../market-data/tdMetrics');
 
 const CACHE_KEY = 'markets:snapshot:v1';
 const CACHE_TTL_MS = 20 * 1000;
@@ -29,45 +31,71 @@ module.exports = async (req, res) => {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
 
+  const wantDiagnostics = String(req.query.diagnostics || '').trim() === '1';
+
   const cached = getCached(CACHE_KEY, CACHE_TTL_MS);
   if (cached && cached.prices && typeof cached.snapshotTimestamp === 'number') {
-    return res.status(200).json({
+    const body = {
       success: true,
       prices: cached.prices,
       snapshotTimestamp: cached.snapshotTimestamp,
       cached: true,
-    });
+    };
+    if (wantDiagnostics) {
+      body.diagnostics = {
+        routeCacheHit: true,
+        cacheTtlMs: CACHE_TTL_MS,
+        hotUniverseSymbols: getSnapshotSymbols(),
+        lastEngineRun: tdMetricsSnapshot().liveHotSnapshot,
+      };
+    }
+    return res.status(200).json(body);
   }
 
   try {
-    const { fetchPricesForSymbols } = require('../market/prices');
-    const { prices, timestamp } = await fetchPricesForSymbols(getSnapshotSymbols());
-
+    const built = await buildLiveHotSnapshot(getSnapshotSymbols());
     const snapshot = {
-      prices,
-      snapshotTimestamp: timestamp,
+      prices: built.prices,
+      snapshotTimestamp: built.timestamp,
     };
     setCached(CACHE_KEY, snapshot, CACHE_TTL_MS);
     lastGoodSnapshot = snapshot;
     lastGoodSnapshotTime = Date.now();
 
-    return res.status(200).json({
+    const body = {
       success: true,
       prices: snapshot.prices,
       snapshotTimestamp: snapshot.snapshotTimestamp,
       cached: false,
-    });
+    };
+    if (wantDiagnostics) {
+      body.diagnostics = {
+        routeCacheHit: false,
+        cacheTtlMs: CACHE_TTL_MS,
+        hotUniverseSymbols: getSnapshotSymbols(),
+        ...built.diagnostics,
+      };
+    }
+    return res.status(200).json(body);
   } catch (err) {
     console.error('Markets snapshot fetch error:', err.message);
 
     if (lastGoodSnapshot && (Date.now() - lastGoodSnapshotTime) < STALE_OK_MS) {
-      return res.status(200).json({
+      const body = {
         success: true,
         prices: lastGoodSnapshot.prices,
         snapshotTimestamp: lastGoodSnapshot.snapshotTimestamp,
         cached: true,
         stale: true,
-      });
+      };
+      if (wantDiagnostics) {
+        body.diagnostics = {
+          staleOk: true,
+          hotUniverseSymbols: getSnapshotSymbols(),
+          lastEngineRun: tdMetricsSnapshot().liveHotSnapshot,
+        };
+      }
+      return res.status(200).json(body);
     }
 
     return res.status(503).json({

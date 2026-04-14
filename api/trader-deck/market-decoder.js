@@ -166,6 +166,13 @@ module.exports = async (req, res) => {
 
     const payload = { brief, cached: false, cacheTtlSec: CACHE_SEC };
     setCached(cacheKey, payload);
+    try {
+      const { recordDecoderSymbolDecode } = require('./decoderSymbolMetrics');
+      const canon = brief?.instrument?.canonical || brief?.meta?.canonicalSymbol || symbol;
+      if (canon) recordDecoderSymbolDecode(String(canon).toUpperCase());
+    } catch (_) {
+      /* non-fatal */
+    }
     res.setHeader('Cache-Control', 'private, max-age=60');
     const briefOut = stripFeedDiagnosticsFromBrief(brief);
     setDecoderEngineHeader(res, briefOut);

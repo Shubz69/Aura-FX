@@ -219,6 +219,37 @@ describe('registry us_market', () => {
   });
 });
 
+describe('marketDecoderPulse', () => {
+  const { computeWeightedMarketPulse } = require('../api/trader-deck/marketDecoderPulse');
+  it('nudges pulse gauge with session pctDay so the needle tracks live tape', () => {
+    const args = {
+      net: 0,
+      bull: 3,
+      bear: 3,
+      bias: 'Neutral',
+      rsiVal: 50,
+      rsiTone: 'neutral',
+      volLabel: 'Low',
+      pulseState: 'Choppy',
+      last: 1.1,
+      piv: null,
+      eventSoon: false,
+      isSparse: false,
+      crossBundle: {},
+      marketType: 'FX',
+      displaySymbol: 'GBPUSD',
+      momentum: 'Rising',
+    };
+    const low = computeWeightedMarketPulse({ ...args, pctDay: -3.2 });
+    const high = computeWeightedMarketPulse({ ...args, pctDay: 3.2 });
+    if (!(high.gaugePosition > low.gaugePosition)) {
+      throw new Error(
+        `Expected higher gauge for positive pctDay, got low=${low.gaugePosition} high=${high.gaugePosition}`
+      );
+    }
+  });
+});
+
 describe('ukMarketGuards display', () => {
   const { ukListingPriceDisplayDecimals } = require('../api/market-data/equities/ukMarketGuards');
   it('uses 2 decimals for normal £ handles, 4 only sub-£1', () => {

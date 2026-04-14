@@ -270,6 +270,9 @@ const AdminPanel = () => {
     const [feedDiagLoading, setFeedDiagLoading] = useState(false);
     const [feedDiagResult, setFeedDiagResult] = useState(null);
     const [feedDiagErr, setFeedDiagErr] = useState(null);
+    const [tdAutoStatus, setTdAutoStatus] = useState(null);
+    const [tdAutoStatusLoading, setTdAutoStatusLoading] = useState(false);
+    const [tdAutoStatusErr, setTdAutoStatusErr] = useState(null);
 
     // Handle real-time online status updates from WebSocket
     const handleOnlineStatusUpdate = (data) => {
@@ -446,6 +449,26 @@ const AdminPanel = () => {
             setFeedDiagLoading(false);
         }
     };
+
+    const fetchTraderDeskAutomationStatus = useCallback(async () => {
+        setTdAutoStatusLoading(true);
+        setTdAutoStatusErr(null);
+        try {
+            const res = await AdminApi.getTraderDeskAutomationStatus();
+            setTdAutoStatus(res.data);
+        } catch (err) {
+            setTdAutoStatus(null);
+            setTdAutoStatusErr(err?.response?.data?.message || err.message || 'Failed to load Trader Desk automation status');
+        } finally {
+            setTdAutoStatusLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (activeTab === 'market-decoder-feeds') {
+            fetchTraderDeskAutomationStatus();
+        }
+    }, [activeTab, fetchTraderDeskAutomationStatus]);
 
     const handleReverseReferralEvent = async () => {
         if (!reverseSourceTable || !reverseSourceId.trim()) {
@@ -1362,6 +1385,62 @@ const AdminPanel = () => {
 
       {activeTab === 'market-decoder-feeds' && (
         <section className="admin-feed-diagnostics" style={{ padding: '0 1rem 2rem' }}>
+          <div
+            className="journal-glass-panel journal-glass-panel--pad"
+            style={{ marginBottom: 24, padding: '14px 16px', borderRadius: 12 }}
+          >
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 10 }}>
+              <strong style={{ fontSize: '0.95rem' }}>Trader Desk automation</strong>
+              <button type="button" className="refresh-btn" onClick={fetchTraderDeskAutomationStatus} disabled={tdAutoStatusLoading}>
+                {tdAutoStatusLoading ? 'Loading…' : '↻ Refresh'}
+              </button>
+            </div>
+            <p className="brief-template-help" style={{ margin: '0 0 10px' }}>
+              Brief / outlook cron ledger: last successful daily outlook, recent run rows, and stored brief kind counts by date (last 14 days).
+            </p>
+            {tdAutoStatusErr ? (
+              <div className="tdna-warn-banner tdna-warn-banner--strong" role="alert">
+                {tdAutoStatusErr}
+              </div>
+            ) : null}
+            {tdAutoStatus?.success && (
+              <div className="md-decoder-small" style={{ opacity: 0.95 }}>
+                <p style={{ margin: '0 0 8px' }}>
+                  <strong>Last daily outlook (success):</strong>{' '}
+                  {tdAutoStatus.lastDailyOutlookSuccess?.run_key || '—'}
+                  {tdAutoStatus.lastDailyOutlookSuccess?.updated_at
+                    ? ` · ${new Date(tdAutoStatus.lastDailyOutlookSuccess.updated_at).toLocaleString()}`
+                    : ''}
+                </p>
+                {Array.isArray(tdAutoStatus.briefKindCoverageByDate) && tdAutoStatus.briefKindCoverageByDate.length > 0 ? (
+                  <p style={{ margin: '0 0 6px' }}>
+                    <strong>Brief kinds stored (by date):</strong>{' '}
+                    {tdAutoStatus.briefKindCoverageByDate
+                      .slice(0, 10)
+                      .map((r) => `${r.date} ${r.period} (${r.kinds})`)
+                      .join(' · ')}
+                  </p>
+                ) : (
+                  <p style={{ margin: '0 0 6px' }}>No brief kind coverage rows in the last window (empty table or DB).</p>
+                )}
+                {Array.isArray(tdAutoStatus.recentRuns) && tdAutoStatus.recentRuns.length > 0 ? (
+                  <details style={{ marginTop: 8 }}>
+                    <summary style={{ cursor: 'pointer' }}>Recent run rows ({tdAutoStatus.recentRuns.length})</summary>
+                    <ul style={{ margin: '8px 0 0', paddingLeft: 18, maxHeight: 200, overflow: 'auto' }}>
+                      {tdAutoStatus.recentRuns.map((r) => (
+                        <li key={`${r.run_key}-${r.updated_at}`} style={{ marginBottom: 4 }}>
+                          {r.run_key} · {r.status}
+                          {r.brief_date ? ` · ${r.brief_date}` : ''}
+                          {r.updated_at ? ` · ${new Date(r.updated_at).toLocaleString()}` : ''}
+                          {r.error_message ? ` — ${r.error_message}` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
+              </div>
+            )}
+          </div>
           <p className="brief-template-help" style={{ marginBottom: 16 }}>
             Runs a live Market Decoder pass for the symbol below and returns provider-level status, rules-engine scores, and
             mapping keys. Traders no longer see this on the public Market Decoder page.

@@ -173,6 +173,13 @@ function cboeAuFeatureFallbackRatio() {
   };
 }
 
+/** Last run of buildLiveHotSnapshot (GET /api/markets/snapshot refresh path). */
+let liveHotSnapshotLast = null;
+
+function recordLiveHotSnapshotRun(stats) {
+  liveHotSnapshotLast = stats && typeof stats === 'object' ? { ...stats, recordedAt: Date.now() } : null;
+}
+
 function snapshot() {
   const now = Date.now();
   const cutoff = now - WINDOW_MS;
@@ -190,6 +197,7 @@ function snapshot() {
     cboeUkRoutes: cboeUkFeatureFallbackRatio(),
     cboeAuRoutes: cboeAuFeatureFallbackRatio(),
     equityDatasets: equityDatasetFeatureRatio(),
+    liveHotSnapshot: liveHotSnapshotLast,
   };
 }
 
@@ -198,6 +206,7 @@ function reset() {
   totals.twelvedata = 0;
   totals.fallback = 0;
   totals.byFeature = {};
+  liveHotSnapshotLast = null;
   fxCache.quoteHits = 0;
   fxCache.quoteMisses = 0;
   fxCache.seriesHits = 0;
@@ -213,6 +222,7 @@ module.exports = {
   bumpFxLayerCache,
   bumpCryptoLayerCache,
   snapshot,
+  recordLiveHotSnapshotRun,
   reset,
   WINDOW_MS,
 };

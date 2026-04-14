@@ -184,6 +184,17 @@ const AdminApi = {
             },
         });
     },
+
+    /** Trader Desk cron / brief run ledger — last daily outlook success, recent runs, per-date kind counts. */
+    getTraderDeskAutomationStatus: () => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/admin/trader-desk-automation-status`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',
+            },
+        });
+    },
 };
 
 export default AdminApi; 

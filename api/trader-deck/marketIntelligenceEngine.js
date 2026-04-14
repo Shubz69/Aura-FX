@@ -934,17 +934,39 @@ function gateTrendStatesForRiskOff(sessionContext, pulseState) {
   return { ...sessionContext, sessions };
 }
 
+function forexRowHasSessionChange(row) {
+  return row && row.dp != null && Number.isFinite(Number(row.dp));
+}
+
+/** Prefer Twelve Data session % when available so pulse / drivers track live quotes. */
+function mergeForexWithTwelveData(fhForex, tdEur, tdGold, tdOil) {
+  const f = fhForex && typeof fhForex === 'object' ? fhForex : {};
+  return {
+    eurUsd: forexRowHasSessionChange(tdEur) ? tdEur : f.eurUsd || null,
+    gold: forexRowHasSessionChange(tdGold) ? tdGold : f.gold || null,
+    oil: forexRowHasSessionChange(tdOil) ? tdOil : f.oil || null,
+  };
+}
+
 async function runEngine(options = {}) {
-  const [finnhub, fmp, fred, spxQuote, fng, rsi] = await Promise.all([
+  const [finnhub, fmp, fred, spxQuote, fng, rsi, tdEur, tdGold, tdOil] = await Promise.all([
     getFinnhubData().catch((e) => ({ news: [], forex: {}, errors: [e.message] })),
     getFmpData().catch((e) => ({ economicCalendar: [], news: [], treasury: null, errors: [e.message] })),
     getFredData().catch((e) => ({ treasury10y: null, cpi: null, unemployment: null, raw: {}, errors: [e.message] })),
     getTwelveDataQuote('SPX').catch(() => null),
     getFearAndGreedIndex().catch(() => null),
     getAlphaVantageRSI().catch(() => null),
+    getTwelveDataQuote('EURUSD').catch(() => null),
+    getTwelveDataQuote('XAUUSD').catch(() => null),
+    getTwelveDataQuote('USOIL').catch(() => null),
   ]);
 
-  return buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi, options);
+  const finnhubMerged = {
+    ...finnhub,
+    forex: mergeForexWithTwelveData(finnhub.forex, tdEur, tdGold, tdOil),
+  };
+
+  return buildPayload(fred, finnhubMerged, fmp, spxQuote, fng, rsi, options);
 }
 
 module.exports = { runEngine, buildPayload, getTwelveDataQuote };

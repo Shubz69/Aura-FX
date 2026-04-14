@@ -175,7 +175,8 @@ async function fetchLlmBriefDataSupplementGlobal({
     + '- upcomingMacro: array of up to 8 { "label": string, "window": string } macro events relevant to the desk date (approx timing OK).\n'
     + '- assetSnapshot: array of up to 18 { "symbol": string, "changePctDayApprox": number or null, "levelOrRangeHint": string or null, "note": string or null } covering the watchSymbols list — best-effort public session context for that date; round % to one decimal.\n'
     + '- caveat: string, one line that figures are approximate synthesis.\n'
-    + 'Rules: no URLs, no citations, no "according to". If unsure, use qualitative wording and null numbers.';
+    + 'Rules: no URLs, no citations, no "according to". If unsure, use qualitative wording and null numbers.\n'
+    + 'Never present approximate or model-filled numbers as exchange-verified facts; when numbers are non-null, they are desk estimates only and must stay aligned with caveat.';
 
   const userPayload = {
     period: String(period || 'daily'),
@@ -208,6 +209,12 @@ async function fetchLlmBriefDataSupplementGlobal({
   }
   return sanitizeLlmDataSupplement(res.parsed);
 }
+
+/** Injected into Perplexity system/user payloads so prose never front-runs missing Twelve Data / pack fields. */
+const STRUCTURED_DATA_FIRST_RULE =
+  'STRUCTURED DATA FIRST: liveQuotes, calendar rows, symbolHeadlines, headlines, macroSummary, keyDrivers, and crossAssetSignals are the only authoritative market facts. '
+  + 'If a symbol or field is missing, empty, or null, do not invent prices, percentages, OHLC, volumes, positioning, or event outcomes—say the pack is thin in one clause and stay qualitative. '
+  + 'Do not use outside or "typical" levels unless they appear explicitly in the JSON.';
 
 const CATEGORY_LOGIC_RULES = {
   stocks: 'Focus on earnings revisions, sector breadth, options positioning and stock-specific catalyst windows.',
@@ -524,10 +531,17 @@ function buildFactPack({
     period === 'weekly'
       ? 'WEEKLY: Summarise what repriced over the week, what persisted, leadership vs laggards in THIS category only, and what matters going into next week. Do not rewrite a daily session note.'
       : 'DAILY: Focus on the next session / upcoming catalysts, tape and liquidity for THIS category only. Do not write a multi-week strategic essay.';
+  const quotePrimed =
+    quoteCache && typeof quoteCache.size === 'number' ? quoteCache.size : null;
   return {
     period,
     briefKind: normalizedKind,
     briefKindLabel: BRIEF_KIND_LABELS[normalizedKind] || BRIEF_KIND_LABELS.general,
+    contextQuality: {
+      headlineCount: filteredNews.length,
+      calendarCount: calSlice.length,
+      quoteCacheSymbols: quotePrimed,
+    },
     topInstruments: selectedTop,
     instruments: selectedTop.length > 0 ? selectedTop : (template.instruments || []),
     sections: frameworkHeadings(period, normalizedKind, template.sections || []),
@@ -1217,12 +1231,18 @@ async function generateSampleMatchedCategoryBrief({
   const expectedAssets = Array.isArray(factPack.topInstruments) ? factPack.topInstruments.slice(0, 5) : [];
   const dayName = weekdayName(runDate, timeZone);
   const dataContextRule = factPack.llmDataSupplement
-    ? 'Use factPack and optional llmDataSupplement together when the latter is present (backup synthesis when automated REST feeds were thin or rate-limited). Prefer alignment with liveQuotes and headlines when those exist. No URLs or citations.'
-    : 'Use only provided factPack context; no fabricated numbers or events.';
+    ? `${STRUCTURED_DATA_FIRST_RULE} llmDataSupplement is approximate backup when REST feeds were thin—prefer agreement with liveQuotes/headlines; never override missing pack fields with invented figures. No URLs or citations.`
+    : `${STRUCTURED_DATA_FIRST_RULE} No URLs or citations.`;
+  const deskDateYmd = normalizeOutlookDate(normalizedPeriod, toYmdInTz(runDate, timeZone));
   const basePayload = {
     briefKind: normalizedKind,
     briefKindLabel: factPack.briefKindLabel,
     period: normalizedPeriod,
+    deskDate: deskDateYmd,
+    contextQuality: factPack.contextQuality || null,
+    periodMandate: factPack.periodMandate,
+    categoryLogicRule: CATEGORY_LOGIC_RULES[normalizedKind] || CATEGORY_LOGIC_RULES.general,
+    instrumentScores: Array.isArray(factPack.instrumentScores) ? factPack.instrumentScores.slice(0, 5) : [],
     dayName,
     topInstruments: expectedAssets,
     factPack: {
@@ -1321,7 +1341,7 @@ Hard rules:
       validationFeedback: validation.reasons,
       previousAttempt: parsedForUse,
       rewriteInstruction:
-        'Rewrite the same brief structure, but fix every missing or thin field called out in validationFeedback. Keep the same market facts, but make each asset block complete and non-empty.',
+        'Rewrite the same brief structure, but fix every missing or thin field called out in validationFeedback. Keep the same market facts from the pack, but make each asset block complete and non-empty. Do not invent prices, levels, or percentages not present in liveQuotes, symbolHeadlines, headlines, or llmDataSupplement.',
     };
     const retry = await fetchStructured(retryPayload);
     if (retry.ok && retry.parsed) {
@@ -1468,6 +1488,7 @@ function slimFactPackForSections(factPack) {
     periodMandate: factPack.periodMandate,
     categoryWritingMandate: factPack.categoryWritingMandate,
     categoryIntelligenceDirective: factPack.categoryIntelligenceDirective || '',
+    contextQuality: factPack.contextQuality || null,
     macroSummary: factPack.macroSummary || [],
     keyDrivers: factPack.keyDrivers || [],
     crossAssetSignals: factPack.crossAssetSignals || [],
@@ -1476,6 +1497,8 @@ function slimFactPackForSections(factPack) {
     calendar: factPack.calendar || [],
     headlines: factPack.headlines || [],
     liveQuotes: (factPack.liveQuotes || []).slice(0, 5),
+    symbolHeadlines: factPack.symbolHeadlines && typeof factPack.symbolHeadlines === 'object' ? factPack.symbolHeadlines : {},
+    instrumentScores: Array.isArray(factPack.instrumentScores) ? factPack.instrumentScores.slice(0, 5) : [],
     marketRegime: factPack.marketRegime,
     marketPulse: factPack.marketPulse,
     bannedPhrases: factPack.bannedPhrases || BANNED_PHRASES,
@@ -1589,7 +1612,8 @@ async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorS
               + 'FORBIDDEN anywhere in body: numbered scenarios (Scenario 1/2/3), pathway labels, "catalyst trigger", "invalidation", "position sizing", '
               + '"base and surprise", playbook templates, or one-paragraph-per-ticker blocks. '
               + 'No sources, URLs, or citations. '
-              + 'If factPack.llmDataSupplement is non-null, it is backup desk synthesis when live price feeds were thin — you may use it with the rest of factPack; prefer agreement with liveQuotes/headlines when both exist. '
+              + STRUCTURED_DATA_FIRST_RULE
+              + ' If factPack.llmDataSupplement is non-null, it is backup desk synthesis when live price feeds were thin — use it only together with factPack; prefer agreement with liveQuotes/headlines when both exist. '
               + 'Obey bannedSubstrings exactly (no substring matches in body). '
               + 'Return valid JSON: {"body":"..."} only.',
           },
@@ -2127,6 +2151,17 @@ async function generateAndStoreBrief({
       instrumentScoreRows: selection.scoreRows,
       quoteCache,
     });
+    if (partialDataMode) {
+      console.warn('[brief-gen] thin structured inputs before model call', {
+        briefKind: normalizedKind,
+        date,
+        period: normalizedPeriod,
+        quoteCacheSize: quoteCache.size,
+        econRows: Array.isArray(econ) ? econ.length : 0,
+        newsRows: Array.isArray(news) ? news.length : 0,
+        contextQuality: factPack.contextQuality,
+      });
+    }
     let llmSup = null;
     if (generationContext?.briefSetRun) {
       llmSup = generationContext.sharedLlmDataSupplement || null;
@@ -2393,7 +2428,7 @@ async function generateAndStoreOutlook({ period, timeZone = 'Europe/London', run
   assertAutomationModelConfigured();
   await ensureAutomationTables();
   const normalizedPeriod = normalizePeriod(period);
-  const date = toYmdInTz(runDate, timeZone);
+  const date = normalizeOutlookDate(normalizedPeriod, toYmdInTz(runDate, timeZone));
   const runKey = `auto-outlook:${normalizedPeriod}:${date}`;
 
   const reserved = await reserveRun(runKey, normalizedPeriod, date);
@@ -2541,12 +2576,13 @@ function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' 
   const hh = Number(map.hour);
   const mm = Number(map.minute);
   const wd = String(map.weekday || '').toLowerCase();
-  /** Daily brief set: every weekday at 00:00 UK (tight window for deterministic midnight generation). */
+  /**
+   * Daily: every calendar day 00:00–00:09 Europe/London (cron polls every five minutes).
+   * Weekly: Sunday 18:00–18:14 UK (week-ending storage key).
+   */
   if (normalizedPeriod === 'daily') {
-    const isWeekday = ['mon', 'tue', 'wed', 'thu', 'fri'].some((x) => wd.startsWith(x));
-    return isWeekday && hh === 0 && mm < 6;
+    return hh === 0 && mm < 10;
   }
-  /** Weekly brief set: Sunday 18:00-18:14 UK (aligns with weekly storage date). */
   return wd.startsWith('sun') && hh === 18 && mm < 15;
 }
 

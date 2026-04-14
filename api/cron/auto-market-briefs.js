@@ -1,8 +1,8 @@
 /**
  * Cron Job: Automated Daily/Weekly market briefs.
- * Daily: 00:00 UK Mon-Fri — outlook + 8 category briefs + Aura FX institutional daily brief.
+ * Daily: 00:00 Europe/London every calendar day — outlook + 8 category briefs + Aura FX institutional daily brief.
  * Daily prefetch: ~22:00 UK — per-instrument Perplexity research layer stored for the next day’s briefs.
- * Weekly: Monday 00:00 UK — 8 category briefs + institutional weekly brief.
+ * Weekly: Sunday 18:00 UK — 8 category briefs + institutional weekly brief (week-ending storage key).
  */
 const {
   generateAndStoreOutlook,

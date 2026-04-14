@@ -13,13 +13,6 @@ import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import '../../styles/trader-deck/MarketDecoder.css';
 
 const QUICK = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD', 'SPY', 'USDJPY'];
-const DECODER_SYMBOL_UNIVERSE = [
-  'EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'NZDUSD', 'USDCAD', 'USDCHF', 'EURJPY', 'GBPJPY', 'EURGBP',
-  'XAUUSD', 'XAGUSD', 'USOIL', 'UKOIL', 'XNGUSD',
-  'BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'ADAUSD',
-  'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'TLT',
-  'US500', 'NAS100', 'US30', 'DXY', 'VIX',
-];
 const LIVE_POLL_MS = Math.max(15000, parseInt(process.env.REACT_APP_MARKET_DECODER_POLL_MS || '30000', 10) || 30000);
 
 function formatGeneratedAt(iso) {
@@ -56,6 +49,9 @@ const DECODER_FLOW = [
 export default function MarketDecoderView({ embedded }) {
   const navigate = useNavigate();
   const [q, setQ] = useState('EURUSD');
+  const [quickChips, setQuickChips] = useState(QUICK);
+  const [suggestions, setSuggestions] = useState([]);
+  const suggestTimerRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [brief, setBrief] = useState(null);
@@ -120,6 +116,40 @@ export default function MarketDecoderView({ embedded }) {
   }, []);
 
   useEffect(() => {
+    let cancel = false;
+    Api.getTraderDeckMarketDecoderSymbols({ preset: 'quick', limit: 5 })
+      .then((res) => {
+        const list = res.data?.suggestions;
+        if (cancel || !Array.isArray(list) || !list.length) return;
+        setQuickChips(list.map((x) => x.symbol).filter(Boolean));
+      })
+      .catch(() => {});
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const t = String(q || '').trim();
+    if (t.length < 1) {
+      setSuggestions([]);
+      return undefined;
+    }
+    if (suggestTimerRef.current) clearTimeout(suggestTimerRef.current);
+    suggestTimerRef.current = setTimeout(() => {
+      Api.getTraderDeckMarketDecoderSymbols({ query: t, limit: 6 })
+        .then((res) => {
+          const list = res.data?.suggestions;
+          setSuggestions(Array.isArray(list) ? list : []);
+        })
+        .catch(() => setSuggestions([]));
+    }, 220);
+    return () => {
+      if (suggestTimerRef.current) clearTimeout(suggestTimerRef.current);
+    };
+  }, [q]);
+
+  useEffect(() => {
     if (!brief || !activeSymbol) return undefined;
     const id = setInterval(() => {
       const sym = activeSymbolRef.current;
@@ -154,7 +184,8 @@ export default function MarketDecoderView({ embedded }) {
 
   const onSubmit = (e) => {
     e.preventDefault();
-    run(q, true);
+    setSuggestions([]);
+    run(String(q || '').trim(), true);
   };
 
   const exportJson = useCallback(() => {
@@ -252,13 +283,15 @@ export default function MarketDecoderView({ embedded }) {
   const exportToTraderLab = useCallback(() => {
     if (!brief) return;
     const symbol = String(activeSymbol || brief?.header?.asset || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const chips = quickChips.length ? quickChips : QUICK;
+    const symbolUniverse = [...new Set([symbol, ...chips].filter(Boolean))];
     const payload = {
       version: 4,
       exportedAt: new Date().toISOString(),
       symbol,
       decodedSymbol: symbol,
       source: 'market_decoder',
-      symbolUniverse: DECODER_SYMBOL_UNIVERSE,
+      symbolUniverse,
       summary: {
         posture: brief?.finalOutput?.currentPosture || null,
         bias: brief?.instantRead?.bias || null,
@@ -282,7 +315,7 @@ export default function MarketDecoderView({ embedded }) {
     setPreviewOpen(false);
     toast.info('Opening Trader Lab with your Market Decoder context.');
     navigate('/trader-deck/trade-validator/trader-lab');
-  }, [brief, activeSymbol, navigate]);
+  }, [brief, activeSymbol, navigate, quickChips]);
 
   const pairLabel = brief ? formatPairLabel(brief.header?.asset) : '';
 
@@ -291,25 +324,53 @@ export default function MarketDecoderView({ embedded }) {
       <header className="md-ref-top">
         <p className="md-ref-aura">Aura Terminal</p>
         <h1 className="md-ref-title">Market Decoder</h1>
-        <form className="md-ref-search" onSubmit={onSubmit} autoComplete="off">
-          <FiSearch className="md-ref-search-ico" aria-hidden />
-          <input
-            className="md-ref-search-input"
-            value={q}
-            onChange={(e) => setQ(e.target.value.toUpperCase())}
-            placeholder="Decode any market"
-            aria-label="Asset symbol"
-          />
-          <button type="button" className="md-ref-mic" aria-label="Voice search">
-            <FiMic aria-hidden />
-          </button>
-          <button type="submit" className="md-ref-decode" disabled={loading}>
-            {loading ? '…' : 'Decode'}
-          </button>
-        </form>
+        <div className="md-ref-search-wrap">
+          <form className="md-ref-search" onSubmit={onSubmit} autoComplete="off" role="search">
+            <FiSearch className="md-ref-search-ico" aria-hidden />
+            <input
+              className="md-ref-search-input"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Symbol or name (e.g. EUR, gold, SPY)"
+              aria-label="Asset symbol or name"
+              aria-autocomplete="list"
+              aria-controls="md-decoder-suggest-list"
+              aria-expanded={suggestions.length > 0}
+            />
+            <button type="button" className="md-ref-mic" aria-label="Voice search">
+              <FiMic aria-hidden />
+            </button>
+            <button type="submit" className="md-ref-decode" disabled={loading}>
+              {loading ? '…' : 'Decode'}
+            </button>
+          </form>
+          {suggestions.length > 0 ? (
+            <ul id="md-decoder-suggest-list" className="md-ref-suggest-panel" role="listbox" aria-label="Symbol suggestions">
+              {suggestions.map((row) => (
+                <li key={row.symbol} role="none">
+                  <button
+                    type="button"
+                    role="option"
+                    className="md-ref-suggest-item"
+                    onClick={() => {
+                      setQ(row.symbol);
+                      setSuggestions([]);
+                      run(row.symbol, true);
+                    }}
+                  >
+                    <span className="md-ref-suggest-symbol">{row.symbol}</span>
+                    {row.label && row.label !== row.symbol ? (
+                      <span className="md-ref-suggest-label">{row.label}</span>
+                    ) : null}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
         <div className="md-ref-chips" role="group" aria-label="Quick symbols">
-          {QUICK.map((s) => (
-            <button key={s} type="button" className="md-ref-chip" onClick={() => { setQ(s); run(s, true); }}>
+          {quickChips.map((s) => (
+            <button key={s} type="button" className="md-ref-chip" onClick={() => { setQ(s); setSuggestions([]); run(s, true); }}>
               {s}
             </button>
           ))}

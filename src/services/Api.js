@@ -885,6 +885,15 @@ const Api = {
         };
         return axios.get(`${API_BASE_URL}/api/trader-deck/market-decoder`, { params });
     },
+    /** Partial symbol / display-name search for Market Decoder (registry-backed index). */
+    getTraderDeckMarketDecoderSymbols: (options = {}) => {
+        const params = {
+            ...(options.query ? { q: String(options.query).trim() } : {}),
+            ...(options.preset === 'quick' ? { preset: 'quick' } : {}),
+            ...(options.limit != null ? { limit: String(options.limit) } : {}),
+        };
+        return axios.get(`${API_BASE_URL}/api/trader-deck/market-decoder-symbols`, { params });
+    },
     /**
      * Economic calendar. skipCache so actuals stay fresh.
      * Supports both legacy params (from/to/date/days) and range aliases (startDate/endDate),
@@ -950,7 +959,7 @@ const Api = {
         const token = localStorage.getItem('token');
         const params = { type, date };
         if (opts && opts.cacheBust) params._ = String(Date.now());
-        if (opts && opts.autogen === false) params.autogen = '0';
+        if (opts && opts.autogen === true) params.autogen = '1';
         return axios.get(`${API_BASE_URL}/api/trader-deck/content`, {
             params,
             headers: token ? { Authorization: `Bearer ${token}` } : {}

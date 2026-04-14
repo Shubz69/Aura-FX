@@ -3,7 +3,7 @@
 /**
  * Trader Deck calendar rules — single source for API.
  * - Weekly intel/outlook rows use week-ending Sunday in UTC (legacy DB alignment).
- * - Daily automated briefs follow UK working days (Mon–Fri); weekend is Sat–Sun in Europe/London.
+ * - Daily automated briefs run every calendar day (Europe/London); weekend reads may still fall back to prior rows if empty.
  *
  * Frontend: keep in sync with src/lib/trader-deck/deskDates.js
  */
