@@ -14,20 +14,23 @@
 }
 
 .sv-page--terminal {
-  --sv-globe-band: clamp(452px, 72vh, 780px);
-  --sv-terminal-side: minmax(152px, 204px);
-  --sv-terminal-rail: minmax(280px, 380px);
+  /* Taller band + slightly narrower side/rail so the globe column gains width */
+  --sv-globe-band: clamp(472px, 74vh, 800px);
+  --sv-terminal-side: minmax(132px, 188px);
+  --sv-terminal-rail: minmax(256px, 348px);
   --sv-terminal-pad-x: 18px;
-  --sv-globe-chrome-reserve: 2.12rem;
+  /* Minimal vertical reserve: bottom chrome is absolutely positioned over the canvas */
+  --sv-globe-chrome-reserve: 1.38rem;
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
   width: 100%;
   /* Taller surface: site footer sits further down the scroll axis */
   min-height: calc(100dvh - 68px + min(32vh, 420px));
-  /* Slightly lower in the viewport: more breathing room above the masthead */
-  padding: 18px 12px clamp(20px, 4vh, 48px);
+  /* Horizontal + bottom only — top clearance lives on .page-wrapper for navbar */
+  padding: 0 12px clamp(20px, 4vh, 48px);
   margin-bottom: 0 !important;
+  margin-top: 0;
   background: linear-gradient(180deg, #050506 0%, #030304 48%, #020203 100%);
 }
 
@@ -36,7 +39,9 @@
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  min-height: calc(100dvh - 68px);
+  /* Clear fixed navbar (62px + safe-area) + deliberate gap — avoids crowding the glass bar */
+  padding-top: calc(var(--nav-height, 62px) + env(safe-area-inset-top, 0px) + 26px) !important;
+  min-height: calc(100dvh - var(--nav-height, 62px) - env(safe-area-inset-top, 0px));
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -454,7 +459,7 @@
   max-height: var(--sv-globe-band);
   min-width: 0;
   overflow: hidden;
-  padding: 0 2px 0;
+  padding: 0;
   border-right: 1px solid rgba(255, 255, 255, 0.04);
   container-type: size;
   container-name: sv-globe-stage;
@@ -496,7 +501,7 @@
   right: 0;
   bottom: 0;
   z-index: 3;
-  padding: 6px var(--sv-terminal-pad-x) 8px;
+  padding: 5px var(--sv-terminal-pad-x) 6px;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -513,10 +518,14 @@
 
 .sv-globe-chrome-hint {
   margin: 0;
-  font-size: 0.74rem;
-  line-height: 1.38;
+  font-size: 0.72rem;
+  line-height: 1.36;
   color: rgba(255, 255, 255, 0.52);
   max-width: 48ch;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .sv-terminal-hero > .sv-command-rail.sv-intel-panel {
@@ -1744,7 +1753,7 @@
 
 /* Globe owns the stage: largest square that fits width × height (minus bottom chrome readout) */
 .sv-globe-stage .sv-globe-wrap {
-  width: min(calc(100cqi - 2px), calc(100cqh - var(--sv-globe-chrome-reserve)));
+  width: min(100cqi, calc(100cqh - var(--sv-globe-chrome-reserve)));
   height: auto;
   max-width: 100%;
   aspect-ratio: 1;
@@ -1754,8 +1763,8 @@
 @supports not (width: 1cqi) {
   .sv-globe-stage .sv-globe-wrap {
     width: auto;
-    max-width: min(100%, calc(var(--sv-globe-band) - 4px));
-    max-height: min(100%, calc(var(--sv-globe-band) - 26px));
+    max-width: min(100%, var(--sv-globe-band));
+    max-height: min(100%, calc(var(--sv-globe-band) - 18px));
     aspect-ratio: 1;
     margin: 0 auto;
   }
@@ -1778,7 +1787,7 @@
   @media (max-width: 960px) {
     .sv-globe-stage .sv-globe-wrap {
       max-width: min(100%, calc(100vw - 40px));
-      max-height: min(100%, calc(clamp(380px, 52vh, 600px) - 26px));
+      max-height: min(100%, calc(clamp(380px, 52vh, 600px) - 18px));
     }
   }
 
