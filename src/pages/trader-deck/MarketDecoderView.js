@@ -285,19 +285,60 @@ export default function MarketDecoderView({ embedded }) {
     const symbol = String(activeSymbol || brief?.header?.asset || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     const chips = quickChips.length ? quickChips : QUICK;
     const symbolUniverse = [...new Set([symbol, ...chips].filter(Boolean))];
+    const kl = brief?.keyLevels || {};
+    const traderLabHandoff = {
+      symbol,
+      generatedAt: brief?.meta?.generatedAt || null,
+      bias: brief?.instantRead?.bias || null,
+      conviction: brief?.instantRead?.conviction || null,
+      tradingCondition: brief?.instantRead?.tradingCondition || null,
+      thesis: brief?.finalOutput?.reason || null,
+      currentPosture: brief?.finalOutput?.currentPosture || null,
+      postureSubtitle: brief?.finalOutput?.postureSubtitle || null,
+      bestApproach: brief?.instantRead?.bestApproach || null,
+      whatWouldChange: brief?.finalOutput?.whatWouldChangeThis || null,
+      keyLevelsNumeric: {
+        spot: brief?.header?.price != null ? Number(brief.header.price) : null,
+        resistance1: kl.resistance1 ?? null,
+        resistance2: kl.resistance2 ?? null,
+        support1: kl.support1 ?? null,
+        support2: kl.support2 ?? null,
+        previousDayHigh: kl.previousDayHigh ?? null,
+        previousDayLow: kl.previousDayLow ?? null,
+        weeklyHigh: kl.weeklyHigh ?? null,
+        weeklyLow: kl.weeklyLow ?? null,
+        pivot: brief?.decoderScenario?.trigger ?? null,
+        invalidation: brief?.decoderScenario?.invalidation ?? null,
+      },
+      execution: {
+        preferredDirection: brief?.executionGuidance?.preferredDirection || null,
+        entryCondition: brief?.executionGuidance?.entryCondition || null,
+        invalidation: brief?.executionGuidance?.invalidation || null,
+        riskConsideration: brief?.executionGuidance?.riskConsideration || null,
+        avoidThis: brief?.executionGuidance?.avoidThis || null,
+      },
+      scenarios: {
+        bullish: brief?.scenarioMap?.bullish?.condition || null,
+        bearish: brief?.scenarioMap?.bearish?.condition || null,
+        noTrade: brief?.scenarioMap?.noTrade?.when || null,
+      },
+      deskLogLine: [brief?.marketPulse?.signalBrief, brief?.finalOutput?.whatWouldChangeThis].filter(Boolean).join(' · ') || null,
+      dataSufficiency: brief?.meta?.dataSufficiency || null,
+    };
     const payload = {
-      version: 4,
+      version: 5,
       exportedAt: new Date().toISOString(),
       symbol,
       decodedSymbol: symbol,
       source: 'market_decoder',
       symbolUniverse,
+      traderLabHandoff,
       summary: {
         posture: brief?.finalOutput?.currentPosture || null,
         bias: brief?.instantRead?.bias || null,
         conviction: brief?.instantRead?.conviction || null,
       },
-      brief, // Keep full decoded brief so Trader Lab receives the exact decoded context.
+      brief,
     };
     try {
       sessionStorage.setItem(MARKET_DECODER_LAB_HANDOFF_KEY, JSON.stringify(payload));

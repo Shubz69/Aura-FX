@@ -724,6 +724,10 @@
       "destination": "/api/trader-deck/news.js"
     },
     {
+      "source": "/api/trader-deck/headlines-daily",
+      "destination": "/api/trader-deck/headlines-daily.js"
+    },
+    {
       "source": "/api/trader-deck/market-intelligence",
       "destination": "/api/trader-deck/market-intelligence.js"
     },

@@ -9,6 +9,7 @@ require('../utils/suppress-warnings');
 const { getConfig } = require('./config');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getCached, setCached } = require('../cache');
+const { executeQuery } = require('../db');
 
 const CACHE_KEY = 'trader-deck:news:v3';
 const CACHE_TTL_MS = Math.min(300, Math.max(60, parseInt(process.env.TRADER_DECK_NEWS_CACHE_SEC, 10) || 90)) * 1000;
@@ -55,6 +56,45 @@ function parseViewerTimeZone(q) {
 }
 
 /** When from/to are set, bucket article day in viewer TZ (from client) so it matches the date picker. */
+/** Desk-relevance score for daily top-30 archival (not shown to users). */
+function scoreHeadlineForDeskArchive(a) {
+  const t = `${a.headline || ''} ${a.summary || ''}`.toLowerCase();
+  let s = 0;
+  if (/fed|fomc|ecb|boe|boj|rba|boc|nfp|cpi|pce|gdp|pmi|jobs|employment|inflation|treasury|yield|rate decision/i.test(t)) {
+    s += 5;
+  }
+  if (/earnings|guidance|revenue|profit|split|ipo|m&a|merger/i.test(t)) s += 3;
+  if (/oil|opec|brent|wti|gold|xau|silver|btc|bitcoin|crypto|forex|fx|dollar|euro|yen/i.test(t)) s += 2;
+  if (/market|stocks|equities|s&p|nasdaq|dow|vix|bank|china|ukraine|geopol/i.test(t)) s += 1;
+  const ts = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+  if (Number.isFinite(ts)) s += Math.min(2, (Date.now() - ts) / 86400000 < 2 ? 2 : 0);
+  return s;
+}
+
+async function upsertDailyHeadlineArchive(articles) {
+  if (!Array.isArray(articles) || articles.length === 0) return;
+  const deskDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
+  const scored = articles
+    .map((a) => ({ a, s: scoreHeadlineForDeskArchive(a) }))
+    .sort((x, y) => y.s - x.s);
+  const top = scored.slice(0, 30).map((x) => x.a);
+  try {
+    const { __ensureTableOnce } = require('./headlines-daily');
+    await __ensureTableOnce();
+    await executeQuery(
+      `INSERT INTO trader_deck_headlines_daily (desk_date, headlines_json, article_count)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         headlines_json = VALUES(headlines_json),
+         article_count = VALUES(article_count),
+         updated_at = CURRENT_TIMESTAMP`,
+      [deskDate, JSON.stringify(top), top.length]
+    );
+  } catch (e) {
+    console.warn('[trader-deck/news] daily headline archive upsert failed:', e.message || e);
+  }
+}
+
 function withinDateWindow(article, fromDate, toDate, viewerTz) {
   if (!fromDate && !toDate) return true;
   const t = article?.publishedAt ? new Date(article.publishedAt).getTime() : NaN;
@@ -230,6 +270,9 @@ module.exports = async (req, res) => {
     count: merged.length,
     updatedAt: new Date().toISOString(),
   };
+  if (!fromDate && !toDate && merged.length) {
+    upsertDailyHeadlineArchive(merged).catch(() => {});
+  }
   setCached(cacheKeyFull, payload, CACHE_TTL_MS);
   res.setHeader('Cache-Control', 'private, max-age=30');
   return res.status(200).json({ success: true, ...payload, cached: false });

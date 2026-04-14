@@ -1863,7 +1863,8 @@ function toSqlDateYmd(date) {
 async function reserveRun(runKey, period, date) {
   const briefDate = toSqlDateYmd(date);
   if (!briefDate) return false;
-  const RUN_STALE_MINUTES = 45;
+  /** Serverless runs can die mid-category; recover stuck `started` locks sooner than old 45m default. */
+  const RUN_STALE_MINUTES = 20;
 
   try {
     const [existing] = await executeQuery(
@@ -2096,9 +2097,55 @@ async function generateAndStoreBrief({
   const date = normalizeOutlookDate(normalizedPeriod, toYmdInTz(runDate, timeZone));
   const runKey = `auto-brief:${normalizedPeriod}:${date}:${normalizedKind}`;
 
-  const reserved = await reserveRun(runKey, normalizedPeriod, date);
+  let reserved = await reserveRun(runKey, normalizedPeriod, date);
   if (!reserved) {
-    return { success: true, skipped: true, reason: 'already-generated', runKey, period: normalizedPeriod, date, briefKind: normalizedKind };
+    try {
+      const [be] = await executeQuery(
+        `SELECT id FROM trader_deck_briefs WHERE date = ? AND period = ? AND brief_kind = ? LIMIT 1`,
+        [date, normalizedPeriod, normalizedKind]
+      );
+      if (be?.[0]?.id) {
+        return {
+          success: true,
+          skipped: true,
+          reason: 'already-generated',
+          runKey,
+          period: normalizedPeriod,
+          date,
+          briefKind: normalizedKind,
+        };
+      }
+    } catch (_) {
+      /* continue recovery */
+    }
+    console.warn('[brief-gen] run ledger present but no brief row — resetting lock for retry', {
+      runKey,
+      briefKind: normalizedKind,
+      date,
+      period: normalizedPeriod,
+    });
+    try {
+      await executeQuery(
+        `UPDATE trader_deck_brief_runs
+         SET status = 'failed', brief_id = NULL, error_message = 'reset_missing_brief_row'
+         WHERE run_key = ?`,
+        [runKey]
+      );
+    } catch (_) {
+      /* ignore */
+    }
+    reserved = await reserveRun(runKey, normalizedPeriod, date);
+    if (!reserved) {
+      return {
+        success: true,
+        skipped: true,
+        reason: 'already-generated',
+        runKey,
+        period: normalizedPeriod,
+        date,
+        briefKind: normalizedKind,
+      };
+    }
   }
 
   try {
@@ -2334,7 +2381,15 @@ async function generateAndStoreBrief({
     });
     return { success: true, briefId, runKey, date, period: normalizedPeriod, briefKind: normalizedKind, briefVersion: saved.briefVersion, topInstruments: selectedTop5 };
   } catch (err) {
-    await finalizeRun(runKey, 'failed', null, (err.message || 'generation failed').slice(0, 255));
+    const msg = (err.message || 'generation failed').slice(0, 255);
+    await finalizeRun(runKey, 'failed', null, msg);
+    console.error('[brief-gen] category generation failed', {
+      briefKind: normalizedKind,
+      period: normalizedPeriod,
+      date,
+      runKey,
+      error: msg,
+    });
     return { success: false, runKey, date, period: normalizedPeriod, briefKind: normalizedKind, error: err.message || 'generation failed' };
   }
 }
@@ -2413,9 +2468,135 @@ async function generateAndStoreBriefSet({
     }
     results.push(row);
   }
+  const hardFails = results.filter((r) => r && !r.success && !r.skipped);
+  if (hardFails.length) {
+    console.error('[brief-gen] category brief failures in set', {
+      date,
+      period: normalizedPeriod,
+      fails: hardFails.map((r) => ({ kind: r.briefKind, error: r.error || r.message })),
+    });
+  }
   const payload = { success: results.some((r) => r && r.success), period: normalizedPeriod, results };
   if (isolateOutboundMeter) {
     logProviderRequestMeter('[brief-gen] generateAndStoreBriefSet outbound HTTP (isolated window)', {
+      period: normalizedPeriod,
+      date,
+    });
+    resetProviderRequestMeter();
+  }
+  return payload;
+}
+
+/**
+ * Idempotent gap-fill: only generates kinds missing from trader_deck_briefs for the desk date.
+ * Use after a partial cron run or timeout so all 8 sleeves can eventually land.
+ */
+async function generateAndStoreMissingCategoryBriefs({
+  period,
+  timeZone = 'Europe/London',
+  runDate = new Date(),
+  isolateOutboundMeter = false,
+} = {}) {
+  if (isolateOutboundMeter) resetProviderRequestMeter();
+  const normalizedPeriod = normalizePeriod(period);
+  const date = normalizeOutlookDate(normalizedPeriod, toYmdInTz(runDate, timeZone));
+  const kinds = orderedAutomatedCategoryKinds();
+  const missingKinds = [];
+  for (const k of kinds) {
+    try {
+      const [r] = await executeQuery(
+        `SELECT id FROM trader_deck_briefs WHERE date = ? AND period = ? AND brief_kind = ? LIMIT 1`,
+        [date, normalizedPeriod, k]
+      );
+      if (!r?.[0]?.id) missingKinds.push(k);
+    } catch (_) {
+      missingKinds.push(k);
+    }
+  }
+  if (!missingKinds.length) {
+    return {
+      success: true,
+      skipped: true,
+      reason: 'all-categories-present',
+      date,
+      period: normalizedPeriod,
+      results: [],
+    };
+  }
+  console.info('[brief-gen] missing category briefs — backfill', {
+    date,
+    period: normalizedPeriod,
+    missingKinds,
+    count: missingKinds.length,
+  });
+  const { market: sharedMarket, econ: sharedEcon, news: sharedNews } = await getSharedBriefInputs(normalizedPeriod, date);
+  const sharedQuoteCache = await buildQuoteCacheForSymbols(
+    collectAllAutomationUniverseSymbols(),
+    fetchAutomationQuoteWithFallback
+  );
+  const thinFeeds = needsLlmDataSupplement(sharedQuoteCache, sharedEcon, sharedNews);
+  let sharedLlmDataSupplement = null;
+  if (thinFeeds) {
+    sharedLlmDataSupplement = await fetchLlmBriefDataSupplementGlobal({
+      period: normalizedPeriod,
+      dateStr: date,
+      timeZone,
+      market: sharedMarket,
+      econ: sharedEcon,
+      news: sharedNews,
+      symbolSample: collectAllAutomationUniverseSymbols(),
+    });
+  }
+  const existingBodies = [];
+  const existingExcerpts = [];
+  const results = [];
+  for (const briefKind of missingKinds) {
+    // eslint-disable-next-line no-await-in-loop
+    const row = await generateAndStoreBrief({
+      period,
+      briefKind,
+      timeZone,
+      runDate,
+      sharedMarket,
+      sharedEcon,
+      sharedNews,
+      sharedQuoteCache,
+      generationContext: {
+        existingBodies,
+        existingExcerpts,
+        briefSetRun: true,
+        sharedLlmDataSupplement,
+      },
+    });
+    if (row && row.success && row.briefId) {
+      // eslint-disable-next-line no-await-in-loop
+      const [rows] = await executeQuery('SELECT file_data FROM trader_deck_briefs WHERE id = ? LIMIT 1', [row.briefId]);
+      const raw = rows?.[0]?.file_data;
+      if (raw) {
+        const text = Buffer.isBuffer(raw) ? raw.toString('utf8') : String(raw);
+        existingBodies.push(text);
+        existingExcerpts.push(text.slice(0, 520));
+      }
+    }
+    results.push(row);
+  }
+  const hardFails = results.filter((r) => r && !r.success && !r.skipped);
+  if (hardFails.length) {
+    console.error('[brief-gen] missing-category backfill failures', {
+      date,
+      period: normalizedPeriod,
+      fails: hardFails.map((r) => ({ kind: r.briefKind, error: r.error })),
+    });
+  }
+  const payload = {
+    success: results.some((r) => r && r.success),
+    period: normalizedPeriod,
+    date,
+    missingKinds,
+    results,
+  };
+  if (isolateOutboundMeter) {
+    logProviderRequestMeter('[brief-gen] generateAndStoreMissingCategoryBriefs outbound HTTP', {
       period: normalizedPeriod,
       date,
     });
@@ -2627,6 +2808,7 @@ module.exports = {
   generateAndStoreOutlook,
   generateAndStoreBrief,
   generateAndStoreBriefSet,
+  generateAndStoreMissingCategoryBriefs,
   generateAndStoreInstitutionalBriefOnly,
   generatePreviewBrief,
   publishManualBrief,

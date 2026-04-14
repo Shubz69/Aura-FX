@@ -88,6 +88,7 @@ function biasValueClass(bias) {
   const b = (bias || '').toLowerCase();
   if (b === 'bullish') return 'md-ref-val md-ref-val--bull';
   if (b === 'bearish') return 'md-ref-val md-ref-val--bear';
+  if (b.includes('unclassif') || b.includes('insufficient')) return 'md-ref-val md-ref-val--warn';
   return 'md-ref-val md-ref-val--neutral';
 }
 
@@ -231,7 +232,8 @@ export default function MarketDecoderBriefContent({ brief, q }) {
   const showingFallbackHeadlines = headlinePack.scope === 'fallback' || headlinePack.scope === 'none';
   const levelRows = Array.isArray(brief.keyLevels?.detailRows) ? brief.keyLevels.detailRows : [];
   const conv = brief.instantRead?.conviction || '';
-  const convFill = conv === 'High' ? 100 : conv === 'Medium' ? 66 : conv === 'Low' ? 33 : 0;
+  const convFill =
+    conv === 'High' ? 100 : conv === 'Medium' ? 66 : conv === 'Low' ? 33 : /unavail|n\/a/i.test(conv) ? 0 : 0;
   const tc = brief.instantRead?.tradingCondition || brief.marketPulse?.marketState || '';
   const tcClass =
     String(tc)
@@ -257,6 +259,8 @@ export default function MarketDecoderBriefContent({ brief, q }) {
   const sparseHint = brief.meta?.sparseSeries
     ? 'Sparse history — MAs / pivots are indicative until full daily load.'
     : null;
+  const ds = brief.meta?.dataSufficiency;
+  const dataSufficiencyWarn = ds && ds.sufficientForStructure === false;
   const pulseBias = pulseDirectionLabel(brief);
   const pulseSub = pulseContextLine(brief);
   const changePctUnavailableTitle =
@@ -264,6 +268,18 @@ export default function MarketDecoderBriefContent({ brief, q }) {
 
   return (
     <div className="md-ref-brief-layout">
+      {dataSufficiencyWarn ? (
+        <div className="md-ref-data-sufficiency-banner" role="status">
+          <strong>Insufficient daily history for full structure</strong>
+          <p>
+            Loaded {ds.dailyBarCount ?? 0} daily bar(s); need at least {ds.minBarsRequired ?? 5} to score MAs, pivots, and
+            directional bias. Live quote and calendar may still apply — confirm levels on your charts.
+          </p>
+          {ds.calendarOk === false ? (
+            <p className="md-ref-data-sufficiency-sub">Economic calendar did not load for this request.</p>
+          ) : null}
+        </div>
+      ) : null}
       <div className="md-ref-grid md-ref-grid--dense">
         <aside className="md-ref-col md-ref-col--left">
           <div className="md-ref-unified-rail md-ref-unified-rail--left">

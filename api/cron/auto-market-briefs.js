@@ -7,6 +7,7 @@
 const {
   generateAndStoreOutlook,
   generateAndStoreBriefSet,
+  generateAndStoreMissingCategoryBriefs,
   generateAndStoreInstitutionalBriefOnly,
   prefetchInstrumentResearchForDaily,
   shouldRunWindow,
@@ -80,6 +81,11 @@ const handler = async (req, res) => {
       runDate: now,
       timeZone: 'Europe/London',
     });
+    const categoryGapFill = await generateAndStoreMissingCategoryBriefs({
+      period,
+      runDate: now,
+      timeZone: 'Europe/London',
+    });
     logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after category brief set', { period });
     const institutional = await generateAndStoreInstitutionalBriefOnly({
       period,
@@ -87,7 +93,7 @@ const handler = async (req, res) => {
       timeZone: 'Europe/London',
     });
     logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after institutional brief', { period });
-    out.push({ period, outlook, categoryBriefs, institutional });
+    out.push({ period, outlook, categoryBriefs, categoryGapFill, institutional });
   }
 
   logProviderRequestMeter('[cron-auto-market-briefs] invocation total outbound HTTP (since cron start)');

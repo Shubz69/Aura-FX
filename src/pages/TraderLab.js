@@ -332,7 +332,10 @@ export default function TraderLab() {
     }
     if (!parsed?.brief) return;
     const brief = parsed.brief || {};
-    const symbol = normalizeDecodedSymbol(parsed.decodedSymbol || parsed.symbol || brief?.header?.asset || '');
+    const handoff = parsed.traderLabHandoff && typeof parsed.traderLabHandoff === 'object' ? parsed.traderLabHandoff : null;
+    const symbol = normalizeDecodedSymbol(
+      handoff?.symbol || parsed.decodedSymbol || parsed.symbol || brief?.header?.asset || ''
+    );
     const symbolUniverse = Array.isArray(parsed?.symbolUniverse)
       ? parsed.symbolUniverse.map((x) => normalizeDecodedSymbol(x)).filter(Boolean)
       : [];
@@ -346,28 +349,56 @@ export default function TraderLab() {
       });
       setInstrumentOptions(merged);
     }
-    const bias = String(brief?.instantRead?.bias || '').toLowerCase();
-    const resistance = parseLevel(brief?.keyLevels?.keyLevelsDisplay?.resistance1);
-    const support = parseLevel(brief?.keyLevels?.keyLevelsDisplay?.support1);
-    const spot = parseLevel(brief?.header?.price);
+    const kln = handoff?.keyLevelsNumeric || {};
+    const biasRaw = String(handoff?.bias || brief?.instantRead?.bias || '');
+    const bias = biasRaw.toLowerCase();
+    const resistance =
+      kln.resistance1 != null && Number.isFinite(Number(kln.resistance1))
+        ? Number(kln.resistance1)
+        : parseLevel(brief?.keyLevels?.keyLevelsDisplay?.resistance1);
+    const support =
+      kln.support1 != null && Number.isFinite(Number(kln.support1))
+        ? Number(kln.support1)
+        : parseLevel(brief?.keyLevels?.keyLevelsDisplay?.support1);
+    const spot =
+      kln.spot != null && Number.isFinite(Number(kln.spot))
+        ? Number(kln.spot)
+        : parseLevel(brief?.header?.price);
     const entry = spot ?? DEFAULT_FORM.entryPrice;
     const isBear = bias.includes('bear');
-    const stop = isBear ? (resistance ?? DEFAULT_FORM.stopLoss) : (support ?? DEFAULT_FORM.stopLoss);
-    const target = isBear ? (support ?? DEFAULT_FORM.targetPrice) : (resistance ?? DEFAULT_FORM.targetPrice);
+    const isBull = bias.includes('bull');
+    const structOk =
+      (handoff?.dataSufficiency?.sufficientForStructure ?? brief?.meta?.dataSufficiency?.sufficientForStructure) !== false;
+    const stop = structOk
+      ? isBear
+        ? resistance ?? DEFAULT_FORM.stopLoss
+        : isBull
+          ? support ?? DEFAULT_FORM.stopLoss
+          : support ?? resistance ?? DEFAULT_FORM.stopLoss
+      : DEFAULT_FORM.stopLoss;
+    const target = structOk
+      ? isBear
+        ? support ?? DEFAULT_FORM.targetPrice
+        : isBull
+          ? resistance ?? DEFAULT_FORM.targetPrice
+          : resistance ?? support ?? DEFAULT_FORM.targetPrice
+      : DEFAULT_FORM.targetPrice;
+    const exec = handoff?.execution || {};
+    const scen = handoff?.scenarios || {};
     const mapped = normalizeSession({
       ...DEFAULT_FORM,
       sessionDate: toYmd(),
       setupName: symbol ? `Market Decoder · ${symbol}` : DEFAULT_FORM.setupName,
       chartSymbol: chartSymbolFromDecoded(symbol),
-      marketBias: brief?.instantRead?.bias || DEFAULT_FORM.marketBias,
-      marketState: brief?.finalOutput?.currentPosture || DEFAULT_FORM.marketState,
+      marketBias: handoff?.bias || brief?.instantRead?.bias || DEFAULT_FORM.marketBias,
+      marketState: handoff?.currentPosture || brief?.finalOutput?.currentPosture || DEFAULT_FORM.marketState,
       entryPrice: entry,
       stopLoss: stop,
       targetPrice: target,
       sessionGoal:
-        brief?.finalOutput?.currentPosture
-        || brief?.finalOutput?.postureSubtitle
-        || DEFAULT_FORM.sessionGoal,
+        `${[handoff?.currentPosture, handoff?.postureSubtitle, handoff?.thesis].filter(Boolean).join(' — ')
+        || [brief?.finalOutput?.currentPosture, brief?.finalOutput?.postureSubtitle].filter(Boolean).join(' — ')
+        || DEFAULT_FORM.sessionGoal}${!structOk ? ' — Decoder: insufficient daily history; confirm levels on your chart.' : ''}`,
       keyDrivers: Array.isArray(brief?.whatMattersNow)
         ? brief.whatMattersNow
             .map((x) => `${x?.label || 'Signal'}: ${x?.text || ''}`.trim())
@@ -375,20 +406,26 @@ export default function TraderLab() {
             .join('\n')
         : DEFAULT_FORM.keyDrivers,
       whatDoISee:
-        [brief?.finalOutput?.currentPosture, brief?.instantRead?.bestApproach].filter(Boolean).join('\n') || '',
+        [handoff?.bestApproach, handoff?.deskLogLine, brief?.instantRead?.bestApproach].filter(Boolean).join('\n') || '',
       whatConfirmsEntry:
-        brief?.executionGuidance?.entryCondition
+        exec.entryCondition
+        || brief?.executionGuidance?.entryCondition
         || brief?.executionGuidance?.preferredDirection
         || DEFAULT_FORM.whatConfirmsEntry,
       whyIsThisValid:
-        brief?.finalOutput?.whyThisPosture
+        exec.invalidation
+        || handoff?.whatWouldChange
+        || brief?.finalOutput?.whyThisPosture
         || brief?.executionGuidance?.invalidation
         || DEFAULT_FORM.whyIsThisValid,
       fundamentalBacking:
         [
-          brief?.executionGuidance?.preferredDirection && `Preferred: ${brief.executionGuidance.preferredDirection}`,
-          brief?.scenarioMap?.bullish?.condition && `Bull case: ${brief.scenarioMap.bullish.condition}`,
-          brief?.scenarioMap?.bearish?.condition && `Bear case: ${brief.scenarioMap.bearish.condition}`,
+          exec.preferredDirection && `Preferred: ${exec.preferredDirection}`,
+          scen.bullish && `Bull case: ${scen.bullish}`,
+          scen.bearish && `Bear case: ${scen.bearish}`,
+          scen.noTrade && `Stand aside if: ${scen.noTrade}`,
+          exec.riskConsideration && `Risk: ${exec.riskConsideration}`,
+          exec.avoidThis && `Avoid: ${exec.avoidThis}`,
         ]
           .filter(Boolean)
           .join('\n') || DEFAULT_FORM.fundamentalBacking,
@@ -398,7 +435,8 @@ export default function TraderLab() {
         source: 'market_decoder',
         handoffVersion: parsed.version || null,
         generatedAt: brief?.meta?.generatedAt || null,
-        posture: brief?.finalOutput?.currentPosture || null,
+        posture: handoff?.currentPosture || brief?.finalOutput?.currentPosture || null,
+        traderLabHandoff: handoff,
         brief,
       },
     });

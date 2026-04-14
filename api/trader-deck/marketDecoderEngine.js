@@ -778,21 +778,46 @@ async function runMarketDecoder(symbolInput) {
   const eventHighImpactSoon = eventsForScoring.some((e) => e.impact === 'High');
   const pairMeetingsPick = pickEventsForAsset(calRows, resolved, 10);
 
-  const { bull, bear, net } = scoreRules({
-    last,
-    sma50,
-    sma200,
-    momentumUp,
-    dxyHeadwindEur: marketType === 'FX' && displaySymbol.includes('EUR') && dxyRising === true,
-    yieldsRising,
-    crowdedLong: crowdedLongCrypto,
-    marketType,
-  });
+  const MIN_BARS_FOR_STRUCTURE = 5;
+  const structureInsufficient = !seriesPack.ok || closes.length < MIN_BARS_FOR_STRUCTURE;
 
-  const bias = biasFromNet(net);
-  const conviction = convictionFromNet(net);
-  const condition = tradingCondition({ net, eventHighImpactSoon, yieldsRising });
-  const approach = bestApproach({ bias, condition, last, sma50, sma200 });
+  let bull;
+  let bear;
+  let net;
+  let bias;
+  let conviction;
+  let condition;
+  let approach;
+  if (structureInsufficient) {
+    bull = 0;
+    bear = 0;
+    net = 0;
+    bias = 'Unclassified';
+    conviction = 'Unavailable';
+    condition = eventHighImpactSoon ? 'Event Risk' : 'Insufficient history';
+    approach =
+      closes.length > 0 && closes.length < MIN_BARS_FOR_STRUCTURE
+        ? `Only ${closes.length} daily bar(s) loaded — need at least ${MIN_BARS_FOR_STRUCTURE} to score trend vs MAs. Live quote is still shown.`
+        : 'Daily OHLC series did not load — cannot score MAs, pivots, or bias from structure. Check data feeds or retry.';
+  } else {
+    const scored = scoreRules({
+      last,
+      sma50,
+      sma200,
+      momentumUp,
+      dxyHeadwindEur: marketType === 'FX' && displaySymbol.includes('EUR') && dxyRising === true,
+      yieldsRising,
+      crowdedLong: crowdedLongCrypto,
+      marketType,
+    });
+    bull = scored.bull;
+    bear = scored.bear;
+    net = scored.net;
+    bias = biasFromNet(net);
+    conviction = convictionFromNet(net);
+    condition = tradingCondition({ net, eventHighImpactSoon, yieldsRising });
+    approach = bestApproach({ bias, condition, last, sma50, sma200 });
+  }
 
   let prevH = highs.length > 1 ? highs[highs.length - 2] : q.h != null ? Number(q.h) : null;
   let prevL = lows.length > 1 ? lows[lows.length - 2] : q.l != null ? Number(q.l) : null;
@@ -838,7 +863,7 @@ async function runMarketDecoder(symbolInput) {
     net,
   });
 
-  const exec = buildExecutionGuidance({
+  let exec = buildExecutionGuidance({
     bias,
     last,
     sma50,
@@ -847,8 +872,17 @@ async function runMarketDecoder(symbolInput) {
     conviction,
     instrument,
   });
+  if (structureInsufficient) {
+    exec = {
+      preferredDirection: 'Stand aside',
+      entryCondition: 'Wait for at least five daily closes so MAs and session pivots can be computed.',
+      invalidation: 'Not applicable — no structural bias is active.',
+      riskConsideration: 'Incomplete history increases gap and level risk; confirm on your charting platform.',
+      avoidThis: 'Avoid sizing from placeholder levels when OHLC is thin or missing.',
+    };
+  }
 
-  const postureElite = buildFinalPostureElite({
+  let postureElite = buildFinalPostureElite({
     net,
     eventHighImpactSoon,
     conviction,
@@ -857,6 +891,14 @@ async function runMarketDecoder(symbolInput) {
     last,
     instrument,
   });
+  if (structureInsufficient) {
+    postureElite = {
+      headline: 'DATA INCOMPLETE',
+      subtitle: 'Decoder cannot score structure yet',
+      reason: `Only ${closes.length} daily bar(s) in pack — need ${MIN_BARS_FOR_STRUCTURE}+ for scored bias and pivots.`,
+      whatWouldChangeThis: 'Reload after daily candles populate, or verify symbol mapping and data keys.',
+    };
+  }
 
   const macroDriver =
     fred.status === 'failed' || fred.level == null
@@ -951,7 +993,7 @@ async function runMarketDecoder(symbolInput) {
   const rsiVal = compose.rsiLast(closes);
   const rsiPack = compose.rsiStateLabel(rsiVal);
 
-  const pulseWeighted = computeWeightedMarketPulse({
+  let pulseWeighted = computeWeightedMarketPulse({
     net,
     bull,
     bear,
@@ -971,10 +1013,28 @@ async function runMarketDecoder(symbolInput) {
     momentum,
   });
 
+  if (structureInsufficient) {
+    pulseWeighted = {
+      ...pulseWeighted,
+      gaugePosition: 50,
+      signalBrief: 'Pulse not scored — waiting on enough daily bars for MAs and pivots.',
+      drivers: [
+        {
+          key: 'data',
+          label: 'Structure',
+          detail: `Need ≥${MIN_BARS_FOR_STRUCTURE} daily closes; have ${closes.length}.`,
+        },
+        ...(pulseWeighted.drivers || []).slice(0, 1),
+      ],
+    };
+  }
+
   const marketPulse = {
     biasScore: net,
-    biasLabel: biasLabelFromNet(net),
-    convictionExplanation: convictionExplanationText({ conviction, net, bull, bear }),
+    biasLabel: structureInsufficient ? 'Unclassified' : biasLabelFromNet(net),
+    convictionExplanation: structureInsufficient
+      ? 'Conviction unavailable until daily structure loads.'
+      : convictionExplanationText({ conviction, net, bull, bear }),
     gaugePosition: pulseWeighted.gaugePosition,
     compositeScore: pulseWeighted.compositeScore,
     pulseDrivers: pulseWeighted.drivers,
@@ -982,8 +1042,10 @@ async function runMarketDecoder(symbolInput) {
     signalBrief: pulseWeighted.signalBrief,
     momentum,
     volatility: volLabel,
-    marketState: pulseState,
-    decisionPressure: decisionPressureText({ net, eventHighImpactSoon, conviction }),
+    marketState: structureInsufficient ? 'Data gap' : pulseState,
+    decisionPressure: structureInsufficient
+      ? 'Defer sizing — structure inputs are incomplete.'
+      : decisionPressureText({ net, eventHighImpactSoon, conviction }),
     tradeReadiness,
     environmentLine,
   };
@@ -1048,13 +1110,22 @@ async function runMarketDecoder(symbolInput) {
   const eventRiskSummary = compose.eventRiskState(events, eventHighImpactSoon, pairMeetingsPick.scope);
   const scenarioTone = compose.scenarioToneFromBias(bias, net);
   const activeSess = compose.utcSessionWindow();
-  const readiness = {
+  let readiness = {
     score: readiness100,
     confidence: conviction,
     sessionAlignment: compose.sessionAlignmentLabel(activeSess.label, bias),
     structureQuality: compose.structureQualityLabel(net, pivOk, isSparse),
     volatilitySuitability: volLabel,
   };
+  if (structureInsufficient) {
+    readiness = {
+      ...readiness,
+      score: Math.min(readiness100, 32),
+      confidence: 'Unavailable',
+      sessionAlignment: 'N/A',
+      structureQuality: 'Insufficient daily history',
+    };
+  }
   const insights = {
     adrPercent: adrPct,
     atrPercent: adrPct,
@@ -1195,6 +1266,14 @@ async function runMarketDecoder(symbolInput) {
         marketMeetings: marketMeetingsForPair,
         marketMeetingsScope: pairMeetingsPick.scope,
         sparseSeries: isSparse,
+        dataSufficiency: {
+          sufficientForStructure: !structureInsufficient,
+          minBarsRequired: MIN_BARS_FOR_STRUCTURE,
+          dailyBarCount: closes.length,
+          seriesOk: Boolean(seriesPack.ok),
+          pivotsAvailable: Boolean(piv && piv.r1 != null && piv.s1 != null),
+          calendarOk: Boolean(cal.ok && calRows.length),
+        },
         freshness: {
           quoteOk: quoteRes.ok,
           quoteSource: (quoteRes.providerLog && quoteRes.providerLog[0] && quoteRes.providerLog[0].name) || null,

@@ -2643,6 +2643,36 @@
   text-shadow: 0 0 18px var(--aura-bear-dim, rgba(200, 85, 105, 0.32));
 }
 
+.md-ref-val--warn {
+  color: rgba(255, 200, 120, 0.95);
+  font-weight: 650;
+}
+
+.md-ref-data-sufficiency-banner {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 180, 100, 0.35);
+  background: rgba(40, 22, 8, 0.55);
+  color: rgba(255, 248, 235, 0.92);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.md-ref-data-sufficiency-banner strong {
+  display: block;
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: rgba(255, 210, 140, 0.95);
+}
+
+.md-ref-data-sufficiency-sub {
+  margin: 8px 0 0;
+  opacity: 0.88;
+}
+
 .md-ref-val--neutral {
   color: var(--ref-ink);
 }

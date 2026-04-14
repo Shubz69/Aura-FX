@@ -955,6 +955,14 @@ const Api = {
         return dedupeGet(`${API_BASE_URL}/api/trader-deck/news`, { params });
     },
 
+    /** Archived top headlines for a London desk calendar day (from trader_deck_headlines_daily). */
+    getTraderDeckHeadlinesDaily: (dateYmd) => {
+        const d = String(dateYmd || '').trim().slice(0, 10);
+        return axios.get(`${API_BASE_URL}/api/trader-deck/headlines-daily`, {
+            params: { date: d },
+        });
+    },
+
     getTraderDeckContent: (type, date, opts = {}) => {
         const token = localStorage.getItem('token');
         const params = { type, date };

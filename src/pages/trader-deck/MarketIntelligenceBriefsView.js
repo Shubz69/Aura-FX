@@ -184,6 +184,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [selectedKinds, setSelectedKinds] = useState(() => new Set(BRIEF_KIND_ORDER));
   /** UK weekend daily view: server serves previous weekday’s briefs */
   const [weekendBriefsNote, setWeekendBriefsNote] = useState(null);
+  /** One-time autogen hint when the desk date has zero stored briefs */
+  const [emptyDeskNote, setEmptyDeskNote] = useState(null);
   const fileInputRef = useRef(null);
   const typewriterScrollRef = useRef(null);
   const filterWrapRef = useRef(null);
@@ -310,6 +312,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     setAddSuccess(null);
     setSelectedKinds(new Set(BRIEF_KIND_ORDER));
     setWeekendBriefsNote(null);
+    setEmptyDeskNote(null);
 
     const finishLoading = () => {
       if (!cancelled) setLoading(false);
@@ -320,7 +323,27 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         if (cancelled) return;
         setBriefs(payload.list);
         setWeekendBriefsNote(payload.weekendNote);
-        if (payload.list.length > 0) return;
+        if (payload.list.length > 0) {
+          setEmptyDeskNote(null);
+          return;
+        }
+
+        try {
+          const key = `td-brief-desk-backfill-${type}-${storageDateStr}`;
+          if (!sessionStorage.getItem(key)) {
+            sessionStorage.setItem(key, '1');
+            setEmptyDeskNote(
+              'No briefs on file for this desk date. A one-time server backfill was requested (requires automation keys). Check again shortly or pick another date.'
+            );
+            Api.getTraderDeckContent(type, storageDateStr, { autogen: true }).catch(() => {});
+          } else {
+            setEmptyDeskNote(
+              'Still no briefs for this date — daily automation may not have run yet, or this day was skipped. Try another session date or contact support.'
+            );
+          }
+        } catch (_) {
+          setEmptyDeskNote('No briefs for this date.');
+        }
 
         pollTimer = setInterval(() => {
           if (cancelled) return;
@@ -335,6 +358,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               if (cancelled || !nextPayload.list.length) return;
               setBriefs(nextPayload.list);
               setWeekendBriefsNote(nextPayload.weekendNote);
+              setEmptyDeskNote(null);
               if (pollTimer) clearInterval(pollTimer);
               pollTimer = null;
             })
@@ -682,7 +706,18 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
             </div>
             <ul className="td-deck-mi-brief-cards">
               {displayedBriefs.length === 0 ? (
-                <li className="td-deck-mi-brief-empty">No briefs for this date. {canEdit && 'Pick the date above, then add a file or link.'}</li>
+                <li className="td-deck-mi-brief-empty">
+                  {emptyDeskNote ? (
+                    <>
+                      {emptyDeskNote}{' '}
+                      {canEdit && 'You can also upload a file or link for this date.'}
+                    </>
+                  ) : (
+                    <>
+                      No briefs for this date. {canEdit && 'Pick the date above, then add a file or link.'}
+                    </>
+                  )}
+                </li>
               ) : (
                 displayedBriefs.map((b) => (
                   <li key={b.id} className="td-deck-mi-brief-card">
