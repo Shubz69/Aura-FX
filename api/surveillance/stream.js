@@ -3,6 +3,7 @@ const { executeQuery } = require('../db');
 const { assertSurveillanceEntitlement } = require('./assertEntitlement');
 const { ensureSurveillanceSchema } = require('./schema');
 const { getSystemHealthSummary } = require('./adapterState');
+const { SURV_FEED_ORDER_SQL } = require('./store');
 
 function authHeaderFromReq(req) {
   const h = req.headers?.authorization;
@@ -42,7 +43,7 @@ module.exports = async (req, res) => {
     const sendTick = async () => {
       const health = await getSystemHealthSummary();
       const [topRows] = await executeQuery(
-        `SELECT id FROM surveillance_events ORDER BY rank_score DESC, updated_at DESC LIMIT 12`,
+        `SELECT id FROM surveillance_events ORDER BY ${SURV_FEED_ORDER_SQL} LIMIT 12`,
         []
       );
       const topEventIds = (topRows || []).map((r) => String(r.id));

@@ -39,6 +39,20 @@ function isMaritimeLogisticsDigestHit(e) {
   return /\b(shipping|canal|strait|container|freight|port congestion|chokepoint|maritime)\b/.test(t);
 }
 
+function eventRecencyMs(e) {
+  const a = e.updated_at || e.published_at || e.detected_at;
+  const t = a ? new Date(a).getTime() : 0;
+  return Number.isFinite(t) ? t : 0;
+}
+
+function trustBandHint(maxTrust) {
+  const t = Number(maxTrust) || 0;
+  if (t >= 90) return 'Tier-1 official';
+  if (t >= 84) return 'Institutional';
+  if (t >= 78) return 'Public authority';
+  return null;
+}
+
 function buildIntelDigest(events, opts = {}) {
   const limitStories = opts.limitStories ?? 7;
   const limitImpact = opts.limitImpact ?? 7;
@@ -56,22 +70,28 @@ function buildIntelDigest(events, opts = {}) {
 
   const developingStories = [...byStory.entries()]
     .map(([story_id, arr]) => {
-      const sorted = [...arr].sort((a, b) => (b.rank_score || 0) - (a.rank_score || 0));
-      const top = sorted[0];
       const rank = Math.max(...arr.map((x) => x.rank_score || 0));
+      const maxTrust = Math.max(...arr.map((x) => (x.trust_score != null ? Number(x.trust_score) : 0)));
+      const latestMs = Math.max(...arr.map(eventRecencyMs));
+      const byRecency = [...arr].sort((a, b) => eventRecencyMs(b) - eventRecencyMs(a));
+      const lead = byRecency[0];
       const instruments = new Set();
       const regions = new Set();
       for (const x of arr) {
         topSymbolsFromEvent(x, 6).forEach((s) => instruments.add(s));
         if (x.region) regions.add(x.region);
       }
+      const publisherCount = new Set(arr.map((x) => x.source).filter(Boolean)).size;
       return {
         story_id,
-        headline: top.title,
+        headline: lead.title,
         item_count: arr.length,
         rank_score: rank,
-        top_event_id: top.id,
-        sources: [...new Set(arr.map((x) => x.source))].slice(0, 5),
+        trust_max: maxTrust,
+        top_event_id: lead.id,
+        latest_at: latestMs ? new Date(latestMs).toISOString() : null,
+        publisher_count: publisherCount,
+        trust_band: trustBandHint(maxTrust),
         instruments: [...instruments].slice(0, 8),
         regions: [...regions].slice(0, 5),
         trade_line:
@@ -79,12 +99,23 @@ function buildIntelDigest(events, opts = {}) {
           ([...regions].length ? ` · ${[...regions].slice(0, 2).join('/')}` : ''),
       };
     })
-    .sort((a, b) => b.rank_score - a.rank_score)
+    .sort((a, b) => {
+      const ams = a.latest_at ? new Date(a.latest_at).getTime() : 0;
+      const bms = b.latest_at ? new Date(b.latest_at).getTime() : 0;
+      if (bms !== ams) return bms - ams;
+      const rr = (b.rank_score || 0) - (a.rank_score || 0);
+      if (rr !== 0) return rr;
+      return (b.trust_max || 0) - (a.trust_max || 0);
+    })
     .slice(0, limitStories);
 
   const highMarketImpact = [...events]
     .filter((e) => (e.market_impact_score || 0) >= 28)
-    .sort((a, b) => (b.market_impact_score || 0) - (a.market_impact_score || 0))
+    .sort((a, b) => {
+      const mi = (b.market_impact_score || 0) - (a.market_impact_score || 0);
+      if (mi !== 0) return mi;
+      return eventRecencyMs(b) - eventRecencyMs(a);
+    })
     .slice(0, limitImpact)
     .map((e) => ({
       id: e.id,
@@ -130,13 +161,17 @@ function buildIntelDigest(events, opts = {}) {
       label: idx === 0 ? 'Hot' : idx < 3 ? 'Warm' : 'Watch',
     }));
 
-  const multiSourceStories = developingStories.filter((s) => (s.sources?.length || 0) > 1).length;
+  const multiSourceStories = developingStories.filter((s) => (s.publisher_count || 0) > 1).length;
   const corroboratedHits = events.filter((e) => e.verification_state === 'corroborated' || (e.corroboration_count || 0) > 0)
     .length;
 
   const aviationAlerts = [...events]
     .filter((e) => isAviationDigestHit(e))
-    .sort((a, b) => (b.rank_score || 0) - (a.rank_score || 0))
+    .sort((a, b) => {
+      const r = (b.rank_score || 0) - (a.rank_score || 0);
+      if (r !== 0) return r;
+      return eventRecencyMs(b) - eventRecencyMs(a);
+    })
     .slice(0, limitAviation)
     .map((e) => ({
       id: e.id,
@@ -149,7 +184,11 @@ function buildIntelDigest(events, opts = {}) {
 
   const maritimeLogistics = [...events]
     .filter((e) => isMaritimeLogisticsDigestHit(e))
-    .sort((a, b) => (b.rank_score || 0) - (a.rank_score || 0))
+    .sort((a, b) => {
+      const r = (b.rank_score || 0) - (a.rank_score || 0);
+      if (r !== 0) return r;
+      return eventRecencyMs(b) - eventRecencyMs(a);
+    })
     .slice(0, limitMarLog)
     .map((e) => ({
       id: e.id,

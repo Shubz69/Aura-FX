@@ -11,10 +11,12 @@ import {
   filterDigestByFocus,
   filterEventsByFocus,
   focusSummaryFromEvents,
+  formatRecencyLabel,
   normalizeRegionKey,
   primaryCountryFromEvent,
   severityUrgencySlug,
 } from './surveillanceRegionUtils';
+import { eventFreshnessTimestamp, salienceHint, trustQualityPresentation } from './surveillancePresentation';
 import './SurveillancePage.css';
 
 const TABS = [
@@ -45,7 +47,6 @@ export default function SurveillancePage() {
   const [sources, setSources] = useState([]);
   const [tab, setTab] = useState('all');
   const [severityMin, setSeverityMin] = useState('');
-  const [sourceFilter, setSourceFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showIntro, setShowIntro] = useState(false);
@@ -120,7 +121,6 @@ export default function SurveillancePage() {
       const params = new URLSearchParams();
       params.set('tab', tab);
       if (severityMin) params.set('severityMin', severityMin);
-      if (sourceFilter) params.set('source', sourceFilter);
       const res = await fetch(`${apiBase()}/api/surveillance/feed?${params}`, {
         headers: authHeaders,
         cache: 'no-store',
@@ -137,7 +137,7 @@ export default function SurveillancePage() {
     } catch {
       /* ignore poll errors */
     }
-  }, [token, authHeaders, tab, severityMin, sourceFilter]);
+  }, [token, authHeaders, tab, severityMin]);
 
   loadFeedRef.current = loadFeed;
 
@@ -222,7 +222,7 @@ export default function SurveillancePage() {
   useEffect(() => {
     if (!introReady || loading) return;
     loadFeed();
-  }, [tab, severityMin, sourceFilter, introReady, loading, loadFeed]);
+  }, [tab, severityMin, introReady, loading, loadFeed]);
 
   useEffect(() => {
     if (loading) return undefined;
@@ -400,7 +400,7 @@ export default function SurveillancePage() {
   const chips = [
     { label: 'Live nodes', value: agg.liveCount ?? events.length },
     { label: 'Tension', value: agg.globalTensionScore ?? '—' },
-    { label: 'Sources', value: sources.length || '—' },
+    { label: 'Publisher feeds', value: sources.length || '—' },
   ];
 
   return (
@@ -429,7 +429,9 @@ export default function SurveillancePage() {
                 <h1 id="sv-terminal-heading" className="sv-terminal-title">
                   Surveillance
                 </h1>
-                <p className="sv-terminal-sub">Global OSINT terminal — live ingest, ranked tape, sector lens</p>
+                <p className="sv-terminal-sub">
+                  Official and institutional public channels — ranked by relevance and freshness, sector lens on the globe
+                </p>
               </div>
             </div>
             <div className="sv-masthead-instruments" aria-label="Grid status">
@@ -485,10 +487,12 @@ export default function SurveillancePage() {
             {focusSummary.count > 0 ? (
               <span
                 className={`sv-hero-context-urgency ${focusSummary.urgencyClass || ''}`}
-                title="Peak severity in this lens"
+                title="Highest severity in this sector lens"
               >
                 {focusSummary.urgencyLabel}
-                {focusSummary.maxSev ? ` · S${focusSummary.maxSev}` : ''}
+                {focusSummary.maxSev
+                  ? ` · Severity ${focusSummary.maxSev} (${focusSummary.urgencyLabel || 'level'})`
+                  : ''}
               </span>
             ) : null}
             <button type="button" className="sv-hero-context-clear" onClick={clearFocusRegion}>
@@ -534,14 +538,13 @@ export default function SurveillancePage() {
             <div className="sv-globe-chrome">
               <span className="sv-globe-chrome-tag">Operating picture</span>
               <p className="sv-globe-chrome-hint">
-                Zoom to frame the theatre. Select a country for a sector lens; markers and tape stay linked to the same
-                geography.
+                Zoom to frame the theatre. Tap a country for a sector lens; markers and tape stay aligned to the same geography.
               </p>
             </div>
           </div>
           <aside
             className={`sv-command-rail sv-intel-panel ${terminalHandoff ? 'sv-intel-panel--handoff' : ''}`}
-            aria-label="Intelligence command rail"
+            aria-label="Situation rail and digest"
           >
             <IntelSidePanel
               digest={filteredDigest}
@@ -553,6 +556,7 @@ export default function SurveillancePage() {
               tapeCount={tapeEvents.length}
               eventsById={eventsById}
               topTapeSeverity={tapeEvents[0]?.severity}
+              leadTapeUpdatedAt={eventFreshnessTimestamp(tapeEvents[0])}
               onClearFocus={clearFocusRegion}
               onSetFocusRegion={setFocusFromHeat}
             />
@@ -577,39 +581,55 @@ export default function SurveillancePage() {
           <div className="sv-control-deck-inner sv-control-deck-inner--compact">
             <div className="sv-control-deck-label">
               <span className="sv-control-eyebrow">Tape</span>
-              <span className="sv-control-title">Severity and source</span>
+              <span className="sv-control-title">Refine severity</span>
             </div>
+            <details className="sv-metrics-legend">
+              <summary>How to read the tape</summary>
+              <dl className="sv-metrics-legend-grid">
+                <div>
+                  <dt>Salience</dt>
+                  <dd>{salienceHint()}</dd>
+                </div>
+                <div>
+                  <dt>Severity</dt>
+                  <dd>Editorial urgency 1–5. Accent colors mark watch, elevated, and critical tiers.</dd>
+                </div>
+                <div>
+                  <dt>Market risk</dt>
+                  <dd>Lean from the asset-impact scan (risk-on / risk-off / supply shock). Neutral when unclear.</dd>
+                </div>
+                <div>
+                  <dt>Corroboration</dt>
+                  <dd>Independent coverage overlap on the same storyline. Higher counts mean stronger cross-check.</dd>
+                </div>
+                <div>
+                  <dt>Source quality</dt>
+                  <dd>
+                    Publisher tier (official, institutional, authority, corroborated, public). Open an item for the
+                    original link — internal ingest labels are not shown on the tape.
+                  </dd>
+                </div>
+              </dl>
+              <p className="sv-metrics-legend-note">
+                Close salience scores usually mean comparable weighting, not identical risk. Use severity, source quality,
+                and recency to judge urgency.
+              </p>
+            </details>
             <div className="sv-control-filters">
               <label className="sv-field">
-                <span className="sv-field-label">Severity floor</span>
+                <span className="sv-field-label">Minimum severity</span>
                 <select
                   className="sv-field-select"
                   value={severityMin}
                   onChange={(e) => setSeverityMin(e.target.value)}
                   aria-label="Minimum severity"
                 >
-                  <option value="">Any</option>
-                  <option value="1">1+</option>
-                  <option value="2">2+</option>
-                  <option value="3">3+</option>
-                  <option value="4">4+</option>
-                  <option value="5">5</option>
-                </select>
-              </label>
-              <label className="sv-field">
-                <span className="sv-field-label">Source</span>
-                <select
-                  className="sv-field-select"
-                  value={sourceFilter}
-                  onChange={(e) => setSourceFilter(e.target.value)}
-                  aria-label="Filter by source"
-                >
-                  <option value="">All sources</option>
-                  {sources.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
+                  <option value="">Any level</option>
+                  <option value="1">1 — Routine+</option>
+                  <option value="2">2 — Watch+</option>
+                  <option value="3">3 — Elevated+</option>
+                  <option value="4">4 — High+</option>
+                  <option value="5">5 — Critical only</option>
                 </select>
               </label>
             </div>
@@ -626,7 +646,14 @@ export default function SurveillancePage() {
             <div className="sv-tape-deck-head-text">
               <p className="sv-tape-eyebrow">Live stream</p>
               <h2 className="sv-tape-heading">Tape</h2>
-              <p className="sv-tape-deck-hint">Ranked rows · select to open dossier · lens highlights in-sector nodes</p>
+              <p className="sv-tape-deck-hint">
+                Salience and freshness drive order · open a row for verification detail and the original publisher link ·
+                lens highlights in-sector nodes
+              </p>
+              <p className="sv-tape-deck-legend" title={salienceHint()}>
+                Salience 0–100 blends severity, corroboration, source quality, and freshness — close scores mean similar
+                weighting, not identical risk.
+              </p>
             </div>
             <div className="sv-tape-deck-meta">
               <span className="sv-stream-live sv-stream-live--tape" data-live={sseOk ? 'on' : 'off'}>
@@ -648,11 +675,16 @@ export default function SurveillancePage() {
           <ul className="sv-tape-list">
             {tapeEvents.map((e) => {
               const urgSlug = severityUrgencySlug(e.severity);
+              const recencyIso = eventFreshnessTimestamp(e);
+              const trustPr = trustQualityPresentation(e.trust_score);
               const metaBits = [
-                e.risk_bias && e.risk_bias !== 'neutral' ? e.risk_bias.replace('_', ' ') : null,
-                e.corroboration_count > 0 ? `${e.corroboration_count}× corroboration` : null,
+                recencyIso ? formatRecencyLabel(recencyIso) : null,
+                trustPr.short !== '—' ? trustPr.label : null,
+                e.risk_bias && e.risk_bias !== 'neutral'
+                  ? `Risk: ${String(e.risk_bias).replace(/_/g, ' ')}`
+                  : null,
+                e.corroboration_count > 0 ? `Corroboration ×${e.corroboration_count}` : null,
                 e.story_id ? 'Storyline' : null,
-                e.trust_score != null ? `Trust ${Math.round(e.trust_score)}` : null,
               ].filter(Boolean);
               const detailTitle = metaBits.length ? `${e.title} — ${metaBits.join(' · ')}` : e.title;
               return (
@@ -666,7 +698,7 @@ export default function SurveillancePage() {
                     title={detailTitle}
                     onClick={() => openDrawer(e.id)}
                   >
-                    <span className="sv-tape-cell sv-tape-cell--sev">
+                    <span className="sv-tape-cell sv-tape-cell--sev" title="Severity (1–5 editorial urgency)">
                       <span
                         className={`sv-sev ${urgSlug !== 'routine' ? `sv-sev--${urgSlug}` : ''}`}
                         data-sev={e.severity}
@@ -674,22 +706,39 @@ export default function SurveillancePage() {
                         {e.severity}
                       </span>
                     </span>
-                    <span className="sv-tape-cell sv-tape-cell--rank" title="Rank score">
-                      <span className="sv-tape-rank-label">R</span>
+                    <span className="sv-tape-cell sv-tape-cell--rank" title={salienceHint()}>
+                      <span className="sv-tape-rank-label">Sal.</span>
                       {e.rank_score != null ? Math.round(e.rank_score) : '—'}
                     </span>
                     {e.risk_bias && e.risk_bias !== 'neutral' ? (
-                      <span className={`sv-tape-cell sv-tape-cell--risk sv-ev-bias sv-ev-bias--${e.risk_bias}`}>
-                        {e.risk_bias.replace('_', ' ')}
+                      <span
+                        className={`sv-tape-cell sv-tape-cell--risk sv-ev-bias sv-ev-bias--${e.risk_bias}`}
+                        title="Market risk lean from impacted assets"
+                      >
+                        {e.risk_bias.replace(/_/g, ' ')}
                       </span>
                     ) : (
-                      <span className="sv-tape-cell sv-tape-cell--risk sv-tape-cell--muted">—</span>
+                      <span className="sv-tape-cell sv-tape-cell--risk sv-tape-cell--muted" title="No clear risk lean">
+                        —
+                      </span>
                     )}
-                    <span className="sv-tape-cell sv-tape-cell--type" title="Event type">
+                    <span className="sv-tape-cell sv-tape-cell--type" title="Event category">
                       {e.event_type}
                     </span>
                     <span className="sv-tape-cell sv-tape-cell--title">{e.title}</span>
-                    <span className="sv-tape-cell sv-tape-cell--src">{e.source}</span>
+                    <span
+                      className="sv-tape-cell sv-tape-cell--signal"
+                      title={`${trustPr.detail}${recencyIso ? ` · ${formatRecencyLabel(recencyIso)}` : ''}`}
+                    >
+                      <span className={`sv-tape-signal-trust sv-tape-signal-trust--${trustPr.tier}`}>
+                        {trustPr.short}
+                      </span>
+                      {recencyIso ? (
+                        <span className="sv-tape-signal-fresh">{formatRecencyLabel(recencyIso)}</span>
+                      ) : (
+                        <span className="sv-tape-signal-fresh sv-tape-signal-fresh--muted">—</span>
+                      )}
+                    </span>
                   </button>
                 </li>
               );

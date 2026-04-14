@@ -1,5 +1,22 @@
 import React from 'react';
 
+const VERIFICATION_LABEL = {
+  unverified: 'Single publisher',
+  official_source: 'Official publisher feed',
+  corroborated: 'Cross-publisher corroboration',
+};
+
+function verificationLabel(state) {
+  const s = String(state || '').toLowerCase();
+  return VERIFICATION_LABEL[s] || state || '—';
+}
+
+function publisherKindLabel(sourceType) {
+  const t = String(sourceType || '').toLowerCase();
+  if (t === 'official_html' || t === 'official') return 'Public institutional page';
+  return 'Publisher feed';
+}
+
 export default function EventDrawer({ event, story, related, onClose, loading, onOpenRelatedId }) {
   if (!event && !loading) return null;
 
@@ -28,32 +45,42 @@ export default function EventDrawer({ event, story, related, onClose, loading, o
             <>
               <header className="sv-drawer-hero">
                 <p className="sv-drawer-source">{event.source}</p>
+                <p className="sv-drawer-source-kind">{publisherKindLabel(event.source_type)}</p>
                 <h2 className="sv-drawer-title">{event.title}</h2>
               </header>
               <div className="sv-drawer-matters-wrap">
                 <p className="sv-drawer-matters-label">Why it matters</p>
                 <p className="sv-drawer-matters">{event.why_it_matters}</p>
               </div>
-              <div className="sv-drawer-scores">
+              <div className="sv-drawer-scores" aria-label="Scores and verification">
                 {event.rank_score != null ? (
-                  <span className="sv-drawer-chip sv-drawer-chip--rank">
+                  <span className="sv-drawer-chip sv-drawer-chip--rank" title="Composite tape priority">
                     Rank {Math.round(event.rank_score)}
                   </span>
                 ) : null}
                 {event.trust_score != null ? (
-                  <span className="sv-drawer-chip">Trust {Math.round(event.trust_score)}</span>
+                  <span className="sv-drawer-chip" title="Publisher tier and confidence (0–100)">
+                    Trust {Math.round(event.trust_score)}
+                  </span>
                 ) : null}
                 {event.risk_bias && event.risk_bias !== 'neutral' ? (
-                  <span className={`sv-drawer-chip sv-drawer-chip--bias-${event.risk_bias}`}>
-                    {String(event.risk_bias).replace('_', ' ')}
+                  <span
+                    className={`sv-drawer-chip sv-drawer-chip--bias-${event.risk_bias}`}
+                    title="Implied lean from impacted markets"
+                  >
+                    Risk: {String(event.risk_bias).replace(/_/g, ' ')}
                   </span>
                 ) : null}
                 {event.corroboration_count > 0 ? (
-                  <span className="sv-drawer-chip sv-drawer-chip--corr">
-                    Corroborated ×{event.corroboration_count}
+                  <span className="sv-drawer-chip sv-drawer-chip--corr" title="Other publishers on the same storyline">
+                    Corroboration ×{event.corroboration_count}
                   </span>
                 ) : null}
-                {event.story_id ? <span className="sv-drawer-chip sv-drawer-chip--story">Storyline</span> : null}
+                {event.story_id ? (
+                  <span className="sv-drawer-chip sv-drawer-chip--story" title="Linked narrative cluster">
+                    Storyline
+                  </span>
+                ) : null}
               </div>
               {story && story.siblings?.length > 0 ? (
                 <section className="sv-drawer-section sv-drawer-story">
@@ -78,11 +105,11 @@ export default function EventDrawer({ event, story, related, onClose, loading, o
                 </div>
                 <div>
                   <dt>Severity</dt>
-                  <dd>{event.severity}</dd>
+                  <dd title="Editorial urgency, 1 (routine) to 5 (critical)">{event.severity}</dd>
                 </div>
                 <div>
                   <dt>Verification</dt>
-                  <dd>{event.verification_state}</dd>
+                  <dd>{verificationLabel(event.verification_state)}</dd>
                 </div>
                 <div>
                   <dt>Published</dt>
@@ -114,9 +141,9 @@ export default function EventDrawer({ event, story, related, onClose, loading, o
                 </section>
               )}
               <section className="sv-drawer-section">
-                <h3>Source</h3>
+                <h3>Original publisher</h3>
                 <a href={event.url} target="_blank" rel="noopener noreferrer" className="sv-drawer-link">
-                  Open original
+                  Open source page
                 </a>
               </section>
               {related && related.length > 0 && (

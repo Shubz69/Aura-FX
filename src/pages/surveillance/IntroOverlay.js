@@ -165,7 +165,7 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
               </p>
               <BriefList
                 title="Highest priority on tape"
-                hint="Tape rank (R): 0–100, higher = surfaced first on the live feed."
+                hint="Rank (0–100): composite priority on the tape — higher appears first. Blends trust, severity, corroboration, and freshness."
                 rankCaption="Rank"
                 items={preview.top}
                 onPick={(id) => runExit(() => onPickStory?.(id))}
@@ -173,7 +173,7 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
               {preview.since.length ? (
                 <BriefList
                   title="New since your last session"
-                  hint="Same R scale — only items not already shown above."
+                  hint="Same rank scale — items updated since your last visit that are not in the top list above."
                   rankCaption="Rank"
                   items={preview.since}
                   onPick={(id) => runExit(() => onPickStory?.(id))}

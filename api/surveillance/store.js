@@ -15,6 +15,10 @@ const {
   disruptionBoostFromRecord,
 } = require('./scoring');
 
+/** Tape ordering: blend editorial rank with freshness so stale rows do not crowd out recent material. */
+const SURV_FEED_ORDER_SQL =
+  '(0.52 * COALESCE(rank_score, 0) + 0.48 * COALESCE(freshness_score, 0)) DESC, updated_at DESC, id DESC';
+
 function rowToEvent(r) {
   if (!r) return null;
   const parseJson = (v) => {
@@ -306,7 +310,7 @@ async function queryFeed({
     params.push(source);
   }
   const lim = Math.max(1, Math.min(250, Math.floor(Number(limit)) || 150));
-  sql += ` ORDER BY rank_score DESC, updated_at DESC, COALESCE(published_at, detected_at) DESC LIMIT ${lim}`;
+  sql += ` ORDER BY ${SURV_FEED_ORDER_SQL} LIMIT ${lim}`;
   const [rows] = await executeQuery(sql, params);
   return (rows || []).map(rowToEvent);
 }
@@ -315,7 +319,7 @@ async function queryTopForBriefing(limit = 12) {
   const lim = Math.max(1, Math.min(250, Math.floor(Number(limit)) || 12));
   const [rows] = await executeQuery(
     `SELECT * FROM surveillance_events
-     ORDER BY rank_score DESC, updated_at DESC
+     ORDER BY ${SURV_FEED_ORDER_SQL}
      LIMIT ${lim}`,
     []
   );
@@ -328,7 +332,7 @@ async function queryDeltaSince(sinceIso, limit = 20) {
   const [rows] = await executeQuery(
     `SELECT * FROM surveillance_events
      WHERE updated_at > ?
-     ORDER BY rank_score DESC, updated_at DESC
+     ORDER BY ${SURV_FEED_ORDER_SQL}
      LIMIT ${lim}`,
     [sinceIso]
   );
@@ -453,4 +457,5 @@ module.exports = {
   computeAggregates,
   listSources,
   rowToEvent,
+  SURV_FEED_ORDER_SQL,
 };

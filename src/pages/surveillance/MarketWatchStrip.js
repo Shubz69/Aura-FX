@@ -19,7 +19,12 @@ export default function MarketWatchStrip({ narrative, items, variant = 'default'
               <div key={g.groupId} className="sv-mw-compact-card" title={g.implication}>
                 <div className="sv-mw-compact-head">
                   <strong className="sv-mw-label">{g.label}</strong>
-                  <span className={`sv-mw-conf ${confidenceClass(g.confidence)}`}>{g.confidence}</span>
+                  <span
+                    className={`sv-mw-conf ${confidenceClass(g.confidence)}`}
+                    title="How strong this read is from the current tape"
+                  >
+                    {g.confidence === 'high' ? 'High confidence' : g.confidence === 'medium' ? 'Medium' : 'Tentative'}
+                  </span>
                 </div>
                 <p className="sv-mw-impl-compact">{g.implication}</p>
               </div>
@@ -36,7 +41,12 @@ export default function MarketWatchStrip({ narrative, items, variant = 'default'
             <div key={g.groupId} className="sv-mw-row">
               <div className="sv-mw-row-head">
                 <strong className="sv-mw-label">{g.label}</strong>
-                <span className={`sv-mw-conf ${confidenceClass(g.confidence)}`}>{g.confidence}</span>
+                <span
+                  className={`sv-mw-conf ${confidenceClass(g.confidence)}`}
+                  title="How strong this read is from the current tape"
+                >
+                  {g.confidence === 'high' ? 'High confidence' : g.confidence === 'medium' ? 'Medium' : 'Tentative'}
+                </span>
               </div>
               <p className="sv-mw-impl">{g.implication}</p>
               {g.reasons?.length ? (
@@ -56,7 +66,7 @@ export default function MarketWatchStrip({ narrative, items, variant = 'default'
   if (!items || !items.length) {
     return (
       <div className={`sv-strip sv-strip--empty ${compact ? 'sv-strip--compact' : ''}`}>
-        <span className="sv-strip-label">{compact ? 'Mkts' : 'Market watch'}</span>
+        <span className="sv-strip-label">{compact ? 'Markets' : 'Market watch'}</span>
         <span className="sv-strip-muted">{compact ? 'Flow pending' : 'Awaiting flow signals from the current tape'}</span>
       </div>
     );
@@ -65,10 +75,14 @@ export default function MarketWatchStrip({ narrative, items, variant = 'default'
   if (compact) {
     return (
       <div className="sv-strip sv-strip--compact" role="region" aria-label="Market watch impact">
-        <span className="sv-strip-label">Mkts</span>
+        <span className="sv-strip-label">Markets</span>
         <div className="sv-strip-compact-scroll sv-strip-compact-scroll--chips">
           {items.map((x) => (
-            <span key={x.symbol} className="sv-strip-chip sv-strip-chip--tight" title={`Implied attention: ${x.flowScore}`}>
+            <span
+              key={x.symbol}
+              className="sv-strip-chip sv-strip-chip--tight"
+              title={`Attention score from the current tape: ${x.flowScore}`}
+            >
               <strong>{x.symbol}</strong>
               <span className="sv-strip-score">{x.flowScore}</span>
             </span>
@@ -83,7 +97,7 @@ export default function MarketWatchStrip({ narrative, items, variant = 'default'
       <span className="sv-strip-label">Market watch</span>
       <div className="sv-strip-chips">
         {items.map((x) => (
-          <span key={x.symbol} className="sv-strip-chip" title={`Implied attention: ${x.flowScore}`}>
+          <span key={x.symbol} className="sv-strip-chip" title={`Attention score from the current tape: ${x.flowScore}`}>
             <strong>{x.symbol}</strong>
             <span className="sv-strip-score">{x.flowScore}</span>
           </span>

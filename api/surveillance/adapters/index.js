@@ -32,6 +32,7 @@ const easaNewsroom = require('./easaNewsroom');
 const ukCaaNews = require('./ukCaaNews');
 const canadaTransportNews = require('./canadaTransportNews');
 const wtoNews = require('./wtoNews');
+const { EXTENSION_CATEGORIES } = require('../officialSourceExtension');
 
 const ADAPTERS = [
   unPress,
@@ -70,4 +71,4 @@ const ADAPTERS = [
   wtoNews,
 ];
 
-module.exports = { ADAPTERS };
+module.exports = { ADAPTERS, EXTENSION_CATEGORIES };

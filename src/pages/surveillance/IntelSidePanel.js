@@ -1,5 +1,6 @@
 import React from 'react';
-import { normalizeRegionKey, severityUrgencyClass, severityUrgencySlug } from './surveillanceRegionUtils';
+import { trustQualityPresentation } from './surveillancePresentation';
+import { formatRecencyLabel, normalizeRegionKey, severityUrgencyClass, severityUrgencySlug } from './surveillanceRegionUtils';
 
 function Section({ title, kicker, children, priority }) {
   return (
@@ -23,6 +24,7 @@ function IntelSidePanel({
   tapeCount,
   eventsById,
   topTapeSeverity,
+  leadTapeUpdatedAt,
   onClearFocus,
   onSetFocusRegion,
 }) {
@@ -54,8 +56,8 @@ function IntelSidePanel({
       <header className="sv-rail-masthead">
         <div className="sv-rail-masthead-titles">
           <span className="sv-rail-masthead-eyebrow">Side intelligence</span>
-          <p className="sv-rail-masthead-title">Command rail</p>
-          <p className="sv-rail-masthead-sub">Digest · ranked picks · regional pressure</p>
+          <p className="sv-rail-masthead-title">Situation rail</p>
+          <p className="sv-rail-masthead-sub">Latest activity first · market impact · cross-checks · regional heat</p>
         </div>
       </header>
 
@@ -72,18 +74,23 @@ function IntelSidePanel({
             {topTapeSeverity != null && topTapeSeverity !== '' ? (
               <span
                 className={`sv-rail-situation-sev ${severityUrgencyClass(topTapeSeverity)}`}
-                title="Lead tape row severity"
+                title="Severity on the current lead tape row (1–5 editorial urgency)"
               >
-                S{topTapeSeverity}
+                Severity {topTapeSeverity}
               </span>
             ) : null}
           </div>
           <p className="sv-rail-situation-text">{situationHeadline}</p>
+          {leadTapeUpdatedAt ? (
+            <p className="sv-rail-situation-fresh" title="Most recent update on the current lead tape row">
+              Lead tape · {formatRecencyLabel(leadTapeUpdatedAt)}
+            </p>
+          ) : null}
         </div>
       ) : (
         <div className="sv-rail-situation sv-rail-situation--empty" role="status">
           <span className="sv-rail-situation-label">Top signal</span>
-          <p className="sv-rail-situation-text">Awaiting a clear lead storyline from the current tape.</p>
+          <p className="sv-rail-situation-text">Waiting for the next lead item from the live tape.</p>
         </div>
       )}
 
@@ -116,11 +123,13 @@ function IntelSidePanel({
               <dd>{focusSummary.count}</dd>
             </div>
             <div>
-              <dt>Peak R</dt>
-              <dd>{focusSummary.maxRank ? Math.round(focusSummary.maxRank) : '—'}</dd>
+              <dt>Peak salience</dt>
+              <dd title="Strongest tape salience among nodes in this lens">
+                {focusSummary.maxRank ? Math.round(focusSummary.maxRank) : '—'}
+              </dd>
             </div>
             <div>
-              <dt>Sev</dt>
+              <dt>Severity</dt>
               <dd>
                 <span className={focusSummary.urgencyClass || severityUrgencyClass(focusSummary.maxSev)}>
                   {focusSummary.maxSev || '—'}
@@ -144,9 +153,9 @@ function IntelSidePanel({
             <span className="sv-rail-kpi-hint">multi-source</span>
           </div>
           <div className="sv-rail-kpi">
-            <span className="sv-rail-kpi-label">Corr</span>
+            <span className="sv-rail-kpi-label">Verify</span>
             <span className="sv-rail-kpi-value">{summary.corroborated_hits}</span>
-            <span className="sv-rail-kpi-hint">cross-source</span>
+            <span className="sv-rail-kpi-hint">corroborated</span>
           </div>
         </div>
       ) : (
@@ -155,11 +164,20 @@ function IntelSidePanel({
         </div>
       )}
 
-      <Section title="Developing" kicker="Storylines" priority>
+      <Section title="Developing" kicker="Latest first" priority>
+        <p className="sv-rail-section-hint">
+          Each line is a storyline sorted by the newest material in the cluster, then salience. Salience is how strongly
+          the terminal surfaces the cluster on the tape — not a market price.
+        </p>
         <ul className="sv-rail-list">
           {developingStories.length ? (
             developingStories.map((s) => {
               const leadSev = idLookup?.get(String(s.top_event_id))?.severity;
+              const pubCount = s.publisher_count != null ? s.publisher_count : 0;
+              const trustLine =
+                s.trust_band && String(s.trust_band).trim()
+                  ? s.trust_band
+                  : trustQualityPresentation(s.trust_max).label;
               return (
                 <li key={s.story_id}>
                   <button
@@ -170,9 +188,25 @@ function IntelSidePanel({
                   >
                     <span className="sv-rail-row-title">{s.headline}</span>
                     <span className="sv-rail-row-meta">
-                      {s.item_count} events · {s.sources?.length || 0} sources · rank{' '}
-                      {s.rank_score != null ? Math.round(s.rank_score) : '—'}
+                      {s.latest_at ? (
+                        <>
+                          <span className="sv-rail-row-fresh" title="Latest activity in this storyline">
+                            {formatRecencyLabel(s.latest_at)}
+                          </span>
+                          <span aria-hidden> · </span>
+                        </>
+                      ) : null}
+                      {s.item_count} update{s.item_count === 1 ? '' : 's'}
+                      {pubCount > 0 ? (
+                        <>
+                          <span aria-hidden> · </span>
+                          {pubCount} publisher{pubCount === 1 ? '' : 's'}
+                        </>
+                      ) : null}
+                      <span aria-hidden> · </span>
+                      salience {s.rank_score != null ? Math.round(s.rank_score) : '—'}
                     </span>
+                    <span className="sv-rail-row-trust">{trustLine}</span>
                     {s.trade_line ? <span className="sv-rail-row-ledger">{s.trade_line}</span> : null}
                   </button>
                 </li>
@@ -195,8 +229,11 @@ function IntelSidePanel({
                   data-urgency={severityUrgencySlug(e.severity)}
                   onClick={() => onOpenEvent(e.id)}
                 >
-                  <span className="sv-rail-row-eyebrow">
-                    MKT {e.market_impact_score != null ? Math.round(e.market_impact_score) : '—'}
+                  <span
+                    className="sv-rail-row-eyebrow"
+                    title="Estimated market attention score from the current tape"
+                  >
+                    Impact {e.market_impact_score != null ? Math.round(e.market_impact_score) : '—'}
                   </span>
                   <span className="sv-rail-row-title">{e.title}</span>
                 </button>
@@ -265,7 +302,9 @@ function IntelSidePanel({
                   data-urgency={severityUrgencySlug(e.severity)}
                   onClick={() => onOpenEvent(e.id)}
                 >
-                  <span className="sv-rail-row-eyebrow">✓{e.corroboration_count || 0}</span>
+                  <span className="sv-rail-row-eyebrow" title="Independent coverage overlap on this item">
+                    Corr ×{e.corroboration_count || 0}
+                  </span>
                   <span className="sv-rail-row-title">{e.title}</span>
                 </button>
               </li>

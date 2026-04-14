@@ -210,6 +210,22 @@ export function cameraTargetForFocus(focusKey, events, isoCentroidMap = SURV_ISO
 }
 
 /** 0 routine · 1 watch (yellow) · 2 elevated (orange) · 3 critical (red) */
+/** Short relative time for tape / digest (user-facing). */
+export function formatRecencyLabel(iso) {
+  if (!iso) return '';
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return '';
+  const diff = Date.now() - t;
+  if (diff < 0) return 'Just now';
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'Just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 48) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
 export function severityUrgencyTier(severity) {
   const s = Number(severity);
   if (!Number.isFinite(s) || s < 1) return 0;
