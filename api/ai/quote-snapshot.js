@@ -289,6 +289,83 @@ async function fetchFromYahoo(symbolConfig) {
   }
 }
 
+// ============= TWELVE DATA (primary) =============
+
+async function fetchFromTwelveData(symbolConfig) {
+  try {
+    const { fetchQuoteDto } = require('../market-data/marketDataLayer');
+    const { changeVsPreviousClose, changeVsPreviousCloseOnly, formatChangePercentDisplay } = require('../market-data/priceMath');
+    const { toCanonical, usesForexSessionContext, getAssetClass } = require('./utils/symbol-registry');
+    const canonical = toCanonical(symbolConfig.instrument);
+    const qFeat = usesForexSessionContext(canonical)
+      ? 'fx-quote-snapshot'
+      : getAssetClass(canonical) === 'crypto'
+        ? 'crypto-quote-snapshot'
+        : 'quote-snapshot';
+    const dto = await fetchQuoteDto(canonical, { feature: qFeat });
+    if (!dto || dto.last == null || !Number.isFinite(dto.last) || dto.last <= 0) return null;
+    const price = dto.last;
+    const usesFx = usesForexSessionContext(canonical);
+    const vs = changeVsPreviousClose(dto);
+    const vsOnly = changeVsPreviousCloseOnly(dto);
+    let previousClose;
+    let change;
+    let changePercent;
+    if (usesFx) {
+      previousClose = dto.prevClose != null && Number.isFinite(dto.prevClose) ? dto.prevClose : null;
+      change =
+        vsOnly.change != null
+          ? vsOnly.change
+          : dto.open != null && Number.isFinite(dto.open)
+            ? price - dto.open
+            : 0;
+      changePercent = vsOnly.changePct != null && Number.isFinite(vsOnly.changePct) ? vsOnly.changePct : null;
+    } else {
+      previousClose = dto.prevClose;
+      if (previousClose == null || !Number.isFinite(previousClose)) previousClose = dto.open;
+      if (previousClose == null || !Number.isFinite(previousClose)) previousClose = price;
+      change = vs.change != null ? vs.change : price - previousClose;
+      changePercent = vs.changePct != null ? vs.changePct : previousClose ? (change / Math.abs(previousClose)) * 100 : 0;
+    }
+    const pctDisplay =
+      changePercent != null && Number.isFinite(changePercent)
+        ? parseFloat(formatChangePercentDisplay(changePercent, canonical))
+        : null;
+    return {
+      symbol: symbolConfig.instrument,
+      displayName: symbolConfig.name,
+      type: symbolConfig.type,
+      last: formatPrice(price, symbolConfig.decimals),
+      bid: dto.bid != null ? formatPrice(dto.bid, symbolConfig.decimals) : null,
+      ask: dto.ask != null ? formatPrice(dto.ask, symbolConfig.decimals) : null,
+      spread: null,
+      open: dto.open != null ? formatPrice(dto.open, symbolConfig.decimals) : null,
+      high: dto.high != null ? formatPrice(dto.high, symbolConfig.decimals) : null,
+      low: dto.low != null ? formatPrice(dto.low, symbolConfig.decimals) : null,
+      previousClose:
+        previousClose != null && Number.isFinite(previousClose)
+          ? formatPrice(previousClose, symbolConfig.decimals)
+          : null,
+      change: formatPrice(change, symbolConfig.decimals),
+      changePercent: pctDisplay,
+      direction: change >= 0 ? 'up' : 'down',
+      decimals: symbolConfig.decimals,
+      timestamp: dto.tsUtcMs || Date.now(),
+      timestampISO: new Date(dto.tsUtcMs || Date.now()).toISOString(),
+      source: 'Twelve Data',
+      isStale: false,
+      _raw: {
+        provider: 'twelvedata',
+        canonical,
+        updateTimestamp: dto.tsUtcMs || Date.now(),
+        forexContext: dto.forexContext || undefined,
+      },
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 // ============= FINNHUB FETCHER =============
 
 async function fetchFromFinnhub(symbolConfig) {
@@ -382,19 +459,13 @@ async function fetchQuoteSnapshot(symbol) {
     return { ...cached, fromCache: true };
   }
   
-  let quote = null;
-  
-  // Try preferred source first
-  if (symbolConfig.preferredSource === 'finnhub') {
+  let quote = await fetchFromTwelveData(symbolConfig);
+  if (!quote && symbolConfig.preferredSource === 'finnhub') {
     quote = await fetchFromFinnhub(symbolConfig);
-    if (!quote) {
-      quote = await fetchFromYahoo(symbolConfig);
-    }
-  } else {
+    if (!quote) quote = await fetchFromYahoo(symbolConfig);
+  } else if (!quote) {
     quote = await fetchFromYahoo(symbolConfig);
-    if (!quote) {
-      quote = await fetchFromFinnhub(symbolConfig);
-    }
+    if (!quote) quote = await fetchFromFinnhub(symbolConfig);
   }
   
   // Cache the result

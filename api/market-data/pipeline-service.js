@@ -5,6 +5,7 @@ const { runEngine } = require('../trader-deck/marketIntelligenceEngine');
 const { runMarketDecoder } = require('../trader-deck/marketDecoderEngine');
 const { enrichTraderDeckPayload } = require('../trader-deck/perplexityTraderInsights');
 const dataService = require('../ai/data-layer/data-service');
+const { getMarketStreamProvider } = require('./marketStreamProvider');
 const {
   ensurePipelineTables,
   upsertMarketSnapshot,
@@ -175,6 +176,13 @@ async function ingestWatchlistPrices(symbols = uniqueSymbolsFromWatchlist()) {
   }
   if (rows.length > 0) {
     await upsertAssetPrices(rows);
+    try {
+      await getMarketStreamProvider().onAssetPricesPersisted({
+        symbols: rows.map((r) => r.symbol).filter(Boolean),
+        rowCount: rows.length,
+        source: 'pipeline-ingest',
+      });
+    } catch (_) {}
   }
   return rows;
 }
@@ -331,6 +339,15 @@ async function runMorningIngestion() {
     ]);
     const aiPacket = await buildAndStoreAiContextPacket();
 
+    let ohlcvIngest = null;
+    try {
+      const { runTier1Incremental } = require('./ohlcvIngest');
+      const lim = Math.min(120, Math.max(10, parseInt(process.env.OHLCV_INGEST_LIMIT || '40', 10) || 40));
+      ohlcvIngest = await runTier1Incremental(lim);
+    } catch (e) {
+      console.warn('[market-data/pipeline] OHLCV incremental:', e.message || e);
+    }
+
     return {
       success: true,
       pricesStored: prices.length,
@@ -339,6 +356,7 @@ async function runMorningIngestion() {
       decoderStatesStored: decoderStates.length,
       snapshotReady: Boolean(snapshot),
       aiPacketReady: Boolean(aiPacket),
+      ohlcvIngest,
       generatedAt: new Date().toISOString(),
     };
   } finally {

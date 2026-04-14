@@ -10,6 +10,10 @@ const TABLES = {
   aiContextPackets: 'ai_context_packets',
   providerUsage: 'provider_usage_logs',
   refreshLocks: 'market_refresh_locks',
+  ohlcvBars: 'market_ohlcv_bars',
+  ohlcvBackfill: 'market_ohlcv_backfill_state',
+  twelveDataDatasets: 'market_twelvedata_datasets',
+  tdIngestRuns: 'market_td_ingest_runs',
 };
 
 function toJson(value) {
@@ -201,6 +205,271 @@ async function ensurePipelineTables() {
   `);
 
   await addColumnIfNotExists(TABLES.snapshots, 'notes', 'VARCHAR(255) NULL');
+
+  await executeQuery(`
+    CREATE TABLE IF NOT EXISTS ${TABLES.ohlcvBars} (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY,
+      canonical_symbol VARCHAR(40) NOT NULL,
+      interval_key VARCHAR(16) NOT NULL,
+      bar_time_utc BIGINT NOT NULL COMMENT 'Unix ms UTC bar open',
+      open_p DECIMAL(24, 10) NOT NULL,
+      high_p DECIMAL(24, 10) NOT NULL,
+      low_p DECIMAL(24, 10) NOT NULL,
+      close_p DECIMAL(24, 10) NOT NULL,
+      volume DECIMAL(24, 4) NULL,
+      provider VARCHAR(40) NOT NULL DEFAULT 'twelvedata',
+      ingested_at DATETIME NOT NULL,
+      raw_json JSON NULL,
+      UNIQUE KEY uq_ohlcv_bar (canonical_symbol, interval_key, bar_time_utc),
+      KEY idx_ohlcv_sym_int_time (canonical_symbol, interval_key, bar_time_utc)
+    )
+  `);
+
+  await executeQuery(`
+    CREATE TABLE IF NOT EXISTS ${TABLES.ohlcvBackfill} (
+      canonical_symbol VARCHAR(40) NOT NULL,
+      interval_key VARCHAR(16) NOT NULL,
+      earliest_ts BIGINT NULL,
+      latest_ts BIGINT NULL,
+      last_full_backfill_at DATETIME NULL,
+      last_incremental_at DATETIME NULL,
+      status VARCHAR(24) NOT NULL DEFAULT 'idle',
+      error_note VARCHAR(512) NULL,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (canonical_symbol, interval_key)
+    )
+  `);
+
+  await executeQuery(`
+    CREATE TABLE IF NOT EXISTS ${TABLES.twelveDataDatasets} (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY,
+      canonical_symbol VARCHAR(40) NOT NULL,
+      provider_symbol VARCHAR(80) NULL,
+      market_category VARCHAR(24) NOT NULL DEFAULT 'equity',
+      dataset_key VARCHAR(80) NOT NULL,
+      provider VARCHAR(32) NOT NULL DEFAULT 'twelvedata',
+      freshness_status VARCHAR(20) NOT NULL DEFAULT 'fresh',
+      fetched_at DATETIME NOT NULL,
+      next_refresh_after DATETIME NULL,
+      payload JSON NOT NULL,
+      meta JSON NULL,
+      error_note VARCHAR(512) NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_td_dataset (canonical_symbol, market_category, dataset_key),
+      KEY idx_td_cat_fetched (market_category, fetched_at),
+      KEY idx_td_symbol (canonical_symbol, fetched_at)
+    )
+  `);
+
+  await executeQuery(`
+    CREATE TABLE IF NOT EXISTS ${TABLES.tdIngestRuns} (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY,
+      category_id VARCHAR(32) NOT NULL,
+      run_started_at DATETIME NOT NULL,
+      run_finished_at DATETIME NOT NULL,
+      status VARCHAR(20) NOT NULL,
+      stats_json JSON NULL,
+      error_summary VARCHAR(512) NULL,
+      options_json JSON NULL,
+      KEY idx_td_ingest_cat_time (category_id, run_started_at)
+    )
+  `);
+}
+
+const OHLCV_DAILY_FRESH_MS = Math.max(
+  6 * 60 * 60 * 1000,
+  parseInt(process.env.MD_OHLCV_DAILY_FRESH_MS || String(36 * 60 * 60 * 1000), 10) || 36 * 60 * 60 * 1000
+);
+
+async function queryOhlcvRange(canonicalSymbol, intervalKey, fromMs, toMs) {
+  if (!process.env.MYSQL_HOST) return [];
+  const sym = String(canonicalSymbol || '').toUpperCase();
+  const intv = String(intervalKey || '1day');
+  const from = Number(fromMs);
+  const to = Number(toMs);
+  if (!sym || !Number.isFinite(from) || !Number.isFinite(to)) return [];
+  try {
+    const [rows] = await executeQuery(
+      `SELECT bar_time_utc, open_p, high_p, low_p, close_p, volume, provider
+       FROM ${TABLES.ohlcvBars}
+       WHERE canonical_symbol = ? AND interval_key = ? AND bar_time_utc >= ? AND bar_time_utc <= ?
+       ORDER BY bar_time_utc ASC`,
+      [sym, intv, Math.floor(from), Math.floor(to)]
+    );
+    return rows || [];
+  } catch (_) {
+    return [];
+  }
+}
+
+/** True when DB has bars covering [fromMs,toMs] and latest bar is fresh enough for daily. */
+async function ohlcvCoverageOk(canonicalSymbol, intervalKey, fromMs, toMs) {
+  const rows = await queryOhlcvRange(canonicalSymbol, intervalKey, fromMs, toMs);
+  if (!rows.length) return { ok: false, rows: [] };
+  const firstT = Number(rows[0].bar_time_utc);
+  const lastT = Number(rows[rows.length - 1].bar_time_utc);
+  if (firstT > fromMs + 86400000 || lastT < toMs - 86400000 || rows.length < 40) {
+    return { ok: false, rows: [] };
+  }
+  if (intervalKey === '1day') {
+    const age = Date.now() - lastT;
+    if (age > OHLCV_DAILY_FRESH_MS) return { ok: false, rows: [] };
+  }
+  return { ok: true, rows };
+}
+
+async function upsertOhlcvBars(rows) {
+  if (!process.env.MYSQL_HOST || !rows || !rows.length) return;
+  const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  for (const r of rows) {
+    await executeQuery(
+      `INSERT INTO ${TABLES.ohlcvBars}
+       (canonical_symbol, interval_key, bar_time_utc, open_p, high_p, low_p, close_p, volume, provider, ingested_at, raw_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         open_p = VALUES(open_p),
+         high_p = VALUES(high_p),
+         low_p = VALUES(low_p),
+         close_p = VALUES(close_p),
+         volume = VALUES(volume),
+         provider = VALUES(provider),
+         ingested_at = VALUES(ingested_at),
+         raw_json = VALUES(raw_json)`,
+      [
+        String(r.canonicalSymbol || '').toUpperCase(),
+        String(r.intervalKey || '1day'),
+        Math.floor(Number(r.barTimeUtc)),
+        r.open,
+        r.high,
+        r.low,
+        r.close,
+        r.volume != null ? r.volume : null,
+        r.provider || 'twelvedata',
+        r.ingestedAt || now,
+        toJson(r.raw || null),
+      ]
+    );
+  }
+}
+
+async function upsertOhlcvBackfillState(row) {
+  if (!process.env.MYSQL_HOST || !row) return;
+  await executeQuery(
+    `INSERT INTO ${TABLES.ohlcvBackfill}
+     (canonical_symbol, interval_key, earliest_ts, latest_ts, last_full_backfill_at, last_incremental_at, status, error_note)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       earliest_ts = COALESCE(VALUES(earliest_ts), earliest_ts),
+       latest_ts = COALESCE(VALUES(latest_ts), latest_ts),
+       last_full_backfill_at = COALESCE(VALUES(last_full_backfill_at), last_full_backfill_at),
+       last_incremental_at = COALESCE(VALUES(last_incremental_at), last_incremental_at),
+       status = VALUES(status),
+       error_note = VALUES(error_note),
+       updated_at = CURRENT_TIMESTAMP`,
+    [
+      String(row.canonicalSymbol || '').toUpperCase(),
+      String(row.intervalKey || '1day'),
+      row.earliestTs != null ? Math.floor(row.earliestTs) : null,
+      row.latestTs != null ? Math.floor(row.latestTs) : null,
+      row.lastFullBackfillAt || null,
+      row.lastIncrementalAt || null,
+      row.status || 'idle',
+      row.errorNote || null,
+    ]
+  );
+}
+
+async function getOhlcvBackfillState(canonicalSymbol, intervalKey) {
+  if (!process.env.MYSQL_HOST) return null;
+  const [rows] = await executeQuery(
+    `SELECT * FROM ${TABLES.ohlcvBackfill} WHERE canonical_symbol = ? AND interval_key = ? LIMIT 1`,
+    [String(canonicalSymbol || '').toUpperCase(), String(intervalKey || '1day')]
+  );
+  return rows && rows[0] ? rows[0] : null;
+}
+
+/**
+ * Per-symbol OHLCV coverage for admin (e.g. FX majors).
+ * @param {string[]} symbols
+ */
+async function getForexOhlcvCoverageReport(symbols = []) {
+  if (!process.env.MYSQL_HOST) {
+    return { configured: false, pairs: [] };
+  }
+  const pairs = [];
+  for (const sym of symbols || []) {
+    const s = String(sym || '').toUpperCase();
+    if (!s) continue;
+    let st = null;
+    try {
+      st = await getOhlcvBackfillState(s, '1day');
+    } catch (_) {
+      st = null;
+    }
+    let barCount = 0;
+    try {
+      const [[row]] = await executeQuery(
+        `SELECT COUNT(*) AS c FROM ${TABLES.ohlcvBars} WHERE canonical_symbol = ? AND interval_key = ?`,
+        [s, '1day']
+      );
+      barCount = Number(row && row.c) || 0;
+    } catch (_) {
+      barCount = 0;
+    }
+    const latestMs = st && st.latest_ts != null ? Number(st.latest_ts) : null;
+    const earliestMs = st && st.earliest_ts != null ? Number(st.earliest_ts) : null;
+    pairs.push({
+      symbol: s,
+      interval: '1day',
+      barCount,
+      latestStoredMs: latestMs,
+      latestStoredIso: latestMs != null && Number.isFinite(latestMs) ? new Date(latestMs).toISOString() : null,
+      earliestStoredMs: earliestMs,
+      earliestStoredIso: earliestMs != null && Number.isFinite(earliestMs) ? new Date(earliestMs).toISOString() : null,
+      status: st ? st.status : null,
+      lastIncrementalAt: st ? st.last_incremental_at : null,
+      errorNote: st ? st.error_note : null,
+    });
+  }
+  return { configured: true, pairs };
+}
+
+async function getOhlcvIngestSummary() {
+  if (!process.env.MYSQL_HOST) {
+    return { configured: false, barCount: null, backfillRowCount: null, recentBackfill: [] };
+  }
+  try {
+    const [[barRow]] = await executeQuery(`SELECT COUNT(*) AS c FROM ${TABLES.ohlcvBars}`);
+    const [[bfRow]] = await executeQuery(`SELECT COUNT(*) AS c FROM ${TABLES.ohlcvBackfill}`);
+    const [recent] = await executeQuery(
+      `SELECT canonical_symbol, interval_key, status, last_incremental_at, latest_ts, error_note
+       FROM ${TABLES.ohlcvBackfill}
+       ORDER BY COALESCE(last_incremental_at, updated_at) DESC
+       LIMIT 8`
+    );
+    return {
+      configured: true,
+      barCount: Number(barRow && barRow.c) || 0,
+      backfillRowCount: Number(bfRow && bfRow.c) || 0,
+      recentBackfill: (recent || []).map((r) => ({
+        symbol: r.canonical_symbol,
+        interval: r.interval_key,
+        status: r.status,
+        lastIncrementalAt: r.last_incremental_at,
+        latestTs: r.latest_ts,
+        errorNote: r.error_note || null,
+      })),
+    };
+  } catch (e) {
+    return {
+      configured: true,
+      error: e.message || String(e),
+      barCount: null,
+      backfillRowCount: null,
+      recentBackfill: [],
+    };
+  }
 }
 
 async function upsertMarketSnapshot({ snapshotKey, snapshotType, timeframe = 'daily', source, asOfTs, freshnessStatus: freshness, payload, notes = null }) {
@@ -551,6 +820,137 @@ async function getRecentHeadlines({ symbol = null, limit = 20 } = {}) {
   }));
 }
 
+async function upsertTwelveDataDataset(row) {
+  if (!process.env.MYSQL_HOST || !row) return;
+  const canon = String(row.canonicalSymbol || '').toUpperCase();
+  const cat = String(row.marketCategory || 'equity');
+  const key = String(row.datasetKey || '');
+  if (!canon || !key) return;
+  const fetchedAt = row.fetchedAt instanceof Date ? row.fetchedAt : new Date(row.fetchedAt || Date.now());
+  const fetchedSql = fetchedAt.toISOString().slice(0, 19).replace('T', ' ');
+  const nextRef = row.nextRefreshAfter
+    ? (row.nextRefreshAfter instanceof Date
+        ? row.nextRefreshAfter.toISOString().slice(0, 19).replace('T', ' ')
+        : row.nextRefreshAfter)
+    : null;
+  await executeQuery(
+    `INSERT INTO ${TABLES.twelveDataDatasets}
+     (canonical_symbol, provider_symbol, market_category, dataset_key, provider, freshness_status, fetched_at, next_refresh_after, payload, meta, error_note)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?)
+     ON DUPLICATE KEY UPDATE
+       provider_symbol = VALUES(provider_symbol),
+       freshness_status = VALUES(freshness_status),
+       fetched_at = VALUES(fetched_at),
+       next_refresh_after = VALUES(next_refresh_after),
+       payload = VALUES(payload),
+       meta = VALUES(meta),
+       error_note = VALUES(error_note),
+       updated_at = CURRENT_TIMESTAMP`,
+    [
+      canon,
+      row.providerSymbol || null,
+      cat,
+      key,
+      row.provider || 'twelvedata',
+      row.freshnessStatus || 'fresh',
+      fetchedSql,
+      nextRef,
+      typeof row.payload === 'string' ? row.payload : toJson(row.payload),
+      row.meta != null ? (typeof row.meta === 'string' ? row.meta : toJson(row.meta)) : null,
+      row.errorNote || null,
+    ]
+  );
+}
+
+async function getTwelveDataDataset(canonicalSymbol, marketCategory, datasetKey) {
+  if (!process.env.MYSQL_HOST) return null;
+  const [rows] = await executeQuery(
+    `SELECT * FROM ${TABLES.twelveDataDatasets}
+     WHERE canonical_symbol = ? AND market_category = ? AND dataset_key = ? LIMIT 1`,
+    [String(canonicalSymbol || '').toUpperCase(), String(marketCategory || 'equity'), String(datasetKey)]
+  );
+  if (!rows || !rows[0]) return null;
+  const r = rows[0];
+  return {
+    ...r,
+    payload: typeof r.payload === 'string' ? fromJson(r.payload) : r.payload,
+    meta: r.meta == null ? null : typeof r.meta === 'string' ? fromJson(r.meta) : r.meta,
+  };
+}
+
+async function listTwelveDataCoverageForStorageCategory(marketCategory, symbols = []) {
+  if (!process.env.MYSQL_HOST) return { rows: [], aggregates: [] };
+  const cat = String(marketCategory || 'equity');
+  const list = [...new Set((symbols || []).map((s) => String(s || '').toUpperCase()).filter(Boolean))];
+  if (!list.length) return { rows: [], aggregates: [] };
+  const ph = list.map(() => '?').join(',');
+  const [rows] = await executeQuery(
+    `SELECT canonical_symbol, dataset_key, fetched_at, freshness_status, error_note, next_refresh_after
+     FROM ${TABLES.twelveDataDatasets}
+     WHERE market_category = ? AND canonical_symbol IN (${ph})
+     ORDER BY canonical_symbol, dataset_key`,
+    [cat, ...list]
+  );
+  const [aggregates] = await executeQuery(
+    `SELECT dataset_key, COUNT(*) AS symbol_count, MAX(fetched_at) AS last_ingest
+     FROM ${TABLES.twelveDataDatasets}
+     WHERE market_category = ? AND canonical_symbol IN (${ph})
+     GROUP BY dataset_key`,
+    [cat, ...list]
+  );
+  return { rows: rows || [], aggregates: aggregates || [] };
+}
+
+async function listTwelveDataEquityCoverageForSymbols(symbols = []) {
+  return listTwelveDataCoverageForStorageCategory('equity', symbols);
+}
+
+async function appendTdIngestRun(row) {
+  if (!process.env.MYSQL_HOST || !row) return;
+  const cat = String(row.categoryId || '');
+  if (!cat) return;
+  const started = row.runStartedAt instanceof Date ? row.runStartedAt : new Date(row.runStartedAt || Date.now());
+  const finished = row.runFinishedAt instanceof Date ? row.runFinishedAt : new Date(row.runFinishedAt || Date.now());
+  await executeQuery(
+    `INSERT INTO ${TABLES.tdIngestRuns}
+     (category_id, run_started_at, run_finished_at, status, stats_json, error_summary, options_json)
+     VALUES (?,?,?,?,?,?,?)`,
+    [
+      cat,
+      started.toISOString().slice(0, 19).replace('T', ' '),
+      finished.toISOString().slice(0, 19).replace('T', ' '),
+      String(row.status || 'unknown'),
+      row.statsJson != null ? (typeof row.statsJson === 'string' ? row.statsJson : toJson(row.statsJson)) : null,
+      row.errorSummary || null,
+      row.optionsJson != null ? (typeof row.optionsJson === 'string' ? row.optionsJson : toJson(row.optionsJson)) : null,
+    ]
+  );
+}
+
+async function listRecentTdIngestRuns({ categoryId = null, limit = 20 } = {}) {
+  if (!process.env.MYSQL_HOST) return [];
+  const lim = Math.max(1, Math.min(100, Number(limit) || 20));
+  const params = [];
+  let where = '';
+  if (categoryId) {
+    where = 'WHERE category_id = ?';
+    params.push(String(categoryId));
+  }
+  const [rows] = await executeQuery(
+    `SELECT id, category_id, run_started_at, run_finished_at, status, stats_json, error_summary, options_json
+     FROM ${TABLES.tdIngestRuns}
+     ${where}
+     ORDER BY run_started_at DESC
+     LIMIT ${lim}`,
+    params
+  );
+  return (rows || []).map((r) => ({
+    ...r,
+    stats_json: r.stats_json != null ? (typeof r.stats_json === 'string' ? fromJson(r.stats_json) : r.stats_json) : null,
+    options_json: r.options_json != null ? (typeof r.options_json === 'string' ? fromJson(r.options_json) : r.options_json) : null,
+  }));
+}
+
 async function getRecentEconomicEvents({ fromDate = null, toDate = null, limit = 200 } = {}) {
   const clauses = [];
   const params = [];
@@ -580,6 +980,14 @@ async function getRecentEconomicEvents({ fromDate = null, toDate = null, limit =
 module.exports = {
   TABLES,
   ensurePipelineTables,
+  OHLCV_DAILY_FRESH_MS,
+  queryOhlcvRange,
+  ohlcvCoverageOk,
+  upsertOhlcvBars,
+  upsertOhlcvBackfillState,
+  getOhlcvBackfillState,
+  getOhlcvIngestSummary,
+  getForexOhlcvCoverageReport,
   freshnessStatus,
   upsertMarketSnapshot,
   upsertAssetPrices,
@@ -600,4 +1008,10 @@ module.exports = {
   getLatestAssetPrices,
   getRecentHeadlines,
   getRecentEconomicEvents,
+  upsertTwelveDataDataset,
+  getTwelveDataDataset,
+  listTwelveDataCoverageForStorageCategory,
+  listTwelveDataEquityCoverageForSymbols,
+  appendTdIngestRun,
+  listRecentTdIngestRuns,
 };

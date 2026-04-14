@@ -7,27 +7,38 @@ const { getFinnhubData } = require('./services/finnhubService');
 const { getFmpData } = require('./services/fmpService');
 const { getFredData } = require('./services/fredService');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
+const { toCanonical, usesForexSessionContext } = require('../ai/utils/symbol-registry');
 const {
   buildSessionContext,
   alignPulseRecommendedActions,
 } = require('./marketOutlookSessionContext');
 
 async function getTwelveDataQuote(symbol) {
-  const apiKey = process.env.TWELVE_DATA_API_KEY;
-  if (!apiKey) return null;
   try {
-    const url = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(apiKey)}`;
-    const res = await fetchWithTimeout(url, {}, 7000);
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (data && data.close && !data.code) {
-      const close = parseFloat(data.close);
-      const prev = parseFloat(data.previous_close);
-      if (isNaN(close) || close <= 0) return null;
-      const d = isNaN(prev) ? 0 : close - prev;
-      const dp = isNaN(prev) || prev === 0 ? 0 : (d / prev) * 100;
-      return { c: close, pc: prev, d, dp };
+    const { fetchQuoteDto } = require('../market-data/marketDataLayer');
+    const { changeVsPreviousClose, changeVsPreviousCloseOnly } = require('../market-data/priceMath');
+    const canonical = toCanonical(symbol);
+    const tdFeat = usesForexSessionContext(canonical) ? 'fx-trader-deck' : 'trader-deck';
+    const dto = await fetchQuoteDto(canonical, { feature: tdFeat });
+    if (!dto || dto.last == null || !Number.isFinite(dto.last) || dto.last <= 0) return null;
+    const c = dto.last;
+    const vs = changeVsPreviousClose(dto);
+    const vsOnly = changeVsPreviousCloseOnly(dto);
+    if (usesForexSessionContext(canonical)) {
+      if (vsOnly.changePct == null || !Number.isFinite(vsOnly.changePct)) return null;
+      return {
+        c,
+        pc: dto.prevClose != null && Number.isFinite(dto.prevClose) ? dto.prevClose : null,
+        d: vsOnly.change,
+        dp: vsOnly.changePct,
+      };
     }
+    let pc = dto.prevClose;
+    if (pc == null || !Number.isFinite(pc)) pc = dto.open;
+    if (pc == null || !Number.isFinite(pc)) return null;
+    const d = c - pc;
+    const dp = vs.changePct != null && Number.isFinite(vs.changePct) ? vs.changePct : pc !== 0 ? (d / Math.abs(pc)) * 100 : 0;
+    return { c, pc, d, dp };
   } catch (e) {
     console.warn('[trader-deck] Twelve Data quote error:', symbol, e.message || e);
   }

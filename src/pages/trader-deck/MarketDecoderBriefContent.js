@@ -11,6 +11,7 @@ import {
   DecoderSmartAlerts,
   DecoderEventRiskHeader,
 } from './MarketDecoderBriefEnhancements';
+import { formatPairLabel } from '../../lib/market/formatPairLabel';
 
 const {
   buildDecoderPriceContext,
@@ -88,19 +89,6 @@ function biasValueClass(bias) {
   if (b === 'bullish') return 'md-ref-val md-ref-val--bull';
   if (b === 'bearish') return 'md-ref-val md-ref-val--bear';
   return 'md-ref-val md-ref-val--neutral';
-}
-
-function formatPairLabel(asset) {
-  const raw = String(asset || '').toUpperCase();
-  const s = raw.replace(/[^A-Z]/g, '');
-  if (s.length === 6 && /^[A-Z]{6}$/.test(s)) {
-    return `${s.slice(0, 3)}/${s.slice(3)}`;
-  }
-  if (/XAU/.test(s) || /BTC/.test(s)) {
-    const base = s.replace(/USD$/, '');
-    return base ? `${base}/USD` : raw || '—';
-  }
-  return raw || '—';
 }
 
 function liquidityLabel(state) {

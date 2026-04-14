@@ -806,6 +806,42 @@
     {
       "source": "/api/surveillance/admin-diagnostics",
       "destination": "/api/surveillance/admin-diagnostics.js"
+    },
+    {
+      "source": "/api/cron/ohlcv-incremental",
+      "destination": "/api/cron/ohlcv-incremental.js"
+    },
+    {
+      "source": "/api/cron/equity-twelvedata-ingest",
+      "destination": "/api/cron/equity-twelvedata-ingest.js"
+    },
+    {
+      "source": "/api/cron/crypto-twelvedata-ingest",
+      "destination": "/api/cron/crypto-twelvedata-ingest.js"
+    },
+    {
+      "source": "/api/cron/forex-twelvedata-ingest",
+      "destination": "/api/cron/forex-twelvedata-ingest.js"
+    },
+    {
+      "source": "/api/cron/asx-twelvedata-ingest",
+      "destination": "/api/cron/asx-twelvedata-ingest.js"
+    },
+    {
+      "source": "/api/cron/uk-twelvedata-ingest",
+      "destination": "/api/cron/uk-twelvedata-ingest.js"
+    },
+    {
+      "source": "/api/cron/cboe-uk-twelvedata-ingest",
+      "destination": "/api/cron/cboe-uk-twelvedata-ingest.js"
+    },
+    {
+      "source": "/api/cron/cboe-au-twelvedata-ingest",
+      "destination": "/api/cron/cboe-au-twelvedata-ingest.js"
+    },
+    {
+      "source": "/api/cron/venture-twelvedata-ingest",
+      "destination": "/api/cron/venture-twelvedata-ingest.js"
     }
   ],
   "crons": [
@@ -840,6 +876,42 @@
     {
       "path": "/api/cron/surveillance-ingest",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/ohlcv-incremental",
+      "schedule": "15 * * * *"
+    },
+    {
+      "path": "/api/cron/equity-twelvedata-ingest",
+      "schedule": "30 4 * * *"
+    },
+    {
+      "path": "/api/cron/crypto-twelvedata-ingest",
+      "schedule": "45 4 * * *"
+    },
+    {
+      "path": "/api/cron/forex-twelvedata-ingest",
+      "schedule": "40 4 * * *"
+    },
+    {
+      "path": "/api/cron/asx-twelvedata-ingest",
+      "schedule": "50 4 * * *"
+    },
+    {
+      "path": "/api/cron/uk-twelvedata-ingest",
+      "schedule": "55 4 * * *"
+    },
+    {
+      "path": "/api/cron/cboe-uk-twelvedata-ingest",
+      "schedule": "58 4 * * *"
+    },
+    {
+      "path": "/api/cron/cboe-au-twelvedata-ingest",
+      "schedule": "59 4 * * *"
+    },
+    {
+      "path": "/api/cron/venture-twelvedata-ingest",
+      "schedule": "10 5 * * *"
     }
   ]
 }

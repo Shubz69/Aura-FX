@@ -507,34 +507,74 @@ module.exports = async (req, res) => {
       }
     }
     
-    // Source 5: Twelve Data API - PARALLEL
-    // Good for real-time data across multiple asset classes
+    // Source 5: Twelve Data — marketDataLayer (quote DTO) - PARALLEL
     if (type === 'quote') {
-      const TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY;
-      if (TWELVE_DATA_API_KEY) {
-        dataPromises.push(
-          axios.get(`https://api.twelvedata.com/price`, {
-            params: {
-              symbol: normalizedSymbol,
-              apikey: TWELVE_DATA_API_KEY
-            },
-            timeout: 6000 // Faster timeout for real-time
-          }).then(response => {
-            if (response.data && response.data.price) {
-              return {
-                symbol: normalizedSymbol,
-                price: parseFloat(response.data.price),
-                timestamp: Date.now(), // Real-time timestamp
-                source: 'Twelve Data'
-              };
+      const { toCanonical, usesForexSessionContext, getAssetClass } = require('./utils/symbol-registry');
+      const { fetchQuoteDto } = require('../market-data/marketDataLayer');
+      const {
+        changeVsPreviousClose,
+        changeVsPreviousCloseOnly,
+        formatSignedChangePercentDisplay,
+      } = require('../market-data/priceMath');
+      const canonical = toCanonical(normalizedSymbol);
+      const legFeat = usesForexSessionContext(canonical)
+        ? 'fx-legacy-market-data'
+        : getAssetClass(canonical) === 'crypto'
+          ? 'crypto-legacy-market-data'
+          : 'legacy-market-data';
+      dataPromises.push(
+        (async () => {
+          try {
+            const dto = await fetchQuoteDto(canonical, { feature: legFeat });
+            if (!dto || dto.last == null || !Number.isFinite(dto.last) || dto.last <= 0) return null;
+            const usesFx = usesForexSessionContext(canonical);
+            const vs = changeVsPreviousClose(dto);
+            const vsOnly = changeVsPreviousCloseOnly(dto);
+            let prev;
+            let ch;
+            let cp;
+            if (usesFx) {
+              prev = dto.prevClose != null && Number.isFinite(dto.prevClose) ? dto.prevClose : null;
+              if (vsOnly.change != null) {
+                ch = vsOnly.change;
+              } else if (dto.open != null && Number.isFinite(dto.open)) {
+                ch = dto.last - dto.open;
+              } else {
+                ch = 0;
+              }
+              const signed = formatSignedChangePercentDisplay(vsOnly.changePct, canonical);
+              cp = signed != null ? `${signed}%` : 'N/A';
+            } else {
+              prev = dto.prevClose != null && Number.isFinite(dto.prevClose) ? dto.prevClose : dto.open;
+              ch = vs.change != null ? vs.change : prev != null ? dto.last - prev : 0;
+              const pctNum =
+                vs.changePct != null && Number.isFinite(vs.changePct)
+                  ? vs.changePct
+                  : prev
+                    ? (ch / Math.abs(prev)) * 100
+                    : 0;
+              const signed = formatSignedChangePercentDisplay(pctNum, canonical);
+              cp = signed != null ? `${signed}%` : '0%';
             }
-            return null;
-          }).catch(err => {
+            return {
+              symbol: canonical,
+              price: dto.last,
+              open: dto.open,
+              high: dto.high,
+              low: dto.low,
+              previousClose: prev,
+              change: ch,
+              changePercent: cp,
+              timestamp: dto.tsUtcMs || Date.now(),
+              instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : isIndex ? 'index' : 'stock',
+              source: 'Twelve Data',
+            };
+          } catch (err) {
             console.log('Twelve Data error:', err.message);
             return null;
-          })
-        );
-      }
+          }
+        })()
+      );
     }
     
     // Source 6: ExchangeRate-API for forex - PARALLEL
@@ -641,26 +681,19 @@ module.exports = async (req, res) => {
         const isSilver = normalizedSymbol === 'XAGUSD' || normalizedSymbol === 'SILVER' || normalizedSymbol === 'XAG' || normalizedSymbol.includes('XAG');
         
         if (isGold) {
-          // Gold: Prioritize spot prices from OANDA and dedicated metals APIs
-          priorityOrder = ['Finnhub', 'Metal API', 'Yahoo Finance (XAU=X)', 'Yahoo Finance', 'Twelve Data', 'Alpha Vantage'];
+          priorityOrder = ['Twelve Data', 'Finnhub', 'Metal API', 'Yahoo Finance (XAU=X)', 'Yahoo Finance', 'Alpha Vantage'];
         } else if (isSilver) {
-          // Silver: Prioritize OANDA (Finnhub) and Yahoo Finance spot prices
-          priorityOrder = ['Finnhub', 'Yahoo Finance', 'Twelve Data', 'Alpha Vantage'];
+          priorityOrder = ['Twelve Data', 'Finnhub', 'Yahoo Finance', 'Alpha Vantage'];
         } else if (isForex) {
-          // Forex: Prioritize OANDA (Finnhub) for spot prices, then Yahoo Finance
-          priorityOrder = ['Finnhub', 'Yahoo Finance', 'Twelve Data', 'ExchangeRate-API', 'Alpha Vantage'];
+          priorityOrder = ['Twelve Data', 'Finnhub', 'Yahoo Finance', 'ExchangeRate-API', 'Alpha Vantage'];
         } else if (isCrypto) {
-          // Crypto: Prioritize real-time sources
-          priorityOrder = ['Finnhub', 'Yahoo Finance', 'Twelve Data', 'Alpha Vantage'];
+          priorityOrder = ['Twelve Data', 'Finnhub', 'Yahoo Finance', 'Alpha Vantage'];
         } else if (isCommodity) {
-          // Commodities: Prioritize spot prices over futures
-          priorityOrder = ['Finnhub', 'Yahoo Finance', 'Twelve Data', 'Alpha Vantage'];
+          priorityOrder = ['Twelve Data', 'Finnhub', 'Yahoo Finance', 'Alpha Vantage'];
         } else if (isIndex) {
-          // Indices: Yahoo Finance is usually most accurate
-          priorityOrder = ['Yahoo Finance', 'Finnhub', 'Twelve Data', 'Alpha Vantage'];
+          priorityOrder = ['Twelve Data', 'Yahoo Finance', 'Finnhub', 'Alpha Vantage'];
         } else {
-          // Stocks: Yahoo Finance for US stocks, Finnhub for international
-          priorityOrder = ['Yahoo Finance', 'Finnhub', 'Twelve Data', 'Alpha Vantage'];
+          priorityOrder = ['Twelve Data', 'Yahoo Finance', 'Finnhub', 'Alpha Vantage'];
         }
         
         // Sort by priority, then by most recent timestamp

@@ -40,6 +40,17 @@ const DEFAULT_TTLS = {
  * @param {number} ttl - Time to live in milliseconds (default: 5 minutes)
  * @returns {any|null} Cached data or null if expired/not found
  */
+/**
+ * Read cache entry without updating hit/miss statistics (for layered instrumentation).
+ */
+const peekCached = (key, ttl = DEFAULT_TTLS.DEFAULT) => {
+  const item = cache.get(key);
+  if (!item) return null;
+  const age = Date.now() - item.timestamp;
+  if (age > ttl) return null;
+  return item.data;
+};
+
 const getCached = (key, ttl = DEFAULT_TTLS.DEFAULT) => {
   const item = cache.get(key);
   if (!item) {
@@ -291,6 +302,7 @@ setInterval(() => {
 
 module.exports = {
   invalidateEntitlementsCache,
+  peekCached,
   getCached,
   getCachedWithMeta,
   setCached,

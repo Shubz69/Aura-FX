@@ -42,10 +42,14 @@ These are **optional** - the system will work with just one, but having multiple
    - **Status**: If missing, system uses other sources
 
 5. **TWELVE_DATA_API_KEY**
-   - **Required**: NO (Optional)
-   - **Purpose**: Market data for stocks, forex, crypto, commodities
-   - **Where to get**: https://twelvedata.com/
-   - **Free tier**: 800 API calls/day
+   - **Required**: NO (Optional, but this project treats Twelve Data as the primary market-data provider in several pipelines)
+   - **Purpose**: REST quotes and series (`/price`, `/quote`, `/time_series`) for automation/briefs, Trader Deck intelligence, FRED treasury fallback, and as a fallback in the public markets snapshot chain
+   - **Where to get**: https://twelvedata.com/ — set the key in `.env` locally and in your host (e.g. Vercel) as `TWELVE_DATA_API_KEY`
+   - **Plans**: Free tier is limited (e.g. daily credit caps). **Paid Venture** plans include a **per-minute REST limit** (e.g. **610 API requests/minute** on Venture 610). Your [Twelve Data account dashboard](https://twelvedata.com/account) shows **minutely average** and **minutely maximum** usage against that cap — that is the authoritative measure of how many REST calls your key is consuming per minute (this app plus any other clients using the same key).
+   - **WebSocket**: Venture includes WebSocket quota (e.g. WS credits and concurrent connections on the account page). **This codebase does not call Twelve Data WebSockets today**; streaming quota is unused until we add a WS client. All Twelve Data usage in-repo is **HTTP REST**.
+   - **Historical data (REST)**: Use `time_series` with `outputsize` (up to **5000** points per request per [Twelve Data docs](https://twelvedata.com/docs/market-data/time-series)) or `start_date` / `end_date` for a bounded range. For the **first available bar** for a symbol/interval, use the [`/earliest_timestamp`](https://twelvedata.com/docs/discovery/earliest-timestamp) endpoint. Depth varies by symbol and interval (daily history is often very long; **1-minute** intraday history has a documented lower bound around **2020-02-10** for many symbols — confirm per symbol via docs/support). The automated briefs path uses a small window (`time_series` with `outputsize=8` daily bars) for weekly scoring, not full history.
+   - **Rough REST burst shape from this repo** (so you can compare to dashboard spikes): building the automation **quote cache** may issue up to **~109** Twelve Data **`quote`** calls per run (batched **12 at a time** — see `buildQuoteCacheForSymbols` in `api/trader-deck/services/briefInstrumentUniverse.js`). **Weekly** automation can add up to **~10** extra **`time_series`** calls. `runEngine` adds **one** **`quote`** (SPX). `getFredData` may add **one** **`price`** (US10Y) if FRED does not return a treasury point. The **markets snapshot** (`GET /api/markets/snapshot`) refreshes at most about every **20s** per server/cache instance and tries Yahoo/Finnhub/CoinGecko/etc. **before** Twelve Data for most symbols, so Twelve Data is not “279 calls per snapshot” unless many upstream providers fail.
+   - **Free tier** (if not on Venture): 800 API calls/day (legacy free-tier wording — verify on your current plan page)
    - **Status**: If missing, system uses other sources
 
 6. **METAL_API_KEY**

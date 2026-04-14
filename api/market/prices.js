@@ -14,7 +14,17 @@
 
 const axios = require('axios');
 const { getWatchlistPayload } = require('./defaultWatchlist');
-const { toCanonical, forProvider, getAssetClass } = require('../ai/utils/symbol-registry');
+const {
+  toCanonical,
+  forProvider,
+  getAssetClass,
+  usesForexSessionContext,
+  isAsxListedEquity,
+  isUkListedEquity,
+  isCboeEuropeUkListedEquity,
+  isCboeAustraliaListedEquity,
+  isVentureRegionalEquity,
+} = require('../ai/utils/symbol-registry');
 
 function buildSymbolDecimalsMap() {
   const out = {};
@@ -650,15 +660,138 @@ const FALLBACK_PRICES = {
   'BRK-B': 428
 };
 
-function getDecimals(symbol) {
+function getDecimals(symbol, rawPriceHint) {
   if (SYMBOL_DECIMALS[symbol] !== undefined) return SYMBOL_DECIMALS[symbol];
+  const hint =
+    rawPriceHint != null && Number.isFinite(Number(rawPriceHint)) ? Number(rawPriceHint) : null;
+  if (/\.L$/i.test(symbol)) {
+    const { ukListingPriceDisplayDecimals } = require('../market-data/equities/ukMarketGuards');
+    return ukListingPriceDisplayDecimals(symbol, hint);
+  }
+  try {
+    const {
+      displayDecimalsForSymbol,
+      effectiveCryptoDisplayDecimals,
+    } = require('../market-data/priceMath');
+    const d0 = displayDecimalsForSymbol(symbol);
+    if (d0 != null) return d0;
+    if (
+      getAssetClass(symbol) === 'crypto' &&
+      rawPriceHint != null &&
+      Number.isFinite(Number(rawPriceHint))
+    ) {
+      const d1 = effectiveCryptoDisplayDecimals(symbol, Number(rawPriceHint));
+      if (d1 != null) return d1;
+    }
+  } catch (_) {
+    /* ignore */
+  }
   return 2;
 }
 
-function formatPrice(price, symbol) {
+/** @param {number|null|undefined} [rawPriceHint] - improves crypto decimal precision for low prices */
+function formatPrice(price, symbol, rawPriceHint) {
   if (price === null || price === undefined || isNaN(price)) return null;
-  const dec = getDecimals(symbol);
+  const hint =
+    rawPriceHint != null && Number.isFinite(Number(rawPriceHint))
+      ? Number(rawPriceHint)
+      : Number(price);
+  const dec = getDecimals(symbol, hint);
   return parseFloat(price).toFixed(dec);
+}
+
+function formatLegacyChangePercent(changePercent, canonical) {
+  if (changePercent == null || !Number.isFinite(changePercent)) {
+    if (usesForexSessionContext(canonical)) return null;
+    return '0.00';
+  }
+  try {
+    if (getAssetClass(canonical) === 'crypto' || usesForexSessionContext(canonical)) {
+      const { formatChangePercentDisplay } = require('../market-data/priceMath');
+      return formatChangePercentDisplay(changePercent, canonical);
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return Math.abs(changePercent).toFixed(2);
+}
+
+/**
+ * Map internal QuoteDTO to legacy snapshot row (stable contract for /api/market/prices + snapshot).
+ * @param {string} canonical
+ * @param {import('../market-data/dto').QuoteDTO} dto
+ */
+function legacyPriceRowFromQuoteDto(canonical, dto) {
+  if (!dto || dto.last == null || !Number.isFinite(dto.last) || dto.last <= 0) return null;
+  const { changeVsPreviousClose, changeVsPreviousCloseOnly } = require('../market-data/priceMath');
+  const fx = usesForexSessionContext(canonical);
+  let change = null;
+  let changePct = null;
+  const vs = changeVsPreviousClose(dto);
+  const vsFx = changeVsPreviousCloseOnly(dto);
+  if (fx) {
+    if (vsFx.change != null && vsFx.changePct != null) {
+      change = vsFx.change;
+      changePct = vsFx.changePct;
+    } else if (dto.open != null && Number.isFinite(dto.open)) {
+      change = dto.last - dto.open;
+      changePct = null;
+    } else {
+      change = 0;
+      changePct = null;
+    }
+  } else if (vs.change != null && vs.changePct != null) {
+    change = vs.change;
+    changePct = vs.changePct;
+  } else if (dto.open != null && Number.isFinite(dto.open) && dto.open !== 0) {
+    change = dto.last - dto.open;
+    changePct = (change / Math.abs(dto.open)) * 100;
+  } else {
+    change = 0;
+    changePct = 0;
+  }
+  const price = dto.last;
+  let previousClose = dto.prevClose;
+  if (!fx && (previousClose == null || !Number.isFinite(previousClose))) {
+    previousClose = change != null ? price - change : price;
+  }
+  if (fx && (previousClose == null || !Number.isFinite(previousClose))) {
+    previousClose = null;
+  }
+  const ch = change != null ? change : 0;
+  const ts = dto.tsUtcMs != null && Number.isFinite(dto.tsUtcMs) ? dto.tsUtcMs : Date.now();
+  const row = {
+    symbol: canonical,
+    price: formatPrice(price, canonical, price),
+    rawPrice: price,
+    previousClose:
+      previousClose != null && Number.isFinite(previousClose)
+        ? formatPrice(previousClose, canonical, price)
+        : null,
+    change: formatPrice(Math.abs(ch), canonical, price),
+    changeSign: ch >= 0 ? '+' : '-',
+    changePercent:
+      changePct != null && Number.isFinite(changePct)
+        ? formatLegacyChangePercent(changePct, canonical)
+        : formatLegacyChangePercent(null, canonical),
+    isUp: ch >= 0,
+    high: dto.high != null ? dto.high : undefined,
+    low: dto.low != null ? dto.low : undefined,
+    open: dto.open != null ? dto.open : undefined,
+    timestamp: ts,
+    source: dto.source || 'twelvedata',
+    delayed: false,
+  };
+  if (dto.forexContext && (dto.forexContext.marketState || dto.forexContext.exchangeSchedule)) {
+    row.forexSession = {
+      marketState: dto.forexContext.marketState || null,
+      hasSchedule: Boolean(dto.forexContext.exchangeSchedule),
+    };
+    if (getAssetClass(canonical) === 'crypto') {
+      row.cryptoSession = row.forexSession;
+    }
+  }
+  return row;
 }
 
 /**
@@ -698,12 +831,12 @@ async function fetchYahooPrice(symbol) {
       
       return {
         symbol: canonical,
-        price: formatPrice(price, canonical),
+        price: formatPrice(price, canonical, price),
         rawPrice: price,
-        previousClose: formatPrice(previousClose, canonical),
-        change: formatPrice(Math.abs(change), canonical),
+        previousClose: formatPrice(previousClose, canonical, price),
+        change: formatPrice(Math.abs(change), canonical, price),
         changeSign: change >= 0 ? '+' : '-',
-        changePercent: Math.abs(changePercent).toFixed(2),
+        changePercent: formatLegacyChangePercent(changePercent, canonical),
         isUp: change >= 0,
         high: meta.regularMarketDayHigh,
         low: meta.regularMarketDayLow,
@@ -748,9 +881,9 @@ async function fetchCoinGeckoPrice(symbol) {
 
     return {
       symbol,
-      price: formatPrice(price, symbol),
+      price: formatPrice(price, symbol, price),
       rawPrice: price,
-      previousClose: formatPrice(price, symbol),
+      previousClose: formatPrice(price, symbol, price),
       change: '0.00',
       changeSign: '+',
       changePercent: '0.00',
@@ -834,12 +967,12 @@ async function fetchFinnhubPrice(symbol) {
       
       return {
         symbol: canonical,
-        price: formatPrice(price, canonical),
+        price: formatPrice(price, canonical, price),
         rawPrice: price,
-        previousClose: formatPrice(previousClose, canonical),
-        change: formatPrice(Math.abs(change), canonical),
+        previousClose: formatPrice(previousClose, canonical, price),
+        change: formatPrice(Math.abs(change), canonical, price),
         changeSign: change >= 0 ? '+' : '-',
-        changePercent: Math.abs(changePercent).toFixed(2),
+        changePercent: formatLegacyChangePercent(changePercent, canonical),
         isUp: change >= 0,
         high: data.h,
         low: data.l,
@@ -990,12 +1123,12 @@ async function fetchPolygonPrice(symbol) {
       const changePercent = previousClose ? ((change / previousClose) * 100) : 0;
       return {
         symbol: canonical,
-        price: formatPrice(price, canonical),
+        price: formatPrice(price, canonical, price),
         rawPrice: price,
-        previousClose: formatPrice(previousClose, canonical),
-        change: formatPrice(Math.abs(change), canonical),
+        previousClose: formatPrice(previousClose, canonical, price),
+        change: formatPrice(Math.abs(change), canonical, price),
         changeSign: change >= 0 ? '+' : '-',
-        changePercent: Math.abs(changePercent).toFixed(2),
+        changePercent: formatLegacyChangePercent(changePercent, canonical),
         isUp: change >= 0,
         high: result.h,
         low: result.l,
@@ -1063,12 +1196,12 @@ async function fetchCoinMarketCapPrice(symbol) {
           const change = price - previousClose;
           cmcCache[sym] = {
             symbol: sym,
-            price: formatPrice(price, sym),
+            price: formatPrice(price, sym, price),
             rawPrice: price,
-            previousClose: formatPrice(previousClose, sym),
-            change: formatPrice(Math.abs(change), sym),
+            previousClose: formatPrice(previousClose, sym, price),
+            change: formatPrice(Math.abs(change), sym, price),
             changeSign: change >= 0 ? '+' : '-',
-            changePercent: Math.abs(changePercent).toFixed(2),
+            changePercent: formatLegacyChangePercent(changePercent, sym),
             isUp: change >= 0,
             timestamp: now,
             source: 'coinmarketcap',
@@ -1137,11 +1270,103 @@ function getFallbackPrice(symbol) {
 async function fetchPrice(symbol, options = {}) {
   const { stooqBySymbol = {} } = options;
   const canonical = toCanonical(symbol);
-  // Check fresh cache first
+  // Check fresh cache first (never let non–Twelve Data crypto rows skip TD when TD can serve)
   const cached = priceCache.get(canonical);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+  let bypassShortCache = false;
+  try {
+    const { shouldIgnoreFreshNonTdCryptoCache } = require('../market-data/cryptoQuotePolicy');
+    const { shouldIgnoreFreshNonTdForexCache } = require('../market-data/forexQuotePolicy');
+    bypassShortCache =
+      shouldIgnoreFreshNonTdCryptoCache(cached, canonical) ||
+      shouldIgnoreFreshNonTdForexCache(cached, canonical);
+  } catch (_) {
+    /* ignore */
+  }
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL && !bypassShortCache) {
     healthStats.cacheHits++;
     return { ...cached, fromCache: true, delayed: false };
+  }
+
+  try {
+    const { fetchQuoteDto } = require('../market-data/marketDataLayer');
+    const { bump } = require('../market-data/tdMetrics');
+    const snapFeat = usesForexSessionContext(canonical)
+      ? 'fx-snapshot'
+      : getAssetClass(canonical) === 'crypto'
+        ? 'crypto-snapshot'
+        : isCboeEuropeUkListedEquity(canonical)
+          ? 'cboe-uk-snapshot'
+          : isUkListedEquity(canonical)
+            ? 'uk-snapshot'
+            : isCboeAustraliaListedEquity(canonical)
+              ? 'cboe-au-snapshot'
+              : isVentureRegionalEquity(canonical)
+                ? 'venture-snapshot'
+                : isAsxListedEquity(canonical)
+                  ? 'asx-snapshot'
+                  : 'snapshot';
+    const dto = await fetchQuoteDto(canonical, { feature: snapFeat });
+    if (dto) {
+      const fromTd = legacyPriceRowFromQuoteDto(canonical, dto);
+      if (fromTd && fromTd.rawPrice > 0) {
+        healthStats.successfulFetches++;
+        healthStats.lastSuccessTime = Date.now();
+        priceCache.set(canonical, fromTd);
+        return fromTd;
+      }
+    } else {
+      bump(
+        usesForexSessionContext(canonical)
+          ? 'fx-snapshot'
+          : getAssetClass(canonical) === 'crypto'
+            ? 'crypto-snapshot'
+            : isCboeEuropeUkListedEquity(canonical)
+              ? 'cboe-uk-snapshot'
+              : isUkListedEquity(canonical)
+                ? 'uk-snapshot'
+                : isCboeAustraliaListedEquity(canonical)
+                  ? 'cboe-au-snapshot'
+                  : isVentureRegionalEquity(canonical)
+                    ? 'venture-snapshot'
+                    : isAsxListedEquity(canonical)
+                      ? 'asx-snapshot'
+                      : 'snapshot',
+        'fallback'
+      );
+    }
+  } catch (e) {
+    try {
+      const { bump } = require('../market-data/tdMetrics');
+      const {
+        usesForexSessionContext: ufx,
+        getAssetClass: gac,
+        isCboeEuropeUkListedEquity: cboeUkEq,
+        isUkListedEquity: ukEq,
+        isCboeAustraliaListedEquity: cboeAuEq,
+        isVentureRegionalEquity: venEq,
+        isAsxListedEquity: axEq,
+      } = require('../ai/utils/symbol-registry');
+      bump(
+        ufx(canonical)
+          ? 'fx-snapshot'
+          : gac(canonical) === 'crypto'
+            ? 'crypto-snapshot'
+            : cboeUkEq(canonical)
+              ? 'cboe-uk-snapshot'
+              : ukEq(canonical)
+                ? 'uk-snapshot'
+                : cboeAuEq(canonical)
+                  ? 'cboe-au-snapshot'
+                  : venEq(canonical)
+                    ? 'venture-snapshot'
+                    : axEq(canonical)
+                      ? 'asx-snapshot'
+                      : 'snapshot',
+        'fallback'
+      );
+    } catch (_) {
+      /* ignore */
+    }
   }
 
   const assetClass = getAssetClass(canonical);
@@ -1149,16 +1374,14 @@ async function fetchPrice(symbol, options = {}) {
   let result = null;
 
   if (assetClass === 'crypto') {
-    // Crypto: CoinGecko (free) -> CoinMarketCap -> Finnhub -> Twelve Data -> Yahoo
+    // Crypto: CoinGecko -> CoinMarketCap -> Finnhub -> Yahoo (Twelve Data already tried via layer)
     result = await fetchCoinGeckoPrice(canonical);
     if (!result) result = await fetchCoinMarketCapPrice(canonical);
     if (!result) result = await fetchFinnhubPrice(canonical);
-    if (!result) result = await fetchTwelveDataPrice(canonical);
     if (!result) result = await fetchYahooPrice(canonical);
   } else if (isSpot) {
-    // Forex/metals: Finnhub (OANDA) -> Twelve Data -> Stooq spot (XAU/XAG + FX) -> Yahoo
+    // Forex/metals: Finnhub (OANDA) -> Stooq spot -> Yahoo
     result = await fetchFinnhubPrice(canonical);
-    if (!result) result = await fetchTwelveDataPrice(canonical);
     if (!result && stooqBySymbol[canonical]) result = stooqBySymbol[canonical];
     if (!result) result = await fetchYahooPrice(canonical);
     // Yahoo GC=F / SI=F can diverge from spot; prefer Stooq when Yahoo looks implausible
@@ -1178,12 +1401,57 @@ async function fetchPrice(symbol, options = {}) {
     ) {
       result = null;
     }
+  } else if (isCboeEuropeUkListedEquity(canonical)) {
+    // Cboe UK: Twelve Data is authoritative when configured — Yahoo/Finnhub often conflate or omit .BCXE vs LSE.
+    try {
+      const td = require('../market-data/providers/twelveDataClient');
+      if (td.apiKey() && !td.primaryDisabled()) {
+        result = null;
+      } else {
+        result = await fetchFinnhubPrice(canonical);
+        if (!result) result = await fetchYahooPrice(canonical);
+      }
+    } catch (_) {
+      result = await fetchFinnhubPrice(canonical);
+      if (!result) result = await fetchYahooPrice(canonical);
+    }
+  } else if (isCboeAustraliaListedEquity(canonical)) {
+    // Cboe Australia: avoid ASX-mangled secondary quotes for *.CXAC when Twelve Data is configured.
+    try {
+      const td = require('../market-data/providers/twelveDataClient');
+      if (td.apiKey() && !td.primaryDisabled()) {
+        result = null;
+      } else {
+        result = await fetchFinnhubPrice(canonical);
+        if (!result) result = await fetchYahooPrice(canonical);
+      }
+    } catch (_) {
+      result = await fetchFinnhubPrice(canonical);
+      if (!result) result = await fetchYahooPrice(canonical);
+    }
+  } else if (isVentureRegionalEquity(canonical)) {
+    // Venture regional: TD-first via marketDataLayer above; never Yahoo→Polygon-first when TD can serve (avoids venue collisions).
+    try {
+      const td = require('../market-data/providers/twelveDataClient');
+      if (td.apiKey() && !td.primaryDisabled()) {
+        result = null;
+      } else {
+        result = await fetchFinnhubPrice(canonical);
+        if (!result) result = await fetchYahooPrice(canonical);
+      }
+    } catch (_) {
+      result = await fetchFinnhubPrice(canonical);
+      if (!result) result = await fetchYahooPrice(canonical);
+    }
+  } else if (isAsxListedEquity(canonical) || isUkListedEquity(canonical)) {
+    // ASX / UK: TD first via marketDataLayer; skip US-only Polygon; Finnhub/Yahoo use listing suffix from registry.
+    result = await fetchFinnhubPrice(canonical);
+    if (!result) result = await fetchYahooPrice(canonical);
   } else {
-    // Stocks, indices, DXY, etc: Yahoo -> Polygon.io -> Finnhub -> Twelve Data
+    // US/global stocks, indices, DXY, etc: Yahoo -> Polygon.io -> Finnhub (Twelve Data already tried via layer)
     result = await fetchYahooPrice(canonical);
     if (!result) result = await fetchPolygonPrice(canonical);
     if (!result) result = await fetchFinnhubPrice(canonical);
-    if (!result) result = await fetchTwelveDataPrice(canonical);
   }
 
   // Got fresh data
@@ -1231,28 +1499,7 @@ async function fetchPricesForSymbols(symbols) {
   const stooqSymbols = symbols.filter((s) => STOOQ_FOREX_METALS.has(s));
   const stooqBySymbol = stooqSymbols.length > 0 ? await fetchStooqBatchMap(stooqSymbols) : {};
 
-  const cryptoSymbols = symbols.filter((s) => CRYPTO_SYMBOLS.has(s));
-  if (cryptoSymbols.length > 0) {
-    const cgPrices = await fetchCoinGeckoBatch();
-    cryptoSymbols.forEach((sym) => {
-      const p = cgPrices[sym];
-      if (p && p > 0) {
-        priceCache.set(sym, {
-          symbol: sym,
-          price: formatPrice(p, sym),
-          rawPrice: p,
-          previousClose: formatPrice(p, sym),
-          change: '0.00',
-          changeSign: '+',
-          changePercent: '0.00',
-          isUp: true,
-          timestamp: Date.now(),
-          source: 'coingecko',
-          delayed: false
-        });
-      }
-    });
-  }
+  // TD-first: do not pre-seed crypto from CoinGecko (would bypass Twelve Data via short cache TTL).
 
   const prices = {};
   for (let i = 0; i < symbols.length; i += CHUNK) {

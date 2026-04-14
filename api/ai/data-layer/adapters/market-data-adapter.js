@@ -12,7 +12,15 @@ try {
 }
 const { DataAdapter, CONFIG } = require('../index');
 const { getCached, setCached } = require('../../../cache');
-const { toCanonical, forProvider, getAssetClass } = require('../../utils/symbol-registry');
+const {
+  toCanonical,
+  forProvider,
+  getAssetClass,
+  usesForexSessionContext,
+  isUkListedEquity,
+  isCboeEuropeUkListedEquity,
+  isCboeAustraliaListedEquity,
+} = require('../../utils/symbol-registry');
 const { withRetry } = require('../../utils/retries');
 const { validateQuote } = require('../../utils/validators');
 
@@ -36,34 +44,35 @@ class MarketDataAdapter extends DataAdapter {
     return getAssetClass(symbol || '');
   }
 
-  /** Twelve Data – primary for live prices, candles, intraday. */
+  /** Twelve Data – primary for live prices (normalized via marketDataLayer). */
   async fetchTwelveData(symbol) {
-    const apiKey = process.env.TWELVE_DATA_API_KEY;
-    if (!apiKey) return null;
+    const { fetchQuoteDto } = require('../../../market-data/marketDataLayer');
     const canonical = toCanonical(symbol);
-    const tdSymbol = forProvider(canonical, 'twelvedata');
-
-    const response = await axios.get('https://api.twelvedata.com/price', {
-      params: { symbol: tdSymbol, apikey: apiKey },
-      timeout: 5000
-    });
-
-    if (response.data?.price != null) {
-      const price = parseFloat(response.data.price);
-      if (Number.isFinite(price) && price > 0) {
-        return {
-          symbol: canonical,
-          price,
-          open: response.data.open != null ? parseFloat(response.data.open) : undefined,
-          high: response.data.high != null ? parseFloat(response.data.high) : undefined,
-          low: response.data.low != null ? parseFloat(response.data.low) : undefined,
-          previousClose: response.data.close != null ? parseFloat(response.data.close) : undefined,
-          timestamp: Date.now(),
-          source: 'Twelve Data'
-        };
-      }
-    }
-    return null;
+    const cls = getAssetClass(canonical);
+    const aFeat =
+      usesForexSessionContext(canonical)
+        ? 'fx-ai-adapter'
+        : cls === 'crypto'
+          ? 'crypto-ai-adapter'
+          : isCboeEuropeUkListedEquity(canonical)
+            ? 'cboe-uk-ai-adapter'
+            : isCboeAustraliaListedEquity(canonical)
+              ? 'cboe-au-ai-adapter'
+              : isUkListedEquity(canonical)
+                ? 'uk-ai-adapter'
+                : 'ai-adapter';
+    const dto = await fetchQuoteDto(canonical, { feature: aFeat });
+    if (!dto || dto.last == null || !Number.isFinite(dto.last) || dto.last <= 0) return null;
+    return {
+      symbol: canonical,
+      price: dto.last,
+      open: dto.open != null ? dto.open : undefined,
+      high: dto.high != null ? dto.high : undefined,
+      low: dto.low != null ? dto.low : undefined,
+      previousClose: dto.prevClose != null ? dto.prevClose : undefined,
+      timestamp: dto.tsUtcMs || Date.now(),
+      source: 'Twelve Data',
+    };
   }
 
   /** Finnhub – secondary quotes, tick data. */

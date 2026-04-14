@@ -230,6 +230,67 @@ const GROUPS = {
       { symbol: 'NOBL', displayName: 'NOBL', decimals: 2 }
     ]
   },
+  asx: {
+    name: 'ASX',
+    icon: 'AU',
+    order: 3.5,
+    symbols: [
+      { symbol: 'BHP.AX', displayName: 'BHP Group', decimals: 2 },
+      { symbol: 'CBA.AX', displayName: 'CommBank', decimals: 2 },
+      { symbol: 'WBC.AX', displayName: 'Westpac', decimals: 2 },
+      { symbol: 'NAB.AX', displayName: 'NAB', decimals: 2 },
+      { symbol: 'ANZ.AX', displayName: 'ANZ', decimals: 2 },
+      { symbol: 'CSL.AX', displayName: 'CSL', decimals: 2 },
+      { symbol: 'FMG.AX', displayName: 'Fortescue', decimals: 2 },
+      { symbol: 'WDS.AX', displayName: 'Woodside', decimals: 2 },
+      { symbol: 'MQG.AX', displayName: 'Macquarie', decimals: 2 },
+      { symbol: 'GMG.AX', displayName: 'Goodman', decimals: 2 },
+      { symbol: 'VAS.AX', displayName: 'Vanguard ASX 300', decimals: 2 },
+      { symbol: 'IOZ.AX', displayName: 'iShares ASX 200', decimals: 2 }
+    ]
+  },
+  /** Cboe Australia — canonical *.CXAC (Twelve Data CXAC), distinct from ASX *.AX */
+  cboeAu: {
+    name: 'Cboe AU',
+    icon: 'CXAC',
+    order: 3.52,
+    symbols: [
+      { symbol: 'BHP.CXAC', displayName: 'BHP (Cboe AU)', decimals: 2 },
+      { symbol: 'CBA.CXAC', displayName: 'CommBank (Cboe AU)', decimals: 2 },
+      { symbol: 'WBC.CXAC', displayName: 'Westpac (Cboe AU)', decimals: 2 },
+      { symbol: 'CSL.CXAC', displayName: 'CSL (Cboe AU)', decimals: 2 }
+    ]
+  },
+  uk: {
+    name: 'UK',
+    icon: 'GB',
+    order: 3.6,
+    symbols: [
+      { symbol: 'VOD.L', displayName: 'Vodafone', decimals: 2 },
+      { symbol: 'SHEL.L', displayName: 'Shell', decimals: 2 },
+      { symbol: 'BP.L', displayName: 'BP', decimals: 2 },
+      { symbol: 'HSBA.L', displayName: 'HSBC', decimals: 2 },
+      { symbol: 'AZN.L', displayName: 'AstraZeneca', decimals: 2 },
+      { symbol: 'ULVR.L', displayName: 'Unilever', decimals: 2 },
+      { symbol: 'RIO.L', displayName: 'Rio Tinto', decimals: 2 },
+      { symbol: 'LLOY.L', displayName: 'Lloyds', decimals: 2 },
+      { symbol: 'BARC.L', displayName: 'Barclays', decimals: 2 },
+      { symbol: 'TSCO.L', displayName: 'Tesco', decimals: 2 },
+      { symbol: 'REL.L', displayName: 'RELX', decimals: 2 },
+      { symbol: 'ISF.L', displayName: 'iShares Core FTSE 100', decimals: 2 }
+    ]
+  },
+  /** Cboe Europe Equities UK — canonical *.BCXE (Twelve Data MIC BCXE), distinct from LSE *.L */
+  cboeUk: {
+    name: 'Cboe UK',
+    icon: 'BCXE',
+    order: 3.65,
+    symbols: [
+      { symbol: 'VOD.BCXE', displayName: 'Vodafone (Cboe UK)', decimals: 2 },
+      { symbol: 'BP.BCXE', displayName: 'BP (Cboe UK)', decimals: 2 },
+      { symbol: 'SHEL.BCXE', displayName: 'Shell (Cboe UK)', decimals: 2 }
+    ]
+  },
   forex: {
     name: 'Forex',
     icon: '💱',
@@ -340,6 +401,10 @@ const DECIMALS = {
   indices: { default: 2 },
   stocks: { default: 2 },
   etfs: { default: 2 },
+  asx: { default: 2 },
+  cboeAu: { default: 2 },
+  uk: { default: 2 },
+  cboeUk: { default: 2 },
   macro: { DXY: 3, US10Y: 3, US30Y: 3, VIX: 2 }
 };
 
@@ -406,7 +471,14 @@ const SPECIAL_PROVIDER_MAPPING = {
 };
 
 const EQUITY_PROVIDER_MAPPING = Object.fromEntries(
-  [...GROUPS.stocks.symbols, ...GROUPS.etfs.symbols].map(({ symbol }) => [symbol, symbol])
+  [
+    ...GROUPS.stocks.symbols,
+    ...GROUPS.etfs.symbols,
+    ...(GROUPS.asx?.symbols || []),
+    ...(GROUPS.uk?.symbols || []),
+    ...(GROUPS.cboeAu?.symbols || []),
+    ...(GROUPS.cboeUk?.symbols || []),
+  ].map(({ symbol }) => [symbol, symbol])
 );
 
 const PROVIDER_MAPPING = {

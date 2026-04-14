@@ -129,10 +129,53 @@ module.exports = async (req, res) => {
   }
 
   const hasTwelveDataKey = String(process.env.TWELVE_DATA_API_KEY || '').trim().length > 0;
-  healthStatus.services.twelveData = {
-    status: hasTwelveDataKey ? 'healthy' : 'degraded',
-    configured: hasTwelveDataKey,
+  const tdProbeStart = Date.now();
+  let twelveDataProbe = {
+    ok: false,
+    latencyMs: null,
+    httpStatus: null,
+    symbol: String(process.env.TWELVE_DATA_HEALTH_SYMBOL || 'EURUSD').trim() || 'EURUSD',
+    hint: null,
   };
+  if (!hasTwelveDataKey) {
+    twelveDataProbe.hint = 'missing_api_key';
+  } else {
+    try {
+      const td = require('../market-data/providers/twelveDataClient');
+      const sym = twelveDataProbe.symbol;
+      const r = await td.fetchPrice(sym);
+      twelveDataProbe.latencyMs = Date.now() - tdProbeStart;
+      twelveDataProbe.httpStatus = r.status || 0;
+      if (r.ok && r.data && (r.data.price != null || r.data.close != null)) {
+        twelveDataProbe.ok = true;
+      } else if (r.status === 429) {
+        twelveDataProbe.hint = 'rate_limited';
+      } else if (r.status === 402) {
+        twelveDataProbe.hint = 'plan_or_credits';
+      } else if (r.error) {
+        twelveDataProbe.hint = String(r.error).slice(0, 120);
+      } else {
+        twelveDataProbe.hint = 'empty_or_invalid';
+      }
+    } catch (e) {
+      twelveDataProbe.latencyMs = Date.now() - tdProbeStart;
+      twelveDataProbe.hint = e.message || 'probe_failed';
+    }
+  }
+  const tdServiceStatus =
+    !hasTwelveDataKey ? 'degraded' :
+    twelveDataProbe.ok ? 'healthy' :
+    twelveDataProbe.hint === 'primary_disabled' ? 'degraded' :
+    twelveDataProbe.hint === 'rate_limited' || twelveDataProbe.hint === 'plan_or_credits' ? 'degraded' :
+    'error';
+  healthStatus.services.twelveData = {
+    status: tdServiceStatus,
+    configured: hasTwelveDataKey,
+    probe: twelveDataProbe,
+  };
+  if (hasTwelveDataKey && !twelveDataProbe.ok) {
+    healthStatus.status = 'degraded';
+  }
 
   // Check Database connectivity
   const dbStartTime = Date.now();

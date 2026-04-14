@@ -452,32 +452,49 @@ function categoryWritingMandate(briefKind, period) {
   return map[k] || map.general;
 }
 
-/** Full Twelve Data quote for brief intelligence (volume etc.) — no fabrication. */
+/** Full Twelve Data quote for brief intelligence (volume etc.) — via marketDataLayer. */
 async function fetchTwelveDataQuoteExtended(symbol) {
-  const apiKey = process.env.TWELVE_DATA_API_KEY;
-  if (!apiKey) return null;
   const sym = String(symbol || '').trim();
   if (!sym) return null;
   try {
-    const url = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(sym)}&apikey=${encodeURIComponent(apiKey)}`;
-    const res = await fetchWithTimeout(url, {}, 7000);
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data || data.code || data.close == null) return null;
-    const close = parseFloat(data.close);
-    const prev = parseFloat(data.previous_close);
-    if (Number.isNaN(close) || close <= 0) return null;
-    const d = Number.isNaN(prev) ? 0 : close - prev;
-    const dp = Number.isNaN(prev) || prev === 0 ? 0 : (d / prev) * 100;
-    const volume = data.volume != null ? parseFloat(data.volume) : null;
-    const averageVolume = data.average_volume != null ? parseFloat(data.average_volume) : null;
+    const { toCanonical, usesForexSessionContext } = require('../../ai/utils/symbol-registry');
+    const { fetchQuoteDto } = require('../../market-data/marketDataLayer');
+    const { changeVsPreviousClose, changeVsPreviousCloseOnly } = require('../../market-data/priceMath');
+    const canonical = toCanonical(sym);
+    const bFeat = usesForexSessionContext(canonical) ? 'fx-brief-quote' : 'brief';
+    const dto = await fetchQuoteDto(canonical, { feature: bFeat });
+    if (!dto || dto.last == null || !Number.isFinite(dto.last) || dto.last <= 0) return null;
+    const c = dto.last;
+    const vs = changeVsPreviousClose(dto);
+    const vsOnly = changeVsPreviousCloseOnly(dto);
+    let pc;
+    let d;
+    let dp;
+    if (usesForexSessionContext(canonical)) {
+      pc = dto.prevClose != null && Number.isFinite(dto.prevClose) ? dto.prevClose : null;
+      if (vsOnly.change != null && vsOnly.changePct != null) {
+        d = vsOnly.change;
+        dp = vsOnly.changePct;
+      } else if (dto.open != null && Number.isFinite(dto.open)) {
+        d = c - dto.open;
+        dp = null;
+      } else {
+        return null;
+      }
+    } else {
+      pc = dto.prevClose;
+      if (pc == null || !Number.isFinite(pc)) pc = dto.open;
+      if (pc == null || !Number.isFinite(pc)) return null;
+      d = c - pc;
+      dp = vs.changePct != null && Number.isFinite(vs.changePct) ? vs.changePct : pc !== 0 ? (d / Math.abs(pc)) * 100 : 0;
+    }
     return {
-      c: close,
-      pc: prev,
+      c,
+      pc,
       d,
       dp,
-      volume: Number.isFinite(volume) ? volume : null,
-      averageVolume: Number.isFinite(averageVolume) ? averageVolume : null,
+      volume: dto.volume != null && Number.isFinite(dto.volume) ? dto.volume : null,
+      averageVolume: dto.averageVolume != null && Number.isFinite(dto.averageVolume) ? dto.averageVolume : null,
     };
   } catch (_) {
     return null;
@@ -757,18 +774,20 @@ function noteAnchoredToIntelligence(note, intel) {
 }
 
 async function fetchWeeklyApproxPctChange(symbol) {
-  const apiKey = process.env.TWELVE_DATA_API_KEY;
-  if (!apiKey) return null;
-  const sym = encodeURIComponent(String(symbol).trim());
   try {
-    const url = `https://api.twelvedata.com/time_series?symbol=${sym}&interval=1day&outputsize=8&apikey=${encodeURIComponent(apiKey)}`;
-    const res = await fetchWithTimeout(url, {}, 6500);
-    if (!res.ok) return null;
-    const data = await res.json();
-    const vals = data && Array.isArray(data.values) ? data.values : [];
-    if (vals.length < 5) return null;
-    const last = parseFloat(vals[0]?.close);
-    const old = parseFloat(vals[4]?.close);
+    const { toCanonical, usesForexSessionContext, getAssetClass } = require('../../ai/utils/symbol-registry');
+    const { fetchTimeSeriesDto } = require('../../market-data/marketDataLayer');
+    const canonical = toCanonical(String(symbol).trim());
+    const sFeat = usesForexSessionContext(canonical)
+      ? 'fx-brief-weekly'
+      : getAssetClass(canonical) === 'crypto'
+        ? 'crypto-brief-weekly'
+        : 'brief-weekly';
+    const series = await fetchTimeSeriesDto(canonical, '1day', 'out8', { outputsize: 8 }, sFeat);
+    if (!series || !series.bars || series.bars.length < 5) return null;
+    const bars = series.bars;
+    const last = bars[bars.length - 1].c;
+    const old = bars[bars.length - 5].c;
     if (!Number.isFinite(last) || !Number.isFinite(old) || old === 0) return null;
     return ((last - old) / Math.abs(old)) * 100;
   } catch (_) {

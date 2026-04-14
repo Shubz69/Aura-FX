@@ -1,17 +1,75 @@
 /**
  * Market Decoder — data acquisition with provider logging and deterministic fallbacks.
- * Order: Finnhub → FMP → Alpha Vantage (where configured).
+ * Order: Twelve Data → MySQL OHLCV (daily) → Twelve Data time_series → Finnhub → FMP → Alpha Vantage.
  */
 
 const { getConfig } = require('./config');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getQuote } = require('./services/finnhubService');
-const { getResolvedSymbol } = require('../ai/utils/symbol-registry');
+const {
+  getResolvedSymbol,
+  usesForexSessionContext,
+  isUkListedEquity,
+  isCboeEuropeUkListedEquity,
+  isCboeAustraliaListedEquity,
+} = require('../ai/utils/symbol-registry');
+const { minTdDailyBarsBeforeOhlcvFallback } = require('../market-data/equities/equityReadPolicy');
 
-/** Finnhub → FMP fallback quote for any resolved symbol (shared by primary + cross-asset). */
+/** Twelve Data → Finnhub → FMP fallback quote for any resolved symbol (shared by primary + cross-asset). */
 async function fetchQuoteNumbersForResolved(resolved) {
   /** @type {{ name: string, status: string, detail?: string }[]} */
   const log = [];
+  try {
+    const { fetchQuoteDto } = require('../market-data/marketDataLayer');
+    const { changeVsPreviousClose, changeVsPreviousCloseOnly } = require('../market-data/priceMath');
+    const qFeat =
+      resolved.marketType === 'FX' || resolved.candleKind === 'forex'
+        ? 'fx-decoder-quote'
+        : isCboeEuropeUkListedEquity(resolved.canonical)
+          ? 'cboe-uk-decoder-quote'
+          : isCboeAustraliaListedEquity(resolved.canonical)
+            ? 'cboe-au-decoder-quote'
+            : isUkListedEquity(resolved.canonical)
+            ? 'uk-decoder-quote'
+            : 'decoder';
+    const dto = await fetchQuoteDto(resolved.canonical, { feature: qFeat });
+    if (dto && dto.last != null && Number.isFinite(dto.last) && dto.last > 0) {
+      const fxSession = usesForexSessionContext(resolved.canonical);
+      const vs = changeVsPreviousClose(dto);
+      const vsOnly = changeVsPreviousCloseOnly(dto);
+      const c = dto.last;
+      let pc;
+      let d;
+      let dp;
+      if (fxSession) {
+        pc = dto.prevClose != null && Number.isFinite(dto.prevClose) ? dto.prevClose : null;
+        if (vsOnly.change != null && vsOnly.changePct != null) {
+          d = vsOnly.change;
+          dp = vsOnly.changePct;
+        } else {
+          d = dto.open != null && Number.isFinite(dto.open) ? c - dto.open : null;
+          dp = null;
+        }
+      } else {
+        pc = dto.prevClose;
+        if ((pc == null || !Number.isFinite(pc)) && dto.open != null && Number.isFinite(dto.open)) {
+          pc = dto.open;
+        }
+        if (pc == null || !Number.isFinite(pc)) pc = c;
+        d = c - pc;
+        dp = vs.changePct != null && Number.isFinite(vs.changePct) ? vs.changePct : pc !== 0 ? (d / Math.abs(pc)) * 100 : 0;
+      }
+      log.push({ name: 'Twelve Data quote', status: 'ok' });
+      return {
+        ok: true,
+        data: { c, pc, dp, h: dto.high, l: dto.low, o: dto.open, d },
+        providerLog: log,
+      };
+    }
+  } catch (e) {
+    log.push({ name: 'Twelve Data quote', status: 'failed', detail: e.message || String(e) });
+  }
+
   const q = await getQuote(resolved.finnhubSymbol);
   if (q.ok && q.data && (q.data.c != null || q.data.pc != null)) {
     log.push({ name: 'Finnhub quote', status: 'ok' });
@@ -178,12 +236,140 @@ async function alphaVantageDaily(symbolForAv) {
   }
 }
 
+function decoderSeriesFromDbRows(rows) {
+  const opens = [];
+  const highs = [];
+  const lows = [];
+  const closes = [];
+  const times = [];
+  const dates = [];
+  for (const r of rows || []) {
+    opens.push(Number(r.open_p));
+    highs.push(Number(r.high_p));
+    lows.push(Number(r.low_p));
+    closes.push(Number(r.close_p));
+    const ms = Number(r.bar_time_utc);
+    times.push(Math.floor(ms / 1000));
+    dates.push(new Date(ms).toISOString().slice(0, 10));
+  }
+  return { opens, highs, lows, closes, times, dates };
+}
+
+function decoderSeriesFromCandleDtoBars(bars) {
+  const opens = [];
+  const highs = [];
+  const lows = [];
+  const closes = [];
+  const times = [];
+  const dates = [];
+  for (const b of bars || []) {
+    opens.push(b.o);
+    highs.push(b.h);
+    lows.push(b.l);
+    closes.push(b.c);
+    times.push(Math.floor(b.tUtcMs / 1000));
+    dates.push(new Date(b.tUtcMs).toISOString().slice(0, 10));
+  }
+  return { opens, highs, lows, closes, times, dates };
+}
+
 /**
- * Resolve OHLC series: Finnhub → FMP → Alpha Vantage (stocks only for AV).
+ * Resolve OHLC series: MySQL → Twelve Data time_series → Finnhub → FMP → Alpha Vantage (stocks only for AV).
  */
 async function fetchDailySeries(resolved, fromSec, toSec) {
   /** @type {ProviderEntry[]} */
   const log = [];
+  const fromMs = fromSec * 1000;
+  const toMs = toSec * 1000;
+
+  try {
+    const { ohlcvCoverageOk, upsertOhlcvBars } = require('../market-data/pipeline-store');
+    const cov = await ohlcvCoverageOk(resolved.canonical, '1day', fromMs, toMs);
+    if (cov.ok && cov.rows.length) {
+      log.push({ name: 'MySQL OHLCV daily', status: 'ok', detail: `${cov.rows.length} bars` });
+      const s = decoderSeriesFromDbRows(cov.rows);
+      return {
+        ok: true,
+        closes: s.closes,
+        highs: s.highs,
+        lows: s.lows,
+        opens: s.opens,
+        times: s.times,
+        dates: s.dates,
+        source: 'mysql',
+        providerLog: log,
+      };
+    }
+  } catch (e) {
+    log.push({ name: 'MySQL OHLCV daily', status: 'failed', detail: e.message || String(e) });
+  }
+
+  try {
+    const { fetchTimeSeriesDtoFromNetwork } = require('../market-data/marketDataLayer');
+    const { upsertOhlcvBars } = require('../market-data/pipeline-store');
+    const start = new Date(fromMs).toISOString().slice(0, 10);
+    const end = new Date(toMs).toISOString().slice(0, 10);
+    const tdFeature =
+      resolved.marketType === 'FX' || resolved.candleKind === 'forex'
+        ? 'fx-decoder-series'
+        : resolved.candleKind === 'crypto' || resolved.assetClass === 'crypto'
+          ? 'crypto-decoder-series'
+          : isCboeEuropeUkListedEquity(resolved.canonical)
+            ? 'cboe-uk-decoder-series'
+            : isCboeAustraliaListedEquity(resolved.canonical)
+              ? 'cboe-au-decoder-series'
+              : isUkListedEquity(resolved.canonical)
+              ? 'uk-decoder-series'
+              : 'decoder';
+    const tdSeries = await fetchTimeSeriesDtoFromNetwork(
+      resolved.canonical,
+      '1day',
+      { start_date: start, end_date: end },
+      tdFeature
+    );
+    const minTdBars = minTdDailyBarsBeforeOhlcvFallback(resolved.canonical);
+    if (tdSeries && tdSeries.bars && tdSeries.bars.length >= minTdBars) {
+      log.push({ name: 'Twelve Data time_series', status: 'ok', detail: `${tdSeries.bars.length} bars` });
+      if (process.env.MYSQL_HOST) {
+        const ingestRows = tdSeries.bars.map((b) => ({
+          canonicalSymbol: resolved.canonical,
+          intervalKey: '1day',
+          barTimeUtc: b.tUtcMs,
+          open: b.o,
+          high: b.h,
+          low: b.l,
+          close: b.c,
+          volume: b.v,
+          provider: 'twelvedata',
+        }));
+        upsertOhlcvBars(ingestRows).catch(() => {});
+      }
+      const s = decoderSeriesFromCandleDtoBars(tdSeries.bars);
+      return {
+        ok: true,
+        closes: s.closes,
+        highs: s.highs,
+        lows: s.lows,
+        opens: s.opens,
+        times: s.times,
+        dates: s.dates,
+        source: 'twelvedata',
+        providerLog: log,
+      };
+    }
+    if (tdSeries && tdSeries.bars && tdSeries.bars.length > 0) {
+      log.push({
+        name: 'Twelve Data time_series',
+        status: 'fallback',
+        detail: `${tdSeries.bars.length} bars (prefer ${minTdBars}+ for full stack — trying Finnhub)`,
+      });
+    } else {
+      log.push({ name: 'Twelve Data time_series', status: 'failed', detail: 'empty or insufficient' });
+    }
+  } catch (e) {
+    log.push({ name: 'Twelve Data time_series', status: 'failed', detail: e.message || String(e) });
+  }
+
   const fh = await finnhubCandles(resolved.candleKind, resolved.finnhubSymbol, fromSec, toSec);
   if (fh.ok && fh.closes.length >= 50) {
     log.push({ name: 'Finnhub daily candles', status: 'ok', detail: `${fh.closes.length} sessions` });

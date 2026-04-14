@@ -11,8 +11,102 @@ const {
   getRecentHeadlines,
   getRecentEconomicEvents,
   freshnessStatus,
+  getOhlcvIngestSummary,
+  getForexOhlcvCoverageReport,
+  listTwelveDataCoverageForStorageCategory,
 } = require('./pipeline-store');
+const {
+  FX_OHLCV_PRIORITY_V1,
+  CRYPTO_OHLCV_PRIORITY_V1,
+  CRYPTO_TD_QUOTE_PRIORITY_V1,
+  ASX_OHLCV_PRIORITY_V1,
+  UK_OHLCV_PRIORITY_V1,
+  CBOE_UK_OHLCV_PRIORITY_V1,
+  CBOE_AU_OHLCV_PRIORITY_V1,
+} = require('./ohlcvTier1');
+const { GROUPS } = require('../market/defaultWatchlist');
+const { summarizeCapabilitiesForAdmin } = require('./equities/twelveDataEquityCapabilities');
+const { getEquityIngestSymbols } = require('./equities/equityUniverse');
+const { listTwelveDataEquityCoverageForSymbols } = require('./pipeline-store');
+const { getCacheStats } = require('../cache');
+const { snapshot: tdMetricsSnapshot } = require('./tdMetrics');
+const { stats: tdLimiterStats } = require('./tdRateLimiter');
 const { uniqueSymbolsFromWatchlist } = require('./pipeline-service');
+const { buildTwelveDataFrameworkDiagnostics } = require('./twelve-data-framework/adminDiagnostics');
+const {
+  summarizeVentureMarketsForHealth,
+  ventureMarketsGloballyEnabled,
+} = require('./equities/ventureRemainingMarkets');
+const { FX_QUOTE_TTL_MS } = require('./cachePolicy');
+
+function cryptoWatchlistSymbolsForHealth() {
+  try {
+    const g = GROUPS.crypto;
+    if (g && Array.isArray(g.symbols) && g.symbols.length) {
+      return [
+        ...new Set(g.symbols.map((row) => String(row.symbol || '').toUpperCase()).filter(Boolean)),
+      ];
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return [...CRYPTO_OHLCV_PRIORITY_V1];
+}
+
+function asxSymbolsForHealth() {
+  try {
+    const g = GROUPS.asx;
+    if (g && Array.isArray(g.symbols) && g.symbols.length) {
+      return [...new Set(g.symbols.map((row) => String(row.symbol || '').toUpperCase()).filter(Boolean))];
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return [...ASX_OHLCV_PRIORITY_V1];
+}
+
+function ukSymbolsForHealth() {
+  try {
+    const g = GROUPS.uk;
+    if (g && Array.isArray(g.symbols) && g.symbols.length) {
+      return [...new Set(g.symbols.map((row) => String(row.symbol || '').toUpperCase()).filter(Boolean))];
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return [...UK_OHLCV_PRIORITY_V1];
+}
+
+function cboeUkSymbolsForHealth() {
+  try {
+    const g = GROUPS.cboeUk;
+    if (g && Array.isArray(g.symbols) && g.symbols.length) {
+      return [...new Set(g.symbols.map((row) => String(row.symbol || '').toUpperCase()).filter(Boolean))];
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return [...CBOE_UK_OHLCV_PRIORITY_V1];
+}
+
+function cboeAuSymbolsForHealth() {
+  try {
+    const g = GROUPS.cboeAu;
+    if (g && Array.isArray(g.symbols) && g.symbols.length) {
+      return [...new Set(g.symbols.map((row) => String(row.symbol || '').toUpperCase()).filter(Boolean))];
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return [...CBOE_AU_OHLCV_PRIORITY_V1];
+}
+
+function technicalIndicatorsEnvEnabled() {
+  return (
+    String(process.env.TD_TECH_INDICATORS || '').trim() === '1' ||
+    String(process.env.TD_CRYPTO_TECH_INDICATORS || '').trim() === '1'
+  );
+}
 
 function requestIsSuperAdmin(req) {
   const decoded = verifyToken(req.headers.authorization);
@@ -55,7 +149,31 @@ module.exports = async (req, res) => {
 
   const start = Date.now();
   try {
-    const [snapshots, decoderStates, aiPacket, headlines, events, usageSummary, activeLocks] = await Promise.all([
+    const equitySymbols = getEquityIngestSymbols();
+    const cryptoSym = cryptoWatchlistSymbolsForHealth();
+    const [
+      snapshots,
+      decoderStates,
+      aiPacket,
+      headlines,
+      events,
+      usageSummary,
+      activeLocks,
+      ohlcvSummary,
+      forexCoverage,
+      equityCoverage,
+      cryptoOhlcvCoverage,
+      cryptoTdCoverage,
+      forexTdCoverage,
+      asxOhlcvCoverage,
+      asxTdCoverage,
+      ukOhlcvCoverage,
+      ukTdCoverage,
+      cboeUkOhlcvCoverage,
+      cboeUkTdCoverage,
+      cboeAuOhlcvCoverage,
+      cboeAuTdCoverage,
+    ] = await Promise.all([
       listLatestSnapshots(25),
       listLatestDecoderStates(25),
       getLatestAiContextPacket('global', 'daily'),
@@ -67,6 +185,20 @@ module.exports = async (req, res) => {
       }),
       getProviderUsageSummary({ days: 31 }),
       listActiveRefreshLocks(),
+      getOhlcvIngestSummary(),
+      getForexOhlcvCoverageReport(FX_OHLCV_PRIORITY_V1),
+      listTwelveDataEquityCoverageForSymbols(equitySymbols),
+      getForexOhlcvCoverageReport(CRYPTO_OHLCV_PRIORITY_V1),
+      listTwelveDataCoverageForStorageCategory('crypto', cryptoSym),
+      listTwelveDataCoverageForStorageCategory('forex', FX_OHLCV_PRIORITY_V1),
+      getForexOhlcvCoverageReport(asxSymbolsForHealth()),
+      listTwelveDataCoverageForStorageCategory('asx_equity', asxSymbolsForHealth()),
+      getForexOhlcvCoverageReport(ukSymbolsForHealth()),
+      listTwelveDataCoverageForStorageCategory('uk_equity', ukSymbolsForHealth()),
+      getForexOhlcvCoverageReport(cboeUkSymbolsForHealth()),
+      listTwelveDataCoverageForStorageCategory('cboe_uk_equity', cboeUkSymbolsForHealth()),
+      getForexOhlcvCoverageReport(cboeAuSymbolsForHealth()),
+      listTwelveDataCoverageForStorageCategory('cboe_au_equity', cboeAuSymbolsForHealth()),
     ]);
 
     const watchlistCount = uniqueSymbolsFromWatchlist().length;
@@ -100,6 +232,16 @@ module.exports = async (req, res) => {
       };
     });
 
+    const tdSnap = tdMetricsSnapshot();
+    const twelveDataFramework = await buildTwelveDataFrameworkDiagnostics({
+      cacheStats: typeof getCacheStats === 'function' ? getCacheStats() : null,
+      tdSnapshot: tdSnap,
+    });
+    const life = tdSnap.lifetime || { twelvedata: 0, fallback: 0 };
+    const tdTotal = (life.twelvedata || 0) + (life.fallback || 0);
+    const fallbackRatio =
+      tdTotal > 0 ? Number(((life.fallback || 0) / tdTotal).toFixed(4)) : null;
+
     const payload = {
       success: true,
       status: activeLocks.length > 0 ? 'refreshing' : 'ready',
@@ -107,6 +249,116 @@ module.exports = async (req, res) => {
       checkDurationMs: Date.now() - start,
       db: getPoolHealth(),
       tables: TABLES,
+      marketDataLayer: {
+        cache: typeof getCacheStats === 'function' ? getCacheStats() : null,
+        twelveData: {
+          rolling60s: {
+            tdCalls: tdSnap.twelveDataCallsLast60s,
+            totalCalls: tdSnap.totalCallsLast60s,
+          },
+          lifetime: life,
+          fallbackRatio,
+          throttle: tdLimiterStats(),
+        },
+        ohlcvIngest: ohlcvSummary,
+        forex: {
+          priorityPairs: FX_OHLCV_PRIORITY_V1,
+          ohlcvCoverage: forexCoverage,
+          twelveDataDatasetCoverage: forexTdCoverage,
+          quoteTtlMs: FX_QUOTE_TTL_MS,
+          layerCache: tdSnap.fxLayerCache || null,
+          routeFallback: tdSnap.fxRoutes || null,
+          technicalIndicators: technicalIndicatorsEnvEnabled() ? 'enabled' : 'disabled',
+          ingestCron: '/api/cron/forex-twelvedata-ingest',
+          note:
+            'market_movers not wired for FX (response skews equity); quotes, time_series, conversion, and OHLCV ingest are primary.',
+        },
+        crypto: {
+          priorityPairs: CRYPTO_OHLCV_PRIORITY_V1,
+          quotePriorityTier1: CRYPTO_TD_QUOTE_PRIORITY_V1,
+          watchlistSymbolSample: cryptoSym.slice(0, 15),
+          ohlcvCoverage: cryptoOhlcvCoverage,
+          twelveDataDatasetCoverage: cryptoTdCoverage,
+          layerCache: tdSnap.cryptoLayerCache || null,
+          routeMetrics: tdSnap.cryptoRoutes || null,
+          technicalIndicators: technicalIndicatorsEnvEnabled() ? 'enabled' : 'disabled',
+          ingestCron: '/api/cron/crypto-twelvedata-ingest',
+          note: 'market_movers omitted (TD response is often equity-oriented; revisit with explicit crypto exchange params).',
+        },
+        equities: {
+          ingestSymbolSample: equitySymbols.slice(0, 15),
+          ingestSymbolCount: equitySymbols.length,
+          twelveDataCapabilities: summarizeCapabilitiesForAdmin(),
+          dbCoverage: equityCoverage,
+          datasetMetrics: tdSnap.equityDatasets || null,
+          refreshPolicy: {
+            cron: '/api/cron/equity-twelvedata-ingest',
+            envSymbolLimit: 'TD_EQUITY_INGEST_SYMBOL_LIMIT',
+            defaultMaxTier: 2,
+            note:
+              'Primary US category id is us_market (storageCategory equity unchanged). Ingest runs us_market (NYSE/NASDAQ reference, US funds, consolidated statements, analyst_ratings/us_equities, mutual_funds family|type). Tier 3 (price_target, calendars, fund_holders, US extras) via maxTier=3. Env: TD_US_NYSE_STOCKS_OUTPUTSIZE, TD_US_NASDAQ_STOCKS_OUTPUTSIZE, TD_US_FUNDS_OUTPUTSIZE, TWELVE_DATA_US_EXCHANGE_MIC.',
+          },
+        },
+        asx: {
+          prioritySymbols: asxSymbolsForHealth(),
+          ohlcvCoverage: asxOhlcvCoverage,
+          twelveDataDatasetCoverage: asxTdCoverage,
+          ingestCron: '/api/cron/asx-twelvedata-ingest',
+          envSymbolExtras: 'ASX_EQ_INGEST_SYMBOLS',
+          envIngestLimit: 'TD_ASX_INGEST_SYMBOL_LIMIT',
+          symbolContract: 'Internal canonical TICKER.AX; Twelve Data requests use TICKER:ASX.',
+          note:
+            'Category asx_equities inherits US equity dataset map plus ASX reference keys (stocks/etf/funds/movers/schedule). Storage market_category asx_equity.',
+        },
+        uk: {
+          prioritySymbols: ukSymbolsForHealth(),
+          ohlcvCoverage: ukOhlcvCoverage,
+          twelveDataDatasetCoverage: ukTdCoverage,
+          ingestCron: '/api/cron/uk-twelvedata-ingest',
+          envSymbolExtras: 'UK_EQ_INGEST_SYMBOLS',
+          envIngestLimit: 'TD_UK_INGEST_SYMBOL_LIMIT',
+          symbolContract: 'Internal canonical TICKER.L; Twelve Data requests use TICKER:LSE (TWELVE_DATA_UK_EXCHANGE_CODE).',
+          note:
+            'Category uk_equities inherits US equity datasets plus UK reference keys. Storage market_category uk_equity. Framework diagnostics include coverage rows and ingest runs.',
+        },
+        cboeUk: {
+          prioritySymbols: cboeUkSymbolsForHealth(),
+          ohlcvCoverage: cboeUkOhlcvCoverage,
+          twelveDataDatasetCoverage: cboeUkTdCoverage,
+          routeMetrics: tdSnap.cboeUkRoutes || null,
+          ingestCron: '/api/cron/cboe-uk-twelvedata-ingest',
+          envSymbolExtras: 'CBOE_UK_EQ_INGEST_SYMBOLS',
+          envIngestLimit: 'TD_CBOE_UK_INGEST_SYMBOL_LIMIT',
+          symbolContract:
+            'Internal canonical TICKER.BCXE (distinct from LSE *.L); Twelve Data TICKER:BCXE (TWELVE_DATA_CBOE_UK_EXCHANGE_CODE).',
+          note:
+            'Category cboe_europe_equities_uk: narrow reference + core only (no US fundamentals inheritance). Super-admin twelveDataFramework.coverage lists dataset freshness; storage market_category cboe_uk_equity.',
+        },
+        cboeAu: {
+          prioritySymbols: cboeAuSymbolsForHealth(),
+          ohlcvCoverage: cboeAuOhlcvCoverage,
+          twelveDataDatasetCoverage: cboeAuTdCoverage,
+          routeMetrics: tdSnap.cboeAuRoutes || null,
+          ingestCron: '/api/cron/cboe-au-twelvedata-ingest',
+          envSymbolExtras: 'CBOE_AU_EQ_INGEST_SYMBOLS',
+          envIngestLimit: 'TD_CBOE_AU_INGEST_SYMBOL_LIMIT',
+          symbolContract:
+            'Internal canonical TICKER.CXAC (distinct from ASX *.AX); Twelve Data TICKER:CXAC (TWELVE_DATA_CBOE_AU_EXCHANGE_CODE).',
+          note:
+            'Category cboe_australia: inherits US equity dataset map + AU reference + consolidated statements. Registry skipIngestDatasetKeys omits low-value inherited keys from cron (see twelveDataFramework.registry). US-scoped /analyst_ratings/us_equities is wired for category us_market only, not CXAC. Storage market_category cboe_au_equity. Fundamentals HTTP route uses TD+DB only for .CXAC.',
+        },
+        ventureRegional: {
+          enabled: ventureMarketsGloballyEnabled(),
+          supportDefault: 'limited',
+          markets: summarizeVentureMarketsForHealth(),
+          ingestCron: '/api/cron/venture-twelvedata-ingest',
+          envIngestLimit: 'TD_VENTURE_INGEST_SYMBOL_LIMIT',
+          disableEnv: 'VENTURE_REGIONAL_MARKETS=0',
+          note:
+            'venture_* = limited (reference+core only); exchange-qualified canonicals required. Twelve Data is primary (marketDataLayer + prices route skips Yahoo→Polygon when TD is configured). refreshTier priority|standard: standard venues use longer reference TTLs (TD_VENTURE_STANDARD_REFRESH_TTL_MULT). Ingest order: ingestCron runs priority venues first.',
+        },
+        twelveDataFramework,
+      },
       coverage: {
         watchlistSymbols: watchlistCount,
         latestSnapshots: snapshots.length,

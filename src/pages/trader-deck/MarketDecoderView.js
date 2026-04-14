@@ -8,6 +8,7 @@ import Api from '../../services/Api';
 import CosmicBackground from '../../components/CosmicBackground';
 import MarketDecoderBriefContent from './MarketDecoderBriefContent';
 import { MARKET_DECODER_LAB_HANDOFF_KEY } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
+import { formatPairLabel } from '../../lib/market/formatPairLabel';
 import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import '../../styles/trader-deck/MarketDecoder.css';
 
@@ -51,19 +52,6 @@ const DECODER_FLOW = [
   { step: '3', title: 'Check risk context', note: 'Review macro calendar, headlines, and positioning.' },
   { step: '4', title: 'Decide execution', note: 'Only act if the posture and trigger still align.' },
 ];
-
-function formatPairLabel(asset) {
-  const raw = String(asset || '').toUpperCase();
-  const s = raw.replace(/[^A-Z]/g, '');
-  if (s.length === 6 && /^[A-Z]{6}$/.test(s)) {
-    return `${s.slice(0, 3)}/${s.slice(3)}`;
-  }
-  if (/XAU/.test(s) || /BTC/.test(s)) {
-    const base = s.replace(/USD$/, '');
-    return base ? `${base}/USD` : raw || '—';
-  }
-  return raw || '—';
-}
 
 export default function MarketDecoderView({ embedded }) {
   const navigate = useNavigate();

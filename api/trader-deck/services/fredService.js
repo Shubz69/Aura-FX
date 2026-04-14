@@ -71,16 +71,12 @@ async function getSeriesRange(seriesId, options = {}) {
 }
 
 async function getTwelveDataTreasury10y() {
-  const apiKey = process.env.TWELVE_DATA_API_KEY;
-  if (!apiKey) return null;
   try {
-    const url = `https://api.twelvedata.com/price?symbol=US10Y&apikey=${encodeURIComponent(apiKey)}`;
-    const res = await fetchWithTimeout(url, {}, 8000);
-    if (!res.ok) return null;
-    const json = await res.json();
-    if (json && json.price) {
-      const val = parseFloat(json.price);
-      if (!isNaN(val) && val > 0) return val;
+    const { fetchQuoteDto } = require('../../market-data/marketDataLayer');
+    const { formatYieldPoints } = require('../../market-data/priceMath');
+    const dto = await fetchQuoteDto('US10Y', { feature: 'fred-fallback' });
+    if (dto && dto.last != null && Number.isFinite(dto.last) && dto.last > 0) {
+      return formatYieldPoints('US10Y', dto.last);
     }
   } catch (e) {
     console.warn('[trader-deck] Twelve Data US10Y error:', e.message || e);
