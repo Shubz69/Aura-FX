@@ -14,13 +14,13 @@
 }
 
 .sv-page--terminal {
-  /* Taller band + slightly narrower side/rail so the globe column gains width */
-  --sv-globe-band: clamp(472px, 74vh, 800px);
-  --sv-terminal-side: minmax(132px, 188px);
-  --sv-terminal-rail: minmax(256px, 348px);
+  /* Hero band + narrow side/rail so the center column carries maximum globe width */
+  --sv-globe-band: clamp(480px, 75vh, 820px);
+  --sv-terminal-side: minmax(126px, 182px);
+  --sv-terminal-rail: minmax(252px, 344px);
   --sv-terminal-pad-x: 18px;
-  /* Minimal vertical reserve: bottom chrome is absolutely positioned over the canvas */
-  --sv-globe-chrome-reserve: 1.38rem;
+  /* Tight reserve: bottom chrome reads over the canvas; larger square = globe owns the stage */
+  --sv-globe-chrome-reserve: 1.05rem;
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
@@ -465,7 +465,7 @@
   container-name: sv-globe-stage;
   contain: layout paint;
   background:
-    radial-gradient(ellipse 88% 76% at 50% 44%, rgba(14, 16, 28, 0.52), transparent 58%),
+    radial-gradient(ellipse 96% 88% at 50% 48%, rgba(16, 18, 34, 0.42), transparent 52%),
     linear-gradient(165deg, #05060c 0%, #03040a 52%, #020208 100%);
 }
 
@@ -475,7 +475,7 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.34;
   background-image:
     radial-gradient(circle at 8% 14%, rgba(255, 255, 255, 0.14) 0, transparent 0.45%),
     radial-gradient(circle at 22% 8%, rgba(255, 255, 255, 0.1) 0, transparent 0.35%),
@@ -501,12 +501,12 @@
   right: 0;
   bottom: 0;
   z-index: 3;
-  padding: 5px var(--sv-terminal-pad-x) 6px;
+  padding: 4px var(--sv-terminal-pad-x) 5px;
   display: flex;
   flex-direction: column;
   gap: 1px;
   pointer-events: none;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.22) 48%, transparent 100%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.58) 0%, rgba(0, 0, 0, 0.14) 44%, transparent 100%);
 }
 
 .sv-globe-chrome-tag {
@@ -564,9 +564,9 @@
 
 .sv-control-deck-inner--compact {
   grid-template-columns: minmax(120px, 180px) auto;
-  gap: 8px 14px;
+  gap: 6px 12px;
   align-items: end;
-  padding: 6px var(--sv-terminal-pad-x) 8px;
+  padding: 4px var(--sv-terminal-pad-x) 6px;
 }
 
 @media (max-width: 1100px) {
@@ -680,9 +680,9 @@
   display: flex;
   flex-direction: column;
   border-top: none;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.032);
-  background: linear-gradient(180deg, rgba(4, 4, 8, 0.9) 0%, rgba(0, 0, 0, 0.36) 55%, rgba(0, 0, 0, 0.32) 100%);
-  padding: 4px var(--sv-terminal-pad-x) 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.038);
+  background: linear-gradient(180deg, rgba(5, 5, 10, 0.94) 0%, rgba(0, 0, 0, 0.36) 50%, rgba(0, 0, 0, 0.32) 100%);
+  padding: 2px var(--sv-terminal-pad-x) 10px;
 }
 
 .sv-tape-deck-head {
@@ -690,9 +690,9 @@
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 8px 12px;
-  margin-bottom: 6px;
-  padding-bottom: 6px;
+  gap: 6px 10px;
+  margin-bottom: 4px;
+  padding-bottom: 5px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.045);
 }
 
@@ -1764,7 +1764,7 @@
   .sv-globe-stage .sv-globe-wrap {
     width: auto;
     max-width: min(100%, var(--sv-globe-band));
-    max-height: min(100%, calc(var(--sv-globe-band) - 18px));
+    max-height: min(100%, calc(var(--sv-globe-band) - 12px));
     aspect-ratio: 1;
     margin: 0 auto;
   }
@@ -1779,15 +1779,15 @@
 
 .sv-globe-wrap--countries .sv-globe-vignette {
   box-shadow:
-    inset 0 0 72px rgba(0, 0, 0, 0.45),
-    inset 0 -32px 56px rgba(248, 195, 125, 0.03);
+    inset 0 0 48px rgba(0, 0, 0, 0.28),
+    inset 0 -20px 36px rgba(248, 195, 125, 0.025);
 }
 
 @supports not (width: 1cqi) {
   @media (max-width: 960px) {
     .sv-globe-stage .sv-globe-wrap {
       max-width: min(100%, calc(100vw - 40px));
-      max-height: min(100%, calc(clamp(380px, 52vh, 600px) - 18px));
+      max-height: min(100%, calc(clamp(380px, 52vh, 600px) - 12px));
     }
   }
 
@@ -3182,8 +3182,8 @@
   z-index: 1;
   border-radius: inherit;
   box-shadow:
-    inset 0 0 40px rgba(0, 0, 0, 0.32),
-    inset 0 -20px 36px rgba(248, 195, 125, 0.02);
+    inset 0 0 26px rgba(0, 0, 0, 0.2),
+    inset 0 -14px 28px rgba(248, 195, 125, 0.018);
 }
 
 .sv-globe-wrap--ready {
