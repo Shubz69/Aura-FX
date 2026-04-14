@@ -37,6 +37,11 @@ const {
 } = require('./cachePolicy');
 const td = require('./providers/twelveDataClient');
 const metrics = require('./tdMetrics');
+const { runWithTdRequestMeta } = require('./tdRequestContext');
+
+function withThrottleFeature(feature, fn) {
+  return runWithTdRequestMeta({ throttleFeature: feature }, fn);
+}
 
 function num(x) {
   if (x == null || x === '') return null;
@@ -194,28 +199,31 @@ async function attachTdSessionContext(dto, resolved) {
 }
 
 async function twelveDataQuoteToDto(canonical, feature) {
-  const resolved = getResolvedSymbol(canonical);
-  const sym = resolved.twelveDataSymbol;
-  const assetClass = resolved.assetClass || 'stock';
-  let res = await td.fetchQuote(sym);
-  if (res.ok && res.data) {
-    const dto = mapTdQuotePayload(res.data, resolved.canonical, sym, assetClass);
-    if (dto) {
-      metrics.bump(feature, 'twelvedata');
-      await attachTdSessionContext(dto, resolved);
-      return dto;
+  const feat = feature || 'quote';
+  return withThrottleFeature(feat, async () => {
+    const resolved = getResolvedSymbol(canonical);
+    const sym = resolved.twelveDataSymbol;
+    const assetClass = resolved.assetClass || 'stock';
+    let res = await td.fetchQuote(sym);
+    if (res.ok && res.data) {
+      const dto = mapTdQuotePayload(res.data, resolved.canonical, sym, assetClass);
+      if (dto) {
+        metrics.bump(feat, 'twelvedata');
+        await attachTdSessionContext(dto, resolved);
+        return dto;
+      }
     }
-  }
-  res = await td.fetchPrice(sym);
-  if (res.ok && res.data) {
-    const dto = mapTdPricePayload(res.data, resolved.canonical, sym, assetClass);
-    if (dto) {
-      metrics.bump(feature, 'twelvedata');
-      await attachTdSessionContext(dto, resolved);
-      return dto;
+    res = await td.fetchPrice(sym);
+    if (res.ok && res.data) {
+      const dto = mapTdPricePayload(res.data, resolved.canonical, sym, assetClass);
+      if (dto) {
+        metrics.bump(feat, 'twelvedata');
+        await attachTdSessionContext(dto, resolved);
+        return dto;
+      }
     }
-  }
-  return null;
+    return null;
+  });
 }
 
 /**
@@ -412,19 +420,22 @@ function candleSeriesFromOhlcvRows(canonical, providerSymbol, interval, rows, me
 }
 
 async function fetchTimeSeriesDtoFromNetwork(canonical, interval, rangeOpts, feature) {
-  const resolved = getResolvedSymbol(canonical);
-  const sym = resolved.twelveDataSymbol;
-  if (!td.apiKey() || td.primaryDisabled()) return null;
-  const res = await td.fetchTimeSeries(sym, interval, rangeOpts || {});
-  if (!res.ok || !res.data) {
+  const feat = feature || 'series';
+  return withThrottleFeature(feat, async () => {
+    const resolved = getResolvedSymbol(canonical);
+    const sym = resolved.twelveDataSymbol;
+    if (!td.apiKey() || td.primaryDisabled()) return null;
+    const res = await td.fetchTimeSeries(sym, interval, rangeOpts || {});
+    if (!res.ok || !res.data) {
+      return null;
+    }
+    const series = mapTdTimeSeriesToCandles(res.data, resolved.canonical, sym, interval);
+    if (series && series.bars.length) {
+      metrics.bump(feat, 'twelvedata');
+      return series;
+    }
     return null;
-  }
-  const series = mapTdTimeSeriesToCandles(res.data, resolved.canonical, sym, interval);
-  if (series && series.bars.length) {
-    metrics.bump(feature || 'series', 'twelvedata');
-    return series;
-  }
-  return null;
+  });
 }
 
 /**
@@ -514,14 +525,15 @@ async function fetchEarliestTimestampCached(canonical, interval, feature) {
                   : 'earliest');
   return getOrFetch(
     key,
-    async () => {
-      const res = await td.fetchEarliestTimestamp(sym, interval);
-      if (!res.ok || !res.data || res.data.datetime == null) {
-        return null;
-      }
-      metrics.bump(feat, 'twelvedata');
-      return { datetime: res.data.datetime, unix_time: res.data.unix_time };
-    },
+    () =>
+      withThrottleFeature(feat, async () => {
+        const res = await td.fetchEarliestTimestamp(sym, interval);
+        if (!res.ok || !res.data || res.data.datetime == null) {
+          return null;
+        }
+        metrics.bump(feat, 'twelvedata');
+        return { datetime: res.data.datetime, unix_time: res.data.unix_time };
+      }),
     EARLIEST_TTL_MS
   );
 }
@@ -538,18 +550,19 @@ async function fetchExchangeRateNormalized(pairSymbol, opts = {}) {
   const feat = opts.feature || 'md-exchange-rate';
   return getOrFetch(
     key,
-    async () => {
-      const r = await td.fetchExchangeRate({ symbol: sym });
-      if (!r.ok || !r.data || r.data.status === 'error') return null;
-      metrics.bump(feat, 'twelvedata');
-      return {
-        schemaVersion: 1,
-        pair: sym,
-        rate: num(r.data.rate ?? r.data.close ?? r.data.price),
-        datetime: r.data.datetime || null,
-        raw: r.data,
-      };
-    },
+    () =>
+      withThrottleFeature(feat, async () => {
+        const r = await td.fetchExchangeRate({ symbol: sym });
+        if (!r.ok || !r.data || r.data.status === 'error') return null;
+        metrics.bump(feat, 'twelvedata');
+        return {
+          schemaVersion: 1,
+          pair: sym,
+          rate: num(r.data.rate ?? r.data.close ?? r.data.price),
+          datetime: r.data.datetime || null,
+          raw: r.data,
+        };
+      }),
     EXCHANGE_RATE_TTL_MS
   );
 }
@@ -566,19 +579,20 @@ async function fetchCurrencyConversionNormalized(pairSymbol, amount = 1, opts = 
   const feat = opts.feature || 'md-currency-conversion';
   return getOrFetch(
     key,
-    async () => {
-      const r = await td.fetchCurrencyConversion({ symbol: sym, amount });
-      if (!r.ok || !r.data || r.data.status === 'error') return null;
-      metrics.bump(feat, 'twelvedata');
-      return {
-        schemaVersion: 1,
-        pair: sym,
-        amount: num(r.data.amount) ?? Number(amount),
-        rate: num(r.data.rate),
-        result: num(r.data.result ?? r.data.converted),
-        raw: r.data,
-      };
-    },
+    () =>
+      withThrottleFeature(feat, async () => {
+        const r = await td.fetchCurrencyConversion({ symbol: sym, amount });
+        if (!r.ok || !r.data || r.data.status === 'error') return null;
+        metrics.bump(feat, 'twelvedata');
+        return {
+          schemaVersion: 1,
+          pair: sym,
+          amount: num(r.data.amount) ?? Number(amount),
+          rate: num(r.data.rate),
+          result: num(r.data.result ?? r.data.converted),
+          raw: r.data,
+        };
+      }),
     CURRENCY_CONVERSION_TTL_MS
   );
 }
@@ -595,10 +609,12 @@ async function fetchTechnicalIndicatorNormalized(indicator, params = {}, opts = 
   if (!techOn) return null;
   if (!td.apiKey() || td.primaryDisabled()) return null;
   const feat = opts.feature || `td-ti-${String(indicator || 'ind').toLowerCase()}`;
-  const r = await td.fetchTechnicalIndicator(indicator, params);
-  if (!r.ok || !r.data || r.data.status === 'error') return null;
-  metrics.bump(feat, 'twelvedata');
-  return { schemaVersion: 1, indicator: String(indicator), meta: r.data.meta || null, values: r.data.values || [] };
+  return withThrottleFeature(feat, async () => {
+    const r = await td.fetchTechnicalIndicator(indicator, params);
+    if (!r.ok || !r.data || r.data.status === 'error') return null;
+    metrics.bump(feat, 'twelvedata');
+    return { schemaVersion: 1, indicator: String(indicator), meta: r.data.meta || null, values: r.data.values || [] };
+  });
 }
 
 /**
@@ -608,9 +624,12 @@ async function fetchTechnicalIndicatorNormalized(indicator, params = {}, opts = 
  */
 async function searchSymbolsTwelveData(query, opts = {}) {
   if (!td.apiKey() || td.primaryDisabled()) return { ok: false, error: 'td_disabled', data: null };
-  const r = await td.fetchSymbolSearch(query, opts);
-  metrics.bump(opts.feature || 'symbol-search', 'twelvedata');
-  return r;
+  const sf = opts.feature || 'symbol-search';
+  return withThrottleFeature(sf, async () => {
+    const r = await td.fetchSymbolSearch(query, opts);
+    metrics.bump(sf, 'twelvedata');
+    return r;
+  });
 }
 
 module.exports = {

@@ -4,6 +4,7 @@
 
 const td = require('../providers/twelveDataClient');
 const metrics = require('../tdMetrics');
+const { runWithTdRequestMeta } = require('../tdRequestContext');
 const { getResolvedSymbol, toCanonical } = require('../../ai/utils/symbol-registry');
 const {
   ensurePipelineTables,
@@ -36,13 +37,14 @@ function metricsFeature(categoryId, datasetKey) {
   return `td-${categoryId}-${datasetKey}`;
 }
 
-async function invokeClient(def, providerSymbol) {
+async function invokeClient(def, providerSymbol, categoryId, datasetKey) {
   const fn = td[def.clientMethod];
   if (typeof fn !== 'function') {
     return { ok: false, status: 0, data: null, error: 'unknown_client_method' };
   }
   const args = def.buildArgs ? def.buildArgs(providerSymbol) : [providerSymbol];
-  return fn(...args);
+  const feat = metricsFeature(categoryId, datasetKey);
+  return runWithTdRequestMeta({ throttleFeature: feat }, async () => fn(...args));
 }
 
 /**
@@ -137,7 +139,7 @@ async function fetchDatasetImpl(ctx) {
 
   const resolved = isGlobal ? { twelveDataSymbol: null, canonical: canon } : getResolvedSymbol(canon);
   const tdSym = resolved.twelveDataSymbol || canon;
-  const res = await invokeClient(def, tdSym);
+  const res = await invokeClient(def, tdSym, categoryId, datasetKey);
 
   if (!res.ok || !res.data || res.data.status === 'error') {
     const errMsg = res.error || (res.data && res.data.message) || 'upstream_error';

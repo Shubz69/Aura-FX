@@ -1,4 +1,5 @@
 const { runMorningIngestion } = require('../market-data/pipeline-service');
+const { runTwelveDataCronWork } = require('./twelveDataCronContext');
 
 function isAuthorized(req) {
   const authHeader = req.headers.authorization;
@@ -20,7 +21,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const result = await runMorningIngestion();
+    const result = await runTwelveDataCronWork(() => runMorningIngestion());
     return res.status(200).json(result);
   } catch (error) {
     console.error('[cron/market-data-ingest]', error);

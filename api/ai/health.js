@@ -142,8 +142,12 @@ module.exports = async (req, res) => {
   } else {
     try {
       const td = require('../market-data/providers/twelveDataClient');
+      const { runWithTdRequestMeta } = require('../market-data/tdRequestContext');
       const sym = twelveDataProbe.symbol;
-      const r = await td.fetchPrice(sym);
+      const r = await runWithTdRequestMeta(
+        { trafficClass: 'background', throttleFeature: 'health-td-probe' },
+        () => td.fetchPrice(sym)
+      );
       twelveDataProbe.latencyMs = Date.now() - tdProbeStart;
       twelveDataProbe.httpStatus = r.status || 0;
       if (r.ok && r.data && (r.data.price != null || r.data.close != null)) {

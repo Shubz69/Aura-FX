@@ -2,6 +2,8 @@
  * Lightweight Twelve Data instrumentation (per-process).
  */
 
+const tdGate = require('./tdRateLimiter');
+
 const WINDOW_MS = 60000;
 const events = [];
 
@@ -190,6 +192,7 @@ function snapshot() {
     twelveDataCallsLast60s: td,
     totalCallsLast60s: inWin.length,
     lifetime: { ...totals },
+    twelveDataGate: tdGate.stats(),
     fxLayerCache: fxLayerCacheSnapshot(),
     cryptoLayerCache: cryptoLayerCacheSnapshot(),
     fxRoutes: fxFeatureFallbackRatio(),
@@ -207,6 +210,7 @@ function reset() {
   totals.fallback = 0;
   totals.byFeature = {};
   liveHotSnapshotLast = null;
+  tdGate.resetDiagnostics();
   fxCache.quoteHits = 0;
   fxCache.quoteMisses = 0;
   fxCache.seriesHits = 0;

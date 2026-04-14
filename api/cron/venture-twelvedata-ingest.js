@@ -3,6 +3,7 @@
  */
 
 const { runCategoryIngest } = require('../market-data/twelve-data-framework/ingestOrchestrator');
+const { runTwelveDataCronWork } = require('./twelveDataCronContext');
 const { listVentureCategoryIds, ventureMarketsGloballyEnabled } = require('../market-data/equities/ventureRemainingMarkets');
 
 function isAuthorized(req) {
@@ -35,16 +36,18 @@ module.exports = async (req, res) => {
   const ids = listVentureCategoryIds();
   const results = [];
   try {
-    /* eslint-disable no-await-in-loop */
-    for (const categoryId of ids) {
-      const out = await runCategoryIngest(categoryId, {
-        maxTier,
-        symbolLimit,
-        includeGlobal,
-      });
-      results.push({ categoryId, ...out });
-    }
-    /* eslint-enable no-await-in-loop */
+    await runTwelveDataCronWork(async () => {
+      /* eslint-disable no-await-in-loop */
+      for (const categoryId of ids) {
+        const out = await runCategoryIngest(categoryId, {
+          maxTier,
+          symbolLimit,
+          includeGlobal,
+        });
+        results.push({ categoryId, ...out });
+      }
+      /* eslint-enable no-await-in-loop */
+    });
     return res.status(200).json({ success: true, categories: ids.length, results });
   } catch (e) {
     console.error('[cron/venture-twelvedata-ingest]', e);

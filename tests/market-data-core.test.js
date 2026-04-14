@@ -116,6 +116,8 @@ describe('tdRateLimiter stats', () => {
     expect(typeof st.maxRpm).toBe('number');
     expect(typeof st.maxConcurrent).toBe('number');
     expect(st.inFlight).toBe(0);
+    expect(typeof st.queuedInteractive).toBe('number');
+    expect(typeof st.rollingWindowUsedSlots).toBe('number');
   });
 });
 

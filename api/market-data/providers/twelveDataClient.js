@@ -7,7 +7,7 @@
 
 const axios = require('axios');
 const { recordOutboundRequest } = require('../../utils/providerRequestMeter');
-const { withThrottle } = require('../tdRateLimiter');
+const { withThrottle, buildDedupeKey } = require('../tdRateLimiter');
 
 const BASE = 'https://api.twelvedata.com';
 const DEFAULT_TIMEOUT = 9000;
@@ -27,6 +27,7 @@ async function getJson(path, params = {}, timeoutMs = DEFAULT_TIMEOUT) {
   if (!key) return { ok: false, status: 0, data: null, error: 'no_key' };
   const url = `${BASE}${path}`;
   const merged = { ...params, apikey: key };
+  const dedupeKey = buildDedupeKey(path, merged);
   return withThrottle(async () => {
     try {
       recordOutboundRequest(url, 1);
@@ -37,7 +38,7 @@ async function getJson(path, params = {}, timeoutMs = DEFAULT_TIMEOUT) {
       const msg = (e.response && e.response.data && e.response.data.message) || e.message || 'err';
       return { ok: false, status, data: e.response && e.response.data ? e.response.data : null, error: String(msg) };
     }
-  });
+  }, { dedupeKey });
 }
 
 /**

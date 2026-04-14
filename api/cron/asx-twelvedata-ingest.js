@@ -3,6 +3,7 @@
  */
 
 const { runCategoryIngest } = require('../market-data/twelve-data-framework/ingestOrchestrator');
+const { runTwelveDataCronWork } = require('./twelveDataCronContext');
 
 function isAuthorized(req) {
   const authHeader = req.headers.authorization;
@@ -25,7 +26,9 @@ module.exports = async (req, res) => {
   const symbolLimit = req.query.symbolLimit ? parseInt(req.query.symbolLimit, 10) : undefined;
   const includeGlobal = String(req.query.includeGlobal || '1') !== '0';
   try {
-    const out = await runCategoryIngest('asx_equities', { maxTier, symbolLimit, includeGlobal });
+    const out = await runTwelveDataCronWork(() =>
+      runCategoryIngest('asx_equities', { maxTier, symbolLimit, includeGlobal })
+    );
     return res.status(200).json({ success: true, ...out });
   } catch (e) {
     console.error('[cron/asx-twelvedata-ingest]', e);

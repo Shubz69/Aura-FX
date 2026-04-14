@@ -12,6 +12,7 @@ const {
 const { DEFAULT_TTL_MS, effectiveTtlMs } = require('./datasetTtlPolicy');
 const { DATASET_KIND } = require('./datasetKinds');
 const { inflightSize } = require('./ingestOrchestrator');
+const { stats: twelveDataGateStats } = require('../tdRateLimiter');
 
 async function buildCategoryCoverageRow(cat) {
   const symbols = getSymbolsForCategory(cat);
@@ -86,6 +87,7 @@ async function buildTwelveDataFrameworkDiagnostics(ctx = {}) {
     cacheMisses: misses,
     fallbackRatio,
     inflightDedupeSize: inflightSize(),
+    twelveDataGate: twelveDataGateStats(),
   };
 }
 

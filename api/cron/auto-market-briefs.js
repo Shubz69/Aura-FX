@@ -15,6 +15,7 @@ const {
   isTraderDeskAutomationConfigured,
 } = require('../trader-deck/services/autoBriefGenerator');
 const { resetProviderRequestMeter, logProviderRequestMeter } = require('../utils/providerRequestMeter');
+const { runTwelveDataCronWork } = require('./twelveDataCronContext');
 
 function isAuthorized(req) {
   const authHeader = req.headers.authorization;
@@ -42,68 +43,73 @@ const handler = async (req, res) => {
     });
   }
 
-  resetProviderRequestMeter();
+  const payload = await runTwelveDataCronWork(async () => {
+    resetProviderRequestMeter();
 
-  const force = req.query?.force === '1' || req.query?.force === 'true';
-  const forcePrefetch = req.query?.prefetch === '1' || req.query?.prefetch === 'true';
-  const periodParam = req.query?.period ? String(req.query.period).toLowerCase() : '';
-  const periods = periodParam === 'daily' || periodParam === 'weekly' ? [periodParam] : ['daily', 'weekly'];
-  const now = new Date();
-  const out = [];
+    const force = req.query?.force === '1' || req.query?.force === 'true';
+    const forcePrefetch = req.query?.prefetch === '1' || req.query?.prefetch === 'true';
+    const periodParam = req.query?.period ? String(req.query.period).toLowerCase() : '';
+    const periods = periodParam === 'daily' || periodParam === 'weekly' ? [periodParam] : ['daily', 'weekly'];
+    const now = new Date();
+    const out = [];
 
-  let prefetchResult = null;
-  const prefetchDue = forcePrefetch || shouldPrefetchInstrumentResearchWindow({ now, period: 'daily', timeZone: 'Europe/London' });
-  if (prefetchDue && (forcePrefetch || periods.includes('daily'))) {
-    try {
-      prefetchResult = await prefetchInstrumentResearchForDaily({
+    let prefetchResult = null;
+    const prefetchDue =
+      forcePrefetch || shouldPrefetchInstrumentResearchWindow({ now, period: 'daily', timeZone: 'Europe/London' });
+    if (prefetchDue && (forcePrefetch || periods.includes('daily'))) {
+      try {
+        prefetchResult = await prefetchInstrumentResearchForDaily({
+          runDate: now,
+          timeZone: 'Europe/London',
+        });
+      } catch (e) {
+        prefetchResult = { success: false, error: e.message || 'prefetch failed' };
+      }
+    }
+
+    for (const period of periods) {
+      const due = force || shouldRunWindow({ now, period, timeZone: 'Europe/London' });
+      if (!due) {
+        out.push({ period, skipped: true, reason: 'outside-window' });
+        continue;
+      }
+      const outlook = await generateAndStoreOutlook({
+        period,
         runDate: now,
         timeZone: 'Europe/London',
       });
-    } catch (e) {
-      prefetchResult = { success: false, error: e.message || 'prefetch failed' };
+      logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after outlook', { period });
+      const categoryBriefs = await generateAndStoreBriefSet({
+        period,
+        runDate: now,
+        timeZone: 'Europe/London',
+      });
+      const categoryGapFill = await generateAndStoreMissingCategoryBriefs({
+        period,
+        runDate: now,
+        timeZone: 'Europe/London',
+      });
+      logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after category brief set', { period });
+      const institutional = await generateAndStoreInstitutionalBriefOnly({
+        period,
+        runDate: now,
+        timeZone: 'Europe/London',
+      });
+      logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after institutional brief', { period });
+      out.push({ period, outlook, categoryBriefs, categoryGapFill, institutional });
     }
-  }
 
-  for (const period of periods) {
-    const due = force || shouldRunWindow({ now, period, timeZone: 'Europe/London' });
-    if (!due) {
-      out.push({ period, skipped: true, reason: 'outside-window' });
-      continue;
-    }
-    const outlook = await generateAndStoreOutlook({
-      period,
-      runDate: now,
-      timeZone: 'Europe/London',
-    });
-    logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after outlook', { period });
-    const categoryBriefs = await generateAndStoreBriefSet({
-      period,
-      runDate: now,
-      timeZone: 'Europe/London',
-    });
-    const categoryGapFill = await generateAndStoreMissingCategoryBriefs({
-      period,
-      runDate: now,
-      timeZone: 'Europe/London',
-    });
-    logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after category brief set', { period });
-    const institutional = await generateAndStoreInstitutionalBriefOnly({
-      period,
-      runDate: now,
-      timeZone: 'Europe/London',
-    });
-    logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after institutional brief', { period });
-    out.push({ period, outlook, categoryBriefs, categoryGapFill, institutional });
-  }
+    logProviderRequestMeter('[cron-auto-market-briefs] invocation total outbound HTTP (since cron start)');
 
-  logProviderRequestMeter('[cron-auto-market-briefs] invocation total outbound HTTP (since cron start)');
-
-  return res.status(200).json({
-    success: true,
-    ranAt: now.toISOString(),
-    instrumentPrefetch: prefetchResult,
-    results: out,
+    return {
+      success: true,
+      ranAt: now.toISOString(),
+      instrumentPrefetch: prefetchResult,
+      results: out,
+    };
   });
+
+  return res.status(200).json(payload);
 };
 
 /** Vercel: allow long-running automation (matches vercel.json `api/cron/*.js`). */

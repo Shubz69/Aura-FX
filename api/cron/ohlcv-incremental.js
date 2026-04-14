@@ -3,6 +3,7 @@
  */
 
 const { runTier1Incremental, runFxPriorityDeepBackfill } = require('../market-data/ohlcvIngest');
+const { runTwelveDataCronWork } = require('./twelveDataCronContext');
 
 function isAuthorized(req) {
   const authHeader = req.headers.authorization;
@@ -26,11 +27,14 @@ module.exports = async (req, res) => {
   const deepPairs = req.query.deepPairs ? parseInt(req.query.deepPairs, 10) : 6;
   const deepChunks = req.query.deepChunks ? parseInt(req.query.deepChunks, 10) : 10;
   try {
-    const out = await runTier1Incremental(limit);
-    let fxDeep = null;
-    if (deep) {
-      fxDeep = await runFxPriorityDeepBackfill(deepPairs, deepChunks);
-    }
+    const { out, fxDeep } = await runTwelveDataCronWork(async () => {
+      const o = await runTier1Incremental(limit);
+      let fd = null;
+      if (deep) {
+        fd = await runFxPriorityDeepBackfill(deepPairs, deepChunks);
+      }
+      return { out: o, fxDeep: fd };
+    });
     return res.status(200).json({ success: true, ...out, fxDeepBackfill: fxDeep });
   } catch (e) {
     console.error('[cron/ohlcv-incremental]', e);
