@@ -1,31 +1,31 @@
-# Grant Admin Access to shubzfx@gmail.com
+# Grant admin access to slutherfx@gmail.com
 
 ## Quick Fix: Update Database
 
 Run this SQL in MySQL Workbench (connected to your Railway database):
 
 ```sql
--- Update shubzfx@gmail.com to ADMIN role
+-- Update slutherfx@gmail.com to ADMIN role
 UPDATE users 
 SET role = 'ADMIN' 
-WHERE email = 'shubzfx@gmail.com';
+WHERE email = 'slutherfx@gmail.com';
 
 -- Verify the update
 SELECT id, email, username, role 
 FROM users 
-WHERE email = 'shubzfx@gmail.com';
+WHERE email = 'slutherfx@gmail.com';
 ```
 
 ## After Running SQL
 
 1. **Log out** from the website
-2. **Log back in** with `shubzfx@gmail.com`
+2. **Log back in** with `slutherfx@gmail.com`
 3. The admin access should now work
 
 ## What Was Fixed
 
 - Updated `AdminMessages.js` to check for admin access more flexibly (handles both 'ADMIN' and 'admin' role formats)
-- Added email-based admin check for `shubzfx@gmail.com` (same as AdminPanel)
+- Added email-based admin check for `slutherfx@gmail.com` (same as AdminPanel)
 - Created SQL script to update the database role
 
 ## If Still Not Working
@@ -40,7 +40,7 @@ If you still see "ACCESS DENIED" after updating the database and logging back in
 
 2. If role is still not 'ADMIN', the database update didn't work. Check:
    - You're connected to the correct Railway database
-   - The email is exactly `shubzfx@gmail.com` (case-sensitive)
+   - The email is exactly `slutherfx@gmail.com` (case-sensitive)
    - The UPDATE query ran successfully
 
 3. Clear browser cache and localStorage:

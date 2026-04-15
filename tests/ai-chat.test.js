@@ -182,7 +182,7 @@ describe('Token Decoding', () => {
 describe('Access Control', () => {
   const prevSuper = process.env.SUPER_ADMIN_EMAIL;
   beforeAll(() => {
-    process.env.SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
+    process.env.SUPER_ADMIN_EMAIL = 'slutherfx@gmail.com';
   });
   afterAll(() => {
     if (prevSuper === undefined) delete process.env.SUPER_ADMIN_EMAIL;
@@ -190,8 +190,8 @@ describe('Access Control', () => {
   });
 
   test('allows super admin by email', () => {
-    expect(checkAccess({ email: 'shubzfx@gmail.com' })).toBe(true);
-    expect(checkAccess({ email: 'SHUBZFX@GMAIL.COM' })).toBe(true);
+    expect(checkAccess({ email: 'slutherfx@gmail.com' })).toBe(true);
+    expect(checkAccess({ email: 'SLUTHERFX@GMAIL.COM' })).toBe(true);
   });
 
   test('allows premium roles', () => {

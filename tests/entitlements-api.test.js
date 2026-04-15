@@ -66,7 +66,7 @@ describe('Entitlements Logic', () => {
   it('super-admin fallback email with USER role gets Surveillance', () => {
     const user = {
       id: 99,
-      email: 'shubzfx@gmail.com',
+      email: 'slutherfx@gmail.com',
       role: 'user',
       subscription_plan: 'free',
       subscription_status: 'inactive',

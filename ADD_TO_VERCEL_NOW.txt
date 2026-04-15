@@ -15,7 +15,7 @@ STEP-BY-STEP:
 5. ADD FIRST VARIABLE:
    - Click "Add New"
    - Key: EMAIL_USER
-   - Value: shubzfx@gmail.com
+   - Value: slutherfx@gmail.com
    (Or whatever Gmail address you used to generate the App Password)
    - Environments: ✅ Production ✅ Preview ✅ Development
    - Click "Save"

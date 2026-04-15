@@ -48,7 +48,7 @@
 3. **Add EMAIL_USER:**
    - Click **"Add New"**
    - **Key:** `EMAIL_USER`
-   - **Value:** Your Gmail address (e.g., `shubzfx@gmail.com`)
+   - **Value:** Your Gmail address (e.g., `slutherfx@gmail.com`)
    - **Environments:** ✅ Check ALL THREE:
      - ✅ Production
      - ✅ Preview  

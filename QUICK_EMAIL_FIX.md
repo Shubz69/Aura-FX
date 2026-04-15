@@ -20,7 +20,7 @@ Signups are failing with: "Email service is temporarily unavailable"
 
 **Variable 1:**
 - **Name**: `EMAIL_USER`
-- **Value**: Your Gmail address (e.g., `shubzfx@gmail.com`)
+- **Value**: Your Gmail address (e.g., `slutherfx@gmail.com`)
 - **Environments**: ✅ Production, ✅ Preview, ✅ Development
 
 **Variable 2:**

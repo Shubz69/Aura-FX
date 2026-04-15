@@ -105,7 +105,7 @@ If you have partial tables causing conflicts:
 Once all tables are created successfully:
 1. ✅ Run `create_admin_user.sql` to create the admin account
 2. ✅ Or use `generate_admin_password.js` to generate a password hash
-3. ✅ Login with shubzfx@gmail.com
+3. ✅ Login with slutherfx@gmail.com
 
 ## Still Having Issues?
 

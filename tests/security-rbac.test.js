@@ -84,7 +84,7 @@ const SUPER_ADMIN_USER = {
 /** Matches api/utils/entitlements SUPER_ADMIN_EMAIL_FALLBACK_LOWER — DB role USER, staff by email list */
 const SUPER_ADMIN_BY_EMAIL_ROW = {
   id: 6,
-  email: 'shubzfx@gmail.com',
+  email: 'slutherfx@gmail.com',
   role: 'user',
   subscription_plan: 'free',
   subscription_status: 'inactive',

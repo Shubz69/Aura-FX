@@ -33,8 +33,8 @@ USE railway;
 
 INSERT INTO users (username, email, password, name, avatar, role, muted, mfa_verified, dtype, subscription_status, created_at)
 VALUES (
-    'shubzfx',
-    'shubzfx@gmail.com',
+    'slutherfx',
+    'slutherfx@gmail.com',
     'YOUR_PASSWORD_HASH',  -- Replace with hash from Step 1
     'Head Admin',
     '/avatars/avatar_ai.png',
@@ -59,19 +59,19 @@ Run this query to verify the admin user was created:
 ```sql
 SELECT id, username, email, role, subscription_status, created_at 
 FROM users 
-WHERE email = 'shubzfx@gmail.com';
+WHERE email = 'slutherfx@gmail.com';
 ```
 
 You should see:
-- username: `shubzfx`
-- email: `shubzfx@gmail.com`
+- username: `slutherfx`
+- email: `slutherfx@gmail.com`
 - role: `ADMIN`
 - subscription_status: `active`
 
 ## Step 4: Login
 
 After creating the admin user, you can log in to the website with:
-- **Email:** shubzfx@gmail.com
+- **Email:** slutherfx@gmail.com
 - **Password:** (the password you used to generate the hash)
 
 ## Quick Start (If you want to use a temporary password)
@@ -83,8 +83,8 @@ USE railway;
 
 INSERT INTO users (username, email, password, name, avatar, role, muted, mfa_verified, dtype, subscription_status, created_at)
 VALUES (
-    'shubzfx',
-    'shubzfx@gmail.com',
+    'slutherfx',
+    'slutherfx@gmail.com',
     '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
     'Head Admin',
     '/avatars/avatar_ai.png',
@@ -103,7 +103,7 @@ ON DUPLICATE KEY UPDATE
 ```
 
 **Login with:**
-- Email: shubzfx@gmail.com
+- Email: slutherfx@gmail.com
 - Password: Admin123!
 
 ⚠️ **IMPORTANT:** Change this password immediately after first login for security!

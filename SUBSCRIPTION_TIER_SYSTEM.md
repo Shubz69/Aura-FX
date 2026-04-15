@@ -13,7 +13,7 @@ The platform now supports a 3-tier subscription system with proper role-based ch
 - `premium` - Assigned when user purchases Aura FX subscription (£99/month)
 - `a7fx` - Assigned when user purchases A7FX Elite subscription (£250/month)
 - `admin` - Admin users (assigned by Super Admin)
-- `super_admin` - Full system access (shubzfx@gmail.com only)
+- `super_admin` - Full system access (primary super-admin: slutherfx@gmail.com in code fallback)
 
 ## Channel Access Levels
 

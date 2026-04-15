@@ -52,7 +52,7 @@
 - ✅ Optimized queries
 
 **Contact Emails:**
-- ✅ All go to shubzfx@gmail.com (updated)
+- ✅ All go to slutherfx@gmail.com (updated)
 
 ## 📊 Performance Summary
 

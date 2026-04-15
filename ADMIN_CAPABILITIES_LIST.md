@@ -6,7 +6,7 @@
 1. **Free User** - Basic access
 2. **Premium User** - Full course access
 3. **Admin** - Limited admin access (capabilities assigned by Super Admin)
-4. **Super Admin** - Full system access (shubzfx@gmail.com only)
+4. **Super Admin** - Full system access (primary: slutherfx@gmail.com in code; env can add more)
 
 ---
 
@@ -89,7 +89,7 @@ When you assign the "Admin" role to a user, they automatically get these capabil
 
 ## Super Admin Account
 
-**Email:** shubzfx@gmail.com
+**Email:** slutherfx@gmail.com
 
 **Security:**
 - Cannot be deleted
@@ -111,7 +111,7 @@ When you assign the "Admin" role to a user, they automatically get these capabil
 
 ## Security Notes
 
-- Only Super Admin (shubzfx@gmail.com) can assign roles
+- Only Super Admin (e.g. slutherfx@gmail.com when listed) can assign roles
 - Super Admin account is protected and cannot be modified
 - Admin capabilities are stored in database and can be customized per admin
 - All admin actions should be logged for security auditing

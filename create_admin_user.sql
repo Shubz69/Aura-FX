@@ -18,8 +18,8 @@ bcrypt.hash(password, 10).then(hash => {
     console.log('\nSQL INSERT statement:');
     console.log(`INSERT INTO users (username, email, password, name, avatar, role, muted, mfa_verified, dtype, subscription_status, created_at)
 VALUES (
-    'shubzfx',
-    'shubzfx@gmail.com',
+    'slutherfx',
+    'slutherfx@gmail.com',
     '${hash}',
     'Head Admin',
     '/avatars/avatar_ai.png',
@@ -44,8 +44,8 @@ ON DUPLICATE KEY UPDATE
 -- TEMPORARY: Using a known hash for "TempPassword123!" - YOU MUST CHANGE THIS!
 INSERT INTO users (username, email, password, name, avatar, role, muted, mfa_verified, dtype, subscription_status, created_at)
 VALUES (
-    'shubzfx',
-    'shubzfx@gmail.com',
+    'slutherfx',
+    'slutherfx@gmail.com',
     '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', -- Hash for "TempPassword123!" - CHANGE THIS!
     'Head Admin',
     '/avatars/avatar_ai.png',
@@ -62,7 +62,7 @@ ON DUPLICATE KEY UPDATE
     name = 'Head Admin';
 
 -- After running this, you can log in with:
--- Email: shubzfx@gmail.com
+-- Email: slutherfx@gmail.com
 -- Password: TempPassword123! (or whatever password you used to generate the hash)
 -- 
 -- IMPORTANT: Change the password immediately after first login!

@@ -88,7 +88,7 @@ Then run `create_tables_fixed.sql` again from the beginning.
 
 1. ✅ Verify all 10 tables exist (run `SHOW TABLES;`)
 2. ✅ Create admin user (see `CREATE_ADMIN_USER.md`)
-3. ✅ Login with shubzfx@gmail.com
+3. ✅ Login with slutherfx@gmail.com
 
 
 

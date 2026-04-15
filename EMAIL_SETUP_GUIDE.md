@@ -41,7 +41,7 @@ Since the application uses Gmail SMTP, you need to create an App Password (not y
 
 ### Example:
 ```
-EMAIL_USER = shubzfx@gmail.com
+EMAIL_USER = slutherfx@gmail.com
 EMAIL_PASS = abcd efgh ijkl mnop
 ```
 

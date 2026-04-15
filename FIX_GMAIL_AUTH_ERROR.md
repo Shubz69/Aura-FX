@@ -43,7 +43,7 @@
 5. **VERIFY EMAIL_USER:**
    - Make sure `EMAIL_USER` is the EXACT Gmail address
    - The one you used to generate the App Password
-   - Example: `shubzfx@gmail.com` (exact match, no typos)
+   - Example: `your-account@gmail.com` (exact match, no typos)
 
 ### Step 4: REDEPLOY (CRITICAL!)
 1. Go to **Deployments** tab

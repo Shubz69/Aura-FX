@@ -9,7 +9,7 @@
 3. Go to **Settings** → **Environment Variables**
 4. **VERIFY** you see these 2 variables:
 
-   ✅ **EMAIL_USER** = `shubzfx@gmail.com` (or your Gmail)
+   ✅ **EMAIL_USER** = `slutherfx@gmail.com` (or your Gmail)
    ✅ **EMAIL_PASS** = `mzxparcgxlvqsxvc` (16 characters, no spaces)
 
 5. **CRITICAL:** Make sure BOTH are enabled for:
