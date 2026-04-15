@@ -15,7 +15,7 @@
 
 .sv-page--terminal {
   /* Hero band + narrow side/rail so the center column carries maximum globe width */
-  --sv-globe-band: clamp(480px, 75vh, 820px);
+  --sv-globe-band: clamp(500px, 78vh, 860px);
   --sv-terminal-side: minmax(126px, 182px);
   --sv-terminal-rail: minmax(252px, 344px);
   --sv-terminal-pad-x: 18px;
@@ -518,12 +518,13 @@
   background:
     radial-gradient(ellipse 108% 96% at 50% 44%, rgba(18, 20, 38, 0.52), transparent 56%),
     radial-gradient(ellipse 88% 70% at 72% 18%, rgba(248, 195, 125, 0.04), transparent 42%),
+    radial-gradient(ellipse 60% 50% at 10% 88%, rgba(72, 92, 130, 0.08), transparent 55%),
     linear-gradient(165deg, #05060c 0%, #03040a 52%, #020208 100%);
 }
 
 /* Slightly more vertical reserve when zoomed — keeps the sphere inside the stage read */
 .sv-globe-stage--lensed {
-  --sv-globe-chrome-reserve: 1.05rem;
+  --sv-globe-chrome-reserve: 0.92rem;
 }
 
 .sv-globe-stage::before {
@@ -928,7 +929,7 @@
 .sv-tape-row {
   width: 100%;
   display: grid;
-  grid-template-columns: 36px 58px 92px minmax(5rem, 7.5rem) 1fr minmax(3.2rem, 5.5rem);
+  grid-template-columns: 36px 58px 92px minmax(5rem, 7.5rem) 1fr minmax(5.5rem, 8rem);
   gap: 0 12px;
   align-items: center;
   padding: 11px 14px;
@@ -1016,6 +1017,68 @@
   white-space: nowrap;
 }
 
+.sv-tape-deck-legend {
+  margin: 6px 0 0;
+  max-width: 62ch;
+  font-size: 0.65rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.34);
+  letter-spacing: 0.02em;
+}
+
+.sv-tape-cell--signal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.sv-tape-signal-trust {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.sv-tape-signal-fresh {
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(248, 195, 125, 0.78);
+  white-space: nowrap;
+}
+
+.sv-tape-signal-fresh--muted {
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.sv-tape-signal-trust--official {
+  color: rgba(200, 228, 255, 0.88);
+}
+
+.sv-tape-signal-trust--institutional {
+  color: rgba(210, 200, 255, 0.85);
+}
+
+.sv-tape-signal-trust--authority {
+  color: rgba(190, 220, 255, 0.82);
+}
+
+.sv-tape-signal-trust--corroborated {
+  color: rgba(186, 230, 200, 0.82);
+}
+
+.sv-tape-signal-trust--public {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.sv-tape-signal-trust--unknown {
+  color: rgba(255, 255, 255, 0.28);
+}
+
 .sv-tape-cell--muted {
   color: rgba(255, 255, 255, 0.22);
   font-size: 0.72rem;
@@ -1041,10 +1104,12 @@
     order: 4;
   }
 
-  .sv-tape-cell--when {
+  .sv-tape-cell--when,
+  .sv-tape-cell--signal {
     flex: 0 0 auto;
     order: 5;
     text-align: left;
+    align-items: flex-start;
   }
 }
 
@@ -1241,6 +1306,14 @@
   font-size: 0.82rem;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.78);
+}
+
+.sv-rail-situation-fresh {
+  margin: 8px 0 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(248, 195, 125, 0.72);
 }
 
 .sv-rail-kpi-grid {
@@ -1457,6 +1530,14 @@
   color: rgba(255, 255, 255, 0.38);
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.sv-rail-section-hint {
+  margin: -4px 0 10px;
+  font-size: 0.65rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.38);
+  letter-spacing: 0.02em;
 }
 
 .sv-rail-list {
@@ -2968,19 +3049,40 @@
   animation: sv-drawer-slide 0.3s var(--sv-ease-out) both;
 }
 
-.sv-drawer-source {
-  margin: 0 0 4px;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(234, 169, 96, 0.8);
+.sv-drawer-provenance {
+  margin: 0 0 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.sv-drawer-source-kind {
+.sv-drawer-trust-tier {
+  margin: 0 0 4px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: rgba(255, 252, 248, 0.94);
+}
+
+.sv-drawer-source-channel {
+  margin: 0 0 4px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.48);
+  letter-spacing: 0.02em;
+}
+
+.sv-drawer-recency {
+  margin: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(248, 195, 125, 0.78);
+}
+
+.sv-drawer-source-note {
   margin: 0 0 10px;
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.45);
-  letter-spacing: 0.02em;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.42);
 }
 
 .sv-drawer-title {
@@ -3018,6 +3120,11 @@
 .sv-drawer-chip--corr {
   background: rgba(80, 200, 120, 0.12);
   color: rgba(190, 245, 210, 0.95);
+}
+
+.sv-drawer-chip--trust {
+  background: rgba(96, 110, 150, 0.14);
+  border: 1px solid rgba(120, 140, 180, 0.22);
 }
 
 .sv-drawer-chip--bias-risk_off {

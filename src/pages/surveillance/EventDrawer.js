@@ -1,4 +1,12 @@
 import React from 'react';
+import {
+  eventFreshnessTimestamp,
+  formatIsoDisplayFriendly,
+  salienceHint,
+  trustQualityPresentation,
+  verificationPresentation,
+} from './surveillancePresentation';
+import { formatRecencyLabel } from './surveillanceRegionUtils';
 
 const VERIFICATION_LABEL = {
   unverified: 'Single publisher',
@@ -6,15 +14,17 @@ const VERIFICATION_LABEL = {
   corroborated: 'Cross-publisher corroboration',
 };
 
-function verificationLabel(state) {
+function verificationCopy(state) {
   const s = String(state || '').toLowerCase();
-  return VERIFICATION_LABEL[s] || state || '—';
+  if (VERIFICATION_LABEL[s]) return VERIFICATION_LABEL[s];
+  return verificationPresentation(state);
 }
 
 function publisherKindLabel(sourceType) {
   const t = String(sourceType || '').toLowerCase();
-  if (t === 'official_html' || t === 'official') return 'Public institutional page';
-  return 'Publisher feed';
+  if (t === 'official_html' || t === 'official') return 'Public institutional statement';
+  if (t === 'wire' || t === 'newswire') return 'Institutional newswire';
+  return 'Published report';
 }
 
 export default function EventDrawer({ event, story, related, onClose, loading, onOpenRelatedId }) {
@@ -44,23 +54,33 @@ export default function EventDrawer({ event, story, related, onClose, loading, o
           {!loading && event && (
             <>
               <header className="sv-drawer-hero">
-                <p className="sv-drawer-source">{event.source}</p>
-                <p className="sv-drawer-source-kind">{publisherKindLabel(event.source_type)}</p>
+                <div className="sv-drawer-provenance">
+                  <p className="sv-drawer-trust-tier">{trustQualityPresentation(event.trust_score).label}</p>
+                  <p className="sv-drawer-source-channel">{publisherKindLabel(event.source_type)}</p>
+                  {eventFreshnessTimestamp(event) ? (
+                    <p className="sv-drawer-recency" title="Most recent timestamp on this intelligence row">
+                      Updated {formatRecencyLabel(eventFreshnessTimestamp(event))}
+                    </p>
+                  ) : null}
+                </div>
                 <h2 className="sv-drawer-title">{event.title}</h2>
               </header>
               <div className="sv-drawer-matters-wrap">
                 <p className="sv-drawer-matters-label">Why it matters</p>
                 <p className="sv-drawer-matters">{event.why_it_matters}</p>
               </div>
-              <div className="sv-drawer-scores" aria-label="Scores and verification">
+              <div className="sv-drawer-scores" aria-label="Salience, sourcing, and risk">
                 {event.rank_score != null ? (
-                  <span className="sv-drawer-chip sv-drawer-chip--rank" title="Composite tape priority">
-                    Rank {Math.round(event.rank_score)}
+                  <span className="sv-drawer-chip sv-drawer-chip--rank" title={salienceHint()}>
+                    Salience {Math.round(event.rank_score)}
                   </span>
                 ) : null}
                 {event.trust_score != null ? (
-                  <span className="sv-drawer-chip" title="Publisher tier and confidence (0–100)">
-                    Trust {Math.round(event.trust_score)}
+                  <span
+                    className="sv-drawer-chip sv-drawer-chip--trust"
+                    title={trustQualityPresentation(event.trust_score).detail}
+                  >
+                    {trustQualityPresentation(event.trust_score).short}
                   </span>
                 ) : null}
                 {event.risk_bias && event.risk_bias !== 'neutral' ? (
@@ -109,15 +129,15 @@ export default function EventDrawer({ event, story, related, onClose, loading, o
                 </div>
                 <div>
                   <dt>Verification</dt>
-                  <dd>{verificationLabel(event.verification_state)}</dd>
+                  <dd>{verificationCopy(event.verification_state)}</dd>
                 </div>
                 <div>
                   <dt>Published</dt>
-                  <dd>{event.published_at || '—'}</dd>
+                  <dd>{formatIsoDisplayFriendly(event.published_at)}</dd>
                 </div>
                 <div>
                   <dt>Detected</dt>
-                  <dd>{event.detected_at || '—'}</dd>
+                  <dd>{formatIsoDisplayFriendly(event.detected_at)}</dd>
                 </div>
                 <div>
                   <dt>Region</dt>
@@ -142,6 +162,9 @@ export default function EventDrawer({ event, story, related, onClose, loading, o
               )}
               <section className="sv-drawer-section">
                 <h3>Original publisher</h3>
+                <p className="sv-drawer-source-note">
+                  Open the publisher&apos;s page to verify wording, timing, and primary attribution.
+                </p>
                 <a href={event.url} target="_blank" rel="noopener noreferrer" className="sv-drawer-link">
                   Open source page
                 </a>

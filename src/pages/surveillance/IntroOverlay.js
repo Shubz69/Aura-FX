@@ -160,21 +160,21 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
           ) : (
             <div className="sv-intro-brief">
               <p className="sv-intro-brief-lede">
-                Snapshot only — the full digest, tape, and globe load inside the terminal. Scores below are how the grid
-                prioritizes items right now (not prices).
+                Snapshot only — the full digest, tape, and globe load inside the terminal. Salience scores show how the
+                grid prioritizes items right now (not prices).
               </p>
               <BriefList
                 title="Highest priority on tape"
-                hint="Rank (0–100): composite priority on the tape — higher appears first. Blends trust, severity, corroboration, and freshness."
-                rankCaption="Rank"
+                hint="Salience (0–100): how strongly the terminal surfaces each row — blends severity, corroboration, source quality, and freshness. Higher appears first."
+                rankCaption="Salience"
                 items={preview.top}
                 onPick={(id) => runExit(() => onPickStory?.(id))}
               />
               {preview.since.length ? (
                 <BriefList
                   title="New since your last session"
-                  hint="Same rank scale — items updated since your last visit that are not in the top list above."
-                  rankCaption="Rank"
+                  hint="Same salience scale — refreshed items since your last visit that are not in the top list above."
+                  rankCaption="Salience"
                   items={preview.since}
                   onPick={(id) => runExit(() => onPickStory?.(id))}
                 />
@@ -182,7 +182,7 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
               {(preview.moreTop > 0 || preview.moreSince > 0) && (
                 <p className="sv-intro-brief-more">
                   {[
-                    preview.moreTop > 0 ? `${preview.moreTop} more ranked on tape` : null,
+                    preview.moreTop > 0 ? `${preview.moreTop} more on the live tape` : null,
                     preview.moreSince > 0 ? `${preview.moreSince} more since last visit` : null,
                   ]
                     .filter(Boolean)
