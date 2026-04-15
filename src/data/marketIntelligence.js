@@ -34,9 +34,9 @@ export const SEED_MARKET_INTELLIGENCE = {
     value: 50,
     label: 'MIXED',
     recommendedAction: [
-      'Reduce position size around clustered events',
-      'Wait for confirmation before directional commitment',
-      'Expect volatility spikes at session handovers',
+      'Mixed tape: macro narratives can rotate quickly between rates, USD, and growth',
+      'Liquidity depth reshapes at London–NY overlaps',
+      'Cross-asset dispersion often rises when regions diverge on data',
     ],
   },
   keyDrivers: [
@@ -57,11 +57,11 @@ export const SEED_MARKET_INTELLIGENCE = {
   ],
   marketChangesToday: ['USD strength increased after macro repricing', 'Gold reacted to real-yield and risk tone', 'Equities lost momentum into later sessions', 'Crypto stayed defensive versus risk benchmarks'],
   traderFocus: [
-    { title: 'Avoid adding risk before high-impact events', reason: 'Event-risk control' },
-    { title: 'Watch bond yields for equity/gold inflections', reason: 'Primary macro driver' },
-    { title: 'Expect volatility into session opens', reason: 'Liquidity windows' },
-    { title: 'Reduce risk when events cluster', reason: 'Volatility management' },
-    { title: 'Use confirmation-based entries', reason: 'Execution discipline' },
+    { title: 'High-impact event windows concentrate correlation resets', reason: 'Macro calendar structure' },
+    { title: 'Bond yields remain the hinge between duration, gold, and USD', reason: 'Primary macro driver' },
+    { title: 'Session opens often reshape depth and short-horizon variance', reason: 'Liquidity windows' },
+    { title: 'Clustered releases can bunch realized volatility in tight clocks', reason: 'Event spacing' },
+    { title: 'Cross-asset dispersion signals narrative rotation early', reason: 'Macro structure' },
   ],
   riskRadar: [
     {
@@ -130,7 +130,7 @@ export const SEED_MARKET_INTELLIGENCE = {
         state: 'event_sensitive',
         confidence: 0.84,
         tags: ['high-impact window'],
-        summary: 'Next major release window approaching; reduce initiative into the print.',
+        summary: 'Next major release window approaching; headline clocks concentrate two-way repricing risk.',
         liquidityBias: 'normal',
         volatilityState: 'normal',
         eventRisk: 'high',
@@ -159,10 +159,12 @@ const SESSION_STATE_LABELS = {
 
 function normalizeSessionRow(r) {
   if (!r || typeof r !== 'object') return null;
+  const tags = Array.isArray(r.tags) ? r.tags.map((t) => String(t || '').trim()).filter(Boolean).slice(0, 2) : [];
   return {
+    ...r,
     state: typeof r.state === 'string' ? r.state : 'range_bound',
     confidence: typeof r.confidence === 'number' && Number.isFinite(r.confidence) ? r.confidence : null,
-    tags: Array.isArray(r.tags) ? r.tags.map((t) => String(t || '').trim()).filter(Boolean).slice(0, 2) : [],
+    tags,
     summary: typeof r.summary === 'string' ? r.summary : '',
     liquidityBias: r.liquidityBias != null ? String(r.liquidityBias) : '',
     volatilityState: r.volatilityState != null ? String(r.volatilityState) : '',
@@ -242,6 +244,7 @@ function mapBackendToDashboard(apiData) {
   return {
     marketRegime: r
       ? {
+          ...r,
           currentRegime: r.currentRegime || '',
           bias: r.bias || '',
           primaryDriver: r.primaryDriver || '',
@@ -254,17 +257,23 @@ function mapBackendToDashboard(apiData) {
       : SEED_MARKET_INTELLIGENCE.marketRegime,
     marketPulse: p
       ? {
-          value: typeof p.score === 'number' ? p.score : 50,
+          ...p,
+          value: typeof p.score === 'number' ? p.score : (p.value != null ? p.value : 50),
+          score: typeof p.score === 'number' ? p.score : (p.value != null ? p.value : 50),
           label: p.label || 'MIXED',
           recommendedAction: Array.isArray(p.recommendedAction) ? p.recommendedAction : [],
+          outlookPulse: p.outlookPulse && typeof p.outlookPulse === 'object' ? p.outlookPulse : null,
         }
       : SEED_MARKET_INTELLIGENCE.marketPulse,
     keyDrivers: Array.isArray(k)
       ? k.map((d) => ({
+          name: d.name || d.title || '',
           title: d.name || d.title || '',
           direction: d.direction || 'neutral',
           impact: capitalize(d.impact) || 'Medium',
           effect: d.effect || '',
+          explanation: typeof d.explanation === 'string' ? d.explanation : '',
+          affectedAssets: Array.isArray(d.affectedAssets) ? d.affectedAssets : [],
         }))
       : SEED_MARKET_INTELLIGENCE.keyDrivers,
     crossAssetSignals: Array.isArray(c)
@@ -272,6 +281,9 @@ function mapBackendToDashboard(apiData) {
           asset: s.asset || '',
           direction: s.direction || 'neutral',
           label: s.signal || s.label || '—',
+          signal: s.signal || s.label || '—',
+          strength: typeof s.strength === 'string' ? s.strength : '',
+          implication: typeof s.implication === 'string' ? s.implication : '',
         }))
       : SEED_MARKET_INTELLIGENCE.crossAssetSignals,
     marketChangesToday: Array.isArray(m)
@@ -301,7 +313,18 @@ function mapBackendToDashboard(apiData) {
     headlineSample: Array.isArray(apiData.headlineSample)
       ? apiData.headlineSample.map((h) => String(h || '').trim()).filter(Boolean)
       : SEED_MARKET_INTELLIGENCE.headlineSample || [],
+    headlineInsights: Array.isArray(apiData.headlineInsights) ? apiData.headlineInsights : [],
     sessionContext: normalizeSessionContext(apiData.sessionContext),
+    marketChangesTimeline: Array.isArray(apiData.marketChangesTimeline) ? apiData.marketChangesTimeline : [],
+    marketImplications: Array.isArray(apiData.marketImplications) ? apiData.marketImplications : [],
+    instrumentSnapshots: Array.isArray(apiData.instrumentSnapshots) ? apiData.instrumentSnapshots : [],
+    outlookRiskContext: apiData.outlookRiskContext && typeof apiData.outlookRiskContext === 'object'
+      ? apiData.outlookRiskContext
+      : null,
+    outlookDataStatus: apiData.outlookDataStatus && typeof apiData.outlookDataStatus === 'object'
+      ? apiData.outlookDataStatus
+      : null,
+    marketOutlookVersion: apiData.marketOutlookVersion != null ? apiData.marketOutlookVersion : null,
   };
 }
 

@@ -88,7 +88,7 @@ function formatRiskDimension(score) {
  * @param {boolean} [summaryOnly] - When true, only show riskEngine summary (no per-event list).
  *   Use on Market Outlook daily where the full Economic Calendar sits below to avoid duplicate “calendars”.
  */
-export default function RiskRadarList({ items = [], riskEngine = null, summaryOnly = false }) {
+export default function RiskRadarList({ items = [], riskEngine = null, summaryOnly = false, outlookContext = null }) {
   const hasList = items.length > 0;
   if (!hasList && !riskEngine) {
     return <p className="td-mi-list-empty" style={{ padding: '12px 0', color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>No market risk factors available.</p>;
@@ -119,6 +119,33 @@ export default function RiskRadarList({ items = [], riskEngine = null, summaryOn
 
   return (
     <div className="rr-table-wrap">
+      {outlookContext && typeof outlookContext === 'object' ? (
+        <div className="td-mi-outlook-risk-context" aria-label="Risk outlook context">
+          <p className="td-mi-outlook-risk-line">
+            <span>Level</span>
+            <strong>{outlookContext.currentRiskLevel || riskEngine?.level || '—'}</strong>
+          </p>
+          {outlookContext.volatilityState ? (
+            <p className="td-mi-outlook-risk-line"><span>Volatility</span><strong>{outlookContext.volatilityState}</strong></p>
+          ) : null}
+          {outlookContext.clusteringBehavior ? (
+            <p className="td-mi-outlook-risk-line"><span>Clustering</span><strong>{outlookContext.clusteringBehavior}</strong></p>
+          ) : null}
+          {outlookContext.nextRiskWindow ? (
+            <p className="td-mi-outlook-risk-line td-mi-outlook-risk-line--wide"><span>Next window</span><strong>{outlookContext.nextRiskWindow}</strong></p>
+          ) : null}
+          {Array.isArray(outlookContext.upcomingEvents) && outlookContext.upcomingEvents.length > 0 ? (
+            <ul className="td-mi-outlook-risk-events">
+              {outlookContext.upcomingEvents.map((ev, idx) => (
+                <li key={idx}>
+                  <span className={`mo-pill mo-pill--impact mo-pill--impact-${ev.impact || 'medium'}`}>{ev.impact || 'med'}</span>
+                  {ev.title}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
       {riskEngine && (
         <div className="td-mi-pulse-meta td-mi-pulse-meta--risk td-mi-risk-engine-meta">
           <div className="td-mi-risk-engine-stats">

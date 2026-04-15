@@ -22,6 +22,12 @@ export default function SessionContextPanel({ sessionContext }) {
           (id === 'asia' && (current === 'asia' || current === 'overlap')) ||
           (id === 'london' && (current === 'london' || current === 'overlap')) ||
           (id === 'newYork' && (current === 'new_york' || current === 'overlap'));
+        const sessionStyleChip = row.sessionStyle && row.sessionStyle !== stateLabel ? row.sessionStyle : null;
+        const biasLine = row.sessionBias || '';
+        const expectLine = row.expectedBehaviour || '';
+        const volExp = row.volatilityExpectation || '';
+        const keyLv = row.keyLevelNote || '';
+        const narrative = row.narrative || row.summary || '';
         return (
           <div
             key={id}
@@ -34,10 +40,28 @@ export default function SessionContextPanel({ sessionContext }) {
                 <span className="mo-dense-row__title">{label}</span>
                 <span className="mo-pill mo-pill--state">{stateLabel}</span>
               </div>
-              {tag ? (
-                <span className="mo-dense-row__meta mo-session-context__tag">{tag}</span>
-              ) : row && row.summary ? (
-                <span className="mo-dense-row__meta mo-session-context__hint">{row.summary}</span>
+              <div className="mo-session-context__chips">
+                {sessionStyleChip ? <span className="mo-pill mo-pill--soft">{sessionStyleChip}</span> : null}
+                {biasLine ? <span className="mo-pill mo-pill--soft">{biasLine}</span> : null}
+                {tag ? <span className="mo-pill mo-pill--tag">{tag}</span> : null}
+              </div>
+              {expectLine ? (
+                <p className="mo-session-context__line mo-session-context__line--expect">{expectLine}</p>
+              ) : null}
+              {volExp ? (
+                <p className="mo-session-context__line mo-session-context__line--vol">
+                  <span className="mo-session-context__k">Volatility</span>
+                  {volExp}
+                </p>
+              ) : null}
+              {keyLv ? (
+                <p className="mo-session-context__line mo-session-context__line--levels">
+                  <span className="mo-session-context__k">Levels</span>
+                  {keyLv}
+                </p>
+              ) : null}
+              {narrative ? (
+                <p className="mo-session-context__narrative">{narrative}</p>
               ) : null}
             </div>
           </div>

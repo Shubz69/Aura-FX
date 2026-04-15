@@ -138,19 +138,19 @@ function pickTags(state, extras, max = 2) {
 function sessionSummary(sessionKey, state, { vix, spxDp, align, nextHiMins } = {}) {
   const v = vix != null ? `${Number(vix).toFixed(1)} VIX` : 'vol proxy limited';
   const spx = spxDp != null ? `${spxDp >= 0 ? '+' : ''}${Number(spxDp).toFixed(2)}% SPX session-to-date` : 'equity drift muted';
-  if (state === 'inactive') return 'Institutional flow thinned; treat prints as low-conviction.';
+  if (state === 'inactive') return 'Institutional flow thinned; local price discovery can dominate versus global beta.';
   if (state === 'event_sensitive') {
     const eta = nextHiMins != null ? `next major release ~${nextHiMins}m` : 'calendar density elevated';
-    return `${eta}; reduce initiative into the print.`;
+    return `${eta}; headline clocks concentrate two-way repricing risk.`;
   }
-  if (state === 'reversal_risk') return `${spx}; extension risk if momentum fades into fixes.`;
+  if (state === 'reversal_risk') return `${spx}; extension risk rises if participation fades into fixes.`;
   if (state === 'trend_continuation') return `Cross-asset ${align === 'mixed' ? 'mixed' : 'directional'} tone; ${spx}.`;
-  if (state === 'expansion_likely') return `Yields/FX impulse building; watch ${v} for follow-through quality.`;
-  if (state === 'compressed') return `Realized drift small versus recent vol; breakout risk rises on impulse.`;
+  if (state === 'expansion_likely') return `Yields/FX impulse building; ${v} frames whether follow-through broadens.`;
+  if (state === 'compressed') return `Realized drift small versus recent vol; impulse can expand ranges quickly.`;
   if (state === 'liquidity_build') return `Quiet tape; liquidity coiling above/below prior session balance.`;
-  if (state === 'choppy') return `${v}; two-way flow — prioritize levels over narrative.`;
-  if (state === 'range_bound') return `${spx}; mean-reversion bias until range breaks with volume.`;
-  return `Monitor ${v} and cross-asset confirmation.`;
+  if (state === 'choppy') return `${v}; two-way flow with uneven depth — correlation signals can flicker.`;
+  if (state === 'range_bound') return `${spx}; range dynamics dominate until a catalyst validates a break with participation.`;
+  return `Monitor ${v} and cross-asset co-movement for narrative confirmation.`;
 }
 
 function buildAsiaRow(ctx) {
@@ -516,7 +516,8 @@ function buildSessionContext(params = {}) {
   };
 }
 
-function alignPulseRecommendedActions(pulse, sessionContext) {
+/** Observational desk notes aligned to session archetype (not execution). */
+function alignPulseObservationalNotes(pulse, sessionContext) {
   if (!pulse || !Array.isArray(pulse.recommendedAction)) return pulse;
   const actions = [...pulse.recommendedAction];
   const ny = sessionContext && sessionContext.sessions && sessionContext.sessions.newYork;
@@ -526,13 +527,13 @@ function alignPulseRecommendedActions(pulse, sessionContext) {
     else actions.push(line);
   };
   if (ny && ny.state === 'event_sensitive') {
-    const line = 'Tighten risk into NY high-impact windows';
-    if (!actions.some((a) => /high-impact|event window|releases/i.test(String(a)))) {
+    const line = 'NY macro windows often reset correlation and depth quickly around releases.';
+    if (!actions.some((a) => /NY macro|high-impact|event window|releases/i.test(String(a)))) {
       pushOrReplaceLast(line);
     }
   } else if (ld && ld.state === 'event_sensitive' && (!ny || ny.state !== 'event_sensitive')) {
-    const line = 'Respect London-window data — wait for post-print liquidity';
-    if (!actions.some((a) => /london|post-print/i.test(String(a)))) {
+    const line = 'London data windows can reprice EUR/GBP legs ahead of US liquidity arrival.';
+    if (!actions.some((a) => /London|EUR|GBP/i.test(String(a)))) {
       pushOrReplaceLast(line);
     }
   }
@@ -543,5 +544,7 @@ module.exports = {
   buildSessionContext,
   resolveCurrentSession,
   STATE_LABELS,
-  alignPulseRecommendedActions,
+  alignPulseObservationalNotes,
+  /** @deprecated use alignPulseObservationalNotes */
+  alignPulseRecommendedActions: alignPulseObservationalNotes,
 };

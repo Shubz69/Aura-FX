@@ -19,17 +19,32 @@ export default function DriverList({ drivers = [] }) {
     );
   }
   return (
-    <ul className="td-mi-list td-mi-list--drivers">
-      {drivers.map((d, i) => (
-        <li key={i} className="td-mi-list-item">
-          <ArrowIcon direction={d.direction || 'neutral'} />
-          <span className="td-mi-list-main"><strong>{d.name || d.title || '—'}</strong></span>
-          <span className="td-mi-list-meta">
-            {impactLabel(d.impact)}
-            {d.effect ? ` · ${d.effect}` : ''}
-          </span>
-        </li>
-      ))}
+    <ul className="td-mi-list td-mi-list--drivers td-mi-list--drivers-dense">
+      {drivers.map((d, i) => {
+        const assets = Array.isArray(d.affectedAssets) ? d.affectedAssets : [];
+        const explain = d.explanation || d.effect || '';
+        return (
+          <li key={i} className="td-mi-list-item td-mi-list-item--driver-dense">
+            <div className="td-mi-list-item__row">
+              <ArrowIcon direction={d.direction || 'neutral'} />
+              <span className="td-mi-list-main"><strong>{d.name || d.title || '—'}</strong></span>
+              <span className="td-mi-list-meta">
+                {impactLabel(d.impact)}
+              </span>
+            </div>
+            {explain ? (
+              <p className="td-mi-list-detail">{explain}</p>
+            ) : null}
+            {assets.length > 0 ? (
+              <div className="td-mi-asset-chips" aria-label="Affected assets">
+                {assets.slice(0, 6).map((a) => (
+                  <span key={a} className="td-mi-asset-chip">{a}</span>
+                ))}
+              </div>
+            ) : null}
+          </li>
+        );
+      })}
     </ul>
   );
 }

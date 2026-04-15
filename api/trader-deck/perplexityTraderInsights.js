@@ -72,7 +72,7 @@ async function enrichTraderDeckPayload(payload) {
           {
             role: 'system',
             content:
-              'You are an institutional trading desk analyst. Reply with valid JSON only: {"sessionBrief":"string (3-5 sentences)","tradingPriorities":["short string",...]} - 4 to 6 priorities. Cover cross-asset context from provided facts only. No markdown, no asterisks, no bullet symbols, no source attributions.',
+              'You are an institutional macro desk analyst. Reply with valid JSON only: {"sessionBrief":"string (3-5 sentences)","tradingPriorities":["short string",...]} - 4 to 6 items. Each item must be observational context only: themes to monitor, relationships, or scenario hooks. Never tell the user to buy, sell, enter, exit, size positions, or execute. No checklists, no commands, no signals. Cover cross-asset context from provided facts only. No markdown, no asterisks, no bullet symbols, no source attributions.',
           },
           { role: 'user', content: userMsg },
         ],

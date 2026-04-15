@@ -24,6 +24,8 @@ export default function MarketPulseGauge({
   score = 50,
   label = 'NEUTRAL',
   recommendedAction = [],
+  /** Outlook: observational dynamics (preferred over recommendedAction when set) */
+  outlookPulse = null,
   variant = 'default',
   /** Short regime line from Market Regime (e.g. currentRegime); outlook only */
   regimeDescriptor = '',
@@ -43,6 +45,11 @@ export default function MarketPulseGauge({
     normalized >= 67 ? 'Lean with trend' : normalized <= 33 ? 'Defensive' : 'Selective';
 
   const outlook = variant === 'outlook';
+  const op = outlookPulse && typeof outlookPulse === 'object' ? outlookPulse : null;
+  const outlookVol = op?.volatilityCondition || (normalized >= 72 ? 'Elevated pulse vs baseline' : normalized <= 34 ? 'Subdued pulse vs baseline' : 'Balanced pulse vs baseline');
+  const shiftLines = Array.isArray(op?.stateShiftFactors) && op.stateShiftFactors.length
+    ? op.stateShiftFactors
+    : (Array.isArray(recommendedAction) ? recommendedAction : []);
 
   return (
     <div className={`td-mi-gauge-wrap${outlook ? ' td-mi-gauge-wrap--outlook' : ''}`}>
@@ -70,18 +77,31 @@ export default function MarketPulseGauge({
       {outlook ? (
         <>
           <div className="td-mi-pulse-snapshot td-mi-pulse-snapshot--compact">
-            <p><span>State</span><strong>{label} ({normalized}%)</strong></p>
-            <p><span>Volatility</span><strong>{volatility}</strong></p>
+            <p><span>State</span><strong>{op?.pulseState || label} ({normalized}%)</strong></p>
+            <p><span>Volatility</span><strong>{outlookVol}</strong></p>
             {regimeDescriptor ? (
               <p><span>Regime</span><strong>{regimeDescriptor}</strong></p>
             ) : null}
-            <p><span>Risk tone</span><strong>{posture}</strong></p>
+            <p><span>Clarity</span><strong>{directionalClarity}</strong></p>
           </div>
-          {Array.isArray(recommendedAction) && recommendedAction.length > 0 && (
-            <div className="td-mi-pulse-meta td-mi-pulse-meta--actions">
-              <p className="td-mi-pulse-actions-label">Action items</p>
+          {Array.isArray(op?.topDrivers) && op.topDrivers.length > 0 ? (
+            <div className="td-mi-pulse-meta td-mi-pulse-meta--drivers">
+              <p className="td-mi-pulse-actions-label">Top drivers</p>
               <ul className="td-mi-bullets td-mi-pulse-actions-list">
-                {recommendedAction.slice(0, 3).map((line, idx) => (
+                {op.topDrivers.slice(0, 3).map((line, idx) => (
+                  <li key={idx} className="td-mi-bullet-item">{line}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {op?.recentChangeSummary ? (
+            <p className="td-mi-pulse-recent"><span>Recent shift</span><strong>{op.recentChangeSummary}</strong></p>
+          ) : null}
+          {Array.isArray(shiftLines) && shiftLines.length > 0 && (
+            <div className="td-mi-pulse-meta td-mi-pulse-meta--actions">
+              <p className="td-mi-pulse-actions-label">What could shift the tape</p>
+              <ul className="td-mi-bullets td-mi-pulse-actions-list">
+                {shiftLines.slice(0, 4).map((line, idx) => (
                   <li key={idx} className="td-mi-bullet-item">{line}</li>
                 ))}
               </ul>
@@ -101,7 +121,7 @@ export default function MarketPulseGauge({
           <div className="td-mi-pulse-meta">
             {Array.isArray(recommendedAction) && recommendedAction.length > 0 && (
               <>
-                <p><strong>Action items:</strong></p>
+                <p><strong>Desk context:</strong></p>
                 <ul className="td-mi-bullets">
                   {recommendedAction.slice(0, 3).map((line, idx) => (
                     <li key={idx} className="td-mi-bullet-item">{line}</li>

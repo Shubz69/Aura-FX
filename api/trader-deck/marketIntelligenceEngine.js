@@ -10,7 +10,7 @@ const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { toCanonical, usesForexSessionContext } = require('../ai/utils/symbol-registry');
 const {
   buildSessionContext,
-  alignPulseRecommendedActions,
+  alignPulseObservationalNotes,
 } = require('./marketOutlookSessionContext');
 
 async function getTwelveDataQuote(symbol) {
@@ -221,17 +221,17 @@ function buildMarketPulse(fred, finnhub, fmp, spxQuote, fng, options = {}) {
   const label = state === 'Risk On' ? 'RISK ON' : state === 'Risk Off' ? 'RISK OFF' : 'MIXED';
   const recommendedAction = [];
   if (state === 'Risk Off') {
-    recommendedAction.push('Reduce position size');
-    recommendedAction.push('Avoid breakout entries into resistance');
-    recommendedAction.push('Wait for confirmation before risk-on continuation');
+    recommendedAction.push('Defensive risk tone visible across beta and duration legs.');
+    recommendedAction.push('Cross-asset confirmation tends to be slower when yields and USD disagree.');
+    recommendedAction.push('Macro catalysts can widen ranges versus drift sessions.');
   } else if (state === 'Risk On') {
-    recommendedAction.push('Prioritize trend continuation setups');
-    recommendedAction.push('Scale only when cross-asset confirms');
-    recommendedAction.push('Protect gains into high-impact event windows');
+    recommendedAction.push('Constructive risk tone when equities, credit, and FX beta align.');
+    recommendedAction.push('Correlation persistence matters more than single-asset bursts.');
+    recommendedAction.push('Scheduled data still resets correlation even in risk-on tape.');
   } else {
-    recommendedAction.push('Avoid forcing directional conviction');
-    recommendedAction.push('Wait for confirmation around key levels');
-    recommendedAction.push('Expect volatility spikes around scheduled events');
+    recommendedAction.push('Mixed tape: two-way macro repricing without a single dominant hinge.');
+    recommendedAction.push('Liquidity reshapes at session overlaps and headline clocks.');
+    recommendedAction.push('Cross-asset dispersion often rises when narratives diverge by region.');
   }
   return { state, score, label, confidence: score, recommendedAction, fng: fng || null };
 }
@@ -410,7 +410,7 @@ function buildMarketChangesToday(finnhub, fmp) {
   }
   if (items.length === 0) {
     items.push({ title: 'Cross-asset tone stayed mixed as macro and liquidity signals diverged', priority: 'medium' });
-    items.push({ title: 'No dominant narrative: confirmation remained essential before commitment', priority: 'low' });
+    items.push({ title: 'No dominant narrative: markets priced incremental evidence rather than a single theme', priority: 'low' });
   }
   return items.slice(0, 6);
 }
@@ -430,7 +430,7 @@ function summarizeWeeklyMarketChanges(keyDrivers, crossAssetSignals, riskRadar) 
     items.push({ title: 'USD directional pressure likely to shape majors this week', priority: 'medium' });
   }
   if (items.length === 0) {
-    items.push({ title: 'Weekly tone is mixed; prioritize confirmation over prediction', priority: 'medium' });
+    items.push({ title: 'Weekly tone is mixed; narrative resolution likely tracks scheduled macro releases', priority: 'medium' });
   }
   return items.slice(0, 6);
 }
@@ -473,79 +473,79 @@ function buildTraderFocus(fred, finnhub, keyDrivers, crossAssetSignals, options 
 
   if (ny && ny.state === 'event_sensitive') {
     focus.push({
-      title: 'Avoid initiating new risk into the next NY high-impact window',
-      reason: 'Session context · NY event risk',
+      title: 'NY high-impact windows concentrate depth and correlation resets',
+      reason: 'Session context · NY event cadence',
     });
   } else if (ld && ld.state === 'event_sensitive') {
     focus.push({
-      title: 'Wait for London-window prints to clear before adding directional risk',
+      title: 'London-window prints often reprice EUR and GBP before US liquidity arrives',
       reason: 'Session context · EU/UK events',
     });
   }
 
   if (ny && ny.state === 'reversal_risk') {
     focus.push({
-      title: 'Require failed break / acceptance before fading an extended trend day',
+      title: 'Late-session mean-reversion risk rises after directional extension',
       reason: 'Session context · reversal tone',
     });
   }
 
   if ((as && as.state === 'choppy') || (ny && ny.state === 'choppy') || (ld && ld.state === 'choppy')) {
     focus.push({
-      title: 'Prioritize confirmation-based entries — chop punishes early conviction',
+      title: 'Choppy conditions often show uneven participation and headline-driven repricing',
       reason: 'Session context · choppy',
     });
   }
 
   if (ny && ny.state === 'trend_continuation' && align !== 'mixed') {
     focus.push({
-      title: 'Let trend setups work while cross-asset tape stays directionally aligned',
+      title: 'Trend maintenance is more plausible while cross-asset tape stays aligned',
       reason: 'Session + cross-asset alignment',
     });
   }
 
   if (as && as.state === 'liquidity_build' && ny && ny.state === 'range_bound') {
     focus.push({
-      title: 'Expect false breaks — wait for NY participation to validate range breaks',
-      reason: 'Asia liquidity build vs NY balance',
+      title: 'Asia liquidity build against NY balance can produce false breaks until depth returns',
+      reason: 'Asia liquidity vs NY balance',
     });
   }
 
   if (clustering != null && clustering > 62) {
     focus.push({
-      title: 'Reduce risk when macro releases cluster inside one session',
+      title: 'Macro releases cluster in time — variance can bunch into tight windows',
       reason: 'Risk engine · clustering',
     });
   }
 
   if (fred.treasury10y != null) {
-    focus.push({ title: 'Watch bond yields for equity and gold reaction pivots', reason: 'Primary macro driver' });
+    focus.push({ title: 'Bond yields remain the hinge between duration, gold, and USD', reason: 'Primary macro driver' });
   }
   const usdSignal = (crossAssetSignals || []).find((s) => s.asset === 'USD');
   if (usdSignal && usdSignal.direction !== 'neutral') {
-    focus.push({ title: 'Treat USD trend as directional filter for majors', reason: 'FX sensitivity' });
+    focus.push({ title: 'USD direction is filtering majors and commodity invoicing', reason: 'FX sensitivity' });
   }
 
   if (!(ny && ny.state === 'event_sensitive')) {
     focus.push({
-      title: 'Avoid new positions immediately ahead of high-impact events',
-      reason: 'Event-risk control',
+      title: 'High-impact event spacing still matters for realized correlation',
+      reason: 'Macro calendar structure',
     });
   }
 
   focus.push({
-    title: 'Prioritize confirmation-based entries over predictive entries',
-    reason: 'Execution discipline',
+    title: 'Cross-asset dispersion often signals narrative rotation before a single theme wins',
+    reason: 'Macro structure',
   });
 
   if ((keyDrivers || []).some((d) => d.name === 'Bond Yields' && d.direction === 'up')) {
-    focus.push({ title: 'Keep size conservative in rate-sensitive instruments', reason: 'Yields rising' });
+    focus.push({ title: 'Rising yields keep rate-sensitive legs in focus for transmission', reason: 'Yields rising' });
   }
   if (options.timeframe === 'weekly') {
-    focus.push({ title: 'Map the week’s major risk windows before adding swing exposure', reason: 'Weekly planning' });
+    focus.push({ title: 'Weekly risk windows are visible on the macro calendar ahead of liquidity shifts', reason: 'Weekly lens' });
   }
   if (String(options.riskLevel || '').toLowerCase() === 'high' || String(options.riskLevel || '').toLowerCase() === 'extreme') {
-    focus.push({ title: 'Trade defensive until risk score normalizes', reason: 'Risk engine state' });
+    focus.push({ title: 'Risk engine reads elevated — tails and gap risk deserve extra attention', reason: 'Risk engine state' });
   }
 
   return dedupeFocus(focus).slice(0, 6);
@@ -882,7 +882,7 @@ function buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi, options = {}) {
 
   sessionContext = gateTrendStatesForRiskOff(sessionContext, marketPulseBase.state);
 
-  let marketPulse = alignPulseRecommendedActions(marketPulseBase, sessionContext);
+  let marketPulse = alignPulseObservationalNotes(marketPulseBase, sessionContext);
 
   const marketChangesToday = timeframe === 'weekly'
     ? summarizeWeeklyMarketChanges(keyDrivers, crossAssetSignals, riskRadar)
