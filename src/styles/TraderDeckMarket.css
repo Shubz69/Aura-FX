@@ -2395,6 +2395,10 @@
   padding-bottom: 4px;
 }
 
+.td-deck-mo-outlook--concept .mo-outlook-freshness {
+  margin-top: 6px;
+}
+
 .td-deck-mo-outlook--concept .td-outlook-concept-page-title {
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -2402,89 +2406,74 @@
   font-weight: 650;
 }
 
-.td-outlook-concept-grid {
+/* Market Outlook — terminal layout: 2fr / 1fr, align start, no equal-height stretch */
+.td-outlook-concept-grid.td-outlook-concept-grid--terminal {
   display: grid;
-  row-gap: 7px;
-  column-gap: 9px;
-  padding: 8px 10px 7px;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  align-items: start;
   min-width: 0;
   box-sizing: border-box;
-  grid-template-columns: 1fr;
-  grid-template-areas:
-    'regime'
-    'pulse'
-    'intel'
-    'changes'
-    'focus'
-    'risk'
-    'headlines';
+  padding: 10px 12px;
 }
 
 @media (min-width: 960px) {
-  .td-outlook-concept-grid {
-    grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
-    grid-template-rows: auto auto auto 1fr auto;
-    min-height: min(78vh, 880px);
-    grid-template-areas:
-      'regime pulse'
-      'intel pulse'
-      'changes pulse'
-      'focus risk'
-      'headlines headlines';
-    align-items: stretch;
-    row-gap: 6px;
-    column-gap: 8px;
-    padding: 8px 10px 6px;
+  .td-outlook-concept-grid.td-outlook-concept-grid--terminal {
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+    align-items: start;
   }
 }
 
-.td-outlook-concept-card--regime { grid-area: regime; }
+.td-outlook-concept-col--primary,
+.td-outlook-concept-col--secondary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.td-deck-mo-outlook--concept .td-outlook-concept-col--primary > *,
+.td-deck-mo-outlook--concept .td-outlook-concept-col--secondary > * {
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 0;
+}
 
 .td-outlook-concept-intel {
-  grid-area: intel;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 8px;
+  gap: 12px;
+  align-items: start;
   min-width: 0;
-  min-height: 0;
-  align-items: stretch;
 }
 
-.td-outlook-concept-intel-col--left {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 0;
-}
-
-.td-outlook-concept-intel-col--left > .td-outlook-concept-card {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.td-outlook-concept-intel-col--left > .td-outlook-concept-card .td-outlook-concept-card__body {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
+.td-outlook-concept-intel-col--left,
 .td-outlook-concept-intel-col--right {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.td-deck-mo-outlook--concept .td-outlook-concept-intel-col--left > *,
+.td-deck-mo-outlook--concept .td-outlook-concept-intel-col--right > * {
+  flex: 0 0 auto;
+  height: auto;
   min-height: 0;
 }
 
-.td-outlook-concept-intel-col--right > .td-outlook-concept-card {
-  flex: 1 1 auto;
-  min-height: 0;
+.td-deck-mo-outlook--concept .td-outlook-concept-intel-col--left > .td-outlook-concept-card,
+.td-deck-mo-outlook--concept .td-outlook-concept-intel-col--right > .td-outlook-concept-card {
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
-.td-outlook-concept-intel-col--right > .td-outlook-concept-card .td-outlook-concept-card__body {
-  flex: 1 1 auto;
+.td-deck-mo-outlook--concept .td-outlook-concept-intel-col--left > .td-outlook-concept-card .td-outlook-concept-card__body,
+.td-deck-mo-outlook--concept .td-outlook-concept-intel-col--right > .td-outlook-concept-card .td-outlook-concept-card__body {
+  flex: unset;
   min-height: 0;
 }
 
@@ -2493,6 +2482,10 @@
 }
 
 .mo-grid-gap-md {
+  gap: 12px;
+}
+
+.td-deck-mo-outlook--concept .td-outlook-concept-intel {
   gap: 12px;
 }
 
@@ -2659,8 +2652,8 @@
 }
 
 /* Market headlines strip */
-.td-outlook-concept-card--headlines {
-  grid-area: headlines;
+.td-deck-mo-outlook--concept .td-outlook-concept-card--headlines {
+  height: auto;
 }
 
 .td-outlook-concept-card__head--headlines {
@@ -2733,19 +2726,17 @@
   font-size: 0.68rem !important;
   line-height: 1.26 !important;
 }
-.td-outlook-concept-card--changes {
-  grid-area: changes;
+.td-deck-mo-outlook--concept .td-outlook-concept-card--changes {
   display: flex;
   flex-direction: column;
+  height: auto;
   min-height: 0;
-  height: 100%;
 }
 
-.td-outlook-concept-card--changes .td-outlook-concept-card__body {
-  flex: 1 1 auto;
+.td-deck-mo-outlook--concept .td-outlook-concept-card--changes .td-outlook-concept-card__body {
+  flex: unset;
   min-height: 0;
 }
-.td-outlook-concept-card--risk { grid-area: risk; }
 
 .td-outlook-concept-card {
   position: relative;
@@ -2806,6 +2797,10 @@
   z-index: 1;
 }
 
+.td-deck-mo-outlook--concept .td-outlook-concept-card__title {
+  padding: 4px 10px 3px;
+}
+
 .td-outlook-concept-card__body {
   position: relative;
   z-index: 1;
@@ -2813,6 +2808,10 @@
   font-size: 0.78rem;
   line-height: 1.32;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.td-deck-mo-outlook--concept .td-outlook-concept-card__body {
+  padding: 8px 10px 8px;
 }
 
 .td-outlook-concept-card__head {
@@ -2840,12 +2839,11 @@
   text-transform: uppercase !important;
 }
 
-.td-outlook-concept-card--pulse {
-  grid-area: pulse;
+.td-deck-mo-outlook--concept .td-outlook-concept-card--pulse {
   display: flex;
   flex-direction: column;
+  height: auto;
   min-height: 0;
-  height: 100%;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.07) inset,
     0 0 0 1px rgba(140, 175, 255, 0.14) inset,
@@ -2853,47 +2851,40 @@
     0 18px 50px rgba(0, 0, 0, 0.52);
 }
 
-.td-outlook-concept-pulse__body {
-  flex: 1 1 auto;
+.td-deck-mo-outlook--concept .td-outlook-concept-pulse__body {
+  flex: unset;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 6px 9px 8px !important;
+  padding: 6px 10px 8px !important;
 }
 
-.td-outlook-concept-card--risk {
+.td-deck-mo-outlook--concept .td-outlook-concept-card--risk {
   display: flex;
   flex-direction: column;
+  height: auto;
   min-height: 0;
-  height: 100%;
 }
 
-.td-outlook-concept-card--focus {
-  grid-area: focus;
+.td-deck-mo-outlook--concept .td-outlook-concept-card--focus {
   display: flex;
   flex-direction: column;
+  height: auto;
   min-height: 0;
-  height: 100%;
 }
 
-.td-outlook-concept-card--focus .td-outlook-concept-card__body {
-  flex: 1 1 auto;
+.td-deck-mo-outlook--concept .td-outlook-concept-card--focus .td-outlook-concept-card__body {
+  flex: unset;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
 
-@media (min-width: 960px) {
-  .td-outlook-concept-card--regime {
-    align-self: start;
-  }
-}
-
-.td-outlook-concept-risk__body {
-  flex: 1 1 auto;
+.td-deck-mo-outlook--concept .td-outlook-concept-risk__body {
+  flex: unset;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
@@ -2953,10 +2944,9 @@
   border-left: 2px solid rgba(140, 175, 255, 0.38) !important;
 }
 
-/* Trader focus — fills row 4 slack */
 .td-deck-mo-outlook--concept .td-outlook-concept-card--focus .td-mi-bullets--focus {
   gap: 2px !important;
-  flex: 1 1 auto;
+  flex: unset;
   min-height: 0;
   margin: 0 !important;
 }
@@ -2975,9 +2965,8 @@
   line-height: 1.3 !important;
 }
 
-/* Risk engine */
 .td-deck-mo-outlook--concept .td-outlook-concept-risk__body .rr-table-wrap {
-  flex: 1 1 auto;
+  flex: unset;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -3008,11 +2997,11 @@
   font-size: 0.7rem !important;
 }
 
-/* Aura Market Pulse — fills upper rail; gauge dominant */
 .td-deck-mo-outlook--concept .td-mi-gauge-wrap--outlook {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  flex: unset;
+  height: auto;
   min-height: 0;
   align-items: center;
   justify-content: flex-start;
@@ -3102,7 +3091,7 @@
 }
 
 .td-deck-mo-outlook--concept .td-mi-pulse-meta--actions {
-  margin-top: auto;
+  margin-top: 6px;
   width: 100%;
   max-width: 288px;
   padding-top: 6px;
@@ -3189,7 +3178,7 @@
 }
 
 .mo-section-sub {
-  margin: -4px 0 8px;
+  margin: 0 0 6px;
   font-size: 0.68rem;
   line-height: 1.35;
   color: rgba(180, 195, 240, 0.55);
@@ -3280,7 +3269,7 @@
   border-radius: 8px;
   border: 1px solid rgba(107, 143, 232, 0.12);
   background: rgba(4, 6, 18, 0.48);
-  min-height: 108px;
+  min-height: 0;
 }
 .mo-instrument-card__head {
   display: flex;

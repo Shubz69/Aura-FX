@@ -568,7 +568,8 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
           <div className="td-outlook-dashboard td-outlook-dashboard--unified td-deck-mo-outlook-dash">
             <div className="td-outlook-terminal-frame td-outlook-concept-shell">
               <div className="td-outlook-terminal-inner">
-                <div className="td-outlook-concept-grid">
+                <div className="td-outlook-concept-grid td-outlook-concept-grid--terminal">
+                  <div className="td-outlook-concept-col td-outlook-concept-col--primary">
                   <section
                     className="td-outlook-concept-card td-outlook-concept-card--regime mo-card-shell"
                     aria-label="Aura market regime"
@@ -653,6 +654,22 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     </div>
                   </section>
 
+                  <section className="td-outlook-concept-card td-outlook-concept-card--focus mo-card-shell" aria-label="Trader focus">
+                    <h2 className="td-outlook-concept-card__title">Trader Focus</h2>
+                    <p className="mo-section-sub">Observational attention areas — not a task list.</p>
+                    <div className="td-outlook-concept-card__body">
+                      {editMode && editDraft ? (
+                        renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item')
+                      ) : traderFocus && traderFocus.length > 0 ? (
+                        <FocusList items={traderFocus} />
+                      ) : (
+                        <p className="td-outlook-empty">No focus items. Use Edit to add.</p>
+                      )}
+                    </div>
+                  </section>
+                  </div>
+
+                  <div className="td-outlook-concept-col td-outlook-concept-col--secondary">
                   <section
                     className="td-outlook-concept-card td-outlook-concept-card--pulse td-outlook-concept-pulse mo-card-shell mo-card-shell--focal"
                     aria-label="Aura market pulse"
@@ -672,20 +689,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     </header>
                     <div className="td-outlook-concept-card__body td-outlook-concept-pulse__body">
                       {renderPulse()}
-                    </div>
-                  </section>
-
-                  <section className="td-outlook-concept-card td-outlook-concept-card--focus mo-card-shell" aria-label="Trader focus">
-                    <h2 className="td-outlook-concept-card__title">Trader Focus</h2>
-                    <p className="mo-section-sub">Observational attention areas — not a task list.</p>
-                    <div className="td-outlook-concept-card__body">
-                      {editMode && editDraft ? (
-                        renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item')
-                      ) : traderFocus && traderFocus.length > 0 ? (
-                        <FocusList items={traderFocus} />
-                      ) : (
-                        <p className="td-outlook-empty">No focus items. Use Edit to add.</p>
-                      )}
                     </div>
                   </section>
 
@@ -766,6 +769,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                       <p className="mo-terminal-feed__note">Event detail in the Economic Calendar below.</p>
                     </div>
                   </section>
+                  </div>
                 </div>
               </div>
             </div>

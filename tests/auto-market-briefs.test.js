@@ -33,7 +33,14 @@ function run() {
     period: 'daily',
     timeZone: 'Europe/London',
   });
-  assert(dueDaily === true, 'daily should run during 00:00-00:19 London window');
+  assert(dueDaily === true, 'daily should run during full 00:00-00:59 London hour');
+
+  const dueDailyLate = autoTest.shouldRunWindow({
+    now: new Date('2026-03-24T00:55:00+00:00'),
+    period: 'daily',
+    timeZone: 'Europe/London',
+  });
+  assert(dueDailyLate === true, 'daily cron at 00:55 London must still be in-window (was missed by old 00:00-00:09 gate)');
 
   const notDueDaily = autoTest.shouldRunWindow({
     now: new Date('2026-03-24T05:40:00+00:00'),
@@ -54,7 +61,14 @@ function run() {
     period: 'weekly',
     timeZone: 'Europe/London',
   });
-  assert(dueWeekly === true, 'weekly should run Sunday 18:00-18:14 London window');
+  assert(dueWeekly === true, 'weekly should run any time Sunday 18:00-18:59 London');
+
+  const dueWeeklyLate = autoTest.shouldRunWindow({
+    now: new Date('2026-03-29T18:45:00+01:00'),
+    period: 'weekly',
+    timeZone: 'Europe/London',
+  });
+  assert(dueWeeklyLate === true, 'weekly late in the 18:00 hour must still be in-window');
 
   const parsed = parseTemplateFromText(
     [

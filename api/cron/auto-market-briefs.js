@@ -11,6 +11,7 @@ const {
   generateAndStoreInstitutionalBriefOnly,
   prefetchInstrumentResearchForDaily,
   shouldRunWindow,
+  shouldRunIntelPackCatchUp,
   shouldPrefetchInstrumentResearchWindow,
   isTraderDeskAutomationConfigured,
 } = require('../trader-deck/services/autoBriefGenerator');
@@ -68,7 +69,10 @@ const handler = async (req, res) => {
     }
 
     for (const period of periods) {
-      const due = force || shouldRunWindow({ now, period, timeZone: 'Europe/London' });
+      const tz = 'Europe/London';
+      const inPrimaryWindow = shouldRunWindow({ now, period, timeZone: tz });
+      const inCatchUp = await shouldRunIntelPackCatchUp({ now, period, timeZone: tz });
+      const due = force || inPrimaryWindow || inCatchUp;
       if (!due) {
         out.push({ period, skipped: true, reason: 'outside-window' });
         continue;

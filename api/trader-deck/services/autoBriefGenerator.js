@@ -25,7 +25,7 @@ const {
 const SOURCE_MARKER_RE = /(https?:\/\/|www\.|source\s*:|sources\s*:|according to|reuters|bloomberg|fmp|finnhub|forex factory|trading economics)/i;
 const { DateTime } = require('luxon');
 const { getWeekEndingSundayUtcYmd } = require('../deskDates');
-const { DESK_AUTOMATION_CATEGORY_KINDS } = require('../deskBriefKinds');
+const { DESK_AUTOMATION_CATEGORY_KINDS, expectedIntelAutomationRowCount } = require('../deskBriefKinds');
 const {
   BRIEF_KIND_ORDER,
   BANNED_PHRASES,
@@ -2731,8 +2731,35 @@ function shouldPrefetchInstrumentResearchWindow({ now = new Date(), period, time
   return hh === 22 && mm < 20;
 }
 
-function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' }) {
+/**
+ * Rows on file for this desk date (excludes legacy `general`). Expect 9 when 8 sleeves + institutional exist.
+ */
+async function countNonGeneralIntelBriefRows(period, dateYmd) {
+  const p = normalizePeriod(period);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateYmd || ''))) return 0;
+  try {
+    const [rows] = await executeQuery(
+      `SELECT COUNT(*) AS n FROM trader_deck_briefs
+       WHERE date = ? AND period = ? AND COALESCE(LOWER(brief_kind), '') <> 'general'`,
+      [dateYmd, p]
+    );
+    return Number(rows?.[0]?.n || 0);
+  } catch (_) {
+    return 0;
+  }
+}
+
+/**
+ * Throttled catch-up when the intel pack is still incomplete (missed narrow cron, partial failure, or cold start).
+ * Called from cron only — avoids hammering APIs every 5 minutes when healthy.
+ */
+async function shouldRunIntelPackCatchUp({ now = new Date(), period, timeZone = 'Europe/London' } = {}) {
+  if (!isTraderDeskAutomationConfigured()) return false;
   const normalizedPeriod = normalizePeriod(period);
+  const deskYmd = normalizeOutlookDate(normalizedPeriod, toYmdInTz(now, timeZone));
+  const n = await countNonGeneralIntelBriefRows(normalizedPeriod, deskYmd);
+  if (n >= expectedIntelAutomationRowCount()) return false;
+
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone,
     weekday: 'short',
@@ -2745,14 +2772,43 @@ function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' 
   const hh = Number(map.hour);
   const mm = Number(map.minute);
   const wd = String(map.weekday || '').toLowerCase();
+  /** London: a few fixed slots per day (Vercel cron runs every five minutes). */
+  if (normalizedPeriod === 'daily') {
+    return (hh === 6 || hh === 12 || hh === 18) && mm < 20;
+  }
+  /** Weekly: early-week retry for the week-ending key in `deskYmd`. */
+  if (normalizedPeriod === 'weekly') {
+    return (
+      (wd.startsWith('mon') || wd.startsWith('tue') || wd.startsWith('wed') || wd.startsWith('thu')) &&
+      hh === 8 &&
+      mm < 20
+    );
+  }
+  return false;
+}
+
+function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' }) {
+  const normalizedPeriod = normalizePeriod(period);
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now);
+  const map = {};
+  for (const p of parts) map[p.type] = p.value;
+  const hh = Number(map.hour);
+  const wd = String(map.weekday || '').toLowerCase();
   /**
-   * Daily: every calendar day 00:00–00:09 Europe/London (cron polls every five minutes).
-   * Weekly: Sunday 18:00–18:14 UK (week-ending storage key).
+   * Daily: full midnight hour Europe/London (00:00–00:59). A 10-minute window missed most five-minute cron ticks
+   * (e.g. 00:10+ skipped the entire day in production).
+   * Weekly: full Sunday 18:00 hour UK (week-ending storage key).
    */
   if (normalizedPeriod === 'daily') {
-    return hh === 0 && mm < 10;
+    return hh === 0;
   }
-  return wd.startsWith('sun') && hh === 18 && mm < 15;
+  return wd.startsWith('sun') && hh === 18;
 }
 
 function getInstitutionalBriefDeps() {
@@ -2802,12 +2858,16 @@ module.exports = {
   publishManualBrief,
   prefetchInstrumentResearchForDaily,
   shouldRunWindow,
+  shouldRunIntelPackCatchUp,
+  countNonGeneralIntelBriefRows,
   shouldPrefetchInstrumentResearchWindow,
   isTraderDeskAutomationConfigured,
   stripSources,
   assertNoSources,
   _test: {
     shouldRunWindow,
+    shouldRunIntelPackCatchUp,
+    countNonGeneralIntelBriefRows,
     shouldPrefetchInstrumentResearchWindow,
     stripSources,
     assertNoSources,
