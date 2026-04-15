@@ -6,13 +6,16 @@
 const { fetchWithTimeout } = require('./fetchWithTimeout');
 const { getConfig } = require('../config');
 const { getQuote } = require('./finnhubService');
+const {
+  DESK_AUTOMATION_CATEGORY_KINDS,
+  isDeskAutomationCategoryKind,
+  isInstitutionalBriefKind,
+} = require('../deskBriefKinds');
 
-const BRIEF_KIND_ORDER = ['general', 'stocks', 'indices', 'futures', 'forex', 'crypto', 'commodities', 'bonds', 'etfs'];
+const BRIEF_KIND_ORDER = [...DESK_AUTOMATION_CATEGORY_KINDS];
 
 /** Strict universe per category — only these may appear as top-5 or in model-facing instrument lists. */
 const INSTRUMENT_UNIVERSE_BY_KIND = {
-  /** House / cross-asset — only category where mixed sleeves are allowed. */
-  general: ['EURUSD', 'XAUUSD', 'US500', 'BTCUSD', 'US10Y', 'GBPUSD', 'USDJPY', 'NAS100'],
   stocks: [
     'AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN', 'META', 'GOOGL', 'AMD', 'NFLX', 'JPM', 'BAC', 'XOM',
     'UNH', 'LLY', 'AVGO', 'COST', 'DIS', 'INTC', 'CRM', 'ORCL', 'WMT', 'MA', 'V', 'PG', 'KO', 'PEP',
@@ -31,7 +34,6 @@ const INSTRUMENT_UNIVERSE_BY_KIND = {
 
 /** Deterministic fallback top-5 when quotes/scoring unavailable (subset of universe, category-pure). */
 const FALLBACK_TOP5_BY_KIND = {
-  general: ['EURUSD', 'XAUUSD', 'US500', 'BTCUSD', 'US10Y'],
   stocks: ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN'],
   indices: ['US500', 'NAS100', 'US30', 'GER40', 'UK100'],
   futures: ['ES1!', 'NQ1!', 'CL1!', 'GC1!', 'ZN1!'],
@@ -43,7 +45,6 @@ const FALLBACK_TOP5_BY_KIND = {
 };
 
 const KIND_HEADLINE_KEYWORDS = {
-  general: null,
   stocks: /\b(stock|equity|equities|earnings|eps|guidance|nasdaq|nyse|s&p|apple|microsoft|nvidia|tesla|amazon|meta|split|buyback|dividend|ipo|sec)\b/i,
   indices: /\b(index|indices|s&p\s*500|nasdaq|dow|dax|ftse|nikkei|hang\s*seng|vix|breadth|advance|decline|futures\s+on\s+index)\b/i,
   futures: /\b(futures|es\s|nq\s|cl\s|gc\s|zb\s|zn\s|roll|curve|contango|backwardation|open\s+interest|cme)\b/i,
@@ -233,26 +234,30 @@ const CATEGORY_INTELLIGENCE_DIRECTIVES = {
     'RATES DESK: Curve and policy path from calendar and drivers; yield language only when backed by pack data.',
   etfs:
     'ETF DESK: Factor/flow tone vs underlying macro; no mechanical vehicle-by-vehicle blocks.',
-  general:
-    'HOUSE BRIEF: Cross-asset leadership and what repriced; scheduled risk in narrative form — not parallel sleeves as copy-paste paragraphs.',
+  aura_institutional_daily:
+    'INSTITUTIONAL DAILY: Cross-asset house note — leadership, liquidity, scheduled risk; grounded in the instrument pack.',
+  aura_institutional_weekly:
+    'INSTITUTIONAL WEEKLY: Week-in-review and forward structural read across the house universe; no single-sleeve monologue.',
 };
 
 const CALENDAR_HIGH_IMPACT = /\b(high|red)\b/i;
 
 function normalizeBriefKind(kind) {
   const k = String(kind || '').toLowerCase().trim();
-  if (k === 'aura_institutional_daily' || k === 'aura_institutional_weekly') return k;
-  return BRIEF_KIND_ORDER.includes(k) ? k : 'general';
+  if (isInstitutionalBriefKind(k)) return k;
+  if (isDeskAutomationCategoryKind(k)) return k;
+  // Legacy `general` and unknown slugs — never persist as general; default universe to stocks.
+  return 'stocks';
 }
 
 function getUniverseSymbols(kind) {
   const k = normalizeBriefKind(kind);
-  return [...(INSTRUMENT_UNIVERSE_BY_KIND[k] || INSTRUMENT_UNIVERSE_BY_KIND.general)];
+  return [...(INSTRUMENT_UNIVERSE_BY_KIND[k] || INSTRUMENT_UNIVERSE_BY_KIND.stocks)];
 }
 
 function fallbackTop5ForKind(kind) {
   const k = normalizeBriefKind(kind);
-  return [...(FALLBACK_TOP5_BY_KIND[k] || FALLBACK_TOP5_BY_KIND.general)].slice(0, 5);
+  return [...(FALLBACK_TOP5_BY_KIND[k] || FALLBACK_TOP5_BY_KIND.stocks)].slice(0, 5);
 }
 
 function isSymbolAllowedForKind(symbol, kind) {
@@ -284,7 +289,7 @@ function filterHeadlinesForBriefKind(headlines, briefKind) {
   if (list.length === 0) return [];
   const k = normalizeBriefKind(briefKind);
   const re = KIND_HEADLINE_KEYWORDS[k];
-  if (!re || k === 'general') return list.slice(0, 14);
+  if (!re) return list.slice(0, 14);
   const matched = list.filter((h) => re.test(h));
   const rest = list.filter((h) => !re.test(h));
   return [...matched, ...rest].slice(0, 14);
@@ -355,11 +360,7 @@ function crossAssetSymbolsForContaminationCheck(kind) {
   const out = new Set();
   for (const cat of BRIEF_KIND_ORDER) {
     if (cat === k) continue;
-    if (k === 'general') continue;
     getUniverseSymbols(cat).forEach((s) => out.add(String(s).toUpperCase()));
-  }
-  if (k !== 'general') {
-    getUniverseSymbols('general').forEach((s) => out.add(String(s).toUpperCase()));
   }
   return out;
 }
@@ -367,7 +368,7 @@ function crossAssetSymbolsForContaminationCheck(kind) {
 /** If non-allowed ticker tokens appear as whole words in prose, flag contamination. */
 function detectCrossAssetContamination(text, briefKind) {
   const k = normalizeBriefKind(briefKind);
-  if (k === 'general') return { contaminated: false, hits: [] };
+  if (!isDeskAutomationCategoryKind(k)) return { contaminated: false, hits: [] };
   const forbidden = crossAssetSymbolsForContaminationCheck(k);
   const body = String(text || '');
   const hits = [];
@@ -428,7 +429,7 @@ function buildDeskContextLines(market, briefKind, period = 'daily') {
   lines.push(
     `Snapshot: ${regime.currentRegime || 'mixed'} regime, ${pulse.label || 'MIXED'} pulse (${pulse.score != null ? pulse.score : '—'}/100).`
   );
-  if (k !== 'general') {
+  if (isDeskAutomationCategoryKind(k)) {
     lines.push(`BOUNDARY: ${k} only — no tickers outside instrumentIntelligence[].instrument.`);
   }
   return lines;
@@ -447,9 +448,10 @@ function categoryWritingMandate(briefKind, period) {
     commodities: `Commodities desk note. ${depth} Emphasize inventories, USD pass-through, geopolitical supply risk, China demand proxies, energy vs metals divergence.`,
     bonds: `Rates desk note. ${depth} Emphasize curve shape, real yield narrative, auction demand, CB path repricing, growth/inflation surprise transmission.`,
     etfs: `ETF sleeve note. ${depth} Emphasize flow/creation narrative, factor and sector ETFs, confirmation from underlying breadth, hedging with rates/vol products.`,
-    general: `House cross-asset note. ${depth} Tie leadership, liquidity, and scheduled risk across sleeves without drifting into a single-asset monologue.`,
+    aura_institutional_daily: `Institutional daily house note. ${depth} Cross-asset leadership, liquidity, and scheduled risk across the published instrument set.`,
+    aura_institutional_weekly: `Institutional weekly house note. ${depth} Structural repricing, persistence, and next-week catalysts across the house universe.`,
   };
-  return map[k] || map.general;
+  return map[k] || map.stocks;
 }
 
 /** Full Twelve Data quote for brief intelligence (volume etc.) — via marketDataLayer. */

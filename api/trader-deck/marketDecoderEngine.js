@@ -1095,6 +1095,7 @@ async function runMarketDecoder(symbolInput) {
     calOk: cal.ok,
     pairMeetingCount: (pairMeetingsPick.events || []).length,
     crossAlignment: pulseWeighted.crossAlignment,
+    structureInsufficient,
   });
   const smartAlerts = compose.buildSmartAlerts({
     piv,
@@ -1106,6 +1107,7 @@ async function runMarketDecoder(symbolInput) {
     eventHighImpactSoon,
     rsiVal,
     volLabel,
+    structureInsufficient,
   });
   const eventRiskSummary = compose.eventRiskState(events, eventHighImpactSoon, pairMeetingsPick.scope);
   const scenarioTone = compose.scenarioToneFromBias(bias, net);
@@ -1136,15 +1138,25 @@ async function runMarketDecoder(symbolInput) {
     volatilityRegime: volLabel,
     structureState: readiness.structureQuality,
     note:
-      adrPct != null
-        ? `Average daily range ≈ ${adrPct}% of spot (last five completed sessions).`
-        : null,
-    stateSummary: [
-      rsiVal != null ? `RSI ${rsiVal} (${rsiPack.label})` : 'RSI n/a',
-      `${volLabel} range regime`,
-      readiness.structureQuality,
-      readiness.sessionAlignment !== 'Weak' ? `Session fit ${readiness.sessionAlignment}` : 'Session fit weak vs bias',
-    ].join(' · '),
+      structureInsufficient
+        ? null
+        : adrPct != null
+          ? `Average daily range ≈ ${adrPct}% of spot (last five completed sessions).`
+          : null,
+    stateSummary: structureInsufficient
+      ? [
+          `Structure not scored (need ≥${MIN_BARS_FOR_STRUCTURE} daily closes; have ${closes.length})`,
+          `${volLabel} range regime from loaded window only`,
+          rsiVal != null
+            ? `RSI ${rsiVal} (${rsiPack.label}) — not a thesis without structure`
+            : 'RSI n/a (needs more closes for a 14-period read)',
+        ].join(' · ')
+      : [
+          rsiVal != null ? `RSI ${rsiVal} (${rsiPack.label})` : 'RSI n/a',
+          `${volLabel} range regime`,
+          readiness.structureQuality,
+          readiness.sessionAlignment !== 'Weak' ? `Session fit ${readiness.sessionAlignment}` : 'Session fit weak vs bias',
+        ].join(' · '),
   };
   const decoderScenario = {
     upsideTarget: piv?.r1 ?? null,

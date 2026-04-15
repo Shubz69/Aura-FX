@@ -180,7 +180,11 @@ function buildInstitutionalFactPack({
   runDate,
   instrumentUniverse = INSTITUTIONAL_INSTRUMENTS,
 }) {
-  const macroSummary = buildMacroSummaryLines(market, 'general', period);
+  const macroSummary = buildMacroSummaryLines(
+    market,
+    period === 'weekly' ? 'aura_institutional_weekly' : 'aura_institutional_daily',
+    period
+  );
   const drivers = (market.keyDrivers || []).slice(0, 12).map(packDriverLine).filter(Boolean);
   const cross = (market.crossAssetSignals || []).slice(0, 12).map(packSignalLine).filter(Boolean);
   const quotes = instrumentUniverse.map(({ id }) => {

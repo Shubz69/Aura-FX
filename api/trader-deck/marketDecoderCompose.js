@@ -257,11 +257,14 @@ function buildConfirmationEngine({
   calOk,
   pairMeetingCount,
   crossAlignment,
+  structureInsufficient,
 }) {
+  const structureInsufficientFlag = Boolean(structureInsufficient);
   const pivOk = piv && piv.r1 != null && piv.s1 != null;
   const structureOk = pivOk && Math.abs(net) >= 2;
   const liquidityOk = pivOk && last != null;
-  const sessionOk = condition !== 'Event Risk' && conviction !== 'Low';
+  const sessionOk =
+    !structureInsufficientFlag && condition !== 'Event Risk' && conviction !== 'Low';
   const volatilityOk = volLabel !== 'High' || conviction === 'High';
   const eventOk = !eventHighImpactSoon;
 
@@ -293,20 +296,40 @@ function buildConfirmationEngine({
     {
       id: 'structure',
       label: 'Structure',
-      status: checkStatus(structureOk, !pivOk || Math.abs(net) < 2, false),
-      verdict: !pivOk ? 'Pivot grid incomplete' : Math.abs(net) < 2 ? 'No clean directional lean' : 'Rules align with lean',
+      status: structureInsufficientFlag
+        ? 'invalid'
+        : checkStatus(structureOk, !pivOk || Math.abs(net) < 2, false),
+      verdict: structureInsufficientFlag
+        ? 'Insufficient daily history — bias and MAs are not scored'
+        : !pivOk
+          ? 'Pivot grid incomplete'
+          : Math.abs(net) < 2
+            ? 'No clean directional lean'
+            : 'Rules align with lean',
     },
     {
       id: 'liquidity',
       label: 'Liquidity',
-      status: checkStatus(liquidityOk, !pivOk, false),
-      verdict: pivOk ? 'Classic levels active' : 'Wait for level grid',
+      status: structureInsufficientFlag
+        ? checkStatus(false, true, false)
+        : checkStatus(liquidityOk, !pivOk, false),
+      verdict: structureInsufficientFlag
+        ? 'Defer level-backed liquidity reads until the daily pack is complete'
+        : pivOk
+          ? 'Classic levels active'
+          : 'Wait for level grid',
     },
     {
       id: 'session',
       label: 'Session',
-      status: checkStatus(sessionOk, condition === 'Choppy' && conviction === 'Low', eventHighImpactSoon),
-      verdict: eventHighImpactSoon ? 'High-impact window' : `${condition} · ${conviction} conviction`,
+      status: structureInsufficientFlag
+        ? checkStatus(false, true, false)
+        : checkStatus(sessionOk, condition === 'Choppy' && conviction === 'Low', eventHighImpactSoon),
+      verdict: structureInsufficientFlag
+        ? `${condition} — session labels are contextual only until structure loads`
+        : eventHighImpactSoon
+          ? 'High-impact window'
+          : `${condition} · ${conviction} conviction`,
     },
     {
       id: 'volatility',
@@ -334,7 +357,15 @@ function buildConfirmationEngine({
   else if (readiness100 >= 62 && pivOk && !eventHighImpactSoon) finalAction = 'READY';
   else if (readiness100 < 38 || eventHighImpactSoon) finalAction = 'CAUTION';
 
-  return { checks, finalAction, readinessScore: readiness100 };
+  if (structureInsufficientFlag) {
+    finalAction = eventHighImpactSoon ? 'CAUTION' : 'WAIT';
+  }
+
+  return {
+    checks,
+    finalAction,
+    readinessScore: structureInsufficientFlag ? Math.min(readiness100, 32) : readiness100,
+  };
 }
 
 function buildSmartAlerts({
@@ -347,9 +378,29 @@ function buildSmartAlerts({
   eventHighImpactSoon,
   rsiVal,
   volLabel,
+  structureInsufficient,
 }) {
   const alerts = [];
   const px = (x) => (x == null ? null : formatPx(x, instrument || { marketType }));
+  if (structureInsufficient) {
+    alerts.push({
+      type: 'data',
+      text: 'Daily structure is not scored yet — pivot / sweep alerts are suppressed until at least five daily closes load.',
+    });
+    if (eventHighImpactSoon) {
+      alerts.push({
+        type: 'event',
+        text: 'High-impact macro window — cut size and avoid new exposure into the print unless your plan explicitly trades the release',
+      });
+    }
+    if (volLabel === 'High') {
+      alerts.push({
+        type: 'vol',
+        text: 'Loaded window shows wide ranges — size defensively until full history confirms the regime.',
+      });
+    }
+    return alerts.slice(0, 7);
+  }
   if (eventHighImpactSoon) {
     alerts.push({
       type: 'event',

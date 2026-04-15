@@ -39,3 +39,14 @@ export function getTraderDeckIntelStorageYmd(selectedYmd, period) {
   if (period === 'weekly') return getWeekEndingSundayUtcYmd(slice);
   return slice;
 }
+
+/** Mon–Fri range label for the ISO week containing the week-ending Sunday key (London). Keep aligned with api deskWeekMonFriRangeLabel. */
+export function formatLondonWeekRangeFromWeekEndingSundayYmd(sundayYmd) {
+  const s = String(sundayYmd || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+  const sun = DateTime.fromISO(`${s}T12:00:00`, { zone: DESK_TIMEZONE });
+  if (!sun.isValid) return '';
+  const mon = sun.set({ weekday: 1 });
+  const fri = mon.plus({ days: 4 });
+  return `${mon.toFormat('d MMMM yyyy')} – ${fri.toFormat('d MMMM yyyy')}`;
+}

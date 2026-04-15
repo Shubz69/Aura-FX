@@ -11,6 +11,7 @@
 require('../utils/suppress-warnings');
 
 const { executeQuery, addColumnIfNotExists } = require('../db');
+const { isInstitutionalBriefKind, isDeskAutomationCategoryKind } = require('./deskBriefKinds');
 const { verifyToken } = require('../utils/auth');
 
 async function ensureChunkBufferTable() {
@@ -43,6 +44,14 @@ async function ensureBriefsTable() {
     )
   `);
   await addColumnIfNotExists('trader_deck_briefs', 'file_data', 'LONGBLOB DEFAULT NULL');
+  await addColumnIfNotExists('trader_deck_briefs', 'brief_kind', "VARCHAR(40) NOT NULL DEFAULT 'general'");
+  await addColumnIfNotExists('trader_deck_briefs', 'brief_version', 'INT NOT NULL DEFAULT 1');
+}
+
+function normalizeUploadedBriefKind(raw) {
+  const k = String(raw || '').toLowerCase().trim();
+  if (isDeskAutomationCategoryKind(k) || isInstitutionalBriefKind(k)) return k;
+  return 'stocks';
 }
 
 async function requireAdmin(req) {
@@ -134,6 +143,7 @@ module.exports = async (req, res) => {
     const date = (body.date || '').trim().slice(0, 10);
     const period = (body.period || 'daily').toLowerCase() === 'weekly' ? 'weekly' : 'daily';
     const title = (body.title || 'Brief').toString().trim().slice(0, 255) || 'Brief';
+    const briefKind = normalizeUploadedBriefKind(body.briefKind);
     const fileName = (body.fileName || '').toString().trim().slice(0, 255);
     const mimeType = (body.mimeType || 'application/octet-stream').toString().trim().slice(0, 128);
     if (!token) {
@@ -166,8 +176,8 @@ module.exports = async (req, res) => {
       }
       const fileBuffer = Buffer.concat(rows.map((r) => r.chunk_data));
       const [result] = await executeQuery(
-        `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data) VALUES (?, ?, ?, ?, ?, ?)`,
-        [date, period, title, null, mimeType || null, fileBuffer]
+        `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data, brief_kind, brief_version) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+        [date, period, title, null, mimeType || null, fileBuffer, briefKind]
       );
       await executeQuery(`DELETE FROM trader_deck_brief_chunks WHERE token = ?`, [token]);
       const id = result.insertId;
@@ -181,6 +191,7 @@ module.exports = async (req, res) => {
   const date = (body.date || '').trim().slice(0, 10);
   const period = (body.period || 'daily').toLowerCase() === 'weekly' ? 'weekly' : 'daily';
   const title = (body.title || 'Brief').toString().trim().slice(0, 255) || 'Brief';
+  const briefKind = normalizeUploadedBriefKind(body.briefKind);
   const fileBase64 = body.fileBase64;
   const fileName = (body.fileName || '').toString().trim().slice(0, 255);
   const mimeType = (body.mimeType || 'application/octet-stream').toString().trim().slice(0, 128);
@@ -206,8 +217,8 @@ module.exports = async (req, res) => {
 
   try {
     const [result] = await executeQuery(
-      `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data) VALUES (?, ?, ?, ?, ?, ?)`,
-      [date, period, title, fileUrl || null, mimeType || null, fileBuffer || null]
+      `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data, brief_kind, brief_version) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+      [date, period, title, fileUrl || null, mimeType || null, fileBuffer || null, briefKind]
     );
     const id = result.insertId;
     return res.status(200).json({ success: true, id, date, period, title });

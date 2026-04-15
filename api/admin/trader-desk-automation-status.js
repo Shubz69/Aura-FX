@@ -49,6 +49,7 @@ module.exports = async (req, res) => {
        FROM trader_deck_briefs
        WHERE period IN ('daily','weekly')
          AND date >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
+         AND COALESCE(LOWER(brief_kind), '') <> 'general'
        GROUP BY date, period
        ORDER BY date DESC, period ASC
        LIMIT 28`

@@ -119,7 +119,7 @@ const SECTION_RULES = {
 
 /** Category-specific angle injected into each section prompt (same structure, different emphasis). */
 function categoryAngleForSection(sectionKey, briefKind) {
-  const k = String(briefKind || 'general').toLowerCase();
+  const k = String(briefKind || 'stocks').toLowerCase();
   const angles = {
     forex: {
       market_context: 'Anchor on rates, USD, CB expectations, and session liquidity.',
@@ -241,24 +241,9 @@ function categoryAngleForSection(sectionKey, briefKind) {
       forward_outlook: 'Outlook.',
       strategic_takeaway: 'Strategic.',
     },
-    general: {
-      market_context: 'Cross-asset snapshot and immediate repricing.',
-      cross_asset_flow: 'Equities, rates, FX, commodities, crypto linkages.',
-      key_drivers: 'Top macro and market drivers.',
-      market_behaviour: 'Risk tone and liquidity.',
-      what_matters_next: 'Calendar and catalysts.',
-      trader_takeaway: 'House takeaway.',
-      weekly_overview: 'Full market week.',
-      macro_theme: 'Dominant macro.',
-      cross_asset_breakdown: 'Leadership and laggards.',
-      structural_shift: 'What changed structurally.',
-      key_events_recap: 'Week recap.',
-      forward_outlook: 'Next week.',
-      strategic_takeaway: 'Strategic.',
-    },
   };
-  const table = angles[k] || angles.general;
-  return table[sectionKey] || angles.general[sectionKey] || 'Apply this category’s lens; stay factual to the pack.';
+  const table = angles[k] || angles.stocks;
+  return table[sectionKey] || angles.stocks[sectionKey] || 'Apply this category’s lens; stay factual to the pack.';
 }
 
 function getStructureKeys(period) {

@@ -23,6 +23,9 @@ const {
 } = briefStructure;
 
 const SOURCE_MARKER_RE = /(https?:\/\/|www\.|source\s*:|sources\s*:|according to|reuters|bloomberg|fmp|finnhub|forex factory|trading economics)/i;
+const { DateTime } = require('luxon');
+const { getWeekEndingSundayUtcYmd } = require('../deskDates');
+const { DESK_AUTOMATION_CATEGORY_KINDS } = require('../deskBriefKinds');
 const {
   BRIEF_KIND_ORDER,
   BANNED_PHRASES,
@@ -33,7 +36,6 @@ const {
   fetchAutomationQuoteWithFallback,
 } = briefUniverse;
 const BRIEF_KIND_LABELS = {
-  general: 'General Market Brief',
   stocks: 'Stocks Brief',
   indices: 'Indices Brief',
   futures: 'Futures Brief',
@@ -225,7 +227,6 @@ const CATEGORY_LOGIC_RULES = {
   commodities: 'Focus on supply-demand balances, inventory dynamics, seasonality and geopolitical transmission into price.',
   bonds: 'Focus on curve shape, duration sensitivity, policy path repricing and auction/data calendar transmission.',
   etfs: 'Focus on ETF flow momentum, creation/redemption pressure, factor rotation and underlying liquidity confirmation.',
-  general: 'Blend cross-asset macro leadership, risk sentiment, liquidity regime and event sequencing.',
 };
 
 function toYmdInTz(date, timeZone) {
@@ -237,18 +238,8 @@ function toYmdInTz(date, timeZone) {
   }).format(date);
 }
 
-function getWeekEndingSunday(dateStr) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr || ''))) return dateStr;
-  const d = new Date(`${dateStr}T12:00:00.000Z`);
-  if (Number.isNaN(d.getTime())) return dateStr;
-  const day = d.getUTCDay();
-  const add = day === 0 ? 0 : (7 - day);
-  d.setUTCDate(d.getUTCDate() + add);
-  return d.toISOString().slice(0, 10);
-}
-
 function normalizeOutlookDate(period, dateStr) {
-  return period === 'weekly' ? getWeekEndingSunday(dateStr) : dateStr;
+  return period === 'weekly' ? getWeekEndingSundayUtcYmd(dateStr) : dateStr;
 }
 
 function weekdayName(date, timeZone) {
@@ -265,17 +256,20 @@ function dateLong(date, timeZone) {
   }).format(date);
 }
 
-function weekRange(date, timeZone) {
-  const nowYmd = toYmdInTz(date, timeZone);
-  const base = new Date(`${nowYmd}T12:00:00Z`);
-  const day = base.getUTCDay();
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-  const monday = new Date(base);
-  monday.setUTCDate(base.getUTCDate() + mondayOffset);
-  const friday = new Date(monday);
-  friday.setUTCDate(monday.getUTCDate() + 4);
+/** JS Date at local noon on desk YMD — stable title tokens vs UTC parsing bugs. */
+function jsDateFromDeskYmd(deskYmd, timeZone) {
+  const dt = DateTime.fromISO(`${String(deskYmd || '').slice(0, 10)}T12:00:00`, { zone: timeZone });
+  return dt.isValid ? dt.toJSDate() : new Date();
+}
+
+/** Mon–Fri window for the ISO week containing `deskYmd` in `timeZone` (matches UK desk week). */
+function deskWeekMonFriRangeLabel(deskYmd, timeZone = 'Europe/London') {
+  const anchor = DateTime.fromISO(`${String(deskYmd || '').slice(0, 10)}T12:00:00`, { zone: timeZone });
+  if (!anchor.isValid) return '';
+  const mon = anchor.set({ weekday: 1 });
+  const fri = mon.plus({ days: 4 });
   const fmt = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'long', year: 'numeric', timeZone });
-  return `${fmt.format(monday)} to ${fmt.format(friday)}`;
+  return `${fmt.format(mon.toJSDate())} to ${fmt.format(fri.toJSDate())}`;
 }
 
 function stripSources(text) {
@@ -305,7 +299,7 @@ function orderedBriefKinds() {
 }
 
 function orderedAutomatedCategoryKinds() {
-  return BRIEF_KIND_ORDER.filter((kind) => kind !== 'general');
+  return [...DESK_AUTOMATION_CATEGORY_KINDS];
 }
 
 function frameworkHeadings(period, briefKind, fallbackSections = []) {
@@ -501,7 +495,7 @@ function buildFactPack({
   market,
   econ,
   news,
-  briefKind = 'general',
+  briefKind = 'stocks',
   topInstruments = [],
   liveQuotes = [],
   instrumentScoreRows = [],
@@ -536,7 +530,7 @@ function buildFactPack({
   return {
     period,
     briefKind: normalizedKind,
-    briefKindLabel: BRIEF_KIND_LABELS[normalizedKind] || BRIEF_KIND_LABELS.general,
+    briefKindLabel: BRIEF_KIND_LABELS[normalizedKind] || BRIEF_KIND_LABELS.stocks,
     contextQuality: {
       headlineCount: filteredNews.length,
       calendarCount: calSlice.length,
@@ -557,7 +551,7 @@ function buildFactPack({
     macroSummary,
     periodMandate,
     categoryWritingMandate: categoryWritingMandate(normalizedKind, period),
-    categoryIntelligenceDirective: CATEGORY_INTELLIGENCE_DIRECTIVES[normalizedKind] || CATEGORY_INTELLIGENCE_DIRECTIVES.general,
+    categoryIntelligenceDirective: CATEGORY_INTELLIGENCE_DIRECTIVES[normalizedKind] || CATEGORY_INTELLIGENCE_DIRECTIVES.stocks,
     instrumentScores: Array.isArray(instrumentScoreRows)
       ? instrumentScoreRows.map((r) => ({
           instrument: r.symbol,
@@ -583,27 +577,23 @@ function ordinalDayNumber(n) {
   return `${v}th`;
 }
 
-function formatDailySampleTitle(runDate, timeZone) {
-  const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone }).format(runDate);
-  const day = ordinalDayNumber(new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone }).format(runDate));
-  const month = new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone }).format(runDate);
-  const year = new Intl.DateTimeFormat('en-GB', { year: 'numeric', timeZone }).format(runDate);
+function formatDailySampleTitle(deskYmd, timeZone) {
+  const mid = jsDateFromDeskYmd(deskYmd, timeZone);
+  const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone }).format(mid);
+  const day = ordinalDayNumber(new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone }).format(mid));
+  const month = new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone }).format(mid);
+  const year = new Intl.DateTimeFormat('en-GB', { year: 'numeric', timeZone }).format(mid);
   return `Daily Brief - ${weekday} ${day} ${month} ${year}`;
 }
 
-function formatWeeklySampleTitle(runDate, timeZone) {
-  const ymd = toYmdInTz(runDate, timeZone);
-  const base = new Date(`${ymd}T12:00:00.000Z`);
-  const day = base.getUTCDay();
-  const mondayOffset = day === 0 ? 1 : 1 - day;
-  const monday = new Date(base);
-  monday.setUTCDate(base.getUTCDate() + mondayOffset);
-  const friday = new Date(monday);
-  friday.setUTCDate(monday.getUTCDate() + 4);
-  const mDay = ordinalDayNumber(new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone }).format(monday));
-  const fDay = ordinalDayNumber(new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone }).format(friday));
-  const month = new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone }).format(friday);
-  const year = new Intl.DateTimeFormat('en-GB', { year: 'numeric', timeZone }).format(friday);
+function formatWeeklySampleTitle(deskYmd, timeZone) {
+  const mon = DateTime.fromISO(`${String(deskYmd || '').slice(0, 10)}T12:00:00`, { zone: timeZone }).set({ weekday: 1 });
+  const fri = mon.plus({ days: 4 });
+  if (!mon.isValid) return 'WEEKLY FUNDAMENTAL ANALYSIS';
+  const mDay = ordinalDayNumber(mon.toFormat('d'));
+  const fDay = ordinalDayNumber(fri.toFormat('d'));
+  const month = new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone }).format(fri.toJSDate());
+  const year = new Intl.DateTimeFormat('en-GB', { year: 'numeric', timeZone }).format(fri.toJSDate());
   return `WEEKLY FUNDAMENTAL ANALYSIS - (${mDay} - ${fDay} ${month} ${year})`;
 }
 
@@ -1241,7 +1231,7 @@ async function generateSampleMatchedCategoryBrief({
     deskDate: deskDateYmd,
     contextQuality: factPack.contextQuality || null,
     periodMandate: factPack.periodMandate,
-    categoryLogicRule: CATEGORY_LOGIC_RULES[normalizedKind] || CATEGORY_LOGIC_RULES.general,
+    categoryLogicRule: CATEGORY_LOGIC_RULES[normalizedKind] || CATEGORY_LOGIC_RULES.stocks,
     instrumentScores: Array.isArray(factPack.instrumentScores) ? factPack.instrumentScores.slice(0, 5) : [],
     dayName,
     topInstruments: expectedAssets,
@@ -1353,8 +1343,8 @@ Hard rules:
   }
   if (!validation.ok) return { ok: false, error: validation.reasons.join(','), parsed: parsedForUse };
   const title = normalizedPeriod === 'daily'
-    ? formatDailySampleTitle(runDate, timeZone)
-    : formatWeeklySampleTitle(runDate, timeZone);
+    ? formatDailySampleTitle(deskDateYmd, timeZone)
+    : formatWeeklySampleTitle(deskDateYmd, timeZone);
   const body = normalizedPeriod === 'daily'
     ? renderCategoryDailyBrief({ title, parsed: parsedForUse, runDate, timeZone })
     : renderCategoryWeeklyBrief({ title, parsed: parsedForUse });
@@ -1362,7 +1352,7 @@ Hard rules:
   if (!renderedValidation.ok) return { ok: false, error: renderedValidation.reasons.join(','), parsed: parsedForUse, body };
   return {
     ok: true,
-    title: normalizedKind === 'general' ? title : `${BRIEF_KIND_LABELS[normalizedKind]} - ${title}`,
+    title: `${BRIEF_KIND_LABELS[normalizedKind]} - ${title}`,
     body,
     parsed: parsedForUse,
     validation: {
@@ -1420,7 +1410,7 @@ function validateBriefBeforeSave({ body, generated, factPack, priorBodies = [] }
   const inv = validateTopInstrumentsForKind(factPack.topInstruments, kind);
   if (!inv.ok) reasons.push(`instrument_universe:${(inv.bad || []).join(',')}`);
 
-  const minBody = kind === 'general' ? 400 : 350;
+  const minBody = 350;
   if (!body || String(body).trim().length < minBody) reasons.push('body_too_short');
 
   if (BANNED_PHRASES_RE.test(body)) reasons.push('banned_phrase_in_body');
@@ -1502,7 +1492,7 @@ function slimFactPackForSections(factPack) {
     marketRegime: factPack.marketRegime,
     marketPulse: factPack.marketPulse,
     bannedPhrases: factPack.bannedPhrases || BANNED_PHRASES,
-    categoryLogicRule: CATEGORY_LOGIC_RULES[factPack.briefKind] || CATEGORY_LOGIC_RULES.general,
+    categoryLogicRule: CATEGORY_LOGIC_RULES[factPack.briefKind] || CATEGORY_LOGIC_RULES.stocks,
     llmDataSupplement: factPack.llmDataSupplement || null,
     narrativeInstrumentRule:
       'Macro-first narrative: mention tickers or spot levels only when they clarify cross-asset or macro transmission (e.g. US10Y dragging risk, DXY skew). '
@@ -1708,17 +1698,18 @@ async function refineFailedSections(generated, factPack, validation, options = {
   return { ...generated, sections: next };
 }
 
-function fallbackGenerated(factPack, template, now, timeZone) {
+function fallbackGenerated(factPack, template, deskYmd, timeZone) {
   const keys = getStructureKeys(factPack.period);
   const renderedSections = keys.map((key) => ({
     key,
     heading: SECTION_HEADINGS[key] || key,
     body: fallbackSectionBodyByKey(key, SECTION_HEADINGS[key], factPack),
   }));
+  const mid = jsDateFromDeskYmd(deskYmd, timeZone);
   const baseTitle = template.titlePattern
-    .replace('{weekday}', weekdayName(now, timeZone))
-    .replace('{dateLong}', dateLong(now, timeZone))
-    .replace('{weekRange}', weekRange(now, timeZone));
+    .replace('{weekday}', weekdayName(mid, timeZone))
+    .replace('{dateLong}', dateLong(mid, timeZone))
+    .replace('{weekRange}', deskWeekMonFriRangeLabel(deskYmd, timeZone));
   return {
     title: baseTitle,
     sections: renderedSections,
@@ -1728,14 +1719,14 @@ function fallbackGenerated(factPack, template, now, timeZone) {
   };
 }
 
-function renderBriefText({ title, period, date, generated, template, briefKind = 'general', topInstruments = [] }) {
+function renderBriefText({ title, period, date, generated, template, briefKind = 'stocks', topInstruments = [] }) {
   const normalizedKind = normalizeBriefKind(briefKind);
   const lines = [];
   lines.push(title);
   lines.push('');
   lines.push(`Period: ${period}`);
   lines.push(`Date: ${date}`);
-  lines.push(`Category: ${BRIEF_KIND_LABELS[normalizedKind] || BRIEF_KIND_LABELS.general}`);
+  lines.push(`Category: ${BRIEF_KIND_LABELS[normalizedKind] || BRIEF_KIND_LABELS.stocks}`);
   lines.push('');
 
   const sections = Array.isArray(generated.sections) ? generated.sections : [];
@@ -2017,7 +2008,7 @@ async function publishAutoBrief({
   date,
   title,
   body,
-  briefKind = 'general',
+  briefKind = 'stocks',
   generationMeta = null,
   mimeType = 'text/plain; charset=utf-8',
 }) {
@@ -2062,26 +2053,27 @@ async function publishManualBrief({ period, date, title, body }) {
   const safeTitle = String(title || 'Market Brief').slice(0, 255);
   assertNoSources(safeTitle);
   assertNoSources(body);
-  const briefVersion = await getNextBriefVersion({ period: normalizedPeriod, date: safeDate, briefKind: 'general' });
+  const briefVersion = await getNextBriefVersion({ period: normalizedPeriod, date: safeDate, briefKind: 'stocks' });
   const [result] = await executeQuery(
     `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data, brief_kind, brief_version)
-     VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?, 'general', ?)`,
+     VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?, 'stocks', ?)`,
     [safeDate, normalizedPeriod, safeTitle, Buffer.from(String(body || ''), 'utf8'), briefVersion]
   );
   return result.insertId;
 }
 
-function computeTitle(template, now, timeZone) {
+function computeTitle(template, deskYmd, timeZone) {
   const pattern = String(template?.titlePattern || '').trim() || 'Market Brief - {dateLong}';
+  const mid = jsDateFromDeskYmd(deskYmd, timeZone);
   return pattern
-    .replace('{weekday}', weekdayName(now, timeZone))
-    .replace('{dateLong}', dateLong(now, timeZone))
-    .replace('{weekRange}', weekRange(now, timeZone));
+    .replace('{weekday}', weekdayName(mid, timeZone))
+    .replace('{dateLong}', dateLong(mid, timeZone))
+    .replace('{weekRange}', deskWeekMonFriRangeLabel(deskYmd, timeZone));
 }
 
 async function generateAndStoreBrief({
   period,
-  briefKind = 'general',
+  briefKind = 'stocks',
   timeZone = 'Europe/London',
   runDate = new Date(),
   generationContext = null,
@@ -2238,27 +2230,25 @@ async function generateAndStoreBrief({
       ? await getLatestWeeklyBriefExcerpt(normalizedKind, date)
       : null;
 
-    if (normalizedKind !== 'general') {
-      const sampleMatch = await generateSampleMatchedCategoryBrief({
-        period: normalizedPeriod,
-        factPack,
-        briefKind: normalizedKind,
-        runDate,
-        timeZone,
-        priorBodies: contextBodies,
-        existingExcerpts,
-        weeklyReference,
-      });
-      if (sampleMatch.ok) {
-        title = sampleMatch.title;
-        body = sampleMatch.body;
-        validation = {
-          ok: true,
-          reasons: [],
-          mode: 'sample-structured',
-          structuredValidation: sampleMatch.validation,
-        };
-      }
+    const sampleMatch = await generateSampleMatchedCategoryBrief({
+      period: normalizedPeriod,
+      factPack,
+      briefKind: normalizedKind,
+      runDate,
+      timeZone,
+      priorBodies: contextBodies,
+      existingExcerpts,
+      weeklyReference,
+    });
+    if (sampleMatch.ok) {
+      title = sampleMatch.title;
+      body = sampleMatch.body;
+      validation = {
+        ok: true,
+        reasons: [],
+        mode: 'sample-structured',
+        structuredValidation: sampleMatch.validation,
+      };
     }
 
     if (!body) {
@@ -2278,12 +2268,10 @@ async function generateAndStoreBrief({
         }
       }
       if (!generated) {
-        generated = fallbackGenerated(factPack, template, runDate, timeZone);
+        generated = fallbackGenerated(factPack, template, date, timeZone);
       }
-      const titleBase = stripSources(computeTitle(template, runDate, timeZone));
-      title = normalizedKind === 'general'
-        ? titleBase
-        : `${BRIEF_KIND_LABELS[normalizedKind]} - ${titleBase}`;
+      const titleBase = stripSources(computeTitle(template, date, timeZone));
+      title = `${BRIEF_KIND_LABELS[normalizedKind]} - ${titleBase}`;
       body = renderBriefText({
         title,
         period: normalizedPeriod,
@@ -2666,7 +2654,7 @@ async function generatePreviewBrief({
     fetchAutomationQuoteWithFallback
   );
   const sel = await scoreAndSelectTopInstruments({
-    briefKind: 'general',
+    briefKind: 'stocks',
     period: normalizedPeriod,
     quoteCache: qc,
     headlines: news,
@@ -2682,7 +2670,7 @@ async function generatePreviewBrief({
     market,
     econ,
     news,
-    briefKind: 'general',
+    briefKind: 'stocks',
     topInstruments: previewTop,
     liveQuotes,
     instrumentScoreRows: sel.scoreRows,
@@ -2705,16 +2693,16 @@ async function generatePreviewBrief({
     uniquenessRetry: false,
   });
   if (!generated) {
-    generated = fallbackGenerated(factPack, template, runDate, timeZone);
+    generated = fallbackGenerated(factPack, template, date, timeZone);
   }
-  const title = stripSources(computeTitle(template, runDate, timeZone));
+  const title = stripSources(computeTitle(template, date, timeZone));
   const body = renderBriefText({
     title,
     period: normalizedPeriod,
     date,
     generated,
     template,
-    briefKind: 'general',
+    briefKind: 'stocks',
     topInstruments: previewTop,
   });
   return {

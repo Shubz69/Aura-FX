@@ -9,7 +9,7 @@ import Api from '../../services/Api';
 import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import { FaEye, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 import CosmicBackground from '../../components/CosmicBackground';
-import { getTraderDeckIntelStorageYmd } from '../../lib/trader-deck/deskDates';
+import { getTraderDeckIntelStorageYmd, formatLondonWeekRangeFromWeekEndingSundayYmd } from '../../lib/trader-deck/deskDates';
 
 /** Client cap (DB LONGBLOB); large files use chunked uploads to avoid HTTP 413 on Vercel. */
 const MAX_UPLOAD_BYTES = 48 * 1024 * 1024;
@@ -44,7 +44,6 @@ function displayBriefTitle(title) {
 const BRIEF_KIND_ORDER = [
   'aura_institutional_daily',
   'aura_institutional_weekly',
-  'general',
   'stocks',
   'indices',
   'futures',
@@ -57,7 +56,6 @@ const BRIEF_KIND_ORDER = [
 const BRIEF_KIND_LABEL = {
   aura_institutional_daily: 'Institutional Daily',
   aura_institutional_weekly: 'Institutional Weekly',
-  general: 'General',
   stocks: 'Stocks',
   indices: 'Indices',
   futures: 'Futures',
@@ -83,7 +81,6 @@ const CATEGORY_BRIEF_KINDS = new Set([
 const ALLOWED_BRIEF_KINDS = new Set([
   'aura_institutional_daily',
   'aura_institutional_weekly',
-  'general',
   ...CATEGORY_BRIEF_KINDS,
 ]);
 
@@ -194,8 +191,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const sortedBriefs = useMemo(() => {
     const orderIndex = new Map(BRIEF_KIND_ORDER.map((k, i) => [k, i]));
     return [...briefs].sort((a, b) => {
-      const ak = String(a?.briefKind || 'general').toLowerCase();
-      const bk = String(b?.briefKind || 'general').toLowerCase();
+      const ak = String(a?.briefKind || '').toLowerCase();
+      const bk = String(b?.briefKind || '').toLowerCase();
       const ao = orderIndex.get(ak) || 99;
       const bo = orderIndex.get(bk) || 99;
       if (ao !== bo) return ao - bo;
@@ -210,8 +207,17 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
 
   const displayedBriefs = useMemo(() => {
     if (!sortedBriefs.length) return [];
-    return sortedBriefs.filter((b) => selectedKinds.has(String(b?.briefKind || 'general').toLowerCase()));
+    return sortedBriefs.filter((b) => selectedKinds.has(String(b?.briefKind || '').toLowerCase()));
   }, [sortedBriefs, selectedKinds]);
+
+  const categoryBriefCount = useMemo(
+    () => briefs.filter((b) => CATEGORY_BRIEF_KINDS.has(String(b?.briefKind || '').toLowerCase())).length,
+    [briefs]
+  );
+  const hasInstitutionalBrief = useMemo(
+    () => briefs.some((b) => String(b?.briefKind || '').toLowerCase().startsWith('aura_institutional')),
+    [briefs]
+  );
 
   const weekendSourceLabel = useMemo(() => {
     const iso = weekendBriefsNote?.sourceDate;
@@ -601,7 +607,11 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     );
   }
 
-  const mainTitle = `Market Intelligence — ${period === 'weekly' ? 'Weekly' : 'Daily'} (${storageDateStr})`;
+  const weekRangeLabel = period === 'weekly' ? formatLondonWeekRangeFromWeekEndingSundayYmd(storageDateStr) : '';
+  const mainTitle =
+    period === 'weekly' && weekRangeLabel
+      ? `Market Intelligence — Weekly (${weekRangeLabel}) · week ending ${storageDateStr}`
+      : `Market Intelligence — ${period === 'weekly' ? 'Weekly' : 'Daily'} (${storageDateStr})`;
 
   return (
     <>
@@ -624,11 +634,13 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           </div>
           {briefs.length > 0 && (
             <div className="td-deck-mi-modern-stat" aria-hidden>
-              <span className="td-deck-mi-modern-stat-value">{briefs.length}</span>
+              <span className="td-deck-mi-modern-stat-value">
+                {categoryBriefCount}/8
+              </span>
               <span className="td-deck-mi-modern-stat-label">
-                {weekendBriefsNote
-                  ? `brief${briefs.length !== 1 ? 's' : ''} (latest weekday)`
-                  : `brief${briefs.length !== 1 ? 's' : ''} this date`}
+                category brief{categoryBriefCount !== 1 ? 's' : ''}
+                {hasInstitutionalBrief ? ' · institutional' : ''}
+                {weekendBriefsNote ? ' (latest weekday pack)' : ''}
               </span>
             </div>
           )}
@@ -722,7 +734,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                 displayedBriefs.map((b) => (
                   <li key={b.id} className="td-deck-mi-brief-card">
                     <span className="td-deck-mi-brief-card-title">
-                      [{BRIEF_KIND_LABEL[String(b?.briefKind || 'general').toLowerCase()] || 'General'}] {displayBriefTitle(b.title)}{Number(b?.briefVersion || 1) > 1 ? ` (v${Number(b.briefVersion)})` : ''}
+                      [{BRIEF_KIND_LABEL[String(b?.briefKind || '').toLowerCase()] || 'Brief'}] {displayBriefTitle(b.title)}{Number(b?.briefVersion || 1) > 1 ? ` (v${Number(b.briefVersion)})` : ''}
                     </span>
                     <div className="td-deck-mi-brief-card-actions">
                       <button type="button" className="td-mi-btn td-mi-btn-small" onClick={() => handlePreview(b)} title="Fullscreen preview">
