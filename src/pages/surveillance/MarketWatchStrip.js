@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { marketActivityLevels } from './surveillancePresentation';
 
 function confidenceClass(c) {
   if (c === 'high') return 'sv-mw-conf--high';
@@ -8,6 +9,7 @@ function confidenceClass(c) {
 
 export default function MarketWatchStrip({ narrative, items, variant = 'default' }) {
   const compact = variant === 'compact';
+  const activityMap = useMemo(() => marketActivityLevels(items || []), [items]);
 
   if (narrative && narrative.length) {
     if (compact) {
@@ -74,34 +76,46 @@ export default function MarketWatchStrip({ narrative, items, variant = 'default'
 
   if (compact) {
     return (
-      <div className="sv-strip sv-strip--compact" role="region" aria-label="Market watch impact">
-        <span className="sv-strip-label">Markets</span>
+      <div className="sv-strip sv-strip--compact" role="region" aria-label="Market watch activity">
+        <div className="sv-strip-compact-labels">
+          <span className="sv-strip-label">Markets</span>
+          <span className="sv-strip-activity-label">Activity level</span>
+        </div>
         <div className="sv-strip-compact-scroll sv-strip-compact-scroll--chips">
-          {items.map((x) => (
-            <span
-              key={x.symbol}
-              className="sv-strip-chip sv-strip-chip--tight"
-              title={`Attention score from the current tape: ${x.flowScore}`}
-            >
-              <strong>{x.symbol}</strong>
-              <span className="sv-strip-score">{x.flowScore}</span>
-            </span>
-          ))}
+          {items.map((x) => {
+            const act = activityMap.get(x.symbol) || { label: 'LOW', band: 'low', title: '' };
+            return (
+              <span
+                key={x.symbol}
+                className={`sv-strip-chip sv-strip-chip--tight sv-strip-chip--act-${act.band}`}
+                title={act.title}
+              >
+                <strong>{x.symbol}</strong>
+                <span className="sv-strip-activity">{act.label}</span>
+              </span>
+            );
+          })}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="sv-strip" role="region" aria-label="Market watch impact">
-      <span className="sv-strip-label">Market watch</span>
+    <div className="sv-strip" role="region" aria-label="Market watch activity">
+      <div className="sv-strip-full-head">
+        <span className="sv-strip-label">Market watch</span>
+        <span className="sv-strip-activity-label">Activity level</span>
+      </div>
       <div className="sv-strip-chips">
-        {items.map((x) => (
-          <span key={x.symbol} className="sv-strip-chip" title={`Attention score from the current tape: ${x.flowScore}`}>
-            <strong>{x.symbol}</strong>
-            <span className="sv-strip-score">{x.flowScore}</span>
-          </span>
-        ))}
+        {items.map((x) => {
+          const act = activityMap.get(x.symbol) || { label: 'LOW', band: 'low', title: '' };
+          return (
+            <span key={x.symbol} className={`sv-strip-chip sv-strip-chip--act-${act.band}`} title={act.title}>
+              <strong>{x.symbol}</strong>
+              <span className="sv-strip-activity">{act.label}</span>
+            </span>
+          );
+        })}
       </div>
     </div>
   );

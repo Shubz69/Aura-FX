@@ -2,7 +2,7 @@ import React from 'react';
 import {
   eventFreshnessTimestamp,
   formatIsoDisplayFriendly,
-  salienceHint,
+  intensityHint,
   trustQualityPresentation,
   verificationPresentation,
 } from './surveillancePresentation';
@@ -69,10 +69,10 @@ export default function EventDrawer({ event, story, related, onClose, loading, o
                 <p className="sv-drawer-matters-label">Why it matters</p>
                 <p className="sv-drawer-matters">{event.why_it_matters}</p>
               </div>
-              <div className="sv-drawer-scores" aria-label="Salience, sourcing, and risk">
+              <div className="sv-drawer-scores" aria-label="Intensity, sourcing, and risk">
                 {event.rank_score != null ? (
-                  <span className="sv-drawer-chip sv-drawer-chip--rank" title={salienceHint()}>
-                    Salience {Math.round(event.rank_score)}
+                  <span className="sv-drawer-chip sv-drawer-chip--rank" title={intensityHint()}>
+                    Intensity {Math.round(event.rank_score)}
                   </span>
                 ) : null}
                 {event.trust_score != null ? (

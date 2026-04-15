@@ -58,8 +58,102 @@ export function trustQualityPresentation(trustScore) {
   };
 }
 
+/** Same metric as backend `rank_score`; user-facing name is Intensity. */
+export function intensityHint() {
+  return 'Intensity (0–100): blends severity, freshness, and source confidence. Higher = more important right now.';
+}
+
 export function salienceHint() {
-  return 'Salience (0–100) is how strongly the terminal surfaces this item on the live tape. It blends severity, corroboration, source quality, and freshness — similar scores mean comparable weighting, not identical risk.';
+  return intensityHint();
+}
+
+/** Tooltip copy for the scoring info control (tape). */
+export function intensityHowItWorksTooltip() {
+  return 'Intensity reflects how important a development is right now, combining:\n• Severity of event\n• Freshness (recency)\n• Source reliability\n• Cross-source confirmation';
+}
+
+/** 0–100 rank score → visual band for row accent (not severity). */
+export function intensityVisualBand(rankScore) {
+  const n = Number(rankScore);
+  if (!Number.isFinite(n)) return 'none';
+  if (n >= 85) return 'peak';
+  if (n >= 65) return 'high';
+  if (n >= 40) return 'mid';
+  return 'low';
+}
+
+/**
+ * Regional heat index from digest (aggregated severity×weight).
+ * Bands: 0–79 LOW, 80–139 MEDIUM, 140+ HIGH
+ */
+export function regionalHeatBand(score) {
+  const s = Number(score);
+  if (!Number.isFinite(s)) return { label: '—', band: 'unknown', title: '' };
+  if (s >= 140) return { label: 'HIGH', band: 'high', title: `Heat index ${Math.round(s)}` };
+  if (s >= 80) return { label: 'MEDIUM', band: 'medium', title: `Heat index ${Math.round(s)}` };
+  return { label: 'LOW', band: 'low', title: `Heat index ${Math.round(s)}` };
+}
+
+/** Global tension score is capped ~0–100; keep separate scale from regional heat sums. */
+export function gridTensionBand(score) {
+  const s = Number(score);
+  if (!Number.isFinite(s)) return { label: '—', band: 'unknown' };
+  if (s >= 70) return { label: 'HIGH', band: 'high' };
+  if (s >= 40) return { label: 'MODERATE', band: 'moderate' };
+  return { label: 'LOW', band: 'low' };
+}
+
+/**
+ * Activity level for market-watch flow scores: quartiles within the current watchlist batch.
+ * If all values are nearly identical, uses absolute score thresholds instead.
+ */
+export function marketActivityLevels(items) {
+  const list = (items || []).filter((x) => x && x.symbol != null);
+  const scores = list.map((x) => Number(x.flowScore)).filter((n) => Number.isFinite(n));
+  const out = new Map();
+  if (!scores.length) return out;
+
+  const sorted = [...scores].sort((a, b) => a - b);
+  const spread = sorted[sorted.length - 1] - sorted[0];
+
+  const labelFromPercentile = (p) => {
+    if (p >= 0.75) return 'EXTREME';
+    if (p >= 0.5) return 'HIGH';
+    if (p >= 0.25) return 'MODERATE';
+    return 'LOW';
+  };
+
+  const labelForScore = (s) => {
+    if (spread < 4) {
+      const max = sorted[sorted.length - 1];
+      if (max >= 400) return 'EXTREME';
+      if (max >= 200) return 'HIGH';
+      if (max >= 80) return 'MODERATE';
+      return 'LOW';
+    }
+    const below = sorted.filter((v) => v < s).length;
+    const equal = sorted.filter((v) => v === s).length;
+    const p = (below + equal * 0.5) / sorted.length;
+    return labelFromPercentile(p);
+  };
+
+  const bandClass = (label) => {
+    if (label === 'EXTREME') return 'extreme';
+    if (label === 'HIGH') return 'high';
+    if (label === 'MODERATE') return 'moderate';
+    return 'low';
+  };
+
+  for (const x of list) {
+    const s = Number(x.flowScore);
+    const label = Number.isFinite(s) ? labelForScore(s) : 'LOW';
+    out.set(x.symbol, {
+      label,
+      band: bandClass(label),
+      title: `Tape attention score ${Number.isFinite(s) ? Math.round(s) : '—'} · activity vs current watchlist`,
+    });
+  }
+  return out;
 }
 
 export function verificationPresentation(state) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { trustQualityPresentation } from './surveillancePresentation';
+import { regionalHeatBand, trustQualityPresentation } from './surveillancePresentation';
 import { formatRecencyLabel, normalizeRegionKey, severityUrgencyClass, severityUrgencySlug } from './surveillanceRegionUtils';
 
 function Section({ title, kicker, children, priority }) {
@@ -123,8 +123,8 @@ function IntelSidePanel({
               <dd>{focusSummary.count}</dd>
             </div>
             <div>
-              <dt>Peak salience</dt>
-              <dd title="Strongest tape salience among nodes in this lens">
+              <dt>Peak intensity</dt>
+              <dd title="Highest tape intensity (0–100) among nodes in this lens">
                 {focusSummary.maxRank ? Math.round(focusSummary.maxRank) : '—'}
               </dd>
             </div>
@@ -166,7 +166,7 @@ function IntelSidePanel({
 
       <Section title="Developing" kicker="Latest first" priority>
         <p className="sv-rail-section-hint">
-          Each line is a storyline sorted by the newest material in the cluster, then salience. Salience is how strongly
+          Each line is a storyline sorted by the newest material in the cluster, then intensity. Intensity is how strongly
           the terminal surfaces the cluster on the tape — not a market price.
         </p>
         <ul className="sv-rail-list">
@@ -204,7 +204,7 @@ function IntelSidePanel({
                         </>
                       ) : null}
                       <span aria-hidden> · </span>
-                      salience {s.rank_score != null ? Math.round(s.rank_score) : '—'}
+                      intensity {s.rank_score != null ? Math.round(s.rank_score) : '—'}
                     </span>
                     <span className="sv-rail-row-trust">{trustLine}</span>
                     {s.trade_line ? <span className="sv-rail-row-ledger">{s.trade_line}</span> : null}
@@ -315,23 +315,31 @@ function IntelSidePanel({
         </ul>
       </Section>
 
-      <Section title="Region pressure" kicker="Heat">
+      <Section title="Regional heat" kicker="Pressure bands">
+        <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+          Relative clustering on the tape. LOW / MEDIUM / HIGH uses heat index bands (under 80 / 80–139 / 140+). Hover a
+          row for the underlying index.
+        </p>
         <ul className="sv-rail-heat">
           {pressure.length ? (
             pressure.map((r) => {
               const active = focusRegion && normalizeRegionKey(r.region) === normalizeRegionKey(focusRegion);
+              const heat = regionalHeatBand(r.score);
               return (
                 <li key={r.region}>
                   <button
                     type="button"
-                    className={`sv-rail-heat-row ${active ? 'sv-rail-heat-row--active' : ''}`}
+                    className={`sv-rail-heat-row sv-rail-heat-row--band-${heat.band} ${
+                      active ? 'sv-rail-heat-row--active' : ''
+                    }`}
+                    title={heat.title}
                     onClick={() => onSetFocusRegion?.(r.region)}
                   >
-                    <span className="sv-rail-heat-name">
-                      {r.region}
-                      {r.label ? <span className="sv-rail-heat-tag">{r.label}</span> : null}
+                    <span className="sv-rail-heat-name">{r.region}</span>
+                    <span className="sv-rail-heat-sep" aria-hidden>
+                      —
                     </span>
-                    <span className="sv-rail-heat-score">{r.score}</span>
+                    <span className={`sv-rail-heat-band sv-rail-heat-band--${heat.band}`}>{heat.label}</span>
                   </button>
                 </li>
               );

@@ -160,21 +160,21 @@ export default function IntroOverlay({ briefing, onDismiss, onComplete, onPickSt
           ) : (
             <div className="sv-intro-brief">
               <p className="sv-intro-brief-lede">
-                Snapshot only — the full digest, tape, and globe load inside the terminal. Salience scores show how the
+                Snapshot only — the full digest, tape, and globe load inside the terminal. Intensity scores show how the
                 grid prioritizes items right now (not prices).
               </p>
               <BriefList
                 title="Highest priority on tape"
-                hint="Salience (0–100): how strongly the terminal surfaces each row — blends severity, corroboration, source quality, and freshness. Higher appears first."
-                rankCaption="Salience"
+                hint="Intensity (0–100): how strongly the terminal surfaces each row — blends severity, corroboration, source quality, and freshness. Higher appears first."
+                rankCaption="Intensity"
                 items={preview.top}
                 onPick={(id) => runExit(() => onPickStory?.(id))}
               />
               {preview.since.length ? (
                 <BriefList
                   title="New since your last session"
-                  hint="Same salience scale — refreshed items since your last visit that are not in the top list above."
-                  rankCaption="Salience"
+                  hint="Same intensity scale — refreshed items since your last visit that are not in the top list above."
+                  rankCaption="Intensity"
                   items={preview.since}
                   onPick={(id) => runExit(() => onPickStory?.(id))}
                 />

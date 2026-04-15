@@ -16,7 +16,14 @@ import {
   primaryCountryFromEvent,
   severityUrgencySlug,
 } from './surveillanceRegionUtils';
-import { eventFreshnessTimestamp, salienceHint, trustQualityPresentation } from './surveillancePresentation';
+import {
+  eventFreshnessTimestamp,
+  gridTensionBand,
+  intensityHint,
+  intensityHowItWorksTooltip,
+  intensityVisualBand,
+  trustQualityPresentation,
+} from './surveillancePresentation';
 import './SurveillancePage.css';
 
 const TABS = [
@@ -397,10 +404,18 @@ export default function SurveillancePage() {
   }
 
   const agg = aggregates || {};
+  const tensionBand = gridTensionBand(agg.globalTensionScore);
   const chips = [
-    { label: 'Live nodes', value: agg.liveCount ?? events.length },
-    { label: 'Tension', value: agg.globalTensionScore ?? '—' },
-    { label: 'Publisher feeds', value: sources.length || '—' },
+    { label: 'Live nodes', value: agg.liveCount ?? events.length, title: 'Events on the current tape after filters' },
+    {
+      label: 'Grid tension',
+      value: agg.globalTensionScore != null && Number.isFinite(Number(agg.globalTensionScore)) ? tensionBand.label : '—',
+      title:
+        agg.globalTensionScore != null && Number.isFinite(Number(agg.globalTensionScore))
+          ? `Blended stress index (0–100 scale): ${Math.round(Number(agg.globalTensionScore))}`
+          : undefined,
+    },
+    { label: 'Publisher feeds', value: sources.length || '—', title: 'Distinct ingest feeds represented on the tape' },
   ];
 
   return (
@@ -436,7 +451,7 @@ export default function SurveillancePage() {
             </div>
             <div className="sv-masthead-instruments" aria-label="Grid status">
               {chips.map((c) => (
-                <div key={c.label} className="sv-instrument">
+                <div key={c.label} className="sv-instrument" title={c.title}>
                   <span className="sv-instrument-label">{c.label}</span>
                   <span className="sv-instrument-value">{c.value}</span>
                 </div>
@@ -587,8 +602,8 @@ export default function SurveillancePage() {
               <summary>How to read the tape</summary>
               <dl className="sv-metrics-legend-grid">
                 <div>
-                  <dt>Salience</dt>
-                  <dd>{salienceHint()}</dd>
+                  <dt>Intensity</dt>
+                  <dd>{intensityHint()}</dd>
                 </div>
                 <div>
                   <dt>Severity</dt>
@@ -611,7 +626,7 @@ export default function SurveillancePage() {
                 </div>
               </dl>
               <p className="sv-metrics-legend-note">
-                Close salience scores usually mean comparable weighting, not identical risk. Use severity, source quality,
+                Close intensity scores usually mean comparable weighting, not identical risk. Use severity, source quality,
                 and recency to judge urgency.
               </p>
             </details>
@@ -645,15 +660,26 @@ export default function SurveillancePage() {
           <header className="sv-tape-deck-head">
             <div className="sv-tape-deck-head-text">
               <p className="sv-tape-eyebrow">Live stream</p>
-              <h2 className="sv-tape-heading">Tape</h2>
+              <div className="sv-tape-heading-row">
+                <h2 className="sv-tape-heading">Tape</h2>
+                <span className="sv-scoring-help">
+                  <button
+                    type="button"
+                    className="sv-scoring-help-btn"
+                    aria-label="How intensity scoring works"
+                  >
+                    <span aria-hidden className="sv-scoring-help-icon" />
+                  </button>
+                  <span className="sv-scoring-help-pop" role="tooltip">
+                    {intensityHowItWorksTooltip()}
+                  </span>
+                </span>
+              </div>
               <p className="sv-tape-deck-hint">
-                Salience and freshness drive order · open a row for verification detail and the original publisher link ·
+                Intensity and freshness drive order · open a row for verification detail and the original publisher link ·
                 lens highlights in-sector nodes
               </p>
-              <p className="sv-tape-deck-legend" title={salienceHint()}>
-                Salience 0–100 blends severity, corroboration, source quality, and freshness — close scores mean similar
-                weighting, not identical risk.
-              </p>
+              <p className="sv-tape-deck-legend">{intensityHint()}</p>
             </div>
             <div className="sv-tape-deck-meta">
               <span className="sv-stream-live sv-stream-live--tape" data-live={sseOk ? 'on' : 'off'}>
@@ -675,6 +701,7 @@ export default function SurveillancePage() {
           <ul className="sv-tape-list">
             {tapeEvents.map((e) => {
               const urgSlug = severityUrgencySlug(e.severity);
+              const intVis = intensityVisualBand(e.rank_score);
               const recencyIso = eventFreshnessTimestamp(e);
               const trustPr = trustQualityPresentation(e.trust_score);
               const metaBits = [
@@ -692,9 +719,10 @@ export default function SurveillancePage() {
                   <button
                     type="button"
                     data-urgency={urgSlug}
-                    className={`sv-tape-row ${String(selectedId) === String(e.id) ? 'sv-tape-row--active' : ''} ${
-                      focusRegion && eventMatchesFocus(e, focusRegion) ? 'sv-tape-row--in-lens' : ''
-                    }`}
+                    data-intensity-visual={intVis}
+                    className={`sv-tape-row sv-tape-row--int-vis-${intVis} ${
+                      String(selectedId) === String(e.id) ? 'sv-tape-row--active' : ''
+                    } ${focusRegion && eventMatchesFocus(e, focusRegion) ? 'sv-tape-row--in-lens' : ''}`}
                     title={detailTitle}
                     onClick={() => openDrawer(e.id)}
                   >
@@ -706,9 +734,11 @@ export default function SurveillancePage() {
                         {e.severity}
                       </span>
                     </span>
-                    <span className="sv-tape-cell sv-tape-cell--rank" title={salienceHint()}>
-                      <span className="sv-tape-rank-label">Sal.</span>
-                      {e.rank_score != null ? Math.round(e.rank_score) : '—'}
+                    <span className="sv-tape-cell sv-tape-cell--intensity" title={intensityHint()}>
+                      <span className="sv-tape-int-label">INTENSITY</span>
+                      <span className="sv-tape-int-value">
+                        {e.rank_score != null ? Math.round(e.rank_score) : '—'}
+                      </span>
                     </span>
                     {e.risk_bias && e.risk_bias !== 'neutral' ? (
                       <span
