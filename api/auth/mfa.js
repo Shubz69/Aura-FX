@@ -1,4 +1,3 @@
-const nodemailer = require('nodemailer');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
@@ -6,28 +5,7 @@ const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { signToken } = require('../utils/auth');
 const { enforceTrustedOrigin } = require('../utils/csrf');
 const { permissionRoleFromUserRow } = require('../utils/userResponseNormalize');
-
-// Function to create email transporter
-const createEmailTransporter = () => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error('Missing EMAIL_USER or EMAIL_PASS environment variables');
-    return null;
-  }
-
-  try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER.trim(),
-        pass: process.env.EMAIL_PASS.trim()
-      }
-    });
-    return transporter;
-  } catch (error) {
-    console.error('Failed to create email transporter:', error);
-    return null;
-  }
-};
+const { sendTransactionalHtml, isMailConfiguredForAuth } = require('../utils/authMail');
 
 // Generate 6-digit MFA code
 const generateMFACode = () => {
@@ -95,7 +73,9 @@ module.exports = async (req, res) => {
         });
       }
 
-      const emailLower = (email || '').toLowerCase();
+      let emailLower = String(email || '')
+        .trim()
+        .toLowerCase();
 
       // Generate MFA code
       const mfaCode = generateMFACode();
@@ -111,6 +91,21 @@ module.exports = async (req, res) => {
           });
         }
         await ensureMfaTable(db);
+        if (userId && (!emailLower || !emailLower.includes('@'))) {
+          const [uRows] = await db.execute(
+            'SELECT LOWER(TRIM(COALESCE(email, \'\'))) AS e FROM users WHERE id = ? LIMIT 1',
+            [userId],
+          );
+          if (uRows && uRows[0] && uRows[0].e) {
+            emailLower = uRows[0].e;
+          }
+        }
+        if (!emailLower || !emailLower.includes('@')) {
+          return res.status(400).json({
+            success: false,
+            message: 'A valid email is required to send your verification code.',
+          });
+        }
         if (userId) {
           await db.execute('DELETE FROM mfa_codes WHERE user_id = ?', [userId]);
         } else if (emailLower) {
@@ -136,20 +131,30 @@ module.exports = async (req, res) => {
         }
       }
 
-      // Send email
-      const transporter = createEmailTransporter();
-      if (!transporter) {
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Email service is not configured. Please contact support.' 
+      if (!isMailConfiguredForAuth()) {
+        try {
+          const db2 = await getDbConnection();
+          if (db2) {
+            try {
+              if (userId) await db2.execute('DELETE FROM mfa_codes WHERE user_id = ?', [userId]);
+              else if (emailLower) await db2.execute('DELETE FROM mfa_codes WHERE email = ?', [emailLower]);
+            } finally {
+              try {
+                db2.release();
+              } catch (_) {}
+            }
+          }
+        } catch (e) {
+          console.warn('MFA rollback after missing mail config:', e.message);
+        }
+        return res.status(503).json({
+          success: false,
+          message:
+            'Email delivery is not configured on the server. Please try again later or contact support.',
         });
       }
 
-      const mailOptions = {
-        from: `"Aura Terminal" <${process.env.EMAIL_USER.trim()}>`,
-        to: emailLower,
-        subject: 'Aura Terminal — Verification code',
-        html: `
+      const html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #ffffff;">Aura Terminal — Sign-in verification</h2>
             <p>Your MFA verification code is:</p>
@@ -159,10 +164,37 @@ module.exports = async (req, res) => {
             <p>This code will expire in 10 minutes.</p>
             <p>If you didn't request this code, please ignore this email.</p>
           </div>
-        `
-      };
+        `;
 
-      await transporter.sendMail(mailOptions);
+      const sendResult = await sendTransactionalHtml({
+        to: emailLower,
+        subject: 'Aura Terminal — Verification code',
+        html,
+      });
+
+      if (!sendResult.ok) {
+        console.error('MFA email failed:', sendResult.errorCode, sendResult.message);
+        try {
+          const db2 = await getDbConnection();
+          if (db2) {
+            try {
+              if (userId) await db2.execute('DELETE FROM mfa_codes WHERE user_id = ?', [userId]);
+              else if (emailLower) await db2.execute('DELETE FROM mfa_codes WHERE email = ?', [emailLower]);
+            } finally {
+              try {
+                db2.release();
+              } catch (_) {}
+            }
+          }
+        } catch (e) {
+          console.warn('MFA rollback after send failure:', e.message);
+        }
+        return res.status(503).json({
+          success: false,
+          message: 'We could not send the verification email. Please try again in a few minutes.',
+        });
+      }
+
       console.log(`MFA code sent to ${emailLower}`);
 
       return res.status(200).json({ 

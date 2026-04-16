@@ -1,5 +1,4 @@
 // Combined password reset endpoint - handles forgot-password, verify code, and reset password
-const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 // Suppress url.parse() deprecation warnings from dependencies
@@ -8,28 +7,7 @@ const { getDbConnection } = require('../db');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { signToken, getJwtSecret } = require('../utils/auth');
 const { enforceTrustedOrigin } = require('../utils/csrf');
-
-// Function to create email transporter
-const createEmailTransporter = () => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error('Missing EMAIL_USER or EMAIL_PASS environment variables');
-    return null;
-  }
-
-  try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER.trim(),
-        pass: process.env.EMAIL_PASS.trim()
-      }
-    });
-    return transporter;
-  } catch (error) {
-    console.error('Failed to create email transporter:', error);
-    return null;
-  }
-};
+const { sendTransactionalHtml, isMailConfiguredForAuth } = require('../utils/authMail');
 
 module.exports = async (req, res) => {
   // Handle CORS
@@ -128,19 +106,16 @@ module.exports = async (req, res) => {
           [userRows[0].id, emailLower, resetCode, expiresAt]
         );
 
-        const transporter = createEmailTransporter();
-        if (!transporter) {
-          return res.status(500).json({
+        if (!isMailConfiguredForAuth()) {
+          await db.execute('DELETE FROM reset_codes WHERE email = ?', [emailLower]);
+          return res.status(503).json({
             success: false,
-            message: 'Email service is not configured. Please contact support.'
+            message:
+              'Email delivery is not available right now. Please try again later or contact support.',
           });
         }
 
-        const mailOptions = {
-          from: `"Aura Terminal" <${process.env.EMAIL_USER.trim()}>`,
-          to: emailLower,
-          subject: 'Aura Terminal — Password reset code',
-          html: `
+        const html = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #ffffff;">Aura Terminal — Password reset</h2>
               <p>You requested to reset your password. Your reset code is:</p>
@@ -150,10 +125,27 @@ module.exports = async (req, res) => {
               <p>This code will expire in 10 minutes.</p>
               <p>If you did not request this code, please ignore this email.</p>
             </div>
-          `
-        };
+          `;
 
-        await transporter.sendMail(mailOptions);
+        const sendResult = await sendTransactionalHtml({
+          to: emailLower,
+          subject: 'Aura Terminal — Password reset code',
+          html,
+        });
+
+        if (!sendResult.ok) {
+          console.error('Password reset email failed:', sendResult.errorCode, sendResult.message);
+          try {
+            await db.execute('DELETE FROM reset_codes WHERE email = ?', [emailLower]);
+          } catch (delErr) {
+            console.warn('Could not remove reset code after send failure:', delErr.message);
+          }
+          return res.status(503).json({
+            success: false,
+            message: 'We could not send the reset email. Please try again in a few minutes.',
+          });
+        }
+
         console.log(`Password reset code sent to ${emailLower}`);
 
         return res.status(200).json({

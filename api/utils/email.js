@@ -6,18 +6,22 @@ const nodemailer = require('nodemailer');
 const SUPPORT_EMAIL = process.env.CONTACT_INBOX || 'support@auraterminal.ai';
 
 const createTransporter = () => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+  const user = process.env.EMAIL_USER?.trim();
+  const pass = process.env.EMAIL_PASS?.trim();
+  if (!user || !pass) {
     return null;
   }
   try {
+    const host = process.env.EMAIL_HOST?.trim() || 'smtp.gmail.com';
+    const port = process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT, 10) : 587;
+    const secure = process.env.EMAIL_SECURE === 'true';
     return nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT, 10) : 587,
-      secure: process.env.EMAIL_SECURE === 'true',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
+      host,
+      port,
+      secure,
+      requireTLS: !secure && port === 587,
+      auth: { user, pass },
+      tls: { minVersion: 'TLSv1.2' },
     });
   } catch (error) {
     console.error('Email transporter error:', error.message);

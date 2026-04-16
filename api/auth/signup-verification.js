@@ -1,53 +1,9 @@
 // Vercel serverless function for signup email verification (consolidated send + verify)
-const nodemailer = require('nodemailer');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
 const { checkPhoneAlreadyRegistered } = require('../utils/signupEligibility');
-
-// Function to create transporter
-const createEmailTransporter = () => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error('Missing EMAIL_USER or EMAIL_PASS environment variables');
-    return null;
-  }
-
-  try {
-    const emailUser = process.env.EMAIL_USER.trim();
-    const emailPass = process.env.EMAIL_PASS.trim();
-    
-    // Log credential info (without exposing password)
-    console.log('Creating email transporter:', {
-      emailUser: emailUser,
-      emailPassLength: emailPass.length,
-      emailPassHasSpaces: emailPass.includes(' ')
-    });
-    
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: emailUser,
-        pass: emailPass
-      }
-    });
-    
-    // Verify connection (but don't block - do it async)
-    transporter.verify((error, success) => {
-      if (error) {
-        console.error('Email transporter verification failed:', error);
-        console.error('Error code:', error.code);
-        console.error('Error response:', error.response);
-      } else {
-        console.log('Email transporter verified successfully');
-      }
-    });
-    
-    return transporter;
-  } catch (error) {
-    console.error('Failed to create email transporter:', error);
-    return null;
-  }
-};
+const { sendTransactionalHtml, isMailConfiguredForAuth } = require('../utils/authMail');
 
 // Generate 6-digit code
 const generateVerificationCode = () => {
@@ -212,37 +168,30 @@ module.exports = async (req, res) => {
         }
       }
 
-      // Send email
-      const transporter = createEmailTransporter();
-      if (!transporter) {
-        console.error('Email service not configured - missing EMAIL_USER or EMAIL_PASS environment variables');
-        console.error('EMAIL_USER exists:', !!process.env.EMAIL_USER);
-        console.error('EMAIL_PASS exists:', !!process.env.EMAIL_PASS);
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Email service is temporarily unavailable. Please contact support or check back later.' 
+      if (!isMailConfiguredForAuth()) {
+        console.error('authMail: transactional email not configured (RESEND_API_KEY or EMAIL_USER+EMAIL_PASS)');
+        try {
+          const dbDel = await getDbConnection();
+          if (dbDel) {
+            try {
+              await dbDel.execute('DELETE FROM signup_verification_codes WHERE email = ?', [emailLower]);
+            } finally {
+              try {
+                dbDel.release();
+              } catch (_) {}
+            }
+          }
+        } catch (delErr) {
+          console.warn('Could not roll back verification row (mail not configured):', delErr.message);
+        }
+        return res.status(503).json({
+          success: false,
+          message:
+            'Email delivery is not configured on the server. Please try again later or contact support.',
         });
       }
 
-      // Check if email credentials are actually set
-      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.error('Email credentials check failed:', {
-          hasEmailUser: !!process.env.EMAIL_USER,
-          hasEmailPass: !!process.env.EMAIL_PASS,
-          emailUserLength: process.env.EMAIL_USER ? process.env.EMAIL_USER.length : 0,
-          emailPassLength: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0
-        });
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Email service configuration error. Please contact support.' 
-        });
-      }
-
-      const mailOptions = {
-        from: `"Aura Terminal" <${process.env.EMAIL_USER.trim()}>`,
-        to: emailLower,
-        subject: 'Aura Terminal — Email verification code',
-        html: `
+      const html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #0a0a1a; color: #ffffff;">
             <div style="text-align: center; margin-bottom: 30px;">
               <h1 style="color: #ffffff; font-size: 32px; margin: 0;">Aura Terminal</h1>
@@ -265,40 +214,43 @@ module.exports = async (req, res) => {
               </p>
             </div>
           </div>
-        `
-      };
+        `;
 
-      try {
-        await transporter.sendMail(mailOptions);
-        console.log(`Signup verification code sent to ${emailLower}`);
-        
-        return res.status(200).json({ 
-          success: true, 
-          message: 'Verification code sent successfully' 
-        });
-      } catch (emailError) {
-        console.error('Failed to send email:', emailError);
-        console.error('Email error details:', {
-          message: emailError.message,
-          code: emailError.code,
-          response: emailError.response,
-          command: emailError.command,
-          responseCode: emailError.responseCode
-        });
-        
-        // Return a more helpful error message
-        let errorMessage = 'Failed to send verification email. Please try again later.';
-        if (emailError.code === 'EAUTH') {
-          errorMessage = 'Email authentication failed. Please check email credentials.';
-        } else if (emailError.code === 'ECONNECTION') {
-          errorMessage = 'Email service connection failed. Please try again later.';
+      const sendResult = await sendTransactionalHtml({
+        to: emailLower,
+        subject: 'Aura Terminal — Email verification code',
+        html,
+      });
+
+      if (!sendResult.ok) {
+        console.error('Signup verification email failed:', sendResult.errorCode, sendResult.message);
+        try {
+          const dbDel = await getDbConnection();
+          if (dbDel) {
+            try {
+              await dbDel.execute('DELETE FROM signup_verification_codes WHERE email = ?', [emailLower]);
+            } finally {
+              try {
+                dbDel.release();
+              } catch (_) {}
+            }
+          }
+        } catch (delErr) {
+          console.warn('Could not roll back verification row after send failure:', delErr.message);
         }
-        
-        return res.status(500).json({ 
-          success: false, 
-          message: errorMessage 
-        });
+
+        const userMsg =
+          sendResult.errorCode === 'EAUTH' || String(sendResult.errorCode).startsWith('RESEND_')
+            ? 'We could not send the email right now. Please try again in a few minutes.'
+            : 'We could not send the verification email. Please try again shortly.';
+        return res.status(503).json({ success: false, message: userMsg });
       }
+
+      console.log(`Signup verification code sent to ${emailLower}`);
+      return res.status(200).json({
+        success: true,
+        message: 'Verification code sent successfully',
+      });
     }
 
     // ACTION: VERIFY CODE
