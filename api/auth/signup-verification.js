@@ -169,7 +169,9 @@ module.exports = async (req, res) => {
       }
 
       if (!isMailConfiguredForAuth()) {
-        console.error('authMail: transactional email not configured (RESEND_API_KEY or EMAIL_USER+EMAIL_PASS)');
+        console.error(
+          'authMail: transactional email not configured (set RESEND_API_KEY, SENDGRID_API_KEY, or EMAIL_USER+EMAIL_PASS)',
+        );
         try {
           const dbDel = await getDbConnection();
           if (dbDel) {
@@ -239,8 +241,12 @@ module.exports = async (req, res) => {
           console.warn('Could not roll back verification row after send failure:', delErr.message);
         }
 
+        const code = String(sendResult.errorCode || '');
         const userMsg =
-          sendResult.errorCode === 'EAUTH' || String(sendResult.errorCode).startsWith('RESEND_')
+          code === 'EAUTH' ||
+          code.startsWith('RESEND_') ||
+          code.startsWith('SENDGRID_') ||
+          code === 'SMTP_NOT_CONFIGURED'
             ? 'We could not send the email right now. Please try again in a few minutes.'
             : 'We could not send the verification email. Please try again shortly.';
         return res.status(503).json({ success: false, message: userMsg });

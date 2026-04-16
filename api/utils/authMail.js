@@ -1,17 +1,16 @@
 /**
  * Transactional mail for auth flows (signup verification, password reset, MFA).
  *
- * Production reliability:
- * - Prefer **RESEND_API_KEY** + **RESEND_FROM_EMAIL** (or CONTACT_FROM) — avoids Gmail SMTP
- *   app-password breakage on serverless (EAUTH 535).
- * - If Resend is not set, uses SMTP (Gmail-compatible: explicit host/port/requireTLS).
+ * Production reliability (tried in order until one succeeds):
+ * 1. **RESEND_API_KEY** — Resend HTTP API (set RESEND_FROM_EMAIL or verified CONTACT_FROM).
+ * 2. **SENDGRID_API_KEY** — SendGrid v3 HTTP API (set SENDGRID_FROM_EMAIL or CONTACT_FROM).
+ * 3. **SMTP** — EMAIL_USER + EMAIL_PASS (Gmail: use an App Password, not the account password).
  *
  * Env:
- * - RESEND_API_KEY — optional; if set, mail is sent via Resend HTTP API first.
- * - RESEND_FROM_EMAIL — e.g. `Aura Terminal <noreply@yourdomain.com>` (must be verified in Resend).
- * - CONTACT_FROM — used as Resend "from" when RESEND_FROM_EMAIL unset.
- * - EMAIL_USER, EMAIL_PASS — SMTP (trimmed). Use a Gmail **App Password**, not the normal password.
- * - EMAIL_HOST, EMAIL_PORT, EMAIL_SECURE — override SMTP (defaults Gmail 587 STARTTLS).
+ * - RESEND_API_KEY, RESEND_FROM_EMAIL (optional if CONTACT_FROM is valid for Resend).
+ * - SENDGRID_API_KEY, SENDGRID_FROM_EMAIL (optional if CONTACT_FROM has a verified SendGrid sender).
+ * - CONTACT_FROM — used as "from" for HTTP providers when specific *_FROM_EMAIL is unset.
+ * - EMAIL_USER, EMAIL_PASS — SMTP; EMAIL_HOST, EMAIL_PORT, EMAIL_SECURE optional.
  */
 
 const nodemailer = require('nodemailer');
@@ -26,6 +25,23 @@ function maskSmtpUser(user) {
   return `${show}***@${domain}`;
 }
 
+/** @returns {{ name: string, email: string } | null} */
+function parseFromNameEmail(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const s = raw.trim();
+  const lt = s.indexOf('<');
+  const gt = s.indexOf('>');
+  if (lt !== -1 && gt > lt) {
+    const name = s.slice(0, lt).trim().replace(/^["']|["']$/g, '') || 'Aura Terminal';
+    const email = s.slice(lt + 1, gt).trim();
+    if (email.includes('@')) return { name, email };
+  }
+  if (s.includes('@') && lt === -1) {
+    return { name: 'Aura Terminal', email: s };
+  }
+  return null;
+}
+
 function resolveResendFrom() {
   const explicit = process.env.RESEND_FROM_EMAIL?.trim();
   if (explicit) return explicit;
@@ -34,6 +50,23 @@ function resolveResendFrom() {
   const emailUser = process.env.EMAIL_USER?.trim();
   if (emailUser) return `"Aura Terminal" <${emailUser}>`;
   return '';
+}
+
+function resolveSendGridFrom() {
+  const explicit = process.env.SENDGRID_FROM_EMAIL?.trim();
+  if (explicit) {
+    const p = parseFromNameEmail(explicit);
+    if (p) return p;
+    if (explicit.includes('@')) return { name: 'Aura Terminal', email: explicit };
+  }
+  const contact = process.env.CONTACT_FROM?.trim();
+  if (contact) {
+    const p = parseFromNameEmail(contact);
+    if (p) return p;
+  }
+  const emailUser = process.env.EMAIL_USER?.trim();
+  if (emailUser) return { name: 'Aura Terminal', email: emailUser };
+  return null;
 }
 
 function hasSmtpCredentials() {
@@ -122,8 +155,67 @@ async function sendViaResend(apiKey, { to, subject, html }) {
 }
 
 /**
+ * @returns {Promise<{ ok: true } | { ok: false, errorCode: string, message: string }>}
+ */
+async function sendViaSendGrid(apiKey, { to, subject, html }) {
+  const from = resolveSendGridFrom();
+  if (!from) {
+    return {
+      ok: false,
+      errorCode: 'SENDGRID_NO_FROM',
+      message: 'SENDGRID_API_KEY is set but no sender: set SENDGRID_FROM_EMAIL or CONTACT_FROM.',
+    };
+  }
+
+  try {
+    const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email: to }] }],
+        from: { email: from.email, name: from.name },
+        subject,
+        content: [{ type: 'text/html', value: html }],
+      }),
+    });
+
+    const bodyText = await res.text();
+    if (res.status === 202 || res.ok) {
+      return { ok: true };
+    }
+
+    let detail = bodyText.slice(0, 500);
+    try {
+      const j = JSON.parse(bodyText);
+      if (j && j.errors && Array.isArray(j.errors)) {
+        detail = j.errors.map((e) => e.message || String(e)).join('; ');
+      } else if (j && j.message) {
+        detail = String(j.message);
+      }
+    } catch (_) {
+      /* keep bodyText */
+    }
+
+    return {
+      ok: false,
+      errorCode: `SENDGRID_${res.status}`,
+      message: detail,
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      errorCode: 'SENDGRID_FETCH',
+      message: e && e.message ? e.message : 'SendGrid request failed',
+    };
+  }
+}
+
+/**
  * Send HTML transactional email (auth codes, reset links).
- * Tries Resend when RESEND_API_KEY is set; on failure falls back to SMTP if configured.
+ * Tries Resend, then SendGrid (HTTP), then SMTP.
  *
  * @param {{ to: string, subject: string, html: string }} opts
  * @returns {Promise<{ ok: true } | { ok: false, errorCode: string, message: string }>}
@@ -139,10 +231,13 @@ async function sendTransactionalHtml(opts) {
     const r = await sendViaResend(resendKey, { to, subject, html });
     if (r.ok) return r;
     console.error('authMail: Resend send failed:', r.errorCode, r.message);
-    if (!hasSmtpCredentials()) {
-      return r;
-    }
-    console.warn('authMail: falling back to SMTP after Resend failure');
+  }
+
+  const sendgridKey = process.env.SENDGRID_API_KEY?.trim();
+  if (sendgridKey) {
+    const r = await sendViaSendGrid(sendgridKey, { to, subject, html });
+    if (r.ok) return r;
+    console.error('authMail: SendGrid send failed:', r.errorCode, r.message);
   }
 
   const transporter = createSmtpTransport();
@@ -150,7 +245,8 @@ async function sendTransactionalHtml(opts) {
     return {
       ok: false,
       errorCode: 'SMTP_NOT_CONFIGURED',
-      message: 'Email is not configured (set RESEND_API_KEY or EMAIL_USER + EMAIL_PASS).',
+      message:
+        'Email is not configured. Set RESEND_API_KEY, SENDGRID_API_KEY, or EMAIL_USER + EMAIL_PASS on the server.',
     };
   }
 
@@ -178,7 +274,11 @@ async function sendTransactionalHtml(opts) {
 }
 
 function isMailConfiguredForAuth() {
-  return !!(process.env.RESEND_API_KEY?.trim() || hasSmtpCredentials());
+  return !!(
+    process.env.RESEND_API_KEY?.trim() ||
+    process.env.SENDGRID_API_KEY?.trim() ||
+    hasSmtpCredentials()
+  );
 }
 
 module.exports = {
