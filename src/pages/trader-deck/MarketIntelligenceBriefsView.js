@@ -86,9 +86,33 @@ const ALLOWED_BRIEF_KINDS = new Set([
 
 const BY_AURA_TERMINAL = 'By AURA TERMINAL';
 
+/** Markdown `code` / ```fences``` rendered as prose (no monospace “IDE” blocks). */
+const BRIEF_MARKDOWN_COMPONENTS = {
+  a: ({ node: _a, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
+  pre: ({ node: _p, children, ...props }) => (
+    <div className="td-intel-brief-md-fenced" {...props}>
+      {children}
+    </div>
+  ),
+  code: ({ node: _c, inline, className: _cn, children, ...props }) =>
+    inline ? (
+      <span className="td-intel-brief-md-code-inline" {...props}>
+        {children}
+      </span>
+    ) : (
+      <div className="td-intel-brief-md-code-block" {...props}>
+        {children}
+      </div>
+    ),
+};
+
 /** Plain-language preview: no markdown hashes/list dashes up top; footer attribution only. */
 function sanitizeBriefForPreview(text) {
   let t = String(text || '').replace(/\r\n/g, '\n');
+
+  // Strip ```fences``` (keep inner text as prose); strip inline `backticks` for typewriter + cleaner source.
+  t = t.replace(/```(?:[\w-]+)?\s*\n?([\s\S]*?)```/g, (_, inner) => `\n${String(inner || '').trim()}\n`);
+  t = t.replace(/`([^`\n]+)`/g, '$1');
 
   t = t.replace(/^\s*By\s+Aura\s+FX\s+AI\s*$/gim, '');
   t = t.replace(/^\s*By\s+AURA\s+TERMINAL\s*$/gim, '');
@@ -115,6 +139,7 @@ function sanitizeBriefForPreview(text) {
     .replace(/^[ \t]*(-\s*){3,}[ \t]*$/gm, '')
     .replace(/^[ \t]*---[ \t]*.*[ \t]*---[ \t]*$/gm, '')
     .replace(/\n{3,}/g, '\n\n')
+    .replace(/```+/g, '')
     .trim();
 
   const endsWithFooter = new RegExp(
@@ -828,13 +853,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                 </div>
               ) : (
                 <div className="td-intel-brief-md">
-                  <ReactMarkdown
-                    components={{
-                      a: ({ node, ...props }) => (
-                        <a {...props} target="_blank" rel="noopener noreferrer" />
-                      ),
-                    }}
-                  >
+                  <ReactMarkdown components={BRIEF_MARKDOWN_COMPONENTS}>
                     {textPreviewBody || '_No text content._'}
                   </ReactMarkdown>
                 </div>

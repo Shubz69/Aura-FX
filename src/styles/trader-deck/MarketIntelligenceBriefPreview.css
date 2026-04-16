@@ -209,6 +209,7 @@
   letter-spacing: 0.01em;
   color: rgba(232, 235, 255, 0.95);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  font-variant-numeric: normal;
 }
 
 .td-intel-preview-typewriter-caret {
@@ -555,6 +556,57 @@
 
 .td-intel-brief-md em {
   color: rgba(200, 210, 230, 0.85);
+}
+
+/* Markdown code/fences read as desk prose (inherit body typography) */
+.td-intel-brief-md pre,
+.td-intel-brief-md code {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.td-intel-brief-md-fenced {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  background: rgba(107, 143, 232, 0.08);
+  border: 1px solid rgba(107, 143, 232, 0.16);
+  border-radius: 10px;
+  color: rgba(235, 240, 252, 0.92);
+  overflow-x: auto;
+}
+
+.td-intel-brief-md-code-block {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0.35rem 0 0.65rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(107, 143, 232, 0.07);
+  border-radius: 8px;
+  color: rgba(235, 240, 252, 0.92);
+}
+
+.td-intel-brief-md-code-inline {
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0.06em 0.32em;
+  border-radius: 6px;
+  background: rgba(107, 143, 232, 0.12);
+  color: rgba(240, 244, 255, 0.96);
 }
 
 /* Attribution line (plain preview footer) */
