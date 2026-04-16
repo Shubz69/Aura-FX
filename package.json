@@ -66,7 +66,7 @@
     "build": "node scripts/generate-aura-icons.js && npm run build:analytics-node && cross-env CI=false GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "analyze": "node scripts/generate-aura-icons.js && cross-env CI=false GENERATE_SOURCEMAP=true DISABLE_ESLINT_PLUGIN=true react-scripts build && npx --yes source-map-explorer@2.5.3 \"build/static/js/*.js\" --gzip",
     "test": "react-scripts test",
-    "test:security": "node tests/security-rbac.test.js && node tests/rate-limit.test.js && node tests/entitlements-api.test.js && node tests/surveillance-pure.test.js",
+    "test:security": "node tests/security-rbac.test.js && node tests/rate-limit.test.js && node tests/entitlements-api.test.js && node tests/surveillance-pure.test.js && node tests/csrf-trusted-origins.test.js",
     "test:auth": "node tests/auth-signup-login.test.js",
     "test:ai": "jest tests/ai-chat.test.js --verbose",
     "test:ai:ci": "jest tests/ai-chat.test.js --ci --coverage",

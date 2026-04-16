@@ -31,7 +31,7 @@ const ForgotPassword = () => {
             console.log('Password reset email result:', success);
             
             if (success === true || success === undefined) {
-                setSuccess('MFA verification code sent! Please check your email for the 6-digit code.');
+                setSuccess('If an account exists for that address, a 6-digit reset code was sent to your email.');
                 setStep(2);
             } else {
                 setError('Failed to send reset email. Please try again.');

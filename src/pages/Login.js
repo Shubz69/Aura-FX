@@ -173,7 +173,16 @@ const Login = () => {
                 setErrorType(null);
                 setPasswordError(false);
                 setEmailError(false);
-                errorMessage = serverMessage || errMsg || (status === 429 ? 'Too many attempts. Try again shortly.' : status === 500 ? 'Something went wrong. Please try again.' : 'Login failed. Please try again.');
+                errorMessage =
+                    serverMessage ||
+                    errMsg ||
+                    (status === 429
+                        ? 'Too many attempts. Try again shortly.'
+                        : status === 503
+                          ? 'Sign-in is temporarily unavailable. Please try again in a few minutes.'
+                          : status === 500
+                            ? 'Something went wrong. Please try again.'
+                            : 'Login failed. Please try again.');
             } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || (err.message && err.message.includes('Network Error'))) {
                 setErrorType(null);
                 setPasswordError(false);

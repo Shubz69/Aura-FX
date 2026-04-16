@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { armPostLoginTransition } from "../utils/postLoginTransition";
 import { isAdmin } from "../utils/roles";
+import Api from "../services/Api";
 import "../styles/VerifyMFA.css";
 import CosmicBackground from '../components/CosmicBackground';
 
@@ -96,48 +96,36 @@ const VerifyMFA = () => {
         }
 
         try {
-            const API_BASE_URL = process.env.REACT_APP_API_URL || '';
-            const res = await axios.post(`${API_BASE_URL}/api/auth/verify-mfa`, {
-                userId,
-                code,
-                email: emailAddress // Send email as a backup if userId is missing
-            });
+            const resData = await Api.verifyMfa(emailAddress, code, userId);
 
-            // Only login if verification is successful
-            if (res.data && res.data.token) {
-                // Set token in localStorage
-                localStorage.setItem("token", res.data.token);
-                
-                // If there's a refreshToken in the response, store it
-                if (res.data.refreshToken) {
-                    localStorage.setItem("refreshToken", res.data.refreshToken);
+            if (resData && resData.token) {
+                localStorage.setItem("token", resData.token);
+
+                if (resData.refreshToken) {
+                    localStorage.setItem("refreshToken", resData.refreshToken);
                 }
-                
-                // Mark MFA as verified
+
                 localStorage.setItem("mfaVerified", "true");
-                
-                // Update auth context with user data
+
                 login(
-                    res.data.token, 
-                    res.data.role,
+                    resData.token,
+                    resData.role,
                     {
-                        id: res.data.id,
-                        username: res.data.username,
-                        email: res.data.email,
-                        name: res.data.name,
-                        avatar: res.data.avatar,
-                        phone: res.data.phone || "",
-                        address: res.data.address || ""
+                        id: resData.id,
+                        username: resData.username,
+                        email: resData.email,
+                        name: resData.name,
+                        avatar: resData.avatar,
+                        phone: resData.phone || "",
+                        address: resData.address || ""
                     }
                 );
-                
-                // Call the verifyMfa function to update state
+
                 verifyMfa();
 
-                // Check subscription status after MFA verification
                 const hasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
                 const pendingSubscription = localStorage.getItem('pendingSubscription') === 'true';
-                const staffUser = isAdmin({ role: res.data.role });
+                const staffUser = isAdmin({ role: resData.role });
 
                 if (!staffUser && !hasActiveSubscription && !pendingSubscription) {
                     armPostLoginTransition();
@@ -151,7 +139,7 @@ const VerifyMFA = () => {
             }
         } catch (err) {
             console.error("MFA verification error:", err);
-            setError(err.response?.data?.message || "Invalid code. Please try again.");
+            setError(err.response?.data?.message || err.message || "Invalid code. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -162,16 +150,12 @@ const VerifyMFA = () => {
         setIsLoading(true);
         
         try {
-            // Send either userId or email depending on what we have
-            const payload = userId ? { userId } : { email: emailAddress };
-            
-            const API_BASE_URL = process.env.REACT_APP_API_URL || '';
-            await axios.post(`${API_BASE_URL}/api/auth/send-mfa`, { ...payload, resend: true });
+            await Api.sendMfa(emailAddress, userId);
             setTimer(30);
             setCanResend(false);
             alert("Code resent to your email.");
         } catch (err) {
-            setError("Failed to resend code. Please try again.");
+            setError(err.response?.data?.message || err.message || "Failed to resend code. Please try again.");
         } finally {
             setIsLoading(false);
         }

@@ -426,40 +426,34 @@ export const AuthProvider = ({ children }) => {
         } catch (_) {}
         const response = await Api.login({ email, password, timezone });
         const data = response.data || {};
-        
-        // Check if login was successful - must have a token and success flag
+
+        // MFA must be handled before the generic token check (API may return MFA without a token).
+        if (data.status === 'MFA_REQUIRED' && !data.mfaVerified) {
+          const mfaEmail = String(data.email || email || '').trim();
+          localStorage.setItem('mfaEmail', mfaEmail);
+          if (data.id != null && data.id !== '') {
+            localStorage.setItem('mfaUserId', String(data.id));
+          } else {
+            localStorage.removeItem('mfaUserId');
+          }
+          navigate('/verify-mfa', {
+            state: {
+              userId: data.id,
+              email: mfaEmail,
+              requiresVerification: true,
+              userData: data,
+              returnUrl: '/community',
+            },
+            replace: true,
+          });
+          return data;
+        }
+
         if (!data.token || data.success === false) {
-          // If we have an error message, use it
           if (data.message) {
             throw new Error(data.message);
           }
           throw new Error('Login failed: No token received from server');
-        }
-        
-        if (data.status === "MFA_REQUIRED" && !data.mfaVerified) {
-          // Redirect to MFA verification
-          localStorage.setItem('mfaEmail', email);
-          
-          // Navigate programmatically to the MFA verification page
-          // with proper state data that won't be lost in browser history
-          navigate('/verify-mfa', {
-            state: {
-              userId: data.id,
-              email: email,
-              requiresVerification: true,
-              userData: data,
-              returnUrl: '/community'
-            },
-            replace: true  // Replace the history entry so back button works properly
-          });
-          
-          // Return early to prevent further processing
-          return data;
-        }
-        
-        // Only proceed if we have a valid token
-        if (!data.token) {
-          throw new Error('Login failed: Invalid response from server');
         }
 
         prepareStorageForUserSwitch(data.id ?? data.userId, data.token);
@@ -668,13 +662,20 @@ export const AuthProvider = ({ children }) => {
       const data = response.data;
       
       if (data.status === "MFA_REQUIRED") {
+        const mfaEmail = String(userData.email || data.email || '').trim();
+        localStorage.setItem('mfaEmail', mfaEmail);
+        if (data.id != null && data.id !== '') {
+          localStorage.setItem('mfaUserId', String(data.id));
+        } else {
+          localStorage.removeItem('mfaUserId');
+        }
         navigate('/verify-mfa', {
           state: {
             userId: data.id,
-            email: userData.email,
+            email: mfaEmail,
             requiresVerification: true,
-            userData: data
-          }
+            userData: data,
+          },
         });
         return;
       }

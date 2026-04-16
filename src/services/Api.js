@@ -1524,6 +1524,11 @@ const Api = {
                 throw new Error('Password reset endpoint is not configured correctly on the server. Please contact support.');
             } else if (status === 429) {
                 throw new Error('Too many requests. Please wait a few minutes before trying again.');
+            } else if (status === 503) {
+                throw new Error(
+                    apiError.response?.data?.message ||
+                        'Email delivery is temporarily unavailable. Please try again in a few minutes.',
+                );
             } else if (status === 500) {
                 throw new Error('Server error. Please try again later.');
             } else if (status === 400) {
