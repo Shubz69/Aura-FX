@@ -502,7 +502,9 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* Stretch the globe panel full width so CSS starfield shows in the letterbox lanes
+     (align-items:center was shrinking the panel to the square canvas width). */
+  align-items: stretch;
   justify-content: center;
   box-sizing: border-box;
   height: var(--sv-globe-band);
@@ -2283,6 +2285,7 @@
   position: relative;
   z-index: 1;
   flex: 1 1 auto;
+  align-self: stretch;
   width: 100%;
   max-width: 100%;
   min-height: 0;
