@@ -970,7 +970,8 @@ const Api = {
         if (opts && opts.autogen === true) params.autogen = '1';
         return axios.get(`${API_BASE_URL}/api/trader-deck/content`, {
             params,
-            headers: token ? { Authorization: `Bearer ${token}` } : {}
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            skipCache: true,
         });
     },
     putTraderDeckContent: (type, date, payload) => {

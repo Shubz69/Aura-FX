@@ -154,9 +154,16 @@ function sanitizeBriefForPreview(text) {
   return stripModelInternalExposition(t);
 }
 
-function filterToAllowedBriefKinds(items) {
+/** Ensure every API row renders: unknown brief_kind maps to general (never drop silently). */
+function normalizeBriefsList(items) {
   if (!Array.isArray(items)) return [];
-  return items.filter((b) => ALLOWED_BRIEF_KINDS.has(String(b?.briefKind || '').toLowerCase()));
+  return items
+    .filter((b) => b && typeof b === 'object')
+    .map((b) => {
+      const k = String(b.briefKind || '').toLowerCase();
+      if (ALLOWED_BRIEF_KINDS.has(k)) return b;
+      return { ...b, briefKind: 'general' };
+    });
 }
 
 const BRIEF_POLL_MS = 3000;
@@ -185,12 +192,17 @@ function emptyDeskMessagesFor(canEdit, phase) {
 }
 
 function briefsPayloadFromContentResponse(res, fallbackStorageDate) {
-  const list = filterToAllowedBriefKinds(Array.isArray(res.data?.briefs) ? res.data.briefs : []);
+  const raw = Array.isArray(res.data?.briefs) ? res.data.briefs : [];
+  const list = normalizeBriefsList(raw);
   const weekendFallback = Boolean(res.data?.weekendFallback);
   const src = String(res.data?.briefsSourceDate || fallbackStorageDate).trim().slice(0, 10);
+  const briefsRowCount =
+    typeof res.data?.briefsRowCount === 'number' ? res.data.briefsRowCount : raw.length;
+  const deskAutomationConfigured = Boolean(res.data?.deskAutomationConfigured);
   return {
     list,
     weekendNote: weekendFallback ? { sourceDate: src } : null,
+    deskMeta: { briefsRowCount, deskAutomationConfigured },
   };
 }
 
@@ -228,6 +240,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [weekendBriefsNote, setWeekendBriefsNote] = useState(null);
   /** When the desk date has zero stored briefs: safe user copy + optional admin-only hint */
   const [emptyDeskMessages, setEmptyDeskMessages] = useState(null);
+  /** Last GET intel payload diagnostics (non-secret; helps admins see DB vs automation). */
+  const [intelDeskMeta, setIntelDeskMeta] = useState(null);
   const typewriterScrollRef = useRef(null);
   const filterWrapRef = useRef(null);
   const filterButtonRef = useRef(null);
@@ -360,6 +374,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       .then((payload) => {
         setBriefs(payload.list);
         setWeekendBriefsNote(payload.weekendNote);
+        setIntelDeskMeta(payload.deskMeta ?? null);
         if (payload.list.length > 0) {
           setEmptyDeskMessages(null);
         }
@@ -377,6 +392,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     setSelectedKinds(new Set(BRIEF_KIND_ORDER));
     setWeekendBriefsNote(null);
     setEmptyDeskMessages(null);
+    setIntelDeskMeta(null);
 
     const finishLoading = () => {
       if (!cancelled) setLoading(false);
@@ -387,6 +403,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         if (cancelled) return;
         setBriefs(payload.list);
         setWeekendBriefsNote(payload.weekendNote);
+        setIntelDeskMeta(payload.deskMeta ?? null);
         if (payload.list.length > 0) {
           setEmptyDeskMessages(null);
           return;
@@ -415,7 +432,9 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           }
           fetchBriefsPayload(true)
             .then((nextPayload) => {
-              if (cancelled || !nextPayload.list.length) return;
+              if (cancelled) return;
+              setIntelDeskMeta(nextPayload.deskMeta ?? null);
+              if (!nextPayload.list.length) return;
               setBriefs(nextPayload.list);
               setWeekendBriefsNote(nextPayload.weekendNote);
               setEmptyDeskMessages(null);
@@ -428,6 +447,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       .catch(() => {
         if (cancelled) return;
         setBriefs([]);
+        setIntelDeskMeta(null);
         setError('Failed to load briefs');
       })
       .finally(finishLoading);
@@ -678,6 +698,15 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                           {' '}
                           {emptyDeskMessages.adminText}
                         </span>
+                      ) : null}
+                      {canEdit && intelDeskMeta ? (
+                        <span className="td-deck-mi-empty-desk-meta" role="note">
+                          Desk rows for this date (server): {intelDeskMeta.briefsRowCount}. Automated generation available:{' '}
+                          {intelDeskMeta.deskAutomationConfigured ? 'yes' : 'no'}
+                          {!intelDeskMeta.deskAutomationConfigured
+                            ? ' — configure the desk automation API key on the API host for scheduled briefs.'
+                            : null}
+                        </span>
                       ) : null}{' '}
                       <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
                         Retry fetch
@@ -685,6 +714,15 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                     </>
                   ) : (
                     <>
+                      {canEdit && intelDeskMeta ? (
+                        <span className="td-deck-mi-empty-desk-meta" role="note">
+                          Desk rows for this date (server): {intelDeskMeta.briefsRowCount}. Automated generation available:{' '}
+                          {intelDeskMeta.deskAutomationConfigured ? 'yes' : 'no'}
+                          {!intelDeskMeta.deskAutomationConfigured
+                            ? ' — configure the desk automation API key on the API host for scheduled briefs.'
+                            : null}
+                        </span>
+                      ) : null}
                       No briefs for this date.{' '}
                       <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
                         Retry fetch

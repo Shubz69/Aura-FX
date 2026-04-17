@@ -383,6 +383,10 @@ module.exports = async (req, res) => {
         date,
         type,
         briefsSourceDate: briefsDate,
+        /** Rows returned for resolved briefsSourceDate + period (before client-side filtering). */
+        briefsRowCount: (rows || []).length,
+        /** Whether automated desk brief generation can run on this deployment (requires hosted API keys). */
+        deskAutomationConfigured: Boolean(isTraderDeskAutomationConfigured()),
       };
       if (weekendFallback) payload.weekendFallback = true;
       return res.status(200).json(payload);
