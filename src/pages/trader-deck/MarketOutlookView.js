@@ -2,7 +2,7 @@
  * Market Outlook content for Trader Deck – date-scoped Daily or Weekly.
  * Same panels as the main dashboard; data from API for selected date or live/seed fallback.
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Fragment } from 'react';
 import Api from '../../services/Api';
 import { getMarketIntelligence, SEED_MARKET_INTELLIGENCE } from '../../data/marketIntelligence';
 import RegimeRows from '../../components/trader-deck/RegimeRows';
@@ -15,7 +15,19 @@ import RiskRadarList from '../../components/trader-deck/RiskRadarList';
 import SessionContextPanel from '../../components/trader-deck/SessionContextPanel';
 import { getTraderDeckIntelStorageYmd } from '../../lib/trader-deck/deskDates';
 import { formatRelativeFreshness } from '../../lib/trader-deck/marketOutlookDisplayFormatters';
-import TraderDeskDataQualityBanner from './TraderDeskDataQualityBanner';
+import {
+  buildDerivedRiskFallbackLines,
+  buildOutlookSecondaryMicroRowsDense,
+  deriveDominantFactorLine,
+  deriveHeadlineFallbackLines,
+  deriveInstrumentSnapshotsMerged,
+  deriveNetDriverBiasLine,
+  deriveTimelineMerged,
+  deriveTraderFocusMerged,
+  deriveWeakestLinkLine,
+  regimeSessionFallbackPairs,
+  signalLine,
+} from '../../lib/trader-deck/marketOutlookDensity';
 import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput.mjs';
 
 /** When the API omits sleeves, derive compact cards from cross-asset signals + drivers (real desk fields, not placeholders). */
@@ -45,6 +57,151 @@ function deriveInstrumentSnapshotsFromDesk(signals, drivers) {
 }
 
 /** Scenario rows from regime + timeline (no “still connecting” filler). */
+/** Compact decision block: narrative left, actionable bullets right (real fields only). */
+function buildImplicationsDecisionModel(showing) {
+  if (!showing || typeof showing !== 'object') {
+    return { scenario: '', keyTheme: '', bullets: [] };
+  }
+  const regime = showing.marketRegime || {};
+  const drivers = Array.isArray(showing.keyDrivers) ? showing.keyDrivers : [];
+  const signals = Array.isArray(showing.crossAssetSignals) ? showing.crossAssetSignals : [];
+  const pulse = showing.marketPulse || {};
+  const timeline = Array.isArray(showing.marketChangesTimeline) ? showing.marketChangesTimeline : [];
+  const implications = Array.isArray(showing.marketImplications) ? showing.marketImplications : [];
+  const priorities = Array.isArray(showing.aiTradingPriorities) ? showing.aiTradingPriorities : [];
+  const riskEngine = showing.riskEngine || null;
+  const outlookRisk = showing.outlookRiskContext && typeof showing.outlookRiskContext === 'object'
+    ? showing.outlookRiskContext
+    : null;
+  const traderFocusRaw = Array.isArray(showing.traderFocus) ? showing.traderFocus : [];
+  const traderFocus = deriveTraderFocusMerged(traderFocusRaw, drivers);
+
+  const scenarioParts = [];
+  const reg = String(regime.currentRegime || '').trim();
+  const bias = String(regime.bias || regime.marketSentiment || '').trim();
+  if (reg || bias) {
+    scenarioParts.push(`${reg || 'Mixed regime'}${bias ? ` · ${bias}` : ''}`);
+  }
+  const tl0 = timeline[0];
+  if (tl0 && (tl0.whatChanged || tl0.title)) {
+    const hook = String(tl0.whatChanged || tl0.title || '').trim();
+    if (hook) scenarioParts.push(hook.slice(0, 140));
+  }
+  if (!scenarioParts.length && implications[0]?.condition) {
+    scenarioParts.push(String(implications[0].condition).trim().slice(0, 200));
+  }
+  const scenario = scenarioParts.slice(0, 2).join(' ').trim().slice(0, 280);
+
+  let keyTheme = String(regime.primaryDriver || '').trim();
+  if (!keyTheme && drivers[0]) {
+    const d0 = drivers[0];
+    keyTheme = `${d0.name || 'Lead driver'}: ${String(d0.effect || d0.explanation || '').trim()}`.trim();
+  }
+  if (!keyTheme && signals[0]) {
+    keyTheme = `${signals[0].asset || 'Cross-asset'} · ${String(signals[0].signal || signals[0].implication || '').trim()}`.trim();
+  }
+  keyTheme = keyTheme.slice(0, 240);
+
+  const pool = [];
+  const pushPool = (raw) => {
+    const t = String(raw || '').trim().replace(/\s+/g, ' ');
+    if (t.length > 8) pool.push(t.slice(0, 132));
+  };
+
+  priorities.slice(0, 3).forEach(pushPool);
+
+  drivers
+    .slice()
+    .sort((a, b) => {
+      const rank = { high: 0, medium: 1, low: 2 };
+      return (rank[String(a.impact || '').toLowerCase()] ?? 3) - (rank[String(b.impact || '').toLowerCase()] ?? 3);
+    })
+    .slice(0, 6)
+    .forEach((d) => {
+      pushPool(`${String(d.name || '').trim()} (${String(d.impact || 'med')}): ${String(d.effect || d.explanation || '').trim()}`.trim());
+    });
+
+  const rec = Array.isArray(pulse.recommendedAction) ? pulse.recommendedAction : [];
+  rec.slice(0, 2).forEach((r) => pushPool(typeof r === 'string' ? r : r?.text || r?.title || ''));
+
+  if (riskEngine?.level != null || riskEngine?.score != null) {
+    pushPool(`Risk desk: ${riskEngine.level || 'posture'} · score ${riskEngine.score ?? '—'}/100`);
+  }
+  if (outlookRisk?.volatilityState) pushPool(`Vol regime: ${outlookRisk.volatilityState}`);
+  if (outlookRisk?.clusteringBehavior) pushPool(`Linkage: ${outlookRisk.clusteringBehavior}`);
+  if (outlookRisk?.nextRiskWindow) pushPool(`Next window: ${String(outlookRisk.nextRiskWindow).slice(0, 120)}`);
+
+  implications.slice(0, 2).forEach((row) => {
+    if (row?.then) pushPool(`Tape: ${String(row.then).slice(0, 120)}`);
+    if (row?.implication) pushPool(`Desk lean: ${String(row.implication).slice(0, 120)}`);
+  });
+
+  traderFocus.slice(0, 6).forEach((f) => {
+    const title = typeof f === 'string' ? f : f?.title || '';
+    const reason = typeof f === 'object' && f?.reason ? String(f.reason).trim() : '';
+    if (title) pushPool(reason ? `Watch · ${title}: ${reason.slice(0, 72)}` : `Watch · ${title}`);
+  });
+
+  signals.slice(0, 10).forEach((s) => {
+    const imp = String(s.implication || '').trim();
+    if (imp) pushPool(`${s.asset || 'Market'}: ${imp.slice(0, 96)}`);
+  });
+
+  const uniq = [];
+  const seen = new Set();
+  pool.forEach((b) => {
+    const k = b.slice(0, 52);
+    if (seen.has(k)) return;
+    seen.add(k);
+    uniq.push(b);
+  });
+
+  let bullets = uniq.slice(0, 5);
+  const seenBullet = new Set(bullets.map((b) => b.slice(0, 52)));
+  const takeBullet = (raw) => {
+    const t = String(raw || '').trim().replace(/\s+/g, ' ');
+    if (t.length < 8) return;
+    const k = t.slice(0, 52);
+    if (seenBullet.has(k)) return;
+    if (bullets.length >= 5) return;
+    seenBullet.add(k);
+    bullets.push(t.slice(0, 132));
+  };
+  if (bullets.length < 5) {
+    [deriveNetDriverBiasLine(drivers), deriveDominantFactorLine(drivers), deriveWeakestLinkLine(signals)].forEach(takeBullet);
+  }
+  if (bullets.length < 5) {
+    drivers.slice(3, 14).forEach((d) => {
+      takeBullet(`${String(d.name || '').trim()}: ${String(d.effect || d.explanation || '').trim()}`.trim());
+    });
+  }
+  if (bullets.length < 5) {
+    signals.slice(6, 18).forEach((s) => {
+      const imp = String(s.implication || '').trim();
+      if (imp) takeBullet(`${s.asset || 'Market'}: ${imp.slice(0, 96)}`);
+    });
+  }
+
+  let scenarioOut = scenario;
+  if (!String(scenarioOut || '').trim()) {
+    const fp = regimeSessionFallbackPairs(regime);
+    if (fp.length) scenarioOut = fp.slice(0, 4).map(([k, v]) => `${k}: ${v}`).join(' · ');
+  }
+  scenarioOut = String(scenarioOut || '').trim().slice(0, 280);
+
+  let keyThemeOut = keyTheme;
+  if (!String(keyThemeOut || '').trim()) {
+    const dom = deriveDominantFactorLine(drivers);
+    if (dom) keyThemeOut = dom.slice(0, 240);
+  }
+
+  return {
+    scenario: scenarioOut,
+    keyTheme: String(keyThemeOut || '').trim().slice(0, 240),
+    bullets,
+  };
+}
+
 function deriveMarketImplicationsFromDesk(regime, drivers, timeline) {
   const rows = [];
   const rReg = regime?.currentRegime || '';
@@ -222,16 +379,12 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
   /** 'saved' = admin JSON in DB; 'live' = pulled from live feeds */
   const dataSourceRef = useRef('loading');
   const liveRefreshInFlightRef = useRef(false);
-  /** React state mirror for banners: saved outlook row vs live GET intelligence */
-  const [contentSource, setContentSource] = useState('loading');
-
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
     setSaveSuccess(null);
     dataSourceRef.current = 'loading';
-    setContentSource('loading');
     const dateStr = getTraderDeckIntelStorageYmd(selectedDate, period);
     Api.getTraderDeckContent(type, dateStr)
       .then((res) => {
@@ -239,7 +392,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
         const payload = res.data?.payload;
         if (payload && typeof payload === 'object') {
           dataSourceRef.current = 'saved';
-          setContentSource('saved');
           const hasOverrideEnvelope = payload.manualOverrides && payload.botPayload;
           const loadSaved = (liveRaw) => {
             const livePayload = liveRaw && typeof liveRaw === 'object' ? liveRaw : null;
@@ -282,7 +434,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
           return;
         }
         dataSourceRef.current = 'live';
-        setContentSource('live');
         return getMarketIntelligence({ refresh: false, timeframe: period, date: dateStr }).then((raw) => {
           if (cancelled) return;
           const normalized = normalizeForUI(raw, period) || normalizeForUI(SEED_MARKET_INTELLIGENCE, period);
@@ -292,7 +443,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       .catch(() => {
         if (cancelled) return;
         dataSourceRef.current = 'live';
-        setContentSource('live');
         const normalized = normalizeForUI(SEED_MARKET_INTELLIGENCE, period);
         setData(normalized);
       })
@@ -409,9 +559,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
         }
       : ui;
 
-  const bannerDataQuality =
-    contentSource === 'saved' ? 'pipeline' : (ui.dataQuality || 'live');
-  const bannerDegradedReason = contentSource === 'saved' ? null : (ui.degradedReason ?? null);
   const {
     marketRegime,
     marketPulse,
@@ -425,12 +572,33 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
 
   const outlookSnapshot = ui;
   const tfShort = period === 'weekly' ? 'weekly' : 'daily';
+  const headlineFeed = (data && data.headlineSample) || ui.headlineSample || [];
   const marketChangesTimeline = editMode && editDraft
     ? buildTimelineFallback(editDraft.marketChangesToday || [], tfShort)
-    : (showing.marketChangesTimeline || []);
-  const marketImplications = outlookSnapshot.marketImplications || [];
-  const instrumentSnapshots = outlookSnapshot.instrumentSnapshots || [];
+    : deriveTimelineMerged(
+        showing.marketChangesTimeline || [],
+        crossAssetSignals,
+        keyDrivers,
+        marketChangesToday || [],
+        tfShort
+      );
+  const deskForInference = {
+    ...showing,
+    riskEngine: showing.riskEngine ?? ui.riskEngine,
+    headlineInsights: outlookSnapshot.headlineInsights || [],
+    headlineSample: headlineFeed,
+    marketChangesTimeline,
+    outlookRiskContext: outlookSnapshot.outlookRiskContext ?? ui.outlookRiskContext,
+  };
+  const implicationsDecision = buildImplicationsDecisionModel(deskForInference);
+  const outlookMicroRows = buildOutlookSecondaryMicroRowsDense(deskForInference, { maxRows: 24 });
+  const instrumentSnapshots = deriveInstrumentSnapshotsMerged(
+    outlookSnapshot.instrumentSnapshots,
+    crossAssetSignals,
+    keyDrivers
+  );
   const headlineInsights = outlookSnapshot.headlineInsights || [];
+  const headlineFallbackLines = deriveHeadlineFallbackLines(crossAssetSignals, keyDrivers);
   const outlookRiskContext = outlookSnapshot.outlookRiskContext;
   const outlookDataStatus = outlookSnapshot.outlookDataStatus;
   const marketPulseForGauge = editMode && editDraft
@@ -438,7 +606,24 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     : showing.marketPulse;
 
   const sessionContextLive = (data && data.sessionContext) || ui.sessionContext || null;
-  const headlineFeed = (data && data.headlineSample) || ui.headlineSample || [];
+  let sessionFallbackPairs = regimeSessionFallbackPairs(marketRegime || {});
+  if (!sessionFallbackPairs.length && (marketPulse?.score != null || marketPulse?.label)) {
+    sessionFallbackPairs = [
+      ['Desk pulse', `${marketPulse.score ?? '—'}/100 · ${String(marketPulse.label || '').trim() || '—'}`],
+    ];
+  }
+  if (!sessionFallbackPairs.length && keyDrivers[0]) {
+    const d0 = keyDrivers[0];
+    const line = `${String(d0.name || '').trim()}: ${String(d0.effect || d0.explanation || '').trim()}`.trim();
+    if (line.length > 4) sessionFallbackPairs = [['Lead driver', line.slice(0, 200)]];
+  }
+  if (!sessionFallbackPairs.length && crossAssetSignals[0]) {
+    const line = signalLine(crossAssetSignals[0]);
+    if (line) sessionFallbackPairs = [['Cross-asset', line]];
+  }
+
+  const riskDerivedLines = buildDerivedRiskFallbackLines(marketPulse, keyDrivers, outlookRiskContext);
+  const traderFocusEffective = deriveTraderFocusMerged(traderFocus, keyDrivers);
 
   const renderRegime = () => {
     if (editMode && editDraft) {
@@ -619,12 +804,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     <>
       {error && <p className="td-mi-fallback-msg" role="status">{error}</p>}
       {saveSuccess && <p className="td-mi-save-success" role="status">{saveSuccess}</p>}
-      {canEdit ? (
-        <TraderDeskDataQualityBanner
-          dataQuality={bannerDataQuality}
-          degradedReason={bannerDegradedReason}
-        />
-      ) : null}
       <div className="td-deck-mo-root td-deck-mo-outlook td-deck-mo-outlook--concept">
           <header className="td-outlook-unified-header td-deck-mo-outlook-hero td-outlook-concept-page-header">
             <div className="td-deck-mo-outlook-hero-text">
@@ -658,16 +837,25 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
 
                   <div className="td-outlook-concept-intel mo-grid-gap-sm" aria-label="Session context, drivers, and cross-asset signals">
                     <div className="td-outlook-concept-intel-col td-outlook-concept-intel-col--left">
+                      {(sessionContextLive || sessionFallbackPairs.length > 0) ? (
                       <section className="td-outlook-concept-card td-outlook-concept-card--session mo-card-shell" aria-label="Session context">
                         <h2 className="td-outlook-concept-card__title mo-section-header">Session Context</h2>
                         <div className="td-outlook-concept-card__body td-outlook-concept-card__body--session">
                           {sessionContextLive ? (
                             <SessionContextPanel sessionContext={sessionContextLive} />
                           ) : (
-                            <p className="td-outlook-empty mo-terminal-feed__empty">Session telemetry appears when the live desk bundle includes session diagnostics.</p>
+                            <dl className="mo-session-regime-fallback">
+                              {sessionFallbackPairs.map(([k, v]) => (
+                                <Fragment key={k}>
+                                  <dt>{k}</dt>
+                                  <dd>{String(v)}</dd>
+                                </Fragment>
+                              ))}
+                            </dl>
                           )}
                         </div>
                       </section>
+                      ) : null}
                       <section className="td-outlook-concept-card td-outlook-concept-card--drivers mo-card-shell">
                         <h2 className="td-outlook-concept-card__title">Key Market Drivers</h2>
                         <div className="td-outlook-concept-card__body">
@@ -682,17 +870,13 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                           {editMode && editDraft ? renderSignalsEdit() : <SignalList signals={crossAssetSignals} />}
                         </div>
                       </section>
+                      {(instrumentSnapshots || []).filter(Boolean).length > 0 ? (
                       <section className="td-outlook-concept-card td-outlook-concept-card--instruments mo-card-shell" aria-label="Instrument snapshots">
                         <h2 className="td-outlook-concept-card__title">Instrument Snapshots</h2>
                         <div className="td-outlook-concept-card__body td-outlook-concept-card__body--instruments">
-                          {(instrumentSnapshots || []).filter(Boolean).length === 0 ? (
-                            <p className="td-outlook-empty mo-instrument-empty">
-                              No cross-asset sleeves in this snapshot yet.
-                            </p>
-                          ) : (
                             <div className="mo-instrument-grid mo-instrument-grid--compact">
-                              {(instrumentSnapshots || []).slice(0, 6).map((card) => (
-                                <article key={card.symbol} className="mo-instrument-card">
+                              {(instrumentSnapshots || []).slice(0, 8).map((card, idx) => (
+                                <article key={card.symbol || `snap-${idx}`} className="mo-instrument-card">
                                   <header className="mo-instrument-card__head">
                                     <span className="mo-instrument-card__sym">{card.symbol}</span>
                                     <span className="mo-pill mo-pill--soft">{card.bias || '—'}</span>
@@ -703,9 +887,9 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                                 </article>
                               ))}
                             </div>
-                          )}
                         </div>
                       </section>
+                      ) : null}
                     </div>
                   </div>
 
@@ -722,32 +906,50 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     </div>
                   </section>
 
-                  {(marketImplications || []).length > 0 ? (
-                  <section className="td-outlook-concept-card td-outlook-concept-card--implications mo-card-shell mo-card-shell--dense" aria-label="Market implications">
+                  {(implicationsDecision.scenario || implicationsDecision.keyTheme || implicationsDecision.bullets.length > 0) ? (
+                  <section
+                    className="td-outlook-concept-card td-outlook-concept-card--implications mo-card-shell mo-card-shell--dense"
+                    aria-label="Market implications"
+                  >
                     <h2 className="td-outlook-concept-card__title">Market Implications</h2>
-                    <p className="mo-section-sub">Scenario context only — not execution guidance.</p>
-                    <div className="td-outlook-concept-card__body">
-                      <ul className="mo-implications-list mo-implications-list--compact">
-                        {(marketImplications || []).map((row, i) => (
-                          <li key={i} className="mo-implication-row">
-                            <p><span className="mo-implication-k">If</span> {row.condition}</p>
-                            <p><span className="mo-implication-k">Then</span> {row.then}</p>
-                            <p><span className="mo-implication-k">Implication</span> {row.implication}</p>
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="td-outlook-concept-card__body td-outlook-concept-card__body--implications">
+                        <div className="mo-implications-decision-grid">
+                          <div className="mo-implications-decision-col mo-implications-decision-col--narrative">
+                            {implicationsDecision.scenario ? (
+                              <>
+                                <span className="mo-implications-kicker">Scenario</span>
+                                <p className="mo-implications-scenario">{implicationsDecision.scenario}</p>
+                              </>
+                            ) : null}
+                            {implicationsDecision.keyTheme ? (
+                              <>
+                                <span className="mo-implications-kicker">Key theme</span>
+                                <p className="mo-implications-theme">{implicationsDecision.keyTheme}</p>
+                              </>
+                            ) : null}
+                          </div>
+                          {implicationsDecision.bullets.length > 0 ? (
+                          <div className="mo-implications-decision-col mo-implications-decision-col--action">
+                            <span className="mo-implications-kicker">Actionable</span>
+                              <ul className="mo-implications-action-list">
+                                {implicationsDecision.bullets.map((line, i) => (
+                                  <li key={i}>{line}</li>
+                                ))}
+                              </ul>
+                          </div>
+                          ) : null}
+                        </div>
                     </div>
                   </section>
                   ) : null}
 
                   <section className="td-outlook-concept-card td-outlook-concept-card--focus mo-card-shell" aria-label="Trader focus">
                     <h2 className="td-outlook-concept-card__title">Trader Focus</h2>
-                    <p className="mo-section-sub">Observational attention areas — not a task list.</p>
                     <div className="td-outlook-concept-card__body">
                       {editMode && editDraft ? (
                         renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item')
-                      ) : traderFocus && traderFocus.length > 0 ? (
-                        <FocusList items={traderFocus} />
+                      ) : traderFocusEffective.length > 0 ? (
+                        <FocusList items={traderFocusEffective} />
                       ) : (
                         <p className="td-outlook-empty">No focus items. Use Edit to add.</p>
                       )}
@@ -790,12 +992,17 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                           summaryOnly={period === 'daily'}
                           outlookContext={outlookRiskContext}
                         />
-                      ) : (
-                        <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
-                      )}
+                      ) : riskDerivedLines.length > 0 ? (
+                        <ul className="mo-risk-fallback-lines td-mi-bullets">
+                          {riskDerivedLines.map((line, i) => (
+                            <li key={i} className="td-mi-bullet-item">{line}</li>
+                          ))}
+                        </ul>
+                      ) : null}
                     </div>
                   </section>
 
+                  {(headlineInsights && headlineInsights.length > 0) || headlineFeed.length > 0 || headlineFallbackLines.length > 0 ? (
                   <section className="td-outlook-concept-card td-outlook-concept-card--headlines mo-card-shell" aria-label="Market headlines">
                     <header className="td-outlook-concept-card__head td-outlook-concept-card__head--headlines">
                       <h2 className="td-outlook-concept-card__title">Market Headlines</h2>
@@ -806,7 +1013,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     <div className="td-outlook-concept-card__body td-outlook-concept-card__body--headlines">
                       {headlineInsights && headlineInsights.length > 0 ? (
                         <ul className="mo-terminal-feed mo-terminal-feed--insights">
-                          {headlineInsights.slice(0, 8).map((row, i) => (
+                          {headlineInsights.slice(0, 12).map((row, i) => (
                             <li key={i} className="mo-terminal-feed__row mo-terminal-feed__row--insight">
                               <div className="mo-headline-chips">
                                 <span className={`mo-sentiment mo-sentiment--${row.sentiment || 'neutral'}`}>{row.sentiment || 'neutral'}</span>
@@ -821,18 +1028,38 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                         </ul>
                       ) : headlineFeed.length > 0 ? (
                         <ul className="mo-terminal-feed">
-                          {headlineFeed.slice(0, 8).map((line, i) => (
+                          {headlineFeed.slice(0, 12).map((line, i) => (
                             <li key={i} className="mo-terminal-feed__row">
                               <span className="mo-terminal-feed__text">{line}</span>
                             </li>
                           ))}
                         </ul>
                       ) : (
-                        <p className="td-outlook-empty mo-terminal-feed__empty">No headline snapshot yet. Refresh intelligence.</p>
+                        <ul className="mo-terminal-feed">
+                          {headlineFallbackLines.slice(0, 12).map((line, i) => (
+                            <li key={i} className="mo-terminal-feed__row">
+                              <span className="mo-terminal-feed__text">{line}</span>
+                            </li>
+                          ))}
+                        </ul>
                       )}
                       <p className="mo-terminal-feed__note">Event detail in the Economic Calendar below.</p>
                     </div>
                   </section>
+                  ) : null}
+
+                  {outlookMicroRows.length > 0 ? (
+                    <section className="td-outlook-concept-card td-outlook-concept-card--aux mo-card-shell mo-card-shell--dense" aria-label="Cross-links and headline overflow">
+                      <h2 className="td-outlook-concept-card__title">More desk lines</h2>
+                      <div className="td-outlook-concept-card__body td-outlook-concept-card__body--aux">
+                        <ul className="mo-outlook-micro-rows">
+                          {outlookMicroRows.map((line, i) => (
+                            <li key={i} className="mo-outlook-micro-rows__item">{line}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </section>
+                  ) : null}
                   </div>
                 </div>
               </div>

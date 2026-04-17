@@ -8,6 +8,7 @@ const { runEngine, getTwelveDataQuote } = require('../marketIntelligenceEngine')
 const { getTemplate, normalizePeriod, parseTemplateFromText } = require('./briefTemplateService');
 const { getPerplexityAutomationModel } = require('../../ai/perplexity-config');
 const { fetchWithTimeout } = require('./fetchWithTimeout');
+const { polishBriefMarkdown } = require('../../../src/utils/briefPresentationSanitize');
 const { enrichTraderDeckPayload } = require('../perplexityTraderInsights');
 const { getStoredBriefInputs } = require('../../market-data/pipeline-service');
 const briefUniverse = require('./briefInstrumentUniverse');
@@ -256,6 +257,16 @@ function dateLong(date, timeZone) {
   }).format(date);
 }
 
+/** Calendar date without weekday — use with `{weekday}` in the same title to avoid “Monday Monday”. */
+function dateLongNoWeekday(date, timeZone) {
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone,
+  }).format(date);
+}
+
 /** JS Date at local noon on desk YMD — stable title tokens vs UTC parsing bugs. */
 function jsDateFromDeskYmd(deskYmd, timeZone) {
   const dt = DateTime.fromISO(`${String(deskYmd || '').slice(0, 10)}T12:00:00`, { zone: timeZone });
@@ -474,7 +485,7 @@ function packDriverLine(d) {
   if (typeof d === 'string') return d.trim();
   if (typeof d === 'object') {
     const parts = [d.name, d.biasLabel || d.direction, d.value, d.effect].filter(Boolean).map(String);
-    return parts.join(' — ').trim();
+    return parts.join(', ').trim();
   }
   return String(d);
 }
@@ -484,7 +495,7 @@ function packSignalLine(s) {
   if (typeof s === 'string') return s.trim();
   if (typeof s === 'object') {
     const parts = [s.label, s.reading, s.detail, s.title].filter(Boolean).map(String);
-    return parts.join(' — ').trim();
+    return parts.join(', ').trim();
   }
   return String(s);
 }
@@ -1524,9 +1535,9 @@ function fallbackSectionBodyByKey(sectionKey, heading, factPack) {
   const map = {
     market_context: `${baseCtx} ${drivers ? `Drivers: ${drivers}.` : ''} ${quotes ? `Spot: ${quotes}.` : ''}`,
     cross_asset_flow: `${label} cross-asset: ${cross || 'Rates, USD, risk and commodities frame the tape.'} ${drivers ? `Linked drivers: ${drivers.slice(0, 220)}.` : ''}`,
-    key_drivers: `${label} — real drivers this window: ${drivers || 'Monitor calendar and flow; avoid generic lists.'}`,
+    key_drivers: `${label}: real drivers this window: ${drivers || 'Monitor calendar and flow; avoid generic lists.'}`,
     market_behaviour: `${label} tape: ${pulse ? `${pulse} tone.` : 'Two-way liquidity.'} ${factPack.traderFocus?.length ? `Focus: ${normaliseArray(factPack.traderFocus.map((x) => (typeof x === 'string' ? x : x.title || ''))).slice(0, 3).join(' · ')}.` : ''}`,
-    what_matters_next: `${label} — next catalysts: ${cal || 'Use calendar rows in the pack for timing; name specific releases.'} ${quotes ? `Context: ${quotes.slice(0, 180)}.` : ''}`,
+    what_matters_next: `${label}: next catalysts: ${cal || 'Use calendar rows in the pack for timing; name specific releases.'} ${quotes ? `Context: ${quotes.slice(0, 180)}.` : ''}`,
     trader_takeaway: `${label} takeaway: lean with ${drivers ? drivers.split(' · ')[0] : 'the dominant macro pulse'}; reassess if the tape contradicts that read. ${quotes ? `Lead context: ${quotes.split(' · ')[0] || 'from spot snapshot'}.` : ''}`,
     weekly_overview: `Weekly ${label}: ${drivers ? drivers.slice(0, 280) : baseCtx} ${cross ? `Cross-asset: ${cross.slice(0, 200)}.` : ''}`,
     macro_theme: `Macro theme for ${label}: ${drivers || cross || 'Policy, growth, and inflation path.'}`,
@@ -1534,9 +1545,9 @@ function fallbackSectionBodyByKey(sectionKey, heading, factPack) {
     structural_shift: `${label} structure: ${pulse || 'No single dominant break'}; ${drivers ? `Watch ${drivers.slice(0, 200)}` : 'track breadth and correlation.'}.`,
     key_events_recap: `Week in ${label}: ${cal || 'Key prints in calendar above.'} ${drivers ? `Drivers: ${drivers.slice(0, 240)}.` : ''}`,
     forward_outlook: `Forward for ${label}: ${cal ? `Next focus: ${cal}.` : 'Event path from calendar.'} ${cross ? cross.slice(0, 200) : ''}`,
-    strategic_takeaway: `Strategic stance — ${label}: ${drivers ? drivers.split(' · ')[0] : 'Stay with confirmed macro'}; risk scales with event density.`,
+    strategic_takeaway: `Strategic stance for ${label}: ${drivers ? drivers.split(' · ')[0] : 'Stay with confirmed macro'}; risk scales with event density.`,
   };
-  return String(map[sectionKey] || `${label} — ${heading}: ${drivers || pulse || quotes || 'Desk context from fact pack.'}`).trim();
+  return String(map[sectionKey] || `${label}: ${heading}: ${drivers || pulse || quotes || 'Desk context from fact pack.'}`).trim();
 }
 
 async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorSectionBodies, options = {}) {
@@ -1566,7 +1577,10 @@ async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorS
     factPack: slimFactPackForSections(factPack),
     priorSectionsInThisBrief: priorHint,
     otherCategoriesThisRun: excerptBlock,
-    outputContract: 'Return JSON only: {"body":"string"} — one prose section, 2–5 short paragraphs max, plain text, no markdown headings inside body.',
+    outputContract:
+      'Return JSON only: {"body":"string"} — one prose section, 2–5 short paragraphs max, plain prose only. '
+      + 'Inside body: use sentence case (never ALL CAPS). No asterisks, no hyphen bullets, no em/en dashes as separators (use commas and periods). '
+      + 'No markdown headings inside body.',
     bannedSubstrings: factPack.bannedPhrases || BANNED_PHRASES,
     rewriteNote:
       uniquenessRetry || validationFix
@@ -1605,6 +1619,7 @@ async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorS
               + STRUCTURED_DATA_FIRST_RULE
               + ' If factPack.llmDataSupplement is non-null, it is backup desk synthesis when live price feeds were thin — use it only together with factPack; prefer agreement with liveQuotes/headlines when both exist. '
               + 'Obey bannedSubstrings exactly (no substring matches in body). '
+              + 'Typography: sentence case only in body; never ALL CAPS blocks. Do not use *, -, —, or – as punctuation or bullets; use commas and full stops. '
               + 'Return valid JSON: {"body":"..."} only.',
           },
           { role: 'user', content: JSON.stringify(userPayload) },
@@ -1705,11 +1720,7 @@ function fallbackGenerated(factPack, template, deskYmd, timeZone) {
     heading: SECTION_HEADINGS[key] || key,
     body: fallbackSectionBodyByKey(key, SECTION_HEADINGS[key], factPack),
   }));
-  const mid = jsDateFromDeskYmd(deskYmd, timeZone);
-  const baseTitle = template.titlePattern
-    .replace('{weekday}', weekdayName(mid, timeZone))
-    .replace('{dateLong}', dateLong(mid, timeZone))
-    .replace('{weekRange}', deskWeekMonFriRangeLabel(deskYmd, timeZone));
+  const baseTitle = computeTitle(template, deskYmd, timeZone);
   return {
     title: baseTitle,
     sections: renderedSections,
@@ -1721,36 +1732,46 @@ function fallbackGenerated(factPack, template, deskYmd, timeZone) {
 
 function renderBriefText({ title, period, date, generated, template, briefKind = 'stocks', topInstruments = [] }) {
   const normalizedKind = normalizeBriefKind(briefKind);
+  const label = BRIEF_KIND_LABELS[normalizedKind] || BRIEF_KIND_LABELS.stocks;
   const lines = [];
-  lines.push(title);
+  lines.push(`# ${title}`);
   lines.push('');
-  lines.push(`Period: ${period}`);
-  lines.push(`Date: ${date}`);
-  lines.push(`Category: ${BRIEF_KIND_LABELS[normalizedKind] || BRIEF_KIND_LABELS.stocks}`);
+  lines.push(
+    `Desk period ${period}, calendar date ${date}. Category focus: ${label}.`
+  );
   lines.push('');
 
   const sections = Array.isArray(generated.sections) ? generated.sections : [];
   for (const sec of sections) {
-    lines.push(sec.heading || 'Section');
+    const heading = String(sec.heading || 'Section').trim() || 'Section';
+    lines.push(`## ${heading.toUpperCase()}`);
+    lines.push('');
     lines.push(stripSources(sec.body || ''));
     lines.push('');
   }
 
   const riskRadar = normaliseArray(generated.riskRadar);
   if (riskRadar.length > 0) {
-    lines.push('Risk Radar');
-    riskRadar.slice(0, 8).forEach((r) => lines.push(`- ${stripSources(r)}`));
+    lines.push('## RISK RADAR');
+    lines.push('');
+    riskRadar.slice(0, 8).forEach((r, idx) => {
+      lines.push(`${idx + 1}. ${stripSources(r)}`);
+    });
     lines.push('');
   }
 
   const playbook = normaliseArray(generated.playbook);
   if (playbook.length > 0) {
-    lines.push('Playbook');
-    playbook.slice(0, 8).forEach((p) => lines.push(`- ${stripSources(p)}`));
+    lines.push('## PLAYBOOK');
+    lines.push('');
+    playbook.slice(0, 8).forEach((p, idx) => {
+      lines.push(`${idx + 1}. ${stripSources(p)}`);
+    });
     lines.push('');
   }
 
-  const body = stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
+  let body = stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
+  body = polishBriefMarkdown(body);
   assertNoSources(body);
   return body;
 }
@@ -2065,9 +2086,11 @@ async function publishManualBrief({ period, date, title, body }) {
 function computeTitle(template, deskYmd, timeZone) {
   const pattern = String(template?.titlePattern || '').trim() || 'Market Brief - {dateLong}';
   const mid = jsDateFromDeskYmd(deskYmd, timeZone);
+  const usesWeekday = pattern.includes('{weekday}');
+  const dateLongFormatted = usesWeekday ? dateLongNoWeekday(mid, timeZone) : dateLong(mid, timeZone);
   return pattern
     .replace('{weekday}', weekdayName(mid, timeZone))
-    .replace('{dateLong}', dateLong(mid, timeZone))
+    .replace('{dateLong}', dateLongFormatted)
     .replace('{weekRange}', deskWeekMonFriRangeLabel(deskYmd, timeZone));
 }
 

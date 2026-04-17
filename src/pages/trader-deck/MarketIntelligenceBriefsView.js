@@ -11,6 +11,7 @@ import { FaEye, FaTrash, FaTimes } from 'react-icons/fa';
 import CosmicBackground from '../../components/CosmicBackground';
 import { getTraderDeckIntelStorageYmd, formatLondonWeekRangeFromWeekEndingSundayYmd } from '../../lib/trader-deck/deskDates';
 import { stripModelInternalExposition } from '../../utils/sanitizeAiDeskOutput.mjs';
+import { polishBriefMarkdown } from '../../utils/briefPresentationSanitize';
 
 function googleViewerEmbedUrl(fileUrl) {
   const u = (fileUrl || '').trim();
@@ -108,41 +109,19 @@ const BRIEF_MARKDOWN_COMPONENTS = {
     ),
 };
 
-/** Plain-language preview: no markdown hashes/list dashes up top; footer attribution only. */
+/** Preview text: preserve markdown headings (section layout); polish separators/casing to match backend. */
 function sanitizeBriefForPreview(text) {
   let t = String(text || '').replace(/\r\n/g, '\n');
 
-  // Strip ```fences``` (keep inner text as prose); strip inline `backticks` for typewriter + cleaner source.
+  // Strip ```fences``` (keep inner text); strip inline backticks from legacy docs.
   t = t.replace(/```(?:[\w-]+)?\s*\n?([\s\S]*?)```/g, (_, inner) => `\n${String(inner || '').trim()}\n`);
   t = t.replace(/`([^`\n]+)`/g, '$1');
 
   t = t.replace(/^\s*By\s+Aura\s+FX\s+AI\s*$/gim, '');
   t = t.replace(/^\s*By\s+AURA\s+TERMINAL\s*$/gim, '');
 
-  t = t
-    .split('\n')
-    .map((line) => {
-      let s = line.replace(/^#{1,6}\s+/, '');
-      s = s.replace(/#/g, '');
-      s = s.replace(/^\s*[-*+]\s+/, '');
-      return s;
-    })
-    .join('\n');
-
-  t = t.replace(/\*\*([^*]+)\*\*/g, '$1');
-  t = t.replace(/\*([^*\n]+)\*/g, '$1');
-  t = t.replace(/([a-zA-Z])-([a-zA-Z])/g, '$1 $2');
-  t = t
-    .split('\n')
-    .map((line) => line.replace(/^\s*-\s+/, ''))
-    .join('\n');
-
-  t = t
-    .replace(/^[ \t]*(-\s*){3,}[ \t]*$/gm, '')
-    .replace(/^[ \t]*---[ \t]*.*[ \t]*---[ \t]*$/gm, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/```+/g, '')
-    .trim();
+  t = stripModelInternalExposition(t);
+  t = polishBriefMarkdown(t);
 
   const endsWithFooter = new RegExp(
     `${BY_AURA_TERMINAL.replace(/\s+/g, '\\s+')}\\s*$`,
@@ -151,7 +130,7 @@ function sanitizeBriefForPreview(text) {
   if (!endsWithFooter) {
     t = `${t}\n\n${BY_AURA_TERMINAL}`;
   }
-  return stripModelInternalExposition(t);
+  return t.trim();
 }
 
 /** Ensure every API row renders: unknown brief_kind maps to general (never drop silently). */
@@ -168,6 +147,8 @@ function normalizeBriefsList(items) {
 
 const BRIEF_POLL_MS = 3000;
 const BRIEF_POLL_MAX = 15;
+/** Partial-pack polling may need longer while several category briefs generate server-side. */
+const BRIEF_PARTIAL_POLL_MAX = 60;
 
 /**
  * Empty desk copy: never expose env var names, secrets, or internal API routes to all users.
@@ -275,6 +256,20 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const hasInstitutionalBrief = useMemo(
     () => briefs.some((b) => String(b?.briefKind || '').toLowerCase().startsWith('aura_institutional')),
     [briefs]
+  );
+
+  /** Server may be gap-filling remaining sleeves in the background — keep polling until the full pack lands. */
+  const needsPartialIntelPoll = useMemo(
+    () =>
+      Boolean(intelDeskMeta?.deskAutomationConfigured) &&
+      briefs.length > 0 &&
+      (categoryBriefCount < CATEGORY_BRIEF_KINDS.size || !hasInstitutionalBrief),
+    [
+      intelDeskMeta?.deskAutomationConfigured,
+      briefs.length,
+      categoryBriefCount,
+      hasInstitutionalBrief,
+    ]
   );
 
   const weekendSourceLabel = useMemo(() => {
@@ -457,6 +452,32 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       if (pollTimer) clearInterval(pollTimer);
     };
   }, [type, storageDateStr, fetchBriefsPayload, canEdit]);
+
+  useEffect(() => {
+    if (!needsPartialIntelPoll) return undefined;
+    let cancelled = false;
+    let pollCount = 0;
+    const pollTimer = setInterval(() => {
+      if (cancelled) return;
+      pollCount += 1;
+      if (pollCount > BRIEF_PARTIAL_POLL_MAX) {
+        clearInterval(pollTimer);
+        return;
+      }
+      fetchBriefsPayload(true)
+        .then((nextPayload) => {
+          if (cancelled) return;
+          setIntelDeskMeta(nextPayload.deskMeta ?? null);
+          setBriefs(nextPayload.list);
+          setWeekendBriefsNote(nextPayload.weekendNote);
+        })
+        .catch(() => {});
+    }, BRIEF_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(pollTimer);
+    };
+  }, [needsPartialIntelPoll, fetchBriefsPayload]);
 
   const storedPreviewSrc = useMemo(() => {
     if (!previewId) return null;
