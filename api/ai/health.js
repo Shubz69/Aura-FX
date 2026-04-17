@@ -130,11 +130,13 @@ module.exports = async (req, res) => {
 
   const hasTwelveDataKey = String(process.env.TWELVE_DATA_API_KEY || '').trim().length > 0;
   const tdProbeStart = Date.now();
+  /** FX majors need slash form for /price (e.g. EUR/USD); equities e.g. AAPL work bare. */
+  const defaultTdHealthSym = 'EUR/USD';
   let twelveDataProbe = {
     ok: false,
     latencyMs: null,
     httpStatus: null,
-    symbol: String(process.env.TWELVE_DATA_HEALTH_SYMBOL || 'EURUSD').trim() || 'EURUSD',
+    symbol: String(process.env.TWELVE_DATA_HEALTH_SYMBOL || defaultTdHealthSym).trim() || defaultTdHealthSym,
     hint: null,
   };
   if (!hasTwelveDataKey) {
@@ -150,8 +152,19 @@ module.exports = async (req, res) => {
       );
       twelveDataProbe.latencyMs = Date.now() - tdProbeStart;
       twelveDataProbe.httpStatus = r.status || 0;
-      if (r.ok && r.data && (r.data.price != null || r.data.close != null)) {
+      const body = r.data && typeof r.data === 'object' ? r.data : null;
+      const tdApiError =
+        body &&
+        (body.status === 'error' ||
+          (body.code != null && Number(body.code) >= 400));
+      const priceOk =
+        body &&
+        !tdApiError &&
+        (body.price != null || body.close != null);
+      if (r.ok && priceOk) {
         twelveDataProbe.ok = true;
+      } else if (tdApiError && body.message) {
+        twelveDataProbe.hint = String(body.message).slice(0, 120);
       } else if (r.status === 429) {
         twelveDataProbe.hint = 'rate_limited';
       } else if (r.status === 402) {

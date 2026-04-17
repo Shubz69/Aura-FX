@@ -5065,3 +5065,26 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Header alert when daily structure is insufficient (engine still returns 200) */
+.md-ref-structure-alert {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 180, 90, 0.42);
+  background: rgba(45, 32, 12, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.md-ref-structure-alert strong {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 230, 200, 0.95);
+}
+.md-ref-structure-alert span {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: rgba(235, 220, 200, 0.88);
+}

@@ -1336,3 +1336,36 @@
 .ap-modal__btn:not(:disabled):hover {
   transform: translateY(-1px);
 }
+
+.admin-integration-health-banner {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border-radius: var(--ap-radius-md);
+  border: 1px solid var(--ap-border-gold);
+  background: rgba(234, 169, 96, 0.06);
+}
+
+.admin-integration-health-banner__link {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--ap-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.admin-integration-health-banner__link svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ap-gold-bright);
+}
+
+.admin-integration-health-banner__link strong {
+  color: var(--ap-text);
+  font-weight: 600;
+}
+
+.admin-integration-health-banner__link:hover {
+  color: rgba(232, 235, 255, 0.92);
+}

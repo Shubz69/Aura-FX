@@ -298,6 +298,11 @@
 }
 
 .nf-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 16px;
   text-align: center;
   padding: 60px 24px;
   color: #fca5a5;
@@ -306,6 +311,20 @@
   border-radius: var(--nf-radius-lg);
   margin: 24px;
   border: 1px solid rgba(240, 61, 95, 0.25);
+}
+
+.nf-retry-btn {
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(107, 143, 232, 0.45);
+  background: rgba(107, 143, 232, 0.18);
+  color: rgba(232, 235, 255, 0.95);
+  cursor: pointer;
+}
+.nf-retry-btn:hover {
+  background: rgba(107, 143, 232, 0.28);
 }
 
 .nf-empty {

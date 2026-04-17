@@ -36,6 +36,7 @@ const Navbar = () => {
   const { user, loading, logout } = useAuth();
   const { entitlements } = useEntitlements();
   const showSuperAdminLinks = !loading && user && isSuperAdmin(user);
+  const showAdminStaffLinks = !loading && user && isAdmin(user);
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -236,6 +237,15 @@ const Navbar = () => {
                       <Link to="/affiliation" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaLink className="dropdown-icon" /> Affiliation
                       </Link>
+                      {showAdminStaffLinks && (
+                        <Link
+                          to="/admin/integration-health"
+                          className="dropdown-item"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <FaHeartbeat className="dropdown-icon" /> Integration health
+                        </Link>
+                      )}
                       {showSuperAdminLinks && (
                         <>
                           <Link to="/admin" className="dropdown-item" onClick={() => setDropdownOpen(false)}>

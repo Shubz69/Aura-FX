@@ -3483,3 +3483,53 @@
   line-height: 1.4;
   color: rgba(185, 198, 240, 0.72);
 }
+
+/* Trader Desk — data quality / degraded intelligence banner */
+.td-mi-dq-banner {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(107, 143, 232, 0.28);
+  background: rgba(8, 10, 26, 0.65);
+}
+.td-mi-dq-banner--info {
+  border-color: rgba(107, 143, 232, 0.35);
+}
+.td-mi-dq-banner--warn {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(40, 28, 8, 0.35);
+}
+.td-mi-dq-banner__title {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(232, 235, 255, 0.92);
+  margin: 0 0 6px;
+}
+.td-mi-dq-banner__body {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: rgba(210, 216, 248, 0.88);
+}
+.td-mi-dq-banner__hint {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  font-family: ui-monospace, monospace;
+  color: rgba(180, 195, 235, 0.72);
+}
+
+/* Reload live desk row (Market Intelligence) */
+.td-mi-reload-live {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+.td-mi-reload-live-hint {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: rgba(210, 216, 248, 0.55);
+}

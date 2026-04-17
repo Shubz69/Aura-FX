@@ -1,3 +1,17 @@
+/**
+ * Trader Deck layout — route → primary data source (REST). All tabs below load via Api.*;
+ * they do not depend on WebSockets. Real-time sockets elsewhere (community chat, inbox,
+ * admin presence) must never gate these panels: if a socket is down, REST-backed Trader Deck
+ * content still renders when HTTP succeeds.
+ *
+ * Tab → API (fallback / notes):
+ * - Overview (glance): GET journal trades — empty KPIs if none; shows load error + retry on failure.
+ * - Market Intelligence / Dashboard: GET market intelligence (+ localStorage merge rules in dashboard).
+ * - MI / Signals, Decoder: same intelligence + decoder routes as nested views.
+ * - Economic Calendar: GET economic calendar — empty state when no rows / filters.
+ * - News: GET trader-deck news — polling; empty / error messages + retry where implemented.
+ * - Trade Journal: journal routes as in TraderDeckTradeJournal.
+ */
 import React, { useState } from 'react';
 import { FaArrowLeft } from 'react-icons/fa';
 import CosmicBackground from '../../components/CosmicBackground';

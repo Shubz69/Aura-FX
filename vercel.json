@@ -436,6 +436,10 @@
       "destination": "/api/admin/trader-desk-automation-status.js"
     },
     {
+      "source": "/api/admin/integration-health",
+      "destination": "/api/admin/integration-health.js"
+    },
+    {
       "source": "/api/users/friends",
       "destination": "/api/users/friends.js"
     },

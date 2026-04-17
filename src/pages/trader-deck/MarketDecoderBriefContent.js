@@ -269,7 +269,7 @@ export default function MarketDecoderBriefContent({ brief, q }) {
   return (
     <div className="md-ref-brief-layout">
       {dataSufficiencyWarn ? (
-        <div className="md-ref-data-sufficiency-banner" role="status">
+        <div className="md-ref-data-sufficiency-banner" role="alert">
           <strong>Insufficient daily history for full structure</strong>
           <p>
             Loaded {ds.dailyBarCount ?? 0} daily bar(s); need at least {ds.minBarsRequired ?? 5} to score MAs, pivots, and

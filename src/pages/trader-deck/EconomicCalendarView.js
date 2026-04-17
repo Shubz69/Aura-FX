@@ -258,11 +258,28 @@ export default function EconomicCalendarView() {
       )}
 
       {!loading && error && (
-        <div className="ec-error">{error}</div>
+        <div className="ec-error" role="alert">
+          <span>{error}</span>{' '}
+          <button type="button" className="ec-refresh-link" onClick={() => fetchCalendar(false, true)}>
+            Retry
+          </button>
+        </div>
       )}
 
       {!loading && !error && sortedDates.length === 0 && (
-        <div className="ec-empty">No events match your filters for the selected period.</div>
+        <div className="ec-empty">
+          {events.length === 0 ? (
+            <>
+              No economic events returned for this period. Try another range, or{' '}
+              <button type="button" className="ec-refresh-link" onClick={() => fetchCalendar(false, true)}>
+                refresh
+              </button>
+              .
+            </>
+          ) : (
+            'No events match your filters for the selected period.'
+          )}
+        </div>
       )}
 
       {!loading && !error && sortedDates.map((dateKey) => (

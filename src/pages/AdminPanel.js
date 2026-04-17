@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useWebSocket } from '../utils/useWebSocket';
 import ConfirmationModal from '../components/ConfirmationModal';
 import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import Api from '../services/Api';
 import AdminApi from '../services/AdminApi';
-import { FaSearch, FaUserShield } from 'react-icons/fa';
+import { FaHeartbeat, FaSearch, FaUserShield } from 'react-icons/fa';
 import '../styles/AdminPanel.css';
 import { isSuperAdmin as hasSuperAdminRole, isConfiguredSuperAdminEmail } from '../utils/roles';
 
@@ -1032,6 +1032,16 @@ const AdminPanel = () => {
             <span>Internal feed diagnostics (admin only — not shown to traders)</span>
           </div>
         )}
+      </div>
+
+      <div className="admin-integration-health-banner">
+        <Link to="/admin/integration-health" className="admin-integration-health-banner__link">
+          <FaHeartbeat aria-hidden />
+          <span>
+            <strong>External services health</strong>
+            {' — '}Third-party APIs (Stripe, Twilio, market data, AI, DB). Admin-only dashboard.
+          </span>
+        </Link>
       </div>
 
       {error && (

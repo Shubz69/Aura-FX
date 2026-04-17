@@ -128,7 +128,28 @@
   color: rgba(255,255,255,0.35);
   font-size: 0.85rem;
 }
-.ec-error { color: #fca5a5; }
+.ec-error {
+  color: #fca5a5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+}
+
+.ec-refresh-link {
+  font: inherit;
+  color: #8cafff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.ec-refresh-link:hover {
+  color: #b4c8ff;
+}
 
 .ec-day-section {
   margin-bottom: 24px;

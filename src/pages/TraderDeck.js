@@ -1,6 +1,7 @@
 /**
  * Trader Desk route (/trader-deck). UI structure/CSS imports are presentation-only;
  * data flow: state here + Api.* in MarketOutlookView / MarketIntelligenceBriefsView.
+ * Verification checklist: docs/trader-deck-verification.md
  */
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';

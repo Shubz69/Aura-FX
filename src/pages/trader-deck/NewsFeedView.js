@@ -2,7 +2,7 @@
  * Trader Desk — Market Headlines
  * Non-clickable headlines with animated pair-impact indicators.
  */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Api from '../../services/Api';
 import '../../styles/trader-deck/NewsFeedView.css';
 
@@ -93,30 +93,44 @@ export default function NewsFeedView() {
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
   const [windowDays, setWindowDays] = useState(1);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    let cancelled = false;
-    const load = (refresh) => {
-      if (!refresh) setLoading(true);
-      setError(null);
-      const now = new Date();
-      const to = now.toISOString().slice(0, 10);
-      const fromDate = new Date(now);
-      fromDate.setUTCDate(fromDate.getUTCDate() - Math.max(0, Number(windowDays) - 1));
-      const from = fromDate.toISOString().slice(0, 10);
-      Api.getTraderDeckNews({ refresh, from, to })
-        .then((r) => {
-          if (cancelled) return;
-          setArticles(Array.isArray(r.data?.articles) ? r.data.articles : []);
-          setUpdatedAt(r.data?.updatedAt || null);
-        })
-        .catch(() => { if (!cancelled) setError('Could not load headlines. Check back soon.'); })
-        .finally(() => { if (!cancelled && !refresh) setLoading(false); });
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
     };
-    load(false);
-    const iv = setInterval(() => load(true), 90 * 1000);
-    return () => { cancelled = true; clearInterval(iv); };
+  }, []);
+
+  const loadHeadlines = useCallback((refresh) => {
+    if (!refresh) setLoading(true);
+    setError(null);
+    const now = new Date();
+    const to = now.toISOString().slice(0, 10);
+    const fromDate = new Date(now);
+    fromDate.setUTCDate(fromDate.getUTCDate() - Math.max(0, Number(windowDays) - 1));
+    const from = fromDate.toISOString().slice(0, 10);
+    return Api.getTraderDeckNews({ refresh, from, to })
+      .then((r) => {
+        if (!mountedRef.current) return;
+        setArticles(Array.isArray(r.data?.articles) ? r.data.articles : []);
+        setUpdatedAt(r.data?.updatedAt || null);
+      })
+      .catch(() => {
+        if (!mountedRef.current) return;
+        setError('Could not load headlines. Check back soon.');
+      })
+      .finally(() => {
+        if (!mountedRef.current) return;
+        if (!refresh) setLoading(false);
+      });
   }, [windowDays]);
+
+  useEffect(() => {
+    loadHeadlines(false);
+    const iv = setInterval(() => loadHeadlines(true), 90 * 1000);
+    return () => clearInterval(iv);
+  }, [loadHeadlines]);
 
   const filtered = useMemo(() => {
     return articles.filter((a) => {
@@ -183,9 +197,27 @@ export default function NewsFeedView() {
           <span>Loading headlines…</span>
         </div>
       )}
-      {!loading && error && <div className="nf-error">{error}</div>}
+      {!loading && error && (
+        <div className="nf-error" role="alert">
+          <span>{error}</span>
+          <button type="button" className="nf-retry-btn" onClick={() => loadHeadlines(false)}>
+            Retry
+          </button>
+        </div>
+      )}
       {!loading && !error && filtered.length === 0 && (
-        <div className="nf-empty">No headlines match your filters.</div>
+        <div className="nf-empty">
+          {articles.length === 0 ? (
+            <>
+              No headlines returned for this window.{' '}
+              <button type="button" className="nf-retry-btn" onClick={() => loadHeadlines(false)}>
+                Retry
+              </button>
+            </>
+          ) : (
+            'No headlines match your filters.'
+          )}
+        </div>
       )}
 
       {!loading && !error && (

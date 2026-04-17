@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Api from '../../services/Api';
 import '../../styles/trader-deck/TraderDeckOverview.css';
@@ -78,11 +78,14 @@ export default function TraderDeckOverview() {
   const [trades, setTrades] = useState([]);
   const [pnlData, setPnlData] = useState({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [viewDate, setViewDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(null);
 
-  useEffect(() => {
-    Api.getJournalTrades()
+  const fetchTrades = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
+    return Api.getJournalTrades()
       .then((r) => {
         const raw = r.data?.trades ?? r.data?.data ?? [];
         const normalized = (Array.isArray(raw) ? raw : []).map((t) => ({
@@ -99,9 +102,15 @@ export default function TraderDeckOverview() {
         const totalPnL = normalized.reduce((s, tr) => s + (Number(tr.pnl) || 0), 0);
         setPnlData({ totalPnL });
       })
-      .catch(() => {})
+      .catch(() => {
+        setLoadError('Could not load journal trades. Your connection or the server may be unavailable.');
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchTrades();
+  }, [fetchTrades]);
 
   const kpis = useMemo(() => computeKpis(trades, pnlData), [trades, pnlData]);
   const equityCurve = useMemo(() => buildEquityCurve(trades), [trades]);
@@ -165,6 +174,19 @@ export default function TraderDeckOverview() {
     return (
       <div className="td-overview-page">
         <p className="td-overview-muted">Loading…</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="td-overview-page">
+        <div className="td-overview-error" role="alert">
+          <p>{loadError}</p>
+          <button type="button" className="td-overview-retry-btn" onClick={() => fetchTrades()}>
+            Retry
+          </button>
+        </div>
       </div>
     );
   }

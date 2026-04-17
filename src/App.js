@@ -66,6 +66,7 @@ const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 const AdminJournal = lazy(() => import('./pages/AdminJournal'));
 const PipelineHealthAdmin = lazy(() => import('./pages/PipelineHealthAdmin'));
+const AdminIntegrationsHealth = lazy(() => import('./pages/AdminIntegrationsHealth'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const VerifyMFA = lazy(() => import('./pages/VerifyMFA'));
 const Subscription = lazy(() => import('./pages/Subscription'));
@@ -423,6 +424,7 @@ function AppRoutes() {
                         <Route path="/admin/users" element={<AdminGuard><AdminUserList /></AdminGuard>} />
                         <Route path="/admin/journal" element={<AdminGuard><AdminJournal /></AdminGuard>} />
                         <Route path="/admin/pipeline-health" element={<AdminGuard><PipelineHealthAdmin /></AdminGuard>} />
+                        <Route path="/admin/integration-health" element={<AdminGuard><AdminIntegrationsHealth /></AdminGuard>} />
                         <Route path="/admin/tools" element={<AdminGuard><AdminPanel /></AdminGuard>} />
                         <Route path="/settings" element={<AdminGuard><Settings /></AdminGuard>} />
                         <Route path="*" element={<NotFound />} />

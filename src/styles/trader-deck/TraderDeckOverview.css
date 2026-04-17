@@ -15,6 +15,33 @@
   margin: 0;
 }
 
+.td-overview-error {
+  background: rgba(40, 28, 12, 0.45);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 12px;
+  padding: 18px 20px;
+  max-width: 520px;
+}
+.td-overview-error p {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: rgba(255, 245, 230, 0.92);
+}
+.td-overview-retry-btn {
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(107, 143, 232, 0.45);
+  background: rgba(107, 143, 232, 0.18);
+  color: rgba(232, 235, 255, 0.95);
+  cursor: pointer;
+}
+.td-overview-retry-btn:hover {
+  background: rgba(107, 143, 232, 0.28);
+}
+
 .td-overview-glance-title {
   font-size: 0.8rem;
   font-weight: 500;
