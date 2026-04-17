@@ -192,6 +192,8 @@ describe('Access Control', () => {
   test('allows super admin by email', () => {
     expect(checkAccess({ email: 'slutherfx@gmail.com' })).toBe(true);
     expect(checkAccess({ email: 'SLUTHERFX@GMAIL.COM' })).toBe(true);
+    expect(checkAccess({ email: 'auraterminal2002@gmail.com' })).toBe(true);
+    expect(checkAccess({ email: 'AURATERMINAL2002@GMAIL.COM' })).toBe(true);
   });
 
   test('allows premium roles', () => {

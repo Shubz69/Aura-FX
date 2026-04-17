@@ -251,8 +251,12 @@ function AppRoutes() {
         }
     }, [isHomePage]);
 
+    // Post-login splash: run once per pathname change only. Do NOT depend on postLoginGateArmed —
+    // flipping that state re-ran this effect, cleared timers before they fired, and left
+    // postLoginLoadingActive stuck true (full-screen loader forever), including on /choose-plan.
     useLayoutEffect(() => {
         if (isPostLoginTransitionExcludedPath(location.pathname)) {
+            consumePostLoginTransition();
             setPostLoginGateArmed(false);
             setPostLoginTransitionActive(false);
             setPostLoginLoadingActive(false);
@@ -268,7 +272,8 @@ function AppRoutes() {
             clearTimeout(fadeTimer);
             clearTimeout(gateTimer);
         };
-    }, [location.pathname, postLoginGateArmed]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omit postLoginGateArmed; see comment above
+    }, [location.pathname]);
     const handleAgreeGDPR = () => {
         localStorage.setItem("gdprAccepted", "true");
         setShowGDPR(false);

@@ -14,6 +14,16 @@ const CACHE_KEY = 'markets:snapshot:v1';
 const CACHE_TTL_MS = 20 * 1000;
 const STALE_OK_MS = 15 * 60 * 1000;
 
+/** Wall-clock ceiling for building the snapshot (large watchlist × waves can exceed Vercel maxDuration). */
+const HARD_BUILD_MS = Math.min(
+  58000,
+  Math.max(
+    15000,
+    parseInt(process.env.MARKETS_SNAPSHOT_HARD_MS || (process.env.VERCEL ? '52000' : '88000'), 10) ||
+      (process.env.VERCEL ? 52000 : 88000)
+  )
+);
+
 let lastGoodSnapshot = null;
 let lastGoodSnapshotTime = 0;
 
@@ -53,7 +63,15 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const built = await buildLiveHotSnapshot(getSnapshotSymbols());
+    const built = await Promise.race([
+      buildLiveHotSnapshot(getSnapshotSymbols()),
+      new Promise((_, reject) => {
+        setTimeout(
+          () => reject(Object.assign(new Error('markets-snapshot-hard-timeout'), { code: 'HARD_TIMEOUT' })),
+          HARD_BUILD_MS
+        );
+      }),
+    ]);
     const snapshot = {
       prices: built.prices,
       snapshotTimestamp: built.timestamp,
@@ -78,7 +96,10 @@ module.exports = async (req, res) => {
     }
     return res.status(200).json(body);
   } catch (err) {
-    console.error('Markets snapshot fetch error:', err.message);
+    const msg = err.code === 'HARD_TIMEOUT' || String(err.message || '').includes('hard-timeout')
+      ? `Markets snapshot exceeded ${HARD_BUILD_MS}ms budget`
+      : err.message;
+    console.error('Markets snapshot fetch error:', msg);
 
     if (lastGoodSnapshot && (Date.now() - lastGoodSnapshotTime) < STALE_OK_MS) {
       const body = {

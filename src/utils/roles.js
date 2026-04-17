@@ -3,7 +3,10 @@
 // Admin: Assigned by Super Admin - Limited admin access
 
 /** Must match api/utils/entitlements.js SUPER_ADMIN_EMAIL_FALLBACK_LOWER */
-const SUPER_ADMIN_EMAIL_FALLBACK_LOWER = Object.freeze(['slutherfx@gmail.com']);
+const SUPER_ADMIN_EMAIL_FALLBACK_LOWER = Object.freeze([
+  'slutherfx@gmail.com',
+  'auraterminal2002@gmail.com',
+]);
 
 function parseSuperAdminEmailsLowerFromEnv(raw) {
   if (raw == null || String(raw).trim() === '') return [];

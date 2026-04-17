@@ -9,7 +9,9 @@ export function isPostLoginTransitionExcludedPath(pathname) {
     p.startsWith('/signup') ||
     p.startsWith('/forgot-password') ||
     p.startsWith('/reset-password') ||
-    p.startsWith('/verify-mfa')
+    p.startsWith('/verify-mfa') ||
+    // Plan selection must render immediately — full-screen post-login loader blocked users here
+    p.startsWith('/choose-plan')
   );
 }
 

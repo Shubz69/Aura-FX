@@ -30,20 +30,20 @@ const IS_VERCEL = Boolean(process.env.VERCEL);
 const DEFAULT_CONCURRENCY = Math.max(
   1,
   Math.min(
-    32,
-    parseInt(process.env.LIVE_HOT_SNAPSHOT_CONCURRENCY || (IS_VERCEL ? '22' : '12'), 10) ||
-      (IS_VERCEL ? 22 : 12)
+    40,
+    parseInt(process.env.LIVE_HOT_SNAPSHOT_CONCURRENCY || (IS_VERCEL ? '34' : '12'), 10) ||
+      (IS_VERCEL ? 34 : 12)
   )
 );
 
 /**
  * One cap for quote DTO + full fetchPrice chain (was two sequential timeouts up to ~20s/symbol — enough to exceed Vercel's 60s with a large watchlist).
- * Override with LIVE_HOT_SYMBOL_BUDGET_MS.
+ * Override with LIVE_HOT_SYMBOL_BUDGET_MS. On Vercel, ~300+ symbols × concurrent waves must stay below maxDuration.
  */
 const SYMBOL_BUDGET_MS = Math.max(
-  2500,
-  parseInt(process.env.LIVE_HOT_SYMBOL_BUDGET_MS || (IS_VERCEL ? '4800' : '14000'), 10) ||
-    (IS_VERCEL ? 4800 : 14000)
+  2200,
+  parseInt(process.env.LIVE_HOT_SYMBOL_BUDGET_MS || (IS_VERCEL ? '3200' : '14000'), 10) ||
+    (IS_VERCEL ? 3200 : 14000)
 );
 
 function snapshotFeatureFor(canonical) {

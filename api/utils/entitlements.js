@@ -31,7 +31,10 @@ const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', '
  * Keeps access if env is misconfigured on a host; add more via env for other operators.
  * Client: keep in sync with src/utils/roles.js SUPER_ADMIN_EMAIL_FALLBACK_LOWER.
  */
-const SUPER_ADMIN_EMAIL_FALLBACK_LOWER = Object.freeze(['slutherfx@gmail.com']);
+const SUPER_ADMIN_EMAIL_FALLBACK_LOWER = Object.freeze([
+  'slutherfx@gmail.com',
+  'auraterminal2002@gmail.com',
+]);
 
 /**
  * Super-admin emails: SUPER_ADMIN_EMAIL env (comma/semicolon) merged with fallback list.
