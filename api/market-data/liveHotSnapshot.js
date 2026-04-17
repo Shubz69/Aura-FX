@@ -4,7 +4,8 @@
  *
  * - Per-symbol: fetchQuoteDto (shared quote cache with Market Decoder / prices) → legacy row
  * - Miss / invalid: fetchPrice full chain (Stooq-seeded for FX batch) → static fallback
- * - Bounded concurrency (LIVE_HOT_SNAPSHOT_CONCURRENCY, default 12)
+ * - Bounded concurrency (LIVE_HOT_SNAPSHOT_CONCURRENCY; default 22 on Vercel, 12 elsewhere)
+ * - Single per-symbol wall clock budget (LIVE_HOT_SYMBOL_BUDGET_MS; default 4.8s on Vercel) so dto + fallback chain cannot stack past ~60s total.
  */
 
 'use strict';
@@ -24,13 +25,25 @@ const {
 } = require('../ai/utils/symbol-registry');
 const tdMetrics = require('./tdMetrics');
 
+const IS_VERCEL = Boolean(process.env.VERCEL);
+
 const DEFAULT_CONCURRENCY = Math.max(
   1,
-  Math.min(32, parseInt(process.env.LIVE_HOT_SNAPSHOT_CONCURRENCY || '12', 10) || 12)
+  Math.min(
+    32,
+    parseInt(process.env.LIVE_HOT_SNAPSHOT_CONCURRENCY || (IS_VERCEL ? '22' : '12'), 10) ||
+      (IS_VERCEL ? 22 : 12)
+  )
 );
-const SYMBOL_TIMEOUT_MS = Math.max(
-  4000,
-  parseInt(process.env.LIVE_HOT_SYMBOL_TIMEOUT_MS || '9000', 10) || 9000
+
+/**
+ * One cap for quote DTO + full fetchPrice chain (was two sequential timeouts up to ~20s/symbol — enough to exceed Vercel's 60s with a large watchlist).
+ * Override with LIVE_HOT_SYMBOL_BUDGET_MS.
+ */
+const SYMBOL_BUDGET_MS = Math.max(
+  2500,
+  parseInt(process.env.LIVE_HOT_SYMBOL_BUDGET_MS || (IS_VERCEL ? '4800' : '14000'), 10) ||
+    (IS_VERCEL ? 4800 : 14000)
 );
 
 function snapshotFeatureFor(canonical) {
@@ -63,10 +76,12 @@ function isUsablePriceRow(row) {
 }
 
 async function withTimeout(promise, ms, fallbackValue) {
+  const resolveFallback =
+    typeof fallbackValue === 'function' ? fallbackValue : () => fallbackValue;
   return Promise.race([
     promise,
     new Promise((resolve) => {
-      setTimeout(() => resolve(fallbackValue), ms);
+      setTimeout(() => resolve(resolveFallback()), ms);
     }),
   ]);
 }
@@ -118,38 +133,51 @@ async function buildLiveHotSnapshot(symbols, opts = {}) {
     else if (primed === false) quotePrimedMiss += 1;
 
     const feat = snapshotFeatureFor(canonical);
-    const dto = await withTimeout(
-      fetchQuoteDto(canonical, { feature: feat }),
-      SYMBOL_TIMEOUT_MS,
-      null
+
+    const budgetFallback = () => {
+      const row = pricesMod.getFallbackPrice(symbol);
+      if (isUsablePriceRow(row)) {
+        return { canonical, symbol, row, resolvedPath: 'budget-timeout-fallback', quoteLayerPrimed: primed };
+      }
+      return { canonical, symbol, row: null, resolvedPath: 'budget-timeout-missing', quoteLayerPrimed: primed };
+    };
+
+    return withTimeout(
+      (async () => {
+        const dto = await fetchQuoteDto(canonical, { feature: feat });
+        let row = dto ? pricesMod.legacyPriceRowFromQuoteDto(canonical, dto) : null;
+        let resolvedPath = 'twelvedata-dto';
+
+        if (!isUsablePriceRow(row)) {
+          resolvedPath = 'full-chain';
+          row = await pricesMod.fetchPrice(symbol, { stooqBySymbol });
+        }
+
+        if (!isUsablePriceRow(row)) {
+          resolvedPath = 'static-fallback';
+          row = pricesMod.getFallbackPrice(symbol);
+        }
+
+        if (!isUsablePriceRow(row)) {
+          return { canonical, symbol, row: null, resolvedPath: 'missing', quoteLayerPrimed: primed };
+        }
+
+        return { canonical, symbol, row, resolvedPath, quoteLayerPrimed: primed };
+      })(),
+      SYMBOL_BUDGET_MS,
+      budgetFallback
     );
-
-    let row = dto ? pricesMod.legacyPriceRowFromQuoteDto(canonical, dto) : null;
-    let resolvedPath = 'twelvedata-dto';
-
-    if (!isUsablePriceRow(row)) {
-      resolvedPath = 'full-chain';
-      row = await withTimeout(
-        pricesMod.fetchPrice(symbol, { stooqBySymbol }),
-        SYMBOL_TIMEOUT_MS + 2000,
-        null
-      );
-    }
-
-    if (!isUsablePriceRow(row)) {
-      resolvedPath = 'static-fallback';
-      row = pricesMod.getFallbackPrice(symbol);
-    }
-
-    if (!isUsablePriceRow(row)) {
-      return { canonical, symbol, row: null, resolvedPath: 'missing', quoteLayerPrimed: primed };
-    }
-
-    return { canonical, symbol, row, resolvedPath, quoteLayerPrimed: primed };
   });
 
   const prices = {};
-  const pathCounts = { 'twelvedata-dto': 0, 'full-chain': 0, 'static-fallback': 0, missing: 0 };
+  const pathCounts = {
+    'twelvedata-dto': 0,
+    'full-chain': 0,
+    'static-fallback': 0,
+    missing: 0,
+    'budget-timeout-fallback': 0,
+    'budget-timeout-missing': 0,
+  };
   for (const entry of perSymbol) {
     pathCounts[entry.resolvedPath] = (pathCounts[entry.resolvedPath] || 0) + 1;
     if (entry.row) prices[entry.canonical] = entry.row;
@@ -161,7 +189,8 @@ async function buildLiveHotSnapshot(symbols, opts = {}) {
     symbolCount: uniq.length,
     durationMs,
     concurrency,
-    symbolTimeoutMs: SYMBOL_TIMEOUT_MS,
+    symbolBudgetMs: SYMBOL_BUDGET_MS,
+    vercelConcurrencyDefault: IS_VERCEL,
     paths: pathCounts,
     quoteLayerPeek: {
       fxCryptoSymbols: quotePrimedHit + quotePrimedMiss,
