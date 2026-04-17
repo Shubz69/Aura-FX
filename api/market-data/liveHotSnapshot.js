@@ -10,6 +10,8 @@
 
 'use strict';
 
+require('../utils/suppress-warnings');
+
 const { peekCached } = require('../cache');
 const { fetchQuoteDto, isFxLayerSymbol, isCryptoLayerSymbol } = require('./marketDataLayer');
 const { quoteKey, QUOTE_TTL_MS, FX_QUOTE_TTL_MS } = require('./cachePolicy');

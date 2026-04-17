@@ -282,6 +282,8 @@ async function fetchFromYahoo(symbolConfig) {
       }
     };
   } catch (error) {
+    const status = error.response && error.response.status;
+    if (status === 404) return null;
     if (error.name !== 'AbortError') {
       console.log(`Yahoo fetch error for ${symbolConfig.instrument}: ${error.message}`);
     }

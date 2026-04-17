@@ -1,6 +1,11 @@
 /**
  * Shared MySQL pool for all serverless routes.
  *
+ * Env (optional):
+ * - MYSQL_CONNECT_TIMEOUT_MS — DB TCP connect timeout (default 20000). Raise if logs show ETIMEDOUT.
+ * - DB_POOL_LOG=1 — log when the pool is created (default off to reduce Vercel noise).
+ * - MYSQL_POOL_SIZE / MYSQL_QUEUE_LIMIT — see inline defaults (Vercel forces pool size 1).
+ *
  * Scaling: On Vercel, connectionLimit is 1 per warm instance; total DB sessions ≈ concurrent warm
  * functions. For many simultaneous users, use a managed pooler (e.g. PlanetScale, AWS RDS Proxy,
  * DigitalOcean pooled mode, or ProxySQL) and set MYSQL_HOST / MYSQL_PORT to the pooler endpoint.
@@ -118,6 +123,11 @@ const getDbPool = () => {
     queueLimit = Math.min(Math.max(queueLimit, 24), 200);
   }
 
+  const connectTimeout = Math.min(
+    60000,
+    Math.max(5000, parseInt(process.env.MYSQL_CONNECT_TIMEOUT_MS || '20000', 10) || 20000)
+  );
+
   pool = mysql.createPool({
     host: process.env.MYSQL_HOST,
     user: process.env.MYSQL_USER,
@@ -127,7 +137,7 @@ const getDbPool = () => {
     waitForConnections: true,
     connectionLimit,
     queueLimit,
-    connectTimeout: 10000,
+    connectTimeout,
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
     ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : false,
@@ -139,7 +149,9 @@ const getDbPool = () => {
   });
 
   poolStats.created = new Date().toISOString();
-  console.log('Database connection pool created');
+  if (process.env.DB_POOL_LOG === '1') {
+    console.log('[db] connection pool created', { connectionLimit, queueLimit, connectTimeoutMs: connectTimeout });
+  }
   return pool;
 };
 
@@ -240,7 +252,12 @@ const executeQuery = async (query, params = [], options = {}) => {
         code: error.code,
         errno: error.errno
       };
-      console.error('Database query error:', JSON.stringify(errorInfo));
+      const line = `Database query error: ${JSON.stringify(errorInfo)}`;
+      if (error.code === 'ETIMEDOUT' || String(error.message || '').includes('ETIMEDOUT')) {
+        console.warn(line);
+      } else {
+        console.error(line);
+      }
     }
 
     if (isTooManyConnectionsError(error)) {

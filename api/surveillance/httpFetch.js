@@ -1,5 +1,19 @@
-const DEFAULT_UA =
-  'AuraTerminal-SurveillanceIngest/1.0 (public official pages only; respectful rate limits)';
+/**
+ * SEC EDGAR / www.sec.gov require a descriptive User-Agent (company + contact).
+ * Datacenter IPs may still get 403 without a compliant UA; override with SURVEILLANCE_FETCH_UA.
+ */
+function defaultSurveillanceUserAgent() {
+  if (process.env.SURVEILLANCE_FETCH_UA) return process.env.SURVEILLANCE_FETCH_UA;
+  const site =
+    process.env.PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'https://www.auraterminal.ai';
+  const contact =
+    process.env.SUPPORT_CONTACT_EMAIL ||
+    process.env.SEC_CONTACT_EMAIL ||
+    'support@auraterminal.ai';
+  return `AuraTerminal/1.0 (+${site}; mailto:${contact}) compatible; surveillance-ingest/1.0`;
+}
 
 const DEFAULT_CACHE_MAX = 220;
 const DEFAULT_CACHE_TTL_MS = 90000;
@@ -66,8 +80,9 @@ async function fetchWithRetry(url, opts = {}) {
         redirect: 'follow',
         signal: controller.signal,
         headers: {
-          'User-Agent': process.env.SURVEILLANCE_FETCH_UA || DEFAULT_UA,
+          'User-Agent': defaultSurveillanceUserAgent(),
           Accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
           ...headers,
         },
       });

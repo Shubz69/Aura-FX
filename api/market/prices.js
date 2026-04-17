@@ -848,7 +848,9 @@ async function fetchYahooPrice(symbol) {
     }
     return null;
   } catch (e) {
-    // Don't log timeout errors as they're expected
+    const status = e.response && e.response.status;
+    // No chart data (delisted, wrong venue, transient) — avoid noise in logs
+    if (status === 404) return null;
     if (e.name !== 'AbortError') {
       console.log(`Yahoo fetch error for ${symbol}: ${e.message}`);
     }

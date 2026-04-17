@@ -1,3 +1,5 @@
+require('../utils/suppress-warnings');
+
 /**
  * GET /api/markets/snapshot
  * Single server-side source of truth for market prices. All users see the same snapshot.

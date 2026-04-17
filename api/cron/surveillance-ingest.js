@@ -1,3 +1,4 @@
+require('../utils/suppress-warnings');
 const { runSurveillanceIngestion } = require('../surveillance/ingestOrchestrator');
 
 function isAuthorized(req) {
