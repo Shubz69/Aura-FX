@@ -1049,8 +1049,8 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                   ) : null}
 
                   {outlookMicroRows.length > 0 ? (
-                    <section className="td-outlook-concept-card td-outlook-concept-card--aux mo-card-shell mo-card-shell--dense" aria-label="Cross-links and headline overflow">
-                      <h2 className="td-outlook-concept-card__title">More desk lines</h2>
+                    <section className="td-outlook-concept-card td-outlook-concept-card--aux mo-card-shell mo-card-shell--dense" aria-label="Desk context">
+                      <h2 className="td-outlook-concept-card__title">Desk Context</h2>
                       <div className="td-outlook-concept-card__body td-outlook-concept-card__body--aux">
                         <ul className="mo-outlook-micro-rows">
                           {outlookMicroRows.map((line, i) => (

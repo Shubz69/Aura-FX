@@ -276,7 +276,7 @@ export function regimeSessionFallbackPairs(regime) {
 }
 
 /**
- * Fills the right-rail “More desk lines” list up to `maxRows` using only desk fields.
+ * Fills the right-rail “Desk Context” list up to `maxRows` using only desk fields.
  */
 export function buildOutlookSecondaryMicroRowsDense(showing, { maxRows = 22 } = {}) {
   const rows = [];

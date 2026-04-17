@@ -2406,12 +2406,12 @@
   font-weight: 650;
 }
 
-/* Market Outlook — terminal layout: 2fr / 1fr, align start, no equal-height stretch */
+/* Market Outlook — terminal layout: equal-height columns (2fr / 1fr), continuous surface */
 .td-outlook-concept-grid.td-outlook-concept-grid--terminal {
   display: grid;
   grid-template-columns: 1fr;
   gap: 6px;
-  align-items: start;
+  align-items: stretch;
   min-width: 0;
   box-sizing: border-box;
   padding: 6px 8px;
@@ -2419,7 +2419,7 @@
 
 @media (min-width: 960px) {
   .td-outlook-concept-grid.td-outlook-concept-grid--terminal {
-    grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr);
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
     gap: 8px;
     align-items: stretch;
   }
@@ -2434,12 +2434,31 @@
   min-width: 0;
 }
 
+.td-outlook-concept-col--primary {
+  justify-content: flex-start;
+}
+
 .td-outlook-concept-col--secondary {
   height: auto;
   align-self: stretch;
 }
 
 @media (min-width: 960px) {
+  .td-outlook-concept-col--primary,
+  .td-outlook-concept-col--secondary {
+    min-height: 100%;
+  }
+  /* Grow the bottom card so the primary column fills the grid row (no dead gap vs right rail). */
+  .td-deck-mo-outlook--concept .td-outlook-concept-col--primary > *:last-child {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .td-deck-mo-outlook--concept .td-outlook-concept-col--primary > *:last-child.mo-card-shell .td-outlook-concept-card__body {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
   .td-outlook-concept-col--secondary {
     min-height: 100%;
   }
@@ -2455,7 +2474,8 @@
   }
 }
 
-.td-deck-mo-outlook--concept .td-outlook-concept-col--primary > *:not(.td-outlook-concept-card--headlines),
+/* Primary: allow last card to flex-grow (column height sync); secondary: headlines uses its own flex rule. */
+.td-deck-mo-outlook--concept .td-outlook-concept-col--primary > *:not(.td-outlook-concept-card--headlines):not(:last-child),
 .td-deck-mo-outlook--concept .td-outlook-concept-col--secondary > *:not(.td-outlook-concept-card--headlines) {
   flex: 0 0 auto;
   height: auto;
@@ -2466,7 +2486,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
   min-width: 0;
 }
 
