@@ -1,19 +1,16 @@
 /**
  * Market Intelligence briefs for Trader Deck – date-scoped Daily or Weekly.
- * Preview in a fullscreen body portal (no new tab / no direct download flow). Admin: upload, delete.
+ * Preview in a fullscreen body portal (no new tab / no direct download flow). Admin: delete only (uploads via admin tools/API).
  */
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import Api from '../../services/Api';
 import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
-import { FaEye, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
+import { FaEye, FaTrash, FaTimes } from 'react-icons/fa';
 import CosmicBackground from '../../components/CosmicBackground';
 import { getTraderDeckIntelStorageYmd, formatLondonWeekRangeFromWeekEndingSundayYmd } from '../../lib/trader-deck/deskDates';
 import { stripModelInternalExposition } from '../../utils/sanitizeAiDeskOutput.mjs';
-
-/** Client cap (DB LONGBLOB); large files use chunked uploads to avoid HTTP 413 on Vercel. */
-const MAX_UPLOAD_BYTES = 48 * 1024 * 1024;
 
 function googleViewerEmbedUrl(fileUrl) {
   const u = (fileUrl || '').trim();
@@ -177,7 +174,7 @@ function emptyDeskMessagesFor(canEdit, phase) {
   const adminFirst =
     'A background refresh was requested once for this browser session. If packs stay empty, confirm scheduled desk automation is enabled on the server and review Admin → integration health.';
   const adminRepeat =
-    'Still empty: the scheduled job may not have finished, integrations may be offline, or generation failed — check deployment logs and Admin → integration health. You can upload a manual brief below.';
+    'Still empty: the scheduled job may not have finished, integrations may be offline, or generation failed — check deployment logs and Admin → integration health.';
 
   const userText = phase === 'first' ? userFirst : userRepeat;
   if (!canEdit) return { userText };
@@ -217,7 +214,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [briefs, setBriefs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [addSuccess, setAddSuccess] = useState(null);
   const [previewId, setPreviewId] = useState(null);
   const [previewEmbedUrl, setPreviewEmbedUrl] = useState(null);
   const [previewBriefMeta, setPreviewBriefMeta] = useState(null);
@@ -225,9 +221,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [textPreviewLoading, setTextPreviewLoading] = useState(false);
   /** Character count while “typing” markdown source; full length ⇒ show rendered brief. */
   const [typewriterIndex, setTypewriterIndex] = useState(0);
-  const [uploading, setUploading] = useState(false);
-  const [uploadTitle, setUploadTitle] = useState('');
-  const [uploadUrl, setUploadUrl] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterMenuPos, setFilterMenuPos] = useState(null);
   const [selectedKinds, setSelectedKinds] = useState(() => new Set(BRIEF_KIND_ORDER));
@@ -235,7 +228,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [weekendBriefsNote, setWeekendBriefsNote] = useState(null);
   /** When the desk date has zero stored briefs: safe user copy + optional admin-only hint */
   const [emptyDeskMessages, setEmptyDeskMessages] = useState(null);
-  const fileInputRef = useRef(null);
   const typewriterScrollRef = useRef(null);
   const filterWrapRef = useRef(null);
   const filterButtonRef = useRef(null);
@@ -382,7 +374,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     let pollCount = 0;
     setLoading(true);
     setError(null);
-    setAddSuccess(null);
     setSelectedKinds(new Set(BRIEF_KIND_ORDER));
     setWeekendBriefsNote(null);
     setEmptyDeskMessages(null);
@@ -578,65 +569,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     setPreviewId(brief.id);
   };
 
-  const handleUploadClick = () => fileInputRef.current?.click();
-
-  const handleAddByUrl = () => {
-    const url = (uploadUrl || '').trim();
-    const title = (uploadTitle || 'Brief').trim() || 'Brief';
-    if (!url) return;
-    setUploading(true);
-    setError(null);
-    setAddSuccess(null);
-    Api.uploadTraderDeckBrief({ date: storageDateStr, period, title, fileUrl: url })
-      .then(() => {
-        setUploadTitle('');
-        setUploadUrl('');
-        setAddSuccess(`Saved for ${storageDateStr}. Open this date on the calendar to see it.`);
-        setTimeout(() => setAddSuccess(null), 4000);
-        return Api.getTraderDeckContent(type, storageDateStr);
-      })
-      .then((res) => {
-        const p = briefsPayloadFromContentResponse(res, storageDateStr);
-        setBriefs(p.list);
-        setWeekendBriefsNote(p.weekendNote);
-      })
-      .catch((err) => setError(err.response?.data?.message || err.message || 'Failed to add link'))
-      .finally(() => setUploading(false));
-  };
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    if (file.size > MAX_UPLOAD_BYTES) {
-      setError(`File is too large (max ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))}MB). Use “Add link” or a smaller PDF.`);
-      return;
-    }
-    const title = uploadTitle.trim() || file.name.replace(/\.[^/.]+$/, '') || 'Brief';
-    setUploading(true);
-    setError(null);
-    setAddSuccess(null);
-    try {
-      await Api.uploadTraderDeckBriefFile(file, { date: storageDateStr, period, title });
-      setUploadTitle('');
-      setAddSuccess(`Saved for ${storageDateStr}. Use the calendar to pick that day anytime.`);
-      setTimeout(() => setAddSuccess(null), 4000);
-      const res = await Api.getTraderDeckContent(type, storageDateStr);
-      const p = briefsPayloadFromContentResponse(res, storageDateStr);
-      setBriefs(p.list);
-      setWeekendBriefsNote(p.weekendNote);
-    } catch (err) {
-      const st = err.response?.status;
-      setError(
-        st === 413
-          ? 'Request was too large for the server. Try again — large files upload in chunks automatically; if this persists, use “Add link” instead.'
-          : err.response?.data?.message || err.message || 'Upload failed'
-      );
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleDelete = (id) => {
     if (!window.confirm('Remove this brief?')) return;
     Api.deleteTraderDeckBrief(id)
@@ -686,7 +618,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           </button>
         </p>
       )}
-      {addSuccess && <p className="td-mi-save-success" role="status">{addSuccess}</p>}
       <div className="td-deck-mi-modern">
         <header className="td-deck-mi-modern-hero">
           <div className="td-deck-mi-modern-hero-copy">
@@ -717,56 +648,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         </header>
 
         <div className="td-deck-mi-modern-grid">
-          {canEdit && (
-            <section className="td-deck-mi-tile td-deck-mi-tile--upload" aria-labelledby="intel-upload-heading">
-              <h2 id="intel-upload-heading" className="td-deck-mi-tile-title">Add brief</h2>
-              <p className="td-deck-mi-tile-hint">Assigns to <strong>{storageDateStr}</strong> — change the desk calendar date before upload if needed.</p>
-              <div className="td-deck-mi-upload-stack">
-                <input
-                  type="text"
-                  className="td-mi-edit-input td-deck-mi-input-full"
-                  placeholder="Brief title"
-                  value={uploadTitle}
-                  onChange={(e) => setUploadTitle(e.target.value)}
-                />
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pptx,.ppt,.pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf"
-                  onChange={handleFileChange}
-                  style={{ display: 'none' }}
-                />
-                <div className="td-deck-mi-upload-actions">
-                  <button
-                    type="button"
-                    className="td-mi-btn td-mi-btn-edit"
-                    onClick={handleUploadClick}
-                    disabled={uploading}
-                  >
-                    <FaPlus aria-hidden /> {uploading ? 'Uploading…' : 'Upload file'}
-                  </button>
-                </div>
-                <div className="td-deck-mi-url-row">
-                  <input
-                    type="url"
-                    className="td-mi-edit-input td-deck-mi-input-grow"
-                    placeholder="Or paste a public https link to the document"
-                    value={uploadUrl}
-                    onChange={(e) => setUploadUrl(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="td-mi-btn td-mi-btn-small"
-                    onClick={handleAddByUrl}
-                    disabled={uploading || !uploadUrl.trim()}
-                  >
-                    Add link
-                  </button>
-                </div>
-              </div>
-            </section>
-          )}
-
           <section className="td-deck-mi-tile td-deck-mi-tile--list" aria-labelledby="intel-list-heading">
             <div className="td-deck-mi-tile-head">
               <h2 id="intel-list-heading" className="td-deck-mi-tile-title">Briefs</h2>
@@ -800,16 +681,14 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                       ) : null}{' '}
                       <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
                         Retry fetch
-                      </button>{' '}
-                      {canEdit && 'You can also upload a file or link for this date.'}
+                      </button>
                     </>
                   ) : (
                     <>
                       No briefs for this date.{' '}
                       <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
                         Retry fetch
-                      </button>{' '}
-                      {canEdit && 'Pick the date above, then add a file or link.'}
+                      </button>
                     </>
                   )}
                 </li>

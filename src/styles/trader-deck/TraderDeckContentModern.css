@@ -2143,6 +2143,11 @@
   min-width: 0;
 }
 
+/* Briefs-only layout (upload panel removed): span full grid on 2-column breakpoints */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid > .td-deck-mi-tile--list:only-child {
+  grid-column: 1 / -1;
+}
+
 /* sm 480–599px: 2-col tiles */
 @media (min-width: 480px) and (max-width: 599px) {
   .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-grid {
