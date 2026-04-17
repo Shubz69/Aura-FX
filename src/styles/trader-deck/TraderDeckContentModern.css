@@ -2348,6 +2348,25 @@
   width: 100%;
 }
 
+.td-deck-with-tabs.td-layout-page .td-deck-mi-empty-user {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-empty-admin {
+  display: block;
+  margin: 0 auto 12px;
+  max-width: 52ch;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  text-align: center;
+  color: rgba(180, 176, 210, 0.72);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 
 /* ─────────────────────────────────────────────────────────────────────────────
    AURA JOURNAL GLASS OVERRIDES (journal-page context)

@@ -201,6 +201,7 @@ const BRIEF_KIND_ORDER_SQL =
   "WHEN 'commodities' THEN 7 " +
   "WHEN 'bonds' THEN 8 " +
   "WHEN 'etfs' THEN 9 " +
+  "WHEN 'general' THEN 10 " +
   "ELSE 99 END";
 
 async function requireAdmin(req) {
@@ -327,7 +328,6 @@ module.exports = async (req, res) => {
                   COALESCE(brief_version, 1) AS brief_version
            FROM trader_deck_briefs
            WHERE date = ? AND period = ?
-             AND COALESCE(LOWER(brief_kind), '') <> 'general'
            ORDER BY ${BRIEF_KIND_ORDER_SQL}, brief_version DESC, created_at DESC`,
           [day, period]
         );

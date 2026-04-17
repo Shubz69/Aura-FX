@@ -53,6 +53,8 @@ const BRIEF_KIND_ORDER = [
   'commodities',
   'bonds',
   'etfs',
+  /** Legacy/default DB rows (`brief_kind` default) — must match API list; was excluded server-side until fixed */
+  'general',
 ];
 const BRIEF_KIND_LABEL = {
   aura_institutional_daily: 'Institutional Daily',
@@ -65,6 +67,7 @@ const BRIEF_KIND_LABEL = {
   commodities: 'Commodities',
   bonds: 'Bonds',
   etfs: 'ETFs',
+  general: 'Desk brief',
 };
 
 const CATEGORY_BRIEF_KINDS = new Set([
@@ -78,11 +81,12 @@ const CATEGORY_BRIEF_KINDS = new Set([
   'etfs',
 ]);
 
-/** All brief kinds we load and show (institutional + desk + eight asset sleeves). */
+/** All brief kinds we load and show (institutional + desk + eight asset sleeves + legacy general). */
 const ALLOWED_BRIEF_KINDS = new Set([
   'aura_institutional_daily',
   'aura_institutional_weekly',
   ...CATEGORY_BRIEF_KINDS,
+  'general',
 ]);
 
 const BY_AURA_TERMINAL = 'By AURA TERMINAL';
@@ -161,6 +165,28 @@ function filterToAllowedBriefKinds(items) {
 const BRIEF_POLL_MS = 3000;
 const BRIEF_POLL_MAX = 15;
 
+/**
+ * Empty desk copy: never expose env var names, secrets, or internal API routes to all users.
+ * Operational detail is optional and only appended for admins (`canEdit`).
+ */
+function emptyDeskMessagesFor(canEdit, phase) {
+  const userFirst =
+    'No briefs are available for this desk date yet. This list refreshes automatically — try again shortly or choose another date.';
+  const userRepeat =
+    'No briefs are available for this desk date yet. Try another date or check back later.';
+  const adminFirst =
+    'A background refresh was requested once for this browser session. If packs stay empty, confirm scheduled desk automation is enabled on the server and review Admin → integration health.';
+  const adminRepeat =
+    'Still empty: the scheduled job may not have finished, integrations may be offline, or generation failed — check deployment logs and Admin → integration health. You can upload a manual brief below.';
+
+  const userText = phase === 'first' ? userFirst : userRepeat;
+  if (!canEdit) return { userText };
+  return {
+    userText,
+    adminText: phase === 'first' ? adminFirst : adminRepeat,
+  };
+}
+
 function briefsPayloadFromContentResponse(res, fallbackStorageDate) {
   const list = filterToAllowedBriefKinds(Array.isArray(res.data?.briefs) ? res.data.briefs : []);
   const weekendFallback = Boolean(res.data?.weekendFallback);
@@ -207,8 +233,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [selectedKinds, setSelectedKinds] = useState(() => new Set(BRIEF_KIND_ORDER));
   /** UK weekend daily view: server serves previous weekday’s briefs */
   const [weekendBriefsNote, setWeekendBriefsNote] = useState(null);
-  /** One-time autogen hint when the desk date has zero stored briefs */
-  const [emptyDeskNote, setEmptyDeskNote] = useState(null);
+  /** When the desk date has zero stored briefs: safe user copy + optional admin-only hint */
+  const [emptyDeskMessages, setEmptyDeskMessages] = useState(null);
   const fileInputRef = useRef(null);
   const typewriterScrollRef = useRef(null);
   const filterWrapRef = useRef(null);
@@ -343,7 +369,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         setBriefs(payload.list);
         setWeekendBriefsNote(payload.weekendNote);
         if (payload.list.length > 0) {
-          setEmptyDeskNote(null);
+          setEmptyDeskMessages(null);
         }
       })
       .catch(() => setError('Failed to load briefs'))
@@ -359,7 +385,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     setAddSuccess(null);
     setSelectedKinds(new Set(BRIEF_KIND_ORDER));
     setWeekendBriefsNote(null);
-    setEmptyDeskNote(null);
+    setEmptyDeskMessages(null);
 
     const finishLoading = () => {
       if (!cancelled) setLoading(false);
@@ -371,7 +397,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         setBriefs(payload.list);
         setWeekendBriefsNote(payload.weekendNote);
         if (payload.list.length > 0) {
-          setEmptyDeskNote(null);
+          setEmptyDeskMessages(null);
           return;
         }
 
@@ -379,17 +405,13 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           const key = `td-brief-desk-backfill-${type}-${storageDateStr}`;
           if (!sessionStorage.getItem(key)) {
             sessionStorage.setItem(key, '1');
-            setEmptyDeskNote(
-              'No briefs on file for this desk date. A one-time server backfill was requested. Automation requires PERPLEXITY_API_KEY plus market-data keys on the server; confirm /api/cron/auto-market-briefs is authorized (CRON_SECRET or Vercel cron). Check again shortly or pick another date.'
-            );
+            setEmptyDeskMessages(emptyDeskMessagesFor(canEdit, 'first'));
             Api.getTraderDeckContent(type, storageDateStr, { autogen: true }).catch(() => {});
           } else {
-            setEmptyDeskNote(
-              'Still no briefs — the daily cron may not have run (check Vercel Cron for /api/cron/auto-market-briefs), automation may be blocked without PERPLEXITY_API_KEY (503 from that endpoint), or generation failed silently. Try another desk date or verify server env.'
-            );
+            setEmptyDeskMessages(emptyDeskMessagesFor(canEdit, 'repeat'));
           }
         } catch (_) {
-          setEmptyDeskNote('No briefs for this date.');
+          setEmptyDeskMessages({ userText: 'No briefs for this date.' });
         }
 
         pollTimer = setInterval(() => {
@@ -405,7 +427,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               if (cancelled || !nextPayload.list.length) return;
               setBriefs(nextPayload.list);
               setWeekendBriefsNote(nextPayload.weekendNote);
-              setEmptyDeskNote(null);
+              setEmptyDeskMessages(null);
               if (pollTimer) clearInterval(pollTimer);
               pollTimer = null;
             })
@@ -423,7 +445,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       cancelled = true;
       if (pollTimer) clearInterval(pollTimer);
     };
-  }, [type, storageDateStr, fetchBriefsPayload]);
+  }, [type, storageDateStr, fetchBriefsPayload, canEdit]);
 
   const storedPreviewSrc = useMemo(() => {
     if (!previewId) return null;
@@ -767,9 +789,15 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
             <ul className="td-deck-mi-brief-cards">
               {displayedBriefs.length === 0 ? (
                 <li className="td-deck-mi-brief-empty">
-                  {emptyDeskNote ? (
+                  {emptyDeskMessages ? (
                     <>
-                      {emptyDeskNote}{' '}
+                      <span className="td-deck-mi-empty-user">{emptyDeskMessages.userText}</span>
+                      {emptyDeskMessages.adminText ? (
+                        <span className="td-deck-mi-empty-admin" role="note">
+                          {' '}
+                          {emptyDeskMessages.adminText}
+                        </span>
+                      ) : null}{' '}
                       <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
                         Retry fetch
                       </button>{' '}

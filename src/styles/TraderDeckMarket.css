@@ -2419,7 +2419,8 @@
 
 @media (min-width: 960px) {
   .td-outlook-concept-grid.td-outlook-concept-grid--terminal {
-    grid-template-columns: 2fr 1fr;
+    /* Slightly narrower primary rail so prose + tiles don’t swim in empty width */
+    grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr);
     gap: 12px;
     align-items: start;
   }
@@ -2432,6 +2433,11 @@
   gap: 8px;
   align-items: stretch;
   min-width: 0;
+}
+
+.td-outlook-concept-col--secondary {
+  height: fit-content;
+  align-self: start;
 }
 
 .td-deck-mo-outlook--concept .td-outlook-concept-col--primary > *,
@@ -2924,6 +2930,49 @@
   font-size: 0.72rem;
   font-weight: 700;
   line-height: 1.25;
+  text-align: left;
+}
+
+/* Close the label/value gap: default regime rows right-align values across a wide grid */
+.td-deck-mo-outlook--concept .td-outlook-concept-card--regime .td-mi-regime-row {
+  grid-template-columns: minmax(7.5rem, 30%) minmax(0, 1fr);
+  gap: 6px 12px;
+}
+
+@media (min-width: 720px) {
+  .td-deck-mo-outlook--concept .td-outlook-concept-card--regime .td-mi-regime-rows {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+    row-gap: 0;
+    align-items: start;
+  }
+
+  .td-deck-mo-outlook--concept .td-outlook-concept-card--regime .td-mi-regime-row {
+    grid-template-columns: minmax(6.5rem, 42%) minmax(0, 1fr);
+  }
+
+  .td-deck-mo-outlook--concept .td-outlook-concept-card--regime .td-mi-regime-narrative {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Readable line-length + denser feeds (primary column) */
+.td-deck-mo-outlook--concept .td-outlook-concept-card--changes .td-outlook-concept-card__body,
+.td-deck-mo-outlook--concept .td-outlook-concept-card--focus .td-outlook-concept-card__body {
+  max-width: 46rem;
+}
+
+.td-deck-mo-outlook--concept .td-outlook-concept-card--implications .td-outlook-concept-card__body {
+  max-width: min(56rem, 100%);
+}
+
+.td-deck-mo-outlook--concept .mo-change-timeline__body {
+  max-width: 42rem;
+}
+
+.td-deck-mo-outlook--concept .td-outlook-concept-card--instruments .td-outlook-concept-card__body--instruments {
+  min-height: 0;
 }
 
 /* Market change — structured feed */
@@ -2963,6 +3012,14 @@
 .td-deck-mo-outlook--concept .td-outlook-concept-card--focus .td-mi-focus-reason {
   font-size: 0.67rem !important;
   line-height: 1.3 !important;
+}
+
+@media (min-width: 900px) {
+  .td-deck-mo-outlook--concept .td-outlook-concept-card--focus .td-mi-bullets--focus {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px 12px !important;
+  }
 }
 
 .td-deck-mo-outlook--concept .td-outlook-concept-risk__body .rr-table-wrap {
@@ -3192,6 +3249,13 @@
   flex-direction: column;
   gap: 10px;
 }
+@media (min-width: 900px) {
+  .mo-implications-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
 .mo-implication-row {
   margin: 0;
   padding: 8px 10px;
@@ -3260,16 +3324,28 @@
 }
 
 .mo-instrument-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  align-items: stretch;
 }
 .mo-instrument-card {
+  flex: 1 1 156px;
+  max-width: min(260px, 100%);
+  min-width: 140px;
+  box-sizing: border-box;
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid rgba(107, 143, 232, 0.12);
   background: rgba(4, 6, 18, 0.48);
   min-height: 0;
+}
+
+.mo-instrument-empty {
+  margin: 0;
+  max-width: 26rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
 }
 .mo-instrument-card__head {
   display: flex;

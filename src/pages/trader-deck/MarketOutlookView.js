@@ -643,20 +643,26 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                       </section>
                       <section className="td-outlook-concept-card td-outlook-concept-card--instruments mo-card-shell" aria-label="Instrument snapshots">
                         <h2 className="td-outlook-concept-card__title">Instrument Snapshots</h2>
-                        <div className="td-outlook-concept-card__body">
-                          <div className="mo-instrument-grid">
-                            {(instrumentSnapshots || []).slice(0, 6).map((card) => (
-                              <article key={card.symbol} className="mo-instrument-card">
-                                <header className="mo-instrument-card__head">
-                                  <span className="mo-instrument-card__sym">{card.symbol}</span>
-                                  <span className="mo-pill mo-pill--soft">{card.bias || '—'}</span>
-                                </header>
-                                <p className="mo-instrument-card__row"><span>Structure</span><strong>{card.structure || '—'}</strong></p>
-                                <p className="mo-instrument-card__row"><span>Key level</span><strong>{card.keyLevel || '—'}</strong></p>
-                                <p className="mo-instrument-card__note">{card.note || ''}</p>
-                              </article>
-                            ))}
-                          </div>
+                        <div className="td-outlook-concept-card__body td-outlook-concept-card__body--instruments">
+                          {(instrumentSnapshots || []).filter(Boolean).length === 0 ? (
+                            <p className="td-outlook-empty mo-instrument-empty">
+                              Awaiting live cross-asset snapshots. Refresh intelligence or connect the desk feed.
+                            </p>
+                          ) : (
+                            <div className="mo-instrument-grid">
+                              {(instrumentSnapshots || []).slice(0, 6).map((card) => (
+                                <article key={card.symbol} className="mo-instrument-card">
+                                  <header className="mo-instrument-card__head">
+                                    <span className="mo-instrument-card__sym">{card.symbol}</span>
+                                    <span className="mo-pill mo-pill--soft">{card.bias || '—'}</span>
+                                  </header>
+                                  <p className="mo-instrument-card__row"><span>Structure</span><strong>{card.structure || '—'}</strong></p>
+                                  <p className="mo-instrument-card__row"><span>Key level</span><strong>{card.keyLevel || '—'}</strong></p>
+                                  <p className="mo-instrument-card__note">{card.note || ''}</p>
+                                </article>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </section>
                     </div>
