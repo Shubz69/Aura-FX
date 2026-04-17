@@ -11,7 +11,9 @@ import { MARKET_DECODER_LAB_HANDOFF_KEY } from '../../lib/aura-analysis/validato
 import { formatPairLabel } from '../../lib/market/formatPairLabel';
 import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import '../../styles/trader-deck/MarketDecoder.css';
-import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput';
+import * as sanitizeAiDeskOutput from '../../utils/sanitizeAiDeskOutput';
+
+const { sanitizeTraderDeskPayloadDeep } = sanitizeAiDeskOutput;
 
 const QUICK = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD', 'SPY', 'USDJPY'];
 const LIVE_POLL_MS = Math.max(15000, parseInt(process.env.REACT_APP_MARKET_DECODER_POLL_MS || '30000', 10) || 30000);

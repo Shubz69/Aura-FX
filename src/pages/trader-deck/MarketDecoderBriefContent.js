@@ -12,7 +12,9 @@ import {
   DecoderEventRiskHeader,
 } from './MarketDecoderBriefEnhancements';
 import { formatPairLabel } from '../../lib/market/formatPairLabel';
-import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput';
+import * as sanitizeAiDeskOutput from '../../utils/sanitizeAiDeskOutput';
+
+const { sanitizeTraderDeskPayloadDeep } = sanitizeAiDeskOutput;
 
 const {
   buildDecoderPriceContext,

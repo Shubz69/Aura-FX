@@ -99,11 +99,3 @@ module.exports = {
   sanitizeAiDeskPayloadFields,
   sanitizeTraderDeskPayloadDeep,
 };
-
-/** ESM named exports (CRA) — keep in sync with `module.exports` above. */
-export {
-  stripModelInternalExposition,
-  sanitizeAiTradingPriorities,
-  sanitizeAiDeskPayloadFields,
-  sanitizeTraderDeskPayloadDeep,
-};

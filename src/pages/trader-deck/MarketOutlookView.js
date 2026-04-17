@@ -16,7 +16,9 @@ import SessionContextPanel from '../../components/trader-deck/SessionContextPane
 import { getTraderDeckIntelStorageYmd } from '../../lib/trader-deck/deskDates';
 import { formatRelativeFreshness } from '../../lib/trader-deck/marketOutlookDisplayFormatters';
 import TraderDeskDataQualityBanner from './TraderDeskDataQualityBanner';
-import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput';
+import * as sanitizeAiDeskOutput from '../../utils/sanitizeAiDeskOutput';
+
+const { sanitizeTraderDeskPayloadDeep } = sanitizeAiDeskOutput;
 
 function buildTimelineFallback(marketChangesToday, tf) {
   const label = tf === 'weekly' ? 'Week' : 'Session';

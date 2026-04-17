@@ -10,7 +10,9 @@ import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import { FaEye, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 import CosmicBackground from '../../components/CosmicBackground';
 import { getTraderDeckIntelStorageYmd, formatLondonWeekRangeFromWeekEndingSundayYmd } from '../../lib/trader-deck/deskDates';
-import { stripModelInternalExposition } from '../../utils/sanitizeAiDeskOutput';
+import * as sanitizeAiDeskOutput from '../../utils/sanitizeAiDeskOutput';
+
+const { stripModelInternalExposition } = sanitizeAiDeskOutput;
 
 /** Client cap (DB LONGBLOB); large files use chunked uploads to avoid HTTP 413 on Vercel. */
 const MAX_UPLOAD_BYTES = 48 * 1024 * 1024;
