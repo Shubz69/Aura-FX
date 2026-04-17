@@ -4,7 +4,7 @@ const COPY = {
   cached: {
     tone: 'info',
     title: 'Cached desk snapshot',
-    body: 'Showing a recently cached Trader Deck response. Refresh the page or use “live” refresh where available for the newest bundle.',
+    body: 'Showing a recently cached Trader Desk response. Refresh the page or use “live” refresh where available for the newest bundle.',
   },
   pipeline: {
     tone: 'info',

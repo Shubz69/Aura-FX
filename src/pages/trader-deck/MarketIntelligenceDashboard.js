@@ -13,7 +13,7 @@ import FocusList from '../../components/trader-deck/FocusList';
 import RiskRadarList from '../../components/trader-deck/RiskRadarList';
 import { getMarketIntelligence, SEED_MARKET_INTELLIGENCE } from '../../data/marketIntelligence';
 import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput';
-import TraderDeskDataQualityBanner from '../../components/trader-deck/TraderDeskDataQualityBanner';
+import TraderDeskDataQualityBanner from './TraderDeskDataQualityBanner';
 import MarketDecoderView from './MarketDecoderView';
 import '../../styles/TraderDeckMarket.css';
 import '../../styles/trader-deck/MarketDecoder.css';

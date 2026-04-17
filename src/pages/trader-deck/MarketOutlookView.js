@@ -15,7 +15,7 @@ import RiskRadarList from '../../components/trader-deck/RiskRadarList';
 import SessionContextPanel from '../../components/trader-deck/SessionContextPanel';
 import { getTraderDeckIntelStorageYmd } from '../../lib/trader-deck/deskDates';
 import { formatRelativeFreshness } from '../../lib/trader-deck/marketOutlookDisplayFormatters';
-import TraderDeskDataQualityBanner from '../../components/trader-deck/TraderDeskDataQualityBanner';
+import TraderDeskDataQualityBanner from './TraderDeskDataQualityBanner';
 import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput';
 
 function buildTimelineFallback(marketChangesToday, tf) {

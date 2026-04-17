@@ -12,6 +12,7 @@ import {
   DecoderEventRiskHeader,
 } from './MarketDecoderBriefEnhancements';
 import { formatPairLabel } from '../../lib/market/formatPairLabel';
+import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput';
 
 const {
   buildDecoderPriceContext,
@@ -182,7 +183,11 @@ function CrossArrow({ tone, diag }) {
   return <span className="md-ref-cross-arrow-ico md-ref-cross-arrow-ico--flat" aria-hidden>—</span>;
 }
 
-export default function MarketDecoderBriefContent({ brief, q }) {
+export default function MarketDecoderBriefContent({ brief: rawBrief, q }) {
+  const brief = useMemo(
+    () => (rawBrief && typeof rawBrief === 'object' ? sanitizeTraderDeskPayloadDeep(rawBrief) : null),
+    [rawBrief]
+  );
   const moreDetailsRef = useRef(null);
 
   const openScenarioDetails = useCallback(() => {

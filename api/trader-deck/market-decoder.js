@@ -10,6 +10,7 @@ const { runMarketDecoder } = require('./marketDecoderEngine');
 const { polishMarketDecoderBrief } = require('./marketDecoderPolish');
 const { getStoredDecoderState } = require('../market-data/pipeline-service');
 const { toCanonical } = require('../ai/utils/symbol-registry');
+const { sanitizeTraderDeskPayloadDeep } = require('../../src/utils/sanitizeAiDeskOutput');
 
 /** Never expose feed/provider diagnostics on the public Market Decoder API (admin uses /api/admin/market-decoder-diagnostics). */
 function stripFeedDiagnosticsFromBrief(brief) {
@@ -22,6 +23,12 @@ function stripFeedDiagnosticsFromBrief(brief) {
     next.meta = meta;
   }
   return next;
+}
+
+/** Strip provider diagnostics and model-internal markup before any public JSON response. */
+function preparePublicDecoderBrief(brief) {
+  if (!brief || typeof brief !== 'object') return brief;
+  return sanitizeTraderDeskPayloadDeep(stripFeedDiagnosticsFromBrief(brief));
 }
 
 const CACHE_SEC = Math.min(900, Math.max(120, parseInt(process.env.MARKET_DECODER_CACHE_SEC, 10) || 600));
@@ -94,7 +101,7 @@ module.exports = async (req, res) => {
     const hit = getCached(cacheKey);
     if (hit) {
       res.setHeader('Cache-Control', 'private, max-age=60');
-      const briefOut = stripFeedDiagnosticsFromBrief(hit.payload.brief);
+      const briefOut = preparePublicDecoderBrief(hit.payload.brief);
       setDecoderEngineHeader(res, briefOut);
       const ageSec = Math.max(0, Math.round((Date.now() - hit.storedAtMs) / 1000));
       return res.status(200).json({
@@ -123,7 +130,7 @@ module.exports = async (req, res) => {
         };
         setCached(cacheKey, payload);
         res.setHeader('Cache-Control', 'private, max-age=60');
-        const briefOut = stripFeedDiagnosticsFromBrief(payload.brief);
+        const briefOut = preparePublicDecoderBrief(payload.brief);
         setDecoderEngineHeader(res, briefOut);
         let cacheAgeSec = null;
         if (stored.updatedAt) {
@@ -174,7 +181,7 @@ module.exports = async (req, res) => {
       /* non-fatal */
     }
     res.setHeader('Cache-Control', 'private, max-age=60');
-    const briefOut = stripFeedDiagnosticsFromBrief(brief);
+    const briefOut = preparePublicDecoderBrief(brief);
     setDecoderEngineHeader(res, briefOut);
     return res.status(200).json({ success: true, brief: briefOut, cached: false, cacheTtlSec: CACHE_SEC });
   } catch (err) {

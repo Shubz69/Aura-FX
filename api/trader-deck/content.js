@@ -23,6 +23,7 @@ const {
   priorLondonWeekdayYmd,
   getWeekEndingSundayUtcYmd,
 } = require('./deskDates');
+const { sanitizeTraderDeskPayloadDeep } = require('../../src/utils/sanitizeAiDeskOutput');
 const {
   DESK_AUTOMATION_CATEGORY_KINDS,
   institutionalBriefKindForPeriod,
@@ -308,9 +309,11 @@ module.exports = async (req, res) => {
       if (typeof payload === 'string') {
         try { payload = JSON.parse(payload); } catch { payload = null; }
       }
+      const safePayload =
+        payload && typeof payload === 'object' ? sanitizeTraderDeskPayloadDeep(payload) : payload;
       return res.status(200).json({
         success: true,
-        payload,
+        payload: safePayload,
         updatedAt: row.updated_at,
         date,
         type,
