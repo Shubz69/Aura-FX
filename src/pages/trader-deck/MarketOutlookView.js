@@ -76,30 +76,6 @@ function deriveMarketImplicationsFromDesk(regime, drivers, timeline) {
   return rows.slice(0, 3);
 }
 
-/** One-paragraph desk summary when Perplexity brief is unavailable — uses the same structured feeds as the rest of the outlook. */
-function synthesizeDeskBriefFromFeeds({ regime, drivers, signals, headlineSample, pulseLabel }) {
-  const parts = [];
-  if (regime?.currentRegime || regime?.bias) {
-    parts.push(
-      `${regime?.currentRegime || 'Mixed'} regime; ${String(regime?.bias || regime?.marketSentiment || 'balanced').trim()} bias.`
-    );
-  }
-  const tops = (drivers || []).slice(0, 3).map((d) => d.name || d.title).filter(Boolean);
-  if (tops.length) parts.push(`Drivers in focus: ${tops.join(', ')}.`);
-  const sleeve = (signals || [])
-    .slice(0, 4)
-    .map((s) => `${s.asset}: ${s.signal || s.label || '—'}`)
-    .join(' · ');
-  if (sleeve) parts.push(`Cross-asset snapshot: ${sleeve}.`);
-  const hl = Array.isArray(headlineSample) && headlineSample[0];
-  if (hl) {
-    const t = String(hl).trim();
-    parts.push(`Headline tone: ${t.slice(0, 260)}${t.length > 260 ? '…' : ''}.`);
-  }
-  if (pulseLabel) parts.push(`Desk pulse reads ${pulseLabel}.`);
-  return parts.join(' ').trim();
-}
-
 function buildTimelineFallback(marketChangesToday, tf) {
   const label = tf === 'weekly' ? 'Week' : 'Session';
   const list = Array.isArray(marketChangesToday) ? marketChangesToday : [];
@@ -162,17 +138,6 @@ function normalizeForUI(data, period = 'daily') {
     data.instrumentSnapshots && data.instrumentSnapshots.length
       ? data.instrumentSnapshots
       : deriveInstrumentSnapshotsFromDesk(signals, drivers);
-  const pulseLabelForSynth = (pulse && pulse.label) || '';
-  const existingBrief = typeof data.aiSessionBrief === 'string' ? data.aiSessionBrief.trim() : '';
-  const synthesizedBrief = synthesizeDeskBriefFromFeeds({
-    regime,
-    drivers,
-    signals,
-    headlineSample,
-    pulseLabel: pulseLabelForSynth,
-  });
-  const aiSessionBriefFinal = existingBrief || synthesizedBrief;
-  const aiBriefSource = existingBrief ? 'api' : synthesizedBrief ? 'synthesized' : 'none';
   const outlookDataStatus = data.outlookDataStatus && typeof data.outlookDataStatus === 'object'
     ? data.outlookDataStatus
     : {
@@ -206,8 +171,7 @@ function normalizeForUI(data, period = 'daily') {
     riskEngine: data.riskEngine || null,
     riskRadarDate: data.riskRadarDate || null,
     updatedAt: data.updatedAt,
-    aiSessionBrief: aiSessionBriefFinal,
-    aiBriefSource,
+    aiSessionBrief: typeof data.aiSessionBrief === 'string' ? data.aiSessionBrief.trim() : '',
     aiTradingPriorities: Array.isArray(data.aiTradingPriorities) ? data.aiTradingPriorities : [],
     headlineSample,
     headlineInsights,
@@ -669,20 +633,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               {outlookDataStatus ? (
                 <div className="mo-outlook-freshness" role="status" aria-live="polite">
                   <span className="mo-outlook-freshness__label">{outlookDataStatus.freshnessLabel || '—'}</span>
-                  {canEdit ? (
-                    <>
-                      <span className={`mo-outlook-freshness__tier mo-outlook-freshness__tier--${outlookDataStatus.sourceTier || 'fallback'}`}>
-                        {outlookDataStatus.sourceTier === 'paid'
-                          ? 'Paid pipeline'
-                          : outlookDataStatus.sourceTier === 'live'
-                            ? 'Live build'
-                            : 'Fallback / partial'}
-                      </span>
-                      {outlookDataStatus.degraded ? (
-                        <span className="mo-outlook-freshness__degraded">Partial data</span>
-                      ) : null}
-                    </>
-                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -846,34 +796,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     </div>
                   </section>
 
-                  <section className="td-outlook-concept-card td-outlook-concept-card--brief mo-card-shell mo-card-shell--dense" aria-label="AI desk brief">
-                    <h2 className="td-outlook-concept-card__title">AI Desk Brief</h2>
-                    <p className="mo-section-sub">
-                      {outlookSnapshot.aiBriefSource === 'api'
-                        ? 'Summary and themes — macro context, not signals.'
-                        : outlookSnapshot.aiBriefSource === 'synthesized'
-                          ? 'Auto summary compiled from the same live desk feeds as this page.'
-                          : 'Macro context, not signals.'}
-                    </p>
-                    <div className="td-outlook-concept-card__body">
-                      {outlookSnapshot.aiSessionBrief ? (
-                        <p className="mo-ai-brief">{outlookSnapshot.aiSessionBrief}</p>
-                      ) : (
-                        <p className="td-outlook-empty mo-terminal-feed__empty">No desk narrative available for this snapshot.</p>
-                      )}
-                      {Array.isArray(outlookSnapshot.aiTradingPriorities) && outlookSnapshot.aiTradingPriorities.length > 0 ? (
-                        <>
-                          <p className="mo-ai-brief__sub">Macro watch points</p>
-                          <ul className="mo-ai-brief__list">
-                            {outlookSnapshot.aiTradingPriorities.slice(0, 6).map((line, i) => (
-                              <li key={i}>{line}</li>
-                            ))}
-                          </ul>
-                        </>
-                      ) : null}
-                    </div>
-                  </section>
-
                   <section className="td-outlook-concept-card td-outlook-concept-card--headlines mo-card-shell" aria-label="Market headlines">
                     <header className="td-outlook-concept-card__head td-outlook-concept-card__head--headlines">
                       <h2 className="td-outlook-concept-card__title">Market Headlines</h2>
@@ -884,7 +806,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     <div className="td-outlook-concept-card__body td-outlook-concept-card__body--headlines">
                       {headlineInsights && headlineInsights.length > 0 ? (
                         <ul className="mo-terminal-feed mo-terminal-feed--insights">
-                          {headlineInsights.slice(0, 6).map((row, i) => (
+                          {headlineInsights.slice(0, 8).map((row, i) => (
                             <li key={i} className="mo-terminal-feed__row mo-terminal-feed__row--insight">
                               <div className="mo-headline-chips">
                                 <span className={`mo-sentiment mo-sentiment--${row.sentiment || 'neutral'}`}>{row.sentiment || 'neutral'}</span>
@@ -899,7 +821,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                         </ul>
                       ) : headlineFeed.length > 0 ? (
                         <ul className="mo-terminal-feed">
-                          {headlineFeed.slice(0, 5).map((line, i) => (
+                          {headlineFeed.slice(0, 8).map((line, i) => (
                             <li key={i} className="mo-terminal-feed__row">
                               <span className="mo-terminal-feed__text">{line}</span>
                             </li>
