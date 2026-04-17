@@ -508,11 +508,13 @@ export default function MarketIntelligenceDashboard({ embedded, mode = 'dashboar
           Market Decoder
         </button>
       </div>
-      <TraderDeskDataQualityBanner
-        dataQuality={showing.dataQuality || 'live'}
-        degradedReason={showing.degradedReason ?? null}
-      />
-      {(showing.dataQuality === 'local_override' || showing.dataQuality === 'client_seed') && (
+      {canEdit ? (
+        <TraderDeskDataQualityBanner
+          dataQuality={showing.dataQuality || 'live'}
+          degradedReason={showing.degradedReason ?? null}
+        />
+      ) : null}
+      {canEdit && (showing.dataQuality === 'local_override' || showing.dataQuality === 'client_seed') && (
         <p className="td-mi-reload-live">
           <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleReloadLiveDesk}>
             Reload live desk from server

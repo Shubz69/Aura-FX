@@ -3396,6 +3396,47 @@
   color: rgba(210, 218, 250, 0.85);
 }
 
+/* Outlook — denser cards when panels are feed-synthesized (smaller footprint, less empty chrome) */
+.td-deck-mo-outlook--concept .mo-card-shell--dense .td-outlook-concept-card__body {
+  padding: 6px 8px 8px !important;
+}
+
+.td-deck-mo-outlook--concept .mo-instrument-grid--compact {
+  gap: 6px;
+}
+
+.td-deck-mo-outlook--concept .mo-instrument-grid--compact .mo-instrument-card {
+  flex: 1 1 124px;
+  max-width: min(200px, 100%);
+  min-width: 118px;
+  padding: 5px 7px;
+}
+
+.td-deck-mo-outlook--concept .mo-instrument-grid--compact .mo-instrument-card__sym {
+  font-size: 0.72rem;
+}
+
+.td-deck-mo-outlook--concept .mo-instrument-grid--compact .mo-instrument-card__note {
+  margin-top: 4px;
+  font-size: 0.59rem;
+}
+
+.mo-implications-list--compact {
+  gap: 6px !important;
+}
+
+.mo-implications-list--compact .mo-implication-row {
+  padding: 5px 8px;
+  font-size: 0.69rem;
+  line-height: 1.32;
+}
+
+.td-deck-mo-outlook--concept .td-outlook-concept-card--brief.mo-card-shell--dense .mo-ai-brief {
+  font-size: 0.71rem;
+  line-height: 1.38;
+  margin-bottom: 6px;
+}
+
 .mo-headline-chips {
   display: flex;
   flex-wrap: wrap;

@@ -176,7 +176,7 @@ export default function TraderDeck() {
  return (
   <AuraTerminalThemeShell>
     <div
-      className="td-layout-page td-deck-with-tabs journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page"
+      className="td-layout-page td-deck-with-tabs journal-glass-panel journal-glass-panel--rim aa-page"
       id="td-deck-top"
     >
 

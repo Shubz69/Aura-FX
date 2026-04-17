@@ -76,7 +76,8 @@
 ═══════════════════════════════════════════════════════════════════════════ */
 .td-deck-with-tabs.td-layout-page {
   min-height: 100vh;
-  padding: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 8px) 20px 48px;
+  /* Leave clearance below fixed navbar (--nav-height 70px here; Navbar.css uses 62px — extra gap avoids overlap) */
+  padding: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 20px) 20px 48px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -1219,7 +1220,7 @@
 /* Tablet Landscape (768px - 991px) */
 @media (min-width: 768px) and (max-width: 991px) {
   .td-deck-with-tabs.td-layout-page {
-    padding: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 8px) 20px 40px;
+    padding: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 20px) 20px 40px;
   }
   
   .td-deck-with-tabs .td-deck-layout {
@@ -1274,7 +1275,7 @@
 /* Tablet Portrait (576px - 767px) */
 @media (min-width: 576px) and (max-width: 767px) {
   .td-deck-with-tabs.td-layout-page {
-    padding: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 8px) 16px 32px;
+    padding: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 20px) 16px 32px;
   }
   
   .td-deck-with-tabs .td-deck-layout {
@@ -1401,7 +1402,7 @@
 /* Mobile (375px - 575px) */
 @media (min-width: 375px) and (max-width: 575px) {
   .td-deck-with-tabs.td-layout-page {
-    padding: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 8px) 12px 28px;
+    padding: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 20px) 12px 28px;
   }
   
   .td-deck-with-tabs .td-deck-layout {
@@ -1621,7 +1622,7 @@
 /* Small Mobile (up to 374px) */
 @media (max-width: 374px) {
   .td-deck-with-tabs.td-layout-page {
-    padding: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 8px) 10px 24px;
+    padding: calc(var(--nav-height) + env(safe-area-inset-top, 0) + 20px) 10px 24px;
   }
   
   .td-deck-with-tabs .td-deck-layout {
