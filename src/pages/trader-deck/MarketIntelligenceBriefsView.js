@@ -10,6 +10,7 @@ import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import { FaEye, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 import CosmicBackground from '../../components/CosmicBackground';
 import { getTraderDeckIntelStorageYmd, formatLondonWeekRangeFromWeekEndingSundayYmd } from '../../lib/trader-deck/deskDates';
+import { stripModelInternalExposition } from '../../utils/sanitizeAiDeskOutput';
 
 /** Client cap (DB LONGBLOB); large files use chunked uploads to avoid HTTP 413 on Vercel. */
 const MAX_UPLOAD_BYTES = 48 * 1024 * 1024;
@@ -149,7 +150,7 @@ function sanitizeBriefForPreview(text) {
   if (!endsWithFooter) {
     t = `${t}\n\n${BY_AURA_TERMINAL}`;
   }
-  return t;
+  return stripModelInternalExposition(t);
 }
 
 function filterToAllowedBriefKinds(items) {
@@ -334,6 +335,21 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     [type, storageDateStr]
   );
 
+  const handleManualBriefsRetry = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetchBriefsPayload(true)
+      .then((payload) => {
+        setBriefs(payload.list);
+        setWeekendBriefsNote(payload.weekendNote);
+        if (payload.list.length > 0) {
+          setEmptyDeskNote(null);
+        }
+      })
+      .catch(() => setError('Failed to load briefs'))
+      .finally(() => setLoading(false));
+  }, [fetchBriefsPayload]);
+
   useEffect(() => {
     let cancelled = false;
     let pollTimer = null;
@@ -364,12 +380,12 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           if (!sessionStorage.getItem(key)) {
             sessionStorage.setItem(key, '1');
             setEmptyDeskNote(
-              'No briefs on file for this desk date. A one-time server backfill was requested (requires automation keys). Check again shortly or pick another date.'
+              'No briefs on file for this desk date. A one-time server backfill was requested. Automation requires PERPLEXITY_API_KEY plus market-data keys on the server; confirm /api/cron/auto-market-briefs is authorized (CRON_SECRET or Vercel cron). Check again shortly or pick another date.'
             );
             Api.getTraderDeckContent(type, storageDateStr, { autogen: true }).catch(() => {});
           } else {
             setEmptyDeskNote(
-              'Still no briefs for this date — daily automation may not have run yet, or this day was skipped. Try another session date or contact support.'
+              'Still no briefs — the daily cron may not have run (check Vercel Cron for /api/cron/auto-market-briefs), automation may be blocked without PERPLEXITY_API_KEY (503 from that endpoint), or generation failed silently. Try another desk date or verify server env.'
             );
           }
         } catch (_) {
@@ -640,7 +656,14 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
 
   return (
     <>
-      {error && <p className="td-mi-fallback-msg" role="status">{error}</p>}
+      {error && (
+        <p className="td-mi-fallback-msg" role="alert">
+          {error}{' '}
+          <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
+            Retry fetch
+          </button>
+        </p>
+      )}
       {addSuccess && <p className="td-mi-save-success" role="status">{addSuccess}</p>}
       <div className="td-deck-mi-modern">
         <header className="td-deck-mi-modern-hero">
@@ -747,11 +770,18 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                   {emptyDeskNote ? (
                     <>
                       {emptyDeskNote}{' '}
+                      <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
+                        Retry fetch
+                      </button>{' '}
                       {canEdit && 'You can also upload a file or link for this date.'}
                     </>
                   ) : (
                     <>
-                      No briefs for this date. {canEdit && 'Pick the date above, then add a file or link.'}
+                      No briefs for this date.{' '}
+                      <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
+                        Retry fetch
+                      </button>{' '}
+                      {canEdit && 'Pick the date above, then add a file or link.'}
                     </>
                   )}
                 </li>

@@ -16,7 +16,7 @@ import SessionContextPanel from '../../components/trader-deck/SessionContextPane
 import { getTraderDeckIntelStorageYmd } from '../../lib/trader-deck/deskDates';
 import { formatRelativeFreshness } from '../../lib/trader-deck/marketOutlookDisplayFormatters';
 import TraderDeskDataQualityBanner from '../../components/trader-deck/TraderDeskDataQualityBanner';
-import { stripModelInternalExposition, sanitizeAiTradingPriorities } from '../../utils/sanitizeAiDeskOutput';
+import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput';
 
 function buildTimelineFallback(marketChangesToday, tf) {
   const label = tf === 'weekly' ? 'Week' : 'Session';
@@ -100,7 +100,7 @@ function normalizeForUI(data, period = 'daily') {
       sourceTier: 'fallback',
       degraded: true,
     };
-  return {
+  return sanitizeTraderDeskPayloadDeep({
     marketRegime: regime,
     marketPulse: {
       score: pulse && (typeof pulse.score === 'number' ? pulse.score : pulse.value) != null ? (pulse.score ?? pulse.value) : 50,
@@ -125,10 +125,8 @@ function normalizeForUI(data, period = 'daily') {
     riskEngine: data.riskEngine || null,
     riskRadarDate: data.riskRadarDate || null,
     updatedAt: data.updatedAt,
-    aiSessionBrief: stripModelInternalExposition(data.aiSessionBrief || ''),
-    aiTradingPriorities: sanitizeAiTradingPriorities(
-      Array.isArray(data.aiTradingPriorities) ? data.aiTradingPriorities : []
-    ),
+    aiSessionBrief: data.aiSessionBrief || '',
+    aiTradingPriorities: Array.isArray(data.aiTradingPriorities) ? data.aiTradingPriorities : [],
     headlineSample,
     headlineInsights,
     sessionContext: data.sessionContext && typeof data.sessionContext === 'object' ? data.sessionContext : null,
@@ -137,7 +135,7 @@ function normalizeForUI(data, period = 'daily') {
     marketOutlookVersion: data.marketOutlookVersion != null ? data.marketOutlookVersion : null,
     dataQuality: data.dataQuality || 'live',
     degradedReason: data.degradedReason ?? null,
-  };
+  });
 }
 
 const impactOptions = ['high', 'medium', 'low'];

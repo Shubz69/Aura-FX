@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import CosmicBackground from '../../components/CosmicBackground';
 import { useAuth } from '../../context/AuthContext';
 import { isAdmin } from '../../utils/roles';
@@ -12,6 +12,8 @@ import ChangeList from '../../components/trader-deck/ChangeList';
 import FocusList from '../../components/trader-deck/FocusList';
 import RiskRadarList from '../../components/trader-deck/RiskRadarList';
 import { getMarketIntelligence, SEED_MARKET_INTELLIGENCE } from '../../data/marketIntelligence';
+import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput';
+import TraderDeskDataQualityBanner from '../../components/trader-deck/TraderDeskDataQualityBanner';
 import MarketDecoderView from './MarketDecoderView';
 import '../../styles/TraderDeckMarket.css';
 import '../../styles/trader-deck/MarketDecoder.css';
@@ -35,7 +37,7 @@ function normalizeForUI(data) {
     signal: s.signal || s.label || '—',
     direction: (s.direction || 'neutral').toLowerCase(),
   }));
-  return {
+  return sanitizeTraderDeskPayloadDeep({
     marketRegime: regime,
     marketPulse: {
       score: pulse && (typeof pulse.score === 'number' ? pulse.score : pulse.value) != null
@@ -52,7 +54,9 @@ function normalizeForUI(data) {
     riskEngine: data.riskEngine || null,
     riskRadarDate: data.riskRadarDate || null,
     updatedAt: data.updatedAt,
-  };
+    dataQuality: data.dataQuality || 'live',
+    degradedReason: data.degradedReason ?? null,
+  });
 }
 
 function loadSaved() {
@@ -74,6 +78,43 @@ function saveToStorage(payload) {
   }
 }
 
+/**
+ * When the server returns live intelligence, it must win over stale client snapshots.
+ * Exception: explicit admin save (`dataQuality === 'local_override'`) keeps the saved layout until "Reload live desk".
+ */
+function mergeDashboardFromApi(apiNormalized, saved) {
+  if (!apiNormalized) return normalizeForUI(SEED_MARKET_INTELLIGENCE);
+  const dq = apiNormalized.dataQuality || 'live';
+  const todayStr = TODAY_STR();
+
+  if (saved && saved.dataQuality === 'local_override') {
+    let data = { ...saved };
+    if (saved.riskRadarDate && saved.riskRadarDate !== todayStr && dq === 'live') {
+      data = {
+        ...data,
+        riskRadar: apiNormalized.riskRadar || [],
+        riskRadarDate: todayStr,
+      };
+    }
+    return data;
+  }
+
+  if (dq === 'live') {
+    return { ...apiNormalized };
+  }
+
+  if (saved) {
+    return {
+      ...saved,
+      ...apiNormalized,
+      dataQuality: apiNormalized.dataQuality,
+      degradedReason: apiNormalized.degradedReason ?? null,
+    };
+  }
+
+  return apiNormalized;
+}
+
 export default function MarketIntelligenceDashboard({ embedded, mode = 'dashboard' }) {
   const { user } = useAuth();
   const canEdit = isAdmin(user);
@@ -86,36 +127,41 @@ export default function MarketIntelligenceDashboard({ embedded, mode = 'dashboar
   const [editMode, setEditMode] = useState(false);
   const [editDraft, setEditDraft] = useState(null);
 
-  useEffect(() => {
+  const fetchDesk = useCallback((refresh = false) => {
     setLoading(true);
     setError(null);
-    getMarketIntelligence()
+    getMarketIntelligence({ refresh })
       .then((raw) => {
         const apiNormalized = normalizeForUI(raw) || normalizeForUI(SEED_MARKET_INTELLIGENCE);
         const saved = loadSaved();
-        const todayStr = TODAY_STR();
-        let data = saved || apiNormalized;
-        // Risk Radar: after midnight use fresh upstream data; during the day use saved if same day
-        if (saved && saved.riskRadarDate && saved.riskRadarDate !== todayStr) {
-          data = { ...data, riskRadar: apiNormalized.riskRadar || [], riskRadarDate: todayStr };
-        } else if (saved && saved.riskRadar) {
-          data = { ...data, riskRadarDate: saved.riskRadarDate || todayStr };
-        }
-        setData(data);
+        setData(mergeDashboardFromApi(apiNormalized, saved));
       })
       .catch(() => {
-        const normalized = normalizeForUI(SEED_MARKET_INTELLIGENCE);
+        const normalized =
+          normalizeForUI({
+            ...SEED_MARKET_INTELLIGENCE,
+            dataQuality: 'client_seed',
+            degradedReason: 'network_error',
+          }) || normalizeForUI(SEED_MARKET_INTELLIGENCE);
         const saved = loadSaved();
-        const todayStr = TODAY_STR();
-        let data = saved || normalized;
-        if (saved && saved.riskRadarDate && saved.riskRadarDate !== todayStr) {
-          data = { ...data, riskRadar: normalized.riskRadar || [], riskRadarDate: todayStr };
-        }
-        setData(data);
+        setData(mergeDashboardFromApi(normalized, saved));
         setError('Using fallback data');
       })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchDesk(false);
+  }, [fetchDesk]);
+
+  const handleReloadLiveDesk = useCallback(() => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (_) {
+      /* ignore */
+    }
+    fetchDesk(true);
+  }, [fetchDesk]);
 
   const handleEditToggle = () => {
     if (editMode) {
@@ -133,6 +179,8 @@ export default function MarketIntelligenceDashboard({ embedded, mode = 'dashboar
       marketChangesToday: (ui.marketChangesToday || []).map(toStr),
       traderFocus: (ui.traderFocus || []).map(toStr),
       riskRadar: (ui.riskRadar || []).map(toStr),
+      dataQuality: ui.dataQuality || 'live',
+      degradedReason: ui.degradedReason ?? null,
     });
     setEditMode(true);
   };
@@ -149,6 +197,8 @@ export default function MarketIntelligenceDashboard({ embedded, mode = 'dashboar
       riskRadar: editDraft.riskRadar,
       riskRadarDate: TODAY_STR(),
       updatedAt: new Date().toISOString(),
+      dataQuality: 'local_override',
+      degradedReason: null,
     };
     const normalized = normalizeForUI(payload);
     setData(normalized);
@@ -200,7 +250,14 @@ export default function MarketIntelligenceDashboard({ embedded, mode = 'dashboar
   }
 
   const ui = data || normalizeForUI(SEED_MARKET_INTELLIGENCE);
-  const showing = editMode && editDraft ? editDraft : ui;
+  const showing =
+    editMode && editDraft
+      ? {
+          ...editDraft,
+          dataQuality: editDraft.dataQuality ?? ui.dataQuality ?? 'live',
+          degradedReason: editDraft.degradedReason ?? ui.degradedReason ?? null,
+        }
+      : ui;
   const {
     marketRegime,
     marketPulse,
@@ -451,6 +508,18 @@ export default function MarketIntelligenceDashboard({ embedded, mode = 'dashboar
           Market Decoder
         </button>
       </div>
+      <TraderDeskDataQualityBanner
+        dataQuality={showing.dataQuality || 'live'}
+        degradedReason={showing.degradedReason ?? null}
+      />
+      {(showing.dataQuality === 'local_override' || showing.dataQuality === 'client_seed') && (
+        <p className="td-mi-reload-live">
+          <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleReloadLiveDesk}>
+            Reload live desk from server
+          </button>
+          <span className="td-mi-reload-live-hint"> Clears saved layout (if any) and refetches intelligence.</span>
+        </p>
+      )}
       {error && (
         <p className="td-mi-fallback-msg" role="status">
           {error}

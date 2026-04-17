@@ -11,6 +11,7 @@ import { MARKET_DECODER_LAB_HANDOFF_KEY } from '../../lib/aura-analysis/validato
 import { formatPairLabel } from '../../lib/market/formatPairLabel';
 import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import '../../styles/trader-deck/MarketDecoder.css';
+import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput';
 
 const QUICK = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD', 'SPY', 'USDJPY'];
 const LIVE_POLL_MS = Math.max(15000, parseInt(process.env.REACT_APP_MARKET_DECODER_POLL_MS || '30000', 10) || 30000);
@@ -88,7 +89,7 @@ export default function MarketDecoderView({ embedded }) {
         }
         return;
       }
-      setBrief(data.brief);
+      setBrief(data.brief ? sanitizeTraderDeskPayloadDeep(data.brief) : null);
       setCached(Boolean(data.cached));
       setCacheSnapshot({
         ageSec: typeof data.cacheAgeSec === 'number' ? data.cacheAgeSec : null,
@@ -123,7 +124,12 @@ export default function MarketDecoderView({ embedded }) {
         if (cancel || !Array.isArray(list) || !list.length) return;
         setQuickChips(list.map((x) => x.symbol).filter(Boolean));
       })
-      .catch(() => {});
+      .catch((e) => {
+        if (process.env.NODE_ENV === 'development') {
+          // eslint-disable-next-line no-console
+          console.warn('[MarketDecoderView] quick symbols preset failed', e?.message || e);
+        }
+      });
     return () => {
       cancel = true;
     };
@@ -365,6 +371,15 @@ export default function MarketDecoderView({ embedded }) {
       <header className="md-ref-top">
         <p className="md-ref-aura">Aura Terminal</p>
         <h1 className="md-ref-title">Market Decoder</h1>
+        {brief?.finalOutput?.currentPosture === 'DATA INCOMPLETE' ? (
+          <div className="md-ref-structure-alert" role="alert">
+            <strong>Structural bias not scored</strong>
+            <span>
+              Five daily closes are required for trend, MAs, and pivots. Quote and calendar may still apply — use Refresh
+              decode or confirm symbol mapping. Full detail appears in the brief preview.
+            </span>
+          </div>
+        ) : null}
         <div className="md-ref-search-wrap">
           <form className="md-ref-search" onSubmit={onSubmit} autoComplete="off" role="search">
             <FiSearch className="md-ref-search-ico" aria-hidden />

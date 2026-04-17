@@ -5,7 +5,7 @@
  */
 
 import Api from '../services/Api';
-import { stripModelInternalExposition, sanitizeAiTradingPriorities } from '../utils/sanitizeAiDeskOutput';
+import { sanitizeTraderDeskPayloadDeep } from '../utils/sanitizeAiDeskOutput';
 
 export const DEFAULT_MARKET_REGIME = {
   currentRegime: '',
@@ -242,7 +242,7 @@ function mapBackendToDashboard(apiData) {
   const m = apiData.marketChangesToday;
   const t = apiData.traderFocus;
   const rr = apiData.riskRadar;
-  return {
+  return sanitizeTraderDeskPayloadDeep({
     marketRegime: r
       ? {
           ...r,
@@ -309,12 +309,8 @@ function mapBackendToDashboard(apiData) {
       ? apiData.riskEngine
       : SEED_MARKET_INTELLIGENCE.riskEngine,
     updatedAt: apiData.updatedAt || null,
-    aiSessionBrief: stripModelInternalExposition(
-      typeof apiData.aiSessionBrief === 'string' ? apiData.aiSessionBrief : ''
-    ),
-    aiTradingPriorities: sanitizeAiTradingPriorities(
-      Array.isArray(apiData.aiTradingPriorities) ? apiData.aiTradingPriorities : []
-    ),
+    aiSessionBrief: typeof apiData.aiSessionBrief === 'string' ? apiData.aiSessionBrief : '',
+    aiTradingPriorities: Array.isArray(apiData.aiTradingPriorities) ? apiData.aiTradingPriorities : [],
     headlineSample: Array.isArray(apiData.headlineSample)
       ? apiData.headlineSample.map((h) => String(h || '').trim()).filter(Boolean)
       : SEED_MARKET_INTELLIGENCE.headlineSample || [],
@@ -332,7 +328,7 @@ function mapBackendToDashboard(apiData) {
     marketOutlookVersion: apiData.marketOutlookVersion != null ? apiData.marketOutlookVersion : null,
     dataQuality: apiData.dataQuality || 'live',
     degradedReason: apiData.degradedReason ?? null,
-  };
+  });
 }
 
 export async function getMarketIntelligence({ refresh = false, timeframe = 'daily', date = '' } = {}) {
