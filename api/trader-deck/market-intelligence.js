@@ -10,7 +10,8 @@ require('../utils/suppress-warnings');
 const { runEngine } = require('./marketIntelligenceEngine');
 const { enrichTraderDeckPayload } = require('./perplexityTraderInsights');
 const { enrichMarketOutlookPayload } = require('./marketOutlookEngine');
-const { getStoredMarketIntelligence } = require('../market-data/pipeline-store');
+const { getStoredMarketIntelligence } = require('../market-data/pipeline-service');
+const { sanitizeTraderDeskPayloadDeep } = require('../../src/utils/sanitizeAiDeskOutput');
 
 // Default 90s — override with TRADER_DECK_MI_CACHE_SEC (45–300)
 const CACHE_SEC = Math.min(300, Math.max(45, parseInt(process.env.TRADER_DECK_MI_CACHE_SEC, 10) || 90));
@@ -146,17 +147,19 @@ module.exports = async (req, res) => {
       { timeframe },
     );
     const dq = fromCache.dataQuality || 'cached';
-    return res.status(200).json({
-      success: true,
-      ...cachedOut,
-      dataQuality: dq,
-      degradedReason: fromCache.degradedReason ?? null,
-      deskTimeframe: timeframe,
-      deskReferenceDate: date || fromCache.deskReferenceDate || null,
-      timeframe,
-      date: date || null,
-      cached: true,
-    });
+    return res.status(200).json(
+      sanitizeTraderDeskPayloadDeep({
+        success: true,
+        ...cachedOut,
+        dataQuality: dq,
+        degradedReason: fromCache.degradedReason ?? null,
+        deskTimeframe: timeframe,
+        deskReferenceDate: date || fromCache.deskReferenceDate || null,
+        timeframe,
+        date: date || null,
+        cached: true,
+      })
+    );
   }
 
   if (!forceRefresh) {
@@ -180,16 +183,18 @@ module.exports = async (req, res) => {
         );
         setCache(cacheKey, { ...payload, dataQuality: 'pipeline', degradedReason: null });
         res.setHeader('Cache-Control', 'private, max-age=30');
-        return res.status(200).json({
-          success: true,
-          ...payload,
-          dataQuality: 'pipeline',
-          degradedReason: null,
-          timeframe,
-          date: date || null,
-          cached: true,
-          sourceOfTruth: 'mysql-pipeline',
-        });
+        return res.status(200).json(
+          sanitizeTraderDeskPayloadDeep({
+            success: true,
+            ...payload,
+            dataQuality: 'pipeline',
+            degradedReason: null,
+            timeframe,
+            date: date || null,
+            cached: true,
+            sourceOfTruth: 'mysql-pipeline',
+          })
+        );
       }
     } catch (error) {
       console.warn('[trader-deck] stored market-intelligence read failed:', error.message || error);
@@ -219,9 +224,8 @@ module.exports = async (req, res) => {
     );
     setCache(cacheKey, { ...payload, dataQuality: 'live', degradedReason: null });
     res.setHeader('Cache-Control', 'private, max-age=30');
-    res
-      .status(200)
-      .json({
+    res.status(200).json(
+      sanitizeTraderDeskPayloadDeep({
         success: true,
         ...payload,
         dataQuality: 'live',
@@ -229,7 +233,8 @@ module.exports = async (req, res) => {
         timeframe,
         date: date || null,
         cached: false,
-      });
+      })
+    );
   } catch (err) {
     console.warn('[trader-deck] market-intelligence error:', err.message || err);
     const degradedReason = String(err.message || err || 'engine_failed').slice(0, 220);
@@ -245,14 +250,16 @@ module.exports = async (req, res) => {
       },
       { timeframe },
     );
-    res.status(200).json({
-      success: true,
-      ...fallback,
-      dataQuality: 'fallback',
-      degradedReason,
-      timeframe,
-      date: date || null,
-      cached: false,
-    });
+    res.status(200).json(
+      sanitizeTraderDeskPayloadDeep({
+        success: true,
+        ...fallback,
+        dataQuality: 'fallback',
+        degradedReason,
+        timeframe,
+        date: date || null,
+        cached: false,
+      })
+    );
   }
 };

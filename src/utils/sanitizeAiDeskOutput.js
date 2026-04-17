@@ -45,7 +45,7 @@ function stripModelInternalExposition(text) {
     ''
   );
 
-  const needles = ['\u003cthinking', '\u003cthink'];
+  const needles = ['\u003c' + 'thinking', '\u003c' + 'think'];
   let best = -1;
   for (const n of needles) {
     const idx = s.indexOf(n);
