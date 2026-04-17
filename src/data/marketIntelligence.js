@@ -5,9 +5,7 @@
  */
 
 import Api from '../services/Api';
-import * as sanitizeAiDeskOutput from '../utils/sanitizeAiDeskOutput';
-
-const { sanitizeTraderDeskPayloadDeep } = sanitizeAiDeskOutput;
+import { sanitizeTraderDeskPayloadDeep } from '../utils/sanitizeAiDeskOutput.mjs';
 
 export const DEFAULT_MARKET_REGIME = {
   currentRegime: '',

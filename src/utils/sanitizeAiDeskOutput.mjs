@@ -1,11 +1,8 @@
 /**
  * Strip model-internal / chain-of-thought text from Trader Deck UI.
- * CommonJS for Node `api/trader-deck` only. The React app imports
- * `sanitizeAiDeskOutput.mjs` (pure ESM) so the browser bundle never runs `module.exports`.
- * @see sanitizeAiDeskOutput.mjs — keep behavior in sync
+ * ESM only — used by the React app. Node API uses `sanitizeAiDeskOutput.js` (CommonJS).
+ * @see sanitizeAiDeskOutput.js (keep logic in sync)
  */
-
-'use strict';
 
 const PAIRED_INTERNAL =
   /<(?:think|thinking|thought|reasoning|analysis|reflect|reflection|tool_call|plan|scratchpad|chain_of_thought|output|system|assistant|user|redacted_thinking|redacted_reasoning)(?:\s[^>]*)?>[\s\S]*?<\/(?:think|thinking|thought|reasoning|analysis|reflect|reflection|tool_call|plan|scratchpad|chain_of_thought|output|system|assistant|user|redacted_thinking|redacted_reasoning)>/gi;
@@ -29,7 +26,7 @@ function decodeAngleEntities(s) {
     .replace(/&#x3e;/gi, '>');
 }
 
-function stripModelInternalExposition(text) {
+export function stripModelInternalExposition(text) {
   if (text == null || typeof text !== 'string') return '';
   let s = decodeAngleEntities(text);
 
@@ -58,7 +55,7 @@ function stripModelInternalExposition(text) {
   return s.replace(/\s{2,}/g, ' ').trim();
 }
 
-function sanitizeTraderDeskPayloadDeep(value, depth = 0) {
+export function sanitizeTraderDeskPayloadDeep(value, depth = 0) {
   if (depth > 18) return value;
   if (typeof value === 'string') return stripModelInternalExposition(value);
   if (Array.isArray(value)) return value.map((v) => sanitizeTraderDeskPayloadDeep(v, depth + 1));
@@ -72,7 +69,7 @@ function sanitizeTraderDeskPayloadDeep(value, depth = 0) {
   return value;
 }
 
-function sanitizeAiTradingPriorities(lines) {
+export function sanitizeAiTradingPriorities(lines) {
   if (!Array.isArray(lines)) return [];
   return lines
     .map((x) => stripModelInternalExposition(String(x || '')))
@@ -80,7 +77,7 @@ function sanitizeAiTradingPriorities(lines) {
     .slice(0, 12);
 }
 
-function sanitizeAiDeskPayloadFields(payload) {
+export function sanitizeAiDeskPayloadFields(payload) {
   if (!payload || typeof payload !== 'object') return payload;
   const brief = stripModelInternalExposition(
     typeof payload.aiSessionBrief === 'string' ? payload.aiSessionBrief : ''
@@ -94,10 +91,3 @@ function sanitizeAiDeskPayloadFields(payload) {
     aiTradingPriorities: pri,
   });
 }
-
-module.exports = {
-  stripModelInternalExposition,
-  sanitizeAiTradingPriorities,
-  sanitizeAiDeskPayloadFields,
-  sanitizeTraderDeskPayloadDeep,
-};

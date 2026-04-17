@@ -12,9 +12,7 @@ import ChangeList from '../../components/trader-deck/ChangeList';
 import FocusList from '../../components/trader-deck/FocusList';
 import RiskRadarList from '../../components/trader-deck/RiskRadarList';
 import { getMarketIntelligence, SEED_MARKET_INTELLIGENCE } from '../../data/marketIntelligence';
-import * as sanitizeAiDeskOutput from '../../utils/sanitizeAiDeskOutput';
-
-const { sanitizeTraderDeskPayloadDeep } = sanitizeAiDeskOutput;
+import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput.mjs';
 import TraderDeskDataQualityBanner from './TraderDeskDataQualityBanner';
 import MarketDecoderView from './MarketDecoderView';
 import '../../styles/TraderDeckMarket.css';

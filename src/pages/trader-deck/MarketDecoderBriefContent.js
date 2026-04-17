@@ -12,17 +12,13 @@ import {
   DecoderEventRiskHeader,
 } from './MarketDecoderBriefEnhancements';
 import { formatPairLabel } from '../../lib/market/formatPairLabel';
-import * as sanitizeAiDeskOutput from '../../utils/sanitizeAiDeskOutput';
-import * as decoderDisplayFormat from '../../utils/decoderDisplayFormat';
-
-const { sanitizeTraderDeskPayloadDeep } = sanitizeAiDeskOutput;
-
-const {
+import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput.mjs';
+import {
   buildDecoderPriceContext,
   formatDecoderPriceOrDash,
   formatCrossTilePrice,
   formatDecoderMetricPercent,
-} = decoderDisplayFormat;
+} from '../../utils/decoderDisplayFormat.mjs';
 
 function formatPct(n) {
   if (n == null || Number.isNaN(Number(n))) {

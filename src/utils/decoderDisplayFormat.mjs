@@ -1,11 +1,8 @@
 /**
  * Market Decoder — instrument-aware price / metric display.
- * CommonJS for Node `api/trader-deck` only. The React app must import
- * `decoderDisplayFormat.mjs` (pure ESM) so Webpack never mixes CJS in browser chunks.
- * @see decoderDisplayFormat.mjs — keep behavior in sync
+ * ESM only — React. Node API uses `decoderDisplayFormat.js` (CommonJS).
+ * @see decoderDisplayFormat.js (keep logic in sync)
  */
-
-'use strict';
 
 function trimTrailingDecimalZeros(str) {
   if (str == null || typeof str !== 'string') return str;
@@ -33,7 +30,7 @@ function isFxJpyPair(display, quote) {
   return u.length === 6 && u.endsWith('JPY');
 }
 
-function buildDecoderPriceContext(brief) {
+export function buildDecoderPriceContext(brief) {
   if (!brief || typeof brief !== 'object') {
     return { marketType: 'FX', quote: 'USD', display: '', canonical: '', assetLike: 'other' };
   }
@@ -51,7 +48,7 @@ function buildDecoderPriceContext(brief) {
   };
 }
 
-function buildDecoderPriceContextFromInstrument(instrument) {
+export function buildDecoderPriceContextFromInstrument(instrument) {
   const inst = instrument || {};
   const mt = inst.marketType || 'FX';
   const display = String(inst.display || '').toUpperCase().replace(/[^A-Z]/g, '');
@@ -88,10 +85,7 @@ function maxDecimalsForPrice(n, ctx) {
   return 4;
 }
 
-/**
- * @returns {string|null} null if value not a finite number
- */
-function formatDecoderPriceRaw(value, ctx) {
+export function formatDecoderPriceRaw(value, ctx) {
   const n = Number(value);
   if (value == null || value === '' || !Number.isFinite(n)) return null;
   const merged = ctx && typeof ctx === 'object' ? ctx : {};
@@ -106,16 +100,16 @@ function formatDecoderPriceRaw(value, ctx) {
   return trimTrailingDecimalZeros(n.toFixed(md));
 }
 
-function formatDecoderPriceOrDash(value, ctx) {
+export function formatDecoderPriceOrDash(value, ctx) {
   const s = formatDecoderPriceRaw(value, ctx);
   return s == null ? '—' : s;
 }
 
-function formatDecoderPriceForInstrument(value, instrument) {
+export function formatDecoderPriceForInstrument(value, instrument) {
   return formatDecoderPriceRaw(value, buildDecoderPriceContextFromInstrument(instrument));
 }
 
-function crossTileContext(tileId) {
+export function crossTileContext(tileId) {
   const id = String(tileId || '').toLowerCase();
   if (id === 'spy') {
     return { marketType: 'Equity', quote: 'USD', display: 'SPY', canonical: 'SPY', assetLike: 'other' };
@@ -132,26 +126,15 @@ function crossTileContext(tileId) {
   return { marketType: 'Equity', quote: 'USD', display: '', canonical: '', assetLike: 'other' };
 }
 
-function formatCrossTilePrice(price, tileId) {
+export function formatCrossTilePrice(price, tileId) {
   return formatDecoderPriceOrDash(price, crossTileContext(tileId));
 }
 
-/** Percent metrics (ADR, distance %, etc.) — not the session change % (keep 2dp there). */
-function formatDecoderMetricPercent(value, maxDecimals = 2) {
+export function formatDecoderMetricPercent(value, maxDecimals = 2) {
   const n = Number(value);
   if (value == null || !Number.isFinite(n)) return null;
   const md = Math.min(4, Math.max(0, maxDecimals));
   return trimTrailingDecimalZeros(n.toFixed(md));
 }
 
-module.exports = {
-  trimTrailingDecimalZeros,
-  buildDecoderPriceContext,
-  buildDecoderPriceContextFromInstrument,
-  formatDecoderPriceRaw,
-  formatDecoderPriceOrDash,
-  formatDecoderPriceForInstrument,
-  crossTileContext,
-  formatCrossTilePrice,
-  formatDecoderMetricPercent,
-};
+export { trimTrailingDecimalZeros };
