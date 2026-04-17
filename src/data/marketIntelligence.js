@@ -5,6 +5,7 @@
  */
 
 import Api from '../services/Api';
+import { stripModelInternalExposition, sanitizeAiTradingPriorities } from '../utils/sanitizeAiDeskOutput';
 
 export const DEFAULT_MARKET_REGIME = {
   currentRegime: '',
@@ -308,8 +309,12 @@ function mapBackendToDashboard(apiData) {
       ? apiData.riskEngine
       : SEED_MARKET_INTELLIGENCE.riskEngine,
     updatedAt: apiData.updatedAt || null,
-    aiSessionBrief: typeof apiData.aiSessionBrief === 'string' ? apiData.aiSessionBrief : '',
-    aiTradingPriorities: Array.isArray(apiData.aiTradingPriorities) ? apiData.aiTradingPriorities : [],
+    aiSessionBrief: stripModelInternalExposition(
+      typeof apiData.aiSessionBrief === 'string' ? apiData.aiSessionBrief : ''
+    ),
+    aiTradingPriorities: sanitizeAiTradingPriorities(
+      Array.isArray(apiData.aiTradingPriorities) ? apiData.aiTradingPriorities : []
+    ),
     headlineSample: Array.isArray(apiData.headlineSample)
       ? apiData.headlineSample.map((h) => String(h || '').trim()).filter(Boolean)
       : SEED_MARKET_INTELLIGENCE.headlineSample || [],
@@ -325,6 +330,8 @@ function mapBackendToDashboard(apiData) {
       ? apiData.outlookDataStatus
       : null,
     marketOutlookVersion: apiData.marketOutlookVersion != null ? apiData.marketOutlookVersion : null,
+    dataQuality: apiData.dataQuality || 'live',
+    degradedReason: apiData.degradedReason ?? null,
   };
 }
 
@@ -336,7 +343,19 @@ export async function getMarketIntelligence({ refresh = false, timeframe = 'dail
       return mapBackendToDashboard(data);
     }
   } catch (e) {
-    // Fallback to seed on network or API error
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.warn('[getMarketIntelligence] request failed, using offline seed', e?.message || e);
+    }
+    return {
+      ...SEED_MARKET_INTELLIGENCE,
+      dataQuality: 'client_seed',
+      degradedReason: e?.message || 'request_failed',
+    };
   }
-  return SEED_MARKET_INTELLIGENCE;
+  return {
+    ...SEED_MARKET_INTELLIGENCE,
+    dataQuality: 'client_seed',
+    degradedReason: 'invalid_or_empty_response',
+  };
 }

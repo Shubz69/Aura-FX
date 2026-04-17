@@ -4,6 +4,7 @@
  */
 
 const { STATE_LABELS } = require('./marketOutlookSessionContext');
+const { sanitizeAiDeskPayloadFields } = require('../../src/utils/sanitizeAiDeskOutput');
 
 function clamp(n, lo, hi) {
   const x = Number(n);
@@ -637,7 +638,7 @@ function enrichMarketOutlookPayload(payload, opts = {}) {
     outlookPulse: pulseOutlook,
   };
 
-  return {
+  return sanitizeAiDeskPayloadFields({
     ...payload,
     marketRegime,
     marketPulse,
@@ -651,7 +652,7 @@ function enrichMarketOutlookPayload(payload, opts = {}) {
     outlookRiskContext,
     outlookDataStatus,
     marketOutlookVersion: 2,
-  };
+  });
 }
 
 module.exports = {

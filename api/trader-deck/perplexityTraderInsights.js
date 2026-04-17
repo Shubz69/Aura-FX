@@ -4,6 +4,10 @@
  */
 
 const { getPerplexityAutomationModel } = require('../ai/perplexity-config');
+const {
+  stripModelInternalExposition,
+  sanitizeAiTradingPriorities,
+} = require('../../src/utils/sanitizeAiDeskOutput');
 const SOURCE_MARKER_RE = /(https?:\/\/|www\.|source\s*:|sources\s*:|according to|reuters|bloomberg|fmp|finnhub|forex factory|trading economics)/i;
 
 function getAutomationModel() {
@@ -89,18 +93,20 @@ async function enrichTraderDeckPayload(payload) {
       const cleaned = text.replace(/^```json\s*|\s*```$/g, '').trim();
       parsed = JSON.parse(cleaned);
     } catch {
+      const raw = stripStars(text).slice(0, 1200);
       return {
-        aiSessionBrief: stripStars(text).slice(0, 1200),
+        aiSessionBrief: stripModelInternalExposition(raw),
         aiTradingPriorities: [],
       };
     }
-    const brief = sanitizeLine(stripStars(parsed.sessionBrief || parsed.session_brief || ''));
-    const pri = Array.isArray(parsed.tradingPriorities)
-      ? parsed.tradingPriorities
-        .map((x) => sanitizeLine(stripStars(String(x || ''))))
-        .filter(Boolean)
-        .slice(0, 6)
-      : [];
+    const brief = stripModelInternalExposition(
+      sanitizeLine(stripStars(parsed.sessionBrief || parsed.session_brief || ''))
+    );
+    const pri = sanitizeAiTradingPriorities(
+      Array.isArray(parsed.tradingPriorities)
+        ? parsed.tradingPriorities.map((x) => sanitizeLine(stripStars(String(x || ''))))
+        : []
+    ).slice(0, 6);
     if (!brief && pri.length === 0) return null;
     assertNoSourceMarkers(`${brief}\n${pri.join('\n')}`);
     return { aiSessionBrief: brief, aiTradingPriorities: pri };

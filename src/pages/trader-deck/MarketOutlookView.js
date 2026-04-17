@@ -15,6 +15,8 @@ import RiskRadarList from '../../components/trader-deck/RiskRadarList';
 import SessionContextPanel from '../../components/trader-deck/SessionContextPanel';
 import { getTraderDeckIntelStorageYmd } from '../../lib/trader-deck/deskDates';
 import { formatRelativeFreshness } from '../../lib/trader-deck/marketOutlookDisplayFormatters';
+import TraderDeskDataQualityBanner from '../../components/trader-deck/TraderDeskDataQualityBanner';
+import { stripModelInternalExposition, sanitizeAiTradingPriorities } from '../../utils/sanitizeAiDeskOutput';
 
 function buildTimelineFallback(marketChangesToday, tf) {
   const label = tf === 'weekly' ? 'Week' : 'Session';
@@ -123,14 +125,18 @@ function normalizeForUI(data, period = 'daily') {
     riskEngine: data.riskEngine || null,
     riskRadarDate: data.riskRadarDate || null,
     updatedAt: data.updatedAt,
-    aiSessionBrief: data.aiSessionBrief || '',
-    aiTradingPriorities: Array.isArray(data.aiTradingPriorities) ? data.aiTradingPriorities : [],
+    aiSessionBrief: stripModelInternalExposition(data.aiSessionBrief || ''),
+    aiTradingPriorities: sanitizeAiTradingPriorities(
+      Array.isArray(data.aiTradingPriorities) ? data.aiTradingPriorities : []
+    ),
     headlineSample,
     headlineInsights,
     sessionContext: data.sessionContext && typeof data.sessionContext === 'object' ? data.sessionContext : null,
     outlookRiskContext: data.outlookRiskContext && typeof data.outlookRiskContext === 'object' ? data.outlookRiskContext : null,
     outlookDataStatus,
     marketOutlookVersion: data.marketOutlookVersion != null ? data.marketOutlookVersion : null,
+    dataQuality: data.dataQuality || 'live',
+    degradedReason: data.degradedReason ?? null,
   };
 }
 
@@ -172,6 +178,8 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
   /** 'saved' = admin JSON in DB; 'live' = pulled from live feeds */
   const dataSourceRef = useRef('loading');
   const liveRefreshInFlightRef = useRef(false);
+  /** React state mirror for banners: saved outlook row vs live GET intelligence */
+  const [contentSource, setContentSource] = useState('loading');
 
   useEffect(() => {
     let cancelled = false;
@@ -179,6 +187,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     setError(null);
     setSaveSuccess(null);
     dataSourceRef.current = 'loading';
+    setContentSource('loading');
     const dateStr = getTraderDeckIntelStorageYmd(selectedDate, period);
     Api.getTraderDeckContent(type, dateStr)
       .then((res) => {
@@ -186,6 +195,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
         const payload = res.data?.payload;
         if (payload && typeof payload === 'object') {
           dataSourceRef.current = 'saved';
+          setContentSource('saved');
           const hasOverrideEnvelope = payload.manualOverrides && payload.botPayload;
           const loadSaved = (liveRaw) => {
             const livePayload = liveRaw && typeof liveRaw === 'object' ? liveRaw : null;
@@ -205,7 +215,12 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     return { ...prev, riskRadar: normalizedLive.riskRadar };
                   });
                 })
-                .catch(() => {});
+                .catch((e) => {
+                  if (process.env.NODE_ENV === 'development') {
+                    // eslint-disable-next-line no-console
+                    console.warn('[MarketOutlookView] risk radar enrichment failed', e?.message || e);
+                  }
+                });
             }
           };
           if (hasOverrideEnvelope) {
@@ -223,6 +238,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
           return;
         }
         dataSourceRef.current = 'live';
+        setContentSource('live');
         return getMarketIntelligence({ refresh: false, timeframe: period, date: dateStr }).then((raw) => {
           if (cancelled) return;
           const normalized = normalizeForUI(raw, period) || normalizeForUI(SEED_MARKET_INTELLIGENCE, period);
@@ -232,6 +248,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       .catch(() => {
         if (cancelled) return;
         dataSourceRef.current = 'live';
+        setContentSource('live');
         const normalized = normalizeForUI(SEED_MARKET_INTELLIGENCE, period);
         setData(normalized);
         setError('Using fallback data');
@@ -252,7 +269,12 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
           const normalized = normalizeForUI(raw, period);
           if (normalized) setData(normalized);
         })
-        .catch(() => {})
+        .catch((e) => {
+          if (process.env.NODE_ENV === 'development') {
+            // eslint-disable-next-line no-console
+            console.warn('[MarketOutlookView] live interval refresh failed', e?.message || e);
+          }
+        })
         .finally(() => {
           liveRefreshInFlightRef.current = false;
         });
@@ -281,6 +303,8 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       marketChangesToday: (ui.marketChangesToday || []).map(toStr),
       traderFocus: (ui.traderFocus || []).map(toStr),
       riskRadar: (ui.riskRadar || []).map(toRiskRow),
+      dataQuality: ui.dataQuality || 'live',
+      degradedReason: ui.degradedReason ?? null,
     });
     setEditMode(true);
   };
@@ -333,7 +357,18 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
   }
 
   const ui = data || normalizeForUI(SEED_MARKET_INTELLIGENCE, period);
-  const showing = editMode && editDraft ? editDraft : ui;
+  const showing =
+    editMode && editDraft
+      ? {
+          ...editDraft,
+          dataQuality: editDraft.dataQuality ?? ui.dataQuality ?? 'live',
+          degradedReason: editDraft.degradedReason ?? ui.degradedReason ?? null,
+        }
+      : ui;
+
+  const bannerDataQuality =
+    contentSource === 'saved' ? 'pipeline' : (ui.dataQuality || 'live');
+  const bannerDegradedReason = contentSource === 'saved' ? null : (ui.degradedReason ?? null);
   const {
     marketRegime,
     marketPulse,
@@ -541,6 +576,10 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     <>
       {error && <p className="td-mi-fallback-msg" role="status">{error}</p>}
       {saveSuccess && <p className="td-mi-save-success" role="status">{saveSuccess}</p>}
+      <TraderDeskDataQualityBanner
+        dataQuality={bannerDataQuality}
+        degradedReason={bannerDegradedReason}
+      />
       <div className="td-deck-mo-root td-deck-mo-outlook td-deck-mo-outlook--concept">
           <header className="td-outlook-unified-header td-deck-mo-outlook-hero td-outlook-concept-page-header">
             <div className="td-deck-mo-outlook-hero-text">
