@@ -142,6 +142,27 @@ function canonicalDeskCategoryKind(k) {
   return raw;
 }
 
+/**
+ * Slug returned in GET /api/trader-deck/content `briefs[].briefKind` so the React list matches
+ * `INTEL_API_BRIEF_KIND_RE`. Maps legacy `brief_kind` rows (equities, global_macro, …) onto the
+ * eight `aura_institutional_{daily|weekly}_*` WFA kinds. Returns null if the row is not displayable
+ * as institutional intel (e.g. `general`, bare `aura_institutional_daily` with no sleeve).
+ */
+function intelResponseBriefKindSlug(briefKind, period) {
+  const p = period === 'weekly' ? 'weekly' : 'daily';
+  const u = String(briefKind || '').toLowerCase().trim();
+  if (!u) return null;
+  if (p === 'daily' && u === 'aura_sunday_market_open') return u;
+  const dailyList = INSTITUTIONAL_DAILY_WFA_KINDS;
+  const weeklyList = INSTITUTIONAL_WEEKLY_WFA_KINDS;
+  if (p === 'daily' && dailyList.includes(u)) return u;
+  if (p === 'weekly' && weeklyList.includes(u)) return u;
+  const canon = canonicalDeskCategoryKind(u);
+  if (!canon || !KIND_SET.has(canon)) return null;
+  const prefix = p === 'weekly' ? 'aura_institutional_weekly_' : 'aura_institutional_daily_';
+  return `${prefix}${canon}`;
+}
+
 function deskCategoryDisplayName(canonicalKind) {
   const c = String(canonicalKind || '').toLowerCase();
   return DESK_CATEGORY_DISPLAY_NAME[c] || canonicalKind;
@@ -183,6 +204,7 @@ module.exports = {
   institutionalWeeklyWfaKinds,
   institutionalDailyWfaKinds,
   canonicalDeskCategoryKind,
+  intelResponseBriefKindSlug,
   deskCategoryDisplayName,
   legacyAliasesForCanonical,
   expectedIntelAutomationRowCount,
