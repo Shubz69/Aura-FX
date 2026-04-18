@@ -57,7 +57,9 @@ function sampleWeeklyWfaPayload() {
       mkWeeklyInstr('USDCHF'),
     ],
     whatMattersStructurally: mk(320),
-    weekStructureMondayToFriday: mk(260),
+    earlyWeekMonTue: mk(200),
+    midweekWed: mk(180),
+    endWeekThuFri: mk(200),
     forwardOutlook: mk(220),
     weekConclusion: mk(220),
     scenarioContinuation: mk(180),
@@ -122,7 +124,7 @@ function run() {
     weekdayHeading: 'MONDAY',
     parsedIn: dp,
   });
-  assert.ok(/\bMACRO INTRO AND STRUCTURAL FLOW\b/.test(assembled), 'daily body macro section');
+  assert.ok(/\bMACRO INTRO \+ STRUCTURAL FLOW\b/.test(assembled), 'daily body macro section');
   assert.ok(/\bOVERALL DAILY STRUCTURE\b/.test(assembled), 'daily overall structure');
 
   console.log('institutionalAuraBrief.selftest: all assertions passed.');

@@ -34,6 +34,8 @@ const {
   deskCategoryDisplayName,
   canonicalDeskCategoryKind,
   legacyAliasesForCanonical,
+  INSTITUTIONAL_DAILY_WFA_KINDS,
+  INSTITUTIONAL_WEEKLY_WFA_KINDS,
 } = require('../deskBriefKinds');
 const {
   BRIEF_KIND_ORDER,
@@ -45,30 +47,32 @@ const {
   fetchAutomationQuoteWithFallback,
 } = briefUniverse;
 const BRIEF_KIND_LABELS = {
-  global_macro: 'Global Macro',
-  equities: 'Equities',
   forex: 'Forex',
-  commodities: 'Commodities',
-  fixed_income: 'Fixed Income',
   crypto: 'Crypto',
-  geopolitics: 'Geopolitics',
-  market_sentiment: 'Market Sentiment',
+  commodities: 'Commodities',
+  etfs: 'ETFs',
+  stocks: 'Stocks',
+  indices: 'Indices',
+  bonds: 'Bonds',
+  futures: 'Futures',
   aura_institutional_daily: 'Aura FX Institutional — Daily (legacy)',
   aura_institutional_daily_forex: 'Daily Brief — Forex',
   aura_institutional_daily_crypto: 'Daily Brief — Crypto',
   aura_institutional_daily_commodities: 'Daily Brief — Commodities',
-  aura_institutional_daily_fixed_income: 'Daily Brief — Fixed Income',
-  aura_institutional_daily_equities: 'Daily Brief — Equities',
-  aura_institutional_daily_indices: 'Daily Brief — Indices',
+  aura_institutional_daily_etfs: 'Daily Brief — ETFs',
   aura_institutional_daily_stocks: 'Daily Brief — Stocks',
+  aura_institutional_daily_indices: 'Daily Brief — Indices',
+  aura_institutional_daily_bonds: 'Daily Brief — Bonds',
+  aura_institutional_daily_futures: 'Daily Brief — Futures',
   aura_institutional_weekly: 'Aura FX Institutional — Weekly (legacy)',
   aura_institutional_weekly_forex: 'Weekly Fundamental — Forex',
   aura_institutional_weekly_crypto: 'Weekly Fundamental — Crypto',
   aura_institutional_weekly_commodities: 'Weekly Fundamental — Commodities',
-  aura_institutional_weekly_fixed_income: 'Weekly Fundamental — Fixed Income',
-  aura_institutional_weekly_equities: 'Weekly Fundamental — Equities',
-  aura_institutional_weekly_indices: 'Weekly Fundamental — Indices',
+  aura_institutional_weekly_etfs: 'Weekly Fundamental — ETFs',
   aura_institutional_weekly_stocks: 'Weekly Fundamental — Stocks',
+  aura_institutional_weekly_indices: 'Weekly Fundamental — Indices',
+  aura_institutional_weekly_bonds: 'Weekly Fundamental — Bonds',
+  aura_institutional_weekly_futures: 'Weekly Fundamental — Futures',
   aura_sunday_market_open: 'Sunday Market Open Brief',
 };
 const {
@@ -80,6 +84,7 @@ const {
   scoreAndSelectTopInstruments,
   buildQuoteCacheForSymbols,
   collectAllAutomationUniverseSymbols,
+  getUniverseSymbols,
   fallbackTop5ForKind,
 } = briefUniverse;
 
@@ -241,28 +246,19 @@ const STRUCTURED_DATA_FIRST_RULE =
   + 'Do not use outside or "typical" levels unless they appear explicitly in the JSON.';
 
 const CATEGORY_LOGIC_RULES = {
-  global_macro: 'Focus on growth, inflation, liquidity, CB path, and cross-asset leadership (indices, yields, FX, gold).',
-  equities: 'Focus on earnings revisions, sector breadth, positioning and stock-specific catalyst windows.',
   forex: 'Focus on relative-rate spreads, central-bank divergence, session behaviour and event-volatility.',
-  commodities: 'Focus on supply-demand balances, inventories, USD pass-through and geopolitical transmission.',
-  fixed_income: 'Focus on curve shape, duration, policy path repricing and auction/data calendar transmission.',
   crypto: 'Focus on liquidity, ETF/regulatory headlines, majors vs alts and macro risk correlation.',
-  geopolitics: 'Focus on conflict, sanctions, trade and energy security transmission into indices, FX, commodities and rates.',
-  market_sentiment: 'Focus on risk appetite, breadth, credit/duration proxies and factor tone versus macro surprises.',
+  commodities: 'Focus on supply-demand balances, inventories, USD pass-through and geopolitical transmission.',
+  etfs: 'Focus on sector/factor ETF leadership, flows, and macro beta versus yields and USD.',
+  stocks: 'Focus on earnings revisions, single-name breadth, positioning and idiosyncratic catalysts.',
+  indices: 'Focus on benchmark leadership, breadth, futures/cash proxies, vol and liquidity.',
+  bonds: 'Focus on curve shape, duration, policy path repricing and auction/data calendar transmission.',
+  futures: 'Focus on index and commodity futures transmission versus yields, USD, and energy.',
+  global_macro: 'Focus on growth, inflation, liquidity, CB path, and cross-asset leadership (indices, yields, FX, gold).',
 };
 
 /** PDF fallback: three observation lines per sleeve so automated scaffolds are not copy-paste across the eight briefs. */
 const FALLBACK_KEY_TECH_OBS_BY_KIND = {
-  global_macro: [
-    'Cross-asset leadership often shifts before single-market charts confirm.',
-    'Liquidity pockets around macro prints can invert short-term correlations.',
-    'Curve and FX frequently transmit before equity breadth stabilises.',
-  ],
-  equities: [
-    'Sector breadth vs index pin risk — avoid treating one mega-cap print as the whole tape.',
-    'Guidance beats/misses matter more than headline EPS when multiples are stretched.',
-    'Respect earnings blackout windows and flow concentration into liquid single names.',
-  ],
   forex: [
     'Relative rates dominate spot — surprise is often in the spread, not the headline.',
     'Asia liquidity gaps can fake breakouts before London reprices the narrative.',
@@ -273,7 +269,7 @@ const FALLBACK_KEY_TECH_OBS_BY_KIND = {
     'USD pass-through differs by complex — energy vs metals often diverge.',
     'Geopolitical premia can decay fast once flows are positioned.',
   ],
-  fixed_income: [
+  bonds: [
     'Curve shape trades often front-run single-duration directional bets.',
     'Auction tails and dealer positioning matter alongside headline CPI prints.',
     'Real yield narrative can flip even when nominal yields look sticky.',
@@ -283,21 +279,36 @@ const FALLBACK_KEY_TECH_OBS_BY_KIND = {
     'ETF/regulatory headlines can gap majors while alts lag liquidity.',
     'Treat macro correlation as conditional — leadership rotates quickly.',
   ],
-  geopolitics: [
-    'Risk premium often embeds first in energy and FX before equities stabilise.',
-    'Sanctions and trade headlines can reprice liquidity without a clean macro print.',
-    'Haven flows can compress correlation stability across risk assets.',
+  etfs: [
+    'Sector sleeves often rotate before headline indices confirm the narrative.',
+    'Flows into liquid ETFs can front-run single-name earnings windows.',
+    'Factor beta to yields shows up in SMH/XLK leadership versus defensives.',
   ],
-  market_sentiment: [
-    'Credit and small-cap breadth often lead broad risk appetite.',
-    'Factor rotation shows up in flows before chart trends confirm.',
-    'Duration and equity beta can diverge when growth expectations shift.',
+  stocks: [
+    'Sector breadth vs index pin risk — avoid treating one mega-cap print as the whole tape.',
+    'Guidance beats/misses matter more than headline EPS when multiples are stretched.',
+    'Respect earnings blackout windows and flow concentration into liquid single names.',
+  ],
+  indices: [
+    'Benchmark futures often discount macro prints before cash indices catch up.',
+    'Breadth divergence warns before headline index breaks range.',
+    'Vol compression into major releases is common; expansion follows surprise.',
+  ],
+  futures: [
+    'Index and energy futures often lead spot when liquidity is patchy.',
+    'Roll windows can distort apparent trend; respect calendar spreads.',
+    'Cross-margin moves link rates and equity index futures in macro shocks.',
+  ],
+  global_macro: [
+    'Cross-asset leadership often shifts before single-market charts confirm.',
+    'Liquidity pockets around macro prints can invert short-term correlations.',
+    'Curve and FX frequently transmit before equity breadth stabilises.',
   ],
 };
 
 function fallbackKeyTechObservationsForKind(briefKind, symbolIndex = 0) {
   const k = normalizeBriefKind(briefKind);
-  const pool = FALLBACK_KEY_TECH_OBS_BY_KIND[k] || FALLBACK_KEY_TECH_OBS_BY_KIND.equities;
+  const pool = FALLBACK_KEY_TECH_OBS_BY_KIND[k] || FALLBACK_KEY_TECH_OBS_BY_KIND.stocks;
   const n = pool.length;
   const i = Number(symbolIndex) || 0;
   return [0, 1, 2].map((j) => pool[(i + j) % n]);
@@ -306,14 +317,6 @@ function fallbackKeyTechObservationsForKind(briefKind, symbolIndex = 0) {
 function weeklyFallbackScenariosForKind(briefKind) {
   const k = normalizeBriefKind(briefKind);
   const map = {
-    global_macro: [
-      'Coordinated easing narrative: curves bull-steepen; equities and credit tighten together.',
-      'Sticky inflation repricing: front-end yields lift; equity multiples compress selectively.',
-    ],
-    equities: [
-      'Soft-landing persistence: earnings beats broaden; cyclicals repair versus defensives.',
-      'Growth scare: yields dip; defensives and quality factor lead while high-beta lags.',
-    ],
     forex: [
       'Central-bank divergence: relative hikes or dovish pivots dominate G10 ranking shifts.',
       'Risk-proxy swing: USD weakens on soft-landing hopes; reverses on haven bid.',
@@ -322,7 +325,7 @@ function weeklyFallbackScenariosForKind(briefKind) {
       'Supply disruption bid: energy and metals resume leadership on inventory shock.',
       'Demand worry: industrial complexes fade as growth data soften.',
     ],
-    fixed_income: [
+    bonds: [
       'Curve steepener: growth surprises fade; duration catches a bid into data.',
       'Bear flattening: inflation prints keep front-end yields pinned higher.',
     ],
@@ -330,16 +333,28 @@ function weeklyFallbackScenariosForKind(briefKind) {
       'Liquidity-linked calm: majors track risk assets inside a narrowing range.',
       'Liquidity crunch: correlated drawdown across high-beta tokens.',
     ],
-    geopolitics: [
-      'Risk-premium spike: energy and havens outperform until policy clarity returns.',
-      'Normalization path: geopolitical headline fade reduces vol but leaves positioning skewed.',
+    etfs: [
+      'Sector rotation lift: cyclical ETFs outperform as rates stabilize.',
+      'Defensive bid: staples and low-vol sleeves lead on growth doubt.',
     ],
-    market_sentiment: [
-      'Breadth recovery: credit and cyclicals outperform as systematic flows return.',
-      'Risk-off glide: redemption pressure in crowded sleeves forces de-grossing.',
+    stocks: [
+      'Soft-landing persistence: earnings beats broaden; cyclicals repair versus defensives.',
+      'Growth scare: yields dip; defensives and quality factor lead while high-beta lags.',
+    ],
+    indices: [
+      'Trend persistence: benchmarks grind higher on liquidity and benign data.',
+      'Range chop: headline indices stall as breadth narrows.',
+    ],
+    futures: [
+      'Trend continuation: futures maintain leadership versus cash on flows.',
+      'Liquidity unwind: leveraged positioning cuts amplify futures ranges.',
+    ],
+    global_macro: [
+      'Coordinated easing narrative: curves bull-steepen; equities and credit tighten together.',
+      'Sticky inflation repricing: front-end yields lift; equity multiples compress selectively.',
     ],
   };
-  return map[k] || map.equities;
+  return map[k] || map.stocks;
 }
 
 function briefFileDataToUtf8(raw) {
@@ -660,7 +675,7 @@ function buildFactPack({
   market,
   econ,
   news,
-  briefKind = 'equities',
+  briefKind = 'stocks',
   topInstruments = [],
   liveQuotes = [],
   instrumentScoreRows = [],
@@ -695,7 +710,10 @@ function buildFactPack({
   return {
     period,
     briefKind: normalizedKind,
-    briefKindLabel: BRIEF_KIND_LABELS[normalizedKind] || BRIEF_KIND_LABELS.equities,
+    briefKindLabel:
+      BRIEF_KIND_LABELS[normalizedKind] ||
+      deskCategoryDisplayName(canonicalDeskCategoryKind(normalizedKind)) ||
+      'Desk',
     contextQuality: {
       headlineCount: filteredNews.length,
       calendarCount: calSlice.length,
@@ -716,7 +734,8 @@ function buildFactPack({
     macroSummary,
     periodMandate,
     categoryWritingMandate: categoryWritingMandate(normalizedKind, period),
-    categoryIntelligenceDirective: CATEGORY_INTELLIGENCE_DIRECTIVES[normalizedKind] || CATEGORY_INTELLIGENCE_DIRECTIVES.equities,
+    categoryIntelligenceDirective:
+      CATEGORY_INTELLIGENCE_DIRECTIVES[normalizedKind] || CATEGORY_INTELLIGENCE_DIRECTIVES.stocks,
     instrumentScores: Array.isArray(instrumentScoreRows)
       ? instrumentScoreRows.map((r) => ({
           instrument: r.symbol,
@@ -797,8 +816,8 @@ function sentencesFromHeadlines(lines, label) {
 }
 
 function buildPdfFallbackDailyParsed(factPack, expectedAssets) {
-  const kind = normalizeBriefKind(factPack.briefKind || 'equities');
-  const logicAngle = CATEGORY_LOGIC_RULES[kind] || CATEGORY_LOGIC_RULES.equities;
+  const kind = normalizeBriefKind(factPack.briefKind || 'stocks');
+  const logicAngle = CATEGORY_LOGIC_RULES[kind] || CATEGORY_LOGIC_RULES.stocks;
   const syms = Array.isArray(expectedAssets) && expectedAssets.length
     ? expectedAssets.slice(0, 5)
     : ['EURUSD', 'XAUUSD', 'US500', 'NAS100', 'US10Y'];
@@ -866,8 +885,8 @@ function buildPdfFallbackDailyParsed(factPack, expectedAssets) {
 }
 
 function buildPdfFallbackWeeklyParsed(factPack, expectedAssets, deskYmd, timeZone) {
-  const kind = normalizeBriefKind(factPack.briefKind || 'equities');
-  const logicAngle = CATEGORY_LOGIC_RULES[kind] || CATEGORY_LOGIC_RULES.equities;
+  const kind = normalizeBriefKind(factPack.briefKind || 'stocks');
+  const logicAngle = CATEGORY_LOGIC_RULES[kind] || CATEGORY_LOGIC_RULES.stocks;
   const syms = Array.isArray(expectedAssets) && expectedAssets.length
     ? expectedAssets.slice(0, 5)
     : ['EURUSD', 'XAUUSD', 'US500'];
@@ -1271,7 +1290,7 @@ async function generateSampleMatchedCategoryBrief({
     deskDate: deskDateYmd,
     contextQuality: factPack.contextQuality || null,
     periodMandate: factPack.periodMandate,
-    categoryLogicRule: CATEGORY_LOGIC_RULES[normalizedKind] || CATEGORY_LOGIC_RULES.equities,
+    categoryLogicRule: CATEGORY_LOGIC_RULES[normalizedKind] || CATEGORY_LOGIC_RULES.stocks,
     instrumentScores: Array.isArray(factPack.instrumentScores) ? factPack.instrumentScores.slice(0, 5) : [],
     dayName,
     topInstruments: expectedAssets,
@@ -1293,8 +1312,8 @@ async function generateSampleMatchedCategoryBrief({
     },
     weeklyReference,
     priorCategoryExcerpts: existingExcerpts.slice(0, 8),
-    /** Up to seven previously generated sleeves in this run (or gap-fill), trimmed to control tokens. */
-    priorCategoryBodies: priorBodies.slice(-7).map((x) => String(x || '').slice(0, 950)),
+    /** Up to eight previously generated sleeves in this run (or gap-fill), trimmed to control tokens. */
+    priorCategoryBodies: priorBodies.slice(-8).map((x) => String(x || '').slice(0, 950)),
     rules: {
       noDuplicatePhrasingAcrossBriefs: true,
       noCopyPasteAcrossCategories: true,
@@ -1303,7 +1322,7 @@ async function generateSampleMatchedCategoryBrief({
       alignWithWeeklyThesisUnlessMajorNewsOverrides: true,
       explainWeeklyOverrideIfNeeded: true,
       uniqueEightSleeveRule:
-        'Eight sleeves (global_macro, equities, forex, commodities, fixed_income, crypto, geopolitics, market_sentiment) share one macro snapshot. '
+        'Eight sleeves (forex, crypto, commodities, etfs, stocks, indices, bonds, futures) share one macro snapshot. '
         + 'Differentiate solely via categoryLogicRule, categoryWritingMandate, and topInstruments — never recycle the same opening sentences or headline bundle across sleeves.',
     },
   };
@@ -1447,7 +1466,7 @@ function slimFactPackForSections(factPack) {
     marketRegime: factPack.marketRegime,
     marketPulse: factPack.marketPulse,
     bannedPhrases: factPack.bannedPhrases || BANNED_PHRASES,
-    categoryLogicRule: CATEGORY_LOGIC_RULES[factPack.briefKind] || CATEGORY_LOGIC_RULES.equities,
+    categoryLogicRule: CATEGORY_LOGIC_RULES[factPack.briefKind] || CATEGORY_LOGIC_RULES.stocks,
     llmDataSupplement: factPack.llmDataSupplement || null,
     narrativeInstrumentRule:
       'Macro-first narrative: mention tickers or spot levels only when they clarify cross-asset or macro transmission (e.g. US10Y dragging risk, DXY skew). '
@@ -1650,9 +1669,12 @@ function fallbackGenerated(factPack, template, deskYmd, timeZone) {
   };
 }
 
-function renderBriefText({ title, period, date, generated, template, briefKind = 'equities', topInstruments = [] }) {
+function renderBriefText({ title, period, date, generated, template, briefKind = 'stocks', topInstruments = [] }) {
   const normalizedKind = normalizeBriefKind(briefKind);
-  const label = BRIEF_KIND_LABELS[normalizedKind] || BRIEF_KIND_LABELS.equities;
+  const label =
+    BRIEF_KIND_LABELS[normalizedKind] ||
+    deskCategoryDisplayName(canonicalDeskCategoryKind(normalizedKind)) ||
+    'Desk';
   const lines = [];
   lines.push(`# ${title}`);
   lines.push('');
@@ -2008,7 +2030,7 @@ async function publishAutoBrief({
   date,
   title,
   body,
-  briefKind = 'equities',
+  briefKind = 'stocks',
   generationMeta = null,
   mimeType = 'text/markdown; charset=utf-8',
 }) {
@@ -2053,10 +2075,10 @@ async function publishManualBrief({ period, date, title, body }) {
   const safeTitle = String(title || 'Market Brief').slice(0, 255);
   assertNoSources(safeTitle);
   assertNoSources(body);
-  const briefVersion = await getNextBriefVersion({ period: normalizedPeriod, date: safeDate, briefKind: 'equities' });
+  const briefVersion = await getNextBriefVersion({ period: normalizedPeriod, date: safeDate, briefKind: 'general' });
   const [result] = await executeQuery(
     `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data, brief_kind, brief_version)
-     VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?, 'equities', ?)`,
+     VALUES (?, ?, ?, NULL, 'text/plain; charset=utf-8', ?, 'general', ?)`,
     [safeDate, normalizedPeriod, safeTitle, Buffer.from(String(body || ''), 'utf8'), briefVersion]
   );
   return result.insertId;
@@ -2081,7 +2103,7 @@ function computeTitle(template, deskYmd, timeZone) {
 
 async function generateAndStoreBrief({
   period,
-  briefKind = 'equities',
+  briefKind = 'stocks',
   timeZone = 'Europe/London',
   runDate = new Date(),
   generationContext = null,
@@ -2605,6 +2627,8 @@ async function generatePreviewBrief({
   timeZone = 'Europe/London',
   runDate = new Date(),
   templateText = '',
+  fastPreview = false,
+  previewBriefKind = 'stocks',
 }) {
   const normalizedPeriod = normalizePeriod(period);
   const date = normalizeOutlookDate(normalizedPeriod, toYmdInTz(runDate, timeZone));
@@ -2612,12 +2636,13 @@ async function generatePreviewBrief({
     ? parseTemplateFromText(templateText, normalizedPeriod)
     : await getTemplate(normalizedPeriod);
   const { market, econ, news } = await getSharedBriefInputs(normalizedPeriod, date);
-  const qc = await buildQuoteCacheForSymbols(
-    collectAllAutomationUniverseSymbols(),
-    fetchAutomationQuoteWithFallback
-  );
+  const previewKind = normalizeBriefKind(previewBriefKind || 'stocks');
+  const quoteSymbols = fastPreview
+    ? getUniverseSymbols(previewKind).slice(0, 36)
+    : collectAllAutomationUniverseSymbols();
+  const qc = await buildQuoteCacheForSymbols(quoteSymbols, fetchAutomationQuoteWithFallback);
   const sel = await scoreAndSelectTopInstruments({
-    briefKind: 'equities',
+    briefKind: previewKind,
     period: normalizedPeriod,
     quoteCache: qc,
     headlines: news,
@@ -2633,13 +2658,17 @@ async function generatePreviewBrief({
     market,
     econ,
     news,
-    briefKind: 'equities',
+    briefKind: previewKind,
     topInstruments: previewTop,
     liveQuotes,
     instrumentScoreRows: sel.scoreRows,
     quoteCache: qc,
   });
-  if (needsLlmDataSupplement(qc, econ, news) && isTraderDeskAutomationConfigured()) {
+  if (
+    !fastPreview &&
+    needsLlmDataSupplement(qc, econ, news) &&
+    isTraderDeskAutomationConfigured()
+  ) {
     const llmSup = await fetchLlmBriefDataSupplementGlobal({
       period: normalizedPeriod,
       dateStr: date,
@@ -2647,7 +2676,7 @@ async function generatePreviewBrief({
       market,
       econ,
       news,
-      symbolSample: collectAllAutomationUniverseSymbols(),
+      symbolSample: fastPreview ? quoteSymbols : collectAllAutomationUniverseSymbols(),
     });
     if (llmSup) factPack.llmDataSupplement = llmSup;
   }
@@ -2661,7 +2690,7 @@ async function generatePreviewBrief({
       ? buildPdfFallbackDailyParsed(factPack, previewTop)
       : buildPdfFallbackWeeklyParsed(factPack, previewTop, date, timeZone);
   const ND = '\u2013';
-  const cat = BRIEF_KIND_LABELS.equities;
+  const cat = BRIEF_KIND_LABELS[previewKind] || BRIEF_KIND_LABELS.stocks;
   const title = stripSources(`${cat} ${ND} ${innerTitle}`);
   let body =
     normalizedPeriod === 'daily'
@@ -2699,18 +2728,19 @@ function shouldPrefetchInstrumentResearchWindow({ now = new Date(), period, time
 }
 
 /**
- * Rows on file for this desk date (excludes legacy `general`). Expect 9 when 8 sleeves + institutional exist.
+ * Distinct canonical category brief rows for this desk date (aura_institutional_* only).
  */
-async function countNonGeneralIntelBriefRows(period, dateYmd) {
+async function countCanonicalIntelBriefRows(period, dateYmd) {
   const p = normalizePeriod(period);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateYmd || ''))) return 0;
+  const kinds = p === 'weekly' ? [...INSTITUTIONAL_WEEKLY_WFA_KINDS] : [...INSTITUTIONAL_DAILY_WFA_KINDS];
+  const lower = kinds.map((k) => String(k).toLowerCase());
+  const ph = lower.map(() => '?').join(',');
   try {
     const [rows] = await executeQuery(
-      `SELECT COUNT(*) AS n FROM trader_deck_briefs
-       WHERE date = ? AND period = ?
-         AND COALESCE(LOWER(brief_kind), '') <> 'general'
-         AND COALESCE(LOWER(brief_kind), '') <> 'aura_sunday_market_open'`,
-      [dateYmd, p]
+      `SELECT COUNT(DISTINCT LOWER(brief_kind)) AS n FROM trader_deck_briefs
+       WHERE date = ? AND period = ? AND LOWER(brief_kind) IN (${ph})`,
+      [dateYmd, p, ...lower]
     );
     return Number(rows?.[0]?.n || 0);
   } catch (_) {
@@ -2726,7 +2756,7 @@ async function shouldRunIntelPackCatchUp({ now = new Date(), period, timeZone = 
   if (!isTraderDeskAutomationConfigured()) return false;
   const normalizedPeriod = normalizePeriod(period);
   const deskYmd = normalizeOutlookDate(normalizedPeriod, toYmdInTz(now, timeZone));
-  const n = await countNonGeneralIntelBriefRows(normalizedPeriod, deskYmd);
+  const n = await countCanonicalIntelBriefRows(normalizedPeriod, deskYmd);
   if (n >= expectedIntelAutomationRowCount(normalizedPeriod)) return false;
 
   const parts = new Intl.DateTimeFormat('en-GB', {
@@ -2745,7 +2775,7 @@ async function shouldRunIntelPackCatchUp({ now = new Date(), period, timeZone = 
   if (normalizedPeriod === 'daily') {
     return (hh === 6 || hh === 12 || hh === 18) && mm < 20;
   }
-  /** Weekly: early-week retry for the week-ending key in `deskYmd`. */
+  /** Weekly: retry Mon–Thu morning after Monday 00:00 generation window. */
   if (normalizedPeriod === 'weekly') {
     return (
       (wd.startsWith('mon') || wd.startsWith('tue') || wd.startsWith('wed') || wd.startsWith('thu')) &&
@@ -2770,14 +2800,21 @@ function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' 
   const hh = Number(map.hour);
   const wd = String(map.weekday || '').toLowerCase();
   /**
-   * Daily: full midnight hour Europe/London (00:00–00:59). A 10-minute window missed most five-minute cron ticks
-   * (e.g. 00:10+ skipped the entire day in production).
-   * Weekly: full Sunday 18:00 hour UK (week-ending storage key).
+   * Daily category pack: Mon–Sat only, full midnight hour Europe/London (00:00–00:59).
+   * Weekly WFA pack: Monday 00:00 hour (week-ending storage key unchanged).
    */
   if (normalizedPeriod === 'daily') {
-    return hh === 0;
+    if (hh !== 0) return false;
+    return (
+      wd.startsWith('mon') ||
+      wd.startsWith('tue') ||
+      wd.startsWith('wed') ||
+      wd.startsWith('thu') ||
+      wd.startsWith('fri') ||
+      wd.startsWith('sat')
+    );
   }
-  return wd.startsWith('sun') && hh === 18;
+  return wd.startsWith('mon') && hh === 0;
 }
 
 function getInstitutionalBriefDeps() {
@@ -2839,7 +2876,7 @@ module.exports = {
   prefetchInstrumentResearchForDaily,
   shouldRunWindow,
   shouldRunIntelPackCatchUp,
-  countNonGeneralIntelBriefRows,
+  countCanonicalIntelBriefRows,
   shouldPrefetchInstrumentResearchWindow,
   isTraderDeskAutomationConfigured,
   stripSources,
@@ -2847,7 +2884,7 @@ module.exports = {
   _test: {
     shouldRunWindow,
     shouldRunIntelPackCatchUp,
-    countNonGeneralIntelBriefRows,
+    countCanonicalIntelBriefRows,
     shouldPrefetchInstrumentResearchWindow,
     shouldRunSundayMarketOpenWindow,
     stripSources,

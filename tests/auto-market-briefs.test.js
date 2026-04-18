@@ -49,6 +49,13 @@ function run() {
   });
   assert(notDueDaily === false, 'daily should not run outside window');
 
+  const notDueDailySunday = autoTest.shouldRunWindow({
+    now: new Date('2026-03-29T00:15:00+01:00'),
+    period: 'daily',
+    timeZone: 'Europe/London',
+  });
+  assert(notDueDailySunday === false, 'daily category pack should not run on Sunday');
+
   const prefetchDue = autoTest.shouldPrefetchInstrumentResearchWindow({
     now: new Date('2026-03-24T22:05:00+00:00'),
     period: 'daily',
@@ -57,18 +64,18 @@ function run() {
   assert(prefetchDue === true, 'prefetch should run during ~22:00 London window');
 
   const dueWeekly = autoTest.shouldRunWindow({
+    now: new Date('2026-03-30T00:15:00+01:00'),
+    period: 'weekly',
+    timeZone: 'Europe/London',
+  });
+  assert(dueWeekly === true, 'weekly should run Monday 00:00-00:59 London');
+
+  const notDueWeeklySunday = autoTest.shouldRunWindow({
     now: new Date('2026-03-29T18:05:00+01:00'),
     period: 'weekly',
     timeZone: 'Europe/London',
   });
-  assert(dueWeekly === true, 'weekly should run any time Sunday 18:00-18:59 London');
-
-  const dueWeeklyLate = autoTest.shouldRunWindow({
-    now: new Date('2026-03-29T18:45:00+01:00'),
-    period: 'weekly',
-    timeZone: 'Europe/London',
-  });
-  assert(dueWeeklyLate === true, 'weekly late in the 18:00 hour must still be in-window');
+  assert(notDueWeeklySunday === false, 'weekly should not run on Sunday 18:00 anymore');
 
   const parsed = parseTemplateFromText(
     [
@@ -86,17 +93,14 @@ function run() {
 
   const kinds = autoTest.orderedBriefKinds();
   assert(Array.isArray(kinds) && kinds.length === 8, 'should expose 8 automation category kinds');
-  assert(
-    kinds[0] === 'global_macro' && kinds[7] === 'market_sentiment',
-    'brief kind ordering should match desk sleeve order'
-  );
+  assert(kinds[0] === 'forex' && kinds[7] === 'futures', 'brief kind ordering should match eight canonical sleeves');
   for (const kind of kinds) {
     const top5 = autoTest.top5ForBriefKind(kind);
     assert(Array.isArray(top5) && top5.length === 5, `top 5 instruments must exist for ${kind}`);
   }
   assert(new Set(kinds).size === 8, 'brief kinds should be unique');
   const normalizedUnknown = autoTest.normalizeBriefKind('not-a-kind');
-  assert(normalizedUnknown === 'equities', 'unknown brief kind should normalize to equities');
+  assert(normalizedUnknown === 'stocks', 'unknown brief kind should normalize to stocks');
   const dailyFxFramework = autoTest.frameworkHeadings('daily', 'forex', []);
   const weeklyFxFramework = autoTest.frameworkHeadings('weekly', 'forex', []);
   assert(Array.isArray(dailyFxFramework) && dailyFxFramework.length === 6, 'daily structure lock must have 6 sections');

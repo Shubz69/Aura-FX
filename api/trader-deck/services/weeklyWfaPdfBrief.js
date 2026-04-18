@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Weekly Fundamental Analysis — PDF-aligned structure per category (seven parallel sleeves).
+ * Weekly Fundamental Analysis — PDF-aligned structure per category (eight parallel sleeves).
  * Plain paragraphs only in stored body (no markdown list markers).
  */
 
@@ -41,10 +41,11 @@ const WFA_KIND_TO_HEADER = Object.freeze({
   aura_institutional_weekly_forex: 'FOREX',
   aura_institutional_weekly_crypto: 'CRYPTO',
   aura_institutional_weekly_commodities: 'COMMODITIES',
-  aura_institutional_weekly_fixed_income: 'FIXED INCOME',
-  aura_institutional_weekly_equities: 'EQUITIES',
-  aura_institutional_weekly_indices: 'INDICES',
+  aura_institutional_weekly_etfs: 'ETFs',
   aura_institutional_weekly_stocks: 'STOCKS',
+  aura_institutional_weekly_indices: 'INDICES',
+  aura_institutional_weekly_bonds: 'BONDS',
+  aura_institutional_weekly_futures: 'FUTURES',
 });
 
 function weeklyWfaSystemPrompt(categoryHeader) {
@@ -68,7 +69,9 @@ Hard rules:
     }
   ],
   "whatMattersStructurally": string,
-  "weekStructureMondayToFriday": string,
+  "earlyWeekMonTue": string,
+  "midweekWed": string,
+  "endWeekThuFri": string,
   "forwardOutlook": string,
   "weekConclusion": string,
   "scenarioContinuation": string,
@@ -81,11 +84,15 @@ overview: Multiple paragraphs. Must explicitly name the week type using one of t
 
 summaryForLastWeek: Structural repricing narrative only — not a news chronology. What changed, why it mattered, how markets repriced.
 
-instruments: EXACTLY five entries. Rank by factPack.topFiveInstruments order. Each instrument must include mechanistic WHY tied to macro (rates, USD, liquidity, earnings, supply, curve) appropriate to ${categoryHeader}.
+instruments: EXACTLY five entries with FIVE DISTINCT symbols (no duplicate tickers). Rank by factPack.topFiveInstruments order. Each instrument must include mechanistic WHY tied to macro (rates, USD, liquidity, earnings, supply, curve) appropriate to ${categoryHeader}. Do not paste the same macro paragraph for two different symbols.
 
 whatMattersStructurally: Drivers across oil, yields, data releases, positioning; possible outcomes in prose.
 
-weekStructureMondayToFriday: One coherent narrative covering early-week drivers, midweek confirmation tendency, end-of-week catalyst timing.
+earlyWeekMonTue: Early week (Mon–Tue) drivers and tone in one substantial paragraph.
+
+midweekWed: Midweek (Wed) dynamics in one substantial paragraph.
+
+endWeekThuFri: End of week (Thu–Fri) catalyst timing and positioning in one substantial paragraph.
 
 forwardOutlook: What confirms the dominant read and what invalidates it structurally.
 
@@ -98,6 +105,7 @@ FORBIDDEN phrasing patterns: ${String(GENERIC_FAIL_RE)}`;
 }
 
 function validateWeeklyWfaPayload(parsed, briefKind) {
+  void briefKind;
   const reasons = [];
   if (!parsed || typeof parsed !== 'object') return { ok: false, reasons: ['no_payload'] };
 
@@ -119,6 +127,8 @@ function validateWeeklyWfaPayload(parsed, briefKind) {
 
   const arr = Array.isArray(parsed.instruments) ? parsed.instruments : [];
   if (arr.length !== 5) reasons.push('instruments_not_five');
+  const symNorm = arr.map((r) => String((r || {}).symbol || '').toUpperCase().trim()).filter(Boolean);
+  if (symNorm.length !== new Set(symNorm).size) reasons.push('instruments_duplicate_symbol');
 
   for (let i = 0; i < arr.length; i += 1) {
     const row = arr[i] || {};
@@ -133,8 +143,12 @@ function validateWeeklyWfaPayload(parsed, briefKind) {
   const wms = String(parsed.whatMattersStructurally || '').trim();
   if (wms.length < 280) reasons.push('structural_thin');
 
-  const ws = String(parsed.weekStructureMondayToFriday || '').trim();
-  if (ws.length < 240) reasons.push('week_structure_thin');
+  const ew = String(parsed.earlyWeekMonTue || '').trim();
+  const mw = String(parsed.midweekWed || '').trim();
+  const ed = String(parsed.endWeekThuFri || '').trim();
+  if (ew.length < 140) reasons.push('early_week_thin');
+  if (mw.length < 120) reasons.push('midweek_thin');
+  if (ed.length < 140) reasons.push('end_week_thin');
 
   const fo = String(parsed.forwardOutlook || '').trim();
   if (fo.length < 200) reasons.push('forward_thin');
@@ -166,7 +180,9 @@ function assembleWeeklyWfaPlain({
     'overview',
     'summaryForLastWeek',
     'whatMattersStructurally',
-    'weekStructureMondayToFriday',
+    'earlyWeekMonTue',
+    'midweekWed',
+    'endWeekThuFri',
     'forwardOutlook',
     'weekConclusion',
     'scenarioContinuation',
@@ -195,7 +211,7 @@ function assembleWeeklyWfaPlain({
   lines.push('');
   lines.push(p.summaryForLastWeek);
   lines.push('');
-  lines.push(`${catHeader} PERFORMANCE AND WHY`);
+  lines.push(`${catHeader} – TOP 5 INSTRUMENT ANALYSIS`);
   lines.push('');
   const inst = Array.isArray(p.instruments) ? p.instruments : [];
   for (const row of inst) {
@@ -214,9 +230,19 @@ function assembleWeeklyWfaPlain({
   lines.push('');
   lines.push(p.whatMattersStructurally);
   lines.push('');
-  lines.push('WEEK STRUCTURE MONDAY TO FRIDAY');
+  lines.push('WEEK STRUCTURE');
   lines.push('');
-  lines.push(p.weekStructureMondayToFriday);
+  lines.push('Early week (Mon–Tue)');
+  lines.push('');
+  lines.push(p.earlyWeekMonTue);
+  lines.push('');
+  lines.push('Midweek (Wed)');
+  lines.push('');
+  lines.push(p.midweekWed);
+  lines.push('');
+  lines.push('End of week (Thu–Fri)');
+  lines.push('');
+  lines.push(p.endWeekThuFri);
   lines.push('');
   lines.push('FORWARD OUTLOOK');
   lines.push('');

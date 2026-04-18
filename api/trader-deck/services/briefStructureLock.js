@@ -119,7 +119,7 @@ const SECTION_RULES = {
 
 /** Category-specific angle injected into each section prompt (same structure, different emphasis). */
 function categoryAngleForSection(sectionKey, briefKind) {
-  const k = String(briefKind || 'equities').toLowerCase();
+  const k = String(briefKind || 'stocks').toLowerCase();
   const angles = {
     global_macro: {
       market_context: 'Cross-asset macro state: growth, inflation, liquidity, CB guidance.',
@@ -136,8 +136,8 @@ function categoryAngleForSection(sectionKey, briefKind) {
       forward_outlook: 'Scheduled risk into next week.',
       strategic_takeaway: 'Strategic macro stance.',
     },
-    equities: {
-      market_context: 'Tape, breadth, and sector leadership.',
+    stocks: {
+      market_context: 'Tape, breadth, and single-name leadership.',
       cross_asset_flow: 'Rates, credit, USD, and commodity tilt vs equities.',
       key_drivers: 'Earnings, guidance, macro beta to rates.',
       market_behaviour: 'Trend vs chop, megacap vs rest, vol.',
@@ -151,7 +151,37 @@ function categoryAngleForSection(sectionKey, briefKind) {
       forward_outlook: 'Next week’s catalysts for the sleeve.',
       strategic_takeaway: 'Equity positioning mindset.',
     },
-    fixed_income: {
+    etfs: {
+      market_context: 'Sector and factor ETF leadership vs benchmark.',
+      cross_asset_flow: 'Rates, USD, credit, and commodity tilt vs ETF complexes.',
+      key_drivers: 'Flows, rotation, macro beta to yields.',
+      market_behaviour: 'Trend vs chop in sector sleeves.',
+      what_matters_next: 'Macro prints and flows into liquid ETFs.',
+      trader_takeaway: 'Factor and sector skew from evidence.',
+      weekly_overview: 'Weekly ETF regime.',
+      macro_theme: 'Liquidity and leadership.',
+      cross_asset_breakdown: 'SPY/QQQ/IWM vs sector ETFs.',
+      structural_shift: 'Rotation breaks.',
+      key_events_recap: 'What moved ETF tape.',
+      forward_outlook: 'Next week.',
+      strategic_takeaway: 'ETF stance.',
+    },
+    indices: {
+      market_context: 'Benchmark tape and breadth.',
+      cross_asset_flow: 'Rates, USD, vol vs indices.',
+      key_drivers: 'Macro prints, liquidity, positioning.',
+      market_behaviour: 'Trend vs range in cash and futures proxies.',
+      what_matters_next: 'Scheduled catalysts.',
+      trader_takeaway: 'Index risk skew.',
+      weekly_overview: 'Weekly benchmark regime.',
+      macro_theme: 'Growth and liquidity.',
+      cross_asset_breakdown: 'Cross-index leadership.',
+      structural_shift: 'Breadth or vol regime breaks.',
+      key_events_recap: 'Drivers of the week.',
+      forward_outlook: 'Next week.',
+      strategic_takeaway: 'Index mindset.',
+    },
+    bonds: {
       market_context: 'Curve and policy path.',
       cross_asset_flow: 'Equities, FX, vol vs rates.',
       key_drivers: 'Auctions, data, Fed path.',
@@ -165,6 +195,21 @@ function categoryAngleForSection(sectionKey, briefKind) {
       key_events_recap: 'Week’s events.',
       forward_outlook: 'Next week.',
       strategic_takeaway: 'Rates mindset.',
+    },
+    futures: {
+      market_context: 'Futures-linked benchmarks vs macro.',
+      cross_asset_flow: 'Index and commodity futures vs USD and yields.',
+      key_drivers: 'Curve, energy, liquidity.',
+      market_behaviour: 'Trend and range in futures complexes.',
+      what_matters_next: 'Macro and supply windows.',
+      trader_takeaway: 'Futures risk stance.',
+      weekly_overview: 'Weekly futures regime.',
+      macro_theme: 'Policy and growth.',
+      cross_asset_breakdown: 'Cross-market transmission.',
+      structural_shift: 'Regime breaks.',
+      key_events_recap: 'Week’s drivers.',
+      forward_outlook: 'Next week.',
+      strategic_takeaway: 'Positioning mindset.',
     },
     geopolitics: {
       market_context: 'Geopolitical catalysts and risk transmission.',
@@ -242,8 +287,8 @@ function categoryAngleForSection(sectionKey, briefKind) {
       strategic_takeaway: 'Strategic takeaway.',
     },
   };
-  const table = angles[k] || angles.equities;
-  return table[sectionKey] || angles.equities[sectionKey] || 'Apply this category’s lens; stay factual to the pack.';
+  const table = angles[k] || angles.stocks;
+  return table[sectionKey] || angles.stocks[sectionKey] || 'Apply this category’s lens; stay factual to the pack.';
 }
 
 function getStructureKeys(period) {

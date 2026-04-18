@@ -74,6 +74,8 @@ module.exports = async (req, res) => {
         templateText,
         timeZone: 'Europe/London',
         runDate: new Date(),
+        fastPreview: body.fastPreview !== false && body.fastPreview !== '0',
+        previewBriefKind: String(body.previewBriefKind || body.briefKind || 'stocks').trim(),
       });
       return res.status(200).json(preview);
     } catch (err) {

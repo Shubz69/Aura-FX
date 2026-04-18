@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Institutional Daily Brief — PDF-aligned structure per category (seven parallel sleeves).
+ * Institutional Daily Brief — PDF-aligned structure per category (eight parallel sleeves).
  * Plain paragraphs in stored body (no markdown list markers; spacing hyphens stripped like weekly WFA).
  */
 
@@ -39,10 +39,11 @@ const DAILY_KIND_TO_HEADER = Object.freeze({
   aura_institutional_daily_forex: 'FOREX',
   aura_institutional_daily_crypto: 'CRYPTO',
   aura_institutional_daily_commodities: 'COMMODITIES',
-  aura_institutional_daily_fixed_income: 'FIXED INCOME',
-  aura_institutional_daily_equities: 'EQUITIES',
-  aura_institutional_daily_indices: 'INDICES',
+  aura_institutional_daily_etfs: 'ETFs',
   aura_institutional_daily_stocks: 'STOCKS',
+  aura_institutional_daily_indices: 'INDICES',
+  aura_institutional_daily_bonds: 'BONDS',
+  aura_institutional_daily_futures: 'FUTURES',
 });
 
 function dailyPdfSystemPrompt(categoryHeader, weekdayLong) {
@@ -89,7 +90,7 @@ macroBackdropGoingIntoToday: What has already been priced earlier in the week, w
 
 marketThemesDominatingToday: Paragraphs covering yield sensitivity, oil influence, positioning into the next catalyst, and cross-asset relationships.
 
-instruments: EXACTLY five objects, in factPack.topFiveInstruments order. Each block must tie WHY to macro (oil, yields, USD, inflation, liquidity, earnings where relevant for ${categoryHeader}). technicalStructure is one coherent paragraph on structure (levels, ranges, volatility tone) without invented precise levels unless inferable from factPack. sessionAsia, sessionLondon, sessionNewYork are each one paragraph for session bias. overallBias is exactly one clear sentence.
+instruments: EXACTLY five objects, in factPack.topFiveInstruments order, with FIVE DISTINCT symbols (no duplicate tickers). Each instrument block must present a different thesis; do not repeat the same macro explanation across symbols. Each block must tie WHY to macro (oil, yields, USD, inflation, liquidity, earnings where relevant for ${categoryHeader}). technicalStructure is one coherent paragraph on structure (levels, ranges, volatility tone) without invented precise levels unless inferable from factPack. sessionAsia, sessionLondon, sessionNewYork are each one paragraph for session bias. overallBias is exactly one clear sentence.
 
 scenarioInflationPersistence, scenarioGrowthModeration, scenarioNeutralConsolidation: Each is a scenario paragraph under Overall Daily Structure (distinct regimes).
 
@@ -128,6 +129,8 @@ function validateDailyPdfPayload(parsed, briefKind) {
 
   const arr = Array.isArray(parsed.instruments) ? parsed.instruments : [];
   if (arr.length !== 5) reasons.push('instruments_not_five');
+  const symNorm = arr.map((r) => String((r || {}).symbol || '').toUpperCase().trim()).filter(Boolean);
+  if (symNorm.length !== new Set(symNorm).size) reasons.push('instruments_duplicate_symbol');
 
   for (let i = 0; i < arr.length; i += 1) {
     const row = arr[i] || {};
@@ -210,11 +213,13 @@ function assembleDailyBriefPlain({
   lines.push(`Category: ${catHeader}`);
   lines.push(`Brief kind: ${briefKind}`);
   lines.push('');
+  lines.push('DAY NAME');
+  lines.push('');
   lines.push(wh);
   lines.push('');
   lines.push(p.dayWeekPositionAndData);
   lines.push('');
-  lines.push('MACRO INTRO AND STRUCTURAL FLOW');
+  lines.push('MACRO INTRO + STRUCTURAL FLOW');
   lines.push('');
   lines.push(p.macroIntroStructuralFlow);
   lines.push('');

@@ -1,14 +1,11 @@
 /**
  * Cron Job: Automated Daily/Weekly market briefs.
- * Daily: 00:00 Europe/London every calendar day — outlook + 8 category briefs + Aura FX institutional daily brief.
- * Daily prefetch: ~22:00 UK — per-instrument Perplexity research layer stored for the next day’s briefs.
- * Weekly: Sunday 18:00 UK — 8 category briefs + institutional weekly brief (week-ending storage key).
+ * Daily: Mon–Sat 00:00 Europe/London — outlook + eight canonical category briefs (PDF pipeline).
+ * Weekly: Monday 00:00 UK — eight weekly fundamental briefs (week-ending storage key).
  * Sunday Market Open: London Sunday ~21:00 (env SUNDAY_OPEN_BRIEF_HOUR_LONDON) — single aura_sunday_market_open brief.
  */
 const {
   generateAndStoreOutlook,
-  generateAndStoreBriefSet,
-  generateAndStoreMissingCategoryBriefs,
   generateAndStoreInstitutionalBriefOnly,
   generateAndStoreSundayMarketOpenBriefOnly,
   prefetchInstrumentResearchForDaily,
@@ -108,24 +105,13 @@ const handler = async (req, res) => {
         timeZone: 'Europe/London',
       });
       logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after outlook', { period });
-      const categoryBriefs = await generateAndStoreBriefSet({
+      const categoryIntelPack = await generateAndStoreInstitutionalBriefOnly({
         period,
         runDate: now,
         timeZone: 'Europe/London',
       });
-      const categoryGapFill = await generateAndStoreMissingCategoryBriefs({
-        period,
-        runDate: now,
-        timeZone: 'Europe/London',
-      });
-      logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after category brief set', { period });
-      const institutional = await generateAndStoreInstitutionalBriefOnly({
-        period,
-        runDate: now,
-        timeZone: 'Europe/London',
-      });
-      logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after institutional brief', { period });
-      out.push({ period, outlook, categoryBriefs, categoryGapFill, institutional });
+      logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after category intel pack', { period });
+      out.push({ period, outlook, categoryIntelPack });
     }
 
     logProviderRequestMeter('[cron-auto-market-briefs] invocation total outbound HTTP (since cron start)');

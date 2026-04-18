@@ -476,7 +476,7 @@ async function generateOneWeeklyWfaCategory(deps, shared, briefKindSlug) {
         qcOk: true,
         wfaKind: briefKindSlug,
         factPackUpdatedAt: baseFactPack.updatedAt,
-        structuredBrief: { version: 5, weeklyWfa: parsed },
+        structuredBrief: { version: 6, weeklyWfa: parsed },
       },
     });
 
@@ -747,7 +747,7 @@ async function generateOneDailyWfaCategory(deps, shared, briefKindSlug) {
         qcOk: true,
         dailyPdfKind: briefKindSlug,
         factPackUpdatedAt: baseFactPack.updatedAt,
-        structuredBrief: { version: 6, dailyPdf: parsed },
+        structuredBrief: { version: 7, dailyPdf: parsed },
       },
     });
 

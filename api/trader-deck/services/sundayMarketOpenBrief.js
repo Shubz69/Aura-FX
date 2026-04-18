@@ -65,13 +65,14 @@ function stripSundayArtifacts(body) {
 function sundayOpenSystemPrompt() {
   return `You are the head of macro strategy writing the SUNDAY MARKET OPEN BRIEF for institutional traders.
 
-Mission: Explain ONLY the highest-impact developments from the prior week and weekend that change how the Monday–Tuesday complex will open. Treat items as roughly 10/10 importance only — omit tactical noise, single-stock trivia, and low-impact headlines.
+Mission: Explain ONLY the highest-impact developments from the prior week and weekend that change how the coming week opens. Treat items as roughly high importance only — omit tactical noise and low-impact trivia.
 
 Hard rules:
 - Tone: sovereign wealth fund / global macro desk — causal chains, regime logic, positioning and liquidity. NOT wire-service recap.
 - Fact anchors: Use ONLY supplied factPack (news sample, headlines, macro lines, calendars, quoted instruments). Do not invent specific prints or meetings not implied by factPack.
 - Across ALL narrative prose you MUST weave market transmission consistently: crude oil as the anchor for inflation and geopolitical risk optics, sovereign yields as the amplifier of repricing and duration stress, gold as the hedge asset against real-rate and tail outcomes, USD as both funding and yield-driver. Embed this naturally in paragraphs, never as a bullet-style checklist.
-- Integrate asset impact naturally when relevant: crude, gold, USD, EUR/USD, USD/JPY, Dow and Nasdaq proxies — not a separate ticker list section.
+
+REQUIRED: After the main opening and top events, you MUST include plain-prose digest paragraphs for ALL EIGHT asset sleeves in one combined brief (not separate documents): Forex, Crypto, Commodities, ETFs, Stocks, Indices, Bonds, Futures. Each sleeve paragraph must explain what matters at this open for that sleeve using factPack (news and macro context). Do not duplicate the same sentence across sleeves; each sleeve needs a distinct transmission angle.
 
 Return JSON ONLY with this schema (exact keys):
 
@@ -87,6 +88,14 @@ Return JSON ONLY with this schema (exact keys):
       "howMarketsInterpret": string
     }
   ],
+  "digestForex": string,
+  "digestCrypto": string,
+  "digestCommodities": string,
+  "digestEtfs": string,
+  "digestStocks": string,
+  "digestIndices": string,
+  "digestBonds": string,
+  "digestFutures": string,
   "sessionAsia": string,
   "sessionLondon": string,
   "sessionNewYork": string,
@@ -157,6 +166,12 @@ function validateSundayOpenPayload(parsed) {
   const fin = String(parsed.finalSection || '').trim();
   if (fin.length < 280) reasons.push('final_thin');
 
+  const digestKeys = ['digestForex', 'digestCrypto', 'digestCommodities', 'digestEtfs', 'digestStocks', 'digestIndices', 'digestBonds', 'digestFutures'];
+  for (const key of digestKeys) {
+    const t = String(parsed[key] || '').trim();
+    if (t.length < 220) reasons.push(`${key}_thin`);
+  }
+
   if (GENERIC_FAIL_RE.test(JSON.stringify(parsed))) reasons.push('banned_voice');
 
   return { ok: reasons.length === 0, reasons };
@@ -173,6 +188,20 @@ function assembleSundayMarketOpenPlain({ titleLine, authorLine, metaDateYmd, par
   p.scenarioEscalation = sanitizeProseField(p.scenarioEscalation);
   p.scenarioContainment = sanitizeProseField(p.scenarioContainment);
   p.finalSection = sanitizeProseField(p.finalSection);
+
+  const digestLabels = [
+    ['digestForex', 'FOREX'],
+    ['digestCrypto', 'CRYPTO'],
+    ['digestCommodities', 'COMMODITIES'],
+    ['digestEtfs', 'ETFs'],
+    ['digestStocks', 'STOCKS'],
+    ['digestIndices', 'INDICES'],
+    ['digestBonds', 'BONDS'],
+    ['digestFutures', 'FUTURES'],
+  ];
+  for (const [k, label] of digestLabels) {
+    p[k] = sanitizeProseField(p[k]);
+  }
 
   const events = Array.isArray(p.topEvents) ? p.topEvents : [];
   const cleanedEvents = events.map((e) => ({
@@ -207,6 +236,15 @@ function assembleSundayMarketOpenPlain({ titleLine, authorLine, metaDateYmd, par
     lines.push(ev.whatChangesStructurally);
     lines.push('');
     lines.push(ev.howMarketsInterpret);
+    lines.push('');
+  }
+
+  lines.push('EIGHT-CATEGORY OPEN DIGEST');
+  lines.push('');
+  for (const [k, label] of digestLabels) {
+    lines.push(label);
+    lines.push('');
+    lines.push(String(p[k] || '').trim());
     lines.push('');
   }
 
@@ -458,7 +496,7 @@ async function generateAndStoreSundayMarketOpenBrief(deps, { runDate = new Date(
         engine: 'sunday_market_open_v1',
         qcOk: true,
         factPackUpdatedAt: basePack.updatedAt,
-        structuredBrief: { version: 1, sundayOpen: parsed },
+        structuredBrief: { version: 2, sundayOpen: parsed },
       },
     });
 
