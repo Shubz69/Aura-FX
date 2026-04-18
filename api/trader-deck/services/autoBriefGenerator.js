@@ -26,7 +26,11 @@ const {
 const SOURCE_MARKER_RE = /(https?:\/\/|www\.|source\s*:|sources\s*:|according to|reuters|bloomberg|fmp|finnhub|forex factory|trading economics)/i;
 const { DateTime } = require('luxon');
 const { getWeekEndingSundayUtcYmd } = require('../deskDates');
-const { DESK_AUTOMATION_CATEGORY_KINDS, expectedIntelAutomationRowCount } = require('../deskBriefKinds');
+const {
+  DESK_AUTOMATION_CATEGORY_KINDS,
+  expectedIntelAutomationRowCount,
+  isDeskAutomationCategoryKind,
+} = require('../deskBriefKinds');
 const {
   BRIEF_KIND_ORDER,
   BANNED_PHRASES,
@@ -1941,6 +1945,32 @@ function toSqlDateYmd(date) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : s.slice(0, 10);
 }
 
+/** `auto-brief:daily:2026-04-13:stocks` → parts (only category automation uses this prefix). */
+function parseAutoBriefRunKey(runKey) {
+  const m = String(runKey || '').match(/^auto-brief:(daily|weekly):(\d{4}-\d{2}-\d{2}):([^:]+)$/);
+  if (!m) return null;
+  return { period: m[1], deskDate: m[2], briefKind: String(m[3] || '').toLowerCase() };
+}
+
+/**
+ * True when a stored category brief predates the PDF-aligned renderers (missing required ## sections).
+ * Used to retire legacy "Market Context" / section-lock bodies without manual DB deletes.
+ */
+function categoryStoredBodyNeedsPdfReshape(bodyText, normalizedPeriod) {
+  const text = String(bodyText || '');
+  if (!text.trim()) return true;
+  const isWeekly = normalizedPeriod === 'weekly';
+  if (!isWeekly) {
+    if (/\n##\s+GLOBAL\s+GEOPOLITICAL\s+ENVIRONMENT\s*\n/i.test(text)) return false;
+    if (/^##\s*MARKET CONTEXT\s*$/im.test(text)) return true;
+    if (/^##\s*CROSS-ASSET FLOW\s*$/im.test(text)) return true;
+    return true;
+  }
+  if (/\n##\s+WHAT\s+MATTERS\s+THIS\s+WEEK\s+STRUCTURALLY\s*\n/i.test(text)) return false;
+  if (/^##\s*WEEKLY MACRO THEME\s*$/im.test(text)) return true;
+  return true;
+}
+
 /**
  * Avoid INSERT duplicate-key noise: SELECT first, INSERT with explicit 4 params, catch race-only duplicates.
  */
@@ -1969,13 +1999,37 @@ async function reserveRun(runKey, period, date) {
       if (status === 'success' && briefId > 0) {
         // If a "success" lock points to a deleted/missing brief row, allow regeneration.
         const [briefRows] = await executeQuery(
-          'SELECT id FROM trader_deck_briefs WHERE id = ? LIMIT 1',
+          'SELECT id, file_data FROM trader_deck_briefs WHERE id = ? LIMIT 1',
           [briefId]
         );
-        if (!briefRows?.[0]?.id) {
+        const br = briefRows?.[0];
+        if (!br?.id) {
           await executeQuery(
             `UPDATE trader_deck_brief_runs
              SET status = 'started', brief_id = NULL, error_message = 'recovered_missing_brief_row', updated_at = CURRENT_TIMESTAMP
+             WHERE run_key = ?`,
+            [runKey]
+          );
+          return true;
+        }
+
+        const rk = parseAutoBriefRunKey(runKey);
+        const rawText = Buffer.isBuffer(br.file_data) ? br.file_data.toString('utf8') : String(br.file_data || '');
+        if (
+          rk &&
+          isDeskAutomationCategoryKind(rk.briefKind) &&
+          categoryStoredBodyNeedsPdfReshape(rawText, rk.period)
+        ) {
+          console.info('[brief-gen] replacing legacy category brief — PDF template markers missing', {
+            runKey,
+            briefId,
+            deskDate: rk.deskDate,
+            briefKind: rk.briefKind,
+          });
+          await executeQuery('DELETE FROM trader_deck_briefs WHERE id = ?', [briefId]);
+          await executeQuery(
+            `UPDATE trader_deck_brief_runs
+             SET status = 'started', brief_id = NULL, error_message = 'pdf_template_upgrade', updated_at = CURRENT_TIMESTAMP
              WHERE run_key = ?`,
             [runKey]
           );
@@ -2103,7 +2157,7 @@ async function publishAutoBrief({
   body,
   briefKind = 'stocks',
   generationMeta = null,
-  mimeType = 'text/plain; charset=utf-8',
+  mimeType = 'text/markdown; charset=utf-8',
 }) {
   const safeTitle = String(title || 'Market Brief').slice(0, 255);
   const normalizedKind = normalizeBriefKind(briefKind);
