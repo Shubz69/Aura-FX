@@ -1,7 +1,7 @@
 /**
  * Strip model-internal / chain-of-thought text from Trader Deck UI.
- * ESM only — used by the React app. Node API uses `sanitizeAiDeskOutput.js` (CommonJS).
- * @see sanitizeAiDeskOutput.js (keep logic in sync)
+ * Reference ESM copy. CRA uses `sanitizeAiDeskOutput.react.js` (inlined impl).
+ * Node uses `sanitizeAiDeskOutput.js` (CommonJS). Keep copies in sync.
  */
 
 const PAIRED_INTERNAL =
