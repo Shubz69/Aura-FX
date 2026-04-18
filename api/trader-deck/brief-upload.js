@@ -11,7 +11,11 @@
 require('../utils/suppress-warnings');
 
 const { executeQuery, addColumnIfNotExists } = require('../db');
-const { isInstitutionalBriefKind, isDeskAutomationCategoryKind } = require('./deskBriefKinds');
+const {
+  isInstitutionalBriefKind,
+  isDeskAutomationCategoryKind,
+  canonicalDeskCategoryKind,
+} = require('./deskBriefKinds');
 const { verifyToken } = require('../utils/auth');
 
 async function ensureChunkBufferTable() {
@@ -50,8 +54,10 @@ async function ensureBriefsTable() {
 
 function normalizeUploadedBriefKind(raw) {
   const k = String(raw || '').toLowerCase().trim();
-  if (isDeskAutomationCategoryKind(k) || isInstitutionalBriefKind(k)) return k;
-  return 'stocks';
+  if (isInstitutionalBriefKind(k)) return k;
+  const canon = canonicalDeskCategoryKind(k);
+  if (isDeskAutomationCategoryKind(canon)) return canon;
+  return 'equities';
 }
 
 async function requireAdmin(req) {

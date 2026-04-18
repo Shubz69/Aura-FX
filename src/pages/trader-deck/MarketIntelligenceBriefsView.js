@@ -44,12 +44,18 @@ function displayBriefTitle(title) {
 const BRIEF_KIND_ORDER = [
   'aura_institutional_daily',
   'aura_institutional_weekly',
+  'global_macro',
+  'equities',
+  'forex',
+  'commodities',
+  'fixed_income',
+  'crypto',
+  'geopolitics',
+  'market_sentiment',
+  /** Legacy slugs (pre canonical mapping) — hidden once DB backfilled */
   'stocks',
   'indices',
   'futures',
-  'forex',
-  'crypto',
-  'commodities',
   'bonds',
   'etfs',
   /** Legacy/default DB rows (`brief_kind` default) — must match API list; was excluded server-side until fixed */
@@ -58,26 +64,31 @@ const BRIEF_KIND_ORDER = [
 const BRIEF_KIND_LABEL = {
   aura_institutional_daily: 'Institutional Daily',
   aura_institutional_weekly: 'Institutional Weekly',
+  global_macro: 'Global Macro',
+  equities: 'Equities',
+  forex: 'Forex',
+  commodities: 'Commodities',
+  fixed_income: 'Fixed Income',
+  crypto: 'Crypto',
+  geopolitics: 'Geopolitics',
+  market_sentiment: 'Market Sentiment',
   stocks: 'Stocks',
   indices: 'Indices',
   futures: 'Futures',
-  forex: 'Forex',
-  crypto: 'Crypto',
-  commodities: 'Commodities',
   bonds: 'Bonds',
   etfs: 'ETFs',
   general: 'Desk brief',
 };
 
 const CATEGORY_BRIEF_KINDS = new Set([
-  'stocks',
-  'indices',
-  'futures',
+  'global_macro',
+  'equities',
   'forex',
-  'crypto',
   'commodities',
-  'bonds',
-  'etfs',
+  'fixed_income',
+  'crypto',
+  'geopolitics',
+  'market_sentiment',
 ]);
 
 /** All brief kinds we load and show (institutional + desk + eight asset sleeves + legacy general). */
@@ -85,6 +96,11 @@ const ALLOWED_BRIEF_KINDS = new Set([
   'aura_institutional_daily',
   'aura_institutional_weekly',
   ...CATEGORY_BRIEF_KINDS,
+  'stocks',
+  'indices',
+  'futures',
+  'bonds',
+  'etfs',
   'general',
 ]);
 

@@ -8,6 +8,7 @@ const { getConfig } = require('../config');
 const { getQuote } = require('./finnhubService');
 const {
   DESK_AUTOMATION_CATEGORY_KINDS,
+  canonicalDeskCategoryKind,
   isDeskAutomationCategoryKind,
   isInstitutionalBriefKind,
 } = require('../deskBriefKinds');
@@ -16,43 +17,50 @@ const BRIEF_KIND_ORDER = [...DESK_AUTOMATION_CATEGORY_KINDS];
 
 /** Strict universe per category — only these may appear as top-5 or in model-facing instrument lists. */
 const INSTRUMENT_UNIVERSE_BY_KIND = {
-  stocks: [
+  global_macro: [
+    'US500', 'NAS100', 'US30', 'GER40', 'UK100',
+    'US10Y', 'US02Y', 'DE10Y', 'EURUSD', 'XAUUSD',
+  ],
+  equities: [
     'AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN', 'META', 'GOOGL', 'AMD', 'NFLX', 'JPM', 'BAC', 'XOM',
     'UNH', 'LLY', 'AVGO', 'COST', 'DIS', 'INTC', 'CRM', 'ORCL', 'WMT', 'MA', 'V', 'PG', 'KO', 'PEP',
   ],
-  indices: ['US500', 'NAS100', 'US30', 'US2000', 'GER40', 'UK100', 'JP225', 'HK50', 'STOXX50', 'CAC40'],
-  futures: ['ES1!', 'NQ1!', 'RTY1!', 'CL1!', 'GC1!', 'SI1!', 'NG1!', 'ZN1!', 'ZB1!', '6E1!', '6B1!', '6J1!'],
   forex: [
     'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'EURJPY', 'GBPJPY', 'EURGBP',
     'AUDJPY', 'EURAUD', 'EURCHF', 'GBPCHF', 'CADJPY', 'NZDJPY',
   ],
-  crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'ADAUSD', 'DOGEUSD', 'AVAXUSD', 'DOTUSD', 'LINKUSD', 'LTCUSD'],
   commodities: ['XAUUSD', 'XAGUSD', 'USOIL', 'UKOIL', 'XNGUSD', 'XCUUSD', 'XPTUSD', 'XPDUSD'],
-  bonds: ['US02Y', 'US05Y', 'US10Y', 'US30Y', 'DE10Y', 'UK10Y', 'JP10Y', 'IT10Y'],
-  etfs: ['SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT', 'HYG', 'LQD', 'XLE', 'XLK', 'SMH', 'XLV', 'XLF', 'XLI', 'EEM', 'VNQ', 'USO', 'UNG'],
+  fixed_income: ['US02Y', 'US05Y', 'US10Y', 'US30Y', 'DE10Y', 'UK10Y', 'JP10Y', 'IT10Y'],
+  crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'ADAUSD', 'DOGEUSD', 'AVAXUSD', 'DOTUSD', 'LINKUSD', 'LTCUSD'],
+  geopolitics: ['US500', 'XAUUSD', 'USOIL', 'EURUSD', 'US10Y', 'NAS100'],
+  market_sentiment: ['SPY', 'QQQ', 'IWM', 'HYG', 'TLT', 'US500', 'NAS100'],
 };
 
 /** Deterministic fallback top-5 when quotes/scoring unavailable (subset of universe, category-pure). */
 const FALLBACK_TOP5_BY_KIND = {
-  stocks: ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN'],
-  indices: ['US500', 'NAS100', 'US30', 'GER40', 'UK100'],
-  futures: ['ES1!', 'NQ1!', 'CL1!', 'GC1!', 'ZN1!'],
+  global_macro: ['US500', 'NAS100', 'US10Y', 'EURUSD', 'XAUUSD'],
+  equities: ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN'],
   forex: ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCHF'],
-  crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'ADAUSD'],
   commodities: ['XAUUSD', 'XAGUSD', 'USOIL', 'UKOIL', 'XNGUSD'],
-  bonds: ['US02Y', 'US10Y', 'US30Y', 'DE10Y', 'UK10Y'],
-  etfs: ['SPY', 'QQQ', 'IWM', 'GLD', 'TLT'],
+  fixed_income: ['US02Y', 'US10Y', 'US30Y', 'DE10Y', 'UK10Y'],
+  crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'ADAUSD'],
+  geopolitics: ['US500', 'XAUUSD', 'USOIL', 'EURUSD', 'US10Y'],
+  market_sentiment: ['SPY', 'QQQ', 'IWM', 'HYG', 'TLT'],
 };
 
 const KIND_HEADLINE_KEYWORDS = {
-  stocks: /\b(stock|equity|equities|earnings|eps|guidance|nasdaq|nyse|s&p|apple|microsoft|nvidia|tesla|amazon|meta|split|buyback|dividend|ipo|sec)\b/i,
-  indices: /\b(index|indices|s&p\s*500|nasdaq|dow|dax|ftse|nikkei|hang\s*seng|vix|breadth|advance|decline|futures\s+on\s+index)\b/i,
-  futures: /\b(futures|es\s|nq\s|cl\s|gc\s|zb\s|zn\s|roll|curve|contango|backwardation|open\s+interest|cme)\b/i,
+  global_macro:
+    /\b(macro|gdp|cpi|pce|pmi|fed|ecb|boe|boj|growth|inflation|recession|liquidity|policy|yield\s*curve|s&p|nasdaq|dax|yield)\b/i,
+  equities:
+    /\b(stock|equity|equities|earnings|eps|guidance|nasdaq|nyse|s&p|apple|microsoft|nvidia|tesla|amazon|meta|split|buyback|dividend|ipo|sec)\b/i,
   forex: /\b(forex|fx|eur|gbp|jpy|chf|aud|nzd|cad|dollar|yen|euro|cable|fed|ecb|boe|boj|cpi|nfp|rate\s+decision|currency)\b/i,
-  crypto: /\b(bitcoin|btc|ethereum|eth|crypto|defi|stablecoin|etf\s+crypto|blockchain|solana|xrp|binance|perp|funding)\b/i,
   commodities: /\b(oil|wti|brent|gold|silver|copper|gas|lng|opec|inventory|xau|xag|commodit)\b/i,
-  bonds: /\b(bond|yield|treasury|t\-bill|duration|curve|auction|10y|2y|30y|rates|gilts|bund)\b/i,
-  etfs: /\b(etf|etn|flow|creation|redemption|spy|qqq|iwm|gld|tlt|ark|factor|passive)\b/i,
+  fixed_income: /\b(bond|yield|treasury|t\-bill|duration|curve|auction|10y|2y|30y|rates|gilts|bund)\b/i,
+  crypto: /\b(bitcoin|btc|ethereum|eth|crypto|defi|stablecoin|etf\s+crypto|blockchain|solana|xrp|binance|perp|funding)\b/i,
+  geopolitics:
+    /\b(war|sanction|nato|opec|conflict|geopol|iran|israel|ukraine|taiwan|middle\s*east|trade\s*war|tariff|election|terror|embargo)\b/i,
+  market_sentiment:
+    /\b(vix|sentiment|breadth|put\s*call|fear|greed|risk\s*on|risk\s*off|etf\s*flow|advance|decline|mag\s*seven)\b/i,
 };
 
 /** Headline → symbol relevance (first match wins per line). */
@@ -218,22 +226,22 @@ const BANNED_PHRASES_RE = new RegExp(
 );
 
 const CATEGORY_INTELLIGENCE_DIRECTIVES = {
-  stocks:
-    'STOCKS DESK: Macro-first tape — breadth, sector rotation, earnings/macro beta. Mention single names only when headlines or relative strength in the pack justify it; never a forced per-ticker rundown.',
+  global_macro:
+    'GLOBAL MACRO DESK: Cross-asset macro spine — growth, inflation, CB path, liquidity, indices vs rates transmission. Ground every level in the pack.',
+  equities:
+    'EQUITIES DESK: Macro-first tape — breadth, sector rotation, earnings/macro beta. Mention single names only when headlines or relative strength justify it.',
   forex:
-    'FX DESK: Rates, USD, and CB path as the spine; session liquidity and event vol. Weave pairs only when they clarify the macro transmission — not a pair-by-pair template.',
-  indices:
-    'INDICES DESK: Benchmark regime, breadth, and vol from drivers; rates linkage. Continuation vs chop as environment — not a stock-picker list.',
-  futures:
-    'FUTURES DESK: Complex vs macro (oil, rates, index beta) in prose; roll/liquidity only when data supports it.',
-  crypto:
-    'CRYPTO DESK: Risk proxy, liquidity, majors vs alts from tape and headlines in the pack — no invented on-chain detail.',
+    'FX DESK: Rates, USD, and CB path as the spine; session liquidity and event vol. Pairs only when they clarify transmission.',
   commodities:
-    'COMMODITIES DESK: USD, growth, and supply/demand themes; oil vs metals only when the pack differentiates them.',
-  bonds:
-    'RATES DESK: Curve and policy path from calendar and drivers; yield language only when backed by pack data.',
-  etfs:
-    'ETF DESK: Factor/flow tone vs underlying macro; no mechanical vehicle-by-vehicle blocks.',
+    'COMMODITIES DESK: USD, growth, and supply/demand themes; energy vs metals when the pack differentiates them.',
+  fixed_income:
+    'FIXED INCOME DESK: Curve shape, policy path, real yields, auctions — yields only when backed by pack data.',
+  crypto:
+    'CRYPTO DESK: Liquidity, majors vs alts, ETF/regulatory headlines from the pack — no invented on-chain detail.',
+  geopolitics:
+    'GEOPOLITICS DESK: Conflict, sanctions, trade, energy security transmission into indices, FX, commodities, rates — cite headlines/calendar only.',
+  market_sentiment:
+    'MARKET SENTIMENT DESK: Risk appetite, breadth, factor/credit proxies (equities + HYG + duration) — flows and positioning tone from facts.',
   aura_institutional_daily:
     'INSTITUTIONAL DAILY: Cross-asset house note — leadership, liquidity, scheduled risk; grounded in the instrument pack.',
   aura_institutional_weekly:
@@ -245,19 +253,19 @@ const CALENDAR_HIGH_IMPACT = /\b(high|red)\b/i;
 function normalizeBriefKind(kind) {
   const k = String(kind || '').toLowerCase().trim();
   if (isInstitutionalBriefKind(k)) return k;
-  if (isDeskAutomationCategoryKind(k)) return k;
-  // Legacy `general` and unknown slugs — never persist as general; default universe to stocks.
-  return 'stocks';
+  const canon = canonicalDeskCategoryKind(k);
+  if (isDeskAutomationCategoryKind(canon)) return canon;
+  return 'equities';
 }
 
 function getUniverseSymbols(kind) {
   const k = normalizeBriefKind(kind);
-  return [...(INSTRUMENT_UNIVERSE_BY_KIND[k] || INSTRUMENT_UNIVERSE_BY_KIND.stocks)];
+  return [...(INSTRUMENT_UNIVERSE_BY_KIND[k] || INSTRUMENT_UNIVERSE_BY_KIND.equities)];
 }
 
 function fallbackTop5ForKind(kind) {
   const k = normalizeBriefKind(kind);
-  return [...(FALLBACK_TOP5_BY_KIND[k] || FALLBACK_TOP5_BY_KIND.stocks)].slice(0, 5);
+  return [...(FALLBACK_TOP5_BY_KIND[k] || FALLBACK_TOP5_BY_KIND.equities)].slice(0, 5);
 }
 
 function isSymbolAllowedForKind(symbol, kind) {
@@ -331,7 +339,7 @@ function filterCalendarForBriefKind(events, briefKind) {
     const fxCcy = new Set(['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'NZD', 'CAD', 'CHF']);
     return base.filter((e) => fxCcy.has(currencyOf(e)) || /\b(rate|cpi|gdp|employment|pmi|retail|trade)\b/i.test(String(e.event || ''))).slice(0, 14);
   }
-  if (k === 'stocks' || k === 'indices' || k === 'etfs') {
+  if (k === 'equities' || k === 'market_sentiment') {
     return base
       .filter(
         (e) =>
@@ -340,7 +348,16 @@ function filterCalendarForBriefKind(events, briefKind) {
       )
       .slice(0, 14);
   }
-  if (k === 'bonds') {
+  if (k === 'global_macro') {
+    return base
+      .filter(
+        (e) =>
+          /\b(fed|ecb|boe|boj|cpi|pce|gdp|employment|nfp|ism|pmi|retail|trade|inflation|rate\s*decision)\b/i.test(String(e.event || '')) ||
+          ['USD', 'EUR', 'GBP', 'JPY'].includes(currencyOf(e))
+      )
+      .slice(0, 14);
+  }
+  if (k === 'fixed_income') {
     return base.filter((e) => /\b(auction|yield|cpi|pce|gdp|employment|fed|ecb|boe|boj|rate\s*decision|pmi)\b/i.test(String(e.event || ''))).slice(0, 14);
   }
   if (k === 'commodities') {
@@ -349,8 +366,14 @@ function filterCalendarForBriefKind(events, briefKind) {
   if (k === 'crypto') {
     return base.filter((e) => /\b(fed|cpi|pce|regulat|sec|etf|inflation|liquidity|dollar|employment)\b/i.test(String(e.event || ''))).slice(0, 14);
   }
-  if (k === 'futures') {
-    return base.slice(0, 14);
+  if (k === 'geopolitics') {
+    return base
+      .filter(
+        (e) =>
+          /\b(war|sanction|nato|opec|geopol|conflict|trade|tariff|energy|defence|election)\b/i.test(String(e.event || '')) ||
+          currencyOf(e) === 'USD'
+      )
+      .slice(0, 14);
   }
   return base.slice(0, 14);
 }
@@ -440,18 +463,18 @@ function categoryWritingMandate(briefKind, period) {
   const p = period === 'weekly' ? 'weekly' : 'daily';
   const depth = p === 'weekly' ? 'structural and strategic: week-to-date repricing, persistence of trends, sector/index leadership rotation, forward path for rates/liquidity.' : 'tactical: next session catalysts, tape/vol behaviour, immediate event risk, how to lean without over-committing.';
   const map = {
-    stocks: `Equities desk note. ${depth} Emphasize earnings/guidance, revisions, sector RS, breadth vs index, flow into mega-cap vs rest, single-name catalyst windows.`,
-    indices: `Index futures / cash benchmark desk note. ${depth} Emphasize breadth, VIX term structure if inferable from context, rate sensitivity, sector weight transmission, positioning tone vs macro prints.`,
-    futures: `Listed derivatives desk note. ${depth} Emphasize contract liquidity, roll windows, curve/carry context, session gaps vs cash, macro release beta per product.`,
-    forex: `G10 FX desk note. ${depth} Emphasize rate spreads, CB guidance, risk beta, session liquidity (Asia/London/NY), data surprises as vol engines.`,
-    crypto: `Digital assets desk note. ${depth} Emphasize liquidity, funding/basis only if inferable from pack, ETF/regulatory headlines, majors vs alts leadership, macro risk correlation.`,
-    commodities: `Commodities desk note. ${depth} Emphasize inventories, USD pass-through, geopolitical supply risk, China demand proxies, energy vs metals divergence.`,
-    bonds: `Rates desk note. ${depth} Emphasize curve shape, real yield narrative, auction demand, CB path repricing, growth/inflation surprise transmission.`,
-    etfs: `ETF sleeve note. ${depth} Emphasize flow/creation narrative, factor and sector ETFs, confirmation from underlying breadth, hedging with rates/vol products.`,
+    global_macro: `Global macro desk note. ${depth} Indices, yields, FX and gold as transmission; leadership and liquidity vs scheduled macro.`,
+    equities: `Equities desk note. ${depth} Earnings/guidance, revisions, sector RS, breadth vs index, flow into mega-cap vs rest.`,
+    forex: `G10 FX desk note. ${depth} Rate spreads, CB guidance, risk beta, session liquidity (Asia/London/NY), data surprises.`,
+    commodities: `Commodities desk note. ${depth} Inventories, USD pass-through, geopolitical supply risk, energy vs metals.`,
+    fixed_income: `Fixed income desk note. ${depth} Curve shape, real yields, auctions, CB path repricing, growth/inflation transmission.`,
+    crypto: `Digital assets desk note. ${depth} Liquidity, ETF/regulatory headlines, majors vs alts, macro correlation from the pack.`,
+    geopolitics: `Geopolitics desk note. ${depth} Transmission into risk assets, energy, FX and rates — headline and calendar grounded only.`,
+    market_sentiment: `Market sentiment desk note. ${depth} Risk appetite, credit/duration proxies, breadth and factor tone vs macro prints.`,
     aura_institutional_daily: `Institutional daily house note. ${depth} Cross-asset leadership, liquidity, and scheduled risk across the published instrument set.`,
     aura_institutional_weekly: `Institutional weekly house note. ${depth} Structural repricing, persistence, and next-week catalysts across the house universe.`,
   };
-  return map[k] || map.stocks;
+  return map[k] || map.equities;
 }
 
 /** Full Twelve Data quote for brief intelligence (volume etc.) — via marketDataLayer. */
@@ -627,7 +650,7 @@ function calendarRelevantToSymbol(symU, cal, k) {
     const hint = INSTRUMENT_HEADLINE_HINTS[symU];
     if (hint && hint.test(ev)) return true;
     if (k === 'forex' && /USD/.test(symU) && /\b(usd|fed|dollar|nfp|cpi)\b/i.test(ev)) return true;
-    if ((k === 'stocks' || k === 'indices') && /US500|NAS100|US30/.test(symU) && /\b(s&p|nasdaq|dow|index|fed|cpi)\b/i.test(ev)) {
+    if ((k === 'equities' || k === 'global_macro' || k === 'market_sentiment') && /US500|NAS100|US30|SPY|QQQ|IWM/.test(symU) && /\b(s&p|nasdaq|dow|index|fed|cpi)\b/i.test(ev)) {
       return true;
     }
     return false;
@@ -673,13 +696,13 @@ function pickMacroLinkForSymbol(symU, market, briefKind) {
   const k = normalizeBriefKind(briefKind);
   const drivers = (market?.keyDrivers || []).map(packDriverLine).join(' ').toLowerCase();
   const parts = [];
-  if (/\b(yield|treasury|rate|bond)\b/i.test(drivers) && (k === 'bonds' || k === 'stocks' || k === 'indices')) {
+  if (/\b(yield|treasury|rate|bond)\b/i.test(drivers) && (k === 'fixed_income' || k === 'equities' || k === 'global_macro' || k === 'market_sentiment')) {
     parts.push((market.keyDrivers || []).find((d) => /yield|treasury|bond|rate/i.test(packDriverLine(d))));
   }
   if (/\b(dollar|usd|eur|fx)\b/i.test(drivers) && (k === 'forex' || k === 'commodities' || k === 'crypto')) {
     parts.push((market.keyDrivers || []).find((d) => /dollar|usd|eur/i.test(packDriverLine(d))));
   }
-  if (/\b(oil|crude)\b/i.test(drivers) && (k === 'commodities' || k === 'futures')) {
+  if (/\b(oil|crude)\b/i.test(drivers) && (k === 'commodities' || k === 'geopolitics')) {
     parts.push((market.keyDrivers || []).find((d) => /oil|crude/i.test(packDriverLine(d))));
   }
   const packed = parts.filter(Boolean).map(packDriverLine).filter(Boolean);
@@ -735,7 +758,7 @@ function buildInstrumentIntelligence({
       catalystSecondary: sh[1] || null,
       macroLink: pickMacroLinkForSymbol(symU, market, k),
       relativeStrengthVsUS500:
-        (k === 'stocks' || k === 'etfs') && dp != null && benchDp != null && Number.isFinite(benchDp)
+        (k === 'equities' || k === 'market_sentiment') && dp != null && benchDp != null && Number.isFinite(benchDp)
           ? Math.round((dp - benchDp) * 100) / 100
           : null,
       nextCatalyst: nextCalendarLineForSymbol(symU, cal, k),
@@ -838,7 +861,7 @@ async function scoreAndSelectTopInstruments({
       const hint = INSTRUMENT_HEADLINE_HINTS[symU];
       if (hint && hint.test(ev)) return true;
       if (k === 'forex' && /USD/.test(symU) && /\b(usd|fed|dollar|nfp|cpi)\b/i.test(ev)) return true;
-      if ((k === 'stocks' || k === 'indices') && /US500|NAS100|US30/.test(symU) && /\b(s&p|nasdaq|dow|index|fed|cpi)\b/i.test(ev)) return true;
+      if ((k === 'equities' || k === 'global_macro' || k === 'market_sentiment') && /US500|NAS100|US30|SPY|QQQ|IWM/.test(symU) && /\b(s&p|nasdaq|dow|index|fed|cpi)\b/i.test(ev)) return true;
       return false;
     });
     breakdown.calendar = calBoost ? 12 : 0;
