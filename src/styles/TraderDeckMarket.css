@@ -2463,14 +2463,17 @@
     min-height: 100%;
   }
   .td-outlook-concept-col--secondary > .td-outlook-concept-card--macro-timing {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
   }
   .td-outlook-concept-col--secondary > .td-outlook-concept-card--macro-timing .td-outlook-concept-card__body--macro-timing {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 }
 
@@ -2706,14 +2709,20 @@
   padding: 5px 8px 6px !important;
 }
 
-/* Macro timing & inflection window — compact terminal density */
+/* Macro timing & inflection window — compact terminal density + column fill */
 .td-deck-mo-outlook--concept .td-outlook-concept-card--macro-timing {
   height: auto;
+}
+
+.mo-macro-timing--stretch {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .td-outlook-concept-card__head--macro-timing {
   border-bottom: 1px solid rgba(107, 143, 232, 0.13);
   padding-right: 10px;
+  flex-shrink: 0;
 }
 
 .td-outlook-concept-card__title--macro-timing {
@@ -2731,17 +2740,56 @@
   flex-direction: column;
 }
 
+.mo-macro-timing__body-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mo-macro-timing__stack--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.mo-macro-timing__region--top {
+  flex: 0 0 auto;
+}
+
+.mo-macro-timing__region--middle {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mo-macro-timing__region--middle > .mo-macro-timing__k {
+  flex-shrink: 0;
+}
+
+.mo-macro-timing__catalyst-dense--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mo-macro-timing__region--bottom {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(107, 143, 232, 0.1);
+}
+
 .mo-macro-timing__fresh {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: 0.54rem !important;
-}
-
-.mo-macro-timing__stack--compact {
-  display: flex;
-  flex-direction: column;
-  flex: 0 0 auto;
-  gap: 0;
 }
 
 .mo-macro-timing__k {
@@ -2781,11 +2829,6 @@
   color: rgba(225, 232, 255, 0.92);
 }
 
-.mo-macro-timing__block--catalyst-compact {
-  padding: 5px 0 6px;
-  border-bottom: 1px solid rgba(107, 143, 232, 0.09);
-}
-
 .mo-macro-timing__catalyst-dense {
   list-style: none;
   margin: 0;
@@ -2806,9 +2849,9 @@
   border: 1px solid rgba(107, 143, 232, 0.1);
 }
 
-.mo-macro-timing__block--behavior-compact {
-  padding: 5px 0 6px;
-  border-bottom: 1px solid rgba(107, 143, 232, 0.09);
+.mo-macro-timing__region--bottom .mo-macro-timing__block--behavior-compact {
+  padding: 2px 0 5px;
+  border-bottom: 1px solid rgba(107, 143, 232, 0.07);
 }
 
 .mo-macro-timing__dense-list {
@@ -2821,6 +2864,7 @@
 
 .mo-macro-timing__dense-list li {
   margin-bottom: 2px;
+  min-height: 1.32em;
 }
 
 .mo-macro-timing__dense-list li:last-child {
@@ -2833,10 +2877,9 @@
   color: rgba(255, 242, 220, 0.92);
 }
 
-.mo-macro-timing__block--edge-compact {
-  padding: 5px 0 2px;
-  border-top: 1px solid rgba(212, 175, 125, 0.18);
-  margin-top: 1px;
+.mo-macro-timing__region--bottom .mo-macro-timing__block--edge-compact {
+  padding: 4px 0 2px;
+  border-top: 0;
 }
 
 .mo-terminal-feed {

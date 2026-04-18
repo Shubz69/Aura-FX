@@ -151,7 +151,23 @@ function buildCatalystLinesCompact(showing, macroPhase, outlookRiskContext, risk
     ),
   );
 
-  return lines.slice(0, 6);
+  lines.push(
+    clip(
+      `[GEO] ${breakdown.geopoliticalRisk != null ? `risk ${Math.round(Number(breakdown.geopoliticalRisk))}/100` : 'policy tail'} — ${breakdown.geopoliticalRisk != null && Number(breakdown.geopoliticalRisk) >= 58 ? 'headline gaps' : 'background only'}.`,
+      118,
+    ),
+  );
+
+  const tl0 = Array.isArray(showing.marketChangesTimeline) ? showing.marketChangesTimeline[0] : null;
+  const tape = tl0 && (tl0.whatChanged || tl0.title);
+  lines.push(
+    clip(
+      `[FLOW] ${tape ? clip(String(tape), 40) : 'theme drift'} — rotate capital on leadership flip.`,
+      118,
+    ),
+  );
+
+  return lines.slice(0, 8);
 }
 
 /** 2–4 short lines */
@@ -202,7 +218,7 @@ function buildExpectedBehaviorCompact(showing, macroPhase, outlookRiskContext, r
   return out.slice(0, 4);
 }
 
-/** 2–3 concise lines */
+/** Up to 4 concise lines — UI scales 2–4 */
 function buildTraderEdgeLines(macroPhase, level, riskEngine) {
   const mins = riskEngine?.nextRiskEventInMins;
   const lines = [];
@@ -238,7 +254,16 @@ function buildTraderEdgeLines(macroPhase, level, riskEngine) {
     ),
   );
 
-  return lines.slice(0, 3);
+  lines.push(
+    clip(
+      Number.isFinite(mins) && mins < 45
+        ? 'Clock compression — prioritize fill quality over direction.'
+        : 'Patience into overlap — depth stacks edge.',
+      100,
+    ),
+  );
+
+  return lines.slice(0, 4);
 }
 
 /**
