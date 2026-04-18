@@ -1,5 +1,5 @@
 /**
- * Macro Timing & Inflection Window — terminal-style decision engine for Market Outlook right rail.
+ * Macro Timing & Inflection Window — compact terminal lines for Market Outlook right rail.
  */
 
 import { currentSessionShortLabel } from './marketOutlookDisplayFormatters';
@@ -85,49 +85,46 @@ function deriveActiveStatus(macroPhase, riskEngine) {
 }
 
 function buildActiveTimingWindow(showing, macroPhase, riskEngine) {
-  const sessionLbl = currentSessionShortLabel(showing.sessionContext?.currentSession);
   const mins = riskEngine?.nextRiskEventInMins;
-  const row = pickTimingSessionRow(showing.sessionContext);
   const cond = deriveSessionConditionLabel(showing.sessionContext, riskEngine);
   const status = deriveActiveStatus(macroPhase, riskEngine);
 
-  const timeToCatalyst = Number.isFinite(mins)
-    ? clip(`~${mins}m to next macro catalyst`, 72)
-    : clip('No imminent catalyst — follow calendar cadence.', 72);
+  const catalystBit = Number.isFinite(mins) ? clip(`~${mins}m to catalyst`, 28) : clip('no imminent print', 28);
+  const headline = clip(`${status} · ${catalystBit} · ${cond}`, 118);
 
   const exec =
     status === 'Pre-catalyst'
-      ? clip('Trade the reaction window — shrink before the print, resize on clean follow-through.', 118)
+      ? clip('Shrink into print · add only on clean follow-through.', 110)
       : cond === 'Thin'
-        ? clip('Size to depth; avoid sweeping illiquid legs until tape proves.', 118)
-        : clip('Align sleeves first — impulse trades only when cross-asset agrees.', 118);
+        ? clip('Size to depth · avoid sweeping thin legs.', 110)
+        : clip('Align sleeves · impulse only if cross-asset agrees.', 110);
 
   return {
+    headline,
+    executionNote: exec,
     status,
-    timeToCatalyst,
+    timeToCatalyst: catalystBit,
     sessionCondition: cond,
-    sessionLabel: sessionLbl || 'Session',
     executionImplication: exec,
+    sessionLabel: currentSessionShortLabel(showing.sessionContext?.currentSession) || 'Session',
   };
 }
 
-function buildInflectionExplanation(level, showing, riskEngine, crossAssetSignals) {
+function buildInflectionReason(level, riskEngine, crossAssetSignals) {
   const breakdown = riskEngine?.breakdown && typeof riskEngine.breakdown === 'object' ? riskEngine.breakdown : {};
   const vol = breakdown.volatility != null ? Number(breakdown.volatility) : null;
   const cl = breakdown.clustering != null ? Number(breakdown.clustering) : null;
   const signals = Array.isArray(crossAssetSignals) ? crossAssetSignals : [];
   const uniq = new Set(signals.map((s) => normDirection(s.direction)));
 
-  const volPart =
-    vol != null && vol >= 58 ? 'elevated realized/risk proxies raise gap risk' : vol != null && vol <= 40 ? 'compressed realized vol favors mean-revert chop' : 'vol mid-band keeps ranges negotiable';
+  const frag =
+    uniq.size >= 3 ? 'dispersed sleeves' : uniq.size === 2 ? 'two-way tape' : uniq.size <= 1 ? 'aligned sleeves' : 'mixed sleeves';
 
-  const corrPart =
-    cl != null && cl >= 58 ? 'risk factors clustering — sleeves likely to move together' : cl != null && cl <= 40 ? 'correlation structure loosening — leadership can rotate fast' : 'factor linkage neutral — confirmation still required';
+  const volBit = vol != null && vol >= 58 ? 'elev vol' : vol != null && vol <= 40 ? 'compressed vol' : 'mid vol';
 
-  const sleevePart =
-    uniq.size >= 3 ? 'cross-asset directions diverging — impulse trades need cleaner confirmation' : uniq.size === 2 ? 'two-way tape — lean on leaders, not breadth' : 'directional sleeves more aligned — cleaner impulse if liquidity holds';
+  const clBit = cl != null && cl >= 56 ? 'tight linkage' : cl != null && cl <= 42 ? 'linkage breaking' : 'neutral linkage';
 
-  return clip(`Why: ${volPart}; ${corrPart}; ${sleevePart}.`, 200);
+  return clip(`${volBit}, ${clBit}, ${frag}.`, 118);
 }
 
 function buildMarketStateSnapshot(riskEngine, crossAssetSignals, macroPhase) {
@@ -153,12 +150,13 @@ function buildMarketStateSnapshot(riskEngine, crossAssetSignals, macroPhase) {
   let positioning = 'Unclear';
   if (macroPhase.key === 'pre-event') positioning = 'Crowded';
   else if (macroPhase.key === 'drift' && vol != null && vol <= 45) positioning = 'Light';
-  else if (uniq.size <= 1 && (cl != null && cl >= 55)) positioning = 'Crowded';
+  else if (uniq.size <= 1 && cl != null && cl >= 55) positioning = 'Crowded';
 
   return { volRegime, liquidity, correlation, positioning };
 }
 
-function buildCatalystItems(showing, macroPhase, outlookRiskContext, riskEngine) {
+/** Max 5 lines: `[TAG] short insight` */
+function buildCatalystCompactLines(showing, macroPhase, outlookRiskContext, riskEngine) {
   const breakdown = riskEngine?.breakdown && typeof riskEngine.breakdown === 'object' ? riskEngine.breakdown : {};
   const mins = riskEngine?.nextRiskEventInMins;
   const row = pickTimingSessionRow(showing.sessionContext);
@@ -166,115 +164,60 @@ function buildCatalystItems(showing, macroPhase, outlookRiskContext, riskEngine)
   const uniq = new Set(signals.map((s) => normDirection(s.direction)));
   const volR = breakdown.volatility != null ? Math.round(Number(breakdown.volatility)) : null;
   const liqR = breakdown.liquidity != null ? Math.round(Number(breakdown.liquidity)) : null;
-  const clR = breakdown.clustering != null ? Math.round(Number(breakdown.clustering)) : null;
-  const tl0 = Array.isArray(showing.marketChangesTimeline) ? showing.marketChangesTimeline[0] : null;
-  const tape = tl0 && (tl0.whatChanged || tl0.title);
-  const drivers = Array.isArray(showing.keyDrivers) ? showing.keyDrivers : [];
-  const dom = drivers[0] && (drivers[0].name || drivers[0].title) ? String(drivers[0].name || drivers[0].title) : null;
 
-  return [
-    {
-      tag: 'MACRO',
-      title: 'Catalyst clock',
-      state: Number.isFinite(mins) ? `Event window open (~${mins}m)` : 'Calendar-driven cadence',
-      trigger: clip(outlookRiskContext?.nextRiskWindow ? String(outlookRiskContext.nextRiskWindow) : 'scheduled macro / policy prints', 64),
-      reaction: clip('USD & rates reprice first; risk follows depth.', 80),
-    },
-    {
-      tag: 'VOL',
-      title: 'Compression / expansion',
-      state: volR != null ? `Vol radar ${volR}/100` : 'Vol radar —',
-      trigger: volR != null && volR >= 58 ? 'realized lift + event tail' : volR != null && volR <= 40 ? 'pinned realized — range drift' : 'transition risk',
-      reaction: volR != null && volR >= 58 ? clip('Tail/gamma matters — shrink gross into binary windows.', 80) : clip('Transitions > direction — trade ranges until break.', 80),
-    },
-    {
-      tag: 'LIQUIDITY',
-      title: 'Session handoff',
-      state: row?.liquidityBias ? `${String(row.liquidityBias)} bias` : 'Session roll',
-      trigger: clip(row?.state ? String(row.state).replace(/_/g, ' ') : 'liquidity profile', 56),
-      reaction: clip('Slippage rises when depth thins — scale into depth, not headlines.', 80),
-    },
-    {
-      tag: 'FLOW',
-      title: 'Cross-asset impulse',
-      state: signals.length ? `${uniq.size}-way sleeve mix` : 'Thin sleeve evidence',
-      trigger: tape ? clip(String(tape), 48) : 'theme leadership',
-      reaction: clip(uniq.size >= 3 ? 'Wait for confirmation — dispersion high.' : 'Cleaner impulse if sleeves align.', 80),
-    },
-    {
-      tag: 'POSITIONING',
-      title: 'Convexity / hedging',
-      state: macroPhase.key === 'pre-event' ? 'Event premium bid' : 'Convexity quieter',
-      trigger: macroPhase.key === 'pre-event' ? 'binary risk into print' : 'post-drift positioning',
-      reaction: clip(macroPhase.key === 'pre-event' ? 'Trim gross pre-release; respect gap risk.' : 'Add on follow-through, not headlines.', 80),
-    },
-    {
-      tag: 'GEO',
-      title: 'Geopolitical tail',
-      state:
-        breakdown.geopoliticalRisk != null ? `Risk gauge ${Math.round(Number(breakdown.geopoliticalRisk))}/100` : 'Policy / headline tail',
-      trigger: breakdown.geopoliticalRisk != null && Number(breakdown.geopoliticalRisk) >= 58 ? 'headline-sensitive tape' : 'background risk',
-      reaction: clip(breakdown.geopoliticalRisk != null && Number(breakdown.geopoliticalRisk) >= 58 ? 'Gap risk — widen stops / reduce size.' : 'Monitor — not primary driver.', 80),
-    },
-    {
-      tag: 'USD / RATES',
-      title: 'Dominant macro driver',
-      state: dom ? clip(dom, 42) + ' leads' : 'No single dominant driver',
-      trigger: clip(liqR != null ? `Liquidity factor ${liqR}/100` : 'curve & front-end path', 56),
-      reaction: clip('Fiat leg sets the release — FX first, beta second.', 80),
-    },
-    {
-      tag: 'MACRO',
-      title: 'Release spacing',
-      state: clR != null ? `Clustering ${clR}/100` : 'Print spacing',
-      trigger: clR != null && clR >= 58 ? 'stacked variance windows' : 'drift between reports',
-      reaction: clip(clR != null && clR >= 58 ? 'Variance stacks — reduce overlapping risk.' : 'Mean-revert between prints if vol contained.', 80),
-    },
+  const volInsight =
+    volR != null && volR >= 58 ? 'Lift / tails on' : volR != null && volR <= 40 ? 'Mid-band, chop' : 'Mid-band, no expansion';
+
+  const flowInsight =
+    uniq.size >= 3 ? 'Mixed sleeves, no alignment' : uniq.size === 2 ? 'Two-way, pick leaders' : signals.length ? 'Sleeves aligned' : 'Thin evidence';
+
+  const liqInsight =
+    liqR != null && liqR <= 40 ? 'Thin transitions' : liqR != null && liqR >= 62 ? 'Fragmented depth' : 'Stable depth';
+
+  const macroInsight = Number.isFinite(mins)
+    ? clip(`Prints spaced · ~${mins}m clock`, 56)
+    : clip('Cadence drift · calendar-led', 56);
+
+  const usdInsight =
+    breakdown.geopoliticalRisk != null && Number(breakdown.geopoliticalRisk) >= 58
+      ? 'USD bid · geo tail'
+      : 'USD · rates path dominant';
+
+  const lines = [
+    clip(`[MACRO] ${macroInsight}`, 96),
+    clip(`[VOL] ${volInsight}`, 96),
+    clip(`[FLOW] ${flowInsight}`, 96),
+    clip(`[LIQ] ${liqInsight}`, 96),
+    clip(`[USD] ${usdInsight}`, 96),
   ];
+
+  return lines.slice(0, 5);
 }
 
 function buildExpectedBehavior(showing, macroPhase, outlookRiskContext, riskEngine) {
   const pulse = showing.marketPulse || {};
   const outlook = pulse.outlookPulse && typeof pulse.outlookPulse === 'object' ? pulse.outlookPulse : null;
   const mins = riskEngine?.nextRiskEventInMins;
-  const out = [];
 
-  if (outlook?.volatilityCondition) {
-    out.push(clip(`Base case: ${String(outlook.volatilityCondition)}`, 118));
-  } else {
-    out.push(
-      clip(`Base case: ${macroPhase.label} tape until ${Number.isFinite(mins) ? `~${mins}m catalyst` : 'next macro print'}.`, 118),
-    );
-  }
+  const base = outlook?.volatilityCondition
+    ? clip(`Base: ${String(outlook.volatilityCondition)}`, 100)
+    : clip(`Base: ${macroPhase.label} until ${Number.isFinite(mins) ? `~${mins}m catalyst` : 'next print'}.`, 100);
 
-  out.push(
-    clip(
-      pulse.score != null && Number(pulse.score) >= 58
-        ? 'Conditional: if flow commits, favor continuation where depth stacks; trail risk.'
-        : 'Conditional: if flow waits, fade noise — scale only after leadership proves.',
-      118,
-    ),
+  const cond = clip(
+    pulse.score != null && Number(pulse.score) >= 58
+      ? 'Conditional: continuation if depth stacks · trail stops.'
+      : 'Conditional: scale only after sleeve leadership proves.',
+    100,
   );
 
-  out.push(
-    clip(
-      outlookRiskContext?.nextRiskWindow
-        ? `If macro hits: reprice core rates/USD first — ${clip(String(outlookRiskContext.nextRiskWindow), 56)}`
-        : 'If macro hits: fade volatility spike if liquidity is thin — wait for fills.',
-      118,
-    ),
+  const fail = clip(
+    macroPhase.key === 'pre-event'
+      ? 'Failure: headline chase · poor fills.'
+      : 'Failure: size without a catalyst clock.',
+    100,
   );
 
-  out.push(
-    clip(
-      macroPhase.key === 'pre-event'
-        ? 'Failure case: chasing headlines without fill quality or defined invalidation.'
-        : 'Failure case: sizing drift without a catalyst clock — narrative without depth.',
-      118,
-    ),
-  );
-
-  return out.slice(0, 4);
+  return [base, cond, fail];
 }
 
 function buildTradeConditionsMatrix(showing, macroPhase, riskEngine) {
@@ -286,22 +229,22 @@ function buildTradeConditionsMatrix(showing, macroPhase, riskEngine) {
 
   const breakout =
     vol != null && vol >= 55 && !liqThin
-      ? clip('Valid on range break with volume & cross-asset confirmation; trail after first pullback holds.', 130)
+      ? clip('Impulse clears range · depth confirms', 88)
       : macroPhase.key === 'expansion'
-        ? clip('Valid when expansion regime + active session — confirm with rates/USD leadership.', 130)
-        : clip('Valid only after impulse clears prior balance with sustained depth — otherwise fade fake breaks.', 130);
+        ? clip('Range break · rates lead', 88)
+        : clip('Break only post-impulse · else fade', 88);
 
   const meanRev =
-    vol != null && vol <= 48 || macroPhase.key === 'drift'
-      ? clip('Valid in compressed tape / drift — fade extremes inside prior balance; tighten if clustering rises.', 130)
-      : clip('Valid when vol contracts post-event — sell rips into thin air until range re-establishes.', 130);
+    (vol != null && vol <= 48) || macroPhase.key === 'drift'
+      ? clip('Fade extremes inside balance', 88)
+      : clip('Mean-revert post-print if vol pins', 88);
 
   const noTrade =
     Number.isFinite(mins) && mins < 45 && liqThin
-      ? clip('No-trade: inside binary window with thin liquidity — binary event risk dominates edge.', 130)
+      ? clip('Binary window · thin book', 88)
       : uniqSessionAmbiguous(sessionRow)
-        ? clip('No-trade: session transition / ambiguous leadership — wait for cleaner sleeve alignment.', 130)
-        : clip('No-trade: conflicting cross-asset signals + mid vol — reduce until catalyst or clarity.', 130);
+        ? clip('Transition tape · wait', 88)
+        : clip('Mixed signals · stand down', 88);
 
   return { breakout, meanReversion: meanRev, noTradeZone: noTrade };
 }
@@ -314,40 +257,31 @@ function uniqSessionAmbiguous(row) {
 
 function buildTraderEdgeLines(macroPhase, level, riskEngine) {
   const mins = riskEngine?.nextRiskEventInMins;
-  const lines = [];
 
-  lines.push(
-    clip(
-      Number.isFinite(mins) && mins < 90
-        ? 'Execution: react into prints — cut size pre-release; add only on clean continuation.'
-        : macroPhase.key === 'drift'
-          ? 'Execution: mean-revert scalps only — no swing adds until expansion confirms.'
-          : 'Execution: trade impulse when sleeves align — scale after depth confirms.',
-      120,
-    ),
+  const a = clip(
+    Number.isFinite(mins) && mins < 90
+      ? 'Execution: react into prints · cut size pre-release.'
+      : macroPhase.key === 'drift'
+        ? 'Execution: scalp ranges · no swing adds.'
+        : 'Execution: impulse when sleeves sync.',
+    96,
   );
 
-  lines.push(
-    clip(
-      level === 'HIGH'
-        ? 'Avoid: correlated gap risk — slice size through catalyst stacks; hedge tail.'
-        : level === 'LOW'
-          ? 'Avoid: overtrading quiet tape — poor R/R in chop without a clock.'
-          : 'Avoid: front-running narrative without liquidity — wait for the move, not the story.',
-      120,
-    ),
+  const b = clip(
+    level === 'HIGH'
+      ? 'Risk: gap · slice orders through catalysts.'
+      : level === 'LOW'
+        ? 'Risk: chop · poor R/R without clock.'
+        : 'Risk: narrative front-run · wait depth.',
+    96,
   );
 
-  lines.push(
-    clip(
-      Number.isFinite(mins) && mins < 60
-        ? 'Edge: fill quality & reaction discipline — calendar defines the window.'
-        : 'Edge: patience into overlap — depth stacks when sleeves sync.',
-      110,
-    ),
+  const c = clip(
+    Number.isFinite(mins) && mins < 60 ? 'Edge: calendar + fill quality.' : 'Edge: overlap · depth stacks.',
+    88,
   );
 
-  return lines.slice(0, 3);
+  return [a, b, c];
 }
 
 /**
@@ -373,31 +307,25 @@ export function buildMacroTimingInflectionWindow(showing) {
   };
 
   const activeTimingWindow = buildActiveTimingWindow(desk, macroPhase, riskEngine);
-  const catalystItems = buildCatalystItems(desk, macroPhase, outlookRiskContext, riskEngine);
+  const reason = buildInflectionReason(level, riskEngine, crossAssetSignals);
+  const catalystLines = buildCatalystCompactLines(desk, macroPhase, outlookRiskContext, riskEngine);
 
   return {
     activeTimingWindow,
     inflectionRisk: {
       level,
-      explanation: buildInflectionExplanation(level, desk, riskEngine, crossAssetSignals),
+      reason,
+      explanation: reason,
     },
     marketStateSnapshot: buildMarketStateSnapshot(riskEngine, crossAssetSignals, macroPhase),
-    catalystItems,
+    catalystLines,
     expectedBehavior: buildExpectedBehavior(desk, macroPhase, outlookRiskContext, riskEngine),
     tradeConditionsMatrix: buildTradeConditionsMatrix(desk, macroPhase, riskEngine),
     traderEdgeLines: buildTraderEdgeLines(macroPhase, level, riskEngine),
-    /** Legacy keys — safe for older callers */
     timingCompact: {
-      lines: [
-        `${activeTimingWindow.status} · ${activeTimingWindow.timeToCatalyst}`,
-        `${activeTimingWindow.sessionLabel} · ${activeTimingWindow.sessionCondition} session`,
-      ],
+      lines: [activeTimingWindow.headline, activeTimingWindow.executionNote],
     },
-    inflectionSummary: clip(buildInflectionExplanation(level, desk, riskEngine, crossAssetSignals), 140),
+    inflectionSummary: clip(reason, 140),
     inflectionLevel: level,
-    catalystLines: catalystItems.map(
-      (it) =>
-        `[${it.tag}] ${it.title} — ${it.state}; ${it.trigger} → ${it.reaction}`,
-    ),
   };
 }
