@@ -5,7 +5,10 @@ const ID = 'eia_news';
 const HOSTS = ['www.eia.gov'];
 
 function linkFilter(href) {
-  return /\/pressroom\/|\/todayinenergy\//i.test(href) && !href.endsWith('.pdf');
+  return (
+    /\/pressroom\/|\/todayinenergy\/|\/newsroom\/|\/news\/releases\//i.test(href) ||
+    /eia\.gov\/(todayinenergy|pressroom|newsroom|news\/releases)/i.test(href)
+  ) && !href.endsWith('.pdf');
 }
 
 module.exports = {
@@ -14,7 +17,8 @@ module.exports = {
   defaultIntervalSeconds: 1800,
   allowHosts: HOSTS,
   async run(ctx) {
-    const listingUrl = 'https://www.eia.gov/newsroom.php';
+    /** newsroom.php often removed; /newsroom/ is the current hub. */
+    const listingUrl = 'https://www.eia.gov/newsroom/';
     const html = await fetchListing(listingUrl, { allowHosts: HOSTS });
     const links = collectLinks(html, listingUrl, HOSTS, linkFilter);
     const cap = Math.min(links.length, ctx.maxPerAdapter || 10);

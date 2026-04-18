@@ -18,6 +18,13 @@ function log(runId, level, msg, extra) {
   else console.log(line);
 }
 
+/** Blocked / moved listings and rate limits — warn so Vercel filters don’t treat every cron as an app error. */
+function adapterFailureLogLevel(errorCode) {
+  const s = String(errorCode || '');
+  if (/^http_(403|404|408|429)$/.test(s)) return 'warn';
+  return 'error';
+}
+
 async function recordRunStart(adapterId) {
   const [r] = await executeQuery(
     `INSERT INTO surveillance_ingest_runs (adapter_id, items_in, items_out) VALUES (?, 0, 0)`,
@@ -96,7 +103,7 @@ async function runSurveillanceIngestion(opts = {}) {
     } catch (e) {
       errorCode = e.message || 'adapter_failed';
       summary.errors.push({ adapter: adapter.id, error: errorCode });
-      log(runId, 'error', `adapter ${adapter.id}`, errorCode);
+      log(runId, adapterFailureLogLevel(errorCode), `adapter ${adapter.id}`, errorCode);
       await markFailure(adapter.id, errorCode, Date.now() - t0);
     } finally {
       await recordRunEnd(runDbId, itemsIn, itemsOut, errorCode, Date.now() - t0, {
@@ -180,7 +187,7 @@ async function runSurveillanceAdaptersById(adapterIds, opts = {}) {
     } catch (e) {
       errorCode = e.message || 'adapter_failed';
       summary.errors.push({ adapter: adapter.id, error: errorCode });
-      log(runId, 'error', `adapter ${adapter.id}`, errorCode);
+      log(runId, adapterFailureLogLevel(errorCode), `adapter ${adapter.id}`, errorCode);
       await markFailure(adapter.id, errorCode, Date.now() - t0);
     } finally {
       await recordRunEnd(runDbId, itemsIn, itemsOut, errorCode, Date.now() - t0, {

@@ -8,7 +8,8 @@
 const { executeQuery } = require('../db');
 
 async function ensureTable() {
-  await executeQuery(`
+  await executeQuery(
+    `
     CREATE TABLE IF NOT EXISTS trader_deck_headlines_daily (
       desk_date DATE NOT NULL PRIMARY KEY,
       headlines_json JSON NOT NULL,
@@ -16,7 +17,10 @@ async function ensureTable() {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       INDEX idx_tdh_updated (updated_at)
     )
-  `);
+  `,
+    [],
+    { suppressErrorLog: true, requestId: 'headlines-daily-ddl', timeout: 25000 }
+  );
 }
 
 let tablePromise = null;

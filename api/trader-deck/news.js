@@ -88,7 +88,8 @@ async function upsertDailyHeadlineArchive(articles) {
          headlines_json = VALUES(headlines_json),
          article_count = VALUES(article_count),
          updated_at = CURRENT_TIMESTAMP`,
-      [deskDate, JSON.stringify(top), top.length]
+      [deskDate, JSON.stringify(top), top.length],
+      { suppressErrorLog: true, requestId: 'trader-deck-news-archive' }
     );
   } catch (e) {
     console.warn('[trader-deck/news] daily headline archive upsert failed:', e.message || e);

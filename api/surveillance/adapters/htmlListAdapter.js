@@ -52,8 +52,21 @@ function collectLinksWithFallback(html, baseUrl, allowHosts, primaryFilter, fall
 }
 
 async function fetchListing(url, opts = {}) {
-  const { allowHosts, headers, ...rest } = opts;
-  const { text } = await fetchWithRetry(url, { allowHosts, cacheListing: true, headers, ...rest });
+  const { allowHosts, headers = {}, ...rest } = opts;
+  let mergedHeaders = { ...headers };
+  if (!mergedHeaders.Referer) {
+    try {
+      mergedHeaders.Referer = new URL(url).origin + '/';
+    } catch (_) {
+      /* ignore */
+    }
+  }
+  const { text } = await fetchWithRetry(url, {
+    allowHosts,
+    cacheListing: true,
+    headers: mergedHeaders,
+    ...rest,
+  });
   return text;
 }
 

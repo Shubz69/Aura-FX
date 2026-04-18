@@ -231,8 +231,10 @@ const getDbConnection = async (_retry = false) => {
  * 
  * Usage:
  * const [rows] = await executeQuery('SELECT * FROM users WHERE id = ?', [userId]);
+ * Options: `suppressErrorLog` — omit console "Database query error" for best-effort queries (still throws / retries).
  */
 const executeQuery = async (query, params = [], options = {}) => {
+  const suppressErrorLog = options.suppressErrorLog === true;
   const timeout = options.timeout || 30000;
   const requestId = options.requestId || 'unknown';
   const connectionAttempt = Number(options._connectionAttempt || 0);
@@ -264,19 +266,21 @@ const executeQuery = async (query, params = [], options = {}) => {
     const suppressDup = isBriefRunsDuplicateInsert(error, query);
     if (!benignDuplicate && !isMetadataAccessDenied(error) && !suppressDup) {
       poolStats.failedQueries++;
-      const errorInfo = {
-        requestId,
-        query: query.substring(0, 100),
-        paramCount: safeParams.length,
-        error: error.message,
-        code: error.code,
-        errno: error.errno
-      };
-      const line = `Database query error: ${JSON.stringify(errorInfo)}`;
-      if (error.code === 'ETIMEDOUT' || String(error.message || '').includes('ETIMEDOUT')) {
-        console.warn(line);
-      } else {
-        console.error(line);
+      if (!suppressErrorLog) {
+        const errorInfo = {
+          requestId,
+          query: query.substring(0, 100),
+          paramCount: safeParams.length,
+          error: error.message,
+          code: error.code,
+          errno: error.errno
+        };
+        const line = `Database query error: ${JSON.stringify(errorInfo)}`;
+        if (error.code === 'ETIMEDOUT' || String(error.message || '').includes('ETIMEDOUT')) {
+          console.warn(line);
+        } else {
+          console.error(line);
+        }
       }
     }
 

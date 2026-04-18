@@ -14,7 +14,8 @@ module.exports = {
   defaultIntervalSeconds: 1200,
   allowHosts: HOSTS,
   async run(ctx) {
-    const listingUrl = 'https://www.boj.or.jp/en/about/pr/index.htm/';
+    /** Trailing slash after index.htm often 404s; canonical is index.htm without extra slash. */
+    const listingUrl = 'https://www.boj.or.jp/en/about/pr/index.htm';
     const html = await fetchListing(listingUrl, { allowHosts: HOSTS });
     const links = collectLinks(html, listingUrl, HOSTS, linkFilter);
     const cap = Math.min(links.length, ctx.maxPerAdapter || 10);

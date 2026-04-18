@@ -16,6 +16,34 @@ const BOXES = [
   { label: 'west_pacific', lamin: -40, lomin: 110, lamax: 45, lomax: 180 },
 ];
 
+function openskyDisabled() {
+  const v = String(process.env.OPENSKY_ADAPTER_DISABLED || '').toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
+}
+
+function boxLimit() {
+  const n = parseInt(process.env.OPENSKY_MAX_BOXES || '', 10);
+  if (Number.isFinite(n) && n >= 1) return Math.min(n, BOXES.length);
+  const hasAuth = !!(process.env.OPENSKY_USERNAME && process.env.OPENSKY_PASSWORD);
+  return hasAuth ? BOXES.length : Math.min(2, BOXES.length);
+}
+
+function fetchOpts() {
+  const hasAuth = !!(process.env.OPENSKY_USERNAME && process.env.OPENSKY_PASSWORD);
+  const timeoutMs = Math.min(
+    60000,
+    Math.max(
+      8000,
+      parseInt(process.env.OPENSKY_FETCH_TIMEOUT_MS || (hasAuth ? '18000' : '12000'), 10) || (hasAuth ? 18000 : 12000)
+    )
+  );
+  const maxAttempts = Math.max(
+    1,
+    Math.min(3, parseInt(process.env.OPENSKY_FETCH_ATTEMPTS || (hasAuth ? '2' : '1'), 10) || (hasAuth ? 2 : 1))
+  );
+  return { timeoutMs, maxAttempts };
+}
+
 function authHeaders() {
   const u = process.env.OPENSKY_USERNAME;
   const p = process.env.OPENSKY_PASSWORD;
@@ -131,15 +159,28 @@ module.exports = {
   defaultIntervalSeconds: 240,
   allowHosts: HOSTS,
   async run(ctx) {
+    if (openskyDisabled()) {
+      return {
+        items: [],
+        meta: {
+          adapter_id: ID,
+          skipped: true,
+          reason: 'OPENSKY_ADAPTER_DISABLED',
+        },
+      };
+    }
+
     const headers = {
       Accept: 'application/json',
       ...authHeaders(),
     };
 
-    const maxPerBox = Math.min(28, Math.ceil((ctx.maxPerAdapter || 48) / BOXES.length));
+    const { timeoutMs, maxAttempts } = fetchOpts();
+    const boxes = BOXES.slice(0, boxLimit());
+    const maxPerBox = Math.min(28, Math.ceil((ctx.maxPerAdapter || 48) / Math.max(1, boxes.length)));
     const collected = [];
 
-    for (const box of BOXES) {
+    for (const box of boxes) {
       if (ctx.shouldStop()) break;
       const q = new URLSearchParams({
         lamin: String(box.lamin),
@@ -151,9 +192,9 @@ module.exports = {
       try {
         const { text } = await fetchWithRetry(apiUrl, {
           allowHosts: HOSTS,
-          timeoutMs: 25000,
+          timeoutMs,
           headers,
-          maxAttempts: 2,
+          maxAttempts,
         });
         let json;
         try {
@@ -185,9 +226,11 @@ module.exports = {
       items,
       meta: {
         adapter_id: ID,
-        boxes: BOXES.length,
+        boxes: boxes.length,
         candidates: unique.length,
         emitted: items.length,
+        opensky_timeout_ms: timeoutMs,
+        opensky_attempts: maxAttempts,
       },
     };
   },
