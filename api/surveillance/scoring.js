@@ -53,21 +53,50 @@ function clamp01(n) {
   return Math.max(0, Math.min(1, n));
 }
 
-function computeFreshnessScore(publishedAtIso, detectedAtIso, nowMs = Date.now()) {
+/**
+ * Freshness as a continuous 22–100 signal (hours + minutes), used inside rank_score.
+ * Piecewise-linear between the old bucket anchors so similar-age rows still spread slightly.
+ */
+function computeFreshnessDetail(publishedAtIso, detectedAtIso, nowMs = Date.now()) {
   const t = publishedAtIso ? new Date(publishedAtIso).getTime() : new Date(detectedAtIso || Date.now()).getTime();
   if (Number.isNaN(t)) return 40;
-  const ageH = (nowMs - t) / 3600000;
-  if (ageH <= 2) return 100;
-  if (ageH <= 12) return 88;
-  if (ageH <= 24) return 75;
-  if (ageH <= 72) return 55;
-  if (ageH <= 168) return 38;
+  const ageMs = Math.max(0, nowMs - t);
+  const ageH = ageMs / 3600000;
+  const ageMin = ageMs / 60000;
+
+  if (ageH <= 2) {
+    /* Within the old “≤2h = 100” bucket, taper gently by minutes so simultaneous items differ. */
+    return Math.max(96, 100 - ageMin * 0.012);
+  }
+  if (ageH <= 12) {
+    return 100 - (ageH - 2) * 1.2;
+  }
+  if (ageH <= 24) {
+    return 88 - ((ageH - 12) * 13) / 12;
+  }
+  if (ageH <= 72) {
+    return 75 - ((ageH - 24) * 20) / 48;
+  }
+  if (ageH <= 168) {
+    return 55 - ((ageH - 72) * 17) / 96;
+  }
   return 22;
+}
+
+/** Stored freshness (0–100 integer) — rounded detail for UI / columns. */
+function computeFreshnessScore(publishedAtIso, detectedAtIso, nowMs = Date.now()) {
+  return Math.round(Math.min(100, Math.max(22, computeFreshnessDetail(publishedAtIso, detectedAtIso, nowMs))));
 }
 
 function severityToScore(severity1to5) {
   const s = Number(severity1to5) || 1;
   return Math.round(clamp01((s - 1) / 4) * 100);
+}
+
+/** Continuous 0–100 severity contribution for rank blending (avoids ties on discrete tiers). */
+function severityDetailScore(severity1to5) {
+  const s = Number(severity1to5) || 1;
+  return clamp01((s - 1) / 4) * 100;
 }
 
 function aggregateMarketImpactScore(impactedMarkets) {
@@ -76,7 +105,8 @@ function aggregateMarketImpactScore(impactedMarkets) {
   for (const m of impactedMarkets) {
     sum += Math.min(100, Number(m.score) || 0);
   }
-  return Math.min(100, Math.round(sum / Math.max(1, impactedMarkets.length / 2)));
+  const denom = Math.max(1, impactedMarkets.length / 2);
+  return Math.min(100, sum / denom);
 }
 
 function noveltyFromSimilarCount(countPast7d) {
@@ -91,21 +121,35 @@ function computeTrustScore(baseTrust, confidence01, corroborationCount) {
   return Math.round(Math.min(100, t));
 }
 
+/** Stable −0.5…0.5 tie-break from content hash so comparable rows rarely share the same integer rank. */
+function tieBreakFromContentHash(hashHex) {
+  if (!hashHex || typeof hashHex !== 'string' || hashHex.length < 8) return 0;
+  const hex = hashHex.replace(/[^0-9a-f]/gi, '');
+  if (hex.length < 8) return 0;
+  const n = parseInt(hex.slice(0, 12), 16);
+  if (!Number.isFinite(n)) return 0;
+  return (n % 8191) / 8190 - 0.5;
+}
+
 /**
  * Final ordering score for tape / globe.
  * corroboration_count / distinct_source_count / repetition_penalty sharpen editorial ordering.
+ * Pass floats for freshness / severity / market impact where available; optional content hash breaks ties deterministically.
  */
-function computeRankScore({
-  trust_score,
-  novelty_score,
-  freshness_score,
-  severity_score,
-  market_impact_score,
-  corroboration_count = 0,
-  distinct_source_count = 1,
-  repetition_penalty = 0,
-  disruption_boost = 0,
-}) {
+function computeRankScore(
+  {
+    trust_score,
+    novelty_score,
+    freshness_score,
+    severity_score,
+    market_impact_score,
+    corroboration_count = 0,
+    distinct_source_count = 1,
+    repetition_penalty = 0,
+    disruption_boost = 0,
+  },
+  contentHashHex
+) {
   const cc = Math.min(8, Number(corroboration_count) || 0);
   const ds = Math.max(1, Number(distinct_source_count) || 1);
   const corrBoost = Math.min(30, cc * 6.5 + (ds - 1) * 5.5);
@@ -119,7 +163,8 @@ function computeRankScore({
     0.21 * (market_impact_score || 50) +
     0.15 * corrBoost +
     0.12 * db;
-  return Math.round(Math.min(100, Math.max(0, base - rep * 0.38)));
+  const tie = tieBreakFromContentHash(contentHashHex || '') * 2.6;
+  return Math.round(Math.min(100, Math.max(0, base - rep * 0.38 + tie)));
 }
 
 /** Bounded rank bump for operational disruption headlines (aviation / maritime / logistics). */
@@ -136,10 +181,13 @@ function disruptionBoostFromRecord(ev) {
 module.exports = {
   trustBaseFromAdapter,
   computeFreshnessScore,
+  computeFreshnessDetail,
   severityToScore,
+  severityDetailScore,
   aggregateMarketImpactScore,
   noveltyFromSimilarCount,
   computeTrustScore,
   computeRankScore,
+  tieBreakFromContentHash,
   disruptionBoostFromRecord,
 };
