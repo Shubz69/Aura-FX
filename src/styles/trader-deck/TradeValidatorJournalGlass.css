@@ -611,8 +611,10 @@
     flex: 1 1 auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    height: 100% !important;
-    overflow: hidden !important;
+    height: auto !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
   }
 
 }
@@ -651,26 +653,28 @@
 /* Wider center column (chart); slightly tighter side rails */
 .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact {
   width: 100%;
-  grid-template-columns: minmax(212px, 0.26fr) minmax(0, 1.08fr) minmax(212px, 0.26fr) !important;
-  gap: 6px 8px !important;
-  padding: 6px 0 8px !important;
+  max-width: min(1560px, 100%) !important;
+  margin-inline: auto !important;
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr) minmax(280px, 320px) !important;
+  gap: 8px 16px !important;
+  padding: 8px 12px 12px !important;
   min-height: 0 !important;
-  max-height: calc(100dvh - 200px) !important;
+  max-height: none !important;
   align-content: start;
   align-items: start !important;
 }
 
-/* Terminal desktop: height comes from flex parent, not a capped max-height */
+/* Terminal desktop: top-aligned rails; natural height (scroll on shell child above) */
 .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact.trader-lab-v2--terminal-desktop {
   max-height: none !important;
-  height: 100% !important;
-  align-items: stretch !important;
-  align-content: stretch !important;
+  height: auto !important;
+  align-items: start !important;
+  align-content: start !important;
 }
 
 @media (min-width: 1181px) {
   .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact.trader-lab-v2--terminal-desktop {
-    padding: 6px 0 8px !important;
+    padding: 8px 12px 12px !important;
   }
 }
 
@@ -715,8 +719,12 @@
 
 .trade-validator-shell .trader-lab-v2 .tlab-execute-btn {
   width: 100% !important;
-  margin-top: 2px !important;
-  padding: 14px 16px !important;
+  margin-top: 4px !important;
+  padding: 12px 14px !important;
+  border-radius: 12px !important;
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
 }
 
 .trade-validator-shell .trader-lab-v2 .tlab-card--session-rail {
@@ -739,29 +747,31 @@
 @media (min-width: 1181px) {
   .trade-validator-shell .trader-lab-v2.trader-lab-v2--terminal-desktop .trader-lab-v2__left,
   .trade-validator-shell .trader-lab-v2.trader-lab-v2--terminal-desktop .trader-lab-v2__right {
-    max-height: 100% !important;
+    max-height: min(92dvh, 900px) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     overscroll-behavior: contain;
-    align-self: stretch !important;
+    align-self: start !important;
   }
 
   .trade-validator-shell .trader-lab-v2.trader-lab-v2--terminal-desktop .trader-lab-v2__center {
-    max-height: 100% !important;
-    overflow: hidden !important;
-    align-self: stretch !important;
+    max-height: none !important;
+    overflow: visible !important;
+    align-self: start !important;
   }
 }
 
 /* Match AuraShared `.aa-card` glass (dashboard outlet panels) */
 .trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold {
-  background: rgba(3, 2, 10, 0.72) !important;
-  border: 1px solid rgba(234, 169, 96, 0.12) !important;
-  border-radius: 10px !important;
-  padding: 12px 14px !important;
-  backdrop-filter: blur(18px) saturate(1.08) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
-  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.03) inset !important;
+  background: rgba(10, 12, 24, 0.78) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  padding: 16px !important;
+  backdrop-filter: blur(16px) saturate(1.06) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.06) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 28px rgba(0, 0, 0, 0.28) !important;
 }
 
 .trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold::before {
@@ -775,8 +785,8 @@
 }
 
 .trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold:hover {
-  border-color: rgba(234, 169, 96, 0.22) !important;
-  box-shadow: 0 0 30px rgba(234, 169, 96, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.32) !important;
 }
 
 .trade-validator-shell .trader-lab-v2 .tlab-ready-box {
@@ -798,17 +808,21 @@
 }
 
 .trade-validator-shell .trader-lab-v2 .tlab-card__title {
-  font-size: 0.62rem !important;
-  margin-bottom: 8px !important;
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  margin-bottom: 6px !important;
+  color: rgba(210, 220, 245, 0.88) !important;
 }
 
 .trade-validator-shell .trader-lab-v2 .tlab-rr-big {
-  margin: 10px 0 8px !important;
-  padding: 10px !important;
+  margin: 6px 0 8px !important;
+  padding: 8px 10px !important;
 }
 
 .trade-validator-shell .trader-lab-v2 .tlab-rr-value {
-  font-size: 1.15rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 750 !important;
 }
 
 .trade-validator-shell .trader-lab-v2 .trader-lab-v2__footer {
