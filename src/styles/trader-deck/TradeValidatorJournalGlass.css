@@ -657,18 +657,26 @@
   border-right-color: rgba(212, 175, 55, 0.14) !important;
 }
 
-/* Wider center column (chart); slightly tighter side rails */
+/* Market Outlook–style: center column dominates; never squeeze chart to 0 */
 .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact {
   width: 100%;
-  max-width: 1500px !important;
+  max-width: min(100%, 1680px) !important;
   margin-inline: auto !important;
-  grid-template-columns: 300px minmax(0, 1fr) 320px !important;
+  grid-template-columns: minmax(260px, 0.95fr) minmax(280px, 2.55fr) minmax(260px, 0.95fr) !important;
   gap: 20px !important;
   padding: 16px 20px 24px !important;
   min-height: 0 !important;
   max-height: none !important;
   align-content: start;
   align-items: start !important;
+}
+
+@media (max-width: 1180px) {
+  .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 12px 14px 20px !important;
+  }
 }
 
 /* Terminal desktop: top-aligned rails; natural height (scroll on shell child above) */

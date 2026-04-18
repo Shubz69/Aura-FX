@@ -3,8 +3,9 @@
 .trader-lab-v2.trader-lab-v2--workspace {
   --tl-gap: 20px;
   --tl-gap-inner: 16px;
-  --tl-col-left: 300px;
-  --tl-col-right: 320px;
+  /* ~22% | ~56% | ~22% — matches Market Outlook balance; center holds the chart */
+  --tl-col-terminal: minmax(260px, 0.95fr) minmax(280px, 2.55fr) minmax(260px, 0.95fr);
+  --tl-chart-slot: clamp(580px, 68vh, 920px);
   --tl-radius-card: 14px;
   --tl-radius-input: 10px;
   --tl-line: rgba(120, 160, 255, 0.18);
@@ -17,15 +18,15 @@
   padding: 16px 20px 20px;
   align-items: start;
   width: 100%;
-  max-width: 1500px;
+  max-width: min(100%, 1680px);
   margin-inline: auto;
   box-sizing: border-box;
 }
 
-/* ── Desktop terminal: strict 300px | 1fr | 320px trading grid ── */
+/* ── Desktop terminal: wide center chart column ── */
 @media (min-width: 1181px) {
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop {
-    grid-template-columns: var(--tl-col-left) minmax(0, 1fr) var(--tl-col-right);
+    grid-template-columns: var(--tl-col-terminal);
     grid-template-rows: auto;
     grid-template-areas: 'tl-left tl-center tl-right';
     align-items: start;
@@ -55,13 +56,21 @@
 }
 
 .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--compact {
-  grid-template-columns: 300px minmax(0, 1fr) 320px !important;
+  grid-template-columns: minmax(260px, 0.95fr) minmax(280px, 2.55fr) minmax(260px, 0.95fr) !important;
   gap: 20px !important;
   padding: 16px 20px 24px !important;
   align-items: start !important;
   align-content: start !important;
-  max-width: 1500px !important;
+  max-width: min(100%, 1680px) !important;
   margin-inline: auto !important;
+}
+
+@media (max-width: 1180px) {
+  .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--compact {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 12px 14px 20px !important;
+  }
 }
 
 .journal-page .trade-validator-shell .trader-lab-v2--workspace:not(.trader-lab-v2--terminal-desktop) .trader-lab-v2__center {
@@ -294,9 +303,9 @@
     max-width: none !important;
     margin-inline: 0 !important;
     aspect-ratio: unset !important;
-    height: clamp(560px, 62vh, 840px) !important;
-    min-height: clamp(560px, 62vh, 840px) !important;
-    max-height: clamp(560px, 62vh, 840px) !important;
+    height: var(--tl-chart-slot) !important;
+    min-height: var(--tl-chart-slot) !important;
+    max-height: var(--tl-chart-slot) !important;
   }
 
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .trader-lab-v2__right .tlab-card--dock-exec {
@@ -418,9 +427,9 @@
     max-width: none !important;
     margin-inline: 0 !important;
     aspect-ratio: unset !important;
-    height: clamp(560px, 62vh, 840px) !important;
-    min-height: clamp(560px, 62vh, 840px) !important;
-    max-height: clamp(560px, 62vh, 840px) !important;
+    height: var(--tl-chart-slot) !important;
+    min-height: var(--tl-chart-slot) !important;
+    max-height: var(--tl-chart-slot) !important;
   }
 }
 
@@ -1274,7 +1283,7 @@
 }
 
 .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .tlab-center-stack {
-  flex: 1 1 auto !important;
+  flex: 0 0 auto !important;
   min-height: 0 !important;
 }
 
@@ -1312,14 +1321,14 @@
 
 @media (min-width: 1181px) {
   .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop {
-    grid-template-columns: 300px minmax(0, 1fr) 320px !important;
+    grid-template-columns: minmax(260px, 0.95fr) minmax(280px, 2.55fr) minmax(260px, 0.95fr) !important;
     grid-template-rows: auto !important;
     grid-template-areas: 'tl-left tl-center tl-right' !important;
     gap: 20px !important;
     align-items: start !important;
     align-content: start !important;
     padding: 16px 20px 24px !important;
-    max-width: 1500px !important;
+    max-width: min(100%, 1680px) !important;
     margin-inline: auto !important;
   }
 

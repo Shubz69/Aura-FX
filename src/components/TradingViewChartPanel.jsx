@@ -21,7 +21,8 @@ export default function TradingViewChartPanel({
 }) {
   const [engine, setEngine] = useState('checking'); // checking | cl | widget
   const resolvedHeight = fillParent ? '100%' : height;
-  const loadingMinH = fillParent ? 0 : height;
+  /** Reserve slot height while chart engine resolves — avoids collapsed black strip with fillParent */
+  const loadingMinH = fillParent ? 'clamp(580px, 68vh, 920px)' : height;
 
   useEffect(() => {
     let active = true;
