@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { formatRelativeFreshness } from '../../lib/trader-deck/marketOutlookDisplayFormatters';
 
 function levelMod(level) {
@@ -6,6 +6,29 @@ function levelMod(level) {
   if (L === 'HIGH') return 'high';
   if (L === 'LOW') return 'low';
   return 'medium';
+}
+
+/** Parse `[TAG] insight` catalyst lines into badge + body */
+function parseCatalystRow(line) {
+  const m = String(line || '').match(/^\[([^\]]+)\]\s*(.+)$/);
+  return m ? { tag: m[1].trim(), insight: m[2].trim() } : { tag: '—', insight: String(line || '—').trim() };
+}
+
+/** Strip verbose prefixes from expected-behavior bullets for scanning */
+function stripExpectedPrefix(line) {
+  return String(line || '')
+    .replace(/^Base case:\s*/i, '')
+    .replace(/^Base:\s*/i, '')
+    .replace(/^Conditional:\s*/i, '')
+    .replace(/^Failure case:\s*/i, '')
+    .replace(/^Failure:\s*/i, '')
+    .trim();
+}
+
+function badgeLevel(level) {
+  const L = String(level || '').toUpperCase();
+  if (L === 'MEDIUM') return 'MED';
+  return L || '—';
 }
 
 export default function MacroTimingInflectionPanel({ model, updatedAt }) {
@@ -19,118 +42,133 @@ export default function MacroTimingInflectionPanel({ model, updatedAt }) {
   const edgeLines = Array.isArray(m.traderEdgeLines) ? m.traderEdgeLines : [];
 
   const lvlMod = levelMod(inflect.level);
-  const headline =
-    timing.headline ||
-    [timing.status, timing.timeToCatalyst, timing.sessionCondition ? `${timing.sessionCondition} session` : null]
-      .filter(Boolean)
-      .join(' · ');
+
+  const catalystParsed = useMemo(() => catalystLines.slice(0, 5).map(parseCatalystRow), [catalystLines]);
+
+  const timingStatus = timing.status || '—';
+  const catalystClock =
+    timing.timeToCatalyst ||
+    (timing.headline ? timing.headline.split(' · ')[1] : null) ||
+    '—';
+
+  const timingSubline = [catalystClock, timing.executionNote || timing.executionImplication].filter(Boolean).join(' · ');
 
   return (
     <section
       className="td-outlook-concept-card td-outlook-concept-card--macro-timing mo-card-shell mo-macro-timing--stretch"
       aria-label="Macro timing and inflection window"
     >
-      <header className="td-outlook-concept-card__head td-outlook-concept-card__head--macro-timing">
-        <h2 className="td-outlook-concept-card__title td-outlook-concept-card__title--macro-timing">
+      <header className="mo-macro-timing__header-row td-outlook-concept-card__head td-outlook-concept-card__head--macro-timing">
+        <h2 className="mo-macro-timing__title-main td-outlook-concept-card__title td-outlook-concept-card__title--macro-timing">
           Macro timing &amp; inflection window
         </h2>
-        <span className="mo-meta mo-macro-timing__fresh" title={updatedAt || ''}>
-          {formatRelativeFreshness(updatedAt) || '—'}
+        <span className="mo-macro-timing__updated" title={updatedAt || ''}>
+          Updated {formatRelativeFreshness(updatedAt) || '—'}
         </span>
       </header>
-      <div className="td-outlook-concept-card__body td-outlook-concept-card__body--macro-timing mo-macro-timing__body-fill">
-        <div className="mo-macro-timing__stack mo-macro-timing__stack--compact">
-          <div className="mo-macro-timing__block mo-macro-timing__block--active-window">
-            <p className="mo-macro-timing__k">Active timing window</p>
-            <p className="mo-macro-timing__line mo-macro-timing__line--head">{headline || '—'}</p>
-            <p className="mo-macro-timing__line mo-macro-timing__line--sub">{timing.executionNote || timing.executionImplication || ''}</p>
-          </div>
 
-          <div className="mo-macro-timing__block mo-macro-timing__block--inflection-risk">
-            <p className="mo-macro-timing__k">Inflection risk level</p>
-            <div className="mo-macro-timing__inflection-inline">
-              <span className={`mo-macro-timing__lvl mo-macro-timing__lvl--${lvlMod}`}>{inflect.level || '—'}</span>
-              <span className="mo-macro-timing__inflection-reason">{inflect.reason || inflect.explanation || ''}</span>
+      <div className="td-outlook-concept-card__body td-outlook-concept-card__body--macro-timing mo-macro-timing__body-fill">
+        <div className="mo-macro-timing__stack mo-macro-timing__stack--terminal">
+          {/* TOP STRIP — 3 blocks */}
+          <div className="mo-macro-timing__top-strip">
+            <div className="mo-macro-timing__micro mo-macro-timing__micro--timing">
+              <span className="mo-macro-timing__micro-label">Active window</span>
+              <strong className="mo-macro-timing__micro-value">{timingStatus}</strong>
+              <span className="mo-macro-timing__micro-sub">{timingSubline || '—'}</span>
+            </div>
+
+            <div className="mo-macro-timing__micro mo-macro-timing__micro--inflect">
+              <span className="mo-macro-timing__micro-label">Inflection</span>
+              <span className={`mo-macro-timing__risk-badge mo-macro-timing__risk-badge--${lvlMod}`}>
+                {badgeLevel(inflect.level)}
+              </span>
+              <span className="mo-macro-timing__micro-sub">{inflect.reason || inflect.explanation || ''}</span>
+            </div>
+
+            <div className="mo-macro-timing__micro mo-macro-timing__micro--state">
+              <span className="mo-macro-timing__micro-label">Market state</span>
+              <div className="mo-macro-timing__state-mini">
+                <span className="mo-macro-timing__state-item">
+                  <abbr title="Volatility regime">Vol</abbr>
+                  <strong>{snap.volRegime || '—'}</strong>
+                </span>
+                <span className="mo-macro-timing__state-item">
+                  <abbr title="Liquidity">Liq</abbr>
+                  <strong>{snap.liquidity || '—'}</strong>
+                </span>
+                <span className="mo-macro-timing__state-item">
+                  <abbr title="Correlation">Corr</abbr>
+                  <strong>{snap.correlation || '—'}</strong>
+                </span>
+                <span className="mo-macro-timing__state-item">
+                  <abbr title="Positioning">Pos</abbr>
+                  <strong>{snap.positioning || '—'}</strong>
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="mo-macro-timing__block mo-macro-timing__block--snapshot">
-            <p className="mo-macro-timing__k">Market state snapshot</p>
-            <dl className="mo-macro-timing__snapshot-rows mo-macro-timing__snapshot-rows--tight">
-              <div className="mo-macro-timing__snapshot-row">
-                <dt>Vol</dt>
-                <dd>{snap.volRegime || '—'}</dd>
-              </div>
-              <div className="mo-macro-timing__snapshot-row">
-                <dt>Liquidity</dt>
-                <dd>{snap.liquidity || '—'}</dd>
-              </div>
-              <div className="mo-macro-timing__snapshot-row">
-                <dt>Correlation</dt>
-                <dd>{snap.correlation || '—'}</dd>
-              </div>
-              <div className="mo-macro-timing__snapshot-row">
-                <dt>Positioning</dt>
-                <dd>{snap.positioning || '—'}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="mo-macro-timing__block mo-macro-timing__block--catalyst">
-            <p className="mo-macro-timing__k">Catalyst map</p>
-            <ul className="mo-macro-timing__catalyst-lines">
-              {catalystLines.slice(0, 5).map((line, i) => (
-                <li key={i} className="mo-macro-timing__catalyst-line">
-                  {line}
+          {/* CATALYST MAP */}
+          <div className="mo-macro-timing__catalyst-panel">
+            <p className="mo-macro-timing__block-title">Catalyst map</p>
+            <ul className="mo-macro-timing__catalyst-list">
+              {catalystParsed.map((row, i) => (
+                <li key={i} className="mo-macro-timing__catalyst-pill">
+                  <span className="mo-macro-timing__catalyst-tag">{row.tag}</span>
+                  <span className="mo-macro-timing__catalyst-insight">{row.insight}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="mo-macro-timing__block mo-macro-timing__block--behavior">
-            <p className="mo-macro-timing__k">Expected market behavior</p>
-            <ul className="mo-macro-timing__bullet-tight">
-              {behavior.slice(0, 3).map((line, i) => (
-                <li key={i}>{line}</li>
-              ))}
-            </ul>
+          {/* EXPECTED + CONDITIONS */}
+          <div className="mo-macro-timing__dual">
+            <div className="mo-macro-timing__dual-col">
+              <p className="mo-macro-timing__dual-head">Expected</p>
+              <dl className="mo-macro-timing__kv">
+                <div className="mo-macro-timing__kv-row">
+                  <dt>Base</dt>
+                  <dd>{stripExpectedPrefix(behavior[0]) || '—'}</dd>
+                </div>
+                <div className="mo-macro-timing__kv-row">
+                  <dt>If triggered</dt>
+                  <dd>{stripExpectedPrefix(behavior[1]) || '—'}</dd>
+                </div>
+                <div className="mo-macro-timing__kv-row">
+                  <dt>Failure</dt>
+                  <dd>{stripExpectedPrefix(behavior[2]) || '—'}</dd>
+                </div>
+              </dl>
+            </div>
+            <div className="mo-macro-timing__dual-divider" aria-hidden />
+            <div className="mo-macro-timing__dual-col">
+              <p className="mo-macro-timing__dual-head">Conditions</p>
+              <dl className="mo-macro-timing__kv">
+                <div className="mo-macro-timing__kv-row">
+                  <dt>Breakout</dt>
+                  <dd>{matrix.breakout || '—'}</dd>
+                </div>
+                <div className="mo-macro-timing__kv-row">
+                  <dt>Mean rev</dt>
+                  <dd>{matrix.meanReversion || '—'}</dd>
+                </div>
+                <div className="mo-macro-timing__kv-row">
+                  <dt>No trade</dt>
+                  <dd>{matrix.noTradeZone || '—'}</dd>
+                </div>
+              </dl>
+            </div>
           </div>
 
-          <div className="mo-macro-timing__block mo-macro-timing__block--matrix">
-            <p className="mo-macro-timing__k">Trade conditions matrix</p>
-            <ul className="mo-macro-timing__matrix-inline">
-              <li>
-                <span className="mo-macro-timing__matrix-key">Breakout</span>
-                <span className="mo-macro-timing__matrix-arrow" aria-hidden>
-                  →
-                </span>
-                <span className="mo-macro-timing__matrix-val">{matrix.breakout || '—'}</span>
-              </li>
-              <li>
-                <span className="mo-macro-timing__matrix-key">Mean reversion</span>
-                <span className="mo-macro-timing__matrix-arrow" aria-hidden>
-                  →
-                </span>
-                <span className="mo-macro-timing__matrix-val">{matrix.meanReversion || '—'}</span>
-              </li>
-              <li>
-                <span className="mo-macro-timing__matrix-key">No trade</span>
-                <span className="mo-macro-timing__matrix-arrow" aria-hidden>
-                  →
-                </span>
-                <span className="mo-macro-timing__matrix-val">{matrix.noTradeZone || '—'}</span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="mo-macro-timing__block mo-macro-timing__block--edge">
-            <p className="mo-macro-timing__k">Trader timing edge</p>
-            <ul className="mo-macro-timing__bullet-tight mo-macro-timing__bullet-tight--edge">
+          {/* TRADER EDGE */}
+          <footer className="mo-macro-timing__edge-bar">
+            <p className="mo-macro-timing__block-title mo-macro-timing__block-title--edge">Trader timing edge</p>
+            <ul className="mo-macro-timing__edge-bullets">
               {edgeLines.slice(0, 3).map((line, i) => (
                 <li key={i}>{line}</li>
               ))}
             </ul>
-          </div>
+          </footer>
         </div>
       </div>
     </section>
