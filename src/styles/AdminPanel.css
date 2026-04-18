@@ -1337,6 +1337,22 @@
   transform: translateY(-1px);
 }
 
+.admin-ops-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.admin-ops-shortcuts__card {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: var(--ap-radius-md);
+  border: 1px solid var(--ap-border-gold);
+  background: rgba(234, 169, 96, 0.06);
+  box-sizing: border-box;
+}
+
 .admin-integration-health-banner {
   margin: 0 0 18px;
   padding: 14px 16px;

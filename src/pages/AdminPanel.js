@@ -6,7 +6,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import Api from '../services/Api';
 import AdminApi from '../services/AdminApi';
-import { FaHeartbeat, FaSearch, FaUserShield } from 'react-icons/fa';
+import { FaHeartbeat, FaSearch, FaUserShield, FaProjectDiagram } from 'react-icons/fa';
 import '../styles/AdminPanel.css';
 import { isSuperAdmin as hasSuperAdminRole, isConfiguredSuperAdminEmail } from '../utils/roles';
 
@@ -1034,14 +1034,23 @@ const AdminPanel = () => {
         )}
       </div>
 
-      <div className="admin-integration-health-banner">
-        <Link to="/admin/integration-health" className="admin-integration-health-banner__link">
+      <div className="admin-ops-shortcuts" role="navigation" aria-label="Admin operations">
+        <Link to="/admin/integration-health" className="admin-integration-health-banner__link admin-ops-shortcuts__card">
           <FaHeartbeat aria-hidden />
           <span>
-            <strong>External services health</strong>
-            {' — '}Third-party APIs (Stripe, Twilio, market data, AI, DB). Admin-only dashboard.
+            <strong>Integration health</strong>
+            {' — '}Third-party APIs (Stripe, Twilio, market data, AI, DB).
           </span>
         </Link>
+        {isSuperAdminUser && (
+          <Link to="/admin/pipeline-health" className="admin-integration-health-banner__link admin-ops-shortcuts__card">
+            <FaProjectDiagram aria-hidden />
+            <span>
+              <strong>Pipeline monitor</strong>
+              {' — '}Market data ingest queue and freshness (super admin).
+            </span>
+          </Link>
+        )}
       </div>
 
       {error && (

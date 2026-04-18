@@ -4,7 +4,7 @@ import { FaChevronRight, FaExclamationTriangle, FaShieldAlt, FaSyncAlt } from 'r
 import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import AdminApi from '../services/AdminApi';
 import { useAuth } from '../context/AuthContext';
-import { isAdmin } from '../utils/roles';
+import { isAdmin, isSuperAdmin } from '../utils/roles';
 import '../styles/admin-integration-health.css';
 
 function toneFor(status) {
@@ -61,7 +61,7 @@ export default function AdminIntegrationsHealth() {
   }, [payload]);
 
   if (!user) return <Navigate to="/login" replace />;
-  if (!isAdmin(user)) return <Navigate to="/" replace />;
+  if (!isAdmin(user) && !isSuperAdmin(user)) return <Navigate to="/" replace />;
 
   return (
     <AuraTerminalThemeShell>

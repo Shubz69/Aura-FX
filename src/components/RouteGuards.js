@@ -167,7 +167,7 @@ export const AuthenticatedGuard = ({ children }) => {
 };
 
 /**
- * AdminGuard - Requires admin role
+ * AdminGuard - Staff: DB admin/super_admin or super-admin-by-email (see roles / entitlements).
  */
 export const AdminGuard = ({ children }) => {
   const { user, token } = useAuth();
@@ -177,7 +177,7 @@ export const AdminGuard = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
-  if (!isAdmin(user)) {
+  if (!isAdmin(user) && !isSuperAdmin(user)) {
     return <Navigate to="/" replace />;
   }
   

@@ -26,6 +26,7 @@ import {
   FaHeartbeat,
   FaHistory,
   FaGlobe,
+  FaProjectDiagram,
 } from "react-icons/fa";
 import { isSuperAdmin, isAdmin, isPremium } from "../utils/roles";
 import A7Logo from "./A7Logo";
@@ -36,7 +37,9 @@ const Navbar = () => {
   const { user, loading, logout } = useAuth();
   const { entitlements } = useEntitlements();
   const showSuperAdminLinks = !loading && user && isSuperAdmin(user);
-  const showAdminStaffLinks = !loading && user && isAdmin(user);
+  /** Admin Panel dropdown group: admins + super admins (incl. email-listed super admins). */
+  const showAdminNavGroup = !loading && user && (isAdmin(user) || isSuperAdmin(user));
+  const showPipelineNav = !loading && user && isSuperAdmin(user);
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -237,25 +240,33 @@ const Navbar = () => {
                       <Link to="/affiliation" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaLink className="dropdown-icon" /> Affiliation
                       </Link>
-                      {showAdminStaffLinks && (
-                        <Link
-                          to="/admin/integration-health"
-                          className="dropdown-item"
-                          onClick={() => setDropdownOpen(false)}
-                        >
-                          <FaHeartbeat className="dropdown-icon" /> Integration health
-                        </Link>
-                      )}
-                      {showSuperAdminLinks && (
+                      {showAdminNavGroup && (
                         <>
                           <Link to="/admin" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                             <FaCog className="dropdown-icon" /> Admin Panel
                           </Link>
+                          <Link
+                            to="/admin/integration-health"
+                            className="dropdown-item dropdown-item--nested"
+                            onClick={() => setDropdownOpen(false)}
+                          >
+                            <FaHeartbeat className="dropdown-icon" /> Integration health
+                          </Link>
+                          {showPipelineNav && (
+                            <Link
+                              to="/admin/pipeline-health"
+                              className="dropdown-item dropdown-item--nested"
+                              onClick={() => setDropdownOpen(false)}
+                            >
+                              <FaProjectDiagram className="dropdown-icon" /> Pipeline Monitor
+                            </Link>
+                          )}
+                        </>
+                      )}
+                      {showSuperAdminLinks && (
+                        <>
                           <Link to="/settings" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                             <FaSlidersH className="dropdown-icon" /> Settings
-                          </Link>
-                          <Link to="/admin/pipeline-health" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                            <FaHeartbeat className="dropdown-icon" /> Pipeline Monitor
                           </Link>
                           <Link to="/admin/messages" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                             <FaHeadset className="dropdown-icon" /> Contact Submissions
