@@ -10,7 +10,7 @@ import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import { FaEye, FaTrash, FaTimes } from 'react-icons/fa';
 import CosmicBackground from '../../components/CosmicBackground';
 import { getTraderDeckIntelStorageYmd, formatLondonWeekRangeFromWeekEndingSundayYmd } from '../../lib/trader-deck/deskDates';
-import { stripModelInternalExposition } from '../../utils/sanitizeAiDeskOutput.mjs';
+import { stripModelInternalExposition } from '../../utils/sanitizeAiDeskOutput.react.js';
 import { polishBriefMarkdown } from '../../utils/briefPresentationSanitize';
 
 function googleViewerEmbedUrl(fileUrl) {

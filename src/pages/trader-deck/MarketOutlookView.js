@@ -31,7 +31,7 @@ import {
   buildMarketStructureMap,
   buildTradeExpressionMatrix,
 } from '../../lib/trader-deck/marketOutlookProductIntel';
-import { sanitizeTraderDeckPayloadDeep } from '../../utils/sanitizeAiDeskOutput.mjs';
+import { sanitizeTraderDeckPayloadDeep } from '../../utils/sanitizeAiDeskOutput.react.js';
 
 /** When the API omits sleeves, derive compact cards from cross-asset signals + drivers (real desk fields, not placeholders). */
 function deriveInstrumentSnapshotsFromDesk(signals, drivers) {

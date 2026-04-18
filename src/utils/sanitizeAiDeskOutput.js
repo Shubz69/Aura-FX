@@ -1,8 +1,7 @@
 /**
  * Strip model-internal / chain-of-thought text from Trader Deck UI.
- * CommonJS for Node `api/trader-deck` only. The React app imports
- * `sanitizeAiDeskOutput.mjs` (pure ESM) so the browser bundle never runs `module.exports`.
- * @see sanitizeAiDeskOutput.mjs — keep behavior in sync
+ * CommonJS `module.exports` also resolves from the React app via CRA/webpack named-import
+ * interop (`sanitizeAiDeskOutput.js`). Pure ESM copy lives in `sanitizeAiDeskOutput.mjs` — keep in sync.
  */
 
 'use strict';
