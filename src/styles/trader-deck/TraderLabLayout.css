@@ -18,13 +18,20 @@
   padding: 16px 20px 20px;
   align-items: start;
   width: 100%;
-  max-width: min(100%, 1680px);
-  margin-inline: auto;
+  max-width: none;
+  width: 100%;
+  margin-inline: 0;
   box-sizing: border-box;
 }
 
-/* ── Desktop terminal: wide center chart column ── */
-@media (min-width: 1181px) {
+@media (max-width: 1399px) {
+  .trader-lab-v2.trader-lab-v2--workspace {
+    --tl-chart-slot: clamp(300px, min(52vh, 78dvh), 680px);
+  }
+}
+
+/* ── Desktop terminal: wide center chart column (needs room for 3 rails) ── */
+@media (min-width: 1400px) {
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop {
     grid-template-columns: var(--tl-col-terminal);
     grid-template-rows: auto;
@@ -61,11 +68,12 @@
   padding: 16px 20px 24px !important;
   align-items: start !important;
   align-content: start !important;
-  max-width: min(100%, 1680px) !important;
-  margin-inline: auto !important;
+  max-width: none !important;
+  width: 100% !important;
+  margin-inline: 0 !important;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1399px) {
   .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--compact {
     grid-template-columns: 1fr !important;
     gap: 16px !important;
@@ -182,7 +190,7 @@
   flex: 0 0 auto;
 }
 
-@media (min-width: 1181px) {
+@media (min-width: 1400px) {
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-stack {
     min-height: 0;
   }
@@ -277,7 +285,7 @@
   margin-top: 4px;
 }
 
-@media (min-width: 1181px) {
+@media (min-width: 1400px) {
   /* Left rail: fundamental card expands with content (page scrolls) */
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .trader-lab-v2__left .tlab-card--dock-fundamental {
     flex: 0 1 auto;
@@ -411,7 +419,7 @@
   flex: 0 0 auto !important;
 }
 
-@media (min-width: 1181px) {
+@media (min-width: 1400px) {
   .journal-page
     .trade-validator-shell
     .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
@@ -936,7 +944,7 @@
   color: rgba(234, 169, 96, 0.95);
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1399px) {
   .trader-lab-v2.trader-lab-v2--workspace {
     grid-template-columns: 1fr;
     grid-template-rows: auto;
@@ -965,7 +973,7 @@
   }
 }
 
-@media (min-width: 1181px) {
+@media (min-width: 1400px) {
   .journal-page .trade-validator-shell .trader-lab-v2--terminal-desktop .tlab-card--session-rail {
     flex: 0 0 auto !important;
     min-height: 0 !important;
@@ -1006,7 +1014,7 @@
   pointer-events: none;
 }
 
-@media (min-width: 1181px) {
+@media (min-width: 1400px) {
   .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop.trader-lab-v2--loading-skeleton .trader-lab-v2__left,
   .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop.trader-lab-v2--loading-skeleton .trader-lab-v2__right {
     overflow: visible;
@@ -1382,7 +1390,7 @@
   color: rgba(255, 159, 67, 0.88);
 }
 
-@media (min-width: 1181px) {
+@media (min-width: 1400px) {
   .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop {
     grid-template-columns: minmax(260px, 0.95fr) minmax(280px, 2.55fr) minmax(260px, 0.95fr) !important;
     grid-template-rows: auto !important;
@@ -1391,8 +1399,9 @@
     align-items: start !important;
     align-content: start !important;
     padding: 16px 20px 24px !important;
-    max-width: min(100%, 1680px) !important;
-    margin-inline: auto !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin-inline: 0 !important;
   }
 
   .journal-page

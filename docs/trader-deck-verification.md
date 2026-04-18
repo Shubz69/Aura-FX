@@ -62,6 +62,18 @@ Run against **your** staging or production API (with real keys/DB/cron as applic
 1. Pick a desk date with **DB rows** — brief list populates; preview works.
 2. Pick a date with **no rows** — empty copy, **Retry fetch**, and polling behave as designed (see `MarketIntelligenceBriefsView`).
 
+### Pass D — Intel `content` API (eight institutional sleeves)
+
+Use the same JSON the UI consumes (`GET /api/trader-deck/content`).
+
+1. **Browser:** DevTools → Network → filter `content` → select `intel-daily` or `intel-weekly` → **Response** tab. Check `briefs` array length and each `briefKind` (`aura_institutional_daily_*` / `aura_institutional_weekly_*`). Compare `categorySleevePack.loaded` vs `expected` (8 when complete).
+2. **CLI (from repo root):** `node scripts/intel-content-network-check.js --base=https://www.auraterminal.ai --date=YYYY-MM-DD` (add `--token=JWT` if your deployment requires auth for reads). Weekly uses the **week-ending Sunday** derived from `--date`, matching [`getTraderDeckIntelStorageYmd`](../src/lib/trader-deck/deskDates.js).
+3. **Interpretation:** If `briefs.length === 0` in the JSON, the empty list is **not** a React filter bug — fix generation/DB/date. If `briefs.length > 0` but the UI shows 0, signed-in **admins** see a one-line “Admin — last API brief rows … after client filter” under the list; that indicates [`normalizeBriefsList`](../src/pages/trader-deck/MarketIntelligenceBriefsView.js) dropped rows (`INTEL_API_BRIEF_KIND_RE`).
+
+### Pass E — Extension / MIME noise (charts)
+
+Some extensions rewrite script URLs (e.g. URLs containing `ad`), producing bogus hosts and **“MIME type text/html”** for `bundle.js`. Charts in this app register UDF via [`udfCompatibleDatafeed.js`](../src/utils/udfCompatibleDatafeed.js), not the static `datafeeds` bundle. **Reproduce in an incognito/private window with extensions disabled** before treating console errors as app regressions.
+
 ---
 
 **Reminder:** Passing all in-repo checks plus this smoke matrix is the operational definition of “works on our deployment.” Neither the repo nor a static audit can certify a third-party network or database you have not exercised.

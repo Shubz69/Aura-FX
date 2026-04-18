@@ -1,10 +1,13 @@
 /**
- * Loads TradingView Charting Library + UDF datafeed bundles from /public.
- * Copy `charting_library` and `datafeeds` into `public/` (see scripts/copy-tradingview-charting-library.ps1).
+ * Loads TradingView Charting Library from /public and registers the UDF datafeed on `window`.
+ * UDF client is bundled in-app (`udfCompatibleDatafeed.js`) so the browser does not load
+ * `public/datafeeds/udf/dist/bundle.js` (404 HTML → “MIME type text/html” in DevTools).
+ * If you still see MIME errors for a mangled `bundle.js` URL, it is usually a browser extension
+ * rewriting script URLs or a stale console line from another tab — retry in a clean profile.
+ * Copy `charting_library` into `public/` (see scripts/copy-tradingview-charting-library.ps1).
  */
 
 const SCRIPT_IDS = {
-  datafeeds: 'aura-tv-cl-datafeeds',
   library: 'aura-tv-cl-standalone',
 };
 
@@ -52,17 +55,20 @@ function hasChartingLibraryGlobals() {
  * @param {string} publicUrl - CRA PUBLIC_URL (usually '')
  * @returns {Promise<void>}
  */
-export function ensureTradingViewChartingLibraryLoaded(publicUrl = '') {
+export async function ensureTradingViewChartingLibraryLoaded(publicUrl = '') {
   if (typeof window === 'undefined') {
     return Promise.reject(new Error('Window is not available'));
   }
+
+  const { installUdfDatafeedGlobal } = await import('./udfCompatibleDatafeed.js');
+  installUdfDatafeedGlobal();
+
   if (hasChartingLibraryGlobals()) {
     return Promise.resolve();
   }
 
   const base = publicUrl.endsWith('/') ? publicUrl.slice(0, -1) : publicUrl;
 
-  const datafeedSrc = `${base}/datafeeds/udf/dist/bundle.js`;
   const standaloneCandidates = [
     `${base}/charting_library/charting_library.standalone.js`,
     `${base}/charting_library/bundles/charting_library.standalone.js`,
@@ -84,7 +90,7 @@ export function ensureTradingViewChartingLibraryLoaded(publicUrl = '') {
       .catch(() => tryStandalone(index + 1));
   }
 
-  return loadScriptOnce(datafeedSrc, SCRIPT_IDS.datafeeds).then(() => tryStandalone(0));
+  return tryStandalone(0);
 }
 
 export { hasChartingLibraryGlobals };

@@ -2587,7 +2587,7 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1399px) {
   .journal-page .trader-suite-shell-grid,
   .journal-page .trader-suite-split,
   .journal-page .trader-suite-grid--2,

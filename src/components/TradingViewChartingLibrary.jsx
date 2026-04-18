@@ -14,7 +14,7 @@ const DEFAULT_DATAFEED = 'https://demo_feed.tradingview.com';
  *
  * Requires under `public/`:
  *   - charting_library/   (from TradingView charting_library repo)
- *   - datafeeds/          (UDF bundle at datafeeds/udf/dist/bundle.js)
+ * UDF adapter is bundled in the app (`src/utils/udfCompatibleDatafeed.js`).
  */
 export default function TradingViewChartingLibrary({
   symbol = 'AAPL',

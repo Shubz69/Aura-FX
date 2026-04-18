@@ -372,8 +372,8 @@
 .journal-page .journal-layout--terminal:has(.trader-lab-v2) {
   max-width: none !important;
   width: 100% !important;
-  padding-left: 1cm !important;
-  padding-right: 1cm !important;
+  padding-left: clamp(8px, 2.4vw, 20px) !important;
+  padding-right: clamp(8px, 2.4vw, 20px) !important;
   box-sizing: border-box !important;
   min-height: calc(100vh - 64px);
   display: flex;
@@ -543,7 +543,7 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    TRADER LAB — desktop: no nested scroll on the lab grid; document / page scrolls
    ═══════════════════════════════════════════════════════════════════════════ */
-@media (min-width: 1181px) {
+@media (min-width: 1400px) {
   .journal-page:has(.trader-lab-v2--terminal-desktop) {
     min-height: 100dvh;
     display: flex;
@@ -660,8 +660,8 @@
 /* Market Outlook–style: center column dominates; never squeeze chart to 0 */
 .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact {
   width: 100%;
-  max-width: min(100%, 1680px) !important;
-  margin-inline: auto !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
   grid-template-columns: minmax(260px, 0.95fr) minmax(280px, 2.55fr) minmax(260px, 0.95fr) !important;
   gap: 14px !important;
   padding: 16px 20px 24px !important;
@@ -671,7 +671,7 @@
   align-items: start !important;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1399px) {
   .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact {
     grid-template-columns: 1fr !important;
     gap: 16px !important;
@@ -687,7 +687,7 @@
   align-content: start !important;
 }
 
-@media (min-width: 1181px) {
+@media (min-width: 1400px) {
   .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact.trader-lab-v2--terminal-desktop {
     padding: 16px 20px 24px !important;
   }
@@ -759,7 +759,7 @@
   min-height: 0 !important;
 }
 
-@media (min-width: 1181px) {
+@media (min-width: 1400px) {
   .trade-validator-shell .trader-lab-v2.trader-lab-v2--terminal-desktop .trader-lab-v2__left,
   .trade-validator-shell .trader-lab-v2.trader-lab-v2--terminal-desktop .trader-lab-v2__right {
     max-height: none !important;
@@ -854,7 +854,7 @@
   color: rgba(232, 198, 88, 0.88) !important;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1399px) {
   .trade-validator-shell .trader-lab-v2 {
     grid-template-columns: 1fr !important;
     grid-template-rows: auto !important;

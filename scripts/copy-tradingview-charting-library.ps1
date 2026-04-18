@@ -1,4 +1,6 @@
-# Copies TradingView Charting Library + datafeeds into this CRA app's public/ folder.
+# Copies TradingView Charting Library (and optional datafeeds/) into public/.
+# UDF is bundled in the app (src/utils/udfCompatibleDatafeed.js); datafeeds/ is only needed if you revert to script-tag loading.
+# DevTools "MIME type text/html" for a mangled bundle.js URL is usually extensions or stale console — see docs/trader-deck-verification.md Pass E.
 # Prerequisite: Git access to https://github.com/tradingview/charting_library (private; request access from TradingView).
 # Usage (from repo root):  powershell -ExecutionPolicy Bypass -File scripts/copy-tradingview-charting-library.ps1
 

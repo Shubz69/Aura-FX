@@ -180,7 +180,14 @@ function briefsPayloadFromContentResponse(res, fallbackStorageDate) {
   return {
     list,
     weekendNote: weekendFallback ? { sourceDate: src } : null,
-    deskMeta: { briefsRowCount, deskAutomationConfigured, categorySleevePack },
+    deskMeta: {
+      briefsRowCount,
+      deskAutomationConfigured,
+      categorySleevePack,
+      /** Same as server `briefs` array length before client filter (for admin diagnosis). */
+      rawBriefsFromApi: raw.length,
+      afterFilterCount: list.length,
+    },
   };
 }
 
@@ -801,6 +808,15 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                 ))
               )}
             </ul>
+            {canEdit && intelDeskMeta && typeof intelDeskMeta.rawBriefsFromApi === 'number' && (
+              <p className="td-deck-mi-admin-intel-diag" role="status">
+                Admin — last API brief rows: {intelDeskMeta.rawBriefsFromApi}; after client filter: {briefs.length}.
+                {storageDateStr ? ` Query storage date: ${storageDateStr}.` : ''}
+                {intelDeskMeta.rawBriefsFromApi > 0 && briefs.length === 0
+                  ? ' All rows dropped by filter (check briefKind slugs vs INTEL_API_BRIEF_KIND_RE).'
+                  : ''}
+              </p>
+            )}
           </section>
         </div>
       </div>
