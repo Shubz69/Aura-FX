@@ -181,10 +181,14 @@ function briefsPayloadFromContentResponse(res, fallbackStorageDate) {
   const briefsRowCount =
     typeof res.data?.briefsRowCount === 'number' ? res.data.briefsRowCount : raw.length;
   const deskAutomationConfigured = Boolean(res.data?.deskAutomationConfigured);
+  const categorySleevePack =
+    res.data?.categorySleevePack && typeof res.data.categorySleevePack === 'object'
+      ? res.data.categorySleevePack
+      : null;
   return {
     list,
     weekendNote: weekendFallback ? { sourceDate: src } : null,
-    deskMeta: { briefsRowCount, deskAutomationConfigured },
+    deskMeta: { briefsRowCount, deskAutomationConfigured, categorySleevePack },
   };
 }
 
@@ -266,16 +270,22 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     [briefs]
   );
 
+  const categorySleevesLoaded =
+    typeof intelDeskMeta?.categorySleevePack?.loaded === 'number'
+      ? intelDeskMeta.categorySleevePack.loaded
+      : categoryBriefCount;
+
   /** Server may be gap-filling remaining sleeves in the background — keep polling until the full pack lands. */
   const needsPartialIntelPoll = useMemo(
     () =>
       Boolean(intelDeskMeta?.deskAutomationConfigured) &&
       briefs.length > 0 &&
-      (categoryBriefCount < CATEGORY_BRIEF_KINDS.size || !hasInstitutionalBrief),
+      (categorySleevesLoaded < CATEGORY_BRIEF_KINDS.size || !hasInstitutionalBrief),
     [
       intelDeskMeta?.deskAutomationConfigured,
+      intelDeskMeta?.categorySleevePack?.loaded,
       briefs.length,
-      categoryBriefCount,
+      categorySleevesLoaded,
       hasInstitutionalBrief,
     ]
   );
@@ -694,12 +704,19 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           {briefs.length > 0 && (
             <div className="td-deck-mi-modern-stat" aria-hidden>
               <span className="td-deck-mi-modern-stat-value">
-                {categoryBriefCount}/8
+                {categorySleevesLoaded}/8
               </span>
               <span className="td-deck-mi-modern-stat-label">
                 asset sleeves stored (of 8)
                 {hasInstitutionalBrief ? ' · institutional ready' : ' · institutional pending'}
                 {weekendBriefsNote ? ' · latest weekday pack' : ''}
+                {canEdit &&
+                intelDeskMeta?.categorySleevePack?.missingKinds?.length > 0 ? (
+                  <span className="td-deck-mi-sleeve-missing" title="Gap-fill may still be running">
+                    {' '}
+                    · missing: {intelDeskMeta.categorySleevePack.missingKinds.join(', ')}
+                  </span>
+                ) : null}
               </span>
             </div>
           )}

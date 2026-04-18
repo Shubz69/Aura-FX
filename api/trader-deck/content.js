@@ -469,6 +469,8 @@ module.exports = async (req, res) => {
         mimeType: r.mime_type || null,
         createdAt: r.created_at,
       }));
+      const haveKind = new Set((rows || []).map((r) => String(r?.brief_kind || '').toLowerCase()));
+      const institutionalKind = String(institutionalBriefKindForPeriod(period) || '').toLowerCase();
       const payload = {
         success: true,
         briefs,
@@ -479,6 +481,13 @@ module.exports = async (req, res) => {
         briefsRowCount: (rows || []).length,
         /** Whether automated desk brief generation can run on this deployment (requires hosted API keys). */
         deskAutomationConfigured: Boolean(isTraderDeskAutomationConfigured()),
+        /** Eight category sleeves coverage (distinct from institutional row). */
+        categorySleevePack: {
+          expected: DESK_AUTOMATION_CATEGORY_KINDS.length,
+          loaded: DESK_AUTOMATION_CATEGORY_KINDS.filter((k) => haveKind.has(k)).length,
+          missingKinds: DESK_AUTOMATION_CATEGORY_KINDS.filter((k) => !haveKind.has(k)),
+          institutionalPresent: institutionalKind ? haveKind.has(institutionalKind) : false,
+        },
       };
       if (weekendFallback) payload.weekendFallback = true;
       return res.status(200).json(payload);
