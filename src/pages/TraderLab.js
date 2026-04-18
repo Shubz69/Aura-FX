@@ -795,6 +795,72 @@ export default function TraderLab() {
                 </p>
               ) : null}
             </div>
+
+            <div className="tlab-left-tail" aria-label="Session and saved labs">
+              <div className="tlab-card tlab-card--gold tlab-card--session-rail">
+                <h3 className="tlab-card__title">Session focus</h3>
+                <div className="tlab-field">
+                  <label htmlFor="tlab-session-goal">Today&apos;s goal</label>
+                  <textarea
+                    id="tlab-session-goal"
+                    className="tlab-textarea tlab-textarea--tight"
+                    rows={3}
+                    value={form.sessionGoal}
+                    onChange={(e) => updateField('sessionGoal', e.target.value)}
+                    placeholder="What you are optimizing this session for…"
+                  />
+                </div>
+                <div className="tlab-field" style={{ marginTop: 8 }}>
+                  <label htmlFor="tlab-max-trades">Max trades</label>
+                  <input
+                    id="tlab-max-trades"
+                    className="tlab-input"
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={form.maxTradesAllowed}
+                    onChange={(e) => updateField('maxTradesAllowed', safeNumber(e.target.value, DEFAULT_FORM.maxTradesAllowed))}
+                  />
+                </div>
+              </div>
+
+              <div className="tlab-card tlab-card--gold tlab-card--saved-labs">
+                <div className="tlab-saved-head">
+                  <h3 className="tlab-card__title">My trades</h3>
+                  <span className="tlab-saved-count">{savedLabRows.length}</span>
+                </div>
+                {!savedLabRows.length ? (
+                  <p className="tlab-saved-empty">No saved labs yet. Save a session to build your archive.</p>
+                ) : (
+                  <div className="tlab-saved-list" role="list" aria-label="Saved Trader Lab sessions">
+                    {savedLabRows.map((row) => (
+                      <div
+                        key={row.id}
+                        className={`tlab-saved-row${activeId === row.id ? ' tlab-saved-row--active' : ''}`}
+                      >
+                        <button
+                          type="button"
+                          className="tlab-saved-item"
+                          onClick={() => openSavedLab(row.id)}
+                        >
+                          <span className="tlab-saved-item__date">{row.date}</span>
+                          <span className="tlab-saved-item__setup">{row.setupName}</span>
+                          <span className="tlab-saved-item__symbol">{row.symbol}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="tlab-saved-remove"
+                          aria-label={`Remove ${row.setupName}`}
+                          onClick={(e) => deleteSavedLab(row.id, e)}
+                        >
+                          <FaTimes />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </aside>
 
           <div className="trader-lab-v2__center">
@@ -892,6 +958,58 @@ export default function TraderLab() {
                   </li>
                 ))}
               </ul>
+            </div>
+
+            <div className="tlab-card tlab-card--gold tlab-card--desk-context">
+              <h3 className="tlab-card__title">Risk & geopolitical</h3>
+              <p className="tlab-hint tlab-hint--tight">Region | sentiment (one per line)</p>
+              <div className="tlab-table-wrap tlab-table-wrap--compact">
+                <table className="tlab-table tlab-table--compact">
+                  <thead>
+                    <tr>
+                      <th>Region</th>
+                      <th>Sentiment</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {geoRows.map((row) => (
+                      <tr key={row.region}>
+                        <td>{row.region}</td>
+                        <td>
+                          <span className={sentimentPillClass(row.sentiment)}>
+                            {String(row.sentiment).toUpperCase()}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <details className="tlab-geo-inline-edit">
+                <summary>Edit region lines</summary>
+                <textarea
+                  className="tlab-textarea tlab-textarea--tight tlab-textarea--geo-inline"
+                  value={form.todaysFocus}
+                  onChange={(e) => updateField('todaysFocus', e.target.value)}
+                  aria-label="Geopolitical backing lines"
+                />
+              </details>
+              <table className="tlab-table tlab-table--compact tlab-table--risk-inline">
+                <tbody>
+                  <tr>
+                    <td>Volatility</td>
+                    <td><span className="tlab-pill tlab-pill--warn">{volLabel}</span></td>
+                  </tr>
+                  <tr>
+                    <td>News risk</td>
+                    <td><span className="tlab-pill tlab-pill--ok">{newsRiskLabel}</span></td>
+                  </tr>
+                  <tr>
+                    <td>Event risk</td>
+                    <td><span className="tlab-pill tlab-pill--ok">{eventRiskLabel}</span></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
             </div>
           </div>
@@ -1075,122 +1193,6 @@ export default function TraderLab() {
                   </li>
                 ))}
               </ul>
-            </div>
-
-            <div className="tlab-card tlab-card--gold tlab-card--session-rail">
-              <h3 className="tlab-card__title">Session focus</h3>
-              <div className="tlab-field">
-                <label htmlFor="tlab-session-goal">Today&apos;s goal</label>
-                <textarea
-                  id="tlab-session-goal"
-                  className="tlab-textarea tlab-textarea--tight"
-                  rows={3}
-                  value={form.sessionGoal}
-                  onChange={(e) => updateField('sessionGoal', e.target.value)}
-                  placeholder="What you are optimizing this session for…"
-                />
-              </div>
-              <div className="tlab-field" style={{ marginTop: 8 }}>
-                <label htmlFor="tlab-max-trades">Max trades</label>
-                <input
-                  id="tlab-max-trades"
-                  className="tlab-input"
-                  type="number"
-                  min={1}
-                  max={99}
-                  value={form.maxTradesAllowed}
-                  onChange={(e) => updateField('maxTradesAllowed', safeNumber(e.target.value, DEFAULT_FORM.maxTradesAllowed))}
-                />
-              </div>
-            </div>
-
-            <div className="tlab-card tlab-card--gold tlab-card--saved-labs">
-              <div className="tlab-saved-head">
-                <h3 className="tlab-card__title">My trades</h3>
-                <span className="tlab-saved-count">{savedLabRows.length}</span>
-              </div>
-              {!savedLabRows.length ? (
-                <p className="tlab-saved-empty">No saved labs yet. Save a session to build your archive.</p>
-              ) : (
-                <div className="tlab-saved-list" role="list" aria-label="Saved Trader Lab sessions">
-                  {savedLabRows.map((row) => (
-                    <div
-                      key={row.id}
-                      className={`tlab-saved-row${activeId === row.id ? ' tlab-saved-row--active' : ''}`}
-                    >
-                      <button
-                        type="button"
-                        className="tlab-saved-item"
-                        onClick={() => openSavedLab(row.id)}
-                      >
-                        <span className="tlab-saved-item__date">{row.date}</span>
-                        <span className="tlab-saved-item__setup">{row.setupName}</span>
-                        <span className="tlab-saved-item__symbol">{row.symbol}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="tlab-saved-remove"
-                        aria-label={`Remove ${row.setupName}`}
-                        onClick={(e) => deleteSavedLab(row.id, e)}
-                      >
-                        <FaTimes />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="tlab-card tlab-card--gold tlab-card--desk-context">
-              <h3 className="tlab-card__title">Risk & geopolitical</h3>
-              <p className="tlab-hint tlab-hint--tight">Region | sentiment (one per line)</p>
-              <div className="tlab-table-wrap tlab-table-wrap--compact">
-                <table className="tlab-table tlab-table--compact">
-                  <thead>
-                    <tr>
-                      <th>Region</th>
-                      <th>Sentiment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {geoRows.map((row) => (
-                      <tr key={row.region}>
-                        <td>{row.region}</td>
-                        <td>
-                          <span className={sentimentPillClass(row.sentiment)}>
-                            {String(row.sentiment).toUpperCase()}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <details className="tlab-geo-inline-edit">
-                <summary>Edit region lines</summary>
-                <textarea
-                  className="tlab-textarea tlab-textarea--tight tlab-textarea--geo-inline"
-                  value={form.todaysFocus}
-                  onChange={(e) => updateField('todaysFocus', e.target.value)}
-                  aria-label="Geopolitical backing lines"
-                />
-              </details>
-              <table className="tlab-table tlab-table--compact tlab-table--risk-inline">
-                <tbody>
-                  <tr>
-                    <td>Volatility</td>
-                    <td><span className="tlab-pill tlab-pill--warn">{volLabel}</span></td>
-                  </tr>
-                  <tr>
-                    <td>News risk</td>
-                    <td><span className="tlab-pill tlab-pill--ok">{newsRiskLabel}</span></td>
-                  </tr>
-                  <tr>
-                    <td>Event risk</td>
-                    <td><span className="tlab-pill tlab-pill--ok">{eventRiskLabel}</span></td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
 
           </aside>

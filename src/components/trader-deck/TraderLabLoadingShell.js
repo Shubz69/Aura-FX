@@ -50,6 +50,22 @@ export default function TraderLabLoadingShell() {
           <SkelLine className="tlab-skel-line--q" />
           <div className="tlab-skel-textarea tlab-skel-textarea--thesis" />
         </div>
+        <div className="tlab-left-tail" aria-hidden>
+          <div className="tlab-card tlab-card--gold tlab-card--session-rail tlab-skel-card">
+            <SkelTitle />
+            <div className="tlab-skel-textarea tlab-skel-textarea--session" />
+            <SkelLine className="tlab-skel-line--field" />
+          </div>
+          <div className="tlab-card tlab-card--gold tlab-card--saved-labs tlab-skel-card">
+            <div className="tlab-skel-saved-head">
+              <SkelTitle />
+              <SkelLine className="tlab-skel-line--count" />
+            </div>
+            <SkelLine className="tlab-skel-line--saved" />
+            <SkelLine className="tlab-skel-line--saved" />
+            <SkelLine className="tlab-skel-line--saved" style={{ width: '80%' }} />
+          </div>
+        </div>
       </aside>
 
       <div className="trader-lab-v2__center">
@@ -98,6 +114,18 @@ export default function TraderLabLoadingShell() {
             </div>
             <SkelLine className="tlab-skel-line--decoder" style={{ width: '92%' }} />
             <SkelLine className="tlab-skel-line--decoder" style={{ width: '78%' }} />
+          </div>
+          <div className="tlab-card tlab-card--gold tlab-card--desk-context tlab-skel-card">
+            <SkelTitle />
+            <div className="tlab-skel-table">
+              <SkelLine />
+              <SkelLine />
+            </div>
+            <div className="tlab-skel-textarea tlab-skel-textarea--short" />
+            <div className="tlab-skel-table">
+              <SkelLine />
+              <SkelLine />
+            </div>
           </div>
         </div>
       </div>
@@ -148,32 +176,6 @@ export default function TraderLabLoadingShell() {
             <SkelLine />
             <SkelLine />
             <SkelLine style={{ width: '72%' }} />
-          </div>
-        </div>
-        <div className="tlab-card tlab-card--gold tlab-card--session-rail tlab-skel-card">
-          <SkelTitle />
-          <div className="tlab-skel-textarea tlab-skel-textarea--session" />
-          <SkelLine className="tlab-skel-line--field" />
-        </div>
-        <div className="tlab-card tlab-card--gold tlab-card--saved-labs tlab-skel-card">
-          <div className="tlab-skel-saved-head">
-            <SkelTitle />
-            <SkelLine className="tlab-skel-line--count" />
-          </div>
-          <SkelLine className="tlab-skel-line--saved" />
-          <SkelLine className="tlab-skel-line--saved" />
-          <SkelLine className="tlab-skel-line--saved" style={{ width: '80%' }} />
-        </div>
-        <div className="tlab-card tlab-card--gold tlab-card--desk-context tlab-skel-card">
-          <SkelTitle />
-          <div className="tlab-skel-table">
-            <SkelLine />
-            <SkelLine />
-          </div>
-          <div className="tlab-skel-textarea tlab-skel-textarea--short" />
-          <div className="tlab-skel-table">
-            <SkelLine />
-            <SkelLine />
           </div>
         </div>
       </aside>

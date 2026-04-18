@@ -679,11 +679,11 @@
   }
 }
 
-/* Terminal desktop: top-aligned rails; natural height (scroll on shell child above) */
+/* Terminal desktop: stretch columns to one row height so the chart can flex-fill */
 .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact.trader-lab-v2--terminal-desktop {
   max-height: none !important;
   height: auto !important;
-  align-items: start !important;
+  align-items: stretch !important;
   align-content: start !important;
 }
 
@@ -743,8 +743,8 @@
 }
 
 .trade-validator-shell .trader-lab-v2 .tlab-card--session-rail {
-  flex: 1 1 auto !important;
-  min-height: 120px !important;
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
   display: flex !important;
   flex-direction: column !important;
 }
@@ -765,13 +765,16 @@
     max-height: none !important;
     overflow-y: visible !important;
     overflow-x: hidden !important;
-    align-self: start !important;
+    align-self: stretch !important;
+    min-height: 0 !important;
   }
 
   .trade-validator-shell .trader-lab-v2.trader-lab-v2--terminal-desktop .trader-lab-v2__center {
     max-height: none !important;
     overflow: visible !important;
-    align-self: start !important;
+    align-self: stretch !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
   }
 }
 

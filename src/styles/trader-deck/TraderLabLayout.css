@@ -36,7 +36,7 @@
     grid-template-columns: var(--tl-col-terminal);
     grid-template-rows: auto;
     grid-template-areas: 'tl-left tl-center tl-right';
-    align-items: start;
+    align-items: stretch;
     align-content: start;
     height: auto;
     min-height: 0;
@@ -47,14 +47,30 @@
 
   .trader-lab-v2--terminal-desktop .trader-lab-v2__left {
     grid-area: tl-left;
+    align-self: stretch;
+    min-height: 0;
   }
 
   .trader-lab-v2--terminal-desktop .trader-lab-v2__center {
     grid-area: tl-center;
+    align-self: stretch;
+    min-height: 0;
+    flex: 1 1 auto;
   }
 
   .trader-lab-v2--terminal-desktop .trader-lab-v2__right {
     grid-area: tl-right;
+    align-self: stretch;
+    min-height: 0;
+  }
+
+  /* Pin session + saved labs to the bottom of a tall left rail */
+  .trader-lab-v2--terminal-desktop .tlab-left-tail {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--tl-gap);
+    flex-shrink: 0;
   }
 
   .trader-lab-v2--terminal-desktop .trader-lab-v2__footer--terminal-mobile {
@@ -71,6 +87,14 @@
   max-width: none !important;
   width: 100% !important;
   margin-inline: 0 !important;
+}
+
+@media (min-width: 1400px) {
+  .journal-page
+    .trade-validator-shell
+    .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--compact.trader-lab-v2--terminal-desktop {
+    align-items: stretch !important;
+  }
 }
 
 @media (max-width: 1399px) {
@@ -192,7 +216,9 @@
 
 @media (min-width: 1400px) {
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-stack {
+    flex: 1 1 auto;
     min-height: 0;
+    width: 100%;
   }
 
   /* Market Decoder: full width under chart */
@@ -215,6 +241,13 @@
   flex: 0 0 auto;
   min-width: 0;
   width: 100%;
+}
+
+@media (min-width: 1400px) {
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-main {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
 }
 
 /* Chart card: dominant center panel (Market Outlook–style shell) */
@@ -294,7 +327,8 @@
   }
 
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-main .tlab-card--focal {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    min-height: 0;
     align-self: stretch;
     width: 100%;
     max-width: none;
@@ -303,18 +337,23 @@
   }
 
   /*
-   * Fixed chart slot height so TradingView (fillParent / height 100%) fully fills the frame.
-   * Avoid flex:1 + min-height:0 here — that left empty space below a short iframe.
+   * Grow the chart slot with the center column; keep a readable floor via --tl-chart-slot.
+   * Absolute .trader-suite-chart-frame fills whatever height this host resolves to.
    */
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-main .tlab-chart-host--fill {
-    flex: 0 0 auto !important;
+    flex: 1 1 auto !important;
     width: 100% !important;
     max-width: none !important;
     margin-inline: 0 !important;
     aspect-ratio: unset !important;
-    height: var(--tl-chart-slot) !important;
+    height: auto !important;
     min-height: var(--tl-chart-slot) !important;
-    max-height: var(--tl-chart-slot) !important;
+    max-height: none !important;
+  }
+
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-stack > .tlab-card--desk-context {
+    flex: 0 1 auto;
+    min-height: 0;
   }
 
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .trader-lab-v2__right .tlab-card--dock-exec {
@@ -327,8 +366,8 @@
     flex: 0 0 auto;
   }
 
-  /* Right rail: stop Session focus from flex-growing and shoving My trades / Risk to the floor */
-  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .trader-lab-v2__right .tlab-card--session-rail {
+  /* Left rail: session + saved — compact, no phantom flex growth */
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .trader-lab-v2__left .tlab-card--session-rail {
     flex: 0 0 auto !important;
     min-height: 0 !important;
   }
@@ -338,11 +377,6 @@
     max-height: none;
     overflow-x: hidden;
     overflow-y: visible;
-    min-height: 0;
-  }
-
-  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .trader-lab-v2__right .tlab-card--desk-context {
-    flex: 0 1 auto;
     min-height: 0;
   }
 
@@ -356,7 +390,7 @@
   .journal-page
     .trade-validator-shell
     .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
-    .trader-lab-v2__right
+    .trader-lab-v2__left
     .tlab-card--session-rail {
     flex: 0 0 auto !important;
     min-height: 0 !important;
@@ -415,17 +449,14 @@
   flex: none !important;
 }
 
-.journal-page .trader-lab-v2--workspace .tlab-chart-host--fill {
-  flex: 0 0 auto !important;
-}
-
 @media (min-width: 1400px) {
   .journal-page
     .trade-validator-shell
     .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
     .tlab-center-main
     .tlab-card--focal {
-    flex: 0 0 auto !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
     align-self: stretch !important;
     width: 100% !important;
     max-width: none !important;
@@ -438,14 +469,47 @@
     .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
     .tlab-center-main
     .tlab-chart-host--fill {
-    flex: 0 0 auto !important;
+    flex: 1 1 auto !important;
     width: 100% !important;
     max-width: none !important;
     margin-inline: 0 !important;
     aspect-ratio: unset !important;
-    height: var(--tl-chart-slot) !important;
+    height: auto !important;
     min-height: var(--tl-chart-slot) !important;
-    max-height: var(--tl-chart-slot) !important;
+    max-height: none !important;
+  }
+
+  .journal-page
+    .trade-validator-shell
+    .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
+    .tlab-center-main {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+
+  .journal-page
+    .trade-validator-shell
+    .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
+    .trader-lab-v2__center {
+    align-self: stretch !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+  }
+
+  .journal-page
+    .trade-validator-shell
+    .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
+    .trader-lab-v2__left {
+    align-self: stretch !important;
+    min-height: 0 !important;
+  }
+
+  .journal-page
+    .trade-validator-shell
+    .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
+    .trader-lab-v2__right {
+    align-self: stretch !important;
+    min-height: 0 !important;
   }
 }
 
@@ -1358,6 +1422,17 @@
   min-height: 0 !important;
 }
 
+@media (min-width: 1400px) {
+  .journal-page
+    .trade-validator-shell
+    .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
+    .tlab-center-stack {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+  }
+}
+
 .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .tlab-level-strip {
   margin-top: 6px;
   padding: 11px 12px 12px;
@@ -1396,7 +1471,7 @@
     grid-template-rows: auto !important;
     grid-template-areas: 'tl-left tl-center tl-right' !important;
     gap: 14px !important;
-    align-items: start !important;
+    align-items: stretch !important;
     align-content: start !important;
     padding: 16px 20px 24px !important;
     max-width: none !important;
