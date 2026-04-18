@@ -5,7 +5,8 @@ const DEFAULT_TEMPLATE_VERSION = 1;
 const DEFAULT_DAILY_TEMPLATE = {
   period: 'daily',
   version: DEFAULT_TEMPLATE_VERSION,
-  titlePattern: 'Daily Market Brief - {weekday} {dateLong}',
+  /** En dash — matches Aura PDF desk titles ("Daily Brief – Thursday 5th March 2026"). */
+  titlePattern: 'Daily Brief \u2013 {weekday} {dateLong}',
   sections: [
     { key: 'market_context', heading: 'Market Context' },
     { key: 'instrument_outlook', heading: 'Instrument Outlook' },
@@ -24,7 +25,7 @@ const DEFAULT_DAILY_TEMPLATE = {
 const DEFAULT_WEEKLY_TEMPLATE = {
   period: 'weekly',
   version: DEFAULT_TEMPLATE_VERSION,
-  titlePattern: 'Weekly Fundamental Analysis - {weekRange}',
+  titlePattern: 'Weekly Fundamental Analysis \u2013 {weekRange}',
   sections: [
     { key: 'weekly_macro_theme', heading: 'Weekly Macro Theme' },
     { key: 'instrument_outlook', heading: 'Instrument Outlook' },

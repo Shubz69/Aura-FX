@@ -54,8 +54,6 @@ const {
   filterCalendarForBriefKind,
   buildMacroSummaryLines,
   categoryWritingMandate,
-  validateTopInstrumentsForKind,
-  detectCrossAssetContamination,
   scoreAndSelectTopInstruments,
   buildQuoteCacheForSymbols,
   collectAllAutomationUniverseSymbols,
@@ -588,24 +586,194 @@ function ordinalDayNumber(n) {
   return `${v}th`;
 }
 
+/** Matches client PDF typography: "Daily Brief – Thursday 5th March 2026" (en dash). */
 function formatDailySampleTitle(deskYmd, timeZone) {
   const mid = jsDateFromDeskYmd(deskYmd, timeZone);
+  const ND = '\u2013';
   const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone }).format(mid);
   const day = ordinalDayNumber(new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone }).format(mid));
   const month = new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone }).format(mid);
   const year = new Intl.DateTimeFormat('en-GB', { year: 'numeric', timeZone }).format(mid);
-  return `Daily Brief - ${weekday} ${day} ${month} ${year}`;
+  return `Daily Brief ${ND} ${weekday} ${day} ${month} ${year}`;
 }
 
+/** Matches client PDF: "WEEKLY FUNDAMENTAL ANALYSIS – (2nd – 6th March 2026)". */
 function formatWeeklySampleTitle(deskYmd, timeZone) {
+  const ND = '\u2013';
   const mon = DateTime.fromISO(`${String(deskYmd || '').slice(0, 10)}T12:00:00`, { zone: timeZone }).set({ weekday: 1 });
   const fri = mon.plus({ days: 4 });
-  if (!mon.isValid) return 'WEEKLY FUNDAMENTAL ANALYSIS';
+  if (!mon.isValid) return `WEEKLY FUNDAMENTAL ANALYSIS ${ND}`;
   const mDay = ordinalDayNumber(mon.toFormat('d'));
   const fDay = ordinalDayNumber(fri.toFormat('d'));
   const month = new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone }).format(fri.toJSDate());
   const year = new Intl.DateTimeFormat('en-GB', { year: 'numeric', timeZone }).format(fri.toJSDate());
-  return `WEEKLY FUNDAMENTAL ANALYSIS - (${mDay} - ${fDay} ${month} ${year})`;
+  return `WEEKLY FUNDAMENTAL ANALYSIS ${ND} (${mDay} ${ND} ${fDay} ${month} ${year})`;
+}
+
+/** Previous Mon–Fri window label for "SUMMARY FOR LAST WEEK (…)" — PDF-style range. */
+function formatPreviousWeekRangeLabel(deskYmd, timeZone) {
+  const anchor = DateTime.fromISO(`${String(deskYmd || '').slice(0, 10)}T12:00:00`, { zone: timeZone });
+  if (!anchor.isValid) return '';
+  const ND = '\u2013';
+  const prevMon = anchor.minus({ weeks: 1 }).set({ weekday: 1 });
+  const prevFri = prevMon.plus({ days: 4 });
+  const mDay = ordinalDayNumber(Number(prevMon.toFormat('d')));
+  const fDay = ordinalDayNumber(Number(prevFri.toFormat('d')));
+  const monthYear = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric', timeZone }).format(prevFri.toJSDate());
+  return `${mDay} ${ND} ${fDay} ${monthYear}`;
+}
+
+function buildPdfFallbackDailyParsed(factPack, expectedAssets) {
+  const syms = Array.isArray(expectedAssets) && expectedAssets.length
+    ? expectedAssets.slice(0, 5)
+    : ['EURUSD', 'XAUUSD', 'US500', 'NAS100', 'DXY'];
+  const ms = Array.isArray(factPack.macroSummary) ? factPack.macroSummary.filter(Boolean).slice(0, 8) : [];
+  const drivers = Array.isArray(factPack.keyDrivers) ? factPack.keyDrivers.slice(0, 8) : [];
+  const headlines = Array.isArray(factPack.headlines) ? factPack.headlines.slice(0, 12) : [];
+  const supplement = factPack.llmDataSupplement || {};
+  const llmThemes = Array.isArray(supplement.headlineThemes) ? supplement.headlineThemes : [];
+
+  const regime = factPack.marketRegime && typeof factPack.marketRegime === 'object'
+    ? factPack.marketRegime.currentRegime || ''
+    : String(factPack.marketRegime || '');
+  const pulse = factPack.marketPulse && typeof factPack.marketPulse === 'object'
+    ? factPack.marketPulse.label || ''
+    : String(factPack.marketPulse || '');
+
+  const opening = [
+    regime ? `Regime: ${sanitizeSentence(regime)}` : '',
+    pulse ? `Pulse: ${sanitizeSentence(pulse)}` : '',
+    ms.length ? ms.map((x) => sanitizeSentence(String(x))).join('\n\n') : '',
+  ].filter(Boolean).join('\n\n') || 'Market context is thin — desk is operating from reduced live inputs; refresh when feeds recover.';
+
+  const globalGeo = llmThemes.length
+    ? llmThemes.slice(0, 10).map((t) => `• ${sanitizeSentence(String(t))}`).join('\n')
+    : headlines.slice(0, 8).map((h) => `• ${sanitizeSentence(String(h))}`).join('\n')
+      || 'Geopolitical headline set unavailable in this snapshot — monitor scheduled risk windows.';
+
+  const macroBackdrop = drivers.length
+    ? drivers.map((d) => `• ${packDriverLine(d)}`).join('\n')
+    : 'Key macro drivers were not fully resolved in the feed snapshot for this run.';
+
+  const cross = Array.isArray(factPack.crossAssetSignals) ? factPack.crossAssetSignals.slice(0, 8) : [];
+  const trader = Array.isArray(factPack.traderFocus) ? factPack.traderFocus.slice(0, 8) : [];
+  const marketThemes = [...cross.map(packSignalLine), ...trader.map(packSignalLine)].filter(Boolean).join('\n\n')
+    || 'Cross-asset themes will clarify as London and New York print liquidity and leadership.';
+
+  const quotes = Array.isArray(factPack.liveQuotes) ? factPack.liveQuotes : [];
+  const symHead = factPack.symbolHeadlines && typeof factPack.symbolHeadlines === 'object' ? factPack.symbolHeadlines : {};
+
+  const assetAnalyses = syms.map((sym) => {
+    const q = quotes.find((lq) => String(lq.symbol || lq.instrument || '').toUpperCase() === String(sym).toUpperCase());
+    const row = Array.isArray(symHead[sym]) ? symHead[sym] : [];
+    const newsLine = row.length ? sanitizeSentence(String(row[0])) : '';
+    const note = q
+      ? `Spot context: ${q.last != null ? q.last : 'n/a'}${q.changePct != null ? ` (${q.changePct}% session)` : ''}.`
+      : 'Quote snapshot thin for this symbol in the current cache.';
+    return {
+      heading: sym,
+      symbol: sym,
+      fundamentalView: [note, newsLine].filter(Boolean).join(' '),
+      technicalView:
+        'Structure is inferred from reduced inputs — confirm ranges and pivot zones on live tape before leaning.',
+      keyTechnicalObservations: [
+        'Respect liquidity pockets around data prints.',
+        'Watch cross-asset leadership for confirmation.',
+        'Avoid front-running thin economic prints.',
+      ],
+      sessionBias: {
+        asia: 'Asia: balanced unless regional headlines gap risk assets.',
+        london: 'London: curves and verbal guidance often reprice the session.',
+        newYork: 'New York: US flows typically set the closing bias.',
+      },
+      overallBias: 'Neutral until follow-through confirms direction.',
+    };
+  });
+
+  const risk = Array.isArray(factPack.riskRadar) ? factPack.riskRadar.slice(0, 8) : [];
+  const overallDailyStructure = risk.length
+    ? risk.map((r) => `• ${typeof r === 'string' ? r : r.title || r.event || ''}`.trim()).filter(Boolean).join('\n')
+    : 'Risk radar incomplete — size for known event windows and liquidity gaps.';
+
+  return {
+    opening,
+    globalGeopoliticalEnvironment: globalGeo,
+    macroBackdrop,
+    marketThemes,
+    assetAnalyses,
+    overallDailyStructure,
+  };
+}
+
+function buildPdfFallbackWeeklyParsed(factPack, expectedAssets, deskYmd, timeZone) {
+  const syms = Array.isArray(expectedAssets) && expectedAssets.length
+    ? expectedAssets.slice(0, 5)
+    : ['EURUSD', 'XAUUSD', 'US500'];
+  const drivers = Array.isArray(factPack.keyDrivers) ? factPack.keyDrivers.slice(0, 8) : [];
+  const cross = Array.isArray(factPack.crossAssetSignals) ? factPack.crossAssetSignals.slice(0, 8) : [];
+  const cal = Array.isArray(factPack.calendar) ? factPack.calendar.slice(0, 12) : [];
+  const prevLabel = formatPreviousWeekRangeLabel(deskYmd, timeZone) || 'prior week';
+
+  const overview = [
+    factPack.marketRegime && typeof factPack.marketRegime === 'object'
+      ? `Regime: ${sanitizeSentence(String(factPack.marketRegime.currentRegime || ''))}`
+      : '',
+    Array.isArray(factPack.macroSummary) && factPack.macroSummary.length
+      ? factPack.macroSummary.slice(0, 4).map((x) => sanitizeSentence(String(x))).join('\n')
+      : '',
+  ].filter(Boolean).join('\n\n') || 'Weekly overview: desk snapshot is reduced — treat this as a scaffold until full feeds return.';
+
+  const summaryForLastWeek = drivers.length
+    ? drivers.map((d) => `• ${packDriverLine(d)}`).join('\n')
+    : 'Prior-week driver detail was thin in the captured snapshot.';
+
+  const assetPerformance = syms.map((sym) => ({
+    heading: sym,
+    body: `${sym}: synthesise performance vs cross-asset drivers from factPack headlines and quotes when live data returns.`,
+  }));
+
+  const structuralWeeklyDrivers = cross.map(packSignalLine).filter(Boolean).join('\n\n')
+    || 'Structural drivers will resolve as the week’s calendar and flows print.';
+
+  const calHint = cal.map((c) => c.event || c.time || '').filter(Boolean).slice(0, 6).join(' · ')
+    || 'See economic calendar in the desk feed for timing.';
+
+  const mondayTuesdayFocus = `Focus: ${calHint}. Watch CB speak and surprise prints that reprice curves.`;
+  const wednesdayFocus = `Mid-week repricing risk around headline data and liquidity pockets.`;
+  const thursdayFridayFocus = `Late-week: position squaring into event risk; respect thin prints.`;
+
+  const assetOutlooks = syms.map((sym) => ({
+    heading: sym,
+    body: `${sym}: outlook ties to USD, yields, and risk appetite — confirm with spot tape.`,
+  }));
+
+  const weekConclusion = Array.isArray(factPack.riskRadar) && factPack.riskRadar.length
+    ? normaliseArray(factPack.riskRadar.map((r) => (typeof r === 'string' ? r : r.title || r.event || ''))).slice(0, 6).join('\n')
+    : 'Week conclusion pending fuller cross-asset confirmation.';
+
+  const keyScenarios = [
+    'Risk stabilises: curves calm, USD mean-reverts, equities repair breadth.',
+    'Risk-off persists: yields stay bid, USD firm, commodities chop with growth fear.',
+  ];
+
+  return {
+    overview,
+    previousWeekLabel: prevLabel,
+    summaryForLastWeek,
+    assetPerformance,
+    structuralWeeklyDrivers,
+    mondayTuesdayFocus,
+    wednesdayFocus,
+    thursdayFridayFocus,
+    assetOutlooks,
+    weekConclusion,
+    sessionWatch: {
+      asia: 'Asia: liquidity and regional risk headlines.',
+      london: 'London: curve and CB guidance.',
+      newYork: 'New York: US flows and closing bias.',
+    },
+    keyScenarios,
+  };
 }
 
 async function getLatestWeeklyBriefExcerpt(briefKind, beforeDate) {
@@ -781,112 +949,120 @@ function parseModelJson(text) {
   throw lastError || new Error('invalid_json');
 }
 
+/**
+ * Aura PDF-matched daily brief body (markdown). `title` is the inner desk title (no category prefix).
+ * Section headings use ## so preview renders like the reference PDFs.
+ */
 function renderCategoryDailyBrief({ title, parsed, runDate, timeZone }) {
   const dayLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone }).format(runDate);
   const lines = [];
-  lines.push(String(title || '').trim());
+  lines.push(`# ${String(title || '').trim()}`);
   lines.push('');
-  lines.push(String(dayLabel || '').trim());
+  lines.push(`## ${String(dayLabel || '').trim()}`);
   lines.push('');
   lines.push(String(parsed.opening || '').trim());
   lines.push('');
-  lines.push('GLOBAL GEOPOLITICAL ENVIRONMENT');
+  lines.push('## GLOBAL GEOPOLITICAL ENVIRONMENT');
   lines.push('');
   lines.push(String(parsed.globalGeopoliticalEnvironment || '').trim());
   lines.push('');
-  lines.push(`MACRO BACKDROP GOING INTO ${dayLabel.toUpperCase()}`);
+  lines.push(`## MACRO BACKDROP GOING INTO ${dayLabel.toUpperCase()}`);
   lines.push('');
   lines.push(String(parsed.macroBackdrop || '').trim());
   lines.push('');
-  lines.push('MARKET THEMES DOMINATING TODAY');
+  lines.push('## MARKET THEMES DOMINATING TODAY');
   lines.push('');
-  lines.push(String(parsed.marketThemes || '').trim());
+  const mt = parsed.marketThemes;
+  lines.push(Array.isArray(mt) ? mt.map((x) => String(x || '').trim()).filter(Boolean).join('\n\n') : String(mt || '').trim());
   lines.push('');
   const assets = Array.isArray(parsed.assetAnalyses) ? parsed.assetAnalyses : [];
   for (const asset of assets) {
-    lines.push(`${String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase()} ANALYSIS`);
+    const h = String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase();
+    lines.push(`## ${h} ANALYSIS`);
     lines.push('');
     lines.push(String(asset.fundamentalView || '').trim());
     lines.push('');
     lines.push(String(asset.technicalView || '').trim());
     lines.push('');
-    lines.push('Key technical observations:');
+    lines.push('**Key technical observations:**');
     const observations = Array.isArray(asset.keyTechnicalObservations) ? asset.keyTechnicalObservations : [];
-    observations.forEach((item) => lines.push(String(item || '').trim()));
+    observations.forEach((item) => lines.push(`- ${String(item || '').trim()}`));
     lines.push('');
-    lines.push('Session bias:');
-    lines.push(`Asia: ${String(asset.sessionBias?.asia || '').trim()}`);
-    lines.push(`London: ${String(asset.sessionBias?.london || '').trim()}`);
-    lines.push(`New York: ${String(asset.sessionBias?.newYork || '').trim()}`);
-    lines.push(`Overall bias: ${String(asset.overallBias || '').trim()}`);
+    lines.push('**Session bias:**');
+    lines.push(`- Asia: ${String(asset.sessionBias?.asia || '').trim()}`);
+    lines.push(`- London: ${String(asset.sessionBias?.london || '').trim()}`);
+    lines.push(`- New York: ${String(asset.sessionBias?.newYork || '').trim()}`);
+    lines.push(`- Overall bias: ${String(asset.overallBias || '').trim()}`);
     lines.push('');
   }
-  lines.push('OVERALL DAILY STRUCTURE');
+  lines.push('## OVERALL DAILY STRUCTURE');
   lines.push('');
   lines.push(String(parsed.overallDailyStructure || '').trim());
   lines.push('');
-  lines.push('By AURA TERMINAL');
+  lines.push('*By AURA TERMINAL*');
   return stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
 }
 
 function renderCategoryWeeklyBrief({ title, parsed }) {
   const lines = [];
-  lines.push(String(title || '').trim());
+  lines.push(`# ${String(title || '').trim()}`);
   lines.push('');
-  lines.push('Overview');
+  lines.push('## Overview');
   lines.push('');
   lines.push(String(parsed.overview || '').trim());
   lines.push('');
-  lines.push(`SUMMARY FOR LAST WEEK (${String(parsed.previousWeekLabel || '').trim()})`);
+  lines.push(`## SUMMARY FOR LAST WEEK (${String(parsed.previousWeekLabel || '').trim()})`);
   lines.push('');
   lines.push(String(parsed.summaryForLastWeek || '').trim());
   lines.push('');
   const howAssets = Array.isArray(parsed.assetPerformance) ? parsed.assetPerformance : [];
   for (const asset of howAssets) {
-    lines.push(`HOW ${String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase()} PERFORMED & WHY`);
+    const h = String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase();
+    lines.push(`## HOW ${h} PERFORMED & WHY`);
     lines.push('');
     lines.push(String(asset.body || '').trim());
     lines.push('');
   }
-  lines.push('WHAT MATTERS THIS WEEK STRUCTURALLY');
+  lines.push('## WHAT MATTERS THIS WEEK STRUCTURALLY');
   lines.push('');
   lines.push(String(parsed.structuralWeeklyDrivers || '').trim());
   lines.push('');
-  lines.push('MONDAY & TUESDAY');
+  lines.push('## MONDAY & TUESDAY');
   lines.push('');
   lines.push(String(parsed.mondayTuesdayFocus || '').trim());
   lines.push('');
-  lines.push('WEDNESDAY');
+  lines.push('## WEDNESDAY');
   lines.push('');
   lines.push(String(parsed.wednesdayFocus || '').trim());
   lines.push('');
-  lines.push('THURSDAY & FRIDAY');
+  lines.push('## THURSDAY & FRIDAY');
   lines.push('');
   lines.push(String(parsed.thursdayFridayFocus || '').trim());
   lines.push('');
   const outlooks = Array.isArray(parsed.assetOutlooks) ? parsed.assetOutlooks : [];
   for (const asset of outlooks) {
-    lines.push(`${String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase()} OUTLOOK THIS WEEK`);
+    const h = String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase();
+    lines.push(`## ${h} OUTLOOK THIS WEEK`);
     lines.push('');
     lines.push(String(asset.body || '').trim());
     lines.push('');
   }
-  lines.push('WEEK CONCLUSION');
+  lines.push('## WEEK CONCLUSION');
   lines.push('');
   lines.push(String(parsed.weekConclusion || '').trim());
   lines.push('');
-  lines.push('SESSION-BY-SESSION WATCH');
+  lines.push('## SESSION-BY-SESSION WATCH');
   lines.push('');
-  lines.push(`Asia: ${String(parsed.sessionWatch?.asia || '').trim()}`);
-  lines.push(`London: ${String(parsed.sessionWatch?.london || '').trim()}`);
-  lines.push(`New York: ${String(parsed.sessionWatch?.newYork || '').trim()}`);
+  lines.push(`- Asia: ${String(parsed.sessionWatch?.asia || '').trim()}`);
+  lines.push(`- London: ${String(parsed.sessionWatch?.london || '').trim()}`);
+  lines.push(`- New York: ${String(parsed.sessionWatch?.newYork || '').trim()}`);
   lines.push('');
-  lines.push('KEY SCENARIOS');
+  lines.push('## KEY SCENARIOS');
   lines.push('');
   const scenarios = Array.isArray(parsed.keyScenarios) ? parsed.keyScenarios : [];
-  scenarios.forEach((s) => lines.push(String(s || '').trim()));
+  scenarios.forEach((s) => lines.push(`- ${String(s || '').trim()}`));
   lines.push('');
-  lines.push('By AURA TERMINAL');
+  lines.push('*By AURA TERMINAL*');
   return stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
 }
 
@@ -1379,32 +1555,6 @@ Hard rules:
 const GENERIC_INSTRUMENT_SCAFFOLD_RE = /scenario\s*\d+\s+defines|catalyst trigger|directional invalidation|\binvalidation\b|invalidation level|position-?sizing|position\s*sizing\s*discipline|daily scenario\s*\d+\s+should define|base and surprise pathways|volatility-?adjusted risk|priority session triggers|trend vs mean-reversion bias|volatility and gap risk|\bpathway\s*[12]\b|\bscenario\s*(?:1|2|3)\b/i;
 const NUMBERED_SCENARIO_RE = /\bscenario\s*(?:1|2|3)\b|\bscenario\s+(?:one|two|three)\b/i;
 
-function repeatedOpeningPenalty(text) {
-  const paras = String(text || '')
-    .split(/\n{2,}/)
-    .map((p) => p.trim())
-    .filter((p) => p.length > 20);
-  const openings = paras.map((p) => p.split(/[.!?:]/)[0].slice(0, 80).toLowerCase().replace(/\s+/g, ' ').trim());
-  const counts = new Map();
-  for (const o of openings) counts.set(o, (counts.get(o) || 0) + 1);
-  let max = 0;
-  for (const c of counts.values()) max = Math.max(max, c);
-  return max;
-}
-
-function duplicateSentenceRatio(text) {
-  const sentences = String(text || '')
-    .split(/[.!?]+\s+/)
-    .map((s) => s.trim().toLowerCase().replace(/\s+/g, ' '))
-    .filter((s) => s.length > 28);
-  if (sentences.length < 4) return 0;
-  const counts = new Map();
-  for (const s of sentences) counts.set(s, (counts.get(s) || 0) + 1);
-  let dups = 0;
-  for (const c of counts.values()) if (c > 1) dups += c - 1;
-  return dups / sentences.length;
-}
-
 function validateOneSectionBody(sectionKey, bodyText) {
   const b = String(bodyText || '').trim();
   if (b.length < 72) return { ok: false, reason: 'thin' };
@@ -1413,60 +1563,6 @@ function validateOneSectionBody(sectionKey, bodyText) {
   if (NUMBERED_SCENARIO_RE.test(b)) return { ok: false, reason: 'scenario_framing' };
   if (GENERIC_BOILERPLATE_RE.test(b)) return { ok: false, reason: 'boilerplate' };
   return { ok: true };
-}
-
-function validateBriefBeforeSave({ body, generated, factPack, priorBodies = [] }) {
-  const reasons = [];
-  const kind = factPack.briefKind;
-  const inv = validateTopInstrumentsForKind(factPack.topInstruments, kind);
-  if (!inv.ok) reasons.push(`instrument_universe:${(inv.bad || []).join(',')}`);
-
-  const minBody = 350;
-  if (!body || String(body).trim().length < minBody) reasons.push('body_too_short');
-
-  if (BANNED_PHRASES_RE.test(body)) reasons.push('banned_phrase_in_body');
-  if (GENERIC_BOILERPLATE_RE.test(body)) reasons.push('generic_boilerplate_body');
-  if (GENERIC_INSTRUMENT_SCAFFOLD_RE.test(body)) reasons.push('instrument_scaffold_body');
-  if (NUMBERED_SCENARIO_RE.test(body)) reasons.push('numbered_scenario_framing');
-
-  const contam = detectCrossAssetContamination(body, kind);
-  if (contam.contaminated) reasons.push(`cross_asset:${contam.hits.join(',')}`);
-
-  const required = getStructureKeys(factPack.period);
-  const sections = Array.isArray(generated?.sections) ? generated.sections : [];
-  if (sections.length !== required.length) {
-    reasons.push(`section_count:${sections.length}_expected_${required.length}`);
-  }
-  for (let i = 0; i < required.length; i += 1) {
-    const sk = required[i];
-    const sec = sections[i];
-    if (!sec) {
-      reasons.push(`missing_section_index:${i}`);
-      continue;
-    }
-    if (sec.key !== sk) reasons.push(`section_key_mismatch:${i}:${sec.key || 'none'}_expected_${sk}`);
-    const b = String(sec.body || '').trim();
-    const one = validateOneSectionBody(sk, b);
-    if (!one.ok) reasons.push(`section_${one.reason}:${sk}`);
-  }
-
-  if (repeatedOpeningPenalty(body) >= 3) reasons.push('repeated_openings');
-  if (duplicateSentenceRatio(body) > 0.12) reasons.push('duplicate_sentences');
-
-  for (let i = 0; i < sections.length - 1; i += 1) {
-    const a = String(sections[i]?.body || '');
-    const c = String(sections[i + 1]?.body || '');
-    if (a.length > 120 && c.length > 120 && similarityScore(a, c) >= 0.55) {
-      reasons.push(`adjacent_sections_similar:${sections[i]?.key || i}`);
-      break;
-    }
-  }
-
-  for (const prev of priorBodies) {
-    if (prev && similarityScore(body, prev) >= 0.6) reasons.push('similar_to_prior_category');
-  }
-
-  return { ok: reasons.length === 0, reasons };
 }
 
 function addDaysYmd(ymdStr, days) {
@@ -1687,30 +1783,6 @@ async function generateBriefBySections(factPack, template, options = {}) {
     riskRadar: [],
     playbook: [],
   };
-}
-
-async function refineFailedSections(generated, factPack, validation, options = {}) {
-  if (!generated || !Array.isArray(generated.sections) || !validation?.reasons?.length) return generated;
-  const required = getStructureKeys(factPack.period);
-  const needKeys = new Set();
-  for (const r of validation.reasons) {
-    const m = r.match(/^section_(thin|banned|scaffold|boilerplate|scenario_framing):(.+)$/);
-    if (m) needKeys.add(m[2]);
-    const adj = r.match(/^adjacent_sections_similar:(.+)$/);
-    if (adj) needKeys.add(adj[1]);
-  }
-  if (needKeys.size === 0) return generated;
-
-  let next = generated.sections.map((sec) => ({ ...sec }));
-  for (let i = 0; i < next.length; i += 1) {
-    const sk = required[i];
-    if (!sk || !needKeys.has(sk)) continue;
-    const heading = next[i].heading || SECTION_HEADINGS[sk];
-    const priorBodies = next.slice(0, i).map((s) => String(s.body || ''));
-    const newBody = await regenerateSectionOpenAI(sk, heading, factPack, priorBodies, options);
-    next[i] = { ...next[i], key: sk, heading, body: newBody };
-  }
-  return { ...generated, sections: next };
 }
 
 function fallbackGenerated(factPack, template, deskYmd, timeZone) {
@@ -2251,7 +2323,6 @@ async function generateAndStoreBrief({
       : [];
     const contextBodies = Array.isArray(generationContext?.existingBodies) ? generationContext.existingBodies : [];
 
-    let generated = null;
     let title = '';
     let body = '';
     let validation = { ok: true, reasons: [] };
@@ -2281,90 +2352,30 @@ async function generateAndStoreBrief({
     }
 
     if (!body) {
-      generated = await generateBriefBySections(factPack, template, {
-        existingExcerpts,
-        uniquenessRetry: false,
-      });
-      if (generated) {
-        const sectionBlob = (generated.sections || []).map((s) => stripSources(s.body || '')).join('\n');
-        const maxOverlapSections = contextBodies.reduce((m, prev) => Math.max(m, similarityScore(sectionBlob, prev)), 0);
-        if (maxOverlapSections >= 0.55) {
-          const regen = await generateBriefBySections(factPack, template, {
-            existingExcerpts,
-            uniquenessRetry: true,
-          });
-          if (regen) generated = regen;
-        }
-      }
-      if (!generated) {
-        generated = fallbackGenerated(factPack, template, date, timeZone);
-      }
-      const titleBase = stripSources(computeTitle(template, date, timeZone));
-      title = `${BRIEF_KIND_LABELS[normalizedKind]} - ${titleBase}`;
-      body = renderBriefText({
-        title,
-        period: normalizedPeriod,
+      const innerTitle =
+        normalizedPeriod === 'daily'
+          ? formatDailySampleTitle(date, timeZone)
+          : formatWeeklySampleTitle(date, timeZone);
+      const fbParsed =
+        normalizedPeriod === 'daily'
+          ? buildPdfFallbackDailyParsed(factPack, selectedTop5)
+          : buildPdfFallbackWeeklyParsed(factPack, selectedTop5, date, timeZone);
+      title = `${BRIEF_KIND_LABELS[normalizedKind]} - ${innerTitle}`;
+      body =
+        normalizedPeriod === 'daily'
+          ? renderCategoryDailyBrief({ title: innerTitle, parsed: fbParsed, runDate, timeZone })
+          : renderCategoryWeeklyBrief({ title: innerTitle, parsed: fbParsed });
+      validation = {
+        ok: true,
+        reasons: [],
+        mode: 'pdf-fallback-factpack',
+      };
+      console.info('[brief-gen] saved PDF-template brief from desk API fact pack (structured JSON path unavailable)', {
+        category: normalizedKind,
         date,
-        generated,
-        template,
-        briefKind: normalizedKind,
-        topInstruments: selectedTop5,
       });
-      validation = validateBriefBeforeSave({
-        body,
-        generated,
-        factPack,
-        priorBodies: contextBodies,
-      });
-      const maxOverlap = contextBodies.reduce((m, prev) => Math.max(m, similarityScore(body, prev)), 0);
-      if (!validation.ok) {
-        const sectionFixable = validation.reasons.some(
-          (r) =>
-            /^section_(thin|banned|scaffold|boilerplate|scenario_framing):/.test(r)
-            || /^adjacent_sections_similar:/.test(r),
-        );
-        if (sectionFixable) {
-          generated = await refineFailedSections(generated, factPack, validation, { existingExcerpts });
-          body = renderBriefText({
-            title,
-            period: normalizedPeriod,
-            date,
-            generated,
-            template,
-            briefKind: normalizedKind,
-            topInstruments: selectedTop5,
-          });
-          validation = validateBriefBeforeSave({ body, generated, factPack, priorBodies: contextBodies });
-        }
-      }
-      if (!validation.ok || containsBoilerplate(body) || maxOverlap >= 0.62) {
-        console.warn('[brief-gen] validation/overlap — full section regen', {
-          category: normalizedKind,
-          date,
-          reasons: validation.reasons,
-          maxOverlap,
-        });
-        const regen = await generateBriefBySections(factPack, template, {
-          existingExcerpts,
-          uniquenessRetry: true,
-          validationFix: true,
-        });
-        if (regen) {
-          generated = regen;
-          body = renderBriefText({
-            title,
-            period: normalizedPeriod,
-            date,
-            generated,
-            template,
-            briefKind: normalizedKind,
-            topInstruments: selectedTop5,
-          });
-          validation = validateBriefBeforeSave({ body, generated, factPack, priorBodies: contextBodies });
-        }
-      }
-      body = diversifyBody(body);
     }
+    if (body) body = diversifyBody(body);
     const generationMeta = {
       generatedAt: new Date().toISOString(),
       topInstruments: selectedTop5,
@@ -2372,7 +2383,7 @@ async function generateAndStoreBrief({
       partialDataMode,
       validationOk: validation.ok,
       validationReasons: validation.ok ? [] : validation.reasons,
-      generationMode: validation.mode || 'legacy-sections',
+      generationMode: validation.mode || 'sample-structured',
       weeklyReferenceDate: weeklyReference?.date || null,
     };
     if (!validation.ok) {
@@ -2717,23 +2728,26 @@ async function generatePreviewBrief({
     });
     if (llmSup) factPack.llmDataSupplement = llmSup;
   }
-  let generated = await generateBriefBySections(factPack, template, {
-    existingExcerpts: [],
-    uniquenessRetry: false,
-  });
-  if (!generated) {
-    generated = fallbackGenerated(factPack, template, date, timeZone);
-  }
-  const title = stripSources(computeTitle(template, date, timeZone));
-  const body = renderBriefText({
-    title,
-    period: normalizedPeriod,
-    date,
-    generated,
-    template,
-    briefKind: 'stocks',
-    topInstruments: previewTop,
-  });
+  const runJs = jsDateFromDeskYmd(date, timeZone);
+  const innerTitle =
+    normalizedPeriod === 'daily'
+      ? formatDailySampleTitle(date, timeZone)
+      : formatWeeklySampleTitle(date, timeZone);
+  const fbParsed =
+    normalizedPeriod === 'daily'
+      ? buildPdfFallbackDailyParsed(factPack, previewTop)
+      : buildPdfFallbackWeeklyParsed(factPack, previewTop, date, timeZone);
+  const title = stripSources(`${BRIEF_KIND_LABELS.stocks} - ${innerTitle}`);
+  let body =
+    normalizedPeriod === 'daily'
+      ? renderCategoryDailyBrief({
+          title: innerTitle,
+          parsed: fbParsed,
+          runDate: runJs,
+          timeZone,
+        })
+      : renderCategoryWeeklyBrief({ title: innerTitle, parsed: fbParsed });
+  body = diversifyBody(stripSources(polishBriefMarkdown(body)));
   return {
     success: true,
     period: normalizedPeriod,
