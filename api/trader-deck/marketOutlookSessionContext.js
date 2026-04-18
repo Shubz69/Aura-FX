@@ -138,7 +138,18 @@ function pickTags(state, extras, max = 2) {
 function sessionSummary(sessionKey, state, { vix, spxDp, align, nextHiMins } = {}) {
   const v = vix != null ? `${Number(vix).toFixed(1)} VIX` : 'vol proxy limited';
   const spx = spxDp != null ? `${spxDp >= 0 ? '+' : ''}${Number(spxDp).toFixed(2)}% SPX session-to-date` : 'equity drift muted';
-  if (state === 'inactive') return 'Institutional flow thinned; local price discovery can dominate versus global beta.';
+  if (state === 'inactive') {
+    if (sessionKey === 'asia') {
+      return 'Institutional flow thin; local price action dominates without strong cross-market direction.';
+    }
+    if (sessionKey === 'london') {
+      return 'Institutional flow selective; participation uneven with limited cross-asset confirmation.';
+    }
+    if (sessionKey === 'new_york') {
+      return 'Institutional flow light; moves lack broad participation and can fade without follow-through.';
+    }
+    return 'Institutional flow light; moves lack broad participation and can fade without follow-through.';
+  }
   if (state === 'event_sensitive') {
     const eta = nextHiMins != null ? `next major release ~${nextHiMins}m` : 'calendar density elevated';
     return `${eta}; headline clocks concentrate two-way repricing risk.`;

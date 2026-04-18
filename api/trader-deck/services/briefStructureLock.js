@@ -212,7 +212,7 @@ function categoryAngleForSection(sectionKey, briefKind) {
       strategic_takeaway: 'Strategic.',
     },
     indices: {
-      market_context: 'Index regime and global beta.',
+      market_context: 'Index regime and cross-asset leadership.',
       cross_asset_flow: 'Rates, FX, vol vs indices.',
       key_drivers: 'Macro, breadth, dispersion.',
       market_behaviour: 'Trend and range on benchmarks.',

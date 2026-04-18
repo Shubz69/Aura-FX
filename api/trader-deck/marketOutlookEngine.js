@@ -236,7 +236,8 @@ function sessionBiasNarrative(row, globalAlign) {
 
 function expectedBehaviourLine(sessionKey, row) {
   const st = String(row?.state || '');
-  if (st === 'inactive') return 'Institutional flow is thinned; local narratives matter more than global beta.';
+  /* Inactive copy lives on row.summary (marketOutlookSessionContext); avoid duplicating expected line + narrative. */
+  if (st === 'inactive') return '';
   if (sessionKey === 'london' && st === 'range_bound') {
     return 'London often probes liquidity around prior balance before NY sets broader direction.';
   }
@@ -444,7 +445,7 @@ function buildInstrumentSnapshots(crossAssetSignals) {
       bias: stocks?.direction === 'up' ? 'Risk-on tilt' : stocks?.direction === 'down' ? 'Defensive' : 'Neutral',
       structure: stocks?.direction === 'neutral' ? 'Balance' : 'Directional',
       keyLevel: 'Cash-open liquidity pocket',
-      note: stocks?.implication ? String(stocks.implication).slice(0, 120) : 'Equities anchor global beta tone.',
+      note: stocks?.implication ? String(stocks.implication).slice(0, 120) : 'Equities often anchor broad participation tone.',
     },
     {
       symbol: 'WTI',
