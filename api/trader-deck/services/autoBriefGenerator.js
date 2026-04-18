@@ -14,6 +14,7 @@ const { getStoredBriefInputs } = require('../../market-data/pipeline-service');
 const briefUniverse = require('./briefInstrumentUniverse');
 const briefStructure = require('./briefStructureLock');
 const institutionalAuraBrief = require('./institutionalAuraBrief');
+const sundayMarketOpenBrief = require('./sundayMarketOpenBrief');
 const { PERPLEXITY_API_URL } = require('../../ai/perplexity-client');
 const {
   SECTION_HEADINGS,
@@ -52,8 +53,23 @@ const BRIEF_KIND_LABELS = {
   crypto: 'Crypto',
   geopolitics: 'Geopolitics',
   market_sentiment: 'Market Sentiment',
-  aura_institutional_daily: 'Aura FX Institutional — Daily',
-  aura_institutional_weekly: 'Aura FX Institutional — Weekly',
+  aura_institutional_daily: 'Aura FX Institutional — Daily (legacy)',
+  aura_institutional_daily_forex: 'Daily Brief — Forex',
+  aura_institutional_daily_crypto: 'Daily Brief — Crypto',
+  aura_institutional_daily_commodities: 'Daily Brief — Commodities',
+  aura_institutional_daily_fixed_income: 'Daily Brief — Fixed Income',
+  aura_institutional_daily_equities: 'Daily Brief — Equities',
+  aura_institutional_daily_indices: 'Daily Brief — Indices',
+  aura_institutional_daily_stocks: 'Daily Brief — Stocks',
+  aura_institutional_weekly: 'Aura FX Institutional — Weekly (legacy)',
+  aura_institutional_weekly_forex: 'Weekly Fundamental — Forex',
+  aura_institutional_weekly_crypto: 'Weekly Fundamental — Crypto',
+  aura_institutional_weekly_commodities: 'Weekly Fundamental — Commodities',
+  aura_institutional_weekly_fixed_income: 'Weekly Fundamental — Fixed Income',
+  aura_institutional_weekly_equities: 'Weekly Fundamental — Equities',
+  aura_institutional_weekly_indices: 'Weekly Fundamental — Indices',
+  aura_institutional_weekly_stocks: 'Weekly Fundamental — Stocks',
+  aura_sunday_market_open: 'Sunday Market Open Brief',
 };
 const {
   filterHeadlinesForBriefKind,
@@ -2691,7 +2707,9 @@ async function countNonGeneralIntelBriefRows(period, dateYmd) {
   try {
     const [rows] = await executeQuery(
       `SELECT COUNT(*) AS n FROM trader_deck_briefs
-       WHERE date = ? AND period = ? AND COALESCE(LOWER(brief_kind), '') <> 'general'`,
+       WHERE date = ? AND period = ?
+         AND COALESCE(LOWER(brief_kind), '') <> 'general'
+         AND COALESCE(LOWER(brief_kind), '') <> 'aura_sunday_market_open'`,
       [dateYmd, p]
     );
     return Number(rows?.[0]?.n || 0);
@@ -2709,7 +2727,7 @@ async function shouldRunIntelPackCatchUp({ now = new Date(), period, timeZone = 
   const normalizedPeriod = normalizePeriod(period);
   const deskYmd = normalizeOutlookDate(normalizedPeriod, toYmdInTz(now, timeZone));
   const n = await countNonGeneralIntelBriefRows(normalizedPeriod, deskYmd);
-  if (n >= expectedIntelAutomationRowCount()) return false;
+  if (n >= expectedIntelAutomationRowCount(normalizedPeriod)) return false;
 
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone,
@@ -2764,6 +2782,7 @@ function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' 
 
 function getInstitutionalBriefDeps() {
   return {
+    executeQuery,
     assertAutomationModelConfigured,
     ensureAutomationTables,
     reserveRun,
@@ -2786,6 +2805,14 @@ async function generateAndStoreInstitutionalBriefOnly(opts) {
   return institutionalAuraBrief.generateAndStoreInstitutionalBrief(getInstitutionalBriefDeps(), opts);
 }
 
+async function generateAndStoreSundayMarketOpenBriefOnly(opts) {
+  return sundayMarketOpenBrief.generateAndStoreSundayMarketOpenBrief(getInstitutionalBriefDeps(), opts);
+}
+
+function shouldRunSundayMarketOpenWindow(opts) {
+  return sundayMarketOpenBrief.shouldRunSundayMarketOpenWindow(opts);
+}
+
 /** Legacy cron hook: per-instrument OpenAI layer removed — briefs are narrative sections only. */
 async function prefetchInstrumentResearchForDaily({ timeZone = 'Europe/London', runDate = new Date() } = {}) {
   const targetDate = tomorrowYmdInTz(runDate, timeZone);
@@ -2805,6 +2832,8 @@ module.exports = {
   generateAndStoreBriefSet,
   generateAndStoreMissingCategoryBriefs,
   generateAndStoreInstitutionalBriefOnly,
+  generateAndStoreSundayMarketOpenBriefOnly,
+  shouldRunSundayMarketOpenWindow,
   generatePreviewBrief,
   publishManualBrief,
   prefetchInstrumentResearchForDaily,
@@ -2820,6 +2849,7 @@ module.exports = {
     shouldRunIntelPackCatchUp,
     countNonGeneralIntelBriefRows,
     shouldPrefetchInstrumentResearchWindow,
+    shouldRunSundayMarketOpenWindow,
     stripSources,
     assertNoSources,
     sanitizeOutlookPayload,

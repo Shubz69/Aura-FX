@@ -1,5 +1,5 @@
 /**
- * Offline QA checks (no OpenAI): unified daily / weekly validators.
+ * Offline QA checks (no OpenAI): weekly WFA + daily PDF validators.
  * Run: node api/trader-deck/services/institutionalAuraBrief.selftest.js
  */
 
@@ -7,77 +7,86 @@
 const assert = require('assert');
 const {
   INSTITUTIONAL_INSTRUMENTS,
-  validateUnifiedDaily,
-  validateUnifiedDailyBody,
-  assembleUnifiedDailyPlain,
-  validateUnifiedWeekly,
-  validateWeeklyUnifiedBody,
-  assembleWeeklyUnifiedPlain,
-  WEEKLY_ASSET_SLEEVES,
   formatWeeklyFundamentalTitle,
+  formatDailyBriefTitle,
   _test: t,
 } = require('./institutionalAuraBrief');
+const weeklyWfaPdfBrief = require('./weeklyWfaPdfBrief');
+const dailyBriefPdfBrief = require('./dailyBriefPdfBrief');
 
 function mk(len) {
   return `x`.repeat(Math.max(len, 20));
 }
 
-function sampleDailyPayload() {
+function mkDailyInstr(sym) {
   return {
-    dayContextIntro: `${mk(320)}`,
-    macroNarrative: `${mk(900)}`,
-    transitionStatement: `${mk(80)}`,
-    globalGeopoliticalEnvironment: `${mk(260)}`,
-    equities: `${mk(260)}`,
-    forexUsd: `${mk(260)}`,
-    commodities: `${mk(260)}`,
-    fixedIncome: `${mk(260)}`,
-    crypto: `${mk(200)}`,
-    marketSentiment: `${mk(260)}`,
-    keyEventsForwardLook: `${mk(260)}`,
+    symbol: sym,
+    label: sym,
+    whatHappening: mk(90),
+    whyHappening: `${mk(130)} Link to oil, Treasury yields, USD funding, and inflation as relevant.`,
+    whatItMeans: mk(90),
+    technicalStructure: mk(100),
+    sessionAsia: mk(70),
+    sessionLondon: mk(70),
+    sessionNewYork: mk(70),
+    overallBias: mk(50),
   };
 }
 
-function assetDive(spec) {
+function mkWeeklyInstr(sym) {
   return {
-    sleeve: spec,
-    whatHappened: `${mk(160)}`,
-    whyItHappened: `${mk(220)} Gold repriced as real yields and the dollar moved; oil volatility fed inflation breakevens.`,
-    whatItMeans: `${mk(160)}`,
+    symbol: sym,
+    label: sym,
+    whatHappened: mk(100),
+    whyMacroLinkage: `${mk(130)} Oil, yields, USD transmission as required by QC.`,
+    whatItMeans: mk(100),
   };
 }
 
-function sampleWeeklyPayload() {
+function sampleWeeklyWfaPayload() {
+  const ovTail =
+    ' confirmation week framing whether this is continuation or reversal. Oil is the anchor, Treasury yields amplify repricing, and labour data remain the catalyst when scheduled.';
   return {
-    overview: `This is a confirmation week for the desk. The live question is whether we are at peak escalation or at the start of a new regime. Oil anchors the inflation risk basket, Treasury yields amplify duration trades, and payroll remains the catalyst when it lands. ${mk(200)}`,
-    conditionalFramework: {
-      scenarios: [
-        `${mk(60)} risk assets continue to trend`,
-        `${mk(60)} the dollar reverses its pivot`,
-        `${mk(60)} oil breaks the range that held pricing`,
-      ],
-    },
-    priorWeekRecap: `${mk(450)}`,
-    keyMarketReactions: `${mk(320)}`,
-    crossAssetLinkage: `${mk(400)}`,
-    assetDeepDives: WEEKLY_ASSET_SLEEVES.map((s) => assetDive(s)),
-    forwardLook: `${mk(400)}`,
+    overview: `${mk(300)}${ovTail}`,
+    summaryForLastWeek: mk(400),
+    instruments: [
+      mkWeeklyInstr('EURUSD'),
+      mkWeeklyInstr('GBPUSD'),
+      mkWeeklyInstr('USDJPY'),
+      mkWeeklyInstr('AUDUSD'),
+      mkWeeklyInstr('USDCHF'),
+    ],
+    whatMattersStructurally: mk(320),
+    weekStructureMondayToFriday: mk(260),
+    forwardOutlook: mk(220),
+    weekConclusion: mk(220),
+    scenarioContinuation: mk(180),
+    scenarioReversal: mk(180),
+  };
+}
+
+function sampleDailyPdfPayload() {
+  const chain =
+    ' Oil moves shape inflation expectations. Inflation prints feed bond yields. Yields drive USD and equity duration. USD and real yields reposition gold.';
+  return {
+    dayWeekPositionAndData: mk(240),
+    macroIntroStructuralFlow: `${mk(400)}${chain}`,
+    macroBackdropGoingIntoToday: mk(300),
+    marketThemesDominatingToday: mk(280),
+    instruments: [
+      mkDailyInstr('EURUSD'),
+      mkDailyInstr('GBPUSD'),
+      mkDailyInstr('USDJPY'),
+      mkDailyInstr('AUDUSD'),
+      mkDailyInstr('USDCHF'),
+    ],
+    scenarioInflationPersistence: mk(160),
+    scenarioGrowthModeration: mk(160),
+    scenarioNeutralConsolidation: mk(160),
   };
 }
 
 function run() {
-  const okDaily = sampleDailyPayload();
-  const vd = validateUnifiedDaily(okDaily);
-  assert.strictEqual(vd.ok, true, `daily QC: ${vd.reasons}`);
-
-  const dailyMd = assembleUnifiedDailyPlain(
-    'Daily Brief – Monday 30th March 2026',
-    'By AURA TERMINAL',
-    '2026-03-30',
-    okDaily
-  );
-  assert.strictEqual(validateUnifiedDailyBody(dailyMd).ok, true, validateUnifiedDailyBody(dailyMd).issues);
-
   const fp = t.buildInstitutionalFactPack({
     period: 'daily',
     market: {},
@@ -91,22 +100,30 @@ function run() {
   });
   assert.ok(fp.tradingWeekMeta && fp.tradingWeekMeta.weekdayLong, 'tradingWeekMeta present');
 
-  const wk = sampleWeeklyPayload();
-  const vw = validateUnifiedWeekly(wk);
-  assert.strictEqual(vw.ok, true, `weekly QC: ${vw.reasons}`);
+  const wk = sampleWeeklyWfaPayload();
+  const vw = weeklyWfaPdfBrief.validateWeeklyWfaPayload(wk, 'aura_institutional_weekly_forex');
+  assert.strictEqual(vw.ok, true, `weekly WFA QC: ${vw.reasons}`);
 
   const weekTitle = formatWeeklyFundamentalTitle('2nd – 6th March 2026');
   assert.ok(/^WEEKLY FUNDAMENTAL ANALYSIS\s+[\u2013-]\s*\(/i.test(weekTitle), 'weekly title shape');
 
-  const weeklyMd = assembleWeeklyUnifiedPlain(
-    weekTitle,
-    'By AURA TERMINAL',
-    '2026-03-09',
-    '2nd – 6th March 2026',
-    wk
-  );
-  const wf = validateWeeklyUnifiedBody(weeklyMd);
-  assert.strictEqual(wf.ok, true, `weekly body: ${wf.issues}`);
+  const dailyTitle = formatDailyBriefTitle(new Date('2026-03-30T12:00:00Z'), 'Europe/London');
+  assert.ok(/^Daily Brief\s+[\u2013-]/i.test(dailyTitle), 'daily title shape');
+
+  const dp = sampleDailyPdfPayload();
+  const vd = dailyBriefPdfBrief.validateDailyPdfPayload(dp, 'aura_institutional_daily_forex');
+  assert.strictEqual(vd.ok, true, `daily PDF QC: ${vd.reasons}`);
+
+  const assembled = dailyBriefPdfBrief.assembleDailyBriefPlain({
+    titleLine: dailyTitle,
+    authorLine: 'By AURA TERMINAL',
+    metaDateYmd: '2026-03-30',
+    briefKind: 'aura_institutional_daily_forex',
+    weekdayHeading: 'MONDAY',
+    parsedIn: dp,
+  });
+  assert.ok(/\bMACRO INTRO AND STRUCTURAL FLOW\b/.test(assembled), 'daily body macro section');
+  assert.ok(/\bOVERALL DAILY STRUCTURE\b/.test(assembled), 'daily overall structure');
 
   console.log('institutionalAuraBrief.selftest: all assertions passed.');
 }

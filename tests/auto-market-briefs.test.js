@@ -86,14 +86,17 @@ function run() {
 
   const kinds = autoTest.orderedBriefKinds();
   assert(Array.isArray(kinds) && kinds.length === 8, 'should expose 8 automation category kinds');
-  assert(kinds[0] === 'stocks' && kinds[7] === 'etfs', 'brief kind ordering should be stable');
+  assert(
+    kinds[0] === 'global_macro' && kinds[7] === 'market_sentiment',
+    'brief kind ordering should match desk sleeve order'
+  );
   for (const kind of kinds) {
     const top5 = autoTest.top5ForBriefKind(kind);
     assert(Array.isArray(top5) && top5.length === 5, `top 5 instruments must exist for ${kind}`);
   }
   assert(new Set(kinds).size === 8, 'brief kinds should be unique');
   const normalizedUnknown = autoTest.normalizeBriefKind('not-a-kind');
-  assert(normalizedUnknown === 'stocks', 'unknown brief kind should normalize to stocks (legacy general removed)');
+  assert(normalizedUnknown === 'equities', 'unknown brief kind should normalize to equities');
   const dailyFxFramework = autoTest.frameworkHeadings('daily', 'forex', []);
   const weeklyFxFramework = autoTest.frameworkHeadings('weekly', 'forex', []);
   assert(Array.isArray(dailyFxFramework) && dailyFxFramework.length === 6, 'daily structure lock must have 6 sections');

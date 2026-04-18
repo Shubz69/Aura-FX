@@ -3,20 +3,28 @@
  * Daily: 00:00 Europe/London every calendar day — outlook + 8 category briefs + Aura FX institutional daily brief.
  * Daily prefetch: ~22:00 UK — per-instrument Perplexity research layer stored for the next day’s briefs.
  * Weekly: Sunday 18:00 UK — 8 category briefs + institutional weekly brief (week-ending storage key).
+ * Sunday Market Open: London Sunday ~21:00 (env SUNDAY_OPEN_BRIEF_HOUR_LONDON) — single aura_sunday_market_open brief.
  */
 const {
   generateAndStoreOutlook,
   generateAndStoreBriefSet,
   generateAndStoreMissingCategoryBriefs,
   generateAndStoreInstitutionalBriefOnly,
+  generateAndStoreSundayMarketOpenBriefOnly,
   prefetchInstrumentResearchForDaily,
   shouldRunWindow,
   shouldRunIntelPackCatchUp,
   shouldPrefetchInstrumentResearchWindow,
+  shouldRunSundayMarketOpenWindow,
   isTraderDeskAutomationConfigured,
 } = require('../trader-deck/services/autoBriefGenerator');
 const { resetProviderRequestMeter, logProviderRequestMeter } = require('../utils/providerRequestMeter');
 const { runTwelveDataCronWork } = require('./twelveDataCronContext');
+
+function isSundayLondon(now, timeZone = 'Europe/London') {
+  const wd = new Intl.DateTimeFormat('en-GB', { timeZone, weekday: 'short' }).format(now);
+  return String(wd).toLowerCase().startsWith('sun');
+}
 
 function isAuthorized(req) {
   const authHeader = req.headers.authorization;
@@ -68,6 +76,23 @@ const handler = async (req, res) => {
       }
     }
 
+    let sundayMarketOpen = null;
+    const sundayOpenDue =
+      shouldRunSundayMarketOpenWindow({ now, timeZone: 'Europe/London' }) ||
+      req.query?.sundayOpen === '1' ||
+      (force && isSundayLondon(now, 'Europe/London'));
+    if (sundayOpenDue) {
+      try {
+        sundayMarketOpen = await generateAndStoreSundayMarketOpenBriefOnly({
+          runDate: now,
+          timeZone: 'Europe/London',
+        });
+      } catch (e) {
+        sundayMarketOpen = { success: false, error: e.message || 'sunday market open brief failed' };
+      }
+      logProviderRequestMeter('[cron-auto-market-briefs] cumulative outbound HTTP after sunday market open brief');
+    }
+
     for (const period of periods) {
       const tz = 'Europe/London';
       const inPrimaryWindow = shouldRunWindow({ now, period, timeZone: tz });
@@ -109,6 +134,7 @@ const handler = async (req, res) => {
       success: true,
       ranAt: now.toISOString(),
       instrumentPrefetch: prefetchResult,
+      sundayMarketOpen,
       results: out,
     };
   });

@@ -48,6 +48,31 @@ const INSTITUTIONAL_KINDS = Object.freeze({
   weekly: 'aura_institutional_weekly',
 });
 
+/**
+ * Weekly Fundamental Analysis (PDF): seven parallel institutional sleeves (no Global Macro).
+ * Stored as distinct brief_kind rows for the same desk week date.
+ */
+const INSTITUTIONAL_WEEKLY_WFA_KINDS = Object.freeze([
+  'aura_institutional_weekly_forex',
+  'aura_institutional_weekly_crypto',
+  'aura_institutional_weekly_commodities',
+  'aura_institutional_weekly_fixed_income',
+  'aura_institutional_weekly_equities',
+  'aura_institutional_weekly_indices',
+  'aura_institutional_weekly_stocks',
+]);
+
+/** Daily Brief PDF: seven parallel institutional sleeves (no Global Macro). Same category set as weekly WFA. */
+const INSTITUTIONAL_DAILY_WFA_KINDS = Object.freeze([
+  'aura_institutional_daily_forex',
+  'aura_institutional_daily_crypto',
+  'aura_institutional_daily_commodities',
+  'aura_institutional_daily_fixed_income',
+  'aura_institutional_daily_equities',
+  'aura_institutional_daily_indices',
+  'aura_institutional_daily_stocks',
+]);
+
 function isDeskAutomationCategoryKind(k) {
   return KIND_SET.has(String(k || '').toLowerCase());
 }
@@ -56,13 +81,32 @@ function isLegacyGeneralBriefKind(k) {
   return String(k || '').toLowerCase() === 'general';
 }
 
+function isInstitutionalWeeklyWfaKind(k) {
+  return INSTITUTIONAL_WEEKLY_WFA_KINDS.includes(String(k || '').toLowerCase());
+}
+
+function isInstitutionalDailyWfaKind(k) {
+  return INSTITUTIONAL_DAILY_WFA_KINDS.includes(String(k || '').toLowerCase());
+}
+
 function isInstitutionalBriefKind(k) {
   const u = String(k || '').toLowerCase();
-  return u === INSTITUTIONAL_KINDS.daily || u === INSTITUTIONAL_KINDS.weekly;
+  return (
+    u === INSTITUTIONAL_KINDS.daily ||
+    u === INSTITUTIONAL_KINDS.weekly ||
+    u === 'aura_sunday_market_open' ||
+    isInstitutionalWeeklyWfaKind(u) ||
+    isInstitutionalDailyWfaKind(u)
+  );
 }
 
 function institutionalBriefKindForPeriod(period) {
   return period === 'weekly' ? INSTITUTIONAL_KINDS.weekly : INSTITUTIONAL_KINDS.daily;
+}
+
+/** Institutional rows expected for a weekly desk date (seven parallel WFA briefs). */
+function institutionalWeeklyWfaKinds() {
+  return [...INSTITUTIONAL_WEEKLY_WFA_KINDS];
 }
 
 /** Map stored or incoming kind to one of DESK_AUTOMATION_CATEGORY_KINDS where applicable. */
@@ -88,9 +132,16 @@ function legacyAliasesForCanonical(canonicalKind) {
   return [...new Set(aliases)];
 }
 
-/** Expected rows for a full intel pack: 8 sleeves + 1 institutional brief. */
-function expectedIntelAutomationRowCount() {
-  return DESK_AUTOMATION_CATEGORY_KINDS.length + 1;
+/** Expected rows: 8 desk sleeves + seven daily PDF briefs, or eight desk + seven weekly WFA briefs. */
+function expectedIntelAutomationRowCount(period = 'daily') {
+  if (period === 'weekly') {
+    return DESK_AUTOMATION_CATEGORY_KINDS.length + INSTITUTIONAL_WEEKLY_WFA_KINDS.length;
+  }
+  return DESK_AUTOMATION_CATEGORY_KINDS.length + INSTITUTIONAL_DAILY_WFA_KINDS.length;
+}
+
+function institutionalDailyWfaKinds() {
+  return [...INSTITUTIONAL_DAILY_WFA_KINDS];
 }
 
 module.exports = {
@@ -98,10 +149,16 @@ module.exports = {
   DESK_CATEGORY_DISPLAY_NAME,
   LEGACY_DESK_KIND_MAP,
   INSTITUTIONAL_KINDS,
+  INSTITUTIONAL_WEEKLY_WFA_KINDS,
+  INSTITUTIONAL_DAILY_WFA_KINDS,
   isDeskAutomationCategoryKind,
+  isInstitutionalWeeklyWfaKind,
+  isInstitutionalDailyWfaKind,
   isLegacyGeneralBriefKind,
   isInstitutionalBriefKind,
   institutionalBriefKindForPeriod,
+  institutionalWeeklyWfaKinds,
+  institutionalDailyWfaKinds,
   canonicalDeskCategoryKind,
   deskCategoryDisplayName,
   legacyAliasesForCanonical,

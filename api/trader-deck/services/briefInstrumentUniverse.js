@@ -34,6 +34,12 @@ const INSTRUMENT_UNIVERSE_BY_KIND = {
   crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'ADAUSD', 'DOGEUSD', 'AVAXUSD', 'DOTUSD', 'LINKUSD', 'LTCUSD'],
   geopolitics: ['US500', 'XAUUSD', 'USOIL', 'EURUSD', 'US10Y', 'NAS100'],
   market_sentiment: ['SPY', 'QQQ', 'IWM', 'HYG', 'TLT', 'US500', 'NAS100'],
+  /** Weekly WFA sleeves (distinct from legacy desk `equities` single-name list). */
+  indices: ['US500', 'NAS100', 'US30', 'GER40', 'UK100'],
+  stocks: [
+    'AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN', 'META', 'GOOGL', 'AMD', 'NFLX', 'JPM', 'BAC', 'XOM',
+  ],
+  equities_basket: ['SPY', 'QQQ', 'IWM', 'SMH', 'XLF', 'XLE', 'DIA'],
 };
 
 /** Deterministic fallback top-5 when quotes/scoring unavailable (subset of universe, category-pure). */
@@ -46,6 +52,9 @@ const FALLBACK_TOP5_BY_KIND = {
   crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'ADAUSD'],
   geopolitics: ['US500', 'XAUUSD', 'USOIL', 'EURUSD', 'US10Y'],
   market_sentiment: ['SPY', 'QQQ', 'IWM', 'HYG', 'TLT'],
+  indices: ['US500', 'NAS100', 'US30', 'GER40', 'UK100'],
+  stocks: ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN'],
+  equities_basket: ['SPY', 'QQQ', 'IWM', 'SMH', 'XLF'],
 };
 
 const KIND_HEADLINE_KEYWORDS = {
@@ -61,6 +70,9 @@ const KIND_HEADLINE_KEYWORDS = {
     /\b(war|sanction|nato|opec|conflict|geopol|iran|israel|ukraine|taiwan|middle\s*east|trade\s*war|tariff|election|terror|embargo)\b/i,
   market_sentiment:
     /\b(vix|sentiment|breadth|put\s*call|fear|greed|risk\s*on|risk\s*off|etf\s*flow|advance|decline|mag\s*seven)\b/i,
+  indices: /\b(index|s&p|nasdaq|dow|dax|ftse|ndx|futures|cash\s*open|breadth)\b/i,
+  stocks: /\b(stock|equity|earnings|eps|guidance|split|buyback|sec|upgrade|downgrade)\b/i,
+  equities_basket: /\b(etf|sector|spy|qqq|iwm|breadth|leadership|rotation)\b/i,
 };
 
 /** Headline → symbol relevance (first match wins per line). */
@@ -246,37 +258,115 @@ const CATEGORY_INTELLIGENCE_DIRECTIVES = {
     'INSTITUTIONAL DAILY: Cross-asset house note — leadership, liquidity, scheduled risk; grounded in the instrument pack.',
   aura_institutional_weekly:
     'INSTITUTIONAL WEEKLY: Week-in-review and forward structural read across the house universe; no single-sleeve monologue.',
+  aura_institutional_weekly_forex:
+    'WEEKLY WFA FOREX: G10 and key crosses; USD funding and curve as spine; event risk from calendar.',
+  aura_institutional_weekly_crypto:
+    'WEEKLY WFA CRYPTO: Majors liquidity beta; ETF and policy headlines; rates and dollar as upstream drivers.',
+  aura_institutional_weekly_commodities:
+    'WEEKLY WFA COMMODITIES: Energy and metals vs USD and growth; inventories and geopolitical supply risk.',
+  aura_institutional_weekly_fixed_income:
+    'WEEKLY WFA FIXED INCOME: Curve and real yields; auctions and CB path; spillover to risk assets.',
+  aura_institutional_weekly_equities:
+    'WEEKLY WFA EQUITIES: ETF and broad equity beta; sector rotation vs rates and earnings.',
+  aura_institutional_weekly_indices:
+    'WEEKLY WFA INDICES: Benchmark tape; breadth and leadership vs volatility and liquidity.',
+  aura_institutional_weekly_stocks:
+    'WEEKLY WFA STOCKS: Single-name idiosyncrasy vs macro; earnings and guidance as first-class drivers.',
+  aura_institutional_daily_forex:
+    'DAILY BRIEF FOREX: Session map and rate spreads; USD path via yields; calendar-backed catalysts only.',
+  aura_institutional_daily_crypto:
+    'DAILY BRIEF CRYPTO: Liquidity beta vs dollar and rates; majors; headlines from pack only.',
+  aura_institutional_daily_commodities:
+    'DAILY BRIEF COMMODITIES: Energy and metals vs USD and growth; factPack quotes only.',
+  aura_institutional_daily_fixed_income:
+    'DAILY BRIEF FIXED INCOME: Curve and real yields; auctions and CB path when in calendar.',
+  aura_institutional_daily_equities:
+    'DAILY BRIEF EQUITIES: ETF and basket beta vs yields; sector tone from drivers when present.',
+  aura_institutional_daily_indices:
+    'DAILY BRIEF INDICES: Benchmark tape vs vol and liquidity; breadth only when inferable.',
+  aura_institutional_daily_stocks:
+    'DAILY BRIEF STOCKS: Single names vs macro; earnings headlines from pack only.',
+  aura_sunday_market_open:
+    'SUNDAY MARKET OPEN: Week-ahead regime lens; oil, yields, gold, USD transmission; highest-impact events only from fact pack.',
 };
 
 const CALENDAR_HIGH_IMPACT = /\b(high|red)\b/i;
 
+const INSTITUTIONAL_CATEGORY_TAIL_TO_SCORE = Object.freeze({
+  forex: 'forex',
+  crypto: 'crypto',
+  commodities: 'commodities',
+  fixed_income: 'fixed_income',
+  equities: 'equities_basket',
+  indices: 'indices',
+  stocks: 'stocks',
+});
+
+/** Maps institutional weekly WFA brief_kind to scoring universe key (NOT a DB category slug). */
+function weeklyInstitutionalKindToScoreKind(kind) {
+  const k = String(kind || '').toLowerCase().trim();
+  if (!k.startsWith('aura_institutional_weekly_')) return null;
+  const tail = k.slice('aura_institutional_weekly_'.length);
+  return INSTITUTIONAL_CATEGORY_TAIL_TO_SCORE[tail] || null;
+}
+
+/** Maps institutional daily PDF brief_kind to scoring universe key. */
+function dailyInstitutionalKindToScoreKind(kind) {
+  const k = String(kind || '').toLowerCase().trim();
+  if (!k.startsWith('aura_institutional_daily_')) return null;
+  const tail = k.slice('aura_institutional_daily_'.length);
+  if (tail === 'daily' || tail === 'weekly') return null;
+  return INSTITUTIONAL_CATEGORY_TAIL_TO_SCORE[tail] || null;
+}
+
 function normalizeBriefKind(kind) {
   const k = String(kind || '').toLowerCase().trim();
-  if (isInstitutionalBriefKind(k)) return k;
+  if (k === 'aura_sunday_market_open') return k;
+  if (
+    /^aura_institutional_daily_(forex|crypto|commodities|fixed_income|equities|indices|stocks)$/.test(k)
+  ) {
+    return k;
+  }
+  if (
+    /^aura_institutional_weekly_(forex|crypto|commodities|fixed_income|equities|indices|stocks)$/.test(k)
+  ) {
+    return k;
+  }
+  if (k === 'aura_institutional_daily' || k === 'aura_institutional_weekly') return k;
   const canon = canonicalDeskCategoryKind(k);
   if (isDeskAutomationCategoryKind(canon)) return canon;
   return 'equities';
 }
 
+/** Maps weekly WFA slugs and legacy kinds to instrument-scoring universe keys (forex, indices, …). */
+function resolveScoringUniverseKey(kind) {
+  const k = String(kind || '').toLowerCase().trim();
+  if (k === 'aura_sunday_market_open') return 'global_macro';
+  const w = weeklyInstitutionalKindToScoreKind(k);
+  if (w) return w;
+  const d = dailyInstitutionalKindToScoreKind(k);
+  if (d) return d;
+  return normalizeBriefKind(kind);
+}
+
 function getUniverseSymbols(kind) {
-  const k = normalizeBriefKind(kind);
+  const k = resolveScoringUniverseKey(kind);
   return [...(INSTRUMENT_UNIVERSE_BY_KIND[k] || INSTRUMENT_UNIVERSE_BY_KIND.equities)];
 }
 
 function fallbackTop5ForKind(kind) {
-  const k = normalizeBriefKind(kind);
+  const k = resolveScoringUniverseKey(kind);
   return [...(FALLBACK_TOP5_BY_KIND[k] || FALLBACK_TOP5_BY_KIND.equities)].slice(0, 5);
 }
 
 function isSymbolAllowedForKind(symbol, kind) {
   const sym = String(symbol || '').toUpperCase().trim();
-  const k = normalizeBriefKind(kind);
-  const set = new Set(getUniverseSymbols(k).map((s) => String(s).toUpperCase()));
+  const set = new Set(getUniverseSymbols(kind).map((s) => String(s).toUpperCase()));
   return set.has(sym);
 }
 
 function validateTopInstrumentsForKind(symbols, kind) {
-  const k = normalizeBriefKind(kind);
+  const k = resolveScoringUniverseKey(kind);
   const list = Array.isArray(symbols) ? symbols.map((s) => String(s).toUpperCase().trim()) : [];
   const uniq = [...new Set(list)];
   const bad = uniq.filter((s) => !isSymbolAllowedForKind(s, k));
@@ -295,7 +385,7 @@ function collectAllAutomationUniverseSymbols() {
 function filterHeadlinesForBriefKind(headlines, briefKind) {
   const list = Array.isArray(headlines) ? headlines.map((h) => String(h || '').trim()).filter(Boolean) : [];
   if (list.length === 0) return [];
-  const k = normalizeBriefKind(briefKind);
+  const k = resolveScoringUniverseKey(briefKind);
   const re = KIND_HEADLINE_KEYWORDS[k];
   if (!re) return list.slice(0, 14);
   const matched = list.filter((h) => re.test(h));
@@ -329,7 +419,7 @@ function headlineHitsForSymbol(symbol, headlines) {
 /** Calendar rows relevant to category (no fabricated events). */
 function filterCalendarForBriefKind(events, briefKind) {
   const rows = Array.isArray(events) ? events : [];
-  const k = normalizeBriefKind(briefKind);
+  const k = resolveScoringUniverseKey(briefKind);
   const hi = rows.filter((e) => CALENDAR_HIGH_IMPACT.test(String(e.impact || '')));
   const base = hi.length >= 4 ? hi : rows;
 
@@ -339,12 +429,21 @@ function filterCalendarForBriefKind(events, briefKind) {
     const fxCcy = new Set(['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'NZD', 'CAD', 'CHF']);
     return base.filter((e) => fxCcy.has(currencyOf(e)) || /\b(rate|cpi|gdp|employment|pmi|retail|trade)\b/i.test(String(e.event || ''))).slice(0, 14);
   }
-  if (k === 'equities' || k === 'market_sentiment') {
+  if (k === 'equities' || k === 'market_sentiment' || k === 'stocks' || k === 'equities_basket') {
     return base
       .filter(
         (e) =>
           currencyOf(e) === 'USD' ||
           /\b(fed|cpi|pce|gdp|employment|nfp|ism|earnings|retail|pmi|consumer|industrial)\b/i.test(String(e.event || ''))
+      )
+      .slice(0, 14);
+  }
+  if (k === 'indices') {
+    return base
+      .filter(
+        (e) =>
+          /\b(fed|cpi|pce|gdp|employment|nfp|ism|pmi|gdp|liquidity)\b/i.test(String(e.event || '')) ||
+          ['USD', 'EUR', 'GBP', 'JPY'].includes(currencyOf(e))
       )
       .slice(0, 14);
   }
@@ -379,7 +478,7 @@ function filterCalendarForBriefKind(events, briefKind) {
 }
 
 function crossAssetSymbolsForContaminationCheck(kind) {
-  const k = normalizeBriefKind(kind);
+  const k = resolveScoringUniverseKey(kind);
   const out = new Set();
   for (const cat of BRIEF_KIND_ORDER) {
     if (cat === k) continue;
@@ -390,9 +489,9 @@ function crossAssetSymbolsForContaminationCheck(kind) {
 
 /** If non-allowed ticker tokens appear as whole words in prose, flag contamination. */
 function detectCrossAssetContamination(text, briefKind) {
-  const k = normalizeBriefKind(briefKind);
+  const k = resolveScoringUniverseKey(briefKind);
   if (!isDeskAutomationCategoryKind(k)) return { contaminated: false, hits: [] };
-  const forbidden = crossAssetSymbolsForContaminationCheck(k);
+  const forbidden = crossAssetSymbolsForContaminationCheck(briefKind);
   const body = String(text || '');
   const hits = [];
   for (const sym of forbidden) {
@@ -452,14 +551,16 @@ function buildDeskContextLines(market, briefKind, period = 'daily') {
   lines.push(
     `Snapshot: ${regime.currentRegime || 'mixed'} regime, ${pulse.label || 'MIXED'} pulse (${pulse.score != null ? pulse.score : '—'}/100).`
   );
-  if (isDeskAutomationCategoryKind(k)) {
-    lines.push(`BOUNDARY: ${k} only — no tickers outside instrumentIntelligence[].instrument.`);
+  const boundaryKey = resolveScoringUniverseKey(briefKind);
+  if (isDeskAutomationCategoryKind(boundaryKey)) {
+    lines.push(`BOUNDARY: ${boundaryKey} only — no tickers outside instrumentIntelligence[].instrument.`);
   }
   return lines;
 }
 
 function categoryWritingMandate(briefKind, period) {
-  const k = normalizeBriefKind(briefKind);
+  const slug = normalizeBriefKind(briefKind);
+  const scoreK = resolveScoringUniverseKey(briefKind);
   const p = period === 'weekly' ? 'weekly' : 'daily';
   const depth = p === 'weekly' ? 'structural and strategic: week-to-date repricing, persistence of trends, sector/index leadership rotation, forward path for rates/liquidity.' : 'tactical: next session catalysts, tape/vol behaviour, immediate event risk, how to lean without over-committing.';
   const map = {
@@ -474,7 +575,7 @@ function categoryWritingMandate(briefKind, period) {
     aura_institutional_daily: `Institutional daily house note. ${depth} Cross-asset leadership, liquidity, and scheduled risk across the published instrument set.`,
     aura_institutional_weekly: `Institutional weekly house note. ${depth} Structural repricing, persistence, and next-week catalysts across the house universe.`,
   };
-  return map[k] || map.equities;
+  return map[slug] || map[scoreK] || map.equities;
 }
 
 /** Full Twelve Data quote for brief intelligence (volume etc.) — via marketDataLayer. */
@@ -650,7 +751,16 @@ function calendarRelevantToSymbol(symU, cal, k) {
     const hint = INSTRUMENT_HEADLINE_HINTS[symU];
     if (hint && hint.test(ev)) return true;
     if (k === 'forex' && /USD/.test(symU) && /\b(usd|fed|dollar|nfp|cpi)\b/i.test(ev)) return true;
-    if ((k === 'equities' || k === 'global_macro' || k === 'market_sentiment') && /US500|NAS100|US30|SPY|QQQ|IWM/.test(symU) && /\b(s&p|nasdaq|dow|index|fed|cpi)\b/i.test(ev)) {
+    if (
+      (k === 'equities' ||
+        k === 'global_macro' ||
+        k === 'market_sentiment' ||
+        k === 'indices' ||
+        k === 'stocks' ||
+        k === 'equities_basket') &&
+      /US500|NAS100|US30|SPY|QQQ|IWM/.test(symU) &&
+      /\b(s&p|nasdaq|dow|index|fed|cpi)\b/i.test(ev)
+    ) {
       return true;
     }
     return false;
@@ -693,10 +803,19 @@ function inferTechnicalState(dp) {
 }
 
 function pickMacroLinkForSymbol(symU, market, briefKind) {
-  const k = normalizeBriefKind(briefKind);
+  const k = resolveScoringUniverseKey(briefKind);
   const drivers = (market?.keyDrivers || []).map(packDriverLine).join(' ').toLowerCase();
   const parts = [];
-  if (/\b(yield|treasury|rate|bond)\b/i.test(drivers) && (k === 'fixed_income' || k === 'equities' || k === 'global_macro' || k === 'market_sentiment')) {
+  if (
+    /\b(yield|treasury|rate|bond)\b/i.test(drivers) &&
+    (k === 'fixed_income' ||
+      k === 'equities' ||
+      k === 'global_macro' ||
+      k === 'market_sentiment' ||
+      k === 'indices' ||
+      k === 'stocks' ||
+      k === 'equities_basket')
+  ) {
     parts.push((market.keyDrivers || []).find((d) => /yield|treasury|bond|rate/i.test(packDriverLine(d))));
   }
   if (/\b(dollar|usd|eur|fx)\b/i.test(drivers) && (k === 'forex' || k === 'commodities' || k === 'crypto')) {
@@ -736,9 +855,9 @@ function buildInstrumentIntelligence({
   briefKind,
   scoreRows,
 }) {
-  const k = normalizeBriefKind(briefKind);
-  const filteredHeadlines = filterHeadlinesForBriefKind(headlines, k);
-  const cal = filterCalendarForBriefKind(calendarRows, k);
+  const k = resolveScoringUniverseKey(briefKind);
+  const filteredHeadlines = filterHeadlinesForBriefKind(headlines, briefKind);
+  const cal = filterCalendarForBriefKind(calendarRows, briefKind);
   const benchDp = quoteCache?.get?.('US500')?.dp;
   const list = Array.isArray(symbols) ? symbols : [];
   return list.map((sym) => {
@@ -758,7 +877,14 @@ function buildInstrumentIntelligence({
       catalystSecondary: sh[1] || null,
       macroLink: pickMacroLinkForSymbol(symU, market, k),
       relativeStrengthVsUS500:
-        (k === 'equities' || k === 'market_sentiment') && dp != null && benchDp != null && Number.isFinite(benchDp)
+        (k === 'equities' ||
+          k === 'market_sentiment' ||
+          k === 'indices' ||
+          k === 'stocks' ||
+          k === 'equities_basket') &&
+        dp != null &&
+        benchDp != null &&
+        Number.isFinite(benchDp)
           ? Math.round((dp - benchDp) * 100) / 100
           : null,
       nextCatalyst: nextCalendarLineForSymbol(symU, cal, k),
@@ -832,11 +958,11 @@ async function scoreAndSelectTopInstruments({
   market,
   logPrefix = '[brief-gen]',
 }) {
-  const k = normalizeBriefKind(briefKind);
-  const universe = getUniverseSymbols(k);
+  const k = resolveScoringUniverseKey(briefKind);
+  const universe = getUniverseSymbols(briefKind);
   const p = period === 'weekly' ? 'weekly' : 'daily';
-  const filteredHeadlines = filterHeadlinesForBriefKind(headlines, k);
-  const cal = filterCalendarForBriefKind(calendarRows, k);
+  const filteredHeadlines = filterHeadlinesForBriefKind(headlines, briefKind);
+  const cal = filterCalendarForBriefKind(calendarRows, briefKind);
 
   const scored = [];
   for (const symbol of universe) {
@@ -861,7 +987,17 @@ async function scoreAndSelectTopInstruments({
       const hint = INSTRUMENT_HEADLINE_HINTS[symU];
       if (hint && hint.test(ev)) return true;
       if (k === 'forex' && /USD/.test(symU) && /\b(usd|fed|dollar|nfp|cpi)\b/i.test(ev)) return true;
-      if ((k === 'equities' || k === 'global_macro' || k === 'market_sentiment') && /US500|NAS100|US30|SPY|QQQ|IWM/.test(symU) && /\b(s&p|nasdaq|dow|index|fed|cpi)\b/i.test(ev)) return true;
+      if (
+        (k === 'equities' ||
+          k === 'global_macro' ||
+          k === 'market_sentiment' ||
+          k === 'indices' ||
+          k === 'stocks' ||
+          k === 'equities_basket') &&
+        /US500|NAS100|US30|SPY|QQQ|IWM/.test(symU) &&
+        /\b(s&p|nasdaq|dow|index|fed|cpi)\b/i.test(ev)
+      )
+        return true;
       return false;
     });
     breakdown.calendar = calBoost ? 12 : 0;
@@ -992,6 +1128,7 @@ module.exports = {
   INSTRUMENT_HEADLINE_HINTS,
   KIND_HEADLINE_KEYWORDS,
   normalizeBriefKind,
+  resolveScoringUniverseKey,
   getUniverseSymbols,
   fallbackTop5ForKind,
   isSymbolAllowedForKind,
