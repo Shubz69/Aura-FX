@@ -255,6 +255,66 @@ function uniqSessionAmbiguous(row) {
   return s === 'event_sensitive' || s === 'overlap';
 }
 
+/** Five structured rows — participation, liquidity, vol path, linkage, positioning */
+function buildExecutionContext(showing, macroPhase, riskEngine, snap) {
+  const mins = riskEngine?.nextRiskEventInMins;
+  const breakdown = riskEngine?.breakdown && typeof riskEngine.breakdown === 'object' ? riskEngine.breakdown : {};
+  const vol = breakdown.volatility != null ? Number(breakdown.volatility) : null;
+  const liq = breakdown.liquidity != null ? Number(breakdown.liquidity) : null;
+  const signals = Array.isArray(showing.crossAssetSignals) ? showing.crossAssetSignals : [];
+  const uniq = new Set(signals.map((s) => normDirection(s.direction)));
+  const pulse = showing.marketPulse?.score != null ? Number(showing.marketPulse.score) : null;
+
+  const participation =
+    uniq.size >= 3
+      ? clip('Light — selective flows; sleeves divergent.', 92)
+      : uniq.size === 2
+        ? clip('Moderate — two-way; leadership matters.', 92)
+        : pulse != null && pulse >= 56
+          ? clip('Firmer — broader participation when sleeves align.', 92)
+          : clip('Moderate — flows selective, not broad.', 92);
+
+  const liquidityQuality =
+    liq != null && liq <= 40
+      ? clip('Thin — clip size into prints & handoffs.', 92)
+      : liq != null && liq >= 62
+        ? clip('Fragmented — depth uneven across venues.', 92)
+        : clip('Stable but not deep — avoid size spikes.', 92);
+
+  const volBehavior =
+    Number.isFinite(mins) && mins < 120 && vol != null && vol <= 50
+      ? clip('Compression → expansion risk near catalyst.', 92)
+      : vol != null && vol >= 58
+        ? clip('Expansion live — tails & gaps in play.', 92)
+        : vol != null && vol <= 42
+          ? clip('Compressed — chop until range breaks.', 92)
+          : clip('Mid-band — transitions beat directional drift.', 92);
+
+  const correlationState =
+    snap.correlation === 'Breaking'
+      ? clip('Decoupling risk — leadership can rotate fast.', 92)
+      : snap.correlation === 'Tight'
+        ? clip('Tight linkage — shocks propagate across sleeves.', 92)
+        : snap.correlation === 'Rotational'
+          ? clip('Semi-linked — watch temporary decoupling.', 92)
+          : clip('Mixed linkage — confirm impulse before size.', 92);
+
+  const positioningPressure =
+    snap.positioning === 'Crowded'
+      ? clip('Crowded — unwind risk into catalyst window.', 92)
+      : snap.positioning === 'Light'
+        ? clip('Light — room to lean if liquidity holds.', 92)
+        : clip('Balanced — no forced unwind yet.', 92);
+
+  return [
+    { label: 'Participation', text: participation },
+    { label: 'Liquidity quality', text: liquidityQuality },
+    { label: 'Vol behavior', text: volBehavior },
+    { label: 'Correlation state', text: correlationState },
+    { label: 'Positioning pressure', text: positioningPressure },
+  ];
+}
+
 function buildTraderEdgeLines(macroPhase, level, riskEngine) {
   const mins = riskEngine?.nextRiskEventInMins;
 
@@ -309,6 +369,7 @@ export function buildMacroTimingInflectionWindow(showing) {
   const activeTimingWindow = buildActiveTimingWindow(desk, macroPhase, riskEngine);
   const reason = buildInflectionReason(level, riskEngine, crossAssetSignals);
   const catalystLines = buildCatalystCompactLines(desk, macroPhase, outlookRiskContext, riskEngine);
+  const marketStateSnapshot = buildMarketStateSnapshot(riskEngine, crossAssetSignals, macroPhase);
 
   return {
     activeTimingWindow,
@@ -317,7 +378,8 @@ export function buildMacroTimingInflectionWindow(showing) {
       reason,
       explanation: reason,
     },
-    marketStateSnapshot: buildMarketStateSnapshot(riskEngine, crossAssetSignals, macroPhase),
+    marketStateSnapshot,
+    executionContext: buildExecutionContext(desk, macroPhase, riskEngine, marketStateSnapshot),
     catalystLines,
     expectedBehavior: buildExpectedBehavior(desk, macroPhase, outlookRiskContext, riskEngine),
     tradeConditionsMatrix: buildTradeConditionsMatrix(desk, macroPhase, riskEngine),

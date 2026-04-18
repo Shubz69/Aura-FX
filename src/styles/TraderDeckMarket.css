@@ -3045,10 +3045,25 @@
   text-overflow: ellipsis;
 }
 
+/* ── Execution context (fills rail between Expected/Conditions and Edge) ── */
+.mo-macro-timing__exec-context {
+  flex-shrink: 0;
+  padding-top: 4px;
+  border-top: 1px solid rgba(107, 143, 232, 0.12);
+}
+
+.mo-macro-timing__kv--exec .mo-macro-timing__kv-row--exec {
+  grid-template-columns: minmax(100px, 34%) minmax(0, 1fr);
+  gap: 8px 10px;
+}
+
+.mo-macro-timing__kv-row--exec dt {
+  letter-spacing: 0.03em;
+}
+
 /* ── Edge bar ── */
 .mo-macro-timing__edge-bar {
   flex-shrink: 0;
-  margin-top: auto;
   padding-top: 10px;
   border-top: 1px solid rgba(140, 175, 255, 0.22);
   box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);

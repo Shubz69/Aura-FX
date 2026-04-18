@@ -40,6 +40,7 @@ export default function MacroTimingInflectionPanel({ model, updatedAt }) {
   const behavior = Array.isArray(m.expectedBehavior) ? m.expectedBehavior : [];
   const matrix = m.tradeConditionsMatrix && typeof m.tradeConditionsMatrix === 'object' ? m.tradeConditionsMatrix : {};
   const edgeLines = Array.isArray(m.traderEdgeLines) ? m.traderEdgeLines : [];
+  const executionContext = Array.isArray(m.executionContext) ? m.executionContext : [];
 
   const lvlMod = levelMod(inflect.level);
 
@@ -158,6 +159,19 @@ export default function MacroTimingInflectionPanel({ model, updatedAt }) {
                 </div>
               </dl>
             </div>
+          </div>
+
+          {/* EXECUTION CONTEXT */}
+          <div className="mo-macro-timing__exec-context">
+            <p className="mo-macro-timing__block-title">Execution context</p>
+            <dl className="mo-macro-timing__kv mo-macro-timing__kv--exec">
+              {executionContext.map((row, i) => (
+                <div key={i} className="mo-macro-timing__kv-row mo-macro-timing__kv-row--exec">
+                  <dt>{row.label}</dt>
+                  <dd>{row.text}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
 
           {/* TRADER EDGE */}
