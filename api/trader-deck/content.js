@@ -74,6 +74,46 @@ const INTEL_GAP_FILL_COOLDOWN_MS = 3 * 60 * 1000;
 const INTEL_GAP_FILL_COOLDOWN_INCOMPLETE_MS = 35 * 1000;
 const intelGapFillCooldown = new Map();
 
+/** Throttle intel GET logs while UI polls every few seconds for gap-fill (avoid noisy Runtime Logs). */
+const intelContentReadLogLast = new Map();
+const INTEL_CONTENT_READ_LOG_MIN_MS = 12000;
+
+function maybeLogIntelContentRead(payload, ctx) {
+  try {
+    if (payload?.categorySleevePack?.institutionalPresent) return;
+    const key = `${ctx.type}:${ctx.briefsSourceDate || ''}:${ctx.autoGenerate ? 1 : 0}`;
+    const now = Date.now();
+    const prev = intelContentReadLogLast.get(key) || 0;
+    if (now - prev < INTEL_CONTENT_READ_LOG_MIN_MS) return;
+    intelContentReadLogLast.set(key, now);
+    if (intelContentReadLogLast.size > 200) {
+      const cutoff = now - 3600000;
+      for (const [k, t] of intelContentReadLogLast) {
+        if (t < cutoff) intelContentReadLogLast.delete(k);
+      }
+    }
+  } catch (_) {
+    /* ignore throttle bookkeeping */
+  }
+  console.log(
+    '[trader-deck/content]',
+    JSON.stringify({
+      event: 'intel_get',
+      type: ctx.type,
+      storageDate: ctx.date,
+      queryDateRaw: ctx.dateRaw,
+      briefsSourceDate: ctx.briefsSourceDate,
+      autogen: Boolean(ctx.autoGenerate),
+      briefsReturned: payload.briefs?.length ?? 0,
+      dbRowsRead: ctx.dbRowsRead,
+      sleeveLoaded: payload.categorySleevePack?.loaded,
+      sleeveExpected: payload.categorySleevePack?.expected,
+      deskAutomationConfigured: payload.deskAutomationConfigured,
+      weekendFallback: Boolean(ctx.weekendFallback),
+    })
+  );
+}
+
 function briefKindsSet(rows) {
   return new Set((rows || []).map((r) => canonicalDeskCategoryKind(String(r?.brief_kind || ''))));
 }
@@ -373,6 +413,12 @@ module.exports = async (req, res) => {
   const isIntel = type.startsWith('intel');
 
   if (req.method === 'GET') {
+    // JSON must not be edge-cached: 304 responses skip the function and look like "no logs"
+    // while the UI can appear stuck on an empty or stale briefs payload.
+    res.setHeader('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Vary', 'Authorization');
+
     if (isOutlook) {
       const [rows] = await executeQuery(
         'SELECT payload, updated_at FROM trader_deck_outlook WHERE date = ? AND period = ? LIMIT 1',
@@ -496,6 +542,15 @@ module.exports = async (req, res) => {
         },
       };
       if (weekendFallback) payload.weekendFallback = true;
+      maybeLogIntelContentRead(payload, {
+        type,
+        date,
+        dateRaw,
+        briefsSourceDate: briefsDate,
+        autoGenerate,
+        dbRowsRead: Array.isArray(rows) ? rows.length : 0,
+        weekendFallback,
+      });
       return res.status(200).json(payload);
     }
     return res.status(400).json({ success: false, message: 'Invalid type' });
