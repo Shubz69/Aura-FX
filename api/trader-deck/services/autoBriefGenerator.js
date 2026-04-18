@@ -772,9 +772,9 @@ function buildPdfFallbackWeeklyParsed(factPack, expectedAssets, deskYmd, timeZon
     assetOutlooks,
     weekConclusion,
     sessionWatch: {
-      asia: 'Asia: liquidity and regional risk headlines.',
-      london: 'London: curve and CB guidance.',
-      newYork: 'New York: US flows and closing bias.',
+      asia: 'Liquidity and regional headlines set the tone before London.',
+      london: 'Curve repricing and CB rhetoric dominate mid-session.',
+      newYork: 'US flows typically fix the weekly bias into the close.',
     },
     keyScenarios,
   };
@@ -1007,21 +1007,38 @@ function renderCategoryDailyBrief({ title, parsed, runDate, timeZone }) {
   return stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
 }
 
+/** Weekly PDF uses the same convention as Daily: ALL CAPS ## desk sections; asset tokens uppercased. */
+function weeklyPdfAssetHeading(raw) {
+  const s = String(raw || '').trim();
+  return s ? s.toUpperCase() : 'ASSET';
+}
+
+/** Prevent "Asia: Asia: …" when model/fallback already prefixes session lines. */
+function weeklySessionWatchLine(sessionLabel, raw) {
+  let v = String(raw || '').trim();
+  if (!v) return '—';
+  v = v.replace(new RegExp(`^${sessionLabel}\\s*:?\\s*`, 'i'), '').trim();
+  return v || '—';
+}
+
 function renderCategoryWeeklyBrief({ title, parsed }) {
   const lines = [];
+  const prevWeek = String(parsed.previousWeekLabel || '').trim();
   lines.push(`# ${String(title || '').trim()}`);
   lines.push('');
-  lines.push('## Overview');
+  lines.push('## OVERVIEW');
   lines.push('');
   lines.push(String(parsed.overview || '').trim());
   lines.push('');
-  lines.push(`## SUMMARY FOR LAST WEEK (${String(parsed.previousWeekLabel || '').trim()})`);
+  lines.push(
+    prevWeek ? `## SUMMARY FOR LAST WEEK (${prevWeek})` : '## SUMMARY FOR LAST WEEK'
+  );
   lines.push('');
   lines.push(String(parsed.summaryForLastWeek || '').trim());
   lines.push('');
   const howAssets = Array.isArray(parsed.assetPerformance) ? parsed.assetPerformance : [];
   for (const asset of howAssets) {
-    const h = String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase();
+    const h = weeklyPdfAssetHeading(asset.heading || asset.label || asset.symbol);
     lines.push(`## HOW ${h} PERFORMED & WHY`);
     lines.push('');
     lines.push(String(asset.body || '').trim());
@@ -1045,7 +1062,7 @@ function renderCategoryWeeklyBrief({ title, parsed }) {
   lines.push('');
   const outlooks = Array.isArray(parsed.assetOutlooks) ? parsed.assetOutlooks : [];
   for (const asset of outlooks) {
-    const h = String(asset.heading || asset.label || asset.symbol || 'ASSET').trim().toUpperCase();
+    const h = weeklyPdfAssetHeading(asset.heading || asset.label || asset.symbol);
     lines.push(`## ${h} OUTLOOK THIS WEEK`);
     lines.push('');
     lines.push(String(asset.body || '').trim());
@@ -1057,9 +1074,10 @@ function renderCategoryWeeklyBrief({ title, parsed }) {
   lines.push('');
   lines.push('## SESSION-BY-SESSION WATCH');
   lines.push('');
-  lines.push(`- Asia: ${String(parsed.sessionWatch?.asia || '').trim()}`);
-  lines.push(`- London: ${String(parsed.sessionWatch?.london || '').trim()}`);
-  lines.push(`- New York: ${String(parsed.sessionWatch?.newYork || '').trim()}`);
+  const sw = parsed.sessionWatch || {};
+  lines.push(`- Asia: ${weeklySessionWatchLine('Asia', sw.asia)}`);
+  lines.push(`- London: ${weeklySessionWatchLine('London', sw.london)}`);
+  lines.push(`- New York: ${weeklySessionWatchLine('New York', sw.newYork)}`);
   lines.push('');
   lines.push('## KEY SCENARIOS');
   lines.push('');
@@ -1382,9 +1400,11 @@ function validateRenderedSampleBody(body, period, expectedAssets = []) {
       /^## OVERALL DAILY STRUCTURE$/m,
     ]
     : [
-      /^## Overview$/m,
+      /^## OVERVIEW$/m,
+      /^## SUMMARY FOR LAST WEEK\b/m,
       /^## WHAT MATTERS THIS WEEK STRUCTURALLY$/m,
       /^## WEEK CONCLUSION$/m,
+      /^## SESSION-BY-SESSION WATCH$/m,
       /^## KEY SCENARIOS$/m,
     ];
   headingChecks.forEach((re, idx) => {
@@ -1966,7 +1986,16 @@ function categoryStoredBodyNeedsPdfReshape(bodyText, normalizedPeriod) {
     if (/^##\s*CROSS-ASSET FLOW\s*$/im.test(text)) return true;
     return true;
   }
-  if (/\n##\s+WHAT\s+MATTERS\s+THIS\s+WEEK\s+STRUCTURALLY\s*\n/i.test(text)) return false;
+  // Full weekly PDF shape (category): OVERVIEW + SUMMARY line + structural block + session watch.
+  if (
+    /\n##\s+OVERVIEW\s*\n/i.test(text) &&
+    /\n##\s+SUMMARY FOR LAST WEEK\b/m.test(text) &&
+    /\n##\s+WHAT\s+MATTERS\s+THIS\s+WEEK\s+STRUCTURALLY\s*\n/i.test(text) &&
+    /\n##\s+SESSION-BY-SESSION\s+WATCH\s*\n/i.test(text)
+  ) {
+    return false;
+  }
+  if (/^##\s*Overview\s*$/im.test(text)) return true;
   if (/^##\s*WEEKLY MACRO THEME\s*$/im.test(text)) return true;
   return true;
 }

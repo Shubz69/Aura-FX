@@ -25,7 +25,8 @@ const DEFAULT_DAILY_TEMPLATE = {
 const DEFAULT_WEEKLY_TEMPLATE = {
   period: 'weekly',
   version: DEFAULT_TEMPLATE_VERSION,
-  titlePattern: 'Weekly Fundamental Analysis \u2013 {weekRange}',
+  /** Matches Aura PDF desk line: WEEKLY FUNDAMENTAL ANALYSIS – (…) */
+  titlePattern: 'WEEKLY FUNDAMENTAL ANALYSIS \u2013 {weekRange}',
   sections: [
     { key: 'weekly_macro_theme', heading: 'Weekly Macro Theme' },
     { key: 'instrument_outlook', heading: 'Instrument Outlook' },

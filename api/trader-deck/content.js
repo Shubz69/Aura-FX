@@ -36,9 +36,10 @@ const {
 async function deskCategoryBriefsNeedPdfReshape(briefsDate, period) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(briefsDate || ''))) return false;
   if (period !== 'daily' && period !== 'weekly') return false;
+  // Weekly: session block is unique to the PDF-aligned template; daily: geo section.
   const marker =
     period === 'weekly'
-      ? 'WHAT MATTERS THIS WEEK STRUCTURALLY'
+      ? 'SESSION-BY-SESSION WATCH'
       : 'GLOBAL GEOPOLITICAL ENVIRONMENT';
   const kindPlaceholders = DESK_AUTOMATION_CATEGORY_KINDS.map(() => '?').join(',');
   try {
