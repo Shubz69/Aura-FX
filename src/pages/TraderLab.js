@@ -896,7 +896,11 @@ export default function TraderLab() {
                 <span className="tlab-decoder-strip__k">Market Decoder</span>
                 <span className="tlab-decoder-strip__sub">Desk log</span>
               </div>
-              <ul className="tlab-decoder-log">
+              <p className="tlab-decoder-log-hint">Many entries? Scroll the list below.</p>
+              <ul
+                className="tlab-decoder-log"
+                aria-label="Market Decoder desk log. Scroll for more when the list is long."
+              >
                 {decoderLogRows.map((row) => (
                   <li key={row.key} className="tlab-decoder-log__row">
                     {row.text}

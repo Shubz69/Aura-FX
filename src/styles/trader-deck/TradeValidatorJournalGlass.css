@@ -364,6 +364,9 @@
 .journal-page:has(.trader-lab-v2) {
   /* Tighten bottom breathing room so the glass panel sits closer to the site footer */
   padding-bottom: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .journal-page .journal-layout--terminal:has(.trader-lab-v2) {
@@ -538,55 +541,61 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   TRADER LAB — desktop terminal viewport: fill main area, internal scroll on rails
+   TRADER LAB — desktop: no nested scroll on the lab grid; document / page scrolls
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (min-width: 1181px) {
   .journal-page:has(.trader-lab-v2--terminal-desktop) {
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .journal-page:has(.trader-lab-v2--terminal-desktop) .journal-layout--terminal {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: visible;
   }
 
   .journal-page .journal-layout--terminal:has(.trader-lab-v2--terminal-desktop) {
     min-height: 0;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
+    overflow: visible;
   }
 
   .journal-page .journal-terminal-body:has(.trader-lab-v2--terminal-desktop) {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
     padding-bottom: 8px;
   }
 
   .journal-page .trade-validator-shell.journal-glass-panel:has(.trader-lab-v2--terminal-desktop) {
-    flex: 1 1 auto;
+    flex: 0 0 auto !important;
     min-height: 0 !important;
-    max-height: none;
-    overflow: hidden !important;
-    display: flex;
-    flex-direction: column;
+    max-height: none !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .journal-page .trade-validator-shell.aa-page:has(.trader-lab-v2--terminal-desktop) {
     min-height: 0 !important;
-    flex: 1 1 auto;
+    flex: 0 0 auto !important;
+    overflow: visible !important;
   }
 
   .trade-validator-shell:has(.trader-lab-v2--terminal-desktop) .aura-shell-content {
-    flex: 1 1 auto !important;
+    flex: 0 0 auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     display: flex !important;
     flex-direction: column !important;
     padding-top: 6px !important;
@@ -594,27 +603,25 @@
   }
 
   .journal-page .trader-suite-page:has(.trader-lab-v2--terminal-desktop) {
-    flex: 1 1 auto !important;
+    flex: 0 0 auto !important;
     min-height: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     display: flex !important;
     flex-direction: column !important;
   }
 
   .trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2--terminal-desktop) {
-    flex: 1 1 auto !important;
+    flex: 0 0 auto !important;
     min-height: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 
   .trade-validator-shell .trader-suite-shell--terminal:has(.trader-lab-v2--terminal-desktop) > .trader-lab-v2 {
-    flex: 1 1 auto !important;
+    flex: 0 0 auto !important;
     min-height: 0 !important;
     max-height: none !important;
     height: auto !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    overscroll-behavior: contain;
+    overflow: visible !important;
   }
 
 }
@@ -734,7 +741,7 @@
   flex-direction: column !important;
 }
 
-/* Page scrolls on small screens; desktop terminal uses internal rail scroll (see block above) */
+/* Rails never scroll independently — only the journal page scrolls */
 .trade-validator-shell .trader-lab-v2__left,
 .trade-validator-shell .trader-lab-v2__right,
 .trade-validator-shell .trader-lab-v2__center {
@@ -747,10 +754,9 @@
 @media (min-width: 1181px) {
   .trade-validator-shell .trader-lab-v2.trader-lab-v2--terminal-desktop .trader-lab-v2__left,
   .trade-validator-shell .trader-lab-v2.trader-lab-v2--terminal-desktop .trader-lab-v2__right {
-    max-height: min(92dvh, 900px) !important;
-    overflow-y: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
     overflow-x: hidden !important;
-    overscroll-behavior: contain;
     align-self: start !important;
   }
 
