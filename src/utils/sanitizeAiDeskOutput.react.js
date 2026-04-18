@@ -1,19 +1,11 @@
 /**
- * CRA/browser entry: named ESM exports wired to the CommonJS implementation.
- * (Importing `.mjs` or bare CJS named imports can break in lazy chunks.)
+ * CRA/browser entry: re-exports the pure ESM implementation.
+ * Do not use `require()` of the CJS file here — webpack 5 ESM chunks error with
+ * "ES Modules may not assign module.exports" when CJS is pulled into an ESM graph.
  */
-'use strict';
-
-const {
-  sanitizeTraderDeskPayloadDeep,
-  stripModelInternalExposition,
-  sanitizeAiTradingPriorities,
-  sanitizeAiDeskPayloadFields,
-} = require('./sanitizeAiDeskOutput.js');
-
 export {
-  sanitizeTraderDeskPayloadDeep,
   stripModelInternalExposition,
+  sanitizeTraderDeskPayloadDeep,
   sanitizeAiTradingPriorities,
   sanitizeAiDeskPayloadFields,
-};
+} from './sanitizeAiDeskOutput.mjs';
