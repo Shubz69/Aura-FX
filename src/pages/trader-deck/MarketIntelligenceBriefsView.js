@@ -153,26 +153,16 @@ const BRIEF_POLL_MAX = 15;
 /** Partial-pack polling may need longer while several category briefs generate server-side. */
 const BRIEF_PARTIAL_POLL_MAX = 60;
 
-/**
- * Empty desk copy: never expose env var names, secrets, or internal API routes to all users.
- * Operational detail is optional and only appended for admins (`canEdit`).
- */
-function emptyDeskMessagesFor(canEdit, phase) {
-  const userFirst =
-    'No briefs are available for this desk date yet. This list refreshes automatically — try again shortly or choose another date.';
-  const userRepeat =
-    'No briefs are available for this desk date yet. Try another date or check back later.';
-  const adminFirst =
-    'A background refresh was requested once for this browser session. If packs stay empty, confirm scheduled desk automation is enabled on the server and review Admin → integration health.';
-  const adminRepeat =
-    'Still empty: the scheduled job may not have finished, integrations may be offline, or generation failed — check deployment logs and Admin → integration health.';
-
-  const userText = phase === 'first' ? userFirst : userRepeat;
-  if (!canEdit) return { userText };
-  return {
-    userText,
-    adminText: phase === 'first' ? adminFirst : adminRepeat,
-  };
+/** Empty list: plain copy only — no row counts, automation flags, or admin runbooks in the UI. */
+function emptyDeskMessagesFor(period, phase) {
+  const weekly = period === 'weekly';
+  const userFirst = weekly
+    ? 'No weekly briefs for this desk week yet. When ready, eight weekly fundamental briefs appear here (Forex through Futures). Try another week or tap Retry.'
+    : 'No briefs for this date yet. When ready, eight daily briefs appear here (Forex, Crypto, Commodities, ETFs, Stocks, Indices, Bonds, Futures). Try another date or tap Retry.';
+  const userRepeat = weekly
+    ? 'No weekly briefs for this desk week yet. Try another week or tap Retry.'
+    : 'No briefs for this date yet. Try another date or tap Retry.';
+  return { userText: phase === 'first' ? userFirst : userRepeat };
 }
 
 function briefsPayloadFromContentResponse(res, fallbackStorageDate) {
@@ -408,11 +398,13 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         setIntelDeskMeta(payload.deskMeta ?? null);
         if (payload.list.length > 0) {
           setEmptyDeskMessages(null);
+        } else {
+          setEmptyDeskMessages(emptyDeskMessagesFor(period, 'repeat'));
         }
       })
       .catch(() => setError('Failed to load briefs'))
       .finally(() => setLoading(false));
-  }, [fetchBriefsPayload]);
+  }, [fetchBriefsPayload, period]);
 
   useEffect(() => {
     let cancelled = false;
@@ -444,13 +436,13 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           const key = `td-brief-desk-backfill-${type}-${storageDateStr}`;
           if (!sessionStorage.getItem(key)) {
             sessionStorage.setItem(key, '1');
-            setEmptyDeskMessages(emptyDeskMessagesFor(canEdit, 'first'));
+            setEmptyDeskMessages(emptyDeskMessagesFor(period, 'first'));
             Api.getTraderDeckContent(type, storageDateStr, { autogen: true }).catch(() => {});
           } else {
-            setEmptyDeskMessages(emptyDeskMessagesFor(canEdit, 'repeat'));
+            setEmptyDeskMessages(emptyDeskMessagesFor(period, 'repeat'));
           }
         } catch (_) {
-          setEmptyDeskMessages({ userText: 'No briefs for this date.' });
+          setEmptyDeskMessages(emptyDeskMessagesFor(period, 'repeat'));
         }
 
         pollTimer = setInterval(() => {
@@ -487,7 +479,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       cancelled = true;
       if (pollTimer) clearInterval(pollTimer);
     };
-  }, [type, storageDateStr, fetchBriefsPayload, canEdit]);
+  }, [type, period, storageDateStr, fetchBriefsPayload]);
 
   useEffect(() => {
     if (!needsPartialIntelPoll) return undefined;
@@ -693,21 +685,16 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
 
   return (
     <>
-      {error && (
-        <p className="td-mi-fallback-msg" role="alert">
-          {error}{' '}
-          <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
-            Retry fetch
-          </button>
-        </p>
-      )}
       <div className="td-deck-mi-modern">
         <header className="td-deck-mi-modern-hero">
           <div className="td-deck-mi-modern-hero-copy">
             <p className="td-deck-mo-eyebrow">Market intelligence</p>
             <h1 className="td-deck-mi-modern-title">{mainTitle}</h1>
             <p className="td-deck-mi-modern-sub">
-              Briefs are stored per calendar date (daily or weekly mode). Preview opens as a fullscreen overlay with a blurred backdrop — scroll inside the document; copying is discouraged and downloads are not linked from the list.
+              Open a brief to read it fullscreen.{' '}
+              {period === 'weekly'
+                ? 'Eight weekly fundamental briefs fill in when the server has finished generating them for the week you selected.'
+                : 'Eight daily briefs fill in when the server has finished generating them for the date you selected.'}
             </p>
             {period === 'daily' && weekendBriefsNote && (
               <p className="td-deck-mi-modern-sub td-deck-mi-weekend-note" role="note">
@@ -723,15 +710,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               </span>
               <span className="td-deck-mi-modern-stat-label">
                 asset sleeves stored (of 8)
-                {hasInstitutionalBrief ? ' · institutional ready' : ' · institutional pending'}
+                {hasInstitutionalBrief ? ' · ready' : ' · generating'}
                 {weekendBriefsNote ? ' · latest weekday pack' : ''}
-                {canEdit &&
-                intelDeskMeta?.categorySleevePack?.missingKinds?.length > 0 ? (
-                  <span className="td-deck-mi-sleeve-missing" title="Gap-fill may still be running">
-                    {' '}
-                    · missing: {intelDeskMeta.categorySleevePack.missingKinds.join(', ')}
-                  </span>
-                ) : null}
               </span>
             </div>
           )}
@@ -776,40 +756,25 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
             <ul className="td-deck-mi-brief-cards">
               {displayedBriefs.length === 0 ? (
                 <li className="td-deck-mi-brief-empty">
-                  {emptyDeskMessages ? (
+                  {error ? (
                     <>
-                      <span className="td-deck-mi-empty-user">{emptyDeskMessages.userText}</span>
-                      {emptyDeskMessages.adminText ? (
-                        <span className="td-deck-mi-empty-admin" role="note">
-                          {' '}
-                          {emptyDeskMessages.adminText}
-                        </span>
-                      ) : null}
-                      {canEdit && intelDeskMeta ? (
-                        <span className="td-deck-mi-empty-desk-meta" role="note">
-                          Desk rows for this date (server): {intelDeskMeta.briefsRowCount}. Automated generation available:{' '}
-                          {intelDeskMeta.deskAutomationConfigured ? 'yes' : 'no'}
-                          {!intelDeskMeta.deskAutomationConfigured
-                            ? ' — configure the desk automation API key on the API host for scheduled briefs.'
-                            : null}
-                        </span>
-                      ) : null}{' '}
+                      <span className="td-deck-mi-empty-user" role="alert">
+                        We could not load briefs (connection or server issue). Check your network, then try again.
+                      </span>{' '}
+                      <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
+                        Retry fetch
+                      </button>
+                    </>
+                  ) : emptyDeskMessages ? (
+                    <>
+                      <span className="td-deck-mi-empty-user">{emptyDeskMessages.userText}</span>{' '}
                       <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
                         Retry fetch
                       </button>
                     </>
                   ) : (
                     <>
-                      {canEdit && intelDeskMeta ? (
-                        <span className="td-deck-mi-empty-desk-meta" role="note">
-                          Desk rows for this date (server): {intelDeskMeta.briefsRowCount}. Automated generation available:{' '}
-                          {intelDeskMeta.deskAutomationConfigured ? 'yes' : 'no'}
-                          {!intelDeskMeta.deskAutomationConfigured
-                            ? ' — configure the desk automation API key on the API host for scheduled briefs.'
-                            : null}
-                        </span>
-                      ) : null}
-                      No briefs for this date.{' '}
+                      <span className="td-deck-mi-empty-user">No briefs for this date.</span>{' '}
                       <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
                         Retry fetch
                       </button>
