@@ -17,7 +17,6 @@ import { getTraderDeckIntelStorageYmd } from '../../lib/trader-deck/deskDates';
 import { formatRelativeFreshness } from '../../lib/trader-deck/marketOutlookDisplayFormatters';
 import {
   buildDerivedRiskFallbackLines,
-  buildOutlookSecondaryMicroRowsDense,
   deriveDominantFactorLine,
   deriveHeadlineFallbackLines,
   deriveInstrumentSnapshotsMerged,
@@ -28,7 +27,11 @@ import {
   regimeSessionFallbackPairs,
   signalLine,
 } from '../../lib/trader-deck/marketOutlookDensity';
-import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput.mjs';
+import {
+  buildMarketStructureMap,
+  buildTradeExpressionMatrix,
+} from '../../lib/trader-deck/marketOutlookProductIntel';
+import { sanitizeTraderDeckPayloadDeep } from '../../utils/sanitizeAiDeskOutput.mjs';
 
 /** When the API omits sleeves, derive compact cards from cross-asset signals + drivers (real desk fields, not placeholders). */
 function deriveInstrumentSnapshotsFromDesk(signals, drivers) {
@@ -591,7 +594,8 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     outlookRiskContext: outlookSnapshot.outlookRiskContext ?? ui.outlookRiskContext,
   };
   const implicationsDecision = buildImplicationsDecisionModel(deskForInference);
-  const outlookMicroRows = buildOutlookSecondaryMicroRowsDense(deskForInference, { maxRows: 24 });
+  const tradeExpressionMatrix = !editMode ? buildTradeExpressionMatrix(deskForInference, { maxRows: 6 }) : [];
+  const marketStructureMap = !editMode ? buildMarketStructureMap(deskForInference) : null;
   const instrumentSnapshots = deriveInstrumentSnapshotsMerged(
     outlookSnapshot.instrumentSnapshots,
     crossAssetSignals,
@@ -862,6 +866,60 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                           {editMode && editDraft ? renderDriversEdit() : <DriverList drivers={keyDrivers} />}
                         </div>
                       </section>
+                      {marketStructureMap ? (
+                      <section
+                        className="td-outlook-concept-card td-outlook-concept-card--structure-map mo-card-shell mo-card-shell--dense"
+                        aria-label="Market structure map"
+                      >
+                        <h2 className="td-outlook-concept-card__title">Market Structure Map</h2>
+                        <div className="td-outlook-concept-card__body td-outlook-concept-card__body--structure-map">
+                          <div className="mo-structure-map-grid">
+                            <div className="mo-structure-map-col">
+                              <div className="mo-structure-kv">
+                                <span className="mo-structure-k">Trend State</span>
+                                <strong className="mo-structure-v">{marketStructureMap.trendState}</strong>
+                              </div>
+                              <div className="mo-structure-kv">
+                                <span className="mo-structure-k">Volatility Regime</span>
+                                <strong className="mo-structure-v">{marketStructureMap.volatilityRegime}</strong>
+                              </div>
+                              <div className="mo-structure-kv">
+                                <span className="mo-structure-k">Liquidity Condition</span>
+                                <strong className="mo-structure-v">{marketStructureMap.liquidityCondition}</strong>
+                              </div>
+                            </div>
+                            <div className="mo-structure-map-col">
+                              <div className="mo-structure-kv">
+                                <span className="mo-structure-k">Correlation Regime</span>
+                                <strong className="mo-structure-v">{marketStructureMap.correlationRegime}</strong>
+                              </div>
+                              <div className="mo-structure-kv">
+                                <span className="mo-structure-k">Market Breadth</span>
+                                <strong className="mo-structure-v">{marketStructureMap.marketBreadth}</strong>
+                              </div>
+                              <div className="mo-structure-kv">
+                                <span className="mo-structure-k">Positioning Pressure</span>
+                                <strong className="mo-structure-v">{marketStructureMap.positioningPressure}</strong>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mo-structure-insights">
+                            <p className="mo-structure-line">
+                              <span className="mo-structure-k">Structure Insight</span>
+                              <span className="mo-structure-t">{marketStructureMap.structureInsight}</span>
+                            </p>
+                            <p className="mo-structure-line">
+                              <span className="mo-structure-k">What This Means</span>
+                              <span className="mo-structure-t">{marketStructureMap.whatThisMeans}</span>
+                            </p>
+                            <p className="mo-structure-line">
+                              <span className="mo-structure-k">Watch For</span>
+                              <span className="mo-structure-t">{marketStructureMap.watchFor}</span>
+                            </p>
+                          </div>
+                        </div>
+                      </section>
+                      ) : null}
                     </div>
                     <div className="td-outlook-concept-intel-col td-outlook-concept-intel-col--right">
                       <section className="td-outlook-concept-card td-outlook-concept-card--signals mo-card-shell">
@@ -1048,15 +1106,31 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                   </section>
                   ) : null}
 
-                  {outlookMicroRows.length > 0 ? (
-                    <section className="td-outlook-concept-card td-outlook-concept-card--aux mo-card-shell mo-card-shell--dense" aria-label="Desk context">
-                      <h2 className="td-outlook-concept-card__title">Desk Context</h2>
-                      <div className="td-outlook-concept-card__body td-outlook-concept-card__body--aux">
-                        <ul className="mo-outlook-micro-rows">
-                          {outlookMicroRows.map((line, i) => (
-                            <li key={i} className="mo-outlook-micro-rows__item">{line}</li>
+                  {tradeExpressionMatrix.length > 0 ? (
+                    <section
+                      className="td-outlook-concept-card td-outlook-concept-card--trade-matrix mo-card-shell mo-card-shell--dense"
+                      aria-label="Trade expression matrix"
+                    >
+                      <h2 className="td-outlook-concept-card__title">Trade Expression Matrix</h2>
+                      <div className="td-outlook-concept-card__body td-outlook-concept-card__body--trade-matrix">
+                        <div className="mo-trade-matrix">
+                          {tradeExpressionMatrix.map((row, i) => (
+                            <article key={i} className="mo-trade-matrix-row">
+                              <div className="mo-trade-matrix-head">{row.headline}</div>
+                              <div className="mo-trade-matrix-line">
+                                <span className="mo-tm-label">Expression</span>
+                                <span className="mo-tm-value">{row.expression}</span>
+                              </div>
+                              <div className="mo-trade-matrix-line">
+                                <span className="mo-tm-label">Why</span>
+                                <span className="mo-tm-value">{row.why}</span>
+                              </div>
+                              <div className="mo-trade-matrix-line mo-trade-matrix-line--invalidation">
+                                <span className="mo-tm-value">{row.invalidation}</span>
+                              </div>
+                            </article>
                           ))}
-                        </ul>
+                        </div>
                       </div>
                     </section>
                   ) : null}
