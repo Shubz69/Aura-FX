@@ -30,6 +30,10 @@ const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', '
  * Core super-admin accounts (always merged with SUPER_ADMIN_EMAIL env).
  * Keeps access if env is misconfigured on a host; add more via env for other operators.
  * Client: keep in sync with src/utils/roles.js SUPER_ADMIN_EMAIL_FALLBACK_LOWER.
+ *
+ * Canonical operator accounts (Gmail comparisons are lowercased):
+ * - slutherfx@gmail.com
+ * - AuraTerminal2002@gmail.com → auraterminal2002@gmail.com
  */
 const SUPER_ADMIN_EMAIL_FALLBACK_LOWER = Object.freeze([
   'slutherfx@gmail.com',

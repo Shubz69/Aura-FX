@@ -2,7 +2,7 @@
 // Super Admin: REACT_APP_SUPER_ADMIN_EMAIL (comma/semicolon) merged with fallback (sync with api/utils/entitlements.js).
 // Admin: Assigned by Super Admin - Limited admin access
 
-/** Must match api/utils/entitlements.js SUPER_ADMIN_EMAIL_FALLBACK_LOWER */
+/** Must match api/utils/entitlements.js SUPER_ADMIN_EMAIL_FALLBACK_LOWER (both full super-admin). */
 const SUPER_ADMIN_EMAIL_FALLBACK_LOWER = Object.freeze([
   'slutherfx@gmail.com',
   'auraterminal2002@gmail.com',

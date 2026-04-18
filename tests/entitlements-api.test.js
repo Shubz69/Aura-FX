@@ -93,6 +93,21 @@ describe('Entitlements Logic', () => {
     expect(ent.canAccessSurveillance).toBe(true);
   });
 
+  it('AuraTerminal2002@gmail.com mixed case resolves as super admin', () => {
+    const user = {
+      id: 101,
+      email: 'AuraTerminal2002@gmail.com',
+      role: 'user',
+      subscription_plan: 'free',
+      subscription_status: 'inactive',
+      subscription_expiry: null,
+      payment_failed: false
+    };
+    const ent = getEntitlements(user);
+    expect(ent.role).toBe('SUPER_ADMIN');
+    expect(ent.canAccessSurveillance).toBe(true);
+  });
+
   it('returns tier PRO for legacy DB role aura (no active paid-through window)', () => {
     const user = {
       id: 4,
