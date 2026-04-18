@@ -2088,10 +2088,16 @@ function computeTitle(template, deskYmd, timeZone) {
   const mid = jsDateFromDeskYmd(deskYmd, timeZone);
   const usesWeekday = pattern.includes('{weekday}');
   const dateLongFormatted = usesWeekday ? dateLongNoWeekday(mid, timeZone) : dateLong(mid, timeZone);
-  return pattern
+  let out = pattern
     .replace('{weekday}', weekdayName(mid, timeZone))
     .replace('{dateLong}', dateLongFormatted)
     .replace('{weekRange}', deskWeekMonFriRangeLabel(deskYmd, timeZone));
+  // Legacy DB templates: {dateLong} may still include a weekday, duplicating {weekday} (e.g. "Monday Monday, 13 April…").
+  out = out.replace(
+    /\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+\1\b/gi,
+    '$1',
+  );
+  return out;
 }
 
 async function generateAndStoreBrief({

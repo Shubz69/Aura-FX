@@ -36,7 +36,8 @@ function isPdfMime(mime) {
 }
 
 function displayBriefTitle(title) {
-  const t = String(title || '').replace(/^\s*\[AUTO\]\s*/i, '').trim();
+  let t = String(title || '').replace(/^\s*\[AUTO\]\s*/i, '').trim();
+  t = t.replace(/\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+\1\b/gi, '$1');
   return t || 'Brief';
 }
 
@@ -68,8 +69,7 @@ const BRIEF_KIND_LABEL = {
   general: 'Desk brief',
 };
 
-/** Fixed UI order for the eight automation sleeves (matches server `DESK_AUTOMATION_CATEGORY_KINDS`). */
-const CATEGORY_BRIEF_KINDS_ORDER = [
+const CATEGORY_BRIEF_KINDS = new Set([
   'stocks',
   'indices',
   'futures',
@@ -78,9 +78,7 @@ const CATEGORY_BRIEF_KINDS_ORDER = [
   'commodities',
   'bonds',
   'etfs',
-];
-
-const CATEGORY_BRIEF_KINDS = new Set(CATEGORY_BRIEF_KINDS_ORDER);
+]);
 
 /** All brief kinds we load and show (institutional + desk + eight asset sleeves + legacy general). */
 const ALLOWED_BRIEF_KINDS = new Set([
@@ -146,31 +144,6 @@ function normalizeBriefsList(items) {
       if (ALLOWED_BRIEF_KINDS.has(k)) return b;
       return { ...b, briefKind: 'general' };
     });
-}
-
-/** Latest row per `briefKind` (highest version, then newest created). */
-function pickLatestBriefPerKind(items) {
-  const map = new Map();
-  for (const b of items || []) {
-    if (!b || typeof b !== 'object') continue;
-    const k = String(b.briefKind || '').toLowerCase();
-    const existing = map.get(k);
-    if (!existing) {
-      map.set(k, b);
-      continue;
-    }
-    const v = Number(b.briefVersion || 1);
-    const ev = Number(existing.briefVersion || 1);
-    if (v > ev) {
-      map.set(k, b);
-      continue;
-    }
-    if (v < ev) continue;
-    const bt = new Date(b.createdAt || 0).getTime();
-    const et = new Date(existing.createdAt || 0).getTime();
-    if (bt > et) map.set(k, b);
-  }
-  return map;
 }
 
 const BRIEF_POLL_MS = 3000;
@@ -271,10 +244,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       return bt - at;
     });
   }, [briefs]);
-
-  const latestBriefByKind = useMemo(() => pickLatestBriefPerKind(briefs), [briefs]);
-
-  const institutionalBriefKind = period === 'weekly' ? 'aura_institutional_weekly' : 'aura_institutional_daily';
 
   const filtersAreDefault = useMemo(
     () =>
@@ -392,19 +361,22 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   }, [previewOpen]);
 
   const fetchBriefsPayload = useCallback(
-    (cacheBust) =>
-      Api.getTraderDeckContent(type, storageDateStr, {
+    (opts = {}) => {
+      const cacheBust = opts.cacheBust ?? false;
+      const autogen = opts.autogen ?? false;
+      return Api.getTraderDeckContent(type, storageDateStr, {
         cacheBust: !!cacheBust,
-        /** Never autogen on list reads — cron fills briefs; `autogen=1` is reserved for explicit operator backfill. */
-        autogen: false,
-      }).then((res) => briefsPayloadFromContentResponse(res, storageDateStr)),
+        /** `autogen=1` kicks server gap-fill (institutional + missing category sleeves); use only when polling partial packs or explicit retry. */
+        autogen: !!autogen,
+      }).then((res) => briefsPayloadFromContentResponse(res, storageDateStr));
+    },
     [type, storageDateStr]
   );
 
   const handleManualBriefsRetry = useCallback(() => {
     setLoading(true);
     setError(null);
-    fetchBriefsPayload(true)
+    fetchBriefsPayload({ cacheBust: true, autogen: true })
       .then((payload) => {
         setBriefs(payload.list);
         setWeekendBriefsNote(payload.weekendNote);
@@ -432,7 +404,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       if (!cancelled) setLoading(false);
     };
 
-    fetchBriefsPayload(false)
+    fetchBriefsPayload({})
       .then((payload) => {
         if (cancelled) return;
         setBriefs(payload.list);
@@ -464,7 +436,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
             pollTimer = null;
             return;
           }
-          fetchBriefsPayload(true)
+          fetchBriefsPayload({ cacheBust: true })
             .then((nextPayload) => {
               if (cancelled) return;
               setIntelDeskMeta(nextPayload.deskMeta ?? null);
@@ -503,7 +475,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         clearInterval(pollTimer);
         return;
       }
-      fetchBriefsPayload(true)
+      fetchBriefsPayload({ cacheBust: true, autogen: true })
         .then((nextPayload) => {
           if (cancelled) return;
           setIntelDeskMeta(nextPayload.deskMeta ?? null);
@@ -744,113 +716,10 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         )}
 
         <div className="td-deck-mi-modern-grid">
-          {briefs.length > 0 && (
-            <section className="td-deck-mi-tile td-deck-mi-tile--pack" aria-labelledby="intel-pack-heading">
-              <div className="td-deck-mi-tile-head td-deck-mi-tile-head--pack">
-                <div>
-                  <h2 id="intel-pack-heading" className="td-deck-mi-tile-title">
-                    Desk pack
-                  </h2>
-                  <p className="td-deck-mi-pack-sub">
-                    One tile per sleeve. Empty tiles are still generating, failed, or not configured on the server — the
-                    list below matches the same data.
-                  </p>
-                </div>
-              </div>
-
-              <div className="td-deck-mi-pack-institutional">
-                {(() => {
-                  const kind = institutionalBriefKind;
-                  const b = latestBriefByKind.get(kind);
-                  const label = BRIEF_KIND_LABEL[kind] || 'Institutional';
-                  const kindVisible = selectedKinds.has(kind);
-                  return (
-                    <div
-                      className={
-                        'td-deck-mi-pack-tile td-deck-mi-pack-tile--wide' +
-                        (b ? ' td-deck-mi-pack-tile--ready' : ' td-deck-mi-pack-tile--pending') +
-                        (b && !kindVisible ? ' td-deck-mi-pack-tile--filtered' : '')
-                      }
-                    >
-                      <div className="td-deck-mi-pack-tile-text">
-                        <span className="td-deck-mi-pack-tile-label">{label}</span>
-                        <span className="td-deck-mi-pack-tile-status">
-                          {b ? 'Ready' : 'Not available yet'}
-                          {b && !kindVisible ? ' · hidden by filter' : ''}
-                        </span>
-                        {b ? (
-                          <span className="td-deck-mi-pack-tile-title-line">{displayBriefTitle(b.title)}</span>
-                        ) : null}
-                      </div>
-                      <div className="td-deck-mi-pack-tile-actions">
-                        {b && kindVisible ? (
-                          <button type="button" className="td-mi-btn td-mi-btn-small" onClick={() => handlePreview(b)}>
-                            <FaEye /> Preview
-                          </button>
-                        ) : null}
-                        {b && !kindVisible ? (
-                          <button
-                            type="button"
-                            className="td-mi-btn td-mi-btn-small"
-                            onClick={() => setSelectedKinds((prev) => new Set(prev).add(kind))}
-                          >
-                            Show type
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-
-              <ul className="td-deck-mi-pack-grid" aria-label="Category brief sleeves">
-                {CATEGORY_BRIEF_KINDS_ORDER.map((kind) => {
-                  const b = latestBriefByKind.get(kind);
-                  const label = BRIEF_KIND_LABEL[kind] || kind;
-                  const kindVisible = selectedKinds.has(kind);
-                  return (
-                    <li
-                      key={kind}
-                      className={
-                        'td-deck-mi-pack-tile' +
-                        (b ? ' td-deck-mi-pack-tile--ready' : ' td-deck-mi-pack-tile--pending') +
-                        (b && !kindVisible ? ' td-deck-mi-pack-tile--filtered' : '')
-                      }
-                    >
-                      <div className="td-deck-mi-pack-tile-text">
-                        <span className="td-deck-mi-pack-tile-label">{label}</span>
-                        <span className="td-deck-mi-pack-tile-status">
-                          {b ? 'Ready' : 'Pending'}
-                          {b && !kindVisible ? ' · filtered' : ''}
-                        </span>
-                      </div>
-                      <div className="td-deck-mi-pack-tile-actions">
-                        {b && kindVisible ? (
-                          <button type="button" className="td-mi-btn td-mi-btn-small" onClick={() => handlePreview(b)}>
-                            Preview
-                          </button>
-                        ) : null}
-                        {b && !kindVisible ? (
-                          <button
-                            type="button"
-                            className="td-mi-btn td-mi-btn-small"
-                            onClick={() => setSelectedKinds((prev) => new Set(prev).add(kind))}
-                          >
-                            Show
-                          </button>
-                        ) : null}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          )}
-
           <section className="td-deck-mi-tile td-deck-mi-tile--list" aria-labelledby="intel-list-heading">
             <div className="td-deck-mi-tile-head">
               <h2 id="intel-list-heading" className="td-deck-mi-tile-title">
-                All brief rows
+                Briefs
               </h2>
               <div className="td-deck-mi-head-tools">
                 <div className="td-deck-mi-filter-wrap" ref={filterWrapRef}>
