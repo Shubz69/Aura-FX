@@ -68,7 +68,8 @@ const BRIEF_KIND_LABEL = {
   general: 'Desk brief',
 };
 
-const CATEGORY_BRIEF_KINDS = new Set([
+/** Fixed UI order for the eight automation sleeves (matches server `DESK_AUTOMATION_CATEGORY_KINDS`). */
+const CATEGORY_BRIEF_KINDS_ORDER = [
   'stocks',
   'indices',
   'futures',
@@ -77,7 +78,9 @@ const CATEGORY_BRIEF_KINDS = new Set([
   'commodities',
   'bonds',
   'etfs',
-]);
+];
+
+const CATEGORY_BRIEF_KINDS = new Set(CATEGORY_BRIEF_KINDS_ORDER);
 
 /** All brief kinds we load and show (institutional + desk + eight asset sleeves + legacy general). */
 const ALLOWED_BRIEF_KINDS = new Set([
@@ -143,6 +146,31 @@ function normalizeBriefsList(items) {
       if (ALLOWED_BRIEF_KINDS.has(k)) return b;
       return { ...b, briefKind: 'general' };
     });
+}
+
+/** Latest row per `briefKind` (highest version, then newest created). */
+function pickLatestBriefPerKind(items) {
+  const map = new Map();
+  for (const b of items || []) {
+    if (!b || typeof b !== 'object') continue;
+    const k = String(b.briefKind || '').toLowerCase();
+    const existing = map.get(k);
+    if (!existing) {
+      map.set(k, b);
+      continue;
+    }
+    const v = Number(b.briefVersion || 1);
+    const ev = Number(existing.briefVersion || 1);
+    if (v > ev) {
+      map.set(k, b);
+      continue;
+    }
+    if (v < ev) continue;
+    const bt = new Date(b.createdAt || 0).getTime();
+    const et = new Date(existing.createdAt || 0).getTime();
+    if (bt > et) map.set(k, b);
+  }
+  return map;
 }
 
 const BRIEF_POLL_MS = 3000;
@@ -243,6 +271,17 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       return bt - at;
     });
   }, [briefs]);
+
+  const latestBriefByKind = useMemo(() => pickLatestBriefPerKind(briefs), [briefs]);
+
+  const institutionalBriefKind = period === 'weekly' ? 'aura_institutional_weekly' : 'aura_institutional_daily';
+
+  const filtersAreDefault = useMemo(
+    () =>
+      selectedKinds.size === BRIEF_KIND_ORDER.length &&
+      BRIEF_KIND_ORDER.every((k) => selectedKinds.has(k)),
+    [selectedKinds]
+  );
 
   const displayedBriefs = useMemo(() => {
     if (!sortedBriefs.length) return [];
@@ -560,6 +599,12 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       return undefined;
     }
 
+    /** Long briefs: skip typewriter so the overlay never ends mid-character or mid-render. */
+    if (full.length > 14000) {
+      setTypewriterIndex(full.length);
+      return undefined;
+    }
+
     setTypewriterIndex(0);
     const n = full.length;
     const TICK_MS = 16;
@@ -680,18 +725,133 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                 {categoryBriefCount}/8
               </span>
               <span className="td-deck-mi-modern-stat-label">
-                category brief{categoryBriefCount !== 1 ? 's' : ''}
-                {hasInstitutionalBrief ? ' · institutional' : ''}
-                {weekendBriefsNote ? ' (latest weekday pack)' : ''}
+                asset sleeves stored (of 8)
+                {hasInstitutionalBrief ? ' · institutional ready' : ' · institutional pending'}
+                {weekendBriefsNote ? ' · latest weekday pack' : ''}
               </span>
             </div>
           )}
         </header>
 
+        {!filtersAreDefault && (
+          <p className="td-deck-mi-filter-active-banner" role="status">
+            Some brief types are hidden by filters — showing {displayedBriefs.length} of {sortedBriefs.length} loaded
+            briefs.{' '}
+            <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
+              Show all types
+            </button>
+          </p>
+        )}
+
         <div className="td-deck-mi-modern-grid">
+          {briefs.length > 0 && (
+            <section className="td-deck-mi-tile td-deck-mi-tile--pack" aria-labelledby="intel-pack-heading">
+              <div className="td-deck-mi-tile-head td-deck-mi-tile-head--pack">
+                <div>
+                  <h2 id="intel-pack-heading" className="td-deck-mi-tile-title">
+                    Desk pack
+                  </h2>
+                  <p className="td-deck-mi-pack-sub">
+                    One tile per sleeve. Empty tiles are still generating, failed, or not configured on the server — the
+                    list below matches the same data.
+                  </p>
+                </div>
+              </div>
+
+              <div className="td-deck-mi-pack-institutional">
+                {(() => {
+                  const kind = institutionalBriefKind;
+                  const b = latestBriefByKind.get(kind);
+                  const label = BRIEF_KIND_LABEL[kind] || 'Institutional';
+                  const kindVisible = selectedKinds.has(kind);
+                  return (
+                    <div
+                      className={
+                        'td-deck-mi-pack-tile td-deck-mi-pack-tile--wide' +
+                        (b ? ' td-deck-mi-pack-tile--ready' : ' td-deck-mi-pack-tile--pending') +
+                        (b && !kindVisible ? ' td-deck-mi-pack-tile--filtered' : '')
+                      }
+                    >
+                      <div className="td-deck-mi-pack-tile-text">
+                        <span className="td-deck-mi-pack-tile-label">{label}</span>
+                        <span className="td-deck-mi-pack-tile-status">
+                          {b ? 'Ready' : 'Not available yet'}
+                          {b && !kindVisible ? ' · hidden by filter' : ''}
+                        </span>
+                        {b ? (
+                          <span className="td-deck-mi-pack-tile-title-line">{displayBriefTitle(b.title)}</span>
+                        ) : null}
+                      </div>
+                      <div className="td-deck-mi-pack-tile-actions">
+                        {b && kindVisible ? (
+                          <button type="button" className="td-mi-btn td-mi-btn-small" onClick={() => handlePreview(b)}>
+                            <FaEye /> Preview
+                          </button>
+                        ) : null}
+                        {b && !kindVisible ? (
+                          <button
+                            type="button"
+                            className="td-mi-btn td-mi-btn-small"
+                            onClick={() => setSelectedKinds((prev) => new Set(prev).add(kind))}
+                          >
+                            Show type
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <ul className="td-deck-mi-pack-grid" aria-label="Category brief sleeves">
+                {CATEGORY_BRIEF_KINDS_ORDER.map((kind) => {
+                  const b = latestBriefByKind.get(kind);
+                  const label = BRIEF_KIND_LABEL[kind] || kind;
+                  const kindVisible = selectedKinds.has(kind);
+                  return (
+                    <li
+                      key={kind}
+                      className={
+                        'td-deck-mi-pack-tile' +
+                        (b ? ' td-deck-mi-pack-tile--ready' : ' td-deck-mi-pack-tile--pending') +
+                        (b && !kindVisible ? ' td-deck-mi-pack-tile--filtered' : '')
+                      }
+                    >
+                      <div className="td-deck-mi-pack-tile-text">
+                        <span className="td-deck-mi-pack-tile-label">{label}</span>
+                        <span className="td-deck-mi-pack-tile-status">
+                          {b ? 'Ready' : 'Pending'}
+                          {b && !kindVisible ? ' · filtered' : ''}
+                        </span>
+                      </div>
+                      <div className="td-deck-mi-pack-tile-actions">
+                        {b && kindVisible ? (
+                          <button type="button" className="td-mi-btn td-mi-btn-small" onClick={() => handlePreview(b)}>
+                            Preview
+                          </button>
+                        ) : null}
+                        {b && !kindVisible ? (
+                          <button
+                            type="button"
+                            className="td-mi-btn td-mi-btn-small"
+                            onClick={() => setSelectedKinds((prev) => new Set(prev).add(kind))}
+                          >
+                            Show
+                          </button>
+                        ) : null}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+
           <section className="td-deck-mi-tile td-deck-mi-tile--list" aria-labelledby="intel-list-heading">
             <div className="td-deck-mi-tile-head">
-              <h2 id="intel-list-heading" className="td-deck-mi-tile-title">Briefs</h2>
+              <h2 id="intel-list-heading" className="td-deck-mi-tile-title">
+                All brief rows
+              </h2>
               <div className="td-deck-mi-head-tools">
                 <div className="td-deck-mi-filter-wrap" ref={filterWrapRef}>
                   <button
@@ -702,10 +862,14 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                     aria-expanded={filtersOpen}
                     aria-haspopup="dialog"
                   >
-                    Filter
+                    Filter types
                   </button>
                 </div>
-                <span className="td-deck-mi-tile-badge">{displayedBriefs.length}</span>
+                <span className="td-deck-mi-tile-badge" title="Rows shown after filters">
+                  {filtersAreDefault
+                    ? `${sortedBriefs.length} brief${sortedBriefs.length !== 1 ? 's' : ''}`
+                    : `${displayedBriefs.length} / ${sortedBriefs.length}`}
+                </span>
               </div>
             </div>
             <ul className="td-deck-mi-brief-cards">
