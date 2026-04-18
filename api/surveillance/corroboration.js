@@ -1,17 +1,33 @@
 const crypto = require('crypto');
 const { executeQuery } = require('../db');
-const { computeRankScore, disruptionBoostFromRecord } = require('./scoring');
+const {
+  computeRankScore,
+  disruptionBoostFromRecord,
+  computeFreshnessDetail,
+  severityDetailScore,
+  aggregateMarketImpactScore,
+} = require('./scoring');
 const {
   clusterIndices,
   canonicalClusterSignature,
   storySignatureFromPayload,
 } = require('./storyline');
 
+function parseImpactedMarkets(v) {
+  if (v == null) return [];
+  if (typeof v === 'object') return v;
+  try {
+    return JSON.parse(v);
+  } catch {
+    return [];
+  }
+}
+
 async function runCorroborationPass() {
   const [rows] = await executeQuery(
-    `SELECT id, title, source, normalized_topic, story_id, story_signature,
+    `SELECT id, title, source, normalized_topic, story_id, story_signature, content_hash,
             rank_score, trust_score, novelty_score, severity_score, market_impact_score, freshness_score,
-            corroboration_count, event_type, countries, impacted_markets, published_at, detected_at
+            corroboration_count, event_type, severity, countries, impacted_markets, published_at, detected_at
      FROM surveillance_events
      WHERE detected_at > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 96 HOUR)
      ORDER BY rank_score DESC, updated_at DESC
@@ -75,17 +91,25 @@ async function runCorroborationPass() {
     for (const ev of group) {
       const bumpTrust = Math.min(16, (distinctSources - 1) * 4 + newCorr * 2);
       const newTrust = Math.min(100, Math.round((ev.trust_score || 50) + bumpTrust));
-      const rank = computeRankScore({
-        trust_score: newTrust,
-        novelty_score: ev.novelty_score,
-        freshness_score: ev.freshness_score,
-        severity_score: ev.severity_score,
-        market_impact_score: ev.market_impact_score,
-        corroboration_count: newCorr,
-        distinct_source_count: distinctSources,
-        repetition_penalty: 0,
-        disruption_boost: disruptionBoostFromRecord(ev),
-      });
+      const pubIso = ev.published_at ? new Date(ev.published_at).toISOString() : null;
+      const detIso = ev.detected_at ? new Date(ev.detected_at).toISOString() : new Date().toISOString();
+      const freshD = computeFreshnessDetail(pubIso, detIso);
+      const mktD = aggregateMarketImpactScore(parseImpactedMarkets(ev.impacted_markets));
+      const sevD = severityDetailScore(ev.severity);
+      const rank = computeRankScore(
+        {
+          trust_score: newTrust,
+          novelty_score: ev.novelty_score,
+          freshness_score: freshD,
+          severity_score: sevD,
+          market_impact_score: mktD,
+          corroboration_count: newCorr,
+          distinct_source_count: distinctSources,
+          repetition_penalty: 0,
+          disruption_boost: disruptionBoostFromRecord(ev),
+        },
+        ev.content_hash
+      );
       await executeQuery(
         `UPDATE surveillance_events SET
            story_id = ?,

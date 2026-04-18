@@ -84,7 +84,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    res.write(`retry: 12000\n\n`);
+    res.write(`retry: 8500\n\n`);
     res.write(`event: tick\ndata: ${payloadJson}\n\n`);
     res.end();
   } catch (e) {

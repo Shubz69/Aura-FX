@@ -265,6 +265,19 @@ describe('Scoring', () => {
     });
     expect(anchor).toBeGreaterThan(wall);
   });
+
+  it('computeRankScore tie-breaks on content hash when other inputs match', () => {
+    const p = {
+      trust_score: 80,
+      novelty_score: 60,
+      freshness_score: 90,
+      severity_score: 70,
+      market_impact_score: 50,
+    };
+    const a = computeRankScore(p, 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2');
+    const b = computeRankScore(p, 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+    if (a === b) throw new Error(`tie-break expected different ranks, both ${a}`);
+  });
 });
 
 describe('Adapter resilience helpers', () => {

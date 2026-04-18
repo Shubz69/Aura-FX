@@ -65,11 +65,12 @@ function computeFreshnessDetail(publishedAtIso, detectedAtIso, nowMs = Date.now(
   const ageMin = ageMs / 60000;
 
   if (ageH <= 2) {
-    /* Within the old “≤2h = 100” bucket, taper gently by minutes so simultaneous items differ. */
-    return Math.max(96, 100 - ageMin * 0.012);
+    /* Gentle minute taper so items published minutes apart aren’t identical; meets next segment at 2h (~98.8). */
+    return Math.max(96, 100 - ageMin * 0.01);
   }
   if (ageH <= 12) {
-    return 100 - (ageH - 2) * 1.2;
+    /* Continuous from ~98.8 @ 2h down to 88 @ 12h */
+    return 98.8 - (ageH - 2) * 1.08;
   }
   if (ageH <= 24) {
     return 88 - ((ageH - 12) * 13) / 12;

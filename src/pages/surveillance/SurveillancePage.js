@@ -221,7 +221,7 @@ export default function SurveillancePage() {
 
   useEffect(() => {
     if (!token || loading) return undefined;
-    const pollMs = sseOk ? 90000 : 45000;
+    const pollMs = sseOk ? 48000 : 22000;
     const t = setInterval(() => loadFeed(), pollMs);
     return () => clearInterval(t);
   }, [token, loading, loadFeed, sseOk]);

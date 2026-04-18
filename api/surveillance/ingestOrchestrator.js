@@ -117,4 +117,91 @@ async function runSurveillanceIngestion(opts = {}) {
   return { success: true, runId, durationMs: Date.now() - started, summary };
 }
 
-module.exports = { runSurveillanceIngestion };
+/**
+ * Run only specific adapters (e.g. live ADS-B) on a tight schedule without walking the full registry.
+ */
+async function runSurveillanceAdaptersById(adapterIds, opts = {}) {
+  const ids = (adapterIds || []).filter(Boolean);
+  if (!ids.length) {
+    return { success: true, runId: null, durationMs: 0, summary: { adapters: [] } };
+  }
+  const runId = `img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const started = Date.now();
+  const maxTotalMs = opts.maxTotalMs || 55000;
+  const delayMs = opts.delayMs ?? 0;
+  const maxPerAdapter = opts.maxPerAdapter ?? 60;
+
+  const shouldStop = () => Date.now() - started > maxTotalMs;
+
+  await ensureSurveillanceSchema();
+  await ensureAdapterRows(ADAPTERS);
+
+  const summary = { adapters: [], errors: [] };
+
+  const ctxBase = {
+    runId,
+    delayMs,
+    maxPerAdapter,
+    shouldStop,
+    sleep,
+    log: (lvl, m, e) => log(runId, lvl, m, e),
+  };
+
+  for (const adapterId of ids) {
+    if (shouldStop()) break;
+    const adapter = adapterById(adapterId);
+    if (!adapter) {
+      log(runId, 'warn', `unknown_adapter ${adapterId}`);
+      continue;
+    }
+
+    const t0 = Date.now();
+    let runDbId;
+    let itemsOut = 0;
+    let itemsIn = 0;
+    let errorCode = null;
+    let ingestMeta = null;
+    try {
+      runDbId = await recordRunStart(adapter.id);
+      const runResult = await adapter.run(ctxBase);
+      const items = Array.isArray(runResult) ? runResult : runResult?.items || [];
+      ingestMeta = Array.isArray(runResult) ? null : runResult?.meta || null;
+      itemsIn = items.length;
+      for (const raw of items) {
+        if (shouldStop()) break;
+        try {
+          await upsertRawEvent(raw);
+          itemsOut += 1;
+        } catch (e) {
+          log(runId, 'warn', `upsert ${adapter.id}`, e.message);
+        }
+      }
+      await markSuccess(adapter.id, itemsIn, itemsOut, Date.now() - t0, ingestMeta);
+    } catch (e) {
+      errorCode = e.message || 'adapter_failed';
+      summary.errors.push({ adapter: adapter.id, error: errorCode });
+      log(runId, 'error', `adapter ${adapter.id}`, errorCode);
+      await markFailure(adapter.id, errorCode, Date.now() - t0);
+    } finally {
+      await recordRunEnd(runDbId, itemsIn, itemsOut, errorCode, Date.now() - t0, {
+        runId,
+        targeted: true,
+        ...(ingestMeta && typeof ingestMeta === 'object' ? ingestMeta : {}),
+      });
+      summary.adapters.push({ id: adapter.id, itemsIn, itemsOut, ms: Date.now() - t0, errorCode });
+    }
+  }
+
+  if (!opts.skipCorroboration) {
+    try {
+      await runCorroborationPass();
+    } catch (e) {
+      log(runId, 'warn', 'corroboration_pass', e.message);
+    }
+  }
+
+  log(runId, 'info', 'ingest_complete', { ms: Date.now() - started, targeted: true, summary });
+  return { success: true, runId, durationMs: Date.now() - started, summary };
+}
+
+module.exports = { runSurveillanceIngestion, runSurveillanceAdaptersById };

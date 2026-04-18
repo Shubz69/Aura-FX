@@ -243,8 +243,7 @@ export default function SurveillanceGlobe({
     const r = Math.round(38 + nightFactor * 6);
     const g = Math.round(52 + nightFactor * 8);
     const b = Math.round(78 + nightFactor * 12);
-    const a = 0.072 + nightFactor * 0.038;
-    return `rgba(${r}, ${g}, ${b}, ${a})`;
+    return `rgb(${r}, ${g}, ${b})`;
   }, [nightFactor]);
 
   const atmosphereAltitude = useMemo(() => 0.078 + nightFactor * 0.032, [nightFactor]);
@@ -545,21 +544,31 @@ export default function SurveillanceGlobe({
       const inFocus = clusterTouchesFocus(p, idMap, focusRegion);
       const lens = !!focusRegion;
       const muted = lens && !inFocus && !isSel;
+      const liveCluster =
+        p.eventIds?.some((evId) => {
+          const ev = idMap.get(String(evId));
+          if (!ev) return false;
+          if (ev.source === 'opensky_live') return true;
+          const tg = ev.tags;
+          return Array.isArray(tg) && tg.some((t) => String(t).toLowerCase().includes('live_track'));
+        }) ?? false;
       const color = isSel
         ? '#ffd9a8'
         : isHover
           ? '#fff0d4'
           : muted
             ? 'rgba(120, 120, 130, 0.28)'
-            : p.maxSev >= 5
-              ? '#e86868'
-              : p.maxSev >= 4
-                ? '#e8945c'
-                : p.maxSev >= 3
-                  ? '#d4b84a'
-                  : lens && inFocus
-                    ? 'rgba(255, 214, 160, 0.92)'
-                    : 'rgba(234,169,96,0.52)';
+            : liveCluster
+              ? 'rgba(154, 214, 255, 0.92)'
+              : p.maxSev >= 5
+                ? '#e86868'
+                : p.maxSev >= 4
+                  ? '#e8945c'
+                  : p.maxSev >= 3
+                    ? '#d4b84a'
+                    : lens && inFocus
+                      ? 'rgba(255, 214, 160, 0.92)'
+                      : 'rgba(234,169,96,0.52)';
       return {
         ...p,
         color,
@@ -568,6 +577,7 @@ export default function SurveillanceGlobe({
           0.28 +
             p.count * 0.06 +
             p.maxSev * 0.05 +
+            (liveCluster ? 0.07 : 0) +
             (hot ? pulse * 0.06 : 0) +
             (isSel ? 0.14 : 0) +
             (isHover ? 0.08 : 0) +
@@ -576,6 +586,7 @@ export default function SurveillanceGlobe({
         altitude:
           0.012 +
           Math.min(0.065, p.count * 0.004 + pulseBoost + (isSel ? 0.018 : 0) + (isHover ? 0.01 : 0)) +
+          (liveCluster ? 0.014 : 0) +
           (lens && inFocus ? 0.02 : 0),
       };
     });

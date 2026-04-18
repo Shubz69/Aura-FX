@@ -7,7 +7,9 @@ const { storySignatureFromPayload } = require('./storyline');
 const {
   trustBaseFromAdapter,
   computeFreshnessScore,
+  computeFreshnessDetail,
   severityToScore,
+  severityDetailScore,
   aggregateMarketImpactScore,
   noveltyFromSimilarCount,
   computeTrustScore,
@@ -157,8 +159,10 @@ async function upsertRawEvent(base) {
       : new Date(merged.published_at).toISOString()
     : null;
   const detectedIso = new Date().toISOString();
+  const freshnessDetail = computeFreshnessDetail(publishedIso, detectedIso);
   const freshness = computeFreshnessScore(publishedIso, detectedIso);
   const sevSc = severityToScore(merged.severity);
+  const sevDetail = severityDetailScore(merged.severity);
   const mktSc = aggregateMarketImpactScore(mk);
   const riskBias = inferRiskBias(eventText(merged), mk);
   const baseTrust = trustBaseFromAdapter(merged.source);
@@ -166,17 +170,20 @@ async function upsertRawEvent(base) {
   const trustSc = computeTrustScore(baseTrust, conf01, merged.corroboration_count || 0);
   const why = buildWhyMatters(merged, mk, riskBias);
   const disruptionBoost = disruptionBoostFromRecord(merged);
-  const rank = computeRankScore({
-    trust_score: trustSc,
-    novelty_score: novelty,
-    freshness_score: freshness,
-    severity_score: sevSc,
-    market_impact_score: mktSc,
-    corroboration_count: merged.corroboration_count || 0,
-    distinct_source_count: 1,
-    repetition_penalty: repetitionPenalty,
-    disruption_boost: disruptionBoost,
-  });
+  const rank = computeRankScore(
+    {
+      trust_score: trustSc,
+      novelty_score: novelty,
+      freshness_score: freshnessDetail,
+      severity_score: sevDetail,
+      market_impact_score: mktSc,
+      corroboration_count: merged.corroboration_count || 0,
+      distinct_source_count: 1,
+      repetition_penalty: repetitionPenalty,
+      disruption_boost: disruptionBoost,
+    },
+    ch
+  );
 
   const sql = `
     INSERT INTO surveillance_events (

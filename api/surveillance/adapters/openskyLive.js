@@ -1,0 +1,194 @@
+/**
+ * Live ADS-B positions via OpenSky Network (research / non-commercial use).
+ * Optional OPENSKY_USERNAME + OPENSKY_PASSWORD improve rate limits.
+ * @see https://openskynetwork.github.io/opensky-api/rest.html
+ */
+
+const { fetchWithRetry } = require('../httpFetch');
+
+const ID = 'opensky_live';
+const HOSTS = ['opensky-network.org'];
+
+/** Regional boxes so we avoid downloading the entire globe in one payload. */
+const BOXES = [
+  { label: 'atlantic_na_eu', lamin: 25, lomin: -95, lamax: 58, lomax: 20 },
+  { label: 'middle_east', lamin: 12, lomin: 25, lamax: 42, lomax: 63 },
+  { label: 'west_pacific', lamin: -40, lomin: 110, lamax: 45, lomax: 180 },
+];
+
+function authHeaders() {
+  const u = process.env.OPENSKY_USERNAME;
+  const p = process.env.OPENSKY_PASSWORD;
+  if (!u || !p) return {};
+  const token = Buffer.from(`${u}:${p}`, 'utf8').toString('base64');
+  return { Authorization: `Basic ${token}` };
+}
+
+function scoreRow(sv) {
+  const baro = sv[7];
+  const vel = sv[9];
+  const altScore = baro != null ? Math.min(1, baro / 12000) : 0;
+  const velScore = vel != null ? Math.min(1, vel / 280) : 0;
+  return altScore * 0.55 + velScore * 0.45;
+}
+
+function parseStatesPayload(json) {
+  const raw = json && json.states;
+  if (!Array.isArray(raw)) return [];
+  const rows = [];
+  for (const sv of raw) {
+    if (!Array.isArray(sv) || sv.length < 11) continue;
+    const icao24 = sv[0];
+    const callsign = sv[1] != null ? String(sv[1]).trim() : '';
+    const originCountry = sv[2] != null ? String(sv[2]).trim() : '';
+    const timePosition = sv[3];
+    const longitude = sv[5];
+    const latitude = sv[6];
+    const baroAltitude = sv[7];
+    const onGround = sv[8] === true;
+    const velocity = sv[9];
+    const trueTrack = sv[10];
+
+    if (onGround) continue;
+    if (longitude == null || latitude == null) continue;
+    if (Math.abs(latitude) > 85) continue;
+
+    rows.push({
+      sv,
+      icao24,
+      callsign,
+      originCountry,
+      timePosition,
+      longitude,
+      latitude,
+      baroAltitude,
+      velocity,
+      trueTrack,
+      score: scoreRow(sv),
+    });
+  }
+  rows.sort((a, b) => b.score - a.score);
+  return rows;
+}
+
+function eventFromRow(row) {
+  const {
+    icao24,
+    callsign,
+    originCountry,
+    timePosition,
+    longitude,
+    latitude,
+    baroAltitude,
+    velocity,
+    trueTrack,
+  } = row;
+
+  const icao = String(icao24 || '').toLowerCase();
+  const url = `https://opensky-network.org/network/public?icao24=${encodeURIComponent(icao)}`;
+  const title = `ADS-B · ${icao}`;
+  const cs = callsign || '—';
+  const altM = baroAltitude != null ? Math.round(baroAltitude) : '—';
+  const spd = velocity != null ? velocity.toFixed(0) : '—';
+  const hdg = trueTrack != null ? Math.round(trueTrack) : '—';
+  const summary = `Live position · CS ${cs} · ${originCountry || 'unknown origin'} · FL ~${altM} m · ${spd} m/s · track ${hdg}°`;
+
+  const tPos = timePosition != null ? new Date(timePosition * 1000) : new Date();
+  const published_at = Number.isNaN(tPos.getTime())
+    ? new Date().toISOString().slice(0, 19).replace('T', ' ')
+    : tPos.toISOString().slice(0, 19).replace('T', ' ');
+
+  return {
+    source: ID,
+    source_type: 'live_adsb',
+    title: title.slice(0, 500),
+    summary: summary.slice(0, 1200),
+    body_snippet: summary.slice(0, 450),
+    url,
+    published_at,
+    event_type: 'aviation',
+    lat: Number(latitude),
+    lng: Number(longitude),
+    confidence: 0.82,
+    verification_state: 'telemetry',
+    tags: ['live_track', 'ads-b', 'opensky'],
+    source_meta: {
+      provider: 'opensky',
+      icao24: icao,
+      callsign: cs,
+      origin_country: originCountry,
+      baro_altitude_m: baroAltitude,
+      velocity_m_s: velocity,
+      true_track_deg: trueTrack,
+      time_position: timePosition,
+    },
+  };
+}
+
+module.exports = {
+  id: ID,
+  tier: 'standard',
+  defaultIntervalSeconds: 240,
+  allowHosts: HOSTS,
+  async run(ctx) {
+    const headers = {
+      Accept: 'application/json',
+      ...authHeaders(),
+    };
+
+    const maxPerBox = Math.min(28, Math.ceil((ctx.maxPerAdapter || 48) / BOXES.length));
+    const collected = [];
+
+    for (const box of BOXES) {
+      if (ctx.shouldStop()) break;
+      const q = new URLSearchParams({
+        lamin: String(box.lamin),
+        lomin: String(box.lomin),
+        lamax: String(box.lamax),
+        lomax: String(box.lomax),
+      });
+      const apiUrl = `https://opensky-network.org/api/states/all?${q.toString()}`;
+      try {
+        const { text } = await fetchWithRetry(apiUrl, {
+          allowHosts: HOSTS,
+          timeoutMs: 25000,
+          headers,
+          maxAttempts: 2,
+        });
+        let json;
+        try {
+          json = JSON.parse(text);
+        } catch {
+          continue;
+        }
+        const parsed = parseStatesPayload(json).slice(0, maxPerBox);
+        collected.push(...parsed);
+      } catch (e) {
+        ctx.log('warn', `${ID} ${box.label}`, e.message);
+      }
+    }
+
+    const merged = new Map();
+    for (const row of collected) {
+      const icaoKey = String(row.icao24 || '').toLowerCase();
+      if (!icaoKey) continue;
+      if (!merged.has(icaoKey) || merged.get(icaoKey).score < row.score) merged.set(icaoKey, row);
+    }
+    const unique = [...merged.values()].sort((a, b) => b.score - a.score);
+    const cap = Math.min(ctx.maxPerAdapter || 48, 48, unique.length);
+    const items = [];
+    for (let i = 0; i < cap; i += 1) {
+      items.push(eventFromRow(unique[i]));
+    }
+
+    return {
+      items,
+      meta: {
+        adapter_id: ID,
+        boxes: BOXES.length,
+        candidates: unique.length,
+        emitted: items.length,
+      },
+    };
+  },
+};

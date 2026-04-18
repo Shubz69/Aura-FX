@@ -69,15 +69,35 @@ function isMetadataAccessDenied(error) {
 }
 
 // Connection error codes/messages that warrant pool reset (e.g. Vercel serverless + MySQL)
-const CONNECTION_ERROR_CODES = new Set(['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'PROTOCOL_CONNECTION_LOST', 'ER_CON_COUNT_ERROR']);
-const CONNECTION_ERROR_MESSAGES = ['Connection lost', 'closed state', 'Connection closed', 'Cannot add new command', 'read ECONNRESET', 'connect ETIMEDOUT', 'Pool is closed', 'Too many connections', 'Queue limit reached'];
+const CONNECTION_ERROR_CODES = new Set([
+  'ETIMEDOUT',
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'PROTOCOL_CONNECTION_LOST',
+  'ER_CON_COUNT_ERROR',
+  'ER_NET_READ_INTERRUPTED',
+]);
+const CONNECTION_ERROR_MESSAGES = [
+  'Connection lost',
+  'closed state',
+  'Connection closed',
+  'Cannot add new command',
+  'read ECONNRESET',
+  'connect ETIMEDOUT',
+  'Pool is closed',
+  'Too many connections',
+  'Queue limit reached',
+  'timeout reading communication packets',
+  'Got timeout reading communication packets',
+];
 
 function isConnectionError(error) {
   if (!error) return false;
   const code = (error.code || '').toString();
   const msg = (error.message || '').toString();
   if (CONNECTION_ERROR_CODES.has(code)) return true;
-  return CONNECTION_ERROR_MESSAGES.some(m => msg.includes(m));
+  if (Number(error.errno) === 1155) return true;
+  return CONNECTION_ERROR_MESSAGES.some((m) => msg.includes(m));
 }
 
 function isTooManyConnectionsError(error) {

@@ -20,7 +20,7 @@ module.exports = {
     return runHtmlListingIngest(ctx, {
       id: ID,
       hosts: HOSTS,
-      listingUrl: 'https://www.ustr.gov/about/policy-offices/press-office/press-releases',
+      listingUrl: 'https://ustr.gov/',
       linkFilter: linkPrimary,
       linkFilterFallback: linkFallback,
       minPrimaryLinks: 2,

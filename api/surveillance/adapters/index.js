@@ -32,6 +32,10 @@ const easaNewsroom = require('./easaNewsroom');
 const ukCaaNews = require('./ukCaaNews');
 const canadaTransportNews = require('./canadaTransportNews');
 const wtoNews = require('./wtoNews');
+const openskyLive = require('./openskyLive');
+const dvidsNewsRss = require('./dvidsNewsRss');
+const ukModRss = require('./ukModRss');
+const gCaptainRss = require('./gCaptainRss');
 const { EXTENSION_CATEGORIES } = require('../officialSourceExtension');
 
 const ADAPTERS = [
@@ -69,6 +73,10 @@ const ADAPTERS = [
   ukCaaNews,
   canadaTransportNews,
   wtoNews,
+  openskyLive,
+  dvidsNewsRss,
+  ukModRss,
+  gCaptainRss,
 ];
 
 module.exports = { ADAPTERS, EXTENSION_CATEGORIES };

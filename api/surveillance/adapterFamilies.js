@@ -38,6 +38,10 @@ const ADAPTER_FAMILY = {
   afdb_news: 'development_multilateral',
   wto_news: 'trade_policy',
   canada_transport_news: 'logistics_transport',
+  opensky_live: 'aviation',
+  dvids_news_rss: 'defense_press',
+  uk_mod_rss: 'defense_press',
+  gcaptain_rss: 'maritime',
 };
 
 /** Coarse region for coverage diagnostics (not a legal jurisdiction). */
@@ -76,6 +80,10 @@ const ADAPTER_REGION = {
   rba_media: 'apac',
   wto_news: 'global',
   afdb_news: 'ssa',
+  dvids_news_rss: 'na',
+  uk_mod_rss: 'eu',
+  gcaptain_rss: 'global',
+  opensky_live: 'global',
 };
 
 const REGIONS = ['na', 'sa', 'eu', 'mea', 'ssa', 'apac', 'global'];
@@ -208,13 +216,13 @@ function aviationMaritimeHealthSummary(states) {
       adapterCount: avTotal,
       freshOrWarm: avFresh,
       staleOrNever: avStale,
-      note: 'Authority press and regulator pages only; not exhaustive flight tracking.',
+      note: 'Includes regulator/FAA-style releases plus OpenSky ADS-B positions (research feed; not all aircraft worldwide).',
     },
     maritimeLogistics: {
       adapterCount: marTotal,
       freshOrWarm: marFresh,
       staleOrNever: marStale,
-      note: 'Public institutional notices; partial chokepoint visibility.',
+      note: 'IMO/gCaptain maritime trade press plus institutional notices; ship AIS tracks require a dedicated AIS provider.',
     },
   };
 }

@@ -1,5 +1,5 @@
 require('../utils/suppress-warnings');
-const { runSurveillanceIngestion } = require('../surveillance/ingestOrchestrator');
+const { runSurveillanceAdaptersById } = require('../surveillance/ingestOrchestrator');
 
 function isAuthorized(req) {
   const authHeader = req.headers.authorization;
@@ -11,6 +11,9 @@ function isAuthorized(req) {
   return isVercelCronHeader || hasValidSecret || (isVercelCronUA && process.env.VERCEL);
 }
 
+/**
+ * Frequent OpenSky ADS-B ingest only — keeps aircraft positions fresh without running all HTML adapters.
+ */
 module.exports = async (req, res) => {
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
@@ -21,22 +24,22 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const result = await runSurveillanceIngestion({
-      maxTotalMs: 240000,
-      delayMs: 650,
-      maxPerAdapter: 12,
-      maxAdaptersPerRun: 22,
+    const result = await runSurveillanceAdaptersById(['opensky_live'], {
+      maxTotalMs: 52000,
+      delayMs: 0,
+      maxPerAdapter: 56,
+      skipCorroboration: true,
     });
     return res.status(200).json(result);
   } catch (error) {
-    console.error('[cron/surveillance-ingest]', error);
+    console.error('[cron/surveillance-tracks]', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Surveillance ingestion failed',
+      message: error.message || 'Surveillance tracks ingest failed',
     });
   }
 };
 
 module.exports.config = {
-  maxDuration: 300,
+  maxDuration: 120,
 };

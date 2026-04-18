@@ -800,6 +800,10 @@
       "destination": "/api/cron/surveillance-ingest.js"
     },
     {
+      "source": "/api/cron/surveillance-tracks",
+      "destination": "/api/cron/surveillance-tracks.js"
+    },
+    {
       "source": "/api/surveillance/feed",
       "destination": "/api/surveillance/feed.js"
     },
@@ -892,6 +896,10 @@
     {
       "path": "/api/cron/surveillance-ingest",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/surveillance-tracks",
+      "schedule": "*/3 * * * *"
     },
     {
       "path": "/api/cron/ohlcv-incremental",
