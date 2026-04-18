@@ -1,4 +1,4 @@
-'use strict';
+import { sessionWhyItMatters } from './marketChangeWhyCopy';
 
 /**
  * Derives additional compact rows from the same Trader Desk snapshot when primary lists are thin.
@@ -180,11 +180,12 @@ export function deriveTimelineMerged(timeline, signals, drivers, marketChangesTo
   (signals || []).slice(0, 12).forEach((s, i) => {
     const line = signalLine(s, i);
     if (!line) return;
+    const impl = String(s.implication || '').trim().slice(0, 200);
     rows.push({
       timeLabel: `${label} ${i + 1}`,
       whatChanged: line,
       assetsAffected: [String(s.asset || 'Cross-asset').slice(0, 24)],
-      whyItMatters: String(s.implication || '').trim().slice(0, 200) || 'Cross-asset alignment from desk signals.',
+      whyItMatters: impl || sessionWhyItMatters(i),
       priority: 'medium',
     });
   });
@@ -207,15 +208,15 @@ export function deriveTimelineMerged(timeline, signals, drivers, marketChangesTo
         const text = typeof item === 'string' ? item : item?.title || item?.description || '';
         const wc = String(text || '').trim();
         if (!wc) return null;
-        const why =
+        const fromItem =
           typeof item === 'object' && item?.whyItMatters
             ? String(item.whyItMatters).trim().slice(0, 200)
-            : wc.slice(0, 200);
+            : '';
         return {
           timeLabel: `${label} ${idx + 1}`,
           whatChanged: wc,
           assetsAffected: [],
-          whyItMatters: why || wc.slice(0, 200),
+          whyItMatters: fromItem || sessionWhyItMatters(idx),
           priority: 'medium',
         };
       })

@@ -194,30 +194,20 @@ function buildCatalystCompactLines(showing, macroPhase, outlookRiskContext, risk
   return lines.slice(0, 5);
 }
 
-function buildExpectedBehavior(showing, macroPhase, outlookRiskContext, riskEngine) {
+function buildExpectedBehavior(showing, _macroPhase, outlookRiskContext, _riskEngine) {
   const pulse = showing.marketPulse || {};
   const outlook = pulse.outlookPulse && typeof pulse.outlookPulse === 'object' ? pulse.outlookPulse : null;
-  const mins = riskEngine?.nextRiskEventInMins;
 
+  const driftCore = 'Drift into catalyst — no clean trend until trigger.';
   const base = outlook?.volatilityCondition
-    ? clip(`Base: ${String(outlook.volatilityCondition)}`, 100)
-    : clip(`Base: ${macroPhase.label} until ${Number.isFinite(mins) ? `~${mins}m catalyst` : 'next print'}.`, 100);
+    ? clip(`Base: ${String(outlook.volatilityCondition).slice(0, 72)} — ${driftCore}`, 118)
+    : clip(`Base: ${driftCore}`, 118);
 
-  const cond = clip(
-    pulse.score != null && Number(pulse.score) >= 58
-      ? 'Conditional: continuation if depth stacks · trail stops.'
-      : 'Conditional: scale only after sleeve leadership proves.',
-    100,
-  );
+  const triggered = clip('If triggered: Direction follows leader (rates/USD first).', 118);
 
-  const fail = clip(
-    macroPhase.key === 'pre-event'
-      ? 'Failure: headline chase · poor fills.'
-      : 'Failure: size without a catalyst clock.',
-    100,
-  );
+  const failureMode = clip('Failure mode: Chop persists — false breaks likely.', 118);
 
-  return [base, cond, fail];
+  return [base, triggered, failureMode];
 }
 
 function buildTradeConditionsMatrix(showing, macroPhase, riskEngine) {
@@ -315,6 +305,16 @@ function buildExecutionContext(showing, macroPhase, riskEngine, snap) {
   ];
 }
 
+/** Desk-style risk framing — compact KV, same tone as execution context */
+function buildRiskFramingLines() {
+  return [
+    { label: 'Upside risk', text: 'Weak — no aggressive chase without catalyst.' },
+    { label: 'Downside risk', text: 'Limited — lack of forced positioning unwind.' },
+    { label: 'Volatility risk', text: 'Event-driven — expansion only on trigger.' },
+    { label: 'Liquidity risk', text: 'Moderate — depth can disappear during transitions.' },
+  ];
+}
+
 function buildTraderEdgeLines(macroPhase, level, riskEngine) {
   const mins = riskEngine?.nextRiskEventInMins;
 
@@ -384,6 +384,7 @@ export function buildMacroTimingInflectionWindow(showing) {
     expectedBehavior: buildExpectedBehavior(desk, macroPhase, outlookRiskContext, riskEngine),
     tradeConditionsMatrix: buildTradeConditionsMatrix(desk, macroPhase, riskEngine),
     traderEdgeLines: buildTraderEdgeLines(macroPhase, level, riskEngine),
+    riskFraming: buildRiskFramingLines(),
     timingCompact: {
       lines: [activeTimingWindow.headline, activeTimingWindow.executionNote],
     },

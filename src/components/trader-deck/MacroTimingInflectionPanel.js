@@ -14,13 +14,15 @@ function parseCatalystRow(line) {
   return m ? { tag: m[1].trim(), insight: m[2].trim() } : { tag: '—', insight: String(line || '—').trim() };
 }
 
-/** Strip verbose prefixes from expected-behavior bullets for scanning */
+/** Strip verbose prefixes from expected-path bullets for scanning */
 function stripExpectedPrefix(line) {
   return String(line || '')
     .replace(/^Base case:\s*/i, '')
     .replace(/^Base:\s*/i, '')
     .replace(/^Conditional:\s*/i, '')
+    .replace(/^If triggered:\s*/i, '')
     .replace(/^Failure case:\s*/i, '')
+    .replace(/^Failure mode:\s*/i, '')
     .replace(/^Failure:\s*/i, '')
     .trim();
 }
@@ -41,6 +43,7 @@ export default function MacroTimingInflectionPanel({ model, updatedAt }) {
   const matrix = m.tradeConditionsMatrix && typeof m.tradeConditionsMatrix === 'object' ? m.tradeConditionsMatrix : {};
   const edgeLines = Array.isArray(m.traderEdgeLines) ? m.traderEdgeLines : [];
   const executionContext = Array.isArray(m.executionContext) ? m.executionContext : [];
+  const riskFraming = Array.isArray(m.riskFraming) ? m.riskFraming : [];
 
   const lvlMod = levelMod(inflect.level);
 
@@ -124,8 +127,8 @@ export default function MacroTimingInflectionPanel({ model, updatedAt }) {
 
           {/* EXPECTED + CONDITIONS */}
           <div className="mo-macro-timing__dual">
-            <div className="mo-macro-timing__dual-col">
-              <p className="mo-macro-timing__dual-head">Expected</p>
+            <div className="mo-macro-timing__dual-col mo-macro-timing__dual-col--expected-path">
+              <p className="mo-macro-timing__dual-head">Expected path</p>
               <dl className="mo-macro-timing__kv">
                 <div className="mo-macro-timing__kv-row">
                   <dt>Base</dt>
@@ -136,7 +139,7 @@ export default function MacroTimingInflectionPanel({ model, updatedAt }) {
                   <dd>{stripExpectedPrefix(behavior[1]) || '—'}</dd>
                 </div>
                 <div className="mo-macro-timing__kv-row">
-                  <dt>Failure</dt>
+                  <dt>Failure mode</dt>
                   <dd>{stripExpectedPrefix(behavior[2]) || '—'}</dd>
                 </div>
               </dl>
@@ -173,6 +176,21 @@ export default function MacroTimingInflectionPanel({ model, updatedAt }) {
               ))}
             </dl>
           </div>
+
+          {/* RISK FRAMING — fills vertical rhythm above trader edge */}
+          {riskFraming.length > 0 ? (
+            <div className="mo-macro-timing__exec-context mo-macro-timing__risk-framing">
+              <p className="mo-macro-timing__block-title">Risk framing</p>
+              <dl className="mo-macro-timing__kv mo-macro-timing__kv--exec">
+                {riskFraming.map((row, i) => (
+                  <div key={i} className="mo-macro-timing__kv-row mo-macro-timing__kv-row--exec">
+                    <dt>{row.label}</dt>
+                    <dd>{row.text}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ) : null}
 
           {/* TRADER EDGE */}
           <footer className="mo-macro-timing__edge-bar">

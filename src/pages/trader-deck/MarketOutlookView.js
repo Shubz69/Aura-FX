@@ -32,6 +32,7 @@ import {
   buildTradeExpressionMatrix,
 } from '../../lib/trader-deck/marketOutlookProductIntel';
 import { buildMacroTimingInflectionWindow } from '../../lib/trader-deck/macroTimingInflectionWindow';
+import { sessionWhyItMatters } from '../../lib/trader-deck/marketChangeWhyCopy';
 import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput.react.js';
 
 /** When the API omits sleeves, derive compact cards from cross-asset signals + drivers (real desk fields, not placeholders). */
@@ -253,9 +254,25 @@ function buildTimelineFallback(marketChangesToday, tf) {
       timeLabel: `${label} ${idx + 1}`,
       whatChanged: text,
       assetsAffected: assets,
-      whyItMatters: 'Highlights what changed versus the prior desk baseline; follow-through depends on liquidity and calendar.',
+      whyItMatters: sessionWhyItMatters(idx),
       priority: typeof item === 'object' && item?.priority ? item.priority : 'medium',
     };
+  });
+}
+
+/** Replace legacy identical “why” lines from API with rotation copy */
+const GENERIC_WHY_PREFIXES = [
+  'Shifts the macro narrative versus the prior baseline',
+  'Highlights what changed versus the prior desk baseline',
+];
+
+function enrichTimelineStaleWhyCopy(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return rows;
+  return rows.map((row, i) => {
+    const w = String(row?.whyItMatters || '').trim();
+    const isGeneric = !w || GENERIC_WHY_PREFIXES.some((p) => w.startsWith(p));
+    if (!isGeneric) return row;
+    return { ...row, whyItMatters: sessionWhyItMatters(i) };
   });
 }
 
@@ -279,9 +296,11 @@ function normalizeForUI(data, period = 'daily') {
     strength: typeof s.strength === 'string' ? s.strength : '',
     implication: typeof s.implication === 'string' ? s.implication : '',
   }));
-  const timeline = (data.marketChangesTimeline && data.marketChangesTimeline.length)
-    ? data.marketChangesTimeline
-    : buildTimelineFallback(data.marketChangesToday || [], tf);
+  const timeline = enrichTimelineStaleWhyCopy(
+    (data.marketChangesTimeline && data.marketChangesTimeline.length)
+      ? data.marketChangesTimeline
+      : buildTimelineFallback(data.marketChangesToday || [], tf)
+  );
   const headlineSample = Array.isArray(data.headlineSample) ? data.headlineSample.map((h) => String(h || '').trim()).filter(Boolean) : [];
   const headlineInsights = (data.headlineInsights && data.headlineInsights.length)
     ? data.headlineInsights

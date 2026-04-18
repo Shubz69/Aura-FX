@@ -308,6 +308,14 @@ function enrichSessionContext(sessionContext, crossAlign, riskEngine) {
   return { ...sessionContext, sessions: nextSessions };
 }
 
+/** Distinct transmission copy per row (see `src/lib/trader-deck/marketChangeWhyCopy.js` for client). */
+const MARKET_CHANGE_WHY_ROTATOR = [
+  'USD rebalancing resets short-term positioning → FX pairs lose directional clarity until a new driver emerges.',
+  'Gold reacting to real yields signals macro sensitivity remains intact → not an isolated move, but part of rate-driven repricing.',
+  'Oil influencing inflation expectations feeds directly into rates → creates second-order impact across FX and equities.',
+  'Geopolitical premium lifts volatility across assets → reduces correlation stability and increases false directional moves.',
+];
+
 function buildMarketChangesTimeline(marketChangesToday, timeframe) {
   const label = timeframe === 'weekly' ? 'Week' : 'Session';
   const list = Array.isArray(marketChangesToday) ? marketChangesToday : [];
@@ -319,7 +327,7 @@ function buildMarketChangesTimeline(marketChangesToday, timeframe) {
       timeLabel: `${label} update ${idx + 1}`,
       whatChanged: text,
       assetsAffected: assets,
-      whyItMatters: 'Shifts the macro narrative versus the prior baseline; watch follow-through in correlated legs.',
+      whyItMatters: MARKET_CHANGE_WHY_ROTATOR[idx % MARKET_CHANGE_WHY_ROTATOR.length],
       priority: typeof item === 'object' && item?.priority ? item.priority : 'medium',
     };
   });
