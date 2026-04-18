@@ -51,7 +51,6 @@ const BRIEF_KIND_ORDER = [
   'aura_institutional_daily_indices',
   'aura_institutional_daily_bonds',
   'aura_institutional_daily_futures',
-  'aura_institutional_daily',
   'aura_institutional_weekly_forex',
   'aura_institutional_weekly_crypto',
   'aura_institutional_weekly_commodities',
@@ -60,22 +59,6 @@ const BRIEF_KIND_ORDER = [
   'aura_institutional_weekly_indices',
   'aura_institutional_weekly_bonds',
   'aura_institutional_weekly_futures',
-  'aura_institutional_weekly',
-  /** Legacy slugs retained for historical DB rows */
-  'global_macro',
-  'equities',
-  'forex',
-  'commodities',
-  'fixed_income',
-  'crypto',
-  'geopolitics',
-  'market_sentiment',
-  'stocks',
-  'indices',
-  'futures',
-  'bonds',
-  'etfs',
-  'general',
 ];
 const BRIEF_KIND_LABEL = {
   aura_sunday_market_open: 'Sunday Market Open Brief',
@@ -87,7 +70,6 @@ const BRIEF_KIND_LABEL = {
   aura_institutional_daily_indices: 'Daily Brief — Indices',
   aura_institutional_daily_bonds: 'Daily Brief — Bonds',
   aura_institutional_daily_futures: 'Daily Brief — Futures',
-  aura_institutional_daily: 'Institutional Daily (legacy)',
   aura_institutional_weekly_forex: 'WFA Forex',
   aura_institutional_weekly_crypto: 'WFA Crypto',
   aura_institutional_weekly_commodities: 'WFA Commodities',
@@ -96,21 +78,6 @@ const BRIEF_KIND_LABEL = {
   aura_institutional_weekly_indices: 'WFA Indices',
   aura_institutional_weekly_bonds: 'WFA Bonds',
   aura_institutional_weekly_futures: 'WFA Futures',
-  aura_institutional_weekly: 'Institutional Weekly (legacy)',
-  global_macro: 'Global Macro',
-  equities: 'Equities',
-  forex: 'Forex',
-  commodities: 'Commodities',
-  fixed_income: 'Fixed Income',
-  crypto: 'Crypto',
-  geopolitics: 'Geopolitics',
-  market_sentiment: 'Market Sentiment',
-  stocks: 'Stocks',
-  indices: 'Indices',
-  futures: 'Futures',
-  bonds: 'Bonds',
-  etfs: 'ETFs',
-  general: 'Desk brief',
 };
 
 const CATEGORY_BRIEF_KINDS = new Set([
@@ -124,35 +91,9 @@ const CATEGORY_BRIEF_KINDS = new Set([
   'futures',
 ]);
 
-/** Canonical automated kinds + legacy rows still readable from DB */
-const ALLOWED_BRIEF_KINDS = new Set([
-  'aura_sunday_market_open',
-  'aura_institutional_daily_forex',
-  'aura_institutional_daily_crypto',
-  'aura_institutional_daily_commodities',
-  'aura_institutional_daily_etfs',
-  'aura_institutional_daily_stocks',
-  'aura_institutional_daily_indices',
-  'aura_institutional_daily_bonds',
-  'aura_institutional_daily_futures',
-  'aura_institutional_daily',
-  'aura_institutional_weekly_forex',
-  'aura_institutional_weekly_crypto',
-  'aura_institutional_weekly_commodities',
-  'aura_institutional_weekly_etfs',
-  'aura_institutional_weekly_stocks',
-  'aura_institutional_weekly_indices',
-  'aura_institutional_weekly_bonds',
-  'aura_institutional_weekly_futures',
-  'aura_institutional_weekly',
-  ...CATEGORY_BRIEF_KINDS,
-  'global_macro',
-  'equities',
-  'geopolitics',
-  'market_sentiment',
-  'fixed_income',
-  'general',
-]);
+/** Matches `/api/trader-deck/content` intel payload (eight sleeves + optional Sunday open). */
+const INTEL_API_BRIEF_KIND_RE =
+  /^aura_sunday_market_open$|^aura_institutional_daily_(forex|crypto|commodities|etfs|stocks|indices|bonds|futures)$|^aura_institutional_weekly_(forex|crypto|commodities|etfs|stocks|indices|bonds|futures)$/;
 
 const BY_AURA_TERMINAL = 'By AURA TERMINAL';
 
@@ -200,16 +141,11 @@ function sanitizeBriefForPreview(text) {
   return t.trim();
 }
 
-/** Ensure every API row renders: unknown brief_kind maps to general (never drop silently). */
 function normalizeBriefsList(items) {
   if (!Array.isArray(items)) return [];
   return items
     .filter((b) => b && typeof b === 'object')
-    .map((b) => {
-      const k = String(b.briefKind || '').toLowerCase();
-      if (ALLOWED_BRIEF_KINDS.has(k)) return b;
-      return { ...b, briefKind: 'general' };
-    });
+    .filter((b) => INTEL_API_BRIEF_KIND_RE.test(String(b.briefKind || '').toLowerCase()));
 }
 
 const BRIEF_POLL_MS = 3000;
@@ -327,14 +263,21 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     return sortedBriefs.filter((b) => selectedKinds.has(String(b?.briefKind || '').toLowerCase()));
   }, [sortedBriefs, selectedKinds]);
 
-  const categoryBriefCount = useMemo(
-    () => briefs.filter((b) => CATEGORY_BRIEF_KINDS.has(String(b?.briefKind || '').toLowerCase())).length,
-    [briefs]
-  );
-  const hasInstitutionalBrief = useMemo(
-    () => briefs.some((b) => String(b?.briefKind || '').toLowerCase().startsWith('aura_institutional')),
-    [briefs]
-  );
+  const categoryBriefCount = useMemo(() => {
+    const re =
+      period === 'weekly'
+        ? /^aura_institutional_weekly_(forex|crypto|commodities|etfs|stocks|indices|bonds|futures)$/
+        : /^aura_institutional_daily_(forex|crypto|commodities|etfs|stocks|indices|bonds|futures)$/;
+    return briefs.filter((b) => re.test(String(b?.briefKind || '').toLowerCase())).length;
+  }, [briefs, period]);
+
+  const hasInstitutionalBrief = useMemo(() => {
+    const re =
+      period === 'weekly'
+        ? /^aura_institutional_weekly_(forex|crypto|commodities|etfs|stocks|indices|bonds|futures)$/
+        : /^aura_institutional_daily_(forex|crypto|commodities|etfs|stocks|indices|bonds|futures)$/;
+    return briefs.some((b) => re.test(String(b?.briefKind || '').toLowerCase()));
+  }, [briefs, period]);
 
   const categorySleevesLoaded =
     typeof intelDeskMeta?.categorySleevePack?.loaded === 'number'
@@ -342,19 +285,25 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       : categoryBriefCount;
 
   /** Server may be gap-filling remaining sleeves in the background — keep polling until the full pack lands. */
-  const needsPartialIntelPoll = useMemo(
-    () =>
+  const needsPartialIntelPoll = useMemo(() => {
+    const onlySundayOpen =
+      period === 'daily' &&
+      briefs.length === 1 &&
+      String(briefs[0]?.briefKind || '').toLowerCase() === 'aura_sunday_market_open';
+    if (onlySundayOpen) return false;
+    return (
       Boolean(intelDeskMeta?.deskAutomationConfigured) &&
       briefs.length > 0 &&
-      (categorySleevesLoaded < CATEGORY_BRIEF_KINDS.size || !hasInstitutionalBrief),
-    [
-      intelDeskMeta?.deskAutomationConfigured,
-      intelDeskMeta?.categorySleevePack?.loaded,
-      briefs.length,
-      categorySleevesLoaded,
-      hasInstitutionalBrief,
-    ]
-  );
+      (categorySleevesLoaded < CATEGORY_BRIEF_KINDS.size || !hasInstitutionalBrief)
+    );
+  }, [
+    period,
+    intelDeskMeta?.deskAutomationConfigured,
+    intelDeskMeta?.categorySleevePack?.loaded,
+    briefs,
+    categorySleevesLoaded,
+    hasInstitutionalBrief,
+  ]);
 
   const weekendSourceLabel = useMemo(() => {
     const iso = weekendBriefsNote?.sourceDate;
