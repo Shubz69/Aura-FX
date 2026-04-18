@@ -769,15 +769,17 @@
 
 /* Match AuraShared `.aa-card` glass (dashboard outlet panels) */
 .trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold {
-  background: rgba(12, 14, 26, 0.82) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 14px !important;
+  background: linear-gradient(180deg, rgba(8, 18, 48, 0.94) 0%, rgba(4, 10, 30, 0.97) 100%) !important;
+  border: 1px solid rgba(120, 160, 255, 0.18) !important;
+  border-radius: 13px !important;
   padding: 18px !important;
   backdrop-filter: blur(16px) saturate(1.06) !important;
   -webkit-backdrop-filter: blur(16px) saturate(1.06) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 8px 28px rgba(0, 0, 0, 0.28) !important;
+    inset 0 1px 0 rgba(160, 190, 255, 0.08),
+    inset 0 0 18px rgba(40, 90, 255, 0.05),
+    0 0 18px rgba(214, 172, 74, 0.06),
+    0 12px 36px rgba(0, 0, 0, 0.42) !important;
 }
 
 .trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold::before {

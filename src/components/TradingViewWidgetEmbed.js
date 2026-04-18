@@ -130,7 +130,7 @@ export default function TradingViewWidgetEmbed({
   }, [allowSymbolChange, fillDims.h, fillDims.w, fillParent, interval, studies, symbol, theme, widgetId]);
 
   const h = height === '100%' || fillParent ? '100%' : height;
-  const minH = fillParent ? 0 : h === '100%' ? 'min(520px, 52vh)' : height;
+  const minH = fillParent ? '100%' : h === '100%' ? 'min(520px, 52vh)' : height;
 
   return (
     <div

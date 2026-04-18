@@ -777,6 +777,7 @@ export default function TraderLab() {
                   <li key={line}>{line}</li>
                 ))}
               </ul>
+              <p className="tlab-card__subnote">Full text (one driver per line)</p>
               <textarea
                 className="tlab-textarea tlab-textarea--tight"
                 value={form.keyDrivers}
@@ -793,6 +794,7 @@ export default function TraderLab() {
                   <li key={line}>{line}</li>
                 ))}
               </ul>
+              <p className="tlab-card__subnote">Full text (one point per line)</p>
               <textarea
                 className="tlab-textarea tlab-textarea--tight tlab-textarea--dock-fundamental"
                 value={form.fundamentalBacking}

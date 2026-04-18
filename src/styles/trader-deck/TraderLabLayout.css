@@ -7,8 +7,9 @@
   --tl-col-right: 320px;
   --tl-radius-card: 14px;
   --tl-radius-input: 10px;
-  --tl-line: rgba(255, 255, 255, 0.1);
-  --tl-surface: linear-gradient(165deg, rgba(14, 16, 28, 0.96), rgba(8, 10, 22, 0.98));
+  --tl-line: rgba(120, 160, 255, 0.18);
+  /* Align with Market Outlook `.mo-card-shell` (TraderDeckMarket.css) */
+  --tl-surface: linear-gradient(180deg, rgba(8, 18, 48, 0.94) 0%, rgba(4, 10, 30, 0.97) 100%);
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: auto;
@@ -169,8 +170,7 @@
   flex-direction: column;
   gap: var(--tl-gap);
   min-width: 0;
-  min-height: 0;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
 }
 
 @media (min-width: 1181px) {
@@ -195,23 +195,26 @@
   display: flex;
   flex-direction: column;
   gap: var(--tl-gap-inner);
-  flex: 0 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
   min-width: 0;
   width: 100%;
 }
 
-/* Chart card: dominant center panel */
+/* Chart card: dominant center panel (Market Outlook–style shell) */
 .trader-lab-v2--workspace .tlab-card--focal {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
   width: 100%;
   padding: 14px 16px !important;
-  border-radius: var(--tl-radius-card);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(12, 14, 26, 0.85);
+  border-radius: 13px;
+  border: 1px solid rgba(120, 160, 255, 0.18);
+  background: linear-gradient(180deg, rgba(8, 18, 48, 0.94) 0%, rgba(4, 10, 30, 0.97) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(160, 190, 255, 0.08),
+    inset 0 0 18px rgba(40, 90, 255, 0.05),
+    0 0 18px rgba(214, 172, 74, 0.06),
+    0 12px 36px rgba(0, 0, 0, 0.42);
   box-sizing: border-box;
 }
 
@@ -247,17 +250,16 @@
 }
 
 .trader-lab-v2--workspace .tlab-chart-host--fill {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
   width: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  border-radius: calc(var(--tl-radius-card) - 4px);
+  border-radius: 10px;
   overflow: hidden;
-  border: none;
-  background: rgba(4, 6, 14, 0.72);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(120, 160, 255, 0.14);
+  background: rgba(4, 8, 22, 0.95);
+  box-shadow: inset 0 1px 0 rgba(160, 190, 255, 0.06);
 }
 
 /* Single outer frame on chart card — avoid double box border */
@@ -274,25 +276,27 @@
   }
 
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-main .tlab-card--focal {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     align-self: stretch;
     width: 100%;
     max-width: none;
-    min-height: 0;
     display: flex;
     flex-direction: column;
   }
 
-  /* Large dominant chart — prioritize visibility over compactness */
+  /*
+   * Fixed chart slot height so TradingView (fillParent / height 100%) fully fills the frame.
+   * Avoid flex:1 + min-height:0 here — that left empty space below a short iframe.
+   */
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-main .tlab-chart-host--fill {
-    flex: 1 1 auto !important;
+    flex: 0 0 auto !important;
     width: 100% !important;
     max-width: none !important;
     margin-inline: 0 !important;
     aspect-ratio: unset !important;
-    min-height: max(500px, min(600px, 60vh)) !important;
-    height: auto !important;
-    max-height: none !important;
+    height: clamp(560px, 62vh, 840px) !important;
+    min-height: clamp(560px, 62vh, 840px) !important;
+    max-height: clamp(560px, 62vh, 840px) !important;
   }
 
   .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .trader-lab-v2__right .tlab-card--dock-exec {
@@ -365,27 +369,29 @@
 
 /* Mobile / non-terminal: readable chart height */
 .trader-lab-v2--workspace:not(.trader-lab-v2--terminal-desktop) .tlab-chart-host--fill {
-  min-height: max(420px, min(520px, 58vh));
+  height: clamp(480px, 58vh, 720px);
+  min-height: clamp(480px, 58vh, 720px);
 }
 
 .trader-lab-v2--workspace .tlab-chart-host--fill .trader-suite-chart-frame {
   flex: 1 1 auto !important;
-  min-height: 0 !important;
+  align-self: stretch !important;
+  width: 100% !important;
+  min-height: 100% !important;
   height: 100% !important;
   max-height: none !important;
 }
 
-/* Win over .journal-page .trader-suite-chart-frame (460px) and any legacy chart height rules */
+/* Win over .journal-page .trader-suite-chart-frame (460px) — lab chart must fill host */
 .journal-page .trader-lab-v2--workspace .tlab-chart-host--fill .trader-suite-chart-frame {
-  min-height: 0 !important;
+  min-height: 100% !important;
   height: 100% !important;
   max-height: none !important;
   flex: 1 1 auto !important;
 }
 
 .journal-page .trader-lab-v2--workspace .tlab-chart-host--fill {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto !important;
 }
 
 @media (min-width: 1181px) {
@@ -394,11 +400,10 @@
     .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
     .tlab-center-main
     .tlab-card--focal {
-    flex: 1 1 auto !important;
+    flex: 0 0 auto !important;
     align-self: stretch !important;
     width: 100% !important;
     max-width: none !important;
-    min-height: 0 !important;
     display: flex !important;
     flex-direction: column !important;
   }
@@ -408,14 +413,14 @@
     .trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
     .tlab-center-main
     .tlab-chart-host--fill {
-    flex: 1 1 auto !important;
+    flex: 0 0 auto !important;
     width: 100% !important;
     max-width: none !important;
     margin-inline: 0 !important;
     aspect-ratio: unset !important;
-    min-height: max(500px, min(600px, 60vh)) !important;
-    height: auto !important;
-    max-height: none !important;
+    height: clamp(560px, 62vh, 840px) !important;
+    min-height: clamp(560px, 62vh, 840px) !important;
+    max-height: clamp(560px, 62vh, 840px) !important;
   }
 }
 
@@ -688,6 +693,14 @@
   letter-spacing: 0.06em;
   text-transform: none;
   color: rgba(230, 236, 255, 0.95);
+}
+
+.trader-lab-v2 .tlab-card__subnote {
+  margin: 0 0 8px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(160, 175, 210, 0.55);
 }
 
 .trader-lab-v2--workspace .tlab-field label,
