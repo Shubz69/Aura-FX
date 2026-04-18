@@ -45,7 +45,6 @@ export default function TradingViewChartPanel({
         style={{
           minHeight: loadingMinH,
           height: fillParent ? '100%' : undefined,
-          flex: fillParent ? '1 1 auto' : undefined,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

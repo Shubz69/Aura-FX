@@ -1,8 +1,8 @@
 /* Trader Lab — workspace (scoped). Keeps Aura tokens; does not change page background. */
 
 .trader-lab-v2.trader-lab-v2--workspace {
-  --tl-gap: 20px;
-  --tl-gap-inner: 16px;
+  --tl-gap: 14px;
+  --tl-gap-inner: 12px;
   /* ~22% | ~56% | ~22% — matches Market Outlook balance; center holds the chart */
   --tl-col-terminal: minmax(260px, 0.95fr) minmax(280px, 2.55fr) minmax(260px, 0.95fr);
   --tl-chart-slot: clamp(580px, 68vh, 920px);
@@ -57,7 +57,7 @@
 
 .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--compact {
   grid-template-columns: minmax(260px, 0.95fr) minmax(280px, 2.55fr) minmax(260px, 0.95fr) !important;
-  gap: 20px !important;
+  gap: 14px !important;
   padding: 16px 20px 24px !important;
   align-items: start !important;
   align-content: start !important;
@@ -259,16 +259,17 @@
 }
 
 .trader-lab-v2--workspace .tlab-chart-host--fill {
+  position: relative;
   flex: 0 0 auto;
   width: 100%;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
+  display: block;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid rgba(120, 160, 255, 0.14);
   background: rgba(4, 8, 22, 0.95);
   box-shadow: inset 0 1px 0 rgba(160, 190, 255, 0.06);
+  isolation: isolate;
 }
 
 /* Single outer frame on chart card — avoid double box border */
@@ -382,21 +383,28 @@
   min-height: clamp(480px, 58vh, 720px);
 }
 
+/* Fill the slot pixel-perfect — flex + % height often leaves dead space under the iframe */
 .trader-lab-v2--workspace .tlab-chart-host--fill .trader-suite-chart-frame {
-  flex: 1 1 auto !important;
-  align-self: stretch !important;
+  position: absolute !important;
+  inset: 0 !important;
   width: 100% !important;
-  min-height: 100% !important;
   height: 100% !important;
+  min-height: 0 !important;
   max-height: none !important;
+  flex: none !important;
+  align-self: auto !important;
+  box-sizing: border-box !important;
 }
 
 /* Win over .journal-page .trader-suite-chart-frame (460px) — lab chart must fill host */
 .journal-page .trader-lab-v2--workspace .tlab-chart-host--fill .trader-suite-chart-frame {
-  min-height: 100% !important;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
   height: 100% !important;
+  min-height: 0 !important;
   max-height: none !important;
-  flex: 1 1 auto !important;
+  flex: none !important;
 }
 
 .journal-page .trader-lab-v2--workspace .tlab-chart-host--fill {
@@ -438,9 +446,12 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--tl-gap-inner);
   align-items: start;
-  margin-top: 12px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 10px;
+  padding: 12px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(120, 160, 255, 0.14);
+  background: rgba(0, 0, 0, 0.38);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   flex-shrink: 0;
   text-align: center;
 }
@@ -663,7 +674,52 @@
 
 .trader-lab-v2--workspace .trader-lab-v2__left,
 .trader-lab-v2--workspace .trader-lab-v2__right {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   gap: var(--tl-gap);
+}
+
+/* Match padding across rails (overrides Trade Validator 18px glass default) */
+.trader-lab-v2.trader-lab-v2--workspace .tlab-card.tlab-card--gold:not(.tlab-card--focal) {
+  padding: 14px 16px !important;
+}
+
+.trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .tlab-card.tlab-card--gold:not(.tlab-card--focal) {
+  padding: 14px 16px !important;
+}
+
+.trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .tlab-card--focal.tlab-card--gold {
+  padding: 14px 16px !important;
+}
+
+/* Collapsible geo editor — keeps table as single source of visible truth */
+.trader-lab-v2--workspace .tlab-geo-inline-edit {
+  margin-top: 8px;
+  border-radius: 10px;
+  border: 1px dashed rgba(120, 160, 255, 0.22);
+  padding: 0 10px 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.trader-lab-v2--workspace .tlab-geo-inline-edit > summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.65rem;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(160, 175, 210, 0.65);
+  padding: 8px 0 6px;
+}
+
+.trader-lab-v2--workspace .tlab-geo-inline-edit > summary::-webkit-details-marker {
+  display: none;
+}
+
+.trader-lab-v2--workspace .tlab-geo-inline-edit .tlab-textarea--geo-inline {
+  margin-top: 0;
+  min-height: 56px;
 }
 
 .trader-lab-v2--workspace .tlab-card--desk-context {
@@ -1215,6 +1271,13 @@
   flex: 1 1 auto;
 }
 
+.trader-lab-v2--workspace .tlab-chart-host--fill .tlab-skel-chart {
+  display: block;
+  min-height: 100%;
+  height: 100%;
+  flex: none;
+}
+
 .trader-lab-v2--workspace .tlab-level-strip--skeleton {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1275,11 +1338,11 @@
 
 .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .trader-lab-v2__left,
 .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .trader-lab-v2__right {
-  gap: 6px !important;
+  gap: 12px !important;
 }
 
 .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .trader-lab-v2__center {
-  gap: 6px !important;
+  gap: 12px !important;
 }
 
 .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace .tlab-center-stack {
@@ -1324,7 +1387,7 @@
     grid-template-columns: minmax(260px, 0.95fr) minmax(280px, 2.55fr) minmax(260px, 0.95fr) !important;
     grid-template-rows: auto !important;
     grid-template-areas: 'tl-left tl-center tl-right' !important;
-    gap: 20px !important;
+    gap: 14px !important;
     align-items: start !important;
     align-content: start !important;
     padding: 16px 20px 24px !important;

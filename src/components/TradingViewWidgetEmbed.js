@@ -140,7 +140,6 @@ export default function TradingViewWidgetEmbed({
         width: '100%',
         height: h,
         minHeight: minH,
-        flex: fillParent ? '1 1 auto' : undefined,
         minWidth: 0,
         position: 'relative',
       }}

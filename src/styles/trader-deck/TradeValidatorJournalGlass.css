@@ -663,7 +663,7 @@
   max-width: min(100%, 1680px) !important;
   margin-inline: auto !important;
   grid-template-columns: minmax(260px, 0.95fr) minmax(280px, 2.55fr) minmax(260px, 0.95fr) !important;
-  gap: 20px !important;
+  gap: 14px !important;
   padding: 16px 20px 24px !important;
   min-height: 0 !important;
   max-height: none !important;

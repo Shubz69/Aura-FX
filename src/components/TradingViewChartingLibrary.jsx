@@ -128,7 +128,6 @@ export default function TradingViewChartingLibrary({
         minHeight: boxMin,
         height: boxHeight,
         width: '100%',
-        flex: fillParent ? '1 1 auto' : undefined,
         minWidth: 0,
       }}
     />

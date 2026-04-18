@@ -191,13 +191,6 @@ function toTraderLabPersistPayload(form, extras = {}) {
   };
 }
 
-function linesToList(text) {
-  return String(text || '')
-    .split(/\n/)
-    .map((l) => l.replace(/^[•\-\*]\s*/, '').trim())
-    .filter(Boolean);
-}
-
 function parseGeopoliticalBlock(text) {
   const lines = String(text || '')
     .split(/\n/)
@@ -508,8 +501,6 @@ export default function TraderLab() {
   );
 
   const geoRows = useMemo(() => parseGeopoliticalBlock(form.todaysFocus), [form.todaysFocus]);
-  const driverLines = useMemo(() => linesToList(form.keyDrivers), [form.keyDrivers]);
-  const fundamentalLines = useMemo(() => linesToList(form.fundamentalBacking), [form.fundamentalBacking]);
   const thesisMeta = useMemo(() => {
     const at = form.traderThesisUpdatedAt;
     if (!at) return null;
@@ -772,14 +763,10 @@ export default function TraderLab() {
 
             <div className="tlab-card tlab-card--gold tlab-card--key-drivers-rail">
               <h3 className="tlab-card__title">Key drivers</h3>
-              <ul className="tlab-ref-bullets">
-                {driverLines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-              <p className="tlab-card__subnote">Full text (one driver per line)</p>
+              <p className="tlab-card__subnote">One driver per line</p>
               <textarea
                 className="tlab-textarea tlab-textarea--tight"
+                rows={5}
                 value={form.keyDrivers}
                 onChange={(e) => updateField('keyDrivers', e.target.value)}
                 placeholder="One line per driver…"
@@ -789,14 +776,10 @@ export default function TraderLab() {
 
             <div className="tlab-card tlab-card--gold tlab-card--dock-fundamental">
               <h3 className="tlab-card__title">Fundamental backing</h3>
-              <ul className="tlab-ref-bullets tlab-ref-bullets--dock-fundamental">
-                {fundamentalLines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-              <p className="tlab-card__subnote">Full text (one point per line)</p>
+              <p className="tlab-card__subnote">One point per line</p>
               <textarea
                 className="tlab-textarea tlab-textarea--tight tlab-textarea--dock-fundamental"
+                rows={4}
                 value={form.fundamentalBacking}
                 onChange={(e) => updateField('fundamentalBacking', e.target.value)}
                 placeholder="One line per fundamental point…"
@@ -1183,12 +1166,15 @@ export default function TraderLab() {
                   </tbody>
                 </table>
               </div>
-              <textarea
-                className="tlab-textarea tlab-textarea--tight tlab-textarea--geo-inline"
-                value={form.todaysFocus}
-                onChange={(e) => updateField('todaysFocus', e.target.value)}
-                aria-label="Geopolitical backing lines"
-              />
+              <details className="tlab-geo-inline-edit">
+                <summary>Edit region lines</summary>
+                <textarea
+                  className="tlab-textarea tlab-textarea--tight tlab-textarea--geo-inline"
+                  value={form.todaysFocus}
+                  onChange={(e) => updateField('todaysFocus', e.target.value)}
+                  aria-label="Geopolitical backing lines"
+                />
+              </details>
               <table className="tlab-table tlab-table--compact tlab-table--risk-inline">
                 <tbody>
                   <tr>
