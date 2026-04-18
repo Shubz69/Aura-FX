@@ -7,20 +7,9 @@
 'use strict';
 
 const { executeQuery } = require('../db');
-const { verifyToken } = require('../utils/auth');
+const { assertStaffAdminFromRequest } = require('../utils/adminAccess');
 
 const PROBE_MS = Math.min(12000, parseInt(process.env.INTEGRATION_HEALTH_PROBE_MS || '8000', 10) || 8000);
-
-async function requireAdmin(req) {
-  const decoded = verifyToken(req.headers.authorization);
-  if (!decoded || !decoded.id) return { ok: false, status: 401, message: 'Authentication required' };
-  const [rows] = await executeQuery('SELECT role FROM users WHERE id = ? LIMIT 1', [Number(decoded.id)]);
-  const role = (rows[0]?.role || '').toString().toLowerCase();
-  if (role !== 'admin' && role !== 'super_admin') {
-    return { ok: false, status: 403, message: 'Admin access required' };
-  }
-  return { ok: true };
-}
 
 function withTimeout(promise, ms, label = 'timeout') {
   return Promise.race([
@@ -361,7 +350,7 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
-  const admin = await requireAdmin(req);
+  const admin = await assertStaffAdminFromRequest(req);
   if (!admin.ok) return res.status(admin.status).json({ success: false, message: admin.message });
 
   const started = Date.now();

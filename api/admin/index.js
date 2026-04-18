@@ -4,6 +4,7 @@ const { getDbConnection } = require('../db');
 const nodemailer = require('nodemailer');
 const { verifyToken } = require('../utils/auth');
 const { isSuperAdminEmail } = require('../utils/entitlements');
+const { assertStaffAdminFromRequest } = require('../utils/adminAccess');
 const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
 const { canonicalStoredPlanFromAny, normalizeKey } = require('../utils/subscriptionNormalize');
 const {
@@ -603,28 +604,14 @@ module.exports = async (req, res) => {
   // Handle /api/admin/users - Get all users (Admin or Super Admin)
   if ((pathname.includes('/users') || pathname.endsWith('/users')) && req.method === 'GET') {
     try {
-      const decoded = verifyToken(req.headers.authorization);
-      if (!decoded || !decoded.id) {
-        return res.status(401).json({ success: false, message: 'Unauthorized' });
+      const gate = await assertStaffAdminFromRequest(req);
+      if (!gate.ok) {
+        return res.status(gate.status).json({ success: false, message: gate.message });
       }
 
       const db = await getDbConnection();
       if (!db) {
         return res.status(500).json({ success: false, message: 'Database connection error' });
-      }
-
-      let authRole = (decoded.role || '').toString().toUpperCase();
-      if (authRole !== 'ADMIN' && authRole !== 'SUPER_ADMIN') {
-        try {
-          const [me] = await db.execute('SELECT role FROM users WHERE id = ?', [decoded.id]);
-          authRole = ((me && me[0] && me[0].role) || '').toString().toUpperCase();
-        } catch (_) {
-          authRole = '';
-        }
-      }
-      if (authRole !== 'ADMIN' && authRole !== 'SUPER_ADMIN') {
-        if (db) { try { db.release(); } catch (_) {} }
-        return res.status(403).json({ success: false, message: 'Admin access required' });
       }
 
       try {
