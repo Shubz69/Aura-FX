@@ -37,6 +37,10 @@ export default function TraderLabLoadingShell() {
           <SkelLine style={{ width: '85%' }} />
           <div className="tlab-skel-textarea" />
         </div>
+        <div className="tlab-card tlab-card--gold tlab-card--dock-fundamental tlab-skel-card">
+          <SkelTitle />
+          <div className="tlab-skel-textarea tlab-skel-textarea--short" />
+        </div>
         <div className="tl-card-shell tl-card-shell--thesis tlab-skel-thesis">
           <SkelLine className="tlab-skel-line--thesis-title" />
           <SkelLine className="tlab-skel-line--q" />
@@ -50,14 +54,7 @@ export default function TraderLabLoadingShell() {
 
       <div className="trader-lab-v2__center">
         <div className="tlab-center-stack">
-          <div className="tlab-center-desk-rail">
-            <div className="tlab-center-desk-col tlab-center-desk-col--left">
-              <div className="tlab-card tlab-card--gold tlab-card--dock-fundamental tlab-skel-card">
-                <SkelTitle />
-                <div className="tlab-skel-textarea tlab-skel-textarea--short" />
-              </div>
-            </div>
-            <div className="tlab-center-desk-col tlab-center-desk-col--chart">
+          <div className="tlab-center-main">
               <div className="tlab-card tlab-card--chart tlab-card--gold tlab-card--focal tlab-skel-card">
                 <div className="tlab-chart-toolbar tlab-chart-toolbar--terminal">
                   <div className="tlab-chart-toolbar__primary">
@@ -93,33 +90,6 @@ export default function TraderLabLoadingShell() {
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="tlab-center-desk-col tlab-center-desk-col--right">
-              <div className="tlab-card tlab-card--gold tlab-card--dock-exec tlab-skel-card">
-                <SkelTitle />
-                <div className="tlab-skel-textarea tlab-skel-textarea--dock" />
-                <div className="tlab-skel-exec-foot">
-                  <SkelLine className="tlab-skel-line--meta" />
-                  <SkelLine className="tlab-skel-line--btn" />
-                </div>
-              </div>
-              <div className="tlab-card tlab-card--gold tlab-card--dock-decision tlab-skel-card">
-                <SkelTitle />
-                <div className="tlab-skel-checks">
-                  <SkelLine className="tlab-skel-line--check" />
-                  <SkelLine className="tlab-skel-line--check" />
-                  <SkelLine className="tlab-skel-line--check" />
-                  <SkelLine className="tlab-skel-line--check" />
-                </div>
-                <SkelLine className="tlab-skel-line--conv-label" />
-                <div className="tlab-skel-conviction">
-                  <SkelLine className="tlab-skel-line--conv" />
-                  <SkelLine className="tlab-skel-line--conv" />
-                  <SkelLine className="tlab-skel-line--conv" />
-                </div>
-                <SkelLine className="tlab-skel-line--execute" />
-              </div>
-            </div>
           </div>
 
           <div className="tlab-decoder-strip tlab-decoder-strip--log tlab-decoder-strip--skeleton" role="presentation">
@@ -133,6 +103,30 @@ export default function TraderLabLoadingShell() {
       </div>
 
       <aside className="trader-lab-v2__right">
+        <div className="tlab-card tlab-card--gold tlab-card--dock-exec tlab-skel-card">
+          <SkelTitle />
+          <div className="tlab-skel-textarea tlab-skel-textarea--dock" />
+          <div className="tlab-skel-exec-foot">
+            <SkelLine className="tlab-skel-line--meta" />
+            <SkelLine className="tlab-skel-line--btn" />
+          </div>
+        </div>
+        <div className="tlab-card tlab-card--gold tlab-card--dock-decision tlab-skel-card">
+          <SkelTitle />
+          <div className="tlab-skel-checks">
+            <SkelLine className="tlab-skel-line--check" />
+            <SkelLine className="tlab-skel-line--check" />
+            <SkelLine className="tlab-skel-line--check" />
+            <SkelLine className="tlab-skel-line--check" />
+          </div>
+          <SkelLine className="tlab-skel-line--conv-label" />
+          <div className="tlab-skel-conviction">
+            <SkelLine className="tlab-skel-line--conv" />
+            <SkelLine className="tlab-skel-line--conv" />
+            <SkelLine className="tlab-skel-line--conv" />
+          </div>
+          <SkelLine className="tlab-skel-line--execute" />
+        </div>
         <div className="tlab-card tlab-card--gold tlab-card--plan-rail tlab-skel-card">
           <SkelTitle />
           <SkelLine className="tlab-skel-line--field" />

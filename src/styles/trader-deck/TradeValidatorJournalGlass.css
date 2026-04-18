@@ -653,11 +653,11 @@
 /* Wider center column (chart); slightly tighter side rails */
 .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact {
   width: 100%;
-  max-width: min(1560px, 100%) !important;
+  max-width: 1500px !important;
   margin-inline: auto !important;
-  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr) minmax(280px, 320px) !important;
-  gap: 8px 16px !important;
-  padding: 8px 12px 12px !important;
+  grid-template-columns: 300px minmax(0, 1fr) 320px !important;
+  gap: 20px !important;
+  padding: 16px 20px 24px !important;
   min-height: 0 !important;
   max-height: none !important;
   align-content: start;
@@ -674,7 +674,7 @@
 
 @media (min-width: 1181px) {
   .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact.trader-lab-v2--terminal-desktop {
-    padding: 8px 12px 12px !important;
+    padding: 16px 20px 24px !important;
   }
 }
 
@@ -763,10 +763,10 @@
 
 /* Match AuraShared `.aa-card` glass (dashboard outlet panels) */
 .trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold {
-  background: rgba(10, 12, 24, 0.78) !important;
+  background: rgba(12, 14, 26, 0.82) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 16px !important;
-  padding: 16px !important;
+  border-radius: 14px !important;
+  padding: 18px !important;
   backdrop-filter: blur(16px) saturate(1.06) !important;
   -webkit-backdrop-filter: blur(16px) saturate(1.06) !important;
   box-shadow:
@@ -808,16 +808,17 @@
 }
 
 .trade-validator-shell .trader-lab-v2 .tlab-card__title {
-  font-size: 0.68rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.12em !important;
-  margin-bottom: 6px !important;
-  color: rgba(210, 220, 245, 0.88) !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: none !important;
+  margin-bottom: 10px !important;
+  color: rgba(230, 236, 255, 0.95) !important;
 }
 
 .trade-validator-shell .trader-lab-v2 .tlab-rr-big {
-  margin: 6px 0 8px !important;
-  padding: 8px 10px !important;
+  margin: 10px 0 12px !important;
+  padding: 12px 14px !important;
 }
 
 .trade-validator-shell .trader-lab-v2 .tlab-rr-value {
