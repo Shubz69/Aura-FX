@@ -2462,21 +2462,24 @@
   .td-outlook-concept-col--secondary {
     min-height: 100%;
   }
-  .td-outlook-concept-col--secondary > .td-outlook-concept-card--headlines {
+  .td-outlook-concept-col--secondary > .td-outlook-concept-card--macro-timing {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
   }
-  .td-outlook-concept-col--secondary > .td-outlook-concept-card--headlines .td-outlook-concept-card__body--headlines {
+  .td-outlook-concept-col--secondary > .td-outlook-concept-card--macro-timing .td-outlook-concept-card__body--macro-timing {
     flex: 1 1 auto;
-    overflow: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 }
 
-/* Primary: allow last card to flex-grow (column height sync); secondary: headlines uses its own flex rule. */
-.td-deck-mo-outlook--concept .td-outlook-concept-col--primary > *:not(.td-outlook-concept-card--headlines):not(:last-child),
-.td-deck-mo-outlook--concept .td-outlook-concept-col--secondary > *:not(.td-outlook-concept-card--headlines):not(.td-outlook-concept-card--trade-matrix) {
+/* Primary: allow last card to flex-grow (column height sync); secondary: macro timing panel uses its own flex rule. */
+.td-deck-mo-outlook--concept .td-outlook-concept-col--primary > *:not(:last-child),
+.td-deck-mo-outlook--concept .td-outlook-concept-col--secondary > *:not(.td-outlook-concept-card--macro-timing):not(.td-outlook-concept-card--trade-matrix) {
   flex: 0 0 auto;
   height: auto;
   min-height: 0;
@@ -2706,18 +2709,184 @@
   padding: 5px 8px 6px !important;
 }
 
-/* Market headlines strip */
-.td-deck-mo-outlook--concept .td-outlook-concept-card--headlines {
+/* Macro timing & inflection window (right rail — fills slack like former headlines card) */
+.td-deck-mo-outlook--concept .td-outlook-concept-card--macro-timing {
   height: auto;
 }
 
-.td-outlook-concept-card__head--headlines {
+.td-outlook-concept-card__head--macro-timing {
   border-bottom: 1px solid rgba(107, 143, 232, 0.13);
   padding-right: 10px;
 }
 
-.td-outlook-concept-card__body--headlines {
-  padding: 5px 9px 7px !important;
+.td-outlook-concept-card__title--macro-timing {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: clamp(0.62rem, 0.55vw + 0.52rem, 0.72rem);
+}
+
+.td-outlook-concept-card__body--macro-timing {
+  padding: 6px 9px 8px !important;
+}
+
+.mo-macro-timing__stack {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.mo-macro-timing__block {
+  flex-shrink: 0;
+}
+
+.mo-macro-timing__k {
+  margin: 0 0 4px;
+  font-size: 0.58rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(140, 175, 255, 0.55);
+}
+
+.mo-macro-timing__k--section {
+  margin-bottom: 6px;
+}
+
+.mo-macro-timing__phase {
+  margin: 0 0 4px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(250, 252, 255, 0.95);
+}
+
+.mo-macro-timing__sub {
+  margin: 0 0 3px;
+  font-size: 0.7rem;
+  line-height: 1.38;
+  color: rgba(205, 215, 248, 0.82);
+}
+
+.mo-macro-timing__sub--muted {
+  color: rgba(175, 190, 235, 0.62);
+}
+
+.mo-macro-timing__block--timing {
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(107, 143, 232, 0.08);
+}
+
+.mo-macro-timing__block--inflection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(107, 143, 232, 0.08);
+}
+
+.mo-macro-timing__pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid rgba(107, 143, 232, 0.22);
+}
+
+.mo-macro-timing__pill--high {
+  border-color: rgba(255, 130, 110, 0.35);
+  background: rgba(48, 12, 10, 0.45);
+  color: rgba(255, 210, 200, 0.95);
+}
+
+.mo-macro-timing__pill--mid {
+  border-color: rgba(212, 175, 125, 0.38);
+  background: rgba(36, 28, 12, 0.4);
+  color: rgba(255, 235, 200, 0.92);
+}
+
+.mo-macro-timing__pill--low {
+  border-color: rgba(110, 200, 160, 0.28);
+  background: rgba(8, 28, 22, 0.42);
+  color: rgba(200, 245, 220, 0.92);
+}
+
+.mo-macro-timing__catalyst-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 2px 8px 0;
+  margin-right: -2px;
+}
+
+.mo-macro-timing__catalyst-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mo-macro-timing__catalyst-row {
+  display: grid;
+  grid-template-columns: minmax(52px, 64px) minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(107, 143, 232, 0.1);
+  background: rgba(4, 8, 22, 0.42);
+}
+
+.mo-macro-timing__catalyst-bucket {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(140, 175, 255, 0.65);
+}
+
+.mo-macro-timing__catalyst-text {
+  font-size: 0.68rem;
+  line-height: 1.38;
+  color: rgba(235, 240, 255, 0.88);
+}
+
+.mo-macro-timing__block--behavior {
+  padding-top: 8px;
+  border-top: 1px solid rgba(107, 143, 232, 0.08);
+}
+
+.mo-macro-timing__line {
+  margin: 0 0 4px;
+  font-size: 0.7rem;
+  line-height: 1.38;
+  color: rgba(210, 218, 250, 0.85);
+}
+
+.mo-macro-timing__line:last-child {
+  margin-bottom: 0;
+}
+
+.mo-macro-timing__block--insight {
+  flex-shrink: 0;
+  padding-top: 8px;
+  border-top: 1px solid rgba(212, 175, 125, 0.15);
+}
+
+.mo-macro-timing__insight {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.42;
+  font-weight: 600;
+  color: rgba(255, 242, 220, 0.94);
 }
 
 .mo-terminal-feed {
@@ -3063,13 +3232,33 @@
   line-height: 1.38;
 }
 
-.td-deck-mo-outlook--concept .td-outlook-concept-card--headlines .mo-terminal-feed__text {
-  font-size: 0.8rem;
-  line-height: 1.38;
-}
-
 .td-deck-mo-outlook--concept .td-outlook-concept-card--instruments .td-outlook-concept-card__body--instruments {
   min-height: 0;
+}
+
+/* Instrument Snapshots: grow with the intel row so the card shell fills space vs a taller left column */
+@media (min-width: 560px) {
+  .td-deck-mo-outlook--concept .td-outlook-concept-intel-col--right > .td-outlook-concept-card--instruments:last-child {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .td-deck-mo-outlook--concept .td-outlook-concept-card--instruments .td-outlook-concept-card__body--instruments {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .td-deck-mo-outlook--concept .td-outlook-concept-card--instruments .mo-instrument-grid--compact {
+    flex: 1 1 auto;
+    align-content: flex-start;
+  }
+}
+
+/* Tighten primary column rhythm between intel block and Market Change (sibling gap compensation) */
+.td-deck-mo-outlook--concept .td-outlook-concept-intel + .td-outlook-concept-card--changes {
+  margin-top: -4px;
 }
 
 /* Market change — structured feed */

@@ -13,12 +13,12 @@ import ChangeList from '../../components/trader-deck/ChangeList';
 import FocusList from '../../components/trader-deck/FocusList';
 import RiskRadarList from '../../components/trader-deck/RiskRadarList';
 import SessionContextPanel from '../../components/trader-deck/SessionContextPanel';
+import MacroTimingInflectionPanel from '../../components/trader-deck/MacroTimingInflectionPanel';
 import { getTraderDeckIntelStorageYmd } from '../../lib/trader-deck/deskDates';
 import { formatRelativeFreshness } from '../../lib/trader-deck/marketOutlookDisplayFormatters';
 import {
   buildDerivedRiskFallbackLines,
   deriveDominantFactorLine,
-  deriveHeadlineFallbackLines,
   deriveInstrumentSnapshotsMerged,
   deriveNetDriverBiasLine,
   deriveTimelineMerged,
@@ -31,6 +31,7 @@ import {
   buildMarketStructureMap,
   buildTradeExpressionMatrix,
 } from '../../lib/trader-deck/marketOutlookProductIntel';
+import { buildMacroTimingInflectionWindow } from '../../lib/trader-deck/macroTimingInflectionWindow';
 import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput.react.js';
 
 /** When the API omits sleeves, derive compact cards from cross-asset signals + drivers (real desk fields, not placeholders). */
@@ -601,8 +602,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     crossAssetSignals,
     keyDrivers
   );
-  const headlineInsights = outlookSnapshot.headlineInsights || [];
-  const headlineFallbackLines = deriveHeadlineFallbackLines(crossAssetSignals, keyDrivers);
   const outlookRiskContext = outlookSnapshot.outlookRiskContext;
   const outlookDataStatus = outlookSnapshot.outlookDataStatus;
   const marketPulseForGauge = editMode && editDraft
@@ -610,6 +609,13 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     : showing.marketPulse;
 
   const sessionContextLive = (data && data.sessionContext) || ui.sessionContext || null;
+  const macroTimingModel = buildMacroTimingInflectionWindow({
+    ...showing,
+    sessionContext: sessionContextLive || ui.sessionContext || null,
+    outlookRiskContext,
+    marketChangesTimeline,
+    marketPulse: marketPulseForGauge,
+  });
   let sessionFallbackPairs = regimeSessionFallbackPairs(marketRegime || {});
   if (!sessionFallbackPairs.length && (marketPulse?.score != null || marketPulse?.label)) {
     sessionFallbackPairs = [
@@ -1060,51 +1066,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     </div>
                   </section>
 
-                  {(headlineInsights && headlineInsights.length > 0) || headlineFeed.length > 0 || headlineFallbackLines.length > 0 ? (
-                  <section className="td-outlook-concept-card td-outlook-concept-card--headlines mo-card-shell" aria-label="Market headlines">
-                    <header className="td-outlook-concept-card__head td-outlook-concept-card__head--headlines">
-                      <h2 className="td-outlook-concept-card__title">Market Headlines</h2>
-                      <span className="mo-meta" title={ui.updatedAt || ''}>
-                        {formatRelativeFreshness(ui.updatedAt)}
-                      </span>
-                    </header>
-                    <div className="td-outlook-concept-card__body td-outlook-concept-card__body--headlines">
-                      {headlineInsights && headlineInsights.length > 0 ? (
-                        <ul className="mo-terminal-feed mo-terminal-feed--insights">
-                          {headlineInsights.slice(0, 12).map((row, i) => (
-                            <li key={i} className="mo-terminal-feed__row mo-terminal-feed__row--insight">
-                              <div className="mo-headline-chips">
-                                <span className={`mo-sentiment mo-sentiment--${row.sentiment || 'neutral'}`}>{row.sentiment || 'neutral'}</span>
-                                <span className={`mo-pill mo-pill--impact mo-pill--impact-${row.impact || 'medium'}`}>{row.impact || 'med'} impact</span>
-                                {Array.isArray(row.affectedAssets) && row.affectedAssets.length > 0 ? (
-                                  <span className="mo-headline-assets">{row.affectedAssets.slice(0, 4).join(' · ')}</span>
-                                ) : null}
-                              </div>
-                              <span className="mo-terminal-feed__text">{row.text}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : headlineFeed.length > 0 ? (
-                        <ul className="mo-terminal-feed">
-                          {headlineFeed.slice(0, 12).map((line, i) => (
-                            <li key={i} className="mo-terminal-feed__row">
-                              <span className="mo-terminal-feed__text">{line}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <ul className="mo-terminal-feed">
-                          {headlineFallbackLines.slice(0, 12).map((line, i) => (
-                            <li key={i} className="mo-terminal-feed__row">
-                              <span className="mo-terminal-feed__text">{line}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      <p className="mo-terminal-feed__note">Event detail in the Economic Calendar below.</p>
-                    </div>
-                  </section>
-                  ) : null}
+                  <MacroTimingInflectionPanel model={macroTimingModel} updatedAt={ui.updatedAt} />
 
                   {tradeExpressionMatrix.length > 0 ? (
                     <section
