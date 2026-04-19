@@ -325,9 +325,7 @@ export default function SurveillanceGlobe({
       const renderer = g && typeof g.renderer === 'function' ? g.renderer() : null;
       if (renderer && typeof renderer.setPixelRatio === 'function') {
         const raw = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-        const pr = reducedMotion
-          ? Math.min(1.25, Math.max(1, raw))
-          : Math.min(2.25, Math.max(1, Math.min(raw, 2.25)));
+        const pr = reducedMotion ? Math.min(1.25, Math.max(1, raw)) : Math.min(2.25, Math.max(1, raw));
         renderer.setPixelRatio(pr);
         if (typeof renderer.setSize === 'function') {
           renderer.setSize(dims.w, dims.h, true);
