@@ -168,6 +168,41 @@ const BRIEF_MARKDOWN_COMPONENTS = {
     ),
 };
 
+function promoteGenericSectionHeadings(markdown) {
+  const lines = String(markdown || '').split('\n');
+  const out = [];
+  const isLikelyHeading = (line) => {
+    const t = String(line || '').trim();
+    if (!t) return false;
+    if (/^\s*#{1,6}\s/.test(t)) return false;
+    if (/^\s*[-*]\s+/.test(t) || /^\s*\d+[.)]\s+/.test(t)) return false;
+    if (t.length > 90) return false;
+    if (/[.!?]$/.test(t)) return false;
+    if (/:$/.test(t)) return true;
+    const letters = (t.match(/[A-Za-z]/g) || []).length;
+    const upper = (t.match(/[A-Z]/g) || []).length;
+    return letters >= 8 && upper / letters >= 0.75;
+  };
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const raw = lines[i];
+    const t = String(raw || '').trim();
+    if (!t) {
+      out.push(raw);
+      continue;
+    }
+    if (isLikelyHeading(t)) {
+      const head = t.replace(/:+\s*$/, '').replace(/\s+/g, ' ').trim();
+      if (out.length && String(out[out.length - 1] || '').trim()) out.push('');
+      out.push(`## ${head}`);
+      if (i + 1 < lines.length && String(lines[i + 1] || '').trim()) out.push('');
+      continue;
+    }
+    out.push(raw);
+  }
+  return out.join('\n').replace(/\n{4,}/g, '\n\n\n').trim();
+}
+
 /** Preview text: preserve markdown headings (section layout); polish separators/casing to match backend. */
 function sanitizeBriefForPreview(text) {
   let t = String(text || '').replace(/\r\n/g, '\n');
@@ -185,6 +220,7 @@ function sanitizeBriefForPreview(text) {
 
   t = stripModelInternalExposition(t);
   t = polishBriefMarkdown(t, { preserveEmphasis: true });
+  t = promoteGenericSectionHeadings(t);
   t = splitLongProseParagraphsForPreview(t);
 
   const endsWithFooter = new RegExp(
