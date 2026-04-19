@@ -281,6 +281,27 @@ function tabToEventTypes(tab) {
   return Object.prototype.hasOwnProperty.call(map, tab) ? map[tab] : null;
 }
 
+function countrySearchTermsForIso(iso2) {
+  const iso = String(iso2 || '').trim().toUpperCase();
+  const map = {
+    PS: ['palestine', 'palestinian', 'gaza', 'west bank'],
+    IR: ['iran', 'islamic republic of iran', 'tehran'],
+    IL: ['israel', 'israeli'],
+    LB: ['lebanon', 'beirut'],
+    SY: ['syria', 'syrian', 'damascus'],
+    IQ: ['iraq', 'baghdad'],
+    YE: ['yemen', 'yemeni'],
+    JO: ['jordan', 'amman'],
+    EG: ['egypt', 'cairo'],
+    TR: ['turkey', 'turkiye', 'ankara'],
+    UA: ['ukraine', 'kyiv'],
+    RU: ['russia', 'russian', 'moscow'],
+    US: ['united states', 'usa', 'u.s.'],
+    GB: ['united kingdom', 'uk', 'britain'],
+  };
+  return map[iso] || [];
+}
+
 async function queryFeed({
   limit = 150,
   sinceUpdated,
@@ -301,8 +322,21 @@ async function queryFeed({
   }
   const iso = countryIso2 ? String(countryIso2).trim().toUpperCase() : '';
   if (iso.length === 2 && /^[A-Z]{2}$/.test(iso)) {
-    sql += ` AND JSON_CONTAINS(COALESCE(countries, JSON_ARRAY()), JSON_QUOTE(?), '$')`;
-    params.push(iso);
+    const clauses = [
+      `JSON_CONTAINS(COALESCE(countries, JSON_ARRAY()), JSON_QUOTE(?), '$')`,
+      `UPPER(COALESCE(region, '')) = ?`,
+    ];
+    params.push(iso, iso);
+
+    const terms = countrySearchTermsForIso(iso).slice(0, 6);
+    for (const term of terms) {
+      const q = `%${String(term).toLowerCase()}%`;
+      clauses.push(
+        `(LOWER(COALESCE(title, '')) LIKE ? OR LOWER(COALESCE(summary, '')) LIKE ? OR LOWER(COALESCE(body_snippet, '')) LIKE ? OR LOWER(COALESCE(CAST(source_meta AS CHAR), '')) LIKE ?)`
+      );
+      params.push(q, q, q, q);
+    }
+    sql += ` AND (${clauses.join(' OR ')})`;
   }
   const hours = maxAgeHours != null ? Number(maxAgeHours) : null;
   if (Number.isFinite(hours) && hours > 0 && hours <= 168) {

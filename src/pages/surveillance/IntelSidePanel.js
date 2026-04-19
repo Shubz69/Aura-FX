@@ -156,7 +156,7 @@ function IntelSidePanel({
           <p className="sv-rail-focus-name">{focusSummary.label || focusRegion}</p>
           <p className="sv-rail-focus-scope">
             {focusSummary.isoHint
-              ? 'Tape + digest for this country · higher-severity institutional nodes from roughly the last 72 hours (category filter on the left still applies)'
+              ? 'Tape + digest for this country · institutional nodes from roughly the last 72 hours (category filter on the left still applies)'
               : 'Tape + digest filtered to this geography'}
             {typeof tapeCount === 'number' ? ` · ${tapeCount} row${tapeCount === 1 ? '' : 's'} on tape` : ''}
           </p>

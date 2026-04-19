@@ -12,7 +12,26 @@ const COUNTRY_HINTS = [
   ['united kingdom', 'GB', 55.3781, -3.436],
   ['japan', 'JP', 36.2048, 138.2529],
   ['iran', 'IR', 32.4279, 53.688],
+  ['islamic republic of iran', 'IR', 32.4279, 53.688],
   ['israel', 'IL', 31.0461, 34.8516],
+  ['palestine', 'PS', 31.9522, 35.2332],
+  ['state of palestine', 'PS', 31.9522, 35.2332],
+  ['palestinian', 'PS', 31.9522, 35.2332],
+  ['gaza', 'PS', 31.9522, 35.2332],
+  ['west bank', 'PS', 31.9522, 35.2332],
+  ['lebanon', 'LB', 33.8547, 35.8623],
+  ['syria', 'SY', 34.8021, 38.9968],
+  ['iraq', 'IQ', 33.2232, 43.6793],
+  ['jordan', 'JO', 30.5852, 36.2384],
+  ['yemen', 'YE', 15.5527, 48.5164],
+  ['oman', 'OM', 21.4735, 55.9754],
+  ['qatar', 'QA', 25.3548, 51.1839],
+  ['kuwait', 'KW', 29.3117, 47.4818],
+  ['bahrain', 'BH', 26.0667, 50.5577],
+  ['united arab emirates', 'AE', 23.4241, 53.8478],
+  ['uae', 'AE', 23.4241, 53.8478],
+  ['turkey', 'TR', 38.9637, 35.2433],
+  ['turkiye', 'TR', 38.9637, 35.2433],
   ['india', 'IN', 20.5937, 78.9629],
   ['brazil', 'BR', -14.235, -51.9253],
   ['canada', 'CA', 56.1304, -106.3468],
@@ -63,7 +82,10 @@ function extractCountries(text) {
   const t = text.toLowerCase();
   const found = [];
   for (const [phrase, code, lat, lng] of COUNTRY_HINTS) {
-    if (t.includes(phrase) && !found.includes(code)) found.push(code);
+    if (!phrase || !code) continue;
+    const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(`\\b${escaped}\\b`, 'i');
+    if (pattern.test(t) && !found.includes(code)) found.push(code);
   }
   return found;
 }

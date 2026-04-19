@@ -143,8 +143,6 @@ export default function SurveillancePage() {
       if (focusCountryIso) {
         params.set('country', focusCountryIso);
         params.set('maxAgeHours', '72');
-        /* Country lens: emphasize higher-impact rows unless the user already chose a severity floor. */
-        if (!severityMin) params.set('severityMin', '3');
       }
       const res = await fetch(`${apiBase()}/api/surveillance/feed?${params}`, {
         headers: authHeaders,
@@ -577,7 +575,7 @@ export default function SurveillancePage() {
             <div className="sv-globe-chrome">
               <span className="sv-globe-chrome-tag">Operating picture</span>
               <p className="sv-globe-chrome-hint">
-                Zoom to frame the theatre. Tap a country for rolling wire headlines plus higher-severity institutional tape
+                Zoom to frame the theatre. Tap a country for rolling wire headlines plus institutional tape
                 (last 72h). Clear the lens to restore the full global grid.
               </p>
             </div>
