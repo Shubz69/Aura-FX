@@ -93,9 +93,10 @@ function applySentenceCaseOutsideHeadings(text) {
 
 /**
  * Full pass for automated brief bodies (markdown-friendly).
+ * @param {{ preserveEmphasis?: boolean }} [opts] — when true, keep `*` so **bold** survives for ReactMarkdown preview.
  */
-function polishBriefMarkdown(markdown) {
-  let t = stripAsterisks(markdown || '');
+function polishBriefMarkdown(markdown, opts = {}) {
+  let t = opts.preserveEmphasis ? String(markdown || '') : stripAsterisks(markdown || '');
   t = t.replace(/^\s*---+?\s*$/gm, '');
   t = normalizeSeparatorsPreserveNewlines(t);
   t = collapseCommaRuns(t);

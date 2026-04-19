@@ -41,6 +41,19 @@ function displayBriefTitle(title) {
   return t || 'Brief';
 }
 
+function formatDeskDateBritishLong(iso) {
+  const s = String(iso || '').trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return s || '';
+  const d = new Date(`${s}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return s;
+  return d.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
 const BRIEF_KIND_ORDER = [
   'aura_sunday_market_open',
   'aura_institutional_daily_forex',
@@ -91,6 +104,28 @@ const CATEGORY_BRIEF_KINDS = new Set([
   'futures',
 ]);
 
+/** Fixed eight-sleeve grid order (institutional WFA only; Sunday open is a separate row when daily). */
+const INTEL_SLEEVE_ORDER_DAILY = [
+  'aura_institutional_daily_forex',
+  'aura_institutional_daily_crypto',
+  'aura_institutional_daily_commodities',
+  'aura_institutional_daily_etfs',
+  'aura_institutional_daily_stocks',
+  'aura_institutional_daily_indices',
+  'aura_institutional_daily_bonds',
+  'aura_institutional_daily_futures',
+];
+const INTEL_SLEEVE_ORDER_WEEKLY = [
+  'aura_institutional_weekly_forex',
+  'aura_institutional_weekly_crypto',
+  'aura_institutional_weekly_commodities',
+  'aura_institutional_weekly_etfs',
+  'aura_institutional_weekly_stocks',
+  'aura_institutional_weekly_indices',
+  'aura_institutional_weekly_bonds',
+  'aura_institutional_weekly_futures',
+];
+
 /** Matches `/api/trader-deck/content` intel payload (eight sleeves + optional Sunday open). */
 const INTEL_API_BRIEF_KIND_RE =
   /^aura_sunday_market_open$|^aura_institutional_daily_(forex|crypto|commodities|etfs|stocks|indices|bonds|futures)$|^aura_institutional_weekly_(forex|crypto|commodities|etfs|stocks|indices|bonds|futures)$/;
@@ -129,7 +164,7 @@ function sanitizeBriefForPreview(text) {
   t = t.replace(/^\s*By\s+AURA\s+TERMINAL\s*$/gim, '');
 
   t = stripModelInternalExposition(t);
-  t = polishBriefMarkdown(t);
+  t = polishBriefMarkdown(t, { preserveEmphasis: true });
 
   const endsWithFooter = new RegExp(
     `${BY_AURA_TERMINAL.replace(/\s+/g, '\\s+')}\\s*$`,
@@ -169,7 +204,15 @@ function briefsPayloadFromContentResponse(res, fallbackStorageDate) {
   const raw = Array.isArray(res.data?.briefs) ? res.data.briefs : [];
   const list = normalizeBriefsList(raw);
   const weekendFallback = Boolean(res.data?.weekendFallback);
-  const src = String(res.data?.briefsSourceDate || fallbackStorageDate).trim().slice(0, 10);
+  const requestedDeskDate = String(res.data?.date || fallbackStorageDate || '').trim().slice(0, 10);
+  const packFileDate = String(res.data?.briefsSourceDate || requestedDeskDate).trim().slice(0, 10);
+  const apiType = String(res.data?.type || '').toLowerCase();
+  const isWeeklyApi = apiType.includes('weekly');
+  const showDeskPackShiftNote =
+    !isWeeklyApi &&
+    /^\d{4}-\d{2}-\d{2}$/.test(requestedDeskDate) &&
+    /^\d{4}-\d{2}-\d{2}$/.test(packFileDate) &&
+    requestedDeskDate !== packFileDate;
   const briefsRowCount =
     typeof res.data?.briefsRowCount === 'number' ? res.data.briefsRowCount : raw.length;
   const deskAutomationConfigured = Boolean(res.data?.deskAutomationConfigured);
@@ -179,7 +222,10 @@ function briefsPayloadFromContentResponse(res, fallbackStorageDate) {
       : null;
   return {
     list,
-    weekendNote: weekendFallback ? { sourceDate: src } : null,
+    weekendNote:
+      weekendFallback || showDeskPackShiftNote
+        ? { packSourceDate: packFileDate, requestedDeskDate }
+        : null,
     deskMeta: {
       briefsRowCount,
       deskAutomationConfigured,
@@ -216,8 +262,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [previewBriefMeta, setPreviewBriefMeta] = useState(null);
   const [textPreviewBody, setTextPreviewBody] = useState('');
   const [textPreviewLoading, setTextPreviewLoading] = useState(false);
-  /** Character count while “typing” markdown source; full length ⇒ show rendered brief. */
-  const [typewriterIndex, setTypewriterIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterMenuPos, setFilterMenuPos] = useState(null);
   const [selectedKinds, setSelectedKinds] = useState(() => new Set(BRIEF_KIND_ORDER));
@@ -227,7 +271,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [emptyDeskMessages, setEmptyDeskMessages] = useState(null);
   /** Last GET intel payload diagnostics (non-secret; helps admins see DB vs automation). */
   const [intelDeskMeta, setIntelDeskMeta] = useState(null);
-  const typewriterScrollRef = useRef(null);
   const filterWrapRef = useRef(null);
   const filterButtonRef = useRef(null);
   const filterMenuRef = useRef(null);
@@ -259,6 +302,27 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     if (!sortedBriefs.length) return [];
     return sortedBriefs.filter((b) => selectedKinds.has(String(b?.briefKind || '').toLowerCase()));
   }, [sortedBriefs, selectedKinds]);
+
+  const intelSleeveOrder = useMemo(
+    () => (period === 'weekly' ? INTEL_SLEEVE_ORDER_WEEKLY : INTEL_SLEEVE_ORDER_DAILY),
+    [period]
+  );
+
+  const briefByKind = useMemo(() => {
+    const m = new Map();
+    for (const b of sortedBriefs) {
+      const k = String(b?.briefKind || '').toLowerCase();
+      if (k) m.set(k, b);
+    }
+    return m;
+  }, [sortedBriefs]);
+
+  const sundayMarketBrief = useMemo(() => {
+    if (period !== 'daily') return null;
+    return (
+      sortedBriefs.find((b) => String(b?.briefKind || '').toLowerCase() === 'aura_sunday_market_open') || null
+    );
+  }, [sortedBriefs, period]);
 
   const categoryBriefCount = useMemo(() => {
     const re =
@@ -302,18 +366,15 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     hasInstitutionalBrief,
   ]);
 
-  const weekendSourceLabel = useMemo(() => {
-    const iso = weekendBriefsNote?.sourceDate;
-    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || '';
-    const d = new Date(`${iso}T12:00:00`);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleDateString('en-GB', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
+  const packSourceDateLabel = useMemo(() => {
+    const iso = weekendBriefsNote?.packSourceDate || weekendBriefsNote?.sourceDate;
+    return formatDeskDateBritishLong(iso);
   }, [weekendBriefsNote]);
+
+  const requestedDeskDateLabel = useMemo(
+    () => formatDeskDateBritishLong(weekendBriefsNote?.requestedDeskDate),
+    [weekendBriefsNote]
+  );
 
   const previewOpen = Boolean(previewId || previewEmbedUrl);
 
@@ -323,7 +384,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     setPreviewBriefMeta(null);
     setTextPreviewBody('');
     setTextPreviewLoading(false);
-    setTypewriterIndex(0);
   }, []);
 
   useEffect(() => {
@@ -576,58 +636,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     };
   }, [previewUseMarkdown, storedPreviewSrc]);
 
-  useEffect(() => {
-    if (!previewUseMarkdown || textPreviewLoading) {
-      setTypewriterIndex(0);
-      return undefined;
-    }
-    const full = textPreviewBody;
-    if (!full) {
-      setTypewriterIndex(0);
-      return undefined;
-    }
-
-    const reduceMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion) {
-      setTypewriterIndex(full.length);
-      return undefined;
-    }
-
-    /** Long briefs: skip typewriter so the overlay never ends mid-character or mid-render. */
-    if (full.length > 14000) {
-      setTypewriterIndex(full.length);
-      return undefined;
-    }
-
-    setTypewriterIndex(0);
-    const n = full.length;
-    const TICK_MS = 16;
-    const MAX_MS = 42000;
-    const maxTicks = Math.max(1, Math.floor(MAX_MS / TICK_MS));
-    const charsPerTick = Math.max(1, Math.ceil(n / maxTicks));
-    let current = 0;
-    const id = setInterval(() => {
-      current = Math.min(n, current + charsPerTick);
-      setTypewriterIndex(current);
-      if (current >= n) clearInterval(id);
-    }, TICK_MS);
-    return () => clearInterval(id);
-  }, [previewUseMarkdown, textPreviewLoading, textPreviewBody]);
-
-  const typewriterActive =
-    previewUseMarkdown &&
-    !textPreviewLoading &&
-    textPreviewBody.length > 0 &&
-    typewriterIndex < textPreviewBody.length;
-
-  useEffect(() => {
-    if (!typewriterActive || !typewriterScrollRef.current) return;
-    const el = typewriterScrollRef.current;
-    el.scrollTop = el.scrollHeight;
-  }, [typewriterActive, typewriterIndex]);
-
   const handlePreview = (brief) => {
     setPreviewBriefMeta({
       id: brief?.id || null,
@@ -703,14 +711,22 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                 ? 'Eight weekly fundamental briefs fill in when the server has finished generating them for the week you selected.'
                 : 'Eight daily briefs fill in when the server has finished generating them for the date you selected.'}
             </p>
+            {period === 'weekly' && weekRangeLabel && (
+              <p className="td-deck-mi-modern-sub td-deck-mi-week-range-key" role="note">
+                Coverage is <strong>{weekRangeLabel}</strong> (London, Mon–Fri). Rows are stored under week-ending
+                Sunday <strong>{storageDateStr}</strong>; titles may mention the Sunday filing date — that is the desk
+                key, not an extra trading day.
+              </p>
+            )}
             {period === 'daily' && weekendBriefsNote && (
               <p className="td-deck-mi-modern-sub td-deck-mi-weekend-note" role="note">
-                Daily automated briefs run on UK business days (Monday–Friday) only. Showing the latest available
-                pack from <strong>{weekendSourceLabel}</strong>.
+                Desk date <strong>{requestedDeskDateLabel}</strong> uses the latest automated pack on file from{' '}
+                <strong>{packSourceDateLabel}</strong> (weekends and non-session days reuse the previous UK weekday
+                pack). In-body titles name that session day.
               </p>
             )}
           </div>
-          {briefs.length > 0 && (
+          {!loading && (
             <div className="td-deck-mi-modern-stat" aria-hidden>
               <span className="td-deck-mi-modern-stat-value">
                 {categorySleevesLoaded}/8
@@ -718,7 +734,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               <span className="td-deck-mi-modern-stat-label">
                 asset sleeves stored (of 8)
                 {hasInstitutionalBrief ? ' · ready' : ' · generating'}
-                {weekendBriefsNote ? ' · latest weekday pack' : ''}
+                {weekendBriefsNote ? ' · desk pack shift' : ''}
               </span>
             </div>
           )}
@@ -726,8 +742,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
 
         {!filtersAreDefault && (
           <p className="td-deck-mi-filter-active-banner" role="status">
-            Some brief types are hidden by filters — showing {displayedBriefs.length} of {sortedBriefs.length} loaded
-            briefs.{' '}
+            Some sleeve cards are hidden by filters — use Show all types to reveal every loaded brief.{' '}
             <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
               Show all types
             </button>
@@ -760,52 +775,137 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                 </span>
               </div>
             </div>
-            <ul className="td-deck-mi-brief-cards">
-              {displayedBriefs.length === 0 ? (
-                <li className="td-deck-mi-brief-empty">
-                  {error ? (
-                    <>
-                      <span className="td-deck-mi-empty-user" role="alert">
-                        We could not load briefs (connection or server issue). Check your network, then try again.
-                      </span>{' '}
-                      <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
-                        Retry fetch
-                      </button>
-                    </>
-                  ) : emptyDeskMessages ? (
-                    <>
-                      <span className="td-deck-mi-empty-user">{emptyDeskMessages.userText}</span>{' '}
-                      <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
-                        Retry fetch
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="td-deck-mi-empty-user">No briefs for this date.</span>{' '}
-                      <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
-                        Retry fetch
-                      </button>
-                    </>
-                  )}
+            <ul className="td-deck-mi-brief-cards td-deck-mi-brief-cards--sleeve-grid">
+              {error ? (
+                <li className="td-deck-mi-brief-empty td-deck-mi-brief-empty--fullwidth">
+                  <span className="td-deck-mi-empty-user" role="alert">
+                    We could not load briefs (connection or server issue). Check your network, then try again.
+                  </span>{' '}
+                  <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
+                    Retry fetch
+                  </button>
+                </li>
+              ) : sortedBriefs.length === 0 && emptyDeskMessages ? (
+                <>
+                  <li className="td-deck-mi-brief-empty td-deck-mi-brief-empty--fullwidth">
+                    <span className="td-deck-mi-empty-user">{emptyDeskMessages.userText}</span>{' '}
+                    <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
+                      Retry fetch
+                    </button>
+                  </li>
+                  {intelSleeveOrder.map((kind) => (
+                    <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--pending">
+                      <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
+                      <span className="td-deck-mi-brief-pending">Awaiting generation</span>
+                    </li>
+                  ))}
+                </>
+              ) : sortedBriefs.length === 0 ? (
+                <li className="td-deck-mi-brief-empty td-deck-mi-brief-empty--fullwidth">
+                  <span className="td-deck-mi-empty-user">No briefs for this date.</span>{' '}
+                  <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
+                    Retry fetch
+                  </button>
                 </li>
               ) : (
-                displayedBriefs.map((b) => (
-                  <li key={b.id} className="td-deck-mi-brief-card">
-                    <span className="td-deck-mi-brief-card-title">
-                      [{BRIEF_KIND_LABEL[String(b?.briefKind || '').toLowerCase()] || 'Brief'}] {displayBriefTitle(b.title)}{Number(b?.briefVersion || 1) > 1 ? ` (v${Number(b.briefVersion)})` : ''}
-                    </span>
-                    <div className="td-deck-mi-brief-card-actions">
-                      <button type="button" className="td-mi-btn td-mi-btn-small" onClick={() => handlePreview(b)} title="Fullscreen preview">
-                        <FaEye /> Preview
-                      </button>
-                      {canEdit && (
-                        <button type="button" className="td-mi-btn td-mi-btn-remove" onClick={() => handleDelete(b.id)} title="Remove">
-                          <FaTrash />
-                        </button>
+                <>
+                  {period === 'daily' && sundayMarketBrief && (
+                    <li
+                      key="aura_sunday_market_open"
+                      className={`td-deck-mi-brief-card${selectedKinds.has('aura_sunday_market_open') ? '' : ' td-deck-mi-brief-card--filtered'}`}
+                    >
+                      {selectedKinds.has('aura_sunday_market_open') ? (
+                        <>
+                          <span className="td-deck-mi-brief-card-title">
+                            [{BRIEF_KIND_LABEL.aura_sunday_market_open}] {displayBriefTitle(sundayMarketBrief.title)}
+                            {Number(sundayMarketBrief?.briefVersion || 1) > 1
+                              ? ` (v${Number(sundayMarketBrief.briefVersion)})`
+                              : ''}
+                          </span>
+                          <div className="td-deck-mi-brief-card-actions">
+                            <button
+                              type="button"
+                              className="td-mi-btn td-mi-btn-small"
+                              onClick={() => handlePreview(sundayMarketBrief)}
+                              title="Fullscreen preview"
+                            >
+                              <FaEye /> Preview
+                            </button>
+                            {canEdit && (
+                              <button
+                                type="button"
+                                className="td-mi-btn td-mi-btn-remove"
+                                onClick={() => handleDelete(sundayMarketBrief.id)}
+                                title="Remove"
+                              >
+                                <FaTrash />
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL.aura_sunday_market_open}</span>
+                          <span className="td-deck-mi-brief-pending">Hidden by filters</span>
+                          <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
+                            Show all
+                          </button>
+                        </>
                       )}
-                    </div>
-                  </li>
-                ))
+                    </li>
+                  )}
+                  {intelSleeveOrder.map((kind) => {
+                    const b = briefByKind.get(kind);
+                    if (!b) {
+                      return (
+                        <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--pending">
+                          <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
+                          <span className="td-deck-mi-brief-pending">Awaiting generation</span>
+                        </li>
+                      );
+                    }
+                    if (!selectedKinds.has(kind)) {
+                      return (
+                        <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--filtered">
+                          <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
+                          <span className="td-deck-mi-brief-pending">Hidden by filters</span>
+                          <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
+                            Show all
+                          </button>
+                        </li>
+                      );
+                    }
+                    return (
+                      <li key={b.id} className="td-deck-mi-brief-card">
+                        <span className="td-deck-mi-brief-card-title">
+                          [{BRIEF_KIND_LABEL[String(b?.briefKind || '').toLowerCase()] || 'Brief'}]{' '}
+                          {displayBriefTitle(b.title)}
+                          {Number(b?.briefVersion || 1) > 1 ? ` (v${Number(b.briefVersion)})` : ''}
+                        </span>
+                        <div className="td-deck-mi-brief-card-actions">
+                          <button
+                            type="button"
+                            className="td-mi-btn td-mi-btn-small"
+                            onClick={() => handlePreview(b)}
+                            title="Fullscreen preview"
+                          >
+                            <FaEye /> Preview
+                          </button>
+                          {canEdit && (
+                            <button
+                              type="button"
+                              className="td-mi-btn td-mi-btn-remove"
+                              onClick={() => handleDelete(b.id)}
+                              title="Remove"
+                            >
+                              <FaTrash />
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </>
               )}
             </ul>
             {canEdit && intelDeskMeta && typeof intelDeskMeta.rawBriefsFromApi === 'number' && (
@@ -867,32 +967,27 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         aria-label={displayBriefTitle(previewBriefMeta?.title)}
       >
         <div className="td-intel-preview-chrome--minimal">
-          <p className="td-intel-preview-title-bar" title={displayBriefTitle(previewBriefMeta?.title)}>
-            {displayBriefTitle(previewBriefMeta?.title)}
-          </p>
+          <div className="td-intel-preview-chrome-main">
+            <p className="td-intel-preview-title-bar" title={displayBriefTitle(previewBriefMeta?.title)}>
+              {displayBriefTitle(previewBriefMeta?.title)}
+            </p>
+            {(period === 'weekly' && weekRangeLabel) || (period === 'daily' && weekendBriefsNote) ? (
+              <p className="td-intel-preview-desk-context">
+                {period === 'weekly' && weekRangeLabel
+                  ? `Coverage ${weekRangeLabel} · desk week-ending Sunday ${storageDateStr}`
+                  : `Pack on file ${packSourceDateLabel} · desk date ${requestedDeskDateLabel}`}
+              </p>
+            ) : null}
+          </div>
           <button type="button" className="td-intel-preview-close--floating" onClick={closePreview} aria-label="Close preview">
             <FaTimes />
           </button>
         </div>
         <div className="td-intel-preview-frame-wrap">
           {previewUseMarkdown ? (
-            <div
-              className="td-intel-preview-md-scroll"
-              aria-busy={textPreviewLoading || typewriterActive}
-            >
+            <div className="td-intel-preview-md-scroll" aria-busy={textPreviewLoading}>
               {textPreviewLoading ? (
                 <p className="td-intel-preview-md-loading">Loading brief…</p>
-              ) : typewriterActive ? (
-                <div
-                  ref={typewriterScrollRef}
-                  className="td-intel-preview-typewriter"
-                  aria-live="off"
-                >
-                  <span className="td-intel-preview-typewriter-text">
-                    {textPreviewBody.slice(0, typewriterIndex)}
-                  </span>
-                  <span className="td-intel-preview-typewriter-caret" aria-hidden />
-                </div>
               ) : (
                 <div className="td-intel-brief-md">
                   <ReactMarkdown components={BRIEF_MARKDOWN_COMPONENTS}>

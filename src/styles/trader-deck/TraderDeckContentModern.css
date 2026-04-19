@@ -2109,6 +2109,17 @@
   font-size: 0.8rem;
 }
 
+.td-deck-with-tabs.td-layout-page .td-deck-mi-week-range-key {
+  margin-top: 10px;
+  padding: 10px 12px;
+  max-width: 56ch;
+  border-radius: 10px;
+  background: rgba(60, 120, 180, 0.12);
+  border: 1px solid rgba(120, 175, 220, 0.28);
+  color: rgba(210, 225, 245, 0.9);
+  font-size: 0.8rem;
+}
+
 .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat {
   text-align: right;
   padding: 12px 18px;
@@ -2329,6 +2340,47 @@
   flex-direction: column;
   gap: 10px;
   width: 100%;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-cards--sleeve-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 12px;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-empty--fullwidth {
+  grid-column: 1 / -1;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card--pending {
+  opacity: 0.78;
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.12);
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card--filtered {
+  opacity: 0.55;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card--sunday {
+  grid-column: 1 / -1;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-pending {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: rgba(200, 205, 230, 0.48);
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card--pending .td-deck-mi-brief-card-actions,
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card--filtered .td-deck-mi-brief-card-actions {
+  margin-top: 8px;
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card {

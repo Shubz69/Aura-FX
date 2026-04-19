@@ -108,7 +108,7 @@
 
 .td-intel-preview-chrome--minimal {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   flex-shrink: 0;
@@ -120,22 +120,40 @@
   z-index: 2;
 }
 
-.td-intel-preview-title-bar {
+.td-intel-preview-chrome-main {
   flex: 1;
-  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   padding-right: 8px;
+}
+
+.td-intel-preview-title-bar {
+  margin: 0;
   font-size: clamp(0.78rem, 2vw, 0.9rem);
   font-weight: 600;
   color: rgba(255, 255, 255, 0.92);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  line-height: 1.35;
   background: linear-gradient(125deg, #fff, rgba(200, 215, 255, 0.95));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.td-intel-preview-desk-context {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: rgba(175, 195, 235, 0.78);
 }
 
 .td-intel-preview-close--floating {
