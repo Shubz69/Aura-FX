@@ -299,7 +299,8 @@ export default function SurveillanceGlobe({
     const panel = el?.parentElement;
     const target = panel && panel.classList?.contains('sv-globe-panel') ? panel : el;
     if (!target || typeof ResizeObserver === 'undefined') return undefined;
-    const chromePx = 20;
+    /* Reserve only a sliver for bottom chrome; large values shrink the square vs wide columns. */
+    const chromePx = 6;
     const ro = new ResizeObserver((entries) => {
       const cr = entries[0]?.contentRect;
       if (cr && cr.width > 0 && cr.height > 0) {
