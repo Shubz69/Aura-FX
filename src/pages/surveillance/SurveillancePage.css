@@ -20,7 +20,7 @@
   --sv-terminal-rail: minmax(228px, 328px);
   --sv-terminal-pad-x: 18px;
   /* Tight reserve: bottom chrome reads over the canvas; larger square = globe owns the stage */
-  --sv-globe-chrome-reserve: 0.65rem;
+  --sv-globe-chrome-reserve: 0.5rem;
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
@@ -32,6 +32,21 @@
   margin-bottom: 0 !important;
   margin-top: 0;
   background: linear-gradient(180deg, #050506 0%, #030304 48%, #020203 100%);
+}
+
+/* Wider / taller operating band on large screens so the square globe approaches column width (fewer side gutters). */
+@media (min-width: 1280px) {
+  .sv-page--terminal {
+    --sv-globe-band: clamp(560px, min(90vh, 62vmin), 980px);
+  }
+}
+
+@media (min-width: 1600px) {
+  .sv-page--terminal {
+    --sv-globe-band: clamp(600px, min(92vh, 68vmin), 1040px);
+    --sv-terminal-side: minmax(96px, 152px);
+    --sv-terminal-rail: minmax(208px, 300px);
+  }
 }
 
 /* Terminal owns first screen; footer sits below — scroll page-wrapper to reach site footer */
@@ -2349,13 +2364,15 @@
   background: transparent;
 }
 
-/* Globe owns the stage: largest square that fits width × height (minus bottom chrome readout) */
+/* Globe: square max-fits stage; explicit w/h may be set inline from JS (panel-sized) for sharper sizing */
 .sv-globe-stage .sv-globe-wrap {
   width: min(100cqi, calc(100cqh - var(--sv-globe-chrome-reserve)));
   height: auto;
   max-width: 100%;
+  max-height: 100%;
   aspect-ratio: 1;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 @supports not (width: 1cqi) {
@@ -3833,6 +3850,7 @@
   opacity: 1;
 }
 
+/* Crisp WebGL layer on HiDPI (browser may still composite softly) */
 .sv-globe-wrap canvas {
   display: block;
   width: 100% !important;

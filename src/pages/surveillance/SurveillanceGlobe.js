@@ -12,8 +12,11 @@ import {
 const Globe = lazy(() => import('react-globe.gl').then((m) => ({ default: m.default })));
 
 const GLOBE_BASE = 'https://unpkg.com/three-globe@2.45.2/example/img';
-/** Higher-resolution source than earth-night.jpg; tinted in refineGlobeSurface for a dark institutional read. */
-const GLOBE_TEXTURE = `${GLOBE_BASE}/earth-blue-marble.jpg`;
+/** NASA Visible Earth 5400×2700 equirectangular (sharper zoom than bundled 2k JPG). CORS-friendly for canvas. */
+const GLOBE_TEXTURE_HI =
+  'https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x5400x2700.jpg';
+/** Fallback if NASA CDN fails. */
+const GLOBE_TEXTURE_LO = `${GLOBE_BASE}/earth-blue-marble.jpg`;
 
 let neGeoJsonCache = null;
 let neGeoJsonPromise = null;
@@ -154,6 +157,15 @@ export default function SurveillanceGlobe({
   const [pulse, setPulse] = useState(0);
   const [hoveredId, setHoveredId] = useState(null);
   const [globeReveal, setGlobeReveal] = useState(false);
+  const [globeTextureUrl, setGlobeTextureUrl] = useState(GLOBE_TEXTURE_LO);
+
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => setGlobeTextureUrl(GLOBE_TEXTURE_HI);
+    img.onerror = () => {};
+    img.src = GLOBE_TEXTURE_HI;
+  }, []);
   const [polygonsData, setPolygonsData] = useState([]);
   const [loadedIsoCentroids, setLoadedIsoCentroids] = useState({});
   const [hoveredIso, setHoveredIso] = useState(null);
@@ -282,15 +294,18 @@ export default function SurveillanceGlobe({
 
   useEffect(() => {
     const el = wrapRef.current;
-    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const panel = el?.parentElement;
+    const target = panel && panel.classList?.contains('sv-globe-panel') ? panel : el;
+    if (!target || typeof ResizeObserver === 'undefined') return undefined;
+    const chromePx = 20;
     const ro = new ResizeObserver((entries) => {
       const cr = entries[0]?.contentRect;
       if (cr && cr.width > 0 && cr.height > 0) {
-        const side = Math.floor(Math.min(cr.width, cr.height));
+        const side = Math.floor(Math.min(cr.width, Math.max(cr.height - chromePx, 200)));
         setDims({ w: Math.max(side, 200), h: Math.max(side, 200) });
       }
     });
-    ro.observe(el);
+    ro.observe(target);
     return () => ro.disconnect();
   }, []);
 
@@ -310,7 +325,9 @@ export default function SurveillanceGlobe({
       const renderer = g && typeof g.renderer === 'function' ? g.renderer() : null;
       if (renderer && typeof renderer.setPixelRatio === 'function') {
         const raw = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-        const pr = reducedMotion ? Math.min(1.25, Math.max(1, raw)) : Math.min(2, Math.max(1, raw));
+        const pr = reducedMotion
+          ? Math.min(1.25, Math.max(1, raw))
+          : Math.min(2.25, Math.max(1, Math.min(raw, 2.25)));
         renderer.setPixelRatio(pr);
         if (typeof renderer.setSize === 'function') {
           renderer.setSize(dims.w, dims.h, true);
@@ -340,7 +357,7 @@ export default function SurveillanceGlobe({
     return () => {
       cancelled = true;
     };
-  }, [globeReveal, dims.w, dims.h, refineGlobeSurface]);
+  }, [globeReveal, dims.w, dims.h, refineGlobeSurface, globeTextureUrl]);
 
   useEffect(() => {
     if (reducedMotion) return undefined;
@@ -681,6 +698,12 @@ export default function SurveillanceGlobe({
     <div
       className={`sv-globe-wrap ${globeReveal ? 'sv-globe-wrap--ready' : ''} ${polygonsData.length ? 'sv-globe-wrap--countries' : ''}`}
       ref={wrapRef}
+      style={{
+        width: dims.w,
+        height: dims.h,
+        maxWidth: '100%',
+        maxHeight: '100%',
+      }}
     >
       <div className="sv-globe-vignette" aria-hidden />
       <Suspense
@@ -700,13 +723,14 @@ export default function SurveillanceGlobe({
           backgroundImageUrl={null}
           waitForGlobeReady
           onGlobeReady={onGlobeReady}
-          globeImageUrl={GLOBE_TEXTURE}
-          globeCurvatureResolution={reducedMotion ? 4 : 2.4}
+          globeImageUrl={globeTextureUrl}
+          globeCurvatureResolution={reducedMotion ? 5 : 5.2}
           bumpImageUrl={null}
           rendererConfig={{
             antialias: true,
             alpha: true,
             powerPreference: 'high-performance',
+            logarithmicDepthBuffer: true,
           }}
           showAtmosphere
           atmosphereColor={atmosphereColor}
@@ -744,7 +768,7 @@ export default function SurveillanceGlobe({
           polygonSideColor={polygonSideColor}
           polygonStrokeColor={polygonStrokeColor}
           polygonAltitude={polygonAltitude}
-          polygonCapCurvatureResolution={3}
+          polygonCapCurvatureResolution={reducedMotion ? 3 : 5}
           polygonsTransitionDuration={
             reducedMotion ? 0 : focusIso ? 95 : focusRegion ? 150 : 220
           }
@@ -764,7 +788,7 @@ export default function SurveillanceGlobe({
           pointAltitude="altitude"
           pointLabel="label"
           pointsMerge={false}
-          pointResolution={reducedMotion ? 10 : 16}
+          pointResolution={reducedMotion ? 10 : 20}
           onPointClick={(pt) => {
             markSurfacePick();
             if (pt && pt.eventId) onSelectEvent(pt.eventId);
