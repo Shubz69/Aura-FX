@@ -42,6 +42,7 @@ function trustBaseFromAdapter(adapterId) {
     'us_dhs_news',
     'us_doe_newsroom',
     'canada_transport_news',
+    'datalastic_ais_live',
   ]);
   if (tier1.has(id)) return 92;
   if (tier2.has(id)) return 86;

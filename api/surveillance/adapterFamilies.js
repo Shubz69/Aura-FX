@@ -39,6 +39,7 @@ const ADAPTER_FAMILY = {
   wto_news: 'trade_policy',
   canada_transport_news: 'logistics_transport',
   opensky_live: 'aviation',
+  datalastic_ais_live: 'maritime',
   dvids_news_rss: 'defense_press',
   uk_mod_rss: 'defense_press',
   gcaptain_rss: 'maritime',
@@ -84,6 +85,7 @@ const ADAPTER_REGION = {
   uk_mod_rss: 'eu',
   gcaptain_rss: 'global',
   opensky_live: 'global',
+  datalastic_ais_live: 'global',
 };
 
 const REGIONS = ['na', 'sa', 'eu', 'mea', 'ssa', 'apac', 'global'];

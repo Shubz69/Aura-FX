@@ -33,6 +33,7 @@ const ukCaaNews = require('./ukCaaNews');
 const canadaTransportNews = require('./canadaTransportNews');
 const wtoNews = require('./wtoNews');
 const openskyLive = require('./openskyLive');
+const datalasticAisLive = require('./datalasticAisLive');
 const dvidsNewsRss = require('./dvidsNewsRss');
 const ukModRss = require('./ukModRss');
 const gCaptainRss = require('./gCaptainRss');
@@ -74,6 +75,7 @@ const ADAPTERS = [
   canadaTransportNews,
   wtoNews,
   openskyLive,
+  datalasticAisLive,
   dvidsNewsRss,
   ukModRss,
   gCaptainRss,
