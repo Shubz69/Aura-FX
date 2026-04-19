@@ -293,6 +293,15 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
   const temperature = options.temperature ?? 0.28;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const hbMs = Number(options.heartbeatMs) || 0;
+  let hb = null;
+  if (hbMs > 0) {
+    const label = String(options.heartbeatLabel || '[perplexity]').trim() || '[perplexity]';
+    hb = setInterval(() => {
+      console.log(label, 'still waiting on Perplexity (large JSON — often 1–3+ min)…');
+    }, hbMs);
+    if (typeof hb.unref === 'function') hb.unref();
+  }
   try {
     const res = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -312,7 +321,6 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
       }),
       signal: controller.signal,
     });
-    clearTimeout(timeout);
     if (!res.ok) {
       const errBody = await res.text().catch(() => '');
       return {
@@ -327,8 +335,10 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
     const parsed = JSON.parse(cleaned);
     return { ok: true, parsed };
   } catch (e) {
-    clearTimeout(timeout);
     return { ok: false, error: e.message || 'perplexity_error' };
+  } finally {
+    clearTimeout(timeout);
+    if (hb) clearInterval(hb);
   }
 }
 
@@ -428,16 +438,19 @@ async function generateOneWeeklyWfaCategory(deps, shared, briefKindSlug) {
     let lastReasons = [];
 
     const weeklyModelLabel = typeof getAutomationModel === 'function' ? String(getAutomationModel() || '').trim() : '';
-    console.log(
-      '[inst-wfa] perplexity',
-      briefKindSlug,
-      date,
-      `model=${weeklyModelLabel || '(default)'} max_tokens≈12000 timeout=180s/attempt (waits here — not frozen)`
-    );
+    const wSleeveIdx = INSTITUTIONAL_WEEKLY_WFA_KINDS.indexOf(briefKindSlug);
+    const wSleeveFrac = wSleeveIdx >= 0 ? `${wSleeveIdx + 1}/${INSTITUTIONAL_WEEKLY_WFA_KINDS.length}` : '?/?';
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const fix = attempt > 0 ? lastReasons : null;
-      console.log('[inst-wfa] perplexity', briefKindSlug, `attempt ${attempt + 1}/3`);
+      console.log(
+        '[inst-wfa] perplexity',
+        `sleeve ${wSleeveFrac}`,
+        briefKindSlug,
+        date,
+        `attempt ${attempt + 1}/3`,
+        `model=${weeklyModelLabel || '(default)'} · heartbeat every 30s while waiting`
+      );
       const rs = await callOpenAIJson(
         systemPrompt,
         {
@@ -449,7 +462,13 @@ async function generateOneWeeklyWfaCategory(deps, shared, briefKindSlug) {
           fixNote: fix,
         },
         getAutomationModel,
-        { maxTokens: 12000, temperature: 0.26, timeoutMs: 180000 }
+        {
+          maxTokens: 12000,
+          temperature: 0.26,
+          timeoutMs: 180000,
+          heartbeatMs: 30000,
+          heartbeatLabel: `[inst-wfa] ${briefKindSlug}`,
+        }
       );
       if (!rs.ok || !rs.parsed) {
         lastReasons = [`llm_${rs.error || 'fail'}`];
@@ -590,8 +609,9 @@ async function generateAndStoreWeeklyWfaPack(deps, { runDate, timeZone, date, no
   if (institutionalWfaSleevesSequential()) {
     console.log('[inst-wfa] sequential sleeves', date);
     results = [];
-    for (const k of INSTITUTIONAL_WEEKLY_WFA_KINDS) {
-      console.log('[inst-wfa] sleeve →', k);
+    for (let i = 0; i < INSTITUTIONAL_WEEKLY_WFA_KINDS.length; i++) {
+      const k = INSTITUTIONAL_WEEKLY_WFA_KINDS[i];
+      console.log('[inst-wfa] sleeve →', `${i + 1}/${INSTITUTIONAL_WEEKLY_WFA_KINDS.length}`, k);
       results.push(await generateOneWeeklyWfaCategory(deps, shared, k));
       const r = results[results.length - 1];
       if (r.skipped) console.log('[inst-wfa] sleeve done (skip)', k, r.reason || '');
@@ -726,16 +746,19 @@ async function generateOneDailyWfaCategory(deps, shared, briefKindSlug) {
     let lastReasons = [];
 
     const modelLabel = typeof getAutomationModel === 'function' ? String(getAutomationModel() || '').trim() : '';
-    console.log(
-      '[inst-daily-pdf] perplexity',
-      briefKindSlug,
-      date,
-      `model=${modelLabel || '(default)'} max_tokens≈16000 timeout=180s/attempt (waits here — not frozen)`
-    );
+    const sleeveIdx = INSTITUTIONAL_DAILY_WFA_KINDS.indexOf(briefKindSlug);
+    const sleeveFrac = sleeveIdx >= 0 ? `${sleeveIdx + 1}/${INSTITUTIONAL_DAILY_WFA_KINDS.length}` : '?/?';
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const fix = attempt > 0 ? lastReasons : null;
-      console.log('[inst-daily-pdf] perplexity', briefKindSlug, `attempt ${attempt + 1}/3`);
+      console.log(
+        '[inst-daily-pdf] perplexity',
+        `sleeve ${sleeveFrac}`,
+        briefKindSlug,
+        date,
+        `attempt ${attempt + 1}/3`,
+        `model=${modelLabel || '(default)'} · one HTTP call (not "N briefs saved yet"); heartbeat every 30s while waiting`
+      );
       const rs = await callOpenAIJson(
         systemPrompt,
         {
@@ -747,7 +770,13 @@ async function generateOneDailyWfaCategory(deps, shared, briefKindSlug) {
           fixNote: fix,
         },
         getAutomationModel,
-        { maxTokens: 16000, temperature: 0.27, timeoutMs: 180000 }
+        {
+          maxTokens: 16000,
+          temperature: 0.27,
+          timeoutMs: 180000,
+          heartbeatMs: 30000,
+          heartbeatLabel: `[inst-daily-pdf] ${briefKindSlug}`,
+        }
       );
       if (!rs.ok || !rs.parsed) {
         lastReasons = [`llm_${rs.error || 'fail'}`];
@@ -890,8 +919,9 @@ async function generateAndStoreDailyWfaPack(deps, { runDate, timeZone, date, nor
   if (institutionalWfaSleevesSequential()) {
     console.log('[inst-daily-pdf] sequential sleeves', date);
     results = [];
-    for (const k of INSTITUTIONAL_DAILY_WFA_KINDS) {
-      console.log('[inst-daily-pdf] sleeve →', k);
+    for (let i = 0; i < INSTITUTIONAL_DAILY_WFA_KINDS.length; i++) {
+      const k = INSTITUTIONAL_DAILY_WFA_KINDS[i];
+      console.log('[inst-daily-pdf] sleeve →', `${i + 1}/${INSTITUTIONAL_DAILY_WFA_KINDS.length}`, k);
       results.push(await generateOneDailyWfaCategory(deps, shared, k));
       const r = results[results.length - 1];
       if (r.skipped) console.log('[inst-daily-pdf] sleeve done (skip)', k, r.reason || '');
