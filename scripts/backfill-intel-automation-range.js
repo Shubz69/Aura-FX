@@ -5,6 +5,10 @@
  * Requirements:
  * - --dry-run: none (prints planned daily/weekly pack dates only).
  * - Real run: MySQL env (api/db.js) + PERPLEXITY_API_KEY (see isTraderDeskAutomationConfigured()).
+ *   Repo-root `.env` and `.env.local` are loaded automatically (same folder as package.json).
+ *
+ * Verify env without running a range:
+ *   node scripts/backfill-intel-automation-range.js --check-env
  *
  * Run from repo root (long-running — dozens of LLM pack runs):
  *   node scripts/backfill-intel-automation-range.js --from=2026-03-01 --to=2026-04-18
@@ -16,11 +20,18 @@
  *   --force            Regenerate even when 8/8 sleeves already exist
  *   --delay-ms=4000    Pause between pack invocations (default 4000)
  *   --dry-run          Log planned work only; no generation
+ *   --check-env        Print whether PERPLEXITY_API_KEY + MySQL vars are set; exit 0 if ready
  */
 
 /* eslint-disable no-console */
 
 'use strict';
+
+const path = require('path');
+const repoRoot = path.join(__dirname, '..');
+// Bare `node scripts/...` does not load .env; mirror local CRA-style secrets at repo root.
+require('dotenv').config({ path: path.join(repoRoot, '.env') });
+require('dotenv').config({ path: path.join(repoRoot, '.env.local'), override: true });
 
 const { DateTime } = require('luxon');
 const { executeQuery } = require('../api/db');
@@ -46,6 +57,7 @@ function parseArgs() {
     force: false,
     delayMs: 4000,
     dryRun: false,
+    checkEnv: false,
   };
   for (const a of process.argv.slice(2)) {
     if (a.startsWith('--from=')) out.from = a.slice(7).trim().slice(0, 10);
@@ -55,6 +67,7 @@ function parseArgs() {
     else if (a === '--include-weekends') out.includeWeekends = true;
     else if (a === '--force') out.force = true;
     else if (a === '--dry-run') out.dryRun = true;
+    else if (a === '--check-env') out.checkEnv = true;
     else if (a.startsWith('--delay-ms=')) out.delayMs = Math.max(0, Number(a.slice(11)) || 0);
   }
   if (!out.to) {
@@ -90,6 +103,28 @@ function jsDateNoonUtc(ymd) {
 
 async function main() {
   const opts = parseArgs();
+  if (opts.checkEnv) {
+    const key = String(process.env.PERPLEXITY_API_KEY || '').trim();
+    const mysqlOk = Boolean(
+      process.env.MYSQL_HOST &&
+        process.env.MYSQL_USER &&
+        process.env.MYSQL_PASSWORD &&
+        process.env.MYSQL_DATABASE
+    );
+    console.log('[backfill] check-env — loaded', path.join(repoRoot, '.env'), 'and .env.local (if present)');
+    console.log(
+      '  PERPLEXITY_API_KEY:',
+      key ? `set (length ${key.length})` : 'MISSING — put in .env or set in shell before node'
+    );
+    console.log(
+      '  MySQL:',
+      mysqlOk ? 'HOST/USER/PASSWORD/DATABASE set' : 'MISSING — real backfill needs these (see api/db.js)'
+    );
+    const ok = Boolean(key) && mysqlOk;
+    if (!ok) console.error('[backfill] Not ready for a real run until missing items are set.');
+    process.exit(ok ? 0 : 1);
+  }
+
   if (!/^\d{4}-\d{2}-\d{2}$/.test(opts.from) || !/^\d{4}-\d{2}-\d{2}$/.test(opts.to)) {
     console.error('Invalid --from / --to (use YYYY-MM-DD)');
     process.exit(1);
