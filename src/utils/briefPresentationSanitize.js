@@ -24,9 +24,7 @@ function normalizeSeparatorsLine(line) {
   while (/\s-\s/.test(L)) {
     L = L.replace(/\s-\s/g, ', ');
   }
-  if (/^\s*-\s+\S/.test(L)) {
-    L = L.replace(/^\s*-\s+/, '• ');
-  }
+  // Keep line-leading "- word" as Markdown list syntax for ReactMarkdown (do not replace with •).
   return L;
 }
 

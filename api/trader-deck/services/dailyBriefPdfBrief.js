@@ -2,26 +2,17 @@
 
 /**
  * Institutional Daily Brief — PDF-aligned structure per category (eight parallel sleeves).
- * Plain paragraphs in stored body (no markdown list markers; spacing hyphens stripped like weekly WFA).
+ * Stored body is Markdown: assembler adds #/##/###; model may use "- " list lines inside JSON strings.
  */
 
 const GENERIC_FAIL_RE =
   /\bit is important to note\b|\bas an ai\b|\bchatgpt\b/i;
 
-function looksLikeListSyntax(s) {
-  const t = String(s || '');
-  return /(^|\n)\s*[-*]\s+\S/.test(t) || /(^|\n)\s*\d+[.)]\s+\S/.test(t);
-}
-
-function sanitizeProseField(s) {
+/** Trim line ends only — preserves Markdown list lines from the model inside JSON strings. */
+function normalizeAssembledProse(s) {
   return String(s || '')
     .split('\n')
-    .map((line) =>
-      line
-        .replace(/^\s*[-*]\s+(?=\S)/, '')
-        .replace(/^\s*\d+[.)]\s+(?=\S)/, '')
-        .trimEnd()
-    )
+    .map((line) => line.trimEnd())
     .join('\n')
     .trim();
 }
@@ -29,8 +20,8 @@ function sanitizeProseField(s) {
 function stripDailyPdfArtifacts(body) {
   let t = String(body || '')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/\*([^*]+)\*/g, '$1')
-    .replace(/^#{1,6}\s+/gm, '');
+    .replace(/\*([^*]+)\*/g, '$1');
+  // Do not strip Markdown headings: assembleDailyBriefPlain emits # / ## / ### for preview layout.
   t = t.replace(/ \u002d /g, ', ');
   return t.replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -94,7 +85,9 @@ instruments: EXACTLY five objects, in factPack.topFiveInstruments order, with FI
 
 scenarioInflationPersistence, scenarioGrowthModeration, scenarioNeutralConsolidation: Each is a scenario paragraph under Overall Daily Structure (distinct regimes).
 
-Forbidden in all strings: hashtags, asterisks, markdown headings, bullet lists, numbered lists, line-leading "- ", "* ", "1.". Do not use the ASCII hyphen minus as a decorative dash inside sentences; use commas or full stops.
+Formatting inside strings: you may use Markdown bullet lists (each line starting with "- " followed by text) when enumerating parallel drivers, tickers, or session notes. Prefer short bullets over one giant sentence when listing three or more comparable items.
+
+Forbidden in all strings: hashtags, asterisks, markdown headings (# through ######), numbered lists (line-leading "1.", "2."), line-leading "* " bullets. Do not use the ASCII hyphen minus as a decorative dash inside sentences; use commas or full stops.
 FORBIDDEN phrasing patterns: ${String(GENERIC_FAIL_RE)}`;
 }
 
@@ -144,7 +137,6 @@ function validateDailyPdfPayload(parsed, briefKind) {
     if (String(row.sessionLondon || '').trim().length < 60) reasons.push(`instr_lon_${i}`);
     if (String(row.sessionNewYork || '').trim().length < 60) reasons.push(`instr_ny_${i}`);
     if (String(row.overallBias || '').trim().length < 40) reasons.push(`instr_bias_${i}`);
-    if (looksLikeListSyntax(blob)) reasons.push(`instr_list_${i}`);
   }
 
   const si = String(parsed.scenarioInflationPersistence || '').trim();
@@ -154,9 +146,6 @@ function validateDailyPdfPayload(parsed, briefKind) {
 
   const blobAll = JSON.stringify(parsed);
   if (GENERIC_FAIL_RE.test(blobAll)) reasons.push('banned_voice');
-
-  const macroFields = [macro, backdrop, themes, dw, si, sg, sn].join('\n');
-  if (looksLikeListSyntax(macroFields)) reasons.push('macro_list_syntax');
 
   return { ok: reasons.length === 0, reasons };
 }
@@ -182,7 +171,7 @@ function assembleDailyBriefPlain({
     'scenarioNeutralConsolidation',
   ];
   for (const k of topFields) {
-    p[k] = sanitizeProseField(p[k]);
+    p[k] = normalizeAssembledProse(p[k]);
   }
 
   const inst = Array.isArray(p.instruments) ? p.instruments : [];
@@ -198,92 +187,91 @@ function assembleDailyBriefPlain({
       'overallBias',
     ];
     for (const k of keys) {
-      if (row[k] != null) row[k] = sanitizeProseField(row[k]);
+      if (row[k] != null) row[k] = normalizeAssembledProse(row[k]);
     }
   }
 
   const ND = '\u2013';
   const lines = [];
-  lines.push(String(titleLine || '').trim());
+  // Markdown body: ReactMarkdown in MI preview renders headings and paragraph spacing (Word-like).
+  lines.push(`# ${String(titleLine || '').trim()}`);
   lines.push('');
   lines.push(String(authorLine || '').trim());
   lines.push('');
-  lines.push('Period: daily');
-  lines.push(`Date: ${metaDateYmd}`);
-  lines.push(`Category: ${catHeader}`);
-  lines.push(`Brief kind: ${briefKind}`);
-  lines.push('');
-  lines.push('DAY NAME');
-  lines.push('');
-  lines.push(wh);
+  lines.push(`## Day position — ${wh}`);
   lines.push('');
   lines.push(p.dayWeekPositionAndData);
   lines.push('');
-  lines.push('MACRO INTRO + STRUCTURAL FLOW');
+  lines.push('## Macro intro and structural flow');
   lines.push('');
   lines.push(p.macroIntroStructuralFlow);
   lines.push('');
-  lines.push(`MACRO BACKDROP GOING INTO ${wh}`);
+  lines.push(`## Macro backdrop going into ${wh}`);
   lines.push('');
   lines.push(p.macroBackdropGoingIntoToday);
   lines.push('');
-  lines.push('MARKET THEMES DOMINATING TODAY');
+  lines.push('## Market themes dominating today');
   lines.push('');
   lines.push(p.marketThemesDominatingToday);
   lines.push('');
-  lines.push(`${catHeader} ${ND} TOP 5 INSTRUMENT ANALYSIS`);
+  lines.push(`## ${catHeader} ${ND} top five instruments`);
   lines.push('');
 
   for (const row of inst) {
     const sym = String(row.symbol || '').toUpperCase().trim();
     const lab = String(row.label || sym || 'Instrument').trim();
-    lines.push(`${sym || lab} ANALYSIS`);
+    const head = sym || lab;
+    lines.push(`### ${head}`);
+    lines.push('');
+    lines.push('#### What is happening');
     lines.push('');
     lines.push(String(row.whatHappening || '').trim());
     lines.push('');
+    lines.push('#### Why it is happening');
+    lines.push('');
     lines.push(String(row.whyHappening || '').trim());
+    lines.push('');
+    lines.push('#### What it means');
     lines.push('');
     lines.push(String(row.whatItMeans || '').trim());
     lines.push('');
-    lines.push('Technical structure');
+    lines.push('#### Technical structure');
     lines.push('');
     lines.push(String(row.technicalStructure || '').trim());
     lines.push('');
-    lines.push('Session bias');
+    lines.push('#### Session bias');
     lines.push('');
-    lines.push('Asia');
+    lines.push('##### Asia');
     lines.push('');
     lines.push(String(row.sessionAsia || '').trim());
     lines.push('');
-    lines.push('London');
+    lines.push('##### London');
     lines.push('');
     lines.push(String(row.sessionLondon || '').trim());
     lines.push('');
-    lines.push('New York');
+    lines.push('##### New York');
     lines.push('');
     lines.push(String(row.sessionNewYork || '').trim());
     lines.push('');
-    lines.push('Overall bias');
+    lines.push('##### Overall bias');
     lines.push('');
     lines.push(String(row.overallBias || '').trim());
     lines.push('');
   }
 
-  lines.push('OVERALL DAILY STRUCTURE');
+  lines.push('## Overall daily structure');
   lines.push('');
-  lines.push('Inflation persistence scenario');
+  lines.push('### Inflation persistence scenario');
   lines.push('');
   lines.push(p.scenarioInflationPersistence);
   lines.push('');
-  lines.push('Growth moderation scenario');
+  lines.push('### Growth moderation scenario');
   lines.push('');
   lines.push(p.scenarioGrowthModeration);
   lines.push('');
-  lines.push('Neutral consolidation scenario');
+  lines.push('### Neutral consolidation scenario');
   lines.push('');
   lines.push(p.scenarioNeutralConsolidation);
-  lines.push('');
-  lines.push('End of daily brief for this category. Saved to Trader Deck.');
   lines.push('');
   lines.push(String(authorLine || '').trim());
   return stripDailyPdfArtifacts(lines.join('\n').replace(/\n{3,}/g, '\n\n').trim());

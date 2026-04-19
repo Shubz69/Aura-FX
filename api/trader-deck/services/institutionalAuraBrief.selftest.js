@@ -124,8 +124,19 @@ function run() {
     weekdayHeading: 'MONDAY',
     parsedIn: dp,
   });
-  assert.ok(/\bMACRO INTRO \+ STRUCTURAL FLOW\b/.test(assembled), 'daily body macro section');
-  assert.ok(/\bOVERALL DAILY STRUCTURE\b/.test(assembled), 'daily overall structure');
+  assert.ok(/\n##\s+Macro intro and structural flow\s*\n/i.test(assembled), 'daily body macro section');
+  assert.ok(/\n##\s+Overall daily structure\s*\n/i.test(assembled), 'daily overall structure');
+
+  const wkAssembled = weeklyWfaPdfBrief.assembleWeeklyWfaPlain({
+    titleLine: weekTitle,
+    authorLine: 'By AURA TERMINAL',
+    metaDateYmd: '2026-03-30',
+    weekRangeLabel: '2nd – 6th March 2026',
+    briefKind: 'aura_institutional_weekly_forex',
+    parsedIn: wk,
+  });
+  assert.ok(/\n##\s+Overview\s*\n/i.test(wkAssembled), 'weekly overview heading');
+  assert.ok(/\n##\s+Scenario framework\s*\n/i.test(wkAssembled), 'weekly scenario heading');
 
   console.log('institutionalAuraBrief.selftest: all assertions passed.');
 }

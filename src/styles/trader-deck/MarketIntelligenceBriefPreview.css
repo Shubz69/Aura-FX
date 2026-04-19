@@ -490,6 +490,22 @@
   font-feature-settings: 'kern' 1, 'liga' 1;
 }
 
+.td-intel-brief-md--typewriter {
+  position: relative;
+  min-height: 2.5rem;
+}
+
+.td-intel-brief-md-typewriter-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: text-bottom;
+  background: linear-gradient(180deg, rgba(107, 143, 232, 0.95), rgba(212, 175, 55, 0.75));
+  animation: tdPreviewBlink 0.9s steps(1, end) infinite;
+  box-shadow: 0 0 6px rgba(107, 143, 232, 0.45);
+}
+
 .td-intel-brief-md h1 {
   margin: 0 0 1rem;
   font-size: clamp(1.05rem, 2.65vw, 1.35rem);
@@ -540,6 +556,23 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(200, 210, 245, 0.9);
+}
+
+.td-intel-brief-md h5 {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 620;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(185, 198, 235, 0.88);
+}
+
+.td-intel-brief-md h6 {
+  margin: 0.85rem 0 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(175, 190, 228, 0.85);
 }
 
 .td-intel-brief-md p {

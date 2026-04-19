@@ -1828,11 +1828,26 @@ function categoryStoredBodyNeedsPdfReshape(bodyText, normalizedPeriod) {
   const isWeekly = normalizedPeriod === 'weekly';
   if (!isWeekly) {
     if (/\n##\s+GLOBAL\s+GEOPOLITICAL\s+ENVIRONMENT\s*\n/i.test(text)) return false;
+    if (
+      /\n##\s+Macro intro and structural flow\s*\n/i.test(text) &&
+      /\n##\s+Overall daily structure\s*\n/i.test(text)
+    ) {
+      return false;
+    }
     if (/^##\s*MARKET CONTEXT\s*$/im.test(text)) return true;
     if (/^##\s*CROSS-ASSET FLOW\s*$/im.test(text)) return true;
     return true;
   }
-  // Full weekly PDF shape (category): OVERVIEW + SUMMARY line + structural block + session watch.
+  // Institutional weekly WFA stored body (markdown headings from assembleWeeklyWfaPlain).
+  if (
+    /\n##\s+Overview\s*\n/i.test(text) &&
+    /\n##\s+Summary for last week\s*\n/i.test(text) &&
+    /\n##\s+What matters this week structurally\s*\n/i.test(text) &&
+    /\n##\s+Scenario framework\s*\n/i.test(text)
+  ) {
+    return false;
+  }
+  // Legacy weekly markers (older automation templates).
   if (
     /\n##\s+OVERVIEW\s*\n/i.test(text) &&
     /\n##\s+SUMMARY FOR LAST WEEK\b/m.test(text) &&

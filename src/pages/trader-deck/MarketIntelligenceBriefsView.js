@@ -168,6 +168,8 @@ const BRIEF_MARKDOWN_COMPONENTS = {
 /** Preview text: preserve markdown headings (section layout); polish separators/casing to match backend. */
 function sanitizeBriefForPreview(text) {
   let t = String(text || '').replace(/\r\n/g, '\n');
+  // Legacy bodies: "##" glued to end of sentence → split so ReactMarkdown sees real headings.
+  t = t.replace(/([^\n#])\s*(#{2,6}\s+)/g, '$1\n\n$2');
 
   // Strip ```fences``` (keep inner text); strip inline backticks from legacy docs.
   t = t.replace(/```(?:[\w-]+)?\s*\n?([\s\S]*?)```/g, (_, inner) => `\n${String(inner || '').trim()}\n`);
@@ -277,6 +279,9 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [previewBriefMeta, setPreviewBriefMeta] = useState(null);
   const [textPreviewBody, setTextPreviewBody] = useState('');
   const [textPreviewLoading, setTextPreviewLoading] = useState(false);
+  /** Progressive reveal for text/markdown briefs (typewriter-style after load). */
+  const [typedMarkdownBody, setTypedMarkdownBody] = useState('');
+  const [briefTypewriterActive, setBriefTypewriterActive] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterMenuPos, setFilterMenuPos] = useState(null);
   const [selectedKinds, setSelectedKinds] = useState(() => new Set(BRIEF_KIND_ORDER));
@@ -651,6 +656,56 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     };
   }, [previewUseMarkdown, storedPreviewSrc]);
 
+  useEffect(() => {
+    if (!previewUseMarkdown) {
+      setTypedMarkdownBody('');
+      setBriefTypewriterActive(false);
+      return undefined;
+    }
+    if (textPreviewLoading) {
+      setTypedMarkdownBody('');
+      setBriefTypewriterActive(false);
+      return undefined;
+    }
+    const full = String(textPreviewBody || '');
+    if (!full.trim()) {
+      setTypedMarkdownBody('');
+      setBriefTypewriterActive(false);
+      return undefined;
+    }
+
+    setBriefTypewriterActive(true);
+    setTypedMarkdownBody('');
+
+    const fullLen = full.length;
+    const TICK_MS = 18;
+    const TARGET_MS = 10000;
+    const steps = Math.max(1, Math.ceil(TARGET_MS / TICK_MS));
+    const stepChars = Math.max(2, Math.ceil(fullLen / steps));
+
+    let pos = 0;
+    let cancelled = false;
+    let timeoutId = null;
+
+    const step = () => {
+      if (cancelled) return;
+      pos = Math.min(fullLen, pos + stepChars);
+      setTypedMarkdownBody(full.slice(0, pos));
+      if (pos >= fullLen) {
+        setBriefTypewriterActive(false);
+        return;
+      }
+      timeoutId = window.setTimeout(step, TICK_MS);
+    };
+
+    timeoutId = window.setTimeout(step, 0);
+    return () => {
+      cancelled = true;
+      if (timeoutId != null) window.clearTimeout(timeoutId);
+      setBriefTypewriterActive(false);
+    };
+  }, [previewUseMarkdown, textPreviewLoading, textPreviewBody, previewId]);
+
   const handlePreview = (brief) => {
     setPreviewBriefMeta({
       id: brief?.id || null,
@@ -1007,14 +1062,24 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         </div>
         <div className="td-intel-preview-frame-wrap">
           {previewUseMarkdown ? (
-            <div className="td-intel-preview-md-scroll" aria-busy={textPreviewLoading}>
+            <div
+              className="td-intel-preview-md-scroll"
+              aria-busy={textPreviewLoading || briefTypewriterActive}
+            >
               {textPreviewLoading ? (
                 <p className="td-intel-preview-md-loading">Loading brief…</p>
               ) : (
-                <div className="td-intel-brief-md">
+                <div className="td-intel-brief-md td-intel-brief-md--typewriter">
                   <ReactMarkdown components={BRIEF_MARKDOWN_COMPONENTS}>
-                    {textPreviewBody || '_No text content._'}
+                    {typedMarkdownBody.length > 0
+                      ? typedMarkdownBody
+                      : String(textPreviewBody || '').trim()
+                        ? '\u00a0'
+                        : '_No text content._'}
                   </ReactMarkdown>
+                  {briefTypewriterActive ? (
+                    <span className="td-intel-brief-md-typewriter-caret" aria-hidden />
+                  ) : null}
                 </div>
               )}
             </div>

@@ -2,36 +2,25 @@
 
 /**
  * Weekly Fundamental Analysis — PDF-aligned structure per category (eight parallel sleeves).
- * Plain paragraphs only in stored body (no markdown list markers).
+ * Stored body is Markdown: assembler adds headings; model may use "- " list lines inside JSON strings.
  */
 
 const GENERIC_FAIL_RE =
   /\bit is important to note\b|\bas an ai\b|\bchatgpt\b/i;
 
-function looksLikeListSyntax(s) {
-  const t = String(s || '');
-  return /(^|\n)\s*[-*]\s+\S/.test(t) || /(^|\n)\s*\d+[.)]\s+\S/.test(t);
-}
-
-function sanitizeProseField(s) {
+function normalizeAssembledProse(s) {
   return String(s || '')
     .split('\n')
-    .map((line) =>
-      line
-        .replace(/^\s*[-*]\s+(?=\S)/, '')
-        .replace(/^\s*\d+[.)]\s+(?=\S)/, '')
-        .trimEnd()
-    )
+    .map((line) => line.trimEnd())
     .join('\n')
     .trim();
 }
 
-/** Remove markdown-like symbols; avoid ASCII hyphen used as dash between words where possible. */
+/** Remove bold/italic markers from LLM prose; keep # headings from assembleWeeklyWfaPlain. */
 function stripWfaUiArtifacts(body) {
   let t = String(body || '')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/\*([^*]+)\*/g, '$1')
-    .replace(/^#{1,6}\s+/gm, '');
+    .replace(/\*([^*]+)\*/g, '$1');
   t = t.replace(/ \u002d /g, ', ');
   return t.replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -100,7 +89,9 @@ weekConclusion: Tie conclusions back through oil, yields, USD and liquidity cond
 
 scenarioContinuation AND scenarioReversal: Each is one substantial paragraph (two scenarios total).
 
-Forbidden in all strings: hashtags, asterisks, markdown headings, bullet lists, numbered lists, line-leading "- ", "* ", "1.". Do not emit the ASCII hyphen minus as a sentence dash; use commas or sentence breaks instead where possible.
+Formatting inside strings: you may use Markdown bullet lists (each line starting with "- " followed by text) when enumerating parallel drivers or tickers.
+
+Forbidden in all strings: hashtags, asterisks, markdown headings (# through ######), numbered lists (line-leading "1.", "2."), line-leading "* " bullets. Do not emit the ASCII hyphen minus as a sentence dash; use commas or sentence breaks instead where possible.
 FORBIDDEN phrasing patterns: ${String(GENERIC_FAIL_RE)}`;
 }
 
@@ -132,12 +123,10 @@ function validateWeeklyWfaPayload(parsed, briefKind) {
 
   for (let i = 0; i < arr.length; i += 1) {
     const row = arr[i] || {};
-    const blob = `${row.whatHappened || ''}${row.whyMacroLinkage || ''}${row.whatItMeans || ''}`;
     if (String(row.symbol || '').trim().length < 2) reasons.push(`instr_symbol_${i}`);
     if (String(row.whatHappened || '').trim().length < 80) reasons.push(`instr_what_${i}`);
     if (String(row.whyMacroLinkage || '').trim().length < 120) reasons.push(`instr_why_${i}`);
     if (String(row.whatItMeans || '').trim().length < 80) reasons.push(`instr_mean_${i}`);
-    if (looksLikeListSyntax(blob)) reasons.push(`instr_list_${i}`);
   }
 
   const wms = String(parsed.whatMattersStructurally || '').trim();
@@ -189,82 +178,87 @@ function assembleWeeklyWfaPlain({
     'scenarioReversal',
   ];
   for (const k of fields) {
-    p[k] = sanitizeProseField(p[k]);
+    p[k] = normalizeAssembledProse(p[k]);
+  }
+
+  const instPre = Array.isArray(p.instruments) ? p.instruments : [];
+  for (const row of instPre) {
+    for (const ik of ['whatHappened', 'whyMacroLinkage', 'whatItMeans']) {
+      if (row && row[ik] != null) row[ik] = normalizeAssembledProse(row[ik]);
+    }
   }
 
   const lines = [];
-  lines.push(String(titleLine || '').trim());
+  lines.push(`# ${String(titleLine || '').trim()}`);
   lines.push('');
   lines.push(String(authorLine || '').trim());
   lines.push('');
-  lines.push(`Period: weekly`);
-  lines.push(`Date: ${metaDateYmd}`);
-  lines.push(`Week range: ${String(weekRangeLabel || '').trim()}`);
-  lines.push(`Category: ${catHeader}`);
-  lines.push(`Brief kind: ${briefKind}`);
+  lines.push(`_Week ${String(weekRangeLabel || '').trim()}_`);
   lines.push('');
-  lines.push('OVERVIEW');
+  lines.push('## Overview');
   lines.push('');
   lines.push(p.overview);
   lines.push('');
-  lines.push('SUMMARY FOR LAST WEEK');
+  lines.push('## Summary for last week');
   lines.push('');
   lines.push(p.summaryForLastWeek);
   lines.push('');
-  lines.push(`${catHeader} – TOP 5 INSTRUMENT ANALYSIS`);
+  lines.push(`## ${catHeader} — top five instruments`);
   lines.push('');
   const inst = Array.isArray(p.instruments) ? p.instruments : [];
   for (const row of inst) {
     const sym = String(row.symbol || '').toUpperCase().trim();
     const lab = String(row.label || sym || 'Instrument').trim();
-    lines.push(sym || lab);
+    lines.push(`### ${sym || lab}`);
+    lines.push('');
+    lines.push('#### What happened');
     lines.push('');
     lines.push(String(row.whatHappened || '').trim());
     lines.push('');
+    lines.push('#### Macro linkage');
+    lines.push('');
     lines.push(String(row.whyMacroLinkage || '').trim());
+    lines.push('');
+    lines.push('#### What it means');
     lines.push('');
     lines.push(String(row.whatItMeans || '').trim());
     lines.push('');
   }
-  lines.push('WHAT MATTERS THIS WEEK STRUCTURALLY');
+  lines.push('## What matters this week structurally');
   lines.push('');
   lines.push(p.whatMattersStructurally);
   lines.push('');
-  lines.push('WEEK STRUCTURE');
+  lines.push('## Week structure');
   lines.push('');
-  lines.push('Early week (Mon–Tue)');
+  lines.push('### Early week (Mon–Tue)');
   lines.push('');
   lines.push(p.earlyWeekMonTue);
   lines.push('');
-  lines.push('Midweek (Wed)');
+  lines.push('### Midweek (Wed)');
   lines.push('');
   lines.push(p.midweekWed);
   lines.push('');
-  lines.push('End of week (Thu–Fri)');
+  lines.push('### End of week (Thu–Fri)');
   lines.push('');
   lines.push(p.endWeekThuFri);
   lines.push('');
-  lines.push('FORWARD OUTLOOK');
+  lines.push('## Forward outlook');
   lines.push('');
   lines.push(p.forwardOutlook);
   lines.push('');
-  lines.push('WEEK CONCLUSION');
+  lines.push('## Week conclusion');
   lines.push('');
   lines.push(p.weekConclusion);
   lines.push('');
-  lines.push('SCENARIO FRAMEWORK');
+  lines.push('## Scenario framework');
   lines.push('');
-  lines.push('Continuation scenario.');
+  lines.push('### Continuation scenario');
   lines.push('');
   lines.push(p.scenarioContinuation);
   lines.push('');
-  lines.push('Reversal scenario.');
+  lines.push('### Reversal scenario');
   lines.push('');
   lines.push(p.scenarioReversal);
-  lines.push('');
-  lines.push(
-    'End of weekly fundamental analysis for this category. Saved to Trader Deck.'
-  );
   lines.push('');
   lines.push(String(authorLine || '').trim());
   return stripWfaUiArtifacts(lines.join('\n').replace(/\n{3,}/g, '\n\n').trim());
