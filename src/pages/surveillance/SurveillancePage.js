@@ -89,6 +89,12 @@ export default function SurveillancePage() {
     [token]
   );
 
+  const focusCountryIso = useMemo(() => {
+    if (!focusRegion) return null;
+    const f = normalizeRegionKey(focusRegion);
+    return /^[A-Z]{2}$/.test(f) ? f : null;
+  }, [focusRegion]);
+
   const loadBootstrap = useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -154,12 +160,6 @@ export default function SurveillancePage() {
   }, [token, authHeaders, tab, severityMin, focusCountryIso]);
 
   loadFeedRef.current = loadFeed;
-
-  const focusCountryIso = useMemo(() => {
-    if (!focusRegion) return null;
-    const f = normalizeRegionKey(focusRegion);
-    return /^[A-Z]{2}$/.test(f) ? f : null;
-  }, [focusRegion]);
 
   const eventsById = useMemo(() => buildEventsById(events), [events]);
 
