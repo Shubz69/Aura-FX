@@ -21,8 +21,9 @@ function stripLlmReasoningNoise(raw) {
   s = s.replace(/<redacted_[a-z0-9_-]+>[\s\S]*?<\/redacted_[a-z0-9_-]+>/gi, '');
   s = s.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '');
   s = s.replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '');
-  // Unclosed `<redacted_…>` (no `</…>`): drop leading tag opens until we see text or `{`.
-  for (let k = 0; k < 4 && s.startsWith('<'); k += 1) {
+  s = s.replace(/<analysis>[\s\S]*?<\/analysis>/gi, '');
+  // Unclosed `<…>`: peel leading XML-like opens (reasoning models).
+  for (let k = 0; k < 8 && s.startsWith('<'); k += 1) {
     const gt = s.indexOf('>');
     if (gt < 0) break;
     s = s.slice(gt + 1).trim();
@@ -60,19 +61,85 @@ function extractBalancedJsonObject(input) {
   return s.slice(start);
 }
 
-function parseJsonFromLlmText(text) {
-  const cleaned = stripLlmReasoningNoise(text);
-  const balanced = extractBalancedJsonObject(cleaned);
-  const attempts = [balanced, balanced.replace(/,\s*([}\]])/g, '$1')];
+/** When prose/thinking contains `{` before the real payload, find institutional root objects. */
+const INSTITUTIONAL_JSON_KEY_ANCHORS = [
+  '"dayWeekPositionAndData"',
+  '"macroIntroStructuralFlow"',
+  '"summaryForLastWeek"',
+];
+
+function looksLikeDailyInstitutionalPayload(o) {
+  return (
+    o &&
+    typeof o === 'object' &&
+    'dayWeekPositionAndData' in o &&
+    Array.isArray(o.instruments) &&
+    o.instruments.length === 5
+  );
+}
+
+function looksLikeWeeklyInstitutionalPayload(o) {
+  return (
+    o &&
+    typeof o === 'object' &&
+    'overview' in o &&
+    Array.isArray(o.instruments) &&
+    o.instruments.length === 5
+  );
+}
+
+function isPlausibleInstitutionalPayload(o) {
+  return looksLikeDailyInstitutionalPayload(o) || looksLikeWeeklyInstitutionalPayload(o);
+}
+
+function tryParseJsonCandidates(strs) {
   let lastErr = null;
-  for (const c of attempts) {
-    try {
-      return JSON.parse(c);
-    } catch (e) {
-      lastErr = e;
+  for (const raw of strs) {
+    const s = String(raw || '').trim();
+    if (!s) continue;
+    const candidates = [s, s.replace(/,\s*([}\]])/g, '$1')];
+    for (const c of candidates) {
+      try {
+        return { ok: true, parsed: JSON.parse(c) };
+      } catch (e) {
+        lastErr = e;
+      }
     }
   }
-  throw lastErr || new Error('invalid_json');
+  return { ok: false, error: lastErr };
+}
+
+function extractRootJsonByAnchors(source) {
+  const s = String(source || '');
+  let lastErr = null;
+  for (const needle of INSTITUTIONAL_JSON_KEY_ANCHORS) {
+    const p = s.indexOf(needle);
+    if (p < 0) continue;
+    const start = s.lastIndexOf('{', p);
+    if (start < 0) continue;
+    const chunk = extractBalancedJsonObject(s.slice(start));
+    const r = tryParseJsonCandidates([chunk]);
+    if (r.ok) return { ok: true, parsed: r.parsed };
+    lastErr = r.error;
+  }
+  return { ok: false, error: lastErr };
+}
+
+function parseJsonFromLlmText(text) {
+  const full = String(text || '');
+  const cleaned = stripLlmReasoningNoise(full);
+  const balanced = extractBalancedJsonObject(cleaned);
+  const primary = tryParseJsonCandidates([balanced]);
+  if (primary.ok && isPlausibleInstitutionalPayload(primary.parsed)) return primary.parsed;
+
+  const anchored = extractRootJsonByAnchors(full);
+  if (anchored.ok) return anchored.parsed;
+  const anchored2 = extractRootJsonByAnchors(cleaned);
+  if (anchored2.ok) return anchored2.parsed;
+
+  if (primary.ok) return primary.parsed;
+
+  throw primary.error || anchored.error || anchored2.error || new Error('invalid_json');
 }
 
 module.exports = {
@@ -80,4 +147,5 @@ module.exports = {
   stripLlmReasoningNoise,
   extractBalancedJsonObject,
   parseJsonFromLlmText,
+  isPlausibleInstitutionalPayload,
 };
