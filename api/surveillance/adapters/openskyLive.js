@@ -25,7 +25,10 @@ function boxLimit() {
   const n = parseInt(process.env.OPENSKY_MAX_BOXES || '', 10);
   if (Number.isFinite(n) && n >= 1) return Math.min(n, BOXES.length);
   const hasAuth = !!(process.env.OPENSKY_USERNAME && process.env.OPENSKY_PASSWORD);
-  return hasAuth ? BOXES.length : Math.min(2, BOXES.length);
+  if (hasAuth) return BOXES.length;
+  // One geographic box on serverless by default — fewer timeouts and shorter cron wall time.
+  if (process.env.VERCEL) return Math.min(1, BOXES.length);
+  return Math.min(2, BOXES.length);
 }
 
 function fetchOpts() {

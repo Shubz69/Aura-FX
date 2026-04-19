@@ -221,15 +221,25 @@ function emptyDeskMessagesFor(period, phase) {
   return { userText: phase === 'first' ? userFirst : userRepeat };
 }
 
+function emptySundayHoldMessages(phase) {
+  const body =
+    'Sunday desk (Europe/London): the previous weekday’s daily pack is not shown here before 21:00. After that time the list refreshes automatically (or use Friday for the last full session, Monday for the new week).';
+  const first = `${body} You can tap Retry after 21:00 London.`;
+  const repeat = body;
+  return { userText: phase === 'first' ? first : repeat };
+}
+
 function briefsPayloadFromContentResponse(res, fallbackStorageDate) {
   const raw = Array.isArray(res.data?.briefs) ? res.data.briefs : [];
   const list = normalizeBriefsList(raw);
   const weekendFallback = Boolean(res.data?.weekendFallback);
+  const intelDailySundayHold = Boolean(res.data?.intelDailySundayHold);
   const requestedDeskDate = String(res.data?.date || fallbackStorageDate || '').trim().slice(0, 10);
   const packFileDate = String(res.data?.briefsSourceDate || requestedDeskDate).trim().slice(0, 10);
   const apiType = String(res.data?.type || '').toLowerCase();
   const isWeeklyApi = apiType.includes('weekly');
   const showDeskPackShiftNote =
+    !intelDailySundayHold &&
     !isWeeklyApi &&
     /^\d{4}-\d{2}-\d{2}$/.test(requestedDeskDate) &&
     /^\d{4}-\d{2}-\d{2}$/.test(packFileDate) &&
@@ -243,6 +253,7 @@ function briefsPayloadFromContentResponse(res, fallbackStorageDate) {
       : null;
   return {
     list,
+    intelDailySundayHold,
     weekendNote:
       weekendFallback || showDeskPackShiftNote
         ? { packSourceDate: packFileDate, requestedDeskDate }
@@ -291,6 +302,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [selectedKinds, setSelectedKinds] = useState(() => new Set(BRIEF_KIND_ORDER));
   /** UK weekend daily view: server serves previous weekday’s briefs */
   const [weekendBriefsNote, setWeekendBriefsNote] = useState(null);
+  /** London Sunday before 21:00: server withholds weekend fallback so titles stay session-correct. */
+  const [intelDailySundayHold, setIntelDailySundayHold] = useState(false);
   /** When the desk date has zero stored briefs: safe user copy + optional admin-only hint */
   const [emptyDeskMessages, setEmptyDeskMessages] = useState(null);
   /** Last GET intel payload diagnostics (non-secret; helps admins see DB vs automation). */
@@ -486,9 +499,12 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       .then((payload) => {
         setBriefs(payload.list);
         setWeekendBriefsNote(payload.weekendNote);
+        setIntelDailySundayHold(Boolean(payload.intelDailySundayHold));
         setIntelDeskMeta(payload.deskMeta ?? null);
         if (payload.list.length > 0) {
           setEmptyDeskMessages(null);
+        } else if (payload.intelDailySundayHold) {
+          setEmptyDeskMessages(emptySundayHoldMessages('repeat'));
         } else {
           setEmptyDeskMessages(emptyDeskMessagesFor(period, 'repeat'));
         }
@@ -505,6 +521,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     setError(null);
     setSelectedKinds(new Set(BRIEF_KIND_ORDER));
     setWeekendBriefsNote(null);
+    setIntelDailySundayHold(false);
     setEmptyDeskMessages(null);
     setIntelDeskMeta(null);
 
@@ -517,23 +534,28 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         if (cancelled) return;
         setBriefs(payload.list);
         setWeekendBriefsNote(payload.weekendNote);
+        setIntelDailySundayHold(Boolean(payload.intelDailySundayHold));
         setIntelDeskMeta(payload.deskMeta ?? null);
         if (payload.list.length > 0) {
           setEmptyDeskMessages(null);
           return;
         }
 
-        try {
-          const key = `td-brief-desk-backfill-${type}-${storageDateStr}`;
-          if (!sessionStorage.getItem(key)) {
-            sessionStorage.setItem(key, '1');
-            setEmptyDeskMessages(emptyDeskMessagesFor(period, 'first'));
-            Api.getTraderDeckContent(type, storageDateStr, { autogen: true }).catch(() => {});
-          } else {
+        if (payload.intelDailySundayHold) {
+          setEmptyDeskMessages(emptySundayHoldMessages('first'));
+        } else {
+          try {
+            const key = `td-brief-desk-backfill-${type}-${storageDateStr}`;
+            if (!sessionStorage.getItem(key)) {
+              sessionStorage.setItem(key, '1');
+              setEmptyDeskMessages(emptyDeskMessagesFor(period, 'first'));
+              Api.getTraderDeckContent(type, storageDateStr, { autogen: true }).catch(() => {});
+            } else {
+              setEmptyDeskMessages(emptyDeskMessagesFor(period, 'repeat'));
+            }
+          } catch (_) {
             setEmptyDeskMessages(emptyDeskMessagesFor(period, 'repeat'));
           }
-        } catch (_) {
-          setEmptyDeskMessages(emptyDeskMessagesFor(period, 'repeat'));
         }
 
         pollTimer = setInterval(() => {
@@ -548,6 +570,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
             .then((nextPayload) => {
               if (cancelled) return;
               setIntelDeskMeta(nextPayload.deskMeta ?? null);
+              setIntelDailySundayHold(Boolean(nextPayload.intelDailySundayHold));
               if (!nextPayload.list.length) return;
               setBriefs(nextPayload.list);
               setWeekendBriefsNote(nextPayload.weekendNote);
@@ -561,6 +584,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       .catch(() => {
         if (cancelled) return;
         setBriefs([]);
+        setIntelDailySundayHold(false);
         setIntelDeskMeta(null);
         setError('Failed to load briefs');
       })
@@ -589,6 +613,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           setIntelDeskMeta(nextPayload.deskMeta ?? null);
           setBriefs(nextPayload.list);
           setWeekendBriefsNote(nextPayload.weekendNote);
+          setIntelDailySundayHold(Boolean(nextPayload.intelDailySundayHold));
         })
         .catch(() => {});
     }, BRIEF_POLL_MS);
@@ -792,7 +817,14 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                 key, not an extra trading day.
               </p>
             )}
-            {period === 'daily' && weekendBriefsNote && (
+            {period === 'daily' && intelDailySundayHold && (
+              <p className="td-deck-mi-modern-sub td-deck-mi-weekend-note" role="status">
+                This Sunday desk date (<strong>{formatDeskDateBritishLong(storageDateStr)}</strong>) does not load the
+                previous weekday’s daily pack until <strong>21:00 Europe/London</strong>, so titles stay aligned with
+                the session you expect. The list refreshes automatically after that time.
+              </p>
+            )}
+            {period === 'daily' && weekendBriefsNote && !intelDailySundayHold && (
               <p className="td-deck-mi-modern-sub td-deck-mi-weekend-note" role="note">
                 Desk date <strong>{requestedDeskDateLabel}</strong> uses the latest automated pack on file from{' '}
                 <strong>{packSourceDateLabel}</strong> (weekends and non-session days reuse the previous UK weekday
@@ -808,7 +840,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               <span className="td-deck-mi-modern-stat-label">
                 asset sleeves stored (of 8)
                 {hasInstitutionalBrief ? ' · ready' : ' · generating'}
-                {weekendBriefsNote ? ' · desk pack shift' : ''}
+                {intelDailySundayHold ? ' · Sunday 21:00 London' : ''}
+                {weekendBriefsNote && !intelDailySundayHold ? ' · desk pack shift' : ''}
               </span>
             </div>
           )}
@@ -1052,11 +1085,14 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
             <p className="td-intel-preview-title-bar" title={displayBriefTitle(previewBriefMeta?.title)}>
               {displayBriefTitle(previewBriefMeta?.title)}
             </p>
-            {(period === 'weekly' && weekRangeLabel) || (period === 'daily' && weekendBriefsNote) ? (
+            {(period === 'weekly' && weekRangeLabel) ||
+            (period === 'daily' && (weekendBriefsNote || intelDailySundayHold)) ? (
               <p className="td-intel-preview-desk-context">
                 {period === 'weekly' && weekRangeLabel
                   ? `Coverage ${weekRangeLabel} · desk week-ending Sunday ${storageDateStr}`
-                  : `Pack on file ${packSourceDateLabel} · desk date ${requestedDeskDateLabel}`}
+                  : intelDailySundayHold
+                    ? `Desk date ${formatDeskDateBritishLong(storageDateStr)} · pack withheld until 21:00 Europe/London`
+                    : `Pack on file ${packSourceDateLabel} · desk date ${requestedDeskDateLabel}`}
               </p>
             ) : null}
           </div>

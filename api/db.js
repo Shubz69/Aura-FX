@@ -5,6 +5,7 @@
  * - MYSQL_CONNECT_TIMEOUT_MS — DB TCP connect timeout (default 20000). Raise if logs show ETIMEDOUT.
  * - DB_POOL_LOG=1 — log when the pool is created (default off to reduce Vercel noise).
  * - MYSQL_POOL_SIZE / MYSQL_QUEUE_LIMIT — see inline defaults (Vercel forces pool size 1).
+ * - MYSQL_QUEUE_MAX_CAP — on Vercel only, upper bound for queue size (default 800, max 1200).
  *
  * Scaling: On Vercel, connectionLimit is 1 per warm instance; total DB sessions ≈ concurrent warm
  * functions. For many simultaneous users, use a managed pooler (e.g. PlanetScale, AWS RDS Proxy,
@@ -139,8 +140,13 @@ const getDbPool = () => {
   let queueLimit = Math.max(1, parseInt(process.env.MYSQL_QUEUE_LIMIT, 10) || defaultQueue);
   if (process.env.VERCEL) {
     connectionLimit = 1;
-    // Single connection serializes work; allow a deeper queue so bursts (e.g.Trader Deck) don't hit "Queue limit reached".
-    queueLimit = Math.min(Math.max(queueLimit, 24), 200);
+    // Single connection serializes work. Warm lambdas can serve many overlapping Trader Deck + cron
+    // requests; each queues pool.execute — cap was 200 and caused "Queue limit reached" under burst.
+    const queueCap = Math.min(
+      1200,
+      Math.max(200, parseInt(process.env.MYSQL_QUEUE_MAX_CAP || '800', 10) || 800)
+    );
+    queueLimit = Math.min(Math.max(queueLimit, 48), queueCap);
   }
 
   const connectTimeout = Math.min(
@@ -287,11 +293,14 @@ const executeQuery = async (query, params = [], options = {}) => {
     if (isTooManyConnectionsError(error)) {
       throw error;
     }
-    if (connectionAttempt < maxConnectionAttempts && isConnectionError(error)) {
+    const queueSaturated = String(error.message || '').includes('Queue limit reached');
+    const maxAttemptsForError = queueSaturated ? 8 : maxConnectionAttempts;
+    if (connectionAttempt < maxAttemptsForError && isConnectionError(error)) {
       if ((error.message || '').includes('Pool is closed')) {
         pool = null;
       }
-      await sleep(200 + connectionAttempt * 200 + Math.floor(Math.random() * 300));
+      const base = queueSaturated ? 400 : 200;
+      await sleep(base + connectionAttempt * 350 + Math.floor(Math.random() * 400));
       return executeQuery(query, params, { ...options, _connectionAttempt: connectionAttempt + 1 });
     }
     // Idempotent DDL: duplicate column/index name — treat as success so handlers don't 500

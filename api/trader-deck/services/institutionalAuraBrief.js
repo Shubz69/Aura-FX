@@ -18,9 +18,16 @@ const {
 } = require('./briefInstrumentUniverse');
 const { parseJsonFromLlmText, normalizeChatCompletionContent } = require('./institutionalLlmJsonParse');
 
-/** When `1`, run WFA sleeves one after another (clearer logs; backfill script sets this by default). */
+/**
+ * When true, run the eight WFA sleeves sequentially (one DB-heavy LLM sleeve at a time).
+ * On Vercel this defaults ON — parallel sleeves × concurrent gap-fill requests exhaust the mysql pool queue.
+ * Opt out: `INSTITUTIONAL_WFA_SEQUENTIAL=0`. Force on anywhere: `INSTITUTIONAL_WFA_SEQUENTIAL=1`.
+ */
 function institutionalWfaSleevesSequential() {
-  return String(process.env.INSTITUTIONAL_WFA_SEQUENTIAL || '').trim() === '1';
+  const v = String(process.env.INSTITUTIONAL_WFA_SEQUENTIAL || '').trim().toLowerCase();
+  if (v === '0' || v === 'false' || v === 'parallel') return false;
+  if (v === '1' || v === 'true' || v === 'yes') return true;
+  return Boolean(process.env.VERCEL);
 }
 
 /** Large JSON + reasoning models often exceed 180s. Set INSTITUTIONAL_PERPLEXITY_TIMEOUT_MS (60000–600000). */

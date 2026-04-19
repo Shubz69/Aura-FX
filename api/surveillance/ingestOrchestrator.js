@@ -22,6 +22,7 @@ function log(runId, level, msg, extra) {
 function adapterFailureLogLevel(errorCode) {
   const s = String(errorCode || '');
   if (/^http_(403|404|408|429)$/.test(s)) return 'warn';
+  if (/abort|aborted|fetch failed|network|timeout/i.test(s)) return 'warn';
   return 'error';
 }
 

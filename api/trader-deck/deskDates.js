@@ -21,6 +21,34 @@ function isLondonWeekendYmd(dateStr) {
   return dt.weekday >= 6;
 }
 
+/** Calendar Sunday in Europe/London (Luxon weekday 7). */
+function isLondonSundayYmd(dateStr) {
+  const s = String(dateStr || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const dt = DateTime.fromISO(s, { zone: DESK_TIMEZONE });
+  return dt.isValid && dt.weekday === 7;
+}
+
+/**
+ * Intel-daily UX: on London Sundays, do not surface the previous weekday’s pack (or kick autogen for Sunday)
+ * until 21:00 London — aligns desk view with the Sunday evening window instead of Friday’s session titles.
+ */
+const INTEL_DAILY_SUNDAY_UK_OPEN_HOUR = 21;
+
+function londonSundayIntelDailyHoldActive(requestedYmd, now = new Date()) {
+  if (!isLondonSundayYmd(requestedYmd)) return false;
+  const day = DateTime.fromISO(String(requestedYmd || '').slice(0, 10), { zone: DESK_TIMEZONE });
+  if (!day.isValid) return false;
+  const open = day.set({
+    hour: INTEL_DAILY_SUNDAY_UK_OPEN_HOUR,
+    minute: 0,
+    second: 0,
+    millisecond: 0,
+  });
+  const nowLon = DateTime.fromJSDate(now).setZone(DESK_TIMEZONE);
+  return nowLon < open;
+}
+
 /** Prior calendar day in London that is Mon–Fri. */
 function priorLondonWeekdayYmd(dateStr) {
   const s = String(dateStr || '').slice(0, 10);
@@ -54,6 +82,8 @@ function getTraderDeckIntelStorageYmd(selectedYmd, period) {
 module.exports = {
   DESK_TIMEZONE,
   isLondonWeekendYmd,
+  isLondonSundayYmd,
+  londonSundayIntelDailyHoldActive,
   priorLondonWeekdayYmd,
   getWeekEndingSundayUtcYmd,
   getTraderDeckIntelStorageYmd,

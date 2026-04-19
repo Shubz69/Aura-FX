@@ -13,6 +13,30 @@ export function isLondonWeekendYmd(dateStr) {
   return dt.weekday >= 6;
 }
 
+export function isLondonSundayYmd(dateStr) {
+  const s = String(dateStr || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const dt = DateTime.fromISO(s, { zone: DESK_TIMEZONE });
+  return dt.isValid && dt.weekday === 7;
+}
+
+/** Keep hour in sync with api/trader-deck/deskDates.js `INTEL_DAILY_SUNDAY_UK_OPEN_HOUR`. */
+const INTEL_DAILY_SUNDAY_UK_OPEN_HOUR = 21;
+
+export function londonSundayIntelDailyHoldActive(requestedYmd, now = new Date()) {
+  if (!isLondonSundayYmd(requestedYmd)) return false;
+  const day = DateTime.fromISO(String(requestedYmd || '').slice(0, 10), { zone: DESK_TIMEZONE });
+  if (!day.isValid) return false;
+  const open = day.set({
+    hour: INTEL_DAILY_SUNDAY_UK_OPEN_HOUR,
+    minute: 0,
+    second: 0,
+    millisecond: 0,
+  });
+  const nowLon = DateTime.fromJSDate(now).setZone(DESK_TIMEZONE);
+  return nowLon < open;
+}
+
 export function priorLondonWeekdayYmd(dateStr) {
   const s = String(dateStr || '').slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
