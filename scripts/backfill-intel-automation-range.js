@@ -11,7 +11,8 @@
  *   node scripts/backfill-intel-automation-range.js --check-env
  *
  * Run from repo root (long-running — dozens of LLM pack runs):
- *   node scripts/backfill-intel-automation-range.js --from=2026-03-01 --to=2026-04-18
+ *   node scripts/backfill-intel-automation-range.js --from=2026-03-01
+ *   (--to defaults to today in Europe/London; dates run newest → oldest so recent MI fills first.)
  *
  * Options:
  *   --daily-only       Skip weekly packs
@@ -22,6 +23,7 @@
  *   --dry-run          Log planned work only; no generation
  *   --check-env        Print whether PERPLEXITY_API_KEY + MySQL vars are set; exit 0 if ready
  *   --parallel-sleeves Run 8 category LLMs in parallel (faster; console stays quiet for minutes)
+ *   --oldest-first     Process --from → --to ascending (default is newest-first: --to down to --from)
  *
  * Optional env (see institutionalAuraBrief.js):
  *   INSTITUTIONAL_PERPLEXITY_TIMEOUT_MS — Perplexity fetch timeout per attempt (default 300000; was 180000).
@@ -69,6 +71,7 @@ function parseArgs() {
     delayMs: 4000,
     dryRun: false,
     checkEnv: false,
+    oldestFirst: false,
   };
   for (const a of argv) {
     if (a.startsWith('--from=')) out.from = a.slice(7).trim().slice(0, 10);
@@ -80,6 +83,7 @@ function parseArgs() {
     else if (a === '--dry-run') out.dryRun = true;
     else if (a === '--check-env') out.checkEnv = true;
     else if (a.startsWith('--delay-ms=')) out.delayMs = Math.max(0, Number(a.slice(11)) || 0);
+    else if (a === '--oldest-first') out.oldestFirst = true;
   }
   if (!out.to) {
     out.to = DateTime.now().setZone(TZ).toISODate();
@@ -171,9 +175,17 @@ async function main() {
     const y = d.toISODate();
     weeklySundays.add(getWeekEndingSundayUtcYmd(y));
   }
-  const weeklySorted = [...weeklySundays].sort();
+  let weeklySorted = [...weeklySundays].sort();
+  if (!opts.oldestFirst) {
+    dailyDates.reverse();
+    weeklySorted.reverse();
+  }
 
   console.log('[backfill] Range', opts.from, '→', opts.to, TZ);
+  console.log(
+    '[backfill] Order:',
+    opts.oldestFirst ? 'oldest → newest (--oldest-first)' : 'newest → oldest (default; recent MI visible first)'
+  );
   console.log(
     '[backfill] Plan:',
     !opts.weeklyOnly ? `${dailyDates.length} daily pack(s) (Mon–Fri${opts.includeWeekends ? ' + weekends' : ''})` : '',
