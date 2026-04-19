@@ -510,7 +510,9 @@ export default function SurveillanceGlobe({
     nightFactorRef.current = nightFactor;
   }, [povAltitude, reducedMotion, nightFactor]);
 
-  const useHex = !reducedMotion && !focusRegion && events.length > 52;
+  /* Hex bins must stay on during country lens: turning them off switched the globe to global
+   * heatmap + arcs — CPU KDE and extra layers caused severe lag until lens cleared. */
+  const useHex = !reducedMotion && events.length > 52;
 
   const rawPoints = useMemo(() => {
     return events
@@ -539,6 +541,9 @@ export default function SurveillanceGlobe({
 
   const arcs = useMemo(() => (useHex ? [] : buildArcs(events)), [events, useHex]);
 
+  /** Coarse pulse for marker styling only — avoids rebuilding point buffers every animation frame. */
+  const pulseStep = Math.round(pulse * 14) / 14;
+
   const arcColor = useCallback((d) => {
     const s = d.sev != null ? Number(d.sev) : 1;
     if (s >= 5) return ['rgba(255, 140, 120, 0.16)', 'rgba(220, 72, 72, 0.38)'];
@@ -553,7 +558,7 @@ export default function SurveillanceGlobe({
     const list = clusterEvents(events, reducedMotion ? 0 : 1);
     return list.map((p) => {
       const hot = p.maxSev >= 4 || p.maxSevScore >= 72;
-      const pulseBoost = !reducedMotion && hot ? pulse * 0.022 : 0;
+      const pulseBoost = !reducedMotion && hot ? pulseStep * 0.022 : 0;
       const isSel = String(p.eventId) === String(selectedId);
       const isHover = hoveredId != null && String(p.eventId) === String(hoveredId);
       const inFocus = clusterTouchesFocus(p, idMap, focusRegion);
@@ -593,7 +598,7 @@ export default function SurveillanceGlobe({
             p.count * 0.06 +
             p.maxSev * 0.05 +
             (liveCluster ? 0.07 : 0) +
-            (hot ? pulse * 0.06 : 0) +
+            (hot ? pulseStep * 0.06 : 0) +
             (isSel ? 0.14 : 0) +
             (isHover ? 0.08 : 0) +
             (lens && inFocus ? 0.1 : 0)
@@ -605,7 +610,7 @@ export default function SurveillanceGlobe({
           (lens && inFocus ? 0.02 : 0),
       };
     });
-  }, [events, selectedId, hoveredId, reducedMotion, pulse, focusRegion]);
+  }, [events, selectedId, hoveredId, reducedMotion, pulseStep, focusRegion]);
 
   const polygonCapColor = useCallback(
     (d) => {
@@ -768,7 +773,7 @@ export default function SurveillanceGlobe({
           polygonAltitude={polygonAltitude}
           polygonCapCurvatureResolution={reducedMotion ? 3 : 5}
           polygonsTransitionDuration={
-            reducedMotion ? 0 : focusIso ? 95 : focusRegion ? 150 : 220
+            reducedMotion ? 0 : focusIso ? 0 : focusRegion ? 120 : 220
           }
           polygonLabel={polygonLabel}
           onPolygonHover={(poly) => {
