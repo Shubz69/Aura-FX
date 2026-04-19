@@ -27,11 +27,12 @@
   width: 100%;
   /* Taller surface: site footer sits further down the scroll axis */
   min-height: calc(100dvh - 68px + min(32vh, 420px));
-  /* Horizontal + bottom only — top clearance lives on .page-wrapper for navbar */
-  padding: 0 8px clamp(20px, 4vh, 48px);
+  /* Horizontal flush so the scroll wrapper’s space field reaches the viewport edges */
+  padding: 0 max(0px, env(safe-area-inset-right, 0px)) clamp(20px, 4vh, 48px) max(0px, env(safe-area-inset-left, 0px));
   margin-bottom: 0 !important;
   margin-top: 0;
-  background: linear-gradient(180deg, #050506 0%, #030304 48%, #020203 100%);
+  /* Let .page-wrapper:has(.sv-page--terminal) carry the deep-field backdrop edge-to-edge */
+  background: transparent;
 }
 
 /* Desktop: band height tracks viewport width minus rails so the square globe uses full column width (no side gutters). */
@@ -62,6 +63,26 @@
   min-height: calc(100dvh - var(--nav-height, 62px) - env(safe-area-inset-top, 0px));
   overflow-x: hidden;
   overflow-y: auto;
+  /* Full-bleed space field (same language as hero) so nothing outside the card reads as flat black */
+  background-color: #030308;
+  background-image:
+    radial-gradient(circle at 1% 42%, rgba(255, 255, 255, 0.07) 0, transparent 0.36%),
+    radial-gradient(circle at 3% 78%, rgba(255, 255, 255, 0.05) 0, transparent 0.32%),
+    radial-gradient(circle at 99% 36%, rgba(255, 255, 255, 0.07) 0, transparent 0.34%),
+    radial-gradient(circle at 97% 72%, rgba(255, 255, 255, 0.055) 0, transparent 0.3%),
+    radial-gradient(circle at 5% 16%, rgba(255, 255, 255, 0.11) 0, transparent 0.42%),
+    radial-gradient(circle at 8% 14%, rgba(255, 255, 255, 0.14) 0, transparent 0.45%),
+    radial-gradient(circle at 22% 8%, rgba(255, 255, 255, 0.1) 0, transparent 0.35%),
+    radial-gradient(circle at 78% 12%, rgba(255, 255, 255, 0.12) 0, transparent 0.4%),
+    radial-gradient(circle at 95% 24%, rgba(255, 255, 255, 0.1) 0, transparent 0.36%),
+    radial-gradient(circle at 92% 28%, rgba(255, 255, 255, 0.09) 0, transparent 0.3%),
+    radial-gradient(circle at 64% 6%, rgba(255, 255, 255, 0.08) 0, transparent 0.32%),
+    radial-gradient(circle at 40% 22%, rgba(255, 255, 255, 0.07) 0, transparent 0.28%),
+    radial-gradient(ellipse 132% 104% at 50% 42%, rgba(22, 24, 48, 0.58), transparent 64%),
+    radial-gradient(ellipse 100% 78% at 76% 16%, rgba(248, 195, 125, 0.055), transparent 48%),
+    radial-gradient(ellipse 72% 56% at 8% 86%, rgba(72, 92, 130, 0.11), transparent 58%),
+    linear-gradient(165deg, #070812 0%, #04060e 48%, #030308 100%);
+  background-repeat: no-repeat;
 }
 
 /* Surveillance shell: dark, minimal scrollbars (tracks + thumbs stay usable) */
@@ -102,7 +123,8 @@
   gap: 0;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: linear-gradient(165deg, rgba(18, 18, 22, 0.55) 0%, rgba(4, 4, 7, 0.94) 42%, #020204 100%);
+  /* Slightly translucent so the page-level starfield reads through — avoids “boxed” gutters */
+  background: linear-gradient(165deg, rgba(18, 18, 22, 0.38) 0%, rgba(4, 4, 7, 0.78) 42%, rgba(2, 2, 4, 0.9) 100%);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.05) inset,
     0 24px 56px rgba(0, 0, 0, 0.45);
@@ -444,36 +466,11 @@
   height: auto;
 }
 
-/* Single continuous space backdrop across full hero width (globe column stays transparent below) */
-.sv-terminal-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse 132% 104% at 50% 42%, rgba(22, 24, 48, 0.58), transparent 64%),
-    radial-gradient(ellipse 100% 78% at 76% 16%, rgba(248, 195, 125, 0.055), transparent 48%),
-    radial-gradient(ellipse 72% 56% at 8% 86%, rgba(72, 92, 130, 0.11), transparent 58%),
-    linear-gradient(165deg, #070812 0%, #04060e 48%, #030308 100%);
-}
-
+/* Deep field + stars live on .page-wrapper (full viewport) so this row is not the clipping edge */
+.sv-terminal-hero::before,
 .sv-terminal-hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.4;
-  background-image:
-    radial-gradient(circle at 5% 16%, rgba(255, 255, 255, 0.11) 0, transparent 0.42%),
-    radial-gradient(circle at 8% 14%, rgba(255, 255, 255, 0.14) 0, transparent 0.45%),
-    radial-gradient(circle at 22% 8%, rgba(255, 255, 255, 0.1) 0, transparent 0.35%),
-    radial-gradient(circle at 78% 12%, rgba(255, 255, 255, 0.12) 0, transparent 0.4%),
-    radial-gradient(circle at 95% 24%, rgba(255, 255, 255, 0.1) 0, transparent 0.36%),
-    radial-gradient(circle at 92% 28%, rgba(255, 255, 255, 0.09) 0, transparent 0.3%),
-    radial-gradient(circle at 64% 6%, rgba(255, 255, 255, 0.08) 0, transparent 0.32%),
-    radial-gradient(circle at 40% 22%, rgba(255, 255, 255, 0.07) 0, transparent 0.28%);
+  content: none;
+  display: none;
 }
 
 .sv-terminal-hero > * {
@@ -492,10 +489,10 @@
   padding: 10px 10px 12px;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   background:
-    linear-gradient(165deg, rgba(248, 195, 125, 0.05) 0%, transparent 42%),
-    linear-gradient(180deg, rgba(14, 16, 32, 0.88) 0%, rgba(4, 5, 14, 0.96) 55%, #03040c 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+    linear-gradient(165deg, rgba(248, 195, 125, 0.06) 0%, transparent 42%),
+    linear-gradient(180deg, rgba(14, 16, 32, 0.42) 0%, rgba(4, 5, 14, 0.62) 55%, rgba(3, 4, 12, 0.72) 100%);
+  backdrop-filter: blur(14px) saturate(1.05);
+  -webkit-backdrop-filter: blur(14px) saturate(1.05);
   overflow: hidden;
 }
 
@@ -509,9 +506,9 @@
   border: 1px solid rgba(255, 255, 255, 0.04);
   border-top: none;
   background:
-    radial-gradient(ellipse 140% 100% at 50% 0%, rgba(56, 64, 98, 0.35), transparent 62%),
-    linear-gradient(180deg, rgba(248, 195, 125, 0.035), transparent 55%),
-    rgba(2, 3, 10, 0.55);
+    radial-gradient(ellipse 140% 100% at 50% 0%, rgba(56, 64, 98, 0.28), transparent 62%),
+    linear-gradient(180deg, rgba(248, 195, 125, 0.03), transparent 55%),
+    rgba(2, 3, 10, 0.38);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   pointer-events: none;
 }
@@ -607,8 +604,27 @@
   contain: layout paint;
   /* Fills side gutters beside the square canvas with the same deep-field read as the hero */
   background:
-    radial-gradient(ellipse 118% 96% at 50% 46%, rgba(26, 30, 56, 0.55), rgba(5, 6, 14, 0.92) 58%, #03040c 100%),
-    linear-gradient(180deg, rgba(8, 10, 22, 0.4) 0%, rgba(2, 3, 10, 0.85) 100%);
+    radial-gradient(ellipse 118% 96% at 50% 46%, rgba(26, 30, 56, 0.48), rgba(5, 6, 14, 0.78) 58%, rgba(3, 4, 12, 0.9) 100%),
+    linear-gradient(180deg, rgba(8, 10, 22, 0.32) 0%, rgba(2, 3, 10, 0.72) 100%);
+}
+
+/* Star speckle in the globe band (matches page-wrapper field; kills flat letterbox lanes) */
+.sv-globe-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.38;
+  background-image:
+    radial-gradient(circle at 6% 18%, rgba(255, 255, 255, 0.12) 0, transparent 0.42%),
+    radial-gradient(circle at 14% 10%, rgba(255, 255, 255, 0.1) 0, transparent 0.36%),
+    radial-gradient(circle at 88% 14%, rgba(255, 255, 255, 0.11) 0, transparent 0.38%),
+    radial-gradient(circle at 94% 22%, rgba(255, 255, 255, 0.09) 0, transparent 0.32%),
+    radial-gradient(circle at 48% 8%, rgba(255, 255, 255, 0.07) 0, transparent 0.3%),
+    radial-gradient(circle at 72% 30%, rgba(255, 255, 255, 0.06) 0, transparent 0.28%),
+    radial-gradient(circle at 30% 88%, rgba(255, 255, 255, 0.065) 0, transparent 0.3%),
+    radial-gradient(circle at 70% 82%, rgba(255, 255, 255, 0.055) 0, transparent 0.26%);
 }
 
 /* Slightly more vertical reserve when zoomed — keeps the sphere inside the stage read */
