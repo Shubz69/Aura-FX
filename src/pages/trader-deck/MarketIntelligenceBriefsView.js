@@ -12,6 +12,7 @@ import CosmicBackground from '../../components/CosmicBackground';
 import { getTraderDeckIntelStorageYmd, formatLondonWeekRangeFromWeekEndingSundayYmd } from '../../lib/trader-deck/deskDates';
 import { stripModelInternalExposition } from '../../utils/sanitizeAiDeskOutput.react.js';
 import { polishBriefMarkdown } from '../../utils/briefPresentationSanitize';
+import { promoteAuraBriefPlaintextToMarkdown } from '../../utils/promoteAuraBriefHeadings';
 
 function googleViewerEmbedUrl(fileUrl) {
   const u = (fileUrl || '').trim();
@@ -93,6 +94,18 @@ const BRIEF_KIND_LABEL = {
   aura_institutional_weekly_futures: 'WFA Futures',
 };
 
+/** One-line title on cards: strip duplicate “[Daily Brief — X] …” prefix; keep desk line. */
+function displayBriefCardSubtitle(title, briefKind) {
+  const label = BRIEF_KIND_LABEL[String(briefKind || '').toLowerCase()];
+  let t = displayBriefTitle(title);
+  if (label) {
+    const esc = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    t = t.replace(new RegExp(`^\\s*\\[\\s*${esc}\\s*\\]\\s*`, 'i'), '').trim();
+  }
+  t = t.replace(/^\s*(?:WFA|Daily Brief|Weekly Brief)\s+[A-Za-z]+(?:\s+[A-Za-z]+)?\s*[—–-]\s*/i, '').trim();
+  return t || displayBriefTitle(title);
+}
+
 const CATEGORY_BRIEF_KINDS = new Set([
   'forex',
   'crypto',
@@ -159,6 +172,8 @@ function sanitizeBriefForPreview(text) {
   // Strip ```fences``` (keep inner text); strip inline backticks from legacy docs.
   t = t.replace(/```(?:[\w-]+)?\s*\n?([\s\S]*?)```/g, (_, inner) => `\n${String(inner || '').trim()}\n`);
   t = t.replace(/`([^`\n]+)`/g, '$1');
+
+  t = promoteAuraBriefPlaintextToMarkdown(t);
 
   t = t.replace(/^\s*By\s+Aura\s+FX\s+AI\s*$/gim, '');
   t = t.replace(/^\s*By\s+AURA\s+TERMINAL\s*$/gim, '');
@@ -816,11 +831,14 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                     >
                       {selectedKinds.has('aura_sunday_market_open') ? (
                         <>
-                          <span className="td-deck-mi-brief-card-title">
-                            [{BRIEF_KIND_LABEL.aura_sunday_market_open}] {displayBriefTitle(sundayMarketBrief.title)}
-                            {Number(sundayMarketBrief?.briefVersion || 1) > 1
-                              ? ` (v${Number(sundayMarketBrief.briefVersion)})`
-                              : ''}
+                          <span className="td-deck-mi-brief-card-titles">
+                            <span className="td-deck-mi-brief-card-kicker">{BRIEF_KIND_LABEL.aura_sunday_market_open}</span>
+                            <span className="td-deck-mi-brief-card-title">
+                              {displayBriefCardSubtitle(sundayMarketBrief.title, sundayMarketBrief.briefKind)}
+                              {Number(sundayMarketBrief?.briefVersion || 1) > 1
+                                ? ` (v${Number(sundayMarketBrief.briefVersion)})`
+                                : ''}
+                            </span>
                           </span>
                           <div className="td-deck-mi-brief-card-actions">
                             <button
@@ -877,10 +895,14 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                     }
                     return (
                       <li key={b.id} className="td-deck-mi-brief-card">
-                        <span className="td-deck-mi-brief-card-title">
-                          [{BRIEF_KIND_LABEL[String(b?.briefKind || '').toLowerCase()] || 'Brief'}]{' '}
-                          {displayBriefTitle(b.title)}
-                          {Number(b?.briefVersion || 1) > 1 ? ` (v${Number(b.briefVersion)})` : ''}
+                        <span className="td-deck-mi-brief-card-titles">
+                          <span className="td-deck-mi-brief-card-kicker">
+                            {BRIEF_KIND_LABEL[String(b?.briefKind || '').toLowerCase()] || 'Brief'}
+                          </span>
+                          <span className="td-deck-mi-brief-card-title">
+                            {displayBriefCardSubtitle(b.title, b.briefKind)}
+                            {Number(b?.briefVersion || 1) > 1 ? ` (v${Number(b.briefVersion)})` : ''}
+                          </span>
                         </span>
                         <div className="td-deck-mi-brief-card-actions">
                           <button

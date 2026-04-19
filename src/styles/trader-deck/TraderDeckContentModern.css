@@ -2402,11 +2402,28 @@
   border-color: rgba(107, 143, 232, 0.4);
   background: rgba(107, 143, 232, 0.1);
 }
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-titles {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-kicker {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(140, 175, 255, 0.88);
+}
+
 .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-title {
   font-weight: 500;
   color: rgba(255, 255, 255, 0.92);
   min-width: 0;
-  flex: 1;
+  width: 100%;
   word-break: break-word;
   overflow-wrap: break-word;
 }
