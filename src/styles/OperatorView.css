@@ -868,6 +868,16 @@
   border-left: 3px solid rgba(234, 169, 96, 0.4);
 }
 
+/* Checklist cards: + menu and inline UI must not clip at the card edge */
+.tv-section-card.tv-checklist-tab-card {
+  overflow: visible;
+  z-index: 1;
+}
+
+.tv-section-card.tv-checklist-tab-card:has(.tv-section-add-menu) {
+  z-index: 8;
+}
+
 @media (max-width: 768px) {
   .tv-section-card {
     padding: 18px;
@@ -1835,6 +1845,8 @@
   flex-wrap: wrap;
   gap: 10px;
   justify-content: flex-end;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .tv-modal-btn {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { FaArrowLeft, FaCheckSquare, FaImage, FaPlus, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
@@ -183,7 +184,7 @@ function TemplatePickerModal({ sectionTitle, templateRows, existingLabels, onClo
     };
   }, [onClose]);
 
-  return (
+  const modal = (
     <div className="tv-modal-overlay" role="presentation" onClick={onClose}>
       <div className="tv-modal" role="dialog" aria-labelledby="tv-template-modal-title" onClick={(e) => e.stopPropagation()}>
         <button type="button" className="tv-modal-close" onClick={onClose} aria-label="Close">
@@ -208,15 +209,17 @@ function TemplatePickerModal({ sectionTitle, templateRows, existingLabels, onClo
             Cancel
           </button>
           <button type="button" className="tv-modal-btn tv-modal-btn--secondary" onClick={handleAddSelected}>
-            Add selected
+            Save selection
           </button>
           <button type="button" className="tv-modal-btn tv-modal-btn--primary" onClick={handleAddAll}>
-            Add all lines
+            Save all lines
           </button>
         </div>
       </div>
     </div>
   );
+  if (typeof document === 'undefined') return null;
+  return createPortal(modal, document.body);
 }
 
 function CustomLineModal({ sectionTitle, onClose, onAdd }) {
@@ -250,7 +253,7 @@ function CustomLineModal({ sectionTitle, onClose, onAdd }) {
     onClose();
   };
 
-  return (
+  const modal = (
     <div className="tv-modal-overlay" role="presentation" onClick={onClose}>
       <div className="tv-modal tv-modal--narrow" role="dialog" aria-labelledby="tv-custom-modal-title" onClick={(e) => e.stopPropagation()}>
         <button type="button" className="tv-modal-close" onClick={onClose} aria-label="Close">
@@ -274,12 +277,14 @@ function CustomLineModal({ sectionTitle, onClose, onAdd }) {
             Cancel
           </button>
           <button type="button" className="tv-modal-btn tv-modal-btn--primary" onClick={submit}>
-            Add line
+            Save line
           </button>
         </div>
       </div>
     </div>
   );
+  if (typeof document === 'undefined') return null;
+  return createPortal(modal, document.body);
 }
 
 function SectionAddButton({ onCustom, onTemplate, ariaLabel }) {
@@ -946,33 +951,36 @@ export default function OperatorView() {
           <AiChartCheckTab embedded />
         </section>
 
-        {exampleOverlay && (
-          <div
-            className="tv-example-lightbox"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Example image"
-            onClick={closeExample}
-          >
-            <button type="button" className="tv-example-lightbox-close" onClick={closeExample} aria-label="Close">
-              ×
-            </button>
-            <div className="tv-example-lightbox-inner" onClick={(e) => e.stopPropagation()}>
-              {exampleOverlay.src ? (
-                <img src={exampleOverlay.src} alt={exampleOverlay.label} className="tv-example-lightbox-img" />
-              ) : (
-                <div className="tv-example-lightbox-placeholder">
-                  <FaImage className="tv-example-lightbox-placeholder-icon" aria-hidden />
-                  <p>No example image for this line yet.</p>
-                  <p className="tv-example-lightbox-hint">
-                    When an image is added, it will show here full size so traders can see what this checklist item refers to.
-                  </p>
-                </div>
-              )}
-              <p className="tv-example-lightbox-caption">{exampleOverlay.label}</p>
-            </div>
-          </div>
-        )}
+        {exampleOverlay &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              className="tv-example-lightbox"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Example image"
+              onClick={closeExample}
+            >
+              <button type="button" className="tv-example-lightbox-close" onClick={closeExample} aria-label="Close">
+                ×
+              </button>
+              <div className="tv-example-lightbox-inner" onClick={(e) => e.stopPropagation()}>
+                {exampleOverlay.src ? (
+                  <img src={exampleOverlay.src} alt={exampleOverlay.label} className="tv-example-lightbox-img" />
+                ) : (
+                  <div className="tv-example-lightbox-placeholder">
+                    <FaImage className="tv-example-lightbox-placeholder-icon" aria-hidden />
+                    <p>No example image for this line yet.</p>
+                    <p className="tv-example-lightbox-hint">
+                      When an image is added, it will show here full size so traders can see what this checklist item refers to.
+                    </p>
+                  </div>
+                )}
+                <p className="tv-example-lightbox-caption">{exampleOverlay.label}</p>
+              </div>
+            </div>,
+            document.body,
+          )}
 
         <div className="tv-bottom-bar">
           <div className={`tv-bottom-msg ${canProceed ? 'tv-bottom-msg-ok' : ''}`}>{bottomMsg}</div>

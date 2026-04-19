@@ -140,6 +140,21 @@
   overflow: hidden !important;
 }
 
+/* + dropdown and inline controls must extend past the glass card (see OperatorView SectionAddButton). */
+.journal-page .trade-validator-shell .tv-section-card.tv-checklist-tab-card,
+.journal-page .trade-validator-shell .tv-checklist-tab-card {
+  overflow: visible !important;
+}
+
+.journal-page .trade-validator-shell .tv-checklist-tab-card:has(.tv-section-add-menu) {
+  z-index: 10;
+}
+
+.journal-page .trade-validator-shell .tv-setup-section:has(.tv-section-add-menu) {
+  overflow: visible !important;
+  z-index: 6;
+}
+
 .journal-page .trade-validator-shell .aura-card:hover,
 .journal-page .trade-validator-shell .aura-overview-kpi-card:hover,
 .journal-page .trade-validator-shell .aura-overview-monthly:hover,

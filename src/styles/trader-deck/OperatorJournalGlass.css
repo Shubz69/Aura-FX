@@ -7,9 +7,11 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
+/* Opacity only — transform on the shell breaks position:fixed descendants (modals)
+   inside journal-glass-panel--rim (overflow:hidden), clipping actions and overlays. */
 @keyframes tvj-fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ── Root shell ──────────────────────────────────────────────────────────── */
