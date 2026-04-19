@@ -8,7 +8,6 @@
  *   PERPLEXITY_REPORTS_MODEL    — Optional: monthly report generation only
  *   PERPLEXITY_DNA_MODEL        — Optional: Trader DNA narrative layer
  *   PERPLEXITY_AUTOMATION_MODEL — Optional: automated Trader Deck runs
- *   PERPLEXITY_INSTITUTIONAL_TIMEOUT_MS — Optional: Trader Desk institutional WFA/daily JSON HTTP timeout (60000–900000, default 300000)
  *
  * Default model:
  *   sonar-reasoning-pro
