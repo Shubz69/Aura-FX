@@ -23,6 +23,13 @@ function institutionalWfaSleevesSequential() {
   return String(process.env.INSTITUTIONAL_WFA_SEQUENTIAL || '').trim() === '1';
 }
 
+/** Perplexity HTTP timeout for large institutional JSON (ms). Env: PERPLEXITY_INSTITUTIONAL_TIMEOUT_MS (60s–15m). */
+function institutionalPerplexityTimeoutMs() {
+  const n = parseInt(String(process.env.PERPLEXITY_INSTITUTIONAL_TIMEOUT_MS || '').trim(), 10);
+  if (Number.isFinite(n) && n >= 60000 && n <= 900000) return n;
+  return 300000;
+}
+
 /** Core Aura brief sleeve — order fixed for validation (default generation). */
 const INSTITUTIONAL_INSTRUMENTS = [
   { id: 'XAUUSD', label: 'XAU/USD' },
@@ -340,7 +347,14 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
     }
     return { ok: true, parsed };
   } catch (e) {
-    return { ok: false, error: e.message || 'perplexity_error' };
+    const msg = e.message || 'perplexity_error';
+    if (/abort/i.test(msg)) {
+      return {
+        ok: false,
+        error: `${msg} (client timeout after ${timeoutMs}ms; set PERPLEXITY_INSTITUTIONAL_TIMEOUT_MS e.g. 420000)`,
+      };
+    }
+    return { ok: false, error: msg };
   } finally {
     clearTimeout(timeout);
     if (hb) clearInterval(hb);
@@ -470,7 +484,7 @@ async function generateOneWeeklyWfaCategory(deps, shared, briefKindSlug) {
         {
           maxTokens: 12000,
           temperature: 0.26,
-          timeoutMs: 180000,
+          timeoutMs: institutionalPerplexityTimeoutMs(),
           heartbeatMs: 30000,
           heartbeatLabel: `[inst-wfa] ${briefKindSlug}`,
         }
@@ -778,7 +792,7 @@ async function generateOneDailyWfaCategory(deps, shared, briefKindSlug) {
         {
           maxTokens: 16000,
           temperature: 0.27,
-          timeoutMs: 180000,
+          timeoutMs: institutionalPerplexityTimeoutMs(),
           heartbeatMs: 30000,
           heartbeatLabel: `[inst-daily-pdf] ${briefKindSlug}`,
         }
