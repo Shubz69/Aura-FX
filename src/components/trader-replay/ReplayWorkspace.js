@@ -406,7 +406,7 @@ export default function ReplayWorkspace({
               Trade Journal
             </Link>
             <Link to={validatorTo} className="trader-suite-btn">
-              Trade Validator
+              The Operator
             </Link>
             <Link to={checklistTo} className="trader-suite-btn">
               Follow-up checklist

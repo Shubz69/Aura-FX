@@ -3,7 +3,7 @@
  * Generates a monthly AI report for the authenticated user.
  * Body: { year: number, month: number, phase?: 'month_open' | 'month_close' (default month_close), csvData?: object (premium only) }
  *
- * Data: journal_trades + journal_daily + ai_chart_checks + aura_analysis_trades (Trade Validator)
+ * Data: journal_trades + journal_daily + ai_chart_checks + aura_analysis_trades (The Operator)
  * Tone: clinical, harsh-on-behaviour coaching; mandatory negatives; DNA vs monthly split explained.
  */
 
@@ -64,7 +64,7 @@ async function aggregateJournalTrades(userId, year, month) {
   return rows || [];
 }
 
-/** Trade Validator / Aura Analysis — same window as monthly report */
+/** The Operator / Aura Analysis — same window as monthly report */
 async function aggregateAuraAnalysisTrades(userId, year, month) {
   const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
   const endDate = new Date(year, month, 0).toISOString().split('T')[0];
@@ -321,7 +321,7 @@ function buildFallbackFailureModes({ tradeSummary, validatorSummary, disciplineS
   if (validatorSummary) {
     if (validatorSummary.losses > validatorSummary.wins) {
       out.push(
-        `Trade Validator: ${validatorSummary.losses} losses vs ${validatorSummary.wins} wins (${validatorSummary.total} closes) — process or edge is not proven this month.`
+        `The Operator: ${validatorSummary.losses} losses vs ${validatorSummary.wins} wins (${validatorSummary.total} closes) — process or edge is not proven this month.`
       );
     }
     if (validatorSummary.avgChecklistPercent != null && validatorSummary.avgChecklistPercent < 55) {
@@ -424,7 +424,7 @@ async function generateReportContent({
   const dataSections = [];
 
   if (validatorSummary) {
-    dataSections.push(`TRADE VALIDATOR (aura_analysis_trades) — primary execution log for Elite / platform-validated trades:
+    dataSections.push(`THE OPERATOR (aura_analysis_trades) — primary execution log for Elite / platform-validated trades:
 - Closed trades: ${validatorSummary.total} (wins ${validatorSummary.wins}, losses ${validatorSummary.losses}, breakeven ${validatorSummary.breakeven})
 - Win rate (excl. BE): ${validatorSummary.winRate}%
 - Total P&L: ${validatorSummary.totalPnl}
@@ -480,7 +480,7 @@ ${typeof csvSummary === 'string' ? csvSummary : JSON.stringify(csvSummary, null,
 
   const depthBlock =
     reportDepth === 'onboarding'
-      ? `DEPTH=ONBOARDING: First or early reporting cycle — explain how Aura Terminal logs work (journal, Trade Validator, AI chart checks). 6–10 improvement items if data supports; teach, do not assume prior knowledge.`
+      ? `DEPTH=ONBOARDING: First or early reporting cycle — explain how Aura Terminal logs work (journal, The Operator, AI chart checks). 6–10 improvement items if data supports; teach, do not assume prior knowledge.`
       : reportDepth === 'brief'
         ? `DEPTH=BRIEF: Trader is engaged and trending better — cap failureModeInventory at 3 items, improvementPlan at 3 items; tight prose. Still be harsh if stagnation or platform abandonment shows in numbers.`
         : `DEPTH=STANDARD: Balanced coaching density.`;
@@ -620,7 +620,7 @@ Return strict JSON only (no markdown). Schema:
       level: engagement.level,
       summary:
         engagement.level === 'absent'
-          ? 'Platform usage this window is too low to treat feedback as representative — engage journal, Trade Validator, and chart checks consistently.'
+          ? 'Platform usage this window is too low to treat feedback as representative — engage journal, The Operator, and chart checks consistently.'
           : engagement.usingSystem
             ? 'You are actively using core Aura Terminal workflows this month; feedback below is grounded in that activity.'
             : 'Engagement is partial — conclusions are directional until logging and checks become habitual.',

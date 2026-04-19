@@ -1498,7 +1498,7 @@ function buildEducationalNote(result) {
     `Treat your ${cat} chart as conditional: wait for confirmation when scores are mixed.`,
     conf ? `Need: ${conf}` : 'Define what would prove the idea wrong before sizing up.',
     inv ? `Invalidation sketch: ${inv.slice(0, 220)}` : 'Mark invalidation from the chart’s last swing or zone.',
-    'Journal the plan and align with your Trade Validator checklist before execution.',
+    'Journal the plan and align with your The Operator checklist before execution.',
   ];
   return lines.join(' ');
 }

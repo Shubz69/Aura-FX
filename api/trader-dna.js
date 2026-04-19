@@ -377,7 +377,7 @@ module.exports = async (req, res) => {
       } else if (latest && !progress.meetsMinimumData) {
         status = 'INSUFFICIENT_FOR_NEXT_CYCLE';
         statusMessage =
-          'The next DNA cycle is open, but your last ~3 months of data do not yet meet minimum quality. Use the checklist below — Trade Validator + journal are the main levers.';
+          'The next DNA cycle is open, but your last ~3 months of data do not yet meet minimum quality. Use the checklist below — The Operator + journal are the main levers.';
       } else if (progress.meetsMinimumData) {
         status = latest ? 'READY_TO_GENERATE' : 'READY_FIRST_GENERATION';
         statusMessage = latest
@@ -509,7 +509,7 @@ module.exports = async (req, res) => {
         return res.status(403).json({
           success: false,
           code: 'INSUFFICIENT_DATA',
-          message: 'Not enough validated data in the last ~90 days to generate Trader DNA. Close more trades in Trade Validator and add journal days.',
+          message: 'Not enough validated data in the last ~90 days to generate Trader DNA. Close more trades in The Operator and add journal days.',
           progress,
           qualificationGaps: buildQualificationGaps(progress),
         });

@@ -474,7 +474,7 @@ export default function TraderLab() {
   const validator = useMemo(() => buildValidator(form), [form]);
   const rrOk = rr >= 1;
 
-  const tradeValidatorRows = useMemo(() => {
+  const operatorValidatorRows = useMemo(() => {
     const rrStatus = rr >= 2 ? 'OPTIMAL' : rr >= 1 ? 'OK' : 'WEAK';
     const conflictStatus = form.setupValid && form.riskDefined ? 'CLEAR' : 'REVIEW';
     return [
@@ -485,7 +485,7 @@ export default function TraderLab() {
     ];
   }, [form.biasAligned, form.setupValid, form.riskDefined, form.entryConfirmed, rr]);
 
-  const validatorPanelOk = tradeValidatorRows.every((r) => r.ok);
+  const validatorPanelOk = operatorValidatorRows.every((r) => r.ok);
 
   const stats = useMemo(
     () => [
@@ -665,7 +665,7 @@ export default function TraderLab() {
       } catch (e) {
         console.warn(e);
       }
-      toast.success('Saved. Opening Trade Validator checklist.');
+      toast.success('Saved. Opening The Operator checklist.');
       navigate('/trader-deck/trade-validator/checklist', { state: { fromTraderLab: true } });
     } catch (error) {
       console.error(error);
@@ -1186,7 +1186,7 @@ export default function TraderLab() {
             <div className={`tlab-card tlab-card--gold tlab-card--validator tlab-card--validator-metrics${validatorPanelOk ? ' tlab-card--validator-pass' : ''}`}>
               <h3 className="tlab-card__title">Validation</h3>
               <ul className="tlab-validator-list tlab-validator-list--status">
-                {tradeValidatorRows.map((row) => (
+                {operatorValidatorRows.map((row) => (
                   <li key={row.label}>
                     <span className="tlab-vlabel">{row.label}</span>
                     <span className={row.ok ? 'tlab-vstatus tlab-vstatus--ok' : 'tlab-vstatus'}>{row.status}</span>

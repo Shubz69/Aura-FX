@@ -71,7 +71,7 @@ export function buildFollowUpActions(session, allSessions = []) {
     });
     out.push({
       key: 'validator-caution',
-      label: 'Trade Validator · rules check',
+      label: 'The Operator · rules check',
       to: validatorTo,
       reason: 'Stress-test entries against your checklist before repeating the pattern.',
     });
@@ -104,7 +104,7 @@ export function buildFollowUpActions(session, allSessions = []) {
   if (rq.score < 48) {
     out.push({
       key: 'validator',
-      label: 'Trade Validator',
+      label: 'The Operator',
       to: validatorTo,
       reason: 'Stress-test the next setup against your rules.',
     });

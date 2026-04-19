@@ -143,7 +143,7 @@ function ReportsDnaPageInner() {
         <p className="tdna-landing-kicker">Aura Terminal</p>
         <h1 className="tdna-landing-title">Trader DNA</h1>
         <p className="tdna-landing-sub">
-          <strong>Who you are as a trader</strong> — built from your Trade Validator data and journal (roughly{' '}
+          <strong>Who you are as a trader</strong> — built from data in The Operator and your journal (roughly{' '}
           {dna?.analysisWindowDays || 90} days). This is a blunt psychological and behavioural mirror, refreshed on a{' '}
           ~90-day cycle. <strong>How to get better:</strong> use{' '}
           <Link to="/reports" style={{ color: '#f8c37d', fontWeight: 700 }}>

@@ -1,5 +1,5 @@
 /* =============================================================================
-   TRADE VALIDATOR SHELL ONLY — src/components/trader-deck/TradeValidatorShell.css
+   THE OPERATOR SHELL ONLY — src/components/trader-deck/OperatorShell.js
    All rules scoped with .trade-validator-shell. Presentation only; no logic.
    Loaded after AuraAnalysisShell.css. Does not affect /aura-analysis or other pages.
    Fully responsive: 320px → ∞
@@ -230,7 +230,7 @@
   }
 }
 
-/* Gold accent centered under “Trade Validator” (matches centered hero titles) */
+/* Gold accent centered under “The Operator” (matches centered hero titles) */
 .trade-validator-shell .aura-shell-hero::after {
   content: '';
   position: absolute;
@@ -306,7 +306,7 @@
   flex-shrink: 0 !important;
 }
 
-/* Only the active tab shows the gold glow line (scoped to Trade Validator shell; wins over generic AuraAnalysisShell tab ::after). */
+/* Only the active tab shows the gold glow line (scoped to The Operator shell; wins over generic AuraAnalysisShell tab ::after). */
 .trade-validator-shell .aura-shell-tab:not(.active)::after {
   content: none !important;
   display: none !important;
@@ -344,7 +344,7 @@
   border-color: transparent !important;
 }
 
-/* Active state finalized in TradeValidatorJournalPanels.css (gold underline, Aura-dashboard style) */
+/* Active state finalized in OperatorJournalPanels.css (gold underline, Aura-dashboard style) */
 .trade-validator-shell .aura-shell-tab.active {
   color: #fff !important;
   background: transparent !important;
@@ -1098,7 +1098,7 @@
   min-width: 600px !important;
 }
 
-/* ── Checklist tab (TradeValidatorView) ──────────────────────────────────── */
+/* ── Checklist tab (OperatorView) ──────────────────────────────────── */
 .trade-validator-shell .trade-validator-page {
   background: transparent !important;
 }

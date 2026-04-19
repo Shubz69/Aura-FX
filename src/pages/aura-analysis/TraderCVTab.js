@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
-import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
+import { useOperatorAccount } from '../../context/OperatorAccountContext';
 import Api from '../../services/Api';
 import { calculateAuraxScore, getAuraxRankTitle } from '../../lib/aura-analysis/trader-cv/auraxScoreCalculator';
 import { computeBehaviourBreakdown } from '../../lib/aura-analysis/trader-cv/behaviourAnalytics';
@@ -37,7 +37,7 @@ function formatStreak(value) {
 
 export default function TraderCVTab() {
   const { user } = useAuth();
-  const { selectedAccountId, loading: accountsLoading } = useTradeValidatorAccount();
+  const { selectedAccountId, loading: accountsLoading } = useOperatorAccount();
   const navigate = useNavigate();
   const passportPreviewRef = useRef(null);
   const passportExportRef = useRef(null);

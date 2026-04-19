@@ -1,5 +1,5 @@
 /* =============================================================================
-   Trade Validator — Aura Analysis visual parity (Growth / dashboard / Reports)
+   The Operator — Aura Analysis visual parity (Growth / dashboard / Reports)
    Same card language as AuraShared .aa-card: gold hairline, blur, readable type.
    Import AFTER AuraShared.css + other TV styles so these rules win.
    ============================================================================= */
@@ -51,7 +51,7 @@
   box-shadow: none !important;
 }
 
-/* Gold underline glow: defined on .trade-validator-shell .aura-shell-tab in TradeValidatorJournalGlass.css */
+/* Gold underline glow: defined on .trade-validator-shell .aura-shell-tab in OperatorJournalGlass.css */
 
 /* ── Shared “aa-card” surface (all inner boxes) ─────────────────────────── */
 .journal-page .trade-validator-shell .aura-card,

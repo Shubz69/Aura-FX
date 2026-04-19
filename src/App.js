@@ -79,8 +79,8 @@ const Journal = lazy(() => import('./pages/Journal'));
 const AuraAnalysis = lazy(() => import('./pages/AuraAnalysis'));
 const AuraAnalysisShell = lazy(() => import('./components/aura-analysis/AuraAnalysisShell'));
 const AuraAnalysisGateway = lazy(() => import('./pages/aura-analysis/AuraAnalysisGateway'));
-const TradeValidatorEntry = lazy(() => import('./pages/aura-analysis/TradeValidatorEntry'));
-const TradeValidatorShell = lazy(() => import('./components/trader-deck/TradeValidatorShell'));
+const OperatorEntry = lazy(() => import('./pages/aura-analysis/OperatorEntry'));
+const OperatorShell = lazy(() => import('./components/trader-deck/OperatorShell'));
 /** Resolves to src/pages/TraderDeck.js – do not remove or rename; required for build. */
 const TraderDeck = lazy(() => import('./pages/TraderDeck'));
 const ConnectionHub = lazy(() => import('./pages/aura-analysis/ConnectionHub'));
@@ -375,9 +375,9 @@ function AppRoutes() {
                                 <Route path="trader-replay" element={<TraderReplay />} />
                             </Route>
                         </Route>
-                        <Route path="/trader-deck/trade-validator" element={<AuthenticatedGuard><TradeValidatorShell /></AuthenticatedGuard>}>
+                        <Route path="/trader-deck/trade-validator" element={<AuthenticatedGuard><OperatorShell /></AuthenticatedGuard>}>
                             <Route index element={<Navigate to="/trader-deck/trade-validator/overview" replace />} />
-                            <Route path="checklist" element={<TradeValidatorEntry />} />
+                            <Route path="checklist" element={<OperatorEntry />} />
                             <Route path="overview" element={<AuraOverview />} />
                             <Route path="calculator" element={<TradeCalculator />} />
                             <Route path="journal" element={<TraderDeckTradeJournal />} />

@@ -1,5 +1,5 @@
 /**
- * Trade Validator – Scalp / Intra Day / Swing. Each tab sums to exactly 100 points.
+ * The Operator – Scalp / Intra Day / Swing. Each tab sums to exactly 100 points.
  *
  * Optional on any item: exampleImageSrc — public URL, e.g.
  *   '/assets/trade-validator/checklist-examples/scalp-1.png'

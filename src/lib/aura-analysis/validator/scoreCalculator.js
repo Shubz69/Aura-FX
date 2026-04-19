@@ -1,5 +1,5 @@
 /**
- * Trade Validator – global scoring engine.
+ * The Operator – global scoring engine.
  * Total score = sum of points for checked items (max 200).
  */
 

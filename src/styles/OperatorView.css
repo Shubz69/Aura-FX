@@ -1,5 +1,5 @@
 /* ============================================================
-   TRADE VALIDATOR — AURA TERMINAL
+   THE OPERATOR — AURA TERMINAL
    Premium Trading Checklist & Scorecard
    Fully Responsive | Journal-matching aesthetics
    ============================================================ */
@@ -220,7 +220,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   WORKFLOW RAIL (embedded in Trade Validator shell)
+   WORKFLOW RAIL (embedded in The Operator shell)
    ═══════════════════════════════════════════════════════════════════ */
 .tv-flow-rail {
   display: flex;
@@ -267,7 +267,7 @@
 /* ═══════════════════════════════════════════════════════════════════
    TAB ROW — Premium Pill Style
    ═══════════════════════════════════════════════════════════════════ */
-/* Checklist top deck — tabs + score (compact layout; shell overrides in TradeValidatorTabModern) */
+/* Checklist top deck — tabs + score (compact layout; shell overrides in OperatorTabModern) */
 .tv-checklist-topdeck {
   display: flex;
   flex-direction: column;

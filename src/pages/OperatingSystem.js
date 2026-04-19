@@ -25,7 +25,7 @@ const blocks = [
     to: '/live-metrics',
   },
   {
-    title: 'Trade Validator',
+    title: 'The Operator',
     purpose: 'Decision control system before execution.',
     does: 'Validates setup quality against checklist criteria and blocks impulsive trades.',
     outcome: 'Higher quality decisions and fewer avoidable mistakes.',
@@ -98,7 +98,7 @@ export default function OperatingSystem() {
 
       <section className="ops-flow">
         <h2>System Flow</h2>
-        <p>Journal → Live Metrics → Trade Validator → Trader DNA → Monthly Statements → Trader CV / Passport → Trader Desk</p>
+        <p>Journal → Live Metrics → The Operator → Trader DNA → Monthly Statements → Trader CV / Passport → Trader Desk</p>
       </section>
     </div>
   );

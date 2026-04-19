@@ -31,7 +31,7 @@ import {
   stripReplayHandoffParams,
   TR_HANDOFF,
 } from '../lib/trader-replay/replayToolHandoff';
-import { TRADE_VALIDATOR_BASE as TV_BASE, PLAYBOOK_MISSED_REVIEW_PATH } from '../lib/trader-playbook/playbookPaths';
+import { OPERATOR_BASE as TV_BASE, PLAYBOOK_MISSED_REVIEW_PATH } from '../lib/trader-playbook/playbookPaths';
 import '../styles/TraderPlaybookTerminalTokens.css';
 import '../styles/aura-analysis/AuraDashboard.css';
 import '../styles/TraderPlaybookPremium.css';

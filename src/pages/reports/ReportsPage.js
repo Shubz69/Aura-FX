@@ -441,8 +441,8 @@ function ReportsPageInner() {
           </Link>
           <p className="rp-subtitle">
             {role === 'premium' || role === 'pro'
-              ? 'Monthly blunt coaching: journal + Trade Validator (when logged) + optional MT5 CSV. Explicit failure modes, change vs last month, and measurable checks. Trader DNA (/reports/dna) is your 90-day identity mirror — this is your fix list.'
-              : 'Elite: same harsh standard with Trade Validator trades in the month plus platform data. DNA shows who you are every ~90 days; this report shows what to change next.'}
+              ? 'Monthly blunt coaching: journal + The Operator (when logged) + optional MT5 CSV. Explicit failure modes, change vs last month, and measurable checks. Trader DNA (/reports/dna) is your 90-day identity mirror — this is your fix list.'
+              : 'Elite: same harsh standard with trades from The Operator in the month plus platform data. DNA shows who you are every ~90 days; this report shows what to change next.'}
           </p>
         </div>
         <span className={`rp-role-badge rp-role-badge--${role}`}>

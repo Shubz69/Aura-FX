@@ -153,7 +153,7 @@ export default function TraderDnaNotReady({ dna, afterIntro = false }) {
         )}
 
         <p className="tdna-nr-hint">
-          Continue journaling, validating trades in Trade Validator, and logging outcomes. Trader DNA refreshes on a strict{' '}
+          Continue journaling, validating trades in The Operator, and logging outcomes. Trader DNA refreshes on a strict{' '}
           {dna?.cycleDays || 90}-day cadence once eligibility is met. Each successful run is saved to your profile in the
           database for that cycle.
         </p>

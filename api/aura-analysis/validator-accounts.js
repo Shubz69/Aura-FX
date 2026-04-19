@@ -1,5 +1,5 @@
 /**
- * Trade Validator — multiple named accounts per user.
+ * The Operator — multiple named accounts per user.
  * GET  /api/aura-analysis/validator-accounts — list (creates Primary + backfills trades if needed)
  * POST /api/aura-analysis/validator-accounts — body { name }
  * DELETE /api/aura-analysis/validator-accounts?id= — removes account and linked trades (≥1 account must remain)
@@ -224,7 +224,7 @@ module.exports = async (req, res) => {
       if (!all?.length || all.length < 2) {
         return res.status(400).json({
           success: false,
-          message: 'You must keep at least one Trade Validator account',
+          message: 'You must keep at least one The Operator account',
         });
       }
       const [own] = await executeQuery('SELECT id FROM trade_validator_accounts WHERE id = ? AND user_id = ?', [

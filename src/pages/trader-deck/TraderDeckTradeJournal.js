@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
 import { useAuth } from '../../context/AuthContext';
-import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
+import { useOperatorAccount } from '../../context/OperatorAccountContext';
 import { mergeTradeMetadataRowMulti } from '../../lib/aura-analysis/tradeMetadataStorage';
 import { formatSignedPnL } from '../../lib/aura-analysis/formatAccountCurrency';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
@@ -137,7 +137,7 @@ export default function TraderDeckTradeJournal() {
   const [searchParams, setSearchParams] = useSearchParams();
   const replayDeckConsumedRef = useRef(false);
   const [replayContext, setReplayContext] = useState(null);
-  const { accounts, selectedAccountId, loading: accountsLoading } = useTradeValidatorAccount();
+  const { accounts, selectedAccountId, loading: accountsLoading } = useOperatorAccount();
   const journalCurrency = useMemo(() => {
     const a = accounts.find((x) => Number(x.id) === Number(selectedAccountId));
     return a?.accountCurrency || 'USD';

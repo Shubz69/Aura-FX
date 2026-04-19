@@ -108,12 +108,12 @@ function buildQualificationGaps(progress) {
     gaps.push({
       key: 'closed_trades',
       title: 'Closed trades with outcomes',
-      detail: `DNA uses ~${progress.analysisWindowDays || ANALYSIS_DAYS} days of Trade Validator / validated activity. You have ${progress.closedTradeCount} closed trades (win, loss, or breakeven); at least ${progress.minClosedTrades} are required.`,
+      detail: `DNA uses ~${progress.analysisWindowDays || ANALYSIS_DAYS} days of The Operator / validated activity. You have ${progress.closedTradeCount} closed trades (win, loss, or breakeven); at least ${progress.minClosedTrades} are required.`,
       met: progress.closedTradeCount,
       need: progress.minClosedTrades,
-      hint: 'Log trades in Trade Validator, complete checklists, and set outcomes so closes are counted.',
+      hint: 'Log trades in The Operator, complete checklists, and set outcomes so closes are counted.',
       links: [
-        { label: 'Trade Validator', href: '/trader-deck/trade-validator' },
+        { label: 'The Operator', href: '/trader-deck/trade-validator' },
         { label: 'Trader Deck', href: '/trader-deck' },
       ],
     });
@@ -129,7 +129,7 @@ function buildQualificationGaps(progress) {
       met: progress.distinctTradeDays,
       need: progress.minDistinctTradeDays,
       hint: 'Spread quality setups across more sessions instead of clustering everything on a few days.',
-      links: [{ label: 'Trade Validator', href: '/trader-deck/trade-validator' }],
+      links: [{ label: 'The Operator', href: '/trader-deck/trade-validator' }],
     });
   }
   if (progress.calendarSpanDays < progress.minCalendarSpanDays) {
@@ -937,7 +937,7 @@ function buildActionPlan(m) {
   if (m.riskEscalation === 'elevated_after_loss') top3.push('Halve risk for the next two trades following a full stop-out.');
   if (m.executionQuality < 62) top3.push('Pre-define SL/TP before entry on every trade for 2 weeks — no exceptions.');
   if (m.worstSession) top3.push(`Reduce or eliminate ${m.worstSession} trades until sample quality improves.`);
-  if (m.ruleAdherence < 60) top3.push('Run Trade Validator checklist on every setup for one full cycle.');
+  if (m.ruleAdherence < 60) top3.push('Run The Operator checklist on every setup for one full cycle.');
   if (m.bestSession) top3.push(`Schedule deep-work trading only during ${m.bestSession} for the next DNA cycle.`);
   while (top3.length < 3) top3.push('Journal mood + one sentence “why this trade” on every close for 30 days.');
   return {

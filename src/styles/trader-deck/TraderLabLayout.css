@@ -386,7 +386,7 @@
     overflow: visible;
   }
 
-  /* Win over TradeValidatorJournalGlass .tlab-card--session-rail { flex: 1 1 auto !important } */
+  /* Win over OperatorJournalGlass .tlab-card--session-rail { flex: 1 1 auto !important } */
   .journal-page
     .trade-validator-shell
     .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop
@@ -752,7 +752,7 @@
   gap: var(--tl-gap);
 }
 
-/* Match padding across rails (overrides Trade Validator 18px glass default) */
+/* Match padding across rails (overrides The Operator 18px glass default) */
 .trader-lab-v2.trader-lab-v2--workspace .tlab-card.tlab-card--gold:not(.tlab-card--focal) {
   padding: 14px 16px !important;
 }
@@ -1390,7 +1390,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Journal + Trade Validator shell — match reference (image 3): single-row grid,
+   Journal + The Operator shell — match reference (image 3): single-row grid,
    wide center chart, ENTRY strip bar, equal trio dock, #FF9F43 accents.
    High specificity wins over legacy .journal-page .trader-lab-v2 in TraderSuite.
    ═══════════════════════════════════════════════════════════════════════════ */

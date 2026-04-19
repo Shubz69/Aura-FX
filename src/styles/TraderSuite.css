@@ -1058,7 +1058,7 @@
 }
 
 /* ── Trader Lab v2 (reference layout: left rail · chart · right rail · footer) ── */
-/* Width / centering for Trader Lab is handled in TradeValidatorJournalGlass (full Aura-dashboard rail) */
+/* Width / centering for Trader Lab is handled in OperatorJournalGlass (full Aura-dashboard rail) */
 .journal-page .trader-suite-page:has(.trader-lab-v2) {
   width: 100%;
   max-width: none;

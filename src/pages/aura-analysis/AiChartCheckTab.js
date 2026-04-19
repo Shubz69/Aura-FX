@@ -239,7 +239,7 @@ function ResultPanel({ result, onReset, embedded = false }) {
       <div className="acc-disclaimer">
         <span className="acc-disclaimer-icon">ℹ</span>
         <p>
-          <strong>This AI Chart Check is a supporting tool only.</strong> Always complete the Trade Validator checklist manually
+          <strong>This AI Chart Check is a supporting tool only.</strong> Always complete The Operator checklist manually
           and confirm your own risk plan before entering any position. Not financial advice.
         </p>
       </div>
@@ -425,7 +425,7 @@ export default function AiChartCheckTab({ embedded = false }) {
               AI Chart Check
             </h2>
             <p className="acc-subtitle">
-              Upload your chart and the AI will assess it against the Trade Validator checklist —
+              Upload your chart and the AI will assess it against The Operator checklist —
               giving you a structured score and breakdown.{' '}
               <strong>You must still complete the checklist manually before taking any trade.</strong>
             </p>
@@ -604,7 +604,7 @@ export default function AiChartCheckTab({ embedded = false }) {
         <span className="acc-reminder-icon">📋</span>
         <p>
           AI Chart Check is a <strong>supporting tool only</strong>. Always complete the full
-          Trade Validator checklist manually and confirm your own trade plan before entering any position.
+          The Operator checklist manually and confirm your own trade plan before entering any position.
           Not financial advice.
         </p>
       </div>

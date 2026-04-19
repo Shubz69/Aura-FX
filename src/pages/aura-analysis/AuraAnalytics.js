@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Api from '../../services/Api';
-import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
+import { useOperatorAccount } from '../../context/OperatorAccountContext';
 import { formatMoneyAccount, formatSignedPnL } from '../../lib/aura-analysis/formatAccountCurrency';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import '../../styles/aura-analysis/AuraAnalytics.css';
@@ -111,7 +111,7 @@ function buildSessionPerformance(trades) {
 }
 
 export default function AuraAnalytics() {
-  const { accounts, selectedAccountId, loading: accountsLoading } = useTradeValidatorAccount();
+  const { accounts, selectedAccountId, loading: accountsLoading } = useOperatorAccount();
   const analyticsCurrency = useMemo(() => {
     const a = accounts.find((x) => Number(x.id) === Number(selectedAccountId));
     return a?.accountCurrency || 'USD';

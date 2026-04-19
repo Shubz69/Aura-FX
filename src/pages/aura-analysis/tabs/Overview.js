@@ -3,14 +3,14 @@ import { useLocation } from 'react-router-dom';
 import { FaPlus, FaTrashAlt } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Api from '../../../services/Api';
-import { useTradeValidatorAccount } from '../../../context/TradeValidatorAccountContext';
+import { useOperatorAccount } from '../../../context/OperatorAccountContext';
 import { ACCOUNT_CURRENCY_OPTIONS, formatSignedPnL } from '../../../lib/aura-analysis/formatAccountCurrency';
 import '../../../styles/aura-analysis/AuraTabSection.css';
 import '../../../styles/aura-analysis/Overview.css';
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-/** TradingView-style range toggles for the Trade Validator overview calendar */
+/** TradingView-style range toggles for The Operator overview calendar */
 const CALENDAR_RANGE_OPTIONS = [
   { id: '1D', label: '1D' },
   { id: '1W', label: '1W' },
@@ -149,7 +149,7 @@ export default function Overview() {
     patchAccountCurrency,
     deleteAccount,
     error: accountsError,
-  } = useTradeValidatorAccount();
+  } = useOperatorAccount();
   const [trades, setTrades] = useState([]);
   const [pnlData, setPnlData] = useState({});
   const [loading, setLoading] = useState(true);
@@ -403,7 +403,7 @@ export default function Overview() {
             disabled={!canRemoveAccount || removeSubmitting}
             title={
               canRemoveAccount
-                ? 'Remove this account and its Trade Validator trades'
+                ? 'Remove this account and its trades from The Operator'
                 : 'Add another account before you can remove one'
             }
             aria-label="Remove selected account"
@@ -438,7 +438,7 @@ export default function Overview() {
           >
             <h3 className="aura-overview-modal-title">Remove account</h3>
             <p className="aura-overview-modal-sub">
-              Remove <strong>{selectedAccountLabel || 'this account'}</strong>? All Trade Validator trades linked to it
+              Remove <strong>{selectedAccountLabel || 'this account'}</strong>? All trades from The Operator linked to it
               will be permanently deleted. This cannot be undone.
             </p>
             <div className="aura-overview-modal-actions">
@@ -465,7 +465,7 @@ export default function Overview() {
       {showAddModal && (
         <div className="aura-overview-modal-backdrop" role="presentation" onClick={() => setShowAddModal(false)}>
           <div className="aura-overview-modal" role="dialog" aria-modal="true" aria-label="Add account" onClick={(e) => e.stopPropagation()}>
-            <h3 className="aura-overview-modal-title">Add Trade Validator Account</h3>
+            <h3 className="aura-overview-modal-title">Add The Operator account</h3>
             <p className="aura-overview-modal-sub">Name it and choose the currency you trade this account in.</p>
             <label className="aura-overview-modal-label">
               Account name

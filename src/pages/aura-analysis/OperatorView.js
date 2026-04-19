@@ -18,9 +18,9 @@ import {
   TV_V3_FORMATION_CHECKED_KEY,
 } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import AiChartCheckTab from './AiChartCheckTab';
-import { TRADE_VALIDATOR_BASE as TV_BASE, PLAYBOOK_MISSED_REVIEW_PATH } from '../../lib/trader-playbook/playbookPaths';
+import { OPERATOR_BASE as TV_BASE, PLAYBOOK_MISSED_REVIEW_PATH } from '../../lib/trader-playbook/playbookPaths';
 import '../../styles/TraderPlaybookTerminalTokens.css';
-import '../../styles/TradeValidatorView.css';
+import '../../styles/OperatorView.css';
 
 const STORAGE_ITEMS = 'aura-tv-v3-items';
 const STORAGE_CHECKED = TV_V3_CHECKED_KEY;
@@ -531,7 +531,7 @@ function FormationSubBlock({
   );
 }
 
-export default function TradeValidatorView() {
+export default function OperatorView() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -791,7 +791,7 @@ export default function TradeValidatorView() {
         {!isEmbedded && (
           <header className="tv-header">
             <h1 className="tv-title">
-              <FaCheckSquare className="tv-title-icon" aria-hidden /> Trade Validator
+              <FaCheckSquare className="tv-title-icon" aria-hidden /> The Operator
             </h1>
             <p className="tv-subtitle">Confluence scoring engine confirms your setup before execution.</p>
           </header>

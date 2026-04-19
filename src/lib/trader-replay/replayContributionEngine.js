@@ -452,7 +452,7 @@ export function buildReplayDevelopmentActions(profile) {
     actions.push('Focus on entry patience — late-entry cautions are the most repeated replay issue.');
   }
   if (b.cautions.some((c) => /Missed-R|exit/i.test(c))) {
-    actions.push('Use Trade Validator checklist before the next session — exit/management themes repeat.');
+    actions.push('Use The Operator checklist before the next session — exit/management themes repeat.');
   }
   if (patterns?.modelExampleCount >= 1) {
     actions.push('Turn strong model examples into Playbook rules under Refine.');

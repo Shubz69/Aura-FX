@@ -154,7 +154,7 @@ export function deriveSuggestedNextAction(session) {
 
   if (rq < 45 || Number(s.entryTiming) <= 4) {
     return {
-      label: 'Trade Validator · setup check',
+      label: 'The Operator · setup check',
       href: mergeReplayDestination('/trader-deck/trade-validator/overview', s, coaching, {
         returnPath: buildDefaultReturnToReplayPath(s),
       }),

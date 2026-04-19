@@ -1,16 +1,16 @@
 /**
- * Trade Validator route shell (/trader-deck/trade-validator/*). Nav + Outlet only;
+ * The Operator route shell (/trader-deck/trade-validator/*). Nav + Outlet only;
  * tab pages own their logic. Theme CSS is scoped with .trade-validator-shell.
  */
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { TradeValidatorAccountProvider } from '../../context/TradeValidatorAccountContext';
+import { OperatorAccountProvider } from '../../context/OperatorAccountContext';
 import AuraTerminalThemeShell from '../AuraTerminalThemeShell';
 import '../../styles/aura-analysis/AuraAnalysisShell.css';
-import '../../styles/trader-deck/TradeValidatorJournalGlass.css';
-import '../../styles/trader-deck/TradeValidatorTabModern.css';
-import '../../styles/trader-deck/TradeValidatorRouteThemeGold.css';
-import '../../styles/trader-deck/TradeValidatorJournalPanels.css';
+import '../../styles/trader-deck/OperatorJournalGlass.css';
+import '../../styles/trader-deck/OperatorTabModern.css';
+import '../../styles/trader-deck/OperatorRouteThemeGold.css';
+import '../../styles/trader-deck/OperatorJournalPanels.css';
 
 const BASE = '/trader-deck/trade-validator';
 /** Main tab rail — Trader Lab & Playbook live in the header; Trader Replay is under Aura Analysis. */
@@ -27,9 +27,9 @@ const TABS = [
 const HERO_TRADER_LAB = { path: `${BASE}/trader-lab`, label: 'Trader Lab' };
 const HERO_PLAYBOOK = { path: `${BASE}/trader-playbook`, label: 'Trader Playbook' };
 
-export default function TradeValidatorShell() {
+export default function OperatorShell() {
   return (
-    <TradeValidatorAccountProvider>
+    <OperatorAccountProvider>
     <AuraTerminalThemeShell>
     <div className="aura-shell trade-validator-shell journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
       <header className="aura-shell-hero">
@@ -45,7 +45,7 @@ export default function TradeValidatorShell() {
             </NavLink>
           </nav>
           <div className="aura-shell-titles trade-validator-hero-titles">
-            <h1 className="aura-shell-title">Trade Validator</h1>
+            <h1 className="aura-shell-title">The Operator</h1>
             <p className="aura-shell-sub">
               One workspace: Trader Lab (plan), Playbook (rules), then Checklist, Calculator, and Journal. Import context from
               Trader Desk → Market Decoder → Export.
@@ -64,7 +64,7 @@ export default function TradeValidatorShell() {
         </div>
       </header>
 
-      <nav className="aura-shell-tabs-wrap aura-shell-tabs-wrap--validator" aria-label="Trade Validator sections">
+      <nav className="aura-shell-tabs-wrap aura-shell-tabs-wrap--validator" aria-label="The Operator sections">
         <div className="aura-shell-tabs-rail">
           <div className="aura-shell-tabs-inner aura-shell-tabs-inner--validator">
             {TABS.map((tab) => (
@@ -86,6 +86,6 @@ export default function TradeValidatorShell() {
       </main>
     </div>
     </AuraTerminalThemeShell>
-    </TradeValidatorAccountProvider>
+    </OperatorAccountProvider>
   );
 }

@@ -1,5 +1,5 @@
 /* =============================================================================
-   TRADE VALIDATOR SHELL — Fully Responsive (all devices)
+   THE OPERATOR SHELL — Fully Responsive (all devices)
    Breakpoints:
      xs  < 480px   (small phones)
      sm  480–767px (large phones / small phablets)
@@ -385,7 +385,7 @@
 }
 
 /* ============================================================
-   CHECKLIST — TradeValidatorView
+   CHECKLIST — OperatorView
    ============================================================ */
 
 .trade-validator-shell .trade-validator-inner.tv-new-layout {

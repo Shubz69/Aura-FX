@@ -2,9 +2,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useAuth } from './AuthContext';
 import Api from '../services/Api';
 
-const TradeValidatorAccountContext = createContext(null);
+const OperatorAccountContext = createContext(null);
 
-export function TradeValidatorAccountProvider({ children }) {
+export function OperatorAccountProvider({ children }) {
   const { user } = useAuth();
   const [accounts, setAccounts] = useState([]);
   const [selectedAccountId, setSelectedIdState] = useState(null);
@@ -123,12 +123,12 @@ export function TradeValidatorAccountProvider({ children }) {
   );
 
   return (
-    <TradeValidatorAccountContext.Provider value={value}>{children}</TradeValidatorAccountContext.Provider>
+    <OperatorAccountContext.Provider value={value}>{children}</OperatorAccountContext.Provider>
   );
 }
 
-export function useTradeValidatorAccount() {
-  const ctx = useContext(TradeValidatorAccountContext);
+export function useOperatorAccount() {
+  const ctx = useContext(OperatorAccountContext);
   if (!ctx) {
     return {
       accounts: [],

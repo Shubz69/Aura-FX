@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import AuraEnterTransition from '../../components/aura-analysis/AuraEnterTransition';
-import TradeValidatorView from './TradeValidatorView';
+import OperatorView from './OperatorView';
 
-export default function TradeValidatorEntry() {
+export default function OperatorEntry() {
   const location = useLocation();
   const [transitionDone, setTransitionDone] = useState(false);
   const fromGateway = location.state?.fromGateway === true;
@@ -16,10 +16,10 @@ export default function TradeValidatorEntry() {
     return (
       <AuraEnterTransition
         onComplete={handleTransitionComplete}
-        label="Initializing Trade Validator"
+        label="Initializing The Operator"
       />
     );
   }
 
-  return <TradeValidatorView />;
+  return <OperatorView />;
 }

@@ -10,7 +10,7 @@ import { summarizeMissedPatterns } from '../lib/trader-playbook/analyticsClient'
 import { MID } from '../lib/trader-playbook/metricDefinitions';
 import { MetricLabel } from '../lib/trader-playbook/MetricTooltip';
 import { NO_SETUP_REASONS } from '../lib/trader-playbook/rulesCopy';
-import { TRADE_VALIDATOR_BASE as TV_BASE, PLAYBOOK_HUB_PATH } from '../lib/trader-playbook/playbookPaths';
+import { OPERATOR_BASE as TV_BASE, PLAYBOOK_HUB_PATH } from '../lib/trader-playbook/playbookPaths';
 import '../styles/TraderPlaybookTerminalTokens.css';
 import '../styles/aura-analysis/AuraDashboard.css';
 import '../styles/TraderPlaybookPremium.css';
@@ -389,7 +389,7 @@ export default function MissedTradeReview() {
               </div>
               <div className="mtr-diag-row">
                 <dt>Classifier</dt>
-                <dd>{selectedOff.source === 'validator' ? 'Validator' : 'Journal'}</dd>
+                <dd>{selectedOff.source === 'validator' ? 'Operator' : 'Journal'}</dd>
               </div>
               <div className="mtr-diag-row">
                 <dt>Driver</dt>
@@ -705,7 +705,7 @@ export default function MissedTradeReview() {
                 ) : null}
                 {mainTab === 'offplan' ? (
                   !offPlanRows.length ? (
-                    <div className="mtr-empty mtr-empty--line">No off-plan rows in the loaded validator + journal sample.</div>
+                    <div className="mtr-empty mtr-empty--line">No off-plan rows in the loaded Operator + journal sample.</div>
                   ) : (
                     <ul className="mtr-list" role="listbox" aria-label="Off-plan trades">
                       {offPlanRows.map((r) => (
@@ -771,7 +771,7 @@ export default function MissedTradeReview() {
                       </div>
                       <div className="mtr-diag-row">
                         <dt>Classifier</dt>
-                        <dd>{selectedOff.source === 'validator' ? 'Validator' : 'Journal'}</dd>
+                        <dd>{selectedOff.source === 'validator' ? 'Operator' : 'Journal'}</dd>
                       </div>
                       <div className="mtr-diag-row">
                         <dt>Date</dt>

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
-import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
+import { useOperatorAccount } from '../../context/OperatorAccountContext';
 import useLivePrices from '../../hooks/useLivePrices';
 import {
   getInstrumentsByCategory,
@@ -22,7 +22,7 @@ import {
   TV_V3_FORMATION_CHECKED_KEY,
 } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import { formatThesisNotesForJournal } from '../../utils/traderSuite';
-import { TRADE_VALIDATOR_BASE as TV_BASE, PLAYBOOK_MISSED_REVIEW_PATH } from '../../lib/trader-playbook/playbookPaths';
+import { OPERATOR_BASE as TV_BASE, PLAYBOOK_MISSED_REVIEW_PATH } from '../../lib/trader-playbook/playbookPaths';
 import '../../styles/TraderPlaybookTerminalTokens.css';
 import '../../styles/aura-analysis/TradeCalculator.css';
 
@@ -40,7 +40,7 @@ const RISK_WARNING_PCT = 5;
 
 export default function TradeCalculator() {
   const navigate = useNavigate();
-  const { accounts, selectedAccountId, patchAccountCurrency } = useTradeValidatorAccount();
+  const { accounts, selectedAccountId, patchAccountCurrency } = useOperatorAccount();
   const { prices } = useLivePrices({ beginnerMode: false });
   const [watchlistPayload, setWatchlistPayload] = useState(null);
   const [pairSearch, setPairSearch] = useState('');
@@ -685,7 +685,7 @@ export default function TradeCalculator() {
               ))}
             </select>
             <span className="trade-calc-helper">
-              Stored per Trade Validator account. Risk and P/L use live FX from the market snapshot when available.
+              Stored per The Operator account. Risk and P/L use live FX from the market snapshot when available.
             </span>
           </div>
 

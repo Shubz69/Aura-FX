@@ -1,5 +1,5 @@
 /**
- * Trade Validator – save/list trades and PnL (daily, weekly, monthly).
+ * The Operator – save/list trades and PnL (daily, weekly, monthly).
  * Table: aura_analysis_trades. All users (including Free) can use.
  */
 

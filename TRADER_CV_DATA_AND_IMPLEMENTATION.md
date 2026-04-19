@@ -1,14 +1,14 @@
 # Trader CV – Data Mapping & Implementation
 
-This document explains how the new **Trader CV** tab (inside Trade Validator) connects to existing platform data, what is real vs placeholder, and what is needed for full live scoring and future PDF export.
+This document explains how the new **Trader CV** tab (inside The Operator) connects to existing platform data, what is real vs placeholder, and what is needed for full live scoring and future PDF export.
 
 ---
 
 ## 1. Where Trader CV Lives
 
-- **Location:** Trade Validator → tab **"Trader CV"** (between Analytics and Leaderboard).
+- **Location:** The Operator → tab **"Trader CV"** (between Analytics and Leaderboard).
 - **Route:** `/trader-deck/trade-validator/trader-cv`.
-- **Shell:** Same as other Trade Validator tabs (`TradeValidatorShell`); no existing tabs or routes were removed or broken.
+- **Shell:** Same as The Operator’s other tabs (`OperatorShell`); no existing tabs or routes were removed or broken.
 
 ---
 
@@ -35,7 +35,7 @@ Trader CV uses **only** the Aurax Trading Behaviour Score. Platform Discipline (
 ### Rule Adherence (30%)
 
 - **From `aura_analysis_trades`:**
-  - `checklist_score`, `checklist_total`, `checklist_percent` (saved when user submits from Trade Validator with checklist).
+  - `checklist_score`, `checklist_total`, `checklist_percent` (saved when user submits from The Operator with checklist).
 - **Logic today:** Average of checklist completion % across trades; message when some trades below 70%.
 - **Extension:** Confluence confirmation, setup validity, session validity, required fields – can all be added as columns or JSON and fed into the same calculator.
 
@@ -151,8 +151,8 @@ Trader CV uses **only** the Aurax Trading Behaviour Score. Platform Discipline (
 
 ## 13. Files Modified
 
-- `src/components/trader-deck/TradeValidatorShell.js` – Added “Trader CV” tab to `TABS`.
-- `src/App.js` – Lazy import for `TraderCVTab`, route `trader-cv` under Trade Validator.
+- `src/components/trader-deck/OperatorShell.js` – Added “Trader CV” tab to `TABS`.
+- `src/App.js` – Lazy import for `TraderCVTab`, route `trader-cv` under The Operator.
 
 ---
 

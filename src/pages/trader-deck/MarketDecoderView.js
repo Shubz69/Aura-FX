@@ -455,7 +455,7 @@ export default function MarketDecoderView({ embedded }) {
         </div>
         <div className="md-ref-flow-note">
           <strong>Flow:</strong> Decode a symbol → review the full brief in the preview → <strong>Export</strong> sends bias, levels,
-          and context into <strong>Trader Lab</strong> (Trade Validator). Then use Checklist and Calculator.
+          and context into <strong>Trader Lab</strong> (The Operator). Then use Checklist and Calculator.
         </div>
         <details className="md-ref-details-help">
           <summary className="md-ref-details-sum">How to use · what this is</summary>

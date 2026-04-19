@@ -925,7 +925,7 @@ const [journalLoading, setJournalLoading] = useState(false);
         selectedChannelRef.current = selectedChannel;
     }, [selectedChannel]);
 
-    // Trader CV passport: attach PNG when user chose "Share via Community" on Trade Validator
+    // Trader CV passport: attach PNG when user chose "Share via Community" on The Operator
     useEffect(() => {
         let cancelled = false;
         const run = async () => {
@@ -934,7 +934,7 @@ const [journalLoading, setJournalLoading] = useState(false);
             const ts = typeof parsed?.ts === 'number' ? parsed.ts : 0;
             if (!dataUrl || typeof dataUrl !== 'string') return;
             if (Date.now() - ts > 5 * 60 * 1000) {
-                toast.info('Trader Passport attachment expired — generate a new one from Trade Validator → Trader CV.');
+                toast.info('Trader Passport attachment expired — generate a new one from The Operator → Trader CV.');
                 return;
             }
             try {

@@ -1,7 +1,7 @@
 # Aura Terminal — Core workspaces reference (detailed)
 
 **What this document is**  
-A **single, exhaustive, product-focused** guide to seven areas of Aura Terminal: **Trader Desk**, **Trade Validator**, **Journal**, **Surveillance**, **Performance & DNA**, **Backtesting**, and **Aura Analysis**. It lists **every main tab, sub-tab, nested route, and major panel** the user can encounter, and explains **what it is for** and **how it helps**.
+A **single, exhaustive, product-focused** guide to seven areas of Aura Terminal: **Trader Desk**, **The Operator**, **Journal**, **Surveillance**, **Performance & DNA**, **Backtesting**, and **Aura Analysis**. It lists **every main tab, sub-tab, nested route, and major panel** the user can encounter, and explains **what it is for** and **how it helps**.
 
 **What this document is not**  
 It does not cover marketing pages, auth, community, Premium AI-only flows, or admin tools—only the workspaces listed above.
@@ -14,7 +14,7 @@ Paths match the React app router (`src/App.js`). Nested paths use `…` where a 
 ## Table of contents
 
 1. [Trader Desk (`/trader-deck`)](#1-trader-desk-trader-deck)  
-2. [Trade Validator (`/trader-deck/trade-validator/…`)](#2-trade-validator-trader-decktrade-validator)  
+2. [The Operator (`/trader-deck/trade-validator/…`)](#2-the-operator-trader-decktrade-validator)  
 3. [Journal (`/journal`)](#3-journal-journal)  
 4. [Surveillance (`/surveillance`)](#4-surveillance-surveillance)  
 5. [Performance & DNA](#5-performance--dna)  
@@ -149,7 +149,7 @@ In **Market Intelligence** (non-Outlook), **News headlines** appear for the **se
 
 ---
 
-## 2. Trade Validator (`/trader-deck/trade-validator`)
+## 2. The Operator (`/trader-deck/trade-validator`)
 
 **Overall purpose**  
 A **discipline terminal**: plan in **Trader Lab**, codify rules in **Trader Playbook**, then **checklist → size → log → analyze → present yourself → compare on leaderboard**.
@@ -163,7 +163,7 @@ A **discipline terminal**: plan in **Trader Lab**, codify rules in **Trader Play
 | **Trader Lab** | `…/trader-lab` | Planning cockpit (chart + thesis + risk + handoffs). |
 | **Trader Playbook** | `…/trader-playbook` | Rules, setups, executions, missed trades, playbook analytics, refine loop. |
 
-**Main tab rail (Validator)**
+**Main tab rail (The Operator)**
 
 | # | Tab | Route | Role |
 |---|-----|--------|------|
@@ -189,7 +189,7 @@ A **discipline terminal**: plan in **Trader Lab**, codify rules in **Trader Play
 ### 2.2 Checklist (`…/checklist`) — internal structure
 
 **Entry**  
-`TradeValidatorEntry` may show a short **enter transition** when coming from certain gateways; then **`TradeValidatorView`** loads.
+`OperatorEntry` may show a short **enter transition** when coming from certain gateways; then **`OperatorView`** loads.
 
 **Main checklist styles (three top tabs inside the page)**
 
@@ -262,7 +262,7 @@ Broad list: FX, metals, energies, indices, US ETFs, crypto, **DXY**, **VIX**, et
 
 **Handoffs**
 
-- **`TRADER_LAB_HANDOFF_KEY`** → Trade Validator checklist context.  
+- **`TRADER_LAB_HANDOFF_KEY`** → The Operator checklist context.  
 - **`MARKET_DECODER_LAB_HANDOFF_KEY`** → brings Decoder context into Lab / forward.
 
 ---
@@ -312,7 +312,7 @@ Broad list: FX, metals, energies, indices, US ETFs, crypto, **DXY**, **VIX**, et
 
 ---
 
-### 2.6 Trade Validator — full route map
+### 2.6 The Operator — full route map
 
 ```
 /trader-deck/trade-validator
@@ -713,7 +713,7 @@ Dashboard may require **eligible connection** before rendering analytics.
 #### **Trader Replay** (`…/trader-replay`)
 
 **Function**  
-Session / trade **replay** study—canonical place linked from Trade Validator’s replay redirect.
+Session / trade **replay** study—canonical place linked from The Operator’s replay redirect.
 
 **How it helps**  
 Reconstruct **what was knowable when**—anti-hindsight training.
@@ -753,4 +753,4 @@ Then extend this file so stakeholder descriptions stay **complete**.
 
 ---
 
-*Last expanded: core workspaces only — Trader Desk, Trade Validator, Journal, Surveillance, Performance & DNA, Backtesting, Aura Analysis.*
+*Last expanded: core workspaces only — Trader Desk, The Operator, Journal, Surveillance, Performance & DNA, Backtesting, Aura Analysis.*

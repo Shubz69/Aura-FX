@@ -1,6 +1,6 @@
 /* =============================================================================
-   TRADE VALIDATOR ROUTE ONLY — import after TradeValidatorTabModern.css in
-   TradeValidatorShell.js. High specificity (.trade-validator-shell …) so lazy
+   THE OPERATOR ROUTE ONLY — import after OperatorTabModern.css in
+   OperatorShell.js. High specificity (.trade-validator-shell …) so lazy
    tab styles (Overview, AiChartCheck, TraderCV, etc.) cannot reintroduce violet accents.
    ============================================================================= */
 

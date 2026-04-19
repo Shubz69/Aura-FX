@@ -640,7 +640,7 @@ export default function OverviewDashboard() {
             { to: '/reports/live', label: 'Live analytics', sub: 'Reports hub index' },
             { to: '/reports/dna', label: 'Reports / DNA', sub: 'Cross-product insights' },
             { to: '/manual-metrics', label: 'Manual / CSV', sub: 'Broker uploads' },
-            { to: '/trader-deck/trade-validator/analytics', label: 'Deck analytics', sub: 'Validator KPIs' },
+            { to: '/trader-deck/trade-validator/analytics', label: 'Deck analytics', sub: 'Operator KPIs' },
           ].map(({ to, label, sub }) => (
             <Link
               key={to}

@@ -34,7 +34,7 @@ const SECTIONS = [
       { to: '/journal', label: 'Daily journal', tag: 'Diary · mood' },
       { to: '/trader-deck/trade-validator/journal', label: 'Trade log', tag: 'Rows · export' },
       { to: '/trader-deck/trade-validator/trader-playbook', label: 'Playbook', tag: 'Strategies' },
-      { to: '/trader-deck/trade-validator/analytics', label: 'Deck analytics', tag: 'Validator KPIs' },
+      { to: '/trader-deck/trade-validator/analytics', label: 'Deck analytics', tag: 'Operator KPIs' },
     ],
   },
   {

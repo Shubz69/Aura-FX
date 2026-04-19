@@ -2299,7 +2299,7 @@
   border-radius: 8px;
 }
 
-/* Trade Validator — account switcher (overview) */
+/* The Operator — account switcher (overview) */
 .aura-overview-account-bar {
   display: flex;
   flex-wrap: wrap;

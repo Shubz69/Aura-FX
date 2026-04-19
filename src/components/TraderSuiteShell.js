@@ -25,9 +25,9 @@ export default function TraderSuiteShell({
   children,
 }) {
   const { pathname } = useLocation();
-  const embedInTradeValidator = pathname.startsWith('/trader-deck/trade-validator');
+  const embedInOperator = pathname.startsWith('/trader-deck/trade-validator');
   const embedInAuraDashboardReplay = /^\/aura-analysis\/dashboard\/trader-replay/.test(pathname);
-  const skipOuterTheme = embedInTradeValidator || embedInAuraDashboardReplay;
+  const skipOuterTheme = embedInOperator || embedInAuraDashboardReplay;
 
   const statToneClass = (tone) => {
     if (tone === 'gold') return 'aura-db-replay-stat__value--gold';

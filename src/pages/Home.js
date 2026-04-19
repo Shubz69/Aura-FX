@@ -1223,7 +1223,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     <strong>{analytics.worstPair || '—'}</strong>
                                 </div>
                                 <div>
-                                    <span>Validator accounts</span>
+                                    <span>Operator accounts</span>
                                     <strong>{dashboardData.validatorAccounts?.length ?? '—'}</strong>
                                 </div>
                             </div>

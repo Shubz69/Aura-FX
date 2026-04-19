@@ -251,7 +251,7 @@
   border-top: none;
 }
 
-/* Trade Validator shell – AI Chart Check tab accent colour */
+/* The Operator shell – AI Chart Check tab accent colour */
 .trade-validator-shell .aura-shell-tab[href*="ai-chart-check"].active,
 .trade-validator-shell .aura-shell-tab[href*="ai-chart-check"]:focus {
   border-color: rgba(234, 169, 96,0.6) !important;
