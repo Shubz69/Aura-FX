@@ -17,6 +17,8 @@ const TOKEN_URL =
 const BOXES = [
   { label: 'atlantic_na_eu', lamin: 25, lomin: -95, lamax: 58, lomax: 20 },
   { label: 'middle_east', lamin: 12, lomin: 25, lamax: 42, lomax: 63 },
+  /** Persian Gulf, Strait of Hormuz, and Gulf of Oman mouth — overlaps middle_east; merge dedupes by ICAO24. */
+  { label: 'persian_gulf_hormuz', lamin: 22.5, lomin: 48.5, lamax: 31.5, lomax: 65.5 },
   { label: 'west_pacific', lamin: -40, lomin: 110, lamax: 45, lomax: 180 },
 ];
 
@@ -132,12 +134,23 @@ function fetchOpts() {
   return { timeoutMs, maxAttempts };
 }
 
-function scoreRow(sv) {
+/** OpenSky emitter category when extended=1 (index 17). See REST docs. */
+function categoryBoost(category) {
+  const c = Number(category);
+  if (!Number.isFinite(c)) return 0;
+  if (c === 14) return 0.08; // UAV
+  if (c === 7) return 0.07; // High performance
+  if (c === 6) return 0.05; // Heavy (also many wide-body civ)
+  if (c === 5) return 0.03; // High vortex large
+  return 0;
+}
+
+function scoreRow(sv, category) {
   const baro = sv[7];
   const vel = sv[9];
   const altScore = baro != null ? Math.min(1, baro / 12000) : 0;
   const velScore = vel != null ? Math.min(1, vel / 280) : 0;
-  return altScore * 0.55 + velScore * 0.45;
+  return altScore * 0.55 + velScore * 0.45 + categoryBoost(category);
 }
 
 function parseStatesPayload(json) {
@@ -156,6 +169,8 @@ function parseStatesPayload(json) {
     const onGround = sv[8] === true;
     const velocity = sv[9];
     const trueTrack = sv[10];
+    const positionSource = sv.length > 16 && sv[16] != null ? Number(sv[16]) : null;
+    const emitterCategory = sv.length > 17 && sv[17] != null ? Number(sv[17]) : null;
 
     if (onGround) continue;
     if (longitude == null || latitude == null) continue;
@@ -172,7 +187,9 @@ function parseStatesPayload(json) {
       baroAltitude,
       velocity,
       trueTrack,
-      score: scoreRow(sv),
+      positionSource,
+      emitterCategory,
+      score: scoreRow(sv, emitterCategory),
     });
   }
   rows.sort((a, b) => b.score - a.score);
@@ -190,6 +207,8 @@ function eventFromRow(row) {
     baroAltitude,
     velocity,
     trueTrack,
+    positionSource,
+    emitterCategory,
   } = row;
 
   const icao = String(icao24 || '').toLowerCase();
@@ -199,12 +218,22 @@ function eventFromRow(row) {
   const altM = baroAltitude != null ? Math.round(baroAltitude) : '—';
   const spd = velocity != null ? velocity.toFixed(0) : '—';
   const hdg = trueTrack != null ? Math.round(trueTrack) : '—';
-  const summary = `Live position · CS ${cs} · ${originCountry || 'unknown origin'} · FL ~${altM} m · ${spd} m/s · track ${hdg}°`;
+  const cat =
+    emitterCategory != null && Number.isFinite(Number(emitterCategory))
+      ? ` · emitter cat ${emitterCategory}`
+      : '';
+  const summary = `Live position · CS ${cs} · ${originCountry || 'unknown origin'} · FL ~${altM} m · ${spd} m/s · track ${hdg}°${cat}`;
 
   const tPos = timePosition != null ? new Date(timePosition * 1000) : new Date();
   const published_at = Number.isNaN(tPos.getTime())
     ? new Date().toISOString().slice(0, 19).replace('T', ' ')
     : tPos.toISOString().slice(0, 19).replace('T', ' ');
+
+  const tags = ['live_track', 'ads-b', 'opensky'];
+  const ec = Number(emitterCategory);
+  if (ec === 14) tags.push('uav_adsb_category');
+  if (ec === 7) tags.push('high_performance_adsb');
+  if (ec === 6) tags.push('heavy_adsb');
 
   return {
     source: ID,
@@ -219,7 +248,7 @@ function eventFromRow(row) {
     lng: Number(longitude),
     confidence: 0.82,
     verification_state: 'telemetry',
-    tags: ['live_track', 'ads-b', 'opensky'],
+    tags,
     source_meta: {
       provider: 'opensky',
       icao24: icao,
@@ -229,6 +258,8 @@ function eventFromRow(row) {
       velocity_m_s: velocity,
       true_track_deg: trueTrack,
       time_position: timePosition,
+      position_source: positionSource,
+      emitter_category: emitterCategory,
     },
   };
 }
@@ -262,6 +293,7 @@ module.exports = {
         lomin: String(box.lomin),
         lamax: String(box.lamax),
         lomax: String(box.lomax),
+        extended: '1',
       });
       const apiUrl = `https://opensky-network.org/api/states/all?${q.toString()}`;
 
