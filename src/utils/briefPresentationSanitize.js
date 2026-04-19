@@ -10,6 +10,27 @@ function stripAsterisks(text) {
   return String(text || '').replace(/\*/g, '');
 }
 
+/** `* item` bullets → `- item` so emphasis stripping does not destroy lists. */
+function convertLeadingAsteriskBulletsToDash(text) {
+  return String(text || '').replace(/^(\s*)\*\s+/gm, '$1- ');
+}
+
+/**
+ * CommonMark only treats `##` headings when the hashes start the line (after up to three spaces).
+ * Models often glue `## Section` onto the previous sentence; insert blank lines so headings parse.
+ */
+function ensureMarkdownHeadingsBreakLines(text) {
+  let s = String(text || '');
+  for (let i = 0; i < 8; i += 1) {
+    const next = s
+      .replace(/([^\n#])(#{2,6})(?=\s+)/g, '$1\n\n$2')
+      .replace(/([^\n#])(#{2,6})(?=[A-Za-z0-9\u00C0-\u024F])/g, '$1\n\n$2 ');
+    if (next === s) break;
+    s = next;
+  }
+  return s;
+}
+
 function collapseCommaRuns(text) {
   return String(text || '')
     .replace(/,\s*,+/g, ', ')
@@ -94,7 +115,11 @@ function applySentenceCaseOutsideHeadings(text) {
  * @param {{ preserveEmphasis?: boolean }} [opts] — when true, keep `*` so **bold** survives for ReactMarkdown preview.
  */
 function polishBriefMarkdown(markdown, opts = {}) {
-  let t = opts.preserveEmphasis ? String(markdown || '') : stripAsterisks(markdown || '');
+  let t = String(markdown || '');
+  if (!opts.preserveEmphasis) {
+    t = convertLeadingAsteriskBulletsToDash(t);
+    t = stripAsterisks(t);
+  }
   t = t.replace(/^\s*---+?\s*$/gm, '');
   t = normalizeSeparatorsPreserveNewlines(t);
   t = collapseCommaRuns(t);
@@ -157,4 +182,5 @@ function splitLongProseParagraphsForPreview(markdown) {
 module.exports = {
   polishBriefMarkdown,
   splitLongProseParagraphsForPreview,
+  ensureMarkdownHeadingsBreakLines,
 };

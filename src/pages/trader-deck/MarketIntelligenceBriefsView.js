@@ -8,12 +8,12 @@ import ReactMarkdown from 'react-markdown';
 import Api from '../../services/Api';
 import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import { FaEye, FaTrash, FaTimes } from 'react-icons/fa';
-import CosmicBackground from '../../components/CosmicBackground';
 import { getTraderDeckIntelStorageYmd, formatLondonWeekRangeFromWeekEndingSundayYmd } from '../../lib/trader-deck/deskDates';
 import { stripModelInternalExposition } from '../../utils/sanitizeAiDeskOutput.react.js';
 import {
   polishBriefMarkdown,
   splitLongProseParagraphsForPreview,
+  ensureMarkdownHeadingsBreakLines,
 } from '../../utils/briefPresentationSanitize';
 import { promoteAuraBriefPlaintextToMarkdown } from '../../utils/promoteAuraBriefHeadings';
 
@@ -206,8 +206,7 @@ function promoteGenericSectionHeadings(markdown) {
 /** Preview text: preserve markdown headings (section layout); polish separators/casing to match backend. */
 function sanitizeBriefForPreview(text) {
   let t = String(text || '').replace(/\r\n/g, '\n');
-  // Legacy bodies: "##" glued to end of sentence → split so ReactMarkdown sees real headings.
-  t = t.replace(/([^\n#])\s*(#{2,6}\s+)/g, '$1\n\n$2');
+  t = ensureMarkdownHeadingsBreakLines(t);
 
   // Strip ```fences``` (keep inner text); strip inline backticks from legacy docs.
   t = t.replace(/```(?:[\w-]+)?\s*\n?([\s\S]*?)```/g, (_, inner) => `\n${String(inner || '').trim()}\n`);
@@ -219,9 +218,11 @@ function sanitizeBriefForPreview(text) {
   t = t.replace(/^\s*By\s+AURA\s+TERMINAL\s*$/gim, '');
 
   t = stripModelInternalExposition(t);
-  t = polishBriefMarkdown(t, { preserveEmphasis: true });
+  // Preview: no raw `*` / `**`; lists use `-` (see polishBriefMarkdown when preserveEmphasis is false).
+  t = polishBriefMarkdown(t, { preserveEmphasis: false });
   t = promoteGenericSectionHeadings(t);
   t = splitLongProseParagraphsForPreview(t);
+  t = ensureMarkdownHeadingsBreakLines(t);
 
   const endsWithFooter = new RegExp(
     `${BY_AURA_TERMINAL.replace(/\s+/g, '\\s+')}\\s*$`,
@@ -1107,7 +1108,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
 
  {typeof document !== 'undefined' && previewOpen && iframeSrc && createPortal(
   <>
-    <CosmicBackground />
     <div className="td-intel-preview-overlay" onClick={closePreview} role="presentation">
       <div
         className="td-intel-preview-box td-intel-preview-box--fullscreen td-intel-preview-box--protected"
