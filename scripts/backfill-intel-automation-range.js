@@ -21,6 +21,9 @@
  *   --delay-ms=4000    Pause between pack invocations (default 4000)
  *   --dry-run          Log planned work only; no generation
  *   --check-env        Print whether PERPLEXITY_API_KEY + MySQL vars are set; exit 0 if ready
+ *   --parallel-sleeves Run 8 category LLMs in parallel (faster; console stays quiet for minutes)
+ *
+ * Default for this script: one sleeve at a time so you see steady progress (set before any API require).
  */
 
 /* eslint-disable no-console */
@@ -32,6 +35,11 @@ const repoRoot = path.join(__dirname, '..');
 // Bare `node scripts/...` does not load .env; mirror local CRA-style secrets at repo root.
 require('dotenv').config({ path: path.join(repoRoot, '.env') });
 require('dotenv').config({ path: path.join(repoRoot, '.env.local'), override: true });
+
+const argv = process.argv.slice(2);
+if (!argv.includes('--parallel-sleeves')) {
+  process.env.INSTITUTIONAL_WFA_SEQUENTIAL = '1';
+}
 
 const { DateTime } = require('luxon');
 const { executeQuery } = require('../api/db');
@@ -59,7 +67,7 @@ function parseArgs() {
     dryRun: false,
     checkEnv: false,
   };
-  for (const a of process.argv.slice(2)) {
+  for (const a of argv) {
     if (a.startsWith('--from=')) out.from = a.slice(7).trim().slice(0, 10);
     else if (a.startsWith('--to=')) out.to = a.slice(5).trim().slice(0, 10);
     else if (a === '--daily-only') out.dailyOnly = true;
@@ -169,6 +177,9 @@ async function main() {
     !opts.dailyOnly ? `${weeklySorted.length} weekly pack(s) (UTC week-ending Sunday keys)` : '',
     opts.dryRun ? '(dry-run)' : ''
   );
+  if (!opts.dryRun && process.env.INSTITUTIONAL_WFA_SEQUENTIAL === '1') {
+    console.log('[backfill] LLM sleeves: one category at a time (steady logs). Use --parallel-sleeves for all-at-once.');
+  }
 
   const results = { daily: [], weekly: [], errors: [] };
 

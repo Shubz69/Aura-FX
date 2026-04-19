@@ -17,6 +17,11 @@ const {
   CATEGORY_INTELLIGENCE_DIRECTIVES,
 } = require('./briefInstrumentUniverse');
 
+/** When `1`, run WFA sleeves one after another (clearer logs; backfill script sets this by default). */
+function institutionalWfaSleevesSequential() {
+  return String(process.env.INSTITUTIONAL_WFA_SEQUENTIAL || '').trim() === '1';
+}
+
 /** Core Aura brief sleeve — order fixed for validation (default generation). */
 const INSTITUTIONAL_INSTRUMENTS = [
   { id: 'XAUUSD', label: 'XAU/USD' },
@@ -422,8 +427,17 @@ async function generateOneWeeklyWfaCategory(deps, shared, briefKindSlug) {
     let parsed = null;
     let lastReasons = [];
 
+    const weeklyModelLabel = typeof getAutomationModel === 'function' ? String(getAutomationModel() || '').trim() : '';
+    console.log(
+      '[inst-wfa] perplexity',
+      briefKindSlug,
+      date,
+      `model=${weeklyModelLabel || '(default)'} max_tokens≈12000 timeout=180s/attempt (waits here — not frozen)`
+    );
+
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const fix = attempt > 0 ? lastReasons : null;
+      console.log('[inst-wfa] perplexity', briefKindSlug, `attempt ${attempt + 1}/3`);
       const rs = await callOpenAIJson(
         systemPrompt,
         {
@@ -439,14 +453,17 @@ async function generateOneWeeklyWfaCategory(deps, shared, briefKindSlug) {
       );
       if (!rs.ok || !rs.parsed) {
         lastReasons = [`llm_${rs.error || 'fail'}`];
+        console.warn('[inst-wfa] perplexity', briefKindSlug, `attempt ${attempt + 1} fail`, String(rs.error || '').slice(0, 220));
         continue;
       }
       const v = weeklyWfaPdfBrief.validateWeeklyWfaPayload(rs.parsed, briefKindSlug);
       if (!v.ok) {
         lastReasons = v.reasons;
+        console.warn('[inst-wfa] perplexity', briefKindSlug, `attempt ${attempt + 1} QC`, (v.reasons || []).slice(0, 2).join('; '));
         continue;
       }
       parsed = rs.parsed;
+      console.log('[inst-wfa] perplexity', briefKindSlug, `attempt ${attempt + 1} ok (QC passed)`);
       break;
     }
 
@@ -569,9 +586,24 @@ async function generateAndStoreWeeklyWfaPack(deps, { runDate, timeZone, date, no
     authorLine,
   };
 
-  const results = await Promise.all(
-    INSTITUTIONAL_WEEKLY_WFA_KINDS.map((k) => generateOneWeeklyWfaCategory(deps, shared, k))
-  );
+  let results;
+  if (institutionalWfaSleevesSequential()) {
+    console.log('[inst-wfa] sequential sleeves', date);
+    results = [];
+    for (const k of INSTITUTIONAL_WEEKLY_WFA_KINDS) {
+      console.log('[inst-wfa] sleeve →', k);
+      results.push(await generateOneWeeklyWfaCategory(deps, shared, k));
+      const r = results[results.length - 1];
+      if (r.skipped) console.log('[inst-wfa] sleeve done (skip)', k, r.reason || '');
+      else if (r.success === false) console.error('[inst-wfa] sleeve done (fail)', k, String(r.error || '').slice(0, 200));
+      else console.log('[inst-wfa] sleeve done (ok)', k);
+    }
+  } else {
+    console.log('[inst-wfa] parallel sleeves ×8 — console may stay quiet for several minutes');
+    results = await Promise.all(
+      INSTITUTIONAL_WEEKLY_WFA_KINDS.map((k) => generateOneWeeklyWfaCategory(deps, shared, k))
+    );
+  }
 
   const failed = results.filter((r) => !r.skipped && r.success === false);
   if (failed.length) {
@@ -693,8 +725,17 @@ async function generateOneDailyWfaCategory(deps, shared, briefKindSlug) {
     let parsed = null;
     let lastReasons = [];
 
+    const modelLabel = typeof getAutomationModel === 'function' ? String(getAutomationModel() || '').trim() : '';
+    console.log(
+      '[inst-daily-pdf] perplexity',
+      briefKindSlug,
+      date,
+      `model=${modelLabel || '(default)'} max_tokens≈16000 timeout=180s/attempt (waits here — not frozen)`
+    );
+
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const fix = attempt > 0 ? lastReasons : null;
+      console.log('[inst-daily-pdf] perplexity', briefKindSlug, `attempt ${attempt + 1}/3`);
       const rs = await callOpenAIJson(
         systemPrompt,
         {
@@ -710,14 +751,17 @@ async function generateOneDailyWfaCategory(deps, shared, briefKindSlug) {
       );
       if (!rs.ok || !rs.parsed) {
         lastReasons = [`llm_${rs.error || 'fail'}`];
+        console.warn('[inst-daily-pdf] perplexity', briefKindSlug, `attempt ${attempt + 1} fail`, String(rs.error || '').slice(0, 220));
         continue;
       }
       const v = dailyBriefPdfBrief.validateDailyPdfPayload(rs.parsed, briefKindSlug);
       if (!v.ok) {
         lastReasons = v.reasons;
+        console.warn('[inst-daily-pdf] perplexity', briefKindSlug, `attempt ${attempt + 1} QC`, (v.reasons || []).slice(0, 2).join('; '));
         continue;
       }
       parsed = rs.parsed;
+      console.log('[inst-daily-pdf] perplexity', briefKindSlug, `attempt ${attempt + 1} ok (QC passed)`);
       break;
     }
 
@@ -842,9 +886,24 @@ async function generateAndStoreDailyWfaPack(deps, { runDate, timeZone, date, nor
     authorLine,
   };
 
-  const results = await Promise.all(
-    INSTITUTIONAL_DAILY_WFA_KINDS.map((k) => generateOneDailyWfaCategory(deps, shared, k))
-  );
+  let results;
+  if (institutionalWfaSleevesSequential()) {
+    console.log('[inst-daily-pdf] sequential sleeves', date);
+    results = [];
+    for (const k of INSTITUTIONAL_DAILY_WFA_KINDS) {
+      console.log('[inst-daily-pdf] sleeve →', k);
+      results.push(await generateOneDailyWfaCategory(deps, shared, k));
+      const r = results[results.length - 1];
+      if (r.skipped) console.log('[inst-daily-pdf] sleeve done (skip)', k, r.reason || '');
+      else if (r.success === false) console.error('[inst-daily-pdf] sleeve done (fail)', k, String(r.error || '').slice(0, 200));
+      else console.log('[inst-daily-pdf] sleeve done (ok)', k);
+    }
+  } else {
+    console.log('[inst-daily-pdf] parallel sleeves ×8 — console may stay quiet for several minutes');
+    results = await Promise.all(
+      INSTITUTIONAL_DAILY_WFA_KINDS.map((k) => generateOneDailyWfaCategory(deps, shared, k))
+    );
+  }
 
   const failed = results.filter((r) => !r.skipped && r.success === false);
   if (failed.length) {
