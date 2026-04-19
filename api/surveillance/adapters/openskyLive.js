@@ -1,6 +1,7 @@
 /**
  * Live ADS-B positions via OpenSky Network (research / non-commercial use).
- * Optional OPENSKY_USERNAME + OPENSKY_PASSWORD improve rate limits.
+ * OpenSky requires OAuth2 client credentials (Bearer). Basic auth is no longer supported.
+ * Set OPENSKY_CLIENT_ID + OPENSKY_CLIENT_SECRET from Account → API client (or legacy OPENSKY_USERNAME + OPENSKY_PASSWORD with the same values).
  * @see https://openskynetwork.github.io/opensky-api/rest.html
  */
 
@@ -9,6 +10,9 @@ const { fetchWithRetry } = require('../httpFetch');
 const ID = 'opensky_live';
 const HOSTS = ['opensky-network.org'];
 
+const TOKEN_URL =
+  'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token';
+
 /** Regional boxes so we avoid downloading the entire globe in one payload. */
 const BOXES = [
   { label: 'atlantic_na_eu', lamin: 25, lomin: -95, lamax: 58, lomax: 20 },
@@ -16,15 +20,96 @@ const BOXES = [
   { label: 'west_pacific', lamin: -40, lomin: 110, lamax: 45, lomax: 180 },
 ];
 
+/** In-memory token (serverless: one cold start per instance). */
+let tokenCache = { token: null, expiresAt: 0 };
+let tokenRefreshPromise = null;
+
 function openskyDisabled() {
   const v = String(process.env.OPENSKY_ADAPTER_DISABLED || '').toLowerCase();
   return v === '1' || v === 'true' || v === 'yes';
 }
 
+/** OAuth client id + secret from OpenSky account page (API client). */
+function clientCredentials() {
+  const id = String(process.env.OPENSKY_CLIENT_ID || process.env.OPENSKY_USERNAME || '').trim();
+  const secret = String(process.env.OPENSKY_CLIENT_SECRET || process.env.OPENSKY_PASSWORD || '').trim();
+  return id && secret ? { id, secret } : null;
+}
+
+function hasOAuthCredentials() {
+  return !!clientCredentials();
+}
+
+function invalidateOpenskyToken() {
+  tokenCache = { token: null, expiresAt: 0 };
+}
+
+/**
+ * @returns {Promise<string|null>} Bearer access token, or null if no credentials (anonymous API).
+ */
+async function getBearerToken() {
+  const cred = clientCredentials();
+  if (!cred) return null;
+
+  const marginMs = (parseInt(process.env.OPENSKY_TOKEN_REFRESH_MARGIN_SEC || '30', 10) || 30) * 1000;
+  const now = Date.now();
+  if (tokenCache.token && tokenCache.expiresAt > now + marginMs) {
+    return tokenCache.token;
+  }
+
+  if (!tokenRefreshPromise) {
+    tokenRefreshPromise = (async () => {
+      try {
+        const body = new URLSearchParams({
+          grant_type: 'client_credentials',
+          client_id: cred.id,
+          client_secret: cred.secret,
+        });
+        const res = await fetch(TOKEN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString(),
+        });
+        const text = await res.text();
+        if (!res.ok) {
+          throw new Error(`opensky_token_http_${res.status} ${text.slice(0, 200)}`);
+        }
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          throw new Error('opensky_token_invalid_json');
+        }
+        const accessToken = data.access_token;
+        const expiresIn = Number(data.expires_in) || 1800;
+        if (!accessToken) throw new Error('opensky_token_missing_access_token');
+
+        const safeExpiresSec = Math.max(60, expiresIn - 30);
+        tokenCache = {
+          token: accessToken,
+          expiresAt: Date.now() + safeExpiresSec * 1000,
+        };
+        return accessToken;
+      } finally {
+        tokenRefreshPromise = null;
+      }
+    })();
+  }
+
+  return tokenRefreshPromise;
+}
+
+async function statesRequestHeaders() {
+  const h = { Accept: 'application/json' };
+  const token = await getBearerToken();
+  if (token) h.Authorization = `Bearer ${token}`;
+  return h;
+}
+
 function boxLimit() {
   const n = parseInt(process.env.OPENSKY_MAX_BOXES || '', 10);
   if (Number.isFinite(n) && n >= 1) return Math.min(n, BOXES.length);
-  const hasAuth = !!(process.env.OPENSKY_USERNAME && process.env.OPENSKY_PASSWORD);
+  const hasAuth = hasOAuthCredentials();
   if (hasAuth) return BOXES.length;
   // One geographic box on serverless by default — fewer timeouts and shorter cron wall time.
   if (process.env.VERCEL) return Math.min(1, BOXES.length);
@@ -32,7 +117,7 @@ function boxLimit() {
 }
 
 function fetchOpts() {
-  const hasAuth = !!(process.env.OPENSKY_USERNAME && process.env.OPENSKY_PASSWORD);
+  const hasAuth = hasOAuthCredentials();
   const timeoutMs = Math.min(
     60000,
     Math.max(
@@ -45,14 +130,6 @@ function fetchOpts() {
     Math.min(3, parseInt(process.env.OPENSKY_FETCH_ATTEMPTS || (hasAuth ? '2' : '1'), 10) || (hasAuth ? 2 : 1))
   );
   return { timeoutMs, maxAttempts };
-}
-
-function authHeaders() {
-  const u = process.env.OPENSKY_USERNAME;
-  const p = process.env.OPENSKY_PASSWORD;
-  if (!u || !p) return {};
-  const token = Buffer.from(`${u}:${p}`, 'utf8').toString('base64');
-  return { Authorization: `Basic ${token}` };
 }
 
 function scoreRow(sv) {
@@ -173,11 +250,6 @@ module.exports = {
       };
     }
 
-    const headers = {
-      Accept: 'application/json',
-      ...authHeaders(),
-    };
-
     const { timeoutMs, maxAttempts } = fetchOpts();
     const boxes = BOXES.slice(0, boxLimit());
     const maxPerBox = Math.min(28, Math.ceil((ctx.maxPerAdapter || 48) / Math.max(1, boxes.length)));
@@ -192,24 +264,36 @@ module.exports = {
         lomax: String(box.lomax),
       });
       const apiUrl = `https://opensky-network.org/api/states/all?${q.toString()}`;
-      try {
-        const { text } = await fetchWithRetry(apiUrl, {
-          allowHosts: HOSTS,
-          timeoutMs,
-          headers,
-          maxAttempts,
-        });
-        let json;
+
+      let parsedBox = [];
+      for (let authRetry = 0; authRetry < 2; authRetry += 1) {
         try {
-          json = JSON.parse(text);
-        } catch {
-          continue;
+          const headers = await statesRequestHeaders();
+          const { text } = await fetchWithRetry(apiUrl, {
+            allowHosts: HOSTS,
+            timeoutMs,
+            headers,
+            maxAttempts,
+          });
+          let json;
+          try {
+            json = JSON.parse(text);
+          } catch {
+            break;
+          }
+          parsedBox = parseStatesPayload(json).slice(0, maxPerBox);
+          break;
+        } catch (e) {
+          const msg = String(e && e.message);
+          if (authRetry === 0 && msg === 'http_401' && hasOAuthCredentials()) {
+            invalidateOpenskyToken();
+            continue;
+          }
+          ctx.log('warn', `${ID} ${box.label}`, msg);
+          break;
         }
-        const parsed = parseStatesPayload(json).slice(0, maxPerBox);
-        collected.push(...parsed);
-      } catch (e) {
-        ctx.log('warn', `${ID} ${box.label}`, e.message);
       }
+      collected.push(...parsedBox);
     }
 
     const merged = new Map();
@@ -234,6 +318,7 @@ module.exports = {
         emitted: items.length,
         opensky_timeout_ms: timeoutMs,
         opensky_attempts: maxAttempts,
+        opensky_oauth: hasOAuthCredentials(),
       },
     };
   },
