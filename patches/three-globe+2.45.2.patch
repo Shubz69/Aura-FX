@@ -1,7 +1,21 @@
 diff --git a/node_modules/three-globe/dist/three-globe.mjs b/node_modules/three-globe/dist/three-globe.mjs
-index cc53c4e..ad1df28 100644
+index cc53c4e..b7a9c01 100644
 --- a/node_modules/three-globe/dist/three-globe.mjs
 +++ b/node_modules/three-globe/dist/three-globe.mjs
+@@ -1835,11 +1835,11 @@ var computeGeoKde = /*#__PURE__*/function () {
+           } : _ref5$latAccessor, _ref5$weightAccessor = _ref5.weightAccessor, weightAccessor = _ref5$weightAccessor === void 0 ? function () {
+             return 1;
+           } : _ref5$weightAccessor, bandwidth = _ref5.bandwidth;
+-          if ((_navigator = navigator) !== null && _navigator !== void 0 && _navigator.gpu) {
++          // CPU GeoKDE only: WebGPURenderer compute (incl. forceWebGL) exhausts GL / TF buffers with the main globe.
++          if (false) {
+             _context.n = 1;
+             break;
+           }
+-          console.warn('WebGPU not enabled in browser. Please consider enabling it to improve performance.');
+           return _context.a(2, vertexGeoCoords.map(function (coords) {
+             return getGeoKDE(coords, data, {
+               lngAccessor: lngAccessor,
 @@ -1899,7 +1899,7 @@ var computeGeoKde = /*#__PURE__*/function () {
              });
            });
