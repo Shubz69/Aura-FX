@@ -24,6 +24,7 @@ const {
 } = require('./services/institutionalAuraBrief');
 const {
   isLondonWeekendYmd,
+  isLondonSundayYmd,
   priorLondonWeekdayYmd,
   getWeekEndingSundayUtcYmd,
   londonSundayIntelDailyHoldActive,
@@ -514,11 +515,20 @@ module.exports = async (req, res) => {
       }
 
       const autogenAnchor = briefsDate;
-      const expectedRows = expectedIntelAutomationRowCount(period);
-      const rowsForIntelResponse = pickIntelResponseRows(rows, period);
-      const packIncomplete =
-        rowsForIntelResponse.length < expectedRows || !isIntelAutomationPackComplete(rows, period);
-      const needsPdfReshape = await deskCategoryBriefsNeedPdfReshape(autogenAnchor, period);
+      const isSundayDeskDaily = period === 'daily' && isLondonSundayYmd(date);
+      const pickedIntelRows = pickIntelResponseRows(rows, period);
+      const rowsForIntelResponse = isSundayDeskDaily
+        ? pickedIntelRows.filter(
+            (r) =>
+              String(intelResponseBriefKindSlug(r.brief_kind, period) || '').toLowerCase() ===
+              'aura_sunday_market_open'
+          )
+        : pickedIntelRows;
+      const packIncomplete = isSundayDeskDaily
+        ? rowsForIntelResponse.length < 1
+        : pickedIntelRows.length < expectedIntelAutomationRowCount(period) ||
+          !isIntelAutomationPackComplete(rows, period);
+      const needsPdfReshape = isSundayDeskDaily ? false : await deskCategoryBriefsNeedPdfReshape(autogenAnchor, period);
       const packNeedsWork = packIncomplete || needsPdfReshape;
       /**
        * Partial DB rows (e.g. only `stocks`) used to leave users stuck: list reads used `autogen=0`, so
@@ -530,6 +540,7 @@ module.exports = async (req, res) => {
       if (
         packNeedsWork &&
         !sundayMorningHold &&
+        !isSundayDeskDaily &&
         isTraderDeskAutomationConfigured() &&
         shouldTriggerIntelGapFill({
           period,
@@ -567,6 +578,23 @@ module.exports = async (req, res) => {
       const institutionalPdfComplete = expectedInstKinds.every((k) =>
         resolvedSlugSet.has(String(k).toLowerCase())
       );
+      const sundayOpenSlug = 'aura_sunday_market_open';
+      const sundayOpenPresent = pickedIntelRows.some(
+        (r) => String(intelResponseBriefKindSlug(r.brief_kind, period) || '').toLowerCase() === sundayOpenSlug
+      );
+      const categorySleevePack = isSundayDeskDaily
+        ? {
+            expected: 1,
+            loaded: sundayOpenPresent ? 1 : 0,
+            missingKinds: sundayOpenPresent ? [] : [sundayOpenSlug],
+            institutionalPresent: sundayOpenPresent,
+          }
+        : {
+            expected: expectedInstKinds.length,
+            loaded: expectedInstKinds.filter((k) => resolvedSlugSet.has(String(k).toLowerCase())).length,
+            missingKinds: expectedInstKinds.filter((k) => !resolvedSlugSet.has(String(k).toLowerCase())),
+            institutionalPresent: institutionalPdfComplete,
+          };
       const payload = {
         success: true,
         briefs,
@@ -577,13 +605,8 @@ module.exports = async (req, res) => {
         briefsRowCount: briefs.length,
         /** Whether automated desk brief generation can run on this deployment (requires hosted API keys). */
         deskAutomationConfigured: Boolean(isTraderDeskAutomationConfigured()),
-        /** Eight canonical PDF/WFA brief kinds for this period. */
-        categorySleevePack: {
-          expected: expectedInstKinds.length,
-          loaded: expectedInstKinds.filter((k) => resolvedSlugSet.has(String(k).toLowerCase())).length,
-          missingKinds: expectedInstKinds.filter((k) => !resolvedSlugSet.has(String(k).toLowerCase())),
-          institutionalPresent: institutionalPdfComplete,
-        },
+        /** Eight canonical PDF/WFA brief kinds for this period (London Sunday daily → single week-open row). */
+        categorySleevePack,
       };
       if (weekendFallback) payload.weekendFallback = true;
       if (sundayMorningHold) payload.intelDailySundayHold = true;

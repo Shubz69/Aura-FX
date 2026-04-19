@@ -8,7 +8,11 @@ import ReactMarkdown from 'react-markdown';
 import Api from '../../services/Api';
 import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import { FaEye, FaTrash, FaTimes } from 'react-icons/fa';
-import { getTraderDeckIntelStorageYmd, formatLondonWeekRangeFromWeekEndingSundayYmd } from '../../lib/trader-deck/deskDates';
+import {
+  getTraderDeckIntelStorageYmd,
+  formatLondonWeekRangeFromWeekEndingSundayYmd,
+  isLondonSundayYmd,
+} from '../../lib/trader-deck/deskDates';
 import { stripModelInternalExposition } from '../../utils/sanitizeAiDeskOutput.react.js';
 import {
   polishBriefMarkdown,
@@ -365,6 +369,16 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     });
   }, [briefs]);
 
+  const isLondonSundayDaily = period === 'daily' && isLondonSundayYmd(storageDateStr);
+
+  /** London Sunday daily: one week-open brief only (no eight-sleeve category grid). */
+  const briefsForSleeveGrid = useMemo(() => {
+    if (!isLondonSundayDaily) return sortedBriefs;
+    return sortedBriefs.filter(
+      (b) => String(b?.briefKind || '').toLowerCase() === 'aura_sunday_market_open'
+    );
+  }, [isLondonSundayDaily, sortedBriefs]);
+
   const filtersAreDefault = useMemo(
     () =>
       selectedKinds.size === BRIEF_KIND_ORDER.length &&
@@ -373,23 +387,28 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   );
 
   const displayedBriefs = useMemo(() => {
-    if (!sortedBriefs.length) return [];
-    return sortedBriefs.filter((b) => selectedKinds.has(String(b?.briefKind || '').toLowerCase()));
-  }, [sortedBriefs, selectedKinds]);
+    if (!briefsForSleeveGrid.length) return [];
+    return briefsForSleeveGrid.filter((b) => selectedKinds.has(String(b?.briefKind || '').toLowerCase()));
+  }, [briefsForSleeveGrid, selectedKinds]);
 
   const intelSleeveOrder = useMemo(
     () => (period === 'weekly' ? INTEL_SLEEVE_ORDER_WEEKLY : INTEL_SLEEVE_ORDER_DAILY),
     [period]
   );
 
+  const sleevePlaceholdersOrder = useMemo(() => {
+    if (isLondonSundayDaily) return ['aura_sunday_market_open'];
+    return intelSleeveOrder;
+  }, [isLondonSundayDaily, intelSleeveOrder]);
+
   const briefByKind = useMemo(() => {
     const m = new Map();
-    for (const b of sortedBriefs) {
+    for (const b of briefsForSleeveGrid) {
       const k = String(b?.briefKind || '').toLowerCase();
       if (k) m.set(k, b);
     }
     return m;
-  }, [sortedBriefs]);
+  }, [briefsForSleeveGrid]);
 
   const sundayMarketBrief = useMemo(() => {
     if (period !== 'daily') return null;
@@ -421,6 +440,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
 
   /** Server may be gap-filling remaining sleeves in the background — keep polling until the full pack lands. */
   const needsPartialIntelPoll = useMemo(() => {
+    if (isLondonSundayDaily) return false;
     const onlySundayOpen =
       period === 'daily' &&
       briefs.length === 1 &&
@@ -432,6 +452,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       (categorySleevesLoaded < CATEGORY_BRIEF_KINDS.size || !hasInstitutionalBrief)
     );
   }, [
+    isLondonSundayDaily,
     period,
     intelDeskMeta?.deskAutomationConfigured,
     intelDeskMeta?.categorySleevePack?.loaded,
@@ -845,7 +866,9 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               Open a brief to read it fullscreen.{' '}
               {period === 'weekly'
                 ? 'Eight weekly fundamental briefs fill in when the server has finished generating them for the week you selected.'
-                : 'Eight daily briefs fill in when the server has finished generating them for the date you selected.'}
+                : isLondonSundayDaily
+                  ? 'London Sunday (desk date) shows one week-open brief for the new session — not the eight-sleeve weekday pack.'
+                  : 'Eight daily briefs fill in when the server has finished generating them for the date you selected.'}
             </p>
             {period === 'weekly' && weekRangeLabel && (
               <p className="td-deck-mi-modern-sub td-deck-mi-week-range-key" role="note">
@@ -872,11 +895,21 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           {!loading && (
             <div className="td-deck-mi-modern-stat" aria-hidden>
               <span className="td-deck-mi-modern-stat-value">
-                {categorySleevesLoaded}/8
+                {isLondonSundayDaily
+                  ? `${briefsForSleeveGrid.length}/1`
+                  : `${categorySleevesLoaded}/8`}
               </span>
               <span className="td-deck-mi-modern-stat-label">
-                asset sleeves stored (of 8)
-                {hasInstitutionalBrief ? ' · ready' : ' · generating'}
+                {isLondonSundayDaily
+                  ? 'Sunday week-open brief'
+                  : 'asset sleeves stored (of 8)'}
+                {isLondonSundayDaily
+                  ? briefsForSleeveGrid.length >= 1
+                    ? ' · ready'
+                    : ' · generating'
+                  : hasInstitutionalBrief
+                    ? ' · ready'
+                    : ' · generating'}
                 {intelDailySundayHold ? ' · Sunday 21:00 London' : ''}
                 {weekendBriefsNote && !intelDailySundayHold ? ' · desk pack shift' : ''}
               </span>
@@ -914,8 +947,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                 </div>
                 <span className="td-deck-mi-tile-badge" title="Rows shown after filters">
                   {filtersAreDefault
-                    ? `${sortedBriefs.length} brief${sortedBriefs.length !== 1 ? 's' : ''}`
-                    : `${displayedBriefs.length} / ${sortedBriefs.length}`}
+                    ? `${briefsForSleeveGrid.length} brief${briefsForSleeveGrid.length !== 1 ? 's' : ''}`
+                    : `${displayedBriefs.length} / ${briefsForSleeveGrid.length}`}
                 </span>
               </div>
             </div>
@@ -937,7 +970,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                       Retry fetch
                     </button>
                   </li>
-                  {intelSleeveOrder.map((kind) => (
+                  {sleevePlaceholdersOrder.map((kind) => (
                     <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--pending">
                       <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
                       <span className="td-deck-mi-brief-pending">Awaiting generation</span>
@@ -953,27 +986,44 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                 </li>
               ) : (
                 <>
-                  {period === 'daily' && sundayMarketBrief && (
-                    <li
-                      key="aura_sunday_market_open"
-                      className={`td-deck-mi-brief-card${selectedKinds.has('aura_sunday_market_open') ? '' : ' td-deck-mi-brief-card--filtered'}`}
-                    >
-                      {selectedKinds.has('aura_sunday_market_open') ? (
-                        <>
+                  {isLondonSundayDaily ? (
+                    sleevePlaceholdersOrder.map((kind) => {
+                      const b = briefByKind.get(kind);
+                      if (!b) {
+                        return (
+                          <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--pending">
+                            <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
+                            <span className="td-deck-mi-brief-pending">Awaiting generation</span>
+                          </li>
+                        );
+                      }
+                      if (!selectedKinds.has(kind)) {
+                        return (
+                          <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--filtered">
+                            <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
+                            <span className="td-deck-mi-brief-pending">Hidden by filters</span>
+                            <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
+                              Show all
+                            </button>
+                          </li>
+                        );
+                      }
+                      return (
+                        <li key={b.id} className="td-deck-mi-brief-card">
                           <span className="td-deck-mi-brief-card-titles">
-                            <span className="td-deck-mi-brief-card-kicker">{BRIEF_KIND_LABEL.aura_sunday_market_open}</span>
+                            <span className="td-deck-mi-brief-card-kicker">
+                              {BRIEF_KIND_LABEL[String(b?.briefKind || '').toLowerCase()] || 'Brief'}
+                            </span>
                             <span className="td-deck-mi-brief-card-title">
-                              {displayBriefCardSubtitle(sundayMarketBrief.title, sundayMarketBrief.briefKind)}
-                              {Number(sundayMarketBrief?.briefVersion || 1) > 1
-                                ? ` (v${Number(sundayMarketBrief.briefVersion)})`
-                                : ''}
+                              {displayBriefCardSubtitle(b.title, b.briefKind)}
+                              {Number(b?.briefVersion || 1) > 1 ? ` (v${Number(b.briefVersion)})` : ''}
                             </span>
                           </span>
                           <div className="td-deck-mi-brief-card-actions">
                             <button
                               type="button"
                               className="td-mi-btn td-mi-btn-small"
-                              onClick={() => handlePreview(sundayMarketBrief)}
+                              onClick={() => handlePreview(b)}
                               title="Fullscreen preview"
                             >
                               <FaEye /> Preview
@@ -982,80 +1032,123 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                               <button
                                 type="button"
                                 className="td-mi-btn td-mi-btn-remove"
-                                onClick={() => handleDelete(sundayMarketBrief.id)}
+                                onClick={() => handleDelete(b.id)}
                                 title="Remove"
                               >
                                 <FaTrash />
                               </button>
                             )}
                           </div>
-                        </>
-                      ) : (
-                        <>
-                          <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL.aura_sunday_market_open}</span>
-                          <span className="td-deck-mi-brief-pending">Hidden by filters</span>
-                          <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
-                            Show all
-                          </button>
-                        </>
-                      )}
-                    </li>
-                  )}
-                  {intelSleeveOrder.map((kind) => {
-                    const b = briefByKind.get(kind);
-                    if (!b) {
-                      return (
-                        <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--pending">
-                          <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
-                          <span className="td-deck-mi-brief-pending">Awaiting generation</span>
                         </li>
                       );
-                    }
-                    if (!selectedKinds.has(kind)) {
-                      return (
-                        <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--filtered">
-                          <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
-                          <span className="td-deck-mi-brief-pending">Hidden by filters</span>
-                          <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
-                            Show all
-                          </button>
-                        </li>
-                      );
-                    }
-                    return (
-                      <li key={b.id} className="td-deck-mi-brief-card">
-                        <span className="td-deck-mi-brief-card-titles">
-                          <span className="td-deck-mi-brief-card-kicker">
-                            {BRIEF_KIND_LABEL[String(b?.briefKind || '').toLowerCase()] || 'Brief'}
-                          </span>
-                          <span className="td-deck-mi-brief-card-title">
-                            {displayBriefCardSubtitle(b.title, b.briefKind)}
-                            {Number(b?.briefVersion || 1) > 1 ? ` (v${Number(b.briefVersion)})` : ''}
-                          </span>
-                        </span>
-                        <div className="td-deck-mi-brief-card-actions">
-                          <button
-                            type="button"
-                            className="td-mi-btn td-mi-btn-small"
-                            onClick={() => handlePreview(b)}
-                            title="Fullscreen preview"
-                          >
-                            <FaEye /> Preview
-                          </button>
-                          {canEdit && (
-                            <button
-                              type="button"
-                              className="td-mi-btn td-mi-btn-remove"
-                              onClick={() => handleDelete(b.id)}
-                              title="Remove"
-                            >
-                              <FaTrash />
-                            </button>
+                    })
+                  ) : (
+                    <>
+                      {period === 'daily' && sundayMarketBrief && (
+                        <li
+                          key="aura_sunday_market_open"
+                          className={`td-deck-mi-brief-card${selectedKinds.has('aura_sunday_market_open') ? '' : ' td-deck-mi-brief-card--filtered'}`}
+                        >
+                          {selectedKinds.has('aura_sunday_market_open') ? (
+                            <>
+                              <span className="td-deck-mi-brief-card-titles">
+                                <span className="td-deck-mi-brief-card-kicker">{BRIEF_KIND_LABEL.aura_sunday_market_open}</span>
+                                <span className="td-deck-mi-brief-card-title">
+                                  {displayBriefCardSubtitle(sundayMarketBrief.title, sundayMarketBrief.briefKind)}
+                                  {Number(sundayMarketBrief?.briefVersion || 1) > 1
+                                    ? ` (v${Number(sundayMarketBrief.briefVersion)})`
+                                    : ''}
+                                </span>
+                              </span>
+                              <div className="td-deck-mi-brief-card-actions">
+                                <button
+                                  type="button"
+                                  className="td-mi-btn td-mi-btn-small"
+                                  onClick={() => handlePreview(sundayMarketBrief)}
+                                  title="Fullscreen preview"
+                                >
+                                  <FaEye /> Preview
+                                </button>
+                                {canEdit && (
+                                  <button
+                                    type="button"
+                                    className="td-mi-btn td-mi-btn-remove"
+                                    onClick={() => handleDelete(sundayMarketBrief.id)}
+                                    title="Remove"
+                                  >
+                                    <FaTrash />
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL.aura_sunday_market_open}</span>
+                              <span className="td-deck-mi-brief-pending">Hidden by filters</span>
+                              <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
+                                Show all
+                              </button>
+                            </>
                           )}
-                        </div>
-                      </li>
-                    );
-                  })}
+                        </li>
+                      )}
+                      {intelSleeveOrder.map((kind) => {
+                        const b = briefByKind.get(kind);
+                        if (!b) {
+                          return (
+                            <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--pending">
+                              <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
+                              <span className="td-deck-mi-brief-pending">Awaiting generation</span>
+                            </li>
+                          );
+                        }
+                        if (!selectedKinds.has(kind)) {
+                          return (
+                            <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--filtered">
+                              <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
+                              <span className="td-deck-mi-brief-pending">Hidden by filters</span>
+                              <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
+                                Show all
+                              </button>
+                            </li>
+                          );
+                        }
+                        return (
+                          <li key={b.id} className="td-deck-mi-brief-card">
+                            <span className="td-deck-mi-brief-card-titles">
+                              <span className="td-deck-mi-brief-card-kicker">
+                                {BRIEF_KIND_LABEL[String(b?.briefKind || '').toLowerCase()] || 'Brief'}
+                              </span>
+                              <span className="td-deck-mi-brief-card-title">
+                                {displayBriefCardSubtitle(b.title, b.briefKind)}
+                                {Number(b?.briefVersion || 1) > 1 ? ` (v${Number(b.briefVersion)})` : ''}
+                              </span>
+                            </span>
+                            <div className="td-deck-mi-brief-card-actions">
+                              <button
+                                type="button"
+                                className="td-mi-btn td-mi-btn-small"
+                                onClick={() => handlePreview(b)}
+                                title="Fullscreen preview"
+                              >
+                                <FaEye /> Preview
+                              </button>
+                              {canEdit && (
+                                <button
+                                  type="button"
+                                  className="td-mi-btn td-mi-btn-remove"
+                                  onClick={() => handleDelete(b.id)}
+                                  title="Remove"
+                                >
+                                  <FaTrash />
+                                </button>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </>
+                  )}
                 </>
               )}
             </ul>
