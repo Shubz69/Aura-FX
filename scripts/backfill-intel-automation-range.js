@@ -2,9 +2,9 @@
  * Backfill eight-sleeve institutional Market Intelligence briefs (daily + weekly)
  * for a date range by calling the same generator as /api/cron/auto-market-briefs.
  *
- * Requirements (same as production automation):
- * - MySQL env vars as used by api/db.js
- * - PERPLEXITY_API_KEY and other keys expected by isTraderDeskAutomationConfigured()
+ * Requirements:
+ * - --dry-run: none (prints planned daily/weekly pack dates only).
+ * - Real run: MySQL env (api/db.js) + PERPLEXITY_API_KEY (see isTraderDeskAutomationConfigured()).
  *
  * Run from repo root (long-running — dozens of LLM pack runs):
  *   node scripts/backfill-intel-automation-range.js --from=2026-03-01 --to=2026-04-18
@@ -99,9 +99,9 @@ async function main() {
     process.exit(1);
   }
 
-  if (!isTraderDeskAutomationConfigured()) {
+  if (!opts.dryRun && !isTraderDeskAutomationConfigured()) {
     console.error(
-      '[backfill] Automation not configured (check PERPLEXITY_API_KEY and related env). See isTraderDeskAutomationConfigured() in autoBriefGenerator.js.'
+      '[backfill] Automation not configured (set PERPLEXITY_API_KEY for real runs). Dry-run does not need it: add --dry-run to preview dates only.'
     );
     process.exit(1);
   }
