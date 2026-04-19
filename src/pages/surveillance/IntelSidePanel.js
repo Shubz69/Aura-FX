@@ -29,6 +29,10 @@ function IntelSidePanel({
   onSetFocusRegion,
   wireHeadlines = [],
   wireActive = false,
+  wireServiceAvailable = true,
+  activeTabId = 'all',
+  activeTabLabel = '',
+  onSelectAllCategories,
 }) {
   const d = digest || {};
   const {
@@ -66,8 +70,9 @@ function IntelSidePanel({
       {wireActive ? (
         <Section title="Live wire" kicker="Rolling headlines">
           <p className="sv-rail-section-hint sv-rail-section-hint--tight">
-            Top stories for this country from NewsAPI (institutional tape below is limited to the last 48h). Third-party
-            wire — verify at source.
+            Breaking and major desk headlines for this country. Open any link to read the publisher’s version on
+            their site. The Aura tape below is editorially ranked and may include items that never appear on public
+            wires.
           </p>
           {wireHeadlines.length ? (
             <ul className="sv-rail-list sv-rail-list--wire">
@@ -89,8 +94,9 @@ function IntelSidePanel({
             </ul>
           ) : (
             <p className="sv-rail-empty sv-rail-empty--tight">
-              No wire bundle returned. Add <code className="sv-rail-code">NEWS_API_KEY</code> for NewsAPI, or the region
-              may have no headline slot.
+              {!wireServiceAvailable
+                ? 'Live wire headlines are not available in this environment. The institutional tape and digest on the right continue to refresh from Aura ingest.'
+                : 'No major wire headlines are available for this country at the moment. The tape may still show high-severity institutional items that have not crossed public desks yet.'}
             </p>
           )}
         </Section>
@@ -150,10 +156,26 @@ function IntelSidePanel({
           <p className="sv-rail-focus-name">{focusSummary.label || focusRegion}</p>
           <p className="sv-rail-focus-scope">
             {focusSummary.isoHint
-              ? 'Tape + digest for this country · institutional nodes from the last 48h only'
+              ? 'Tape + digest for this country · higher-severity institutional nodes from roughly the last 72 hours (category filter on the left still applies)'
               : 'Tape + digest filtered to this geography'}
             {typeof tapeCount === 'number' ? ` · ${tapeCount} row${tapeCount === 1 ? '' : 's'} on tape` : ''}
           </p>
+          {typeof tapeCount === 'number' && tapeCount === 0 && activeTabId && activeTabId !== 'all' && onSelectAllCategories ? (
+            <p className="sv-rail-focus-note" role="note">
+              The category filter is set to <span className="sv-rail-focus-note-strong">{activeTabLabel || activeTabId}</span>
+              . There are no tape rows in that lane for this lens window. Use{' '}
+              <button type="button" className="sv-rail-inline-action" onClick={onSelectAllCategories}>
+                All categories
+              </button>{' '}
+              on the left to widen the sweep, or clear the lens for the full grid.
+            </p>
+          ) : null}
+          {typeof tapeCount === 'number' && tapeCount === 0 && activeTabId === 'all' ? (
+            <p className="sv-rail-focus-note" role="note">
+              No qualifying nodes in this window for the current severity floor. Try lowering severity on the tape
+              controls, wait for the next ingest pass, or clear the lens to see the global picture.
+            </p>
+          ) : null}
           <dl className="sv-rail-focus-stats">
             <div>
               <dt>Nodes</dt>

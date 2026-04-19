@@ -120,6 +120,7 @@ module.exports = async (req, res) => {
       sources,
       systemHealth,
       briefing,
+      countryWireAvailable: !!process.env.NEWS_API_KEY,
       serverTime: new Date().toISOString(),
     });
   } catch (e) {

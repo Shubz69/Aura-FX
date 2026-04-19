@@ -106,6 +106,49 @@ function clusterEvents(events, precision = 1) {
   }));
 }
 
+/** Aviation vs defence-style tracks for marker colour (editorial grouping, not a legal classification). */
+function eventTrackKind(ev) {
+  if (!ev) return 'intel';
+  const et = String(ev.event_type || '').toLowerCase();
+  if (et === 'aviation') return 'aviation';
+  const src = String(ev.source || '').toLowerCase();
+  if (src.includes('opensky') || src.includes('adsb') || src.includes('flight')) return 'aviation';
+  const tags = Array.isArray(ev.tags) ? ev.tags : [];
+  for (const t of tags) {
+    const s = String(t).toLowerCase();
+    if (s.includes('flight') || s.includes('aircraft') || s.includes('live_track') || s.includes('ads-b')) return 'aviation';
+    if (
+      s.includes('military') ||
+      s.includes('defence') ||
+      s.includes('defense') ||
+      s.includes('mod') ||
+      s.includes('pentagon')
+    ) {
+      return 'military';
+    }
+  }
+  if (et === 'conflict' || et === 'sanctions' || et === 'geopolitics') return 'military';
+  const blob = `${ev.title || ''} ${ev.summary || ''}`.toLowerCase();
+  if (/(nato|defence|defense|military|naval|troop|missile|strike|drone)/.test(blob)) return 'military';
+  return 'intel';
+}
+
+function clusterDominantTrackKind(idMap, pt) {
+  const order = { intel: 0, military: 1, aviation: 2 };
+  let best = 'intel';
+  let bestR = 0;
+  for (const id of pt.eventIds || []) {
+    const ev = idMap.get(String(id));
+    const k = eventTrackKind(ev);
+    const r = order[k] ?? 0;
+    if (r >= bestR) {
+      bestR = r;
+      best = k;
+    }
+  }
+  return best;
+}
+
 function buildArcs(events) {
   const out = [];
   for (const ev of events) {
@@ -516,16 +559,24 @@ export default function SurveillanceGlobe({
   /* Hex bins must stay on during country lens: turning them off switched the globe to global
    * arcs (and previously heatmap) — extra layers caused severe lag until lens cleared.
    * Heatmap layer is disabled: three-globe heatmap updates could throw under some WebGL timing paths. */
-  const useHex = !reducedMotion && events.length > 52;
+  /* Under a country lens with a modest event count, prefer point markers (aviation / defence read) over hex bins. */
+  const useHex = !reducedMotion && events.length > 52 && !(focusIso && events.length < 64);
 
   const rawPoints = useMemo(() => {
     return events
       .filter((e) => e.lat != null && e.lng != null)
-      .map((e) => ({
-        lat: e.lat,
-        lng: e.lng,
-        w: Math.max(0.15, ((e.rank_score != null ? Number(e.rank_score) : 50) + (e.severity || 1) * 6) / 130),
-      }));
+      .map((e) => {
+        const tk = eventTrackKind(e);
+        const boost = tk === 'aviation' ? 1.38 : tk === 'military' ? 1.22 : 1;
+        return {
+          lat: e.lat,
+          lng: e.lng,
+          w: Math.max(
+            0.15,
+            (((e.rank_score != null ? Number(e.rank_score) : 50) + (e.severity || 1) * 6) / 130) * boost
+          ),
+        };
+      });
   }, [events]);
 
   const hexPoints = useMemo(() => rawPoints, [rawPoints]);
@@ -555,6 +606,7 @@ export default function SurveillanceGlobe({
       const inFocus = clusterTouchesFocus(p, idMap, focusRegion);
       const lens = !!focusRegion;
       const muted = lens && !inFocus && !isSel;
+      const trackKind = clusterDominantTrackKind(idMap, p);
       const liveCluster =
         p.eventIds?.some((evId) => {
           const ev = idMap.get(String(evId));
@@ -569,17 +621,21 @@ export default function SurveillanceGlobe({
           ? '#fff0d4'
           : muted
             ? 'rgba(120, 120, 130, 0.28)'
-            : liveCluster
-              ? 'rgba(154, 214, 255, 0.92)'
-              : p.maxSev >= 5
-                ? '#e86868'
-                : p.maxSev >= 4
-                  ? '#e8945c'
-                  : p.maxSev >= 3
-                    ? '#d4b84a'
-                    : lens && inFocus
-                      ? 'rgba(255, 214, 160, 0.92)'
-                      : 'rgba(234,169,96,0.52)';
+            : trackKind === 'aviation'
+              ? 'rgba(118, 228, 255, 0.96)'
+              : trackKind === 'military'
+                ? 'rgba(255, 148, 112, 0.94)'
+                : liveCluster
+                  ? 'rgba(154, 214, 255, 0.92)'
+                  : p.maxSev >= 5
+                    ? '#e86868'
+                    : p.maxSev >= 4
+                      ? '#e8945c'
+                      : p.maxSev >= 3
+                        ? '#d4b84a'
+                        : lens && inFocus
+                          ? 'rgba(255, 214, 160, 0.92)'
+                          : 'rgba(234,169,96,0.52)';
       return {
         ...p,
         color,
@@ -589,6 +645,7 @@ export default function SurveillanceGlobe({
             p.count * 0.06 +
             p.maxSev * 0.05 +
             (liveCluster ? 0.07 : 0) +
+            (trackKind === 'aviation' || trackKind === 'military' ? 0.06 : 0) +
             (hot ? pulseStep * 0.06 : 0) +
             (isSel ? 0.14 : 0) +
             (isHover ? 0.08 : 0) +

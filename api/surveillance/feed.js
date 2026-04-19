@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
     const countryIso2 = /^[A-Z]{2}$/.test(countryRaw) ? countryRaw : null;
     let maxAgeHours = q.maxAgeHours != null ? Number(q.maxAgeHours) : null;
     if (countryIso2 && (!Number.isFinite(maxAgeHours) || maxAgeHours <= 0)) {
-      maxAgeHours = 48;
+      maxAgeHours = 72;
     }
     if (!countryIso2) maxAgeHours = null;
     if (Number.isFinite(maxAgeHours) && maxAgeHours > 168) maxAgeHours = 168;
@@ -109,6 +109,8 @@ module.exports = async (req, res) => {
       countryIso2,
       maxAgeHours: countryIso2 ? maxAgeHours : null,
       countryHeadlines,
+      /** UI only: whether headline wire can be served (no secrets exposed). Always sent for client copy. */
+      countryWireAvailable: !!process.env.NEWS_API_KEY,
       serverTime: new Date().toISOString(),
     });
   } catch (e) {
