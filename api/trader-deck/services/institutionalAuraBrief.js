@@ -16,6 +16,7 @@ const {
   categoryWritingMandate,
   CATEGORY_INTELLIGENCE_DIRECTIVES,
 } = require('./briefInstrumentUniverse');
+const { parseJsonFromLlmText, normalizeChatCompletionContent } = require('./institutionalLlmJsonParse');
 
 /** When `1`, run WFA sleeves one after another (clearer logs; backfill script sets this by default). */
 function institutionalWfaSleevesSequential() {
@@ -329,10 +330,14 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
       };
     }
     const json = await res.json();
-    const text = json.choices?.[0]?.message?.content?.trim();
+    const text = normalizeChatCompletionContent(json.choices?.[0]?.message?.content);
     if (!text) return { ok: false, error: 'empty_completion' };
-    const cleaned = text.replace(/^```json\s*|\s*```$/g, '').trim();
-    const parsed = JSON.parse(cleaned);
+    let parsed;
+    try {
+      parsed = parseJsonFromLlmText(text);
+    } catch (parseErr) {
+      return { ok: false, error: parseErr.message || 'invalid_json' };
+    }
     return { ok: true, parsed };
   } catch (e) {
     return { ok: false, error: e.message || 'perplexity_error' };

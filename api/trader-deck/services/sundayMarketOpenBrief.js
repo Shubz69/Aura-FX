@@ -6,6 +6,7 @@
  */
 
 const SUNDAY_MARKET_OPEN_BRIEF_KIND = 'aura_sunday_market_open';
+const { parseJsonFromLlmText, normalizeChatCompletionContent } = require('./institutionalLlmJsonParse');
 
 const GENERIC_FAIL_RE =
   /\bit is important to note\b|\bas an ai\b|\bchatgpt\b|\baccording to reports\b/i;
@@ -340,7 +341,6 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
       }),
       signal: controller.signal,
     });
-    clearTimeout(timeout);
     if (!res.ok) {
       const errBody = await res.text().catch(() => '');
       return {
@@ -349,14 +349,19 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
       };
     }
     const json = await res.json();
-    const text = json.choices?.[0]?.message?.content?.trim();
+    const text = normalizeChatCompletionContent(json.choices?.[0]?.message?.content);
     if (!text) return { ok: false, error: 'empty_completion' };
-    const cleaned = text.replace(/^```json\s*|\s*```$/g, '').trim();
-    const parsed = JSON.parse(cleaned);
+    let parsed;
+    try {
+      parsed = parseJsonFromLlmText(text);
+    } catch (parseErr) {
+      return { ok: false, error: parseErr.message || 'invalid_json' };
+    }
     return { ok: true, parsed };
   } catch (e) {
-    clearTimeout(timeout);
     return { ok: false, error: e.message || 'perplexity_error' };
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
