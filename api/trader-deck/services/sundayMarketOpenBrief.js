@@ -332,7 +332,7 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
         model: getAutomationModel(),
         temperature,
         max_tokens: maxTokens,
-        response_format: { type: 'json_object' },
+        // Perplexity chat/completions: omit invalid `json_object` response_format (API returns 400).
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: JSON.stringify(userObj) },
@@ -341,7 +341,13 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
       signal: controller.signal,
     });
     clearTimeout(timeout);
-    if (!res.ok) return { ok: false, error: `http_${res.status}` };
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      return {
+        ok: false,
+        error: `http_${res.status}:${String(errBody).slice(0, 400)}`,
+      };
+    }
     const json = await res.json();
     const text = json.choices?.[0]?.message?.content?.trim();
     if (!text) return { ok: false, error: 'empty_completion' };
