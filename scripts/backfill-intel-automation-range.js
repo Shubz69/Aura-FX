@@ -23,6 +23,9 @@
  *   --check-env        Print whether PERPLEXITY_API_KEY + MySQL vars are set; exit 0 if ready
  *   --parallel-sleeves Run 8 category LLMs in parallel (faster; console stays quiet for minutes)
  *
+ * Optional env (see institutionalAuraBrief.js):
+ *   INSTITUTIONAL_PERPLEXITY_TIMEOUT_MS — Perplexity fetch timeout per attempt (default 300000; was 180000).
+ *
  * Default for this script: one sleeve at a time so you see steady progress (set before any API require).
  */
 

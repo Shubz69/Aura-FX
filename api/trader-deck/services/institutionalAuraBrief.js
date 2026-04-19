@@ -23,10 +23,10 @@ function institutionalWfaSleevesSequential() {
   return String(process.env.INSTITUTIONAL_WFA_SEQUENTIAL || '').trim() === '1';
 }
 
-/** Perplexity HTTP timeout for large institutional JSON (ms). Env: PERPLEXITY_INSTITUTIONAL_TIMEOUT_MS (60s–15m). */
+/** Large JSON + reasoning models often exceed 180s. Set INSTITUTIONAL_PERPLEXITY_TIMEOUT_MS (60000–600000). */
 function institutionalPerplexityTimeoutMs() {
-  const n = parseInt(String(process.env.PERPLEXITY_INSTITUTIONAL_TIMEOUT_MS || '').trim(), 10);
-  if (Number.isFinite(n) && n >= 60000 && n <= 900000) return n;
+  const n = Number.parseInt(String(process.env.INSTITUTIONAL_PERPLEXITY_TIMEOUT_MS || '').trim(), 10);
+  if (Number.isFinite(n) && n >= 60000) return Math.min(600000, n);
   return 300000;
 }
 
@@ -347,14 +347,7 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
     }
     return { ok: true, parsed };
   } catch (e) {
-    const msg = e.message || 'perplexity_error';
-    if (/abort/i.test(msg)) {
-      return {
-        ok: false,
-        error: `${msg} (client timeout after ${timeoutMs}ms; set PERPLEXITY_INSTITUTIONAL_TIMEOUT_MS e.g. 420000)`,
-      };
-    }
-    return { ok: false, error: msg };
+    return { ok: false, error: e.message || 'perplexity_error' };
   } finally {
     clearTimeout(timeout);
     if (hb) clearInterval(hb);
