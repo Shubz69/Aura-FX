@@ -72,6 +72,7 @@ export default function SurveillancePage() {
   const [terminalHandoff, setTerminalHandoff] = useState(false);
   const [tapeRefreshGlow, setTapeRefreshGlow] = useState(false);
   const [focusRegion, setFocusRegion] = useState(null);
+  const [countryHeadlines, setCountryHeadlines] = useState([]);
   const loadFeedRef = useRef(null);
   const prevIntroRef = useRef(showIntro);
   const tapeSigRef = useRef('');
@@ -114,6 +115,7 @@ export default function SurveillancePage() {
       setIntelDigest(json.intelDigest || null);
       setMarketWatchNarrative(json.marketWatchNarrative || null);
       setSystemHealth(json.systemHealth || null);
+      setCountryHeadlines([]);
       setIntroReady(true);
     } catch {
       setError('load');
@@ -128,6 +130,10 @@ export default function SurveillancePage() {
       const params = new URLSearchParams();
       params.set('tab', tab);
       if (severityMin) params.set('severityMin', severityMin);
+      if (focusCountryIso) {
+        params.set('country', focusCountryIso);
+        params.set('maxAgeHours', '48');
+      }
       const res = await fetch(`${apiBase()}/api/surveillance/feed?${params}`, {
         headers: authHeaders,
         cache: 'no-store',
@@ -141,12 +147,19 @@ export default function SurveillancePage() {
       if (json.systemHealth) setSystemHealth(json.systemHealth);
       if (json.intelDigest) setIntelDigest(json.intelDigest);
       if (json.marketWatchNarrative) setMarketWatchNarrative(json.marketWatchNarrative);
+      setCountryHeadlines(Array.isArray(json.countryHeadlines) ? json.countryHeadlines : []);
     } catch {
       /* ignore poll errors */
     }
-  }, [token, authHeaders, tab, severityMin]);
+  }, [token, authHeaders, tab, severityMin, focusCountryIso]);
 
   loadFeedRef.current = loadFeed;
+
+  const focusCountryIso = useMemo(() => {
+    if (!focusRegion) return null;
+    const f = normalizeRegionKey(focusRegion);
+    return /^[A-Z]{2}$/.test(f) ? f : null;
+  }, [focusRegion]);
 
   const eventsById = useMemo(() => buildEventsById(events), [events]);
 
@@ -229,7 +242,7 @@ export default function SurveillancePage() {
   useEffect(() => {
     if (!introReady || loading) return;
     loadFeed();
-  }, [tab, severityMin, introReady, loading, loadFeed]);
+  }, [tab, severityMin, introReady, loading, loadFeed, focusCountryIso]);
 
   useEffect(() => {
     if (loading) return undefined;
@@ -553,7 +566,8 @@ export default function SurveillancePage() {
             <div className="sv-globe-chrome">
               <span className="sv-globe-chrome-tag">Operating picture</span>
               <p className="sv-globe-chrome-hint">
-                Zoom to frame the theatre. Tap a country for a sector lens; markers and tape stay aligned to the same geography.
+                Zoom to frame the theatre. Tap a country for live wire headlines plus institutional tape from the last 48h
+                only. Clear the lens to restore the full global grid.
               </p>
             </div>
           </div>
@@ -574,6 +588,8 @@ export default function SurveillancePage() {
               leadTapeUpdatedAt={eventFreshnessTimestamp(tapeEvents[0])}
               onClearFocus={clearFocusRegion}
               onSetFocusRegion={setFocusFromHeat}
+              wireHeadlines={countryHeadlines}
+              wireActive={!!focusCountryIso}
             />
             <details className="sv-rail-accordion">
               <summary>Type mix</summary>

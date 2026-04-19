@@ -14,8 +14,8 @@
 }
 
 .sv-page--terminal {
-  /* Hero band + tighter side rails so the globe column + starfield read wider */
-  --sv-globe-band: clamp(520px, 80vh, 880px);
+  /* Hero band: must track wide center columns or the square globe letterboxes (black side gutters). */
+  --sv-globe-band: clamp(520px, min(80vh, max(52vmin, calc(100vw - 520px))), 920px);
   --sv-terminal-side: minmax(108px, 168px);
   --sv-terminal-rail: minmax(228px, 328px);
   --sv-terminal-pad-x: 18px;
@@ -34,16 +34,22 @@
   background: linear-gradient(180deg, #050506 0%, #030304 48%, #020203 100%);
 }
 
-/* Wider / taller operating band on large screens so the square globe approaches column width (fewer side gutters). */
-@media (min-width: 1280px) {
+/* Desktop: grow the band with viewport width so min(columnWidth, bandHeight) ≈ column width (fills the stage). */
+@media (min-width: 1180px) {
   .sv-page--terminal {
-    --sv-globe-band: clamp(560px, min(90vh, 62vmin), 980px);
+    --sv-globe-band: clamp(
+      560px,
+      min(
+        max(min(90vh, 1080px), min(62vw, calc(100vw - 440px))),
+        min(96vh, 1280px)
+      ),
+      1280px
+    );
   }
 }
 
 @media (min-width: 1600px) {
   .sv-page--terminal {
-    --sv-globe-band: clamp(600px, min(92vh, 68vmin), 1040px);
     --sv-terminal-side: minmax(96px, 152px);
     --sv-terminal-rail: minmax(208px, 300px);
   }
@@ -427,7 +433,7 @@
   color: rgba(255, 255, 255, 0.38);
 }
 
-/* Three-column band: context | globe (height anchor) | rail — shared fixed row height */
+/* Three-column band: context | globe (height anchor) | rail — shared row height from --sv-globe-band */
 .sv-terminal-hero {
   flex: 0 0 auto;
   min-width: 0;
@@ -437,7 +443,8 @@
   grid-template-columns: var(--sv-terminal-side) minmax(0, 1fr) var(--sv-terminal-rail);
   align-items: stretch;
   min-height: var(--sv-globe-band);
-  max-height: var(--sv-globe-band);
+  /* Allow the row to grow with --sv-globe-band on wide layouts (do not clamp shorter than the band). */
+  height: auto;
 }
 
 /* Single continuous space backdrop across full hero width (globe column stays transparent below) */
@@ -566,7 +573,6 @@
   box-sizing: border-box;
   height: var(--sv-globe-band);
   min-height: var(--sv-globe-band);
-  max-height: var(--sv-globe-band);
   min-width: 0;
   overflow: hidden;
   padding: 0;
@@ -574,8 +580,10 @@
   container-type: size;
   container-name: sv-globe-stage;
   contain: layout paint;
-  /* Space + stars painted on .sv-terminal-hero so all three columns share one canvas */
-  background: transparent;
+  /* Fills side gutters beside the square canvas with the same deep-field read as the hero */
+  background:
+    radial-gradient(ellipse 118% 96% at 50% 46%, rgba(26, 30, 56, 0.55), rgba(5, 6, 14, 0.92) 58%, #03040c 100%),
+    linear-gradient(180deg, rgba(8, 10, 22, 0.4) 0%, rgba(2, 3, 10, 0.85) 100%);
 }
 
 /* Slightly more vertical reserve when zoomed — keeps the sphere inside the stage read */
@@ -1778,6 +1786,54 @@
   padding: 0;
 }
 
+.sv-rail-list--wire li {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sv-rail-list--wire li:last-child {
+  border-bottom: none;
+}
+
+.sv-rail-wire-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 9px 2px 9px 6px;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 6px;
+  transition: background 0.22s var(--sv-ease-out);
+}
+
+.sv-rail-wire-link:hover {
+  background: rgba(120, 170, 255, 0.06);
+}
+
+.sv-rail-wire-title {
+  font-size: 0.82rem;
+  line-height: 1.38;
+  color: rgba(248, 250, 255, 0.94);
+  letter-spacing: 0.01em;
+}
+
+.sv-rail-wire-meta {
+  font-size: 0.64rem;
+  color: rgba(255, 255, 255, 0.42);
+  letter-spacing: 0.04em;
+}
+
+.sv-rail-empty--tight {
+  padding: 4px 0 2px;
+  font-size: 0.72rem;
+}
+
+.sv-rail-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.68em;
+  color: rgba(200, 220, 255, 0.85);
+}
+
 .sv-rail-row {
   position: relative;
   width: 100%;
@@ -2361,7 +2417,7 @@
   overflow: hidden;
   border: none;
   border-radius: 0;
-  background: transparent;
+  background: radial-gradient(ellipse 100% 88% at 50% 50%, rgba(18, 20, 36, 0.25), transparent 70%);
 }
 
 /* Globe: square max-fits stage; explicit w/h may be set inline from JS (panel-sized) for sharper sizing */
@@ -2389,7 +2445,9 @@
   position: relative;
   z-index: 1;
   flex-shrink: 0;
-  transition: opacity 0.34s var(--sv-ease-out);
+  transition:
+    opacity 0.34s var(--sv-ease-out),
+    filter 0.42s var(--sv-ease-out);
 }
 
 .sv-globe-wrap--countries .sv-globe-vignette {

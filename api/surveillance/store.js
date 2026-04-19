@@ -288,6 +288,8 @@ async function queryFeed({
   severityMin,
   source,
   tab,
+  countryIso2,
+  maxAgeHours,
 }) {
   const types = tabToEventTypes(tab);
   const highImpact = tab === 'high_impact';
@@ -296,6 +298,16 @@ async function queryFeed({
   if (sinceUpdated) {
     sql += ` AND updated_at > ?`;
     params.push(sinceUpdated);
+  }
+  const iso = countryIso2 ? String(countryIso2).trim().toUpperCase() : '';
+  if (iso.length === 2 && /^[A-Z]{2}$/.test(iso)) {
+    sql += ` AND JSON_CONTAINS(COALESCE(countries, JSON_ARRAY()), JSON_QUOTE(?), '$')`;
+    params.push(iso);
+  }
+  const hours = maxAgeHours != null ? Number(maxAgeHours) : null;
+  if (Number.isFinite(hours) && hours > 0 && hours <= 168) {
+    sql += ` AND COALESCE(detected_at, published_at, updated_at) >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL ? HOUR)`;
+    params.push(Math.floor(hours));
   }
   if (eventType) {
     sql += ` AND event_type = ?`;

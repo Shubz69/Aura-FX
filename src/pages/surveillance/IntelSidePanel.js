@@ -27,6 +27,8 @@ function IntelSidePanel({
   leadTapeUpdatedAt,
   onClearFocus,
   onSetFocusRegion,
+  wireHeadlines = [],
+  wireActive = false,
 }) {
   const d = digest || {};
   const {
@@ -60,6 +62,39 @@ function IntelSidePanel({
           <p className="sv-rail-masthead-sub">Latest activity first · market impact · cross-checks · regional heat</p>
         </div>
       </header>
+
+      {wireActive ? (
+        <Section title="Live wire" kicker="Rolling headlines">
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            Top stories for this country from NewsAPI (institutional tape below is limited to the last 48h). Third-party
+            wire — verify at source.
+          </p>
+          {wireHeadlines.length ? (
+            <ul className="sv-rail-list sv-rail-list--wire">
+              {wireHeadlines.map((h, idx) => (
+                <li key={`${h.url || h.title || 'w'}-${idx}`}>
+                  {h.url ? (
+                    <a className="sv-rail-wire-link" href={h.url} target="_blank" rel="noreferrer noopener">
+                      <span className="sv-rail-wire-title">{h.title}</span>
+                      <span className="sv-rail-wire-meta">
+                        {h.source ? `${h.source}` : 'Wire'}
+                        {h.publishedAt ? ` · ${formatRecencyLabel(h.publishedAt)}` : ''}
+                      </span>
+                    </a>
+                  ) : (
+                    <span className="sv-rail-wire-title">{h.title}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="sv-rail-empty sv-rail-empty--tight">
+              No wire bundle returned. Add <code className="sv-rail-code">NEWS_API_KEY</code> for NewsAPI, or the region
+              may have no headline slot.
+            </p>
+          )}
+        </Section>
+      ) : null}
 
       {situationHeadline ? (
         <div
@@ -114,7 +149,9 @@ function IntelSidePanel({
           </div>
           <p className="sv-rail-focus-name">{focusSummary.label || focusRegion}</p>
           <p className="sv-rail-focus-scope">
-            Tape + digest filtered to this geography
+            {focusSummary.isoHint
+              ? 'Tape + digest for this country · institutional nodes from the last 48h only'
+              : 'Tape + digest filtered to this geography'}
             {typeof tapeCount === 'number' ? ` · ${tapeCount} row${tapeCount === 1 ? '' : 's'} on tape` : ''}
           </p>
           <dl className="sv-rail-focus-stats">

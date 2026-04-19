@@ -11,11 +11,13 @@ import {
 
 const Globe = lazy(() => import('react-globe.gl').then((m) => ({ default: m.default })));
 
+/** Stable ref so react-globe does not treat heatmaps as changed every render. */
+const NO_HEATMAPS = [];
+
 const GLOBE_BASE = 'https://unpkg.com/three-globe@2.45.2/example/img';
-/** NASA Visible Earth 5400×2700 equirectangular (sharper zoom than bundled 2k JPG). CORS-friendly for canvas. */
-const GLOBE_TEXTURE_HI =
-  'https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x5400x2700.jpg';
-/** Fallback if NASA CDN fails. */
+/** Tactical night basemap (Glint-style operating picture). */
+const GLOBE_TEXTURE_NIGHT = `${GLOBE_BASE}/earth-night.jpg`;
+/** Fallback if night texture fails to load. */
 const GLOBE_TEXTURE_LO = `${GLOBE_BASE}/earth-blue-marble.jpg`;
 
 let neGeoJsonCache = null;
@@ -157,14 +159,14 @@ export default function SurveillanceGlobe({
   const [pulse, setPulse] = useState(0);
   const [hoveredId, setHoveredId] = useState(null);
   const [globeReveal, setGlobeReveal] = useState(false);
-  const [globeTextureUrl, setGlobeTextureUrl] = useState(GLOBE_TEXTURE_LO);
+  const [globeTextureUrl, setGlobeTextureUrl] = useState(GLOBE_TEXTURE_NIGHT);
 
   useEffect(() => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => setGlobeTextureUrl(GLOBE_TEXTURE_HI);
-    img.onerror = () => {};
-    img.src = GLOBE_TEXTURE_HI;
+    img.onload = () => setGlobeTextureUrl(GLOBE_TEXTURE_NIGHT);
+    img.onerror = () => setGlobeTextureUrl(GLOBE_TEXTURE_LO);
+    img.src = GLOBE_TEXTURE_NIGHT;
   }, []);
   const [polygonsData, setPolygonsData] = useState([]);
   const [loadedIsoCentroids, setLoadedIsoCentroids] = useState({});
@@ -252,13 +254,13 @@ export default function SurveillanceGlobe({
   );
 
   const atmosphereColor = useMemo(() => {
-    const r = Math.round(38 + nightFactor * 6);
-    const g = Math.round(52 + nightFactor * 8);
-    const b = Math.round(78 + nightFactor * 12);
+    const r = Math.round(22 + nightFactor * 10);
+    const g = Math.round(32 + nightFactor * 12);
+    const b = Math.round(58 + nightFactor * 18);
     return `rgb(${r}, ${g}, ${b})`;
   }, [nightFactor]);
 
-  const atmosphereAltitude = useMemo(() => 0.078 + nightFactor * 0.032, [nightFactor]);
+  const atmosphereAltitude = useMemo(() => 0.055 + nightFactor * 0.022, [nightFactor]);
 
   const refineGlobeSurface = useCallback(() => {
     const g = globeRef.current;
@@ -272,9 +274,9 @@ export default function SurveillanceGlobe({
     mat.map.magFilter = THREE.LinearFilter;
     mat.map.generateMipmaps = true;
     mat.map.needsUpdate = true;
-    mat.color = new THREE.Color(0x5a5f72);
-    mat.shininess = 4;
-    mat.specular = new THREE.Color(0x101014);
+    mat.color = new THREE.Color(0x8b92a4);
+    mat.shininess = 2;
+    mat.specular = new THREE.Color(0x08080a);
     mat.needsUpdate = true;
     return true;
   }, []);
@@ -511,7 +513,8 @@ export default function SurveillanceGlobe({
   }, [povAltitude, reducedMotion, nightFactor]);
 
   /* Hex bins must stay on during country lens: turning them off switched the globe to global
-   * heatmap + arcs — CPU KDE and extra layers caused severe lag until lens cleared. */
+   * arcs (and previously heatmap) — extra layers caused severe lag until lens cleared.
+   * Heatmap layer is disabled: three-globe heatmap updates could throw under some WebGL timing paths. */
   const useHex = !reducedMotion && events.length > 52;
 
   const rawPoints = useMemo(() => {
@@ -523,19 +526,6 @@ export default function SurveillanceGlobe({
         w: Math.max(0.15, ((e.rank_score != null ? Number(e.rank_score) : 50) + (e.severity || 1) * 6) / 130),
       }));
   }, [events]);
-
-  const heatmapLayer = useMemo(() => {
-    if (!rawPoints.length || useHex) return [];
-    return [
-      {
-        points: rawPoints.map((p) => ({
-          lat: p.lat,
-          lng: p.lng,
-          weight: p.w,
-        })),
-      },
-    ];
-  }, [rawPoints, useHex]);
 
   const hexPoints = useMemo(() => rawPoints, [rawPoints]);
 
@@ -612,26 +602,63 @@ export default function SurveillanceGlobe({
     });
   }, [events, selectedId, hoveredId, reducedMotion, pulseStep, focusRegion]);
 
+  const tensionByIso = useMemo(() => {
+    const m = new Map();
+    for (const e of events) {
+      const w = (Number(e.rank_score) || 50) * 0.014 + (Number(e.severity) || 1) * 5.5;
+      for (const c of e.countries || []) {
+        const k = normalizeRegionKey(c);
+        if (!/^[A-Z]{2}$/.test(k)) continue;
+        m.set(k, (m.get(k) || 0) + w);
+      }
+    }
+    return m;
+  }, [events]);
+
   const polygonCapColor = useCallback(
     (d) => {
       const iso = d.iso;
+      const raw = tensionByIso.get(iso) || 0;
+      const heat = Math.max(0, Math.min(1, Math.log1p(raw) / 7.2));
+      const chill = 1 - heat;
       if (focusIso) {
-        if (iso === focusIso) return 'rgba(255, 214, 170, 0.42)';
-        return 'rgba(6, 8, 14, 0.5)';
+        if (iso === focusIso) {
+          const r = Math.round(210 - heat * 55);
+          const g = Math.round(72 + heat * 70);
+          const b = Math.round(58 + heat * 48);
+          const a = 0.38 + heat * 0.42;
+          return `rgba(${r}, ${g}, ${b}, ${a})`;
+        }
+        return `rgba(4, 5, 10, ${0.48 + chill * 0.12})`;
       }
-      if (hoveredIso === iso) return 'rgba(248, 195, 125, 0.18)';
-      return 'rgba(255, 255, 255, 0.04)';
+      if (hoveredIso === iso) {
+        const r = Math.round(40 + heat * 200);
+        const g = Math.round(36 + heat * 70);
+        const b = Math.round(48 + heat * 40);
+        return `rgba(${r}, ${g}, ${b}, ${0.22 + heat * 0.32})`;
+      }
+      const r = Math.round(14 + heat * 198);
+      const g = Math.round(16 + heat * 52);
+      const b = Math.round(22 + heat * 36);
+      const a = 0.08 + heat * 0.46;
+      return `rgba(${r}, ${g}, ${b}, ${a})`;
     },
-    [focusIso, hoveredIso]
+    [focusIso, hoveredIso, tensionByIso]
   );
 
   const polygonSideColor = useCallback(
     (d) => {
-      if (focusIso && d.iso !== focusIso) return 'rgba(3, 4, 8, 0.62)';
+      const iso = d.iso;
+      const raw = tensionByIso.get(iso) || 0;
+      const heat = Math.max(0, Math.min(1, Math.log1p(raw) / 7.2));
+      if (focusIso && d.iso !== focusIso) return 'rgba(2, 3, 8, 0.72)';
       if (hoveredIso === d.iso) return 'rgba(248, 195, 125, 0.14)';
-      return 'rgba(255, 255, 255, 0.035)';
+      const r = Math.round(6 + heat * 80);
+      const g = Math.round(8 + heat * 28);
+      const b = Math.round(14 + heat * 22);
+      return `rgba(${r}, ${g}, ${b}, ${0.04 + heat * 0.28})`;
     },
-    [focusIso, hoveredIso]
+    [focusIso, hoveredIso, tensionByIso]
   );
 
   const polygonStrokeColor = useCallback(
@@ -740,15 +767,7 @@ export default function SurveillanceGlobe({
           atmosphereAltitude={reducedMotion ? atmosphereAltitude * 0.82 : atmosphereAltitude}
           onGlobeClick={handleGlobeClick}
           onZoom={handleZoom}
-          heatmapsData={heatmapLayer}
-          heatmapPoints={(d) => d.points}
-          heatmapPointLat="lat"
-          heatmapPointLng="lng"
-          heatmapPointWeight="weight"
-          heatmapBandwidth={1.45}
-          heatmapColorFn={() => 'rgba(234, 169, 96, 0.52)'}
-          heatmapBaseAltitude={0.01}
-          heatmapTopAltitude={0.04}
+          heatmapsData={NO_HEATMAPS}
           hexBinPointsData={useHex ? hexPoints : []}
           hexBinPointLat="lat"
           hexBinPointLng="lng"
@@ -773,7 +792,7 @@ export default function SurveillanceGlobe({
           polygonAltitude={polygonAltitude}
           polygonCapCurvatureResolution={reducedMotion ? 3 : 5}
           polygonsTransitionDuration={
-            reducedMotion ? 0 : focusIso ? 0 : focusRegion ? 120 : 220
+            reducedMotion ? 0 : focusIso ? 0 : focusRegion ? 140 : 280
           }
           polygonLabel={polygonLabel}
           onPolygonHover={(poly) => {

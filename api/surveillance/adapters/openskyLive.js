@@ -25,6 +25,21 @@ const BOXES = [
 /** In-memory token (serverless: one cold start per instance). */
 let tokenCache = { token: null, expiresAt: 0 };
 let tokenRefreshPromise = null;
+/** After a token endpoint failure, skip OAuth until this time (ms) to avoid N sequential hangs per cron. */
+let oauthSuspendedUntil = 0;
+
+function oauthBackoffMs() {
+  const onVercel = !!(process.env.VERCEL && String(process.env.VERCEL).toLowerCase() !== 'false');
+  const defSec = onVercel ? 600 : 180;
+  const s = parseInt(process.env.OPENSKY_OAUTH_BACKOFF_SEC || '', 10);
+  const sec = Number.isFinite(s) && s >= 0 ? s : defSec;
+  return sec * 1000;
+}
+
+function tokenFetchTimeoutMs() {
+  const ms = parseInt(process.env.OPENSKY_TOKEN_FETCH_TIMEOUT_MS || '12000', 10);
+  return Math.min(45000, Math.max(4000, Number.isFinite(ms) ? ms : 12000));
+}
 
 function openskyDisabled() {
   const v = String(process.env.OPENSKY_ADAPTER_DISABLED || '').toLowerCase();
@@ -59,6 +74,8 @@ async function getBearerToken() {
     return tokenCache.token;
   }
 
+  if (now < oauthSuspendedUntil) return null;
+
   if (!tokenRefreshPromise) {
     tokenRefreshPromise = (async () => {
       try {
@@ -67,10 +84,20 @@ async function getBearerToken() {
           client_id: cred.id,
           client_secret: cred.secret,
         });
+        const tmo = tokenFetchTimeoutMs();
+        let signal;
+        if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+          signal = AbortSignal.timeout(tmo);
+        } else {
+          const ac = new AbortController();
+          setTimeout(() => ac.abort(), tmo);
+          signal = ac.signal;
+        }
         const res = await fetch(TOKEN_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: body.toString(),
+          signal,
         });
         const text = await res.text();
         if (!res.ok) {
@@ -91,7 +118,12 @@ async function getBearerToken() {
           token: accessToken,
           expiresAt: Date.now() + safeExpiresSec * 1000,
         };
+        oauthSuspendedUntil = 0;
         return accessToken;
+      } catch {
+        oauthSuspendedUntil = Date.now() + oauthBackoffMs();
+        invalidateOpenskyToken();
+        return null;
       } finally {
         tokenRefreshPromise = null;
       }
@@ -351,6 +383,8 @@ module.exports = {
         opensky_timeout_ms: timeoutMs,
         opensky_attempts: maxAttempts,
         opensky_oauth: hasOAuthCredentials(),
+        opensky_oauth_suspended_until: oauthSuspendedUntil > Date.now() ? oauthSuspendedUntil : null,
+        opensky_token_fetch_timeout_ms: tokenFetchTimeoutMs(),
       },
     };
   },

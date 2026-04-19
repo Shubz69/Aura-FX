@@ -10,6 +10,32 @@ const { getSystemHealthSummary } = require('./adapterState');
 const { buildIntelDigest } = require('./intelDigest');
 const { buildMarketWatchNarrative } = require('./marketWatchNarrative');
 
+/** NewsAPI top-headlines (optional; requires NEWS_API_KEY). Lowercase ISO2 country code. */
+async function fetchCountryWireHeadlines(iso2) {
+  const key = process.env.NEWS_API_KEY;
+  if (!key || !iso2 || iso2.length !== 2) return [];
+  const cc = String(iso2).toLowerCase();
+  const url = `https://newsapi.org/v2/top-headlines?country=${encodeURIComponent(cc)}&pageSize=12&apiKey=${encodeURIComponent(key)}`;
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), 4800);
+  try {
+    const res = await fetch(url, { signal: ac.signal });
+    clearTimeout(t);
+    if (!res.ok) return [];
+    const json = await res.json();
+    const arr = Array.isArray(json.articles) ? json.articles : [];
+    return arr.slice(0, 10).map((a) => ({
+      title: a.title || '',
+      url: a.url || '',
+      source: (a.source && a.source.name) || '',
+      publishedAt: a.publishedAt || null,
+    }));
+  } catch {
+    clearTimeout(t);
+    return [];
+  }
+}
+
 function setCors(req, res) {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -39,15 +65,28 @@ module.exports = async (req, res) => {
     const severityMin = q.severityMin != null ? Number(q.severityMin) : null;
     const source = q.source ? String(q.source) : null;
     const eventType = q.eventType ? String(q.eventType) : null;
+    const countryRaw = q.country ? String(q.country).trim().toUpperCase() : '';
+    const countryIso2 = /^[A-Z]{2}$/.test(countryRaw) ? countryRaw : null;
+    let maxAgeHours = q.maxAgeHours != null ? Number(q.maxAgeHours) : null;
+    if (countryIso2 && (!Number.isFinite(maxAgeHours) || maxAgeHours <= 0)) {
+      maxAgeHours = 48;
+    }
+    if (!countryIso2) maxAgeHours = null;
+    if (Number.isFinite(maxAgeHours) && maxAgeHours > 168) maxAgeHours = 168;
 
-    const events = await queryFeed({
-      limit,
-      sinceUpdated: since || null,
-      eventType: eventType || null,
-      severityMin: Number.isFinite(severityMin) ? severityMin : null,
-      source: source || null,
-      tab: tab === 'all' ? null : tab,
-    });
+    const [events, countryHeadlines] = await Promise.all([
+      queryFeed({
+        limit,
+        sinceUpdated: since || null,
+        eventType: eventType || null,
+        severityMin: Number.isFinite(severityMin) ? severityMin : null,
+        source: source || null,
+        tab: tab === 'all' ? null : tab,
+        countryIso2,
+        maxAgeHours: Number.isFinite(maxAgeHours) ? maxAgeHours : null,
+      }),
+      countryIso2 ? fetchCountryWireHeadlines(countryIso2) : Promise.resolve([]),
+    ]);
     const aggregates = await computeAggregates(events);
     const intelDigest = buildIntelDigest(events, {
       limitStories: 7,
@@ -67,6 +106,9 @@ module.exports = async (req, res) => {
       marketWatchNarrative,
       sources,
       systemHealth,
+      countryIso2,
+      maxAgeHours: countryIso2 ? maxAgeHours : null,
+      countryHeadlines,
       serverTime: new Date().toISOString(),
     });
   } catch (e) {
