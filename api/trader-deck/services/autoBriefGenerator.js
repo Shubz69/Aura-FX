@@ -31,6 +31,8 @@ const {
   DESK_AUTOMATION_CATEGORY_KINDS,
   expectedIntelAutomationRowCount,
   isDeskAutomationCategoryKind,
+  isInstitutionalDailyWfaKind,
+  isInstitutionalWeeklyWfaKind,
   deskCategoryDisplayName,
   canonicalDeskCategoryKind,
   legacyAliasesForCanonical,
@@ -1811,11 +1813,21 @@ function toSqlDateYmd(date) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : s.slice(0, 10);
 }
 
-/** `auto-brief:daily:2026-04-13:stocks` → parts (only category automation uses this prefix). */
+/**
+ * Parse automation run_key for reserveRun reshape logic.
+ * - `auto-brief:daily:2026-04-13:stocks` (legacy sleeve slug)
+ * - `aura-institutional:daily-wfa:aura_institutional_daily_forex:2026-04-13`
+ * - `aura-institutional:wfa:aura_institutional_weekly_forex:2026-04-13`
+ */
 function parseAutoBriefRunKey(runKey) {
-  const m = String(runKey || '').match(/^auto-brief:(daily|weekly):(\d{4}-\d{2}-\d{2}):([^:]+)$/);
-  if (!m) return null;
-  return { period: m[1], deskDate: m[2], briefKind: String(m[3] || '').toLowerCase() };
+  const s = String(runKey || '');
+  const m = s.match(/^auto-brief:(daily|weekly):(\d{4}-\d{2}-\d{2}):([^:]+)$/);
+  if (m) return { period: m[1], deskDate: m[2], briefKind: String(m[3] || '').toLowerCase() };
+  const d = s.match(/^aura-institutional:daily-wfa:([^:]+):(\d{4}-\d{2}-\d{2})$/);
+  if (d) return { period: 'daily', deskDate: d[2], briefKind: String(d[1] || '').toLowerCase() };
+  const w = s.match(/^aura-institutional:wfa:([^:]+):(\d{4}-\d{2}-\d{2})$/);
+  if (w) return { period: 'weekly', deskDate: w[2], briefKind: String(w[1] || '').toLowerCase() };
+  return null;
 }
 
 /**
@@ -1905,9 +1917,13 @@ async function reserveRun(runKey, period, date) {
 
         const rk = parseAutoBriefRunKey(runKey);
         const rawText = Buffer.isBuffer(br.file_data) ? br.file_data.toString('utf8') : String(br.file_data || '');
+        const institutionalSleeve =
+          rk &&
+          (isInstitutionalDailyWfaKind(rk.briefKind) || isInstitutionalWeeklyWfaKind(rk.briefKind));
+        const legacyDeskCategory = rk && isDeskAutomationCategoryKind(rk.briefKind);
         if (
           rk &&
-          isDeskAutomationCategoryKind(rk.briefKind) &&
+          (institutionalSleeve || legacyDeskCategory) &&
           categoryStoredBodyNeedsPdfReshape(rawText, rk.period)
         ) {
           console.info('[brief-gen] replacing legacy category brief — PDF template markers missing', {

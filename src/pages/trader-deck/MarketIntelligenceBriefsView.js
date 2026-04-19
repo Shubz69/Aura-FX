@@ -11,7 +11,10 @@ import { FaEye, FaTrash, FaTimes } from 'react-icons/fa';
 import CosmicBackground from '../../components/CosmicBackground';
 import { getTraderDeckIntelStorageYmd, formatLondonWeekRangeFromWeekEndingSundayYmd } from '../../lib/trader-deck/deskDates';
 import { stripModelInternalExposition } from '../../utils/sanitizeAiDeskOutput.react.js';
-import { polishBriefMarkdown } from '../../utils/briefPresentationSanitize';
+import {
+  polishBriefMarkdown,
+  splitLongProseParagraphsForPreview,
+} from '../../utils/briefPresentationSanitize';
 import { promoteAuraBriefPlaintextToMarkdown } from '../../utils/promoteAuraBriefHeadings';
 
 function googleViewerEmbedUrl(fileUrl) {
@@ -182,6 +185,7 @@ function sanitizeBriefForPreview(text) {
 
   t = stripModelInternalExposition(t);
   t = polishBriefMarkdown(t, { preserveEmphasis: true });
+  t = splitLongProseParagraphsForPreview(t);
 
   const endsWithFooter = new RegExp(
     `${BY_AURA_TERMINAL.replace(/\s+/g, '\\s+')}\\s*$`,
@@ -1069,7 +1073,8 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               {textPreviewLoading ? (
                 <p className="td-intel-preview-md-loading">Loading brief…</p>
               ) : (
-                <div className="td-intel-brief-md td-intel-brief-md--typewriter">
+                <div className="td-intel-brief-md-document">
+                  <div className="td-intel-brief-md td-intel-brief-md--typewriter">
                   <ReactMarkdown components={BRIEF_MARKDOWN_COMPONENTS}>
                     {typedMarkdownBody.length > 0
                       ? typedMarkdownBody
@@ -1080,6 +1085,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                   {briefTypewriterActive ? (
                     <span className="td-intel-brief-md-typewriter-caret" aria-hidden />
                   ) : null}
+                  </div>
                 </div>
               )}
             </div>

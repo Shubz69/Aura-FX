@@ -102,6 +102,59 @@ function polishBriefMarkdown(markdown, opts = {}) {
   return String(t || '').trim();
 }
 
+/**
+ * Preview-only: break very long prose blocks (one huge paragraph) into several Markdown
+ * paragraphs so ReactMarkdown renders readable spacing like a Word document.
+ */
+function splitLongTextIntoParagraphs(text, maxLen = 500) {
+  const parts = [];
+  let rest = String(text || '').trim();
+  if (!rest || rest.length <= maxLen) return text;
+  while (rest.length > maxLen) {
+    let cut = rest.lastIndexOf('. ', maxLen);
+    if (cut >= 100) {
+      cut += 2;
+    } else {
+      cut = rest.indexOf('. ', 60);
+      if (cut !== -1) cut += 2;
+      else {
+        cut = rest.lastIndexOf(' ', maxLen);
+        if (cut < maxLen * 0.45) {
+          cut = maxLen;
+        }
+      }
+    }
+    if (cut <= 0 || cut >= rest.length) {
+      parts.push(rest);
+      return parts.join('\n\n');
+    }
+    parts.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) parts.push(rest);
+  return parts.join('\n\n');
+}
+
+function splitLongProseParagraphsForPreview(markdown) {
+  const raw = String(markdown || '');
+  if (!raw.trim()) return raw;
+  const blocks = raw.split(/\n\n+/);
+  const refined = blocks.map((block) => {
+    const b = block.trim();
+    if (!b) return block;
+    if (b.includes('```')) return block;
+    if (/^#{1,6}\s/m.test(b)) return block;
+    if (/^\s*[-*]\s/m.test(b)) return block;
+    if (/^\s*\d+[.)]\s/m.test(b)) return block;
+    if (b.length < 520) return block;
+    const oneLine = b.replace(/\s*\n\s*/g, ' ').replace(/[ \t]+/g, ' ').trim();
+    if (oneLine.length < 520) return block;
+    return splitLongTextIntoParagraphs(oneLine, 500);
+  });
+  return refined.join('\n\n');
+}
+
 module.exports = {
   polishBriefMarkdown,
+  splitLongProseParagraphsForPreview,
 };

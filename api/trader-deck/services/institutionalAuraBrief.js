@@ -568,7 +568,9 @@ async function generateAndStoreWeeklyWfaPack(deps, { runDate, timeZone, date, no
   assertAutomationModelConfigured();
   await ensureAutomationTables();
 
-  if (await weeklyWfaPackAlreadyComplete(executeQuery, date)) {
+  const weeklyEight = await weeklyWfaPackAlreadyComplete(executeQuery, date);
+  const weeklyV2 = await weeklyInstitutionalBodiesMarkdownV2Complete(executeQuery, date);
+  if (weeklyEight && weeklyV2) {
     return {
       success: true,
       skipped: true,
@@ -678,6 +680,38 @@ async function dailyWfaPackAlreadyComplete(executeQuery, deskDate) {
   );
   const have = new Set((rows || []).map((r) => String(r.brief_kind).toLowerCase()));
   return INSTITUTIONAL_DAILY_WFA_KINDS.every((k) => have.has(String(k).toLowerCase()));
+}
+
+/** All eight daily sleeves stored with current Markdown document assembly (server + preview). */
+async function dailyInstitutionalBodiesMarkdownV2Complete(executeQuery, deskDate) {
+  if (!executeQuery || !/^\d{4}-\d{2}-\d{2}$/.test(String(deskDate || ''))) return false;
+  const ph = INSTITUTIONAL_DAILY_WFA_KINDS.map(() => '?').join(',');
+  const [rows] = await executeQuery(
+    `SELECT COUNT(*) AS c FROM trader_deck_briefs
+     WHERE period = 'daily' AND date = ?
+       AND LOWER(brief_kind) IN (${ph})
+       AND file_data IS NOT NULL
+       AND INSTR(CONVERT(file_data USING utf8mb4), '## Macro intro and structural flow') > 0
+       AND INSTR(CONVERT(file_data USING utf8mb4), '## Overall daily structure') > 0`,
+    [deskDate, ...INSTITUTIONAL_DAILY_WFA_KINDS]
+  );
+  return Number(rows?.[0]?.c || 0) >= INSTITUTIONAL_DAILY_WFA_KINDS.length;
+}
+
+/** All eight weekly WFA sleeves stored with current Markdown document assembly. */
+async function weeklyInstitutionalBodiesMarkdownV2Complete(executeQuery, deskDate) {
+  if (!executeQuery || !/^\d{4}-\d{2}-\d{2}$/.test(String(deskDate || ''))) return false;
+  const ph = INSTITUTIONAL_WEEKLY_WFA_KINDS.map(() => '?').join(',');
+  const [rows] = await executeQuery(
+    `SELECT COUNT(*) AS c FROM trader_deck_briefs
+     WHERE period = 'weekly' AND date = ?
+       AND LOWER(brief_kind) IN (${ph})
+       AND file_data IS NOT NULL
+       AND INSTR(CONVERT(file_data USING utf8mb4), '## Overview') > 0
+       AND INSTR(CONVERT(file_data USING utf8mb4), '## Scenario framework') > 0`,
+    [deskDate, ...INSTITUTIONAL_WEEKLY_WFA_KINDS]
+  );
+  return Number(rows?.[0]?.c || 0) >= INSTITUTIONAL_WEEKLY_WFA_KINDS.length;
 }
 
 function collectDailyWfaQuoteSymbols() {
@@ -876,7 +910,9 @@ async function generateAndStoreDailyWfaPack(deps, { runDate, timeZone, date, nor
   assertAutomationModelConfigured();
   await ensureAutomationTables();
 
-  if (await dailyWfaPackAlreadyComplete(executeQuery, date)) {
+  const dailyEight = await dailyWfaPackAlreadyComplete(executeQuery, date);
+  const dailyV2 = await dailyInstitutionalBodiesMarkdownV2Complete(executeQuery, date);
+  if (dailyEight && dailyV2) {
     return {
       success: true,
       skipped: true,
@@ -991,6 +1027,8 @@ module.exports = {
   generateAndStoreInstitutionalBrief,
   formatDailyBriefTitle,
   formatWeeklyFundamentalTitle,
+  dailyInstitutionalBodiesMarkdownV2Complete,
+  weeklyInstitutionalBodiesMarkdownV2Complete,
   _test: {
     buildInstitutionalFactPack,
     upcomingMonFriYmd,
