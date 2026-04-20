@@ -105,7 +105,11 @@ async function ensureNotificationPermission() {
     toast.info('Turn on notifications in your browser settings if you want desktop alerts.', { autoClose: 6000 });
     return;
   }
-  await Notification.requestPermission();
+  try {
+    await Notification.requestPermission();
+  } catch {
+    // Ignore prompt issues; in-app toast reminders still work.
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -578,7 +582,7 @@ export default function Journal() {
       // Keep local reminder fallback even if server sync fails.
       console.warn('Server reminder sync failed:', e?.response?.data?.message || e?.message);
     }
-    toast.success('Reminder set. You will get a notice when it is due.');
+    toast.success(`Reminder set ${formatReminderRelative(t)}.`);
     setReminderMenuTaskId(null);
   }, [journalUserId]);
 
@@ -905,6 +909,7 @@ export default function Journal() {
           'journal-task-item',
           isDone ? 'journal-task-item--done' : '',
           isMand ? 'journal-task-item--mandatory' : '',
+          reminderMenuTaskId === task.id ? 'journal-task-item--reminder-open' : '',
           !canEditJournal ? 'journal-task-item--readonly' : '',
         ].filter(Boolean).join(' ')}
       >

@@ -1862,6 +1862,12 @@
   -webkit-backdrop-filter: none;
 }
 
+/* Reminder popover must be able to paint outside the task card */
+.journal-task-item--reminder-open {
+  overflow: visible;
+  z-index: 36;
+}
+
 /* Stagger */
 .journal-task-list .journal-task-item:nth-child(1) { animation-delay: 0.03s; }
 .journal-task-list .journal-task-item:nth-child(2) { animation-delay: 0.07s; }
@@ -2098,6 +2104,7 @@
 /* Task reminder (bell + popover) */
 .journal-reminder-wrap {
   position: relative;
+  isolation: isolate;
 }
 
 .journal-task-remind-btn {
@@ -2131,7 +2138,7 @@
   position: absolute;
   right: 0;
   top: calc(100% + 6px);
-  z-index: 40;
+  z-index: 140;
   min-width: 220px;
   max-width: min(92vw, 280px);
   padding: 10px 12px 12px;
