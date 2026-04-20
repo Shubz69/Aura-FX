@@ -20,6 +20,7 @@ import {
 } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import AiChartCheckTab from './AiChartCheckTab';
 import { OPERATOR_BASE as TV_BASE, PLAYBOOK_MISSED_REVIEW_PATH } from '../../lib/trader-playbook/playbookPaths';
+import { compressImageToJpegDataUrl, COMPRESS_PRESETS } from '../../utils/compressImageToJpegDataUrl';
 import '../../styles/TraderPlaybookTerminalTokens.css';
 import '../../styles/OperatorView.css';
 
@@ -287,6 +288,192 @@ function CustomLineModal({ sectionTitle, onClose, onAdd }) {
   return createPortal(modal, document.body);
 }
 
+function ExampleImageLightbox({ overlay, onClose, onSaveDataUrl, onRemoveImage }) {
+  const [busy, setBusy] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileRef = useRef(null);
+  const cameraRef = useRef(null);
+  const canEdit = Boolean(overlay?.itemId && overlay?.scope);
+
+  const runFile = useCallback(
+    async (file) => {
+      if (!file) return;
+      if (!canEdit) return;
+      setBusy(true);
+      try {
+        const dataUrl = await compressImageToJpegDataUrl(file, COMPRESS_PRESETS.checklist);
+        await onSaveDataUrl(dataUrl);
+      } catch (err) {
+        toast.error(err?.message || 'Could not use this image.');
+      } finally {
+        setBusy(false);
+      }
+    },
+    [canEdit, onSaveDataUrl],
+  );
+
+  useEffect(() => {
+    if (!overlay) return undefined;
+    const onPaste = (e) => {
+      const cd = e.clipboardData;
+      if (!cd) return;
+      const files = cd.files;
+      if (files && files[0] && files[0].type.startsWith('image/')) {
+        e.preventDefault();
+        void runFile(files[0]);
+        return;
+      }
+      const items = cd.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i += 1) {
+        if (items[i].kind === 'file' && items[i].type.startsWith('image/')) {
+          const f = items[i].getAsFile();
+          if (f) {
+            e.preventDefault();
+            void runFile(f);
+          }
+          break;
+        }
+      }
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  }, [overlay, runFile]);
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const f = e.dataTransfer?.files?.[0];
+    if (f) void runFile(f);
+  };
+
+  if (!overlay) return null;
+
+  const lightbox = (
+    <div className="tv-example-lightbox" role="dialog" aria-modal="true" aria-label="Checklist line image" onClick={onClose}>
+      <button type="button" className="tv-example-lightbox-close" onClick={onClose} aria-label="Close">
+        ×
+      </button>
+      <div className="tv-example-lightbox-inner" onClick={(e) => e.stopPropagation()}>
+        {overlay.src ? (
+          <div
+            className={`tv-example-lightbox-img-wrap${dragOver ? ' tv-example-lightbox-img-wrap--drop' : ''}`}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={onDrop}
+          >
+            <img src={overlay.src} alt={overlay.label || 'Checklist example'} className="tv-example-lightbox-img" />
+          </div>
+        ) : (
+          <div
+            className={`tv-example-lightbox-placeholder${dragOver ? ' tv-example-lightbox-placeholder--drop' : ''}`}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={onDrop}
+          >
+            <FaImage className="tv-example-lightbox-placeholder-icon" aria-hidden />
+            <p>{canEdit ? 'Add an example image for this line' : 'No example image for this line yet.'}</p>
+            {canEdit ? (
+              <>
+                <p className="tv-example-lightbox-hint">
+                  Drag and drop a screenshot here, paste from the clipboard (Ctrl+V / ⌘V), or use the buttons below. On
+                  phone you can take a photo or pick from your gallery — saved on this device and replaceable anytime.
+                </p>
+                <div className="tv-example-lightbox-tools">
+                  <button
+                    type="button"
+                    className="tv-modal-btn tv-modal-btn--secondary"
+                    disabled={busy}
+                    onClick={() => cameraRef.current?.click()}
+                  >
+                    {busy ? 'Working…' : 'Camera / photo'}
+                  </button>
+                  <button
+                    type="button"
+                    className="tv-modal-btn tv-modal-btn--primary"
+                    disabled={busy}
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    {busy ? 'Working…' : 'Choose file'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="tv-example-lightbox-hint">
+                When an image is added, it will show here full size so traders can see what this checklist item refers to.
+              </p>
+            )}
+          </div>
+        )}
+        {canEdit && overlay.src ? (
+          <>
+            <div className="tv-example-lightbox-tools tv-example-lightbox-tools--below">
+              <button type="button" className="tv-modal-btn tv-modal-btn--secondary" disabled={busy} onClick={() => fileRef.current?.click()}>
+                Replace image…
+              </button>
+              <button type="button" className="tv-modal-btn tv-modal-btn--ghost" disabled={busy} onClick={() => cameraRef.current?.click()}>
+                Camera / photo
+              </button>
+              <button type="button" className="tv-modal-btn tv-modal-btn--ghost" disabled={busy} onClick={onRemoveImage}>
+                Remove image
+              </button>
+            </div>
+            <p className="tv-example-lightbox-hint tv-example-lightbox-hint--tools">
+              Drop a file on the preview or paste (Ctrl+V) to replace the image.
+            </p>
+          </>
+        ) : null}
+        <p className="tv-example-lightbox-caption">{overlay.label}</p>
+        <input
+          ref={fileRef}
+          type="file"
+          className="tv-sr-only"
+          accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+          aria-hidden
+          tabIndex={-1}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';
+            if (f) void runFile(f);
+          }}
+        />
+        <input
+          ref={cameraRef}
+          type="file"
+          className="tv-sr-only"
+          accept="image/*"
+          capture="environment"
+          aria-hidden
+          tabIndex={-1}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';
+            if (f) void runFile(f);
+          }}
+        />
+      </div>
+    </div>
+  );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(lightbox, document.body);
+}
+
 function SectionAddButton({ onCustom, onTemplate, ariaLabel }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
@@ -342,7 +529,7 @@ function SectionAddButton({ onCustom, onTemplate, ariaLabel }) {
   );
 }
 
-function ChecklistItemRow({ item, checked, points, onToggle, onExampleOpen, onRemove }) {
+function ChecklistItemRow({ item, checked, points, onToggle, onExampleOpen, onRemove, exampleScope }) {
   const hasImg = Boolean(item.exampleImageSrc);
   return (
     <div className="tv-checklist-item">
@@ -358,10 +545,16 @@ function ChecklistItemRow({ item, checked, points, onToggle, onExampleOpen, onRe
           onExampleOpen({
             src: item.exampleImageSrc || null,
             label: item.label,
+            itemId: item.id,
+            scope: exampleScope,
           })
         }
-        aria-label={hasImg ? `Enlarge example image for: ${item.label}` : `Example image placeholder for: ${item.label}`}
-        title={hasImg ? 'View example' : 'Example image (optional)'}
+        aria-label={
+          hasImg
+            ? `View or change example image for: ${item.label}`
+            : `Add or view example image for: ${item.label}`
+        }
+        title={hasImg ? 'View or replace image' : 'Add image (camera, file, paste, or drop)'}
       >
         {hasImg ? (
           <img src={item.exampleImageSrc} alt="" className="tv-example-thumb-img" loading="lazy" />
@@ -380,6 +573,7 @@ function ChecklistItemRow({ item, checked, points, onToggle, onExampleOpen, onRe
 }
 
 function ChecklistCard({
+  tabId,
   cardMeta,
   items,
   cardBudget,
@@ -390,6 +584,7 @@ function ChecklistCard({
   onAppendItems,
   onRemoveItem,
 }) {
+  const exampleScope = useMemo(() => ({ type: 'execution', tabId, cardId: cardMeta.id }), [tabId, cardMeta.id]);
   const pmap = useMemo(() => allocateEvenPointsById(items, cardBudget), [items, cardBudget]);
   const earned = useMemo(
     () => items.reduce((s, i) => s + (checked.has(i.id) ? pmap[i.id] || 0 : 0), 0),
@@ -431,6 +626,7 @@ function ChecklistCard({
               onToggle={onToggle}
               onExampleOpen={onExampleOpen}
               onRemove={onRemoveItem}
+              exampleScope={exampleScope}
             />
           ))}
         </div>
@@ -471,6 +667,7 @@ function FormationSubBlock({
   onAppendItems,
   onRemoveItem,
 }) {
+  const exampleScope = useMemo(() => ({ type: 'formation', subId: subMeta.id }), [subMeta.id]);
   const budget = subMeta.budget;
   const pmap = useMemo(() => allocateEvenPointsById(items, budget), [items, budget]);
   const earned = useMemo(
@@ -507,6 +704,7 @@ function FormationSubBlock({
             onToggle={onToggle}
             onExampleOpen={onExampleOpen}
             onRemove={onRemoveItem}
+            exampleScope={exampleScope}
           />
         ))
       )}
@@ -551,6 +749,62 @@ export default function OperatorView() {
     parseFormationItems(localStorage.getItem(STORAGE_FORMATION_ITEMS)),
   );
   const [exampleOverlay, setExampleOverlay] = useState(null);
+  const exampleOverlayRef = useRef(null);
+  useEffect(() => {
+    exampleOverlayRef.current = exampleOverlay;
+  }, [exampleOverlay]);
+
+  const handleSaveExampleImage = useCallback(async (dataUrl) => {
+    const o = exampleOverlayRef.current;
+    if (!o?.itemId || !o?.scope) return;
+    if (o.scope.type === 'execution') {
+      const { tabId, cardId } = o.scope;
+      setItemsByTab((prev) => ({
+        ...prev,
+        [tabId]: {
+          ...prev[tabId],
+          [cardId]: (prev[tabId][cardId] || []).map((row) => (row.id === o.itemId ? { ...row, exampleImageSrc: dataUrl } : row)),
+        },
+      }));
+    } else {
+      const { subId } = o.scope;
+      setFormationItemsBySub((prev) => ({
+        ...prev,
+        [subId]: (prev[subId] || []).map((row) => (row.id === o.itemId ? { ...row, exampleImageSrc: dataUrl } : row)),
+      }));
+    }
+    setExampleOverlay((prev) => (prev && prev.itemId === o.itemId ? { ...prev, src: dataUrl } : prev));
+    toast.success('Image saved to this checklist line.');
+  }, []);
+
+  const handleRemoveExampleImage = useCallback(() => {
+    const o = exampleOverlayRef.current;
+    if (!o?.itemId || !o?.scope) return;
+    const strip = (row) => {
+      if (row.id !== o.itemId) return row;
+      const next = { ...row };
+      delete next.exampleImageSrc;
+      return next;
+    };
+    if (o.scope.type === 'execution') {
+      const { tabId, cardId } = o.scope;
+      setItemsByTab((prev) => ({
+        ...prev,
+        [tabId]: {
+          ...prev[tabId],
+          [cardId]: (prev[tabId][cardId] || []).map(strip),
+        },
+      }));
+    } else {
+      const { subId } = o.scope;
+      setFormationItemsBySub((prev) => ({
+        ...prev,
+        [subId]: (prev[subId] || []).map(strip),
+      }));
+    }
+    setExampleOverlay((prev) => (prev && prev.itemId === o.itemId ? { ...prev, src: null } : prev));
+    toast.info('Image removed from this line.');
+  }, []);
 
   const formationSubTemplates = useMemo(() => getSetupFormationSubTemplates(), []);
   const formationSection = useMemo(() => CHECKLIST_SECTIONS.find((s) => s.id === 'setup-formation'), []);
@@ -611,7 +865,11 @@ export default function OperatorView() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_ITEMS, JSON.stringify(itemsByTab));
-    } catch {}
+    } catch (e) {
+      if (e?.name === 'QuotaExceededError' || e?.code === 22) {
+        toast.error('Storage is full. Remove or shrink checklist images, then try again.');
+      }
+    }
   }, [itemsByTab]);
 
   useEffect(() => {
@@ -623,7 +881,11 @@ export default function OperatorView() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_FORMATION_ITEMS, JSON.stringify(formationItemsBySub));
-    } catch {}
+    } catch (e) {
+      if (e?.name === 'QuotaExceededError' || e?.code === 22) {
+        toast.error('Storage is full. Remove or shrink checklist images, then try again.');
+      }
+    }
   }, [formationItemsBySub]);
 
   useEffect(() => {
@@ -900,6 +1162,7 @@ export default function OperatorView() {
               return (
                 <ChecklistCard
                   key={card.id}
+                  tabId={activeTab}
                   cardMeta={{ id: card.id, cardTitle: card.cardTitle }}
                   items={items}
                   cardBudget={cardBudget}
@@ -951,36 +1214,14 @@ export default function OperatorView() {
           <AiChartCheckTab embedded />
         </section>
 
-        {exampleOverlay &&
-          typeof document !== 'undefined' &&
-          createPortal(
-            <div
-              className="tv-example-lightbox"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Example image"
-              onClick={closeExample}
-            >
-              <button type="button" className="tv-example-lightbox-close" onClick={closeExample} aria-label="Close">
-                ×
-              </button>
-              <div className="tv-example-lightbox-inner" onClick={(e) => e.stopPropagation()}>
-                {exampleOverlay.src ? (
-                  <img src={exampleOverlay.src} alt={exampleOverlay.label} className="tv-example-lightbox-img" />
-                ) : (
-                  <div className="tv-example-lightbox-placeholder">
-                    <FaImage className="tv-example-lightbox-placeholder-icon" aria-hidden />
-                    <p>No example image for this line yet.</p>
-                    <p className="tv-example-lightbox-hint">
-                      When an image is added, it will show here full size so traders can see what this checklist item refers to.
-                    </p>
-                  </div>
-                )}
-                <p className="tv-example-lightbox-caption">{exampleOverlay.label}</p>
-              </div>
-            </div>,
-            document.body,
-          )}
+        {exampleOverlay ? (
+          <ExampleImageLightbox
+            overlay={exampleOverlay}
+            onClose={closeExample}
+            onSaveDataUrl={handleSaveExampleImage}
+            onRemoveImage={handleRemoveExampleImage}
+          />
+        ) : null}
 
         <div className="tv-bottom-bar">
           <div className={`tv-bottom-msg ${canProceed ? 'tv-bottom-msg-ok' : ''}`}>{bottomMsg}</div>

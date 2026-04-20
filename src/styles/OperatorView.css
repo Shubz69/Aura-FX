@@ -1969,6 +1969,55 @@
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
 }
 
+.tv-example-lightbox-img-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  border-radius: var(--tv-radius);
+  transition: box-shadow 0.15s ease, outline 0.15s ease;
+}
+
+.tv-example-lightbox-img-wrap--drop {
+  outline: 2px dashed rgba(234, 169, 96, 0.75);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 3px rgba(234, 169, 96, 0.2);
+}
+
+.tv-example-lightbox-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.tv-example-lightbox-tools--below {
+  margin-top: 16px;
+}
+
+.tv-example-lightbox-hint--tools {
+  margin-top: 8px;
+  font-size: 0.78rem;
+}
+
+.tv-example-lightbox-placeholder--drop {
+  outline: 2px dashed rgba(234, 169, 96, 0.65);
+  outline-offset: 4px;
+  background: rgba(24, 18, 10, 0.55);
+}
+
+.tv-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .tv-example-lightbox-placeholder {
   padding: 48px 32px;
   border-radius: var(--tv-radius);

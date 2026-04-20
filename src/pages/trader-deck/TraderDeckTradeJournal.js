@@ -5,6 +5,7 @@ import Api from '../../services/Api';
 import { useAuth } from '../../context/AuthContext';
 import { useOperatorAccount } from '../../context/OperatorAccountContext';
 import { mergeTradeMetadataRowMulti } from '../../lib/aura-analysis/tradeMetadataStorage';
+import { compressImageToJpegDataUrl, COMPRESS_PRESETS } from '../../utils/compressImageToJpegDataUrl';
 import { formatSignedPnL } from '../../lib/aura-analysis/formatAccountCurrency';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import { stripReplayHandoffParams, TR_HANDOFF } from '../../lib/trader-replay/replayToolHandoff';
@@ -42,15 +43,6 @@ function getVerificationMeta(t) {
   if (s === 'self_reported') return { label: 'Self', cls: 'td-journal-verify--self' };
   if (s === 'failed') return { label: 'Unverified', cls: 'td-journal-verify--fail' };
   return { label: '—', cls: '' };
-}
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(typeof r.result === 'string' ? r.result : '');
-    r.onerror = () => reject(new Error('Could not read file'));
-    r.readAsDataURL(file);
-  });
 }
 
 const JOURNAL_COL_META = [
@@ -157,8 +149,12 @@ export default function TraderDeckTradeJournal() {
   const [saveError, setSaveError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [verifyTrade, setVerifyTrade] = useState(null);
-  const [verifyFile, setVerifyFile] = useState(null);
+  const [verifyImage, setVerifyImage] = useState(null);
+  const [verifyPrepBusy, setVerifyPrepBusy] = useState(false);
+  const [verifyDragOver, setVerifyDragOver] = useState(false);
   const [verifyBusy, setVerifyBusy] = useState(false);
+  const verifyFileRef = useRef(null);
+  const verifyCameraRef = useRef(null);
   const [colVis, setColVis] = useState(() => readColumnVisibility());
   const [columnsOpen, setColumnsOpen] = useState(false);
   const colPopRef = useRef(null);
@@ -283,20 +279,63 @@ export default function TraderDeckTradeJournal() {
 
   const closeVerify = () => {
     setVerifyTrade(null);
-    setVerifyFile(null);
+    setVerifyImage(null);
+    setVerifyPrepBusy(false);
+    setVerifyDragOver(false);
     setVerifyBusy(false);
   };
 
+  const applyVerifyFile = useCallback(async (file) => {
+    if (!file || !verifyTrade) return;
+    setVerifyPrepBusy(true);
+    try {
+      const dataUrl = await compressImageToJpegDataUrl(file, COMPRESS_PRESETS.tradeVerify);
+      setVerifyImage({ dataUrl, label: file.name || 'Screenshot' });
+    } catch (err) {
+      toast.error(err?.message || 'Could not use this image.');
+    } finally {
+      setVerifyPrepBusy(false);
+    }
+  }, [verifyTrade]);
+
+  useEffect(() => {
+    if (!verifyTrade) return undefined;
+    const onPaste = (e) => {
+      const cd = e.clipboardData;
+      if (!cd) return;
+      const files = cd.files;
+      if (files && files[0] && files[0].type.startsWith('image/')) {
+        e.preventDefault();
+        void applyVerifyFile(files[0]);
+        return;
+      }
+      const items = cd.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i += 1) {
+        if (items[i].kind === 'file' && items[i].type.startsWith('image/')) {
+          const f = items[i].getAsFile();
+          if (f) {
+            e.preventDefault();
+            void applyVerifyFile(f);
+          }
+          break;
+        }
+      }
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  }, [verifyTrade, applyVerifyFile]);
+
   const submitVerify = async () => {
-    if (!verifyTrade?.id || !verifyFile) {
-      toast.error('Choose a screenshot first.');
+    if (!verifyTrade?.id || !verifyImage?.dataUrl) {
+      toast.error('Add a screenshot first (camera, file, paste, or drop).');
       return;
     }
     setVerifyBusy(true);
     try {
-      const dataUrl = await readFileAsDataUrl(verifyFile);
+      const dataUrl = verifyImage.dataUrl;
       const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
-      const mimeType = verifyFile.type || 'image/png';
+      const mimeType = 'image/jpeg';
       const res = await Api.verifyTradeOutcome(verifyTrade.id, base64, mimeType);
       if (res.data?.applied) toast.success(res.data?.message || 'Outcome saved from screenshot.');
       else toast.warning(res.data?.message || 'Could not confirm from this image — try a clearer screenshot.');
@@ -760,17 +799,117 @@ export default function TraderDeckTradeJournal() {
             <p className="td-journal-modal-pair">
               {verifyTrade.pair} · {verifyTrade.direction} — upload a clear image of closed P/L from your platform.
             </p>
+            <p className="td-journal-verify-hint">
+              Use camera or gallery, choose a file, drag and drop onto the area below, or paste an image (Ctrl+V / ⌘V).
+            </p>
+            <div
+              className={['td-journal-verify-drop', verifyDragOver ? 'td-journal-verify-drop--active' : ''].filter(Boolean).join(' ')}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                setVerifyDragOver(true);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setVerifyDragOver(true);
+              }}
+              onDragLeave={() => setVerifyDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setVerifyDragOver(false);
+                const f = e.dataTransfer?.files?.[0];
+                if (f) void applyVerifyFile(f);
+              }}
+            >
+              {verifyImage?.dataUrl ? (
+                <>
+                  <img src={verifyImage.dataUrl} alt="Screenshot preview" className="td-journal-verify-preview" />
+                  <p className="td-journal-verify-filename">{verifyImage.label}</p>
+                  <div className="td-journal-verify-tools">
+                    <button
+                      type="button"
+                      className="td-journal-modal-btn"
+                      disabled={verifyPrepBusy || verifyBusy}
+                      onClick={() => verifyFileRef.current?.click()}
+                    >
+                      {verifyPrepBusy ? 'Working…' : 'Replace…'}
+                    </button>
+                    <button
+                      type="button"
+                      className="td-journal-modal-btn"
+                      disabled={verifyPrepBusy || verifyBusy}
+                      onClick={() => verifyCameraRef.current?.click()}
+                    >
+                      Camera / photo
+                    </button>
+                    <button
+                      type="button"
+                      className="td-journal-modal-btn"
+                      disabled={verifyPrepBusy || verifyBusy}
+                      onClick={() => setVerifyImage(null)}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="td-journal-verify-drop-title">{verifyPrepBusy ? 'Preparing image…' : 'Drop screenshot here'}</p>
+                  <div className="td-journal-verify-tools">
+                    <button
+                      type="button"
+                      className="td-journal-modal-btn primary"
+                      disabled={verifyPrepBusy || verifyBusy}
+                      onClick={() => verifyCameraRef.current?.click()}
+                    >
+                      {verifyPrepBusy ? 'Working…' : 'Camera / photo'}
+                    </button>
+                    <button
+                      type="button"
+                      className="td-journal-modal-btn"
+                      disabled={verifyPrepBusy || verifyBusy}
+                      onClick={() => verifyFileRef.current?.click()}
+                    >
+                      Choose file
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
             <input
+              ref={verifyFileRef}
               type="file"
-              accept="image/*"
-              className="td-journal-verify-file"
-              onChange={(e) => setVerifyFile(e.target.files?.[0] || null)}
+              className="td-journal-sr-only"
+              accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+              aria-hidden
+              tabIndex={-1}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = '';
+                if (f) void applyVerifyFile(f);
+              }}
             />
-            {verifyFile && (
-              <p className="td-journal-verify-filename">{verifyFile.name}</p>
-            )}
+            <input
+              ref={verifyCameraRef}
+              type="file"
+              className="td-journal-sr-only"
+              accept="image/*"
+              capture="environment"
+              aria-hidden
+              tabIndex={-1}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = '';
+                if (f) void applyVerifyFile(f);
+              }}
+            />
             <div className="td-journal-modal-actions">
-              <button type="button" className="td-journal-modal-btn primary" onClick={submitVerify} disabled={verifyBusy || !verifyFile}>
+              <button
+                type="button"
+                className="td-journal-modal-btn primary"
+                onClick={submitVerify}
+                disabled={verifyBusy || verifyPrepBusy || !verifyImage?.dataUrl}
+              >
                 {verifyBusy ? 'Checking…' : 'Run verification'}
               </button>
               <button type="button" className="td-journal-modal-btn" onClick={closeVerify} disabled={verifyBusy}>
