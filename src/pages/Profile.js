@@ -21,6 +21,11 @@ import {
     getXPProgress,
     getNextRankMilestone
 } from '../utils/xpSystem';
+import {
+    SITE_LANGUAGES,
+    applySiteLanguage,
+    getPreferredSiteLanguage,
+} from '../utils/siteLanguage';
 
 const resolveApiBaseUrl = () => {
     return Api.getBaseUrl() || '';
@@ -121,6 +126,7 @@ const Profile = () => {
         win_rate: false, total_trades: false, login_streak: false
     });
     const [profileStatsPreview, setProfileStatsPreview] = useState(null);
+    const [siteLanguage, setSiteLanguage] = useState(getPreferredSiteLanguage());
 
     const initialLoadDone = useRef(false);
 // Add near your other helper functions
@@ -256,6 +262,9 @@ useEffect(() => {
 
                 if (settingsRes?.data?.timezone != null) {
                     setFormData(prev => ({ ...prev, timezone: settingsRes.data.timezone || "" }));
+                }
+                if (settingsRes?.data?.language && SITE_LANGUAGES.some((l) => l.code === settingsRes.data.language)) {
+                    setSiteLanguage(settingsRes.data.language);
                 }
                 if (settingsRes?.data?.settings?.profile_visible_stats) {
                     try {
@@ -1129,6 +1138,39 @@ if (!avatarToSave && avatarColor) {
                                     <option value="">Auto (browser)</option>
                                     {getIANATimezones().map(tz => (
                                         <option key={tz} value={tz}>{tz}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="pf-form-group">
+                                <label className="pf-label">Website Language <span className="pf-label-hint">· one click, site-wide</span></label>
+                                <select
+                                    className="pf-input"
+                                    name="siteLanguage"
+                                    value={siteLanguage}
+                                    onChange={async (e) => {
+                                        const lang = e.target.value || 'en';
+                                        setSiteLanguage(lang);
+                                        try {
+                                            const token = localStorage.getItem('token');
+                                            if (token) {
+                                                await axios.put(
+                                                    `${resolveApiBaseUrl()}/api/users/settings`,
+                                                    { language: lang === 'en' ? null : lang },
+                                                    { headers: { Authorization: `Bearer ${token}` } }
+                                                );
+                                            }
+                                        } catch (error) {
+                                            console.warn('Language preference server sync failed:', error?.response?.data?.message || error?.message);
+                                        }
+                                        applySiteLanguage(lang, { persist: true, forceReloadFallback: true });
+                                        const languageLabel = SITE_LANGUAGES.find((l) => l.code === lang)?.label || 'English';
+                                        setStatus(`Language switched to ${languageLabel}.`);
+                                        setTimeout(() => setStatus(""), 3000);
+                                    }}
+                                >
+                                    {SITE_LANGUAGES.map((lang) => (
+                                        <option key={lang.code} value={lang.code}>{lang.label}</option>
                                     ))}
                                 </select>
                             </div>

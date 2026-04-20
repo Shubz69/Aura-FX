@@ -16,6 +16,7 @@ import { consumePostLoginTransition, isPostLoginTransitionExcludedPath } from '.
 import { LEGACY_MISSED_TRADE_REVIEW_PATH, PLAYBOOK_MISSED_REVIEW_PATH } from './lib/trader-playbook/playbookPaths';
 import { ensureWebPushSubscription } from './utils/ensureWebPushSubscription';
 import JournalReminderScheduler from './components/JournalReminderScheduler';
+import SiteLanguageBootstrap from './components/SiteLanguageBootstrap';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/Courses.css';
@@ -296,6 +297,7 @@ function AppRoutes() {
 
             <Navbar />
             {user?.id ? <JournalReminderScheduler /> : null}
+            <SiteLanguageBootstrap />
 
             {/* Main content area - page-wrapper now only contains the route content */}
             <main className={`page-wrapper${postLoginTransitionActive ? ' post-login-transition-surface' : ''}`}>
