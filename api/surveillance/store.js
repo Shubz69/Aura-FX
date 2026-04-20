@@ -281,6 +281,17 @@ function tabToEventTypes(tab) {
   return Object.prototype.hasOwnProperty.call(map, tab) ? map[tab] : null;
 }
 
+function normalizeEventTypeFilter(eventType) {
+  const et = String(eventType || '').toLowerCase().trim();
+  if (!et) return null;
+  const aliases = {
+    geopolitical: 'geopolitics',
+    central_banks: 'central_bank',
+    transport: 'logistics',
+  };
+  return aliases[et] || et;
+}
+
 function countrySearchTermsForIso(iso2) {
   const iso = String(iso2 || '').trim().toUpperCase();
   const map = {
@@ -344,8 +355,9 @@ async function queryFeed({
     params.push(Math.floor(hours));
   }
   if (eventType) {
+    const evType = normalizeEventTypeFilter(eventType);
     sql += ` AND event_type = ?`;
-    params.push(eventType);
+    params.push(evType);
   }
   if (types && types.length) {
     sql += ` AND event_type IN (${types.map(() => '?').join(',')})`;

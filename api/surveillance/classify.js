@@ -67,6 +67,29 @@ function classifyEventType(text) {
   return 'geopolitics';
 }
 
+function normalizeEventType(eventType) {
+  const et = String(eventType || '').toLowerCase();
+  const aliases = {
+    geopolitical: 'geopolitics',
+    central_banks: 'central_bank',
+    transport: 'logistics',
+  };
+  const normalized = aliases[et] || et;
+  const allowed = new Set([
+    'macro',
+    'geopolitics',
+    'conflict',
+    'aviation',
+    'maritime',
+    'logistics',
+    'energy',
+    'commodities',
+    'sanctions',
+    'central_bank',
+  ]);
+  return allowed.has(normalized) ? normalized : 'geopolitics';
+}
+
 function severityFromText(text) {
   const t = text.toLowerCase();
   if (/\b(catastrophic|declaration of war|nuclear)\b/.test(t)) return 5;
@@ -109,7 +132,7 @@ function classifyRecord({ title, summary, body_snippet }) {
   if (/\b(attack|sanction|crisis|default|recession|hike rates)\b/i.test(text)) sentiment = 'negative';
 
   return {
-    event_type,
+    event_type: normalizeEventType(event_type),
     severity,
     countries,
     lat: geo.lat,
@@ -121,6 +144,7 @@ function classifyRecord({ title, summary, body_snippet }) {
 
 module.exports = {
   classifyEventType,
+  normalizeEventType,
   severityFromText,
   extractCountries,
   geolocateFromCountries,

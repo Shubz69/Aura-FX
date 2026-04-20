@@ -53,6 +53,59 @@ function trustBandHint(maxTrust) {
   return null;
 }
 
+function toCategoryLabel(eventType) {
+  const et = String(eventType || '').toLowerCase();
+  const map = {
+    central_bank: 'Central banks',
+    geopolitical: 'Geopolitics',
+    geopolitics: 'Geopolitics',
+    logistics: 'Maritime & logistics',
+    maritime: 'Maritime & logistics',
+  };
+  if (map[et]) return map[et];
+  return et ? et.replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase()) : 'General';
+}
+
+function prioritySignalScore(e) {
+  const sev = Number(e.severity) || 1;
+  const impact = Number(e.market_impact_score) || 0;
+  const rank = Number(e.rank_score) || 0;
+  const corr = Number(e.corroboration_count) || 0;
+  const trust = Number(e.trust_score) || 0;
+  const ageHours = Math.max(0, (Date.now() - eventRecencyMs(e)) / 3600000);
+  const recencyBoost = Math.max(0, 32 - ageHours * 1.25);
+  return sev * 24 + impact * 0.95 + rank * 0.42 + corr * 5 + trust * 0.12 + recencyBoost;
+}
+
+function compactPriorityLine(e, nowIso) {
+  const title = String(e.title || '').replace(/\s+/g, ' ').trim();
+  const shortTitle = title.length > 84 ? `${title.slice(0, 81).trim()}...` : title;
+  const recency = formatRecencyHours(nowIso, eventRecencyMs(e));
+  const category = toCategoryLabel(e.event_type);
+  const sev = Number(e.severity) || 1;
+  const impact = Number(e.market_impact_score);
+  const impactBand =
+    Number.isFinite(impact) && impact >= 34
+      ? 'high market impact'
+      : Number.isFinite(impact) && impact >= 24
+        ? 'elevated market impact'
+        : Number.isFinite(impact)
+          ? 'watch impact'
+          : 'watch';
+  return `${category} · S${sev} · ${impactBand} · ${recency} · ${shortTitle}`;
+}
+
+function formatRecencyHours(nowIso, tsMs) {
+  if (!Number.isFinite(tsMs) || tsMs <= 0) return 'timing unclear';
+  const diff = Math.max(0, new Date(nowIso).getTime() - tsMs);
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 48) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
 function buildIntelDigest(events, opts = {}) {
   const limitStories = opts.limitStories ?? 7;
   const limitImpact = opts.limitImpact ?? 7;
@@ -199,6 +252,17 @@ function buildIntelDigest(events, opts = {}) {
       observability: observabilityNote(e),
     }));
 
+  const nowIso = new Date().toISOString();
+  const priorityRanked = [...events]
+    .map((e) => ({ e, score: prioritySignalScore(e) }))
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return eventRecencyMs(b.e) - eventRecencyMs(a.e);
+    })
+    .map((x) => x.e);
+  const importantNow = priorityRanked.slice(0, 4).map((e) => compactPriorityLine(e, nowIso));
+  const lowerPriority = priorityRanked.slice(4, 8).map((e) => compactPriorityLine(e, nowIso));
+
   return {
     summary: {
       tape_events: events.length,
@@ -210,6 +274,10 @@ function buildIntelDigest(events, opts = {}) {
     maritimeLogistics,
     highMarketImpact,
     corroboratedAlerts,
+    prioritySummary: {
+      importantNow,
+      lowerPriority,
+    },
     majorRegions: regionPressure.map(({ region, score }) => ({ region, score })),
     regionPressure,
   };

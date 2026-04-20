@@ -1745,6 +1745,46 @@
   font-variant-numeric: tabular-nums;
 }
 
+.sv-rail-priority-brief {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sv-rail-priority-title {
+  margin: 0 0 8px;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(248, 195, 125, 0.9);
+}
+
+.sv-rail-priority-block + .sv-rail-priority-block {
+  margin-top: 8px;
+}
+
+.sv-rail-priority-heading {
+  margin: 0 0 5px;
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.sv-rail-priority-list {
+  margin: 0;
+  padding-left: 16px;
+  display: grid;
+  gap: 4px;
+}
+
+.sv-rail-priority-list li {
+  font-size: 0.69rem;
+  line-height: 1.38;
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .sv-rail-focus[data-lens-urgency='critical'] {
   border-color: rgba(200, 82, 74, 0.38);
   box-shadow: 0 0 32px rgba(180, 48, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.04);

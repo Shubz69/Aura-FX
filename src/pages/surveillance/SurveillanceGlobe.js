@@ -133,6 +133,61 @@ function eventTrackKind(ev) {
   return 'intel';
 }
 
+function normalizeEventCategory(eventType) {
+  const et = String(eventType || '').toLowerCase();
+  if (et === 'central_bank') return 'central_banks';
+  if (et === 'logistics') return 'maritime';
+  if (
+    et === 'all' ||
+    et === 'macro' ||
+    et === 'geopolitics' ||
+    et === 'conflict' ||
+    et === 'aviation' ||
+    et === 'maritime' ||
+    et === 'energy' ||
+    et === 'commodities' ||
+    et === 'sanctions' ||
+    et === 'central_banks' ||
+    et === 'high_impact'
+  ) {
+    return et;
+  }
+  return 'geopolitics';
+}
+
+function eventUiCategory(ev) {
+  if (!ev) return 'geopolitics';
+  const et = normalizeEventCategory(ev.event_type);
+  if (et && et !== 'geopolitics') return et;
+  const text = `${ev.title || ''} ${ev.summary || ''}`.toLowerCase();
+  if (/\b(sanction|ofac|asset freeze)\b/.test(text)) return 'sanctions';
+  if (/\b(airspace|flight|aviation|airport|notam|ads-b)\b/.test(text)) return 'aviation';
+  if (/\b(maritime|shipping|vessel|port|freight|logistics|strait)\b/.test(text)) return 'maritime';
+  if (/\b(oil|opec|crude|gas|lng|energy)\b/.test(text)) return 'energy';
+  if (/\b(wheat|corn|soy|copper|gold|commodity)\b/.test(text)) return 'commodities';
+  if (/\b(central bank|fed|ecb|boj|boe|policy rate|interest rate)\b/.test(text)) return 'central_banks';
+  if (/\b(conflict|military|war|missile|strike|troops)\b/.test(text)) return 'conflict';
+  if (/\b(gdp|inflation|cpi|employment|jobs report|treasury)\b/.test(text)) return 'macro';
+  return 'geopolitics';
+}
+
+function categoryColor(category) {
+  const c = normalizeEventCategory(category);
+  const palette = {
+    macro: 'rgba(176, 214, 255, 0.9)',
+    geopolitics: 'rgba(236, 172, 118, 0.92)',
+    conflict: 'rgba(255, 130, 116, 0.94)',
+    aviation: 'rgba(118, 228, 255, 0.96)',
+    maritime: 'rgba(132, 204, 255, 0.9)',
+    energy: 'rgba(255, 194, 106, 0.94)',
+    commodities: 'rgba(212, 184, 118, 0.92)',
+    sanctions: 'rgba(255, 160, 136, 0.94)',
+    central_banks: 'rgba(190, 214, 255, 0.94)',
+    high_impact: 'rgba(255, 146, 110, 0.95)',
+  };
+  return palette[c] || palette.geopolitics;
+}
+
 function clusterDominantTrackKind(idMap, pt) {
   const order = { intel: 0, military: 1, aviation: 2 };
   let best = 'intel';
@@ -146,6 +201,24 @@ function clusterDominantTrackKind(idMap, pt) {
       best = k;
     }
   }
+  return best;
+}
+
+function clusterDominantCategory(idMap, pt) {
+  const counts = new Map();
+  for (const id of pt.eventIds || []) {
+    const ev = idMap.get(String(id));
+    const cat = eventUiCategory(ev);
+    counts.set(cat, (counts.get(cat) || 0) + 1);
+  }
+  let best = 'geopolitics';
+  let max = 0;
+  counts.forEach((v, k) => {
+    if (v > max) {
+      max = v;
+      best = k;
+    }
+  });
   return best;
 }
 
@@ -183,6 +256,7 @@ export default function SurveillanceGlobe({
   events,
   selectedId,
   focusRegion,
+  activeCategory = 'all',
   onSelectEvent,
   onCountryFocus,
   onGlobeBackground,
@@ -563,21 +637,24 @@ export default function SurveillanceGlobe({
   const useHex = !reducedMotion && events.length > 52 && !(focusIso && events.length < 64);
 
   const rawPoints = useMemo(() => {
+    const activeCat = normalizeEventCategory(activeCategory);
     return events
       .filter((e) => e.lat != null && e.lng != null)
       .map((e) => {
         const tk = eventTrackKind(e);
+        const cat = eventUiCategory(e);
+        const catBoost = activeCat !== 'all' && cat === activeCat ? 1.22 : 1;
         const boost = tk === 'aviation' ? 1.38 : tk === 'military' ? 1.22 : 1;
         return {
           lat: e.lat,
           lng: e.lng,
           w: Math.max(
             0.15,
-            (((e.rank_score != null ? Number(e.rank_score) : 50) + (e.severity || 1) * 6) / 130) * boost
+            (((e.rank_score != null ? Number(e.rank_score) : 50) + (e.severity || 1) * 6) / 130) * boost * catBoost
           ),
         };
       });
-  }, [events]);
+  }, [events, activeCategory]);
 
   const hexPoints = useMemo(() => rawPoints, [rawPoints]);
 
@@ -595,6 +672,7 @@ export default function SurveillanceGlobe({
   }, []);
 
   const points = useMemo(() => {
+    const activeCat = normalizeEventCategory(activeCategory);
     const idMap = new Map();
     for (const e of events) idMap.set(String(e.id), e);
     const list = clusterEvents(events, reducedMotion ? 0 : 1);
@@ -607,6 +685,8 @@ export default function SurveillanceGlobe({
       const lens = !!focusRegion;
       const muted = lens && !inFocus && !isSel;
       const trackKind = clusterDominantTrackKind(idMap, p);
+      const dominantCategory = clusterDominantCategory(idMap, p);
+      const categoryFocused = activeCat !== 'all' && dominantCategory === activeCat;
       const liveCluster =
         p.eventIds?.some((evId) => {
           const ev = idMap.get(String(evId));
@@ -621,21 +701,11 @@ export default function SurveillanceGlobe({
           ? '#fff0d4'
           : muted
             ? 'rgba(120, 120, 130, 0.28)'
-            : trackKind === 'aviation'
-              ? 'rgba(118, 228, 255, 0.96)'
-              : trackKind === 'military'
-                ? 'rgba(255, 148, 112, 0.94)'
-                : liveCluster
-                  ? 'rgba(154, 214, 255, 0.92)'
-                  : p.maxSev >= 5
-                    ? '#e86868'
-                    : p.maxSev >= 4
-                      ? '#e8945c'
-                      : p.maxSev >= 3
-                        ? '#d4b84a'
-                        : lens && inFocus
-                          ? 'rgba(255, 214, 160, 0.92)'
-                          : 'rgba(234,169,96,0.52)';
+            : activeCat !== 'all' && !categoryFocused
+              ? 'rgba(106, 116, 130, 0.36)'
+              : liveCluster && dominantCategory === 'aviation'
+                ? 'rgba(128, 234, 255, 0.97)'
+                : categoryColor(activeCat !== 'all' ? activeCat : dominantCategory);
       return {
         ...p,
         color,
@@ -646,6 +716,7 @@ export default function SurveillanceGlobe({
             p.maxSev * 0.05 +
             (liveCluster ? 0.07 : 0) +
             (trackKind === 'aviation' || trackKind === 'military' ? 0.06 : 0) +
+            (categoryFocused ? 0.08 : 0) +
             (hot ? pulseStep * 0.06 : 0) +
             (isSel ? 0.14 : 0) +
             (isHover ? 0.08 : 0) +
@@ -655,10 +726,11 @@ export default function SurveillanceGlobe({
           0.012 +
           Math.min(0.065, p.count * 0.004 + pulseBoost + (isSel ? 0.018 : 0) + (isHover ? 0.01 : 0)) +
           (liveCluster ? 0.014 : 0) +
+          (categoryFocused ? 0.012 : 0) +
           (lens && inFocus ? 0.02 : 0),
       };
     });
-  }, [events, selectedId, hoveredId, reducedMotion, pulseStep, focusRegion]);
+  }, [events, selectedId, hoveredId, reducedMotion, pulseStep, focusRegion, activeCategory]);
 
   const tensionByIso = useMemo(() => {
     const m = new Map();

@@ -566,6 +566,7 @@ export default function SurveillancePage() {
                 events={events}
                 selectedId={selectedId}
                 focusRegion={focusRegion}
+                activeCategory={tab}
                 onSelectEvent={onGlobeSelectEvent}
                 onCountryFocus={onGlobeCountryFocus}
                 onGlobeBackground={onGlobeBackground}

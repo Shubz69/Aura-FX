@@ -42,9 +42,12 @@ function IntelSidePanel({
     maritimeLogistics = [],
     highMarketImpact = [],
     corroboratedAlerts = [],
+    prioritySummary = {},
     majorRegions = [],
     regionPressure = [],
   } = d;
+  const importantNow = Array.isArray(prioritySummary.importantNow) ? prioritySummary.importantNow : [];
+  const lowerPriority = Array.isArray(prioritySummary.lowerPriority) ? prioritySummary.lowerPriority : [];
 
   const pressure = regionPressure.length
     ? regionPressure
@@ -196,6 +199,31 @@ function IntelSidePanel({
               </dd>
             </div>
           </dl>
+          {(importantNow.length || lowerPriority.length) && focusSummary.isoHint ? (
+            <div className="sv-rail-priority-brief" aria-label="Country priority brief">
+              <p className="sv-rail-priority-title">Country brief</p>
+              {importantNow.length ? (
+                <div className="sv-rail-priority-block">
+                  <p className="sv-rail-priority-heading">Important now</p>
+                  <ul className="sv-rail-priority-list">
+                    {importantNow.map((line, idx) => (
+                      <li key={`prio-hi-${idx}`}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {lowerPriority.length ? (
+                <div className="sv-rail-priority-block">
+                  <p className="sv-rail-priority-heading">Lower priority</p>
+                  <ul className="sv-rail-priority-list">
+                    {lowerPriority.map((line, idx) => (
+                      <li key={`prio-lo-${idx}`}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
