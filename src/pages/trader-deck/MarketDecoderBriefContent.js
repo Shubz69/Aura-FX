@@ -265,6 +265,12 @@ export default function MarketDecoderBriefContent({ brief: rawBrief, q }) {
     : null;
   const ds = brief.meta?.dataSufficiency;
   const dataSufficiencyWarn = ds && ds.sufficientForStructure === false;
+  const dataSufficiencyThin =
+    ds &&
+    ds.sufficientForStructure !== false &&
+    Number.isFinite(Number(ds.dailyBarCount)) &&
+    Number.isFinite(Number(ds.recommendedBars)) &&
+    Number(ds.dailyBarCount) < Number(ds.recommendedBars);
   const pulseBias = pulseDirectionLabel(brief);
   const pulseSub = pulseContextLine(brief);
   const changePctUnavailableTitle =
@@ -282,6 +288,15 @@ export default function MarketDecoderBriefContent({ brief: rawBrief, q }) {
           {ds.calendarOk === false ? (
             <p className="md-ref-data-sufficiency-sub">Economic calendar did not load for this request.</p>
           ) : null}
+        </div>
+      ) : null}
+      {dataSufficiencyThin ? (
+        <div className="md-ref-data-sufficiency-banner md-ref-data-sufficiency-banner--thin" role="status">
+          <strong>Limited history loaded</strong>
+          <p>
+            Structure is scored with {ds.dailyBarCount} daily bar(s). Confidence improves as history approaches{' '}
+            {ds.recommendedBars} bars.
+          </p>
         </div>
       ) : null}
       <div className="md-ref-grid md-ref-grid--dense">

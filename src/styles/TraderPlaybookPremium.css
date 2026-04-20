@@ -3213,6 +3213,96 @@
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.tp-detail-end-save {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.95fr);
+  gap: 10px;
+}
+
+.tp-detail-end-save__card,
+.tp-detail-end-save__saved {
+  padding: 12px 14px;
+}
+
+.tp-detail-end-save__head h3 {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(235, 232, 255, 0.94);
+}
+
+.tp-detail-end-save__head p {
+  margin: 6px 0 0;
+  font-size: 0.74rem;
+  color: rgba(200, 196, 232, 0.58);
+}
+
+.tp-detail-end-save__actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tp-detail-end-save__list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.tp-detail-end-save__item {
+  width: 100%;
+  text-align: left;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 8px 10px;
+  color: rgba(232, 235, 255, 0.9);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.tp-detail-end-save__item:hover {
+  border-color: rgba(180, 160, 255, 0.34);
+  background: rgba(120, 110, 210, 0.18);
+}
+
+.tp-detail-end-save__item--active {
+  border-color: rgba(245, 192, 120, 0.42);
+  background: rgba(60, 36, 12, 0.42);
+}
+
+.tp-detail-end-save__item-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tp-detail-end-save__item-meta {
+  font-size: 0.66rem;
+  color: rgba(200, 196, 232, 0.58);
+  white-space: nowrap;
+}
+
+.tp-detail-end-save__empty {
+  margin: 0;
+  font-size: 0.76rem;
+  color: rgba(200, 196, 232, 0.58);
+  line-height: 1.45;
+}
+
 @media (max-width: 1180px) {
   .tp-detail-prismetrics {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3234,6 +3324,10 @@
 
   .tp-detail-command-hero__actions {
     justify-content: flex-start;
+  }
+
+  .tp-detail-end-save {
+    grid-template-columns: 1fr;
   }
 }
 

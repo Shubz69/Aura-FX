@@ -124,6 +124,7 @@ function ResultPanel({ result, onReset, embedded = false }) {
   const action = result.traderAction || {};
   const explanation = result.userExplanation || {};
   const answers = result.traderAnswers || {};
+  const processingMeta = result.processingMeta || {};
 
   return (
     <div className="acc-result">
@@ -264,6 +265,12 @@ function ResultPanel({ result, onReset, embedded = false }) {
           </button>
         )}
       </div>
+      {(Number.isFinite(Number(processingMeta.elapsedMs)) || Number.isFinite(Number(processingMeta.repairPasses))) && (
+        <p className="acc-processing-meta">
+          Analysis time: {Number.isFinite(Number(processingMeta.elapsedMs)) ? `${(Number(processingMeta.elapsedMs) / 1000).toFixed(1)}s` : 'n/a'}
+          {Number.isFinite(Number(processingMeta.repairPasses)) ? ` · repair passes: ${Number(processingMeta.repairPasses)}` : ''}
+        </p>
+      )}
     </div>
   );
 }

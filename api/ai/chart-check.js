@@ -23,6 +23,7 @@ const ERROR_CODES = require('../utils/errorCodes');
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 const PERPLEXITY_MODEL = getPerplexityModelForVision();
 const PERPLEXITY_TEXT_MODEL = getPerplexityModelForChat();
+let chartCheckTableReadyPromise = null;
 
 /** Perplexity may return `content` as a string, array of {type,text}, or other shapes — normalize to plain text. */
 function normalizeAssistantContent(content) {
@@ -1259,8 +1260,9 @@ async function callOpenAIVision(images, systemPrompt, userPrompt) {
     'Do not use single quotes for JSON.';
 
   const envTok = Number(process.env.PERPLEXITY_CHART_CHECK_MAX_TOKENS);
-  const fromEnv = Number.isFinite(envTok) && envTok >= 512 ? envTok : 10000;
-  const maxOut = Math.min(16384, Math.max(4096, fromEnv));
+  const adaptiveDefault = images.length >= 3 ? 7200 : images.length === 2 ? 6400 : 5600;
+  const fromEnv = Number.isFinite(envTok) && envTok >= 512 ? envTok : adaptiveDefault;
+  const maxOut = Math.min(12000, Math.max(4096, fromEnv));
 
   const baseBody = {
     model: PERPLEXITY_MODEL,
@@ -1273,7 +1275,7 @@ async function callOpenAIVision(images, systemPrompt, userPrompt) {
   };
 
   // Perplexity rejects response_format json_schema / json_object when the request includes images.
-  const { content, finishReason } = await perplexityRequest({ ...baseBody }, 240000);
+  const { content, finishReason } = await perplexityRequest({ ...baseBody }, 140000);
   if (finishReason === 'length') {
     console.warn('[chart-check] vision completion truncated (finish_reason=length); JSON repair may run');
   }
@@ -1745,35 +1747,30 @@ async function runAiAnalysisPipeline({ rubric, context, images }) {
   const buckets = buildTimeframeBuckets(images);
   const systemPrompt = buildSystemPrompt({ rubric, context, images, buckets });
   const userPrompt = buildUserInstruction(images, buckets);
+  const startedAt = Date.now();
   const raw = await callOpenAIVision(images, systemPrompt, userPrompt);
   if (!safeString(raw).trim()) {
     throw new Error('Empty response from vision model');
   }
   let parsed = tryParseChartCheckJson(raw);
-  if (parsed) return parsed;
+  if (parsed) return { parsed, debug: { repairPasses: 0, elapsedMs: Date.now() - startedAt } };
   console.warn('[chart-check] vision JSON parse failed; running text-only repair pass');
   let repaired = '';
+  let repairPasses = 0;
   try {
     repaired = await callTextOnlyJsonRepair(raw);
+    repairPasses += 1;
     parsed = tryParseChartCheckJson(repaired);
   } catch (e) {
     console.warn('[chart-check] JSON repair request failed:', e.message);
   }
-  if (parsed) return parsed;
-  if (safeString(repaired).trim()) {
-    try {
-      console.warn('[chart-check] second JSON repair pass (re-parsing repair output)');
-      const repaired2 = await callTextOnlyJsonRepair(repaired);
-      parsed = tryParseChartCheckJson(repaired2);
-    } catch (e2) {
-      console.warn('[chart-check] second JSON repair failed:', e2.message);
-    }
-  }
-  if (parsed) return parsed;
+  if (parsed) return { parsed, debug: { repairPasses, elapsedMs: Date.now() - startedAt } };
   throw new Error('AI returned non-JSON response');
 }
 
 async function ensureTableReady() {
+  if (chartCheckTableReadyPromise) return chartCheckTableReadyPromise;
+  chartCheckTableReadyPromise = (async () => {
   try {
     await executeQuery(`
       CREATE TABLE IF NOT EXISTS ai_chart_checks (
@@ -1819,6 +1816,11 @@ async function ensureTableReady() {
       // already exists / non-critical
     }
   }
+  })().catch((err) => {
+    chartCheckTableReadyPromise = null;
+    throw err;
+  });
+  return chartCheckTableReadyPromise;
 }
 
 async function persistAnalysis({ userId, context, images, result }) {
@@ -1912,18 +1914,23 @@ module.exports = async (req, res) => {
       }
 
       const rubric = CHECKLIST_RUBRIC[context.checklistType];
-      const rawAnalysis = await runAiAnalysisPipeline({ rubric, context, images });
+      const startedAt = Date.now();
+      const { parsed: rawAnalysis, debug: pipelineDebug } = await runAiAnalysisPipeline({ rubric, context, images });
       const result = normalizeResult(rawAnalysis, {
         rubric,
         checklistType: context.checklistType,
         context,
         imageCount: images.length,
       });
-      try {
-        await persistAnalysis({ userId, context, images, result });
-      } catch (persistErr) {
+      const totalMs = Date.now() - startedAt;
+      result.processingMeta = {
+        imageCount: images.length,
+        elapsedMs: totalMs,
+        repairPasses: pipelineDebug?.repairPasses || 0,
+      };
+      void persistAnalysis({ userId, context, images, result }).catch((persistErr) => {
         console.error('[chart-check] persist warning:', persistErr.message);
-      }
+      });
 
       recordChartCheck();
       return res.status(200).json({ success: true, result, requestId });

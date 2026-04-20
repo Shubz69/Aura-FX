@@ -2668,6 +2668,15 @@
   color: rgba(255, 210, 140, 0.95);
 }
 
+.md-ref-data-sufficiency-banner--thin {
+  border-color: rgba(150, 190, 255, 0.35);
+  background: rgba(12, 24, 44, 0.55);
+}
+
+.md-ref-data-sufficiency-banner--thin strong {
+  color: rgba(190, 220, 255, 0.95);
+}
+
 .md-ref-data-sufficiency-sub {
   margin: 8px 0 0;
   opacity: 0.88;

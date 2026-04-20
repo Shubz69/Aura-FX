@@ -778,8 +778,14 @@ async function runMarketDecoder(symbolInput) {
   const eventHighImpactSoon = eventsForScoring.some((e) => e.impact === 'High');
   const pairMeetingsPick = pickEventsForAsset(calRows, resolved, 10);
 
-  const MIN_BARS_FOR_STRUCTURE = 5;
+  // Hard minimum to score direction from loaded structure.
+  // We intentionally keep this low because marketDecoderData can synthesize a
+  // sparse 2-point daily series from live quote when providers are thin.
+  const MIN_BARS_FOR_STRUCTURE = 2;
+  // Recommended history for stronger MA/pivot confidence (used for guidance only).
+  const RECOMMENDED_BARS_FOR_STRUCTURE = 5;
   const structureInsufficient = !seriesPack.ok || closes.length < MIN_BARS_FOR_STRUCTURE;
+  const structureThinHistory = !structureInsufficient && closes.length < RECOMMENDED_BARS_FOR_STRUCTURE;
 
   let bull;
   let bear;
@@ -797,7 +803,7 @@ async function runMarketDecoder(symbolInput) {
     condition = eventHighImpactSoon ? 'Event Risk' : 'Insufficient history';
     approach =
       closes.length > 0 && closes.length < MIN_BARS_FOR_STRUCTURE
-        ? `Only ${closes.length} daily bar(s) loaded — need at least ${MIN_BARS_FOR_STRUCTURE} to score trend vs MAs. Live quote is still shown.`
+        ? `Only ${closes.length} daily bar(s) loaded — need at least ${MIN_BARS_FOR_STRUCTURE} to score direction from structure. Live quote is still shown.`
         : 'Daily OHLC series did not load — cannot score MAs, pivots, or bias from structure. Check data feeds or retry.';
   } else {
     const scored = scoreRules({
@@ -875,7 +881,7 @@ async function runMarketDecoder(symbolInput) {
   if (structureInsufficient) {
     exec = {
       preferredDirection: 'Stand aside',
-      entryCondition: 'Wait for at least five daily closes so MAs and session pivots can be computed.',
+      entryCondition: `Wait for at least ${MIN_BARS_FOR_STRUCTURE} daily closes so structure can be scored.`,
       invalidation: 'Not applicable — no structural bias is active.',
       riskConsideration: 'Incomplete history increases gap and level risk; confirm on your charting platform.',
       avoidThis: 'Avoid sizing from placeholder levels when OHLC is thin or missing.',
@@ -895,7 +901,7 @@ async function runMarketDecoder(symbolInput) {
     postureElite = {
       headline: 'DATA INCOMPLETE',
       subtitle: 'Decoder cannot score structure yet',
-      reason: `Only ${closes.length} daily bar(s) in pack — need ${MIN_BARS_FOR_STRUCTURE}+ for scored bias and pivots.`,
+      reason: `Only ${closes.length} daily bar(s) in pack — need ${MIN_BARS_FOR_STRUCTURE}+ for scored structure and pivots.`,
       whatWouldChangeThis: 'Reload after daily candles populate, or verify symbol mapping and data keys.',
     };
   }
@@ -1042,7 +1048,7 @@ async function runMarketDecoder(symbolInput) {
     signalBrief: pulseWeighted.signalBrief,
     momentum,
     volatility: volLabel,
-    marketState: structureInsufficient ? 'Data gap' : pulseState,
+    marketState: structureInsufficient ? 'Data gap' : structureThinHistory ? 'Limited history' : pulseState,
     decisionPressure: structureInsufficient
       ? 'Defer sizing — structure inputs are incomplete.'
       : decisionPressureText({ net, eventHighImpactSoon, conviction }),
@@ -1151,6 +1157,13 @@ async function runMarketDecoder(symbolInput) {
             ? `RSI ${rsiVal} (${rsiPack.label}) — not a thesis without structure`
             : 'RSI n/a (needs more closes for a 14-period read)',
         ].join(' · ')
+      : structureThinHistory
+        ? [
+            rsiVal != null ? `RSI ${rsiVal} (${rsiPack.label})` : 'RSI n/a',
+            `${volLabel} range regime`,
+            `Thin history (${closes.length} bars) — confidence is provisional`,
+            readiness.sessionAlignment !== 'Weak' ? `Session fit ${readiness.sessionAlignment}` : 'Session fit weak vs bias',
+          ].join(' · ')
       : [
           rsiVal != null ? `RSI ${rsiVal} (${rsiPack.label})` : 'RSI n/a',
           `${volLabel} range regime`,
@@ -1281,6 +1294,7 @@ async function runMarketDecoder(symbolInput) {
         dataSufficiency: {
           sufficientForStructure: !structureInsufficient,
           minBarsRequired: MIN_BARS_FOR_STRUCTURE,
+          recommendedBars: RECOMMENDED_BARS_FOR_STRUCTURE,
           dailyBarCount: closes.length,
           seriesOk: Boolean(seriesPack.ok),
           pivotsAvailable: Boolean(piv && piv.r1 != null && piv.s1 != null),

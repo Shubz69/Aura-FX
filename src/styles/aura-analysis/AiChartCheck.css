@@ -940,6 +940,11 @@ select.acc-input:focus {
   gap: 10px;
   flex-wrap: wrap;
 }
+.acc-processing-meta {
+  margin: 10px 2px 0;
+  font-size: 0.75rem;
+  color: rgba(196, 207, 255, 0.72);
+}
 .acc-go-checklist {
   width: auto;
   padding: 10px 18px;

@@ -1147,6 +1147,13 @@ export default function TraderPlaybook() {
     const isLeadingPlaybook = summary?.bestPlaybook?.id === selectedId;
     const winsShow = detailMetrics.wins ?? 0;
     const lossesShow = detailMetrics.losses ?? 0;
+    const savedPlaybooks = (setups || [])
+      .slice()
+      .sort(
+        (a, b) =>
+          Date.parse(String(b.updatedAt || b.createdAt || '')) - Date.parse(String(a.updatedAt || a.createdAt || ''))
+      )
+      .slice(0, 8);
 
     return (
       <div className="tp-root tp-root--detail-command">
@@ -2147,6 +2154,58 @@ export default function TraderPlaybook() {
             </div>
           ) : null}
         </div>
+        <section className="tp-detail-end-save" aria-label="Save and saved playbooks">
+          <div className="tp-panel tp-detail-end-save__card">
+            <div className="tp-detail-end-save__head">
+              <h3>Save playbook</h3>
+              <p>Changes are not locked in until you save.</p>
+            </div>
+            <div className="tp-detail-end-save__actions">
+              <button
+                type="button"
+                className="trader-suite-btn trader-suite-btn--primary"
+                onClick={() => saveSetup(false)}
+                disabled={saving}
+              >
+                {saving ? 'Saving…' : 'Save playbook'}
+              </button>
+              <button type="button" className="trader-suite-btn" onClick={() => saveSetup(true)} disabled={saving}>
+                Save as draft
+              </button>
+              <button type="button" className="trader-suite-btn" onClick={resetLocal}>
+                Revert unsaved edits
+              </button>
+            </div>
+          </div>
+          <div className="tp-panel tp-detail-end-save__saved">
+            <div className="tp-detail-end-save__head">
+              <h3>Saved playbooks</h3>
+              <p>Open any saved setup directly from here.</p>
+            </div>
+            <div className="tp-detail-end-save__list">
+              {savedPlaybooks.length ? (
+                savedPlaybooks.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`tp-detail-end-save__item${s.id === selectedId ? ' tp-detail-end-save__item--active' : ''}`}
+                    onClick={() => {
+                      if (s.id === selectedId) return;
+                      setSelectedId(s.id);
+                      setDetailTab('overview');
+                      loadDetailData(s.id);
+                    }}
+                  >
+                    <span className="tp-detail-end-save__item-name">{s.name || 'Untitled playbook'}</span>
+                    <span className="tp-detail-end-save__item-meta">{fmtShortDate(s.updatedAt || s.createdAt)}</span>
+                  </button>
+                ))
+              ) : (
+                <p className="tp-detail-end-save__empty">No saved playbooks yet. Save this one to create your first entry.</p>
+              )}
+            </div>
+          </div>
+        </section>
         </div>
       </div>
     );
