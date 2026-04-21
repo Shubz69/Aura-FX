@@ -1,7 +1,35 @@
 {
-  "generatedAt": "2026-04-21T15:12:28.388Z",
+  "generatedAt": "2026-04-21T23:47:59.004Z",
   "base": "https://www.auraterminal.ai",
   "results": [
+    {
+      "test": "live messaging: admin sends to user realtime",
+      "pass": true,
+      "steps": [
+        "Open /admin/inbox",
+        "Send unique message",
+        "Observe /messages receive"
+      ],
+      "expected": "User receives without waiting full poll interval when websocket healthy",
+      "actual": "User saw admin message in messages thread.",
+      "timingMs": 8868,
+      "consoleIssues": [],
+      "networkIssues": [
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        }
+      ],
+      "completion": "complete"
+    },
     {
       "test": "suite setup/execution",
       "pass": false,
@@ -10,7 +38,7 @@
         "Run strict scenarios"
       ],
       "expected": "All strict scenarios execute",
-      "actual": "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.message-content').filter({ hasText: 'STRICT_ADMIN_TO_USER_1776784341044' }).first()\nExpected: visible\nTimeout: 7000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 7000ms\u001b[22m\n\u001b[2m  - waiting for locator('.message-content').filter({ hasText: 'STRICT_ADMIN_TO_USER_1776784341044' }).first()\u001b[22m\n",
+      "actual": "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.admin-inbox-message-text').filter({ hasText: 'STRICT_USER_TO_ADMIN_1776815271563' }).first()\nExpected: visible\nTimeout: 7000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 7000ms\u001b[22m\n\u001b[2m  - waiting for locator('.admin-inbox-message-text').filter({ hasText: 'STRICT_USER_TO_ADMIN_1776815271563' }).first()\u001b[22m\n",
       "consoleIssues": [],
       "networkIssues": [],
       "completion": "still_unreliable"

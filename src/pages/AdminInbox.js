@@ -384,7 +384,7 @@ useEffect(() => {
       setLoadingMessages(true);
       loadMessagesInFlightRef.current = true;
       try {
-        const resp = await Api.getThreadMessages(activeThreadId, { limit: 50 });
+        const resp = await Api.getThreadMessages(activeThreadId, { limit: 50, _sync: Date.now() });
         if (!mounted || loadSeq !== messagesLoadSeqRef.current) return;
         setMessages(resp.data.messages || []);
         await Api.markThreadRead(activeThreadId);
@@ -402,7 +402,10 @@ useEffect(() => {
       WebSocketService.joinThread(activeThreadId);
       WebSocketService.onThreadMessage(({ threadId, message, thread }) => {
         if (!mounted || String(threadId) !== String(activeThreadId)) return;
-        setMessages(prev => prev.some(m => m.id === message.id) ? prev : [...prev, message]);
+        const mid = message?.id != null ? message.id : `rt_${Date.now()}`;
+        setMessages((prev) =>
+          prev.some((m) => String(m.id) === String(mid)) ? prev : [...prev, { ...message, id: mid }],
+        );
         if (thread) setThreads(prev => prev.map(t => t.id === thread.id ? { ...t, ...thread, adminUnreadCount: 0 } : t));
       });
       WebSocketService.onThreadRead(({ thread }) => {
@@ -413,13 +416,16 @@ useEffect(() => {
     });
     
     const pollInterval = setInterval(() => {
-      if (!mounted || !activeThreadId || WebSocketService.isConnected) return;
+      if (!mounted || !activeThreadId) return;
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
-      Api.getThreadMessages(activeThreadId, { limit: 50 }).then((resp) => {
-        if (!mounted) return;
-        setMessages(resp.data.messages || []);
-      }).catch(() => {});
-    }, 8000);
+      if (loadMessagesInFlightRef.current) return;
+      Api.getThreadMessages(activeThreadId, { limit: 50, _sync: Date.now() })
+        .then((resp) => {
+          if (!mounted) return;
+          setMessages(resp.data.messages || []);
+        })
+        .catch(() => {});
+    }, 1500);
     
     return () => { 
       clearInterval(pollInterval); 

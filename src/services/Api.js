@@ -177,7 +177,8 @@ const shouldMakeRequest = (url) => {
 
 // Lightweight GET cache (site-wide speed: avoid duplicate/repeated GETs)
 const GET_CACHE_TTL_MS = 18000; // 18s
-const GET_CACHE_SKIP_PATTERNS = /login|register|payment|stripe|password|forgot-password|auth\/login|auth\/register|auth\/forgot|auth\/phone-verification|auth\/verify-signup|auth\/send-signup/i;
+const GET_CACHE_SKIP_PATTERNS =
+    /login|register|payment|stripe|password|forgot-password|auth\/login|auth\/register|auth\/forgot|auth\/phone-verification|auth\/verify-signup|auth\/send-signup|aura-analysis\/platform-connect|aura-analysis\/platform-account|aura-analysis\/platform-history|aura-analysis\/trades/i;
 const getCacheStore = (() => {
     const store = new Map();
     return () => store;
@@ -739,10 +740,13 @@ const Api = {
     },
 
     getAuraAnalysisTrades: (params = {}) => {
-        return axios.get(`${API_BASE_URL}/api/aura-analysis/trades`, { params });
+        return axios.get(`${API_BASE_URL}/api/aura-analysis/trades`, { params, skipCache: true });
     },
     getAuraAnalysisPnl: (params = {}) => {
-        return axios.get(`${API_BASE_URL}/api/aura-analysis/trades`, { params: { pnl: 1, ...params } });
+        return axios.get(`${API_BASE_URL}/api/aura-analysis/trades`, {
+            params: { pnl: 1, ...params },
+            skipCache: true,
+        });
     },
     createAuraAnalysisTrade: (body) => {
         return axios.post(`${API_BASE_URL}/api/aura-analysis/trades`, body);
@@ -818,6 +822,7 @@ const Api = {
         const token = localStorage.getItem('token');
         return axios.get(`${API_BASE_URL}/api/aura-analysis/platform-connect`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
+            skipCache: true,
         });
     },
     connectAuraPlatform: (platformId, credentials) => {
@@ -843,6 +848,7 @@ const Api = {
         return axios.get(`${API_BASE_URL}/api/aura-analysis/platform-account`, {
             params: { platformId },
             headers: token ? { Authorization: `Bearer ${token}` } : {},
+            skipCache: true,
         });
     },
     /** @param {number|{ days?: number, from?: string, to?: string }} daysOrOpts - preset window in days, or { from, to } YYYY-MM-DD (UTC range on API) */
@@ -859,6 +865,7 @@ const Api = {
         return axios.get(`${API_BASE_URL}/api/aura-analysis/platform-history`, {
             params,
             headers: token ? { Authorization: `Bearer ${token}` } : {},
+            skipCache: true,
         });
     },
 

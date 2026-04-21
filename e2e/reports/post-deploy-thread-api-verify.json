@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-04-21T22:40:31.770Z",
+  "base": "https://www.auraterminal.ai",
+  "ensureAdmin": {
+    "ok": 30,
+    "status": 200,
+    "threadId": 30
+  },
+  "postThreadMessage": {
+    "ok": true,
+    "status": 200,
+    "threadId": 30
+  },
+  "getThreadMessages": {
+    "ok": true,
+    "status": 200,
+    "foundSentBody": true
+  }
+}

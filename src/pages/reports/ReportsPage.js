@@ -6,7 +6,7 @@
  * Admin  → same as elite
  */
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ReportsHubSubNav from '../../components/reports/ReportsHubSubNav';
 import { useAuth } from '../../context/AuthContext';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
@@ -379,6 +379,7 @@ function ReportHistoryList({ reports, onView }) {
 /* ── Main component ─────────────────────────────────────────────────── */
 function ReportsPageInner() {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const { eligibility, loading, error, reload } = useReportsEligibility(token);
   const [viewingReport, setViewingReport] = useState(null);
   const [viewLoading, setViewLoading] = useState(false);
@@ -413,7 +414,26 @@ function ReportsPageInner() {
     );
   }
 
-  if (!eligibility) return null;
+  if (!eligibility) {
+    return (
+      <div className="rp-error-state journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
+        <p>
+          {!token
+            ? 'Sign in to view monthly reports and your eligibility status.'
+            : 'We could not load report eligibility. Your session may have expired, or the service is temporarily unavailable.'}
+        </p>
+        {!token ? (
+          <button className="rp-btn rp-btn--primary" type="button" onClick={() => navigate('/login')}>
+            Go to sign in
+          </button>
+        ) : (
+          <button className="rp-btn rp-btn--secondary" type="button" onClick={reload}>
+            Retry
+          </button>
+        )}
+      </div>
+    );
+  }
 
   const { role } = eligibility;
   const canAccessDna = role === 'elite' || role === 'admin';

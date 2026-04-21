@@ -31,6 +31,16 @@ async function addResult(entry) {
   fs.writeFileSync(OUT_JSON, JSON.stringify(payload, null, 2), 'utf8');
 }
 
+function readNormalUserIdFromState() {
+  const raw = JSON.parse(fs.readFileSync(USER_STATE, 'utf8'));
+  const origin = (raw?.origins || []).find((o) => o.origin === BASE) || (raw?.origins || [])[0];
+  const userEntry = (origin?.localStorage || []).find((x) => x.name === 'user');
+  const userObj = userEntry?.value ? JSON.parse(userEntry.value) : null;
+  const id = userObj?.id != null ? String(userObj.id) : '';
+  if (!id) throw new Error('Could not read normal-user id from storage state');
+  return id;
+}
+
 function writeMd() {
   const lines = [
     '# Strict Messaging/AdminInbox Verification',
@@ -90,6 +100,12 @@ test.describe('Strict high-risk verification: messaging/admin inbox', () => {
         networkIssues: [...adminIssues.network, ...userIssues.network],
         completion: 'complete',
       });
+
+      // Re-bind admin to the same normal-user support thread (sidebar default order is not guaranteed).
+      const qaUserId = readNormalUserIdFromState();
+      await adminPage.goto(`${BASE}/admin/inbox?user=${encodeURIComponent(qaUserId)}`, { waitUntil: 'domcontentloaded' });
+      await expect(adminPage.locator('.admin-inbox-form-row input[type="text"]')).toBeEnabled({ timeout: 25000 });
+      await adminPage.waitForTimeout(600);
 
       // 2) User -> admin delivery
       const userMsg = `STRICT_USER_TO_ADMIN_${Date.now()}`;

@@ -1,0 +1,113 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\1230s\\OneDrive\\Documents\\Samy\\Aura FX\\playwright.final-background-qa.config.js",
+    "rootDir": "C:/Users/1230s/OneDrive/Documents/Samy/Aura FX/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/1230s/OneDrive/Documents/Samy/Aura FX/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/1230s/OneDrive/Documents/Samy/Aura FX/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/final-background-full-qa-pass.spec.js"
+        ],
+        "timeout": 5700000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "e2e/reports/final-background-qa-playwright-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "final-background-full-qa-pass.spec.js",
+      "file": "final-background-full-qa-pass.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "final background full QA pass (soft-fail aggregate)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 5700000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 93115,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-04-21T23:30:42.452Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e84cab8e7f2a51409ce0-a02fae83a39b8d73cb85",
+          "file": "final-background-full-qa-pass.spec.js",
+          "line": 63,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-04-21T23:30:41.337Z",
+    "duration": 94604.123,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
