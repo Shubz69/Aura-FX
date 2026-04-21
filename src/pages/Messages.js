@@ -20,6 +20,7 @@ const Messages = () => {
     const threadIdRef = useRef(null);
     const loadInFlightRef = useRef(false);
     const isRealtimeConnectedRef = useRef(false);
+    const lastRealtimeReceiveAtRef = useRef(0);
     const [threadId, setThreadId] = useState(null);
 
     const loadMessages = useCallback(async () => {
@@ -34,7 +35,10 @@ const Messages = () => {
                 setThreadId(threadId);
             }
             if (threadId) {
-                const messagesResponse = await Api.getThreadMessages(threadId, { limit: 50 });
+                const messagesResponse = await Api.getThreadMessages(threadId, {
+                    limit: 50,
+                    _sync: Date.now(),
+                });
                 const apiMessages = messagesResponse.data?.messages || [];
                 const formattedMessages = apiMessages.map(msg => ({
                     id: msg.id,
@@ -52,8 +56,12 @@ const Messages = () => {
             }
         } catch (error) {
             logClassifiedError('messages.page_load', error, { userId: user?.id || null });
-            const savedMessages = localStorage.getItem(`messages_${user.id}`);
-            if (savedMessages) setMessages(JSON.parse(savedMessages));
+            // Only hydrate from localStorage when we never established a server thread.
+            // Otherwise a transient GET error would clobber in-memory admin messages (localStorage is user-send only).
+            if (!threadIdRef.current) {
+                const savedMessages = localStorage.getItem(`messages_${user.id}`);
+                if (savedMessages) setMessages(JSON.parse(savedMessages));
+            }
         } finally {
             loadInFlightRef.current = false;
         }
@@ -79,21 +87,25 @@ const Messages = () => {
                 if (!mounted || String(incomingThreadId) !== String(threadId)) return;
                 const createdAt = message?.createdAt || message?.created_at || null;
                 const latencyMs = createdAt ? Date.now() - new Date(createdAt).getTime() : null;
+                lastRealtimeReceiveAtRef.current = Date.now();
                 console.info('[observability]', {
                     scope: 'messages.realtime_receive',
                     threadId,
                     latencyMs: Number.isFinite(latencyMs) ? latencyMs : null,
                 });
                 setMessages((prev) => {
+                    const mid =
+                        message?.id != null
+                            ? message.id
+                            : `rt_${Date.now()}_${String(message?.body || '').slice(0, 12)}`;
                     const normalized = {
-                        id: message.id,
+                        id: mid,
                         sender: String(message.senderId) === String(user.id) ? 'user' : 'admin',
                         senderName: String(message.senderId) === String(user.id) ? (user.username || user.name || 'You') : 'Admin',
                         content: message.body,
                         timestamp: message.createdAt || message.created_at,
                         read: !!message.readAt || !!message.read_at,
                     };
-                    if (!normalized.id) return prev;
                     return prev.some((m) => String(m.id) === String(normalized.id)) ? prev : [...prev, normalized];
                 });
                 await Api.markThreadRead(threadId).catch(() => {});
@@ -107,23 +119,35 @@ const Messages = () => {
             if (isRealtimeConnectedRef.current) {
                 console.info('[observability]', { scope: 'messages.realtime_connected', threadId });
                 wireRealtime();
+                void loadMessages();
             }
         });
 
         return () => {
             mounted = false;
             isRealtimeConnectedRef.current = false;
+            lastRealtimeReceiveAtRef.current = 0;
             WebSocketService.offThreadEvents();
         };
-    }, [user?.id, user?.role, user?.name, user?.username, threadId]);
+    }, [user?.id, user?.role, user?.name, user?.username, threadId, loadMessages]);
+
+    useEffect(() => {
+        if (!user?.id) return undefined;
+        const onVisible = () => {
+            if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+                void loadMessages();
+            }
+        };
+        document.addEventListener('visibilitychange', onVisible);
+        return () => document.removeEventListener('visibilitychange', onVisible);
+    }, [user?.id, loadMessages]);
 
     useEffect(() => {
         if (!user?.id) return undefined;
         const pollInterval = setInterval(() => {
-            if (isRealtimeConnectedRef.current) return;
             if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
             loadMessages();
-        }, 8000);
+        }, 1500);
         return () => clearInterval(pollInterval);
     }, [user?.id, loadMessages]);
 
@@ -185,7 +209,10 @@ const Messages = () => {
             
             if (threadId) {
                 await Api.sendThreadMessage(threadId, newMessage);
-                const messagesResponse = await Api.getThreadMessages(threadId, { limit: 50 });
+                const messagesResponse = await Api.getThreadMessages(threadId, {
+                    limit: 50,
+                    _sync: Date.now(),
+                });
                 const apiMessages = messagesResponse.data?.messages || [];
                 const formattedMessages = apiMessages.map(msg => ({
                     id: msg.id,

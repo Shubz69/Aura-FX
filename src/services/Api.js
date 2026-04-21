@@ -1934,8 +1934,11 @@ const Api = {
                 {
                     params: options,
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache',
+                        Pragma: 'no-cache'
                     },
+                    skipCache: true,
                     signal: requestOptions?.signal
                 }
             );

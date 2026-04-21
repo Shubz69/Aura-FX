@@ -405,8 +405,13 @@ module.exports = async (req, res) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               threadId: String(threadId),
-              message: createdMessage,
-              thread: { id: threadId, userId: thread.userId, adminId: thread.adminId, lastMessageAt: new Date().toISOString() },
+              message: jsonSafeDeep(createdMessage),
+              thread: jsonSafeDeep({
+                id: threadId,
+                userId: thread.userId,
+                adminId: thread.adminId,
+                lastMessageAt: new Date().toISOString(),
+              }),
             }),
           },
           2000,

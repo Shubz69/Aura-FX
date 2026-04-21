@@ -1,0 +1,390 @@
+{
+  "generatedAt": "2026-04-21T21:58:34.930Z",
+  "base": "https://www.auraterminal.ai",
+  "storageState": "C:\\Users\\1230s\\OneDrive\\Documents\\Samy\\Aura FX\\e2e\\reports\\auraterminal-normal-user.json",
+  "routes": [
+    {
+      "route": "/messages",
+      "requestedUrl": "https://www.auraterminal.ai/messages",
+      "finalUrl": "https://www.auraterminal.ai/messages",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 441,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": []
+    },
+    {
+      "route": "/admin/inbox",
+      "requestedUrl": "https://www.auraterminal.ai/admin/inbox",
+      "finalUrl": "https://www.auraterminal.ai/admin/inbox",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 404,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/messages/threads/ensure-admin",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        }
+      ]
+    },
+    {
+      "route": "/reports",
+      "requestedUrl": "https://www.auraterminal.ai/reports",
+      "finalUrl": "https://www.auraterminal.ai/reports",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 868,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": false,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        }
+      ]
+    },
+    {
+      "route": "/reports/dna",
+      "requestedUrl": "https://www.auraterminal.ai/reports/dna",
+      "finalUrl": "https://www.auraterminal.ai/reports/dna",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 423,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        }
+      ]
+    },
+    {
+      "route": "/reports/live",
+      "requestedUrl": "https://www.auraterminal.ai/reports/live",
+      "finalUrl": "https://www.auraterminal.ai/reports/live",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 305,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": true,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": []
+    },
+    {
+      "route": "/manual-metrics/dashboard",
+      "requestedUrl": "https://www.auraterminal.ai/manual-metrics/dashboard",
+      "finalUrl": "https://www.auraterminal.ai/manual-metrics/dashboard",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 417,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        }
+      ]
+    },
+    {
+      "route": "/manual-metrics/processing",
+      "requestedUrl": "https://www.auraterminal.ai/manual-metrics/processing",
+      "finalUrl": "https://www.auraterminal.ai/manual-metrics/processing",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 327,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": []
+    },
+    {
+      "route": "/trader-deck",
+      "requestedUrl": "https://www.auraterminal.ai/trader-deck",
+      "finalUrl": "https://www.auraterminal.ai/trader-deck",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 576,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        }
+      ]
+    },
+    {
+      "route": "/trader-deck/trade-validator/overview",
+      "requestedUrl": "https://www.auraterminal.ai/trader-deck/trade-validator/overview",
+      "finalUrl": "https://www.auraterminal.ai/trader-deck/trade-validator/overview",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 581,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/trader-deck/content?type=outlook-daily&date=2026-04-21",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        }
+      ]
+    },
+    {
+      "route": "/aura-analysis/dashboard/overview",
+      "requestedUrl": "https://www.auraterminal.ai/aura-analysis/dashboard/overview",
+      "finalUrl": "https://www.auraterminal.ai/aura-analysis/dashboard/overview",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 471,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/trades?validatorAccountId=14",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/trades?pnl=1&validatorAccountId=14",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        }
+      ]
+    },
+    {
+      "route": "/backtesting",
+      "requestedUrl": "https://www.auraterminal.ai/backtesting",
+      "finalUrl": "https://www.auraterminal.ai/backtesting",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 567,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        }
+      ]
+    },
+    {
+      "route": "/backtesting/sessions",
+      "requestedUrl": "https://www.auraterminal.ai/backtesting/sessions",
+      "finalUrl": "https://www.auraterminal.ai/backtesting/sessions",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 481,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/backtesting/sessions",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/backtesting/summary",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        }
+      ]
+    },
+    {
+      "route": "/surveillance",
+      "requestedUrl": "https://www.auraterminal.ai/surveillance",
+      "finalUrl": "https://www.auraterminal.ai/community",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 203,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/backtesting/sessions",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/users/88",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "fetch"
+        }
+      ]
+    },
+    {
+      "route": "/premium-ai",
+      "requestedUrl": "https://www.auraterminal.ai/premium-ai",
+      "finalUrl": "https://www.auraterminal.ai/premium-ai",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 471,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": true,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/community/users",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/community/channels?bootstrap=true",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "fetch"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/community/update-presence",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "fetch"
+        }
+      ]
+    },
+    {
+      "route": "/subscription",
+      "requestedUrl": "https://www.auraterminal.ai/subscription",
+      "finalUrl": "https://www.auraterminal.ai/subscription",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 920,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": false,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        }
+      ]
+    },
+    {
+      "route": "/profile",
+      "requestedUrl": "https://www.auraterminal.ai/profile",
+      "finalUrl": "https://www.auraterminal.ai/profile",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "bodyChars": 9210,
+      "looksLogin": false,
+      "looksForbidden": false,
+      "looksError": false,
+      "stuckLoading": false,
+      "emptyShell": false,
+      "pageErrors": [],
+      "apiRequestFailures": [
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "resourceType": "xhr"
+        }
+      ]
+    }
+  ]
+}

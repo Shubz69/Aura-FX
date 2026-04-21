@@ -401,7 +401,7 @@ useEffect(() => {
       WebSocketService.offThreadEvents();
       WebSocketService.joinThread(activeThreadId);
       WebSocketService.onThreadMessage(({ threadId, message, thread }) => {
-        if (!mounted || threadId !== activeThreadId) return;
+        if (!mounted || String(threadId) !== String(activeThreadId)) return;
         setMessages(prev => prev.some(m => m.id === message.id) ? prev : [...prev, message]);
         if (thread) setThreads(prev => prev.map(t => t.id === thread.id ? { ...t, ...thread, adminUnreadCount: 0 } : t));
       });

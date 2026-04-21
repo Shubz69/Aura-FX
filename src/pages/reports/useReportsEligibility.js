@@ -14,7 +14,12 @@ export function useReportsEligibility(token) {
   const controllerRef = useRef(null);
 
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      setEligibility(null);
+      setError('');
+      setLoading(false);
+      return;
+    }
     const requestSeq = ++requestSeqRef.current;
     if (controllerRef.current) controllerRef.current.abort();
     const controller = new AbortController();
