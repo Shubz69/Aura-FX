@@ -35,6 +35,49 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   }
 }
 
+let schemaReady = false;
+let schemaInitPromise = null;
+async function ensureMessagesSchema(db) {
+  if (schemaReady) return;
+  if (schemaInitPromise) return schemaInitPromise;
+  schemaInitPromise = (async () => {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS threads (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        userId INT NOT NULL,
+        adminId INT DEFAULT NULL,
+        lastMessageAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_userId (userId),
+        INDEX idx_adminId (adminId)
+      )
+    `);
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS thread_messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        threadId INT NOT NULL,
+        senderId INT NOT NULL,
+        recipientId VARCHAR(50) NOT NULL,
+        body TEXT NOT NULL,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        readAt TIMESTAMP NULL,
+        INDEX idx_threadId (threadId),
+        INDEX idx_senderId (senderId),
+        FOREIGN KEY (threadId) REFERENCES threads(id) ON DELETE CASCADE
+      )
+    `);
+    schemaReady = true;
+  })();
+
+  try {
+    await schemaInitPromise;
+  } finally {
+    schemaInitPromise = null;
+  }
+}
+
 module.exports = async (req, res) => {
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -102,35 +145,8 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Ensure threads table exists
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS threads (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        userId INT NOT NULL,
-        adminId INT DEFAULT NULL,
-        lastMessageAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_userId (userId),
-        INDEX idx_adminId (adminId)
-      )
-    `);
-
-    // Ensure thread_messages table exists
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS thread_messages (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        threadId INT NOT NULL,
-        senderId INT NOT NULL,
-        recipientId VARCHAR(50) NOT NULL,
-        body TEXT NOT NULL,
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        readAt TIMESTAMP NULL,
-        INDEX idx_threadId (threadId),
-        INDEX idx_senderId (senderId),
-        FOREIGN KEY (threadId) REFERENCES threads(id) ON DELETE CASCADE
-      )
-    `);
+    // Avoid running DDL on every request; initialize once per warm instance.
+    await ensureMessagesSchema(db);
 
     // Handle /api/messages/threads/ensure-admin - Create or get user's admin thread
     if (pathname.includes('/ensure-admin') && req.method === 'POST') {
@@ -399,65 +415,30 @@ module.exports = async (req, res) => {
         console.warn('Thread realtime broadcast failed:', broadcastError?.message || broadcastError);
       }
 
-      // Notify recipient: admin→user (recipientId is user id) or user→admin (recipientId is 'ADMIN')
-      if (createNotification) {
-        const recipientUserId = parseInt(recipientId, 10);
-        if (!isNaN(recipientUserId) && recipientUserId > 0) {
-          const [senderRows] = await db.execute('SELECT username FROM users WHERE id = ?', [senderId]);
-          const senderName = senderRows && senderRows[0] ? senderRows[0].username : 'Someone';
-          const preview = typeof messageBody === 'string' && messageBody.length > 80
-            ? messageBody.substring(0, 77) + '...'
-            : messageBody;
-          const dmTitle = thread.adminId != null
-            ? `New message from ${senderName}`
-            : 'New message from Admin';
-          try {
-            await createNotification({
-              userId: recipientUserId,
-              type: 'REPLY',
-              title: dmTitle,
-              body: `${senderName}: ${preview}`,
-              channelId: 0,
-              messageId: threadId,
-              fromUserId: senderId,
-              friendRequestId: null,
-              actionStatus: null
-            });
-          } catch (e) {
-            console.warn('Thread notification failed:', e.message);
-          }
-        } else if (recipientId === 'ADMIN') {
-          const [senderRows] = await db.execute('SELECT username FROM users WHERE id = ?', [senderId]);
-          const senderName = senderRows && senderRows[0] ? senderRows[0].username : 'A user';
-          const preview = typeof messageBody === 'string' && messageBody.length > 80
-            ? messageBody.substring(0, 77) + '...'
-            : messageBody;
-          const [adminRows] = await db.execute(
-            "SELECT id FROM users WHERE LOWER(role) IN ('admin', 'super_admin')"
-          );
-          const adminIds = (adminRows || []).map((r) => r.id).filter(Boolean);
-          for (const adminId of adminIds) {
-            try {
-              await createNotification({
-                userId: adminId,
-                type: 'REPLY',
-                title: 'New message from user',
-                body: `${senderName}: ${preview}`,
-                channelId: 0,
-                messageId: threadId,
-                fromUserId: senderId,
-                friendRequestId: null,
-                actionStatus: null
-              });
-            } catch (e) {
-              console.warn('Thread notification failed:', e.message);
-            }
-          }
-        }
-      }
-
+      const recipientUserId = parseInt(recipientId, 10);
       db.release && db.release();
-      return res.status(200).json({ success: true, message: 'Message sent', created: createdMessage });
+      res.status(200).json({ success: true, message: 'Message sent', created: createdMessage });
+
+      // Fire-and-forget notifications so response path is never blocked.
+      if (createNotification && Number.isFinite(recipientUserId) && recipientUserId > 0) {
+        const preview = typeof messageBody === 'string' && messageBody.length > 80
+          ? messageBody.substring(0, 77) + '...'
+          : messageBody;
+        void createNotification({
+          userId: recipientUserId,
+          type: 'REPLY',
+          title: 'New message from Admin',
+          body: `Admin: ${preview}`,
+          channelId: 0,
+          messageId: threadId,
+          fromUserId: senderId,
+          friendRequestId: null,
+          actionStatus: null
+        }).catch((e) => {
+          console.warn('Thread notification failed:', e.message);
+        });
+      }
+      return;
     }
 
     // Handle /api/messages/threads/:threadId/read - Mark thread as read
