@@ -65,6 +65,7 @@ export default function SurveillancePage() {
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [intelDigest, setIntelDigest] = useState(null);
   const [marketWatchNarrative, setMarketWatchNarrative] = useState(null);
+  const [pairHeat, setPairHeat] = useState(null);
   const [systemHealth, setSystemHealth] = useState(null);
   const [briefing, setBriefing] = useState(null);
   const [sseOk, setSseOk] = useState(false);
@@ -121,6 +122,7 @@ export default function SurveillancePage() {
       setBriefing(json.briefing || null);
       setIntelDigest(json.intelDigest || null);
       setMarketWatchNarrative(json.marketWatchNarrative || null);
+      setPairHeat(Array.isArray(json.pairHeat) ? json.pairHeat : null);
       setSystemHealth(json.systemHealth || null);
       setCountryHeadlines([]);
       if (typeof json.countryWireAvailable === 'boolean') {
@@ -157,6 +159,7 @@ export default function SurveillancePage() {
       if (json.systemHealth) setSystemHealth(json.systemHealth);
       if (json.intelDigest) setIntelDigest(json.intelDigest);
       if (json.marketWatchNarrative) setMarketWatchNarrative(json.marketWatchNarrative);
+      if (Array.isArray(json.pairHeat)) setPairHeat(json.pairHeat);
       setCountryHeadlines(Array.isArray(json.countryHeadlines) ? json.countryHeadlines : []);
       if (typeof json.countryWireAvailable === 'boolean') {
         setCountryWireAvailable(json.countryWireAvailable);
@@ -480,7 +483,12 @@ export default function SurveillancePage() {
               ))}
             </div>
             <div className="sv-masthead-markets">
-              <MarketWatchStrip variant="compact" narrative={marketWatchNarrative} items={agg.marketWatch || []} />
+              <MarketWatchStrip
+                variant="compact"
+                pairHeat={pairHeat}
+                narrative={marketWatchNarrative}
+                items={agg.marketWatch || []}
+              />
             </div>
           </div>
           {systemHealth ? (

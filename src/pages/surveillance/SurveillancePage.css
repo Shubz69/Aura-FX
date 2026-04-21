@@ -146,7 +146,7 @@
 
 .sv-masthead-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 1.1fr) auto minmax(260px, 1fr);
+  grid-template-columns: minmax(220px, 1.05fr) auto minmax(300px, 1.2fr);
   gap: 14px 20px;
   align-items: start;
   padding: 12px var(--sv-terminal-pad-x) 10px;
@@ -1337,6 +1337,104 @@
   font-size: 0.72rem;
   line-height: 1.35;
   color: rgba(255, 255, 255, 0.72);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Masthead: tape-driven FX pair bias (replaces narrative strip in compact slot). */
+.sv-strip--pair-heat {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.sv-strip-compact-scroll--pair-heat {
+  flex-wrap: wrap;
+  overflow-x: auto;
+  gap: 6px;
+}
+
+.sv-pair-heat-hint {
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+  font-weight: 500;
+}
+
+.sv-pair-bias-card {
+  flex: 1 1 140px;
+  min-width: 132px;
+  max-width: 180px;
+  padding: 6px 8px 7px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.sv-pair-bias-card--up {
+  border-color: rgba(120, 220, 190, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(120, 220, 190, 0.06);
+}
+
+.sv-pair-bias-card--down {
+  border-color: rgba(255, 150, 140, 0.38);
+  box-shadow: inset 0 0 0 1px rgba(255, 150, 140, 0.07);
+}
+
+.sv-pair-bias-card--sideways {
+  border-color: rgba(180, 190, 210, 0.2);
+}
+
+.sv-pair-bias-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.sv-pair-bias-sym {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(255, 252, 248, 0.96);
+  font-variant-numeric: tabular-nums;
+}
+
+.sv-pair-bias-arrow {
+  font-size: 1rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.sv-pair-bias-arrow--up {
+  color: rgba(150, 240, 200, 0.95);
+}
+
+.sv-pair-bias-arrow--down {
+  color: rgba(255, 170, 150, 0.95);
+}
+
+.sv-pair-bias-arrow--sideways {
+  color: rgba(200, 210, 230, 0.75);
+}
+
+.sv-pair-bias-dir {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.sv-pair-bias-driver {
+  margin: 4px 0 0;
+  font-size: 0.65rem;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.58);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

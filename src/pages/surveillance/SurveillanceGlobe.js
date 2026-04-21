@@ -106,17 +106,47 @@ function clusterEvents(events, precision = 1) {
   }));
 }
 
+function parseEventSourceMeta(ev) {
+  if (!ev || ev.source_meta == null) return null;
+  if (typeof ev.source_meta === 'object') return ev.source_meta;
+  try {
+    const o = JSON.parse(String(ev.source_meta));
+    return o && typeof o === 'object' ? o : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Aviation vs defence-style tracks for marker colour (editorial grouping, not a legal classification). */
 function eventTrackKind(ev) {
   if (!ev) return 'intel';
+  const meta = parseEventSourceMeta(ev);
+  const hints = Array.isArray(meta?.aviation_hints) ? meta.aviation_hints.map((x) => String(x).toLowerCase()) : [];
+  const milHint = hints.some((h) => h === 'military_air_candidate' || h === 'special_squawk');
+  const cargoHint = hints.includes('cargo_air_candidate');
+
   const et = String(ev.event_type || '').toLowerCase();
-  if (et === 'aviation') return 'aviation';
+  if (et === 'aviation') {
+    if (milHint) return 'aviation_military';
+    if (cargoHint) return 'aviation_cargo';
+    return 'aviation';
+  }
   const src = String(ev.source || '').toLowerCase();
-  if (src.includes('opensky') || src.includes('adsb') || src.includes('flight')) return 'aviation';
+  if (src.includes('opensky') || src.includes('adsb') || src.includes('flight')) {
+    if (milHint) return 'aviation_military';
+    if (cargoHint) return 'aviation_cargo';
+    return 'aviation';
+  }
   const tags = Array.isArray(ev.tags) ? ev.tags : [];
   for (const t of tags) {
     const s = String(t).toLowerCase();
-    if (s.includes('flight') || s.includes('aircraft') || s.includes('live_track') || s.includes('ads-b')) return 'aviation';
+    if (s.includes('military_air_candidate')) return 'aviation_military';
+    if (s.includes('cargo_air_candidate')) return 'aviation_cargo';
+    if (s.includes('flight') || s.includes('aircraft') || s.includes('live_track') || s.includes('ads-b')) {
+      if (milHint) return 'aviation_military';
+      if (cargoHint) return 'aviation_cargo';
+      return 'aviation';
+    }
     if (
       s.includes('military') ||
       s.includes('defence') ||
@@ -131,6 +161,17 @@ function eventTrackKind(ev) {
   const blob = `${ev.title || ''} ${ev.summary || ''}`.toLowerCase();
   if (/(nato|defence|defense|military|naval|troop|missile|strike|drone)/.test(blob)) return 'military';
   return 'intel';
+}
+
+function trackKindRank(kind) {
+  const order = {
+    intel: 0,
+    military: 1,
+    aviation: 2,
+    aviation_cargo: 2.55,
+    aviation_military: 2.95,
+  };
+  return order[kind] ?? 0;
 }
 
 function normalizeEventCategory(eventType) {
@@ -189,13 +230,12 @@ function categoryColor(category) {
 }
 
 function clusterDominantTrackKind(idMap, pt) {
-  const order = { intel: 0, military: 1, aviation: 2 };
   let best = 'intel';
   let bestR = 0;
   for (const id of pt.eventIds || []) {
     const ev = idMap.get(String(id));
     const k = eventTrackKind(ev);
-    const r = order[k] ?? 0;
+    const r = trackKindRank(k);
     if (r >= bestR) {
       bestR = r;
       best = k;
@@ -644,7 +684,14 @@ export default function SurveillanceGlobe({
         const tk = eventTrackKind(e);
         const cat = eventUiCategory(e);
         const catBoost = activeCat !== 'all' && cat === activeCat ? 1.22 : 1;
-        const boost = tk === 'aviation' ? 1.38 : tk === 'military' ? 1.22 : 1;
+        const boost =
+          tk === 'aviation_military' || tk === 'aviation_cargo'
+            ? 1.48
+            : tk === 'aviation'
+              ? 1.38
+              : tk === 'military'
+                ? 1.22
+                : 1;
         return {
           lat: e.lat,
           lng: e.lng,
@@ -684,7 +731,6 @@ export default function SurveillanceGlobe({
       const inFocus = clusterTouchesFocus(p, idMap, focusRegion);
       const lens = !!focusRegion;
       const muted = lens && !inFocus && !isSel;
-      const trackKind = clusterDominantTrackKind(idMap, p);
       const dominantCategory = clusterDominantCategory(idMap, p);
       const categoryFocused = activeCat !== 'all' && dominantCategory === activeCat;
       const liveCluster =
@@ -695,6 +741,9 @@ export default function SurveillanceGlobe({
           const tg = ev.tags;
           return Array.isArray(tg) && tg.some((t) => String(t).toLowerCase().includes('live_track'));
         }) ?? false;
+      const trackKind = clusterDominantTrackKind(idMap, p);
+      const liveMil = liveCluster && trackKind === 'aviation_military';
+      const liveCargo = liveCluster && trackKind === 'aviation_cargo';
       const color = isSel
         ? '#ffd9a8'
         : isHover
@@ -703,9 +752,13 @@ export default function SurveillanceGlobe({
             ? 'rgba(120, 120, 130, 0.28)'
             : activeCat !== 'all' && !categoryFocused
               ? 'rgba(106, 116, 130, 0.36)'
-              : liveCluster && dominantCategory === 'aviation'
-                ? 'rgba(128, 234, 255, 0.97)'
-                : categoryColor(activeCat !== 'all' ? activeCat : dominantCategory);
+              : liveMil
+                ? 'rgba(255, 198, 138, 0.98)'
+                : liveCargo
+                  ? 'rgba(168, 236, 255, 0.98)'
+                  : liveCluster && dominantCategory === 'aviation'
+                    ? 'rgba(128, 234, 255, 0.97)'
+                    : categoryColor(activeCat !== 'all' ? activeCat : dominantCategory);
       return {
         ...p,
         color,
@@ -715,7 +768,12 @@ export default function SurveillanceGlobe({
             p.count * 0.06 +
             p.maxSev * 0.05 +
             (liveCluster ? 0.07 : 0) +
-            (trackKind === 'aviation' || trackKind === 'military' ? 0.06 : 0) +
+            (trackKind === 'aviation' ||
+            trackKind === 'aviation_cargo' ||
+            trackKind === 'aviation_military' ||
+            trackKind === 'military'
+              ? 0.06
+              : 0) +
             (categoryFocused ? 0.08 : 0) +
             (hot ? pulseStep * 0.06 : 0) +
             (isSel ? 0.14 : 0) +

@@ -51,6 +51,7 @@ function scoreMarkets(event) {
     if (existing) {
       existing.score = Math.min(100, existing.score + weight);
       if (rationale) existing.rationale.push(rationale);
+      if (direction !== 'neutral') existing.direction = direction;
       return;
     }
     out.push({
@@ -74,6 +75,19 @@ function scoreMarkets(event) {
   add('GBPUSD', 16, ['pound', 'sterling', 'gbp/', 'bank of england'], 'Cable / UK policy');
   add('USDJPY', 18, ['yen', 'jpy', 'bank of japan', 'boj '], 'Carry / policy divergence');
   add('USDCHF', 14, ['franc', 'chf', 'snb ', 'swiss national bank'], 'CHF safe-haven skew');
+  add('AUDUSD', 18, ['australia', 'canberra', 'rba ', 'reserve bank of australia', 'aud/'], 'AUD risk proxy', 'bearish_risk');
+  add('NZDUSD', 15, ['new zealand', 'wellington', 'rbnz', 'nzd/'], 'NZD risk proxy', 'bearish_risk');
+  add('USDCAD', 16, ['canada', 'ottawa', 'bank of canada', 'boc ', 'loonie', 'cad/'], 'Oil-beta USD/CAD', 'usd_bull');
+  add('EURGBP', 12, ['sterling', 'eurozone vs uk', 'euro-sterling'], 'EUR/GBP cross', 'neutral');
+  add('EURJPY', 16, ['euro-yen', 'eur/jpy', 'europe japan'], 'EUR/JPY risk cross', 'bearish_risk');
+  add('GBPJPY', 16, ['cable yen', 'gbp/jpy', 'pound yen'], 'GBP/JPY risk cross', 'bearish_risk');
+  add('USDMXN', 14, ['mexico', 'mexican', 'banxico', 'peso'], 'LatAm FX bellwether', 'bearish_risk');
+  add('USDZAR', 13, ['south africa', 'pretoria', 'sarb', 'rand'], 'EM carry / risk', 'bearish_risk');
+  add('USDBRL', 13, ['brazil', 'brasilia', 'bcb ', 'real '], 'LatAm FX', 'bearish_risk');
+  add('USDINR', 12, ['india', 'new delhi', 'rbi ', 'rupee'], 'Asia EM FX', 'bearish_risk');
+  add('USDKRW', 12, ['south korea', 'seoul', 'bank of korea', 'won'], 'Asia risk proxy', 'bearish_risk');
+  add('USDCNH', 14, ['china', 'beijing', 'pboc', 'yuan', 'cnh', 'hong kong'], 'China offshore FX', 'bearish_risk');
+  add('USDTRY', 13, ['turkey', 'ankara', 'cbrt', 'lira'], 'TRY stress channel', 'bearish_risk');
   add('US2Y', 20, ['2-year', '2y ', 'short end', 'front end'], 'Policy expectations', 'bearish_risk');
   add('US10Y', 22, ['yield', 'treasury', 'bond', 'rates ', 'qt ', 'qe ', '10-year', '10y '], 'Duration / risk-free', 'bearish_risk');
   add('SHIPPING', 15, ['shipping', 'freight', 'container', 'baltic', 'maritime', 'port'], 'Goods / supply chain');
@@ -85,10 +99,61 @@ function scoreMarkets(event) {
   if (/\b(severe disruption|mass diversion|canal closure|port closure|blockade)\b/i.test(text)) {
     add('XAUUSD', 6, ['gold'], 'Haven bid on logistics shock', 'bearish_risk');
   }
+  if (/\b(military|defence|defense|nato|missile|strike sortie|mobilization|naval|troop|invasion|drone)\b/i.test(text)) {
+    add('XAUUSD', 10, ['military'], 'Geopolitical haven bid', 'bearish_risk');
+    add('USDJPY', 9, ['military'], 'Yen skew on shock headlines', 'bearish_risk');
+    add('USDCHF', 7, ['military'], 'Franc haven channel', 'bearish_risk');
+    add('WTI', 8, ['military'], 'Energy tail risk', 'bearish_risk');
+    add('BRENT', 8, ['military'], 'Energy tail risk', 'bearish_risk');
+  }
+  if (/\b(aviation|airspace|notam|ads-b|flight ban|ground stop|airport closure|airliner)\b/i.test(text)) {
+    add('WTI', 7, ['aviation'], 'Jet fuel / crude demand channel', 'bearish_risk');
+    add('BRENT', 7, ['aviation'], 'Jet fuel / crude demand channel', 'bearish_risk');
+    add('US30', 5, ['aviation'], 'Travel-linked equity beta', 'bearish_risk');
+    add('SPX', 5, ['aviation'], 'Travel-linked equity beta', 'bearish_risk');
+  }
+  if (/\b(sanction|export control|embargo|asset freeze|ofac)\b/i.test(text)) {
+    add('EURUSD', 8, ['sanction'], 'Policy / fragmentation risk', 'bearish_risk');
+    add('XAUUSD', 7, ['sanction'], 'Haven demand', 'bearish_risk');
+  }
   add('RISK', 18, ['risk sentiment', 'volatility', 'vix', 'safe haven'], 'Cross-asset risk tone', 'bearish_risk');
 
+  const cset = new Set((event.countries || []).map((x) => String(x).toUpperCase()));
+  const addIfIso = (iso, symbol, weight, rationale, hint) => {
+    if (!cset.has(iso)) return;
+    let direction = 'neutral';
+    if (hint === 'bearish_risk') direction = 'bearish_risk';
+    if (hint === 'bullish_risk') direction = 'bullish_risk';
+    if (hint === 'usd_bull') direction = 'bullish';
+    if (hint === 'usd_bear') direction = 'bearish';
+    const existing = out.find((o) => o.symbol === symbol);
+    if (existing) {
+      existing.score = Math.min(100, existing.score + weight);
+      if (rationale) existing.rationale.push(rationale);
+      if (direction !== 'neutral') existing.direction = direction;
+      return;
+    }
+    out.push({ symbol, score: Math.min(100, weight), direction, rationale: rationale ? [rationale] : [] });
+  };
+  addIfIso('JP', 'USDJPY', 12, 'Japan-tagged tape', 'bearish_risk');
+  addIfIso('CH', 'USDCHF', 10, 'Switzerland-tagged tape', 'bearish_risk');
+  addIfIso('AU', 'AUDUSD', 11, 'Australia-tagged tape', 'bearish_risk');
+  addIfIso('NZ', 'NZDUSD', 10, 'New Zealand-tagged tape', 'bearish_risk');
+  addIfIso('CA', 'USDCAD', 10, 'Canada-tagged tape', 'usd_bull');
+  addIfIso('GB', 'GBPUSD', 11, 'United Kingdom-tagged tape', 'neutral');
+  addIfIso('DE', 'EURUSD', 9, 'Germany-tagged tape', 'neutral');
+  addIfIso('FR', 'EURUSD', 9, 'France-tagged tape', 'neutral');
+  addIfIso('IT', 'EURUSD', 9, 'Italy-tagged tape', 'neutral');
+  addIfIso('CN', 'USDCNH', 12, 'China-tagged tape', 'bearish_risk');
+  addIfIso('IN', 'USDINR', 10, 'India-tagged tape', 'bearish_risk');
+  addIfIso('BR', 'USDBRL', 10, 'Brazil-tagged tape', 'bearish_risk');
+  addIfIso('MX', 'USDMXN', 10, 'Mexico-tagged tape', 'bearish_risk');
+  addIfIso('ZA', 'USDZAR', 10, 'South Africa-tagged tape', 'bearish_risk');
+  addIfIso('TR', 'USDTRY', 10, 'Turkey-tagged tape', 'bearish_risk');
+  addIfIso('KR', 'USDKRW', 9, 'Korea-tagged tape', 'bearish_risk');
+
   out.sort((a, b) => b.score - a.score);
-  return out.slice(0, 14);
+  return out.slice(0, 22);
 }
 
 /**

@@ -9,6 +9,7 @@ const {
 const { getSystemHealthSummary } = require('./adapterState');
 const { buildIntelDigest } = require('./intelDigest');
 const { buildMarketWatchNarrative } = require('./marketWatchNarrative');
+const { buildPairHeatFromEvents } = require('./pairHeat');
 
 /** NewsAPI top-headlines (optional; requires NEWS_API_KEY). Lowercase ISO2 country code. */
 async function fetchCountryWireHeadlines(iso2) {
@@ -87,7 +88,8 @@ module.exports = async (req, res) => {
     const q = req.query || {};
     const since = q.since ? String(q.since) : null;
     const tab = q.tab ? String(q.tab).toLowerCase() : 'all';
-    const limit = q.limit ? Number(q.limit) : 180;
+    const limitParsed = q.limit != null ? Number(q.limit) : 180;
+    const limit = Number.isFinite(limitParsed) && limitParsed > 0 ? limitParsed : 180;
     const severityMin = q.severityMin != null ? Number(q.severityMin) : null;
     const source = q.source ? String(q.source) : null;
     const eventType = q.eventType ? String(q.eventType) : null;
@@ -102,7 +104,7 @@ module.exports = async (req, res) => {
 
     const [events, countryHeadlines] = await Promise.all([
       queryFeed({
-        limit,
+        limit: Math.min(320, Math.max(120, limit)),
         sinceUpdated: since || null,
         eventType: eventType || null,
         severityMin: Number.isFinite(severityMin) ? severityMin : null,
@@ -121,6 +123,7 @@ module.exports = async (req, res) => {
       limitRegions: 7,
     });
     const marketWatchNarrative = buildMarketWatchNarrative(events, aggregates, intelDigest);
+    const pairHeat = buildPairHeatFromEvents(events, { limit: 6 });
     const sources = await listSources();
     const systemHealth = await getSystemHealthSummary();
 
@@ -130,6 +133,7 @@ module.exports = async (req, res) => {
       aggregates,
       intelDigest,
       marketWatchNarrative,
+      pairHeat,
       sources,
       systemHealth,
       countryIso2,

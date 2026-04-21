@@ -13,13 +13,19 @@ const HOSTS = ['opensky-network.org'];
 const TOKEN_URL =
   'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token';
 
-/** Regional boxes so we avoid downloading the entire globe in one payload. */
+/**
+ * Regional boxes so we avoid downloading the entire globe in one payload.
+ * Middle East + Hormuz/Gulf of Oman mouth are one bbox (same HTTP payload as before split,
+ * but one fewer `states/all` request vs separate ME + Hormuz boxes).
+ */
 const BOXES = [
   { label: 'atlantic_na_eu', lamin: 25, lomin: -95, lamax: 58, lomax: 20 },
-  { label: 'middle_east', lamin: 12, lomin: 25, lamax: 42, lomax: 63 },
-  /** Persian Gulf, Strait of Hormuz, and Gulf of Oman mouth — overlaps middle_east; merge dedupes by ICAO24. */
-  { label: 'persian_gulf_hormuz', lamin: 22.5, lomin: 48.5, lamax: 31.5, lomax: 65.5 },
+  { label: 'middle_east_hormuz', lamin: 12, lomin: 25, lamax: 42, lomax: 65.5 },
   { label: 'west_pacific', lamin: -40, lomin: 110, lamax: 45, lomax: 180 },
+  /** Latin America + Caribbean (no extra API vs one merged bbox per run). */
+  { label: 'americas_latam', lamin: -54, lomin: -118, lamax: 32, lomax: -34 },
+  /** Sub-Saharan Africa + western Indian Ocean lanes. */
+  { label: 'africa_indian_ocean', lamin: -40, lomin: -25, lamax: 15, lomax: 130 },
 ];
 
 /** In-memory token (serverless: one cold start per instance). */
@@ -166,23 +172,97 @@ function fetchOpts() {
   return { timeoutMs, maxAttempts };
 }
 
-/** OpenSky emitter category when extended=1 (index 17). See REST docs. */
+/**
+ * ICAO ADS-B emitter category (index 17 when extended=1). OpenSky REST docs / Annex 10 Table A-2-68.
+ * 4 = high vortex large, 5 = heavy, 6 = highly maneuverable, 7 = rotorcraft, 14 = UAV.
+ */
 function categoryBoost(category) {
   const c = Number(category);
   if (!Number.isFinite(c)) return 0;
-  if (c === 14) return 0.08; // UAV
-  if (c === 7) return 0.07; // High performance
-  if (c === 6) return 0.05; // Heavy (also many wide-body civ)
-  if (c === 5) return 0.03; // High vortex large
+  if (c === 14) return 0.11; // UAV
+  if (c === 6) return 0.1; // high-performance (often fast mil / high-energy traffic)
+  if (c === 5) return 0.09; // heavy — wide-body, many freighters, tankers, transports
+  if (c === 4) return 0.055; // high vortex large
+  if (c === 7) return 0.045; // rotorcraft
+  if (c === 3) return 0.02; // large
   return 0;
 }
 
-function scoreRow(sv, category) {
+const CARGO_CALLSIGN_RE =
+  /^(UPS|FDX|DHL|ABX|GTI|CKS|ATN|POL|CLX|UAE|ETH|KAL|LAN|SLG|SWN|QTN|BCS|CAO|CJT|GEC)/;
+const MIL_STYLE_CALLSIGN_RE =
+  /^(RCH|REACH|CNV|NAVY|USAF|SAM|EXEC|EVAC|DUKE|TABOO|SHANK|SPAR|QUID|JAKE|VIPER|STEEL|RAF|RRR|ASY|GAF|NAF|IAF|PLF)/;
+
+/** Extra ranking from callsign / squawk — no extra HTTP; biases cargo + mil-style traffic to the top of each box. */
+function callsignAndSquawkBoost(callsign, squawkRaw) {
+  const cs = String(callsign || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+  let b = 0;
+  const sq = String(squawkRaw || '').replace(/\s+/g, '');
+  if (sq === '7500' || sq === '7600' || sq === '7700') b += 0.22;
+
+  if (!cs || cs === '—') return b;
+
+  if (CARGO_CALLSIGN_RE.test(cs)) b += 0.14;
+
+  if (MIL_STYLE_CALLSIGN_RE.test(cs) || /^(RCH|REACH|CNV)/.test(cs.slice(0, 3))) b += 0.16;
+
+  // All-numeric or tightly alphanumeric callsigns often correlate with mil coordination (weak signal).
+  if (/^[0-9]{2,}[A-Z]?$/.test(cs) || /^[A-Z][0-9]{4,6}$/.test(cs)) b += 0.04;
+
+  return Math.min(0.35, b);
+}
+
+function scoreRow(sv, category, callsign, squawk) {
   const baro = sv[7];
   const vel = sv[9];
   const altScore = baro != null ? Math.min(1, baro / 12000) : 0;
   const velScore = vel != null ? Math.min(1, vel / 280) : 0;
-  return altScore * 0.55 + velScore * 0.45 + categoryBoost(category);
+  let base = altScore * 0.52 + velScore * 0.38 + categoryBoost(category) + callsignAndSquawkBoost(callsign, squawk);
+  const ec = Number(category);
+  // Deprioritise light GA that is low + slow (same API payload; keeps corridor traffic visible).
+  if (Number.isFinite(ec) && ec <= 2 && (baro == null || baro < 3200) && (vel == null || vel < 95)) {
+    base *= 0.42;
+  }
+  return base;
+}
+
+const EMITTER_CATEGORY_LABEL = {
+  0: 'class unknown',
+  1: 'light',
+  2: 'small',
+  3: 'large',
+  4: 'high-vortex large',
+  5: 'heavy',
+  6: 'high-performance',
+  7: 'rotorcraft',
+  14: 'UAV (emitter cat.)',
+};
+
+function emitterLabel(cat) {
+  const n = Number(cat);
+  if (!Number.isFinite(n)) return null;
+  return EMITTER_CATEGORY_LABEL[n] || `cat ${n}`;
+}
+
+function aviationHintsFromRow({ callsign, emitterCategory, squawk, baroAltitude, velocity }) {
+  const hints = [];
+  const cs = String(callsign || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+  if (MIL_STYLE_CALLSIGN_RE.test(cs) || /^(RCH|REACH|CNV)/.test(cs.slice(0, 3))) hints.push('military_air_candidate');
+  if (CARGO_CALLSIGN_RE.test(cs)) hints.push('cargo_air_candidate');
+  const ec = Number(emitterCategory);
+  if (ec === 5 || ec === 4) hints.push('heavy_airframe');
+  if (ec === 6 || ec === 14) hints.push('military_air_candidate');
+  const sq = String(squawk || '').replace(/\s+/g, '');
+  if (sq === '7500' || sq === '7600' || sq === '7700') hints.push('special_squawk');
+  if ((baroAltitude == null || baroAltitude > 8000) && velocity != null && velocity > 200) hints.push('high_energy_track');
+  if (/^[0-9]{2,}[A-Z]?$/.test(cs) || /^[A-Z][0-9]{4,6}$/.test(cs)) hints.push('coordination_style_callsign');
+  return [...new Set(hints)];
 }
 
 function parseStatesPayload(json) {
@@ -201,6 +281,9 @@ function parseStatesPayload(json) {
     const onGround = sv[8] === true;
     const velocity = sv[9];
     const trueTrack = sv[10];
+    const verticalRate = sv.length > 11 && sv[11] != null ? Number(sv[11]) : null;
+    const geoAltitude = sv.length > 13 && sv[13] != null ? Number(sv[13]) : null;
+    const squawk = sv.length > 14 && sv[14] != null ? String(sv[14]).trim() : '';
     const positionSource = sv.length > 16 && sv[16] != null ? Number(sv[16]) : null;
     const emitterCategory = sv.length > 17 && sv[17] != null ? Number(sv[17]) : null;
 
@@ -219,9 +302,12 @@ function parseStatesPayload(json) {
       baroAltitude,
       velocity,
       trueTrack,
+      verticalRate,
+      geoAltitude,
+      squawk,
       positionSource,
       emitterCategory,
-      score: scoreRow(sv, emitterCategory),
+      score: scoreRow(sv, emitterCategory, callsign, squawk),
     });
   }
   rows.sort((a, b) => b.score - a.score);
@@ -239,22 +325,48 @@ function eventFromRow(row) {
     baroAltitude,
     velocity,
     trueTrack,
+    verticalRate,
+    geoAltitude,
+    squawk,
     positionSource,
     emitterCategory,
   } = row;
 
   const icao = String(icao24 || '').toLowerCase();
   const url = `https://opensky-network.org/network/public?icao24=${encodeURIComponent(icao)}`;
-  const title = `ADS-B · ${icao}`;
-  const cs = callsign || '—';
+  const csRaw = String(callsign || '').trim();
+  const cs = csRaw || '—';
+  const emitterCatLabel = emitterLabel(emitterCategory);
+  const hints = aviationHintsFromRow({
+    callsign: csRaw,
+    emitterCategory,
+    squawk,
+    baroAltitude,
+    velocity,
+  });
+  const roleBits = [];
+  if (hints.includes('cargo_air_candidate')) roleBits.push('cargo');
+  if (hints.includes('military_air_candidate')) roleBits.push('mil-style');
+  const titleCore = cs !== '—' ? `${cs} · ${icao}` : icao;
+  const title = `ADS-B · ${titleCore}${emitterCatLabel ? ` · ${emitterCatLabel}` : ''}${roleBits.length ? ` · ${roleBits.join('/')}` : ''}`.slice(
+    0,
+    500
+  );
   const altM = baroAltitude != null ? Math.round(baroAltitude) : '—';
+  const geoM = geoAltitude != null ? Math.round(geoAltitude) : '—';
   const spd = velocity != null ? velocity.toFixed(0) : '—';
   const hdg = trueTrack != null ? Math.round(trueTrack) : '—';
-  const cat =
+  const vs = verticalRate != null ? `${verticalRate > 0 ? '+' : ''}${verticalRate.toFixed(1)} m/s` : '—';
+  const sq = squawk ? String(squawk) : '—';
+  const posSrc = positionSource === 0 ? 'ADS-B' : positionSource === 1 ? 'ASTERIX' : positionSource != null ? `src ${positionSource}` : '—';
+  const catLine =
     emitterCategory != null && Number.isFinite(Number(emitterCategory))
-      ? ` · emitter cat ${emitterCategory}`
-      : '';
-  const summary = `Live position · CS ${cs} · ${originCountry || 'unknown origin'} · FL ~${altM} m · ${spd} m/s · track ${hdg}°${cat}`;
+      ? `Emitter ${emitterCategory}${emitterCatLabel ? ` (${emitterCatLabel})` : ''}`
+      : 'Emitter class unknown';
+  const summary = `Live ADS-B · ${cs} · ${originCountry || 'unknown origin'} · baro ${altM} m · geo ${geoM} m · ${spd} m/s · track ${hdg}° · VS ${vs} · squawk ${sq} · ${posSrc} · ${catLine}`.slice(
+    0,
+    1200
+  );
 
   const tPos = timePosition != null ? new Date(timePosition * 1000) : new Date();
   const published_at = Number.isNaN(tPos.getTime())
@@ -264,8 +376,11 @@ function eventFromRow(row) {
   const tags = ['live_track', 'ads-b', 'opensky'];
   const ec = Number(emitterCategory);
   if (ec === 14) tags.push('uav_adsb_category');
-  if (ec === 7) tags.push('high_performance_adsb');
-  if (ec === 6) tags.push('heavy_adsb');
+  if (ec === 6) tags.push('high_performance_adsb');
+  if (ec === 5) tags.push('heavy_adsb');
+  if (ec === 4) tags.push('high_vortex_large');
+  if (hints.includes('cargo_air_candidate')) tags.push('cargo_air_candidate');
+  if (hints.includes('military_air_candidate')) tags.push('military_air_candidate');
 
   return {
     source: ID,
@@ -287,11 +402,16 @@ function eventFromRow(row) {
       callsign: cs,
       origin_country: originCountry,
       baro_altitude_m: baroAltitude,
+      geo_altitude_m: geoAltitude,
       velocity_m_s: velocity,
+      vertical_rate_m_s: verticalRate,
       true_track_deg: trueTrack,
+      squawk: squawk || null,
       time_position: timePosition,
       position_source: positionSource,
       emitter_category: emitterCategory,
+      emitter_category_label: emitterCatLabel,
+      aviation_hints: hints,
     },
   };
 }
@@ -315,7 +435,8 @@ module.exports = {
 
     const { timeoutMs, maxAttempts } = fetchOpts();
     const boxes = BOXES.slice(0, boxLimit());
-    const maxPerBox = Math.min(28, Math.ceil((ctx.maxPerAdapter || 48) / Math.max(1, boxes.length)));
+    const adapterCap = Math.min(72, Math.max(1, ctx.maxPerAdapter || 60));
+    const maxPerBox = Math.min(40, Math.ceil(adapterCap / Math.max(1, boxes.length)));
     const collected = [];
 
     for (const box of boxes) {
@@ -367,7 +488,7 @@ module.exports = {
       if (!merged.has(icaoKey) || merged.get(icaoKey).score < row.score) merged.set(icaoKey, row);
     }
     const unique = [...merged.values()].sort((a, b) => b.score - a.score);
-    const cap = Math.min(ctx.maxPerAdapter || 48, 48, unique.length);
+    const cap = Math.min(adapterCap, 72, unique.length);
     const items = [];
     for (let i = 0; i < cap; i += 1) {
       items.push(eventFromRow(unique[i]));

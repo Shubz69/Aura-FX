@@ -13,6 +13,7 @@ const {
 const { getSystemHealthSummary } = require('./adapterState');
 const { buildIntelDigest } = require('./intelDigest');
 const { buildMarketWatchNarrative } = require('./marketWatchNarrative');
+const { buildPairHeatFromEvents } = require('./pairHeat');
 
 function setCors(req, res) {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -77,7 +78,7 @@ module.exports = async (req, res) => {
       : null;
     const showIntro = !seenStr || seenStr < today;
 
-    const events = await queryFeed({ limit: 180, tab: null });
+    const events = await queryFeed({ limit: 260, tab: null });
     const aggregates = await computeAggregates(events);
     const intelDigest = buildIntelDigest(events, {
       limitStories: 7,
@@ -86,6 +87,7 @@ module.exports = async (req, res) => {
       limitRegions: 7,
     });
     const marketWatchNarrative = buildMarketWatchNarrative(events, aggregates, intelDigest);
+    const pairHeat = buildPairHeatFromEvents(events, { limit: 6 });
     const sources = await listSources();
     const systemHealth = await getSystemHealthSummary();
 
@@ -117,6 +119,7 @@ module.exports = async (req, res) => {
       aggregates,
       intelDigest,
       marketWatchNarrative,
+      pairHeat,
       sources,
       systemHealth,
       briefing,

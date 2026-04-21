@@ -7,9 +7,42 @@ function confidenceClass(c) {
   return 'sv-mw-conf--low';
 }
 
-export default function MarketWatchStrip({ narrative, items, variant = 'default' }) {
+export default function MarketWatchStrip({ pairHeat, narrative, items, variant = 'default' }) {
   const compact = variant === 'compact';
   const activityMap = useMemo(() => marketActivityLevels(items || []), [items]);
+
+  if (pairHeat && pairHeat.length && compact) {
+    return (
+      <div className="sv-strip sv-strip--compact sv-strip--pair-heat" role="region" aria-label="FX pairs from surveillance tape">
+        <div className="sv-strip-compact-labels">
+          <span className="sv-strip-label">Largest pair skew</span>
+          <span className="sv-pair-heat-hint" title="Heuristic from geopolitics, conflict, sanctions, maritime, and aviation headlines — not trade advice.">
+            Live tape
+          </span>
+        </div>
+        <div className="sv-strip-compact-scroll sv-strip-compact-scroll--pair-heat">
+          {pairHeat.map((p) => (
+            <div
+              key={p.symbol}
+              className={`sv-pair-bias-card sv-pair-bias-card--${p.bias}`}
+              title={`${(p.drivers || []).join(' · ')} — aggregated read from the current surveillance grid.`}
+            >
+              <div className="sv-pair-bias-top">
+                <strong className="sv-pair-bias-sym">{p.symbol}</strong>
+                <span className={`sv-pair-bias-arrow sv-pair-bias-arrow--${p.bias}`} aria-hidden>
+                  {p.bias === 'up' ? '↑' : p.bias === 'down' ? '↓' : '↔'}
+                </span>
+              </div>
+              <span className="sv-pair-bias-dir">
+                {p.bias === 'up' ? 'Leaning up' : p.bias === 'down' ? 'Leaning down' : 'Sideways'}
+              </span>
+              <p className="sv-pair-bias-driver">{p.drivers && p.drivers[0] ? p.drivers[0] : 'Cross-tape read'}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (narrative && narrative.length) {
     if (compact) {

@@ -32,6 +32,16 @@ function rowToEvent(r) {
       return [];
     }
   };
+  const parseJsonObject = (v) => {
+    if (v == null) return null;
+    if (typeof v === 'object' && !Array.isArray(v)) return v;
+    try {
+      const o = JSON.parse(String(v));
+      return o && typeof o === 'object' && !Array.isArray(o) ? o : null;
+    } catch {
+      return null;
+    }
+  };
   return {
     id: String(r.id),
     source: r.source,
@@ -69,6 +79,7 @@ function rowToEvent(r) {
     why_matters: r.why_matters || null,
     normalized_topic: r.normalized_topic || null,
     story_signature: r.story_signature || null,
+    source_meta: parseJsonObject(r.source_meta),
   };
 }
 
