@@ -21,6 +21,7 @@ import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/Courses.css';
 import './styles/AuraPageTitle.css';
+import './styles/OperatorGlassOverride.css';
 
 function Mt5MetricsLegacyRedirect() {
     const location = useLocation();

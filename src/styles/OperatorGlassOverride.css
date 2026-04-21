@@ -1,0 +1,120 @@
+/* =============================================================================
+   OperatorGlassOverride.css
+   Forces The Operator glass aesthetic on ALL journal-glass-panel elements
+   EXCEPT the main Journal page.
+   ============================================================================= */
+
+/* ── Target ALL .journal-glass-panel on .aa-page containers (Admin, Affiliation, etc.) ── */
+.journal-page .aa-page.journal-glass-panel,
+.journal-page .admin-panel-container .journal-glass-panel,
+.journal-page .aff-content.journal-glass-panel,
+.journal-page .settings-page .journal-glass-panel,
+.journal-page .messages-page-container .journal-glass-panel,
+.journal-page .connection-hub-page .journal-glass-panel,
+.journal-page .rp-page .journal-glass-panel,
+.journal-page .admin-inbox-page .journal-glass-panel,
+.journal-page .legal-terminal-page .journal-glass-panel {
+  background: rgba(3, 2, 10, 0.34) !important;
+  background-image: none !important;
+  border: 1px solid rgba(234, 169, 96, 0.14) !important;
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.48),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset !important;
+  backdrop-filter: blur(22px) saturate(1.06) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.06) !important;
+}
+
+/* Override the navy/white border gradient from Journal.css */
+.journal-page .aa-page.journal-glass-panel,
+.journal-page .admin-panel-container .journal-glass-panel,
+.journal-page .aff-content.journal-glass-panel {
+  border-image: none !important;
+  border-color: rgba(234, 169, 96, 0.14) !important;
+}
+
+/* Fix the rim effect (top gold hairline) */
+.journal-page .aa-page.journal-glass-panel--rim::before,
+.journal-page .admin-panel-container .journal-glass-panel--rim::before,
+.journal-page .aff-content.journal-glass-panel--rim::before {
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent) !important;
+}
+
+/* Remove the Journal-specific corner glow */
+.journal-page .aa-page.journal-glass-panel--rim::after,
+.journal-page .admin-panel-container .journal-glass-panel--rim::after,
+.journal-page .aff-content.journal-glass-panel--rim::after {
+  background: radial-gradient(circle, rgba(234, 169, 96, 0.08) 0%, transparent 70%) !important;
+}
+
+/* ── Target the specific admin panel classes ── */
+.journal-page .admin-panel-container {
+  background: transparent !important;
+}
+
+.journal-page .admin-panel-container .journal-glass-panel {
+  background: rgba(3, 2, 10, 0.34) !important;
+  background-image: none !important;
+  border: 1px solid rgba(234, 169, 96, 0.14) !important;
+  backdrop-filter: blur(22px) saturate(1.06) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.06) !important;
+}
+
+/* ── BUT preserve Journal page's original styling ── */
+.journal-page .journal-layout .journal-calendar,
+.journal-page .journal-layout .journal-streak-card,
+.journal-page .journal-layout .journal-progress-card,
+.journal-page .journal-layout .journal-glass-card,
+.journal-page .journal-layout .journal-daily-section,
+.journal-page .journal-layout .journal-task-item,
+.journal-page .journal-layout .journal-note-item,
+.journal-page .journal-layout .journal-glass-panel {
+  background: initial !important;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--journal-panel-outer-glow) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Restore Journal rim effect */
+.journal-page .journal-layout .journal-glass-panel--rim::before {
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.48) 32%,
+    rgba(175, 200, 255, 0.42) 58%,
+    rgba(212, 175, 55, 0.12) 88%,
+    transparent 100%
+  ) !important;
+}
+
+.journal-page .journal-layout .journal-glass-panel--rim::after {
+  background: radial-gradient(circle, rgba(85, 118, 205, 0.12) 0%, rgba(255, 255, 255, 0.04) 45%, transparent 70%) !important;
+}
+
+/* ── Additional override for any remaining journal-glass-panel on non-Journal pages ── */
+.journal-page :not(.journal-layout) .journal-glass-panel {
+  background: rgba(3, 2, 10, 0.34) !important;
+  background-image: none !important;
+  border: 1px solid rgba(234, 169, 96, 0.14) !important;
+  backdrop-filter: blur(22px) saturate(1.06) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.06) !important;
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.48),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset !important;
+}
+
+/* Force override any background-image from Journal.css */
+.journal-page :not(.journal-layout) .journal-glass-panel[class*="journal-glass-panel"] {
+  background-image: none !important;
+}
+
+/* Ensure AA page tokens are correct */
+.journal-page .aa-page.journal-glass-panel {
+  --text-muted: rgba(200, 198, 190, 0.78);
+  --text-dim: rgba(255, 255, 255, 0.45);
+  --aa-text-muted: rgba(200, 198, 190, 0.78);
+  --aa-bg-card: rgba(3, 2, 10, 0.72);
+  --aa-border: rgba(255, 255, 255, 0.06);
+}
