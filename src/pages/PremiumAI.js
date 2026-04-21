@@ -185,7 +185,7 @@ const ChatMessage = ({ msg, copiedId, speakId, spRate, onCopy, onSpeak, onSpeedC
    ═══════════════════════════════════════════════════════════ */
 const PremiumAI = () => {
   const { user, isAuthenticated } = useAuth();
-  const { entitlements } = useEntitlements();
+  const { entitlements, loading: entitlementsLoading } = useEntitlements();
   const navigate = useNavigate();
 
   const [messages,       setMessages]       = useState([]);
@@ -199,6 +199,7 @@ const PremiumAI = () => {
   const [spRate,         setSpRate]         = useState(1.0);
   const [speakId,        setSpeakId]        = useState(null);
   const [copiedId,       setCopiedId]       = useState(null);
+  const [accessReady,    setAccessReady]    = useState(false);
 
   const endRef   = useRef(null);
   const fileRef  = useRef(null);
@@ -217,6 +218,7 @@ const PremiumAI = () => {
 
   /* auth guard */
   useEffect(() => {
+    if (entitlementsLoading) return;
     if (!isAuthenticated) { navigate('/login'); return; }
     const { role = 'access', subscription_status: ss = 'inactive', subscription_plan: sp, email = '' } = user || {};
     const r = (role || '').toString().toLowerCase();
@@ -224,8 +226,13 @@ const PremiumAI = () => {
     const ok = isSuperAdmin(user)
       || ['premium', 'pro', 'a7fx', 'elite', 'admin', 'super_admin'].includes(r)
       || (ss === 'active' && ['aura', 'a7fx', 'elite', 'pro'].includes(spLow));
-    if (!ok) { toast.error('Pro or Elite subscription required'); navigate('/subscription'); }
-  }, [isAuthenticated, user, navigate]);
+    if (!ok) {
+      toast.error('Pro or Elite subscription required');
+      navigate('/subscription');
+      return;
+    }
+    setAccessReady(true);
+  }, [isAuthenticated, user, navigate, entitlementsLoading]);
 
   /* persist messages */
   useEffect(() => {
@@ -490,6 +497,20 @@ const PremiumAI = () => {
       : tierUpper === 'PRO' || tierUpper === 'PREMIUM'
         ? 'Pro'
         : 'Access';
+
+  if (entitlementsLoading || !accessReady) {
+    return (
+      <div className="pai">
+        <main className="pai-body pai-body--welcome">
+          <div className="pai-welcome">
+            <div className="pai-welcome-icon" aria-hidden>✦</div>
+            <h2>Verifying Premium AI access…</h2>
+            <p className="pai-welcome-sub">Checking plan entitlement before loading your assistant.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   /* ─────────────── RENDER ─────────────── */
   return (

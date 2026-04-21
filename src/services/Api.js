@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { savePostAuthRedirect } from '../utils/postAuthRedirect';
+import { ensureCorrelationId, logClassifiedError } from '../utils/apiObservability';
 
 /** If REACT_APP_API_URL points at the standalone analysis API host, ignore it — app JWT routes live on the main site. */
 function resolveReactAppApiUrl() {
@@ -218,6 +219,7 @@ const dedupeGet = (url, options = {}) => {
 
 axios.interceptors.request.use(
     (config) => {
+        ensureCorrelationId(config);
         const token = localStorage.getItem('token');
         if (token && !config.skipAuthRefresh) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -250,6 +252,7 @@ axios.interceptors.response.use(
         return response;
     },
     (error) => {
+        logClassifiedError('api.response_interceptor', error);
         if (error.response && error.response.status === 401) {
             const requestUrl = resolveRequestUrl(error.config?.url);
             if (isSubscriptionEndpoint(requestUrl)) {
@@ -793,6 +796,9 @@ const Api = {
         return axios.get(`${API_BASE_URL}/api/trader-dna`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
             skipCache: true,
+        }).catch((error) => {
+            logClassifiedError('reports.trader_dna.get', error);
+            throw error;
         });
     },
     generateTraderDna: () => {
@@ -801,7 +807,10 @@ const Api = {
             `${API_BASE_URL}/api/trader-dna`,
             { confirm: true },
             { headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
-        );
+        ).catch((error) => {
+            logClassifiedError('reports.trader_dna.generate', error);
+            throw error;
+        });
     },
 
     // Platform connections (real MT5/exchange APIs — requires same JWT as other protected APIs)
@@ -1828,7 +1837,7 @@ const Api = {
             );
             return response;
         } catch (error) {
-            console.error('Error ensuring admin thread:', error);
+            logClassifiedError('messages.ensure_admin_thread', error, { userId: userIdFromAuth || null });
             throw error;
         }
     },
@@ -1850,7 +1859,7 @@ const Api = {
             );
             return response;
         } catch (error) {
-            console.error('Error ensuring admin thread:', error);
+            logClassifiedError('admin_inbox.ensure_admin_thread_for_user', error, { targetUserId });
             throw error;
         }
     },
@@ -1883,20 +1892,21 @@ const Api = {
         }
     },
 
-    listThreads: async () => {
+    listThreads: async (options = {}) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get(
+            const response = await dedupeGet(
                 `${API_BASE_URL}/api/messages/threads`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`
-                    }
+                    },
+                    signal: options?.signal
                 }
             );
             return response;
         } catch (error) {
-            console.error('Error listing threads:', error);
+            logClassifiedError('messages.list_threads', error);
             throw error;
         }
     },
@@ -1916,21 +1926,22 @@ const Api = {
         }
     },
 
-    getThreadMessages: async (threadId, options = {}) => {
+    getThreadMessages: async (threadId, options = {}, requestOptions = {}) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get(
+            const response = await dedupeGet(
                 `${API_BASE_URL}/api/messages/threads/${threadId}/messages`,
                 {
                     params: options,
                     headers: {
                         'Authorization': `Bearer ${token}`
-                    }
+                    },
+                    signal: requestOptions?.signal
                 }
             );
             return response;
         } catch (error) {
-            console.error('Error getting thread messages:', error);
+            logClassifiedError('messages.get_thread_messages', error, { threadId });
             throw error;
         }
     },
@@ -1958,7 +1969,7 @@ const Api = {
             );
             return response;
         } catch (error) {
-            console.error('Error sending thread message:', error);
+            logClassifiedError('messages.send_thread_message', error, { threadId });
             throw error;
         }
     },

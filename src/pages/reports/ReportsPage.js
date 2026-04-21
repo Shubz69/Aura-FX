@@ -416,6 +416,7 @@ function ReportsPageInner() {
   if (!eligibility) return null;
 
   const { role } = eligibility;
+  const canAccessDna = role === 'elite' || role === 'admin';
 
   const { currentPeriod, currentMonthReports, reports, isEligible } = eligibility;
   const { year, month } = currentPeriod;
@@ -436,8 +437,8 @@ function ReportsPageInner() {
         <div className="rp-header-stack">
           <p className="rp-eyebrow">Performance intelligence</p>
           <h2 className="rp-title">Performance &amp; DNA</h2>
-          <Link to="/reports/dna" className="rp-btn rp-btn--secondary rp-dna-enter">
-            Enter Your DNA
+          <Link to={canAccessDna ? '/reports/dna' : '/choose-plan'} className="rp-btn rp-btn--secondary rp-dna-enter">
+            {canAccessDna ? 'Enter Your DNA' : 'DNA (Elite)'}
           </Link>
           <p className="rp-subtitle">
             {role === 'premium' || role === 'pro'

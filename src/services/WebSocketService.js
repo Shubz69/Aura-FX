@@ -1,6 +1,6 @@
-import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 import CryptoJS from 'crypto-js';
+import { logClassifiedError } from '../utils/apiObservability';
 
 class WebSocketService {
     constructor() {
@@ -40,7 +40,16 @@ class WebSocketService {
             return;
         }
 
-        const socketFactory = () => new SockJS(wsEndpoint);
+        // Production websocket server is raw STOMP-over-WebSocket at /ws (no SockJS /ws/info endpoint).
+        const toNativeWsUrl = (url) => {
+            if (!url || typeof url !== 'string') return url;
+            if (url.startsWith('wss://') || url.startsWith('ws://')) return url;
+            if (url.startsWith('https://')) return `wss://${url.slice('https://'.length)}`;
+            if (url.startsWith('http://')) return `ws://${url.slice('http://'.length)}`;
+            return url;
+        };
+        const nativeWsEndpoint = toNativeWsUrl(wsEndpoint);
+        const socketFactory = () => new WebSocket(nativeWsEndpoint);
         this.stompClient = Stomp.over(socketFactory);
         this.stompClient.debug = () => {};
 
@@ -48,6 +57,10 @@ class WebSocketService {
             this.isConnected = true;
             callback();
         }, (error) => {
+            logClassifiedError('realtime.ws_connect', {
+                message: error?.message || 'WebSocket connection error',
+                config: { url: nativeWsEndpoint, method: 'ws-connect' },
+            });
             if (process.env.NODE_ENV === 'development') {
                 console.warn('WebSocket connection error:', error?.message || error);
             }
@@ -111,8 +124,13 @@ class WebSocketService {
                 
                 callback(parsedMessage);
             } catch (error) {
-                console.error('Error handling WebSocket message:', error);
-                console.log('Raw message content:', message.body);
+                logClassifiedError('realtime.ws_message_parse', {
+                    message: error?.message || 'WebSocket message parse error',
+                    config: { url: destination, method: 'ws-subscribe' },
+                }, {
+                    destination,
+                    hasRawBody: Boolean(message?.body),
+                });
             }
         });
 
@@ -139,6 +157,10 @@ class WebSocketService {
         }
         const ws = this.stompClient?.ws || this.stompClient?.webSocket;
         if (ws && ws.readyState !== 1) {
+            logClassifiedError('realtime.ws_send_not_ready', {
+                message: 'WebSocket send skipped: socket not open',
+                config: { url: destination, method: 'ws-send' },
+            });
             this.isConnected = false;
             return;
         }
@@ -149,6 +171,10 @@ class WebSocketService {
         try {
             this.stompClient.send(destination, {}, messageToSend);
         } catch (e) {
+            logClassifiedError('realtime.ws_send_failed', {
+                message: e?.message || 'WebSocket send failed',
+                config: { url: destination, method: 'ws-send' },
+            });
             if (process.env.NODE_ENV === 'development') console.warn('WebSocket send failed:', e?.message || e);
             this.isConnected = false;
         }

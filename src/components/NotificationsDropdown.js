@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { isAdmin } from '../utils/roles';
+import { logClassifiedError } from '../utils/apiObservability';
 import '../styles/NotificationsDropdown.css';
 
 // Notification type icons
@@ -90,6 +91,9 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
   
   const listRef = useRef(null);
   const listRetryRef = useRef(0);
+  const listFetchSeqRef = useRef(0);
+  const listControllerRef = useRef(null);
+  const inFlightCursorRef = useRef(new Set());
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const baseUrl = process.env.REACT_APP_API_URL || window.location.origin;
@@ -97,6 +101,13 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
   // Fetch notifications
   const fetchNotifications = useCallback(async (cursor = null, append = false) => {
     if (!token) return;
+    const cursorKey = cursor || '__root__';
+    if (inFlightCursorRef.current.has(cursorKey)) return;
+    const fetchSeq = ++listFetchSeqRef.current;
+    if (!append && listControllerRef.current) listControllerRef.current.abort();
+    const controller = new AbortController();
+    listControllerRef.current = controller;
+    inFlightCursorRef.current.add(cursorKey);
     
     try {
       if (append) setLoadingMore(true);
@@ -106,11 +117,20 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       if (cursor) params.append('cursor', cursor);
       params.append('limit', '20');
       
-      const response = await fetch(`${baseUrl}/api/notifications?${params}`, {
+      let response = await fetch(`${baseUrl}/api/notifications?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` }
+        , signal: controller.signal
       });
+      // Safe retry for idempotent GET only.
+      if (!response.ok && response.status >= 500) {
+        response = await fetch(`${baseUrl}/api/notifications?${params}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          signal: controller.signal,
+        });
+      }
       
       const data = response.ok ? await response.json().catch(() => ({})) : null;
+      if (fetchSeq !== listFetchSeqRef.current && !append) return;
 
       if (!response.ok) {
         setListFetchFailed(true);
@@ -150,10 +170,14 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       }
       if (items.length > 0) listRetryRef.current = 0;
     } catch (error) {
+      if (error?.name === 'AbortError') return;
+      if (fetchSeq !== listFetchSeqRef.current && !append) return;
       console.error('Failed to fetch notifications:', error);
+      logClassifiedError('notifications.list_fetch', error, { cursor: cursor || null, append });
       setListFetchFailed(true);
       toast.error('Failed to load notifications');
     } finally {
+      inFlightCursorRef.current.delete(cursorKey);
       setLoading(false);
       setLoadingMore(false);
     }
@@ -165,6 +189,8 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       listRetryRef.current = 0;
       setListFetchFailed(false);
       fetchNotifications();
+    } else if (listControllerRef.current) {
+      listControllerRef.current.abort();
     }
   }, [isOpen, fetchNotifications]);
 

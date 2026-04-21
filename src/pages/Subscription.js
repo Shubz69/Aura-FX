@@ -119,6 +119,7 @@ const Subscription = () => {
 
     // Subscription status from server
     const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+    const [statusFetchFailed, setStatusFetchFailed] = useState(false);
 
     // Fetch subscription status from server
     const fetchSubscriptionStatus = async () => {
@@ -138,10 +139,11 @@ const Subscription = () => {
 
             if (response.data && response.data.success) {
                 setSubscriptionStatus(response.data.subscription);
+                setStatusFetchFailed(false);
             }
         } catch (err) {
             console.error('Error fetching subscription status:', err);
-            // Don't show error - fall back to free state
+            setStatusFetchFailed(true);
         } finally {
             setLoading(false);
         }
@@ -703,6 +705,11 @@ const Subscription = () => {
                 </div>
 
                 <div className="subscription-content">
+                    {statusFetchFailed && !loading && (
+                        <div className="subscription-error" role="status" style={{ marginBottom: '14px' }}>
+                            Live subscription status is temporarily unavailable. Plan actions are still shown, but current-plan badges may be delayed.
+                        </div>
+                    )}
                     {loading ? (
                         <div className="subscription-loading">
                             <div className="loading-spinner"></div>

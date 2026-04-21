@@ -72,3 +72,21 @@ complete-backup/
 !trading-platform-frontend/
 .vercel
 .env*.local
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Playwright live signup / session (secrets)
+e2e/reports/signup-credentials.txt
+e2e/reports/signup-otp.env
+e2e/reports/auraterminal-new-user.json
+e2e/reports/signup-journey-report.json
+e2e/reports/signup-journey-report.md
+e2e/reports/admin-audit-data.json
+e2e/reports/admin-audit-report.md
+e2e/playwright-report-signup/
+e2e/playwright-report-admin/

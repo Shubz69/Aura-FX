@@ -5,7 +5,7 @@ import { SubscriptionProvider } from './context/SubscriptionContext';
 import { EntitlementsProvider } from './context/EntitlementsContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { AuraConnectionProvider } from './context/AuraConnectionContext';
-import { CommunityGuard, SubscriptionPageGuard, PremiumAIGuard, SurveillanceGuard, AdminGuard, AuthenticatedGuard, InboxGuard } from './components/RouteGuards';
+import { CommunityGuard, SubscriptionPageGuard, PremiumAIGuard, SurveillanceGuard, AdminGuard, AuthenticatedGuard, InboxGuard, ReportsDnaGuard, ManualMetricsGuard } from './components/RouteGuards';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
 import AuraDashboardGuard from './pages/aura-analysis/AuraDashboardGuard';
@@ -360,7 +360,7 @@ function AppRoutes() {
                         <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
                         <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
                         {/* Aura Analysis: Connection Hub (MT4/MT5 investor read-only) + dashboard. */}
-                        <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
+                        <Route path="/aura-analysis" element={<AuthenticatedGuard><PremiumAIGuard><AuraAnalysis /></PremiumAIGuard></AuthenticatedGuard>}>
                             <Route index element={<Navigate to="/aura-analysis/ai" replace />} />
                             <Route path="ai" element={<ConnectionHub />} />
                             <Route path="overview" element={<Navigate to="/aura-analysis/dashboard/overview" replace />} />
@@ -398,12 +398,12 @@ function AppRoutes() {
                         </Route>
                         <Route path="/reports" element={<AuthenticatedGuard><ReportsPage /></AuthenticatedGuard>} />
                         <Route path="/reports/live" element={<AuthenticatedGuard><ReportsLiveAnalyticsHub /></AuthenticatedGuard>} />
-                        <Route path="/reports/dna" element={<AuthenticatedGuard><ReportsDnaPage /></AuthenticatedGuard>} />
+                        <Route path="/reports/dna" element={<AuthenticatedGuard><ReportsDnaGuard><ReportsDnaPage /></ReportsDnaGuard></AuthenticatedGuard>} />
                         <Route path="/reports/mt5-metrics" element={<Mt5MetricsLegacyRedirect />} />
                         <Route path="/reports/manual-metrics/dashboard" element={<LegacyManualMetricsRedirect suffix="/dashboard" />} />
                         <Route path="/reports/manual-metrics/processing" element={<LegacyManualMetricsRedirect suffix="/processing" />} />
                         <Route path="/reports/manual-metrics" element={<LegacyManualMetricsRedirect />} />
-                        <Route path="/manual-metrics/dashboard" element={<AuthenticatedGuard><ManualMetricsDashboardPage /></AuthenticatedGuard>} />
+                        <Route path="/manual-metrics/dashboard" element={<AuthenticatedGuard><ManualMetricsGuard><ManualMetricsDashboardPage /></ManualMetricsGuard></AuthenticatedGuard>} />
                         <Route path="/manual-metrics/processing" element={<AuthenticatedGuard><ManualMetricsProcessingPage /></AuthenticatedGuard>} />
                         <Route path="/manual-metrics" element={<AuthenticatedGuard><ManualMetricsEntryPage /></AuthenticatedGuard>} />
                         <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />

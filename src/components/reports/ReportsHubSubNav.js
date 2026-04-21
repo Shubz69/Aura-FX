@@ -8,6 +8,7 @@ import { NavLink } from 'react-router-dom';
 export default function ReportsHubSubNav({ role }) {
   const showMonthly =
     role === 'premium' || role === 'elite' || role === 'admin' || role === 'pro';
+  const canAccessDna = role === 'elite' || role === 'admin';
 
   return (
     <nav className="rp-subnav" aria-label="Performance and DNA sections">
@@ -26,12 +27,21 @@ export default function ReportsHubSubNav({ role }) {
           Reports hub
         </NavLink>
       )}
-      <NavLink
-        to="/reports/dna"
-        className={({ isActive }) => `rp-subnav-link${isActive ? ' rp-subnav-link--active' : ''}`}
-      >
-        DNA
-      </NavLink>
+      {canAccessDna ? (
+        <NavLink
+          to="/reports/dna"
+          className={({ isActive }) => `rp-subnav-link${isActive ? ' rp-subnav-link--active' : ''}`}
+        >
+          DNA
+        </NavLink>
+      ) : (
+        <NavLink
+          to="/choose-plan"
+          className={({ isActive }) => `rp-subnav-link${isActive ? ' rp-subnav-link--active' : ''}`}
+        >
+          DNA (Elite)
+        </NavLink>
+      )}
     </nav>
   );
 }

@@ -41,13 +41,37 @@ function initTranslateWidget() {
   window.__auraGoogleTranslateLoaded = true;
 }
 
+function shouldLoadTranslateForLanguage(lang) {
+  return !!lang && lang !== 'en';
+}
+
+function ensureTranslateScriptLoaded() {
+  if (window.google?.translate?.TranslateElement) {
+    return;
+  }
+  if (document.getElementById(TRANSLATE_SCRIPT_ID)) {
+    return;
+  }
+  const script = document.createElement('script');
+  script.id = TRANSLATE_SCRIPT_ID;
+  script.src = `https://translate.google.com/translate_a/element.js?cb=${TRANSLATE_CALLBACK}`;
+  script.async = true;
+  document.body.appendChild(script);
+}
+
 export default function SiteLanguageBootstrap() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
 
     const onLanguageChanged = (e) => {
       const lang = e?.detail?.language || getPreferredSiteLanguage();
-      applySiteLanguage(lang, { persist: false, forceReloadFallback: false });
+      if (shouldLoadTranslateForLanguage(lang)) {
+        if (window.google?.translate?.TranslateElement) {
+          initTranslateWidget();
+        } else {
+          ensureTranslateScriptLoaded();
+        }
+      }
     };
     window.addEventListener(SITE_LANGUAGE_CHANGED_EVENT, onLanguageChanged);
 
@@ -59,14 +83,17 @@ export default function SiteLanguageBootstrap() {
       });
     };
 
+    const preferredLanguage = getPreferredSiteLanguage();
+    if (!shouldLoadTranslateForLanguage(preferredLanguage)) {
+      return () => {
+        window.removeEventListener(SITE_LANGUAGE_CHANGED_EVENT, onLanguageChanged);
+      };
+    }
+
     if (window.google?.translate?.TranslateElement) {
       window[TRANSLATE_CALLBACK]();
-    } else if (!document.getElementById(TRANSLATE_SCRIPT_ID)) {
-      const script = document.createElement('script');
-      script.id = TRANSLATE_SCRIPT_ID;
-      script.src = `https://translate.google.com/translate_a/element.js?cb=${TRANSLATE_CALLBACK}`;
-      script.async = true;
-      document.body.appendChild(script);
+    } else {
+      ensureTranslateScriptLoaded();
     }
 
     return () => {

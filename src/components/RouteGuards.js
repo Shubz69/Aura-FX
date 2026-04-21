@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import { isSuperAdmin, isAdmin } from '../utils/roles';
+import { useReportsEligibility } from '../pages/reports/useReportsEligibility';
 
 // Loading spinner component - shown while waiting for subscription status
 const LoadingSpinner = () => (
@@ -42,6 +43,39 @@ const LoadingSpinner = () => (
           100% { transform: rotate(360deg); }
         }
       `}</style>
+    </div>
+  </div>
+);
+
+const GateNotice = ({ title, message, primaryTo, primaryLabel, secondaryTo, secondaryLabel }) => (
+  <div style={{
+    minHeight: '60vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px',
+    color: '#fff'
+  }}>
+    <div style={{
+      maxWidth: 560,
+      width: '100%',
+      background: 'rgba(255,255,255,0.03)',
+      border: '1px solid rgba(234,169,96,0.25)',
+      borderRadius: 14,
+      padding: '24px'
+    }}>
+      <h2 style={{ marginTop: 0, marginBottom: 12, fontSize: '1.2rem' }}>{title}</h2>
+      <p style={{ marginTop: 0, marginBottom: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.5 }}>{message}</p>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <Link to={primaryTo} style={{ padding: '10px 14px', borderRadius: 10, textDecoration: 'none', background: '#b47830', color: '#fff', fontWeight: 600 }}>
+          {primaryLabel}
+        </Link>
+        {secondaryTo ? (
+          <Link to={secondaryTo} style={{ padding: '10px 14px', borderRadius: 10, textDecoration: 'none', background: 'rgba(255,255,255,0.08)', color: '#fff' }}>
+            {secondaryLabel}
+          </Link>
+        ) : null}
+      </div>
     </div>
   </div>
 );
@@ -124,7 +158,78 @@ export const PremiumAIGuard = ({ children }) => {
     return <LoadingSpinner />;
   }
   if (entitlements && entitlements.canAccessAI === false) {
-    return <Navigate to="/subscription" replace />;
+    return (
+      <GateNotice
+        title="Aura Analysis requires an active plan"
+        message="Your current plan does not include Aura Analysis access. Upgrade or manage your subscription to continue."
+        primaryTo="/subscription"
+        primaryLabel="Manage subscription"
+        secondaryTo="/choose-plan"
+        secondaryLabel="View plans"
+      />
+    );
+  }
+  return children;
+};
+
+export const ReportsDnaGuard = ({ children }) => {
+  const { token } = useAuth();
+  const { eligibility, loading, error } = useReportsEligibility(token);
+
+  if (loading) return <LoadingSpinner />;
+  if (error) {
+    return (
+      <GateNotice
+        title="Could not verify Trader DNA access"
+        message={error || 'Please retry in a moment.'}
+        primaryTo="/reports"
+        primaryLabel="Back to reports"
+      />
+    );
+  }
+  const role = (eligibility?.role || '').toLowerCase();
+  if (!['elite', 'admin'].includes(role)) {
+    return (
+      <GateNotice
+        title="Trader DNA is gated to Elite"
+        message="This route is currently available to Elite and Admin users only."
+        primaryTo="/choose-plan"
+        primaryLabel="Upgrade to Elite"
+        secondaryTo="/reports"
+        secondaryLabel="Back to reports"
+      />
+    );
+  }
+  return children;
+};
+
+export const ManualMetricsGuard = ({ children }) => {
+  const { token } = useAuth();
+  const { eligibility, loading, error } = useReportsEligibility(token);
+
+  if (loading) return <LoadingSpinner />;
+  if (error) {
+    return (
+      <GateNotice
+        title="Could not verify manual metrics access"
+        message={error || 'Please retry in a moment.'}
+        primaryTo="/reports"
+        primaryLabel="Back to reports"
+      />
+    );
+  }
+  const role = (eligibility?.role || '').toLowerCase();
+  if (!['premium', 'pro', 'elite', 'admin'].includes(role)) {
+    return (
+      <GateNotice
+        title="Manual metrics require a paid plan"
+        message="CSV metrics dashboard is unavailable on your current plan."
+        primaryTo="/choose-plan"
+        primaryLabel="View plans"
+        secondaryTo="/reports"
+        secondaryLabel="Back to reports"
+      />
+    );
   }
   return children;
 };
@@ -256,7 +361,9 @@ const RouteGuards = {
   SurveillanceGuard,
   AuthenticatedGuard,
   AdminGuard,
-  InboxGuard
+  InboxGuard,
+  ReportsDnaGuard,
+  ManualMetricsGuard
 };
 
 export default RouteGuards;

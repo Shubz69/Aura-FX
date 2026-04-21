@@ -2,9 +2,10 @@
  * Manual metrics dashboard — CSV snapshot (Aura-style density, no Aura provider).
  */
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
+import { useReportsEligibility } from './useReportsEligibility';
 import '../../styles/aura-analysis/AuraShared.css';
 import '../../styles/reports/ReportsPage.css';
 import '../../styles/reports/Mt5CsvDashboard.css';
@@ -124,6 +125,7 @@ function WeekdayBars({ extended }) {
 
 function ManualMetricsDashboardInner() {
   const { token } = useAuth();
+  const { eligibility, loading: eligibilityLoading } = useReportsEligibility(token);
   const [searchParams] = useSearchParams();
   const yParam = searchParams.get('year');
   const mParam = searchParams.get('month');
@@ -134,8 +136,10 @@ function ManualMetricsDashboardInner() {
   const [error, setError] = useState('');
   const [forbiddenCode, setForbiddenCode] = useState('');
   const [payload, setPayload] = useState(null);
+  const role = (eligibility?.role || '').toLowerCase();
+  const canAccessCsvMetrics = ['premium', 'pro', 'elite', 'admin'].includes(role);
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!token || eligibilityLoading || !eligibility || !canAccessCsvMetrics) return;
     setLoading(true);
     setError('');
     setForbiddenCode('');
@@ -162,7 +166,7 @@ function ManualMetricsDashboardInner() {
     } finally {
       setLoading(false);
     }
-  }, [token, yParam, mParam]);
+  }, [token, yParam, mParam, eligibilityLoading, eligibility, canAccessCsvMetrics]);
 
   useEffect(() => {
     load();
@@ -207,6 +211,10 @@ function ManualMetricsDashboardInner() {
         <div className="m5dash-loading">Loading manual metrics…</div>
       </div>
     );
+  }
+
+  if (!eligibilityLoading && eligibility && !canAccessCsvMetrics) {
+    return <Navigate to="/reports" replace />;
   }
 
   if (error && forbiddenCode) {

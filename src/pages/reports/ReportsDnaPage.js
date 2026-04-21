@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
+import { useAuth } from '../../context/AuthContext';
+import { useReportsEligibility } from './useReportsEligibility';
 import TraderDnaIntroSequence from '../../components/trader-dna/TraderDnaIntroSequence';
 import TraderDnaReport, { hasRenderableDnaReport } from '../../components/trader-dna/TraderDnaReport';
 import TraderDnaNotReady from '../../components/trader-dna/TraderDnaNotReady';
@@ -11,6 +13,8 @@ import '../../styles/trader-dna/TraderDna.css';
 
 function ReportsDnaPageInner() {
   const navigate = useNavigate();
+  const { token } = useAuth();
+  const { eligibility, loading: eligibilityLoading } = useReportsEligibility(token);
   const [loading, setLoading] = useState(true);
   const [dna, setDna] = useState(null);
   const [error, setError] = useState('');
@@ -21,7 +25,18 @@ function ReportsDnaPageInner() {
   const introCompleteRef = useRef(false);
   const couldGenerateRef = useRef(false);
 
+  const role = (eligibility?.role || '').toLowerCase();
+  const canAccessDna = role === 'elite' || role === 'admin';
+
   const load = useCallback(async () => {
+    if (eligibilityLoading) return;
+    if (eligibility && !canAccessDna) {
+      setLoading(false);
+      setDna(null);
+      setEliteGate(true);
+      setError('Trader DNA is part of A7FX Elite. Upgrade to Elite to unlock this synthesis.');
+      return;
+    }
     setLoading(true);
     setError('');
     setEliteGate(false);
@@ -67,7 +82,7 @@ function ReportsDnaPageInner() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [eligibility, eligibilityLoading, canAccessDna]);
 
   useEffect(() => {
     load();

@@ -340,6 +340,7 @@ function AuraDashboardInner() {
   const rawTab = location.pathname.replace(`${base}/`, '') || 'overview';
   const tabSeg = rawTab.split('/')[0] || 'overview';
   const activeTabPath = TABS.some((t) => t.path === tabSeg) ? tabSeg : 'overview';
+  const noDataYet = !loading && !error && !account && (!rawTrades || rawTrades.length === 0);
 
   return (
     <div className="aura-dashboard journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
@@ -395,6 +396,21 @@ function AuraDashboardInner() {
 
       {/* ══ Content ══ */}
       <main className="aura-dashboard-content">
+        {loading && (
+          <div className="aura-db-warn-banner" role="status">
+            Loading dashboard data…
+          </div>
+        )}
+        {!!error && (
+          <div className="aura-db-warn-banner aura-db-warn-banner--strong" role="alert">
+            {error}
+          </div>
+        )}
+        {noDataYet && (
+          <div className="aura-db-warn-banner" role="status">
+            Dashboard is ready, but no synced account data is available yet. Connect MetaTrader in Connection Hub, then refresh.
+          </div>
+        )}
         <Outlet />
       </main>
     </div>

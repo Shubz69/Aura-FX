@@ -164,10 +164,11 @@ export default function PipelineHealthAdmin() {
             type="button"
             className="pipeline-health-refresh"
             onClick={() => load(true)}
-            disabled={refreshing}
+            disabled={refreshing || loading}
+            aria-busy={refreshing || loading}
           >
             <FaSyncAlt style={{ opacity: refreshing ? 0.55 : 1 }} />
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            {refreshing || loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
 

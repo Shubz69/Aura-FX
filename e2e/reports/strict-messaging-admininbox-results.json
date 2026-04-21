@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-04-21T15:12:28.388Z",
+  "base": "https://www.auraterminal.ai",
+  "results": [
+    {
+      "test": "suite setup/execution",
+      "pass": false,
+      "steps": [
+        "Initialize admin/user contexts",
+        "Run strict scenarios"
+      ],
+      "expected": "All strict scenarios execute",
+      "actual": "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.message-content').filter({ hasText: 'STRICT_ADMIN_TO_USER_1776784341044' }).first()\nExpected: visible\nTimeout: 7000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 7000ms\u001b[22m\n\u001b[2m  - waiting for locator('.message-content').filter({ hasText: 'STRICT_ADMIN_TO_USER_1776784341044' }).first()\u001b[22m\n",
+      "consoleIssues": [],
+      "networkIssues": [],
+      "completion": "still_unreliable"
+    }
+  ]
+}

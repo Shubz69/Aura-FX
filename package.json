@@ -72,7 +72,11 @@
     "test:ai": "jest tests/ai-chat.test.js --verbose",
     "test:ai:ci": "jest tests/ai-chat.test.js --ci --coverage",
     "eject": "react-scripts eject",
-    "test-server": "node test-server.js"
+    "test-server": "node test-server.js",
+    "test:e2e:audit": "playwright test --config=playwright.audit.config.js",
+    "test:e2e:signup": "playwright test --config=playwright.signup.config.js",
+    "test:e2e:admin": "playwright test --config=playwright.admin.config.js",
+    "test:e2e": "playwright test"
   },
   "eslintConfig": {
     "extends": [
@@ -103,6 +107,8 @@
     "better-sqlite3": "^9.2.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.0",
     "cross-env": "^10.1.0",
     "patch-package": "^8.0.1",
     "sharp": "^0.34.5"

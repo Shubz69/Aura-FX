@@ -5,6 +5,8 @@ import '../styles/Messages.css';
 import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { FaPaperPlane, FaArrowLeft, FaShieldAlt, FaCheckCircle } from 'react-icons/fa';
 import Api from '../services/Api';
+import { logClassifiedError } from '../utils/apiObservability';
+import WebSocketService from '../services/WebSocketService';
 
 const Messages = () => {
     const { user } = useAuth();
@@ -17,6 +19,8 @@ const Messages = () => {
     const prevMessagesLength = useRef(0);
     const threadIdRef = useRef(null);
     const loadInFlightRef = useRef(false);
+    const isRealtimeConnectedRef = useRef(false);
+    const [threadId, setThreadId] = useState(null);
 
     const loadMessages = useCallback(async () => {
         if (!user || loadInFlightRef.current) return;
@@ -27,6 +31,7 @@ const Messages = () => {
                 const threadResponse = await Api.ensureAdminThread(user.id);
                 threadId = threadResponse.data?.thread?.id || null;
                 threadIdRef.current = threadId;
+                setThreadId(threadId);
             }
             if (threadId) {
                 const messagesResponse = await Api.getThreadMessages(threadId, { limit: 50 });
@@ -40,12 +45,13 @@ const Messages = () => {
                     read: !!msg.readAt || !!msg.read_at
                 }));
                 setMessages(formattedMessages);
+                await Api.markThreadRead(threadId).catch(() => {});
             } else {
                 const savedMessages = localStorage.getItem(`messages_${user.id}`);
                 if (savedMessages) setMessages(JSON.parse(savedMessages));
             }
         } catch (error) {
-            console.error('Error loading messages:', error);
+            logClassifiedError('messages.page_load', error, { userId: user?.id || null });
             const savedMessages = localStorage.getItem(`messages_${user.id}`);
             if (savedMessages) setMessages(JSON.parse(savedMessages));
         } finally {
@@ -59,12 +65,67 @@ const Messages = () => {
             return;
         }
         loadMessages();
+        return undefined;
+    }, [user, navigate, loadMessages]);
+
+    useEffect(() => {
+        if (!user?.id || !threadId) return undefined;
+        let mounted = true;
+
+        const wireRealtime = () => {
+            WebSocketService.offThreadEvents();
+            WebSocketService.joinThread(threadId);
+            WebSocketService.onThreadMessage(async ({ threadId: incomingThreadId, message }) => {
+                if (!mounted || String(incomingThreadId) !== String(threadId)) return;
+                const createdAt = message?.createdAt || message?.created_at || null;
+                const latencyMs = createdAt ? Date.now() - new Date(createdAt).getTime() : null;
+                console.info('[observability]', {
+                    scope: 'messages.realtime_receive',
+                    threadId,
+                    latencyMs: Number.isFinite(latencyMs) ? latencyMs : null,
+                });
+                setMessages((prev) => {
+                    const normalized = {
+                        id: message.id,
+                        sender: String(message.senderId) === String(user.id) ? 'user' : 'admin',
+                        senderName: String(message.senderId) === String(user.id) ? (user.username || user.name || 'You') : 'Admin',
+                        content: message.body,
+                        timestamp: message.createdAt || message.created_at,
+                        read: !!message.readAt || !!message.read_at,
+                    };
+                    if (!normalized.id) return prev;
+                    return prev.some((m) => String(m.id) === String(normalized.id)) ? prev : [...prev, normalized];
+                });
+                await Api.markThreadRead(threadId).catch(() => {});
+            });
+            WebSocketService.onThreadRead(() => {});
+        };
+
+        WebSocketService.connect({ userId: user.id, role: user.role }, () => {
+            if (!mounted) return;
+            isRealtimeConnectedRef.current = Boolean(WebSocketService.isConnected);
+            if (isRealtimeConnectedRef.current) {
+                console.info('[observability]', { scope: 'messages.realtime_connected', threadId });
+                wireRealtime();
+            }
+        });
+
+        return () => {
+            mounted = false;
+            isRealtimeConnectedRef.current = false;
+            WebSocketService.offThreadEvents();
+        };
+    }, [user?.id, user?.role, user?.name, user?.username, threadId]);
+
+    useEffect(() => {
+        if (!user?.id) return undefined;
         const pollInterval = setInterval(() => {
+            if (isRealtimeConnectedRef.current) return;
             if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
             loadMessages();
-        }, 10000);
+        }, 8000);
         return () => clearInterval(pollInterval);
-    }, [user, navigate, loadMessages]);
+    }, [user?.id, loadMessages]);
 
     // Control scrolling behavior
     useEffect(() => {
@@ -137,7 +198,7 @@ const Messages = () => {
                 setMessages(formattedMessages);
             }
         } catch (error) {
-            console.error('Error sending message to admin:', error);
+            logClassifiedError('messages.page_send', error, { userId: user?.id || null, threadId: threadIdRef.current });
         }
     };
 

@@ -1,0 +1,414 @@
+{
+  "generatedAt": "2026-04-21T14:29:03.651Z",
+  "base": "https://www.auraterminal.ai",
+  "flows": [
+    {
+      "flow": "reports/dna access behavior",
+      "status": "pass",
+      "url": "https://www.auraterminal.ai/reports/dna",
+      "tested": "Route gating and clarity on /reports/dna.",
+      "expected": "Eligible users reach report; ineligible users see gating/redirect instead of broken 403 shell.",
+      "actual": "Behavior matched targeted expectations.",
+      "checks": [
+        {
+          "path": "/reports/dna",
+          "url": "https://www.auraterminal.ai/reports/dna",
+          "expected": "Either report content or explicit gate messaging",
+          "actual": "urlMatch=true, textMatch=true",
+          "pass": true,
+          "tested": "Open DNA report route"
+        }
+      ],
+      "consoleIssues": [
+        {
+          "url": "https://www.auraterminal.ai/reports/dna",
+          "text": "Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+        }
+      ],
+      "networkIssues": [
+        {
+          "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+          "error": "csp",
+          "during": "https://www.auraterminal.ai/reports/dna"
+        }
+      ],
+      "completion": "complete"
+    },
+    {
+      "flow": "manual metrics / csv metrics access behavior",
+      "status": "pass",
+      "url": "https://www.auraterminal.ai/manual-metrics/processing",
+      "tested": "Eligibility behavior on manual metrics dashboard/processing.",
+      "expected": "Eligible users load dashboard; ineligible users redirected/gated without silent failure.",
+      "actual": "Behavior matched targeted expectations.",
+      "checks": [
+        {
+          "path": "/manual-metrics/dashboard",
+          "url": "https://www.auraterminal.ai/manual-metrics/dashboard",
+          "expected": "Dashboard or redirect/gate",
+          "actual": "urlMatch=true, textMatch=true",
+          "pass": true,
+          "tested": "Open CSV metrics dashboard route"
+        },
+        {
+          "path": "/manual-metrics/processing",
+          "url": "https://www.auraterminal.ai/manual-metrics/processing",
+          "expected": "Processing UI or explicit gating",
+          "actual": "urlMatch=true, textMatch=true",
+          "pass": true,
+          "tested": "Open processing step route"
+        }
+      ],
+      "consoleIssues": [
+        {
+          "url": "https://www.auraterminal.ai/manual-metrics/dashboard",
+          "text": "Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+        },
+        {
+          "url": "https://www.auraterminal.ai/manual-metrics/processing",
+          "text": "Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+        }
+      ],
+      "networkIssues": [
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/reports/dna"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/trader-dna",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/reports/dna"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/users/88",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/reports/dna"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/me",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/reports/dna"
+        },
+        {
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/reports/dna"
+        },
+        {
+          "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+          "error": "csp",
+          "during": "https://www.auraterminal.ai/manual-metrics/dashboard"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/reports/csv-metrics?",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/manual-metrics/dashboard"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/manual-metrics/dashboard"
+        },
+        {
+          "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+          "error": "csp",
+          "during": "https://www.auraterminal.ai/manual-metrics/processing"
+        }
+      ],
+      "completion": "complete"
+    },
+    {
+      "flow": "user/admin live messaging",
+      "status": "pass",
+      "url": "https://www.auraterminal.ai/messages",
+      "tested": "User /messages route stability and live state readiness.",
+      "expected": "Messages page loads thread UI; no dead shell.",
+      "actual": "Behavior matched targeted expectations.",
+      "checks": [
+        {
+          "path": "/messages",
+          "url": "https://www.auraterminal.ai/messages",
+          "expected": "Thread list/messages input or explicit empty state",
+          "actual": "urlMatch=true, textMatch=true",
+          "pass": true,
+          "tested": "Open user messaging page"
+        }
+      ],
+      "consoleIssues": [
+        {
+          "url": "https://www.auraterminal.ai/messages",
+          "text": "Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+        }
+      ],
+      "networkIssues": [
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/manual-metrics/processing"
+        },
+        {
+          "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+          "error": "csp",
+          "during": "https://www.auraterminal.ai/messages"
+        }
+      ],
+      "completion": "complete"
+    },
+    {
+      "flow": "admin inbox stability",
+      "status": "pass",
+      "url": "https://www.auraterminal.ai/admin/inbox",
+      "tested": "Admin inbox hydration/loading behavior on /admin/inbox.",
+      "expected": "Inbox loads with deterministic loading states and usable controls.",
+      "actual": "Behavior matched targeted expectations.",
+      "checks": [
+        {
+          "path": "/admin/inbox",
+          "url": "https://www.auraterminal.ai/admin/inbox",
+          "expected": "User list/message area with loading or ready indicators",
+          "actual": "urlMatch=true, textMatch=true",
+          "pass": true,
+          "tested": "Open admin inbox"
+        }
+      ],
+      "consoleIssues": [
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox",
+          "text": "Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox",
+          "text": "Access to XMLHttpRequest at 'https://aura-fx-production.up.railway.app/ws/info?t=1776781732943' from origin 'https://www.auraterminal.ai' has been blocked by CORS policy: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'. The credentials mode of requests initiated by the XMLHttpRequest is controlled by the withCredentials attribute."
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox",
+          "text": "Failed to load resource: net::ERR_FAILED"
+        }
+      ],
+      "networkIssues": [
+        {
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/messages"
+        },
+        {
+          "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+          "error": "csp",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "url": "https://aura-fx-production.up.railway.app/ws/info?t=1776781732943",
+          "error": "net::ERR_FAILED",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        }
+      ],
+      "completion": "complete"
+    },
+    {
+      "flow": "notifications/session refresh stability",
+      "status": "pass",
+      "url": "https://www.auraterminal.ai/profile",
+      "tested": "Session/refresh-sensitive surfaces touched by request orchestration.",
+      "expected": "Dashboard/profile load without unstable refresh loop.",
+      "actual": "Behavior matched targeted expectations.",
+      "checks": [
+        {
+          "path": "/dashboard",
+          "url": "https://www.auraterminal.ai/dashboard",
+          "expected": "Page loads normally without hard auth failure loop",
+          "actual": "urlMatch=true, textMatch=true",
+          "pass": true,
+          "tested": "Open dashboard after auth/session checks"
+        },
+        {
+          "path": "/profile",
+          "url": "https://www.auraterminal.ai/profile",
+          "expected": "Profile loads with user settings controls",
+          "actual": "urlMatch=true, textMatch=true",
+          "pass": true,
+          "tested": "Open profile (notifications/session-adjacent)"
+        }
+      ],
+      "consoleIssues": [
+        {
+          "url": "https://www.auraterminal.ai/dashboard",
+          "text": "Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+        },
+        {
+          "url": "https://www.auraterminal.ai/profile",
+          "text": "Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+        }
+      ],
+      "networkIssues": [
+        {
+          "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+          "error": "csp",
+          "during": "https://www.auraterminal.ai/dashboard"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/dashboard"
+        },
+        {
+          "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+          "error": "csp",
+          "during": "https://www.auraterminal.ai/profile"
+        }
+      ],
+      "completion": "complete"
+    },
+    {
+      "flow": "premium/subscription/courses/aura-analysis state clarity",
+      "status": "pass",
+      "url": "https://www.auraterminal.ai/aura-analysis/ai",
+      "tested": "State clarity on touched shell-like routes.",
+      "expected": "Clear loading/gated/placeholder/ready/error state messaging.",
+      "actual": "Behavior matched targeted expectations.",
+      "checks": [
+        {
+          "path": "/premium-ai",
+          "url": "https://www.auraterminal.ai/subscription",
+          "expected": "Verifying/gated/ready messaging, not blank shell",
+          "actual": "urlMatch=true, textMatch=true",
+          "pass": true,
+          "tested": "Open premium AI route"
+        },
+        {
+          "path": "/subscription",
+          "url": "https://www.auraterminal.ai/subscription",
+          "expected": "Plan/status clarity",
+          "actual": "urlMatch=true, textMatch=true",
+          "pass": true,
+          "tested": "Open subscription route"
+        },
+        {
+          "path": "/courses",
+          "url": "https://www.auraterminal.ai/courses",
+          "expected": "Course placeholder/ready clarity message",
+          "actual": "urlMatch=true, textMatch=true",
+          "pass": true,
+          "tested": "Open courses route"
+        },
+        {
+          "path": "/aura-analysis/dashboard/performance",
+          "url": "https://www.auraterminal.ai/aura-analysis/ai",
+          "expected": "Loading/error/no-data/ready signal",
+          "actual": "urlMatch=true, textMatch=true",
+          "pass": true,
+          "tested": "Open aura analysis dashboard route"
+        }
+      ],
+      "consoleIssues": [
+        {
+          "url": "https://www.auraterminal.ai/premium-ai",
+          "text": "Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+        },
+        {
+          "url": "https://www.auraterminal.ai/subscription",
+          "text": "Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+        },
+        {
+          "url": "https://www.auraterminal.ai/subscription",
+          "text": "Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+        },
+        {
+          "url": "https://www.auraterminal.ai/courses",
+          "text": "Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+        },
+        {
+          "url": "https://www.auraterminal.ai/aura-analysis/dashboard/performance",
+          "text": "Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+        }
+      ],
+      "networkIssues": [
+        {
+          "url": "https://www.auraterminal.ai/api/users/88",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/profile"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/journal/tasks?dateFrom=2026-04-01&dateTo=2026-04-30",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/profile"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/users/settings",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/profile"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/users/settings",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/profile"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/profile"
+        },
+        {
+          "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+          "error": "csp",
+          "during": "https://www.auraterminal.ai/premium-ai"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/subscription"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/subscription"
+        },
+        {
+          "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+          "error": "csp",
+          "during": "https://www.auraterminal.ai/subscription"
+        },
+        {
+          "url": "https://m.stripe.network/out-4.5.45.js",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/subscription"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/subscription"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/subscription"
+        },
+        {
+          "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+          "error": "csp",
+          "during": "https://www.auraterminal.ai/courses"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/courses",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/courses"
+        },
+        {
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "error": "net::ERR_ABORTED",
+          "during": "https://www.auraterminal.ai/courses"
+        },
+        {
+          "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+          "error": "csp",
+          "during": "https://www.auraterminal.ai/aura-analysis/dashboard/performance"
+        }
+      ],
+      "completion": "complete"
+    }
+  ],
+  "totals": {
+    "pass": 6,
+    "fail": 0
+  }
+}

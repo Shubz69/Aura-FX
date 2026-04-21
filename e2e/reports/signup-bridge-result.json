@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "finalUrl": "https://www.auraterminal.ai/choose-plan",
+  "username": "auraqa_1776733723074",
+  "email": "Shobhit2069@gmail.com",
+  "issues": [
+    {
+      "sev": "low",
+      "title": "console.error",
+      "detail": "https://www.auraterminal.ai/register Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+      "t": "2026-04-21T01:08:46.579Z"
+    },
+    {
+      "sev": "medium",
+      "title": "free-plan",
+      "detail": "Select Free Plan not visible",
+      "t": "2026-04-21T01:18:41.670Z"
+    }
+  ],
+  "at": "2026-04-21T01:18:41.689Z"
+}

@@ -31,8 +31,21 @@ try {
 const app = express();
 const server = http.createServer(app);
 
-// Enable CORS
-app.use(cors());
+// Enable CORS (SockJS /ws/info uses credentials, so wildcard origin is invalid)
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser/server-side calls
+    if (!origin) return callback(null, true);
+    // If allowlist exists, enforce it
+    if (ALLOWED_ORIGINS && !ALLOWED_ORIGINS.includes(origin)) {
+      return callback(new Error('Origin not allowed by CORS'));
+    }
+    // Reflect request origin to avoid wildcard+credentials rejection
+    return callback(null, origin);
+  },
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // ============================================================================
@@ -287,6 +300,54 @@ app.post('/api/broadcast-new-message', async (req, res) => {
     }
 });
 
+// Endpoint to broadcast admin/user thread message (called by /api/messages/threads)
+app.post('/api/broadcast-thread-message', async (req, res) => {
+    try {
+        const { threadId, message, thread } = req.body || {};
+
+        if (!threadId || !message) {
+            return res.status(400).json({ success: false, message: 'threadId and message required' });
+        }
+
+        const payload = JSON.stringify({
+            threadId: String(threadId),
+            message,
+            thread: thread || null
+        });
+
+        const destination = `/topic/thread/${threadId}`;
+        const messageFrame = createStompFrame('MESSAGE', {
+            'destination': destination,
+            'content-type': 'application/json',
+            'message-id': `thread-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        }, payload);
+
+        let notifiedCount = 0;
+        const threadSubs = subscriptions.get(String(threadId)) || subscriptions.get(threadId);
+        if (threadSubs) {
+            threadSubs.forEach((ws) => {
+                try {
+                    if (ws.readyState === 1) {
+                        ws.send(messageFrame);
+                        notifiedCount++;
+                    }
+                } catch (error) {
+                    console.error('Error broadcasting thread message:', error);
+                }
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Thread message broadcasted',
+            clientsNotified: notifiedCount
+        });
+    } catch (error) {
+        console.error('Error broadcasting thread message:', error);
+        return res.status(500).json({ success: false, message: 'Failed to broadcast thread message' });
+    }
+});
+
 // Endpoint to broadcast message deleted (called by delete API)
 app.post('/api/broadcast-message-deleted', async (req, res) => {
     try {
@@ -537,15 +598,18 @@ wss.on('connection', (ws, req) => {
                 console.log(`Client ${clientId} subscribed to: ${destination}`);
                 
                 let channelId = null;
+                const isThreadTopic = Boolean(destination && destination.startsWith('/topic/thread/'));
                 if (destination && destination.startsWith('/topic/chat/')) {
                     channelId = destination.replace('/topic/chat/', '');
+                } else if (destination && destination.startsWith('/topic/thread/')) {
+                    channelId = destination.replace('/topic/thread/', '');
                 } else if (destination === '/topic/online-users') {
                     channelId = 'online-users';
                 }
                 
                 if (channelId) {
                     // Enforce entitlements on chat channels (canSee) to stop retry loops / "closed before established"
-                    if (channelId !== 'online-users') {
+                    if (channelId !== 'online-users' && !isThreadTopic) {
                         const currentUserId = clients.get(ws)?.userId;
                         const access = await getChannelAccess(currentUserId, channelId);
                         if (!access.canSee) {
@@ -579,6 +643,8 @@ wss.on('connection', (ws, req) => {
                 let channelId = null;
                 if (destination && destination.startsWith('/topic/chat/')) {
                     channelId = destination.replace('/topic/chat/', '');
+                } else if (destination && destination.startsWith('/topic/thread/')) {
+                    channelId = destination.replace('/topic/thread/', '');
                 } else if (destination === '/topic/online-users') {
                     channelId = 'online-users';
                 }

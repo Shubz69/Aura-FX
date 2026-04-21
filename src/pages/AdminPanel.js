@@ -273,6 +273,18 @@ const AdminPanel = () => {
     const [tdAutoStatus, setTdAutoStatus] = useState(null);
     const [tdAutoStatusLoading, setTdAutoStatusLoading] = useState(false);
     const [tdAutoStatusErr, setTdAutoStatusErr] = useState(null);
+    const [busyActionKey, setBusyActionKey] = useState(null);
+    const [channelsRefreshing, setChannelsRefreshing] = useState(false);
+
+    const withBusyAction = useCallback(async (key, fn) => {
+        if (busyActionKey) return;
+        setBusyActionKey(key);
+        try {
+            await fn();
+        } finally {
+            setBusyActionKey(null);
+        }
+    }, [busyActionKey]);
 
     // Handle real-time online status updates from WebSocket
     const handleOnlineStatusUpdate = (data) => {
@@ -373,6 +385,7 @@ const AdminPanel = () => {
     const fetchChannels = async () => {
         try {
             setChannelsLoading(true);
+            setChannelsRefreshing(true);
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/community/channels`, {
                 headers: {
@@ -389,6 +402,7 @@ const AdminPanel = () => {
             console.error('Error fetching channels:', err);
         } finally {
             setChannelsLoading(false);
+            setChannelsRefreshing(false);
         }
     };
 
@@ -994,8 +1008,8 @@ const AdminPanel = () => {
         {activeTab === 'channels' && (
           <div className="user-summary">
             <span>Total Channels: {channels.length}</span>
-            <button onClick={fetchChannels} className="refresh-btn">
-              ↻ Refresh
+            <button onClick={fetchChannels} className="refresh-btn" disabled={channelsRefreshing}>
+              {channelsRefreshing ? 'Refreshing…' : '↻ Refresh'}
             </button>
           </div>
         )}
@@ -1093,8 +1107,8 @@ const AdminPanel = () => {
                 </button>
               )}
               {!searchTerm && (
-                <button onClick={fetchUsers} className="retry-btn">
-                  Retry
+                <button onClick={fetchUsers} className="retry-btn" disabled={loading}>
+                  {loading ? 'Loading…' : 'Retry'}
                 </button>
               )}
             </div>
@@ -1150,15 +1164,17 @@ const AdminPanel = () => {
                   <div className="user-actions">
                     <button 
                       className="action-btn xp-btn"
-                      onClick={() => handleGiveXP(userItem.id, userItem.email, userItem.xp || 0, userItem.level || 1)}
+                      onClick={() => withBusyAction(`xp-${userItem.id}`, () => handleGiveXP(userItem.id, userItem.email, userItem.xp || 0, userItem.level || 1))}
+                      disabled={!!busyActionKey}
                     >
-                      ⭐ Give XP
+                      {busyActionKey === `xp-${userItem.id}` ? 'Working…' : '⭐ Give XP'}
                     </button>
                     <button 
                       className="action-btn reset-xp-btn"
-                      onClick={() => handleResetXP(userItem.id, userItem.email)}
+                      onClick={() => withBusyAction(`resetxp-${userItem.id}`, () => handleResetXP(userItem.id, userItem.email))}
+                      disabled={!!busyActionKey}
                     >
-                      🔄 Reset XP
+                      {busyActionKey === `resetxp-${userItem.id}` ? 'Working…' : '🔄 Reset XP'}
                     </button>
                     <button 
                       className="action-btn grant-access-btn"
@@ -1169,20 +1185,23 @@ const AdminPanel = () => {
                     {isSuperAdminUser && !isRowSuperAdminOrAdmin(userItem) && (
                       <button 
                         className="action-btn grant-admin-btn"
-                        onClick={() => handleGrantAdminAccess(userItem.id, userItem.email)}
+                        onClick={() => withBusyAction(`grantadmin-${userItem.id}`, () => handleGrantAdminAccess(userItem.id, userItem.email))}
+                        disabled={!!busyActionKey}
                       >
-                        <FaUserShield /> Grant Admin
+                        {busyActionKey === `grantadmin-${userItem.id}` ? 'Working…' : <><FaUserShield /> Grant Admin</>}
                       </button>
                     )}
                     <button 
                       className="action-btn revoke-access-btn"
-                      onClick={() => handleRevokeCommunityAccess(userItem.id, userItem.email)}
+                      onClick={() => withBusyAction(`revoke-${userItem.id}`, () => handleRevokeCommunityAccess(userItem.id, userItem.email))}
+                      disabled={!!busyActionKey}
                     >
-                      Revoke
+                      {busyActionKey === `revoke-${userItem.id}` ? 'Working…' : 'Revoke'}
                     </button>
                     <button 
                       className="action-btn delete-btn"
                       onClick={() => handleDeleteUser(userItem.id, userItem.email)}
+                      disabled={!!busyActionKey}
                     >
                       Delete
                     </button>
@@ -1190,6 +1209,7 @@ const AdminPanel = () => {
                       className="action-btn plan-btn"
                       type="button"
                       onClick={() => openChangePlanModal(userItem)}
+                      disabled={!!busyActionKey}
                     >
                       Change plan
                     </button>
@@ -1211,7 +1231,9 @@ const AdminPanel = () => {
           ) : channels.length === 0 ? (
             <div className="no-channels-message">
               <p>No channels found.</p>
-              <button onClick={fetchChannels} className="retry-btn">Retry</button>
+              <button onClick={fetchChannels} className="retry-btn" disabled={channelsRefreshing}>
+                {channelsRefreshing ? 'Refreshing…' : 'Retry'}
+              </button>
             </div>
           ) : (
             <div className="users-grid">
@@ -1234,8 +1256,9 @@ const AdminPanel = () => {
                       <select
                         id={`access-${channel.id}`}
                         value={channel.accessLevel || 'open'}
-                        onChange={(e) => handleUpdateChannelAccess(channel.id, e.target.value)}
+                        onChange={(e) => withBusyAction(`channel-access-${channel.id}`, () => handleUpdateChannelAccess(channel.id, e.target.value))}
                         className="access-level-select"
+                        disabled={!!busyActionKey}
                       >
                         <option value="open">Open/Free - Everyone can view and post</option>
                         <option value="free">Free - Everyone can view and post</option>

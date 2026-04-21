@@ -8,6 +8,7 @@ import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { FriendsUpgradeRequired } from '../components/RouteGuards';
 import { isAdmin, isSuperAdmin, isPremium } from '../utils/roles';
 import '../styles/AdminInbox.css';
+import { logClassifiedError } from '../utils/apiObservability';
 
 const API_BASE = () => (Api.getBaseUrl() || '');
 
@@ -42,6 +43,7 @@ const AdminInbox = () => {
   const [file, setFile] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [ensuringThread, setEnsuringThread] = useState(false);
   const [userSupportThreadId, setUserSupportThreadId] = useState(null);
   
@@ -52,6 +54,9 @@ const AdminInbox = () => {
   const shouldScrollToBottom = useRef(false);
   const prevMessagesLength = useRef(0);
   const loadMessagesInFlightRef = useRef(false);
+  const usersLoadSeqRef = useRef(0);
+  const supportLoadSeqRef = useRef(0);
+  const messagesLoadSeqRef = useRef(0);
   const threadsRef = useRef(threads);
   useEffect(() => {
     threadsRef.current = threads;
@@ -130,15 +135,20 @@ const AdminInbox = () => {
 useEffect(() => {
   if (!isAdminRole(user?.role)) return;
   let mounted = true;
+  const loadSeq = ++usersLoadSeqRef.current;
+  const usersAbort = new AbortController();
   const load = async () => {
     setLoadingUsers(true);
     try {
       const token = localStorage.getItem('token');
       const [usersRes, threadsRes] = await Promise.all([
-        fetch(`${API_BASE()}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_BASE()}/api/admin/users`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: usersAbort.signal,
+        }),
         Api.listThreads()
       ]);
-      if (!mounted) return;
+      if (!mounted || loadSeq !== usersLoadSeqRef.current) return;
       const usersData = usersRes.ok ? await usersRes.json() : [];
       const usersList = Array.isArray(usersData) ? usersData : (usersData.users || usersData.data || []);
       const filteredUsers = usersList.filter(u => u.id !== user?.id);
@@ -155,9 +165,10 @@ useEffect(() => {
         setSelectedUserId(threadsList[0].userId);
       }
     } catch (e) {
-      console.error('Load users/threads failed', e);
+      if (e?.name === 'AbortError') return;
+      logClassifiedError('admin_inbox.load_users_threads', e, { userId: user?.id || null });
     } finally {
-      if (mounted) setLoadingUsers(false);
+      if (mounted && loadSeq === usersLoadSeqRef.current) setLoadingUsers(false);
     }
   };
   load();
@@ -168,18 +179,23 @@ useEffect(() => {
       setThreads((res.data?.threads || []).filter(t => t.userId !== user?.id));
     }).catch(() => {});
   }, 15000);
-  return () => { clearInterval(refreshList); mounted = false; };
+  return () => {
+    clearInterval(refreshList);
+    usersAbort.abort();
+    mounted = false;
+  };
 }, [user, activeThreadId, threadFromUrl, setSearchParams]);
 
   /* ── Load current user's support thread (Admin tab, non-admin only) ── */
   useEffect(() => {
     if (isAdminRole(user?.role) || !user?.id) return;
     let mounted = true;
+    const loadSeq = ++supportLoadSeqRef.current;
     const load = async () => {
       setLoadingUsers(true);
       try {
         const resp = await Api.ensureAdminThread();
-        if (!mounted) return;
+        if (!mounted || loadSeq !== supportLoadSeqRef.current) return;
         const thread = resp.data?.thread;
         if (thread) {
           const supportThread = {
@@ -193,14 +209,22 @@ useEffect(() => {
           setUserSupportThreadId(thread.id);
         }
       } catch (e) {
-        if (mounted) console.error('Load support thread failed', e);
+        if (mounted) logClassifiedError('admin_inbox.load_support_thread', e, { userId: user?.id || null });
       } finally {
-        if (mounted) setLoadingUsers(false);
+        if (mounted && loadSeq === supportLoadSeqRef.current) setLoadingUsers(false);
       }
     };
     load();
     return () => { mounted = false; };
   }, [user?.id, user?.role]);
+
+  useEffect(() => {
+    if (!activeThreadId) return;
+    const active = threads.find((t) => t.id === activeThreadId);
+    if (active?.userId && active.userId !== selectedUserId) {
+      setSelectedUserId(active.userId);
+    }
+  }, [threads, activeThreadId, selectedUserId]);
 
   /* ── Default to Friends tab when user is Premium but not Admin ── */
   useEffect(() => {
@@ -253,7 +277,7 @@ useEffect(() => {
         setActiveThreadId(thread.id);
       }
     } catch (e) {
-      console.error('Ensure thread failed', e);
+      logClassifiedError('admin_inbox.ensure_thread', e, { targetUserId: u?.id || null });
     } finally {
       setEnsuringThread(false);
     }
@@ -310,7 +334,7 @@ useEffect(() => {
           }
         }
       } catch (e) {
-        console.error('Open inbox for linked user failed', e);
+        logClassifiedError('admin_inbox.open_linked_user', e, { targetId });
       } finally {
         if (!cancelled) setEnsuringThread(false);
         setSearchParams((prev) => {
@@ -336,7 +360,7 @@ useEffect(() => {
         setActiveThreadId(thread.id);
       }
     } catch (e) {
-      console.error('Ensure friend thread failed', e);
+      logClassifiedError('admin_inbox.ensure_friend_thread', e, { friendUserId: friend?.id || null });
     } finally {
       setEnsuringThread(false);
     }
@@ -356,16 +380,19 @@ useEffect(() => {
     
     const loadMessages = async () => {
       if (loadMessagesInFlightRef.current) return;
+      const loadSeq = ++messagesLoadSeqRef.current;
+      setLoadingMessages(true);
       loadMessagesInFlightRef.current = true;
       try {
         const resp = await Api.getThreadMessages(activeThreadId, { limit: 50 });
-        if (!mounted) return;
+        if (!mounted || loadSeq !== messagesLoadSeqRef.current) return;
         setMessages(resp.data.messages || []);
         await Api.markThreadRead(activeThreadId);
         setThreads(prev => prev.map(t => t.id === activeThreadId ? { ...t, adminUnreadCount: 0 } : t));
       } catch (e) {
-        if (mounted) console.error('Load messages failed', e);
+        if (mounted) logClassifiedError('admin_inbox.load_messages', e, { activeThreadId });
       } finally {
+        if (mounted && loadSeq === messagesLoadSeqRef.current) setLoadingMessages(false);
         loadMessagesInFlightRef.current = false;
       }
     };
@@ -404,6 +431,7 @@ useEffect(() => {
   /* ── Send message ── */
   const handleSend = async (e) => {
     e.preventDefault();
+    if (ensuringThread || loadingMessages) return;
     const hasText = input.trim().length > 0;
     if (!hasText && !file) return;
     const body = hasText ? input.trim() : `[file] ${file?.name || ''}`;
@@ -437,7 +465,7 @@ useEffect(() => {
         }
       }
     } catch (e) {
-      console.error('Send failed', e);
+      logClassifiedError('admin_inbox.send_message', e, { activeThreadId });
     }
   };
 
@@ -730,6 +758,11 @@ useEffect(() => {
                   <div className="admin-inbox-conversation-empty-icon">✦</div>
                   <p>Starting conversation…</p>
                 </div>
+              ) : loadingMessages && activeThreadId ? (
+                <div className="admin-inbox-conversation-empty">
+                  <div className="admin-inbox-conversation-empty-icon">✦</div>
+                  <p>Loading messages…</p>
+                </div>
               ) : messages.length === 0 && activeThreadId ? (
                 <div className="admin-inbox-conversation-empty">
                   <div className="admin-inbox-conversation-empty-icon">
@@ -811,7 +844,7 @@ useEffect(() => {
                 <button
                   type="submit"
                   className="admin-inbox-send-btn"
-                  disabled={(!input.trim() && !file) || !activeThreadId}
+                  disabled={(!input.trim() && !file) || !activeThreadId || ensuringThread || loadingMessages}
                 >
                   <FaPaperPlane size={14} />
                   <span>Send</span>

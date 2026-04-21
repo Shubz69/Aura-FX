@@ -1,0 +1,900 @@
+{
+  "base": "https://auraterminal.ai",
+  "generatedAt": "2026-04-21T00:42:01.393Z",
+  "pageNotes": [
+    {
+      "requested": "https://auraterminal.ai",
+      "finalUrl": "https://www.auraterminal.ai/",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 4985
+    },
+    {
+      "requested": "https://www.auraterminal.ai/",
+      "finalUrl": "https://www.auraterminal.ai/",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 1163
+    },
+    {
+      "requested": "https://www.auraterminal.ai/courses",
+      "finalUrl": "https://www.auraterminal.ai/courses",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 1166
+    },
+    {
+      "requested": "https://www.auraterminal.ai/explore",
+      "finalUrl": "https://www.auraterminal.ai/explore",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 934
+    },
+    {
+      "requested": "https://www.auraterminal.ai/why-glitch",
+      "finalUrl": "https://www.auraterminal.ai/why-glitch",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 1380
+    },
+    {
+      "requested": "https://www.auraterminal.ai/contact",
+      "finalUrl": "https://www.auraterminal.ai/contact",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 689
+    },
+    {
+      "requested": "https://www.auraterminal.ai/choose-plan",
+      "finalUrl": "https://www.auraterminal.ai/choose-plan",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 116
+    },
+    {
+      "requested": "https://www.auraterminal.ai/affiliation",
+      "finalUrl": "https://www.auraterminal.ai/affiliation",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 109
+    },
+    {
+      "requested": "https://www.auraterminal.ai/privacy",
+      "finalUrl": "https://www.auraterminal.ai/privacy",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 1704
+    },
+    {
+      "requested": "https://www.auraterminal.ai/terms",
+      "finalUrl": "https://www.auraterminal.ai/terms",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 100
+    },
+    {
+      "requested": "https://www.auraterminal.ai/friends",
+      "finalUrl": "https://www.auraterminal.ai/friends",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 175
+    },
+    {
+      "requested": "https://www.auraterminal.ai/contact-us",
+      "finalUrl": "https://www.auraterminal.ai/contact-us",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 78
+    },
+    {
+      "requested": "https://www.auraterminal.ai/login",
+      "finalUrl": "https://www.auraterminal.ai/login",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 170
+    },
+    {
+      "requested": "https://www.auraterminal.ai/register",
+      "finalUrl": "https://www.auraterminal.ai/register",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 91
+    },
+    {
+      "requested": "https://www.auraterminal.ai/signup",
+      "finalUrl": "https://www.auraterminal.ai/signup",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 1022
+    },
+    {
+      "requested": "https://www.auraterminal.ai/dashboard",
+      "finalUrl": "https://www.auraterminal.ai/dashboard",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 93
+    },
+    {
+      "requested": "https://www.auraterminal.ai/reports",
+      "finalUrl": "https://www.auraterminal.ai/reports",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 77
+    },
+    {
+      "requested": "https://www.auraterminal.ai/live-metrics",
+      "finalUrl": "https://www.auraterminal.ai/live-metrics",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 3558
+    },
+    {
+      "requested": "https://www.auraterminal.ai/monthly-statements",
+      "finalUrl": "https://www.auraterminal.ai/monthly-statements",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 1017
+    },
+    {
+      "requested": "https://www.auraterminal.ai/aura-analysis",
+      "finalUrl": "https://www.auraterminal.ai/aura-analysis",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 87
+    },
+    {
+      "requested": "https://www.auraterminal.ai/aura-analysis/dashboard/performance",
+      "finalUrl": "https://www.auraterminal.ai/aura-analysis/dashboard/performance",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 788
+    },
+    {
+      "requested": "https://www.auraterminal.ai/subscription",
+      "finalUrl": "https://www.auraterminal.ai/subscription",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 101
+    },
+    {
+      "requested": "https://www.auraterminal.ai/forgot-password",
+      "finalUrl": "https://www.auraterminal.ai/forgot-password",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 100
+    },
+    {
+      "requested": "https://www.auraterminal.ai/reset-password",
+      "finalUrl": "https://www.auraterminal.ai/reset-password",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 950
+    },
+    {
+      "requested": "https://www.auraterminal.ai/operating-system",
+      "finalUrl": "https://www.auraterminal.ai/operating-system",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 778
+    },
+    {
+      "requested": "https://www.auraterminal.ai/premium-ai",
+      "finalUrl": "https://www.auraterminal.ai/premium-ai",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 119
+    },
+    {
+      "requested": "https://www.auraterminal.ai/journal",
+      "finalUrl": "https://www.auraterminal.ai/journal",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 107
+    },
+    {
+      "requested": "https://www.auraterminal.ai/trader-deck",
+      "finalUrl": "https://www.auraterminal.ai/trader-deck",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 777
+    },
+    {
+      "requested": "https://www.auraterminal.ai/surveillance",
+      "finalUrl": "https://www.auraterminal.ai/surveillance",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 109
+    },
+    {
+      "requested": "https://www.auraterminal.ai/backtesting",
+      "finalUrl": "https://www.auraterminal.ai/backtesting",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 6394
+    },
+    {
+      "requested": "https://www.auraterminal.ai/community",
+      "finalUrl": "https://www.auraterminal.ai/community",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 810
+    },
+    {
+      "requested": "https://www.auraterminal.ai/messages",
+      "finalUrl": "https://www.auraterminal.ai/messages",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 93
+    },
+    {
+      "requested": "https://www.auraterminal.ai/profile",
+      "finalUrl": "https://www.auraterminal.ai/profile",
+      "httpStatus": 200,
+      "title": "AURA TERMINAL",
+      "ms": 98
+    }
+  ],
+  "findings": [
+    {
+      "phase": "P1",
+      "severity": "info",
+      "title": "Audit start",
+      "ts": "2026-04-21T00:38:30.174Z",
+      "url": "https://auraterminal.ai",
+      "evidence": "BASE=https://auraterminal.ai"
+    },
+    {
+      "phase": "P1",
+      "severity": "medium",
+      "title": "Contact page form presence",
+      "ts": "2026-04-21T00:38:48.186Z",
+      "url": "https://www.auraterminal.ai/terms",
+      "actual": "No <form> detected (may still use JS submit)"
+    },
+    {
+      "phase": "P3",
+      "severity": "info",
+      "title": "Login page password field",
+      "ts": "2026-04-21T00:40:50.869Z",
+      "url": "https://www.auraterminal.ai/login",
+      "actual": "Password input present"
+    },
+    {
+      "phase": "P3",
+      "severity": "info",
+      "title": "Post-login / MFA / subscription flows not executed",
+      "ts": "2026-04-21T00:40:50.869Z",
+      "steps": [
+        "Set AUDIT_EMAIL and AUDIT_PASSWORD to enable automated login continuation"
+      ],
+      "expected": "Deep authenticated audit",
+      "actual": "Skipped — no AUDIT_EMAIL / AUDIT_PASSWORD in environment"
+    },
+    {
+      "phase": "P5",
+      "severity": "info",
+      "title": "Link interaction sample on https://auraterminal.ai",
+      "ts": "2026-04-21T00:41:25.648Z",
+      "url": "https://auraterminal.ai",
+      "evidence": "Approx 0 in-page navigations attempted"
+    },
+    {
+      "phase": "P5",
+      "severity": "low",
+      "title": "Button did not respond to click",
+      "ts": "2026-04-21T00:41:27.586Z",
+      "url": "https://www.auraterminal.ai/register",
+      "steps": [
+        "Click \"Get Started\""
+      ],
+      "actual": "Click timeout or intercepted"
+    },
+    {
+      "phase": "P5",
+      "severity": "low",
+      "title": "Button did not respond to click",
+      "ts": "2026-04-21T00:41:27.742Z",
+      "url": "https://www.auraterminal.ai/register",
+      "steps": [
+        "Click \"Explore Features\""
+      ],
+      "actual": "Click timeout or intercepted"
+    },
+    {
+      "phase": "P5",
+      "severity": "low",
+      "title": "Button did not respond to click",
+      "ts": "2026-04-21T00:41:27.844Z",
+      "url": "https://www.auraterminal.ai/register",
+      "steps": [
+        "Click \"View All Markets →\""
+      ],
+      "actual": "Click timeout or intercepted"
+    },
+    {
+      "phase": "P5",
+      "severity": "info",
+      "title": "Button sample on https://auraterminal.ai",
+      "ts": "2026-04-21T00:41:27.855Z",
+      "evidence": "3 buttons clicked without hard failure"
+    },
+    {
+      "phase": "P5",
+      "severity": "info",
+      "title": "Link interaction sample on https://www.auraterminal.ai/explore",
+      "ts": "2026-04-21T00:41:33.164Z",
+      "url": "https://www.auraterminal.ai/explore",
+      "evidence": "Approx 4 in-page navigations attempted"
+    },
+    {
+      "phase": "P5",
+      "severity": "low",
+      "title": "Button did not respond to click",
+      "ts": "2026-04-21T00:41:34.403Z",
+      "url": "https://www.auraterminal.ai/register",
+      "steps": [
+        "Click \"🇬🇧+44▼\""
+      ],
+      "actual": "Click timeout or intercepted"
+    },
+    {
+      "phase": "P5",
+      "severity": "low",
+      "title": "Button did not respond to click",
+      "ts": "2026-04-21T00:41:34.507Z",
+      "url": "https://www.auraterminal.ai/register",
+      "steps": [
+        "Click \"SEND VERIFICATION CODES\""
+      ],
+      "actual": "Click timeout or intercepted"
+    },
+    {
+      "phase": "P5",
+      "severity": "info",
+      "title": "Button sample on https://www.auraterminal.ai/explore",
+      "ts": "2026-04-21T00:41:34.515Z",
+      "evidence": "2 buttons clicked without hard failure"
+    },
+    {
+      "phase": "P5",
+      "severity": "info",
+      "title": "Link interaction sample on https://www.auraterminal.ai/courses",
+      "ts": "2026-04-21T00:41:40.370Z",
+      "url": "https://www.auraterminal.ai/courses",
+      "evidence": "Approx 3 in-page navigations attempted"
+    },
+    {
+      "phase": "P5",
+      "severity": "low",
+      "title": "Button did not respond to click",
+      "ts": "2026-04-21T00:41:41.518Z",
+      "url": "https://www.auraterminal.ai/register",
+      "steps": [
+        "Click \"🇬🇧+44▼\""
+      ],
+      "actual": "Click timeout or intercepted"
+    },
+    {
+      "phase": "P5",
+      "severity": "low",
+      "title": "Button did not respond to click",
+      "ts": "2026-04-21T00:41:41.632Z",
+      "url": "https://www.auraterminal.ai/register",
+      "steps": [
+        "Click \"SEND VERIFICATION CODES\""
+      ],
+      "actual": "Click timeout or intercepted"
+    },
+    {
+      "phase": "P5",
+      "severity": "info",
+      "title": "Button sample on https://www.auraterminal.ai/courses",
+      "ts": "2026-04-21T00:41:41.643Z",
+      "evidence": "2 buttons clicked without hard failure"
+    },
+    {
+      "phase": "P5",
+      "severity": "info",
+      "title": "Link interaction sample on https://www.auraterminal.ai/contact",
+      "ts": "2026-04-21T00:41:51.436Z",
+      "url": "https://www.auraterminal.ai/contact",
+      "evidence": "Approx 6 in-page navigations attempted"
+    },
+    {
+      "phase": "P5",
+      "severity": "low",
+      "title": "Button did not respond to click",
+      "ts": "2026-04-21T00:41:52.740Z",
+      "url": "https://www.auraterminal.ai/register",
+      "steps": [
+        "Click \"🇬🇧+44▼\""
+      ],
+      "actual": "Click timeout or intercepted"
+    },
+    {
+      "phase": "P5",
+      "severity": "low",
+      "title": "Button did not respond to click",
+      "ts": "2026-04-21T00:41:52.859Z",
+      "url": "https://www.auraterminal.ai/register",
+      "steps": [
+        "Click \"SEND VERIFICATION CODES\""
+      ],
+      "actual": "Click timeout or intercepted"
+    },
+    {
+      "phase": "P5",
+      "severity": "info",
+      "title": "Button sample on https://www.auraterminal.ai/contact",
+      "ts": "2026-04-21T00:41:52.867Z",
+      "evidence": "2 buttons clicked without hard failure"
+    },
+    {
+      "phase": "P5",
+      "severity": "info",
+      "title": "Link interaction sample on https://www.auraterminal.ai/why-glitch",
+      "ts": "2026-04-21T00:42:00.093Z",
+      "url": "https://www.auraterminal.ai/why-glitch",
+      "evidence": "Approx 5 in-page navigations attempted"
+    },
+    {
+      "phase": "P5",
+      "severity": "low",
+      "title": "Button did not respond to click",
+      "ts": "2026-04-21T00:42:01.266Z",
+      "url": "https://www.auraterminal.ai/register",
+      "steps": [
+        "Click \"🇬🇧+44▼\""
+      ],
+      "actual": "Click timeout or intercepted"
+    },
+    {
+      "phase": "P5",
+      "severity": "low",
+      "title": "Button did not respond to click",
+      "ts": "2026-04-21T00:42:01.381Z",
+      "url": "https://www.auraterminal.ai/register",
+      "steps": [
+        "Click \"SEND VERIFICATION CODES\""
+      ],
+      "actual": "Click timeout or intercepted"
+    },
+    {
+      "phase": "P5",
+      "severity": "info",
+      "title": "Button sample on https://www.auraterminal.ai/why-glitch",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "2 buttons clicked without hard failure"
+    },
+    {
+      "phase": "P6",
+      "severity": "medium",
+      "title": "Request failed",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+      "actual": "csp",
+      "evidence": "From: https://www.auraterminal.ai/register"
+    },
+    {
+      "phase": "P6",
+      "severity": "medium",
+      "title": "Request failed",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "url": "https://www.auraterminal.ai/api/markets/snapshot",
+      "actual": "net::ERR_ABORTED",
+      "evidence": "From: https://www.auraterminal.ai/"
+    },
+    {
+      "phase": "P6",
+      "severity": "medium",
+      "title": "Request failed",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "actual": "net::ERR_ABORTED",
+      "evidence": "From: https://www.auraterminal.ai/register"
+    },
+    {
+      "phase": "P6",
+      "severity": "medium",
+      "title": "Request failed",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "url": "https://www.auraterminal.ai/images/ipad-slides/courses.png",
+      "actual": "net::ERR_ABORTED",
+      "evidence": "From: https://www.auraterminal.ai/"
+    },
+    {
+      "phase": "P6",
+      "severity": "medium",
+      "title": "Request failed",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "url": "https://www.auraterminal.ai/api/courses",
+      "actual": "net::ERR_ABORTED",
+      "evidence": "From: https://www.auraterminal.ai/explore"
+    },
+    {
+      "phase": "P6",
+      "severity": "medium",
+      "title": "Request failed",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "url": "https://www.auraterminal.ai/static/js/8331.b18ae261.chunk.js",
+      "actual": "net::ERR_ABORTED",
+      "evidence": "From: https://www.auraterminal.ai/privacy"
+    },
+    {
+      "phase": "P6",
+      "severity": "medium",
+      "title": "Request failed",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "url": "https://www.auraterminal.ai/static/css/8331.45d2e586.chunk.css",
+      "actual": "net::ERR_ABORTED",
+      "evidence": "From: https://www.auraterminal.ai/privacy"
+    },
+    {
+      "phase": "P6",
+      "severity": "medium",
+      "title": "Request failed",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "url": "https://www.auraterminal.ai/static/css/6806.0610ddeb.chunk.css",
+      "actual": "net::ERR_ABORTED",
+      "evidence": "From: https://www.auraterminal.ai/privacy"
+    },
+    {
+      "phase": "P6",
+      "severity": "medium",
+      "title": "Request failed",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "url": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d158857.83989158905!2d-0.24168154759218046!3d51.52877184051532!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47d8a00baf21de75%3A0x52963a5addd52a99!2sLondon%2C%20UK!5e0!3m2!1sen!2s!4v1710000000000!5m2!1sen!2s&style=feature:all|element:labels.text.fill|color:0xffffff&style=feature:all|element:labels.text.stroke|color:0x000000",
+      "actual": "net::ERR_ABORTED",
+      "evidence": "From: https://www.auraterminal.ai/explore"
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/ :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/courses :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/explore :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/why-glitch :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/contact :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/choose-plan :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/affiliation :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/privacy :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/terms :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/friends :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/contact-us :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/login :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/register :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/signup :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/dashboard :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/reports :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/live-metrics :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/monthly-statements :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/aura-analysis :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/aura-analysis/dashboard/performance :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/subscription :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/forgot-password :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/reset-password :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/operating-system :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/premium-ai :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/journal :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/trader-deck :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/surveillance :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/backtesting :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/community :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/messages :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P6",
+      "severity": "low",
+      "title": "Console / page JS error",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "[console.error] https://www.auraterminal.ai/profile :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+    },
+    {
+      "phase": "P7",
+      "severity": "info",
+      "title": "Homepage heading (marketing claim)",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "🔒 GDPR Privacy Notice"
+    },
+    {
+      "phase": "P7",
+      "severity": "info",
+      "title": "Homepage heading (marketing claim)",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "Trade SmarterWith Aura Terminal"
+    },
+    {
+      "phase": "P7",
+      "severity": "info",
+      "title": "Homepage heading (marketing claim)",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "Why Choose AURA TERMINAL"
+    },
+    {
+      "phase": "P7",
+      "severity": "info",
+      "title": "Homepage heading (marketing claim)",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "Trade Multiple Markets"
+    },
+    {
+      "phase": "P7",
+      "severity": "info",
+      "title": "Homepage heading (marketing claim)",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "evidence": "What Sets Us Apart"
+    },
+    {
+      "phase": "P7",
+      "severity": "info",
+      "title": "Trader-heavy areas require auth — not fully verified without login",
+      "ts": "2026-04-21T00:42:01.392Z",
+      "expected": "Charts, journal, reports, MT hub verified end-to-end",
+      "actual": "Could not verify (no credentials)"
+    }
+  ],
+  "failedResponses": [],
+  "failedRequests": [
+    {
+      "url": "https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit",
+      "error": "csp",
+      "from": "https://www.auraterminal.ai/register"
+    },
+    {
+      "url": "https://www.auraterminal.ai/api/markets/snapshot",
+      "error": "net::ERR_ABORTED",
+      "from": "https://www.auraterminal.ai/"
+    },
+    {
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED",
+      "from": "https://www.auraterminal.ai/register"
+    },
+    {
+      "url": "https://www.auraterminal.ai/images/ipad-slides/courses.png",
+      "error": "net::ERR_ABORTED",
+      "from": "https://www.auraterminal.ai/"
+    },
+    {
+      "url": "https://www.auraterminal.ai/api/courses",
+      "error": "net::ERR_ABORTED",
+      "from": "https://www.auraterminal.ai/explore"
+    },
+    {
+      "url": "https://www.auraterminal.ai/static/js/8331.b18ae261.chunk.js",
+      "error": "net::ERR_ABORTED",
+      "from": "https://www.auraterminal.ai/privacy"
+    },
+    {
+      "url": "https://www.auraterminal.ai/static/css/8331.45d2e586.chunk.css",
+      "error": "net::ERR_ABORTED",
+      "from": "https://www.auraterminal.ai/privacy"
+    },
+    {
+      "url": "https://www.auraterminal.ai/static/css/6806.0610ddeb.chunk.css",
+      "error": "net::ERR_ABORTED",
+      "from": "https://www.auraterminal.ai/privacy"
+    },
+    {
+      "url": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d158857.83989158905!2d-0.24168154759218046!3d51.52877184051532!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47d8a00baf21de75%3A0x52963a5addd52a99!2sLondon%2C%20UK!5e0!3m2!1sen!2s!4v1710000000000!5m2!1sen!2s&style=feature:all|element:labels.text.fill|color:0xffffff&style=feature:all|element:labels.text.stroke|color:0x000000",
+      "error": "net::ERR_ABORTED",
+      "from": "https://www.auraterminal.ai/explore"
+    }
+  ],
+  "runtimeErrors": [
+    "[console.error] https://www.auraterminal.ai/ :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/courses :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/explore :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/why-glitch :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/contact :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/choose-plan :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/affiliation :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/privacy :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/terms :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/friends :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/contact-us :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/login :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/register :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/signup :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/dashboard :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/reports :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/live-metrics :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/monthly-statements :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/aura-analysis :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/aura-analysis/dashboard/performance :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/subscription :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/forgot-password :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/reset-password :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/operating-system :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/premium-ai :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/journal :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/trader-deck :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/surveillance :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/backtesting :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/community :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/messages :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked.",
+    "[console.error] https://www.auraterminal.ai/profile :: Loading the script 'https://translate.google.com/translate_a/element.js?cb=auraGoogleTranslateInit' violates the following Content Security Policy directive: \"script-src-elem 'self' 'unsafe-inline' blob: https://vercel.live https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://apis.google.com https://s3.tradingview.com\". The action has been blocked."
+  ]
+}

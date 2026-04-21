@@ -240,6 +240,10 @@ const Courses = () => {
                         Master the Markets with Our Comprehensive, Expert-Led Trading Education Programs
                     </p>
                 </div>
+                <div className="courses-error" style={{ marginBottom: '14px' }}>
+                    <h2>Course Library Status</h2>
+                    <p>Subscription plans are active. Most course tiles are preview placeholders and will unlock as courses are released.</p>
+                </div>
                 
                 <div className="courses-grid">
                     {Array.isArray(courses) && courses.length > 0 ? (

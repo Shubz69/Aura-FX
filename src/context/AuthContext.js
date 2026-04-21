@@ -6,6 +6,7 @@ import { consumePostAuthRedirect } from '../utils/postAuthRedirect';
 import { armPostLoginTransition, isPostLoginTransitionExcludedPath } from '../utils/postLoginTransition';
 import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/userLocalStorage';
 import { isConfiguredSuperAdminEmail, isAdmin } from '../utils/roles';
+import { logClassifiedError } from '../utils/apiObservability';
 import {
   prepareStorageForUserSwitch,
   clearPerAccountLocalCaches,
@@ -204,6 +205,9 @@ export const AuthProvider = ({ children }) => {
 
   // Check if token exists and is valid on app load
   useEffect(() => {
+    let isDisposed = false;
+    let verifyTimer = null;
+    let verifyController = null;
     const checkAuth = async () => {
       try {
         setLoading(true);
@@ -231,16 +235,18 @@ export const AuthProvider = ({ children }) => {
           const userId = decodedToken.id || decodedToken.userId || decodedToken.sub;
           if (userId) {
             // Run verification in background - don't block app loading
-            setTimeout(async () => {
+            verifyTimer = setTimeout(async () => {
               try {
+                if (isDisposed) return;
                 const API_BASE_URL = Api.getBaseUrl() || window.location.origin;
+                verifyController = new AbortController();
                 const verifyResponse = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
                   method: 'GET',
                   headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                   },
-                  signal: AbortSignal.timeout(5000) // 5 second timeout
+                  signal: verifyController.signal
                 });
                 
                 // Only logout on 404 (user not found), not on 500 (server error)
@@ -256,6 +262,7 @@ export const AuthProvider = ({ children }) => {
                   console.warn('Error verifying user:', verifyResponse.status);
                 }
               } catch (verifyError) {
+                if (isDisposed || verifyError?.name === 'AbortError') return;
                 // If verification fails, don't block - just log warning
                 // Network errors or timeouts shouldn't prevent app from loading
                 // Suppress timeout errors as they're expected and non-critical
@@ -265,6 +272,7 @@ export const AuthProvider = ({ children }) => {
                                       verifyError.message?.toLowerCase().includes('timed out');
                 
                 if (!isTimeoutError) {
+                  logClassifiedError('auth.session_verify_user', verifyError, { userId });
                   console.warn('Could not verify user existence:', verifyError);
                 }
                 // Timeout errors are silently ignored - they're expected on slow connections
@@ -395,6 +403,11 @@ export const AuthProvider = ({ children }) => {
     };
     
     checkAuth();
+    return () => {
+      isDisposed = true;
+      if (verifyTimer) clearTimeout(verifyTimer);
+      if (verifyController) verifyController.abort();
+    };
   }, [logout, persistUser]);
 
   // Login function - supports both email/password login and token-based login from MFA

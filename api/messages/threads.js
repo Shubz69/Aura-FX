@@ -25,6 +25,16 @@ function parseBody(req) {
   }
 }
 
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 module.exports = async (req, res) => {
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -367,6 +377,27 @@ module.exports = async (req, res) => {
       const createdMessage = newMsgRows && newMsgRows[0] ? newMsgRows[0] : null;
 
       await db.execute('UPDATE threads SET lastMessageAt = NOW() WHERE id = ?', [threadId]);
+
+      // Realtime thread broadcast: deliver to subscribed /topic/thread/{threadId} clients.
+      try {
+        const wsServerUrl = process.env.WEBSOCKET_SERVER_URL || 'https://aura-fx-production.up.railway.app';
+        const wsBroadcastUrl = `${wsServerUrl.replace(/\/$/, '')}/api/broadcast-thread-message`;
+        await fetchWithTimeout(
+          wsBroadcastUrl,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              threadId: String(threadId),
+              message: createdMessage,
+              thread: { id: threadId, userId: thread.userId, adminId: thread.adminId, lastMessageAt: new Date().toISOString() },
+            }),
+          },
+          2000,
+        );
+      } catch (broadcastError) {
+        console.warn('Thread realtime broadcast failed:', broadcastError?.message || broadcastError);
+      }
 
       // Notify recipient: admin→user (recipientId is user id) or user→admin (recipientId is 'ADMIN')
       if (createNotification) {
