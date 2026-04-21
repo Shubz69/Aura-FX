@@ -1,83 +1,71 @@
 /* =============================================================================
-   AdminPanel.css — THE OPERATOR GLASS PREMIUM
+   AdminPanel.css — THE OPERATOR GLASS PREMIUM (EXACT MATCH)
    Gold hairline · Blur crystal · Aura Analysis visual parity
-   Matching The Operator shell aesthetic
+   Tokens copied directly from The Operator reference files
    ============================================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
 /* ══════════════════════════════════════════════════════════
-   DESIGN TOKENS — Matching AuraShared / The Operator
+   DESIGN TOKENS — EXACT MATCH from OperatorShell.css
    ══════════════════════════════════════════════════════════ */
 .admin-panel-container {
-  /* Core palette */
-  --ap-bg:              #010008;
-  --ap-card:            rgba(3, 2, 10, 0.72);
-  --ap-card-hover:      rgba(8, 6, 20, 0.88);
-  --ap-glass:           rgba(3, 2, 10, 0.55);
-  --brief-surface-navy: rgba(4, 6, 18, 0.85);
-
-  /* Gold family — matches AuraShared .aa-card */
-  --ap-gold:            #EAA960;
-  --ap-gold-bright:     #F8C37D;
-  --ap-gold-warm:       #D48D44;
-  --ap-gold-pale:       #FDE8C4;
-  --ap-gold-soft:       rgba(234, 169, 96, 0.12);
-  --ap-gold-glow:       rgba(234, 169, 96, 0.18);
-  --ap-gold-glass:      rgba(234, 169, 96, 0.06);
-
-  /* Borders — gold hairline theme */
-  --ap-border:          rgba(255, 255, 255, 0.06);
-  --ap-border-mid:      rgba(255, 255, 255, 0.12);
-  --ap-border-gold:     rgba(234, 169, 96, 0.12);
-  --ap-border-strong:   rgba(234, 169, 96, 0.28);
-
-  /* Text — AuraShared parity */
-  --ap-text:            #FFFFFF;
-  --ap-muted:           rgba(200, 198, 190, 0.78);
-  --ap-dim:             rgba(255, 255, 255, 0.45);
-  --ap-faint:           rgba(255, 255, 255, 0.32);
-
-  /* Status colors */
-  --ap-green:           #0FD98A;
-  --ap-red:             #F03D5F;
-  --ap-amber:           #C9A05C;
-  --ap-blue:            #7AB8FF;
-
-  /* Shadows — glass crystal */
-  --ap-shadow:          
+  /* Core tokens — EXACT from OperatorShell.css */
+  --bg:             #010008;
+  --bg-card:        rgba(3, 2, 10, 0.72);
+  --bg-card-h:      rgba(8, 6, 20, 0.88);
+  --bg-glass:       rgba(2, 1, 8, 0.65);
+  --border:         rgba(255, 255, 255, 0.05);
+  --border-h:       rgba(255, 255, 255, 0.12);
+  --border-gold:    rgba(234, 169, 96, 0.28);
+  --gold:           #EAA960;
+  --gold-bright:    #F8C37D;
+  --gold-warm:      #D48D44;
+  --gold-soft:      #EABB80;
+  --gold-pale:      #FDE8C4;
+  --gold-glow:      rgba(234, 169, 96, 0.18);
+  --gold-glass:     rgba(234, 169, 96, 0.06);
+  --text:           #FFFFFF;
+  --text-muted:     rgba(200, 198, 190, 0.78);
+  --text-dim:       rgba(255, 255, 255, 0.45);
+  --green:          #0FD98A;
+  --glass-shadow:
     0 8px 32px rgba(0, 0, 0, 0.65),
     0 1px 0 rgba(255, 255, 255, 0.03) inset,
     0 0 0 0.5px rgba(255, 255, 255, 0.02) inset;
-  --ap-shadow-hover:    
-    0 12px 40px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(234, 169, 96, 0.14),
-    0 0 28px rgba(234, 169, 96, 0.08);
+  --grad-gold: linear-gradient(130deg, var(--gold-pale) 0%, var(--gold-bright) 35%, var(--gold) 65%, var(--gold-warm) 100%);
+  --line-gold: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold-bright) 70%, transparent);
 
-  /* Glass */
-  --ap-blur:            blur(18px) saturate(1.08);
-  --ap-blur-sm:         blur(12px) saturate(1.05);
-  --ap-blur-lg:         blur(22px) saturate(1.06);
+  /* AuraShared tokens — EXACT match */
+  --aa-bg:           transparent;
+  --aa-bg-card:      rgba(3, 2, 10, 0.72);
+  --aa-bg-card-h:    rgba(8, 6, 20, 0.88);
+  --aa-border:       rgba(255, 255, 255, 0.06);
+  --aa-border-h:     rgba(255, 255, 255, 0.12);
+  --aa-accent:       rgba(234, 169, 96, 0.92);
+  --aa-accent-soft:  rgba(234, 169, 96, 0.14);
+  --aa-text:         #ffffff;
+  --aa-text-muted:   rgba(200, 198, 190, 0.78);
+  --aa-border-accent:rgba(234, 169, 96, 0.42);
+  --aa-radius:       12px;
+  --aa-radius-lg:    18px;
 
   /* Radius */
-  --ap-radius-sm:       10px;
-  --ap-radius-md:       12px;
-  --ap-radius-lg:       16px;
-  --ap-radius-xl:       20px;
-  --ap-radius-full:     9999px;
+  --radius-sm:       10px;
+  --radius-md:       12px;
+  --radius-lg:       16px;
+  --radius-xl:       20px;
+  --radius-full:     9999px;
 
   /* Transitions */
-  --ap-ease:            0.22s cubic-bezier(0.4, 0, 0.2, 1);
-  --ap-ease-out:        0.28s cubic-bezier(0.22, 1, 0.36, 1);
-
-  /* Typography */
-  --ap-font:            'Space Grotesk', system-ui, sans-serif;
+  --ease:            0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out:        0.28s cubic-bezier(0.22, 1, 0.36, 1);
 
   /* Layout */
   min-height: 100vh;
   background: transparent;
-  color: var(--ap-text);
-  font-family: var(--ap-font);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
   position: relative;
   padding: 96px 24px 48px;
   width: 100%;
@@ -88,10 +76,10 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   ANIMATIONS
+   ANIMATIONS — EXACT from OperatorShell.css
    ══════════════════════════════════════════════════════════ */
-@keyframes ap-fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
+@keyframes ap-fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -120,7 +108,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   AMBIENT BACKGROUND
+   AMBIENT BACKGROUND — EXACT from Operator reference
    ══════════════════════════════════════════════════════════ */
 .admin-panel-container::before {
   content: '';
@@ -129,9 +117,9 @@
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(ellipse 70% 55% at 15% 0%, rgba(234, 169, 96, 0.05) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 40% at 90% 20%, rgba(248, 195, 125, 0.03) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 30% at 50% 85%, rgba(212, 141, 68, 0.02) 0%, transparent 65%);
+    radial-gradient(ellipse 70% 55% at 15% 0%, rgba(234, 169, 96, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 40% at 90% 20%, rgba(248, 195, 125, 0.04) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 30% at 50% 85%, rgba(212, 141, 68, 0.03) 0%, transparent 65%);
 }
 
 .admin-panel-container::after {
@@ -142,7 +130,7 @@
   transform: translate(-50%, -50%);
   width: min(900px, 95vw);
   height: min(700px, 80vh);
-  background: radial-gradient(ellipse at center, rgba(234, 169, 96, 0.06) 0%, transparent 68%);
+  background: radial-gradient(ellipse at center, rgba(234, 169, 96, 0.07) 0%, transparent 68%);
   border-radius: 50%;
   z-index: 0;
   pointer-events: none;
@@ -157,11 +145,11 @@
   margin: 0 auto;
   position: relative;
   z-index: 2;
-  animation: ap-fadeUp 0.5s ease-out;
+  animation: ap-fadeIn 0.4s ease both;
 }
 
 /* ══════════════════════════════════════════════════════════
-   HEADER — Glass with gold hairline
+   HEADER — EXACT glass card style from reference
    ══════════════════════════════════════════════════════════ */
 .admin-header {
   display: flex;
@@ -170,18 +158,20 @@
   text-align: center;
   margin-bottom: 28px;
   padding: 32px 28px 28px;
-  background: var(--ap-card);
-  backdrop-filter: var(--ap-blur-lg);
-  -webkit-backdrop-filter: var(--ap-blur-lg);
-  border: 1px solid var(--ap-border-gold);
-  border-radius: var(--ap-radius-xl);
+  background: var(--aa-bg-card);
+  backdrop-filter: blur(22px) saturate(1.06);
+  -webkit-backdrop-filter: blur(22px) saturate(1.06);
+  border: 1px solid rgba(234, 169, 96, 0.14);
+  border-radius: var(--radius-xl);
   position: relative;
   overflow: hidden;
-  box-shadow: var(--ap-shadow);
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.48),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
   animation: ap-scaleIn 0.5s ease-out;
 }
 
-/* Gold hairline top */
+/* Gold hairline top — EXACT from OperatorGlass.css */
 .admin-header::before {
   content: '';
   position: absolute;
@@ -201,7 +191,7 @@
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.22em;
-  background: linear-gradient(130deg, var(--ap-gold-pale) 0%, var(--ap-gold-bright) 35%, var(--ap-gold) 65%, var(--ap-gold-warm) 100%);
+  background: var(--grad-gold);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -209,7 +199,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   TABS — Gold active state
+   TABS — EXACT match from OperatorShell.css
    ══════════════════════════════════════════════════════════ */
 .admin-tabs {
   display: flex;
@@ -219,34 +209,34 @@
   margin-bottom: 24px;
   padding: 6px;
   background: rgba(4, 5, 18, 0.55);
-  border-radius: var(--ap-radius-full);
-  border: 1px solid var(--ap-border-gold);
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(234, 169, 96, 0.12);
   width: fit-content;
   margin-left: auto;
   margin-right: auto;
-  backdrop-filter: var(--ap-blur-sm);
-  -webkit-backdrop-filter: var(--ap-blur-sm);
+  backdrop-filter: blur(20px) saturate(1.05);
+  -webkit-backdrop-filter: blur(20px) saturate(1.05);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
 }
 
 .admin-tab-btn {
   background: transparent;
   border: 1px solid transparent;
-  color: var(--ap-muted);
+  color: var(--text-muted);
   padding: 11px 24px;
-  border-radius: var(--ap-radius-full);
+  border-radius: var(--radius-full);
   font-size: 0.76rem;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all var(--ap-ease);
-  font-family: var(--ap-font);
+  transition: all var(--ease);
+  font-family: 'Space Grotesk', sans-serif;
   white-space: nowrap;
 }
 
 .admin-tab-btn:hover {
-  color: var(--ap-text);
+  color: rgba(255, 255, 255, 0.92);
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -254,7 +244,7 @@
   color: #0a0704;
   background: linear-gradient(135deg, rgba(248, 195, 125, 0.95) 0%, rgba(234, 169, 96, 0.92) 50%, rgba(212, 141, 68, 0.88) 100%);
   border-color: rgba(234, 169, 96, 0.45);
-  box-shadow: 0 4px 20px rgba(234, 169, 96, 0.25);
+  box-shadow: 0 0 20px rgba(234, 169, 96, 0.2);
   font-weight: 600;
 }
 
@@ -264,10 +254,10 @@
   margin-left: 8px;
   padding: 2px 8px;
   background: rgba(0, 0, 0, 0.35);
-  border-radius: var(--ap-radius-full);
+  border-radius: var(--radius-full);
   font-size: 0.62rem;
   font-weight: 700;
-  color: var(--ap-gold-bright);
+  color: var(--gold-bright);
 }
 
 .admin-tab-btn.active::after {
@@ -281,25 +271,25 @@
 .admin-panel-container .user-summary {
   font-size: 0.8rem;
   font-weight: 500;
-  color: var(--ap-muted);
+  color: var(--text-muted);
   background: rgba(0, 0, 0, 0.28);
   padding: 14px 24px;
-  border-radius: var(--ap-radius-lg);
+  border-radius: var(--radius-lg);
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
   justify-content: center;
-  border: 1px solid var(--ap-border);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   letter-spacing: 0.04em;
-  backdrop-filter: var(--ap-blur-sm);
-  -webkit-backdrop-filter: var(--ap-blur-sm);
+  backdrop-filter: blur(12px) saturate(1.05);
+  -webkit-backdrop-filter: blur(12px) saturate(1.05);
 }
 
 .admin-panel-container .connection-status {
   font-weight: 600;
   padding: 5px 12px;
-  border-radius: var(--ap-radius-full);
+  border-radius: var(--radius-full);
   font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -323,7 +313,7 @@
 .admin-panel-container .error-message {
   background: rgba(240, 61, 95, 0.08);
   border: 1px solid rgba(240, 61, 95, 0.28);
-  border-radius: var(--ap-radius-md);
+  border-radius: var(--radius-md);
   padding: 14px 44px 14px 18px;
   margin-bottom: 22px;
   display: flex;
@@ -331,9 +321,9 @@
   gap: 12px;
   color: #fecaca;
   position: relative;
-  backdrop-filter: var(--ap-blur-sm);
-  -webkit-backdrop-filter: var(--ap-blur-sm);
-  animation: ap-fadeUp 0.3s ease-out;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: ap-fadeIn 0.3s ease-out;
 }
 
 .error-close {
@@ -352,8 +342,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--ap-radius-sm);
-  transition: background var(--ap-ease);
+  border-radius: var(--radius-sm);
+  transition: background var(--ease);
 }
 
 .error-close:hover {
@@ -362,21 +352,21 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   SEARCH — Glass bar
+   SEARCH — EXACT glass bar style
    ══════════════════════════════════════════════════════════ */
 .search-container {
   margin-bottom: 22px;
   padding: 16px 20px;
-  background: var(--ap-card);
-  backdrop-filter: var(--ap-blur);
-  -webkit-backdrop-filter: var(--ap-blur);
-  border: 1px solid var(--ap-border-gold);
-  border-radius: var(--ap-radius-xl);
+  background: var(--aa-bg-card);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   gap: 14px;
-  box-shadow: var(--ap-shadow);
-  animation: ap-fadeUp 0.45s ease-out;
+  box-shadow: var(--glass-shadow);
+  animation: ap-fadeIn 0.45s ease-out;
   position: relative;
   overflow: hidden;
 }
@@ -388,13 +378,13 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.4), rgba(248, 195, 125, 0.25), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent);
   pointer-events: none;
   z-index: 2;
 }
 
 .admin-panel-container .search-icon {
-  color: var(--ap-gold);
+  color: var(--gold);
   font-size: 1rem;
   flex-shrink: 0;
   opacity: 0.85;
@@ -403,13 +393,13 @@
 .search-input {
   flex: 1;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--ap-border);
-  border-radius: var(--ap-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
   padding: 13px 18px;
-  color: var(--ap-text);
+  color: var(--text);
   font-size: 0.88rem;
-  font-family: var(--ap-font);
-  transition: border-color var(--ap-ease), box-shadow var(--ap-ease);
+  font-family: 'Space Grotesk', sans-serif;
+  transition: border-color var(--ease), box-shadow var(--ease);
   outline: none;
   min-width: 0;
 }
@@ -420,26 +410,26 @@
 }
 
 .search-input::placeholder {
-  color: var(--ap-dim);
+  color: var(--text-dim);
 }
 
 .clear-search-btn {
   background: transparent;
   border: none;
-  color: var(--ap-muted);
+  color: var(--text-muted);
   cursor: pointer;
   padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--ap-radius-sm);
-  transition: all var(--ap-ease);
+  border-radius: var(--radius-sm);
+  transition: all var(--ease);
   flex-shrink: 0;
 }
 
 .clear-search-btn:hover {
-  color: var(--ap-text);
-  background: var(--ap-gold-soft);
+  color: var(--text);
+  background: rgba(234, 169, 96, 0.12);
   transform: rotate(90deg);
 }
 
@@ -454,19 +444,19 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   USER CARD — Glass aa-card style
+   USER CARD — EXACT aa-card style from reference
    ══════════════════════════════════════════════════════════ */
 .user-card {
-  background: var(--ap-card);
-  backdrop-filter: var(--ap-blur);
-  -webkit-backdrop-filter: var(--ap-blur);
-  border: 1px solid var(--ap-border-gold);
-  border-radius: var(--ap-radius-xl);
+  background: var(--aa-bg-card);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  border-radius: var(--radius-xl);
   padding: 22px 22px 20px;
-  transition: all var(--ap-ease-out);
+  transition: border-color var(--ease-out), box-shadow var(--ease-out);
   position: relative;
   overflow: hidden;
-  box-shadow: var(--ap-shadow);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.03) inset;
   animation: ap-scaleIn 0.45s ease-out both;
   min-width: 0;
 }
@@ -485,9 +475,11 @@
 }
 
 .user-card:hover {
-  transform: translateY(-3px);
   border-color: rgba(234, 169, 96, 0.2);
-  box-shadow: var(--ap-shadow-hover);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
+    0 0 28px rgba(234, 169, 96, 0.07);
+  transform: none;
 }
 
 .user-info {
@@ -497,28 +489,28 @@
 .user-email {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--ap-text);
+  color: var(--text);
   margin-bottom: 8px;
   cursor: pointer;
-  transition: color var(--ap-ease);
+  transition: color var(--ease);
   word-break: break-word;
 }
 
 .user-email:hover {
-  color: var(--ap-gold-bright);
+  color: var(--gold-bright);
 }
 
 .user-name {
   font-size: 0.84rem;
-  color: var(--ap-muted);
+  color: var(--text-muted);
   margin-bottom: 12px;
   padding: 6px 14px;
-  background: var(--ap-gold-soft);
-  border-radius: var(--ap-radius-full);
+  background: rgba(234, 169, 96, 0.12);
+  border-radius: var(--radius-full);
   display: inline-block;
   border: 1px solid rgba(234, 169, 96, 0.18);
   cursor: pointer;
-  transition: all var(--ap-ease);
+  transition: all var(--ease);
 }
 
 .user-name:hover {
@@ -529,13 +521,13 @@
 .user-role {
   display: inline-block;
   background: rgba(20, 28, 55, 0.6);
-  color: var(--ap-gold-bright);
+  color: var(--gold-bright);
   padding: 6px 14px;
-  border-radius: var(--ap-radius-full);
+  border-radius: var(--radius-full);
   font-size: 0.7rem;
   font-weight: 600;
   margin-bottom: 12px;
-  border: 1px solid var(--ap-border-gold);
+  border: 1px solid rgba(234, 169, 96, 0.12);
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
@@ -543,7 +535,7 @@
 .user-role.user-role--super {
   background: rgba(234, 169, 96, 0.14);
   border-color: rgba(234, 169, 96, 0.35);
-  color: var(--ap-gold-pale);
+  color: var(--gold-pale);
 }
 
 .user-xp {
@@ -554,8 +546,8 @@
   margin: 12px 0;
   padding: 10px 14px;
   background: rgba(0, 0, 0, 0.28);
-  border-radius: var(--ap-radius-md);
-  border: 1px solid var(--ap-border);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   width: fit-content;
   max-width: 100%;
 }
@@ -566,7 +558,7 @@
 }
 
 .user-xp span:first-child {
-  color: var(--ap-amber);
+  color: #C9A05C;
 }
 
 .user-plan {
@@ -583,7 +575,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ap-dim);
+  color: var(--text-dim);
 }
 
 .user-plan__value {
@@ -591,22 +583,22 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding: 4px 10px;
-  border-radius: var(--ap-radius-sm);
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--ap-border);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .admin-panel-container .user-plan__value--free,
 .admin-panel-container .user-plan__value--access {
-  color: var(--ap-muted);
+  color: var(--text-muted);
 }
 
 .admin-panel-container .user-plan__value--pro,
 .admin-panel-container .user-plan__value--premium,
 .admin-panel-container .user-plan__value--aura {
-  color: var(--ap-gold-bright);
+  color: var(--gold-bright);
   border-color: rgba(234, 169, 96, 0.35);
-  background: var(--ap-gold-soft);
+  background: rgba(234, 169, 96, 0.12);
 }
 
 .admin-panel-container .user-plan__value--a7fx {
@@ -623,13 +615,13 @@
 
 .user-plan__expiry {
   font-size: 0.73rem;
-  color: var(--ap-dim);
+  color: var(--text-dim);
   width: 100%;
 }
 
 .user-joined {
   font-size: 0.76rem;
-  color: var(--ap-muted);
+  color: var(--text-muted);
   margin-bottom: 8px;
 }
 
@@ -654,17 +646,17 @@
 }
 
 .admin-panel-container .user-status.online::before {
-  background: var(--ap-green);
+  background: var(--green);
   box-shadow: 0 0 10px rgba(15, 217, 138, 0.55);
   animation: ap-pulse 2.2s ease-in-out infinite;
 }
 
 .admin-panel-container .user-status.offline {
-  color: var(--ap-muted);
+  color: var(--text-muted);
 }
 
 .admin-panel-container .user-status.offline::before {
-  background: var(--ap-dim);
+  background: var(--text-dim);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -676,19 +668,19 @@
   gap: 10px;
   margin-top: 16px;
   padding-top: 18px;
-  border-top: 1px solid var(--ap-border);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .action-btn {
   padding: 10px 12px;
-  border-radius: var(--ap-radius-sm);
+  border-radius: var(--radius-sm);
   font-size: 0.66rem;
   font-weight: 600;
-  font-family: var(--ap-font);
+  font-family: 'Space Grotesk', sans-serif;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all var(--ap-ease);
+  transition: all var(--ease);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -744,7 +736,7 @@
 
 .grant-admin-btn {
   background: linear-gradient(135deg, rgba(248, 195, 125, 0.22), rgba(234, 169, 96, 0.14));
-  color: var(--ap-gold-bright);
+  color: var(--gold-bright);
   border-color: rgba(234, 169, 96, 0.35);
   box-shadow: 0 4px 18px rgba(234, 169, 96, 0.12);
 }
@@ -754,7 +746,7 @@
 }
 
 .action-btn.plan-btn {
-  background: linear-gradient(135deg, var(--ap-gold-bright) 0%, var(--ap-gold) 50%, var(--ap-gold-warm) 100%);
+  background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold) 50%, var(--gold-warm) 100%);
   color: #0a0704;
   border-color: rgba(234, 169, 96, 0.45);
   box-shadow: 0 4px 18px rgba(234, 169, 96, 0.25);
@@ -768,14 +760,14 @@
    CHANNEL CARD
    ══════════════════════════════════════════════════════════ */
 .channel-card {
-  background: var(--ap-card);
-  backdrop-filter: var(--ap-blur);
-  -webkit-backdrop-filter: var(--ap-blur);
-  border: 1px solid var(--ap-border-gold);
-  border-radius: var(--ap-radius-xl);
+  background: var(--aa-bg-card);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  border-radius: var(--radius-xl);
   padding: 22px;
-  transition: all var(--ap-ease-out);
-  box-shadow: var(--ap-shadow);
+  transition: all var(--ease-out);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.03) inset;
   animation: ap-scaleIn 0.45s ease-out;
   position: relative;
   overflow: hidden;
@@ -788,37 +780,39 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.4), rgba(248, 195, 125, 0.25), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent);
   pointer-events: none;
   z-index: 2;
 }
 
 .channel-card:hover {
   border-color: rgba(234, 169, 96, 0.2);
-  box-shadow: var(--ap-shadow-hover);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
+    0 0 28px rgba(234, 169, 96, 0.07);
 }
 
 .admin-panel-container .channel-name {
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--ap-text);
+  color: var(--text);
   margin-bottom: 10px;
 }
 
 .admin-panel-container .channel-name::before {
   content: '#';
-  color: var(--ap-gold);
+  color: var(--gold);
   font-weight: 700;
   margin-right: 4px;
 }
 
 .admin-panel-container .channel-category {
   font-size: 0.76rem;
-  color: var(--ap-muted);
+  color: var(--text-muted);
   margin-bottom: 10px;
   padding: 5px 12px;
-  background: var(--ap-gold-soft);
-  border-radius: var(--ap-radius-full);
+  background: rgba(234, 169, 96, 0.12);
+  border-radius: var(--radius-full);
   display: inline-block;
   border: 1px solid rgba(234, 169, 96, 0.2);
   text-transform: uppercase;
@@ -827,19 +821,19 @@
 
 .channel-description {
   font-size: 0.84rem;
-  color: var(--ap-muted);
+  color: var(--text-muted);
   line-height: 1.55;
   margin-bottom: 18px;
   padding: 14px;
   background: rgba(0, 0, 0, 0.28);
-  border-radius: var(--ap-radius-md);
-  border: 1px solid var(--ap-border);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .channel-access-label {
   display: block;
   margin-bottom: 10px;
-  color: var(--ap-dim);
+  color: var(--text-dim);
   font-size: 0.66rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -848,15 +842,15 @@
 
 .access-level-select {
   background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--ap-border-gold);
-  border-radius: var(--ap-radius-md);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  border-radius: var(--radius-md);
   padding: 12px 16px;
-  color: var(--ap-text);
+  color: var(--text);
   font-size: 0.84rem;
-  font-family: var(--ap-font);
+  font-family: 'Space Grotesk', sans-serif;
   width: 100%;
   cursor: pointer;
-  transition: all var(--ap-ease);
+  transition: all var(--ease);
   outline: none;
 }
 
@@ -868,7 +862,7 @@
 
 .access-level-select option {
   background: #0c0b14;
-  color: var(--ap-text);
+  color: var(--text);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -876,24 +870,24 @@
    ══════════════════════════════════════════════════════════ */
 .refresh-btn {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--ap-border-gold);
-  color: var(--ap-muted);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  color: var(--text-muted);
   padding: 8px 16px;
-  border-radius: var(--ap-radius-sm);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.7rem;
-  font-family: var(--ap-font);
+  font-family: 'Space Grotesk', sans-serif;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  transition: all var(--ap-ease);
+  transition: all var(--ease);
   margin-left: 12px;
 }
 
 .refresh-btn:hover {
   border-color: rgba(234, 169, 96, 0.35);
-  color: var(--ap-gold-bright);
-  background: var(--ap-gold-soft);
+  color: var(--gold-bright);
+  background: rgba(234, 169, 96, 0.12);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -911,15 +905,15 @@
 .loading-spinner {
   width: 48px;
   height: 48px;
-  border: 3px solid rgba(234, 169, 96, 0.15);
-  border-top-color: var(--ap-gold-bright);
+  border: 3px solid rgba(234, 169, 96, 0.25);
+  border-top-color: var(--gold-bright);
   border-radius: 50%;
   animation: ap-spin 0.85s linear infinite;
 }
 
 .loading-text {
   font-size: 0.76rem;
-  color: var(--ap-muted);
+  color: var(--text-muted);
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
@@ -928,13 +922,13 @@
 .no-channels-message {
   text-align: center;
   padding: 72px 24px;
-  background: var(--ap-card);
-  backdrop-filter: var(--ap-blur);
-  -webkit-backdrop-filter: var(--ap-blur);
-  border: 1px solid var(--ap-border-gold);
-  border-radius: var(--ap-radius-xl);
-  color: var(--ap-muted);
-  box-shadow: var(--ap-shadow);
+  background: var(--aa-bg-card);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  border-radius: var(--radius-xl);
+  color: var(--text-muted);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.03) inset;
   position: relative;
   overflow: hidden;
 }
@@ -947,7 +941,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.4), rgba(248, 195, 125, 0.25), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent);
   pointer-events: none;
   z-index: 2;
 }
@@ -960,18 +954,18 @@
 }
 
 .retry-btn {
-  background: linear-gradient(135deg, var(--ap-gold-bright) 0%, var(--ap-gold) 50%, var(--ap-gold-warm) 100%);
+  background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold) 50%, var(--gold-warm) 100%);
   border: 1px solid rgba(234, 169, 96, 0.4);
   color: #0a0704;
   padding: 11px 26px;
-  border-radius: var(--ap-radius-md);
+  border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 0.76rem;
-  font-family: var(--ap-font);
+  font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  transition: all var(--ap-ease);
+  transition: all var(--ease);
 }
 
 .retry-btn:hover {
@@ -993,18 +987,18 @@
   background: rgba(1, 0, 8, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  animation: ap-fadeUp 0.25s ease both;
+  animation: ap-fadeIn 0.25s ease both;
 }
 
 .ap-modal {
   width: 100%;
   max-width: 420px;
-  border-radius: var(--ap-radius-lg);
+  border-radius: var(--radius-lg);
   padding: 26px 28px 24px;
-  background: var(--ap-card);
-  border: 1px solid var(--ap-border-gold);
-  box-shadow: var(--ap-shadow);
-  animation: ap-scaleIn 0.28s var(--ap-ease-out) both;
+  background: var(--aa-bg-card);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  box-shadow: var(--glass-shadow);
+  animation: ap-scaleIn 0.28s var(--ease-out) both;
   position: relative;
   overflow: hidden;
 }
@@ -1027,13 +1021,13 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ap-gold-bright);
+  color: var(--gold-bright);
 }
 
 .ap-modal__email {
   margin: 0 0 18px;
   font-size: 0.85rem;
-  color: var(--ap-text);
+  color: var(--text);
   word-break: break-all;
   opacity: 0.92;
 }
@@ -1049,7 +1043,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ap-muted);
+  color: var(--text-muted);
   margin-top: 6px;
 }
 
@@ -1058,10 +1052,10 @@
   width: 100%;
   box-sizing: border-box;
   padding: 12px 14px;
-  border-radius: var(--ap-radius-sm);
-  border: 1px solid var(--ap-border-gold);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(234, 169, 96, 0.12);
   background: rgba(0, 0, 0, 0.35);
-  color: var(--ap-text);
+  color: var(--text);
   font-family: inherit;
   font-size: 0.88rem;
 }
@@ -1069,7 +1063,7 @@
 .ap-modal__select:focus,
 .ap-modal__input:focus {
   outline: none;
-  border-color: var(--ap-gold);
+  border-color: var(--gold);
   box-shadow: 0 0 0 3px rgba(234, 169, 96, 0.12);
 }
 
@@ -1082,7 +1076,7 @@
   margin: 4px 0 12px;
   font-size: 0.73rem;
   line-height: 1.5;
-  color: var(--ap-muted);
+  color: var(--text-muted);
 }
 
 .ap-modal__actions {
@@ -1094,7 +1088,7 @@
 
 .ap-modal__btn {
   padding: 10px 18px;
-  border-radius: var(--ap-radius-sm);
+  border-radius: var(--radius-sm);
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -1102,7 +1096,7 @@
   font-family: inherit;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all var(--ap-ease);
+  transition: all var(--ease);
 }
 
 .ap-modal__btn:disabled {
@@ -1113,11 +1107,11 @@
 .ap-modal__btn--ghost {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.12);
-  color: var(--ap-text);
+  color: var(--text);
 }
 
 .ap-modal__btn--primary {
-  background: linear-gradient(135deg, var(--ap-gold-bright) 0%, var(--ap-gold) 50%, var(--ap-gold-warm) 100%);
+  background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold) 50%, var(--gold-warm) 100%);
   color: #0a0704;
   border-color: rgba(234, 169, 96, 0.45);
   box-shadow: 0 4px 16px rgba(234, 169, 96, 0.25);
@@ -1140,13 +1134,13 @@
 .admin-ops-shortcuts__card {
   margin: 0;
   padding: 16px 18px;
-  border-radius: var(--ap-radius-md);
-  border: 1px solid var(--ap-border-gold);
-  background: var(--ap-card);
-  backdrop-filter: var(--ap-blur-sm);
-  -webkit-backdrop-filter: var(--ap-blur-sm);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  background: var(--aa-bg-card);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
   box-sizing: border-box;
-  transition: all var(--ap-ease);
+  transition: all var(--ease);
   position: relative;
   overflow: hidden;
 }
@@ -1158,25 +1152,27 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent);
   pointer-events: none;
   z-index: 2;
 }
 
 .admin-ops-shortcuts__card:hover {
   border-color: rgba(234, 169, 96, 0.2);
-  box-shadow: var(--ap-shadow-hover);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
+    0 0 28px rgba(234, 169, 96, 0.07);
 }
 
 .admin-integration-health-banner {
   margin: 0 0 20px;
   padding: 16px 18px;
-  border-radius: var(--ap-radius-md);
-  border: 1px solid var(--ap-border-gold);
-  background: var(--ap-card);
-  backdrop-filter: var(--ap-blur-sm);
-  -webkit-backdrop-filter: var(--ap-blur-sm);
-  transition: all var(--ap-ease);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  background: var(--aa-bg-card);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  transition: all var(--ease);
   position: relative;
   overflow: hidden;
 }
@@ -1188,14 +1184,16 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent);
   pointer-events: none;
   z-index: 2;
 }
 
 .admin-integration-health-banner:hover {
   border-color: rgba(234, 169, 96, 0.2);
-  box-shadow: var(--ap-shadow-hover);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
+    0 0 28px rgba(234, 169, 96, 0.07);
 }
 
 .admin-integration-health-banner__link {
@@ -1203,7 +1201,7 @@
   align-items: flex-start;
   gap: 12px;
   text-decoration: none;
-  color: var(--ap-muted);
+  color: var(--text-muted);
   font-size: 0.86rem;
   line-height: 1.45;
 }
@@ -1211,16 +1209,16 @@
 .admin-integration-health-banner__link svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: var(--ap-gold-bright);
+  color: var(--gold-bright);
 }
 
 .admin-integration-health-banner__link strong {
-  color: var(--ap-text);
+  color: var(--text);
   font-weight: 600;
 }
 
 .admin-integration-health-banner__link:hover {
-  color: var(--ap-text);
+  color: var(--text);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1229,9 +1227,9 @@
 .admin-panel-container .brief-template-panel {
   margin-top: 14px;
   padding: 18px;
-  border: 1px solid var(--ap-border-gold);
-  border-radius: var(--ap-radius-md);
-  background: var(--brief-surface-navy);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  border-radius: var(--radius-md);
+  background: rgba(4, 6, 18, 0.85);
   position: relative;
   overflow: hidden;
 }
@@ -1243,7 +1241,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent);
   pointer-events: none;
   z-index: 2;
 }
@@ -1256,7 +1254,7 @@
 }
 
 .admin-panel-container .brief-template-row label {
-  color: var(--ap-muted);
+  color: var(--text-muted);
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1264,17 +1262,17 @@
 
 .admin-panel-container .brief-template-help {
   margin: 0 0 10px 0;
-  color: var(--ap-muted);
+  color: var(--text-muted);
   font-size: 0.88rem;
 }
 
 .admin-panel-container .brief-template-textarea {
   width: 100%;
   min-height: 300px;
-  border-radius: var(--ap-radius-md);
-  border: 1px solid var(--ap-border-gold);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(234, 169, 96, 0.12);
   background: rgba(0, 0, 0, 0.35);
-  color: var(--ap-text);
+  color: var(--text);
   font-family: inherit;
   font-size: 0.92rem;
   line-height: 1.45;
@@ -1284,7 +1282,7 @@
 
 .admin-panel-container .brief-template-textarea:focus {
   outline: none;
-  border-color: var(--ap-gold);
+  border-color: var(--gold);
   box-shadow: 0 0 0 3px rgba(234, 169, 96, 0.12);
 }
 
@@ -1296,7 +1294,7 @@
 
 .admin-panel-container .brief-template-status {
   margin: 10px 0 0 0;
-  color: var(--ap-gold-bright);
+  color: var(--gold-bright);
   font-size: 0.88rem;
 }
 
@@ -1304,7 +1302,7 @@
   margin-top: 12px;
   border: 1px solid rgba(240, 61, 95, 0.5);
   background: rgba(240, 61, 95, 0.08);
-  border-radius: var(--ap-radius-md);
+  border-radius: var(--radius-md);
   padding: 14px 16px;
   color: #fecaca;
 }
@@ -1317,15 +1315,15 @@
 
 .admin-panel-container .brief-template-preview {
   margin-top: 12px;
-  border: 1px solid var(--ap-border-gold);
-  background: var(--brief-surface-navy);
-  border-radius: var(--ap-radius-md);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  background: rgba(4, 6, 18, 0.85);
+  border-radius: var(--radius-md);
   padding: 14px 16px;
 }
 
 .admin-panel-container .brief-template-preview h3 {
   margin: 0 0 8px 0;
-  color: var(--ap-gold-bright);
+  color: var(--gold-bright);
   font-size: 0.88rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1333,7 +1331,7 @@
 
 .admin-panel-container .brief-template-preview p {
   margin: 0 0 6px 0;
-  color: var(--ap-muted);
+  color: var(--text-muted);
   font-size: 0.88rem;
 }
 
@@ -1345,8 +1343,8 @@
 .admin-panel-container .brief-template-generated-preview {
   margin-top: 12px;
   border: 1px solid rgba(125, 211, 252, 0.35);
-  background: var(--brief-surface-navy);
-  border-radius: var(--ap-radius-md);
+  background: rgba(4, 6, 18, 0.85);
+  border-radius: var(--radius-md);
   padding: 14px 16px;
 }
 
@@ -1362,8 +1360,8 @@
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
-  color: var(--ap-text);
-  font-family: var(--ap-font);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
   line-height: 1.45;
   font-size: 0.86rem;
 }
@@ -1377,7 +1375,7 @@
 }
 
 .admin-panel-container .brief-template-publish-row label {
-  color: var(--ap-dim);
+  color: var(--text-dim);
   font-size: 0.73rem;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -1385,11 +1383,11 @@
 
 .admin-panel-container .brief-template-date {
   background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--ap-border-gold);
-  border-radius: var(--ap-radius-sm);
-  color: var(--ap-text);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  border-radius: var(--radius-sm);
+  color: var(--text);
   padding: 8px 10px;
-  font-family: var(--ap-font);
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1402,22 +1400,22 @@
   gap: 12px;
   margin: 8px 0;
   font-size: 0.82rem;
-  color: var(--ap-muted);
+  color: var(--text-muted);
 }
 
 .payout-card .payout-label {
   font-size: 0.66rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ap-dim);
+  color: var(--text-dim);
 }
 
 .payout-status {
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
-  border-radius: var(--ap-radius-full);
-  border: 1px solid var(--ap-border);
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.04);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1426,9 +1424,9 @@
 }
 
 .payout-status--requested {
-  color: var(--ap-gold-bright);
+  color: var(--gold-bright);
   border-color: rgba(234, 169, 96, 0.4);
-  background: var(--ap-gold-soft);
+  background: rgba(234, 169, 96, 0.12);
 }
 
 .payout-status--processing {
@@ -1455,7 +1453,7 @@
    ══════════════════════════════════════════════════════════ */
 @media (max-width: 992px) {
   .admin-tabs {
-    border-radius: var(--ap-radius-lg);
+    border-radius: var(--radius-lg);
     width: 100%;
     justify-content: stretch;
   }
@@ -1511,7 +1509,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   SCROLLBAR — Gold tinted
+   SCROLLBAR — EXACT match from Operator
    ══════════════════════════════════════════════════════════ */
 .admin-panel-container::-webkit-scrollbar {
   width: 4px;
@@ -1528,4 +1526,260 @@
 
 .admin-panel-container::-webkit-scrollbar-thumb:hover {
   background: rgba(234, 169, 96, 0.45);
+}
+/* =============================================================================
+   OVERRIDE NAVY STYLES FROM AuraTerminalNav.css
+   Higher specificity to beat .journal-page .admin-panel-container rules
+   ============================================================================= */
+
+/* Override the navy tokens with gold tokens */
+.journal-page .admin-panel-container {
+  --ap-border-gold: rgba(234, 169, 96, 0.12) !important;
+  --ap-gold: #EAA960 !important;
+  --ap-gold-bright: #F8C37D !important;
+  --ap-gold-soft: rgba(234, 169, 96, 0.12) !important;
+}
+
+/* Override the ::after background */
+.journal-page .admin-panel-container::after {
+  background: radial-gradient(ellipse at center, rgba(234, 169, 96, 0.07) 0%, transparent 68%) !important;
+}
+
+/* Override admin-header border and shadow */
+.journal-page .admin-panel-container .admin-header {
+  border-color: rgba(234, 169, 96, 0.14) !important;
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.48),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset !important;
+}
+
+/* Override admin-header gold hairline */
+.journal-page .admin-panel-container .admin-header::before {
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent) !important;
+}
+
+/* Override admin-title gradient */
+.journal-page .admin-panel-container .admin-title {
+  background: linear-gradient(130deg, #FDE8C4 0%, #F8C37D 35%, #EAA960 65%, #D48D44 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 0 20px rgba(234, 169, 96, 0.2)) !important;
+}
+
+/* Override tab hover */
+.journal-page .admin-panel-container .admin-tab-btn:hover {
+  border-color: rgba(234, 169, 96, 0.35) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Override active tab - GOLD instead of NAVY */
+.journal-page .admin-panel-container .admin-tab-btn.active {
+  color: #0a0704 !important;
+  background: linear-gradient(135deg, rgba(248, 195, 125, 0.95) 0%, rgba(234, 169, 96, 0.92) 50%, rgba(212, 141, 68, 0.88) 100%) !important;
+  border-color: rgba(234, 169, 96, 0.45) !important;
+  box-shadow: 0 4px 20px rgba(234, 169, 96, 0.25) !important;
+}
+
+/* Override active tab count badge */
+.journal-page .admin-panel-container .admin-tab-btn.active::after {
+  background: rgba(10, 7, 4, 0.15) !important;
+  color: #0a0704 !important;
+}
+
+/* Override user summary border */
+.journal-page .admin-panel-container .user-summary {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Override connection status colors */
+.journal-page .admin-panel-container .connection-status.online {
+  background: rgba(15, 217, 138, 0.12) !important;
+  color: #6ee7b7 !important;
+  border: 1px solid rgba(15, 217, 138, 0.35) !important;
+}
+
+.journal-page .admin-panel-container .connection-status.offline {
+  background: rgba(240, 61, 95, 0.1) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(240, 61, 95, 0.28) !important;
+}
+
+/* Override search container */
+.journal-page .admin-panel-container .search-container {
+  background: rgba(3, 2, 10, 0.72) !important;
+  border: 1px solid rgba(234, 169, 96, 0.12) !important;
+}
+
+.journal-page .admin-panel-container .search-container::before {
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent) !important;
+}
+
+/* Override search icon */
+.journal-page .admin-panel-container .search-icon {
+  color: #EAA960 !important;
+}
+
+/* Override search input */
+.journal-page .admin-panel-container .search-input {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.journal-page .admin-panel-container .search-input:focus {
+  border-color: rgba(234, 169, 96, 0.45) !important;
+  box-shadow: 0 0 0 3px rgba(234, 169, 96, 0.12) !important;
+}
+
+/* Override user card */
+.journal-page .admin-panel-container .user-card {
+  background: rgba(3, 2, 10, 0.72) !important;
+  border: 1px solid rgba(234, 169, 96, 0.12) !important;
+}
+
+.journal-page .admin-panel-container .user-card::before {
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent) !important;
+}
+
+.journal-page .admin-panel-container .user-card:hover {
+  border-color: rgba(234, 169, 96, 0.2) !important;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
+    0 0 28px rgba(234, 169, 96, 0.07) !important;
+}
+
+/* Override user email hover */
+.journal-page .admin-panel-container .user-email:hover {
+  color: #F8C37D !important;
+}
+
+/* Override user name */
+.journal-page .admin-panel-container .user-name {
+  background: rgba(234, 169, 96, 0.12) !important;
+  border-color: rgba(234, 169, 96, 0.18) !important;
+  color: rgba(200, 198, 190, 0.78) !important;
+}
+
+.journal-page .admin-panel-container .user-name:hover {
+  border-color: rgba(234, 169, 96, 0.35) !important;
+  background: rgba(234, 169, 96, 0.16) !important;
+}
+
+/* Override user role */
+.journal-page .admin-panel-container .user-role {
+  color: #F8C37D !important;
+  border-color: rgba(234, 169, 96, 0.12) !important;
+}
+
+.journal-page .admin-panel-container .user-role.user-role--super {
+  background: rgba(234, 169, 96, 0.14) !important;
+  border-color: rgba(234, 169, 96, 0.35) !important;
+  color: #FDE8C4 !important;
+}
+
+/* Override user plan values */
+.journal-page .admin-panel-container .user-plan__value--pro,
+.journal-page .admin-panel-container .user-plan__value--premium,
+.journal-page .admin-panel-container .user-plan__value--aura {
+  color: #F8C37D !important;
+  border-color: rgba(234, 169, 96, 0.35) !important;
+  background: rgba(234, 169, 96, 0.12) !important;
+}
+
+/* Override action buttons */
+.journal-page .admin-panel-container .action-btn.plan-btn {
+  background: linear-gradient(135deg, #F8C37D 0%, #EAA960 50%, #D48D44 100%) !important;
+  color: #0a0704 !important;
+  border-color: rgba(234, 169, 96, 0.45) !important;
+}
+
+.journal-page .admin-panel-container .grant-admin-btn {
+  background: linear-gradient(135deg, rgba(248, 195, 125, 0.22), rgba(234, 169, 96, 0.14)) !important;
+  color: #F8C37D !important;
+  border-color: rgba(234, 169, 96, 0.35) !important;
+}
+
+/* Override channel card */
+.journal-page .admin-panel-container .channel-card {
+  background: rgba(3, 2, 10, 0.72) !important;
+  border: 1px solid rgba(234, 169, 96, 0.12) !important;
+}
+
+.journal-page .admin-panel-container .channel-card::before {
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent) !important;
+}
+
+/* Override channel name */
+.journal-page .admin-panel-container .channel-name::before {
+  color: #EAA960 !important;
+}
+
+/* Override channel category */
+.journal-page .admin-panel-container .channel-category {
+  background: rgba(234, 169, 96, 0.12) !important;
+  border-color: rgba(234, 169, 96, 0.2) !important;
+}
+
+/* Override refresh button */
+.journal-page .admin-panel-container .refresh-btn {
+  border-color: rgba(234, 169, 96, 0.12) !important;
+}
+
+.journal-page .admin-panel-container .refresh-btn:hover {
+  border-color: rgba(234, 169, 96, 0.35) !important;
+  color: #F8C37D !important;
+  background: rgba(234, 169, 96, 0.12) !important;
+}
+
+/* Override loading spinner */
+.journal-page .admin-panel-container .loading-spinner {
+  border-color: rgba(234, 169, 96, 0.25) !important;
+  border-top-color: #F8C37D !important;
+}
+
+/* Override retry button */
+.journal-page .admin-panel-container .retry-btn {
+  background: linear-gradient(135deg, #F8C37D 0%, #EAA960 50%, #D48D44 100%) !important;
+  border-color: rgba(234, 169, 96, 0.4) !important;
+  color: #0a0704 !important;
+}
+
+/* Override modal */
+.journal-page .admin-panel-container .ap-modal {
+  background: rgba(3, 2, 10, 0.72) !important;
+  border: 1px solid rgba(234, 169, 96, 0.12) !important;
+}
+
+.journal-page .admin-panel-container .ap-modal::before {
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent) !important;
+}
+
+.journal-page .admin-panel-container .ap-modal__title {
+  color: #F8C37D !important;
+}
+
+.journal-page .admin-panel-container .ap-modal__select,
+.journal-page .admin-panel-container .ap-modal__input {
+  border-color: rgba(234, 169, 96, 0.12) !important;
+}
+
+.journal-page .admin-panel-container .ap-modal__select:focus,
+.journal-page .admin-panel-container .ap-modal__input:focus {
+  border-color: #EAA960 !important;
+  box-shadow: 0 0 0 3px rgba(234, 169, 96, 0.12) !important;
+}
+
+.journal-page .admin-panel-container .ap-modal__btn--primary {
+  background: linear-gradient(135deg, #F8C37D 0%, #EAA960 50%, #D48D44 100%) !important;
+  color: #0a0704 !important;
+  border-color: rgba(234, 169, 96, 0.45) !important;
+}
+
+/* Override scrollbar */
+.journal-page .admin-panel-container::-webkit-scrollbar-thumb {
+  background: rgba(234, 169, 96, 0.28) !important;
+}
+
+.journal-page .admin-panel-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(234, 169, 96, 0.45) !important;
 }
