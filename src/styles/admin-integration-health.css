@@ -1,137 +1,286 @@
+/* =============================================================================
+   Admin — Integration Health Page
+   Matches The Operator / Aura gold design system.
+   Import AFTER AuraShared.css so these rules win.
+   ============================================================================= */
+
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
 .integration-health-page {
-  max-width: 920px;
+  --ih-gold:          rgba(234, 169, 96, 0.92);
+  --ih-gold-dim:      rgba(234, 169, 96, 0.14);
+  --ih-gold-border:   rgba(234, 169, 96, 0.22);
+  --ih-gold-hover:    rgba(234, 169, 96, 0.28);
+  --ih-gold-glow:     rgba(234, 169, 96, 0.08);
+  --ih-bg-shell:      rgba(3, 2, 10, 0.72);
+  --ih-bg-page:       rgba(3, 2, 10, 0.34);
+  --ih-border-page:   rgba(234, 169, 96, 0.14);
+  --ih-text-primary:  rgba(255, 255, 255, 0.96);
+  --ih-text-warm:     rgba(255, 248, 240, 0.96);
+  --ih-text-secondary:rgba(200, 198, 190, 0.78);
+  --ih-text-muted:    rgba(148, 163, 184, 0.75);
+  --ih-green:         #34d399;
+  --ih-amber:         #fbbf24;
+  --ih-red:           #f87171;
+  --ih-slate:         rgba(148, 163, 184, 0.95);
+  --ih-radius-card:   14px;
+  --ih-radius-pill:   999px;
+}
+
+/* ── Page shell ─────────────────────────────────────────────────────────── */
+.integration-health-page {
+  max-width: 900px;
   margin: 0 auto;
-  padding: 28px 20px 56px;
+  padding: 32px 24px 64px;
   box-sizing: border-box;
 }
 
+/* ── Header ─────────────────────────────────────────────────────────────── */
 .integration-health-page__header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 20px;
   flex-wrap: wrap;
-  margin-bottom: 22px;
+  margin-bottom: 28px;
 }
 
+/* Eyebrow */
 .integration-health-page__eyebrow {
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(226, 232, 240, 0.65);
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 7px;
+  font-size: 10.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: rgba(234, 169, 96, 0.75);
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
+.integration-health-page__eyebrow svg,
+.integration-health-page__eyebrow [aria-hidden] {
+  width: 11px;
+  height: 11px;
+  color: var(--ih-gold);
+  filter: drop-shadow(0 0 5px rgba(234, 169, 96, 0.55));
+  flex-shrink: 0;
+}
+
+/* Title — gold gradient text matching Aura overview title */
 .integration-health-page__title {
   margin: 0;
-  font-size: 1.75rem;
+  font-size: 1.65rem;
   font-weight: 700;
-  color: #f8fafc;
   line-height: 1.15;
+  letter-spacing: -0.01em;
+  background: linear-gradient(125deg, #ffffff 35%, #f8c37d 72%, #eaa960 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .integration-health-page__lede {
   margin: 10px 0 0;
-  max-width: 640px;
-  font-size: 0.9rem;
-  line-height: 1.55;
-  color: rgba(203, 213, 225, 0.88);
+  max-width: 580px;
+  font-size: 0.855rem;
+  line-height: 1.62;
+  color: var(--ih-text-secondary);
 }
 
+/* Back link */
 .integration-health-page__back {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   margin-top: 14px;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  color: #93c5fd;
+  color: rgba(248, 195, 125, 0.85);
   text-decoration: none;
+  letter-spacing: 0.01em;
+  transition: color 0.2s;
 }
 
 .integration-health-page__back:hover {
-  color: #bfdbfe;
+  color: #f8c37d;
 }
 
+.integration-health-page__back svg {
+  opacity: 0.65;
+  width: 10px;
+  height: 10px;
+}
+
+/* Refresh button */
 .integration-health-page__refresh {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   padding: 10px 18px;
   border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(15, 23, 42, 0.6);
-  color: #e2e8f0;
-  font-size: 0.88rem;
+  border: 1px solid var(--ih-gold-border);
+  background: var(--ih-gold-dim);
+  color: rgba(253, 232, 196, 0.9);
+  font-size: 0.83rem;
+  font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 4px;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.integration-health-page__refresh:hover:not(:disabled) {
+  border-color: rgba(234, 169, 96, 0.45);
+  background: rgba(234, 169, 96, 0.18);
+  box-shadow: 0 0 18px rgba(234, 169, 96, 0.12);
 }
 
 .integration-health-page__refresh:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
+.integration-health-page__refresh svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+/* ── Error banner ───────────────────────────────────────────────────────── */
 .integration-health-page__error {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 16px;
+  padding: 13px 16px;
   border-radius: 10px;
-  background: rgba(127, 29, 29, 0.25);
-  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(127, 29, 29, 0.22);
+  border: 1px solid rgba(248, 113, 113, 0.3);
   color: #fecaca;
-  margin-bottom: 18px;
-  font-size: 0.88rem;
+  margin-bottom: 20px;
+  font-size: 0.855rem;
+  line-height: 1.5;
 }
 
+.integration-health-page__error svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Summary bar ────────────────────────────────────────────────────────── */
 .integration-health-page__summary {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 14px 18px;
-  margin-bottom: 22px;
+  padding: 14px 20px;
+  margin-bottom: 24px;
   border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid var(--ih-gold-border);
+  background: rgba(15, 10, 2, 0.55);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gold hairline shimmer — identical to .aura-card::before */
+.integration-health-page__summary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(234, 169, 96, 0.55),
+    rgba(248, 195, 125, 0.38),
+    transparent
+  );
+  pointer-events: none;
 }
 
 .integration-health-page__summary-label {
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  font-size: 10px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(148, 163, 184, 0.9);
+  color: var(--ih-text-muted);
+  font-weight: 600;
   margin-right: 10px;
 }
 
+.integration-health-page__summary-main {
+  display: flex;
+  align-items: center;
+}
+
 .integration-health-page__summary-main strong {
-  font-size: 1.05rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .integration-health-page__summary-meta {
-  font-size: 0.8rem;
-  color: rgba(148, 163, 184, 0.85);
+  font-size: 0.78rem;
+  color: var(--ih-text-muted);
 }
 
+/* ── Card list ──────────────────────────────────────────────────────────── */
 .integration-health-page__list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
+/* ── Individual card ────────────────────────────────────────────────────── */
 .integration-health-card {
-  padding: 18px 18px 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(10, 15, 28, 0.72);
+  padding: 20px 20px 16px;
+  border-radius: var(--ih-radius-card);
+  border: 1px solid rgba(234, 169, 96, 0.13);
+  background: var(--ih-bg-shell);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.03) inset;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease;
 }
 
+/* Gold hairline top — matching .aura-card::before exactly */
+.integration-health-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(234, 169, 96, 0.5),
+    rgba(248, 195, 125, 0.35),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.integration-health-card:hover {
+  border-color: rgba(234, 169, 96, 0.26);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
+    0 0 28px rgba(234, 169, 96, 0.07);
+}
+
+/* Card top row */
 .integration-health-card__top {
   display: flex;
   justify-content: space-between;
@@ -140,68 +289,83 @@
 }
 
 .integration-health-card__category {
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
+  font-size: 10px;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: rgba(148, 163, 184, 0.85);
+  color: var(--ih-text-muted);
+  font-weight: 600;
+  display: block;
 }
 
 .integration-health-card__name {
   margin: 4px 0 0;
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #f1f5f9;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--ih-text-warm);
+  letter-spacing: -0.005em;
 }
 
+/* Status pill */
 .integration-health-card__pill {
   flex-shrink: 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  padding: 6px 12px;
-  border-radius: 999px;
+  padding: 5px 12px;
+  border-radius: var(--ih-radius-pill);
   border: 1px solid currentColor;
+  background: transparent;
+  margin-top: 2px;
+  white-space: nowrap;
 }
 
+/* Progress bar */
 .integration-health-card__bar-wrap {
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(30, 41, 59, 0.9);
+  height: 5px;
+  border-radius: var(--ih-radius-pill);
+  background: rgba(255, 255, 255, 0.07);
   overflow: hidden;
-  margin: 14px 0 12px;
+  margin: 16px 0 13px;
 }
 
 .integration-health-card__bar-fill {
   height: 100%;
-  border-radius: 999px;
-  transition: width 0.35s ease;
+  border-radius: var(--ih-radius-pill);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Purpose text */
 .integration-health-card__purpose {
   margin: 0;
-  font-size: 0.84rem;
-  line-height: 1.55;
-  color: rgba(203, 213, 225, 0.92);
+  font-size: 0.845rem;
+  line-height: 1.62;
+  color: var(--ih-text-secondary);
 }
 
+/* Meta row */
 .integration-health-card__meta {
-  margin-top: 12px;
+  margin-top: 13px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 16px;
-  font-size: 0.76rem;
-  color: rgba(148, 163, 184, 0.88);
+  gap: 8px 18px;
+  font-size: 0.75rem;
+  color: var(--ih-text-muted);
 }
 
 .integration-health-card__detail {
-  font-family: ui-monospace, monospace;
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.68);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* ── Skeleton loader ────────────────────────────────────────────────────── */
 .integration-health-page__skeleton-grid {
   display: flex;
   flex-direction: column;
@@ -209,18 +373,20 @@
 }
 
 .integration-health-page__skeleton-card {
-  height: 120px;
-  border-radius: 14px;
-  background: linear-gradient(90deg, rgba(30, 41, 59, 0.5), rgba(51, 65, 85, 0.35), rgba(30, 41, 59, 0.5));
+  height: 118px;
+  border-radius: var(--ih-radius-card);
+  border: 1px solid rgba(234, 169, 96, 0.07);
+  background: linear-gradient(
+    90deg,
+    rgba(30, 20, 5, 0.5),
+    rgba(60, 45, 10, 0.28),
+    rgba(30, 20, 5, 0.5)
+  );
   background-size: 200% 100%;
-  animation: integration-health-shimmer 1.2s ease-in-out infinite;
+  animation: ih-shimmer 1.4s ease-in-out infinite;
 }
 
-@keyframes integration-health-shimmer {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: -100% 0;
-  }
+@keyframes ih-shimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
