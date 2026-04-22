@@ -5367,3 +5367,255 @@ background: radial-gradient(circle at 38% 35%,
   border-top-right-radius: 12px;
   border-bottom-right-radius: 12px;
 }
+/* =============================================================================
+   NUCLEAR - Remove ALL inner glass panels completely
+   Keep ONLY .td-layout-page.td-deck-with-tabs.journal-glass-panel
+   ============================================================================= */
+
+/* Target ALL inner containers that might have glass classes */
+.td-deck-with-tabs .td-deck-content-box,
+.td-deck-with-tabs .td-outlook-terminal-frame,
+.td-deck-with-tabs .td-outlook-concept-shell,
+.td-deck-with-tabs .td-outlook-panel,
+.td-deck-with-tabs .td-mi-tile,
+.td-deck-with-tabs .td-ff-wrap,
+.td-deck-with-tabs [class*="journal-glass-panel"]:not(.td-layout-page) {
+  /* Kill all glass effects */
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0 !important;
+}
+
+/* Remove all pseudo-element shimmer lines */
+.td-deck-with-tabs [class*="journal-glass"]:not(.td-layout-page)::before,
+.td-deck-with-tabs [class*="journal-glass"]:not(.td-layout-page)::after,
+.td-deck-with-tabs .td-outlook-terminal-frame::before,
+.td-deck-with-tabs .td-outlook-terminal-frame::after,
+.td-deck-with-tabs .td-outlook-concept-shell::before,
+.td-deck-with-tabs .td-outlook-concept-shell::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Add subtle borders to inner containers for visual separation (optional) */
+.td-deck-with-tabs .td-outlook-panel,
+.td-deck-with-tabs .td-mi-tile {
+  border: 1px solid rgba(107, 143, 232, 0.12) !important;
+  border-radius: 12px !important;
+}
+
+/* KEEP the outer shell exactly as is */
+.td-deck-with-tabs.td-layout-page.journal-glass-panel {
+  /* Intentionally empty - preserves original glass */
+}
+/* =============================================================================
+   ADDITIONAL - Remove td-deck-tab-zone glass layer
+   ============================================================================= */
+
+.td-deck-with-tabs .td-deck-tab-zone {
+  background: transparent !important;
+  background-image: none !important;
+  border: 1px solid rgba(107, 143, 232, 0.12) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.td-deck-with-tabs .td-deck-tab-zone::before,
+.td-deck-with-tabs .td-deck-tab-zone::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Also remove glass from calendar sub-zone */
+.td-deck-with-tabs .td-deck-tab-zone-calendar {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+}
+
+.td-deck-with-tabs .td-deck-tab-zone-calendar::before,
+.td-deck-with-tabs .td-deck-tab-zone-calendar::after {
+  display: none !important;
+}
+/* =============================================================================
+   COLOR ONLY - Match World Clocks background
+   NO layout changes - preserves all original spacing/shadows/positioning
+   ============================================================================= */
+
+/* Only override background and border-color - nothing else */
+.td-deck-mo-root .td-outlook-concept-shell .td-outlook-panel,
+.td-deck-mo-root .td-outlook-concept-shell .td-mi-panel,
+.td-deck-mo-root .td-outlook-concept-shell .td-outlook-card,
+.td-deck-mo-root .td-outlook-concept-shell [class*="panel"],
+.td-deck-mo-root .td-outlook-concept-shell [class*="card"],
+.td-deck-mo-root .td-outlook-concept-shell [class*="tile"],
+.td-deck-mo-root .td-outlook-terminal-frame .td-outlook-panel,
+.td-deck-mo-root .td-outlook-terminal-frame .td-mi-panel,
+.td-deck-mo-root .td-outlook-terminal-frame [class*="panel"],
+.td-deck-mo-root .td-outlook-terminal-frame [class*="card"],
+.td-deck-mo-root .td-outlook-terminal-frame [class*="tile"],
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--regime,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--pulse,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--drivers,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--signals,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--changes,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--focus,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--radar,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--execution-mega,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--headlines,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--intel-mega,
+.td-deck-mi-modern .td-mi-tile,
+.td-deck-mi-modern .td-outlook-panel,
+.td-deck-mi-modern [class*="panel"],
+.td-deck-mi-modern [class*="card"] {
+  background: rgba(4, 5, 18, 0.45) !important;
+  background-image: none !important;
+  border-color: rgba(107, 143, 232, 0.25) !important;
+}
+
+/* Hover state - only border color change, keep original transform/shadow */
+.td-deck-mo-root .td-outlook-concept-shell .td-outlook-panel:hover,
+.td-deck-mo-root .td-outlook-terminal-frame .td-outlook-panel:hover,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--regime:hover,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--pulse:hover,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--drivers:hover,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--signals:hover,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--changes:hover,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--focus:hover,
+.td-deck-mo-root.td-deck-mo-outlook .td-outlook-panel--radar:hover,
+.td-deck-mi-modern .td-mi-tile:hover,
+.td-deck-mi-modern .td-outlook-panel:hover {
+  border-color: rgba(107, 143, 232, 0.45) !important;
+}
+/* =============================================================================
+   REMOVE td-outlook-concept-grid LAYER - Make it transparent
+   ============================================================================= */
+
+.td-deck-mo-root .td-outlook-concept-grid,
+.td-deck-mo-root .td-outlook-concept-grid--terminal {
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Remove any pseudo-elements on the grid */
+.td-deck-mo-root .td-outlook-concept-grid::before,
+.td-deck-mo-root .td-outlook-concept-grid::after,
+.td-deck-mo-root .td-outlook-concept-grid--terminal::before,
+.td-deck-mo-root .td-outlook-concept-grid--terminal::after {
+  display: none !important;
+  content: none !important;
+}
+/* =============================================================================
+   ADD MISSING ELEMENTS - Apply World Clocks background to these too
+   ============================================================================= */
+
+/* Session context, unified header, and page header */
+.td-deck-mo-root .mo-session-context,
+.td-deck-mo-root .td-outlook-unified-header,
+.td-deck-mo-root .td-deck-mo-outlook-hero,
+.td-deck-mo-root .td-outlook-concept-page-header,
+.td-deck-mo-root .td-deck-mo-outlook .mo-session-context,
+.td-deck-mo-root .td-deck-mo-outlook .td-outlook-unified-header,
+.td-deck-mo-root .td-deck-mo-outlook .td-outlook-concept-page-header {
+  background: rgba(4, 5, 18, 0.45) !important;
+  background-image: none !important;
+  border-color: rgba(107, 143, 232, 0.25) !important;
+}
+
+/* Hover state for these elements if applicable */
+.td-deck-mo-root .mo-session-context:hover,
+.td-deck-mo-root .td-outlook-unified-header:hover,
+.td-deck-mo-root .td-deck-mo-outlook-hero:hover,
+.td-deck-mo-root .td-outlook-concept-page-header:hover {
+  border-color: rgba(107, 143, 232, 0.45) !important;
+}
+/* =============================================================================
+   ADD mo-dense-row AND mo-session-context__row
+   ============================================================================= */
+
+.td-deck-mo-root .mo-dense-row,
+.td-deck-mo-root .mo-session-context__row,
+.td-deck-mo-root .td-deck-mo-outlook .mo-dense-row,
+.td-deck-mo-root .td-deck-mo-outlook .mo-session-context__row {
+  background: rgba(4, 5, 18, 0.45) !important;
+  background-image: none !important;
+  border-color: rgba(107, 143, 232, 0.25) !important;
+}
+
+.td-deck-mo-root .mo-dense-row:hover,
+.td-deck-mo-root .mo-session-context__row:hover {
+  border-color: rgba(107, 143, 232, 0.45) !important;
+}
+/* =============================================================================
+   MAXIMUM SPECIFICITY - Force remove td-outlook-concept-grid background
+   ============================================================================= */
+
+html body .journal-page .td-deck-mo-root .td-outlook-concept-grid.td-outlook-concept-grid--terminal,
+.journal-page .td-deck-with-tabs .td-deck-mo-root .td-outlook-concept-grid,
+.td-layout-page .td-outlook-concept-grid,
+div.td-outlook-concept-grid,
+div.td-outlook-concept-grid--terminal {
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Override any inline styles */
+.td-outlook-concept-grid[style],
+.td-outlook-concept-grid--terminal[style] {
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* =============================================================================
+   APPLY WORLD CLOCKS BLUE TO MARKET INTELLIGENCE ELEMENTS
+   ============================================================================= */
+
+.td-deck-mi-modern .td-deck-mi-modern-hero,
+.td-deck-mi-modern .td-deck-mi-tile,
+.td-deck-mi-modern .td-deck-mi-tile--list,
+.td-deck-mi-modern .td-deck-mi-tile--upload,
+.td-deck-mi-modern .td-deck-mi-brief-card {
+  background: rgba(4, 5, 18, 0.45) !important;
+  background-image: none !important;
+  border-color: rgba(107, 143, 232, 0.25) !important;
+}
+
+/* Hover states */
+.td-deck-mi-modern .td-deck-mi-modern-hero:hover,
+.td-deck-mi-modern .td-deck-mi-tile:hover,
+.td-deck-mi-modern .td-deck-mi-tile--list:hover,
+.td-deck-mi-modern .td-deck-mi-brief-card:hover {
+  border-color: rgba(107, 143, 232, 0.45) !important;
+}
+
+/* Brief cards individual background */
+.td-deck-mi-modern .td-deck-mi-brief-card {
+  background: rgba(4, 5, 18, 0.35) !important;
+}
+
+.td-deck-mi-modern .td-deck-mi-brief-card:hover {
+  background: rgba(4, 5, 18, 0.5) !important;
+}

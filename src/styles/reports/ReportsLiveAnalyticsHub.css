@@ -1,110 +1,435 @@
-/* Live analytics hub — table of contents for reports + Aura dashboard */
+/* =============================================================================
+   Live Analytics Hub — THE OPERATOR GLASS PREMIUM
+   Gold hairline · Blur crystal · Aura Analysis visual parity
+   Matching The Operator shell aesthetic with Space Grotesk font
+   ============================================================================= */
 
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+/* ══════════════════════════════════════════════════════════
+   PAGE TOKENS — Matching The Operator shell
+   ══════════════════════════════════════════════════════════ */
 .rlah-page {
+  --rlah-bg-card:        rgba(3, 2, 10, 0.72);
+  --rlah-bg-card-hover:  rgba(8, 6, 20, 0.88);
+  --rlah-border-gold:    rgba(234, 169, 96, 0.12);
+  --rlah-border-hover:   rgba(234, 169, 96, 0.28);
+  --rlah-gold:           #EAA960;
+  --rlah-gold-bright:    #F8C37D;
+  --rlah-gold-warm:      #D48D44;
+  --rlah-gold-pale:      #FDE8C4;
+  --rlah-gold-soft:      rgba(234, 169, 96, 0.12);
+  --rlah-gold-glow:      rgba(234, 169, 96, 0.18);
+  --rlah-text:           #FFFFFF;
+  --rlah-text-muted:     rgba(200, 198, 190, 0.78);
+  --rlah-text-dim:       rgba(255, 255, 255, 0.45);
+  --rlah-text-faint:     rgba(255, 255, 255, 0.32);
+  --rlah-shadow-card:
+    0 8px 32px rgba(0, 0, 0, 0.65),
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 0 0 0.5px rgba(255, 255, 255, 0.02) inset;
+  --rlah-shadow-hover:
+    0 12px 40px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(234, 169, 96, 0.14),
+    0 0 28px rgba(234, 169, 96, 0.08);
+  --rlah-grad-gold: linear-gradient(130deg, var(--rlah-gold-pale) 0%, var(--rlah-gold-bright) 35%, var(--rlah-gold) 65%, var(--rlah-gold-warm) 100%);
+  --rlah-radius-md: 12px;
+  --rlah-radius-lg: 16px;
+  --rlah-ease: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  
   max-width: 960px;
   margin: 0 auto;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  color: var(--rlah-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* ══════════════════════════════════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════════════════════════════════ */
+@keyframes rlah-fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rlah-scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes rlah-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   HEADER — Gold gradient title
+   ══════════════════════════════════════════════════════════ */
 .rlah-header {
-  margin-bottom: 20px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--rlah-border-gold);
+  animation: rlah-fadeUp 0.45s ease-out;
 }
 
 .rlah-eyebrow {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(212, 175, 55, 0.75);
-  margin: 0 0 8px;
+  color: var(--rlah-gold);
+  margin: 0 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--rlah-gold-soft);
+  border-radius: 30px;
+  border: 1px solid var(--rlah-border-gold);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.rlah-eyebrow::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rlah-gold-bright);
+  box-shadow: 0 0 8px var(--rlah-gold-glow);
 }
 
 .rlah-title {
-  font-size: clamp(1.35rem, 3vw, 1.75rem);
-  font-weight: 700;
-  margin: 0 0 10px;
-  color: rgba(255, 248, 240, 0.95);
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 200;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+  background: var(--rlah-grad-gold);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 20px rgba(234, 169, 96, 0.2));
+  line-height: 1.2;
 }
 
 .rlah-lede {
   font-size: 0.88rem;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.48);
+  line-height: 1.6;
+  color: var(--rlah-text-muted);
   margin: 0;
-  max-width: 720px;
+  max-width: 680px;
+  font-weight: 300;
+  letter-spacing: 0.01em;
 }
 
-.rlah-loading,
-.rlah-error {
-  padding: 24px;
+/* ══════════════════════════════════════════════════════════
+   LOADING & ERROR STATES
+   ══════════════════════════════════════════════════════════ */
+.rlah-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
   text-align: center;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--rlah-text-muted);
+  gap: 16px;
+  background: var(--rlah-bg-card);
+  border: 1px solid var(--rlah-border-gold);
+  border-radius: var(--rlah-radius-lg);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  box-shadow: var(--rlah-shadow-card);
+  animation: rlah-scaleIn 0.4s ease-out;
+}
+
+.rlah-loading::before {
+  content: '';
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(234, 169, 96, 0.15);
+  border-top-color: var(--rlah-gold-bright);
+  border-radius: 50%;
+  animation: rlah-spin 0.85s linear infinite;
+}
+
+.rlah-error {
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--rlah-text-muted);
+  background: var(--rlah-bg-card);
+  border: 1px solid rgba(240, 61, 95, 0.28);
+  border-radius: var(--rlah-radius-lg);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  box-shadow: var(--rlah-shadow-card);
+  animation: rlah-scaleIn 0.4s ease-out;
 }
 
 .rlah-retry {
-  margin-top: 12px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  background: rgba(212, 175, 55, 0.1);
-  color: #e8c658;
+  margin-top: 16px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--rlah-border-hover);
+  background: var(--rlah-gold-soft);
+  color: var(--rlah-gold-bright);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  transition: all var(--rlah-ease);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
+.rlah-retry:hover {
+  background: rgba(234, 169, 96, 0.2);
+  border-color: rgba(234, 169, 96, 0.45);
+  color: var(--rlah-gold-pale);
+  box-shadow: 0 0 20px var(--rlah-gold-glow);
+  transform: translateY(-1px);
+}
+
+/* ══════════════════════════════════════════════════════════
+   SECTIONS
+   ══════════════════════════════════════════════════════════ */
 .rlah-sections {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 32px;
   margin-top: 8px;
 }
 
+.rlah-section {
+  animation: rlah-fadeUp 0.5s ease-out both;
+}
+
+.rlah-section:nth-child(1) { animation-delay: 0.05s; }
+.rlah-section:nth-child(2) { animation-delay: 0.1s; }
+.rlah-section:nth-child(3) { animation-delay: 0.15s; }
+
 .rlah-section-title {
   font-size: 1rem;
-  font-weight: 700;
-  margin: 0 0 6px;
-  color: rgba(255, 245, 230, 0.92);
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: rgba(255, 255, 255, 0.94);
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rlah-section-title::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  background: linear-gradient(180deg, var(--rlah-gold-bright), var(--rlah-gold-warm));
+  border-radius: 2px;
+  box-shadow: 0 0 8px var(--rlah-gold-glow);
 }
 
 .rlah-section-desc {
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.42);
-  margin: 0 0 14px;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: var(--rlah-text-dim);
+  margin: 0 0 18px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  padding-left: 14px;
 }
 
+/* ══════════════════════════════════════════════════════════
+   LINK GRID — Glass cards with gold accent
+   ══════════════════════════════════════════════════════════ */
 .rlah-link-grid {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
 }
 
+/* ══════════════════════════════════════════════════════════
+   CARD — Premium glass with gold hairline
+   ══════════════════════════════════════════════════════════ */
 .rlah-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px 14px;
-  border-radius: 12px;
+  gap: 6px;
+  padding: 18px 18px 16px;
+  border-radius: var(--rlah-radius-md);
   text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(3, 2, 12, 0.55);
-  transition: border-color 0.15s ease, background 0.15s ease;
+  border: 1px solid var(--rlah-border-gold);
+  background: var(--rlah-bg-card);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  box-shadow: var(--rlah-shadow-card);
+  transition: all var(--rlah-ease);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gold hairline top */
+.rlah-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent);
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity var(--rlah-ease);
+}
+
+.rlah-card:hover::before {
+  opacity: 1;
 }
 
 .rlah-card:hover {
-  border-color: rgba(212, 175, 55, 0.35);
-  background: rgba(212, 175, 55, 0.06);
+  border-color: var(--rlah-border-hover);
+  box-shadow: var(--rlah-shadow-hover);
+  transform: translateY(-3px);
 }
 
+/* Card label — Gold gradient */
 .rlah-card-label {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #f8c37d;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: linear-gradient(125deg, #ffffff 30%, var(--rlah-gold-bright) 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.3;
 }
 
+.rlah-card:hover .rlah-card-label {
+  background: linear-gradient(125deg, #ffffff 40%, var(--rlah-gold-pale) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Card tag — Muted but readable */
 .rlah-card-tag {
   font-size: 0.62rem;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.35);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rlah-text-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 2px;
+  transition: color var(--rlah-ease);
+}
+
+.rlah-card:hover .rlah-card-tag {
+  color: var(--rlah-text-muted);
+}
+
+.rlah-card-tag::before {
+  content: '→';
+  font-size: 0.7rem;
+  color: var(--rlah-gold);
+  opacity: 0.6;
+  transition: opacity var(--rlah-ease), transform var(--rlah-ease);
+}
+
+.rlah-card:hover .rlah-card-tag::before {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .rlah-page {
+    padding: 0 4px;
+  }
+  
+  .rlah-header {
+    margin-bottom: 22px;
+    padding-bottom: 16px;
+  }
+  
+  .rlah-title {
+    font-size: 1.4rem;
+    letter-spacing: 0.04em;
+  }
+  
+  .rlah-link-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  
+  .rlah-card {
+    padding: 15px 16px 14px;
+  }
+  
+  .rlah-card-label {
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .rlah-header {
+    margin-bottom: 18px;
+  }
+  
+  .rlah-eyebrow {
+    font-size: 0.58rem;
+    padding: 3px 10px;
+  }
+  
+  .rlah-title {
+    font-size: 1.25rem;
+  }
+  
+  .rlah-lede {
+    font-size: 0.82rem;
+  }
+  
+  .rlah-link-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .rlah-sections {
+    gap: 24px;
+  }
+  
+  .rlah-section-title {
+    font-size: 0.9rem;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCROLLBAR — Gold tinted
+   ══════════════════════════════════════════════════════════ */
+.rlah-page::-webkit-scrollbar {
+  width: 4px;
+}
+
+.rlah-page::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rlah-page::-webkit-scrollbar-thumb {
+  background: rgba(234, 169, 96, 0.28);
+  border-radius: 4px;
+}
+
+.rlah-page::-webkit-scrollbar-thumb:hover {
+  background: rgba(234, 169, 96, 0.45);
 }

@@ -722,3 +722,155 @@
     }
   }
 }
+/* ══════════════════════════════════════════════════════════
+   NESTED DROPDOWN ITEMS — Same styling as parent, just indented
+   ══════════════════════════════════════════════════════════ */
+
+/* Reset nested items to match regular items exactly */
+.user-dropdown .dropdown-item--nested {
+  padding-left: 19px !important;
+  font-size: 0.76rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  background-image: var(--home-cta-text) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-color: transparent !important;
+  color: transparent !important;
+  filter: drop-shadow(0 0 10px rgba(234, 169, 96, 0.22)) !important;
+  position: relative !important;
+  border-top: none !important;
+  margin-top: 0 !important;
+}
+
+/* Nested item hover - match regular hover exactly */
+.user-dropdown .dropdown-item--nested:hover {
+  background: var(--gold-ultra) !important;
+  background-image: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: #FDE8C4 !important;
+  color: #FDE8C4 !important;
+  padding-left: 46px !important;
+  filter: none !important;
+}
+
+/* Nested item left accent bar - match regular exactly */
+.user-dropdown .dropdown-item--nested::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 14% !important;
+  bottom: 14% !important;
+  width: 2px !important;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    var(--gold) 50%,
+    var(--gold-warm) 100%
+  ) !important;
+  border-radius: 2px !important;
+  opacity: 0 !important;
+  transform: scaleY(0.3) !important;
+  transition: opacity var(--transition), transform var(--transition) !important;
+  box-shadow: 0 0 6px var(--gold-glow) !important;
+}
+
+.user-dropdown .dropdown-item--nested:hover::before {
+  opacity: 1 !important;
+  transform: scaleY(1) !important;
+}
+
+/* Nested item icon - match regular icon exactly */
+.user-dropdown .dropdown-item--nested .dropdown-icon {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 0.95rem !important;
+  margin-right: 12px !important;
+  color: #F8C37D !important;
+  background: var(--gold-ultra) !important;
+  border: 1px solid rgba(248, 195, 125, 0.35) !important;
+  border-radius: 7px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  transition: color var(--transition), background var(--transition),
+              border-color var(--transition), box-shadow var(--transition) !important;
+}
+
+.user-dropdown .dropdown-item--nested:hover .dropdown-icon {
+  color: var(--gold-bright) !important;
+  background: var(--gold-glass) !important;
+  border-color: var(--gold-dim) !important;
+  box-shadow: 0 0 10px var(--gold-glow) !important;
+}
+
+/* Integration health icon - keep same gold as others */
+.user-dropdown a[href="/admin/integration-health"] .dropdown-icon {
+  color: #F8C37D !important;
+  border-color: rgba(248, 195, 125, 0.35) !important;
+}
+
+.user-dropdown a[href="/admin/integration-health"]:hover .dropdown-icon {
+  color: var(--gold-bright) !important;
+  background: var(--gold-glass) !important;
+  border-color: var(--gold-dim) !important;
+  box-shadow: 0 0 10px var(--gold-glow) !important;
+}
+
+/* Pipeline Monitor icon - keep same gold as others */
+.user-dropdown a[href="/admin/pipeline-health"] .dropdown-icon {
+  color: #F8C37D !important;
+  border-color: rgba(248, 195, 125, 0.35) !important;
+}
+
+.user-dropdown a[href="/admin/pipeline-health"]:hover .dropdown-icon {
+  color: var(--gold-bright) !important;
+  background: var(--gold-glass) !important;
+  border-color: var(--gold-dim) !important;
+  box-shadow: 0 0 10px var(--gold-glow) !important;
+}
+
+/* Animation - same staggered fade-in */
+.user-dropdown .dropdown-item--nested {
+  animation: fadeInItem 0.32s cubic-bezier(0.4, 0, 0.2, 1) both !important;
+}
+
+/* Mobile responsive - maintain same proportions */
+@media (max-width: 767px) {
+  .user-dropdown .dropdown-item--nested {
+    padding-left: 48px !important;
+    font-size: 0.72rem !important;
+    min-height: 52px !important;
+  }
+  
+  .user-dropdown .dropdown-item--nested:hover {
+    padding-left: 52px !important;
+  }
+  
+  .user-dropdown .dropdown-item--nested .dropdown-icon {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 1rem !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .user-dropdown .dropdown-item--nested {
+    padding-left: 42px !important;
+    font-size: 0.68rem !important;
+    min-height: 48px !important;
+  }
+  
+  .user-dropdown .dropdown-item--nested:hover {
+    padding-left: 46px !important;
+  }
+  
+  .user-dropdown .dropdown-item--nested .dropdown-icon {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 0.9rem !important;
+  }
+}
