@@ -1530,3 +1530,111 @@
 .journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--compact .tlab-textarea--exec {
   max-height: none !important;
 }
+/* =============================================================================
+   CENTER COLUMN STACK - Fundamental + Thesis moved from left rail
+   Clean vertical spacing for the new layout
+   ============================================================================= */
+
+.trader-lab-v2--workspace .tlab-center-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-gap, 14px);
+}
+
+/* Ensure fundamental backing and thesis block have proper spacing */
+.trader-lab-v2--workspace .tlab-center-stack .tlab-card--dock-fundamental,
+.trader-lab-v2--workspace .tlab-center-stack .tl-thesis-stack {
+  width: 100%;
+  margin: 0;
+}
+
+/* Risk & Geopolitical in left rail - ensure it flows naturally */
+.trader-lab-v2--workspace .trader-lab-v2__left .tlab-card--desk-context {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+/* Mobile stacking - preserve proper order */
+@media (max-width: 1399px) {
+  .trader-lab-v2--workspace .tlab-center-stack .tlab-card--dock-fundamental {
+    order: 0;
+  }
+  
+  .trader-lab-v2--workspace .tlab-center-stack .tl-thesis-stack {
+    order: 1;
+  }
+}
+/* =============================================================================
+   SCROLL FIX - Ensure page scrolls properly
+   ============================================================================= */
+
+/* Allow the main container to scroll */
+.trader-lab-v2.trader-lab-v2--workspace {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+/* Remove any fixed height constraints on rails */
+.trader-lab-v2--workspace .trader-lab-v2__left,
+.trader-lab-v2--workspace .trader-lab-v2__center,
+.trader-lab-v2--workspace .trader-lab-v2__right {
+  max-height: none !important;
+  height: auto !important;
+  overflow-y: visible !important;
+  overflow-x: hidden !important;
+}
+
+/* Fix for terminal desktop mode */
+@media (min-width: 1400px) {
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop {
+    overflow-y: auto !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+  
+  .trader-lab-v2--terminal-desktop .trader-lab-v2__left,
+  .trader-lab-v2--terminal-desktop .trader-lab-v2__center,
+  .trader-lab-v2--terminal-desktop .trader-lab-v2__right {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+}
+
+/* Ensure the parent containers also allow scroll */
+.journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace {
+  overflow-y: auto !important;
+  max-height: none !important;
+}
+
+/* Fix for textareas - allow them to be scrollable internally */
+.trader-lab-v2--workspace textarea {
+  max-height: 120px !important;
+  overflow-y: auto !important;
+}
+
+/* Ensure saved labs list can scroll if needed */
+.trader-lab-v2--workspace .tlab-saved-list {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+/* Ensure decoder log can scroll */
+.trader-lab-v2--workspace .tlab-decoder-log {
+  max-height: 150px !important;
+  overflow-y: auto !important;
+}
+
+/* Remove any fixed heights from cards */
+.trader-lab-v2--workspace .tlab-card {
+  max-height: none !important;
+  flex-shrink: 0;
+}
+
+/* Allow center stack to grow naturally */
+.trader-lab-v2--workspace .tlab-center-stack {
+  max-height: none !important;
+  overflow-y: visible !important;
+}

@@ -2746,3 +2746,64 @@
     grid-template-columns: 1fr;
   }
 }
+/* =============================================================================
+   SCROLL FIX - Allow Trader Lab terminal to scroll properly
+   ============================================================================= */
+
+/* Fix the terminal shell - remove overflow hidden and allow flex growth */
+.journal-page .trader-suite-panel.trader-suite-shell--terminal {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+}
+
+/* Keep the terminal bar fixed at top */
+.journal-page .trader-suite-terminal-bar {
+  flex-shrink: 0 !important;
+}
+
+/* Keep the stats bar fixed */
+.journal-page .trader-suite-terminal-stats {
+  flex-shrink: 0 !important;
+}
+
+/* Allow the Trader Lab content to scroll */
+.journal-page .trader-suite-panel.trader-suite-shell--terminal > .trader-lab-v2 {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+}
+
+/* Fix the page container that wraps the terminal */
+.journal-page .trader-suite-page:has(.trader-lab-v2) {
+  max-height: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow-y: visible !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+}
+
+/* Fix the Aura shell content */
+.journal-page .trade-validator-shell .aura-shell-content {
+  overflow-y: auto !important;
+  max-height: none !important;
+  height: auto !important;
+  flex: 1 1 auto !important;
+}
+
+/* Fix the journal page container */
+.journal-page .trade-validator-shell {
+  overflow-y: auto !important;
+  max-height: none !important;
+  min-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}

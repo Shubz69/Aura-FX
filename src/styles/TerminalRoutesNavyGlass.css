@@ -557,7 +557,6 @@
 }
 
 .journal-page .rp-page .rp-title {
-  background: linear-gradient(125deg, #ffffff 0%, #d2dcff 45%, #a8b8e8 88%) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
