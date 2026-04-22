@@ -685,16 +685,12 @@ export default function TraderLab() {
   );
 
   return (
-    <TraderSuiteShell
-      variant="terminal"
-      eyebrow={welcomeEyebrow}
-      terminalSubtitle="Focus. Execute. Profit."
-      terminalTitlePrefix={
-        <svg className="trader-suite-terminal-logo" width="22" height="22" viewBox="0 0 24 24" aria-hidden>
-          <path fill="currentColor" d="M12 2 22 20H2z" />
-        </svg>
-      }
-      title="AURA TERMINAL — TRADER LAB"
+<TraderSuiteShell
+  variant="terminal"
+  eyebrow={welcomeEyebrow}
+  terminalSubtitle="Focus. Execute. Profit."
+  terminalTitlePrefix={null}
+  title="AURA TERMINAL — TRADER LAB"
       description={null}
       stats={loading ? LOADING_TERMINAL_STATS : stats}
       primaryAction={

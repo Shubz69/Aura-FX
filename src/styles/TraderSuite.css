@@ -98,7 +98,16 @@
   font-weight: 700;
   letter-spacing: 0.03em;
 }
-
+.trader-suite-terminal-title,
+.trader-suite-terminal-title-text {
+  background: linear-gradient(135deg, var(--gold-bright, #F8C37D) 0%, var(--gold, #EAA960) 50%, var(--gold-warm, #D48D44) 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 20px rgba(234, 169, 96, 0.3) !important;
+}
 .journal-page .trader-suite-terminal-title-inner {
   display: inline-flex;
   align-items: center;
@@ -2806,4 +2815,207 @@
   min-height: 100vh !important;
   display: flex !important;
   flex-direction: column !important;
+}
+/* =============================================================================
+   PROFESSIONAL TEXTAREA STYLING - Clean, non-draggable, consistent
+   ============================================================================= */
+
+/* Base textarea reset - remove all unprofessional behaviors */
+.trader-lab-v2--workspace textarea,
+.trader-lab-v2--workspace .tlab-textarea,
+.journal-page .trader-lab-v2--workspace textarea,
+.journal-page .trader-lab-v2--workspace .tlab-textarea {
+  /* Remove resize handle and dragging */
+  resize: none !important;
+  
+  /* Prevent text dragging */
+  -webkit-user-drag: none !important;
+  user-select: text !important;
+  
+  /* Hide scrollbar until needed, then show clean overlay scrollbar */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--gold-soft, #EABB80) rgba(0, 0, 0, 0.2) !important;
+  
+  /* Consistent padding and spacing */
+  padding: 12px 14px !important;
+  line-height: 1.6 !important;
+  font-size: 0.8rem !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+  
+  /* Clean borders and background */
+  border: 1px solid rgba(234, 169, 96, 0.25) !important;
+  border-radius: 12px !important;
+  background: linear-gradient(165deg, rgba(8, 12, 28, 0.92), rgba(4, 8, 20, 0.96)) !important;
+  color: rgba(245, 248, 255, 0.95) !important;
+  
+  /* Smooth transitions */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+  
+  /* Remove default outline */
+  outline: none !important;
+  
+  /* Better text rendering */
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  
+  /* Prevent awkward stretching */
+  box-sizing: border-box !important;
+  max-width: 100% !important;
+}
+
+/* Webkit scrollbar styling */
+.trader-lab-v2--workspace textarea::-webkit-scrollbar,
+.trader-lab-v2--workspace .tlab-textarea::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.trader-lab-v2--workspace textarea::-webkit-scrollbar-track,
+.trader-lab-v2--workspace .tlab-textarea::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15) !important;
+  border-radius: 10px !important;
+  margin: 4px !important;
+}
+
+.trader-lab-v2--workspace textarea::-webkit-scrollbar-thumb,
+.trader-lab-v2--workspace .tlab-textarea::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--gold-soft, #EABB80), var(--gold, #EAA960)) !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(234, 169, 96, 0.3) !important;
+}
+
+.trader-lab-v2--workspace textarea::-webkit-scrollbar-thumb:hover,
+.trader-lab-v2--workspace .tlab-textarea::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--gold-bright, #F8C37D), var(--gold-warm, #D48D44)) !important;
+}
+
+/* Focus state - elegant gold glow */
+.trader-lab-v2--workspace textarea:focus,
+.trader-lab-v2--workspace .tlab-textarea:focus {
+  border-color: rgba(234, 169, 96, 0.6) !important;
+  box-shadow: 
+    0 0 0 3px rgba(234, 169, 96, 0.12),
+    inset 0 0 20px rgba(234, 169, 96, 0.06) !important;
+  background: linear-gradient(165deg, rgba(12, 18, 36, 0.95), rgba(6, 10, 24, 0.98)) !important;
+}
+
+/* Hover state */
+.trader-lab-v2--workspace textarea:hover:not(:focus),
+.trader-lab-v2--workspace .tlab-textarea:hover:not(:focus) {
+  border-color: rgba(234, 169, 96, 0.4) !important;
+  background: linear-gradient(165deg, rgba(10, 15, 32, 0.94), rgba(5, 9, 22, 0.97)) !important;
+}
+
+/* Placeholder styling */
+.trader-lab-v2--workspace textarea::placeholder,
+.trader-lab-v2--workspace .tlab-textarea::placeholder {
+  color: rgba(180, 190, 220, 0.4) !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.01em !important;
+  font-size: 0.78rem !important;
+}
+
+/* Disabled state */
+.trader-lab-v2--workspace textarea:disabled,
+.trader-lab-v2--workspace .tlab-textarea:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  border-color: rgba(140, 175, 255, 0.15) !important;
+}
+
+/* Specific textarea sizes - consistent heights */
+.trader-lab-v2--workspace .tlab-textarea--tight {
+  min-height: 52px !important;
+  max-height: 120px !important;
+}
+
+.trader-lab-v2--workspace .tlab-textarea--exec,
+.trader-lab-v2--workspace .tlab-textarea--dock {
+  min-height: 120px !important;
+  max-height: 200px !important;
+}
+
+.trader-lab-v2--workspace .tlab-textarea--dock-fundamental {
+  min-height: 100px !important;
+  max-height: 160px !important;
+}
+
+.trader-lab-v2--workspace .tl-textarea {
+  min-height: 52px !important;
+  max-height: 100px !important;
+}
+
+/* Thesis block textareas */
+.trader-lab-v2--workspace .tl-thesis-q .tl-textarea {
+  min-height: 65px !important;
+  max-height: 120px !important;
+}
+
+/* Geopolitical inline edit */
+.trader-lab-v2--workspace .tlab-textarea--geo-inline {
+  min-height: 56px !important;
+  max-height: 100px !important;
+}
+
+/* Key drivers textarea */
+.trader-lab-v2--workspace .tlab-card--key-drivers-rail textarea {
+  min-height: 110px !important;
+  max-height: 160px !important;
+}
+
+/* Session goal textarea */
+.trader-lab-v2--workspace #tlab-session-goal {
+  min-height: 75px !important;
+  max-height: 110px !important;
+}
+
+/* Journal page overrides - ensure same clean styling */
+.journal-page .trader-lab-v2--workspace textarea,
+.journal-page .trader-lab-v2--workspace .tlab-textarea {
+  resize: none !important;
+  -webkit-user-drag: none !important;
+  border: 1px solid rgba(234, 169, 96, 0.25) !important;
+  background: linear-gradient(165deg, rgba(8, 12, 28, 0.92), rgba(4, 8, 20, 0.96)) !important;
+}
+
+/* Remove any legacy resize handles */
+.journal-page .trader-suite-textarea {
+  resize: none !important;
+}
+
+/* Label styling to match professional look */
+.trader-lab-v2--workspace .tlab-field label,
+.trader-lab-v2--workspace .tlab-card__subnote {
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: rgba(234, 169, 96, 0.7) !important;
+  margin-bottom: 6px !important;
+  display: block !important;
+}
+
+/* Card title consistency */
+.trader-lab-v2--workspace .tlab-card__title {
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: rgba(234, 169, 96, 0.85) !important;
+  margin-bottom: 12px !important;
+  border-bottom: 1px solid rgba(234, 169, 96, 0.15) !important;
+  padding-bottom: 8px !important;
+}
+
+/* Hint text under titles */
+.trader-lab-v2--workspace .tlab-hint,
+.trader-lab-v2--workspace .tlab-card__subnote {
+  font-size: 0.62rem !important;
+  color: rgba(160, 175, 210, 0.5) !important;
+  text-transform: none !important;
+  letter-spacing: 0.03em !important;
+  margin-top: -8px !important;
+  margin-bottom: 10px !important;
 }

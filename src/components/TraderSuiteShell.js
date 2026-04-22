@@ -35,57 +35,59 @@ export default function TraderSuiteShell({
     return undefined;
   };
 
-  const terminalChrome = (
-    <section className="trader-suite-panel trader-suite-shell trader-suite-shell--terminal">
-      <div className="trader-suite-terminal-bar">
-        <div className="trader-suite-terminal-left">
-          {eyebrow || 'Aura Terminal'}
-          {terminalSubtitle ? (
-            <div className="trader-suite-terminal-subtitle">{terminalSubtitle}</div>
-          ) : null}
-        </div>
-        <div className="trader-suite-terminal-title">
-          {terminalTitlePrefix ? (
-            <span className="trader-suite-terminal-title-inner">
-              {terminalTitlePrefix}
-              <span className="trader-suite-terminal-title-text">{title}</span>
-            </span>
-          ) : (
-            title
-          )}
-        </div>
-        <div className="trader-suite-terminal-actions">
-          {primaryAction}
-          {secondaryActions}
-        </div>
+// In TraderSuiteShell.js, modify the terminalChrome section (around line 30-50)
+
+const terminalChrome = (
+  <section className="trader-suite-panel trader-suite-shell trader-suite-shell--terminal">
+    <div className="trader-suite-terminal-bar">
+      <div className="trader-suite-terminal-left">
+        {eyebrow || 'Aura Terminal'}
+        {terminalSubtitle ? (
+          <div className="trader-suite-terminal-subtitle">{terminalSubtitle}</div>
+        ) : null}
       </div>
-      {stats.length ? (
-        <div className="trader-suite-terminal-stats">
-          {stats.map((stat) => (
-            <div className="trader-suite-terminal-stat" key={stat.label}>
-              <span className="trader-suite-terminal-stat__label">
-                {stat.label}
-                {stat.metricId ? <MetricTooltip metricId={stat.metricId} /> : null}
-              </span>
-              <strong
-                className={
-                  stat.tone === 'gold'
-                    ? 'trader-suite-terminal-stat__value--gold'
-                    : stat.tone === 'green'
-                      ? 'trader-suite-terminal-stat__value--green'
-                      : undefined
-                }
-              >
-                {stat.value}
-              </strong>
-            </div>
-          ))}
-        </div>
-      ) : null}
-      {description ? <p className="trader-suite-terminal-description">{description}</p> : null}
-      {children}
-    </section>
-  );
+      <div className="trader-suite-terminal-title">
+        {terminalTitlePrefix ? (
+          <span className="trader-suite-terminal-title-inner">
+            {terminalTitlePrefix}
+            <span className="trader-suite-terminal-title-text">{title}</span>
+          </span>
+        ) : (
+          title
+        )}
+      </div>
+      <div className="trader-suite-terminal-actions">
+        {primaryAction}
+        {secondaryActions}
+      </div>
+    </div>
+    {stats.length ? (
+      <div className="trader-suite-terminal-stats">
+        {stats.map((stat) => (
+          <div className="trader-suite-terminal-stat" key={stat.label}>
+            <span className="trader-suite-terminal-stat__label">
+              {stat.label}
+              {stat.metricId ? <MetricTooltip metricId={stat.metricId} /> : null}
+            </span>
+            <strong
+              className={
+                stat.tone === 'gold'
+                  ? 'trader-suite-terminal-stat__value--gold'
+                  : stat.tone === 'green'
+                    ? 'trader-suite-terminal-stat__value--green'
+                    : undefined
+              }
+            >
+              {stat.value}
+            </strong>
+          </div>
+        ))}
+      </div>
+    ) : null}
+    {description ? <p className="trader-suite-terminal-description">{description}</p> : null}
+    {children}
+  </section>
+);
 
   /** Aura dashboard: same page chrome as Overview / Performance — no nested Trader Suite glass panel */
   const auraDashboardTerminal = (

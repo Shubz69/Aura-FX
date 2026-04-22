@@ -1565,76 +1565,295 @@
   }
 }
 /* =============================================================================
-   SCROLL FIX - Ensure page scrolls properly
+   ULTIMATE SCROLL FIX - Target the actual scroll jail
    ============================================================================= */
 
-/* Allow the main container to scroll */
-.trader-lab-v2.trader-lab-v2--workspace {
+/* 1. Force html/body to be the ONLY scrollable containers */
+html {
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  max-height: none !important;
+  height: 100% !important;
+}
+
+body {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   height: auto !important;
+  min-height: 100% !important;
+}
+
+/* 2. Kill overflow on all intermediate containers */
+.journal-page,
+.journal-layout,
+.journal-layout--terminal,
+.journal-terminal-body,
+#root,
+.aura-shell-content,
+.trader-suite-panel,
+.trader-suite-shell,
+.trader-suite-shell--terminal,
+.trader-lab-v2,
+.trader-lab-v2--workspace,
+.trader-lab-v2--terminal-desktop {
+  overflow: visible !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+  height: auto !important;
+  max-height: none !important;
   min-height: 0 !important;
 }
 
-/* Remove any fixed height constraints on rails */
+/* 3. Ensure flex containers don't restrict height */
+.journal-page,
+.journal-layout,
+.journal-terminal-body,
+.trader-suite-panel,
+.trader-suite-shell--terminal,
+.trader-lab-v2--workspace {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+}
+
+/* 4. Trader Lab specific - grid layout needs special handling */
+.trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop {
+  display: grid !important;
+  flex: 1 1 auto !important;
+  min-height: min-content !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* 5. Rails should not clip */
 .trader-lab-v2--workspace .trader-lab-v2__left,
 .trader-lab-v2--workspace .trader-lab-v2__center,
 .trader-lab-v2--workspace .trader-lab-v2__right {
-  max-height: none !important;
-  height: auto !important;
   overflow-y: visible !important;
-  overflow-x: hidden !important;
-}
-
-/* Fix for terminal desktop mode */
-@media (min-width: 1400px) {
-  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop {
-    overflow-y: auto !important;
-    max-height: none !important;
-    height: auto !important;
-  }
-  
-  .trader-lab-v2--terminal-desktop .trader-lab-v2__left,
-  .trader-lab-v2--terminal-desktop .trader-lab-v2__center,
-  .trader-lab-v2--terminal-desktop .trader-lab-v2__right {
-    max-height: none !important;
-    overflow-y: visible !important;
-  }
-}
-
-/* Ensure the parent containers also allow scroll */
-.journal-page .trade-validator-shell .trader-lab-v2.trader-lab-v2--workspace {
-  overflow-y: auto !important;
+  height: auto !important;
   max-height: none !important;
 }
 
-/* Fix for textareas - allow them to be scrollable internally */
-.trader-lab-v2--workspace textarea {
-  max-height: 120px !important;
-  overflow-y: auto !important;
+/* 6. Chart positioning - keep relative */
+.trader-lab-v2--workspace .tlab-chart-host--fill,
+.trader-lab-v2--workspace .tlab-chart-host--fill .trader-suite-chart-frame {
+  position: relative !important;
 }
 
-/* Ensure saved labs list can scroll if needed */
+/* 7. Internal scrollable elements only */
 .trader-lab-v2--workspace .tlab-saved-list {
-  max-height: 200px !important;
+  max-height: 250px !important;
   overflow-y: auto !important;
 }
 
-/* Ensure decoder log can scroll */
 .trader-lab-v2--workspace .tlab-decoder-log {
   max-height: 150px !important;
   overflow-y: auto !important;
 }
 
-/* Remove any fixed heights from cards */
-.trader-lab-v2--workspace .tlab-card {
-  max-height: none !important;
-  flex-shrink: 0;
+.trader-lab-v2--workspace textarea {
+  max-height: 120px !important;
+  overflow-y: auto !important;
+}
+/* =============================================================================
+   PROFESSIONAL SELECT STYLING - Modern, clean, theme-matched dropdowns
+   ============================================================================= */
+
+/* Base select reset and styling */
+.trader-lab-v2--workspace .tlab-select,
+.journal-page .trader-lab-v2--workspace .tlab-select {
+  /* Remove default appearance */
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  
+  /* Base styling */
+  width: 100% !important;
+  padding: 11px 36px 11px 14px !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+  line-height: 1.5 !important;
+  color: rgba(245, 248, 255, 0.95) !important;
+  
+  /* Background and border */
+  background: linear-gradient(165deg, rgba(8, 12, 28, 0.94), rgba(4, 8, 20, 0.98)) !important;
+  border: 1px solid rgba(234, 169, 96, 0.3) !important;
+  border-radius: 12px !important;
+  
+  /* Remove default outline */
+  outline: none !important;
+  
+  /* Cursor */
+  cursor: pointer !important;
+  
+  /* Smooth transitions */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  
+  /* Prevent text selection */
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  
+  /* Box sizing */
+  box-sizing: border-box !important;
+  
+  /* Custom dropdown arrow - gold chevron */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23EAA960' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 14px !important;
+  
+  /* Subtle inner shadow */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Allow center stack to grow naturally */
-.trader-lab-v2--workspace .tlab-center-stack {
-  max-height: none !important;
-  overflow-y: visible !important;
+/* Hover state */
+.trader-lab-v2--workspace .tlab-select:hover {
+  border-color: rgba(234, 169, 96, 0.5) !important;
+  background: linear-gradient(165deg, rgba(10, 15, 32, 0.96), rgba(6, 10, 24, 0.99)) !important;
+  box-shadow: 
+    inset 0 1px 3px rgba(0, 0, 0, 0.35),
+    0 2px 8px rgba(234, 169, 96, 0.08) !important;
+}
+
+/* Focus state */
+.trader-lab-v2--workspace .tlab-select:focus {
+  border-color: rgba(234, 169, 96, 0.7) !important;
+  box-shadow: 
+    0 0 0 3px rgba(234, 169, 96, 0.15),
+    inset 0 1px 3px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(234, 169, 96, 0.1) !important;
+  background: linear-gradient(165deg, rgba(12, 18, 36, 0.97), rgba(8, 12, 28, 0.99)) !important;
+}
+
+/* Disabled state */
+.trader-lab-v2--workspace .tlab-select:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  border-color: rgba(140, 175, 255, 0.2) !important;
+  background: rgba(8, 12, 28, 0.7) !important;
+  box-shadow: none !important;
+}
+
+/* Option styling (limited browser support, but helps) */
+.trader-lab-v2--workspace .tlab-select option {
+  background: rgba(8, 12, 28, 0.98) !important;
+  color: rgba(245, 248, 255, 0.95) !important;
+  padding: 12px 14px !important;
+  font-size: 0.82rem !important;
+  border: none !important;
+}
+
+/* Option hover state (works in some browsers) */
+.trader-lab-v2--workspace .tlab-select option:hover,
+.trader-lab-v2--workspace .tlab-select option:focus,
+.trader-lab-v2--workspace .tlab-select option:active,
+.trader-lab-v2--workspace .tlab-select option:checked {
+  background: linear-gradient(165deg, rgba(234, 169, 96, 0.25), rgba(234, 169, 96, 0.15)) !important;
+  color: #fff !important;
+}
+
+/* Label styling for selects */
+.trader-lab-v2--workspace .tlab-field label:has(+ .tlab-select),
+.trader-lab-v2--workspace label:has(+ .tlab-select) {
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: rgba(234, 169, 96, 0.7) !important;
+  margin-bottom: 6px !important;
+  display: block !important;
+}
+
+/* Select wrapper for better control */
+.trader-lab-v2--workspace .tlab-field {
+  position: relative !important;
+}
+
+/* Small select variant */
+.trader-lab-v2--workspace .tlab-select--small {
+  padding: 8px 30px 8px 12px !important;
+  font-size: 0.75rem !important;
+  background-size: 12px !important;
+  background-position: right 10px center !important;
+}
+
+/* Large select variant */
+.trader-lab-v2--workspace .tlab-select--large {
+  padding: 14px 40px 14px 16px !important;
+  font-size: 0.9rem !important;
+  background-size: 16px !important;
+  background-position: right 14px center !important;
+}
+
+/* Chart toolbar specific selects */
+.trader-lab-v2--workspace .tlab-chart-toolbar__primary .tlab-select {
+  min-width: 140px !important;
+  padding: 9px 32px 9px 12px !important;
+  font-size: 0.8rem !important;
+  background-size: 13px !important;
+}
+
+/* Field grid selects */
+.trader-lab-v2--workspace .tlab-field-grid .tlab-select {
+  padding: 10px 34px 10px 12px !important;
+}
+
+/* Journal page overrides */
+.journal-page .trader-lab-v2--workspace .tlab-select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23EAA960' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+}
+
+/* Dark theme specific enhancement */
+.trader-lab-v2--workspace .tlab-select {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Animation for dropdown open (visual feedback) */
+.trader-lab-v2--workspace .tlab-select:active {
+  transform: scale(0.99) !important;
+  transition: transform 0.1s ease !important;
+}
+
+/* Remove default IE arrow */
+.trader-lab-v2--workspace .tlab-select::-ms-expand {
+  display: none !important;
+}
+
+/* Select inside bias rail */
+.trader-lab-v2--workspace .tlab-card--bias-rail .tlab-select {
+  background: linear-gradient(165deg, rgba(10, 15, 35, 0.95), rgba(5, 9, 22, 0.98)) !important;
+  border-color: rgba(234, 169, 96, 0.35) !important;
+  font-weight: 600 !important;
+}
+
+/* Select inside plan builder */
+.trader-lab-v2--workspace .tlab-card--plan-rail .tlab-select {
+  padding: 10px 34px 10px 12px !important;
+  background: linear-gradient(165deg, rgba(6, 10, 24, 0.96), rgba(3, 6, 16, 0.99)) !important;
+}
+
+/* Error state (if needed) */
+.trader-lab-v2--workspace .tlab-select--error {
+  border-color: rgba(255, 126, 145, 0.5) !important;
+  box-shadow: 0 0 0 1px rgba(255, 126, 145, 0.2) !important;
+}
+
+.trader-lab-v2--workspace .tlab-select--error:focus {
+  border-color: rgba(255, 126, 145, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(255, 126, 145, 0.15) !important;
+}
+
+/* Success state */
+.trader-lab-v2--workspace .tlab-select--success {
+  border-color: rgba(100, 243, 176, 0.5) !important;
+}
+
+/* Select with icon prefix (if you add icons later) */
+.trader-lab-v2--workspace .tlab-select--with-icon {
+  padding-left: 42px !important;
+  background-position: right 12px center, left 12px center !important;
 }
