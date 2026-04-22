@@ -1,732 +1,762 @@
-/* ============================================================
-   ADMIN INBOX — AURA TERMINAL  |  Cosmic Fintech Messaging UI
-   ============================================================ */
+/* =============================================================================
+   ADMIN INBOX — Aura Terminal
+   Matches OperatorJournalGlass + OperatorTheme gold system exactly.
+   Import after AuraShared.css
+   ============================================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
 
-/* ── Variables (mirrors Home.css) ─────────────────────────── */
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
 :root {
-    --bg:           #0a0a0a;
-    --bg-card:      rgba(255,255,255,0.03);
-    --bg-card-h:    rgba(255,255,255,0.055);
-    --border:       rgba(255,255,255,0.08);
-    --border-h:     rgba(255,255,255,0.22);
-    --text:         #ffffff;
-    --text-muted:   rgba(255,255,255,0.55);
-    --accent:       rgba(234,169,96,0.55);
-    --accent-solid: #eaa960;
-    --accent-light: #f8c37d;
-    --accent-blue:  rgba(248,195,125,0.45);
-    --up:           #f8c37d;
-    --radius:       12px;
-    --transition:   0.28s cubic-bezier(0.4,0,0.2,1);
+  --bg:            #03020a;
+  --bg-card:       rgba(3, 2, 10, 0.72);
+  --bg-card-h:     rgba(5, 4, 18, 0.78);
+  --border:        rgba(234, 169, 96, 0.12);
+  --border-h:      rgba(234, 169, 96, 0.22);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --text:          rgba(255, 255, 255, 0.96);
+  --text-muted:    rgba(200, 198, 190, 0.78);
+  --text-dim:      rgba(255, 255, 255, 0.38);
+  --accent:        #eaa960;
+  --accent-light:  #f8c37d;
+  --accent-soft:   rgba(234, 169, 96, 0.12);
+  --accent-glow:   rgba(234, 169, 96, 0.22);
+  --up:            rgba(34, 197, 94, 0.9);
+  --radius:        12px;
+  --transition:    0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Page Wrapper ─────────────────────────────────────────── */
+/* ── Page Wrapper ───────────────────────────────────────────────────────── */
 .admin-inbox-page {
-    position: relative;
-    z-index: 1;
-    min-height: calc(100vh - 120px);
-    padding: calc(70px + env(safe-area-inset-top, 0px) + 28px) 20px 28px;
-    box-sizing: border-box;
-    font-family: 'Space Grotesk', sans-serif;
+  position: relative;
+  z-index: 1;
+  min-height: calc(100vh - 120px);
+  padding: calc(70px + env(safe-area-inset-top, 0px) + 28px) 20px 28px;
+  box-sizing: border-box;
+  font-family: 'DM Sans', sans-serif;
 }
 
-/* ── Layout ───────────────────────────────────────────────── */
+/* ── Layout ─────────────────────────────────────────────────────────────── */
 .admin-inbox-layout {
-    display: flex;
-    gap: 20px;
-    height: calc(100vh - 150px);
-    min-height: 480px;
-    max-width: 1400px;
-    margin: 0 auto;
+  display: flex;
+  gap: 14px;
+  height: calc(100vh - 150px);
+  min-height: 480px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ============================================================
+   SHARED GLASS CARD MIXIN
+   Both sidebar and main panel use this surface language.
+   ============================================================ */
+.admin-inbox-sidebar,
+.admin-inbox-main {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.48),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
+  backdrop-filter: blur(22px) saturate(1.06);
+  -webkit-backdrop-filter: blur(22px) saturate(1.06);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gold shimmer top line — identical to .aura-card::before */
+.admin-inbox-sidebar::before,
+.admin-inbox-main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(234, 169, 96, 0.5) 42%,
+    rgba(248, 195, 125, 0.35) 72%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.admin-inbox-sidebar:hover,
+.admin-inbox-main:hover {
+  border-color: var(--border-h);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
+    0 0 28px rgba(234, 169, 96, 0.07);
 }
 
 /* ============================================================
    SIDEBAR
    ============================================================ */
 .admin-inbox-sidebar {
-    width: 320px;
-    min-width: 290px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    background: rgba(10, 10, 18, 0.92);
-    border: 1px solid rgba(234,169,96,0.22);
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow:
-        0 8px 40px rgba(0,0,0,0.55),
-        inset 0 1px 0 rgba(255,255,255,0.04);
-    backdrop-filter: blur(20px);
-    position: relative;
+  width: 300px;
+  min-width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Top shimmer accent line */
-.admin-inbox-sidebar::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(234,169,96,0.8), rgba(248,195,125,0.5), transparent);
-    z-index: 2;
-}
-
-/* ── Tabs (Admin | Friends) ───────────────────────────────── */
+/* ── Tabs ───────────────────────────────────────────────────────────────── */
 .admin-inbox-tabs {
-    display: flex;
-    gap: 0;
-    padding: 16px 22px 0;
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 12px;
+  display: flex;
+  padding: 16px 18px 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  margin-bottom: 14px;
+  gap: 2px;
 }
 
 .admin-inbox-tab {
-    padding: 10px 18px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    transition: color var(--transition), border-color var(--transition);
-    font-family: inherit;
+  padding: 9px 16px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: color var(--transition), border-color var(--transition);
+  margin-bottom: -1px;
 }
 
 .admin-inbox-tab:hover {
-    color: var(--text);
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .admin-inbox-tab.active {
-    color: var(--accent-light);
-    border-bottom-color: var(--accent-solid);
+  color: #fff;
+  font-weight: 600;
+  border-bottom-color: var(--accent);
 }
 
-/* ── Sidebar Header ───────────────────────────────────────── */
+/* ── Sidebar Header ─────────────────────────────────────────────────────── */
 .admin-inbox-sidebar-header {
-    padding: 0 22px 0;
-    flex-shrink: 0;
+  padding: 0 18px 4px;
+  flex-shrink: 0;
 }
 
 .admin-inbox-sidebar-title {
-    font-size: 0.72rem;
-    font-weight: 500;
-    color: var(--text-muted);
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    display: block;
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: rgba(255, 245, 235, 0.48);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
 }
 
 .admin-inbox-sidebar-count {
-    font-size: 2rem;
-    font-weight: 200;
-    color: var(--text);
-    letter-spacing: -0.01em;
-    line-height: 1;
-    background: linear-gradient(125deg, #ffffff 30%, #fcd9a8 70%, #e8c992 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 0 16px rgba(234,169,96,0.4));
-    margin-bottom: 16px;
-    display: block;
+  display: block;
+  font-size: 1.9rem;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  background: linear-gradient(125deg, #ffffff 35%, #f8c37d 72%, #eaa960 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 14px;
 }
 
-/* ── Sidebar Search ───────────────────────────────────────── */
+/* ── Search ─────────────────────────────────────────────────────────────── */
 .admin-inbox-sidebar-search {
-    padding: 0 22px 16px;
-    flex-shrink: 0;
-    position: relative;
+  padding: 0 18px 14px;
+  flex-shrink: 0;
+  position: relative;
 }
 
 .admin-inbox-search-icon {
-    position: absolute;
-    left: 36px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: rgba(255,255,255,0.35);
-    font-size: 13px;
-    pointer-events: none;
+  position: absolute;
+  left: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  font-size: 12px;
+  pointer-events: none;
 }
 
 .admin-inbox-sidebar-search input {
-    width: 100%;
-    padding: 11px 14px 11px 38px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.04);
-    color: var(--text);
-    font-size: 0.88rem;
-    font-family: 'Space Grotesk', sans-serif;
-    letter-spacing: 0.04em;
-    box-sizing: border-box;
-    transition: border-color var(--transition), background var(--transition);
-    outline: none;
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  box-sizing: border-box;
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+  outline: none;
 }
 
 .admin-inbox-sidebar-search input:focus {
-    border-color: rgba(234,169,96,0.5);
-    background: rgba(234,169,96,0.06);
-    box-shadow: 0 0 0 3px rgba(234,169,96,0.1);
+  border-color: rgba(234, 169, 96, 0.45);
+  background: rgba(234, 169, 96, 0.05);
+  box-shadow: 0 0 0 3px rgba(234, 169, 96, 0.1);
 }
 
 .admin-inbox-sidebar-search input::placeholder {
-    color: rgba(255,255,255,0.3);
-    letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.04em;
 }
 
-/* ── Divider ──────────────────────────────────────────────── */
+/* ── Divider ────────────────────────────────────────────────────────────── */
 .admin-inbox-sidebar-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
-    margin: 0 16px;
-    flex-shrink: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  margin: 0 14px;
+  flex-shrink: 0;
 }
 
-/* ── User List (scrollable) ───────────────────────────────── */
+/* ── User List ──────────────────────────────────────────────────────────── */
 .admin-inbox-user-list {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    min-height: 0;
-    -webkit-overflow-scrolling: touch;
-    padding: 8px 0;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 0;
 }
 
-.admin-inbox-user-list::-webkit-scrollbar { width: 4px; }
+.admin-inbox-user-list::-webkit-scrollbar { width: 3px; }
 .admin-inbox-user-list::-webkit-scrollbar-track { background: transparent; }
 .admin-inbox-user-list::-webkit-scrollbar-thumb {
-    background: rgba(234,169,96,0.35);
-    border-radius: 4px;
+  background: rgba(234, 169, 96, 0.28);
+  border-radius: 3px;
 }
 .admin-inbox-user-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(234,169,96,0.6);
+  background: rgba(234, 169, 96, 0.5);
 }
 
-/* ── User List Item ───────────────────────────────────────── */
+/* ── User Item ──────────────────────────────────────────────────────────── */
 .admin-inbox-user-item {
-    display: block;
-    width: 100%;
-    padding: 14px 22px;
-    border: none;
-    background: transparent;
-    color: var(--text);
-    text-align: left;
-    cursor: pointer;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.9rem;
-    box-sizing: border-box;
-    position: relative;
-    transition: background var(--transition);
+  display: block;
+  width: 100%;
+  padding: 11px 18px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.875rem;
+  box-sizing: border-box;
+  position: relative;
+  transition: background var(--transition);
 }
 
+/* Left accent bar */
 .admin-inbox-user-item::after {
-    content: '';
-    position: absolute;
-    left: 0; top: 15%; bottom: 15%;
-    width: 2px;
-    background: linear-gradient(180deg, rgba(234,169,96,0), rgba(234,169,96,0.9) 50%, rgba(248,195,125,0.6));
-    border-radius: 2px;
-    opacity: 0;
-    transition: opacity var(--transition);
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18%;
+  bottom: 18%;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(234, 169, 96, 0.9) 50%,
+    rgba(248, 195, 125, 0.55)
+  );
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity var(--transition);
 }
 
 .admin-inbox-user-item:hover {
-    background: rgba(234,169,96,0.08);
+  background: rgba(234, 169, 96, 0.06);
 }
 
 .admin-inbox-user-item.selected {
-    background: rgba(234,169,96,0.14);
+  background: rgba(234, 169, 96, 0.1);
 }
 
 .admin-inbox-user-item.selected::after {
-    opacity: 1;
+  opacity: 1;
 }
 
 .admin-inbox-user-item:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* Avatar + content row */
 .admin-inbox-user-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
 }
 
 .admin-inbox-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, rgba(234,169,96,0.4), rgba(248,195,125,0.3));
-    border: 1px solid rgba(234,169,96,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #fff;
-    flex-shrink: 0;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(234, 169, 96, 0.1);
+  border: 1px solid rgba(234, 169, 96, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent-light);
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.admin-inbox-user-info { flex: 1; min-width: 0; }
+.admin-inbox-user-info {
+  flex: 1;
+  min-width: 0;
+}
 
 .admin-inbox-user-name {
-    font-weight: 500;
-    font-size: 0.88rem;
-    letter-spacing: 0.06em;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 3px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .unread-badge {
-    background: linear-gradient(135deg, #b47830, #f8c37d);
-    color: #fff;
-    font-size: 0.65rem;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    flex-shrink: 0;
-    box-shadow: 0 0 10px rgba(234,169,96,0.35);
+  background: linear-gradient(135deg, rgba(234, 169, 96, 0.85), rgba(248, 195, 125, 0.75));
+  color: #0a0704;
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  border-radius: 99px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
 }
 
 .admin-inbox-user-meta {
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.38);
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-size: 0.72rem;
+  color: rgba(255, 245, 235, 0.42);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 400;
 }
 
-/* ── Empty / Loading states ───────────────────────────────── */
+/* ── Empty / Loading ────────────────────────────────────────────────────── */
 .admin-inbox-empty-list,
 .admin-inbox-loading {
-    padding: 28px 22px;
-    color: rgba(255,255,255,0.45);
-    font-size: 0.85rem;
-    letter-spacing: 0.06em;
-    line-height: 1.7;
-    font-weight: 300;
+  padding: 24px 18px;
+  color: rgba(255, 245, 235, 0.38);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+  font-weight: 300;
 }
 
 /* ============================================================
    MAIN CONVERSATION PANEL
    ============================================================ */
 .admin-inbox-main {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    background: rgba(10, 10, 18, 0.92);
-    border: 1px solid rgba(234,169,96,0.22);
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow:
-        0 8px 40px rgba(0,0,0,0.55),
-        inset 0 1px 0 rgba(255,255,255,0.04);
-    backdrop-filter: blur(20px);
-    position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.admin-inbox-main::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(248,195,125,0.5), rgba(234,169,96,0.8), transparent);
-    z-index: 2;
-}
-
-/* ── Conversation Header ──────────────────────────────────── */
+/* ── Conversation Header ────────────────────────────────────────────────── */
 .admin-inbox-main-header {
-    padding: 18px 24px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: rgba(255,255,255,0.015);
-    position: relative;
-    z-index: 1;
+  padding: 16px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  background: rgba(255, 255, 255, 0.015);
+  position: relative;
+  z-index: 1;
 }
 
 .admin-inbox-main-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 11px;
-    background: linear-gradient(135deg, rgba(234,169,96,0.45), rgba(248,195,125,0.35));
-    border: 1px solid rgba(234,169,96,0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #fff;
-    flex-shrink: 0;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(234, 169, 96, 0.1);
+  border: 1px solid rgba(234, 169, 96, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-light);
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.admin-inbox-main-title-wrap { flex: 1; min-width: 0; }
+.admin-inbox-main-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
 
 .admin-inbox-main-title {
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--text);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-inbox-main-subtitle {
-    font-size: 0.72rem;
-    color: rgba(255,255,255,0.35);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    margin-top: 2px;
-    display: block;
+  font-size: 0.68rem;
+  color: rgba(255, 245, 235, 0.38);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 2px;
+  display: block;
+  font-weight: 400;
 }
 
-/* Online dot */
+/* Online status dot */
 .admin-inbox-status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--up);
-    box-shadow: 0 0 8px rgba(16,185,129,0.7);
-    animation: statusPulse 2.5s ease-in-out infinite;
-    flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.9);
+  box-shadow: 0 0 7px rgba(34, 197, 94, 0.55);
+  flex-shrink: 0;
+  animation: statusPulse 2.5s ease-in-out infinite;
 }
 
 @keyframes statusPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
 }
 
-/* ── Messages Wrap ────────────────────────────────────────── */
+/* ── Messages Area ──────────────────────────────────────────────────────── */
 .admin-inbox-messages-wrap {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-    padding: 24px 24px 16px;
-    -webkit-overflow-scrolling: touch;
-    background:
-        radial-gradient(ellipse at 20% 80%, rgba(234,169,96,0.04) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(248,195,125,0.03) 0%, transparent 50%);
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 22px 22px 14px;
+  -webkit-overflow-scrolling: touch;
+  background:
+    radial-gradient(ellipse at 18% 82%, rgba(234, 169, 96, 0.03) 0%, transparent 48%),
+    radial-gradient(ellipse at 82% 18%, rgba(248, 195, 125, 0.02) 0%, transparent 48%);
 }
 
-.admin-inbox-messages-wrap::-webkit-scrollbar { width: 4px; }
+.admin-inbox-messages-wrap::-webkit-scrollbar { width: 3px; }
 .admin-inbox-messages-wrap::-webkit-scrollbar-track { background: transparent; }
 .admin-inbox-messages-wrap::-webkit-scrollbar-thumb {
-    background: rgba(234,169,96,0.3);
-    border-radius: 4px;
+  background: rgba(234, 169, 96, 0.25);
+  border-radius: 3px;
 }
 
-/* ── Date Divider ─────────────────────────────────────────── */
+/* ── Date Divider ───────────────────────────────────────────────────────── */
 .admin-inbox-date-divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 16px 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 18px;
 }
 
 .admin-inbox-date-divider span {
-    font-size: 0.7rem;
-    color: rgba(255,255,255,0.3);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    font-weight: 400;
-    white-space: nowrap;
+  font-size: 0.65rem;
+  color: rgba(255, 245, 235, 0.3);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 400;
+  white-space: nowrap;
 }
 
 .admin-inbox-date-divider::before,
 .admin-inbox-date-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06));
+  content: '';
+  flex: 1;
+  height: 1px;
+}
+
+.admin-inbox-date-divider::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05));
 }
 
 .admin-inbox-date-divider::after {
-    background: linear-gradient(90deg, rgba(255,255,255,0.06), transparent);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), transparent);
 }
 
-/* ── Message Rows ─────────────────────────────────────────── */
+/* ── Message Rows ───────────────────────────────────────────────────────── */
 .admin-inbox-message-row {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 10px;
-    animation: msgIn 0.28s cubic-bezier(0.4,0,0.2,1) both;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+  animation: msgIn 0.22s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 .admin-inbox-message-row.other {
-    justify-content: flex-start;
+  justify-content: flex-start;
 }
 
 @keyframes msgIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Bubbles ──────────────────────────────────────────────── */
+/* ── Bubbles ────────────────────────────────────────────────────────────── */
 .admin-inbox-message-bubble {
-    max-width: 72%;
-    padding: 13px 16px;
-    border-radius: 14px;
-    font-size: 0.9rem;
-    line-height: 1.55;
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 300;
-    position: relative;
+  max-width: 68%;
+  padding: 11px 15px;
+  border-radius: 13px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  position: relative;
 }
 
-/* Own (admin) bubble — purple tinted */
+/* Admin / own bubble — gold glass */
 .admin-inbox-message-row.own .admin-inbox-message-bubble {
-    background: linear-gradient(135deg, rgba(234,169,96,0.3) 0%, rgba(248,195,125,0.18) 100%);
-    border: 1px solid rgba(234,169,96,0.35);
-    border-bottom-right-radius: 4px;
-    color: #fff;
-    box-shadow:
-        0 4px 16px rgba(0,0,0,0.3),
-        inset 0 1px 0 rgba(255,255,255,0.07);
+  background: rgba(234, 169, 96, 0.12);
+  border: 1px solid rgba(234, 169, 96, 0.28);
+  border-bottom-right-radius: 3px;
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* Other (user) bubble — subtle glass */
+/* User bubble — subtle glass */
 .admin-inbox-message-row.other .admin-inbox-message-bubble {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-bottom-left-radius: 4px;
-    color: rgba(255,255,255,0.88);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom-left-radius: 3px;
+  color: rgba(200, 198, 190, 0.88);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
 }
 
 .admin-inbox-message-text {
-    word-break: break-word;
+  word-break: break-word;
 }
 
 .admin-inbox-message-time {
-    font-size: 0.68rem;
-    color: rgba(255,255,255,0.38);
-    margin-top: 5px;
-    text-align: right;
-    letter-spacing: 0.06em;
+  font-size: 0.65rem;
+  color: rgba(255, 245, 235, 0.3);
+  margin-top: 5px;
+  text-align: right;
+  letter-spacing: 0.05em;
+  font-weight: 400;
 }
 
-/* Sending indicator */
+/* Sending state */
 .admin-inbox-message-row.own .admin-inbox-message-bubble[data-status="sending"] {
-    opacity: 0.65;
+  opacity: 0.6;
 }
 
-/* ── Empty conversation state ─────────────────────────────── */
+/* ── Empty Conversation ─────────────────────────────────────────────────── */
 .admin-inbox-conversation-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    gap: 16px;
-    color: rgba(255,255,255,0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 14px;
+  color: rgba(255, 245, 235, 0.25);
 }
 
 .admin-inbox-conversation-empty-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 18px;
-    background: rgba(234,169,96,0.08);
-    border: 1px solid rgba(234,169,96,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.6rem;
-    color: rgba(234,169,96,0.5);
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(234, 169, 96, 0.07);
+  border: 1px solid rgba(234, 169, 96, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: rgba(234, 169, 96, 0.45);
 }
 
 .admin-inbox-conversation-empty p {
-    font-size: 0.82rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    font-weight: 400;
-    margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 400;
+  margin: 0;
 }
 
-/* ── Input Form ───────────────────────────────────────────── */
+/* ── Input Form ─────────────────────────────────────────────────────────── */
 .admin-inbox-form-wrap {
-    padding: 16px 20px 20px;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    flex-shrink: 0;
-    background: rgba(255,255,255,0.015);
-    position: relative;
-    z-index: 1;
+  padding: 14px 18px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.01);
+  position: relative;
+  z-index: 1;
 }
 
 .admin-inbox-form-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 14px;
-    padding: 6px 6px 6px 14px;
-    transition: border-color var(--transition), box-shadow var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 11px;
+  padding: 5px 5px 5px 14px;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
 }
 
 .admin-inbox-form-row:focus-within {
-    border-color: rgba(234,169,96,0.45);
-    box-shadow: 0 0 0 3px rgba(234,169,96,0.1);
-    background: rgba(234,169,96,0.04);
+  border-color: rgba(234, 169, 96, 0.38);
+  box-shadow: 0 0 0 3px rgba(234, 169, 96, 0.08);
+  background: rgba(234, 169, 96, 0.03);
 }
 
 .admin-inbox-form-row input[type="text"] {
-    flex: 1;
-    padding: 10px 0;
-    border: none;
-    background: transparent;
-    color: var(--text);
-    font-size: 0.9rem;
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 300;
-    letter-spacing: 0.04em;
-    outline: none;
-    min-width: 0;
+  flex: 1;
+  padding: 9px 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  outline: none;
+  min-width: 0;
 }
 
 .admin-inbox-form-row input[type="text"]::placeholder {
-    color: rgba(255,255,255,0.25);
-    letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.22);
 }
 
 /* Attach button */
 .admin-inbox-attach-btn {
-    background: transparent !important;
-    border: none !important;
-    color: rgba(255,255,255,0.4) !important;
-    padding: 8px !important;
-    border-radius: 9px !important;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color var(--transition), background var(--transition);
-    flex-shrink: 0;
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.32) !important;
+  padding: 7px !important;
+  border-radius: 8px !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition), background var(--transition);
+  flex-shrink: 0;
 }
 
 .admin-inbox-attach-btn:hover:not(:disabled) {
-    color: rgba(255,255,255,0.75) !important;
-    background: rgba(255,255,255,0.07) !important;
+  color: rgba(255, 255, 255, 0.65) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
 }
 
-.admin-inbox-attach-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.admin-inbox-attach-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
 
-/* Send button */
+/* Send button — matches .acc-btn--primary */
 .admin-inbox-send-btn {
-    padding: 10px 18px !important;
-    border-radius: 10px !important;
-    border: none !important;
-    background: linear-gradient(135deg, rgba(234,169,96,0.85), rgba(248,195,125,0.7)) !important;
-    color: #fff !important;
-    font-weight: 500 !important;
-    font-family: 'Space Grotesk', sans-serif !important;
-    cursor: pointer;
-    flex-shrink: 0;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 8px !important;
-    font-size: 0.8rem !important;
-    letter-spacing: 0.12em !important;
-    text-transform: uppercase !important;
-    box-shadow: 0 0 20px rgba(234,169,96,0.3) !important;
-    transition: all var(--transition) !important;
-    position: relative;
-    overflow: hidden;
-}
-
-.admin-inbox-send-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%);
-    opacity: 0;
-    transition: opacity var(--transition);
+  padding: 9px 18px !important;
+  border-radius: 9px !important;
+  border: none !important;
+  background: linear-gradient(135deg, #f8c37d 0%, #eaa960 45%, #d48d44 100%) !important;
+  color: #0a0704 !important;
+  font-weight: 600 !important;
+  font-family: 'DM Sans', sans-serif !important;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 4px 20px rgba(234, 169, 96, 0.32) !important;
+  transition: box-shadow var(--transition), transform var(--transition) !important;
+  position: relative;
+  overflow: hidden;
 }
 
 .admin-inbox-send-btn:hover:not(:disabled) {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 0 32px rgba(234,169,96,0.55), 0 6px 18px rgba(0,0,0,0.4) !important;
+  box-shadow: 0 6px 26px rgba(234, 169, 96, 0.42) !important;
+  transform: translateY(-1px) !important;
 }
-
-.admin-inbox-send-btn:hover:not(:disabled)::before { opacity: 1; }
 
 .admin-inbox-send-btn:disabled {
-    opacity: 0.35 !important;
-    cursor: not-allowed !important;
-    box-shadow: none !important;
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
 }
 
-/* ── File attached indicator ──────────────────────────────── */
+/* ── File chip ──────────────────────────────────────────────────────────── */
 .admin-inbox-file-chip {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px 4px 8px;
-    background: rgba(234,169,96,0.15);
-    border: 1px solid rgba(234,169,96,0.3);
-    border-radius: 8px;
-    font-size: 0.75rem;
-    color: var(--accent-light);
-    letter-spacing: 0.06em;
-    max-width: 160px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 7px;
+  background: rgba(234, 169, 96, 0.1);
+  border: 1px solid rgba(234, 169, 96, 0.26);
+  border-radius: 7px;
+  font-size: 0.72rem;
+  color: var(--accent-light);
+  letter-spacing: 0.04em;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 
 /* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 900px) {
-    .admin-inbox-layout {
-        flex-direction: column;
-        height: auto;
-        min-height: 70vh;
-    }
+  .admin-inbox-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: 70vh;
+  }
 
-    .admin-inbox-sidebar {
-        width: 100%;
-        min-width: 0;
-        max-height: 38vh;
-    }
+  .admin-inbox-sidebar {
+    width: 100%;
+    min-width: 0;
+    max-height: 38vh;
+  }
 
-    .admin-inbox-main {
-        min-height: 420px;
-    }
+  .admin-inbox-main {
+    min-height: 420px;
+  }
 }
 
 @media (max-width: 480px) {
-    .admin-inbox-page {
-        padding: calc(68px + env(safe-area-inset-top, 0px) + 16px) 12px 16px;
-    }
+  .admin-inbox-page {
+    padding: calc(68px + env(safe-area-inset-top, 0px) + 16px) 12px 16px;
+  }
 
-    .admin-inbox-message-bubble { max-width: 88%; }
+  .admin-inbox-message-bubble {
+    max-width: 86%;
+  }
 
-    .admin-inbox-send-btn span { display: none; }
+  .admin-inbox-send-btn span {
+    display: none;
+  }
 }
