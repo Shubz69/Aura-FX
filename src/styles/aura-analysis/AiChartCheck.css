@@ -975,3 +975,88 @@ select.acc-input:focus {
   line-height: 1.5;
   font-size: 0.86rem;
 }
+/* =============================================================================
+   AI CHART CHECK - Force Vertical Alignment Fix
+   ============================================================================= */
+
+/* Target the specific page and layout with higher specificity */
+.acc-page .acc-layout {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 20px !important;
+  align-items: flex-start !important;
+}
+
+/* Force both cards to start at the exact same position */
+.acc-page .acc-layout .acc-upload-card,
+.acc-page .acc-layout .acc-config-card {
+  margin-top: 0 !important;
+  padding-top: 22px !important;
+  position: relative !important;
+  top: 0 !important;
+}
+
+/* Reset any inherited margins that could push content down */
+.acc-page .acc-layout .acc-config-card *:first-child {
+  margin-top: 0 !important;
+}
+
+/* Target the field label specifically */
+.acc-page .acc-layout .acc-config-card .acc-field-group:first-of-type {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.acc-page .acc-layout .acc-config-card .acc-field-group:first-of-type .acc-field-label {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  line-height: 1.4 !important;
+}
+
+/* Match the upload card header spacing */
+.acc-page .acc-layout .acc-upload-card .acc-upload-card-head {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  margin-bottom: 14px !important;
+}
+
+/* Ensure the type pills container has no top margin */
+.acc-page .acc-layout .acc-config-card .acc-type-pills {
+  margin-top: 0 !important;
+}
+
+/* Make the first pill have no extra top spacing */
+.acc-page .acc-layout .acc-config-card .acc-type-pill:first-child {
+  margin-top: 0 !important;
+}
+
+/* Override any browser default margins on headings */
+.acc-page .acc-layout .acc-card-title,
+.acc-page .acc-layout .acc-field-label {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* If there's still a gap, check if it's the card padding itself */
+.acc-page .acc-layout .acc-card {
+  box-sizing: border-box !important;
+}
+
+/* Emergency override - use transform if margins won't cooperate */
+@media (min-width: 701px) {
+  .acc-page .acc-layout {
+    position: relative !important;
+  }
+  
+  /* Only apply if the config card is visually lower */
+  .acc-page .acc-layout .acc-config-card {
+    transform: translateY(0) !important;
+  }
+  
+  /* Match the exact visual start line */
+  .acc-page .acc-layout .acc-upload-card-head,
+  .acc-page .acc-layout .acc-config-card .acc-field-group:first-of-type .acc-field-label {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+}

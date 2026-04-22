@@ -95,6 +95,7 @@ const NotificationSystem = ({ user, onNotificationClick }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const notificationRef = useRef(null);
+    
 
     useEffect(() => {
         const savedNotifications = localStorage.getItem(`notifications_${user?.id}`);
