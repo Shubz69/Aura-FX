@@ -1857,3 +1857,191 @@ body {
   padding-left: 42px !important;
   background-position: right 12px center, left 12px center !important;
 }
+/* =============================================================================
+   TRADINGVIEW CHART WIDGET - Perfect Fit & Clean Alignment
+   ============================================================================= */
+
+/* Chart host container - ensure proper sizing */
+.trader-lab-v2--workspace .tlab-chart-host--fill {
+  position: relative !important;
+  width: 100% !important;
+  min-height: var(--tl-chart-slot, 580px) !important;
+  height: auto !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(234, 169, 96, 0.25) !important;
+  background: rgba(4, 8, 22, 0.98) !important;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  isolation: isolate !important;
+}
+
+/* TradingView wrapper - force full containment */
+.trader-lab-v2--workspace .tlab-chart-host--fill .trader-suite-chart-frame,
+.trader-lab-v2--workspace .tlab-chart-host--fill [class*="tradingview"],
+.trader-lab-v2--workspace .tlab-chart-host--fill [id*="tradingview"] {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: inherit !important;
+  overflow: hidden !important;
+}
+
+/* TradingView iframe - perfect fit */
+.trader-lab-v2--workspace .tlab-chart-host--fill iframe {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  border: none !important;
+  border-radius: inherit !important;
+  display: block !important;
+}
+
+/* TradingView widget container */
+.trader-lab-v2--workspace .tlab-chart-host--fill .tv-chart-view,
+.trader-lab-v2--workspace .tlab-chart-host--fill .chart-container,
+.trader-lab-v2--workspace .tlab-chart-host--fill [data-role="chart"] {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+}
+
+/* Fix TradingView internal layout */
+.trader-lab-v2--workspace .tlab-chart-host--fill .layout__area--top,
+.trader-lab-v2--workspace .tlab-chart-host--fill .layout__area--left,
+.trader-lab-v2--workspace .tlab-chart-host--fill .layout__area--right,
+.trader-lab-v2--workspace .tlab-chart-host--fill .layout__area--bottom {
+  background: transparent !important;
+}
+
+/* Chart container inner elements */
+.trader-lab-v2--workspace .tlab-chart-host--fill > div {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+}
+
+/* Ensure chart canvas fills space */
+.trader-lab-v2--workspace .tlab-chart-host--fill canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+/* Journal page specific overrides */
+.journal-page .trader-lab-v2--workspace .tlab-chart-host--fill,
+.journal-page .trader-lab-v2--workspace .tlab-chart-host--fill .trader-suite-chart-frame {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: var(--tl-chart-slot, 580px) !important;
+  overflow: hidden !important;
+}
+
+.journal-page .trader-lab-v2--workspace .tlab-chart-host--fill iframe {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+}
+
+/* Desktop specific chart sizing */
+@media (min-width: 1400px) {
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-center-main .tlab-chart-host--fill {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+    aspect-ratio: unset !important;
+    height: auto !important;
+    min-height: var(--tl-chart-slot, 580px) !important;
+    max-height: none !important;
+  }
+  
+  .trader-lab-v2.trader-lab-v2--workspace.trader-lab-v2--terminal-desktop .tlab-chart-host--fill .trader-suite-chart-frame {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+/* Mobile chart sizing */
+.trader-lab-v2--workspace:not(.trader-lab-v2--terminal-desktop) .tlab-chart-host--fill {
+  height: clamp(480px, 58vh, 720px) !important;
+  min-height: clamp(480px, 58vh, 720px) !important;
+}
+
+/* Remove any white borders or gaps */
+.trader-lab-v2--workspace .tlab-chart-host--fill * {
+  box-sizing: border-box !important;
+}
+
+/* Fix TradingView toolbar positioning */
+.trader-lab-v2--workspace .tlab-chart-host--fill .chart-controls-bar,
+.trader-lab-v2--workspace .tlab-chart-host--fill .chart-toolbar {
+  position: absolute !important;
+  z-index: 5 !important;
+}
+
+/* Ensure chart background matches theme */
+.trader-lab-v2--workspace .tlab-chart-host--fill {
+  background: #0a0e1a !important;
+}
+
+/* Loading state styling */
+.trader-lab-v2--workspace .tlab-chart-host--fill .loading-indicator,
+.trader-lab-v2--workspace .tlab-chart-host--fill [data-loading="true"] {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: rgba(234, 169, 96, 0.7) !important;
+  font-size: 0.9rem !important;
+  z-index: 10 !important;
+}
+
+/* Fix for TradingView watermarks and overlays */
+.trader-lab-v2--workspace .tlab-chart-host--fill .tv-chart-view__watermark,
+.trader-lab-v2--workspace .tlab-chart-host--fill .js-control-bar,
+.trader-lab-v2--workspace .tlab-chart-host--fill .pane-legend {
+  z-index: 2 !important;
+}
+
+/* Ensure the chart card has proper padding for the chart */
+.trader-lab-v2--workspace .tlab-card--focal {
+  padding: 14px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.trader-lab-v2--workspace .tlab-card--focal .tlab-chart-host--fill {
+  margin-top: 8px !important;
+  flex: 1 1 auto !important;
+}
+
+/* Fix any overflow issues with the chart toolbar */
+.trader-lab-v2--workspace .tlab-chart-toolbar--terminal {
+  flex-shrink: 0 !important;
+  margin-bottom: 8px !important;
+}
