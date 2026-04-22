@@ -433,3 +433,87 @@
 .rlah-page::-webkit-scrollbar-thumb:hover {
   background: rgba(234, 169, 96, 0.45);
 }
+/* =============================================================================
+   OVERRIDE NAVY STYLES FROM AuraTerminalNav.css
+   Force gold Operator theme on Reports Live Analytics Hub
+   ============================================================================= */
+
+/* Override rp-title with gold gradient */
+.journal-page .rp-page .rlah-page .rlah-title,
+.journal-page .rp-page .rlah-title,
+.rlah-page .rlah-title {
+  background: linear-gradient(130deg, #FDE8C4 0%, #F8C37D 35%, #EAA960 65%, #D48D44 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 0 20px rgba(234, 169, 96, 0.2)) !important;
+}
+
+/* Override any navy text colors */
+.journal-page .rp-page .rlah-page,
+.journal-page .rp-page .rlah-page * {
+  --rp-accent: #EAA960 !important;
+  --rp-border-h: rgba(234, 169, 96, 0.35) !important;
+  --rp-accent-soft: rgba(234, 169, 96, 0.14) !important;
+  --rp-green: #F8C37D !important;
+}
+
+/* Override eyebrow */
+.journal-page .rp-page .rlah-eyebrow,
+.journal-page .rlah-eyebrow {
+  color: #EAA960 !important;
+  background: rgba(234, 169, 96, 0.12) !important;
+  border-color: rgba(234, 169, 96, 0.12) !important;
+}
+
+/* Override card borders and backgrounds */
+.journal-page .rp-page .rlah-card,
+.journal-page .rlah-card {
+  border-color: rgba(234, 169, 96, 0.12) !important;
+  background: rgba(3, 2, 10, 0.72) !important;
+}
+
+.journal-page .rp-page .rlah-card:hover,
+.journal-page .rlah-card:hover {
+  border-color: rgba(234, 169, 96, 0.28) !important;
+  box-shadow: 0 0 28px rgba(234, 169, 96, 0.08) !important;
+}
+
+/* Override card label */
+.journal-page .rp-page .rlah-card-label,
+.journal-page .rlah-card-label {
+  background: linear-gradient(125deg, #ffffff 30%, #F8C37D 80%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Override section title accent bar */
+.journal-page .rp-page .rlah-section-title::before,
+.journal-page .rlah-section-title::before {
+  background: linear-gradient(180deg, #F8C37D, #D48D44) !important;
+  box-shadow: 0 0 8px rgba(234, 169, 96, 0.18) !important;
+}
+
+/* Override spinner */
+.journal-page .rp-page .rlah-loading::before,
+.journal-page .rlah-loading::before {
+  border-top-color: #F8C37D !important;
+  border-color: rgba(234, 169, 96, 0.15) !important;
+  border-top-color: #F8C37D !important;
+}
+
+/* Override retry button */
+.journal-page .rp-page .rlah-retry,
+.journal-page .rlah-retry {
+  border-color: rgba(234, 169, 96, 0.28) !important;
+  background: rgba(234, 169, 96, 0.12) !important;
+  color: #F8C37D !important;
+}
+
+.journal-page .rp-page .rlah-retry:hover,
+.journal-page .rlah-retry:hover {
+  background: rgba(234, 169, 96, 0.2) !important;
+  border-color: rgba(234, 169, 96, 0.45) !important;
+  color: #FDE8C4 !important;
+}
