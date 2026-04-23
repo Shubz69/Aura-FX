@@ -92,7 +92,7 @@ const Footer = React.memo(function Footer() {
       <div className="footer-bottom-wrap">
         <div className="footer-divider" />
         <div className="footer-bottom">
-          <span className="footer-copy">Â© 2025 AURA TERMINAL™. All rights reserved.</span>
+          <span className="footer-copy">© 2025 AURA TERMINAL™. All rights reserved.</span>
           <span className="footer-status">
             <span className="footer-status-dot" />
             All systems operational

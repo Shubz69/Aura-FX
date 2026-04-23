@@ -28,7 +28,7 @@ const TABS = [
 
 const base = '/aura-analysis/dashboard';
 
-/** Filter + refresh bar â€” rendered inside the provider so it can read context */
+/** Filter + refresh bar — rendered inside the provider so it can read context */
 function ymdLocal(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -192,7 +192,7 @@ function AuraFilterBar() {
           title="Filter by session (UTC)"
         >
           {SESSION_FILTER_OPTIONS.map((s) => (
-            <option key={s} value={s}>{s === 'ALL' ? 'Session Â· All' : s}</option>
+            <option key={s} value={s}>{s === 'ALL' ? 'Session · All' : s}</option>
           ))}
         </select>
 
@@ -202,7 +202,7 @@ function AuraFilterBar() {
           onChange={(e) => setDirFilter(e.target.value)}
           title="Filter by direction"
         >
-          <option value="ALL">Dir Â· All</option>
+          <option value="ALL">Dir · All</option>
           <option value="buy">Long</option>
           <option value="sell">Short</option>
         </select>
@@ -220,7 +220,7 @@ function AuraFilterBar() {
             }}
             title="Apply saved filter view"
           >
-            <option value="">Saved viewsâ€¦</option>
+            <option value="">Saved views…</option>
             {filterPresets.map((p) => (
               <option key={p.name} value={p.name}>{p.name}</option>
             ))}
@@ -232,7 +232,7 @@ function AuraFilterBar() {
             type="text"
             className="aura-db-filter-select"
             style={{ width: 120, maxWidth: '28vw' }}
-            placeholder="Save view asâ€¦"
+            placeholder="Save view as…"
             value={presetDraft}
             onChange={(e) => setPresetDraft(e.target.value)}
             onKeyDown={(e) => {
@@ -266,7 +266,7 @@ function AuraFilterBar() {
               }}
               title="Delete a saved view"
             >
-              <option value="">Delete viewâ€¦</option>
+              <option value="">Delete view…</option>
               {filterPresets.map((p) => (
                 <option key={`del-${p.name}`} value={p.name}>{p.name}</option>
               ))}
@@ -378,7 +378,7 @@ function AuraDashboardInner() {
             </select>
           </div>
 
-          <div className="aura-db-right" title={`${dateStr} Â· local time`}>
+          <div className="aura-db-right" title={`${dateStr} · local time`}>
             <div className="aura-db-clock" aria-label={`Local time ${timeStr}, ${dateStr}`}>
               <span className="aura-db-time">{timeStr}</span>
               <span className="aura-db-date">{dateStr}</span>
@@ -398,7 +398,7 @@ function AuraDashboardInner() {
       <main className="aura-dashboard-content">
         {loading && (
           <div className="aura-db-warn-banner" role="status">
-            Loading dashboard dataâ€¦
+            Loading dashboard data…
           </div>
         )}
         {!!error && (

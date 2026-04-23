@@ -111,7 +111,7 @@ const Register = () => {
             if (!sendRes?.success) {
                 setError(
                     sendRes?.message ||
-                        "Could not send phone code. If an email code was already sent, check your inboxâ€”you can fix your mobile number and tap Send verification codes again."
+                        "Could not send phone code. If an email code was already sent, check your inbox—you can fix your mobile number and tap Send verification codes again."
                 );
                 setIsLoading(false);
                 return;
@@ -124,7 +124,7 @@ const Register = () => {
             if (serverMsg.includes("not configured") || serverMsg.includes("temporarily unavailable")) {
                 errorMsg = "Email service is temporarily unavailable. Please try again later.";
             } else if (emailStepOk) {
-                errorMsg = `${serverMsg} If an email code was already sent, check your inboxâ€”you can fix your mobile number and tap Send verification codes again.`;
+                errorMsg = `${serverMsg} If an email code was already sent, check your inbox—you can fix your mobile number and tap Send verification codes again.`;
             }
             setError(errorMsg);
         } finally {
@@ -234,7 +234,7 @@ const Register = () => {
             <div className="register-form-container">
                 <div className="form-header">
                     <h2 className="register-title">Sign up</h2>
-                    <p className="register-subtitle">Create your account â€“ verify email and phone</p>
+                    <p className="register-subtitle">Create your account – verify email and phone</p>
                 </div>
                 {error ? <div className="error-message">{error}</div> : null}
                 {success ? <div className="success-message">{success}</div> : null}

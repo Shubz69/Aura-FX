@@ -126,10 +126,10 @@ const ContactUs = () => {
                     <p className="contact-subtitle">
                         {fromMfa
                             ? 'Having trouble with Multi-Factor Authentication? Our team resolves issues fast.'
-                            : 'Questions, proposals, or just want to say hello â€” we\u2019re always here.'}
+                            : 'Questions, proposals, or just want to say hello — we\u2019re always here.'}
                     </p>
 
-                    {/* Decorative line â€” same gold treatment as C&S */}
+                    {/* Decorative line — same gold treatment as C&S */}
                     <div className="contact-header__rule aura-page-title-line" aria-hidden>
                         <span className="aura-page-title-dot" />
                     </div>
@@ -138,7 +138,7 @@ const ContactUs = () => {
                 {/* â”€â”€ MAIN GRID â”€â”€ */}
                 <div className="contact-grid">
 
-                    {/* LEFT â€” FORM */}
+                    {/* LEFT — FORM */}
                     <div className="contact-form-container">
                         <div className="contact-form-header">
                             <h2>Send a Message</h2>
@@ -245,7 +245,7 @@ const ContactUs = () => {
                             {submitStatus && (
                                 <div className={`status-message status-message--${submitStatus.type}`}>
                                     <span className="status-message__icon">
-                                        {submitStatus.type === 'success' ? 'âœ“' : 'âœ•'}
+                                        {submitStatus.type === 'success' ? '✓' : 'âœ•'}
                                     </span>
                                     <span>{submitStatus.message}</span>
                                 </div>
@@ -259,7 +259,7 @@ const ContactUs = () => {
                         </form>
                     </div>
 
-                    {/* RIGHT â€” INFO + MAP */}
+                    {/* RIGHT — INFO + MAP */}
                     <div className="contact-info-container">
 
                         {/* Info Cards */}
@@ -282,7 +282,7 @@ const ContactUs = () => {
                                 {
                                     icon: <FaGlobe />,
                                     label: 'Availability',
-                                    value: '24 / 7 â€” Always On',
+                                    value: '24 / 7 — Always On',
                                     href: null,
                                     tag: 'Live'
                                 }

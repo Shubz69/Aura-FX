@@ -1,5 +1,5 @@
 /**
- * Shared Aura Terminal™ tokens â€” Playbook hub/detail, Missed Review, Checklist, Trade Calculator.
+ * Shared Aura Terminal™ tokens — Playbook hub/detail, Missed Review, Checklist, Trade Calculator.
  * Import before page-specific CSS so surfaces inherit one rhythm.
  */
 .tp-root,
@@ -35,7 +35,7 @@
   --at-transition: 0.16s ease;
 }
 
-/* Workspace strip â€” any page that imports this file + uses tp-terminal-flow */
+/* Workspace strip — any page that imports this file + uses tp-terminal-flow */
 .tp-terminal-flow {
   display: flex;
   flex-wrap: wrap;

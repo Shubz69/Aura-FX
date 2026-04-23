@@ -1,21 +1,21 @@
 /* ============================================================
-   CONNECTION HUB â€” AURA TERMINAL™
+   CONNECTION HUB — AURA TERMINAL™
    Rethemed to match site-wide design language:
-   Â· Near-black deep background  (#03020a base)
-   Â· Gold / amber accent system  (rgba(234,169,96,â€¦) / #f8c37d)
-   Â· Glass morphism panels       (backdrop-filter blur + dark fill)
-   Â· Soft white borders          (rgba(255,255,255,0.06â€“0.12))
-   Â· Warm gold glows             (no purple/blue ambient)
+   · Near-black deep background  (#03020a base)
+   · Gold / amber accent system  (rgba(234,169,96,…) / #f8c37d)
+   · Glass morphism panels       (backdrop-filter blur + dark fill)
+   · Soft white borders          (rgba(255,255,255,0.06–0.12))
+   · Warm gold glows             (no purple/blue ambient)
    Fully responsive:
-     xs  < 480px  |  sm 480â€“767px  |  md 768â€“1023px
-     lg  1024â€“1279px  |  xl 1280px+
+     xs  < 480px  |  sm 480–767px  |  md 768–1023px
+     lg  1024–1279px  |  xl 1280px+
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
 
 
-/* â”€â”€ CSS Variables â€” site-matched token system â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ CSS Variables — site-matched token system â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
   /* Backgrounds */
   --ch-bg:             #03020a;
@@ -43,7 +43,7 @@
   --ch-gold-glow:      rgba(234, 169, 96, 0.18);
   --ch-gold-glow-h:    rgba(234, 169, 96, 0.32);
 
-  /* Gradient â€” gold shimmer (matches site active states) */
+  /* Gradient — gold shimmer (matches site active states) */
   --ch-grad-gold:      linear-gradient(135deg,
                          rgba(248, 195, 125, 0.96) 0%,
                          rgba(234, 169, 96, 0.90) 50%,
@@ -83,7 +83,7 @@
 }
 
 
-/* â”€â”€ Ambient background â€” warm gold core, not purple â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Ambient background — warm gold core, not purple â”€â”€â”€â”€â”€â”€â”€ */
 .connection-hub-page::before {
   content: '';
   position: fixed;
@@ -105,7 +105,7 @@
   animation: chGlowPulse 7s ease-in-out infinite;
 }
 
-/* Corner warmth â€” top right */
+/* Corner warmth — top right */
 .connection-hub-page::after {
   content: '';
   position: fixed;
@@ -135,7 +135,7 @@
   66%       { transform: translate(16px, -22px); }
 }
 
-/* Floating particles â€” gold tint */
+/* Floating particles — gold tint */
 .connection-hub-particles {
   position: fixed;
   inset: 0;
@@ -365,7 +365,7 @@
   background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.18), rgba(255, 255, 255, 0.06), transparent);
 }
 
-/* Manual Metrics section â€” sits below Enter Dashboard */
+/* Manual Metrics section — sits below Enter Dashboard */
 .connection-hub-section-label--manual-below {
   margin-top: clamp(4px, 1.5vw, 12px);
 }
@@ -385,7 +385,7 @@
   justify-content: center;
 }
 
-/* CSV block at end of page â€” keep comfortable footer space */
+/* CSV block at end of page — keep comfortable footer space */
 .connection-hub-grid--csv-tail {
   margin-bottom: clamp(8px, 2vw, 20px);
 }
@@ -404,7 +404,7 @@
   overflow: hidden;
   cursor: pointer;
   box-shadow: var(--ch-shadow-card);
-  /* Top-edge highlight line â€” matches site panel style */
+  /* Top-edge highlight line — matches site panel style */
   box-shadow:
     var(--ch-shadow-card),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -461,7 +461,7 @@
 .connection-card:hover::before { opacity: 1; }
 .connection-card:hover::after  { opacity: 1; }
 
-/* Connected state â€” gold-green tint */
+/* Connected state — gold-green tint */
 .connection-card.connected {
   border-color: rgba(16, 185, 129, 0.2);
   background: rgba(16, 185, 129, 0.03);
@@ -651,7 +651,7 @@
 }
 
 .health-ok::before {
-  content: 'âœ“';
+  content: '✓';
   font-weight: 700;
 }
 
@@ -677,7 +677,7 @@
   min-height: 44px; /* touch target */
 }
 
-/* Connect â€” gold gradient (matches site active pill) */
+/* Connect — gold gradient (matches site active pill) */
 .connection-card-connect {
   background: var(--ch-grad-gold);
   color: #0a0704;
@@ -759,7 +759,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Disconnect â€” gold-tinted outline */
+/* Disconnect — gold-tinted outline */
 .connection-card-disconnect {
   background: transparent;
   border: 1px solid rgba(234, 169, 96, 0.22);
@@ -834,7 +834,7 @@
   gap: 0;
 }
 
-/* Primary CTA directly under MetaTrader row â€” tighter vertical rhythm */
+/* Primary CTA directly under MetaTrader row — tighter vertical rhythm */
 .connection-hub-enter--after-mt {
   padding-top: clamp(10px, 2vw, 18px);
   padding-bottom: clamp(18px, 3vw, 28px);
@@ -1290,7 +1290,7 @@
   gap: 8px;
 }
 
-/* Submit button â€” matches site gold CTA */
+/* Submit button — matches site gold CTA */
 .chub-modal-submit {
   background: var(--ch-grad-gold);
   border: none;
@@ -1346,7 +1346,7 @@
    RESPONSIVE BREAKPOINTS
    ============================================================================= */
 
-/* â”€â”€ lg 1024â€“1279px â”€â”€ */
+/* â”€â”€ lg 1024–1279px â”€â”€ */
 @media (min-width: 1024px) and (max-width: 1279px) {
   .connection-hub-grid {
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -1354,7 +1354,7 @@
   }
 }
 
-/* â”€â”€ md 768â€“1023px (tablets) â”€â”€ */
+/* â”€â”€ md 768–1023px (tablets) â”€â”€ */
 @media (min-width: 768px) and (max-width: 1023px) {
   .connection-hub-container {
     padding-top: clamp(72px, 9vh, 90px);
@@ -1380,7 +1380,7 @@
   }
 }
 
-/* â”€â”€ sm 480â€“767px (large phones) â”€â”€ */
+/* â”€â”€ sm 480–767px (large phones) â”€â”€ */
 @media (min-width: 480px) and (max-width: 767px) {
   .connection-hub-container {
     padding-top: 72px;
@@ -1426,7 +1426,7 @@
     padding: 64px 12px 28px;
   }
 
-  /* Live badge â€” static, not absolute on tiny screens */
+  /* Live badge — static, not absolute on tiny screens */
   .connection-hub-live-badge {
     position: static;
     display: inline-flex;
@@ -1444,7 +1444,7 @@
     padding: 0 8px;
   }
 
-  /* Stats â€” single column on xs */
+  /* Stats — single column on xs */
   .connection-hub-stats-strip {
     flex-direction: column;
     align-items: center;
@@ -1547,7 +1547,7 @@
 }
 
 
-/* â”€â”€ Safe area â€” notched / punch-hole devices â”€â”€ */
+/* â”€â”€ Safe area — notched / punch-hole devices â”€â”€ */
 @supports (padding: max(0px)) {
   .connection-hub-container {
     padding-left: max(12px, env(safe-area-inset-left));
@@ -1562,7 +1562,7 @@
   }
 }
 
-/* â”€â”€ Touch / iPad â€” larger tap targets â”€â”€ */
+/* â”€â”€ Touch / iPad — larger tap targets â”€â”€ */
 @media (pointer: coarse) {
   .connection-card-connect,
   .connection-card-disconnect,

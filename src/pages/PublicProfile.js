@@ -228,7 +228,7 @@ const PublicProfile = () => {
                 <div className="profile-tab-content">
                     {activeTab === 'overview' && (
                         <div className="tab-panel">
-                            {/* Discipline Streak â€“ prominent when on a streak */}
+                            {/* Discipline Streak – prominent when on a streak */}
                             {loginStreak > 0 && (
                                 <div className="public-profile-discipline-streak">
                                     <span className="public-profile-streak-icon">ðŸ”¥</span>
@@ -238,24 +238,24 @@ const PublicProfile = () => {
                                     </div>
                                 </div>
                             )}
-                            {/* Journal / Task stats â€“ real-time (Today, This week, This month) */}
+                            {/* Journal / Task stats – real-time (Today, This week, This month) */}
                             {(profile.journalStats && (profile.journalStats.todayPct != null || profile.journalStats.weekPct != null || profile.journalStats.monthPct != null)) && (
                                 <div className="public-profile-stats-circles">
                                     <div className="public-profile-stat-circle">
                                         <div className="public-profile-stat-circle-ring" style={{ '--pct': profile.journalStats.todayPct != null ? profile.journalStats.todayPct : 0 }}>
-                                            <span className="public-profile-stat-circle-value">{profile.journalStats.todayPct != null ? `${profile.journalStats.todayPct}%` : 'â€”'}</span>
+                                            <span className="public-profile-stat-circle-value">{profile.journalStats.todayPct != null ? `${profile.journalStats.todayPct}%` : '—'}</span>
                                         </div>
                                         <span className="public-profile-stat-circle-label">Today</span>
                                     </div>
                                     <div className="public-profile-stat-circle">
                                         <div className="public-profile-stat-circle-ring" style={{ '--pct': profile.journalStats.weekPct != null ? profile.journalStats.weekPct : 0 }}>
-                                            <span className="public-profile-stat-circle-value">{profile.journalStats.weekPct != null ? `${profile.journalStats.weekPct}%` : 'â€”'}</span>
+                                            <span className="public-profile-stat-circle-value">{profile.journalStats.weekPct != null ? `${profile.journalStats.weekPct}%` : '—'}</span>
                                         </div>
                                         <span className="public-profile-stat-circle-label">This week</span>
                                     </div>
                                     <div className="public-profile-stat-circle">
                                         <div className="public-profile-stat-circle-ring" style={{ '--pct': profile.journalStats.monthPct != null ? profile.journalStats.monthPct : 0 }}>
-                                            <span className="public-profile-stat-circle-value">{profile.journalStats.monthPct != null ? `${profile.journalStats.monthPct}%` : 'â€”'}</span>
+                                            <span className="public-profile-stat-circle-value">{profile.journalStats.monthPct != null ? `${profile.journalStats.monthPct}%` : '—'}</span>
                                         </div>
                                         <span className="public-profile-stat-circle-label">This month</span>
                                     </div>

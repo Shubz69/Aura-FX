@@ -1,5 +1,5 @@
 /* ============================================================
-   Overview.css  |  AURA TERMINAL™ â€” Polished Dark Luxury
+   Overview.css  |  AURA TERMINAL™ — Polished Dark Luxury
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -24,7 +24,7 @@
   --ov-ease:         cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* â”€â”€ Page shell â€” NO side padding so content fills width â”€â”€â”€ */
+/* â”€â”€ Page shell — NO side padding so content fills width â”€â”€â”€ */
 .aura-overview-page {
   width: 100%;
   min-height: 100%;
@@ -190,7 +190,7 @@
   border-color: var(--ov-border-h);
 }
 
-/* â”€â”€ Calendar time range toolbar (1D â€¦ Custom) â€” matches TradingView-style toggles â”€â”€ */
+/* â”€â”€ Calendar time range toolbar (1D … Custom) — matches TradingView-style toggles â”€â”€ */
 .aura-overview-cal-range-bar {
   display: flex;
   flex-wrap: wrap;
@@ -551,7 +551,7 @@
   }
 }
 
-/* â”€â”€ Grid â€” full width, no horizontal overflow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Grid — full width, no horizontal overflow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-overview-grid {
   display: grid;
   grid-template-columns: 1fr 1.5fr 1fr;
@@ -576,7 +576,7 @@
   .aura-overview-grid { grid-template-columns: 1fr; }
 }
 
-/* â”€â”€ Card base â€” luxury glass â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Card base — luxury glass â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-card {
   background: var(--ov-card);
   border: 1px solid var(--ov-border);
@@ -1142,7 +1142,7 @@
 
 .aura-streaks-list .positive { color: var(--ov-green); font-weight: 600; }
 
-/* â”€â”€ Trade log â€” full width â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Trade log — full width â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-trade-log-card {
   width: 100%;
   box-sizing: border-box;
@@ -1215,7 +1215,7 @@
 }
 
 /* ============================================================
-   OV2 â€” Image 2 Redesign Styles
+   OV2 — Image 2 Redesign Styles
    ============================================================ */
 
 /* â”€â”€ Page shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -2299,7 +2299,7 @@
   border-radius: 8px;
 }
 
-/* The Operator â€” account switcher (overview) */
+/* The Operator — account switcher (overview) */
 .aura-overview-account-bar {
   display: flex;
   flex-wrap: wrap;

@@ -1,10 +1,10 @@
 /* ============================================================
-   AuraTabSection.css  |  AURA TERMINAL™ â€” Polished Dark Luxury
+   AuraTabSection.css  |  AURA TERMINAL™ — Polished Dark Luxury
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* â”€â”€ Tab page shell â€” full width, no side gaps â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Tab page shell — full width, no side gaps â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-page {
   width: 100%;
   min-height: 100%;
@@ -20,7 +20,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* â”€â”€ Tab title â€” matches .aura-overview-title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Tab title — matches .aura-overview-title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-title {
   font-size: 1.6rem;
   font-weight: 300;
@@ -43,13 +43,13 @@
   text-transform: uppercase;
 }
 
-/* â”€â”€ Header divider line â€” matches overview header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Header divider line — matches overview header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-page > .aura-tab-title,
 .aura-tab-page > .aura-tab-sub {
   display: block;
 }
 
-/* Subtle underline separator after sub title â€” mirrors header border */
+/* Subtle underline separator after sub title — mirrors header border */
 .aura-tab-sub {
   padding-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -89,7 +89,7 @@
   box-sizing: border-box;
 }
 
-/* â”€â”€ Stat card â€” matches .aura-card glass style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Stat card — matches .aura-card glass style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-card {
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -156,7 +156,7 @@
   display: block;
 }
 
-/* â”€â”€ Card value â€” matches .stat-number gradient â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Card value — matches .stat-number gradient â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-card-value {
   font-size: 1.3rem;
   font-weight: 500;

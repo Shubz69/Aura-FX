@@ -1,5 +1,5 @@
 /* =============================================================================
-   Terminal routes under .journal-page â€” navy / white glass chrome.
+   Terminal routes under .journal-page — navy / white glass chrome.
    Import after Journal.css (AuraTerminalThemeShell). Gold stays on progress
    fills (.aa-bar-fill-*) and similar data viz; borders and panels use journal blue.
    ============================================================================= */
@@ -268,7 +268,7 @@
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â• Aura shared cards / KPIs (not bar fills) â•â•â•â•â•â•â•â•â•â•â• */
-/* Aura Analysis â€” empty / connect card (dashboard) */
+/* Aura Analysis — empty / connect card (dashboard) */
 .journal-page .aa-empty-state-card {
   background: linear-gradient(
     135deg,
@@ -462,7 +462,7 @@
   box-shadow: 0 10px 32px rgba(50, 70, 140, 0.38) !important;
 }
 
-/* Affiliation: styled in Affiliation.css (gold / journal-aligned â€” no navy overrides). */
+/* Affiliation: styled in Affiliation.css (gold / journal-aligned — no navy overrides). */
 
 /* â•â•â•â•â•â•â•â•â•â•â• Admin panel â•â•â•â•â•â•â•â•â•â•â• */
 .journal-page .admin-panel-container::after {
@@ -551,7 +551,7 @@
   border-bottom-color: var(--accent-solid) !important;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â• Reports (Aura Terminal™) â€” keep rp-progress-bar gold (progress) â•â•â•â•â•â•â•â•â•â•â• */
+/* â•â•â•â•â•â•â•â•â•â•â• Reports (Aura Terminal™) — keep rp-progress-bar gold (progress) â•â•â•â•â•â•â•â•â•â•â• */
 .journal-page .rp-page .rp-eyebrow {
   color: rgba(160, 185, 240, 0.62) !important;
 }

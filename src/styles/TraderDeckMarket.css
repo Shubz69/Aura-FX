@@ -1,12 +1,12 @@
 /* =============================================================================
-   TRADER DESK â€” MARKET INTELLIGENCE  |  AURA TERMINAL™ Premium v4
-   Theme aligned with World Clocks â€” Deep-space navy/blue dominant
+   TRADER DESK — MARKET INTELLIGENCE  |  AURA TERMINAL™ Premium v4
+   Theme aligned with World Clocks — Deep-space navy/blue dominant
    Gold removed, replaced with refined blue/navy spectrum
    ============================================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-/* â”€â”€ Root tokens â€” refined navy/blue palette (aligned with world clocks) â”€â”€ */
+/* â”€â”€ Root tokens — refined navy/blue palette (aligned with world clocks) â”€â”€ */
 :root {
   /* â”€â”€ Deep-space backgrounds (enhanced) â”€â”€ */
   --bg:             #010008;
@@ -19,7 +19,7 @@
   --bg-glass:       rgba(4, 5, 18, 0.52);
   --bg-glass-h:     rgba(7, 9, 26, 0.68);
 
-  /* â”€â”€ Borders â€” consistent with world clocks container â”€â”€ */
+  /* â”€â”€ Borders — consistent with world clocks container â”€â”€ */
   --border:         rgba(107, 143, 232, 0.20);
   --border-h:       rgba(107, 143, 232, 0.45);
 
@@ -88,7 +88,7 @@
       0 10px 34px -10px rgba(15,20,48,0.48),
      inset 0 1px 0 rgba(107,143,232,0.18) !important;
 
-  /* â”€â”€ Gradient heading â€” refined blue spectrum â”€â”€ */
+  /* â”€â”€ Gradient heading — refined blue spectrum â”€â”€ */
   --grad-primary: linear-gradient(125deg,
       #ffffff 0%,
       rgba(252,253,255,0.99) 28%,
@@ -101,7 +101,7 @@
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   PAGE BACKGROUND â€” deep-space nebula atmosphere
+   PAGE BACKGROUND — deep-space nebula atmosphere
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .td-mi--page {
   position: relative;
@@ -244,7 +244,7 @@
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   OUTER SHELL â€” premium border system
+   OUTER SHELL — premium border system
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .td-mi-shell {
   position: relative;
@@ -372,7 +372,7 @@
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   BUTTONS â€” premium CTA style
+   BUTTONS — premium CTA style
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .td-mi-btn {
   padding: 8px 20px;
@@ -613,7 +613,7 @@
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   BASE PANEL CARD â€” premium glass system
+   BASE PANEL CARD — premium glass system
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .td-mi-panel {
   background-image: var(--panel-fill), var(--panel-border);
@@ -762,7 +762,7 @@
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   MARKET PULSE GAUGE â€” navy/blue spectrum
+   MARKET PULSE GAUGE — navy/blue spectrum
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .td-mi-gauge-wrap {
   display: flex;
@@ -828,7 +828,7 @@
 
 .td-mi-gauge-arc-fill { display: none; }
 
-/* Needle â€” blue/white gradient */
+/* Needle — blue/white gradient */
 .td-mi-gauge-needle {
   position: absolute;
   left: 50%; bottom: 6px;
@@ -847,7 +847,7 @@
     0 0 24px rgba(107,143,232,0.20);
 }
 
-/* Centre pivot â€” blue */
+/* Centre pivot — blue */
 .td-mi-gauge-needle::after {
   content: '';
   position: absolute;
@@ -874,7 +874,7 @@
   padding: 0 4px;
 }
 
-/* Gauge badge â€” premium style */
+/* Gauge badge — premium style */
 .td-mi-gauge-badge {
   display: inline-flex;
   align-items: center;
@@ -919,7 +919,7 @@
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   LIST ITEMS â€” drivers, signals
+   LIST ITEMS — drivers, signals
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .td-mi-list {
   list-style: none;
@@ -1001,7 +1001,7 @@
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   BULLET LISTS â€” changes, focus, radar
+   BULLET LISTS — changes, focus, radar
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .td-mi-bullets {
   list-style: none;
@@ -1288,7 +1288,7 @@
   .td-outlook-panel--headlines { grid-column: 1 / -1; grid-row: 5; }
 }
 
-/* â”€â”€ Market Outlook â€” concept shell (framed terminal) â”€ */
+/* â”€â”€ Market Outlook — concept shell (framed terminal) â”€ */
 .td-deck-mo-outlook--concept .td-outlook-terminal-frame {
   border-radius: 16px;
   padding: 1px;
@@ -1519,7 +1519,7 @@
   font-size: 0.8rem !important;
 }
 
-/* Aura Market Pulse â€” hero treatment on outlook */
+/* Aura Market Pulse — hero treatment on outlook */
 .td-outlook-panel--pulse-feature {
   background-image:
     linear-gradient(168deg, rgba(10, 16, 38, 0.96) 0%, rgba(5, 8, 22, 0.99) 55%, rgba(2, 4, 14, 1) 100%),
@@ -1673,7 +1673,7 @@
   color: rgba(212, 175, 125, 0.75) !important;
 }
 
-/* Trader focus â€” title + reason */
+/* Trader focus — title + reason */
 .td-mi-bullets--focus {
   gap: 5px !important;
 }
@@ -1717,7 +1717,7 @@
   border-radius: 10px !important;
 }
 
-/* â”€â”€ Unified panels â€” premium glass edition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Unified panels — premium glass edition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .td-outlook-panel {
   min-height: 0;
   padding: 0 !important;
@@ -2064,7 +2064,7 @@
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   RISK RADAR TABLE â€” premium glass style
+   RISK RADAR TABLE — premium glass style
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .rr-table-wrap {
   overflow-x: auto;
@@ -2143,7 +2143,7 @@
 .rr-td--impact { text-align: center; }
 .rr-td--num    { text-align: right; font-variant-numeric: tabular-nums; font-size: 0.74rem; }
 
-/* Currency badge â€” blue-toned */
+/* Currency badge — blue-toned */
 .rr-currency {
   font-size: 0.58rem;
   font-weight: 700;
@@ -2295,7 +2295,7 @@
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   SECTION DECORATORS â€” blue shimmer dividers
+   SECTION DECORATORS — blue shimmer dividers
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .td-mi-section-divider {
   width: 100%;
@@ -2385,7 +2385,7 @@
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Market Outlook â€” concept composition (matches reference layout)
+   Market Outlook — concept composition (matches reference layout)
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .td-deck-mo-outlook--concept.td-deck-mo-outlook .td-outlook-dashboard--unified {
   gap: 4px;
@@ -2406,7 +2406,7 @@
   font-weight: 650;
 }
 
-/* Market Outlook â€” terminal layout: equal-height columns (2fr / 1fr), continuous surface */
+/* Market Outlook — terminal layout: equal-height columns (2fr / 1fr), continuous surface */
 .td-outlook-concept-grid.td-outlook-concept-grid--terminal {
   display: grid;
   grid-template-columns: 1fr;
@@ -2709,7 +2709,7 @@
   padding: 5px 8px 6px !important;
 }
 
-/* Macro timing & inflection window â€” compact terminal density + column fill */
+/* Macro timing & inflection window — compact terminal density + column fill */
 .td-deck-mo-outlook--concept .td-outlook-concept-card--macro-timing {
   height: auto;
 }
@@ -3321,7 +3321,7 @@
   flex-direction: column;
 }
 
-/* Regime â€” compact horizontal band */
+/* Regime — compact horizontal band */
 .td-deck-mo-outlook--concept .td-outlook-concept-card--regime .td-outlook-concept-card__title {
   padding: 3px 9px 3px !important;
   font-size: 0.53rem !important;
@@ -3469,7 +3469,7 @@
   margin-top: -4px;
 }
 
-/* Market change â€” structured feed */
+/* Market change — structured feed */
 .td-deck-mo-outlook--concept .td-outlook-concept-card--changes .td-outlook-concept-card__body {
   padding: 5px 8px 7px !important;
 }
@@ -3890,7 +3890,7 @@
   color: rgba(210, 218, 250, 0.85);
 }
 
-/* Outlook â€” denser cards when panels are feed-synthesized (smaller footprint, less empty chrome) */
+/* Outlook — denser cards when panels are feed-synthesized (smaller footprint, less empty chrome) */
 .td-deck-mo-outlook--concept .mo-card-shell--dense .td-outlook-concept-card__body {
   padding: 6px 8px 8px !important;
 }
@@ -3938,7 +3938,7 @@
   line-height: 1.32;
 }
 
-/* Market Implications â€” 2-column decision grid (dense) */
+/* Market Implications — 2-column decision grid (dense) */
 .mo-implications-decision-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -4032,7 +4032,7 @@
   padding: 4px 6px 6px !important;
 }
 
-/* Secondary rail â€” overflow signal/headline micro rows */
+/* Secondary rail — overflow signal/headline micro rows */
 .mo-outlook-micro-rows {
   list-style: none;
   margin: 0;
@@ -4059,7 +4059,7 @@
   padding: 4px 6px 6px !important;
 }
 
-/* Market Structure Map â€” 2-column structural read */
+/* Market Structure Map — 2-column structural read */
 .td-outlook-concept-card__body--structure-map {
   padding: 6px 8px 8px !important;
   display: flex;
@@ -4125,7 +4125,7 @@
   color: rgba(228, 234, 252, 0.92);
 }
 
-/* Trade Expression Matrix â€” execution rows */
+/* Trade Expression Matrix — execution rows */
 .td-outlook-concept-card__body--trade-matrix {
   padding: 4px 6px 6px !important;
 }
@@ -4349,7 +4349,7 @@
   color: rgba(185, 198, 240, 0.72);
 }
 
-/* Trader Desk â€” data quality / degraded intelligence banner */
+/* Trader Desk — data quality / degraded intelligence banner */
 .td-mi-dq-banner {
   margin: 0 0 16px;
   padding: 12px 14px;

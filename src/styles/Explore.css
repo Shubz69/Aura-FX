@@ -1,5 +1,5 @@
 /* ============================================================
-   EXPLORE.CSS â€” AURA TERMINAL™ | Matched to Home Theme v2
+   EXPLORE.CSS — AURA TERMINAL™ | Matched to Home Theme v2
    Gold system, glass cards, Space Grotesk, #03020D bg
    ============================================================ */
 
@@ -89,7 +89,7 @@ html, body {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    /* Content-sized height â€” avoids empty scroll gap above global footer */
+    /* Content-sized height — avoids empty scroll gap above global footer */
     min-height: auto !important;
 }
 
@@ -168,7 +168,7 @@ html, body {
     position: relative;
 }
 
-/* Eyebrow pill â€” gold like home hero-eyebrow */
+/* Eyebrow pill — gold like home hero-eyebrow */
 .explore-eyebrow {
     display: inline-flex;
     align-items: center;
@@ -204,7 +204,7 @@ html, body {
     text-transform: uppercase;
 }
 
-/* Main H1: C&S-style gold shimmer â€” AuraPageTitle.css (h1.aura-page-title) */
+/* Main H1: C&S-style gold shimmer — AuraPageTitle.css (h1.aura-page-title) */
 .explore-header .explore-main-title.aura-page-title {
     margin: 0 auto 1.6rem;
 }
@@ -266,7 +266,7 @@ html, body {
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   MAIN CONTENT â€” 2-COLUMN SPLIT
+   MAIN CONTENT — 2-COLUMN SPLIT
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .explore-main-content {
     display: grid;
@@ -329,7 +329,7 @@ html, body {
     font-weight: 400;
 }
 
-/* CTA button â€” gold like home-cta-button */
+/* CTA button — gold like home-cta-button */
 .explore-cta-button {
     position: relative;
     padding: 0.92rem 2.5rem;
@@ -553,7 +553,7 @@ html, body {
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   SECTION TITLE â€” same as home section-title
+   SECTION TITLE — same as home section-title
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .explore-section-title {
     font-family: var(--font);
@@ -1000,7 +1000,7 @@ html, body {
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   STATS ROW (optional â€” add to your page for premium feel)
+   STATS ROW (optional — add to your page for premium feel)
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .explore-stats-row {
     display: grid;
@@ -1257,7 +1257,7 @@ html, body {
     .explore-main-content { margin-bottom: 1.75rem; }
 }
 
-/* Tall screens â€” do not add huge bottom padding */
+/* Tall screens — do not add huge bottom padding */
 @media (min-height: 1000px) {
     .explore-content-wrapper { padding-top: 140px; padding-bottom: 3.5rem; }
 }

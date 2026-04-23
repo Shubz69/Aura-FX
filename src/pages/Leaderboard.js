@@ -5,7 +5,7 @@ import Api from '../services/Api';
 
 // â”€â”€â”€ Deterministic avatar generator (no external deps) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Generates a unique SVG avatar from a username string.
-// Uses DiceBear "adventurer" style via their free CDN â€” no API key needed.
+// Uses DiceBear "adventurer" style via their free CDN — no API key needed.
 // Falls back to a gradient+initial avatar if the CDN is unavailable.
 
 function hashCode(str) {
@@ -17,7 +17,7 @@ function hashCode(str) {
     return Math.abs(hash);
 }
 
-// Navy + luxury gold â€” deterministic variety
+// Navy + luxury gold — deterministic variety
 const AVATAR_PALETTES = [
     ['#0f1b38', '#d4af37'],
     ['#132043', '#e8c658'],
@@ -49,7 +49,7 @@ const LeaderboardAvatar = ({ user, size = 42, podium = false }) => {
     const variant = h % 4;
     const s = podium ? 64 : size;
 
-    // DiceBear URL â€” works offline fallback via the gradient below
+    // DiceBear URL — works offline fallback via the gradient below
     const dicebearUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}&backgroundColor=${colors[0].replace('#', '')}&size=${s}`;
 
     // Gradient SVG fallback avatar with unique geometric detail
@@ -361,7 +361,7 @@ const Leaderboard = () => {
                     <div className="podium-info">
                         <div className="podium-rank">{emoji}</div>
                         <div className="podium-username empty">Available</div>
-                        <div className="podium-xp empty">â€” XP</div>
+                        <div className="podium-xp empty">— XP</div>
                     </div>
                 </div>
             );
@@ -418,7 +418,7 @@ const Leaderboard = () => {
                     <h3 className="section-title">
                         ðŸ† Top 10 Leaderboard
                         <span className="timeframe-label">
-                            {selectedTimeframe === 'all-time' ? ' Â· All Time' : ` Â· ${getXpLabel()}`}
+                            {selectedTimeframe === 'all-time' ? ' · All Time' : ` · ${getXpLabel()}`}
                         </span>
                     </h3>
                     {onlineCount > 0 && (
@@ -575,7 +575,7 @@ const Leaderboard = () => {
             {loading ? (
                 <div className="loading-screen">
                     <div className="loading-spinner" />
-                    <div className="loading-text">Loading leaderboardâ€¦</div>
+                    <div className="loading-text">Loading leaderboard…</div>
                 </div>
             ) : (
                 <>

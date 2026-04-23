@@ -73,9 +73,9 @@ const CHART_INTERVALS = [
 ];
 
 const LOADING_TERMINAL_STATS = [
-  { label: 'Market State', value: 'â€¦', tone: 'gold' },
-  { label: 'Confidence', value: 'â€¦' },
-  { label: 'Bias', value: 'â€¦' },
+  { label: 'Market State', value: '…', tone: 'gold' },
+  { label: 'Confidence', value: '…' },
+  { label: 'Bias', value: '…' },
 ];
 
 const DEFAULT_FORM = {
@@ -197,7 +197,7 @@ function parseGeopoliticalBlock(text) {
     .filter(Boolean);
   return lines.map((line) => {
     const pipe = line.indexOf('|');
-    if (pipe === -1) return { region: line, sentiment: 'â€”' };
+    if (pipe === -1) return { region: line, sentiment: '—' };
     return {
       region: line.slice(0, pipe).trim(),
       sentiment: line.slice(pipe + 1).trim(),
@@ -234,7 +234,7 @@ function chartSymbolFromDecoded(decodedSymbol) {
 
 function displaySymbolFromChartSymbol(chartSymbol) {
   const raw = String(chartSymbol || '');
-  if (!raw) return 'â€”';
+  if (!raw) return '—';
   const token = raw.includes(':') ? raw.split(':')[1] : raw;
   return token || raw;
 }
@@ -244,7 +244,7 @@ function BiasPill({ bias }) {
   let cls = 'tlab-pill-bias tlab-pill-bias--neutral';
   if (b.includes('bull')) cls = 'tlab-pill-bias tlab-pill-bias--bull';
   if (b.includes('bear')) cls = 'tlab-pill-bias tlab-pill-bias--bear';
-  return <span className={cls}>{String(bias || 'â€”').toUpperCase()}</span>;
+  return <span className={cls}>{String(bias || '—').toUpperCase()}</span>;
 }
 
 export default function TraderLab() {
@@ -380,7 +380,7 @@ export default function TraderLab() {
     const mapped = normalizeSession({
       ...DEFAULT_FORM,
       sessionDate: toYmd(),
-      setupName: symbol ? `Market Decoder Â· ${symbol}` : DEFAULT_FORM.setupName,
+      setupName: symbol ? `Market Decoder · ${symbol}` : DEFAULT_FORM.setupName,
       chartSymbol: chartSymbolFromDecoded(symbol),
       marketBias: handoff?.bias || brief?.instantRead?.bias || DEFAULT_FORM.marketBias,
       marketState: handoff?.currentPosture || brief?.finalOutput?.currentPosture || DEFAULT_FORM.marketState,
@@ -388,9 +388,9 @@ export default function TraderLab() {
       stopLoss: stop,
       targetPrice: target,
       sessionGoal:
-        `${[handoff?.currentPosture, handoff?.postureSubtitle, handoff?.thesis].filter(Boolean).join(' â€” ')
-        || [brief?.finalOutput?.currentPosture, brief?.finalOutput?.postureSubtitle].filter(Boolean).join(' â€” ')
-        || DEFAULT_FORM.sessionGoal}${!structOk ? ' â€” Decoder: insufficient daily history; confirm levels on your chart.' : ''}`,
+        `${[handoff?.currentPosture, handoff?.postureSubtitle, handoff?.thesis].filter(Boolean).join(' — ')
+        || [brief?.finalOutput?.currentPosture, brief?.finalOutput?.postureSubtitle].filter(Boolean).join(' — ')
+        || DEFAULT_FORM.sessionGoal}${!structOk ? ' — Decoder: insufficient daily history; confirm levels on your chart.' : ''}`,
       keyDrivers: Array.isArray(brief?.whatMattersNow)
         ? brief.whatMattersNow
             .map((x) => `${x?.label || 'Signal'}: ${x?.text || ''}`.trim())
@@ -488,7 +488,7 @@ export default function TraderLab() {
 
   const stats = useMemo(
     () => [
-      { label: 'Market State', value: form.marketState || 'â€”', tone: 'gold' },
+      { label: 'Market State', value: form.marketState || '—', tone: 'gold' },
       { label: 'Confidence', value: `${form.auraConfidence}%` },
       {
         label: 'Bias',
@@ -504,7 +504,7 @@ export default function TraderLab() {
     const at = form.traderThesisUpdatedAt;
     if (!at) return null;
     try {
-      return `Thesis saved Â· ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(at))}`;
+      return `Thesis saved · ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(at))}`;
     } catch {
       return 'Thesis saved';
     }
@@ -514,7 +514,7 @@ export default function TraderLab() {
       .sort((a, b) => String(b.sessionDate || '').localeCompare(String(a.sessionDate || '')))
       .map((session) => ({
         id: session.id,
-        date: session.sessionDate || 'â€”',
+        date: session.sessionDate || '—',
         setupName: session.setupName || 'Untitled lab',
         symbol: displaySymbolFromChartSymbol(session.chartSymbol),
       }));
@@ -523,21 +523,21 @@ export default function TraderLab() {
   const decoderLogRows = useMemo(() => {
     const rows = [];
     if (form.decoderContext) {
-      const sym = form.decoderContext.symbol ? `${form.decoderContext.symbol} Â· ` : '';
+      const sym = form.decoderContext.symbol ? `${form.decoderContext.symbol} · ` : '';
       const posture = form.decoderContext.posture || 'Context linked';
       const when = form.decoderContext.generatedAt
         ? new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(form.decoderContext.generatedAt))
         : '';
-      rows.push({ key: 'decoder', text: `${sym}${posture}${when ? ` Â· ${when}` : ''}` });
+      rows.push({ key: 'decoder', text: `${sym}${posture}${when ? ` · ${when}` : ''}` });
     }
     savedLabRows.slice(0, 5).forEach((row) => {
       rows.push({
         key: `lab-${row.id}`,
-        text: `${row.setupName} Â· ${row.symbol} Â· ${row.date}`,
+        text: `${row.setupName} · ${row.symbol} · ${row.date}`,
       });
     });
     if (rows.length === 0) {
-      rows.push({ key: 'empty', text: 'No linked brief â€” export from Market Decoder. Saved labs appear here as a timeline.' });
+      rows.push({ key: 'empty', text: 'No linked brief — export from Market Decoder. Saved labs appear here as a timeline.' });
     }
     return rows;
   }, [form.decoderContext, savedLabRows]);
@@ -690,7 +690,7 @@ export default function TraderLab() {
   eyebrow={welcomeEyebrow}
   terminalSubtitle="Focus. Execute. Profit."
   terminalTitlePrefix={null}
-  title="AURA TERMINAL™ â€” TRADER LAB"
+  title="AURA TERMINAL™ — TRADER LAB"
       description={null}
       stats={loading ? LOADING_TERMINAL_STATS : stats}
       primaryAction={
@@ -765,7 +765,7 @@ export default function TraderLab() {
                 rows={5}
                 value={form.keyDrivers}
                 onChange={(e) => updateField('keyDrivers', e.target.value)}
-                placeholder="One line per driverâ€¦"
+                placeholder="One line per driver…"
                 aria-label="Key drivers"
               />
             </div>
@@ -834,7 +834,7 @@ export default function TraderLab() {
                     rows={3}
                     value={form.sessionGoal}
                     onChange={(e) => updateField('sessionGoal', e.target.value)}
-                    placeholder="What you are optimizing this session forâ€¦"
+                    placeholder="What you are optimizing this session for…"
                   />
                 </div>
                 <div className="tlab-field" style={{ marginTop: 8 }}>
@@ -997,7 +997,7 @@ export default function TraderLab() {
                   rows={4}
                   value={form.fundamentalBacking}
                   onChange={(e) => updateField('fundamentalBacking', e.target.value)}
-                  placeholder="One line per fundamental pointâ€¦"
+                  placeholder="One line per fundamental point…"
                   aria-label="Fundamental backing"
                 />
               </div>
@@ -1027,11 +1027,11 @@ export default function TraderLab() {
                 className="tlab-textarea tlab-textarea--exec tlab-textarea--dock"
                 value={form.duringNotes}
                 onChange={(e) => updateField('duringNotes', e.target.value)}
-                placeholder="Live execution plan, scaling, desk notesâ€¦"
+                placeholder="Live execution plan, scaling, desk notes…"
               />
               <div className="tlab-exec-foot">
                 <span className="tlab-exec-meta">
-                  {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : 'â€”'}
+                  {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}
                 </span>
                 <button type="button" className="tlab-btn-save-notes" onClick={saveSession} disabled={saving}>
                   {saving ? 'SAVING...' : 'SAVE NOTES'}
@@ -1084,7 +1084,7 @@ export default function TraderLab() {
                 disabled={!readyToExecute || saving}
                 onClick={handleExecute}
               >
-                {saving ? 'â€¦' : 'EXECUTE'}
+                {saving ? '…' : 'EXECUTE'}
               </button>
             </div>
 
@@ -1161,7 +1161,7 @@ export default function TraderLab() {
               <div className="tlab-rr-big">
                 <span className="tlab-rr-label">Râˆ¶R ratio</span>
                 <span className="tlab-rr-value">
-                  1 : {Number.isFinite(rr) && rr > 0 ? rr.toFixed(2) : 'â€”'}
+                  1 : {Number.isFinite(rr) && rr > 0 ? rr.toFixed(2) : '—'}
                 </span>
               </div>
               <div className="tlab-metric-row">
@@ -1169,7 +1169,7 @@ export default function TraderLab() {
                 <strong>
                   {riskAmount > 0
                     ? new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(riskAmount)
-                    : 'â€”'}
+                    : '—'}
                 </strong>
               </div>
               <div className="tlab-metric-row">
@@ -1180,7 +1180,7 @@ export default function TraderLab() {
                 className={`tlab-validator-banner tlab-validator-banner--plan${validatorPanelOk ? ' tlab-validator-banner--ok' : ' tlab-validator-banner--bad'}`}
                 role="status"
               >
-                {validatorPanelOk ? 'âœ“ TRADE VALID' : 'BLOCKED â€” review checks'}
+                {validatorPanelOk ? '✓ TRADE VALID' : 'BLOCKED — review checks'}
               </div>
             </div>
 

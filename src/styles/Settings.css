@@ -1,5 +1,5 @@
 /* ============================================================
-   SETTINGS â€” Admin settings (journal navy / gold glass, scoped)
+   SETTINGS — Admin settings (journal navy / gold glass, scoped)
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -11,7 +11,7 @@
   box-sizing: border-box;
 }
 
-/* â”€â”€ Page + tokens (scoped â€” do not use :root) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Page + tokens (scoped — do not use :root) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .settings-page {
   --bg:              #010008;
   --bg-card:         rgba(3, 2, 10, 0.72);
@@ -392,7 +392,7 @@
   pointer-events: none;
 }
 
-/* Top shimmer sweep â€” matches feature-card treatment in home.css */
+/* Top shimmer sweep — matches feature-card treatment in home.css */
 .settings-content::after {
   content: '';
   position: absolute;
@@ -544,7 +544,7 @@
   padding-right: 0.4rem;
 }
 
-/* Custom scrollbar â€” matches home theme */
+/* Custom scrollbar — matches home theme */
 .users-list::-webkit-scrollbar { width: 3px; }
 .users-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 3px; }
 .users-list::-webkit-scrollbar-thumb {
@@ -573,7 +573,7 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 
-/* Left accent bar â€” same motif as stat-item in home.css */
+/* Left accent bar — same motif as stat-item in home.css */
 .user-item::before {
   content: '';
   position: absolute;
@@ -1151,7 +1151,7 @@
   .btn-primary, .btn-secondary, .btn-danger { width: 100%; justify-content: center; }
 }
 /* ============================================================
-   SETTINGS FILTERS PANEL PATCH â€” AURA TERMINAL™
+   SETTINGS FILTERS PANEL PATCH — AURA TERMINAL™
    Add this to the bottom of Settings.css
    ============================================================ */
 

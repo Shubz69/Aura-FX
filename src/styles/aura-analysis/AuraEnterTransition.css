@@ -36,7 +36,7 @@
   background: var(--aura-bg);
 }
 
-/* â”€â”€ Cosmic background â€” radial pulse matching .central-glow  */
+/* â”€â”€ Cosmic background — radial pulse matching .central-glow  */
 .aura-enter-cosmic {
   position: absolute;
   top: 50%;
@@ -61,7 +61,7 @@
   50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
 }
 
-/* â”€â”€ Starfield â€” subtle scattered dots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Starfield — subtle scattered dots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-starfield {
   position: absolute;
   inset: 0;
@@ -107,7 +107,7 @@
   to   { rotate: 360deg; }
 }
 
-/* â”€â”€ Galaxy items â€” matches GALAXY_ITEMS text tokens â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Galaxy items — matches GALAXY_ITEMS text tokens â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-galaxy-item {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -134,13 +134,13 @@
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
-  /* Frosted card â€” mirrors .feature-card glass */
+  /* Frosted card — mirrors .feature-card glass */
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--aura-border);
   border-radius: var(--aura-radius);
   padding: 2.25rem 3rem;
   backdrop-filter: blur(16px);
-  /* Top shimmer line â€” from .feature-card::before */
+  /* Top shimmer line — from .feature-card::before */
   position: relative;
   overflow: hidden;
 }
@@ -168,7 +168,7 @@
   pointer-events: none;
 }
 
-/* â”€â”€ Label â€” mirrors .loading-subtitle / .powered-by-glitch â”€ */
+/* â”€â”€ Label — mirrors .loading-subtitle / .powered-by-glitch â”€ */
 .aura-enter-loading-label {
   font-size: 0.72rem;
   font-weight: 300;
@@ -202,7 +202,7 @@
   width: 260px;
 }
 
-/* â”€â”€ Track â€” mirrors .stat-trend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Track — mirrors .stat-trend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-loading-track {
   width: 260px;
   height: 3px;
@@ -212,7 +212,7 @@
   position: relative;
 }
 
-/* â”€â”€ Fill â€” mirrors .stat-trend-fill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Fill — mirrors .stat-trend-fill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-loading-fill {
   height: 100%;
   border-radius: 99px;
@@ -226,7 +226,7 @@
   transition: width 0.12s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Shimmer sweep â€” mirrors @keyframes trendShimmer */
+/* Shimmer sweep — mirrors @keyframes trendShimmer */
 .aura-enter-loading-fill::after {
   content: '';
   position: absolute;
@@ -257,7 +257,7 @@
   letter-spacing: 0.18em;
   margin: 0;
   font-variant-numeric: tabular-nums;
-  /* Gradient text â€” mirrors .stat-number */
+  /* Gradient text — mirrors .stat-number */
   background: linear-gradient(125deg, #ffffff 30%, #c4b5fd 70%, #93c5fd 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

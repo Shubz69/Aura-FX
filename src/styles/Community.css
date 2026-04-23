@@ -1,5 +1,5 @@
 /* ============================================================
-   AURA TERMINAL™ Community â€” Rethemed to match Journal deep-space aesthetic
+   AURA TERMINAL™ Community — Rethemed to match Journal deep-space aesthetic
    Preserves ALL layout / responsiveness logic exactly.
    Only visual tokens (colors, borders, backgrounds, shadows,
    animations, typography accents) have been updated.
@@ -18,7 +18,7 @@
     --bg-card:        rgba(3, 2, 10, 0.70);
     --bg-card-h:      rgba(8, 6, 20, 0.85);
 
-    /* â”€â”€ Borders â€” white corner â†’ navy body â†’ gold whisper â”€â”€ */
+    /* â”€â”€ Borders — white corner â†’ navy body â†’ gold whisper â”€â”€ */
     --border:         rgba(255, 255, 255, 0.10);
     --border-h:       rgba(160, 185, 240, 0.28);
 
@@ -117,7 +117,7 @@
 }
 
 /* ============================================================
-   GLOBAL â€” DEEP SPACE BACKGROUND LAYERS
+   GLOBAL — DEEP SPACE BACKGROUND LAYERS
    ============================================================ */
 
 /* Deep nebula + star field on the page root */
@@ -281,7 +281,7 @@ body.community-page-active {
 }
 
 /* ============================================================
-   LEFT SIDEBAR â€” glass panel treatment
+   LEFT SIDEBAR — glass panel treatment
    ============================================================ */
 
 .community-sidebar {
@@ -304,7 +304,7 @@ body.community-page-active {
     -webkit-backdrop-filter: blur(20px);
 }
 
-/* Top rim line â€” journal signature */
+/* Top rim line — journal signature */
 .community-sidebar::before {
     content: '';
     position: absolute;
@@ -320,7 +320,7 @@ body.community-page-active {
     z-index: 2;
 }
 
-/* Corner nebula glow â€” same as journal sidebar::after */
+/* Corner nebula glow — same as journal sidebar::after */
 .community-sidebar::after {
     content: '';
     position: absolute;
@@ -788,7 +788,7 @@ body.community-page-active {
 }
 
 /* ============================================================
-   CHAT INPUT â€” same safe-area logic, journal visual treatment
+   CHAT INPUT — same safe-area logic, journal visual treatment
    ============================================================ */
 
 .chat-input-container {
@@ -903,7 +903,7 @@ body.community-page-active {
 .chat-input-btn:active:not(:disabled) { transform: translateY(0) scale(0.94) !important; }
 .chat-input-btn:disabled { opacity: 0.28 !important; cursor: not-allowed !important; transform: none !important; }
 
-/* Send button â€” journal CTA style */
+/* Send button — journal CTA style */
 .send-btn {
     flex-shrink: 0 !important;
     align-self: flex-end !important;
@@ -981,7 +981,7 @@ body.community-page-active {
 .journal-floating-btn:active { transform: scale(0.92) !important; animation-play-state: paused !important; }
 
 /* ============================================================
-   EMOJI & GIF PICKERS â€” glass panel treatment
+   EMOJI & GIF PICKERS — glass panel treatment
    ============================================================ */
 
 .mention-autocomplete {
@@ -1126,7 +1126,7 @@ body.community-page-active {
 }
 
 /* ============================================================
-   MANAGE CHANNELS MODAL â€” journal glass panel
+   MANAGE CHANNELS MODAL — journal glass panel
    ============================================================ */
 
 div[style*="position: fixed"][style*="inset: 0"][style*="padding: 20px"],
@@ -1463,7 +1463,7 @@ body.sidebar-open-mobile {
 }
 
 /* ============================================================
-   JOURNAL MODAL â€” updated to space/navy palette
+   JOURNAL MODAL — updated to space/navy palette
    ============================================================ */
 
 @keyframes jm-overlayIn  { from{opacity:0} to{opacity:1} }

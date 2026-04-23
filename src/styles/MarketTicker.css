@@ -1,5 +1,5 @@
 /**
- * MarketTicker CSS â€” AURA TERMINAL™ Premium v3
+ * MarketTicker CSS — AURA TERMINAL™ Premium v3
  * Full redesign: aligned with home.css gold system, glass language,
  * spatial layers, motion, and typography conventions.
  */
@@ -90,7 +90,7 @@
 }
 
 /* ============================================================================
-   STALE STATUS BADGE â€” matches hero-eyebrow pill style
+   STALE STATUS BADGE — matches hero-eyebrow pill style
    ============================================================================ */
 
 .ticker-status {
@@ -132,7 +132,7 @@
 }
 
 /* ============================================================================
-   CATEGORY TABS â€” matches hero-eyebrow pill language from home.css
+   CATEGORY TABS — matches hero-eyebrow pill language from home.css
    ============================================================================ */
 
 .ticker-categories {
@@ -215,7 +215,7 @@
 }
 
 /* ============================================================================
-   TICKER TAPE CONTAINER â€” glass-card style from home.css
+   TICKER TAPE CONTAINER — glass-card style from home.css
    ============================================================================ */
 
 .stock-ticker-compact {
@@ -235,7 +235,7 @@
   position: relative;
 }
 
-/* Top shimmer line â€” mirrors glass-card::before in home.css */
+/* Top shimmer line — mirrors glass-card::before in home.css */
 .stock-ticker-compact::before {
   content: '';
   position: absolute;
@@ -250,7 +250,7 @@
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
-/* Diagonal texture overlay â€” mirrors stat-item::after */
+/* Diagonal texture overlay — mirrors stat-item::after */
 .stock-ticker-compact::after {
   content: '';
   position: absolute;
@@ -264,7 +264,7 @@
   border-radius: var(--radius-lg);
 }
 
-/* Left gold accent bar â€” mirrors stat-item::before */
+/* Left gold accent bar — mirrors stat-item::before */
 .stock-ticker-compact .ticker-accent-bar {
   position: absolute;
   left: 0; top: 18%; bottom: 18%;
@@ -325,7 +325,7 @@
 }
 
 /* ============================================================================
-   INDIVIDUAL TICKER ITEM â€” refined card style
+   INDIVIDUAL TICKER ITEM — refined card style
    ============================================================================ */
 
 .ticker-item {
@@ -385,7 +385,7 @@
 }
 
 /* ============================================================================
-   FLASH ANIMATIONS â€” gold-aware
+   FLASH ANIMATIONS — gold-aware
    ============================================================================ */
 
 .ticker-item.flash-green {
@@ -429,7 +429,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.10em;
   text-transform: uppercase;
-  /* Gradient text â€” mirrors brand-name-line gradient in home.css */
+  /* Gradient text — mirrors brand-name-line gradient in home.css */
   background: linear-gradient(112deg, var(--eaa-pale) 0%, var(--eaa-bright) 55%, var(--eaa-core) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -510,7 +510,7 @@
 }
 
 /* ============================================================================
-   VIEW ALL MARKETS BUTTON â€” matches home-secondary-button style
+   VIEW ALL MARKETS BUTTON — matches home-secondary-button style
    ============================================================================ */
 
 .view-all-markets-btn {
@@ -570,7 +570,7 @@
 .view-all-markets-btn:active { transform: translateY(-1px); }
 
 /* ============================================================================
-   MODAL OVERLAY â€” premium backdrop
+   MODAL OVERLAY — premium backdrop
    ============================================================================ */
 
 .market-modal-overlay {
@@ -594,7 +594,7 @@
   to   { opacity: 1; }
 }
 
-/* Central ambient glow â€” mirrors ipad-scene::before radial in home.css */
+/* Central ambient glow — mirrors ipad-scene::before radial in home.css */
 .market-modal-overlay::before {
   content: '';
   position: absolute;
@@ -611,7 +611,7 @@
   animation: glowPulse 7s ease-in-out infinite;
 }
 
-/* Outer ring â€” mirrors loading-content::before */
+/* Outer ring — mirrors loading-content::before */
 .market-modal-overlay::after {
   content: '';
   position: absolute;
@@ -636,7 +636,7 @@
 }
 
 /* ============================================================================
-   MODAL CONTAINER â€” mirrors feature-card + stat-item glass language
+   MODAL CONTAINER — mirrors feature-card + stat-item glass language
    ============================================================================ */
 
 .market-modal {
@@ -666,7 +666,7 @@
   overscroll-behavior: contain;
 }
 
-/* Top shimmer line â€” mirrors glass-card::before */
+/* Top shimmer line — mirrors glass-card::before */
 .market-modal::before {
   content: '';
   position: absolute;
@@ -681,7 +681,7 @@
   pointer-events: none;
 }
 
-/* Diagonal grid texture â€” mirrors stat-item::after */
+/* Diagonal grid texture — mirrors stat-item::after */
 .market-modal::after {
   content: '';
   position: absolute;
@@ -716,7 +716,7 @@
   z-index: 3;
 }
 
-/* Left gold accent bar â€” mirrors stat-item::before */
+/* Left gold accent bar — mirrors stat-item::before */
 .market-modal-header::before {
   content: '';
   position: absolute;
@@ -730,7 +730,7 @@
   opacity: 0.70;
 }
 
-/* Gold separator line under header â€” matches section-title::before */
+/* Gold separator line under header — matches section-title::before */
 .market-modal-header::after {
   content: '';
   position: absolute;
@@ -754,7 +754,7 @@
   font-weight: 700;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  /* Gradient text â€” mirrors brand-name in home.css */
+  /* Gradient text — mirrors brand-name in home.css */
   background: linear-gradient(130deg,
     #FFFFFF 18%,
     var(--eaa-bright) 54%,
@@ -854,7 +854,7 @@
 }
 
 /* ============================================================================
-   MARKET GROUPS â€” matches section-title convention from home.css
+   MARKET GROUPS — matches section-title convention from home.css
    ============================================================================ */
 
 .market-group {
@@ -878,7 +878,7 @@
   position: relative;
 }
 
-/* Full-width gold gradient underline â€” mirrors section-title::before */
+/* Full-width gold gradient underline — mirrors section-title::before */
 .market-group-title::after {
   content: '';
   position: absolute;
@@ -912,7 +912,7 @@
 }
 
 /* ============================================================================
-   MARKET ITEM CARDS â€” mirrors feature-card / stat-item glass style
+   MARKET ITEM CARDS — mirrors feature-card / stat-item glass style
    ============================================================================ */
 
 .market-item {
@@ -934,7 +934,7 @@
   box-shadow: var(--glass-shadow);
 }
 
-/* Radial inner glow â€” mirrors feature-card::after */
+/* Radial inner glow — mirrors feature-card::after */
 .market-item::before {
   content: '';
   position: absolute;
@@ -1073,7 +1073,7 @@
 }
 
 /* ============================================================================
-   COSMIC DIVIDER in modal â€” matches home.css cosmic-divider
+   COSMIC DIVIDER in modal — matches home.css cosmic-divider
    ============================================================================ */
 
 .market-group-divider {

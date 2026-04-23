@@ -1,5 +1,5 @@
 /* =============================================================================
-   ADMIN INBOX â€” Aura Terminal™
+   ADMIN INBOX — Aura Terminal™
    Matches OperatorJournalGlass + OperatorTheme gold system exactly.
    Import after AuraShared.css
    ============================================================================= */
@@ -64,7 +64,7 @@
   overflow: hidden;
 }
 
-/* Gold shimmer top line â€” identical to .aura-card::before */
+/* Gold shimmer top line — identical to .aura-card::before */
 .admin-inbox-sidebar::before,
 .admin-inbox-main::before {
   content: '';
@@ -532,7 +532,7 @@
   position: relative;
 }
 
-/* Admin / own bubble â€” gold glass */
+/* Admin / own bubble — gold glass */
 .admin-inbox-message-row.own .admin-inbox-message-bubble {
   background: rgba(234, 169, 96, 0.12);
   border: 1px solid rgba(234, 169, 96, 0.28);
@@ -543,7 +543,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* User bubble â€” subtle glass */
+/* User bubble — subtle glass */
 .admin-inbox-message-row.other .admin-inbox-message-bubble {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.07);
@@ -672,7 +672,7 @@
   cursor: not-allowed;
 }
 
-/* Send button â€” matches .acc-btn--primary */
+/* Send button — matches .acc-btn--primary */
 .admin-inbox-send-btn {
   padding: 9px 18px !important;
   border-radius: 9px !important;

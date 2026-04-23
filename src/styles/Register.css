@@ -1,5 +1,5 @@
 /* ============================================================
-   REGISTER.CSS â€” AURA TERMINAL™ | Registration Page - FIXED SCROLLING
+   REGISTER.CSS — AURA TERMINAL™ | Registration Page - FIXED SCROLLING
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -550,7 +550,7 @@ html, body {
 }
 
 .color-option.selected::after {
-    content: 'âœ“';
+    content: '✓';
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);

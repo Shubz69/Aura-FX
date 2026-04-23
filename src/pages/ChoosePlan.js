@@ -196,9 +196,9 @@ const ChoosePlan = () => {
           }}
         >
           <strong style={{ color: '#eaa960' }}>Reports &amp; broker metrics:</strong>{' '}
-          <strong>Premium (AURA TERMINAL™)</strong> includes monthly report PDFs (<strong>Performance &amp; DNA</strong>, <code style={{ fontSize: '13px', opacity: 0.9 }}>/reports</code>) â€” add your MT5 trade history via CSV on{' '}
+          <strong>Premium (AURA TERMINAL™)</strong> includes monthly report PDFs (<strong>Performance &amp; DNA</strong>, <code style={{ fontSize: '13px', opacity: 0.9 }}>/reports</code>) — add your MT5 trade history via CSV on{' '}
           <strong>Manual metrics</strong> (<code style={{ fontSize: '13px', opacity: 0.9 }}>/manual-metrics</code>) or <strong>Aura Analysis â†’ Connection Hub</strong>.{' '}
-          <strong>Elite (A7FX)</strong> gets <strong>Aura Analysis</strong> with live, automatic platform metrics (no CSV for analysis), and monthly reports are compiled automatically â€” no CSV upload.
+          <strong>Elite (A7FX)</strong> gets <strong>Aura Analysis</strong> with live, automatic platform metrics (no CSV for analysis), and monthly reports are compiled automatically — no CSV upload.
         </p>
 
         {error && (
@@ -247,7 +247,7 @@ const ChoosePlan = () => {
               <li>âœ… Weekly Briefs</li>
               <li>âœ… Premium AURA AI</li>
               <li>âœ… Advanced trading strategies</li>
-              <li>âœ… Monthly Reports â€” MT5 sections via CSV upload on Monthly Reports (/reports)</li>
+              <li>âœ… Monthly Reports — MT5 sections via CSV upload on Monthly Reports (/reports)</li>
             </ul>
             <button className="subscription-plan-button premium" onClick={handleSelectPremium}>
               Select Premium Plan
@@ -267,8 +267,8 @@ const ChoosePlan = () => {
               <li>âœ… Daily Briefs</li>
               <li>âœ… Weekly Briefs</li>
               <li>âœ… Premium AURA AI</li>
-              <li>âœ… Aura Analysis â€” full platform; live metrics from MT5 (no CSV needed)</li>
-              <li>âœ… Monthly report PDFs â€” fully automated (no CSV)</li>
+              <li>âœ… Aura Analysis — full platform; live metrics from MT5 (no CSV needed)</li>
+              <li>âœ… Monthly report PDFs — fully automated (no CSV)</li>
             </ul>
             <button className="subscription-plan-button elite" onClick={handleSelectElite}>
               Select Elite Plan

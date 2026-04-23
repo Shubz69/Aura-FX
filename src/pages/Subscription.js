@@ -45,7 +45,7 @@ const PLANS = {
             'Exclusive market insights and expert commentary',
             'Weekly Briefs',
             'Premium AURA AI',
-            'Monthly report PDFs: MT5 broker metrics via CSV on Performance & DNA (/reports) â€” not an Aura Analysis tab'
+            'Monthly report PDFs: MT5 broker metrics via CSV on Performance & DNA (/reports) — not an Aura Analysis tab'
         ],
         paymentLink: STRIPE_PAYMENT_LINK_AURA,
         isElite: false
@@ -66,8 +66,8 @@ const PLANS = {
             'Daily Briefs',
             'Weekly Briefs',
             'Premium AURA AI',
-            'Aura Analysis: full platform â€” live metrics and dashboards with automatic MT5-linked data (no CSV for analysis)',
-            'Monthly Reports: fully automated on /reports â€” no CSV upload'
+            'Aura Analysis: full platform — live metrics and dashboards with automatic MT5-linked data (no CSV for analysis)',
+            'Monthly Reports: fully automated on /reports — no CSV upload'
         ],
         paymentLink: STRIPE_PAYMENT_LINK_A7FX,
         isElite: true
@@ -281,7 +281,7 @@ const Subscription = () => {
                         month: 'short', 
                         year: 'numeric' 
                     })}
-                    {targetName && <span> Â· Then switching to {targetName}</span>}
+                    {targetName && <span> · Then switching to {targetName}</span>}
                 </div>
             );
         }
@@ -700,7 +700,7 @@ const Subscription = () => {
                         {' '}and optional <strong>MT5 CSV snapshot</strong> under{' '}
                         <a href="/manual-metrics" style={{ color: '#f8c37d', textDecoration: 'underline' }}>Manual metrics</a> or{' '}
                         <a href="/aura-analysis/ai" style={{ color: '#f8c37d', textDecoration: 'underline' }}>Connection Hub</a> for broker sections in your PDF.
-                        {' '}<strong>Elite</strong> adds <strong>Aura Analysis</strong> with <strong>automatic</strong> platform + MT5-linked metrics â€” no CSV for live analysis â€” and <strong>fully automated</strong> monthly reports.
+                        {' '}<strong>Elite</strong> adds <strong>Aura Analysis</strong> with <strong>automatic</strong> platform + MT5-linked metrics — no CSV for live analysis — and <strong>fully automated</strong> monthly reports.
                     </p>
                 </div>
 
@@ -734,8 +734,8 @@ const Subscription = () => {
                                     You can either:
                                 </p>
                                 <ul className="downgrade-modal-list">
-                                    <li><strong>End now</strong> â€“ Your subscription ends immediately. No refund for the unused period. You will have access only to the plan you switch to.</li>
-                                    <li><strong>At end of period</strong> â€“ Keep your current access until your subscription end date, then switch automatically to {(downgradeTargetPlanId === 'free' || downgradeTargetPlanId === 'access') ? 'Access' : 'AURA TERMINAL™'}.</li>
+                                    <li><strong>End now</strong> – Your subscription ends immediately. No refund for the unused period. You will have access only to the plan you switch to.</li>
+                                    <li><strong>At end of period</strong> – Keep your current access until your subscription end date, then switch automatically to {(downgradeTargetPlanId === 'free' || downgradeTargetPlanId === 'access') ? 'Access' : 'AURA TERMINAL™'}.</li>
                                 </ul>
                                 {downgradeError && <div className="downgrade-modal-error" role="alert">{downgradeError}</div>}
                                 {downgradeSubmitting && <p className="downgrade-modal-message" style={{ marginBottom: 8 }}>Processing...</p>}
@@ -773,7 +773,7 @@ const Subscription = () => {
 
                 {showCardForm && planForCard && PLANS[planForCard] && (
                     <div className="subscription-card-form" style={{ marginTop: 24, padding: 24, background: 'rgba(0,0,0,0.2)', borderRadius: 12 }}>
-                        <h3 style={{ marginTop: 0, marginBottom: 8 }}>Pay with card â€“ {PLANS[planForCard].name}</h3>
+                        <h3 style={{ marginTop: 0, marginBottom: 8 }}>Pay with card – {PLANS[planForCard].name}</h3>
                         <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 16 }}>
                             {PLANS[planForCard].currency}{PLANS[planForCard].price}{PLANS[planForCard].period}
                         </p>

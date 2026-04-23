@@ -4,12 +4,12 @@ import Api from '../../services/Api';
 import { toast } from 'react-toastify';
 
 function fmtPct(x) {
-  if (x == null || Number.isNaN(Number(x))) return 'â€”';
+  if (x == null || Number.isNaN(Number(x))) return '—';
   return `${(Number(x) * 100).toFixed(1)}%`;
 }
 
 function fmtNum(x, d = 2) {
-  if (x == null || Number.isNaN(Number(x))) return 'â€”';
+  if (x == null || Number.isNaN(Number(x))) return '—';
   return Number(x).toFixed(d);
 }
 
@@ -73,7 +73,7 @@ export default function BacktestingHub() {
         <p className="bt-hero-kicker">Aura Terminal™</p>
         <h1 className="bt-hero-title">Backtesting</h1>
         <p className="bt-hero-sub">
-          Measure edge on historical data: execution quality, playbook performance, and discipline signals â€” before capital hits the market.
+          Measure edge on historical data: execution quality, playbook performance, and discipline signals — before capital hits the market.
         </p>
         <div className="bt-hero-actions">
           <Link to="/backtesting/new" className="bt-btn bt-btn--primary">
@@ -100,7 +100,7 @@ export default function BacktestingHub() {
       {loading ? (
         <div className="aa-loading" style={{ padding: '48px 0' }}>
           <span className="aa-spinner" aria-hidden />
-          Loading backtesting intelligenceâ€¦
+          Loading backtesting intelligence…
         </div>
       ) : !hasData ? (
         <div className="aa-card aa-card--accent" style={{ marginBottom: 20 }}>
@@ -109,7 +109,7 @@ export default function BacktestingHub() {
             Start your first run
           </h2>
           <p className="aa--muted" style={{ fontSize: '0.88rem', lineHeight: 1.55, margin: '0 0 16px' }}>
-            You have not logged backtest trades yet. Create a session, step through replay, and record trades with checklist and playbook metadata â€”
+            You have not logged backtest trades yet. Create a session, step through replay, and record trades with checklist and playbook metadata —
             your hub will populate with win rate, profit factor, session edge, and deterministic insights tied to real outcomes.
           </p>
           <Link to="/backtesting/new" className="bt-btn bt-btn--primary">
@@ -130,8 +130,8 @@ export default function BacktestingHub() {
               ['Expectancy / trade', fmtNum(summary?.expectancy)],
               ['Net PnL (all)', fmtNum(summary?.netPnl)],
               ['Max drawdown', fmtNum(summary?.maxDrawdown)],
-              ['Best instrument', summary?.bestInstrument || 'â€”'],
-              ['Best session', summary?.bestSession || 'â€”'],
+              ['Best instrument', summary?.bestInstrument || '—'],
+              ['Best session', summary?.bestSession || '—'],
               ['Win streak', `${summary?.currentStreak ?? 0}W`],
               ['Hours in sim', fmtNum(summary?.totalBacktestingHours, 1)],
             ].map(([label, val]) => (
@@ -156,7 +156,7 @@ export default function BacktestingHub() {
                     </span>
                   </p>
                   <p className="aa--muted" style={{ margin: '8px 0 0', fontSize: '0.8rem' }}>
-                    Replay position and notebook auto-save stay attached â€” open the workspace to continue.
+                    Replay position and notebook auto-save stay attached — open the workspace to continue.
                   </p>
                 </div>
                 <Link className="bt-btn bt-btn--primary" to={`/backtesting/session/${summary.activeSession.id}`}>
@@ -231,7 +231,7 @@ export default function BacktestingHub() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {hub.topTags.map((t) => (
                     <span key={t.name} className="aa-pill aa-pill--dim" title={`Expectancy ${fmtNum(t.expectancy)}`}>
-                      {t.name} Â· {t.tradeCount}t
+                      {t.name} · {t.tradeCount}t
                     </span>
                   ))}
                 </div>
@@ -273,16 +273,16 @@ export default function BacktestingHub() {
                 <span>Longs</span>
                 <strong>
                   {hub?.longVsShort?.long
-                    ? `${hub.longVsShort.long.trades} Â· ${fmtNum(hub.longVsShort.long.netPnl)} Â· ${fmtPct(hub.longVsShort.long.winRate)} WR`
-                    : 'â€”'}
+                    ? `${hub.longVsShort.long.trades} · ${fmtNum(hub.longVsShort.long.netPnl)} · ${fmtPct(hub.longVsShort.long.winRate)} WR`
+                    : '—'}
                 </strong>
               </div>
               <div className="bt-stat-mini">
                 <span>Shorts</span>
                 <strong>
                   {hub?.longVsShort?.short
-                    ? `${hub.longVsShort.short.trades} Â· ${fmtNum(hub.longVsShort.short.netPnl)} Â· ${fmtPct(hub.longVsShort.short.winRate)} WR`
-                    : 'â€”'}
+                    ? `${hub.longVsShort.short.trades} · ${fmtNum(hub.longVsShort.short.netPnl)} · ${fmtPct(hub.longVsShort.short.winRate)} WR`
+                    : '—'}
                 </strong>
               </div>
               {hub?.weakestSetup && (
@@ -360,7 +360,7 @@ export default function BacktestingHub() {
                         <td>{p.name}</td>
                         <td className="aa-table-num">{p.sessions}</td>
                         <td className="aa-table-num">{p.trades}</td>
-                        <td className="aa-table-num">{p.winRate != null ? fmtPct(p.winRate) : 'â€”'}</td>
+                        <td className="aa-table-num">{p.winRate != null ? fmtPct(p.winRate) : '—'}</td>
                         <td className="aa-table-num">{p.net.toFixed(2)}</td>
                       </tr>
                     ))}

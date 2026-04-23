@@ -1,5 +1,5 @@
 /* ============================================================
-   PRIVACY.CSS â€” AURA TERMINAL™ | Matched to Home Theme
+   PRIVACY.CSS — AURA TERMINAL™ | Matched to Home Theme
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -243,7 +243,7 @@
     position: relative;
 }
 
-/* Custom bullet â€” tiny purple dot */
+/* Custom bullet — tiny purple dot */
 .privacy-body li::before {
     content: '';
     position: absolute;

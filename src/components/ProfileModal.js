@@ -573,7 +573,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         ))}
                     </div>
                 </div>
-                {settingsLoading && <div style={{ textAlign: 'center', padding: '12px', color: 'rgba(234,169,96,0.7)', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif" }}>Savingâ€¦</div>}
+                {settingsLoading && <div style={{ textAlign: 'center', padding: '12px', color: 'rgba(234,169,96,0.7)', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif" }}>Saving…</div>}
             </div>
         </div>
     );
@@ -604,7 +604,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 {/* Top shimmer line */}
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}80, rgba(248,195,125,0.5), transparent)`, borderRadius: '22px 22px 0 0', zIndex: 10 }} />
 
-                {/* Action Buttons â€” all icon-only, uniform 38Ã—38 squares */}
+                {/* Action Buttons — all icon-only, uniform 38Ã—38 squares */}
                 <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px', zIndex: 20 }}>
                     {isOwnProfile && (
                         <button onClick={() => setShowSettings(true)} title="Settings" style={{
@@ -618,7 +618,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         <button
                             onClick={() => friendBtn.action && handleFriendAction(friendBtn.action)}
                             disabled={friendLoading}
-                            title={`${friendBtn.text} â€” ${friendBtn.subtext}`}
+                            title={`${friendBtn.text} — ${friendBtn.subtext}`}
                             style={{
                                 background: `${friendBtn.color}14`,
                                 border: `1px solid ${friendBtn.color}50`,
@@ -721,7 +721,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '5px 14px', background: `${tierColor}12`, border: `1px solid ${tierColor}30`, borderRadius: '99px' }}>
                             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: tierColor, animation: 'dotPulse 2s ease-in-out infinite alternate' }} />
                             <span style={{ fontSize: '0.65rem', fontWeight: 500, color: tierColor, textTransform: 'uppercase', letterSpacing: '0.24em', fontFamily: "'Space Grotesk', sans-serif" }}>{rankTitle}</span>
-                            <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', fontFamily: "'Space Grotesk', sans-serif" }}>Â· {tierName}</span>
+                            <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', fontFamily: "'Space Grotesk', sans-serif" }}>· {tierName}</span>
                         </div>
                     </div>
                 </div>
@@ -758,7 +758,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 &ldquo;
                             </div>
                             
-                            {/* Quote icon â€” fixed circle (avoid stretched oval from flex) */}
+                            {/* Quote icon — fixed circle (avoid stretched oval from flex) */}
                             <div style={{
                                 flexShrink: 0,
                                 width: 32,
@@ -916,7 +916,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                         </div>
                                         <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '0.04em', lineHeight: 1.45 }}>
                                             Subscription view: <span style={{ color: tierColor }}>{formatMembershipLabel('USER', tierUpper)}</span>
-                                            {tierName ? <span style={{ color: 'rgba(255,255,255,0.35)' }}> Â· XP rank {tierName}</span> : null}
+                                            {tierName ? <span style={{ color: 'rgba(255,255,255,0.35)' }}> · XP rank {tierName}</span> : null}
                                         </div>
                                     </div>
                                 ) : (
@@ -950,7 +950,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                         <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', minWidth: '72px' }}>
                                             <div style={{ width: 48, height: 48, borderRadius: '50%', background: `conic-gradient(${tierColor} 0deg, #f8c37d ${(item.pct ?? 0) * 3.6}deg, rgba(255,255,255,0.06) ${(item.pct ?? 0) * 3.6}deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                                                 <div style={{ position: 'absolute', inset: 3, borderRadius: '50%', background: '#0a0a12' }} />
-                                                <span style={{ position: 'relative', zIndex: 1, fontSize: '0.7rem', fontWeight: 500, color: '#fff', fontFamily: "'Space Grotesk', sans-serif" }}>{item.pct != null ? `${item.pct}%` : 'â€”'}</span>
+                                                <span style={{ position: 'relative', zIndex: 1, fontSize: '0.7rem', fontWeight: 500, color: '#fff', fontFamily: "'Space Grotesk', sans-serif" }}>{item.pct != null ? `${item.pct}%` : '—'}</span>
                                             </div>
                                             <span style={{ fontSize: '0.52rem', color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase', letterSpacing: '0.18em', fontFamily: "'Space Grotesk', sans-serif" }}>{item.label}</span>
                                         </div>
@@ -958,7 +958,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 </div>
                             )}
 
-                            {/* Stat tiles â€” compact horizontal rows, no stretched grid cells */}
+                            {/* Stat tiles — compact horizontal rows, no stretched grid cells */}
                             <div
                                 className="pm-overview-stat-grid"
                                 style={{

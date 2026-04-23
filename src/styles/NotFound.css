@@ -1,5 +1,5 @@
 /* ============================================================
-   404 NOT FOUND â€” AURA TERMINAL™  |  Theme-Aligned
+   404 NOT FOUND — AURA TERMINAL™  |  Theme-Aligned
    ============================================================ */
 
 /* â”€â”€ Page Wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -17,7 +17,7 @@
   font-family: 'Space Grotesk', sans-serif;
 }
 
-/* Ambient glow orb â€” matches home.css */
+/* Ambient glow orb — matches home.css */
 .not-found-container::before {
   content: '';
   position: fixed;
@@ -122,7 +122,7 @@
   animation: glitchSkew 3s infinite linear alternate-reverse;
 }
 
-/* Glitch colour layers â€” purple + blue to match theme */
+/* Glitch colour layers — purple + blue to match theme */
 .glitch::before {
   content: attr(data-text);
   position: absolute;
@@ -196,7 +196,7 @@
   height: 64px;
 }
 
-/* Glow halo behind button â€” purple+blue matching theme */
+/* Glow halo behind button — purple+blue matching theme */
 .portal-effect {
   position: absolute;
   inset: 0;
@@ -217,7 +217,7 @@
   50%       { opacity: 1;   transform: scale(1.12); }
 }
 
-/* Return home button â€” matches home-cta-button exactly */
+/* Return home button — matches home-cta-button exactly */
 .return-home-button {
   display: inline-flex;
   align-items: center;

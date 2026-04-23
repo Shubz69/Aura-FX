@@ -1,5 +1,5 @@
 /* ============================================================
-   HOME.CSS â€” AURA TERMINAL™ | Premium Redesign v2
+   HOME.CSS — AURA TERMINAL™ | Premium Redesign v2
    Enhanced: refined gold system, premium typography, deeper
    spatial layers, smoother transitions, polished components
    + Dashboard Card (replaces iPad) + Touch 3D rotation
@@ -17,7 +17,7 @@
     --border:        rgba(255, 255, 255, 0.072);
     --border-h:      rgba(255, 255, 255, 0.14);
 
-    /* Gold system â€” more nuanced tiers */
+    /* Gold system — more nuanced tiers */
     --eaa-core:      #EAA960;
     --eaa-bright:    #F8C37D;
     --eaa-warm:      #D48D44;
@@ -458,7 +458,7 @@ html, body {
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    DASHBOARD CARD SCENE
-   Replaces the iPad â€” matches reference image:
+   Replaces the iPad — matches reference image:
    a sleek, glassy trading terminal card with
    3D tilt, touch rotation, and image slideshow.
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
@@ -489,7 +489,7 @@ html, body {
     transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* â”€â”€ Dashboard Card Body â€” replaces ipad-body â”€â”€ */
+/* â”€â”€ Dashboard Card Body — replaces ipad-body â”€â”€ */
 .ipad-body {
     width: 100%;
     border-radius: 20px;
@@ -506,7 +506,7 @@ html, body {
     overflow: hidden;
 }
 
-/* Top shimmer line â€” gold-tinted glass edge */
+/* Top shimmer line — gold-tinted glass edge */
 .ipad-body::before {
     content: '';
     position: absolute; top: 0; left: 0; right: 0;
@@ -920,7 +920,7 @@ html, body {
         }
     }
 }
-/* â”€â”€ Bottom stats bar â€” matches reference image â”€â”€ */
+/* â”€â”€ Bottom stats bar — matches reference image â”€â”€ */
 .ipad-dots {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1008,7 +1008,7 @@ html, body {
     box-shadow: 0 0 6px rgba(80,140,255,.24);
 }
 
-/* Active indicator â€” thin gold line at top of active stat */
+/* Active indicator — thin gold line at top of active stat */
 .ipad-dot.active::after {
     content: '';
     position: absolute; top: 0; left: 10%; right: 10%; height: 2px;
@@ -1016,7 +1016,7 @@ html, body {
     border-radius: 0 0 2px 2px;
 }
 
-/* â”€â”€ Physical sides â€” glassy/translucent â”€â”€ */
+/* â”€â”€ Physical sides — glassy/translucent â”€â”€ */
 .ipad-wrap::before {
     content: '';
     position: absolute; left: 1%; right: 0%; top: 100%;
@@ -1111,7 +1111,7 @@ html, body {
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   TOUCH 3D ROTATION â€” JS HOOK CLASSES
+   TOUCH 3D ROTATION — JS HOOK CLASSES
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @media (hover: none) and (pointer: coarse) {
     .ipad-scene {
@@ -1748,7 +1748,7 @@ html, body {
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   SLIDE IMAGE â€” always fully visible
+   SLIDE IMAGE — always fully visible
    Uses <img> with object-fit: contain so any
    image size / aspect ratio fits without cropping.
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
@@ -3194,7 +3194,7 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 1.15rem;
-    /* Ensure desk copy never inherits dark body text â€” match gold / white terminal theme */
+    /* Ensure desk copy never inherits dark body text — match gold / white terminal theme */
     --text: #f4f5fb;
     --text-muted: rgba(235, 236, 245, 0.78);
     --text-dim: rgba(232, 210, 175, 0.58);
@@ -3794,7 +3794,7 @@ html, body {
     flex-shrink: 0;
 }
 
-/* Live metrics â€” optional frosted lock when no MT link (Aura Analysis) */
+/* Live metrics — optional frosted lock when no MT link (Aura Analysis) */
 .terminal-metrics-shell {
     position: relative;
     min-height: 5.5rem;
@@ -4203,7 +4203,7 @@ html, body {
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   LOGGED-IN HOME â€” condensed 3-column terminal desk
+   LOGGED-IN HOME — condensed 3-column terminal desk
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .home-desk2 {
     width: 100%;

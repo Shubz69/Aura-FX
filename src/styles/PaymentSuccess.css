@@ -1,5 +1,5 @@
 /* ============================================================
-   PAYMENT SUCCESS â€” AURA TERMINAL™  |  Theme-Aligned
+   PAYMENT SUCCESS — AURA TERMINAL™  |  Theme-Aligned
    ============================================================ */
 
 /* â”€â”€ Page Wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -251,7 +251,7 @@
   z-index: 1;
 }
 
-/* Primary â€” filled gradient pill (matches home-cta-button) */
+/* Primary — filled gradient pill (matches home-cta-button) */
 .primary-button {
   padding: 0.95rem 2.2rem;
   font-family: 'Space Grotesk', sans-serif;
@@ -292,7 +292,7 @@
   box-shadow: 0 0 22px rgba(234,169,96,0.3);
 }
 
-/* Secondary â€” outlined pill */
+/* Secondary — outlined pill */
 .secondary-button {
   padding: 0.95rem 2.2rem;
   font-family: 'Space Grotesk', sans-serif;

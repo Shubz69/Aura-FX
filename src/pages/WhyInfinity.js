@@ -22,13 +22,13 @@ const typicalItems = [
 
 const auraItems = [
     "Decision-making, risk, and deep market understanding",
-    "Full transparency â€” real trades, real accounts, live execution",
+    "Full transparency — real trades, real accounts, live execution",
     "Frameworks adaptable across all market conditions",
     "Technical, fundamental, macro, and geopolitical coverage",
-    "Live on Twitch â€” unfiltered, unedited market execution",
+    "Live on Twitch — unfiltered, unedited market execution",
     "Multi-level structured education across all asset classes",
     "Risk-first institutional trading principles at every level",
-    "AI intelligence, analysis, education & community â€” one platform",
+    "AI intelligence, analysis, education & community — one platform",
     "Professional moderation, structure, and full accountability",
 ];
 
@@ -56,7 +56,7 @@ const VSCard = ({ type, items }) => {
                 {items.map((text, i) => (
                     <li key={i} className="vs-list__item">
                         <span className="vs-list__bullet">
-                            {isTypical ? "âœ•" : "âœ“"}
+                            {isTypical ? "âœ•" : "✓"}
                         </span>
                         {text}
                     </li>
@@ -296,17 +296,17 @@ const WhyInfinity = () => {
                     <h2 className="why-section-heading">AURA TERMINAL™ vs Typical Trading Communities</h2>
 
                     <div className="vs-grid">
-                        {/* Left â€” Typical */}
+                        {/* Left — Typical */}
                         <VSCard type="typical" items={typicalItems} />
 
-                        {/* Centre â€” VS badge */}
+                        {/* Centre — VS badge */}
                         <div className="vs-divider">
                             <div className="vs-line" />
                             <div className="vs-badge">VS</div>
                             <div className="vs-line" />
                         </div>
 
-                        {/* Right â€” AURA TERMINAL™ */}
+                        {/* Right — AURA TERMINAL™ */}
                         <VSCard type="aura" items={auraItems} />
                     </div>
                 </div>

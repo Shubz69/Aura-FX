@@ -1,6 +1,6 @@
 /* ============================================================
-   PROFILE.CSS â€” AURA TERMINAL™  |  Premium React Redesign
-   Drop-in replacement â€” matches home.css design system exactly
+   PROFILE.CSS — AURA TERMINAL™  |  Premium React Redesign
+   Drop-in replacement — matches home.css design system exactly
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -43,7 +43,7 @@
     background: var(--bg);
     color: var(--text);
     position: relative;
-    /* Only hide horizontal overflow â€” never vertical */
+    /* Only hide horizontal overflow — never vertical */
     overflow-x: hidden;
     overflow-y: visible;
     padding: 85px 20px 60px;
@@ -1141,7 +1141,7 @@
         padding-top: 100px;
         padding-left: max(16px, env(safe-area-inset-left));
         padding-right: max(16px, env(safe-area-inset-right));
-        /* No height/overflow-y â€” let the document scroll */
+        /* No height/overflow-y — let the document scroll */
     }
 
     .pf-banner-wrap { height: 170px; margin-bottom: -60px; }
@@ -1168,7 +1168,7 @@
 @media (max-width: 480px) {
     .pf-container {
         padding: 76px 12px 32px;
-        /* overflow-x hidden only â€” page scroll stays on document */
+        /* overflow-x hidden only — page scroll stays on document */
         overflow-x: hidden;
         overflow-y: visible;
     }
@@ -1190,7 +1190,7 @@
     .pf-stat-vis-row { padding: 8px 10px; }
 }
 
-/* Landscape on phones â€” prevent awkward squashing */
+/* Landscape on phones — prevent awkward squashing */
 @media (max-width: 896px) and (orientation: landscape) {
     .pf-container { padding-top: 68px; padding-bottom: 40px; }
     .pf-banner-wrap { height: 120px; margin-bottom: -50px; }
@@ -1199,7 +1199,7 @@
 }
 
 /* =============================================================
-   PROFILE PAGE â€” SCROLL FIX
+   PROFILE PAGE — SCROLL FIX
    Add at the bottom of Profile.css
 
    Root cause: AuraTerminalThemeShell renders children inside
@@ -1209,8 +1209,8 @@
      @media (768px-1366px)     { .journal-page { height:100vh; overflow-y:auto } }
 
    This creates an isolated scroll context so .journal-page
-   scrolls internally while the footer â€” outside it in the
-   document â€” appears frozen. Fix: when .journal-page wraps
+   scrolls internally while the footer — outside it in the
+   document — appears frozen. Fix: when .journal-page wraps
    .pf-container, release its height/overflow constraints so
    the document owns the scroll again.
    ============================================================= */
@@ -1224,7 +1224,7 @@
     overflow-x: hidden !important;
 }
 
-/* â”€â”€ iPad: 768px â€“ 1366px (primary breakpoint causing the bug) â”€â”€ */
+/* â”€â”€ iPad: 768px – 1366px (primary breakpoint causing the bug) â”€â”€ */
 @media (min-width: 768px) and (max-width: 1366px) {
     .journal-page:has(.pf-container) {
         height: auto !important;

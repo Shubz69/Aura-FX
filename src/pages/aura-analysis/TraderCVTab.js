@@ -134,7 +134,7 @@ export default function TraderCVTab() {
       { key: 'emotionalControl', label: 'Emotional control' },
     ];
     const sorted = [...arr].sort((a, b) => (breakdown[b.key] ?? 0) - (breakdown[a.key] ?? 0));
-    return sorted[0]?.label ?? 'â€”';
+    return sorted[0]?.label ?? '—';
   }, [breakdown]);
 
   const weakestTrait = useMemo(() => {
@@ -145,7 +145,7 @@ export default function TraderCVTab() {
       { key: 'emotionalControl', label: 'Emotional control' },
     ];
     const sorted = [...arr].sort((a, b) => (breakdown[a.key] ?? 0) - (breakdown[b.key] ?? 0));
-    return sorted[0]?.label ?? 'â€”';
+    return sorted[0]?.label ?? '—';
   }, [breakdown]);
 
   /** Prefer auth context; fall back to persisted `user` in localStorage (same source as Profile). */
@@ -257,7 +257,7 @@ export default function TraderCVTab() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toast.success('Passport saved â€” premium render ready to share.');
+      toast.success('Passport saved — premium render ready to share.');
     } catch (e) {
       console.warn(e);
       toast.error('Save failed. Try again in a moment.');
@@ -279,7 +279,7 @@ export default function TraderCVTab() {
         setTraderPassportShare({ dataUrl, ts: Date.now() });
       } catch (err) {
         console.warn(err);
-        toast.error('Image is too large to attach automatically â€” use Save and upload the file in Community.');
+        toast.error('Image is too large to attach automatically — use Save and upload the file in Community.');
         return;
       }
       navigate('/community');
@@ -296,7 +296,7 @@ export default function TraderCVTab() {
       <div className="trader-cv">
         <div className="trader-cv-loading">
           <div className="trader-cv-loading-ring" aria-hidden />
-          <p>Loading your Trader CVâ€¦</p>
+          <p>Loading your Trader CV…</p>
         </div>
       </div>
     );
@@ -357,7 +357,7 @@ export default function TraderCVTab() {
                 <div className="trader-cv-breakdown-bar" style={{ width: `${Math.max(0, Math.min(100, Number(breakdown[key]) || 0))}%` }} />
               </div>
               <p className="trader-cv-breakdown-score">{Math.round(Number(breakdown[key]) || 0)}</p>
-              <p className="trader-cv-breakdown-message">{behaviour.messages?.[key] ?? 'â€”'}</p>
+              <p className="trader-cv-breakdown-message">{behaviour.messages?.[key] ?? '—'}</p>
             </div>
           ))}
         </div>
@@ -398,13 +398,13 @@ export default function TraderCVTab() {
         ) : (
           <div className="trader-cv-replay-identity">
             <p className="trader-cv-replay-line">
-              <strong>{replayCvSnapshot.completedReplayCount}</strong> completed replays Â· avg replay Q{' '}
-              <strong>{replayCvSnapshot.averageReplayQuality ?? 'â€”'}</strong> Â· avg review depth{' '}
-              <strong>{replayCvSnapshot.averageReviewCompleteness ?? 'â€”'}%</strong>
+              <strong>{replayCvSnapshot.completedReplayCount}</strong> completed replays · avg replay Q{' '}
+              <strong>{replayCvSnapshot.averageReplayQuality ?? '—'}</strong> · avg review depth{' '}
+              <strong>{replayCvSnapshot.averageReviewCompleteness ?? '—'}%</strong>
               {replayCvSnapshot.learningExampleCount > 0 ? (
                 <>
                   {' '}
-                  Â· <strong>{replayCvSnapshot.modelExampleCount}</strong> model /{' '}
+                  · <strong>{replayCvSnapshot.modelExampleCount}</strong> model /{' '}
                   <strong>{replayCvSnapshot.cautionExampleCount}</strong> caution examples
                 </>
               ) : null}
@@ -417,13 +417,13 @@ export default function TraderCVTab() {
             ) : null}
             {replayCvSnapshot.developmentProfile?.strongestTrait ? (
               <p className="trader-cv-replay-line trader-cv-replay-line--tight">
-                <strong>Replay strength Â· </strong>
+                <strong>Replay strength · </strong>
                 {replayCvSnapshot.developmentProfile.strongestTrait.label}: {replayCvSnapshot.developmentProfile.strongestTrait.line}
               </p>
             ) : null}
             {replayCvSnapshot.developmentProfile?.highestRiskTrait ? (
               <p className="trader-cv-replay-line trader-cv-replay-line--tight">
-                <strong>Highest-risk pattern Â· </strong>
+                <strong>Highest-risk pattern · </strong>
                 {replayCvSnapshot.developmentProfile.highestRiskTrait.label}: {replayCvSnapshot.developmentProfile.highestRiskTrait.line}
               </p>
             ) : null}
@@ -435,13 +435,13 @@ export default function TraderCVTab() {
             ) : null}
             {replayCvSnapshot.developmentProfile?.developmentPractice ? (
               <p className="trader-cv-replay-micro">
-                <strong>Next Â· </strong>
+                <strong>Next · </strong>
                 {replayCvSnapshot.developmentProfile.developmentPractice}
               </p>
             ) : null}
             {replayCvSnapshot.developmentProfile?.stopDoing && replayCvSnapshot.developmentProfile.guidanceMode !== 'gather_evidence' ? (
               <p className="trader-cv-replay-micro">
-                <strong>Stop Â· </strong>
+                <strong>Stop · </strong>
                 {replayCvSnapshot.developmentProfile.stopDoing}
               </p>
             ) : null}
@@ -462,20 +462,20 @@ export default function TraderCVTab() {
             <div className="trader-cv-replay-contribution">
               <h4 className="trader-cv-replay-subtitle">Replay discipline &amp; behavior contribution</h4>
               <p className="trader-cv-replay-micro">
-                One input to your wider profile â€” not a replacement for Aurax. Indices are 0â€“100 from completed replays only.
+                One input to your wider profile — not a replacement for Aurax. Indices are 0–100 from completed replays only.
               </p>
               <div className="trader-cv-replay-contrib-grid">
                 <div className="trader-cv-replay-contrib-card">
                   <span className="trader-cv-replay-contrib-label">Discipline index</span>
                   <span className="trader-cv-replay-contrib-value">
-                    {replayContribution.discipline.replayDisciplineContribution ?? 'â€”'}
+                    {replayContribution.discipline.replayDisciplineContribution ?? '—'}
                   </span>
                   <span className="trader-cv-replay-contrib-meta">{replayContribution.discipline.replayDisciplineConfidence}</span>
                 </div>
                 <div className="trader-cv-replay-contrib-card">
                   <span className="trader-cv-replay-contrib-label">Behavior index</span>
                   <span className="trader-cv-replay-contrib-value">
-                    {replayContribution.behavior.replayBehaviorContribution ?? 'â€”'}
+                    {replayContribution.behavior.replayBehaviorContribution ?? '—'}
                   </span>
                   <span className="trader-cv-replay-contrib-meta">{replayContribution.behavior.replayBehaviorConfidence}</span>
                 </div>
@@ -487,7 +487,7 @@ export default function TraderCVTab() {
                       : replayContribution.discipline.replayDisciplineTrend === 'slipping'
                         ? 'â†“ Softer'
                         : replayContribution.discipline.replayDisciplineTrend === 'insufficient_evidence'
-                          ? 'â€”'
+                          ? '—'
                           : 'â†’ Stable'}
                   </span>
                   <span className="trader-cv-replay-contrib-meta">vs prior week</span>
@@ -495,12 +495,12 @@ export default function TraderCVTab() {
               </div>
               {replayContribution.behavior.strengths[0] ? (
                 <p className="trader-cv-replay-line trader-cv-replay-line--tight">
-                  <strong>Strength Â·</strong> {replayContribution.behavior.strengths[0]}
+                  <strong>Strength ·</strong> {replayContribution.behavior.strengths[0]}
                 </p>
               ) : null}
               {replayContribution.behavior.cautions[0] ? (
                 <p className="trader-cv-replay-line trader-cv-replay-line--tight">
-                  <strong>Caution Â·</strong> {replayContribution.behavior.cautions[0]}
+                  <strong>Caution ·</strong> {replayContribution.behavior.cautions[0]}
                 </p>
               ) : null}
               {replayContribution.scoreContributionExplanations.slice(0, 2).map((line, i) => (
@@ -508,7 +508,7 @@ export default function TraderCVTab() {
               ))}
               {replayContribution.developmentActions[0] ? (
                 <p className="trader-cv-replay-dev">
-                  <strong>Development Â·</strong> {replayContribution.developmentActions[0]}
+                  <strong>Development ·</strong> {replayContribution.developmentActions[0]}
                 </p>
               ) : null}
             </div>
@@ -523,12 +523,12 @@ export default function TraderCVTab() {
           <div className="trader-cv-empty">More trade data is needed to identify your strongest conditions.</div>
         ) : (
           <div className="trader-cv-conditions-grid">
-            <div className="trader-cv-condition"><span className="trader-cv-condition-label">Best day</span><span className="trader-cv-condition-value">{conditions.bestDay ?? 'â€”'}</span></div>
-            <div className="trader-cv-condition"><span className="trader-cv-condition-label">Worst day</span><span className="trader-cv-condition-value">{conditions.worstDay ?? 'â€”'}</span></div>
-            <div className="trader-cv-condition"><span className="trader-cv-condition-label">Best session</span><span className="trader-cv-condition-value">{conditions.bestSession ?? 'â€”'}</span></div>
-            <div className="trader-cv-condition"><span className="trader-cv-condition-label">Weakest period</span><span className="trader-cv-condition-value">{conditions.worstSession ?? 'â€”'}</span></div>
-            <div className="trader-cv-condition"><span className="trader-cv-condition-label">Best pair</span><span className="trader-cv-condition-value">{conditions.bestPair ?? 'â€”'}</span></div>
-            <div className="trader-cv-condition"><span className="trader-cv-condition-label">Worst pair</span><span className="trader-cv-condition-value">{conditions.worstPair ?? 'â€”'}</span></div>
+            <div className="trader-cv-condition"><span className="trader-cv-condition-label">Best day</span><span className="trader-cv-condition-value">{conditions.bestDay ?? '—'}</span></div>
+            <div className="trader-cv-condition"><span className="trader-cv-condition-label">Worst day</span><span className="trader-cv-condition-value">{conditions.worstDay ?? '—'}</span></div>
+            <div className="trader-cv-condition"><span className="trader-cv-condition-label">Best session</span><span className="trader-cv-condition-value">{conditions.bestSession ?? '—'}</span></div>
+            <div className="trader-cv-condition"><span className="trader-cv-condition-label">Weakest period</span><span className="trader-cv-condition-value">{conditions.worstSession ?? '—'}</span></div>
+            <div className="trader-cv-condition"><span className="trader-cv-condition-label">Best pair</span><span className="trader-cv-condition-value">{conditions.bestPair ?? '—'}</span></div>
+            <div className="trader-cv-condition"><span className="trader-cv-condition-label">Worst pair</span><span className="trader-cv-condition-value">{conditions.worstPair ?? '—'}</span></div>
           </div>
         )}
       </section>
@@ -548,7 +548,7 @@ export default function TraderCVTab() {
         </div>
       </section>
 
-      {/* Development timeline â€“ simplified trend */}
+      {/* Development timeline – simplified trend */}
       <section className="trader-cv-section">
         <h3 className="trader-cv-section-title">Score Trend</h3>
         {trades.length < 3 ? (
@@ -599,7 +599,7 @@ export default function TraderCVTab() {
         <h3 className="trader-cv-section-title">Trader Passport</h3>
         <p className="trader-cv-passport-intro">
           A shareable ID-style summary of your Trader CV. Only you see this here. Others only see it if you save the image or send it in{' '}
-          <strong>Community</strong> messages â€” choose the channel and audience carefully.
+          <strong>Community</strong> messages — choose the channel and audience carefully.
         </p>
 
         <div ref={passportPreviewRef} className="trader-cv-passport-card" aria-hidden={false}>
@@ -613,7 +613,7 @@ export default function TraderCVTab() {
               </div>
               <div className="trader-cv-passport-chip">
                 <span className="trader-cv-passport-chip-pulse" aria-hidden />
-                <span className="trader-cv-passport-chip-text">PASSPORT Â· VERIFIED</span>
+                <span className="trader-cv-passport-chip-text">PASSPORT · VERIFIED</span>
               </div>
             </header>
 
@@ -678,15 +678,15 @@ export default function TraderCVTab() {
               <div className="trader-cv-passport-footer-cell">
                 <p className="trader-cv-passport-hud">TRADE QUALITY (AVG)</p>
                 <p className="trader-cv-passport-quality">
-                  {trades.length ? `${quality.averageQuality}` : 'â€”'}
-                  {trades.length > 0 ? <span className="trader-cv-passport-quality-sub"> Â· window</span> : null}
+                  {trades.length ? `${quality.averageQuality}` : '—'}
+                  {trades.length > 0 ? <span className="trader-cv-passport-quality-sub"> · window</span> : null}
                 </p>
               </div>
               <div className="trader-cv-passport-footer-cell trader-cv-passport-footer-cell--right">
                 <p className="trader-cv-passport-hud">ISSUED</p>
                 <p className="trader-cv-passport-issued">{issuedDate}</p>
                 <p className="trader-cv-passport-id">
-                  REF Â· {String(user?.id ?? user?.username ?? 'â€”').slice(0, 14)}
+                  REF · {String(user?.id ?? user?.username ?? '—').slice(0, 14)}
                 </p>
               </div>
             </div>
@@ -709,7 +709,7 @@ export default function TraderCVTab() {
                 </div>
                 <div className="trader-cv-passport-chip">
                   <span className="trader-cv-passport-chip-pulse" aria-hidden />
-                  <span className="trader-cv-passport-chip-text">PASSPORT Â· VERIFIED</span>
+                  <span className="trader-cv-passport-chip-text">PASSPORT · VERIFIED</span>
                 </div>
               </header>
 
@@ -774,15 +774,15 @@ export default function TraderCVTab() {
                 <div className="trader-cv-passport-footer-cell">
                   <p className="trader-cv-passport-hud">TRADE QUALITY (AVG)</p>
                   <p className="trader-cv-passport-quality">
-                    {trades.length ? `${quality.averageQuality}` : 'â€”'}
-                    {trades.length > 0 ? <span className="trader-cv-passport-quality-sub"> Â· window</span> : null}
+                    {trades.length ? `${quality.averageQuality}` : '—'}
+                    {trades.length > 0 ? <span className="trader-cv-passport-quality-sub"> · window</span> : null}
                   </p>
                 </div>
                 <div className="trader-cv-passport-footer-cell trader-cv-passport-footer-cell--right">
                   <p className="trader-cv-passport-hud">ISSUED</p>
                   <p className="trader-cv-passport-issued">{issuedDate}</p>
                   <p className="trader-cv-passport-id">
-                    REF Â· {String(user?.id ?? user?.username ?? 'â€”').slice(0, 14)}
+                    REF · {String(user?.id ?? user?.username ?? '—').slice(0, 14)}
                   </p>
                 </div>
               </div>
@@ -801,7 +801,7 @@ export default function TraderCVTab() {
             disabled={passportBusy}
             onClick={handleSavePassport}
           >
-            {passportBusy ? 'Workingâ€¦' : 'Save image'}
+            {passportBusy ? 'Working…' : 'Save image'}
           </button>
           <button
             type="button"

@@ -1,5 +1,5 @@
 /* ============================================================
-   ADMIN JOURNAL â€” AURA TERMINAL™  |  Matches site theme exactly
+   ADMIN JOURNAL — AURA TERMINAL™  |  Matches site theme exactly
    Purple/blue accents, Space Grotesk, dark cosmic aesthetic
    ============================================================ */
 
@@ -57,7 +57,7 @@
   position: relative;
 }
 
-/* Eyebrow pill â€” matches explore.css ::before pattern */
+/* Eyebrow pill — matches explore.css ::before pattern */
 .admin-journal-header::before {
   content: 'ADMIN PANEL';
   display: block;
@@ -80,7 +80,7 @@
   letter-spacing: 0.3em;
   text-transform: uppercase;
   margin: 0 0 0.9rem;
-  /* Animated gradient â€” exact match to explore-main-title */
+  /* Animated gradient — exact match to explore-main-title */
   background: linear-gradient(270deg, #ffffff 0%, #fcd9a8 30%, #e8c992 55%, #fcd9a8 75%, #ffffff 100%);
   background-size: 300% 100%;
   -webkit-background-clip: text;
@@ -103,7 +103,7 @@
   margin: 0 0 20px;
 }
 
-/* Dot + line decoration â€” matches explore-header-line */
+/* Dot + line decoration — matches explore-header-line */
 .admin-journal-header-line {
   display: flex;
   align-items: center;
@@ -185,7 +185,7 @@
   font-size: 0.95rem;
 }
 
-/* â”€â”€ Summary Cards â€” mirrors stat-item from home.css â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Summary Cards — mirrors stat-item from home.css â”€â”€â”€â”€â”€â”€â”€ */
 .admin-journal-summary {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
@@ -206,7 +206,7 @@
               box-shadow var(--aj-transition);
 }
 
-/* Animated left-side glow bar â€” exact stat-item::before */
+/* Animated left-side glow bar — exact stat-item::before */
 .admin-journal-card::before {
   content: '';
   position: absolute;
@@ -221,7 +221,7 @@
   transition: opacity var(--aj-transition), top 0.4s ease, bottom 0.4s ease;
 }
 
-/* Diagonal texture â€” matches stat-item::after */
+/* Diagonal texture — matches stat-item::after */
 .admin-journal-card::after {
   content: '';
   position: absolute;
@@ -260,7 +260,7 @@
   margin-bottom: 0.5rem;
   position: relative;
   z-index: 1;
-  /* White to purple shimmer â€” matches stat-number */
+  /* White to purple shimmer — matches stat-number */
   background: linear-gradient(125deg, #ffffff 30%, #fcd9a8 70%, #e8c992 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -286,7 +286,7 @@
   margin-bottom: 14px;
 }
 
-/* Trend bar â€” matches stat-trend */
+/* Trend bar — matches stat-trend */
 .admin-journal-card-bar {
   display: block;
   width: 100%;
@@ -427,7 +427,7 @@
   margin-left: 5px;
 }
 
-/* â”€â”€ View Button â€” matches home-cta-button / explore-cta-button */
+/* â”€â”€ View Button — matches home-cta-button / explore-cta-button */
 .admin-journal-view-btn {
   padding: 7px 18px;
   border: none;
@@ -499,7 +499,7 @@
   animation: ajModalSlideIn 0.32s cubic-bezier(0.34,1.56,0.64,1);
 }
 
-/* Top shimmer â€” feature-card::before pattern */
+/* Top shimmer — feature-card::before pattern */
 .admin-journal-modal-inner::before {
   content: '';
   position: absolute;
@@ -510,7 +510,7 @@
   pointer-events: none;
 }
 
-/* Inner top glow â€” feature-card::after pattern */
+/* Inner top glow — feature-card::after pattern */
 .admin-journal-modal-inner::after {
   content: '';
   position: absolute;

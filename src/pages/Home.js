@@ -67,9 +67,9 @@ const StatItem = ({ number, label, fill = '75%' }) => {
 const IPAD_SLIDE_BASE = `${process.env.PUBLIC_URL || ''}/images/ipad-slides`;
 
 const SLIDES = [
-    { image: `${IPAD_SLIDE_BASE}/journal.png`,      tag: 'ðŸ““ Trading Journal',    title: 'Your Daily Trading Discipline',  subtitle: 'Streaks, checklists, and session notesâ€”built to keep execution consistent.',                           statBadge: 'Streaks & tasks', chartColor: '#F8C37D' },
+    { image: `${IPAD_SLIDE_BASE}/journal.png`,      tag: 'ðŸ““ Trading Journal',    title: 'Your Daily Trading Discipline',  subtitle: 'Streaks, checklists, and session notes—built to keep execution consistent.',                           statBadge: 'Streaks & tasks', chartColor: '#F8C37D' },
     { image: `${IPAD_SLIDE_BASE}/traderdesk.png`,  tag: 'ðŸ“Š Market Intelligence', title: 'Briefs, Bias & Macro Context',   subtitle: 'Session-ready views of structure, drivers, and what matters before London & New York.',              statBadge: 'Live context',    chartColor: '#EAA960' },
-    { image: `${IPAD_SLIDE_BASE}/auraAI.png`,      tag: 'ðŸ¤– Aura AI',             title: 'Premium Trading Copilot',        subtitle: 'Ask for analysis, risk framing, and ideasâ€”grounded in live data when available.',                    statBadge: 'Aura AI',         chartColor: '#FDE8C4' },
+    { image: `${IPAD_SLIDE_BASE}/auraAI.png`,      tag: 'ðŸ¤– Aura AI',             title: 'Premium Trading Copilot',        subtitle: 'Ask for analysis, risk framing, and ideas—grounded in live data when available.',                    statBadge: 'Aura AI',         chartColor: '#FDE8C4' },
     { image: `${IPAD_SLIDE_BASE}/community.png`,    tag: 'ðŸ† Community',           title: 'Elite Trading Community',        subtitle: 'Structured channels, real moderators, and traders who take the craft seriously.',                    statBadge: '1,200+ Members',  chartColor: '#D48D44' },
     { image: `${IPAD_SLIDE_BASE}/courses.png`,    tag: 'ðŸŽ“ Education',           title: 'Courses & Mentorship',           subtitle: 'Progressive curriculum plus optional 1-to-1 mentorship for committed traders.',                     statBadge: 'C & S',           chartColor: '#EABB80' },
 ];
@@ -265,7 +265,7 @@ const FloatingIPad = () => {
         };
     }, []);
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   iPAD TOUCH 3D ROTATION â€” COMPANION JS SNIPPET
+   iPAD TOUCH 3D ROTATION — COMPANION JS SNIPPET
    â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Add this script to your page (or component).
    It handles both desktop mouse-tilt AND mobile
@@ -404,7 +404,7 @@ const FloatingIPad = () => {
                         {SLIDES.map((slide, i) => (
                             <div key={i} className={`ipad-slide${i === activeSlide ? ' active' : ''}`}>
 
-                                {/* Image â€” uses <img> so object-fit: contain works properly */}
+                                {/* Image — uses <img> so object-fit: contain works properly */}
                                 {slide.image && (
                                     <img
                                         src={slide.image}
@@ -447,19 +447,19 @@ const FloatingIPad = () => {
 };
 
 const formatPercent = (value, digits = 1) => {
-    if (value == null || Number.isNaN(Number(value))) return 'â€”';
+    if (value == null || Number.isNaN(Number(value))) return '—';
     return `${Number(value).toFixed(digits)}%`;
 };
 
 const formatSignedCurrency = (value) => {
-    if (value == null || Number.isNaN(Number(value))) return 'â€”';
+    if (value == null || Number.isNaN(Number(value))) return '—';
     const numeric = Number(value);
     const sign = numeric >= 0 ? '+' : '-';
     return `${sign}$${Math.abs(numeric).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 const formatNumber = (value, digits = 2) => {
-    if (value == null || Number.isNaN(Number(value))) return 'â€”';
+    if (value == null || Number.isNaN(Number(value))) return '—';
     return Number(value).toFixed(digits);
 };
 
@@ -492,11 +492,11 @@ const computePerformanceKpis = (trades = [], pnlData = {}) => {
     const grossProfit = settled.filter((trade) => (Number(trade.pnl) || 0) > 0).reduce((sum, trade) => sum + Number(trade.pnl), 0);
     const grossLoss = Math.abs(settled.filter((trade) => (Number(trade.pnl) || 0) < 0).reduce((sum, trade) => sum + Number(trade.pnl), 0));
     let profitFactor = null;
-    let profitFactorDisplay = 'â€”';
+    let profitFactorDisplay = '—';
     if (settled.length) {
         if (grossLoss > 0) {
             profitFactor = grossProfit / grossLoss;
-            profitFactorDisplay = Number.isFinite(profitFactor) ? profitFactor.toFixed(2) : 'â€”';
+            profitFactorDisplay = Number.isFinite(profitFactor) ? profitFactor.toFixed(2) : '—';
         } else if (grossProfit > 0) {
             profitFactorDisplay = 'âˆž';
         } else {
@@ -559,7 +559,7 @@ const computePerformanceKpis = (trades = [], pnlData = {}) => {
 
     const pairTotals = {};
     sortedTrades.filter(isSettledTrade).forEach((trade) => {
-        const pair = trade.pair || 'â€”';
+        const pair = trade.pair || '—';
         pairTotals[pair] = (pairTotals[pair] || 0) + (Number(trade.pnl) || 0);
     });
     const pairEntries = Object.entries(pairTotals).map(([pair, pnl]) => ({ pair, pnl })).sort((a, b) => b.pnl - a.pnl);
@@ -583,8 +583,8 @@ const computePerformanceKpis = (trades = [], pnlData = {}) => {
         activeWinStreak: currentWin,
         activeLossStreak: currentLoss,
         equityCurve,
-        bestPair: pairEntries[0]?.pair || 'â€”',
-        worstPair: pairEntries[pairEntries.length - 1]?.pair || 'â€”',
+        bestPair: pairEntries[0]?.pair || '—',
+        worstPair: pairEntries[pairEntries.length - 1]?.pair || '—',
         recentTrades: sortedTrades.slice(-5).reverse(),
     };
 };
@@ -614,7 +614,7 @@ const computeJournalMetrics = (tasks = [], selectedDate = new Date(), journalDai
     };
 };
 
-/** Single source of truth for desk bias label + gauge position (0â€“100, bearish left â†’ bullish right). */
+/** Single source of truth for desk bias label + gauge position (0–100, bearish left â†’ bullish right). */
 const normalizeDeskBias = (lab, analytics) => {
     const raw = lab?.marketBias != null ? String(lab.marketBias).trim() : '';
     const lower = raw.toLowerCase();
@@ -661,9 +661,9 @@ const computeLabMetrics = (sessions = []) => {
     const validCount = persistedSessions.filter((session) => session.setupValid && session.biasAligned && session.entryConfirmed && session.riskDefined).length;
     return {
         sessionCount: persistedSessions.length,
-        latestSetup: latest.setupName || 'â€”',
+        latestSetup: latest.setupName || '—',
         confidence: latest.confidence ?? latest.auraConfidence ?? null,
-        riskLevel: latest.riskLevel || 'â€”',
+        riskLevel: latest.riskLevel || '—',
         validPct: Math.round((validCount / persistedSessions.length) * 100),
         marketBias: latest.marketBias || '',
         targetPrice: latest.targetPrice,
@@ -778,9 +778,9 @@ const DeskWatchlist = () => {
                 return (
                     <div className="desk2-wl__row" key={row.symbol}>
                         <span className="desk2-wl__sym">{row.displayName || row.symbol}</span>
-                        <span className="desk2-wl__px">{loading ? 'â€”' : row.price}</span>
+                        <span className="desk2-wl__px">{loading ? '—' : row.price}</span>
                         <span className={`desk2-wl__chg ${up ? 'is-up' : 'is-down'}`}>
-                            {loading ? 'â€”' : `${up ? '+' : ''}${formatPercent(pct, 2)}`}
+                            {loading ? '—' : `${up ? '+' : ''}${formatPercent(pct, 2)}`}
                         </span>
                         <WatchlistRowSpark up={up} />
                     </div>
@@ -826,7 +826,7 @@ const ScoreRing = ({ label, value }) => {
         <div className="desk2-ring">
             <div className="desk2-ring__track" style={{ '--ring-pct': v }}>
                 <div className="desk2-ring__inner">
-                    <strong>{Number.isFinite(Number(value)) ? Math.round(Number(value)) : 'â€”'}</strong>
+                    <strong>{Number.isFinite(Number(value)) ? Math.round(Number(value)) : '—'}</strong>
                 </div>
             </div>
             <span className="desk2-ring__lab">{label}</span>
@@ -1025,7 +1025,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     }, [hasAnyConnection, dashboardData.auraPnl.monthlyPnl, analytics.monthToDatePnl]);
 
     const rewardLabel = useMemo(() => {
-        if (!lab) return 'â€”';
+        if (!lab) return '—';
         if (lab.resultR == null || Number.isNaN(Number(lab.resultR))) return 'TBD';
         const r = Number(lab.resultR);
         if (r >= 2) return 'High';
@@ -1071,7 +1071,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
         }
         if (analytics.averageR > 0) return formatNumber(analytics.averageR * 10, 1);
         if (analytics.totalTrades) return formatNumber(Math.min(99, analytics.winRate * 0.65), 1);
-        return 'â€”';
+        return '—';
     }, [lab, analytics]);
 
     const consistencyRing = Math.round(
@@ -1091,9 +1091,9 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     const expectancyHint = useMemo(() => {
         if (!analytics.settledTrades) return 'Log closed trades in Aura Analysis to measure edge and R-multiples.';
         if (analytics.averageR >= 0.8) return 'Strong average R profile on closed trades.';
-        if (analytics.averageR >= 0.2) return 'Positive R-multiple trend â€” refine selectivity.';
-        if (analytics.averageR >= 0) return 'Flat average R â€” tighten invalidations.';
-        return 'Negative R profile â€” reduce size and review setups.';
+        if (analytics.averageR >= 0.2) return 'Positive R-multiple trend — refine selectivity.';
+        if (analytics.averageR >= 0) return 'Flat average R — tighten invalidations.';
+        return 'Negative R profile — reduce size and review setups.';
     }, [analytics]);
 
     const journalBullets = useMemo(() => {
@@ -1105,7 +1105,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                 .map((s) => s.trim())
                 .filter(Boolean)
                 .slice(0, 4)
-                .forEach((x) => out.push(x.length > 100 ? `${x.slice(0, 97)}â€¦` : x));
+                .forEach((x) => out.push(x.length > 100 ? `${x.slice(0, 97)}…` : x));
         }
         scenarioLines.slice(0, Math.max(0, 3 - out.length)).forEach((x) => out.push(x));
         if (out.length === 0) out.push('Add journal notes to see a qualitative read-through here.');
@@ -1117,7 +1117,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
             <div className="terminal-dashboard">
                 <div className="terminal-dashboard__loading glass-card">
                     <span className="terminal-dashboard__loading-kicker">Loading</span>
-                    <h2>Preparing Aura Terminal™â€¦</h2>
+                    <h2>Preparing Aura Terminal™…</h2>
                     <p>Syncing Aura Analysis, journal, lab sessions, and market snapshot.</p>
                 </div>
             </div>
@@ -1153,28 +1153,28 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     <div>
                                         <span>P&amp;L</span>
                                         <strong className={liveDeskPnl >= 0 ? 'is-positive' : 'is-negative'}>
-                                            {liveMetricsLocked ? 'â€”' : formatSignedCurrency(liveDeskPnl)}
+                                            {liveMetricsLocked ? '—' : formatSignedCurrency(liveDeskPnl)}
                                         </strong>
                                     </div>
                                     <div>
                                         <span>Win rate</span>
                                         <strong>
                                             {liveMetricsLocked
-                                                ? 'â€”'
+                                                ? '—'
                                                 : analytics.totalTrades
                                                   ? formatPercent(analytics.winRate, 0)
-                                                  : 'â€”'}
+                                                  : '—'}
                                         </strong>
                                     </div>
                                     <div>
                                         <span>Win streak</span>
-                                        <strong>{liveMetricsLocked ? 'â€”' : analytics.activeWinStreak ?? 0}</strong>
+                                        <strong>{liveMetricsLocked ? '—' : analytics.activeWinStreak ?? 0}</strong>
                                     </div>
                                 </div>
                                 {liveMetricsLocked ? (
                                     <div className="desk2-frost" role="status">
                                         <p className="desk2-frost__t">
-                                            {auraConnectionsLoading ? 'Checking linkâ€¦' : 'Connect MetaTrader (Aura Analysis)'}
+                                            {auraConnectionsLoading ? 'Checking link…' : 'Connect MetaTrader (Aura Analysis)'}
                                         </p>
                                         {!auraConnectionsLoading ? (
                                             <Link to="/aura-analysis/ai" className="desk2-frost__a">
@@ -1192,16 +1192,16 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                             <div className="desk2-mini-metrics">
                                 <div>
                                     <span>Total trades</span>
-                                    <strong>{analytics.totalTrades || 'â€”'}</strong>
+                                    <strong>{analytics.totalTrades || '—'}</strong>
                                 </div>
                                 <div>
                                     <span>Profit factor</span>
-                                    <strong>{analytics.settledTrades ? analytics.profitFactorDisplay : 'â€”'}</strong>
+                                    <strong>{analytics.settledTrades ? analytics.profitFactorDisplay : '—'}</strong>
                                 </div>
                                 <div>
                                     <span>Avg R</span>
                                     <strong>
-                                        {analytics.settledTrades ? formatNumber(analytics.averageR, 2) : 'â€”'}
+                                        {analytics.settledTrades ? formatNumber(analytics.averageR, 2) : '—'}
                                     </strong>
                                 </div>
                                 <div>
@@ -1209,22 +1209,22 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     <strong>
                                         {analytics.settledTrades
                                             ? formatSignedCurrency(-Math.abs(analytics.maxDrawdown || 0))
-                                            : 'â€”'}
+                                            : '—'}
                                     </strong>
                                 </div>
                             </div>
                             <div className="desk2-mini-metrics">
                                 <div>
                                     <span>Best pair</span>
-                                    <strong>{analytics.bestPair || 'â€”'}</strong>
+                                    <strong>{analytics.bestPair || '—'}</strong>
                                 </div>
                                 <div>
                                     <span>Worst pair</span>
-                                    <strong>{analytics.worstPair || 'â€”'}</strong>
+                                    <strong>{analytics.worstPair || '—'}</strong>
                                 </div>
                                 <div>
                                     <span>Operator accounts</span>
-                                    <strong>{dashboardData.validatorAccounts?.length ?? 'â€”'}</strong>
+                                    <strong>{dashboardData.validatorAccounts?.length ?? '—'}</strong>
                                 </div>
                             </div>
                             <Link to="/aura-analysis/dashboard/overview" className="desk2-inline-link">
@@ -1258,7 +1258,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                 <div className="desk2-trio__cell">
                                     <span>Risk</span>
                                     <strong>{riskLabel}</strong>
-                                    {rewardLabel && rewardLabel !== 'â€”' && rewardLabel !== 'TBD' ? (
+                                    {rewardLabel && rewardLabel !== '—' && rewardLabel !== 'TBD' ? (
                                         <span className="desk2-trio__hint">R-profile: {rewardLabel}</span>
                                     ) : null}
                                 </div>
@@ -1286,7 +1286,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                                 {a.headline || 'Article'}
                                             </a>
                                         ) : (
-                                            <span className="desk2-news__text">{a.headline || 'â€”'}</span>
+                                            <span className="desk2-news__text">{a.headline || '—'}</span>
                                         )}
                                         <span className="desk2-news__time">{headlineTimeAgo(a.publishedAt)}</span>
                                     </li>
@@ -1305,20 +1305,20 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     <strong>
                                         {analytics.avgChecklistPct != null
                                             ? `${Math.round(analytics.avgChecklistPct)}%`
-                                            : 'â€”'}
+                                            : '—'}
                                     </strong>
                                 </div>
                                 <div>
                                     <span>Avg R</span>
-                                    <strong>{analytics.settledTrades ? `${formatNumber(analytics.averageR, 2)}R` : 'â€”'}</strong>
+                                    <strong>{analytics.settledTrades ? `${formatNumber(analytics.averageR, 2)}R` : '—'}</strong>
                                 </div>
                                 <div>
                                     <span>Loss streak</span>
-                                    <strong>{analytics.settledTrades ? analytics.activeLossStreak : 'â€”'}</strong>
+                                    <strong>{analytics.settledTrades ? analytics.activeLossStreak : '—'}</strong>
                                 </div>
                                 <div>
                                     <span>Valid setups</span>
-                                    <strong>{lab ? `${validatorCompletion.pct}%` : 'â€”'}</strong>
+                                    <strong>{lab ? `${validatorCompletion.pct}%` : '—'}</strong>
                                 </div>
                             </div>
                             <p className="desk2-muted">{expectancyHint}</p>
@@ -1384,7 +1384,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     <strong>
                                         {dashboardData.reportsEligibility?.dataDays != null
                                             ? `${dashboardData.reportsEligibility.dataDays}d`
-                                            : 'â€”'}
+                                            : '—'}
                                     </strong>
                                 </div>
                                 <div>
@@ -1392,19 +1392,19 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     <strong>
                                         {dashboardData.reportsEligibility?.chartCheckCount != null
                                             ? dashboardData.reportsEligibility.chartCheckCount
-                                            : 'â€”'}
+                                            : '—'}
                                     </strong>
                                 </div>
                                 <div>
                                     <span>Month tasks</span>
                                     <strong>
-                                        {journal.monthTotal != null ? `${journal.monthCompleted}/${journal.monthTotal}` : 'â€”'}
+                                        {journal.monthTotal != null ? `${journal.monthCompleted}/${journal.monthTotal}` : '—'}
                                     </strong>
                                 </div>
                                 <div>
                                     <span>Plan</span>
                                     <strong className="desk2-insight-plan">
-                                        {String(dashboardData.reportsEligibility?.role || 'â€”')}
+                                        {String(dashboardData.reportsEligibility?.role || '—')}
                                     </strong>
                                 </div>
                             </div>
@@ -1424,10 +1424,10 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     return (
                                         <li key={`${t.pair}-${i}`}>
                                             <span>
-                                                {tag} Â· {t.pair || 'â€”'}
+                                                {tag} · {t.pair || '—'}
                                             </span>
                                             <span className={pnl >= 0 ? 'is-up' : 'is-down'}>
-                                                {Number.isFinite(pnl) ? formatSignedCurrency(pnl) : 'â€”'}
+                                                {Number.isFinite(pnl) ? formatSignedCurrency(pnl) : '—'}
                                             </span>
                                         </li>
                                     );
@@ -1525,12 +1525,12 @@ const Home = () => {
                                         <button className="home-secondary-button" onClick={() => navigate('/explore')}>Explore Features</button>
                                     </div>
                                     <div className="hero-trust-badges">
-                                        {[{icon:'âœ“',label:'Real Time Data'},{icon:'ðŸ”’',label:'Secure & Private'},{icon:'âŠ™',label:'24/7 Support'}].map(b=>(
+                                        {[{icon:'✓',label:'Real Time Data'},{icon:'ðŸ”’',label:'Secure & Private'},{icon:'âŠ™',label:'24/7 Support'}].map(b=>(
                                             <div className="trust-badge" key={b.label}><div className="trust-badge-icon">{b.icon}</div>{b.label}</div>
                                         ))}
                                     </div>
                                     <div className="partner-logos-row">
-                                        {[{icon:'ðŸ“Š',name:'TradingView'},{icon:'â—ˆ',name:'Binance'},{icon:'Â©',name:'Coinbase'},{icon:'â—‰',name:'Bloomberg'},{icon:'â—Ž',name:'Reuters'}].map(p=>(
+                                        {[{icon:'ðŸ“Š',name:'TradingView'},{icon:'â—ˆ',name:'Binance'},{icon:'©',name:'Coinbase'},{icon:'â—‰',name:'Bloomberg'},{icon:'â—Ž',name:'Reuters'}].map(p=>(
                                             <div className="partner-logo" key={p.name}><span className="partner-logo-icon">{p.icon}</span>{p.name}</div>
                                         ))}
                                     </div>
@@ -1579,7 +1579,7 @@ const Home = () => {
                                             {title:'Comprehensive Resources',text:'Unlock unlimited access to our extensive library of premium courses, advanced tools, and exclusive trading materials'},
                                         ].map(w=>(
                                             <div className="why-item" key={w.title}>
-                                                <div className="why-icon">âœ“</div>
+                                                <div className="why-icon">✓</div>
                                                 <h3 className="why-title">{w.title}</h3>
                                                 <p className="why-text">{w.text}</p>
                                             </div>

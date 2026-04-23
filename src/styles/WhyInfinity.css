@@ -1,5 +1,5 @@
 /* ============================================================
-   WHYINFINITY.CSS â€” AURA TERMINAL™ | Matched to Home Theme v2
+   WHYINFINITY.CSS — AURA TERMINAL™ | Matched to Home Theme v2
    Gold system, glass cards, Space Grotesk, #03020D bg
    ============================================================ */
 
@@ -83,7 +83,7 @@ html, body {
     box-sizing: border-box;
 }
 
-/* â”€â”€ Market Ticker â€” preserved exactly â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Market Ticker — preserved exactly â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .market-ticker-wrapper {
     position: relative;
     width: 100%;
@@ -184,7 +184,7 @@ html, body {
     position: relative;
 }
 
-/* Eyebrow pill â€” gold, matches hero-eyebrow */
+/* Eyebrow pill — gold, matches hero-eyebrow */
 .why-eyebrow {
     display: inline-flex;
     align-items: center;
@@ -220,7 +220,7 @@ html, body {
     text-transform: uppercase;
 }
 
-/* Main H1: C&S-style gold shimmer â€” AuraPageTitle.css (h1.aura-page-title) */
+/* Main H1: C&S-style gold shimmer — AuraPageTitle.css (h1.aura-page-title) */
 .why-header .why-main-title.aura-page-title {
     margin: 0 auto 1.6rem;
 }
@@ -285,7 +285,7 @@ html, body {
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   SECTION TITLE â€” matches home section-title
+   SECTION TITLE — matches home section-title
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .why-section-heading {
     font-family: var(--font);
@@ -377,7 +377,7 @@ html, body {
     font-weight: 400;
 }
 
-/* â”€â”€ CTA Button â€” gold, matches home-cta-button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ CTA Button — gold, matches home-cta-button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .why-cta-button {
     position: relative;
     display: inline-flex;
@@ -800,7 +800,7 @@ html, body {
     background: linear-gradient(to bottom, transparent, var(--eaa-dim), transparent);
 }
 
-/* VS badge â€” gold spinner */
+/* VS badge — gold spinner */
 .vs-badge {
     width: 52px;
     height: 52px;
@@ -874,7 +874,7 @@ html, body {
     transition: opacity var(--transition);
 }
 
-/* â”€â”€ Typical card â€” red tint (status color, unchanged) â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ Typical card — red tint (status color, unchanged) â”€â”€â”€â”€â”€â”€ */
 .vs-card--typical {
     border-color: rgba(240,61,95,0.18);
 }
@@ -895,7 +895,7 @@ html, body {
 
 .vs-card--typical:hover::before { opacity: 1; }
 
-/* â”€â”€ AURA card â€” gold tint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€ AURA card — gold tint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .vs-card--aura {
     border-color: rgba(234,169,96,0.20);
 }
@@ -1166,7 +1166,7 @@ html, body {
     .why-main-content { margin-bottom: 1.75rem; }
 }
 
-/* Tall screens â€” avoid huge empty strip above site footer */
+/* Tall screens — avoid huge empty strip above site footer */
 @media (min-height: 1000px) {
     .content-wrapper { padding-top: 140px; padding-bottom: 3.5rem; }
     .why-header { margin-bottom: 5rem; }

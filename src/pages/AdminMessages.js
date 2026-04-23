@@ -57,7 +57,7 @@ const AdminMessages = () => {
             `Hi ${(msg.name || 'there').split(/\s+/)[0] || 'there'},`,
             '',
             '',
-            'â€”',
+            '—',
             `Regarding your message (${msg.createdAt ? new Date(msg.createdAt).toLocaleString() : 'recent'}):`,
             (msg.message || '').slice(0, 2000),
         ];
@@ -75,7 +75,7 @@ const AdminMessages = () => {
             navigate(`/admin/inbox?user=${uid}`);
             return;
         }
-        /* Guest / no account â€” mailto opens the default mail client */
+        /* Guest / no account — mailto opens the default mail client */
     };
 
     const markDealt = async (msgId, dealt) => {
@@ -186,7 +186,7 @@ const AdminMessages = () => {
                                                         </span>
                                                     )}
                                                     {msg.dealtWith && (
-                                                        <span className="submission-dealt-badge">âœ“ Dealt</span>
+                                                        <span className="submission-dealt-badge">✓ Dealt</span>
                                                     )}
                                                 </div>
                                                 <div className="user-email">{msg.email || 'No email'}</div>
@@ -215,7 +215,7 @@ const AdminMessages = () => {
                                             disabled={actionLoading[msg.id]}
                                             onClick={() => markDealt(msg.id, !msg.dealtWith)}
                                         >
-                                            {actionLoading[msg.id] ? '...' : msg.dealtWith ? 'Mark Open' : 'Mark Dealt âœ“'}
+                                            {actionLoading[msg.id] ? '...' : msg.dealtWith ? 'Mark Open' : 'Mark Dealt ✓'}
                                         </button>
                                     </div>
                                 </div>

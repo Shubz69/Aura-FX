@@ -61,7 +61,7 @@ function ReportsDnaPageInner() {
       let msg =
         serverMsg ||
         (status === 401
-          ? 'Session expired â€” sign in again to load Trader DNA.'
+          ? 'Session expired — sign in again to load Trader DNA.'
           : status === 503
             ? 'Service temporarily unavailable. Try again in a moment.'
             : e.message || 'Failed to load Trader DNA');
@@ -69,7 +69,7 @@ function ReportsDnaPageInner() {
         setEliteGate(true);
         msg =
           serverMsg ||
-          'Trader DNA is part of A7FX Elite. Upgrade to Elite to unlock this synthesis â€” Premium does not include it.';
+          'Trader DNA is part of A7FX Elite. Upgrade to Elite to unlock this synthesis — Premium does not include it.';
       }
       if (!serverMsg && status === 500) {
         msg = 'Server error while loading Trader DNA. If this keeps happening, contact support.';
@@ -145,7 +145,7 @@ function ReportsDnaPageInner() {
         createPortal(
           <div className="tdna-resolving">
             <div className="tdna-resolving-spinner" />
-            <span>Sealing profile Â· writing DNA snapshot</span>
+            <span>Sealing profile · writing DNA snapshot</span>
           </div>,
           document.body
         )}
@@ -158,13 +158,13 @@ function ReportsDnaPageInner() {
         <p className="tdna-landing-kicker">Aura Terminal™</p>
         <h1 className="tdna-landing-title">Trader DNA</h1>
         <p className="tdna-landing-sub">
-          <strong>Who you are as a trader</strong> â€” built from data in The Operator and your journal (roughly{' '}
+          <strong>Who you are as a trader</strong> — built from data in The Operator and your journal (roughly{' '}
           {dna?.analysisWindowDays || 90} days). This is a blunt psychological and behavioural mirror, refreshed on a{' '}
           ~90-day cycle. <strong>How to get better:</strong> use{' '}
           <Link to="/reports" style={{ color: '#f8c37d', fontWeight: 700 }}>
             Monthly reports
           </Link>{' '}
-          for ranked fixes, failure modes, and measurable checks â€” not DNA alone.
+          for ranked fixes, failure modes, and measurable checks — not DNA alone.
         </p>
 
         <div className="tdna-cta-row">
@@ -191,7 +191,7 @@ function ReportsDnaPageInner() {
         <div className="tdna-load-panel" aria-live="polite">
           <div className="tdna-resolving-spinner tdna-load-panel-spinner" />
           <p className="tdna-landing-sub tdna-load-panel-text">
-            Loading your DNA status, trade window, and any saved snapshot from the databaseâ€¦
+            Loading your DNA status, trade window, and any saved snapshot from the database…
           </p>
         </div>
       )}

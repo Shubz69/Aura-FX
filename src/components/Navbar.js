@@ -96,7 +96,7 @@ const Navbar = () => {
             <li><Link to="/leaderboard" onClick={closeMobileMenu} className={isActive('/leaderboard') ? 'active' : ''}>Leaderboard</Link></li>
           </ul>
           <p className="mobile-menu-account-hint">
-            Tap the <strong>profile icon</strong> (next to the bell) for Trader Desk, Journal, Profile, Settings &amp; more â€” same menu as desktop.
+            Tap the <strong>profile icon</strong> (next to the bell) for Trader Desk, Journal, Profile, Settings &amp; more — same menu as desktop.
           </p>
         </>
       ) : (
@@ -128,7 +128,9 @@ const Navbar = () => {
               <A7Logo />
               <span className="navbar-wordmark" aria-label="Aura Terminal™">
                 <span className="navbar-wordmark-aura">AURA</span>
-                <span className="navbar-wordmark-terminal">TERMINAL</span>
+                <span className="navbar-wordmark-terminal">
+                  TERMINAL<sup className="navbar-wordmark-tm">TM</sup>
+                </span>
               </span>
             </div>
           </Link>
@@ -283,7 +285,7 @@ const Navbar = () => {
               </div>
             </>
           )}
-          {/* Hamburger â€” mobile only */}
+          {/* Hamburger — mobile only */}
           <button
             className="mobile-menu-toggle"
             onClick={() => {

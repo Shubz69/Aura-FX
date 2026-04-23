@@ -42,7 +42,7 @@ import { popTraderPassportShare, setTraderPassportShare, dataUrlToBlob } from '.
 import { subscribeVisibleInterval } from '../utils/subscribeVisibleInterval';
 // All API calls use real endpoints only - no mock mode
 
-/** Isolated from Community â€” only this control re-renders when mute toggles (not the whole page). */
+/** Isolated from Community — only this control re-renders when mute toggles (not the whole page). */
 function ChannelMuteButton({ channel, userId }) {
     const mutedSet = useSyncExternalStore(subscribeMutedChannels, getMutedSnapshot, getMutedServerSnapshot);
     const isMuted = mutedSet.has(String(channel.id));
@@ -504,7 +504,7 @@ const formatCommunityRoleLabel = (role) => {
         .join(' ');
 };
 
-/** Community uses UUID client ids until the server returns a numeric DB id â€” only the latter exists in MySQL. */
+/** Community uses UUID client ids until the server returns a numeric DB id — only the latter exists in MySQL. */
 function isPersistedCommunityMessageId(messageId) {
     if (messageId == null || messageId === '') return false;
     if (typeof messageId === 'string' && messageId.startsWith('temp_')) return false;
@@ -934,7 +934,7 @@ const [journalLoading, setJournalLoading] = useState(false);
             const ts = typeof parsed?.ts === 'number' ? parsed.ts : 0;
             if (!dataUrl || typeof dataUrl !== 'string') return;
             if (Date.now() - ts > 5 * 60 * 1000) {
-                toast.info('Trader Passport attachment expired â€” generate a new one from The Operator â†’ Trader CV.');
+                toast.info('Trader Passport attachment expired — generate a new one from The Operator â†’ Trader CV.');
                 return;
             }
             try {
@@ -948,7 +948,7 @@ const [journalLoading, setJournalLoading] = useState(false);
                 });
                 setSelectedFile(file);
                 setNewMessage((prev) => (prev && prev.trim() ? prev : 'My Trader Passport (Aura FX)'));
-                toast.info('Trader Passport attached â€” pick a channel and send. Only people in that channel will see it.');
+                toast.info('Trader Passport attached — pick a channel and send. Only people in that channel will see it.');
             } catch (e) {
                 console.warn('Trader Passport attach failed', e);
                 setTraderPassportShare({ dataUrl, ts });
@@ -1069,7 +1069,7 @@ const [journalLoading, setJournalLoading] = useState(false);
             }
         };
 
-        // Initial category/channel order is loaded by getChannelsBootstrap â€” avoid 3Ã— parallel
+        // Initial category/channel order is loaded by getChannelsBootstrap — avoid 3Ã— parallel
         // serverless invocations (504/timeouts) on every Community mount.
 
         const stopCategoryVis = subscribeVisibleInterval(() => {
@@ -1581,7 +1581,7 @@ const {
       return;
     }
     
-    // Subscribed only to `/topic/chat/${selectedChannel.id}` â€” frame is always for this open channel.
+    // Subscribed only to `/topic/chat/${selectedChannel.id}` — frame is always for this open channel.
     const isCurrentChannel = Boolean(selectedChannel?.id);
     
     // Check if message mentions current user
@@ -1594,7 +1594,7 @@ const {
     const messageSenderId = message.sender?.id || message.userId;
     const isOwnMessage = String(messageSenderId) === String(userId);
     
-    // Badges + notifications (muted non-announcement channels: fully silent â€” no unread/mention counts, no toasts/OS alerts)
+    // Badges + notifications (muted non-announcement channels: fully silent — no unread/mention counts, no toasts/OS alerts)
     const msgChannel = channelList.find(c => String(c.id) === String(messageChannelId));
     const isAnnouncements = msgChannel?.category === 'announcements';
     const isMuted = isChannelMuted(messageChannelId);
@@ -1753,7 +1753,7 @@ return newMessages;
 
     // ***** MESSAGE PERSISTENCE: SERVER ONLY (no localStorage) *****
     // Community messages use the API as the single source of truth to avoid
-    // localStorage quota limits (5â€“10MB). All users see the same data from the server.
+    // localStorage quota limits (5–10MB). All users see the same data from the server.
 
     const saveMessagesToStorage = (channelId, messages) => {
         if (!channelId || !Array.isArray(messages)) return;
@@ -2028,7 +2028,7 @@ const renderMessageContent = (content, messageFile) => {
     
     // XP calculation is now handled by the imported calculateMessageXP function from xpSystem.js
 
-    /** Channel / UI tier: super_admin | admin | a7fx | premium | free â€” aligned with entitlements + subscription_plan */
+    /** Channel / UI tier: super_admin | admin | a7fx | premium | free — aligned with entitlements + subscription_plan */
     const getCurrentUserRole = () => {
         if (isSuperAdminUser) return 'super_admin';
         if (isAdminUser) return 'admin';
@@ -3473,7 +3473,7 @@ useEffect(() => {
     useEffect(() => {
         if (!isAuthenticated) return;
 
-        // ~45s cadence (was random 30â€“60s); pauses when tab hidden
+        // ~45s cadence (was random 30–60s); pauses when tab hidden
         return subscribeVisibleInterval(updateOnlineCount, 45000, { runLeadingWhenVisible: false });
     }, [isAuthenticated, updateOnlineCount]);
 
@@ -3521,7 +3521,7 @@ useEffect(() => {
         }
     }, [selectedChannel?.id, clearChannelBadge]);
 
-    // Backup poll for new messages only. Real-time path is WebSocket â€” aggressive 200â€“400ms polling
+    // Backup poll for new messages only. Real-time path is WebSocket — aggressive 200–400ms polling
     // caused constant network + setState work and froze the tab ("Page Unresponsive") on busy channels.
  useEffect(() => {
     if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
@@ -4613,7 +4613,7 @@ const groupedChannels = useMemo(() => {
     
     return grouped;
 }, [channelList, channelOrder]); // Only recompute when channelList or channelOrder changes
-   // Detect when user is manually scrolling (rAF-throttle setState â€” raw scroll events can fire >100/s)
+   // Detect when user is manually scrolling (rAF-throttle setState — raw scroll events can fire >100/s)
 useEffect(() => {
     const messagesContainer = messagesContainerRef.current;
     if (!messagesContainer) return;
@@ -4751,7 +4751,7 @@ useEffect(() => {
         setShowSubscriptionModal(true);
     };
 
-    // FREE plan: no Stripe â€“ call API, refresh entitlements, go to /community
+    // FREE plan: no Stripe – call API, refresh entitlements, go to /community
     const [selectingFreePlan, setSelectingFreePlan] = useState(false);
     const [subscriptionModalError, setSubscriptionModalError] = useState('');
 
@@ -6690,7 +6690,7 @@ if (!isAuthenticated && !hasToken) {
                                             setChannelPushEnabled(next);
                                             toast.success(
                                                 next
-                                                    ? 'Channel push on â€” occasional alerts when people message (max ~1/10 min).'
+                                                    ? 'Channel push on — occasional alerts when people message (max ~1/10 min).'
                                                     : 'Channel push off for this channel.'
                                             );
                                         } catch {
@@ -8827,7 +8827,7 @@ if (!isAuthenticated && !hasToken) {
                     navigate('/profile');
                 }}
             />
-            {/* Floating Journal Button â€” hide while profile modal open to avoid overlap / odd shapes */}
+            {/* Floating Journal Button — hide while profile modal open to avoid overlap / odd shapes */}
             {!showProfileModal ? (
                 <button
                     type="button"

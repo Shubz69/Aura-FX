@@ -1,5 +1,5 @@
 /* ============================================================
-   PUBLIC-PROFILE.CSS â€” AURA TERMINAL™  |  Premium Gamified Profile
+   PUBLIC-PROFILE.CSS — AURA TERMINAL™  |  Premium Gamified Profile
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -50,7 +50,7 @@
   align-items: flex-start;
 }
 
-/* Ambient glow orb â€” matches home.css */
+/* Ambient glow orb — matches home.css */
 .public-profile-container::before {
   content: '';
   position: fixed;

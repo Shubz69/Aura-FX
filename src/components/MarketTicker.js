@@ -5,7 +5,7 @@
  * - Live price updates with green/red flash
  * - Auto-scrolling ticker tape (TradingView style)
  * - Category tabs for filtering
- * - "View All Markets" modal with live prices â€” premium AURA TERMINAL™ redesign
+ * - "View All Markets" modal with live prices — premium AURA TERMINAL™ redesign
  * - Never shows 0.00 - shows loading or delayed indicator
  * - Stale data indicator
  * - Responsive design with proper height/padding
@@ -65,7 +65,7 @@ const TickerItem = memo(({
           <span className="ticker-price loading-price">
             <PriceLoading />
           </span>
-          <span className="ticker-change ticker-loading">â€”</span>
+          <span className="ticker-change ticker-loading">—</span>
         </>
       )}
     </div>
@@ -92,7 +92,7 @@ const MarketItem = memo(({
   return (
     <div
       className={`market-item ${flashClass} ${delayed ? 'delayed' : ''} ${quoteUnavailable ? 'quote-unavailable' : ''}`}
-      title={quoteUnavailable ? 'Live quote unavailable â€” check API keys or try again shortly' : undefined}
+      title={quoteUnavailable ? 'Live quote unavailable — check API keys or try again shortly' : undefined}
     >
       <div className="market-item-info">
         <span className="market-item-symbol">{displayName || symbol}</span>
@@ -106,7 +106,7 @@ const MarketItem = memo(({
   );
 });
 
-// View All Markets Modal â€” AURA TERMINAL™ premium redesign
+// View All Markets Modal — AURA TERMINAL™ premium redesign
 const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
   if (!isOpen) return null;
 

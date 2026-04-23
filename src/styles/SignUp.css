@@ -1,5 +1,5 @@
 /* ============================================================
-   SIGNUP.CSS â€” AURA TERMINAL™  |  Sign Up Page (Multi-Step)
+   SIGNUP.CSS — AURA TERMINAL™  |  Sign Up Page (Multi-Step)
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -42,12 +42,12 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    /* More top padding than login â€” signup card is taller */
+    /* More top padding than login — signup card is taller */
     padding: 90px max(20px, env(safe-area-inset-left)) max(40px, env(safe-area-inset-bottom));
     width: 100%;
 }
 
-/* â”€â”€ Ambient Glow (purple left, blue right â€” signup variant) */
+/* â”€â”€ Ambient Glow (purple left, blue right — signup variant) */
 .login-container::before {
     content: '';
     position: fixed;
@@ -259,7 +259,7 @@
     animation: fieldReveal 0.6s cubic-bezier(0.22,1,0.36,1) both;
 }
 
-/* Stagger each field â€” signup has up to 6 fields */
+/* Stagger each field — signup has up to 6 fields */
 .form-group:nth-child(1) { animation-delay: 0.22s; }
 .form-group:nth-child(2) { animation-delay: 0.29s; }
 .form-group:nth-child(3) { animation-delay: 0.36s; }
@@ -327,7 +327,7 @@
     transform: translateY(-1px);
 }
 
-/* Disabled state â€” step 1 fields locked after codes sent */
+/* Disabled state — step 1 fields locked after codes sent */
 .form-input:disabled {
     opacity: 0.45;
     cursor: not-allowed;
@@ -437,7 +437,7 @@
 
 /* "Step 2" pill label over the divider */
 .login-form-container hr::before {
-    content: 'Step 2 â€” Verify';
+    content: 'Step 2 — Verify';
     position: absolute;
     top: 50%;
     left: 50%;
@@ -482,7 +482,7 @@
     cursor: not-allowed;
 }
 
-/* Start over button â€” slightly different treatment */
+/* Start over button — slightly different treatment */
 .login-form-container > p > .link-button {
     font-size: 0.72rem;
     color: rgba(255,255,255,0.3);

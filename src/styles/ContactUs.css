@@ -1,5 +1,5 @@
 /* ============================================================
-   CONTACT US â€” AURA TERMINAL™ | ORIGINAL FONT & STYLES - NO WHITE GAPS
+   CONTACT US — AURA TERMINAL™ | ORIGINAL FONT & STYLES - NO WHITE GAPS
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -161,7 +161,7 @@ html, body {
     50% { opacity: 1; box-shadow: 0 0 6px rgba(139,92,246,0.8); }
 }
 
-/* Main H1: C&S-style gold shimmer â€” AuraPageTitle.css (h1.aura-page-title) */
+/* Main H1: C&S-style gold shimmer — AuraPageTitle.css (h1.aura-page-title) */
 .contact-header .contact-title.aura-page-title {
     margin: 0 auto 1.25rem;
 }
@@ -184,7 +184,7 @@ html, body {
     animation: titleIn 0.9s ease-out 0.5s both;
 }
 
-/* Decorative rule â€” gold line + dot (AuraPageTitle.css .aura-page-title-line) */
+/* Decorative rule — gold line + dot (AuraPageTitle.css .aura-page-title-line) */
 .contact-header__rule {
     animation: titleIn 0.9s ease-out 0.65s both;
 }

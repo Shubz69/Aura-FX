@@ -33,7 +33,7 @@ html {
     --glow-medium: 0 0 1px;
     --glow-strong: 0 0 1.5px;
 
-    /* Aura Analysis / Trader Desk â€“ exact same UI/UX as Aura Journal (Journal.css) */
+    /* Aura Analysis / Trader Desk – exact same UI/UX as Aura Journal (Journal.css) */
     --aa-bg:            #0a0a0a;
     --aa-bg-card:       rgba(255,255,255,0.025);
     --aa-bg-card-h:     rgba(255,255,255,0.048);
@@ -71,7 +71,7 @@ html {
 /* Ensures document can scroll on touch devices; no global overflow: hidden on html/body */
 /* DO NOT add touch-action: none or overflow: hidden to body/html globally */
 
-/* Installed PWA (Safari Add to Home Screen / Chrome install) â€” respect notch + home indicator */
+/* Installed PWA (Safari Add to Home Screen / Chrome install) — respect notch + home indicator */
 html.pwa-standalone body {
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
@@ -318,7 +318,7 @@ button {
   margin-top: 3rem;
 }
 
-/* Navbar: glass + layers live in Navbar.css â€” avoid solid bg here or frosted navy/black wonâ€™t show */
+/* Navbar: glass + layers live in Navbar.css — avoid solid bg here or frosted navy/black wonâ€™t show */
 .navbar-brand, .nav-link {
   color: #fff !important;
   font-weight: 500;
@@ -971,7 +971,7 @@ img, video, canvas {
 }
 
 /* ============================================================
-   UNIFIED LAYOUT â€” definitive scroll fix
+   UNIFIED LAYOUT — definitive scroll fix
    ============================================================ */
 
 footer.footer, .footer {

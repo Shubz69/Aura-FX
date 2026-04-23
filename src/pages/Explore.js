@@ -175,19 +175,19 @@ const Explore = () => {
           </div>
         </header>
 
-        {/* â”€â”€ Main Content â€” Split â”€â”€ */}
+        {/* â”€â”€ Main Content — Split â”€â”€ */}
         <div className="explore-main-content">
           <div className="explore-text-section">
             <h2 className="explore-subtitle">Discover AURA TERMINAL™</h2>
             <div className="explore-divider"></div>
             <p className="explore-text">
-              Welcome to AURA TERMINAL™â€”your gateway to professional trading education. This page will help you navigate our platform and discover everything we offer. Whether you're new to trading or looking to enhance your skills, explore our comprehensive resources designed to transform you into a consistently profitable trader.
+              Welcome to AURA TERMINAL™—your gateway to professional trading education. This page will help you navigate our platform and discover everything we offer. Whether you're new to trading or looking to enhance your skills, explore our comprehensive resources designed to transform you into a consistently profitable trader.
             </p>
             <p className="explore-text">
               Our platform offers multiple ways to learn and grow. From structured courses and expert mentorship to an active trading community and advanced AI assistance, we provide the tools and knowledge you need to succeed across all major markets.
             </p>
             <p className="explore-text">
-              Take your time exploring each section. Each page is designed to provide specific valueâ€”whether you're researching our courses, connecting with the community, or learning about our approach to trading education. Start your journey toward consistent profitability today.
+              Take your time exploring each section. Each page is designed to provide specific value—whether you're researching our courses, connecting with the community, or learning about our approach to trading education. Start your journey toward consistent profitability today.
             </p>
             <button className="explore-cta-button" onClick={() => navigate('/register')}>
               Get Started <FaArrowRight />
