@@ -5,44 +5,24 @@
       "origin": "https://www.auraterminal.ai",
       "localStorage": [
         {
-          "name": "community_channels_cache_88",
-          "value": "[{\"id\":\"announcements\",\"name\":\"announcements\",\"displayName\":\"Announcements\",\"category\":\"announcements\",\"description\":\"Important announcements from AURA TERMINAL.\",\"accessLevel\":\"open\",\"permissionType\":\"read-only\",\"locked\":true,\"canSee\":true,\"canRead\":true,\"canWrite\":false},{\"id\":\"levels\",\"name\":\"levels\",\"displayName\":\"Levels\",\"category\":\"announcements\",\"description\":\"Level-up celebrations and progress.\",\"accessLevel\":\"open\",\"permissionType\":\"read-only\",\"locked\":true,\"canSee\":true,\"canRead\":true,\"canWrite\":false},{\"id\":\"welcome\",\"name\":\"welcome\",\"displayName\":\"Welcome\",\"category\":\"announcements\",\"description\":\"Welcome to Aura Terminal community. Read the rules and click the checkmark below to unlock your channels.\",\"accessLevel\":\"open\",\"permissionType\":\"read-only\",\"locked\":true,\"canSee\":true,\"canRead\":true,\"canWrite\":false}]"
+          "name": "daily_login_check_88",
+          "value": "Wed Apr 22 2026"
         },
         {
           "name": "token",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODgsImVtYWlsIjoic2hvYmhpdDIwNjlAZ21haWwuY29tIiwidXNlcm5hbWUiOiJhdXJhcWFfMTc3NjczMzcyMzA3NCIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzc2Nzg0MDQwLCJleHAiOjE3NzY4NzA0NDB9.LH0R8KGW4bhhWOHMkx6lz1nFbRYWeB93-lAEjCuB-sY"
-        },
-        {
-          "name": "channelBadges_88",
-          "value": "{}"
-        },
-        {
-          "name": "welcomeMessageRead",
-          "value": "true"
-        },
-        {
-          "name": "user",
-          "value": "{\"id\":88,\"username\":\"auraqa_1776733723074\",\"email\":\"shobhit2069@gmail.com\",\"name\":\"Playwright QA Trader\",\"avatar\":null,\"role\":\"USER\",\"mfaVerified\":false,\"timezone\":\"Europe/London\",\"level\":1,\"xp\":3.5,\"bio\":\"\",\"avatarColor\":null,\"subscriptionPlan\":\"access\",\"joinDate\":\"2026-04-21T01:18:39.000Z\",\"createdAt\":\"2026-04-21T01:18:39.000Z\",\"login_streak\":1,\"last_seen\":\"2026-04-21T15:07:20.000Z\",\"stats\":{\"reputation\":0,\"totalTrades\":0,\"winRate\":0,\"totalProfit\":0},\"phone\":\"+447368877735\",\"address\":null,\"lastUsernameChange\":null,\"subscription_status\":\"inactive\",\"subscription_plan\":\"access\",\"banner\":\"\"}"
-        },
-        {
-          "name": "gdprAccepted",
-          "value": "true"
-        },
-        {
-          "name": "community_message_alerts_banner_dismissed",
-          "value": "1"
-        },
-        {
-          "name": "daily_login_check_88",
-          "value": "Tue Apr 21 2026"
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODgsImVtYWlsIjoic2hvYmhpdDIwNjlAZ21haWwuY29tIiwidXNlcm5hbWUiOiJhdXJhcWFfMTc3NjczMzcyMzA3NCIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzc2ODgwNDYyLCJleHAiOjE3NzY5NjY4NjJ9.eIEfF3_Yt1zy84IHZShJRlwFeVabgbcgA9I4Y4jj6O0"
         },
         {
           "name": "hasActiveSubscription",
           "value": "true"
         },
         {
-          "name": "community_messages_announcements",
-          "value": "[]"
+          "name": "user",
+          "value": "{\"id\":88,\"username\":\"auraqa_1776733723074\",\"email\":\"shobhit2069@gmail.com\",\"name\":\"Playwright QA Trader\",\"avatar\":\"\",\"role\":\"USER\",\"mfaVerified\":false,\"timezone\":\"Europe/London\",\"level\":1,\"xp\":7,\"phone\":\"+447368877735\",\"address\":\"\",\"bio\":\"\"}"
+        },
+        {
+          "name": "gdprAccepted",
+          "value": "true"
         }
       ]
     }

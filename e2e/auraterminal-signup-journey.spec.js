@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Full signup → OTP (pause for human / file / env) → choose free plan → logged-in smoke.
+ * Full signup â†’ OTP (pause for human / file / env) â†’ choose free plan â†’ logged-in smoke.
  *
  * Required env for YOUR phone (10+ national digits):
  *   SIGNUP_PHONE_NATIONAL=7123456789
@@ -78,10 +78,10 @@ async function readOtpFromEnvOrFile(page) {
   );
 }
 
-test.describe.serial('Aura Terminal — signup from scratch', () => {
+test.describe.serial('Aura Terminal™ â€” signup from scratch', () => {
   test.setTimeout(1_800_000);
 
-  test('register → verify → free plan → smoke (non-destructive)', async ({ page, context }) => {
+  test('register â†’ verify â†’ free plan â†’ smoke (non-destructive)', async ({ page, context }) => {
     fs.mkdirSync(REPORT_DIR, { recursive: true });
 
     const ts = Date.now();
@@ -115,7 +115,7 @@ test.describe.serial('Aura Terminal — signup from scratch', () => {
     fs.writeFileSync(
       CREDS_FILE,
       [
-        '=== Aura Terminal Playwright signup (keep private) ===',
+        '=== Aura Terminal™ Playwright signup (keep private) ===',
         `BASE=${BASE}`,
         `USERNAME=${username}`,
         `EMAIL=${email}`,
@@ -175,7 +175,7 @@ test.describe.serial('Aura Terminal — signup from scratch', () => {
     issue(
       'info',
       'otp',
-      'PAUSE — enter codes in env or file',
+      'PAUSE â€” enter codes in env or file',
       `Set SIGNUP_EMAIL_CODE and SIGNUP_SMS_CODE, or create ${OTP_FILE} with EMAIL=###### and SMS=###### (then save). Waiting up to OTP_WAIT_MS.`,
       page.url(),
     );

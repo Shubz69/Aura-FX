@@ -1,10 +1,10 @@
 /* ============================================================
-   AuraEnterTransition.css  |  Matched to AURA TERMINAL Theme
+   AuraEnterTransition.css  |  Matched to AURA TERMINAL™ Theme
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* ── Variables (mirror home.css) ─────────────────────────── */
+/* â”€â”€ Variables (mirror home.css) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
   --aura-bg:          #0a0a0a;
   --aura-border:      rgba(255, 255, 255, 0.08);
@@ -17,7 +17,7 @@
   --aura-transition:  0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Overlay shell ────────────────────────────────────────── */
+/* â”€â”€ Overlay shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-transition {
   position: fixed;
   inset: 0;
@@ -31,12 +31,12 @@
   overflow: hidden;
 }
 
-/* ── Reduced-motion variant ───────────────────────────────── */
+/* â”€â”€ Reduced-motion variant â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-reduced {
   background: var(--aura-bg);
 }
 
-/* ── Cosmic background — radial pulse matching .central-glow  */
+/* â”€â”€ Cosmic background â€” radial pulse matching .central-glow  */
 .aura-enter-cosmic {
   position: absolute;
   top: 50%;
@@ -61,7 +61,7 @@
   50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
 }
 
-/* ── Starfield — subtle scattered dots ───────────────────── */
+/* â”€â”€ Starfield â€” subtle scattered dots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-starfield {
   position: absolute;
   inset: 0;
@@ -85,7 +85,7 @@
   to   { transform: translateY(-8px); }
 }
 
-/* ── Galaxy container ─────────────────────────────────────── */
+/* â”€â”€ Galaxy container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-galaxy {
   position: absolute;
   top: 50%;
@@ -107,7 +107,7 @@
   to   { rotate: 360deg; }
 }
 
-/* ── Galaxy items — matches GALAXY_ITEMS text tokens ─────── */
+/* â”€â”€ Galaxy items â€” matches GALAXY_ITEMS text tokens â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-galaxy-item {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -126,7 +126,7 @@
   will-change: opacity, transform;
 }
 
-/* ── Loading section wrapper ──────────────────────────────── */
+/* â”€â”€ Loading section wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-loading-section {
   position: relative;
   z-index: 10;
@@ -134,13 +134,13 @@
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
-  /* Frosted card — mirrors .feature-card glass */
+  /* Frosted card â€” mirrors .feature-card glass */
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--aura-border);
   border-radius: var(--aura-radius);
   padding: 2.25rem 3rem;
   backdrop-filter: blur(16px);
-  /* Top shimmer line — from .feature-card::before */
+  /* Top shimmer line â€” from .feature-card::before */
   position: relative;
   overflow: hidden;
 }
@@ -168,7 +168,7 @@
   pointer-events: none;
 }
 
-/* ── Label — mirrors .loading-subtitle / .powered-by-glitch ─ */
+/* â”€â”€ Label â€” mirrors .loading-subtitle / .powered-by-glitch â”€ */
 .aura-enter-loading-label {
   font-size: 0.72rem;
   font-weight: 300;
@@ -186,7 +186,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Bar wrap ─────────────────────────────────────────────── */
+/* â”€â”€ Bar wrap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-loading-bar-wrap {
   display: flex;
   flex-direction: column;
@@ -202,7 +202,7 @@
   width: 260px;
 }
 
-/* ── Track — mirrors .stat-trend ─────────────────────────── */
+/* â”€â”€ Track â€” mirrors .stat-trend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-loading-track {
   width: 260px;
   height: 3px;
@@ -212,7 +212,7 @@
   position: relative;
 }
 
-/* ── Fill — mirrors .stat-trend-fill ─────────────────────── */
+/* â”€â”€ Fill â€” mirrors .stat-trend-fill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-loading-fill {
   height: 100%;
   border-radius: 99px;
@@ -226,7 +226,7 @@
   transition: width 0.12s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Shimmer sweep — mirrors @keyframes trendShimmer */
+/* Shimmer sweep â€” mirrors @keyframes trendShimmer */
 .aura-enter-loading-fill::after {
   content: '';
   position: absolute;
@@ -249,7 +249,7 @@
   100% { left: 120%; opacity: 0; }
 }
 
-/* ── Percentage counter ───────────────────────────────────── */
+/* â”€â”€ Percentage counter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-enter-loading-pct {
   font-size: 0.72rem;
   font-weight: 300;
@@ -257,7 +257,7 @@
   letter-spacing: 0.18em;
   margin: 0;
   font-variant-numeric: tabular-nums;
-  /* Gradient text — mirrors .stat-number */
+  /* Gradient text â€” mirrors .stat-number */
   background: linear-gradient(125deg, #ffffff 30%, #c4b5fd 70%, #93c5fd 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -265,7 +265,7 @@
   filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
 }
 
-/* ── Responsive tweaks ────────────────────────────────────── */
+/* â”€â”€ Responsive tweaks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (max-width: 480px) {
   .aura-enter-cosmic { width: 500px; height: 500px; }
   .aura-enter-loading-section { padding: 1.75rem 2rem; }

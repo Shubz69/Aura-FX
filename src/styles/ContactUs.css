@@ -1,10 +1,10 @@
 /* ============================================================
-   CONTACT US — AURA TERMINAL | ORIGINAL FONT & STYLES - NO WHITE GAPS
+   CONTACT US â€” AURA TERMINAL™ | ORIGINAL FONT & STYLES - NO WHITE GAPS
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* ── Variables (EXACTLY as your original) ─────────────────── */
+/* â”€â”€ Variables (EXACTLY as your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
     --c-bg:          #0a0a0a;
     --c-bg-card:     rgba(255,255,255,0.03);
@@ -20,14 +20,14 @@
     --c-transition:  0.28s cubic-bezier(0.4,0,0.2,1);
 }
 
-/* ── Base (EXACTLY as your original) ──────────────────────── */
+/* â”€â”€ Base (EXACTLY as your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .contact-container,
 .contact-container * {
     font-family: 'Space Grotesk', sans-serif;
     box-sizing: border-box;
 }
 
-/* ── RESET ONLY FOR CONTAINER FIX ─────────────────────────── */
+/* â”€â”€ RESET ONLY FOR CONTAINER FIX â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 html, body {
     width: 100%;
     max-width: 100%;
@@ -37,7 +37,7 @@ html, body {
     padding: 0;
 }
 
-/* ── Scroll Container - FIXED (keeping your original styles) ─ */
+/* â”€â”€ Scroll Container - FIXED (keeping your original styles) â”€ */
 .contact-container {
     position: relative;
     display: flex;
@@ -62,7 +62,7 @@ html, body {
     transform: translateY(0);
 }
 
-/* ── Ambient Glow Orbs (your original) ────────────────────── */
+/* â”€â”€ Ambient Glow Orbs (your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .contact-orb {
     position: fixed;
     border-radius: 50%;
@@ -99,7 +99,7 @@ html, body {
     50% { transform: translate(20px, -20px) scale(1.05); }
 }
 
-/* ── Content Wrapper - FIXED (your original structure) ────── */
+/* â”€â”€ Content Wrapper - FIXED (your original structure) â”€â”€â”€â”€â”€â”€ */
 .contact-content {
     position: relative;
     z-index: 10;
@@ -113,7 +113,7 @@ html, body {
     box-sizing: border-box;
 }
 
-/* ── Header (your original styles) ────────────────────────── */
+/* â”€â”€ Header (your original styles) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .contact-header {
     text-align: center;
     margin-bottom: 4rem;
@@ -161,7 +161,7 @@ html, body {
     50% { opacity: 1; box-shadow: 0 0 6px rgba(139,92,246,0.8); }
 }
 
-/* Main H1: C&S-style gold shimmer — AuraPageTitle.css (h1.aura-page-title) */
+/* Main H1: C&S-style gold shimmer â€” AuraPageTitle.css (h1.aura-page-title) */
 .contact-header .contact-title.aura-page-title {
     margin: 0 auto 1.25rem;
 }
@@ -184,12 +184,12 @@ html, body {
     animation: titleIn 0.9s ease-out 0.5s both;
 }
 
-/* Decorative rule — gold line + dot (AuraPageTitle.css .aura-page-title-line) */
+/* Decorative rule â€” gold line + dot (AuraPageTitle.css .aura-page-title-line) */
 .contact-header__rule {
     animation: titleIn 0.9s ease-out 0.65s both;
 }
 
-/* ── Grid (your original) ─────────────────────────────────── */
+/* â”€â”€ Grid (your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .contact-grid {
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
@@ -198,7 +198,7 @@ html, body {
     align-items: start;
 }
 
-/* ── Form Container (your original) ───────────────────────── */
+/* â”€â”€ Form Container (your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .contact-form-container {
     background: rgba(255,255,255,0.025);
     border: 1px solid var(--c-border);
@@ -248,7 +248,7 @@ html, body {
     margin: 0;
 }
 
-/* ── Form Groups (your original) ──────────────────────────── */
+/* â”€â”€ Form Groups (your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .form-group {
     margin-bottom: 1.5rem;
 }
@@ -331,7 +331,7 @@ html, body {
     border-color: rgba(139,92,246,0.3);
 }
 
-/* ── Submit Button (your original) ────────────────────────── */
+/* â”€â”€ Submit Button (your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .submit-btn {
     width: 100%;
     padding: 1rem 2rem;
@@ -397,7 +397,7 @@ html, body {
     100% { content: '...'; }
 }
 
-/* ── Status Message (your original) ───────────────────────── */
+/* â”€â”€ Status Message (your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .status-message {
     display: flex;
     align-items: center;
@@ -445,7 +445,7 @@ html, body {
     border: 1px solid rgba(239,68,68,0.3);
 }
 
-/* ── Direct Email (your original) ─────────────────────────── */
+/* â”€â”€ Direct Email (your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .direct-email-option {
     display: flex;
     align-items: center;
@@ -479,7 +479,7 @@ html, body {
     text-decoration: underline;
 }
 
-/* ── Info Container (your original) ───────────────────────── */
+/* â”€â”€ Info Container (your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .contact-info-container {
     display: flex;
     flex-direction: column;
@@ -493,7 +493,7 @@ html, body {
     to { opacity: 1; transform: translateX(0); }
 }
 
-/* ── Info Cards (your original) ───────────────────────────── */
+/* â”€â”€ Info Cards (your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .contact-info-cards {
     display: flex;
     flex-direction: column;
@@ -609,7 +609,7 @@ a.info-card__value:hover {
     flex-shrink: 0;
 }
 
-/* ── Map (your original) ──────────────────────────────────── */
+/* â”€â”€ Map (your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .contact-map {
     border-radius: var(--c-radius);
     overflow: hidden;
@@ -660,7 +660,7 @@ a.info-card__value:hover {
         linear-gradient(to right, rgba(139,92,246,0.04) 0%, transparent 100%);
 }
 
-/* ── Response Indicator (your original) ───────────────────── */
+/* â”€â”€ Response Indicator (your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .response-indicator {
     display: flex;
     align-items: center;
@@ -703,7 +703,7 @@ a.info-card__value:hover {
     50% { opacity: 0; transform: scale(1.8); }
 }
 
-/* ── Shared Animations (your original) ────────────────────── */
+/* â”€â”€ Shared Animations (your original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }

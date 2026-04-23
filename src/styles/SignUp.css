@@ -1,10 +1,10 @@
 /* ============================================================
-   SIGNUP.CSS — AURA TERMINAL  |  Sign Up Page (Multi-Step)
+   SIGNUP.CSS â€” AURA TERMINAL™  |  Sign Up Page (Multi-Step)
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* ── CSS Variables ────────────────────────────────────────── */
+/* â”€â”€ CSS Variables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
     --bg:           #0a0a0a;
     --bg-card:      rgba(255,255,255,0.03);
@@ -20,7 +20,7 @@
     --transition:   0.28s cubic-bezier(0.4,0,0.2,1);
 }
 
-/* ── Reset ────────────────────────────────────────────────── */
+/* â”€â”€ Reset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .login-container,
 .login-container *,
 .login-container *::before,
@@ -29,7 +29,7 @@
     font-family: 'Space Grotesk', sans-serif;
 }
 
-/* ── Outer Container ──────────────────────────────────────── */
+/* â”€â”€ Outer Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .login-container {
     min-height: 100vh;
     min-height: 100dvh;
@@ -42,12 +42,12 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    /* More top padding than login — signup card is taller */
+    /* More top padding than login â€” signup card is taller */
     padding: 90px max(20px, env(safe-area-inset-left)) max(40px, env(safe-area-inset-bottom));
     width: 100%;
 }
 
-/* ── Ambient Glow (purple left, blue right — signup variant) */
+/* â”€â”€ Ambient Glow (purple left, blue right â€” signup variant) */
 .login-container::before {
     content: '';
     position: fixed;
@@ -86,7 +86,7 @@
     50%       { opacity: 1;   transform: scale(1.08); }
 }
 
-/* ── Form Card ────────────────────────────────────────────── */
+/* â”€â”€ Form Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .login-form-container {
     position: relative;
     z-index: 10;
@@ -131,7 +131,7 @@
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ── Step Progress Indicator ──────────────────────────────── */
+/* â”€â”€ Step Progress Indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 /* Shown when codesSent === false (step 1) vs true (step 2) */
 .signup-steps {
     display: flex;
@@ -202,7 +202,7 @@
 
 .signup-step-line.done { background: rgba(234,169,96,0.4); }
 
-/* ── Form Header ──────────────────────────────────────────── */
+/* â”€â”€ Form Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .form-header {
     text-align: center;
     margin-bottom: 32px;
@@ -250,7 +250,7 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Form Groups ──────────────────────────────────────────── */
+/* â”€â”€ Form Groups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .form-group {
     margin-bottom: 18px;
     min-width: 0;
@@ -259,7 +259,7 @@
     animation: fieldReveal 0.6s cubic-bezier(0.22,1,0.36,1) both;
 }
 
-/* Stagger each field — signup has up to 6 fields */
+/* Stagger each field â€” signup has up to 6 fields */
 .form-group:nth-child(1) { animation-delay: 0.22s; }
 .form-group:nth-child(2) { animation-delay: 0.29s; }
 .form-group:nth-child(3) { animation-delay: 0.36s; }
@@ -277,7 +277,7 @@
     margin: 8px 0 0;
 }
 
-/* ── Labels ───────────────────────────────────────────────── */
+/* â”€â”€ Labels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .form-label {
     display: block;
     color: rgba(255,255,255,0.45);
@@ -293,7 +293,7 @@
     color: rgba(167,139,250,0.9);
 }
 
-/* ── Inputs ───────────────────────────────────────────────── */
+/* â”€â”€ Inputs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .form-input {
     width: 100%;
     min-width: 0;
@@ -327,7 +327,7 @@
     transform: translateY(-1px);
 }
 
-/* Disabled state — step 1 fields locked after codes sent */
+/* Disabled state â€” step 1 fields locked after codes sent */
 .form-input:disabled {
     opacity: 0.45;
     cursor: not-allowed;
@@ -340,7 +340,7 @@
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.3), 0 0 0 3px rgba(239,68,68,0.08);
 }
 
-/* ── Verification Code Input (Step 2) ─────────────────────── */
+/* â”€â”€ Verification Code Input (Step 2) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 /* Larger, centered, monospace feel for 6-digit codes */
 .form-input[maxLength="6"] {
     font-size: 1.35rem;
@@ -361,7 +361,7 @@
         0 0 24px rgba(234,169,96,0.15);
 }
 
-/* ── Primary Button ───────────────────────────────────────── */
+/* â”€â”€ Primary Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .login-button {
     width: 100%;
     min-width: 0;
@@ -426,7 +426,7 @@
     box-shadow: none;
 }
 
-/* ── Step Divider ─────────────────────────────────────────── */
+/* â”€â”€ Step Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 /* The <hr> between step 1 fields and step 2 verification */
 .login-form-container hr {
     border: none;
@@ -437,7 +437,7 @@
 
 /* "Step 2" pill label over the divider */
 .login-form-container hr::before {
-    content: 'Step 2 — Verify';
+    content: 'Step 2 â€” Verify';
     position: absolute;
     top: 50%;
     left: 50%;
@@ -452,7 +452,7 @@
     white-space: nowrap;
 }
 
-/* ── Link Button (Resend / Start over) ────────────────────── */
+/* â”€â”€ Link Button (Resend / Start over) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .link-button {
     background: none;
     border: none;
@@ -482,7 +482,7 @@
     cursor: not-allowed;
 }
 
-/* Start over button — slightly different treatment */
+/* Start over button â€” slightly different treatment */
 .login-form-container > p > .link-button {
     font-size: 0.72rem;
     color: rgba(255,255,255,0.3);
@@ -496,7 +496,7 @@
     text-decoration-color: rgba(255,255,255,0.4);
 }
 
-/* ── Success Message ──────────────────────────────────────── */
+/* â”€â”€ Success Message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .success-message {
     background: linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.1) 100%);
     border: 1px solid rgba(16,185,129,0.4);
@@ -518,7 +518,7 @@
     display: block;
 }
 
-/* ── Error Message ────────────────────────────────────────── */
+/* â”€â”€ Error Message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .error-message {
     background: linear-gradient(135deg, rgba(239,68,68,0.13) 0%, rgba(220,38,38,0.1) 100%) !important;
     border: 1px solid rgba(239,68,68,0.45) !important;
@@ -547,7 +547,7 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Sign In Link ─────────────────────────────────────────── */
+/* â”€â”€ Sign In Link â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .register-link {
     text-align: center;
     margin-top: 24px;
@@ -591,7 +591,7 @@
 .register-link a:hover { color: #fcd9a8; filter: drop-shadow(0 0 7px rgba(234,169,96,0.5)); }
 .register-link a:hover::after { transform: scaleX(1); }
 
-/* ── iPad ─────────────────────────────────────────────────── */
+/* â”€â”€ iPad â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (min-width: 768px) and (max-width: 1024px) {
     .login-container {
         height: 100vh !important; height: 100dvh !important;
@@ -612,7 +612,7 @@
     .login-title { font-size: 2rem; }
 }
 
-/* ── Mobile ───────────────────────────────────────────────── */
+/* â”€â”€ Mobile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (max-width: 767px) {
     .login-container {
         position: relative !important;

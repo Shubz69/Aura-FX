@@ -5,7 +5,7 @@
  * - Live price updates with green/red flash
  * - Auto-scrolling ticker tape (TradingView style)
  * - Category tabs for filtering
- * - "View All Markets" modal with live prices — premium AURA TERMINAL redesign
+ * - "View All Markets" modal with live prices â€” premium AURA TERMINAL™ redesign
  * - Never shows 0.00 - shows loading or delayed indicator
  * - Stale data indicator
  * - Responsive design with proper height/padding
@@ -19,9 +19,9 @@ import ReactDOM from 'react-dom';
 // Loading placeholder for prices
 const PriceLoading = () => (
   <span className="price-loading">
-    <span className="loading-dot">•</span>
-    <span className="loading-dot">•</span>
-    <span className="loading-dot">•</span>
+    <span className="loading-dot">â€¢</span>
+    <span className="loading-dot">â€¢</span>
+    <span className="loading-dot">â€¢</span>
   </span>
 );
 
@@ -65,7 +65,7 @@ const TickerItem = memo(({
           <span className="ticker-price loading-price">
             <PriceLoading />
           </span>
-          <span className="ticker-change ticker-loading">—</span>
+          <span className="ticker-change ticker-loading">â€”</span>
         </>
       )}
     </div>
@@ -92,7 +92,7 @@ const MarketItem = memo(({
   return (
     <div
       className={`market-item ${flashClass} ${delayed ? 'delayed' : ''} ${quoteUnavailable ? 'quote-unavailable' : ''}`}
-      title={quoteUnavailable ? 'Live quote unavailable — check API keys or try again shortly' : undefined}
+      title={quoteUnavailable ? 'Live quote unavailable â€” check API keys or try again shortly' : undefined}
     >
       <div className="market-item-info">
         <span className="market-item-symbol">{displayName || symbol}</span>
@@ -106,7 +106,7 @@ const MarketItem = memo(({
   );
 });
 
-// View All Markets Modal — AURA TERMINAL premium redesign
+// View All Markets Modal â€” AURA TERMINAL™ premium redesign
 const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
   if (!isOpen) return null;
 
@@ -114,7 +114,7 @@ const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
     <div className="market-modal-overlay" onClick={onClose}>
       <div className="market-modal" onClick={e => e.stopPropagation()}>
 
-        {/* ── Header ── */}
+        {/* â”€â”€ Header â”€â”€ */}
         <div className="market-modal-header">
           <div className="market-modal-header-left">
             <h2>All Markets</h2>
@@ -123,15 +123,15 @@ const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {stale && (
-              <span className="modal-stale-badge">⚠ Delayed</span>
+              <span className="modal-stale-badge">âš  Delayed</span>
             )}
             <button className="market-modal-close" onClick={onClose} aria-label="Close">
-              ×
+              Ã—
             </button>
           </div>
         </div>
 
-        {/* ── Scrollable content ── */}
+        {/* â”€â”€ Scrollable content â”€â”€ */}
         <div className="market-modal-content">
           {Object.entries(groupedPrices)
             .sort((a, b) => a[1].order - b[1].order)
@@ -239,7 +239,7 @@ function MarketTicker({
     <div className={`market-ticker-wrapper ${className} ${stale ? 'stale' : ''} ${!connected && !loading ? 'disconnected' : ''}`}>
 
       {stale && (
-        <div className="ticker-status stale">⚠️ Data may be delayed</div>
+        <div className="ticker-status stale">âš ï¸ Data may be delayed</div>
       )}
 
       {showTabs && categories.length > 0 && (
@@ -270,7 +270,7 @@ function MarketTicker({
             refresh();
           }}
         >
-          View All Markets →
+          View All Markets â†’
         </button>
       )}
 

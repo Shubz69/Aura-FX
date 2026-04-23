@@ -449,7 +449,7 @@ const Settings = () => {
                 onClick={() => setShowFilters(!showFilters)}
               >
                 <FaFilter style={{ marginRight: '8px' }} />
-                Filters {showFilters ? '▲' : '▼'}
+                Filters {showFilters ? 'â–²' : 'â–¼'}
               </button>
             </div>
 
@@ -473,7 +473,7 @@ const Settings = () => {
                     <option value="all">All Subscriptions</option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
-                    <option value="premium">Premium (AURA TERMINAL)</option>
+                    <option value="premium">Premium (AURA TERMINAL™)</option>
                     <option value="a7fx">A7FX Elite</option>
                     <option value="expired">Expired</option>
                     <option value="cancelled">Cancelled</option>
@@ -576,7 +576,7 @@ const Settings = () => {
                     disabled={isConfiguredSuperAdminEmail(selectedUser.email)}
                   >
                     <option value="free">Free / Access</option>
-                    <option value="premium">Premium (AURA TERMINAL)</option>
+                    <option value="premium">Premium (AURA TERMINAL™)</option>
                     <option value="a7fx">Elite / A7FX</option>
                     <option value="admin">Admin</option>
                     {superAdmin && <option value="super_admin">Super Admin</option>}
@@ -788,8 +788,8 @@ const Settings = () => {
                     value={subscriptionPlan} 
                     onChange={(e) => setSubscriptionPlan(e.target.value)}
                   >
-                    <option value="aura">AURA TERMINAL (£99/month)</option>
-                    <option value="a7fx">A7FX Elite (£250/month)</option>
+                    <option value="aura">AURA TERMINAL™ (Â£99/month)</option>
+                    <option value="a7fx">A7FX Elite (Â£250/month)</option>
                     <option value="">None (Free)</option>
                   </select>
                 </div>

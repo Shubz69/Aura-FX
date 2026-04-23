@@ -7,7 +7,7 @@ import { FaChartLine, FaGraduationCap, FaArrowRight, FaUsers, FaLock, FaRocket, 
 import { BiCodeAlt } from 'react-icons/bi';
 import { RiStockLine } from 'react-icons/ri';
 
-/* ── VS comparison data ────────────────────────────────────── */
+/* â”€â”€ VS comparison data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const typicalItems = [
     "Signals without reasoning, context, or risk guidance",
     "Showcases wins, quietly deletes losses",
@@ -22,17 +22,17 @@ const typicalItems = [
 
 const auraItems = [
     "Decision-making, risk, and deep market understanding",
-    "Full transparency — real trades, real accounts, live execution",
+    "Full transparency â€” real trades, real accounts, live execution",
     "Frameworks adaptable across all market conditions",
     "Technical, fundamental, macro, and geopolitical coverage",
-    "Live on Twitch — unfiltered, unedited market execution",
+    "Live on Twitch â€” unfiltered, unedited market execution",
     "Multi-level structured education across all asset classes",
     "Risk-first institutional trading principles at every level",
-    "AI intelligence, analysis, education & community — one platform",
+    "AI intelligence, analysis, education & community â€” one platform",
     "Professional moderation, structure, and full accountability",
 ];
 
-/* ── VS Card Component ─────────────────────────────────────── */
+/* â”€â”€ VS Card Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const VSCard = ({ type, items }) => {
     const isTypical = type === "typical";
     return (
@@ -44,7 +44,7 @@ const VSCard = ({ type, items }) => {
                 </div>
                 <div>
                     <div className="vs-card__title">
-                        {isTypical ? "Typical Community" : "AURA TERMINAL"}
+                        {isTypical ? "Typical Community" : "AURA TERMINAL™"}
                     </div>
                     <div className="vs-card__label">
                         {isTypical ? "What you usually get" : "The standard we hold ourselves to"}
@@ -56,7 +56,7 @@ const VSCard = ({ type, items }) => {
                 {items.map((text, i) => (
                     <li key={i} className="vs-list__item">
                         <span className="vs-list__bullet">
-                            {isTypical ? "✕" : "✓"}
+                            {isTypical ? "âœ•" : "âœ“"}
                         </span>
                         {text}
                     </li>
@@ -66,7 +66,7 @@ const VSCard = ({ type, items }) => {
     );
 };
 
-/* ── Main Component ────────────────────────────────────────── */
+/* â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const WhyInfinity = () => {
     const navigate = useNavigate();
     const [visibleSections, setVisibleSections] = useState({
@@ -125,7 +125,7 @@ const WhyInfinity = () => {
             <div className="content-wrapper">
                 {/* Header Section */}
                 <header className="why-header">
-                    <h1 className="why-main-title aura-page-title">Why Aura Terminal</h1>
+                    <h1 className="why-main-title aura-page-title">Why Aura Terminal™</h1>
                     <div className="aura-page-title-line" aria-hidden>
                         <span className="aura-page-title-dot" />
                     </div>
@@ -140,16 +140,16 @@ const WhyInfinity = () => {
                 {/* Main Content - Split Layout */}
                 <div className="why-main-content">
                     <div className="why-text-section">
-                        <h2 className="why-subtitle">Why Choose AURA TERMINAL</h2>
+                        <h2 className="why-subtitle">Why Choose AURA TERMINAL™</h2>
                         <div className="why-divider"></div>
                         <p className="why-text">
-                            AURA TERMINAL is an institutional-grade trading education and intelligence platform built by professional traders, for serious traders. Our team brings together 35+ years of real, live market experience, spanning Forex, Indices, Futures, Stocks, Commodities, and Crypto, with each educator specialising exclusively in their respective market. We are accredited by multiple industry bodies and operate with full transparency. Our work is backed by verifiable proof: real trades, real funded accounts, real results, and real students who have gone on to perform consistently in live market conditions.
+                            AURA TERMINAL™ is an institutional-grade trading education and intelligence platform built by professional traders, for serious traders. Our team brings together 35+ years of real, live market experience, spanning Forex, Indices, Futures, Stocks, Commodities, and Crypto, with each educator specialising exclusively in their respective market. We are accredited by multiple industry bodies and operate with full transparency. Our work is backed by verifiable proof: real trades, real funded accounts, real results, and real students who have gone on to perform consistently in live market conditions.
                         </p>
                         <p className="why-text">
-                            Unlike typical trading communities built around recycled YouTube content or surface-level Twitter analysis, AURA TERMINAL operates live. Our trading is broadcast publicly on Twitch, allowing anyone to observe real-time decision-making, execution, and risk management. There is no editing, no cherry-picking, and no post-hoc justification. Only disciplined, professional trading in live market conditions. Everything we teach has been executed, tested, and refined in real markets with real capital at risk.
+                            Unlike typical trading communities built around recycled YouTube content or surface-level Twitter analysis, AURA TERMINAL™ operates live. Our trading is broadcast publicly on Twitch, allowing anyone to observe real-time decision-making, execution, and risk management. There is no editing, no cherry-picking, and no post-hoc justification. Only disciplined, professional trading in live market conditions. Everything we teach has been executed, tested, and refined in real markets with real capital at risk.
                         </p>
                         <p className="why-text">
-                            We do not train dependency. Our sole objective is to build independent, self-sufficient traders capable of making high-quality decisions without reliance on signals or external confirmation. We place risk management first, followed by execution, and teach traders to operate with the mindset and discipline required for long-term consistency. If you are a serious trader seeking professional-grade education and a community built for sustained profitability, AURA TERMINAL is where you belong.
+                            We do not train dependency. Our sole objective is to build independent, self-sufficient traders capable of making high-quality decisions without reliance on signals or external confirmation. We place risk management first, followed by execution, and teach traders to operate with the mindset and discipline required for long-term consistency. If you are a serious trader seeking professional-grade education and a community built for sustained profitability, AURA TERMINAL™ is where you belong.
                         </p>
                         <button className="why-cta-button" onClick={() => navigate('/register')}>
                             Apply for Access <FaArrowRight />
@@ -198,7 +198,7 @@ const WhyInfinity = () => {
                     className={`why-additional-features ${visibleSections['additional-features'] ? 'fade-in-up' : ''}`}
                     ref={el => sectionRefs.current.additionalFeatures = el}
                 >
-                    <h2 className="why-section-heading">The AURA TERMINAL Advantage</h2>
+                    <h2 className="why-section-heading">The AURA TERMINAL™ Advantage</h2>
                     
                     <div className="why-features-grid">
                         <div className="why-platform-feature">
@@ -247,7 +247,7 @@ const WhyInfinity = () => {
                             </div>
                             <h3>Professional Environment & Security</h3>
                             <p>
-                                AURA TERMINAL is professionally moderated by experienced administrators. Market discussions are structured, separated by asset class, and designed for meaningful learning. All user data and payment information are protected using secure, professional-grade infrastructure ensuring confidentiality and reliability at scale.
+                                AURA TERMINAL™ is professionally moderated by experienced administrators. Market discussions are structured, separated by asset class, and designed for meaningful learning. All user data and payment information are protected using secure, professional-grade infrastructure ensuring confidentiality and reliability at scale.
                             </p>
                         </div>
                         
@@ -257,30 +257,30 @@ const WhyInfinity = () => {
                             </div>
                             <h3>Our Commitment</h3>
                             <p>
-                                AURA TERMINAL exists to create disciplined, profitable traders. With consistent effort, adherence to our frameworks, and professional discipline, traders who fully engage with the platform will develop the skills required to achieve sustained profitability within six months. Not a promise of shortcuts, but a commitment to real growth and real results.
+                                AURA TERMINAL™ exists to create disciplined, profitable traders. With consistent effort, adherence to our frameworks, and professional discipline, traders who fully engage with the platform will develop the skills required to achieve sustained profitability within six months. Not a promise of shortcuts, but a commitment to real growth and real results.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Why AURA TERMINAL Is NOT For You Section */}
+                {/* Why AURA TERMINAL™ Is NOT For You Section */}
                 <div className="why-not-for-you-box fade-in-up">
-                    <h2 className="why-section-heading">Why AURA TERMINAL Is NOT For You</h2>
+                    <h2 className="why-section-heading">Why AURA TERMINAL™ Is NOT For You</h2>
                     <div className="why-not-for-you-inner">
                         <p className="why-text">
-                            AURA TERMINAL is not designed for everyone, and that is intentional.
+                            AURA TERMINAL™ is not designed for everyone, and that is intentional.
                         </p>
                         <p className="why-text">
-                            This platform is not for traders looking for shortcuts, guaranteed profits, or passive income without effort. We do not sell hype, unrealistic promises, or instant results. If you are seeking signals to blindly follow without understanding risk, process, or accountability, AURA TERMINAL is not the right environment.
+                            This platform is not for traders looking for shortcuts, guaranteed profits, or passive income without effort. We do not sell hype, unrealistic promises, or instant results. If you are seeking signals to blindly follow without understanding risk, process, or accountability, AURA TERMINAL™ is not the right environment.
                         </p>
                         <p className="why-text">
-                            AURA TERMINAL is also not suitable for traders who are unwilling to be disciplined, patient, and consistent. Long-term profitability requires structure, emotional control, and respect for risk. If you are not prepared to review mistakes, follow rules, and improve incrementally, this platform will not deliver value to you.
+                            AURA TERMINAL™ is also not suitable for traders who are unwilling to be disciplined, patient, and consistent. Long-term profitability requires structure, emotional control, and respect for risk. If you are not prepared to review mistakes, follow rules, and improve incrementally, this platform will not deliver value to you.
                         </p>
                         <p className="why-text">
                             We are not a casual Discord group or entertainment-based trading community. Discussions are structured, analysis is professional, and standards are maintained. Traders who prefer unmoderated environments, noise, or speculative gambling will not benefit here.
                         </p>
                         <p className="why-text">
-                            AURA TERMINAL is built for individuals who take trading seriously as a skill, a business, and a long-term pursuit, not as a quick opportunity.
+                            AURA TERMINAL™ is built for individuals who take trading seriously as a skill, a business, and a long-term pursuit, not as a quick opportunity.
                         </p>
                         <p className="why-not-for-you-close">
                             If that describes you, we welcome you to apply.
@@ -291,26 +291,26 @@ const WhyInfinity = () => {
                     </div>
                 </div>
 
-                {/* ── AURA TERMINAL vs Typical Trading Communities ─────────────── */}
+                {/* â”€â”€ AURA TERMINAL™ vs Typical Trading Communities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <div className="why-additional-features fade-in-up vs-section-wrapper">
-                    <h2 className="why-section-heading">AURA TERMINAL vs Typical Trading Communities</h2>
+                    <h2 className="why-section-heading">AURA TERMINAL™ vs Typical Trading Communities</h2>
 
                     <div className="vs-grid">
-                        {/* Left — Typical */}
+                        {/* Left â€” Typical */}
                         <VSCard type="typical" items={typicalItems} />
 
-                        {/* Centre — VS badge */}
+                        {/* Centre â€” VS badge */}
                         <div className="vs-divider">
                             <div className="vs-line" />
                             <div className="vs-badge">VS</div>
                             <div className="vs-line" />
                         </div>
 
-                        {/* Right — AURA TERMINAL */}
+                        {/* Right â€” AURA TERMINAL™ */}
                         <VSCard type="aura" items={auraItems} />
                     </div>
                 </div>
-                {/* ─────────────────────────────────────────────────────────── */}
+                {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
 
             </div>
         </div>

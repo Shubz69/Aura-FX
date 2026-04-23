@@ -1,21 +1,21 @@
 /* ============================================================
-   CONNECTION HUB — AURA TERMINAL
+   CONNECTION HUB â€” AURA TERMINAL™
    Rethemed to match site-wide design language:
-   · Near-black deep background  (#03020a base)
-   · Gold / amber accent system  (rgba(234,169,96,…) / #f8c37d)
-   · Glass morphism panels       (backdrop-filter blur + dark fill)
-   · Soft white borders          (rgba(255,255,255,0.06–0.12))
-   · Warm gold glows             (no purple/blue ambient)
+   Â· Near-black deep background  (#03020a base)
+   Â· Gold / amber accent system  (rgba(234,169,96,â€¦) / #f8c37d)
+   Â· Glass morphism panels       (backdrop-filter blur + dark fill)
+   Â· Soft white borders          (rgba(255,255,255,0.06â€“0.12))
+   Â· Warm gold glows             (no purple/blue ambient)
    Fully responsive:
-     xs  < 480px  |  sm 480–767px  |  md 768–1023px
-     lg  1024–1279px  |  xl 1280px+
+     xs  < 480px  |  sm 480â€“767px  |  md 768â€“1023px
+     lg  1024â€“1279px  |  xl 1280px+
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
 
 
-/* ── CSS Variables — site-matched token system ────────────── */
+/* â”€â”€ CSS Variables â€” site-matched token system â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
   /* Backgrounds */
   --ch-bg:             #03020a;
@@ -43,7 +43,7 @@
   --ch-gold-glow:      rgba(234, 169, 96, 0.18);
   --ch-gold-glow-h:    rgba(234, 169, 96, 0.32);
 
-  /* Gradient — gold shimmer (matches site active states) */
+  /* Gradient â€” gold shimmer (matches site active states) */
   --ch-grad-gold:      linear-gradient(135deg,
                          rgba(248, 195, 125, 0.96) 0%,
                          rgba(234, 169, 96, 0.90) 50%,
@@ -72,7 +72,7 @@
 }
 
 
-/* ── Page wrapper ─────────────────────────────────────────── */
+/* â”€â”€ Page wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-hub-page {
   min-height: 100vh;
   background: var(--ch-bg);
@@ -83,7 +83,7 @@
 }
 
 
-/* ── Ambient background — warm gold core, not purple ─────── */
+/* â”€â”€ Ambient background â€” warm gold core, not purple â”€â”€â”€â”€â”€â”€â”€ */
 .connection-hub-page::before {
   content: '';
   position: fixed;
@@ -105,7 +105,7 @@
   animation: chGlowPulse 7s ease-in-out infinite;
 }
 
-/* Corner warmth — top right */
+/* Corner warmth â€” top right */
 .connection-hub-page::after {
   content: '';
   position: fixed;
@@ -135,7 +135,7 @@
   66%       { transform: translate(16px, -22px); }
 }
 
-/* Floating particles — gold tint */
+/* Floating particles â€” gold tint */
 .connection-hub-particles {
   position: fixed;
   inset: 0;
@@ -159,7 +159,7 @@
 }
 
 
-/* ── Container ────────────────────────────────────────────── */
+/* â”€â”€ Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-hub-container {
   position: relative;
   z-index: 2;
@@ -177,7 +177,7 @@
 }
 
 
-/* ── Header ───────────────────────────────────────────────── */
+/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-hub-header {
   text-align: center;
   margin-bottom: clamp(32px, 5vw, 56px);
@@ -280,7 +280,7 @@
 }
 
 
-/* ── Stats strip ──────────────────────────────────────────── */
+/* â”€â”€ Stats strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-hub-stats-strip {
   display: flex;
   justify-content: center;
@@ -339,7 +339,7 @@
 }
 
 
-/* ── Section label ────────────────────────────────────────── */
+/* â”€â”€ Section label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-hub-section-label {
   display: flex;
   align-items: center;
@@ -365,13 +365,13 @@
   background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.18), rgba(255, 255, 255, 0.06), transparent);
 }
 
-/* Manual Metrics section — sits below Enter Dashboard */
+/* Manual Metrics section â€” sits below Enter Dashboard */
 .connection-hub-section-label--manual-below {
   margin-top: clamp(4px, 1.5vw, 12px);
 }
 
 
-/* ── Platform grid ────────────────────────────────────────── */
+/* â”€â”€ Platform grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-hub-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(clamp(260px, 30vw, 300px), 1fr));
@@ -385,13 +385,13 @@
   justify-content: center;
 }
 
-/* CSV block at end of page — keep comfortable footer space */
+/* CSV block at end of page â€” keep comfortable footer space */
 .connection-hub-grid--csv-tail {
   margin-bottom: clamp(8px, 2vw, 20px);
 }
 
 
-/* ── Connection card ──────────────────────────────────────── */
+/* â”€â”€ Connection card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-card {
   background: var(--ch-bg-card);
   border: 1px solid var(--ch-border);
@@ -404,7 +404,7 @@
   overflow: hidden;
   cursor: pointer;
   box-shadow: var(--ch-shadow-card);
-  /* Top-edge highlight line — matches site panel style */
+  /* Top-edge highlight line â€” matches site panel style */
   box-shadow:
     var(--ch-shadow-card),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -461,7 +461,7 @@
 .connection-card:hover::before { opacity: 1; }
 .connection-card:hover::after  { opacity: 1; }
 
-/* Connected state — gold-green tint */
+/* Connected state â€” gold-green tint */
 .connection-card.connected {
   border-color: rgba(16, 185, 129, 0.2);
   background: rgba(16, 185, 129, 0.03);
@@ -495,7 +495,7 @@
 }
 
 
-/* ── Card header ──────────────────────────────────────────── */
+/* â”€â”€ Card header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-card-header {
   display: flex;
   align-items: center;
@@ -558,7 +558,7 @@
 }
 
 
-/* ── Status row ───────────────────────────────────────────── */
+/* â”€â”€ Status row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-card-status {
   display: flex;
   align-items: center;
@@ -610,7 +610,7 @@
 }
 
 
-/* ── Card meta panel ──────────────────────────────────────── */
+/* â”€â”€ Card meta panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-card-meta {
   display: flex;
   flex-direction: column;
@@ -651,12 +651,12 @@
 }
 
 .health-ok::before {
-  content: '✓';
+  content: 'âœ“';
   font-weight: 700;
 }
 
 
-/* ── Buttons ──────────────────────────────────────────────── */
+/* â”€â”€ Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-card-connect,
 .connection-card-disconnect {
   width: 100%;
@@ -677,7 +677,7 @@
   min-height: 44px; /* touch target */
 }
 
-/* Connect — gold gradient (matches site active pill) */
+/* Connect â€” gold gradient (matches site active pill) */
 .connection-card-connect {
   background: var(--ch-grad-gold);
   color: #0a0704;
@@ -759,7 +759,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Disconnect — gold-tinted outline */
+/* Disconnect â€” gold-tinted outline */
 .connection-card-disconnect {
   background: transparent;
   border: 1px solid rgba(234, 169, 96, 0.22);
@@ -820,7 +820,7 @@
 }
 
 
-/* ── Enter section ────────────────────────────────────────── */
+/* â”€â”€ Enter section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-hub-enter {
   text-align: center;
   padding: clamp(28px, 4vw, 40px) 0 clamp(16px, 3vw, 20px);
@@ -834,7 +834,7 @@
   gap: 0;
 }
 
-/* Primary CTA directly under MetaTrader row — tighter vertical rhythm */
+/* Primary CTA directly under MetaTrader row â€” tighter vertical rhythm */
 .connection-hub-enter--after-mt {
   padding-top: clamp(10px, 2vw, 18px);
   padding-bottom: clamp(18px, 3vw, 28px);
@@ -905,7 +905,7 @@
   flex-shrink: 0;
 }
 
-/* ── Enter Dashboard CTA button ── */
+/* â”€â”€ Enter Dashboard CTA button â”€â”€ */
 .connection-hub-enter-btn {
   padding: clamp(0.8rem, 2vw, 1.1rem) clamp(2rem, 5vw, 3.5rem);
   font-size: clamp(0.78rem, 1.8vw, 0.92rem);
@@ -1020,7 +1020,7 @@
 }
 
 
-/* ── Tooltip ──────────────────────────────────────────────── */
+/* â”€â”€ Tooltip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-hub-tooltip {
   position: relative;
   display: inline-block;
@@ -1046,7 +1046,7 @@
 }
 
 
-/* ── Loading skeleton ─────────────────────────────────────── */
+/* â”€â”€ Loading skeleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .connection-card-skeleton {
   background: var(--ch-bg-card);
   border: 1px solid var(--ch-border);
@@ -1290,7 +1290,7 @@
   gap: 8px;
 }
 
-/* Submit button — matches site gold CTA */
+/* Submit button â€” matches site gold CTA */
 .chub-modal-submit {
   background: var(--ch-grad-gold);
   border: none;
@@ -1346,7 +1346,7 @@
    RESPONSIVE BREAKPOINTS
    ============================================================================= */
 
-/* ── lg 1024–1279px ── */
+/* â”€â”€ lg 1024â€“1279px â”€â”€ */
 @media (min-width: 1024px) and (max-width: 1279px) {
   .connection-hub-grid {
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -1354,7 +1354,7 @@
   }
 }
 
-/* ── md 768–1023px (tablets) ── */
+/* â”€â”€ md 768â€“1023px (tablets) â”€â”€ */
 @media (min-width: 768px) and (max-width: 1023px) {
   .connection-hub-container {
     padding-top: clamp(72px, 9vh, 90px);
@@ -1380,7 +1380,7 @@
   }
 }
 
-/* ── sm 480–767px (large phones) ── */
+/* â”€â”€ sm 480â€“767px (large phones) â”€â”€ */
 @media (min-width: 480px) and (max-width: 767px) {
   .connection-hub-container {
     padding-top: 72px;
@@ -1420,13 +1420,13 @@
   }
 }
 
-/* ── xs < 480px (small phones) ── */
+/* â”€â”€ xs < 480px (small phones) â”€â”€ */
 @media (max-width: 479px) {
   .connection-hub-container {
     padding: 64px 12px 28px;
   }
 
-  /* Live badge — static, not absolute on tiny screens */
+  /* Live badge â€” static, not absolute on tiny screens */
   .connection-hub-live-badge {
     position: static;
     display: inline-flex;
@@ -1444,7 +1444,7 @@
     padding: 0 8px;
   }
 
-  /* Stats — single column on xs */
+  /* Stats â€” single column on xs */
   .connection-hub-stats-strip {
     flex-direction: column;
     align-items: center;
@@ -1522,7 +1522,7 @@
   }
 }
 
-/* ── xxs < 360px ── */
+/* â”€â”€ xxs < 360px â”€â”€ */
 @media (max-width: 359px) {
   .connection-hub-title {
     font-size: 1.35rem;
@@ -1547,7 +1547,7 @@
 }
 
 
-/* ── Safe area — notched / punch-hole devices ── */
+/* â”€â”€ Safe area â€” notched / punch-hole devices â”€â”€ */
 @supports (padding: max(0px)) {
   .connection-hub-container {
     padding-left: max(12px, env(safe-area-inset-left));
@@ -1562,7 +1562,7 @@
   }
 }
 
-/* ── Touch / iPad — larger tap targets ── */
+/* â”€â”€ Touch / iPad â€” larger tap targets â”€â”€ */
 @media (pointer: coarse) {
   .connection-card-connect,
   .connection-card-disconnect,
@@ -1583,7 +1583,7 @@
 }
 
 
-/* ── Print ── */
+/* â”€â”€ Print â”€â”€ */
 @media print {
   .connection-hub-page::before,
   .connection-hub-page::after,
@@ -1606,7 +1606,7 @@
   }
 }
 
-/* ── Reduced motion ── */
+/* â”€â”€ Reduced motion â”€â”€ */
 @media (prefers-reduced-motion: reduce) {
   .connection-hub-page::before,
   .connection-hub-page::after,

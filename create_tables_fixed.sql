@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS signup_verification_codes (
 
 -- Insert default welcome channel
 INSERT INTO channels (id, name, display_name, category, description, access_level, is_system_channel, hidden)
-VALUES ('welcome', 'welcome', 'Welcome', 'announcements', 'Welcome to Aura Terminal community!', 'open', TRUE, FALSE)
+VALUES ('welcome', 'welcome', 'Welcome', 'announcements', 'Welcome to Aura Terminal™ community!', 'open', TRUE, FALSE)
 ON DUPLICATE KEY UPDATE name=name;
 
 -- Insert default announcements channel

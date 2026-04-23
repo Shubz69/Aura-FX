@@ -1,5 +1,5 @@
 /* ============================================================
-   HOME.CSS — AURA TERMINAL | Premium Redesign v2
+   HOME.CSS â€” AURA TERMINAL™ | Premium Redesign v2
    Enhanced: refined gold system, premium typography, deeper
    spatial layers, smoother transitions, polished components
    + Dashboard Card (replaces iPad) + Touch 3D rotation
@@ -17,7 +17,7 @@
     --border:        rgba(255, 255, 255, 0.072);
     --border-h:      rgba(255, 255, 255, 0.14);
 
-    /* Gold system — more nuanced tiers */
+    /* Gold system â€” more nuanced tiers */
     --eaa-core:      #EAA960;
     --eaa-bright:    #F8C37D;
     --eaa-warm:      #D48D44;
@@ -62,7 +62,7 @@
     /* Accent line */
     --line-gold:     linear-gradient(90deg, transparent, var(--eaa-core) 30%, var(--eaa-bright) 70%, transparent);
 
-    /* ── Dashboard Card Frame tokens ── */
+    /* â”€â”€ Dashboard Card Frame tokens â”€â”€ */
     --card-frame-bg:      rgba(8, 9, 22, 0.72);
     --card-frame-border:  rgba(255, 255, 255, 0.10);
     --card-frame-blur:    22px;
@@ -88,7 +88,7 @@ html, body {
     margin: 0; padding: 0;
 }
 
-/* ── Scrollbar ── */
+/* â”€â”€ Scrollbar â”€â”€ */
 .home-container {
     position: relative;
     display: flex; flex-direction: column;
@@ -107,7 +107,7 @@ html, body {
     border-radius: 2px;
 }
 
-/* ── Glass card base ── */
+/* â”€â”€ Glass card base â”€â”€ */
 .glass-card {
     background: var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
@@ -129,9 +129,9 @@ html, body {
     pointer-events: none; z-index: 2;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    LOADING SCREEN
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .home-container .loading-screen {
     position: fixed !important; inset: 0 !important;
     background: var(--bg) !important;
@@ -200,9 +200,9 @@ html, body {
     50%    {opacity:1;transform:scale(1.35);box-shadow:0 0 9px var(--eaa-glow)}
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    HOME LAYOUT
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .home-content {
     position: relative; z-index: 10;
     width: 100%; max-width: 1500px;
@@ -217,9 +217,9 @@ html, body {
     to   { opacity:1; transform:translateY(0); }
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    HERO SECTION
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .home-logo-section {
     display: grid; grid-template-columns: 1fr 1fr;
     align-items: center; gap: 4.5rem;
@@ -336,7 +336,7 @@ html, body {
     text-shadow: 0 1px 10px rgba(0,0,0,.68);
 }
 
-/* ── CTAs ── */
+/* â”€â”€ CTAs â”€â”€ */
 .home-cta-section {
     display: flex; gap: 1.05rem; align-items: center;
     flex-wrap: wrap; margin-top: 2.4rem; width: 100%;
@@ -416,7 +416,7 @@ html, body {
 .home-secondary-button:hover::before { opacity: 1; }
 .home-secondary-button:active { transform: translateY(-1px); }
 
-/* ── Trust badges ── */
+/* â”€â”€ Trust badges â”€â”€ */
 .hero-trust-badges {
     display: flex; gap: 1.6rem; align-items: center;
     margin-top: 2.1rem; flex-wrap: wrap;
@@ -437,7 +437,7 @@ html, body {
     background: rgba(234,169,96,.065); flex-shrink: 0;
 }
 
-/* ── Partner logos ── */
+/* â”€â”€ Partner logos â”€â”€ */
 .partner-logos-row {
     display: flex; align-items: center; gap: 1.9rem;
     flex-wrap: wrap; margin-top: 1.5rem; padding-top: 1.5rem;
@@ -456,12 +456,12 @@ html, body {
 .partner-logo:hover { color: rgba(234,169,96,.84); }
 .partner-logo-icon { font-size: .86rem; color: rgba(234,169,96,.55); }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    DASHBOARD CARD SCENE
-   Replaces the iPad — matches reference image:
+   Replaces the iPad â€” matches reference image:
    a sleek, glassy trading terminal card with
    3D tilt, touch rotation, and image slideshow.
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .ipad-scene {
     width: 100%; max-width: 580px;
     perspective: 1000px; perspective-origin: 50% 40%;
@@ -489,7 +489,7 @@ html, body {
     transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ── Dashboard Card Body — replaces ipad-body ── */
+/* â”€â”€ Dashboard Card Body â€” replaces ipad-body â”€â”€ */
 .ipad-body {
     width: 100%;
     border-radius: 20px;
@@ -506,7 +506,7 @@ html, body {
     overflow: hidden;
 }
 
-/* Top shimmer line — gold-tinted glass edge */
+/* Top shimmer line â€” gold-tinted glass edge */
 .ipad-body::before {
     content: '';
     position: absolute; top: 0; left: 0; right: 0;
@@ -530,7 +530,7 @@ html, body {
     pointer-events: none; z-index: 1; border-radius: 20px;
 }
 
-/* ── Dashboard card top header bar ── */
+/* â”€â”€ Dashboard card top header bar â”€â”€ */
 .ipad-topbar {
     display: flex; align-items: center; justify-content: space-between;
     gap: .80rem;
@@ -593,7 +593,7 @@ html, body {
     color: rgba(234,169,96,.80); letter-spacing: .10em;
 }
 
-/* ── Screen / Slideshow area ── */
+/* â”€â”€ Screen / Slideshow area â”€â”€ */
 .ipad-screen {
     margin: 0;
     border-radius: 0;
@@ -920,7 +920,7 @@ html, body {
         }
     }
 }
-/* ── Bottom stats bar — matches reference image ── */
+/* â”€â”€ Bottom stats bar â€” matches reference image â”€â”€ */
 .ipad-dots {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1008,7 +1008,7 @@ html, body {
     box-shadow: 0 0 6px rgba(80,140,255,.24);
 }
 
-/* Active indicator — thin gold line at top of active stat */
+/* Active indicator â€” thin gold line at top of active stat */
 .ipad-dot.active::after {
     content: '';
     position: absolute; top: 0; left: 10%; right: 10%; height: 2px;
@@ -1016,7 +1016,7 @@ html, body {
     border-radius: 0 0 2px 2px;
 }
 
-/* ── Physical sides — glassy/translucent ── */
+/* â”€â”€ Physical sides â€” glassy/translucent â”€â”€ */
 .ipad-wrap::before {
     content: '';
     position: absolute; left: 1%; right: 0%; top: 100%;
@@ -1079,7 +1079,7 @@ html, body {
     transition: opacity .22s ease, width .15s ease, height .15s ease;
 }
 
-/* ── Touch ripple feedback (mobile) ── */
+/* â”€â”€ Touch ripple feedback (mobile) â”€â”€ */
 .ipad-touch-ripple {
     position: absolute;
     width: 36px; height: 36px; border-radius: 50%;
@@ -1110,9 +1110,9 @@ html, body {
     filter: blur(1px); z-index: 1;
 }
 
-/* ══════════════════════════════════════════════
-   TOUCH 3D ROTATION — JS HOOK CLASSES
-══════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   TOUCH 3D ROTATION â€” JS HOOK CLASSES
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @media (hover: none) and (pointer: coarse) {
     .ipad-scene {
         perspective: 900px;
@@ -1158,9 +1158,9 @@ html, body {
     .ipad-drag-hint { display: none !important; }
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SECTION LAYOUT & TITLES
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .home-main-content {
     width: 100%; display: flex; flex-direction: column;
     align-items: center; gap: 6rem;
@@ -1188,9 +1188,9 @@ html, body {
     background: linear-gradient(90deg, transparent, rgba(234,169,96,.22), transparent);
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    FEATURE CARDS
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .feature-cards-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
     gap: 1.4rem; width: 100%; max-width: 1240px; margin: 0 auto;
@@ -1263,9 +1263,9 @@ html, body {
     line-height: 1.76; font-weight: 400;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    STATS
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .stats-section { width: 100%; max-width: 1240px; margin: 0 auto; }
 .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.4rem; }
 
@@ -1346,9 +1346,9 @@ html, body {
 }
 .stat-item.stat-visible .stat-trend-fill { width: var(--fill, 75%); }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    WHY CHOOSE
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .why-choose-section { width: 100%; max-width: 1240px; margin: 0 auto; text-align: center; }
 .why-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.4rem; }
 
@@ -1420,9 +1420,9 @@ html, body {
     line-height: 1.78; font-weight: 400;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    TRADE MARKETS
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .trade-markets-section {
     width: 100%; max-width: 1240px;
     margin: 0 auto; padding: 0 1rem;
@@ -1513,9 +1513,9 @@ html, body {
     color: var(--text-muted); line-height: 1.44;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    KEY FEATURES LIST
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .key-features-section { width: 100%; max-width: 1240px; margin: 0 auto; text-align: center; }
 .features-list { display: flex; flex-direction: column; gap: 1.15rem; margin-top: 3.2rem; width: 100%; }
 
@@ -1581,9 +1581,9 @@ html, body {
     line-height: 1.76; font-weight: 400;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    COSMIC DIVIDER
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .cosmic-divider {
     width: 100%; height: 1px;
     background: linear-gradient(90deg,
@@ -1595,21 +1595,21 @@ html, body {
     position: relative; margin: .5rem 0;
 }
 .cosmic-divider::before {
-    content: '◈'; position: absolute; top: 50%; left: 50%;
+    content: 'â—ˆ'; position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     color: var(--eaa-core); font-size: .66rem;
     background: transparent;
     padding: 0 .75rem; opacity: .46;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MARKET TICKER WRAPPER
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .market-ticker-wrapper { width: 100%; }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    RESPONSIVE
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @media (min-width: 1600px) {
     .home-content   { max-width: 1640px; padding: 104px 4rem 320px; }
     .brand-name     { font-size: 5.4rem; }
@@ -1747,11 +1747,11 @@ html, body {
     .stats-grid         { grid-template-columns: repeat(2,1fr); }
 }
 
-/* ══════════════════════════════════════════════
-   SLIDE IMAGE — always fully visible
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   SLIDE IMAGE â€” always fully visible
    Uses <img> with object-fit: contain so any
    image size / aspect ratio fits without cropping.
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .ipad-slide {
     background-image: none !important;
     background-color: #050711;
@@ -1774,9 +1774,9 @@ html, body {
     transition: opacity 0.3s ease;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    LOGGED-IN DASHBOARD HOME
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .home-content--dashboard {
     max-width: min(100%, 1920px);
     width: 100%;
@@ -2405,9 +2405,9 @@ html, body {
     }
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    INSTITUTIONAL LOGGED-IN HOME
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .institution-home {
     display: flex;
     flex-direction: column;
@@ -3187,14 +3187,14 @@ html, body {
 }
 /* ══════════════════════════════════════════════
    LOGGED-IN TERMINAL DASHBOARD (reference layout)
-══════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .terminal-dashboard {
     width: 100%;
     max-width: none;
     display: flex;
     flex-direction: column;
     gap: 1.15rem;
-    /* Ensure desk copy never inherits dark body text — match gold / white terminal theme */
+    /* Ensure desk copy never inherits dark body text â€” match gold / white terminal theme */
     --text: #f4f5fb;
     --text-muted: rgba(235, 236, 245, 0.78);
     --text-dim: rgba(232, 210, 175, 0.58);
@@ -3794,7 +3794,7 @@ html, body {
     flex-shrink: 0;
 }
 
-/* Live metrics — optional frosted lock when no MT link (Aura Analysis) */
+/* Live metrics â€” optional frosted lock when no MT link (Aura Analysis) */
 .terminal-metrics-shell {
     position: relative;
     min-height: 5.5rem;
@@ -4011,7 +4011,7 @@ html, body {
     color: var(--down);
 }
 
-/* ── Home (logged-in only): compact user snapshot ribbon ── */
+/* â”€â”€ Home (logged-in only): compact user snapshot ribbon â”€â”€ */
 .home-logged-metrics {
     padding: 0.55rem 0.75rem 0.65rem;
     border-radius: var(--radius-lg);
@@ -4202,9 +4202,9 @@ html, body {
     }
 }
 
-/* ══════════════════════════════════════════════
-   LOGGED-IN HOME — condensed 3-column terminal desk
-══════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   LOGGED-IN HOME â€” condensed 3-column terminal desk
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .home-desk2 {
     width: 100%;
     max-width: none;

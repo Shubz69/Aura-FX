@@ -1,10 +1,10 @@
 /* ============================================================
-   AuraTabSection.css  |  AURA TERMINAL — Polished Dark Luxury
+   AuraTabSection.css  |  AURA TERMINAL™ â€” Polished Dark Luxury
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* ── Tab page shell — full width, no side gaps ────────────── */
+/* â”€â”€ Tab page shell â€” full width, no side gaps â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-page {
   width: 100%;
   min-height: 100%;
@@ -20,7 +20,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Tab title — matches .aura-overview-title ─────────────── */
+/* â”€â”€ Tab title â€” matches .aura-overview-title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-title {
   font-size: 1.6rem;
   font-weight: 300;
@@ -34,7 +34,7 @@
   background-clip: text;
 }
 
-/* ── Sub label ────────────────────────────────────────────── */
+/* â”€â”€ Sub label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-sub {
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.5);
@@ -43,13 +43,13 @@
   text-transform: uppercase;
 }
 
-/* ── Header divider line — matches overview header ────────── */
+/* â”€â”€ Header divider line â€” matches overview header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-page > .aura-tab-title,
 .aura-tab-page > .aura-tab-sub {
   display: block;
 }
 
-/* Subtle underline separator after sub title — mirrors header border */
+/* Subtle underline separator after sub title â€” mirrors header border */
 .aura-tab-sub {
   padding-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -64,7 +64,7 @@
   background: linear-gradient(90deg, rgba(234, 169, 96,0.8), transparent);
 }
 
-/* ── Section wrapper ──────────────────────────────────────── */
+/* â”€â”€ Section wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-section {
   margin-bottom: 28px;
   width: 100%;
@@ -80,7 +80,7 @@
   text-transform: uppercase;
 }
 
-/* ── Card grid ────────────────────────────────────────────── */
+/* â”€â”€ Card grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-grid {
   display: grid;
   gap: 14px;
@@ -89,7 +89,7 @@
   box-sizing: border-box;
 }
 
-/* ── Stat card — matches .aura-card glass style ───────────── */
+/* â”€â”€ Stat card â€” matches .aura-card glass style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-card {
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -144,7 +144,7 @@
 .aura-tab-card:hover::before { opacity: 1; }
 .aura-tab-card:hover::after  { opacity: 1; }
 
-/* ── Card label ───────────────────────────────────────────── */
+/* â”€â”€ Card label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-card-label {
   font-size: 0.65rem;
   text-transform: uppercase;
@@ -156,7 +156,7 @@
   display: block;
 }
 
-/* ── Card value — matches .stat-number gradient ───────────── */
+/* â”€â”€ Card value â€” matches .stat-number gradient â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-card-value {
   font-size: 1.3rem;
   font-weight: 500;
@@ -173,7 +173,7 @@
   filter: drop-shadow(0 0 12px rgba(234, 169, 96,0.22));
 }
 
-/* ── Placeholder / empty state ────────────────────────────── */
+/* â”€â”€ Placeholder / empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .aura-tab-placeholder {
   padding: 28px 24px;
   background: rgba(255, 255, 255, 0.02);
@@ -192,7 +192,7 @@
   background: rgba(234, 169, 96,0.03);
 }
 
-/* ── Responsive ───────────────────────────────────────────── */
+/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (max-width: 768px) {
   .aura-tab-grid {
     grid-template-columns: repeat(2, 1fr);

@@ -1,6 +1,6 @@
 /**
  * Send Web Push to all stored subscriptions for a user (after in-app notification is created).
- * Users with no subscription only see the bell dropdown; disabling push removes DB rows → no device ping.
+ * Users with no subscription only see the bell dropdown; disabling push removes DB rows â†’ no device ping.
  */
 
 const webpush = require('web-push');
@@ -18,7 +18,7 @@ function ensureVapid() {
   if (!pub || !priv) {
     if (!vapidMissingLogged) {
       vapidMissingLogged = true;
-      console.warn('[webPush] VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY not set — device push disabled (in-app notifications still work)');
+      console.warn('[webPush] VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY not set â€” device push disabled (in-app notifications still work)');
     }
     return false;
   }
@@ -47,7 +47,7 @@ function resolveOpenUrl(type, meta, channelId) {
     if (m.kind === 'JOURNAL_TASK_DUE') return '/journal';
     return '/';
   }
-  // Thread DMs use REPLY with channel_id 0 — not community channels
+  // Thread DMs use REPLY with channel_id 0 â€” not community channels
   if (type === 'REPLY' && (channelId === 0 || channelId == null)) return '/messages';
   if (type === 'CHANNEL_ACTIVITY') return '/community';
   if (type === 'MENTION' || type === 'REPLY') return '/community';
@@ -78,7 +78,7 @@ async function sendWebPushForNotification(opts) {
 
   const url = resolveOpenUrl(type, meta, channelId);
   const payload = JSON.stringify({
-    title: title || 'AURA TERMINAL',
+    title: title || 'AURA TERMINAL™',
     body: body || '',
     url,
     type: pushPayloadType(type),

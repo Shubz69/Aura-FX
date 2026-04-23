@@ -196,12 +196,12 @@ module.exports = async (req, res) => {
       const html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #0a0a1a; color: #ffffff;">
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #ffffff; font-size: 32px; margin: 0;">Aura Terminal</h1>
+              <h1 style="color: #ffffff; font-size: 32px; margin: 0;">Aura Terminal™</h1>
             </div>
             <div style="background-color: #1a1a1a; padding: 30px; border-radius: 10px; border: 1px solid #ffffff;">
               <h2 style="color: #ffffff; margin-top: 0;">Email Verification Required</h2>
               <p style="font-size: 16px; line-height: 1.6;">
-                Thank you for signing up for Aura Terminal. To complete your registration and verify your email address, please use the following verification code:
+                Thank you for signing up for Aura Terminal™. To complete your registration and verify your email address, please use the following verification code:
               </p>
               <div style="text-align: center; margin: 30px 0;">
                 <div style="display: inline-block; background-color: #2a2a2a; padding: 20px 40px; border-radius: 8px; border: 2px solid #ffffff;">
@@ -212,7 +212,7 @@ module.exports = async (req, res) => {
                 This code will expire in 10 minutes. If you didn't request this verification code, please ignore this email.
               </p>
               <p style="font-size: 14px; color: #cccccc; margin-top: 20px;">
-                Welcome to Aura Terminal — where wealth meets opportunity! 💰🚀
+                Welcome to Aura Terminal™ — where wealth meets opportunity! 💰🚀
               </p>
             </div>
           </div>
@@ -220,7 +220,7 @@ module.exports = async (req, res) => {
 
       const sendResult = await sendTransactionalHtml({
         to: emailLower,
-        subject: 'Aura Terminal — Email verification code',
+        subject: 'Aura Terminal™ — Email verification code',
         html,
       });
 

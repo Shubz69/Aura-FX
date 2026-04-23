@@ -296,7 +296,7 @@ const Login = () => {
                         <div className="logo-icon">
                             <RiTerminalBoxFill />
                         </div>
-                        <h1 className="brand-title">Why Aura Terminal</h1>
+                        <h1 className="brand-title">Why Aura Terminal™</h1>
                     </div>
                     
                     <h2 className="mfa-title">MFA verification</h2>

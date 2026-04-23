@@ -224,7 +224,7 @@ module.exports = async (req, res) => {
       }
 
       // Create admin thread and send welcome message for new user
-      const WELCOME_MESSAGE = `Welcome to AURA TERMINAL! This is a place where you can complain, ask questions, or get help. A personal admin will be there to assist you whenever you need it.`;
+      const WELCOME_MESSAGE = `Welcome to AURA TERMINAL™! This is a place where you can complain, ask questions, or get help. A personal admin will be there to assist you whenever you need it.`;
       try {
         await db.execute(`
           CREATE TABLE IF NOT EXISTS threads (

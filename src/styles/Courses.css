@@ -1,5 +1,5 @@
 /* ============================================================
-   COURSES.CSS — AURA TERMINAL PREMIUM EDUCATION EDITION
+   COURSES.CSS â€” AURA TERMINAL™ PREMIUM EDUCATION EDITION
    MATCHES COMMUNITY PAGE AESTHETIC - JOURNAL THEME
    ============================================================ */
 
@@ -185,7 +185,7 @@ html, body {
 
 /* Eyebrow pill - Journal style */
 .courses-header::before {
-    content: 'AURA TERMINAL EDUCATION';
+    content: 'AURA TERMINAL™ EDUCATION';
     display: block;
     margin: 0 auto 1.5rem;
     width: fit-content;
@@ -882,7 +882,7 @@ html, body {
 }
 
 .subscription-plan-features li::before {
-    content: '✦';
+    content: 'âœ¦';
     position: absolute;
     left: 0;
     color: var(--eaa-bright);

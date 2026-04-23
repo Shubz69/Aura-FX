@@ -1,10 +1,10 @@
 /* =============================================================================
-   Terminal routes under .journal-page — navy / white glass chrome.
+   Terminal routes under .journal-page â€” navy / white glass chrome.
    Import after Journal.css (AuraTerminalThemeShell). Gold stays on progress
    fills (.aa-bar-fill-*) and similar data viz; borders and panels use journal blue.
    ============================================================================= */
 
-/* ── Re-tokens (inherit to descendants) ─────────────────────────────────── */
+/* â”€â”€ Re-tokens (inherit to descendants) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .journal-page .connection-hub-page {
   --border-h: rgba(160, 185, 240, 0.28);
   --accent: rgba(175, 200, 255, 0.55);
@@ -72,7 +72,7 @@
   border-top-color: #eaa960 !important;
 }
 
-/* ═══════════ Connection Hub ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• Connection Hub â•â•â•â•â•â•â•â•â•â•â• */
 .journal-page .connection-hub-page::before {
   background: radial-gradient(
     ellipse at center,
@@ -209,7 +209,7 @@
   background: linear-gradient(135deg, #243058, #3d5290) !important;
 }
 
-/* ═══════════ Aura dashboard chrome ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• Aura dashboard chrome â•â•â•â•â•â•â•â•â•â•â• */
 .journal-page .aura-dashboard-tabs-wrap {
   border-bottom: 1px solid rgba(160, 185, 240, 0.2) !important;
   box-shadow: 0 1px 0 rgba(160, 185, 240, 0.12), 0 8px 32px rgba(0, 0, 0, 0.5) !important;
@@ -267,8 +267,8 @@
   background: rgba(180, 200, 255, 0.45) !important;
 }
 
-/* ═══════════ Aura shared cards / KPIs (not bar fills) ═══════════ */
-/* Aura Analysis — empty / connect card (dashboard) */
+/* â•â•â•â•â•â•â•â•â•â•â• Aura shared cards / KPIs (not bar fills) â•â•â•â•â•â•â•â•â•â•â• */
+/* Aura Analysis â€” empty / connect card (dashboard) */
 .journal-page .aa-empty-state-card {
   background: linear-gradient(
     135deg,
@@ -332,7 +332,7 @@
   background: rgba(160, 185, 240, 0.55) !important;
 }
 
-/* ═══════════ Messages ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• Messages â•â•â•â•â•â•â•â•â•â•â• */
 .journal-page .messages-page-container .messages-page-header {
   box-shadow:
     var(--msg-glass-shadow),
@@ -462,9 +462,9 @@
   box-shadow: 0 10px 32px rgba(50, 70, 140, 0.38) !important;
 }
 
-/* Affiliation: styled in Affiliation.css (gold / journal-aligned — no navy overrides). */
+/* Affiliation: styled in Affiliation.css (gold / journal-aligned â€” no navy overrides). */
 
-/* ═══════════ Admin panel ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• Admin panel â•â•â•â•â•â•â•â•â•â•â• */
 .journal-page .admin-panel-container::after {
   background: radial-gradient(ellipse at center, rgba(100, 130, 220, 0.08) 0%, transparent 68%) !important;
 }
@@ -497,7 +497,7 @@
   box-shadow: 0 4px 20px rgba(70, 100, 190, 0.2) !important;
 }
 
-/* ═══════════ Settings ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• Settings â•â•â•â•â•â•â•â•â•â•â• */
 .journal-page .settings-page .settings-container {
   background:
     radial-gradient(ellipse 60% 40% at 25% -5%, rgba(100, 130, 220, 0.12) 0%, transparent 60%),
@@ -537,7 +537,7 @@
   box-shadow: 0 0 28px rgba(70, 100, 190, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
 }
 
-/* ═══════════ Admin inbox ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• Admin inbox â•â•â•â•â•â•â•â•â•â•â• */
 .journal-page .admin-inbox-sidebar {
   border-color: rgba(160, 185, 240, 0.24) !important;
 }
@@ -551,7 +551,7 @@
   border-bottom-color: var(--accent-solid) !important;
 }
 
-/* ═══════════ Reports (Aura terminal) — keep rp-progress-bar gold (progress) ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• Reports (Aura Terminal™) â€” keep rp-progress-bar gold (progress) â•â•â•â•â•â•â•â•â•â•â• */
 .journal-page .rp-page .rp-eyebrow {
   color: rgba(160, 185, 240, 0.62) !important;
 }

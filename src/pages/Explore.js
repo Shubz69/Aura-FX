@@ -114,7 +114,7 @@ const Explore = () => {
     {
       icon: <FaHome />,
       title: 'Home',
-      description: 'Discover AURA TERMINAL and learn about our professional trading education platform. Get started with elite mentorship and proven strategies.',
+      description: 'Discover AURA TERMINAL™ and learn about our professional trading education platform. Get started with elite mentorship and proven strategies.',
       path: '/'
     },
     {
@@ -131,8 +131,8 @@ const Explore = () => {
     },
     {
       icon: <FaQuestionCircle />,
-      title: 'Why AURA TERMINAL',
-      description: 'Learn why AURA TERMINAL is the premier choice for professional trading education. Discover our approach to consistent profitability.',
+      title: 'Why AURA TERMINAL™',
+      description: 'Learn why AURA TERMINAL™ is the premier choice for professional trading education. Discover our approach to consistent profitability.',
       path: '/why-glitch'
     },
     {
@@ -167,7 +167,7 @@ const Explore = () => {
       
       <div className="explore-content-wrapper">
 
-        {/* ── Header ── */}
+        {/* â”€â”€ Header â”€â”€ */}
         <header className="explore-header">
           <h1 className="explore-main-title aura-page-title">Explore</h1>
           <div className="explore-header-line aura-page-title-line" aria-hidden>
@@ -175,19 +175,19 @@ const Explore = () => {
           </div>
         </header>
 
-        {/* ── Main Content — Split ── */}
+        {/* â”€â”€ Main Content â€” Split â”€â”€ */}
         <div className="explore-main-content">
           <div className="explore-text-section">
-            <h2 className="explore-subtitle">Discover AURA TERMINAL</h2>
+            <h2 className="explore-subtitle">Discover AURA TERMINAL™</h2>
             <div className="explore-divider"></div>
             <p className="explore-text">
-              Welcome to AURA TERMINAL—your gateway to professional trading education. This page will help you navigate our platform and discover everything we offer. Whether you're new to trading or looking to enhance your skills, explore our comprehensive resources designed to transform you into a consistently profitable trader.
+              Welcome to AURA TERMINAL™â€”your gateway to professional trading education. This page will help you navigate our platform and discover everything we offer. Whether you're new to trading or looking to enhance your skills, explore our comprehensive resources designed to transform you into a consistently profitable trader.
             </p>
             <p className="explore-text">
               Our platform offers multiple ways to learn and grow. From structured courses and expert mentorship to an active trading community and advanced AI assistance, we provide the tools and knowledge you need to succeed across all major markets.
             </p>
             <p className="explore-text">
-              Take your time exploring each section. Each page is designed to provide specific value—whether you're researching our courses, connecting with the community, or learning about our approach to trading education. Start your journey toward consistent profitability today.
+              Take your time exploring each section. Each page is designed to provide specific valueâ€”whether you're researching our courses, connecting with the community, or learning about our approach to trading education. Start your journey toward consistent profitability today.
             </p>
             <button className="explore-cta-button" onClick={() => navigate('/register')}>
               Get Started <FaArrowRight />
@@ -209,11 +209,11 @@ const Explore = () => {
           </div>
         </div>
 
-        {/* ── Navigate Section ── */}
+        {/* â”€â”€ Navigate Section â”€â”€ */}
         <div className="explore-pages-section">
           <h2 className="explore-section-heading">Navigate Our Platform</h2>
           <p className="explore-section-description">
-            Explore the different sections of AURA TERMINAL to find exactly what you need for your trading journey.
+            Explore the different sections of AURA TERMINAL™ to find exactly what you need for your trading journey.
           </p>
           <div className="explore-pages-grid">
             {sitePages.map((page, index) => (
@@ -235,7 +235,7 @@ const Explore = () => {
           </div>
         </div>
 
-        {/* ── Courses Section ── */}
+        {/* â”€â”€ Courses Section â”€â”€ */}
         <div className="explore-courses-section">
           <h2 className="explore-section-heading">Courses Provided</h2>
           <p className="explore-section-description">
@@ -258,11 +258,11 @@ const Explore = () => {
           </div>
         </div>
 
-        {/* ── Footer ── */}
+        {/* â”€â”€ Footer â”€â”€ */}
         <div className="explore-footer">
           <div className="explore-footer-content">
             <span className="explore-footer-text">Courses Provided</span>
-            <span className="explore-footer-separator">•</span>
+            <span className="explore-footer-separator">â€¢</span>
             <span className="explore-footer-powered">
               powered by <strong>The Glitch</strong>
             </span>

@@ -72,7 +72,7 @@ export default function OperatingSystem() {
   return (
     <div className="ops-page">
       <section className="ops-hero">
-        <p className="ops-kicker">Aura Terminal</p>
+        <p className="ops-kicker">Aura Terminal™</p>
         <h1>The Trader Performance Operating System</h1>
         <p>Where retail traders become professional operators.</p>
       </section>
@@ -81,7 +81,7 @@ export default function OperatingSystem() {
         <h2>Problem</h2>
         <p>Most traders do not have a system. They rely on habits, emotions, and guesswork, which creates inconsistency and repeated mistakes.</p>
         <h2>Solution</h2>
-        <p>Aura Terminal connects behaviour, discipline, execution, and performance inside one structured operating environment.</p>
+        <p>Aura Terminal™ connects behaviour, discipline, execution, and performance inside one structured operating environment.</p>
       </section>
 
       <section className="ops-grid">
@@ -98,7 +98,7 @@ export default function OperatingSystem() {
 
       <section className="ops-flow">
         <h2>System Flow</h2>
-        <p>Journal → Live Metrics → The Operator → Trader DNA → Monthly Statements → Trader CV / Passport → Trader Desk</p>
+        <p>Journal â†’ Live Metrics â†’ The Operator â†’ Trader DNA â†’ Monthly Statements â†’ Trader CV / Passport â†’ Trader Desk</p>
       </section>
     </div>
   );

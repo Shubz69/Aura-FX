@@ -1,4 +1,4 @@
-# Aura Terminal — Playwright live audit report
+# Aura Terminal™ â€” Playwright live audit report
 
 - **Generated:** 2026-04-21T00:42:01.393Z
 - **Base URL:** https://auraterminal.ai
@@ -10,39 +10,39 @@ Automated Chromium audit visited the homepage, discovered same-origin links, hit
 
 ## 2. Working features (observed)
 
-- **200** https://www.auraterminal.ai/ — _AURA TERMINAL_ (4985ms)
-- **200** https://www.auraterminal.ai/ — _AURA TERMINAL_ (1163ms)
-- **200** https://www.auraterminal.ai/courses — _AURA TERMINAL_ (1166ms)
-- **200** https://www.auraterminal.ai/explore — _AURA TERMINAL_ (934ms)
-- **200** https://www.auraterminal.ai/why-glitch — _AURA TERMINAL_ (1380ms)
-- **200** https://www.auraterminal.ai/contact — _AURA TERMINAL_ (689ms)
-- **200** https://www.auraterminal.ai/choose-plan — _AURA TERMINAL_ (116ms)
-- **200** https://www.auraterminal.ai/affiliation — _AURA TERMINAL_ (109ms)
-- **200** https://www.auraterminal.ai/privacy — _AURA TERMINAL_ (1704ms)
-- **200** https://www.auraterminal.ai/terms — _AURA TERMINAL_ (100ms)
-- **200** https://www.auraterminal.ai/friends — _AURA TERMINAL_ (175ms)
-- **200** https://www.auraterminal.ai/contact-us — _AURA TERMINAL_ (78ms)
-- **200** https://www.auraterminal.ai/login — _AURA TERMINAL_ (170ms)
-- **200** https://www.auraterminal.ai/register — _AURA TERMINAL_ (91ms)
-- **200** https://www.auraterminal.ai/signup — _AURA TERMINAL_ (1022ms)
-- **200** https://www.auraterminal.ai/dashboard — _AURA TERMINAL_ (93ms)
-- **200** https://www.auraterminal.ai/reports — _AURA TERMINAL_ (77ms)
-- **200** https://www.auraterminal.ai/live-metrics — _AURA TERMINAL_ (3558ms)
-- **200** https://www.auraterminal.ai/monthly-statements — _AURA TERMINAL_ (1017ms)
-- **200** https://www.auraterminal.ai/aura-analysis — _AURA TERMINAL_ (87ms)
-- **200** https://www.auraterminal.ai/aura-analysis/dashboard/performance — _AURA TERMINAL_ (788ms)
-- **200** https://www.auraterminal.ai/subscription — _AURA TERMINAL_ (101ms)
-- **200** https://www.auraterminal.ai/forgot-password — _AURA TERMINAL_ (100ms)
-- **200** https://www.auraterminal.ai/reset-password — _AURA TERMINAL_ (950ms)
-- **200** https://www.auraterminal.ai/operating-system — _AURA TERMINAL_ (778ms)
-- **200** https://www.auraterminal.ai/premium-ai — _AURA TERMINAL_ (119ms)
-- **200** https://www.auraterminal.ai/journal — _AURA TERMINAL_ (107ms)
-- **200** https://www.auraterminal.ai/trader-deck — _AURA TERMINAL_ (777ms)
-- **200** https://www.auraterminal.ai/surveillance — _AURA TERMINAL_ (109ms)
-- **200** https://www.auraterminal.ai/backtesting — _AURA TERMINAL_ (6394ms)
-- **200** https://www.auraterminal.ai/community — _AURA TERMINAL_ (810ms)
-- **200** https://www.auraterminal.ai/messages — _AURA TERMINAL_ (93ms)
-- **200** https://www.auraterminal.ai/profile — _AURA TERMINAL_ (98ms)
+- **200** https://www.auraterminal.ai/ â€” _AURA TERMINAL™_ (4985ms)
+- **200** https://www.auraterminal.ai/ â€” _AURA TERMINAL™_ (1163ms)
+- **200** https://www.auraterminal.ai/courses â€” _AURA TERMINAL™_ (1166ms)
+- **200** https://www.auraterminal.ai/explore â€” _AURA TERMINAL™_ (934ms)
+- **200** https://www.auraterminal.ai/why-glitch â€” _AURA TERMINAL™_ (1380ms)
+- **200** https://www.auraterminal.ai/contact â€” _AURA TERMINAL™_ (689ms)
+- **200** https://www.auraterminal.ai/choose-plan â€” _AURA TERMINAL™_ (116ms)
+- **200** https://www.auraterminal.ai/affiliation â€” _AURA TERMINAL™_ (109ms)
+- **200** https://www.auraterminal.ai/privacy â€” _AURA TERMINAL™_ (1704ms)
+- **200** https://www.auraterminal.ai/terms â€” _AURA TERMINAL™_ (100ms)
+- **200** https://www.auraterminal.ai/friends â€” _AURA TERMINAL™_ (175ms)
+- **200** https://www.auraterminal.ai/contact-us â€” _AURA TERMINAL™_ (78ms)
+- **200** https://www.auraterminal.ai/login â€” _AURA TERMINAL™_ (170ms)
+- **200** https://www.auraterminal.ai/register â€” _AURA TERMINAL™_ (91ms)
+- **200** https://www.auraterminal.ai/signup â€” _AURA TERMINAL™_ (1022ms)
+- **200** https://www.auraterminal.ai/dashboard â€” _AURA TERMINAL™_ (93ms)
+- **200** https://www.auraterminal.ai/reports â€” _AURA TERMINAL™_ (77ms)
+- **200** https://www.auraterminal.ai/live-metrics â€” _AURA TERMINAL™_ (3558ms)
+- **200** https://www.auraterminal.ai/monthly-statements â€” _AURA TERMINAL™_ (1017ms)
+- **200** https://www.auraterminal.ai/aura-analysis â€” _AURA TERMINAL™_ (87ms)
+- **200** https://www.auraterminal.ai/aura-analysis/dashboard/performance â€” _AURA TERMINAL™_ (788ms)
+- **200** https://www.auraterminal.ai/subscription â€” _AURA TERMINAL™_ (101ms)
+- **200** https://www.auraterminal.ai/forgot-password â€” _AURA TERMINAL™_ (100ms)
+- **200** https://www.auraterminal.ai/reset-password â€” _AURA TERMINAL™_ (950ms)
+- **200** https://www.auraterminal.ai/operating-system â€” _AURA TERMINAL™_ (778ms)
+- **200** https://www.auraterminal.ai/premium-ai â€” _AURA TERMINAL™_ (119ms)
+- **200** https://www.auraterminal.ai/journal â€” _AURA TERMINAL™_ (107ms)
+- **200** https://www.auraterminal.ai/trader-deck â€” _AURA TERMINAL™_ (777ms)
+- **200** https://www.auraterminal.ai/surveillance â€” _AURA TERMINAL™_ (109ms)
+- **200** https://www.auraterminal.ai/backtesting â€” _AURA TERMINAL™_ (6394ms)
+- **200** https://www.auraterminal.ai/community â€” _AURA TERMINAL™_ (810ms)
+- **200** https://www.auraterminal.ai/messages â€” _AURA TERMINAL™_ (93ms)
+- **200** https://www.auraterminal.ai/profile â€” _AURA TERMINAL™_ (98ms)
 
 ## 3. Broken features (findings: high/critical)
 
@@ -54,7 +54,7 @@ Automated Chromium audit visited the homepage, discovered same-origin links, hit
   - URL: `https://www.auraterminal.ai/terms`
   - Actual: No <form> detected (may still use JS submit)
 - **info** Post-login / MFA / subscription flows not executed
-  - Actual: Skipped — no AUDIT_EMAIL / AUDIT_PASSWORD in environment
+  - Actual: Skipped â€” no AUDIT_EMAIL / AUDIT_PASSWORD in environment
   - Expected: Deep authenticated audit
   - Steps: Set AUDIT_EMAIL and AUDIT_PASSWORD to enable automated login continuation
 - **medium** Request failed
@@ -107,19 +107,11 @@ Automated Chromium audit visited the homepage, discovered same-origin links, hit
 - **low** Button did not respond to click
   - URL: `https://www.auraterminal.ai/register`
   - Actual: Click timeout or intercepted
-  - Steps: Click "View All Markets →"
+  - Steps: Click "View All Markets â†’"
 - **low** Button did not respond to click
   - URL: `https://www.auraterminal.ai/register`
   - Actual: Click timeout or intercepted
-  - Steps: Click "🇬🇧+44▼"
-- **low** Button did not respond to click
-  - URL: `https://www.auraterminal.ai/register`
-  - Actual: Click timeout or intercepted
-  - Steps: Click "SEND VERIFICATION CODES"
-- **low** Button did not respond to click
-  - URL: `https://www.auraterminal.ai/register`
-  - Actual: Click timeout or intercepted
-  - Steps: Click "🇬🇧+44▼"
+  - Steps: Click "ðŸ‡¬ðŸ‡§+44â–¼"
 - **low** Button did not respond to click
   - URL: `https://www.auraterminal.ai/register`
   - Actual: Click timeout or intercepted
@@ -127,7 +119,7 @@ Automated Chromium audit visited the homepage, discovered same-origin links, hit
 - **low** Button did not respond to click
   - URL: `https://www.auraterminal.ai/register`
   - Actual: Click timeout or intercepted
-  - Steps: Click "🇬🇧+44▼"
+  - Steps: Click "ðŸ‡¬ðŸ‡§+44â–¼"
 - **low** Button did not respond to click
   - URL: `https://www.auraterminal.ai/register`
   - Actual: Click timeout or intercepted
@@ -135,7 +127,15 @@ Automated Chromium audit visited the homepage, discovered same-origin links, hit
 - **low** Button did not respond to click
   - URL: `https://www.auraterminal.ai/register`
   - Actual: Click timeout or intercepted
-  - Steps: Click "🇬🇧+44▼"
+  - Steps: Click "ðŸ‡¬ðŸ‡§+44â–¼"
+- **low** Button did not respond to click
+  - URL: `https://www.auraterminal.ai/register`
+  - Actual: Click timeout or intercepted
+  - Steps: Click "SEND VERIFICATION CODES"
+- **low** Button did not respond to click
+  - URL: `https://www.auraterminal.ai/register`
+  - Actual: Click timeout or intercepted
+  - Steps: Click "ðŸ‡¬ðŸ‡§+44â–¼"
 - **low** Button did not respond to click
   - URL: `https://www.auraterminal.ai/register`
   - Actual: Click timeout or intercepted
@@ -204,9 +204,9 @@ See **pageNotes** in `e2e/reports/auraterminal-audit-data.json` for requested vs
 
 | Claim (homepage headings) | Status |
 |---|---|
-| 🔒 GDPR Privacy Notice | Could not fully verify without product depth test |
-| Trade SmarterWith Aura Terminal | Could not fully verify without product depth test |
-| Why Choose AURA TERMINAL | Could not fully verify without product depth test |
+| ðŸ”’ GDPR Privacy Notice | Could not fully verify without product depth test |
+| Trade SmarterWith Aura Terminal™ | Could not fully verify without product depth test |
+| Why Choose AURA TERMINAL™ | Could not fully verify without product depth test |
 | Trade Multiple Markets | Could not fully verify without product depth test |
 | What Sets Us Apart | Could not fully verify without product depth test |
 

@@ -15,9 +15,9 @@ import {
     FaChartLine, FaGlobe, FaArrowRight,
 } from 'react-icons/fa';
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    ANIMATED COUNTER
-══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const useCountUp = (target, duration = 2000, start = false) => {
     const [count, setCount] = useState(0);
     useEffect(() => {
@@ -61,17 +61,17 @@ const StatItem = ({ number, label, fill = '75%' }) => {
     );
 };
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    iPad slideshow
-══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const IPAD_SLIDE_BASE = `${process.env.PUBLIC_URL || ''}/images/ipad-slides`;
 
 const SLIDES = [
-    { image: `${IPAD_SLIDE_BASE}/journal.png`,      tag: '📓 Trading Journal',    title: 'Your Daily Trading Discipline',  subtitle: 'Streaks, checklists, and session notes—built to keep execution consistent.',                           statBadge: 'Streaks & tasks', chartColor: '#F8C37D' },
-    { image: `${IPAD_SLIDE_BASE}/traderdesk.png`,  tag: '📊 Market Intelligence', title: 'Briefs, Bias & Macro Context',   subtitle: 'Session-ready views of structure, drivers, and what matters before London & New York.',              statBadge: 'Live context',    chartColor: '#EAA960' },
-    { image: `${IPAD_SLIDE_BASE}/auraAI.png`,      tag: '🤖 Aura AI',             title: 'Premium Trading Copilot',        subtitle: 'Ask for analysis, risk framing, and ideas—grounded in live data when available.',                    statBadge: 'Aura AI',         chartColor: '#FDE8C4' },
-    { image: `${IPAD_SLIDE_BASE}/community.png`,    tag: '🏆 Community',           title: 'Elite Trading Community',        subtitle: 'Structured channels, real moderators, and traders who take the craft seriously.',                    statBadge: '1,200+ Members',  chartColor: '#D48D44' },
-    { image: `${IPAD_SLIDE_BASE}/courses.png`,    tag: '🎓 Education',           title: 'Courses & Mentorship',           subtitle: 'Progressive curriculum plus optional 1-to-1 mentorship for committed traders.',                     statBadge: 'C & S',           chartColor: '#EABB80' },
+    { image: `${IPAD_SLIDE_BASE}/journal.png`,      tag: 'ðŸ““ Trading Journal',    title: 'Your Daily Trading Discipline',  subtitle: 'Streaks, checklists, and session notesâ€”built to keep execution consistent.',                           statBadge: 'Streaks & tasks', chartColor: '#F8C37D' },
+    { image: `${IPAD_SLIDE_BASE}/traderdesk.png`,  tag: 'ðŸ“Š Market Intelligence', title: 'Briefs, Bias & Macro Context',   subtitle: 'Session-ready views of structure, drivers, and what matters before London & New York.',              statBadge: 'Live context',    chartColor: '#EAA960' },
+    { image: `${IPAD_SLIDE_BASE}/auraAI.png`,      tag: 'ðŸ¤– Aura AI',             title: 'Premium Trading Copilot',        subtitle: 'Ask for analysis, risk framing, and ideasâ€”grounded in live data when available.',                    statBadge: 'Aura AI',         chartColor: '#FDE8C4' },
+    { image: `${IPAD_SLIDE_BASE}/community.png`,    tag: 'ðŸ† Community',           title: 'Elite Trading Community',        subtitle: 'Structured channels, real moderators, and traders who take the craft seriously.',                    statBadge: '1,200+ Members',  chartColor: '#D48D44' },
+    { image: `${IPAD_SLIDE_BASE}/courses.png`,    tag: 'ðŸŽ“ Education',           title: 'Courses & Mentorship',           subtitle: 'Progressive curriculum plus optional 1-to-1 mentorship for committed traders.',                     statBadge: 'C & S',           chartColor: '#EABB80' },
 ];
 
 const MiniSparkline = ({ color = '#EAA960' }) => {
@@ -91,9 +91,9 @@ const MiniSparkline = ({ color = '#EAA960' }) => {
     );
 };
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    3D FLOATING iPAD
-══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const FloatingIPad = () => {
     const sceneRef  = useRef(null);
     const wrapRef   = useRef(null);
@@ -120,18 +120,18 @@ const FloatingIPad = () => {
         const cursor = cursorRef.current;
         if (!scene || !wrap) return;
 
-        /* ── Config ── */
+        /* â”€â”€ Config â”€â”€ */
         const BASE_X         =  7,  BASE_Y         = -13;
         const MOBILE_BASE_X  =  5,  MOBILE_BASE_Y  = -8;
         const MAX_TILT       =  20, MAX_TOUCH_TILT =  22;
         const LERP = 0.08, FLOAT_AMP = 4.0, FLOAT_SPD = 0.00065;
 
-        /* ── Touch detection ──────────────────────────────────────────────────
+        /* â”€â”€ Touch detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
            Media queries can lie on some Android WebViews / iOS Chrome.
            Instead: set a flag when the FIRST touchstart fires on the window,
            and clear it when a real mousemove fires (desktop pointer).
            This is the most reliable cross-browser approach.
-        ──────────────────────────────────────────────────────────────────── */
+        â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         let _touchMode = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         const setTouchMode  = () => { _touchMode = true;  };
         const setMouseMode  = () => { _touchMode = false; };
@@ -139,19 +139,19 @@ const FloatingIPad = () => {
         window.addEventListener('mousemove',  setMouseMode, { passive: true });
         const inTouchMode = () => _touchMode;
 
-        /* ── Desktop state ── */
+        /* â”€â”€ Desktop state â”€â”€ */
         let targetX = BASE_X, targetY = BASE_Y;
         let currentX = BASE_X, currentY = BASE_Y;
         let phase = 0, lastTime = performance.now();
         let rafId = null;
         const lerp = (a, b, t) => a + (b-a)*t;
 
-        /* ── Touch state ── */
+        /* â”€â”€ Touch state â”€â”€ */
         let touchStartX = 0, touchStartY = 0;
         let touchRafId  = null;
         let isTouching  = false;
 
-        /* ── Mouse handlers ── */
+        /* â”€â”€ Mouse handlers â”€â”€ */
         const onEnter = () => { if (!inTouchMode() && cursor) cursor.style.opacity = '1'; };
         const onLeave = () => {
             if (inTouchMode()) return;
@@ -189,7 +189,7 @@ const FloatingIPad = () => {
             rafId = requestAnimationFrame(tick);
         };
 
-        /* ── Touch handlers ── */
+        /* â”€â”€ Touch handlers â”€â”€ */
         const spawnRipple = (cx, cy) => {
             const r = scene.getBoundingClientRect();
             const el = document.createElement('div');
@@ -202,7 +202,7 @@ const FloatingIPad = () => {
 
         const onTouchStart = (e) => {
             if (e.touches.length !== 1) return;
-            e.preventDefault();         // ← blocks page scroll on the iPad card
+            e.preventDefault();         // â† blocks page scroll on the iPad card
             isTouching  = true;
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
@@ -234,7 +234,7 @@ const FloatingIPad = () => {
             setTimeout(() => wrap.classList.remove('is-resting'), 700);
         };
 
-        /* ── Register ── */
+        /* â”€â”€ Register â”€â”€ */
         scene.addEventListener('mousemove',   onMove);
         scene.addEventListener('mouseenter',  onEnter);
         scene.addEventListener('mouseleave',  onLeave);
@@ -247,7 +247,7 @@ const FloatingIPad = () => {
 
         rafId = requestAnimationFrame((ts) => { lastTime = ts; rafId = requestAnimationFrame(tick); });
 
-        /* ── Cleanup ── */
+        /* â”€â”€ Cleanup â”€â”€ */
         return () => {
             cancelAnimationFrame(rafId);
             if (touchRafId) cancelAnimationFrame(touchRafId);
@@ -264,13 +264,13 @@ const FloatingIPad = () => {
             scene.removeEventListener('touchcancel', onTouchEnd);
         };
     }, []);
-/* ══════════════════════════════════════════════
-   iPAD TOUCH 3D ROTATION — COMPANION JS SNIPPET
-   ──────────────────────────────────────────────
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   iPAD TOUCH 3D ROTATION â€” COMPANION JS SNIPPET
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Add this script to your page (or component).
    It handles both desktop mouse-tilt AND mobile
    touch-drag 3D rotation of .ipad-wrap.
-══════════════════════════════════════════════*/
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•*/
 
 
 
@@ -289,7 +289,7 @@ const FloatingIPad = () => {
 
   const isMobile = () => window.matchMedia('(hover:none) and (pointer:coarse)').matches;
 
-  // ── Desktop mouse tilt ──────────────────────
+  // â”€â”€ Desktop mouse tilt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   scene.addEventListener('mousemove', (e) => {
     if (isMobile()) return;
     const r   = scene.getBoundingClientRect();
@@ -314,7 +314,7 @@ const FloatingIPad = () => {
     setTimeout(() => wrap.classList.remove('is-resting'), 700);
   });
 
-  // ── Mobile / touch tilt ─────────────────────
+  // â”€â”€ Mobile / touch tilt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   let touchStartX = 0;
   let touchStartY = 0;
   let currentRx   = MOBILE_REST_RX;
@@ -372,7 +372,7 @@ const FloatingIPad = () => {
     setTimeout(() => wrap.classList.remove('is-resting'), 700);
   });
 
-  // ── Gold ripple helper ───────────────────────
+  // â”€â”€ Gold ripple helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function spawnRipple(clientX, clientY) {
     const r    = scene.getBoundingClientRect();
     const el   = document.createElement('div');
@@ -389,7 +389,7 @@ const FloatingIPad = () => {
     return (
         <div className="ipad-scene" ref={sceneRef} style={{ cursor: 'none' }}>
             <div ref={cursorRef} className="ipad-cursor" style={{ width:'8px', height:'8px', transition:'opacity .22s ease, width .15s ease, height .15s ease' }} />
-            <div className="ipad-drag-hint"><span className="ipad-drag-hint-icon">✦</span> Drag to rotate</div>
+            <div className="ipad-drag-hint"><span className="ipad-drag-hint-icon">âœ¦</span> Drag to rotate</div>
 
             <div className="ipad-wrap" ref={wrapRef} style={{ position:'relative', width:'100%', transformStyle:'preserve-3d', transform:'translateY(0px) rotateX(7deg) rotateY(-13deg)', willChange:'transform' }}>
                 <div className="ipad-body" ref={bodyRef}>
@@ -399,12 +399,12 @@ const FloatingIPad = () => {
                         <div style={{ marginLeft:'auto', fontSize:'.52rem', fontWeight:600, color:'rgba(255,255,255,.28)', letterSpacing:'.12em' }}>AURA</div>
                     </div>
 
-                    {/* ── SCREEN ── */}
+                    {/* â”€â”€ SCREEN â”€â”€ */}
                     <div className="ipad-screen">
                         {SLIDES.map((slide, i) => (
                             <div key={i} className={`ipad-slide${i === activeSlide ? ' active' : ''}`}>
 
-                                {/* Image — uses <img> so object-fit: contain works properly */}
+                                {/* Image â€” uses <img> so object-fit: contain works properly */}
                                 {slide.image && (
                                     <img
                                         src={slide.image}
@@ -447,19 +447,19 @@ const FloatingIPad = () => {
 };
 
 const formatPercent = (value, digits = 1) => {
-    if (value == null || Number.isNaN(Number(value))) return '—';
+    if (value == null || Number.isNaN(Number(value))) return 'â€”';
     return `${Number(value).toFixed(digits)}%`;
 };
 
 const formatSignedCurrency = (value) => {
-    if (value == null || Number.isNaN(Number(value))) return '—';
+    if (value == null || Number.isNaN(Number(value))) return 'â€”';
     const numeric = Number(value);
     const sign = numeric >= 0 ? '+' : '-';
     return `${sign}$${Math.abs(numeric).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 const formatNumber = (value, digits = 2) => {
-    if (value == null || Number.isNaN(Number(value))) return '—';
+    if (value == null || Number.isNaN(Number(value))) return 'â€”';
     return Number(value).toFixed(digits);
 };
 
@@ -492,13 +492,13 @@ const computePerformanceKpis = (trades = [], pnlData = {}) => {
     const grossProfit = settled.filter((trade) => (Number(trade.pnl) || 0) > 0).reduce((sum, trade) => sum + Number(trade.pnl), 0);
     const grossLoss = Math.abs(settled.filter((trade) => (Number(trade.pnl) || 0) < 0).reduce((sum, trade) => sum + Number(trade.pnl), 0));
     let profitFactor = null;
-    let profitFactorDisplay = '—';
+    let profitFactorDisplay = 'â€”';
     if (settled.length) {
         if (grossLoss > 0) {
             profitFactor = grossProfit / grossLoss;
-            profitFactorDisplay = Number.isFinite(profitFactor) ? profitFactor.toFixed(2) : '—';
+            profitFactorDisplay = Number.isFinite(profitFactor) ? profitFactor.toFixed(2) : 'â€”';
         } else if (grossProfit > 0) {
-            profitFactorDisplay = '∞';
+            profitFactorDisplay = 'âˆž';
         } else {
             profitFactorDisplay = '0.00';
             profitFactor = 0;
@@ -559,7 +559,7 @@ const computePerformanceKpis = (trades = [], pnlData = {}) => {
 
     const pairTotals = {};
     sortedTrades.filter(isSettledTrade).forEach((trade) => {
-        const pair = trade.pair || '—';
+        const pair = trade.pair || 'â€”';
         pairTotals[pair] = (pairTotals[pair] || 0) + (Number(trade.pnl) || 0);
     });
     const pairEntries = Object.entries(pairTotals).map(([pair, pnl]) => ({ pair, pnl })).sort((a, b) => b.pnl - a.pnl);
@@ -583,8 +583,8 @@ const computePerformanceKpis = (trades = [], pnlData = {}) => {
         activeWinStreak: currentWin,
         activeLossStreak: currentLoss,
         equityCurve,
-        bestPair: pairEntries[0]?.pair || '—',
-        worstPair: pairEntries[pairEntries.length - 1]?.pair || '—',
+        bestPair: pairEntries[0]?.pair || 'â€”',
+        worstPair: pairEntries[pairEntries.length - 1]?.pair || 'â€”',
         recentTrades: sortedTrades.slice(-5).reverse(),
     };
 };
@@ -614,7 +614,7 @@ const computeJournalMetrics = (tasks = [], selectedDate = new Date(), journalDai
     };
 };
 
-/** Single source of truth for desk bias label + gauge position (0–100, bearish left → bullish right). */
+/** Single source of truth for desk bias label + gauge position (0â€“100, bearish left â†’ bullish right). */
 const normalizeDeskBias = (lab, analytics) => {
     const raw = lab?.marketBias != null ? String(lab.marketBias).trim() : '';
     const lower = raw.toLowerCase();
@@ -661,9 +661,9 @@ const computeLabMetrics = (sessions = []) => {
     const validCount = persistedSessions.filter((session) => session.setupValid && session.biasAligned && session.entryConfirmed && session.riskDefined).length;
     return {
         sessionCount: persistedSessions.length,
-        latestSetup: latest.setupName || '—',
+        latestSetup: latest.setupName || 'â€”',
         confidence: latest.confidence ?? latest.auraConfidence ?? null,
-        riskLevel: latest.riskLevel || '—',
+        riskLevel: latest.riskLevel || 'â€”',
         validPct: Math.round((validCount / persistedSessions.length) * 100),
         marketBias: latest.marketBias || '',
         targetPrice: latest.targetPrice,
@@ -680,7 +680,7 @@ const computeLabMetrics = (sessions = []) => {
     };
 };
 
-/** Semi-circular desk pulse: needle sweeps left (bearish) → up (neutral) → right (bullish). */
+/** Semi-circular desk pulse: needle sweeps left (bearish) â†’ up (neutral) â†’ right (bullish). */
 const DeskPulseGauge = ({ biasLabel = 'Neutral', pulsePct }) => {
     let pct =
         typeof pulsePct === 'number' && Number.isFinite(pulsePct) ? pulsePct : null;
@@ -691,7 +691,7 @@ const DeskPulseGauge = ({ biasLabel = 'Neutral', pulsePct }) => {
         else pct = 50;
     }
     pct = Math.max(0, Math.min(100, pct));
-    /* Default needle points up (12 o'clock). -90° → left (bear), 0° → up (neutral), +90° → right (bull). */
+    /* Default needle points up (12 o'clock). -90Â° â†’ left (bear), 0Â° â†’ up (neutral), +90Â° â†’ right (bull). */
     const rot = -90 + (pct / 100) * 180;
     const toneClass = pct >= 58 ? 'is-bull' : pct <= 42 ? 'is-bear' : '';
     return (
@@ -778,9 +778,9 @@ const DeskWatchlist = () => {
                 return (
                     <div className="desk2-wl__row" key={row.symbol}>
                         <span className="desk2-wl__sym">{row.displayName || row.symbol}</span>
-                        <span className="desk2-wl__px">{loading ? '—' : row.price}</span>
+                        <span className="desk2-wl__px">{loading ? 'â€”' : row.price}</span>
                         <span className={`desk2-wl__chg ${up ? 'is-up' : 'is-down'}`}>
-                            {loading ? '—' : `${up ? '+' : ''}${formatPercent(pct, 2)}`}
+                            {loading ? 'â€”' : `${up ? '+' : ''}${formatPercent(pct, 2)}`}
                         </span>
                         <WatchlistRowSpark up={up} />
                     </div>
@@ -826,7 +826,7 @@ const ScoreRing = ({ label, value }) => {
         <div className="desk2-ring">
             <div className="desk2-ring__track" style={{ '--ring-pct': v }}>
                 <div className="desk2-ring__inner">
-                    <strong>{Number.isFinite(Number(value)) ? Math.round(Number(value)) : '—'}</strong>
+                    <strong>{Number.isFinite(Number(value)) ? Math.round(Number(value)) : 'â€”'}</strong>
                 </div>
             </div>
             <span className="desk2-ring__lab">{label}</span>
@@ -1025,7 +1025,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     }, [hasAnyConnection, dashboardData.auraPnl.monthlyPnl, analytics.monthToDatePnl]);
 
     const rewardLabel = useMemo(() => {
-        if (!lab) return '—';
+        if (!lab) return 'â€”';
         if (lab.resultR == null || Number.isNaN(Number(lab.resultR))) return 'TBD';
         const r = Number(lab.resultR);
         if (r >= 2) return 'High';
@@ -1071,7 +1071,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
         }
         if (analytics.averageR > 0) return formatNumber(analytics.averageR * 10, 1);
         if (analytics.totalTrades) return formatNumber(Math.min(99, analytics.winRate * 0.65), 1);
-        return '—';
+        return 'â€”';
     }, [lab, analytics]);
 
     const consistencyRing = Math.round(
@@ -1091,9 +1091,9 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     const expectancyHint = useMemo(() => {
         if (!analytics.settledTrades) return 'Log closed trades in Aura Analysis to measure edge and R-multiples.';
         if (analytics.averageR >= 0.8) return 'Strong average R profile on closed trades.';
-        if (analytics.averageR >= 0.2) return 'Positive R-multiple trend — refine selectivity.';
-        if (analytics.averageR >= 0) return 'Flat average R — tighten invalidations.';
-        return 'Negative R profile — reduce size and review setups.';
+        if (analytics.averageR >= 0.2) return 'Positive R-multiple trend â€” refine selectivity.';
+        if (analytics.averageR >= 0) return 'Flat average R â€” tighten invalidations.';
+        return 'Negative R profile â€” reduce size and review setups.';
     }, [analytics]);
 
     const journalBullets = useMemo(() => {
@@ -1105,7 +1105,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                 .map((s) => s.trim())
                 .filter(Boolean)
                 .slice(0, 4)
-                .forEach((x) => out.push(x.length > 100 ? `${x.slice(0, 97)}…` : x));
+                .forEach((x) => out.push(x.length > 100 ? `${x.slice(0, 97)}â€¦` : x));
         }
         scenarioLines.slice(0, Math.max(0, 3 - out.length)).forEach((x) => out.push(x));
         if (out.length === 0) out.push('Add journal notes to see a qualitative read-through here.');
@@ -1117,7 +1117,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
             <div className="terminal-dashboard">
                 <div className="terminal-dashboard__loading glass-card">
                     <span className="terminal-dashboard__loading-kicker">Loading</span>
-                    <h2>Preparing Aura Terminal…</h2>
+                    <h2>Preparing Aura Terminal™â€¦</h2>
                     <p>Syncing Aura Analysis, journal, lab sessions, and market snapshot.</p>
                 </div>
             </div>
@@ -1129,11 +1129,11 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
             <header className="terminal-dashboard__topbar glass-card">
                 <p className="terminal-dashboard__welcome">{welcomeShort}</p>
                 <div className="terminal-dashboard__top-right">
-                    <span className="terminal-dashboard__wordmark">AURA TERMINAL</span>
+                    <span className="terminal-dashboard__wordmark">AURA TERMINAL™</span>
                 </div>
             </header>
 
-            <div className="home-desk2" aria-label="Aura Terminal desk">
+            <div className="home-desk2" aria-label="Aura Terminal™ desk">
                 <div className="home-desk2__cols">
                     <aside className="home-desk2__col home-desk2__col--left">
                         <section className="desk2-card desk2-card--pulse glass-card">
@@ -1153,28 +1153,28 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     <div>
                                         <span>P&amp;L</span>
                                         <strong className={liveDeskPnl >= 0 ? 'is-positive' : 'is-negative'}>
-                                            {liveMetricsLocked ? '—' : formatSignedCurrency(liveDeskPnl)}
+                                            {liveMetricsLocked ? 'â€”' : formatSignedCurrency(liveDeskPnl)}
                                         </strong>
                                     </div>
                                     <div>
                                         <span>Win rate</span>
                                         <strong>
                                             {liveMetricsLocked
-                                                ? '—'
+                                                ? 'â€”'
                                                 : analytics.totalTrades
                                                   ? formatPercent(analytics.winRate, 0)
-                                                  : '—'}
+                                                  : 'â€”'}
                                         </strong>
                                     </div>
                                     <div>
                                         <span>Win streak</span>
-                                        <strong>{liveMetricsLocked ? '—' : analytics.activeWinStreak ?? 0}</strong>
+                                        <strong>{liveMetricsLocked ? 'â€”' : analytics.activeWinStreak ?? 0}</strong>
                                     </div>
                                 </div>
                                 {liveMetricsLocked ? (
                                     <div className="desk2-frost" role="status">
                                         <p className="desk2-frost__t">
-                                            {auraConnectionsLoading ? 'Checking link…' : 'Connect MetaTrader (Aura Analysis)'}
+                                            {auraConnectionsLoading ? 'Checking linkâ€¦' : 'Connect MetaTrader (Aura Analysis)'}
                                         </p>
                                         {!auraConnectionsLoading ? (
                                             <Link to="/aura-analysis/ai" className="desk2-frost__a">
@@ -1192,16 +1192,16 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                             <div className="desk2-mini-metrics">
                                 <div>
                                     <span>Total trades</span>
-                                    <strong>{analytics.totalTrades || '—'}</strong>
+                                    <strong>{analytics.totalTrades || 'â€”'}</strong>
                                 </div>
                                 <div>
                                     <span>Profit factor</span>
-                                    <strong>{analytics.settledTrades ? analytics.profitFactorDisplay : '—'}</strong>
+                                    <strong>{analytics.settledTrades ? analytics.profitFactorDisplay : 'â€”'}</strong>
                                 </div>
                                 <div>
                                     <span>Avg R</span>
                                     <strong>
-                                        {analytics.settledTrades ? formatNumber(analytics.averageR, 2) : '—'}
+                                        {analytics.settledTrades ? formatNumber(analytics.averageR, 2) : 'â€”'}
                                     </strong>
                                 </div>
                                 <div>
@@ -1209,22 +1209,22 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     <strong>
                                         {analytics.settledTrades
                                             ? formatSignedCurrency(-Math.abs(analytics.maxDrawdown || 0))
-                                            : '—'}
+                                            : 'â€”'}
                                     </strong>
                                 </div>
                             </div>
                             <div className="desk2-mini-metrics">
                                 <div>
                                     <span>Best pair</span>
-                                    <strong>{analytics.bestPair || '—'}</strong>
+                                    <strong>{analytics.bestPair || 'â€”'}</strong>
                                 </div>
                                 <div>
                                     <span>Worst pair</span>
-                                    <strong>{analytics.worstPair || '—'}</strong>
+                                    <strong>{analytics.worstPair || 'â€”'}</strong>
                                 </div>
                                 <div>
                                     <span>Operator accounts</span>
-                                    <strong>{dashboardData.validatorAccounts?.length ?? '—'}</strong>
+                                    <strong>{dashboardData.validatorAccounts?.length ?? 'â€”'}</strong>
                                 </div>
                             </div>
                             <Link to="/aura-analysis/dashboard/overview" className="desk2-inline-link">
@@ -1258,7 +1258,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                 <div className="desk2-trio__cell">
                                     <span>Risk</span>
                                     <strong>{riskLabel}</strong>
-                                    {rewardLabel && rewardLabel !== '—' && rewardLabel !== 'TBD' ? (
+                                    {rewardLabel && rewardLabel !== 'â€”' && rewardLabel !== 'TBD' ? (
                                         <span className="desk2-trio__hint">R-profile: {rewardLabel}</span>
                                     ) : null}
                                 </div>
@@ -1286,7 +1286,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                                 {a.headline || 'Article'}
                                             </a>
                                         ) : (
-                                            <span className="desk2-news__text">{a.headline || '—'}</span>
+                                            <span className="desk2-news__text">{a.headline || 'â€”'}</span>
                                         )}
                                         <span className="desk2-news__time">{headlineTimeAgo(a.publishedAt)}</span>
                                     </li>
@@ -1305,20 +1305,20 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     <strong>
                                         {analytics.avgChecklistPct != null
                                             ? `${Math.round(analytics.avgChecklistPct)}%`
-                                            : '—'}
+                                            : 'â€”'}
                                     </strong>
                                 </div>
                                 <div>
                                     <span>Avg R</span>
-                                    <strong>{analytics.settledTrades ? `${formatNumber(analytics.averageR, 2)}R` : '—'}</strong>
+                                    <strong>{analytics.settledTrades ? `${formatNumber(analytics.averageR, 2)}R` : 'â€”'}</strong>
                                 </div>
                                 <div>
                                     <span>Loss streak</span>
-                                    <strong>{analytics.settledTrades ? analytics.activeLossStreak : '—'}</strong>
+                                    <strong>{analytics.settledTrades ? analytics.activeLossStreak : 'â€”'}</strong>
                                 </div>
                                 <div>
                                     <span>Valid setups</span>
-                                    <strong>{lab ? `${validatorCompletion.pct}%` : '—'}</strong>
+                                    <strong>{lab ? `${validatorCompletion.pct}%` : 'â€”'}</strong>
                                 </div>
                             </div>
                             <p className="desk2-muted">{expectancyHint}</p>
@@ -1384,7 +1384,7 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     <strong>
                                         {dashboardData.reportsEligibility?.dataDays != null
                                             ? `${dashboardData.reportsEligibility.dataDays}d`
-                                            : '—'}
+                                            : 'â€”'}
                                     </strong>
                                 </div>
                                 <div>
@@ -1392,19 +1392,19 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     <strong>
                                         {dashboardData.reportsEligibility?.chartCheckCount != null
                                             ? dashboardData.reportsEligibility.chartCheckCount
-                                            : '—'}
+                                            : 'â€”'}
                                     </strong>
                                 </div>
                                 <div>
                                     <span>Month tasks</span>
                                     <strong>
-                                        {journal.monthTotal != null ? `${journal.monthCompleted}/${journal.monthTotal}` : '—'}
+                                        {journal.monthTotal != null ? `${journal.monthCompleted}/${journal.monthTotal}` : 'â€”'}
                                     </strong>
                                 </div>
                                 <div>
                                     <span>Plan</span>
                                     <strong className="desk2-insight-plan">
-                                        {String(dashboardData.reportsEligibility?.role || '—')}
+                                        {String(dashboardData.reportsEligibility?.role || 'â€”')}
                                     </strong>
                                 </div>
                             </div>
@@ -1424,10 +1424,10 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                     return (
                                         <li key={`${t.pair}-${i}`}>
                                             <span>
-                                                {tag} · {t.pair || '—'}
+                                                {tag} Â· {t.pair || 'â€”'}
                                             </span>
                                             <span className={pnl >= 0 ? 'is-up' : 'is-down'}>
-                                                {Number.isFinite(pnl) ? formatSignedCurrency(pnl) : '—'}
+                                                {Number.isFinite(pnl) ? formatSignedCurrency(pnl) : 'â€”'}
                                             </span>
                                         </li>
                                     );
@@ -1453,9 +1453,9 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     );
 };
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    HOME PAGE
-══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const Home = () => {
     const navigate = useNavigate();
     const { isAuthenticated, user, token } = useAuth();
@@ -1485,7 +1485,7 @@ const Home = () => {
                 <div className="loading-screen">
                     <CosmicBackground />
                     <div className="loading-content">
-                        <span className="loading-brand-text">Aura Terminal</span>
+                        <span className="loading-brand-text">Aura Terminal™</span>
                         <div className="loading-subtitle">Initializing System...</div>
                         <div className="loading-dots-container">
                             <span className="loading-dot"/><span className="loading-dot"/><span className="loading-dot"/>
@@ -1513,7 +1513,7 @@ const Home = () => {
                                     <div className="brand-name-container">
                                         <h1 className="brand-name">
                                             <span className="brand-name-line">Trade Smarter</span>
-                                            <span className="brand-name-line">With Aura Terminal</span>
+                                            <span className="brand-name-line">With Aura Terminal™</span>
                                         </h1>
                                         <p className="powered-by-glitch">powered by <strong>The Glitch</strong></p>
                                     </div>
@@ -1525,12 +1525,12 @@ const Home = () => {
                                         <button className="home-secondary-button" onClick={() => navigate('/explore')}>Explore Features</button>
                                     </div>
                                     <div className="hero-trust-badges">
-                                        {[{icon:'✓',label:'Real Time Data'},{icon:'🔒',label:'Secure & Private'},{icon:'⊙',label:'24/7 Support'}].map(b=>(
+                                        {[{icon:'âœ“',label:'Real Time Data'},{icon:'ðŸ”’',label:'Secure & Private'},{icon:'âŠ™',label:'24/7 Support'}].map(b=>(
                                             <div className="trust-badge" key={b.label}><div className="trust-badge-icon">{b.icon}</div>{b.label}</div>
                                         ))}
                                     </div>
                                     <div className="partner-logos-row">
-                                        {[{icon:'📊',name:'TradingView'},{icon:'◈',name:'Binance'},{icon:'©',name:'Coinbase'},{icon:'◉',name:'Bloomberg'},{icon:'◎',name:'Reuters'}].map(p=>(
+                                        {[{icon:'ðŸ“Š',name:'TradingView'},{icon:'â—ˆ',name:'Binance'},{icon:'Â©',name:'Coinbase'},{icon:'â—‰',name:'Bloomberg'},{icon:'â—Ž',name:'Reuters'}].map(p=>(
                                             <div className="partner-logo" key={p.name}><span className="partner-logo-icon">{p.icon}</span>{p.name}</div>
                                         ))}
                                     </div>
@@ -1546,10 +1546,10 @@ const Home = () => {
 
                                 <div className="feature-cards-grid">
                                     {[
-                                        {icon:'📈',title:'Forex Trading',   desc:'Dominate currency markets with institutional-grade strategies and live market analysis'},
-                                        {icon:'💹',title:'Stock Trading',   desc:'Master equity markets with advanced analysis techniques and professional trading strategies'},
-                                        {icon:'₿', title:'Crypto Trading',  desc:'Capitalize on digital asset opportunities with cutting-edge strategies and market insights'},
-                                        {icon:'🎯',title:'1-to-1 Mentorship',desc:'Accelerate your success with personalized coaching from industry-leading trading experts'},
+                                        {icon:'ðŸ“ˆ',title:'Forex Trading',   desc:'Dominate currency markets with institutional-grade strategies and live market analysis'},
+                                        {icon:'ðŸ’¹',title:'Stock Trading',   desc:'Master equity markets with advanced analysis techniques and professional trading strategies'},
+                                        {icon:'â‚¿', title:'Crypto Trading',  desc:'Capitalize on digital asset opportunities with cutting-edge strategies and market insights'},
+                                        {icon:'ðŸŽ¯',title:'1-to-1 Mentorship',desc:'Accelerate your success with personalized coaching from industry-leading trading experts'},
                                     ].map(c=>(
                                         <div className="feature-card" key={c.title}>
                                             <div className="feature-icon">{c.icon}</div>
@@ -1570,7 +1570,7 @@ const Home = () => {
                                 <div className="cosmic-divider" />
 
                                 <div className="why-choose-section">
-                                    <h2 className="section-title">Why Choose AURA TERMINAL</h2>
+                                    <h2 className="section-title">Why Choose AURA TERMINAL™</h2>
                                     <div className="why-grid">
                                         {[
                                             {title:'Elite Education',        text:'Learn from world-class professionals with decades of combined trading expertise'},
@@ -1579,7 +1579,7 @@ const Home = () => {
                                             {title:'Comprehensive Resources',text:'Unlock unlimited access to our extensive library of premium courses, advanced tools, and exclusive trading materials'},
                                         ].map(w=>(
                                             <div className="why-item" key={w.title}>
-                                                <div className="why-icon">✓</div>
+                                                <div className="why-icon">âœ“</div>
                                                 <h3 className="why-title">{w.title}</h3>
                                                 <p className="why-text">{w.text}</p>
                                             </div>

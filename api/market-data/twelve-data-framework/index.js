@@ -1,7 +1,7 @@
 /**
  * Twelve Data category-aware ingestion framework (registry, orchestration, public helpers).
  *
- * Design constraints (Aura Terminal):
+ * Design constraints (Aura Terminal™):
  * - Twelve Data is the primary provider; other providers are fallbacks only in outer layers.
  * - Preserve existing HTTP/JSON contracts unless routes and consumers change in the same pass.
  * - Prefer DB-first and cache-first reads (see fetchDataset opts.dbFirst / marketDataLayer caches).

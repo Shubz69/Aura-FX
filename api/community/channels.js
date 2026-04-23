@@ -183,9 +183,9 @@ const releaseDb = (db) => {
   }
 };
 
-/** Heavy INFORMATION_SCHEMA + possible ALTERs — once per warm serverless instance is enough. */
+/** Heavy INFORMATION_SCHEMA + possible ALTERs â€” once per warm serverless instance is enough. */
 let channelsHeavySchemaDone = false;
-/** trading→forums migration + settings JSON fix — once per instance. */
+/** tradingâ†’forums migration + settings JSON fix â€” once per instance. */
 let channelsTradingMigrateDone = false;
 
 function isBenignChannelDdlError(e) {
@@ -235,21 +235,21 @@ async function ensureChannelColumnsFromSet(db, colSet) {
 /** One round-trip seed of default channels (ON DUPLICATE KEY UPDATE). */
 async function bulkUpsertDefaultChannels(db) {
   const seeds = [
-    ['welcome', 'welcome', 'announcements', 'Welcome to Aura Terminal community. Read the rules and click the checkmark below to unlock your channels.', 'open'],
-    ['announcements', 'announcements', 'announcements', 'Important announcements from AURA TERMINAL.', 'open'],
+    ['welcome', 'welcome', 'announcements', 'Welcome to Aura Terminal™ community. Read the rules and click the checkmark below to unlock your channels.', 'open'],
+    ['announcements', 'announcements', 'announcements', 'Important announcements from AURA TERMINAL™.', 'open'],
     ['levels', 'levels', 'announcements', 'Level-up celebrations and progress.', 'open'],
     ['general', 'general', 'general', 'General chat for all free subscribers. Say hello and join the conversation.', 'open'],
-    ['forex', 'forex-talk', 'forums', 'Forex Talk — discussion and ideas', 'open'],
-    ['crypto', 'crypto-talk', 'forums', 'Crypto Talk — discussion and ideas', 'open'],
-    ['stocks', 'stocks-talk', 'forums', 'Stocks Talk — discussion and ideas', 'open'],
-    ['indices', 'indices-talk', 'forums', 'Indices Talk — discussion and ideas', 'open'],
-    ['day-trading', 'day-trading-talk', 'forums', 'Day Trading Talk — strategies and discussion', 'open'],
-    ['swing-trading', 'swing-trading-talk', 'forums', 'Swing Trading Talk — discussion and ideas', 'open'],
-    ['commodities', 'commodity-talk', 'forums', 'Commodity Talk — metals, energy, and more', 'open'],
-    ['futures', 'futures-talk', 'forums', 'Futures Talk — strategies and setups', 'open'],
-    ['options', 'options-talk', 'forums', 'Options Talk — education and discussion', 'open'],
-    ['prop-trading', 'prop-trading-talk', 'forums', 'Prop Trading Talk — funded accounts and firms', 'open'],
-    ['market-analysis', 'market-analysis-talk', 'forums', 'Market Analysis Talk — ideas and commentary', 'open']
+    ['forex', 'forex-talk', 'forums', 'Forex Talk â€” discussion and ideas', 'open'],
+    ['crypto', 'crypto-talk', 'forums', 'Crypto Talk â€” discussion and ideas', 'open'],
+    ['stocks', 'stocks-talk', 'forums', 'Stocks Talk â€” discussion and ideas', 'open'],
+    ['indices', 'indices-talk', 'forums', 'Indices Talk â€” discussion and ideas', 'open'],
+    ['day-trading', 'day-trading-talk', 'forums', 'Day Trading Talk â€” strategies and discussion', 'open'],
+    ['swing-trading', 'swing-trading-talk', 'forums', 'Swing Trading Talk â€” discussion and ideas', 'open'],
+    ['commodities', 'commodity-talk', 'forums', 'Commodity Talk â€” metals, energy, and more', 'open'],
+    ['futures', 'futures-talk', 'forums', 'Futures Talk â€” strategies and setups', 'open'],
+    ['options', 'options-talk', 'forums', 'Options Talk â€” education and discussion', 'open'],
+    ['prop-trading', 'prop-trading-talk', 'forums', 'Prop Trading Talk â€” funded accounts and firms', 'open'],
+    ['market-analysis', 'market-analysis-talk', 'forums', 'Market Analysis Talk â€” ideas and commentary', 'open']
   ];
   const rows = seeds.map(([id, name, cat, desc, access]) => {
     const isSystem = PROTECTED_CHANNEL_IDS.has(id) ? 1 : 0;
@@ -309,11 +309,11 @@ const ensureSettingsTable = async (db) => {
 
 const PROTECTED_CHANNEL_IDS = new Set(['welcome', 'announcements', 'levels', 'admin']);
 
-/** Default category order — `forums` replaces legacy `trading` */
+/** Default category order â€” `forums` replaces legacy `trading` */
 const DEFAULT_CATEGORY_ORDER = ['announcements', 'staff', 'courses', 'forums', 'general', 'support', 'premium', 'a7fx'];
 
 /**
- * One-time style migration: trading → forums, channel display names → *-talk slugs.
+ * One-time style migration: trading â†’ forums, channel display names â†’ *-talk slugs.
  * Idempotent: safe to run on every channels bootstrap.
  */
 async function migrateTradingCategoryToForums(db) {
@@ -488,7 +488,7 @@ module.exports = async (req, res) => {
     try {
       // Default channels (fallback) - include canSee/canRead so free users see them
       const defaultChannels = [
-        { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to Aura Terminal community!', canSee: true, canRead: true, canWrite: false },
+        { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to Aura Terminal™ community!', canSee: true, canRead: true, canWrite: false },
         { id: 'announcements', name: 'announcements', displayName: 'Announcements', category: 'announcements', description: 'Important announcements', canSee: true, canRead: true, canWrite: false },
         { id: 'levels', name: 'levels', displayName: 'Levels', category: 'announcements', description: 'Level-up celebrations', canSee: true, canRead: true, canWrite: false },
         { id: 'general', name: 'general', displayName: 'General', category: 'general', description: 'General discussion', canSee: true, canRead: true, canWrite: true }
@@ -565,7 +565,7 @@ module.exports = async (req, res) => {
             let entitlements = { role: 'USER', tier: 'ACCESS', effectiveTier: 'ACCESS', allowedChannelSlugs: [] };
             try {
               const userId = decoded.id != null ? String(decoded.id) : null;
-              // Pass same DB connection — pool is often size 1 on Vercel; nested executeQuery() deadlocks → 504
+              // Pass same DB connection â€” pool is often size 1 on Vercel; nested executeQuery() deadlocks â†’ 504
               const userRow = userId ? await applyScheduledDowngrade(userId, db) : null;
               if (userRow) {
                 entitlements = getEntitlements(userRow);

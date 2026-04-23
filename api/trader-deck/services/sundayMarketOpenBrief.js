@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Sunday Market Open Brief — single institutional explainer for the week open (London Sunday).
+ * Sunday Market Open Brief â€” single institutional explainer for the week open (London Sunday).
  * Stored as brief_kind aura_sunday_market_open, period daily, date = calendar Sunday (Europe/London).
  */
 
@@ -32,7 +32,7 @@ function ordinalDay(n) {
   return `${v}TH`;
 }
 
-/** Title line: SUNDAY MARKET OPEN BRIEF – 13TH APRIL 2026 */
+/** Title line: SUNDAY MARKET OPEN BRIEF â€“ 13TH APRIL 2026 */
 function formatSundayMarketOpenTitle(runDate, timeZone) {
   const ND = '\u2013';
   const dayNum = Number(new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone }).format(runDate));
@@ -66,10 +66,10 @@ function stripSundayArtifacts(body) {
 function sundayOpenSystemPrompt() {
   return `You are the head of macro strategy writing the SUNDAY MARKET OPEN BRIEF for institutional traders.
 
-Mission: Explain ONLY the highest-impact developments from the prior week and weekend that change how the coming week opens. Treat items as roughly high importance only — omit tactical noise and low-impact trivia.
+Mission: Explain ONLY the highest-impact developments from the prior week and weekend that change how the coming week opens. Treat items as roughly high importance only â€” omit tactical noise and low-impact trivia.
 
 Hard rules:
-- Tone: sovereign wealth fund / global macro desk — causal chains, regime logic, positioning and liquidity. NOT wire-service recap.
+- Tone: sovereign wealth fund / global macro desk â€” causal chains, regime logic, positioning and liquidity. NOT wire-service recap.
 - Fact anchors: Use ONLY supplied factPack (news sample, headlines, macro lines, calendars, quoted instruments). Do not invent specific prints or meetings not implied by factPack.
 - Across ALL narrative prose you MUST weave market transmission consistently: crude oil as the anchor for inflation and geopolitical risk optics, sovereign yields as the amplifier of repricing and duration stress, gold as the hedge asset against real-rate and tail outcomes, USD as both funding and yield-driver. Embed this naturally in paragraphs, never as a bullet-style checklist.
 
@@ -438,7 +438,7 @@ async function generateAndStoreSundayMarketOpenBrief(deps, { runDate = new Date(
       tradingWeekMeta: basePack.tradingWeekMeta,
       liveQuotesByInstrument: basePack.liveQuotesByInstrument,
       horizonNote:
-        'Scope: Sunday open lens — judge only developments that materially reset Asia–London–New York liquidity and tail pricing into the new week.',
+        'Scope: Sunday open lens â€” judge only developments that materially reset Asiaâ€“Londonâ€“New York liquidity and tail pricing into the new week.',
     };
 
     const factPack = {
@@ -456,7 +456,7 @@ async function generateAndStoreSundayMarketOpenBrief(deps, { runDate = new Date(
       const rs = await callOpenAIJson(
         systemPrompt,
         {
-          task: 'Sunday Market Open Brief — JSON only',
+          task: 'Sunday Market Open Brief â€” JSON only',
           factPack,
           fixNote: fix,
         },
@@ -481,7 +481,7 @@ async function generateAndStoreSundayMarketOpenBrief(deps, { runDate = new Date(
     }
 
     const titleLine = formatSundayMarketOpenTitle(runDate, timeZone);
-    const authorLine = String(process.env.AURA_INSTITUTIONAL_AUTHOR || 'By AURA TERMINAL').trim();
+    const authorLine = String(process.env.AURA_INSTITUTIONAL_AUTHOR || 'By AURA TERMINAL™').trim();
 
     let body = assembleSundayMarketOpenPlain({
       titleLine,
@@ -535,7 +535,7 @@ async function generateAndStoreSundayMarketOpenBrief(deps, { runDate = new Date(
 
 /**
  * Default: Sunday 21:00 London full hour (one hour before typical 22:00 FX week reopen).
- * Override hour with env SUNDAY_OPEN_BRIEF_HOUR_LONDON (0–23).
+ * Override hour with env SUNDAY_OPEN_BRIEF_HOUR_LONDON (0â€“23).
  */
 function shouldRunSundayMarketOpenWindow({
   now = new Date(),

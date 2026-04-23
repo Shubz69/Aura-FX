@@ -48,7 +48,7 @@ function lastDayOfCalendarMonth(year, month) {
   return new Date(year, month, 0).getDate();
 }
 
-// ── Data aggregation ──────────────────────────────────────────────────────────
+// â”€â”€ Data aggregation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function aggregateJournalTrades(userId, year, month) {
   const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -64,7 +64,7 @@ async function aggregateJournalTrades(userId, year, month) {
   return rows || [];
 }
 
-/** The Operator / Aura Analysis — same window as monthly report */
+/** The Operator / Aura Analysis â€” same window as monthly report */
 async function aggregateAuraAnalysisTrades(userId, year, month) {
   const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
   const endDate = new Date(year, month, 0).toISOString().split('T')[0];
@@ -214,7 +214,7 @@ async function computeEngagementSignals(userId, year, month) {
   };
 }
 
-// ── Metric summaries ──────────────────────────────────────────────────────────
+// â”€â”€ Metric summaries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function summariseTrades(trades) {
   if (!trades.length) return null;
@@ -241,7 +241,7 @@ function summariseTrades(trades) {
     avgRR,
     topPairs: pairs.slice(0, 5),
     bestSession,
-    profitFactor: losses > 0 ? (wins / losses).toFixed(2) : wins > 0 ? '∞' : '0',
+    profitFactor: losses > 0 ? (wins / losses).toFixed(2) : wins > 0 ? 'âˆž' : '0',
   };
 }
 
@@ -281,7 +281,7 @@ function summariseValidatorTrades(rows) {
     topPairs: pairs.slice(0, 5),
     bestSession,
     avgChecklistPercent: avgChecklist,
-    profitFactor: losses > 0 ? (wins / losses).toFixed(2) : wins > 0 ? '∞' : '0',
+    profitFactor: losses > 0 ? (wins / losses).toFixed(2) : wins > 0 ? 'âˆž' : '0',
   };
 }
 
@@ -321,34 +321,34 @@ function buildFallbackFailureModes({ tradeSummary, validatorSummary, disciplineS
   if (validatorSummary) {
     if (validatorSummary.losses > validatorSummary.wins) {
       out.push(
-        `The Operator: ${validatorSummary.losses} losses vs ${validatorSummary.wins} wins (${validatorSummary.total} closes) — process or edge is not proven this month.`
+        `The Operator: ${validatorSummary.losses} losses vs ${validatorSummary.wins} wins (${validatorSummary.total} closes) â€” process or edge is not proven this month.`
       );
     }
     if (validatorSummary.avgChecklistPercent != null && validatorSummary.avgChecklistPercent < 55) {
       out.push(
-        `Average checklist completion ~${validatorSummary.avgChecklistPercent}% — sub-50% entries dominate weak execution DNA.`
+        `Average checklist completion ~${validatorSummary.avgChecklistPercent}% â€” sub-50% entries dominate weak execution DNA.`
       );
     }
     if (parseFloat(validatorSummary.totalPnl) < 0) {
-      out.push(`Validator P&L is negative (${validatorSummary.totalPnl}) — size or selectivity is failing.`);
+      out.push(`Validator P&L is negative (${validatorSummary.totalPnl}) â€” size or selectivity is failing.`);
     }
   }
   if (tradeSummary && !validatorSummary) {
     if (tradeSummary.losses > tradeSummary.wins) {
-      out.push('Journal trades show more losses than wins — same honesty applies: fix process before adding size.');
+      out.push('Journal trades show more losses than wins â€” same honesty applies: fix process before adding size.');
     }
   }
   if (disciplineSummary && parseFloat(disciplineSummary.avgMood || '3') < 2.5) {
-    out.push('Journal mood average is poor — emotional state and trading are coupling; reduce frequency until stable.');
+    out.push('Journal mood average is poor â€” emotional state and trading are coupling; reduce frequency until stable.');
   }
   if (disciplineSummary && disciplineSummary.daysLogged < 8) {
-    out.push(`Only ${disciplineSummary.daysLogged} journal days — you are flying blind on discipline.`);
+    out.push(`Only ${disciplineSummary.daysLogged} journal days â€” you are flying blind on discipline.`);
   }
   if (chartCheckSummary && chartCheckSummary.avgScore < 55) {
-    out.push(`AI chart checks averaging ${chartCheckSummary.avgScore}% — setup quality is not institutional.`);
+    out.push(`AI chart checks averaging ${chartCheckSummary.avgScore}% â€” setup quality is not institutional.`);
   }
   if (out.length < 5) {
-    out.push('Absence of a flagged weakness does not mean performance is good — it may mean data is thin or you avoided logging losses.');
+    out.push('Absence of a flagged weakness does not mean performance is good â€” it may mean data is thin or you avoided logging losses.');
     out.push('Retail failure modes to audit: overtrading after boredom, moving stops to avoid loss, revenge entries, oversized recovery trades.');
   }
   return [...new Set(out)].slice(0, 10);
@@ -373,11 +373,11 @@ function ensureReportShape(parsed, fallbacks) {
       base.systemUsage && typeof base.systemUsage === 'object'
         ? { ...fallbacks.systemUsage, ...base.systemUsage }
         : fallbacks.systemUsage,
-    brutalHonesty: base.brutalHonesty || 'Data was insufficient for a full blunt read — log every trade and journal daily.',
+    brutalHonesty: base.brutalHonesty || 'Data was insufficient for a full blunt read â€” log every trade and journal daily.',
     failureModeInventory: mergedFm,
     changeVsPriorMonth:
       base.changeVsPriorMonth || {
-        better: ['Prior period not on file or model returned empty — generate reports each month to unlock deltas.'],
+        better: ['Prior period not on file or model returned empty â€” generate reports each month to unlock deltas.'],
         worse: [],
         unchanged: [],
       },
@@ -389,14 +389,14 @@ function ensureReportShape(parsed, fallbacks) {
           ...p,
           measurableCheck:
             p.measurableCheck ||
-            'Reconcile at month-end: compare trade count, win rate, and journal days vs this month’s baseline.',
+            'Reconcile at month-end: compare trade count, win rate, and journal days vs this monthâ€™s baseline.',
         }))
       : [],
     disclaimer: DISCLAIMER_TEXT,
   };
 }
 
-// ── Perplexity report generation ──────────────────────────────────────────────────
+// â”€â”€ Perplexity report generation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function generateReportContent({
   role,
@@ -424,7 +424,7 @@ async function generateReportContent({
   const dataSections = [];
 
   if (validatorSummary) {
-    dataSections.push(`THE OPERATOR (aura_analysis_trades) — primary execution log for Elite / platform-validated trades:
+    dataSections.push(`THE OPERATOR (aura_analysis_trades) â€” primary execution log for Elite / platform-validated trades:
 - Closed trades: ${validatorSummary.total} (wins ${validatorSummary.wins}, losses ${validatorSummary.losses}, breakeven ${validatorSummary.breakeven})
 - Win rate (excl. BE): ${validatorSummary.winRate}%
 - Total P&L: ${validatorSummary.totalPnl}
@@ -436,7 +436,7 @@ async function generateReportContent({
   }
 
   if (tradeSummary) {
-    dataSections.push(`JOURNAL TRADES (journal_trades) — may overlap conceptually with validator; treat as separate log:
+    dataSections.push(`JOURNAL TRADES (journal_trades) â€” may overlap conceptually with validator; treat as separate log:
 - Total: ${tradeSummary.total}, Win rate: ${tradeSummary.winRate}%, P&L: ${tradeSummary.totalPnl}
 - Profit factor: ${tradeSummary.profitFactor}, Avg R:R: ${tradeSummary.avgRR || 'N/A'}
 - Pairs: ${tradeSummary.topPairs.join(', ') || 'N/A'}, Best session: ${tradeSummary.bestSession || 'N/A'}`);
@@ -473,16 +473,16 @@ ${typeof csvSummary === 'string' ? csvSummary : JSON.stringify(csvSummary, null,
   if (!isOpen && monthOpenDigest?.found && monthOpenDigest.digest) {
     openerBlock = `MONTH OPENER YOU GAVE AT THE START OF ${calendarPeriodLabel} (hold yourself accountable): ${JSON.stringify(monthOpenDigest.digest)}`;
   } else if (!isOpen) {
-    openerBlock = 'No month-opener report on file for this calendar month — month-close cannot grade against opening goals.';
+    openerBlock = 'No month-opener report on file for this calendar month â€” month-close cannot grade against opening goals.';
   }
 
   const engBlock = `PLATFORM USAGE (${dataPeriodLabel}): level=${engagement.level}, composite=${engagement.compositeScore}, journalDays=${engagement.journalDays}, trades=${engagement.trades}, chartChecks=${engagement.chartChecks}, validatorTrades=${engagement.validatorTrades}. usingSystem=${engagement.usingSystem}. If level is absent, state clearly that the trader is not engaging with the workspace and conclusions are limited.`;
 
   const depthBlock =
     reportDepth === 'onboarding'
-      ? `DEPTH=ONBOARDING: First or early reporting cycle — explain how Aura Terminal logs work (journal, The Operator, AI chart checks). 6–10 improvement items if data supports; teach, do not assume prior knowledge.`
+      ? `DEPTH=ONBOARDING: First or early reporting cycle â€” explain how Aura Terminal™ logs work (journal, The Operator, AI chart checks). 6â€“10 improvement items if data supports; teach, do not assume prior knowledge.`
       : reportDepth === 'brief'
-        ? `DEPTH=BRIEF: Trader is engaged and trending better — cap failureModeInventory at 3 items, improvementPlan at 3 items; tight prose. Still be harsh if stagnation or platform abandonment shows in numbers.`
+        ? `DEPTH=BRIEF: Trader is engaged and trending better â€” cap failureModeInventory at 3 items, improvementPlan at 3 items; tight prose. Still be harsh if stagnation or platform abandonment shows in numbers.`
         : `DEPTH=STANDARD: Balanced coaching density.`;
 
   const phaseBlock = isOpen
@@ -491,17 +491,17 @@ ${typeof csvSummary === 'string' ? csvSummary : JSON.stringify(csvSummary, null,
 
   const systemMessage = `You are a clinical trading performance coach. Your job is developmental, not supportive. Rules:
 - Do not flatter. Do not say "great job" unless numbers objectively justify it.
-- Ground every claim in the numbers provided. If data is thin, say so bluntly — do not invent trades or metrics.
-- Harshness applies to trading behaviour and process only — not insults about the person.
+- Ground every claim in the numbers provided. If data is thin, say so bluntly â€” do not invent trades or metrics.
+- Harshness applies to trading behaviour and process only â€” not insults about the person.
 - You must output valid JSON only matching the user's schema exactly.
-- improvementPlan items MUST include "measurableCheck" — a concrete metric or rule.
+- improvementPlan items MUST include "measurableCheck" â€” a concrete metric or rule.
 - failureModeInventory: at least ${fmMin} items when trade or validator data exists (fewer only if reportDepth is brief and data is thin).
 ${phaseBlock}
 ${depthBlock}`;
 
   const defaultTitle = isOpen
-    ? `${calendarPeriodLabel} — Month opener`
-    : `${calendarPeriodLabel} — Month close`;
+    ? `${calendarPeriodLabel} â€” Month opener`
+    : `${calendarPeriodLabel} â€” Month close`;
 
   const userPrompt = `Generate the report for "${name}" (${role} plan).
 
@@ -533,9 +533,9 @@ Return strict JSON only (no markdown). Schema:
     "summary": "<1-3 sentences: are they using the platform meaningfully?>"
   },
   "brutalHonesty": "<1-4 sentences, zero hedging, cite numbers>",
-  "failureModeInventory": ["<${fmMin}+ items when data exists — tie to metrics>"],
+  "failureModeInventory": ["<${fmMin}+ items when data exists â€” tie to metrics>"],
   "changeVsPriorMonth": {
-    "better": ["<improved vs prior digest / opener — use N/A strings if none>"],
+    "better": ["<improved vs prior digest / opener â€” use N/A strings if none>"],
     "worse": ["<regressed>"],
     "unchanged": ["<still weak>"]
   },
@@ -620,15 +620,15 @@ Return strict JSON only (no markdown). Schema:
       level: engagement.level,
       summary:
         engagement.level === 'absent'
-          ? 'Platform usage this window is too low to treat feedback as representative — engage journal, The Operator, and chart checks consistently.'
+          ? 'Platform usage this window is too low to treat feedback as representative â€” engage journal, The Operator, and chart checks consistently.'
           : engagement.usingSystem
-            ? 'You are actively using core Aura Terminal workflows this month; feedback below is grounded in that activity.'
-            : 'Engagement is partial — conclusions are directional until logging and checks become habitual.',
+            ? 'You are actively using core Aura Terminal™ workflows this month; feedback below is grounded in that activity.'
+            : 'Engagement is partial â€” conclusions are directional until logging and checks become habitual.',
     },
   });
 }
 
-// ── Main handler ──────────────────────────────────────────────────────────────
+// â”€â”€ Main handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function generateMonthlyReportForUser({
   userId,
@@ -772,7 +772,7 @@ async function generateHandler(req, res) {
 
   const { year, month, phase: phaseBody } = req.body || {};
   if (!year || !month || month < 1 || month > 12) {
-    return res.status(400).json({ success: false, message: 'year and month (1–12) are required' });
+    return res.status(400).json({ success: false, message: 'year and month (1â€“12) are required' });
   }
   const phase = phaseBody === 'month_open' ? 'month_open' : 'month_close';
 

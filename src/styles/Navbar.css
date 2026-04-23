@@ -1,19 +1,19 @@
 /* ============================================================
-   Navbar.css — AURA TERMINAL | Cosmic EAA960 · Premium Glass
-   Polished: deep glassmorphism · layered glows · refined micro-UX
+   Navbar.css â€” AURA TERMINAL™ | Cosmic EAA960 Â· Premium Glass
+   Polished: deep glassmorphism Â· layered glows Â· refined micro-UX
    Font: Space Grotesk
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* ── Shared with home.css ── */
+  /* â”€â”€ Shared with home.css â”€â”€ */
   --bg:            #04030A;
   --bg-card:       rgba(5, 6, 16, 0.92);
   --border:        rgba(255, 255, 255, 0.10);
   --border-h:      rgba(255, 255, 255, 0.20);
 
-  /* Peachy gold — same tokens as Home.css / hero “With Aura Terminal” */
+  /* Peachy gold â€” same tokens as Home.css / hero â€œWith Aura Terminal™â€ */
   --eaa-core:      #EAA960;
   --eaa-bright:    #F8C37D;
   --eaa-warm:      #D48D44;
@@ -41,10 +41,10 @@
   --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   --radius:        10px;
 
-  /* ── Navbar-specific ── */
+  /* â”€â”€ Navbar-specific â”€â”€ */
   --nav-height:    62px;
 
-  /* ── GLASS — transparent veil so page/starfield shows through blur (classic frosted bar) ── */
+  /* â”€â”€ GLASS â€” transparent veil so page/starfield shows through blur (classic frosted bar) â”€â”€ */
   --nav-light-black:   rgba(8, 10, 20, 0.36);
   --nav-navy-shine:    rgba(28, 52, 98, 0.22);
   --nav-navy-deep:     rgba(8, 22, 48, 0.28);
@@ -71,9 +71,9 @@ body.loading-active .navbar {
   display: none !important;
 }
 
-/* ══════════════════════════════════════════════════════════
-   NAVBAR BASE — PREMIUM GLASS LAYER STACK
-══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   NAVBAR BASE â€” PREMIUM GLASS LAYER STACK
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -87,7 +87,7 @@ body.loading-active .navbar {
   overflow-x: clip;
   overflow-y: visible;
 
-  /* ── Glass stack: light tint + blur — content behind remains visible ── */
+  /* â”€â”€ Glass stack: light tint + blur â€” content behind remains visible â”€â”€ */
   background:
     linear-gradient(
       180deg,
@@ -123,7 +123,7 @@ body.loading-active .navbar {
     backdrop-filter var(--transition);
 }
 
-/* Scrolled — slightly more readable, still frosted (not solid) */
+/* Scrolled â€” slightly more readable, still frosted (not solid) */
 .navbar.scrolled {
   background:
     linear-gradient(
@@ -147,9 +147,9 @@ body.loading-active .navbar {
     inset 0 -2px 18px rgba(234, 169, 96, 0.06);
 }
 
-/* Top gold streak removed — was .navbar::before prismatic line */
+/* Top gold streak removed â€” was .navbar::before prismatic line */
 
-/* Slow shimmer — white + gold + cool navy (reads as “shine through glass”) */
+/* Slow shimmer â€” white + gold + cool navy (reads as â€œshine through glassâ€) */
 .navbar::after {
   content: '';
   position: absolute;
@@ -182,9 +182,9 @@ body.loading-active .navbar {
   100% { transform: translateX(160%); opacity: 0; }
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    LOGO
-══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .logo-container {
   display: flex;
   align-items: center;
@@ -225,7 +225,7 @@ body.loading-active .navbar {
     drop-shadow(0 0 28px rgba(234, 169, 96, 0.45));
 }
 
-/* Hexagon badge — glass inner + gold gradient */
+/* Hexagon badge â€” glass inner + gold gradient */
 .logo-square {
   width: 36px; height: 36px;
   margin-right: 10px;
@@ -270,7 +270,7 @@ body.loading-active .navbar {
 
 .navbar-ai-head { display: none; }
 
-/* Wordmark — AURA bold, TERMINAL regular; light neutral type (reference layout) */
+/* Wordmark â€” AURA bold, TERMINAL regular; light neutral type (reference layout) */
 .navbar-wordmark {
   display: inline-flex;
   align-items: baseline;
@@ -299,9 +299,9 @@ body.loading-active .navbar {
   color: #ffffff;
 }
 
-/* ══════════════════════════════════════════════════════════
-   NAV LINKS — glass pill on hover
-══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   NAV LINKS â€” glass pill on hover
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .nav-links {
   display: flex;
   list-style: none;
@@ -423,9 +423,9 @@ body.loading-active .navbar {
   left: 0.95rem;
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    NAV BUTTONS
-══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .nav-buttons {
   display: flex;
   align-items: center;
@@ -436,7 +436,7 @@ body.loading-active .navbar {
   z-index: 2;
 }
 
-/* Sign In — refined glass ghost */
+/* Sign In â€” refined glass ghost */
 .sign-in {
   padding: 0.44rem 1.15rem;
   background: linear-gradient(
@@ -481,7 +481,7 @@ body.loading-active .navbar {
 
 .sign-in:active { transform: translateY(0); }
 
-/* CTA — gold gradient · glass sheen · multi-layer glow */
+/* CTA â€” gold gradient Â· glass sheen Â· multi-layer glow */
 .start-trading {
   padding: 0.44rem 1.22rem;
   background: linear-gradient(
@@ -577,9 +577,9 @@ body.loading-active .navbar {
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    USER PROFILE
-══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .user-profile {
   position: relative;
   display: flex;
@@ -633,7 +633,7 @@ body.loading-active .navbar {
   50%       { box-shadow: 0 0 0 4px rgba(240, 64, 96, 0.00); }
 }
 
-/* User icon — glass circle */
+/* User icon â€” glass circle */
 .user-icon {
   width: 34px; height: 34px;
   border-radius: 7px;
@@ -682,9 +682,9 @@ body.loading-active .navbar {
   opacity: 0.8;
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    NOTIFICATIONS WRAPPER
-══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .notifications-wrapper {
   display: flex;
   align-items: center;
@@ -734,9 +734,9 @@ body.loading-active .navbar {
 
 .desktop-only { display: flex; }
 
-/* ══════════════════════════════════════════════════════════
-   MOBILE MENU TOGGLE — glass pill
-══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   MOBILE MENU TOGGLE â€” glass pill
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .mobile-menu-toggle {
   display: none;
   background: linear-gradient(
@@ -776,9 +776,9 @@ body.loading-active .navbar {
     0 4px 16px rgba(0, 0, 0, 0.30);
 }
 
-/* ══════════════════════════════════════════════════════════
-   MOBILE FULL-SCREEN MENU — premium glass overlay
-══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   MOBILE FULL-SCREEN MENU â€” premium glass overlay
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .mobile-menu {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -891,9 +891,9 @@ body.loading-active .navbar {
     0 0 20px rgba(234, 169, 96, 0.25);
 }
 
-/* ══════════════════════════════════════════════════════════
-   MOBILE NAV LINKS — glass cards
-══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   MOBILE NAV LINKS â€” glass cards
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .mobile-nav-links {
   list-style: none;
   padding: 0;
@@ -960,7 +960,7 @@ body.loading-active .navbar {
 }
 
 .mobile-nav-links li a::after {
-  content: '→';
+  content: 'â†’';
   position: absolute;
   right: 1.25rem;
   font-size: 0.8rem;
@@ -975,9 +975,9 @@ body.loading-active .navbar {
   transform: translateX(0);
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MOBILE BUTTONS
-══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .mobile-buttons {
   display: flex;
   flex-direction: column;
@@ -1091,9 +1091,9 @@ body.loading-active .navbar {
   box-shadow: 0 0 16px rgba(234, 169, 96, 0.38);
 }
 
-/* ══════════════════════════════════════════════════════════
-   MOBILE USER SLIDE-OUT — glass panel
-══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   MOBILE USER SLIDE-OUT â€” glass panel
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .mobile-user-menu {
   position: fixed;
   top: var(--nav-height);
@@ -1260,9 +1260,9 @@ body.loading-active .navbar {
   opacity: 0.75;
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    RESPONSIVE BREAKPOINTS
-══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @media (min-width: 1151px) {
   .navbar {
     display: grid;
@@ -1392,9 +1392,9 @@ body.loading-active .navbar {
   .mobile-menu-toggle { display: flex !important; width: 38px; height: 38px; font-size: 1.1rem; flex-shrink: 0; align-items: center; justify-content: center; }
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MOBILE MENU FINAL OVERRIDES
-══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @media (max-width: 1150px) {
   .mobile-menu,
   .mobile-menu.active {

@@ -12,7 +12,7 @@ const Footer = React.memo(function Footer() {
         {/* Brand Section */}
         <div className="footer-brand">
           <div className="footer-logo-wrap">
-            <span className="footer-logo">AURA TERMINAL</span>
+            <span className="footer-logo">AURA TERMINAL™</span>
             <div className="footer-a7-mark" aria-hidden="true">
               <A7Logo />
             </div>
@@ -71,7 +71,7 @@ const Footer = React.memo(function Footer() {
             <li><Link to="/">Home</Link></li>
             <li><Link to="/courses">C&S</Link></li>
             <li><Link to="/explore">Explore</Link></li>
-            <li><Link to="/why-glitch">Why Aura Terminal</Link></li>
+            <li><Link to="/why-glitch">Why Aura Terminal™</Link></li>
             <li><Link to="/contact">Contact</Link></li>
           </ul>
         </div>
@@ -92,7 +92,7 @@ const Footer = React.memo(function Footer() {
       <div className="footer-bottom-wrap">
         <div className="footer-divider" />
         <div className="footer-bottom">
-          <span className="footer-copy">© 2025 AURA TERMINAL. All rights reserved.</span>
+          <span className="footer-copy">Â© 2025 AURA TERMINAL™. All rights reserved.</span>
           <span className="footer-status">
             <span className="footer-status-dot" />
             All systems operational

@@ -17,7 +17,7 @@ html {
     --bg-medium: #1a1a1a;
     --bg-light: #252525;
     
-    /* Fonts - same as navbar "AURA TERMINAL" logo everywhere */
+    /* Fonts - same as navbar "AURA TERMINAL™" logo everywhere */
     --font-main: 'Space Grotesk', sans-serif;
     --font-secondary: 'Space Grotesk', sans-serif;
     
@@ -33,7 +33,7 @@ html {
     --glow-medium: 0 0 1px;
     --glow-strong: 0 0 1.5px;
 
-    /* Aura Analysis / Trader Desk – exact same UI/UX as Aura Journal (Journal.css) */
+    /* Aura Analysis / Trader Desk â€“ exact same UI/UX as Aura Journal (Journal.css) */
     --aa-bg:            #0a0a0a;
     --aa-bg-card:       rgba(255,255,255,0.025);
     --aa-bg-card-h:     rgba(255,255,255,0.048);
@@ -71,7 +71,7 @@ html {
 /* Ensures document can scroll on touch devices; no global overflow: hidden on html/body */
 /* DO NOT add touch-action: none or overflow: hidden to body/html globally */
 
-/* Installed PWA (Safari Add to Home Screen / Chrome install) — respect notch + home indicator */
+/* Installed PWA (Safari Add to Home Screen / Chrome install) â€” respect notch + home indicator */
 html.pwa-standalone body {
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
@@ -168,7 +168,7 @@ html {
     min-height: 100%;
 }
 
-/* Site-wide font: same as navbar "AURA TERMINAL" logo (Space Grotesk) - skinny weight to match logo */
+/* Site-wide font: same as navbar "AURA TERMINAL™" logo (Space Grotesk) - skinny weight to match logo */
 body,
 body * {
     font-family: 'Space Grotesk', sans-serif;
@@ -179,7 +179,7 @@ pre, code, .md-pre, .md-code,
 [class*="monospace"], [class*="code-block"] {
     font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace !important;
 }
-/* Site-wide: all titles first letter capital only, skinny font (match AURA TERMINAL logo) */
+/* Site-wide: all titles first letter capital only, skinny font (match AURA TERMINAL™ logo) */
 h1, h2, h3, h4, h5, h6,
 .nav-links a, .leaderboard-main-title, .courses-title,
 .section-title, .journal-sidebar-title, .journal-section-title,
@@ -201,7 +201,7 @@ h1, h2, h3, h4, h5, h6,
 .subscription-title, .privacy-title, .terms-title, .footer-brand {
     text-transform: none !important;
 }
-/* All titles: skinny font like AURA TERMINAL logo */
+/* All titles: skinny font like AURA TERMINAL™ logo */
 h1, h2, h3, h4, h5, h6,
 .section-title, .tab-btn, .leaderboard-main-title, .courses-title,
 .journal-main-title, .journal-sidebar-title, .journal-section-title,
@@ -209,7 +209,7 @@ h1, h2, h3, h4, h5, h6,
 .messages-title, .community-title, .premium-ai-title, .subscription-title {
     font-weight: 200;
 }
-/* Keep navbar logo "AURA TERMINAL" with skinny weight and brand caps */
+/* Keep navbar logo "AURA TERMINAL™" with skinny weight and brand caps */
 .logo {
     font-weight: 200 !important;
 }
@@ -318,7 +318,7 @@ button {
   margin-top: 3rem;
 }
 
-/* Navbar: glass + layers live in Navbar.css — avoid solid bg here or frosted navy/black won’t show */
+/* Navbar: glass + layers live in Navbar.css â€” avoid solid bg here or frosted navy/black wonâ€™t show */
 .navbar-brand, .nav-link {
   color: #fff !important;
   font-weight: 500;
@@ -971,7 +971,7 @@ img, video, canvas {
 }
 
 /* ============================================================
-   UNIFIED LAYOUT — definitive scroll fix
+   UNIFIED LAYOUT â€” definitive scroll fix
    ============================================================ */
 
 footer.footer, .footer {
@@ -988,7 +988,7 @@ footer.footer, .footer {
   flex-shrink: 0 !important;
 }
 
-/* ── ALL screen sizes: shared base ── */
+/* â”€â”€ ALL screen sizes: shared base â”€â”€ */
 html, body {
   margin: 0 !important;
   padding: 0 !important;
@@ -1011,7 +1011,7 @@ html, body {
   overflow-x: hidden !important;
 }
 
-/* ── DESKTOP > 1366px: body scrolls naturally ── */
+/* â”€â”€ DESKTOP > 1366px: body scrolls naturally â”€â”€ */
 @media (min-width: 1367px) {
   html, body {
     height: auto !important;
@@ -1049,7 +1049,7 @@ html, body {
   }
 }
 
-/* ── TABLET 768-1366px: page-wrapper is the ONE scroll surface ── */
+/* â”€â”€ TABLET 768-1366px: page-wrapper is the ONE scroll surface â”€â”€ */
 @media (min-width: 768px) and (max-width: 1366px) {
   html, body {
     height: 100dvh !important;
@@ -1107,7 +1107,7 @@ html, body {
   }
 }
 
-/* ── MOBILE ≤ 767px: same as tablet ── */
+/* â”€â”€ MOBILE â‰¤ 767px: same as tablet â”€â”€ */
 @media (max-width: 767px) {
   html, body {
     height: 100dvh !important;
@@ -1173,7 +1173,7 @@ html, body {
   }
 }
 
-/* ── Small mobile navbar height adjustment ── */
+/* â”€â”€ Small mobile navbar height adjustment â”€â”€ */
 @media (max-width: 480px) {
   .page-wrapper {
     height: calc(100dvh - 56px) !important;

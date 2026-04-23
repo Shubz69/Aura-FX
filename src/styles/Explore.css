@@ -1,11 +1,11 @@
 /* ============================================================
-   EXPLORE.CSS — AURA TERMINAL | Matched to Home Theme v2
+   EXPLORE.CSS â€” AURA TERMINAL™ | Matched to Home Theme v2
    Gold system, glass cards, Space Grotesk, #03020D bg
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-/* ── CSS Variables (mirrored from home.css) ───────────────── */
+/* â”€â”€ CSS Variables (mirrored from home.css) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
     /* Core palette */
     --bg:            #03020D;
@@ -58,7 +58,7 @@
     --line-gold: linear-gradient(90deg, transparent, var(--eaa-core) 30%, var(--eaa-bright) 70%, transparent);
 }
 
-/* ── Base ─────────────────────────────────────────────────── */
+/* â”€â”€ Base â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .explore-container,
 .explore-container * {
     font-family: var(--font);
@@ -74,7 +74,7 @@ html, body {
     padding: 0;
 }
 
-/* ── Container ────────────────────────────────────────────── */
+/* â”€â”€ Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .explore-container {
     position: relative;
     display: flex;
@@ -89,7 +89,7 @@ html, body {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    /* Content-sized height — avoids empty scroll gap above global footer */
+    /* Content-sized height â€” avoids empty scroll gap above global footer */
     min-height: auto !important;
 }
 
@@ -100,7 +100,7 @@ html, body {
     border-radius: 2px;
 }
 
-/* ── Ambient orbs (gold-tinted to match home) ─────────────── */
+/* â”€â”€ Ambient orbs (gold-tinted to match home) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .explore-container::before,
 .explore-container::after {
     content: '';
@@ -138,7 +138,7 @@ html, body {
     50%       { transform: translate(25px,-35px) scale(1.08); }
 }
 
-/* ── Content Wrapper ──────────────────────────────────────── */
+/* â”€â”€ Content Wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .explore-content-wrapper {
     position: relative;
     z-index: 2;
@@ -158,9 +158,9 @@ html, body {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    HEADER
-   ══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .explore-header {
     text-align: center;
     margin-bottom: 6rem;
@@ -168,7 +168,7 @@ html, body {
     position: relative;
 }
 
-/* Eyebrow pill — gold like home hero-eyebrow */
+/* Eyebrow pill â€” gold like home hero-eyebrow */
 .explore-eyebrow {
     display: inline-flex;
     align-items: center;
@@ -204,7 +204,7 @@ html, body {
     text-transform: uppercase;
 }
 
-/* Main H1: C&S-style gold shimmer — AuraPageTitle.css (h1.aura-page-title) */
+/* Main H1: C&S-style gold shimmer â€” AuraPageTitle.css (h1.aura-page-title) */
 .explore-header .explore-main-title.aura-page-title {
     margin: 0 auto 1.6rem;
 }
@@ -265,9 +265,9 @@ html, body {
     50%       { transform: rotate(45deg) scale(1.8); opacity: 0.6; }
 }
 
-/* ══════════════════════════════════════════════════════════
-   MAIN CONTENT — 2-COLUMN SPLIT
-   ══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   MAIN CONTENT â€” 2-COLUMN SPLIT
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .explore-main-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -329,7 +329,7 @@ html, body {
     font-weight: 400;
 }
 
-/* CTA button — gold like home-cta-button */
+/* CTA button â€” gold like home-cta-button */
 .explore-cta-button {
     position: relative;
     padding: 0.92rem 2.5rem;
@@ -436,7 +436,7 @@ html, body {
     margin-top: 1.4rem;
 }
 
-/* ── Feature Cards (right column) ────────────────────────── */
+/* â”€â”€ Feature Cards (right column) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .explore-features-section {
     display: flex;
     flex-direction: column;
@@ -552,9 +552,9 @@ html, body {
     margin: 0;
 }
 
-/* ══════════════════════════════════════════════════════════
-   SECTION TITLE — same as home section-title
-   ══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   SECTION TITLE â€” same as home section-title
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .explore-section-title {
     font-family: var(--font);
     font-size: 1.95rem;
@@ -591,9 +591,9 @@ html, body {
     line-height: 1.72;
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    COSMIC DIVIDER (same as home)
-   ══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .explore-cosmic-divider {
     width: 100%;
     height: 1px;
@@ -608,7 +608,7 @@ html, body {
 }
 
 .explore-cosmic-divider::before {
-    content: '◈';
+    content: 'â—ˆ';
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
@@ -619,9 +619,9 @@ html, body {
     opacity: 0.46;
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    PAGES SECTION
-   ══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .explore-pages-section,
 .explore-courses-section {
     display: flex;
@@ -632,7 +632,7 @@ html, body {
     margin-bottom: 0.5rem;
 }
 
-/* ── Pages Grid ───────────────────────────────────────────── */
+/* â”€â”€ Pages Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .explore-pages-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -773,9 +773,9 @@ html, body {
     transform: translateX(5px);
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    COURSES SECTION
-   ══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .explore-courses-loading,
 .explore-courses-empty {
     text-align: center;
@@ -999,9 +999,9 @@ html, body {
     transform: translateX(4px);
 }
 
-/* ══════════════════════════════════════════════════════════
-   STATS ROW (optional — add to your page for premium feel)
-   ══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   STATS ROW (optional â€” add to your page for premium feel)
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .explore-stats-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1076,9 +1076,9 @@ html, body {
     display: block;
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    FOOTER
-   ══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .explore-footer {
     width: 100%;
     padding: 1.25rem 0 1rem;
@@ -1126,9 +1126,9 @@ html, body {
     text-transform: uppercase;
 }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    RESPONSIVE
-   ══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* Large Desktop */
 @media (min-width: 1600px) {
@@ -1257,7 +1257,7 @@ html, body {
     .explore-main-content { margin-bottom: 1.75rem; }
 }
 
-/* Tall screens — do not add huge bottom padding */
+/* Tall screens â€” do not add huge bottom padding */
 @media (min-height: 1000px) {
     .explore-content-wrapper { padding-top: 140px; padding-bottom: 3.5rem; }
 }
@@ -1273,7 +1273,7 @@ html, body {
     .explore-course-icon-wrapper { height: 140px; }
 }
 
-/* iPad only: extra top padding so “Explore” title clears fixed navbar (touch + tablet widths; excludes mouse desktops) */
+/* iPad only: extra top padding so â€œExploreâ€ title clears fixed navbar (touch + tablet widths; excludes mouse desktops) */
 @media only screen and (min-width: 768px) and (max-width: 1366px) and (hover: none) and (pointer: coarse) {
     .explore-content-wrapper {
         padding-top: calc(148px + env(safe-area-inset-top, 0px));

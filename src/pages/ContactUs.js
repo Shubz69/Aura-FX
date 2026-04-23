@@ -113,7 +113,7 @@ const ContactUs = () => {
 
             <div className="contact-content">
 
-                {/* ── HERO HEADER ── */}
+                {/* â”€â”€ HERO HEADER â”€â”€ */}
                 <div className="contact-header">
                     <div className="contact-eyebrow">
                         <span className="contact-eyebrow__dot" />
@@ -126,19 +126,19 @@ const ContactUs = () => {
                     <p className="contact-subtitle">
                         {fromMfa
                             ? 'Having trouble with Multi-Factor Authentication? Our team resolves issues fast.'
-                            : 'Questions, proposals, or just want to say hello — we\u2019re always here.'}
+                            : 'Questions, proposals, or just want to say hello â€” we\u2019re always here.'}
                     </p>
 
-                    {/* Decorative line — same gold treatment as C&S */}
+                    {/* Decorative line â€” same gold treatment as C&S */}
                     <div className="contact-header__rule aura-page-title-line" aria-hidden>
                         <span className="aura-page-title-dot" />
                     </div>
                 </div>
 
-                {/* ── MAIN GRID ── */}
+                {/* â”€â”€ MAIN GRID â”€â”€ */}
                 <div className="contact-grid">
 
-                    {/* LEFT — FORM */}
+                    {/* LEFT â€” FORM */}
                     <div className="contact-form-container">
                         <div className="contact-form-header">
                             <h2>Send a Message</h2>
@@ -245,7 +245,7 @@ const ContactUs = () => {
                             {submitStatus && (
                                 <div className={`status-message status-message--${submitStatus.type}`}>
                                     <span className="status-message__icon">
-                                        {submitStatus.type === 'success' ? '✓' : '✕'}
+                                        {submitStatus.type === 'success' ? 'âœ“' : 'âœ•'}
                                     </span>
                                     <span>{submitStatus.message}</span>
                                 </div>
@@ -259,7 +259,7 @@ const ContactUs = () => {
                         </form>
                     </div>
 
-                    {/* RIGHT — INFO + MAP */}
+                    {/* RIGHT â€” INFO + MAP */}
                     <div className="contact-info-container">
 
                         {/* Info Cards */}
@@ -282,7 +282,7 @@ const ContactUs = () => {
                                 {
                                     icon: <FaGlobe />,
                                     label: 'Availability',
-                                    value: '24 / 7 — Always On',
+                                    value: '24 / 7 â€” Always On',
                                     href: null,
                                     tag: 'Live'
                                 }
@@ -311,7 +311,7 @@ const ContactUs = () => {
                             </div>
                             <div className="contact-map__frame">
                                 <iframe
-                                    title="AURA TERMINAL London Office"
+                                    title="AURA TERMINAL™ London Office"
                                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d158857.83989158905!2d-0.24168154759218046!3d51.52877184051532!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47d8a00baf21de75%3A0x52963a5addd52a99!2sLondon%2C%20UK!5e0!3m2!1sen!2s!4v1710000000000!5m2!1sen!2s&style=feature:all|element:labels.text.fill|color:0xffffff&style=feature:all|element:labels.text.stroke|color:0x000000"
                                     width="100%"
                                     height="100%"

@@ -111,7 +111,7 @@ const Courses = () => {
             
             {error && (
                 <div className="courses-error">
-                    <h2>❄️ System Error</h2>
+                    <h2>â„ï¸ System Error</h2>
                     <p>{error}</p>
                     <button onClick={() => window.location.reload()}>
                         Retry Connection
@@ -132,7 +132,7 @@ const Courses = () => {
                     {/* FREE plan */}
                     <div className="subscription-plan-card free">
                         <h3 className="subscription-plan-title">Free</h3>
-                        <div className="subscription-plan-price">£0</div>
+                        <div className="subscription-plan-price">Â£0</div>
                         <div className="subscription-plan-period">per month</div>
                         <ul className="subscription-plan-features">
                             <li>Access to general community channels</li>
@@ -171,15 +171,15 @@ const Courses = () => {
                         </button>
                     </div>
 
-                    {/* AURA TERMINAL (Premium) */}
+                    {/* AURA TERMINAL™ (Premium) */}
                     <div className="subscription-plan-card premium">
-                        <h3 className="subscription-plan-title">AURA TERMINAL</h3>
+                        <h3 className="subscription-plan-title">AURA TERMINAL™</h3>
                         <div className="promotional-pricing">
-                            <div className="promo-price">£0</div>
+                            <div className="promo-price">Â£0</div>
                             <div className="promo-text">for the first 2 months</div>
                         </div>
                         <div className="original-pricing">
-                            <div className="original-price-strikethrough">£99</div>
+                            <div className="original-price-strikethrough">Â£99</div>
                             <div className="subscription-plan-period">per month</div>
                         </div>
                         <ul className="subscription-plan-features">
@@ -201,7 +201,7 @@ const Courses = () => {
                     <div className="subscription-plan-card elite">
                         <div className="elite-badge">ELITE</div>
                         <h3 className="subscription-plan-title">A7FX Elite</h3>
-                        <div className="subscription-plan-price">£250</div>
+                        <div className="subscription-plan-price">Â£250</div>
                         <div className="subscription-plan-period">per month</div>
                         <ul className="subscription-plan-features">
                             <li>Everything in Premium</li>
@@ -228,7 +228,7 @@ const Courses = () => {
                     padding: '0 20px',
                     letterSpacing: '0.08em'
                 }}>
-                    Cancel anytime • No hidden fees • Switch plans anytime
+                    Cancel anytime â€¢ No hidden fees â€¢ Switch plans anytime
                 </p>
             </div>
 
@@ -258,7 +258,7 @@ const Courses = () => {
                                         <div className="placeholder-image">
                                             {course.title && course.title.length > 0 
                                                 ? course.title.charAt(0).toUpperCase() 
-                                                : '📘'}
+                                                : 'ðŸ“˜'}
                                         </div>
                                     )}
                                 </div>

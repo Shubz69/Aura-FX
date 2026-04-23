@@ -52,12 +52,12 @@ const AdminMessages = () => {
         if (!email) return '#';
         const subj = msg.subject
             ? `Re: ${msg.subject}`
-            : 'Re: Your message to AURA TERMINAL';
+            : 'Re: Your message to AURA TERMINAL™';
         const bodyLines = [
             `Hi ${(msg.name || 'there').split(/\s+/)[0] || 'there'},`,
             '',
             '',
-            '—',
+            'â€”',
             `Regarding your message (${msg.createdAt ? new Date(msg.createdAt).toLocaleString() : 'recent'}):`,
             (msg.message || '').slice(0, 2000),
         ];
@@ -75,7 +75,7 @@ const AdminMessages = () => {
             navigate(`/admin/inbox?user=${uid}`);
             return;
         }
-        /* Guest / no account — mailto opens the default mail client */
+        /* Guest / no account â€” mailto opens the default mail client */
     };
 
     const markDealt = async (msgId, dealt) => {
@@ -145,13 +145,13 @@ const AdminMessages = () => {
                     </div>
                 ) : error ? (
                     <div className="error-container">
-                        <span className="error-icon">⚠️</span>
+                        <span className="error-icon">âš ï¸</span>
                         <p className="error-message">{error}</p>
                         <button onClick={fetchMessages} className="retry-btn">Retry</button>
                     </div>
                 ) : filtered.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-icon">📭</div>
+                        <div className="empty-icon">ðŸ“­</div>
                         <h3>No Messages</h3>
                         <p>{filter === 'dealt' ? 'No dealt messages yet.' : 'No open messages.'}</p>
                     </div>
@@ -186,14 +186,14 @@ const AdminMessages = () => {
                                                         </span>
                                                     )}
                                                     {msg.dealtWith && (
-                                                        <span className="submission-dealt-badge">✓ Dealt</span>
+                                                        <span className="submission-dealt-badge">âœ“ Dealt</span>
                                                     )}
                                                 </div>
                                                 <div className="user-email">{msg.email || 'No email'}</div>
                                             </div>
                                         </div>
                                         <div className="message-time">
-                                            <span className="time-icon">🕒</span>
+                                            <span className="time-icon">ðŸ•’</span>
                                             {msg.createdAt ? new Date(msg.createdAt).toLocaleString() : 'N/A'}
                                         </div>
                                     </div>
@@ -215,7 +215,7 @@ const AdminMessages = () => {
                                             disabled={actionLoading[msg.id]}
                                             onClick={() => markDealt(msg.id, !msg.dealtWith)}
                                         >
-                                            {actionLoading[msg.id] ? '...' : msg.dealtWith ? 'Mark Open' : 'Mark Dealt ✓'}
+                                            {actionLoading[msg.id] ? '...' : msg.dealtWith ? 'Mark Open' : 'Mark Dealt âœ“'}
                                         </button>
                                     </div>
                                 </div>

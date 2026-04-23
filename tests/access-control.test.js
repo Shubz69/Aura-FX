@@ -4,14 +4,14 @@
  * Tests for the strict subscription-based access control system.
  * 
  * TEST SCENARIOS:
- * 1. Aura FX paid (£99) → Community access ✓
- * 2. A7FX Elite paid (£250) → Community access ✓
- * 3. Admin role → Community access ✓
- * 4. Unpaid user → Subscription page only ✓
- * 5. Unpaid user hitting /community → Forced redirect to /subscription ✓
- * 6. Paid user hitting /subscription → Forced redirect to /community ✓
- * 7. Paid user with ?manage=true → Can access /subscription ✓
- * 8. No scenario where paid user lands on subscription page after sign-in ✓
+ * 1. Aura FX paid (Â£99) â†’ Community access âœ“
+ * 2. A7FX Elite paid (Â£250) â†’ Community access âœ“
+ * 3. Admin role â†’ Community access âœ“
+ * 4. Unpaid user â†’ Subscription page only âœ“
+ * 5. Unpaid user hitting /community â†’ Forced redirect to /subscription âœ“
+ * 6. Paid user hitting /subscription â†’ Forced redirect to /community âœ“
+ * 7. Paid user with ?manage=true â†’ Can access /subscription âœ“
+ * 8. No scenario where paid user lands on subscription page after sign-in âœ“
  */
 
 // Mock the database query function
@@ -30,7 +30,7 @@ describe('Community Access Control', () => {
   });
 
   // ============= TEST 1: Aura FX Paid User =============
-  describe('Aura FX Subscription (£99)', () => {
+  describe('Aura FX Subscription (Â£99)', () => {
     it('should grant community access to user with active Aura FX subscription', async () => {
       const mockUser = {
         id: 1,
@@ -71,7 +71,7 @@ describe('Community Access Control', () => {
   });
 
   // ============= TEST 2: A7FX Elite Paid User =============
-  describe('A7FX Elite Subscription (£250)', () => {
+  describe('A7FX Elite Subscription (Â£250)', () => {
     it('should grant community access to user with active A7FX subscription', async () => {
       const mockUser = {
         id: 3,
@@ -330,7 +330,7 @@ describe('Complete Scenario Verification', () => {
    */
   describe('Paid User Never Lands on Subscription', () => {
     const paidUserScenarios = [
-      { accessType: 'PRO_ACTIVE', description: 'Pro (Aura Terminal) subscriber' },
+      { accessType: 'PRO_ACTIVE', description: 'Pro (Aura Terminal™) subscriber' },
       { accessType: 'ELITE_ACTIVE', description: 'Elite subscriber' },
       { accessType: 'ADMIN', description: 'Admin user' }
     ];
@@ -387,18 +387,18 @@ describe('Complete Scenario Verification', () => {
 });
 
 console.log(`
-╔══════════════════════════════════════════════════════════════════╗
-║            ACCESS CONTROL TEST SUITE                              ║
-╠══════════════════════════════════════════════════════════════════╣
-║ Tests verify strict subscription-based access control:            ║
-║                                                                   ║
-║ ✓ Aura FX paid (£99) → Community access                          ║
-║ ✓ A7FX Elite paid (£250) → Community access                       ║
-║ ✓ Admin role → Community access                                   ║
-║ ✓ Unpaid → Subscription page only                                 ║
-║ ✓ Unpaid hitting /community → Forced redirect                     ║
-║ ✓ Paid hitting /subscription → Forced redirect to /community      ║
-║ ✓ Paid with ?manage=true → Can access /subscription               ║
-║ ✓ No paid user ever lands on subscription after sign-in           ║
-╚══════════════════════════════════════════════════════════════════╝
+â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+â•‘            ACCESS CONTROL TEST SUITE                              â•‘
+â• â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•£
+â•‘ Tests verify strict subscription-based access control:            â•‘
+â•‘                                                                   â•‘
+â•‘ âœ“ Aura FX paid (Â£99) â†’ Community access                          â•‘
+â•‘ âœ“ A7FX Elite paid (Â£250) â†’ Community access                       â•‘
+â•‘ âœ“ Admin role â†’ Community access                                   â•‘
+â•‘ âœ“ Unpaid â†’ Subscription page only                                 â•‘
+â•‘ âœ“ Unpaid hitting /community â†’ Forced redirect                     â•‘
+â•‘ âœ“ Paid hitting /subscription â†’ Forced redirect to /community      â•‘
+â•‘ âœ“ Paid with ?manage=true â†’ Can access /subscription               â•‘
+â•‘ âœ“ No paid user ever lands on subscription after sign-in           â•‘
+â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 `);

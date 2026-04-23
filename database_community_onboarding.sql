@@ -16,9 +16,9 @@ VALUES (
   'welcome',
   'welcome',
   'general',
-  'Welcome to Aura Terminal community. Read the rules and click the checkmark below to unlock your channels.',
+  'Welcome to Aura Terminal™ community. Read the rules and click the checkmark below to unlock your channels.',
   'open',
   'read-only'
 ) ON DUPLICATE KEY UPDATE 
   permission_type = 'read-only',
-  description = 'Welcome to Aura Terminal community. Read the rules and click the checkmark below to unlock your channels.';
+  description = 'Welcome to Aura Terminal™ community. Read the rules and click the checkmark below to unlock your channels.';

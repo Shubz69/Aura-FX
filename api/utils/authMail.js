@@ -32,12 +32,12 @@ function parseFromNameEmail(raw) {
   const lt = s.indexOf('<');
   const gt = s.indexOf('>');
   if (lt !== -1 && gt > lt) {
-    const name = s.slice(0, lt).trim().replace(/^["']|["']$/g, '') || 'Aura Terminal';
+    const name = s.slice(0, lt).trim().replace(/^["']|["']$/g, '') || 'Aura Terminal™';
     const email = s.slice(lt + 1, gt).trim();
     if (email.includes('@')) return { name, email };
   }
   if (s.includes('@') && lt === -1) {
-    return { name: 'Aura Terminal', email: s };
+    return { name: 'Aura Terminal™', email: s };
   }
   return null;
 }
@@ -48,7 +48,7 @@ function resolveResendFrom() {
   const contact = process.env.CONTACT_FROM?.trim();
   if (contact) return contact;
   const emailUser = process.env.EMAIL_USER?.trim();
-  if (emailUser) return `"Aura Terminal" <${emailUser}>`;
+  if (emailUser) return `"Aura Terminal™" <${emailUser}>`;
   return '';
 }
 
@@ -57,7 +57,7 @@ function resolveSendGridFrom() {
   if (explicit) {
     const p = parseFromNameEmail(explicit);
     if (p) return p;
-    if (explicit.includes('@')) return { name: 'Aura Terminal', email: explicit };
+    if (explicit.includes('@')) return { name: 'Aura Terminal™', email: explicit };
   }
   const contact = process.env.CONTACT_FROM?.trim();
   if (contact) {
@@ -65,7 +65,7 @@ function resolveSendGridFrom() {
     if (p) return p;
   }
   const emailUser = process.env.EMAIL_USER?.trim();
-  if (emailUser) return { name: 'Aura Terminal', email: emailUser };
+  if (emailUser) return { name: 'Aura Terminal™', email: emailUser };
   return null;
 }
 
@@ -93,10 +93,10 @@ function createSmtpTransport() {
 
 function defaultFromHeader() {
   const u = process.env.EMAIL_USER?.trim();
-  if (u) return `"Aura Terminal" <${u}>`;
+  if (u) return `"Aura Terminal™" <${u}>`;
   const c = process.env.CONTACT_FROM?.trim();
   if (c) return c;
-  return 'Aura Terminal <no-reply@auraterminal.ai>';
+  return 'Aura Terminal™ <no-reply@auraterminal.ai>';
 }
 
 /**

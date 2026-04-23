@@ -65,12 +65,12 @@ module.exports = async (req, res) => {
       let fixedCount = 0;
       const fixedUsers = [];
 
-      // Pro-tier plans → role pro
+      // Pro-tier plans â†’ role pro
       const [proUsers] = await db.execute(
         `SELECT id, email, role, subscription_status, subscription_plan 
          FROM users 
          WHERE subscription_status = 'active' 
-         AND subscription_plan IN ('aura', 'Aura Terminal', 'premium', 'pro')
+         AND subscription_plan IN ('aura', 'Aura Terminal™', 'premium', 'pro')
          AND role != 'pro'`
       );
 
@@ -80,7 +80,7 @@ module.exports = async (req, res) => {
         fixedUsers.push({ email: user.email, oldRole: user.role, newRole: 'pro' });
       }
 
-      // Elite-tier plans → role elite
+      // Elite-tier plans â†’ role elite
       const [eliteUsers] = await db.execute(
         `SELECT id, email, role, subscription_status, subscription_plan 
          FROM users 
@@ -95,7 +95,7 @@ module.exports = async (req, res) => {
         fixedUsers.push({ email: user.email, oldRole: user.role, newRole: 'elite' });
       }
 
-      // Inactive subscriptions → access tier
+      // Inactive subscriptions â†’ access tier
       const [inactiveUsers] = await db.execute(
         `SELECT id, email, role, subscription_status 
          FROM users 

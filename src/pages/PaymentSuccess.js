@@ -38,7 +38,7 @@ const PaymentSuccess = () => {
             if (planParam === "a7fx") {
                 purchaseName = "A7FX Elite subscription";
             } else {
-                purchaseName = "AURA TERMINAL subscription";
+                purchaseName = "AURA TERMINAL™ subscription";
             }
             setMessage(`Purchasing ${purchaseName}...`);
         } else {
@@ -156,7 +156,7 @@ const PaymentSuccess = () => {
                                             localStorage.setItem('subscriptionExpiry', retryResponse.data.expiry);
                                         }
                                         const user = JSON.parse(localStorage.getItem('user') || '{}');
-                                        // Set role based on plan: 'elite' for A7FX Elite, 'premium' for AURA TERMINAL
+                                        // Set role based on plan: 'elite' for A7FX Elite, 'premium' for AURA TERMINAL™
                                         if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
                                             user.role = 'elite'; // A7FX purchases get Elite role
                                         } else {
@@ -329,7 +329,7 @@ const PaymentSuccess = () => {
                     }
 
                     if (response.status === 200) {
-                        setMessage(`🎉 Purchased ${courseTitle}! Course added and community access unlocked!`);
+                        setMessage(`ðŸŽ‰ Purchased ${courseTitle}! Course added and community access unlocked!`);
                     } else {
                         setMessage("Your payment was processed but there was an issue with course enrollment. Please contact support.");
                         setError(true);
@@ -372,7 +372,7 @@ const PaymentSuccess = () => {
             <CosmicBackground />
             <div className="payment-success-card">
                 <div className={`success-icon ${error ? "error" : ""}`}>
-                    {error ? "❌" : "✅"}
+                    {error ? "âŒ" : "âœ…"}
                 </div>
                 <h2 className="payment-title">
                     {error ? "PROCESSING ERROR" : "PAYMENT SUCCESSFUL"}

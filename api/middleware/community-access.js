@@ -6,8 +6,8 @@
  * STRICT ACCESS RULES:
  * - Requires authentication (valid JWT token)
  * - Requires active paid subscription:
- *   - AURA_FX_ACTIVE (£99/month subscription)
- *   - A7FX_ELITE_ACTIVE (£250/month subscription)
+ *   - AURA_FX_ACTIVE (Â£99/month subscription)
+ *   - A7FX_ELITE_ACTIVE (Â£250/month subscription)
  * - Admin role always has access
  * 
  * This is the SERVER-SIDE enforcement layer.
@@ -74,14 +74,14 @@ async function checkCommunityAccess(userId) {
       expiryDate > now;
     const isExpired = !!(expiryDate && expiryDate <= now);
     
-    // Elite check (£250) — legacy a7fx plan id
+    // Elite check (Â£250) â€” legacy a7fx plan id
     if (isSubscriptionActive && ['a7fx', 'elite'].includes(plan)) {
       return { hasAccess: true, accessType: 'ELITE_ACTIVE', reason: 'Elite subscription active' };
     }
     
-    // Pro check (£99) — legacy aura / premium
+    // Pro check (Â£99) â€” legacy aura / premium
     if (isSubscriptionActive && ['aura', 'premium', 'pro'].includes(plan)) {
-      return { hasAccess: true, accessType: 'PRO_ACTIVE', reason: 'Aura Terminal subscription active' };
+      return { hasAccess: true, accessType: 'PRO_ACTIVE', reason: 'Aura Terminal™ subscription active' };
     }
     // Legacy role-based fallback for migrated users without expiry rows.
     // Never allow role-only fallback for explicitly expired users.

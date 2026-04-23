@@ -1,7 +1,7 @@
 /**
  * Aura FX institutional AI brief.
- * Daily: seven parallel PDF-structured daily briefs (Forex … Stocks), prose only.
- * Weekly: seven parallel PDF-structured fundamental analyses (Forex … Stocks), prose only.
+ * Daily: seven parallel PDF-structured daily briefs (Forex â€¦ Stocks), prose only.
+ * Weekly: seven parallel PDF-structured fundamental analyses (Forex â€¦ Stocks), prose only.
  */
 
 const { INSTITUTIONAL_WEEKLY_WFA_KINDS, INSTITUTIONAL_DAILY_WFA_KINDS } = require('../deskBriefKinds');
@@ -20,7 +20,7 @@ const { parseJsonFromLlmText, normalizeChatCompletionContent } = require('./inst
 
 /**
  * When true, run the eight WFA sleeves sequentially (one DB-heavy LLM sleeve at a time).
- * On Vercel this defaults ON — parallel sleeves × concurrent gap-fill requests exhaust the mysql pool queue.
+ * On Vercel this defaults ON â€” parallel sleeves Ã— concurrent gap-fill requests exhaust the mysql pool queue.
  * Opt out: `INSTITUTIONAL_WFA_SEQUENTIAL=0`. Force on anywhere: `INSTITUTIONAL_WFA_SEQUENTIAL=1`.
  */
 function institutionalWfaSleevesSequential() {
@@ -30,14 +30,14 @@ function institutionalWfaSleevesSequential() {
   return Boolean(process.env.VERCEL);
 }
 
-/** Large JSON + reasoning models often exceed 180s. Set INSTITUTIONAL_PERPLEXITY_TIMEOUT_MS (60000–600000). */
+/** Large JSON + reasoning models often exceed 180s. Set INSTITUTIONAL_PERPLEXITY_TIMEOUT_MS (60000â€“600000). */
 function institutionalPerplexityTimeoutMs() {
   const n = Number.parseInt(String(process.env.INSTITUTIONAL_PERPLEXITY_TIMEOUT_MS || '').trim(), 10);
   if (Number.isFinite(n) && n >= 60000) return Math.min(600000, n);
   return 300000;
 }
 
-/** Core Aura brief sleeve — order fixed for validation (default generation). */
+/** Core Aura brief sleeve â€” order fixed for validation (default generation). */
 const INSTITUTIONAL_INSTRUMENTS = [
   { id: 'XAUUSD', label: 'XAU/USD' },
   { id: 'US30', label: 'US30' },
@@ -52,7 +52,7 @@ const INSTITUTIONAL_INSTRUMENTS = [
   { id: 'GBPJPY', label: 'GBP/JPY' },
 ];
 
-/** Optional pairs — enable with env AURA_BRIEF_INCLUDE_OPTIONAL_PAIRS=true (same quote pipeline IDs must exist in cache). */
+/** Optional pairs â€” enable with env AURA_BRIEF_INCLUDE_OPTIONAL_PAIRS=true (same quote pipeline IDs must exist in cache). */
 const OPTIONAL_INSTITUTIONAL_INSTRUMENTS = [
   { id: 'XAUEUR', label: 'XAU/EUR' },
   { id: 'XAUGBP', label: 'XAU/GBP' },
@@ -90,7 +90,7 @@ function weekdayIndexFromShort(s) {
   return map[String(s || '').slice(0, 3)] ?? 0;
 }
 
-/** Next Mon and Fri (5-day window) for “this trading week” from run date in TZ. */
+/** Next Mon and Fri (5-day window) for â€œthis trading weekâ€ from run date in TZ. */
 function upcomingMonFriYmd(runDate, timeZone) {
   const ymd = new Intl.DateTimeFormat('en-CA', {
     timeZone,
@@ -128,8 +128,8 @@ function formatRangeOrdinal(ymdStart, ymdEnd, timeZone) {
   const m2 = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric', timeZone }).format(d2);
   const day1 = ordinalDay(new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone }).format(d1));
   const day2 = ordinalDay(new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone }).format(d2));
-  if (m1 === m2) return `${day1} – ${day2} ${m1}`;
-  return `${day1} ${m1.split(' ')[0]} – ${day2} ${m2}`;
+  if (m1 === m2) return `${day1} â€“ ${day2} ${m1}`;
+  return `${day1} ${m1.split(' ')[0]} â€“ ${day2} ${m2}`;
 }
 
 async function fetchEconomicCalendarInline() {
@@ -180,7 +180,7 @@ function packDriverLine(d) {
   if (typeof d === 'string') return d.trim();
   if (typeof d === 'object') {
     const parts = [d.name, d.biasLabel || d.direction, d.value, d.effect].filter(Boolean).map(String);
-    return parts.join(' — ').trim();
+    return parts.join(' â€” ').trim();
   }
   return String(d);
 }
@@ -190,7 +190,7 @@ function packSignalLine(s) {
   if (typeof s === 'string') return s.trim();
   if (typeof s === 'object') {
     const parts = [s.label, s.reading, s.detail, s.title].filter(Boolean).map(String);
-    return parts.join(' — ').trim();
+    return parts.join(' â€” ').trim();
   }
   return String(s);
 }
@@ -282,7 +282,7 @@ function buildInstitutionalFactPack({
   };
 }
 
-/** Matches Trader Desk PDF line: "Daily Brief – Thursday 5th March 2026" (en dash). */
+/** Matches Trader Desk PDF line: "Daily Brief â€“ Thursday 5th March 2026" (en dash). */
 function formatDailyBriefTitle(runDate, timeZone) {
   const ND = '\u2013';
   const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone }).format(runDate);
@@ -293,7 +293,7 @@ function formatDailyBriefTitle(runDate, timeZone) {
   return `Daily Brief ${ND} ${weekday} ${dayOrd} ${month} ${year}`;
 }
 
-/** Matches PDF title: WEEKLY FUNDAMENTAL ANALYSIS – (2nd – 6th March 2026). */
+/** Matches PDF title: WEEKLY FUNDAMENTAL ANALYSIS â€“ (2nd â€“ 6th March 2026). */
 function formatWeeklyFundamentalTitle(weekRangeLabel) {
   const ND = '\u2013';
   const r = String(weekRangeLabel || '').trim();
@@ -313,7 +313,7 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
   if (hbMs > 0) {
     const label = String(options.heartbeatLabel || '[perplexity]').trim() || '[perplexity]';
     hb = setInterval(() => {
-      console.log(label, 'still waiting on Perplexity (large JSON — often 1–3+ min)…');
+      console.log(label, 'still waiting on Perplexity (large JSON â€” often 1â€“3+ min)â€¦');
     }, hbMs);
     if (typeof hb.unref === 'function') hb.unref();
   }
@@ -328,7 +328,7 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
         model: getAutomationModel(),
         temperature,
         max_tokens: maxTokens,
-        // Perplexity chat/completions accepts `text` or `json_schema` only — `json_object` returns HTTP 400.
+        // Perplexity chat/completions accepts `text` or `json_schema` only â€” `json_object` returns HTTP 400.
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: JSON.stringify(userObj) },
@@ -468,7 +468,7 @@ async function generateOneWeeklyWfaCategory(deps, shared, briefKindSlug) {
         briefKindSlug,
         date,
         `attempt ${attempt + 1}/3`,
-        `model=${weeklyModelLabel || '(default)'} · heartbeat every 30s while waiting`
+        `model=${weeklyModelLabel || '(default)'} Â· heartbeat every 30s while waiting`
       );
       const rs = await callOpenAIJson(
         systemPrompt,
@@ -612,7 +612,7 @@ async function generateAndStoreWeeklyWfaPack(deps, { runDate, timeZone, date, no
   });
 
   const titleLine = formatWeeklyFundamentalTitle(baseFactPack.weekAheadRangeLabel);
-  const authorLine = String(process.env.AURA_INSTITUTIONAL_AUTHOR || 'By AURA TERMINAL').trim();
+  const authorLine = String(process.env.AURA_INSTITUTIONAL_AUTHOR || 'By AURA TERMINAL™').trim();
 
   const shared = {
     market,
@@ -632,7 +632,7 @@ async function generateAndStoreWeeklyWfaPack(deps, { runDate, timeZone, date, no
     results = [];
     for (let i = 0; i < INSTITUTIONAL_WEEKLY_WFA_KINDS.length; i++) {
       const k = INSTITUTIONAL_WEEKLY_WFA_KINDS[i];
-      console.log('[inst-wfa] sleeve →', `${i + 1}/${INSTITUTIONAL_WEEKLY_WFA_KINDS.length}`, k);
+      console.log('[inst-wfa] sleeve â†’', `${i + 1}/${INSTITUTIONAL_WEEKLY_WFA_KINDS.length}`, k);
       results.push(await generateOneWeeklyWfaCategory(deps, shared, k));
       const r = results[results.length - 1];
       if (r.skipped) console.log('[inst-wfa] sleeve done (skip)', k, r.reason || '');
@@ -640,7 +640,7 @@ async function generateAndStoreWeeklyWfaPack(deps, { runDate, timeZone, date, no
       else console.log('[inst-wfa] sleeve done (ok)', k);
     }
   } else {
-    console.log('[inst-wfa] parallel sleeves ×8 — console may stay quiet for several minutes');
+    console.log('[inst-wfa] parallel sleeves Ã—8 â€” console may stay quiet for several minutes');
     results = await Promise.all(
       INSTITUTIONAL_WEEKLY_WFA_KINDS.map((k) => generateOneWeeklyWfaCategory(deps, shared, k))
     );
@@ -810,7 +810,7 @@ async function generateOneDailyWfaCategory(deps, shared, briefKindSlug) {
         briefKindSlug,
         date,
         `attempt ${attempt + 1}/3`,
-        `model=${modelLabel || '(default)'} · one HTTP call (not "N briefs saved yet"); heartbeat every 30s while waiting`
+        `model=${modelLabel || '(default)'} Â· one HTTP call (not "N briefs saved yet"); heartbeat every 30s while waiting`
       );
       const rs = await callOpenAIJson(
         systemPrompt,
@@ -954,7 +954,7 @@ async function generateAndStoreDailyWfaPack(deps, { runDate, timeZone, date, nor
   });
 
   const titleLine = formatDailyBriefTitle(runDate, timeZone);
-  const authorLine = String(process.env.AURA_INSTITUTIONAL_AUTHOR || 'By AURA TERMINAL').trim();
+  const authorLine = String(process.env.AURA_INSTITUTIONAL_AUTHOR || 'By AURA TERMINAL™').trim();
 
   const shared = {
     market,
@@ -976,7 +976,7 @@ async function generateAndStoreDailyWfaPack(deps, { runDate, timeZone, date, nor
     results = [];
     for (let i = 0; i < INSTITUTIONAL_DAILY_WFA_KINDS.length; i++) {
       const k = INSTITUTIONAL_DAILY_WFA_KINDS[i];
-      console.log('[inst-daily-pdf] sleeve →', `${i + 1}/${INSTITUTIONAL_DAILY_WFA_KINDS.length}`, k);
+      console.log('[inst-daily-pdf] sleeve â†’', `${i + 1}/${INSTITUTIONAL_DAILY_WFA_KINDS.length}`, k);
       results.push(await generateOneDailyWfaCategory(deps, shared, k));
       const r = results[results.length - 1];
       if (r.skipped) console.log('[inst-daily-pdf] sleeve done (skip)', k, r.reason || '');
@@ -984,7 +984,7 @@ async function generateAndStoreDailyWfaPack(deps, { runDate, timeZone, date, nor
       else console.log('[inst-daily-pdf] sleeve done (ok)', k);
     }
   } else {
-    console.log('[inst-daily-pdf] parallel sleeves ×8 — console may stay quiet for several minutes');
+    console.log('[inst-daily-pdf] parallel sleeves Ã—8 â€” console may stay quiet for several minutes');
     results = await Promise.all(
       INSTITUTIONAL_DAILY_WFA_KINDS.map((k) => generateOneDailyWfaCategory(deps, shared, k))
     );

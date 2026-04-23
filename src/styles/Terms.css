@@ -1,10 +1,10 @@
 /* ============================================================
-   TERMS.CSS — AURA TERMINAL | Matched to Home Theme
+   TERMS.CSS â€” AURA TERMINAL™ | Matched to Home Theme
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* ── CSS Variables (mirrored from home.css) ───────────────── */
+/* â”€â”€ CSS Variables (mirrored from home.css) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
     --bg:          #0a0a0a;
     --bg-card:     rgba(255,255,255,0.03);
@@ -19,7 +19,7 @@
     --transition:  0.28s cubic-bezier(0.4,0,0.2,1);
 }
 
-/* ── Base (inside Aura Terminal / journal starfield) ─────── */
+/* â”€â”€ Base (inside Aura Terminal™ / journal starfield) â”€â”€â”€â”€â”€â”€â”€ */
 .terms-legal-page,
 .terms-legal-page * {
     font-family: 'Space Grotesk', sans-serif;
@@ -43,7 +43,7 @@
     50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
 }
 
-/* ── Glass panel = .terms-content + journal-glass-panel ─── */
+/* â”€â”€ Glass panel = .terms-content + journal-glass-panel â”€â”€â”€ */
 .terms-content {
     max-width: 100%;
     margin: 0 auto;
@@ -51,7 +51,7 @@
     z-index: 1;
 }
 
-/* ── Header ───────────────────────────────────────────────── */
+/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .terms-header {
     text-align: center;
     margin-bottom: 60px;
@@ -109,7 +109,7 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Body ─────────────────────────────────────────────────── */
+/* â”€â”€ Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .terms-body {
     line-height: 1.8;
 }
@@ -181,7 +181,7 @@
 .terms-body section:hover::before { opacity: 1; }
 .terms-body section:hover::after  { opacity: 1; }
 
-/* ── Section Headings ─────────────────────────────────────── */
+/* â”€â”€ Section Headings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .terms-body h2 {
     font-size: 0.78rem;
     font-weight: 500;
@@ -214,7 +214,7 @@
     text-transform: uppercase;
 }
 
-/* ── Body Text ────────────────────────────────────────────── */
+/* â”€â”€ Body Text â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .terms-body p {
     color: rgba(255,255,255,0.65);
     font-size: 0.92rem;
@@ -223,7 +223,7 @@
     line-height: 1.8;
 }
 
-/* ── Lists ────────────────────────────────────────────────── */
+/* â”€â”€ Lists â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .terms-body ul {
     margin: 0.5rem 0 1rem 0;
     padding: 0;
@@ -254,14 +254,14 @@
     box-shadow: 0 0 6px rgba(234,169,96,0.5);
 }
 
-/* ── Strong ───────────────────────────────────────────────── */
+/* â”€â”€ Strong â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .terms-body strong {
     color: rgba(255,255,255,0.9);
     font-weight: 500;
     letter-spacing: 0.04em;
 }
 
-/* ── Footer ───────────────────────────────────────────────── */
+/* â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .terms-footer {
     margin-top: 3rem;
     padding-top: 2rem;
@@ -305,7 +305,7 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
-/* ── Responsive ───────────────────────────────────────────── */
+/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (max-width: 1024px) {
     .terms-legal-page { padding-left: 4px; padding-right: 4px; }
     .terms-header h1 { font-size: 2.5rem; }

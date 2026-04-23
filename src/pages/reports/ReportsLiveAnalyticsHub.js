@@ -1,6 +1,6 @@
 /**
  * Curated index of live analytics & journals (TradeZella-style report library surface).
- * Links into existing Aura / deck routes — no duplicate metrics.
+ * Links into existing Aura / deck routes â€” no duplicate metrics.
  */
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -12,18 +12,18 @@ import '../../styles/reports/ReportsLiveAnalyticsHub.css';
 
 const SECTIONS = [
   {
-    title: 'Aura Terminal — MetaTrader analytics',
+    title: 'Aura Terminal™ â€” MetaTrader analytics',
     description: 'Live account stats, equity, risk, edge, execution, psychology, habits, growth.',
     links: [
       { to: '/aura-analysis/dashboard/overview', label: 'Overview', tag: 'Dashboard' },
-      { to: '/aura-analysis/dashboard/performance', label: 'Performance', tag: 'P/L · R · scatter' },
-      { to: '/aura-analysis/dashboard/risk-lab', label: 'Risk Lab', tag: 'DD · ruin · Kelly' },
-      { to: '/aura-analysis/dashboard/edge-analyzer', label: 'Edge Analyzer', tag: 'Session · time' },
-      { to: '/aura-analysis/dashboard/execution-lab', label: 'Execution Lab', tag: 'Quality · hold' },
-      { to: '/aura-analysis/dashboard/calendar', label: 'Calendar intelligence', tag: 'Months · UTC' },
+      { to: '/aura-analysis/dashboard/performance', label: 'Performance', tag: 'P/L Â· R Â· scatter' },
+      { to: '/aura-analysis/dashboard/risk-lab', label: 'Risk Lab', tag: 'DD Â· ruin Â· Kelly' },
+      { to: '/aura-analysis/dashboard/edge-analyzer', label: 'Edge Analyzer', tag: 'Session Â· time' },
+      { to: '/aura-analysis/dashboard/execution-lab', label: 'Execution Lab', tag: 'Quality Â· hold' },
+      { to: '/aura-analysis/dashboard/calendar', label: 'Calendar intelligence', tag: 'Months Â· UTC' },
       { to: '/aura-analysis/dashboard/psychology', label: 'Psychology & discipline', tag: 'Behaviour' },
-      { to: '/aura-analysis/dashboard/habits', label: 'Habits & strengths', tag: 'Setups · flags' },
-      { to: '/aura-analysis/dashboard/growth', label: 'Growth engine', tag: 'CAGR · milestones' },
+      { to: '/aura-analysis/dashboard/habits', label: 'Habits & strengths', tag: 'Setups Â· flags' },
+      { to: '/aura-analysis/dashboard/growth', label: 'Growth engine', tag: 'CAGR Â· milestones' },
       { to: '/aura-analysis/dashboard/trader-replay', label: 'Trader Replay', tag: 'Session replay' },
     ],
   },
@@ -31,8 +31,8 @@ const SECTIONS = [
     title: 'Journal & trade log',
     description: 'Daily diary, task discipline, validator trade grid (columns, CSV).',
     links: [
-      { to: '/journal', label: 'Daily journal', tag: 'Diary · mood' },
-      { to: '/trader-deck/trade-validator/journal', label: 'Trade log', tag: 'Rows · export' },
+      { to: '/journal', label: 'Daily journal', tag: 'Diary Â· mood' },
+      { to: '/trader-deck/trade-validator/journal', label: 'Trade log', tag: 'Rows Â· export' },
       { to: '/trader-deck/trade-validator/trader-playbook', label: 'Playbook', tag: 'Strategies' },
       { to: '/trader-deck/trade-validator/analytics', label: 'Deck analytics', tag: 'Operator KPIs' },
     ],
@@ -45,7 +45,7 @@ const SECTIONS = [
       { to: '/reports/dna', label: 'Trader DNA', tag: '90-day' },
       { to: '/manual-metrics', label: 'Manual metrics / CSV', tag: 'Upload' },
       { to: '/backtesting', label: 'Backtesting', tag: 'Sessions' },
-      { to: '/aura-analysis/ai', label: 'Connection Hub', tag: 'MT · CSV' },
+      { to: '/aura-analysis/ai', label: 'Connection Hub', tag: 'MT Â· CSV' },
     ],
   },
 ];
@@ -57,7 +57,7 @@ function ReportsLiveAnalyticsHubInner() {
   if (loading) {
     return (
       <div className="rlah-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
-        <p className="rlah-loading">Loading…</p>
+        <p className="rlah-loading">Loadingâ€¦</p>
       </div>
     );
   }
@@ -78,7 +78,7 @@ function ReportsLiveAnalyticsHubInner() {
         <p className="rlah-eyebrow">Report library</p>
         <h1 className="rlah-title">Live analytics hub</h1>
         <p className="rlah-lede">
-          TradeZella-style breadth: every surface below already exists in Aura — use this page as your table of contents.
+          TradeZella-style breadth: every surface below already exists in Aura â€” use this page as your table of contents.
           Filters and date ranges on the dashboard apply to MetaTrader-linked data.
         </p>
       </header>

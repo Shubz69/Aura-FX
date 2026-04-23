@@ -150,7 +150,7 @@ const INTEL_SLEEVE_ORDER_WEEKLY = [
 const INTEL_API_BRIEF_KIND_RE =
   /^aura_sunday_market_open$|^aura_institutional_daily_(forex|crypto|commodities|etfs|stocks|indices|bonds|futures)$|^aura_institutional_weekly_(forex|crypto|commodities|etfs|stocks|indices|bonds|futures)$/;
 
-const BY_AURA_TERMINAL = 'By AURA TERMINAL';
+const BY_AURA_TERMINAL = 'By AURA TERMINAL™';
 
 /** Markdown `code` / ```fences``` rendered as prose (no monospace “IDE” blocks). */
 const BRIEF_MARKDOWN_COMPONENTS = {

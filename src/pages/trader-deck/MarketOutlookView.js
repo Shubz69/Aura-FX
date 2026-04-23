@@ -836,7 +836,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       <div className="td-deck-mo-root td-deck-mo-outlook td-deck-mo-outlook--concept">
           <header className="td-outlook-unified-header td-deck-mo-outlook-hero td-outlook-concept-page-header">
             <div className="td-deck-mo-outlook-hero-text">
-              <p className="td-deck-mo-eyebrow">Aura Terminal</p>
+              <p className="td-deck-mo-eyebrow">Aura Terminal™</p>
               <h1 className="td-outlook-main-title td-outlook-concept-page-title">{mainTitle}</h1>
               {outlookDataStatus ? (
                 <div className="mo-outlook-freshness" role="status" aria-live="polite">

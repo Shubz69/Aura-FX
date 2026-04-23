@@ -1,5 +1,5 @@
 /**
- * /api/news — Financial news headlines for the Trader Desk
+ * /api/news â€” Financial news headlines for the Trader Desk
  * Uses GNews API if GNEWS_API_KEY is set, otherwise falls back to RSS proxy.
  * Client caches for 15 minutes to avoid hammering the upstream API.
  */
@@ -62,14 +62,14 @@ async function fetchNewsAPI(apiKey) {
 // Static fallback headlines when no API key is configured
 function getStaticHeadlines() {
   return [
-    { title: 'Federal Reserve Holds Rates Steady — Markets React', description: 'The Fed left interest rates unchanged at its latest meeting, citing mixed economic signals.', url: 'https://www.federalreserve.gov', source: 'AURA TERMINAL', publishedAt: new Date().toISOString(), image: null },
-    { title: 'Gold Holds Near Record Highs Amid Dollar Weakness', description: 'XAU/USD remains elevated as safe-haven demand persists.', url: 'https://www.investing.com', source: 'AURA TERMINAL', publishedAt: new Date().toISOString(), image: null },
-    { title: 'EUR/USD Technical Outlook: Key Level in Focus', description: 'Price action at major support; traders watch for breakout confirmation.', url: 'https://www.forexlive.com', source: 'AURA TERMINAL', publishedAt: new Date().toISOString(), image: null },
-    { title: 'Oil Prices Rally on OPEC Supply Cut Signals', description: 'Crude surges after OPEC+ hints at extending production cuts through next quarter.', url: 'https://www.oilprice.com', source: 'AURA TERMINAL', publishedAt: new Date().toISOString(), image: null },
-    { title: 'S&P 500 Hits Resistance — Earnings Season Begins', description: 'Major indices pause near highs as Q4 earnings reports roll in.', url: 'https://finance.yahoo.com', source: 'AURA TERMINAL', publishedAt: new Date().toISOString(), image: null },
-    { title: 'GBP/USD Weakens on Mixed UK Economic Data', description: 'Sterling dips as manufacturing PMI disappoints, services remain resilient.', url: 'https://www.forexlive.com', source: 'AURA TERMINAL', publishedAt: new Date().toISOString(), image: null },
-    { title: 'Bitcoin Consolidates Above Key Support Zone', description: 'BTC/USD holding structure after strong week; analysts watch for continuation.', url: 'https://www.coindesk.com', source: 'AURA TERMINAL', publishedAt: new Date().toISOString(), image: null },
-    { title: 'NFP Report Preview: What Traders Need to Know', description: 'Non-Farm Payrolls due Friday — consensus estimates and expected market impact.', url: 'https://www.investing.com', source: 'AURA TERMINAL', publishedAt: new Date().toISOString(), image: null }
+    { title: 'Federal Reserve Holds Rates Steady â€” Markets React', description: 'The Fed left interest rates unchanged at its latest meeting, citing mixed economic signals.', url: 'https://www.federalreserve.gov', source: 'AURA TERMINAL™', publishedAt: new Date().toISOString(), image: null },
+    { title: 'Gold Holds Near Record Highs Amid Dollar Weakness', description: 'XAU/USD remains elevated as safe-haven demand persists.', url: 'https://www.investing.com', source: 'AURA TERMINAL™', publishedAt: new Date().toISOString(), image: null },
+    { title: 'EUR/USD Technical Outlook: Key Level in Focus', description: 'Price action at major support; traders watch for breakout confirmation.', url: 'https://www.forexlive.com', source: 'AURA TERMINAL™', publishedAt: new Date().toISOString(), image: null },
+    { title: 'Oil Prices Rally on OPEC Supply Cut Signals', description: 'Crude surges after OPEC+ hints at extending production cuts through next quarter.', url: 'https://www.oilprice.com', source: 'AURA TERMINAL™', publishedAt: new Date().toISOString(), image: null },
+    { title: 'S&P 500 Hits Resistance â€” Earnings Season Begins', description: 'Major indices pause near highs as Q4 earnings reports roll in.', url: 'https://finance.yahoo.com', source: 'AURA TERMINAL™', publishedAt: new Date().toISOString(), image: null },
+    { title: 'GBP/USD Weakens on Mixed UK Economic Data', description: 'Sterling dips as manufacturing PMI disappoints, services remain resilient.', url: 'https://www.forexlive.com', source: 'AURA TERMINAL™', publishedAt: new Date().toISOString(), image: null },
+    { title: 'Bitcoin Consolidates Above Key Support Zone', description: 'BTC/USD holding structure after strong week; analysts watch for continuation.', url: 'https://www.coindesk.com', source: 'AURA TERMINAL™', publishedAt: new Date().toISOString(), image: null },
+    { title: 'NFP Report Preview: What Traders Need to Know', description: 'Non-Farm Payrolls due Friday â€” consensus estimates and expected market impact.', url: 'https://www.investing.com', source: 'AURA TERMINAL™', publishedAt: new Date().toISOString(), image: null }
   ];
 }
 

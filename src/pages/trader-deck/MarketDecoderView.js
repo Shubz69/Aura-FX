@@ -369,7 +369,7 @@ export default function MarketDecoderView({ embedded }) {
   return (
     <div className={`md-decoder md-decoder--reference ${embedded ? 'md-decoder--embedded' : ''}`}>
       <header className="md-ref-top">
-        <p className="md-ref-aura">Aura Terminal</p>
+        <p className="md-ref-aura">Aura Terminal™</p>
         <h1 className="md-ref-title">Market Decoder</h1>
         {brief?.finalOutput?.currentPosture === 'DATA INCOMPLETE' ? (
           <div className="md-ref-structure-alert" role="alert">

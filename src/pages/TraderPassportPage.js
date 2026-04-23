@@ -6,7 +6,7 @@ import TraderCVTab from './aura-analysis/TraderCVTab';
 
 /**
  * Trader Passport is currently fulfilled by Trader CV in Aura Analysis.
- * We keep this page to match the Aura Terminal product messaging.
+ * We keep this page to match the Aura Terminal™ product messaging.
  */
 export default function TraderPassportPage() {
   const { user } = useAuth();

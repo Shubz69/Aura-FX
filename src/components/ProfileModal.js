@@ -42,7 +42,7 @@ function inferTierUpperFromProfile(user) {
 
 function planProductLabel(plan) {
     const pl = normalizeRoleKey(plan);
-    if (pl === 'aura' || pl === 'pro') return 'AURA TERMINAL';
+    if (pl === 'aura' || pl === 'pro') return 'AURA TERMINAL™';
     if (pl === 'a7fx' || pl === 'elite') return 'Elite';
     if (pl === 'premium') return 'Pro';
     if (pl === 'free' || pl === 'access') return 'Access';
@@ -103,18 +103,18 @@ const AvatarWithFallback = ({ size = 120, tierColor, isOnline, avatar, userId })
 };
 
 const ALL_ACHIEVEMENTS = [
-    { id: 'first_steps', name: 'First Steps', icon: '🔰', description: 'Reach Level 10', unlockLevel: 10 },
-    { id: 'communicator', name: 'Communicator', icon: '💬', description: 'Reach Level 20', unlockLevel: 20 },
-    { id: 'dedicated', name: 'Dedicated', icon: '📈', description: 'Reach Level 30', unlockLevel: 30 },
-    { id: 'rising_star', name: 'Rising Star', icon: '⭐', description: 'Reach Level 40', unlockLevel: 40 },
-    { id: 'level_50', name: 'Level 50', icon: '🔥', description: 'Reach Level 50', unlockLevel: 50 },
-    { id: 'tier_elite', name: 'Elite Tier', icon: '🎯', description: 'Reach Level 60', unlockLevel: 60 },
-    { id: 'tier_legend', name: 'Legend Tier', icon: '👑', description: 'Reach Level 80', unlockLevel: 80 },
-    { id: 'god_tier', name: 'GOD Tier', icon: '💎', description: 'Reach Level 100', unlockLevel: 100 },
-    { id: 'streak_7', name: 'Week Warrior', icon: '🗓️', description: '7 day streak', unlockStreak: 7 },
-    { id: 'streak_30', name: 'Monthly Master', icon: '📅', description: '30 day streak', unlockStreak: 30 },
-    { id: 'ai_user', name: 'AI Explorer', icon: '🤖', description: 'Use AI 10 times', unlockAiChats: 10 },
-    { id: 'social', name: 'Social', icon: '🦋', description: 'Send 100 messages', unlockMessages: 100 }
+    { id: 'first_steps', name: 'First Steps', icon: 'ðŸ”°', description: 'Reach Level 10', unlockLevel: 10 },
+    { id: 'communicator', name: 'Communicator', icon: 'ðŸ’¬', description: 'Reach Level 20', unlockLevel: 20 },
+    { id: 'dedicated', name: 'Dedicated', icon: 'ðŸ“ˆ', description: 'Reach Level 30', unlockLevel: 30 },
+    { id: 'rising_star', name: 'Rising Star', icon: 'â­', description: 'Reach Level 40', unlockLevel: 40 },
+    { id: 'level_50', name: 'Level 50', icon: 'ðŸ”¥', description: 'Reach Level 50', unlockLevel: 50 },
+    { id: 'tier_elite', name: 'Elite Tier', icon: 'ðŸŽ¯', description: 'Reach Level 60', unlockLevel: 60 },
+    { id: 'tier_legend', name: 'Legend Tier', icon: 'ðŸ‘‘', description: 'Reach Level 80', unlockLevel: 80 },
+    { id: 'god_tier', name: 'GOD Tier', icon: 'ðŸ’Ž', description: 'Reach Level 100', unlockLevel: 100 },
+    { id: 'streak_7', name: 'Week Warrior', icon: 'ðŸ—“ï¸', description: '7 day streak', unlockStreak: 7 },
+    { id: 'streak_30', name: 'Monthly Master', icon: 'ðŸ“…', description: '30 day streak', unlockStreak: 30 },
+    { id: 'ai_user', name: 'AI Explorer', icon: 'ðŸ¤–', description: 'Use AI 10 times', unlockAiChats: 10 },
+    { id: 'social', name: 'Social', icon: 'ðŸ¦‹', description: 'Send 100 messages', unlockMessages: 100 }
 ];
 
 const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, currentUserId }) => {
@@ -247,7 +247,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         setTimeout(() => setMounted(true), 50);
         
         if (isSystemUser) { 
-            setProfile(userData || { username: 'AURA TERMINAL', id: 'system' }); 
+            setProfile(userData || { username: 'AURA TERMINAL™', id: 'system' }); 
             setLoading(false); 
             return; 
         }
@@ -548,9 +548,9 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         <div>
                             <label style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.6rem', display: 'block', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.24em', fontFamily: "'Space Grotesk', sans-serif" }}>Risk Profile</label>
                             <select value={settings?.risk_profile || 'moderate'} onChange={e => handleSettingsUpdate({ risk_profile: e.target.value })} style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', cursor: 'pointer', background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', color: 'white', fontSize: '0.86rem', fontFamily: "'Space Grotesk', sans-serif", outline: 'none', transition: 'border-color 0.2s' }}>
-                                <option value="conservative">🛡️ Conservative</option>
-                                <option value="moderate">⚖️ Moderate</option>
-                                <option value="aggressive">🔥 Aggressive</option>
+                                <option value="conservative">ðŸ›¡ï¸ Conservative</option>
+                                <option value="moderate">âš–ï¸ Moderate</option>
+                                <option value="aggressive">ðŸ”¥ Aggressive</option>
                             </select>
                         </div>
                     </div>
@@ -573,7 +573,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         ))}
                     </div>
                 </div>
-                {settingsLoading && <div style={{ textAlign: 'center', padding: '12px', color: 'rgba(234,169,96,0.7)', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif" }}>Saving…</div>}
+                {settingsLoading && <div style={{ textAlign: 'center', padding: '12px', color: 'rgba(234,169,96,0.7)', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif" }}>Savingâ€¦</div>}
             </div>
         </div>
     );
@@ -604,7 +604,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 {/* Top shimmer line */}
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}80, rgba(248,195,125,0.5), transparent)`, borderRadius: '22px 22px 0 0', zIndex: 10 }} />
 
-                {/* Action Buttons — all icon-only, uniform 38×38 squares */}
+                {/* Action Buttons â€” all icon-only, uniform 38Ã—38 squares */}
                 <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px', zIndex: 20 }}>
                     {isOwnProfile && (
                         <button onClick={() => setShowSettings(true)} title="Settings" style={{
@@ -618,7 +618,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         <button
                             onClick={() => friendBtn.action && handleFriendAction(friendBtn.action)}
                             disabled={friendLoading}
-                            title={`${friendBtn.text} — ${friendBtn.subtext}`}
+                            title={`${friendBtn.text} â€” ${friendBtn.subtext}`}
                             style={{
                                 background: `${friendBtn.color}14`,
                                 border: `1px solid ${friendBtn.color}50`,
@@ -646,7 +646,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     }}><FaTimes /></button>
                 </div>
 
-                {/* ─── BANNER ─────────────────────────────────────────── */}
+                {/* â”€â”€â”€ BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <div style={{
                     position: 'relative', width: '100%',
                     height: 'clamp(120px, 20vw, 170px)',
@@ -677,7 +677,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
                     {/* Level badge */}
                     <div style={{ position: 'absolute', top: '16px', left: '16px', display: 'flex', alignItems: 'center', gap: '9px', padding: '8px 16px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)', borderRadius: '10px', border: `1px solid ${bannerAccent}30`, zIndex: 2 }}>
-                        <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{level >= 75 ? '👑' : level >= 50 ? '💎' : level >= 25 ? '🔥' : '⭐'}</span>
+                        <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{level >= 75 ? 'ðŸ‘‘' : level >= 50 ? 'ðŸ’Ž' : level >= 25 ? 'ðŸ”¥' : 'â­'}</span>
                         <div>
                             <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.3em', fontFamily: "'Space Grotesk', sans-serif" }}>Power Level</div>
                             <div style={{ fontSize: '1rem', fontWeight: 300, color: 'white', letterSpacing: '0.1em', fontFamily: "'Space Grotesk', sans-serif" }}>{level}</div>
@@ -693,7 +693,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     )}
                 </div>
 
-                {/* ─── AVATAR OVERLAP STRIP ────────────────────────────── */}
+                {/* â”€â”€â”€ AVATAR OVERLAP STRIP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <div style={{
                     padding: '0 clamp(16px, 4vw, 32px)',
                     display: 'flex', alignItems: 'flex-end', gap: '0',
@@ -705,7 +705,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     />
                 </div>
 
-                {/* ─── USERNAME + RANK ────────────────────────────────── */}
+                {/* â”€â”€â”€ USERNAME + RANK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <div style={{ padding: '14px clamp(16px, 4vw, 32px) 0', display: 'flex', alignItems: 'center', gap: '22px', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: '180px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '7px', flexWrap: 'wrap' }}>
@@ -721,12 +721,12 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '5px 14px', background: `${tierColor}12`, border: `1px solid ${tierColor}30`, borderRadius: '99px' }}>
                             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: tierColor, animation: 'dotPulse 2s ease-in-out infinite alternate' }} />
                             <span style={{ fontSize: '0.65rem', fontWeight: 500, color: tierColor, textTransform: 'uppercase', letterSpacing: '0.24em', fontFamily: "'Space Grotesk', sans-serif" }}>{rankTitle}</span>
-                            <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', fontFamily: "'Space Grotesk', sans-serif" }}>· {tierName}</span>
+                            <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', fontFamily: "'Space Grotesk', sans-serif" }}>Â· {tierName}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* ─── BIO SECTION ───────────────────────────────────── */}
+                {/* â”€â”€â”€ BIO SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 {bio && (
                     <div style={{ 
                         padding: '12px clamp(16px, 4vw, 32px) 8px',
@@ -758,7 +758,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 &ldquo;
                             </div>
                             
-                            {/* Quote icon — fixed circle (avoid stretched oval from flex) */}
+                            {/* Quote icon â€” fixed circle (avoid stretched oval from flex) */}
                             <div style={{
                                 flexShrink: 0,
                                 width: 32,
@@ -806,10 +806,10 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     </div>
                 )}
 
-                {/* ─── XP BAR ─────────────────────────────────────────── */}
+                {/* â”€â”€â”€ XP BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <div style={{ padding: bio ? '8px clamp(16px, 4vw, 32px) 20px' : '4px clamp(16px, 4vw, 32px) 20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.28em', fontFamily: "'Space Grotesk', sans-serif" }}>Lv {level} → Lv {level + 1}</span>
+                        <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.28em', fontFamily: "'Space Grotesk', sans-serif" }}>Lv {level} â†’ Lv {level + 1}</span>
                         <span style={{ fontSize: '0.65rem', color: tierColor, fontWeight: 500, letterSpacing: '0.06em', fontFamily: "'Space Grotesk', sans-serif" }}>{(xpProgress.current || 0).toLocaleString()} / {(xpProgress.needed || 0).toLocaleString()} XP</span>
                     </div>
                     <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
@@ -825,7 +825,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 {/* Thin divider */}
                 <div style={{ height: '1px', margin: '0 clamp(16px, 4vw, 32px)', background: 'linear-gradient(90deg, transparent, rgba(234,169,96,0.2), transparent)' }} />
 
-                {/* ─── TABS ───────────────────────────────────────────── */}
+                {/* â”€â”€â”€ TABS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <div style={{ display: 'flex', gap: '2px', padding: '0 clamp(16px, 4vw, 32px)', borderBottom: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto', scrollbarWidth: 'none', marginTop: '4px' }}>
                     {TABS.map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)} style={{
@@ -842,7 +842,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     ))}
                 </div>
 
-                {/* ─── TAB CONTENT ────────────────────────────────────── */}
+                {/* â”€â”€â”€ TAB CONTENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <div style={{ padding: 'clamp(12px, 2.5vw, 20px) clamp(16px, 4vw, 32px) clamp(16px, 3vw, 24px)', minHeight: '0' }}>
 
                     {/* OVERVIEW TAB */}
@@ -916,7 +916,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                         </div>
                                         <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '0.04em', lineHeight: 1.45 }}>
                                             Subscription view: <span style={{ color: tierColor }}>{formatMembershipLabel('USER', tierUpper)}</span>
-                                            {tierName ? <span style={{ color: 'rgba(255,255,255,0.35)' }}> · XP rank {tierName}</span> : null}
+                                            {tierName ? <span style={{ color: 'rgba(255,255,255,0.35)' }}> Â· XP rank {tierName}</span> : null}
                                         </div>
                                     </div>
                                 ) : (
@@ -950,7 +950,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                         <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', minWidth: '72px' }}>
                                             <div style={{ width: 48, height: 48, borderRadius: '50%', background: `conic-gradient(${tierColor} 0deg, #f8c37d ${(item.pct ?? 0) * 3.6}deg, rgba(255,255,255,0.06) ${(item.pct ?? 0) * 3.6}deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                                                 <div style={{ position: 'absolute', inset: 3, borderRadius: '50%', background: '#0a0a12' }} />
-                                                <span style={{ position: 'relative', zIndex: 1, fontSize: '0.7rem', fontWeight: 500, color: '#fff', fontFamily: "'Space Grotesk', sans-serif" }}>{item.pct != null ? `${item.pct}%` : '—'}</span>
+                                                <span style={{ position: 'relative', zIndex: 1, fontSize: '0.7rem', fontWeight: 500, color: '#fff', fontFamily: "'Space Grotesk', sans-serif" }}>{item.pct != null ? `${item.pct}%` : 'â€”'}</span>
                                             </div>
                                             <span style={{ fontSize: '0.52rem', color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase', letterSpacing: '0.18em', fontFamily: "'Space Grotesk', sans-serif" }}>{item.label}</span>
                                         </div>
@@ -958,7 +958,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 </div>
                             )}
 
-                            {/* Stat tiles — compact horizontal rows, no stretched grid cells */}
+                            {/* Stat tiles â€” compact horizontal rows, no stretched grid cells */}
                             <div
                                 className="pm-overview-stat-grid"
                                 style={{
@@ -969,9 +969,9 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 }}
                             >
                                 {[
-                                    { icon: '✨', label: 'Total XP', value: xp.toLocaleString(), color: '#FFD700' },
-                                    { icon: '🔥', label: 'Streak', value: `${loginStreak}d`, color: '#f59e0b' },
-                                    { icon: '🎖️', label: 'Achievements', value: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, color: '#eaa960' }
+                                    { icon: 'âœ¨', label: 'Total XP', value: xp.toLocaleString(), color: '#FFD700' },
+                                    { icon: 'ðŸ”¥', label: 'Streak', value: `${loginStreak}d`, color: '#f59e0b' },
+                                    { icon: 'ðŸŽ–ï¸', label: 'Achievements', value: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, color: '#eaa960' }
                                 ].map((stat, i) => (
                                     <div
                                         key={i}
@@ -1006,19 +1006,19 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             {/* Visible trading stats chosen by the user */}
                             {displayProfile.visibleStats && Object.keys(displayProfile.visibleStats).length > 0 && (() => {
                                 const STAT_META = {
-                                    discipline_score: { icon: '🎯', label: 'Discipline', color: '#f8c37d', fmt: v => `${v}%` },
-                                    journal_score:    { icon: '📓', label: 'Journal',    color: '#f8c37d', fmt: v => `${v}%` },
-                                    consistency_score:{ icon: '📈', label: 'Consistency',color: '#f8c37d', fmt: v => `${v}%` },
-                                    win_rate:         { icon: '✅', label: 'Win Rate',   color: '#f59e0b', fmt: v => `${v}%` },
-                                    total_trades:     { icon: '📊', label: 'Trades',     color: '#eaa960', fmt: v => String(v) },
-                                    login_streak:     { icon: '🔥', label: 'Streak',     color: '#f97316', fmt: v => `${v}d` },
+                                    discipline_score: { icon: 'ðŸŽ¯', label: 'Discipline', color: '#f8c37d', fmt: v => `${v}%` },
+                                    journal_score:    { icon: 'ðŸ““', label: 'Journal',    color: '#f8c37d', fmt: v => `${v}%` },
+                                    consistency_score:{ icon: 'ðŸ“ˆ', label: 'Consistency',color: '#f8c37d', fmt: v => `${v}%` },
+                                    win_rate:         { icon: 'âœ…', label: 'Win Rate',   color: '#f59e0b', fmt: v => `${v}%` },
+                                    total_trades:     { icon: 'ðŸ“Š', label: 'Trades',     color: '#eaa960', fmt: v => String(v) },
+                                    login_streak:     { icon: 'ðŸ”¥', label: 'Streak',     color: '#f97316', fmt: v => `${v}d` },
                                 };
                                 const entries = Object.entries(displayProfile.visibleStats).filter(([k]) => STAT_META[k]);
                                 if (entries.length === 0) return null;
                                 return (
                                     <div style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.015)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                                            <span style={{ fontSize: '0.85rem', color: tierColor }}>📊</span>
+                                            <span style={{ fontSize: '0.85rem', color: tierColor }}>ðŸ“Š</span>
                                             <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.32em', fontFamily: "'Space Grotesk', sans-serif" }}>Trader Stats</span>
                                         </div>
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', alignItems: 'start' }}>
@@ -1044,7 +1044,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             {nextMilestone && (
                                 <div style={{ padding: '14px 18px', background: `${tierColor}08`, border: `1px solid ${tierColor}20`, borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '14px', position: 'relative', overflow: 'hidden' }}>
                                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}60, transparent)` }} />
-                                    <div style={{ fontSize: '1.5rem' }}>🏆</div>
+                                    <div style={{ fontSize: '1.5rem' }}>ðŸ†</div>
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.28em', marginBottom: '3px', fontFamily: "'Space Grotesk', sans-serif" }}>Next Milestone</div>
                                         <div style={{ fontSize: '0.95rem', fontWeight: 300, color: tierColor, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif", lineHeight: 1.25 }}>{nextMilestone.title}</div>
@@ -1064,7 +1064,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             {[
                                 { icon: <FaChartLine />, color: tierColor, label: 'Preferred Markets', content: (settings?.preferred_markets || ['forex', 'gold']).map((m, i) => <span key={i} style={{ padding: '5px 12px', background: `${tierColor}18`, border: `1px solid ${tierColor}40`, borderRadius: '99px', color: tierColor, fontSize: '0.7rem', fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{m}</span>) },
                                 { icon: <FaClock />, color: '#f8c37d', label: 'Trading Sessions', content: (settings?.trading_sessions || ['london', 'newyork']).map((s, i) => <span key={i} style={{ padding: '5px 12px', background: 'rgba(248,195,125,0.1)', border: '1px solid rgba(248,195,125,0.3)', borderRadius: '99px', color: '#f8c37d', fontSize: '0.7rem', fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{s}</span>) },
-                                { icon: <FaShieldAlt />, color: '#f8c37d', label: 'Risk Profile', content: [<span key="r" style={{ fontSize: '1.1rem', color: '#f8c37d', fontWeight: 300, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{settings?.risk_profile === 'conservative' ? '🛡️ ' : settings?.risk_profile === 'aggressive' ? '🔥 ' : '⚖️ '}{settings?.risk_profile || 'Moderate'}</span>] },
+                                { icon: <FaShieldAlt />, color: '#f8c37d', label: 'Risk Profile', content: [<span key="r" style={{ fontSize: '1.1rem', color: '#f8c37d', fontWeight: 300, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{settings?.risk_profile === 'conservative' ? 'ðŸ›¡ï¸ ' : settings?.risk_profile === 'aggressive' ? 'ðŸ”¥ ' : 'âš–ï¸ '}{settings?.risk_profile || 'Moderate'}</span>] },
                                 { icon: <FaRobot />, color: '#f8c37d', label: 'AI Usage', content: [<span key="ai" style={{ fontSize: '1.1rem', color: '#f8c37d', fontWeight: 300, letterSpacing: '0.04em', fontFamily: "'Space Grotesk', sans-serif" }}>{stats?.ai_chats_count || 0} conversations</span>] }
                             ].map((card, i) => (
                                 <div key={i} style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', position: 'relative', overflow: 'hidden' }}>
@@ -1114,7 +1114,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                     <div key={i} title={achievement.description} style={{ padding: '16px 10px', textAlign: 'center', borderRadius: '14px', position: 'relative', overflow: 'hidden', background: achievement.unlocked ? `${tierColor}0a` : 'rgba(255,255,255,0.015)', border: `1px solid ${achievement.unlocked ? tierColor + '30' : 'rgba(255,255,255,0.05)'}`, opacity: achievement.unlocked ? 1 : 0.5, transition: 'all 0.3s', cursor: 'pointer' }}>
                                         {achievement.unlocked && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}70, transparent)` }} />}
                                         <div style={{ fontSize: '2rem', marginBottom: '8px', filter: achievement.unlocked ? 'none' : 'grayscale(100%)' }}>
-                                            {achievement.unlocked ? achievement.icon : '🔒'}
+                                            {achievement.unlocked ? achievement.icon : 'ðŸ”’'}
                                         </div>
                                         <div style={{ fontSize: '0.6rem', fontWeight: 500, color: achievement.unlocked ? tierColor : 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', lineHeight: 1.3, marginBottom: '4px', fontFamily: "'Space Grotesk', sans-serif" }}>{achievement.name}</div>
                                         <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.25)', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '0.04em' }}>{achievement.description}</div>
@@ -1139,12 +1139,12 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         .pm-overview-stat-grid { grid-template-columns: 1fr !important; }
                     }
 
-                    /* ── Mobile: ≤ 480px ─────────────────────────────── */
+                    /* â”€â”€ Mobile: â‰¤ 480px â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
                     @media (max-width: 480px) {
                         .pm-actions { top: max(12px, env(safe-area-inset-top, 12px)) !important; right: max(12px, env(safe-area-inset-right, 12px)) !important; }
                     }
 
-                    /* ── Small mobile: ≤ 360px ───────────────────────── */
+                    /* â”€â”€ Small mobile: â‰¤ 360px â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
                     @media (max-width: 360px) {
                         #profile-modal-root h1 { font-size: 1rem !important; letter-spacing: 0.12em !important; }
                     }

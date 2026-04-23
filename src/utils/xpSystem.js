@@ -1,8 +1,8 @@
 /**
- * AURA TERMINAL XP System (Premium v2)
+ * AURA TERMINAL™ XP System (Premium v2)
  * - 100 levels max
  * - Total XP to reach level 100: 1,000,000 (power curve)
- * - Tier ladder preserved: Beginner → Intermediate → Advanced → Professional → Elite → Master → Legend → Mythical → Immortal → GOD
+ * - Tier ladder preserved: Beginner â†’ Intermediate â†’ Advanced â†’ Professional â†’ Elite â†’ Master â†’ Legend â†’ Mythical â†’ Immortal â†’ GOD
  */
 
 export const MAX_LEVEL = 100;
@@ -10,7 +10,7 @@ export const MAX_LEVEL = 100;
 /** Cumulative XP required to be at level 100 (must match api/utils/xp-system.js). */
 export const TOTAL_XP_FOR_LEVEL_100 = 1_000_000;
 
-/** Shape of the level curve; 2.0 = quadratic scaling from level 1→100. */
+/** Shape of the level curve; 2.0 = quadratic scaling from level 1â†’100. */
 export const LEVEL_CURVE_GAMMA = 2.0;
 
 const FOUR_DP = 10000;
@@ -51,7 +51,7 @@ const TIER_NAMES = [
     'GOD Tier'
 ];
 
-/** Tier accent colors — peachy gold ladder (brand); replaces gray/blue/teal progression */
+/** Tier accent colors â€” peachy gold ladder (brand); replaces gray/blue/teal progression */
 const TIER_COLORS = [
     '#9a8a7a',
     '#b08d6a',
@@ -75,7 +75,7 @@ const TIER_RANK_NAMES = [
     ['Legendary Reader', 'Legendary Operator', 'Legendary Strategist', 'Legendary Executor', 'Legendary Risk Manager', 'Legendary Tactician', 'Legendary Architect', 'Legendary Commander', 'Legendary Specialist', 'Trading Legend'],
     ['Mythic Analyst', 'Mythic Strategist', 'Mythic Executor', 'Mythic Risk Architect', 'Mythic Commander', 'Mythic Operator', 'Mythic Specialist', 'Mythic Mastermind', 'Mythic Sovereign', 'Mythical Trader'],
     ['Immortal Analyst', 'Immortal Strategist', 'Immortal Executor', 'Immortal Risk Lord', 'Immortal Commander', 'Immortal Architect', 'Immortal Specialist', 'Immortal Sovereign', 'Immortal Grandmaster', 'Immortal Trader'],
-    ['God of Structure', 'God of Timing', 'God of Confirmation', 'God of Execution', 'God of Risk', 'God of Process', 'God of Discipline', 'God of Edge', 'Supreme Trader', 'AURA TERMINAL God']
+    ['God of Structure', 'God of Timing', 'God of Confirmation', 'God of Execution', 'God of Risk', 'God of Process', 'God of Discipline', 'God of Edge', 'Supreme Trader', 'AURA TERMINAL™ God']
 ];
 
 export const TRADING_RANKS = (() => {

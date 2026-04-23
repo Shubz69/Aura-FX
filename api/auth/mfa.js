@@ -156,7 +156,7 @@ module.exports = async (req, res) => {
 
       const html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #ffffff;">Aura Terminal — Sign-in verification</h2>
+            <h2 style="color: #ffffff;">Aura Terminal™ — Sign-in verification</h2>
             <p>Your MFA verification code is:</p>
             <div style="background: #1a1a1a; color: #ffffff; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; border-radius: 8px; border: 1px solid #ffffff;">
               ${mfaCode}
@@ -168,7 +168,7 @@ module.exports = async (req, res) => {
 
       const sendResult = await sendTransactionalHtml({
         to: emailLower,
-        subject: 'Aura Terminal — Verification code',
+        subject: 'Aura Terminal™ — Verification code',
         html,
       });
 

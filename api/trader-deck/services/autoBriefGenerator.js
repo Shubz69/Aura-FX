@@ -57,24 +57,24 @@ const BRIEF_KIND_LABELS = {
   indices: 'Indices',
   bonds: 'Bonds',
   futures: 'Futures',
-  aura_institutional_daily: 'Aura FX Institutional — Daily (legacy)',
-  aura_institutional_daily_forex: 'Daily Brief — Forex',
-  aura_institutional_daily_crypto: 'Daily Brief — Crypto',
-  aura_institutional_daily_commodities: 'Daily Brief — Commodities',
-  aura_institutional_daily_etfs: 'Daily Brief — ETFs',
-  aura_institutional_daily_stocks: 'Daily Brief — Stocks',
-  aura_institutional_daily_indices: 'Daily Brief — Indices',
-  aura_institutional_daily_bonds: 'Daily Brief — Bonds',
-  aura_institutional_daily_futures: 'Daily Brief — Futures',
-  aura_institutional_weekly: 'Aura FX Institutional — Weekly (legacy)',
-  aura_institutional_weekly_forex: 'Weekly Fundamental — Forex',
-  aura_institutional_weekly_crypto: 'Weekly Fundamental — Crypto',
-  aura_institutional_weekly_commodities: 'Weekly Fundamental — Commodities',
-  aura_institutional_weekly_etfs: 'Weekly Fundamental — ETFs',
-  aura_institutional_weekly_stocks: 'Weekly Fundamental — Stocks',
-  aura_institutional_weekly_indices: 'Weekly Fundamental — Indices',
-  aura_institutional_weekly_bonds: 'Weekly Fundamental — Bonds',
-  aura_institutional_weekly_futures: 'Weekly Fundamental — Futures',
+  aura_institutional_daily: 'Aura FX Institutional â€” Daily (legacy)',
+  aura_institutional_daily_forex: 'Daily Brief â€” Forex',
+  aura_institutional_daily_crypto: 'Daily Brief â€” Crypto',
+  aura_institutional_daily_commodities: 'Daily Brief â€” Commodities',
+  aura_institutional_daily_etfs: 'Daily Brief â€” ETFs',
+  aura_institutional_daily_stocks: 'Daily Brief â€” Stocks',
+  aura_institutional_daily_indices: 'Daily Brief â€” Indices',
+  aura_institutional_daily_bonds: 'Daily Brief â€” Bonds',
+  aura_institutional_daily_futures: 'Daily Brief â€” Futures',
+  aura_institutional_weekly: 'Aura FX Institutional â€” Weekly (legacy)',
+  aura_institutional_weekly_forex: 'Weekly Fundamental â€” Forex',
+  aura_institutional_weekly_crypto: 'Weekly Fundamental â€” Crypto',
+  aura_institutional_weekly_commodities: 'Weekly Fundamental â€” Commodities',
+  aura_institutional_weekly_etfs: 'Weekly Fundamental â€” ETFs',
+  aura_institutional_weekly_stocks: 'Weekly Fundamental â€” Stocks',
+  aura_institutional_weekly_indices: 'Weekly Fundamental â€” Indices',
+  aura_institutional_weekly_bonds: 'Weekly Fundamental â€” Bonds',
+  aura_institutional_weekly_futures: 'Weekly Fundamental â€” Futures',
   aura_sunday_market_open: 'Sunday Market Open Brief',
 };
 const {
@@ -204,7 +204,7 @@ async function fetchLlmBriefDataSupplementGlobal({
     + '- pulse: string, one sentence risk tone / liquidity read.\n'
     + '- headlineThemes: string array, up to 12 short theme lines (no URLs, no publisher names).\n'
     + '- upcomingMacro: array of up to 8 { "label": string, "window": string } macro events relevant to the desk date (approx timing OK).\n'
-    + '- assetSnapshot: array of up to 18 { "symbol": string, "changePctDayApprox": number or null, "levelOrRangeHint": string or null, "note": string or null } covering the watchSymbols list — best-effort public session context for that date; round % to one decimal.\n'
+    + '- assetSnapshot: array of up to 18 { "symbol": string, "changePctDayApprox": number or null, "levelOrRangeHint": string or null, "note": string or null } covering the watchSymbols list â€” best-effort public session context for that date; round % to one decimal.\n'
     + '- caveat: string, one line that figures are approximate synthesis.\n'
     + 'Rules: no URLs, no citations, no "according to". If unsure, use qualitative wording and null numbers.\n'
     + 'Never present approximate or model-filled numbers as exchange-verified facts; when numbers are non-null, they are desk estimates only and must stay aligned with caveat.';
@@ -244,7 +244,7 @@ async function fetchLlmBriefDataSupplementGlobal({
 /** Injected into Perplexity system/user payloads so prose never front-runs missing Twelve Data / pack fields. */
 const STRUCTURED_DATA_FIRST_RULE =
   'STRUCTURED DATA FIRST: liveQuotes, calendar rows, symbolHeadlines, headlines, macroSummary, keyDrivers, and crossAssetSignals are the only authoritative market facts. '
-  + 'If a symbol or field is missing, empty, or null, do not invent prices, percentages, OHLC, volumes, positioning, or event outcomes—say the pack is thin in one clause and stay qualitative. '
+  + 'If a symbol or field is missing, empty, or null, do not invent prices, percentages, OHLC, volumes, positioning, or event outcomesâ€”say the pack is thin in one clause and stay qualitative. '
   + 'Do not use outside or "typical" levels unless they appear explicitly in the JSON.';
 
 const CATEGORY_LOGIC_RULES = {
@@ -262,13 +262,13 @@ const CATEGORY_LOGIC_RULES = {
 /** PDF fallback: three observation lines per sleeve so automated scaffolds are not copy-paste across the eight briefs. */
 const FALLBACK_KEY_TECH_OBS_BY_KIND = {
   forex: [
-    'Relative rates dominate spot — surprise is often in the spread, not the headline.',
+    'Relative rates dominate spot â€” surprise is often in the spread, not the headline.',
     'Asia liquidity gaps can fake breakouts before London reprices the narrative.',
     'Positioning extremes tend to mean-revert into major CB windows.',
   ],
   commodities: [
     'Inventories and curve shape beat day-to-day noise for durable trends.',
-    'USD pass-through differs by complex — energy vs metals often diverge.',
+    'USD pass-through differs by complex â€” energy vs metals often diverge.',
     'Geopolitical premia can decay fast once flows are positioned.',
   ],
   bonds: [
@@ -279,7 +279,7 @@ const FALLBACK_KEY_TECH_OBS_BY_KIND = {
   crypto: [
     'Liquidity gaps around headlines can dominate spot trend.',
     'ETF/regulatory headlines can gap majors while alts lag liquidity.',
-    'Treat macro correlation as conditional — leadership rotates quickly.',
+    'Treat macro correlation as conditional â€” leadership rotates quickly.',
   ],
   etfs: [
     'Sector sleeves often rotate before headline indices confirm the narrative.',
@@ -287,7 +287,7 @@ const FALLBACK_KEY_TECH_OBS_BY_KIND = {
     'Factor beta to yields shows up in SMH/XLK leadership versus defensives.',
   ],
   stocks: [
-    'Sector breadth vs index pin risk — avoid treating one mega-cap print as the whole tape.',
+    'Sector breadth vs index pin risk â€” avoid treating one mega-cap print as the whole tape.',
     'Guidance beats/misses matter more than headline EPS when multiples are stretched.',
     'Respect earnings blackout windows and flow concentration into liquid single names.',
   ],
@@ -428,7 +428,7 @@ function dateLong(date, timeZone) {
   }).format(date);
 }
 
-/** Calendar date without weekday — use with `{weekday}` in the same title to avoid “Monday Monday”. */
+/** Calendar date without weekday â€” use with `{weekday}` in the same title to avoid â€œMonday Mondayâ€. */
 function dateLongNoWeekday(date, timeZone) {
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
@@ -438,13 +438,13 @@ function dateLongNoWeekday(date, timeZone) {
   }).format(date);
 }
 
-/** JS Date at local noon on desk YMD — stable title tokens vs UTC parsing bugs. */
+/** JS Date at local noon on desk YMD â€” stable title tokens vs UTC parsing bugs. */
 function jsDateFromDeskYmd(deskYmd, timeZone) {
   const dt = DateTime.fromISO(`${String(deskYmd || '').slice(0, 10)}T12:00:00`, { zone: timeZone });
   return dt.isValid ? dt.toJSDate() : new Date();
 }
 
-/** Mon–Fri window for the ISO week containing `deskYmd` in `timeZone` (matches UK desk week). */
+/** Monâ€“Fri window for the ISO week containing `deskYmd` in `timeZone` (matches UK desk week). */
 function deskWeekMonFriRangeLabel(deskYmd, timeZone = 'Europe/London') {
   const anchor = DateTime.fromISO(`${String(deskYmd || '').slice(0, 10)}T12:00:00`, { zone: timeZone });
   if (!anchor.isValid) return '';
@@ -523,7 +523,7 @@ function removeDashSeparators(text) {
     .replace(/^[ \t]*---[ \t]*.*[ \t]*---[ \t]*$/gm, '');
 }
 
-/** Light structural tidy only — do not append meta filler (handled via regeneration). */
+/** Light structural tidy only â€” do not append meta filler (handled via regeneration). */
 function diversifyBody(body) {
   return removeDashSeparators(body)
     .replace(/\n{3,}/g, '\n\n')
@@ -763,7 +763,7 @@ function ordinalDayNumber(n) {
   return `${v}th`;
 }
 
-/** Matches client PDF typography: "Daily Brief – Thursday 5th March 2026" (en dash). */
+/** Matches client PDF typography: "Daily Brief â€“ Thursday 5th March 2026" (en dash). */
 function formatDailySampleTitle(deskYmd, timeZone) {
   const mid = jsDateFromDeskYmd(deskYmd, timeZone);
   const ND = '\u2013';
@@ -774,7 +774,7 @@ function formatDailySampleTitle(deskYmd, timeZone) {
   return `Daily Brief ${ND} ${weekday} ${day} ${month} ${year}`;
 }
 
-/** Matches client PDF: "WEEKLY FUNDAMENTAL ANALYSIS – (2nd – 6th March 2026)". */
+/** Matches client PDF: "WEEKLY FUNDAMENTAL ANALYSIS â€“ (2nd â€“ 6th March 2026)". */
 function formatWeeklySampleTitle(deskYmd, timeZone) {
   const ND = '\u2013';
   const mon = DateTime.fromISO(`${String(deskYmd || '').slice(0, 10)}T12:00:00`, { zone: timeZone }).set({ weekday: 1 });
@@ -787,7 +787,7 @@ function formatWeeklySampleTitle(deskYmd, timeZone) {
   return `WEEKLY FUNDAMENTAL ANALYSIS ${ND} (${mDay} ${ND} ${fDay} ${month} ${year})`;
 }
 
-/** Previous Mon–Fri window label for "SUMMARY FOR LAST WEEK (…)" — PDF-style range. */
+/** Previous Monâ€“Fri window label for "SUMMARY FOR LAST WEEK (â€¦)" â€” PDF-style range. */
 function formatPreviousWeekRangeLabel(deskYmd, timeZone) {
   const anchor = DateTime.fromISO(`${String(deskYmd || '').slice(0, 10)}T12:00:00`, { zone: timeZone });
   if (!anchor.isValid) return '';
@@ -806,7 +806,7 @@ function stripDeskMarkdownSymbols(text) {
     .replace(/\*\*/g, '')
     .replace(/\*/g, '')
     .replace(/^#{1,6}\s+/gm, '')
-    .replace(/^\s*[-*•]\s+/gm, '')
+    .replace(/^\s*[-*â€¢]\s+/gm, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -913,7 +913,7 @@ function buildPdfFallbackWeeklyParsed(factPack, expectedAssets, deskYmd, timeZon
     : 'Prior-week driver detail was thin in the captured snapshot.';
 
   const crossProse = cross.map(packSignalLine).filter(Boolean).join(' ')
-    || 'Structural drivers will resolve as the week’s calendar and flows print.';
+    || 'Structural drivers will resolve as the weekâ€™s calendar and flows print.';
 
   const calHint = cal.map((c) => c.event || c.time || '').filter(Boolean).slice(0, 8).join('. ')
     || 'See economic calendar in the desk feed for timing.';
@@ -921,7 +921,7 @@ function buildPdfFallbackWeeklyParsed(factPack, expectedAssets, deskYmd, timeZon
   const symsSummary = syms.join(', ');
 
   const detailedAnalysis = [
-    `Last week’s repricing for this sleeve anchored on ${priorWeekRecap}`,
+    `Last weekâ€™s repricing for this sleeve anchored on ${priorWeekRecap}`,
     `Cross-asset linkage: ${crossProse}`,
     `Watch-list symbols for narrative anchoring: ${symsSummary}.`,
   ].join('\n\n');
@@ -1124,7 +1124,7 @@ function parseModelJson(text) {
 }
 
 /**
- * PDF-aligned daily body: plain paragraphs only (no markdown symbols). `deskTitle` is e.g. "Daily Brief – Thursday 5th March 2026".
+ * PDF-aligned daily body: plain paragraphs only (no markdown symbols). `deskTitle` is e.g. "Daily Brief â€“ Thursday 5th March 2026".
  */
 function renderCategoryDailyBrief({ categoryDisplayName, deskTitle, parsed }) {
   const lines = [];
@@ -1143,7 +1143,7 @@ function renderCategoryDailyBrief({ categoryDisplayName, deskTitle, parsed }) {
   lines.push('Key Levels and Metrics');
   lines.push(stripDeskMarkdownSymbols(parsed.keyLevelsMetrics || ''));
   lines.push('');
-  lines.push('By AURA TERMINAL');
+  lines.push('By AURA TERMINAL™');
   return stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
 }
 
@@ -1169,7 +1169,7 @@ function renderCategoryWeeklyBrief({ categoryDisplayName, deskTitle, parsed }) {
   lines.push('Forward Outlook');
   lines.push(stripDeskMarkdownSymbols(parsed.forwardOutlook || ''));
   lines.push('');
-  lines.push('By AURA TERMINAL');
+  lines.push('By AURA TERMINAL™');
   return stripSources(lines.join('\n').replace(/\n{3,}/g, '\n\n')).trim();
 }
 
@@ -1263,7 +1263,7 @@ function validateRenderedSampleBody(body, period, expectedAssets = []) {
   headingChecks.forEach((re, idx) => {
     if (!re.test(text)) reasons.push(`missing_heading_${period}_${idx + 1}`);
   });
-  if (/\*\*|#{1,6}\s|^\s*[-*•]\s+/m.test(text)) reasons.push('forbidden_markdown_leak');
+  if (/\*\*|#{1,6}\s|^\s*[-*â€¢]\s+/m.test(text)) reasons.push('forbidden_markdown_leak');
   return { ok: reasons.length === 0, reasons };
 }
 
@@ -1282,7 +1282,7 @@ async function generateSampleMatchedCategoryBrief({
   const expectedAssets = Array.isArray(factPack.topInstruments) ? factPack.topInstruments.slice(0, 5) : [];
   const dayName = weekdayName(runDate, timeZone);
   const dataContextRule = factPack.llmDataSupplement
-    ? `${STRUCTURED_DATA_FIRST_RULE} llmDataSupplement is approximate backup when REST feeds were thin—prefer agreement with liveQuotes/headlines; never override missing pack fields with invented figures. No URLs or citations.`
+    ? `${STRUCTURED_DATA_FIRST_RULE} llmDataSupplement is approximate backup when REST feeds were thinâ€”prefer agreement with liveQuotes/headlines; never override missing pack fields with invented figures. No URLs or citations.`
     : `${STRUCTURED_DATA_FIRST_RULE} No URLs or citations.`;
   const deskDateYmd = normalizeOutlookDate(normalizedPeriod, toYmdInTz(runDate, timeZone));
   const basePayload = {
@@ -1325,7 +1325,7 @@ async function generateSampleMatchedCategoryBrief({
       explainWeeklyOverrideIfNeeded: true,
       uniqueEightSleeveRule:
         'Eight sleeves (forex, crypto, commodities, etfs, stocks, indices, bonds, futures) share one macro snapshot. '
-        + 'Differentiate solely via categoryLogicRule, categoryWritingMandate, and topInstruments — never recycle the same opening sentences or headline bundle across sleeves.',
+        + 'Differentiate solely via categoryLogicRule, categoryWritingMandate, and topInstruments â€” never recycle the same opening sentences or headline bundle across sleeves.',
     },
   };
 
@@ -1338,30 +1338,30 @@ Writing structure (fills those keys):
 marketContext (short): what happened in roughly the last 24 hours for THIS category; anchor on headline/calendar/liveQuotes data in the payload only.
 keyDevelopments: TWO TO THREE SEPARATE PARAGRAPHS (embed as ONE string with blank lines \\n\\n between paragraphs only). Data-backed narrative for THIS asset-class lens ONLY.
 marketImpact: why this matters tactically forward; no execution orders; connect rates/flows/liquidity transmission where visible in the pack.
-keyLevelsMetrics: prose paragraph(s) quoting levels/percent/yields/prices ONLY from liveQuotes, headlines, macroSummary, keyDrivers, calendar, llmDataSupplement — woven into sentences. If sparse, say the pack is thin qualitatively.
+keyLevelsMetrics: prose paragraph(s) quoting levels/percent/yields/prices ONLY from liveQuotes, headlines, macroSummary, keyDrivers, calendar, llmDataSupplement â€” woven into sentences. If sparse, say the pack is thin qualitatively.
 
 Forbidden in ALL string values: hashtags, asterisks, markdown headings, hyphen or asterisk bullets, numbered lists as lines. Plain sentences and paragraph breaks only.
 
 Hard rules:
 - ${dataContextRule}
 - Do NOT copy phrases from priorCategoryBodies or priorCategoryExcerpts.
-- Sleeve identity: ${String(normalizedKind)} — lead with categoryLogicRule + topInstruments from the payload; thesis must differ from other sleeves.
-- Tone: concise, tactical, institutional desk — no retail hype.`
+- Sleeve identity: ${String(normalizedKind)} â€” lead with categoryLogicRule + topInstruments from the payload; thesis must differ from other sleeves.
+- Tone: concise, tactical, institutional desk â€” no retail hype.`
     : `You are an institutional strategist producing one WEEKLY FUNDAMENTAL ANALYSIS for a SINGLE category.
 Return JSON ONLY with keys: weeklyOverview, previousWeekLabel, detailedAnalysis, keyDrivers, forwardOutlook.
 
-previousWeekLabel: short bracket label for the PRIOR Mon–Fri window (from desk context), e.g. format like "3rd ${ND} 7th February 2026" using facts only.
+previousWeekLabel: short bracket label for the PRIOR Monâ€“Fri window (from desk context), e.g. format like "3rd ${ND} 7th February 2026" using facts only.
 
 weeklyOverview: week summary and major themes for THIS category (strategic, not session scalping).
 detailedAnalysis: multi-paragraph string (use \\n\\n between paragraphs) with cross-asset links where the fact pack supports them.
-keyDrivers: economic data, central banks, earnings/flows as relevant to THIS category — prose paragraphs only, no bullet syntax.
+keyDrivers: economic data, central banks, earnings/flows as relevant to THIS category â€” prose paragraphs only, no bullet syntax.
 forwardOutlook: what to watch next week; risks and catalysts from calendar/riskRadar in the pack.
 
 Forbidden in ALL string values: hashtags, asterisks, markdown, hyphen bullet lines. Plain paragraphs only.
 
 Hard rules:
 - Analyze the NEW week ahead; ${dataContextRule}
-- weeklyReference is alignment context only — do not paste it.
+- weeklyReference is alignment context only â€” do not paste it.
 - No duplicated phrasing from priorCategoryExcerpts.
 - Sleeve ${String(normalizedKind)} must differ from other sleeves; use categoryLogicRule + topInstruments.`;
 
@@ -1472,22 +1472,22 @@ function slimFactPackForSections(factPack) {
     llmDataSupplement: factPack.llmDataSupplement || null,
     narrativeInstrumentRule:
       'Macro-first narrative: mention tickers or spot levels only when they clarify cross-asset or macro transmission (e.g. US10Y dragging risk, DXY skew). '
-      + 'Do not enumerate a watchlist, do not use one-paragraph-per-symbol structure, do not fabricate parallel “templates” across names.',
+      + 'Do not enumerate a watchlist, do not use one-paragraph-per-symbol structure, do not fabricate parallel â€œtemplatesâ€ across names.',
   };
 }
 
 function fallbackSectionBodyByKey(sectionKey, heading, factPack) {
   const label = factPack.briefKindLabel || 'Desk';
-  const drivers = (factPack.keyDrivers || []).slice(0, 5).map(packDriverLine).filter(Boolean).join(' · ');
-  const cross = (factPack.crossAssetSignals || []).slice(0, 4).map(packSignalLine).filter(Boolean).join(' · ');
+  const drivers = (factPack.keyDrivers || []).slice(0, 5).map(packDriverLine).filter(Boolean).join(' Â· ');
+  const cross = (factPack.crossAssetSignals || []).slice(0, 4).map(packSignalLine).filter(Boolean).join(' Â· ');
   const quotes = (factPack.liveQuotes || [])
     .map((q) => `${q.symbol}${q.last != null ? ` ${q.last}` : ''}${q.changePct != null ? ` (${q.changePct}%)` : ''}`)
-    .join(' · ');
+    .join(' Â· ');
   const cal = (factPack.calendar || [])
     .slice(0, 4)
     .map((c) => c.event)
     .filter(Boolean)
-    .join(' · ');
+    .join(' Â· ');
   const pulse =
     factPack.marketPulse && typeof factPack.marketPulse === 'object'
       ? factPack.marketPulse.label || ''
@@ -1501,16 +1501,16 @@ function fallbackSectionBodyByKey(sectionKey, heading, factPack) {
     market_context: `${baseCtx} ${drivers ? `Drivers: ${drivers}.` : ''} ${quotes ? `Spot: ${quotes}.` : ''}`,
     cross_asset_flow: `${label} cross-asset: ${cross || 'Rates, USD, risk and commodities frame the tape.'} ${drivers ? `Linked drivers: ${drivers.slice(0, 220)}.` : ''}`,
     key_drivers: `${label}: real drivers this window: ${drivers || 'Monitor calendar and flow; avoid generic lists.'}`,
-    market_behaviour: `${label} tape: ${pulse ? `${pulse} tone.` : 'Two-way liquidity.'} ${factPack.traderFocus?.length ? `Focus: ${normaliseArray(factPack.traderFocus.map((x) => (typeof x === 'string' ? x : x.title || ''))).slice(0, 3).join(' · ')}.` : ''}`,
+    market_behaviour: `${label} tape: ${pulse ? `${pulse} tone.` : 'Two-way liquidity.'} ${factPack.traderFocus?.length ? `Focus: ${normaliseArray(factPack.traderFocus.map((x) => (typeof x === 'string' ? x : x.title || ''))).slice(0, 3).join(' Â· ')}.` : ''}`,
     what_matters_next: `${label}: next catalysts: ${cal || 'Use calendar rows in the pack for timing; name specific releases.'} ${quotes ? `Context: ${quotes.slice(0, 180)}.` : ''}`,
-    trader_takeaway: `${label} takeaway: lean with ${drivers ? drivers.split(' · ')[0] : 'the dominant macro pulse'}; reassess if the tape contradicts that read. ${quotes ? `Lead context: ${quotes.split(' · ')[0] || 'from spot snapshot'}.` : ''}`,
+    trader_takeaway: `${label} takeaway: lean with ${drivers ? drivers.split(' Â· ')[0] : 'the dominant macro pulse'}; reassess if the tape contradicts that read. ${quotes ? `Lead context: ${quotes.split(' Â· ')[0] || 'from spot snapshot'}.` : ''}`,
     weekly_overview: `Weekly ${label}: ${drivers ? drivers.slice(0, 280) : baseCtx} ${cross ? `Cross-asset: ${cross.slice(0, 200)}.` : ''}`,
     macro_theme: `Macro theme for ${label}: ${drivers || cross || 'Policy, growth, and inflation path.'}`,
     cross_asset_breakdown: `${label} weekly cross-asset: ${cross || 'Leadership vs laggards across linked markets.'}`,
     structural_shift: `${label} structure: ${pulse || 'No single dominant break'}; ${drivers ? `Watch ${drivers.slice(0, 200)}` : 'track breadth and correlation.'}.`,
     key_events_recap: `Week in ${label}: ${cal || 'Key prints in calendar above.'} ${drivers ? `Drivers: ${drivers.slice(0, 240)}.` : ''}`,
     forward_outlook: `Forward for ${label}: ${cal ? `Next focus: ${cal}.` : 'Event path from calendar.'} ${cross ? cross.slice(0, 200) : ''}`,
-    strategic_takeaway: `Strategic stance for ${label}: ${drivers ? drivers.split(' · ')[0] : 'Stay with confirmed macro'}; risk scales with event density.`,
+    strategic_takeaway: `Strategic stance for ${label}: ${drivers ? drivers.split(' Â· ')[0] : 'Stay with confirmed macro'}; risk scales with event density.`,
   };
   return String(map[sectionKey] || `${label}: ${heading}: ${drivers || pulse || quotes || 'Desk context from fact pack.'}`).trim();
 }
@@ -1543,14 +1543,14 @@ async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorS
     priorSectionsInThisBrief: priorHint,
     otherCategoriesThisRun: excerptBlock,
     outputContract:
-      'Return JSON only: {"body":"string"} — one prose section, 2–5 short paragraphs max, plain prose only. '
+      'Return JSON only: {"body":"string"} â€” one prose section, 2â€“5 short paragraphs max, plain prose only. '
       + 'Inside body: use sentence case (never ALL CAPS). No asterisks, no hyphen bullets, no em/en dashes as separators (use commas and periods). '
       + 'No markdown headings inside body.',
     bannedSubstrings: factPack.bannedPhrases || BANNED_PHRASES,
     rewriteNote:
       uniquenessRetry || validationFix
         ? hasLlmSup
-          ? 'Prior attempt failed validation: change wording; use factPack plus llmDataSupplement when needed — still no URLs.'
+          ? 'Prior attempt failed validation: change wording; use factPack plus llmDataSupplement when needed â€” still no URLs.'
           : 'Prior attempt failed validation: change wording and openings; keep facts from factPack only.'
         : null,
   };
@@ -1577,14 +1577,14 @@ async function generateSingleSectionOpenAI(sectionKey, heading, factPack, priorS
             content:
               'You write ONE section of a fixed-structure institutional market brief. '
               + 'You do NOT choose section titles or order. '
-              + 'Tone: clean, sharp, narrative flow like a professional desk note — no checklist voice, no filler, no symmetrical bullet patterns. '
+              + 'Tone: clean, sharp, narrative flow like a professional desk note â€” no checklist voice, no filler, no symmetrical bullet patterns. '
               + 'FORBIDDEN anywhere in body: numbered scenarios (Scenario 1/2/3), pathway labels, "catalyst trigger", "invalidation", "position sizing", '
               + '"base and surprise", playbook templates, or one-paragraph-per-ticker blocks. '
               + 'No sources, URLs, or citations. '
               + STRUCTURED_DATA_FIRST_RULE
-              + ' If factPack.llmDataSupplement is non-null, it is backup desk synthesis when live price feeds were thin — use it only together with factPack; prefer agreement with liveQuotes/headlines when both exist. '
+              + ' If factPack.llmDataSupplement is non-null, it is backup desk synthesis when live price feeds were thin â€” use it only together with factPack; prefer agreement with liveQuotes/headlines when both exist. '
               + 'Obey bannedSubstrings exactly (no substring matches in body). '
-              + 'Typography: sentence case only in body; never ALL CAPS blocks. Do not use *, -, —, or – as punctuation or bullets; use commas and full stops. '
+              + 'Typography: sentence case only in body; never ALL CAPS blocks. Do not use *, -, â€”, or â€“ as punctuation or bullets; use commas and full stops. '
               + 'Return valid JSON: {"body":"..."} only.',
           },
           { role: 'user', content: JSON.stringify(userPayload) },
@@ -1926,7 +1926,7 @@ async function reserveRun(runKey, period, date) {
           (institutionalSleeve || legacyDeskCategory) &&
           categoryStoredBodyNeedsPdfReshape(rawText, rk.period)
         ) {
-          console.info('[brief-gen] replacing legacy category brief — PDF template markers missing', {
+          console.info('[brief-gen] replacing legacy category brief â€” PDF template markers missing', {
             runKey,
             briefId,
             deskDate: rk.deskDate,
@@ -2124,7 +2124,7 @@ function computeTitle(template, deskYmd, timeZone) {
     .replace('{weekday}', weekdayName(mid, timeZone))
     .replace('{dateLong}', dateLongFormatted)
     .replace('{weekRange}', deskWeekMonFriRangeLabel(deskYmd, timeZone));
-  // Legacy DB templates: {dateLong} may still include a weekday, duplicating {weekday} (e.g. "Monday Monday, 13 April…").
+  // Legacy DB templates: {dateLong} may still include a weekday, duplicating {weekday} (e.g. "Monday Monday, 13 Aprilâ€¦").
   out = out.replace(
     /\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+\1\b/gi,
     '$1',
@@ -2171,7 +2171,7 @@ async function generateAndStoreBrief({
     } catch (_) {
       /* continue recovery */
     }
-    console.warn('[brief-gen] run ledger present but no brief row — resetting lock for retry', {
+    console.warn('[brief-gen] run ledger present but no brief row â€” resetting lock for retry', {
       runKey,
       briefKind: normalizedKind,
       date,
@@ -2413,7 +2413,7 @@ async function generateAndStoreBriefSet({
   console.info('[brief-gen] quote cache built', { symbols: sharedQuoteCache.size, period: normalizedPeriod, date });
   if (sharedQuoteCache.size === 0) {
     console.warn(
-      '[brief-gen] quote cache is empty — configure TWELVE_DATA_API_KEY and/or valid FMP_API_KEY and FINNHUB_API_KEY (403 usually means invalid key or plan).'
+      '[brief-gen] quote cache is empty â€” configure TWELVE_DATA_API_KEY and/or valid FMP_API_KEY and FINNHUB_API_KEY (403 usually means invalid key or plan).'
     );
   }
   const thinFeeds = needsLlmDataSupplement(sharedQuoteCache, sharedEcon, sharedNews);
@@ -2526,7 +2526,7 @@ async function generateAndStoreMissingCategoryBriefs({
       results: [],
     };
   }
-  console.info('[brief-gen] missing category briefs — backfill', {
+  console.info('[brief-gen] missing category briefs â€” backfill', {
     date,
     period: normalizedPeriod,
     missingKinds,
@@ -2754,7 +2754,7 @@ function shouldPrefetchInstrumentResearchWindow({ now = new Date(), period, time
   for (const p of parts) map[p.type] = p.value;
   const hh = Number(map.hour);
   const mm = Number(map.minute);
-  /** ~UK cash equity close: prefetch research for the next calendar session’s brief (stored under tomorrow’s date). */
+  /** ~UK cash equity close: prefetch research for the next calendar sessionâ€™s brief (stored under tomorrowâ€™s date). */
   return hh === 22 && mm < 20;
 }
 
@@ -2781,7 +2781,7 @@ async function countCanonicalIntelBriefRows(period, dateYmd) {
 
 /**
  * Throttled catch-up when the intel pack is still incomplete (missed narrow cron, partial failure, or cold start).
- * Called from cron only — avoids hammering APIs every 5 minutes when healthy.
+ * Called from cron only â€” avoids hammering APIs every 5 minutes when healthy.
  */
 async function shouldRunIntelPackCatchUp({ now = new Date(), period, timeZone = 'Europe/London' } = {}) {
   if (!isTraderDeskAutomationConfigured()) return false;
@@ -2806,7 +2806,7 @@ async function shouldRunIntelPackCatchUp({ now = new Date(), period, timeZone = 
   if (normalizedPeriod === 'daily') {
     return (hh === 6 || hh === 12 || hh === 18) && mm < 20;
   }
-  /** Weekly: retry Mon–Thu morning after Monday 00:00 generation window. */
+  /** Weekly: retry Monâ€“Thu morning after Monday 00:00 generation window. */
   if (normalizedPeriod === 'weekly') {
     return (
       (wd.startsWith('mon') || wd.startsWith('tue') || wd.startsWith('wed') || wd.startsWith('thu')) &&
@@ -2831,7 +2831,7 @@ function shouldRunWindow({ now = new Date(), period, timeZone = 'Europe/London' 
   const hh = Number(map.hour);
   const wd = String(map.weekday || '').toLowerCase();
   /**
-   * Daily category pack: Mon–Sat only, full midnight hour Europe/London (00:00–00:59).
+   * Daily category pack: Monâ€“Sat only, full midnight hour Europe/London (00:00â€“00:59).
    * Weekly WFA pack: Monday 00:00 hour (week-ending storage key unchanged).
    */
   if (normalizedPeriod === 'daily') {
@@ -2881,7 +2881,7 @@ function shouldRunSundayMarketOpenWindow(opts) {
   return sundayMarketOpenBrief.shouldRunSundayMarketOpenWindow(opts);
 }
 
-/** Legacy cron hook: per-instrument OpenAI layer removed — briefs are narrative sections only. */
+/** Legacy cron hook: per-instrument OpenAI layer removed â€” briefs are narrative sections only. */
 async function prefetchInstrumentResearchForDaily({ timeZone = 'Europe/London', runDate = new Date() } = {}) {
   const targetDate = tomorrowYmdInTz(runDate, timeZone);
   return {

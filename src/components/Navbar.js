@@ -70,7 +70,7 @@ const Navbar = () => {
   const auraAiHref = isPremium(user) ? "/premium-ai" : "/subscription";
   const auraAiLabel = "Aura AI";
 
-  // ── Mobile full-screen menu (portalled to body)
+  // â”€â”€ Mobile full-screen menu (portalled to body)
   const mobileMenuPortal = ReactDOM.createPortal(
     <div className={`mobile-menu ${mobileMenuOpen ? "active" : ""}`}>
       <button className="mobile-menu-close" onClick={closeMobileMenu} aria-label="Close menu">
@@ -96,7 +96,7 @@ const Navbar = () => {
             <li><Link to="/leaderboard" onClick={closeMobileMenu} className={isActive('/leaderboard') ? 'active' : ''}>Leaderboard</Link></li>
           </ul>
           <p className="mobile-menu-account-hint">
-            Tap the <strong>profile icon</strong> (next to the bell) for Trader Desk, Journal, Profile, Settings &amp; more — same menu as desktop.
+            Tap the <strong>profile icon</strong> (next to the bell) for Trader Desk, Journal, Profile, Settings &amp; more â€” same menu as desktop.
           </p>
         </>
       ) : (
@@ -105,7 +105,7 @@ const Navbar = () => {
             <li><Link to="/" onClick={closeMobileMenu}>Home</Link></li>
             <li><Link to="/courses" onClick={closeMobileMenu}>C &amp; S</Link></li>
             <li><Link to="/explore" onClick={closeMobileMenu}>Explore</Link></li>
-            <li><Link to="/why-glitch" onClick={closeMobileMenu}>Why Aura Terminal</Link></li>
+            <li><Link to="/why-glitch" onClick={closeMobileMenu}>Why Aura Terminal™</Link></li>
             <li><Link to="/contact" onClick={closeMobileMenu}>Contact Us</Link></li>
           </ul>
           <div className="mobile-buttons">
@@ -126,7 +126,7 @@ const Navbar = () => {
           <Link to="/" className="logo-link">
             <div className="navbar-logo-wrapper">
               <A7Logo />
-              <span className="navbar-wordmark" aria-label="Aura Terminal">
+              <span className="navbar-wordmark" aria-label="Aura Terminal™">
                 <span className="navbar-wordmark-aura">AURA</span>
                 <span className="navbar-wordmark-terminal">TERMINAL</span>
               </span>
@@ -156,7 +156,7 @@ const Navbar = () => {
               <li><Link to="/">Home</Link></li>
               <li><Link to="/courses">C &amp; S</Link></li>
               <li><Link to="/explore">Explore</Link></li>
-              <li><Link to="/why-glitch">Why Aura Terminal</Link></li>
+              <li><Link to="/why-glitch">Why Aura Terminal™</Link></li>
               <li><Link to="/contact">Contact Us</Link></li>
             </>
           )}
@@ -283,7 +283,7 @@ const Navbar = () => {
               </div>
             </>
           )}
-          {/* Hamburger — mobile only */}
+          {/* Hamburger â€” mobile only */}
           <button
             className="mobile-menu-toggle"
             onClick={() => {

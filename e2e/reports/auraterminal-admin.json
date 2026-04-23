@@ -5,20 +5,16 @@
       "origin": "https://www.auraterminal.ai",
       "localStorage": [
         {
-          "name": "community_channels_cache_86",
-          "value": "[{\"id\":\"a7fx-general-chat\",\"name\":\"a7fx-general-chat\",\"displayName\":\"A7fx General Chat\",\"category\":\"a7fx\",\"description\":null,\"accessLevel\":\"a7fx\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"announcements\",\"name\":\"announcements\",\"displayName\":\"Announcements\",\"category\":\"announcements\",\"description\":\"Important announcements from AURA TERMINAL.\",\"accessLevel\":\"open\",\"permissionType\":\"read-only\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"levels\",\"name\":\"levels\",\"displayName\":\"Levels\",\"category\":\"announcements\",\"description\":\"Level-up celebrations and progress.\",\"accessLevel\":\"open\",\"permissionType\":\"read-only\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"welcome\",\"name\":\"welcome\",\"displayName\":\"Welcome\",\"category\":\"announcements\",\"description\":\"Welcome to Aura Terminal community. Read the rules and click the checkmark below to unlock your channels.\",\"accessLevel\":\"open\",\"permissionType\":\"read-only\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"commodities\",\"name\":\"commodity-talk\",\"displayName\":\"Commodity Talk\",\"category\":\"forums\",\"description\":\"Commodity Talk — metals, energy, and more\",\"accessLevel\":\"open\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"crypto\",\"name\":\"crypto-talk\",\"displayName\":\"Crypto Talk\",\"category\":\"forums\",\"description\":\"Crypto Talk — discussion and ideas\",\"accessLevel\":\"open\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"day-trading\",\"name\":\"day-trading-talk\",\"displayName\":\"Day Trading Talk\",\"category\":\"forums\",\"description\":\"Day Trading Talk — strategies and discussion\",\"accessLevel\":\"open\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"forex\",\"name\":\"forex-talk\",\"displayName\":\"Forex Talk\",\"category\":\"forums\",\"description\":\"Forex Talk — discussion and ideas\",\"accessLevel\":\"open\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"futures\",\"name\":\"futures-talk\",\"displayName\":\"Futures Talk\",\"category\":\"forums\",\"description\":\"Futures Talk — strategies and setups\",\"accessLevel\":\"open\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"indices\",\"name\":\"indices-talk\",\"displayName\":\"Indices Talk\",\"category\":\"forums\",\"description\":\"Indices Talk — discussion and ideas\",\"accessLevel\":\"open\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"market-analysis\",\"name\":\"market-analysis-talk\",\"displayName\":\"Market Analysis Talk\",\"category\":\"forums\",\"description\":\"Market Analysis Talk — ideas and commentary\",\"accessLevel\":\"open\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"options\",\"name\":\"options-talk\",\"displayName\":\"Options Talk\",\"category\":\"forums\",\"description\":\"Options Talk — education and discussion\",\"accessLevel\":\"open\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"prop-trading\",\"name\":\"prop-trading-talk\",\"displayName\":\"Prop Trading Talk\",\"category\":\"forums\",\"description\":\"Prop Trading Talk — funded accounts and firms\",\"accessLevel\":\"open\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"stocks\",\"name\":\"stocks-talk\",\"displayName\":\"Stocks Talk\",\"category\":\"forums\",\"description\":\"Stocks Talk — discussion and ideas\",\"accessLevel\":\"open\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"swing-trading\",\"name\":\"swing-trading-talk\",\"displayName\":\"Swing Trading Talk\",\"category\":\"forums\",\"description\":\"Swing Trading Talk — discussion and ideas\",\"accessLevel\":\"open\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"general\",\"name\":\"general\",\"displayName\":\"General\",\"category\":\"general\",\"description\":\"General chat for all free subscribers. Say hello and join the conversation.\",\"accessLevel\":\"open\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"premium-general\",\"name\":\"premium-general\",\"displayName\":\"Premium General\",\"category\":\"premium\",\"description\":null,\"accessLevel\":\"premium\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"trade-results\",\"name\":\"trade-results\",\"displayName\":\"Trade Results\",\"category\":\"premium\",\"description\":null,\"accessLevel\":\"premium\",\"permissionType\":\"read-only\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"trade-setups\",\"name\":\"trade-setups\",\"displayName\":\"Trade Setups\",\"category\":\"premium\",\"description\":null,\"accessLevel\":\"premium\",\"permissionType\":\"read-only\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"weekly-brief\",\"name\":\"weekly-brief\",\"displayName\":\"Weekly Brief\",\"category\":\"premium\",\"description\":null,\"accessLevel\":\"premium\",\"permissionType\":\"read-only\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true},{\"id\":\"admin\",\"name\":\"admin\",\"displayName\":\"Admin\",\"category\":\"staff\",\"description\":\"Admin-only channel\",\"accessLevel\":\"admin-only\",\"permissionType\":\"read-write\",\"locked\":false,\"canSee\":true,\"canRead\":true,\"canWrite\":true}]"
+          "name": "hasActiveSubscription",
+          "value": "true"
         },
         {
           "name": "token",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODYsImVtYWlsIjoiYXVyYXRlcm1pbmFsMjAwMkBnbWFpbC5jb20iLCJ1c2VybmFtZSI6InNodWJ6aW5obyIsInJvbGUiOiJTVVBFUl9BRE1JTiIsImlhdCI6MTc3Njc4NDEzOSwiZXhwIjoxNzc2ODcwNTM5fQ.9RVUZgr2j4zBHQqaIBCddpx2KynYCG8e1Y7q-VDPP9M"
-        },
-        {
-          "name": "channelBadges_86",
-          "value": "{}"
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODYsImVtYWlsIjoiYXVyYXRlcm1pbmFsMjAwMkBnbWFpbC5jb20iLCJ1c2VybmFtZSI6InNodWJ6aW5obyIsInJvbGUiOiJTVVBFUl9BRE1JTiIsImlhdCI6MTc3Njg4MDU0MSwiZXhwIjoxNzc2OTY2OTQxfQ.6zDCJQikz7WCSxleSCWNSr9NIXq6hpmLzKtyNDCmD2I"
         },
         {
           "name": "user",
-          "value": "{\"id\":86,\"username\":\"shubzinho\",\"email\":\"auraterminal2002@gmail.com\",\"name\":\"Shobhit Singh\",\"avatar\":null,\"role\":\"SUPER_ADMIN\",\"mfaVerified\":false,\"timezone\":\"Europe/London\",\"level\":1,\"xp\":19.62,\"bio\":\"\",\"avatarColor\":null,\"subscriptionPlan\":\"access\",\"joinDate\":\"2026-04-17T19:13:08.000Z\",\"createdAt\":\"2026-04-17T19:13:08.000Z\",\"login_streak\":5,\"last_seen\":\"2026-04-21T15:08:59.000Z\",\"stats\":{\"reputation\":0,\"totalTrades\":0,\"winRate\":0,\"totalProfit\":0},\"phone\":\"+447414845542\",\"address\":null,\"lastUsernameChange\":null}"
+          "value": "{\"id\":86,\"username\":\"shubzinho\",\"email\":\"auraterminal2002@gmail.com\",\"name\":\"Shobhit Singh\",\"avatar\":null,\"role\":\"SUPER_ADMIN\",\"mfaVerified\":false,\"timezone\":\"Europe/London\",\"level\":1,\"xp\":20.62,\"subscription_status\":\"inactive\"}"
         },
         {
           "name": "mfaVerified",
@@ -29,20 +25,8 @@
           "value": "true"
         },
         {
-          "name": "community_message_alerts_banner_dismissed",
-          "value": "1"
-        },
-        {
-          "name": "hasActiveSubscription",
-          "value": "true"
-        },
-        {
-          "name": "community_messages_announcements",
-          "value": "[]"
-        },
-        {
           "name": "daily_login_check_86",
-          "value": "Tue Apr 21 2026"
+          "value": "Wed Apr 22 2026"
         }
       ]
     }

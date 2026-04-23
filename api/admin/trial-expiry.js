@@ -27,19 +27,19 @@ const sendExpiryEmail = async (email, username) => {
     await transporter.sendMail({
       from: process.env.CONTACT_FROM || process.env.EMAIL_USER,
       to: email,
-      subject: 'Your AURA TERMINAL subscription has expired',
+      subject: 'Your AURA TERMINAL™ subscription has expired',
       html: `
         <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0a0a0a;color:#e2e8f0;padding:32px;border-radius:12px;">
           <h2 style="color:#a78bfa;margin-bottom:16px;">Subscription Expired</h2>
           <p>Hi ${username || 'Trader'},</p>
-          <p>Your AURA TERMINAL subscription has expired. Your account has been downgraded to the <strong>Free</strong> plan.</p>
+          <p>Your AURA TERMINAL™ subscription has expired. Your account has been downgraded to the <strong>Free</strong> plan.</p>
           <p>You will retain access to free features. To restore full access, renew your subscription at any time.</p>
           <a href="${process.env.FRONTEND_URL || 'https://auraterminal.ai'}/subscription"
              style="display:inline-block;margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,#7c3aed,#3b82f6);color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">
             Renew Subscription
           </a>
           <p style="margin-top:24px;font-size:0.85rem;color:#64748b;">
-            AURA TERMINAL — Professional Trading Education
+            AURA TERMINAL™ â€” Professional Trading Education
           </p>
         </div>
       `

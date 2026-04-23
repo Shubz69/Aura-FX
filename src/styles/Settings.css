@@ -1,17 +1,17 @@
 /* ============================================================
-   SETTINGS — Admin settings (journal navy / gold glass, scoped)
+   SETTINGS â€” Admin settings (journal navy / gold glass, scoped)
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* ── Base ─────────────────────────────────────────────────────────── */
+/* â”€â”€ Base â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .settings-page,
 .settings-page * {
   font-family: var(--font);
   box-sizing: border-box;
 }
 
-/* ── Page + tokens (scoped — do not use :root) ───────────────────── */
+/* â”€â”€ Page + tokens (scoped â€” do not use :root) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .settings-page {
   --bg:              #010008;
   --bg-card:         rgba(3, 2, 10, 0.72);
@@ -54,7 +54,7 @@
   text-transform: uppercase;
 }
 
-/* ── Main Container ───────────────────────────────────────────────── */
+/* â”€â”€ Main Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .settings-container {
   max-width: 1400px;
   width: 100%;
@@ -122,7 +122,7 @@
   50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.06); }
 }
 
-/* ── Everything inside sits above the glow orb ───────────────────── */
+/* â”€â”€ Everything inside sits above the glow orb â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .settings-header,
 .settings-tabs,
 .settings-content,
@@ -131,7 +131,7 @@
   z-index: 2;
 }
 
-/* ── Header ───────────────────────────────────────────────────────── */
+/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .settings-header {
   display: flex;
   justify-content: space-between;
@@ -154,7 +154,7 @@
   filter: drop-shadow(0 0 22px rgba(234,169,96,0.38));
 }
 
-/* ── Role Badges (header) ─────────────────────────────────────────── */
+/* â”€â”€ Role Badges (header) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .super-admin-badge,
 .admin-badge {
   display: inline-flex;
@@ -195,7 +195,7 @@
 .super-admin-badge:hover::before,
 .admin-badge:hover::before { opacity: 1; }
 
-/* ── Stats Cards Row ──────────────────────────────────────────────── */
+/* â”€â”€ Stats Cards Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .stats-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -297,7 +297,7 @@
   font-weight: 500;
 }
 
-/* ── Tabs ─────────────────────────────────────────────────────────── */
+/* â”€â”€ Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .settings-tabs {
   display: flex;
   gap: 0.4rem;
@@ -356,7 +356,7 @@
   vertical-align: middle;
 }
 
-/* ── Content Panel ────────────────────────────────────────────────── */
+/* â”€â”€ Content Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .settings-content {
   background: rgba(3, 2, 10, 0.72);
   backdrop-filter: blur(22px) saturate(1.15);
@@ -392,7 +392,7 @@
   pointer-events: none;
 }
 
-/* Top shimmer sweep — matches feature-card treatment in home.css */
+/* Top shimmer sweep â€” matches feature-card treatment in home.css */
 .settings-content::after {
   content: '';
   position: absolute;
@@ -408,7 +408,7 @@
   pointer-events: none;
 }
 
-/* ── Section Headings ─────────────────────────────────────────────── */
+/* â”€â”€ Section Headings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .settings-section h2 {
   margin: 0 0 2rem 0;
   font-size: 1.5rem;
@@ -444,7 +444,7 @@
   background: linear-gradient(90deg, rgba(234,169,96,0.7), transparent);
 }
 
-/* ── Search & Filters ─────────────────────────────────────────────── */
+/* â”€â”€ Search & Filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .search-and-filters {
   display: flex;
   gap: 1rem;
@@ -493,7 +493,7 @@
   letter-spacing: 0.05em;
 }
 
-/* ── Filter Toggle ────────────────────────────────────────────────── */
+/* â”€â”€ Filter Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .filter-toggle {
   display: inline-flex;
   align-items: center;
@@ -520,7 +520,7 @@
   box-shadow: 0 8px 22px rgba(0,0,0,0.35);
 }
 
-/* ── Results Info ─────────────────────────────────────────────────── */
+/* â”€â”€ Results Info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .results-info {
   display: inline-block;
   margin-bottom: 1.5rem;
@@ -533,7 +533,7 @@
   letter-spacing: 0.06em;
 }
 
-/* ── Users List ───────────────────────────────────────────────────── */
+/* â”€â”€ Users List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .users-list {
   display: flex;
   flex-direction: column;
@@ -544,7 +544,7 @@
   padding-right: 0.4rem;
 }
 
-/* Custom scrollbar — matches home theme */
+/* Custom scrollbar â€” matches home theme */
 .users-list::-webkit-scrollbar { width: 3px; }
 .users-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 3px; }
 .users-list::-webkit-scrollbar-thumb {
@@ -552,7 +552,7 @@
   border-radius: 3px;
 }
 
-/* ── User Item ────────────────────────────────────────────────────── */
+/* â”€â”€ User Item â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .user-item {
   display: flex;
   justify-content: space-between;
@@ -573,7 +573,7 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 
-/* Left accent bar — same motif as stat-item in home.css */
+/* Left accent bar â€” same motif as stat-item in home.css */
 .user-item::before {
   content: '';
   position: absolute;
@@ -680,7 +680,7 @@
   gap: 0.6rem;
 }
 
-/* ── Role Badges (inline) ─────────────────────────────────────────── */
+/* â”€â”€ Role Badges (inline) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .role-badge {
   display: inline-flex;
   align-items: center;
@@ -715,7 +715,7 @@
   border-color: rgba(255,255,255,0.18);
 }
 
-/* ── Username Pill ────────────────────────────────────────────────── */
+/* â”€â”€ Username Pill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .username {
   display: inline-flex;
   align-items: center;
@@ -731,12 +731,12 @@
 }
 
 .username::before {
-  content: '👤';
+  content: 'ðŸ‘¤';
   font-size: 0.65rem;
   opacity: 0.7;
 }
 
-/* ── Super Admin Tag ──────────────────────────────────────────────── */
+/* â”€â”€ Super Admin Tag â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .super-admin-tag {
   display: inline-flex;
   align-items: center;
@@ -754,14 +754,14 @@
   white-space: nowrap;
 }
 
-/* ── User Right Section ───────────────────────────────────────────── */
+/* â”€â”€ User Right Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .user-right {
   display: flex;
   align-items: center;
   gap: 0.85rem;
 }
 
-/* ── Pagination ───────────────────────────────────────────────────── */
+/* â”€â”€ Pagination â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .pagination {
   display: flex;
   justify-content: center;
@@ -812,7 +812,7 @@
   padding: 0 0.75rem;
 }
 
-/* ── User Edit Panel ──────────────────────────────────────────────── */
+/* â”€â”€ User Edit Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .user-edit-panel {
   background: rgba(3, 2, 10, 0.82);
   backdrop-filter: blur(26px) saturate(1.12);
@@ -864,7 +864,7 @@
   pointer-events: none;
 }
 
-/* ── Form Elements inside Edit Panel ─────────────────────────────── */
+/* â”€â”€ Form Elements inside Edit Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .user-edit-panel input,
 .user-edit-panel select,
 .user-edit-panel textarea {
@@ -888,7 +888,7 @@
   background: rgba(0,0,0,0.42);
 }
 
-/* ── Action Buttons (inside edit panel / general) ─────────────────── */
+/* â”€â”€ Action Buttons (inside edit panel / general) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -978,7 +978,7 @@
   box-shadow: 0 0 24px rgba(234,169,96,0.1);
 }
 
-/* ── Toggle / Switch ──────────────────────────────────────────────── */
+/* â”€â”€ Toggle / Switch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .toggle-switch {
   position: relative;
   display: inline-block;
@@ -1023,7 +1023,7 @@
   background: #fff;
 }
 
-/* ── Dividers ─────────────────────────────────────────────────────── */
+/* â”€â”€ Dividers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .settings-divider {
   width: 100%;
   height: 1px;
@@ -1037,7 +1037,7 @@
   border: none;
 }
 
-/* ── Empty State ──────────────────────────────────────────────────── */
+/* â”€â”€ Empty State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
@@ -1058,7 +1058,7 @@
   text-transform: uppercase;
 }
 
-/* ── Toast / Notification ─────────────────────────────────────────── */
+/* â”€â”€ Toast / Notification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .settings-toast {
   position: fixed;
   bottom: 2rem;
@@ -1083,7 +1083,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Responsive ───────────────────────────────────────────────────── */
+/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (max-width: 1200px) {
   .stats-cards { grid-template-columns: repeat(2, 1fr); }
   .stat-card-value { font-size: 2.2rem; }
@@ -1151,11 +1151,11 @@
   .btn-primary, .btn-secondary, .btn-danger { width: 100%; justify-content: center; }
 }
 /* ============================================================
-   SETTINGS FILTERS PANEL PATCH — AURA TERMINAL
+   SETTINGS FILTERS PANEL PATCH â€” AURA TERMINAL™
    Add this to the bottom of Settings.css
    ============================================================ */
 
-/* ── Filters Panel (shown when showFilters is true) ───────── */
+/* â”€â”€ Filters Panel (shown when showFilters is true) â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .filters-panel {
   display: flex;
   flex-wrap: wrap;
@@ -1190,7 +1190,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Each filter group (label + select) ───────────────────── */
+/* â”€â”€ Each filter group (label + select) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .filter-group {
   display: flex;
   align-items: center;
@@ -1209,7 +1209,7 @@
   margin: 0;
 }
 
-/* ── The select dropdowns ─────────────────────────────────── */
+/* â”€â”€ The select dropdowns â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .filter-group select {
   appearance: none;
   -webkit-appearance: none;
@@ -1245,7 +1245,7 @@
   color: #fff;
 }
 
-/* ── Option items ─────────────────────────────────────────── */
+/* â”€â”€ Option items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .filter-group select option {
   background: #0e0f14;
   color: rgba(255, 255, 255, 0.82);
@@ -1253,7 +1253,7 @@
   padding: 8px 12px;
 }
 
-/* ── Edit panel selects (Role dropdown inside user-edit-panel) */
+/* â”€â”€ Edit panel selects (Role dropdown inside user-edit-panel) */
 .user-edit-panel select,
 .form-group select {
   appearance: none;
@@ -1305,7 +1305,7 @@
   cursor: not-allowed;
 }
 
-/* ── Form group labels ────────────────────────────────────── */
+/* â”€â”€ Form group labels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .form-group {
   margin-bottom: 1.25rem;
 }
@@ -1321,7 +1321,7 @@
   margin-bottom: 0.6rem;
 }
 
-/* ── Help / warning text ──────────────────────────────────── */
+/* â”€â”€ Help / warning text â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .help-text {
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.35);
@@ -1335,7 +1335,7 @@
   color: #fbbf24;
 }
 
-/* ── Subscription badge ───────────────────────────────────── */
+/* â”€â”€ Subscription badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .subscription-badge {
   display: inline-flex;
   align-items: center;
@@ -1355,7 +1355,7 @@
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.18);
 }
 
-/* ── Form actions row ─────────────────────────────────────── */
+/* â”€â”€ Form actions row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .form-actions {
   display: flex;
   gap: 0.85rem;
@@ -1363,7 +1363,7 @@
   flex-wrap: wrap;
 }
 
-/* ── Panel header ─────────────────────────────────────────── */
+/* â”€â”€ Panel header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .panel-header {
   display: flex;
   justify-content: space-between;
@@ -1405,7 +1405,7 @@
   transform: rotate(90deg);
 }
 
-/* ── Admin list items ─────────────────────────────────────── */
+/* â”€â”€ Admin list items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .admin-item {
   display: flex;
   justify-content: space-between;
@@ -1470,7 +1470,7 @@
   margin-top: 3px;
 }
 
-/* ── Capability reference section ─────────────────────────── */
+/* â”€â”€ Capability reference section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .capability-reference {
   margin-bottom: 2rem;
 }
@@ -1521,7 +1521,7 @@
   border: 1px solid rgba(234, 169, 96, 0.15);
 }
 
-/* ── Capability checkboxes ────────────────────────────────── */
+/* â”€â”€ Capability checkboxes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .capability-category {
   margin-bottom: 1.25rem;
 }
@@ -1565,7 +1565,7 @@
   letter-spacing: 0.03em;
 }
 
-/* ── No results ───────────────────────────────────────────── */
+/* â”€â”€ No results â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .no-results {
   text-align: center;
   padding: 3rem 2rem;
@@ -1578,7 +1578,7 @@
 
 .no-results p { margin-bottom: 1.25rem; }
 
-/* ── User subscription info ───────────────────────────────── */
+/* â”€â”€ User subscription info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .user-role,
 .user-subscription-expiry {
   font-size: 0.72rem;
@@ -1587,7 +1587,7 @@
   letter-spacing: 0.06em;
 }
 
-/* ── Clear search button ──────────────────────────────────── */
+/* â”€â”€ Clear search button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .clear-search {
   position: absolute;
   right: 1rem;
@@ -1608,7 +1608,7 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* ── Responsive ───────────────────────────────────────────── */
+/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (max-width: 600px) {
   .filters-panel {
     flex-direction: column;

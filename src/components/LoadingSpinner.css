@@ -1,12 +1,12 @@
 /* ============================================================
-   LOADING SCREEN - AURA TERMINAL PREMIUM EDITION
+   LOADING SCREEN - AURA TERMINAL™ PREMIUM EDITION
    Navy & Blue Theme with Subtle Gold Accents
    Matching Aura Dashboard & Trader Deck Aesthetic
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* ── Force Space Grotesk on the entire loading screen ── */
+/* â”€â”€ Force Space Grotesk on the entire loading screen â”€â”€ */
 .loading-screen,
 .loading-screen * {
     font-family: 'Space Grotesk', sans-serif !important;

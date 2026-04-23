@@ -41,10 +41,10 @@ async function assertSuperAdminDb(db, authHeader) {
 }
 const { postLevelUpToLevelsChannel } = require('../utils/post-level-up-to-levels-channel');
 
-// Configure email transporter (optional – logs warning if credentials missing)
+// Configure email transporter (optional â€“ logs warning if credentials missing)
 const createTransporter = () => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('Contact email credentials not configured – messages will be stored but no email will be sent.');
+    console.warn('Contact email credentials not configured â€“ messages will be stored but no email will be sent.');
     return null;
   }
 
@@ -88,7 +88,7 @@ const sendContactEmail = async ({ name, email, subject, message }) => {
         <p><strong>Message:</strong></p>
         <p>${(message || '').replace(/\n/g, '<br>')}</p>
         <hr />
-        <p style="font-size: 12px; color: #666;">Submitted via AURA TERMINAL contact form.</p>
+        <p style="font-size: 12px; color: #666;">Submitted via AURA TERMINAL™ contact form.</p>
       `
     });
 
@@ -415,7 +415,7 @@ module.exports = async (req, res) => {
       try {
         const db = await getDbConnection();
         if (!db) {
-          console.warn('Contact GET requested but database connection unavailable – returning empty list.');
+          console.warn('Contact GET requested but database connection unavailable â€“ returning empty list.');
           return res.status(200).json([]);
         }
 
@@ -502,7 +502,7 @@ module.exports = async (req, res) => {
             );
             db.release();
           } else {
-            console.warn('Contact POST received but database not configured – message will not be persisted.');
+            console.warn('Contact POST received but database not configured â€“ message will not be persisted.');
           }
 
           emailResult = await sendContactEmail({ name, email, subject, message });
@@ -839,7 +839,7 @@ module.exports = async (req, res) => {
           return res.status(403).json({ success: false, message: 'Cannot change Super Admin role' });
         }
         /* Granting super_admin: caller already passed assertSuperAdminDb (DB super_admin or env-listed email).
-           Target need not be pre-listed in SUPER_ADMIN_EMAIL — that list is for recognition / bootstrap only. */
+           Target need not be pre-listed in SUPER_ADMIN_EMAIL â€” that list is for recognition / bootstrap only. */
 
         // Update user role (canonical tier strings)
         await db.execute('UPDATE users SET role = ? WHERE id = ?', [storedTierRole, userId]);
@@ -1198,7 +1198,7 @@ module.exports = async (req, res) => {
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-        // Ensure journal tables exist (optional – may 404 if not used yet)
+        // Ensure journal tables exist (optional â€“ may 404 if not used yet)
         try {
           await db.execute('SELECT 1 FROM journal_tasks LIMIT 1');
         } catch (e) {
@@ -1408,7 +1408,7 @@ module.exports = async (req, res) => {
     }
   }
 
-  // Handle /api/admin/give-xp — must write xp_events or cron syncUserXpFromLedger overwrites users.xp
+  // Handle /api/admin/give-xp â€” must write xp_events or cron syncUserXpFromLedger overwrites users.xp
   if ((pathname.includes('/give-xp') || pathname.endsWith('/give-xp')) && req.method === 'POST') {
     try {
       const { invalidatePattern } = require('../cache');

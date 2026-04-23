@@ -22,11 +22,11 @@ Received: false
 ```yaml
 - generic [ref=e3]:
   - navigation [ref=e4]:
-    - link "A7 Logo Aura Terminal" [ref=e6] [cursor=pointer]:
+    - link "A7 Logo Aura Terminal™" [ref=e6] [cursor=pointer]:
       - /url: /
       - generic [ref=e7]:
         - img "A7 Logo" [ref=e9]
-        - generic "Aura Terminal" [ref=e10]:
+        - generic "Aura Terminal™" [ref=e10]:
           - generic [ref=e11]: AURA
           - generic [ref=e12]: TERMINAL
     - list [ref=e13]:
@@ -40,7 +40,7 @@ Received: false
         - link "Explore" [ref=e19] [cursor=pointer]:
           - /url: /explore
       - listitem [ref=e20]:
-        - link "Why Aura Terminal" [ref=e21] [cursor=pointer]:
+        - link "Why Aura Terminal™" [ref=e21] [cursor=pointer]:
           - /url: /why-glitch
       - listitem [ref=e22]:
         - link "Contact Us" [ref=e23] [cursor=pointer]:
@@ -73,7 +73,7 @@ Received: false
       - generic [ref=e47]:
         - generic [ref=e48]:
           - generic [ref=e49]:
-            - generic [ref=e50]: AURA TERMINAL
+            - generic [ref=e50]: AURA TERMINAL™
             - img [ref=e53]
           - paragraph [ref=e54]: Trade smarter with AI-powered insights.
           - generic [ref=e55]:
@@ -90,37 +90,37 @@ Received: false
           - heading "Platform" [level=4] [ref=e67]
           - list [ref=e68]:
             - listitem [ref=e69]:
-              - link "Home →" [ref=e70] [cursor=pointer]:
+              - link "Home â†’" [ref=e70] [cursor=pointer]:
                 - /url: /
             - listitem [ref=e71]:
-              - link "C&S →" [ref=e72] [cursor=pointer]:
+              - link "C&S â†’" [ref=e72] [cursor=pointer]:
                 - /url: /courses
             - listitem [ref=e73]:
-              - link "Explore →" [ref=e74] [cursor=pointer]:
+              - link "Explore â†’" [ref=e74] [cursor=pointer]:
                 - /url: /explore
             - listitem [ref=e75]:
-              - link "Why Aura Terminal →" [ref=e76] [cursor=pointer]:
+              - link "Why Aura Terminal™ â†’" [ref=e76] [cursor=pointer]:
                 - /url: /why-glitch
             - listitem [ref=e77]:
-              - link "Contact →" [ref=e78] [cursor=pointer]:
+              - link "Contact â†’" [ref=e78] [cursor=pointer]:
                 - /url: /contact
         - generic [ref=e79]:
           - heading "Resources" [level=4] [ref=e80]
           - list [ref=e81]:
             - listitem [ref=e82]:
-              - link "Plans →" [ref=e83] [cursor=pointer]:
+              - link "Plans â†’" [ref=e83] [cursor=pointer]:
                 - /url: /choose-plan
             - listitem [ref=e84]:
-              - link "Affiliation →" [ref=e85] [cursor=pointer]:
+              - link "Affiliation â†’" [ref=e85] [cursor=pointer]:
                 - /url: /affiliation
             - listitem [ref=e86]:
-              - link "Privacy Policy →" [ref=e87] [cursor=pointer]:
+              - link "Privacy Policy â†’" [ref=e87] [cursor=pointer]:
                 - /url: /privacy
             - listitem [ref=e88]:
-              - link "Terms of Service →" [ref=e89] [cursor=pointer]:
+              - link "Terms of Service â†’" [ref=e89] [cursor=pointer]:
                 - /url: /terms
       - generic [ref=e92]:
-        - generic [ref=e93]: © 2025 AURA TERMINAL. All rights reserved.
+        - generic [ref=e93]: Â© 2025 AURA TERMINAL™. All rights reserved.
         - generic [ref=e94]: All systems operational
   - button "Open chat assistant" [ref=e97] [cursor=pointer]:
     - img [ref=e98]

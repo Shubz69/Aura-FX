@@ -12,7 +12,7 @@ import { logClassifiedError } from '../utils/apiObservability';
 
 const API_BASE = () => (Api.getBaseUrl() || '');
 
-/* ── Avatar initials helper ── */
+/* â”€â”€ Avatar initials helper â”€â”€ */
 const getInitials = (name) => {
   if (!name) return '?';
   const parts = name.trim().split(/\s+/);
@@ -131,7 +131,7 @@ const AdminInbox = () => {
     return users.find(u => u.id === selectedUserId) || null;
   }, [activeTab, activeThread, selectedUserId, users, friends]);
 
- /* ── Load users + threads (Admin tab, admins only) ── */
+ /* â”€â”€ Load users + threads (Admin tab, admins only) â”€â”€ */
 useEffect(() => {
   if (!isAdminRole(user?.role)) return;
   let mounted = true;
@@ -186,7 +186,7 @@ useEffect(() => {
   };
 }, [user, activeThreadId, threadFromUrl, setSearchParams]);
 
-  /* ── Load current user's support thread (Admin tab, non-admin only) ── */
+  /* â”€â”€ Load current user's support thread (Admin tab, non-admin only) â”€â”€ */
   useEffect(() => {
     if (isAdminRole(user?.role) || !user?.id) return;
     let mounted = true;
@@ -201,7 +201,7 @@ useEffect(() => {
           const supportThread = {
             ...thread,
             username: 'Support',
-            name: 'AURA TERMINAL Support',
+            name: 'AURA TERMINAL™ Support',
             email: ''
           };
           setThreads([supportThread]);
@@ -226,13 +226,13 @@ useEffect(() => {
     }
   }, [threads, activeThreadId, selectedUserId]);
 
-  /* ── Default to Friends tab when user is Premium but not Admin ── */
+  /* â”€â”€ Default to Friends tab when user is Premium but not Admin â”€â”€ */
   useEffect(() => {
     if (!user?.role) return;
     if (isFriendsAllowed(user) && !isAdminRole(user.role)) setActiveTab('friends');
   }, [user?.role]);
 
-  /* ── Load friends (Friends tab only) ── */
+  /* â”€â”€ Load friends (Friends tab only) â”€â”€ */
   useEffect(() => {
     if (activeTab !== 'friends' || !isFriendsAllowed(user) || !user?.id) return;
     let mounted = true;
@@ -255,7 +255,7 @@ useEffect(() => {
     return () => { mounted = false; };
   }, [activeTab, user?.id, user?.role]);
 
-  /* ── Select user (Admin tab) ── */
+  /* â”€â”€ Select user (Admin tab) â”€â”€ */
   const handleSelectUser = async (u) => {
     const existing = threads.find(t => t.userId === u.id);
     if (existing) {
@@ -283,7 +283,7 @@ useEffect(() => {
     }
   };
 
-  /* ── Deep-link from contact submissions: ?user=<id> ── */
+  /* â”€â”€ Deep-link from contact submissions: ?user=<id> â”€â”€ */
   useEffect(() => {
     if (!isAdminRole(user?.role) || !userIdFromUrl || loadingUsers) return;
     const targetId = parseInt(userIdFromUrl, 10);
@@ -349,7 +349,7 @@ useEffect(() => {
     };
   }, [user?.role, userIdFromUrl, loadingUsers, users, setSearchParams]);
 
-  /* ── Select friend (Friends tab) ── */
+  /* â”€â”€ Select friend (Friends tab) â”€â”€ */
   const handleSelectFriend = async (friend) => {
     setSelectedUserId(friend.id);
     setEnsuringThread(true);
@@ -366,7 +366,7 @@ useEffect(() => {
     }
   };
 
-  /* ── Load messages + WS ── */
+  /* â”€â”€ Load messages + WS â”€â”€ */
   useEffect(() => {
     const adminCanLoad = activeTab === 'admin' && (isAdminRole(user?.role) || userSupportThreadId);
     const friendsCanLoad = activeTab === 'friends' && isFriendsAllowed(user);
@@ -434,7 +434,7 @@ useEffect(() => {
     };
   }, [user, activeThreadId, activeTab, userSupportThreadId]);
 
-  /* ── Send message ── */
+  /* â”€â”€ Send message â”€â”€ */
   const handleSend = async (e) => {
     e.preventDefault();
     if (ensuringThread || loadingMessages) return;
@@ -487,7 +487,7 @@ useEffect(() => {
   };
   const isOwn = (m) => String(m.senderId) === String(user?.id);
 
-  /* ── Build inbox list (admins) or single support thread (non-admin) ── */
+  /* â”€â”€ Build inbox list (admins) or single support thread (non-admin) â”€â”€ */
   const inboxList = useMemo(() => {
     if (!isAdminRole(user?.role)) {
       return threads.length ? threads.map(t => ({ ...t, id: t.userId, thread: t })) : [];
@@ -511,7 +511,7 @@ useEffect(() => {
     return [...withThreads, ...withoutThreads];
   }, [user?.role, users, threads, searchTerm]);
 
-  /* ── Build friends list (filtered by search) ── */
+  /* â”€â”€ Build friends list (filtered by search) â”€â”€ */
   const friendsList = useMemo(() => {
     const q = (searchTerm || '').toLowerCase().trim();
     const list = friends.filter(f => !q || (f.username || '').toLowerCase().includes(q));
@@ -541,7 +541,7 @@ useEffect(() => {
 
   const displayName = (u) => u?.username || u?.name || u?.email || `User ${u?.id}`;
 
-  /* ── Group messages by date ── */
+  /* â”€â”€ Group messages by date â”€â”€ */
   const groupedMessages = useMemo(() => {
     const groups = [];
     let lastDate = null;
@@ -566,7 +566,7 @@ useEffect(() => {
       <div className="admin-inbox-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
         <div className="admin-inbox-layout">
 
-          {/* ── Sidebar ── */}
+          {/* â”€â”€ Sidebar â”€â”€ */}
           <aside className="admin-inbox-sidebar">
             {/* Tabs: Admin | Friends */}
             <div className="admin-inbox-tabs">
@@ -596,8 +596,8 @@ useEffect(() => {
               </span>
               <span className="admin-inbox-sidebar-count">
                 {activeTab === 'friends'
-                  ? (loadingFriends ? '—' : canUseFriendsTab ? friendsList.length : '—')
-                  : (loadingUsers ? '—' : inboxList.length)}
+                  ? (loadingFriends ? 'â€”' : canUseFriendsTab ? friendsList.length : 'â€”')
+                  : (loadingUsers ? 'â€”' : inboxList.length)}
                 {activeTab === 'admin' && isAdminRole(user?.role) && totalUnread > 0 && (
                   <span className="unread-badge" style={{ marginLeft: 10, fontSize: '0.7rem', verticalAlign: 'middle' }}>
                     {totalUnread > 99 ? '99+' : totalUnread} new
@@ -611,7 +611,7 @@ useEffect(() => {
                 <FaSearch className="admin-inbox-search-icon" aria-hidden />
                 <input
                   type="text"
-                  placeholder="Search friends…"
+                  placeholder="Search friendsâ€¦"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   aria-label="Search friends"
@@ -623,7 +623,7 @@ useEffect(() => {
                 <FaSearch className="admin-inbox-search-icon" aria-hidden />
                 <input
                   type="text"
-                  placeholder="Search users…"
+                  placeholder="Search usersâ€¦"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   aria-label="Search users"
@@ -638,7 +638,7 @@ useEffect(() => {
                 <>
                   {loadingUsers ? (
                     <div className="admin-inbox-loading">
-                      {isAdminRole(user?.role) ? 'Loading users…' : 'Loading…'}
+                      {isAdminRole(user?.role) ? 'Loading usersâ€¦' : 'Loadingâ€¦'}
                     </div>
                   ) : inboxList.length === 0 ? (
                     <div className="admin-inbox-empty-list">
@@ -646,7 +646,7 @@ useEffect(() => {
                         ? 'No users match your search.'
                         : isAdminRole(user?.role)
                           ? 'Users will appear here once they message support.'
-                          : 'Starting your support thread…'}
+                          : 'Starting your support threadâ€¦'}
                     </div>
                   ) : (
                     inboxList.map((u) => {
@@ -691,7 +691,7 @@ useEffect(() => {
                       Upgrade to Premium or Elite to message friends.
                     </div>
                   ) : loadingFriends ? (
-                    <div className="admin-inbox-loading">Loading friends…</div>
+                    <div className="admin-inbox-loading">Loading friendsâ€¦</div>
                   ) : friendsList.length === 0 ? (
                     <div className="admin-inbox-empty-list">
                       {searchTerm
@@ -728,7 +728,7 @@ useEffect(() => {
             </div>
           </aside>
 
-          {/* ── Main conversation panel ── */}
+          {/* â”€â”€ Main conversation panel â”€â”€ */}
           <main className="admin-inbox-main">
             {activeTab === 'friends' && !canUseFriendsTab ? (
               <FriendsUpgradeRequired />
@@ -761,20 +761,20 @@ useEffect(() => {
             >
               {ensuringThread && selectedUserId && !activeThreadId ? (
                 <div className="admin-inbox-conversation-empty">
-                  <div className="admin-inbox-conversation-empty-icon">✦</div>
-                  <p>Starting conversation…</p>
+                  <div className="admin-inbox-conversation-empty-icon">âœ¦</div>
+                  <p>Starting conversationâ€¦</p>
                 </div>
               ) : loadingMessages && activeThreadId ? (
                 <div className="admin-inbox-conversation-empty">
-                  <div className="admin-inbox-conversation-empty-icon">✦</div>
-                  <p>Loading messages…</p>
+                  <div className="admin-inbox-conversation-empty-icon">âœ¦</div>
+                  <p>Loading messagesâ€¦</p>
                 </div>
               ) : messages.length === 0 && activeThreadId ? (
                 <div className="admin-inbox-conversation-empty">
                   <div className="admin-inbox-conversation-empty-icon">
                     <FaPaperPlane size={22} />
                   </div>
-                  <p>No messages yet — say hello</p>
+                  <p>No messages yet â€” say hello</p>
                 </div>
               ) : !activeThreadId ? (
                 <div className="admin-inbox-conversation-empty">
@@ -805,7 +805,7 @@ useEffect(() => {
                         <div className="admin-inbox-message-text">{m.body}</div>
                         <div className="admin-inbox-message-time">
                           {formatTime(m.createdAt ?? m.created_at)}
-                          {m.status === 'sending' && ' · sending…'}
+                          {m.status === 'sending' && ' Â· sendingâ€¦'}
                         </div>
                       </div>
                     </div>
@@ -834,7 +834,7 @@ useEffect(() => {
 
                 {file && (
                   <div className="admin-inbox-file-chip" title={file.name}>
-                    📎 {file.name}
+                    ðŸ“Ž {file.name}
                   </div>
                 )}
 
@@ -842,7 +842,7 @@ useEffect(() => {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={activeThreadId ? 'Type a message…' : 'Select a user first'}
+                  placeholder={activeThreadId ? 'Type a messageâ€¦' : 'Select a user first'}
                   disabled={!activeThreadId}
                   aria-label="Message input"
                 />

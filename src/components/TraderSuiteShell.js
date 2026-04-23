@@ -7,7 +7,7 @@ import '../styles/TraderSuite.css';
 export default function TraderSuiteShell({
   title,
   eyebrow,
-  /** Optional mark before the centered title (e.g. logo) — terminal variant only */
+  /** Optional mark before the centered title (e.g. logo) â€” terminal variant only */
   terminalTitlePrefix,
   /** Shown under welcome / eyebrow on terminal variant (e.g. tagline) */
   terminalSubtitle,
@@ -20,7 +20,7 @@ export default function TraderSuiteShell({
   railTitle,
   railContent,
   variant,
-  /** When variant is terminal, use Aura Analysis–style header (premium dashboard) instead of compact terminal bar */
+  /** When variant is terminal, use Aura Analysisâ€“style header (premium dashboard) instead of compact terminal bar */
   terminalPresentation = 'classic',
   children,
 }) {
@@ -41,7 +41,7 @@ const terminalChrome = (
   <section className="trader-suite-panel trader-suite-shell trader-suite-shell--terminal">
     <div className="trader-suite-terminal-bar">
       <div className="trader-suite-terminal-left">
-        {eyebrow || 'Aura Terminal'}
+        {eyebrow || 'Aura Terminal™'}
         {terminalSubtitle ? (
           <div className="trader-suite-terminal-subtitle">{terminalSubtitle}</div>
         ) : null}
@@ -89,12 +89,12 @@ const terminalChrome = (
   </section>
 );
 
-  /** Aura dashboard: same page chrome as Overview / Performance — no nested Trader Suite glass panel */
+  /** Aura dashboard: same page chrome as Overview / Performance â€” no nested Trader Suite glass panel */
   const auraDashboardTerminal = (
     <div className="aura-db-replay-page">
       <header className="aura-db-replay-header">
         <div className="aura-db-replay-header-top">
-          <div className="aura-db-replay-eyebrow">{eyebrow || 'Aura Terminal'}</div>
+          <div className="aura-db-replay-eyebrow">{eyebrow || 'Aura Terminal™'}</div>
           <h1 className="aura-db-replay-title">
             {terminalTitlePrefix ? (
               <span className="aura-db-replay-title-inner">

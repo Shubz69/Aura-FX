@@ -23,17 +23,17 @@ timings = sorted(
 longest = timings[0] if timings else None
 
 lines = [
-    "# Aura Terminal — admin session audit (bounded)",
+    "# Aura Terminal™ â€” admin session audit (bounded)",
     "",
     f"- **When:** {d.get('updatedAt', '')}",
     f"- **Base:** {d.get('base', '')}",
     f"- **Session:** `{d.get('sessionFile', '')}`",
     f"- **Pages audited:** {len(rows)}",
-    f"- **Suites completed:** {', '.join(d.get('slicesCompleted', [])) or '—'}",
+    f"- **Suites completed:** {', '.join(d.get('slicesCompleted', [])) or 'â€”'}",
     (
         f"- **Longest page:** `{longest['path']}` ({longest['durationMs']}ms, suite {longest['suiteId']})"
         if longest
-        else "- **Longest page:** —"
+        else "- **Longest page:** â€”"
     ),
     "",
     "## 1. Executive summary",
@@ -46,7 +46,7 @@ lines = [
 
 if broken:
     for r in broken:
-        err = f" — _{r.get('error')}_" if r.get("error") else ""
+        err = f" â€” _{r.get('error')}_" if r.get("error") else ""
         lines.append(f"- `{r.get('path')}` -> {r.get('finalUrl', '')}{err}")
 else:
     lines.append("- _None classified as broken._")
@@ -57,7 +57,7 @@ lines += [f"- `{r.get('path')}` (gated)" for r in gated]
 
 lines += ["", "## 4. Shell-only pages", ""]
 if shell:
-    lines += [f"- `{r.get('path')}` (score≈{(r.get('content') or {}).get('score', 'n/a')})" for r in shell]
+    lines += [f"- `{r.get('path')}` (scoreâ‰ˆ{(r.get('content') or {}).get('score', 'n/a')})" for r in shell]
 else:
     lines += ["- _None._"]
 

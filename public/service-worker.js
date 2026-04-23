@@ -1,11 +1,11 @@
-/* AURA TERMINAL — Service Worker v1
+/* AURA TERMINAL™ â€” Service Worker v1
    Handles: push notifications, background sync, offline caching
 */
 
 const CACHE_NAME = 'aura-terminal-v4';
 const OFFLINE_URLS = ['/'];
 
-// ── INSTALL: cache offline shell
+// â”€â”€ INSTALL: cache offline shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(OFFLINE_URLS))
@@ -13,7 +13,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// ── ACTIVATE: clean old caches
+// â”€â”€ ACTIVATE: clean old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -23,16 +23,16 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// ── PUSH: show notification from server
+// â”€â”€ PUSH: show notification from server
 self.addEventListener('push', (event) => {
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
   } catch (_) {
-    data = { title: 'AURA TERMINAL', body: event.data ? event.data.text() : 'New notification' };
+    data = { title: 'AURA TERMINAL™', body: event.data ? event.data.text() : 'New notification' };
   }
 
-  const title = data.title || 'AURA TERMINAL';
+  const title = data.title || 'AURA TERMINAL™';
   const options = {
     body: data.body || '',
     icon: '/icons/icon-192.png',
@@ -47,7 +47,7 @@ self.addEventListener('push', (event) => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// ── NOTIFICATION CLICK: navigate to target URL
+// â”€â”€ NOTIFICATION CLICK: navigate to target URL
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const targetUrl = event.notification.data?.url || '/';
@@ -64,7 +64,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// ── FETCH: network-first with offline fallback for navigation (GET only — HEAD prefetch must bypass SW)
+// â”€â”€ FETCH: network-first with offline fallback for navigation (GET only â€” HEAD prefetch must bypass SW)
 self.addEventListener('fetch', (event) => {
   if (event.request.mode !== 'navigate') return;
   if (event.request.method !== 'GET') return;
