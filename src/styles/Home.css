@@ -2760,7 +2760,431 @@ html, body {
         flex-direction: column;
     }
 }
+/* ═══════════════════════════════════════════════════════════════════════
+   LOGGED-IN THEME OVERRIDE — Trader Desk Blue/Navy Spectrum
+   Cards: linear-gradient(168deg, rgba(4,5,18,0.92), rgba(5,6,20,0.89))
+   Border: rgba(107,143,232,0.18) | Accent: #6b8fe8
+   ═══════════════════════════════════════════════════════════════════════ */
 
+/* ── Design tokens for logged-in dashboard ── */
+.terminal-dashboard {
+    --td-blue: #6b8fe8;
+    --td-blue-bright: #8cafff;
+    --td-blue-dim: rgba(107, 143, 232, 0.14);
+    --td-blue-glow: rgba(107, 143, 232, 0.32);
+    --td-border: rgba(107, 143, 232, 0.18);
+    --td-border-h: rgba(107, 143, 232, 0.35);
+    --td-text-muted: rgba(232, 235, 255, 0.86);
+    --td-text-dim: rgba(210, 216, 248, 0.48);
+    --td-green: #0FD98A;
+    --td-down: #F03D5F;
+
+    --td-panel-fill: linear-gradient(168deg, rgba(4,5,18,0.92) 0%, rgba(5,6,20,0.89) 100%);
+    --td-panel-fill-hover: linear-gradient(168deg, rgba(7,8,24,0.95) 0%, rgba(9,10,28,0.91) 100%);
+    --td-panel-outer-glow:
+        0 18px 52px rgba(0,0,0,0.64),
+        0 0 0 1px rgba(107,143,232,0.18),
+        0 0 40px -10px rgba(107,143,232,0.10),
+        0 0 52px -12px rgba(70,100,190,0.26),
+        0 8px 30px -12px rgba(12,16,40,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.24);
+    --td-panel-outer-glow-hover:
+        0 22px 60px rgba(0,0,0,0.70),
+        0 0 0 1px rgba(107,143,232,0.22),
+        0 0 48px -8px rgba(107,143,232,0.13),
+        0 0 60px -10px rgba(85,115,205,0.32),
+        0 10px 34px -10px rgba(15,20,48,0.48),
+        inset 0 1px 0 rgba(255,255,255,0.30);
+
+    --td-line-blue: linear-gradient(90deg, transparent, var(--td-blue) 30%, var(--td-blue-bright) 70%, transparent);
+    --td-grad-blue: linear-gradient(125deg,
+        #ffffff 0%,
+        rgba(252,253,255,0.99) 28%,
+        rgba(200,215,255,0.96) 58%,
+        rgba(120,150,220,0.92) 82%,
+        rgba(107,143,232,0.75) 100%);
+}
+
+/* ── Cards — Trader Desk blue/navy glass ── */
+.terminal-dashboard .glass-card,
+.terminal-dashboard__topbar,
+.home-desk2 .desk2-card,
+.terminal-card,
+.terminal-mini,
+.terminal-equity,
+.home-logged-metrics {
+    background: var(--td-panel-fill) !important;
+    background-image: none !important;
+    border: 1px solid var(--td-border) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--td-panel-outer-glow) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    position: relative;
+    overflow: visible !important;
+    transition: box-shadow 0.28s ease, background 0.28s ease, transform 0.28s ease !important;
+}
+
+/* ── .home-desk2 wrapper — KEEP ORIGINAL BACKGROUND ── */
+.home-desk2 {
+    background: 
+        radial-gradient(ellipse 90% 80% at 50% 0%, rgba(234, 169, 96, 0.06), transparent 50%),
+        linear-gradient(180deg, rgba(10, 12, 26, 0.78), rgba(5, 7, 16, 0.62)) !important;
+    border: 1px solid rgba(234, 169, 96, 0.12) !important;
+    box-shadow: var(--glass-shadow) !important;
+}
+
+/* ── Blue hairline top border on cards ── */
+.terminal-dashboard .glass-card::before,
+.terminal-dashboard__topbar::before,
+.home-desk2 .desk2-card::before,
+.terminal-card::before,
+.terminal-mini::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 5% !important;
+    right: 15% !important;
+    height: 1px !important;
+    background: linear-gradient(90deg,
+        rgba(255,255,255,0.22) 0%,
+        rgba(175,200,255,0.18) 40%,
+        rgba(107,143,232,0.08) 75%,
+        transparent 100%) !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+    border-radius: 16px 16px 0 0 !important;
+}
+
+/* ── Remove conflicting pseudo-elements ── */
+.terminal-dashboard .glass-card::after,
+.terminal-dashboard__topbar::after,
+.home-desk2 .desk2-card::after {
+    display: none !important;
+}
+
+/* ── Hover state — lift + blue glow enhancement ── */
+.terminal-dashboard .glass-card:hover,
+.home-desk2 .desk2-card:hover,
+.terminal-card:hover,
+.terminal-mini:hover {
+    background: var(--td-panel-fill-hover) !important;
+    box-shadow: var(--td-panel-outer-glow-hover) !important;
+    transform: translateY(-4px) !important;
+}
+
+/* ── Top bar ── */
+.terminal-dashboard__topbar {
+    border-bottom: 1px solid rgba(107, 143, 232, 0.1) !important;
+}
+
+/* ── Welcome text — blue gradient ── */
+.terminal-dashboard__welcome {
+    background: var(--td-grad-blue) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.04em !important;
+}
+
+/* ── Wordmark — blue accent ── */
+.terminal-dashboard__wordmark {
+    color: rgba(140, 175, 255, 0.75) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.18em !important;
+}
+
+/* ── Section labels — blue accent ── */
+.desk2-card__label,
+.desk2-card__sublabel,
+.desk2-scen__lab {
+    color: rgba(140, 175, 255, 0.75) !important;
+    letter-spacing: 0.18em !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    position: relative !important;
+    padding-bottom: 12px !important;
+}
+
+.desk2-card__label::after,
+.desk2-scen__lab::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -1px !important;
+    left: 0 !important;
+    width: 32px !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, var(--td-blue), rgba(107,143,232,0.18), transparent) !important;
+    box-shadow: 0 0 6px rgba(107,143,232,0.35) !important;
+}
+
+/* ── Pulse gauge ── */
+.desk2-pulse__readout {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+.desk2-pulse__readout.is-bull {
+    color: var(--td-green) !important;
+}
+.desk2-pulse__readout.is-bear {
+    color: var(--td-down) !important;
+}
+
+/* ── Watchlist ── */
+.desk2-wl__row {
+    border-bottom-color: rgba(255, 255, 255, 0.04) !important;
+}
+.desk2-wl__sym {
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+.desk2-wl__px {
+    color: var(--td-text-muted) !important;
+}
+.desk2-wl__chg.is-up {
+    color: var(--td-green) !important;
+}
+.desk2-wl__chg.is-down {
+    color: var(--td-down) !important;
+}
+
+/* ── Live metrics frost ── */
+.desk2-frost {
+    background: rgba(4, 5, 18, 0.85) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(107, 143, 232, 0.2) !important;
+    border-radius: 12px !important;
+}
+.desk2-frost__t {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+.desk2-frost__a {
+    color: var(--td-blue-bright) !important;
+}
+
+/* ── Trio cells ── */
+.desk2-trio__cell {
+    background: rgba(107, 143, 232, 0.05) !important;
+    border: 1px solid rgba(107, 143, 232, 0.15) !important;
+    border-radius: 10px !important;
+}
+.desk2-trio__cell strong {
+    color: #ffffff !important;
+}
+.desk2-trio__cell .is-bull {
+    color: var(--td-green) !important;
+}
+.desk2-trio__cell .is-bear {
+    color: var(--td-down) !important;
+}
+
+/* ── Scenarios ── */
+.desk2-scen ul li {
+    color: var(--td-text-muted) !important;
+}
+
+/* ── CTA buttons — blue theme ── */
+.desk2-cta {
+    background: rgba(107, 143, 232, 0.05) !important;
+    border: 1px solid rgba(107, 143, 232, 0.25) !important;
+    color: rgba(140, 175, 255, 0.85) !important;
+    font-weight: 500 !important;
+    box-shadow: none !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    transition: all 0.18s ease !important;
+}
+.desk2-cta:hover {
+    background: rgba(107, 143, 232, 0.12) !important;
+    border-color: rgba(107, 143, 232, 0.45) !important;
+    color: #fff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 0 12px rgba(107, 143, 232, 0.15) !important;
+}
+
+/* ── Posture cards ── */
+.desk2-posture {
+    border: 1px solid rgba(107, 143, 232, 0.12) !important;
+    background: rgba(107, 143, 232, 0.03) !important;
+}
+.desk2-posture.is-active {
+    border-color: rgba(107, 143, 232, 0.55) !important;
+    background: rgba(107, 143, 232, 0.15) !important;
+    box-shadow: 0 0 12px rgba(107, 143, 232, 0.15) !important;
+}
+.desk2-posture__tag {
+    color: var(--td-text-muted) !important;
+}
+.desk2-posture.is-active .desk2-posture__tag {
+    color: #fff !important;
+}
+.desk2-posture__sub {
+    color: var(--td-text-dim) !important;
+}
+
+/* ── Score rings ── */
+.desk2-ring__track {
+    background: conic-gradient(
+        rgba(107, 143, 232, 0.85) calc(var(--ring-pct) * 1%),
+        rgba(255, 255, 255, 0.06) 0
+    ) !important;
+}
+.desk2-ring__inner {
+    background: rgba(4, 5, 18, 0.85) !important;
+}
+.desk2-ring__inner strong {
+    color: #ffffff !important;
+}
+.desk2-ring__lab {
+    color: var(--td-text-dim) !important;
+}
+
+/* ── Metrics values ── */
+.desk2-mini-metrics strong,
+.desk2-insight-grid strong {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+.desk2-mini-metrics .is-positive,
+.desk2-mini-metrics .is-up {
+    color: var(--td-green) !important;
+}
+.desk2-mini-metrics .is-negative,
+.desk2-mini-metrics .is-down {
+    color: var(--td-down) !important;
+}
+
+/* ── News ── */
+.desk2-news__link {
+    color: var(--td-text-muted) !important;
+}
+.desk2-news__link:hover {
+    color: var(--td-blue-bright) !important;
+}
+.desk2-news__time {
+    color: var(--td-text-dim) !important;
+}
+
+/* ── Equity chart ── */
+.terminal-equity {
+    border: 1px solid rgba(107, 143, 232, 0.12) !important;
+    background: rgba(4, 5, 18, 0.5) !important;
+    border-radius: 12px !important;
+}
+.terminal-equity__meta-label {
+    color: rgba(140, 175, 255, 0.65) !important;
+}
+
+/* ── Journal trades ── */
+.desk2-trades li {
+    border-bottom-color: rgba(255, 255, 255, 0.04) !important;
+    color: var(--td-text-muted) !important;
+}
+.desk2-trades .is-up {
+    color: var(--td-green) !important;
+}
+.desk2-trades .is-down {
+    color: var(--td-down) !important;
+}
+
+/* ── Notes ── */
+.desk2-notes li {
+    color: rgba(210, 216, 248, 0.6) !important;
+}
+
+/* ── Inline links ── */
+.desk2-inline-link {
+    color: var(--td-blue-bright) !important;
+}
+.desk2-inline-link:hover {
+    color: #fff !important;
+}
+
+/* ── Positive / Negative universal ── */
+.terminal-dashboard .is-positive,
+.terminal-dashboard .is-up {
+    color: var(--td-green) !important;
+}
+.terminal-dashboard .is-negative,
+.terminal-dashboard .is-down {
+    color: var(--td-down) !important;
+}
+
+/* ── Muted text ── */
+.desk2-muted {
+    color: var(--td-text-dim) !important;
+}
+
+/* ── Loading state ── */
+.terminal-dashboard__loading {
+    background: var(--td-panel-fill) !important;
+    border: 1px solid var(--td-border) !important;
+}
+.terminal-dashboard__loading-kicker {
+    color: rgba(140, 175, 255, 0.75) !important;
+}
+
+/* ── Pills inside metrics ── */
+.terminal-kpi-pill {
+    background: rgba(107, 143, 232, 0.05) !important;
+    border-color: rgba(107, 143, 232, 0.18) !important;
+}
+.terminal-kpi-pill:hover {
+    background: rgba(107, 143, 232, 0.12) !important;
+    border-color: rgba(107, 143, 232, 0.35) !important;
+}
+.terminal-kpi-pill__lab {
+    color: var(--td-text-dim) !important;
+}
+.terminal-kpi-pill__val {
+    color: #fff !important;
+}
+
+/* ── Home logged metrics ribbon ── */
+.home-logged-metrics {
+    border-bottom: 1px solid rgba(107, 143, 232, 0.1) !important;
+}
+.home-logged-metrics__title {
+    color: rgba(140, 175, 255, 0.75) !important;
+}
+.home-logged-metrics__cell {
+    background: rgba(107, 143, 232, 0.03) !important;
+    border-color: rgba(107, 143, 232, 0.08) !important;
+}
+.home-logged-metrics__cell:hover {
+    background: rgba(107, 143, 232, 0.08) !important;
+    border-color: rgba(107, 143, 232, 0.25) !important;
+}
+.home-logged-metrics__ico {
+    background: rgba(107, 143, 232, 0.1) !important;
+    color: var(--td-blue-bright) !important;
+}
+
+/* ── Section divider (blue) ── */
+.terminal-dashboard .cosmic-divider {
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(107,143,232,0.08) 20%,
+        rgba(107,143,232,0.25) 50%,
+        rgba(107,143,232,0.08) 80%,
+        transparent 100%) !important;
+}
+
+/* ── Ensure tooltips and dropdowns work ── */
+.terminal-dashboard .glass-card,
+.desk2-card {
+    overflow: visible !important;
+}
+
+/* ── Mobile adjustments ── */
+@media (max-width: 767px) {
+    .terminal-dashboard .glass-card,
+    .home-desk2 .desk2-card {
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+    }
+}
 /* ══════════════════════════════════════════════
    LOGGED-IN TERMINAL DASHBOARD (reference layout)
 ══════════════════════════════════════════════ */
