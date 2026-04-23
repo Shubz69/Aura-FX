@@ -2743,155 +2743,7 @@ body {
   color: rgba(255, 255, 255, 0.96) !important;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
 }
-/* =============================================================================
-   TRADER LAB - Remove Blue Hover (Operator Gold Theme)
-   ============================================================================= */
 
-/* Override ALL blue hover states with gold */
-.trader-lab-v2--workspace .tlab-card:hover,
-.trader-lab-v2--workspace .tl-card-shell:hover,
-.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold:hover,
-.trade-validator-shell .trader-lab-v2 .tlab-card:hover {
-  background: rgba(8, 6, 20, 0.65) !important;
-  background-image: none !important;
-  border-color: rgba(234, 169, 96, 0.28) !important;
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.55),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 0 0 0.5px rgba(234, 169, 96, 0.12) inset,
-    0 0 28px rgba(234, 169, 96, 0.08) !important;
-}
-
-/* Focal chart card hover */
-.trader-lab-v2--workspace .tlab-card--focal:hover,
-.trade-validator-shell .trader-lab-v2 .tlab-card--focal:hover {
-  background: rgba(6, 5, 18, 0.7) !important;
-  border-color: rgba(234, 169, 96, 0.25) !important;
-  box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    inset 0 0 20px rgba(234, 169, 96, 0.04),
-    0 12px 40px rgba(0, 0, 0, 0.55),
-    0 0 0 0.5px rgba(234, 169, 96, 0.1) inset,
-    0 0 32px rgba(234, 169, 96, 0.06) !important;
-}
-
-/* Remove any blue tint from all hover states */
-.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold:hover {
-  background: rgba(8, 6, 20, 0.65) !important;
-  border-color: rgba(234, 169, 96, 0.28) !important;
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.5),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 0 0 0.5px rgba(234, 169, 96, 0.1) inset !important;
-}
-
-/* Override any blue glow from OperatorShell */
-.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold:hover {
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.5),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 0 0 0.5px rgba(234, 169, 96, 0.12) inset,
-    0 0 28px rgba(234, 169, 96, 0.08) !important;
-}
-
-/* Ensure no blue backgrounds anywhere on hover */
-.trade-validator-shell .trader-lab-v2 *:hover {
-  background-image: none !important;
-}
-
-/* Specifically target any element that might get blue on hover */
-.trader-lab-v2--workspace .tlab-card:hover,
-.trader-lab-v2--workspace .tl-card-shell:hover,
-.trader-lab-v2--workspace .tlab-card--focal:hover,
-.trader-lab-v2--workspace .tlab-card--gold:hover {
-  background-image: none !important;
-  background-color: rgba(8, 6, 20, 0.65) !important;
-}
-
-/* Saved items hover */
-.trader-lab-v2--workspace .tlab-saved-item:hover,
-.trade-validator-shell .trader-lab-v2 .tlab-saved-item:hover {
-  background: rgba(10, 8, 24, 0.6) !important;
-  border-color: rgba(234, 169, 96, 0.35) !important;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35), 0 0 0 0.5px rgba(234, 169, 96, 0.1) inset !important;
-}
-
-/* Session tabs hover */
-.trader-lab-v2--workspace .tlab-session-tab:hover {
-  background: rgba(234, 169, 96, 0.1) !important;
-  border-color: rgba(234, 169, 96, 0.3) !important;
-}
-
-/* Timeframe buttons hover */
-.trader-lab-v2--workspace .tlab-tf:hover {
-  background: rgba(234, 169, 96, 0.1) !important;
-  border-color: rgba(234, 169, 96, 0.3) !important;
-}
-
-/* Conviction buttons hover */
-.trader-lab-v2--workspace .tlab-conviction-btn:hover {
-  background: rgba(234, 169, 96, 0.1) !important;
-}
-
-/* Select hover */
-.trader-lab-v2--workspace .tlab-select:hover {
-  background: rgba(8, 6, 20, 0.55) !important;
-  border-color: rgba(234, 169, 96, 0.4) !important;
-}
-
-/* Input/Textarea hover */
-.trader-lab-v2--workspace textarea:hover,
-.trader-lab-v2--workspace .tlab-textarea:hover,
-.trader-lab-v2--workspace .tl-textarea:hover,
-.trader-lab-v2--workspace .tlab-input:hover {
-  background: rgba(6, 5, 16, 0.55) !important;
-  border-color: rgba(234, 169, 96, 0.3) !important;
-}
-
-/* Decoder strip hover */
-.trader-lab-v2--workspace .tlab-decoder-strip:hover {
-  background: rgba(5, 4, 14, 0.55) !important;
-  border-color: rgba(234, 169, 96, 0.2) !important;
-}
-
-/* Level strip hover */
-.trader-lab-v2--workspace .tlab-level-strip:hover {
-  background: rgba(5, 4, 14, 0.55) !important;
-  border-color: rgba(234, 169, 96, 0.22) !important;
-}
-
-/* R:R display hover */
-.trader-lab-v2--workspace .tlab-rr-big:hover {
-  background: rgba(6, 5, 16, 0.5) !important;
-  border-color: rgba(234, 169, 96, 0.3) !important;
-}
-
-/* Save notes button hover */
-.trader-lab-v2--workspace .tlab-btn-save-notes:hover:not(:disabled) {
-  background: rgba(234, 169, 96, 0.15) !important;
-  border-color: rgba(234, 169, 96, 0.55) !important;
-  box-shadow: 0 0 20px rgba(234, 169, 96, 0.18) !important;
-}
-
-/* Emergency override - kill any blue anywhere */
-.trade-validator-shell .trader-lab-v2 [class*="card"]:hover {
-  background-image: none !important;
-}
-
-/* Remove any blue box shadows on hover */
-.trade-validator-shell .trader-lab-v2 *:hover {
-  box-shadow: none !important;
-}
-
-/* Then re-apply gold box shadows specifically */
-.trade-validator-shell .trader-lab-v2 .tlab-card:hover,
-.trade-validator-shell .trader-lab-v2 .tl-card-shell:hover {
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.55),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 0 0 0.5px rgba(234, 169, 96, 0.12) inset,
-    0 0 28px rgba(234, 169, 96, 0.08) !important;
-}
 /* =============================================================================
    SESSION FOCUS - Increase Height to Fill Gap
    ============================================================================= */
@@ -2965,4 +2817,184 @@ body {
 .journal-page .trader-lab-v2--workspace .tlab-card--session-rail {
   max-height: none !important;
   height: auto !important;
+}
+/* =============================================================================
+   REMOVE EXTRA TRADER SUITE PANEL - Hide the nested shell
+   ============================================================================= */
+
+/* Hide the nested trader-suite-panel that wraps Trader Lab */
+.trader-lab-v2--workspace .trader-suite-panel.trader-suite-shell.trader-suite-shell--terminal,
+.trade-validator-shell .trader-suite-panel.trader-suite-shell.trader-suite-shell--terminal,
+.journal-page .trader-suite-panel.trader-suite-shell--terminal {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+/* Remove the pseudo-element line */
+.trader-lab-v2--workspace .trader-suite-panel.trader-suite-shell.trader-suite-shell--terminal::after,
+.trade-validator-shell .trader-suite-panel.trader-suite-shell.trader-suite-shell--terminal::after,
+.journal-page .trader-suite-panel.trader-suite-shell--terminal::after {
+  display: none !important;
+}
+
+/* Make the Trader Lab container take full space */
+.trader-lab-v2--workspace {
+  margin: 0 !important;
+  width: 100% !important;
+}
+/* =============================================================================
+   TRADER LAB - All Cards Get Trader Playbook Glassy Shade (rgba(5, 4, 14, 0.65))
+   ============================================================================= */
+
+/* Override ALL card backgrounds with the exact Trader Playbook shade */
+.trader-lab-v2--workspace .tlab-card,
+.trader-lab-v2--workspace .tlab-card--gold,
+.trader-lab-v2--workspace .tlab-card--bias-rail,
+.trader-lab-v2--workspace .tlab-card--key-drivers-rail,
+.trader-lab-v2--workspace .tlab-card--desk-context,
+.trader-lab-v2--workspace .tlab-card--session-rail,
+.trader-lab-v2--workspace .tlab-card--saved-labs,
+.trader-lab-v2--workspace .tlab-card--chart,
+.trader-lab-v2--workspace .tlab-card--focal,
+.trader-lab-v2--workspace .tlab-card--dock-fundamental,
+.trader-lab-v2--workspace .tlab-card--dock-exec,
+.trader-lab-v2--workspace .tlab-card--dock-decision,
+.trader-lab-v2--workspace .tlab-card--plan-rail,
+.trader-lab-v2--workspace .tlab-card--validator,
+.trader-lab-v2--workspace .tlab-card--validator-metrics,
+.trader-lab-v2--workspace .tl-card-shell,
+.trader-lab-v2--workspace .tl-card-shell--thesis,
+.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold {
+  /* Exact Trader Playbook shade */
+  background: rgba(5, 4, 14, 0.65) !important;
+  background-image: none !important;
+  border: 1px solid rgba(234, 169, 96, 0.15) !important;
+  border-radius: 14px !important;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(16px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.08) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease !important;
+}
+
+/* Gold hairline top border for all cards */
+.trader-lab-v2--workspace .tlab-card::before,
+.trader-lab-v2--workspace .tlab-card--gold::before,
+.trader-lab-v2--workspace .tl-card-shell::before,
+.trader-lab-v2--workspace .tl-card-shell--thesis::before,
+.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(234, 169, 96, 0.4), 
+    rgba(248, 195, 125, 0.6), 
+    rgba(234, 169, 96, 0.4), 
+    transparent
+  ) !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+  opacity: 0.6 !important;
+}
+
+/* Remove conflicting pseudo-elements */
+.trader-lab-v2--workspace .tlab-card::after,
+.trader-lab-v2--workspace .tlab-card--gold::after,
+.trader-lab-v2--workspace .tl-card-shell::after,
+.trader-lab-v2--workspace .tl-card-shell--thesis::after,
+.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold::after {
+  display: none !important;
+}
+
+/* Hover effect for all cards */
+.trader-lab-v2--workspace .tlab-card:hover,
+.trader-lab-v2--workspace .tlab-card--gold:hover,
+.trader-lab-v2--workspace .tl-card-shell:hover,
+.trader-lab-v2--workspace .tl-card-shell--thesis:hover,
+.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold:hover {
+  transform: translateY(-2px) !important;
+  border-color: rgba(234, 169, 96, 0.3) !important;
+  background: rgba(8, 6, 20, 0.7) !important;
+  box-shadow: 
+    0 8px 28px rgba(0, 0, 0, 0.45),
+    0 0 0 0.5px rgba(234, 169, 96, 0.08) inset !important;
+}
+
+/* Focal chart card - slightly darker for contrast */
+.trader-lab-v2--workspace .tlab-card--focal,
+.trade-validator-shell .trader-lab-v2 .tlab-card--focal {
+  background: rgba(4, 3, 14, 0.7) !important;
+  border: 1px solid rgba(234, 169, 96, 0.18) !important;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 0 18px rgba(234, 169, 96, 0.03),
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 0.5px rgba(234, 169, 96, 0.08) inset !important;
+  backdrop-filter: blur(18px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.1) !important;
+}
+
+/* Keep original accent borders for specific cards */
+.trader-lab-v2--workspace .tlab-card--bias-rail {
+  border-left: 3px solid rgba(234, 169, 96, 0.5) !important;
+}
+
+.trader-lab-v2--workspace .tlab-card--dock-exec {
+  border-left: 3px solid rgba(100, 243, 176, 0.4) !important;
+}
+
+.trader-lab-v2--workspace .tlab-card--dock-decision {
+  border-left: 3px solid rgba(248, 195, 125, 0.4) !important;
+}
+
+.trader-lab-v2--workspace .tlab-card--validator-pass {
+  border-left: 3px solid rgba(100, 243, 176, 0.5) !important;
+}
+
+/* Card titles - gold accent */
+.trader-lab-v2--workspace .tlab-card__title,
+.trader-lab-v2--workspace .tl-card-header {
+  color: rgba(248, 195, 125, 0.9) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  border-bottom: 1px solid rgba(234, 169, 96, 0.12) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Labels - warm muted */
+.trader-lab-v2--workspace .tlab-field label,
+.trader-lab-v2--workspace .tlab-level-label,
+.trader-lab-v2--workspace .tl-thesis-q__label {
+  color: rgba(255, 245, 235, 0.6) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.04em !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Text values - bright white */
+.trader-lab-v2--workspace .tlab-mc-row strong,
+.trader-lab-v2--workspace .tlab-level-strip strong,
+.trader-lab-v2--workspace .tlab-metric-row strong,
+.trader-lab-v2--workspace .tlab-rr-value {
+  color: rgba(255, 255, 255, 0.96) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Ensure text remains readable on glass */
+.trader-lab-v2--workspace .tlab-card,
+.trader-lab-v2--workspace .tl-card-shell {
+  color: rgba(255, 255, 255, 0.92) !important;
 }

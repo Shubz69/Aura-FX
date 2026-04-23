@@ -5619,3 +5619,191 @@ div.td-outlook-concept-grid--terminal {
 .td-deck-mi-modern .td-deck-mi-brief-card:hover {
   background: rgba(4, 5, 18, 0.5) !important;
 }
+/* =============================================================================
+   WORLD CLOCKS CONTAINER - Move the Entire Container Upward
+   ============================================================================= */
+
+/* Target the container directly and pull it up */
+.td-deck-world-clocks-container {
+  margin-top: -30px !important;
+  margin-bottom: 10px !important;
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+/* Also target it when inside the rail */
+.td-deck-world-clocks-rail--above .td-deck-world-clocks-container {
+  margin-top: -30px !important;
+  margin-bottom: 10px !important;
+}
+
+/* Remove any padding/margin from parent containers */
+.td-deck-world-clocks-rail--above {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+}
+
+/* Reduce tab zone bottom padding */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
+  padding-bottom: 0 !important;
+}
+
+/* Desktop */
+@media (min-width: 1100px) {
+  .td-deck-world-clocks-container,
+  .td-deck-world-clocks-rail--above .td-deck-world-clocks-container {
+    margin-top: -40px !important;
+    margin-bottom: 15px !important;
+  }
+}
+
+/* Tablet landscape */
+@media (min-width: 900px) and (max-width: 1099px) {
+  .td-deck-world-clocks-container,
+  .td-deck-world-clocks-rail--above .td-deck-world-clocks-container {
+    margin-top: -35px !important;
+    margin-bottom: 12px !important;
+  }
+}
+
+/* Tablet portrait */
+@media (min-width: 768px) and (max-width: 899px) {
+  .td-deck-world-clocks-container,
+  .td-deck-world-clocks-rail--above .td-deck-world-clocks-container {
+    margin-top: -30px !important;
+    margin-bottom: 10px !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .td-deck-world-clocks-container,
+  .td-deck-world-clocks-rail--above .td-deck-world-clocks-container {
+    margin-top: -20px !important;
+    margin-bottom: 8px !important;
+  }
+}
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main {
+  transform: translateY(-15px) !important;
+}
+
+@media (min-width: 1100px) {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main {
+    transform: translateY(-20px) !important;
+  }
+}
+/* =============================================================================
+   OUTLOOK HERO HEADER - Centered Container with Centered Text
+   ============================================================================= */
+
+/* Main header container - centered */
+.td-outlook-unified-header.td-deck-mo-outlook-hero.td-outlook-concept-page-header {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  flex-wrap: nowrap !important;
+  max-width: 70% !important;
+  padding: 8px 16px !important;
+  margin-bottom: 12px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  min-height: auto !important;
+  height: auto !important;
+  border-radius: 12px !important;
+}
+
+/* Hero text container - centered content */
+.td-deck-mo-outlook-hero-text {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-align: center !important;
+}
+
+/* Main title */
+.td-deck-mo-outlook-hero-text .td-outlook-main-title {
+  white-space: nowrap !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.2 !important;
+  text-align: center !important;
+  background: linear-gradient(125deg,
+    #ffffff 0%,
+    rgba(252, 253, 255, 0.99) 28%,
+    rgba(200, 215, 255, 0.96) 58%,
+    rgba(120, 150, 220, 0.92) 82%,
+    rgba(107, 143, 232, 0.75) 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* Desktop */
+@media (min-width: 1400px) {
+  .td-outlook-unified-header.td-deck-mo-outlook-hero.td-outlook-concept-page-header {
+    max-width: 60% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
+
+/* Desktop medium */
+@media (min-width: 1100px) and (max-width: 1399px) {
+  .td-outlook-unified-header.td-deck-mo-outlook-hero.td-outlook-concept-page-header {
+    max-width: 65% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
+
+/* Tablet landscape */
+@media (min-width: 900px) and (max-width: 1099px) {
+  .td-outlook-unified-header.td-deck-mo-outlook-hero.td-outlook-concept-page-header {
+    max-width: 75% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
+
+/* Tablet portrait */
+@media (min-width: 768px) and (max-width: 899px) {
+  .td-outlook-unified-header.td-deck-mo-outlook-hero.td-outlook-concept-page-header {
+    max-width: 85% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .td-outlook-unified-header.td-deck-mo-outlook-hero.td-outlook-concept-page-header {
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  
+  .td-deck-mo-outlook-hero-text {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+}
+
+/* If the header is inside a flex container, ensure it can center */
+.td-deck-mo-outlook .td-deck-mo-outlook-hero,
+.td-deck-main-stage .td-outlook-unified-header {
+  display: flex !important;
+  justify-content: center !important;
+  width: 100% !important;
+}
