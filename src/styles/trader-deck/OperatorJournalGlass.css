@@ -413,13 +413,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0 !important;
-  /* Nebula wash + dashboard glass stack (Trader Lab reference) */
-  background-image:
-    radial-gradient(ellipse 130% 85% at 14% 8%, rgba(255, 130, 70, 0.1), transparent 52%),
-    radial-gradient(ellipse 90% 65% at 88% 72%, rgba(95, 65, 210, 0.14), transparent 55%),
-    radial-gradient(ellipse 100% 55% at 48% 100%, rgba(35, 75, 190, 0.12), transparent 58%),
-    var(--journal-panel-fill),
-    var(--journal-panel-border) !important;
+
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
   /* Slightly stronger blur than base 12px so stars/cosmic diffuse through like crystal */
@@ -1326,4 +1320,303 @@
   .trade-validator-shell .aura-shell-tabs-wrap {
     display: none !important;
   }
+}
+/* =============================================================================
+   TRADER LAB - Override Blue Cards from OperatorShell.css with Gold Theme
+   ============================================================================= */
+
+/* Override the blue card background with warm gold glass */
+.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold {
+  background: linear-gradient(165deg, rgba(8, 10, 22, 0.88), rgba(4, 6, 14, 0.92)) !important;
+  border: 1px solid rgba(234, 169, 96, 0.16) !important;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 28px rgba(0, 0, 0, 0.35),
+    0 0 0 0.5px rgba(234, 169, 96, 0.08) inset !important;
+  backdrop-filter: blur(18px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+}
+
+/* Remove the blue glow effects */
+.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(234, 169, 96, 0.5),
+    rgba(248, 195, 125, 0.35),
+    transparent
+  ) !important;
+}
+
+/* Card hover - gold glow instead of blue */
+.trade-validator-shell .trader-lab-v2 .tlab-card.tlab-card--gold:hover {
+  border-color: rgba(234, 169, 96, 0.25) !important;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 32px rgba(0, 0, 0, 0.38),
+    0 0 0 0.5px rgba(234, 169, 96, 0.12) inset !important;
+}
+
+/* Focal chart card - remove blue, add gold */
+.trade-validator-shell .trader-lab-v2 .tlab-card--focal {
+  background: linear-gradient(165deg, rgba(10, 12, 28, 0.92), rgba(5, 7, 18, 0.95)) !important;
+  border: 1px solid rgba(234, 169, 96, 0.2) !important;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 0 18px rgba(234, 169, 96, 0.04),
+    0 0 18px rgba(234, 169, 96, 0.08),
+    0 12px 36px rgba(0, 0, 0, 0.42) !important;
+}
+
+/* Chart host border */
+.trade-validator-shell .trader-lab-v2 .tlab-chart-host--fill {
+  border: 1px solid rgba(234, 169, 96, 0.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Level strip */
+.trade-validator-shell .trader-lab-v2 .tlab-level-strip {
+  border: 1px solid rgba(234, 169, 96, 0.18) !important;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.42) 0%, rgba(6, 10, 26, 0.94) 100%) !important;
+}
+
+/* Card titles - gold instead of blue-white */
+.trade-validator-shell .trader-lab-v2 .tlab-card__title {
+  color: rgba(248, 195, 125, 0.85) !important;
+  border-bottom: 1px solid rgba(234, 169, 96, 0.12) !important;
+}
+
+/* Decoder strip */
+.trade-validator-shell .trader-lab-v2 .tlab-decoder-strip {
+  border: 1px solid rgba(234, 169, 96, 0.14) !important;
+  background: rgba(3, 5, 14, 0.65) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-decoder-strip__k {
+  color: rgba(248, 195, 125, 0.85) !important;
+}
+
+/* Textarea and input borders */
+.trade-validator-shell .trader-lab-v2 textarea,
+.trade-validator-shell .trader-lab-v2 .tlab-textarea,
+.trade-validator-shell .trader-lab-v2 .tl-textarea,
+.trade-validator-shell .trader-lab-v2 .tlab-input {
+  border: 1px solid rgba(234, 169, 96, 0.22) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 textarea:focus,
+.trade-validator-shell .trader-lab-v2 .tlab-textarea:focus,
+.trade-validator-shell .trader-lab-v2 .tl-textarea:focus,
+.trade-validator-shell .trader-lab-v2 .tlab-input:focus {
+  border-color: rgba(234, 169, 96, 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(234, 169, 96, 0.12) !important;
+}
+
+/* Progress bar */
+.trade-validator-shell .trader-lab-v2 .tlab-progress span {
+  background: linear-gradient(90deg, rgba(234, 169, 96, 0.4), #f8c37d) !important;
+}
+
+/* Range slider */
+.trade-validator-shell .trader-lab-v2 .tlab-range {
+  accent-color: #eaa960 !important;
+}
+
+/* Bias pills */
+.trade-validator-shell .trader-lab-v2 .tlab-pill-bias--bull {
+  color: #0a0704 !important;
+  background: linear-gradient(145deg, #ffc078 0%, #ff9f43 52%, #e88935 100%) !important;
+  border-color: rgba(255, 190, 120, 0.55) !important;
+  box-shadow: 0 0 18px rgba(255, 159, 67, 0.22) !important;
+}
+
+/* Confidence pill */
+.trade-validator-shell .trader-lab-v2 .tlab-pill-confidence {
+  color: rgba(255, 248, 240, 0.95) !important;
+  border-color: rgba(234, 169, 96, 0.45) !important;
+  background: rgba(234, 169, 96, 0.14) !important;
+}
+
+/* Saved items */
+.trade-validator-shell .trader-lab-v2 .tlab-saved-item {
+  border: 1px solid rgba(234, 169, 96, 0.18) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-saved-item:hover {
+  border-color: rgba(234, 169, 96, 0.4) !important;
+  background: linear-gradient(160deg, rgba(24, 18, 12, 0.92), rgba(10, 8, 16, 0.9)) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-saved-item__symbol {
+  color: rgba(248, 195, 125, 0.9) !important;
+}
+
+/* Saved count badge */
+.trade-validator-shell .trader-lab-v2 .tlab-saved-count {
+  border: 1px solid rgba(234, 169, 96, 0.4) !important;
+  color: rgba(255, 224, 180, 0.95) !important;
+  background: linear-gradient(165deg, rgba(234, 169, 96, 0.18), rgba(234, 169, 96, 0.06)) !important;
+}
+
+/* Conviction buttons */
+.trade-validator-shell .trader-lab-v2 .tlab-conviction-btn--active {
+  color: #f4e4a6 !important;
+  background: rgba(234, 169, 96, 0.16) !important;
+  box-shadow: 
+    0 0 18px rgba(234, 169, 96, 0.3),
+    inset 0 0 0 1px rgba(234, 169, 96, 0.4) !important;
+}
+
+/* Execute button */
+.trade-validator-shell .trader-lab-v2 .tlab-execute-btn--dock {
+  background: linear-gradient(135deg, #fde8c4 0%, #f8c37d 38%, #eaa960 72%, #c9a05c 100%) !important;
+  color: #0a0704 !important;
+  box-shadow: 
+    0 4px 22px rgba(234, 169, 96, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42) !important;
+}
+
+/* R:R display */
+.trade-validator-shell .trader-lab-v2 .tlab-rr-big {
+  border: 1px solid rgba(234, 169, 96, 0.25) !important;
+  background: linear-gradient(145deg, rgba(234, 169, 96, 0.1), rgba(8, 12, 32, 0.5)) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-rr-value {
+  color: #f8c37d !important;
+}
+
+/* Session tabs */
+.trade-validator-shell .trader-lab-v2 .tlab-session-tab--active {
+  border-color: rgba(234, 169, 96, 0.45) !important;
+  background: rgba(234, 169, 96, 0.14) !important;
+}
+
+/* Timeframe buttons */
+.trade-validator-shell .trader-lab-v2 .tlab-tf--active {
+  border-color: rgba(234, 169, 96, 0.45) !important;
+  background: rgba(234, 169, 96, 0.14) !important;
+}
+
+/* Save notes button */
+.trade-validator-shell .trader-lab-v2 .tlab-btn-save-notes {
+  border: 1px solid rgba(234, 169, 96, 0.5) !important;
+  color: rgba(248, 195, 125, 0.95) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-btn-save-notes:hover:not(:disabled) {
+  background: rgba(234, 169, 96, 0.12) !important;
+  box-shadow: 0 0 20px rgba(234, 169, 96, 0.15) !important;
+}
+
+/* Tagline */
+.trade-validator-shell .trader-lab-v2 .tlab-tagline {
+  color: rgba(248, 195, 125, 0.75) !important;
+}
+
+/* Ready box */
+.trade-validator-shell .trader-lab-v2 .tlab-ready-box {
+  border-color: rgba(234, 169, 96, 0.45) !important;
+  background: linear-gradient(165deg, rgba(234, 169, 96, 0.1), rgba(8, 10, 22, 0.94)) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-ready-box__check {
+  border-color: rgba(234, 169, 96, 0.55) !important;
+  color: rgba(248, 195, 125, 0.95) !important;
+}
+
+/* Geopolitical pills */
+.trade-validator-shell .trader-lab-v2 .tlab-geo-pill--pos {
+  color: #6ee7b7 !important;
+  border-color: rgba(100, 243, 176, 0.35) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-geo-pill--neg {
+  color: #fca5a5 !important;
+  border-color: rgba(248, 113, 113, 0.35) !important;
+}
+
+/* Risk pills */
+.trade-validator-shell .trader-lab-v2 .tlab-pill--ok {
+  color: #6ee7b7 !important;
+  border-color: rgba(100, 243, 176, 0.3) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-pill--warn {
+  color: #fde68a !important;
+  border-color: rgba(250, 204, 21, 0.3) !important;
+}
+
+/* Validator banner */
+.trade-validator-shell .trader-lab-v2 .tlab-validator-banner--plan.tlab-validator-banner--ok {
+  background: rgba(100, 243, 176, 0.1) !important;
+  color: #6ee7b7 !important;
+  border: 1px solid rgba(100, 243, 176, 0.3) !important;
+}
+
+/* Validation status */
+.trade-validator-shell .trader-lab-v2 .tlab-vstatus--ok {
+  color: #6ee7b7 !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-vstatus {
+  color: rgba(248, 195, 125, 0.85) !important;
+}
+
+/* Welcome avatar */
+.trade-validator-shell .trader-lab-v2 .tlab-avatar {
+  background: linear-gradient(145deg, rgba(234, 169, 96, 0.35), rgba(212, 141, 68, 0.25)) !important;
+  border: 1px solid rgba(248, 195, 125, 0.25) !important;
+}
+
+/* Labels */
+.trade-validator-shell .trader-lab-v2 .tlab-field label,
+.trade-validator-shell .trader-lab-v2 .tlab-level-label {
+  color: rgba(255, 245, 235, 0.55) !important;
+}
+
+/* Level strip labels */
+.trade-validator-shell .trader-lab-v2 .tlab-level-strip .tlab-level-label {
+  color: rgba(255, 200, 150, 0.55) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-level-label--sl {
+  color: #fca5a5 !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-level-label--tp {
+  color: #6ee7b7 !important;
+}
+
+/* Decision check UI */
+.trade-validator-shell .trader-lab-v2 .tlab-decision-check__ui {
+  border: 1px solid rgba(100, 243, 176, 0.35) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 .tlab-decision-check input:checked + .tlab-decision-check__ui {
+  background: rgba(100, 243, 176, 0.2) !important;
+  border-color: rgba(100, 243, 176, 0.85) !important;
+  box-shadow: 0 0 14px rgba(100, 243, 176, 0.35) !important;
+}
+
+/* Table borders */
+.trade-validator-shell .trader-lab-v2 .tlab-table th,
+.trade-validator-shell .trader-lab-v2 .tlab-table td {
+  border-bottom: 1px solid rgba(234, 169, 96, 0.08) !important;
+}
+
+/* Geo inline edit */
+.trade-validator-shell .trader-lab-v2 .tlab-geo-inline-edit {
+  border: 1px dashed rgba(234, 169, 96, 0.22) !important;
+}
+
+/* Scrollbar styling */
+.trade-validator-shell .trader-lab-v2 .tlab-saved-list::-webkit-scrollbar-thumb,
+.trade-validator-shell .trader-lab-v2 .tlab-decoder-log::-webkit-scrollbar-thumb {
+  background: rgba(234, 169, 96, 0.35) !important;
+}
+
+.trade-validator-shell .trader-lab-v2 textarea::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(234, 169, 96, 0.6), rgba(212, 141, 68, 0.5)) !important;
 }

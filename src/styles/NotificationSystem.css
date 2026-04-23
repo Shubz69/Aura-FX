@@ -26,19 +26,19 @@
 }
 
 .notification-bell:hover {
-  background: rgba(139, 92, 246, 0.12);
-  border-color: rgba(139, 92, 246, 0.35);
+  background: rgba(234, 169, 96, 0.12);
+  border-color: rgba(234, 169, 96, 0.35);
   color: #fff;
   transform: scale(1.08);
-  box-shadow: 0 0 18px rgba(139, 92, 246, 0.22);
+  box-shadow: 0 0 18px rgba(234, 169, 96, 0.22);
 }
 
 /* Active / open state */
 .notification-bell.active {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.45);
-  color: #a78bfa;
-  box-shadow: 0 0 22px rgba(139, 92, 246, 0.28);
+  background: rgba(234, 169, 96, 0.15);
+  border-color: rgba(234, 169, 96, 0.45);
+  color: #F8C37D;
+  box-shadow: 0 0 22px rgba(234, 169, 96, 0.28);
 }
 
 /* ── Badge ────────────────────────────────────────────────── */
