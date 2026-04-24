@@ -1,1285 +1,1704 @@
-/* Trader CV – premium behavioural scorecard inside The Operator */
+/* ═══════════════════════════════════════════════════════════════════════
+   TRADER CV — Premium Behavioural Scorecard | Operator Design System
+   Gold-glass · deep navy · proper alignments · Trader Playbook theme
+   ═══════════════════════════════════════════════════════════════════════ */
+
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
+/* ── Design tokens ─────────────────────────────────────────────────────── */
 .trader-cv {
-  font-family: 'Space Grotesk', sans-serif;
-  color: #fff;
-  max-width: 960px;
-  margin: 0 auto;
-  /* Match Journal panels when outside .journal-page (fallbacks) */
-  --tcv-fill: var(--journal-panel-fill, linear-gradient(168deg, rgba(4, 5, 18, 0.92) 0%, rgba(5, 6, 20, 0.89) 100%));
-  --tcv-fill-h: var(--journal-panel-fill-hover, linear-gradient(168deg, rgba(7, 8, 24, 0.95) 0%, rgba(9, 10, 28, 0.91) 100%));
-  --tcv-border: var(--journal-panel-border, linear-gradient(135deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(185, 205, 255, 0.42) 44%,
-    rgba(85, 115, 195, 0.58) 64%,
-    rgba(38, 52, 105, 0.72) 84%,
-    rgba(248, 195, 125, 0.12) 100%));
-  --tcv-border-h: var(--journal-panel-border-hover, linear-gradient(135deg,
-    rgba(255, 255, 255, 0.92) 0%,
-    rgba(195, 215, 255, 0.48) 42%,
-    rgba(95, 125, 210, 0.65) 62%,
-    rgba(45, 58, 118, 0.78) 82%,
-    rgba(248, 200, 150, 0.18) 100%));
-  --tcv-glow: var(--journal-panel-outer-glow,
-    0 18px 52px rgba(0, 0, 0, 0.64),
-    0 0 0 1px rgba(255, 255, 255, 0.18),
-    0 0 40px -12px rgba(70, 100, 190, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22));
-  --tcv-line: var(--line-gold, linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5) 35%, rgba(160, 185, 240, 0.45) 55%, rgba(248, 195, 125, 0.14) 85%, transparent));
+    --tcv-bg: rgba(5, 4, 14, 0.65);
+    --tcv-bg-h: rgba(8, 7, 20, 0.78);
+    --tcv-border: rgba(234, 169, 96, 0.15);
+    --tcv-border-h: rgba(234, 169, 96, 0.30);
+    --tcv-gold: #EAA960;
+    --tcv-gold-bright: #F8C37D;
+    --tcv-gold-pale: #FDE8C4;
+    --tcv-gold-warm: #D48D44;
+    --tcv-text: #FFFFFF;
+    --tcv-text-muted: rgba(200, 196, 232, 0.72);
+    --tcv-text-dim: rgba(200, 196, 232, 0.45);
+    --tcv-green: rgba(100, 243, 176, 0.92);
+    --tcv-red: rgba(255, 130, 120, 0.92);
+    --tcv-blue: rgba(130, 180, 255, 0.82);
+    --tcv-purple: rgba(180, 155, 255, 0.82);
+    --tcv-radius-sm: 10px;
+    --tcv-radius-md: 14px;
+    --tcv-radius-lg: 18px;
+    --tcv-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    --tcv-shadow-h: 0 8px 28px rgba(0, 0, 0, 0.45), 0 0 0 0.5px rgba(234, 169, 96, 0.08) inset;
+    --tcv-blur: blur(16px) saturate(1.08);
+    --tcv-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --tcv-grad-gold: linear-gradient(135deg, #FDE8C4 0%, #F8C37D 35%, #EAA960 65%, #D48D44 100%);
+    --tcv-line-gold: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent);
+
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--tcv-text);
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 0 48px;
 }
 
+/* ── Loading ────────────────────────────────────────────────────────────── */
 .trader-cv-loading,
 .trader-cv-error {
-  text-align: center;
-  padding: 48px 24px;
-  color: rgba(255,255,255,0.7);
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--tcv-text-muted);
 }
 
 .trader-cv-loading-ring {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 16px;
-  border: 3px solid rgba(234, 169, 96,0.3);
-  border-top-color: rgba(234, 169, 96,0.9);
-  border-radius: 50%;
-  animation: trader-cv-spin 0.8s linear infinite;
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 20px;
+    border: 3px solid rgba(234, 169, 96, 0.2);
+    border-top-color: var(--tcv-gold);
+    border-radius: 50%;
+    animation: trader-cv-spin 0.8s linear infinite;
 }
 
 @keyframes trader-cv-spin {
-  to { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
 }
 
-/* Hero */
+/* ═══════════════════════════════════════════════════════════════════════
+   HERO SECTION
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── REPLACE your existing .trader-cv-hero ────────────────────────────── */
 .trader-cv-hero {
-  position: relative;
-  border-radius: var(--radius-lg, 18px);
-  padding: 28px 24px 32px;
-  margin-bottom: 28px;
-  border: 1px solid transparent;
-  background-image: var(--tcv-fill), var(--tcv-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--tcv-glow);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  overflow: hidden;
+    position: relative;
+    border-radius: var(--tcv-radius-lg);
+    padding: 36px 32px;
+    margin-bottom: 28px;
+    background: var(--tcv-bg);
+    border: 1px solid var(--tcv-border);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    overflow: hidden;
 }
 
+/* ── REPLACE your existing .trader-cv-hero::before ───────────────────── */
+/* Gold hairline top */
+.trader-cv-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: var(--tcv-line-gold);
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.7;
+}
+
+/* ── ADD this — bottom hairline ───────────────────────────────────────── */
+.trader-cv-hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: var(--tcv-line-gold);
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.25;
+}
+
+/* ── REPLACE your existing .trader-cv-hero-glow ──────────────────────── */
 .trader-cv-hero-glow {
-  position: absolute;
-  top: -60%;
-  right: -20%;
-  width: 60%;
-  height: 120%;
-  background: radial-gradient(ellipse, rgba(70, 100, 190, 0.14) 0%, rgba(255, 255, 255, 0.04) 40%, transparent 70%);
-  pointer-events: none;
+    position: absolute;
+    top: -40%;
+    right: -15%;
+    width: 55%;
+    height: 130%;
+    background:
+        radial-gradient(ellipse at 70% 40%, rgba(234, 169, 96, 0.09) 0%, transparent 55%),
+        radial-gradient(ellipse at 20% 80%, rgba(180, 155, 255, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
 }
 
+/* ── ADD this — left side ambient glow ───────────────────────────────── */
+.trader-cv-hero-glow-left {
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 40%;
+    height: 100%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(234, 169, 96, 0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ── REPLACE your existing .trader-cv-hero-inner ─────────────────────── */
 .trader-cv-hero-inner {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 24px;
-  align-items: start;
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: start;
 }
 
-@media (max-width: 640px) {
-  .trader-cv-hero-inner { grid-template-columns: 1fr; }
-}
-
+/* ── REPLACE your existing .trader-cv-hero-name ─────────────────────── */
 .trader-cv-hero-name {
-  font-size: 1.35rem;
-  font-weight: 600;
-  margin: 0 0 4px 0;
-  letter-spacing: -0.02em;
+    font-size: 1.65rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+    letter-spacing: -0.025em;
+    color: var(--tcv-text);
+    line-height: 1.1;
+    text-shadow: 0 0 48px rgba(234, 169, 96, 0.12);
 }
 
+/* ── REPLACE your existing .trader-cv-hero-rank ──────────────────────── */
 .trader-cv-hero-rank {
-  font-size: 0.85rem;
-  color: rgba(210, 216, 248, 0.72);
-  margin: 0 0 20px 0;
-  font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--tcv-gold-bright);
+    margin: 0 0 26px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    padding: 5px 12px;
+    border-radius: var(--tcv-radius-sm);
+    background: rgba(234, 169, 96, 0.08);
+    border: 1px solid var(--tcv-border);
 }
 
+/* ── ADD this — gold dot before rank ─────────────────────────────────── */
+.trader-cv-hero-rank::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--tcv-gold);
+    box-shadow: 0 0 8px rgba(234, 169, 96, 0.8);
+    flex-shrink: 0;
+}
+
+/* ── REPLACE your existing .trader-cv-hero-score-wrap ────────────────── */
 .trader-cv-hero-score-wrap {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 22px;
+    padding: 18px 20px;
+    border-radius: var(--tcv-radius-md);
+    background: var(--tcv-bg-h);
+    border: 1px solid var(--tcv-border);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    position: relative;
+    overflow: hidden;
 }
 
+/* Accent stripe on score wrap */
+.trader-cv-hero-score-wrap::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--tcv-grad-gold);
+    border-radius: 2px 0 0 2px;
+}
+
+/* ── REPLACE your existing .trader-cv-hero-ring ──────────────────────── */
 .trader-cv-hero-ring {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background: conic-gradient(
-    rgba(95, 125, 210, 0.95) calc(var(--score, 0) * 1%),
-    rgba(255, 255, 255, 0.08) 0
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: inset 0 0 0 4px rgba(10, 10, 18, 0.92), 0 0 20px rgba(70, 100, 190, 0.2);
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    background: conic-gradient(
+        var(--tcv-gold) calc(var(--score, 0) * 1%),
+        rgba(255, 255, 255, 0.05) 0
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        inset 0 0 0 4px var(--tcv-bg-h),
+        0 0 28px rgba(234, 169, 96, 0.18),
+        0 0 0 1px var(--tcv-border);
+    flex-shrink: 0;
+    position: relative;
 }
 
+/* ── ADD this — score ring tick marks ────────────────────────────────── */
+.trader-cv-hero-ring::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1px solid var(--tcv-border);
+    pointer-events: none;
+}
+
+/* ── REPLACE your existing .trader-cv-hero-score-value ───────────────── */
 .trader-cv-hero-score-value {
-  width: 76px;
-  height: 76px;
-  border-radius: 50%;
-  background: #0e0e14;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #fff;
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    background: var(--tcv-bg-h);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--tcv-text);
+    text-shadow: 0 0 24px rgba(234, 169, 96, 0.2);
+    border: 1px solid var(--tcv-border);
+}
+
+/* ── ADD this — score meta block beside the ring ─────────────────────── */
+.trader-cv-hero-score-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .trader-cv-hero-score-label {
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.6);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+    font-size: 0.68rem;
+    color: var(--tcv-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 500;
 }
 
+/* ── ADD this — score grade badge ────────────────────────────────────── */
+.trader-cv-hero-score-grade {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--tcv-gold-bright);
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(234, 169, 96, 0.1);
+    border: 1px solid var(--tcv-border);
+    letter-spacing: 0.04em;
+    width: fit-content;
+}
+
+/* ── ADD this — score percentile line ───────────────────────────────── */
+.trader-cv-hero-score-pct {
+    font-size: 0.72rem;
+    color: var(--tcv-text-muted);
+    letter-spacing: 0.02em;
+}
+
+/* ── REPLACE your existing .trader-cv-hero-summary ───────────────────── */
 .trader-cv-hero-summary {
-  font-size: 0.95rem;
-  color: rgba(255,255,255,0.8);
-  margin: 0;
-  line-height: 1.45;
+    font-size: 0.88rem;
+    color: var(--tcv-text-muted);
+    margin: 0;
+    line-height: 1.6;
+    padding: 14px 16px;
+    border-radius: var(--tcv-radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+    border-left: 2px solid var(--tcv-gold-warm);
+    border-top: 1px solid var(--tcv-border);
+    border-right: 1px solid var(--tcv-border);
+    border-bottom: 1px solid var(--tcv-border);
 }
 
+/* ── REPLACE your existing .trader-cv-hero-chips ─────────────────────── */
 .trader-cv-hero-chips {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 168px;
 }
 
+/* ── REPLACE your existing .trader-cv-chip ───────────────────────────── */
 .trader-cv-chip {
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: rgba(4, 6, 18, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  min-width: 140px;
+    padding: 14px 16px;
+    border-radius: var(--tcv-radius-sm);
+    background: var(--tcv-bg-h);
+    border: 1px solid var(--tcv-border);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    text-align: center;
+    transition: transform var(--tcv-transition), border-color var(--tcv-transition), box-shadow var(--tcv-transition);
+    position: relative;
+    overflow: hidden;
 }
 
+/* Top hairline accent on chip */
+.trader-cv-chip::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20%; right: 20%;
+    height: 1px;
+    background: var(--tcv-line-gold);
+    opacity: 0.5;
+}
+
+.trader-cv-chip:hover {
+    transform: translateX(3px);
+    border-color: var(--tcv-border-h);
+    box-shadow: var(--tcv-shadow-h);
+}
+
+/* ── REPLACE your existing .trader-cv-chip-label ─────────────────────── */
 .trader-cv-chip-label {
-  display: block;
-  font-size: 0.7rem;
-  color: rgba(255,255,255,0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 2px;
+    display: block;
+    font-size: 0.62rem;
+    color: var(--tcv-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 5px;
+    font-weight: 500;
 }
 
+/* ── REPLACE your existing .trader-cv-chip-value ─────────────────────── */
 .trader-cv-chip-value {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #fff;
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--tcv-gold-bright);
+    letter-spacing: 0.01em;
 }
 
-/* Section */
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION TITLES
+   ═══════════════════════════════════════════════════════════════════════ */
+
 .trader-cv-section {
-  margin-bottom: 28px;
+    margin-bottom: 28px;
 }
 
 .trader-cv-section-title {
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0 0 16px 0;
-  color: rgba(255,255,255,0.9);
-  letter-spacing: 0.02em;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 20px;
+    color: rgba(234, 169, 96, 0.8);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-/* Breakdown */
-.trader-cv-breakdown-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
+.trader-cv-section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(234, 169, 96, 0.2), transparent);
 }
 
-.trader-cv-breakdown-card {
-  padding: 16px;
-  border-radius: var(--radius, 12px);
-  border: 1px solid transparent;
-  background-image: var(--tcv-fill), var(--tcv-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--tcv-glow);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
+/* ═══════════════════════════════════════════════════════════════════════
+   STREAKS ROW
+   ═══════════════════════════════════════════════════════════════════════ */
 
-.trader-cv-breakdown-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.trader-cv-breakdown-label {
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.trader-cv-breakdown-weight {
-  font-size: 0.7rem;
-  color: rgba(160, 185, 240, 0.75);
-}
-
-.trader-cv-breakdown-bar-wrap {
-  height: 8px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.08);
-  margin-bottom: 8px;
-  overflow: hidden;
-}
-
-.trader-cv-breakdown-bar {
-  height: 100%;
-  border-radius: 4px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.55) 0%, rgba(234, 169, 96, 0.75) 45%, rgba(248, 195, 125, 0.65) 100%);
-  transition: width 0.4s ease;
-}
-
-.trader-cv-breakdown-score {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0 0 4px 0;
-}
-
-.trader-cv-breakdown-message {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.55);
-  margin: 0;
-  line-height: 1.35;
-}
-
-/* Quality */
-.trader-cv-quality-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 20px;
-}
-
-.trader-cv-quality-card {
-  padding: 20px 24px;
-  border-radius: var(--radius-lg, 18px);
-  border: 1px solid transparent;
-  background-image: var(--tcv-fill), var(--tcv-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--tcv-glow);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.trader-cv-quality-value {
-  display: block;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #fff;
-}
-
-.trader-cv-quality-label {
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.6);
-}
-
-.trader-cv-quality-trend {
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.8);
-}
-
-.trader-cv-quality-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.trader-cv-quality-badge {
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.trader-cv-quality-badge--excellent { background: rgba(58, 86, 165, 0.22); color: rgba(230, 236, 255, 0.95); border: 1px solid rgba(160, 185, 240, 0.35); }
-.trader-cv-quality-badge--good { background: rgba(45, 65, 130, 0.2); color: rgba(200, 215, 255, 0.9); border: 1px solid rgba(140, 170, 235, 0.28); }
-.trader-cv-quality-badge--needs-work { background: rgba(255, 255, 255, 0.06); color: rgba(248, 195, 125, 0.85); border: 1px solid rgba(248, 195, 125, 0.22); }
-.trader-cv-quality-badge--poor { background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.45); border: 1px solid rgba(255, 255, 255, 0.1); }
-
-/* Conditions */
-.trader-cv-conditions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
-}
-
-.trader-cv-condition {
-  padding: 14px;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  background-image: var(--tcv-fill), var(--tcv-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--tcv-glow);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.trader-cv-condition-label {
-  display: block;
-  font-size: 0.7rem;
-  color: rgba(255,255,255,0.5);
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.trader-cv-condition-value {
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-/* Empty */
-.trader-cv-empty {
-  padding: 24px;
-  text-align: center;
-  color: rgba(255,255,255,0.5);
-  font-size: 0.9rem;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.02);
-  border: 1px dashed rgba(255,255,255,0.08);
-}
-
-/* Streaks */
 .trader-cv-streaks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
 }
 
 .trader-cv-streak-card {
-  padding: 18px 24px;
-  border-radius: var(--radius, 12px);
-  border: 1px solid transparent;
-  background-image: var(--tcv-fill), var(--tcv-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--tcv-glow);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  text-align: center;
-  min-width: 120px;
+    padding: 20px 24px;
+    border-radius: var(--tcv-radius-md);
+    background: var(--tcv-bg);
+    border: 1px solid var(--tcv-border);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    text-align: center;
+    transition: transform var(--tcv-transition), box-shadow var(--tcv-transition);
+}
+
+.trader-cv-streak-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--tcv-shadow-h);
 }
 
 .trader-cv-streak-value {
-  display: block;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #fff;
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--tcv-text);
+    margin-bottom: 4px;
 }
 
 .trader-cv-streak-label {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.55);
+    font-size: 0.75rem;
+    color: var(--tcv-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   BREAKDOWN GRID
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.trader-cv-breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.trader-cv-breakdown-card {
+    padding: 20px;
+    border-radius: var(--tcv-radius-md);
+    background: var(--tcv-bg);
+    border: 1px solid var(--tcv-border);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    transition: transform var(--tcv-transition), box-shadow var(--tcv-transition);
+}
+
+.trader-cv-breakdown-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--tcv-shadow-h);
+}
+
+.trader-cv-breakdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.trader-cv-breakdown-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--tcv-text);
+}
+
+.trader-cv-breakdown-weight {
+    font-size: 0.7rem;
+    color: var(--tcv-gold-bright);
+    font-weight: 500;
+}
+
+.trader-cv-breakdown-bar-wrap {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.trader-cv-breakdown-bar {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--tcv-gold), var(--tcv-gold-bright));
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.trader-cv-breakdown-score {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--tcv-text);
+    margin: 0 0 4px;
+}
+
+.trader-cv-breakdown-message {
+    font-size: 0.75rem;
+    color: var(--tcv-text-dim);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   QUALITY SECTION
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.trader-cv-quality-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.trader-cv-quality-card {
+    padding: 24px 28px;
+    border-radius: var(--tcv-radius-md);
+    background: var(--tcv-bg);
+    border: 1px solid var(--tcv-border);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    text-align: center;
+    min-width: 140px;
+    flex: 1;
+}
+
+.trader-cv-quality-value {
+    display: block;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--tcv-text);
+    margin-bottom: 4px;
+}
+
+.trader-cv-quality-label {
+    font-size: 0.75rem;
+    color: var(--tcv-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.trader-cv-quality-trend {
+    font-size: 0.85rem;
+    color: var(--tcv-text-muted);
+    margin-top: 8px;
+    display: block;
+}
+
+.trader-cv-quality-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.trader-cv-quality-badge {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.trader-cv-quality-badge--excellent {
+    background: rgba(100, 243, 176, 0.1);
+    color: var(--tcv-green);
+    border: 1px solid rgba(100, 243, 176, 0.25);
+}
+
+.trader-cv-quality-badge--good {
+    background: rgba(130, 180, 255, 0.08);
+    color: var(--tcv-blue);
+    border: 1px solid rgba(130, 180, 255, 0.2);
+}
+
+.trader-cv-quality-badge--needs-work {
+    background: rgba(248, 195, 125, 0.08);
+    color: var(--tcv-gold-bright);
+    border: 1px solid rgba(248, 195, 125, 0.2);
+}
+
+.trader-cv-quality-badge--poor {
+    background: rgba(255, 130, 120, 0.06);
+    color: var(--tcv-red);
+    border: 1px solid rgba(255, 130, 120, 0.15);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CONDITIONS GRID
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.trader-cv-conditions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.trader-cv-condition {
+    padding: 16px;
+    border-radius: var(--tcv-radius-sm);
+    background: var(--tcv-bg);
+    border: 1px solid var(--tcv-border);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    transition: transform var(--tcv-transition), box-shadow var(--tcv-transition);
+}
+
+.trader-cv-condition:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--tcv-shadow-h);
+}
+
+.trader-cv-condition-label {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--tcv-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+}
+
+.trader-cv-condition-value {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--tcv-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RANK BAR
+   ═══════════════════════════════════════════════════════════════════════ */
+
 .trader-cv-rank-bar {
-  padding: 14px 18px;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  background-image: var(--tcv-fill), var(--tcv-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--tcv-glow);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+    padding: 18px 20px;
+    border-radius: var(--tcv-radius-md);
+    background: var(--tcv-bg);
+    border: 1px solid var(--tcv-border);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
 }
 
 .trader-cv-rank-title {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.5);
-  text-transform: uppercase;
-  margin-right: 10px;
+    font-size: 0.72rem;
+    color: var(--tcv-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-right: 10px;
 }
 
 .trader-cv-rank-value {
-  font-size: 0.95rem;
-  font-weight: 600;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--tcv-text);
 }
 
 .trader-cv-rank-progress {
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(255,255,255,0.08);
-  margin-top: 10px;
-  overflow: hidden;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    margin-top: 12px;
+    overflow: hidden;
 }
 
 .trader-cv-rank-fill {
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.45) 0%, rgba(234, 169, 96, 0.82) 50%, rgba(248, 195, 125, 0.72) 100%);
-  transition: width 0.4s ease;
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--tcv-gold), var(--tcv-gold-bright));
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Trend */
+/* ═══════════════════════════════════════════════════════════════════════
+   TREND CARDS
+   ═══════════════════════════════════════════════════════════════════════ */
+
 .trader-cv-trend-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
 }
 
 .trader-cv-trend-card {
-  padding: 14px;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  background-image: var(--tcv-fill), var(--tcv-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--tcv-glow);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+    padding: 16px;
+    border-radius: var(--tcv-radius-sm);
+    background: var(--tcv-bg);
+    border: 1px solid var(--tcv-border);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    transition: transform var(--tcv-transition), box-shadow var(--tcv-transition);
+}
+
+.trader-cv-trend-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--tcv-shadow-h);
 }
 
 .trader-cv-trend-label {
-  display: block;
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.55);
-  margin-bottom: 4px;
+    display: block;
+    font-size: 0.72rem;
+    color: var(--tcv-text-dim);
+    margin-bottom: 6px;
 }
 
 .trader-cv-trend-value {
-  font-size: 1.25rem;
-  font-weight: 600;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--tcv-text);
 }
 
-/* Review */
+/* ═══════════════════════════════════════════════════════════════════════
+   REVIEW SECTION
+   ═══════════════════════════════════════════════════════════════════════ */
+
 .trader-cv-review-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-@media (max-width: 640px) {
-  .trader-cv-review-grid { grid-template-columns: 1fr; }
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
 }
 
 .trader-cv-review-col {
-  padding: 18px;
-  border-radius: var(--radius-lg, 18px);
-  border: 1px solid transparent;
-  background-image: var(--tcv-fill), var(--tcv-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--tcv-glow);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+    padding: 20px;
+    border-radius: var(--tcv-radius-md);
+    background: var(--tcv-bg);
+    border: 1px solid var(--tcv-border);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
 }
 
 .trader-cv-review-heading {
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin: 0 0 12px 0;
-  color: rgba(255,255,255,0.9);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0 0 14px;
+    color: var(--tcv-text);
 }
 
 .trader-cv-review-list {
-  margin: 0;
-  padding-left: 18px;
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.75);
-  line-height: 1.6;
+    margin: 0;
+    padding-left: 18px;
+    font-size: 0.85rem;
+    color: var(--tcv-text-muted);
+    line-height: 1.7;
 }
 
 .trader-cv-review-list li::marker {
-  color: rgba(160, 185, 240, 0.85);
+    color: var(--tcv-gold);
 }
 
-.trader-cv-review-list--weak { color: rgba(200, 215, 255, 0.88); }
-.trader-cv-review-list--action { color: rgba(255, 255, 255, 0.82); }
+.trader-cv-review-list--weak {
+    color: rgba(210, 216, 248, 0.85);
+}
 
+.trader-cv-review-list--action {
+    color: rgba(248, 195, 125, 0.88);
+}
+
+.trader-cv-review-list li {
+    margin-bottom: 4px;
+}
+
+/* Monthly stats */
 .trader-cv-monthly-stats {
-  margin-top: 16px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background-image: var(--tcv-fill), var(--tcv-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--tcv-glow);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.7);
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
+    margin-top: 16px;
+    padding: 14px 18px;
+    border-radius: var(--tcv-radius-sm);
+    background: rgba(3, 2, 10, 0.4);
+    border: 1px solid var(--tcv-border);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: 0.85rem;
+    color: var(--tcv-text-muted);
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CTA SECTION
+   ═══════════════════════════════════════════════════════════════════════ */
 
 .trader-cv-cta {
-  margin-top: 24px;
-  padding: 20px;
-  text-align: center;
-  border-radius: var(--radius-lg, 18px);
-  border: 1px solid transparent;
-  background-image: var(--journal-subtle-fill, linear-gradient(168deg, rgba(58, 86, 165, 0.14) 0%, rgba(3, 4, 14, 0.92) 100%)), var(--tcv-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--tcv-glow);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: rgba(255,255,255,0.82);
-  font-size: 0.9rem;
-}
-
-/* Trader Passport — premium credential (navy / white / gold); matches PNG export */
-.trader-cv-passport-section {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,0.06);
-}
-
-.trader-cv-passport-intro {
-  font-size: 0.88rem;
-  line-height: 1.55;
-  color: rgba(255,255,255,0.58);
-  margin: 0 0 22px 0;
-  max-width: 52rem;
-}
-
-.trader-cv-passport-intro strong {
-  color: rgba(248, 195, 125, 0.95);
-  font-weight: 600;
-}
-
-.trader-cv-passport-card {
-  --tp-mono: 'IBM Plex Mono', ui-monospace, monospace;
-  --tp-gold: #e8c27a;
-  --tp-gold-deep: #c9a05c;
-  --tp-navy-mid: #0f172a;
-  --tp-navy-deep: #070b18;
-  position: relative;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  border-radius: 24px;
-  overflow: hidden;
-  border: 1px solid rgba(234, 169, 96, 0.35);
-  background: linear-gradient(145deg, rgba(18, 24, 42, 0.98) 0%, var(--tp-navy-deep) 55%, #050810 100%);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 2px 0 rgba(234, 169, 96, 0.12) inset,
-    0 32px 64px rgba(0, 0, 0, 0.55),
-    0 0 80px rgba(234, 169, 96, 0.07);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  max-width: 920px;
-}
-
-.trader-cv-passport-cosmos {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse 100% 70% at 8% 12%, rgba(234, 169, 96, 0.11) 0%, transparent 45%),
-    radial-gradient(ellipse 90% 60% at 96% 88%, rgba(212, 175, 55, 0.07) 0%, transparent 48%),
-    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 42%),
-    linear-gradient(168deg, #0c1224 0%, var(--tp-navy-deep) 42%, #04060e 100%);
-  opacity: 1;
-}
-
-.trader-cv-passport-scan {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image: linear-gradient(rgba(248, 195, 125, 0.25) 1px, transparent 1px);
-  background-size: 100% 5px;
-  animation: trader-cv-passport-scan 12s linear infinite;
-}
-
-@keyframes trader-cv-passport-scan {
-  from { transform: translateY(0); }
-  to { transform: translateY(4px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .trader-cv-passport-scan {
-    animation: none;
-    opacity: 0.025;
-  }
-}
-
-.trader-cv-passport-card-inner {
-  position: relative;
-  z-index: 1;
-  padding: 0;
-}
-
-.trader-cv-passport-card-inner::before,
-.trader-cv-passport-card-inner::after {
-  content: '';
-  position: absolute;
-  width: 28px;
-  height: 28px;
-  border-color: rgba(234, 169, 96, 0.55);
-  border-style: solid;
-  pointer-events: none;
-  z-index: 2;
-  box-shadow: 0 0 12px rgba(234, 169, 96, 0.15);
-}
-
-.trader-cv-passport-card-inner::before {
-  top: 14px;
-  left: 14px;
-  border-width: 2px 0 0 2px;
-  border-radius: 2px 0 0 0;
-}
-
-.trader-cv-passport-card-inner::after {
-  bottom: 42px;
-  right: 14px;
-  border-width: 0 2px 2px 0;
-  border-radius: 0 0 2px 0;
-}
-
-.trader-cv-passport-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid rgba(234, 169, 96, 0.22);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(7, 11, 24, 0.4) 100%);
-}
-
-.trader-cv-passport-brand-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding-left: 2px;
-}
-
-.trader-cv-passport-brand-mark {
-  font-family: 'Cormorant Garamond', 'Georgia', serif;
-  font-size: 1.15rem;
-  font-weight: 600;
-  letter-spacing: 0.42em;
-  text-transform: uppercase;
-  background: linear-gradient(180deg, #ffffff 0%, #f5ebe0 38%, var(--tp-gold) 95%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 1px 8px rgba(234, 169, 96, 0.2));
-}
-
-.trader-cv-passport-brand-sub {
-  font-family: var(--tp-mono);
-  font-size: 0.52rem;
-  font-weight: 500;
-  letter-spacing: 0.32em;
-  color: rgba(255, 255, 255, 0.42);
-  margin-top: 4px;
-}
-
-.trader-cv-passport-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(12, 18, 36, 0.95) 0%, rgba(6, 10, 22, 0.92) 100%);
-  border: 1px solid rgba(234, 169, 96, 0.45);
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.35),
-    0 4px 16px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  font-family: var(--tp-mono);
-  font-size: 0.52rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.88);
-}
-
-.trader-cv-passport-chip-pulse {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #fde8c4, var(--tp-gold-deep));
-  box-shadow: 0 0 12px rgba(234, 169, 96, 0.85), 0 0 4px rgba(255, 255, 255, 0.4);
-  animation: trader-cv-passport-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes trader-cv-passport-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.65; transform: scale(0.92); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .trader-cv-passport-chip-pulse {
-    animation: none;
-  }
-}
-
-.trader-cv-passport-hero {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 24px;
-  align-items: center;
-  padding: 24px 24px 20px;
-}
-
-@media (max-width: 600px) {
-  .trader-cv-passport-hero {
-    grid-template-columns: 1fr;
+    margin-top: 24px;
+    padding: 24px;
     text-align: center;
-  }
-  .trader-cv-passport-identity {
-    order: 2;
-  }
-  .trader-cv-passport-avatar-col {
-    order: 1;
-    margin: 0 auto;
-  }
-  .trader-cv-passport-aurax-block {
-    order: 3;
+    border-radius: var(--tcv-radius-md);
+    background: var(--tcv-bg);
+    border: 1px solid var(--tcv-border);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    color: var(--tcv-text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   EMPTY STATE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.trader-cv-empty {
+    padding: 32px 24px;
     text-align: center;
-    margin: 0 auto;
-  }
+    color: var(--tcv-text-dim);
+    font-size: 0.9rem;
+    border-radius: var(--tcv-radius-md);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
-.trader-cv-passport-avatar-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
+/* ═══════════════════════════════════════════════════════════════════════
+   REPLAY IDENTITY (CV integration)
+   ═══════════════════════════════════════════════════════════════════════ */
 
-.trader-cv-passport-avatar-shell {
-  position: relative;
-  width: 108px;
-  height: 108px;
-}
-
-.trader-cv-passport-avatar-ring {
-  position: absolute;
-  inset: -3px;
-  border-radius: 20px;
-  background: linear-gradient(145deg,
-    rgba(255, 255, 255, 0.35) 0%,
-    rgba(234, 169, 96, 0.75) 35%,
-    rgba(201, 160, 92, 0.9) 55%,
-    rgba(15, 23, 42, 0.95) 100%);
-  opacity: 1;
-}
-
-.trader-cv-passport-avatar-ring::after {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  border-radius: 17px;
-  background: linear-gradient(165deg, #0a1022 0%, #070b18 100%);
-}
-
-.trader-cv-passport-photo {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  border-radius: 16px;
-  border: 1px solid rgba(234, 169, 96, 0.35);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 16px 40px rgba(0, 0, 0, 0.55);
-}
-
-.trader-cv-passport-photo--placeholder {
-  background: linear-gradient(155deg, #0c1528 0%, #121c32 42%, #1a2740 100%) !important;
-}
-
-.trader-cv-passport-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.trader-cv-passport-photo-initials {
-  font-size: 1.75rem;
-  font-weight: 700;
-  font-family: 'Cormorant Garamond', 'Georgia', serif;
-  letter-spacing: 0.08em;
-  background: linear-gradient(180deg, #ffffff 0%, #f8e8c8 45%, var(--tp-gold-deep) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
-}
-
-.trader-cv-passport-avatar-caption {
-  margin: 0;
-  font-family: var(--tp-mono);
-  font-size: 0.5rem;
-  letter-spacing: 0.24em;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.trader-cv-passport-identity {
-  min-width: 0;
-}
-
-.trader-cv-passport-hud {
-  font-family: var(--tp-mono);
-  font-size: 0.54rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  color: rgba(255, 255, 255, 0.42);
-  margin: 0 0 8px 0;
-  text-transform: uppercase;
-}
-
-.trader-cv-passport-handle {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #ffffff;
-  line-height: 1.12;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
-  word-break: break-word;
-}
-
-.trader-cv-passport-altname {
-  margin: 8px 0 0 0;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.48);
-}
-
-.trader-cv-passport-rank {
-  margin: 12px 0 0 0;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: rgba(248, 195, 125, 0.92);
-  line-height: 1.4;
-  letter-spacing: 0.02em;
-}
-
-.trader-cv-passport-aurax-block {
-  text-align: right;
-  padding: 16px 18px;
-  border-radius: 16px;
-  border: 1px solid rgba(234, 169, 96, 0.32);
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.06) 0%, rgba(8, 12, 28, 0.92) 40%, rgba(5, 8, 20, 0.96) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 4px 0 0 rgba(234, 169, 96, 0.55),
-    0 12px 32px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  min-width: 118px;
-}
-
-.trader-cv-passport-aurax-block .trader-cv-passport-hud {
-  color: rgba(234, 169, 96, 0.85);
-  text-align: inherit;
-}
-
-.trader-cv-passport-score-num {
-  margin: 0;
-  font-family: var(--tp-mono);
-  font-size: 2.5rem;
-  font-weight: 600;
-  line-height: 1;
-  color: #ffffff;
-  letter-spacing: -0.04em;
-  text-shadow:
-    0 0 40px rgba(234, 169, 96, 0.25),
-    0 2px 0 rgba(0, 0, 0, 0.35);
-}
-
-.trader-cv-passport-score-sub {
-  margin: 8px 0 0 0;
-  font-family: var(--tp-mono);
-  font-size: 0.5rem;
-  letter-spacing: 0.2em;
-  color: rgba(255, 255, 255, 0.38);
-  text-transform: uppercase;
-}
-
-.trader-cv-passport-metrics {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  padding: 0 24px 22px;
-}
-
-@media (max-width: 520px) {
-  .trader-cv-passport-metrics {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.trader-cv-passport-metric {
-  padding: 14px 10px 16px;
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(6, 10, 24, 0.88) 100%),
-    repeating-linear-gradient(-45deg, transparent, transparent 6px, rgba(234, 169, 96, 0.03) 6px, rgba(234, 169, 96, 0.03) 7px);
-  border: 1px solid rgba(234, 169, 96, 0.2);
-  text-align: center;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 4px 16px rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.trader-cv-passport-metric-code {
-  display: block;
-  font-family: var(--tp-mono);
-  font-size: 0.46rem;
-  letter-spacing: 0.1em;
-  color: rgba(234, 169, 96, 0.75);
-  margin-bottom: 6px;
-}
-
-.trader-cv-passport-metric-label {
-  display: block;
-  font-family: var(--tp-mono);
-  font-size: 0.52rem;
-  color: rgba(255, 255, 255, 0.38);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
-.trader-cv-passport-metric-val {
-  font-family: var(--tp-mono);
-  font-size: 1.28rem;
-  font-weight: 600;
-  color: #f8fafc;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
-}
-
-.trader-cv-passport-footer-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  padding: 0 24px 18px;
-}
-
-.trader-cv-passport-footer-cell--right {
-  text-align: right;
-}
-
-.trader-cv-passport-quality {
-  margin: 4px 0 0 0;
-  font-family: var(--tp-mono);
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: rgba(255,255,255,0.95);
-}
-
-.trader-cv-passport-quality-sub {
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.38);
-}
-
-.trader-cv-passport-footer-row .trader-cv-passport-hud {
-  color: rgba(234, 169, 96, 0.72);
-}
-
-.trader-cv-passport-issued {
-  margin: 4px 0 0 0;
-  font-family: var(--tp-mono);
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.trader-cv-passport-id {
-  margin: 8px 0 0 0;
-  font-family: var(--tp-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.trader-cv-passport-watermark {
-  margin: 0;
-  padding: 14px 24px 18px;
-  font-family: var(--tp-mono);
-  font-size: 0.52rem;
-  color: rgba(255, 255, 255, 0.28);
-  letter-spacing: 0.08em;
-  border-top: 1px solid rgba(234, 169, 96, 0.12);
-  background: linear-gradient(90deg, transparent 0%, rgba(234, 169, 96, 0.04) 50%, transparent 100%);
-}
-
-.trader-cv-passport-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 18px;
-  max-width: 920px;
-}
-
-.trader-cv-passport-btn {
-  padding: 13px 22px;
-  border-radius: 12px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
-}
-
-.trader-cv-passport-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.trader-cv-passport-btn--primary {
-  background: linear-gradient(135deg, #f8e4c4 0%, #f8c37d 35%, #eaa960 70%, #c9a05c 100%);
-  color: #0a0704;
-  border-color: rgba(234, 169, 96, 0.55);
-  box-shadow:
-    0 4px 20px rgba(234, 169, 96, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
-}
-
-.trader-cv-passport-btn--primary:hover:not(:disabled) {
-  filter: brightness(1.04);
-  box-shadow:
-    0 6px 28px rgba(234, 169, 96, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-.trader-cv-passport-btn--secondary {
-  background: rgba(12, 18, 36, 0.75);
-  color: rgba(255, 255, 255, 0.92);
-  border-color: rgba(234, 169, 96, 0.28);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-.trader-cv-passport-btn--secondary:hover:not(:disabled) {
-  background: rgba(20, 28, 48, 0.9);
-  border-color: rgba(234, 169, 96, 0.4);
-}
-
-/* Offscreen export card keeps a universal look across route shells. */
-.trader-cv-passport-export-stage {
-  position: fixed;
-  top: 0;
-  left: -10000px;
-  width: 0;
-  height: 0;
-  opacity: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.trader-cv-passport-card--export {
-  width: 920px;
-  min-width: 920px;
-  max-width: 920px;
-  box-sizing: border-box;
-}
-
-.trade-validator-shell .trader-cv-passport-card--export,
-.trader-cv-passport-card--export {
-  border-color: rgba(234, 169, 96, 0.35) !important;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 2px 0 rgba(234, 169, 96, 0.12) inset,
-    0 32px 64px rgba(0, 0, 0, 0.55),
-    0 0 80px rgba(234, 169, 96, 0.07) !important;
-}
-
-.trade-validator-shell .trader-cv-passport-card--export .trader-cv-passport-cosmos,
-.trader-cv-passport-card--export .trader-cv-passport-cosmos {
-  background:
-    radial-gradient(ellipse 100% 70% at 8% 12%, rgba(234, 169, 96, 0.11) 0%, transparent 45%),
-    radial-gradient(ellipse 90% 60% at 96% 88%, rgba(212, 175, 55, 0.07) 0%, transparent 48%),
-    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 42%),
-    linear-gradient(168deg, #0c1224 0%, #070b18 42%, #04060e 100%) !important;
-}
-
-.trade-validator-shell .trader-cv-passport-card--export .trader-cv-passport-card-inner::before,
-.trade-validator-shell .trader-cv-passport-card--export .trader-cv-passport-card-inner::after,
-.trader-cv-passport-card--export .trader-cv-passport-card-inner::before,
-.trader-cv-passport-card--export .trader-cv-passport-card-inner::after {
-  border-color: rgba(234, 169, 96, 0.55) !important;
-}
-
-.trade-validator-shell .trader-cv-passport-card--export .trader-cv-passport-top,
-.trader-cv-passport-card--export .trader-cv-passport-top {
-  border-bottom-color: rgba(234, 169, 96, 0.22) !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(7, 11, 24, 0.4) 100%) !important;
-}
-
-.trade-validator-shell .trader-cv-passport-card--export .trader-cv-passport-avatar-ring,
-.trader-cv-passport-card--export .trader-cv-passport-avatar-ring {
-  background: linear-gradient(145deg,
-    rgba(255, 255, 255, 0.35) 0%,
-    rgba(234, 169, 96, 0.75) 35%,
-    rgba(201, 160, 92, 0.9) 55%,
-    rgba(15, 23, 42, 0.95) 100%) !important;
-}
-
-.trade-validator-shell .trader-cv-passport-card--export .trader-cv-passport-rank,
-.trader-cv-passport-card--export .trader-cv-passport-rank {
-  color: rgba(248, 195, 125, 0.92) !important;
-}
-
-.trade-validator-shell .trader-cv-passport-card--export .trader-cv-passport-aurax-block .trader-cv-passport-hud,
-.trader-cv-passport-card--export .trader-cv-passport-aurax-block .trader-cv-passport-hud {
-  color: rgba(234, 169, 96, 0.85) !important;
-}
-
-.trade-validator-shell .trader-cv-passport-card--export .trader-cv-passport-metric-code,
-.trader-cv-passport-card--export .trader-cv-passport-metric-code {
-  color: rgba(234, 169, 96, 0.75) !important;
-}
-
-.trader-cv-passport-card--capture .trader-cv-passport-scan,
-.trader-cv-passport-card--capture .trader-cv-passport-chip-pulse {
-  animation: none !important;
-}
-
-/* Trader Replay identity (CV integration) */
 .trader-cv-replay-identity {
-  padding: 16px 18px;
-  border-radius: var(--radius-md, 14px);
-  border: 1px solid rgba(234, 169, 96, 0.18);
-  background: linear-gradient(168deg, rgba(8, 10, 22, 0.72) 0%, rgba(5, 6, 16, 0.88) 100%);
+    padding: 20px;
+    border-radius: var(--tcv-radius-md);
+    background: var(--tcv-bg);
+    border: 1px solid var(--tcv-border);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
 }
 
 .trader-cv-replay-line {
-  margin: 0 0 10px;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.88);
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--tcv-text-muted);
 }
 
 .trader-cv-replay-line strong {
-  color: rgba(248, 195, 125, 0.95);
-  font-weight: 600;
+    color: var(--tcv-gold-bright);
+    font-weight: 600;
 }
 
 .trader-cv-replay-focus,
 .trader-cv-replay-growth,
 .trader-cv-replay-attention {
-  margin: 0 0 8px;
-  font-size: 0.82rem;
-  line-height: 1.45;
-  color: rgba(200, 205, 230, 0.82);
+    margin: 0 0 8px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--tcv-text-muted);
 }
 
 .trader-cv-replay-growth {
-  color: rgba(124, 220, 176, 0.82);
+    color: var(--tcv-green);
 }
 
 .trader-cv-replay-attention {
-  color: rgba(248, 195, 125, 0.78);
+    color: var(--tcv-gold-bright);
 }
 
 .trader-cv-replay-narrative-wrap {
-  margin-top: 14px;
-}
-
-.trader-cv-replay-narrative-wrap .trader-cv-replay-subtitle {
-  margin-bottom: 8px;
+    margin-top: 14px;
 }
 
 .trader-cv-replay-contribution {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(234, 169, 96, 0.12);
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--tcv-border);
 }
 
 .trader-cv-replay-subtitle {
-  margin: 0 0 6px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(248, 195, 125, 0.88);
+    margin: 0 0 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--tcv-gold-bright);
 }
 
 .trader-cv-replay-micro {
-  margin: 0 0 12px;
-  font-size: 0.72rem;
-  line-height: 1.45;
-  color: rgba(200, 205, 230, 0.55);
+    margin: 0 0 12px;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: var(--tcv-text-dim);
 }
 
 .trader-cv-replay-contrib-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-  margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
 }
 
 .trader-cv-replay-contrib-card {
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(0, 0, 0, 0.2);
+    padding: 12px 14px;
+    border-radius: var(--tcv-radius-sm);
+    background: rgba(3, 2, 10, 0.35);
+    border: 1px solid var(--tcv-border);
 }
 
 .trader-cv-replay-contrib-label {
-  display: block;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(200, 205, 230, 0.5);
-  margin-bottom: 4px;
+    display: block;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tcv-text-dim);
+    margin-bottom: 4px;
 }
 
 .trader-cv-replay-contrib-value {
-  display: block;
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: rgba(248, 195, 125, 0.95);
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--tcv-gold-bright);
 }
 
 .trader-cv-replay-contrib-meta {
-  display: block;
-  font-size: 0.68rem;
-  color: rgba(200, 205, 230, 0.45);
-  margin-top: 2px;
+    display: block;
+    font-size: 0.68rem;
+    color: var(--tcv-text-dim);
+    margin-top: 2px;
 }
 
 .trader-cv-replay-line--tight {
-  margin-bottom: 6px;
-  font-size: 0.82rem;
+    margin-bottom: 6px;
+    font-size: 0.82rem;
 }
 
 .trader-cv-replay-expl {
-  margin: 0 0 6px;
-  font-size: 0.8rem;
-  line-height: 1.45;
-  color: rgba(200, 205, 230, 0.78);
+    margin: 0 0 6px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--tcv-text-muted);
 }
 
 .trader-cv-replay-dev {
-  margin: 10px 0 0;
-  font-size: 0.8rem;
-  line-height: 1.45;
-  color: rgba(124, 220, 176, 0.82);
+    margin: 10px 0 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--tcv-green);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+    .trader-cv-hero-inner {
+        grid-template-columns: 1fr;
+    }
+
+    .trader-cv-hero-chips {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .trader-cv-review-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .trader-cv-breakdown-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .trader-cv-hero {
+        padding: 20px 16px;
+    }
+
+    .trader-cv-hero-score-wrap {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .trader-cv-streaks {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .trader-cv-quality-row {
+        flex-direction: column;
+    }
+
+    .trader-cv-conditions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TRADER PASSPORT — Premium Credential Card v3 (Token-Matched)
+   Uses site-wide --tcv-* tokens for perfect theme consistency
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.trader-cv-passport-section {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--tcv-border);
+}
+
+.trader-cv-passport-intro {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--tcv-text-muted);
+    margin: 0 0 24px;
+    max-width: 100%;
+}
+
+.trader-cv-passport-intro strong {
+    color: var(--tcv-gold-bright);
+    font-weight: 600;
+}
+
+/* ── Passport Card Container ──────────────────────────────────────────── */
+.trader-cv-passport-card {
+    --tp-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+    position: relative;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    border-radius: var(--tcv-radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--tcv-border-h);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    background: var(--tcv-bg);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    transition: box-shadow var(--tcv-transition), border-color var(--tcv-transition);
+}
+
+.trader-cv-passport-card:hover {
+    border-color: rgba(234, 169, 96, 0.40);
+    box-shadow: var(--tcv-shadow-h);
+}
+
+/* ── Cosmos Background ────────────────────────────────────────────────── */
+.trader-cv-passport-cosmos {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 80% 50% at 4%  6%,  rgba(234, 169, 96, 0.07) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 96% 94%, rgba(212, 175, 55, 0.05)  0%, transparent 50%),
+        radial-gradient(ellipse 45% 30% at 50% 0%,  rgba(255, 255, 255, 0.03) 0%, transparent 45%);
+}
+
+/* ── Security Scan Lines ──────────────────────────────────────────────── */
+.trader-cv-passport-scan {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.022;
+    background-image: linear-gradient(rgba(234, 169, 96, 0.35) 1px, transparent 1px);
+    background-size: 100% 6px;
+    animation: trader-cv-passport-scan 16s linear infinite;
+}
+
+@keyframes trader-cv-passport-scan {
+    from { transform: translateY(0); }
+    to   { transform: translateY(5px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .trader-cv-passport-scan { animation: none; opacity: 0.015; }
+}
+
+/* ── Card Inner ───────────────────────────────────────────────────────── */
+.trader-cv-passport-card-inner {
+    position: relative;
+    z-index: 1;
+    padding: 0;
+}
+
+/* Corner ornaments */
+.trader-cv-passport-card-inner::before,
+.trader-cv-passport-card-inner::after {
+    content: '';
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    border-color: var(--tcv-border-h);
+    border-style: solid;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.trader-cv-passport-card-inner::before {
+    top: 18px; left: 18px;
+    border-width: 2px 0 0 2px;
+    border-radius: 4px 0 0 0;
+}
+
+.trader-cv-passport-card-inner::after {
+    bottom: 50px; right: 18px;
+    border-width: 0 2px 2px 0;
+    border-radius: 0 0 4px 0;
+}
+
+/* ── Top Bar ──────────────────────────────────────────────────────────── */
+.trader-cv-passport-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 32px 18px;
+    border-bottom: 1px solid var(--tcv-border);
+    background: rgba(255, 255, 255, 0.02);
+    position: relative;
+}
+
+.trader-cv-passport-top::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 32px;
+    right: 32px;
+    height: 1px;
+    background: var(--tcv-line-gold);
+    opacity: 0.5;
+}
+
+/* Brand */
+.trader-cv-passport-brand-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.trader-cv-passport-brand-mark {
+    font-family: 'Cormorant Garamond', 'Georgia', serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    background: var(--tcv-grad-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 1px 10px rgba(234, 169, 96, 0.2));
+}
+
+.trader-cv-passport-brand-sub {
+    font-family: var(--tp-mono);
+    font-size: 0.5rem;
+    font-weight: 500;
+    letter-spacing: 0.38em;
+    color: var(--tcv-text-dim);
+    margin-top: 6px;
+}
+
+/* Chip */
+.trader-cv-passport-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--tcv-bg-h);
+    border: 1px solid var(--tcv-border-h);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    font-family: var(--tp-mono);
+    font-size: 0.52rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    color: var(--tcv-text-muted);
+    transition: all var(--tcv-transition);
+}
+
+.trader-cv-passport-chip:hover {
+    border-color: rgba(234, 169, 96, 0.55);
+    box-shadow: var(--tcv-shadow-h);
+}
+
+.trader-cv-passport-chip-pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--tcv-gold);
+    box-shadow: 0 0 14px rgba(234, 169, 96, 0.9), 0 0 4px rgba(255, 255, 255, 0.3);
+    animation: trader-cv-passport-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes trader-cv-passport-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.55; transform: scale(0.88); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .trader-cv-passport-chip-pulse { animation: none; }
+}
+
+/* ── Hero Section ─────────────────────────────────────────────────────── */
+.trader-cv-passport-hero {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 32px;
+    align-items: center;
+    padding: 30px 32px 24px;
+}
+
+/* Avatar */
+.trader-cv-passport-avatar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.trader-cv-passport-avatar-shell {
+    position: relative;
+    width: 116px;
+    height: 116px;
+}
+
+.trader-cv-passport-avatar-ring {
+    position: absolute;
+    inset: -5px;
+    border-radius: 24px;
+    background: conic-gradient(
+        from 135deg,
+        rgba(255, 255, 255, 0.25) 0deg,
+        var(--tcv-gold)           90deg,
+        var(--tcv-gold-warm)      160deg,
+        rgba(5, 4, 14, 0.98)      220deg,
+        rgba(255, 255, 255, 0.1)  360deg
+    );
+    box-shadow: 0 0 24px rgba(234, 169, 96, 0.2);
+}
+
+.trader-cv-passport-avatar-ring::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 20px;
+    background: var(--tcv-bg-h);
+}
+
+.trader-cv-passport-photo {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    border-radius: 18px;
+    border: 1px solid var(--tcv-border-h);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--tcv-shadow);
+}
+
+.trader-cv-passport-photo--placeholder {
+    background: var(--tcv-bg-h) !important;
+}
+
+.trader-cv-passport-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.trader-cv-passport-photo-initials {
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: 'Cormorant Garamond', 'Georgia', serif;
+    letter-spacing: 0.1em;
+    background: var(--tcv-grad-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.trader-cv-passport-avatar-caption {
+    margin: 0;
+    font-family: var(--tp-mono);
+    font-size: 0.48rem;
+    letter-spacing: 0.3em;
+    color: var(--tcv-text-dim);
+}
+
+/* Identity */
+.trader-cv-passport-identity {
+    min-width: 0;
+}
+
+.trader-cv-passport-hud {
+    font-family: var(--tp-mono);
+    font-size: 0.52rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    color: var(--tcv-text-dim);
+    margin: 0 0 10px;
+    text-transform: uppercase;
+}
+
+.trader-cv-passport-handle {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--tcv-text);
+    line-height: 1.1;
+    word-break: break-word;
+}
+
+.trader-cv-passport-altname {
+    margin: 10px 0 0;
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--tcv-text-dim);
+}
+
+.trader-cv-passport-rank {
+    margin: 14px 0 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--tcv-gold-bright);
+    letter-spacing: 0.03em;
+    padding: 6px 12px;
+    border-radius: var(--tcv-radius-sm);
+    background: rgba(234, 169, 96, 0.08);
+    border: 1px solid var(--tcv-border);
+}
+
+/* Aura Score Block */
+.trader-cv-passport-aurax-block {
+    text-align: right;
+    padding: 20px 22px;
+    border-radius: var(--tcv-radius-md);
+    border: 1px solid var(--tcv-border-h);
+    background: var(--tcv-bg-h);
+    box-shadow:
+        var(--tcv-shadow),
+        inset 5px 0 0 var(--tcv-gold-warm);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    min-width: 130px;
+    transition: box-shadow var(--tcv-transition), border-color var(--tcv-transition);
+}
+
+.trader-cv-passport-aurax-block:hover {
+    border-color: rgba(234, 169, 96, 0.45);
+    box-shadow:
+        var(--tcv-shadow-h),
+        inset 5px 0 0 var(--tcv-gold);
+}
+
+.trader-cv-passport-aurax-block .trader-cv-passport-hud {
+    color: rgba(234, 169, 96, 0.82);
+    text-align: inherit;
+    margin-bottom: 10px;
+}
+
+.trader-cv-passport-score-num {
+    margin: 0;
+    font-family: var(--tp-mono);
+    font-size: 3rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--tcv-text);
+    letter-spacing: -0.045em;
+    text-shadow: 0 0 48px rgba(234, 169, 96, 0.22);
+}
+
+.trader-cv-passport-score-sub {
+    margin: 12px 0 0;
+    font-family: var(--tp-mono);
+    font-size: 0.48rem;
+    letter-spacing: 0.26em;
+    color: var(--tcv-text-dim);
+    text-transform: uppercase;
+}
+
+/* ── Hairline divider between hero and metrics ────────────────────────── */
+.trader-cv-passport-hero-divider {
+    height: 1px;
+    margin: 0 32px;
+    background: var(--tcv-line-gold);
+    opacity: 0.5;
+}
+
+/* ── Metrics Grid ─────────────────────────────────────────────────────── */
+.trader-cv-passport-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    padding: 22px 32px 26px;
+}
+
+.trader-cv-passport-metric {
+    padding: 18px 14px 20px;
+    border-radius: var(--tcv-radius-md);
+    background: var(--tcv-bg);
+    border: 1px solid var(--tcv-border);
+    text-align: center;
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+    transition: transform var(--tcv-transition), box-shadow var(--tcv-transition), border-color var(--tcv-transition);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Top accent hairline — fades in on hover */
+.trader-cv-passport-metric::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20%; right: 20%;
+    height: 1px;
+    background: var(--tcv-line-gold);
+    opacity: 0;
+    transition: opacity var(--tcv-transition);
+}
+
+.trader-cv-passport-metric:hover {
+    transform: translateY(-3px);
+    border-color: var(--tcv-border-h);
+    box-shadow: var(--tcv-shadow-h);
+}
+
+.trader-cv-passport-metric:hover::before {
+    opacity: 1;
+}
+
+.trader-cv-passport-metric-code {
+    display: block;
+    font-family: var(--tp-mono);
+    font-size: 0.44rem;
+    letter-spacing: 0.14em;
+    color: var(--tcv-gold);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.trader-cv-passport-metric-label {
+    display: block;
+    font-family: var(--tp-mono);
+    font-size: 0.5rem;
+    color: var(--tcv-text-dim);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.trader-cv-passport-metric-val {
+    font-family: var(--tp-mono);
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--tcv-text);
+}
+
+/* ── Footer Row ───────────────────────────────────────────────────────── */
+.trader-cv-passport-footer-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    padding: 0 32px 22px;
+}
+
+.trader-cv-passport-footer-cell--right {
+    text-align: right;
+}
+
+.trader-cv-passport-quality {
+    margin: 4px 0 0;
+    font-family: var(--tp-mono);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--tcv-text);
+}
+
+.trader-cv-passport-quality-sub {
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: var(--tcv-text-dim);
+}
+
+.trader-cv-passport-footer-row .trader-cv-passport-hud {
+    color: rgba(234, 169, 96, 0.7);
+}
+
+.trader-cv-passport-issued {
+    margin: 4px 0 0;
+    font-family: var(--tp-mono);
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--tcv-text);
+}
+
+.trader-cv-passport-id {
+    margin: 10px 0 0;
+    font-family: var(--tp-mono);
+    font-size: 0.56rem;
+    letter-spacing: 0.12em;
+    color: var(--tcv-text-dim);
+}
+
+/* ── Watermark ────────────────────────────────────────────────────────── */
+.trader-cv-passport-watermark {
+    margin: 0;
+    padding: 13px 32px 18px;
+    font-family: var(--tp-mono);
+    font-size: 0.5rem;
+    color: var(--tcv-text-dim);
+    letter-spacing: 0.12em;
+    border-top: 1px solid var(--tcv-border);
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(234, 169, 96, 0.03) 50%,
+        transparent 100%);
+}
+
+/* ── Action Buttons ───────────────────────────────────────────────────── */
+.trader-cv-passport-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.trader-cv-passport-btn {
+    padding: 14px 26px;
+    border-radius: var(--tcv-radius-md);
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all var(--tcv-transition);
+    letter-spacing: 0.04em;
+}
+
+.trader-cv-passport-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.trader-cv-passport-btn--primary {
+    background: var(--tcv-grad-gold);
+    color: #0a0704;
+    border-color: var(--tcv-gold-warm);
+    box-shadow:
+        0 4px 24px rgba(234, 169, 96, 0.32),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.trader-cv-passport-btn--primary:hover:not(:disabled) {
+    filter: brightness(1.07);
+    box-shadow:
+        0 8px 32px rgba(234, 169, 96, 0.42),
+        0 0 48px rgba(234, 169, 96, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.trader-cv-passport-btn--primary:active:not(:disabled) {
+    transform: translateY(0);
+    filter: brightness(0.98);
+}
+
+.trader-cv-passport-btn--secondary {
+    background: var(--tcv-bg-h);
+    color: var(--tcv-text-muted);
+    border-color: var(--tcv-border-h);
+    box-shadow: var(--tcv-shadow);
+    backdrop-filter: var(--tcv-blur);
+    -webkit-backdrop-filter: var(--tcv-blur);
+}
+
+.trader-cv-passport-btn--secondary:hover:not(:disabled) {
+    border-color: rgba(234, 169, 96, 0.45);
+    color: var(--tcv-text);
+    box-shadow: var(--tcv-shadow-h);
+    transform: translateY(-1px);
+}
+
+.trader-cv-passport-btn--secondary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* ── Export Card (offscreen) ──────────────────────────────────────────── */
+.trader-cv-passport-export-stage {
+    position: fixed;
+    top: 0;
+    left: -10000px;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.trader-cv-passport-card--export {
+    width: 100%;
+    min-width: unset;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.trader-cv-passport-card--export,
+.trade-validator-shell .trader-cv-passport-card--export {
+    border-color: var(--tcv-border-h) !important;
+    box-shadow: var(--tcv-shadow) !important;
+}
+
+.trader-cv-passport-card--export .trader-cv-passport-top,
+.trade-validator-shell .trader-cv-passport-card--export .trader-cv-passport-top {
+    border-bottom-color: var(--tcv-border) !important;
+}
+
+.trader-cv-passport-card--export .trader-cv-passport-rank,
+.trade-validator-shell .trader-cv-passport-card--export .trader-cv-passport-rank {
+    color: var(--tcv-gold-bright) !important;
+}
+
+.trader-cv-passport-card--export .trader-cv-passport-metric-code,
+.trade-validator-shell .trader-cv-passport-card--export .trader-cv-passport-metric-code {
+    color: var(--tcv-gold) !important;
+}
+
+.trader-cv-passport-card--capture .trader-cv-passport-scan,
+.trader-cv-passport-card--capture .trader-cv-passport-chip-pulse {
+    animation: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PASSPORT RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+    .trader-cv-passport-top {
+        padding: 18px 22px 15px;
+    }
+
+    .trader-cv-passport-top::after {
+        left: 22px;
+        right: 22px;
+    }
+
+    .trader-cv-passport-hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 22px;
+        padding: 24px 22px;
+    }
+
+    .trader-cv-passport-identity   { order: 2; }
+    .trader-cv-passport-avatar-col { order: 1; margin: 0 auto; }
+
+    .trader-cv-passport-rank {
+        justify-content: center;
+    }
+
+    .trader-cv-passport-aurax-block {
+        order: 3;
+        text-align: center;
+        margin: 0 auto;
+        min-width: 200px;
+        box-shadow: var(--tcv-shadow), inset 0 5px 0 var(--tcv-gold-warm);
+    }
+
+    .trader-cv-passport-metrics {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 20px 22px 24px;
+        gap: 12px;
+    }
+
+    .trader-cv-passport-hero-divider {
+        margin: 0 22px;
+    }
+
+    .trader-cv-passport-footer-row {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+        padding: 0 22px 22px;
+    }
+
+    .trader-cv-passport-footer-cell--right { text-align: center; }
+
+    .trader-cv-passport-actions  { flex-direction: column; }
+    .trader-cv-passport-btn      { width: 100%; text-align: center; }
+
+    .trader-cv-passport-watermark { padding: 12px 22px 18px; }
+}
+
+@media (max-width: 480px) {
+    .trader-cv-passport-metrics {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .trader-cv-passport-brand-mark {
+        font-size: 1rem;
+        letter-spacing: 0.35em;
+    }
+
+    .trader-cv-passport-score-num { font-size: 2.4rem; }
 }
