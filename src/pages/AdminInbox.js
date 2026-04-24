@@ -58,24 +58,30 @@ const AdminInbox = () => {
   const supportLoadSeqRef = useRef(0);
   const messagesLoadSeqRef = useRef(0);
   const threadsRef = useRef(threads);
+  const userScrolledUpRef = useRef(false); // ← ADD THIS
+const lastScrollTopRef = useRef(0);  
   useEffect(() => {
     threadsRef.current = threads;
   }, [threads]);
 
-  // Scroll to bottom function - only called when explicitly needed
-  const scrollToBottom = useCallback((behavior = 'smooth') => {
-    if (messages.length > 0 && shouldScrollToBottom.current) {
-      setTimeout(() => {
-        endRef.current?.scrollIntoView({ behavior });
-      }, 100);
-    }
-  }, [messages.length]);
+// Scroll to bottom function — targets the messages container, NOT the whole page
+const scrollToBottom = useCallback((behavior = 'smooth') => {
+    const container = messagesContainerRef.current;
+    if (!container || userScrolledUpRef.current) return;
+    
+    // Scroll the messages container itself, not the whole page
+    setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+    }, 50);
+}, []);
 
   // Reset scroll flags when thread changes
   useEffect(() => {
     if (activeThreadId) {
       isThreadChanging.current = true;
       shouldScrollToBottom.current = false;
+        userScrolledUpRef.current = false;  // ← ADD THIS
+        lastScrollTopRef.current = 0;  
       
       // Reset scroll position to top when switching threads
       if (messagesContainerRef.current) {
@@ -84,42 +90,43 @@ const AdminInbox = () => {
     }
   }, [activeThreadId]);
 
-  // Handle message updates - ONLY auto-scroll for new messages from user or when user is at bottom
-  useEffect(() => {
-    // Skip on first load
+ // Handle message updates - ONLY auto-scroll when user is at bottom
+useEffect(() => {
     if (isFirstLoad.current) {
-      isFirstLoad.current = false;
-      return;
+        isFirstLoad.current = false;
+        prevMessagesLength.current = messages.length;
+        return;
     }
 
-    // Skip if thread is changing
     if (isThreadChanging.current) {
-      isThreadChanging.current = false;
-      return;
+        isThreadChanging.current = false;
+        prevMessagesLength.current = messages.length;
+        return;
     }
 
-    // Check if we have new messages
     const hasNewMessages = messages.length > prevMessagesLength.current;
     
     if (hasNewMessages && messagesContainerRef.current) {
-      const container = messagesContainerRef.current;
-      const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
-      
-      // Get the last message
-      const lastMessage = messages[messages.length - 1];
-      const isOwnMessage = lastMessage && String(lastMessage.senderId) === String(user?.id);
-      
-      // Only auto-scroll if:
-      // 1. The new message is from the current user (optimistic update), OR
-      // 2. User was already at the bottom when message arrived
-      if (isOwnMessage || isAtBottom) {
-        shouldScrollToBottom.current = true;
-        scrollToBottom('smooth');
-      }
+        const container = messagesContainerRef.current;
+        const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+        
+        const lastMessage = messages[messages.length - 1];
+        const isOwnMessage = lastMessage && String(lastMessage.senderId) === String(user?.id);
+        
+        // NEW LOGIC: Only scroll if user is at bottom (regardless of who sent)
+        // Do NOT force scroll for own messages if user has scrolled up
+        if (isAtBottom) {
+            shouldScrollToBottom.current = true;
+            scrollToBottom('smooth');
+        } else {
+            // User has scrolled up - respect their position
+            userScrolledUpRef.current = true;
+            shouldScrollToBottom.current = false;
+        }
     }
     
     prevMessagesLength.current = messages.length;
-  }, [messages, user?.id, scrollToBottom]);
+}, [messages, user?.id, scrollToBottom]);
 
   const activeThread = useMemo(() => threads.find(t => t.id === activeThreadId), [threads, activeThreadId]);
   const activeUser = useMemo(() => {
@@ -435,46 +442,65 @@ useEffect(() => {
   }, [user, activeThreadId, activeTab, userSupportThreadId]);
 
   /* â”€â”€ Send message â”€â”€ */
-  const handleSend = async (e) => {
+ const handleSend = async (e) => {
     e.preventDefault();
     if (ensuringThread || loadingMessages) return;
     const hasText = input.trim().length > 0;
     if (!hasText && !file) return;
     const body = hasText ? input.trim() : `[file] ${file?.name || ''}`;
     const optimistic = {
-      id: `tmp_${Date.now()}`,
-      threadId: activeThreadId,
-      senderId: String(user.id),
-      recipientId: String(activeThread?.userId),
-      body,
-      createdAt: new Date().toISOString(),
-      status: 'sending'
+        id: `tmp_${Date.now()}`,
+        threadId: activeThreadId,
+        senderId: String(user.id),
+        recipientId: String(activeThread?.userId),
+        body,
+        createdAt: new Date().toISOString(),
+        status: 'sending'
     };
     setMessages(prev => [...prev, optimistic]);
     setInput('');
     setFile(null);
     
-    // Force scroll for own messages immediately
+    // Reset scroll-up flag so own messages show correctly
+    userScrolledUpRef.current = false;
     shouldScrollToBottom.current = true;
     scrollToBottom('smooth');
     
     try {
-      if (hasText) {
-        const resp = await Api.sendThreadMessage(activeThreadId, body);
-        const created = resp.data?.created;
-        if (created) {
-          setMessages(prev => prev.map(m =>
-            m.id === optimistic.id
-              ? { ...created, senderId: String(created.senderId), createdAt: created.createdAt || created.created_at }
-              : m
-          ));
+        if (hasText) {
+            const resp = await Api.sendThreadMessage(activeThreadId, body);
+            const created = resp.data?.created;
+            if (created) {
+                setMessages(prev => prev.map(m =>
+                    m.id === optimistic.id
+                        ? { ...created, senderId: String(created.senderId), createdAt: created.createdAt || created.created_at }
+                        : m
+                ));
+            }
         }
-      }
     } catch (e) {
-      logClassifiedError('admin_inbox.send_message', e, { activeThreadId });
+        logClassifiedError('admin_inbox.send_message', e, { activeThreadId });
     }
-  };
-
+};
+// Track user scroll position to prevent unwanted auto-scroll
+useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+        const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+        
+        if (isAtBottom) {
+            userScrolledUpRef.current = false;
+        } else {
+            userScrolledUpRef.current = true;
+        }
+        lastScrollTopRef.current = container.scrollTop;
+    };
+    
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+}, []);
   const formatTime = (ts) => (ts ? new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
   const formatDate = (ts) => {
     if (!ts) return '';
@@ -522,7 +548,7 @@ useEffect(() => {
   const showFriendsTab = true;
   const canUseFriendsTab = isFriendsAllowed(user);
   
-  const onTabChange = (tab) => {
+ const onTabChange = (tab) => {
     setActiveTab(tab);
     setActiveThreadId(null);
     setSelectedUserId(null);
@@ -532,12 +558,13 @@ useEffect(() => {
     isThreadChanging.current = false;
     shouldScrollToBottom.current = false;
     prevMessagesLength.current = 0;
+    userScrolledUpRef.current = false;  // ← ADD THIS
+    lastScrollTopRef.current = 0;       // ← ADD THIS
     
-    // Scroll to top
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = 0;
+        messagesContainerRef.current.scrollTop = 0;
     }
-  };
+};
 
   const displayName = (u) => u?.username || u?.name || u?.email || `User ${u?.id}`;
 
