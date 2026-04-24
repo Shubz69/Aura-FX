@@ -1,6 +1,6 @@
 {
   "config": {
-    "configFile": "C:\\Users\\1230s\\OneDrive\\Documents\\Samy\\Aura FX\\playwright.final-background-qa.config.js",
+    "configFile": "C:\\Users\\1230s\\OneDrive\\Documents\\Samy\\Aura FX\\playwright.final-hardcheck.config.js",
     "rootDir": "C:/Users/1230s/OneDrive/Documents/Samy/Aura FX/e2e",
     "forbidOnly": false,
     "fullyParallel": false,
@@ -27,7 +27,7 @@
         "testDir": "C:/Users/1230s/OneDrive/Documents/Samy/Aura FX/e2e",
         "testIgnore": [],
         "testMatch": [
-          "**/final-background-full-qa-pass.spec.js"
+          "**/final-hardcheck-production.spec.js"
         ],
         "timeout": 10800000
       }
@@ -41,7 +41,7 @@
       [
         "json",
         {
-          "outputFile": "e2e/reports/final-background-qa-playwright-results.json"
+          "outputFile": "e2e/reports/final-hardcheck-playwright-results.json"
         }
       ]
     ],
@@ -59,13 +59,13 @@
   },
   "suites": [
     {
-      "title": "final-background-full-qa-pass.spec.js",
-      "file": "final-background-full-qa-pass.spec.js",
+      "title": "final-hardcheck-production.spec.js",
+      "file": "final-hardcheck-production.spec.js",
       "column": 0,
       "line": 0,
       "specs": [
         {
-          "title": "final background full QA pass (soft-fail aggregate)",
+          "title": "production hard-check autonomous pass",
           "ok": true,
           "tags": [],
           "tests": [
@@ -80,12 +80,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 159199,
+                  "duration": 73678,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-22T16:19:48.697Z",
+                  "startTime": "2026-04-22T18:03:15.621Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -93,9 +93,9 @@
               "status": "expected"
             }
           ],
-          "id": "e84cab8e7f2a51409ce0-a02fae83a39b8d73cb85",
-          "file": "final-background-full-qa-pass.spec.js",
-          "line": 63,
+          "id": "c57c08a42652d7e22d60-e7eb9af67e72bb210f7b",
+          "file": "final-hardcheck-production.spec.js",
+          "line": 80,
           "column": 5
         }
       ]
@@ -103,8 +103,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-22T16:19:47.415Z",
-    "duration": 160856.715,
+    "startTime": "2026-04-22T18:03:14.361Z",
+    "duration": 76005.627,
     "expected": 1,
     "skipped": 0,
     "unexpected": 0,

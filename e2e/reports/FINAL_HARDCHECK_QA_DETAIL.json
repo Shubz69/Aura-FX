@@ -1,0 +1,1504 @@
+{
+  "startedAt": "2026-04-22T18:03:16.449Z",
+  "base": "https://www.auraterminal.ai",
+  "phase0": {
+    "attempts": 0,
+    "adminValid": true,
+    "userValid": true,
+    "notes": [
+      "admin state validated from existing file",
+      "user state validated from existing file"
+    ]
+  },
+  "passed": [
+    {
+      "id": "FLOW-MSG-A2U",
+      "feature": "Admin to user messaging",
+      "url": "https://www.auraterminal.ai/admin/inbox"
+    },
+    {
+      "id": "FLOW-MSG-U2A",
+      "feature": "User to admin messaging",
+      "url": "https://www.auraterminal.ai/messages"
+    },
+    {
+      "id": "DATA-reports",
+      "feature": "Data validity /reports",
+      "url": "https://www.auraterminal.ai/reports"
+    },
+    {
+      "id": "DATA-reports-dna",
+      "feature": "Data validity /reports/dna",
+      "url": "https://www.auraterminal.ai/reports/dna"
+    },
+    {
+      "id": "DATA-reports-live",
+      "feature": "Data validity /reports/live",
+      "url": "https://www.auraterminal.ai/reports/live"
+    },
+    {
+      "id": "DATA-manual-metrics-dashboard",
+      "feature": "Data validity /manual-metrics/dashboard",
+      "url": "https://www.auraterminal.ai/manual-metrics/dashboard"
+    },
+    {
+      "id": "DATA-trader-deck",
+      "feature": "Data validity /trader-deck",
+      "url": "https://www.auraterminal.ai/trader-deck"
+    },
+    {
+      "id": "DATA-trader-deck-trade-validator-overview",
+      "feature": "Data validity /trader-deck/trade-validator/overview",
+      "url": "https://www.auraterminal.ai/trader-deck/trade-validator/overview"
+    },
+    {
+      "id": "DATA-aura-analysis-dashboard-overview",
+      "feature": "Data validity /aura-analysis/dashboard/overview",
+      "url": "https://www.auraterminal.ai/aura-analysis/dashboard/overview"
+    },
+    {
+      "id": "DATA-aura-analysis-dashboard-performance",
+      "feature": "Data validity /aura-analysis/dashboard/performance",
+      "url": "https://www.auraterminal.ai/aura-analysis/dashboard/performance"
+    },
+    {
+      "id": "DATA-backtesting",
+      "feature": "Data validity /backtesting",
+      "url": "https://www.auraterminal.ai/backtesting"
+    },
+    {
+      "id": "DATA-backtesting-sessions",
+      "feature": "Data validity /backtesting/sessions",
+      "url": "https://www.auraterminal.ai/backtesting/sessions"
+    },
+    {
+      "id": "DATA-leaderboard",
+      "feature": "Data validity /leaderboard",
+      "url": "https://www.auraterminal.ai/leaderboard"
+    },
+    {
+      "id": "THIN-",
+      "feature": "Thin-shell classify /",
+      "url": "https://www.auraterminal.ai/"
+    },
+    {
+      "id": "THIN-reports",
+      "feature": "Thin-shell classify /reports",
+      "url": "https://www.auraterminal.ai/reports"
+    },
+    {
+      "id": "THIN-reports-dna",
+      "feature": "Thin-shell classify /reports/dna",
+      "url": "https://www.auraterminal.ai/reports/dna"
+    },
+    {
+      "id": "THIN-reports-live",
+      "feature": "Thin-shell classify /reports/live",
+      "url": "https://www.auraterminal.ai/reports/live"
+    },
+    {
+      "id": "THIN-backtesting-sessions",
+      "feature": "Thin-shell classify /backtesting/sessions",
+      "url": "https://www.auraterminal.ai/backtesting/sessions"
+    },
+    {
+      "id": "THIN-leaderboard",
+      "feature": "Thin-shell classify /leaderboard",
+      "url": "https://www.auraterminal.ai/leaderboard"
+    },
+    {
+      "id": "THIN-admin-inbox",
+      "feature": "Thin-shell classify /admin/inbox",
+      "url": "https://www.auraterminal.ai/admin/inbox"
+    },
+    {
+      "id": "THIN-admin-inbox-user-88",
+      "feature": "Thin-shell classify /admin/inbox?user=88",
+      "url": "https://www.auraterminal.ai/admin/inbox?user=88"
+    },
+    {
+      "id": "THIN-admin-users",
+      "feature": "Thin-shell classify /admin/users",
+      "url": "https://www.auraterminal.ai/admin/users"
+    },
+    {
+      "id": "THIN-settings",
+      "feature": "Thin-shell classify /settings",
+      "url": "https://www.auraterminal.ai/settings"
+    },
+    {
+      "id": "FLOW-NOTIFICATIONS",
+      "feature": "Notification system behavior",
+      "url": "https://www.auraterminal.ai/profile"
+    },
+    {
+      "id": "FLOW-SUB",
+      "feature": "Subscription flow",
+      "url": "https://www.auraterminal.ai/subscription"
+    },
+    {
+      "id": "FLOW-COMMUNITY",
+      "feature": "Community flow",
+      "url": "https://www.auraterminal.ai/community"
+    },
+    {
+      "id": "FLOW-ADMIN-USERS",
+      "feature": "Admin users flow",
+      "url": "https://www.auraterminal.ai/admin/users"
+    },
+    {
+      "id": "FLOW-SETTINGS",
+      "feature": "Settings flow",
+      "url": "https://www.auraterminal.ai/settings"
+    },
+    {
+      "id": "GATE-SURV-001",
+      "feature": "Surveillance entitlement routing",
+      "url": "https://www.auraterminal.ai/surveillance"
+    }
+  ],
+  "failed": [],
+  "blocked": [],
+  "needsManual": [],
+  "messaging": {
+    "a2u": "pass",
+    "u2a": "pass",
+    "status": "full-duplex-pass"
+  },
+  "dataValidity": [
+    {
+      "path": "/reports",
+      "dataPresent": true,
+      "shellOnly": false,
+      "metricWidgets": 2,
+      "numericTokens": 1,
+      "status": "healthy"
+    },
+    {
+      "path": "/reports/dna",
+      "dataPresent": true,
+      "shellOnly": false,
+      "metricWidgets": 2,
+      "numericTokens": 1,
+      "status": "healthy"
+    },
+    {
+      "path": "/reports/live",
+      "dataPresent": true,
+      "shellOnly": false,
+      "metricWidgets": 2,
+      "numericTokens": 1,
+      "status": "healthy"
+    },
+    {
+      "path": "/manual-metrics/dashboard",
+      "dataPresent": true,
+      "shellOnly": false,
+      "metricWidgets": 2,
+      "numericTokens": 1,
+      "status": "healthy"
+    },
+    {
+      "path": "/trader-deck",
+      "dataPresent": true,
+      "shellOnly": false,
+      "metricWidgets": 2,
+      "numericTokens": 1,
+      "status": "healthy"
+    },
+    {
+      "path": "/trader-deck/trade-validator/overview",
+      "dataPresent": true,
+      "shellOnly": false,
+      "metricWidgets": 2,
+      "numericTokens": 1,
+      "status": "healthy"
+    },
+    {
+      "path": "/aura-analysis/dashboard/overview",
+      "dataPresent": true,
+      "shellOnly": false,
+      "metricWidgets": 2,
+      "numericTokens": 1,
+      "status": "healthy"
+    },
+    {
+      "path": "/aura-analysis/dashboard/performance",
+      "dataPresent": true,
+      "shellOnly": false,
+      "metricWidgets": 2,
+      "numericTokens": 1,
+      "status": "healthy"
+    },
+    {
+      "path": "/backtesting",
+      "dataPresent": true,
+      "shellOnly": false,
+      "metricWidgets": 2,
+      "numericTokens": 1,
+      "status": "healthy"
+    },
+    {
+      "path": "/backtesting/sessions",
+      "dataPresent": true,
+      "shellOnly": false,
+      "metricWidgets": 2,
+      "numericTokens": 1,
+      "status": "healthy"
+    },
+    {
+      "path": "/leaderboard",
+      "dataPresent": true,
+      "shellOnly": false,
+      "metricWidgets": 2,
+      "numericTokens": 1,
+      "status": "healthy"
+    }
+  ],
+  "apiReliability": {
+    "/api/notifications": {
+      "ok": 43,
+      "http4xx5xx": 0,
+      "requestFailed": 15,
+      "retryObserved": true,
+      "gracefulFallback": "partial",
+      "samples": [
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=20",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1",
+        "requestfailed https://www.auraterminal.ai/api/notifications?limit=1"
+      ]
+    },
+    "/api/subscription/status": {
+      "ok": 64,
+      "http4xx5xx": 1,
+      "requestFailed": 19,
+      "retryObserved": true,
+      "gracefulFallback": "partial",
+      "samples": [
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "requestfailed https://www.auraterminal.ai/api/subscription/status",
+        "HTTP 429 https://www.auraterminal.ai/api/subscription/status"
+      ]
+    },
+    "/api/aura-analysis/platform-connect": {
+      "ok": 6,
+      "http4xx5xx": 0,
+      "requestFailed": 36,
+      "retryObserved": true,
+      "gracefulFallback": "partial",
+      "samples": [
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+        "requestfailed https://www.auraterminal.ai/api/aura-analysis/platform-connect"
+      ]
+    },
+    "/api/reports/eligibility": {
+      "ok": 7,
+      "http4xx5xx": 0,
+      "requestFailed": 9,
+      "retryObserved": true,
+      "gracefulFallback": "partial",
+      "samples": [
+        "requestfailed https://www.auraterminal.ai/api/reports/eligibility",
+        "requestfailed https://www.auraterminal.ai/api/reports/eligibility",
+        "requestfailed https://www.auraterminal.ai/api/reports/eligibility",
+        "requestfailed https://www.auraterminal.ai/api/reports/eligibility",
+        "requestfailed https://www.auraterminal.ai/api/reports/eligibility",
+        "requestfailed https://www.auraterminal.ai/api/reports/eligibility",
+        "requestfailed https://www.auraterminal.ai/api/reports/eligibility",
+        "requestfailed https://www.auraterminal.ai/api/reports/eligibility",
+        "requestfailed https://www.auraterminal.ai/api/reports/eligibility"
+      ]
+    },
+    "/api/me": {
+      "ok": 76,
+      "http4xx5xx": 0,
+      "requestFailed": 14,
+      "retryObserved": true,
+      "gracefulFallback": "partial",
+      "samples": [
+        "requestfailed https://www.auraterminal.ai/api/me",
+        "requestfailed https://www.auraterminal.ai/api/me",
+        "requestfailed https://www.auraterminal.ai/api/messages/threads/ensure-admin",
+        "requestfailed https://www.auraterminal.ai/api/messages/threads/30/read",
+        "requestfailed https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776881012076",
+        "requestfailed https://www.auraterminal.ai/api/me",
+        "requestfailed https://www.auraterminal.ai/api/me",
+        "requestfailed https://www.auraterminal.ai/api/me",
+        "requestfailed https://www.auraterminal.ai/api/me",
+        "requestfailed https://www.auraterminal.ai/api/me",
+        "requestfailed https://www.auraterminal.ai/api/me",
+        "requestfailed https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776881044426",
+        "requestfailed https://www.auraterminal.ai/api/me",
+        "requestfailed https://www.auraterminal.ai/api/me"
+      ]
+    },
+    "/api/users/88": {
+      "ok": 32,
+      "http4xx5xx": 0,
+      "requestFailed": 16,
+      "retryObserved": true,
+      "gracefulFallback": "partial",
+      "samples": [
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88",
+        "requestfailed https://www.auraterminal.ai/api/users/88"
+      ]
+    },
+    "/api/markets/snapshot": {
+      "ok": 0,
+      "http4xx5xx": 0,
+      "requestFailed": 0,
+      "retryObserved": false,
+      "gracefulFallback": "n/a",
+      "samples": []
+    }
+  },
+  "thinShellFindings": [
+    {
+      "path": "/",
+      "classification": "thin but intentional",
+      "textLen": 393,
+      "sample": "AURA TERMINAL™ HOME AURA NETWORK AURA AI C & S LEADERBOARD 20 LOADING Preparing Aura Terminal™… Syncing Aura Analysis, journal, lab sessions, and market snapshot. AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All system"
+    },
+    {
+      "path": "/reports",
+      "classification": "thin but intentional",
+      "textLen": 310,
+      "sample": "AURA TERMINAL™ HOME AURA NETWORK AURA AI C & S LEADERBOARD 20 Loading reports… AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems operational"
+    },
+    {
+      "path": "/reports/dna",
+      "classification": "healthy",
+      "textLen": 420,
+      "sample": "AURA TERMINAL™ HOME AURA NETWORK AURA AI C & S LEADERBOARD 20 Trader DNA is gated to Elite This route is currently available to Elite and Admin users only. Upgrade to Elite Back to reports AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All "
+    },
+    {
+      "path": "/reports/live",
+      "classification": "thin but intentional",
+      "textLen": 302,
+      "sample": "AURA TERMINAL™ HOME AURA NETWORK AURA AI C & S LEADERBOARD 20 Loading… AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems operational"
+    },
+    {
+      "path": "/backtesting/sessions",
+      "classification": "thin but intentional",
+      "textLen": 476,
+      "sample": "AURA TERMINAL™ HOME AURA NETWORK AURA AI C & S LEADERBOARD 20 HUB SESSIONS TRADES REPORTS Session manager Filter, resume, duplicate, archive, or remove backtesting sessions. NEW SESSION STATUS All Draft Active Paused Completed Archived Loading… AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Pr"
+    },
+    {
+      "path": "/leaderboard",
+      "classification": "healthy",
+      "textLen": 2265,
+      "sample": "AURA TERMINAL™ HOME AURA NETWORK AURA AI C & S LEADERBOARD LEADERBOARD COMPETE WITH THE BEST TRADERS IN THE CYBER REALM TODAY THIS WEEK THIS MONTH ALL TIME I 🥈 🏆 🇨🇦 INDIANAROMAN 165 XP TOTAL Level 2 Active long ago A 👑 🥇 🏆 🇳🇬 AURA-KING 1,110,197 XP TOTAL Level 100 Active 2h ago B 🥉 🏆 🇸🇬 BRUNOGK 92.7 XP TOTAL Level 1 Active long ago 🏆 TOP 10 LEADERBOARD · ALL TIME R"
+    },
+    {
+      "path": "/admin/inbox",
+      "classification": "thin but intentional",
+      "textLen": 398,
+      "sample": "AURA TERMINAL™ HOME AURA NETWORK AURA AI C & S LEADERBOARD ADMIN FRIENDS INBOX — Loading users… Select a user to open conversation SELECT A USER FROM THE SIDEBAR SEND AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All s"
+    },
+    {
+      "path": "/admin/inbox?user=88",
+      "classification": "thin but intentional",
+      "textLen": 398,
+      "sample": "AURA TERMINAL™ HOME AURA NETWORK AURA AI C & S LEADERBOARD ADMIN FRIENDS INBOX — Loading users… Select a user to open conversation SELECT A USER FROM THE SIDEBAR SEND AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All s"
+    },
+    {
+      "path": "/admin/users",
+      "classification": "thin but intentional",
+      "textLen": 369,
+      "sample": "AURA TERMINAL™ HOME AURA NETWORK AURA AI C & S LEADERBOARD 2 REGISTERED USERS 👥 Total: 0 | 🟢 Online: 0 | 🔴 Offline: 0 LOADING USERS... AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems operational"
+    },
+    {
+      "path": "/settings",
+      "classification": "thin but intentional",
+      "textLen": 303,
+      "sample": "AURA TERMINAL™ HOME AURA NETWORK AURA AI C & S LEADERBOARD 2 LOADING... AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems operational"
+    }
+  ],
+  "adminFindings": [],
+  "gatingFindings": [
+    {
+      "path": "/surveillance",
+      "landed": "https://www.auraterminal.ai/surveillance",
+      "verdict": "healthy direct route"
+    }
+  ],
+  "notificationFindings": [
+    {
+      "dropdownInteractive": true,
+      "apiOk": 35,
+      "apiFailures": 11,
+      "graceful": "yes"
+    }
+  ],
+  "consoleSamples": [
+    {
+      "role": "admin",
+      "at": "https://www.auraterminal.ai/admin",
+      "text": "Error fetching channels: TypeError: Failed to fetch\n    at window.fetch (https://www.auraterminal.ai/static/js/main.8d3023be.js:2:124564)\n    at aa (https://www.auraterminal.ai/static/js/7382.51016373.chunk.js:1:22193)\n    at https://www.auraterminal.ai/static/js/7382.51016373.ch"
+    },
+    {
+      "role": "admin",
+      "at": "https://www.auraterminal.ai/admin",
+      "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "admin",
+      "at": "https://www.auraterminal.ai/admin",
+      "text": "Error fetching users: TypeError: Failed to fetch\n    at window.fetch (https://www.auraterminal.ai/static/js/main.8d3023be.js:2:124564)\n    at $e (https://www.auraterminal.ai/static/js/7382.51016373.chunk.js:1:21328)\n    at https://www.auraterminal.ai/static/js/7382.51016373.chunk"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/messages",
+      "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/reports",
+      "text": "[observability] {scope: reports.eligibility.fetch, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/reports/dna",
+      "text": "[observability] {scope: reports.eligibility.fetch, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/reports/live",
+      "text": "[observability] {scope: reports.eligibility.fetch, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/reports/live",
+      "text": "[observability] {scope: reports.eligibility.fetch, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/reports/live",
+      "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/manual-metrics/dashboard",
+      "text": "[observability] {scope: reports.eligibility.fetch, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/manual-metrics/dashboard",
+      "text": "[observability] {scope: reports.eligibility.fetch, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/manual-metrics/dashboard",
+      "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/trader-deck",
+      "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/trader-deck/trade-validator/overview",
+      "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/aura-analysis/ai",
+      "text": "[observability] {scope: reports.eligibility.fetch, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/aura-analysis/ai",
+      "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/aura-analysis/ai",
+      "text": "[observability] {scope: reports.eligibility.fetch, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/aura-analysis/ai",
+      "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/backtesting",
+      "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "admin",
+      "at": "https://www.auraterminal.ai/admin/inbox",
+      "text": "[observability] {scope: admin_inbox.load_users_threads, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "admin",
+      "at": "https://www.auraterminal.ai/admin/inbox?user=88",
+      "text": "[observability] {scope: admin_inbox.load_users_threads, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/community",
+      "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/community",
+      "text": "Failed to fetch notifications: TypeError: Failed to fetch\n    at window.fetch (https://www.auraterminal.ai/static/js/main.8d3023be.js:2:124564)\n    at https://www.auraterminal.ai/static/js/main.8d3023be.js:2:448385\n    at https://www.auraterminal.ai/static/js/main.8d3023be.js:2:4"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/community",
+      "text": "[observability] {scope: notifications.list_fetch, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/community",
+      "text": "Failed to update presence: TypeError: Failed to fetch\n    at window.fetch (https://www.auraterminal.ai/static/js/main.8d3023be.js:2:124564)\n    at e (https://www.auraterminal.ai/static/js/4891.4c67b0d9.chunk.js:1:115170)\n    at https://www.auraterminal.ai/static/js/4891.4c67b0d9."
+    },
+    {
+      "role": "admin",
+      "at": "https://www.auraterminal.ai/admin/users",
+      "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/community/announcements",
+      "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+    },
+    {
+      "role": "user",
+      "at": "https://www.auraterminal.ai/community/announcements",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    }
+  ],
+  "networkSamples": [
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/community/channels",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/user-status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/me",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/users/86",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/users",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/me",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/messages/threads/ensure-admin",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/users",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/messages/threads/30/read",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776881012076",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/reports/eligibility",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/me",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/reports/eligibility",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/reports/eligibility",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/reports/eligibility",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/me",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/reports/eligibility",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/reports/eligibility",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/me",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/trader-deck/content?type=outlook-daily&date=2026-04-22",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/validator-accounts",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/me",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/validator-accounts",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/reports/eligibility",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/reports/eligibility",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/me",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/backtesting/summary",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/backtesting/sessions",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/backtesting/summary",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/backtesting/sessions",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/me",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/backtesting/sessions",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/leaderboard?timeframe=all-time&_cb=1776881035045",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/leaderboard?timeframe=all-time&_cb=1776881036157",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/journal/daily?date=2026-04-22",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/trades?pnl=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/reports/eligibility",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/trader-lab/sessions",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/journal/tasks?dateFrom=2026-03-31&dateTo=2026-04-22",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/trades",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/validator-accounts",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776881044426",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/users",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/users",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/users",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/users",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/user-status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/users",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/community/users",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=20",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/community/update-presence",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/community/channels?bootstrap=true",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/user-status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/users",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/me",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/users",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/admin/user-status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/me",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/users/86",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/community/channel-push-preference?channelId=announcements",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/community/users",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/subscription/status",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/community/channels/announcements/messages",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "user",
+      "url": "https://www.auraterminal.ai/api/users/88",
+      "error": "net::ERR_ABORTED"
+    }
+  ],
+  "checkedGaps": [
+    "PHASE0 auth rebuild+validation",
+    "Messaging duplex admin↔user",
+    "Data/calculation target pages",
+    "API reliability target endpoints",
+    "Thin-shell explicit classifications",
+    "Real flows (subscription/profile/community/admin users/settings)",
+    "Edge reload/navigation checks",
+    "Surveillance entitlement verdict",
+    "Notification system behavior"
+  ],
+  "uncheckedGaps": [],
+  "stage": "final",
+  "lastUpdatedAt": "2026-04-22T18:04:30.119Z",
+  "endedAt": "2026-04-22T18:04:30.119Z"
+}

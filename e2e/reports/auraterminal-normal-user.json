@@ -6,11 +6,11 @@
       "localStorage": [
         {
           "name": "daily_login_check_88",
-          "value": "Wed Apr 22 2026"
+          "value": "Fri Apr 24 2026"
         },
         {
           "name": "token",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODgsImVtYWlsIjoic2hvYmhpdDIwNjlAZ21haWwuY29tIiwidXNlcm5hbWUiOiJhdXJhcWFfMTc3NjczMzcyMzA3NCIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzc2ODgwNDYyLCJleHAiOjE3NzY5NjY4NjJ9.eIEfF3_Yt1zy84IHZShJRlwFeVabgbcgA9I4Y4jj6O0"
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODgsImVtYWlsIjoic2hvYmhpdDIwNjlAZ21haWwuY29tIiwidXNlcm5hbWUiOiJhdXJhcWFfMTc3NjczMzcyMzA3NCIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzc2OTg5NTcyLCJleHAiOjE3NzcwNzU5NzJ9.qh5MdLpvMeD-Ik5XOORJ0S2Mhvem0LNZcV1Fd5YWB4c"
         },
         {
           "name": "hasActiveSubscription",
@@ -18,10 +18,14 @@
         },
         {
           "name": "user",
-          "value": "{\"id\":88,\"username\":\"auraqa_1776733723074\",\"email\":\"shobhit2069@gmail.com\",\"name\":\"Playwright QA Trader\",\"avatar\":\"\",\"role\":\"USER\",\"mfaVerified\":false,\"timezone\":\"Europe/London\",\"level\":1,\"xp\":7,\"phone\":\"+447368877735\",\"address\":\"\",\"bio\":\"\"}"
+          "value": "{\"id\":88,\"username\":\"auraqa_1776733723074\",\"email\":\"shobhit2069@gmail.com\",\"name\":\"Playwright QA Trader\",\"avatar\":null,\"role\":\"USER\",\"mfaVerified\":false,\"timezone\":\"Europe/London\"}"
         },
         {
           "name": "gdprAccepted",
+          "value": "true"
+        },
+        {
+          "name": "daily_login_in_progress_88",
           "value": "true"
         }
       ]

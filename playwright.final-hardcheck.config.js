@@ -1,23 +1,23 @@
 // @ts-check
-/** One-shot full-site soft-fail QA pass (user + admin). */
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
-  testMatch: '**/final-background-full-qa-pass.spec.js',
+  testMatch: '**/final-hardcheck-production.spec.js',
   fullyParallel: false,
   workers: 1,
   timeout: 180 * 60 * 1000,
   expect: { timeout: 12000 },
-  reporter: [['list'], ['json', { outputFile: 'e2e/reports/final-background-qa-playwright-results.json' }]],
+  reporter: [['list'], ['json', { outputFile: 'e2e/reports/final-hardcheck-playwright-results.json' }]],
   use: {
     ...devices['Desktop Chrome'],
-    trace: 'off',
-    screenshot: 'off',
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
     video: 'off',
     navigationTimeout: 60000,
-    ignoreHTTPSErrors: true,
     actionTimeout: 20000,
+    ignoreHTTPSErrors: true,
   },
   projects: [{ name: 'chromium', use: {} }],
 });
+

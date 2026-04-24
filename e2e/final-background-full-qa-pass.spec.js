@@ -70,7 +70,7 @@ test('final background full QA pass (soft-fail aggregate)', async ({ browser }) 
     failed: [],
     blocked: [],
     needsManual: [],
-    messaging: { userMessages: null, adminInbox: null },
+    messaging: { userMessages: null, adminInbox: null, a2u: null, u2a: null, fullDuplexPass: false },
     dataIssues: [],
     infoStaleIssues: [],
     adminIssues: [],
@@ -82,6 +82,16 @@ test('final background full QA pass (soft-fail aggregate)', async ({ browser }) 
   const capSamples = (arr, cap = 35) => {
     if (arr.length <= cap) return arr;
     return arr.slice(0, cap);
+  };
+
+  const persistArtifacts = (stage = 'checkpoint') => {
+    report.stage = stage;
+    report.lastUpdatedAt = new Date().toISOString();
+    fs.mkdirSync(path.dirname(OUT_JSON), { recursive: true });
+    fs.writeFileSync(OUT_JSON, JSON.stringify(report, null, 2), 'utf8');
+    fs.writeFileSync(OUT_MD, buildMarkdown(report), 'utf8');
+    const boardPath = path.join(process.cwd(), 'ISSUE_BOARD.md');
+    fs.writeFileSync(boardPath, buildIssueBoardMd(report), 'utf8');
   };
 
   /**
@@ -209,6 +219,7 @@ test('final background full QA pass (soft-fail aggregate)', async ({ browser }) 
   } finally {
     report.consoleSamples.push(...pubBucket.console);
     report.networkSamples.push(...pubBucket.network);
+    persistArtifacts('public-complete');
     await publicCtx.close();
   }
 
@@ -217,6 +228,112 @@ test('final background full QA pass (soft-fail aggregate)', async ({ browser }) 
   const u = await userCtx.newPage();
   const userBucket = { console: [], network: [] };
   attachCollectors(u, userBucket);
+
+  // —— Explicit bidirectional messaging (admin ↔ user) ——
+  if (fs.existsSync(ADMIN_STATE)) {
+    const adminMsgCtx = await browser.newContext({ storageState: ADMIN_STATE });
+    const aMsg = await adminMsgCtx.newPage();
+    const adminMsgBucket = { console: [], network: [] };
+    attachCollectors(aMsg, adminMsgBucket);
+    try {
+      await aMsg.goto(`${BASE}/admin/inbox`, { waitUntil: 'domcontentloaded', timeout: 55000 });
+      await u.goto(`${BASE}/messages`, { waitUntil: 'domcontentloaded', timeout: 55000 });
+      await u.waitForTimeout(700);
+      await aMsg.waitForTimeout(900);
+
+      const adminInput = aMsg.locator('.admin-inbox-form-row input[type="text"]');
+      const userInput = u.locator('.message-input');
+      const adminSend = aMsg.locator('.admin-inbox-send-btn');
+      const userSend = u.locator('.send-button');
+
+      const adminToUserText = `QA_A2U_${Date.now()}`;
+      let a2uPass = false;
+      try {
+        await adminInput.fill(adminToUserText, { timeout: 10000 });
+        await adminSend.click({ timeout: 10000 });
+        await expect(u.locator('.message-content', { hasText: adminToUserText }).first()).toBeVisible({ timeout: 12000 });
+        a2uPass = true;
+        report.passed.push({
+          id: 'MSG-A2U',
+          feature: 'Messaging admin → user support-thread delivery',
+          url: `${BASE}/messages`,
+          bodyChars: (await pageDigest(u)).len,
+          notes: 'strict directional delivery verified',
+          dataSignal: 'substantive',
+        });
+      } catch (e) {
+        report.failed.push({
+          id: 'MSG-A2U',
+          severity: 'P1',
+          url: `${BASE}/messages`,
+          feature: 'Messaging admin → user support-thread delivery',
+          description: 'Admin-sent message not visible on user page within bounded timeout',
+          likelyRootCause: 'Realtime/polling latency or thread mismatch',
+          evidence: (e && e.message) || String(e),
+          knownOrNew: 'known',
+        });
+      }
+
+      const userToAdminText = `QA_U2A_${Date.now()}`;
+      let u2aPass = false;
+      try {
+        await userInput.fill(userToAdminText, { timeout: 10000 });
+        await userSend.click({ timeout: 10000 });
+        await expect(aMsg.locator('.admin-inbox-message-text', { hasText: userToAdminText }).first()).toBeVisible({ timeout: 12000 });
+        u2aPass = true;
+        report.passed.push({
+          id: 'MSG-U2A',
+          feature: 'Messaging user → admin support-thread delivery',
+          url: `${BASE}/admin/inbox`,
+          bodyChars: (await pageDigest(aMsg)).len,
+          notes: 'strict directional delivery verified',
+          dataSignal: 'substantive',
+        });
+      } catch (e) {
+        report.failed.push({
+          id: 'MSG-U2A',
+          severity: 'P1',
+          url: `${BASE}/admin/inbox`,
+          feature: 'Messaging user → admin support-thread delivery',
+          description: 'User-sent message not visible in admin inbox within bounded timeout',
+          likelyRootCause: 'Realtime/polling latency or selected-thread mismatch',
+          evidence: (e && e.message) || String(e),
+          knownOrNew: 'known',
+        });
+      }
+
+      report.messaging.a2u = { pass: a2uPass, text: adminToUserText };
+      report.messaging.u2a = { pass: u2aPass, text: userToAdminText };
+      report.messaging.fullDuplexPass = Boolean(a2uPass && u2aPass);
+    } catch (e) {
+      report.failed.push({
+        id: 'MSG-FLOW-SETUP',
+        severity: 'P1',
+        url: `${BASE}/admin/inbox`,
+        feature: 'Messaging setup/admin-user dual-session bootstrap',
+        description: (e && e.message) || String(e),
+        likelyRootCause: 'State invalid or route failure',
+        evidence: (e && e.stack ? e.stack : '').split('\n').slice(0, 6).join(' | '),
+        knownOrNew: 'new',
+      });
+    } finally {
+      report.consoleSamples.push(...adminMsgBucket.console);
+      report.networkSamples.push(...adminMsgBucket.network);
+      persistArtifacts('messaging-complete');
+      await adminMsgCtx.close();
+    }
+  } else {
+    report.blocked.push({
+      id: 'MSG-NO-ADMIN-STATE',
+      severity: 'P1',
+      url: `${BASE}/admin/inbox`,
+      feature: 'Bidirectional messaging validation',
+      description: 'Missing admin storage state for admin↔user test',
+      likelyRootCause: 'Local state file not present',
+      evidence: ADMIN_STATE,
+      knownOrNew: 'known',
+    });
+  }
 
   const userPaths = [
     ['USR-PROFILE', 'P2', 'Profile', '/profile', async (p) => {
@@ -316,6 +433,7 @@ test('final background full QA pass (soft-fail aggregate)', async ({ browser }) 
   }
   report.consoleSamples.push(...userBucket.console);
   report.networkSamples.push(...userBucket.network);
+  persistArtifacts('user-complete');
   await userCtx.close();
 
   if (!fs.existsSync(ADMIN_STATE)) {
@@ -379,14 +497,7 @@ test('final background full QA pass (soft-fail aggregate)', async ({ browser }) 
     }
   }
 
-  fs.mkdirSync(path.dirname(OUT_JSON), { recursive: true });
-  fs.writeFileSync(OUT_JSON, JSON.stringify(report, null, 2), 'utf8');
-
-  const md = buildMarkdown(report);
-  fs.writeFileSync(OUT_MD, md, 'utf8');
-
-  const boardPath = path.join(process.cwd(), 'ISSUE_BOARD.md');
-  fs.writeFileSync(boardPath, buildIssueBoardMd(report), 'utf8');
+  persistArtifacts('final');
 });
 
 /**
@@ -400,10 +511,14 @@ function buildIssueBoardMd(r) {
   const gate = r.gatingIssues || [];
   const thin = r.infoStaleIssues || [];
 
+  const msgFailures = failed.filter((x) => /^MSG-/.test(String(x.id || '')));
+  const msgFullPass = r.messaging?.fullDuplexPass === true && msgFailures.length === 0;
+
   const failRows = [
-    '| E2E-MSG-FULL-001 | Full strict messaging: user → admin inbox visibility (known) | P1 | `/messages` → `/admin/inbox` | See strict suite | `e2e/strict-messaging-admininbox.spec.js` | Open | Pre-QA |',
+    ...(!msgFullPass
+      ? ['| E2E-MSG-FULL-001 | Full strict messaging: admin ↔ user support-thread delivery | P1 | `/messages` ↔ `/admin/inbox` | Bounded duplex check did not fully pass in this run (see MSG-* failure rows/artifacts). | `e2e/final-background-full-qa-pass.spec.js`, `e2e/strict-messaging-admininbox.spec.js` | Open | Current run |']
+      : []),
     ...failed
-      .filter((x) => !String(x.id || '').includes('MSG'))
       .map(
         (f) =>
           `| QA-${String(f.id).replace(/[^A-Z0-9-]/gi, '-')} | ${(f.feature || '').replace(/\|/g, '/')} — ${(f.description || '').slice(0, 80).replace(/\|/g, '/')} | ${f.severity} | ${(f.url || '').replace(/\|/g, '/')} | ${(f.likelyRootCause || '').slice(0, 60).replace(/\|/g, '/')} | Final background QA | Open | \`e2e/reports/final-background-qa-detail.json\` |`,
@@ -411,6 +526,9 @@ function buildIssueBoardMd(r) {
   ];
 
   const passRows = [
+    ...(msgFullPass
+      ? ['| E2E-MSG-FULL-001 | Full strict messaging: admin ↔ user support-thread delivery | P1 | `/messages` ↔ `/admin/inbox` | Bidirectional messaging validated in bounded end-to-end flow; controls and thread visibility behaved as expected. | `e2e/final-background-full-qa-pass.spec.js`, `src/pages/AdminInbox.js` | Passed — production-ready | Current run |']
+      : []),
     '| VER-API-001 | Thread messages API (production) | P0 | API | — | `api/messages/threads.js` | Passed | Prior post-deploy |',
     '| VER-STRICT-FIRST-001 | Admin → user strict first-check | P0 | Messaging | — | `e2e/strict-admin-to-user-first.spec.js` | Passed | Prior post-deploy |',
     '| VER-STRICT-PART-001 | Admin → user strict suite segment | P0 | Messaging | — | `e2e/strict-messaging-admininbox.spec.js` | Passed | Prior post-deploy |',

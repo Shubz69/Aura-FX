@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-21T23:47:59.004Z",
+  "generatedAt": "2026-04-22T11:50:25.753Z",
   "base": "https://www.auraterminal.ai",
   "results": [
     {
@@ -12,7 +12,7 @@
       ],
       "expected": "User receives without waiting full poll interval when websocket healthy",
       "actual": "User saw admin message in messages thread.",
-      "timingMs": 8868,
+      "timingMs": 6629,
       "consoleIssues": [],
       "networkIssues": [
         {
@@ -31,17 +31,462 @@
       "completion": "complete"
     },
     {
-      "test": "suite setup/execution",
+      "test": "live messaging: user sends to admin delivery",
+      "pass": true,
+      "steps": [
+        "Open /messages",
+        "User sends unique message",
+        "Observe /admin/inbox thread"
+      ],
+      "expected": "Admin receives new user message",
+      "actual": "Admin inbox displayed the user message.",
+      "timingMs": 3143,
+      "consoleIssues": [],
+      "networkIssues": [
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776858606425",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?user=88"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        }
+      ],
+      "completion": "complete"
+    },
+    {
+      "test": "live messaging: websocket unhealthy polling fallback",
+      "pass": true,
+      "steps": [
+        "Abort ws/info on user context",
+        "Admin sends message",
+        "Wait on user /messages"
+      ],
+      "expected": "Message arrives via polling fallback within expected interval (~8s + render)",
+      "actual": "Message arrived while websocket bootstrap was blocked.",
+      "timingMs": 3159,
+      "consoleIssues": [],
+      "networkIssues": [
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776858606425",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?user=88"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776858613928",
+          "during": "https://www.auraterminal.ai/messages"
+        }
+      ],
+      "completion": "complete"
+    },
+    {
+      "test": "live messaging: unread/read state after view",
+      "pass": true,
+      "steps": [
+        "Send user message",
+        "Keep thread open",
+        "Check read indicator"
+      ],
+      "expected": "Read indicator appears for user message after admin view/mark read",
+      "actual": "Read indicator visible.",
+      "consoleIssues": [],
+      "networkIssues": [
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776858606425",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?user=88"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776858613928",
+          "during": "https://www.auraterminal.ai/messages"
+        }
+      ],
+      "completion": "complete"
+    },
+    {
+      "test": "admin inbox: rapid thread switching / stale overwrite",
       "pass": false,
       "steps": [
-        "Initialize admin/user contexts",
-        "Run strict scenarios"
+        "Rapidly switch between two user items",
+        "Observe final selected header/thread"
       ],
-      "expected": "All strict scenarios execute",
-      "actual": "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.admin-inbox-message-text').filter({ hasText: 'STRICT_USER_TO_ADMIN_1776815271563' }).first()\nExpected: visible\nTimeout: 7000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 7000ms\u001b[22m\n\u001b[2m  - waiting for locator('.admin-inbox-message-text').filter({ hasText: 'STRICT_USER_TO_ADMIN_1776815271563' }).first()\u001b[22m\n",
-      "consoleIssues": [],
-      "networkIssues": [],
-      "completion": "still_unreliable"
+      "expected": "Final selected thread remains active; no stale overwrite from prior request",
+      "actual": "Could not confidently confirm stale-protection under this dataset.",
+      "consoleIssues": [
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox",
+          "text": "[observability] {scope: admin_inbox.load_users_threads, type: unknown, correlationId: null, status: null, code: null}"
+        }
+      ],
+      "networkIssues": [
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776858606425",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?user=88"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776858616894",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        }
+      ],
+      "completion": "partial_or_unreliable"
+    },
+    {
+      "test": "admin inbox: controls disabled while unresolved",
+      "pass": true,
+      "steps": [
+        "Load inbox",
+        "Before selecting ready thread inspect send button"
+      ],
+      "expected": "Send remains blocked until active thread ready",
+      "actual": "Send button disabled in unresolved state.",
+      "consoleIssues": [
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox",
+          "text": "[observability] {scope: admin_inbox.load_users_threads, type: unknown, correlationId: null, status: null, code: null}"
+        }
+      ],
+      "networkIssues": [
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776858606425",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?user=88"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776858616894",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        }
+      ],
+      "completion": "complete"
+    },
+    {
+      "test": "admin inbox: no duplicate/out-of-order under quick interactions",
+      "pass": false,
+      "steps": [
+        "Send 3 rapid unique messages",
+        "Count rendered unique messages"
+      ],
+      "expected": "All unique messages appear once in order (no duplicate loss)",
+      "actual": "Observed 1 quick messages with marker STRICT_QUICK_1776858618169.",
+      "consoleIssues": [
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox",
+          "text": "[observability] {scope: admin_inbox.load_users_threads, type: unknown, correlationId: null, status: null, code: null}"
+        }
+      ],
+      "networkIssues": [
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776858606425",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?user=88"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1776858616894",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        }
+      ],
+      "completion": "partial_or_unreliable"
     }
   ]
 }
