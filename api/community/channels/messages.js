@@ -1,4 +1,4 @@
-const { getDbConnection, executeQuery } = require('../../db');
+const { getDbConnection } = require('../../db');
 const { jsonSafeDeep } = require('../../utils/jsonSafe');
 const { getEntitlements, getChannelPermissions, canAccessChannel, isSuperAdminEmail } = require('../../utils/entitlements');
 const {
@@ -14,9 +14,17 @@ try {
   createNotification = null;
 }
 
-let messagesSchemaReady = false;
-let messagesSchemaCheckedAt = 0;
-const SCHEMA_CHECK_TTL_MS = 10 * 60 * 1000;
+/**
+ * Notification side-effects can starve message reads on Vercel because api/db enforces
+ * connectionLimit=1. Default to disabling DB-backed notification fanout in production
+ * serverless hot path unless explicitly re-enabled.
+ */
+const NOTIFICATION_SIDE_EFFECTS_ENABLED = (() => {
+  if (String(process.env.COMMUNITY_NOTIFICATIONS_ENABLE_DB_SIDE_EFFECTS || '').trim() === '1') return true;
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') return false;
+  return true;
+})();
+const COMMUNITY_BUILD = 'community-messages-debug-2026-04-24d';
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../../utils/suppress-warnings');
@@ -59,27 +67,6 @@ async function runInBatches(items, concurrency, fn) {
 }
 
 /** Per-channel push preferences (enabled=0 means muted by user). */
-let channelPushPrefsTableReady = false;
-async function ensureChannelPushPrefsTable() {
-  if (channelPushPrefsTableReady) return;
-  try {
-    await executeQuery(`
-      CREATE TABLE IF NOT EXISTS channel_push_prefs (
-        user_id INT NOT NULL,
-        channel_id VARCHAR(191) NOT NULL,
-        enabled TINYINT(1) NOT NULL DEFAULT 1,
-        last_push_at DATETIME NULL,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (user_id, channel_id),
-        INDEX idx_channel_throttle (channel_id, last_push_at)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-    channelPushPrefsTableReady = true;
-  } catch (e) {
-    console.warn('[channel_push_prefs] ensure table:', e.message);
-  }
-}
-
 async function notifyChannelActivityBroadcast(db, params) {
   const {
     createNotification: cn,
@@ -95,7 +82,6 @@ async function notifyChannelActivityBroadcast(db, params) {
     excludeUserIds
   } = params;
   if (!cn || !channelIdStr || !senderId) return;
-  await ensureChannelPushPrefsTable();
   const activityTitle = 'New activity';
   const activityBody = `${senderUsername} in #${channelName}: ${bodySnippet}`;
   try {
@@ -297,160 +283,38 @@ function decodeToken(authHeader) {
   }
 }
 
-// Ensure messages table exists with correct schema
-const ensureMessagesTable = async (db) => {
-  if (!db || !process.env.MYSQL_DATABASE) {
-    return false;
-  }
-
-  try {
-    // Create table if it doesn't exist with VARCHAR channel_id (supports string IDs)
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS messages (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        channel_id VARCHAR(255) NOT NULL,
-        sender_id INT,
-        content TEXT NOT NULL,
-        encrypted BOOLEAN DEFAULT FALSE,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_channel (channel_id),
-        INDEX idx_timestamp (timestamp),
-        INDEX idx_sender (sender_id)
-      )
-    `);
-    try {
-      await db.execute('ALTER TABLE messages ADD INDEX idx_channel_id (channel_id, id)');
-    } catch (_) {
-      // Duplicate index / incompatible engines are safe to ignore.
-    }
-    console.log('Messages table ensured (created or already exists)');
-    
-    // Check if encrypted column exists, add it if it doesn't
-    try {
-      const [encryptedColumn] = await db.execute(`
-        SELECT COLUMN_NAME 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = ? 
-        AND TABLE_NAME = 'messages' 
-        AND COLUMN_NAME = 'encrypted'
-      `, [process.env.MYSQL_DATABASE]);
-      
-      if (!encryptedColumn || encryptedColumn.length === 0) {
-        // Add encrypted column with default value
-        await db.execute('ALTER TABLE messages ADD COLUMN encrypted BOOLEAN DEFAULT FALSE');
-        console.log('Added encrypted column to messages table');
-      } else {
-        // Check if it has a default value
-        const [columnInfo] = await db.execute(`
-          SELECT COLUMN_DEFAULT 
-          FROM INFORMATION_SCHEMA.COLUMNS 
-          WHERE TABLE_SCHEMA = ? 
-          AND TABLE_NAME = 'messages' 
-          AND COLUMN_NAME = 'encrypted'
-        `, [process.env.MYSQL_DATABASE]);
-        
-        if (columnInfo && columnInfo.length > 0 && columnInfo[0].COLUMN_DEFAULT === null) {
-          // Set default value if it doesn't have one
-          await db.execute('ALTER TABLE messages MODIFY COLUMN encrypted BOOLEAN DEFAULT FALSE');
-          console.log('Set default value for encrypted column');
-        }
-      }
-    } catch (encryptedError) {
-      console.warn('Could not check/add encrypted column:', encryptedError.message);
-      // Continue anyway
-    }
-    
-    // Check if file_data column exists, add it if it doesn't
-    try {
-      const [fileDataColumn] = await db.execute(`
-        SELECT COLUMN_NAME 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = ? 
-        AND TABLE_NAME = 'messages' 
-        AND COLUMN_NAME = 'file_data'
-      `, [process.env.MYSQL_DATABASE]);
-      
-      if (!fileDataColumn || fileDataColumn.length === 0) {
-        // Add file_data column as JSON to store file metadata
-        await db.execute('ALTER TABLE messages ADD COLUMN file_data JSON DEFAULT NULL');
-        console.log('Added file_data column to messages table');
-      }
-    } catch (fileDataError) {
-      console.warn('Could not check/add file_data column:', fileDataError.message);
-      // Continue anyway
-    }
-    
-    // Check if channel_id is VARCHAR, if not, convert it
-    try {
-      const [columnInfo] = await db.execute(`
-        SELECT DATA_TYPE, COLUMN_TYPE 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = ? 
-        AND TABLE_NAME = 'messages' 
-        AND COLUMN_NAME = 'channel_id'
-      `, [process.env.MYSQL_DATABASE]);
-      
-      if (columnInfo && columnInfo.length > 0) {
-        const dataType = columnInfo[0].DATA_TYPE;
-        if (dataType === 'int' || dataType === 'bigint') {
-          console.log('Converting channel_id from', dataType, 'to VARCHAR(255)...');
-          try {
-            // Drop foreign keys first
-            const [fks] = await db.execute(`
-              SELECT CONSTRAINT_NAME 
-              FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-              WHERE TABLE_SCHEMA = ? 
-              AND TABLE_NAME = 'messages' 
-              AND COLUMN_NAME = 'channel_id' 
-              AND REFERENCED_TABLE_NAME IS NOT NULL
-            `, [process.env.MYSQL_DATABASE]);
-            
-            for (const fk of fks) {
-              try {
-                await db.execute(`ALTER TABLE messages DROP FOREIGN KEY ${fk.CONSTRAINT_NAME}`);
-                console.log(`Dropped foreign key: ${fk.CONSTRAINT_NAME}`);
-              } catch (fkError) {
-                console.warn('Could not drop foreign key:', fkError.message);
-              }
-            }
-            
-            // Convert to VARCHAR
-            await db.execute('ALTER TABLE messages MODIFY COLUMN channel_id VARCHAR(255) NOT NULL');
-            console.log('Successfully converted channel_id to VARCHAR(255)');
-          } catch (alterError) {
-            console.error('Failed to convert channel_id:', alterError.message);
-            // Continue anyway
-          }
-        }
-      }
-    } catch (checkError) {
-      console.warn('Could not check channel_id column:', checkError.message);
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error ensuring messages table:', error);
-    return false;
-  }
-};
-
-async function ensureMessagesSchemaCached(db) {
-  const now = Date.now();
-  if (messagesSchemaReady && (now - messagesSchemaCheckedAt) < SCHEMA_CHECK_TTL_MS) {
-    return true;
-  }
-  const ok = await ensureMessagesTable(db);
-  messagesSchemaReady = Boolean(ok);
-  messagesSchemaCheckedAt = now;
-  return ok;
-}
-
 module.exports = async (req, res) => {
+  const handlerStartMs = Date.now();
+  const reqDiag = {
+    channelId: null,
+    afterId: null,
+    pathType: null,
+    acquireStartMs: null,
+    acquireEndMs: null,
+    sqlStartMs: null,
+    sqlEndMs: null,
+    rows: null,
+    releaseMs: null
+  };
+  const applyDiagHeaders = () => {
+    res.setHeader('X-Community-Handler-Ms', String(Date.now() - handlerStartMs));
+    res.setHeader('X-Community-Conn-Acquire-Ms', reqDiag.acquireStartMs && reqDiag.acquireEndMs ? String(reqDiag.acquireEndMs - reqDiag.acquireStartMs) : 'n/a');
+    res.setHeader('X-Community-Sql-Ms', reqDiag.sqlStartMs && reqDiag.sqlEndMs ? String(reqDiag.sqlEndMs - reqDiag.sqlStartMs) : 'n/a');
+    res.setHeader('X-Community-Release-Ms', reqDiag.releaseMs != null ? String(reqDiag.releaseMs) : 'n/a');
+    res.setHeader('X-Community-AfterId', reqDiag.afterId != null ? String(reqDiag.afterId) : 'none');
+    res.setHeader('X-Community-Path-Type', reqDiag.pathType || 'unknown');
+    res.setHeader('X-Community-Row-Count', reqDiag.rows != null ? String(reqDiag.rows) : 'n/a');
+  };
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('X-Community-Messages-Handler', 'cm-2026-04-24b');
+  res.setHeader('X-Community-Build', COMMUNITY_BUILD);
+  if (req.method === 'GET') {
+    // Always present on every GET response path (success/error/early return).
+    applyDiagHeaders();
+  }
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -503,12 +367,18 @@ module.exports = async (req, res) => {
     });
     return res.status(400).json({ success: false, message: 'Channel ID is required' });
   }
+  reqDiag.channelId = String(channelId);
   
   console.log('Processing messages request for channel:', channelId, 'Method:', req.method);
 
   try {
+    reqDiag.acquireStartMs = Date.now();
+    console.log('[community/messages] await getDbConnection start', { method: req.method, channelId: reqDiag.channelId });
     const db = await getDbConnection();
+    reqDiag.acquireEndMs = Date.now();
+    console.log('[community/messages] await getDbConnection end', { method: req.method, channelId: reqDiag.channelId, ms: reqDiag.acquireEndMs - reqDiag.acquireStartMs, ok: Boolean(db) });
     const releaseDb = async () => {
+      const relStart = Date.now();
       try {
         if (!db) return;
         if (typeof db.release === 'function') {
@@ -518,10 +388,150 @@ module.exports = async (req, res) => {
         }
       } catch (_) {
         // ignore
+      } finally {
+        reqDiag.releaseMs = Date.now() - relStart;
       }
     };
     if (!db) {
       return res.status(500).json({ success: false, message: 'Database unavailable' });
+    }
+
+    // Fast path for GET: single DB query only (auth already validated via JWT above).
+    // Keep this path lean to avoid runtime stacking under poll/reload pressure.
+    if (req.method === 'GET') {
+      const channelIdLower = (channelId || '').toString().toLowerCase();
+      const excludeLevelUp = channelIdLower === 'announcements'
+        ? " AND (m.content NOT LIKE '%LEVEL UP%' AND m.content NOT LIKE '%Level up%' AND m.content NOT LIKE '%has reached Level%' AND m.content NOT LIKE '%New Rank:%')"
+        : '';
+      const afterId = req.query && req.query.afterId ? parseInt(req.query.afterId, 10) : null;
+      const isCursor = Number.isInteger(afterId) && afterId > 0;
+      reqDiag.afterId = isCursor ? afterId : null;
+      const queryMode = isCursor ? 'get_afterId_single' : 'get_no_cursor_single';
+      reqDiag.pathType = queryMode;
+      const limit = isCursor ? 120 : 100;
+      const queryStart = Date.now();
+      try {
+        // Keep explicit read authorization in GET fast path.
+        const [userRows] = await db.execute(
+          'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed, onboarding_accepted, onboarding_subscription_snapshot FROM users WHERE id = ?',
+          [decoded.id]
+        );
+        if (!userRows || userRows.length === 0) {
+          await releaseDb();
+          return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'Access denied.' });
+        }
+        let [channelRows] = await db.execute(
+          'SELECT id, name, access_level, permission_type FROM channels WHERE id = ?',
+          [channelId]
+        );
+        if (!channelRows || channelRows.length === 0) {
+          [channelRows] = await db.execute(
+            'SELECT id, name, access_level, permission_type FROM channels WHERE LOWER(id) = LOWER(?)',
+            [channelId]
+          );
+        }
+        if (!channelRows || channelRows.length === 0) {
+          await releaseDb();
+          return res.status(404).json({ success: false, message: 'Channel not found.' });
+        }
+        const channelRow = channelRows[0];
+        channelId = channelRow.id;
+        let entitlements = getEntitlements(userRows[0]);
+        const jwtRole = (decoded.role || '').toString().toUpperCase();
+        if (jwtRole === 'ADMIN' || jwtRole === 'SUPER_ADMIN') {
+          entitlements = { ...entitlements, role: jwtRole, tier: 'ELITE', effectiveTier: 'ELITE' };
+        }
+        const perm = getChannelPermissions(entitlements, {
+          id: channelRow.id,
+          name: channelRow.name,
+          access_level: channelRow.access_level,
+          accessLevel: channelRow.access_level,
+          permission_type: channelRow.permission_type,
+          permissionType: channelRow.permission_type
+        });
+        if (!perm.canSee || !perm.canRead) {
+          await releaseDb();
+          return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'You cannot read this channel.' });
+        }
+
+        let rows;
+        reqDiag.sqlStartMs = Date.now();
+        console.log('[community/messages][GET] sql start', { channelId, afterId: reqDiag.afterId, queryMode, limit });
+        if (isCursor) {
+          const [resultRows] = await db.execute(
+            `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan
+             FROM messages m
+             LEFT JOIN users u ON m.sender_id = u.id
+             WHERE m.channel_id = ? AND m.id > ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
+             ORDER BY m.id ASC
+             LIMIT ${limit}`,
+            [channelId, afterId]
+          );
+          rows = resultRows;
+        } else {
+          const [resultRows] = await db.execute(
+            `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan
+             FROM messages m
+             LEFT JOIN users u ON m.sender_id = u.id
+             WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
+             ORDER BY m.id DESC
+             LIMIT ${limit}`,
+            [channelId]
+          );
+          rows = resultRows.reverse();
+        }
+        reqDiag.sqlEndMs = Date.now();
+        reqDiag.rows = rows.length;
+
+        await releaseDb();
+        const totalQueryMs = Date.now() - queryStart;
+        res.setHeader('X-Community-Query-Mode', queryMode);
+        res.setHeader('X-Community-Query-Ms', String(totalQueryMs));
+        res.setHeader('X-Community-Row-Count', String(rows.length));
+        applyDiagHeaders();
+        console.log('[community/messages][GET]', queryMode, 'ms=', totalQueryMs, 'rows=', rows.length, 'channel=', channelId);
+
+        const messages = rows.map((row) => {
+          const username = row.username || row.name || (row.email ? row.email.split('@')[0] : 'Anonymous');
+          const avatar = row.avatar ?? null;
+          const senderRow = { role: row.role, email: row.email, subscription_plan: row.subscription_plan };
+          let fileData = null;
+          if (row.file_data) {
+            try {
+              fileData = typeof row.file_data === 'string' ? JSON.parse(row.file_data) : row.file_data;
+            } catch (_) {
+              fileData = null;
+            }
+          }
+          const isDeleted = !!row.deleted_at || row.content === '[deleted]';
+          return {
+            id: row.id,
+            sequence: row.id,
+            channelId: row.channel_id,
+            userId: row.sender_id,
+            username,
+            content: row.content,
+            createdAt: row.timestamp,
+            timestamp: row.timestamp,
+            file: fileData,
+            isDeleted,
+            deletedAt: row.deleted_at || null,
+            sender: {
+              id: row.sender_id,
+              username,
+              avatar,
+              role: permissionRoleFromUserRow(senderRow),
+              subscriptionPlan: canonicalSubscriptionPlanForResponse(senderRow)
+            }
+          };
+        });
+        return res.status(200).json(jsonSafeDeep(messages));
+      } catch (error) {
+        reqDiag.sqlEndMs = Date.now();
+        await releaseDb();
+        applyDiagHeaders();
+        return res.status(500).json({ success: false, message: 'Failed to fetch messages' });
+      }
     }
 
     // Single source of truth: enforce channel access via entitlements
@@ -604,43 +614,50 @@ module.exports = async (req, res) => {
           : '';
         
         // Try to fetch messages with username from users table
-        // channel_id is bigint in actual table, but we receive it as string, so we need to handle both
+        // channel_id is bigint in most deployments; channel slug fallback remains for mixed schemas.
         let [rows] = [];
+        let queryMode = 'unknown';
+        let queryElapsedMs = 0;
         try {
+          const queryStart = Date.now();
           const afterId = req.query && req.query.afterId ? parseInt(req.query.afterId, 10) : null;
           const isCursor = Number.isInteger(afterId) && afterId > 0;
+          const baseLimit = isCursor ? 120 : 100;
+          const numericChannelId = parseInt(channelId, 10);
+          const channelCandidates = Number.isNaN(numericChannelId) ? [channelId] : [numericChannelId, String(channelId)];
           if (isCursor) {
-            [rows] = await db.execute(
-              `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan
-               FROM messages m
-               LEFT JOIN users u ON m.sender_id = u.id
-               WHERE m.channel_id = ? AND m.id > ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
-               ORDER BY m.id ASC
-               LIMIT 200`,
-              [channelId, afterId]
-            );
-          } else {
-            // No-cursor reads were hitting 60s function timeouts on hot tables.
-            // Bound scan by recent id windows so we can still serve "latest messages" quickly
-            // even when channel_id index quality varies across environments.
-            const [[maxRow]] = await db.execute('SELECT MAX(id) AS maxId FROM messages');
-            const maxId = Number(maxRow?.maxId || 0);
-            const windows = [5000, 50000, 500000];
-            for (let i = 0; i < windows.length; i += 1) {
-              const minId = Math.max(0, maxId - windows[i]);
+            queryMode = 'get_afterId';
+            for (const candidate of channelCandidates) {
               [rows] = await db.execute(
                 `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan
                  FROM messages m
                  LEFT JOIN users u ON m.sender_id = u.id
                  WHERE m.channel_id = ? AND m.id > ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
-                 ORDER BY m.id DESC
-                 LIMIT 200`,
-                [channelId, minId]
+                 ORDER BY m.id ASC
+                 LIMIT ${baseLimit}`,
+                [candidate, afterId]
               );
-              if (rows.length > 0 || i === windows.length - 1) break;
+              if (rows.length > 0) break;
+            }
+          } else {
+            queryMode = 'get_no_cursor';
+            // Keep no-cursor path index-friendly: channel predicate + descending PK window only.
+            // Avoid global MAX(id) scan and multi-window retries that caused hot-path timeouts.
+            for (const candidate of channelCandidates) {
+              [rows] = await db.execute(
+                `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan
+                 FROM messages m
+                 LEFT JOIN users u ON m.sender_id = u.id
+                 WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
+                 ORDER BY m.id DESC
+                 LIMIT ${baseLimit}`,
+                [candidate]
+              );
+              if (rows.length > 0) break;
             }
             rows = rows.reverse();
           }
+          queryElapsedMs = Date.now() - queryStart;
         } catch (queryError) {
           // If that fails, try converting channelId to number (for numeric IDs)
           const numericChannelId = parseInt(channelId);
@@ -692,6 +709,9 @@ module.exports = async (req, res) => {
         
         // Release connection back to pool
         await releaseDb();
+        res.setHeader('X-Community-Query-Mode', queryMode);
+        res.setHeader('X-Community-Query-Ms', String(queryElapsedMs));
+        res.setHeader('X-Community-Row-Count', String(rows.length));
 
         // Map to frontend format - handle actual column names
         const messages = rows.map(row => {
@@ -763,6 +783,7 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'POST') {
+      reqDiag.pathType = 'post';
       // Create a new message
       const { userId, username, content, file, clientMessageId } = req.body;
       const senderId = userId || decoded.id;
@@ -778,28 +799,10 @@ module.exports = async (req, res) => {
       }
 
       try {
-        // Ensure messages table exists with correct schema
-        const tableExists = await ensureMessagesSchemaCached(db);
-        if (!tableExists) {
-          console.error('Failed to ensure messages table exists');
-          try {
-            if (db && typeof db.release === 'function') {
-              db.release();
-            } else if (db && typeof db.end === 'function') {
-              await db.end();
-            }
-          } catch (e) {
-            console.warn('Error releasing connection:', e.message);
-          }
-          return res.status(500).json({ 
-            success: false, 
-            message: 'Failed to initialize messages table. Please contact support.',
-            error: 'Table initialization failed'
-          });
-        }
-
+        console.log('[community/messages][POST] flow start', { channelId, hasClientMessageId: Boolean(clientMessageId) });
         // Rate limit: max 30 messages per minute per user per channel
         try {
+          console.log('[community/messages][POST] await rate-limit query start');
           const [rateRows] = await db.execute(
             'SELECT COUNT(*) as cnt FROM messages WHERE sender_id = ? AND channel_id = ? AND timestamp > DATE_SUB(NOW(), INTERVAL 1 MINUTE)',
             [senderId, channelId]
@@ -923,6 +926,7 @@ module.exports = async (req, res) => {
         const clientMsgId = clientMessageId ? String(clientMessageId).substring(0, 64) : null;
         let result;
         try {
+          console.log('[community/messages][POST] await insert start');
           const insertCols = 'channel_id, sender_id, content, encrypted, file_data, timestamp';
           const insertVals = '?, ?, ?, FALSE, ?, NOW()';
           const insertParams = [channelIdValue, senderId || userId || null, messageContent, fileDataJson];
@@ -976,23 +980,13 @@ module.exports = async (req, res) => {
           }
         }
 
-        // Fetch the newly created message with user info - execute returns [rows, fields]
-        const [newMessageRows] = await db.execute(
-          `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan 
-           FROM messages m 
-           LEFT JOIN users u ON m.sender_id = u.id 
-           WHERE m.id = ?`, 
-          [result.insertId]
-        );
-        const newMessage = newMessageRows[0]; // Get first row
-        
-        // Get username and avatar from joined user table
-        const senderUsername = newMessage.username || newMessage.name || (newMessage.email ? newMessage.email.split('@')[0] : 'Anonymous');
-        const senderAvatar = newMessage.avatar ?? null;
+        const senderBase = userRows[0] || {};
+        const senderUsername = username || senderBase.username || senderBase.name || (senderBase.email ? senderBase.email.split('@')[0] : 'Anonymous');
+        const senderAvatar = senderBase.avatar ?? null;
         const newSenderRow = {
-          role: newMessage.role,
-          email: newMessage.email,
-          subscription_plan: newMessage.subscription_plan
+          role: senderBase.role,
+          email: senderBase.email,
+          subscription_plan: senderBase.subscription_plan
         };
 
         let fileData = null;
@@ -1007,19 +1001,19 @@ module.exports = async (req, res) => {
         }
 
         const message = {
-          id: newMessage.id,
-          sequence: newMessage.id,
+          id: result.insertId,
+          sequence: result.insertId,
           // Always use canonical channels.id for realtime (Pusher + WS + UI). Row channel_id may be numeric legacy.
           channelId: channelId,
           channel_id: channelId,
-          userId: newMessage.sender_id,
+          userId: senderId || userId || null,
           username: senderUsername,
-          content: newMessage.content,
-          createdAt: newMessage.timestamp,
-          timestamp: newMessage.timestamp,
+          content: messageContent,
+          createdAt: new Date().toISOString(),
+          timestamp: new Date().toISOString(),
           file: fileData,
           sender: {
-            id: newMessage.sender_id,
+            id: senderId || userId || null,
             username: senderUsername,
             avatar: senderAvatar,
             role: permissionRoleFromUserRow(newSenderRow),
@@ -1027,36 +1021,55 @@ module.exports = async (req, res) => {
           }
         };
 
-        // Realtime first — bounded so a dead Railway / Pusher never hits Vercel 60s timeout
-        await triggerNewMessageBounded(channelId, message, PUSHER_TRIGGER_TIMEOUT_MS);
-        const wsServerUrl = process.env.WEBSOCKET_SERVER_URL || 'https://aura-fx-production.up.railway.app';
-        const wsBroadcastUrl = `${wsServerUrl.replace(/\/$/, '')}/api/broadcast-new-message`;
-        await fetchWithTimeout(
-          wsBroadcastUrl,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ channelId, message })
-          },
-          WS_BROADCAST_TIMEOUT_MS
-        );
-
-        // Release connection back to pool before responding (notifications use their own connection).
+        const postStartMs = Date.now();
         await releaseDb();
-
+        const postReleasedMs = Date.now();
+        console.log('[community/messages][POST] release_before_response_ms=', postReleasedMs - postStartMs, 'insertId=', result.insertId);
+        applyDiagHeaders();
         res.status(201).json(message);
+        const respondedMs = Date.now();
+        console.log('[community/messages][POST] responded_ms=', respondedMs - postStartMs, 'insertId=', result.insertId);
 
-        if (createNotification && messageContent) {
-          void runCommunityMessageNotificationSideEffects({
+        // Non-critical realtime + notification side-effects are intentionally fire-and-forget.
+        // They must never block POST response or hold the request DB connection.
+        setTimeout(() => {
+          const sideFxStart = Date.now();
+          console.log('[community/messages][POST] sidefx start', { insertId: result.insertId });
+          void triggerNewMessageBounded(channelId, message, PUSHER_TRIGGER_TIMEOUT_MS)
+            .catch(() => null);
+          const wsServerUrl = process.env.WEBSOCKET_SERVER_URL || 'https://aura-fx-production.up.railway.app';
+          const wsBroadcastUrl = `${wsServerUrl.replace(/\/$/, '')}/api/broadcast-new-message`;
+          void fetchWithTimeout(
+            wsBroadcastUrl,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ channelId, message })
+            },
+            WS_BROADCAST_TIMEOUT_MS
+          ).catch(() => null);
+          console.log('[community/messages][POST] sidefx_dispatched_ms=', Date.now() - sideFxStart, 'insertId=', result.insertId);
+        }, 0);
+
+        if (createNotification && messageContent && NOTIFICATION_SIDE_EFFECTS_ENABLED) {
+          setTimeout(() => {
+            const notifStart = Date.now();
+            void runCommunityMessageNotificationSideEffects({
             createNotification,
             messageContent,
-            newMessageId: newMessage.id,
+            newMessageId: result.insertId,
             channelRow,
             channelId,
             channelIdValue,
             senderId,
             senderUsername,
-          }).catch((e) => console.error('[community/messages] deferred notifications:', e.message));
+            }).catch((e) => console.error('[community/messages] deferred notifications:', e.message))
+              .finally(() => {
+                console.log('[community/messages][POST] deferred_notif_ms=', Date.now() - notifStart, 'insertId=', result.insertId);
+              });
+          }, 0);
+        } else if (createNotification && messageContent && !NOTIFICATION_SIDE_EFFECTS_ENABLED) {
+          console.log('[community/messages][POST] deferred_notif_skipped=1 reason=db_starvation_guard insertId=', result.insertId);
         }
         return;
       } catch (dbError) {

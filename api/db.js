@@ -4,7 +4,8 @@
  * Env (optional):
  * - MYSQL_CONNECT_TIMEOUT_MS — DB TCP connect timeout (default 20000). Raise if logs show ETIMEDOUT.
  * - DB_POOL_LOG=1 — log when the pool is created (default off to reduce Vercel noise).
- * - MYSQL_POOL_SIZE / MYSQL_QUEUE_LIMIT — see inline defaults (Vercel forces pool size 1).
+ * - MYSQL_POOL_SIZE / MYSQL_QUEUE_LIMIT — see inline defaults.
+ * - MYSQL_CONNECTION_LIMIT — optional explicit override for per-instance pool size.
  * - MYSQL_QUEUE_MAX_CAP — on Vercel only, upper bound for queue size (default 800, max 1200).
  *
  * Scaling: On Vercel, connectionLimit is 1 per warm instance; total DB sessions ≈ concurrent warm
@@ -139,7 +140,11 @@ const getDbPool = () => {
   let connectionLimit = Math.max(1, parseInt(process.env.MYSQL_POOL_SIZE, 10) || defaultLimit);
   let queueLimit = Math.max(1, parseInt(process.env.MYSQL_QUEUE_LIMIT, 10) || defaultQueue);
   if (process.env.VERCEL) {
-    connectionLimit = 1;
+    const explicitConnLimit = parseInt(process.env.MYSQL_CONNECTION_LIMIT || '', 10);
+    // Keep small and bounded on serverless. Use 1 by default, allow controlled bump to 2-5.
+    connectionLimit = Number.isFinite(explicitConnLimit)
+      ? Math.min(5, Math.max(1, explicitConnLimit))
+      : 1;
     // Single connection serializes work. Warm lambdas can serve many overlapping Trader Deck + cron
     // requests; each queues pool.execute — cap was 200 and caused "Queue limit reached" under burst.
     const queueCap = Math.min(
