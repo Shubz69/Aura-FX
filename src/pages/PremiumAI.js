@@ -6,6 +6,8 @@ import { toast } from 'react-toastify';
 import ReactMarkdown from 'react-markdown';
 import '../styles/PremiumAI.css';
 import { isSuperAdmin } from '../utils/roles';
+import '../styles/PremiumAITheme.css';
+import CosmicBackground from '../components/CosmicBackground'; 
 
 /* ── Icons ──────────────────────────────────────────────── */
 const SendIcon = () => (
@@ -501,6 +503,8 @@ const PremiumAI = () => {
   if (entitlementsLoading || !accessReady) {
     return (
       <div className="pai">
+        {/* ── Cosmic Background ──────────────────────────────────── */}
+      <CosmicBackground />
         <main className="pai-body pai-body--welcome">
           <div className="pai-welcome">
             <div className="pai-welcome-icon" aria-hidden>✦</div>
@@ -512,140 +516,151 @@ const PremiumAI = () => {
     );
   }
 
-  /* ─────────────── RENDER ─────────────── */
-  return (
+/* ─────────────── RENDER ─────────────── */
+return (
     <div className="pai">
+      {/* ── Cosmic Background — behind everything ── */}
+      <CosmicBackground />
 
-      {/* ROW 1 — Header */}
-      <header className="pai-header">
-        <div className="pai-header-left">
-          <div className="pai-logo-wrap">
-            <span className="pai-logo-icon">✨</span>
-            <h1 className="pai-title">AURA AI</h1>
+      {/* ── Operator Glass Shell — wraps ENTIRE page ── */}
+      <div className="trade-validator-shell journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page" 
+           style={{ 
+             position: 'relative', 
+             zIndex: 1, 
+             display: 'flex', 
+             flexDirection: 'column', 
+             height: '100%',
+             width: '100%',
+             overflow: 'hidden'
+           }}>
+
+        {/* ROW 1 — Header */}
+        <header className="pai-header">
+          <div className="pai-header-left">
+            <div className="pai-logo-wrap">
+              <span className="pai-logo-icon">✨</span>
+              <h1 className="pai-title">AURA AI</h1>
+            </div>
+            <span className="pai-badge">{badge}</span>
           </div>
-          <span className="pai-badge">{badge}</span>
-        </div>
-        <button className="pai-clear" onClick={clearAll} title="Clear conversation">
-          <TrashIcon />
-        </button>
-      </header>
+          <button className="pai-clear" onClick={clearAll} title="Clear conversation">
+            <TrashIcon />
+          </button>
+        </header>
 
-      {/* ROW 2 — Scrollable chat body */}
-      <main className={`pai-body${isEmpty ? ' pai-body--welcome' : ''}`}>
-        <div className="pai-messages">
+        {/* ROW 2 — Scrollable chat body */}
+        <main className={`pai-body${isEmpty ? ' pai-body--welcome' : ''}`}>
+          <div className="pai-messages">
+            {isEmpty && (
+              <WelcomeScreen onChipClick={onChipClick} disabled={isLoading || isStreaming} />
+            )}
 
-          {isEmpty && (
-            <WelcomeScreen onChipClick={onChipClick} disabled={isLoading || isStreaming} />
-          )}
-
-          {messages.map((m, i) => (
-            <ChatMessage
-              key={m.id || i}
-              msg={m}
-              copiedId={copiedId}
-              speakId={speakId}
-              spRate={spRate}
-              onCopy={copy}
-              onSpeak={speak}
-              onSpeedChange={setSpRate}
-            />
-          ))}
-
-          {/* Streaming bubble */}
-          {isStreaming && streamContent && (
-            <div className="pai-msg assistant">
-              <div className="pai-avatar ai">✨</div>
-              <div className="pai-bubble-wrap">
-                <div className="pai-bubble">
-                  <ReactMarkdown components={MD}>{stripAssistantAsterisks(streamContent)}</ReactMarkdown>
-                </div>
-                <div className="pai-streaming">
-                  <span className="pai-pulse" />Generating…
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Loading dots */}
-          {isLoading && !isStreaming && (
-            <div className="pai-msg assistant">
-              <div className="pai-avatar ai">✨</div>
-              <div className="pai-bubble-wrap">
-                <div className="pai-bubble">
-                  <div className="pai-dots"><span /><span /><span /></div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div ref={endRef} />
-        </div>
-      </main>
-
-      {/* ROW 3 — Composer */}
-      <footer className="pai-composer">
-
-        {/* Image preview strip */}
-        {previews.length > 0 && (
-          <div className="pai-img-strip">
-            {previews.map((src, i) => (
-              <div key={i} className="pai-thumb">
-                <img src={src} alt="" loading="lazy" />
-                <button className="pai-thumb-rm" onClick={() => rmImg(i)}>×</button>
-              </div>
+            {messages.map((m, i) => (
+              <ChatMessage
+                key={m.id || i}
+                msg={m}
+                copiedId={copiedId}
+                speakId={speakId}
+                spRate={spRate}
+                onCopy={copy}
+                onSpeak={speak}
+                onSpeedChange={setSpRate}
+              />
             ))}
+
+            {isStreaming && streamContent && (
+              <div className="pai-msg assistant">
+                <div className="pai-avatar ai">✨</div>
+                <div className="pai-bubble-wrap">
+                  <div className="pai-bubble">
+                    <ReactMarkdown components={MD}>{stripAssistantAsterisks(streamContent)}</ReactMarkdown>
+                  </div>
+                  <div className="pai-streaming">
+                    <span className="pai-pulse" />Generating…
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isLoading && !isStreaming && (
+              <div className="pai-msg assistant">
+                <div className="pai-avatar ai">✨</div>
+                <div className="pai-bubble-wrap">
+                  <div className="pai-bubble">
+                    <div className="pai-dots"><span /><span /><span /></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div ref={endRef} />
           </div>
-        )}
+        </main>
 
-        <div className="pai-compose-row">
-          <input ref={fileRef} type="file" accept="image/*" multiple
-            onChange={onImgSelect} style={{ display: 'none' }} />
+        {/* ROW 3 — Composer */}
+        <footer className="pai-composer">
+          {previews.length > 0 && (
+            <div className="pai-img-strip">
+              {previews.map((src, i) => (
+                <div key={i} className="pai-thumb">
+                  <img src={src} alt="" loading="lazy" />
+                  <button className="pai-thumb-rm" onClick={() => rmImg(i)}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
 
-          <button className="pai-icon-btn"
-            onClick={() => fileRef.current?.click()}
-            disabled={isLoading || isStreaming || selImages.length >= 4}
-            title="Upload image">
-            <ImgIcon />
-          </button>
+          <div className="pai-compose-row">
+            <input ref={fileRef} type="file" accept="image/*" multiple
+              onChange={onImgSelect} style={{ display: 'none' }} />
 
-          <button className={`pai-icon-btn${isRec ? ' recording' : ''}`}
-            onClick={toggleRec}
-            disabled={isLoading || isStreaming}
-            title={isRec ? 'Stop recording' : 'Voice input'}>
-            <MicIcon />
-          </button>
+            <button className="pai-icon-btn"
+              onClick={() => fileRef.current?.click()}
+              disabled={isLoading || isStreaming || selImages.length >= 4}
+              title="Upload image">
+              <ImgIcon />
+            </button>
 
-          <div className="pai-input-wrap">
-            <textarea
-              ref={taRef}
-              value={input}
-              rows={1}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={onKey}
-              onPaste={onPaste}
-              placeholder={isRec ? 'Listening…' : 'Ask AURA anything about trading…'}
-              disabled={isLoading}
-              className={isRec ? 'recording' : ''}
-            />
+            <button className={`pai-icon-btn${isRec ? ' recording' : ''}`}
+              onClick={toggleRec}
+              disabled={isLoading || isStreaming}
+              title={isRec ? 'Stop recording' : 'Voice input'}>
+              <MicIcon />
+            </button>
+
+            <div className="pai-input-wrap">
+              <textarea
+                ref={taRef}
+                value={input}
+                rows={1}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={onKey}
+                onPaste={onPaste}
+                placeholder={isRec ? 'Listening…' : 'Ask AURA anything about trading…'}
+                disabled={isLoading}
+                className={isRec ? 'recording' : ''}
+              />
+            </div>
+
+            {isStreaming
+              ? <button className="pai-icon-btn stop" onClick={stopStream} title="Stop">
+                  <StopIcon />
+                </button>
+              : <button className="pai-send" onClick={send}
+                  disabled={isLoading || (!input.trim() && !selImages.length)}
+                  title="Send">
+                  <SendIcon />
+                </button>
+            }
           </div>
 
-          {isStreaming
-            ? <button className="pai-icon-btn stop" onClick={stopStream} title="Stop">
-                <StopIcon />
-              </button>
-            : <button className="pai-send" onClick={send}
-                disabled={isLoading || (!input.trim() && !selImages.length)}
-                title="Send">
-                <SendIcon />
-              </button>
-          }
-        </div>
+          <p className="pai-hint-text">Enter to send · Shift + Enter for new line</p>
+        </footer>
 
-        <p className="pai-hint-text">Enter to send · Shift + Enter for new line</p>
-      </footer>
-
+      </div>
+      {/* ── End Operator Glass Shell ── */}
     </div>
-  );
+);
 };
 
 export default PremiumAI;

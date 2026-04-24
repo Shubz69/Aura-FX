@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { getStoredUser } from '../utils/storage';
 import { isAdmin } from '../utils/roles';
 import { getJournalTodayForUser } from '../utils/journalDate';
+import CosmicBackground from '../components/CosmicBackground';
+
 import {
   getReminderForTask,
   upsertReminder,
@@ -1091,6 +1093,8 @@ export default function Journal() {
      ════════════════════════════════════════════════════════ */
   return (
     <div className="journal-page" id="journal-top">
+        {/* ── Cosmic Background ── */}
+      <CosmicBackground />
       <div className="journal-layout">
 
         {/* ══════════ SIDEBAR ══════════ */}
@@ -1163,6 +1167,7 @@ export default function Journal() {
 
         {/* ══════════ MAIN ══════════ */}
         <main className="journal-main">
+              
           {error && <div className="journal-error" role="alert">{error}</div>}
 
           {/* Header */}

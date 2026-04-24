@@ -1,0 +1,574 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   PREMIUM AI THEME OVERRIDE — Trader Playbook Premium
+   Deep navy glass: rgba(5, 4, 14, 0.65)
+   Gold accents: #EAA960 / #F8C37D
+   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════
+   COSMIC BACKGROUND — Inside pai-body
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Remove old CSS starfield */
+.pai::before,
+.pai::after {
+    display: none !important;
+}
+
+/* Position CosmicBackground inside the body area */
+.pai .pai-body {
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.pai .pai-body > .cosmic-background,
+.pai .pai-body > [class*="cosmic"] {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+    opacity: 0.4 !important;
+}
+
+/* Content sits above the background */
+.pai .pai-body .pai-messages {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .pai .pai-body > .cosmic-background,
+    .pai .pai-body > [class*="cosmic"] {
+        opacity: 0.3 !important;
+    }
+}
+/* ── Override root variables ─────────────────────────────────────────── */
+.pai {
+    --bg: #010008;
+    --bg-card: rgba(5, 4, 14, 0.65);
+    --bg-glass: rgba(5, 4, 14, 0.65);
+    --border: rgba(234, 169, 96, 0.15);
+    --border-h: rgba(234, 169, 96, 0.30);
+    --pai-gold: #EAA960;
+    --pai-gold-bright: #F8C37D;
+    --pai-gold-warm: #D48D44;
+    --pai-gold-dim: rgba(234, 169, 96, 0.28);
+    --pai-gold-glass: rgba(234, 169, 96, 0.10);
+    --pai-gold-glow: rgba(234, 169, 96, 0.14);
+    --pai-gold-rgb: 234, 169, 96;
+    --pai-gold-bright-rgb: 248, 195, 125;
+    --accent: #EAA960;
+    --accent2: #F8C37D;
+    --text: #FFFFFF;
+    --text-muted: rgba(200, 196, 232, 0.72);
+    --muted: rgba(200, 196, 232, 0.45);
+    --up: #0FD98A;
+    --down: #F03D5F;
+    --green: #0FD98A;
+    --red: #F03D5F;
+    --radius: 14px;
+    --radius-lg: 18px;
+    --ease: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --grad-gold: linear-gradient(135deg, #FDE8C4 0%, #F8C37D 35%, #EAA960 65%, #D48D44 100%);
+    --line-gold: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent);
+
+    /* Override panel tokens to gold theme */
+    --journal-panel-fill: linear-gradient(168deg, rgba(5, 4, 14, 0.92) 0%, rgba(5, 4, 14, 0.89) 100%);
+    --journal-panel-fill-hover: linear-gradient(168deg, rgba(8, 7, 20, 0.95) 0%, rgba(8, 7, 20, 0.91) 100%);
+    --journal-panel-border: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.8) 0%,
+        rgba(255, 255, 255, 0.5) 11%,
+        rgba(234, 169, 96, 0.3) 26%,
+        rgba(234, 169, 96, 0.2) 44%,
+        rgba(212, 141, 68, 0.35) 64%,
+        rgba(176, 110, 50, 0.5) 84%,
+        rgba(234, 169, 96, 0.12) 100%);
+    --journal-panel-border-hover: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.6) 9%,
+        rgba(248, 195, 125, 0.4) 24%,
+        rgba(234, 169, 96, 0.3) 42%,
+        rgba(212, 141, 68, 0.45) 62%,
+        rgba(176, 110, 50, 0.6) 82%,
+        rgba(234, 169, 96, 0.18) 100%);
+    --journal-panel-outer-glow:
+        0 18px 52px rgba(0, 0, 0, 0.64),
+        0 0 0 1px rgba(234, 169, 96, 0.15),
+        0 0 40px -10px rgba(234, 169, 96, 0.08),
+        0 0 52px -12px rgba(180, 120, 50, 0.18),
+        0 8px 30px -12px rgba(12, 16, 40, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    --journal-panel-outer-glow-hover:
+        0 22px 60px rgba(0, 0, 0, 0.70),
+        0 0 0 1px rgba(234, 169, 96, 0.2),
+        0 0 48px -8px rgba(234, 169, 96, 0.1),
+        0 0 60px -10px rgba(200, 140, 70, 0.24),
+        0 10px 34px -10px rgba(15, 20, 48, 0.48),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    --journal-focus-fill: linear-gradient(168deg, rgba(234, 169, 96, 0.12) 0%, rgba(5, 4, 14, 0.90) 100%);
+    --journal-focus-ring: 0 0 0 3px rgba(234, 169, 96, 0.18);
+
+    --pai-header-fill: linear-gradient(168deg, rgba(5, 4, 14, 0.94) 0%, rgba(5, 4, 14, 0.90) 100%);
+    --pai-composer-fill: linear-gradient(180deg, rgba(5, 4, 14, 0.97) 0%, rgba(5, 4, 14, 0.99) 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   HEADER
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.pai .pai-header {
+    background: rgba(5, 4, 14, 0.9) !important;
+    background-image: none !important;
+    border-bottom: 1px solid rgba(234, 169, 96, 0.15) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+}
+
+.pai .pai-header::before {
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(234, 169, 96, 0.5) 30%,
+        rgba(248, 195, 125, 0.35) 60%,
+        transparent) !important;
+}
+
+.pai .pai-header::after {
+    background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.3), rgba(248, 195, 125, 0.2), transparent) !important;
+}
+
+.pai .pai-title {
+    background: linear-gradient(135deg, #FDE8C4 0%, #F8C37D 35%, #EAA960 65%, #D48D44 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+.pai .pai-badge {
+    background: rgba(234, 169, 96, 0.12) !important;
+    border-color: rgba(234, 169, 96, 0.3) !important;
+    color: #F8C37D !important;
+}
+
+.pai .pai-clear {
+    border-color: rgba(234, 169, 96, 0.2) !important;
+    color: var(--muted) !important;
+}
+
+.pai .pai-clear:hover {
+    border-color: rgba(248, 195, 125, 0.4) !important;
+    background: rgba(234, 169, 96, 0.1) !important;
+    color: #F8C37D !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   WELCOME / EMPTY STATE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.pai .pai-welcome h2 {
+    background: linear-gradient(135deg, #FDE8C4 0%, #F8C37D 35%, #EAA960 65%, #D48D44 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+.pai .pai-welcome-icon {
+    filter: drop-shadow(0 0 18px rgba(234, 169, 96, 0.45)) drop-shadow(0 0 32px rgba(234, 169, 96, 0.2)) !important;
+}
+
+/* Capability cards */
+.pai .pai-cap {
+    background: rgba(5, 4, 14, 0.65) !important;
+    background-image: none !important;
+    border: 1px solid rgba(234, 169, 96, 0.15) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+}
+
+.pai .pai-cap::before {
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(234, 169, 96, 0.5) 30%,
+        rgba(248, 195, 125, 0.35) 60%,
+        transparent) !important;
+}
+
+.pai .pai-cap:hover {
+    background: rgba(8, 7, 20, 0.78) !important;
+    border-color: rgba(234, 169, 96, 0.3) !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), 0 0 0 0.5px rgba(234, 169, 96, 0.08) inset !important;
+}
+
+.pai .pai-cap-icon {
+    background: rgba(234, 169, 96, 0.1) !important;
+    border-color: rgba(234, 169, 96, 0.2) !important;
+}
+
+/* Quick action chips */
+.pai .pai-chip {
+    background: rgba(5, 4, 14, 0.65) !important;
+    background-image: none !important;
+    border: 1px solid rgba(234, 169, 96, 0.15) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+    color: rgba(248, 195, 125, 0.85) !important;
+}
+
+.pai .pai-chip:hover:not(:disabled) {
+    background: rgba(234, 169, 96, 0.12) !important;
+    border-color: rgba(248, 195, 125, 0.35) !important;
+    color: #F8C37D !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), 0 0 16px rgba(234, 169, 96, 0.08) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MESSAGE BUBBLES
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* AI bubble */
+.pai .pai-msg.assistant .pai-bubble {
+    background: rgba(5, 4, 14, 0.65) !important;
+    background-image: none !important;
+    border: 1px solid rgba(234, 169, 96, 0.15) !important;
+    border-radius: 14px !important;
+    border-bottom-left-radius: 4px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+    color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.pai .pai-msg.assistant .pai-bubble::before {
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(234, 169, 96, 0.5) 30%,
+        rgba(248, 195, 125, 0.35) 60%,
+        transparent) !important;
+}
+
+/* User bubble */
+.pai .pai-msg.user .pai-bubble {
+    background: rgba(234, 169, 96, 0.12) !important;
+    background-image: none !important;
+    border: 1px solid rgba(234, 169, 96, 0.25) !important;
+    border-radius: 14px !important;
+    border-bottom-right-radius: 4px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* User avatar */
+.pai .pai-avatar.user {
+    background: linear-gradient(135deg, #5a3d18, #8a6028, rgba(234, 169, 96, 0.8)) !important;
+    border-color: rgba(234, 169, 96, 0.35) !important;
+}
+
+/* AI avatar */
+.pai .pai-avatar.ai {
+    background: linear-gradient(135deg, #F8C37D, #FDE8C4) !important;
+    border-color: rgba(234, 169, 96, 0.35) !important;
+    box-shadow: 0 0 14px rgba(234, 169, 96, 0.22) !important;
+}
+
+/* Error bubble */
+.pai .pai-msg.error .pai-bubble {
+    background: rgba(240, 61, 95, 0.06) !important;
+    border-color: rgba(240, 61, 95, 0.2) !important;
+    color: rgba(252, 165, 165, 0.95) !important;
+}
+
+/* Action buttons */
+.pai .pai-action-btn:hover {
+    border-color: rgba(248, 195, 125, 0.4) !important;
+    background: rgba(234, 169, 96, 0.1) !important;
+    color: #F8C37D !important;
+}
+
+.pai .pai-action-btn.active {
+    background: rgba(234, 169, 96, 0.12) !important;
+    border-color: rgba(234, 169, 96, 0.35) !important;
+    color: #F8C37D !important;
+}
+
+/* Sources button */
+.pai .pai-sources-btn {
+    border-color: rgba(234, 169, 96, 0.2) !important;
+    background: rgba(234, 169, 96, 0.06) !important;
+    color: rgba(248, 195, 125, 0.8) !important;
+}
+
+.pai .pai-sources-btn:hover {
+    border-color: rgba(248, 195, 125, 0.4) !important;
+    background: rgba(234, 169, 96, 0.12) !important;
+    color: #F8C37D !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   COMPOSER
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.pai .pai-composer {
+    background: rgba(5, 4, 14, 0.95) !important;
+    background-image: none !important;
+    border-top: 1px solid rgba(234, 169, 96, 0.15) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4), 0 0 40px rgba(234, 169, 96, 0.03) !important;
+    backdrop-filter: blur(22px) saturate(1.25) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.25) !important;
+}
+
+.pai .pai-composer::before {
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(234, 169, 96, 0.5) 30%,
+        rgba(248, 195, 125, 0.35) 60%,
+        transparent) !important;
+}
+
+/* Icon buttons */
+.pai .pai-icon-btn {
+    background: rgba(5, 4, 14, 0.65) !important;
+    background-image: none !important;
+    border: 1px solid rgba(234, 169, 96, 0.2) !important;
+    border-radius: 12px !important;
+    color: rgba(248, 195, 125, 0.75) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+}
+
+.pai .pai-icon-btn:hover:not(:disabled) {
+    background: rgba(234, 169, 96, 0.12) !important;
+    border-color: rgba(248, 195, 125, 0.4) !important;
+    color: #F8C37D !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 0 16px rgba(234, 169, 96, 0.1) !important;
+}
+
+/* Send button */
+.pai .pai-send {
+    background: linear-gradient(135deg, #D48D44 0%, #EAA960 40%, #F8C37D 100%) !important;
+    border-color: rgba(248, 195, 125, 0.5) !important;
+    box-shadow: 0 0 22px rgba(234, 169, 96, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.pai .pai-send:hover:not(:disabled) {
+    box-shadow: 0 0 36px rgba(248, 195, 125, 0.45), 0 8px 24px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Textarea */
+.pai .pai-input-wrap textarea {
+    background-color: rgba(5, 4, 14, 0.85) !important;
+    background-image: none !important;
+    border: 1px solid rgba(234, 169, 96, 0.15) !important;
+    border-radius: 12px !important;
+    color: rgba(248, 250, 252, 0.94) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+    scrollbar-color: rgba(234, 169, 96, 0.3) transparent !important;
+}
+
+.pai .pai-input-wrap textarea:focus {
+    background-color: rgba(5, 4, 14, 0.95) !important;
+    border-color: rgba(234, 169, 96, 0.4) !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45), 0 0 0 3px rgba(234, 169, 96, 0.1) !important;
+}
+
+.pai .pai-input-wrap textarea::-webkit-scrollbar-thumb {
+    background: rgba(234, 169, 96, 0.35) !important;
+}
+
+.pai .pai-input-wrap textarea::-webkit-scrollbar-thumb:hover {
+    background: rgba(248, 195, 125, 0.5) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TYPING DOTS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.pai .pai-dots span {
+    background: rgba(234, 169, 96, 0.5) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PULSE INDICATOR
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.pai .pai-pulse {
+    background: rgba(234, 169, 96, 0.85) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MARKDOWN ENHANCEMENTS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.pai .pai-bubble .md-bold {
+    color: #F8C37D !important;
+}
+
+.pai .pai-bubble .md-code {
+    background: rgba(234, 169, 96, 0.08) !important;
+    border-color: rgba(234, 169, 96, 0.2) !important;
+    color: #F8C37D !important;
+}
+
+.pai .pai-bubble .md-pre {
+    background: rgba(5, 4, 14, 0.6) !important;
+    border-color: rgba(234, 169, 96, 0.15) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.pai .pai-body::-webkit-scrollbar-thumb {
+    background: rgba(234, 169, 96, 0.3) !important;
+}
+
+.pai .pai-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(248, 195, 125, 0.5) !important;
+}
+/* ═══════════════════════════════════════════════════════════════════════
+   OPERATOR GLASS SHELL — Inside pai-body
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Remove old CSS starfield */
+.pai::before,
+.pai::after {
+    display: none !important;
+}
+
+/* Body positioning for CosmicBackground */
+.pai .pai-body {
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* CosmicBackground inside body */
+.pai .pai-body > .cosmic-background,
+.pai .pai-body > [class*="cosmic"] {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+    opacity: 0.4 !important;
+}
+
+/* ── Operator Glass Shell ───────────────────────────────── */
+.pai .pai-body .trade-validator-shell.journal-glass-panel {
+    background: rgba(3, 2, 10, 0.34) !important;
+    background-image: none !important;
+    border: 1px solid rgba(234, 169, 96, 0.14) !important;
+    border-radius: 18px !important;
+    box-shadow:
+        0 20px 56px rgba(0, 0, 0, 0.48),
+        0 0 0 0.5px rgba(255, 255, 255, 0.04) inset !important;
+    backdrop-filter: blur(22px) saturate(1.06) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.06) !important;
+    padding: 24px !important;
+    margin: 16px auto !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Gold hairline on top */
+.pai .pai-body .trade-validator-shell.journal-glass-panel--rim::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 4% !important;
+    right: 14% !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent) !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+}
+
+/* Messages inside the shell */
+.pai .pai-body .pai-messages {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .pai .pai-body > .cosmic-background,
+    .pai .pai-body > [class*="cosmic"] {
+        opacity: 0.3 !important;
+    }
+    
+    .pai .pai-body .trade-validator-shell.journal-glass-panel {
+        padding: 16px !important;
+        margin: 8px !important;
+        border-radius: 14px !important;
+    }
+}
+/* ═══════════════════════════════════════════════════════════════════════
+   COSMIC BACKGROUND + OPERATOR GLASS SHELL — Full Page
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Remove old CSS starfield */
+.pai::before,
+.pai::after {
+    display: none !important;
+}
+
+/* CosmicBackground — behind everything */
+.pai > .cosmic-background,
+.pai > [class*="cosmic"] {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+    opacity: 0.45 !important;
+}
+
+/* ── Operator Glass Shell — wraps entire page ── */
+.pai > .trade-validator-shell.journal-glass-panel {
+    background: rgba(3, 2, 10, 0.34) !important;
+    background-image: none !important;
+    border: 1px solid rgba(234, 169, 96, 0.14) !important;
+    border-radius: 0 !important;
+    box-shadow:
+        0 20px 56px rgba(0, 0, 0, 0.48),
+        0 0 0 0.5px rgba(255, 255, 255, 0.04) inset !important;
+    backdrop-filter: blur(22px) saturate(1.06) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.06) !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Gold hairline on top of the shell */
+.pai > .trade-validator-shell.journal-glass-panel--rim::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 4% !important;
+    right: 14% !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent) !important;
+    pointer-events: none !important;
+    z-index: 10 !important;
+}
+
+/* Make header transparent so glass shell shows through */
+.pai > .trade-validator-shell .pai-header {
+    background: transparent !important;
+    background-image: none !important;
+    border-bottom: 1px solid rgba(234, 169, 96, 0.12) !important;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Body area — transparent */
+.pai > .trade-validator-shell .pai-body {
+    background: transparent !important;
+}
+
+/* Composer — transparent */
+.pai > .trade-validator-shell .pai-composer {
+    background: transparent !important;
+    background-image: none !important;
+    border-top: 1px solid rgba(234, 169, 96, 0.12) !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .pai > .cosmic-background,
+    .pai > [class*="cosmic"] {
+        opacity: 0.35 !important;
+    }
+    
+    .pai > .trade-validator-shell.journal-glass-panel {
+        backdrop-filter: blur(18px) saturate(1.04) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(1.04) !important;
+    }
+}

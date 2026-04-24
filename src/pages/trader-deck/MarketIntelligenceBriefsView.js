@@ -902,7 +902,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               <span className="td-deck-mi-modern-stat-label">
                 {isLondonSundayDaily
                   ? 'Sunday week-open brief'
-                  : 'asset sleeves stored (of 8)'}
+                  : 'Brief (of 8)'}
                 {isLondonSundayDaily
                   ? briefsForSleeveGrid.length >= 1
                     ? ' · ready'

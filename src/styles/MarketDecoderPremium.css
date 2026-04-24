@@ -1,0 +1,396 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   MARKET DECODER — Trader Playbook Premium Theme Override
+   Deep navy glass · gold accents · professional typography
+   Import AFTER the main Market Decoder CSS file
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens ───────────────────────────────────────────────────── */
+.md-decoder {
+    --tp-glass: rgba(5, 4, 14, 0.65);
+    --tp-glass-h: rgba(8, 7, 20, 0.78);
+    --tp-glass-deep: rgba(3, 4, 14, 0.82);
+    --tp-border-gold: rgba(234, 169, 96, 0.15);
+    --tp-border-gold-h: rgba(234, 169, 96, 0.30);
+    --tp-gold: #EAA960;
+    --tp-gold-bright: #F8C37D;
+    --tp-gold-pale: #FDE8C4;
+    --tp-gold-warm: #D48D44;
+    --tp-text: #FFFFFF;
+    --tp-text-muted: rgba(200, 196, 232, 0.72);
+    --tp-text-dim: rgba(200, 196, 232, 0.45);
+    --tp-text-gold: rgba(248, 195, 125, 0.92);
+    --tp-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    --tp-shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.45), 0 0 0 0.5px rgba(234, 169, 96, 0.08) inset;
+    --tp-radius-sm: 10px;
+    --tp-radius-md: 14px;
+    --tp-radius-lg: 18px;
+    --tp-blur: blur(16px) saturate(1.08);
+    --tp-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --tp-grad-gold: linear-gradient(135deg, #FDE8C4 0%, #F8C37D 35%, #EAA960 65%, #D48D44 100%);
+    --tp-line-gold: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5), rgba(248, 195, 125, 0.35), transparent);
+}
+
+/* ── Hero Section ────────────────────────────────────────────────────── */
+.md-decoder .md-decoder-hero {
+    background: var(--tp-glass) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+    border-radius: var(--tp-radius-lg) !important;
+    box-shadow: var(--tp-shadow-card) !important;
+    backdrop-filter: var(--tp-blur) !important;
+    -webkit-backdrop-filter: var(--tp-blur) !important;
+}
+
+.md-decoder .md-decoder-hero::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 1px !important;
+    background: var(--tp-line-gold) !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+    opacity: 0.6 !important;
+}
+
+.md-decoder .md-decoder-hero-title {
+    background: var(--tp-grad-gold) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+}
+
+.md-decoder .md-decoder-hero-eyebrow {
+    color: rgba(234, 169, 96, 0.75) !important;
+}
+
+.md-decoder .md-decoder-hero-sub {
+    color: var(--tp-text-muted) !important;
+}
+
+/* Hero rail cards */
+.md-decoder .md-hero-rail-card {
+    background: rgba(5, 4, 14, 0.5) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+    border-radius: var(--tp-radius-md) !important;
+    box-shadow: var(--tp-shadow-card) !important;
+}
+
+.md-decoder .md-hero-rail-label {
+    color: rgba(234, 169, 96, 0.75) !important;
+}
+
+/* ── Search & Input ──────────────────────────────────────────────────── */
+.md-decoder .md-decoder-input,
+.md-decoder .md-ref-search-input {
+    background: rgba(5, 4, 14, 0.65) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+    border-radius: 999px !important;
+    color: var(--tp-text) !important;
+}
+
+.md-decoder .md-decoder-input:focus,
+.md-decoder .md-ref-search-input:focus {
+    border-color: rgba(234, 169, 96, 0.45) !important;
+    box-shadow: 0 0 0 3px rgba(234, 169, 96, 0.1) !important;
+}
+
+.md-decoder .md-decoder-input::placeholder,
+.md-decoder .md-ref-search-input::placeholder {
+    color: rgba(200, 196, 232, 0.4) !important;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.md-decoder .md-decoder-submit,
+.md-decoder .md-ref-decode {
+    background: rgba(234, 169, 96, 0.12) !important;
+    border: 1px solid rgba(234, 169, 96, 0.3) !important;
+    color: var(--tp-text-gold) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.md-decoder .md-decoder-submit:hover:not(:disabled),
+.md-decoder .md-ref-decode:hover:not(:disabled) {
+    background: rgba(234, 169, 96, 0.2) !important;
+    border-color: rgba(248, 195, 125, 0.5) !important;
+    color: #F8C37D !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 0 16px rgba(234, 169, 96, 0.15) !important;
+}
+
+/* ── Chips ───────────────────────────────────────────────────────────── */
+.md-decoder .md-decoder-chip,
+.md-decoder .md-ref-chip {
+    background: rgba(5, 4, 14, 0.5) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+    color: rgba(248, 195, 125, 0.8) !important;
+    border-radius: 999px !important;
+}
+
+.md-decoder .md-decoder-chip:hover,
+.md-decoder .md-ref-chip:hover {
+    background: rgba(234, 169, 96, 0.1) !important;
+    border-color: rgba(248, 195, 125, 0.4) !important;
+    color: #F8C37D !important;
+}
+
+/* ── Action Buttons ──────────────────────────────────────────────────── */
+.md-decoder .md-decoder-action-btn {
+    background: rgba(234, 169, 96, 0.08) !important;
+    border-color: rgba(234, 169, 96, 0.25) !important;
+    color: rgba(248, 195, 125, 0.9) !important;
+}
+
+.md-decoder .md-decoder-action-btn:hover {
+    background: rgba(234, 169, 96, 0.15) !important;
+    border-color: rgba(248, 195, 125, 0.45) !important;
+    color: #F8C37D !important;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────── */
+.md-decoder .md-decoder-card,
+.md-decoder .md-summary-item,
+.md-decoder .md-decision-card,
+.md-decoder .md-decoder-card--pulse,
+.md-decoder .md-ref-panel,
+.md-decoder .md-ref-panel--glass,
+.md-decoder .md-ref-panel--surface {
+    background: var(--tp-glass) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+    border-radius: var(--tp-radius-md) !important;
+    box-shadow: var(--tp-shadow-card) !important;
+    backdrop-filter: var(--tp-blur) !important;
+    -webkit-backdrop-filter: var(--tp-blur) !important;
+}
+
+.md-decoder .md-decoder-card::before,
+.md-decoder .md-ref-panel::before {
+    background: var(--tp-line-gold) !important;
+}
+
+.md-decoder .md-decoder-card:hover,
+.md-decoder .md-summary-item:hover,
+.md-decoder .md-ref-panel:hover {
+    border-color: var(--tp-border-gold-h) !important;
+    box-shadow: var(--tp-shadow-hover) !important;
+}
+
+/* ── Card Titles ─────────────────────────────────────────────────────── */
+.md-decoder .md-decoder-card-title,
+.md-decoder .md-summary-label,
+.md-decoder .md-decision-label,
+.md-decoder .md-ref-panel-h {
+    color: rgba(234, 169, 96, 0.8) !important;
+}
+
+/* ── Executive Strip ─────────────────────────────────────────────────── */
+.md-decoder .md-decoder-executive {
+    background: var(--tp-glass) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+    border-radius: var(--tp-radius-md) !important;
+    box-shadow: var(--tp-shadow-card) !important;
+}
+
+/* ── Impact Cards ────────────────────────────────────────────────────── */
+.md-decoder .md-impact-card {
+    background: rgba(5, 4, 14, 0.5) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+    border-radius: 12px !important;
+}
+
+/* ── Headline Strip ──────────────────────────────────────────────────── */
+.md-decoder .md-decoder-headline-strip,
+.md-decoder .md-headline-card {
+    background: rgba(5, 4, 14, 0.5) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+}
+
+/* ── Tone / Status Colors ────────────────────────────────────────────── */
+.md-decoder .md-tone--bull,
+.md-decoder .md-ref-pct--up,
+.md-decoder .md-ref-val--bull {
+    color: #0FD98A !important;
+}
+
+.md-decoder .md-tone--bear,
+.md-decoder .md-ref-pct--down,
+.md-decoder .md-ref-val--bear {
+    color: #F03D5F !important;
+}
+
+.md-decoder .md-tone--neutral {
+    color: rgba(248, 195, 125, 0.9) !important;
+}
+
+/* ── Gauge ───────────────────────────────────────────────────────────── */
+.md-decoder .md-pulse-gauge-track,
+.md-decoder .md-ref-gauge-track {
+    background: linear-gradient(90deg, 
+        rgba(240, 61, 95, 0.3), 
+        rgba(200, 196, 232, 0.1), 
+        rgba(15, 217, 138, 0.3)) !important;
+    border-color: rgba(234, 169, 96, 0.2) !important;
+}
+
+.md-decoder .md-pulse-needle,
+.md-decoder .md-ref-g-needle {
+    background: linear-gradient(180deg, #F8C37D, #EAA960) !important;
+    box-shadow: 0 0 14px rgba(234, 169, 96, 0.55) !important;
+}
+
+/* ── Scenario Rows ───────────────────────────────────────────────────── */
+.md-decoder .md-ref-scen-row {
+    background: rgba(5, 4, 14, 0.4) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+}
+
+.md-decoder .md-ref-scen-v {
+    color: var(--tp-text-gold) !important;
+}
+
+/* ── Execution Check ─────────────────────────────────────────────────── */
+.md-decoder .md-ref-exec-check {
+    background: rgba(234, 169, 96, 0.15) !important;
+    border-color: rgba(234, 169, 96, 0.4) !important;
+}
+
+.md-decoder .md-ref-exec-check::after {
+    border-color: #F8C37D !important;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.md-decoder .md-ref-footer {
+    background: var(--tp-glass) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+}
+
+.md-decoder .md-ref-footer-cap {
+    color: #F8C37D !important;
+}
+
+/* ── Decision Bar ────────────────────────────────────────────────────── */
+.md-decoder .md-decision-bar {
+    background: rgba(5, 4, 14, 0.85) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+}
+
+.md-decoder .md-decision-slot {
+    background: rgba(5, 4, 14, 0.5) !important;
+    border: 1px solid rgba(234, 169, 96, 0.1) !important;
+}
+
+.md-decoder .md-decision-bar-action {
+    background: rgba(234, 169, 96, 0.08) !important;
+    border: 1px solid rgba(234, 169, 96, 0.3) !important;
+}
+
+.md-decoder .md-decision-bar-action-cap {
+    background: var(--tp-grad-gold) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+}
+
+/* ── Unified Rails ───────────────────────────────────────────────────── */
+.md-decoder .md-ref-unified-rail {
+    background: var(--tp-glass) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+    border-radius: var(--tp-radius-lg) !important;
+    box-shadow: var(--tp-shadow-card) !important;
+}
+
+.md-decoder .md-ref-unified-h {
+    color: rgba(234, 169, 96, 0.8) !important;
+}
+
+/* ── Pulse / Bias ────────────────────────────────────────────────────── */
+.md-decoder .md-ref-pulse-bias {
+    color: var(--tp-text) !important;
+}
+
+.md-decoder .md-ref-pulse-bias--bullish {
+    color: #0FD98A !important;
+}
+
+.md-decoder .md-ref-pulse-bias--bearish {
+    color: #F03D5F !important;
+}
+
+/* ── Live Dot ────────────────────────────────────────────────────────── */
+.md-decoder .md-decoder-live-dot,
+.md-decoder .md-ref-live-dot {
+    background: #0FD98A !important;
+    box-shadow: 0 0 10px rgba(15, 217, 138, 0.65) !important;
+}
+
+/* ── Data Health ─────────────────────────────────────────────────────── */
+.md-decoder .md-data-health {
+    background: rgba(5, 4, 14, 0.5) !important;
+    border-color: var(--tp-border-gold) !important;
+}
+
+.md-decoder .md-ph--ok { color: #0FD98A !important; }
+.md-decoder .md-ph--fallback { color: rgba(248, 195, 125, 0.85) !important; }
+.md-decoder .md-ph--failed { color: #F03D5F !important; }
+
+/* ── Reference Theme — Top Section ───────────────────────────────────── */
+.md-decoder--reference .md-ref-top {
+    background: var(--tp-glass) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+    box-shadow: var(--tp-shadow-card) !important;
+}
+
+.md-decoder--reference .md-ref-aura {
+    color: rgba(234, 169, 96, 0.7) !important;
+}
+
+.md-decoder--reference .md-ref-title {
+    background: var(--tp-grad-gold) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+}
+
+/* ── Preview Overlay ─────────────────────────────────────────────────── */
+.md-decoder .md-preview-dialog {
+    background: rgba(5, 4, 14, 0.95) !important;
+    border: 1px solid var(--tp-border-gold) !important;
+}
+
+.md-decoder .md-preview-bar {
+    border-bottom-color: var(--tp-border-gold) !important;
+}
+
+.md-decoder .md-preview-title {
+    color: #F8C37D !important;
+}
+
+.md-decoder .md-preview-close:hover {
+    background: rgba(240, 61, 95, 0.15) !important;
+}
+
+.md-decoder .md-preview-export-primary {
+    background: linear-gradient(135deg, #FDE8C4, #F8C37D, #EAA960, #D48D44) !important;
+    color: #0A0810 !important;
+}
+
+/* ── Intel Preview ───────────────────────────────────────────────────── */
+.md-decoder .md-decoder-intel-export {
+    background: rgba(234, 169, 96, 0.15) !important;
+    border: 1px solid rgba(234, 169, 96, 0.35) !important;
+    color: #F8C37D !important;
+}
+
+.md-decoder .md-decoder-intel-export:hover {
+    background: rgba(234, 169, 96, 0.22) !important;
+    box-shadow: 0 0 24px rgba(234, 169, 96, 0.2) !important;
+}
+
+/* ── Scrollbars ──────────────────────────────────────────────────────── */
+.md-decoder *::-webkit-scrollbar-thumb {
+    background: rgba(234, 169, 96, 0.35) !important;
+}
+
+.md-decoder *::-webkit-scrollbar-thumb:hover {
+    background: rgba(248, 195, 125, 0.55) !important;
+}

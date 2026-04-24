@@ -5807,3 +5807,477 @@ div.td-outlook-concept-grid--terminal {
   justify-content: center !important;
   width: 100% !important;
 }
+/* ═══════════════════════════════════════════════════════════════════════
+   STRICT FIX: Remove gap above Market Outlook header
+   Target every possible container creating space
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* 1. Kill padding on the body wrapper */
+.td-deck-with-tabs.td-layout-page .td-deck-body,
+.td-deck-with-tabs.td-layout-page .td-deck-body-single {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* 2. Kill padding on the content box */
+.td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern,
+.td-deck-with-tabs.td-layout-page .td-deck-content-box.journal-glass-panel {
+    padding: 2px 14px 16px !important;
+}
+
+/* 3. Kill margin on the outlook root */
+.td-deck-with-tabs.td-layout-page .td-deck-mo-root,
+.td-deck-with-tabs.td-layout-page .td-deck-mo-root.td-deck-mo-outlook {
+    margin: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* 4. Kill margin on the hero header itself */
+.td-deck-with-tabs.td-layout-page .td-outlook-unified-header,
+.td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-hero,
+.td-deck-with-tabs.td-layout-page .td-outlook-concept-page-header {
+    margin-top: 0 !important;
+    margin-bottom: 10px !important;
+    padding: 10px 14px !important;
+}
+
+/* 5. Reduce tab zone bottom spacing */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
+    margin-bottom: 0 !important;
+    padding-bottom: 8px !important;
+}
+
+/* 6. Journal scoped */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-body,
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-body-single {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern,
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-content-box.journal-glass-panel {
+    padding: 2px 14px 16px !important;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-outlook-unified-header,
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-hero {
+    margin-top: 0 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SCROLLBAR FIX
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.td-deck-with-tabs.td-layout-page .td-deck-content-box,
+.td-deck-with-tabs.td-layout-page .td-deck-body,
+.td-deck-with-tabs.td-layout-page .td-deck-body-single {
+    overflow: visible !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-content-box::-webkit-scrollbar,
+.td-deck-with-tabs.td-layout-page .td-deck-body::-webkit-scrollbar,
+.td-deck-with-tabs.td-layout-page .td-deck-body-single::-webkit-scrollbar {
+    display: none !important;
+}
+/* ═══════════════════════════════════════════════════════════════════════
+   MATCH: Market Intelligence Hero = Market Outlook Header Style
+   Single row, centered, compact box
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Match the hero box to outlook header dimensions */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-modern-hero {
+    margin-top: 0 !important;
+    margin-bottom: 10px !important;
+    padding: 10px 14px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    flex-wrap: nowrap !important;
+    min-height: auto !important;
+}
+
+/* Title — single line, match outlook title size */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-modern-title {
+    margin: 0 !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.03em !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+}
+
+/* Hide the subtitle/description to keep it single line */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-modern-sub {
+    display: none !important;
+}
+
+/* Hide weekend note and week range key in the hero */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-weekend-note,
+.td-deck-with-tabs.td-layout-page .td-deck-mi-week-range-key {
+    display: none !important;
+}
+
+/* Stat badge — match outlook stat style */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat {
+    text-align: right !important;
+    padding: 6px 10px !important;
+    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+    min-width: auto !important;
+    max-width: none !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat-value {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    line-height: 1.1 !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat-label {
+    font-size: 0.55rem !important;
+    letter-spacing: 0.1em !important;
+}
+
+/* Filter banner — keep below hero, compact */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-filter-active-banner {
+    margin: 0 0 8px !important;
+    padding: 6px 10px !important;
+    font-size: 0.72rem !important;
+}
+
+/* Admin diag — hide in hero, keep compact */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-admin-intel-diag {
+    margin: 4px 0 0 !important;
+    padding: 4px 8px !important;
+    font-size: 0.65rem !important;
+}
+
+/* Journal scoped */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-hero {
+    margin-top: 0 !important;
+    padding: 10px 14px !important;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-hero {
+        padding: 8px 10px !important;
+        gap: 8px !important;
+    }
+    
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-title {
+        font-size: 0.78rem !important;
+    }
+    
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat {
+        padding: 4px 8px !important;
+    }
+    
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat-value {
+        font-size: 0.72rem !important;
+    }
+}
+/* ═══════════════════════════════════════════════════════════════════════
+   BRIEF CARDS — All Text Visible, Proper Icon Sizing
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Grid container */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-cards--sleeve-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+}
+
+/* Individual brief card — allow text to wrap */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    padding: 14px 16px !important;
+    border-radius: 12px !important;
+    background: rgba(5, 4, 14, 0.55) !important;
+    border: 1px solid rgba(107, 143, 232, 0.12) !important;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease !important;
+    min-height: auto !important;
+    height: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card:hover {
+    border-color: rgba(107, 143, 232, 0.35) !important;
+    background: rgba(107, 143, 232, 0.06) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Card titles wrapper — text can wrap naturally */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-titles {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+}
+
+/* Kicker / category label */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-kicker {
+    font-size: 0.58rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    color: rgba(140, 175, 255, 0.8) !important;
+    flex-shrink: 0 !important;
+    padding: 2px 7px !important;
+    background: rgba(107, 143, 232, 0.08) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(107, 143, 232, 0.12) !important;
+    white-space: nowrap !important;
+    line-height: 1.4 !important;
+}
+
+/* Card title — FULLY VISIBLE, wraps naturally */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-title {
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    color: rgba(255, 255, 255, 0.92) !important;
+    letter-spacing: 0.01em !important;
+    line-height: 1.45 !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Card actions — properly sized, clearly visible */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    padding-top: 2px !important;
+}
+
+/* ALL buttons inside actions — consistent sizing */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions .trader-suite-btn,
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button,
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions .td-deck-btn,
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions [class*="btn"] {
+    padding: 7px 14px !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.03em !important;
+    border-radius: 8px !important;
+    min-height: 34px !important;
+    min-width: 34px !important;
+    white-space: nowrap !important;
+    height: auto !important;
+    line-height: 1.2 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+}
+
+/* Icon-only buttons (delete, edit etc) — larger and clearly visible */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button[title],
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions .td-deck-btn-icon,
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button:has(svg),
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button:has([class*="icon"]) {
+    padding: 7px 10px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+}
+
+/* SVG icons inside buttons — properly sized */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions svg,
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions [class*="icon"] {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+}
+
+/* Delete button specifically — red tint, clearly visible */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button[title*="Delete"],
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button[title*="delete"],
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button[title*="Remove"],
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button[title*="remove"],
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions .td-deck-btn-danger {
+    background: rgba(240, 61, 95, 0.08) !important;
+    border-color: rgba(240, 61, 95, 0.25) !important;
+    color: rgba(255, 130, 140, 0.9) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button[title*="Delete"]:hover,
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button[title*="delete"]:hover,
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button[title*="Remove"]:hover,
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button[title*="remove"]:hover,
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions .td-deck-btn-danger:hover {
+    background: rgba(240, 61, 95, 0.15) !important;
+    border-color: rgba(240, 61, 95, 0.45) !important;
+}
+
+/* Pending card */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card--pending {
+    border-style: dashed !important;
+    border-color: rgba(107, 143, 232, 0.18) !important;
+    opacity: 0.85 !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-pending {
+    font-size: 0.72rem !important;
+    color: rgba(200, 196, 232, 0.48) !important;
+    margin: 2px 0 0 !important;
+    line-height: 1.4 !important;
+}
+
+/* Filtered card */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card--filtered {
+    opacity: 0.6 !important;
+}
+
+/* Sunday card */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card--sunday {
+    grid-column: 1 / -1 !important;
+}
+
+/* Empty state */
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-empty {
+    padding: 20px 16px !important;
+    text-align: center !important;
+    font-size: 0.82rem !important;
+    color: rgba(200, 196, 232, 0.45) !important;
+    border-radius: 12px !important;
+    border: 1px dashed rgba(255, 255, 255, 0.08) !important;
+    width: 100% !important;
+    grid-column: 1 / -1 !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-mi-brief-empty--fullwidth {
+    grid-column: 1 / -1 !important;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-cards--sleeve-grid {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+        gap: 8px !important;
+    }
+    
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card {
+        padding: 12px 14px !important;
+        gap: 8px !important;
+    }
+    
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-title {
+        font-size: 0.8rem !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-cards--sleeve-grid {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+    }
+    
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card {
+        padding: 12px 14px !important;
+    }
+    
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-title {
+        font-size: 0.82rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+        padding: 12px 14px !important;
+    }
+    
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-titles {
+        width: 100% !important;
+    }
+    
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions {
+        width: 100% !important;
+        justify-content: flex-end !important;
+    }
+    
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions button,
+    .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card-actions .trader-suite-btn {
+        padding: 8px 14px !important;
+        font-size: 0.78rem !important;
+        min-height: 36px !important;
+    }
+}
+/* ═══════════════════════════════════════════════════════════════════════
+   FIX: Move Intel Center Sub-Tabs Downward — Prevent Collision
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Move the center sub-tabs (BRIEFS button) down */
+.td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-center {
+    padding-top: 6px !important;
+    margin-top: 2px !important;
+}
+
+/* Add breathing room above the sub-tabs row */
+.td-deck-with-tabs.td-layout-page .td-deck-period-row-main .td-deck-sub-tabs {
+    padding-top: 4px !important;
+}
+
+/* Specifically target the intel-center sub-tab */
+.td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-center .td-deck-sub-tab {
+    position: relative !important;
+    top: 4px !important;
+}
+
+/* Ensure the period row has proper spacing */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-row-main__intel.td-deck-period-row--intel-three {
+    align-items: center !important;
+    padding-top: 2px !important;
+}
+
+/* Push the center section down slightly */
+.td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-center {
+    align-self: flex-end !important;
+    padding-bottom: 0 !important;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 1099px) {
+    .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-center {
+        padding-top: 4px !important;
+    }
+    
+    .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-center .td-deck-sub-tab {
+        top: 2px !important;
+    }
+}
+
+@media (max-width: 767px) {
+    .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-center {
+        padding-top: 2px !important;
+    }
+    
+    .td-deck-with-tabs.td-layout-page .td-deck-sub-tabs--intel-center .td-deck-sub-tab {
+        top: 0 !important;
+    }
+}
