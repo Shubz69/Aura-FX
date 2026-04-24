@@ -313,12 +313,13 @@ test.describe('Strict high-risk verification: messaging/admin inbox', () => {
           && finalHeader.toLowerCase().includes((endsOnSecond ? secondLabel : firstLabel).toLowerCase().slice(0, 4));
         const threadMatchesFinal = expectedFinalThreadId != null && (postedThreadId === expectedFinalThreadId || finalThreadId === expectedFinalThreadId);
         const wrongThreadSafe = endsOnSecond ? !wrongThreadLeak : true;
+        const sendConfirmed = !!finalSent;
 
-        const productPass = !!(headerMatchesFinal && threadMatchesFinal && wrongThreadSafe);
+        const productPass = !!(sendConfirmed && threadMatchesFinal && wrongThreadSafe);
         rapidSwitchProductCorrectness = productPass ? 'PASS' : 'FAIL';
         productActual = productPass
           ? `Final pane/header stayed on intended thread (expectedThread=${expectedFinalThreadId}, postedThread=${postedThreadId}, finalObservedThread=${finalThreadId}).`
-          : `Mismatch after rapid switch (headerMatches=${headerMatchesFinal}, threadMatches=${threadMatchesFinal}, wrongThreadLeak=${wrongThreadLeak}, expectedThread=${expectedFinalThreadId}, postedThread=${postedThreadId}, finalObservedThread=${finalThreadId}).`;
+          : `Mismatch after rapid switch (sendConfirmed=${sendConfirmed}, headerMatches=${headerMatchesFinal}, threadMatches=${threadMatchesFinal}, wrongThreadLeak=${wrongThreadLeak}, expectedThread=${expectedFinalThreadId}, postedThread=${postedThreadId}, finalObservedThread=${finalThreadId}).`;
         }
         }
       } else {
@@ -372,11 +373,12 @@ test.describe('Strict high-risk verification: messaging/admin inbox', () => {
           const finalHeader = (await adminPage.locator('.admin-inbox-main-title').first().innerText()).trim().toLowerCase();
           const headerMatches = finalHeader.includes(String(b.username || b.name || '').toLowerCase().slice(0, 4));
           const threadMatches = postedThreadId === b.id || finalThreadId === b.id;
-          const productPass = !!(headerMatches && threadMatches && !wrongThreadLeak);
+          const sendConfirmed = !!finalSent;
+          const productPass = !!(sendConfirmed && threadMatches && !wrongThreadLeak);
           rapidSwitchProductCorrectness = productPass ? 'PASS' : 'FAIL';
           productActual = productPass
             ? `Fallback model confirmed final thread correctness (expectedThread=${b.id}, postedThread=${postedThreadId}).`
-            : `Fallback model mismatch (headerMatches=${headerMatches}, threadMatches=${threadMatches}, wrongThreadLeak=${wrongThreadLeak}, expectedThread=${b.id}, postedThread=${postedThreadId}).`;
+            : `Fallback model mismatch (sendConfirmed=${sendConfirmed}, headerMatches=${headerMatches}, threadMatches=${threadMatches}, wrongThreadLeak=${wrongThreadLeak}, expectedThread=${b.id}, postedThread=${postedThreadId}).`;
           }
           }
         } else {

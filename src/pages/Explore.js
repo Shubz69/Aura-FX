@@ -262,7 +262,7 @@ const Explore = () => {
         <div className="explore-footer">
           <div className="explore-footer-content">
             <span className="explore-footer-text">Courses Provided</span>
-            <span className="explore-footer-separator">â€¢</span>
+            <span className="explore-footer-separator">⬢</span>
             <span className="explore-footer-powered">
               powered by <strong>The Glitch</strong>
             </span>

@@ -106,7 +106,7 @@ const ALL_ACHIEVEMENTS = [
     { id: 'first_steps', name: 'First Steps', icon: 'ðŸ”°', description: 'Reach Level 10', unlockLevel: 10 },
     { id: 'communicator', name: 'Communicator', icon: 'ðŸ’¬', description: 'Reach Level 20', unlockLevel: 20 },
     { id: 'dedicated', name: 'Dedicated', icon: 'ðŸ“ˆ', description: 'Reach Level 30', unlockLevel: 30 },
-    { id: 'rising_star', name: 'Rising Star', icon: 'â­', description: 'Reach Level 40', unlockLevel: 40 },
+    { id: 'rising_star', name: 'Rising Star', icon: '⭐', description: 'Reach Level 40', unlockLevel: 40 },
     { id: 'level_50', name: 'Level 50', icon: 'ðŸ”¥', description: 'Reach Level 50', unlockLevel: 50 },
     { id: 'tier_elite', name: 'Elite Tier', icon: 'ðŸŽ¯', description: 'Reach Level 60', unlockLevel: 60 },
     { id: 'tier_legend', name: 'Legend Tier', icon: 'ðŸ‘‘', description: 'Reach Level 80', unlockLevel: 80 },
@@ -604,7 +604,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 {/* Top shimmer line */}
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}80, rgba(248,195,125,0.5), transparent)`, borderRadius: '22px 22px 0 0', zIndex: 10 }} />
 
-                {/* Action Buttons — all icon-only, uniform 38Ã—38 squares */}
+                {/* Action Buttons — all icon-only, uniform 38×38 squares */}
                 <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px', zIndex: 20 }}>
                     {isOwnProfile && (
                         <button onClick={() => setShowSettings(true)} title="Settings" style={{
@@ -677,7 +677,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
                     {/* Level badge */}
                     <div style={{ position: 'absolute', top: '16px', left: '16px', display: 'flex', alignItems: 'center', gap: '9px', padding: '8px 16px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)', borderRadius: '10px', border: `1px solid ${bannerAccent}30`, zIndex: 2 }}>
-                        <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{level >= 75 ? 'ðŸ‘‘' : level >= 50 ? 'ðŸ’Ž' : level >= 25 ? 'ðŸ”¥' : 'â­'}</span>
+                        <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{level >= 75 ? 'ðŸ‘‘' : level >= 50 ? 'ðŸ’Ž' : level >= 25 ? 'ðŸ”¥' : '⭐'}</span>
                         <div>
                             <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.3em', fontFamily: "'Space Grotesk', sans-serif" }}>Power Level</div>
                             <div style={{ fontSize: '1rem', fontWeight: 300, color: 'white', letterSpacing: '0.1em', fontFamily: "'Space Grotesk', sans-serif" }}>{level}</div>

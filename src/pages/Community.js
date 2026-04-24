@@ -83,8 +83,8 @@ const emojis = [
     'ðŸ˜®', 'ðŸ˜²', 'ðŸ˜´', 'ðŸ¤¤', 'ðŸ˜ª', 'ðŸ˜µ', 'ðŸ¤', 'ðŸ¥´', 'ðŸ¤¢', 'ðŸ¤®',
     'ðŸ’ª', 'ðŸ‘', 'ðŸ‘Ž', 'ðŸ‘', 'ðŸ™Œ', 'ðŸ‘‹', 'ðŸ¤', 'ðŸ™', 'ðŸ’°', 'ðŸ’¸',
     'ðŸ’Ž', 'ðŸ’µ', 'ðŸ’´', 'ðŸ’¶', 'ðŸ’·', 'ðŸš€', 'ðŸ“ˆ', 'ðŸ“‰', 'ðŸ’¹', 'âš¡',
-    'ðŸ”¥', 'â­', 'âœ¨', 'ðŸ’«', 'ðŸŒŸ', 'ðŸŽ¯', 'ðŸŽ®', 'ðŸŽµ', 'ðŸŽ¶', 'â¤ï¸',
-    'ðŸ’œ', 'ðŸ’™', 'ðŸ’š', 'ðŸ’›', 'ðŸ§¡', 'ðŸ–¤', 'ðŸ¤', 'ðŸ¤Ž', 'ðŸ’”', 'â£ï¸'
+    'ðŸ”¥', '⭐', 'âœ¨', 'ðŸ’«', 'ðŸŒŸ', 'ðŸŽ¯', 'ðŸŽ®', 'ðŸŽµ', 'ðŸŽ¶', '❤️',
+    'ðŸ’œ', 'ðŸ’™', 'ðŸ’š', 'ðŸ’›', 'ðŸ§¡', 'ðŸ–¤', 'ðŸ¤', 'ðŸ¤Ž', 'ðŸ’”', '❣️'
 ];
 
 // Online users will be fetched from API or computed from real data
@@ -130,18 +130,21 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
         <div className="emoji-picker" onClick={(e) => e.stopPropagation()}>
             <div className="emoji-picker-header">
                 <span>Emoji</span>
-                <button className="emoji-picker-close" onClick={onClose}>Ã—</button>
+                <button className="emoji-picker-close" onClick={onClose}>×</button>
             </div>
             <div className="emoji-grid">
-                {emojis.map((emoji, index) => (
+                {emojis.map((emoji, index) => {
+                    const shownEmoji = decodeMojibakeText(emoji);
+                    return (
                     <button
                         key={index}
                         className="emoji-item"
-                        onClick={() => onEmojiSelect(emoji)}
+                        onClick={() => onEmojiSelect(shownEmoji)}
                     >
-                        {emoji}
+                        {shownEmoji}
                     </button>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
@@ -217,7 +220,7 @@ const PptxViewer = ({ file, onClose }) => {
             <div className="pptx-viewer-container">
                 <div className="pptx-viewer-header">
                     <h3>{file?.name || 'Presentation'}</h3>
-                    <button onClick={onClose} className="pptx-viewer-close">Ã—</button>
+                    <button onClick={onClose} className="pptx-viewer-close">×</button>
                 </div>
                 <div className="pptx-viewer-loading">
                     <div className="pptx-loading-spinner"></div>
@@ -231,7 +234,7 @@ const PptxViewer = ({ file, onClose }) => {
         <div className="pptx-viewer-container">
             <div className="pptx-viewer-header">
                 <h3>{file?.name || 'Presentation'}</h3>
-                <button onClick={onClose} className="pptx-viewer-close">Ã—</button>
+                <button onClick={onClose} className="pptx-viewer-close">×</button>
             </div>
             
             <div className="pptx-viewer-content">
@@ -385,7 +388,7 @@ const GifPicker = ({ onGifSelect, onClose }) => {
         <div className="gif-picker" onClick={(e) => e.stopPropagation()}>
             <div className="gif-picker-header">
                 <span>GIFs</span>
-                <button className="gif-picker-close" onClick={onClose}>Ã—</button>
+                <button className="gif-picker-close" onClick={onClose}>×</button>
             </div>
             <div className="gif-picker-search">
                 <input
@@ -430,18 +433,40 @@ const GifPicker = ({ onGifSelect, onClose }) => {
 // Normalize legacy category slug (cached localStorage / old DB)
 const normalizeCategorySlug = (category) => (category === 'trading' ? 'forums' : category);
 
+const decodeMojibakeText = (value) => {
+    const text = String(value || '');
+    if (!/[ðâÂ]/.test(text)) return text;
+    try {
+        const bytes = Uint8Array.from(text, (ch) => ch.charCodeAt(0) & 0xff);
+        const decoded = new TextDecoder('utf-8').decode(bytes);
+        return decoded || text;
+    } catch {
+        return text;
+    }
+};
+
+const cleanChannelLabel = (value) => {
+    const decoded = decodeMojibakeText(value).trim();
+    return decoded
+        .replace(/^[#\s]+/, '')
+        // Strip leading mojibake/emoji garbage tokens often stored in legacy channel names.
+        .replace(/^((?:[ðâÂÃ][^\s]*)|(?:[^\p{L}\p{N}#]+))\s*/u, '')
+        .replace(/^((?:[ðâÂÃ][^\s]*)|(?:[^\p{L}\p{N}#]+))\s*/u, '')
+        .trim();
+};
+
 // Get category icon
 const getCategoryIcon = (category) => {
     const c = normalizeCategorySlug(category);
     switch(c) {
-        case 'announcements': return 'ðŸ“¢';
-        case 'staff': return 'ðŸ‘¨â€ðŸ’¼';
+        case 'announcements': return '📢';
+        case 'staff': return '👨‍💼';
         case 'forums':
-        case 'trading': return 'ðŸ“ˆ';
-        case 'general': return 'ðŸ’¬';
-        case 'support': return 'ðŸ†˜';
-        case 'premium': return 'â­';
-        case 'a7fx': return 'ðŸ’Ž';
+        case 'trading': return '📈';
+        case 'general': return '💬';
+        case 'support': return '🆘';
+        case 'premium': return '⭐';
+        case 'a7fx': return '💎';
         default: return '#';
     }
 };
@@ -1070,7 +1095,7 @@ const [journalLoading, setJournalLoading] = useState(false);
             }
         };
 
-        // Initial category/channel order is loaded by getChannelsBootstrap — avoid 3Ã— parallel
+        // Initial category/channel order is loaded by getChannelsBootstrap — avoid 3× parallel
         // serverless invocations (504/timeouts) on every Community mount.
 
         const stopCategoryVis = subscribeVisibleInterval(() => {
@@ -1100,7 +1125,7 @@ const handleMiniTaskToggle = useCallback(async (task) => {
                 prev.map(t => t.id === task.id ? updated : t)
             );
             if (res.data?.xpAwarded) {
-                toast.success(`+${res.data.xpAwarded} XP!`, { icon: 'â­' });
+                toast.success(`+${res.data.xpAwarded} XP!`, { icon: '⭐' });
             }
         }
     } catch (err) {
@@ -1969,7 +1994,7 @@ const renderMessageContent = (content, messageFile) => {
 
                     if (response.ok) {
                         const result = await response.json();
-                        console.log(`âœ… XP updated: +${earnedXP} XP`, result);
+                        console.log(`✅ XP updated: +${earnedXP} XP`, result);
                         const { merged, leveledUp } = applyServerProfile(result);
                         return {
                             earnedXP,
@@ -1999,7 +2024,7 @@ const renderMessageContent = (content, messageFile) => {
                             });
                             if (retryResponse.ok) {
                                 const result = await retryResponse.json();
-                                console.log('âœ… XP synced to database on retry');
+                                console.log('✅ XP synced to database on retry');
                                 applyServerProfile(result);
                             }
                         } catch (retryError) {
@@ -2010,7 +2035,7 @@ const renderMessageContent = (content, messageFile) => {
                     console.error('âŒ Error syncing XP to database:', dbError);
                 }
             } else {
-                console.warn('âš ï¸ Cannot sync XP: User ID not found');
+                console.warn('⚠️ Cannot sync XP: User ID not found');
             }
 
             return {
@@ -2406,10 +2431,10 @@ if (window.requestAnimationFrame) {
             
             // Award XP for sending message
             const earnedXP = calculateMessageXP(messageContent, false);
-            console.log(`ðŸŽ¯ Awarding ${earnedXP} XP for GIF message`);
+            console.log(`🎯 Awarding ${earnedXP} XP for GIF message`);
             const xpResult = await awardXP(earnedXP);
             if (xpResult) {
-                console.log(`âœ… XP Awarded: +${earnedXP} XP | Total: ${xpResult.newXP} XP | Level: ${xpResult.newLevel}`);
+                console.log(`✅ XP Awarded: +${earnedXP} XP | Total: ${xpResult.newXP} XP | Level: ${xpResult.newLevel}`);
                 
                 // Trigger XP update event
                 window.dispatchEvent(new CustomEvent('xpUpdated', {
@@ -2422,7 +2447,7 @@ if (window.requestAnimationFrame) {
                 }));
                 
                 if (xpResult.leveledUp) {
-                    console.log(`ðŸŽ‰ LEVEL UP! You reached level ${xpResult.newLevel}!`);
+                    console.log(`🎉 LEVEL UP! You reached level ${xpResult.newLevel}!`);
                     window.dispatchEvent(new CustomEvent('levelUp', {
                         detail: {
                             newLevel: xpResult.newLevel,
@@ -3766,48 +3791,48 @@ useEffect(() => {
         const welcomeMessage = {
             id: 'welcome-message',
             channelId: selectedChannel.id,
-            content: `ðŸŽ‰ Welcome to Aura Terminal™ Network! ðŸŽ‰
+            content: `🎉 Welcome to Aura Terminal™ Network! 🎉
 
 Welcome to the most elite trading and wealth-building community on the planet! We're thrilled to have you join us on this incredible journey toward financial freedom and generational wealth.
 
-## ðŸ“‹ COMMUNITY RULES
+## 📋 COMMUNITY RULES
 
 1. Respect & Professionalism
-   â€¢ Treat all members with respect and professionalism
-   â€¢ No harassment, discrimination, or personal attacks
-   â€¢ Maintain a positive and constructive environment
+   ⬢ Treat all members with respect and professionalism
+   ⬢ No harassment, discrimination, or personal attacks
+   ⬢ Maintain a positive and constructive environment
 
 2. Trading & Investment Discussions
-   â€¢ Share knowledge and insights, not financial advice
-   â€¢ All trades are at your own risk - we are not financial advisors
-   â€¢ Use proper risk management and never trade more than you can afford to lose
+   ⬢ Share knowledge and insights, not financial advice
+   ⬢ All trades are at your own risk - we are not financial advisors
+   ⬢ Use proper risk management and never trade more than you can afford to lose
 
 3. Content & Privacy
-   â€¢ Keep conversations relevant to trading, wealth-building, and course topics
-   â€¢ Do not share personal financial information (account numbers, passwords, etc.)
-   â€¢ Respect intellectual property - do not share copyrighted course materials
+   ⬢ Keep conversations relevant to trading, wealth-building, and course topics
+   ⬢ Do not share personal financial information (account numbers, passwords, etc.)
+   ⬢ Respect intellectual property - do not share copyrighted course materials
 
 4. Spam & Promotion
-   â€¢ No spam, self-promotion, or affiliate links without permission
-   â€¢ Do not promote other trading services or products
-   â€¢ Keep discussions focused on learning and community growth
+   ⬢ No spam, self-promotion, or affiliate links without permission
+   ⬢ Do not promote other trading services or products
+   ⬢ Keep discussions focused on learning and community growth
 
 5. Course Access
-   â€¢ Course-specific channels are for enrolled members only
-   â€¢ Share insights and ask questions related to your enrolled courses
-   â€¢ Complete courses in order for maximum learning effectiveness
+   ⬢ Course-specific channels are for enrolled members only
+   ⬢ Share insights and ask questions related to your enrolled courses
+   ⬢ Complete courses in order for maximum learning effectiveness
 
 6. Community Support
-   â€¢ Help fellow members when you can
-   â€¢ Ask questions - we're all here to learn and grow together
-   â€¢ Report any issues or concerns to staff members
+   ⬢ Help fellow members when you can
+   ⬢ Ask questions - we're all here to learn and grow together
+   ⬢ Report any issues or concerns to staff members
 
 7. Platform Usage
-   â€¢ Use appropriate language and avoid profanity
-   â€¢ Keep messages clear and concise
-   â€¢ Use channels for their intended purposes
+   ⬢ Use appropriate language and avoid profanity
+   ⬢ Keep messages clear and concise
+   ⬢ Use channels for their intended purposes
 
-## ðŸš€ GETTING STARTED
+## 🚀 GETTING STARTED
 
 1. Complete your profile - Add your bio
 2. Explore channels - Check out different course and trading channels
@@ -3815,27 +3840,27 @@ Welcome to the most elite trading and wealth-building community on the planet! W
 4. Enroll in courses - Begin your wealth-building journey
 5. Earn XP - Level up by being active in the community
 
-## ðŸ’Ž PREMIUM BENEFITS
+## 💎 PREMIUM BENEFITS
 
 Premium members get access to:
-â€¢ Exclusive VIP channels and content
-â€¢ Premium trading signals and insights
-â€¢ Advanced course materials
-â€¢ Priority support from our team
-â€¢ Elite trader discussions
+⬢ Exclusive VIP channels and content
+⬢ Premium trading signals and insights
+⬢ Advanced course materials
+⬢ Priority support from our team
+⬢ Elite trader discussions
 
-## âš¡ QUICK TIPS
+## ⚡ QUICK TIPS
 
-â€¢ Earn XP by sending messages, sharing files, and being active
-â€¢ Level up to unlock new channels and features
-â€¢ Check the announcements channel regularly for updates
-â€¢ Connect with other traders in the general chat channels
+⬢ Earn XP by sending messages, sharing files, and being active
+⬢ Level up to unlock new channels and features
+⬢ Check the announcements channel regularly for updates
+⬢ Connect with other traders in the general chat channels
 
 Remember: Success in trading comes from discipline, education, and consistent action. We're here to support you every step of the way!
 
-Click the âœ… below to acknowledge you've read and agree to follow these rules, and unlock access to all channels.
+Click the ✅ below to acknowledge you've read and agree to follow these rules, and unlock access to all channels.
 
-Let's build generational wealth together! ðŸ’°ðŸš€`,
+Let's build generational wealth together! 💰🚀`,
                     sender: {
                         id: 'system',
                         username: 'AURA TERMINAL™',
@@ -3864,15 +3889,15 @@ Let's build generational wealth together! ðŸ’°ðŸš€`,
         const placeholderMessage = {
             id: 'announcements-placeholder',
             channelId: selectedChannel.id,
-            content: `ðŸ“¢ **ANNOUNCEMENTS**
+            content: `📢 **ANNOUNCEMENTS**
 
 Important updates and news from AURA TERMINAL™ will appear here.
 
 Check back regularly for:
-â€¢ New features and platform updates
-â€¢ Trading insights and market analysis
-â€¢ Community events and challenges
-â€¢ Course updates and new content`,
+⬢ New features and platform updates
+⬢ Trading insights and market analysis
+⬢ Community events and challenges
+⬢ Course updates and new content`,
             sender: { id: 'system', username: 'AURA TERMINAL™', avatar: null, role: 'admin' },
             timestamp: new Date().toISOString(),
             file: null,
@@ -3896,15 +3921,15 @@ Check back regularly for:
         const placeholderMessage = {
             id: 'levels-placeholder',
             channelId: selectedChannel.id,
-            content: `ðŸ† **LEVEL-UP CELEBRATIONS**
+            content: `🏆 **LEVEL-UP CELEBRATIONS**
 
 When members level up by earning XP, their achievements will be celebrated here!
 
 Earn XP by:
-â€¢ Sending messages in the community
-â€¢ Sharing files and insights
-â€¢ Being active in discussions
-â€¢ Completing courses`,
+⬢ Sending messages in the community
+⬢ Sharing files and insights
+⬢ Being active in discussions
+⬢ Completing courses`,
             sender: { id: 'system', username: 'AURA TERMINAL™', avatar: null, role: 'admin' },
             timestamp: new Date().toISOString(),
             file: null,
@@ -4031,7 +4056,7 @@ const handleSendMessage = async (e) => {
 setMessages(prev => {
     // Check if we already have this message (prevent duplicates)
     if (prev.some(m => m.id === clientMessageId || m.clientMessageId === clientMessageId)) {
-        console.log('âš ï¸ Message already exists, skipping');
+        console.log('⚠️ Message already exists, skipping');
         return prev;
     }
     
@@ -4108,13 +4133,13 @@ setMessages(prev => {
     _optimistic: true
   };
 
-  console.log('ðŸ“¤ Adding optimistic message:', optimisticMessage.id);
+  console.log('📤 Adding optimistic message:', optimisticMessage.id);
   
   // Add message to state immediately and ensure proper chronological order
   setMessages(prev => {
     // Check if we already have this message (prevent duplicates)
     if (prev.some(m => m.id === clientMessageId || m.clientMessageId === clientMessageId)) {
-      console.log('âš ï¸ Message already exists, skipping');
+      console.log('⚠️ Message already exists, skipping');
       return prev;
     }
     
@@ -4140,7 +4165,7 @@ setMessages(prev => {
 
   try {
     // Send via API
-    console.log('ðŸ“¡ Sending to API...');
+    console.log('📡 Sending to API...');
     const response = await Api.sendMessage(selectedChannel.id, messageToSend);
     const payload = response?.data;
     const isSavedMessage =
@@ -4150,7 +4175,7 @@ setMessages(prev => {
 
     if (isSavedMessage) {
       const serverMessage = payload;
-      console.log('âœ… Server responded with message:', serverMessage.id);
+      console.log('✅ Server responded with message:', serverMessage.id);
       
       // Update state by replacing optimistic message with server message and maintain order
       setMessages(prev => {
@@ -4231,10 +4256,10 @@ setMessages(prev => {
         
         // Award XP for sending message
         const earnedXP = calculateMessageXP(messageContent, !!selectedFile);
-        console.log(`ðŸŽ¯ Awarding ${earnedXP} XP for message`);
+        console.log(`🎯 Awarding ${earnedXP} XP for message`);
         const xpResult = await awardXP(earnedXP);
         if (xpResult) {
-            console.log(`âœ… XP Awarded: +${earnedXP} XP | Total: ${xpResult.newXP} XP | Level: ${xpResult.newLevel}`);
+            console.log(`✅ XP Awarded: +${earnedXP} XP | Total: ${xpResult.newXP} XP | Level: ${xpResult.newLevel}`);
             
             window.dispatchEvent(new CustomEvent('xpUpdated', {
                 detail: {
@@ -4246,7 +4271,7 @@ setMessages(prev => {
             }));
             
             if (xpResult.leveledUp) {
-                console.log(`ðŸŽ‰ LEVEL UP! You reached level ${xpResult.newLevel}!`);
+                console.log(`🎉 LEVEL UP! You reached level ${xpResult.newLevel}!`);
                 window.dispatchEvent(new CustomEvent('levelUp', {
                     detail: {
                         newLevel: xpResult.newLevel,
@@ -5150,7 +5175,7 @@ useEffect(() => {
                                                 onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'}
                                                 onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
                                                 >
-                                                    <span style={{ fontSize: '1.5rem' }}>âœ…</span>
+                                                    <span style={{ fontSize: '1.5rem' }}>✅</span>
                                                     <span style={{ fontWeight: 600 }}>I've read and agree to the rules</span>
                                                 </div>
                                             )}
@@ -5337,7 +5362,7 @@ if (!isAuthenticated && !hasToken) {
                 }}>
                     <div style={{ flex: 1 }}>
                         <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
-                            âš ï¸ Payment Failed - Access Restricted
+                            ⚠️ Payment Failed - Access Restricted
                         </h3>
                         <p style={{ margin: '4px 0 0 0', fontSize: '14px', opacity: 0.9 }}>
                             {subscriptionStatus?.message || 'Your payment has failed. Please update your payment method to continue using the community.'}
@@ -5416,7 +5441,7 @@ if (!isAuthenticated && !hasToken) {
                             Subscribe to Access Full Community
                         </h3>
                         <p style={{ margin: '4px 0 0 0', fontSize: '14px', opacity: 0.9 }}>
-                            Subscribe to access the community - Free monthly, Premium (Â£99/month), or Elite (Â£250/month)
+                            Subscribe to access the community - Free monthly, Premium (£99/month), or Elite (£250/month)
                         </p>
                     </div>
                     <button
@@ -5488,7 +5513,7 @@ if (!isAuthenticated && !hasToken) {
                             border: '2px solid rgba(255, 255, 255, 0.2)'
                         }}>
                             <div style={{ marginBottom: '20px' }}>
-                                <span style={{ fontSize: '48px' }}>ðŸ”’</span>
+                                <span style={{ fontSize: '48px' }}>🔒</span>
                             </div>
                             <h2 style={{
                                 color: '#ffffff',
@@ -5506,7 +5531,7 @@ if (!isAuthenticated && !hasToken) {
                                 lineHeight: '1.5',
                                 fontFamily: 'var(--font-secondary)'
                             }}>
-                                To access the community, you need to subscribe. Click here to subscribe and get 3 months free, then just Â£99/month.
+                                To access the community, you need to subscribe. Click here to subscribe and get 3 months free, then just £99/month.
                             </p>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 <button
@@ -5929,7 +5954,7 @@ if (!isAuthenticated && !hasToken) {
                                         }
                                     }}
                                 >
-                                    <span className={`category-chevron ${isCollapsed ? 'collapsed' : ''}`}>â–¼</span>
+                                    <span className={`category-chevron ${isCollapsed ? 'collapsed' : ''}`}>▼</span>
                                     <span className="category-icon">{getCategoryIcon(categoryName)}</span>
                                     <h3 className="category-title">{formatCategoryName(categoryName)}</h3>
                                     <span className="category-count">{channels.length}</span>
@@ -6197,14 +6222,14 @@ if (!isAuthenticated && !hasToken) {
                                                         opacity: isLocked ? 0.6 : (isDragging ? 0.4 : 1),
                                                         transform: isDragging ? 'scale(0.98)' : 'scale(1)'
                                                 }}
-                                                    title={isLocked ? `ðŸ”’ Requires ${subscriptionRequirement} subscription - Click to subscribe` : ((isAdminUser || isSuperAdminUser) ? 'Drag to reorder' : '')}
+                                                    title={isLocked ? `🔒 Requires ${subscriptionRequirement} subscription - Click to subscribe` : ((isAdminUser || isSuperAdminUser) ? 'Drag to reorder' : '')}
                                             >
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
                                                     <span className="channel-icon">
                                                         {getChannelIcon(channel)}
                                                     </span>
                                                     <span className="channel-name" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                        {channel.displayName || channel.name}
+                                                        {cleanChannelLabel(channel.displayName || channel.name)}
                                                     </span>
                                                 </span>
                                                 {channel.category !== 'announcements' && isAuthenticated && (
@@ -6401,12 +6426,12 @@ if (!isAuthenticated && !hasToken) {
                                     fontWeight: 600,
                                     color: '#E9D5FF'
                                 }}>{formatCommunityRoleLabel(storedUser?.role)}</span>
-                                <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>â€¢</span>
+                                <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>⬢</span>
                                 <span style={{ 
                                     fontWeight: 600,
                                     color: '#C4B5FD'
                                 }}>Level {userLevel}</span>
-                                <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>â€¢</span>
+                                <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>⬢</span>
                                 <span style={{ 
                                     fontWeight: 600,
                                     color: '#A78BFA'
@@ -6451,7 +6476,7 @@ if (!isAuthenticated && !hasToken) {
                                     fontSize: '64px', 
                                     marginBottom: '24px',
                                     filter: 'drop-shadow(0 0 10px rgba(139, 92, 246, 0.5))'
-                                }}>ðŸ”’</div>
+                                }}>🔒</div>
                                 <h2 style={{ 
                                     color: '#fff', 
                                     marginBottom: '12px',
@@ -6465,7 +6490,7 @@ if (!isAuthenticated && !hasToken) {
                                     fontSize: '16px',
                                     marginBottom: '32px'
                                 }}>
-                                    #{selectedChannel.displayName || selectedChannel.name}
+                                    #{cleanChannelLabel(selectedChannel.displayName || selectedChannel.name)}
                                 </p>
                                 {(() => {
                                     const accessLevel = (selectedChannel.accessLevel || 'open').toLowerCase();
@@ -6475,10 +6500,10 @@ if (!isAuthenticated && !hasToken) {
                                     
                                     if (accessLevel === 'premium') {
                                         subscriptionType = 'Aura FX Premium';
-                                        price = 'Â£99/month';
+                                        price = '£99/month';
                                     } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
                                         subscriptionType = 'A7FX Elite';
-                                        price = 'Â£250/month';
+                                        price = '£250/month';
                                     }
                                     
                                     return (
@@ -6677,7 +6702,7 @@ if (!isAuthenticated && !hasToken) {
                                 </button>
                             )}
                             <h2 style={{ flex: 1, minWidth: 0 }}>
-                                {selectedChannel.displayName || selectedChannel.name}
+                                {cleanChannelLabel(selectedChannel.displayName || selectedChannel.name)}
                             </h2>
                             <div className="chat-header-actions">
                                 <button
@@ -7360,7 +7385,7 @@ if (!isAuthenticated && !hasToken) {
             {/* Status Message */}
             {channelActionStatus && (
                 <div className={`channel-manager-status ${channelActionStatus.type}`}>
-                    <span>{channelActionStatus.type === 'success' ? 'âœ¨' : 'âš ï¸'}</span>
+                    <span>{channelActionStatus.type === 'success' ? '✨' : '⚠️'}</span>
                     {channelActionStatus.message}
                 </div>
             )}
@@ -7385,7 +7410,7 @@ if (!isAuthenticated && !hasToken) {
                 <div className="channel-manager-row">
                     <div className="channel-manager-form-group">
                         <div className="channel-manager-label">
-                            <span>ðŸ“</span>
+                            <span>📁</span>
                             <span>CATEGORY</span>
                         </div>
                         <select
@@ -7393,18 +7418,18 @@ if (!isAuthenticated && !hasToken) {
                             value={newChannelCategory}
                             onChange={(e) => setNewChannelCategory(e.target.value)}
                         >
-                            <option value="forums">ðŸ“ˆ Forums</option>
-                            <option value="general">ðŸ’¬ General</option>
-                            <option value="support">ðŸ†˜ Support</option>
-                            <option value="premium">â­ Premium</option>
-                            <option value="a7fx">ðŸ’Ž A7FX</option>
-                            <option value="staff">ðŸ‘¨â€ðŸ’¼ Staff</option>
+                            <option value="forums">📈 Forums</option>
+                            <option value="general">💬 General</option>
+                            <option value="support">🆘 Support</option>
+                            <option value="premium">⭐ Premium</option>
+                            <option value="a7fx">💎 A7FX</option>
+                            <option value="staff">👨‍💼 Staff</option>
                         </select>
                     </div>
 
                     <div className="channel-manager-form-group">
                         <div className="channel-manager-label">
-                            <span>ðŸ”’</span>
+                            <span>🔒</span>
                             <span>ACCESS</span>
                         </div>
                         <select
@@ -7412,19 +7437,19 @@ if (!isAuthenticated && !hasToken) {
                             value={newChannelAccess}
                             onChange={(e) => setNewChannelAccess(e.target.value)}
                         >
-                            <option value="free">ðŸŒ± Free</option>
-                            <option value="open">ðŸ”“ Open</option>
-                            <option value="read-only">ðŸ“– Read Only</option>
-                            <option value="admin-only">ðŸ‘‘ Admin Only</option>
-                            <option value="premium">âœ¨ Premium (Â£99/mo)</option>
-                            <option value="a7fx">ðŸ’Ž A7FX Elite (Â£250/mo)</option>
+                            <option value="free">🌱 Free</option>
+                            <option value="open">🔓 Open</option>
+                            <option value="read-only">📖 Read Only</option>
+                            <option value="admin-only">🛡 Admin Only</option>
+                            <option value="premium">✨ Premium (£99/mo)</option>
+                            <option value="a7fx">💎 A7FX Elite (£250/mo)</option>
                         </select>
                     </div>
                 </div>
 
                 <div className="channel-manager-form-group">
                     <div className="channel-manager-label">
-                        <span>ðŸ“</span>
+                        <span>📝</span>
                         <span>DESCRIPTION</span>
                     </div>
                     <textarea
@@ -7441,7 +7466,7 @@ if (!isAuthenticated && !hasToken) {
                     className="channel-manager-submit"
                     disabled={channelActionLoading}
                 >
-                    <span>âœ¨</span>
+                    <span>✨</span>
                     {channelActionLoading ? 'Creating...' : 'Create Channel'}
                     <span>â†’</span>
                 </button>
@@ -7449,7 +7474,7 @@ if (!isAuthenticated && !hasToken) {
 
             {/* Existing Channels Section */}
             <div className="channel-manager-section-header">
-                <span>ðŸ“‹</span>
+                <span>📋</span>
                 <span className="label">Existing Channels</span>
                 <span className="count-badge">
                     {channelList.filter(channel => !protectedChannelIds.includes(channel.id)).length} channels
@@ -7459,7 +7484,7 @@ if (!isAuthenticated && !hasToken) {
             <div className="channel-manager-list">
                 {channelList.filter(channel => !protectedChannelIds.includes(channel.id)).length === 0 ? (
                     <div className="channel-manager-empty">
-                        <span className="channel-manager-empty-icon">ðŸ“­</span>
+                        <span className="channel-manager-empty-icon">💭</span>
                         <div className="channel-manager-empty-text">No custom channels yet</div>
                         <div className="channel-manager-empty-sub">Create your first channel above</div>
                     </div>
@@ -7476,11 +7501,11 @@ if (!isAuthenticated && !hasToken) {
                                     <div className="channel-manager-item-info">
                                         <div className="channel-manager-item-name">
                                             <span className="icon">
-                                                {channel.category === 'premium' ? 'âœ¨' : 
-                                                 channel.category === 'a7fx' ? 'ðŸ’Ž' : 
-                                                 channel.category === 'announcements' ? 'ðŸ“¢' : '#'}
+                                                {channel.category === 'premium' ? '✨' : 
+                                                 channel.category === 'a7fx' ? '💎' : 
+                                                 channel.category === 'announcements' ? '📢' : '#'}
                                             </span>
-                                            <span className="name">{channel.displayName || channel.name}</span>
+                                            <span className="name">{cleanChannelLabel(channel.displayName || channel.name)}</span>
                                             <span className={`channel-manager-item-badge ${badgeClass}`}>
                                                 {accessLevel === 'premium' ? 'Premium' : 
                                                  accessLevel === 'a7fx' || accessLevel === 'elite' ? 'Elite' : 
@@ -7899,8 +7924,8 @@ if (!isAuthenticated && !hasToken) {
                                 <option value="open">Open - Everyone can view and post</option>
                                 <option value="read-only">Read-Only - Everyone can view, only admins can post</option>
                                 <option value="admin-only">Admin-Only - Only admins can view and post</option>
-                                <option value="premium">Premium - Subscription required (Aura FX Â£99/mo)</option>
-                                <option value="a7fx">A7FX Elite - Subscription required (A7FX Â£250/mo)</option>
+                                <option value="premium">Premium - Subscription required (Aura FX £99/mo)</option>
+                                <option value="a7fx">A7FX Elite - Subscription required (A7FX £250/mo)</option>
                             </select>
                         </div>
                         <div style={{ marginBottom: '20px' }}>
@@ -8099,7 +8124,7 @@ if (!isAuthenticated && !hasToken) {
                                     e.target.style.background = 'transparent';
                                 }}
                             >
-                                Ã—
+                                ×
                             </button>
                         </div>
                         
@@ -8112,7 +8137,7 @@ if (!isAuthenticated && !hasToken) {
                                 marginBottom: '24px'
                             }}>
                                 <p style={{ color: '#fff', margin: 0, fontSize: '0.9rem' }}>
-                                    <strong>ðŸ’¡ This channel requires:</strong> {requiredSubscriptionType === 'premium' ? 'Aura FX Premium (Â£99/month)' : 'A7FX Elite (Â£250/month)'}
+                                    <strong>💡 This channel requires:</strong> {requiredSubscriptionType === 'premium' ? 'Aura FX Premium (£99/month)' : 'A7FX Elite (£250/month)'}
                                 </p>
                             </div>
                         )}
@@ -8134,7 +8159,7 @@ if (!isAuthenticated && !hasToken) {
                                 transition: 'all 0.3s ease'
                             }}>
                                 <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>Free Monthly</h3>
-                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>Â£0</div>
+                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£0</div>
                                 <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
                                 <ul style={{ 
                                     textAlign: 'left', 
@@ -8144,9 +8169,9 @@ if (!isAuthenticated && !hasToken) {
                                     paddingLeft: '20px',
                                     listStyle: 'none'
                                 }}>
-                                    <li style={{ marginBottom: '8px' }}>âœ… General, welcome & announcements</li>
-                                    <li style={{ marginBottom: '8px' }}>âœ… No payment required</li>
-                                    <li style={{ marginBottom: '8px' }}>âœ… Instant access to community</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ General, welcome & announcements</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ No payment required</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Instant access to community</li>
                                 </ul>
                                 {subscriptionModalError && (
                                     <div role="alert" style={{ color: '#fa755a', fontSize: '13px', marginBottom: '12px' }}>{subscriptionModalError}</div>
@@ -8213,7 +8238,7 @@ if (!isAuthenticated && !hasToken) {
                                     }}>REQUIRED</div>
                                 )}
                                 <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>Aura FX</h3>
-                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>Â£99</div>
+                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£99</div>
                                 <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
                                 <ul style={{ 
                                     textAlign: 'left', 
@@ -8223,11 +8248,11 @@ if (!isAuthenticated && !hasToken) {
                                     paddingLeft: '20px',
                                     listStyle: 'none'
                                 }}>
-                                    <li style={{ marginBottom: '8px' }}>âœ… Access to premium channels</li>
-                                    <li style={{ marginBottom: '8px' }}>âœ… Market analysis</li>
-                                    <li style={{ marginBottom: '8px' }}>âœ… Community access</li>
-                                    <li style={{ marginBottom: '8px' }}>âœ… Weekly Briefs</li>
-                                    <li style={{ marginBottom: '8px' }}>âœ… Premium AURA AI</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Access to premium channels</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Market analysis</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Community access</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Weekly Briefs</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Premium AURA AI</li>
                                 </ul>
                                 <button
                                     onClick={() => handleSelectSubscription('aura')}
@@ -8291,7 +8316,7 @@ if (!isAuthenticated && !hasToken) {
                                     fontWeight: 'bold'
                                 }}>{requiredSubscriptionType === 'a7fx' ? 'REQUIRED' : 'ELITE'}</div>
                                 <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>A7FX Elite</h3>
-                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>Â£250</div>
+                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£250</div>
                                 <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
                                 <ul style={{ 
                                     textAlign: 'left', 
@@ -8301,12 +8326,12 @@ if (!isAuthenticated && !hasToken) {
                                     paddingLeft: '20px',
                                     listStyle: 'none'
                                 }}>
-                                    <li style={{ marginBottom: '8px' }}>âœ… Everything in Aura FX</li>
-                                    <li style={{ marginBottom: '8px' }}>âœ… Elite-only channels</li>
-                                    <li style={{ marginBottom: '8px' }}>âœ… Direct founder access</li>
-                                    <li style={{ marginBottom: '8px' }}>âœ… Daily Briefs</li>
-                                    <li style={{ marginBottom: '8px' }}>âœ… Weekly Briefs</li>
-                                    <li style={{ marginBottom: '8px' }}>âœ… Premium AURA AI</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Everything in Aura FX</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Elite-only channels</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Direct founder access</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Daily Briefs</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Weekly Briefs</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Premium AURA AI</li>
                                 </ul>
                                 <button
                                     onClick={() => handleSelectSubscription('a7fx')}
@@ -8352,7 +8377,7 @@ if (!isAuthenticated && !hasToken) {
                             marginTop: '20px',
                             marginBottom: 0
                         }}>
-                            Cancel anytime â€¢ No hidden fees â€¢ Switch plans anytime
+                            Cancel anytime ⬢ No hidden fees ⬢ Switch plans anytime
                         </p>
                     </div>
                 </div>
@@ -8580,7 +8605,7 @@ if (!isAuthenticated && !hasToken) {
                                 e.currentTarget.style.transform = 'rotate(0deg)';
                             }}
                         >
-                            Ã—
+                            ×
                         </button>
 
                         {/* Lock icon */}
@@ -8592,7 +8617,7 @@ if (!isAuthenticated && !hasToken) {
                                 fontSize: '48px',
                                 marginBottom: '16px',
                                 filter: 'drop-shadow(0 0 10px rgba(139, 92, 246, 0.5))'
-                            }}>ðŸ”’</div>
+                            }}>🔒</div>
                             <h2 style={{
                                 color: '#fff',
                                 fontSize: '24px',
@@ -8627,7 +8652,7 @@ if (!isAuthenticated && !hasToken) {
                                         lineHeight: '1.6',
                                         margin: '0 0 16px 0'
                                     }}>
-                                        This channel requires an <strong style={{ color: '#8B5CF6' }}>Aura FX Premium</strong> subscription (Â£99/month) to access.
+                                        This channel requires an <strong style={{ color: '#8B5CF6' }}>Aura FX Premium</strong> subscription (£99/month) to access.
                                     </p>
                                     {lockedChannelInfo.currentRole === 'free' ? (
                                         <div style={{
@@ -8685,7 +8710,7 @@ if (!isAuthenticated && !hasToken) {
                                         lineHeight: '1.6',
                                         margin: '0 0 16px 0'
                                     }}>
-                                        This channel requires an <strong style={{ color: '#fbbf24' }}>A7FX Elite</strong> subscription (Â£250/month) to access.
+                                        This channel requires an <strong style={{ color: '#fbbf24' }}>A7FX Elite</strong> subscription (£250/month) to access.
                                     </p>
                                     {lockedChannelInfo.currentRole === 'free' ? (
                                         <div style={{

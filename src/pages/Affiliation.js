@@ -391,7 +391,7 @@ export default function Affiliation() {
           </span>
           <span className="aff-toast__text">{toast.msg}</span>
           <button type="button" className="aff-toast__close" onClick={() => setToast(null)} aria-label="Dismiss">
-            Ã—
+            ×
           </button>
         </div>
       )}

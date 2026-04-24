@@ -449,7 +449,7 @@ const Settings = () => {
                 onClick={() => setShowFilters(!showFilters)}
               >
                 <FaFilter style={{ marginRight: '8px' }} />
-                Filters {showFilters ? 'â–²' : 'â–¼'}
+                Filters {showFilters ? 'â–²' : '▼'}
               </button>
             </div>
 
@@ -788,8 +788,8 @@ const Settings = () => {
                     value={subscriptionPlan} 
                     onChange={(e) => setSubscriptionPlan(e.target.value)}
                   >
-                    <option value="aura">AURA TERMINAL™ (Â£99/month)</option>
-                    <option value="a7fx">A7FX Elite (Â£250/month)</option>
+                    <option value="aura">AURA TERMINAL™ (£99/month)</option>
+                    <option value="a7fx">A7FX Elite (£250/month)</option>
                     <option value="">None (Free)</option>
                   </select>
                 </div>

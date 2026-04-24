@@ -691,7 +691,7 @@ const DeskPulseGauge = ({ biasLabel = 'Neutral', pulsePct }) => {
         else pct = 50;
     }
     pct = Math.max(0, Math.min(100, pct));
-    /* Default needle points up (12 o'clock). -90Â° â†’ left (bear), 0Â° â†’ up (neutral), +90Â° â†’ right (bull). */
+    /* Default needle points up (12 o'clock). -90° â†’ left (bear), 0° â†’ up (neutral), +90° â†’ right (bull). */
     const rot = -90 + (pct / 100) * 180;
     const toneClass = pct >= 58 ? 'is-bull' : pct <= 42 ? 'is-bear' : '';
     return (

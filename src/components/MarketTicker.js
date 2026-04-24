@@ -19,9 +19,9 @@ import ReactDOM from 'react-dom';
 // Loading placeholder for prices
 const PriceLoading = () => (
   <span className="price-loading">
-    <span className="loading-dot">â€¢</span>
-    <span className="loading-dot">â€¢</span>
-    <span className="loading-dot">â€¢</span>
+    <span className="loading-dot">⬢</span>
+    <span className="loading-dot">⬢</span>
+    <span className="loading-dot">⬢</span>
   </span>
 );
 
@@ -126,7 +126,7 @@ const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
               <span className="modal-stale-badge">âš  Delayed</span>
             )}
             <button className="market-modal-close" onClick={onClose} aria-label="Close">
-              Ã—
+              ×
             </button>
           </div>
         </div>

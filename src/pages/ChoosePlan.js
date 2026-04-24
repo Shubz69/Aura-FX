@@ -211,7 +211,7 @@ const ChoosePlan = () => {
           {/* Free */}
           <div className="subscription-plan-card free">
             <h3 className="subscription-plan-title">Free</h3>
-            <div className="subscription-plan-price">Â£0</div>
+            <div className="subscription-plan-price">£0</div>
             <div className="subscription-plan-period">per month</div>
             <ul className="subscription-plan-features">
               <li>âœ… Access to general community channels only</li>
@@ -233,11 +233,11 @@ const ChoosePlan = () => {
             <h3 className="subscription-plan-title">AURA TERMINAL™</h3>
             <div className="subscription-pricing-container">
               <div className="promotional-pricing">
-                <div className="promo-price">Â£0</div>
+                <div className="promo-price">£0</div>
                 <div className="promo-text">for the first 2 months</div>
               </div>
               <div className="original-pricing">
-                <div className="original-price-strikethrough">Â£99</div>
+                <div className="original-price-strikethrough">£99</div>
                 <div className="subscription-plan-period">per month</div>
               </div>
             </div>
@@ -258,7 +258,7 @@ const ChoosePlan = () => {
           <div className="subscription-plan-card elite">
             <div className="elite-badge">ELITE</div>
             <h3 className="subscription-plan-title">A7FX Elite</h3>
-            <div className="subscription-plan-price">Â£250</div>
+            <div className="subscription-plan-price">£250</div>
             <div className="subscription-plan-period">per month</div>
             <ul className="subscription-plan-features">
               <li>âœ… Everything in Premium</li>
@@ -277,7 +277,7 @@ const ChoosePlan = () => {
         </div>
 
         <p style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.6)', fontSize: 'clamp(12px, 2vw, 14px)', marginTop: '20px', padding: '0 20px' }}>
-          Cancel anytime â€¢ No hidden fees â€¢ Switch plans anytime
+          Cancel anytime ⬢ No hidden fees ⬢ Switch plans anytime
         </p>
       </div>
     </div>

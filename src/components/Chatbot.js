@@ -215,7 +215,7 @@ const Chatbot = () => {
             
             // Pricing
             if (msg.includes("price") || msg.includes("cost") || msg.includes("subscription")) {
-                return "We offer AURA TERMINAL™ subscription at Â£99/month and A7FX Elite at Â£250/month. Visit our <a href='/subscription'>Subscription page</a> for details. <a href='/register'>Create an account</a> to get started!";
+                return "We offer AURA TERMINAL™ subscription at £99/month and A7FX Elite at £250/month. Visit our <a href='/subscription'>Subscription page</a> for details. <a href='/register'>Create an account</a> to get started!";
             }
             
             // Sign up/Login
@@ -262,7 +262,7 @@ const Chatbot = () => {
         
         // Pricing related queries
         if (msg.includes("price") || msg.includes("cost") || msg.includes("subscription") || msg.includes("pay") || msg.includes("fee")) {
-            return "AURA TERMINAL™ offers two subscription plans: AURA TERMINAL™ at Â£99/month and A7FX Elite at Â£250/month. Visit our <a href='/subscription'>Subscription page</a> for full details.";
+            return "AURA TERMINAL™ offers two subscription plans: AURA TERMINAL™ at £99/month and A7FX Elite at £250/month. Visit our <a href='/subscription'>Subscription page</a> for full details.";
         }
         
         // Platform features

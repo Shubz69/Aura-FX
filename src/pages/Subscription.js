@@ -19,7 +19,7 @@ const PLANS = {
         name: 'Access',
         badge: 'Current',
         price: 0,
-        currency: 'Â£',
+        currency: '£',
         period: '/month',
         features: [
             'General chat only',
@@ -35,7 +35,7 @@ const PLANS = {
         name: 'AURA TERMINAL™',
         badge: 'Standard',
         price: 99,
-        currency: 'Â£',
+        currency: '£',
         period: '/month',
         features: [
             'Unlimited access to all premium community channels',
@@ -55,7 +55,7 @@ const PLANS = {
         name: 'Elite',
         badge: 'ELITE',
         price: 250,
-        currency: 'Â£',
+        currency: '£',
         period: '/month',
         features: [
             'Everything included in AURA TERMINAL™ Standard',
@@ -755,7 +755,7 @@ const Subscription = () => {
                             </div>
                         </div>
                     )}
-                    <p className="pricing-note" style={{ textAlign: 'center', marginTop: '20px' }}>Cancel anytime â€¢ No hidden fees</p>
+                    <p className="pricing-note" style={{ textAlign: 'center', marginTop: '20px' }}>Cancel anytime ⬢ No hidden fees</p>
                 </div>
 
                 {showCardForm && planForCard && PLANS[planForCard] && (

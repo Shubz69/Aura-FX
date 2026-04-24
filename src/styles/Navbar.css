@@ -13,7 +13,7 @@
   --border:        rgba(255, 255, 255, 0.10);
   --border-h:      rgba(255, 255, 255, 0.20);
 
-  /* Peachy gold — same tokens as Home.css / hero â€œWith Aura Terminal™â€ */
+  /* Peachy gold — same tokens as Home.css / hero â€œWith Aura Terminal™⬝ */
   --eaa-core:      #EAA960;
   --eaa-bright:    #F8C37D;
   --eaa-warm:      #D48D44;
@@ -149,7 +149,7 @@ body.loading-active .navbar {
 
 /* Top gold streak removed — was .navbar::before prismatic line */
 
-/* Slow shimmer — white + gold + cool navy (reads as â€œshine through glassâ€) */
+/* Slow shimmer — white + gold + cool navy (reads as â€œshine through glass⬝) */
 .navbar::after {
   content: '';
   position: absolute;

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-24T10:50:32.622Z",
+  "generatedAt": "2026-04-24T12:51:49.054Z",
   "base": "https://www.auraterminal.ai",
   "results": [
     {
@@ -12,19 +12,13 @@
       ],
       "expected": "User receives without waiting full poll interval when websocket healthy",
       "actual": "User saw admin message in messages thread.",
-      "timingMs": 2152,
+      "timingMs": 4244,
       "consoleIssues": [],
       "networkIssues": [
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         }
       ],
@@ -40,38 +34,26 @@
       ],
       "expected": "Admin receives new user message",
       "actual": "Admin inbox displayed the user message.",
-      "timingMs": 3143,
+      "timingMs": 5219,
       "consoleIssues": [],
       "networkIssues": [
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035067481",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027804176",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox?user=88"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
-          "during": "https://www.auraterminal.ai/admin/inbox"
         }
       ],
       "completion": "complete"
@@ -86,43 +68,37 @@
       ],
       "expected": "Message arrives via polling fallback within expected interval (~8s + render)",
       "actual": "Message arrived while websocket bootstrap was blocked.",
-      "timingMs": 2153,
+      "timingMs": 4304,
       "consoleIssues": [],
       "networkIssues": [
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035067481",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027804176",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox?user=88"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
-          "during": "https://www.auraterminal.ai/admin/inbox"
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/read",
+          "during": "https://www.auraterminal.ai/messages"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027810089",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035074695",
           "during": "https://www.auraterminal.ai/messages"
         }
       ],
@@ -143,37 +119,31 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035067481",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027804176",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox?user=88"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
-          "during": "https://www.auraterminal.ai/admin/inbox"
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/read",
+          "during": "https://www.auraterminal.ai/messages"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027810089",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035074695",
           "during": "https://www.auraterminal.ai/messages"
         }
       ],
@@ -181,51 +151,105 @@
     },
     {
       "test": "admin inbox: rapid thread switching / stale overwrite",
-      "pass": false,
+      "pass": true,
       "steps": [
         "Rapidly switch between two user items",
         "Observe final selected header/thread"
       ],
       "expected": "Final selected thread remains active; no stale overwrite from prior request",
-      "actual": "Fallback rapid-switch check could not send on first thread because composer stayed disabled.",
-      "rapidSwitchProductCorrectness": "FAIL",
+      "actual": "Fallback model confirmed final thread correctness (expectedThread=13, postedThread=13).",
+      "rapidSwitchProductCorrectness": "PASS",
       "adminUsersFetchReliability": "RISK",
-      "rapidSwitchOverall": "FAIL",
+      "rapidSwitchOverall": "PASS_WITH_RISK",
       "consoleIssues": [
         {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 32699d0b-2161-4a54-804a-6e9c81b78660, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 32699d0b-2161-4a54-804a-6e9c81b78660, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 9830f760-4172-4b20-af4b-00ea8b78c496, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 9830f760-4172-4b20-af4b-00ea8b78c496, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 11241887-1bc2-493f-a0f5-086006de747b, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 11241887-1bc2-493f-a0f5-086006de747b, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 02234279-f9f2-440e-9a2b-e0a5bb0f4159, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 02234279-f9f2-440e-9a2b-e0a5bb0f4159, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 3288a861-2cfe-4417-94f5-c67d7f683f01, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 3288a861-2cfe-4417-94f5-c67d7f683f01, status: null, code: ERR_CANCELED}"
+        },
+        {
           "url": "https://www.auraterminal.ai/admin/inbox",
-          "text": "[observability] {scope: admin_inbox.load_users_threads, type: unknown, correlationId: null, status: null, code: null}"
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 0962cafb-d667-47fb-b9ce-41ffe4c47f01, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 0962cafb-d667-47fb-b9ce-41ffe4c47f01, status: null, code: ERR_CANCELED}"
         }
       ],
       "networkIssues": [
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035067481",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027804176",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox?user=88"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035079642",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
@@ -237,13 +261,7 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
@@ -255,8 +273,32 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/5411.43751dd1.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/4891.4d83532a.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
           "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
           "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035082074",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
         },
         {
           "type": "requestfailed",
@@ -267,17 +309,305 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027820011",
-          "during": "https://www.auraterminal.ai/admin/inbox"
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035083504",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/4891.4d83532a.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035084871",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035085533",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035086002",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035086727",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/logos/a7-logo.png",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035087496",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/me",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035088076",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
           "url": "https://www.auraterminal.ai/api/admin/users",
           "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035089948",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035093028",
+          "during": "https://www.auraterminal.ai/admin/inbox"
         }
       ],
-      "completion": "partial_or_unreliable"
+      "completion": "complete"
     },
     {
       "test": "admin inbox: controls disabled while unresolved",
@@ -290,39 +620,93 @@
       "actual": "Send button disabled in unresolved state.",
       "consoleIssues": [
         {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 32699d0b-2161-4a54-804a-6e9c81b78660, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 32699d0b-2161-4a54-804a-6e9c81b78660, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 9830f760-4172-4b20-af4b-00ea8b78c496, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 9830f760-4172-4b20-af4b-00ea8b78c496, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 11241887-1bc2-493f-a0f5-086006de747b, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 11241887-1bc2-493f-a0f5-086006de747b, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 02234279-f9f2-440e-9a2b-e0a5bb0f4159, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 02234279-f9f2-440e-9a2b-e0a5bb0f4159, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 3288a861-2cfe-4417-94f5-c67d7f683f01, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 3288a861-2cfe-4417-94f5-c67d7f683f01, status: null, code: ERR_CANCELED}"
+        },
+        {
           "url": "https://www.auraterminal.ai/admin/inbox",
-          "text": "[observability] {scope: admin_inbox.load_users_threads, type: unknown, correlationId: null, status: null, code: null}"
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 0962cafb-d667-47fb-b9ce-41ffe4c47f01, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 0962cafb-d667-47fb-b9ce-41ffe4c47f01, status: null, code: ERR_CANCELED}"
         }
       ],
       "networkIssues": [
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035067481",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027804176",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox?user=88"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035079642",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
@@ -334,13 +718,7 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
@@ -352,8 +730,32 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/5411.43751dd1.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/4891.4d83532a.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
           "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
           "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035082074",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
         },
         {
           "type": "requestfailed",
@@ -364,13 +766,301 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027820011",
-          "during": "https://www.auraterminal.ai/admin/inbox"
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035083504",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/4891.4d83532a.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
           "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035084871",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035085533",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035086002",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035086727",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/logos/a7-logo.png",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035087496",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/me",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035088076",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035089948",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035093028",
           "during": "https://www.auraterminal.ai/admin/inbox"
         }
       ],
@@ -388,39 +1078,93 @@
       "actual": "Observed count=3, unique=3, inOrder=true.",
       "consoleIssues": [
         {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 32699d0b-2161-4a54-804a-6e9c81b78660, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 32699d0b-2161-4a54-804a-6e9c81b78660, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 9830f760-4172-4b20-af4b-00ea8b78c496, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 9830f760-4172-4b20-af4b-00ea8b78c496, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 11241887-1bc2-493f-a0f5-086006de747b, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 11241887-1bc2-493f-a0f5-086006de747b, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 02234279-f9f2-440e-9a2b-e0a5bb0f4159, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 02234279-f9f2-440e-9a2b-e0a5bb0f4159, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 3288a861-2cfe-4417-94f5-c67d7f683f01, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 3288a861-2cfe-4417-94f5-c67d7f683f01, status: null, code: ERR_CANCELED}"
+        },
+        {
           "url": "https://www.auraterminal.ai/admin/inbox",
-          "text": "[observability] {scope: admin_inbox.load_users_threads, type: unknown, correlationId: null, status: null, code: null}"
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 0962cafb-d667-47fb-b9ce-41ffe4c47f01, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 0962cafb-d667-47fb-b9ce-41ffe4c47f01, status: null, code: ERR_CANCELED}"
         }
       ],
       "networkIssues": [
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035067481",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027804176",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox?user=88"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035079642",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
@@ -432,13 +1176,7 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
@@ -450,8 +1188,32 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/5411.43751dd1.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/4891.4d83532a.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
           "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
           "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035082074",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
         },
         {
           "type": "requestfailed",
@@ -462,13 +1224,301 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027820011",
-          "during": "https://www.auraterminal.ai/admin/inbox"
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035083504",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/4891.4d83532a.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
           "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035084871",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035085533",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035086002",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035086727",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/logos/a7-logo.png",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035087496",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/me",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035088076",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035089948",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035093028",
           "during": "https://www.auraterminal.ai/admin/inbox"
         }
       ],
@@ -485,39 +1535,93 @@
       "actual": "Observed count=3, unique=3.",
       "consoleIssues": [
         {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 32699d0b-2161-4a54-804a-6e9c81b78660, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 32699d0b-2161-4a54-804a-6e9c81b78660, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 9830f760-4172-4b20-af4b-00ea8b78c496, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 9830f760-4172-4b20-af4b-00ea8b78c496, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 11241887-1bc2-493f-a0f5-086006de747b, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 11241887-1bc2-493f-a0f5-086006de747b, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 02234279-f9f2-440e-9a2b-e0a5bb0f4159, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 02234279-f9f2-440e-9a2b-e0a5bb0f4159, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 3288a861-2cfe-4417-94f5-c67d7f683f01, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 3288a861-2cfe-4417-94f5-c67d7f683f01, status: null, code: ERR_CANCELED}"
+        },
+        {
           "url": "https://www.auraterminal.ai/admin/inbox",
-          "text": "[observability] {scope: admin_inbox.load_users_threads, type: unknown, correlationId: null, status: null, code: null}"
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 0962cafb-d667-47fb-b9ce-41ffe4c47f01, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 0962cafb-d667-47fb-b9ce-41ffe4c47f01, status: null, code: ERR_CANCELED}"
         }
       ],
       "networkIssues": [
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035067481",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027804176",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox?user=88"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035079642",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
@@ -529,13 +1633,7 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
@@ -547,8 +1645,32 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/5411.43751dd1.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/4891.4d83532a.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
           "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
           "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035082074",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
         },
         {
           "type": "requestfailed",
@@ -559,8 +1681,284 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027820011",
-          "during": "https://www.auraterminal.ai/admin/inbox"
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035083504",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/4891.4d83532a.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035084871",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035085533",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035086002",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035086727",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/logos/a7-logo.png",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035087496",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/me",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035088076",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
         },
         {
           "type": "requestfailed",
@@ -571,7 +1969,25 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027810089",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035089948",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035093028",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/read",
+          "during": "https://www.auraterminal.ai/messages"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035074695",
           "during": "https://www.auraterminal.ai/messages"
         }
       ],
@@ -587,39 +2003,93 @@
       "actual": "No login redirect observed.",
       "consoleIssues": [
         {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 32699d0b-2161-4a54-804a-6e9c81b78660, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 32699d0b-2161-4a54-804a-6e9c81b78660, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 9830f760-4172-4b20-af4b-00ea8b78c496, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 9830f760-4172-4b20-af4b-00ea8b78c496, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 11241887-1bc2-493f-a0f5-086006de747b, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 11241887-1bc2-493f-a0f5-086006de747b, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 02234279-f9f2-440e-9a2b-e0a5bb0f4159, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 02234279-f9f2-440e-9a2b-e0a5bb0f4159, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=30",
+          "text": "[observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 3288a861-2cfe-4417-94f5-c67d7f683f01, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox?thread=13",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 3288a861-2cfe-4417-94f5-c67d7f683f01, status: null, code: ERR_CANCELED}"
+        },
+        {
           "url": "https://www.auraterminal.ai/admin/inbox",
-          "text": "[observability] {scope: admin_inbox.load_users_threads, type: unknown, correlationId: null, status: null, code: null}"
+          "text": "[observability] {scope: api.response_interceptor, type: request_abort, correlationId: 0962cafb-d667-47fb-b9ce-41ffe4c47f01, status: null, code: ERR_CANCELED}"
+        },
+        {
+          "url": "https://www.auraterminal.ai/admin/inbox",
+          "text": "[observability] {scope: messages.get_thread_messages, type: request_abort, correlationId: 0962cafb-d667-47fb-b9ce-41ffe4c47f01, status: null, code: ERR_CANCELED}"
         }
       ],
       "networkIssues": [
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035067481",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027804176",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox?user=88"
         },
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035079642",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
@@ -631,13 +2101,7 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/admin/users",
-          "during": "https://www.auraterminal.ai/admin/inbox"
-        },
-        {
-          "type": "requestfailed",
-          "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
           "during": "https://www.auraterminal.ai/admin/inbox"
         },
         {
@@ -649,8 +2113,32 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/5411.43751dd1.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/4891.4d83532a.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
           "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
           "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035082074",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
         },
         {
           "type": "requestfailed",
@@ -661,8 +2149,284 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027820011",
-          "during": "https://www.auraterminal.ai/admin/inbox"
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035083504",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/static/js/4891.4d83532a.chunk.js",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035084871",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035085533",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035086002",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035086727",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/logos/a7-logo.png",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/aura-analysis/platform-connect",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/subscription/status",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/notifications?limit=1",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/users/86",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035087496",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/admin/users",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/me",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/assets/my-bg.jpg",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=30"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035088076",
+          "during": "https://www.auraterminal.ai/admin/inbox?thread=13"
         },
         {
           "type": "requestfailed",
@@ -673,7 +2437,25 @@
         {
           "type": "requestfailed",
           "error": "net::ERR_ABORTED",
-          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777027810089",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035089948",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/13/messages?limit=50&_sync=1777035093028",
+          "during": "https://www.auraterminal.ai/admin/inbox"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/read",
+          "during": "https://www.auraterminal.ai/messages"
+        },
+        {
+          "type": "requestfailed",
+          "error": "net::ERR_ABORTED",
+          "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777035074695",
           "during": "https://www.auraterminal.ai/messages"
         }
       ],

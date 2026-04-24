@@ -182,7 +182,7 @@
   gap: 14px;
 }
 
-/* A7 mark — same 32Ã—32 footprint as former hexagon badge */
+/* A7 mark — same 32×32 footprint as former hexagon badge */
 .footer-logo-wrap .footer-a7-mark {
   flex-shrink: 0;
   display: flex;
