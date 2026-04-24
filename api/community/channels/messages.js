@@ -450,6 +450,7 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('X-Community-Messages-Handler', 'cm-2026-04-24b');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -608,23 +609,38 @@ module.exports = async (req, res) => {
         try {
           const afterId = req.query && req.query.afterId ? parseInt(req.query.afterId, 10) : null;
           const isCursor = Number.isInteger(afterId) && afterId > 0;
-          const whereClause = (isCursor
-            ? 'm.channel_id = ? AND m.id > ? AND (m.content IS NULL OR m.content <> \'[deleted]\')'
-            : 'm.channel_id = ? AND (m.content IS NULL OR m.content <> \'[deleted]\')') + excludeLevelUp;
-          const params = isCursor ? [channelId, afterId] : [channelId];
-          // Use id ordering for stable pagination and index-friendly scans on hot polling route.
-          const orderLimit = isCursor
-            ? 'ORDER BY m.id ASC LIMIT 200'
-            : 'ORDER BY m.id DESC LIMIT 200';
-          [rows] = await db.execute(
-            `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan 
-             FROM messages m 
-             LEFT JOIN users u ON m.sender_id = u.id 
-             WHERE ${whereClause}
-             ${orderLimit}`,
-            params
-          );
-          if (!isCursor) rows = rows.reverse();
+          if (isCursor) {
+            [rows] = await db.execute(
+              `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan
+               FROM messages m
+               LEFT JOIN users u ON m.sender_id = u.id
+               WHERE m.channel_id = ? AND m.id > ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
+               ORDER BY m.id ASC
+               LIMIT 200`,
+              [channelId, afterId]
+            );
+          } else {
+            // No-cursor reads were hitting 60s function timeouts on hot tables.
+            // Bound scan by recent id windows so we can still serve "latest messages" quickly
+            // even when channel_id index quality varies across environments.
+            const [[maxRow]] = await db.execute('SELECT MAX(id) AS maxId FROM messages');
+            const maxId = Number(maxRow?.maxId || 0);
+            const windows = [5000, 50000, 500000];
+            for (let i = 0; i < windows.length; i += 1) {
+              const minId = Math.max(0, maxId - windows[i]);
+              [rows] = await db.execute(
+                `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan
+                 FROM messages m
+                 LEFT JOIN users u ON m.sender_id = u.id
+                 WHERE m.channel_id = ? AND m.id > ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
+                 ORDER BY m.id DESC
+                 LIMIT 200`,
+                [channelId, minId]
+              );
+              if (rows.length > 0 || i === windows.length - 1) break;
+            }
+            rows = rows.reverse();
+          }
         } catch (queryError) {
           // If that fails, try converting channelId to number (for numeric IDs)
           const numericChannelId = parseInt(channelId);
