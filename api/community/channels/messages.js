@@ -24,7 +24,7 @@ const NOTIFICATION_SIDE_EFFECTS_ENABLED = (() => {
   if (process.env.VERCEL || process.env.NODE_ENV === 'production') return false;
   return true;
 })();
-const COMMUNITY_BUILD = 'community-messages-debug-2026-04-24d';
+const COMMUNITY_BUILD = 'community-messages-debug-2026-04-24e';
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../../utils/suppress-warnings');
@@ -990,13 +990,11 @@ module.exports = async (req, res) => {
         };
 
         let fileData = null;
-        if (newMessage.file_data) {
+        if (fileDataJson) {
           try {
-            fileData = typeof newMessage.file_data === 'string'
-              ? JSON.parse(newMessage.file_data)
-              : newMessage.file_data;
+            fileData = JSON.parse(fileDataJson);
           } catch (parseError) {
-            console.warn('Could not parse file_data:', parseError);
+            console.warn('Could not parse file_data for response:', parseError.message);
           }
         }
 
