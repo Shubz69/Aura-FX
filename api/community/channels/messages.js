@@ -318,6 +318,11 @@ const ensureMessagesTable = async (db) => {
         INDEX idx_sender (sender_id)
       )
     `);
+    try {
+      await db.execute('ALTER TABLE messages ADD INDEX idx_channel_id (channel_id, id)');
+    } catch (_) {
+      // Duplicate index / incompatible engines are safe to ignore.
+    }
     console.log('Messages table ensured (created or already exists)');
     
     // Check if encrypted column exists, add it if it doesn't
@@ -502,6 +507,18 @@ module.exports = async (req, res) => {
 
   try {
     const db = await getDbConnection();
+    const releaseDb = async () => {
+      try {
+        if (!db) return;
+        if (typeof db.release === 'function') {
+          db.release();
+        } else if (typeof db.end === 'function') {
+          await db.end();
+        }
+      } catch (_) {
+        // ignore
+      }
+    };
     if (!db) {
       return res.status(500).json({ success: false, message: 'Database unavailable' });
     }
@@ -512,6 +529,7 @@ module.exports = async (req, res) => {
       [decoded.id]
     );
     if (!userRows || userRows.length === 0) {
+      await releaseDb();
       return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'Access denied.' });
     }
     let entitlements = getEntitlements(userRows[0]);
@@ -532,6 +550,7 @@ module.exports = async (req, res) => {
       );
     }
     if (!channelRows || channelRows.length === 0) {
+      await releaseDb();
       return res.status(404).json({ success: false, message: 'Channel not found.' });
     }
     const channelRow = channelRows[0];
@@ -545,12 +564,15 @@ module.exports = async (req, res) => {
       permissionType: channelRow.permission_type
     });
     if (!perm.canSee) {
+      await releaseDb();
       return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'You do not have access to this channel.' });
     }
     if (req.method === 'GET' && !perm.canRead) {
+      await releaseDb();
       return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'You cannot read this channel.' });
     }
     if ((req.method === 'POST' || req.method === 'PUT') && !perm.canWrite) {
+      await releaseDb();
       return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'You cannot post in this channel.' });
     }
     /* Announcement channels (welcome, announcements, levels, notifications): only super admin can post */
@@ -560,6 +582,7 @@ module.exports = async (req, res) => {
       const userRow = userRows[0];
       const isSuperAdmin = isSuperAdminEmail(userRow) || (userRow.role || '').toString().toUpperCase() === 'SUPER_ADMIN';
       if (!isSuperAdmin) {
+        await releaseDb();
         return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'Only the Super Admin can post in this channel.' });
       }
     }
@@ -589,10 +612,10 @@ module.exports = async (req, res) => {
             ? 'm.channel_id = ? AND m.id > ? AND (m.content IS NULL OR m.content <> \'[deleted]\')'
             : 'm.channel_id = ? AND (m.content IS NULL OR m.content <> \'[deleted]\')') + excludeLevelUp;
           const params = isCursor ? [channelId, afterId] : [channelId];
-          // For catch-up: ORDER BY m.id ASC (newer messages after cursor). For initial load: DESC then reverse.
+          // Use id ordering for stable pagination and index-friendly scans on hot polling route.
           const orderLimit = isCursor
             ? 'ORDER BY m.id ASC LIMIT 200'
-            : 'ORDER BY m.timestamp DESC LIMIT 200';
+            : 'ORDER BY m.id DESC LIMIT 200';
           [rows] = await db.execute(
             `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan 
              FROM messages m 
@@ -652,15 +675,7 @@ module.exports = async (req, res) => {
         }
         
         // Release connection back to pool
-        try {
-          if (db && typeof db.release === 'function') {
-            db.release();
-          } else if (db && typeof db.end === 'function') {
-            await db.end();
-          }
-        } catch (releaseError) {
-          console.warn('Error releasing database connection:', releaseError.message);
-        }
+        await releaseDb();
 
         // Map to frontend format - handle actual column names
         const messages = rows.map(row => {
@@ -725,16 +740,7 @@ module.exports = async (req, res) => {
           stack: error.stack
         });
         if (db) {
-          try {
-            if (typeof db.release === 'function') {
-              db.release(); // Release connection back to pool
-            } else if (typeof db.end === 'function') {
-              await db.end();
-            }
-          } catch (e) {
-            // Ignore release errors
-            console.warn('Error releasing database connection:', e.message);
-          }
+          await releaseDb();
         }
         return res.status(500).json({ success: false, message: 'Failed to fetch messages' });
       }
@@ -876,93 +882,8 @@ module.exports = async (req, res) => {
           } catch (e) { /* non-fatal, continue to insert */ }
         }
 
-        // Check and convert channel_id column type if needed (to support string channel IDs)
-        let columnType = null;
-        try {
-          const [columnInfo] = await db.execute(`
-            SELECT DATA_TYPE, COLUMN_TYPE 
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_SCHEMA = ? 
-            AND TABLE_NAME = 'messages' 
-            AND COLUMN_NAME = 'channel_id'
-          `, [process.env.MYSQL_DATABASE]);
-          
-          if (columnInfo && columnInfo.length > 0) {
-            columnType = columnInfo[0].DATA_TYPE;
-            // If channel_id is numeric (int, bigint) but we have string channel IDs, convert it
-            if ((columnType === 'int' || columnType === 'bigint') && isNaN(parseInt(channelId))) {
-              console.log(`Channel ID "${channelId}" is string but column is ${columnType}. Attempting conversion...`);
-              try {
-                // Drop foreign key if exists (required before ALTER)
-                try {
-                  const [fks] = await db.execute(`
-                    SELECT CONSTRAINT_NAME 
-                    FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-                    WHERE TABLE_SCHEMA = ? 
-                    AND TABLE_NAME = 'messages' 
-                    AND COLUMN_NAME = 'channel_id' 
-                    AND REFERENCED_TABLE_NAME IS NOT NULL
-                  `, [process.env.MYSQL_DATABASE]);
-                  
-                  for (const fk of fks) {
-                    try {
-                      await db.execute(`ALTER TABLE messages DROP FOREIGN KEY ${fk.CONSTRAINT_NAME}`);
-                      console.log(`Dropped foreign key: ${fk.CONSTRAINT_NAME}`);
-                    } catch (fkError) {
-                      console.warn('Could not drop foreign key:', fkError.message);
-                    }
-                  }
-                } catch (fkQueryError) {
-                  console.warn('Could not query foreign keys:', fkQueryError.message);
-                }
-                
-                // Convert column to VARCHAR
-                await db.execute('ALTER TABLE messages MODIFY COLUMN channel_id VARCHAR(255) NOT NULL');
-                console.log('Successfully converted messages.channel_id to VARCHAR(255)');
-                columnType = 'varchar'; // Update for next insert attempt
-              } catch (alterError) {
-                console.error('Failed to convert channel_id column type:', alterError.message);
-                console.error('Error code:', alterError.code);
-                // Continue - we'll try to insert anyway
-              }
-            } else if (columnType === 'varchar' || columnType === 'char') {
-              console.log(`Channel ID column is already ${columnType}, no conversion needed`);
-            }
-          } else {
-            console.warn('Could not find channel_id column in messages table');
-          }
-        } catch (schemaError) {
-          console.warn('Could not check channel_id column type:', schemaError.message);
-          // Continue with insert attempt
-        }
-        
-        // Use actual table structure: id, content, encrypted, timestamp, channel_id, sender_id
-        // Handle channel_id as either string or number based on column type
-        let channelIdValue = channelId; // Default to string
-        if (columnType === 'int' || columnType === 'bigint') {
-          // If column is numeric, try to convert channelId to number
-          const numericId = parseInt(channelId);
-          if (!isNaN(numericId)) {
-            channelIdValue = numericId;
-          } else {
-            // Can't convert string to number for numeric column
-            console.error(`Cannot convert channel ID "${channelId}" to number for ${columnType} column`);
-            try {
-              if (db && typeof db.release === 'function') {
-                db.release();
-              } else if (db && typeof db.end === 'function') {
-                await db.end();
-              }
-            } catch (e) {
-              console.warn('Error releasing connection:', e.message);
-            }
-            return res.status(200).json({ 
-              success: false, 
-              message: `Channel ID "${channelId}" is not compatible with database column type ${columnType}`,
-              error: 'Type mismatch'
-            });
-          }
-        }
+        // Fast path: avoid INFORMATION_SCHEMA checks on hot POST route.
+        let channelIdValue = channelId;
         
         // Prepare content - include file info if present
         let messageContent = content.trim();
@@ -1105,15 +1026,7 @@ module.exports = async (req, res) => {
         );
 
         // Release connection back to pool before responding (notifications use their own connection).
-        try {
-          if (db && typeof db.release === 'function') {
-            db.release();
-          } else if (db && typeof db.end === 'function') {
-            await db.end();
-          }
-        } catch (releaseError) {
-          console.warn('Error releasing database connection:', releaseError.message);
-        }
+        await releaseDb();
 
         res.status(201).json(message);
 
@@ -1167,9 +1080,8 @@ module.exports = async (req, res) => {
         
         if (db) {
           try {
-            db.release(); // Release connection back to pool
+            await releaseDb();
           } catch (releaseError) {
-            // Ignore errors when releasing connection
             console.warn('Error releasing database connection:', releaseError.message);
           }
         }
@@ -1234,15 +1146,7 @@ module.exports = async (req, res) => {
         
         if (!messageRows || messageRows.length === 0) {
           console.log('Message not found with ID:', messageId, 'tried value:', messageIdValue);
-          try {
-            if (db && typeof db.release === 'function') {
-              db.release();
-            } else if (db && typeof db.end === 'function') {
-              await db.end();
-            }
-          } catch (e) {
-            console.warn('Error releasing connection:', e.message);
-          }
+          await releaseDb();
           return res.status(404).json({ success: false, message: 'Message not found' });
         }
 
@@ -1254,15 +1158,7 @@ module.exports = async (req, res) => {
         const [result] = await db.execute('DELETE FROM messages WHERE id = ?', [messageIdValue]);
         
         // Release connection back to pool
-        try {
-          if (db && typeof db.release === 'function') {
-            db.release();
-          } else if (db && typeof db.end === 'function') {
-            await db.end();
-          }
-        } catch (releaseError) {
-          console.warn('Error releasing database connection:', releaseError.message);
-        }
+        await releaseDb();
 
         if (result.affectedRows > 0) {
           console.log('Message deleted successfully:', messageIdValue);
@@ -1287,7 +1183,7 @@ module.exports = async (req, res) => {
         });
         if (db) {
           try {
-            db.release(); // Release connection back to pool
+            await releaseDb();
           } catch (releaseError) {
             // Ignore errors when releasing connection
           }
@@ -1300,6 +1196,7 @@ module.exports = async (req, res) => {
       }
     }
 
+    await releaseDb();
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   } catch (error) {
     console.error('Unexpected error handling messages:', error);
