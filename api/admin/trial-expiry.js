@@ -39,7 +39,7 @@ const sendExpiryEmail = async (email, username) => {
             Renew Subscription
           </a>
           <p style="margin-top:24px;font-size:0.85rem;color:#64748b;">
-            AURA TERMINAL™ â€” Professional Trading Education
+            AURA TERMINAL™ — Professional Trading Education
           </p>
         </div>
       `

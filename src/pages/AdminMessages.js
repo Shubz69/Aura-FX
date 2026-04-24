@@ -151,7 +151,7 @@ const AdminMessages = () => {
                     </div>
                 ) : filtered.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-icon">ðŸ“­</div>
+                        <div className="empty-icon">📭</div>
                         <h3>No Messages</h3>
                         <p>{filter === 'dealt' ? 'No dealt messages yet.' : 'No open messages.'}</p>
                     </div>
@@ -193,7 +193,7 @@ const AdminMessages = () => {
                                             </div>
                                         </div>
                                         <div className="message-time">
-                                            <span className="time-icon">ðŸ•’</span>
+                                            <span className="time-icon">🕒</span>
                                             {msg.createdAt ? new Date(msg.createdAt).toLocaleString() : 'N/A'}
                                         </div>
                                     </div>

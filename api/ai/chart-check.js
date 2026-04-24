@@ -25,7 +25,7 @@ const PERPLEXITY_MODEL = getPerplexityModelForVision();
 const PERPLEXITY_TEXT_MODEL = getPerplexityModelForChat();
 let chartCheckTableReadyPromise = null;
 
-/** Perplexity may return `content` as a string, array of {type,text}, or other shapes â€” normalize to plain text. */
+/** Perplexity may return `content` as a string, array of {type,text}, or other shapes — normalize to plain text. */
 function normalizeAssistantContent(content) {
   if (content == null) return '';
   if (typeof content === 'string') return content;
@@ -206,7 +206,7 @@ const CHECKLIST_RUBRIC = {
           'Thesis can survive short-term noise/pullbacks',
           'Risk sizing is appropriate for a wider stop',
           'No near-term high-impact news would break the thesis',
-          'Setup requires patience â€” no forced execution visible',
+          'Setup requires patience — no forced execution visible',
           'Trade setup is rule-based and systematic',
         ],
       },
@@ -322,11 +322,11 @@ STRICT ANALYSIS CONTRACT (NON-NEGOTIABLE):
 
 2) EXPLICIT REASONING (use in section whatAiSees bullets and in traderAnswers)
 Each substantive bullet MUST read as three linked clauses in ONE string, using this exact delimiter pattern so it is scannable:
-"Observation: â€¦ | Meaning: â€¦ | Implication: â€¦"
+"Observation: … | Meaning: … | Implication: …"
 Example: "Observation: Two successive closes could not hold above the horizontal zone near the recent swing high; wicks extend above it. | Meaning: Rejection/liquidity delivery at that offer zone. | Implication: Long-bias continuation is weakened until a decisive close through that zone."
-If something is not visible, use: "Observation: not clearly visible in the image | Meaning: â€¦ | Implication: â€¦" and score that area as unclear/fail for relevant criteria.
+If something is not visible, use: "Observation: not clearly visible in the image | Meaning: … | Implication: …" and score that area as unclear/fail for relevant criteria.
 
-3) INDICATORS â€” NO NUMERIC HALLUCINATION
+3) INDICATORS — NO NUMERIC HALLUCINATION
 - Never state RSI/MACD/Stochastic/Bollinger values unless the exact reading is legible on-chart (or in a data window readable in the screenshot).
 - If an oscillator pane exists but values are unreadable: say "indicator type present; numeric value not confirmed from image".
 - If unsure of indicator identity: "indicator not clearly visible".
@@ -334,7 +334,7 @@ If something is not visible, use: "Observation: not clearly visible in the image
 4) MULTI-TIMEFRAME (when 2+ charts)
 - State HTF directional lean vs execution TF behavior explicitly in alignmentSummary.
 - Penalize (lower biasConfidenceScore, list in contradictions) when execution TF appears to buy into obvious HTF supply or sell into obvious HTF demand UNLESS the chart shows a clear invalidation-based probe with evidence.
-- Reward alignment only when each timeframeâ€™s structure is described with chart-tied evidence.
+- Reward alignment only when each timeframe’s structure is described with chart-tied evidence.
 
 5) INSTRUMENT-AWARE SCORING (same rubric weights, different evidence bar)
 - Apply category-specific caution from INSTRUMENT CONTEXT: e.g. crypto breakout reliability vs FX session noise vs metal volatility vs index gap context.
@@ -348,8 +348,8 @@ If something is not visible, use: "Observation: not clearly visible in the image
 
 7) CONFIDENCE (confidenceLabel)
 - high ONLY if: clarity is strong, contradictions are none or minor, and evidence for bias is chart-obvious.
-- If image noisy, zoomed awkwardly, or indicators ambiguous â†’ medium or low.
-- If symbol not confirmed from chart text AND user did not provide pair â†’ prefer medium or low.
+- If image noisy, zoomed awkwardly, or indicators ambiguous → medium or low.
+- If symbol not confirmed from chart text AND user did not provide pair → prefer medium or low.
 
 8) WEAK / STRONG SETUPS
 - weak / messy: practicalAction should be avoid or wait_for_confirmation with explicit chart reasons in traderAction.reason (not generic).
@@ -601,7 +601,7 @@ function inferTradeLifecycleHeuristic(result) {
     tradeStage = 'extended';
     entryTiming = 'late';
     tradeLifecycleExplanation =
-      'Price language suggests a late / crowded leg â€” continuation needs fresh acceptance; mean-reversion risk rises without it.';
+      'Price language suggests a late / crowded leg — continuation needs fresh acceptance; mean-reversion risk rises without it.';
   } else if (/\b(exhaustion|exhausted|blow-?off|parabolic|thrust)\b/.test(issues)) {
     tradeStage = 'exhaustion';
     entryTiming = 'late';
@@ -611,7 +611,7 @@ function inferTradeLifecycleHeuristic(result) {
     tradeStage = 'developing';
     entryTiming = 'early';
     tradeLifecycleExplanation =
-      'Pullback relative to the visible impulse appears early if the defending level holds â€” confirm with your trigger chart.';
+      'Pullback relative to the visible impulse appears early if the defending level holds — confirm with your trigger chart.';
   } else if (mc === 'continuation' && score < 42) {
     tradeStage = 'early_stage';
     entryTiming = 'early';
@@ -656,7 +656,7 @@ function normalizeRiskViews(raw, result) {
   if (!conservativeView.explanation) {
     conservativeView.explanation =
       contN >= 2
-        ? 'Conservative: skip â€” timeframe disagreement materially raises failure rate until structure reconciles.'
+        ? 'Conservative: skip — timeframe disagreement materially raises failure rate until structure reconciles.'
         : score < 48 || clarity < 45
           ? 'Conservative: stand aside; scores or chart readability do not justify meaningful risk.'
           : 'Conservative: only small, risk-capped trial size with explicit invalidation and live spread/session checks.';
@@ -665,7 +665,7 @@ function normalizeRiskViews(raw, result) {
     aggressiveView.explanation =
       score >= 62 && contN === 0
         ? 'Aggressive: momentum/structure may justify a tactical probe if you accept noise and size down.'
-        : 'Aggressive: treat any entry as an experiment â€” minimal size, fast invalidation, no averaging into confusion.';
+        : 'Aggressive: treat any entry as an experiment — minimal size, fast invalidation, no averaging into confusion.';
   }
 
   if (score < 42 || contN >= 2 || clarity < 40) conservativeView.takeTrade = false;
@@ -714,7 +714,7 @@ function applyStrictQualityGates(result, gateCtx) {
     const d = 14;
     biasConf = clampScore(biasConf - d);
     adjustments.push(`contradictions>=2: biasConfidence -${d}`);
-    gates.push('Multiple timeframe/signal contradictions â€” bias confidence reduced.');
+    gates.push('Multiple timeframe/signal contradictions — bias confidence reduced.');
   } else if (contN === 1) {
     const d = 6;
     biasConf = clampScore(biasConf - d);
@@ -725,7 +725,7 @@ function applyStrictQualityGates(result, gateCtx) {
     const d = 10;
     checklist = clampScore(checklist - d);
     adjustments.push(`unclearCriteria>=8: checklist -${d}`);
-    gates.push('Many checklist items unclear from imagery â€” checklist quality reduced.');
+    gates.push('Many checklist items unclear from imagery — checklist quality reduced.');
   } else if (unclearN >= 4) {
     const d = 5;
     checklist = clampScore(checklist - d);
@@ -736,7 +736,7 @@ function applyStrictQualityGates(result, gateCtx) {
     const d = 8;
     biasConf = clampScore(biasConf - d);
     adjustments.push(`chartClarity<42: biasConfidence -${d}`);
-    gates.push('Low chart clarity â€” down-weighting directional confidence.');
+    gates.push('Low chart clarity — down-weighting directional confidence.');
   }
 
   if (instrumentContext && !instrumentContext.confirmedOnAura && !instrumentContext.normalizedSymbol) {
@@ -746,7 +746,7 @@ function applyStrictQualityGates(result, gateCtx) {
   } else if (instrumentContext && !instrumentContext.confirmedOnAura) {
     biasConf = clampScore(Math.min(biasConf, 72));
     adjustments.push('symbol not on Aura list: biasConfidence cap 72');
-    gates.push('Symbol/category not fully confirmed in Aura registry â€” conservative bias scoring.');
+    gates.push('Symbol/category not fully confirmed in Aura registry — conservative bias scoring.');
   }
 
   const vagueHits = collectVagueSnippetHits(result);
@@ -754,7 +754,7 @@ function applyStrictQualityGates(result, gateCtx) {
     const pen = Math.min(3 * vagueHits.length, 15);
     biasConf = clampScore(biasConf - pen);
     adjustments.push(`vagueSnippetHints (${vagueHits.length}): biasConfidence -${pen}`);
-    gates.push(`Automated text review flagged generic phrasing (${vagueHits.slice(0, 3).join('; ')}) â€” tighten chart-observable wording in a future run.`);
+    gates.push(`Automated text review flagged generic phrasing (${vagueHits.slice(0, 3).join('; ')}) — tighten chart-observable wording in a future run.`);
   }
 
   if (semanticStrengthWeaknessClash(result)) {
@@ -762,7 +762,7 @@ function applyStrictQualityGates(result, gateCtx) {
     const d = 10;
     biasConf = clampScore(biasConf - d);
     adjustments.push(`sanity: trend vs range/chop language clash, biasConfidence -${d}`);
-    gates.push('Sanity check: strong trend language conflicts with range/unclear-direction notes â€” scores and confidence reduced.');
+    gates.push('Sanity check: strong trend language conflicts with range/unclear-direction notes — scores and confidence reduced.');
   }
 
   if (claimsPremiumSetupWithoutEvidence(result, unclearN)) {
@@ -770,7 +770,7 @@ function applyStrictQualityGates(result, gateCtx) {
     checklist = clampScore(checklist - 8);
     biasConf = clampScore(biasConf - 5);
     adjustments.push('sanity: premium "clear setup" phrasing vs many unclear checklist rows');
-    gates.push('Sanity check: setup described as premium while checklist is largely unclear â€” verdict softened.');
+    gates.push('Sanity check: setup described as premium while checklist is largely unclear — verdict softened.');
   }
 
   const indFlags = collectIndicatorNumericFlags(result);
@@ -779,7 +779,7 @@ function applyStrictQualityGates(result, gateCtx) {
     const pen = Math.min(6 * indFlags.length, 14);
     checklist = clampScore(checklist - pen);
     adjustments.push(`sanity: indicator numeric snippets flagged (${indFlags.length}), checklist -${pen}`);
-    gates.push('Sanity check: oscillator/study numbers cited â€” confirm legibility on image or treat as unconfirmed.');
+    gates.push('Sanity check: oscillator/study numbers cited — confirm legibility on image or treat as unconfirmed.');
   }
 
   const merged = mergeAdaptiveWeights(checklistType, instrumentContext);
@@ -945,7 +945,7 @@ CHECKLIST SCORING RULES:
   name, score (0-100), verdict (strong/moderate/weak/unclear), whatAiSees[], whyItMatters, issues[], whatWouldImproveIt[]
 - checklistScore is average of section scores.
 
-SCORE OUTPUT (subscores â€” Aura recomputes final overall using adaptive style/category weights + conflict multiplier):
+SCORE OUTPUT (subscores — Aura recomputes final overall using adaptive style/category weights + conflict multiplier):
 - chartClarityScore (0-100): image readability, symbol/timeframe clarity, how cleanly structure reads
 - checklistScore (0-100): rubric criteria strength (from section scores)
 - biasConfidenceScore (0-100): HTF/MTF/LTF alignment and contradiction penalty
@@ -959,7 +959,7 @@ For each row: indicator, visibility (visible|unclear|not_visible), observation (
 Patterns to mention when genuinely seen: RSI swing divergence vs price, MACD histogram/momentum flip, VWAP reclaim/reject, Bollinger squeeze vs expansion, EMA bullish/bearish stacking or compression.
 If unsure, set visibility unclear/not_visible and avoid numbers.
 
-SETUP STYLE (internal reasoning â€” reflect in marketCondition / whatAiSees text when applicable):
+SETUP STYLE (internal reasoning — reflect in marketCondition / whatAiSees text when applicable):
 Consider: breakout, reversal, continuation, pullback, range, momentum impulse, discrete liquidity sweep, discretionary multi-factor confluence.
 
 OUTPUT SHAPE:
@@ -1049,7 +1049,7 @@ Critical:
 - Use probability language when evidence is mixed, but still anchor claims to chart observations (never empty hedging).
 - Do not output markdown, comments, or extra keys.
 - JSON string values must not contain raw line breaks; use \\n inside strings instead.
-- every whatAiSees[] entry MUST use "Observation: â€¦ | Meaning: â€¦ | Implication: â€¦" format.`;
+- every whatAiSees[] entry MUST use "Observation: … | Meaning: … | Implication: …" format.`;
 }
 
 function buildUserInstruction(images, buckets) {
@@ -1256,7 +1256,7 @@ async function callOpenAIVision(images, systemPrompt, userPrompt) {
     '\n\nRespond with a single valid JSON object exactly matching the OUTPUT SHAPE contract. ' +
     'No markdown code fences, no commentary before or after the JSON. Use double quotes for all keys and strings. ' +
     'No trailing commas. Escape any double quotes inside string values as \\". ' +
-    'Never put raw line breaks inside a JSON string â€” use \\n for newlines inside strings. ' +
+    'Never put raw line breaks inside a JSON string — use \\n for newlines inside strings. ' +
     'Do not use single quotes for JSON.';
 
   const envTok = Number(process.env.PERPLEXITY_CHART_CHECK_MAX_TOKENS);
@@ -1378,7 +1378,7 @@ function normalizeAiJsonText(raw) {
   const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fence) t = fence[1].trim();
   else t = t.replace(/```json/gi, '').replace(/```/g, '').trim();
-  // Curly/smart double quotes break JSON.parse â€” normalize to ASCII "
+  // Curly/smart double quotes break JSON.parse — normalize to ASCII "
   t = t.replace(/\u201C/g, '"').replace(/\u201D/g, '"');
   return stripJsonTrailingCommas(t);
 }
@@ -1499,7 +1499,7 @@ function buildEducationalNote(result) {
   const lines = [
     `Treat your ${cat} chart as conditional: wait for confirmation when scores are mixed.`,
     conf ? `Need: ${conf}` : 'Define what would prove the idea wrong before sizing up.',
-    inv ? `Invalidation sketch: ${inv.slice(0, 220)}` : 'Mark invalidation from the chartâ€™s last swing or zone.',
+    inv ? `Invalidation sketch: ${inv.slice(0, 220)}` : 'Mark invalidation from the chart’s last swing or zone.',
     'Journal the plan and align with your The Operator checklist before execution.',
   ];
   return lines.join(' ');
@@ -1630,7 +1630,7 @@ function normalizeResult(raw, { rubric, checklistType, context, imageCount = 0 }
   result.verdictTier = verdictTierFromScore(result.scores.overallSetupScore);
   result.instrumentContext = instrumentContext;
   result.statusLabel = result.summary.practicalAction === 'executable' ? 'Executable Setup' : 'Conditional Setup';
-  result.statusEmoji = result.summary.practicalAction === 'executable' ? 'ðŸŸ¢' : 'ðŸŸ¡';
+  result.statusEmoji = result.summary.practicalAction === 'executable' ? '🟢' : '🟡';
   result.checklistType = checklistType;
   result.checklistLabel = rubric.label;
   result.imageQuality = result.scores.chartClarityScore >= 75 ? 'good' : result.scores.chartClarityScore >= 45 ? 'acceptable' : 'poor';

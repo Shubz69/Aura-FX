@@ -90,7 +90,7 @@ const DEFAULT_FORM = {
   maxTradesAllowed: 3,
   keyDrivers:
     'Strong U.S. economic data supporting risk tone\nInstitutional inflows into metals\nDXY softening into NY close',
-  fundamentalBacking: 'GDP Growth: 3.2% YoY\nInflation cooling: 2.9% â†’ 2.4%\nSector strength in metals and energy',
+  fundamentalBacking: 'GDP Growth: 3.2% YoY\nInflation cooling: 2.9% → 2.4%\nSector strength in metals and energy',
   whatDoISee: '',
   setupName: 'London Breakout',
   whyIsThisValid: '',
@@ -715,7 +715,7 @@ export default function TraderLab() {
 
       {!loading ? (
         <div className="trader-lab-v2 trader-lab-v2--gold trader-lab-v2--compact trader-lab-v2--workspace trader-lab-v2--terminal-desktop">
-          {/* LEFT RAIL - Reorganized: Trade Thesis â†’ Key Drivers â†’ Risk & Geopolitical â†’ Session Focus */}
+          {/* LEFT RAIL - Reorganized: Trade Thesis → Key Drivers → Risk & Geopolitical → Session Focus */}
           <aside className="trader-lab-v2__left">
             <div className="tlab-card tlab-card--gold tlab-card--bias-rail">
               <h3 className="tlab-card__title">Trade thesis</h3>
@@ -890,7 +890,7 @@ export default function TraderLab() {
             </div>
           </aside>
 
-          {/* CENTER COLUMN - Reorganized: Chart â†’ Decoder Strip â†’ Fundamental Backing â†’ Trader Thesis */}
+          {/* CENTER COLUMN - Reorganized: Chart → Decoder Strip → Fundamental Backing → Trader Thesis */}
           <div className="trader-lab-v2__center">
             <div className="tlab-center-stack">
               <div className="tlab-center-main">
@@ -1159,7 +1159,7 @@ export default function TraderLab() {
                 </div>
               </div>
               <div className="tlab-rr-big">
-                <span className="tlab-rr-label">Râˆ¶R ratio</span>
+                <span className="tlab-rr-label">R∶R ratio</span>
                 <span className="tlab-rr-value">
                   1 : {Number.isFinite(rr) && rr > 0 ? rr.toFixed(2) : '—'}
                 </span>

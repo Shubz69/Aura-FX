@@ -167,7 +167,7 @@ const Explore = () => {
       
       <div className="explore-content-wrapper">
 
-        {/* â”€â”€ Header â”€â”€ */}
+        {/* ── Header ── */}
         <header className="explore-header">
           <h1 className="explore-main-title aura-page-title">Explore</h1>
           <div className="explore-header-line aura-page-title-line" aria-hidden>
@@ -175,7 +175,7 @@ const Explore = () => {
           </div>
         </header>
 
-        {/* â”€â”€ Main Content — Split â”€â”€ */}
+        {/* ── Main Content — Split ── */}
         <div className="explore-main-content">
           <div className="explore-text-section">
             <h2 className="explore-subtitle">Discover AURA TERMINAL™</h2>
@@ -209,7 +209,7 @@ const Explore = () => {
           </div>
         </div>
 
-        {/* â”€â”€ Navigate Section â”€â”€ */}
+        {/* ── Navigate Section ── */}
         <div className="explore-pages-section">
           <h2 className="explore-section-heading">Navigate Our Platform</h2>
           <p className="explore-section-description">
@@ -235,7 +235,7 @@ const Explore = () => {
           </div>
         </div>
 
-        {/* â”€â”€ Courses Section â”€â”€ */}
+        {/* ── Courses Section ── */}
         <div className="explore-courses-section">
           <h2 className="explore-section-heading">Courses Provided</h2>
           <p className="explore-section-description">
@@ -258,7 +258,7 @@ const Explore = () => {
           </div>
         </div>
 
-        {/* â”€â”€ Footer â”€â”€ */}
+        {/* ── Footer ── */}
         <div className="explore-footer">
           <div className="explore-footer-content">
             <span className="explore-footer-text">Courses Provided</span>

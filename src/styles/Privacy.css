@@ -4,7 +4,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* â”€â”€ CSS Variables (mirrored from home.css) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── CSS Variables (mirrored from home.css) ───────────────── */
 :root {
     --bg:          #0a0a0a;
     --bg-card:     rgba(255,255,255,0.03);
@@ -19,7 +19,7 @@
     --transition:  0.28s cubic-bezier(0.4,0,0.2,1);
 }
 
-/* â”€â”€ Base (inside Aura Terminal™ / journal starfield) â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Base (inside Aura Terminal™ / journal starfield) ─────── */
 .privacy-legal-page,
 .privacy-legal-page * {
     font-family: 'Space Grotesk', sans-serif;
@@ -43,7 +43,7 @@
     50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
 }
 
-/* â”€â”€ Glass panel = .privacy-content + journal-glass-panel â”€â”€ */
+/* ── Glass panel = .privacy-content + journal-glass-panel ── */
 .privacy-content {
     max-width: 100%;
     margin: 0 auto;
@@ -51,7 +51,7 @@
     z-index: 1;
 }
 
-/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Header ───────────────────────────────────────────────── */
 .privacy-header {
     text-align: center;
     margin-bottom: 60px;
@@ -111,7 +111,7 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* â”€â”€ Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Body ─────────────────────────────────────────────────── */
 .privacy-body {
     line-height: 1.8;
 }
@@ -181,7 +181,7 @@
 .privacy-body section:hover::before { opacity: 1; }
 .privacy-body section:hover::after  { opacity: 1; }
 
-/* â”€â”€ Section Headings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Section Headings ─────────────────────────────────────── */
 .privacy-body h2 {
     font-size: 0.78rem;
     font-weight: 500;
@@ -215,7 +215,7 @@
     text-transform: uppercase;
 }
 
-/* â”€â”€ Body Text â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Body Text ────────────────────────────────────────────── */
 .privacy-body p {
     color: rgba(255,255,255,0.65);
     font-size: 0.92rem;
@@ -224,7 +224,7 @@
     line-height: 1.8;
 }
 
-/* â”€â”€ Lists â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Lists ────────────────────────────────────────────────── */
 .privacy-body ul {
     margin: 0.5rem 0 1rem 0;
     padding: 0;
@@ -256,14 +256,14 @@
     box-shadow: 0 0 6px rgba(234,169,96,0.5);
 }
 
-/* â”€â”€ Strong / Emphasis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Strong / Emphasis ────────────────────────────────────── */
 .privacy-body strong {
     color: rgba(255,255,255,0.9);
     font-weight: 500;
     letter-spacing: 0.04em;
 }
 
-/* â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Footer ───────────────────────────────────────────────── */
 .privacy-footer {
     margin-top: 3rem;
     padding-top: 2rem;
@@ -308,7 +308,7 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
-/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 1024px) {
     .privacy-legal-page { padding-left: 4px; padding-right: 4px; }
     .privacy-header h1 { font-size: 2.5rem; }

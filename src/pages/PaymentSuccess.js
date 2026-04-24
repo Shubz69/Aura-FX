@@ -329,7 +329,7 @@ const PaymentSuccess = () => {
                     }
 
                     if (response.status === 200) {
-                        setMessage(`ðŸŽ‰ Purchased ${courseTitle}! Course added and community access unlocked!`);
+                        setMessage(`🎉 Purchased ${courseTitle}! Course added and community access unlocked!`);
                     } else {
                         setMessage("Your payment was processed but there was an issue with course enrollment. Please contact support.");
                         setError(true);
@@ -372,7 +372,7 @@ const PaymentSuccess = () => {
             <CosmicBackground />
             <div className="payment-success-card">
                 <div className={`success-icon ${error ? "error" : ""}`}>
-                    {error ? "âŒ" : "âœ…"}
+                    {error ? "❌" : "✅"}
                 </div>
                 <h2 className="payment-title">
                     {error ? "PROCESSING ERROR" : "PAYMENT SUCCESSFUL"}

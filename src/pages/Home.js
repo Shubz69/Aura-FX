@@ -15,9 +15,9 @@ import {
     FaChartLine, FaGlobe, FaArrowRight,
 } from 'react-icons/fa';
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    ANIMATED COUNTER
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+══════════════════════════════════════════════════════════ */
 const useCountUp = (target, duration = 2000, start = false) => {
     const [count, setCount] = useState(0);
     useEffect(() => {
@@ -61,17 +61,17 @@ const StatItem = ({ number, label, fill = '75%' }) => {
     );
 };
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    iPad slideshow
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+══════════════════════════════════════════════════════════ */
 const IPAD_SLIDE_BASE = `${process.env.PUBLIC_URL || ''}/images/ipad-slides`;
 
 const SLIDES = [
-    { image: `${IPAD_SLIDE_BASE}/journal.png`,      tag: 'ðŸ““ Trading Journal',    title: 'Your Daily Trading Discipline',  subtitle: 'Streaks, checklists, and session notes—built to keep execution consistent.',                           statBadge: 'Streaks & tasks', chartColor: '#F8C37D' },
-    { image: `${IPAD_SLIDE_BASE}/traderdesk.png`,  tag: 'ðŸ“Š Market Intelligence', title: 'Briefs, Bias & Macro Context',   subtitle: 'Session-ready views of structure, drivers, and what matters before London & New York.',              statBadge: 'Live context',    chartColor: '#EAA960' },
-    { image: `${IPAD_SLIDE_BASE}/auraAI.png`,      tag: 'ðŸ¤– Aura AI',             title: 'Premium Trading Copilot',        subtitle: 'Ask for analysis, risk framing, and ideas—grounded in live data when available.',                    statBadge: 'Aura AI',         chartColor: '#FDE8C4' },
-    { image: `${IPAD_SLIDE_BASE}/community.png`,    tag: 'ðŸ† Community',           title: 'Elite Trading Community',        subtitle: 'Structured channels, real moderators, and traders who take the craft seriously.',                    statBadge: '1,200+ Members',  chartColor: '#D48D44' },
-    { image: `${IPAD_SLIDE_BASE}/courses.png`,    tag: 'ðŸŽ“ Education',           title: 'Courses & Mentorship',           subtitle: 'Progressive curriculum plus optional 1-to-1 mentorship for committed traders.',                     statBadge: 'C & S',           chartColor: '#EABB80' },
+    { image: `${IPAD_SLIDE_BASE}/journal.png`,      tag: '📓 Trading Journal',    title: 'Your Daily Trading Discipline',  subtitle: 'Streaks, checklists, and session notes—built to keep execution consistent.',                           statBadge: 'Streaks & tasks', chartColor: '#F8C37D' },
+    { image: `${IPAD_SLIDE_BASE}/traderdesk.png`,  tag: '📊 Market Intelligence', title: 'Briefs, Bias & Macro Context',   subtitle: 'Session-ready views of structure, drivers, and what matters before London & New York.',              statBadge: 'Live context',    chartColor: '#EAA960' },
+    { image: `${IPAD_SLIDE_BASE}/auraAI.png`,      tag: '🤖 Aura AI',             title: 'Premium Trading Copilot',        subtitle: 'Ask for analysis, risk framing, and ideas—grounded in live data when available.',                    statBadge: 'Aura AI',         chartColor: '#FDE8C4' },
+    { image: `${IPAD_SLIDE_BASE}/community.png`,    tag: '🏆 Community',           title: 'Elite Trading Community',        subtitle: 'Structured channels, real moderators, and traders who take the craft seriously.',                    statBadge: '1,200+ Members',  chartColor: '#D48D44' },
+    { image: `${IPAD_SLIDE_BASE}/courses.png`,    tag: '🎓 Education',           title: 'Courses & Mentorship',           subtitle: 'Progressive curriculum plus optional 1-to-1 mentorship for committed traders.',                     statBadge: 'C & S',           chartColor: '#EABB80' },
 ];
 
 const MiniSparkline = ({ color = '#EAA960' }) => {
@@ -91,9 +91,9 @@ const MiniSparkline = ({ color = '#EAA960' }) => {
     );
 };
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    3D FLOATING iPAD
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+══════════════════════════════════════════════════════════ */
 const FloatingIPad = () => {
     const sceneRef  = useRef(null);
     const wrapRef   = useRef(null);
@@ -120,18 +120,18 @@ const FloatingIPad = () => {
         const cursor = cursorRef.current;
         if (!scene || !wrap) return;
 
-        /* â”€â”€ Config â”€â”€ */
+        /* ── Config ── */
         const BASE_X         =  7,  BASE_Y         = -13;
         const MOBILE_BASE_X  =  5,  MOBILE_BASE_Y  = -8;
         const MAX_TILT       =  20, MAX_TOUCH_TILT =  22;
         const LERP = 0.08, FLOAT_AMP = 4.0, FLOAT_SPD = 0.00065;
 
-        /* â”€â”€ Touch detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        /* ── Touch detection ──────────────────────────────────────────────────
            Media queries can lie on some Android WebViews / iOS Chrome.
            Instead: set a flag when the FIRST touchstart fires on the window,
            and clear it when a real mousemove fires (desktop pointer).
            This is the most reliable cross-browser approach.
-        â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+        ──────────────────────────────────────────────────────────────────── */
         let _touchMode = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         const setTouchMode  = () => { _touchMode = true;  };
         const setMouseMode  = () => { _touchMode = false; };
@@ -139,19 +139,19 @@ const FloatingIPad = () => {
         window.addEventListener('mousemove',  setMouseMode, { passive: true });
         const inTouchMode = () => _touchMode;
 
-        /* â”€â”€ Desktop state â”€â”€ */
+        /* ── Desktop state ── */
         let targetX = BASE_X, targetY = BASE_Y;
         let currentX = BASE_X, currentY = BASE_Y;
         let phase = 0, lastTime = performance.now();
         let rafId = null;
         const lerp = (a, b, t) => a + (b-a)*t;
 
-        /* â”€â”€ Touch state â”€â”€ */
+        /* ── Touch state ── */
         let touchStartX = 0, touchStartY = 0;
         let touchRafId  = null;
         let isTouching  = false;
 
-        /* â”€â”€ Mouse handlers â”€â”€ */
+        /* ── Mouse handlers ── */
         const onEnter = () => { if (!inTouchMode() && cursor) cursor.style.opacity = '1'; };
         const onLeave = () => {
             if (inTouchMode()) return;
@@ -189,7 +189,7 @@ const FloatingIPad = () => {
             rafId = requestAnimationFrame(tick);
         };
 
-        /* â”€â”€ Touch handlers â”€â”€ */
+        /* ── Touch handlers ── */
         const spawnRipple = (cx, cy) => {
             const r = scene.getBoundingClientRect();
             const el = document.createElement('div');
@@ -202,7 +202,7 @@ const FloatingIPad = () => {
 
         const onTouchStart = (e) => {
             if (e.touches.length !== 1) return;
-            e.preventDefault();         // â† blocks page scroll on the iPad card
+            e.preventDefault();         // ← blocks page scroll on the iPad card
             isTouching  = true;
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
@@ -234,7 +234,7 @@ const FloatingIPad = () => {
             setTimeout(() => wrap.classList.remove('is-resting'), 700);
         };
 
-        /* â”€â”€ Register â”€â”€ */
+        /* ── Register ── */
         scene.addEventListener('mousemove',   onMove);
         scene.addEventListener('mouseenter',  onEnter);
         scene.addEventListener('mouseleave',  onLeave);
@@ -247,7 +247,7 @@ const FloatingIPad = () => {
 
         rafId = requestAnimationFrame((ts) => { lastTime = ts; rafId = requestAnimationFrame(tick); });
 
-        /* â”€â”€ Cleanup â”€â”€ */
+        /* ── Cleanup ── */
         return () => {
             cancelAnimationFrame(rafId);
             if (touchRafId) cancelAnimationFrame(touchRafId);
@@ -264,13 +264,13 @@ const FloatingIPad = () => {
             scene.removeEventListener('touchcancel', onTouchEnd);
         };
     }, []);
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════
    iPAD TOUCH 3D ROTATION — COMPANION JS SNIPPET
-   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   ──────────────────────────────────────────────
    Add this script to your page (or component).
    It handles both desktop mouse-tilt AND mobile
    touch-drag 3D rotation of .ipad-wrap.
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•*/
+══════════════════════════════════════════════*/
 
 
 
@@ -289,7 +289,7 @@ const FloatingIPad = () => {
 
   const isMobile = () => window.matchMedia('(hover:none) and (pointer:coarse)').matches;
 
-  // â”€â”€ Desktop mouse tilt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Desktop mouse tilt ──────────────────────
   scene.addEventListener('mousemove', (e) => {
     if (isMobile()) return;
     const r   = scene.getBoundingClientRect();
@@ -314,7 +314,7 @@ const FloatingIPad = () => {
     setTimeout(() => wrap.classList.remove('is-resting'), 700);
   });
 
-  // â”€â”€ Mobile / touch tilt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Mobile / touch tilt ─────────────────────
   let touchStartX = 0;
   let touchStartY = 0;
   let currentRx   = MOBILE_REST_RX;
@@ -372,7 +372,7 @@ const FloatingIPad = () => {
     setTimeout(() => wrap.classList.remove('is-resting'), 700);
   });
 
-  // â”€â”€ Gold ripple helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Gold ripple helper ───────────────────────
   function spawnRipple(clientX, clientY) {
     const r    = scene.getBoundingClientRect();
     const el   = document.createElement('div');
@@ -389,7 +389,7 @@ const FloatingIPad = () => {
     return (
         <div className="ipad-scene" ref={sceneRef} style={{ cursor: 'none' }}>
             <div ref={cursorRef} className="ipad-cursor" style={{ width:'8px', height:'8px', transition:'opacity .22s ease, width .15s ease, height .15s ease' }} />
-            <div className="ipad-drag-hint"><span className="ipad-drag-hint-icon">âœ¦</span> Drag to rotate</div>
+            <div className="ipad-drag-hint"><span className="ipad-drag-hint-icon">✦</span> Drag to rotate</div>
 
             <div className="ipad-wrap" ref={wrapRef} style={{ position:'relative', width:'100%', transformStyle:'preserve-3d', transform:'translateY(0px) rotateX(7deg) rotateY(-13deg)', willChange:'transform' }}>
                 <div className="ipad-body" ref={bodyRef}>
@@ -399,7 +399,7 @@ const FloatingIPad = () => {
                         <div style={{ marginLeft:'auto', fontSize:'.52rem', fontWeight:600, color:'rgba(255,255,255,.28)', letterSpacing:'.12em' }}>AURA</div>
                     </div>
 
-                    {/* â”€â”€ SCREEN â”€â”€ */}
+                    {/* ── SCREEN ── */}
                     <div className="ipad-screen">
                         {SLIDES.map((slide, i) => (
                             <div key={i} className={`ipad-slide${i === activeSlide ? ' active' : ''}`}>
@@ -498,7 +498,7 @@ const computePerformanceKpis = (trades = [], pnlData = {}) => {
             profitFactor = grossProfit / grossLoss;
             profitFactorDisplay = Number.isFinite(profitFactor) ? profitFactor.toFixed(2) : '—';
         } else if (grossProfit > 0) {
-            profitFactorDisplay = 'âˆž';
+            profitFactorDisplay = '∞';
         } else {
             profitFactorDisplay = '0.00';
             profitFactor = 0;
@@ -614,7 +614,7 @@ const computeJournalMetrics = (tasks = [], selectedDate = new Date(), journalDai
     };
 };
 
-/** Single source of truth for desk bias label + gauge position (0–100, bearish left â†’ bullish right). */
+/** Single source of truth for desk bias label + gauge position (0–100, bearish left → bullish right). */
 const normalizeDeskBias = (lab, analytics) => {
     const raw = lab?.marketBias != null ? String(lab.marketBias).trim() : '';
     const lower = raw.toLowerCase();
@@ -680,7 +680,7 @@ const computeLabMetrics = (sessions = []) => {
     };
 };
 
-/** Semi-circular desk pulse: needle sweeps left (bearish) â†’ up (neutral) â†’ right (bullish). */
+/** Semi-circular desk pulse: needle sweeps left (bearish) → up (neutral) → right (bullish). */
 const DeskPulseGauge = ({ biasLabel = 'Neutral', pulsePct }) => {
     let pct =
         typeof pulsePct === 'number' && Number.isFinite(pulsePct) ? pulsePct : null;
@@ -691,7 +691,7 @@ const DeskPulseGauge = ({ biasLabel = 'Neutral', pulsePct }) => {
         else pct = 50;
     }
     pct = Math.max(0, Math.min(100, pct));
-    /* Default needle points up (12 o'clock). -90° â†’ left (bear), 0° â†’ up (neutral), +90° â†’ right (bull). */
+    /* Default needle points up (12 o'clock). -90° → left (bear), 0° → up (neutral), +90° → right (bull). */
     const rot = -90 + (pct / 100) * 180;
     const toneClass = pct >= 58 ? 'is-bull' : pct <= 42 ? 'is-bear' : '';
     return (
@@ -1453,9 +1453,9 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     );
 };
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    HOME PAGE
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+══════════════════════════════════════════════════════════ */
 const Home = () => {
     const navigate = useNavigate();
     const { isAuthenticated, user, token } = useAuth();
@@ -1525,12 +1525,12 @@ const Home = () => {
                                         <button className="home-secondary-button" onClick={() => navigate('/explore')}>Explore Features</button>
                                     </div>
                                     <div className="hero-trust-badges">
-                                        {[{icon:'✓',label:'Real Time Data'},{icon:'ðŸ”’',label:'Secure & Private'},{icon:'âŠ™',label:'24/7 Support'}].map(b=>(
+                                        {[{icon:'✓',label:'Real Time Data'},{icon:'🔒',label:'Secure & Private'},{icon:'⊙',label:'24/7 Support'}].map(b=>(
                                             <div className="trust-badge" key={b.label}><div className="trust-badge-icon">{b.icon}</div>{b.label}</div>
                                         ))}
                                     </div>
                                     <div className="partner-logos-row">
-                                        {[{icon:'ðŸ“Š',name:'TradingView'},{icon:'â—ˆ',name:'Binance'},{icon:'©',name:'Coinbase'},{icon:'â—‰',name:'Bloomberg'},{icon:'â—Ž',name:'Reuters'}].map(p=>(
+                                        {[{icon:'📊',name:'TradingView'},{icon:'◈',name:'Binance'},{icon:'©',name:'Coinbase'},{icon:'◉',name:'Bloomberg'},{icon:'◎',name:'Reuters'}].map(p=>(
                                             <div className="partner-logo" key={p.name}><span className="partner-logo-icon">{p.icon}</span>{p.name}</div>
                                         ))}
                                     </div>
@@ -1546,10 +1546,10 @@ const Home = () => {
 
                                 <div className="feature-cards-grid">
                                     {[
-                                        {icon:'ðŸ“ˆ',title:'Forex Trading',   desc:'Dominate currency markets with institutional-grade strategies and live market analysis'},
-                                        {icon:'ðŸ’¹',title:'Stock Trading',   desc:'Master equity markets with advanced analysis techniques and professional trading strategies'},
-                                        {icon:'â‚¿', title:'Crypto Trading',  desc:'Capitalize on digital asset opportunities with cutting-edge strategies and market insights'},
-                                        {icon:'ðŸŽ¯',title:'1-to-1 Mentorship',desc:'Accelerate your success with personalized coaching from industry-leading trading experts'},
+                                        {icon:'📈',title:'Forex Trading',   desc:'Dominate currency markets with institutional-grade strategies and live market analysis'},
+                                        {icon:'💹',title:'Stock Trading',   desc:'Master equity markets with advanced analysis techniques and professional trading strategies'},
+                                        {icon:'₿', title:'Crypto Trading',  desc:'Capitalize on digital asset opportunities with cutting-edge strategies and market insights'},
+                                        {icon:'🎯',title:'1-to-1 Mentorship',desc:'Accelerate your success with personalized coaching from industry-leading trading experts'},
                                     ].map(c=>(
                                         <div className="feature-card" key={c.title}>
                                             <div className="feature-icon">{c.icon}</div>

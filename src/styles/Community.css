@@ -7,9 +7,9 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-/* â”€â”€ CSS Variables â”€â”€â”€ aligned with journal.css tokens â”€â”€â”€â”€â”€â”€â”€ */
+/* ── CSS Variables ─── aligned with journal.css tokens ─────── */
 :root {
-    /* â”€â”€ Deep-space backgrounds (from journal --bg / --bg-card) â”€â”€ */
+    /* ── Deep-space backgrounds (from journal --bg / --bg-card) ── */
     --bg:             #010008;
     --bg-primary:     #01010a;
     --bg-secondary:   #02010c;
@@ -18,16 +18,16 @@
     --bg-card:        rgba(3, 2, 10, 0.70);
     --bg-card-h:      rgba(8, 6, 20, 0.85);
 
-    /* â”€â”€ Borders — white corner â†’ navy body â†’ gold whisper â”€â”€ */
+    /* ── Borders — white corner → navy body → gold whisper ── */
     --border:         rgba(255, 255, 255, 0.10);
     --border-h:       rgba(160, 185, 240, 0.28);
 
-    /* â”€â”€ Text â”€â”€ */
+    /* ── Text ── */
     --text:           #FFFFFF;
     --text-muted:     rgba(232, 235, 255, 0.86);
     --text-dim:       rgba(210, 216, 248, 0.48);
 
-    /* â”€â”€ Accent: journal uses blue/navy primary, gold as whisper â”€â”€ */
+    /* ── Accent: journal uses blue/navy primary, gold as whisper ── */
     --purple:         #6b8fe8;           /* cooler, more "space-blue" */
     --purple-dim:     rgba(107,143,232,0.14);
     --purple-glow:    rgba(107,143,232,0.32);
@@ -36,7 +36,7 @@
     --accent-red:     #F03D5F;
     --accent-amber:   #D4AF37;           /* journal --gold */
 
-    /* â”€â”€ Shape â”€â”€ */
+    /* ── Shape ── */
     --radius:         10px;
     --radius-lg:      16px;
     --transition:     0.22s cubic-bezier(0.4,0,0.2,1);
@@ -44,13 +44,13 @@
     --hover-bg:       rgba(255,255,255,0.04);
     --navbar-h:       62px;
 
-    /* â”€â”€ Safe area â”€â”€ */
+    /* ── Safe area ── */
     --safe-top:    env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left:   env(safe-area-inset-left, 0px);
     --safe-right:  env(safe-area-inset-right, 0px);
 
-    /* â”€â”€ Journal glass-panel system â”€â”€ */
+    /* ── Journal glass-panel system ── */
     --panel-fill:        linear-gradient(168deg, rgba(4,5,18,0.92) 0%, rgba(5,6,20,0.89) 100%);
     --panel-fill-h:      linear-gradient(168deg, rgba(7,8,24,0.95) 0%, rgba(9,10,28,0.91) 100%);
     --panel-border:      linear-gradient(135deg,
@@ -84,7 +84,7 @@
         0 10px 34px -10px rgba(15,20,48,0.48),
         inset 0 1px 0 rgba(255,255,255,0.30);
 
-    /* â”€â”€ Gradient heading (same as journal --grad-gold) â”€â”€ */
+    /* ── Gradient heading (same as journal --grad-gold) ── */
     --grad-primary: linear-gradient(125deg,
         #ffffff 0%,
         rgba(252,253,255,0.99) 28%,
@@ -93,7 +93,7 @@
         rgba(212,175,55,0.45)  100%);
 }
 
-/* â”€â”€ Journal Modal Variables (unchanged keys, updated values) â”€ */
+/* ── Journal Modal Variables (unchanged keys, updated values) ─ */
 :root {
     --jm-bg:        #010008;
     --jm-surface:   #02010c;
@@ -134,7 +134,7 @@ body.community-page-active {
         linear-gradient(168deg, #010008 0%, #01010a 15%, #02010c 30%, #01010a 50%, #000006 70%, #010008 100%);
 }
 
-/* â”€â”€ Star-field pseudo-layer on the community container â”€â”€ */
+/* ── Star-field pseudo-layer on the community container ── */
 .community-container::after {
     content: '';
     position: fixed;
@@ -1658,7 +1658,7 @@ body.sidebar-open-mobile {
 }
 .go-to-journal-btn:active { transform:scale(0.97) !important; }
 
-/* â”€â”€ Journal Stats â”€â”€ */
+/* ── Journal Stats ── */
 .mini-stats-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 20px; }
 
 .mini-stat-item {
@@ -1710,7 +1710,7 @@ body.sidebar-open-mobile {
     background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
 }
 
-/* â”€â”€ Journal Calendar (in modal) â”€â”€ */
+/* ── Journal Calendar (in modal) ── */
 .journal-modal-body .mini-calendar,
 .journal-modal-body .journal-calendar {
     position: relative;
@@ -1872,7 +1872,7 @@ body.sidebar-open-mobile {
     background: rgba(55,80,150,0.16); border-color: rgba(160,185,240,0.42); color: rgba(210,228,255,0.90);
 }
 
-/* â”€â”€ Progress â”€â”€ */
+/* ── Progress ── */
 .jmodal-progress-wrap {
     display: flex; align-items: center; gap: 12px; padding: 10px 14px;
     border: 1px solid transparent;
@@ -1910,7 +1910,7 @@ body.sidebar-open-mobile {
 .jmodal-progress-sub { font-size: 0.58rem; font-weight: 400; color: rgba(210,216,248,0.32); margin-top: 5px; }
 .jmodal-progress-sub strong { color: rgba(185,210,255,0.72); font-weight: 600; }
 
-/* â”€â”€ Tasks â”€â”€ */
+/* ── Tasks ── */
 .mini-task-item {
     display: flex; align-items: center; gap: 10px; padding: 10px 12px;
     border: 1px solid transparent;
@@ -1963,7 +1963,7 @@ body.sidebar-open-mobile {
     margin: -2px 0 14px; text-transform: uppercase;
 }
 
-/* â”€â”€ Notes â”€â”€ */
+/* ── Notes ── */
 .mini-note-item {
     padding: 10px 12px;
     background-image: var(--panel-fill), var(--panel-border);
@@ -1984,7 +1984,7 @@ body.sidebar-open-mobile {
     -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* â”€â”€ Empty â”€â”€ */
+/* ── Empty ── */
 .jmodal-empty {
     padding: 18px 12px; text-align: center;
     font-size: 0.64rem; font-weight: 300; color: rgba(210,216,248,0.20); letter-spacing: 0.1em;
@@ -2034,7 +2034,7 @@ body.sidebar-open-mobile {
 }
 
 /* ============================================================
-   MOBILE STYLES (â‰¤767px)
+   MOBILE STYLES (≤767px)
    ============================================================ */
 
 @media (max-width: 767px) {
@@ -2167,7 +2167,7 @@ body.sidebar-open-mobile {
 }
 
 /* ============================================================
-   VERY SMALL PHONES (â‰¤480px)
+   VERY SMALL PHONES (≤480px)
    ============================================================ */
 
 @media (max-width: 480px) {
@@ -2314,7 +2314,7 @@ body.community-page-active { overflow: hidden !important; height: 100% !importan
 html.community-page-active { overflow: hidden !important; height: 100% !important; }
 body.sidebar-open-mobile   { overflow: hidden !important; width: 100% !important; height: 100% !important; }
 
-/* â”€â”€ Anti-flash & touch â”€â”€ */
+/* ── Anti-flash & touch ── */
 .journal-modal-content button,
 .journal-modal-content a,
 .journal-modal-content input,
@@ -2328,7 +2328,7 @@ body.sidebar-open-mobile   { overflow: hidden !important; width: 100% !important
 .journal-modal-close { -webkit-tap-highlight-color: transparent; }
 .chat-input:focus { scroll-margin-bottom: 20px !important; }
 
-/* â”€â”€ Scrollbars â”€â”€ */
+/* ── Scrollbars ── */
 .community-container ::-webkit-scrollbar { width: 3px; height: 3px; }
 .community-container ::-webkit-scrollbar-track { background: transparent; }
 .community-container ::-webkit-scrollbar-thumb { background: rgba(130,160,230,0.22); border-radius: 99px; }

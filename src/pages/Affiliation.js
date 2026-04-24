@@ -25,16 +25,16 @@ import '../styles/Affiliation.css';
 
 /** Milestones — consistent labels & rewards (display only; backend may differ) */
 const TIERS = [
-  { referrals: 5, reward: '1 week free Premium', icon: 'ðŸ¥‰', color: '#cd7f32', label: 'Bronze' },
-  { referrals: 10, reward: '1 month free Premium', icon: 'ðŸ¥ˆ', color: '#94a3b8', label: 'Silver' },
-  { referrals: 25, reward: '3 months Elite access', icon: 'ðŸ¥‡', color: '#eaa960', label: 'Gold' },
-  { referrals: 100, reward: 'Lifetime Elite access', icon: 'ðŸ’Ž', color: '#f8c37d', label: 'Elite' },
+  { referrals: 5, reward: '1 week free Premium', icon: '🥉', color: '#cd7f32', label: 'Bronze' },
+  { referrals: 10, reward: '1 month free Premium', icon: '🥈', color: '#94a3b8', label: 'Silver' },
+  { referrals: 25, reward: '3 months Elite access', icon: '🥇', color: '#eaa960', label: 'Gold' },
+  { referrals: 100, reward: 'Lifetime Elite access', icon: '💎', color: '#f8c37d', label: 'Elite' },
 ];
 
 const FAQ_ITEMS = [
   {
     q: 'When does a referral count?',
-    a: 'Sign-ups count when someone registers with your link or enters your code (e.g. AURA-XXXXXXXX or legacy AT-000123). Subscriptions count when a referred person pays (including your code in the Stripe Payment Link â€œReferralâ€ field if they did not sign up via link). Courses count once per referred person when they complete a tracked course payment while logged in. Numbers update from the server — this page refreshes when you come back to the tab and every 45 seconds.',
+    a: 'Sign-ups count when someone registers with your link or enters your code (e.g. AURA-XXXXXXXX or legacy AT-000123). Subscriptions count when a referred person pays (including your code in the Stripe Payment Link “Referral” field if they did not sign up via link). Courses count once per referred person when they complete a tracked course payment while logged in. Numbers update from the server — this page refreshes when you come back to the tab and every 45 seconds.',
   },
   {
     q: 'How long until rewards apply?',
@@ -46,11 +46,11 @@ const FAQ_ITEMS = [
   },
   {
     q: 'What is Total impact?',
-    a: 'It is the sum of your sign-ups, subscription conversions, and course conversions. It is a simple â€œvolumeâ€ number; tier rewards are still based on referred sign-ups (the milestone ladder). Momentum is a small score that weights subscriptions and courses a bit higher for encouragement.',
+    a: 'It is the sum of your sign-ups, subscription conversions, and course conversions. It is a simple “volume” number; tier rewards are still based on referred sign-ups (the milestone ladder). Momentum is a small score that weights subscriptions and courses a bit higher for encouragement.',
   },
   {
     q: 'Can I share anywhere?',
-    a: 'Yes — social, forums, or direct messages. Just keep it honest: no spam, no misleading claims, and follow each platformâ€™s rules.',
+    a: 'Yes — social, forums, or direct messages. Just keep it honest: no spam, no misleading claims, and follow each platform’s rules.',
   },
   {
     q: 'What if tiers change?',
@@ -387,7 +387,7 @@ export default function Affiliation() {
       {toast?.msg && (
         <div className="aff-toast" role="status">
           <span className="aff-toast__icon" aria-hidden>
-            âœ¦
+            ✦
           </span>
           <span className="aff-toast__text">{toast.msg}</span>
           <button type="button" className="aff-toast__close" onClick={() => setToast(null)} aria-label="Dismiss">
@@ -555,7 +555,7 @@ export default function Affiliation() {
                 <div className="aff-milestone-progress">
                   <div className="aff-milestone-progress__top">
                     <span>
-                      <strong>{tierBasis}</strong> / {nextTier.referrals} sign-ups â†’ <em>{nextTier.reward}</em>
+                      <strong>{tierBasis}</strong> / {nextTier.referrals} sign-ups → <em>{nextTier.reward}</em>
                     </span>
                     <span className="aff-milestone-progress__pct">{Math.round(progressPct)}%</span>
                   </div>

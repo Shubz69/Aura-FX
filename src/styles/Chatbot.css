@@ -5,7 +5,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* â”€â”€ CSS Variables (aligned with .journal-page) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── CSS Variables (aligned with .journal-page) ───────────── */
 :root {
     --chatbot-bg: rgba(5, 6, 18, 0.97);
     --chatbot-bg-secondary: rgba(255, 255, 255, 0.04);
@@ -26,7 +26,7 @@
     --chatbot-transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* â”€â”€ Floating Chat Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Floating Chat Button ──────────────────────────────────── */
 .chatbot-container {
     position: fixed;
     bottom: 24px;
@@ -101,7 +101,7 @@
     transform: scale(1.1);
 }
 
-/* â”€â”€ Chat Window â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Chat Window ──────────────────────────────────────────── */
 .chatbot-window {
     position: fixed;
     bottom: 100px;
@@ -162,7 +162,7 @@
     50%      { opacity: 0.8; transform: translate(-50%, -50%) scale(1.05); }
 }
 
-/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Header ───────────────────────────────────────────────── */
 .chatbot-header {
     display: flex;
     justify-content: space-between;
@@ -246,7 +246,7 @@
     50% { opacity: 0.5; }
 }
 
-/* â”€â”€ Messages Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Messages Container ──────────────────────────────────── */
 .chatbot-messages {
     flex: 1;
     padding: 20px;
@@ -278,7 +278,7 @@
     background: rgba(95, 125, 205, 0.5);
 }
 
-/* â”€â”€ Message Bubbles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Message Bubbles ─────────────────────────────────────── */
 .message {
     max-width: 85%;
     padding: 12px 16px;
@@ -392,7 +392,7 @@
     letter-spacing: 0.02em;
 }
 
-/* â”€â”€ Options Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Options Container ───────────────────────────────────── */
 .chatbot-options-container {
     display: flex;
     flex-direction: column;
@@ -433,7 +433,7 @@
     background: linear-gradient(90deg, rgba(95, 125, 205, 0.8), transparent);
 }
 
-/* â”€â”€ Option Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Option Cards ─────────────────────────────────────────── */
 .chatbot-option {
     cursor: pointer;
     padding: 14px 16px;
@@ -500,7 +500,7 @@
     transform: translateX(3px);
 }
 
-/* â”€â”€ Input Area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Input Area ──────────────────────────────────────────── */
 .chatbot-input {
     display: flex;
     padding: 16px 20px;
@@ -588,7 +588,7 @@
     z-index: 1;
 }
 
-/* â”€â”€ Typing Indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Typing Indicator ─────────────────────────────────────── */
 .typing-indicator {
     display: flex;
     gap: 6px;
@@ -633,7 +633,7 @@
     }
 }
 
-/* â”€â”€ Premium Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Premium Banner ───────────────────────────────────────── */
 .chatbot-premium-banner {
     background: rgba(212, 175, 55, 0.06);
     border: 1px solid rgba(212, 175, 55, 0.22);
@@ -685,7 +685,7 @@
     border-bottom-color: rgba(95, 125, 205, 0.8);
 }
 
-/* â”€â”€ Responsive Design (Matching Home.css) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Responsive Design (Matching Home.css) ────────────────── */
 
 /* Large Tablets / Small Desktops */
 @media (max-width: 1200px) {

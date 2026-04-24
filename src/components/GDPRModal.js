@@ -5,7 +5,7 @@ const GDPRModal = ({ onAgree }) => {
     return (
         <div className="gdpr-backdrop">
             <div className="gdpr-modal">
-                <h2>ðŸ”’ GDPR Privacy Notice</h2>
+                <h2>🔒 GDPR Privacy Notice</h2>
                 <p>
                     AURA TERMINAL™ values your privacy. We collect and store your email,
                     chat messages, course progress, and usage patterns only for platform functionality.

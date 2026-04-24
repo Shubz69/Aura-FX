@@ -3,7 +3,7 @@ import '../styles/Leaderboard.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 
-// â”€â”€â”€ Deterministic avatar generator (no external deps) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Deterministic avatar generator (no external deps) ───────────────────────
 // Generates a unique SVG avatar from a username string.
 // Uses DiceBear "adventurer" style via their free CDN — no API key needed.
 // Falls back to a gradient+initial avatar if the CDN is unavailable.
@@ -102,7 +102,7 @@ const LeaderboardAvatar = ({ user, size = 42, podium = false }) => {
     );
 };
 
-// â”€â”€â”€ Real activity from API (last_seen + last XP) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Real activity from API (last_seen + last XP) ────────────────────────────
 const ONLINE_MS = 5 * 60 * 1000;
 const AWAY_MAX_MS = 24 * 60 * 60 * 1000;
 
@@ -140,14 +140,14 @@ function getPresenceFromUser(user, nowMs = Date.now()) {
     return { dot, label };
 }
 
-// â”€â”€â”€ Streak indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Streak indicator ─────────────────────────────────────────────────────────
 function getStreakDays(userId) {
     const h = hashCode(String(userId || 0) + 'streak');
     const streaks = [0, 0, 0, 1, 2, 3, 3, 5, 7, 7, 10, 14, 14, 21, 30];
     return streaks[h % streaks.length];
 }
 
-// â”€â”€â”€ Tiny XP sparkline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Tiny XP sparkline ────────────────────────────────────────────────────────
 function MiniSparkline({ userId, xp }) {
     const h = hashCode(String(userId || 0) + 'spark');
     const points = Array.from({ length: 7 }, (_, i) => {
@@ -189,20 +189,20 @@ function MiniSparkline({ userId, xp }) {
     );
 }
 
-// â”€â”€â”€ Clean username display (remove underscores, camelcase) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Clean username display (remove underscores, camelcase) ──────────────────
 function cleanUsername(raw) {
     if (!raw) return 'Trader';
-    // Remove underscores â†’ spaces â†’ trim â†’ recombine as display text
+    // Remove underscores → spaces → trim → recombine as display text
     return raw.replace(/_/g, '').replace(/([A-Z])/g, ' $1').trim() || raw;
 }
 
-// â”€â”€â”€ Country flags (deterministic per user) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const FLAGS = ['ðŸ‡ºðŸ‡¸','ðŸ‡¬ðŸ‡§','ðŸ‡¦ðŸ‡º','ðŸ‡¨ðŸ‡¦','ðŸ‡¸ðŸ‡¬','ðŸ‡©ðŸ‡ª','ðŸ‡¯ðŸ‡µ','ðŸ‡¿ðŸ‡¦','ðŸ‡³ðŸ‡¬','ðŸ‡§ðŸ‡·','ðŸ‡¦ðŸ‡ª','ðŸ‡«ðŸ‡·','ðŸ‡³ðŸ‡¿','ðŸ‡¸ðŸ‡ª','ðŸ‡¨ðŸ‡­'];
+// ─── Country flags (deterministic per user) ──────────────────────────────────
+const FLAGS = ['🇺🇸','🇬🇧','🇦🇺','🇨🇦','🇸🇬','🇩🇪','🇯🇵','🇿🇦','🇳🇬','🇧🇷','🇦🇪','🇫🇷','🇳🇿','🇸🇪','🇨🇭'];
 function getFlag(userId) {
     return FLAGS[hashCode(String(userId || 0) + 'flag') % FLAGS.length];
 }
 
-// â”€â”€â”€ Main Leaderboard Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main Leaderboard Component ───────────────────────────────────────────────
 
 const Leaderboard = () => {
     const containerRef = useRef(null);
@@ -292,26 +292,26 @@ const Leaderboard = () => {
     }, []);
 
     const getRankEmoji = (rank) => {
-        if (rank === 1) return 'ðŸ¥‡';
-        if (rank === 2) return 'ðŸ¥ˆ';
-        if (rank === 3) return 'ðŸ¥‰';
+        if (rank === 1) return '🥇';
+        if (rank === 2) return '🥈';
+        if (rank === 3) return '🥉';
         return `#${rank}`;
     };
 
     const getStrikeDisplay = (strikes) => {
         if (!strikes || strikes === 0) return null;
-        if (strikes >= 5) return <span className="strike-warning banned">ðŸš« BANNED</span>;
+        if (strikes >= 5) return <span className="strike-warning banned">🚫 BANNED</span>;
         if (strikes >= 3) return <span className="strike-warning danger">âš ï¸ {strikes}/5</span>;
         return <span className="strike-warning">âš ï¸ {strikes}/5</span>;
     };
 
     const getLevelBadge = (level) => {
         const lv = Math.min(100, Math.max(1, parseInt(level, 10) || 1));
-        if (lv >= 100) return { class: 'badge-legend', text: 'ðŸ‘‘ GOD' };
-        if (lv >= 90) return { class: 'badge-elite', text: 'âš¡ IMMORTAL' };
-        if (lv >= 80) return { class: 'badge-pro', text: 'ðŸ”¥ MYTHICAL' };
-        if (lv >= 70) return { class: 'badge-member', text: 'ðŸ† LEGEND' };
-        return { class: 'badge-rookie', text: 'ðŸ“ˆ RISING' };
+        if (lv >= 100) return { class: 'badge-legend', text: '👑 GOD' };
+        if (lv >= 90) return { class: 'badge-elite', text: '⚡ IMMORTAL' };
+        if (lv >= 80) return { class: 'badge-pro', text: '🔥 MYTHICAL' };
+        if (lv >= 70) return { class: 'badge-member', text: '🏆 LEGEND' };
+        return { class: 'badge-rookie', text: '📈 RISING' };
     };
 
     const getXpLabel = () => {
@@ -332,7 +332,7 @@ const Leaderboard = () => {
             : `+${val.toLocaleString()} XP`;
     };
 
-    // â”€â”€ Podium (Top 3) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Podium (Top 3) ────────────────────────────────────────────────────────
     const Top3Podium = ({ top3 }) => {
         const hasData = top3 && top3.length > 0 && top3[0]?.username;
 
@@ -340,7 +340,7 @@ const Leaderboard = () => {
             return (
                 <div className="top3-podium">
                     <div className="podium-empty">
-                        <div className="empty-icon">ðŸ†</div>
+                        <div className="empty-icon">🏆</div>
                         <div className="empty-text">No participants yet</div>
                         <div className="empty-subtext">Be the first to earn XP!</div>
                     </div>
@@ -377,15 +377,15 @@ const Leaderboard = () => {
                         <LeaderboardAvatar user={user} size={64} podium />
                         {/* Online dot */}
                         <span className={`status-dot status-dot--${activity.dot} podium-dot`} />
-                        {place === 'first' && <div className="crown">ðŸ‘‘</div>}
+                        {place === 'first' && <div className="crown">👑</div>}
                     </div>
                     <div className="podium-info">
                         <div className="podium-rank">{emoji}</div>
-                        <div className="podium-trophy-above-name">ðŸ†</div>
+                        <div className="podium-trophy-above-name">🏆</div>
                         <div className="podium-username">
                             <span className="podium-flag">{flag}</span>
                             {displayName}
-                            {streak >= 7 && <span className="streak-fire" title={`${streak} day streak`}>ðŸ”¥</span>}
+                            {streak >= 7 && <span className="streak-fire" title={`${streak} day streak`}>🔥</span>}
                         </div>
                         <div className="podium-xp">{formatXp(user)}</div>
                         <div className="podium-xp-label">{getXpLabel()}</div>
@@ -399,15 +399,15 @@ const Leaderboard = () => {
         return (
             <div className="top3-podium">
                 <div className="podium-container">
-                    {renderPodiumPlace(top3[1], 'second', 'ðŸ¥ˆ')}
-                    {renderPodiumPlace(top3[0], 'first',  'ðŸ¥‡')}
-                    {renderPodiumPlace(top3[2], 'third',  'ðŸ¥‰')}
+                    {renderPodiumPlace(top3[1], 'second', '🥈')}
+                    {renderPodiumPlace(top3[0], 'first',  '🥇')}
+                    {renderPodiumPlace(top3[2], 'third',  '🥉')}
                 </div>
             </div>
         );
     };
 
-    // â”€â”€ Top 10 List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Top 10 List ───────────────────────────────────────────────────────────
     const Top10List = ({ data }) => {
         const hasData = data && data.length > 0;
         const maxXp = hasData ? Math.max(...data.map(u => u.xp || 0)) : 1;
@@ -416,7 +416,7 @@ const Leaderboard = () => {
             <div className="top10-list">
                 <div className="section-title-row">
                     <h3 className="section-title">
-                        ðŸ† Top 10 Leaderboard
+                        🏆 Top 10 Leaderboard
                         <span className="timeframe-label">
                             {selectedTimeframe === 'all-time' ? ' · All Time' : ` · ${getXpLabel()}`}
                         </span>
@@ -443,7 +443,7 @@ const Leaderboard = () => {
                     {!hasData ? (
                         <div className="leaderboard-row empty-row">
                             <div className="empty-table-message">
-                                <span>ðŸ“Š</span>
+                                <span>📊</span>
                                 <span>No participants yet. Start earning XP!</span>
                             </div>
                         </div>
@@ -476,12 +476,12 @@ const Leaderboard = () => {
                                         </div>
                                         <div className="user-info">
                                             <div className="username">
-                                                {index < 3 && <span className="table-trophy">ðŸ†</span>}
+                                                {index < 3 && <span className="table-trophy">🏆</span>}
                                                 <span className="username-flag">{flag}</span>
                                                 {displayName}
                                                 {streak >= 7 && (
                                                     <span className="streak-chip" title={`${streak}d streak`}>
-                                                        ðŸ”¥ {streak}d
+                                                        🔥 {streak}d
                                                     </span>
                                                 )}
                                             </div>
@@ -584,18 +584,18 @@ const Leaderboard = () => {
 
                     {/* XP Info */}
                     <div className="xp-info-section">
-                        <h3>ðŸŽ¯ How XP Works</h3>
+                        <h3>🎯 How XP Works</h3>
                         <div className="xp-rules">
                             {[
-                                ['ðŸ’¬', '~0.12 XP per message, capped per message (cooldown applies)'],
-                                ['ðŸ“Ž', 'Extra XP for attachments (still low vs journals)'],
-                                ['ðŸ”¥', '+3.5 XP daily login; +1000 XP every 7-day streak; +5000 XP every 30-day streak'],
-                                ['ðŸ“š', 'Up to 5 XP for course completion'],
-                                ['ðŸ“', 'Up to 5 XP for journal tasks (anti-abuse gated)'],
-                                ['ðŸŽ', 'Up to 5 XP for verified help to other users'],
-                                ['âœ…', 'Level 100 at 1,000,000 total XP (competitive curve)'],
+                                ['💬', '~0.12 XP per message, capped per message (cooldown applies)'],
+                                ['📎', 'Extra XP for attachments (still low vs journals)'],
+                                ['🔥', '+3.5 XP daily login; +1000 XP every 7-day streak; +5000 XP every 30-day streak'],
+                                ['📚', 'Up to 5 XP for course completion'],
+                                ['📝', 'Up to 5 XP for journal tasks (anti-abuse gated)'],
+                                ['🎁', 'Up to 5 XP for verified help to other users'],
+                                ['✅', 'Level 100 at 1,000,000 total XP (competitive curve)'],
                                 ['âš ï¸', 'Up to 50 XP penalties for rule violations', true],
-                                ['ðŸš«', '5 strikes = 1 month ban', true],
+                                ['🚫', '5 strikes = 1 month ban', true],
                             ].map(([icon, text, neg]) => (
                                 <div key={text} className={`xp-rule${neg ? ' negative' : ''}`}>
                                     <span className="rule-icon">{icon}</span>
@@ -604,13 +604,13 @@ const Leaderboard = () => {
                             ))}
                         </div>
                         <div className="xp-system-info">
-                            <h4>ðŸ“Š XP System Details</h4>
+                            <h4>📊 XP System Details</h4>
                             <ul>
                                 <li><strong>Level Cap:</strong> 100 (AURA TERMINAL™ God)</li>
                                 <li><strong>Scaling:</strong> 1M XP to max level; chat stays low; streak milestones reward consistency</li>
                                 <li><strong>Anti-Spam:</strong> Cooldowns and moderation-gated XP events</li>
                                 <li><strong>Rank Titles:</strong> Unique premium rank title for every level</li>
-                                <li><strong>Tiers:</strong> Beginner â†’ Intermediate â†’ Advanced â†’ Professional â†’ Elite â†’ Master â†’ Legend â†’ Mythical â†’ Immortal â†’ GOD</li>
+                                <li><strong>Tiers:</strong> Beginner → Intermediate → Advanced → Professional → Elite → Master → Legend → Mythical → Immortal → GOD</li>
                             </ul>
                         </div>
                     </div>

@@ -114,7 +114,7 @@ const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
     <div className="market-modal-overlay" onClick={onClose}>
       <div className="market-modal" onClick={e => e.stopPropagation()}>
 
-        {/* â”€â”€ Header â”€â”€ */}
+        {/* ── Header ── */}
         <div className="market-modal-header">
           <div className="market-modal-header-left">
             <h2>All Markets</h2>
@@ -131,7 +131,7 @@ const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
           </div>
         </div>
 
-        {/* â”€â”€ Scrollable content â”€â”€ */}
+        {/* ── Scrollable content ── */}
         <div className="market-modal-content">
           {Object.entries(groupedPrices)
             .sort((a, b) => a[1].order - b[1].order)
@@ -270,7 +270,7 @@ function MarketTicker({
             refresh();
           }}
         >
-          View All Markets â†’
+          View All Markets →
         </button>
       )}
 

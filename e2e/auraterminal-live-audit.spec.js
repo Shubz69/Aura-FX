@@ -76,11 +76,11 @@ function attachRuntimeMonitors(page, bucket) {
   });
 }
 
-test.describe('Aura Terminal™ â€” live phased audit', () => {
+test.describe('Aura Terminal™ — live phased audit', () => {
   test.describe.configure({ mode: 'serial' });
   test.setTimeout(720_000);
 
-  test('full audit (public â†’ routes â†’ interactions â†’ report)', async ({ page }) => {
+  test('full audit (public → routes → interactions → report)', async ({ page }) => {
     const runtimeLog = [];
     attachRuntimeMonitors(page, runtimeLog);
 
@@ -145,7 +145,7 @@ test.describe('Aura Terminal™ â€” live phased audit', () => {
       if (opts.scroll) await safeScroll(page);
     }
 
-    // â”€â”€â”€ PHASE 1: public / home â”€â”€â”€
+    // ─── PHASE 1: public / home ───
     finding('P1', 'info', 'Audit start', { url: BASE, evidence: `BASE=${BASE}` });
     await visit(BASE, { scroll: true });
 
@@ -187,7 +187,7 @@ test.describe('Aura Terminal™ â€” live phased audit', () => {
       if (!visited.has(u)) await visit(u, { scroll: false });
     }
 
-    // Contact page explicit (force reload â€” may have been visited during link crawl)
+    // Contact page explicit (force reload — may have been visited during link crawl)
     await visit(`${origin}/contact`, { scroll: true, force: true });
     const contactHasForm = await page.locator('form').count().catch(() => 0);
     finding('P1', contactHasForm ? 'info' : 'medium', 'Contact page form presence', {
@@ -195,7 +195,7 @@ test.describe('Aura Terminal™ â€” live phased audit', () => {
       actual: contactHasForm ? 'At least one <form> found' : 'No <form> detected (may still use JS submit)',
     });
 
-    // â”€â”€â”€ PHASE 2: direct routes â”€â”€â”€
+    // ─── PHASE 2: direct routes ───
     const RISK_PATHS = [
       '/friends',
       '/contact-us',
@@ -244,7 +244,7 @@ test.describe('Aura Terminal™ â€” live phased audit', () => {
       await page.waitForTimeout(120);
     }
 
-    // â”€â”€â”€ PHASE 3: auth surfaces (no credentials unless env) â”€â”€â”€
+    // ─── PHASE 3: auth surfaces (no credentials unless env) ───
     await visit(`${origin}/login`, { scroll: true });
     const hasPassword = (await page.locator('input[type="password"]').count()) > 0;
     finding('P3', 'info', 'Login page password field', {
@@ -274,12 +274,12 @@ test.describe('Aura Terminal™ â€” live phased audit', () => {
         {
           steps: ['Set AUDIT_EMAIL and AUDIT_PASSWORD to enable automated login continuation'],
           expected: 'Deep authenticated audit',
-          actual: 'Skipped â€” no AUDIT_EMAIL / AUDIT_PASSWORD in environment',
+          actual: 'Skipped — no AUDIT_EMAIL / AUDIT_PASSWORD in environment',
         },
       );
     }
 
-    // VerifyMFA /contact-us vs /contact (codebase-known issue â€” verify live)
+    // VerifyMFA /contact-us vs /contact (codebase-known issue — verify live)
     await visit(`${origin}/contact-us`, { scroll: false });
     const contactUsNotFound =
       (await page.getByText(/not found|404/i).count().catch(() => 0)) > 0 ||
@@ -293,7 +293,7 @@ test.describe('Aura Terminal™ â€” live phased audit', () => {
       });
     }
 
-    // â”€â”€â”€ PHASE 4 & 5: shallow interactive sweep on key public pages â”€â”€â”€
+    // ─── PHASE 4 & 5: shallow interactive sweep on key public pages ───
     const sweepUrls = [BASE, `${origin}/explore`, `${origin}/courses`, `${origin}/contact`, `${origin}/why-glitch`].filter(
       (v, i, a) => a.indexOf(v) === i,
     );
@@ -345,7 +345,7 @@ test.describe('Aura Terminal™ â€” live phased audit', () => {
       finding('P5', 'info', `Button sample on ${sweep}`, { evidence: `${btnOk} buttons clicked without hard failure` });
     }
 
-    // â”€â”€â”€ PHASE 6: dedupe technical noise â”€â”€â”€
+    // ─── PHASE 6: dedupe technical noise ───
     const uniqFailedResp = [...new Map(failedResponses.map((x) => [`${x.status}:${x.url}`, x])).values()];
     const uniqFailedReq = [...new Map(failedRequests.map((x) => [`${x.error}:${x.url}`, x])).values()];
     const uniqRuntime = [...new Set(runtimeLog)];
@@ -367,21 +367,21 @@ test.describe('Aura Terminal™ â€” live phased audit', () => {
       finding('P6', 'low', 'Console / page JS error', { evidence: line });
     }
 
-    // â”€â”€â”€ PHASE 7: claims vs quick checks â”€â”€â”€
+    // ─── PHASE 7: claims vs quick checks ───
     for (const claim of heroClaims) {
       finding('P7', 'info', 'Homepage heading (marketing claim)', { evidence: claim });
     }
     finding(
       'P7',
       'info',
-      'Trader-heavy areas require auth â€” not fully verified without login',
+      'Trader-heavy areas require auth — not fully verified without login',
       {
         expected: 'Charts, journal, reports, MT hub verified end-to-end',
         actual: email && password ? 'Partial (logged-in path attempted)' : 'Could not verify (no credentials)',
       },
     );
 
-    // â”€â”€â”€ Write artifacts â”€â”€â”€
+    // ─── Write artifacts ───
     const outDir = path.join(process.cwd(), 'e2e', 'reports');
     fs.mkdirSync(outDir, { recursive: true });
     const data = {
@@ -416,7 +416,7 @@ function buildMarkdownReport(data, heroClaims) {
   const f = /** @type {any[]} */ (data.findings || []);
   const bySev = (s) => f.filter((x) => x.severity === s);
 
-  lines.push(`# Aura Terminal™ â€” Playwright live audit report`);
+  lines.push(`# Aura Terminal™ — Playwright live audit report`);
   lines.push('');
   lines.push(`- **Generated:** ${data.generatedAt}`);
   lines.push(`- **Base URL:** ${data.base}`);
@@ -433,7 +433,7 @@ function buildMarkdownReport(data, heroClaims) {
   lines.push(`## 2. Working features (observed)`);
   lines.push('');
   (data.pageNotes || []).slice(0, 35).forEach((p) => {
-    lines.push(`- **${p.httpStatus}** ${p.finalUrl} â€” _${(p.title || '').slice(0, 80)}_ (${p.ms}ms)`);
+    lines.push(`- **${p.httpStatus}** ${p.finalUrl} — _${(p.title || '').slice(0, 80)}_ (${p.ms}ms)`);
   });
   lines.push('');
   lines.push(`## 3. Broken features (findings: high/critical)`);
@@ -493,7 +493,7 @@ function buildMarkdownReport(data, heroClaims) {
   bySev('critical')
     .concat(bySev('high'))
     .slice(0, 15)
-    .forEach((x) => lines.push(`1. **${x.title}** (${x.severity}) â€” ${x.url || x.evidence || ''}`));
+    .forEach((x) => lines.push(`1. **${x.title}** (${x.severity}) — ${x.url || x.evidence || ''}`));
   lines.push('');
   lines.push(`## 13. Needs manual human verification`);
   lines.push('');
@@ -514,7 +514,7 @@ function formatFindings(arr) {
     if (x.url) parts.push(`  - URL: \`${x.url}\``);
     if (x.actual) parts.push(`  - Actual: ${x.actual}`);
     if (x.expected) parts.push(`  - Expected: ${x.expected}`);
-    if (x.steps?.length) parts.push(`  - Steps: ${x.steps.join(' â†’ ')}`);
+    if (x.steps?.length) parts.push(`  - Steps: ${x.steps.join(' → ')}`);
     if (x.evidence) parts.push(`  - Evidence: ${String(x.evidence).slice(0, 400)}`);
     return parts.join('\n');
   });

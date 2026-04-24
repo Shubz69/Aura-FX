@@ -72,7 +72,7 @@
       "id": "MSG-A2U",
       "severity": "P1",
       "url": "https://www.auraterminal.ai/messages",
-      "feature": "Messaging admin â†’ user support-thread delivery",
+      "feature": "Messaging admin → user support-thread delivery",
       "description": "Admin-sent message not visible on user page within bounded timeout",
       "likelyRootCause": "Realtime/polling latency or thread mismatch",
       "evidence": "locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.admin-inbox-form-row input[type=\"text\"]')\u001b[22m\n",
@@ -82,7 +82,7 @@
       "id": "MSG-U2A",
       "severity": "P1",
       "url": "https://www.auraterminal.ai/admin/inbox",
-      "feature": "Messaging user â†’ admin support-thread delivery",
+      "feature": "Messaging user → admin support-thread delivery",
       "description": "User-sent message not visible in admin inbox within bounded timeout",
       "likelyRootCause": "Realtime/polling latency or selected-thread mismatch",
       "evidence": "locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.message-input')\u001b[22m\n",
@@ -95,7 +95,7 @@
       "feature": "Profile",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -105,7 +105,7 @@
       "feature": "Subscription",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -115,7 +115,7 @@
       "feature": "User messages",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -125,7 +125,7 @@
       "feature": "Reports DNA",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -135,7 +135,7 @@
       "feature": "Reports live hub",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -145,7 +145,7 @@
       "feature": "Manual metrics dashboard",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -155,7 +155,7 @@
       "feature": "Manual metrics processing",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -165,7 +165,7 @@
       "feature": "Trader deck hub",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -175,7 +175,7 @@
       "feature": "Trader deck trade validator overview",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -185,7 +185,7 @@
       "feature": "Aura dashboard overview",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -195,7 +195,7 @@
       "feature": "Aura dashboard performance tab",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -205,7 +205,7 @@
       "feature": "Backtesting hub",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -215,7 +215,7 @@
       "feature": "Backtesting sessions",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -225,7 +225,7 @@
       "feature": "Surveillance",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -235,7 +235,7 @@
       "feature": "Premium AI landing",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -245,7 +245,7 @@
       "feature": "Community",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":319,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP Loadingâ€¦ AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems operational\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":true}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":319,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP Loading… AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems operational\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":true}}",
       "knownOrNew": "new"
     },
     {
@@ -255,7 +255,7 @@
       "feature": "Leaderboard",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -265,7 +265,7 @@
       "feature": "Live metrics",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -275,7 +275,7 @@
       "feature": "Journal",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -285,7 +285,7 @@
       "feature": "Notifications dropdown",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -295,7 +295,7 @@
       "feature": "Admin inbox",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -305,7 +305,7 @@
       "feature": "Admin inbox deep link",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -315,7 +315,7 @@
       "feature": "Admin panel",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -325,7 +325,7 @@
       "feature": "Admin users list",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     },
     {
@@ -335,7 +335,7 @@
       "feature": "Settings (admin)",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new"
     }
   ],
@@ -343,7 +343,7 @@
   "needsManual": [
     {
       "id": "PUB-HOME-MANUAL",
-      "text": "Marketing home: thin or loading-heavy shell â€” confirm gating vs defect (https://www.auraterminal.ai/)"
+      "text": "Marketing home: thin or loading-heavy shell — confirm gating vs defect (https://www.auraterminal.ai/)"
     }
   ],
   "messaging": {
@@ -370,7 +370,7 @@
       "id": "MSG-A2U",
       "severity": "P1",
       "url": "https://www.auraterminal.ai/messages",
-      "feature": "Messaging admin â†’ user support-thread delivery",
+      "feature": "Messaging admin → user support-thread delivery",
       "description": "Admin-sent message not visible on user page within bounded timeout",
       "likelyRootCause": "Realtime/polling latency or thread mismatch",
       "evidence": "locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.admin-inbox-form-row input[type=\"text\"]')\u001b[22m\n",
@@ -381,7 +381,7 @@
       "id": "MSG-U2A",
       "severity": "P1",
       "url": "https://www.auraterminal.ai/admin/inbox",
-      "feature": "Messaging user â†’ admin support-thread delivery",
+      "feature": "Messaging user → admin support-thread delivery",
       "description": "User-sent message not visible in admin inbox within bounded timeout",
       "likelyRootCause": "Realtime/polling latency or selected-thread mismatch",
       "evidence": "locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.message-input')\u001b[22m\n",
@@ -395,7 +395,7 @@
       "feature": "Profile",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -406,7 +406,7 @@
       "feature": "Subscription",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -417,7 +417,7 @@
       "feature": "User messages",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -428,7 +428,7 @@
       "feature": "Reports DNA",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -439,7 +439,7 @@
       "feature": "Reports live hub",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -450,7 +450,7 @@
       "feature": "Manual metrics dashboard",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -461,7 +461,7 @@
       "feature": "Manual metrics processing",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -472,7 +472,7 @@
       "feature": "Trader deck hub",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -483,7 +483,7 @@
       "feature": "Trader deck trade validator overview",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -494,7 +494,7 @@
       "feature": "Aura dashboard overview",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -505,7 +505,7 @@
       "feature": "Aura dashboard performance tab",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -516,7 +516,7 @@
       "feature": "Backtesting hub",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -527,7 +527,7 @@
       "feature": "Backtesting sessions",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -538,7 +538,7 @@
       "feature": "Surveillance",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -549,7 +549,7 @@
       "feature": "Premium AI landing",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -560,7 +560,7 @@
       "feature": "Community",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":319,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP Loadingâ€¦ AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems operational\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":true}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":319,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP Loading… AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems operational\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":true}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -571,7 +571,7 @@
       "feature": "Leaderboard",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -582,7 +582,7 @@
       "feature": "Live metrics",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -593,7 +593,7 @@
       "feature": "Journal",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -604,7 +604,7 @@
       "feature": "Notifications dropdown",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -615,7 +615,7 @@
       "feature": "Admin inbox",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -626,7 +626,7 @@
       "feature": "Admin inbox deep link",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -637,7 +637,7 @@
       "feature": "Admin panel",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -648,7 +648,7 @@
       "feature": "Admin users list",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     },
@@ -659,7 +659,7 @@
       "feature": "Settings (admin)",
       "description": "Redirected or rendered login while expecting authenticated shell",
       "likelyRootCause": "Expired Playwright storage state or guard mis-route",
-      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service Â© 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
+      "evidence": "{\"http\":200,\"digest\":{\"len\":427,\"sample\":\"AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP SIGN IN ACCESS YOUR TRADING ACCOUNT EMAIL OR USERNAME PASSWORD LOGIN FORGOT PASSWORD? Don't have an account? SIGN UP AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURCES Plans Affiliation Privacy Policy Terms of Service © 2025 AURA TERMINAL™. All rights reserved. All systems oper\",\"looksLogin\":true,\"looksError\":false,\"stuckLoading\":false}}",
       "knownOrNew": "new",
       "category": "data"
     }
@@ -671,7 +671,7 @@
       "url": "https://www.auraterminal.ai/",
       "description": "Very little visible text or persistent loading wording",
       "likelyRootCause": "Slow data, gated empty state, or SPA skeleton",
-      "evidence": "AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP Loadingâ€¦ AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURC",
+      "evidence": "AURA TERMINAL™ HOME C & S EXPLORE WHY AURA TERMINAL™ CONTACT US SIGN IN SIGN UP Loading… AURA TERMINAL™ Trade smarter with AI-powered insights. PLATFORM Home C&S Explore Why Aura Terminal™ Contact RESOURC",
       "knownOrNew": "new"
     }
   ],

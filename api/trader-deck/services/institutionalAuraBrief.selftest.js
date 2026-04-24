@@ -106,7 +106,7 @@ function run() {
   const vw = weeklyWfaPdfBrief.validateWeeklyWfaPayload(wk, 'aura_institutional_weekly_forex');
   assert.strictEqual(vw.ok, true, `weekly WFA QC: ${vw.reasons}`);
 
-  const weekTitle = formatWeeklyFundamentalTitle('2nd â€“ 6th March 2026');
+  const weekTitle = formatWeeklyFundamentalTitle('2nd – 6th March 2026');
   assert.ok(/^WEEKLY FUNDAMENTAL ANALYSIS\s+[\u2013-]\s*\(/i.test(weekTitle), 'weekly title shape');
 
   const dailyTitle = formatDailyBriefTitle(new Date('2026-03-30T12:00:00Z'), 'Europe/London');
@@ -131,7 +131,7 @@ function run() {
     titleLine: weekTitle,
     authorLine: 'By AURA TERMINAL™',
     metaDateYmd: '2026-03-30',
-    weekRangeLabel: '2nd â€“ 6th March 2026',
+    weekRangeLabel: '2nd – 6th March 2026',
     briefKind: 'aura_institutional_weekly_forex',
     parsedIn: wk,
   });

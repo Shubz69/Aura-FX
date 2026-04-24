@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
       let fixedCount = 0;
       const fixedUsers = [];
 
-      // Pro-tier plans â†’ role pro
+      // Pro-tier plans → role pro
       const [proUsers] = await db.execute(
         `SELECT id, email, role, subscription_status, subscription_plan 
          FROM users 
@@ -80,7 +80,7 @@ module.exports = async (req, res) => {
         fixedUsers.push({ email: user.email, oldRole: user.role, newRole: 'pro' });
       }
 
-      // Elite-tier plans â†’ role elite
+      // Elite-tier plans → role elite
       const [eliteUsers] = await db.execute(
         `SELECT id, email, role, subscription_status, subscription_plan 
          FROM users 
@@ -95,7 +95,7 @@ module.exports = async (req, res) => {
         fixedUsers.push({ email: user.email, oldRole: user.role, newRole: 'elite' });
       }
 
-      // Inactive subscriptions â†’ access tier
+      // Inactive subscriptions → access tier
       const [inactiveUsers] = await db.execute(
         `SELECT id, email, role, subscription_status 
          FROM users 

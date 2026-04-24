@@ -204,8 +204,8 @@ function getStaticResponse(msg, authenticated) {
   // Greetings
   if (msg.includes('hello') || msg.includes('hi ') || msg.includes('hey') || msg.match(/^hi$/) || msg.match(/^hey$/)) {
     return authenticated 
-      ? `Hello! ðŸ‘‹ I'm here to help with questions about AURA TERMINAL™. What would you like to know?`
-      : `Hello! Welcome to AURA TERMINAL™! ðŸ‘‹ I can answer questions about our platform. <a href="/register" style="color: #1E90FF; text-decoration: underline;">Sign up</a> or <a href="/login" style="color: #1E90FF; text-decoration: underline;">log in</a> to access full features!`;
+      ? `Hello! 👋 I'm here to help with questions about AURA TERMINAL™. What would you like to know?`
+      : `Hello! Welcome to AURA TERMINAL™! 👋 I can answer questions about our platform. <a href="/register" style="color: #1E90FF; text-decoration: underline;">Sign up</a> or <a href="/login" style="color: #1E90FF; text-decoration: underline;">log in</a> to access full features!`;
   }
   
   // Platform info
@@ -215,7 +215,7 @@ function getStaticResponse(msg, authenticated) {
   
   // Trading education (general)
   if (msg.includes('trade') || msg.includes('trading') || msg.includes('forex') || msg.includes('crypto') || msg.includes('stock')) {
-    return 'AURA TERMINAL™ specializes in trading education. We offer courses in Forex, Stocks, Crypto, and Options trading. Visit our <a href="/courses" style="color: #1E90FF; text-decoration: underline;">Courses page</a> to learn more.\n\nðŸ’¡ For advanced trading analysis, market insights, and personalized strategies, <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>.';
+    return 'AURA TERMINAL™ specializes in trading education. We offer courses in Forex, Stocks, Crypto, and Options trading. Visit our <a href="/courses" style="color: #1E90FF; text-decoration: underline;">Courses page</a> to learn more.\n\n💡 For advanced trading analysis, market insights, and personalized strategies, <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>.';
   }
   
   // Courses
@@ -225,7 +225,7 @@ function getStaticResponse(msg, authenticated) {
   
   // Pricing
   if (msg.includes('price') || msg.includes('cost') || msg.includes('subscription')) {
-    return 'We offer Aura Terminal™ subscription at Â£99/month and A7FX Elite at Â£250/month. Visit our <a href="/subscription" style="color: #1E90FF; text-decoration: underline;">Subscription page</a> for details.';
+    return 'We offer Aura Terminal™ subscription at £99/month and A7FX Elite at £250/month. Visit our <a href="/subscription" style="color: #1E90FF; text-decoration: underline;">Subscription page</a> for details.';
   }
   
   // Sign up/Login

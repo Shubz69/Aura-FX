@@ -639,7 +639,7 @@ const Subscription = () => {
                 <div className="plan-benefits">
                     <ul>
                         {plan.features.map((feature, index) => (
-                            <li key={index}>âœ… {feature}</li>
+                            <li key={index}>✅ {feature}</li>
                         ))}
                     </ul>
                 </div>
@@ -669,7 +669,7 @@ const Subscription = () => {
             <CosmicBackground />
             <div className="subscription-card">
                 <div className="subscription-header">
-                    <h1>ðŸ”’ PRO COMMUNITY ACCESS</h1>
+                    <h1>🔒 PRO COMMUNITY ACCESS</h1>
                     <p className="subscription-subtitle">Join 1,200+ Elite Traders and Unlock Your Path to Financial Freedom</p>
                     <p className="subscription-reports-note" style={{
                         marginTop: '16px',
@@ -788,7 +788,7 @@ const Subscription = () => {
                 
                 {subscriptionActivated && !error && (
                     <div className="subscription-success">
-                        <h2>âœ… Payment Confirmed!</h2>
+                        <h2>✅ Payment Confirmed!</h2>
                         <p>Your subscription has been activated.</p>
                         <p className="redirect-info">
                             Redirecting to community page in <span className="countdown-number">{countdown}</span> seconds...

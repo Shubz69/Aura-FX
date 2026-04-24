@@ -4,7 +4,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* â”€â”€ Variables: journal UI/UX (match Journal / --aa-*) â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Variables: journal UI/UX (match Journal / --aa-*) ──────── */
 .aura-overview-page {
   --ov-bg:           var(--aa-bg, #010008);
   --ov-card:         var(--aa-bg-card, rgba(255, 255, 255, 0.025));
@@ -24,7 +24,7 @@
   --ov-ease:         cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* â”€â”€ Page shell — NO side padding so content fills width â”€â”€â”€ */
+/* ── Page shell — NO side padding so content fills width ─── */
 .aura-overview-page {
   width: 100%;
   min-height: 100%;
@@ -34,7 +34,7 @@
   box-sizing: border-box;
 }
 
-/* â”€â”€ Entry animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Entry animations ─────────────────────────────────────── */
 .aura-overview-from-transition {
   animation: aura-overview-enter 0.5s var(--ov-ease) forwards;
 }
@@ -71,7 +71,7 @@
   .aura-overview-from-transition .aura-card { animation: none; }
 }
 
-/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Header ───────────────────────────────────────────────── */
 .aura-overview-header {
   margin-bottom: 24px;
   padding-bottom: 20px;
@@ -109,7 +109,7 @@
   text-transform: uppercase;
 }
 
-/* â”€â”€ Reference: Your trading performance at a glance (2x4 KPI grid) â”€â”€ */
+/* ── Reference: Your trading performance at a glance (2x4 KPI grid) ── */
 .aura-overview-muted {
   color: var(--ov-muted);
   font-size: 0.95rem;
@@ -176,7 +176,7 @@
   color: var(--ov-red);
 }
 
-/* â”€â”€ Monthly total + calendar (reference style) â”€â”€ */
+/* ── Monthly total + calendar (reference style) ── */
 .aura-overview-monthly {
   background: var(--ov-card);
   border: 1px solid var(--ov-border);
@@ -190,7 +190,7 @@
   border-color: var(--ov-border-h);
 }
 
-/* â”€â”€ Calendar time range toolbar (1D … Custom) — matches TradingView-style toggles â”€â”€ */
+/* ── Calendar time range toolbar (1D … Custom) — matches TradingView-style toggles ── */
 .aura-overview-cal-range-bar {
   display: flex;
   flex-wrap: wrap;
@@ -551,7 +551,7 @@
   }
 }
 
-/* â”€â”€ Grid — full width, no horizontal overflow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Grid — full width, no horizontal overflow ───────────── */
 .aura-overview-grid {
   display: grid;
   grid-template-columns: 1fr 1.5fr 1fr;
@@ -576,7 +576,7 @@
   .aura-overview-grid { grid-template-columns: 1fr; }
 }
 
-/* â”€â”€ Card base — luxury glass â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Card base — luxury glass ─────────────────────────────── */
 .aura-card {
   background: var(--ov-card);
   border: 1px solid var(--ov-border);
@@ -631,7 +631,7 @@
 .aura-card:hover::before { opacity: 1; }
 .aura-card:hover::after  { opacity: 1; }
 
-/* â”€â”€ Card title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Card title ───────────────────────────────────────────── */
 .aura-card-title {
   font-size: 0.72rem;
   font-weight: 600;
@@ -684,7 +684,7 @@
   border-color: rgba(234, 169, 96,0.4);
 }
 
-/* â”€â”€ Summary card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Summary card ─────────────────────────────────────────── */
 .aura-summary-list {
   display: flex;
   flex-direction: column;
@@ -753,7 +753,7 @@
   letter-spacing: 0.04em;
 }
 
-/* â”€â”€ Calendar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Calendar ─────────────────────────────────────────────── */
 .aura-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -808,7 +808,7 @@
   z-index: 1;
 }
 
-/* â”€â”€ Key Stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Key Stats ────────────────────────────────────────────── */
 .aura-key-stats-list {
   display: flex;
   flex-direction: column;
@@ -877,7 +877,7 @@
   color: #f8c37d;
 }
 
-/* â”€â”€ Chart placeholders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Chart placeholders ───────────────────────────────────── */
 .aura-chart-placeholder {
   position: relative;
   height: 160px;
@@ -935,7 +935,7 @@
   z-index: 1;
 }
 
-/* â”€â”€ Sessions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Sessions ─────────────────────────────────────────────── */
 .aura-sessions-list {
   display: flex;
   flex-direction: column;
@@ -988,7 +988,7 @@
   z-index: 1;
 }
 
-/* â”€â”€ Donut â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Donut ────────────────────────────────────────────────── */
 .aura-donut-wrap {
   position: relative;
   width: 120px;
@@ -1082,7 +1082,7 @@
   letter-spacing: 0.06em;
 }
 
-/* â”€â”€ Bar chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Bar chart ────────────────────────────────────────────── */
 .aura-bar-chart {
   display: flex;
   align-items: flex-end;
@@ -1117,7 +1117,7 @@
   z-index: 1;
 }
 
-/* â”€â”€ Streaks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Streaks ──────────────────────────────────────────────── */
 .aura-streaks-list {
   position: relative;
   z-index: 1;
@@ -1142,7 +1142,7 @@
 
 .aura-streaks-list .positive { color: var(--ov-green); font-weight: 600; }
 
-/* â”€â”€ Trade log — full width â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Trade log — full width ───────────────────────────────── */
 .aura-trade-log-card {
   width: 100%;
   box-sizing: border-box;
@@ -1218,7 +1218,7 @@
    OV2 — Image 2 Redesign Styles
    ============================================================ */
 
-/* â”€â”€ Page shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Page shell ───────────────────────────────────────────── */
 .ov2-page {
   width: 100%;
   min-height: 100%;
@@ -1251,7 +1251,7 @@
 
 @keyframes ov2-spin { to { transform: rotate(360deg); } }
 
-/* â”€â”€ Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Grid ─────────────────────────────────────────────────── */
 .ov2-grid {
   display: grid;
   grid-template-columns: 220px 1fr 240px;
@@ -1280,7 +1280,7 @@
   .ov2-col-right { grid-column: 1; display: flex; flex-direction: column; }
 }
 
-/* â”€â”€ Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Card ─────────────────────────────────────────────────── */
 .ov2-card {
   background: rgba(255,255,255,0.025);
   border: 1px solid rgba(255,255,255,0.08);
@@ -1349,7 +1349,7 @@
   letter-spacing: 0.06em;
 }
 
-/* â”€â”€ View / filter buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── View / filter buttons ────────────────────────────────── */
 .ov2-view-btn, .ov2-filter-btn {
   padding: 4px 10px;
   font-size: 0.68rem;
@@ -1376,7 +1376,7 @@
   box-shadow: 0 0 10px rgba(234, 169, 96,0.2);
 }
 
-/* â”€â”€ Overview / equity stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Overview / equity stats ─────────────────────────────── */
 .ov2-equity-row {
   display: flex;
   align-items: center;
@@ -1489,7 +1489,7 @@
   margin-left: 4px;
 }
 
-/* â”€â”€ Calendar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Calendar ─────────────────────────────────────────────── */
 .ov2-cal-nav {
   display: flex;
   align-items: center;
@@ -1615,7 +1615,7 @@
   color: #fff;
 }
 
-/* â”€â”€ Key Stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Key Stats ────────────────────────────────────────────── */
 .ov2-stat-badges-row {
   display: flex;
   align-items: center;
@@ -1708,7 +1708,7 @@
 .ov2-ks-tag.blue   { background: rgba(59,130,246,0.12); color: #fcd9a8; border: 1px solid rgba(59,130,246,0.25); }
 .ov2-ks-tag.dim    { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); }
 
-/* â”€â”€ Charts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Charts ───────────────────────────────────────────────── */
 .ov2-chart-wrap {
   border-radius: 8px;
   overflow: hidden;
@@ -1724,7 +1724,7 @@
   width: 100%;
 }
 
-/* â”€â”€ Daily header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Daily header ─────────────────────────────────────────── */
 .ov2-card-title-row {
   display: flex;
   align-items: center;
@@ -1743,7 +1743,7 @@
 
 .ov2-daily-filters { display: flex; gap: 4px; flex-wrap: wrap; }
 
-/* â”€â”€ Sessions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Sessions ─────────────────────────────────────────────── */
 .ov2-session-cols-hdr {
   display: flex;
   gap: 12px;
@@ -1815,7 +1815,7 @@
 
 .ov2-empty { font-size: 0.78rem; color: rgba(255,255,255,0.3); padding: 12px 0; }
 
-/* â”€â”€ Trade log â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Trade log ────────────────────────────────────────────── */
 .ov2-trade-log-card { padding-bottom: 12px; }
 
 .ov2-tl-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -1918,7 +1918,7 @@
 .ov2-proof-link:hover { opacity: 1; }
 .ov2-empty-row { text-align: center; color: rgba(255,255,255,0.25); padding: 20px !important; }
 
-/* â”€â”€ Donut â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Donut ────────────────────────────────────────────────── */
 .ov-donut-wrap {
   position: relative;
   flex-shrink: 0;
@@ -1948,7 +1948,7 @@
   letter-spacing: 0.04em;
 }
 
-/* â”€â”€ Win/Loss cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Win/Loss cards ───────────────────────────────────────── */
 .ov2-wl-top { text-align: center; }
 
 .ov2-wl-center { display: flex; justify-content: center; margin: 8px 0 10px; }
@@ -2049,7 +2049,7 @@
   line-height: 1.4;
 }
 
-/* â”€â”€ Trade Distribution â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Trade Distribution ───────────────────────────────────── */
 .ov2-dist-label {
   font-size: 0.6rem;
   color: rgba(255,255,255,0.3);
@@ -2084,7 +2084,7 @@
   letter-spacing: 0.04em;
 }
 
-/* â”€â”€ Streaks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Streaks ──────────────────────────────────────────────── */
 .ov2-streaks { display: flex; flex-direction: column; gap: 0; }
 
 .ov2-streak-row {
@@ -2131,9 +2131,9 @@
 .ov2-streak-arrow.green { color: #f8c37d; font-size: 0.65rem; }
 .ov2-streak-arrow.muted { color: rgba(255,255,255,0.2); font-size: 0.65rem; }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    CARD ENTRANCE ANIMATIONS
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ══════════════════════════════════════════════════════════ */
 @keyframes ov2-card-enter {
   from {
     opacity: 0;
@@ -2170,7 +2170,7 @@
   transform: translateY(-2px);
 }
 
-/* â”€â”€ Spinning refresh button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Spinning refresh button ────────────────────────────── */
 @keyframes ov2-spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
@@ -2180,9 +2180,9 @@
   animation: ov2-spin 0.7s linear infinite;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    EXPANDABLE TRADE LOG ROWS
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ══════════════════════════════════════════════════════════ */
 .ov2-tl tbody tr {
   transition: background 0.15s;
 }
@@ -2255,7 +2255,7 @@
   letter-spacing: 0.06em;
 }
 
-/* â”€â”€ Distribution bar hover â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Distribution bar hover ─────────────────────────────── */
 .ov2-dist-bar {
   transition: opacity 0.15s, transform 0.15s;
   cursor: default;
@@ -2267,7 +2267,7 @@
   transform-origin: bottom;
 }
 
-/* â”€â”€ Session row hover â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Session row hover ──────────────────────────────────── */
 .ov2-session-row {
   transition: background 0.15s;
 }
@@ -2277,7 +2277,7 @@
   border-radius: 6px;
 }
 
-/* â”€â”€ Calendar cell hover â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Calendar cell hover ────────────────────────────────── */
 .ov2-cal-cell {
   transition: transform 0.15s, box-shadow 0.15s;
   cursor: default;
@@ -2289,7 +2289,7 @@
   box-shadow: 0 4px 14px rgba(0,0,0,0.5);
 }
 
-/* â”€â”€ Streak row hover â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Streak row hover ───────────────────────────────────── */
 .ov2-streak-row {
   transition: background 0.15s;
 }

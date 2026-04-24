@@ -172,7 +172,7 @@ const Register = () => {
             localStorage.setItem('newSignup', 'true');
             localStorage.setItem('pendingSubscription', 'true');
             const response = await registerUser(submitData);
-            toast.success('ðŸŽ‰ Account created successfully! Welcome to AURA TERMINAL™!', {
+            toast.success('🎉 Account created successfully! Welcome to AURA TERMINAL™!', {
                 position: "top-center",
                 autoClose: 1500,
                 hideProgressBar: false,

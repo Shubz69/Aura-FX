@@ -5,7 +5,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* â”€â”€ CSS Variables (mirrors home.css / explore.css) â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── CSS Variables (mirrors home.css / explore.css) ──────── */
 :root {
   --aj-bg:         #0a0a0a;
   --aj-card:       rgba(255,255,255,0.03);
@@ -20,7 +20,7 @@
   --aj-transition: 0.28s cubic-bezier(0.4,0,0.2,1);
 }
 
-/* â”€â”€ Base â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Base ─────────────────────────────────────────────────── */
 .admin-journal-page,
 .admin-journal-page * {
   font-family: 'Space Grotesk', sans-serif;
@@ -35,7 +35,7 @@
   overflow-x: hidden;
 }
 
-/* â”€â”€ Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Container ────────────────────────────────────────────── */
 .admin-journal-container {
   padding: 72px 24px 60px;
   max-width: 1240px;
@@ -50,7 +50,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* â”€â”€ Page Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Page Header ──────────────────────────────────────────── */
 .admin-journal-header {
   text-align: center;
   margin-bottom: 52px;
@@ -140,7 +140,7 @@
   50%       { transform: scale(1.7); opacity: 0.65; }
 }
 
-/* â”€â”€ State Messages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── State Messages ───────────────────────────────────────── */
 .admin-journal-loading {
   text-align: center;
   padding: 48px 24px;
@@ -185,7 +185,7 @@
   font-size: 0.95rem;
 }
 
-/* â”€â”€ Summary Cards — mirrors stat-item from home.css â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Summary Cards — mirrors stat-item from home.css ─────── */
 .admin-journal-summary {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
@@ -306,7 +306,7 @@
   box-shadow: 0 0 8px rgba(234,169,96,0.5);
 }
 
-/* â”€â”€ Section Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Section Title ────────────────────────────────────────── */
 .admin-journal-table-title {
   font-size: 1.1rem;
   font-weight: 200;
@@ -329,7 +329,7 @@
   background: linear-gradient(90deg, transparent, rgba(234,169,96,0.7), transparent);
 }
 
-/* â”€â”€ Search Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Search Bar ───────────────────────────────────────────── */
 .admin-journal-search-wrap {
   margin-bottom: 20px;
 }
@@ -365,7 +365,7 @@
   box-shadow: 0 0 0 3px rgba(234,169,96,0.1), 0 4px 20px rgba(0,0,0,0.3);
 }
 
-/* â”€â”€ Table Wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Table Wrapper ────────────────────────────────────────── */
 .admin-journal-table-wrap {
   overflow-x: auto;
   border-radius: 14px;
@@ -374,7 +374,7 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
-/* â”€â”€ Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Table ────────────────────────────────────────────────── */
 .admin-journal-table {
   width: 100%;
   border-collapse: collapse;
@@ -427,7 +427,7 @@
   margin-left: 5px;
 }
 
-/* â”€â”€ View Button — matches home-cta-button / explore-cta-button */
+/* ── View Button — matches home-cta-button / explore-cta-button */
 .admin-journal-view-btn {
   padding: 7px 18px;
   border: none;
@@ -464,7 +464,7 @@
 .admin-journal-view-btn:hover::before { opacity: 1; }
 .admin-journal-view-btn:active { transform: translateY(0); }
 
-/* â”€â”€ Modal Overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Modal Overlay ────────────────────────────────────────── */
 .admin-journal-modal {
   position: fixed;
   inset: 0;
@@ -483,7 +483,7 @@
   to   { opacity: 1; }
 }
 
-/* â”€â”€ Modal Inner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Modal Inner ──────────────────────────────────────────── */
 .admin-journal-modal-inner {
   background: #0f0f0f;
   border: 1px solid rgba(255,255,255,0.09);
@@ -525,7 +525,7 @@
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* â”€â”€ Modal Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Modal Header ─────────────────────────────────────────── */
 .admin-journal-modal-header {
   display: flex;
   align-items: center;
@@ -574,7 +574,7 @@
   color: #9a8f84;
 }
 
-/* â”€â”€ Modal Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Modal Body ───────────────────────────────────────────── */
 .admin-journal-modal-body {
   padding: 24px;
   overflow-y: auto;
@@ -621,7 +621,7 @@
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-/* â”€â”€ XP List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── XP List ──────────────────────────────────────────────── */
 .admin-journal-xp-list {
   list-style: none;
   padding: 0;
@@ -659,7 +659,7 @@
   flex-shrink: 0;
 }
 
-/* â”€â”€ By-date section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── By-date section ──────────────────────────────────────── */
 .admin-journal-by-date {
   font-size: 0.82rem;
   margin-bottom: 24px;
@@ -684,7 +684,7 @@
   background: rgba(234,169,96,0.04);
 }
 
-/* â”€â”€ Proof List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Proof List ───────────────────────────────────────────── */
 .admin-journal-proof-list {
   list-style: none;
   padding: 0;
@@ -728,7 +728,7 @@
   white-space: nowrap;
 }
 
-/* â”€â”€ Proof Viewer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Proof Viewer ─────────────────────────────────────────── */
 .admin-journal-proof-viewer {
   margin-top: 16px;
   padding: 16px;
@@ -767,7 +767,7 @@
   object-fit: contain;
 }
 
-/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .admin-journal-summary { grid-template-columns: repeat(3, 1fr); }
 }

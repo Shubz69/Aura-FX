@@ -80,7 +80,7 @@ function splitCsvLine(line, delimiter) {
 function stripBom(s) {
   if (!s || typeof s !== 'string') return s;
   if (s.charCodeAt(0) === 0xfeff) return s.slice(1);
-  // UTF-8 BOM as raw bytes mis-decoded, or UTF-16 LE BOM appearing as�� in some pipelines
+  // UTF-8 BOM as raw bytes mis-decoded, or UTF-16 LE BOM appearing as replacement characters in some pipelines
   if (s.charCodeAt(0) === 0xfffe) return s.slice(1);
   return s;
 }

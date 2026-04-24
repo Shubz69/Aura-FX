@@ -268,7 +268,7 @@
         "Set AUDIT_EMAIL and AUDIT_PASSWORD to enable automated login continuation"
       ],
       "expected": "Deep authenticated audit",
-      "actual": "Skipped â€” no AUDIT_EMAIL / AUDIT_PASSWORD in environment"
+      "actual": "Skipped — no AUDIT_EMAIL / AUDIT_PASSWORD in environment"
     },
     {
       "phase": "P5",
@@ -307,7 +307,7 @@
       "ts": "2026-04-21T00:41:27.844Z",
       "url": "https://www.auraterminal.ai/register",
       "steps": [
-        "Click \"View All Markets â†’\""
+        "Click \"View All Markets →\""
       ],
       "actual": "Click timeout or intercepted"
     },
@@ -333,7 +333,7 @@
       "ts": "2026-04-21T00:41:34.403Z",
       "url": "https://www.auraterminal.ai/register",
       "steps": [
-        "Click \"ðŸ‡¬ðŸ‡§+44â–¼\""
+        "Click \"🇬🇧+44▼\""
       ],
       "actual": "Click timeout or intercepted"
     },
@@ -370,7 +370,7 @@
       "ts": "2026-04-21T00:41:41.518Z",
       "url": "https://www.auraterminal.ai/register",
       "steps": [
-        "Click \"ðŸ‡¬ðŸ‡§+44â–¼\""
+        "Click \"🇬🇧+44▼\""
       ],
       "actual": "Click timeout or intercepted"
     },
@@ -407,7 +407,7 @@
       "ts": "2026-04-21T00:41:52.740Z",
       "url": "https://www.auraterminal.ai/register",
       "steps": [
-        "Click \"ðŸ‡¬ðŸ‡§+44â–¼\""
+        "Click \"🇬🇧+44▼\""
       ],
       "actual": "Click timeout or intercepted"
     },
@@ -444,7 +444,7 @@
       "ts": "2026-04-21T00:42:01.266Z",
       "url": "https://www.auraterminal.ai/register",
       "steps": [
-        "Click \"ðŸ‡¬ðŸ‡§+44â–¼\""
+        "Click \"🇬🇧+44▼\""
       ],
       "actual": "Click timeout or intercepted"
     },
@@ -776,7 +776,7 @@
       "severity": "info",
       "title": "Homepage heading (marketing claim)",
       "ts": "2026-04-21T00:42:01.392Z",
-      "evidence": "ðŸ”’ GDPR Privacy Notice"
+      "evidence": "🔒 GDPR Privacy Notice"
     },
     {
       "phase": "P7",
@@ -809,7 +809,7 @@
     {
       "phase": "P7",
       "severity": "info",
-      "title": "Trader-heavy areas require auth â€” not fully verified without login",
+      "title": "Trader-heavy areas require auth — not fully verified without login",
       "ts": "2026-04-21T00:42:01.392Z",
       "expected": "Charts, journal, reports, MT hub verified end-to-end",
       "actual": "Could not verify (no credentials)"

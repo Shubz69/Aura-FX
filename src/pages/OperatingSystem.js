@@ -98,7 +98,7 @@ export default function OperatingSystem() {
 
       <section className="ops-flow">
         <h2>System Flow</h2>
-        <p>Journal â†’ Live Metrics â†’ The Operator â†’ Trader DNA â†’ Monthly Statements â†’ Trader CV / Passport â†’ Trader Desk</p>
+        <p>Journal → Live Metrics → The Operator → Trader DNA → Monthly Statements → Trader CV / Passport → Trader Desk</p>
       </section>
     </div>
   );

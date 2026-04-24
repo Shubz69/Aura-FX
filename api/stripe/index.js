@@ -7,7 +7,7 @@ const { invalidateEntitlementsCache } = require('../cache');
 const { getDbConnection } = require('../db');
 const { canonicalStoredPlanFromAny } = require('../utils/subscriptionNormalize');
 
-// Validate Stripe secret key (backend only â€“ never expose sk_ in frontend)
+// Validate Stripe secret key (backend only – never expose sk_ in frontend)
 function getStripeClient() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey || typeof secretKey !== 'string' || !secretKey.startsWith('sk_')) {
@@ -126,7 +126,7 @@ const sendSubscriptionCancellationEmail = async (userEmail, userName) => {
 
 /**
  * Resolve app user id from Stripe invoice/subscription payloads.
- * Invoices may omit customer_email; subscription.deleted only has customer id â€” retrieve Customer from Stripe when needed.
+ * Invoices may omit customer_email; subscription.deleted only has customer id — retrieve Customer from Stripe when needed.
  */
 async function resolveUserIdForStripeBilling(db, stripe, { customerId, customerEmail }) {
   const tryEmail = async (email) => {
@@ -334,7 +334,7 @@ module.exports = async (req, res) => {
         );
 
         // Log the role update for debugging
-        console.log(`âœ… Subscription activated for user ${userId}: role=${userRole}, plan=${dbPlan}, expiry=${expiryDate}`);
+        console.log(`✅ Subscription activated for user ${userId}: role=${userRole}, plan=${dbPlan}, expiry=${expiryDate}`);
         invalidateEntitlementsCache(userId);
 
         if (dbPlan !== 'access') {
@@ -487,7 +487,7 @@ module.exports = async (req, res) => {
                    WHERE id = ?`,
                   [expiryStr, session?.id || null, userRole, dbPlan, markFreeTrialUsed, userId]
                 );
-                console.log(`âœ… Webhook: Subscription activated for ${customerEmail} (user ${userId}): role=${userRole}, plan=${dbPlan}`);
+                console.log(`✅ Webhook: Subscription activated for ${customerEmail} (user ${userId}): role=${userRole}, plan=${dbPlan}`);
                 invalidateEntitlementsCache(userId);
                 try {
                   const { recordReferralConversion } = require('../referral/referralService');
@@ -658,7 +658,7 @@ module.exports = async (req, res) => {
     }
   }
 
-  // Handle /api/stripe/create-payment-intent (PaymentIntent flow â€“ frontend uses Stripe.js confirmCardPayment only)
+  // Handle /api/stripe/create-payment-intent (PaymentIntent flow – frontend uses Stripe.js confirmCardPayment only)
   if (pathname.includes('/create-payment-intent') || pathname.endsWith('/create-payment-intent')) {
     if (req.method !== 'POST') {
       return res.status(405).json({ success: false, message: 'Method not allowed' });

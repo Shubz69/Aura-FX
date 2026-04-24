@@ -4,7 +4,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* â”€â”€ CSS Variables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── CSS Variables ────────────────────────────────────────── */
 :root {
     --bg:           #0a0a0a;
     --bg-card:      rgba(255,255,255,0.03);
@@ -22,7 +22,7 @@
     --transition:   0.28s cubic-bezier(0.4,0,0.2,1);
 }
 
-/* â”€â”€ HTML/BODY Reset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── HTML/BODY Reset ──────────────────────────────────────── */
 html, body {
     width: 100%;
     max-width: 100%;
@@ -32,7 +32,7 @@ html, body {
     padding: 0;
 }
 
-/* â”€â”€ Outer Container - FIXED like contact.css â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Outer Container - FIXED like contact.css ─────────────── */
 .register-container,
 .register-container *,
 .register-container *::before,
@@ -59,7 +59,7 @@ html, body {
     min-height: 100vh;
 }
 
-/* â”€â”€ Ambient Glow (matches home.css central-glow) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Ambient Glow (matches home.css central-glow) ─────────── */
 .register-container::before {
     content: '';
     position: fixed;
@@ -98,7 +98,7 @@ html, body {
     50%       { opacity: 1;   transform: scale(1.07); }
 }
 
-/* â”€â”€ Form Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Form Card ────────────────────────────────────────────── */
 .register-form-container {
     position: relative;
     z-index: 10;
@@ -148,7 +148,7 @@ html, body {
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* â”€â”€ Form Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Form Header ──────────────────────────────────────────── */
 .form-header {
     text-align: center;
     margin-bottom: 32px;
@@ -196,7 +196,7 @@ html, body {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* â”€â”€ Two-Column Form Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Two-Column Form Grid ─────────────────────────────────── */
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -231,7 +231,7 @@ html, body {
     to   { opacity: 1; transform: translateX(0); }
 }
 
-/* â”€â”€ Labels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Labels ───────────────────────────────────────────────── */
 .form-label {
     display: block;
     color: rgba(255,255,255,0.45);
@@ -248,7 +248,7 @@ html, body {
     color: rgba(167,139,250,0.9);
 }
 
-/* â”€â”€ Inputs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Inputs ───────────────────────────────────────────────── */
 .form-input {
     width: 100%;
     max-width: 100%;
@@ -289,7 +289,7 @@ html, body {
     transform: none !important;
 }
 
-/* â”€â”€ Phone Input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Phone Input ──────────────────────────────────────────── */
 .form-group-phone {
     width: 100%;
     min-width: 0;
@@ -438,7 +438,7 @@ html, body {
 .phone-country-item-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(255,255,255,0.85); }
 .phone-country-item-code  { flex-shrink: 0; font-weight: 500; min-width: 44px; color: rgba(167,139,250,0.7); font-size: clamp(0.75rem, 1.8vw, 0.82rem); }
 
-/* â”€â”€ Profile Picture Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Profile Picture Section ──────────────────────────────── */
 .profile-picture-section {
     margin-bottom: 24px;
     position: relative;
@@ -505,7 +505,7 @@ html, body {
 
 .remove-image:hover { background: #dc2626; transform: scale(1.1); }
 
-/* â”€â”€ Color Selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Color Selection ──────────────────────────────────────── */
 .color-selection { margin-top: 14px; }
 
 .color-label {
@@ -560,7 +560,7 @@ html, body {
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
-/* â”€â”€ reCAPTCHA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── reCAPTCHA ────────────────────────────────────────────── */
 .captcha-wrapper {
     overflow: visible !important;
     min-height: 90px;
@@ -570,7 +570,7 @@ html, body {
 
 .captcha-wrapper iframe { max-width: 100% !important; visibility: visible !important; }
 
-/* â”€â”€ Register Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Register Button ──────────────────────────────────────── */
 .register-button {
     width: 100%;
     min-width: 0;
@@ -639,7 +639,7 @@ html, body {
 
 .register-button:disabled::before { display: none; }
 
-/* â”€â”€ Terms Checkbox â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Terms Checkbox ───────────────────────────────────────── */
 .terms-checkbox {
     display: flex;
     align-items: flex-start;
@@ -718,7 +718,7 @@ html, body {
     text-underline-offset: 2px;
 }
 
-/* â”€â”€ Verification Code Inputs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Verification Code Inputs ─────────────────────────────── */
 .verification-code-group {
     margin-bottom: 14px;
 }
@@ -759,7 +759,7 @@ html, body {
     letter-spacing: 0.2em;
 }
 
-/* â”€â”€ Error Message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Error Message ────────────────────────────────────────── */
 .error-message {
     background: linear-gradient(135deg, rgba(239,68,68,0.13) 0%, rgba(220,38,38,0.1) 100%) !important;
     border: 1px solid rgba(239,68,68,0.45) !important;
@@ -787,7 +787,7 @@ html, body {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* â”€â”€ Login Link â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Login Link ───────────────────────────────────────────── */
 .login-link {
     text-align: center;
     margin-top: clamp(20px, 4vh, 24px);
@@ -831,7 +831,7 @@ html, body {
 .login-link a:hover { color: #fcd9a8; filter: drop-shadow(0 0 7px rgba(234,169,96,0.5)); }
 .login-link a:hover::after { transform: scaleX(1); }
 
-/* â”€â”€ Loading Spinner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Loading Spinner ──────────────────────────────────────── */
 .loading {
     display: flex;
     align-items: center;

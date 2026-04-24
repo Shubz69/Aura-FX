@@ -345,7 +345,7 @@ function AuraDashboardInner() {
   return (
     <div className="aura-dashboard journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
 
-      {/* â•â• Primary Tab Header â•â• */}
+      {/* ══ Primary Tab Header ══ */}
       <div className="aura-dashboard-tabs-wrap">
         <div className="aura-dashboard-tabs-inner">
           <Link to="/aura-analysis/ai" className="aura-dashboard-brand" title="Back to Connection Hub">
@@ -391,10 +391,10 @@ function AuraDashboardInner() {
         </div>
       </div>
 
-      {/* â•â• Filter / Refresh bar â•â• */}
+      {/* ══ Filter / Refresh bar ══ */}
       <AuraFilterBar />
 
-      {/* â•â• Content â•â• */}
+      {/* ══ Content ══ */}
       <main className="aura-dashboard-content">
         {loading && (
           <div className="aura-db-warn-banner" role="status">

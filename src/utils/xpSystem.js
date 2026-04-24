@@ -2,7 +2,7 @@
  * AURA TERMINAL™ XP System (Premium v2)
  * - 100 levels max
  * - Total XP to reach level 100: 1,000,000 (power curve)
- * - Tier ladder preserved: Beginner â†’ Intermediate â†’ Advanced â†’ Professional â†’ Elite â†’ Master â†’ Legend â†’ Mythical â†’ Immortal â†’ GOD
+ * - Tier ladder preserved: Beginner → Intermediate → Advanced → Professional → Elite → Master → Legend → Mythical → Immortal → GOD
  */
 
 export const MAX_LEVEL = 100;
@@ -10,7 +10,7 @@ export const MAX_LEVEL = 100;
 /** Cumulative XP required to be at level 100 (must match api/utils/xp-system.js). */
 export const TOTAL_XP_FOR_LEVEL_100 = 1_000_000;
 
-/** Shape of the level curve; 2.0 = quadratic scaling from level 1â†’100. */
+/** Shape of the level curve; 2.0 = quadratic scaling from level 1→100. */
 export const LEVEL_CURVE_GAMMA = 2.0;
 
 const FOUR_DP = 10000;

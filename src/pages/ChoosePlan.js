@@ -167,7 +167,7 @@ const ChoosePlan = () => {
             padding: '0 20px'
           }}
         >
-          ðŸ’Ž Subscriptions
+          💎 Subscriptions
         </h2>
         <p
           className="section-description subscriptions-description"
@@ -197,7 +197,7 @@ const ChoosePlan = () => {
         >
           <strong style={{ color: '#eaa960' }}>Reports &amp; broker metrics:</strong>{' '}
           <strong>Premium (AURA TERMINAL™)</strong> includes monthly report PDFs (<strong>Performance &amp; DNA</strong>, <code style={{ fontSize: '13px', opacity: 0.9 }}>/reports</code>) — add your MT5 trade history via CSV on{' '}
-          <strong>Manual metrics</strong> (<code style={{ fontSize: '13px', opacity: 0.9 }}>/manual-metrics</code>) or <strong>Aura Analysis â†’ Connection Hub</strong>.{' '}
+          <strong>Manual metrics</strong> (<code style={{ fontSize: '13px', opacity: 0.9 }}>/manual-metrics</code>) or <strong>Aura Analysis → Connection Hub</strong>.{' '}
           <strong>Elite (A7FX)</strong> gets <strong>Aura Analysis</strong> with live, automatic platform metrics (no CSV for analysis), and monthly reports are compiled automatically — no CSV upload.
         </p>
 
@@ -214,10 +214,10 @@ const ChoosePlan = () => {
             <div className="subscription-plan-price">£0</div>
             <div className="subscription-plan-period">per month</div>
             <ul className="subscription-plan-features">
-              <li>âœ… Access to general community channels only</li>
-              <li>âœ… Welcome &amp; announcements channels</li>
-              <li>âŒ No Premium AI</li>
-              <li>âŒ No Premium or Elite channels</li>
+              <li>✅ Access to general community channels only</li>
+              <li>✅ Welcome &amp; announcements channels</li>
+              <li>❌ No Premium AI</li>
+              <li>❌ No Premium or Elite channels</li>
             </ul>
             <button
               className="subscription-plan-button free"
@@ -242,12 +242,12 @@ const ChoosePlan = () => {
               </div>
             </div>
             <ul className="subscription-plan-features">
-              <li>âœ… Premium channels</li>
-              <li>âœ… Market analysis</li>
-              <li>âœ… Weekly Briefs</li>
-              <li>âœ… Premium AURA AI</li>
-              <li>âœ… Advanced trading strategies</li>
-              <li>âœ… Monthly Reports — MT5 sections via CSV upload on Monthly Reports (/reports)</li>
+              <li>✅ Premium channels</li>
+              <li>✅ Market analysis</li>
+              <li>✅ Weekly Briefs</li>
+              <li>✅ Premium AURA AI</li>
+              <li>✅ Advanced trading strategies</li>
+              <li>✅ Monthly Reports — MT5 sections via CSV upload on Monthly Reports (/reports)</li>
             </ul>
             <button className="subscription-plan-button premium" onClick={handleSelectPremium}>
               Select Premium Plan
@@ -261,14 +261,14 @@ const ChoosePlan = () => {
             <div className="subscription-plan-price">£250</div>
             <div className="subscription-plan-period">per month</div>
             <ul className="subscription-plan-features">
-              <li>âœ… Everything in Premium</li>
-              <li>âœ… Elite-only channels</li>
-              <li>âœ… Direct founder access</li>
-              <li>âœ… Daily Briefs</li>
-              <li>âœ… Weekly Briefs</li>
-              <li>âœ… Premium AURA AI</li>
-              <li>âœ… Aura Analysis — full platform; live metrics from MT5 (no CSV needed)</li>
-              <li>âœ… Monthly report PDFs — fully automated (no CSV)</li>
+              <li>✅ Everything in Premium</li>
+              <li>✅ Elite-only channels</li>
+              <li>✅ Direct founder access</li>
+              <li>✅ Daily Briefs</li>
+              <li>✅ Weekly Briefs</li>
+              <li>✅ Premium AURA AI</li>
+              <li>✅ Aura Analysis — full platform; live metrics from MT5 (no CSV needed)</li>
+              <li>✅ Monthly report PDFs — fully automated (no CSV)</li>
             </ul>
             <button className="subscription-plan-button elite" onClick={handleSelectElite}>
               Select Elite Plan

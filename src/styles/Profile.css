@@ -5,7 +5,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* â”€â”€ CSS Variables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── CSS Variables ────────────────────────────────────────── */
 :root {
     --bg:            #0a0a0a;
     --bg-card:       rgba(255,255,255,0.03);
@@ -24,14 +24,14 @@
     --tr:            0.28s cubic-bezier(0.4,0,0.2,1);
 }
 
-/* â”€â”€ Base reset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Base reset ───────────────────────────────────────────── */
 .pf-container,
 .pf-container * {
     font-family: 'Space Grotesk', sans-serif;
     box-sizing: border-box;
 }
 
-/* â”€â”€ Page container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Page container ───────────────────────────────────────── */
 /*
    KEY FIX: .pf-container must NEVER have height/max-height constraints
    or overflow-y: auto. Scrolling belongs to the document (html/body),
@@ -52,7 +52,7 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* â”€â”€ Ambient orbs (fixed, behind everything) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Ambient orbs (fixed, behind everything) ──────────────── */
 .pf-ambient { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
 
 .pf-orb {
@@ -81,7 +81,7 @@
     100% { transform: translate(30px, 20px); opacity:1; }
 }
 
-/* â”€â”€ Content wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Content wrapper ──────────────────────────────────────── */
 .pf-content {
     position: relative;
     z-index: 1;
@@ -231,7 +231,7 @@
     pointer-events: none;
 }
 
-/* â”€â”€ Avatar column â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Avatar column ────────────────────────────────────────── */
 .pf-avatar-col {
     display: flex; flex-direction: column;
     align-items: center; gap: 12px;
@@ -321,7 +321,7 @@
     box-shadow: 0 0 10px rgba(255,255,255,0.35);
 }
 
-/* â”€â”€ Header info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Header info ──────────────────────────────────────────── */
 .pf-header-info {
     flex: 1; padding-bottom: 4px; z-index: 1;
     display: flex; flex-direction: column; gap: 7px;
@@ -367,7 +367,7 @@
     text-transform: uppercase; letter-spacing: 0.22em;
 }
 
-/* â”€â”€ Quick stats (desktop) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Quick stats (desktop) ────────────────────────────────── */
 .pf-header-quick-stats {
     display: flex; gap: 12px;
     margin-left: auto; flex-shrink: 0; z-index: 1;
@@ -732,7 +732,7 @@
 
 .pf-panel { position: relative; z-index: 1; }
 
-/* â”€â”€ Role row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Role row ─────────────────────────────────────────────── */
 .pf-role-row {
     display: flex; align-items: center; gap: 10px;
     padding: 11px 14px;
@@ -751,7 +751,7 @@
     text-transform: uppercase; letter-spacing: 0.14em;
 }
 
-/* â”€â”€ Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Form ─────────────────────────────────────────────────── */
 .pf-form-row-2 {
     display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
 }
@@ -802,7 +802,7 @@
     font-size: 0.72rem; color: #fca5a5;
 }
 
-/* â”€â”€ Save button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Save button ──────────────────────────────────────────── */
 .pf-save-btn {
     padding: 12px 28px;
     background: rgba(234,169,96,0.12);
@@ -1123,7 +1123,7 @@
 
 /* ============================================================
    RESPONSIVE
-   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   ──────────────────────────────────────────────────────────
    CRITICAL: No rule below may set height, max-height, or
    overflow-y on .pf-container. Page-level scroll must always
    live on the document (html/body), not inside this element.
@@ -1215,7 +1215,7 @@
    the document owns the scroll again.
    ============================================================= */
 
-/* â”€â”€ All viewports: release the scroll trap on profile pages â”€â”€ */
+/* ── All viewports: release the scroll trap on profile pages ── */
 .journal-page:has(.pf-container) {
     height: auto !important;
     min-height: 100vh !important;
@@ -1224,7 +1224,7 @@
     overflow-x: hidden !important;
 }
 
-/* â”€â”€ iPad: 768px – 1366px (primary breakpoint causing the bug) â”€â”€ */
+/* ── iPad: 768px – 1366px (primary breakpoint causing the bug) ── */
 @media (min-width: 768px) and (max-width: 1366px) {
     .journal-page:has(.pf-container) {
         height: auto !important;
@@ -1244,7 +1244,7 @@
     }
 }
 
-/* â”€â”€ Mobile: â‰¤ 767px â”€â”€ */
+/* ── Mobile: ≤ 767px ── */
 @media (max-width: 767px) {
     .journal-page:has(.pf-container) {
         height: auto !important;
@@ -1265,7 +1265,7 @@
     }
 }
 
-/* â”€â”€ Ensure html + body own the scroll (safety net) â”€â”€ */
+/* ── Ensure html + body own the scroll (safety net) ── */
 html,
 body {
     overflow-y: auto !important;

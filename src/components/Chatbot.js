@@ -18,8 +18,8 @@ const Chatbot = () => {
     useEffect(() => {
         if (isOpen) {
             const welcomeMessage = isAuthenticated 
-                ? `<p>Welcome back, ${user?.username || user?.name || 'there'}! I'm your AURA TERMINAL™ assistant. I can help with general questions about our platform, courses, and subscriptions.</p><p>ðŸ’¡ <strong>Upgrade to Premium</strong> to unlock <a href="/premium-ai">Aura AI</a> - our advanced AI assistant that provides professional trading analysis, market insights, and personalized trading strategies.</p><p>Choose a question below or ask me anything!</p>`
-                : "<p>Welcome to <strong>AURA TERMINAL™</strong>! I'm your free assistant. I can help with questions about our platform, courses, and subscriptions.</p><p>ðŸ’¡ <strong>Upgrade to Premium</strong> to unlock <a href=\"/premium-ai\">Aura AI</a> - our advanced AI assistant for professional trading analysis and strategies.</p><p><a href='/register'>Sign up</a> or <a href='/login'>log in</a> to get started!</p><p>Choose a question below or ask me anything!</p>";
+                ? `<p>Welcome back, ${user?.username || user?.name || 'there'}! I'm your AURA TERMINAL™ assistant. I can help with general questions about our platform, courses, and subscriptions.</p><p>💡 <strong>Upgrade to Premium</strong> to unlock <a href="/premium-ai">Aura AI</a> - our advanced AI assistant that provides professional trading analysis, market insights, and personalized trading strategies.</p><p>Choose a question below or ask me anything!</p>`
+                : "<p>Welcome to <strong>AURA TERMINAL™</strong>! I'm your free assistant. I can help with questions about our platform, courses, and subscriptions.</p><p>💡 <strong>Upgrade to Premium</strong> to unlock <a href=\"/premium-ai\">Aura AI</a> - our advanced AI assistant for professional trading analysis and strategies.</p><p><a href='/register'>Sign up</a> or <a href='/login'>log in</a> to get started!</p><p>Choose a question below or ask me anything!</p>";
             
             setMessages([
                 {
@@ -195,7 +195,7 @@ const Chatbot = () => {
         if (!isAuthenticated) {
             // Greetings
             if (msg.includes("hello") || msg.includes("hi ") || msg.includes("hey") || msg.match(/^hi$/) || msg.match(/^hey$/)) {
-                return "Hello! Welcome to AURA TERMINAL™! ðŸ‘‹ I can answer questions about trading and our platform. <a href='/register'>Sign up</a> or <a href='/login'>log in</a> to access full features!";
+                return "Hello! Welcome to AURA TERMINAL™! 👋 I can answer questions about trading and our platform. <a href='/register'>Sign up</a> or <a href='/login'>log in</a> to access full features!";
             }
             
             // Simple platform info
@@ -235,7 +235,7 @@ const Chatbot = () => {
         // If logged in, provide trading-focused responses
         // Greetings
         if (msg.includes("hello") || msg.includes("hi ") || msg.includes("hey") || msg.match(/^hi$/) || msg.match(/^hey$/)) {
-            return `Hello ${user?.username || user?.name || 'there'}! ðŸ‘‹ I'm the AURA TERMINAL™ trading assistant. I can help you with questions about trading, our courses, and the platform. What would you like to know?`;
+            return `Hello ${user?.username || user?.name || 'there'}! 👋 I'm the AURA TERMINAL™ trading assistant. I can help you with questions about trading, our courses, and the platform. What would you like to know?`;
         }
         
         // Trading questions - PRIMARY FOCUS

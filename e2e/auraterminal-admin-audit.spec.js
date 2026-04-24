@@ -1,7 +1,7 @@
 // @ts-check
 /**
  * Authenticated admin + trader audit (production-safe, bounded).
- * Session: e2e/reports/auraterminal-new-user.json â€” no login performed here.
+ * Session: e2e/reports/auraterminal-new-user.json — no login performed here.
  *
  * Run: npm run test:e2e:admin
  *
@@ -310,7 +310,7 @@ async function visitAndAudit(page, path, group, suiteId, findings, consoleErrors
     if (/per-page-total:/.test(msg) || /exceeded \d+ms/.test(msg)) {
       findings.push({
         severity: 'high',
-        title: `Per-page budget exceeded (${PER_PAGE_TOTAL_MS}ms) â€” skipped remainder`,
+        title: `Per-page budget exceeded (${PER_PAGE_TOTAL_MS}ms) — skipped remainder`,
         url: page.url(),
         page: path,
         detail: msg.slice(0, 300),
@@ -403,7 +403,7 @@ async function visitAndAuditInner(
   ).catch(() => {
     findings.push({
       severity: 'medium',
-      title: 'Interactive timeout â€” body not confirmed visible in time',
+      title: 'Interactive timeout — body not confirmed visible in time',
       url: page.url(),
       page: path,
       detail: `>${PAGE_INTERACTIVE_MS}ms`,
@@ -415,7 +415,7 @@ async function visitAndAuditInner(
   if (/\/login(\?|$)/i.test(finalUrl)) {
     findings.push({
       severity: 'high',
-      title: 'Session invalid â€” redirected to login',
+      title: 'Session invalid — redirected to login',
       url: finalUrl,
       page: path,
       detail: `Requested ${requested}`,
@@ -481,7 +481,7 @@ async function visitAndAuditInner(
   if (!isAppHost(page.url())) {
     findings.push({
       severity: 'low',
-      title: 'Off app host (e.g. Stripe) â€” skipped interactions; resetting to /community',
+      title: 'Off app host (e.g. Stripe) — skipped interactions; resetting to /community',
       url: page.url(),
       page: path,
     });
@@ -490,7 +490,7 @@ async function visitAndAuditInner(
       .catch((err) => {
         findings.push({
           severity: 'medium',
-          title: 'Interaction phase capped â€” partial clicks only',
+          title: 'Interaction phase capped — partial clicks only',
           url: page.url(),
           page: path,
           detail: String(err).slice(0, 240),
@@ -611,47 +611,47 @@ function buildMarkdownReport(payload) {
   const longest = [...timings].sort((a, b) => (b.durationMs || 0) - (a.durationMs || 0))[0];
 
   const lines = [
-    '# Aura Terminal™ â€” admin session audit (bounded)',
+    '# Aura Terminal™ — admin session audit (bounded)',
     '',
     `- **When:** ${payload.updatedAt || payload.at || new Date().toISOString()}`,
     `- **Base:** ${payload.base}`,
     `- **Session:** \`${payload.sessionFile}\``,
     `- **Pages audited:** ${rows.length}`,
-    `- **Suites completed:** ${(payload.slicesCompleted || []).join(', ') || 'â€”'}`,
-    `- **Longest page:** ${longest ? `\`${longest.path}\` (${longest.durationMs}ms, suite ${longest.suiteId})` : 'â€”'}`,
+    `- **Suites completed:** ${(payload.slicesCompleted || []).join(', ') || '—'}`,
+    `- **Longest page:** ${longest ? `\`${longest.path}\` (${longest.durationMs}ms, suite ${longest.suiteId})` : '—'}`,
     '',
     '## 1. Executive summary',
     '',
-    `Serial suites with **incremental JSON saves**. Per-page navigation cap **~${PAGE_GOTO_MS}ms**, interactive probe **~${PAGE_INTERACTIVE_MS}ms**, per-action cap **~${ACTION_TIMEOUT_MS}ms**. Max **${MAX_TABS}** tab clicks and **${MAX_BUTTONS}** button clicks per in-app page; **Escape** after interactions. **Stripe / off-host:** no crawl; reset to \`/community\`. **Trader Lab:** load + metrics only â€” **no** deep TradingView interaction.`,
+    `Serial suites with **incremental JSON saves**. Per-page navigation cap **~${PAGE_GOTO_MS}ms**, interactive probe **~${PAGE_INTERACTIVE_MS}ms**, per-action cap **~${ACTION_TIMEOUT_MS}ms**. Max **${MAX_TABS}** tab clicks and **${MAX_BUTTONS}** button clicks per in-app page; **Escape** after interactions. **Stripe / off-host:** no crawl; reset to \`/community\`. **Trader Lab:** load + metrics only — **no** deep TradingView interaction.`,
     '',
     `**Counts:** working **${working.length}**, partially_working **${partial.length}**, gated **${gated.length}**, placeholder **${placeholder.length}**, broken **${broken.length}**. Findings: **${findings.length}**. Console lines: **${uniqConsole.length}**, failed HTTP: **${uniqFail.length}**, requestfailed: **${uniqReqF.length}**.`,
     '',
     '## 2. Working features',
     '',
-    ...working.map((r) => `- \`${r.path}\` â†’ ${r.finalUrl} (scoreâ‰ˆ${r.content?.score ?? 'n/a'}, ${r.durationMs ?? '?'}ms)`),
+    ...working.map((r) => `- \`${r.path}\` → ${r.finalUrl} (score≈${r.content?.score ?? 'n/a'}, ${r.durationMs ?? '?'}ms)`),
     '',
     '## 3. Broken features',
     '',
-    ...broken.map((r) => `- \`${r.path}\` â†’ ${r.finalUrl} ${r.error ? `â€” _${r.error}_` : ''}`),
+    ...broken.map((r) => `- \`${r.path}\` → ${r.finalUrl} ${r.error ? `— _${r.error}_` : ''}`),
     ...(broken.length ? [] : ['- _None classified as broken._']),
     '',
     '## 4. Missing / placeholder',
     '',
-    ...placeholder.map((r) => `- \`${r.path}\` â†’ ${r.finalUrl}`),
+    ...placeholder.map((r) => `- \`${r.path}\` → ${r.finalUrl}`),
     ...(placeholder.length ? [] : ['- _None._']),
     '',
     '## 5. Admin panel findings',
     '',
     ...findings
       .filter((f) => (f.page || '').startsWith('/admin') || (f.page || '') === '/settings')
-      .map((f) => `- **${f.severity}** ${f.title} â€” \`${f.page}\``),
+      .map((f) => `- **${f.severity}** ${f.title} — \`${f.page}\``),
     ...(findings.some((f) => (f.page || '').startsWith('/admin')) ? [] : ['- _None admin-specific._']),
     '',
     '## 6. Console / network (sample)',
     '',
     ...uniqFail.slice(0, 25).map((x) => `- HTTP \`${x.status}\` ${x.url}`),
     ...uniqReqF.slice(0, 20).map((x) => `- ${x.err}: ${x.url}`),
-    ...uniqConsole.slice(0, 25).map((c) => `- ${c.url} :: ${(c.text || '').slice(0, 180)}â€¦`),
+    ...uniqConsole.slice(0, 25).map((c) => `- ${c.url} :: ${(c.text || '').slice(0, 180)}…`),
     '',
     '## 7. Highest priority fixes',
     '',
@@ -661,7 +661,7 @@ function buildMarkdownReport(payload) {
     '',
     '## 8. Shell-like pages',
     '',
-    ...shellOnly.map((r) => `- \`${r.path}\` â€” scoreâ‰ˆ${r.content?.score}`),
+    ...shellOnly.map((r) => `- \`${r.path}\` — score≈${r.content?.score}`),
     ...(shellOnly.length ? [] : ['- _None._']),
   ];
   return lines.join('\n');
@@ -690,7 +690,7 @@ function attachListeners(page, payload) {
   });
 }
 
-test.describe('Aura Terminal™ â€” admin audit (bounded, incremental)', () => {
+test.describe('Aura Terminal™ — admin audit (bounded, incremental)', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(() => {
@@ -712,7 +712,7 @@ test.describe('Aura Terminal™ â€” admin audit (bounded, incremental)', ()
       if (/\/login/i.test(page.url())) {
         payload.findings.push({
           severity: 'critical',
-          title: 'Saved session expired â€” authenticated areas unreliable',
+          title: 'Saved session expired — authenticated areas unreliable',
           url: page.url(),
           detail: 'Regenerate e2e/reports/auraterminal-new-user.json',
         });

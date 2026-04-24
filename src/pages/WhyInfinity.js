@@ -7,7 +7,7 @@ import { FaChartLine, FaGraduationCap, FaArrowRight, FaUsers, FaLock, FaRocket, 
 import { BiCodeAlt } from 'react-icons/bi';
 import { RiStockLine } from 'react-icons/ri';
 
-/* â”€â”€ VS comparison data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── VS comparison data ────────────────────────────────────── */
 const typicalItems = [
     "Signals without reasoning, context, or risk guidance",
     "Showcases wins, quietly deletes losses",
@@ -32,7 +32,7 @@ const auraItems = [
     "Professional moderation, structure, and full accountability",
 ];
 
-/* â”€â”€ VS Card Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── VS Card Component ─────────────────────────────────────── */
 const VSCard = ({ type, items }) => {
     const isTypical = type === "typical";
     return (
@@ -56,7 +56,7 @@ const VSCard = ({ type, items }) => {
                 {items.map((text, i) => (
                     <li key={i} className="vs-list__item">
                         <span className="vs-list__bullet">
-                            {isTypical ? "âœ•" : "✓"}
+                            {isTypical ? "✕" : "✓"}
                         </span>
                         {text}
                     </li>
@@ -66,7 +66,7 @@ const VSCard = ({ type, items }) => {
     );
 };
 
-/* â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Main Component ────────────────────────────────────────── */
 const WhyInfinity = () => {
     const navigate = useNavigate();
     const [visibleSections, setVisibleSections] = useState({
@@ -291,7 +291,7 @@ const WhyInfinity = () => {
                     </div>
                 </div>
 
-                {/* â”€â”€ AURA TERMINAL™ vs Typical Trading Communities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* ── AURA TERMINAL™ vs Typical Trading Communities ─────────────── */}
                 <div className="why-additional-features fade-in-up vs-section-wrapper">
                     <h2 className="why-section-heading">AURA TERMINAL™ vs Typical Trading Communities</h2>
 
@@ -310,7 +310,7 @@ const WhyInfinity = () => {
                         <VSCard type="aura" items={auraItems} />
                     </div>
                 </div>
-                {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* ─────────────────────────────────────────────────────────── */}
 
             </div>
         </div>

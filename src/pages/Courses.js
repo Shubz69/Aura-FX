@@ -111,7 +111,7 @@ const Courses = () => {
             
             {error && (
                 <div className="courses-error">
-                    <h2>â„ï¸ System Error</h2>
+                    <h2>❄️ System Error</h2>
                     <p>{error}</p>
                     <button onClick={() => window.location.reload()}>
                         Retry Connection
@@ -258,7 +258,7 @@ const Courses = () => {
                                         <div className="placeholder-image">
                                             {course.title && course.title.length > 0 
                                                 ? course.title.charAt(0).toUpperCase() 
-                                                : 'ðŸ“˜'}
+                                                : '📘'}
                                         </div>
                                     )}
                                 </div>

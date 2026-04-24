@@ -4,7 +4,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* â”€â”€ Tab page shell — full width, no side gaps â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Tab page shell — full width, no side gaps ────────────── */
 .aura-tab-page {
   width: 100%;
   min-height: 100%;
@@ -20,7 +20,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* â”€â”€ Tab title — matches .aura-overview-title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Tab title — matches .aura-overview-title ─────────────── */
 .aura-tab-title {
   font-size: 1.6rem;
   font-weight: 300;
@@ -34,7 +34,7 @@
   background-clip: text;
 }
 
-/* â”€â”€ Sub label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Sub label ────────────────────────────────────────────── */
 .aura-tab-sub {
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.5);
@@ -43,7 +43,7 @@
   text-transform: uppercase;
 }
 
-/* â”€â”€ Header divider line — matches overview header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Header divider line — matches overview header ────────── */
 .aura-tab-page > .aura-tab-title,
 .aura-tab-page > .aura-tab-sub {
   display: block;
@@ -64,7 +64,7 @@
   background: linear-gradient(90deg, rgba(234, 169, 96,0.8), transparent);
 }
 
-/* â”€â”€ Section wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Section wrapper ──────────────────────────────────────── */
 .aura-tab-section {
   margin-bottom: 28px;
   width: 100%;
@@ -80,7 +80,7 @@
   text-transform: uppercase;
 }
 
-/* â”€â”€ Card grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Card grid ────────────────────────────────────────────── */
 .aura-tab-grid {
   display: grid;
   gap: 14px;
@@ -89,7 +89,7 @@
   box-sizing: border-box;
 }
 
-/* â”€â”€ Stat card — matches .aura-card glass style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Stat card — matches .aura-card glass style ───────────── */
 .aura-tab-card {
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -144,7 +144,7 @@
 .aura-tab-card:hover::before { opacity: 1; }
 .aura-tab-card:hover::after  { opacity: 1; }
 
-/* â”€â”€ Card label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Card label ───────────────────────────────────────────── */
 .aura-tab-card-label {
   font-size: 0.65rem;
   text-transform: uppercase;
@@ -156,7 +156,7 @@
   display: block;
 }
 
-/* â”€â”€ Card value — matches .stat-number gradient â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Card value — matches .stat-number gradient ───────────── */
 .aura-tab-card-value {
   font-size: 1.3rem;
   font-weight: 500;
@@ -173,7 +173,7 @@
   filter: drop-shadow(0 0 12px rgba(234, 169, 96,0.22));
 }
 
-/* â”€â”€ Placeholder / empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Placeholder / empty state ────────────────────────────── */
 .aura-tab-placeholder {
   padding: 28px 24px;
   background: rgba(255, 255, 255, 0.02);
@@ -192,7 +192,7 @@
   background: rgba(234, 169, 96,0.03);
 }
 
-/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
   .aura-tab-grid {
     grid-template-columns: repeat(2, 1fr);

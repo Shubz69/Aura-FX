@@ -882,7 +882,7 @@ html, body {
 }
 
 .subscription-plan-features li::before {
-    content: 'âœ¦';
+    content: '✦';
     position: absolute;
     left: 0;
     color: var(--eaa-bright);

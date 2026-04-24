@@ -111,12 +111,12 @@ const PublicProfile = () => {
     // Get achievements based on level
     const getAchievements = (level) => {
         const list = [];
-        if (level >= 10) list.push({ name: "Getting Started", icon: "ðŸ”°" });
-        if (level >= 20) list.push({ name: "Active Communicator", icon: "ðŸŽ¯" });
-        if (level >= 40) list.push({ name: "Professional Tier", icon: "ðŸ”¥" });
-        if (level >= 60) list.push({ name: "Elite Tier", icon: "ðŸ†" });
-        if (level >= 80) list.push({ name: "Legend Tier", icon: "ðŸ‘‘" });
-        if (level >= 100) list.push({ name: "AURA God", icon: "ðŸ’Ž" });
+        if (level >= 10) list.push({ name: "Getting Started", icon: "🔰" });
+        if (level >= 20) list.push({ name: "Active Communicator", icon: "🎯" });
+        if (level >= 40) list.push({ name: "Professional Tier", icon: "🔥" });
+        if (level >= 60) list.push({ name: "Elite Tier", icon: "🏆" });
+        if (level >= 80) list.push({ name: "Legend Tier", icon: "👑" });
+        if (level >= 100) list.push({ name: "AURA God", icon: "💎" });
         return list;
     };
 
@@ -231,7 +231,7 @@ const PublicProfile = () => {
                             {/* Discipline Streak – prominent when on a streak */}
                             {loginStreak > 0 && (
                                 <div className="public-profile-discipline-streak">
-                                    <span className="public-profile-streak-icon">ðŸ”¥</span>
+                                    <span className="public-profile-streak-icon">🔥</span>
                                     <div className="public-profile-streak-text">
                                         <span className="public-profile-streak-label">Discipline Streak</span>
                                         <span className="public-profile-streak-value">{loginStreak} day{loginStreak !== 1 ? 's' : ''}</span>
@@ -327,21 +327,21 @@ const PublicProfile = () => {
                         <div className="tab-panel">
                             <div className="journey-content">
                                 <div className="journey-stat">
-                                    <div className="journey-icon">ðŸ“ˆ</div>
+                                    <div className="journey-icon">📈</div>
                                     <div className="journey-info">
                                         <div className="journey-label">Current Level</div>
                                         <div className="journey-value">{profile.level || 1}</div>
                                     </div>
                                 </div>
                                 <div className="journey-stat">
-                                    <div className="journey-icon">ðŸŽ¯</div>
+                                    <div className="journey-icon">🎯</div>
                                     <div className="journey-info">
                                         <div className="journey-label">Total XP</div>
                                         <div className="journey-value">{(profile.xp || 0).toLocaleString()}</div>
                                     </div>
                                 </div>
                                 <div className="journey-stat">
-                                    <div className="journey-icon">ðŸ†</div>
+                                    <div className="journey-icon">🏆</div>
                                     <div className="journey-info">
                                         <div className="journey-label">Rank</div>
                                         <div className="journey-value">{rankTitle}</div>
@@ -362,22 +362,22 @@ const PublicProfile = () => {
                         <div className="tab-panel">
                             <div className="stats-grid">
                                 <div className="stat-card">
-                                    <div className="stat-icon">ðŸ“Š</div>
+                                    <div className="stat-icon">📊</div>
                                     <div className="stat-value">{profile.stats?.totalTrades || 0}</div>
                                     <div className="stat-label">Total Trades</div>
                                 </div>
                                 <div className="stat-card">
-                                    <div className="stat-icon">âœ…</div>
+                                    <div className="stat-icon">✅</div>
                                     <div className="stat-value">{profile.stats?.winRate || 0}%</div>
                                     <div className="stat-label">Win Rate</div>
                                 </div>
                                 <div className="stat-card">
-                                    <div className="stat-icon">ðŸ’°</div>
+                                    <div className="stat-icon">💰</div>
                                     <div className="stat-value">${(profile.stats?.totalProfit || 0).toLocaleString()}</div>
                                     <div className="stat-label">Total Profit</div>
                                 </div>
                                 <div className="stat-card">
-                                    <div className="stat-icon">ðŸ“…</div>
+                                    <div className="stat-icon">📅</div>
                                     <div className="stat-value">{joinDate}</div>
                                     <div className="stat-label">Joined</div>
                                 </div>
@@ -401,7 +401,7 @@ const PublicProfile = () => {
                                 </div>
                             ) : (
                                 <div className="no-achievements">
-                                    <div className="no-achievements-icon">ðŸ…</div>
+                                    <div className="no-achievements-icon">🏅</div>
                                     <div className="no-achievements-text">No achievements yet</div>
                                     <div className="no-achievements-hint">Keep trading and engaging to unlock achievements!</div>
                                 </div>

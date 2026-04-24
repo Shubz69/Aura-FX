@@ -70,7 +70,7 @@ const Navbar = () => {
   const auraAiHref = isPremium(user) ? "/premium-ai" : "/subscription";
   const auraAiLabel = "Aura AI";
 
-  // â”€â”€ Mobile full-screen menu (portalled to body)
+  // ── Mobile full-screen menu (portalled to body)
   const mobileMenuPortal = ReactDOM.createPortal(
     <div className={`mobile-menu ${mobileMenuOpen ? "active" : ""}`}>
       <button className="mobile-menu-close" onClick={closeMobileMenu} aria-label="Close menu">

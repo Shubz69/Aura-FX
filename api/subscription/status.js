@@ -6,7 +6,7 @@
  * 
  * STRICT ACCESS CONTROL:
  * - hasCommunityAccess: true ONLY when user has active paid subscription
- * - Paid plans: AURA_FX (Â£99) or A7FX_ELITE (Â£250)
+ * - Paid plans: AURA_FX (£99) or A7FX_ELITE (£250)
  * - Admins always have access
  * 
  * Response (entitlements - single source for RouteGuards and API filters):
@@ -16,7 +16,7 @@
  *     tier: 'ACCESS' | 'PRO' | 'ELITE',
  *     status: 'inactive' | 'trialing' | 'active',
  *     hasCommunityAccess: boolean,
- *     planId: canonical or legacy Stripe id (aura, pro, elite, access, â€¦),
+ *     planId: canonical or legacy Stripe id (aura, pro, elite, access, …),
  *     planName: string | null,
  *     accessType: 'PRO_ACTIVE' | 'ELITE_ACTIVE' | 'ADMIN' | 'NONE' (legacy AURA_FX_ACTIVE / A7FX_ELITE_ACTIVE still accepted client-side),
  *     renewsAt, trialEndsAt, canceledAt, startedAt, isActive, daysRemaining, ...
@@ -188,7 +188,7 @@ module.exports = async (req, res) => {
     }
     
     // ============= ADMIN CHECK FIRST - ADMINS ALWAYS HAVE ACCESS =============
-    // Super admin by env SUPER_ADMIN_EMAIL or admin/super_admin role â€” full access regardless of DB subscription
+    // Super admin by env SUPER_ADMIN_EMAIL or admin/super_admin role — full access regardless of DB subscription
     const isAdminRole = isSuperAdminByEmail || ['admin', 'super_admin'].includes(userRole);
     
     if (isAdminRole) {
@@ -259,21 +259,21 @@ module.exports = async (req, res) => {
       tier = 'ELITE';
       logger.info('Access granted: ADMIN', { userId, role: userRole });
     }
-    // 2. Elite role or subscription (Â£250) â€” legacy a7fx plan id maps here
+    // 2. Elite role or subscription (£250) — legacy a7fx plan id maps here
     else if (['elite', 'a7fx'].includes(userRole) || (isActive && isElitePlanId(userPlan))) {
       hasCommunityAccess = true;
       accessType = 'ELITE_ACTIVE';
       tier = 'ELITE';
       logger.info('Access granted: ELITE_ACTIVE', { userId, role: userRole, plan: userPlan });
     }
-    // 3. Pro role or subscription (Â£99) â€” legacy aura / premium
+    // 3. Pro role or subscription (£99) — legacy aura / premium
     else if (userRole === 'premium' || userRole === 'pro' || (isActive && isProPlanId(userPlan))) {
       hasCommunityAccess = true;
       accessType = 'PRO_ACTIVE';
       tier = 'PRO';
       logger.info('Access granted: PRO_ACTIVE', { userId, role: userRole, plan: userPlan });
     }
-    // 4. Access â€” community only when user has selected a plan (subscription_plan set)
+    // 4. Access — community only when user has selected a plan (subscription_plan set)
     else {
       const planSelected = !!(user.subscription_plan && String(user.subscription_plan).trim().length > 0);
       hasCommunityAccess = planSelected;

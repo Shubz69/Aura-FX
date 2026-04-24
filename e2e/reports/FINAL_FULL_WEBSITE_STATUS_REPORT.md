@@ -1,7 +1,7 @@
-# FINAL FULL WEBSITE STATUS REPORT � AuraTerminal
+# FINAL FULL WEBSITE STATUS REPORT — AuraTerminal
 
 **Generated:** 2026-04-24  
-**Updated:** 2026-04-24 (targeted API reliability hardening addendum)  
+**Updated:** 2026-04-24 (strict messaging final rerun + bounded concurrency validation completed)  
 **Source artifacts only (no new full test runs):**
 - `ISSUE_BOARD.md`
 - `e2e/reports/FINAL_HARDCHECK_QA_REPORT.md`
@@ -23,7 +23,7 @@
 - **MANUAL:** `7`
 - **Biggest remaining risks:**
   - Intermittent API/network instability (`net::ERR_ABORTED`, one observed `429` on `/api/subscription/status`)
-  - Strict admin inbox edge behavior (rapid thread switching, rapid message burst reliability)
+  - Residual API abort noise risk under intermittent network conditions (`/api/admin/users`, community timeouts if reproducible)
   - Mathematical correctness of financial/report metrics not formally validated by automation
   - Business-rule correctness for entitlement matrix and payment/subscription real-world transitions
 
@@ -39,24 +39,23 @@
 
 ## 3. Messaging status
 
-- **admin -> user messaging:** `PASS (baseline) / NOT RE-VERIFIED in latest strict rerun`  
-  Baseline hard-check flow passed, but latest strict messaging rerun could not execute due unstable admin auth state.
-- **user -> admin messaging:** `PASS (baseline) / NOT RE-VERIFIED in latest strict rerun`  
-  Baseline hard-check flow passed, but latest strict messaging rerun could not execute due unstable admin auth state.
+- **admin -> user messaging:** `PASS`  
+  Verified in strict messaging rerun.
+- **user -> admin messaging:** `PASS`  
+  Verified in strict messaging rerun.
 - **admin inbox:** `PASS with RISK`  
-  Core flow works; strict edge tests flagged non-deterministic confidence on rapid thread switching and burst ordering.
+  Product correctness verified; residual reliability risk remains for noisy API aborts and unvalidated concurrency/load.
 - **user `/messages`:** `PASS`  
   Message visibility verified in strict messaging.
-- **websocket / polling fallback:** `PARTIAL`  
-  Earlier strict messaging artifacts showed fallback delivery, but latest strict rerun was blocked by admin auth instability.
+- **websocket / polling fallback:** `PASS_WITH_RISK`  
+  Fallback delivery verified; residual abort-noise risk remains.
 - **community realtime posting:** `PASS`  
   Verified 2026-04-24 (`COMM-RT-REM-001` passed).
 - **community reload duplicate check:** `PASS`  
   Post visible once before reload and once after reload.
 - **remaining messaging risk:**
-  - Rapid thread switching stale-overwrite confidence remains `RISK`
-  - Rapid multi-send duplicate/out-of-order confidence remains `RISK`
-  - Latest strict rerun blocked by unstable admin auth state (`/admin/inbox` -> `/login` after hydration)
+  - `/api/admin/users` abort noise remains reliability risk
+  - broader multi-user concurrency/load (>1 non-admin sender) remains an optional future extension (bounded baseline passed)
 
 ### Messaging/community hardening addendum (2026-04-24)
 
@@ -68,10 +67,12 @@
 - Targeted chromium run:
   - community post/reload dedupe: `PASS`
   - community rapid channel switching stale-content guard: `PASS`
-  - strict admin inbox burst/rapid-switch suite: `SKIP/BLOCKED` in this run context due unstable admin storage state
+- strict admin inbox burst/rapid-switch suite: `PASS_WITH_RISK`
 - Status impact:
-  - Community realtime risk reduced.
-  - Messaging burst/rapid-switch reliability remains unverified pending stable admin state and strict suite rerun.
+  - Community realtime remains passed.
+  - Messaging product correctness verified and `QA-RISK-MSG-001` closed.
+  - Bounded concurrency validation completed and passed (`QA-RISK-MSG-CONCURRENCY-001` closed as bounded-pass).
+  - Residual messaging risk now centered on API abort-noise reliability, not product correctness.
 
 ## 4. Community status
 
@@ -85,77 +86,77 @@
 
 ## 5. Public pages
 
-- **`/`** � `PASS` (content available; flagged as potentially thin shell in earlier run; currently treated as healthy but keep manual visual confirmation)
-- **`/courses`** � `PASS` (substantive content)
-- **`/explore`** � `PASS` (substantive content)
-- **`/contact`** � `PASS` (substantive content)
-- **`/terms`** � `PASS` (substantive content)
-- **`/privacy`** � `PASS` (substantive content)
-- **`/login`** � `PASS` (form present and interactive)
+- **`/`** — `PASS` (content available; flagged as potentially thin shell in earlier run; currently treated as healthy but keep manual visual confirmation)
+- **`/courses`** — `PASS` (substantive content)
+- **`/explore`** — `PASS` (substantive content)
+- **`/contact`** — `PASS` (substantive content)
+- **`/terms`** — `PASS` (substantive content)
+- **`/privacy`** — `PASS` (substantive content)
+- **`/login`** — `PASS` (form present and interactive)
 
 ## 6. User authenticated pages
 
-- **`/profile`** � `MANUAL`  
+- **`/profile`** — `MANUAL`  
   Notification behavior verified, but profile data correctness requires manual review.
-- **`/subscription`** � `PASS with RISK`  
+- **`/subscription`** — `PASS with RISK`  
   Subscription page flow chapter passed; one observed API 429 in reliability sample.
-- **`/messages`** � `PASS`  
+- **`/messages`** — `PASS`  
   Bidirectional messaging verified.
-- **`/reports`** � `PASS`  
+- **`/reports`** — `PASS`  
   Data present; no hard fail.
-- **`/reports/dna`** � `PASS`  
+- **`/reports/dna`** — `PASS`  
   Data/gating behavior observed; entitlement semantics still need business-rule manual check.
-- **`/reports/live`** � `PASS`  
+- **`/reports/live`** — `PASS`  
   Data signal present; monitor thin/loading behavior under load.
-- **`/manual-metrics/dashboard`** � `PASS` (data signal present)
-- **`/manual-metrics/processing`** � `MANUAL` (not explicitly re-verified in latest hard-check chapter list)
-- **`/trader-deck`** � `PASS`
-- **`/trader-deck/trade-validator/overview`** � `PASS`
-- **`/aura-analysis/dashboard/overview`** � `PASS`
-- **`/aura-analysis/dashboard/performance`** � `PASS`
-- **`/backtesting`** � `PASS`
-- **`/backtesting/sessions`** � `PASS` (thin but intentional classification)
-- **`/surveillance`** � `PASS` (healthy direct route)
-- **`/premium-ai`** � `MANUAL` (latest hard-check did not explicitly provide a fresh chapter line-item for this route)
-- **`/community`** � `PASS` (including realtime + reload dedupe)
-- **`/leaderboard`** � `PASS`
-- **`/journal`** � `MANUAL` (manual validation required for data correctness and interaction consistency)
-- **notifications behavior** � `PASS with RISK` (`dropdownInteractive=true`, graceful handling yes, but intermittent fetch failures exist)
+- **`/manual-metrics/dashboard`** — `PASS` (data signal present)
+- **`/manual-metrics/processing`** — `MANUAL` (not explicitly re-verified in latest hard-check chapter list)
+- **`/trader-deck`** — `PASS`
+- **`/trader-deck/trade-validator/overview`** — `PASS`
+- **`/aura-analysis/dashboard/overview`** — `PASS`
+- **`/aura-analysis/dashboard/performance`** — `PASS`
+- **`/backtesting`** — `PASS`
+- **`/backtesting/sessions`** — `PASS` (thin but intentional classification)
+- **`/surveillance`** — `PASS` (healthy direct route)
+- **`/premium-ai`** — `MANUAL` (latest hard-check did not explicitly provide a fresh chapter line-item for this route)
+- **`/community`** — `PASS` (including realtime + reload dedupe)
+- **`/leaderboard`** — `PASS`
+- **`/journal`** — `MANUAL` (manual validation required for data correctness and interaction consistency)
+- **notifications behavior** — `PASS with RISK` (`dropdownInteractive=true`, graceful handling yes, but intermittent fetch failures exist)
 
 ## 7. Admin pages
 
-- **`/admin`** � `PASS` (authenticated route validated)
-- **`/admin/inbox`** � `PASS with RISK` (core flow pass; strict edge cases at risk)
-- **`/admin/inbox?user=88`** � `PASS with RISK` (same caveat)
-- **`/admin/users`** � `PASS` (flow chapter passed)
-- **`/settings`** � `PASS` (flow chapter passed)
-- **admin users flow** � `PASS`
-- **admin messaging/inbox flow** � `PASS with RISK`
+- **`/admin`** — `PASS` (authenticated route validated)
+- **`/admin/inbox`** — `PASS with RISK` (strict rapid-switch product correctness passed; concurrency risk still open)
+- **`/admin/inbox?user=88`** — `PASS with RISK` (same caveat)
+- **`/admin/users`** — `PASS` (flow chapter passed)
+- **`/settings`** — `PASS` (flow chapter passed)
+- **admin users flow** — `PASS`
+- **admin messaging/inbox flow** — `PASS with RISK`
 
 ## 8. Reports / data / calculation status
 
-- **Reports hub** � data appeared: Yes; shell-only: No; widgets: present; **math correctness:** `MANUAL`
-- **Reports DNA** � data appeared: Yes; shell-only: No; widgets: present; **math correctness:** `MANUAL`
-- **Reports live** � data appeared: Yes; shell-only: No (earlier thin tendency noted); widgets: present; **math correctness:** `MANUAL`
-- **Manual metrics dashboard** � data appeared: Yes; shell-only: No; widgets: present; **math correctness:** `MANUAL`
-- **Aura-analysis dashboards** � data appeared: Yes; shell-only: No; widgets: present; **math correctness:** `MANUAL`
-- **Trader deck** � data appeared: Yes; shell-only: No; widgets: present; **math correctness:** `MANUAL`
-- **Backtesting** � data appeared: Yes; shell-only: No; widgets: present; **math correctness:** `MANUAL`
-- **Leaderboard** � data appeared: Yes; shell-only: No; widgets: present; **ranking/business correctness:** `MANUAL`
+- **Reports hub** — data appeared: Yes; shell-only: No; widgets: present; **math correctness:** `MANUAL`
+- **Reports DNA** — data appeared: Yes; shell-only: No; widgets: present; **math correctness:** `MANUAL`
+- **Reports live** — data appeared: Yes; shell-only: No (earlier thin tendency noted); widgets: present; **math correctness:** `MANUAL`
+- **Manual metrics dashboard** — data appeared: Yes; shell-only: No; widgets: present; **math correctness:** `MANUAL`
+- **Aura-analysis dashboards** — data appeared: Yes; shell-only: No; widgets: present; **math correctness:** `MANUAL`
+- **Trader deck** — data appeared: Yes; shell-only: No; widgets: present; **math correctness:** `MANUAL`
+- **Backtesting** — data appeared: Yes; shell-only: No; widgets: present; **math correctness:** `MANUAL`
+- **Leaderboard** — data appeared: Yes; shell-only: No; widgets: present; **ranking/business correctness:** `MANUAL`
 
 **Important honesty note:** Automation here validates data presence/rendering and basic interactions. It **does not mathematically prove** financial/statistical correctness.
 
 ## 9. API reliability status
 
-- **`/api/notifications`** � ok=43, fail=15 request-failed, fallback=`partial`, risk=`medium`
-- **`/api/subscription/status`** � ok=64, fail=19 request-failed + 1x HTTP 429, fallback=`partial`, risk=`high`
-- **`/api/aura-analysis/platform-connect`** � ok=6, fail=36 request-failed, fallback=`partial`, risk=`high`
-- **`/api/reports/eligibility`** � ok=7, fail=9 request-failed, fallback=`partial`, risk=`medium`
-- **`/api/me`** � ok=76, fail=14 request-failed, fallback=`partial`, risk=`medium`
-- **`/api/users/88`** � ok=32, fail=16 request-failed, fallback=`partial`, risk=`medium`
-- **`/api/markets/snapshot`** � ok=0, fail=0 in hard-check sample window, fallback=`n/a`, risk=`MANUAL`
+- **`/api/notifications`** — ok=43, fail=15 request-failed, fallback=`partial`, risk=`medium`
+- **`/api/subscription/status`** — ok=64, fail=19 request-failed + 1x HTTP 429, fallback=`partial`, risk=`high`
+- **`/api/aura-analysis/platform-connect`** — ok=6, fail=36 request-failed, fallback=`partial`, risk=`high`
+- **`/api/reports/eligibility`** — ok=7, fail=9 request-failed, fallback=`partial`, risk=`medium`
+- **`/api/me`** — ok=76, fail=14 request-failed, fallback=`partial`, risk=`medium`
+- **`/api/users/88`** — ok=32, fail=16 request-failed, fallback=`partial`, risk=`medium`
+- **`/api/markets/snapshot`** — ok=0, fail=0 in hard-check sample window, fallback=`n/a`, risk=`MANUAL`
 
-### API addendum (targeted hardening pass � 2026-04-24)
+### API addendum (targeted hardening pass — 2026-04-24)
 
 - Code hardening landed for transient GET reliability and fetch pressure control in:
   - `src/services/Api.js` (dedupe + bounded retry/backoff for safe GETs)
@@ -173,23 +174,23 @@
 
 Current classification (from latest hard-check thin-shell findings):
 
-- **`/`** � `PASS` (thin but intentional)
-- **`/reports`** � `PASS` (thin but intentional)
-- **`/reports/dna`** � `PASS` (healthy)
-- **`/reports/live`** � `PASS` (thin but intentional)
-- **`/backtesting/sessions`** � `PASS` (thin but intentional)
-- **`/leaderboard`** � `PASS` (healthy)
-- **`/admin/inbox`** � `PASS` (thin but intentional)
-- **`/admin/inbox?user=88`** � `PASS` (thin but intentional)
-- **`/admin/users`** � `PASS` (thin but intentional)
-- **`/settings`** � `PASS` (thin but intentional)
+- **`/`** — `PASS` (thin but intentional)
+- **`/reports`** — `PASS` (thin but intentional)
+- **`/reports/dna`** — `PASS` (healthy)
+- **`/reports/live`** — `PASS` (thin but intentional)
+- **`/backtesting/sessions`** — `PASS` (thin but intentional)
+- **`/leaderboard`** — `PASS` (healthy)
+- **`/admin/inbox`** — `PASS` (thin but intentional)
+- **`/admin/inbox?user=88`** — `PASS` (thin but intentional)
+- **`/admin/users`** — `PASS` (thin but intentional)
+- **`/settings`** — `PASS` (thin but intentional)
 
 ## 11. Gating / entitlement status
 
-- **`/surveillance`** � `healthy` (direct route verified)
-- **`/reports/dna`** � `gated intentionally` behavior seen (elite gate text observed in sample)
-- **premium/elite gated areas** � `needs manual confirmation` (business-rule matrix validation needed)
-- **subscription-related flows** � `healthy with risk` (flow works, but intermittent subscription status reliability + 429 observed)
+- **`/surveillance`** — `healthy` (direct route verified)
+- **`/reports/dna`** — `gated intentionally` behavior seen (elite gate text observed in sample)
+- **premium/elite gated areas** — `needs manual confirmation` (business-rule matrix validation needed)
+- **subscription-related flows** — `healthy with risk` (flow works, but intermittent subscription status reliability + 429 observed)
 
 ## 12. Console / network issues
 
@@ -215,7 +216,7 @@ Current classification (from latest hard-check thin-shell findings):
 - Subscription/payment real-world flow end-to-end (including retries, webhooks, entitlement propagation)
 - Entitlement matrix by role/tier/channel/page (especially edge transitions)
 - Production load/concurrency behavior and long-session stability
-- Admin inbox rapid switching/rapid-send ordering correctness under stress
+- High-concurrency messaging behavior (multi-user simultaneous sends across multiple threads)
 - Journal and premium-ai deep functional correctness
 
 ## 15. Highest-priority follow-up tasks
@@ -224,7 +225,7 @@ Current classification (from latest hard-check thin-shell findings):
 2. **Mathematical/data correctness validation** (manual + oracle-based checks)
 3. **Subscription/payment manual QA** (real cards/plans/webhooks)
 4. **Entitlement matrix QA** (role x tier x route x channel)
-5. **Performance/load testing** (messaging/community concurrency and failover)
+5. **Performance/load testing** (messaging/community concurrency and failover; required to close `QA-RISK-MSG-CONCURRENCY-001`)
 
 ## 16. Final manual QA checklist
 

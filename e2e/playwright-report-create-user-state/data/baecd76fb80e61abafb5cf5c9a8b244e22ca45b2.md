@@ -90,37 +90,37 @@ Received: false
           - heading "Platform" [level=4] [ref=e67]
           - list [ref=e68]:
             - listitem [ref=e69]:
-              - link "Home â†’" [ref=e70] [cursor=pointer]:
+              - link "Home →" [ref=e70] [cursor=pointer]:
                 - /url: /
             - listitem [ref=e71]:
-              - link "C&S â†’" [ref=e72] [cursor=pointer]:
+              - link "C&S →" [ref=e72] [cursor=pointer]:
                 - /url: /courses
             - listitem [ref=e73]:
-              - link "Explore â†’" [ref=e74] [cursor=pointer]:
+              - link "Explore →" [ref=e74] [cursor=pointer]:
                 - /url: /explore
             - listitem [ref=e75]:
-              - link "Why Aura Terminal™ â†’" [ref=e76] [cursor=pointer]:
+              - link "Why Aura Terminal™ →" [ref=e76] [cursor=pointer]:
                 - /url: /why-glitch
             - listitem [ref=e77]:
-              - link "Contact â†’" [ref=e78] [cursor=pointer]:
+              - link "Contact →" [ref=e78] [cursor=pointer]:
                 - /url: /contact
         - generic [ref=e79]:
           - heading "Resources" [level=4] [ref=e80]
           - list [ref=e81]:
             - listitem [ref=e82]:
-              - link "Plans â†’" [ref=e83] [cursor=pointer]:
+              - link "Plans →" [ref=e83] [cursor=pointer]:
                 - /url: /choose-plan
             - listitem [ref=e84]:
-              - link "Affiliation â†’" [ref=e85] [cursor=pointer]:
+              - link "Affiliation →" [ref=e85] [cursor=pointer]:
                 - /url: /affiliation
             - listitem [ref=e86]:
-              - link "Privacy Policy â†’" [ref=e87] [cursor=pointer]:
+              - link "Privacy Policy →" [ref=e87] [cursor=pointer]:
                 - /url: /privacy
             - listitem [ref=e88]:
-              - link "Terms of Service â†’" [ref=e89] [cursor=pointer]:
+              - link "Terms of Service →" [ref=e89] [cursor=pointer]:
                 - /url: /terms
       - generic [ref=e92]:
-        - generic [ref=e93]: Â© 2025 AURA TERMINAL™. All rights reserved.
+        - generic [ref=e93]: © 2025 AURA TERMINAL™. All rights reserved.
         - generic [ref=e94]: All systems operational
   - button "Open chat assistant" [ref=e97] [cursor=pointer]:
     - img [ref=e98]

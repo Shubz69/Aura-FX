@@ -5,7 +5,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-/* â”€â”€ CSS Variables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── CSS Variables ─────────────────────────────────────────── */
 :root {
   --bg:           #03020D;
   --gold:         #EAA960;
@@ -28,14 +28,14 @@
   --home-cta-text: linear-gradient(132deg, #FDE8C4 0%, #F8C37D 28%, #EAA960 58%, #D48D44 100%);
 }
 
-/* â”€â”€ Wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Wrapper ───────────────────────────────────────────────── */
 .user-profile {
   position: relative;
   display: inline-block;
   font-family: 'Space Grotesk', sans-serif;
 }
 
-/* â”€â”€ Overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Overlay ───────────────────────────────────────────────── */
 .user-dropdown-overlay {
   position: fixed;
   inset: 0;
@@ -44,7 +44,7 @@
   cursor: default;
 }
 
-/* â”€â”€ Trigger Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Trigger Icon ──────────────────────────────────────────── */
 .user-icon {
   cursor: pointer;
   font-size: 22px;
@@ -93,7 +93,7 @@
   opacity: 1;
 }
 
-/* â”€â”€ Dropdown Panel â”€â”€ Fully Scrollable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Dropdown Panel ── Fully Scrollable ────────────────────── */
 .user-dropdown {
   position: fixed;
   top: calc(55px + env(safe-area-inset-top, 0) + 10px);
@@ -220,7 +220,7 @@
   }
 }
 
-/* â”€â”€ Email Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Email Header ──────────────────────────────────────────── */
 .user-dropdown > p {
   margin: 0;
   padding: 16px 18px 14px;
@@ -242,19 +242,19 @@
 
 /* Gold dot indicator before email */
 .user-dropdown > p::before {
-  content: 'â—ˆ';
+  content: '◈';
   margin-right: 7px;
   color: rgba(234, 169, 96, 0.50);
   font-size: 0.55rem;
   vertical-align: middle;
 }
 
-/* â”€â”€ Menu Items Container â”€â”€ Improves scroll performance â”€â”€â”€â”€ */
+/* ── Menu Items Container ── Improves scroll performance ──── */
 .user-dropdown .dropdown-items-container {
   padding: 4px 0;
 }
 
-/* â”€â”€ Menu Items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Menu Items ────────────────────────────────────────────── */
 .user-dropdown a,
 .user-dropdown button {
   display: flex;
@@ -364,7 +364,7 @@
   -webkit-text-fill-color: currentColor;
 }
 
-/* â”€â”€ Dropdown Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Dropdown Icon ─────────────────────────────────────────── */
 .dropdown-icon {
   margin-right: 12px;
   font-size: 0.95rem;
@@ -404,7 +404,7 @@
   box-shadow: 0 0 8px rgba(240, 61, 95, 0.30);
 }
 
-/* â”€â”€ dropdown-item (needed for Link children) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── dropdown-item (needed for Link children) ──────────────── */
 .dropdown-item {
   display: flex;
   align-items: center;
@@ -452,7 +452,7 @@
   color: rgba(253, 232, 196, 0.85);
 }
 
-/* â”€â”€ Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Badge ─────────────────────────────────────────────────── */
 .dropdown-badge {
   position: absolute;
   right: 16px;
@@ -477,7 +477,7 @@
   50%       { box-shadow: 0 0 16px rgba(234, 169, 96, 0.55); transform: scale(1.12); }
 }
 
-/* â”€â”€ Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Divider ───────────────────────────────────────────────── */
 .dropdown-divider {
   height: 1px;
   margin: 8px 14px;
@@ -492,7 +492,7 @@
   z-index: 1;
 }
 
-/* â”€â”€ Staggered fade-in â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Staggered fade-in ─────────────────────────────────────── */
 .user-dropdown a,
 .user-dropdown button {
   animation: fadeInItem 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
@@ -514,7 +514,7 @@
 .user-dropdown a:nth-child(9),  .user-dropdown button:nth-child(9)  { animation-delay: 0.36s; }
 .user-dropdown a:nth-child(10), .user-dropdown button:nth-child(10) { animation-delay: 0.40s; }
 
-/* â”€â”€ Avatar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Avatar ────────────────────────────────────────────────── */
 .avatar-img {
   display: block;
   margin: 0 auto;
@@ -528,7 +528,7 @@
   box-shadow: 0 0 24px rgba(234, 169, 96, 0.40);
 }
 
-/* â”€â”€ Avatar Select â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Avatar Select ─────────────────────────────────────────── */
 .avatar-dropdown {
   width: 100%;
   padding: 8px 10px;
@@ -556,7 +556,7 @@
   background: var(--gold-ultra);
 }
 
-/* â”€â”€ Tablet / Mobile Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Tablet / Mobile Responsive ───────────────────────────── */
 @media (max-width: 1150px) {
   .user-dropdown {
     top: calc(56px + env(safe-area-inset-top, 0) + 8px);
@@ -722,9 +722,9 @@
     }
   }
 }
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    NESTED DROPDOWN ITEMS — Same styling as parent, just indented
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ══════════════════════════════════════════════════════════ */
 
 /* Reset nested items to match regular items exactly */
 .user-dropdown .dropdown-item--nested {

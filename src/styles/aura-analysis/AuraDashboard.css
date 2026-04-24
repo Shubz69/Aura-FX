@@ -4,7 +4,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* â”€â”€ Global â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Global ───────────────────────────────────────────────── */
 html, body, #root {
   background: #010008 !important;
   width: 100%;
@@ -14,7 +14,7 @@ html, body, #root {
   padding: 0;
 }
 
-/* â”€â”€ Dashboard shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ── Dashboard shell ────────────────────────────────────────
    --aura-nav-offset mirrors the fixed site navbar height so the
    sticky tab bar sits immediately beneath it with zero gap.       */
 .aura-dashboard {
@@ -55,10 +55,10 @@ html, body, #root {
   padding-bottom: clamp(16px, 2.5vw, 28px);
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    PRIMARY TAB BAR
    Fixed positioning ensures proper stacking context
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ══════════════════════════════════════════════════════════ */
 .aura-dashboard-tabs-wrap {
   position: fixed;  /* Changed from sticky to fixed */
   top: var(--aura-nav-offset);   /* flush under navbar — no gap */
@@ -96,7 +96,7 @@ html, body, #root {
 }
 .aura-dashboard-tabs-inner::-webkit-scrollbar { display: none; }
 
-/* â”€â”€ Brand â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Brand ────────────────────────────────────────────────── */
 .aura-dashboard-brand {
   display: flex;
   align-items: center;
@@ -124,7 +124,7 @@ html, body, #root {
   color: #fff;
 }
 
-/* â”€â”€ Tab list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Tab list ─────────────────────────────────────────────── */
 .aura-dashboard-tabs {
   display: flex;
   gap: 2px;
@@ -137,7 +137,7 @@ html, body, #root {
 }
 .aura-dashboard-tabs::-webkit-scrollbar { display: none; }
 
-/* â”€â”€ SELECT DROPDOWN (tablet) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── SELECT DROPDOWN (tablet) ─────────────────────────────── */
 .aura-dashboard-tab-select-wrap {
   display: none;
   flex-shrink: 0;
@@ -193,7 +193,7 @@ html, body, #root {
 }
 .aura-dashboard-tab-select-wrap::after { display: none; }
 
-/* â”€â”€ Individual tab — text-only rail, gold underline active (no icon boxes / no pill chrome) */
+/* ── Individual tab — text-only rail, gold underline active (no icon boxes / no pill chrome) */
 .aura-dashboard-tab {
   display: inline-flex;
   align-items: center;
@@ -251,7 +251,7 @@ html, body, #root {
   pointer-events: none;
 }
 
-/* â”€â”€ Right controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Right controls ───────────────────────────────────────── */
 .aura-db-right {
   display: flex;
   align-items: center;
@@ -320,10 +320,10 @@ html, body, #root {
   text-transform: uppercase;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    FILTER / REFRESH BAR
    Fixed positioning with offset to sit below tab bar
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ══════════════════════════════════════════════════════════ */
 .aura-db-filterbar {
   position: fixed;  /* Changed to fixed */
   top: calc(var(--aura-nav-offset) + 56px); /* Tab bar height + offsets */
@@ -555,9 +555,9 @@ html, body, #root {
 .aura-db-refresh-btn.spinning i { animation: aura-spin-r 0.7s linear infinite; }
 @keyframes aura-spin-r { to { transform: rotate(360deg); } }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    MAIN CONTENT OUTLET
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ══════════════════════════════════════════════════════════ */
 .aura-dashboard-content {
   flex: 1;
   min-height: 0;
@@ -568,11 +568,11 @@ html, body, #root {
   padding: calc(var(--aura-nav-offset) + 94px) clamp(14px, 2vw, 22px) 30px;
   box-sizing: border-box;
 }
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    RESPONSIVE BREAKPOINTS
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ══════════════════════════════════════════════════════════ */
 
-/* â”€â”€ â‰¤768px — mobile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── ≤768px — mobile ──────────────────────────────────────── */
 @media (max-width: 768px) {
   .aura-dashboard-tabs-inner {
     padding: 5px 12px;
@@ -591,7 +591,7 @@ html, body, #root {
   .aura-dashboard-content { padding: 14px 12px 30px; }
 }
 
-/* â”€â”€ 768px–1366px — tablet: replace tab list with dropdown â”€â”€ */
+/* ── 768px–1366px — tablet: replace tab list with dropdown ── */
 @media (min-width: 768px) and (max-width: 1366px) {
   .aura-dashboard-tabs-inner {
     padding: 6px 12px;
@@ -612,7 +612,7 @@ html, body, #root {
   .aura-dashboard-content { padding: 12px 12px 26px; }
 }
 
-/* â”€â”€ â‰¤480px — small mobile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── ≤480px — small mobile ────────────────────────────────── */
 @media (max-width: 480px) {
   .aura-dashboard-tabs-inner { padding: 4px 10px; min-height: 40px; }
   .aura-dashboard-tab { font-size: 0.62rem; padding: 6px 6px 8px; letter-spacing: 0.03em; }
@@ -620,15 +620,15 @@ html, body, #root {
   .aura-dashboard-content { padding: 10px 8px 24px; }
 }
 
-/* â”€â”€ â‰¤374px — tiny screens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── ≤374px — tiny screens ────────────────────────────────── */
 @media (max-width: 374px) {
   .aura-db-date { display: none; }    /* drop date on very narrow screens */
   .aura-db-status-label { display: none; }
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    SCROLLBARS (dashboard scope only)
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ══════════════════════════════════════════════════════════ */
 .aura-dashboard {
   scrollbar-width: thin;
   scrollbar-color: rgba(212,175,55,0.22) transparent;
@@ -642,7 +642,7 @@ html, body, #root {
 .aura-dashboard ::-webkit-scrollbar-thumb:hover {
   background: rgba(212,175,55,0.42);
 }
-/* â”€â”€ New: Responsive adjustments for fixed elements â”€â”€ */
+/* ── New: Responsive adjustments for fixed elements ── */
 @media (min-width: 768px) and (max-width: 1150px) {
   .aura-db-filterbar {
     top: calc(var(--aura-nav-offset) + 54px);
@@ -722,10 +722,10 @@ html {
   pointer-events: auto;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════
    Trade Replay (TraderSuiteShell terminal) — align with other
-   dashboard routes: no nested Trader Suite â€œblue glass⬝ shell
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   dashboard routes: no nested Trader Suite “blue glass⬝ shell
+   ══════════════════════════════════════════════════════════ */
 .journal-page .aura-dashboard .trader-suite-page--aura-dashboard {
   width: 100%;
   max-width: none;
@@ -1005,7 +1005,7 @@ html {
   -webkit-backdrop-filter: blur(14px);
 }
 
-/* â”€â”€ Trader Replay (premium hub + workspace) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Trader Replay (premium hub + workspace) ───────────────── */
 .journal-page .aura-dashboard .aura-db-replay-page .aura-tr-loading,
 .journal-page .aura-dashboard .aura-db-replay-page .aura-tr-error {
   padding: 24px;

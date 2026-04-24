@@ -113,7 +113,7 @@ const ContactUs = () => {
 
             <div className="contact-content">
 
-                {/* â”€â”€ HERO HEADER â”€â”€ */}
+                {/* ── HERO HEADER ── */}
                 <div className="contact-header">
                     <div className="contact-eyebrow">
                         <span className="contact-eyebrow__dot" />
@@ -135,7 +135,7 @@ const ContactUs = () => {
                     </div>
                 </div>
 
-                {/* â”€â”€ MAIN GRID â”€â”€ */}
+                {/* ── MAIN GRID ── */}
                 <div className="contact-grid">
 
                     {/* LEFT — FORM */}
@@ -245,7 +245,7 @@ const ContactUs = () => {
                             {submitStatus && (
                                 <div className={`status-message status-message--${submitStatus.type}`}>
                                     <span className="status-message__icon">
-                                        {submitStatus.type === 'success' ? '✓' : 'âœ•'}
+                                        {submitStatus.type === 'success' ? '✓' : '✕'}
                                     </span>
                                     <span>{submitStatus.message}</span>
                                 </div>

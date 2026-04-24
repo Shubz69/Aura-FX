@@ -12,7 +12,7 @@ import { logClassifiedError } from '../utils/apiObservability';
 
 const API_BASE = () => (Api.getBaseUrl() || '');
 
-/* â”€â”€ Avatar initials helper â”€â”€ */
+/* ── Avatar initials helper ── */
 const getInitials = (name) => {
   if (!name) return '?';
   const parts = name.trim().split(/\s+/);
@@ -151,7 +151,7 @@ useEffect(() => {
     return null;
   }, [activeTab, activeThread, selectedUserId, users, friends]);
 
- /* â”€â”€ Load users + threads (Admin tab, admins only) â”€â”€ */
+ /* ── Load users + threads (Admin tab, admins only) ── */
 useEffect(() => {
   if (!isAdminRole(user?.role)) return;
   let mounted = true;
@@ -225,7 +225,7 @@ useEffect(() => {
   };
 }, [user?.id, user?.role, threadFromUrl, setSearchParams]);
 
-  /* â”€â”€ Load current user's support thread (Admin tab, non-admin only) â”€â”€ */
+  /* ── Load current user's support thread (Admin tab, non-admin only) ── */
   useEffect(() => {
     if (isAdminRole(user?.role) || !user?.id) return;
     let mounted = true;
@@ -265,13 +265,13 @@ useEffect(() => {
     }
   }, [threads, activeThreadId, selectedUserId]);
 
-  /* â”€â”€ Default to Friends tab when user is Premium but not Admin â”€â”€ */
+  /* ── Default to Friends tab when user is Premium but not Admin ── */
   useEffect(() => {
     if (!user?.role) return;
     if (isFriendsAllowed(user) && !isAdminRole(user.role)) setActiveTab('friends');
   }, [user?.role]);
 
-  /* â”€â”€ Load friends (Friends tab only) â”€â”€ */
+  /* ── Load friends (Friends tab only) ── */
   useEffect(() => {
     if (activeTab !== 'friends' || !isFriendsAllowed(user) || !user?.id) return;
     let mounted = true;
@@ -294,7 +294,7 @@ useEffect(() => {
     return () => { mounted = false; };
   }, [activeTab, user?.id, user?.role]);
 
-  /* â”€â”€ Select user (Admin tab) â”€â”€ */
+  /* ── Select user (Admin tab) ── */
   const handleSelectUser = async (u) => {
     const ensureSeq = ++ensureThreadSeqRef.current;
     const existing = threads.find(t => t.userId === u.id);
@@ -327,7 +327,7 @@ useEffect(() => {
     }
   };
 
-  /* â”€â”€ Deep-link from contact submissions: ?user=<id> â”€â”€ */
+  /* ── Deep-link from contact submissions: ?user=<id> ── */
   useEffect(() => {
     if (!isAdminRole(user?.role) || !userIdFromUrl || loadingUsers) return;
     const targetId = parseInt(userIdFromUrl, 10);
@@ -393,7 +393,7 @@ useEffect(() => {
     };
   }, [user?.role, userIdFromUrl, loadingUsers, users, setSearchParams]);
 
-  /* â”€â”€ Select friend (Friends tab) â”€â”€ */
+  /* ── Select friend (Friends tab) ── */
   const handleSelectFriend = async (friend) => {
     setSelectedUserId(friend.id);
     setEnsuringThread(true);
@@ -410,7 +410,7 @@ useEffect(() => {
     }
   };
 
-  /* â”€â”€ Load messages + WS â”€â”€ */
+  /* ── Load messages + WS ── */
   useEffect(() => {
     const adminCanLoad = activeTab === 'admin' && (isAdminRole(user?.role) || userSupportThreadId);
     const friendsCanLoad = activeTab === 'friends' && isFriendsAllowed(user);
@@ -491,7 +491,7 @@ useEffect(() => {
     };
   }, [user, activeThreadId, activeTab, userSupportThreadId]);
 
-  /* â”€â”€ Send message â”€â”€ */
+  /* ── Send message ── */
  const handleSend = async (e) => {
     e.preventDefault();
     if (ensuringThread) return;
@@ -566,7 +566,7 @@ useEffect(() => {
   };
   const isOwn = (m) => String(m.senderId) === String(user?.id);
 
-  /* â”€â”€ Build inbox list (admins) or single support thread (non-admin) â”€â”€ */
+  /* ── Build inbox list (admins) or single support thread (non-admin) ── */
   const inboxList = useMemo(() => {
     if (!isAdminRole(user?.role)) {
       return threads.length ? threads.map(t => ({ ...t, id: t.userId, thread: t })) : [];
@@ -590,7 +590,7 @@ useEffect(() => {
     return [...withThreads, ...withoutThreads];
   }, [user?.role, users, threads, searchTerm]);
 
-  /* â”€â”€ Build friends list (filtered by search) â”€â”€ */
+  /* ── Build friends list (filtered by search) ── */
   const friendsList = useMemo(() => {
     const q = (searchTerm || '').toLowerCase().trim();
     const list = friends.filter(f => !q || (f.username || '').toLowerCase().includes(q));
@@ -621,7 +621,7 @@ useEffect(() => {
 
   const displayName = (u) => u?.username || u?.name || u?.email || `User ${u?.id}`;
 
-  /* â”€â”€ Group messages by date â”€â”€ */
+  /* ── Group messages by date ── */
   const groupedMessages = useMemo(() => {
     const groups = [];
     let lastDate = null;
@@ -646,7 +646,7 @@ useEffect(() => {
       <div className="admin-inbox-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
         <div className="admin-inbox-layout">
 
-          {/* â”€â”€ Sidebar â”€â”€ */}
+          {/* ── Sidebar ── */}
           <aside className="admin-inbox-sidebar">
             {/* Tabs: Admin | Friends */}
             <div className="admin-inbox-tabs">
@@ -808,7 +808,7 @@ useEffect(() => {
             </div>
           </aside>
 
-          {/* â”€â”€ Main conversation panel â”€â”€ */}
+          {/* ── Main conversation panel ── */}
           <main className="admin-inbox-main">
             {activeTab === 'friends' && !canUseFriendsTab ? (
               <FriendsUpgradeRequired />
@@ -841,12 +841,12 @@ useEffect(() => {
             >
               {ensuringThread && selectedUserId && !activeThreadId ? (
                 <div className="admin-inbox-conversation-empty">
-                  <div className="admin-inbox-conversation-empty-icon">âœ¦</div>
+                  <div className="admin-inbox-conversation-empty-icon">✦</div>
                   <p>Starting conversation…</p>
                 </div>
               ) : loadingMessages && activeThreadId ? (
                 <div className="admin-inbox-conversation-empty">
-                  <div className="admin-inbox-conversation-empty-icon">âœ¦</div>
+                  <div className="admin-inbox-conversation-empty-icon">✦</div>
                   <p>Loading messages…</p>
                 </div>
               ) : messages.length === 0 && activeThreadId ? (
@@ -914,7 +914,7 @@ useEffect(() => {
 
                 {file && (
                   <div className="admin-inbox-file-chip" title={file.name}>
-                    ðŸ“Ž {file.name}
+                    📎 {file.name}
                   </div>
                 )}
 

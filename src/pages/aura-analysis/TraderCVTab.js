@@ -375,7 +375,7 @@ export default function TraderCVTab() {
               <span className="trader-cv-quality-label">Avg this period</span>
             </div>
             <div className="trader-cv-quality-trend">
-              Trend: {quality.trend === 'up' ? 'â†‘ Improving' : quality.trend === 'down' ? 'â†“ Review process' : 'â†’ Stable'}
+              Trend: {quality.trend === 'up' ? '↑ Improving' : quality.trend === 'down' ? '↓ Review process' : '→ Stable'}
             </div>
             {quality.recent.length > 0 && (
               <div className="trader-cv-quality-badges">
@@ -483,12 +483,12 @@ export default function TraderCVTab() {
                   <span className="trader-cv-replay-contrib-label">7d discipline trend</span>
                   <span className="trader-cv-replay-contrib-value">
                     {replayContribution.discipline.replayDisciplineTrend === 'improving'
-                      ? 'â†‘ Improving'
+                      ? '↑ Improving'
                       : replayContribution.discipline.replayDisciplineTrend === 'slipping'
-                        ? 'â†“ Softer'
+                        ? '↓ Softer'
                         : replayContribution.discipline.replayDisciplineTrend === 'insufficient_evidence'
                           ? '—'
-                          : 'â†’ Stable'}
+                          : '→ Stable'}
                   </span>
                   <span className="trader-cv-replay-contrib-meta">vs prior week</span>
                 </div>

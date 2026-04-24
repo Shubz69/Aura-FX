@@ -73,18 +73,18 @@ function ChannelMuteButton({ channel, userId }) {
 
 // Emojis array for the emoji picker
 const emojis = [
-    'ðŸ˜€', 'ðŸ˜ƒ', 'ðŸ˜„', 'ðŸ˜', 'ðŸ˜†', 'ðŸ˜…', 'ðŸ˜‚', 'ðŸ¤£', 'ðŸ˜Š', 'ðŸ˜‡',
-    'ðŸ™‚', 'ðŸ™ƒ', 'ðŸ˜‰', 'ðŸ˜Œ', 'ðŸ˜', 'ðŸ¥°', 'ðŸ˜˜', 'ðŸ˜—', 'ðŸ˜™', 'ðŸ˜š',
-    'ðŸ˜‹', 'ðŸ˜›', 'ðŸ˜', 'ðŸ˜œ', 'ðŸ¤ª', 'ðŸ¤¨', 'ðŸ§', 'ðŸ¤“', 'ðŸ˜Ž', 'ðŸ¤©',
-    'ðŸ¥³', 'ðŸ˜', 'ðŸ˜’', 'ðŸ˜ž', 'ðŸ˜”', 'ðŸ˜Ÿ', 'ðŸ˜•', 'ðŸ™', 'â˜¹ï¸', 'ðŸ˜£',
-    'ðŸ˜–', 'ðŸ˜«', 'ðŸ˜©', 'ðŸ¥º', 'ðŸ˜¢', 'ðŸ˜­', 'ðŸ˜¤', 'ðŸ˜ ', 'ðŸ˜¡', 'ðŸ¤¬',
-    'ðŸ¤¯', 'ðŸ˜³', 'ðŸ¥µ', 'ðŸ¥¶', 'ðŸ˜±', 'ðŸ˜¨', 'ðŸ˜°', 'ðŸ˜¥', 'ðŸ˜“', 'ðŸ¤—',
-    'ðŸ¤”', 'ðŸ¤­', 'ðŸ¤«', 'ðŸ¤¥', 'ðŸ˜¶', 'ðŸ˜', 'ðŸ˜‘', 'ðŸ˜¯', 'ðŸ˜¦', 'ðŸ˜§',
-    'ðŸ˜®', 'ðŸ˜²', 'ðŸ˜´', 'ðŸ¤¤', 'ðŸ˜ª', 'ðŸ˜µ', 'ðŸ¤', 'ðŸ¥´', 'ðŸ¤¢', 'ðŸ¤®',
-    'ðŸ’ª', 'ðŸ‘', 'ðŸ‘Ž', 'ðŸ‘', 'ðŸ™Œ', 'ðŸ‘‹', 'ðŸ¤', 'ðŸ™', 'ðŸ’°', 'ðŸ’¸',
-    'ðŸ’Ž', 'ðŸ’µ', 'ðŸ’´', 'ðŸ’¶', 'ðŸ’·', 'ðŸš€', 'ðŸ“ˆ', 'ðŸ“‰', 'ðŸ’¹', 'âš¡',
-    'ðŸ”¥', '⭐', 'âœ¨', 'ðŸ’«', 'ðŸŒŸ', 'ðŸŽ¯', 'ðŸŽ®', 'ðŸŽµ', 'ðŸŽ¶', '❤️',
-    'ðŸ’œ', 'ðŸ’™', 'ðŸ’š', 'ðŸ’›', 'ðŸ§¡', 'ðŸ–¤', 'ðŸ¤', 'ðŸ¤Ž', 'ðŸ’”', '❣️'
+    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+    '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+    '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
+    '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
+    '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬',
+    '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗',
+    '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😯', '😦', '😧',
+    '😮', '😲', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮',
+    '💪', '👍', '👎', '👏', '🙌', '👋', '🤝', '🙏', '💰', '💸',
+    '💎', '💵', '💴', '💶', '💷', '🚀', '📈', '📉', '💹', '⚡',
+    '🔥', '⭐', '✨', '💫', '🌟', '🎯', '🎮', '🎵', '🎶', '❤️',
+    '💜', '💙', '💚', '💛', '🧡', '🖤', '🤍', '🤎', '💔', '❣️'
 ];
 
 // Online users will be fetched from API or computed from real data
@@ -552,7 +552,7 @@ const [showImageModal, setShowImageModal] = useState(false);
 const [selectedImage, setSelectedImage] = useState(null);
 const scrollTimeoutRef = useRef(null);
 const messagesContainerRef = useRef(null);
-/** Prevents overlapping /api/users/:id polls (storm â†’ net::ERR_INSUFFICIENT_RESOURCES when DB is slow). */
+/** Prevents overlapping /api/users/:id polls (storm → net::ERR_INSUFFICIENT_RESOURCES when DB is slow). */
 const latestUserFetchInFlightRef = useRef(false);
 const latestUserBackoffUntilRef = useRef(0);
 const latestUserFailCountRef = useRef(0);
@@ -960,7 +960,7 @@ const [journalLoading, setJournalLoading] = useState(false);
             const ts = typeof parsed?.ts === 'number' ? parsed.ts : 0;
             if (!dataUrl || typeof dataUrl !== 'string') return;
             if (Date.now() - ts > 5 * 60 * 1000) {
-                toast.info('Trader Passport attachment expired — generate a new one from The Operator â†’ Trader CV.');
+                toast.info('Trader Passport attachment expired — generate a new one from The Operator → Trader CV.');
                 return;
             }
             try {
@@ -1721,7 +1721,7 @@ return newMessages;
 
     const messagesRef = useRef(messages);
     messagesRef.current = messages;
-    /** Prevents stacked message polls (was hammering API + main thread â†’ "Page Unresponsive"). */
+    /** Prevents stacked message polls (was hammering API + main thread → "Page Unresponsive"). */
     const messagesPollInFlightRef = useRef(false);
 
     useEffect(() => {
@@ -2007,7 +2007,7 @@ const renderMessageContent = (content, messageFile) => {
                     }
 
                     const errorData = await response.json().catch(() => ({}));
-                    console.error('âŒ Failed to sync XP to database:', response.status, errorData);
+                    console.error('❌ Failed to sync XP to database:', response.status, errorData);
                     setTimeout(async () => {
                         try {
                             const retryResponse = await fetch(`${API_BASE_URL}/api/users/update-xp`, {
@@ -2028,11 +2028,11 @@ const renderMessageContent = (content, messageFile) => {
                                 applyServerProfile(result);
                             }
                         } catch (retryError) {
-                            console.error('âŒ XP retry failed:', retryError);
+                            console.error('❌ XP retry failed:', retryError);
                         }
                     }, 1000);
                 } catch (dbError) {
-                    console.error('âŒ Error syncing XP to database:', dbError);
+                    console.error('❌ Error syncing XP to database:', dbError);
                 }
             } else {
                 console.warn('⚠️ Cannot sync XP: User ID not found');
@@ -2456,7 +2456,7 @@ if (window.requestAnimationFrame) {
                     }));
                 }
             } else {
-                console.error('âŒ Failed to award XP for GIF');
+                console.error('❌ Failed to award XP for GIF');
             }
         } catch (error) {
             console.error('Error sending GIF message:', error);
@@ -4280,7 +4280,7 @@ setMessages(prev => {
                 }));
             }
         } else {
-            console.error('âŒ Failed to award XP');
+            console.error('❌ Failed to award XP');
         }
     } else {
       const errText =
@@ -7468,7 +7468,7 @@ if (!isAuthenticated && !hasToken) {
                 >
                     <span>✨</span>
                     {channelActionLoading ? 'Creating...' : 'Create Channel'}
-                    <span>â†’</span>
+                    <span>→</span>
                 </button>
             </form>
 

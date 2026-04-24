@@ -3,6 +3,16 @@
 - Generated: 2026-04-24T12:51:49.057Z
 - Base: https://www.auraterminal.ai
 
+## Final classification
+
+- rapidSwitchProductCorrectness: `PASS`
+- adminUsersFetchReliability: `RISK`
+- rapidSwitchOverall: `PASS_WITH_RISK`
+- admin 3-message burst: `PASS`
+- user 3-message burst: `PASS`
+- QA-RISK-MSG-001: `PASS/CLOSED` (product correctness)
+- Concurrency/load validation requirement: keep `QA-RISK-MSG-CONCURRENCY-001` open until bounded simultaneous multi-user messaging checks pass.
+
 ## live messaging: admin sends to user realtime — PASS
 - Steps: Open /admin/inbox -> Send unique message -> Observe /messages receive
 - Expected: User receives without waiting full poll interval when websocket healthy

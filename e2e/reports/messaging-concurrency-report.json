@@ -1,0 +1,39 @@
+{
+  "generatedAt": "2026-04-24T13:36:57.421Z",
+  "base": "https://www.auraterminal.ai",
+  "scope": "bounded single-thread overlap (admin+normal user sessions only)",
+  "overlapTimingMs": 29786,
+  "sent": {
+    "adminToUser": 5,
+    "userToAdmin": 5,
+    "total": 10
+  },
+  "received": {
+    "adminSawUser": 5,
+    "userSawAdmin": 5,
+    "total": 10
+  },
+  "duplicates": 0,
+  "missing": 0,
+  "order": {
+    "adminThreadOrderOk": true,
+    "userThreadOrderOk": true
+  },
+  "noCrossThreadLeakage": true,
+  "noStaleOverwrite": true,
+  "composerStuck": false,
+  "reloadDuplicateNodes": false,
+  "api": {
+    "timings": [],
+    "failures": [
+      {
+        "type": "requestfailed",
+        "error": "net::ERR_ABORTED",
+        "url": "https://www.auraterminal.ai/api/messages/threads/30/messages?limit=50&_sync=1777037816432",
+        "during": "https://www.auraterminal.ai/messages"
+      }
+    ],
+    "fail429or5xx": false
+  },
+  "pass": true
+}

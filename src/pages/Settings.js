@@ -449,7 +449,7 @@ const Settings = () => {
                 onClick={() => setShowFilters(!showFilters)}
               >
                 <FaFilter style={{ marginRight: '8px' }} />
-                Filters {showFilters ? 'â–²' : '▼'}
+                Filters {showFilters ? '▲' : '▼'}
               </button>
             </div>
 

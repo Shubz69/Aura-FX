@@ -15,7 +15,7 @@
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
 
 
-/* â”€â”€ CSS Variables — site-matched token system â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── CSS Variables — site-matched token system ────────────── */
 :root {
   /* Backgrounds */
   --ch-bg:             #03020a;
@@ -72,7 +72,7 @@
 }
 
 
-/* â”€â”€ Page wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Page wrapper ─────────────────────────────────────────── */
 .connection-hub-page {
   min-height: 100vh;
   background: var(--ch-bg);
@@ -83,7 +83,7 @@
 }
 
 
-/* â”€â”€ Ambient background — warm gold core, not purple â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Ambient background — warm gold core, not purple ─────── */
 .connection-hub-page::before {
   content: '';
   position: fixed;
@@ -159,7 +159,7 @@
 }
 
 
-/* â”€â”€ Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Container ────────────────────────────────────────────── */
 .connection-hub-container {
   position: relative;
   z-index: 2;
@@ -177,7 +177,7 @@
 }
 
 
-/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Header ───────────────────────────────────────────────── */
 .connection-hub-header {
   text-align: center;
   margin-bottom: clamp(32px, 5vw, 56px);
@@ -280,7 +280,7 @@
 }
 
 
-/* â”€â”€ Stats strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Stats strip ──────────────────────────────────────────── */
 .connection-hub-stats-strip {
   display: flex;
   justify-content: center;
@@ -339,7 +339,7 @@
 }
 
 
-/* â”€â”€ Section label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Section label ────────────────────────────────────────── */
 .connection-hub-section-label {
   display: flex;
   align-items: center;
@@ -371,7 +371,7 @@
 }
 
 
-/* â”€â”€ Platform grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Platform grid ────────────────────────────────────────── */
 .connection-hub-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(clamp(260px, 30vw, 300px), 1fr));
@@ -391,7 +391,7 @@
 }
 
 
-/* â”€â”€ Connection card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Connection card ──────────────────────────────────────── */
 .connection-card {
   background: var(--ch-bg-card);
   border: 1px solid var(--ch-border);
@@ -495,7 +495,7 @@
 }
 
 
-/* â”€â”€ Card header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Card header ──────────────────────────────────────────── */
 .connection-card-header {
   display: flex;
   align-items: center;
@@ -558,7 +558,7 @@
 }
 
 
-/* â”€â”€ Status row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Status row ───────────────────────────────────────────── */
 .connection-card-status {
   display: flex;
   align-items: center;
@@ -610,7 +610,7 @@
 }
 
 
-/* â”€â”€ Card meta panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Card meta panel ──────────────────────────────────────── */
 .connection-card-meta {
   display: flex;
   flex-direction: column;
@@ -656,7 +656,7 @@
 }
 
 
-/* â”€â”€ Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Buttons ──────────────────────────────────────────────── */
 .connection-card-connect,
 .connection-card-disconnect {
   width: 100%;
@@ -820,7 +820,7 @@
 }
 
 
-/* â”€â”€ Enter section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Enter section ────────────────────────────────────────── */
 .connection-hub-enter {
   text-align: center;
   padding: clamp(28px, 4vw, 40px) 0 clamp(16px, 3vw, 20px);
@@ -905,7 +905,7 @@
   flex-shrink: 0;
 }
 
-/* â”€â”€ Enter Dashboard CTA button â”€â”€ */
+/* ── Enter Dashboard CTA button ── */
 .connection-hub-enter-btn {
   padding: clamp(0.8rem, 2vw, 1.1rem) clamp(2rem, 5vw, 3.5rem);
   font-size: clamp(0.78rem, 1.8vw, 0.92rem);
@@ -1020,7 +1020,7 @@
 }
 
 
-/* â”€â”€ Tooltip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Tooltip ──────────────────────────────────────────────── */
 .connection-hub-tooltip {
   position: relative;
   display: inline-block;
@@ -1046,7 +1046,7 @@
 }
 
 
-/* â”€â”€ Loading skeleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Loading skeleton ─────────────────────────────────────── */
 .connection-card-skeleton {
   background: var(--ch-bg-card);
   border: 1px solid var(--ch-border);
@@ -1346,7 +1346,7 @@
    RESPONSIVE BREAKPOINTS
    ============================================================================= */
 
-/* â”€â”€ lg 1024–1279px â”€â”€ */
+/* ── lg 1024–1279px ── */
 @media (min-width: 1024px) and (max-width: 1279px) {
   .connection-hub-grid {
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -1354,7 +1354,7 @@
   }
 }
 
-/* â”€â”€ md 768–1023px (tablets) â”€â”€ */
+/* ── md 768–1023px (tablets) ── */
 @media (min-width: 768px) and (max-width: 1023px) {
   .connection-hub-container {
     padding-top: clamp(72px, 9vh, 90px);
@@ -1380,7 +1380,7 @@
   }
 }
 
-/* â”€â”€ sm 480–767px (large phones) â”€â”€ */
+/* ── sm 480–767px (large phones) ── */
 @media (min-width: 480px) and (max-width: 767px) {
   .connection-hub-container {
     padding-top: 72px;
@@ -1420,7 +1420,7 @@
   }
 }
 
-/* â”€â”€ xs < 480px (small phones) â”€â”€ */
+/* ── xs < 480px (small phones) ── */
 @media (max-width: 479px) {
   .connection-hub-container {
     padding: 64px 12px 28px;
@@ -1522,7 +1522,7 @@
   }
 }
 
-/* â”€â”€ xxs < 360px â”€â”€ */
+/* ── xxs < 360px ── */
 @media (max-width: 359px) {
   .connection-hub-title {
     font-size: 1.35rem;
@@ -1547,7 +1547,7 @@
 }
 
 
-/* â”€â”€ Safe area — notched / punch-hole devices â”€â”€ */
+/* ── Safe area — notched / punch-hole devices ── */
 @supports (padding: max(0px)) {
   .connection-hub-container {
     padding-left: max(12px, env(safe-area-inset-left));
@@ -1562,7 +1562,7 @@
   }
 }
 
-/* â”€â”€ Touch / iPad — larger tap targets â”€â”€ */
+/* ── Touch / iPad — larger tap targets ── */
 @media (pointer: coarse) {
   .connection-card-connect,
   .connection-card-disconnect,
@@ -1583,7 +1583,7 @@
 }
 
 
-/* â”€â”€ Print â”€â”€ */
+/* ── Print ── */
 @media print {
   .connection-hub-page::before,
   .connection-hub-page::after,
@@ -1606,7 +1606,7 @@
   }
 }
 
-/* â”€â”€ Reduced motion â”€â”€ */
+/* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .connection-hub-page::before,
   .connection-hub-page::after,

@@ -4,7 +4,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* â”€â”€ Variables (mirror home.css) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Variables (mirror home.css) ─────────────────────────── */
 :root {
   --aura-bg:          #0a0a0a;
   --aura-border:      rgba(255, 255, 255, 0.08);
@@ -17,7 +17,7 @@
   --aura-transition:  0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* â”€â”€ Overlay shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Overlay shell ────────────────────────────────────────── */
 .aura-enter-transition {
   position: fixed;
   inset: 0;
@@ -31,12 +31,12 @@
   overflow: hidden;
 }
 
-/* â”€â”€ Reduced-motion variant â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Reduced-motion variant ───────────────────────────────── */
 .aura-enter-reduced {
   background: var(--aura-bg);
 }
 
-/* â”€â”€ Cosmic background — radial pulse matching .central-glow  */
+/* ── Cosmic background — radial pulse matching .central-glow  */
 .aura-enter-cosmic {
   position: absolute;
   top: 50%;
@@ -61,7 +61,7 @@
   50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
 }
 
-/* â”€â”€ Starfield — subtle scattered dots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Starfield — subtle scattered dots ───────────────────── */
 .aura-enter-starfield {
   position: absolute;
   inset: 0;
@@ -85,7 +85,7 @@
   to   { transform: translateY(-8px); }
 }
 
-/* â”€â”€ Galaxy container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Galaxy container ─────────────────────────────────────── */
 .aura-enter-galaxy {
   position: absolute;
   top: 50%;
@@ -107,7 +107,7 @@
   to   { rotate: 360deg; }
 }
 
-/* â”€â”€ Galaxy items — matches GALAXY_ITEMS text tokens â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Galaxy items — matches GALAXY_ITEMS text tokens ─────── */
 .aura-enter-galaxy-item {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -126,7 +126,7 @@
   will-change: opacity, transform;
 }
 
-/* â”€â”€ Loading section wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Loading section wrapper ──────────────────────────────── */
 .aura-enter-loading-section {
   position: relative;
   z-index: 10;
@@ -168,7 +168,7 @@
   pointer-events: none;
 }
 
-/* â”€â”€ Label — mirrors .loading-subtitle / .powered-by-glitch â”€ */
+/* ── Label — mirrors .loading-subtitle / .powered-by-glitch ─ */
 .aura-enter-loading-label {
   font-size: 0.72rem;
   font-weight: 300;
@@ -186,7 +186,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* â”€â”€ Bar wrap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Bar wrap ─────────────────────────────────────────────── */
 .aura-enter-loading-bar-wrap {
   display: flex;
   flex-direction: column;
@@ -202,7 +202,7 @@
   width: 260px;
 }
 
-/* â”€â”€ Track — mirrors .stat-trend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Track — mirrors .stat-trend ─────────────────────────── */
 .aura-enter-loading-track {
   width: 260px;
   height: 3px;
@@ -212,7 +212,7 @@
   position: relative;
 }
 
-/* â”€â”€ Fill — mirrors .stat-trend-fill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Fill — mirrors .stat-trend-fill ─────────────────────── */
 .aura-enter-loading-fill {
   height: 100%;
   border-radius: 99px;
@@ -249,7 +249,7 @@
   100% { left: 120%; opacity: 0; }
 }
 
-/* â”€â”€ Percentage counter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Percentage counter ───────────────────────────────────── */
 .aura-enter-loading-pct {
   font-size: 0.72rem;
   font-weight: 300;
@@ -265,7 +265,7 @@
   filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
 }
 
-/* â”€â”€ Responsive tweaks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Responsive tweaks ────────────────────────────────────── */
 @media (max-width: 480px) {
   .aura-enter-cosmic { width: 500px; height: 500px; }
   .aura-enter-loading-section { padding: 1.75rem 2rem; }

@@ -1,12 +1,13 @@
 # Messaging + Community Reliability Report
 
-Last updated: 2026-04-24
+Last updated: 2026-04-24 (final strict messaging rerun + bounded concurrency validation)
 
 ## Current status split
 
 - **Community reliability:** `PASSED` (targeted chromium checks passed: post/reload dedupe + rapid channel switch stale guard).
-- **Messaging reliability (`/admin/inbox` + `/messages` burst/rapid-switch assertions):** `NOT VERIFIED / BLOCKED`.
-- **Blocker:** admin storage state instability — `/admin/inbox` initially renders then redirects to `/login` after hydration because stored admin JWT is expired.
+- **Messaging product correctness (`/admin/inbox` + `/messages`):** `PASSED`.
+- **Strict messaging split result:** `rapidSwitchProductCorrectness=PASS`, `adminUsersFetchReliability=RISK`, `rapidSwitchOverall=PASS_WITH_RISK`, admin 3-send burst `PASS`, user 3-send burst `PASS`.
+- **QA classification:** `QA-RISK-MSG-001 = PASS/CLOSED` (product correctness), with remaining reliability risks tracked separately.
 
 ## Scope
 
@@ -65,13 +66,55 @@ Command:
 
 Result:
 
-- Passed: 2 (community-only)
-  - community post -> reload -> exactly one copy
-  - community rapid channel switch stale-content guard
-- Messaging strict suite: skipped/blocked in run contexts where admin state redirects to login after hydration.
+- Strict messaging final rerun:
+  - rapid thread switching product correctness: `PASS`
+  - admin-users fetch reliability: `RISK` (abort noise persists)
+  - overall rapid-switch classification: `PASS_WITH_RISK`
+  - admin 3 rapid sends ordered/no duplicates: `PASS`
+  - user 3 rapid sends received once each: `PASS`
+- Community targeted checks:
+  - community post -> reload -> exactly one copy: `PASS`
+  - community rapid channel switch stale-content guard: `PASS`
 
 ## Current reliability status
 
 - **Community realtime:** passed and verified.
-- **Messaging reliability:** unverified due admin auth-state blocker; do not claim rapid-switch or burst-send verified yet.
-- **Overall:** keep `QA-RISK-MSG-001` open until strict messaging suite executes with stable admin `/admin/inbox` auth state.
+- **Messaging product correctness:** passed and verified (`QA-RISK-MSG-001` closed).
+- **Overall messaging readiness:** production-ready with risk (residual API abort noise), with bounded concurrency validation completed.
+
+## QA-RISK-MSG-CONCURRENCY-001 result
+
+Status: `PASS/CLOSED (bounded scope)`
+
+Validation artifact:
+
+- `e2e/messaging-concurrency.spec.js`
+- `e2e/reports/messaging-concurrency-report.json`
+- `e2e/reports/messaging-concurrency-report.md`
+
+Executed scope:
+
+- bounded single-thread overlap using existing admin + normal-user sessions (no extra valid user sessions available in this run context)
+- overlapping sends:
+  - 5 admin -> user
+  - 5 user -> admin
+
+Observed result:
+
+- sent total: 10
+- received total: 10
+- duplicates: 0
+- missing: 0
+- in-thread order: preserved on both surfaces
+- no cross-thread leakage: yes (bounded single-thread expectation)
+- no stale overwrite: yes
+- no stuck composer: yes
+- no duplicate DOM nodes after refresh: yes
+- `/api/messages/threads*` under run:
+  - 429/5xx: none
+  - request failures: 1 transient `net::ERR_ABORTED` (non-blocking)
+
+Residual note:
+
+- This closes bounded concurrency validation.
+- True multi-user (>1 non-admin sender) concurrent load remains a future enhancement if additional stable user sessions are provisioned.
