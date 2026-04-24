@@ -508,7 +508,9 @@ const Api = {
 
     getChannelMessages: async (channelId, options = {}, customHeaders = {}) => {
         const { afterId } = options;
-        const params = afterId ? { afterId: String(afterId) } : {};
+        const params = afterId
+            ? { afterId: String(afterId), _cb: Date.now() }
+            : { _cb: Date.now() };
         if (process.env.NODE_ENV === 'development') console.log(`Attempting to fetch messages for channel ${channelId}${afterId ? ` (afterId=${afterId})` : ''}`);
         try {
             const token = localStorage.getItem('token');
@@ -517,7 +519,8 @@ const Api = {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     ...customHeaders
-                }
+                },
+                skipCache: true,
             });
             return response;
 } catch (error) {

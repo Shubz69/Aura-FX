@@ -39,7 +39,8 @@ test('create normal-user storage state', async ({ page, context }) => {
   await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 25000 });
   await dismissConsentIfPresent(page);
 
-  const submit = page.locator('button[type="submit"], button:has-text("Sign"), button:has-text("Log")').first();
+  // Avoid matching the nav "Sign In" control (has-text("Sign")) — use the login form submit only.
+  const submit = page.locator('button.login-button[type="submit"]');
   const idField = page.locator('input[type="email"], input[name="email"], #email, input[name="username"], input[type="text"]').first();
   const passField = page.locator('input[type="password"]').first();
 
@@ -50,8 +51,14 @@ test('create normal-user storage state', async ({ page, context }) => {
     await dismissConsentIfPresent(page);
     await idField.fill(id);
     await passField.fill(creds.password);
-    await submit.click({ timeout: 10000, force: true });
-    await page.waitForTimeout(3500);
+    const loginResp = page
+      .waitForResponse((r) => r.url().includes('/api/auth/login') && r.status() < 500, { timeout: 25000 })
+      .catch(() => null);
+    await submit.click({ timeout: 10000 });
+    const resp = await loginResp;
+    if (resp && resp.status() >= 400) continue;
+    await page.waitForURL((u) => !/\/login(\?|$)/i.test(u.pathname + u.search), { timeout: 20000 }).catch(() => {});
+    await page.waitForTimeout(800);
     if (!/\/login(\?|$)/i.test(page.url())) {
       ok = true;
       break;

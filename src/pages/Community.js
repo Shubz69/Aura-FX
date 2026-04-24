@@ -2584,8 +2584,8 @@ if (window.requestAnimationFrame) {
             if (mergeMode) {
                 // Merge mode: Add only new messages that don't exist yet
                 setMessages(prev => {
-                    const existingIds = new Set(prev.map(m => m.id));
-                    const newMessages = apiMessages.filter(m => !existingIds.has(m.id));
+                    const existingIds = new Set(prev.map((m) => String(m.id ?? '')));
+                    const newMessages = apiMessages.filter((m) => !existingIds.has(String(m.id ?? '')));
                     
                     if (newMessages.length > 0) {
                         // Merge new messages with existing ones, sorted by timestamp
@@ -3530,8 +3530,9 @@ useEffect(() => {
     if (pollingActiveRef.current) return;
     pollingActiveRef.current = true;
 
-    // Shorter fallback when WS reports connected (realtime should carry load); faster catch-up if Pusher/WS miss an event
-    const POLL_MS_WS_UP = 6000;
+    // When WS/Pusher reports connected, realtime should carry most updates — but a dead/stale socket
+    // must not delay REST reconcile for multiple seconds (same class of bug as inbox messaging).
+    const POLL_MS_WS_UP = 2500;
     const POLL_MS_WS_DOWN = 3500;
     const pollInterval = isConnected ? POLL_MS_WS_UP : POLL_MS_WS_DOWN;
 
@@ -3555,7 +3556,10 @@ useEffect(() => {
                         }
                     }
                 }
-                const response = await Api.getChannelMessages(channelId, afterId ? { afterId } : {});
+                const response = await Api.getChannelMessages(
+                    channelId,
+                    afterId ? { afterId, _cb: Date.now() } : { _cb: Date.now() },
+                );
                 if (selectedChannelRef.current?.id !== channelId) return;
 
                 if (response && response.data && Array.isArray(response.data)) {
