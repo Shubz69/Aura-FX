@@ -3520,62 +3520,137 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SIDEBAR — Move downward + theme
+   SIDEBAR & MAIN — Push Both Upward Together, Fill Gap to Navbar
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* Move the entire layout upward */
+.journal-page .journal-layout {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0 !important;
+    margin-top: -28px !important;  /* Pulls everything up toward navbar */
+    padding-top: 0 !important;
+}
+
+/* Remove extra top padding from journal-page */
+.journal-page {
+    padding-top: 56px !important;  /* Just enough for navbar clearance */
+}
+
+/* Sidebar — keep original styling, just adjust position */
 .journal-page .journal-sidebar {
-    background: rgba(5, 4, 14, 0.85) !important;
-    border-right: 1px solid rgba(234, 169, 96, 0.15) !important;
-    box-shadow: inset -1px 0 0 rgba(234, 169, 96, 0.05) !important;
-    padding-top: 48px !important; /* ← Moves content downward */
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 22px !important;
+    padding-bottom: 22px !important;
+    width: 280px !important;
+    flex-shrink: 0;
+    box-sizing: border-box;
 }
 
-.journal-page .journal-sidebar::before {
-    background: linear-gradient(90deg,
-        transparent,
-        rgba(234, 169, 96, 0.5) 20%,
-        rgba(248, 195, 125, 0.3) 50%,
-        rgba(234, 169, 96, 0.3) 78%,
-        transparent) !important;
-}
-
-.journal-page .journal-sidebar-header {
+/* Main content — align with sidebar */
+.journal-page .journal-main {
+    padding-top: 22px !important;  /* Match sidebar padding-top */
     margin-top: 0 !important;
 }
 
-/* ── Sidebar Title ────────────────────────────────────────────────────── */
-.journal-page .journal-sidebar-title {
-    background: linear-gradient(135deg, #FDE8C4, #F8C37D, #EAA960) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    background-clip: text !important;
+/* ── Calendar: Today + Selected Day — WHITE TEXT ── */
+.journal-page .journal-calendar-day--selected {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+.journal-page .journal-calendar-day--today {
+    color: #F8C37D !important;
+    font-weight: 600 !important;
+}
+
+.journal-page .journal-calendar-day--today.journal-calendar-day--selected {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+.journal-page .journal-calendar-day--selected .journal-calendar-day-num {
+    color: #ffffff !important;
+}
+
+.journal-page .journal-calendar-day--today.journal-calendar-day--selected .journal-calendar-day-num {
+    color: #ffffff !important;
+}
+
+.journal-page .journal-calendar-day--today.journal-calendar-day--selected .journal-calendar-day-num::before {
+    color: rgba(255, 255, 255, 0.85) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   CALENDAR — Complete theme application
+   RESPONSIVE
    ═══════════════════════════════════════════════════════════════════════ */
 
-.journal-page .journal-calendar {
-    background: rgba(5, 4, 14, 0.65) !important;
-    background-image: none !important;
-    border: 1px solid rgba(234, 169, 96, 0.15) !important;
-    border-radius: 18px !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
-    backdrop-filter: blur(16px) saturate(1.08) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(1.08) !important;
+@media (max-width: 900px) {
+    .journal-page .journal-layout {
+        flex-direction: column !important;
+        margin-top: -16px !important;
+    }
+    
+    .journal-page {
+        padding-top: 52px !important;
+    }
+    
+    .journal-page .journal-sidebar {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 0 14px 0 !important;
+        padding: 18px 18px !important;
+    }
+    
+    .journal-page .journal-main {
+        padding: 0 16px 24px !important;
+    }
 }
 
-.journal-page .journal-calendar::before {
-    background: linear-gradient(90deg,
-        transparent,
-        rgba(234, 169, 96, 0.5) 30%,
-        rgba(248, 195, 125, 0.35) 60%,
-        transparent) !important;
+@media (max-width: 767px) {
+    .journal-page {
+        padding-top: 48px !important;
+    }
+    
+    .journal-page .journal-layout {
+        margin-top: -12px !important;
+    }
+    
+    .journal-page .journal-sidebar {
+        padding: 16px 14px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .journal-page .journal-main {
+        padding: 0 12px 20px !important;
+    }
 }
 
+@media (min-width: 901px) {
+    .journal-page .journal-sidebar {
+        position: sticky !important;
+        top: 84px !important;
+    }
+}
+/* ═══════════════════════════════════════════════════════════════════════
+   SIDEBAR — Gold Theme Border (Replace Blue Shade)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.journal-page .journal-sidebar {
+    border: 1px solid rgba(234, 169, 96, 0.25) !important;
+    border-right: 1px solid rgba(234, 169, 96, 0.25) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.35), 
+        inset 0 1px 0 rgba(255, 255, 255, 0.03),
+        inset -1px 0 0 rgba(234, 169, 96, 0.05) !important;
+}
+
+/* Calendar nav buttons — gold instead of blue */
 .journal-page .journal-calendar-btn {
     background: rgba(234, 169, 96, 0.08) !important;
-    border-color: rgba(234, 169, 96, 0.25) !important;
+    border: 1px solid rgba(234, 169, 96, 0.25) !important;
     color: rgba(248, 195, 125, 0.9) !important;
 }
 
@@ -3586,60 +3661,7 @@
     box-shadow: 0 0 18px rgba(234, 169, 96, 0.2) !important;
 }
 
-.journal-page .journal-calendar-month {
-    background: linear-gradient(135deg, #FDE8C4, #F8C37D, #EAA960) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    background-clip: text !important;
-}
-
-/* Calendar days */
-.journal-page .journal-calendar-day {
-    color: rgba(255, 255, 255, 0.65) !important;
-}
-
-.journal-page .journal-calendar-day--today {
-    background: rgba(234, 169, 96, 0.12) !important;
-    color: #F8C37D !important;
-    font-weight: 600 !important;
-}
-
-.journal-page .journal-calendar-day--today::before {
-    background:
-        linear-gradient(#010008, #010008) padding-box,
-        conic-gradient(
-            rgba(248, 195, 125, 0.7) 0deg,
-            rgba(234, 169, 96, 0.6) 90deg,
-            rgba(234, 169, 96, 0.1) 180deg,
-            rgba(248, 195, 125, 0.5) 270deg,
-            rgba(248, 195, 125, 0.7) 360deg
-        ) border-box !important;
-}
-
-.journal-page .journal-calendar-day--selected {
-    background: linear-gradient(135deg,
-        rgba(248, 195, 125, 0.35) 0%,
-        rgba(234, 169, 96, 0.25) 50%,
-        rgba(212, 141, 68, 0.25) 100%) !important;
-    border-color: rgba(248, 195, 125, 0.55) !important;
-    color: #fff !important;
-    box-shadow: 0 0 0 2px rgba(234, 169, 96, 0.15), 0 6px 24px rgba(234, 169, 96, 0.2) !important;
-}
-
-.journal-page .journal-calendar-day--today.journal-calendar-day--selected {
-    background: linear-gradient(135deg,
-        rgba(248, 195, 125, 0.45) 0%,
-        rgba(234, 169, 96, 0.35) 50%,
-        rgba(212, 141, 68, 0.35) 100%) !important;
-    color: #0a0704 !important;
-}
-
-.journal-page .journal-calendar-day:hover {
-    background: rgba(234, 169, 96, 0.08) !important;
-    border-color: rgba(248, 195, 125, 0.35) !important;
-    color: #fff !important;
-}
-
+/* Calendar footer today button */
 .journal-page .journal-calendar-footer-today-btn {
     border-color: rgba(234, 169, 96, 0.35) !important;
     color: rgba(248, 195, 125, 0.9) !important;
@@ -3649,11 +3671,233 @@
     background: rgba(234, 169, 96, 0.12) !important;
     border-color: rgba(248, 195, 125, 0.55) !important;
 }
+/* ═══════════════════════════════════════════════════════════════════════
+   CALENDAR DAYS — Complete Gold Theme
+   ═══════════════════════════════════════════════════════════════════════ */
 
-.journal-page .journal-calendar-footer-done {
-    color: #6FFFC9 !important;
+/* ── Default day ─────────────────────────────────────────────────── */
+.journal-page .journal-calendar-day {
+    color: rgba(255, 255, 255, 0.65) !important;
 }
 
+/* ── Hover ───────────────────────────────────────────────────────── */
+.journal-page .journal-calendar-day:hover {
+    background: rgba(234, 169, 96, 0.10) !important;
+    border-color: rgba(248, 195, 125, 0.45) !important;
+    color: #ffffff !important;
+    transform: scale(1.12) translateY(-1px) !important;
+    box-shadow: 0 4px 18px rgba(180, 120, 50, 0.22) !important;
+}
+
+/* ── Empty ───────────────────────────────────────────────────────── */
+.journal-page .journal-calendar-day--empty {
+    pointer-events: none;
+    opacity: 0;
+    animation: none;
+}
+
+/* ── Locked ──────────────────────────────────────────────────────── */
+.journal-page .journal-calendar-day--locked {
+    opacity: 0.32;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.journal-page .journal-calendar-day--locked:hover {
+    transform: none;
+    border-color: inherit;
+    box-shadow: none;
+}
+
+/* ── Today ───────────────────────────────────────────────────────── */
+.journal-page .journal-calendar-day--today {
+    color: #F8C37D !important;
+    font-weight: 600 !important;
+    background: rgba(234, 169, 96, 0.12) !important;
+    animation: cal-todayPulse 3s ease-in-out infinite,
+               journal-dayAppear 0.28s ease-out both;
+}
+
+/* Today pulse — gold */
+@keyframes cal-todayPulse {
+    0%, 100% { 
+        box-shadow: 0 0 0 0px rgba(234, 169, 96, 0.35), 
+                    0 0 14px rgba(200, 140, 60, 0.15); 
+    }
+    50% { 
+        box-shadow: 0 0 0 3px rgba(234, 169, 96, 0.12), 
+                    0 0 24px rgba(220, 160, 80, 0.22); 
+    }
+}
+
+/* Today orbit ring — gold */
+.journal-page .journal-calendar-day--today::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: clamp(8px, 2vw, 13px);
+    border: 1px solid transparent;
+    background:
+        linear-gradient(#010008, #010008) padding-box,
+        conic-gradient(
+            rgba(248, 195, 125, 0.75) 0deg,
+            rgba(234, 169, 96, 0.65) 90deg,
+            rgba(234, 169, 96, 0.12) 180deg,
+            rgba(248, 195, 125, 0.55) 270deg,
+            rgba(248, 195, 125, 0.75) 360deg
+        ) border-box !important;
+    animation: cal-orbitSpin 4s linear infinite;
+    pointer-events: none;
+}
+
+/* ── Selected ────────────────────────────────────────────────────── */
+.journal-page .journal-calendar-day--selected {
+    background: linear-gradient(135deg,
+        rgba(248, 195, 125, 0.45) 0%,
+        rgba(234, 169, 96, 0.35) 50%,
+        rgba(212, 141, 68, 0.35) 100%
+    ) !important;
+    border-color: rgba(248, 195, 125, 0.55) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    transform: scale(1.08);
+    animation: cal-selectedGlowGold 2.5s ease-in-out infinite,
+               journal-dayAppear 0.28s ease-out both;
+    box-shadow:
+        0 0 0 2px rgba(234, 169, 96, 0.18),
+        0 6px 24px rgba(180, 120, 50, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Selected glow — gold */
+@keyframes cal-selectedGlowGold {
+    0%, 100% { 
+        box-shadow: 0 4px 22px rgba(200, 140, 60, 0.28), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.15); 
+    }
+    50% { 
+        box-shadow: 0 6px 34px rgba(234, 169, 96, 0.38), 
+                    0 0 0 1px rgba(248, 195, 125, 0.22), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.22); 
+    }
+}
+
+/* Selected sheen */
+.journal-page .journal-calendar-day--selected::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; right: 100%; bottom: 0;
+    background: linear-gradient(105deg,
+        transparent 40%,
+        rgba(255, 255, 255, 0.18) 50%,
+        transparent 60%
+    );
+    border-radius: inherit;
+    animation: cal-selectedSheen 3s ease-in-out infinite;
+}
+
+.journal-page .journal-calendar-day--selected:hover { 
+    transform: scale(1.12) !important; 
+}
+
+/* ── Today + Selected ────────────────────────────────────────────── */
+.journal-page .journal-calendar-day--today.journal-calendar-day--selected {
+    background: linear-gradient(135deg,
+        rgba(248, 195, 125, 0.55) 0%,
+        rgba(234, 169, 96, 0.45) 50%,
+        rgba(212, 141, 68, 0.45) 100%
+    ) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    animation: cal-selectedGlowGold 2.5s ease-in-out infinite;
+}
+
+.journal-page .journal-calendar-day--today.journal-calendar-day--selected::before {
+    inset: -3px;
+    border-radius: clamp(9px, 2vw, 14px);
+    background:
+        linear-gradient(#010008, #010008) padding-box,
+        conic-gradient(
+            rgba(248, 195, 125, 0.88) 0deg,
+            rgba(234, 169, 96, 0.72) 90deg,
+            rgba(248, 195, 125, 0.14) 180deg,
+            rgba(234, 169, 96, 0.70) 270deg,
+            rgba(248, 195, 125, 0.88) 360deg
+        ) border-box !important;
+    animation: cal-orbitSpin 3s linear infinite;
+}
+
+/* ── Day Number ──────────────────────────────────────────────────── */
+.journal-page .journal-calendar-day-num {
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+}
+
+/* Selected day number — white */
+.journal-page .journal-calendar-day--selected .journal-calendar-day-num {
+    color: #ffffff !important;
+}
+
+.journal-page .journal-calendar-day--today.journal-calendar-day--selected .journal-calendar-day-num {
+    color: #ffffff !important;
+}
+
+/* Today superscript dot — gold */
+.journal-page .journal-calendar-day--today .journal-calendar-day-num::before {
+    content: '·';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.5rem;
+    color: rgba(248, 195, 125, 0.85) !important;
+    pointer-events: none;
+}
+
+/* Today dot on selected day */
+.journal-page .journal-calendar-day--today.journal-calendar-day--selected .journal-calendar-day-num::before {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* ── Entry Dots ──────────────────────────────────────────────────── */
+.journal-page .journal-calendar-day-dot {
+    position: absolute;
+    bottom: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    z-index: 2;
+}
+
+.journal-page .journal-dot-done {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #0FD98A;
+    box-shadow: 0 0 5px rgba(15, 217, 138, 0.55);
+    animation: cal-dotPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    display: block;
+}
+
+.journal-page .journal-dot-pending {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: rgba(234, 169, 96, 0.65) !important;
+    box-shadow: 0 0 4px rgba(200, 140, 60, 0.40) !important;
+    animation: cal-dotPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    display: block;
+}
+
+.journal-page .journal-dot-mood {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: rgba(248, 195, 125, 0.78) !important;
+    box-shadow: 0 0 5px rgba(220, 160, 80, 0.48) !important;
+    animation: cal-dotPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.06s both;
+    display: block;
+}
 /* ═══════════════════════════════════════════════════════════════════════
    STREAK CARD — Complete theme application
    ═══════════════════════════════════════════════════════════════════════ */
@@ -3663,7 +3907,10 @@
     background-image: none !important;
     border: 1px solid rgba(234, 169, 96, 0.15) !important;
     border-radius: 18px !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+   box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.35), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    inset -1px 0 0 rgba(234, 169, 96, 0.05) !important;
     backdrop-filter: blur(16px) saturate(1.08) !important;
     -webkit-backdrop-filter: blur(16px) saturate(1.08) !important;
 }
