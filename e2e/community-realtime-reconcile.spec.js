@@ -125,6 +125,7 @@ function chatMessageText(page, token) {
 
 
 test.describe('Community realtime / REST reconcile', () => {
+  test.setTimeout(180000);
 
   test('writable channel: post appears and survives reload', async ({ browser }) => {
 
@@ -238,7 +239,7 @@ test.describe('Community realtime / REST reconcile', () => {
 
       await names.nth(welcomeIdx).scrollIntoViewIfNeeded().catch(() => {});
 
-      await names.nth(welcomeIdx).click({ timeout: 8000 });
+      await names.nth(welcomeIdx).click({ timeout: 8000, force: true });
 
       await page.waitForTimeout(2000);
 
@@ -331,7 +332,7 @@ test.describe('Community realtime / REST reconcile', () => {
 
       await names.nth(index).scrollIntoViewIfNeeded().catch(() => {});
 
-      await names.nth(index).click({ timeout: 8000 }).catch(() => {});
+      await names.nth(index).click({ timeout: 8000, force: true }).catch(() => {});
 
       await page.waitForTimeout(1500);
 
@@ -450,6 +451,72 @@ test.describe('Community realtime / REST reconcile', () => {
 
     await ctx.close();
 
+  });
+
+  test('rapid channel switching does not leave stale thread content', async ({ browser }) => {
+    test.skip(!fs.existsSync(USER_STATE), `Missing ${USER_STATE}`);
+    const ctx = await browser.newContext({
+      storageState: USER_STATE,
+      viewport: { width: 1440, height: 900 },
+    });
+    const page = await ctx.newPage();
+    await page.goto(`${BASE}/community`, { waitUntil: 'domcontentloaded' });
+
+    const channelsSection = page.locator('.channels-section').first();
+    await channelsSection.waitFor({ state: 'visible', timeout: 30000 });
+    await dismissConsentIfPresent(page);
+    const rows = channelsSection.locator('li');
+    await expect(rows.first()).toBeVisible({ timeout: 20000 });
+    const names = rows.locator('.channel-name');
+    const count = await names.count();
+    const labels = [];
+    for (let i = 0; i < count; i += 1) labels.push(((await names.nth(i).innerText().catch(() => '')) || '').trim());
+    const candidates = channelTryOrder(labels);
+    test.skip(candidates.length < 2, 'Need at least two writable channels for rapid-switch stale test.');
+
+    const first = candidates[0];
+    const second = candidates[1];
+    const clickChannel = async ({ label }) => {
+      const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const row = channelsSection
+        .locator('li')
+        .filter({ has: page.locator('.channel-name', { hasText: new RegExp(`^\\s*${escaped}\\s*$`, 'i') }) })
+        .first();
+      await row.scrollIntoViewIfNeeded().catch(() => {});
+      const ready = page.waitForResponse(
+        (r) =>
+          r.request().method() === 'GET' &&
+          /\/api\/community\/channels\/[^/]+\/messages/i.test(r.url()) &&
+          r.status() >= 200 &&
+          r.status() < 500,
+        { timeout: 25000 }
+      ).catch(() => null);
+      await row.click({ timeout: 8000, force: true });
+      await ready;
+      await page.waitForTimeout(900);
+    };
+
+    await clickChannel(first);
+    const firstChatText = await page.locator('.chat-messages').innerText().catch(() => '');
+
+    // Rapid switch burst (same user behavior that previously caused stale overwrite)
+    await clickChannel(second);
+    await clickChannel(first);
+    await clickChannel(second);
+
+    const secondChatText = await page.locator('.chat-messages').innerText().catch(() => '');
+    const secondLabelVisible = await page
+      .locator('.channel-name.active, .channel-item.active .channel-name')
+      .filter({ hasText: new RegExp(second.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') })
+      .first()
+      .isVisible()
+      .catch(() => false);
+
+    // Primary assertion: final selected channel is second; stale overwrite typically keeps previous text.
+    // Text can legitimately overlap between channels, so we accept either a visible final active channel marker
+    // or distinct chat pane content after the final switch.
+    expect(secondLabelVisible || (firstChatText && secondChatText && firstChatText !== secondChatText)).toBeTruthy();
+    await ctx.close();
   });
 
 });

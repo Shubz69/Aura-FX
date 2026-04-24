@@ -54,15 +54,25 @@ const AdminInbox = () => {
   const shouldScrollToBottom = useRef(false);
   const prevMessagesLength = useRef(0);
   const loadMessagesInFlightRef = useRef(false);
+  const sendQueueRef = useRef(Promise.resolve());
   const usersLoadSeqRef = useRef(0);
   const supportLoadSeqRef = useRef(0);
   const messagesLoadSeqRef = useRef(0);
+  const ensureThreadSeqRef = useRef(0);
+  const activeThreadIdRef = useRef(activeThreadId);
   const threadsRef = useRef(threads);
+  const usersRef = useRef(users);
   const userScrolledUpRef = useRef(false); // ← ADD THIS
 const lastScrollTopRef = useRef(0);  
   useEffect(() => {
     threadsRef.current = threads;
   }, [threads]);
+  useEffect(() => {
+    usersRef.current = users;
+  }, [users]);
+  useEffect(() => {
+    activeThreadIdRef.current = activeThreadId;
+  }, [activeThreadId]);
 
 // Scroll to bottom function — targets the messages container, NOT the whole page
 const scrollToBottom = useCallback((behavior = 'smooth') => {
@@ -134,8 +144,11 @@ useEffect(() => {
       const f = friends.find(fr => fr.id === selectedUserId);
       return f ? { id: f.id, username: f.username, name: f.username, email: f.email } : null;
     }
+    // Keep header deterministic during rapid switches: active thread is source of truth.
     if (activeThread) return { id: activeThread.userId, username: activeThread.username, name: activeThread.name, email: activeThread.email };
-    return users.find(u => u.id === selectedUserId) || null;
+    const selectedUser = users.find(u => u.id === selectedUserId);
+    if (selectedUser) return selectedUser;
+    return null;
   }, [activeTab, activeThread, selectedUserId, users, friends]);
 
  /* â”€â”€ Load users + threads (Admin tab, admins only) â”€â”€ */
@@ -144,24 +157,40 @@ useEffect(() => {
   let mounted = true;
   const loadSeq = ++usersLoadSeqRef.current;
   const usersAbort = new AbortController();
+  const fetchUsersWithRetry = async (token) => {
+    const run = () =>
+      fetch(`${API_BASE()}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: usersAbort.signal,
+      });
+    let res = await run();
+    if (!res.ok && (res.status === 429 || res.status >= 500)) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      res = await run();
+    }
+    return res;
+  };
   const load = async () => {
     setLoadingUsers(true);
     try {
       const token = localStorage.getItem('token');
-      const [usersRes, threadsRes] = await Promise.all([
-        fetch(`${API_BASE()}/api/admin/users`, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: usersAbort.signal,
-        }),
-        Api.listThreads()
+      const [usersRes, threadsRes] = await Promise.allSettled([
+        fetchUsersWithRetry(token),
+        Api.listThreads({ signal: usersAbort.signal })
       ]);
       if (!mounted || loadSeq !== usersLoadSeqRef.current) return;
-      const usersData = usersRes.ok ? await usersRes.json() : [];
-      const usersList = Array.isArray(usersData) ? usersData : (usersData.users || usersData.data || []);
-      const filteredUsers = usersList.filter(u => u.id !== user?.id);
-      setUsers(filteredUsers);
-      const threadsList = (threadsRes.data?.threads || []).filter(t => t.userId !== user?.id);
-      setThreads(threadsList);
+      let usersList = usersRef.current || [];
+      if (usersRes.status === 'fulfilled' && usersRes.value?.ok) {
+        const usersData = await usersRes.value.json().catch(() => []);
+        const parsed = Array.isArray(usersData) ? usersData : (usersData.users || usersData.data || []);
+        usersList = parsed.filter(u => u.id !== user?.id);
+        setUsers(usersList);
+      }
+      let threadsList = threadsRef.current || [];
+      if (threadsRes.status === 'fulfilled') {
+        threadsList = (threadsRes.value?.data?.threads || []).filter(t => t.userId !== user?.id);
+        setThreads(threadsList);
+      }
       const targetId = threadFromUrl ? parseInt(threadFromUrl, 10) : null;
       if (targetId && threadsList.some(t => t.id === targetId)) {
         setActiveThreadId(targetId);
@@ -172,7 +201,8 @@ useEffect(() => {
         setSelectedUserId(threadsList[0].userId);
       }
     } catch (e) {
-      if (e?.name === 'AbortError') return;
+      const aborted = e?.name === 'AbortError' || e?.code === 'ERR_CANCELED' || /ERR_ABORTED|aborted/i.test(String(e?.message || ''));
+      if (aborted) return;
       logClassifiedError('admin_inbox.load_users_threads', e, { userId: user?.id || null });
     } finally {
       if (mounted && loadSeq === usersLoadSeqRef.current) setLoadingUsers(false);
@@ -181,17 +211,19 @@ useEffect(() => {
   load();
   const refreshList = setInterval(() => {
     if (!mounted) return;
-    Api.listThreads().then((res) => {
+    Api.listThreads({ signal: usersAbort.signal }).then((res) => {
       if (!mounted) return;
       setThreads((res.data?.threads || []).filter(t => t.userId !== user?.id));
-    }).catch(() => {});
+    }).catch((e) => {
+      if (e?.name === 'AbortError' || e?.code === 'ERR_CANCELED') return;
+    });
   }, 15000);
   return () => {
     clearInterval(refreshList);
     usersAbort.abort();
     mounted = false;
   };
-}, [user, activeThreadId, threadFromUrl, setSearchParams]);
+}, [user?.id, user?.role, threadFromUrl, setSearchParams]);
 
   /* â”€â”€ Load current user's support thread (Admin tab, non-admin only) â”€â”€ */
   useEffect(() => {
@@ -264,8 +296,12 @@ useEffect(() => {
 
   /* â”€â”€ Select user (Admin tab) â”€â”€ */
   const handleSelectUser = async (u) => {
+    const ensureSeq = ++ensureThreadSeqRef.current;
     const existing = threads.find(t => t.userId === u.id);
     if (existing) {
+      // If switching to an already-known thread, this selection is resolved immediately.
+      // Clear unresolved flags so composer doesn't stay disabled from prior async paths.
+      setEnsuringThread(false);
       setSelectedUserId(u.id);
       setActiveThreadId(existing.id);
       return;
@@ -274,6 +310,7 @@ useEffect(() => {
     setEnsuringThread(true);
     try {
       const resp = await Api.ensureAdminThreadForUser(u.id);
+      if (ensureSeq !== ensureThreadSeqRef.current) return;
       const thread = resp.data?.thread;
       if (thread) {
         setThreads(prev => {
@@ -286,7 +323,7 @@ useEffect(() => {
     } catch (e) {
       logClassifiedError('admin_inbox.ensure_thread', e, { targetUserId: u?.id || null });
     } finally {
-      setEnsuringThread(false);
+      if (ensureSeq === ensureThreadSeqRef.current) setEnsuringThread(false);
     }
   };
 
@@ -385,21 +422,28 @@ useEffect(() => {
     isThreadChanging.current = true;
     shouldScrollToBottom.current = false;
     
+    const pollAbort = new AbortController();
     const loadMessages = async () => {
       if (loadMessagesInFlightRef.current) return;
       const loadSeq = ++messagesLoadSeqRef.current;
-      setLoadingMessages(true);
       loadMessagesInFlightRef.current = true;
+      const threadAtStart = activeThreadId;
+      setLoadingMessages(true);
       try {
-        const resp = await Api.getThreadMessages(activeThreadId, { limit: 50, _sync: Date.now() });
-        if (!mounted || loadSeq !== messagesLoadSeqRef.current) return;
+        const resp = await Api.getThreadMessages(
+          threadAtStart,
+          { limit: 50, _sync: Date.now() },
+          { signal: pollAbort.signal }
+        );
+        if (!mounted || loadSeq !== messagesLoadSeqRef.current || activeThreadIdRef.current !== threadAtStart) return;
         setMessages(resp.data.messages || []);
-        await Api.markThreadRead(activeThreadId);
-        setThreads(prev => prev.map(t => t.id === activeThreadId ? { ...t, adminUnreadCount: 0 } : t));
+        await Api.markThreadRead(threadAtStart);
+        setThreads(prev => prev.map(t => t.id === threadAtStart ? { ...t, adminUnreadCount: 0 } : t));
       } catch (e) {
+        if (e?.name === 'AbortError' || e?.code === 'ERR_CANCELED') return;
         if (mounted) logClassifiedError('admin_inbox.load_messages', e, { activeThreadId });
       } finally {
-        if (mounted && loadSeq === messagesLoadSeqRef.current) setLoadingMessages(false);
+        if (mounted) setLoadingMessages(false);
         loadMessagesInFlightRef.current = false;
       }
     };
@@ -426,17 +470,23 @@ useEffect(() => {
       if (!mounted || !activeThreadId) return;
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       if (loadMessagesInFlightRef.current) return;
-      Api.getThreadMessages(activeThreadId, { limit: 50, _sync: Date.now() })
+      const seq = ++messagesLoadSeqRef.current;
+      const threadAtStart = activeThreadIdRef.current;
+      Api.getThreadMessages(threadAtStart, { limit: 50, _sync: Date.now() }, { signal: pollAbort.signal })
         .then((resp) => {
-          if (!mounted) return;
+          if (!mounted || seq !== messagesLoadSeqRef.current || activeThreadIdRef.current !== threadAtStart) return;
           setMessages(resp.data.messages || []);
         })
-        .catch(() => {});
+        .catch((e) => {
+          if (e?.name === 'AbortError' || e?.code === 'ERR_CANCELED') return;
+        });
     }, 1500);
     
     return () => { 
       clearInterval(pollInterval); 
+      pollAbort.abort();
       WebSocketService.offThreadEvents(); 
+      setLoadingMessages(false);
       mounted = false; 
     };
   }, [user, activeThreadId, activeTab, userSupportThreadId]);
@@ -444,7 +494,7 @@ useEffect(() => {
   /* â”€â”€ Send message â”€â”€ */
  const handleSend = async (e) => {
     e.preventDefault();
-    if (ensuringThread || loadingMessages) return;
+    if (ensuringThread) return;
     const hasText = input.trim().length > 0;
     if (!hasText && !file) return;
     const body = hasText ? input.trim() : `[file] ${file?.name || ''}`;
@@ -466,21 +516,24 @@ useEffect(() => {
     shouldScrollToBottom.current = true;
     scrollToBottom('smooth');
     
-    try {
-        if (hasText) {
-            const resp = await Api.sendThreadMessage(activeThreadId, body);
-            const created = resp.data?.created;
-            if (created) {
-                setMessages(prev => prev.map(m =>
-                    m.id === optimistic.id
-                        ? { ...created, senderId: String(created.senderId), createdAt: created.createdAt || created.created_at }
-                        : m
-                ));
+    sendQueueRef.current = sendQueueRef.current.then(async () => {
+        try {
+            if (hasText) {
+                const resp = await Api.sendThreadMessage(activeThreadId, body);
+                const created = resp.data?.created;
+                if (created) {
+                    setMessages(prev => prev.map(m =>
+                        m.id === optimistic.id
+                            ? { ...created, senderId: String(created.senderId), createdAt: created.createdAt || created.created_at }
+                            : m
+                    ));
+                }
             }
+        } catch (e) {
+            setMessages(prev => prev.filter((m) => m.id !== optimistic.id));
+            logClassifiedError('admin_inbox.send_message', e, { activeThreadId });
         }
-    } catch (e) {
-        logClassifiedError('admin_inbox.send_message', e, { activeThreadId });
-    }
+    });
 };
 // Track user scroll position to prevent unwanted auto-scroll
 useEffect(() => {
@@ -678,7 +731,7 @@ useEffect(() => {
                   ) : (
                     inboxList.map((u) => {
                       const thread = u.thread || threads.find(t => t.userId === u.id);
-                      const isSelected = (activeThreadId && thread?.id === activeThreadId) || selectedUserId === u.id;
+                      const isSelected = activeThreadId ? thread?.id === activeThreadId : selectedUserId === u.id;
                       const unread = u.adminUnreadCount ?? thread?.adminUnreadCount ?? 0;
                       const name = displayName(u);
                       return (
@@ -877,7 +930,7 @@ useEffect(() => {
                 <button
                   type="submit"
                   className="admin-inbox-send-btn"
-                  disabled={(!input.trim() && !file) || !activeThreadId || ensuringThread || loadingMessages}
+                  disabled={(!input.trim() && !file) || !activeThreadId || ensuringThread}
                 >
                   <FaPaperPlane size={14} />
                   <span>Send</span>

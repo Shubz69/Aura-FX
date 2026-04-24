@@ -218,6 +218,42 @@ const dedupeGet = (url, options = {}) => {
     return request;
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const shouldRetryGetError = (error) => {
+    if (!error) return false;
+    if (error?.name === 'AbortError' || error?.code === 'ERR_CANCELED') return false;
+    const status = Number(error?.response?.status || 0);
+    if (status === 429 || status >= 500) return true;
+    const isNetwork =
+        error?.code === 'ERR_NETWORK' ||
+        error?.message === 'Network Error' ||
+        /network|failed to fetch|timeout|timed out/i.test(String(error?.message || ''));
+    return isNetwork;
+};
+
+const dedupeGetWithRetry = async (
+    url,
+    options = {},
+    retryOptions = { retries: 1, baseDelayMs: 350 }
+) => {
+    const retries = Math.max(0, Number(retryOptions?.retries || 0));
+    const baseDelayMs = Math.max(100, Number(retryOptions?.baseDelayMs || 350));
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+        try {
+            return await dedupeGet(url, options);
+        } catch (error) {
+            if (attempt >= retries || !shouldRetryGetError(error)) {
+                throw error;
+            }
+            const jitter = Math.floor(Math.random() * 120);
+            const delay = baseDelayMs * (2 ** attempt) + jitter;
+            await sleep(delay);
+        }
+    }
+    throw new Error('unreachable');
+};
+
 axios.interceptors.request.use(
     (config) => {
         ensureCorrelationId(config);
@@ -514,14 +550,18 @@ const Api = {
         if (process.env.NODE_ENV === 'development') console.log(`Attempting to fetch messages for channel ${channelId}${afterId ? ` (afterId=${afterId})` : ''}`);
         try {
             const token = localStorage.getItem('token');
-            const response = await dedupeGet(`${API_BASE_URL}/api/community/channels/${channelId}/messages`, {
-                params,
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    ...customHeaders
+            const response = await dedupeGetWithRetry(
+                `${API_BASE_URL}/api/community/channels/${channelId}/messages`,
+                {
+                    params,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        ...customHeaders
+                    },
+                    skipCache: true
                 },
-                skipCache: true,
-            });
+                { retries: 1, baseDelayMs: 280 }
+            );
             return response;
 } catch (error) {
             // Avoid flooding console on network/resource errors (polling will retry)
@@ -620,11 +660,11 @@ const Api = {
     
     // User Profile
     getUserData: () => {
-        return axios.get(`${API_BASE_URL}/api/me`);
+        return dedupeGetWithRetry(`${API_BASE_URL}/api/me`, { skipCache: true }, { retries: 1, baseDelayMs: 300 });
     },
     
     getUserProfile: (userId) => {
-        return axios.get(`${API_BASE_URL}/api/users/${userId}`);
+        return dedupeGetWithRetry(`${API_BASE_URL}/api/users/${userId}`, { skipCache: true }, { retries: 1, baseDelayMs: 300 });
     },
 
     getUserSettings: () => {
@@ -823,10 +863,14 @@ const Api = {
     // Platform connections (real MT5/exchange APIs — requires same JWT as other protected APIs)
     getAuraPlatformConnections: () => {
         const token = localStorage.getItem('token');
-        return axios.get(`${API_BASE_URL}/api/aura-analysis/platform-connect`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-            skipCache: true,
-        });
+        return dedupeGetWithRetry(
+            `${API_BASE_URL}/api/aura-analysis/platform-connect`,
+            {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                skipCache: true
+            },
+            { retries: 1, baseDelayMs: 400 }
+        );
     },
     connectAuraPlatform: (platformId, credentials) => {
         const token = localStorage.getItem('token');
@@ -1447,6 +1491,20 @@ const Api = {
             throw error;
         }
     },
+    getSubscriptionStatus: async () => {
+        const token = localStorage.getItem('token');
+        return dedupeGetWithRetry(
+            `${API_BASE_URL}/api/subscription/status`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                skipCache: true
+            },
+            { retries: 1, baseDelayMs: 450 }
+        );
+    },
 
     selectFreePlan: async () => {
         const token = localStorage.getItem('token');
@@ -1926,9 +1984,10 @@ const Api = {
         try {
             const token = localStorage.getItem('token');
             const url = `${API_BASE_URL}/api/messages/threads?mode=dms${friendsOnly ? '&friendsOnly=1' : ''}`;
-            const response = await axios.get(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await dedupeGetWithRetry(url, {
+                headers: { 'Authorization': `Bearer ${token}` },
+                skipCache: true
+            }, { retries: 1, baseDelayMs: 300 });
             return response;
         } catch (error) {
             console.error('Error listing friend threads:', error);
@@ -1939,7 +1998,7 @@ const Api = {
     getThreadMessages: async (threadId, options = {}, requestOptions = {}) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await dedupeGet(
+            const response = await dedupeGetWithRetry(
                 `${API_BASE_URL}/api/messages/threads/${threadId}/messages`,
                 {
                     params: options,
@@ -1950,7 +2009,8 @@ const Api = {
                     },
                     skipCache: true,
                     signal: requestOptions?.signal
-                }
+                },
+                { retries: 1, baseDelayMs: 280 }
             );
             return response;
         } catch (error) {

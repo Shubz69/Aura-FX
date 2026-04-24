@@ -1,13 +1,13 @@
 # Strict Messaging/AdminInbox Verification
 
-- Generated: 2026-04-22T11:50:25.755Z
+- Generated: 2026-04-24T10:50:32.623Z
 - Base: https://www.auraterminal.ai
 
 ## live messaging: admin sends to user realtime — PASS
 - Steps: Open /admin/inbox -> Send unique message -> Observe /messages receive
 - Expected: User receives without waiting full poll interval when websocket healthy
 - Actual: User saw admin message in messages thread.
-- Timing: 6629ms
+- Timing: 2152ms
 - Console issues: 0
 - Network issues: 2
 - Completion: complete
@@ -25,7 +25,7 @@
 - Steps: Abort ws/info on user context -> Admin sends message -> Wait on user /messages
 - Expected: Message arrives via polling fallback within expected interval (~8s + render)
 - Actual: Message arrived while websocket bootstrap was blocked.
-- Timing: 3159ms
+- Timing: 2153ms
 - Console issues: 0
 - Network issues: 6
 - Completion: complete
@@ -41,9 +41,9 @@
 ## admin inbox: rapid thread switching / stale overwrite — FAIL
 - Steps: Rapidly switch between two user items -> Observe final selected header/thread
 - Expected: Final selected thread remains active; no stale overwrite from prior request
-- Actual: Could not confidently confirm stale-protection under this dataset.
+- Actual: Fallback rapid-switch check could not send on first thread because composer stayed disabled.
 - Console issues: 1
-- Network issues: 14
+- Network issues: 13
 - Completion: partial_or_unreliable
 
 ## admin inbox: controls disabled while unresolved — PASS
@@ -51,13 +51,29 @@
 - Expected: Send remains blocked until active thread ready
 - Actual: Send button disabled in unresolved state.
 - Console issues: 1
+- Network issues: 13
+- Completion: complete
+
+## admin inbox: 3 rapid sends preserve order without duplicates — PASS
+- Steps: Send 3 rapid unique messages -> Verify each appears once -> Verify relative order in thread UI
+- Expected: Exactly 3 messages, no duplicates, order _0 -> _1 -> _2
+- Actual: Observed count=3, unique=3, inOrder=true.
+- Console issues: 1
+- Network issues: 13
+- Completion: complete
+
+## user->admin: 3 rapid sends received once each — PASS
+- Steps: User sends 3 rapid unique messages -> Admin thread observes burst
+- Expected: Admin sees all 3 unique user messages exactly once
+- Actual: Observed count=3, unique=3.
+- Console issues: 1
 - Network issues: 14
 - Completion: complete
 
-## admin inbox: no duplicate/out-of-order under quick interactions — FAIL
-- Steps: Send 3 rapid unique messages -> Count rendered unique messages
-- Expected: All unique messages appear once in order (no duplicate loss)
-- Actual: Observed 1 quick messages with marker STRICT_QUICK_1776858618169.
+## auth stability: no login redirect during strict run — PASS
+- Steps: Observe top-frame navigations during entire strict suite
+- Expected: No main-frame navigation to /login
+- Actual: No login redirect observed.
 - Console issues: 1
 - Network issues: 14
-- Completion: partial_or_unreliable
+- Completion: complete

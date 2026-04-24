@@ -73,17 +73,25 @@ export const EntitlementsProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     try {
       const base = process.env.REACT_APP_API_URL ||
         (typeof window !== 'undefined' && window.location?.origin
           ? window.location.origin
           : '');
-      const res = await fetch(`${base}/api/me`, {
+      let res = await fetch(`${base}/api/me`, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         cache: 'no-store',
         signal: controller.signal
       });
+      if (!res.ok && (res.status === 429 || res.status >= 500)) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        res = await fetch(`${base}/api/me`, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          cache: 'no-store',
+          signal: controller.signal
+        });
+      }
       clearTimeout(timeoutId);
       if (!res.ok) {
         if (res.status === 401) {
@@ -107,7 +115,7 @@ export const EntitlementsProvider = ({ children }) => {
     } catch (err) {
       clearTimeout(timeoutId);
       if (err.name !== 'AbortError') setError(err.message);
-      setData(null);
+      // Keep last known-good entitlements during transient errors/aborts.
     } finally {
       setLoading(false);
       fetchInFlight.current = false;

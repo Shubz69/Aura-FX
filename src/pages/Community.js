@@ -894,6 +894,7 @@ const [journalLoading, setJournalLoading] = useState(false);
     const fileInputRef = useRef(null);
     const channelListRef = useRef([]);
     const selectedChannelRef = useRef(null);
+    const fetchMessagesSeqRef = useRef(0);
     const isSendingGifRef = useRef(false);
     const isTabVisibleRef = useRef(typeof document === 'undefined' ? true : document.visibilityState !== 'hidden');
     
@@ -2575,9 +2576,12 @@ if (window.requestAnimationFrame) {
 
     const fetchMessages = useCallback(async (channelId, mergeMode = false) => {
     if (!channelId) return;
+    const requestSeq = ++fetchMessagesSeqRef.current;
     
     try {
         const response = await Api.getChannelMessages(channelId);
+        if (requestSeq !== fetchMessagesSeqRef.current) return;
+        if (selectedChannelRef.current?.id && String(selectedChannelRef.current.id) !== String(channelId)) return;
         if (response && response.data && Array.isArray(response.data)) {
             const apiMessages = response.data;
             
@@ -2639,6 +2643,7 @@ if (window.requestAnimationFrame) {
             }
         }
     } catch (apiError) {
+        if (requestSeq !== fetchMessagesSeqRef.current) return;
         // In merge mode, don't show errors - just silently fail
         if (!mergeMode) {
             // Full refresh mode: show cached messages if available
@@ -2650,6 +2655,7 @@ if (window.requestAnimationFrame) {
             }
         }
     } finally {
+        if (requestSeq !== fetchMessagesSeqRef.current) return;
         if (!mergeMode) { 
              setMessagesLoading(false);
         }

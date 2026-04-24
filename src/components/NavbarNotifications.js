@@ -14,26 +14,47 @@ const NavbarNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const bellRef = useRef(null);
   const fetchInFlightRef = useRef(false);
+  const controllerRef = useRef(null);
+  const failStreakRef = useRef(0);
+  const nextAllowedAtRef = useRef(0);
   const token = localStorage.getItem('token');
   const baseUrl = process.env.REACT_APP_API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
   const fetchUnreadCount = useCallback(async () => {
     if (!token || !user) return;
     if (fetchInFlightRef.current) return;
+    if (Date.now() < nextAllowedAtRef.current) return;
     fetchInFlightRef.current = true;
     try {
-      const res = await fetch(`${baseUrl}/api/notifications?limit=1`, {
+      if (controllerRef.current) controllerRef.current.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      let res = await fetch(`${baseUrl}/api/notifications?limit=1`, {
         headers: { Authorization: `Bearer ${token}` }
+        , signal: controller.signal
       });
+      if (!res.ok && (res.status === 429 || res.status >= 500)) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        res = await fetch(`${baseUrl}/api/notifications?limit=1`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal
+        });
+      }
       if (res.ok) {
         const data = await res.json();
         if (data.success !== false) {
           setUnreadCount(data.unreadCount ?? 0);
         }
+        failStreakRef.current = 0;
+        nextAllowedAtRef.current = 0;
       }
     } catch (e) {
+      if (e?.name === 'AbortError') return;
       // Avoid console spam on network errors
       if ((e?.message || '').indexOf('fetch') === -1) console.warn('Failed to fetch notification count:', e?.message);
+      failStreakRef.current = Math.min(5, failStreakRef.current + 1);
+      const backoffMs = 400 * (2 ** failStreakRef.current);
+      nextAllowedAtRef.current = Date.now() + backoffMs;
     } finally {
       fetchInFlightRef.current = false;
     }
@@ -48,6 +69,7 @@ const NavbarNotifications = () => {
     return () => {
       clearInterval(interval);
       window.removeEventListener('focus', onFocus);
+      if (controllerRef.current) controllerRef.current.abort();
     };
   }, [user, fetchUnreadCount]);
 

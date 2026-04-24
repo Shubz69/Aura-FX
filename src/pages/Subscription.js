@@ -130,12 +130,7 @@ const Subscription = () => {
                 return;
             }
 
-            const response = await axios.get(`${API_BASE_URL}/api/subscription/status`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+            const response = await Api.getSubscriptionStatus();
 
             if (response.data && response.data.success) {
                 setSubscriptionStatus(response.data.subscription);
@@ -537,15 +532,7 @@ const Subscription = () => {
                         await new Promise(resolve => setTimeout(resolve, 500));
                         
                         try {
-                            const verifyResponse = await axios.get(
-                                `${API_BASE_URL}/api/subscription/status`,
-                                {
-                                    headers: {
-                                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                                        'Content-Type': 'application/json'
-                                    }
-                                }
-                            );
+                            const verifyResponse = await Api.getSubscriptionStatus();
                             
                             if (verifyResponse.data?.success && verifyResponse.data?.subscription?.isActive) {
                                 localStorage.setItem('hasActiveSubscription', 'true');

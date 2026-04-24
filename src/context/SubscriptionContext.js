@@ -42,16 +42,10 @@ export const SubscriptionProvider = ({ children }) => {
     setError(null);
     
     try {
-      const response = await fetch(`${Api.getBaseUrl() || ''}/api/subscription/status`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        if (response.status === 401) {
+      const response = await Api.getSubscriptionStatus();
+      const statusCode = Number(response?.status || 0);
+      if (!(statusCode >= 200 && statusCode < 300)) {
+        if (statusCode === 401) {
           // Token expired or invalid
           setSubscription(null);
           setLoading(false);
@@ -59,8 +53,7 @@ export const SubscriptionProvider = ({ children }) => {
         }
         throw new Error('Failed to fetch subscription status');
       }
-      
-      const data = await response.json();
+      const data = response?.data || {};
       
       if (data.success && data.subscription) {
         const sub = data.subscription;

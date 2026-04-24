@@ -19,12 +19,15 @@ const Messages = () => {
     const prevMessagesLength = useRef(0);
     const threadIdRef = useRef(null);
     const loadInFlightRef = useRef(false);
+    const loadSeqRef = useRef(0);
+    const sendQueueRef = useRef(Promise.resolve());
     const isRealtimeConnectedRef = useRef(false);
     const lastRealtimeReceiveAtRef = useRef(0);
     const [threadId, setThreadId] = useState(null);
 
     const loadMessages = useCallback(async () => {
         if (!user || loadInFlightRef.current) return;
+        const loadSeq = ++loadSeqRef.current;
         loadInFlightRef.current = true;
         try {
             let threadId = threadIdRef.current;
@@ -39,6 +42,7 @@ const Messages = () => {
                     limit: 50,
                     _sync: Date.now(),
                 });
+                if (loadSeq !== loadSeqRef.current || threadIdRef.current !== threadId) return;
                 const apiMessages = messagesResponse.data?.messages || [];
                 const formattedMessages = apiMessages.map(msg => ({
                     id: msg.id,
@@ -186,6 +190,7 @@ const Messages = () => {
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
+        const sendBody = newMessage;
 
         const newMsg = {
             id: `temp_${Date.now()}`,
@@ -203,12 +208,14 @@ const Messages = () => {
         setNewMessage('');
 
         // Send message to admin via API
-        try {
-            const threadResponse = await Api.ensureAdminThread(user.id);
-            const threadId = threadResponse.data?.thread?.id;
-            
-            if (threadId) {
-                await Api.sendThreadMessage(threadId, newMessage);
+        sendQueueRef.current = sendQueueRef.current.then(async () => {
+            try {
+                const threadResponse = await Api.ensureAdminThread(user.id);
+                const threadId = threadResponse.data?.thread?.id;
+                if (!threadId) return;
+                threadIdRef.current = threadId;
+                setThreadId(threadId);
+                await Api.sendThreadMessage(threadId, sendBody);
                 const messagesResponse = await Api.getThreadMessages(threadId, {
                     limit: 50,
                     _sync: Date.now(),
@@ -223,10 +230,11 @@ const Messages = () => {
                     read: !!msg.readAt || !!msg.read_at
                 }));
                 setMessages(formattedMessages);
+            } catch (error) {
+                setMessages((prev) => prev.filter((m) => m.id !== newMsg.id));
+                logClassifiedError('messages.page_send', error, { userId: user?.id || null, threadId: threadIdRef.current });
             }
-        } catch (error) {
-            logClassifiedError('messages.page_send', error, { userId: user?.id || null, threadId: threadIdRef.current });
-        }
+        });
     };
 
     const formatTime = (timestamp) => {
