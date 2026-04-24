@@ -83,6 +83,7 @@ const AuraAnalysisShell = lazy(() => import('./components/aura-analysis/AuraAnal
 const AuraAnalysisGateway = lazy(() => import('./pages/aura-analysis/AuraAnalysisGateway'));
 const OperatorEntry = lazy(() => import('./pages/aura-analysis/OperatorEntry'));
 const OperatorShell = lazy(() => import('./components/trader-deck/OperatorShell'));
+const OperatorGalaxy = lazy(() => import('./pages/OperatorGalaxy/OperatorGalaxy')); 
 /** Resolves to src/pages/TraderDeck.js – do not remove or rename; required for build. */
 const TraderDeck = lazy(() => import('./pages/TraderDeck'));
 const ConnectionHub = lazy(() => import('./pages/aura-analysis/ConnectionHub'));
@@ -406,6 +407,12 @@ function AppRoutes() {
                         <Route path="/manual-metrics/dashboard" element={<AuthenticatedGuard><ManualMetricsGuard><ManualMetricsDashboardPage /></ManualMetricsGuard></AuthenticatedGuard>} />
                         <Route path="/manual-metrics/processing" element={<AuthenticatedGuard><ManualMetricsProcessingPage /></AuthenticatedGuard>} />
                         <Route path="/manual-metrics" element={<AuthenticatedGuard><ManualMetricsEntryPage /></AuthenticatedGuard>} />
+                        {/* Operator Galaxy - Central Hub */}
+<Route path="/operator-galaxy" element={
+  <AuthenticatedGuard>
+    <OperatorGalaxy />
+  </AuthenticatedGuard>
+} />
                         <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />
                         <Route path="/trader-lab" element={<AuthenticatedGuard><Navigate to="/trader-deck/trade-validator/trader-lab" replace /></AuthenticatedGuard>} />
                         <Route path="/trader-replay" element={<AuthenticatedGuard><Navigate to="/aura-analysis/dashboard/trader-replay" replace /></AuthenticatedGuard>} />

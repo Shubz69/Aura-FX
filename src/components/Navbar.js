@@ -199,9 +199,9 @@ const Navbar = () => {
                       <Link to="/journal" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaBook className="dropdown-icon" /> Journal
                       </Link>
-                      <Link to="/trader-deck/trade-validator/overview" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaCheckSquare className="dropdown-icon" /> The Operator
-                      </Link>
+                   <Link to="/operator-galaxy" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+  <FaCheckSquare className="dropdown-icon" /> The Operator
+</Link>
                       {entitlements?.canAccessSurveillance ? (
                         <Link to="/surveillance" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                           <FaGlobe className="dropdown-icon" /> Surveillance
