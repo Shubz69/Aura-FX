@@ -227,14 +227,17 @@
 ────────────────────────────────────────────────────────────────────── */
 .planet-node {
   position: absolute;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  will-change: transform;
-  /* ✅ No transform here — handled 100% in JS */
+  will-change: transform, z-index;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* ── Glow ring ── */

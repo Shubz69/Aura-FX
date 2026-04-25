@@ -152,46 +152,54 @@ export default function OperatorGalaxy() {
    *   • + Xpx shifts it to the correct orbit position
    * This is a single CSS transform — nothing conflicts.
    */
-  useEffect(() => {
+ useEffect(() => {
+    let running = true;
     lastRef.current = performance.now();
 
     const tick = (now) => {
-      const dt = (now - lastRef.current) / 1000;
+      if (!running) return;
+
+      const dt = Math.min((now - lastRef.current) / 1000, 0.1); // Cap delta to prevent jumps on tab switch
       lastRef.current = now;
 
       const { rx, ry, planetScale } = dimsRef.current;
 
-      PLANETS.forEach(planet => {
+      for (let i = 0; i < PLANETS.length; i++) {
+        const planet = PLANETS[i];
+
         // Advance angle
         anglesRef.current[planet.id] =
           (anglesRef.current[planet.id] + SPEED * dt) % 360;
 
         const el = nodeRefs.current[planet.id];
-        if (!el) return;
+        if (!el) continue;
 
         const { x, y, z } = orbitXY(anglesRef.current[planet.id], rx, ry);
-        const perspScale   = 0.72 + (z + 1) * 0.14;
-        const finalScale   = perspScale * planetScale;
-        const sz           = planet.size * finalScale;
+        const perspScale = 0.72 + (z + 1) * 0.14;
+        const finalScale = perspScale * planetScale;
+        const sz = planet.size * finalScale;
 
-        // Position + scale — ONE transform string, no conflict
-        el.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(${finalScale})`;
-        el.style.zIndex    = String(Math.round((z + 1) * 50) + 10);
+        // Use will-change hint and transform3d for GPU acceleration
+        el.style.transform = `translate3d(calc(-50% + ${x}px), calc(-50% + ${y}px), 0) scale(${finalScale})`;
+        el.style.zIndex = String(Math.round((z + 1) * 50) + 10);
         el.style.setProperty('--sz', `${sz}px`);
 
-        // Also resize the sphere element directly
+        // Update sphere size
         const sphere = sphereRefs.current[planet.id];
         if (sphere) {
-          sphere.style.width  = `${sz}px`;
+          sphere.style.width = `${sz}px`;
           sphere.style.height = `${sz}px`;
         }
-      });
+      }
 
       rafRef.current = requestAnimationFrame(tick);
     };
 
     rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => {
+      running = false;
+      cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   const handleClick = (planet) => {
