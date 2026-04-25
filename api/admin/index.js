@@ -6,6 +6,7 @@ const { verifyToken } = require('../utils/auth');
 const { isSuperAdminEmail } = require('../utils/entitlements');
 const { assertStaffAdminFromRequest } = require('../utils/adminAccess');
 const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
+const { invalidateEntitlementsCache } = require('../cache');
 const { canonicalStoredPlanFromAny, normalizeKey } = require('../utils/subscriptionNormalize');
 const {
   permissionRoleFromUserRow,
@@ -745,6 +746,7 @@ module.exports = async (req, res) => {
             level: hasLevel ? jsonNumber(user.level ?? 1, 1) : 1,
             subscription_status: hasSubscriptionStatus ? (user.subscription_status || 'inactive') : 'inactive',
             subscriptionPlan: hasSubscriptionPlan ? canonicalSubscriptionPlanForResponse(user) : null,
+            subscription_plan: hasSubscriptionPlan ? canonicalSubscriptionPlanForResponse(user) : null,
             subscription_expiry: hasSubscriptionExpiry ? (user.subscription_expiry || null) : null
           };
 
@@ -843,6 +845,7 @@ module.exports = async (req, res) => {
 
         // Update user role (canonical tier strings)
         await db.execute('UPDATE users SET role = ? WHERE id = ?', [storedTierRole, userId]);
+        try { invalidateEntitlementsCache(userId); } catch (_) {}
 
         // Update capabilities in metadata JSON field
         if (capabilities && Array.isArray(capabilities)) {
@@ -986,6 +989,7 @@ module.exports = async (req, res) => {
           'UPDATE users SET subscription_status = ?, payment_failed = TRUE, role = ?, subscription_plan = ? WHERE id = ?',
           ['inactive', 'access', 'access', userId]
         );
+        try { invalidateEntitlementsCache(userId); } catch (_) {}
 
         db.release();
 
@@ -1123,6 +1127,7 @@ module.exports = async (req, res) => {
       values.push(userId);
       const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
       await db.execute(query, values);
+      try { invalidateEntitlementsCache(userId); } catch (_) {}
 
       // Fetch updated user data
       const [updatedRows] = await db.execute(

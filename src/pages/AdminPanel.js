@@ -11,11 +11,18 @@ import '../styles/AdminPanel.css';
 import { isSuperAdmin as hasSuperAdminRole, isConfiguredSuperAdminEmail } from '../utils/roles';
 
 /** Admin card label: env-listed super admins match primary super-admin UX even if DB was left as admin. */
+function getUserPlanKey(userItem) {
+  return (userItem?.subscription_plan || userItem?.subscriptionPlan || '').toString().toLowerCase();
+}
+
 function adminPanelRoleLabel(userItem) {
   const r = (userItem?.role || '').toString().toLowerCase();
   if (r === 'super_admin' || isConfiguredSuperAdminEmail(userItem?.email)) return 'SUPER ADMIN';
   if (r === 'admin') return 'ADMIN';
-  return (userItem?.role || 'USER').toString().toUpperCase();
+  const plan = getUserPlanKey(userItem);
+  if (plan === 'elite') return 'ELITE';
+  if (plan === 'pro') return 'PRO';
+  return 'ACCESS';
 }
 
 function isRowSuperAdminOrAdmin(userItem) {
@@ -49,7 +56,7 @@ function initialAccessPlanSelect(userItem) {
   const r = (userItem?.role || '').toString().toLowerCase();
   if (r === 'super_admin') return 'super_admin';
   if (r === 'admin') return 'admin';
-  const plan = userItem?.subscription_plan;
+  const plan = getUserPlanKey(userItem);
   return normalizePlanForSelect(plan);
 }
 
@@ -354,7 +361,15 @@ const AdminPanel = () => {
             const data = await response.json();
             // Handle different response formats
             const usersList = Array.isArray(data) ? data : (data.users || data.data || []);
-            setUsers(usersList);
+            const normalizedUsers = usersList.map((u) => {
+                const normalizedPlan = (u.subscription_plan || u.subscriptionPlan || '').toString().toLowerCase() || 'access';
+                return {
+                    ...u,
+                    subscription_plan: normalizedPlan,
+                    subscriptionPlan: normalizedPlan,
+                };
+            });
+            setUsers(normalizedUsers);
         } catch (err) {
             console.error('Error fetching users:', err);
             setError(err.message || 'Failed to load users. Please try again.');
@@ -1142,13 +1157,11 @@ const AdminPanel = () => {
                     <div className="user-plan">
                       <span className="user-plan__label">Plan</span>
                       <span
-                        className={`user-plan__value user-plan__value--${(userItem.subscription_plan || 'free').toLowerCase()}`}
+                        className={`user-plan__value user-plan__value--${(userItem.subscription_plan || 'access').toLowerCase()}`}
                       >
-                        {userItem.subscription_plan || 'free'}
+                        {userItem.subscription_plan || 'access'}
                       </span>
-                      {userItem.subscription_expiry &&
-                        userItem.subscription_plan !== 'free' &&
-                        userItem.subscription_plan !== 'access' && (
+                      {userItem.subscription_expiry && userItem.subscription_plan !== 'access' && (
                         <span className="user-plan__expiry">
                           Expires {new Date(userItem.subscription_expiry).toLocaleDateString()}
                         </span>

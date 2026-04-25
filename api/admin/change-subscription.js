@@ -3,6 +3,7 @@
 const { getDbConnection } = require('../db');
 const { isSuperAdminEmail } = require('../utils/entitlements');
 const { canonicalStoredPlanFromAny, normalizeKey } = require('../utils/subscriptionNormalize');
+const { invalidateEntitlementsCache } = require('../cache');
 require('../utils/suppress-warnings');
 
 const log = (level, message, data = {}) => {
@@ -221,6 +222,7 @@ module.exports = async (req, res) => {
       durationDays: isAccessTier ? null : durationDays,
       expiry: expiryDate ? expiryDate.toISOString() : null
     });
+    try { invalidateEntitlementsCache(userId); } catch (_) {}
 
     return res.status(200).json({
       success: true,
