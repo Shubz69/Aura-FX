@@ -8,6 +8,7 @@ const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getQuote } = require('./services/finnhubService');
 const {
   getResolvedSymbol,
+  forProvider,
   usesForexSessionContext,
   isUkListedEquity,
   isCboeEuropeUkListedEquity,
@@ -108,6 +109,7 @@ async function fetchQuoteNumbersForResolved(resolved) {
 
 const FINNHUB_BASE = 'https://finnhub.io/api/v1';
 const FMP_BASE = 'https://financialmodelingprep.com';
+const YAHOO_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
 const TIMEOUT_MS = 11000;
 
 function logProvider(tag, status, detail) {
@@ -122,6 +124,84 @@ function logProvider(tag, status, detail) {
     return;
   }
   console.info(msg);
+}
+
+function decoderSeriesFromYahooResult(result) {
+  const ts = Array.isArray(result?.timestamp) ? result.timestamp : [];
+  const q = result?.indicators?.quote?.[0] || {};
+  const opens = Array.isArray(q.open) ? q.open : [];
+  const highs = Array.isArray(q.high) ? q.high : [];
+  const lows = Array.isArray(q.low) ? q.low : [];
+  const closesRaw = Array.isArray(q.close) ? q.close : [];
+  const outOpens = [];
+  const outHighs = [];
+  const outLows = [];
+  const outCloses = [];
+  const outTimes = [];
+  const outDates = [];
+  for (let i = 0; i < ts.length; i += 1) {
+    const t = Number(ts[i]);
+    const c = Number(closesRaw[i]);
+    if (!Number.isFinite(t) || !Number.isFinite(c)) continue;
+    const o = Number.isFinite(Number(opens[i])) ? Number(opens[i]) : c;
+    const h = Number.isFinite(Number(highs[i])) ? Number(highs[i]) : c;
+    const l = Number.isFinite(Number(lows[i])) ? Number(lows[i]) : c;
+    outTimes.push(t);
+    outDates.push(new Date(t * 1000).toISOString().slice(0, 10));
+    outOpens.push(o);
+    outHighs.push(Math.max(h, l, o, c));
+    outLows.push(Math.min(h, l, o, c));
+    outCloses.push(c);
+  }
+  return {
+    opens: outOpens,
+    highs: outHighs,
+    lows: outLows,
+    closes: outCloses,
+    times: outTimes,
+    dates: outDates,
+  };
+}
+
+async function yahooDailySeries(resolved) {
+  const ySym = forProvider(resolved.canonical, 'yahoo') || resolved.canonical;
+  const url = `${YAHOO_BASE}/${encodeURIComponent(ySym)}`;
+  try {
+    const res = await fetchWithTimeout(url, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'application/json',
+      },
+    }, TIMEOUT_MS);
+    if (!res.ok) {
+      return {
+        ok: false, opens: [], highs: [], lows: [], closes: [], dates: [], times: [],
+        error: `http ${res.status}`, providerSymbol: ySym,
+      };
+    }
+    const j = await res.json();
+    const result = j?.chart?.result?.[0];
+    if (!result) {
+      return {
+        ok: false, opens: [], highs: [], lows: [], closes: [], dates: [], times: [],
+        error: 'empty', providerSymbol: ySym,
+      };
+    }
+    const s = decoderSeriesFromYahooResult(result);
+    if (!s.closes.length) {
+      return {
+        ok: false, opens: [], highs: [], lows: [], closes: [], dates: [], times: [],
+        error: 'parse-empty', providerSymbol: ySym,
+      };
+    }
+    return { ok: true, ...s, source: 'yahoo', providerSymbol: ySym };
+  } catch (e) {
+    return {
+      ok: false, opens: [], highs: [], lows: [], closes: [], dates: [], times: [],
+      error: e.message || 'err', providerSymbol: ySym,
+    };
+  }
 }
 
 /**
@@ -441,6 +521,33 @@ async function fetchDailySeries(resolved, fromSec, toSec) {
     });
   }
 
+  const y = await yahooDailySeries(resolved);
+  if (y.ok && y.closes.length >= 10) {
+    log.push({ name: 'Yahoo chart daily', status: 'fallback', detail: `${y.closes.length} sessions ${y.providerSymbol}` });
+    return {
+      ok: true,
+      closes: y.closes,
+      highs: y.highs,
+      lows: y.lows,
+      opens: y.opens || [],
+      dates: y.dates || [],
+      times: y.times || [],
+      source: y.source,
+      providerLog: log,
+      diagnostics: {
+        symbol: resolved.displaySymbol,
+        canonical: resolved.canonical,
+        provider: 'yahoo',
+        providerSymbol: y.providerSymbol,
+        interval: '1D',
+        range: '1Y',
+        barCount: y.closes.length,
+        providerError: null,
+      },
+    };
+  }
+  log.push({ name: 'Yahoo chart daily', status: 'failed', detail: y.error || 'no data' });
+
   return {
     ok: false,
     closes: [],
@@ -450,6 +557,17 @@ async function fetchDailySeries(resolved, fromSec, toSec) {
     dates: [],
     times: [],
     providerLog: log,
+    diagnostics: {
+      symbol: resolved.displaySymbol,
+      canonical: resolved.canonical,
+      provider: 'none',
+      providerSymbol: '',
+      interval: '1D',
+      range: '1Y',
+      barCount: 0,
+      providerError: y.error || 'all providers failed',
+      twelveDataKeyPresent: Boolean(String(process.env.TWELVE_DATA_API_KEY || '').trim()),
+    },
   };
 }
 
@@ -497,6 +615,15 @@ async function fetchDailySeriesWithQuoteFallback(resolved, fromSec, toSec, quote
       source: mini.source,
       providerLog: log,
       isSparse: true,
+      diagnostics: {
+        ...(primary.diagnostics || {}),
+        provider: 'quote_snapshot',
+        providerSymbol: resolved.displaySymbol,
+        interval: '1D',
+        range: '1Y',
+        barCount: mini.closes.length,
+        providerError: primary.diagnostics?.providerError || null,
+      },
     };
   }
   return primary;

@@ -49,6 +49,11 @@ const priceCache = new Map();
 const CACHE_TTL = 2000; // Fresh data TTL: 2 seconds for accuracy
 const STALE_TTL = 300000; // Stale data TTL: 5 minutes (use as delayed fallback)
 const REQUEST_TIMEOUT = 5000; // 5 second timeout per request
+const ROUTE_CACHE_TTL_MS = Math.max(5000, parseInt(process.env.MARKET_PRICES_ROUTE_TTL_MS || '8000', 10) || 8000);
+const ROUTE_CACHE_MAX_ENTRIES = Math.max(50, parseInt(process.env.MARKET_PRICES_ROUTE_CACHE_MAX || '350', 10) || 350);
+const ROUTE_CACHE_CONTROL = `public, max-age=${Math.floor(ROUTE_CACHE_TTL_MS / 1000)}, s-maxage=${Math.floor(ROUTE_CACHE_TTL_MS / 1000)}, stale-while-revalidate=10`;
+const routeResponseCache = new Map();
+const routeInFlight = new Map();
 
 // Health stats
 const healthStats = {
@@ -60,6 +65,29 @@ const healthStats = {
   lastSuccessTime: 0,
   avgLatency: 0
 };
+const routeStats = {
+  routeCacheHits: 0,
+  routeCacheMisses: 0,
+  routeInFlightShares: 0,
+  sourceCounts: {},
+  rateLimitErrors: 0,
+};
+
+function bumpSourceCount(source, count = 1) {
+  const key = String(source || 'unknown').trim() || 'unknown';
+  routeStats.sourceCounts[key] = (routeStats.sourceCounts[key] || 0) + count;
+}
+
+function pruneRouteCache() {
+  if (routeResponseCache.size <= ROUTE_CACHE_MAX_ENTRIES) return;
+  const entries = Array.from(routeResponseCache.entries()).sort((a, b) => a[1].cachedAt - b[1].cachedAt);
+  const toRemove = entries.slice(0, Math.max(1, entries.length - ROUTE_CACHE_MAX_ENTRIES));
+  toRemove.forEach(([k]) => routeResponseCache.delete(k));
+}
+
+function getRouteCacheKey(symbols) {
+  return symbols.slice().sort().join(',');
+}
 
 // Yahoo Finance: indices, macro, commodities futures, crypto, FX
 const FOREX_YAHOO = {
@@ -1485,7 +1513,7 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Cache-Control', ROUTE_CACHE_CONTROL);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -1509,85 +1537,151 @@ module.exports = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Max 50 symbols per request' });
   }
 
+  const routeCacheKey = getRouteCacheKey(symbols);
+  const cachedRoute = routeResponseCache.get(routeCacheKey);
+  if (cachedRoute && Date.now() - cachedRoute.cachedAt < ROUTE_CACHE_TTL_MS) {
+    routeStats.routeCacheHits += 1;
+    return res.status(200).json({
+      ...cachedRoute.payload,
+      meta: {
+        ...cachedRoute.payload.meta,
+        routeCacheHit: true,
+        routeCacheTtlMs: ROUTE_CACHE_TTL_MS,
+      },
+    });
+  }
+  routeStats.routeCacheMisses += 1;
+
+  const existingInFlight = routeInFlight.get(routeCacheKey);
+  if (existingInFlight) {
+    routeStats.routeInFlightShares += 1;
+    const sharedPayload = await existingInFlight;
+    return res.status(200).json({
+      ...sharedPayload,
+      meta: {
+        ...sharedPayload.meta,
+        routeCacheHit: false,
+        routeSharedInFlight: true,
+        routeCacheTtlMs: ROUTE_CACHE_TTL_MS,
+      },
+    });
+  }
+
   const startTime = Date.now();
+  const buildPayload = async () => {
+    const stooqBySymbol = await fetchStooqBatchMap(symbols.filter((s) => STOOQ_FOREX_METALS.has(s)));
 
-  const stooqBySymbol = await fetchStooqBatchMap(symbols.filter((s) => STOOQ_FOREX_METALS.has(s)));
+    // Fetch all prices in parallel with timeout
+    const results = await Promise.allSettled(
+      symbols.map(symbol =>
+        Promise.race([
+          fetchPrice(symbol, { stooqBySymbol }),
+          new Promise(resolve => setTimeout(() => resolve(getFallbackPrice(symbol)), REQUEST_TIMEOUT + 1000))
+        ])
+      )
+    );
 
-  // Fetch all prices in parallel with timeout
-  const results = await Promise.allSettled(
-    symbols.map(symbol => 
-      Promise.race([
-        fetchPrice(symbol, { stooqBySymbol }),
-        new Promise(resolve => setTimeout(() => resolve(getFallbackPrice(symbol)), REQUEST_TIMEOUT + 1000))
-      ])
-    )
-  );
-  
-  const prices = {};
-  let liveCount = 0;
-  let delayedCount = 0;
-  let errorSymbols = [];
-  
-  results.forEach((result, index) => {
-    const symbol = symbols[index];
-    
-    if (result.status === 'fulfilled' && result.value) {
-      const priceData = result.value;
-      
-      // Ensure we never have 0.00 prices
-      if (!priceData.price || priceData.price === '0.00' || parseFloat(priceData.price) === 0) {
+    const prices = {};
+    let liveCount = 0;
+    let delayedCount = 0;
+    const errorSymbols = [];
+    const sourceBreakdown = {};
+    let symbolRateLimitErrors = 0;
+
+    results.forEach((result, index) => {
+      const symbol = symbols[index];
+      const recordSource = (src) => {
+        const k = String(src || 'unknown');
+        sourceBreakdown[k] = (sourceBreakdown[k] || 0) + 1;
+        bumpSourceCount(k, 1);
+      };
+
+      if (result.status === 'fulfilled' && result.value) {
+        const priceData = result.value;
+
+        // Ensure we never have 0.00 prices
+        if (!priceData.price || priceData.price === '0.00' || parseFloat(priceData.price) === 0) {
+          const fallback = getFallbackPrice(symbol);
+          if (fallback) {
+            prices[symbol] = fallback;
+            recordSource(fallback.source || 'fallback');
+            delayedCount++;
+          } else {
+            errorSymbols.push(symbol);
+          }
+        } else {
+          prices[symbol] = priceData;
+          recordSource(priceData.source || 'unknown');
+          if (priceData.delayed) delayedCount++;
+          else liveCount++;
+          if (String(priceData.source || '').toLowerCase().includes('rate_limit')) {
+            symbolRateLimitErrors += 1;
+          }
+        }
+      } else {
+        // Promise rejected - use fallback
         const fallback = getFallbackPrice(symbol);
         if (fallback) {
           prices[symbol] = fallback;
+          recordSource(fallback.source || 'fallback');
           delayedCount++;
         } else {
           errorSymbols.push(symbol);
         }
-      } else {
-        prices[symbol] = priceData;
-        if (priceData.delayed) {
-          delayedCount++;
-        } else {
-          liveCount++;
-        }
       }
-    } else {
-      // Promise rejected - use fallback
-      const fallback = getFallbackPrice(symbol);
-      if (fallback) {
-        prices[symbol] = fallback;
-        delayedCount++;
-      } else {
-        errorSymbols.push(symbol);
+    });
+
+    const latency = Date.now() - startTime;
+    healthStats.avgLatency = (healthStats.avgLatency * (healthStats.totalRequests - 1) + latency) / healthStats.totalRequests;
+    routeStats.rateLimitErrors += symbolRateLimitErrors;
+
+    return {
+      success: true,
+      prices,
+      meta: {
+        requestedCount: symbols.length,
+        liveCount,
+        delayedCount,
+        errorCount: errorSymbols.length,
+        errors: errorSymbols.length > 0 ? errorSymbols : undefined,
+        latencyMs: latency,
+        timestamp: Date.now(),
+        sourceBreakdown,
+        routeCacheHit: false,
+        routeCacheTtlMs: ROUTE_CACHE_TTL_MS,
+      },
+      health: {
+        totalRequests: healthStats.totalRequests,
+        cacheHitRate: healthStats.totalRequests > 0
+          ? (healthStats.cacheHits / healthStats.totalRequests * 100).toFixed(1) + '%'
+          : '0%',
+        avgLatencyMs: Math.round(healthStats.avgLatency),
+        lastSuccessTime: healthStats.lastSuccessTime,
+        uptime: healthStats.lastSuccessTime > 0,
+        routeCache: {
+          hits: routeStats.routeCacheHits,
+          misses: routeStats.routeCacheMisses,
+          inFlightShares: routeStats.routeInFlightShares,
+          ttlMs: ROUTE_CACHE_TTL_MS,
+        },
+        sourceCountsLifetime: routeStats.sourceCounts,
+        providerRateLimitErrors: routeStats.rateLimitErrors,
       }
-    }
-  });
+    };
+  };
 
-  const latency = Date.now() - startTime;
-  healthStats.avgLatency = (healthStats.avgLatency * (healthStats.totalRequests - 1) + latency) / healthStats.totalRequests;
-
-  return res.status(200).json({
-    success: true,
-    prices,
-    meta: {
-      requestedCount: symbols.length,
-      liveCount,
-      delayedCount,
-      errorCount: errorSymbols.length,
-      errors: errorSymbols.length > 0 ? errorSymbols : undefined,
-      latencyMs: latency,
-      timestamp: Date.now()
-    },
-    health: {
-      totalRequests: healthStats.totalRequests,
-      cacheHitRate: healthStats.totalRequests > 0 
-        ? (healthStats.cacheHits / healthStats.totalRequests * 100).toFixed(1) + '%' 
-        : '0%',
-      avgLatencyMs: Math.round(healthStats.avgLatency),
-      lastSuccessTime: healthStats.lastSuccessTime,
-      uptime: healthStats.lastSuccessTime > 0
-    }
-  });
+  const inFlightPromise = buildPayload()
+    .then((payload) => {
+      routeResponseCache.set(routeCacheKey, { cachedAt: Date.now(), payload });
+      pruneRouteCache();
+      return payload;
+    })
+    .finally(() => {
+      routeInFlight.delete(routeCacheKey);
+    });
+  routeInFlight.set(routeCacheKey, inFlightPromise);
+  const payload = await inFlightPromise;
+  return res.status(200).json(payload);
 };
 
 module.exports.fetchPricesForSymbols = fetchPricesForSymbols;

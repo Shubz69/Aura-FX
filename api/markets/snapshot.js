@@ -15,6 +15,7 @@ const { snapshot: tdMetricsSnapshot } = require('../market-data/tdMetrics');
 const CACHE_KEY = 'markets:snapshot:v1';
 const CACHE_TTL_MS = 20 * 1000;
 const STALE_OK_MS = 5 * 60 * 1000;
+const SNAPSHOT_CACHE_CONTROL = 'public, max-age=30, s-maxage=30, stale-while-revalidate=15';
 
 /** Wall-clock ceiling for building the snapshot (large watchlist × waves can exceed Vercel maxDuration). */
 const HARD_BUILD_MS = Math.min(
@@ -28,12 +29,30 @@ const HARD_BUILD_MS = Math.min(
 
 let lastGoodSnapshot = null;
 let lastGoodSnapshotTime = 0;
+let snapshotBuildInFlight = null;
+
+async function buildSnapshotWithBudget() {
+  const built = await Promise.race([
+    buildLiveHotSnapshot(getSnapshotSymbols()),
+    new Promise((_, reject) => {
+      setTimeout(
+        () => reject(Object.assign(new Error('markets-snapshot-hard-timeout'), { code: 'HARD_TIMEOUT' })),
+        HARD_BUILD_MS
+      );
+    }),
+  ]);
+  return {
+    prices: built.prices,
+    snapshotTimestamp: built.timestamp,
+    diagnostics: built.diagnostics,
+  };
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=30, stale-while-revalidate=15');
+  res.setHeader('Cache-Control', SNAPSHOT_CACHE_CONTROL);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -65,18 +84,15 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const built = await Promise.race([
-      buildLiveHotSnapshot(getSnapshotSymbols()),
-      new Promise((_, reject) => {
-        setTimeout(
-          () => reject(Object.assign(new Error('markets-snapshot-hard-timeout'), { code: 'HARD_TIMEOUT' })),
-          HARD_BUILD_MS
-        );
-      }),
-    ]);
+    if (!snapshotBuildInFlight) {
+      snapshotBuildInFlight = buildSnapshotWithBudget().finally(() => {
+        snapshotBuildInFlight = null;
+      });
+    }
+    const built = await snapshotBuildInFlight;
     const snapshot = {
       prices: built.prices,
-      snapshotTimestamp: built.timestamp,
+      snapshotTimestamp: built.snapshotTimestamp,
     };
     setCached(CACHE_KEY, snapshot, CACHE_TTL_MS);
     lastGoodSnapshot = snapshot;
@@ -93,6 +109,7 @@ module.exports = async (req, res) => {
         routeCacheHit: false,
         cacheTtlMs: CACHE_TTL_MS,
         hotUniverseSymbols: getSnapshotSymbols(),
+        sharedBuild: true,
         ...built.diagnostics,
       };
     }

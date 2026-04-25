@@ -35,6 +35,7 @@ export default function LightweightInstrumentChart({
   const [status, setStatus] = useState('loading');
   const [errorMessage, setErrorMessage] = useState('');
   const [bars, setBars] = useState(null);
+  const lastRequestKeyRef = useRef('');
 
   useEffect(() => {
     let cancelled = false;
@@ -45,46 +46,60 @@ export default function LightweightInstrumentChart({
       setErrorMessage('No symbol');
       return undefined;
     }
+    const reqKey = JSON.stringify({
+      s: sym,
+      i: String(interval || '60'),
+      r: String(range || '3M'),
+      f: from ? String(from) : '',
+      t: to ? String(to) : '',
+    });
+    if (lastRequestKeyRef.current === reqKey && status === 'ready') {
+      return undefined;
+    }
+    lastRequestKeyRef.current = reqKey;
     setStatus('loading');
     setErrorMessage('');
     setBars(null);
-    Api.getMarketChartHistory(sym, {
-      interval: String(interval || '60'),
-      range: String(range || '3M'),
-      ...(from ? { from } : {}),
-      ...(to ? { to } : {}),
-    })
-      .then((res) => {
-        if (cancelled) return;
-        const data = res?.data;
-        const list = Array.isArray(data?.bars) ? data.bars : [];
-        if (!data?.success || list.length < 2) {
-          const diag = data?.diagnostics;
-          if (diag && typeof console !== 'undefined' && console.warn) {
-            console.warn('[LightweightInstrumentChart] chart empty or insufficient bars', diag);
-          }
-          setStatus('empty');
-          setErrorMessage(data?.message || 'Not enough chart data for this symbol yet.');
-          setBars(null);
-          return;
-        }
-        setBars(list);
-        setStatus('ready');
+    const timer = setTimeout(() => {
+      Api.getMarketChartHistory(sym, {
+        interval: String(interval || '60'),
+        range: String(range || '3M'),
+        ...(from ? { from } : {}),
+        ...(to ? { to } : {}),
       })
-      .catch((err) => {
-        if (cancelled) return;
-        const diag = err?.response?.data?.diagnostics;
-        if (diag && typeof console !== 'undefined' && console.warn) {
-          console.warn('[LightweightInstrumentChart] chart request failed', diag);
-        }
-        setStatus('error');
-        setBars(null);
-        setErrorMessage(err?.response?.data?.message || err?.message || 'Chart failed to load');
-      });
+        .then((res) => {
+          if (cancelled) return;
+          const data = res?.data;
+          const list = Array.isArray(data?.bars) ? data.bars : [];
+          if (!data?.success || list.length < 2) {
+            const diag = data?.diagnostics;
+            if (diag && typeof console !== 'undefined' && console.warn) {
+              console.warn('[LightweightInstrumentChart] chart empty or insufficient bars', diag);
+            }
+            setStatus('empty');
+            setErrorMessage(data?.message || 'Not enough chart data for this symbol yet.');
+            setBars(null);
+            return;
+          }
+          setBars(list);
+          setStatus('ready');
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          const diag = err?.response?.data?.diagnostics;
+          if (diag && typeof console !== 'undefined' && console.warn) {
+            console.warn('[LightweightInstrumentChart] chart request failed', diag);
+          }
+          setStatus('error');
+          setBars(null);
+          setErrorMessage(err?.response?.data?.message || err?.message || 'Chart failed to load');
+        });
+    }, 160);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, [symbol, interval, range, from, to]);
+  }, [symbol, interval, range, from, to, status]);
 
   useEffect(() => {
     const wrap = wrapRef.current;

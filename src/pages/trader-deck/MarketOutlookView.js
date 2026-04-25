@@ -477,10 +477,12 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     if (editMode) return undefined;
     const iv = setInterval(() => {
       if (dataSourceRef.current !== 'live') return;
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       if (liveRefreshInFlightRef.current) return;
       liveRefreshInFlightRef.current = true;
       const dateStr = getTraderDeckIntelStorageYmd(selectedDate, period);
-      getMarketIntelligence({ refresh: true, timeframe: period, date: dateStr })
+      // Keep periodic refresh cache-friendly; explicit admin edits still force updates on save.
+      getMarketIntelligence({ refresh: false, timeframe: period, date: dateStr })
         .then((raw) => {
           const normalized = normalizeForUI(raw, period);
           if (normalized) setData(normalized);

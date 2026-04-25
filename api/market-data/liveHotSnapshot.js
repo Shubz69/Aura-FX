@@ -33,8 +33,8 @@ const DEFAULT_CONCURRENCY = Math.max(
   1,
   Math.min(
     40,
-    parseInt(process.env.LIVE_HOT_SNAPSHOT_CONCURRENCY || (IS_VERCEL ? '34' : '12'), 10) ||
-      (IS_VERCEL ? 34 : 12)
+    parseInt(process.env.LIVE_HOT_SNAPSHOT_CONCURRENCY || (IS_VERCEL ? '16' : '10'), 10) ||
+      (IS_VERCEL ? 16 : 10)
   )
 );
 

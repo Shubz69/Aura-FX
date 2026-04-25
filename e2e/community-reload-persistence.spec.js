@@ -67,11 +67,14 @@ async function pickWritableChannel(page) {
     const label = ((await names.nth(i).innerText().catch(() => '')) || '').trim();
     const t = label.toLowerCase();
     if (!label || t === 'welcome' || t.startsWith('announcement') || t === 'levels' || t.includes('notification') || /\brules?\b/.test(t)) continue;
-    await names.nth(i).click({ force: true });
+    const row = names.nth(i).locator('xpath=ancestor::li[1]').first();
+    await row.click({ force: true });
+    await page.waitForTimeout(350);
     const input = page.locator('#community-message-input').first();
     await input.waitFor({ state: 'visible', timeout: 15000 });
     if (await input.isEnabled().catch(() => false)) {
       const channelId = (new URL(page.url()).pathname.split('/').filter(Boolean)[1] || '').trim();
+      if (!channelId || channelId.toLowerCase() === 'announcements') continue;
       return { channelId, channelName: label, input };
     }
   }
@@ -88,11 +91,27 @@ test.describe('Community reload persistence', () => {
     try {
       const { channelId, channelName, input } = await pickWritableChannel(page);
       const tokens = [];
+      const postEvents = [];
+      let lastPostStatus = null;
+      let lastPostId = null;
       for (let i = 0; i < 10; i += 1) {
         const token = `RLD_ONE_${Date.now()}_${i}`;
         tokens.push(token);
         await input.fill(token);
+        const waitPost = page.waitForResponse((r) => {
+          return r.request().method() === 'POST' && r.url().includes(`/api/community/channels/${channelId}/messages`);
+        }, { timeout: 20000 }).catch(() => null);
         await input.press('Enter');
+        const postRes = await waitPost;
+        if (postRes) {
+          lastPostStatus = postRes.status();
+          const postBody = await postRes.json().catch(() => ({}));
+          lastPostId = postBody?.id ?? postBody?.message?.id ?? null;
+          postEvents.push({ status: postRes.status(), id: lastPostId });
+        }
+        const currentChannelId = (new URL(page.url()).pathname.split('/').filter(Boolean)[1] || '').trim();
+        const preAssertCount = await page.locator('.chat-messages').first().getByText(token, { exact: true }).count().catch(() => 0);
+        console.log('[community-send-debug]', JSON.stringify({ token, currentChannelId, postStatus: lastPostStatus, postId: lastPostId, preAssertCount }));
         await expect(page.locator('.chat-messages').first().getByText(token, { exact: true })).toBeVisible({ timeout: 15000 });
       }
 
@@ -159,6 +178,14 @@ test.describe('Community reload persistence', () => {
 
       const lastToken = tokens[tokens.length - 1];
       const userToken = readUserToken();
+      const apiContainsAfterSend = await page.request.get(`${BASE}/api/community/channels/${channelId}/messages`, {
+        failOnStatusCode: false,
+        headers: userToken ? { Authorization: `Bearer ${userToken}` } : undefined
+      }).then(async (r) => {
+        const body = await r.json().catch(() => []);
+        return Array.isArray(body) && body.some((m) => String(m?.content || '').includes(lastToken));
+      }).catch(() => false);
+      const uiContainsAfterSend = (await page.locator('.chat-messages').first().getByText(lastToken, { exact: true }).count().catch(() => 0)) > 0;
       const apiContainsPosted = await page.request.get(`${BASE}/api/community/channels/${channelId}/messages`, {
         failOnStatusCode: false,
         headers: userToken ? { Authorization: `Bearer ${userToken}` } : undefined
@@ -171,6 +198,11 @@ test.describe('Community reload persistence', () => {
         channelId,
         channelName,
         reloadChannelId,
+        lastPostStatus,
+        lastPostId,
+        postEvents,
+        apiContainsAfterSend,
+        uiContainsAfterSend,
         reloadGet,
         apiContainsPosted,
         uiCountAfterReload,

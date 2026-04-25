@@ -14,8 +14,9 @@ const axios = require('axios');
 const { toCanonical, forProvider } = require('../ai/utils/symbol-registry');
 
 const REQUEST_TIMEOUT = 12000;
-const cache = new Map();
-const CACHE_TTL_MS = 30000;
+const responseCache = new Map();
+const inFlight = new Map();
+const providerCallCounts = new Map();
 const VALID_INTERVALS = new Set(['1', '15', '60', '240', '1D', 'D']);
 const VALID_RANGES = new Set(['1D', '1W', '1M', '3M', '6M', '1Y']);
 const TWELVE_BASE = 'https://api.twelvedata.com/time_series';
@@ -126,8 +127,7 @@ function toYahooRange(range) {
 
 function providerPlan({ interval, range, from, to }) {
   const hasDateWindow = Number.isFinite(from) || Number.isFinite(to);
-  const isDeep = range === '1Y' || hasDateWindow;
-  const preferTwelve = interval === '1' || isDeep;
+  const preferTwelve = interval === '1' || hasDateWindow;
   return {
     prefer: preferTwelve ? 'twelvedata' : 'yahoo',
     fallback: preferTwelve ? 'yahoo' : 'twelvedata',
@@ -235,6 +235,32 @@ function cacheKey(yahooSym, interval, range, suffix = '') {
   return `${yahooSym}|${interval}|${range}${suffix ? `|${suffix}` : ''}`;
 }
 
+function ttlByIntervalMs(interval) {
+  const i = normalizeInterval(interval);
+  if (i === '1') return 20_000;
+  if (i === '15') return 90_000;
+  if (i === '60') return 7 * 60_000;
+  if (i === '240') return 20 * 60_000;
+  return 3 * 60 * 60_000;
+}
+
+function bumpProviderCall(provider) {
+  const p = String(provider || 'unknown');
+  providerCallCounts.set(p, (providerCallCounts.get(p) || 0) + 1);
+}
+
+function makeResponseKey({ requestSymbol, canonical, interval, range, from, to, provider }) {
+  return JSON.stringify({
+    requestSymbol: String(requestSymbol || '').toUpperCase(),
+    canonical: String(canonical || '').toUpperCase(),
+    interval: normalizeInterval(interval),
+    range: normalizeRange(range),
+    from: Number.isFinite(from) ? Number(from) : null,
+    to: Number.isFinite(to) ? Number(to) : null,
+    provider: String(provider || 'auto').toLowerCase(),
+  });
+}
+
 function buildChartRequestUrl(yahooSymbol, interval, range) {
   const base = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}`;
   const qs = new URLSearchParams({
@@ -250,19 +276,32 @@ function buildChartRequestUrl(yahooSymbol, interval, range) {
  */
 async function fetchYahooChartBars(yahooSymbol, interval, range) {
   const key = cacheKey(yahooSymbol, interval, range);
-  const hit = cache.get(key);
+  const hit = responseCache.get(key);
   const requestUrl = buildChartRequestUrl(yahooSymbol, interval, range);
-  if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
+  const ttlMs = ttlByIntervalMs(interval);
+  if (hit && Date.now() - hit.at < ttlMs) {
     return {
       bars: hit.bars,
       requestUrl,
       responseStatus: hit.responseStatus ?? 200,
+      cacheHit: true,
+      cacheTtlMs: ttlMs,
+      inFlightDeduped: false,
+      providerCallMade: false,
     };
+  }
+
+  const inFlightKey = `yahoo:${key}`;
+  const pending = inFlight.get(inFlightKey);
+  if (pending) {
+    const out = await pending;
+    return { ...out, inFlightDeduped: true, providerCallMade: false };
   }
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-  try {
+  const run = (async () => {
+    bumpProviderCall('yahoo');
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}`;
     const response = await axios.get(url, {
       params: { interval, range, includePrePost: 'false' },
@@ -274,15 +313,30 @@ async function fetchYahooChartBars(yahooSymbol, interval, range) {
         Accept: 'application/json',
       },
     });
-    clearTimeout(timeoutId);
     const status = response.status ?? 200;
     const result = response.data?.chart?.result?.[0];
     const bars = result ? yahooResultToBars(result) : [];
-    cache.set(key, { at: Date.now(), bars, responseStatus: status });
-    return { bars, requestUrl, responseStatus: status };
+    responseCache.set(key, { at: Date.now(), bars, responseStatus: status });
+    return {
+      bars,
+      requestUrl,
+      responseStatus: status,
+      cacheHit: false,
+      cacheTtlMs: ttlMs,
+      inFlightDeduped: false,
+      providerCallMade: true,
+    };
+  })();
+  inFlight.set(inFlightKey, run);
+  try {
+    const out = await run;
+    clearTimeout(timeoutId);
+    return out;
   } catch (e) {
     clearTimeout(timeoutId);
     throw e;
+  } finally {
+    inFlight.delete(inFlightKey);
   }
 }
 
@@ -311,24 +365,51 @@ async function fetchTwelveDataBars({ symbol, interval, outputsize, from, to, api
   if (Number.isFinite(from)) params.start_date = new Date(from * 1000).toISOString();
   if (Number.isFinite(to)) params.end_date = new Date(to * 1000).toISOString();
   const key = cacheKey(`TD:${symbol}`, interval, JSON.stringify({ outputsize, from: params.start_date || '', to: params.end_date || '' }));
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
+  const hit = responseCache.get(key);
+  const ttlMs = ttlByIntervalMs(interval);
+  if (hit && Date.now() - hit.at < ttlMs) {
     return hit.payload;
   }
-  const response = await axios.get(TWELVE_BASE, {
-    params,
-    timeout: REQUEST_TIMEOUT,
-    headers: { Accept: 'application/json' },
-  });
-  const status = response.status ?? 200;
-  const values = Array.isArray(response.data?.values) ? response.data.values : [];
-  const bars = values.map(twelveBarToUnified).filter(Boolean).sort((a, b) => a.time - b.time);
-  if (response.data?.status === 'error') {
-    throw new Error(response.data?.message || 'Twelve Data error');
+  const inFlightKey = `td:${key}`;
+  const pending = inFlight.get(inFlightKey);
+  if (pending) {
+    const out = await pending;
+    return { ...out, inFlightDeduped: true, providerCallMade: false };
   }
-  const payload = { bars, requestUrl: `${TWELVE_BASE}?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}`, responseStatus: status };
-  cache.set(key, { at: Date.now(), payload });
-  return payload;
+  const run = (async () => {
+    bumpProviderCall('twelvedata');
+    const response = await axios.get(TWELVE_BASE, {
+      params,
+      timeout: REQUEST_TIMEOUT,
+      headers: { Accept: 'application/json' },
+    });
+    const status = response.status ?? 200;
+    const values = Array.isArray(response.data?.values) ? response.data.values : [];
+    const bars = values.map(twelveBarToUnified).filter(Boolean).sort((a, b) => a.time - b.time);
+    if (response.data?.status === 'error') {
+      const msg = String(response.data?.message || 'Twelve Data error');
+      const err = new Error(msg);
+      err.code = /rate|quota|limit|429/i.test(msg) ? 'TD_RATE_LIMIT' : 'TD_ERROR';
+      throw err;
+    }
+    const payload = {
+      bars,
+      requestUrl: `${TWELVE_BASE}?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}`,
+      responseStatus: status,
+      cacheHit: false,
+      cacheTtlMs: ttlMs,
+      inFlightDeduped: false,
+      providerCallMade: true,
+    };
+    responseCache.set(key, { at: Date.now(), payload });
+    return payload;
+  })();
+  inFlight.set(inFlightKey, run);
+  try {
+    return await run;
+  } finally {
+    inFlight.delete(inFlightKey);
+  }
 }
 
 function buildDiagnostics(base) {
@@ -353,6 +434,14 @@ function buildDiagnostics(base) {
     firstBarTime: base.firstBarTime != null ? base.firstBarTime : null,
     lastBarTime: base.lastBarTime != null ? base.lastBarTime : null,
     error: base.error || undefined,
+    cacheHit: Boolean(base.cacheHit),
+    cacheTtlMs: base.cacheTtlMs != null ? base.cacheTtlMs : null,
+    inFlightDeduped: Boolean(base.inFlightDeduped),
+    providerCallMade: Boolean(base.providerCallMade),
+    providerCallCounts: {
+      yahoo: providerCallCounts.get('yahoo') || 0,
+      twelvedata: providerCallCounts.get('twelvedata') || 0,
+    },
   };
 }
 
@@ -454,6 +543,29 @@ module.exports = async (req, res) => {
   const yPlan = yahooRangeParams({ interval: normalizedInterval, range: normalizedRange });
   const tPlan = twelveDataParams({ interval: normalizedInterval, range: normalizedRange, from: requestedFrom, to: requestedTo });
   const requestUrl = buildChartRequestUrl(yahoo, yPlan.interval, yPlan.range);
+  const responseTtlMs = ttlByIntervalMs(normalizedInterval);
+  const responseKeyAuto = makeResponseKey({
+    requestSymbol: symbol,
+    canonical,
+    interval: normalizedInterval,
+    range: normalizedRange,
+    from: requestedFrom,
+    to: requestedTo,
+    provider: 'auto',
+  });
+  const responseHit = responseCache.get(responseKeyAuto);
+  if (responseHit && Date.now() - responseHit.at < responseTtlMs) {
+    return res.status(200).json({
+      ...responseHit.payload,
+      diagnostics: {
+        ...(responseHit.payload.diagnostics || {}),
+        cacheHit: true,
+        cacheTtlMs: responseTtlMs,
+        inFlightDeduped: false,
+        providerCallMade: false,
+      },
+    });
+  }
 
   if (!yahoo) {
     return res.status(400).json({
@@ -494,6 +606,10 @@ module.exports = async (req, res) => {
         fourHourAggregated: yPlan.aggregateTo4h,
         yahooFetchInterval: yPlan.interval,
         yahooRange: yPlan.range,
+        cacheHit: out.cacheHit,
+        cacheTtlMs: out.cacheTtlMs,
+        inFlightDeduped: out.inFlightDeduped,
+        providerCallMade: out.providerCallMade,
       };
     }
     if (!twKey) throw new Error('TWELVE_DATA_API_KEY is required for Twelve Data provider');
@@ -514,6 +630,10 @@ module.exports = async (req, res) => {
       fourHourAggregated: tPlan.aggregateTo4h,
       yahooFetchInterval: '',
       yahooRange: '',
+      cacheHit: out.cacheHit,
+      cacheTtlMs: out.cacheTtlMs,
+      inFlightDeduped: out.inFlightDeduped,
+      providerCallMade: out.providerCallMade,
     };
   }
 
@@ -535,12 +655,13 @@ module.exports = async (req, res) => {
     if (fetched.fourHourAggregated) {
       const aggKey = cacheKey(selected === 'yahoo' ? yahoo : twelveDataSymbol, normalizedInterval, normalizedRange, 'agg4h');
       const sourceFresh = bars;
-      const aggHit = cache.get(aggKey);
-      if (aggHit && Date.now() - aggHit.at < CACHE_TTL_MS) {
+      const aggHit = responseCache.get(aggKey);
+      const aggTtlMs = ttlByIntervalMs(normalizedInterval);
+      if (aggHit && Date.now() - aggHit.at < aggTtlMs) {
         bars = aggHit.bars;
       } else {
         bars = sourceFresh;
-        cache.set(aggKey, { at: Date.now(), bars });
+        responseCache.set(aggKey, { at: Date.now(), bars });
       }
     }
 
@@ -569,10 +690,14 @@ module.exports = async (req, res) => {
       firstBarTime,
       lastBarTime,
       error: providerError || undefined,
+      cacheHit: fetched.cacheHit,
+      cacheTtlMs: fetched.cacheTtlMs,
+      inFlightDeduped: fetched.inFlightDeduped,
+      providerCallMade: fetched.providerCallMade,
     });
 
     if (barCount < 2) {
-      return res.status(200).json({
+      const payload = {
         success: false,
         message: 'Not enough chart data for this symbol yet.',
         canonical,
@@ -582,10 +707,24 @@ module.exports = async (req, res) => {
         diagnostics,
         source: selected,
         delayed: true,
-      });
+      };
+      responseCache.set(responseKeyAuto, { at: Date.now(), payload });
+      responseCache.set(
+        makeResponseKey({
+          requestSymbol: symbol,
+          canonical,
+          interval: normalizedInterval,
+          range: normalizedRange,
+          from: requestedFrom,
+          to: requestedTo,
+          provider: selected,
+        }),
+        { at: Date.now(), payload }
+      );
+      return res.status(200).json(payload);
     }
 
-    return res.status(200).json({
+    const payload = {
       success: true,
       canonical,
       yahooSymbol: yahoo,
@@ -602,7 +741,21 @@ module.exports = async (req, res) => {
       source: selected,
       delayed: true,
       diagnostics,
-    });
+    };
+    responseCache.set(responseKeyAuto, { at: Date.now(), payload });
+    responseCache.set(
+      makeResponseKey({
+        requestSymbol: symbol,
+        canonical,
+        interval: normalizedInterval,
+        range: normalizedRange,
+        from: requestedFrom,
+        to: requestedTo,
+        provider: selected,
+      }),
+      { at: Date.now(), payload }
+    );
+    return res.status(200).json(payload);
   } catch (err) {
     const status = err.response?.status;
     const httpStatus = status && status >= 400 && status < 600 ? status : 502;

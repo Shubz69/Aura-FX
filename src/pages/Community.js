@@ -951,6 +951,7 @@ const { id: channelIdParam } = useParams();
     const fetchMessagesSeqRef = useRef(0);
     const pollRequestSeqRef = useRef(0);
     const fetchInFlightKeyRef = useRef(null);
+    const fetchInFlightMetaRef = useRef(null);
     const fetchAbortRef = useRef(null);
     const pollAbortRef = useRef(null);
     const pollFailureStreakRef = useRef(0);
@@ -2717,18 +2718,26 @@ if (window.requestAnimationFrame) {
     const requestSeq = ++fetchMessagesSeqRef.current;
     const fetchKey = `${channelId}:${mergeMode ? 'merge' : 'full'}`;
     if (fetchInFlightKeyRef.current === fetchKey) return;
+    const existingFetchMeta = fetchInFlightMetaRef.current;
     if (fetchAbortRef.current) {
-        try { fetchAbortRef.current.abort(); } catch (_) { /* ignore */ }
+        const existingChannelId = existingFetchMeta?.channelId != null ? String(existingFetchMeta.channelId) : null;
+        const incomingChannelId = String(channelId);
+        const isSameSelectedChannel = existingChannelId === incomingChannelId;
+        // Do not cancel an active fetch for the currently selected channel.
+        if (!isSameSelectedChannel) {
+            try { fetchAbortRef.current.abort(); } catch (_) { /* ignore */ }
+        }
     }
     const ac = new AbortController();
     fetchAbortRef.current = ac;
     fetchInFlightKeyRef.current = fetchKey;
+    fetchInFlightMetaRef.current = { channelId: String(channelId), mergeMode: Boolean(mergeMode), requestSeq };
     
     try {
         const response = await Api.getChannelMessages(channelId, { signal: ac.signal });
         fetchMeta.status = Number(response?.status || 0) || null;
         fetchMeta.elapsedMs = Date.now() - startedAt;
-        if (requestSeq !== fetchMessagesSeqRef.current) return;
+        if (requestSeq !== fetchMessagesSeqRef.current && String(selectedChannelRef.current?.id || '') !== String(channelId)) return;
         if (selectedChannelRef.current?.id && String(selectedChannelRef.current.id) !== String(channelId)) return;
         if (response && response.data && Array.isArray(response.data)) {
             const apiMessages = response.data;
@@ -2783,7 +2792,7 @@ if (window.requestAnimationFrame) {
             fetchMeta.elapsedMs = Date.now() - startedAt;
             return fetchMeta;
         }
-        if (requestSeq !== fetchMessagesSeqRef.current) return;
+        if (requestSeq !== fetchMessagesSeqRef.current && String(selectedChannelRef.current?.id || '') !== String(channelId)) return;
         // In merge mode, don't show errors - just silently fail
         if (!mergeMode) {
             // Full refresh mode: show cached messages if available
@@ -2797,7 +2806,8 @@ if (window.requestAnimationFrame) {
     } finally {
         if (fetchAbortRef.current === ac) fetchAbortRef.current = null;
         if (fetchInFlightKeyRef.current === fetchKey) fetchInFlightKeyRef.current = null;
-        if (requestSeq !== fetchMessagesSeqRef.current) return;
+        if (fetchInFlightMetaRef.current?.requestSeq === requestSeq) fetchInFlightMetaRef.current = null;
+        if (requestSeq !== fetchMessagesSeqRef.current && String(selectedChannelRef.current?.id || '') !== String(channelId)) return;
         if (!mergeMode) { 
              setMessagesLoading(false);
         }
@@ -4319,13 +4329,17 @@ setMessages(prev => {
     reconcilePauseUntilRef.current = Date.now() + 1800;
     const response = await Api.sendMessage(selectedChannel.id, messageToSend);
     const payload = response?.data;
+    const payloadMessage =
+      payload && typeof payload === 'object' && payload.message && typeof payload.message === 'object'
+        ? payload.message
+        : payload;
     const isSavedMessage =
-      payload &&
-      payload.success !== false &&
-      (payload.id != null || payload.sequence != null);
+      payloadMessage &&
+      payload?.success !== false &&
+      (payloadMessage.id != null || payloadMessage.sequence != null);
 
     if (isSavedMessage) {
-      const serverMessage = payload;
+      const serverMessage = payloadMessage;
       console.log('✅ Server responded with message:', serverMessage.id);
       
       // Update state by replacing optimistic message with server message and maintain order

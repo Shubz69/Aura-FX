@@ -39,6 +39,7 @@ function resolveAsset(raw) {
   if (!r?.canonical) return null;
   return {
     displaySymbol: r.displaySymbol,
+    canonical: r.canonical,
     marketType: r.marketType,
     candleKind: r.candleKind,
     finnhubSymbol: r.finnhubSymbol,
@@ -744,6 +745,20 @@ async function runMarketDecoder(symbolInput) {
   const highs = seriesPack.ok ? seriesPack.highs : [];
   const lows = seriesPack.ok ? seriesPack.lows : [];
   const isSparse = Boolean(seriesPack.isSparse);
+  const dailyHistoryDiagnostics = {
+    symbol: displaySymbol,
+    canonical: canonicalSymbol,
+    provider: seriesPack?.diagnostics?.provider || seriesPack?.source || 'none',
+    providerSymbol: seriesPack?.diagnostics?.providerSymbol || '',
+    interval: seriesPack?.diagnostics?.interval || '1D',
+    range: seriesPack?.diagnostics?.range || '1Y',
+    barCount: Array.isArray(closes) ? closes.length : 0,
+    providerError: seriesPack?.diagnostics?.providerError || null,
+    twelveDataKeyPresent:
+      seriesPack?.diagnostics?.twelveDataKeyPresent != null
+        ? Boolean(seriesPack.diagnostics.twelveDataKeyPresent)
+        : Boolean(String(process.env.TWELVE_DATA_API_KEY || '').trim()),
+  };
 
   const last =
     closes.length > 0
@@ -1299,6 +1314,7 @@ async function runMarketDecoder(symbolInput) {
           seriesOk: Boolean(seriesPack.ok),
           pivotsAvailable: Boolean(piv && piv.r1 != null && piv.s1 != null),
           calendarOk: Boolean(cal.ok && calRows.length),
+          dailyHistoryDiagnostics,
         },
         freshness: {
           quoteOk: quoteRes.ok,

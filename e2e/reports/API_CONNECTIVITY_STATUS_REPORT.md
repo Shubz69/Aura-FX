@@ -1,6 +1,6 @@
 # API Connectivity Status Report
 
-Last updated: 2026-04-25 (targeted audit + reliability hardening pass + market-data probe + Twelve Data WS feasibility addendum)
+Last updated: 2026-04-25 (targeted audit + Twelve Data REST-usage reduction pass + focused pre-commit sanity)
 
 ## Scope and method
 
@@ -35,6 +35,27 @@ Last updated: 2026-04-25 (targeted audit + reliability hardening pass + market-d
 - Frontend dependencies:
   - `src/hooks/useLivePrices.js` -> `/api/markets/snapshot`.
   - Used by `src/components/MarketTicker.js`, `src/pages/Home.js`, `src/pages/aura-analysis/TradeCalculator.js`.
+- REST spike root-cause findings (dashboard minute spikes vs plan):
+  - `src/pages/trader-deck/MarketDecoderView.js` background poll called decoder with `refresh=1` every ~30s, bypassing decoder cache.
+  - `src/pages/trader-deck/MarketOutlookView.js` interval called market-intelligence with `refresh=true`, bypassing route cache.
+  - `api/market/prices.js` had no response-level route cache or in-flight dedupe, so concurrent identical requests rebuilt independently.
+  - `api/markets/snapshot.js` could trigger parallel snapshot builds under concurrent misses (no in-flight build sharing).
+  - `api/market-data/liveHotSnapshot.js` default Vercel concurrency was high, increasing short-window upstream burst pressure.
+
+## Twelve Data REST reduction changes (this pass)
+
+- `src/pages/trader-deck/MarketDecoderView.js`
+  - Background interval + visibility refresh now use cache-friendly decoder reads (`refresh=false`).
+  - User-triggered decode actions still use refresh when needed.
+- `src/pages/trader-deck/MarketOutlookView.js`
+  - Periodic live refresh now uses cache-friendly market-intelligence reads (`refresh=false`) and skips hidden-tab polls.
+- `api/markets/snapshot.js`
+  - Added in-flight snapshot build dedupe so concurrent misses share one build.
+- `api/market/prices.js`
+  - Added short response cache TTL (default 8s), in-flight dedupe by symbol set, and route/source instrumentation.
+  - Added route cache metrics (`routeCache` hits/misses/shares) and source breakdown in response meta/health.
+- `api/market-data/liveHotSnapshot.js`
+  - Reduced default Vercel concurrency from 34 -> 16 (non-Vercel 12 -> 10) to reduce burst fanout pressure.
 - Missing/invalid/rate-limited fallback behavior:
   - TD client returns structured non-ok (`no_key`, status/error payloads) without crashing.
   - Market snapshot route returns cached/stale snapshot when provider fetch fails; emits `503` only when no viable stale snapshot exists.
@@ -86,12 +107,24 @@ Last updated: 2026-04-25 (targeted audit + reliability hardening pass + market-d
   - `/api/market/prices?symbols=BTCUSD,ETHUSD,EURUSD,XAUUSD,SPX,NVDA` -> `200` (`liveCount=6`, `delayedCount=0`, `errorCount=0`)
   - `/api/trader-deck/market-intelligence?timeframe=daily` -> `200` (`~17.5s`, uncached sample)
   - `/api/trader-deck/market-decoder?symbol=EURUSD&refresh=1` -> `200` (`~12.6s`, uncached sample, `X-Market-Decoder-Engine=5`)
+- Live endpoint probe results (2026-04-25 focused sanity):
+  - `/api/markets/snapshot?diagnostics=1` -> `200` (`~9.7s` cold), second probe `200` (`~81ms`)
+  - `/api/market/prices?symbols=BTCUSD,ETHUSD,EURUSD,XAUUSD,SPX,NVDA` -> `200` (`~1.1s` first, `~0.26s` second)
+  - `/api/ai/health` -> `200` (`services.twelveData.status=healthy`)
+  - `/api/trader-deck/market-intelligence?timeframe=daily` -> `200` (`~15.6s`)
+  - `/api/trader-deck/market-decoder?symbol=EURUSD` -> `200` (`~0.12s`, cached hit)
 - Targeted local reliability integration test:
   - `tests/reliability-integration.test.js` -> 21 passed, 0 failed.
+- Community focused sanity (2026-04-25):
+  - `e2e/community-reload-persistence.spec.js` failed (`post token not visible` timeout).
+  - `e2e/community-latency.spec.js` failed (`post token not visible` timeout).
+  - Scripted normal-user community run observed repeated `ERR_CANCELED`/`net::ERR_ABORTED` on `/api/community/*`; no new 500/504 captured in that run.
 
 ## Current risk summary
 
 - Remaining high/medium risks are intermittent network/request-failed behavior under load plus high-latency cold paths for market-intelligence/decoder.
+- `QA-RISK-TWELVEDATA-REST-SPIKE-001` is now tracked as mitigating/verify: reduction changes are implemented in code, but dashboard minute-credit trend must confirm sustained improvement post-deploy.
+- `QA-RISK-TWELVEDATA-WS-001` remains open planning risk until backend-owned WS fanout/cache is implemented.
 - `/api/subscription/status` and `/api/aura-analysis/platform-connect` remain highest-priority reliability watchpoints due prior failure density.
 - Twelve Data key wiring appears correct; post-key-rotation monitoring should continue on `/api/ai/health` (provider field), `/api/markets/snapshot`, and UI ticker freshness.
 - Community messaging risk is now primarily reload persistence correctness (not POST 500); split focused specs (2026-04-25) show:

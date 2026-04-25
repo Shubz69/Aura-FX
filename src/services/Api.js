@@ -319,6 +319,9 @@ axios.interceptors.response.use(
         return response;
     },
     (error) => {
+        if (error?.name === 'AbortError' || error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') {
+            return Promise.reject(error);
+        }
         logClassifiedError('api.response_interceptor', error);
         if (error.response && error.response.status === 401) {
             const requestUrl = resolveRequestUrl(error.config?.url);
@@ -596,9 +599,16 @@ const Api = {
             );
             return response;
 } catch (error) {
-            // Avoid flooding console on network/resource errors (polling will retry)
+            // Avoid flooding console on expected poll aborts and transient network/resource errors.
             const isNetworkError = error?.code === 'ERR_NETWORK' || error?.message === 'Network Error';
-            if (!isNetworkError) console.error(`Error fetching messages for channel ${channelId}:`, error);
+            const errorMessage = String(error?.message || '').toLowerCase();
+            const isCanceled =
+                error?.code === 'ERR_CANCELED' ||
+                error?.name === 'CanceledError' ||
+                error?.name === 'AbortError' ||
+                errorMessage === 'canceled' ||
+                errorMessage.includes('aborted');
+            if (!isNetworkError && !isCanceled) console.error(`Error fetching messages for channel ${channelId}:`, error);
             throw error;
         }
     },
@@ -978,7 +988,7 @@ const Api = {
             ...(options.refresh ? { refresh: '1' } : {}),
             ...(options.noAi ? { noAi: '1' } : {}),
         };
-        return axios.get(`${API_BASE_URL}/api/trader-deck/market-decoder`, { params, skipCache: true });
+        return dedupeGet(`${API_BASE_URL}/api/trader-deck/market-decoder`, { params, skipCache: true });
     },
     /** Partial symbol / display-name search for Market Decoder (registry-backed index). */
     getTraderDeckMarketDecoderSymbols: (options = {}) => {
@@ -1002,7 +1012,7 @@ const Api = {
             ...(options.from != null ? { from: String(options.from) } : {}),
             ...(options.to != null ? { to: String(options.to) } : {}),
         };
-        return axios.get(`${API_BASE_URL}/api/market/chart-history`, { params, skipCache: true });
+        return dedupeGet(`${API_BASE_URL}/api/market/chart-history`, { params, skipCache: true });
     },
     /**
      * Economic calendar. skipCache so actuals stay fresh.

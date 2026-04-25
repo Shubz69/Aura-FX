@@ -28,7 +28,14 @@ export function getCorrelationIdFromError(error) {
 
 export function classifyRequestError(error) {
   if (!error) return 'unknown';
-  if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') return 'request_abort';
+  const message = String(error?.message || '').toLowerCase();
+  if (
+    error?.code === 'ERR_CANCELED' ||
+    error?.name === 'CanceledError' ||
+    error?.name === 'AbortError' ||
+    message === 'canceled' ||
+    message.includes('aborted')
+  ) return 'request_abort';
   if (error?.code === 'ECONNABORTED' || /timeout/i.test(String(error?.message || ''))) return 'timeout';
   if (error?.response?.status === 401 || error?.response?.status === 403) return 'auth';
   if (!error?.response && (error?.code === 'ERR_NETWORK' || /network error/i.test(String(error?.message || '')))) return 'network';
@@ -39,9 +46,12 @@ export function classifyRequestError(error) {
 }
 
 export function logClassifiedError(scope, error, extra = {}) {
+  const type = classifyRequestError(error);
+  // Aborts/cancellations are expected in poll/switch flows; avoid console noise.
+  if (type === 'request_abort') return;
   const payload = {
     scope,
-    type: classifyRequestError(error),
+    type,
     correlationId: getCorrelationIdFromError(error),
     status: error?.response?.status || null,
     code: error?.code || null,

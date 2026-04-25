@@ -25,6 +25,36 @@ const NOTIFICATION_SIDE_EFFECTS_ENABLED = (() => {
   return true;
 })();
 const COMMUNITY_BUILD = 'community-messages-debug-2026-04-24e';
+const READ_ACCESS_CACHE_TTL_MS = Math.max(
+  5000,
+  parseInt(process.env.COMMUNITY_READ_ACCESS_CACHE_MS || '30000', 10) || 30000
+);
+const readAccessCache = new Map();
+
+function readAccessCacheKey(userId, channelIdRaw) {
+  return `${String(userId || '')}:${String(channelIdRaw || '').toLowerCase()}`;
+}
+
+function getCachedReadAccess(userId, channelIdRaw) {
+  const key = readAccessCacheKey(userId, channelIdRaw);
+  const hit = readAccessCache.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.at > READ_ACCESS_CACHE_TTL_MS) {
+    readAccessCache.delete(key);
+    return null;
+  }
+  return hit.value || null;
+}
+
+function setCachedReadAccess(userId, channelIdRaw, value) {
+  const key = readAccessCacheKey(userId, channelIdRaw);
+  readAccessCache.set(key, { at: Date.now(), value });
+  if (readAccessCache.size > 4000) {
+    const entries = Array.from(readAccessCache.entries()).sort((a, b) => a[1].at - b[1].at);
+    const trim = entries.slice(0, 1000);
+    trim.forEach(([k]) => readAccessCache.delete(k));
+  }
+}
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../../utils/suppress-warnings');
@@ -369,14 +399,20 @@ module.exports = async (req, res) => {
   }
   reqDiag.channelId = String(channelId);
   
-  console.log('Processing messages request for channel:', channelId, 'Method:', req.method);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Processing messages request for channel:', channelId, 'Method:', req.method);
+  }
 
   try {
     reqDiag.acquireStartMs = Date.now();
-    console.log('[community/messages] await getDbConnection start', { method: req.method, channelId: reqDiag.channelId });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[community/messages] await getDbConnection start', { method: req.method, channelId: reqDiag.channelId });
+    }
     const db = await getDbConnection();
     reqDiag.acquireEndMs = Date.now();
-    console.log('[community/messages] await getDbConnection end', { method: req.method, channelId: reqDiag.channelId, ms: reqDiag.acquireEndMs - reqDiag.acquireStartMs, ok: Boolean(db) });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[community/messages] await getDbConnection end', { method: req.method, channelId: reqDiag.channelId, ms: reqDiag.acquireEndMs - reqDiag.acquireStartMs, ok: Boolean(db) });
+    }
     const releaseDb = async () => {
       const relStart = Date.now();
       try {
@@ -393,7 +429,9 @@ module.exports = async (req, res) => {
       }
     };
     if (!db) {
-      return res.status(500).json({ success: false, message: 'Database unavailable' });
+      if (req.method === 'GET') applyDiagHeaders();
+      res.setHeader('Retry-After', '2');
+      return res.status(503).json({ success: false, message: 'Database temporarily unavailable' });
     }
 
     // Fast path for GET: single DB query only (auth already validated via JWT above).
@@ -411,52 +449,63 @@ module.exports = async (req, res) => {
       const limit = isCursor ? 120 : 100;
       const queryStart = Date.now();
       try {
-        // Keep explicit read authorization in GET fast path.
-        const [userRows] = await db.execute(
-          'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed, onboarding_accepted, onboarding_subscription_snapshot FROM users WHERE id = ?',
-          [decoded.id]
-        );
-        if (!userRows || userRows.length === 0) {
-          await releaseDb();
-          return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'Access denied.' });
-        }
-        let [channelRows] = await db.execute(
-          'SELECT id, name, access_level, permission_type FROM channels WHERE id = ?',
-          [channelId]
-        );
-        if (!channelRows || channelRows.length === 0) {
-          [channelRows] = await db.execute(
-            'SELECT id, name, access_level, permission_type FROM channels WHERE LOWER(id) = LOWER(?)',
+        const cachedAccess = getCachedReadAccess(decoded.id, channelId);
+        if (cachedAccess?.allowRead && cachedAccess?.channelId) {
+          channelId = cachedAccess.channelId;
+        } else {
+          // Keep explicit read authorization in GET fast path.
+          const [userRows] = await db.execute(
+            'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed, onboarding_accepted, onboarding_subscription_snapshot FROM users WHERE id = ?',
+            [decoded.id]
+          );
+          if (!userRows || userRows.length === 0) {
+            await releaseDb();
+            return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'Access denied.' });
+          }
+          let [channelRows] = await db.execute(
+            'SELECT id, name, access_level, permission_type FROM channels WHERE id = ?',
             [channelId]
           );
-        }
-        if (!channelRows || channelRows.length === 0) {
-          await releaseDb();
-          return res.status(404).json({ success: false, message: 'Channel not found.' });
-        }
-        const channelRow = channelRows[0];
-        channelId = channelRow.id;
-        let entitlements = getEntitlements(userRows[0]);
-        const jwtRole = (decoded.role || '').toString().toUpperCase();
-        if (jwtRole === 'ADMIN' || jwtRole === 'SUPER_ADMIN') {
-          entitlements = { ...entitlements, role: jwtRole, tier: 'ELITE', effectiveTier: 'ELITE' };
-        }
-        const perm = getChannelPermissions(entitlements, {
-          id: channelRow.id,
-          name: channelRow.name,
-          access_level: channelRow.access_level,
-          accessLevel: channelRow.access_level,
-          permission_type: channelRow.permission_type,
-          permissionType: channelRow.permission_type
-        });
-        if (!perm.canSee || !perm.canRead) {
-          await releaseDb();
-          return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'You cannot read this channel.' });
+          if (!channelRows || channelRows.length === 0) {
+            [channelRows] = await db.execute(
+              'SELECT id, name, access_level, permission_type FROM channels WHERE LOWER(id) = LOWER(?)',
+              [channelId]
+            );
+          }
+          if (!channelRows || channelRows.length === 0) {
+            await releaseDb();
+            return res.status(404).json({ success: false, message: 'Channel not found.' });
+          }
+          const channelRow = channelRows[0];
+          channelId = channelRow.id;
+          let entitlements = getEntitlements(userRows[0]);
+          const jwtRole = (decoded.role || '').toString().toUpperCase();
+          if (jwtRole === 'ADMIN' || jwtRole === 'SUPER_ADMIN') {
+            entitlements = { ...entitlements, role: jwtRole, tier: 'ELITE', effectiveTier: 'ELITE' };
+          }
+          const perm = getChannelPermissions(entitlements, {
+            id: channelRow.id,
+            name: channelRow.name,
+            access_level: channelRow.access_level,
+            accessLevel: channelRow.access_level,
+            permission_type: channelRow.permission_type,
+            permissionType: channelRow.permission_type
+          });
+          if (!perm.canSee || !perm.canRead) {
+            await releaseDb();
+            return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'You cannot read this channel.' });
+          }
+          setCachedReadAccess(decoded.id, reqDiag.channelId || channelId, {
+            allowRead: true,
+            channelId: channelRow.id,
+          });
         }
 
         let rows;
         reqDiag.sqlStartMs = Date.now();
-        console.log('[community/messages][GET] sql start', { channelId, afterId: reqDiag.afterId, queryMode, limit });
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[community/messages][GET] sql start', { channelId, afterId: reqDiag.afterId, queryMode, limit });
+        }
         if (isCursor) {
           const [resultRows] = await db.execute(
             `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan
@@ -489,7 +538,9 @@ module.exports = async (req, res) => {
         res.setHeader('X-Community-Query-Ms', String(totalQueryMs));
         res.setHeader('X-Community-Row-Count', String(rows.length));
         applyDiagHeaders();
-        console.log('[community/messages][GET]', queryMode, 'ms=', totalQueryMs, 'rows=', rows.length, 'channel=', channelId);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[community/messages][GET]', queryMode, 'ms=', totalQueryMs, 'rows=', rows.length, 'channel=', channelId);
+        }
 
         const messages = rows.map((row) => {
           const username = row.username || row.name || (row.email ? row.email.split('@')[0] : 'Anonymous');
@@ -530,6 +581,12 @@ module.exports = async (req, res) => {
         reqDiag.sqlEndMs = Date.now();
         await releaseDb();
         applyDiagHeaders();
+        const msg = String(error?.message || '');
+        const transientDb = msg.includes('Queue limit reached') || msg.includes('Too many connections');
+        if (transientDb) {
+          res.setHeader('Retry-After', '2');
+          return res.status(503).json({ success: false, message: 'Database temporarily overloaded' });
+        }
         return res.status(500).json({ success: false, message: 'Failed to fetch messages' });
       }
     }

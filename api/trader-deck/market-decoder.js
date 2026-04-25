@@ -34,6 +34,7 @@ function preparePublicDecoderBrief(brief) {
 const CACHE_SEC = Math.min(900, Math.max(120, parseInt(process.env.MARKET_DECODER_CACHE_SEC, 10) || 600));
 const CACHE_TTL_MS = CACHE_SEC * 1000;
 const cacheStore = new Map();
+const inFlightStore = new Map();
 
 /** @returns {{ ok: true, symbol: string } | { ok: false, code: string, message: string }} */
 function normalizeDecoderQuerySymbol(raw) {
@@ -45,12 +46,12 @@ function normalizeDecoderQuerySymbol(raw) {
   if (/[\r\n\x00]/.test(s0)) {
     return { ok: false, code: 'INVALID_SYMBOL', message: 'Symbol contains invalid characters.' };
   }
-  const s = s0.toUpperCase();
+  const s = s0.toUpperCase().replace(/\s+/g, '').replace(/\//g, '');
   if (!/^[\w.:\-]{2,48}$/.test(s)) {
     return {
       ok: false,
       code: 'INVALID_SYMBOL',
-      message: 'Use letters, numbers, and . : - only (e.g. EURUSD, XAUUSD, SPY).',
+      message: 'Use letters, numbers, and . : - / only (e.g. EURUSD, EUR/USD, XAUUSD, SPY).',
     };
   }
   return { ok: true, symbol: s };
@@ -64,6 +65,18 @@ function getCached(key) {
 
 function setCached(key, payload) {
   cacheStore.set(key, { at: Date.now(), payload });
+}
+
+function makeDecoderCacheKey({ requestSymbol, canonicalSymbol, from, to, provider = 'auto' }) {
+  return JSON.stringify({
+    requestSymbol: String(requestSymbol || '').toUpperCase(),
+    canonicalSymbol: String(canonicalSymbol || '').toUpperCase(),
+    interval: '1D',
+    range: '1Y',
+    from: from || null,
+    to: to || null,
+    provider: String(provider || 'auto').toLowerCase(),
+  });
 }
 
 function setDecoderEngineHeader(res, brief) {
@@ -94,8 +107,9 @@ module.exports = async (req, res) => {
   const symbol = toCanonical(normalized.symbol) || normalized.symbol;
   const refresh = q.refresh === '1' || q.refresh === 'true';
   const skipAi = q.noAi === '1' || q.noAi === 'true';
-
-  const cacheKey = symbol;
+  const from = q.from ? String(q.from) : '';
+  const to = q.to ? String(q.to) : '';
+  const cacheKey = makeDecoderCacheKey({ requestSymbol: normalized.symbol, canonicalSymbol: symbol, from, to, provider: 'auto' });
 
   if (!refresh) {
     const hit = getCached(cacheKey);
@@ -111,13 +125,17 @@ module.exports = async (req, res) => {
         cached: true,
         cacheAgeSec: ageSec,
         cacheTtlSec: CACHE_SEC,
+        cacheHit: true,
+        cacheTtlMs: CACHE_TTL_MS,
+        inFlightDeduped: false,
+        providerCallMade: false,
       });
     }
   }
 
   if (!refresh) {
     try {
-      const stored = await getStoredDecoderState(cacheKey, 'daily');
+      const stored = await getStoredDecoderState(symbol, 'daily');
       if (stored && stored.payload && stored.freshnessStatus !== 'expired') {
         const payload = {
           brief: stored.payload,
@@ -144,6 +162,10 @@ module.exports = async (req, res) => {
           ...payload,
           brief: briefOut,
           ...(cacheAgeSec != null ? { cacheAgeSec } : {}),
+          cacheHit: true,
+          cacheTtlMs: CACHE_TTL_MS,
+          inFlightDeduped: false,
+          providerCallMade: false,
         });
       }
     } catch (error) {
@@ -153,7 +175,18 @@ module.exports = async (req, res) => {
 
   try {
     console.info('[market-decoder] request', { symbol: symbol.toUpperCase(), refresh: Boolean(refresh), noAi: Boolean(skipAi) });
-    const raw = await runMarketDecoder(symbol);
+    const inFlightKey = `${cacheKey}|noAi:${skipAi ? '1' : '0'}`;
+    let deduped = false;
+    let callMade = false;
+    let rawPromise = inFlightStore.get(inFlightKey);
+    if (!rawPromise) {
+      callMade = true;
+      rawPromise = runMarketDecoder(symbol).finally(() => inFlightStore.delete(inFlightKey));
+      inFlightStore.set(inFlightKey, rawPromise);
+    } else {
+      deduped = true;
+    }
+    const raw = await rawPromise;
     if (!raw.success) {
       return res.status(400).json({
         success: false,
@@ -173,6 +206,8 @@ module.exports = async (req, res) => {
 
     const payload = { brief, cached: false, cacheTtlSec: CACHE_SEC };
     setCached(cacheKey, payload);
+    const providerUsed = brief?.meta?.dataSufficiency?.dailyHistoryDiagnostics?.provider || 'auto';
+    setCached(makeDecoderCacheKey({ requestSymbol: normalized.symbol, canonicalSymbol: symbol, from, to, provider: providerUsed }), payload);
     try {
       const { recordDecoderSymbolDecode } = require('./decoderSymbolMetrics');
       const canon = brief?.instrument?.canonical || brief?.meta?.canonicalSymbol || symbol;
@@ -183,7 +218,16 @@ module.exports = async (req, res) => {
     res.setHeader('Cache-Control', 'private, max-age=60');
     const briefOut = preparePublicDecoderBrief(brief);
     setDecoderEngineHeader(res, briefOut);
-    return res.status(200).json({ success: true, brief: briefOut, cached: false, cacheTtlSec: CACHE_SEC });
+    return res.status(200).json({
+      success: true,
+      brief: briefOut,
+      cached: false,
+      cacheTtlSec: CACHE_SEC,
+      cacheHit: false,
+      cacheTtlMs: CACHE_TTL_MS,
+      inFlightDeduped: deduped,
+      providerCallMade: callMade,
+    });
   } catch (err) {
     console.error('[market-decoder]', err);
     return res.status(500).json({ success: false, message: err.message || 'Market Decoder failed' });

@@ -159,8 +159,10 @@ export default function MarketDecoderView({ embedded }) {
   useEffect(() => {
     if (!brief || !activeSymbol) return undefined;
     const id = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       const sym = activeSymbolRef.current;
-      if (sym) run(sym, true, true);
+      // Background poll should respect backend cache; hard refresh stays user-triggered.
+      if (sym) run(sym, false, true);
     }, LIVE_POLL_MS);
     return () => clearInterval(id);
   }, [brief, activeSymbol, run]);
@@ -169,7 +171,7 @@ export default function MarketDecoderView({ embedded }) {
     const onVis = () => {
       if (document.visibilityState !== 'visible') return;
       const sym = activeSymbolRef.current;
-      if (sym && brief) run(sym, true, true);
+      if (sym && brief) run(sym, false, true);
     };
     document.addEventListener('visibilitychange', onVis);
     return () => document.removeEventListener('visibilitychange', onVis);

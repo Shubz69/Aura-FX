@@ -1,15 +1,15 @@
 # Market Data and Surveillance Audit Report
 
 - Generated: 2026-04-25
-- Scope: targeted Trader Desk/Market Decoder/Twelve Data + Surveillance macro-feasibility audit (no broad site scan), with Twelve Data WebSocket feasibility addendum
+- Scope: targeted Trader Desk/Market Decoder/Twelve Data + Surveillance macro-feasibility audit (no broad site scan), with Twelve Data WebSocket feasibility addendum and REST-usage reduction pass
 
 ## 1) Targeted probe evidence
 
-- `/api/markets/snapshot?diagnostics=1` -> `200` (~11.5s cold), second probe `200` (~0.2s warm cache)
-- `/api/market/prices?symbols=BTCUSD,ETHUSD,EURUSD,XAUUSD,SPX,NVDA` -> `200` (`liveCount=6`, `delayedCount=0`, `errorCount=0`)
-- `/api/ai/health` -> `503` (overall degraded), while Twelve Data service field remains healthy in payload
-- `/api/trader-deck/market-intelligence?timeframe=daily` -> `200` (~17.5s)
-- `/api/trader-deck/market-decoder?symbol=EURUSD&refresh=1` -> `200` (~12.6s), header `X-Market-Decoder-Engine=5`
+- `/api/markets/snapshot?diagnostics=1` -> `200` (~11.5s cold historical), focused sanity rerun `200` (~9.7s cold) then `200` (~81ms warm)
+- `/api/market/prices?symbols=BTCUSD,ETHUSD,EURUSD,XAUUSD,SPX,NVDA` -> `200` (`~1.1s` first, `~0.26s` second focused sanity rerun)
+- `/api/ai/health` -> historical `503` degraded; focused sanity rerun `200` with Twelve Data service healthy
+- `/api/trader-deck/market-intelligence?timeframe=daily` -> `200` (~17.5s historical, ~15.6s focused sanity rerun)
+- `/api/trader-deck/market-decoder?symbol=EURUSD&refresh=1` -> `200` (~12.6s uncached historical), focused sanity rerun `/api/trader-deck/market-decoder?symbol=EURUSD` `200` (~0.12s cached)
 - Targeted UI probe loaded Trader Desk route and observed successful market-intelligence/market-decoder API hits
 
 ## 2) Data lineage map (UI -> API -> provider/cache)
@@ -40,12 +40,17 @@
 
 ## 4) Minimal hardening applied in this pass
 
-- `src/services/Api.js`
-  - `getTraderDeckMarketDecoder` now sends uncached fetch intent (`skipCache: true`) to reduce stale client reuse during audits.
+- `src/pages/trader-deck/MarketDecoderView.js`
+  - Interval and visibility refresh use `refresh=false` (cache-friendly); manual decode still supports explicit refresh.
+- `src/pages/trader-deck/MarketOutlookView.js`
+  - Periodic refresh uses `refresh=false` and skips hidden-tab intervals.
 - `api/markets/snapshot.js`
-  - Reduced stale-ok serving window from 15m to 5m to limit aged snapshot exposure.
+  - Added in-flight build dedupe so concurrent misses share one snapshot build.
 - `api/market/prices.js`
-  - Stale cached fallback is now bounded by `STALE_TTL` instead of accepting arbitrarily old cached entries.
+  - Added response-level route cache (default 8s), in-flight dedupe per sorted symbol set, and route/source instrumentation.
+  - Response now exposes route cache metadata and source breakdown for targeted observability.
+- `api/market-data/liveHotSnapshot.js`
+  - Reduced default Vercel concurrency to lower upstream burst pressure.
 
 ## 5) Surveillance macro-data feasibility (Twelve Data)
 
@@ -144,6 +149,7 @@
 ## 7) Final status
 
 - `QA-RISK-MARKETDATA-001`: `OPEN (RISK)`
+- `QA-RISK-TWELVEDATA-REST-SPIKE-001`: `OPEN (MITIGATING/VERIFY)` — reduction changes landed; dashboard credit/minute trend must confirm sustained improvement after deploy.
 - `QA-RISK-TWELVEDATA-WS-001`: `OPEN (PLANNING/RISK)` — WS capacity exists but integration is not yet implemented.
 - Recommended close criteria:
   - p95 endpoint latency SLOs for market-intelligence/decoder under representative load
