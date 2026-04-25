@@ -145,7 +145,7 @@ const AdminMessages = () => {
                     </div>
                 ) : error ? (
                     <div className="error-container">
-                        <span className="error-icon">âš ï¸</span>
+                        <span className="error-icon">⚠️</span>
                         <p className="error-message">{error}</p>
                         <button onClick={fetchMessages} className="retry-btn">Retry</button>
                     </div>

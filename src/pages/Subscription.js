@@ -255,7 +255,7 @@ const Subscription = () => {
         if (subscriptionStatus.paymentFailed) {
             return (
                 <div className="plan-renewal-info past-due">
-                    âš ï¸ Payment failed. Please update your payment method.
+                    ⚠️ Payment failed. Please update your payment method.
                 </div>
             );
         }
@@ -794,7 +794,7 @@ const Subscription = () => {
                             Redirecting to community page in <span className="countdown-number">{countdown}</span> seconds...
                         </p>
                         <p className="redirect-warning">
-                            âš ï¸ If you're not redirected within 10 seconds, click the button below to access the community.
+                            ⚠️ If you're not redirected within 10 seconds, click the button below to access the community.
                         </p>
                         <button 
                             className="manual-redirect-button"

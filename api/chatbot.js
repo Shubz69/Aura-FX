@@ -210,7 +210,7 @@ function getStaticResponse(msg, authenticated) {
   
   // Platform info
   if (msg.includes('what') && (msg.includes('aura') || msg.includes('platform') || msg.includes('website'))) {
-    return 'AURA TERMINAL™ is a professional trading education platform. We teach Forex, Stocks, Crypto, and Options trading with expert strategies and 1-to-1 mentorship.';
+    return 'AURA TERMINALâ„¢ is a professional trading education platform. We teach Forex, Stocks, Crypto, and Options trading with expert strategies and 1-to-1 mentorship.';
   }
   
   // Trading education (general)
@@ -245,6 +245,6 @@ function getStaticResponse(msg, authenticated) {
   
   // Default response
   return authenticated
-    ? 'I can help with general questions about AURA TERMINAL™, our courses, and subscriptions. For advanced trading analysis, market insights, and personalized strategies, <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a> - our professional AI trading assistant. What would you like to know?'
-    : 'I can help with questions about AURA TERMINAL™, our courses, and subscriptions. For advanced trading analysis and strategies, <a href="/register" style="color: #1E90FF; text-decoration: underline;">sign up</a> and <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>.';
+    ? 'I can help with general questions about AURA TERMINALâ„¢, our courses, and subscriptions. For advanced trading analysis, market insights, and personalized strategies, <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a> - our professional AI trading assistant. What would you like to know?'
+    : 'I can help with questions about AURA TERMINALâ„¢, our courses, and subscriptions. For advanced trading analysis and strategies, <a href="/register" style="color: #1E90FF; text-decoration: underline;">sign up</a> and <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>.';
 }

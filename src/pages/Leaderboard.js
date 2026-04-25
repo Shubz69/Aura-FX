@@ -536,7 +536,7 @@ const Leaderboard = () => {
                     </div>
                 </div>
                 <div className="error-message">
-                    <h2>âš ï¸ Error Loading Leaderboard</h2>
+                    <h2>⚠️ Error Loading Leaderboard</h2>
                     <p>{error}</p>
                     <button onClick={() => window.location.reload()}>Retry</button>
                 </div>

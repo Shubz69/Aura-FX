@@ -23,7 +23,7 @@ import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import Api from '../services/Api';
 import '../styles/Affiliation.css';
 
-/** Milestones — consistent labels & rewards (display only; backend may differ) */
+/** Milestones â€” consistent labels & rewards (display only; backend may differ) */
 const TIERS = [
   { referrals: 5, reward: '1 week free Premium', icon: '🥉', color: '#cd7f32', label: 'Bronze' },
   { referrals: 10, reward: '1 month free Premium', icon: '🥈', color: '#94a3b8', label: 'Silver' },
@@ -42,7 +42,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Will I get emails when something happens?',
-    a: 'If email is configured on the server, you receive an email when you cross a sign-up tier (Bronze, Silver, Gold, Elite) and when a referred person completes their first tracked subscription or course purchase — once per person per type.',
+    a: 'If email is configured on the server, you receive an email when you cross a sign-up tier (Bronze, Silver, Gold, Elite) and when a referred person completes their first tracked subscription or course purchase â€” once per person per type.',
   },
   {
     q: 'What is Total impact?',
@@ -225,7 +225,7 @@ export default function Affiliation() {
   const inviteMessage = useMemo(() => {
     if (!referralLink) return '';
     const codeLine = referralCode ? `\n\nCode (signup or Stripe checkout): ${referralCode}` : '';
-    return `I've been using AURA TERMINAL™ for trading education and serious tools. Join with my link — it helps me out:\n${referralLink}${codeLine}`;
+    return `I've been using AURA TERMINALâ„¢ for trading education and serious tools. Join with my link â€” it helps me out:\n${referralLink}${codeLine}`;
   }, [referralLink, referralCode]);
 
   useEffect(() => {
@@ -247,7 +247,7 @@ export default function Affiliation() {
       return;
     }
     if (cur.signups > prev.signups) {
-      setToast({ msg: 'New sign-up from your referral — nice one.', kind: 'win' });
+      setToast({ msg: 'New sign-up from your referral â€” nice one.', kind: 'win' });
     } else if (cur.subscriptionPurchases > prev.subscriptionPurchases) {
       setToast({ msg: 'A referral activated a subscription.', kind: 'win' });
     } else if (cur.coursePurchases > prev.coursePurchases) {
@@ -283,21 +283,21 @@ export default function Affiliation() {
   const shareTwitter = () => {
     if (!referralLink) return;
     window.open(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent('Join me on AURA TERMINAL™ — serious tools for traders. My link:')} ${encodeURIComponent(referralLink)}`,
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent('Join me on AURA TERMINALâ„¢ â€” serious tools for traders. My link:')} ${encodeURIComponent(referralLink)}`,
       '_blank',
     );
   };
 
   const shareWhatsApp = () => {
     if (!referralLink) return;
-    window.open(`https://wa.me/?text=${encodeURIComponent(`Join me on AURA TERMINAL™: ${referralLink}`)}`, '_blank');
+    window.open(`https://wa.me/?text=${encodeURIComponent(`Join me on AURA TERMINALâ„¢: ${referralLink}`)}`, '_blank');
   };
 
   const shareEmail = () => {
     if (!referralLink) return;
-    const subject = encodeURIComponent('Join me on AURA TERMINAL™');
+    const subject = encodeURIComponent('Join me on AURA TERMINALâ„¢');
     const body = encodeURIComponent(
-      `Hey,\n\nI've been using AURA TERMINAL™ for trading — thought you might want to check it out.\n\n${referralLink}\n\nSee you there.`,
+      `Hey,\n\nI've been using AURA TERMINALâ„¢ for trading â€” thought you might want to check it out.\n\n${referralLink}\n\nSee you there.`,
     );
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
@@ -322,22 +322,22 @@ export default function Affiliation() {
   const statCards = [
     {
       label: 'Total impact',
-      value: loading ? '—' : stats.totalImpact,
+      value: loading ? 'â€”' : stats.totalImpact,
       hint: 'Sign-ups + subs + courses (combined activity)',
       highlight: true,
     },
-    { label: 'Sign-ups', value: loading ? '—' : tierBasis, hint: 'Registered with your code · drives tiers' },
+    { label: 'Sign-ups', value: loading ? 'â€”' : tierBasis, hint: 'Registered with your code Â· drives tiers' },
     {
       label: 'Subscriptions',
-      value: loading ? '—' : stats.subscriptionPurchases,
+      value: loading ? 'â€”' : stats.subscriptionPurchases,
       hint: 'Referred users who bought a subscription',
     },
     {
       label: 'Courses',
-      value: loading ? '—' : stats.coursePurchases,
+      value: loading ? 'â€”' : stats.coursePurchases,
       hint: 'Referred users who completed a course payment',
     },
-    { label: 'Active plans', value: loading ? '—' : stats.active ?? 0, hint: 'Referred users · active or trialing' },
+    { label: 'Active plans', value: loading ? 'â€”' : stats.active ?? 0, hint: 'Referred users Â· active or trialing' },
   ];
 
   const syncedLabel = statsAt
@@ -390,9 +390,9 @@ export default function Affiliation() {
             ✦
           </span>
           <span className="aff-toast__text">{toast.msg}</span>
-          <button type="button" className="aff-toast__close" onClick={() => setToast(null)} aria-label="Dismiss">
-            ×
-          </button>
+        <button type="button" className="aff-toast__close" onClick={() => setToast(null)} aria-label="Dismiss">
+  ×
+</button>
         </div>
       )}
       <div className="aff-content journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
@@ -400,7 +400,7 @@ export default function Affiliation() {
           <div className="aff-hero__eyebrow">Referral programme</div>
           <h1 className="aff-hero__title">Refer &amp; earn</h1>
           <p className="aff-hero__sub">
-            One link. Real rewards. Share AURA TERMINAL™ with traders you trust — unlock Premium and Elite perks as your
+            One link. Real rewards. Share AURA TERMINALâ„¢ with traders you trust â€” unlock Premium and Elite perks as your
             community grows.
           </p>
           <div className="aff-hero__chips">
@@ -434,7 +434,7 @@ export default function Affiliation() {
               <FaRocket />
             </div>
             <h3 className="aff-steps__title">Share your link</h3>
-            <p className="aff-steps__text">Copy once — use it in bios, DMs, or emails. Your code is baked into the URL.</p>
+            <p className="aff-steps__text">Copy once â€” use it in bios, DMs, or emails. Your code is baked into the URL.</p>
           </div>
           <div className="aff-steps__connector" aria-hidden />
           <div className="aff-steps__item">
@@ -549,7 +549,7 @@ export default function Affiliation() {
                 </div>
               </div>
               <div className="aff-link-box__code">
-                Code: <strong>{referralCode || '—'}</strong>
+                Code: <strong>{referralCode || 'â€”'}</strong>
               </div>
               {nextTier && (
                 <div className="aff-milestone-progress">
@@ -564,7 +564,7 @@ export default function Affiliation() {
                   </div>
                   <p className="aff-milestone-progress__hint">
                     {referralsToNext === 0
-                      ? 'You reached this tier — next milestone unlocking soon.'
+                      ? 'You reached this tier â€” next milestone unlocking soon.'
                       : `${referralsToNext} more referral${referralsToNext === 1 ? '' : 's'} until the next reward.`}
                   </p>
                 </div>
@@ -582,7 +582,7 @@ export default function Affiliation() {
                 <span>Tips that convert</span>
               </div>
               <ul className="aff-tips__list">
-                <li>Lead with what you actually use — journal, validator, or desk — not generic hype.</li>
+                <li>Lead with what you actually use â€” journal, validator, or desk â€” not generic hype.</li>
                 <li>Use <strong>Copy invite message</strong> for DMs; it includes your link and code in one paste.</li>
                 <li>If they subscribe via your Stripe Payment Link, remind them to paste your code in the Referral field if they did not sign up with your link first.</li>
                 <li>Pin the link in your profile during high-engagement weeks to compound clicks.</li>
@@ -623,7 +623,7 @@ export default function Affiliation() {
         <section className="aff-tier-bar-section" aria-label="Referral milestones">
           <div className="aff-tier-bar-header">
             <span className="aff-tier-bar-name">Milestone path</span>
-            <span className="aff-tier-bar-sub">Four tiers · cumulative referrals</span>
+            <span className="aff-tier-bar-sub">Four tiers Â· cumulative referrals</span>
           </div>
           <div className="aff-tier-track">
             <div className="aff-tier-track__line" />
@@ -651,7 +651,7 @@ export default function Affiliation() {
             <FaTrophy aria-hidden />
             Rewards at a glance
           </h2>
-          <p className="aff-section-lead">Each tier stacks on your progress — check what you have unlocked and what is next.</p>
+          <p className="aff-section-lead">Each tier stacks on your progress â€” check what you have unlocked and what is next.</p>
           <div className="aff-how__grid">
             {TIERS.map((tier) => {
               const achieved = tierBasis >= tier.referrals;
@@ -713,7 +713,7 @@ export default function Affiliation() {
               <span className="aff-link-box__label">Commission tier status</span>
             </div>
             <div className="aff-link-box__code">
-              Current tier: <strong>{currentCommissionTierPercent}% commission</strong> · Verified paid referrals:{' '}
+              Current tier: <strong>{currentCommissionTierPercent}% commission</strong> Â· Verified paid referrals:{' '}
               <strong>{verifiedPaidReferrals}</strong>
             </div>
             <p className="aff-milestone-progress__hint">
@@ -734,11 +734,11 @@ export default function Affiliation() {
             {ledger.map((item) => (
               <div key={item.id} className="aff-faq__item">
                 <div className="aff-faq__summary">
-                  <span>{new Date(item.date).toLocaleDateString()} · {item.maskedReferee}</span>
+                  <span>{new Date(item.date).toLocaleDateString()} Â· {item.maskedReferee}</span>
                   <span>{penceToCurrency(item.commissionAmountPence || item.commissionPence)}</span>
                 </div>
                 <p className="aff-faq__answer">
-                  {String(item.eventType || '').replace(/_/g, ' ')} · <strong>{item.status}</strong>
+                  {String(item.eventType || '').replace(/_/g, ' ')} Â· <strong>{item.status}</strong>
                 </p>
               </div>
             ))}
@@ -761,7 +761,7 @@ export default function Affiliation() {
                       <span>{penceToCurrency(r.totalCommissionEarnedPence)}</span>
                     </div>
                     <p className="aff-faq__answer">
-                      Joined {new Date(r.joinDate || r.joinedAt).toLocaleDateString()} · {r.verifiedPaid ? 'Verified paid' : 'Not yet verified paid'}
+                      Joined {new Date(r.joinDate || r.joinedAt).toLocaleDateString()} Â· {r.verifiedPaid ? 'Verified paid' : 'Not yet verified paid'}
                     </p>
                   </div>
                 ))}
@@ -845,7 +845,7 @@ export default function Affiliation() {
             <li>Referrals must use your unique link (or approved code flow) to be tracked.</li>
             <li>Self-referrals, duplicate accounts, and fraudulent signups are not permitted.</li>
             <li>Rewards are applied within 48 hours of milestone verification where possible.</li>
-            <li>AURA TERMINAL™ may update tiers or benefits; we will communicate material changes where required.</li>
+            <li>AURA TERMINALâ„¢ may update tiers or benefits; we will communicate material changes where required.</li>
             <li>Abuse of the programme may result in forfeiture of rewards and account action.</li>
           </ul>
         </footer>

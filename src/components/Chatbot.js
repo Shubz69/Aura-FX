@@ -88,7 +88,7 @@ const Chatbot = () => {
                 body: JSON.stringify(requestBody),
             });
 
-            let replyText = "âš ï¸ The chatbot encountered an error. Please try again later.";
+            let replyText = "⚠️ The chatbot encountered an error. Please try again later.";
             let shouldRedirect = false;
             let redirectPath = null;
             
@@ -109,7 +109,7 @@ const Chatbot = () => {
                 setConnectError(false);
             } else {
                 if (res.status === 404) {
-                    replyText = "âš ï¸ The chatbot service is currently unavailable. I'll use simulated responses instead.";
+                    replyText = "⚠️ The chatbot service is currently unavailable. I'll use simulated responses instead.";
                     setConnectError(true);
                     // Provide a simulated response based on the message
                     setTimeout(() => {
