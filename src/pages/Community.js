@@ -773,7 +773,7 @@ const [journalLoading, setJournalLoading] = useState(false);
     const [mentionQuery, setMentionQuery] = useState(''); // Current @mention query
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const navigate = useNavigate();
-    const { id: channelIdParam } = useParams();
+const { id: channelIdParam } = useParams();
     const location = useLocation();
     const { user: authUser } = useAuth();
     const [journalQuickToday, setJournalQuickToday] = useState(() => getJournalTodayForUser(null));
@@ -808,6 +808,10 @@ const [journalLoading, setJournalLoading] = useState(false);
     
     const [channelList, setChannelList] = useState([]);
     const [selectedChannel, setSelectedChannel] = useState(null);
+    const selectedChannelStorageKey = useMemo(
+        () => `community_selected_channel_${authUser?.id || userId || 'anon'}`,
+        [authUser?.id, userId]
+    );
     const [messages, setMessages] = useState([]);
     const [messagesLoading, setMessagesLoading] = useState(false);
     const [newMessage, setNewMessage] = useState('');
@@ -841,6 +845,31 @@ const [journalLoading, setJournalLoading] = useState(false);
     /** Opt-in Web Push for channel activity (server throttles; see Profile + docs/PUSH_AND_PWA.md) */
     const [channelPushEnabled, setChannelPushEnabled] = useState(false);
     const [channelPushBusy, setChannelPushBusy] = useState(false);
+    const routeChannelId = useMemo(() => {
+        if (!location?.pathname) return null;
+        const parts = String(location.pathname).split('/').filter(Boolean);
+        if (parts[0] !== 'community') return null;
+        return parts[1] ? decodeURIComponent(parts[1]) : null;
+    }, [location?.pathname]);
+    const effectiveChannelId = channelIdParam || routeChannelId;
+
+    useEffect(() => {
+        if (!selectedChannel?.id) return;
+        try {
+            localStorage.setItem(selectedChannelStorageKey, String(selectedChannel.id));
+        } catch (_) { /* ignore */ }
+    }, [selectedChannel?.id, selectedChannelStorageKey]);
+
+    useEffect(() => {
+        if (selectedChannel?.id) return;
+        try {
+            const savedId = localStorage.getItem(selectedChannelStorageKey);
+            if (!savedId || !channelList.length) return;
+            const savedChannel = channelList.find((c) => String(c.id) === String(savedId));
+            if (savedChannel) setSelectedChannel(savedChannel);
+        } catch (_) { /* ignore */ }
+    }, [selectedChannel?.id, channelList, selectedChannelStorageKey]);
+
     useEffect(() => {
         if (!selectedChannel?.id || !userId) {
             setChannelPushEnabled(false);
@@ -920,6 +949,13 @@ const [journalLoading, setJournalLoading] = useState(false);
     const channelListRef = useRef([]);
     const selectedChannelRef = useRef(null);
     const fetchMessagesSeqRef = useRef(0);
+    const pollRequestSeqRef = useRef(0);
+    const fetchInFlightKeyRef = useRef(null);
+    const fetchAbortRef = useRef(null);
+    const pollAbortRef = useRef(null);
+    const pollFailureStreakRef = useRef(0);
+    const pollBackoffUntilRef = useRef(0);
+    const reconcilePauseUntilRef = useRef(0);
     const isSendingGifRef = useRef(false);
     const isTabVisibleRef = useRef(typeof document === 'undefined' ? true : document.visibilityState !== 'hidden');
     
@@ -1532,8 +1568,14 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
 
     const currentSelectedId = selectedChannelRef.current?.id || null;
     const normalizedSelectId = selectChannelId ? selectChannelId.toString() : null;
-    const routeTargetId = channelIdParam ? channelIdParam.toString() : null;
-    const targetId = normalizedSelectId || routeTargetId || currentSelectedId;
+    const routeTargetId = effectiveChannelId ? effectiveChannelId.toString() : null;
+    let savedSelectedId = null;
+    try {
+        savedSelectedId = localStorage.getItem(selectedChannelStorageKey);
+    } catch (_) {
+        savedSelectedId = null;
+    }
+    const targetId = normalizedSelectId || routeTargetId || savedSelectedId || currentSelectedId;
 
     let nextSelection = sortedChannels.find((channel) => String(channel.id) === String(targetId));
 
@@ -1550,7 +1592,7 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
     }
 
     return sortedChannels;
-}, [isAuthenticated, sortChannels, channelIdParam]); // Add channelIdParam to dependencies// ADD THE REF DECLARATION HERE (RIGHT AFTER refreshChannelList):
+}, [isAuthenticated, sortChannels, effectiveChannelId, selectedChannelStorageKey]); // Add channelIdParam to dependencies// ADD THE REF DECLARATION HERE (RIGHT AFTER refreshChannelList):
 const refreshChannelListRef = useRef(refreshChannelList);
     // Update refreshChannelList ref when it changes
 useEffect(() => {
@@ -1730,6 +1772,7 @@ return newMessages;
             const ch = selectedChannelRef.current?.id;
             const msgs = messagesRef.current || [];
             if (!ch) return;
+            if (messagesPollInFlightRef.current || fetchInFlightKeyRef.current === `${ch}:full`) return;
             const numericIds = msgs
                 .filter(m => m.id != null && (typeof m.id === 'number' || /^\d+$/.test(String(m.id))))
                 .map(m => Number(m.id));
@@ -1802,6 +1845,64 @@ return newMessages;
         setMessages(nextMessages);
         saveMessagesToStorage(channelId, nextMessages);
     };
+
+    const getNumericMessageId = (msg) => {
+        const raw = msg?.sequence ?? msg?.id;
+        if (raw == null) return null;
+        if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+        if (/^\d+$/.test(String(raw))) return Number(raw);
+        return null;
+    };
+
+    const getMessageTimeMs = (msg) => new Date(msg?.timestamp || msg?.created_at || msg?.createdAt || 0).getTime();
+
+    const sortMessagesStable = (list) => [...list].sort((a, b) => {
+        const aId = getNumericMessageId(a);
+        const bId = getNumericMessageId(b);
+        if (aId != null && bId != null && aId !== bId) return aId - bId;
+        const t = getMessageTimeMs(a) - getMessageTimeMs(b);
+        if (t !== 0) return t;
+        return String(a?.id ?? '').localeCompare(String(b?.id ?? ''));
+    });
+
+    const dedupeAndMergeMessages = (prev, incoming, currentUserId) => {
+        let next = [...prev];
+        for (const apiMsg of incoming) {
+            const apiId = String(apiMsg?.id ?? '');
+            if (apiId && next.some((m) => String(m?.id ?? '') === apiId)) {
+                next = next.map((m) => (String(m?.id ?? '') === apiId ? apiMsg : m));
+                continue;
+            }
+            const apiSenderId = String(apiMsg?.sender?.id || apiMsg?.userId || '');
+            if (currentUserId && apiSenderId === currentUserId) {
+                const apiTime = getMessageTimeMs(apiMsg);
+                const apiContent = String(apiMsg?.content || '');
+                const apiFileName = String(apiMsg?.file?.name || '');
+                const optimisticMatch = next.find((m) => {
+                    const mid = String(m?.id ?? '');
+                    const isOptimistic = mid.startsWith('temp_') || mid.length === 36;
+                    if (!isOptimistic) return false;
+                    const mSenderId = String(m?.userId || m?.sender?.id || '');
+                    if (mSenderId !== currentUserId) return false;
+                    if (Math.abs(getMessageTimeMs(m) - apiTime) > 15000) return false;
+                    const mContent = String(m?.content || '');
+                    const mFileName = String(m?.file?.name || '');
+                    return (apiContent && mContent === apiContent) || (apiFileName && mFileName === apiFileName);
+                });
+                if (optimisticMatch) {
+                    next = next.map((m) => (m.id === optimisticMatch.id ? apiMsg : m));
+                    continue;
+                }
+            }
+            next = [...next, apiMsg];
+        }
+        return sortMessagesStable(next);
+    };
+
+    const getMaxNumericId = (list) => (list || []).reduce((max, m) => {
+        const n = getNumericMessageId(m);
+        return n != null && n > max ? n : max;
+    }, 0);
 
     const replaceMessageById = (list, messageId, replacement) =>
         list.map(msg => (msg.id === messageId ? replacement : msg));
@@ -2365,6 +2466,7 @@ if (window.requestAnimationFrame) {
         try {
             // Save to backend API for permanent persistence
             try {
+                reconcilePauseUntilRef.current = Date.now() + 1800;
                 const response = await Api.sendMessage(selectedChannel.id, messageToSend);
                 const payload = response?.data;
                 const isSavedMessage =
@@ -2464,6 +2566,7 @@ if (window.requestAnimationFrame) {
             setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
             alert('Failed to send GIF. Please try again.');
         } finally {
+            reconcilePauseUntilRef.current = Date.now() + 900;
             // Reset sending flag after a short delay to prevent rapid clicks
             setTimeout(() => {
                 isSendingGifRef.current = false;
@@ -2600,36 +2703,48 @@ if (window.requestAnimationFrame) {
     };
 
     const fetchMessages = useCallback(async (channelId, mergeMode = false) => {
+    const fetchMeta = {
+        channelId: String(channelId),
+        mergeMode: Boolean(mergeMode),
+        status: null,
+        elapsedMs: 0,
+        rows: 0,
+        applied: false,
+        aborted: false
+    };
+    const startedAt = Date.now();
     if (!channelId) return;
     const requestSeq = ++fetchMessagesSeqRef.current;
+    const fetchKey = `${channelId}:${mergeMode ? 'merge' : 'full'}`;
+    if (fetchInFlightKeyRef.current === fetchKey) return;
+    if (fetchAbortRef.current) {
+        try { fetchAbortRef.current.abort(); } catch (_) { /* ignore */ }
+    }
+    const ac = new AbortController();
+    fetchAbortRef.current = ac;
+    fetchInFlightKeyRef.current = fetchKey;
     
     try {
-        const response = await Api.getChannelMessages(channelId);
+        const response = await Api.getChannelMessages(channelId, { signal: ac.signal });
+        fetchMeta.status = Number(response?.status || 0) || null;
+        fetchMeta.elapsedMs = Date.now() - startedAt;
         if (requestSeq !== fetchMessagesSeqRef.current) return;
         if (selectedChannelRef.current?.id && String(selectedChannelRef.current.id) !== String(channelId)) return;
         if (response && response.data && Array.isArray(response.data)) {
             const apiMessages = response.data;
+            fetchMeta.rows = apiMessages.length;
             
             if (mergeMode) {
-                // Merge mode: Add only new messages that don't exist yet
+                // Merge mode: id-based merge + optimistic replacement.
                 setMessages(prev => {
-                    const existingIds = new Set(prev.map((m) => String(m.id ?? '')));
-                    const newMessages = apiMessages.filter((m) => !existingIds.has(String(m.id ?? '')));
-                    
-                    if (newMessages.length > 0) {
-                        // Merge new messages with existing ones, sorted by timestamp
-                        const merged = [...prev, ...newMessages].sort((a, b) => {
-                            const timeA = new Date(a.timestamp || a.created_at || 0).getTime();
-                            const timeB = new Date(b.timestamp || b.created_at || 0).getTime();
-                            return timeA - timeB;
-                        });
-                        
-                        // Save to localStorage
+                    if (!apiMessages.length) return prev;
+                    const merged = dedupeAndMergeMessages(prev, apiMessages);
+                    if (merged.length !== prev.length || merged.some((m, i) => String(m.id) !== String(prev[i]?.id))) {
                         saveMessagesToStorage(channelId, merged);
+                        fetchMeta.applied = true;
                         return merged;
                     }
-                    
-                    return prev; // No new messages
+                    return prev;
                 });
             } else {
                 // Full refresh mode: Replace all messages
@@ -2637,37 +2752,37 @@ if (window.requestAnimationFrame) {
                 const cachedMessages = loadMessagesFromStorage(channelId);
                 if (cachedMessages.length > 0) {
                     // Show cached messages immediately while fetching fresh ones
-                    setMessages(cachedMessages);
-                } else {
-                    setMessages([]);
+                    setMessages(prev => (prev.length ? prev : sortMessagesStable(cachedMessages)));
                 }
                 
-                // Always update with fresh messages from API (ensure persistence)
-                // Compare by message count and IDs to determine if update is needed
-                const cachedIds = new Set(cachedMessages.map(m => String(m.id || m.tempId || '')));
-                const apiIds = new Set(apiMessages.map(m => String(m.id || '')));
-                const hasNewMessages = apiMessages.length !== cachedMessages.length || 
-                                     apiMessages.some(m => !cachedIds.has(String(m.id))) ||
-                                     cachedMessages.some(m => m.id && !apiIds.has(String(m.id)));
-                
-                // Always save and update if:
-                // 1. There are new messages from API
-                // 2. API has messages (even if count matches, content might differ)
-                // 3. API messages exist (to ensure persistence)
+                // Keep list stable on transient empty payloads and stale no-cursor responses.
                 const isAllowlistChannel = ['announcements', 'levels'].includes(String(channelId).toLowerCase());
-                if (hasNewMessages || apiMessages.length > 0) {
-                    // Save to localStorage as backup/cache (CRITICAL for persistence)
-                    saveMessagesToStorage(channelId, apiMessages);
-                    setMessages(apiMessages);
-                } else if (apiMessages.length === 0 && cachedMessages.length > 0) {
-                    saveMessagesToStorage(channelId, []);
-                } else if (apiMessages.length === 0 && isAllowlistChannel) {
+                if (apiMessages.length > 0) {
+                    setMessages(prev => {
+                        const prevMaxId = getMaxNumericId(prev);
+                        const apiMaxId = getMaxNumericId(apiMessages);
+                        if (prevMaxId > 0 && apiMaxId > 0 && apiMaxId < prevMaxId) return prev;
+                        const merged = dedupeAndMergeMessages(prev, apiMessages);
+                        saveMessagesToStorage(channelId, merged);
+                        fetchMeta.applied = true;
+                        return merged;
+                    });
+                } else if (cachedMessages.length > 0) {
+                    setMessages(prev => (prev.length ? prev : sortMessagesStable(cachedMessages)));
+                    saveMessagesToStorage(channelId, sortMessagesStable(cachedMessages));
+                    fetchMeta.applied = true;
+                } else if (isAllowlistChannel) {
                     // Don't overwrite - placeholder useEffect will show content for empty announcements/levels
                     saveMessagesToStorage(channelId, []);
                 }
             }
         }
     } catch (apiError) {
+        if (apiError?.name === 'AbortError' || apiError?.code === 'ERR_CANCELED') {
+            fetchMeta.aborted = true;
+            fetchMeta.elapsedMs = Date.now() - startedAt;
+            return fetchMeta;
+        }
         if (requestSeq !== fetchMessagesSeqRef.current) return;
         // In merge mode, don't show errors - just silently fail
         if (!mergeMode) {
@@ -2680,11 +2795,15 @@ if (window.requestAnimationFrame) {
             }
         }
     } finally {
+        if (fetchAbortRef.current === ac) fetchAbortRef.current = null;
+        if (fetchInFlightKeyRef.current === fetchKey) fetchInFlightKeyRef.current = null;
         if (requestSeq !== fetchMessagesSeqRef.current) return;
         if (!mergeMode) { 
              setMessagesLoading(false);
         }
     }
+    fetchMeta.elapsedMs = fetchMeta.elapsedMs || (Date.now() - startedAt);
+    return fetchMeta;
 }, []);
 
     const handleCreateChannel = async (event) => {
@@ -3379,7 +3498,7 @@ useEffect(() => {
     
     const loadChannels = async () => {
         if (!isAuthenticated) return;
-        await refreshChannelListRef.current({ selectChannelId: channelIdParam || undefined });
+        await refreshChannelListRef.current({ selectChannelId: effectiveChannelId || undefined });
     };
     
     loadChannels();
@@ -3387,7 +3506,7 @@ useEffect(() => {
     return () => {
         isMounted = false;
     };
-}, [isAuthenticated]); // Remove channelIdParam from dependencies to prevent reload on channel change
+}, [isAuthenticated, effectiveChannelId]); // Keep route channel restoration on direct reload/deep-link
     // Periodically refresh channels so new ones appear for everyone
     useEffect(() => {
         if (!isAuthenticated) return;
@@ -3510,16 +3629,17 @@ useEffect(() => {
 
     // Sync selectedChannel from URL (handles back/forward, direct links, refresh)
     useEffect(() => {
-        if (!channelIdParam || !channelList.length) return;
-        const targetId = String(channelIdParam);
+        if (!effectiveChannelId || !channelList.length) return;
+        const targetId = String(effectiveChannelId);
         if (selectedChannel?.id === targetId) return;
         const ch = channelList.find((c) => String(c.id) === targetId);
         if (ch) setSelectedChannel(ch);
-    }, [channelIdParam, channelList, selectedChannel?.id]);
+    }, [effectiveChannelId, channelList, selectedChannel?.id]);
 
     // Load messages when channel changes - optimized for instant display
     useEffect(() => {
         if (selectedChannel && selectedChannel.id) {
+            reconcilePauseUntilRef.current = Date.now() + 1200;
             setMessagesLoading(true);
             // Preserve ?jump= / ?message= when navigating (notification deep link)
             const params = new URLSearchParams(location.search);
@@ -3538,10 +3658,18 @@ useEffect(() => {
                 setMessages([]);
             }
             
-            // Fetch fresh messages in parallel (non-blocking)
-            fetchMessages(selectedChannel.id).catch(() => {
-                // Silently handle fetch errors
-            });
+            // Fetch fresh messages and retry once on aborted/empty apply after reload/channel swap.
+            (async () => {
+                try {
+                    const first = await fetchMessages(selectedChannel.id);
+                    const needsRetry = Boolean(first && !first.mergeMode && (first.aborted || !first.applied));
+                    if (needsRetry) {
+                        await fetchMessages(selectedChannel.id);
+                    }
+                } catch (_) {
+                    // Silently handle fetch errors
+                }
+            })();
         }
     }, [selectedChannel, fetchMessages, navigate]);
     
@@ -3563,18 +3691,24 @@ useEffect(() => {
 
     // When WS/Pusher reports connected, realtime should carry most updates — but a dead/stale socket
     // must not delay REST reconcile for multiple seconds (same class of bug as inbox messaging).
-    const POLL_MS_WS_UP = 2500;
-    const POLL_MS_WS_DOWN = 3500;
+    const POLL_MS_WS_UP = 2200;
+    const POLL_MS_WS_DOWN = 4200;
     const pollInterval = isConnected ? POLL_MS_WS_UP : POLL_MS_WS_DOWN;
 
         const pollMessages = async () => {
             if (messagesPollInFlightRef.current) return;
             if (!isTabVisibleRef.current) return;
+            if (Date.now() < reconcilePauseUntilRef.current) return;
+            if (Date.now() < pollBackoffUntilRef.current) return;
             const ch = selectedChannelRef.current;
             const channelId = ch?.id;
             if (!channelId) return;
+            if (fetchInFlightKeyRef.current === `${channelId}:full`) return;
 
             messagesPollInFlightRef.current = true;
+            const pollSeq = ++pollRequestSeqRef.current;
+            const ac = new AbortController();
+            pollAbortRef.current = ac;
             try {
                 const msgs = messagesRef.current || [];
                 let afterId = null;
@@ -3589,12 +3723,19 @@ useEffect(() => {
                 }
                 const response = await Api.getChannelMessages(
                     channelId,
-                    afterId ? { afterId, _cb: Date.now() } : { _cb: Date.now() },
+                    afterId ? { afterId, signal: ac.signal } : { signal: ac.signal },
                 );
+                if (pollSeq !== pollRequestSeqRef.current) return;
                 if (selectedChannelRef.current?.id !== channelId) return;
 
                 if (response && response.data && Array.isArray(response.data)) {
                     const apiMessages = response.data;
+                    const apiMaxId = getMaxNumericId(apiMessages);
+                    if (afterId && apiMaxId > 0 && apiMaxId <= afterId) {
+                        pollFailureStreakRef.current = 0;
+                        pollBackoffUntilRef.current = 0;
+                        return;
+                    }
 
                     setMessages((prev) => {
                         const sel = selectedChannelRef.current;
@@ -3670,11 +3811,7 @@ useEffect(() => {
                                     result = [...result, apiMsg];
                                 }
                             }
-                            result = result.sort((a, b) => {
-                                const timeA = new Date(a.timestamp || a.created_at || 0).getTime();
-                                const timeB = new Date(b.timestamp || b.created_at || 0).getTime();
-                                return timeA - timeB;
-                            });
+                            result = sortMessagesStable(result);
                             saveMessagesToStorage(channelId, result);
                             return result;
                         }
@@ -3682,9 +3819,18 @@ useEffect(() => {
                         return prev;
                     });
                 }
+                pollFailureStreakRef.current = 0;
+                pollBackoffUntilRef.current = 0;
             } catch (err) {
-                // ignore
+                if (err?.name === 'AbortError' || err?.code === 'ERR_CANCELED') return;
+                const status = Number(err?.response?.status || 0);
+                if (status === 504 || status === 429) {
+                    pollFailureStreakRef.current += 1;
+                    const delay = Math.min(12000, 600 * (2 ** Math.min(pollFailureStreakRef.current, 4)));
+                    pollBackoffUntilRef.current = Date.now() + delay;
+                }
             } finally {
+                if (pollAbortRef.current === ac) pollAbortRef.current = null;
                 messagesPollInFlightRef.current = false;
             }
         };
@@ -3718,6 +3864,10 @@ useEffect(() => {
         return () => {
             document.removeEventListener('visibilitychange', onPollVis);
             if (pollTimer) clearInterval(pollTimer);
+            if (pollAbortRef.current) {
+                try { pollAbortRef.current.abort(); } catch (_) { /* ignore */ }
+                pollAbortRef.current = null;
+            }
             pollingActiveRef.current = false;
         };
     }, [selectedChannel?.id, isAuthenticated, storedUser, userId, updateChannelBadge, isConnected]);
@@ -4166,6 +4316,7 @@ setMessages(prev => {
   try {
     // Send via API
     console.log('📡 Sending to API...');
+    reconcilePauseUntilRef.current = Date.now() + 1800;
     const response = await Api.sendMessage(selectedChannel.id, messageToSend);
     const payload = response?.data;
     const isSavedMessage =
@@ -4306,6 +4457,8 @@ setMessages(prev => {
         });
         
         toast.error('Failed to send message. Please try again.');
+    } finally {
+        reconcilePauseUntilRef.current = Date.now() + 900;
     }
 };
 

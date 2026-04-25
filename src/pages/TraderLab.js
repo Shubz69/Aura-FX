@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import { useAuth } from '../context/AuthContext';
@@ -19,7 +19,7 @@ import {
   safeNumber,
   toYmd,
 } from '../utils/traderSuite';
-import TradingViewChartPanel from '../components/TradingViewChartPanel';
+import LightweightInstrumentChart from '../components/charts/LightweightInstrumentChart';
 import TraderLabThesisBlock from '../components/trader-deck/TraderLabThesisBlock';
 import TraderLabLoadingShell from '../components/trader-deck/TraderLabLoadingShell';
 import { formatLabLevel } from '../lib/trader-deck/traderLabFormatters';
@@ -27,6 +27,12 @@ import {
   TRADER_LAB_HANDOFF_KEY,
   MARKET_DECODER_LAB_HANDOFF_KEY,
 } from '../lib/aura-analysis/validator/validatorChecklistStorage';
+import {
+  peekChartUserRequestFromStorage,
+  clearChartUserRequestStorage,
+  intervalForTraderLab,
+  CHART_PATH_TRADER_LAB,
+} from '../lib/chartUserRequest';
 import '../styles/trader-deck/TraderLabLayout.css';
 
 const INSTRUMENTS = [
@@ -66,11 +72,13 @@ const INSTRUMENT_VALUE_SET = new Set(INSTRUMENTS.map((x) => x.value));
 const INSTRUMENT_LABEL_TO_VALUE = new Map(INSTRUMENTS.map((x) => [x.label, x.value]));
 
 const CHART_INTERVALS = [
+  { label: '1m', value: '1' },
   { label: '15m', value: '15' },
   { label: '1H', value: '60' },
   { label: '4H', value: '240' },
   { label: '1D', value: '1D' },
 ];
+const CHART_RANGES = ['1D', '1W', '1M', '3M', '6M', '1Y'];
 
 const LOADING_TERMINAL_STATS = [
   { label: 'Market State', value: '…', tone: 'gold' },
@@ -249,6 +257,7 @@ function BiasPill({ bias }) {
 
 export default function TraderLab() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [playbookSetups, setPlaybookSetups] = useState(PLAYBOOK_SETUP_OPTIONS);
@@ -258,6 +267,7 @@ export default function TraderLab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [chartInterval, setChartInterval] = useState('60');
+  const [chartRange, setChartRange] = useState('3M');
   const [lastSavedAt, setLastSavedAt] = useState(null);
   const decoderImportAppliedRef = React.useRef(false);
 
@@ -299,6 +309,20 @@ export default function TraderLab() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!location.pathname.includes('trader-lab')) return;
+    const payload = peekChartUserRequestFromStorage();
+    if (!payload || payload.path !== CHART_PATH_TRADER_LAB) return;
+    clearChartUserRequestStorage();
+    if (payload.chartSymbol) {
+      setForm((f) => ({ ...f, chartSymbol: payload.chartSymbol }));
+    }
+    if (payload.interval) {
+      setChartInterval(intervalForTraderLab(payload.interval));
+    }
+  }, [loading, location.pathname]);
 
   useEffect(() => {
     if (loading || decoderImportAppliedRef.current) return;
@@ -919,6 +943,16 @@ export default function TraderLab() {
                           </button>
                         ))}
                       </div>
+                      <select
+                        className="tlab-select"
+                        value={chartRange}
+                        onChange={(e) => setChartRange(e.target.value)}
+                        aria-label="Chart range"
+                      >
+                        {CHART_RANGES.map((r) => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                      </select>
                     </div>
                     {sessions.length ? (
                       <div className="tlab-session-tabs-inline" role="tablist" aria-label="Recent saved sessions">
@@ -941,12 +975,12 @@ export default function TraderLab() {
                     ) : null}
                   </div>
                   <div className="tlab-chart-host tlab-chart-host--fill">
-                    <TradingViewChartPanel
+                    <LightweightInstrumentChart
                       symbol={form.chartSymbol}
                       interval={chartInterval}
+                      range={chartRange}
                       fillParent
                       className="trader-suite-chart-frame"
-                      suppressLoadingText
                     />
                   </div>
                   <div className="tlab-level-strip">

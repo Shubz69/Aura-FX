@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import ReplayHub from '../components/trader-replay/ReplayHub';
 import ReplaySetupPanel from '../components/trader-replay/ReplaySetupPanel';
@@ -25,6 +25,13 @@ import {
   computeReviewCompletenessScore,
 } from '../lib/trader-replay/replayNormalizer';
 import { findContinueLastSession } from '../lib/trader-replay/replayScenarioEngine';
+import {
+  peekChartUserRequestFromStorage,
+  clearChartUserRequestStorage,
+  intervalForReplayForm,
+  CHART_PATH_TRADER_REPLAY,
+} from '../lib/chartUserRequest';
+import { isQaTestModeEnabled } from '../utils/qaTestMode';
 
 function toApiPayload(form) {
   return normalizeReplay(form, { forApi: true });
@@ -34,6 +41,7 @@ export default function TraderReplay() {
   const { user } = useAuth();
   const { tier, accessType, isAdmin } = useSubscription();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const replayTier = useMemo(() => getReplayTier({ tier, accessType, isAdmin }), [tier, accessType, isAdmin]);
   const replayFlags = useMemo(() => getReplayFeatureFlags(replayTier), [replayTier]);
   const [sessions, setSessions] = useState([]);
@@ -53,6 +61,7 @@ export default function TraderReplay() {
 
   const habitStats = useMemo(() => computeReplayHabitStats(sessions), [sessions]);
   const [tradeLibraryExamplesOnly, setTradeLibraryExamplesOnly] = useState(false);
+  const qaMode = isQaTestModeEnabled();
 
   const refreshSessions = useCallback(async () => {
     const res = await Api.getTraderReplaySessions();
@@ -66,16 +75,39 @@ export default function TraderReplay() {
     try {
       await refreshSessions();
     } catch (e) {
-      setLoadError('Could not load replay sessions');
+      if (!qaMode) {
+        setLoadError('Could not load replay sessions');
+      }
       setSessions([]);
     } finally {
       setLoading(false);
     }
-  }, [refreshSessions]);
+  }, [refreshSessions, qaMode]);
 
   useEffect(() => {
     runInitialLoad();
   }, [runInitialLoad]);
+
+  useEffect(() => {
+    if (qaMode && location.pathname.includes('trader-replay')) {
+      // In QA mode ensure workspace is visible even when no saved sessions are present.
+      setView('workspace');
+    }
+  }, [qaMode, location.pathname]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!location.pathname.includes('trader-replay')) return;
+    const payload = peekChartUserRequestFromStorage();
+    if (!payload || payload.path !== CHART_PATH_TRADER_REPLAY) return;
+    clearChartUserRequestStorage();
+    setForm((prev) => ({
+      ...prev,
+      ...(payload.chartSymbol ? { symbol: payload.chartSymbol } : {}),
+      ...(payload.interval ? { interval: intervalForReplayForm(payload.interval) } : {}),
+    }));
+    setView('workspace');
+  }, [loading, location.pathname]);
 
   const continueLast = useMemo(() => findContinueLastSession(sessions), [sessions]);
 

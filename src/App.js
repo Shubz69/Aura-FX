@@ -15,6 +15,7 @@ import CommunityRouteBoundary from './components/CommunityRouteBoundary';
 import { consumePostLoginTransition, isPostLoginTransitionExcludedPath } from './utils/postLoginTransition';
 import { LEGACY_MISSED_TRADE_REVIEW_PATH, PLAYBOOK_MISSED_REVIEW_PATH } from './lib/trader-playbook/playbookPaths';
 import { ensureWebPushSubscription } from './utils/ensureWebPushSubscription';
+import { isQaTestModeEnabled } from './utils/qaTestMode';
 import JournalReminderScheduler from './components/JournalReminderScheduler';
 import SiteLanguageBootstrap from './components/SiteLanguageBootstrap';
 import { ToastContainer } from "react-toastify";
@@ -192,8 +193,9 @@ const PageLoadFallback = React.memo(function PageLoadFallback() {
 
 function AppRoutes() {
     const { user, loading } = useAuth();
-    // Only show chatbot to logged-out users; hide everywhere when logged in (including Community)
-    const showChatbot = !user;
+    // Default: show chatbot only when logged-out.
+    // QA mode can force visibility for browser test automation.
+    const showChatbot = !user || isQaTestModeEnabled();
     const location = useLocation();
     const isHomePage = location.pathname === '/';
 

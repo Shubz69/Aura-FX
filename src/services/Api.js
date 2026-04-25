@@ -15,14 +15,44 @@ function resolveReactAppApiUrl() {
     }
 }
 
+/** Runtime override for local QA without changing production routing. */
+function resolveRuntimeApiOverride() {
+    if (typeof window === 'undefined') return null;
+    try {
+        const w = window;
+        const explicit = w.__AURA_API_BASE_URL__;
+        if (typeof explicit === 'string' && explicit.trim()) return explicit.trim();
+        const ls = w.localStorage?.getItem('auraApiBaseUrlOverride');
+        if (typeof ls === 'string' && ls.trim()) return ls.trim();
+    } catch {
+        // ignore localStorage/runtime access failures
+    }
+    return null;
+}
+
 // Define a fixed API base URL with proper fallback
 // Automatically detect the origin to avoid CORS issues with www redirects
 const getApiBaseUrl = () => {
+    // Highest priority: explicit QA/local override (build-time env or runtime hook).
+    const explicitEnv =
+        process.env.REACT_APP_PLAYWRIGHT_API_BASE_URL
+        || process.env.REACT_APP_API_BASE_URL_OVERRIDE
+        || process.env.REACT_APP_LOCAL_API_URL
+        || null;
+    if (explicitEnv) {
+        return String(explicitEnv).trim();
+    }
+    const runtimeOverride = resolveRuntimeApiOverride();
+    if (runtimeOverride) {
+        return runtimeOverride;
+    }
+
     const fromEnv = resolveReactAppApiUrl();
     if (fromEnv) {
         return fromEnv;
     }
-    // In local dev prefer relative URLs so CRA proxy handles routing consistently.
+
+    // In local dev default to same-origin /api and let setupProxy route to a local API host.
     if (process.env.NODE_ENV === 'development') {
         return '';
     }
@@ -543,9 +573,9 @@ const Api = {
     },
 
     getChannelMessages: async (channelId, options = {}, customHeaders = {}) => {
-        const { afterId } = options;
+        const { afterId, signal } = options;
         const params = afterId
-            ? { afterId: String(afterId), _cb: Date.now() }
+            ? { afterId: String(afterId) }
             : { _cb: Date.now() };
         if (process.env.NODE_ENV === 'development') console.log(`Attempting to fetch messages for channel ${channelId}${afterId ? ` (afterId=${afterId})` : ''}`);
         try {
@@ -558,9 +588,11 @@ const Api = {
                         'Authorization': `Bearer ${token}`,
                         ...customHeaders
                     },
-                    skipCache: true
+                    skipCache: true,
+                    signal
                 },
-                { retries: 1, baseDelayMs: 280 }
+                // Cursor polls should avoid retry storms; baseline/reload can tolerate one retry.
+                afterId ? { retries: 0, baseDelayMs: 220 } : { retries: 1, baseDelayMs: 220 }
             );
             return response;
 } catch (error) {
@@ -946,7 +978,7 @@ const Api = {
             ...(options.refresh ? { refresh: '1' } : {}),
             ...(options.noAi ? { noAi: '1' } : {}),
         };
-        return axios.get(`${API_BASE_URL}/api/trader-deck/market-decoder`, { params });
+        return axios.get(`${API_BASE_URL}/api/trader-deck/market-decoder`, { params, skipCache: true });
     },
     /** Partial symbol / display-name search for Market Decoder (registry-backed index). */
     getTraderDeckMarketDecoderSymbols: (options = {}) => {
@@ -956,6 +988,21 @@ const Api = {
             ...(options.limit != null ? { limit: String(options.limit) } : {}),
         };
         return axios.get(`${API_BASE_URL}/api/trader-deck/market-decoder-symbols`, { params });
+    },
+    /** OHLC bars for Lightweight Charts (Yahoo/Twelve-backed). */
+    getMarketChartHistory: (symbol, options = {}) => {
+        const sym = String(symbol || '').trim();
+        if (!sym) {
+            return Promise.reject(new Error('symbol required'));
+        }
+        const params = {
+            symbol: sym,
+            ...(options.interval != null ? { interval: String(options.interval) } : {}),
+            ...(options.range != null ? { range: String(options.range) } : {}),
+            ...(options.from != null ? { from: String(options.from) } : {}),
+            ...(options.to != null ? { to: String(options.to) } : {}),
+        };
+        return axios.get(`${API_BASE_URL}/api/market/chart-history`, { params, skipCache: true });
     },
     /**
      * Economic calendar. skipCache so actuals stay fresh.
@@ -2010,7 +2057,7 @@ const Api = {
                     skipCache: true,
                     signal: requestOptions?.signal
                 },
-                { retries: 1, baseDelayMs: 280 }
+                { retries: 2, baseDelayMs: 220 }
             );
             return response;
         } catch (error) {

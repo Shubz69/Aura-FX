@@ -14,7 +14,7 @@ const { snapshot: tdMetricsSnapshot } = require('../market-data/tdMetrics');
 
 const CACHE_KEY = 'markets:snapshot:v1';
 const CACHE_TTL_MS = 20 * 1000;
-const STALE_OK_MS = 15 * 60 * 1000;
+const STALE_OK_MS = 5 * 60 * 1000;
 
 /** Wall-clock ceiling for building the snapshot (large watchlist × waves can exceed Vercel maxDuration). */
 const HARD_BUILD_MS = Math.min(

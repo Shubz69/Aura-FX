@@ -716,6 +716,10 @@
       "destination": "/api/market/prices.js"
     },
     {
+      "source": "/api/market/chart-history",
+      "destination": "/api/market/chart-history.js"
+    },
+    {
       "source": "/api/markets/snapshot",
       "destination": "/api/markets/snapshot.js"
     },

@@ -1,25 +1,29 @@
 {
-  "generatedAt": "2026-04-24T15:55:00.148Z",
+  "generatedAt": "2026-04-25T04:32:02.091Z",
   "base": "https://www.auraterminal.ai",
+  "normalUserState": {
+    "refreshed": false,
+    "valid": true
+  },
   "partA": {
     "sentEachDirection": 10,
     "adminToUser": {
-      "min": 1583,
-      "median": 2643,
-      "p95": 4116,
-      "max": 4116
+      "min": 1126,
+      "median": 1578,
+      "p95": 2855,
+      "max": 2855
     },
     "userToAdmin": {
-      "min": 2039,
-      "median": 2641,
-      "p95": 5678,
-      "max": 5678
+      "min": 1614,
+      "median": 2157,
+      "p95": 3170,
+      "max": 3170
     },
     "combined": {
-      "min": 1583,
-      "median": 2643,
-      "p95": 4116,
-      "max": 5678
+      "min": 1126,
+      "median": 1713,
+      "p95": 3035,
+      "max": 3170
     },
     "missing": 0,
     "duplicates": 0,
@@ -29,154 +33,78 @@
   "partB": {
     "sent": 10,
     "latency": {
-      "min": 102,
-      "median": 11946,
-      "p95": 15011,
-      "max": 15011
+      "min": 627,
+      "median": 651,
+      "p95": 952,
+      "max": 952
     },
     "missing": 0,
     "duplicates": 0,
-    "reloadOneCopy": false
+    "reloadOneCopy": false,
+    "reloadFailureMode": "zero",
+    "reloadDiagnostics": {
+      "chosenChannelId": "a7fx-general-chat",
+      "chosenChannelName": "A7fx General Chat",
+      "reloadSelectedChannelId": "announcements",
+      "reloadSelectedChannelName": "Announcements",
+      "reloadFetchSettled": false,
+      "wrongChannelAfterReload": true,
+      "reloadZeroCount": 10,
+      "reloadDupCount": 0,
+      "postTokenPresentInApi": true,
+      "uiContainsPostedMessageAfterReselect": false
+    },
+    "endpointBreakdown": {
+      "getNoCursor": {
+        "min": 424,
+        "median": 439,
+        "p95": 523,
+        "max": 523
+      },
+      "getAfterId": {
+        "min": 436,
+        "median": 444,
+        "p95": 525,
+        "max": 885
+      },
+      "post": {
+        "min": 593,
+        "median": 611,
+        "p95": 910,
+        "max": 910
+      },
+      "reloadFetch": {
+        "min": 426,
+        "median": 426,
+        "p95": 440,
+        "max": 440
+      },
+      "pollingFetch": {
+        "min": 436,
+        "median": 444,
+        "p95": 525,
+        "max": 885
+      }
+    }
   },
   "partC": {
-    "verified": true,
+    "verified": false,
     "channelsUsed": [
-      "General",
+      "A7fx General Chat",
       "A7fx General Chat"
     ],
-    "noCrossChannelLeakage": true,
-    "note": "Multi-channel bounded check complete."
+    "reason": "Multi-channel attempt failed: locator.fill: Test ended.\nCall log:\n\u001b[2m  - waiting for locator('#community-message-input')\u001b[22m\n\u001b[2m    - locator resolved to <textarea disabled rows=\"3\" name=\"message\" class=\"chat-input\" id=\"community-message-input\" placeholder=\"Read-only. Only admins can post here.\"></textarea>\u001b[22m\n\u001b[2m    - fill(\"LAT_CH1_1777091721737\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    1358 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m         - element is not enabled\u001b[22m\n\u001b[2m       - retrying fill action\u001b[22m\n\u001b[2m         - waiting 500ms\u001b[22m\n"
   },
   "partD": {
     "verified": false,
     "extraUsers": 0,
-    "note": "True multi-user concurrency NOT VERIFIED (only one normal-user state validated)."
+    "note": "Skipped in focused reload-persistence run."
   },
   "apiIssues": [
     {
-      "type": "http",
-      "status": 504,
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages?afterId=341&_cb=1777046171503",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "http",
-      "status": 504,
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "http",
-      "status": 504,
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "http",
-      "status": 504,
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
       "type": "requestfailed",
       "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages?afterId=344&_cb=1777046235625",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "http",
-      "status": 504,
-      "url": "https://www.auraterminal.ai/api/community/channels/commodities/messages?_cb=1777046262693",
-      "during": "https://www.auraterminal.ai/community/commodities"
-    },
-    {
-      "type": "http",
-      "status": 504,
-      "url": "https://www.auraterminal.ai/api/community/channels/commodities/messages?_cb=1777046262759",
-      "during": "https://www.auraterminal.ai/community/commodities"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages?_cb=1777046343918",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages?_cb=1777046344061",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channel-push-preference?channelId=general",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels/general/messages?afterId=321&_cb=1777046343918",
-      "during": "https://www.auraterminal.ai/community/general"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channel-push-preference?channelId=a7fx-general-chat",
-      "during": "https://www.auraterminal.ai/community/a7fx-general-chat"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels?bootstrap=true",
-      "during": "https://www.auraterminal.ai/community/a7fx-general-chat"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels/a7fx-general-chat/messages",
-      "during": "https://www.auraterminal.ai/community/a7fx-general-chat"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels/a7fx-general-chat/messages?_cb=1777046343894",
-      "during": "https://www.auraterminal.ai/community/a7fx-general-chat"
-    },
-    {
-      "type": "requestfailed",
-      "error": "net::ERR_ABORTED",
-      "url": "https://www.auraterminal.ai/api/community/channels/a7fx-general-chat/messages?_cb=1777046344029",
+      "url": "https://www.auraterminal.ai/api/community/channels/a7fx-general-chat/messages?afterId=560&_cb=1777091579897",
       "during": "https://www.auraterminal.ai/community/a7fx-general-chat"
     }
   ]

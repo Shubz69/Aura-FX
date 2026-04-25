@@ -1224,9 +1224,9 @@ async function fetchCoinMarketCapPrice(symbol) {
  * Uses cached data or static fallback prices - NEVER returns 0.00
  */
 function getFallbackPrice(symbol) {
-  // First try cached data (even if stale)
+  // First try cached data if still within stale window.
   const cached = priceCache.get(symbol);
-  if (cached && cached.rawPrice > 0) {
+  if (cached && cached.rawPrice > 0 && Date.now() - cached.timestamp <= STALE_TTL) {
     healthStats.staleFallbacks++;
     return {
       ...cached,

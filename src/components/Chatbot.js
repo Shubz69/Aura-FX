@@ -2,6 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { isPremium } from "../utils/roles";
+import Api from "../services/Api";
+import {
+    parseChartNavigationIntent,
+    writeChartUserRequestToStorage,
+} from "../lib/chartUserRequest";
+import { isQaTestModeEnabled } from "../utils/qaTestMode";
 import "../styles/Chatbot.css";
 
 const Chatbot = () => {
@@ -36,7 +42,7 @@ const Chatbot = () => {
     }, [messages]);
 
     // Rules of Hooks: all hooks must run unconditionally above. Early return only after hooks.
-    if (isPremium(user)) {
+    if (isPremium(user) && !isQaTestModeEnabled()) {
         return null;
     }
 
@@ -57,10 +63,25 @@ const Chatbot = () => {
         setIsLoading(true);
 
         try {
+            const chartIntent = parseChartNavigationIntent(message);
+            if (chartIntent && (chartIntent.chartSymbol || chartIntent.interval)) {
+                writeChartUserRequestToStorage({
+                    chartSymbol: chartIntent.chartSymbol || '',
+                    interval: chartIntent.interval || '',
+                    path: chartIntent.path,
+                });
+                const parts = [];
+                if (chartIntent.chartSymbol) parts.push(`Symbol: <strong>${chartIntent.chartSymbol}</strong>`);
+                if (chartIntent.interval) parts.push(`Timeframe: <strong>${chartIntent.interval}</strong>`);
+                const replyHtml = `<p>Opening the chart — ${parts.join(' · ')}.</p><p>Loading your workspace…</p>`;
+                setMessages((prev) => [...prev, { from: "bot", text: replyHtml }]);
+                setIsLoading(false);
+                setTimeout(() => navigate(chartIntent.path), 400);
+                return;
+            }
+
             // Try to use the live API first
-            const API_BASE_URL = (typeof window !== 'undefined' && window.location?.origin)
-                ? window.location.origin
-                : (process.env.REACT_APP_API_URL || '');
+            const API_BASE_URL = Api.getBaseUrl() || (typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '');
             const token = localStorage.getItem('token');
             
             // Prepare headers - include auth token if user is logged in

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CHART_INTERVAL_OPTIONS, PLAYBACK_SPEED_OPTIONS, clampPlaybackSpeedMs } from '../../lib/trader-replay/replayDefaults';
+import { CHART_INTERVAL_OPTIONS, CHART_RANGE_OPTIONS, PLAYBACK_SPEED_OPTIONS, clampPlaybackSpeedMs } from '../../lib/trader-replay/replayDefaults';
 
 export default function ReplayControls({
   playing,
@@ -16,6 +16,8 @@ export default function ReplayControls({
   onPlaybackSpeedMs,
   interval,
   onInterval,
+  chartRange,
+  onChartRange,
   autoFocusNotes,
   onAutoFocusNotes,
   showLessons,
@@ -29,6 +31,9 @@ export default function ReplayControls({
   const intervalValue = CHART_INTERVAL_OPTIONS.some((o) => o.value === String(interval))
     ? String(interval)
     : (interval ? String(interval) : CHART_INTERVAL_OPTIONS[2].value);
+  const rangeValue = CHART_RANGE_OPTIONS.some((o) => o.value === String(chartRange))
+    ? String(chartRange)
+    : '3M';
 
   return (
     <div className="trader-suite-panel aura-tr-controls" role="region" aria-label="Replay controls">
@@ -105,6 +110,19 @@ export default function ReplayControls({
             onChange={(e) => onInterval(e.target.value)}
           >
             {CHART_INTERVAL_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="aura-tr-control-field">
+          <span className="aura-tr-muted" id="tr-replay-range-label">Range</span>
+          <select
+            className="trader-suite-select"
+            aria-labelledby="tr-replay-range-label"
+            value={rangeValue}
+            onChange={(e) => onChartRange(e.target.value)}
+          >
+            {CHART_RANGE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>

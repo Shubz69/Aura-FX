@@ -1,7 +1,7 @@
 # FINAL FULL WEBSITE STATUS REPORT — AuraTerminal
 
 **Generated:** 2026-04-24  
-**Updated:** 2026-04-24 (strict messaging final rerun + bounded concurrency validation completed)  
+**Updated:** 2026-04-25 (bounded community concurrency/reload reconciliation)  
 **Source artifacts only (no new full test runs):**
 - `ISSUE_BOARD.md`
 - `e2e/reports/FINAL_HARDCHECK_QA_REPORT.md`
@@ -12,6 +12,7 @@
 - `e2e/reports/strict-messaging-admininbox-report.md`
 - `e2e/reports/strict-messaging-admininbox-results.json`
 - Community realtime verified from issue-board scan entry (2026-04-24)
+- `ISSUE_BOARD.md` + focused community specs: `e2e/community-reload-persistence.spec.js`, `e2e/community-latency.spec.js` (2026-04-25 bounded closure)
 
 ## 1. Executive summary
 
@@ -23,8 +24,10 @@
 - **MANUAL:** `7`
 - **Biggest remaining risks:**
   - Intermittent API/network instability (`net::ERR_ABORTED`, one observed `429` on `/api/subscription/status`)
-  - Residual API abort noise risk under intermittent network conditions (`/api/admin/users`, community timeouts if reproducible)
+  - Monolithic realtime audit still showed high latency vs strict targets; **focused** community latency/reload specs passed bounded QA (see §3 addendum); production SLO monitoring remains separate
+  - Residual API abort noise and community 504 timeout risk under intermittent network conditions
   - Mathematical correctness of financial/report metrics not formally validated by automation
+  - Trader Desk / Market Decoder cold-path latency and stale/fallback data risk (`QA-RISK-MARKETDATA-001`)
   - Business-rule correctness for entitlement matrix and payment/subscription real-world transitions
 
 ## 2. Authentication / session status
@@ -54,8 +57,10 @@
 - **community reload duplicate check:** `PASS`  
   Post visible once before reload and once after reload.
 - **remaining messaging risk:**
+  - Strict latency targets from the **monolithic** realtime audit may still fail even when **focused** community specs pass; treat operational latency under `QA-RISK-API-001` / monitoring as the long-term signal
+  - Multi-channel community concurrency not fully verified (monolithic Part C)
+  - True multi-user messaging concurrency not verified (>1 non-admin sender unavailable)
   - `/api/admin/users` abort noise remains reliability risk
-  - broader multi-user concurrency/load (>1 non-admin sender) remains an optional future extension (bounded baseline passed)
 
 ### Messaging/community hardening addendum (2026-04-24)
 
@@ -68,11 +73,16 @@
   - community post/reload dedupe: `PASS`
   - community rapid channel switching stale-content guard: `PASS`
 - strict admin inbox burst/rapid-switch suite: `PASS_WITH_RISK`
+- realtime latency/concurrency audit (`e2e/realtime-latency-concurrency.spec.js`):
+  - Part A (admin/user): missing=0, duplicates=0, but median/p95 exceeded thresholds
+  - Part B (community): missing=0, duplicates=0, but median/p95 exceeded thresholds and reload one-copy=false
+  - Part C: two writable channels found but not fully verified (visibility timeout during concurrent posting)
+  - Part D: true multi-user concurrency not verified (single validated normal-user state)
+- **Bounded reconciliation (2026-04-25):** `e2e/community-reload-persistence.spec.js` and `e2e/community-latency.spec.js` both **PASS** — `reloadOneCopy=true`, `apiContainsPosted=true`, `uiCountAfterReload=1`, `zero=0`, `dup=0`, channel **general/General** after reload, community latency median/p95 **82ms / 2137ms** (verified run). **`QA-RISK-MSG-CONCURRENCY-001` = PASS/CLOSED for bounded QA.** This does not prove unlimited production load; API reliability monitoring remains separate.
 - Status impact:
   - Community realtime remains passed.
   - Messaging product correctness verified and `QA-RISK-MSG-001` closed.
-  - Bounded concurrency validation completed and passed (`QA-RISK-MSG-CONCURRENCY-001` closed as bounded-pass).
-  - Residual messaging risk now centered on API abort-noise reliability, not product correctness.
+  - `QA-RISK-MSG-CONCURRENCY-001` closed for **bounded** concurrency/reload/latency criteria per focused specs + prior messaging overlap baseline; monolithic audit gaps (multi-channel, multi-user, strict global thresholds) remain documented risks outside that closure.
 
 ## 4. Community status
 
@@ -111,14 +121,15 @@
 - **`/manual-metrics/dashboard`** — `PASS` (data signal present)
 - **`/manual-metrics/processing`** — `MANUAL` (not explicitly re-verified in latest hard-check chapter list)
 - **`/trader-deck`** — `PASS`
+  - Targeted API probes returned data but with high cold latency (`market-intelligence` ~17.5s, `market-decoder` ~12.6s).
 - **`/trader-deck/trade-validator/overview`** — `PASS`
 - **`/aura-analysis/dashboard/overview`** — `PASS`
 - **`/aura-analysis/dashboard/performance`** — `PASS`
 - **`/backtesting`** — `PASS`
 - **`/backtesting/sessions`** — `PASS` (thin but intentional classification)
-- **`/surveillance`** — `PASS` (healthy direct route)
+- **`/surveillance`** — `PASS with RISK` (current feeds are event/news-centric; macro-economic indicators not yet first-class)
 - **`/premium-ai`** — `MANUAL` (latest hard-check did not explicitly provide a fresh chapter line-item for this route)
-- **`/community`** — `PASS` (including realtime + reload dedupe)
+- **`/community`** — `PASS with RISK` (baseline realtime pass exists, but latest latency audit shows 504/abort noise and reload one-copy inconsistency under stress)
 - **`/leaderboard`** — `PASS`
 - **`/journal`** — `MANUAL` (manual validation required for data correctness and interaction consistency)
 - **notifications behavior** — `PASS with RISK` (`dropdownInteractive=true`, graceful handling yes, but intermittent fetch failures exist)
@@ -169,6 +180,7 @@
   - `/api/ai/health` returned HTTP 503 overall, but `services.twelveData.status=healthy` in payload.
 - Net status change:
   - Reliability risk remains open, but downgraded from outage concern to **intermittent/load risk** pending further soak validation.
+- Added market data reliability risk (`QA-RISK-MARKETDATA-001`) pending freshness SLOs + manual oracle checks for formula/correctness.
 
 ## 10. Thin-shell / loading status
 
@@ -216,6 +228,7 @@ Current classification (from latest hard-check thin-shell findings):
 - Subscription/payment real-world flow end-to-end (including retries, webhooks, entitlement propagation)
 - Entitlement matrix by role/tier/channel/page (especially edge transitions)
 - Production load/concurrency behavior and long-session stability
+- Messaging/community realtime latency under overlap (target: median<1000ms, p95<3000ms)
 - High-concurrency messaging behavior (multi-user simultaneous sends across multiple threads)
 - Journal and premium-ai deep functional correctness
 

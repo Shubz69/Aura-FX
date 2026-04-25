@@ -151,7 +151,7 @@ const Messages = () => {
         const pollInterval = setInterval(() => {
             if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
             loadMessages();
-        }, 1500);
+        }, 800);
         return () => clearInterval(pollInterval);
     }, [user?.id, loadMessages]);
 

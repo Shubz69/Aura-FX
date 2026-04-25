@@ -1,6 +1,6 @@
 # API Connectivity Status Report
 
-Last updated: 2026-04-24 (targeted audit + reliability hardening pass)
+Last updated: 2026-04-25 (targeted audit + reliability hardening pass + market-data probe + Twelve Data WS feasibility addendum)
 
 ## Scope and method
 
@@ -40,6 +40,22 @@ Last updated: 2026-04-24 (targeted audit + reliability hardening pass)
   - Market snapshot route returns cached/stale snapshot when provider fetch fails; emits `503` only when no viable stale snapshot exists.
   - Health probes classify `rate_limited`/`plan_or_credits` and report degraded instead of leaking secrets.
 
+## Twelve Data WebSocket feasibility (market data only)
+
+- Current app usage is effectively **REST-dominant** for market data (`/api/markets/snapshot`, `/api/market/prices`, decoder/intelligence endpoints); TD WebSocket usage in runtime is **0**.
+- Evidence in code:
+  - `api/market-data/providers/twelveDataClient.js` implements REST endpoints only.
+  - `api/market-data/marketStreamProvider.js` is a no-op with explicit comment that TD WS belongs on a long-lived worker/service.
+  - Frontend `useLivePrices` polls snapshot every 30s, and decoder/intelligence rely on REST refresh patterns.
+- Plan-fit summary:
+  - Venture supports WS credits and multi-symbol subscriptions.
+  - WS credits are separate from REST credits and can reduce REST pressure for always-live symbols.
+  - Connection limits and subscription event limits favor a **shared backend WS fanout**, not per-browser direct TD WS.
+- Recommendation:
+  - Keep TD WS strictly for market data (ticker/live quote paths).
+  - Do **not** use TD WS for chat/community/admin messaging.
+  - Build backend-shared TD WS ingestion + cache; let clients consume app stream/snapshot outputs.
+
 ## Reliability hardening applied (frontend)
 
 - `src/services/Api.js`
@@ -66,11 +82,18 @@ Last updated: 2026-04-24 (targeted audit + reliability hardening pass)
   - `/api/users/88` -> `200`
   - `/api/markets/snapshot` -> `200`
   - `/api/ai/health` -> `503` with `services.twelveData.status=healthy`
+  - `/api/markets/snapshot?diagnostics=1` -> `200` (`~11.5s` cold, `~0.2s` warm cache hit)
+  - `/api/market/prices?symbols=BTCUSD,ETHUSD,EURUSD,XAUUSD,SPX,NVDA` -> `200` (`liveCount=6`, `delayedCount=0`, `errorCount=0`)
+  - `/api/trader-deck/market-intelligence?timeframe=daily` -> `200` (`~17.5s`, uncached sample)
+  - `/api/trader-deck/market-decoder?symbol=EURUSD&refresh=1` -> `200` (`~12.6s`, uncached sample, `X-Market-Decoder-Engine=5`)
 - Targeted local reliability integration test:
   - `tests/reliability-integration.test.js` -> 21 passed, 0 failed.
 
 ## Current risk summary
 
-- Remaining high/medium risks are primarily intermittent network/request-failed behavior under load, not hard endpoint outage in current targeted probe.
+- Remaining high/medium risks are intermittent network/request-failed behavior under load plus high-latency cold paths for market-intelligence/decoder.
 - `/api/subscription/status` and `/api/aura-analysis/platform-connect` remain highest-priority reliability watchpoints due prior failure density.
 - Twelve Data key wiring appears correct; post-key-rotation monitoring should continue on `/api/ai/health` (provider field), `/api/markets/snapshot`, and UI ticker freshness.
+- Community messaging risk is now primarily reload persistence correctness (not POST 500); split focused specs (2026-04-25) show:
+  - `e2e/community-latency.spec.js` PASS (no API issues; latency report generated in `community-latency-spec-report.json`).
+  - `e2e/community-reload-persistence.spec.js` FAIL (`post channel=general`, `reload channel=announcements`, one-copy check fails with zero-count), confirming channel-selection/reload state issue remains open.

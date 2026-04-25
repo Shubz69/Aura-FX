@@ -480,7 +480,7 @@ useEffect(() => {
         .catch((e) => {
           if (e?.name === 'AbortError' || e?.code === 'ERR_CANCELED') return;
         });
-    }, 1500);
+    }, 800);
     
     return () => { 
       clearInterval(pollInterval); 

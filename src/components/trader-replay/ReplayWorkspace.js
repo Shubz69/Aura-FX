@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import TradingViewChartPanel from '../TradingViewChartPanel';
+import LightweightInstrumentChart from '../charts/LightweightInstrumentChart';
 import ReplayControls from './ReplayControls';
 import ReplayTimeline from './ReplayTimeline';
 import ReplayInsightCard from './ReplayInsightCard';
@@ -140,11 +140,12 @@ export default function ReplayWorkspace({
             )}
           </div>
           <div className="aura-tr-chart-frame">
-            <TradingViewChartPanel
+            <LightweightInstrumentChart
               symbol={session.symbol || 'OANDA:EURUSD'}
               interval={session.interval || '15'}
-              studies={['STD;RSI']}
+              range={session.chartRange || '3M'}
               height={compactTimeline ? 300 : 420}
+              className="trader-suite-chart-frame"
             />
           </div>
           <ReplayControls
@@ -165,6 +166,8 @@ export default function ReplayWorkspace({
             onPlaybackSpeedMs={(ms) => changeField('playbackSpeedMs', ms)}
             interval={session.interval}
             onInterval={(v) => changeField('interval', v)}
+            chartRange={session.chartRange || '3M'}
+            onChartRange={(v) => changeField('chartRange', v)}
             autoFocusNotes={session.autoFocusNotes}
             onAutoFocusNotes={(v) => changeField('autoFocusNotes', v)}
             showLessons={session.showLessons}
