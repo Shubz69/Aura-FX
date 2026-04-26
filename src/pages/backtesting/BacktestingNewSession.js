@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Api from '../../services/Api';
 import { toast } from 'react-toastify';
+import BacktestDateField from '../../components/backtesting/BacktestDateField';
 
 const MARKETS = ['forex', 'indices', 'commodities', 'stocks', 'crypto', 'futures', 'other'];
 const OBJECTIVES = [
@@ -400,12 +401,22 @@ export default function BacktestingNewSession() {
               </button>
             </div>
             <div>
-              <label className="bt-label">Date start</label>
-              <input className="bt-input" type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)} />
+              <BacktestDateField
+                id="bt-date-start"
+                label="Date start"
+                value={dateStart}
+                onChange={setDateStart}
+                maxIso={dateEnd || undefined}
+              />
             </div>
             <div>
-              <label className="bt-label">Date end</label>
-              <input className="bt-input" type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} />
+              <BacktestDateField
+                id="bt-date-end"
+                label="Date end"
+                value={dateEnd}
+                onChange={setDateEnd}
+                minIso={dateStart || undefined}
+              />
             </div>
             <div>
               <label className="bt-label">Base timeframe</label>

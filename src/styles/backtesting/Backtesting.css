@@ -962,3 +962,231 @@
     width: 100% !important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   CUSTOM DATE FIELD (replaces native type="date" picker)
+   Popover is portaled to <body> — use explicit theme colors.
+   ══════════════════════════════════════════════════════════ */
+.journal-page .bt-root .bt-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.journal-page .bt-root .bt-date-field__wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.journal-page .bt-root .bt-date-field__wrap--invalid .bt-input.bt-date-field__input {
+  border-color: rgba(240, 61, 95, 0.55) !important;
+  box-shadow: 0 0 0 1px rgba(240, 61, 95, 0.15) !important;
+}
+
+.journal-page .bt-root .bt-date-field__input {
+  width: 100% !important;
+  padding-right: 44px !important;
+  box-sizing: border-box !important;
+}
+
+.journal-page .bt-root .bt-date-field__btn {
+  position: absolute !important;
+  right: 8px;
+  top: 50% !important;
+  transform: translateY(-50%);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: linear-gradient(160deg, rgba(234, 169, 96, 0.12) 0%, rgba(2, 1, 8, 0.2) 100%) !important;
+  color: #e8b86a !important;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 0 0 0.5px rgba(234, 169, 96, 0.2) inset;
+}
+
+.journal-page .bt-root .bt-date-field__btn:hover {
+  color: #fde8c4 !important;
+  background: linear-gradient(160deg, rgba(234, 169, 96, 0.22) 0%, rgba(2, 1, 8, 0.25) 100%) !important;
+  box-shadow: 0 0 0 0.5px rgba(234, 169, 96, 0.35) inset, 0 0 12px rgba(234, 169, 96, 0.12);
+}
+
+.journal-page .bt-root .bt-date-field__btn:focus-visible {
+  outline: 2px solid rgba(234, 169, 96, 0.5);
+  outline-offset: 2px;
+}
+
+.bt-date-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Portaled to body */
+.bt-date-popover {
+  position: fixed;
+  z-index: 10060;
+  box-sizing: border-box;
+  padding: 12px 12px 14px;
+  background: linear-gradient(165deg, rgba(10, 8, 22, 0.98) 0%, rgba(3, 2, 10, 0.99) 100%);
+  border: 1px solid rgba(234, 169, 96, 0.25);
+  border-radius: 14px;
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.75),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
+    0 0 40px rgba(234, 169, 96, 0.08);
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+}
+
+.bt-date-popover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.45), rgba(248, 195, 125, 0.25), transparent);
+  border-radius: 14px 14px 0 0;
+  pointer-events: none;
+}
+
+.bt-date-popover__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bt-date-popover__nav {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(234, 169, 96, 0.1);
+  border: 1px solid rgba(234, 169, 96, 0.22);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.bt-date-popover__nav:hover {
+  background: rgba(234, 169, 96, 0.2);
+  border-color: rgba(234, 169, 96, 0.35);
+}
+
+.bt-date-popover__selects {
+  flex: 1 1 auto;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.bt-date-popover__select {
+  max-width: 50%;
+  padding: 7px 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: 'Space Grotesk', sans-serif;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(234, 169, 96, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+}
+
+.bt-date-popover__select:hover,
+.bt-date-popover__select:focus {
+  border-color: rgba(234, 169, 96, 0.45);
+  box-shadow: 0 0 0 1px rgba(234, 169, 96, 0.12);
+}
+
+.bt-date-popover__dow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+  text-align: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(200, 198, 190, 0.55);
+}
+
+.bt-date-popover__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.bt-date-popover__cell {
+  min-height: 34px;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: 'Space Grotesk', sans-serif;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.bt-date-popover__cell--faint {
+  color: rgba(255, 255, 255, 0.22);
+  background: transparent;
+}
+
+.bt-date-popover__cell--faint:hover:not(:disabled) {
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(234, 169, 96, 0.08);
+}
+
+.bt-date-popover__cell--in:hover:not(:disabled) {
+  background: rgba(234, 169, 96, 0.18);
+  border-color: rgba(234, 169, 96, 0.35);
+}
+
+.bt-date-popover__cell--selected {
+  color: #0d0602 !important;
+  background: linear-gradient(130deg, #fde8c4 0%, #e8a960 50%, #d48d44 100%) !important;
+  border-color: rgba(234, 169, 96, 0.5) !important;
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(234, 169, 96, 0.35);
+}
+
+.bt-date-popover__cell--blocked,
+.bt-date-popover__cell:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.12) !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+}
