@@ -55,9 +55,18 @@ function normalizeNotification(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const id = raw.id != null ? String(raw.id) : null;
   if (!id) return null;
+  let meta = raw.meta ?? null;
+  if (typeof meta === 'string') {
+    try {
+      meta = JSON.parse(meta);
+    } catch (_) {
+      meta = null;
+    }
+  }
   return {
     ...raw,
     id,
+    meta,
     type: raw.type || 'SYSTEM',
     title: raw.title != null ? String(raw.title) : 'Notification',
     body: raw.body != null ? raw.body : null,
@@ -260,11 +269,27 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
 
   // Handle notification click
   const handleNotificationClick = async (notification) => {
-    // Mark as read optimistically
+    let meta = notification.meta;
+    if (typeof meta === 'string') {
+      try {
+        meta = JSON.parse(meta);
+      } catch (_) {
+        meta = null;
+      }
+    }
+    if (meta && typeof meta === 'object' && typeof meta.url === 'string' && meta.url.startsWith('/')) {
+      if (notification.status === 'UNREAD') {
+        markAsRead(notification.id);
+      }
+      onClose();
+      navigate(meta.url);
+      return;
+    }
+
     if (notification.status === 'UNREAD') {
       markAsRead(notification.id);
     }
-    
+
     if (notification.type === 'DAILY_JOURNAL') {
       onClose();
       navigate('/journal');
@@ -278,24 +303,31 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
     if (notification.type === 'CHANNEL_ACTIVITY') {
       onClose();
       if (notification.channelId) {
-        navigate(`/community?channel=${notification.channelId}&jump=${notification.messageId || ''}&focus=1`);
+        const mid = notification.messageId || '';
+        navigate(
+          `/community/${encodeURIComponent(String(notification.channelId))}${
+            mid ? `?jump=${encodeURIComponent(String(mid))}` : ''
+          }`
+        );
       } else {
         navigate('/community');
       }
       return;
     }
-    // Handle message-type notifications (jump to message)
     if ((notification.type === 'MENTION' || notification.type === 'REPLY') && notification.messageId) {
       onClose();
-      // channelId 0 = admin/user thread message
       if (notification.channelId === 0 || notification.channelId === '0') {
         if (isAdmin(user) && notification.title?.toLowerCase().includes('from user')) {
           navigate(`/admin/inbox?thread=${notification.messageId}`);
         } else {
-          navigate('/messages');
+          navigate(`/messages?thread=${encodeURIComponent(String(notification.messageId))}`);
         }
       } else if (notification.channelId) {
-        navigate(`/community?channel=${notification.channelId}&jump=${notification.messageId}&focus=1`);
+        navigate(
+          `/community/${encodeURIComponent(String(notification.channelId))}?jump=${encodeURIComponent(
+            String(notification.messageId)
+          )}`
+        );
       }
     }
   };

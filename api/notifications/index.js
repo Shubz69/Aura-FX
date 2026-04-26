@@ -190,21 +190,33 @@ async function createNotification(data) {
 
   // Do not await web push — it can take seconds per device and was blocking community POST
   // (Vercel 60s timeout). In-app notification row is already persisted.
-  try {
-    const { sendWebPushForNotification } = require('../push/webPushNotify');
-    void sendWebPushForNotification({
-      userId,
-      notificationId: id,
-      type,
-      title,
-      body: body || '',
-      meta,
-      channelId
-    }).catch((pushErr) => {
+  let metaForPush = meta;
+  if (typeof metaForPush === 'string') {
+    try {
+      metaForPush = JSON.parse(metaForPush);
+    } catch (_) {
+      metaForPush = null;
+    }
+  }
+  const skipPush = metaForPush && typeof metaForPush === 'object' && metaForPush.suppressWebPush === true;
+  if (!skipPush) {
+    try {
+      const { sendWebPushForNotification } = require('../push/webPushNotify');
+      void sendWebPushForNotification({
+        userId,
+        notificationId: id,
+        type,
+        title,
+        body: body || '',
+        meta: metaForPush || meta,
+        channelId,
+        messageId
+      }).catch((pushErr) => {
+        console.warn('[notifications] web push:', pushErr.message);
+      });
+    } catch (pushErr) {
       console.warn('[notifications] web push:', pushErr.message);
-    });
-  } catch (pushErr) {
-    console.warn('[notifications] web push:', pushErr.message);
+    }
   }
 
   return id;

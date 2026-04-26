@@ -28,6 +28,14 @@ const REPLAY_TFS = [
   ['4H', '240'],
   ['Daily', 'D'],
 ];
+const DECODER_TFS = [
+  ['1m', '1'],
+  ['15m', '15'],
+  ['1H', '60'],
+  ['4H', '240'],
+  ['1d', '1D'],
+];
+const DECODER_RANGES = ['1D', '1W', '1M', '3M', '6M', '1Y'];
 
 function token() {
   const now = Math.floor(Date.now() / 1000);
@@ -347,6 +355,105 @@ async function run() {
     });
   } catch (e) {
     issues.push({ page: 'TraderReplay', symbol: 'OANDA:EURUSD', interval: '60+1Y', error: String(e.message || e) });
+  }
+
+  // Market Decoder controls: candle timeframe + visible range should each drive chart-history request.
+  try {
+    await page.goto(`${BASE_URL}/trader-deck?qa_test_mode=1`, { waitUntil: 'domcontentloaded' });
+    await dismissGdpr(page);
+    await page.getByRole('button', { name: 'MARKET INTELLIGENCE' }).click();
+    await page.getByRole('button', { name: 'MARKET DECODER' }).click();
+    await page.getByRole('button', { name: 'Decode', exact: true }).first().click();
+    await page.waitForSelector('.md-chart-tf-btn', { timeout: 45000 });
+
+    const decoderSymbol = 'OANDA:EURUSD';
+    for (const [label, intervalVal] of DECODER_TFS) {
+      const respPromise = waitChartResp(page, decoderSymbol, intervalVal, { range: '3M', timeoutMs: 90000 });
+      await page.locator('.md-chart-tf[aria-label=\"Candle timeframe\"] .md-chart-tf-btn', { hasText: label }).first().click();
+      const resp = await respPromise;
+      const body = await resp.json();
+      const bars = Array.isArray(body?.bars) ? body.bars.length : null;
+      const ok = Boolean(body?.success && bars >= 2);
+      if (!ok) {
+        issues.push({
+          page: 'MarketDecoder',
+          symbol: decoderSymbol,
+          interval: intervalVal,
+          range: '3M',
+          success: body?.success ?? null,
+          bars,
+          diagnostics: body?.diagnostics || null,
+        });
+      }
+      if (intervalVal === '240' && body?.diagnostics?.returnedInterval !== '240') {
+        issues.push({
+          page: 'MarketDecoder',
+          symbol: decoderSymbol,
+          interval: '240',
+          range: '3M',
+          error: `expected returnedInterval=240 got ${body?.diagnostics?.returnedInterval || 'n/a'}`,
+          diagnostics: body?.diagnostics || null,
+        });
+      }
+      matrix.push({
+        page: 'MarketDecoder',
+        symbol: decoderSymbol,
+        interval: intervalVal,
+        range: '3M',
+        status: resp.status(),
+        barCount: bars,
+        firstBarTime: bars ? body.bars[0].time : null,
+        lastBarTime: bars ? body.bars[bars - 1].time : null,
+        canvasRendered: await page.locator('.md-chart-canvas-wrap canvas').first().isVisible().catch(() => false),
+        layoutHeightStable: null,
+        chartWarnings: warnings.filter((w) => w.includes('chart-history') || w.includes('Lightweight')).slice(-2),
+      });
+    }
+
+    for (const rangeVal of DECODER_RANGES) {
+      const respPromise = waitChartResp(page, decoderSymbol, '60', { range: rangeVal, timeoutMs: 90000 });
+      await page.locator('.md-chart-tf[aria-label=\"Visible history range\"] .md-chart-tf-btn', { hasText: rangeVal }).first().click();
+      const resp = await respPromise;
+      const body = await resp.json();
+      const bars = Array.isArray(body?.bars) ? body.bars.length : null;
+      const ok = Boolean(body?.success && bars >= 2);
+      if (!ok) {
+        issues.push({
+          page: 'MarketDecoder',
+          symbol: decoderSymbol,
+          interval: '60',
+          range: rangeVal,
+          success: body?.success ?? null,
+          bars,
+          diagnostics: body?.diagnostics || null,
+        });
+      }
+      if (['1M', '3M', '6M', '1Y'].includes(rangeVal) && bars != null && bars < 60) {
+        issues.push({
+          page: 'MarketDecoder',
+          symbol: decoderSymbol,
+          interval: '60',
+          range: rangeVal,
+          error: `sparse bars for deep range: ${bars}`,
+          diagnostics: body?.diagnostics || null,
+        });
+      }
+      matrix.push({
+        page: 'MarketDecoder',
+        symbol: decoderSymbol,
+        interval: '60',
+        range: rangeVal,
+        status: resp.status(),
+        barCount: bars,
+        firstBarTime: bars ? body.bars[0].time : null,
+        lastBarTime: bars ? body.bars[bars - 1].time : null,
+        canvasRendered: await page.locator('.md-chart-canvas-wrap canvas').first().isVisible().catch(() => false),
+        layoutHeightStable: null,
+        chartWarnings: warnings.filter((w) => w.includes('chart-history') || w.includes('Lightweight')).slice(-2),
+      });
+    }
+  } catch (e) {
+    issues.push({ page: 'MarketDecoder', error: String(e.message || e) });
   }
 
   // Chatbot routing check in separate non-premium auth context (chatbot hidden for admin)

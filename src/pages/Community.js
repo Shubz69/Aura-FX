@@ -851,7 +851,16 @@ const { id: channelIdParam } = useParams();
         if (parts[0] !== 'community') return null;
         return parts[1] ? decodeURIComponent(parts[1]) : null;
     }, [location?.pathname]);
-    const effectiveChannelId = channelIdParam || routeChannelId;
+    const queryChannelId = useMemo(() => {
+        try {
+            const q = new URLSearchParams(location.search || '');
+            const c = q.get('channel');
+            return c ? decodeURIComponent(String(c).trim()) : null;
+        } catch (_) {
+            return null;
+        }
+    }, [location.search]);
+    const effectiveChannelId = channelIdParam || routeChannelId || queryChannelId;
 
     useEffect(() => {
         if (!selectedChannel?.id) return;
@@ -1650,26 +1659,27 @@ const {
       return;
     }
     
-    // Subscribed only to `/topic/chat/${selectedChannel.id}` — frame is always for this open channel.
-    const isCurrentChannel = Boolean(selectedChannel?.id);
-    
-    // Check if message mentions current user
+    // True when this realtime frame belongs to the channel currently open (not merely “some channel selected”).
+    const messageChannelId = message.channelId || message.channel_id;
+    const messageSenderId = message.sender?.id || message.userId;
+    const isViewingThisChannel =
+      Boolean(selectedChannel?.id) &&
+      messageChannelId != null &&
+      channelIdsMatch(messageChannelId, selectedChannel.id);
+
     const currentUsername = storedUser?.username || storedUser?.name || '';
     const messageContent = message.content || '';
     const mentionRegex = new RegExp(`@${currentUsername}\\b`, 'i');
     const isMentioned = currentUsername && mentionRegex.test(messageContent);
-    
-    const messageChannelId = message.channelId || message.channel_id;
-    const messageSenderId = message.sender?.id || message.userId;
+
     const isOwnMessage = String(messageSenderId) === String(userId);
-    
-    // Badges + notifications (muted non-announcement channels: fully silent — no unread/mention counts, no toasts/OS alerts)
+
     const msgChannel = channelList.find(c => String(c.id) === String(messageChannelId));
     const isAnnouncements = msgChannel?.category === 'announcements';
     const isMuted = isChannelMuted(messageChannelId);
     const fullyMuted = isMuted && !isAnnouncements;
 
-    if (!isCurrentChannel && !isOwnMessage) {
+    if (!isViewingThisChannel && !isOwnMessage) {
       if (!fullyMuted) {
         updateChannelBadge(messageChannelId, 'unread');
         if (isMentioned) {
@@ -1678,41 +1688,35 @@ const {
       }
 
       const channelName = msgChannel?.name || 'a channel';
+      const jumpId = message.id || message.messageId || '';
+      const deepLink = `/community/${encodeURIComponent(String(messageChannelId))}${
+        jumpId ? `?jump=${encodeURIComponent(String(jumpId))}` : ''
+      }`;
       if (!fullyMuted) {
         if (isMentioned) {
           triggerNotification(
             'mention',
             `You were mentioned in #${channelName}`,
             `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-            `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
-            userId
+            deepLink,
+            userId,
+            { dedupeKey: `ws:mention:${jumpId}:${messageChannelId}:${messageSenderId}` }
           );
         } else if (!isMuted || isAnnouncements) {
           triggerNotification(
             'message',
             `New message in #${channelName}`,
             `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-            `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
-            null
+            deepLink,
+            userId,
+            { dedupeKey: `ws:msg:${jumpId}:${messageChannelId}:${messageSenderId}` }
           );
         }
       }
-    } else if (isCurrentChannel && isMentioned && !isOwnMessage) {
-      const curAnn = selectedChannel?.category === 'announcements';
-      const curMuted = isChannelMuted(selectedChannel.id) && !curAnn;
-      if (!curMuted) {
-        triggerNotification(
-          'mention',
-          `You were mentioned in #${selectedChannel.name}`,
-          `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-          `/community/${selectedChannel.id}?message=${message.id}`,
-          userId
-        );
-      }
     }
-    
+
     // INSTANT UI update - only add message if it's for the current channel
-    if (isCurrentChannel) {
+    if (isViewingThisChannel) {
       setMessages(prev => {
         // Fast duplicate check
         const existingIds = new Set(prev.map(m => String(m.id || '')));
@@ -3769,13 +3773,7 @@ useEffect(() => {
                                 const curMuted = isChannelMuted(sel.id) && !curAnn;
                                 if (isMentioned && !curMuted) {
                                     updateChannelBadge(sel.id, 'mentions');
-                                    triggerNotification(
-                                        'mention',
-                                        `You were mentioned in #${sel.name}`,
-                                        `${newMsg.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                                        `/community/${sel.id}?message=${newMsg.id || newMsg.messageId || ''}`,
-                                        userId
-                                    );
+                                    /* No toast here: poll only hydrates the open channel; user already sees the message. */
                                 }
                             });
                         }
@@ -4361,64 +4359,8 @@ setMessages(prev => {
         return final;
       });
 
-        // Handle mentions (keep your existing mention code)
-        const mentionRegex = /@(\w+)/g;
-        const mentions = messageContent.match(mentionRegex);
-        if (mentions) {
-            // Handle mentions asynchronously
-            (async () => {
-                try {
-                    let usersForMentions = allUsers;
-                    if (usersForMentions.length === 0) {
-                        const usersResponse = await axios.get(`${Api.getBaseUrl() || ''}/api/community/users`);
-                        usersForMentions = Array.isArray(usersResponse.data) ? usersResponse.data : [];
-                        setAllUsers(usersForMentions);
-                    }
-                        
-                    const mentionedUsernames = [...new Set(mentions.map(m => m.substring(1).toLowerCase()))];
-                    const hasAdminMention = mentionedUsernames.includes('admin');
-                    
-                    if (hasAdminMention) {
-                        const adminUsers = usersForMentions.filter(u => {
-                            const role = (u.role || '').toLowerCase();
-                            return role === 'admin' || role === 'super_admin';
-                        });
-                        
-                        adminUsers.forEach(adminUser => {
-                            triggerNotification(
-                                'mention',
-                                `@admin mention in #${selectedChannel.name}`,
-                                `${senderUsername} mentioned @admin: ${messageContent}`,
-                                `/community`,
-                                adminUser.id
-                            );
-                        });
-                    }
-                    
-                    mentionedUsernames.forEach(mentionedUsername => {
-                        if (mentionedUsername === 'admin') return;
-                        
-                        const mentionedUser = usersForMentions.find(u => {
-                            const uUsername = (u.username || u.name || '').toLowerCase();
-                            return uUsername === mentionedUsername;
-                        });
-                        
-                        if (mentionedUser && String(mentionedUser.id) !== String(userId)) {
-                            triggerNotification(
-                                'mention',
-                                `You were mentioned in #${selectedChannel.name}`,
-                                `${senderUsername} mentioned you: ${messageContent}`,
-                                `/community`,
-                                mentionedUser.id
-                            );
-                        }
-                    });
-                } catch (error) {
-                    console.error('Error fetching users for mentions:', error);
-                }
-            })();
-        }
-        
+        // Mention / DM delivery: server creates notifications + Web Push; avoid duplicate client-side triggers here.
+
         // Award XP for sending message
         const earnedXP = calculateMessageXP(messageContent, !!selectedFile);
         console.log(`🎯 Awarding ${earnedXP} XP for message`);
