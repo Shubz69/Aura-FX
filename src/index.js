@@ -145,7 +145,7 @@ if (process.env.NODE_ENV === 'production') {
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/service-worker.js', { scope: '/', updateViaCache: 'none' })
+      .register('/service-worker.js?v=6', { scope: '/', updateViaCache: 'none' })
       .then((reg) => reg?.update?.())
       .catch((err) => console.warn('SW registration failed:', err));
   });
