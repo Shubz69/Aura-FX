@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaBell, FaTimes, FaEnvelope, FaAt } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { ensureWebPushSubscription } from '../utils/ensureWebPushSubscription';
+import { appNavigate } from '../utils/appNavigate';
 import '../styles/NotificationSystem.css';
 
 /**
@@ -36,6 +37,23 @@ export function getNotificationPermission() {
     return Notification.permission;
 }
 
+function getStoredUserId() {
+    try {
+        const u = JSON.parse(localStorage.getItem('user') || '{}');
+        return u.id != null ? String(u.id) : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+function formatShortTime() {
+    try {
+        return new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    } catch (_) {
+        return '';
+    }
+}
+
 /**
  * @param {string} type - 'message' | 'mention' | 'dm' | etc.
  * @param {string} title
@@ -45,51 +63,104 @@ export function getNotificationPermission() {
  * @param {{ showSystem?: boolean, silent?: boolean }} [options] - silent: no UI at all; showSystem: OS notification when permitted
  */
 export const triggerNotification = (type, title, message, link = null, userId = null, options = {}) => {
-    const { showSystem = true, silent = false } = options || {};
+    const { showSystem = true, silent = false, dedupeKey: dedupeKeyOpt } = options || {};
     try {
-        const detail = { type, title, message, link, userId, showSystem };
+        const me = getStoredUserId();
+        const isMessageLike = type === 'message' || type === 'mention' || type === 'dm';
+        if (isMessageLike) {
+            if (userId == null || userId === undefined) return;
+            if (me != null && String(userId) !== String(me)) return;
+        }
+
+        const dedupeKey =
+            dedupeKeyOpt ||
+            (link && message ? `${type}:${link}:${String(message).slice(0, 40)}` : `${type}:${Date.now()}`);
+        if (typeof sessionStorage !== 'undefined' && dedupeKey) {
+            const sk = `aura_nd_${dedupeKey}`;
+            const now = Date.now();
+            const prev = parseInt(sessionStorage.getItem(sk) || '0', 10);
+            if (prev && now - prev < 45000) return;
+            sessionStorage.setItem(sk, String(now));
+        }
+
+        const detail = { type, title, message, link, userId, showSystem, silent };
         window.dispatchEvent(new CustomEvent('newNotification', { detail }));
 
-        if (silent) return;
+        if (silent) {
+            window.dispatchEvent(new Event('aura-notifications-refresh'));
+            return;
+        }
 
         const canSystem =
             showSystem &&
             typeof window !== 'undefined' &&
             'Notification' in window &&
             Notification.permission === 'granted';
+        const tabHidden = typeof document !== 'undefined' && document.visibilityState !== 'visible';
 
-        if (canSystem) {
+        if (canSystem && tabHidden && isMessageLike) {
             try {
-                const isMessageLike = type === 'message' || type === 'mention' || type === 'dm';
                 new Notification(title, {
                     body: message || '',
                     icon: '/icons/icon-192.png',
                     badge: '/icons/icon-192.png',
-                    tag: isMessageLike ? `aura-community-${type}` : `aura-${type}-${Date.now()}`,
+                    tag: `aura-${type}-${dedupeKey}`.slice(0, 64),
                     renotify: type === 'mention',
                 });
             } catch (_) {
                 /* some platforms throw if Notification options unsupported */
             }
+            window.dispatchEvent(new Event('aura-notifications-refresh'));
             return;
         }
 
-        if ((type === 'message' || type === 'mention' || type === 'dm') && !silent) {
+        if (isMessageLike) {
             const snippet = message ? `${String(message).slice(0, 100)}${String(message).length > 100 ? '…' : ''}` : '';
+            const timeLine = formatShortTime();
             toast.info(
-                <div>
+                <div
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && link) appNavigate(link);
+                    }}
+                    style={{ cursor: link ? 'pointer' : 'default' }}
+                    onClick={() => {
+                        if (link) appNavigate(link);
+                    }}
+                >
                     <strong style={{ display: 'block', marginBottom: 4 }}>{title}</strong>
                     <span style={{ fontSize: '0.92em', opacity: 0.9 }}>{snippet}</span>
+                    {timeLine ? (
+                        <div style={{ fontSize: '0.75em', opacity: 0.65, marginTop: 6 }}>{timeLine}</div>
+                    ) : null}
                 </div>,
-                { autoClose: 5000, toastId: 'aura-community-inapp' }
+                {
+                    autoClose: 6500,
+                    toastId: `aura-inapp-${dedupeKey}`.slice(0, 120),
+                    onClick: () => {
+                        if (link) appNavigate(link);
+                    },
+                }
             );
+            window.dispatchEvent(new Event('aura-notifications-refresh'));
         }
     } catch (error) {
         console.error('Error triggering notification:', error);
     }
 };
 
-const NotificationSystem = ({ user, onNotificationClick }) => {
+if (typeof window !== 'undefined') {
+    try {
+        if (/\be2eNotify=1\b/.test(window.location.search || '')) {
+            window.__AURA_E2E_TRIGGER__ = triggerNotification;
+        }
+    } catch (_) {
+        /* ignore */
+    }
+}
+
+const NotificationSystem = ({ user, onNotificationClick, headless = false }) => {
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
@@ -198,6 +269,8 @@ const NotificationSystem = ({ user, onNotificationClick }) => {
         if (days < 7) return `${days}d ago`;
         return date.toLocaleDateString();
     };
+
+    if (headless) return null;
 
     return (
         <div className="notification-container" ref={notificationRef}>

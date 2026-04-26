@@ -39,20 +39,28 @@ Your OpenAI API key needs to be added to Vercel environment variables for the Pr
    - **Environment:** Production (and Preview/Development if you want full auth there too)
    - If this is not set, Vercel logs will show: "JWT_SECRET not set or too short - auth verification degraded." and token signing falls back to an insecure legacy mode. Set it in Vercel to remove the warning and enable secure HMAC-SHA256 signing.
 
-6. **Redeploy:**
+6. **Web Push + Community notification side-effects (required for phone push):**
+   - **`REACT_APP_VAPID_PUBLIC_KEY`** (client build-time env, must match server public key)
+   - **`VAPID_PUBLIC_KEY`** (server env)
+   - **`VAPID_PRIVATE_KEY`** (server env)
+   - **`COMMUNITY_NOTIFICATIONS_ENABLE_DB_SIDE_EFFECTS=1`** (enable DB-backed community notification side-effects on Vercel serverless)
+   - **Environment:** Production (and Preview if you test push there)
+   - Redeploy after setting/changing any of the above (client key is baked at build time).
+
+7. **Redeploy:**
    - After adding the variable, go to "Deployments"
    - Click the three dots on the latest deployment
    - Click "Redeploy"
    - Or push a new commit to trigger auto-deploy
 
-7. **Aura Analysis — MetaTrader investor-password sync (REQUIRED for MT4/MT5 connect & analytics in production):**
+8. **Aura Analysis — MetaTrader investor-password sync (REQUIRED for MT4/MT5 connect & analytics in production):**
    - **`AURA_MT_SYNC_URL`** — Base URL of the hosted worker (must expose `POST /api/v1/sync` and `POST /api/v1/positions`). Legacy env names also work: `TERMINALSYNC_WORKER_URL`, `PYTHON_WORKER_URL`.
    - **`AURA_MT_SYNC_SECRET`** — Shared secret; the API sends it as header `x-worker-secret` on every worker request. Legacy: `TERMINALSYNC_WORKER_SECRET`, `WORKER_SECRET`.
    - **`PLATFORM_ENCRYPTION_KEY`** — **Set in production** for Aura platform credentials (AES-256-GCM). Use a long random value (e.g. `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`). If omitted, the code derives the key from **`JWT_SECRET`**; if **both** are omitted, a fixed development default is used (insecure — never ship that way).
    - **`JWT_SECRET`** — Already required above for auth; keep it set. Prefer also setting **`PLATFORM_ENCRYPTION_KEY`** so MT credential encryption is not tied to the JWT signing secret.
    - **`AURA_ANALYSIS_DIAGNOSTICS`** — Do **not** set to `1` in production (adds diagnostic payloads and extra server logging for the MT path). Use only in dev/preview when debugging.
 
-8. **All Markets / live snapshot (recommended for accurate spot FX & metals):**
+9. **All Markets / live snapshot (recommended for accurate spot FX & metals):**
    - **`FINNHUB_API_KEY`** — Primary source for OANDA-style spot forex and gold/silver in `/api/markets/snapshot` and the All Markets modal. Without it, the app falls back to Yahoo/Stooq, which can be delayed or use futures symbols for metals.
    - **Optional:** `TWELVE_DATA_API_KEY`, `POLYGON_API_KEY`, `COINMARKETCAP_API_KEY` — Extra redundancy for stocks, indices, and crypto. See [`.env.example`](.env.example) for descriptions.
    - After setting keys, redeploy and open **View All Markets** — prices should show provider-backed quotes (not “Live quote unavailable” placeholders).

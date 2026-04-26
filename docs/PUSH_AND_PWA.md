@@ -11,6 +11,7 @@ This document is the **verification source of truth** for ops and QA. Code refer
 | ☐ | `REACT_APP_VAPID_PUBLIC_KEY` | Build-time (Vercel / `.env` for client). **Must equal** server `VAPID_PUBLIC_KEY` string. |
 | ☐ | `VAPID_PUBLIC_KEY` | Server — same public key as above. |
 | ☐ | `VAPID_PRIVATE_KEY` | Server — private key paired with that public key. |
+| ☐ | `COMMUNITY_NOTIFICATIONS_ENABLE_DB_SIDE_EFFECTS` | Server toggle. Set to `1` on Vercel if you want DB-backed community notification fanout/web-push side-effects enabled there. |
 | ☐ | HTTPS | Production site served over HTTPS (required for PWA + push). |
 
 Generate keys once, e.g. `npx web-push generate-vapid-keys`. If any of the trio is wrong or missing, subscribe or send can **fail silently**.

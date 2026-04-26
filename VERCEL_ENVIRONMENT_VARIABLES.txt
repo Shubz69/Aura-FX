@@ -22,11 +22,19 @@ MYSQL_PASSWORD=FGcoKdqpUYWNb1nXzdGmBUACzeYDmewb
 MYSQL_DATABASE=railway
 MYSQL_SSL=true
 
+# Web Push + community notifications
+REACT_APP_VAPID_PUBLIC_KEY=your-vapid-public-key
+VAPID_PUBLIC_KEY=your-vapid-public-key
+VAPID_PRIVATE_KEY=your-vapid-private-key
+COMMUNITY_NOTIFICATIONS_ENABLE_DB_SIDE_EFFECTS=1
+
 IMPORTANT NOTES:
 - Copy and paste EXACTLY as shown above
 - MYSQL_SSL must be set to "true" (Railway requires SSL for external connections)
 - Make sure all variables are added to Production, Preview, AND Development environments
 - After adding, redeploy your project for changes to take effect
+- REACT_APP_VAPID_PUBLIC_KEY is build-time; redeploy after changes
+- REACT_APP_VAPID_PUBLIC_KEY must exactly match VAPID_PUBLIC_KEY
 
 REQUIRED EMAIL VARIABLES (for signups and password resets to work):
 ====================================================================

@@ -15,13 +15,14 @@ try {
 }
 
 /**
- * Notification side-effects can starve message reads on Vercel because api/db enforces
- * connectionLimit=1. Default to disabling DB-backed notification fanout in production
- * serverless hot path unless explicitly re-enabled.
+ * DB-backed mention/channel notifications + Web Push are created here.
+ * Keep them enabled on Railway/non-Vercel production; only default-disable on Vercel
+ * serverless unless explicitly re-enabled.
  */
 const NOTIFICATION_SIDE_EFFECTS_ENABLED = (() => {
   if (String(process.env.COMMUNITY_NOTIFICATIONS_ENABLE_DB_SIDE_EFFECTS || '').trim() === '1') return true;
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') return false;
+  if (String(process.env.COMMUNITY_NOTIFICATIONS_DISABLE_DB_SIDE_EFFECTS || '').trim() === '1') return false;
+  if (process.env.VERCEL) return false;
   return true;
 })();
 const COMMUNITY_BUILD = 'community-messages-debug-2026-04-24e';
@@ -243,6 +244,27 @@ async function runCommunityMessageNotificationSideEffects(payload) {
       });
     }
 
+    /**
+     * Mentioned users in muted channels still receive inbox rows, but device push should stay off.
+     * We encode this in notification meta and let notifications/index skip web push.
+     */
+    const mentionPushMuted = new Set();
+    try {
+      if (mentionIds.length > 0) {
+        const placeholders = mentionIds.map(() => '?').join(',');
+        const [prefMentionRows] = await db.execute(
+          `SELECT user_id FROM channel_push_prefs WHERE channel_id = ? AND enabled = 0 AND user_id IN (${placeholders})`,
+          [String(channelIdValue), ...mentionIds]
+        );
+        (prefMentionRows || []).forEach((r) => {
+          const u = Number(r.user_id);
+          if (Number.isFinite(u) && u > 0) mentionPushMuted.add(u);
+        });
+      }
+    } catch (prefErr) {
+      console.warn('[community/messages] mention mute lookup:', prefErr.message);
+    }
+
     try {
       await runInBatches(mentionIds, NOTIFICATION_CONCURRENCY, async (targetUserId) => {
         try {
@@ -254,7 +276,10 @@ async function runCommunityMessageNotificationSideEffects(payload) {
             channelId: channelIdForDb,
             messageId: newMessageId,
             fromUserId: senderId,
-            meta: notifMeta
+            meta: {
+              ...notifMeta,
+              suppressWebPush: mentionPushMuted.has(targetUserId),
+            }
           });
         } catch (err) {
           console.warn('Mention notification create failed:', err.message);

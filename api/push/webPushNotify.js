@@ -31,7 +31,7 @@ function ensureVapid() {
   return true;
 }
 
-function resolveOpenUrl(type, meta, channelId) {
+function resolveOpenUrl(type, meta, channelId, messageId) {
   let m = meta;
   if (m && typeof m === 'string') {
     try {
@@ -47,10 +47,21 @@ function resolveOpenUrl(type, meta, channelId) {
     if (m.kind === 'JOURNAL_TASK_DUE') return '/journal';
     return '/';
   }
-  // Thread DMs use REPLY with channel_id 0 — not community channels
-  if (type === 'REPLY' && (channelId === 0 || channelId == null)) return '/messages';
-  if (type === 'CHANNEL_ACTIVITY') return '/community';
-  if (type === 'MENTION' || type === 'REPLY') return '/community';
+  // Thread DMs use REPLY with channel_id 0 — route directly to thread.
+  if (type === 'REPLY' && (channelId === 0 || channelId === '0' || channelId == null)) {
+    const tid = m.threadId != null ? m.threadId : messageId;
+    if (tid != null && String(tid).match(/^\d+$/)) return `/messages?thread=${encodeURIComponent(String(tid))}`;
+    return '/messages';
+  }
+  if (type === 'CHANNEL_ACTIVITY' || type === 'MENTION' || type === 'REPLY') {
+    const cid = m.channelId != null ? m.channelId : channelId;
+    const mid = m.messageId != null ? m.messageId : messageId;
+    if (cid != null && String(cid)) {
+      const jump = mid != null && String(mid) ? `?jump=${encodeURIComponent(String(mid))}` : '';
+      return `/community/${encodeURIComponent(String(cid))}${jump}`;
+    }
+    return '/community';
+  }
   if (String(type || '').startsWith('FRIEND')) return '/messages';
   return '/messages';
 }
@@ -72,17 +83,27 @@ function pushPayloadType(type) {
  * @param {number|null} [opts.channelId]
  */
 async function sendWebPushForNotification(opts) {
-  const { userId, notificationId, type, title, body = '', meta, channelId = null } = opts;
+  const { userId, notificationId, type, title, body = '', meta, channelId = null, messageId = null } = opts;
   if (!userId || !notificationId) return;
   if (!ensureVapid()) return;
 
-  const url = resolveOpenUrl(type, meta, channelId);
+  const url = resolveOpenUrl(type, meta, channelId, messageId);
+  const metaObj = meta && typeof meta === 'object' ? meta : {};
+  const timestamp = new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
   const payload = JSON.stringify({
     title: title || 'AURA TERMINAL™',
-    body: body || '',
+    body: [body || '', timestamp].filter(Boolean).join(' · ').slice(0, 220),
     url,
     type: pushPayloadType(type),
-    tag: `aura-${notificationId}`
+    tag: `aura-${notificationId}`,
+    data: {
+      url,
+      type: pushPayloadType(type),
+      notificationId: String(notificationId),
+      channelId: channelId != null ? String(channelId) : (metaObj.channelId != null ? String(metaObj.channelId) : ''),
+      messageId: messageId != null ? String(messageId) : (metaObj.messageId != null ? String(metaObj.messageId) : ''),
+      threadId: metaObj.threadId != null ? String(metaObj.threadId) : ''
+    }
   });
 
   let rows;

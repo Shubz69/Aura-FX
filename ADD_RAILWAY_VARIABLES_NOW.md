@@ -25,12 +25,22 @@ MYSQL_USER = root
 MYSQL_PASSWORD = FGcoKdqpUYWNb1nXzdGmBUACzeYDmewb
 MYSQL_DATABASE = railway
 MYSQL_SSL = true
+
+# Web Push / PWA notifications
+VAPID_PUBLIC_KEY = your-vapid-public-key
+VAPID_PRIVATE_KEY = your-vapid-private-key
+# Client build-time key (if this service builds the frontend)
+REACT_APP_VAPID_PUBLIC_KEY = your-vapid-public-key
+# Keep community notification side-effects on for non-Vercel;
+# optional explicit toggle shown for parity:
+COMMUNITY_NOTIFICATIONS_ENABLE_DB_SIDE_EFFECTS = 1
 ```
 
 **Important:** 
 - Copy these EXACTLY as shown
 - No spaces around the `=` sign
 - `MYSQL_SSL` should be the string `"true"` (not boolean)
+- `REACT_APP_VAPID_PUBLIC_KEY` must match `VAPID_PUBLIC_KEY`
 
 ### Step 3: Wait for Redeploy
 After adding variables, Railway will automatically redeploy. Wait 1-2 minutes.

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import LazyImportErrorBoundary from './components/LazyImportErrorBoundary';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
@@ -19,6 +19,8 @@ import { ensureWebPushSubscription } from './utils/ensureWebPushSubscription';
 import { isQaTestModeEnabled } from './utils/qaTestMode';
 import JournalReminderScheduler from './components/JournalReminderScheduler';
 import SiteLanguageBootstrap from './components/SiteLanguageBootstrap';
+import NotificationSystem from './components/NotificationSystem';
+import { registerAppNavigate } from './utils/appNavigate';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/Courses.css';
@@ -196,6 +198,7 @@ const PageLoadFallback = React.memo(function PageLoadFallback() {
 
 function AppRoutes() {
     const { user, loading } = useAuth();
+    const navigate = useNavigate();
     // Default: show chatbot only when logged-out.
     // QA mode can force visibility for browser test automation.
     const showChatbot = !user || isQaTestModeEnabled();
@@ -209,6 +212,17 @@ function AppRoutes() {
     });
     const [postLoginTransitionActive, setPostLoginTransitionActive] = useState(() => postLoginGateArmed);
     const [postLoginLoadingActive, setPostLoginLoadingActive] = useState(() => postLoginGateArmed);
+
+    useEffect(() => {
+        registerAppNavigate((to) => navigate(to));
+        return () => {
+            registerAppNavigate((to) => {
+                if (typeof window !== 'undefined' && typeof to === 'string' && to.startsWith('/')) {
+                    window.location.assign(to);
+                }
+            });
+        };
+    }, [navigate]);
 
     usePrefetchRoutes();
     usePrefetchAuraDashboardTabChunks();
@@ -449,6 +463,7 @@ function AppRoutes() {
                 </Suspense>
                  <Footer />
             </main>
+            {user?.id ? <NotificationSystem user={user} headless /> : null}
 
            
            
@@ -458,7 +473,11 @@ function AppRoutes() {
                     <Chatbot />
                 </Suspense>
             )}
-            <ToastContainer position="bottom-right" autoClose={3000} />
+            <ToastContainer
+                position="bottom-right"
+                autoClose={3000}
+                style={{ bottom: 'max(16px, calc(10px + env(safe-area-inset-bottom, 0px)))' }}
+            />
         </div>
     );
 }
