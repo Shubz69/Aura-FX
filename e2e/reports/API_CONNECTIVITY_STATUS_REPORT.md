@@ -1,6 +1,6 @@
 # API Connectivity Status Report
 
-Last updated: 2026-04-25 (targeted audit + Twelve Data REST-usage reduction pass + focused pre-commit sanity)
+Last updated: 2026-04-26 (home dashboard watchlist pass + snapshot `meta` instrumentation)
 
 ## Scope and method
 
@@ -13,7 +13,7 @@ Last updated: 2026-04-25 (targeted audit + Twelve Data REST-usage reduction pass
 | API name | Internal endpoint(s) | External provider | Env var(s) required | Current connection status | Last tested result | Error/failure signal | Pages/features affected |
 |---|---|---|---|---|---|---|---|
 | Twelve Data health probe | `/api/ai/health` (probe payload `services.twelveData`) | Twelve Data | `TWELVE_DATA_API_KEY` (+ optional `TWELVE_DATA_HEALTH_SYMBOL`) | Connected (provider), service endpoint degraded overall | `services.twelveData.status=healthy`; endpoint HTTP `503` (degraded due non-TD dependencies) | Non-TD subsystem can degrade whole health route | Ops diagnostics, provider readiness checks |
-| Markets snapshot | `/api/markets/snapshot` | Twelve Data primary via market-data layer; fallback providers internal | `TWELVE_DATA_API_KEY` primary; fallbacks use `FINNHUB_API_KEY`, `POLYGON_API_KEY`, `COINMARKETCAP_API_KEY`, `FMP_API_KEY` where configured | Connected | HTTP `200` in targeted probe; stale-ok fallback implemented server-side | Historical `requestfailed`/abort events in prior QA artifacts | `MarketTicker`, `Home`, `TradeCalculator`, live pricing widgets |
+| Markets snapshot | `/api/markets/snapshot` | Twelve Data primary via market-data layer; fallback providers internal | `TWELVE_DATA_API_KEY` primary; fallbacks use `FINNHUB_API_KEY`, `POLYGON_API_KEY`, `COINMARKETCAP_API_KEY`, `FMP_API_KEY` where configured | Connected | HTTP `200` in targeted probe; stale-ok fallback implemented server-side; response **`meta`** (2026-04-26): `serverRouteCacheHit`, `cacheTtlMs`, `symbolCount`, `staleFallback` for lightweight client instrumentation | Historical `requestfailed`/abort events in prior QA artifacts | `MarketTicker`, `Home` (logged-in desk watchlist + public ticker), `TradeCalculator`, live pricing widgets |
 | Aura platform connectivity | `/api/aura-analysis/platform-connect` | MT bridge/MetaTrader infra (internal + external bridge) | Bridge/connection envs (no secrets exposed) | Connected with elevated risk | HTTP `200` in targeted probe; historical high request-failed count | Prior hard-check: high requestfailed volume | Aura Analysis connection hub/dashboard |
 | Subscription status | `/api/subscription/status` | Stripe-backed billing state (internal DB + webhook state) | `STRIPE_SECRET_KEY` (backend billing flows), auth token | Connected with elevated risk | HTTP `200` in targeted probe | Prior hard-check: requestfailed spikes + `429` seen once | Subscription page, community gating, entitlement UI |
 | Notifications | `/api/notifications`, `/api/notifications/:id/read`, `/api/notifications/read-all` | Internal DB + optional push providers | Auth token (+ push envs for web push delivery) | Connected with medium risk | HTTP `200` in targeted probe | Prior hard-check: intermittent requestfailed on unread polling | Navbar bell, notifications dropdown, community/message alerts |

@@ -1,7 +1,7 @@
 # FINAL FULL WEBSITE STATUS REPORT — AuraTerminal
 
 **Generated:** 2026-04-24  
-**Updated:** 2026-04-25 (bounded community reconciliation + Twelve Data REST-usage reduction pass)  
+**Updated:** 2026-04-26 (logged-in Home live market-data watchlist pass + snapshot `meta`)  
 **Source artifacts only (no new full test runs):**
 - `ISSUE_BOARD.md`
 - `e2e/reports/FINAL_HARDCHECK_QA_REPORT.md`
@@ -14,6 +14,7 @@
 - Community realtime verified from issue-board scan entry (2026-04-24)
 - `ISSUE_BOARD.md` + focused community specs: `e2e/community-reload-persistence.spec.js`, `e2e/community-latency.spec.js` (2026-04-25 bounded closure)
 - Market-data reduction artifacts: `e2e/reports/API_CONNECTIVITY_STATUS_REPORT.md`, `e2e/reports/MARKET_DATA_AND_SURVEILLANCE_AUDIT_REPORT.md`
+- Logged-in home market-data: `e2e/reports/HOME_LIVE_MARKET_DATA_REPORT.md` (`QA-RISK-HOME-LIVE-MARKET-001`)
 
 ## 1. Executive summary
 
@@ -29,7 +30,8 @@
   - Residual API abort noise and community 504 timeout risk under intermittent network conditions
   - Mathematical correctness of financial/report metrics not formally validated by automation
   - Trader Desk / Market Decoder cold-path latency and stale/fallback data risk (`QA-RISK-MARKETDATA-001`)
-  - Twelve Data REST minute overuse risk under multi-surface polling bursts (`QA-RISK-TWELVEDATA-REST-SPIKE-001`, mitigating/verify)
+  - Twelve Data REST minute overuse risk under multi-surface polling bursts (`QA-RISK-TWELVEDATA-REST-SPIKE-001`, mitigating/verify); logged-in home watchlist uses the **same** snapshot poll interval (30s) — rotation is UI-only
+  - Logged-in home watchlist quote-oracle and edge-case labelling (`QA-RISK-HOME-LIVE-MARKET-001`, mitigating)
   - Business-rule correctness for entitlement matrix and payment/subscription real-world transitions
 
 ## 2. Authentication / session status

@@ -1,7 +1,8 @@
 # Market Data and Surveillance Audit Report
 
 - Generated: 2026-04-25
-- Scope: targeted Trader Desk/Market Decoder/Twelve Data + Surveillance macro-feasibility audit (no broad site scan), with Twelve Data WebSocket feasibility addendum and REST-usage reduction pass
+- Updated: 2026-04-26 (logged-in Home watchlist + snapshot `meta`)
+- Scope: targeted Trader Desk/Market Decoder/Twelve Data + Surveillance macro-feasibility audit (no broad site scan), with Twelve Data WebSocket feasibility addendum and REST-usage reduction pass; plus logged-in home dashboard market strip
 
 ## 1) Targeted probe evidence
 
@@ -20,6 +21,9 @@
 - Shared live pricing UI (`src/hooks/useLivePrices.js`, `src/components/MarketTicker.js`, `TradeCalculator`)
   - Calls `/api/markets/snapshot`
   - Route builds from `api/market-data/liveHotSnapshot.js` and market-data layer/provider chain
+- Logged-in home dashboard watchlist (`src/pages/Home.js` → `DeskWatchlist`)
+  - Uses `useLivePrices({ symbols: HOME_DASHBOARD_MARKET_POOL })` with **visible rotation** (no extra REST vs singleton poll); see `e2e/reports/HOME_LIVE_MARKET_DATA_REPORT.md`
+  - Snapshot JSON **`meta`** (2026-04-26): `serverRouteCacheHit`, `cacheTtlMs`, `symbolCount`, `staleFallback` for UI transparency
 - Batch prices route (`/api/market/prices`)
   - Uses market-data layer first, then fallback providers and stale/static fallback policy
 - Twelve Data provider entrypoint

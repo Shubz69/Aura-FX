@@ -4356,6 +4356,47 @@ html, body {
     font-size: clamp(0.72rem, 1.1vw, 0.82rem);
 }
 
+.desk2-wl__meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 0.5rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+    margin-bottom: 0.35rem;
+}
+
+.desk2-wl__meta-upd {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+}
+
+.desk2-wl__meta-hint {
+    max-width: 100%;
+    text-align: right;
+    opacity: 0.92;
+}
+
+.desk2-wl__badge {
+    display: inline-block;
+    margin-left: 0.28rem;
+    padding: 0.06rem 0.28rem;
+    border-radius: 999px;
+    font-size: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 210, 120, 0.95);
+    border: 1px solid rgba(255, 210, 120, 0.35);
+    background: rgba(255, 210, 120, 0.08);
+    vertical-align: middle;
+}
+
+.desk2-wl__row--alt .desk2-wl__sym {
+    color: var(--text-muted);
+}
+
 .desk2-wl__head,
 .desk2-wl__row {
     display: grid;

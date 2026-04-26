@@ -8,6 +8,11 @@ import A7Logo from "../components/A7Logo";
 import MarketTicker from "../components/MarketTicker";
 import Api from "../services/Api";
 import { useLivePrices } from "../hooks/useLivePrices";
+import {
+    HOME_DASHBOARD_MARKET_POOL,
+    HOME_DASHBOARD_WATCHLIST_ROTATE_MS,
+    HOME_DASHBOARD_WATCHLIST_VISIBLE,
+} from "../constants/homeDashboardMarketPool";
 import { formatWelcomeSentence } from "../utils/welcomeUser";
 import {
     FaUsers, FaTrophy, FaGraduationCap, FaRocket,
@@ -760,11 +765,65 @@ const WatchlistRowSpark = ({ up }) => {
 };
 
 const DeskWatchlist = () => {
-    const { getPricesArray } = useLivePrices({ beginnerMode: true });
-    const rows = getPricesArray().slice(0, 4);
+    const { getPricesArray, getHealth, stale, loading } = useLivePrices({
+        symbols: HOME_DASHBOARD_MARKET_POOL,
+    });
+    const [sliceStart, setSliceStart] = useState(0);
+
+    useEffect(() => {
+        let timer = null;
+        const arm = () => {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+            if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+            timer = setInterval(() => {
+                setSliceStart((s) => (s + HOME_DASHBOARD_WATCHLIST_VISIBLE) % HOME_DASHBOARD_MARKET_POOL.length);
+            }, HOME_DASHBOARD_WATCHLIST_ROTATE_MS);
+        };
+        arm();
+        const onVis = () => arm();
+        if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVis);
+        return () => {
+            if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVis);
+            if (timer) clearInterval(timer);
+        };
+    }, []);
+
+    const full = getPricesArray();
+    const poolLen = HOME_DASHBOARD_MARKET_POOL.length;
+    const rows = [];
+    for (let i = 0; i < HOME_DASHBOARD_WATCHLIST_VISIBLE; i += 1) {
+        rows.push(full[(sliceStart + i) % poolLen]);
+    }
+
+    const health = getHealth();
+    const meta = health.lastSnapshotMeta || {};
+    const lastSnapMs = rows.find((r) => r?.lastUpdate != null)?.lastUpdate || null;
+    const updatedLabel =
+        lastSnapMs != null
+            ? new Date(Number(lastSnapMs)).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            : health.lastFetchTime
+              ? new Date(health.lastFetchTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+              : '—';
+    const statusParts = [];
+    if (loading && !health.lastFetchTime) statusParts.push('Loading…');
+    if (stale || meta.responseStale || meta.staleFallback) statusParts.push('Stale / delayed snapshot');
+    if (meta.staleFallback) statusParts.push('Serving last good prices');
+    if (meta.serverRouteCacheHit === false) statusParts.push('Fresh server build');
+    if (meta.serverRouteCacheHit === true && !meta.staleFallback) statusParts.push('CDN / route cache');
+    const sourceHint =
+        statusParts.length > 0 ? statusParts.join(' · ') : meta.symbolCount != null ? `${meta.symbolCount} symbols in snapshot` : 'Live snapshot';
 
     return (
         <div className="desk2-wl">
+            <div className="desk2-wl__meta" aria-live="polite">
+                <span className="desk2-wl__meta-upd">As of {updatedLabel}</span>
+                <span className="desk2-wl__meta-hint" title="Prices from /api/markets/snapshot (Twelve Data–first when available). % vs prior close or session rules from server.">
+                    {sourceHint}
+                </span>
+            </div>
             <div className="desk2-wl__head">
                 <span>Market</span>
                 <span>Price</span>
@@ -774,13 +833,21 @@ const DeskWatchlist = () => {
             {rows.map((row) => {
                 const pct = row.changePercent != null ? Number(row.changePercent) : null;
                 const up = pct != null && !Number.isNaN(pct) ? pct >= 0 : row.isUp !== false;
-                const loading = row.loading || !row.price;
+                const loadingRow = row.loading || !row.price;
+                const absHint =
+                    !loadingRow && row.change != null
+                        ? `Session / day vs reference: ${row.changeSign === '-' ? '-' : ''}${row.change} (${formatPercent(pct, 2)}%)`
+                        : undefined;
+                const rowStale = row.source === 'fallback' || row.delayed || row.quoteUnavailable;
                 return (
-                    <div className="desk2-wl__row" key={row.symbol}>
-                        <span className="desk2-wl__sym">{row.displayName || row.symbol}</span>
-                        <span className="desk2-wl__px">{loading ? '—' : row.price}</span>
-                        <span className={`desk2-wl__chg ${up ? 'is-up' : 'is-down'}`}>
-                            {loading ? '—' : `${up ? '+' : ''}${formatPercent(pct, 2)}`}
+                    <div className={`desk2-wl__row${rowStale ? ' desk2-wl__row--alt' : ''}`} key={row.symbol}>
+                        <span className="desk2-wl__sym">
+                            {row.displayName || row.symbol}
+                            {rowStale ? <span className="desk2-wl__badge">alt</span> : null}
+                        </span>
+                        <span className="desk2-wl__px">{loadingRow ? '—' : row.price}</span>
+                        <span className={`desk2-wl__chg ${up ? 'is-up' : 'is-down'}`} title={absHint}>
+                            {loadingRow ? '—' : `${up ? '+' : ''}${formatPercent(pct, 2)}`}
                         </span>
                         <WatchlistRowSpark up={up} />
                     </div>

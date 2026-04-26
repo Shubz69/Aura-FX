@@ -74,7 +74,9 @@ const healthStats = {
   avgLatency: 0,
   errors: 0,
   liveSymbols: 0,
-  delayedSymbols: 0
+  delayedSymbols: 0,
+  /** Last `meta` object from GET /api/markets/snapshot (server cache hit, symbol count, stale fallback). */
+  lastSnapshotMeta: null,
 };
 
 // Decimals configuration
@@ -212,6 +214,16 @@ async function fetchSnapshot() {
       healthStats.lastUpdateTime = Date.now();
       healthStats.liveSymbols = Object.keys(data.prices).length;
       healthStats.delayedSymbols = 0;
+      if (data.meta && typeof data.meta === 'object') {
+        healthStats.lastSnapshotMeta = { ...data.meta, responseStale: Boolean(data.stale) };
+      } else {
+        healthStats.lastSnapshotMeta = {
+          serverRouteCacheHit: Boolean(data.cached),
+          symbolCount: Object.keys(data.prices).length,
+          staleFallback: Boolean(data.stale),
+          responseStale: Boolean(data.stale),
+        };
+      }
 
       Object.entries(data.prices).forEach(([symbol, priceData]) => {
         const fallbackNumeric =
@@ -436,7 +448,7 @@ export function useLivePrices(options = {}) {
 
       globalListeners.add(handleUpdate);
 
-      // Single global snapshot poll every 60s (same data for ticker + modal)
+      // Single global snapshot poll (SNAPSHOT_POLL_MS; aligns with snapshot Cache-Control)
       if (globalListeners.size > 0) {
         startSnapshotPolling();
       }
@@ -545,7 +557,8 @@ export function useLivePrices(options = {}) {
     stale,
     listenerCount: globalListeners.size,
     activeSymbolCount: activeSymbols.size,
-    lastFetchTime
+    lastFetchTime,
+    pollIntervalMs: SNAPSHOT_POLL_MS,
   }), [stale]);
 
   // Trigger an immediate refresh (e.g. when opening All Markets modal or on page focus)

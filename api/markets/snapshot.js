@@ -66,11 +66,18 @@ module.exports = async (req, res) => {
 
   const cached = getCached(CACHE_KEY, CACHE_TTL_MS);
   if (cached && cached.prices && typeof cached.snapshotTimestamp === 'number') {
+    const priceKeys = Object.keys(cached.prices || {});
     const body = {
       success: true,
       prices: cached.prices,
       snapshotTimestamp: cached.snapshotTimestamp,
       cached: true,
+      meta: {
+        serverRouteCacheHit: true,
+        cacheTtlMs: CACHE_TTL_MS,
+        symbolCount: priceKeys.length,
+        staleFallback: false,
+      },
     };
     if (wantDiagnostics) {
       body.diagnostics = {
@@ -98,11 +105,19 @@ module.exports = async (req, res) => {
     lastGoodSnapshot = snapshot;
     lastGoodSnapshotTime = Date.now();
 
+    const priceKeys = Object.keys(snapshot.prices || {});
     const body = {
       success: true,
       prices: snapshot.prices,
       snapshotTimestamp: snapshot.snapshotTimestamp,
       cached: false,
+      meta: {
+        serverRouteCacheHit: false,
+        cacheTtlMs: CACHE_TTL_MS,
+        symbolCount: priceKeys.length,
+        staleFallback: false,
+        buildDurationMs: built.diagnostics?.durationMs ?? null,
+      },
     };
     if (wantDiagnostics) {
       body.diagnostics = {
@@ -121,12 +136,19 @@ module.exports = async (req, res) => {
     console.error('Markets snapshot fetch error:', msg);
 
     if (lastGoodSnapshot && (Date.now() - lastGoodSnapshotTime) < STALE_OK_MS) {
+      const priceKeys = Object.keys(lastGoodSnapshot.prices || {});
       const body = {
         success: true,
         prices: lastGoodSnapshot.prices,
         snapshotTimestamp: lastGoodSnapshot.snapshotTimestamp,
         cached: true,
         stale: true,
+        meta: {
+          serverRouteCacheHit: true,
+          cacheTtlMs: CACHE_TTL_MS,
+          symbolCount: priceKeys.length,
+          staleFallback: true,
+        },
       };
       if (wantDiagnostics) {
         body.diagnostics = {
