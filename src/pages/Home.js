@@ -764,6 +764,39 @@ const WatchlistRowSpark = ({ up }) => {
     );
 };
 
+const normalizeDeskWatchlistRow = (row, fallbackSymbol) => {
+    const symbol = row?.symbol || fallbackSymbol || '—';
+    const displayName = row?.displayName || symbol;
+    const price = row?.price ?? null;
+    const change = row?.change ?? null;
+    const changePercent = row?.changePercent ?? null;
+    const loading = row?.loading === true || !price;
+    const source = row?.source || null;
+    const delayed = row?.delayed === true;
+    const quoteUnavailable = row?.quoteUnavailable === true;
+    const isMissing = !row || row?.missing === true;
+    const isUp =
+        typeof row?.isUp === 'boolean'
+            ? row.isUp
+            : (changePercent != null && Number.isFinite(Number(changePercent)) ? Number(changePercent) >= 0 : true);
+
+    return {
+        symbol,
+        displayName,
+        price,
+        change,
+        changePercent,
+        loading,
+        source,
+        delayed,
+        quoteUnavailable,
+        isMissing,
+        isUp,
+        changeSign: row?.changeSign || null,
+        lastUpdate: row?.lastUpdate ?? null,
+    };
+};
+
 const DeskWatchlist = () => {
     const { getPricesArray, getHealth, stale, loading } = useLivePrices({
         symbols: HOME_DASHBOARD_MARKET_POOL,
@@ -795,7 +828,9 @@ const DeskWatchlist = () => {
     const poolLen = HOME_DASHBOARD_MARKET_POOL.length;
     const rows = [];
     for (let i = 0; i < HOME_DASHBOARD_WATCHLIST_VISIBLE; i += 1) {
-        rows.push(full[(sliceStart + i) % poolLen]);
+        const symbol = HOME_DASHBOARD_MARKET_POOL[(sliceStart + i) % poolLen];
+        const candidate = full[(sliceStart + i) % poolLen];
+        rows.push(normalizeDeskWatchlistRow(candidate, symbol));
     }
 
     const health = getHealth();
@@ -831,19 +866,19 @@ const DeskWatchlist = () => {
                 <span />
             </div>
             {rows.map((row) => {
-                const pct = row.changePercent != null ? Number(row.changePercent) : null;
+                const pct = row?.changePercent != null ? Number(row.changePercent) : null;
                 const up = pct != null && !Number.isNaN(pct) ? pct >= 0 : row.isUp !== false;
                 const loadingRow = row.loading || !row.price;
                 const absHint =
                     !loadingRow && row.change != null
                         ? `Session / day vs reference: ${row.changeSign === '-' ? '-' : ''}${row.change} (${formatPercent(pct, 2)}%)`
                         : undefined;
-                const rowStale = row.source === 'fallback' || row.delayed || row.quoteUnavailable;
+                const rowStale = row.isMissing || row.source === 'fallback' || row.delayed || row.quoteUnavailable;
                 return (
                     <div className={`desk2-wl__row${rowStale ? ' desk2-wl__row--alt' : ''}`} key={row.symbol}>
                         <span className="desk2-wl__sym">
                             {row.displayName || row.symbol}
-                            {rowStale ? <span className="desk2-wl__badge">alt</span> : null}
+                            {rowStale ? <span className="desk2-wl__badge">{row.isMissing ? 'missing' : 'alt'}</span> : null}
                         </span>
                         <span className="desk2-wl__px">{loadingRow ? '—' : row.price}</span>
                         <span className={`desk2-wl__chg ${up ? 'is-up' : 'is-down'}`} title={absHint}>
