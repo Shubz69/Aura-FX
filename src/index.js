@@ -80,13 +80,8 @@ if (typeof window !== "undefined") {
     },
     true
   );
-  window.addEventListener("unhandledrejection", (event) => {
-    const reason = event.reason;
-    if (isChunkLoadFailure(reason, reason?.message)) {
-      event.preventDefault();
-      scheduleChunkLoadRecovery();
-    }
-  });
+  // Dynamic import / React.lazy failures are handled by LazyImportErrorBoundary (user-triggered reload).
+  // Auto-reloading here caused loops with ERR_CACHE_READ_FAILURE and fought the in-app recovery UI.
 }
 
 function flattenConsoleArgs(args) {
@@ -149,8 +144,10 @@ if (process.env.NODE_ENV === 'production') {
 // Register service worker for PWA push notifications
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
-      .catch(err => console.warn('SW registration failed:', err));
+    navigator.serviceWorker
+      .register('/service-worker.js', { scope: '/', updateViaCache: 'none' })
+      .then((reg) => reg?.update?.())
+      .catch((err) => console.warn('SW registration failed:', err));
   });
 }
 

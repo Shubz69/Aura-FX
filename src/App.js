@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import LazyImportErrorBoundary from './components/LazyImportErrorBoundary';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import { EntitlementsProvider } from './context/EntitlementsContext';
@@ -176,6 +177,8 @@ function usePrefetchAuraDashboardTabChunks() {
 
 /** Lightweight fallback while a route chunk loads (memoized to avoid re-renders) */
 const PageLoadFallback = React.memo(function PageLoadFallback() {
+    const { pathname } = useLocation();
+    const label = pathname.startsWith('/surveillance') ? 'Loading Surveillance…' : 'Loading…';
     return (
         <div style={{
             display: 'flex',
@@ -186,7 +189,7 @@ const PageLoadFallback = React.memo(function PageLoadFallback() {
             color: 'rgba(255,255,255,0.7)',
             fontSize: '1rem'
         }}>
-            <span>Loading…</span>
+            <span>{label}</span>
         </div>
     );
 });
@@ -306,6 +309,7 @@ function AppRoutes() {
             {/* Main content area - page-wrapper now only contains the route content */}
             <main className={`page-wrapper${postLoginTransitionActive ? ' post-login-transition-surface' : ''}`}>
                 <Suspense fallback={<PageLoadFallback />}>
+                    <LazyImportErrorBoundary resetKey={location.pathname}>
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/login" element={<Login />} />
@@ -441,6 +445,7 @@ function AppRoutes() {
                         <Route path="/settings" element={<AdminGuard><Settings /></AdminGuard>} />
                         <Route path="*" element={<NotFound />} />
                     </Routes>
+                    </LazyImportErrorBoundary>
                 </Suspense>
                  <Footer />
             </main>

@@ -251,7 +251,16 @@ export const SurveillanceGuard = ({ children }) => {
     return <LoadingSpinner />;
   }
   if (entitlements && entitlements.canAccessSurveillance === false) {
-    return <Navigate to="/choose-plan" replace />;
+    return (
+      <GateNotice
+        title="Access restricted"
+        message="Surveillance is available on active Elite (or A7FX) billing and to Admin / Super Admin staff. Upgrade your plan to open this terminal, or return home."
+        primaryTo="/choose-plan"
+        primaryLabel="View plans"
+        secondaryTo="/"
+        secondaryLabel="Back to home"
+      />
+    );
   }
   return children;
 };

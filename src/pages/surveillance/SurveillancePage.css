@@ -2280,6 +2280,59 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
+  min-height: 52vh;
+  padding: 24px 18px 40px;
+}
+
+.sv-page-error-panel {
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  padding: 22px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(234, 169, 96, 0.22);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.sv-page-error-title {
+  margin: 0 0 10px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: rgba(255, 252, 248, 0.96);
+}
+
+.sv-page-error-copy {
+  margin: 0 0 18px;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.sv-page-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+a.sv-retry {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.sv-page-error-secondary {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.82);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.sv-page-error-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .sv-spinner {

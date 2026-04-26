@@ -98,7 +98,10 @@ export default function SurveillancePage() {
   }, [focusRegion]);
 
   const loadBootstrap = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -377,8 +380,22 @@ export default function SurveillancePage() {
 
   if (error === 'access') {
     return (
-      <div className="sv-page sv-page--error">
-        <p>Surveillance requires Elite access.</p>
+      <div className="sv-page sv-page--error" role="alert" aria-live="assertive">
+        <div className="sv-page-error-panel">
+          <h1 className="sv-page-error-title">Access restricted</h1>
+          <p className="sv-page-error-copy">
+            Your account cannot open Surveillance (Elite terminal). If you believe this is a mistake, confirm your
+            subscription is active or contact support.
+          </p>
+          <div className="sv-page-error-actions">
+            <a className="sv-retry" href="/choose-plan">
+              View plans
+            </a>
+            <a className="sv-page-error-secondary" href="/">
+              Home
+            </a>
+          </div>
+        </div>
       </div>
     );
   }
@@ -419,11 +436,21 @@ export default function SurveillancePage() {
 
   if (error === 'load' && !events.length) {
     return (
-      <div className="sv-page sv-page--error">
-        <p>Could not load surveillance data.</p>
-        <button type="button" className="sv-retry" onClick={() => loadBootstrap()}>
-          Retry
-        </button>
+      <div className="sv-page sv-page--error" role="alert" aria-live="assertive">
+        <div className="sv-page-error-panel">
+          <h1 className="sv-page-error-title">Could not load Surveillance</h1>
+          <p className="sv-page-error-copy">
+            The grid could not reach the server or your session may have expired. Check your connection and try again.
+          </p>
+          <div className="sv-page-error-actions">
+            <button type="button" className="sv-retry" onClick={() => loadBootstrap()}>
+              Retry
+            </button>
+            <a className="sv-page-error-secondary" href="/login">
+              Sign in again
+            </a>
+          </div>
+        </div>
       </div>
     );
   }
