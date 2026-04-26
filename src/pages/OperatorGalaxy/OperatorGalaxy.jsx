@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import './OperatorGalaxy.css';
@@ -7,125 +7,205 @@ import OperatorGalaxyBG from '../../components/OperatorGalaxyBG';
 /* ── SVG Icons ── */
 const TraderLabIcon = () => (
   <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-    <rect x="4"  y="4"  width="12" height="12" rx="2" fill="#EAA960" opacity="0.9"/>
-    <rect x="20" y="4"  width="12" height="12" rx="2" fill="#EAA960" opacity="0.7"/>
-    <rect x="4"  y="20" width="12" height="12" rx="2" fill="#EAA960" opacity="0.7"/>
-    <rect x="20" y="20" width="12" height="12" rx="2" fill="#EAA960" opacity="0.5"/>
+    <rect x="4" y="4" width="12" height="12" rx="2" fill="#EAA960" opacity="0.9" />
+    <rect x="20" y="4" width="12" height="12" rx="2" fill="#EAA960" opacity="0.7" />
+    <rect x="4" y="20" width="12" height="12" rx="2" fill="#EAA960" opacity="0.7" />
+    <rect x="20" y="20" width="12" height="12" rx="2" fill="#EAA960" opacity="0.5" />
   </svg>
 );
 
 const TradeValidatorIcon = () => (
   <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-    <path d="M18 3L33 10V18C33 26.28 26.58 33.93 18 36C9.42 33.93 3 26.28 3 18V10L18 3Z"
-      fill="none" stroke="#EAA960" strokeWidth="1.5" opacity="0.8"/>
-    <path d="M18 3L33 10V18C33 26.28 26.58 33.93 18 36C9.42 33.93 3 26.28 3 18V10L18 3Z"
-      fill="#EAA960" opacity="0.12"/>
-    <path d="M11 18L16 23L25 13" stroke="#EAA960" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path
+      d="M18 3L33 10V18C33 26.28 26.58 33.93 18 36C9.42 33.93 3 26.28 3 18V10L18 3Z"
+      fill="none"
+      stroke="#EAA960"
+      strokeWidth="1.5"
+      opacity="0.8"
+    />
+    <path
+      d="M18 3L33 10V18C33 26.28 26.58 33.93 18 36C9.42 33.93 3 26.28 3 18V10L18 3Z"
+      fill="#EAA960"
+      opacity="0.12"
+    />
+    <path
+      d="M11 18L16 23L25 13"
+      stroke="#EAA960"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
 const TradePlaybookIcon = () => (
   <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-    <rect x="7" y="3" width="22" height="30" rx="3" fill="#EAA960" opacity="0.12" stroke="#EAA960" strokeWidth="1.5"/>
-    <path d="M12 12H24" stroke="#EAA960" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M12 18H24" stroke="#EAA960" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M12 24H19" stroke="#EAA960" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M24 3V10L28 7L24 3Z" fill="#EAA960" opacity="0.7"/>
+    <rect x="7" y="3" width="22" height="30" rx="3" fill="#EAA960" opacity="0.12" stroke="#EAA960" strokeWidth="1.5" />
+    <path d="M12 12H24" stroke="#EAA960" strokeWidth="2" strokeLinecap="round" />
+    <path d="M12 18H24" stroke="#EAA960" strokeWidth="2" strokeLinecap="round" />
+    <path d="M12 24H19" stroke="#EAA960" strokeWidth="2" strokeLinecap="round" />
+    <path d="M24 3V10L28 7L24 3Z" fill="#EAA960" opacity="0.7" />
   </svg>
 );
 
+/*
+ * ── Planet definitions ──
+ * Positions match the diagram EXACTLY:
+ *   Trade Validator  → left: 50%, top: 58%  (center, below midpoint)
+ *   Trader Lab       → left: 20%, top: 50%  (left, true vertical center)
+ *   Trade Playbook   → left: 80%, top: 50%  (right, true vertical center)
+ *
+ * These are % of the full viewport (.operator-galaxy is fixed inset:0).
+ * translate(-50%,-50%) centers each planet on its anchor point.
+ */
 const PLANETS = [
-  {
-    id: 'traderlab',
-    name: 'Trader Lab',
-    description: 'Advanced trading laboratory with real-time analytics',
-    Icon: TraderLabIcon,
-    color: '#EAA960',
-    glowColor: 'rgba(234,169,96,0.55)',
-    angleOffset: 210,
-    size: 110,
-    path: '/trader-deck/trade-validator/trader-lab',
-    features: ['Live Markets', 'AI Signals', 'Risk Analysis'],
-  },
   {
     id: 'validator',
     name: 'Trade Validator',
-    description: 'Validate and optimise your trading strategies',
     Icon: TradeValidatorIcon,
-    color: '#C9A96E',
-    glowColor: 'rgba(201,169,110,0.55)',
-    angleOffset: 340,
-    size: 110,
+    color: '#EAA960',
+    glowColor: 'rgba(234,169,96,0.65)',
+    // OUTER ORBIT — front/bottom center
+    leftPct: 50,
+    topPct: 92,          // sits on outer orbit bottom arc
+    baseSize: 160,
+    zIndex: 30,          // highest — in front of everything
+    depthScale: 1.08,    // larger = closer to user
+    depthOpacity: 1,
+    depthBlur: 0,
     path: '/trader-deck/trade-validator/overview',
     features: ['Strategy Test', 'Performance', 'Optimization'],
   },
   {
+    id: 'traderlab',
+    name: 'Trader Lab',
+    Icon: TraderLabIcon,
+    color: '#D48D44',
+    glowColor: 'rgba(212,141,68,0.45)',
+    // INNER ORBIT — left, receding behind
+    leftPct: 33,
+    topPct: 46,          // inner orbit left node
+    baseSize: 140,
+    zIndex: 10,          // behind validator
+    depthScale: 0.87,    // smaller = further away
+    depthOpacity: 0.72,
+    depthBlur: 0.6,      // px blur for depth haze
+    path: '/trader-deck/trade-validator/trader-lab',
+    features: ['Live Markets', 'AI Signals', 'Risk Analysis'],
+  },
+  {
     id: 'playbook',
     name: 'Trade Playbook',
-    description: 'Your personalised trading playbook and journal',
     Icon: TradePlaybookIcon,
-    color: '#D48D44',
-    glowColor: 'rgba(212,141,68,0.55)',
-    angleOffset: 100,
-    size: 120,
+    color: '#C9A96E',
+    glowColor: 'rgba(201,169,110,0.45)',
+    // INNER ORBIT — right, receding behind
+    leftPct: 67,
+    topPct: 46,          // inner orbit right node
+    baseSize: 140,
+    zIndex: 10,          // behind validator
+    depthScale: 0.87,
+    depthOpacity: 0.72,
+    depthBlur: 0.6,
     path: '/trader-deck/trade-validator/trader-playbook',
     features: ['Plays', 'Notes', 'History'],
   },
 ];
 
-const ORBIT_TILT = -8;   // degrees — matches the CSS rotate(-8deg) on the ring
-const SPEED      = 18;   // degrees per second
-
-function getOrbitDimensions() {
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
-  if (vw >= 1200) return { rx: 310, ry: 110, planetScale: 1.00, topOffset: 60 };
-  if (vw >= 1024) return { rx: 270, ry:  96, planetScale: 0.92, topOffset: 50 };
-  if (vw >=  768) return { rx: 235, ry:  83, planetScale: 0.85, topOffset: 40 };
-  if (vw >=  480) return { rx: 190, ry:  67, planetScale: 0.75, topOffset: 30 };
-  if (vw >=  380) return { rx: 155, ry:  55, planetScale: 0.65, topOffset: 20 };
-  if (vw >=  320) return { rx: 130, ry:  46, planetScale: 0.55, topOffset: 15 };
-  return                 { rx: 110, ry:  39, planetScale: 0.48, topOffset: 10 };
+/*
+ * ── Responsive planet sizes ──
+ * Exactly matches the "Responsive Scaling Recommendation" table in the diagram.
+ */
+function getPlanetSize(baseSize, vw) {
+  const isCenter = baseSize === 160;
+  if (vw >= 1400) return isCenter ? 160 : 140;
+  if (vw >= 1024) return isCenter ? 148 : 128;
+  if (vw >= 768)  return isCenter ? 128 : 110;
+  if (vw >= 480)  return isCenter ? 108 :  92;
+  return isCenter ? 88 : 74;
 }
 
-/** Pixel offset from orbit-centre for a planet at `angleDeg` on the tilted ellipse */
-function orbitXY(angleDeg, rx, ry) {
-  const rad  = (angleDeg * Math.PI) / 180;
-  const tilt = (ORBIT_TILT * Math.PI) / 180;
-  const ex   = Math.cos(rad) * rx;
-  const ey   = Math.sin(rad) * ry;
-  return {
-    x: ex * Math.cos(tilt) - ey * Math.sin(tilt),
-    y: ex * Math.sin(tilt) + ey * Math.cos(tilt),
-    z: Math.sin(rad),  // −1 = far side, +1 = near side
-  };
+/*
+ * ── Responsive planet positions ──
+ * Matches diagram's responsive position table.
+ * Center: top always 58% (60% at 480-767, 62% at ≤479)
+ * Sides: left 20%/80% (18%/82% at 480-767, 15%/85% at ≤479)
+ */
+function getResponsivePos(planet, vw) {
+if (planet.id === 'validator') {
+    if (vw >= 480) return { leftPct: 50, topPct: 75 };
+    if (vw >= 380) return { leftPct: 50, topPct: 78 };
+    return { leftPct: 50, topPct: 82 };
+}
+if (planet.id === 'traderlab') {
+    if (vw >= 480) return { leftPct: 29, topPct: 50 };
+    if (vw >= 380) return { leftPct: 27, topPct: 50 };
+    return { leftPct: 24, topPct: 50 };
+}
+  // playbook
+if (vw >= 480) return { leftPct: 71, topPct: 50 };
+if (vw >= 380) return { leftPct: 73, topPct: 50 };
+return { leftPct: 76, topPct: 50 };
+}
+
+/*
+ * ── Orbit ellipse dimensions ──
+ * The ellipse is centered at (50%, 50%) of the viewport.
+ * rx/ry sized so the ellipse passes through (or near) all 3 planet anchor points.
+ * At 1400px+: planets at 20%/80% horizontally → horizontal distance from center = 30vw = ~420px → rx≈420
+ * Vertical: center planet at top=58%, sides at top=50% → ry should match that offset visually.
+ */
+/*
+ * Returns dimensions for both orbital rings.
+ * INNER orbit: passes through Trader Lab (left) & Trade Playbook (right)
+ *   — planets at leftPct 24/76, topPct 46  → horiz offset ≈ 26% of vw from center
+ * OUTER orbit: passes through Trade Validator bottom arc
+ *   — planet at leftPct 50, topPct 75     → vert offset ≈ 25% of vh from center
+ * We keep orbit centers at 50%/50% viewport.
+ */
+function getOrbitDimensions(vw) {
+  // Inner orbit rx = horizontal distance from center to side planets (26% of vw)
+  // Outer orbit rx is wider; ry is taller so validator sits on bottom arc
+if (vw >= 1400) return {
+    inner: { rx: 260, ry: 110 },
+    outer: { rx: 480, ry: 265 },
+};
+if (vw >= 1200) return {
+    inner: { rx: 225, ry:  96 },
+    outer: { rx: 420, ry: 235 },
+};
+if (vw >= 1024) return {
+    inner: { rx: 195, ry:  82 },
+    outer: { rx: 360, ry: 200 },
+};
+if (vw >= 768) return {
+    inner: { rx: 160, ry:  66 },
+    outer: { rx: 295, ry: 162 },
+};
+if (vw >= 480) return {
+    inner: { rx: 125, ry:  50 },
+    outer: { rx: 225, ry: 125 },
+};
+if (vw >= 380) return {
+    inner: { rx: 105, ry:  41 },
+    outer: { rx: 185, ry: 104 },
+};
+return {
+    inner: { rx:  90, ry:  34 },
+    outer: { rx: 155, ry:  88 },
+};
 }
 
 export default function OperatorGalaxy() {
   const navigate = useNavigate();
-
-  const [dims,     setDims]     = useState(getOrbitDimensions);
-  const [hovered,  setHovered]  = useState(null);
+  const [vw, setVw] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth : 1400
+  );
+  const [hovered, setHovered] = useState(null);
   const [selected, setSelected] = useState(null);
 
-  /*
-   * anglesRef   — current angle per planet (mutated in rAF, never causes re-render)
-   * nodeRefs    — map of planet id → wrapper DOM element
-   * sphereRefs  — map of planet id → sphere DOM element (for boxShadow updates)
-   * dimsRef     — live dims without triggering re-renders inside rAF
-   * rafRef      — animation frame handle
-   * lastRef     — previous timestamp
-   */
-  const anglesRef  = useRef(Object.fromEntries(PLANETS.map(p => [p.id, p.angleOffset])));
-  const nodeRefs   = useRef({});
-  const sphereRefs = useRef({});
-  const dimsRef    = useRef(dims);
-  const rafRef     = useRef(null);
-  const lastRef    = useRef(null);
+  const handleResize = useCallback(() => setVw(window.innerWidth), []);
 
-  useEffect(() => { dimsRef.current = dims; }, [dims]);
-
-  /* Resize */
-  const handleResize = useCallback(() => setDims(getOrbitDimensions()), []);
   useEffect(() => {
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
@@ -135,71 +215,10 @@ export default function OperatorGalaxy() {
     };
   }, [handleResize]);
 
-  /* Hide app footer */
   useEffect(() => {
     document.querySelector('.app-container')?.classList.add('operator-galaxy-page');
-    return () => document.querySelector('.app-container')?.classList.remove('operator-galaxy-page');
-  }, []);
-
-  /*
-   * ANIMATION LOOP — writes directly to DOM nodes via refs.
-   * Zero React re-renders per frame → buttery smooth.
-   * The transform string is:
-   *   translate(calc(-50% + Xpx), calc(-50% + Ypx)) scale(S)
-   *
-   * The `calc(-50% + Xpx)` part:
-   *   • -50%  centres the element on the stage anchor (0,0)
-   *   • + Xpx shifts it to the correct orbit position
-   * This is a single CSS transform — nothing conflicts.
-   */
- useEffect(() => {
-    let running = true;
-    lastRef.current = performance.now();
-
-    const tick = (now) => {
-      if (!running) return;
-
-      const dt = Math.min((now - lastRef.current) / 1000, 0.1); // Cap delta to prevent jumps on tab switch
-      lastRef.current = now;
-
-      const { rx, ry, planetScale } = dimsRef.current;
-
-      for (let i = 0; i < PLANETS.length; i++) {
-        const planet = PLANETS[i];
-
-        // Advance angle
-        anglesRef.current[planet.id] =
-          (anglesRef.current[planet.id] + SPEED * dt) % 360;
-
-        const el = nodeRefs.current[planet.id];
-        if (!el) continue;
-
-        const { x, y, z } = orbitXY(anglesRef.current[planet.id], rx, ry);
-        const perspScale = 0.72 + (z + 1) * 0.14;
-        const finalScale = perspScale * planetScale;
-        const sz = planet.size * finalScale;
-
-        // Use will-change hint and transform3d for GPU acceleration
-        el.style.transform = `translate3d(calc(-50% + ${x}px), calc(-50% + ${y}px), 0) scale(${finalScale})`;
-        el.style.zIndex = String(Math.round((z + 1) * 50) + 10);
-        el.style.setProperty('--sz', `${sz}px`);
-
-        // Update sphere size
-        const sphere = sphereRefs.current[planet.id];
-        if (sphere) {
-          sphere.style.width = `${sz}px`;
-          sphere.style.height = `${sz}px`;
-        }
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      running = false;
-      cancelAnimationFrame(rafRef.current);
-    };
+    return () =>
+      document.querySelector('.app-container')?.classList.remove('operator-galaxy-page');
   }, []);
 
   const handleClick = (planet) => {
@@ -208,38 +227,66 @@ export default function OperatorGalaxy() {
     setTimeout(() => navigate(planet.path), 800);
   };
 
-  const { rx, ry, topOffset, planetScale } = dims;
+  const { rx, ry } = getOrbitDimensions(vw);
+
+  /*
+   * Orbit rings — same visual layering as original but now the
+   * main ring (index 2) is sized to rx/ry so it passes through the planets.
+   */
+  const rings = [
+    { rx: rx * 1.30, ry: ry * 1.30, opacity: 0.14, width: 1   },
+    { rx: rx * 1.10, ry: ry * 1.10, opacity: 0.24, width: 1   },
+    { rx,            ry,            opacity: 0.52, width: 1.5 }, // ← main orbit
+    { rx: rx * 0.72, ry: ry * 0.72, opacity: 0.28, width: 1   },
+    { rx: rx * 0.44, ry: ry * 0.44, opacity: 0.18, width: 1   },
+  ];
 
   return (
     <div className="operator-galaxy">
       <OperatorGalaxyBG />
+{/* ── Orbital rings — centered at 50% / 50% ── */}
+<div className="orbit-rings-container">
+  {rings.map((ring, i) => (
+    <div
+      key={i}
+      className="orbit-ring"
+      style={{
+        width:       ring.rx * 2,
+        height:      ring.ry * 2,
+        opacity:     ring.opacity,
+        borderWidth: ring.width,
+      }}
+    />
+  ))}
+  {/* Central sun glow */}
+  <div className="orbit-sun">
+    <div className="orbit-sun-core" />
+    <div className="orbit-sun-halo1" />
+    <div className="orbit-sun-halo2" />
+    <div className="orbit-sun-halo3" />
+  </div>
+  
+{/* Central sun glow */}
+<div className="orbit-sun">
+  <div className="orbit-sun-core" />
+  <div className="orbit-sun-halo1" />
+  <div className="orbit-sun-halo2" />
+  <div className="orbit-sun-halo3" />
+</div>
 
-      {/* ── Orbit ring ── */}
-      <div
-        className="orbit-ellipse-wrap"
-        style={{ top: `calc(50% + ${topOffset}px)` }}
-      >
-        <div
-          className="orbit-ellipse"
-          style={{ width: `${rx * 2}px`, height: `${ry * 2}px` }}
-        />
+{/* ── Static orbital dots ── */}
+<div className="orbit-dot orbit-dot-1" />
 
-        {/* Sparkle dots pinned to the ring at 0°/90°/180°/270° */}
-        {[0, 90, 180, 270].map(deg => {
-          const { x, y } = orbitXY(deg, rx, ry);
-          return (
-            <div
-              key={deg}
-              className="orbit-sparkle"
-              style={{
-                '--tx': `${x}px`,
-                '--ty': `${y}px`,
-                transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
-              }}
-            />
-          );
-        })}
-      </div>
+
+
+{/* ── Static orbital dots - OUTSIDE container, all same as Dot 1 style ── */}
+<div className="orbit-dot orbit-dot-1" />
+<div className="orbit-dot orbit-dot-2" />
+<div className="orbit-dot orbit-dot-3" />
+<div className="orbit-dot orbit-dot-4" />
+<div className="orbit-dot orbit-dot-5" />
+<div className="orbit-dot orbit-dot-6" />
+</div>
 
       {/* ── Header ── */}
       <motion.div
@@ -248,125 +295,143 @@ export default function OperatorGalaxy() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
       >
-        <p className="galaxy-brand-mark">THE</p>
-        <h1 className="galaxy-title">OPERATOR</h1>
-        <div className="galaxy-ornament">
-          <span className="ornament-line" />
-          <span className="ornament-diamond">◆</span>
-          <span className="ornament-line" />
+        <div className="galaxy-header-left">
+          <p className="galaxy-brand-mark">OPERATOR</p>
+          <p className="galaxy-brand-sub">TRADING INTELLIGENCE SYSTEM</p>
         </div>
-        <p className="galaxy-subtitle">TRADERS GALAXY</p>
-        <p className="galaxy-subnote">Navigate your trading universe</p>
+        <div className="galaxy-header-right">
+          <p className="galaxy-status-label">SYSTEM STATUS</p>
+          <div className="galaxy-status-value">
+            <span className="galaxy-status-dot" />
+            OPTIMAL
+          </div>
+        </div>
       </motion.div>
 
-      {/* ── Planets stage ──
-          A zero-size div positioned at the orbit centre.
-          Each planet-node is absolutely placed from this point using
-          a combined translate+scale transform so there is no CSS/JS conflict.
-      ── */}
-      <div
-        className="planets-stage"
-        style={{ top: `calc(50% + ${topOffset}px)` }}
+      {/* ── Title block ── */}
+      <motion.div
+        className="galaxy-title-block"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
       >
-        {PLANETS.map((planet) => {
-          const isHovered  = hovered  === planet.id;
-          const isSelected = selected === planet.id;
+        <h1 className="galaxy-title">TRADERS GALAXY</h1>
+        <p className="galaxy-subtitle">NAVIGATE YOUR TRADING UNIVERSE</p>
+      </motion.div>
 
-          // Snapshot initial position to avoid a one-frame flash at 0,0
-          const { x: ix, y: iy, z: iz } = orbitXY(anglesRef.current[planet.id], rx, ry);
-          const initScale = (0.72 + (iz + 1) * 0.14) * planetScale;
-          const initSz    = planet.size * initScale;
+      {/* ── Planets ── */}
+      {PLANETS.map((planet) => {
+        const isHovered  = hovered  === planet.id;
+        const isSelected = selected === planet.id;
+        const sz         = getPlanetSize(planet.baseSize, vw);
+        const pos        = getResponsivePos(planet, vw);
 
-          return (
+        return (
+          <div
+            key={planet.id}
+            className={`planet-node${isHovered ? ' is-hovered' : ''}${isSelected ? ' is-selected' : ''}${planet.id === 'validator' ? ' is-center' : ''}`}
+            style={{
+              '--glow' : planet.glowColor,
+              '--sz'   : `${sz}px`,
+              position : 'fixed',          // fixed so % is of viewport, same as operator-galaxy
+              left     : `${pos.leftPct}%`,
+              top      : `${pos.topPct}%`,
+              transform: 'translate(-50%, -50%)',
+              zIndex   : planet.zIndex,
+            }}
+            onMouseEnter={() => setHovered(planet.id)}
+            onMouseLeave={() => setHovered(null)}
+            onClick={() => handleClick(planet)}
+          >
+   
+            
             <div
-              key={planet.id}
-              ref={el => { nodeRefs.current[planet.id] = el; }}
-              className={`planet-node${isHovered ? ' is-hovered' : ''}${isSelected ? ' is-selected' : ''}`}
+              className="planet-sphere"
               style={{
-                '--glow': planet.glowColor,
-                '--sz':   `${initSz}px`,
-                // Initial transform — rAF will overwrite every frame
-                transform: `translate(calc(-50% + ${ix}px), calc(-50% + ${iy}px)) scale(${initScale})`,
-                zIndex:     Math.round((iz + 1) * 50) + 10,
+                width  : sz,
+                height : sz,
+             boxShadow: isHovered
+  ? `0 0 0 2px  rgba(255,235,150,0.95),
+     0 0 0 5px  rgba(234,169, 96,0.45),
+     0 0 0 10px rgba(234,169, 96,0.18),
+     0 0 50px 14px rgba(234,169,96,0.50),
+     0 0 90px 24px rgba(234,169,96,0.22),
+     0 20px 55px rgba(0,0,0,0.72),
+     inset -10px 12px 28px rgba(0,0,0,0.85),
+     inset   7px -7px 20px rgba(234,169,96,0.18),
+     inset   3px -3px  8px rgba(255,240,200,0.12)`
+  : planet.id === 'validator'
+    ? `0 0 0 1.5px rgba(234,169,96,0.65),
+       0 0 0 4px   rgba(234,169,96,0.22),
+       0 0 35px 8px rgba(234,169,96,0.32),
+       0 0 70px 16px rgba(234,169,96,0.13),
+       0 20px 52px rgba(0,0,0,0.65),
+       inset -8px 10px 24px rgba(0,0,0,0.80),
+       inset  6px -6px 18px rgba(234,169,96,0.14),
+       inset  3px -3px  8px rgba(255,240,200,0.09)`
+    : `0 0 0 1px   rgba(234,169,96,0.35),
+       0 0 0 3px   rgba(234,169,96,0.12),
+       0 0 20px 4px rgba(234,169,96,0.16),
+       0 0 42px 8px rgba(234,169,96,0.07),
+       0 12px 32px rgba(0,0,0,0.60),
+       inset -6px  8px 18px rgba(0,0,0,0.78),
+       inset  4px -4px 14px rgba(234,169,96,0.10),
+       inset  2px -2px  6px rgba(255,240,200,0.06)`,
               }}
-              onMouseEnter={() => setHovered(planet.id)}
-              onMouseLeave={() => setHovered(null)}
-              onClick={() => handleClick(planet)}
             >
-              {/* Glow ring */}
-              <div className="planet-glow-ring" />
-
-              {/* Sphere */}
-              <div
-                ref={el => { sphereRefs.current[planet.id] = el; }}
-                className="planet-sphere"
-                style={{
-                  width:  initSz,
-                  height: initSz,
-                  boxShadow: isHovered
-                    ? `0 0 0 2px rgba(234,169,96,0.9),
-                       0 0 24px ${planet.glowColor},
-                       0 0 60px ${planet.glowColor.replace('0.55', '0.35')},
-                       inset 0 0 30px rgba(234,169,96,0.12)`
-                    : `0 0 0 1.5px rgba(234,169,96,0.45),
-                       0 0 20px rgba(234,169,96,0.2),
-                       inset 0 0 20px rgba(234,169,96,0.06)`,
-                }}
-              >
-                <div className="planet-rim" />
-                <div className="planet-icon-wrap">
-                  <planet.Icon />
-                </div>
+                       <div className="planet-atmosphere" />
+<div className="planet-gold-crescent" />
+            <div className="planet-glow-ring" />
+              <div className="planet-bubble-shell" />
+              <div className="planet-bubble-shell" />
+              <div className="planet-rim" />
+              <div className="planet-icon-wrap">
+                <planet.Icon />
               </div>
-
-              {/* Label */}
-              <div className="planet-label-wrap">
-                <span className="planet-label">{planet.name}</span>
-              </div>
-
-              {/* Selection burst */}
-              {isSelected && (
-                <motion.div
-                  className="planet-select-flash"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: [0, 1, 0], scale: [0.8, 1.8, 2.8] }}
-                  transition={{ duration: 0.75, ease: [0.4, 0, 0.2, 1] }}
-                />
-              )}
             </div>
-          );
-        })}
-      </div>
+
+            <div className="planet-label-wrap">
+              <span className="planet-label">{planet.name}</span>
+            </div>
+
+            {isSelected && (
+              <motion.div
+                className="planet-select-flash"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: [0, 1, 0], scale: [0.8, 1.8, 2.8] }}
+                transition={{ duration: 0.75, ease: [0.4, 0, 0.2, 1] }}
+              />
+            )}
+          </div>
+        );
+      })}
 
       {/* ── Hover tooltip ── */}
       <AnimatePresence>
-        {hovered && !selected && (
-          <motion.div
-            className="planet-tooltip"
-            key={hovered}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.25 }}
-          >
-            {(() => {
-              const p = PLANETS.find(pl => pl.id === hovered);
-              if (!p) return null;
-              return (
-                <div className="tooltip-inner">
-                  <div className="tooltip-top-line" />
-                  <h3>{p.name}</h3>
-                  <p>{p.description}</p>
-                  <div className="tooltip-tags">
-                    {p.features.map((f, i) => (
-                      <span key={i} className="tooltip-tag">{f}</span>
-                    ))}
-                  </div>
+        {hovered && !selected && (() => {
+          const p = PLANETS.find((pl) => pl.id === hovered);
+          if (!p) return null;
+          return (
+            <motion.div
+              className="planet-tooltip"
+              key={hovered}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.25 }}
+            >
+              <div className="tooltip-inner">
+                <div className="tooltip-top-line" />
+                <h3>{p.name}</h3>
+                <div className="tooltip-tags">
+                  {p.features.map((f, i) => (
+                    <span key={i} className="tooltip-tag">{f}</span>
+                  ))}
                 </div>
-              );
-            })()}
-          </motion.div>
-        )}
+              </div>
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
 
       {/* ── Bottom cue ── */}

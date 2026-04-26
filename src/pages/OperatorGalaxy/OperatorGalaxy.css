@@ -1,5 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   OPERATOR GALAXY
+   OPERATOR GALAXY — TRADERS GALAXY LAYOUT
+   Planet positions per diagram:
+     Trade Validator  → left:50%  top:58%  size:160px  z:3
+     Trader Lab       → left:20%  top:50%  size:140px  z:2
+     Trade Playbook   → left:80%  top:50%  size:140px  z:2
    ═══════════════════════════════════════════════════════════════════════ */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
@@ -12,9 +16,11 @@
   --text:        #FFFFFF;
   --text-muted:  rgba(200,196,232,0.72);
   --text-dim:    rgba(200,196,232,0.42);
+  --planet-inner: rgba(7,11,21,0.92);
   --ease:        cubic-bezier(0.4,0,0.2,1);
 }
 
+/* ── Root container ── */
 .operator-galaxy {
   position: fixed;
   inset: 0;
@@ -25,21 +31,23 @@
   cursor: default;
 }
 
+/* Top hairline */
 .operator-galaxy::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 2px;
   background: linear-gradient(90deg,
-    rgba(180,220,255,0.5) 0%,
+    rgba(180,220,255,0.5)  0%,
     rgba(200,230,255,0.25) 20%,
-    rgba(234,169,96,0.15) 55%,
-    transparent 100%
+    rgba(234,169,96,0.15)  55%,
+    transparent            100%
   );
   z-index: 20;
   pointer-events: none;
 }
 
+/* Bottom hairline */
 .operator-galaxy::after {
   content: '';
   position: absolute;
@@ -55,218 +63,307 @@
   pointer-events: none;
 }
 
-/* ── Header ── */
+/* ═══════════════════════════════
+   HEADER
+═══════════════════════════════ */
 .galaxy-header {
   position: absolute;
-  top: clamp(80px, 11vh, 120px);
+  top: clamp(80px, 10vh, 100px);
+  left: 0; right: 0;
+  margin: 0 auto;
+  z-index: 10;
+  pointer-events: none;
+  width: calc(100% - 90px);
+  left: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 20px;
+  padding: 24px 32px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  box-shadow: 
+    0 0 40px rgba(212, 175, 55, 0.2),
+    inset 0 0 20px rgba(255, 255, 255, 0.03);
+}
+
+.galaxy-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 8%; right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(234,169,96,0.5),
+    rgba(248,195,125,0.3),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.galaxy-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 15%; right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(234,169,96,0.18),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.galaxy-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.galaxy-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  padding-left: 32px;
+  border-left: 1px solid rgba(234,169,96,0.12);
+}
+
+.galaxy-brand-mark {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+  font-weight: 300;
+  letter-spacing: 0.35em;
+  color: #ffffff;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1;
+  text-shadow: 0 0 40px rgba(234,169,96,0.25), 0 2px 12px rgba(0,0,0,0.8);
+}
+
+.galaxy-brand-sub {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 300;
+  letter-spacing: 0.38em;
+  color: rgba(200,196,232,0.55);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.galaxy-status-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  color: rgba(200,196,232,0.45);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.galaxy-status-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--gold-bright);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+}
+
+.galaxy-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5aff9d;
+  box-shadow: 0 0 8px #5aff9d, 0 0 16px rgba(90,255,157,0.4);
+  animation: statusPulse 2.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes statusPulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+/* ═══════════════════════════════
+   TITLE BLOCK
+═══════════════════════════════ */
+.galaxy-title-block {
+  position: absolute;
+  top: clamp(210px, 26vh, 270px);
   left: 0; right: 0;
   text-align: center;
   z-index: 10;
   pointer-events: none;
-  filter: drop-shadow(0 0 40px rgba(4,3,12,0.8));
-}
-
-.galaxy-brand-mark {
-  font-size: 0.62rem;
-  font-weight: 500;
-  letter-spacing: 0.42em;
-  color: var(--gold);
-  text-transform: uppercase;
-  margin: 0 0 10px;
-  opacity: 0.85;
-  text-shadow: 0 0 20px rgba(234,169,96,0.6), 0 0 40px rgba(234,169,96,0.2);
 }
 
 .galaxy-title {
-  font-size: clamp(2.2rem, 5.5vw, 3.8rem);
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(0.9rem, 1.8vw, 1.3rem);
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  margin: 0 0 8px;
   line-height: 1;
-  background: linear-gradient(150deg, #FDE8C4 0%, #F8C37D 30%, #EAA960 60%, #C9843A 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: titleFloat 6s ease-in-out infinite;
-}
-
-@keyframes titleFloat {
-  0%,100% { filter: drop-shadow(0 0 60px rgba(234,169,96,0.35)) drop-shadow(0 2px 4px rgba(0,0,0,0.9)); }
-  50%      { filter: drop-shadow(0 0 80px rgba(234,169,96,0.5))  drop-shadow(0 2px 4px rgba(0,0,0,0.9)); }
-}
-
-.galaxy-ornament {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin: 12px 0 8px;
-}
-
-.ornament-line {
-  width: 56px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.55), transparent);
-  box-shadow: 0 0 8px rgba(234,169,96,0.3);
-}
-
-.ornament-diamond {
   color: var(--gold);
-  font-size: 0.45rem;
-  opacity: 0.7;
-  filter: drop-shadow(0 0 6px rgba(234,169,96,0.8));
-  animation: diamondPulse 3s ease-in-out infinite;
-}
-
-@keyframes diamondPulse {
-  0%,100% { opacity: 0.5; transform: scale(1); }
-  50%      { opacity: 1;   transform: scale(1.3); }
+  text-transform: uppercase;
+  text-shadow:
+    0 0 40px rgba(234,169,96,0.55),
+    0 0 80px rgba(234,169,96,0.2),
+    0 2px 8px rgba(0,0,0,0.9);
 }
 
 .galaxy-subtitle {
-  font-size: clamp(1rem, 2.2vw, 1.4rem);
-  font-weight: 600;
-  color: var(--gold);
-  letter-spacing: 0.28em;
-  margin: 0;
-  opacity: 0.85;
-  text-shadow: 0 0 24px rgba(234,169,96,0.5), 0 2px 8px rgba(0,0,0,0.8);
-}
-
-.galaxy-subnote {
-  font-size: 0.62rem;
-  font-weight: 500;
-  letter-spacing: 0.28em;
-  color: rgba(255,255,255,0.9);
+  font-size: clamp(0.6rem, 1.2vw, 0.75rem);
+  font-weight: 400;
+  letter-spacing: 0.38em;
+  color: rgba(200,196,232,0.65);
   text-transform: uppercase;
-  margin: 10px 0 0;
-  background: rgba(4,3,12,0.55);
-  padding: 4px 16px 5px;
-  border-radius: 20px;
-  border: 1px solid rgba(234,169,96,0.12);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: inline-block;
-  text-shadow: 0 0 20px rgba(0,0,0,1), 0 2px 8px rgba(0,0,0,1);
+  margin: 0;
 }
 
-/* ── Orbit ring ── */
-.orbit-ellipse-wrap {
-  position: absolute;
+/* ═══════════════════════════════
+   ORBIT RINGS
+   Centered at exactly 50% / 50% of viewport.
+   Rings are ellipses — width = rx*2, height = ry*2.
+═══════════════════════════════ */
+.orbit-rings-container {
+  position: fixed;          /* same stacking context as planets */
   left: 50%;
+  top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 3;
+  z-index: 1;
   pointer-events: none;
-}
-
-.orbit-ellipse {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%) rotate(-8deg);
-  border-radius: 50%;
-  border: 1.5px solid rgba(234,169,96,0.55);
-  box-shadow:
-    0 0 8px  rgba(234,169,96,0.35),
-    0 0 20px rgba(234,169,96,0.18),
-    0 0 50px rgba(234,169,96,0.08),
-    inset 0 0 12px rgba(234,169,96,0.08);
-  animation: orbitShimmer 4s ease-in-out infinite;
-}
-
-@keyframes orbitShimmer {
-  0%,100% {
-    border-color: rgba(234,169,96,0.45);
-    box-shadow: 0 0 8px rgba(234,169,96,0.3), 0 0 20px rgba(234,169,96,0.15);
-  }
-  50% {
-    border-color: rgba(234,169,96,0.75);
-    box-shadow: 0 0 14px rgba(234,169,96,0.55), 0 0 35px rgba(234,169,96,0.28);
-  }
-}
-
-.orbit-ellipse::after {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  border-radius: 50%;
-  border: 1px solid rgba(234,169,96,0.12);
-}
-
-/* ── Sparkles ── */
-.orbit-sparkle {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff 0%, #F8C37D 35%, #EAA960 65%, transparent 100%);
-  box-shadow: 0 0 6px 2px rgba(255,240,200,0.9), 0 0 16px 5px rgba(234,169,96,0.65);
-  animation: sparklePulse 2.8s ease-in-out infinite;
-}
-.orbit-sparkle:nth-child(2) { animation-delay: 0.7s; }
-.orbit-sparkle:nth-child(3) { animation-delay: 1.4s; }
-.orbit-sparkle:nth-child(4) { animation-delay: 2.1s; }
-
-@keyframes sparklePulse {
-  0%,100% { opacity: 0.45; transform: translate(var(--tx,0), var(--ty,0)) scale(0.7); }
-  50%      { opacity: 1;    transform: translate(var(--tx,0), var(--ty,0)) scale(1.4); }
-}
-
-/* ── Planets stage — zero-size anchor ── */
-.planets-stage {
-  position: absolute;
-  left: 50%;
+  /* Size 0 so children center naturally */
   width: 0;
   height: 0;
-  z-index: 4;
 }
 
-/* ── Planet node ──────────────────────────────────────────────────────
-   NO transform property here — the rAF loop writes:
-     transform: translate(calc(-50% + Xpx), calc(-50% + Ypx)) scale(S)
-   as one string on the element's style attribute every frame.
-   CSS must not interfere.
-────────────────────────────────────────────────────────────────────── */
-.planet-node {
+.orbit-ring {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border-style: solid;
+  border-color: rgba(234,169,96,0.38);
+  /* box-shadow gives subtle glow */
+  box-shadow:
+    0 0 12px rgba(234,169,96,0.08),
+    inset 0 0 8px rgba(234,169,96,0.04);
+}
+
+/* ── Central sun ── */
+.orbit-sun {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px; height: 28px;
+  z-index: 5;
+}
+
+.orbit-sun-core {
+  position: absolute;
+  top: 4px; left: 4px;
+  right: 4px; bottom: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff8ee, #EAA960 60%, rgba(234,169,96,0.3) 100%);
+  box-shadow:
+    0 0 24px #f8c37d,
+    0 0 48px rgba(234,169,96,0.55),
+    0 0 80px rgba(234,169,96,0.25);
+}
+
+.orbit-sun-halo1,
+.orbit-sun-halo2,
+.orbit-sun-halo3 {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(234,169,96,0.3);
+  animation: sunPulse 2.8s ease-in-out infinite;
+}
+
+.orbit-sun-halo1 { inset: -8px; }
+.orbit-sun-halo2 { inset: -18px; animation-delay: 0.45s; opacity: 0.5; }
+.orbit-sun-halo3 { inset: -30px; animation-delay: 0.9s;  opacity: 0.22; }
+
+@keyframes sunPulse {
+  0%,100% { transform: scale(1);    opacity: 0.4; }
+  50%      { transform: scale(1.08); opacity: 0.75; }
+}
+
+/* ═══════════════════════════════
+   PLANET NODES
+   Each planet is position:fixed so left/top % = % of viewport.
+   translate(-50%,-50%) centers the planet on its anchor.
+═══════════════════════════════ */
+.planet-node {
+  position: fixed;          /* set in JSX, listed here for clarity */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
-  will-change: transform, z-index;
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  /* Default: slightly dimmed for side planets (overridden by .is-center) */
+  filter: brightness(0.78) saturate(0.88);
+  transition:
+    transform  0.32s var(--ease),
+    filter     0.32s var(--ease);
 }
 
-/* ── Glow ring ── */
+/* Center planet is always at full brightness */
+.planet-node.is-center {
+  filter: brightness(1.08) saturate(1.1);
+  animation: floatCenter 4.2s ease-in-out infinite;
+}
+
+/* Hover state overrides dimming for any planet */
+.planet-node.is-hovered {
+  transform: translate(-50%, -50%) scale(1.07) !important;
+  filter: brightness(1.15) saturate(1.15) drop-shadow(0 0 22px rgba(234,169,96,0.65));
+}
+
+/* Selected state */
+.planet-node.is-selected {
+  filter: brightness(1.3) saturate(1.2);
+}
+
+/* Center planet float animation */
+@keyframes floatCenter {
+  0%,100% { transform: translate(-50%, -50%) translateY(0); }
+  50%      { transform: translate(-50%, -50%) translateY(-10px); }
+}
+
+/* ── Glow ring (ambient, hover-revealed) ── */
 .planet-glow-ring {
   position: absolute;
   top: 50%; left: 50%;
-  width: calc(var(--sz) * 1.9);
-  height: calc(var(--sz) * 1.9);
-  transform: translate(-50%, calc(-50% - 10px));
+  width:  calc(var(--sz) * 1.6);
+  height: calc(var(--sz) * 1.6);
+  transform: translate(-50%, -50%);
   border-radius: 50%;
   background: radial-gradient(circle,
-    var(--glow) 0%,
-    rgba(234,169,96,0.15) 40%,
-    transparent 68%
+    rgba(212, 175, 55, 0.25) 0%,
+    rgba(212, 175, 55, 0.12) 30%,
+    rgba(212, 175, 55, 0.04) 55%,
+    transparent 70%
   );
-  opacity: 0;
-  transition: opacity 0.35s var(--ease);
+  opacity: 0.35;  /* subtle ambient always on */
+  transition: opacity 0.4s var(--ease);
   pointer-events: none;
-  filter: blur(3px);
+  filter: blur(8px);
 }
 
 .planet-node.is-hovered .planet-glow-ring {
   opacity: 1;
-  animation: glowPulse 2.2s ease-in-out infinite;
 }
 
-@keyframes glowPulse {
-  0%,100% { opacity: 0.85; transform: translate(-50%, calc(-50% - 10px)) scale(1);    filter: blur(3px); }
-  50%      { opacity: 1;    transform: translate(-50%, calc(-50% - 10px)) scale(1.18); filter: blur(6px); }
+.planet-node.is-hovered .planet-glow-ring {
+  opacity: 1;
 }
 
 /* ── Sphere ── */
@@ -276,80 +373,246 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: box-shadow 0.35s var(--ease);
   flex-shrink: 0;
   overflow: hidden;
-  background: radial-gradient(circle at 32% 28%,
-    rgba(255,200,120,0.18) 0%,
-    rgba(180,110,40,0.12)  20%,
-    rgba(5,5,18,0.96)      60%,
-    rgba(3,3,12,1)         100%
+  transition: box-shadow 0.4s cubic-bezier(0.4,0,0.2,1);
+  /* Mixture of your colors - light at top-left, dark at bottom-right */
+  background: radial-gradient(circle at 30% 25%,
+    rgba(44, 60, 76, 1)     0%,
+    rgba(36, 50, 65, 1)    25%,
+    rgba(24, 28, 34, 1)    55%,
+    rgba(14, 21, 29, 1)    85%,
+    rgba(8,  12, 18, 1)   100%
   );
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  box-shadow:
+    0 0 50px rgba(212, 175, 55, 0.25),
+    0 0 100px rgba(212, 175, 55, 0.06),
+    0 0 0 3px rgba(212, 175, 55, 0.08),
+    0 0 0 8px rgba(212, 175, 55, 0.03),
+    0 10px 28px rgba(0, 0, 0, 0.5),
+    inset 0 4px 10px rgba(255, 255, 255, 0.15),
+    inset 0 2px 4px rgba(255, 255, 255, 0.08),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.2),
+    inset -2px 0 6px rgba(212, 175, 55, 0.06),
+    inset 2px 0 6px rgba(212, 175, 55, 0.04);
 }
-
+/* ── Realistic outer gold glow ring ── */
+.planet-outer-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--sz) * 1.55);
+  height: calc(var(--sz) * 1.55);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle,
+    rgba(212, 175, 55, 0.18) 0%,
+    rgba(212, 175, 55, 0.10) 35%,
+    rgba(212, 175, 55, 0.04) 60%,
+    transparent 75%
+  );
+  box-shadow:
+    0 0 25px 8px rgba(212, 175, 55, 0.28),
+    0 0 55px 18px rgba(212, 175, 55, 0.13),
+    0 0 90px 30px rgba(212, 175, 55, 0.05);
+}
+/* Inner highlight (specular) */
 .planet-sphere::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 30% 25%, rgba(255,210,130,0.22) 0%, rgba(234,169,96,0.1) 30%, transparent 58%),
-    radial-gradient(circle at 70% 75%, rgba(100,60,180,0.08) 0%, transparent 50%);
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.15),
+    transparent 50%
+  );
   pointer-events: none;
   z-index: 2;
 }
-
+/* Outer shadow vignette */
 .planet-sphere::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 72% 60%, rgba(0,0,0,0) 35%, rgba(2,1,8,0.55) 60%, rgba(1,0,5,0.88) 100%),
-    repeating-linear-gradient(168deg,
-      transparent 0%, transparent 28%,
-      rgba(234,169,96,0.04) 29%, rgba(234,169,96,0.04) 31%,
-      transparent 32%, transparent 52%,
-      rgba(180,100,30,0.03) 53%, rgba(180,100,30,0.03) 55%,
-      transparent 56%
-    );
+  background: radial-gradient(circle at 50% 50%,
+    transparent 60%,
+    rgba(212, 175, 55, 0.06) 90%,
+    rgba(212, 175, 55, 0.12) 100%
+  );
   pointer-events: none;
   z-index: 3;
 }
 
+/* Specular rim highlight */
 .planet-rim {
   position: absolute;
-  top: 6%; left: 10%;
-  width: 48%; height: 32%;
+  top: 3%;
+  left: 4%;
+  width: 46%;
+  height: 32%;
   border-radius: 50%;
-  background: radial-gradient(ellipse at 40% 35%,
-    rgba(255,245,220,0.22) 0%,
-    rgba(255,220,150,0.1) 45%,
-    transparent 100%
+  background: radial-gradient(ellipse at 28% 22%,
+    rgba(255, 255, 255, 0.72)  0%,
+    rgba(255, 250, 235, 0.45) 12%,
+    rgba(255, 235, 180, 0.22) 28%,
+    rgba(234, 169,  96, 0.08) 50%,
+    transparent                72%
+  );
+  pointer-events: none;
+  z-index: 9;
+  filter: blur(0.3px);
+}
+.planet-bottom-shadow {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 40%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 100%,
+    rgba(0, 0, 0, 0.55) 0%,
+    transparent 70%
   );
   pointer-events: none;
   z-index: 4;
-  filter: blur(1px);
+}
+/* Planet breathing with dot light */
+@keyframes planetBreatheWithDots {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(234, 169, 96, 0.4),
+      0 0 0 3px rgba(234, 169, 96, 0.15),
+      0 0 22px rgba(234, 169, 96, 0.18),
+      0 0 45px rgba(234, 169, 96, 0.07),
+      -6px -6px 12px rgba(255, 253, 245, 0.15),
+      -3px -3px 8px rgba(234, 169, 96, 0.2),
+      6px 2px 10px rgba(255, 253, 245, 0.1),
+      3px 1px 6px rgba(234, 169, 96, 0.15),
+      4px 5px 10px rgba(255, 253, 245, 0.08),
+      0 10px 28px rgba(0, 0, 0, 0.5),
+      inset 0 3px 8px rgba(255, 255, 255, 0.15),
+      inset 0 1px 3px rgba(255, 255, 255, 0.08),
+      inset 0 -3px 6px rgba(0, 0, 0, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(234, 169, 96, 0.5),
+      0 0 0 3px rgba(234, 169, 96, 0.2),
+      0 0 28px rgba(234, 169, 96, 0.25),
+      0 0 50px rgba(234, 169, 96, 0.1),
+      -8px -8px 16px rgba(255, 253, 245, 0.25),
+      -4px -4px 12px rgba(234, 169, 96, 0.3),
+      8px 3px 14px rgba(255, 253, 245, 0.15),
+      4px 2px 8px rgba(234, 169, 96, 0.2),
+      5px 6px 14px rgba(255, 253, 245, 0.12),
+      0 10px 28px rgba(0, 0, 0, 0.5),
+      inset 0 3px 8px rgba(255, 255, 255, 0.18),
+      inset 0 1px 3px rgba(255, 255, 255, 0.1),
+      inset 0 -3px 6px rgba(0, 0, 0, 0.2);
+  }
+}
+/* ── Atmospheric rim glow (visible halo outside sphere edge) ── */
+.planet-atmosphere {
+  position: absolute;
+  inset: -3%;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow:
+    /* Sharp gold rim */
+    inset 0 0 0 1px rgba(212, 175, 55, 0.4),
+    /* Soft glow inside rim */
+    inset 0 0 6px rgba(212, 175, 55, 0.2),
+    inset 0 0 15px rgba(212, 175, 55, 0.08),
+    /* Outer rim glow */
+    0 0 8px rgba(212, 175, 55, 0.25);
+  pointer-events: none;
+  z-index: 6;
+  mask-image: radial-gradient(circle at 50% 50%,
+    transparent 82%,
+    black       90%,
+    black       100%
+  );
+  -webkit-mask-image: radial-gradient(circle at 50% 50%,
+    transparent 82%,
+    black       90%,
+    black       100%
+  );
+}
+.planet-bubble-shell {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 8;
+  background: transparent;
+  border: 2.5px solid rgba(255, 255, 255, 0.13);
+  box-shadow:
+    inset 0 0 18px rgba(255, 255, 255, 0.07),
+    inset 0 2px 6px rgba(255, 255, 255, 0.18),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.35);
+}
+/* ── Gold mirror crescent — the sun's reflection on sphere edge ── */
+.planet-gold-crescent {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 7;
+  background-image: conic-gradient(
+    from 195deg at 50% 50%,
+    /* Bright rim light from dots */
+    rgba(255, 253, 245, 0.75)   0deg,
+    rgba(255, 245, 220, 0.55)   8deg,
+    rgba(234, 169, 96, 0.5)    18deg,
+    rgba(210, 140, 55, 0.28)   30deg,
+    /* Fade to dark */
+    rgba(180, 110, 38, 0.1)    45deg,
+    transparent                  60deg,
+    transparent                 360deg
+  );
+  mask-image: radial-gradient(circle at 50% 50%,
+    transparent 78%,
+    black       83%,
+    black       100%
+  );
+  -webkit-mask-image: radial-gradient(circle at 50% 50%,
+    transparent 78%,
+    black       83%,
+    black       100%
+  );
+  /* Subtle animation to make rim light shimmer like dots */
+  animation: crescentShimmer 3s ease-in-out infinite;
 }
 
+@keyframes crescentShimmer {
+  0%, 100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+/* Icon */
 .planet-icon-wrap {
   position: relative;
   z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  filter: drop-shadow(0 0 8px rgba(234,169,96,0.55));
+  filter: drop-shadow(0 0 8px rgba(234,169,96,0.4));
   transition: filter 0.3s var(--ease), transform 0.3s var(--ease);
 }
 
 .planet-node.is-hovered .planet-icon-wrap {
-  filter: drop-shadow(0 0 18px rgba(234,169,96,1)) brightness(1.25);
+  filter: drop-shadow(0 0 16px rgba(234,169,96,0.95));
   transform: scale(1.08);
 }
 
 .planet-icon-wrap svg {
-  width:  calc(var(--sz) * 0.34);
-  height: calc(var(--sz) * 0.34);
+  width:  calc(var(--sz) * 0.36);
+  height: calc(var(--sz) * 0.36);
 }
 
 /* ── Label ── */
@@ -360,205 +623,243 @@
 }
 
 .planet-label {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 500;
-  letter-spacing: 0.06em;
-  color: rgba(255,255,255,0.88);
-  background: rgba(4,3,12,0.75);
-  padding: 5px 16px;
-  border-radius: 20px;
-  border: 1px solid rgba(234,169,96,0.18);
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  padding: 6px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(212, 175, 55, 0.25);
   white-space: nowrap;
-  transition: all 0.28s var(--ease);
-  box-shadow: 0 2px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
-  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  box-shadow:
+    0 0 20px rgba(212, 175, 55, 0.15),
+    inset 0 0 15px rgba(255, 255, 255, 0.03);
+  transition: border-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
 }
 
 .planet-node.is-hovered .planet-label {
-  color: var(--gold-bright);
-  border-color: rgba(234,169,96,0.5);
-  background: rgba(4,3,12,0.92);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 16px rgba(234,169,96,0.15), inset 0 1px 0 rgba(234,169,96,0.08);
-  text-shadow: 0 0 12px rgba(234,169,96,0.4);
+  border-color: rgba(234,169,96,0.55);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 18px rgba(234,169,96,0.22);
 }
 
-/* ── Selection burst ── */
+/* ── Selection flash ── */
 .planet-select-flash {
   position: absolute;
   top: 50%; left: 50%;
-  width: var(--sz);
+  width:  var(--sz);
   height: var(--sz);
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(234,169,96,0.6) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(234,169,96,0.55) 0%, transparent 70%);
   pointer-events: none;
-  z-index: 20;
+  z-index: 25;
 }
 
-/* ── Tooltip ── */
+/* ═══════════════════════════════
+   TOOLTIP
+═══════════════════════════════ */
 .planet-tooltip {
   position: fixed;
   bottom: 100px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 30;
+  z-index: 35;
   pointer-events: none;
 }
 
 .tooltip-inner {
   position: relative;
-  background: rgba(4,3,12,0.92);
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  background: rgba(7,11,21,0.95);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
   border: 1px solid rgba(234,169,96,0.3);
   border-radius: 16px;
   padding: 20px 26px 22px;
-  min-width: 280px;
+  min-width: 260px;
   max-width: 330px;
-  box-shadow: 0 8px 48px rgba(0,0,0,0.6), 0 0 40px rgba(234,169,96,0.06);
-  overflow: hidden;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.72);
 }
 
 .tooltip-top-line {
   position: absolute;
-  top: 0; left: 16px; right: 16px;
+  top: 0; left: 15%; right: 15%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.65), rgba(248,195,125,0.45), transparent);
-}
-
-.tooltip-inner::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 32px; height: 32px;
-  border-top: 1px solid rgba(234,169,96,0.35);
-  border-left: 1px solid rgba(234,169,96,0.35);
-  border-radius: 16px 0 0 0;
-  pointer-events: none;
-}
-
-.tooltip-inner::after {
-  content: '';
-  position: absolute;
-  bottom: 0; right: 0;
-  width: 32px; height: 32px;
-  border-bottom: 1px solid rgba(234,169,96,0.2);
-  border-right: 1px solid rgba(234,169,96,0.2);
-  border-radius: 0 0 16px 0;
-  pointer-events: none;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(234,169,96,0.55),
+    transparent
+  );
 }
 
 .tooltip-inner h3 {
-  font-size: 0.96rem;
+  font-size: 0.94rem;
   font-weight: 600;
   color: var(--text);
-  margin: 0 0 8px;
-  letter-spacing: 0.03em;
+  margin: 0 0 12px;
+  letter-spacing: 0.05em;
 }
 
-.tooltip-inner p {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin: 0 0 14px;
-  line-height: 1.6;
+.tooltip-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
-
-.tooltip-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .tooltip-tag {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.58rem;
   padding: 3px 10px;
   border-radius: 4px;
-  background: rgba(234,169,96,0.09);
-  border: 1px solid rgba(234,169,96,0.18);
+  background: rgba(234,169,96,0.10);
+  border: 1px solid rgba(234,169,96,0.22);
   color: var(--gold-bright);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
 }
 
-/* ── Bottom cue ── */
+/* ═══════════════════════════════
+   BOTTOM CUE
+═══════════════════════════════ */
 .galaxy-cue {
-  position: absolute;
+  position: fixed;
   bottom: 44px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   z-index: 10;
   pointer-events: none;
-  background: rgba(4,3,12,0.45);
-  padding: 8px 20px;
-  border-radius: 20px;
-  border: 1px solid rgba(234,169,96,0.1);
+  background: rgba(7,11,21,0.6);
+  padding: 5px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(234,169,96,0.12);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
-.cue-text {
-  font-size: 0.72rem;
-  color: var(--text-dim);
-  letter-spacing: 0.14em;
-}
+.cue-text { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.14em; }
+.cue-icon  { font-size: 0.76rem; color: var(--gold); opacity: 0.55; }
 
-.cue-icon {
-  font-size: 0.76rem;
-  color: var(--gold);
-  opacity: 0.55;
-  animation: cuePulse 2.4s ease-in-out infinite;
-}
-
-@keyframes cuePulse {
-  0%,100% { opacity: 0.3; }
-  50%      { opacity: 0.7; filter: drop-shadow(0 0 6px rgba(234,169,96,0.6)); }
-}
-
-/* ── Hide app footer ── */
-.operator-galaxy-page .footer       { display: none !important; }
-.operator-galaxy-page .page-wrapper { overflow: hidden; }
-
-/* ── Responsive ── */
-@media (max-width: 1200px) { .galaxy-header { top: clamp(70px, 10vh, 100px); } }
-
-@media (max-width: 1024px) {
-  .galaxy-header { top: clamp(65px, 9vh, 90px); }
-  .galaxy-cue    { bottom: 36px; padding: 7px 18px; }
-}
-
+/* ═══════════════════════════════
+   RESPONSIVE
+═══════════════════════════════ */
 @media (max-width: 768px) {
-  .galaxy-header     { top: clamp(58px, 8vh, 80px); }
-  .galaxy-brand-mark { font-size: 0.55rem; letter-spacing: 0.32em; }
-  .galaxy-title      { font-size: clamp(1.8rem, 6vw, 2.6rem); letter-spacing: 0.16em; }
-  .galaxy-ornament   { gap: 10px; }
-  .ornament-line     { width: 40px; }
-  .galaxy-subtitle   { font-size: clamp(0.8rem, 2.5vw, 1rem); letter-spacing: 0.2em; }
-  .galaxy-subnote    { font-size: 0.56rem; padding: 3px 12px 4px; }
-  .planet-label      { font-size: 0.65rem; padding: 4px 10px; }
-  .tooltip-inner     { min-width: 230px; max-width: 270px; padding: 16px 18px 18px; }
-  .galaxy-cue        { bottom: 30px; padding: 6px 14px; }
-  .cue-text          { font-size: 0.66rem; }
+  .galaxy-header {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    text-align: center;
+    padding: 20px;
+  }
+  .galaxy-header-right {
+    border-left: none;
+    border-top: 1px solid rgba(234,169,96,0.12);
+    padding-left: 0;
+    padding-top: 12px;
+    align-items: center;
+  }
+  .planet-label {
+    font-size: 0.68rem;
+    padding: 5px 11px;
+  }
 }
 
 @media (max-width: 480px) {
-  .galaxy-header     { top: clamp(50px, 7vh, 65px); }
-  .galaxy-brand-mark { font-size: 0.48rem; margin-bottom: 6px; }
-  .galaxy-title      { font-size: clamp(1.5rem, 7vw, 2rem); letter-spacing: 0.12em; }
-  .galaxy-ornament   { gap: 8px; margin: 8px 0 6px; }
-  .ornament-line     { width: 30px; }
-  .galaxy-subtitle   { font-size: clamp(0.7rem, 3vw, 0.85rem); }
-  .galaxy-subnote    { font-size: 0.5rem; padding: 3px 10px 4px; margin-top: 6px; }
-  .planet-label      { font-size: 0.58rem; padding: 3px 8px; }
-  .tooltip-inner     { min-width: 200px; max-width: 240px; padding: 12px 14px 14px; }
-  .galaxy-cue        { bottom: 24px; padding: 5px 12px; gap: 6px; }
-  .cue-text          { font-size: 0.6rem; }
-  .cue-icon          { font-size: 0.66rem; }
+  .galaxy-header { padding: 14px 16px; }
+  .galaxy-cue { bottom: 28px; }
+  .planet-label { font-size: 0.62rem; padding: 4px 9px; }
+}
+/* ═══════════════════════════════
+   STATIC ORBITAL DOTS
+═══════════════════════════════ */
+.orbit-dot {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 6;  /* Higher than orbit rings (which are z-index: 1-5) */
 }
 
-@media (max-width: 360px) {
-  .galaxy-header   { top: clamp(44px, 6vh, 55px); }
-  .galaxy-title    { font-size: clamp(1.3rem, 8vw, 1.7rem); }
-  .galaxy-subtitle { font-size: clamp(0.62rem, 3.5vw, 0.75rem); }
-  .galaxy-cue      { bottom: 18px; }
+/* Dot 1 - inner ring, top-left */
+.orbit-dot-1 {
+  width: 18px;
+  height: 18px;
+  top: calc(80% - 0px);
+  left: calc(80% - 500px);
+  background: radial-gradient(circle,
+    rgba(255, 253, 245, 1)    0%,
+    rgba(255, 245, 220, 0.95) 15%,
+    rgba(234, 169, 96, 0.85) 40%,
+    rgba(234, 169, 96, 0.4)  65%,
+    transparent                 100%
+  );
+  box-shadow:
+    0 0 12px rgba(234, 169, 96, 0.9),
+    0 0 28px rgba(234, 169, 96, 0.6),
+    0 0 50px rgba(234, 169, 96, 0.3),
+    0 0 80px rgba(234, 169, 96, 0.12);
+}
+
+/* Dot 2 - inner ring, bottom-right */
+.orbit-dot-2 {
+  width: 12px;
+  height: 12px;
+  top: calc(90% + 70px);
+  left: calc(50% + 170px);
+  background: radial-gradient(circle,
+    rgba(255, 253, 245, 1)    0%,
+    rgba(255, 245, 220, 0.9)  15%,
+    rgba(234, 169, 96, 0.8)  40%,
+    rgba(234, 169, 96, 0.35) 65%,
+    transparent                 100%
+  );
+  box-shadow:
+    0 0 10px rgba(234, 169, 96, 0.85),
+    0 0 24px rgba(234, 169, 96, 0.55),
+    0 0 42px rgba(234, 169, 96, 0.25),
+    0 0 68px rgba(234, 169, 96, 0.1);
+}
+
+/* Dot 3 - outer ring, top-right */
+.orbit-dot-3 {
+ width: 18px;
+  height: 18px;
+  top: calc(50% - 160px);
+  left: calc(50% + 100px);
+  background: radial-gradient(circle,
+    rgba(255, 253, 245, 1)    0%,
+    rgba(255, 245, 220, 0.92) 15%,
+    rgba(234, 169, 96, 0.82) 40%,
+    rgba(234, 169, 96, 0.38) 65%,
+    transparent                 100%
+  );
+  box-shadow:
+    0 0 11px rgba(234, 169, 96, 0.88),
+    0 0 26px rgba(234, 169, 96, 0.58),
+    0 0 46px rgba(234, 169, 96, 0.28),
+    0 0 74px rgba(234, 169, 96, 0.11);
+}
+
+
+.orbit-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  box-shadow:
+    0 0 10px rgba(212, 175, 55, 0.2);
+  z-index: 2;
+}
+/* Dot 2 - inner ring, top */
+.orbit-dot-2 {
+  top: calc(10% - 100px);
+  left: calc(100% + 90px);
+}
+
+/* Dot 3 - inner ring, right */
+.orbit-dot-3 {
+  top: calc(50% + 25px);
+  left: calc(80% + 500px);
 }

@@ -103,18 +103,18 @@ const AvatarWithFallback = ({ size = 120, tierColor, isOnline, avatar, userId })
 };
 
 const ALL_ACHIEVEMENTS = [
-    { id: 'first_steps', name: 'First Steps', icon: '🔰', description: 'Reach Level 10', unlockLevel: 10 },
-    { id: 'communicator', name: 'Communicator', icon: '💬', description: 'Reach Level 20', unlockLevel: 20 },
-    { id: 'dedicated', name: 'Dedicated', icon: '📈', description: 'Reach Level 30', unlockLevel: 30 },
-    { id: 'rising_star', name: 'Rising Star', icon: '⭐', description: 'Reach Level 40', unlockLevel: 40 },
-    { id: 'level_50', name: 'Level 50', icon: '🔥', description: 'Reach Level 50', unlockLevel: 50 },
-    { id: 'tier_elite', name: 'Elite Tier', icon: '🎯', description: 'Reach Level 60', unlockLevel: 60 },
-    { id: 'tier_legend', name: 'Legend Tier', icon: '👑', description: 'Reach Level 80', unlockLevel: 80 },
-    { id: 'god_tier', name: 'GOD Tier', icon: '💎', description: 'Reach Level 100', unlockLevel: 100 },
-    { id: 'streak_7', name: 'Week Warrior', icon: '🗓️', description: '7 day streak', unlockStreak: 7 },
-    { id: 'streak_30', name: 'Monthly Master', icon: '📅', description: '30 day streak', unlockStreak: 30 },
-    { id: 'ai_user', name: 'AI Explorer', icon: '🤖', description: 'Use AI 10 times', unlockAiChats: 10 },
-    { id: 'social', name: 'Social', icon: '🦋', description: 'Send 100 messages', unlockMessages: 100 }
+    { id: 'first_steps', name: 'First Steps', icon: '\uD83D\uDD30', description: 'Reach Level 10', unlockLevel: 10 },
+    { id: 'communicator', name: 'Communicator', icon: '\uD83D\uDCAC', description: 'Reach Level 20', unlockLevel: 20 },
+    { id: 'dedicated', name: 'Dedicated', icon: '\uD83D\uDCC8', description: 'Reach Level 30', unlockLevel: 30 },
+    { id: 'rising_star', name: 'Rising Star', icon: '\u2B50', description: 'Reach Level 40', unlockLevel: 40 },
+    { id: 'level_50', name: 'Level 50', icon: '\uD83D\uDD25', description: 'Reach Level 50', unlockLevel: 50 },
+    { id: 'tier_elite', name: 'Elite Tier', icon: '\uD83C\uDFAF', description: 'Reach Level 60', unlockLevel: 60 },
+    { id: 'tier_legend', name: 'Legend Tier', icon: '\uD83D\uDC51', description: 'Reach Level 80', unlockLevel: 80 },
+    { id: 'god_tier', name: 'GOD Tier', icon: '\uD83D\uDC8E', description: 'Reach Level 100', unlockLevel: 100 },
+    { id: 'streak_7', name: 'Week Warrior', icon: '\uD83D\uDDD3\uFE0F', description: '7 day streak', unlockStreak: 7 },
+    { id: 'streak_30', name: 'Monthly Master', icon: '\uD83D\uDCC5', description: '30 day streak', unlockStreak: 30 },
+    { id: 'ai_user', name: 'AI Explorer', icon: '\uD83E\uDD16', description: 'Use AI 10 times', unlockAiChats: 10 },
+    { id: 'social', name: 'Social', icon: '\uD83E\uDD8B', description: 'Send 100 messages', unlockMessages: 100 }
 ];
 
 const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, currentUserId }) => {
