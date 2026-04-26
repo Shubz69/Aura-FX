@@ -80,6 +80,17 @@ if (typeof window !== "undefined") {
     },
     true
   );
+  // Webpack's chunk loader often rejects a promise; that may not surface as a window "error" on the script tag
+  // in all cases, so recover from the same failure mode via unhandledrejection (capped; see scheduleChunkLoadRecovery).
+  window.addEventListener("unhandledrejection", (event) => {
+    const reason = event.reason;
+    const name = reason?.name || "";
+    const msg = reason?.message != null ? String(reason.message) : String(reason || "");
+    if (name === "ChunkLoadError" || isChunkLoadFailure(reason, msg)) {
+      event.preventDefault();
+      scheduleChunkLoadRecovery();
+    }
+  });
   // Dynamic import / React.lazy failures are handled by LazyImportErrorBoundary (user-triggered reload).
   // Auto-reloading here caused loops with ERR_CACHE_READ_FAILURE and fought the in-app recovery UI.
 }
