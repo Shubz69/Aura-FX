@@ -775,6 +775,8 @@ const [journalLoading, setJournalLoading] = useState(false);
     const navigate = useNavigate();
 const { id: channelIdParam } = useParams();
     const location = useLocation();
+    const lastNavigatedChannelIdRef = useRef(null);
+    const routeSyncByClickRef = useRef({ id: null, count: 0, startedAt: 0 });
     const { user: authUser } = useAuth();
     const [journalQuickToday, setJournalQuickToday] = useState(() => getJournalTodayForUser(null));
     useEffect(() => {
@@ -871,13 +873,14 @@ const { id: channelIdParam } = useParams();
 
     useEffect(() => {
         if (selectedChannel?.id) return;
+        if (effectiveChannelId) return;
         try {
             const savedId = localStorage.getItem(selectedChannelStorageKey);
             if (!savedId || !channelList.length) return;
             const savedChannel = channelList.find((c) => String(c.id) === String(savedId));
             if (savedChannel) setSelectedChannel(savedChannel);
         } catch (_) { /* ignore */ }
-    }, [selectedChannel?.id, channelList, selectedChannelStorageKey]);
+    }, [selectedChannel?.id, channelList, selectedChannelStorageKey, effectiveChannelId]);
 
     useEffect(() => {
         if (!selectedChannel?.id || !userId) {
@@ -927,6 +930,33 @@ const { id: channelIdParam } = useParams();
             return updated;
         });
     }, []);
+
+    const navigateToChannelOnce = useCallback((channel) => {
+        if (!channel?.id) return;
+        const targetId = String(channel.id);
+        const routeId = effectiveChannelId ? String(effectiveChannelId) : '';
+        const now = Date.now();
+        if (lastNavigatedChannelIdRef.current === targetId && routeId === targetId) {
+            setSelectedChannel(channel);
+            return;
+        }
+        if (routeId !== targetId) {
+            navigate(`/community/${encodeURIComponent(targetId)}`, { replace: false });
+        }
+        if (routeSyncByClickRef.current.id === targetId && now - routeSyncByClickRef.current.startedAt < 3000) {
+            routeSyncByClickRef.current.count += 1;
+        } else {
+            routeSyncByClickRef.current = { id: targetId, count: 1, startedAt: now };
+        }
+        if (process.env.NODE_ENV === 'development' && routeSyncByClickRef.current.count > 1) {
+            console.warn('[community-route-sync-guard] multiple route syncs after click', {
+                channelId: targetId,
+                count: routeSyncByClickRef.current.count
+            });
+        }
+        lastNavigatedChannelIdRef.current = targetId;
+        setSelectedChannel(channel);
+    }, [effectiveChannelId, navigate]);
     
     // Discord-like features
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -2719,6 +2749,16 @@ if (window.requestAnimationFrame) {
         aborted: false
     };
     const startedAt = Date.now();
+    const getActiveRouteChannelId = () => {
+        try {
+            const path = String(window.location?.pathname || '');
+            const parts = path.split('/').filter(Boolean);
+            if (parts[0] !== 'community') return '';
+            return parts[1] ? decodeURIComponent(parts[1]) : '';
+        } catch (_) {
+            return '';
+        }
+    };
     if (!channelId) return;
     const requestSeq = ++fetchMessagesSeqRef.current;
     const fetchKey = `${channelId}:${mergeMode ? 'merge' : 'full'}`;
@@ -2742,8 +2782,10 @@ if (window.requestAnimationFrame) {
         const response = await Api.getChannelMessages(channelId, { signal: ac.signal });
         fetchMeta.status = Number(response?.status || 0) || null;
         fetchMeta.elapsedMs = Date.now() - startedAt;
+        const activeRouteChannelId = String(getActiveRouteChannelId() || '');
         if (requestSeq !== fetchMessagesSeqRef.current && String(selectedChannelRef.current?.id || '') !== String(channelId)) return;
         if (selectedChannelRef.current?.id && String(selectedChannelRef.current.id) !== String(channelId)) return;
+        if (activeRouteChannelId && activeRouteChannelId !== String(channelId)) return;
         if (response && response.data && Array.isArray(response.data)) {
             const apiMessages = response.data;
             fetchMeta.rows = apiMessages.length;
@@ -3656,15 +3698,6 @@ useEffect(() => {
         if (selectedChannel && selectedChannel.id) {
             reconcilePauseUntilRef.current = Date.now() + 1200;
             setMessagesLoading(true);
-            // Preserve ?jump= / ?message= when navigating (notification deep link)
-            const params = new URLSearchParams(location.search);
-            const jump = params.get('jump') || params.get('message');
-            const path = `/community/${selectedChannel.id}`;
-            const nextUrl = jump ? `${path}?jump=${encodeURIComponent(jump)}` : path;
-            const currentUrl = `${location.pathname}${location.search}`;
-            if (nextUrl !== currentUrl) {
-                navigate(nextUrl, { replace: true });
-            }
             
             // Load cached messages first for instant display
             const cachedMessages = loadMessagesFromStorage(selectedChannel.id);
@@ -3674,7 +3707,7 @@ useEffect(() => {
                 // Scroll to bottom immediately when showing cached messages
                 setTimeout(() => scrollToBottom(), 0);
             } else {
-                setMessages([]);
+                // Keep current list until fresh fetch resolves for this route/channel.
             }
             
             // Fetch fresh messages and retry once on aborted/empty apply after reload/channel swap.
@@ -3690,7 +3723,7 @@ useEffect(() => {
                 }
             })();
         }
-    }, [selectedChannel, fetchMessages, navigate]);
+    }, [selectedChannel, fetchMessages]);
     
     // Clear channel badge when channel is selected
     useEffect(() => {
@@ -4204,9 +4237,37 @@ const handleFileDownload = (e, file) => {
 // Handle send message (or update if editing)
 const handleSendMessage = async (e) => {
   e.preventDefault();
-  if ((!newMessage.trim() && !selectedFile) || !selectedChannel) return;
-  if (selectedChannel.canWrite === false) {
+  const shouldDebugSend = process.env.NODE_ENV !== 'production';
+  const routeChannelId = effectiveChannelId ? String(effectiveChannelId) : '';
+  const selectedRefId = selectedChannelRef.current?.id != null ? String(selectedChannelRef.current.id) : '';
+  const selectedStateId = selectedChannel?.id != null ? String(selectedChannel.id) : '';
+  const resolvedChannel =
+    (routeChannelId && channelList.find((c) => String(c.id) === routeChannelId)) ||
+    selectedChannelRef.current ||
+    selectedChannel ||
+    null;
+  if (shouldDebugSend) {
+    console.info('[community-send-debug] before-send', {
+      routeChannelId,
+      selectedChannelId: selectedStateId || null,
+      selectedChannelRefId: selectedRefId || null
+    });
+  }
+  if ((!newMessage.trim() && !selectedFile) || !resolvedChannel?.id) return;
+  if (resolvedChannel.canWrite === false) {
     return;
+  }
+  let sendChannelId = routeChannelId || String(resolvedChannel.id);
+  if (routeChannelId && routeChannelId !== String(resolvedChannel.id)) {
+    const routeChannel = channelList.find((c) => String(c.id) === routeChannelId);
+    if (routeChannel) {
+      setSelectedChannel(routeChannel);
+      sendChannelId = String(routeChannel.id);
+    }
+  }
+  if (selectedRefId !== sendChannelId || selectedStateId !== sendChannelId) {
+    const syncChannel = channelList.find((c) => String(c.id) === sendChannelId) || resolvedChannel;
+    if (syncChannel) setSelectedChannel(syncChannel);
   }
 
   // If editing a message, handle update instead
@@ -4253,7 +4314,7 @@ setMessages(prev => {
     : `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   
   const messageToSend = {
-    channelId: selectedChannel.id,
+    channelId: sendChannelId,
     content: messageContent || '',
     userId,
     username: senderUsername,
@@ -4281,7 +4342,7 @@ setMessages(prev => {
   const now = new Date();
   const optimisticMessage = {
     id: clientMessageId,
-    channelId: selectedChannel.id,
+    channelId: sendChannelId,
     content: messageContent,
     sender: {
       id: userId,
@@ -4313,7 +4374,15 @@ setMessages(prev => {
       return timeA - timeB; // Ascending order (oldest to newest)
     });
     
-    saveMessagesToStorage(selectedChannel.id, updated);
+    saveMessagesToStorage(sendChannelId, updated);
+    if (shouldDebugSend) {
+      const tokenCount = updated.filter((m) => String(m?.content || '') === messageContent).length;
+      console.info('[community-send-debug] optimistic-insert', {
+        sendChannelId,
+        selectedChannelRefId: String(selectedChannelRef.current?.id || ''),
+        tokenCount
+      });
+    }
     return updated;
   });
   
@@ -4330,7 +4399,7 @@ setMessages(prev => {
     // Send via API
     console.log('📡 Sending to API...');
     reconcilePauseUntilRef.current = Date.now() + 1800;
-    const response = await Api.sendMessage(selectedChannel.id, messageToSend);
+    const response = await Api.sendMessage(sendChannelId, messageToSend);
     const payload = response?.data;
     const payloadMessage =
       payload && typeof payload === 'object' && payload.message && typeof payload.message === 'object'
@@ -4340,6 +4409,13 @@ setMessages(prev => {
       payloadMessage &&
       payload?.success !== false &&
       (payloadMessage.id != null || payloadMessage.sequence != null);
+    if (shouldDebugSend) {
+      console.info('[community-send-debug] post-result', {
+        sendChannelId,
+        status: Number(response?.status || 0) || null,
+        messageId: payloadMessage?.id ?? null
+      });
+    }
 
     if (isSavedMessage) {
       const serverMessage = payloadMessage;
@@ -4360,9 +4436,18 @@ setMessages(prev => {
           return timeA - timeB; // Ascending order (oldest to newest)
         });
         
-        saveMessagesToStorage(selectedChannel.id, final);
+        saveMessagesToStorage(sendChannelId, final);
         return final;
       });
+      await fetchMessages(sendChannelId, true);
+      if (shouldDebugSend) {
+        const cachedAfterReconcile = loadMessagesFromStorage(sendChannelId);
+        const liveTokenCount = cachedAfterReconcile.filter((m) => String(m?.content || '') === messageContent).length;
+        console.info('[community-send-debug] after-reconcile', {
+          fetchChannelId: sendChannelId,
+          tokenCount: liveTokenCount
+        });
+      }
 
         // Mention / DM delivery: server creates notifications + Web Push; avoid duplicate client-side triggers here.
 
@@ -4402,7 +4487,7 @@ setMessages(prev => {
         const filtered = prev.filter(
           m => m.id !== clientMessageId && m.clientMessageId !== clientMessageId
         );
-        saveMessagesToStorage(selectedChannel.id, filtered);
+        saveMessagesToStorage(sendChannelId, filtered);
         return filtered;
       });
       toast.error(errText);
@@ -4413,7 +4498,7 @@ setMessages(prev => {
         // On error, remove the optimistic message
         setMessages(prev => {
             const filtered = prev.filter(m => m.id !== clientMessageId && m.clientMessageId !== clientMessageId);
-            saveMessagesToStorage(selectedChannel.id, filtered);
+            saveMessagesToStorage(sendChannelId, filtered);
             return filtered;
         });
         
@@ -6328,7 +6413,7 @@ if (!isAuthenticated && !hasToken) {
                                                             setShowChannelAccessModal(true);
                                                             return;
                                                         }
-                                                        setSelectedChannel(channel);
+                                                        navigateToChannelOnce(channel);
                                                         if (isMobile) setSidebarOpen(false);
                                                     }}
                                                 style={{ 

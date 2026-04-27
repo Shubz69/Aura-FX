@@ -1,10 +1,11 @@
 # Messaging + Community Reliability Report
 
-Last updated: 2026-04-25 (bounded `QA-RISK-MSG-CONCURRENCY-001` closure via focused community specs)
+Last updated: 2026-04-27 (production community regression hardening pass; verification pending prod-auth run)
 
 ## Current status split
 
 - **Community reliability:** `PASSED` (targeted chromium checks passed: post/reload dedupe + rapid channel switch stale guard).
+- **Community production regression follow-up (2026-04-27):** `FIXED IN CODE / VERIFYING IN PROD`.
 - **Messaging product correctness (`/admin/inbox` + `/messages`):** `PASSED`.
 - **Strict messaging split result:** `rapidSwitchProductCorrectness=PASS`, `adminUsersFetchReliability=RISK`, `rapidSwitchOverall=PASS_WITH_RISK`, admin 3-send burst `PASS`, user 3-send burst `PASS`.
 - **QA classification:** `QA-RISK-MSG-001 = PASS/CLOSED` (product correctness), with remaining reliability risks tracked separately.
@@ -45,6 +46,30 @@ Last updated: 2026-04-25 (bounded `QA-RISK-MSG-CONCURRENCY-001` closure via focu
 - `src/pages/Community.js`
   - Added request sequence + selected-channel guard in `fetchMessages(...)` to prevent stale channel response application.
   - Preserved existing no-retry POST behavior.
+
+### 2026-04-27 production regression hotfix additions
+
+- `src/pages/Community.js`
+  - Removed selected-channel effect URL `navigate(..., { replace: true })` path that could churn route updates on channel switches.
+  - Added click-time route guard (`navigateToChannelOnce`) so channel clicks navigate once only when target route differs.
+  - Prevented localStorage channel restore from overriding a valid route channel.
+  - Added development safety log when route sync repeats for the same click target.
+- `src/components/NavbarNotifications.js`
+  - Enforced app-wide single unread poll in-flight.
+  - Added hard global minimum 30s gap between unread requests across remounts.
+  - Poll cadence set to 60s with hidden-tab pause.
+  - Added 429 handling honoring `Retry-After` with minimum 60s backoff and reduced expected-error noise.
+- `src/services/Api.js`
+  - Removed production delete-message intent logging string (`Attempting to delete message ...`).
+
+## 2026-04-27 verification commands + result
+
+- `npx eslint src/components/NavbarNotifications.js src/pages/Community.js src/services/Api.js e2e/community-production-stability.spec.js e2e/community-channel-switch-stability.spec.js e2e/community-latency.spec.js e2e/community-reload-persistence.spec.js`
+  - `PASS` (existing `Community.js` hook-deps warnings only).
+- `npx playwright test e2e/community-production-stability.spec.js --project=chromium`
+  - `FAIL` (auth precondition: community route not authenticated in local saved state).
+- `npx playwright test e2e/community-channel-switch-stability.spec.js e2e/community-latency.spec.js e2e/community-reload-persistence.spec.js --project=chromium --workers=1`
+  - `FAIL` (timeouts/selector precondition before channel assertions; channel list not found in current run context).
 
 ## Targeted tests updated
 

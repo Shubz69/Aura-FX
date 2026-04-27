@@ -23,7 +23,7 @@ async function dismissConsentIfPresent(page) {
 async function pickWritableChannel(page) {
   await page.goto(`${BASE}/community`, { waitUntil: 'domcontentloaded' });
   await dismissConsentIfPresent(page);
-  const names = page.locator('.channels-section li .channel-name');
+  const names = page.locator('.channel-name');
   await expect(names.first()).toBeVisible({ timeout: 30000 });
   const count = await names.count();
   for (let i = 0; i < count; i += 1) {
