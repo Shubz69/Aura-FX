@@ -1229,8 +1229,8 @@ if (!avatarToSave && avatarColor) {
                                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0' }}>Push Notifications</div>
                                         <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 2 }}>
                                             {pushPermission === 'denied' ? 'Blocked — enable in browser settings' :
-                                             pushSubscribed ? 'Active — device alerts for DMs, @mentions, and (if you turn it on per channel) occasional channel activity. Disable to keep alerts only in the bell menu.' :
-                                             'Enable for DMs and @mentions. In Community, use “Push on” on a channel for occasional alerts when people chat (throttled). iPhone: add to Home Screen (iOS 16.4+) and allow notifications.'}
+                                             pushSubscribed ? 'Active for DMs, @mentions, and channels you enable. Disable to use the bell only.' :
+                                             'Browser alerts for DMs, @mentions, and Community channels you turn on.'}
                                         </div>
                                         {pushError ? (
                                             <div style={{ fontSize: '0.72rem', color: '#f87171', marginTop: 6 }} role="alert">{pushError}</div>
