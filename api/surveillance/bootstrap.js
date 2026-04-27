@@ -23,6 +23,9 @@ const {
   logFeedServe,
 } = require('./feedDiagnostics');
 
+/** Temporary deploy probe: if missing in Network, production is not this API build. */
+const SURVEILLANCE_API_VERSION = 'diagnostics-d6354e6e';
+
 function setCors(req, res) {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -155,6 +158,7 @@ module.exports = async (req, res) => {
       briefing,
       countryWireAvailable: !!process.env.NEWS_API_KEY,
       serverTime: new Date().toISOString(),
+      surveillanceApiVersion: SURVEILLANCE_API_VERSION,
       surveillanceDiagnostics: {
         providerEnv: providerEnvFlags(),
         geoTaggedEventCounts: geoCounts,

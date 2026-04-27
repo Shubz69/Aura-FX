@@ -19,6 +19,9 @@ const {
   logFeedServe,
 } = require('./feedDiagnostics');
 
+/** Temporary deploy probe: if missing in Network, production is not this API build. */
+const SURVEILLANCE_API_VERSION = 'diagnostics-d6354e6e';
+
 /** NewsAPI top-headlines (optional; requires NEWS_API_KEY). Lowercase ISO2 country code. */
 async function fetchCountryWireHeadlines(iso2) {
   const key = process.env.NEWS_API_KEY;
@@ -174,6 +177,7 @@ module.exports = async (req, res) => {
       /** UI only: whether headline wire can be served (no secrets exposed). Always sent for client copy. */
       countryWireAvailable: !!process.env.NEWS_API_KEY,
       serverTime: new Date().toISOString(),
+      surveillanceApiVersion: SURVEILLANCE_API_VERSION,
       surveillanceDiagnostics: {
         providerEnv: providerEnvFlags(),
         geoTaggedEventCounts: geoCounts,
