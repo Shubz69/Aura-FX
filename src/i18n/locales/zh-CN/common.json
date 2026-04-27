@@ -693,7 +693,22 @@
       "a7fx": "£250/月"
     },
     "file": {
-      "unknownName": "未知"
+      "unknownName": "未知",
+      "unknownFile": "未知文件"
+    },
+    "channelContext": {
+      "editChannel": "编辑频道",
+      "deleteChannel": "删除频道"
+    },
+    "categoryContext": {
+      "editCategory": "编辑分类",
+      "deleteCategory": "删除分类"
+    },
+    "notify": {
+      "mentionTitle": "您在 #{{channel}} 中被提及",
+      "messageTitle": "#{{channel}} 中的新消息",
+      "senderFallback": "某人",
+      "unnamedChannel": "某个频道"
     }
   },
   "signUp": {

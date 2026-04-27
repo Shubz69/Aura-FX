@@ -586,7 +586,7 @@
       "placeholderBody": "📢 **घोषणाएँ**\n\nमहत्वपूर्ण अपडेट यहाँ दिखेंगे। नियमित रूप से देखें।"
     },
     "levels": {
-      "placeholderBody": "🏆 **LEVEL-UP CELEBRATIONS**\n\nWhen members level up by earning XP, their achievements will be celebrated here!\n\nEarn XP by:\n⬢ Sending messages in the community\n⬢ Sharing files and insights\n⬢ Helping other members\n⬢ Participating in discussions"
+      "placeholderBody": "🏆 **लेवल-अप उत्सव**\n\nXP कमाकर लेवल अप करने पर उपलब्धियाँ यहाँ दिखेंगी।\n\nXP कमाएँ:\n⬢ समुदाय में संदेश भेजकर\n⬢ फ़ाइलें और इनसाइट साझा करके\n⬢ सदस्यों की मदद करके\n⬢ चर्चाओं में भाग लेकर"
     },
     "rules": {
       "ackRead": "मैंने नियम पढ़े और सहमति दी"
@@ -693,7 +693,22 @@
       "a7fx": "£250/माह"
     },
     "file": {
-      "unknownName": "अज्ञात"
+      "unknownName": "अज्ञात",
+      "unknownFile": "अज्ञात फ़ाइल"
+    },
+    "channelContext": {
+      "editChannel": "चैनल संपादित करें",
+      "deleteChannel": "चैनल हटाएँ"
+    },
+    "categoryContext": {
+      "editCategory": "श्रेणी संपादित करें",
+      "deleteCategory": "श्रेणी हटाएँ"
+    },
+    "notify": {
+      "mentionTitle": "आपको #{{channel}} में मेंशन किया गया",
+      "messageTitle": "#{{channel}} में नया संदेश",
+      "senderFallback": "कोई",
+      "unnamedChannel": "एक चैनल"
     }
   },
   "signUp": {

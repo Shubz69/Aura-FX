@@ -693,7 +693,22 @@
       "a7fx": "£250/month"
     },
     "file": {
-      "unknownName": "Unknown"
+      "unknownName": "Unknown",
+      "unknownFile": "Unknown file"
+    },
+    "channelContext": {
+      "editChannel": "Edit Channel",
+      "deleteChannel": "Delete Channel"
+    },
+    "categoryContext": {
+      "editCategory": "Edit Category",
+      "deleteCategory": "Delete Category"
+    },
+    "notify": {
+      "mentionTitle": "You were mentioned in #{{channel}}",
+      "messageTitle": "New message in #{{channel}}",
+      "senderFallback": "Someone",
+      "unnamedChannel": "a channel"
     }
   },
   "signUp": {

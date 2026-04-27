@@ -586,7 +586,7 @@
       "placeholderBody": "📢 **ঘোষণা**\n\nগুরুত্বপূর্ণ আপডেট এখানে থাকবে।"
     },
     "levels": {
-      "placeholderBody": "🏆 **LEVEL-UP CELEBRATIONS**\n\nWhen members level up by earning XP, their achievements will be celebrated here!\n\nEarn XP by:\n⬢ Sending messages in the community\n⬢ Sharing files and insights\n⬢ Helping other members\n⬢ Participating in discussions"
+      "placeholderBody": "🏆 **লেভেল-আপ উদযাপন**\n\nXP অর্জন করে লেভেল আপ হলে অর্জন এখানে দেখাবে।\n\nXP অর্জন:\n⬢ বার্তা পাঠিয়ে\n⬢ ফাইল ও ইনসাইট শেয়ার করে\n⬢ সদস্যদের সাহায্য করে\n⬢ আলোচনায় অংশ নিয়ে"
     },
     "rules": {
       "ackRead": "আমি নিয়ম পড়েছি এবং সম্মত"
@@ -693,7 +693,22 @@
       "a7fx": "£২৫০/মাস"
     },
     "file": {
-      "unknownName": "অজানা"
+      "unknownName": "অজানা",
+      "unknownFile": "অজানা ফাইল"
+    },
+    "channelContext": {
+      "editChannel": "চ্যানেল সম্পাদনা",
+      "deleteChannel": "চ্যানেল মুছুন"
+    },
+    "categoryContext": {
+      "editCategory": "ক্যাটাগরি সম্পাদনা",
+      "deleteCategory": "ক্যাটাগরি মুছুন"
+    },
+    "notify": {
+      "mentionTitle": "আপনাকে #{{channel}}-এ উল্লেখ করা হয়েছে",
+      "messageTitle": "#{{channel}}-এ নতুন বার্তা",
+      "senderFallback": "কেউ",
+      "unnamedChannel": "একটি চ্যানেল"
     }
   },
   "signUp": {

@@ -46,6 +46,12 @@ test.describe('language support', () => {
     expect(pref === null || pref === 'en').toBeTruthy();
   });
 
+  test('login page renders for auth i18n smoke', async ({ page }) => {
+    await page.goto('/login');
+    await expect(page.locator('#site-language-select')).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  });
+
   test('guest home loads in Spanish without i18n console errors', async ({ page }) => {
     const errors = [];
     page.on('console', (msg) => {

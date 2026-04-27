@@ -1,6 +1,10 @@
 /**
  * Verifies all locale common.json files have identical key paths to English.
- * Optional: --strict-english flags leaf values that still match English (excluding brand allowlist).
+ *
+ * Flags:
+ * - --skip-mirror-english — disable the check that fails when v===en for a non-en locale (minus allowlists).
+ *
+ * Always: key-path parity with en, non-empty string leaves for non-en, and mirror-English (unless skipped).
  */
 import fs from 'fs';
 import path from 'path';
@@ -9,7 +13,8 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
 const localesRoot = path.join(root, 'src', 'i18n', 'locales');
-const strictEnglish = process.argv.includes('--strict-english');
+/** Reject non-en strings that still equal English (minus allowlists). On by default; use --skip-mirror-english to disable. */
+const mirrorEnglish = !process.argv.includes('--skip-mirror-english');
 
 const BRAND_KEY_SUBSTR = ['slides.auraAI', 'slides.courses.statBadge', 'marketing.brand', 'wordmark', 'loadingBrand', 'auraAnalysis', 'Aura', 'TradingView', 'Binance', 'Coinbase', 'Bloomberg', 'Reuters', 'Glitch', 'A7FX', 'C & S', 'MFA', 'GDPR', 'PPTX', 'PowerPoint', 'GIF', 'GIFs', 'KB', 'MetaTrader', 'Twelve Data', 'CDN'];
 
@@ -21,6 +26,7 @@ const IDENTICAL_OK_KEYS = new Set(['common.dash', 'loadingSpinner.title', 'loadi
  * Strict mode skips v===en for these key+language pairs only.
  */
 /** Category/badge strings often match English (acronyms, loanwords); strict mode allows v===en here. */
+/** Minimal allowlist: brand-like keys, acronyms, or intentional cross-locale identical tokens (e.g. @mention slug). */
 const STRICT_IDENTICAL_OK_KEYS = new Set([
   'community.toast.xpAwarded',
   'community.badge.admin',
@@ -35,9 +41,16 @@ const STRICT_IDENTICAL_OK_KEYS = new Set([
   'community.channelMgr.optPremium',
   'community.channelMgr.optForums',
   'community.channelMgr.description',
+  'community.mention.slugFallback',
+  'community.subModal.premiumCardTitle',
+  'community.subModal.eliteCardTitle',
+  'community.planName.premium',
+  'community.planName.a7fx',
+  'community.editChannel.catA7fx',
 ]);
 
 const IDENTICAL_OK_BY_LANG = {
+  es: new Set(['community.editChannel.catGeneral', 'community.editChannel.catPremium']),
   fr: new Set([
     'common.article',
     'navbar.journal',
@@ -53,7 +66,11 @@ const IDENTICAL_OK_BY_LANG = {
     'home.tradeMarkets.cryptoTitle',
     'home.tradeMarkets.indicesTitle',
     'home.desk.pnl',
+    'community.editChannel.catForums',
+    'community.editChannel.catPremium',
+    'community.editChannel.description',
   ]),
+  pt: new Set(['community.editChannel.catPremium', 'community.subModal.badgeElite']),
 };
 
 function flattenKeys(obj, prefix = '') {
@@ -131,7 +148,15 @@ for (const code of codes) {
       failed = true;
     }
   }
-  if (strictEnglish) {
+  for (const k of enKeys) {
+    const ev = getLeaf(en, k);
+    const v = getLeaf(tree, k);
+    if (typeof ev === 'string' && typeof v === 'string' && v.trim().length === 0 && ev.trim().length > 0) {
+      console.error(`${code}: empty translation for required key ${k}`);
+      failed = true;
+    }
+  }
+  if (mirrorEnglish) {
     for (const k of enKeys) {
       const ev = getLeaf(en, k);
       const v = getLeaf(tree, k);
@@ -152,4 +177,7 @@ for (const code of codes) {
 }
 
 if (failed) process.exit(1);
-console.log(`i18n locale key parity OK (${codes.length} locales, ${enKeys.length} leaf keys).`);
+console.log(
+  `i18n locale key parity OK (${codes.length} locales, ${enKeys.length} leaf keys).` +
+    (mirrorEnglish ? ' Non-empty + mirror-English checks passed.' : ' Mirror-English check skipped (--skip-mirror-english).')
+);

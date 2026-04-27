@@ -175,7 +175,19 @@ Earn XP by:
 ⬢ Participating in discussions`;
 
 rows.push(
-  seed('community.levels.placeholderBody', LV, '🏆 **等级庆祝**\n成员升级时将在此展示！\n通过发消息、分享文件、互助与讨论赚取 XP。', LV, LV, LV, LV, LV, LV, LV, LV)
+  seed(
+    'community.levels.placeholderBody',
+    LV,
+    '🏆 **等级庆祝**\n成员升级时将在此展示！\n通过发消息、分享文件、互助与讨论赚取 XP。',
+    '🏆 **लेवल-अप उत्सव**\n\nXP कमाकर लेवल अप करने पर उपलब्धियाँ यहाँ दिखेंगी।\n\nXP कमाएँ:\n⬢ समुदाय में संदेश भेजकर\n⬢ फ़ाइलें और इनसाइट साझा करके\n⬢ सदस्यों की मदद करके\n⬢ चर्चाओं में भाग लेकर',
+    '🏆 **CELEBRACIONES DE SUBIDA DE NIVEL**\n\nCuando suban de nivel con XP, ¡se celebrará aquí!\n\nGana XP:\n⬢ Enviando mensajes\n⬢ Compartiendo archivos\n⬢ Ayudando a otros\n⬢ Participando en debates',
+    '🏆 **PASSAGES DE NIVEAU**\n\nLes succès apparaîtront ici.\n\nGagnez de l’XP :\n⬢ Messages\n⬢ Fichiers et idées\n⬢ Aider les membres\n⬢ Discussions',
+    '🏆 **احتفالات الصعود**\n\nستُعرض الإنجازات هنا عند ترقية المستوى.\n\nاكسب XP:\n⬢ بإرسال الرسائل\n⬢ بمشاركة الملفات\n⬢ بمساعدة الأعضاء\n⬢ بالمشاركة في النقاشات',
+    '🏆 **লেভেল-আপ উদযাপন**\n\nXP অর্জন করে লেভেল আপ হলে অর্জন এখানে দেখাবে।\n\nXP অর্জন:\n⬢ বার্তা পাঠিয়ে\n⬢ ফাইল ও ইনসাইট শেয়ার করে\n⬢ সদস্যদের সাহায্য করে\n⬢ আলোচনায় অংশ নিয়ে',
+    '🏆 **COMEMORAÇÕES DE LEVEL**\n\nConquistas aparecerão aqui ao subir de nível com XP.\n\nGanhe XP:\n⬢ Enviando mensagens\n⬢ Compartilhando arquivos\n⬢ Ajudando membros\n⬢ Participando',
+    '🏆 **ПОВЫШЕНИЯ УРОВНЯ**\n\nДостижения появятся здесь.\n\nЗарабатывайте XP:\n⬢ Сообщениями\n⬢ Файлами и идеями\n⬢ Помощью участникам\n⬢ В обсуждениях',
+    '🏆 **لیول اپ جشن**\n\nXP سے لیول اپ پر کامیابیاں یہاں دکھائی جائیں گی۔\n\nXP کمائیں:\n⬢ پیغامات بھیج کر\n⬢ فائلیں شیئر کر کے\n⬢ مدد کر کے\n⬢ بحث میں حصہ لے کر'
+  )
 );
 
 rows.push(
@@ -264,7 +276,16 @@ rows.push(
   seed('community.context.addReaction', 'Add Reaction', '添加表情回应', 'प्रतिक्रिया जोड़ें', 'Añadir reacción', 'Ajouter une réaction', 'إضافة تفاعل', 'রিয়াকশন যোগ', 'Adicionar reação', 'Добавить реакцию', 'ری ایکشن'),
   seed('community.context.copyText', 'Copy message text', '复制消息文本', 'संदेश टेक्स्ट कॉपी', 'Copiar texto', 'Copier le texte', 'نسخ نص الرسالة', 'বার্তার টেক্সট কপি', 'Copiar texto', 'Копировать текст', 'متن کاپی'),
   seed('community.file.unknownName', 'Unknown', '未知', 'अज्ञात', 'Desconocido', 'Inconnu', 'غير معروف', 'অজানা', 'Desconhecido', 'Неизвестно', 'نامعلوم'),
-  seed('community.mention.slugFallback', 'user', 'user', 'user', 'user', 'user', 'user', 'user', 'user', 'user', 'user')
+  seed('community.mention.slugFallback', 'user', 'user', 'user', 'user', 'user', 'user', 'user', 'user', 'user', 'user'),
+  seed('community.file.unknownFile', 'Unknown file', '未知文件', 'अज्ञात फ़ाइल', 'Archivo desconocido', 'Fichier inconnu', 'ملف غير معروف', 'অজানা ফাইল', 'Arquivo desconhecido', 'Неизвестный файл', 'نامعلوم فائل'),
+  seed('community.channelContext.editChannel', 'Edit Channel', '编辑频道', 'चैनल संपादित करें', 'Editar canal', 'Modifier le canal', 'تعديل القناة', 'চ্যানেল সম্পাদনা', 'Editar canal', 'Изменить канал', 'چینل میں ترمیم'),
+  seed('community.channelContext.deleteChannel', 'Delete Channel', '删除频道', 'चैनल हटाएँ', 'Eliminar canal', 'Supprimer le canal', 'حذف القناة', 'চ্যানেল মুছুন', 'Excluir canal', 'Удалить канал', 'چینل حذف'),
+  seed('community.categoryContext.editCategory', 'Edit Category', '编辑分类', 'श्रेणी संपादित करें', 'Editar categoría', 'Modifier la catégorie', 'تعديل الفئة', 'ক্যাটাগরি সম্পাদনা', 'Editar categoria', 'Изменить категорию', 'زمرہ میں ترمیم'),
+  seed('community.categoryContext.deleteCategory', 'Delete Category', '删除分类', 'श्रेणी हटाएँ', 'Eliminar categoría', 'Supprimer la catégorie', 'حذف الفئة', 'ক্যাটাগরি মুছুন', 'Excluir categoria', 'Удалить категорию', 'زمرہ حذف'),
+  seed('community.notify.mentionTitle', 'You were mentioned in #{{channel}}', '您在 #{{channel}} 中被提及', 'आपको #{{channel}} में मेंशन किया गया', 'Te mencionaron en #{{channel}}', 'Vous avez été mentionné dans #{{channel}}', 'تمت الإشارة إليك في #{{channel}}', 'আপনাকে #{{channel}}-এ উল্লেখ করা হয়েছে', 'Você foi mencionado em #{{channel}}', 'Вас упомянули в #{{channel}}', 'آپ کا #{{channel}} میں ذکر ہوا'),
+  seed('community.notify.messageTitle', 'New message in #{{channel}}', '#{{channel}} 中的新消息', '#{{channel}} में नया संदेश', 'Nuevo mensaje en #{{channel}}', 'Nouveau message dans #{{channel}}', 'رسالة جديدة في #{{channel}}', '#{{channel}}-এ নতুন বার্তা', 'Nova mensagem em #{{channel}}', 'Новое сообщение в #{{channel}}', '#{{channel}} میں نیا پیغام'),
+  seed('community.notify.senderFallback', 'Someone', '某人', 'कोई', 'Alguien', 'Quelqu’un', 'شخص ما', 'কেউ', 'Alguém', 'Кто-то', 'کوئی'),
+  seed('community.notify.unnamedChannel', 'a channel', '某个频道', 'एक चैनल', 'un canal', 'un canal', 'قناة', 'একটি চ্যানেল', 'um canal', 'канал', 'ایک چینل')
 );
 
 function esc(s) {

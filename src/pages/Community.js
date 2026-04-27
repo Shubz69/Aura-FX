@@ -1724,7 +1724,7 @@ const {
         }
       }
 
-      const channelName = msgChannel?.name || 'a channel';
+      const channelName = msgChannel?.name || t('community.notify.unnamedChannel');
       const jumpId = message.id || message.messageId || '';
       const deepLink = `/community/${encodeURIComponent(String(messageChannelId))}${
         jumpId ? `?jump=${encodeURIComponent(String(jumpId))}` : ''
@@ -1733,8 +1733,8 @@ const {
         if (isMentioned) {
           triggerNotification(
             'mention',
-            `You were mentioned in #${channelName}`,
-            `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+            t('community.notify.mentionTitle', { channel: channelName }),
+            `${message.sender?.username || t('community.notify.senderFallback')}: ${messageContent.substring(0, 100)}`,
             deepLink,
             userId,
             { dedupeKey: `ws:mention:${jumpId}:${messageChannelId}:${messageSenderId}` }
@@ -1742,8 +1742,8 @@ const {
         } else if (!isMuted || isAnnouncements) {
           triggerNotification(
             'message',
-            `New message in #${channelName}`,
-            `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+            t('community.notify.messageTitle', { channel: channelName }),
+            `${message.sender?.username || t('community.notify.senderFallback')}: ${messageContent.substring(0, 100)}`,
             deepLink,
             userId,
             { dedupeKey: `ws:msg:${jumpId}:${messageChannelId}:${messageSenderId}` }
@@ -1953,7 +1953,7 @@ return newMessages;
     
     // Extract just the filename from a path (remove directory path)
     const getFileName = (filePath) => {
-        if (!filePath) return 'Unknown file';
+        if (!filePath) return t('community.file.unknownFile');
         const fileName = filePath.split(/[/\\]/).pop();
         return fileName || filePath;
     };
@@ -3993,76 +3993,7 @@ useEffect(() => {
         const welcomeMessage = {
             id: 'welcome-message',
             channelId: selectedChannel.id,
-            content: `🎉 Welcome to Aura Terminal™ Network! 🎉
-
-Welcome to the most elite trading and wealth-building community on the planet! We're thrilled to have you join us on this incredible journey toward financial freedom and generational wealth.
-
-## 📋 COMMUNITY RULES
-
-1. Respect & Professionalism
-   ⬢ Treat all members with respect and professionalism
-   ⬢ No harassment, discrimination, or personal attacks
-   ⬢ Maintain a positive and constructive environment
-
-2. Trading & Investment Discussions
-   ⬢ Share knowledge and insights, not financial advice
-   ⬢ All trades are at your own risk - we are not financial advisors
-   ⬢ Use proper risk management and never trade more than you can afford to lose
-
-3. Content & Privacy
-   ⬢ Keep conversations relevant to trading, wealth-building, and course topics
-   ⬢ Do not share personal financial information (account numbers, passwords, etc.)
-   ⬢ Respect intellectual property - do not share copyrighted course materials
-
-4. Spam & Promotion
-   ⬢ No spam, self-promotion, or affiliate links without permission
-   ⬢ Do not promote other trading services or products
-   ⬢ Keep discussions focused on learning and community growth
-
-5. Course Access
-   ⬢ Course-specific channels are for enrolled members only
-   ⬢ Share insights and ask questions related to your enrolled courses
-   ⬢ Complete courses in order for maximum learning effectiveness
-
-6. Community Support
-   ⬢ Help fellow members when you can
-   ⬢ Ask questions - we're all here to learn and grow together
-   ⬢ Report any issues or concerns to staff members
-
-7. Platform Usage
-   ⬢ Use appropriate language and avoid profanity
-   ⬢ Keep messages clear and concise
-   ⬢ Use channels for their intended purposes
-
-## 🚀 GETTING STARTED
-
-1. Complete your profile - Add your bio
-2. Explore channels - Check out different course and trading channels
-3. Join discussions - Start participating in conversations
-4. Enroll in courses - Begin your wealth-building journey
-5. Earn XP - Level up by being active in the community
-
-## 💎 PREMIUM BENEFITS
-
-Premium members get access to:
-⬢ Exclusive VIP channels and content
-⬢ Premium trading signals and insights
-⬢ Advanced course materials
-⬢ Priority support from our team
-⬢ Elite trader discussions
-
-## ⚡ QUICK TIPS
-
-⬢ Earn XP by sending messages, sharing files, and being active
-⬢ Level up to unlock new channels and features
-⬢ Check the announcements channel regularly for updates
-⬢ Connect with other traders in the general chat channels
-
-Remember: Success in trading comes from discipline, education, and consistent action. We're here to support you every step of the way!
-
-Click the ✅ below to acknowledge you've read and agree to follow these rules, and unlock access to all channels.
-
-Let's build generational wealth together! 💰🚀`,
+            content: [t('community.welcome.part1'), t('community.welcome.part2'), t('community.welcome.part3')].join('\n\n'),
                     sender: {
                         id: 'system',
                         username: 'AURA TERMINAL™',
@@ -4078,7 +4009,7 @@ Let's build generational wealth together! 💰🚀`,
             if (prev.some(m => m.id === 'welcome-message')) return prev;
             return [welcomeMessage, ...prev];
         });
-    }, [selectedChannel, messages, isWelcomeChannel]);
+    }, [t, selectedChannel, messages, isWelcomeChannel]);
 
     // Placeholder for empty Announcements channel - ensures free users see content
     useEffect(() => {
@@ -4091,15 +4022,7 @@ Let's build generational wealth together! 💰🚀`,
         const placeholderMessage = {
             id: 'announcements-placeholder',
             channelId: selectedChannel.id,
-            content: `📢 **ANNOUNCEMENTS**
-
-Important updates and news from AURA TERMINAL™ will appear here.
-
-Check back regularly for:
-⬢ New features and platform updates
-⬢ Trading insights and market analysis
-⬢ Community events and challenges
-⬢ Course updates and new content`,
+            content: t('community.announcements.placeholderBody'),
             sender: { id: 'system', username: 'AURA TERMINAL™', avatar: null, role: 'admin' },
             timestamp: new Date().toISOString(),
             file: null,
@@ -4110,7 +4033,7 @@ Check back regularly for:
             if (prev.some(m => m.id === 'announcements-placeholder')) return prev;
             return [placeholderMessage, ...prev];
         });
-    }, [selectedChannel, messages, isAnnouncementsChannel]);
+    }, [t, selectedChannel, messages, isAnnouncementsChannel]);
 
     // Placeholder for empty Levels channel - ensures free users see content
     useEffect(() => {
@@ -4123,15 +4046,7 @@ Check back regularly for:
         const placeholderMessage = {
             id: 'levels-placeholder',
             channelId: selectedChannel.id,
-            content: `🏆 **LEVEL-UP CELEBRATIONS**
-
-When members level up by earning XP, their achievements will be celebrated here!
-
-Earn XP by:
-⬢ Sending messages in the community
-⬢ Sharing files and insights
-⬢ Being active in discussions
-⬢ Completing courses`,
+            content: t('community.levels.placeholderBody'),
             sender: { id: 'system', username: 'AURA TERMINAL™', avatar: null, role: 'admin' },
             timestamp: new Date().toISOString(),
             file: null,
@@ -4142,7 +4057,7 @@ Earn XP by:
             if (prev.some(m => m.id === 'levels-placeholder')) return prev;
             return [placeholderMessage, ...prev];
         });
-    }, [selectedChannel, messages, isLevelsChannel]);
+    }, [t, selectedChannel, messages, isLevelsChannel]);
 
     // Handle edit message
     const handleEditMessage = (messageId) => {
@@ -4216,7 +4131,7 @@ const handleFileDownload = (e, file) => {
     }
     
     if (!file || !file.preview) {
-        alert(t('community.alert.fileCannotDownload', { fileName: (file && file.name) || 'Unknown' }));
+        alert(t('community.alert.fileCannotDownload', { fileName: (file && file.name) || t('community.file.unknownName') }));
         return;
     }
     
@@ -4710,7 +4625,7 @@ setMessages(prev => {
         setDeleteMessageModal({
             messageId,
             messageContent: messageToDelete.content,
-            author: messageToDelete.sender?.username || 'Unknown',
+            author: messageToDelete.sender?.username || t('community.file.unknownName'),
             isOwnMessage: String(messageToDelete.userId || messageToDelete.sender?.id) === String(userId),
         });
     };
@@ -5253,7 +5168,7 @@ useEffect(() => {
                                                                     e.currentTarget.style.textDecoration = 'none';
                                                                 }}
                                                             >
-                                                                {message.sender?.username || 'Unknown'}
+                                                                {message.sender?.username || t('community.file.unknownName')}
                                                             </span>
                                                             {message.edited && (
                                                                 <span style={{ 
@@ -5388,7 +5303,7 @@ useEffect(() => {
                                                 onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
                                                 >
                                                     <span style={{ fontSize: '1.5rem' }}>✅</span>
-                                                    <span style={{ fontWeight: 600 }}>I've read and agree to the rules</span>
+                                                    <span style={{ fontWeight: 600 }}>{t('community.rules.ackRead')}</span>
                                                 </div>
                                             )}
                                                                                     {message.file && message.file.preview && (
@@ -5574,10 +5489,10 @@ if (!isAuthenticated && !hasToken) {
                 }}>
                     <div style={{ flex: 1 }}>
                         <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
-                            ⚠️ Payment Failed - Access Restricted
+                            {t('community.banner.paymentFailedTitle')}
                         </h3>
                         <p style={{ margin: '4px 0 0 0', fontSize: '14px', opacity: 0.9 }}>
-                            {subscriptionStatus?.message || 'Your payment has failed. Please update your payment method to continue using the community.'}
+                            {subscriptionStatus?.message || t('community.banner.paymentFailedDefault')}
                         </p>
                     </div>
                     <button
@@ -5604,7 +5519,7 @@ if (!isAuthenticated && !hasToken) {
                             e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
                         }}
                     >
-                        UPDATE PAYMENT
+                        {t('community.banner.updatePayment')}
                     </button>
                     <button
                         onClick={() => navigate('/subscription')}
@@ -5626,7 +5541,7 @@ if (!isAuthenticated && !hasToken) {
                             e.target.style.background = 'rgba(255, 255, 255, 0.2)';
                         }}
                     >
-                        CONTACT SUPPORT
+                        {t('community.banner.contactSupportBtn')}
                     </button>
                 </div>
             )}
@@ -5650,10 +5565,10 @@ if (!isAuthenticated && !hasToken) {
                 }}>
                     <div style={{ flex: 1 }}>
                         <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
-                            Subscribe to Access Full Community
+                            {t('community.banner.subscribeTitle')}
                         </h3>
                         <p style={{ margin: '4px 0 0 0', fontSize: '14px', opacity: 0.9 }}>
-                            Subscribe to access the community - Free monthly, Premium (£99/month), or Elite (£250/month)
+                            {t('community.banner.subscribeSubtitle')}
                         </p>
                     </div>
                     <button
@@ -5679,7 +5594,7 @@ if (!isAuthenticated && !hasToken) {
                             e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
                         }}
                     >
-                        CHOOSE PLAN
+                        {t('community.banner.choosePlan')}
                     </button>
                 </div>
             )}
@@ -5734,7 +5649,7 @@ if (!isAuthenticated && !hasToken) {
                                 marginBottom: '16px',
                                 fontFamily: 'var(--font-main)'
                             }}>
-                                Subscribe to Access Community
+                                {t('community.overlay.subscribeTitle')}
                             </h2>
                             <p style={{
                                 color: 'rgba(255, 255, 255, 0.8)',
@@ -5743,7 +5658,7 @@ if (!isAuthenticated && !hasToken) {
                                 lineHeight: '1.5',
                                 fontFamily: 'var(--font-secondary)'
                             }}>
-                                To access the community, you need to subscribe. Click here to subscribe and get 3 months free, then just £99/month.
+                                {t('community.overlay.subscribeBody')}
                             </p>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 <button
@@ -5770,7 +5685,7 @@ if (!isAuthenticated && !hasToken) {
                                         e.target.style.boxShadow = '0 4px 12px rgba(109, 40, 217, 0.4)';
                                     }}
                                 >
-                                    Subscribe Now
+                                    {t('community.overlay.subscribeNow')}
                                 </button>
                                 <button
                                     onClick={() => {
@@ -5796,7 +5711,7 @@ if (!isAuthenticated && !hasToken) {
                                         e.target.style.background = 'rgba(255, 255, 255, 0.1)';
                                     }}
                                 >
-                                    I've Already Paid - Contact Support
+                                    {t('community.overlay.alreadyPaid')}
                                 </button>
                             </div>
                         </div>
@@ -6642,7 +6557,7 @@ if (!isAuthenticated && !hasToken) {
                                 <span style={{ 
                                     fontWeight: 600,
                                     color: '#C4B5FD'
-                                }}>Level {userLevel}</span>
+                                }}>{t('community.profile.levelLabel', { level: userLevel })}</span>
                                 <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>⬢</span>
                                 <span style={{ 
                                     fontWeight: 600,
@@ -6695,7 +6610,7 @@ if (!isAuthenticated && !hasToken) {
                                     fontSize: '28px',
                                     fontWeight: 'bold'
                                 }}>
-                                    Subscription Required
+                                    {t('community.accessModal.title')}
                                 </h2>
                                 <p style={{
                                     color: 'rgba(255, 255, 255, 0.7)',
@@ -6707,17 +6622,13 @@ if (!isAuthenticated && !hasToken) {
                                 {(() => {
                                     const accessLevel = (selectedChannel.accessLevel || 'open').toLowerCase();
                                     const currentRole = getCurrentUserRole();
-                                    let subscriptionType = '';
-                                    let price = '';
-                                    
-                                    if (accessLevel === 'premium') {
-                                        subscriptionType = 'Aura FX Premium';
-                                        price = '£99/month';
-                                    } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
-                                        subscriptionType = 'A7FX Elite';
-                                        price = '£250/month';
-                                    }
-                                    
+                                    const planLabel = accessLevel === 'premium'
+                                        ? t('community.planName.premium')
+                                        : t('community.planName.a7fx');
+                                    const priceLabel = accessLevel === 'premium'
+                                        ? t('community.price.premium')
+                                        : t('community.price.a7fx');
+
                                     return (
                                         <>
                                             <div style={{
@@ -6729,15 +6640,15 @@ if (!isAuthenticated && !hasToken) {
                                                 width: '100%',
                                                 border: '1px solid rgba(139, 92, 246, 0.3)'
                                             }}>
-                                                <p style={{ 
-                                                    color: '#fff', 
+                                                <p style={{
+                                                    color: '#fff',
                                                     marginBottom: '20px',
                                                     fontSize: '16px',
                                                     lineHeight: '1.6'
                                                 }}>
-                                                    This channel requires an <strong style={{ color: '#8B5CF6' }}>{subscriptionType}</strong> subscription ({price}) to access.
+                                                    {t('community.accessBlock.requires', { plan: planLabel, price: priceLabel })}
                                                 </p>
-                                                
+
                                                 {accessLevel === 'premium' ? (
                                                     currentRole === 'free' ? (
                                                         <div style={{
@@ -6752,14 +6663,14 @@ if (!isAuthenticated && !hasToken) {
                                                                 margin: '0 0 8px 0',
                                                                 fontWeight: '600'
                                                             }}>
-                                                                Your Status: Free User
+                                                                {t('community.accessModal.statusFree')}
                                                             </p>
                                                             <p style={{
                                                                 color: 'rgba(255, 255, 255, 0.8)',
                                                                 fontSize: '14px',
                                                                 margin: 0
                                                             }}>
-                                                                Upgrade to Premium to unlock this channel and access exclusive trading content.
+                                                                {t('community.accessModal.upgradePremium')}
                                                             </p>
                                                         </div>
                                                     ) : (
@@ -6775,14 +6686,14 @@ if (!isAuthenticated && !hasToken) {
                                                                 margin: '0 0 8px 0',
                                                                 fontWeight: '600'
                                                             }}>
-                                                                Your Status: Premium User
+                                                                {t('community.accessModal.statusPremium')}
                                                             </p>
                                                             <p style={{
                                                                 color: 'rgba(255, 255, 255, 0.8)',
                                                                 fontSize: '14px',
                                                                 margin: 0
                                                             }}>
-                                                                Your subscription may be inactive or expired. Please check your subscription status or renew to access this channel.
+                                                                {t('community.accessModal.inactiveSub')}
                                                             </p>
                                                         </div>
                                                     )
@@ -6800,14 +6711,14 @@ if (!isAuthenticated && !hasToken) {
                                                                 margin: '0 0 8px 0',
                                                                 fontWeight: '600'
                                                             }}>
-                                                                Your Status: Free User
+                                                                {t('community.accessModal.statusFree')}
                                                             </p>
                                                             <p style={{
                                                                 color: 'rgba(255, 255, 255, 0.8)',
                                                                 fontSize: '14px',
                                                                 margin: 0
                                                             }}>
-                                                                Upgrade to A7FX Elite to unlock this channel and access the most exclusive trading content and signals.
+                                                                {t('community.accessModal.upgradeElite')}
                                                             </p>
                                                         </div>
                                                     ) : currentRole === 'premium' ? (
@@ -6823,14 +6734,14 @@ if (!isAuthenticated && !hasToken) {
                                                                 margin: '0 0 8px 0',
                                                                 fontWeight: '600'
                                                             }}>
-                                                                Your Status: Premium User
+                                                                {t('community.accessModal.statusPremium')}
                                                             </p>
                                                             <p style={{
                                                                 color: 'rgba(255, 255, 255, 0.8)',
                                                                 fontSize: '14px',
                                                                 margin: 0
                                                             }}>
-                                                                This channel requires A7FX Elite. Upgrade from Premium to Elite to access the most exclusive content.
+                                                                {t('community.accessModal.premiumToElite')}
                                                             </p>
                                                         </div>
                                                     ) : (
@@ -6846,14 +6757,14 @@ if (!isAuthenticated && !hasToken) {
                                                                 margin: '0 0 8px 0',
                                                                 fontWeight: '600'
                                                             }}>
-                                                                Your Status: A7FX Elite User
+                                                                {t('community.accessModal.statusElite')}
                                                             </p>
                                                             <p style={{
                                                                 color: 'rgba(255, 255, 255, 0.8)',
                                                                 fontSize: '14px',
                                                                 margin: 0
                                                             }}>
-                                                                Your subscription may be inactive or expired. Please check your subscription status or renew to access this channel.
+                                                                {t('community.accessModal.inactiveSub')}
                                                             </p>
                                                         </div>
                                                     )
@@ -6882,7 +6793,7 @@ if (!isAuthenticated && !hasToken) {
                                                     e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 234, 0.4)';
                                                 }}
                                             >
-                                                Subscribe Now - {price}
+                                                {t('community.accessBlock.subscribeWithPrice', { price: priceLabel })}
                                             </button>
                                         </>
                                     );
@@ -7400,7 +7311,7 @@ if (!isAuthenticated && !hasToken) {
                                 )}
                                 {filteredUsers.map(user => {
                                     const displayName = user.name || user.username || t('community.mention.userFallback');
-                                    const username = user.username || user.name || 'user';
+                                    const username = user.username || user.name || t('community.mention.slugFallback');
                                     return (
                                     <div
                                         key={user.id}
@@ -7967,7 +7878,7 @@ if (!isAuthenticated && !hasToken) {
                             setChannelContextMenu(null);
                         }}
                     >
-                        <FaEdit size={14} /> Edit Channel
+                        <FaEdit size={14} /> {t('community.channelContext.editChannel')}
                     </button>
                     {!protectedChannelIds.includes(channelContextMenu.channelId) && (
                         <>
@@ -7979,7 +7890,7 @@ if (!isAuthenticated && !hasToken) {
                                 }}
                                 style={{ color: '#f87171' }}
                             >
-                                <FaTrash size={14} /> Delete Channel
+                                <FaTrash size={14} /> {t('community.channelContext.deleteChannel')}
                             </button>
                         </>
                     )}
@@ -8018,7 +7929,7 @@ if (!isAuthenticated && !hasToken) {
                             setCategoryContextMenu(null);
                         }}
                     >
-                        <FaEdit size={14} /> Edit Category
+                        <FaEdit size={14} /> {t('community.categoryContext.editCategory')}
                     </button>
                     <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '4px 0' }} />
                     <button
@@ -8028,7 +7939,7 @@ if (!isAuthenticated && !hasToken) {
                         }}
                         style={{ color: '#f87171' }}
                     >
-                        <FaTrash size={14} /> Delete Category
+                        <FaTrash size={14} /> {t('community.categoryContext.deleteCategory')}
                     </button>
                 </div>
             )}
@@ -8057,9 +7968,9 @@ if (!isAuthenticated && !hasToken) {
                         border: '1px solid rgba(255, 255, 255, 0.1)',
                         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
                     }} onClick={(e) => e.stopPropagation()}>
-                        <h3 style={{ color: '#fff', marginBottom: '20px', fontSize: '1.5rem' }}>Edit Channel</h3>
+                        <h3 style={{ color: '#fff', marginBottom: '20px', fontSize: '1.5rem' }}>{t('community.editChannel.title')}</h3>
                         <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Channel Name</label>
+                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>{t('community.editChannel.channelName')}</label>
                             <input
                                 type="text"
                                 value={editingChannel.displayName || editingChannel.name}
@@ -8076,7 +7987,7 @@ if (!isAuthenticated && !hasToken) {
                             />
                         </div>
                         <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Description</label>
+                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>{t('community.editChannel.description')}</label>
                             <textarea
                                 value={editingChannel.description}
                                 onChange={(e) => setEditingChannel({ ...editingChannel, description: e.target.value })}
@@ -8094,7 +8005,7 @@ if (!isAuthenticated && !hasToken) {
                             />
                         </div>
                         <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Category</label>
+                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>{t('community.editChannel.category')}</label>
                             <select
                                 value={editingChannel.category}
                                 onChange={(e) => setEditingChannel({ ...editingChannel, category: e.target.value })}
@@ -8108,17 +8019,17 @@ if (!isAuthenticated && !hasToken) {
                                     fontSize: '0.9rem'
                                 }}
                             >
-                                <option value="general">General</option>
-                                <option value="forums">Forums</option>
-                                <option value="premium">Premium</option>
-                                <option value="a7fx">A7FX</option>
-                                <option value="announcements">Announcements</option>
-                                <option value="staff">Staff</option>
-                                <option value="support">Support</option>
+                                <option value="general">{t('community.editChannel.catGeneral')}</option>
+                                <option value="forums">{t('community.editChannel.catForums')}</option>
+                                <option value="premium">{t('community.editChannel.catPremium')}</option>
+                                <option value="a7fx">{t('community.editChannel.catA7fx')}</option>
+                                <option value="announcements">{t('community.editChannel.catAnnouncements')}</option>
+                                <option value="staff">{t('community.editChannel.catStaff')}</option>
+                                <option value="support">{t('community.editChannel.catSupport')}</option>
                             </select>
                         </div>
                         <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Access Level</label>
+                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>{t('community.editChannel.accessLevel')}</label>
                             <select
                                 value={editingChannel.accessLevel}
                                 onChange={(e) => setEditingChannel({ ...editingChannel, accessLevel: e.target.value })}
@@ -8132,16 +8043,16 @@ if (!isAuthenticated && !hasToken) {
                                     fontSize: '0.9rem'
                                 }}
                             >
-                                <option value="free">Free - No subscription required</option>
-                                <option value="open">Open - Everyone can view and post</option>
-                                <option value="read-only">Read-Only - Everyone can view, only admins can post</option>
-                                <option value="admin-only">Admin-Only - Only admins can view and post</option>
-                                <option value="premium">Premium - Subscription required (Aura FX £99/mo)</option>
-                                <option value="a7fx">A7FX Elite - Subscription required (A7FX £250/mo)</option>
+                                <option value="free">{t('community.channelMgr.accessFree')}</option>
+                                <option value="open">{t('community.channelMgr.accessOpen')}</option>
+                                <option value="read-only">{t('community.channelMgr.accessReadOnly')}</option>
+                                <option value="admin-only">{t('community.channelMgr.accessAdminOnly')}</option>
+                                <option value="premium">{t('community.channelMgr.accessPremium')}</option>
+                                <option value="a7fx">{t('community.channelMgr.accessA7fx')}</option>
                             </select>
                         </div>
                         <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Permission Type</label>
+                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>{t('community.editChannel.permissionType')}</label>
                             <select
                                 value={editingChannel.permissionType || 'read-write'}
                                 onChange={(e) => setEditingChannel({ ...editingChannel, permissionType: e.target.value })}
@@ -8155,11 +8066,11 @@ if (!isAuthenticated && !hasToken) {
                                     fontSize: '0.9rem'
                                 }}
                             >
-                                <option value="read-write">Read & Write - Users can text in channel</option>
-                                <option value="read-only">Read Only - Users can only see channel (cannot text)</option>
+                                <option value="read-write">{t('community.editChannel.permReadWrite')}</option>
+                                <option value="read-only">{t('community.editChannel.permReadOnly')}</option>
                             </select>
                             <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.75rem', marginTop: '6px', marginBottom: 0 }}>
-                                This controls whether users with access can text or just view the channel
+                                {t('community.editChannel.permissionHelp')}
                             </p>
                         </div>
                         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
@@ -8175,7 +8086,7 @@ if (!isAuthenticated && !hasToken) {
                                     fontSize: '0.9rem'
                                 }}
                             >
-                                Cancel
+                                {t('community.cancel')}
                             </button>
                             <button
                                 onClick={() => handleEditChannel(editingChannel)}
@@ -8192,7 +8103,7 @@ if (!isAuthenticated && !hasToken) {
                                     opacity: channelActionLoading ? 0.6 : 1
                                 }}
                             >
-                                {channelActionLoading ? 'Saving...' : 'Save Changes'}
+                                {channelActionLoading ? t('community.saving') : t('community.editChannel.saveChanges')}
                             </button>
                         </div>
                     </div>
@@ -8223,9 +8134,9 @@ if (!isAuthenticated && !hasToken) {
                         border: '1px solid rgba(255, 255, 255, 0.1)',
                         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
                     }} onClick={(e) => e.stopPropagation()}>
-                        <h3 style={{ color: '#fff', marginBottom: '20px', fontSize: '1.5rem' }}>Edit Category</h3>
+                        <h3 style={{ color: '#fff', marginBottom: '20px', fontSize: '1.5rem' }}>{t('community.editCategory.title')}</h3>
                         <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Category Name</label>
+                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>{t('community.editCategory.nameLabel')}</label>
                             <input
                                 type="text"
                                 value={editingCategory.newName}
@@ -8239,7 +8150,7 @@ if (!isAuthenticated && !hasToken) {
                                     color: '#fff',
                                     fontSize: '0.9rem'
                                 }}
-                                placeholder="Enter category name"
+                                placeholder={t('community.editCategory.placeholder')}
                             />
                         </div>
                         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
@@ -8255,7 +8166,7 @@ if (!isAuthenticated && !hasToken) {
                                     fontSize: '0.9rem'
                                 }}
                             >
-                                Cancel
+                                {t('community.cancel')}
                             </button>
                             <button
                                 onClick={() => handleEditCategory(editingCategory.oldName, editingCategory.newName)}
@@ -8270,7 +8181,7 @@ if (!isAuthenticated && !hasToken) {
                                     fontWeight: '600'
                                 }}
                             >
-                                Save Changes
+                                {t('community.editChannel.saveChanges')}
                             </button>
                         </div>
                     </div>
@@ -8315,7 +8226,7 @@ if (!isAuthenticated && !hasToken) {
                                 WebkitTextFillColor: 'transparent',
                                 backgroundClip: 'text'
                             }}>
-                                Choose Your Subscription Plan
+                                {t('community.subModal.title')}
                             </h2>
                             <button
                                 onClick={() => setShowSubscriptionModal(false)}
@@ -8349,7 +8260,8 @@ if (!isAuthenticated && !hasToken) {
                                 marginBottom: '24px'
                             }}>
                                 <p style={{ color: '#fff', margin: 0, fontSize: '0.9rem' }}>
-                                    <strong>💡 This channel requires:</strong> {requiredSubscriptionType === 'premium' ? 'Aura FX Premium (£99/month)' : 'A7FX Elite (£250/month)'}
+                                    <strong>{t('community.subModal.channelRequiresLead')}</strong>{' '}
+                                    {requiredSubscriptionType === 'premium' ? t('community.subModal.planPremiumName') : t('community.subModal.planA7fxName')}
                                 </p>
                             </div>
                         )}
@@ -8370,9 +8282,9 @@ if (!isAuthenticated && !hasToken) {
                                 position: 'relative',
                                 transition: 'all 0.3s ease'
                             }}>
-                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>Free Monthly</h3>
+                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>{t('community.subModal.planFreeTitle')}</h3>
                                 <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£0</div>
-                                <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
+                                <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>{t('community.subModal.perMonth')}</div>
                                 <ul style={{ 
                                     textAlign: 'left', 
                                     color: 'rgba(255, 255, 255, 0.8)', 
@@ -8381,9 +8293,9 @@ if (!isAuthenticated && !hasToken) {
                                     paddingLeft: '20px',
                                     listStyle: 'none'
                                 }}>
-                                    <li style={{ marginBottom: '8px' }}>✅ General, welcome & announcements</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ No payment required</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Instant access to community</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.freeFeat1')}</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.freeFeat2')}</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.freeFeat3')}</li>
                                 </ul>
                                 {subscriptionModalError && (
                                     <div role="alert" style={{ color: '#fa755a', fontSize: '13px', marginBottom: '12px' }}>{subscriptionModalError}</div>
@@ -8418,7 +8330,7 @@ if (!isAuthenticated && !hasToken) {
                                         }
                                     }}
                                 >
-                                    {selectingFreePlan ? 'Activating...' : 'Get Free Monthly'}
+                                    {selectingFreePlan ? t('community.subModal.activating') : t('community.subModal.getFreeMonthly')}
                                 </button>
                             </div>
 
@@ -8447,11 +8359,11 @@ if (!isAuthenticated && !hasToken) {
                                         borderRadius: '12px',
                                         fontSize: '11px',
                                         fontWeight: 'bold'
-                                    }}>REQUIRED</div>
+                                    }}>{t('community.subModal.badgeRequired')}</div>
                                 )}
-                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>Aura FX</h3>
+                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>{t('community.subModal.premiumCardTitle')}</h3>
                                 <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£99</div>
-                                <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
+                                <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>{t('community.subModal.perMonth')}</div>
                                 <ul style={{ 
                                     textAlign: 'left', 
                                     color: 'rgba(255, 255, 255, 0.8)', 
@@ -8460,11 +8372,11 @@ if (!isAuthenticated && !hasToken) {
                                     paddingLeft: '20px',
                                     listStyle: 'none'
                                 }}>
-                                    <li style={{ marginBottom: '8px' }}>✅ Access to premium channels</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Market analysis</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Community access</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Weekly Briefs</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Premium AURA AI</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.premiumFeat1')}</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.premiumFeat2')}</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.premiumFeat3')}</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.premiumFeat4')}</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.premiumFeat5')}</li>
                                 </ul>
                                 <button
                                     onClick={() => handleSelectSubscription('aura')}
@@ -8498,7 +8410,7 @@ if (!isAuthenticated && !hasToken) {
                                         e.target.style.transform = 'translateY(0)';
                                     }}
                                 >
-                                    Select Aura FX
+                                    {t('community.subModal.selectAura')}
                                 </button>
                             </div>
 
@@ -8526,10 +8438,10 @@ if (!isAuthenticated && !hasToken) {
                                     borderRadius: '12px',
                                     fontSize: '11px',
                                     fontWeight: 'bold'
-                                }}>{requiredSubscriptionType === 'a7fx' ? 'REQUIRED' : 'ELITE'}</div>
-                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>A7FX Elite</h3>
+                                }}>{requiredSubscriptionType === 'a7fx' ? t('community.subModal.badgeRequired') : t('community.subModal.badgeElite')}</div>
+                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>{t('community.subModal.eliteCardTitle')}</h3>
                                 <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£250</div>
-                                <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
+                                <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>{t('community.subModal.perMonth')}</div>
                                 <ul style={{ 
                                     textAlign: 'left', 
                                     color: 'rgba(255, 255, 255, 0.8)', 
@@ -8538,12 +8450,12 @@ if (!isAuthenticated && !hasToken) {
                                     paddingLeft: '20px',
                                     listStyle: 'none'
                                 }}>
-                                    <li style={{ marginBottom: '8px' }}>✅ Everything in Aura FX</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Elite-only channels</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Direct founder access</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Daily Briefs</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Weekly Briefs</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Premium AURA AI</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.eliteFeat1')}</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.eliteFeat2')}</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.eliteFeat3')}</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.eliteFeat4')}</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.eliteFeat5')}</li>
+                                    <li style={{ marginBottom: '8px' }}>{t('community.subModal.eliteFeat6')}</li>
                                 </ul>
                                 <button
                                     onClick={() => handleSelectSubscription('a7fx')}
@@ -8577,7 +8489,7 @@ if (!isAuthenticated && !hasToken) {
                                         e.target.style.transform = 'translateY(0)';
                                     }}
                                 >
-                                    Select A7FX Elite
+                                    {t('community.subModal.selectA7fx')}
                                 </button>
                             </div>
                         </div>
@@ -8589,7 +8501,7 @@ if (!isAuthenticated && !hasToken) {
                             marginTop: '20px',
                             marginBottom: 0
                         }}>
-                            Cancel anytime ⬢ No hidden fees ⬢ Switch plans anytime
+                            {t('community.subModal.footerNote')}
                         </p>
                     </div>
                 </div>
@@ -8643,7 +8555,7 @@ if (!isAuthenticated && !hasToken) {
                                             handleEditMessage(contextMenu.messageId);
                                         }}
                                     >
-                                        <FaEdit size={14} /> Edit
+                                        <FaEdit size={14} /> {t('community.context.edit')}
                                     </button>
                                 )}
                                 <button
@@ -8651,13 +8563,13 @@ if (!isAuthenticated && !hasToken) {
                                     onClick={() => {
                                         // Reply functionality - could focus input and add @mention
                                         if (message) {
-                                            setNewMessage(`@${message.sender?.username || 'user'} `);
+                                            setNewMessage(`@${message.sender?.username || t('community.mention.slugFallback')} `);
                                             messageInputRef.current?.focus();
                                         }
                                         setContextMenu(null);
                                     }}
                                 >
-                                    <FaReply size={14} /> Reply
+                                    <FaReply size={14} /> {t('community.context.reply')}
                                 </button>
                                 <button
                                     className="context-menu-item"
@@ -8667,7 +8579,7 @@ if (!isAuthenticated && !hasToken) {
                                         setContextMenu(null);
                                     }}
                                 >
-                                    <FaSmile size={14} /> Add Reaction
+                                    <FaSmile size={14} /> {t('community.context.addReaction')}
                                 </button>
                                 <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '4px 0' }} />
                             </>
@@ -8683,7 +8595,7 @@ if (!isAuthenticated && !hasToken) {
                             }
                         }}
                     >
-                        <FaCopy size={14} /> Copy message text
+                        <FaCopy size={14} /> {t('community.context.copyText')}
                     </button>
                     <button
                         className="context-menu-item"
@@ -8837,7 +8749,7 @@ if (!isAuthenticated && !hasToken) {
                                 margin: 0,
                                 marginBottom: '8px'
                             }}>
-                                Subscription Required
+                                {t('community.accessModal.title')}
                             </h2>
                             <p style={{
                                 color: 'rgba(255, 255, 255, 0.7)',
@@ -8864,7 +8776,7 @@ if (!isAuthenticated && !hasToken) {
                                         lineHeight: '1.6',
                                         margin: '0 0 16px 0'
                                     }}>
-                                        This channel requires an <strong style={{ color: '#8B5CF6' }}>Aura FX Premium</strong> subscription (£99/month) to access.
+                                        {t('community.accessModal.bodyPremium')}
                                     </p>
                                     {lockedChannelInfo.currentRole === 'free' ? (
                                         <div style={{
@@ -8879,14 +8791,14 @@ if (!isAuthenticated && !hasToken) {
                                                 margin: 0,
                                                 fontWeight: '600'
                                             }}>
-                                                Your Status: Free User
+                                                {t('community.accessModal.statusFree')}
                                             </p>
                                             <p style={{
                                                 color: 'rgba(255, 255, 255, 0.8)',
                                                 fontSize: '14px',
                                                 margin: '8px 0 0 0'
                                             }}>
-                                                Upgrade to Premium to unlock this channel and access exclusive trading content.
+                                                {t('community.accessModal.upgradePremium')}
                                             </p>
                                         </div>
                                     ) : (
@@ -8902,14 +8814,14 @@ if (!isAuthenticated && !hasToken) {
                                                 margin: 0,
                                                 fontWeight: '600'
                                             }}>
-                                                Your Status: Premium User
+                                                {t('community.accessModal.statusPremium')}
                                             </p>
                                             <p style={{
                                                 color: 'rgba(255, 255, 255, 0.8)',
                                                 fontSize: '14px',
                                                 margin: '8px 0 0 0'
                                             }}>
-                                                Your subscription may be inactive or expired. Please check your subscription status or renew to access this channel.
+                                                {t('community.accessModal.inactiveSub')}
                                             </p>
                                         </div>
                                     )}
@@ -8922,7 +8834,7 @@ if (!isAuthenticated && !hasToken) {
                                         lineHeight: '1.6',
                                         margin: '0 0 16px 0'
                                     }}>
-                                        This channel requires an <strong style={{ color: '#fbbf24' }}>A7FX Elite</strong> subscription (£250/month) to access.
+                                        {t('community.accessModal.bodyA7fx')}
                                     </p>
                                     {lockedChannelInfo.currentRole === 'free' ? (
                                         <div style={{
@@ -8937,14 +8849,14 @@ if (!isAuthenticated && !hasToken) {
                                                 margin: 0,
                                                 fontWeight: '600'
                                             }}>
-                                                Your Status: Free User
+                                                {t('community.accessModal.statusFree')}
                                             </p>
                                             <p style={{
                                                 color: 'rgba(255, 255, 255, 0.8)',
                                                 fontSize: '14px',
                                                 margin: '8px 0 0 0'
                                             }}>
-                                                Upgrade to A7FX Elite to unlock this channel and access the most exclusive trading content and signals.
+                                                {t('community.accessModal.upgradeElite')}
                                             </p>
                                         </div>
                                     ) : lockedChannelInfo.currentRole === 'premium' ? (
@@ -8960,14 +8872,14 @@ if (!isAuthenticated && !hasToken) {
                                                 margin: 0,
                                                 fontWeight: '600'
                                             }}>
-                                                Your Status: Premium User
+                                                {t('community.accessModal.statusPremium')}
                                             </p>
                                             <p style={{
                                                 color: 'rgba(255, 255, 255, 0.8)',
                                                 fontSize: '14px',
                                                 margin: '8px 0 0 0'
                                             }}>
-                                                This channel requires A7FX Elite. Upgrade from Premium to Elite to access the most exclusive content.
+                                                {t('community.accessModal.premiumToElite')}
                                             </p>
                                         </div>
                                     ) : (
@@ -8983,14 +8895,14 @@ if (!isAuthenticated && !hasToken) {
                                                 margin: 0,
                                                 fontWeight: '600'
                                             }}>
-                                                Your Status: A7FX Elite User
+                                                {t('community.accessModal.statusElite')}
                                             </p>
                                             <p style={{
                                                 color: 'rgba(255, 255, 255, 0.8)',
                                                 fontSize: '14px',
                                                 margin: '8px 0 0 0'
                                             }}>
-                                                Your subscription may be inactive or expired. Please check your subscription status or renew to access this channel.
+                                                {t('community.accessModal.inactiveSub')}
                                             </p>
                                         </div>
                                     )}
@@ -9027,7 +8939,7 @@ if (!isAuthenticated && !hasToken) {
                                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                                 }}
                             >
-                                Cancel
+                                {t('community.cancel')}
                             </button>
                             <button
                                 onClick={() => {
@@ -9056,7 +8968,7 @@ if (!isAuthenticated && !hasToken) {
                                     e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 234, 0.4)';
                                 }}
                             >
-                                Subscribe Now
+                                {t('community.accessModal.subscribeBtn')}
                             </button>
                         </div>
                     </div>
@@ -9080,7 +8992,7 @@ if (!isAuthenticated && !hasToken) {
                     type="button"
                     className="journal-floating-btn"
                     onClick={() => setShowJournalModal(true)}
-                    title="Quick Journal"
+                    title={t('community.journal.quickTitle')}
                 >
                     <FaBook />
                 </button>

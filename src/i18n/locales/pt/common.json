@@ -586,7 +586,7 @@
       "placeholderBody": "📢 **AVISOS**\n\nNovidades da AURA TERMINAL™ aparecerão aqui."
     },
     "levels": {
-      "placeholderBody": "🏆 **LEVEL-UP CELEBRATIONS**\n\nWhen members level up by earning XP, their achievements will be celebrated here!\n\nEarn XP by:\n⬢ Sending messages in the community\n⬢ Sharing files and insights\n⬢ Helping other members\n⬢ Participating in discussions"
+      "placeholderBody": "🏆 **COMEMORAÇÕES DE LEVEL**\n\nConquistas aparecerão aqui ao subir de nível com XP.\n\nGanhe XP:\n⬢ Enviando mensagens\n⬢ Compartilhando arquivos\n⬢ Ajudando membros\n⬢ Participando"
     },
     "rules": {
       "ackRead": "Li e concordo com as regras"
@@ -693,7 +693,22 @@
       "a7fx": "£250/mês"
     },
     "file": {
-      "unknownName": "Desconhecido"
+      "unknownName": "Desconhecido",
+      "unknownFile": "Arquivo desconhecido"
+    },
+    "channelContext": {
+      "editChannel": "Editar canal",
+      "deleteChannel": "Excluir canal"
+    },
+    "categoryContext": {
+      "editCategory": "Editar categoria",
+      "deleteCategory": "Excluir categoria"
+    },
+    "notify": {
+      "mentionTitle": "Você foi mencionado em #{{channel}}",
+      "messageTitle": "Nova mensagem em #{{channel}}",
+      "senderFallback": "Alguém",
+      "unnamedChannel": "um canal"
     }
   },
   "signUp": {

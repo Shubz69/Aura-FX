@@ -586,7 +586,7 @@
       "placeholderBody": "📢 **إعلانات**\n\nستظهر التحديثات المهمة هنا."
     },
     "levels": {
-      "placeholderBody": "🏆 **LEVEL-UP CELEBRATIONS**\n\nWhen members level up by earning XP, their achievements will be celebrated here!\n\nEarn XP by:\n⬢ Sending messages in the community\n⬢ Sharing files and insights\n⬢ Helping other members\n⬢ Participating in discussions"
+      "placeholderBody": "🏆 **احتفالات الصعود**\n\nستُعرض الإنجازات هنا عند ترقية المستوى.\n\nاكسب XP:\n⬢ بإرسال الرسائل\n⬢ بمشاركة الملفات\n⬢ بمساعدة الأعضاء\n⬢ بالمشاركة في النقاشات"
     },
     "rules": {
       "ackRead": "قرأتُ القواعد وأوافق"
@@ -693,7 +693,22 @@
       "a7fx": "250 £/شهر"
     },
     "file": {
-      "unknownName": "غير معروف"
+      "unknownName": "غير معروف",
+      "unknownFile": "ملف غير معروف"
+    },
+    "channelContext": {
+      "editChannel": "تعديل القناة",
+      "deleteChannel": "حذف القناة"
+    },
+    "categoryContext": {
+      "editCategory": "تعديل الفئة",
+      "deleteCategory": "حذف الفئة"
+    },
+    "notify": {
+      "mentionTitle": "تمت الإشارة إليك في #{{channel}}",
+      "messageTitle": "رسالة جديدة في #{{channel}}",
+      "senderFallback": "شخص ما",
+      "unnamedChannel": "قناة"
     }
   },
   "signUp": {
