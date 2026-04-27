@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
 import Api from '../../services/Api';
+import { normalizeChartBars, normalizeApiInterval, timeScaleOptionsForInterval } from '../../lib/charts/lightweightChartData';
 
 const MODES = [
   { id: 'candles', label: 'Candles' },
@@ -37,7 +38,7 @@ function computeReferenceChartHeight(el) {
   return Math.min(620, Math.max(340, Math.floor(vh * 0.36)));
 }
 
-function ReferenceChartPlaceholder({ sparkline }) {
+function ReferenceChartPlaceholder({ sparkline, showGhostTimeframes = true }) {
   const blurId = useId().replace(/:/g, '');
   const hasSpark = Array.isArray(sparkline) && sparkline.length >= 3;
   let pathD = '';
@@ -58,13 +59,15 @@ function ReferenceChartPlaceholder({ sparkline }) {
   }
   return (
     <div className="md-chart-root md-chart-root--ref md-chart-root--ref-fill md-chart-root--placeholder">
-      <div className="md-chart-tf md-chart-tf--disabled" aria-hidden>
-        {TIMEFRAMES_REF.map((tf) => (
-          <span key={tf} className="md-chart-tf-btn md-chart-tf-btn--ghost">
-            {tf}
-          </span>
-        ))}
-      </div>
+      {showGhostTimeframes ? (
+        <div className="md-chart-tf md-chart-tf--disabled" aria-hidden>
+          {TIMEFRAMES_REF.map((tf) => (
+            <span key={tf} className="md-chart-tf-btn md-chart-tf-btn--ghost">
+              {tf}
+            </span>
+          ))}
+        </div>
+      ) : null}
       <div className="md-chart-canvas-wrap md-chart-canvas-wrap--ref-fill md-chart-canvas-wrap--placeholder">
         <div className="md-chart-ph-shimmer" aria-hidden />
         {pathD ? (
@@ -134,12 +137,28 @@ export default function MarketDecoderChart({
   const refetchLive = useCallback(() => {
     const sym = String(requestSymbol || '').trim();
     if (!sym) return;
+    const intervalNorm = normalizeApiInterval(candleInterval);
+    const rangeNorm = String(visibleRange || '3M');
     (async () => {
       try {
-        const { data } = await Api.getMarketChartHistory(sym, { interval: candleInterval, range: visibleRange });
+        const { data } = await Api.getMarketChartHistory(sym, { interval: intervalNorm, range: rangeNorm });
         const b = data?.bars;
-        if (Array.isArray(b) && b.length >= 2) {
-          setLiveBars(b);
+        const normalized = Array.isArray(b) ? normalizeChartBars(b) : [];
+        if (typeof console !== 'undefined' && console.debug) {
+          const first = normalized[0];
+          const last = normalized[normalized.length - 1];
+          console.debug('[AuraChart]', {
+            scope: 'MarketDecoder',
+            symbol: sym,
+            interval: intervalNorm,
+            range: rangeNorm,
+            barCount: normalized.length,
+            firstBarTime: first?.time,
+            lastBarTime: last?.time,
+          });
+        }
+        if (normalized.length >= 2) {
+          setLiveBars(normalized);
         } else {
           setLiveBars([]);
         }
@@ -182,6 +201,7 @@ export default function MarketDecoderChart({
     const bg = referenceStyle ? '#0b0e14' : '#07111f';
     const gridGold = referenceStyle ? 'rgba(212, 175, 55, 0.07)' : 'rgba(140, 175, 255, 0.08)';
 
+    const scaleInterval = useLive ? normalizeApiInterval(candleInterval) : '1D';
     const chart = createChart(el, {
       width: el.clientWidth,
       height,
@@ -194,18 +214,15 @@ export default function MarketDecoderChart({
         vertLines: { color: gridGold },
         horzLines: { color: gridGold },
       },
-      timeScale: { borderColor: referenceStyle ? 'rgba(212,175,55,0.15)' : 'rgba(140,175,255,0.2)' },
+      timeScale: {
+        borderColor: referenceStyle ? 'rgba(212,175,55,0.15)' : 'rgba(140,175,255,0.2)',
+        ...timeScaleOptionsForInterval(scaleInterval),
+      },
       rightPriceScale: { borderColor: referenceStyle ? 'rgba(212,175,55,0.15)' : 'rgba(140,175,255,0.2)' },
     });
     chartRef.current = chart;
 
-    const data = bForChart.map((b) => ({
-      time: Number(b.time),
-      open: Number(b.open),
-      high: Number(b.high),
-      low: Number(b.low),
-      close: Number(b.close),
-    }));
+    const data = normalizeChartBars(bForChart);
 
     const lineData = data.map((b) => ({ time: b.time, value: b.close }));
 
@@ -288,7 +305,15 @@ export default function MarketDecoderChart({
         chart.timeScale().fitContent();
       }
     } else {
-      chart.timeScale().fitContent();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try {
+            chart.timeScale().fitContent();
+          } catch {
+            /* ignore */
+          }
+        });
+      });
     }
 
     const ro = new ResizeObserver(() => {
@@ -308,7 +333,7 @@ export default function MarketDecoderChart({
       chart.remove();
       chartRef.current = null;
     };
-  }, [displayBars, mode, compact, referenceStyle, activeTf, overlays, useLive]);
+  }, [displayBars, mode, compact, referenceStyle, activeTf, overlays, useLive, candleInterval, visibleRange]);
 
   if (!displayBars || displayBars.length < 2) {
     if (referenceStyle && useLive) {
@@ -320,6 +345,7 @@ export default function MarketDecoderChart({
                 key={c.apiInterval}
                 type="button"
                 role="tab"
+                aria-selected={candleInterval === c.apiInterval}
                 data-testid={c.testId}
                 className={`md-chart-tf-btn${candleInterval === c.apiInterval ? ' md-chart-tf-btn--active' : ''}`}
                 onClick={() => {
@@ -336,6 +362,7 @@ export default function MarketDecoderChart({
                 key={c.label}
                 type="button"
                 role="tab"
+                aria-selected={visibleRange === c.label}
                 data-testid={c.testId}
                 className={`md-chart-tf-btn${visibleRange === c.label ? ' md-chart-tf-btn--active' : ''}`}
                 onClick={() => setVisibleRange(c.label)}
@@ -346,7 +373,7 @@ export default function MarketDecoderChart({
           </div>
           <div className="md-chart-canvas-wrap md-chart-canvas-wrap--ref-fill">
             {seed || placeholderSparkline ? (
-              <ReferenceChartPlaceholder sparkline={placeholderSparkline} />
+              <ReferenceChartPlaceholder sparkline={placeholderSparkline} showGhostTimeframes={false} />
             ) : (
               <p className="md-decoder-small md-mse-note">Loading chart data…</p>
             )}
@@ -390,6 +417,7 @@ export default function MarketDecoderChart({
                 key={c.apiInterval}
                 type="button"
                 role="tab"
+                aria-selected={candleInterval === c.apiInterval}
                 data-testid={c.testId}
                 className={`md-chart-tf-btn${candleInterval === c.apiInterval ? ' md-chart-tf-btn--active' : ''}`}
                 onClick={() => {
@@ -406,6 +434,7 @@ export default function MarketDecoderChart({
                 key={c.label}
                 type="button"
                 role="tab"
+                aria-selected={visibleRange === c.label}
                 data-testid={c.testId}
                 className={`md-chart-tf-btn${visibleRange === c.label ? ' md-chart-tf-btn--active' : ''}`}
                 onClick={() => setVisibleRange(c.label)}

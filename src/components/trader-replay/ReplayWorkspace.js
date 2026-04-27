@@ -20,6 +20,7 @@ import ReplayPremiumNudge from './ReplayPremiumNudge';
 import ReplayCopyExportBar from './ReplayCopyExportBar';
 import ReplayPackagePrep from './ReplayPackagePrep';
 import ReplayNarrativePrep from './ReplayNarrativePrep';
+import { normalizeApiInterval } from '../../lib/charts/lightweightChartData';
 
 function executionAverage(s) {
   const a = Number(s.entryTiming) || 0;
@@ -142,7 +143,7 @@ export default function ReplayWorkspace({
           <div className="aura-tr-chart-frame">
             <LightweightInstrumentChart
               symbol={session.symbol || 'OANDA:EURUSD'}
-              interval={session.interval || '15'}
+              interval={normalizeApiInterval(session.interval || '15')}
               range={session.chartRange || '3M'}
               height={compactTimeline ? 300 : 420}
               className="trader-suite-chart-frame"

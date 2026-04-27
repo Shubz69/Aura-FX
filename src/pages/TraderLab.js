@@ -34,6 +34,7 @@ import {
   CHART_PATH_TRADER_LAB,
 } from '../lib/chartUserRequest';
 import { validateMarketDecoderSections } from '../lib/trader-deck/marketDecoderExport';
+import { normalizeApiInterval } from '../lib/charts/lightweightChartData';
 import '../styles/trader-deck/TraderLabLayout.css';
 
 const INSTRUMENTS = [
@@ -133,6 +134,10 @@ const DEFAULT_FORM = {
   mistakeTags: [],
   traderThesisUpdatedAt: null,
   decoderExport: null,
+  /** Candle timeframe for `/api/market/chart-history` (1, 15, 60, 240, 1D). */
+  chartInterval: '60',
+  /** Visible history range (1D … 1Y). */
+  chartRange: '3M',
 };
 
 const TRADER_LAB_LOCAL_DRAFT_KEY = 'aura_trader_lab_last_draft_v1';
@@ -205,6 +210,9 @@ function normalizeSession(session = {}) {
   if (!raw.conviction && raw.confidence != null) {
     merged.conviction = confidenceToConviction(raw.confidence);
   }
+  merged.chartInterval = normalizeApiInterval(raw.chartInterval ?? merged.chartInterval);
+  const rangeRaw = String(raw.chartRange || merged.chartRange || '3M').toUpperCase();
+  merged.chartRange = CHART_RANGES.includes(rangeRaw) ? rangeRaw : merged.chartRange || '3M';
   return merged;
 }
 
@@ -286,8 +294,6 @@ export default function TraderLab() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [chartInterval, setChartInterval] = useState('60');
-  const [chartRange, setChartRange] = useState('3M');
   const [lastSavedAt, setLastSavedAt] = useState(null);
   const decoderImportAppliedRef = React.useRef(false);
 
@@ -340,7 +346,7 @@ export default function TraderLab() {
       setForm((f) => ({ ...f, chartSymbol: payload.chartSymbol }));
     }
     if (payload.interval) {
-      setChartInterval(intervalForTraderLab(payload.interval));
+      setForm((f) => ({ ...f, chartInterval: normalizeApiInterval(intervalForTraderLab(payload.interval)) }));
     }
   }, [loading, location.pathname]);
 
@@ -962,13 +968,15 @@ export default function TraderLab() {
                           <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
                       </select>
-                      <div className="tlab-tf-group" role="group" aria-label="Timeframe">
+                      <div className="tlab-tf-group" role="tablist" aria-label="Candle timeframe">
                         {CHART_INTERVALS.map((tf) => (
                           <button
                             key={tf.value}
                             type="button"
-                            className={`tlab-tf${chartInterval === tf.value ? ' tlab-tf--active' : ''}`}
-                            onClick={() => setChartInterval(tf.value)}
+                            role="tab"
+                            aria-selected={form.chartInterval === tf.value}
+                            className={`tlab-tf${form.chartInterval === tf.value ? ' tlab-tf--active' : ''}`}
+                            onClick={() => updateField('chartInterval', tf.value)}
                           >
                             {tf.label}
                           </button>
@@ -976,8 +984,8 @@ export default function TraderLab() {
                       </div>
                       <select
                         className="tlab-select"
-                        value={chartRange}
-                        onChange={(e) => setChartRange(e.target.value)}
+                        value={form.chartRange}
+                        onChange={(e) => updateField('chartRange', e.target.value)}
                         aria-label="Chart range"
                       >
                         {CHART_RANGES.map((r) => (
@@ -1008,8 +1016,8 @@ export default function TraderLab() {
                   <div className="tlab-chart-host tlab-chart-host--fill">
                     <LightweightInstrumentChart
                       symbol={form.chartSymbol}
-                      interval={chartInterval}
-                      range={chartRange}
+                      interval={normalizeApiInterval(form.chartInterval)}
+                      range={form.chartRange}
                       fillParent
                       className="trader-suite-chart-frame"
                     />

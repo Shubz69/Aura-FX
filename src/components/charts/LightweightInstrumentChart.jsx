@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
 import Api from '../../services/Api';
+import { normalizeChartBars, normalizeApiInterval, timeScaleOptionsForInterval } from '../../lib/charts/lightweightChartData';
 
 function computeChartHeight(containerEl, fillParent, fixedHeight) {
   if (fixedHeight != null && Number.isFinite(Number(fixedHeight))) return Math.max(200, Number(fixedHeight));
@@ -35,7 +36,6 @@ export default function LightweightInstrumentChart({
   const [status, setStatus] = useState('loading');
   const [errorMessage, setErrorMessage] = useState('');
   const [bars, setBars] = useState(null);
-  const lastRequestKeyRef = useRef('');
 
   useEffect(() => {
     let cancelled = false;
@@ -46,24 +46,15 @@ export default function LightweightInstrumentChart({
       setErrorMessage('No symbol');
       return undefined;
     }
-    const reqKey = JSON.stringify({
-      s: sym,
-      i: String(interval || '60'),
-      r: String(range || '3M'),
-      f: from ? String(from) : '',
-      t: to ? String(to) : '',
-    });
-    if (lastRequestKeyRef.current === reqKey && status === 'ready') {
-      return undefined;
-    }
-    lastRequestKeyRef.current = reqKey;
+    const intervalNorm = normalizeApiInterval(interval);
+    const rangeNorm = String(range || '3M');
     setStatus('loading');
     setErrorMessage('');
     setBars(null);
     const timer = setTimeout(() => {
       Api.getMarketChartHistory(sym, {
-        interval: String(interval || '60'),
-        range: String(range || '3M'),
+        interval: intervalNorm,
+        range: rangeNorm,
         ...(from ? { from } : {}),
         ...(to ? { to } : {}),
       })
@@ -71,7 +62,8 @@ export default function LightweightInstrumentChart({
           if (cancelled) return;
           const data = res?.data;
           const list = Array.isArray(data?.bars) ? data.bars : [];
-          if (!data?.success || list.length < 2) {
+          const normalized = normalizeChartBars(list);
+          if (!data?.success || normalized.length < 2) {
             const diag = data?.diagnostics;
             if (diag && typeof console !== 'undefined' && console.warn) {
               console.warn('[LightweightInstrumentChart] chart empty or insufficient bars', diag);
@@ -81,7 +73,20 @@ export default function LightweightInstrumentChart({
             setBars(null);
             return;
           }
-          setBars(list);
+          if (typeof console !== 'undefined' && console.debug) {
+            const first = normalized[0];
+            const last = normalized[normalized.length - 1];
+            console.debug('[AuraChart]', {
+              scope: 'LightweightInstrumentChart',
+              symbol: sym,
+              interval: intervalNorm,
+              range: rangeNorm,
+              barCount: normalized.length,
+              firstBarTime: first?.time,
+              lastBarTime: last?.time,
+            });
+          }
+          setBars(normalized);
           setStatus('ready');
         })
         .catch((err) => {
@@ -99,7 +104,7 @@ export default function LightweightInstrumentChart({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [symbol, interval, range, from, to, status]);
+  }, [symbol, interval, range, from, to]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -109,6 +114,7 @@ export default function LightweightInstrumentChart({
     const gridGold = 'rgba(212, 175, 55, 0.07)';
 
     const h = computeChartHeight(rootRef.current, fillParent, height);
+    const intervalNorm = normalizeApiInterval(interval);
     const chart = createChart(wrap, {
       width: wrap.clientWidth,
       height: h,
@@ -121,17 +127,20 @@ export default function LightweightInstrumentChart({
         vertLines: { color: gridGold },
         horzLines: { color: gridGold },
       },
-      timeScale: { borderColor: 'rgba(212,175,55,0.15)' },
+      timeScale: {
+        borderColor: 'rgba(212,175,55,0.15)',
+        ...timeScaleOptionsForInterval(intervalNorm),
+      },
       rightPriceScale: { borderColor: 'rgba(212,175,55,0.15)' },
     });
     chartRef.current = chart;
 
     const data = bars.map((b) => ({
-      time: Number(b.time),
-      open: Number(b.open),
-      high: Number(b.high),
-      low: Number(b.low),
-      close: Number(b.close),
+      time: b.time,
+      open: b.open,
+      high: b.high,
+      low: b.low,
+      close: b.close,
     }));
 
     const series = chart.addCandlestickSeries({
@@ -143,7 +152,15 @@ export default function LightweightInstrumentChart({
       wickDownColor: '#ff6b81',
     });
     series.setData(data);
-    chart.timeScale().fitContent();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        try {
+          chart.timeScale().fitContent();
+        } catch {
+          /* ignore */
+        }
+      });
+    });
 
     const ro = new ResizeObserver(() => {
       if (!wrapRef.current || !chartRef.current) return;
@@ -158,7 +175,7 @@ export default function LightweightInstrumentChart({
       chart.remove();
       chartRef.current = null;
     };
-  }, [bars, status, fillParent, height]);
+  }, [bars, status, fillParent, height, interval]);
 
   const tradingViewHref =
     symbol && showTradingViewLink

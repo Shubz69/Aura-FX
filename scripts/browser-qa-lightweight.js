@@ -1,5 +1,27 @@
 /* eslint-disable no-console */
+const path = require('path');
+const fs = require('fs');
 const { chromium } = require('playwright');
+
+const QA_REPORTS_DIR = path.join(__dirname, '..', 'e2e', 'reports');
+
+function ensureReportsDir() {
+  try {
+    fs.mkdirSync(QA_REPORTS_DIR, { recursive: true });
+  } catch {
+    /* ignore */
+  }
+}
+
+/** @param {import('playwright').Response} resp */
+function parseChartHistoryRequest(resp) {
+  const u = new URL(resp.request().url());
+  return {
+    symbol: u.searchParams.get('symbol'),
+    interval: u.searchParams.get('interval'),
+    range: u.searchParams.get('range'),
+  };
+}
 
 const BASE_URL = process.env.QA_BASE_URL || 'http://localhost:3000';
 const CHART_STORAGE_KEY = 'aura_chart_user_request_v1';
@@ -149,22 +171,33 @@ async function run() {
   for (const [, sym] of SYMBOLS) {
     await page.selectOption('.tlab-chart-toolbar select.tlab-select', sym);
     for (const [tfLabel, tfVal] of LAB_TFS) {
-      const respPromise = waitChartResp(page, sym, tfVal, { range: DEFAULT_CHART_RANGE });
-      await page.locator('.tlab-chart-toolbar--terminal .tlab-tf', { hasText: tfLabel }).first().click();
       let body = null;
       let status = null;
       let firstBarTime = null;
       let lastBarTime = null;
       let barCount = null;
-      try {
-        const resp = await respPromise;
-        status = resp.status();
-        body = await resp.json();
-        barCount = Array.isArray(body?.bars) ? body.bars.length : null;
-        firstBarTime = barCount ? body.bars[0].time : null;
-        lastBarTime = barCount ? body.bars[barCount - 1].time : null;
-      } catch (e) {
-        issues.push({ page: 'TraderLab', symbol: sym, interval: tfVal, error: String(e.message || e) });
+      let lastErr = null;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        if (attempt > 0) await page.waitForTimeout(1200);
+        const respPromise = waitChartResp(page, sym, tfVal, { range: DEFAULT_CHART_RANGE });
+        await page.locator('.tlab-chart-toolbar--terminal .tlab-tf', { hasText: tfLabel }).first().click();
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          const resp = await respPromise;
+          status = resp.status();
+          // eslint-disable-next-line no-await-in-loop
+          body = await resp.json();
+          barCount = Array.isArray(body?.bars) ? body.bars.length : null;
+          firstBarTime = barCount ? body.bars[0].time : null;
+          lastBarTime = barCount ? body.bars[barCount - 1].time : null;
+          lastErr = null;
+          break;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      if (lastErr) {
+        issues.push({ page: 'TraderLab', symbol: sym, interval: tfVal, error: String(lastErr.message || lastErr) });
         matrix.push({
           page: 'TraderLab',
           symbol: sym,
@@ -236,6 +269,85 @@ async function run() {
     });
   } catch (e) {
     issues.push({ page: 'TraderLab', symbol: 'OANDA:EURUSD', interval: '60+1Y', error: String(e.message || e) });
+  }
+
+  // Chart control matrix: single active TF, interval/range independence, both query params on chart-history
+  try {
+    ensureReportsDir();
+    await page.goto(`${BASE_URL}/trader-deck/trade-validator/trader-lab?qa_test_mode=1`, { waitUntil: 'domcontentloaded' });
+    await dismissGdpr(page);
+    await page.waitForTimeout(500);
+    await page.selectOption('.tlab-chart-toolbar select[aria-label="Instrument"]', 'OANDA:EURUSD');
+
+    const labActiveTf = await page.locator('.tlab-chart-toolbar--terminal .tlab-tf.tlab-tf--active').count();
+    if (labActiveTf !== 1) {
+      issues.push({
+        page: 'TraderLab',
+        chartControl: true,
+        error: `expected exactly 1 active candle interval button, got ${labActiveTf}`,
+      });
+    }
+
+    const rA = waitChartResp(page, 'OANDA:EURUSD', '15', { range: '3M' });
+    await page.locator('.tlab-chart-toolbar--terminal .tlab-tf', { hasText: '15m' }).first().click();
+    const respA = await rA;
+    const pA = parseChartHistoryRequest(respA);
+    if (!pA.interval || !pA.range) {
+      issues.push({ page: 'TraderLab', chartControl: true, error: 'chart-history missing interval or range', params: pA });
+    }
+    if (!intervalsMatch(pA.interval, '15') || pA.range !== '3M') {
+      issues.push({ page: 'TraderLab', chartControl: true, error: '15m+3M request mismatch', params: pA });
+    }
+
+    const rB = waitChartResp(page, 'OANDA:EURUSD', '15', { range: '1W' });
+    await page.getByLabel('Chart range').selectOption('1W');
+    const respB = await rB;
+    const pB = parseChartHistoryRequest(respB);
+    if (!intervalsMatch(pB.interval, '15') || pB.range !== '1W') {
+      issues.push({
+        page: 'TraderLab',
+        chartControl: true,
+        error: 'changing range must keep interval (expected 15 + 1W)',
+        params: pB,
+      });
+    }
+
+    const rC = waitChartResp(page, 'OANDA:EURUSD', '240', { range: '1W' });
+    await page.locator('.tlab-chart-toolbar--terminal .tlab-tf', { hasText: '4H' }).first().click();
+    const respC = await rC;
+    const pC = parseChartHistoryRequest(respC);
+    if (!intervalsMatch(pC.interval, '240') || pC.range !== '1W') {
+      issues.push({
+        page: 'TraderLab',
+        chartControl: true,
+        error: 'changing interval must keep range (expected 240 + 1W)',
+        params: pC,
+      });
+    }
+
+    const labActiveTfAfter = await page.locator('.tlab-chart-toolbar--terminal .tlab-tf.tlab-tf--active').count();
+    if (labActiveTfAfter !== 1) {
+      issues.push({
+        page: 'TraderLab',
+        chartControl: true,
+        error: `after changes expected 1 active interval, got ${labActiveTfAfter}`,
+      });
+    }
+
+    const canvasBox = page.locator('.tlab-chart-host--fill .trader-suite-chart-frame canvas').first();
+    if (await canvasBox.isVisible().catch(() => false)) {
+      await canvasBox.screenshot({ path: path.join(QA_REPORTS_DIR, 'qa-chart-control-trader-lab-canvas.png') });
+    }
+    await page.screenshot({ path: path.join(QA_REPORTS_DIR, 'qa-chart-control-trader-lab.png'), fullPage: false });
+
+    matrix.push({
+      page: 'TraderLab',
+      chartControlChecks: 'intervalRangeIndependence',
+      chartHistoryParams: [pA, pB, pC],
+      screenshots: ['qa-chart-control-trader-lab.png', 'qa-chart-control-trader-lab-canvas.png'],
+    });
+  } catch (e) {
+    issues.push({ page: 'TraderLab', chartControl: true, error: String(e.message || e) });
   }
 
   // Replay checks (register chart response listener before navigation to avoid missing the fetch)
@@ -372,18 +484,98 @@ async function run() {
     issues.push({ page: 'TraderReplay', symbol: 'OANDA:EURUSD', interval: '60+1Y', error: String(e.message || e) });
   }
 
+  // Replay chart control: range change preserves interval; interval change preserves range; both params on requests
+  try {
+    ensureReportsDir();
+    await page.goto(`${BASE_URL}/?qa_test_mode=1`, { waitUntil: 'domcontentloaded' });
+    await dismissGdpr(page);
+    await page.evaluate(([k, p]) => sessionStorage.setItem(k, JSON.stringify(p)), [CHART_STORAGE_KEY, {
+      chartSymbol: 'OANDA:EURUSD',
+      interval: '15',
+      path: '/aura-analysis/dashboard/trader-replay',
+      ts: Date.now(),
+    }]);
+    const boot = waitChartResp(page, 'OANDA:EURUSD', '15', { range: '3M' });
+    await page.goto(`${BASE_URL}/aura-analysis/dashboard/trader-replay?qa_test_mode=1`, { waitUntil: 'domcontentloaded' });
+    await dismissGdpr(page);
+    await page.waitForFunction(() => !document.querySelector('.aura-tr-loading'), { timeout: 45000 }).catch(() => {});
+    await page.locator('.aura-tr-chart-frame').first().waitFor({ state: 'visible', timeout: 45000 });
+    const bootResp = await boot;
+    const bootParams = parseChartHistoryRequest(bootResp);
+    if (!bootParams.interval || !bootParams.range) {
+      issues.push({ page: 'TraderReplay', chartControl: true, error: 'initial chart-history missing interval or range', params: bootParams });
+    }
+
+    const rRc1 = waitChartResp(page, 'OANDA:EURUSD', '15', { range: '6M' });
+    await page.getByLabel('Range', { exact: true }).selectOption('6M');
+    const respRc1 = await rRc1;
+    const qRc1 = parseChartHistoryRequest(respRc1);
+    if (!intervalsMatch(qRc1.interval, '15') || qRc1.range !== '6M') {
+      issues.push({
+        page: 'TraderReplay',
+        chartControl: true,
+        error: 'Replay: range change should keep interval 15 and set range 6M',
+        params: qRc1,
+      });
+    }
+
+    const rRc2 = waitChartResp(page, 'OANDA:EURUSD', '60', { range: '6M' });
+    await page.getByLabel('Chart timeframe').selectOption('60');
+    const respRc2 = await rRc2;
+    const qRc2 = parseChartHistoryRequest(respRc2);
+    if (!intervalsMatch(qRc2.interval, '60') || qRc2.range !== '6M') {
+      issues.push({
+        page: 'TraderReplay',
+        chartControl: true,
+        error: 'Replay: interval change should keep range 6M',
+        params: qRc2,
+      });
+    }
+
+    const replayCanvas = page.locator('.aura-tr-chart-frame .trader-suite-chart-frame canvas').first();
+    if (await replayCanvas.isVisible().catch(() => false)) {
+      await replayCanvas.screenshot({ path: path.join(QA_REPORTS_DIR, 'qa-chart-control-replay-canvas.png') });
+    }
+    await page.screenshot({ path: path.join(QA_REPORTS_DIR, 'qa-chart-control-replay.png'), fullPage: false });
+
+    matrix.push({
+      page: 'TraderReplay',
+      chartControlChecks: 'intervalRangeIndependence',
+      chartHistoryParams: [bootParams, qRc1, qRc2],
+      screenshots: ['qa-chart-control-replay.png', 'qa-chart-control-replay-canvas.png'],
+    });
+  } catch (e) {
+    issues.push({ page: 'TraderReplay', chartControl: true, error: String(e.message || e) });
+  }
+
   // Market Decoder controls: candle timeframe + visible range should each drive chart-history request.
   try {
     await page.goto(`${BASE_URL}/trader-deck?qa_test_mode=1`, { waitUntil: 'domcontentloaded' });
     await dismissGdpr(page);
-    await page.getByRole('button', { name: 'MARKET INTELLIGENCE' }).click();
-    await page.getByRole('button', { name: 'MARKET DECODER' }).click();
+    // Trader Desk uses i18n keys (e.g. "Market Intelligence") — avoid hard-coded ALL CAPS copy.
+    const intelBtn = page.getByRole('button', { name: /market intelligence/i }).first();
+    await intelBtn.waitFor({ state: 'visible', timeout: 60000 });
+    await intelBtn.click();
+    const decoderTab = page.getByRole('button', { name: /market decoder/i }).first();
+    await decoderTab.waitFor({ state: 'visible', timeout: 60000 });
+    await decoderTab.click();
     const decodeResp = page.waitForResponse((r) => r.url().includes('/api/trader-deck/market-decoder') && r.request().method() === 'GET', {
       timeout: 120000,
     }).catch(() => null);
     await page.getByRole('button', { name: 'Decode', exact: true }).first().click();
     await decodeResp;
     await page.waitForTimeout(1200);
+    ensureReportsDir();
+    const ghostTfRows = await page.locator('.md-chart-root--ref .md-chart-tf--disabled').count();
+    if (ghostTfRows > 0) {
+      issues.push({
+        page: 'MarketDecoder',
+        chartControl: true,
+        error: `duplicate/ghost timeframe row present (md-chart-tf--disabled count=${ghostTfRows})`,
+      });
+    }
+    await page.screenshot({ path: path.join(QA_REPORTS_DIR, 'qa-chart-control-market-decoder.png'), fullPage: false }).catch(() => {});
+
     const decoderControlsLocator = page.locator(
       '[data-testid="md-candle-tf-1h"], [data-testid="md-candle-tf-1m"], .md-chart-tf[aria-label=\"Candle timeframe\"] .md-chart-tf-btn'
     );
