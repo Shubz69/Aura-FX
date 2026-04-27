@@ -51,7 +51,9 @@ function classifyEventType(text) {
     return 'logistics';
   if (/\b(canal)\b/.test(t) && /\b(congestion|container|freight|transit|queue|delay|backlog)\b/.test(t))
     return 'logistics';
-  if (/\b(maritime|shipping|port|vessel|navy|strait|cargo ship|container ship|tanker|dry bulk|freight vessel|ais\b)\b/.test(t))
+  if (
+    /\b(maritime|shipping|port|vessel|navy|strait|submarine|submersible|cargo ship|container ship|tanker|dry bulk|freight vessel|ais\b)\b/.test(t)
+  )
     return 'maritime';
   if (/\b(airspace|flight|aviation|airport|faa|notam|diversion|ground stop|airspace closure|ads-b|transponder)\b/.test(t))
     return 'aviation';

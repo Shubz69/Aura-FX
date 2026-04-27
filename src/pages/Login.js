@@ -2,11 +2,14 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import "../styles/Login.css";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from 'react-i18next';
 import { RiTerminalBoxFill } from 'react-icons/ri';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRedirect';
 import { armPostLoginTransition } from '../utils/postLoginTransition';
+import LanguageSelector from '../components/LanguageSelector';
+import { getPreferredSiteLanguage } from '../utils/siteLanguage';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -26,6 +29,8 @@ const Login = () => {
     const redirectedAuthedRef = useRef(false);
     const location = useLocation();
     const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const { t } = useTranslation();
+    const [siteLanguage, setSiteLanguage] = useState(getPreferredSiteLanguage());
     const nextParam = queryParams.get('next');
     const planParam = queryParams.get('plan');
     
@@ -272,10 +277,10 @@ const Login = () => {
             
             setCountdown(30);
             setCanResendCode(false);
-            alert("Code resent to your email.");
+            alert(t('auth.resendSuccessAlert'));
             setIsLoading(false);
         } catch (err) {
-            setError(err.response?.data?.message || err.message || "Failed to resend code. Please try again.");
+            setError(err.response?.data?.message || err.message || t('auth.resendFailed'));
             setIsLoading(false);
         }
     };
@@ -296,18 +301,21 @@ const Login = () => {
                         <div className="logo-icon">
                             <RiTerminalBoxFill />
                         </div>
-                        <h1 className="brand-title">Why Aura Terminal™</h1>
+                        <h1 className="brand-title">{t('auth.mfaHeaderBrand')}</h1>
                     </div>
                     
-                    <h2 className="mfa-title">MFA verification</h2>
-                    <p className="mfa-info">Please enter the 6-digit code sent to your email.</p>
-                    <p className="email-sent">Code sent to: {email}</p>
+                    <div style={{ marginBottom: 12 }}>
+                        <LanguageSelector value={siteLanguage} onChange={setSiteLanguage} />
+                    </div>
+                    <h2 className="mfa-title">{t('auth.mfaTitle')}</h2>
+                    <p className="mfa-info">{t('auth.mfaInfo')}</p>
+                    <p className="email-sent">{t('auth.codeSentTo')} {email}</p>
                     
                     {error && <div className="error-message">{error}</div>}
                     
                     <form onSubmit={handleVerifyMfa}>
                         <div className="form-group">
-                            <label htmlFor="mfa-code">Verification Code</label>
+                            <label htmlFor="mfa-code">{t('auth.verificationCode')}</label>
                             <div className="input-wrapper">
                                 <input 
                                     type="text"
@@ -316,7 +324,7 @@ const Login = () => {
                                     onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
                                     maxLength={6}
                                     required
-                                    placeholder="Enter 6-digit code"
+                                    placeholder={t('auth.enterSixDigitCode')}
                                 />
                             </div>
                         </div>
@@ -326,7 +334,7 @@ const Login = () => {
                             className="login-button"
                             disabled={isLoading || mfaCode.length !== 6}
                         >
-                            {isLoading ? 'VERIFYING...' : 'VERIFY CODE'}
+                            {isLoading ? t('auth.verifyingCta') : t('auth.verifyCodeCta')}
                         </button>
                         
                         <div className="mfa-actions">
@@ -336,7 +344,7 @@ const Login = () => {
                                 onClick={handleResendCode}
                                 disabled={!canResendCode || isLoading}
                             >
-                                {canResendCode ? 'Resend Code' : `Resend Code (${countdown}s)`}
+                                {canResendCode ? t('auth.resendCode') : t('auth.resendCodeSeconds', { seconds: countdown })}
                             </button>
                             
                             <button 
@@ -344,7 +352,7 @@ const Login = () => {
                                 className="back-btn"
                                 onClick={returnToLogin}
                             >
-                                Back to Login
+                                {t('auth.backToLogin')}
                             </button>
                         </div>
                     </form>
@@ -360,13 +368,16 @@ const Login = () => {
             <div className="login-form-container">
                 
                 <div className="form-header">
-                    <h2 className="login-title">Sign in</h2>
-                    <p className="login-subtitle">Access your trading account</p>
+                    <h2 className="login-title">{t('auth.signIn')}</h2>
+                    <p className="login-subtitle">{t('auth.accessTradingAccount')}</p>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                    <LanguageSelector value={siteLanguage} onChange={setSiteLanguage} />
                 </div>
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label htmlFor="email" className="form-label">Email or username</label>
+                        <label htmlFor="email" className="form-label">{t('auth.emailOrUsername')}</label>
                         <input 
                             type="text"
                             id="email"
@@ -377,7 +388,7 @@ const Login = () => {
                             }}
                             required
                             autoComplete="username"
-                            placeholder="Email or username"
+                            placeholder={t('auth.emailOrUsername')}
                             className={`form-input ${emailError ? 'input-error' : ''}`}
                             aria-invalid={emailError}
                             aria-describedby={emailError ? 'email-error' : undefined}
@@ -385,7 +396,7 @@ const Login = () => {
                     </div>
                     
                     <div className="form-group">
-                        <label htmlFor="password" className="form-label">Password</label>
+                        <label htmlFor="password" className="form-label">{t('auth.password')}</label>
                         <input 
                             type="password"
                             id="password"
@@ -398,7 +409,7 @@ const Login = () => {
                             }}
                             required
                             autoComplete="current-password"
-                            placeholder="Enter your password"
+                            placeholder={t('auth.password')}
                             className={`form-input ${passwordError ? 'input-error' : ''}`}
                             aria-invalid={passwordError}
                             aria-describedby={passwordError ? 'password-error' : emailError ? 'email-error' : undefined}
@@ -427,16 +438,16 @@ const Login = () => {
                         className="login-button"
                         disabled={isLoading}
                     >
-                        {isLoading ? 'AUTHENTICATING...' : 'LOGIN'}
+                        {isLoading ? t('auth.authenticating') : t('auth.loginCta')}
                     </button>
                     
                     <Link to="/forgot-password" className="forgot-password">
-                        Forgot Password?
+                        {t('auth.forgotPassword')}
                     </Link>
                 </form>
                 
                 <div className="register-link">
-                    <p>Don't have an account? <Link to="/register">Sign Up</Link></p>
+                    <p>{t('auth.dontHaveAccount')} <Link to="/register">{t('auth.signUp')}</Link></p>
                 </div>
             </div>
         </div>

@@ -1,7 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import './LoadingSpinner.css';
 
 const LoadingSpinner = () => {
+    const { t } = useTranslation();
     return (
         <div className="loading-screen">
             {/* Animated background with binary code - more dense */}
@@ -23,12 +25,12 @@ const LoadingSpinner = () => {
             
             {/* Main content */}
             <div className="loading-content">
-                <div className="loading-title">AURA TERMINAL™</div>
-                <div className="loading-subtitle">WEALTH REVOLUTION</div>
+                <div className="loading-title">{t('loadingSpinner.title')}</div>
+                <div className="loading-subtitle">{t('loadingSpinner.subtitle')}</div>
                 
                 {/* Loading progress */}
                 <div className="loading-progress">
-                    <div className="loading-text">SYSTEM INITIALIZING... <span className="loading-percentage">63%</span></div>
+                    <div className="loading-text">{t('loadingSpinner.initializing')} <span className="loading-percentage">{t('loadingSpinner.percent')}</span></div>
                     <div className="loading-bar">
                         <div className="loading-bar-fill"></div>
                     </div>

@@ -77,6 +77,7 @@ function rowToEvent(r) {
     corroboration_count: r.corroboration_count != null ? Number(r.corroboration_count) : 0,
     risk_bias: r.risk_bias || 'neutral',
     why_matters: r.why_matters || null,
+    why_it_matters: r.why_matters || null,
     normalized_topic: r.normalized_topic || null,
     story_signature: r.story_signature || null,
     source_meta: parseJsonObject(r.source_meta),

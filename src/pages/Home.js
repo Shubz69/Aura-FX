@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/Home.css";
 import { useAuth } from "../context/AuthContext";
@@ -71,13 +72,43 @@ const StatItem = ({ number, label, fill = '75%' }) => {
 ══════════════════════════════════════════════════════════ */
 const IPAD_SLIDE_BASE = `${process.env.PUBLIC_URL || ''}/images/ipad-slides`;
 
-const SLIDES = [
-    { image: `${IPAD_SLIDE_BASE}/journal.png`,      tag: '📓 Trading Journal',    title: 'Your Daily Trading Discipline',  subtitle: 'Streaks, checklists, and session notes—built to keep execution consistent.',                           statBadge: 'Streaks & tasks', chartColor: '#F8C37D' },
-    { image: `${IPAD_SLIDE_BASE}/traderdesk.png`,  tag: '📊 Market Intelligence', title: 'Briefs, Bias & Macro Context',   subtitle: 'Session-ready views of structure, drivers, and what matters before London & New York.',              statBadge: 'Live context',    chartColor: '#EAA960' },
-    { image: `${IPAD_SLIDE_BASE}/auraAI.png`,      tag: '🤖 Aura AI',             title: 'Premium Trading Copilot',        subtitle: 'Ask for analysis, risk framing, and ideas—grounded in live data when available.',                    statBadge: 'Aura AI',         chartColor: '#FDE8C4' },
-    { image: `${IPAD_SLIDE_BASE}/community.png`,    tag: '🏆 Community',           title: 'Elite Trading Community',        subtitle: 'Structured channels, real moderators, and traders who take the craft seriously.',                    statBadge: '1,200+ Members',  chartColor: '#D48D44' },
-    { image: `${IPAD_SLIDE_BASE}/courses.png`,    tag: '🎓 Education',           title: 'Courses & Mentorship',           subtitle: 'Progressive curriculum plus optional 1-to-1 mentorship for committed traders.',                     statBadge: 'C & S',           chartColor: '#EABB80' },
-];
+const SLIDE_IDS = ['journal', 'traderdesk', 'auraAI', 'community', 'courses'];
+const SLIDE_IMAGE_FILES = {
+    journal: 'journal.png',
+    traderdesk: 'traderdesk.png',
+    auraAI: 'auraAI.png',
+    community: 'community.png',
+    courses: 'courses.png',
+};
+const SLIDE_CHART_COLORS = {
+    journal: '#F8C37D',
+    traderdesk: '#EAA960',
+    auraAI: '#FDE8C4',
+    community: '#D48D44',
+    courses: '#EABB80',
+};
+
+function buildSlides(t) {
+    return SLIDE_IDS.map((id) => {
+        const s = t(`home.slides.${id}`, { returnObjects: true });
+        return {
+            image: `${IPAD_SLIDE_BASE}/${SLIDE_IMAGE_FILES[id]}`,
+            tag: s.tag,
+            title: s.title,
+            subtitle: s.subtitle,
+            statBadge: s.statBadge,
+            chartColor: SLIDE_CHART_COLORS[id],
+        };
+    });
+}
+
+function translateBiasLabel(label, t) {
+    const x = String(label || '').toLowerCase();
+    if (x === 'bullish') return t('home.desk.biasBullish');
+    if (x === 'bearish') return t('home.desk.biasBearish');
+    if (x === 'neutral') return t('home.desk.biasNeutral');
+    return label;
+}
 
 const MiniSparkline = ({ color = '#EAA960' }) => {
     const pts = [0.30,0.42,0.38,0.55,0.50,0.66,0.60,0.74,0.70,0.84,0.80,0.92,0.88,0.96];
@@ -99,7 +130,7 @@ const MiniSparkline = ({ color = '#EAA960' }) => {
 /* ══════════════════════════════════════════════════════════
    3D FLOATING iPAD
 ══════════════════════════════════════════════════════════ */
-const FloatingIPad = () => {
+const FloatingIPad = ({ slides, dragHint }) => {
     const sceneRef  = useRef(null);
     const wrapRef   = useRef(null);
     const bodyRef   = useRef(null);
@@ -110,13 +141,13 @@ const FloatingIPad = () => {
     const advanceTo = (idx) => {
         setActiveSlide(idx);
         clearInterval(slideTimerRef.current);
-        slideTimerRef.current = setInterval(() => setActiveSlide(p => (p+1) % SLIDES.length), 4000);
+        slideTimerRef.current = setInterval(() => setActiveSlide(p => (p+1) % slides.length), 4000);
     };
 
     useEffect(() => {
-        slideTimerRef.current = setInterval(() => setActiveSlide(p => (p+1) % SLIDES.length), 4000);
+        slideTimerRef.current = setInterval(() => setActiveSlide(p => (p+1) % slides.length), 4000);
         return () => clearInterval(slideTimerRef.current);
-    }, []);
+    }, [slides.length]);
 
     useEffect(() => {
         const scene  = sceneRef.current;
@@ -394,7 +425,7 @@ const FloatingIPad = () => {
     return (
         <div className="ipad-scene" ref={sceneRef} style={{ cursor: 'none' }}>
             <div ref={cursorRef} className="ipad-cursor" style={{ width:'8px', height:'8px', transition:'opacity .22s ease, width .15s ease, height .15s ease' }} />
-            <div className="ipad-drag-hint"><span className="ipad-drag-hint-icon">✦</span> Drag to rotate</div>
+            <div className="ipad-drag-hint"><span className="ipad-drag-hint-icon">✦</span> {dragHint}</div>
 
             <div className="ipad-wrap" ref={wrapRef} style={{ position:'relative', width:'100%', transformStyle:'preserve-3d', transform:'translateY(0px) rotateX(7deg) rotateY(-13deg)', willChange:'transform' }}>
                 <div className="ipad-body" ref={bodyRef}>
@@ -406,7 +437,7 @@ const FloatingIPad = () => {
 
                     {/* ── SCREEN ── */}
                     <div className="ipad-screen">
-                        {SLIDES.map((slide, i) => (
+                        {slides.map((slide, i) => (
                             <div key={i} className={`ipad-slide${i === activeSlide ? ' active' : ''}`}>
 
                                 {/* Image — uses <img> so object-fit: contain works properly */}
@@ -438,7 +469,7 @@ const FloatingIPad = () => {
                     </div>
 
                     <div className="ipad-dots">
-                        {SLIDES.map((_,i) => (
+                        {slides.map((_,i) => (
                             <div key={i} className={`ipad-dot${i===activeSlide?' active':''}`} onClick={()=>advanceTo(i)} />
                         ))}
                     </div>
@@ -686,11 +717,12 @@ const computeLabMetrics = (sessions = []) => {
 };
 
 /** Semi-circular desk pulse: needle sweeps left (bearish) → up (neutral) → right (bullish). */
-const DeskPulseGauge = ({ biasLabel = 'Neutral', pulsePct }) => {
+const DeskPulseGauge = ({ biasReadout, biasLabelInternal = '', pulsePct }) => {
+    const { t } = useTranslation();
     let pct =
         typeof pulsePct === 'number' && Number.isFinite(pulsePct) ? pulsePct : null;
     if (pct == null) {
-        const b = String(biasLabel || '').toLowerCase();
+        const b = String(biasLabelInternal || '').toLowerCase();
         if (/\bbull|long\b/i.test(b)) pct = 78;
         else if (/\bbear|short\b/i.test(b)) pct = 22;
         else pct = 50;
@@ -701,7 +733,7 @@ const DeskPulseGauge = ({ biasLabel = 'Neutral', pulsePct }) => {
     const toneClass = pct >= 58 ? 'is-bull' : pct <= 42 ? 'is-bear' : '';
     return (
         <div className="desk2-pulse">
-            <span className="desk2-pulse__kicker">Market pulse</span>
+            <span className="desk2-pulse__kicker">{t('home.desk.marketPulse')}</span>
             <svg viewBox="0 0 200 118" className="desk2-pulse__svg" aria-hidden>
                 <defs>
                     <linearGradient id="desk2PulseArc" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -726,27 +758,27 @@ const DeskPulseGauge = ({ biasLabel = 'Neutral', pulsePct }) => {
                 </g>
             </svg>
             <div className="desk2-pulse__labels">
-                <span>Bearish</span>
-                <span>Neutral</span>
-                <span>Bullish</span>
+                <span>{t('home.desk.bearishLabel')}</span>
+                <span>{t('home.desk.neutralLabel')}</span>
+                <span>{t('home.desk.bullishLabel')}</span>
             </div>
             <p className={`desk2-pulse__readout${toneClass ? ` ${toneClass}` : ''}`}>
-                {biasLabel}
+                {biasReadout}
             </p>
         </div>
     );
 };
 
-const headlineTimeAgo = (iso) => {
+const headlineTimeAgo = (iso, t) => {
     if (!iso) return '';
-    const t = new Date(iso).getTime();
-    if (Number.isNaN(t)) return '';
-    const m = Math.floor((Date.now() - t) / 60000);
-    if (m < 1) return 'just now';
-    if (m < 60) return `${m}m ago`;
+    const ts = new Date(iso).getTime();
+    if (Number.isNaN(ts)) return '';
+    const m = Math.floor((Date.now() - ts) / 60000);
+    if (m < 1) return t('time.headlineJustNow');
+    if (m < 60) return t('time.minutesAgo', { count: m });
     const h = Math.floor(m / 60);
-    if (h < 48) return `${h}h ago`;
-    return `${Math.floor(h / 24)}d ago`;
+    if (h < 48) return t('time.hoursAgo', { count: h });
+    return t('time.daysAgo', { count: Math.floor(h / 24) });
 };
 
 const WatchlistRowSpark = ({ up }) => {
@@ -798,6 +830,7 @@ const normalizeDeskWatchlistRow = (row, fallbackSymbol) => {
 };
 
 const DeskWatchlist = () => {
+    const { t } = useTranslation();
     const { getPricesArray, getHealth, stale, loading } = useLivePrices({
         symbols: HOME_DASHBOARD_MARKET_POOL,
     });
@@ -841,28 +874,28 @@ const DeskWatchlist = () => {
             ? new Date(Number(lastSnapMs)).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
             : health.lastFetchTime
               ? new Date(health.lastFetchTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-              : '—';
+              : t('common.dash');
     const statusParts = [];
-    if (loading && !health.lastFetchTime) statusParts.push('Loading…');
-    if (stale || meta.responseStale || meta.staleFallback) statusParts.push('Stale / delayed snapshot');
-    if (meta.staleFallback) statusParts.push('Serving last good prices');
-    if (meta.serverRouteCacheHit === false) statusParts.push('Fresh server build');
-    if (meta.serverRouteCacheHit === true && !meta.staleFallback) statusParts.push('CDN / route cache');
+    if (loading && !health.lastFetchTime) statusParts.push(t('home.desk.watchlistMetaLoading'));
+    if (stale || meta.responseStale || meta.staleFallback) statusParts.push(t('home.desk.watchlistMetaStale'));
+    if (meta.staleFallback) statusParts.push(t('home.desk.watchlistMetaServing'));
+    if (meta.serverRouteCacheHit === false) statusParts.push(t('home.desk.watchlistMetaFresh'));
+    if (meta.serverRouteCacheHit === true && !meta.staleFallback) statusParts.push(t('home.desk.watchlistMetaCdn'));
     const sourceHint =
-        statusParts.length > 0 ? statusParts.join(' · ') : meta.symbolCount != null ? `${meta.symbolCount} symbols in snapshot` : 'Live snapshot';
+        statusParts.length > 0 ? statusParts.join(' · ') : meta.symbolCount != null ? t('home.desk.watchlistMetaSymbols', { count: meta.symbolCount }) : t('home.desk.watchlistMetaLiveSnapshot');
 
     return (
         <div className="desk2-wl">
             <div className="desk2-wl__meta" aria-live="polite">
-                <span className="desk2-wl__meta-upd">As of {updatedLabel}</span>
-                <span className="desk2-wl__meta-hint" title="Prices from /api/markets/snapshot (Twelve Data–first when available). % vs prior close or session rules from server.">
+                <span className="desk2-wl__meta-upd">{t('home.desk.watchlistAsOf', { time: updatedLabel })}</span>
+                <span className="desk2-wl__meta-hint" title={t('home.desk.watchlistPricesHintTitle')}>
                     {sourceHint}
                 </span>
             </div>
             <div className="desk2-wl__head">
-                <span>Market</span>
-                <span>Price</span>
-                <span>Chg%</span>
+                <span>{t('home.desk.tableMarket')}</span>
+                <span>{t('home.desk.tablePrice')}</span>
+                <span>{t('home.desk.tableChgPct')}</span>
                 <span />
             </div>
             {rows.map((row) => {
@@ -871,18 +904,22 @@ const DeskWatchlist = () => {
                 const loadingRow = row.loading || !row.price;
                 const absHint =
                     !loadingRow && row.change != null
-                        ? `Session / day vs reference: ${row.changeSign === '-' ? '-' : ''}${row.change} (${formatPercent(pct, 2)}%)`
+                        ? t('home.desk.rowHintSession', {
+                              sign: row.changeSign === '-' ? '-' : '',
+                              change: row.change,
+                              pct: formatPercent(pct, 2),
+                          })
                         : undefined;
                 const rowStale = row.isMissing || row.source === 'fallback' || row.delayed || row.quoteUnavailable;
                 return (
                     <div className={`desk2-wl__row${rowStale ? ' desk2-wl__row--alt' : ''}`} key={row.symbol}>
                         <span className="desk2-wl__sym">
                             {row.displayName || row.symbol}
-                            {rowStale ? <span className="desk2-wl__badge">{row.isMissing ? 'missing' : 'alt'}</span> : null}
+                            {rowStale ? <span className="desk2-wl__badge">{row.isMissing ? t('home.desk.badgeMissing') : t('home.desk.badgeAlt')}</span> : null}
                         </span>
-                        <span className="desk2-wl__px">{loadingRow ? '—' : row.price}</span>
+                        <span className="desk2-wl__px">{loadingRow ? t('common.dash') : row.price}</span>
                         <span className={`desk2-wl__chg ${up ? 'is-up' : 'is-down'}`} title={absHint}>
-                            {loadingRow ? '—' : `${up ? '+' : ''}${formatPercent(pct, 2)}`}
+                            {loadingRow ? t('common.dash') : `${up ? '+' : ''}${formatPercent(pct, 2)}`}
                         </span>
                         <WatchlistRowSpark up={up} />
                     </div>
@@ -893,12 +930,13 @@ const DeskWatchlist = () => {
 };
 
 const MiniEquitySpark = ({ points = [] }) => {
+    const { t } = useTranslation();
     const series = !points.length ? [] : points.length === 1 ? [points[0], points[0]] : points;
     const W = 280;
     const H = 48;
     const pad = 4;
     if (!series.length) {
-        return <div className="desk2-mini-equity desk2-mini-equity--empty">No equity series yet</div>;
+        return <div className="desk2-mini-equity desk2-mini-equity--empty">{t('home.desk.noEquitySeries')}</div>;
     }
     const vals = series.map((p) => p.y);
     const minY = Math.min(...vals, 0);
@@ -937,6 +975,7 @@ const ScoreRing = ({ label, value }) => {
 };
 
 const TerminalEquityChart = ({ points = [] }) => {
+    const { t } = useTranslation();
     const W = 560;
     const H = 160;
     const pad = 8;
@@ -945,9 +984,9 @@ const TerminalEquityChart = ({ points = [] }) => {
     if (!vals.length) {
         return (
             <div className="terminal-equity">
-                <svg viewBox={`0 0 ${W} ${H}`} className="terminal-equity__svg" preserveAspectRatio="none" role="img" aria-label="Equity curve">
+                <svg viewBox={`0 0 ${W} ${H}`} className="terminal-equity__svg" preserveAspectRatio="none" role="img" aria-label={t('home.desk.equityEmpty')}>
                     <text x={W / 2} y={H / 2} textAnchor="middle" fill="var(--text-dim)" fontSize="12" fontFamily="var(--font)">
-                        Log trades to see your equity curve
+                        {t('home.desk.equityEmpty')}
                     </text>
                 </svg>
             </div>
@@ -973,10 +1012,10 @@ const TerminalEquityChart = ({ points = [] }) => {
     return (
         <div className="terminal-equity">
             <div className="terminal-equity__meta">
-                <span className="terminal-equity__meta-label">Net curve</span>
+                <span className="terminal-equity__meta-label">{t('home.desk.netCurve')}</span>
                 <strong className={toneClass}>{formatSignedCurrency(net)}</strong>
             </div>
-            <svg viewBox={`0 0 ${W} ${H}`} className="terminal-equity__svg" preserveAspectRatio="none" role="img" aria-label="Equity curve">
+            <svg viewBox={`0 0 ${W} ${H}`} className="terminal-equity__svg" preserveAspectRatio="none" role="img" aria-label={t('home.desk.netCurve')}>
                 <defs>
                     <linearGradient id="terminalEquityFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="rgba(234,169,96,0.35)" />
@@ -1040,6 +1079,7 @@ const TerminalEquityChart = ({ points = [] }) => {
 };
 
 const LoggedInDashboardHome = ({ user, token, navigate }) => {
+    const { t } = useTranslation();
     const { hasAnyConnection, loading: auraConnectionsLoading } = useAuraConnection();
     const [dashboardLoading, setDashboardLoading] = useState(true);
     const [dashboardData, setDashboardData] = useState({
@@ -1126,16 +1166,16 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
         return analytics.monthToDatePnl;
     }, [hasAnyConnection, dashboardData.auraPnl.monthlyPnl, analytics.monthToDatePnl]);
 
-    const rewardLabel = useMemo(() => {
-        if (!lab) return '—';
-        if (lab.resultR == null || Number.isNaN(Number(lab.resultR))) return 'TBD';
+    const rewardKey = useMemo(() => {
+        if (!lab) return 'empty';
+        if (lab.resultR == null || Number.isNaN(Number(lab.resultR))) return 'tbd';
         const r = Number(lab.resultR);
-        if (r >= 2) return 'High';
-        if (r >= 1) return 'Moderate';
-        return 'Building';
+        if (r >= 2) return 'high';
+        if (r >= 1) return 'moderate';
+        return 'building';
     }, [lab]);
 
-    const riskLabel = lab?.riskLevel && String(lab.riskLevel).trim() ? lab.riskLevel : 'Moderate';
+    const riskLabel = lab?.riskLevel && String(lab.riskLevel).trim() ? lab.riskLevel : t('home.desk.rewardModerate');
 
     /**
      * Live P&L from MetaTrader when linked; otherwise show month-to-date from logged Aura Analysis trades.
@@ -1149,13 +1189,13 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
 
     const scenarioLines = useMemo(() => {
         const lines = [];
-        if (lab?.targetPrice) lines.push(`Target near ${lab.targetPrice}`);
-        if (lab?.stopLoss) lines.push(`Risk / stop region ${lab.stopLoss}`);
+        if (lab?.targetPrice) lines.push(t('home.desk.scenarioTarget', { price: lab.targetPrice }));
+        if (lab?.stopLoss) lines.push(t('home.desk.scenarioStop', { level: lab.stopLoss }));
         if (lab?.todaysFocus) lines.push(lab.todaysFocus.slice(0, 120));
         if (lab?.whatDoISee && lines.length < 3) lines.push(lab.whatDoISee.slice(0, 120));
-        if (lines.length === 0) lines.push('Define structure and levels in Trader Lab.');
+        if (lines.length === 0) lines.push(t('home.desk.scenarioDefault'));
         return lines.slice(0, 3);
-    }, [lab]);
+    }, [lab, t]);
 
     const disciplineScore = Math.round(
         journal.monthPct != null ? journal.monthPct : analytics.avgChecklistPct ?? analytics.consistencyScore ?? 72
@@ -1173,8 +1213,8 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
         }
         if (analytics.averageR > 0) return formatNumber(analytics.averageR * 10, 1);
         if (analytics.totalTrades) return formatNumber(Math.min(99, analytics.winRate * 0.65), 1);
-        return '—';
-    }, [lab, analytics]);
+        return t('common.dash');
+    }, [lab, analytics, t]);
 
     const consistencyRing = Math.round(
         journal.monthPct != null ? journal.monthPct : analytics.winRate || disciplineScore
@@ -1191,12 +1231,12 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
     }, [lab]);
 
     const expectancyHint = useMemo(() => {
-        if (!analytics.settledTrades) return 'Log closed trades in Aura Analysis to measure edge and R-multiples.';
-        if (analytics.averageR >= 0.8) return 'Strong average R profile on closed trades.';
-        if (analytics.averageR >= 0.2) return 'Positive R-multiple trend — refine selectivity.';
-        if (analytics.averageR >= 0) return 'Flat average R — tighten invalidations.';
-        return 'Negative R profile — reduce size and review setups.';
-    }, [analytics]);
+        if (!analytics.settledTrades) return t('home.desk.expectancyEmpty');
+        if (analytics.averageR >= 0.8) return t('home.desk.expectancyStrong');
+        if (analytics.averageR >= 0.2) return t('home.desk.expectancyPositive');
+        if (analytics.averageR >= 0) return t('home.desk.expectancyFlat');
+        return t('home.desk.expectancyNegative');
+    }, [analytics, t]);
 
     const journalBullets = useMemo(() => {
         const out = [];
@@ -1210,77 +1250,86 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                 .forEach((x) => out.push(x.length > 100 ? `${x.slice(0, 97)}…` : x));
         }
         scenarioLines.slice(0, Math.max(0, 3 - out.length)).forEach((x) => out.push(x));
-        if (out.length === 0) out.push('Add journal notes to see a qualitative read-through here.');
+        if (out.length === 0) out.push(t('home.desk.journalNotesEmpty'));
         return out.slice(0, 4);
-    }, [dashboardData.journalDaily, scenarioLines]);
+    }, [dashboardData.journalDaily, scenarioLines, t]);
 
     if (dashboardLoading) {
         return (
             <div className="terminal-dashboard">
                 <div className="terminal-dashboard__loading glass-card">
-                    <span className="terminal-dashboard__loading-kicker">Loading</span>
-                    <h2>Preparing Aura Terminal™…</h2>
-                    <p>Syncing Aura Analysis, journal, lab sessions, and market snapshot.</p>
+                    <span className="terminal-dashboard__loading-kicker">{t('home.desk.loadingKicker')}</span>
+                    <h2>{t('home.desk.loadingTitle')}</h2>
+                    <p>{t('home.desk.loadingSubtitle')}</p>
                 </div>
             </div>
         );
     }
+
+    const rewardHintKey =
+        rewardKey === 'empty' || rewardKey === 'tbd'
+            ? null
+            : ({ high: 'home.desk.rewardHigh', moderate: 'home.desk.rewardModerate', building: 'home.desk.rewardBuilding' }[rewardKey] || null);
 
     return (
         <div className="terminal-dashboard">
             <header className="terminal-dashboard__topbar glass-card">
                 <p className="terminal-dashboard__welcome">{welcomeShort}</p>
                 <div className="terminal-dashboard__top-right">
-                    <span className="terminal-dashboard__wordmark">AURA TERMINAL™</span>
+                    <span className="terminal-dashboard__wordmark">{t('home.desk.wordmark')}</span>
                 </div>
             </header>
 
-            <div className="home-desk2" aria-label="Aura Terminal™ desk">
+            <div className="home-desk2" aria-label={t('home.desk.ariaLabel')}>
                 <div className="home-desk2__cols">
                     <aside className="home-desk2__col home-desk2__col--left">
                         <section className="desk2-card desk2-card--pulse glass-card">
-                            <DeskPulseGauge biasLabel={biasDisplay} pulsePct={deskBias.pct} />
+                            <DeskPulseGauge
+                                biasReadout={translateBiasLabel(biasDisplay, t)}
+                                biasLabelInternal={biasDisplay}
+                                pulsePct={deskBias.pct}
+                            />
                         </section>
                         <section className="desk2-card glass-card">
-                            <span className="desk2-card__label">Watchlist</span>
+                            <span className="desk2-card__label">{t('home.desk.watchlist')}</span>
                             <DeskWatchlist />
                         </section>
                         <section className="desk2-card glass-card">
-                            <span className="desk2-card__label">Live metrics</span>
+                            <span className="desk2-card__label">{t('home.desk.liveMetrics')}</span>
                             <div className="desk2-metrics-shell">
                                 <div
                                     className={`desk2-metrics-grid${liveMetricsLocked ? ' desk2-metrics-grid--muted' : ''}`}
                                     aria-hidden={liveMetricsLocked}
                                 >
                                     <div>
-                                        <span>P&amp;L</span>
+                                        <span>{t('home.desk.pnl')}</span>
                                         <strong className={liveDeskPnl >= 0 ? 'is-positive' : 'is-negative'}>
-                                            {liveMetricsLocked ? '—' : formatSignedCurrency(liveDeskPnl)}
+                                            {liveMetricsLocked ? t('common.dash') : formatSignedCurrency(liveDeskPnl)}
                                         </strong>
                                     </div>
                                     <div>
-                                        <span>Win rate</span>
+                                        <span>{t('home.desk.winRate')}</span>
                                         <strong>
                                             {liveMetricsLocked
-                                                ? '—'
+                                                ? t('common.dash')
                                                 : analytics.totalTrades
                                                   ? formatPercent(analytics.winRate, 0)
-                                                  : '—'}
+                                                  : t('common.dash')}
                                         </strong>
                                     </div>
                                     <div>
-                                        <span>Win streak</span>
-                                        <strong>{liveMetricsLocked ? '—' : analytics.activeWinStreak ?? 0}</strong>
+                                        <span>{t('home.desk.winStreak')}</span>
+                                        <strong>{liveMetricsLocked ? t('common.dash') : analytics.activeWinStreak ?? 0}</strong>
                                     </div>
                                 </div>
                                 {liveMetricsLocked ? (
                                     <div className="desk2-frost" role="status">
                                         <p className="desk2-frost__t">
-                                            {auraConnectionsLoading ? 'Checking link…' : 'Connect MetaTrader (Aura Analysis)'}
+                                            {auraConnectionsLoading ? t('home.desk.checkingLink') : t('home.desk.connectMt')}
                                         </p>
                                         {!auraConnectionsLoading ? (
                                             <Link to="/aura-analysis/ai" className="desk2-frost__a">
-                                                Connection Hub <FaArrowRight aria-hidden />
+                                                {t('home.desk.connectionHub')} <FaArrowRight aria-hidden />
                                             </Link>
                                         ) : null}
                                     </div>
@@ -1290,57 +1339,57 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                         </section>
 
                         <section className="desk2-card desk2-card--fill desk2-card--metrics-extra glass-card">
-                            <span className="desk2-card__label">Execution metrics</span>
+                            <span className="desk2-card__label">{t('home.desk.executionMetrics')}</span>
                             <div className="desk2-mini-metrics">
                                 <div>
-                                    <span>Total trades</span>
-                                    <strong>{analytics.totalTrades || '—'}</strong>
+                                    <span>{t('home.desk.totalTrades')}</span>
+                                    <strong>{analytics.totalTrades || t('common.dash')}</strong>
                                 </div>
                                 <div>
-                                    <span>Profit factor</span>
-                                    <strong>{analytics.settledTrades ? analytics.profitFactorDisplay : '—'}</strong>
+                                    <span>{t('home.desk.profitFactor')}</span>
+                                    <strong>{analytics.settledTrades ? analytics.profitFactorDisplay : t('common.dash')}</strong>
                                 </div>
                                 <div>
-                                    <span>Avg R</span>
+                                    <span>{t('home.desk.avgRLabel')}</span>
                                     <strong>
-                                        {analytics.settledTrades ? formatNumber(analytics.averageR, 2) : '—'}
+                                        {analytics.settledTrades ? formatNumber(analytics.averageR, 2) : t('common.dash')}
                                     </strong>
                                 </div>
                                 <div>
-                                    <span>Max drawdown</span>
+                                    <span>{t('home.desk.maxDrawdown')}</span>
                                     <strong>
                                         {analytics.settledTrades
                                             ? formatSignedCurrency(-Math.abs(analytics.maxDrawdown || 0))
-                                            : '—'}
+                                            : t('common.dash')}
                                     </strong>
                                 </div>
                             </div>
                             <div className="desk2-mini-metrics">
                                 <div>
-                                    <span>Best pair</span>
-                                    <strong>{analytics.bestPair || '—'}</strong>
+                                    <span>{t('home.desk.bestPair')}</span>
+                                    <strong>{analytics.bestPair || t('common.dash')}</strong>
                                 </div>
                                 <div>
-                                    <span>Worst pair</span>
-                                    <strong>{analytics.worstPair || '—'}</strong>
+                                    <span>{t('home.desk.worstPair')}</span>
+                                    <strong>{analytics.worstPair || t('common.dash')}</strong>
                                 </div>
                                 <div>
-                                    <span>Operator accounts</span>
-                                    <strong>{dashboardData.validatorAccounts?.length ?? '—'}</strong>
+                                    <span>{t('home.desk.operatorAccounts')}</span>
+                                    <strong>{dashboardData.validatorAccounts?.length ?? t('common.dash')}</strong>
                                 </div>
                             </div>
                             <Link to="/aura-analysis/dashboard/overview" className="desk2-inline-link">
-                                Aura Analysis overview <FaArrowRight aria-hidden />
+                                {t('home.desk.auraAnalysisOverview')} <FaArrowRight aria-hidden />
                             </Link>
                         </section>
                     </aside>
 
                     <main className="home-desk2__col home-desk2__col--center">
                         <section className="desk2-card glass-card">
-                            <span className="desk2-card__label">Trader desk</span>
+                            <span className="desk2-card__label">{t('home.desk.traderDesk')}</span>
                             <div className="desk2-trio">
                                 <div className="desk2-trio__cell">
-                                    <span>Bias</span>
+                                    <span>{t('home.desk.bias')}</span>
                                     <strong
                                         className={
                                             biasDisplay === 'Bearish'
@@ -1350,23 +1399,25 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                                   : ''
                                         }
                                     >
-                                        {biasDisplay}
+                                        {translateBiasLabel(biasDisplay, t)}
                                     </strong>
                                 </div>
                                 <div className="desk2-trio__cell">
-                                    <span>Conviction</span>
+                                    <span>{t('home.desk.conviction')}</span>
                                     <strong>{convictionDisplay}</strong>
                                 </div>
                                 <div className="desk2-trio__cell">
-                                    <span>Risk</span>
+                                    <span>{t('home.desk.risk')}</span>
                                     <strong>{riskLabel}</strong>
-                                    {rewardLabel && rewardLabel !== '—' && rewardLabel !== 'TBD' ? (
-                                        <span className="desk2-trio__hint">R-profile: {rewardLabel}</span>
+                                    {rewardHintKey ? (
+                                        <span className="desk2-trio__hint">
+                                            {t('home.desk.rProfile')} {t(rewardHintKey)}
+                                        </span>
                                     ) : null}
                                 </div>
                             </div>
                             <div className="desk2-scen">
-                                <span className="desk2-scen__lab">Scenarios</span>
+                                <span className="desk2-scen__lab">{t('home.desk.scenarios')}</span>
                                 <ul>
                                     {scenarioLines.map((line) => (
                                         <li key={line}>{line}</li>
@@ -1374,53 +1425,53 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                 </ul>
                             </div>
                             <button type="button" className="desk2-cta" onClick={() => navigate('/trader-deck')}>
-                                Open desk <FaArrowRight aria-hidden />
+                                {t('home.desk.openDesk')} <FaArrowRight aria-hidden />
                             </button>
                         </section>
 
                         <section className="desk2-card glass-card">
-                            <span className="desk2-card__label">Latest headlines</span>
+                            <span className="desk2-card__label">{t('home.desk.latestHeadlines')}</span>
                             <ul className="desk2-news">
                                 {(dashboardData.headlines || []).slice(0, 4).map((a, i) => (
                                     <li key={`${a.headline || i}-${i}`}>
                                         {a.url ? (
                                             <a href={a.url} target="_blank" rel="noopener noreferrer" className="desk2-news__link">
-                                                {a.headline || 'Article'}
+                                                {a.headline || t('common.article')}
                                             </a>
                                         ) : (
-                                            <span className="desk2-news__text">{a.headline || '—'}</span>
+                                            <span className="desk2-news__text">{a.headline || t('common.dash')}</span>
                                         )}
-                                        <span className="desk2-news__time">{headlineTimeAgo(a.publishedAt)}</span>
+                                        <span className="desk2-news__time">{headlineTimeAgo(a.publishedAt, t)}</span>
                                     </li>
                                 ))}
                             </ul>
                             {!dashboardData.headlines?.length ? (
-                                <p className="desk2-muted">Market headlines will load when the news feed is available.</p>
+                                <p className="desk2-muted">{t('home.desk.headlinesEmpty')}</p>
                             ) : null}
                         </section>
 
                         <section className="desk2-card glass-card">
-                            <span className="desk2-card__label">Edge snapshot</span>
+                            <span className="desk2-card__label">{t('home.desk.edgeSnapshot')}</span>
                             <div className="desk2-mini-metrics">
                                 <div>
-                                    <span>Checklist avg</span>
+                                    <span>{t('home.desk.checklistAvg')}</span>
                                     <strong>
                                         {analytics.avgChecklistPct != null
                                             ? `${Math.round(analytics.avgChecklistPct)}%`
-                                            : '—'}
+                                            : t('common.dash')}
                                     </strong>
                                 </div>
                                 <div>
-                                    <span>Avg R</span>
-                                    <strong>{analytics.settledTrades ? `${formatNumber(analytics.averageR, 2)}R` : '—'}</strong>
+                                    <span>{t('home.desk.avgRShort')}</span>
+                                    <strong>{analytics.settledTrades ? `${formatNumber(analytics.averageR, 2)}R` : t('common.dash')}</strong>
                                 </div>
                                 <div>
-                                    <span>Loss streak</span>
-                                    <strong>{analytics.settledTrades ? analytics.activeLossStreak : '—'}</strong>
+                                    <span>{t('home.desk.lossStreak')}</span>
+                                    <strong>{analytics.settledTrades ? analytics.activeLossStreak : t('common.dash')}</strong>
                                 </div>
                                 <div>
-                                    <span>Valid setups</span>
-                                    <strong>{lab ? `${validatorCompletion.pct}%` : '—'}</strong>
+                                    <span>{t('home.desk.validSetups')}</span>
+                                    <strong>{lab ? `${validatorCompletion.pct}%` : t('common.dash')}</strong>
                                 </div>
                             </div>
                             <p className="desk2-muted">{expectancyHint}</p>
@@ -1429,33 +1480,33 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                 className="desk2-cta desk2-cta--ghost"
                                 onClick={() => navigate('/trader-deck/trade-validator/calculator')}
                             >
-                                Open calculator <FaArrowRight aria-hidden />
+                                {t('home.desk.openCalculator')} <FaArrowRight aria-hidden />
                             </button>
                         </section>
 
                         <section className="desk2-card desk2-card--chart glass-card">
-                            <span className="desk2-card__label">Performance</span>
+                            <span className="desk2-card__label">{t('home.desk.performance')}</span>
                             <TerminalEquityChart points={analytics.equityCurve} />
                         </section>
                     </main>
 
                     <aside className="home-desk2__col home-desk2__col--right">
                         <section className="desk2-card glass-card">
-                            <span className="desk2-card__label">Desk posture</span>
+                            <span className="desk2-card__label">{t('home.desk.deskPosture')}</span>
                             <div className="desk2-postures">
                                 <Link
                                     to="/trader-deck"
                                     className={`desk2-posture ${biasDisplay === 'Bullish' ? 'is-active' : ''}`}
                                 >
-                                    <span className="desk2-posture__tag">Bullish</span>
-                                    <span className="desk2-posture__sub">Setups identified</span>
+                                    <span className="desk2-posture__tag">{t('home.desk.biasBullish')}</span>
+                                    <span className="desk2-posture__sub">{t('home.desk.setupsIdentified')}</span>
                                 </Link>
                                 <Link
                                     to="/trader-deck"
                                     className={`desk2-posture ${biasDisplay === 'Bearish' ? 'is-active' : ''}`}
                                 >
-                                    <span className="desk2-posture__tag">Bearish</span>
-                                    <span className="desk2-posture__sub">Wait for confirmation</span>
+                                    <span className="desk2-posture__tag">{t('home.desk.biasBearish')}</span>
+                                    <span className="desk2-posture__sub">{t('home.desk.waitConfirm')}</span>
                                 </Link>
                                 <Link
                                     to="/trader-deck/trade-validator"
@@ -1463,89 +1514,89 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
                                         biasDisplay !== 'Bullish' && biasDisplay !== 'Bearish' ? 'is-active' : ''
                                     }`}
                                 >
-                                    <span className="desk2-posture__tag">No trade</span>
-                                    <span className="desk2-posture__sub">Stay on sidelines</span>
+                                    <span className="desk2-posture__tag">{t('home.desk.noTrade')}</span>
+                                    <span className="desk2-posture__sub">{t('home.desk.staySidelines')}</span>
                                 </Link>
                             </div>
                         </section>
 
                         <section className="desk2-card glass-card">
-                            <span className="desk2-card__label">Behaviour &amp; discipline</span>
+                            <span className="desk2-card__label">{t('home.desk.behaviourDiscipline')}</span>
                             <div className="desk2-rings">
-                                <ScoreRing label="Discipline" value={disciplineScore} />
-                                <ScoreRing label="Consistency" value={consistencyRing} />
-                                <ScoreRing label="Behaviour" value={behaviourScore} />
+                                <ScoreRing label={t('home.desk.discipline')} value={disciplineScore} />
+                                <ScoreRing label={t('home.desk.consistency')} value={consistencyRing} />
+                                <ScoreRing label={t('home.desk.behaviour')} value={behaviourScore} />
                             </div>
                         </section>
 
                         <section className="desk2-card desk2-card--fill glass-card">
-                            <span className="desk2-card__label">Reports &amp; DNA</span>
+                            <span className="desk2-card__label">{t('home.desk.reportsDna')}</span>
                             <div className="desk2-insight-grid">
                                 <div>
-                                    <span>Report data</span>
+                                    <span>{t('home.desk.reportData')}</span>
                                     <strong>
                                         {dashboardData.reportsEligibility?.dataDays != null
                                             ? `${dashboardData.reportsEligibility.dataDays}d`
-                                            : '—'}
+                                            : t('common.dash')}
                                     </strong>
                                 </div>
                                 <div>
-                                    <span>Chart checks</span>
+                                    <span>{t('home.desk.chartChecks')}</span>
                                     <strong>
                                         {dashboardData.reportsEligibility?.chartCheckCount != null
                                             ? dashboardData.reportsEligibility.chartCheckCount
-                                            : '—'}
+                                            : t('common.dash')}
                                     </strong>
                                 </div>
                                 <div>
-                                    <span>Month tasks</span>
+                                    <span>{t('home.desk.monthTasks')}</span>
                                     <strong>
-                                        {journal.monthTotal != null ? `${journal.monthCompleted}/${journal.monthTotal}` : '—'}
+                                        {journal.monthTotal != null ? `${journal.monthCompleted}/${journal.monthTotal}` : t('common.dash')}
                                     </strong>
                                 </div>
                                 <div>
-                                    <span>Plan</span>
+                                    <span>{t('home.desk.plan')}</span>
                                     <strong className="desk2-insight-plan">
-                                        {String(dashboardData.reportsEligibility?.role || '—')}
+                                        {String(dashboardData.reportsEligibility?.role || t('common.dash'))}
                                     </strong>
                                 </div>
                             </div>
                             <div className="desk2-insight-links">
-                                <Link to="/reports">Monthly reports</Link>
-                                <Link to="/reports/dna">Trader DNA</Link>
+                                <Link to="/reports">{t('home.desk.monthlyReports')}</Link>
+                                <Link to="/reports/dna">{t('home.desk.traderDna')}</Link>
                             </div>
                         </section>
 
                         <section className="desk2-card desk2-card--fill glass-card">
-                            <span className="desk2-card__label">Journal snapshot</span>
+                            <span className="desk2-card__label">{t('home.desk.journalSnapshot')}</span>
                             <ul className="desk2-trades">
-                                {(analytics.recentTrades || []).slice(0, 3).map((t, i) => {
-                                    const pnl = Number(t.pnl);
-                                    const win = (t.result || '').toLowerCase() === 'win' || pnl > 0;
-                                    const tag = pnl > 0 || win ? 'Win' : pnl < 0 ? 'Loss' : 'Trade';
+                                {(analytics.recentTrades || []).slice(0, 3).map((trade, i) => {
+                                    const pnl = Number(trade.pnl);
+                                    const win = (trade.result || '').toLowerCase() === 'win' || pnl > 0;
+                                    const tag = pnl > 0 || win ? t('home.desk.winTag') : pnl < 0 ? t('home.desk.lossTag') : t('home.desk.tradeTag');
                                     return (
-                                        <li key={`${t.pair}-${i}`}>
+                                        <li key={`${trade.pair}-${i}`}>
                                             <span>
-                                                {tag} · {t.pair || '—'}
+                                                {tag} · {trade.pair || t('common.dash')}
                                             </span>
                                             <span className={pnl >= 0 ? 'is-up' : 'is-down'}>
-                                                {Number.isFinite(pnl) ? formatSignedCurrency(pnl) : '—'}
+                                                {Number.isFinite(pnl) ? formatSignedCurrency(pnl) : t('common.dash')}
                                             </span>
                                         </li>
                                     );
                                 })}
                             </ul>
                             {!analytics.recentTrades?.length ? (
-                                <p className="desk2-muted">Log trades in Aura Analysis to populate recent activity.</p>
+                                <p className="desk2-muted">{t('home.desk.journalEmptyTrades')}</p>
                             ) : null}
-                            <span className="desk2-card__sublabel">Notes</span>
+                            <span className="desk2-card__sublabel">{t('home.desk.notes')}</span>
                             <ul className="desk2-notes">
                                 {journalBullets.map((line) => (
                                     <li key={line}>{line}</li>
                                 ))}
                             </ul>
                             <button type="button" className="desk2-cta desk2-cta--ghost" onClick={() => navigate('/journal')}>
-                                Journal <FaArrowRight aria-hidden />
+                                {t('home.desk.journalButton')} <FaArrowRight aria-hidden />
                             </button>
                         </section>
                     </aside>
@@ -1559,8 +1610,10 @@ const LoggedInDashboardHome = ({ user, token, navigate }) => {
    HOME PAGE
 ══════════════════════════════════════════════════════════ */
 const Home = () => {
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const { isAuthenticated, user, token } = useAuth();
+    const slides = useMemo(() => buildSlides(t), [t, i18n.language]);
     // Cinematic intro only for visitors who are not signed in (normal landing).
     // After login (or any authenticated session), skip the delay so the dashboard is immediate.
     const [showContent, setShowContent] = useState(() => isAuthenticated);
@@ -1572,11 +1625,11 @@ const Home = () => {
             setShowContent(true);
             return undefined;
         }
-        const t = setTimeout(() => {
+        const introTimer = setTimeout(() => {
             setIsLoading(false);
             setShowContent(true);
         }, 3000);
-        return () => clearTimeout(t);
+        return () => clearTimeout(introTimer);
     }, [isAuthenticated]);
 
     const handleStart = () => navigate(isAuthenticated ? '/community' : '/register');
@@ -1587,8 +1640,8 @@ const Home = () => {
                 <div className="loading-screen">
                     <CosmicBackground />
                     <div className="loading-content">
-                        <span className="loading-brand-text">Aura Terminal™</span>
-                        <div className="loading-subtitle">Initializing System...</div>
+                        <span className="loading-brand-text">{t('homeLoading.brand')}</span>
+                        <div className="loading-subtitle">{t('homeLoading.subtitle')}</div>
                         <div className="loading-dots-container">
                             <span className="loading-dot"/><span className="loading-dot"/><span className="loading-dot"/>
                         </div>
@@ -1610,34 +1663,34 @@ const Home = () => {
                                     <div className="a7-logo-wrap" style={{ marginBottom:'1.4rem' }}><A7Logo /></div>
                                     <div className="hero-eyebrow">
                                         <span className="hero-eyebrow-dot" />
-                                        <span className="hero-eyebrow-text">AI-Powered Trading Platform</span>
+                                        <span className="hero-eyebrow-text">{t('home.marketing.heroEyebrow')}</span>
                                     </div>
                                     <div className="brand-name-container">
                                         <h1 className="brand-name">
-                                            <span className="brand-name-line">Trade Smarter</span>
-                                            <span className="brand-name-line">With Aura Terminal™</span>
+                                            <span className="brand-name-line">{t('home.marketing.brandLine1')}</span>
+                                            <span className="brand-name-line">{t('home.marketing.brandLine2')}</span>
                                         </h1>
-                                        <p className="powered-by-glitch">powered by <strong>The Glitch</strong></p>
+                                        <p className="powered-by-glitch">{t('home.marketing.poweredBy')} <strong>{t('home.marketing.poweredByStrong')}</strong></p>
                                     </div>
                                     <div className="content-intro hero-intro">
-                                        <p className="intro-text">AI-Powered Trading Tools for Precision, Discipline and Consistent Performance</p>
+                                        <p className="intro-text">{t('home.marketing.introText')}</p>
                                     </div>
                                     <div className="home-cta-section hero-cta">
-                                        <button className="home-cta-button"      onClick={handleStart}>Get Started</button>
-                                        <button className="home-secondary-button" onClick={() => navigate('/explore')}>Explore Features</button>
+                                        <button className="home-cta-button"      onClick={handleStart}>{t('home.marketing.getStarted')}</button>
+                                        <button className="home-secondary-button" onClick={() => navigate('/explore')}>{t('home.marketing.exploreFeatures')}</button>
                                     </div>
                                     <div className="hero-trust-badges">
-                                        {[{icon:'✓',label:'Real Time Data'},{icon:'🔒',label:'Secure & Private'},{icon:'⊙',label:'24/7 Support'}].map(b=>(
+                                        {[{icon:'✓',label:t('home.marketing.trustRealtime')},{icon:'🔒',label:t('home.marketing.trustSecure')},{icon:'⊙',label:t('home.marketing.trustSupport')}].map(b=>(
                                             <div className="trust-badge" key={b.label}><div className="trust-badge-icon">{b.icon}</div>{b.label}</div>
                                         ))}
                                     </div>
                                     <div className="partner-logos-row">
-                                        {[{icon:'📊',name:'TradingView'},{icon:'◈',name:'Binance'},{icon:'©',name:'Coinbase'},{icon:'◉',name:'Bloomberg'},{icon:'◎',name:'Reuters'}].map(p=>(
+                                        {[{icon:'📊',name:t('home.marketing.partnerTradingView')},{icon:'◈',name:t('home.marketing.partnerBinance')},{icon:'©',name:t('home.marketing.partnerCoinbase')},{icon:'◉',name:t('home.marketing.partnerBloomberg')},{icon:'◎',name:t('home.marketing.partnerReuters')}].map(p=>(
                                             <div className="partner-logo" key={p.name}><span className="partner-logo-icon">{p.icon}</span>{p.name}</div>
                                         ))}
                                     </div>
                                 </div>
-                                <div className="hero-right"><FloatingIPad /></div>
+                                <div className="hero-right"><FloatingIPad slides={slides} dragHint={t('home.ipad.dragHint')} /></div>
                             </div>
 
                             <div className="home-main-content">
@@ -1648,11 +1701,11 @@ const Home = () => {
 
                                 <div className="feature-cards-grid">
                                     {[
-                                        {icon:'📈',title:'Forex Trading',   desc:'Dominate currency markets with institutional-grade strategies and live market analysis'},
-                                        {icon:'💹',title:'Stock Trading',   desc:'Master equity markets with advanced analysis techniques and professional trading strategies'},
-                                        {icon:'₿', title:'Crypto Trading',  desc:'Capitalize on digital asset opportunities with cutting-edge strategies and market insights'},
-                                        {icon:'🎯',title:'1-to-1 Mentorship',desc:'Accelerate your success with personalized coaching from industry-leading trading experts'},
-                                    ].map(c=>(
+                                        { icon: '📈', title: t('home.features.forexTitle'), desc: t('home.features.forexDesc') },
+                                        { icon: '💹', title: t('home.features.stockTitle'), desc: t('home.features.stockDesc') },
+                                        { icon: '₿', title: t('home.features.cryptoTitle'), desc: t('home.features.cryptoDesc') },
+                                        { icon: '🎯', title: t('home.features.mentorshipTitle'), desc: t('home.features.mentorshipDesc') },
+                                    ].map((c) => (
                                         <div className="feature-card" key={c.title}>
                                             <div className="feature-icon">{c.icon}</div>
                                             <h3 className="feature-title">{c.title}</h3>
@@ -1663,23 +1716,23 @@ const Home = () => {
 
                                 <div className="stats-section">
                                     <div className="stats-grid">
-                                        <StatItem number="24.7%" label="Average ROI"     fill="82%"/>
-                                        <StatItem number="1,200+" label="Active Traders" fill="90%"/>
-                                        <StatItem number="85%"    label="Success Rate"   fill="85%"/>
-                                        <StatItem number="50+"    label="Expert Courses" fill="60%"/>
+                                        <StatItem number="24.7%" label={t('home.stats.avgRoi')} fill="82%"/>
+                                        <StatItem number="1,200+" label={t('home.stats.activeTraders')} fill="90%"/>
+                                        <StatItem number="85%" label={t('home.stats.successRate')} fill="85%"/>
+                                        <StatItem number="50+" label={t('home.stats.expertCourses')} fill="60%"/>
                                     </div>
                                 </div>
                                 <div className="cosmic-divider" />
 
                                 <div className="why-choose-section">
-                                    <h2 className="section-title">Why Choose AURA TERMINAL™</h2>
+                                    <h2 className="section-title">{t('home.why.title')}</h2>
                                     <div className="why-grid">
                                         {[
-                                            {title:'Elite Education',        text:'Learn from world-class professionals with decades of combined trading expertise'},
-                                            {title:'Proven Strategies',      text:'Access battle-tested trading methodologies that generate consistent profits'},
-                                            {title:'24/7 Support',           text:'Receive instant assistance from our thriving community and dedicated expert mentors'},
-                                            {title:'Comprehensive Resources',text:'Unlock unlimited access to our extensive library of premium courses, advanced tools, and exclusive trading materials'},
-                                        ].map(w=>(
+                                            { title: t('home.why.eliteEducationTitle'), text: t('home.why.eliteEducationText') },
+                                            { title: t('home.why.provenStrategiesTitle'), text: t('home.why.provenStrategiesText') },
+                                            { title: t('home.why.support247Title'), text: t('home.why.support247Text') },
+                                            { title: t('home.why.resourcesTitle'), text: t('home.why.resourcesText') },
+                                        ].map((w) => (
                                             <div className="why-item" key={w.title}>
                                                 <div className="why-icon">✓</div>
                                                 <h3 className="why-title">{w.title}</h3>
@@ -1690,16 +1743,16 @@ const Home = () => {
                                 </div>
 
                                 <div className="trade-markets-section">
-                                    <h2 className="trade-markets-section__title">Trade Multiple Markets</h2>
+                                    <h2 className="trade-markets-section__title">{t('home.tradeMarkets.title')}</h2>
                                     <div className="trade-markets-section__grid">
                                         {[
-                                            {icon:<FaChartLine/>,title:'Forex',      desc:'Major, minor, and exotic currency pairs'},
-                                            {icon:<FaGlobe/>,    title:'Futures',    desc:'Master futures contracts and commodity trading'},
-                                            {icon:<FaRocket/>,   title:'Crypto',     desc:'Bitcoin, Ethereum, and altcoins'},
-                                            {icon:<FaTrophy/>,   title:'Stocks',     desc:'US and international equity markets'},
-                                            {icon:<FaChartBar/>, title:'Indices',    desc:'S&P 500, NASDAQ, and more'},
-                                            {icon:<FaCoins/>,    title:'Commodities',desc:'Trade gold, oil, and valuable resources'},
-                                        ].map(m=>(
+                                            { icon: <FaChartLine />, title: t('home.tradeMarkets.forexTitle'), desc: t('home.tradeMarkets.forexDesc') },
+                                            { icon: <FaGlobe />, title: t('home.tradeMarkets.futuresTitle'), desc: t('home.tradeMarkets.futuresDesc') },
+                                            { icon: <FaRocket />, title: t('home.tradeMarkets.cryptoTitle'), desc: t('home.tradeMarkets.cryptoDesc') },
+                                            { icon: <FaTrophy />, title: t('home.tradeMarkets.stocksTitle'), desc: t('home.tradeMarkets.stocksDesc') },
+                                            { icon: <FaChartBar />, title: t('home.tradeMarkets.indicesTitle'), desc: t('home.tradeMarkets.indicesDesc') },
+                                            { icon: <FaCoins />, title: t('home.tradeMarkets.commoditiesTitle'), desc: t('home.tradeMarkets.commoditiesDesc') },
+                                        ].map((m) => (
                                             <div className="trade-markets-section__card" key={m.title}>
                                                 <div className="trade-markets-section__icon">{m.icon}</div>
                                                 <div className="trade-markets-section__card-body">
@@ -1712,14 +1765,14 @@ const Home = () => {
                                 </div>
 
                                 <div className="key-features-section">
-                                    <h2 className="section-title">What Sets Us Apart</h2>
+                                    <h2 className="section-title">{t('home.keyFeatures.title')}</h2>
                                     <div className="features-list">
                                         {[
-                                            {icon:<FaShieldAlt/>,    title:'Bank-Level Security',  text:'Your data and privacy are safeguarded with military-grade encryption and enterprise security protocols'},
-                                            {icon:<FaClock/>,        title:'24/7 Premium Support', text:'Access round-the-clock assistance from our expert support team, available whenever you need guidance'},
-                                            {icon:<FaUsers/>,        title:'Thriving Community',   text:'Join over 1,200+ active traders sharing exclusive insights, strategies, and real-time market analysis'},
-                                            {icon:<FaGraduationCap/>,title:'Elite Mentors',        text:'Learn directly from industry legends with verified track records of consistent profitability and market success'},
-                                        ].map(f=>(
+                                            { icon: <FaShieldAlt />, title: t('home.keyFeatures.securityTitle'), text: t('home.keyFeatures.securityText') },
+                                            { icon: <FaClock />, title: t('home.keyFeatures.premiumSupportTitle'), text: t('home.keyFeatures.premiumSupportText') },
+                                            { icon: <FaUsers />, title: t('home.keyFeatures.communityTitle'), text: t('home.keyFeatures.communityText') },
+                                            { icon: <FaGraduationCap />, title: t('home.keyFeatures.mentorsTitle'), text: t('home.keyFeatures.mentorsText') },
+                                        ].map((f) => (
                                             <div className="feature-item" key={f.title}>
                                                 <div className="feature-icon">{f.icon}</div>
                                                 <div className="feature-content">

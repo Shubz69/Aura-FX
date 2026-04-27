@@ -7,6 +7,7 @@ import { armPostLoginTransition, isPostLoginTransitionExcludedPath } from '../ut
 import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/userLocalStorage';
 import { isConfiguredSuperAdminEmail, isAdmin } from '../utils/roles';
 import { logClassifiedError } from '../utils/apiObservability';
+import { applySiteLanguage, getPreferredSiteLanguage, normalizeSiteLanguage } from '../utils/siteLanguage';
 import {
   prepareStorageForUserSwitch,
   clearPerAccountLocalCaches,
@@ -110,6 +111,7 @@ export const AuthProvider = ({ children }) => {
       capabilities: data.capabilities || [],
       mfaVerified: data.mfaVerified || false,
       timezone: data.timezone ?? null,
+      preferredLanguage: normalizeSiteLanguage(data.preferredLanguage) || undefined,
       subscription_plan,
       subscription_status
     };
@@ -138,7 +140,7 @@ export const AuthProvider = ({ children }) => {
     if (merged.level === undefined && existing.level != null) merged.level = existing.level;
     if (merged.xp === undefined && existing.xp != null) merged.xp = existing.xp;
     // Token-only refresh (id + email + role) must not wipe profile fields already in localStorage
-    const preserveKeys = ['username', 'name', 'avatar', 'phone', 'address', 'timezone'];
+    const preserveKeys = ['username', 'name', 'avatar', 'phone', 'address', 'timezone', 'preferredLanguage'];
     for (const k of preserveKeys) {
       const incoming = safeUser[k];
       const empty =
@@ -288,6 +290,7 @@ export const AuthProvider = ({ children }) => {
             email: decodedToken.email || '',
             role: decodedToken.role || 'USER'
           });
+          applySiteLanguage(userData?.preferredLanguage || getPreferredSiteLanguage(), { persist: true }).catch(() => {});
           
           if (isAdmin(userData)) {
             localStorage.setItem('mfaVerified', 'true');
@@ -437,7 +440,7 @@ export const AuthProvider = ({ children }) => {
         try {
           timezone = (typeof Intl !== 'undefined' && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions) ? Intl.DateTimeFormat().resolvedOptions().timeZone : '';
         } catch (_) {}
-        const response = await Api.login({ email, password, timezone });
+        const response = await Api.login({ email, password, timezone, preferredLanguage: getPreferredSiteLanguage() });
         const data = response.data || {};
 
         // MFA must be handled before the generic token check (API may return MFA without a token).
@@ -472,6 +475,7 @@ export const AuthProvider = ({ children }) => {
         prepareStorageForUserSwitch(data.id ?? data.userId, data.token);
         persistTokens(data.token, data.refreshToken);
         persistUser(data);
+        await applySiteLanguage(data.preferredLanguage || getPreferredSiteLanguage(), { persist: true });
         
         if (isAdmin({ role: data.role, email: data.email })) {
           localStorage.setItem('mfaVerified', 'true');
@@ -696,6 +700,7 @@ export const AuthProvider = ({ children }) => {
       prepareStorageForUserSwitch(data.id ?? data.userId, data.token);
       persistTokens(data.token, data.refreshToken);
       const userInfo = persistUser(data);
+      await applySiteLanguage(data.preferredLanguage || userInfo?.preferredLanguage || getPreferredSiteLanguage(), { persist: true });
       
       if (isAdmin(userInfo)) {
         localStorage.setItem('mfaVerified', 'true');

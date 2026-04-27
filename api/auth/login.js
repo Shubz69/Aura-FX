@@ -23,6 +23,7 @@ const OPTIONAL_SELECT_FIELDS = [
   'payment_failed',
   'timezone'
 ];
+const SUPPORTED_LANGUAGE_CODES = new Set(['en', 'zh-CN', 'hi', 'es', 'fr', 'ar', 'bn', 'pt', 'ru', 'ur']);
 
 function isUnknownColumnError(error) {
   if (!error) return false;
@@ -113,7 +114,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    const { email, login, password, timezone } = req.body;
+    const { email, login, password, timezone, preferredLanguage: preferredLanguageInput } = req.body;
     const rawLogin = (email != null && email !== '' ? email : login) || '';
     const loginTrimmed = typeof rawLogin === 'string' ? rawLogin.trim() : '';
 
@@ -236,6 +237,43 @@ module.exports = async (req, res) => {
       }, '24h');
 
       const updatedTimezone = tz || (user.timezone && String(user.timezone).trim()) || 'UTC';
+      let preferredLanguage = null;
+      try {
+        const [langRows] = await db.execute(
+          'SELECT preferred_language FROM user_settings WHERE user_id = ? LIMIT 1',
+          [user.id]
+        );
+        const rawLanguage = langRows?.[0]?.preferred_language || null;
+        preferredLanguage = SUPPORTED_LANGUAGE_CODES.has(rawLanguage) ? rawLanguage : null;
+      } catch (langErr) {
+        if (!isUnknownColumnError(langErr)) {
+          console.warn('Login language lookup:', langErr.message);
+        }
+      }
+      const normalizedPreferredInput = SUPPORTED_LANGUAGE_CODES.has(preferredLanguageInput) ? preferredLanguageInput : null;
+      if (!preferredLanguage && normalizedPreferredInput) {
+        preferredLanguage = normalizedPreferredInput;
+      }
+      if (normalizedPreferredInput) {
+        try {
+          await db.execute(
+            `CREATE TABLE IF NOT EXISTS user_settings (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              user_id INT NOT NULL UNIQUE,
+              preferred_language VARCHAR(10) NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              INDEX idx_user (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+          );
+          await db.execute(
+            'INSERT INTO user_settings (user_id, preferred_language) VALUES (?, ?) ON DUPLICATE KEY UPDATE preferred_language = IFNULL(preferred_language, VALUES(preferred_language))',
+            [user.id, normalizedPreferredInput]
+          );
+        } catch (languageSaveErr) {
+          console.warn('Login preferred language save:', languageSaveErr.message);
+        }
+      }
       return res.status(200).json({
         success: true,
         id: user.id,
@@ -246,6 +284,7 @@ module.exports = async (req, res) => {
         role: apiRole,
         token: token,
         timezone: updatedTimezone,
+        preferredLanguage,
         status: 'SUCCESS',
         subscription: {
           status: subscriptionStatus,

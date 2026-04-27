@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useTranslation } from 'react-i18next';
 import { useAuth } from "../context/AuthContext";
 import { useEntitlements } from "../context/EntitlementsContext";
 import { formatMembershipLabel } from "../utils/roles";
@@ -87,6 +88,7 @@ const RingProgress = ({ pct, color, value, label, size = 80 }) => {
 };
 
 const Profile = () => {
+    const { t } = useTranslation();
     const { user, setUser } = useAuth();
     const { entitlements, user: meUser } = useEntitlements();
     const membershipLabel = useMemo(
@@ -1143,7 +1145,7 @@ if (!avatarToSave && avatarColor) {
                             </div>
 
                             <div className="pf-form-group">
-                                <label className="pf-label">Website Language <span className="pf-label-hint">· one click, site-wide</span></label>
+                                <label className="pf-label">{t('profile.websiteLanguage')} <span className="pf-label-hint">· one click, site-wide</span></label>
                                 <select
                                     className="pf-input"
                                     name="siteLanguage"
@@ -1163,9 +1165,9 @@ if (!avatarToSave && avatarColor) {
                                         } catch (error) {
                                             console.warn('Language preference server sync failed:', error?.response?.data?.message || error?.message);
                                         }
-                                        applySiteLanguage(lang, { persist: true, forceReloadFallback: true });
+                                        await applySiteLanguage(lang, { persist: true });
                                         const languageLabel = SITE_LANGUAGES.find((l) => l.code === lang)?.label || 'English';
-                                        setStatus(`Language switched to ${languageLabel}.`);
+                                        setStatus(t('profile.languageUpdated', { language: languageLabel }));
                                         setTimeout(() => setStatus(""), 3000);
                                     }}
                                 >

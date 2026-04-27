@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import { useAuth } from "../context/AuthContext";
 import { useEntitlements } from "../context/EntitlementsContext";
 import "../styles/Navbar.css";
@@ -40,6 +41,7 @@ const isLocalDev = typeof window !== 'undefined' &&
    window.location.hostname.startsWith('10.') ||
    window.location.hostname.endsWith('.local'));
 const Navbar = () => {
+  const { t } = useTranslation();
   const { user, loading, logout } = useAuth();
   const { entitlements } = useEntitlements();
   const showSuperAdminLinks = !loading && user && isSuperAdmin(user);
@@ -79,16 +81,16 @@ const Navbar = () => {
   // ── Mobile full-screen menu (portalled to body)
   const mobileMenuPortal = ReactDOM.createPortal(
     <div className={`mobile-menu ${mobileMenuOpen ? "active" : ""}`}>
-      <button className="mobile-menu-close" onClick={closeMobileMenu} aria-label="Close menu">
+      <button className="mobile-menu-close" onClick={closeMobileMenu} aria-label={t('navbar.closeMenu')}>
         <FaTimes />
       </button>
 
       {user ? (
         <>
-          <p className="mobile-menu-section-label">Menu</p>
+          <p className="mobile-menu-section-label">{t('navbar.menu')}</p>
           <ul className="mobile-nav-links mobile-nav-links-primary">
-            <li><Link to="/" onClick={closeMobileMenu} className={location.pathname === '/' ? 'active' : ''}>Home</Link></li>
-            <li><Link to="/community" onClick={closeMobileMenu} className={isActive('/community') ? 'active' : ''}>Aura Network</Link></li>
+            <li><Link to="/" onClick={closeMobileMenu} className={location.pathname === '/' ? 'active' : ''}>{t('navbar.home')}</Link></li>
+            <li><Link to="/community" onClick={closeMobileMenu} className={isActive('/community') ? 'active' : ''}>{t('navbar.network')}</Link></li>
             <li>
               <Link
                 to={auraAiHref}
@@ -99,7 +101,7 @@ const Navbar = () => {
               </Link>
             </li>
             <li><Link to="/courses" onClick={closeMobileMenu} className={isActive('/courses') ? 'active' : ''}>C &amp; S</Link></li>
-            <li><Link to="/leaderboard" onClick={closeMobileMenu} className={isActive('/leaderboard') ? 'active' : ''}>Leaderboard</Link></li>
+            <li><Link to="/leaderboard" onClick={closeMobileMenu} className={isActive('/leaderboard') ? 'active' : ''}>{t('navbar.leaderboard')}</Link></li>
           </ul>
           <p className="mobile-menu-account-hint">
             Tap the <strong>profile icon</strong> (next to the bell) for Trader Desk, Journal, Profile, Settings &amp; more — same menu as desktop.
@@ -108,15 +110,15 @@ const Navbar = () => {
       ) : (
         <>
           <ul className="mobile-nav-links">
-            <li><Link to="/" onClick={closeMobileMenu}>Home</Link></li>
+            <li><Link to="/" onClick={closeMobileMenu}>{t('navbar.home')}</Link></li>
             <li><Link to="/courses" onClick={closeMobileMenu}>C &amp; S</Link></li>
-            <li><Link to="/explore" onClick={closeMobileMenu}>Explore</Link></li>
-            <li><Link to="/why-glitch" onClick={closeMobileMenu}>Why Aura Terminal™</Link></li>
-            <li><Link to="/contact" onClick={closeMobileMenu}>Contact Us</Link></li>
+            <li><Link to="/explore" onClick={closeMobileMenu}>{t('navbar.explore')}</Link></li>
+            <li><Link to="/why-glitch" onClick={closeMobileMenu}>{t('navbar.whyAura')}</Link></li>
+            <li><Link to="/contact" onClick={closeMobileMenu}>{t('navbar.contactUs')}</Link></li>
           </ul>
           <div className="mobile-buttons">
-            <button className="mobile-sign-in" onClick={() => { navigate("/login"); closeMobileMenu(); }}>Sign In</button>
-            <button className="mobile-start-trading" onClick={() => { navigate("/register"); closeMobileMenu(); }}>Sign Up</button>
+            <button className="mobile-sign-in" onClick={() => { navigate("/login"); closeMobileMenu(); }}>{t('navbar.signIn')}</button>
+            <button className="mobile-start-trading" onClick={() => { navigate("/register"); closeMobileMenu(); }}>{t('navbar.signUp')}</button>
           </div>
         </>
       )}
@@ -146,8 +148,8 @@ const Navbar = () => {
         <ul className="nav-links">
           {user ? (
             <>
-              <li><Link to="/" className={location.pathname === "/" ? "active" : ""}>Home</Link></li>
-              <li><Link to="/community" className={isActive("/community") ? "active" : ""}>Aura Network</Link></li>
+              <li><Link to="/" className={location.pathname === "/" ? "active" : ""}>{t('navbar.home')}</Link></li>
+              <li><Link to="/community" className={isActive("/community") ? "active" : ""}>{t('navbar.network')}</Link></li>
               <li>
                 <Link
                   to={auraAiHref}
@@ -157,15 +159,15 @@ const Navbar = () => {
                 </Link>
               </li>
               <li><Link to="/courses" className={isActive("/courses") ? "active" : ""}>C &amp; S</Link></li>
-              <li><Link to="/leaderboard" className={isActive("/leaderboard") ? "active" : ""}>Leaderboard</Link></li>
+              <li><Link to="/leaderboard" className={isActive("/leaderboard") ? "active" : ""}>{t('navbar.leaderboard')}</Link></li>
             </>
           ) : (
             <>
-              <li><Link to="/">Home</Link></li>
+              <li><Link to="/">{t('navbar.home')}</Link></li>
               <li><Link to="/courses">C &amp; S</Link></li>
-              <li><Link to="/explore">Explore</Link></li>
-              <li><Link to="/why-glitch">Why Aura Terminal™</Link></li>
-              <li><Link to="/contact">Contact Us</Link></li>
+              <li><Link to="/explore">{t('navbar.explore')}</Link></li>
+              <li><Link to="/why-glitch">{t('navbar.whyAura')}</Link></li>
+              <li><Link to="/contact">{t('navbar.contactUs')}</Link></li>
             </>
           )}
         </ul>
@@ -174,8 +176,8 @@ const Navbar = () => {
         <div className="nav-buttons">
           {!user ? (
             <div className="desktop-only" style={{ display: "flex", gap: "8px" }}>
-              <button className="sign-in" onClick={() => navigate("/login")}>Sign In</button>
-              <button className="start-trading" onClick={() => navigate("/register")}>Sign Up</button>
+              <button className="sign-in" onClick={() => navigate("/login")}>{t('navbar.signIn')}</button>
+              <button className="start-trading" onClick={() => navigate("/register")}>{t('navbar.signUp')}</button>
             </div>
           ) : (
             <>
@@ -190,7 +192,7 @@ const Navbar = () => {
                   onClick={handleUserIconClick}
                   aria-expanded={dropdownOpen}
                   aria-haspopup="true"
-                  aria-label="User menu"
+                  aria-label={t('navbar.userMenu')}
                 >
                   <FaUserCircle />
                 </button>
@@ -200,10 +202,10 @@ const Navbar = () => {
                       {/* Prefer username for user-facing identity; fall back to name/email if missing. */}
                       <p>{user?.username || user?.name || user?.email}</p>
                       <Link to="/trader-deck" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaThLarge className="dropdown-icon" /> Trader Desk
+                        <FaThLarge className="dropdown-icon" /> {t('navbar.traderDesk')}
                       </Link>
                       <Link to="/journal" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaBook className="dropdown-icon" /> Journal
+                        <FaBook className="dropdown-icon" /> {t('navbar.journal')}
                       </Link>
                    <Link to="/operator-galaxy" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
   <FaCheckSquare className="dropdown-icon" /> The Operator
@@ -251,10 +253,10 @@ const Navbar = () => {
                         </>
                       )}
                       <Link to="/profile" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaUserCircle className="dropdown-icon" /> Profile
+                        <FaUserCircle className="dropdown-icon" /> {t('navbar.profile')}
                       </Link>
                       <Link to="/admin/inbox" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaEnvelope className="dropdown-icon" /> Messages
+                        <FaEnvelope className="dropdown-icon" /> {t('navbar.messages')}
                       </Link>
                       <Link to="/affiliation" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaLink className="dropdown-icon" /> Affiliation
@@ -285,7 +287,7 @@ const Navbar = () => {
                       {showSuperAdminLinks && (
                         <>
                           <Link to="/settings" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                            <FaSlidersH className="dropdown-icon" /> Settings
+                            <FaSlidersH className="dropdown-icon" /> {t('navbar.settings')}
                           </Link>
                           <Link to="/admin/messages" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                             <FaHeadset className="dropdown-icon" /> Contact Submissions
@@ -293,7 +295,7 @@ const Navbar = () => {
                         </>
                       )}
                       <button onClick={() => { setDropdownOpen(false); logout(); }} className="dropdown-item">
-                        <FaSignOutAlt className="dropdown-icon" /> Logout
+                        <FaSignOutAlt className="dropdown-icon" /> {t('navbar.logout')}
                       </button>
                     </div>
                   </div>,
@@ -309,7 +311,7 @@ const Navbar = () => {
               setDropdownOpen(false);
               setMobileMenuOpen((p) => !p);
             }}
-            aria-label="Toggle menu"
+            aria-label={t('navbar.toggleMenu')}
           >
             {mobileMenuOpen ? <FaTimes /> : <FaBars />}
           </button>

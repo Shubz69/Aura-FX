@@ -261,11 +261,12 @@ export function buildRenderableEvents(events) {
         is_demo: !!e.is_demo,
       };
     });
+    const allDemo = enriched.every((e) => e.is_demo);
     return {
       events: enriched,
-      dataMode: 'live',
-      fallbackActive: false,
-      liveDataConfidence: confidenceFromEvents(enriched, 'live'),
+      dataMode: allDemo ? 'fallback' : 'live',
+      fallbackActive: allDemo,
+      liveDataConfidence: confidenceFromEvents(enriched, allDemo ? 'fallback' : 'live'),
     };
   }
   const fallbackEvents = DEMO_FALLBACK_EVENTS.map((e) => {

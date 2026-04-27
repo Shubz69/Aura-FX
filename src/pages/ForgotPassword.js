@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import "../styles/Login.css";
 import { RiTerminalBoxFill } from 'react-icons/ri';
@@ -6,6 +7,7 @@ import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 
 const ForgotPassword = () => {
+    const { t } = useTranslation();
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -31,10 +33,10 @@ const ForgotPassword = () => {
             console.log('Password reset email result:', success);
             
             if (success === true || success === undefined) {
-                setSuccess('If an account exists for that address, a 6-digit reset code was sent to your email.');
+                setSuccess(t('forgotPassword.successEmailSent'));
                 setStep(2);
             } else {
-                setError('Failed to send reset email. Please try again.');
+                setError(t('forgotPassword.errorSendFailed'));
             }
         } catch (err) {
             console.error('Password reset error:', err);
@@ -46,7 +48,7 @@ const ForgotPassword = () => {
             });
             
             // Use the error message from the API
-            const errorMessage = err.message || 'Failed to send reset email. Please try again.';
+            const errorMessage = err.message || t('forgotPassword.errorSendFailed');
             setError(errorMessage);
         }
         
@@ -60,27 +62,27 @@ const ForgotPassword = () => {
 
         try {
             if (resetCode.length !== 6) { 
-                setError('Please enter a valid 6-digit code.'); 
+                setError(t('forgotPassword.errorInvalidCode')); 
                 setIsLoading(false); 
                 return; 
             }
             
             const resp = await Api.verifyResetCode(email, resetCode);
             if (resp && resp.success && resp.token) {
-                setSuccess('MFA code verified successfully! You can now set your new password.');
+                setSuccess(t('forgotPassword.successCodeVerified'));
                 // Store the reset token for password reset
                 localStorage.setItem('resetToken', resp.token);
                 setStep(3);
             } else {
-                setError('Invalid or expired code.');
+                setError(t('forgotPassword.errorInvalidOrExpired'));
             }
         } catch (err) {
             if (err.message.includes('expired')) {
-                setError('Code has expired. Please request a new one.');
+                setError(t('forgotPassword.errorCodeExpired'));
             } else if (err.message.includes('Invalid')) {
-                setError('Invalid code. Please check the code and try again.');
+                setError(t('forgotPassword.errorInvalidCodeGeneric'));
             } else {
-                setError('Verification failed. Please try again.');
+                setError(t('forgotPassword.errorVerificationFailed'));
             }
         }
         
@@ -92,12 +94,12 @@ const ForgotPassword = () => {
         setError('');
 
         if (newPassword !== confirmPassword) {
-            setError('Passwords do not match.');
+            setError(t('forgotPassword.errorPasswordsMismatch'));
             return;
         }
 
         if (newPassword.length < 6) {
-            setError('Password must be at least 6 characters long.');
+            setError(t('forgotPassword.errorPasswordTooShort'));
             return;
         }
 
@@ -107,7 +109,7 @@ const ForgotPassword = () => {
             // Get the reset token from localStorage
             const resetToken = localStorage.getItem('resetToken');
             if (!resetToken) {
-                setError('Reset session expired. Please start the password reset process again.');
+                setError(t('forgotPassword.errorResetTokenMissing'));
                 setIsLoading(false);
                 return;
             }
@@ -116,24 +118,24 @@ const ForgotPassword = () => {
             const success = await Api.resetPassword(resetToken, newPassword);
             
             if (success) {
-                setSuccess('Password reset successfully! You can now login with your new password.');
+                setSuccess(t('forgotPassword.successPasswordReset'));
                 // Clean up the reset token
                 localStorage.removeItem('resetToken');
                 setTimeout(() => {
                     navigate('/login');
                 }, 2000);
             } else {
-                setError('Failed to reset password. Please try again.');
+                setError(t('forgotPassword.errorResetFailed'));
             }
         } catch (err) {
             if (err.message.includes('expired')) {
-                setError('Reset session has expired. Please start the password reset process again.');
+                setError(t('forgotPassword.errorResetExpired'));
                 localStorage.removeItem('resetToken');
             } else if (err.message.includes('Invalid')) {
-                setError('Invalid reset token. Please start the password reset process again.');
+                setError(t('forgotPassword.errorInvalidToken'));
                 localStorage.removeItem('resetToken');
             } else {
-                setError('Failed to reset password. Please try again.');
+                setError(t('forgotPassword.errorResetFailed'));
             }
         }
         
@@ -146,12 +148,12 @@ const ForgotPassword = () => {
                 <div className="logo-icon">
                     <RiTerminalBoxFill />
                 </div>
-                <h1 className="brand-title">Aura Terminal™</h1>
+                <h1 className="brand-title">{t('forgotPassword.brandTitle')}</h1>
             </div>
             
             <div className="form-header">
-                <h2 className="login-title">Reset password</h2>
-                <p className="login-subtitle">Enter your email to receive reset instructions</p>
+                <h2 className="login-title">{t('forgotPassword.step1Title')}</h2>
+                <p className="login-subtitle">{t('forgotPassword.step1Subtitle')}</p>
             </div>
             
             {error && <div className="error-message">{error}</div>}
@@ -159,7 +161,7 @@ const ForgotPassword = () => {
             
             <form onSubmit={handleSendResetEmail}>
                 <div className="form-group">
-                    <label htmlFor="email" className="form-label">Email Address</label>
+                    <label htmlFor="email" className="form-label">{t('forgotPassword.emailLabel')}</label>
                     <input 
                         type="email"
                         id="email"
@@ -167,7 +169,7 @@ const ForgotPassword = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                         autoComplete="email"
-                        placeholder="Enter your email"
+                        placeholder={t('forgotPassword.emailPlaceholder')}
                         className="form-input"
                     />
                 </div>
@@ -177,12 +179,12 @@ const ForgotPassword = () => {
                     className="login-button"
                     disabled={isLoading}
                 >
-                    {isLoading ? 'SENDING...' : 'SEND RESET EMAIL'}
+                    {isLoading ? t('forgotPassword.sending') : t('forgotPassword.sendResetEmail')}
                 </button>
             </form>
             
             <div className="register-link">
-                <p>Remember your password? <Link to="/login">Back to Login</Link></p>
+                <p>{t('forgotPassword.rememberPassword')} <Link to="/login">{t('forgotPassword.backToLoginLink')}</Link></p>
             </div>
         </div>
     );
@@ -193,13 +195,13 @@ const ForgotPassword = () => {
                 <div className="logo-icon">
                     <RiTerminalBoxFill />
                 </div>
-                <h1 className="brand-title">Aura Terminal™</h1>
+                <h1 className="brand-title">{t('forgotPassword.brandTitle')}</h1>
             </div>
             
             <div className="form-header">
-                <h2 className="login-title">MFA verification</h2>
-                <p className="login-subtitle">Enter the 6-digit MFA code sent to your email</p>
-                <p className="email-sent">Code sent to: {email}</p>
+                <h2 className="login-title">{t('forgotPassword.step2Title')}</h2>
+                <p className="login-subtitle">{t('forgotPassword.step2Subtitle')}</p>
+                <p className="email-sent">{t('forgotPassword.codeSentLabel')} {email}</p>
             </div>
             
             {error && <div className="error-message">{error}</div>}
@@ -207,7 +209,7 @@ const ForgotPassword = () => {
             
             <form onSubmit={handleVerifyCode}>
                 <div className="form-group">
-                    <label htmlFor="reset-code" className="form-label">Verification Code</label>
+                    <label htmlFor="reset-code" className="form-label">{t('auth.verificationCode')}</label>
                     <input 
                         type="text"
                         id="reset-code"
@@ -215,7 +217,7 @@ const ForgotPassword = () => {
                         onChange={(e) => setResetCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
                         maxLength={6}
                         required
-                        placeholder="Enter 6-digit code"
+                        placeholder={t('auth.enterSixDigitCode')}
                         className="form-input"
                     />
                 </div>
@@ -225,12 +227,12 @@ const ForgotPassword = () => {
                     className="login-button"
                     disabled={isLoading || resetCode.length !== 6}
                 >
-                    {isLoading ? 'VERIFYING...' : 'VERIFY CODE'}
+                    {isLoading ? t('forgotPassword.verifying') : t('forgotPassword.verifyCode')}
                 </button>
             </form>
             
             <div className="register-link">
-                <p>Didn't receive the code? <button type="button" onClick={() => setStep(1)} className="link-button">Resend Email</button></p>
+                <p>{t('forgotPassword.didNotReceive')} <button type="button" onClick={() => setStep(1)} className="link-button">{t('forgotPassword.resendEmail')}</button></p>
             </div>
         </div>
     );
@@ -241,12 +243,12 @@ const ForgotPassword = () => {
                 <div className="logo-icon">
                     <RiTerminalBoxFill />
                 </div>
-                <h1 className="brand-title">Aura Terminal™</h1>
+                <h1 className="brand-title">{t('forgotPassword.brandTitle')}</h1>
             </div>
             
             <div className="form-header">
-                <h2 className="login-title">New password</h2>
-                <p className="login-subtitle">Enter your new password</p>
+                <h2 className="login-title">{t('forgotPassword.step3Title')}</h2>
+                <p className="login-subtitle">{t('forgotPassword.step3Subtitle')}</p>
             </div>
             
             {error && <div className="error-message">{error}</div>}
@@ -254,7 +256,7 @@ const ForgotPassword = () => {
             
             <form onSubmit={handleResetPassword}>
                 <div className="form-group">
-                    <label htmlFor="new-password" className="form-label">New Password</label>
+                    <label htmlFor="new-password" className="form-label">{t('forgotPassword.newPasswordLabel')}</label>
                     <input 
                         type="password"
                         id="new-password"
@@ -262,13 +264,13 @@ const ForgotPassword = () => {
                         onChange={(e) => setNewPassword(e.target.value)}
                         required
                         autoComplete="new-password"
-                        placeholder="Enter new password"
+                        placeholder={t('forgotPassword.newPasswordPlaceholder')}
                         className="form-input"
                     />
                 </div>
                 
                 <div className="form-group">
-                    <label htmlFor="confirm-password" className="form-label">Confirm Password</label>
+                    <label htmlFor="confirm-password" className="form-label">{t('auth.confirmPassword')}</label>
                     <input 
                         type="password"
                         id="confirm-password"
@@ -276,7 +278,7 @@ const ForgotPassword = () => {
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
                         autoComplete="new-password"
-                        placeholder="Confirm new password"
+                        placeholder={t('forgotPassword.confirmPasswordPlaceholder')}
                         className="form-input"
                     />
                 </div>
@@ -286,12 +288,12 @@ const ForgotPassword = () => {
                     className="login-button"
                     disabled={isLoading}
                 >
-                    {isLoading ? 'RESETTING...' : 'RESET PASSWORD'}
+                    {isLoading ? t('forgotPassword.resetting') : t('forgotPassword.resetPassword')}
                 </button>
             </form>
             
             <div className="register-link">
-                <p>Remember your password? <Link to="/login">Back to Login</Link></p>
+                <p>{t('forgotPassword.rememberPassword')} <Link to="/login">{t('forgotPassword.backToLoginLink')}</Link></p>
             </div>
         </div>
     );

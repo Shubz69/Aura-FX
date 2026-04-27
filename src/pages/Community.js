@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useTranslation } from 'react-i18next';
 import '../styles/Community.css';
 import { useWebSocket } from '../utils/useWebSocket';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
@@ -44,12 +45,13 @@ import { subscribeVisibleInterval } from '../utils/subscribeVisibleInterval';
 
 /** Isolated from Community — only this control re-renders when mute toggles (not the whole page). */
 function ChannelMuteButton({ channel, userId }) {
+    const { t } = useTranslation();
     const mutedSet = useSyncExternalStore(subscribeMutedChannels, getMutedSnapshot, getMutedServerSnapshot);
     const isMuted = mutedSet.has(String(channel.id));
     return (
         <button
             type="button"
-            title={isMuted ? 'Unmute channel' : 'Mute channel'}
+            title={isMuted ? t('community.unmuteChannel') : t('community.muteChannel')}
             onClick={(e) => {
                 e.stopPropagation();
                 toggleMutedChannel(channel.id, channel.category, userId);
@@ -64,7 +66,7 @@ function ChannelMuteButton({ channel, userId }) {
                 touchAction: 'manipulation'
             }}
             className={`channel-mute-btn${isMuted ? ' channel-mute-btn--muted' : ''}`}
-            aria-label={isMuted ? 'Unmute' : 'Mute'}
+            aria-label={isMuted ? t('community.unmuteAria') : t('community.muteAria')}
         >
             <FaBell />
         </button>
@@ -126,10 +128,11 @@ function onSidebarClose() {
 
 // Emoji picker component
 const EmojiPicker = ({ onEmojiSelect, onClose }) => {
+    const { t } = useTranslation();
     return (
         <div className="emoji-picker" onClick={(e) => e.stopPropagation()}>
             <div className="emoji-picker-header">
-                <span>Emoji</span>
+                <span>{t('community.emojiHeader')}</span>
                 <button className="emoji-picker-close" onClick={onClose}>×</button>
             </div>
             <div className="emoji-grid">
@@ -150,6 +153,7 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
     );
 };
 const PptxViewer = ({ file, onClose }) => {
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [downloadUrl, setDownloadUrl] = useState('');
     const [fileSize, setFileSize] = useState('');
@@ -219,12 +223,12 @@ const PptxViewer = ({ file, onClose }) => {
         return (
             <div className="pptx-viewer-container">
                 <div className="pptx-viewer-header">
-                    <h3>{file?.name || 'Presentation'}</h3>
+                    <h3>{file?.name || t('community.pptxPresentation')}</h3>
                     <button onClick={onClose} className="pptx-viewer-close">×</button>
                 </div>
                 <div className="pptx-viewer-loading">
                     <div className="pptx-loading-spinner"></div>
-                    <p>Preparing file for download...</p>
+                    <p>{t('community.pptxPreparingDownload')}</p>
                 </div>
             </div>
         );
@@ -233,7 +237,7 @@ const PptxViewer = ({ file, onClose }) => {
     return (
         <div className="pptx-viewer-container">
             <div className="pptx-viewer-header">
-                <h3>{file?.name || 'Presentation'}</h3>
+                <h3>{file?.name || t('community.pptxPresentation')}</h3>
                 <button onClick={onClose} className="pptx-viewer-close">×</button>
             </div>
             
@@ -247,7 +251,7 @@ const PptxViewer = ({ file, onClose }) => {
                         </svg>
                     </div>
                     
-                    <h2 className="pptx-download-title">PowerPoint Presentation</h2>
+                    <h2 className="pptx-download-title">{t('community.pptxDownloadTitle')}</h2>
                     
                     <div className="pptx-file-info">
                         <span className="pptx-file-name">{file?.name || 'presentation.pptx'}</span>
@@ -255,8 +259,7 @@ const PptxViewer = ({ file, onClose }) => {
                     </div>
                     
                     <p className="pptx-download-description">
-                        Download this presentation to view it in Microsoft PowerPoint, 
-                        Google Slides, or any compatible presentation software.
+                        {t('community.pptxDescription')}
                     </p>
                     
                     <button 
@@ -264,11 +267,11 @@ const PptxViewer = ({ file, onClose }) => {
                         className="pptx-download-button"
                     >
                         <FaDownload className="download-icon" />
-                        Download Presentation
+                        {t('community.pptxDownloadButton')}
                     </button>
                     
                     <p className="pptx-download-note">
-                        After downloading, open the file with your preferred presentation software.
+                        {t('community.pptxDownloadNote')}
                     </p>
                 </div>
             </div>
@@ -277,6 +280,7 @@ const PptxViewer = ({ file, onClose }) => {
 };
  // PPTX Preview Component - THEME MATCHING
 const PptxPreview = React.memo(({ file, onClick }) => {
+    const { t } = useTranslation();
     // Format file size nicely
     const formatFileSize = (bytes) => {
         if (!bytes) return '0 KB';
@@ -307,12 +311,12 @@ const PptxPreview = React.memo(({ file, onClick }) => {
             {/* File Info */}
             <div className="pptx-preview-info">
                 <div className="pptx-preview-name">
-                    {file.name || 'Presentation'}
+                    {file.name || t('community.pptxPresentation')}
                 </div>
                 <div className="pptx-preview-meta">
-                    <span className="pptx-preview-type">PowerPoint</span>
+                    <span className="pptx-preview-type">{t('community.pptxPowerPoint')}</span>
                     <span className="pptx-preview-size">{formatFileSize(file.size)}</span>
-                    <span className="pptx-preview-action">Click to download</span>
+                    <span className="pptx-preview-action">{t('community.pptxClickDownload')}</span>
                 </div>
             </div>
 
@@ -325,6 +329,7 @@ const PptxPreview = React.memo(({ file, onClick }) => {
 });
 // GIF Picker component
 const GifPicker = ({ onGifSelect, onClose }) => {
+    const { t } = useTranslation();
     const [gifs, setGifs] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
@@ -387,13 +392,13 @@ const GifPicker = ({ onGifSelect, onClose }) => {
     return (
         <div className="gif-picker" onClick={(e) => e.stopPropagation()}>
             <div className="gif-picker-header">
-                <span>GIFs</span>
+                <span>{t('community.gifs')}</span>
                 <button className="gif-picker-close" onClick={onClose}>×</button>
             </div>
             <div className="gif-picker-search">
                 <input
                     type="text"
-                    placeholder="Search GIFs..."
+                    placeholder={t('community.searchGifs')}
                     value={searchQuery}
                     onChange={(e) => handleSearch(e.target.value)}
                     className="gif-search-input"
@@ -401,9 +406,9 @@ const GifPicker = ({ onGifSelect, onClose }) => {
             </div>
             <div className="gif-grid">
                 {loading ? (
-                    <div className="gif-loading">Loading GIFs...</div>
+                    <div className="gif-loading">{t('community.loadingGifs')}</div>
                 ) : gifs.length === 0 ? (
-                    <div className="gif-empty">No GIFs found</div>
+                    <div className="gif-empty">{t('community.noGifsFound')}</div>
                 ) : (
                     gifs.map((gif) => {
                         const imgs = gif?.images || {};
@@ -471,18 +476,18 @@ const getCategoryIcon = (category) => {
     }
 };
 
-// Format category name for display
-const formatCategoryName = (category) => {
+// Format category name for display (pass `t` from useTranslation)
+const formatCategoryName = (category, t) => {
     const c = normalizeCategorySlug(category);
     switch(c) {
-        case 'a7fx': return 'Elite';
-        case 'announcements': return 'ANNOUNCEMENTS';
-        case 'staff': return 'STAFF';
-        case 'forums': return 'FORUMS';
-        case 'trading': return 'TRADING';
-        case 'general': return 'GENERAL';
-        case 'support': return 'SUPPORT';
-        case 'premium': return 'PRO';
+        case 'a7fx': return t('community.category.elite');
+        case 'announcements': return t('community.category.announcements');
+        case 'staff': return t('community.category.staff');
+        case 'forums': return t('community.category.forums');
+        case 'trading': return t('community.category.trading');
+        case 'general': return t('community.category.general');
+        case 'support': return t('community.category.support');
+        case 'premium': return t('community.category.premium');
         default: return (category || '').toUpperCase();
     }
 };
@@ -518,9 +523,9 @@ const generateWeightedOnlineCount = () => {
     }
 };
 
-const formatCommunityRoleLabel = (role) => {
+const formatCommunityRoleLabel = (role, t) => {
     const raw = String(role || '').trim();
-    if (!raw) return 'Member';
+    if (!raw) return t('community.role.member');
     return raw
         .replace(/_/g, ' ')
         .split(' ')
@@ -541,6 +546,7 @@ function isPersistedCommunityMessageId(messageId) {
 
 // Main Community Component
 const Community = () => {
+    const { t } = useTranslation();
     const [userLevel, setUserLevel] = useState(1);
     const [storedUser, setStoredUser] = useState(null);
     const [userId, setUserId] = useState(null);
@@ -1036,7 +1042,7 @@ const { id: channelIdParam } = useParams();
             const ts = typeof parsed?.ts === 'number' ? parsed.ts : 0;
             if (!dataUrl || typeof dataUrl !== 'string') return;
             if (Date.now() - ts > 5 * 60 * 1000) {
-                toast.info('Trader Passport attachment expired — generate a new one from The Operator → Trader CV.');
+                toast.info(t('community.toast.passportExpired'));
                 return;
             }
             try {
@@ -1049,17 +1055,17 @@ const { id: channelIdParam } = useParams();
                     type: blob.type || 'image/png',
                 });
                 setSelectedFile(file);
-                setNewMessage((prev) => (prev && prev.trim() ? prev : 'My Trader Passport (Aura FX)'));
-                toast.info('Trader Passport attached — pick a channel and send. Only people in that channel will see it.');
+                setNewMessage((prev) => (prev && prev.trim() ? prev : t('signUp.traderPassportDefaultCaption')));
+                toast.info(t('community.toast.passportAttached'));
             } catch (e) {
                 console.warn('Trader Passport attach failed', e);
                 setTraderPassportShare({ dataUrl, ts });
-                toast.error('Could not attach Trader Passport. Use Save on Trader CV and upload the image manually.');
+                toast.error(t('community.toast.passportAttachFailed'));
             }
         };
         run();
         return () => { cancelled = true; };
-    }, []);
+    }, [t]);
     
     // Welcome message and channel visibility
     const [hasReadWelcome, setHasReadWelcome] = useState(false);
@@ -1202,13 +1208,13 @@ const handleMiniTaskToggle = useCallback(async (task) => {
                 prev.map(t => t.id === task.id ? updated : t)
             );
             if (res.data?.xpAwarded) {
-                toast.success(`+${res.data.xpAwarded} XP!`, { icon: '⭐' });
+                toast.success(t('community.toast.xpAwarded', { xp: res.data.xpAwarded }), { icon: '⭐' });
             }
         }
     } catch (err) {
         console.error('Error toggling task:', err);
     }
-}, []);
+}, [t]);
 
 // Fetch mini journal data for modal - with debounce to prevent multiple calls
 const fetchMiniJournalData = useCallback(async () => {
@@ -2444,7 +2450,7 @@ useEffect(() => {
 
         // Check if user can send messages in this channel
         if (!selectedChannel || selectedChannel.canWrite === false) {
-            alert("You don't have permission to send messages in this channel.");
+            alert(t('community.alert.noSendPermission'));
             isSendingGifRef.current = false;
             return;
         }
@@ -2600,7 +2606,7 @@ if (window.requestAnimationFrame) {
             console.error('Error sending GIF message:', error);
             // On error, remove optimistic message
             setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
-            alert('Failed to send GIF. Please try again.');
+            alert(t('community.alert.gifSendFailed'));
         } finally {
             reconcilePauseUntilRef.current = Date.now() + 900;
             // Reset sending flag after a short delay to prevent rapid clicks
@@ -2869,7 +2875,7 @@ if (window.requestAnimationFrame) {
         }
 
         if (!newChannelName.trim()) {
-            setChannelActionStatus({ type: 'error', message: 'Channel name is required.' });
+            setChannelActionStatus({ type: 'error', message: t('community.channelAction.nameRequired') });
             return;
         }
 
@@ -2904,7 +2910,7 @@ if (window.requestAnimationFrame) {
             setSelectedChannel(localChannel);
 
             await refreshChannelList({ selectChannelId: fallbackId });
-            setChannelActionStatus({ type: 'success', message: 'Channel created successfully.' });
+            setChannelActionStatus({ type: 'success', message: t('community.channelAction.created') });
 
             setNewChannelName('');
             setNewChannelDescription('');
@@ -2912,7 +2918,7 @@ if (window.requestAnimationFrame) {
 
         } catch (error) {
             console.error('Failed to create channel:', error);
-            const errorMessage = error.response?.data?.message || error.message || 'Failed to create channel.';
+            const errorMessage = error.response?.data?.message || error.message || t('community.channelAction.createFailed');
             setChannelActionStatus({
                 type: 'error',
                 message: errorMessage
@@ -2932,7 +2938,7 @@ if (window.requestAnimationFrame) {
             return;
         }
 
-        const confirmed = window.confirm(`Delete channel "${channel.displayName || channel.name}"? This cannot be undone.`);
+        const confirmed = window.confirm(t('community.confirm.deleteChannel', { name: channel.displayName || channel.name }));
         if (!confirmed) return;
 
         setChannelActionLoading(true);
@@ -2948,12 +2954,12 @@ if (window.requestAnimationFrame) {
                 setMessages([]);
             }
 
-            setChannelActionStatus({ type: 'success', message: 'Channel deleted successfully.' });
+            setChannelActionStatus({ type: 'success', message: t('community.channelAction.deleted') });
         } catch (error) {
             console.error('Failed to delete channel:', error);
             setChannelActionStatus({
                 type: 'error',
-                message: error.response?.data?.message || error.message || 'Failed to delete channel.'
+                message: error.response?.data?.message || error.message || t('community.channelAction.deleteFailed')
             });
         } finally {
             setChannelActionLoading(false);
@@ -2993,10 +2999,10 @@ if (window.requestAnimationFrame) {
                 const u = JSON.parse(localStorage.getItem('user') || '{}');
                 try { localStorage.removeItem(`community_channels_cache_${u.id || 'anon'}`); } catch (e) { /* ignore */ }
                 setEditingChannel(null);
-                setChannelActionStatus({ type: 'success', message: 'Channel updated successfully.' });
+                setChannelActionStatus({ type: 'success', message: t('community.channelAction.updated') });
                 refreshChannelList().catch((err) => console.warn('Refresh after edit failed:', err));
             } else {
-                let errorMessage = 'Failed to update channel';
+                let errorMessage = t('community.channelAction.updateFailed');
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
@@ -3007,7 +3013,7 @@ if (window.requestAnimationFrame) {
             console.error('Failed to update channel:', error);
             setChannelActionStatus({
                 type: 'error',
-                message: error.message || 'Failed to update channel.'
+                message: error.message || t('community.channelAction.updateFailed')
             });
         } finally {
             setChannelActionLoading(false);
@@ -3023,12 +3029,12 @@ if (window.requestAnimationFrame) {
         // Check if category has channels
         const channelsInCategory = channelList.filter(c => (c.category || 'general') === categoryName);
         if (channelsInCategory.length > 0) {
-            alert(`Cannot delete category "${categoryName}" because it contains ${channelsInCategory.length} channel(s). Please move or delete all channels first.`);
+            alert(t('community.alert.cannotDeleteCategory', { name: formatCategoryName(categoryName, t), count: channelsInCategory.length }));
             setCategoryContextMenu(null);
             return;
         }
 
-        const confirmed = window.confirm(`Delete category "${formatCategoryName(categoryName)}"? This cannot be undone.`);
+        const confirmed = window.confirm(t('community.confirm.deleteCategory', { name: formatCategoryName(categoryName, t) }));
         if (!confirmed) {
             setCategoryContextMenu(null);
             return;
@@ -3049,20 +3055,20 @@ if (window.requestAnimationFrame) {
                 setCategoryOrderState(updatedOrder);
                 localStorage.setItem('channelCategoryOrder', JSON.stringify(updatedOrder));
                 setCategoryContextMenu(null);
-                toast.success('Category deleted successfully');
+                toast.success(t('community.toast.categoryDeleted'));
             } else {
                 throw new Error('Failed to delete category');
             }
         } catch (error) {
             console.error('Failed to delete category:', error);
-            alert('Failed to delete category. Please try again.');
+            alert(t('community.alert.deleteCategoryFailed'));
             setCategoryContextMenu(null);
         }
     };
 
     const handleEditCategory = async (oldName, newName) => {
         if (!newName || newName.trim() === '') {
-            alert('Category name cannot be empty');
+            alert(t('community.alert.renameCategoryEmpty'));
             return;
         }
 
@@ -3106,13 +3112,13 @@ if (window.requestAnimationFrame) {
                 localStorage.setItem('channelCategoryOrder', JSON.stringify(currentOrder));
                 setCategoryContextMenu(null);
                 setEditingCategory(null);
-                toast.success('Category renamed successfully');
+                toast.success(t('community.toast.categoryRenamed'));
             } else {
                 throw new Error('Failed to rename category');
             }
         } catch (error) {
             console.error('Failed to rename category:', error);
-            alert('Failed to rename category. Please try again.');
+            alert(t('community.alert.renameCategoryFailed'));
             setCategoryContextMenu(null);
             setEditingCategory(null);
         }
@@ -4210,7 +4216,7 @@ const handleFileDownload = (e, file) => {
     }
     
     if (!file || !file.preview) {
-        alert(`File "${(file && file.name) || 'Unknown'}" cannot be downloaded. File data is not available.`);
+        alert(t('community.alert.fileCannotDownload', { fileName: (file && file.name) || 'Unknown' }));
         return;
     }
     
@@ -4230,7 +4236,7 @@ const handleFileDownload = (e, file) => {
         URL.revokeObjectURL(url);
     } catch (error) {
         console.error('Error downloading file:', error);
-        toast.error('Download failed. The file data may be corrupted.');
+        toast.error(t('community.toast.downloadFailed'));
     }
 };
 
@@ -4299,7 +4305,7 @@ setMessages(prev => {
         return;
       } catch (error) {
         console.error('Error editing message:', error);
-        alert('Failed to edit message. Please try again.');
+        alert(t('community.alert.editMessageFailed'));
         return;
       }
     }
@@ -4481,7 +4487,7 @@ setMessages(prev => {
         }
     } else {
       const errText =
-        typeof payload?.message === 'string' ? payload.message : 'Message could not be saved. Try again in a moment.';
+        typeof payload?.message === 'string' ? payload.message : t('community.msg.saveFailed');
       console.warn('Message send returned error payload:', payload);
       setMessages(prev => {
         const filtered = prev.filter(
@@ -4502,24 +4508,24 @@ setMessages(prev => {
             return filtered;
         });
         
-        toast.error('Failed to send message. Please try again.');
+        toast.error(t('community.toast.sendFailed'));
     } finally {
         reconcilePauseUntilRef.current = Date.now() + 900;
     }
 };
 
     // Date label for separators: Today / Yesterday / formatted date
-    const getDateLabel = (timestamp) => {
+    const getDateLabel = useCallback((timestamp) => {
         if (!timestamp) return '';
         const d = new Date(timestamp);
         const today = new Date();
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
         const key = (dt) => `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}`;
-        if (key(d) === key(today)) return 'Today';
-        if (key(d) === key(yesterday)) return 'Yesterday';
+        if (key(d) === key(today)) return t('community.date.today');
+        if (key(d) === key(yesterday)) return t('community.date.yesterday');
         return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-    };
+    }, [t]);
 
     // Time only (for hover on the right)
     const formatTimeOnly = (timestamp) => {
@@ -4579,16 +4585,16 @@ setMessages(prev => {
     });
     
     return result;
-}, [messages]);
+}, [messages, getDateLabel]);
     // Format timestamp with timezone awareness
-    const formatTimestamp = (timestamp) => {
-        if (!timestamp) return 'Unknown time';
+    const formatTimestamp = useCallback((timestamp) => {
+        if (!timestamp) return t('community.time.unknownTime');
         
         try {
             const date = new Date(timestamp);
             // Check if date is valid
             if (isNaN(date.getTime())) {
-                return 'Invalid date';
+                return t('community.time.invalidDate');
             }
             
             const now = new Date();
@@ -4598,10 +4604,10 @@ setMessages(prev => {
             const diffInDays = Math.floor(diffInHours / 24);
             
             // Relative time for recent messages
-            if (diffInMinutes < 1) return 'Just now';
-            if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-            if (diffInHours < 24) return `${diffInHours}h ago`;
-            if (diffInDays < 7) return `${diffInDays}d ago`;
+            if (diffInMinutes < 1) return t('community.time.justNow');
+            if (diffInMinutes < 60) return t('community.time.minutesAgo', { count: diffInMinutes });
+            if (diffInHours < 24) return t('community.time.hoursAgo', { count: diffInHours });
+            if (diffInDays < 7) return t('community.time.daysAgo', { count: diffInDays });
             
             // For older messages, show date and time in user's local timezone
             const isToday = date.toDateString() === now.toDateString();
@@ -4616,11 +4622,13 @@ setMessages(prev => {
                 });
             } else if (isYesterday) {
                 // Show "Yesterday" with time
-                return `Yesterday at ${date.toLocaleTimeString('en-US', { 
-                    hour: 'numeric', 
-                    minute: '2-digit',
-                    hour12: true 
-                })}`;
+                return t('community.time.yesterdayAt', {
+                    time: date.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    })
+                });
             } else if (diffInDays < 365) {
                 // Show date and time for this year
                 return date.toLocaleDateString('en-US', { 
@@ -4643,9 +4651,9 @@ setMessages(prev => {
             }
         } catch (error) {
             console.error('Error formatting timestamp:', error, timestamp);
-            return 'Invalid date';
+            return t('community.time.invalidDate');
         }
-    };
+    }, [t]);
 
     // Handle welcome message acknowledgment (emoji reaction - unlocks channels)
     const handleWelcomeAcknowledgment = async () => {
@@ -4658,7 +4666,7 @@ setMessages(prev => {
             await refreshChannelList();
         } catch (err) {
             console.error('Accept onboarding error:', err);
-            toast.error(err?.response?.data?.message || 'Failed to accept. Please try again.');
+            toast.error(err?.response?.data?.message || t('community.toast.acceptFailed'));
         }
     };
 
@@ -4810,7 +4818,7 @@ setMessages(prev => {
             console.error('Failed to delete message:', error);
             // Only show error if it's not a temporary message
             if (!(typeof messageId === 'string' && messageId.startsWith('temp_'))) {
-                alert('Failed to delete message: ' + (error.message || 'Unknown error'));
+                alert(t('community.alert.deleteMessageFailed', { detail: error.message || t('community.alert.unknownError') }));
             }
         } finally {
             setIsDeletingMessage(false);
@@ -5288,7 +5296,7 @@ useEffect(() => {
                                                                     e.currentTarget.style.opacity = 0;
                                                                     e.currentTarget.style.background = 'transparent';
                                                                 }}
-                                                                title="Delete message"
+                                                                title={t('community.tooltip.deleteMessage')}
                                                             >
                                                                 <FaTrash size={12} />
                                                             </button>
@@ -5323,7 +5331,7 @@ useEffect(() => {
                                                             onMouseLeave={(e) => {
                                                                 e.currentTarget.style.background = 'transparent';
                                                             }}
-                                                            title="Delete message"
+                                                            title={t('community.tooltip.deleteMessage')}
                                                         >
                                                             <FaTrash size={12} />
                                                         </button>
@@ -5524,7 +5532,7 @@ if (!isAuthenticated && !hasToken) {
             zIndex: 9999
         }}>
             <CosmicBackground />
-            <div style={{ color: '#fff', fontSize: '18px' }}>Loading...</div>
+            <div style={{ color: '#fff', fontSize: '18px' }}>{t('community.loading')}</div>
         </div>
     );
 }
@@ -5801,7 +5809,7 @@ if (!isAuthenticated && !hasToken) {
                 <button
                     className="mobile-sidebar-toggle"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
-                    aria-label="Toggle channels"
+                    aria-label={t('community.aria.toggleChannels')}
                    style={{
     display: 'none'
 }}
@@ -5859,7 +5867,7 @@ if (!isAuthenticated && !hasToken) {
                         background: 'var(--bg-primary)',
                         gap: '8px'
                     }}>
-                        <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#fff', flex: 1 }}>Channels</h2>
+                        <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#fff', flex: 1 }}>{t('community.channels')}</h2>
                         {(isAdminUser || isSuperAdminUser) && (
                             <button
                                 type="button"
@@ -5889,7 +5897,7 @@ if (!isAuthenticated && !hasToken) {
                                     e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)';
                                 }}
                             >
-                                <FaPlus size={10} /> Manage
+                                <FaPlus size={10} /> {t('community.manage')}
                             </button>
                         )}
                         <button
@@ -5922,7 +5930,7 @@ if (!isAuthenticated && !hasToken) {
                 {/* Desktop sidebar header */}
                 {!isMobile && (
                     <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                        <h2 style={{ margin: 0 }}>Channels</h2>
+                        <h2 style={{ margin: 0 }}>{t('community.channels')}</h2>
                         {(isAdminUser || isSuperAdminUser) && (
                             <button
                                 type="button"
@@ -5951,7 +5959,7 @@ if (!isAuthenticated && !hasToken) {
                                     e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)';
                                 }}
                             >
-                                <FaPlus size={10} /> Manage
+                                <FaPlus size={10} /> {t('community.manage')}
                             </button>
                         )}
                     </div>
@@ -5986,7 +5994,7 @@ if (!isAuthenticated && !hasToken) {
                                 textTransform: 'none',
                                 letterSpacing: '0.5px'
                             }}>
-                                Online Now
+                                {t('community.onlineNow')}
                             </span>
                         </div>
                         <span style={{
@@ -6003,8 +6011,8 @@ if (!isAuthenticated && !hasToken) {
                     <div className="community-message-alerts-banner">
                         <div className="community-message-alerts-banner-text">
                             {communityNotifPerm === 'denied'
-                                ? 'System alerts are off or blocked. Unmute AURA TERMINAL™ in your device settings to get message-style notifications when the app is in the background.'
-                                : 'Enable alerts to get notified of new messages and mentions (muted channels stay silent).'}
+                                ? t('community.alerts.deniedBody')
+                                : t('community.alerts.promptBody')}
                         </div>
                         <div className="community-message-alerts-banner-actions">
                             {communityNotifPerm === 'default' && (
@@ -6013,7 +6021,7 @@ if (!isAuthenticated && !hasToken) {
                                     className="community-message-alerts-enable"
                                     onClick={() => requestCommunityMessageAlerts().then(setCommunityNotifPerm)}
                                 >
-                                    Enable alerts
+                                    {t('community.alerts.enable')}
                                 </button>
                             )}
                             <button
@@ -6024,7 +6032,7 @@ if (!isAuthenticated && !hasToken) {
                                     setDismissCommunityAlertBanner(true);
                                 }}
                             >
-                                Dismiss
+                                {t('community.alerts.dismiss')}
                             </button>
                         </div>
                     </div>
@@ -6160,7 +6168,7 @@ if (!isAuthenticated && !hasToken) {
                                 >
                                     <span className={`category-chevron ${isCollapsed ? 'collapsed' : ''}`}>▼</span>
                                     <span className="category-icon">{getCategoryIcon(categoryName)}</span>
-                                    <h3 className="category-title">{formatCategoryName(categoryName)}</h3>
+                                    <h3 className="category-title">{formatCategoryName(categoryName, t)}</h3>
                                     <span className="category-count">{channels.length}</span>
                                 </div>
                                 
@@ -6426,7 +6434,7 @@ if (!isAuthenticated && !hasToken) {
                                                         opacity: isLocked ? 0.6 : (isDragging ? 0.4 : 1),
                                                         transform: isDragging ? 'scale(0.98)' : 'scale(1)'
                                                 }}
-                                                    title={isLocked ? `🔒 Requires ${subscriptionRequirement} subscription - Click to subscribe` : ((isAdminUser || isSuperAdminUser) ? 'Drag to reorder' : '')}
+                                                    title={isLocked ? t('community.tooltip.channelLocked', { tier: subscriptionRequirement }) : ((isAdminUser || isSuperAdminUser) ? t('community.tooltip.dragReorder') : '')}
                                             >
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
                                                     <span className="channel-icon">
@@ -6629,7 +6637,7 @@ if (!isAuthenticated && !hasToken) {
                                 <span style={{
                                     fontWeight: 600,
                                     color: '#E9D5FF'
-                                }}>{formatCommunityRoleLabel(storedUser?.role)}</span>
+                                }}>{formatCommunityRoleLabel(storedUser?.role, t)}</span>
                                 <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>⬢</span>
                                 <span style={{ 
                                     fontWeight: 600,
@@ -6661,7 +6669,7 @@ if (!isAuthenticated && !hasToken) {
                         {/* Check if user can access this channel - don't show "not allowed" while entitlements loading (avoids flash) */}
                         {selectedChannel?.canSee === false ? (
                             entitlementsLoading ? (
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>Loading...</div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>{t('community.loading')}</div>
                             ) : (
                             <div style={{
                                 display: 'flex',
@@ -6914,8 +6922,8 @@ if (!isAuthenticated && !hasToken) {
                                     className={`channel-push-toggle${channelPushEnabled ? ' channel-push-toggle--on' : ''}`}
                                     title={
                                         channelPushEnabled
-                                            ? 'Stop push alerts for new messages in this channel'
-                                            : 'Get push when people chat here (throttled, ~1 per 10 min per channel)'
+                                            ? t('community.pushTitleOn')
+                                            : t('community.pushTitleOff')
                                     }
                                     aria-pressed={channelPushEnabled}
                                     disabled={channelPushBusy || !userId}
@@ -6929,18 +6937,18 @@ if (!isAuthenticated && !hasToken) {
                                             setChannelPushEnabled(next);
                                             toast.success(
                                                 next
-                                                    ? 'Channel push on — occasional alerts when people message (max ~1/10 min).'
-                                                    : 'Channel push off for this channel.'
+                                                    ? t('community.toast.pushOn')
+                                                    : t('community.toast.pushOff')
                                             );
                                         } catch {
-                                            toast.error('Could not update channel notifications');
+                                            toast.error(t('community.toast.channelNotifFailed'));
                                         } finally {
                                             setChannelPushBusy(false);
                                         }
                                     }}
                                 >
                                     <FaBell aria-hidden />
-                                    <span className="channel-push-toggle__label">{channelPushEnabled ? 'Push on' : 'Push off'}</span>
+                                    <span className="channel-push-toggle__label">{channelPushEnabled ? t('community.pushOn') : t('community.pushOff')}</span>
                                 </button>
                             </div>
                         </div>
@@ -7041,7 +7049,7 @@ if (!isAuthenticated && !hasToken) {
                                 gap: '12px',
                                 flexWrap: 'wrap'
                             }}>
-                                <span>Real-time connection unavailable. Messages will update via polling.</span>
+                                <span>{t('community.wsReconnectBody')}</span>
                                 <button
                                     type="button"
                                     onClick={() => retryWebSocket && retryWebSocket()}
@@ -7056,7 +7064,7 @@ if (!isAuthenticated && !hasToken) {
                                         fontSize: '13px'
                                     }}
                                 >
-                                    Retry connection
+                                    {t('community.wsRetryConnection')}
                                 </button>
                             </div>
                         )}
@@ -7075,10 +7083,10 @@ if (!isAuthenticated && !hasToken) {
                    '#F59E0B',
             fontWeight: 600
         }}>
-            {connectionStatus === 'connected' ? 'Connected' : 
-             connectionStatus === 'server-issue' ? 'Connection Issues' :
-             connectionStatus === 'wifi-issue' ? 'Cannot Connect' :
-             'Connecting...'}
+            {connectionStatus === 'connected' ? t('community.conn.connected') : 
+             connectionStatus === 'server-issue' ? t('community.conn.serverIssue') :
+             connectionStatus === 'wifi-issue' ? t('community.conn.wifiIssue') :
+             t('community.conn.connecting')}
         </span>
     </div>
     
@@ -7141,8 +7149,8 @@ if (!isAuthenticated && !hasToken) {
             fontSize: '0.875rem'
         }}>
             {['welcome', 'announcements', 'levels', 'notifications'].includes((selectedChannel?.name || selectedChannel?.id || '').toLowerCase())
-                ? 'This channel is read-only. Only admins can post here.'
-                : 'This channel is read-only. Upgrade to post here.'}
+                ? t('community.readOnly.adminChannel')
+                : t('community.readOnly.upgradeChannel')}
         </div>
     )}
     <form className="chat-form" onSubmit={handleSendMessage}>
@@ -7179,14 +7187,14 @@ if (!isAuthenticated && !hasToken) {
                             fontWeight: 600,
                             fontSize: '0.875rem'
                         }}>
-                            Editing message
+                            {t('community.editing.label')}
                         </div>
                         <div style={{ 
                             color: 'var(--text-muted)', 
                             fontSize: '0.75rem',
                             marginTop: '2px'
                         }}>
-                            Make your changes and click Save
+                            {t('community.editing.hint')}
                         </div>
                     </div>
                 </div>
@@ -7213,7 +7221,7 @@ if (!isAuthenticated && !hasToken) {
                         e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
                     }}
                 >
-                    Cancel
+                    {t('community.cancel')}
                 </button>
             </div>
         )}
@@ -7280,12 +7288,12 @@ if (!isAuthenticated && !hasToken) {
                 }}
                 placeholder={
                     editingMessageId
-                        ? 'Edit your message...'
+                        ? t('community.placeholder.editMessage')
                         : selectedChannel?.canWrite !== false
-                            ? `Message #${selectedChannel?.name || ''}`
+                            ? t('community.placeholder.messageChannel', { channel: selectedChannel?.name || '' })
                             : ['welcome', 'announcements', 'levels', 'notifications'].includes((selectedChannel?.name || selectedChannel?.id || '').toLowerCase())
-                                ? 'Read-only. Only admins can post here.'
-                                : 'Read-only channel. Upgrade to post here.'
+                                ? t('community.placeholder.readOnlyAdmin')
+                                : t('community.placeholder.readOnlyUpgrade')
                 }
                 disabled={selectedChannel?.canWrite === false}
                 rows="3"
@@ -7327,7 +7335,7 @@ if (!isAuthenticated && !hasToken) {
                         textTransform: 'none',
                         borderBottom: '1px solid rgba(0, 0, 0, 0.2)'
                     }}>
-                        Members
+                        {t('community.mention.members')}
                     </div>
                     <div style={{ padding: '8px 0' }}>
                     {(() => {
@@ -7386,12 +7394,12 @@ if (!isAuthenticated && !hasToken) {
                                         }}>A</div>
                                         <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                                             <div style={{ fontWeight: 600, color: '#fff', fontSize: '1rem' }}>@admin</div>
-                                            <div style={{ fontSize: '0.8125rem', color: '#b9bbbe', marginTop: '2px' }}>Notify all admins</div>
+                                            <div style={{ fontSize: '0.8125rem', color: '#b9bbbe', marginTop: '2px' }}>{t('community.mention.notifyAdmins')}</div>
                                         </div>
                                     </div>
                                 )}
                                 {filteredUsers.map(user => {
-                                    const displayName = user.name || user.username || 'User';
+                                    const displayName = user.name || user.username || t('community.mention.userFallback');
                                     const username = user.username || user.name || 'user';
                                     return (
                                     <div
@@ -7541,7 +7549,7 @@ if (!isAuthenticated && !hasToken) {
                     type="submit" 
                     className="chat-input-btn"
                     disabled={(!newMessage.trim() && !selectedFile) || selectedChannel?.canWrite === false}
-                    title="Send message"
+                    title={t('community.tooltip.send')}
                 >
                     <FaPaperPlane />
                 </button>
@@ -7556,8 +7564,8 @@ if (!isAuthenticated && !hasToken) {
                     </>
                 ) : (
                     <div className="no-channel-selected">
-                        <h2>Welcome to Aura Terminal™ community</h2>
-                        <p>Select a channel to start chatting</p>
+                        <h2>{t('community.welcome.title')}</h2>
+                        <p>{t('community.welcome.subtitle')}</p>
                     </div>
                 )}
             </div>
@@ -7572,7 +7580,7 @@ if (!isAuthenticated && !hasToken) {
         <div className="channel-manager-modal" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="channel-manager-header">
-                <h3>CHANNEL MANAGEMENT</h3>
+                <h3>{t('community.channelMgr.title')}</h3>
                 <button 
                     type="button" 
                     className="channel-manager-close"
@@ -7599,14 +7607,14 @@ if (!isAuthenticated && !hasToken) {
                 <div className="channel-manager-form-group">
                     <div className="channel-manager-label">
                         <span>#</span>
-                        <span>CHANNEL NAME</span>
+                        <span>{t('community.channelMgr.channelName')}</span>
                     </div>
                     <input
                         type="text"
                         className="channel-manager-input"
                         value={newChannelName}
                         onChange={(e) => setNewChannelName(e.target.value)}
-                        placeholder="e.g., Smart Money Concepts"
+                        placeholder={t('community.channelMgr.channelNamePh')}
                         required
                     />
                 </div>
@@ -7615,38 +7623,38 @@ if (!isAuthenticated && !hasToken) {
                     <div className="channel-manager-form-group">
                         <div className="channel-manager-label">
                             <span>📁</span>
-                            <span>CATEGORY</span>
+                            <span>{t('community.channelMgr.category')}</span>
                         </div>
                         <select
                             className="channel-manager-select"
                             value={newChannelCategory}
                             onChange={(e) => setNewChannelCategory(e.target.value)}
                         >
-                            <option value="forums">📈 Forums</option>
-                            <option value="general">💬 General</option>
-                            <option value="support">🆘 Support</option>
-                            <option value="premium">⭐ Premium</option>
-                            <option value="a7fx">💎 A7FX</option>
-                            <option value="staff">👨‍💼 Staff</option>
+                            <option value="forums">{t('community.channelMgr.optForums')}</option>
+                            <option value="general">{t('community.channelMgr.optGeneral')}</option>
+                            <option value="support">{t('community.channelMgr.optSupport')}</option>
+                            <option value="premium">{t('community.channelMgr.optPremium')}</option>
+                            <option value="a7fx">{t('community.channelMgr.optA7fx')}</option>
+                            <option value="staff">{t('community.channelMgr.optStaff')}</option>
                         </select>
                     </div>
 
                     <div className="channel-manager-form-group">
                         <div className="channel-manager-label">
                             <span>🔒</span>
-                            <span>ACCESS</span>
+                            <span>{t('community.channelMgr.access')}</span>
                         </div>
                         <select
                             className="channel-manager-select"
                             value={newChannelAccess}
                             onChange={(e) => setNewChannelAccess(e.target.value)}
                         >
-                            <option value="free">🌱 Free</option>
-                            <option value="open">🔓 Open</option>
-                            <option value="read-only">📖 Read Only</option>
-                            <option value="admin-only">🛡 Admin Only</option>
-                            <option value="premium">✨ Premium (£99/mo)</option>
-                            <option value="a7fx">💎 A7FX Elite (£250/mo)</option>
+                            <option value="free">{t('community.channelMgr.accessFree')}</option>
+                            <option value="open">{t('community.channelMgr.accessOpen')}</option>
+                            <option value="read-only">{t('community.channelMgr.accessReadOnly')}</option>
+                            <option value="admin-only">{t('community.channelMgr.accessAdminOnly')}</option>
+                            <option value="premium">{t('community.channelMgr.accessPremium')}</option>
+                            <option value="a7fx">{t('community.channelMgr.accessA7fx')}</option>
                         </select>
                     </div>
                 </div>
@@ -7654,14 +7662,14 @@ if (!isAuthenticated && !hasToken) {
                 <div className="channel-manager-form-group">
                     <div className="channel-manager-label">
                         <span>📝</span>
-                        <span>DESCRIPTION</span>
+                        <span>{t('community.channelMgr.description')}</span>
                     </div>
                     <textarea
                         className="channel-manager-textarea"
                         value={newChannelDescription}
                         onChange={(e) => setNewChannelDescription(e.target.value)}
                         rows="3"
-                        placeholder="Describe the purpose of this channel..."
+                        placeholder={t('community.channelMgr.descPh')}
                     />
                 </div>
 
@@ -7671,7 +7679,7 @@ if (!isAuthenticated && !hasToken) {
                     disabled={channelActionLoading}
                 >
                     <span>✨</span>
-                    {channelActionLoading ? 'Creating...' : 'Create Channel'}
+                    {channelActionLoading ? t('community.channelMgr.creating') : t('community.channelMgr.createBtn')}
                     <span>→</span>
                 </button>
             </form>
@@ -7679,9 +7687,9 @@ if (!isAuthenticated && !hasToken) {
             {/* Existing Channels Section */}
             <div className="channel-manager-section-header">
                 <span>📋</span>
-                <span className="label">Existing Channels</span>
+                <span className="label">{t('community.channelMgr.existing')}</span>
                 <span className="count-badge">
-                    {channelList.filter(channel => !protectedChannelIds.includes(channel.id)).length} channels
+                    {t('community.channelMgr.channelsCount', { count: channelList.filter(channel => !protectedChannelIds.includes(channel.id)).length })}
                 </span>
             </div>
 
@@ -7689,8 +7697,8 @@ if (!isAuthenticated && !hasToken) {
                 {channelList.filter(channel => !protectedChannelIds.includes(channel.id)).length === 0 ? (
                     <div className="channel-manager-empty">
                         <span className="channel-manager-empty-icon">💭</span>
-                        <div className="channel-manager-empty-text">No custom channels yet</div>
-                        <div className="channel-manager-empty-sub">Create your first channel above</div>
+                        <div className="channel-manager-empty-text">{t('community.channelMgr.emptyTitle')}</div>
+                        <div className="channel-manager-empty-sub">{t('community.channelMgr.emptySub')}</div>
                     </div>
                 ) : (
                     channelList
@@ -7711,16 +7719,16 @@ if (!isAuthenticated && !hasToken) {
                                             </span>
                                             <span className="name">{cleanChannelLabel(channel.displayName || channel.name)}</span>
                                             <span className={`channel-manager-item-badge ${badgeClass}`}>
-                                                {accessLevel === 'premium' ? 'Premium' : 
-                                                 accessLevel === 'a7fx' || accessLevel === 'elite' ? 'Elite' : 
-                                                 accessLevel === 'admin-only' ? 'Admin' :
-                                                 accessLevel === 'read-only' ? 'Read Only' : 
-                                                 accessLevel === 'free' ? 'Free' : 'Open'}
+                                                {accessLevel === 'premium' ? t('community.badge.premium') : 
+                                                 accessLevel === 'a7fx' || accessLevel === 'elite' ? t('community.badge.elite') : 
+                                                 accessLevel === 'admin-only' ? t('community.badge.admin') :
+                                                 accessLevel === 'read-only' ? t('community.badge.readOnly') : 
+                                                 accessLevel === 'free' ? t('community.badge.free') : t('community.badge.open')}
                                             </span>
                                         </div>
                                         <div className="channel-manager-item-meta">
                                             <span>{getCategoryIcon(channel.category)}</span>
-                                            <span>{formatCategoryName(channel.category || 'general')}</span>
+                                            <span>{formatCategoryName(channel.category || 'general', t)}</span>
                                         </div>
                                     </div>
                                     <button
@@ -7730,7 +7738,7 @@ if (!isAuthenticated && !hasToken) {
                                         disabled={channelActionLoading}
                                     >
                                         <FaTrash size={10} />
-                                        Delete
+                                        {t('community.channelMgr.delete')}
                                     </button>
                                 </div>
                             );
@@ -7778,14 +7786,14 @@ if (!isAuthenticated && !hasToken) {
                                 fontSize: '1.25rem',
                                 fontWeight: 600
                             }}>
-                                Delete Message
+                                {t('community.deleteModal.title')}
                             </h3>
                             <p style={{
                                 margin: 0,
                                 color: '#9CA3AF',
                                 fontSize: '0.9rem'
                             }}>
-                                Are you sure you want to delete this message? This action cannot be undone.
+                                {t('community.deleteModal.body')}
                             </p>
                         </div>
 
@@ -7846,7 +7854,7 @@ if (!isAuthenticated && !hasToken) {
                                     e.currentTarget.style.background = 'transparent';
                                 }}
                             >
-                                Cancel
+                                {t('community.cancel')}
                             </button>
                             <button
                                 onClick={confirmDeleteMessage}
@@ -7876,7 +7884,7 @@ if (!isAuthenticated && !hasToken) {
                                     }
                                 }}
                             >
-                                {isDeletingMessage ? 'Deleting...' : 'Delete Message'}
+                                {isDeletingMessage ? t('community.deleteModal.deleting') : t('community.deleteModal.confirm')}
                             </button>
                         </div>
                     </div>
@@ -8685,7 +8693,7 @@ if (!isAuthenticated && !hasToken) {
                             setContextMenu(null);
                         }}
                     >
-                        <FaLink size={14} /> Copy message link
+                        <FaLink size={14} /> {t('community.context.copyMessageLink')}
                     </button>
                     <button
                         className="context-menu-item"
@@ -8694,7 +8702,7 @@ if (!isAuthenticated && !hasToken) {
                             setContextMenu(null);
                         }}
                     >
-                        <FaBookmark size={14} /> Save Message
+                        <FaBookmark size={14} /> {t('community.context.saveMessage')}
                     </button>
                     <button
                         className="context-menu-item"
@@ -8703,7 +8711,7 @@ if (!isAuthenticated && !hasToken) {
                             setContextMenu(null);
                         }}
                     >
-                        <FaBell size={14} /> Notify on Replies
+                        <FaBell size={14} /> {t('community.context.notifyReplies')}
                     </button>
                     <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '4px 0' }} />
                     <button
@@ -8713,7 +8721,7 @@ if (!isAuthenticated && !hasToken) {
                             setContextMenu(null);
                         }}
                     >
-                        Mark as Unread
+                        {t('community.context.markUnread')}
                     </button>
                     <button
                         className="context-menu-item"
@@ -8723,7 +8731,7 @@ if (!isAuthenticated && !hasToken) {
                         }}
                         style={{ color: '#f87171' }}
                     >
-                        <FaFlag size={14} /> Report message
+                        <FaFlag size={14} /> {t('community.context.reportMessage')}
                     </button>
                     {/* Delete message - show for message owner, admin, or moderator */}
                     {(() => {
@@ -8738,7 +8746,7 @@ if (!isAuthenticated && !hasToken) {
                                     }}
                                     style={{ color: '#ef4444' }}
                                 >
-                                    <FaTrash size={14} /> Delete message
+                                    <FaTrash size={14} /> {t('community.context.deleteMessage')}
                                 </button>
                             );
                         }

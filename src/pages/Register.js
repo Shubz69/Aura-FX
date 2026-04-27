@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import "../styles/Register.css";
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
@@ -8,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRedirect';
 import { toE164 } from '../utils/countryCodes.js';
 import PhoneCountrySelect from '../components/PhoneCountrySelect';
+import LanguageSelector from '../components/LanguageSelector';
+import { getPreferredSiteLanguage } from '../utils/siteLanguage';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -28,6 +31,8 @@ const Register = () => {
     const [codesSent, setCodesSent] = useState(false);
     const [phoneCountryCode, setPhoneCountryCode] = useState('+44');
     const [phoneNational, setPhoneNational] = useState('');
+    const { t } = useTranslation();
+    const [siteLanguage, setSiteLanguage] = useState(getPreferredSiteLanguage());
     const { register: registerUser } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
@@ -167,6 +172,7 @@ const Register = () => {
                 password: formData.password,
                 name: (formData.name || '').trim(),
                 avatar: null,
+                preferredLanguage: siteLanguage,
                 ...(referralMerged ? { referralCode: referralMerged } : {})
             };
             localStorage.setItem('newSignup', 'true');
@@ -234,7 +240,10 @@ const Register = () => {
             <div className="register-form-container">
                 <div className="form-header">
                     <h2 className="register-title">Sign up</h2>
-                    <p className="register-subtitle">Create your account – verify email and phone</p>
+                    <p className="register-subtitle">{t('auth.createAccountVerify')}</p>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                    <LanguageSelector value={siteLanguage} onChange={setSiteLanguage} />
                 </div>
                 {error ? <div className="error-message">{error}</div> : null}
                 {success ? <div className="success-message">{success}</div> : null}
@@ -305,7 +314,7 @@ const Register = () => {
                             </span>
                         </label>
                         <button type="submit" className="register-button" disabled={isLoading}>
-                            {isLoading ? 'SENDING CODES...' : 'SEND VERIFICATION CODES'}
+                            {isLoading ? t('auth.sendingCodes') : t('auth.sendVerificationCodes')}
                         </button>
                     </form>
                 )}
@@ -330,17 +339,17 @@ const Register = () => {
                                 <p><button type="button" onClick={handleResendPhoneCode} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Resend phone code</button></p>
                             </div>
                             <button type="submit" className="register-button" disabled={isLoading || emailCode.length !== 6 || phoneCode.length !== 6} style={{ marginTop: '0.5rem' }}>
-                                {isLoading ? 'VERIFYING...' : 'VERIFY & SIGN UP'}
+                                {isLoading ? t('auth.verifying') : t('auth.verifyAndSignUp')}
                             </button>
                         </form>
                         <p style={{ marginTop: '1rem' }}>
-                            <button type="button" onClick={() => { setCodesSent(false); setEmailCode(''); setPhoneCode(''); setPhoneCountryCode('+44'); setPhoneNational(''); setError(''); setSuccess(''); }} className="link-button" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Start over</button>
+                            <button type="button" onClick={() => { setCodesSent(false); setEmailCode(''); setPhoneCode(''); setPhoneCountryCode('+44'); setPhoneNational(''); setError(''); setSuccess(''); }} className="link-button" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>{t('auth.startOver')}</button>
                         </p>
                     </>
                 )}
 
                 <div className="login-link" style={{ marginTop: '1.25rem' }}>
-                    <p>Already have an account? <Link to="/login">Sign In</Link></p>
+                    <p>{t('auth.alreadyHaveAccount')} <Link to="/login">{t('auth.signIn')}</Link></p>
                 </div>
             </div>
         </div>

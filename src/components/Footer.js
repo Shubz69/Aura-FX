@@ -1,9 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import A7Logo from "./A7Logo";
 import "../styles/Footer.css";
 
 const Footer = React.memo(function Footer() {
+  const { t } = useTranslation();
   return (
     <footer className="footer">
       <div className="footer-glow-top" />
@@ -17,7 +19,7 @@ const Footer = React.memo(function Footer() {
               <A7Logo />
             </div>
           </div>
-          <p className="footer-tagline">Trade smarter with AI-powered insights.</p>
+          <p className="footer-tagline">{t('footer.tagline')}</p>
           <div className="footer-social">
             {/* X (Twitter) */}
             <a 
@@ -66,24 +68,24 @@ const Footer = React.memo(function Footer() {
 
         {/* Quick Links */}
         <div className="footer-column">
-          <h4 className="footer-column-heading">Platform</h4>
+          <h4 className="footer-column-heading">{t('footer.platform')}</h4>
           <ul className="footer-links">
-            <li><Link to="/">Home</Link></li>
+            <li><Link to="/">{t('navbar.home')}</Link></li>
             <li><Link to="/courses">C&S</Link></li>
-            <li><Link to="/explore">Explore</Link></li>
-            <li><Link to="/why-glitch">Why Aura Terminal™</Link></li>
-            <li><Link to="/contact">Contact</Link></li>
+            <li><Link to="/explore">{t('navbar.explore')}</Link></li>
+            <li><Link to="/why-glitch">{t('navbar.whyAura')}</Link></li>
+            <li><Link to="/contact">{t('navbar.contactUs')}</Link></li>
           </ul>
         </div>
 
         {/* Resources */}
         <div className="footer-column">
-          <h4 className="footer-column-heading">Resources</h4>
+          <h4 className="footer-column-heading">{t('footer.resources')}</h4>
           <ul className="footer-links">
-            <li><Link to="/choose-plan">Plans</Link></li>
+            <li><Link to="/choose-plan">{t('footer.plans')}</Link></li>
             <li><Link to="/affiliation">Affiliation</Link></li>
-            <li><Link to="/privacy">Privacy Policy</Link></li>
-            <li><Link to="/terms">Terms of Service</Link></li>
+            <li><Link to="/privacy">{t('footer.privacy')}</Link></li>
+            <li><Link to="/terms">{t('footer.terms')}</Link></li>
           </ul>
         </div>
       </div>
@@ -92,10 +94,10 @@ const Footer = React.memo(function Footer() {
       <div className="footer-bottom-wrap">
         <div className="footer-divider" />
         <div className="footer-bottom">
-          <span className="footer-copy">© 2025 AURA TERMINAL™. All rights reserved.</span>
+          <span className="footer-copy">© 2025 AURA TERMINAL™. {t('footer.allRightsReserved')}</span>
           <span className="footer-status">
             <span className="footer-status-dot" />
-            All systems operational
+            {t('footer.allSystemsOperational')}
           </span>
         </div>
       </div>

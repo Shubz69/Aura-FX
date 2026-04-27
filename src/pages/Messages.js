@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Messages.css';
@@ -9,6 +10,7 @@ import { logClassifiedError } from '../utils/apiObservability';
 import WebSocketService from '../services/WebSocketService';
 
 const Messages = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
     const [messages, setMessages] = useState([]);
@@ -237,7 +239,7 @@ const Messages = () => {
         });
     };
 
-    const formatTime = (timestamp) => {
+    const formatTime = useCallback((timestamp) => {
         const date = new Date(timestamp);
         const now = new Date();
         const diff = now - date;
@@ -245,23 +247,23 @@ const Messages = () => {
         const hours = Math.floor(diff / 3600000);
         const days = Math.floor(diff / 86400000);
 
-        if (minutes < 1) return 'Just now';
-        if (minutes < 60) return `${minutes}m ago`;
-        if (hours < 24) return `${hours}h ago`;
-        if (days < 7) return `${days}d ago`;
+        if (minutes < 1) return t('time.justNow');
+        if (minutes < 60) return t('time.minutesAgo', { count: minutes });
+        if (hours < 24) return t('time.hoursAgo', { count: hours });
+        if (days < 7) return t('time.daysAgo', { count: days });
         return date.toLocaleDateString();
-    };
+    }, [t]);
 
-    const getDateLabel = (timestamp) => {
+    const getDateLabel = useCallback((timestamp) => {
         const d = new Date(timestamp);
         const today = new Date();
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
-        const key = (date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-        if (key(d) === key(today)) return 'Today';
-        if (key(d) === key(yesterday)) return 'Yesterday';
+        const keyFn = (date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        if (keyFn(d) === keyFn(today)) return t('time.today');
+        if (keyFn(d) === keyFn(yesterday)) return t('time.yesterday');
         return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-    };
+    }, [t]);
 
     const messagesWithDateGroups = useMemo(() => {
         if (!messages.length) return [];
@@ -279,14 +281,14 @@ const Messages = () => {
             const { label, messages: dayMessages } = groups.get(dateKey);
             return [{ type: 'date', label, dateKey }, ...dayMessages.map((m) => ({ type: 'message', message: m }))];
         });
-    }, [messages]);
+    }, [messages, getDateLabel]);
 
     return (
         <AuraTerminalThemeShell>
             <div className="messages-page-container journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
                 <div className="messages-page-header">
                     <button className="back-button" onClick={() => navigate(-1)}>
-                        <FaArrowLeft /> Back
+                        <FaArrowLeft /> {t('messages.back')}
                     </button>
                     <div className="chat-partner-info">
                         <div className="admin-avatar">
@@ -294,12 +296,12 @@ const Messages = () => {
                         </div>
                         <div className="admin-details">
                             <h2>
-                                <span className="admin-badge">Admin</span>
-                                <span className="admin-title-text">Support Team</span>
+                                <span className="admin-badge">{t('common.admin')}</span>
+                                <span className="admin-title-text">{t('messages.supportTeam')}</span>
                             </h2>
                             <p className="admin-status">
                                 <span className="status-dot online"></span>
-                                <span className="status-text">Available to help</span>
+                                <span className="status-text">{t('messages.availableToHelp')}</span>
                             </p>
                         </div>
                     </div>
@@ -315,8 +317,8 @@ const Messages = () => {
                                 <div className="empty-icon-wrapper">
                                     <FaShieldAlt className="empty-icon" />
                                 </div>
-                                <h3>Start a conversation</h3>
-                                <p>Send a message to our admin team and we'll get back to you as soon as possible.</p>
+                                <h3>{t('messages.emptyTitle')}</h3>
+                                <p>{t('messages.emptyBody')}</p>
                             </div>
                         ) : (
                             messagesWithDateGroups.map((item, index) =>
@@ -335,11 +337,11 @@ const Messages = () => {
                                                     {item.message.sender === 'admin' ? (
                                                         <>
                                                             <FaShieldAlt className="sender-icon" />
-                                                            Admin
+                                                            {t('common.admin')}
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <span className="sender-you-icon">You</span>
+                                                            <span className="sender-you-icon">{t('common.you')}</span>
                                                         </>
                                                     )}
                                                 </span>
@@ -364,7 +366,7 @@ const Messages = () => {
                                 className="message-input"
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
-                                placeholder="Type your message to Admin..."
+                                placeholder={t('messages.placeholder')}
                             />
                             <button type="submit" className="send-button" disabled={!newMessage.trim()}>
                                 <FaPaperPlane />

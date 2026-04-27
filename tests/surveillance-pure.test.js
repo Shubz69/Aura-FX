@@ -29,6 +29,13 @@ const {
   clusterIndicesForTape,
 } = require('../api/surveillance/storyline');
 const { bucketAdapterRecency } = require('../api/surveillance/adapterState');
+const {
+  validCoord,
+  mergeGeoFallback,
+  getFallbackEventById,
+  FALLBACK_DEMO_EVENTS,
+} = require('../api/surveillance/fallbackGeoEvents');
+const { buildFeedDiagnostics } = require('../api/surveillance/feedDiagnostics');
 
 let passed = 0;
 let failed = 0;
@@ -578,6 +585,74 @@ describe('Classify', () => {
         summary: '',
       })
     ).toBeGreaterThan(0);
+  });
+
+  it('classifies submarine mentions as maritime', () => {
+    const r = classifyRecord({
+      title: 'Submarine fleet movement reported in Baltic Sea shipping lanes',
+      summary: '',
+      body_snippet: '',
+    });
+    expect(r.event_type).toBe('maritime');
+  });
+});
+
+describe('Surveillance geo fallback', () => {
+  it('validCoord rejects null and 0,0', () => {
+    expect(validCoord(10, 20)).toBe(true);
+    expect(validCoord(0, 0)).toBe(false);
+    expect(validCoord(null, 1)).toBe(false);
+    expect(validCoord(100, 0)).toBe(false);
+  });
+
+  it('mergeGeoFallback adds renderable demos when feed empty', () => {
+    const m = mergeGeoFallback([], { minGeoMarkers: 4, tab: null });
+    if (m.mergedDemoCount < 1) throw new Error('expected demo merge');
+    if (m.geoAfter < 1) throw new Error('expected geo after');
+    const withCoords = m.events.filter((e) => validCoord(e.lat, e.lng));
+    if (withCoords.length < m.geoAfter) throw new Error('coords');
+    const kinds = new Set(m.events.filter((e) => e.is_demo).map((e) => e.marker_kind));
+    if (!kinds.has('aircraft') || !kinds.has('submarine')) throw new Error('expected aircraft and submarine demos');
+  });
+
+  it('mergeGeoFallback skips demos when country filter active', () => {
+    const m = mergeGeoFallback([], { countryIso2: 'US', minGeoMarkers: 4, tab: null });
+    expect(m.mergedDemoCount).toBe(0);
+    expect(m.reason).toBe('country_filter_no_demo_merge');
+  });
+
+  it('mergeGeoFallback does not merge when live geo sufficient', () => {
+    const live = Array.from({ length: 8 }).map((_, i) => ({
+      id: String(i),
+      lat: 10 + i * 0.1,
+      lng: 20 + i * 0.1,
+      event_type: 'aviation',
+      severity: 2,
+    }));
+    const m = mergeGeoFallback(live, { minGeoMarkers: 4, tab: null });
+    expect(m.mergedDemoCount).toBe(0);
+    expect(m.reason).toBe('sufficient_live_geo');
+  });
+
+  it('getFallbackEventById returns demo envelope', () => {
+    const first = FALLBACK_DEMO_EVENTS[0];
+    const g = getFallbackEventById(first.id);
+    if (!g || !g.is_demo) throw new Error('demo by id');
+    expect(g.source).toContain('fallback');
+  });
+
+  it('buildFeedDiagnostics shapes safe payload', () => {
+    const d = buildFeedDiagnostics({
+      liveEventCount: 0,
+      geoTaggedLive: 0,
+      mergedDemoCount: 5,
+      mergeReason: 'empty_feed',
+      finalGeoCount: 5,
+      tab: 'all',
+      countryIso2: null,
+    });
+    if (d.mergedDemoCount !== 5) throw new Error('diag');
+    if (d.demoLabel !== 'synthetic_geo_markers') throw new Error('label');
   });
 });
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { armPostLoginTransition } from "../utils/postLoginTransition";
@@ -8,6 +9,7 @@ import "../styles/VerifyMFA.css";
 import CosmicBackground from '../components/CosmicBackground';
 
 const VerifyMFA = () => {
+    const { t } = useTranslation();
     const [code, setCode] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -90,7 +92,7 @@ const VerifyMFA = () => {
         setIsLoading(true);
 
         if (!code || code.length !== 6) {
-            setError("Please enter a valid 6-digit code");
+            setError(t("forgotPassword.errorInvalidCode"));
             setIsLoading(false);
             return;
         }
@@ -139,7 +141,7 @@ const VerifyMFA = () => {
             }
         } catch (err) {
             console.error("MFA verification error:", err);
-            setError(err.response?.data?.message || err.message || "Invalid code. Please try again.");
+            setError(err.response?.data?.message || err.message || t("forgotPassword.errorInvalidCodeGeneric"));
         } finally {
             setIsLoading(false);
         }
@@ -153,9 +155,9 @@ const VerifyMFA = () => {
             await Api.sendMfa(emailAddress, userId);
             setTimer(30);
             setCanResend(false);
-            alert("Code resent to your email.");
+            alert(t("auth.resendSuccessAlert"));
         } catch (err) {
-            setError(err.response?.data?.message || err.message || "Failed to resend code. Please try again.");
+            setError(err.response?.data?.message || err.message || t("auth.resendFailed"));
         } finally {
             setIsLoading(false);
         }
@@ -175,9 +177,9 @@ const VerifyMFA = () => {
             <CosmicBackground />
             
             <div className="login-box">
-                <h2 className="gradient-text">🔐 MFA VERIFICATION</h2>
-                <p>Please enter the 6-digit code sent to your email.</p>
-                <p className="email-sent">Code sent to: {emailAddress}</p>
+                <h2 className="gradient-text">{t("verifyMfa.title")}</h2>
+                <p>{t("verifyMfa.subtitle")}</p>
+                <p className="email-sent">{t("auth.codeSentTo")} {emailAddress}</p>
 
                 {error && <p className="error-message">{error}</p>}
 
@@ -187,7 +189,7 @@ const VerifyMFA = () => {
                             type="text"
                             value={code}
                             onChange={(e) => setCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                            placeholder="Enter 6-digit code"
+                            placeholder={t("auth.enterSixDigitCode")}
                             maxLength={6}
                             className="code-input"
                             required
@@ -198,7 +200,7 @@ const VerifyMFA = () => {
                         className="verify-btn" 
                         disabled={isLoading || code.length !== 6}
                     >
-                        {isLoading ? "Verifying..." : "Verify Code"}
+                        {isLoading ? t("verifyMfa.verifying") : t("verifyMfa.verifyCode")}
                     </button>
                 </form>
 
@@ -208,22 +210,22 @@ const VerifyMFA = () => {
                         onClick={handleResendCode}
                         disabled={!canResend || isLoading}
                     >
-                        {canResend ? "Resend Code" : `Resend Code (${timer}s)`}
+                        {canResend ? t("auth.resendCode") : t("auth.resendCodeSeconds", { seconds: timer })}
                     </button>
                 </div>
 
                 <div className="support-container">
-                    <p>Having trouble with verification?</p>
+                    <p>{t("verifyMfa.trouble")}</p>
                     <button 
                         className="support-btn" 
                         onClick={navigateToSupport}
                     >
-                        Contact Support
+                        {t("verifyMfa.contactSupport")}
                     </button>
                 </div>
 
                 <div className="back-link">
-                    <Link to="/login">← Back to Login</Link>
+                    <Link to="/login">{t("verifyMfa.backToLogin")}</Link>
                 </div>
             </div>
         </div>

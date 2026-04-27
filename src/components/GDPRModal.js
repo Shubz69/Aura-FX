@@ -1,21 +1,16 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import "../styles/GDPRModal.css";
 
 const GDPRModal = ({ onAgree }) => {
+    const { t } = useTranslation();
     return (
         <div className="gdpr-backdrop">
             <div className="gdpr-modal">
-                <h2>🔒 GDPR Privacy Notice</h2>
-                <p>
-                    AURA TERMINAL™ values your privacy. We collect and store your email,
-                    chat messages, course progress, and usage patterns only for platform functionality.
-                    Your data is stored securely and never shared with third parties.
-                </p>
-                <p>
-                    By clicking "I Agree", you confirm that you understand and accept our data processing policy
-                    in compliance with GDPR regulations.
-                </p>
-                <button onClick={onAgree}>I Agree</button>
+                <h2>{t('gdpr.title')}</h2>
+                <p>{t('gdpr.body1')}</p>
+                <p>{t('gdpr.body2')}</p>
+                <button onClick={onAgree}>{t('gdpr.agree')}</button>
             </div>
         </div>
     );

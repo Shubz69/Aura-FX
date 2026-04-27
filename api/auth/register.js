@@ -29,6 +29,8 @@ async function ensureUsersTable(conn) {
     `);
 }
 
+const SUPPORTED_LANGUAGE_CODES = new Set(['en', 'zh-CN', 'hi', 'es', 'fr', 'ar', 'bn', 'pt', 'ru', 'ur']);
+
 module.exports = async (req, res) => {
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -49,7 +51,11 @@ module.exports = async (req, res) => {
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch { return res.status(400).json({ success: false, message: 'Invalid JSON' }); }
     }
-    const { username, email, password, name, phone, avatar, referralCode, ref } = body;
+    const { username, email, password, name, phone, avatar, referralCode, ref, preferredLanguage } = body;
+    const normalizedPreferredLanguage =
+      preferredLanguage && SUPPORTED_LANGUAGE_CODES.has(String(preferredLanguage).trim())
+        ? String(preferredLanguage).trim()
+        : null;
 
     // Validate required fields
     if (!username || !email || !password) {
@@ -154,6 +160,25 @@ module.exports = async (req, res) => {
       }
 
       const userId = result.insertId;
+
+      try {
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS user_settings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL UNIQUE,
+            preferred_language VARCHAR(10) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_user (user_id)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+        await db.execute(
+          'INSERT INTO user_settings (user_id, preferred_language) VALUES (?, ?) ON DUPLICATE KEY UPDATE preferred_language = VALUES(preferred_language)',
+          [userId, normalizedPreferredLanguage]
+        );
+      } catch (settingsErr) {
+        console.warn('Registration preferred language save:', settingsErr.message);
+      }
 
       try {
         await db.execute(
@@ -318,6 +343,7 @@ module.exports = async (req, res) => {
         name: name || username,
         phone: phoneClean,
         avatar: avatar ?? null,
+        preferredLanguage: normalizedPreferredLanguage,
         role: 'USER',
         token: token,
         status: 'SUCCESS'

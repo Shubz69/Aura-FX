@@ -83,6 +83,7 @@ export default function SurveillancePage() {
   const [focusRegion, setFocusRegion] = useState(null);
   const [countryHeadlines, setCountryHeadlines] = useState([]);
   const [countryWireAvailable, setCountryWireAvailable] = useState(true);
+  const [surveillanceDiag, setSurveillanceDiag] = useState(null);
   const loadFeedRef = useRef(null);
   const prevIntroRef = useRef(showIntro);
   const tapeSigRef = useRef('');
@@ -139,6 +140,7 @@ export default function SurveillancePage() {
       if (typeof json.countryWireAvailable === 'boolean') {
         setCountryWireAvailable(json.countryWireAvailable);
       }
+      setSurveillanceDiag(json.surveillanceDiagnostics || null);
       setIntroReady(true);
     } catch {
       setError('load');
@@ -175,6 +177,7 @@ export default function SurveillancePage() {
       if (typeof json.countryWireAvailable === 'boolean') {
         setCountryWireAvailable(json.countryWireAvailable);
       }
+      if (json.surveillanceDiagnostics) setSurveillanceDiag(json.surveillanceDiagnostics);
     } catch {
       /* ignore poll errors */
     }
@@ -550,6 +553,16 @@ export default function SurveillancePage() {
               />
             </div>
           </div>
+          {surveillanceDiag?.feed?.mergedDemoCount > 0 && !renderable.fallbackActive ? (
+            <div className="sv-masthead-status sv-masthead-status--warm" role="status">
+              <div className="sv-masthead-status-main">
+                <span>
+                  Server added {surveillanceDiag.feed.mergedDemoCount} synthetic map markers (tape and drawer show Demo).
+                  Not live ADS-B or AIS — configure OpenSky and Datalastic keys for live tracks.
+                </span>
+              </div>
+            </div>
+          ) : null}
           {renderable.fallbackActive ? (
             <div className="sv-masthead-status sv-masthead-status--warm" role="status">
               <div className="sv-masthead-status-main">

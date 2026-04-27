@@ -4,6 +4,7 @@
 
 const { executeQuery } = require('../db');
 const { ensureTimezoneColumn } = require('../utils/ensure-timezone-column');
+const SUPPORTED_LANGUAGE_CODES = ['en', 'zh-CN', 'hi', 'es', 'fr', 'ar', 'bn', 'pt', 'ru', 'ur'];
 
 // Track if table has been created this session
 let settingsTableCreated = false;
@@ -12,6 +13,7 @@ let settingsTableCreated = false;
 async function ensureSettingsTable() {
   if (settingsTableCreated) {
     await ensureTradingUiPrefsColumn();
+    await ensurePreferredLanguageColumn();
     return true;
   }
 
@@ -45,11 +47,13 @@ async function ensureSettingsTable() {
     settingsTableCreated = true;
     console.log('User settings table ready');
     await ensureTradingUiPrefsColumn();
+    await ensurePreferredLanguageColumn();
     return true;
   } catch (error) {
     console.log('Settings table check:', error.code || error.message);
     settingsTableCreated = true;
     await ensureTradingUiPrefsColumn();
+    await ensurePreferredLanguageColumn();
     return true;
   }
 }
@@ -64,6 +68,20 @@ async function ensureTradingUiPrefsColumn() {
     const msg = e.message || String(e);
     if (!/Duplicate column name/i.test(msg)) {
       console.warn('trading_ui_prefs column:', msg);
+    }
+  }
+}
+
+async function ensurePreferredLanguageColumn() {
+  try {
+    await executeQuery(`
+      ALTER TABLE user_settings
+      ADD COLUMN preferred_language VARCHAR(10) NULL
+    `);
+  } catch (e) {
+    const msg = e.message || String(e);
+    if (!/Duplicate column name/i.test(msg)) {
+      console.warn('preferred_language column:', msg);
     }
   }
 }
@@ -101,6 +119,7 @@ const defaultSettings = {
   show_achievements: true,
   ai_personality: 'professional',
   ai_chart_preference: 'candlestick',
+  preferred_language: null,
   profile_visible_stats: { discipline_score: false, journal_score: false, consistency_score: false, win_rate: false, total_trades: false, login_streak: false }
 };
 
@@ -155,6 +174,7 @@ module.exports = async (req, res) => {
       let settingsData = { ...defaultSettings };
       
       try {
+        await ensurePreferredLanguageColumn();
         const settingsResult = await executeQuery(
           'SELECT * FROM user_settings WHERE user_id = ?',
           [userId]
@@ -243,7 +263,10 @@ module.exports = async (req, res) => {
         settings: settingsData,
         stats: stats,
         profileStats: profileStats,
-        timezone: user.timezone ?? null
+        timezone: user.timezone ?? null,
+        language: SUPPORTED_LANGUAGE_CODES.includes(settingsData.preferred_language)
+          ? settingsData.preferred_language
+          : null
       });
     }
 
@@ -271,19 +294,29 @@ module.exports = async (req, res) => {
       // Try to save to database if table exists
       try {
         await ensureTradingUiPrefsColumn();
+        await ensurePreferredLanguageColumn();
         // Allowed fields for update (user_settings only; timezone handled above)
         const allowedFields = [
           'preferred_markets', 'trading_sessions', 'risk_profile', 'trading_style',
           'experience_level', 'theme', 'notifications_enabled', 'email_notifications',
           'sound_enabled', 'compact_mode', 'show_online_status', 'profile_visibility',
           'show_trading_stats', 'show_achievements', 'ai_personality', 'ai_chart_preference',
-          'profile_visible_stats'
+          'profile_visible_stats', 'preferred_language'
         ];
 
         const setClauses = [];
         const values = [];
 
         for (const [key, value] of Object.entries(updates)) {
+          if (key === 'language') {
+            const normalized = value == null ? null : String(value).trim();
+            if (normalized !== null && !SUPPORTED_LANGUAGE_CODES.includes(normalized)) {
+              return res.status(400).json({ success: false, message: 'Unsupported language code' });
+            }
+            setClauses.push('preferred_language = ?');
+            values.push(normalized);
+            continue;
+          }
           if (allowedFields.includes(key)) {
             setClauses.push(`${key} = ?`);
             if (key === 'preferred_markets' || key === 'trading_sessions' || key === 'profile_visible_stats') {

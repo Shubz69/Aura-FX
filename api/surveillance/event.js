@@ -3,6 +3,7 @@ const { assertSurveillanceEntitlement } = require('./assertEntitlement');
 const { ensureSurveillanceSchema } = require('./schema');
 const { getEventById, getStoryBundleForEvent, relatedEvents } = require('./store');
 const { buildWhyMatters } = require('./marketImpact');
+const { getFallbackEventById } = require('./fallbackGeoEvents');
 
 function setCors(req, res) {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -34,6 +35,19 @@ module.exports = async (req, res) => {
     await ensureSurveillanceSchema();
     const entitled = await assertSurveillanceEntitlement(Number(decoded.id), res);
     if (!entitled) return;
+
+    const demo = getFallbackEventById(id);
+    if (demo) {
+      return res.status(200).json({
+        success: true,
+        event: {
+          ...demo,
+          why_it_matters: whyItMatters(demo),
+        },
+        story: null,
+        related: [],
+      });
+    }
 
     const event = await getEventById(id);
     if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
