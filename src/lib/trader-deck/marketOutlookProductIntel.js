@@ -5,6 +5,12 @@
  * Strings are assembled only from desk snapshot fields (no canned macro filler).
  */
 
+import i18n from '../../i18n/config';
+
+function sm(key, opts) {
+  return i18n.t(`traderDeck.structureMap.${key}`, opts ?? {});
+}
+
 function normDirection(d) {
   const x = String(d || '').toLowerCase();
   if (['up', 'bull', 'bullish', 'risk-on', 'riskon'].some((w) => x.includes(w))) return 'up';
@@ -255,16 +261,16 @@ export function buildTradeExpressionMatrix(showing, { maxRows = 6 } = {}) {
 
 function volTag(n) {
   if (!Number.isFinite(n)) return '';
-  if (n >= 62) return 'Expanding';
-  if (n <= 38) return 'Contracting';
-  return 'Blended';
+  if (n >= 62) return 'expanding';
+  if (n <= 38) return 'contracting';
+  return 'blended';
 }
 
 function liqTag(n) {
   if (!Number.isFinite(n)) return '';
-  if (n >= 58) return 'Deep';
-  if (n <= 40) return 'Thin';
-  return 'Uneven';
+  if (n >= 58) return 'deep';
+  if (n <= 40) return 'thin';
+  return 'uneven';
 }
 
 /**
@@ -295,74 +301,81 @@ export function buildMarketStructureMap(showing) {
   const down = dirs.filter((d) => d === 'down').length;
   const neu = dirs.filter((d) => d === 'neutral').length;
 
-  let trendState = 'Transitioning';
+  let trendKey = 'transitioning';
   if (signals.length >= 2) {
-    if (up === dirs.length && dirs.length) trendState = 'Trending';
-    else if (down === dirs.length && dirs.length) trendState = 'Trending';
-    else if (neu >= dirs.length * 0.6) trendState = 'Ranging';
-    else if (Math.max(up, down) >= 1 && Math.min(up, down) >= 1) trendState = 'Transitioning';
-    else trendState = dirs.length ? 'Trending' : 'Ranging';
+    if (up === dirs.length && dirs.length) trendKey = 'trending';
+    else if (down === dirs.length && dirs.length) trendKey = 'trending';
+    else if (neu >= dirs.length * 0.6) trendKey = 'ranging';
+    else if (Math.max(up, down) >= 1 && Math.min(up, down) >= 1) trendKey = 'transitioning';
+    else trendKey = dirs.length ? 'trending' : 'ranging';
   } else if (drivers.length >= 2) {
     const dd = drivers.map((d) => normDirection(d.direction));
     const same = new Set(dd).size === 1;
-    trendState = same ? 'Trending' : 'Ranging';
+    trendKey = same ? 'trending' : 'ranging';
   }
 
-  let volatilityRegime =
-    b && Number.isFinite(Number(b.volatility))
-      ? volTag(Number(b.volatility))
-      : orc?.volatilityState
-        ? String(orc.volatilityState).slice(0, 28)
-        : '';
-  if (!volatilityRegime && signals.length >= 2 && neu < dirs.length) volatilityRegime = 'Blended';
+  let volatilityRegimeKey = '';
+  let volatilityRegimeCustom = '';
+  if (b && Number.isFinite(Number(b.volatility))) {
+    volatilityRegimeKey = volTag(Number(b.volatility));
+  } else if (orc?.volatilityState) {
+    volatilityRegimeCustom = String(orc.volatilityState).slice(0, 28);
+  }
+  if (!volatilityRegimeKey && !volatilityRegimeCustom && signals.length >= 2 && neu < dirs.length) {
+    volatilityRegimeKey = 'blended';
+  }
 
-  let liquidityCondition = b && Number.isFinite(Number(b.liquidity)) ? liqTag(Number(b.liquidity)) : '';
-  if (!liquidityCondition && drivers.length >= 3) liquidityCondition = 'Uneven';
-  else if (!liquidityCondition && signals.length >= 3) liquidityCondition = 'Uneven flow';
-  if (!liquidityCondition) liquidityCondition = 'Mixed depth';
-  if (!volatilityRegime) volatilityRegime = 'Blended';
+  let liquidityKey = b && Number.isFinite(Number(b.liquidity)) ? liqTag(Number(b.liquidity)) : '';
+  if (!liquidityKey && drivers.length >= 3) liquidityKey = 'uneven';
+  else if (!liquidityKey && signals.length >= 3) liquidityKey = 'uneven_flow';
+  if (!liquidityKey) liquidityKey = 'mixed_depth';
+  if (!volatilityRegimeKey && !volatilityRegimeCustom) volatilityRegimeKey = 'blended';
 
-  let correlationRegime = 'Rotational';
+  let correlationKey = 'rotational';
   if (b && Number.isFinite(Number(b.clustering))) {
     const c = Number(b.clustering);
-    if (c >= 62) correlationRegime = 'High';
-    else if (c <= 40) correlationRegime = 'Breaking';
-    else correlationRegime = 'Rotational';
+    if (c >= 62) correlationKey = 'high';
+    else if (c <= 40) correlationKey = 'breaking';
+    else correlationKey = 'rotational';
   } else if (orc?.clusteringBehavior) {
     const t = String(orc.clusteringBehavior).toLowerCase();
-    if (/tight|high|cluster/i.test(t)) correlationRegime = 'High';
-    else if (/break|decouple/i.test(t)) correlationRegime = 'Breaking';
+    if (/tight|high|cluster/i.test(t)) correlationKey = 'high';
+    else if (/break|decouple/i.test(t)) correlationKey = 'breaking';
   }
 
-  let marketBreadth = 'Narrow';
+  let breadthKey = 'narrow';
   if (drivers.length >= 3) {
     const impacts = new Set(drivers.map((d) => String(d.impact || '').toLowerCase()));
-    if (impacts.size >= 2 && signals.length >= 2) marketBreadth = 'Diverging';
-    else if (drivers.length >= 4) marketBreadth = 'Diverging';
+    if (impacts.size >= 2 && signals.length >= 2) breadthKey = 'diverging';
+    else if (drivers.length >= 4) breadthKey = 'diverging';
   }
-  if (signals.length >= 3 && new Set(dirs).size === 1) marketBreadth = 'Strong';
+  if (signals.length >= 3 && new Set(dirs).size === 1) breadthKey = 'strong';
 
-  let positioningPressure = 'Unclear';
+  let positioningKey = 'unclear';
   const ps = Number(pulse.score);
   if (Number.isFinite(ps)) {
-    if (ps >= 68 || ps <= 35) positioningPressure = 'Crowded';
-    else positioningPressure = 'Clean';
+    if (ps >= 68 || ps <= 35) positioningKey = 'crowded';
+    else positioningKey = 'clean';
   }
   const conv = String(regime.convictionClarity || '').toLowerCase();
-  if (/low|weak/.test(conv)) positioningPressure = 'Unclear';
+  if (/low|weak/.test(conv)) positioningKey = 'unclear';
+
+  const volLabel = volatilityRegimeCustom || sm(`vol_${volatilityRegimeKey || 'blended'}`);
+  const liqLabel = sm(`liq_${liquidityKey}`);
+  const trendLabel = sm(`trend_${trendKey}`);
 
   const structureInsight = clip(
-    `${trendState} tape${volatilityRegime ? ` · vol ${volatilityRegime.toLowerCase()}` : ''}${liquidityCondition ? ` · liquidity ${liquidityCondition.toLowerCase()}` : ''}`,
-    160
+    sm('insight_line', { trend: trendLabel, vol: volLabel, liq: liqLabel }),
+    160,
   );
 
   const whatThisMeans = clip(
-    correlationRegime === 'Breaking'
-      ? 'Sleeves can diverge — breakout trades need sleeve confirmation.'
-      : correlationRegime === 'High'
-        ? 'Cross-asset moves likely to sync — expression risk is correlated.'
-        : 'Leadership can rotate without a single macro trend holding.',
-    160
+    correlationKey === 'breaking'
+      ? sm('means_breaking')
+      : correlationKey === 'high'
+        ? sm('means_high')
+        : sm('means_rotational'),
+    160,
   );
 
   const tl0 = Array.isArray(showing.marketChangesTimeline) ? showing.marketChangesTimeline[0] : null;
@@ -371,28 +384,36 @@ export function buildMarketStructureMap(showing) {
 
   const watchParts = [];
   if (orc?.nextRiskWindow) watchParts.push(clip(String(orc.nextRiskWindow), 90));
-  else if (Number.isFinite(re?.nextRiskEventInMins)) watchParts.push(`Event clustering ~${re.nextRiskEventInMins}m`);
-  if (b && Number.isFinite(Number(b.volatility)) && Number(b.volatility) >= 58) {
-    watchParts.push('Volatility expansion vs current range');
+  else if (Number.isFinite(re?.nextRiskEventInMins)) {
+    watchParts.push(sm('watch_event_cluster', { m: re.nextRiskEventInMins }));
   }
-  if (marketBreadth === 'Diverging') watchParts.push('Factor / sleeve dispersion');
-  if (!watchParts.length && tlHook) watchParts.push(`Tape hook: ${tlHook}`);
+  if (b && Number.isFinite(Number(b.volatility)) && Number(b.volatility) >= 58) {
+    watchParts.push(sm('watch_vol_exp'));
+  }
+  if (breadthKey === 'diverging') watchParts.push(sm('watch_factor'));
+  if (!watchParts.length && tlHook) watchParts.push(sm('watch_tape_hook', { hook: tlHook }));
   if (!watchParts.length) {
     watchParts.push(
-      clip(`Correlation ${correlationRegime.toLowerCase()} · breadth ${marketBreadth.toLowerCase()}`, 120)
+      clip(
+        sm('watch_corr_breadth', {
+          corr: sm(`corr_${correlationKey}`),
+          breadth: sm(`breadth_${breadthKey}`),
+        }),
+        120,
+      ),
     );
   }
-  const watchFor = clip(watchParts.slice(0, 2).join(' · '), 160);
+  const watchFor = clip(watchParts.slice(0, 2).join(i18n.t('traderDeck.macroGen.sep')), 160);
 
   if (!structureInsight || !whatThisMeans || !watchFor) return null;
 
   return {
-    trendState,
-    volatilityRegime,
-    liquidityCondition,
-    correlationRegime,
-    marketBreadth,
-    positioningPressure,
+    trendState: trendLabel,
+    volatilityRegime: volLabel,
+    liquidityCondition: liqLabel,
+    correlationRegime: sm(`corr_${correlationKey}`),
+    marketBreadth: sm(`breadth_${breadthKey}`),
+    positioningPressure: sm(`pos_${positioningKey}`),
     structureInsight,
     whatThisMeans,
     watchFor,

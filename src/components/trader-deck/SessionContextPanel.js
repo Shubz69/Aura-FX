@@ -1,19 +1,21 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { formatSessionStateLabel, currentSessionShortLabel } from '../../lib/trader-deck/marketOutlookDisplayFormatters';
 
 const SESSION_ORDER = [
-  { id: 'asia', label: 'Asia', icon: '◉' },
-  { id: 'london', label: 'London', icon: '◆' },
-  { id: 'newYork', label: 'New York', icon: '▣' },
+  { id: 'asia', labelKey: 'traderDeck.sessionContext.asia', icon: '◉' },
+  { id: 'london', labelKey: 'traderDeck.sessionContext.london', icon: '◆' },
+  { id: 'newYork', labelKey: 'traderDeck.sessionContext.newYork', icon: '▣' },
 ];
 
 export default function SessionContextPanel({ sessionContext }) {
+  const { t } = useTranslation();
   const sc = sessionContext && sessionContext.sessions ? sessionContext : null;
   const current = sc ? String(sessionContext.currentSession || '').toLowerCase() : '';
 
   return (
-    <div className="mo-session-context" aria-label="Session context">
-      {SESSION_ORDER.map(({ id, label, icon }) => {
+    <div className="mo-session-context" aria-label={t('traderDeck.outlook.sectionSessionContext')}>
+      {SESSION_ORDER.map(({ id, labelKey, icon }) => {
         const row = sc && sc.sessions ? sc.sessions[id] : null;
         const stateKey = row && row.state ? row.state : 'inactive';
         const stateLabel = formatSessionStateLabel(stateKey);
@@ -37,7 +39,7 @@ export default function SessionContextPanel({ sessionContext }) {
             <span className="mo-session-context__icon" aria-hidden>{icon}</span>
             <div className="mo-session-context__main">
               <div className="mo-session-context__top">
-                <span className="mo-dense-row__title">{label}</span>
+                <span className="mo-dense-row__title">{t(labelKey)}</span>
                 <span className="mo-pill mo-pill--state">{stateLabel}</span>
               </div>
               <div className="mo-session-context__chips">
@@ -50,13 +52,13 @@ export default function SessionContextPanel({ sessionContext }) {
               ) : null}
               {volExp ? (
                 <p className="mo-session-context__line mo-session-context__line--vol">
-                  <span className="mo-session-context__k">Volatility</span>
+                  <span className="mo-session-context__k">{t('traderDeck.sessionContext.volatility')}</span>
                   {volExp}
                 </p>
               ) : null}
               {keyLv ? (
                 <p className="mo-session-context__line mo-session-context__line--levels">
-                  <span className="mo-session-context__k">Levels</span>
+                  <span className="mo-session-context__k">{t('traderDeck.sessionContext.levels')}</span>
                   {keyLv}
                 </p>
               ) : null}
@@ -69,7 +71,7 @@ export default function SessionContextPanel({ sessionContext }) {
       })}
       {current ? (
         <p className="mo-session-context__foot">
-          Active window: <strong>{currentSessionShortLabel(current)}</strong>
+          {t('traderDeck.sessionContext.activeWindow')} <strong>{currentSessionShortLabel(current)}</strong>
         </p>
       ) : null}
     </div>

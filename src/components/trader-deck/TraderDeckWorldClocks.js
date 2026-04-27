@@ -2,21 +2,32 @@
  * World clocks for Trader Desk — top rail, circular analog faces (IANA + Intl, DST-safe).
  */
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n/config';
 
 const ZONES = [
-  { label: 'New York', timeZone: 'America/New_York' },
-  { label: 'London', timeZone: 'Europe/London' },
-  { label: 'Dubai', timeZone: 'Asia/Dubai' },
-  { label: 'Tokyo', timeZone: 'Asia/Tokyo' },
-  { label: 'Sydney', timeZone: 'Australia/Sydney' },
+  { cityKey: 'newYork', timeZone: 'America/New_York' },
+  { cityKey: 'london', timeZone: 'Europe/London' },
+  { cityKey: 'dubai', timeZone: 'Asia/Dubai' },
+  { cityKey: 'tokyo', timeZone: 'Asia/Tokyo' },
+  { cityKey: 'sydney', timeZone: 'Australia/Sydney' },
 ];
+
+function pickerLocale(lng) {
+  if (lng === 'zh-CN') return 'zh-CN';
+  if (lng === 'hi') return 'hi-IN';
+  if (lng === 'ar') return 'ar';
+  if (lng === 'bn') return 'bn-BD';
+  if (lng === 'ur') return 'ur-PK';
+  return lng || 'en-GB';
+}
 
 const CX = 50;
 const CY = 50;
 
-function getHmsInTimeZone(date, timeZone) {
+function getHmsInTimeZone(date, timeZone, locale) {
   try {
-    const parts = new Intl.DateTimeFormat('en-GB', {
+    const parts = new Intl.DateTimeFormat(locale, {
       timeZone,
       hour: 'numeric',
       minute: 'numeric',
@@ -34,9 +45,9 @@ function getHmsInTimeZone(date, timeZone) {
   }
 }
 
-function formatDigital(date, timeZone) {
+function formatDigital(date, timeZone, locale) {
   try {
-    return new Intl.DateTimeFormat('en-GB', {
+    return new Intl.DateTimeFormat(locale, {
       timeZone,
       hour: '2-digit',
       minute: '2-digit',
@@ -44,7 +55,7 @@ function formatDigital(date, timeZone) {
       hour12: false,
     }).format(date);
   } catch {
-    return '—';
+    return i18n.t('traderDeck.eta.emDash');
   }
 }
 
@@ -209,6 +220,8 @@ function AnalogClockFace({ label, timeZone, hour, minute, second, digitalTitle }
 }
 
 export default function TraderDeckWorldClocks() {
+  const { t, i18n } = useTranslation();
+  const loc = pickerLocale(i18n.language);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -221,24 +234,25 @@ export default function TraderDeckWorldClocks() {
   const clocks = useMemo(
     () =>
       ZONES.map((z) => {
-        const { hour, minute, second } = getHmsInTimeZone(now, z.timeZone);
-        const digital = formatDigital(now, z.timeZone);
+        const { hour, minute, second } = getHmsInTimeZone(now, z.timeZone, loc);
+        const digital = formatDigital(now, z.timeZone, loc);
         return {
           ...z,
+          label: t(`traderDeck.city.${z.cityKey}`),
           hour,
           minute,
           second,
           digitalTitle: `${digital} · ${z.timeZone}`,
         };
       }),
-    [now],
+    [now, loc, t, i18n.language],
   );
 
   return (
     <div className="td-deck-world-clocks-rail td-deck-world-clocks-rail--above">
       <div
         className="td-deck-world-clocks td-deck-world-clocks--top"
-        aria-label="World clocks"
+        aria-label={t('traderDeck.worldClocksAria')}
         aria-live="off"
       >
         {clocks.map(({ label, timeZone, hour, minute, second, digitalTitle }) => (

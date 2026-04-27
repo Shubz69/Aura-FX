@@ -3,6 +3,8 @@
  * Same panels as the main dashboard; data from API for selected date or live/seed fallback.
  */
 import React, { useState, useEffect, useRef, Fragment } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n/config';
 import Api from '../../services/Api';
 import { getMarketIntelligence, SEED_MARKET_INTELLIGENCE } from '../../data/marketIntelligence';
 import RegimeRows from '../../components/trader-deck/RegimeRows';
@@ -37,26 +39,29 @@ import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput.
 
 /** When the API omits sleeves, derive compact cards from cross-asset signals + drivers (real desk fields, not placeholders). */
 function deriveInstrumentSnapshotsFromDesk(signals, drivers) {
+  const dash = () => i18n.t('traderDeck.eta.emDash');
   const sigs = Array.isArray(signals) ? signals : [];
   if (!sigs.length) return [];
   return sigs.slice(0, 6).map((s) => {
-    const asset = String(s.asset || '').trim() || 'Cross-asset';
+    const asset = String(s.asset || '').trim() || i18n.t('traderDeck.outlook.instrumentFbCrossAsset');
     const dn = asset.toLowerCase();
     const driverMatch = drivers.find((d) => {
       const name = String(d.name || '').toLowerCase();
       return name && (dn.includes(name.slice(0, 4)) || name.includes(dn.slice(0, 4)));
     });
     const implication = String(s.implication || '').trim();
+    const dirKey = String(s.direction || 'neutral').toLowerCase();
+    const dirLabel = i18n.t(`traderDeck.direction.${dirKey === 'up' || dirKey === 'down' || dirKey === 'neutral' ? dirKey : 'neutral'}`);
     return {
       symbol: asset.slice(0, 28),
-      bias: String(s.signal || s.label || '—').slice(0, 44),
+      bias: String(s.signal || s.label || dash()).slice(0, 44),
       structure: implication
         ? implication.slice(0, 140)
-        : `${String(s.direction || 'neutral')} posture versus the prior session`,
-      keyLevel: '—',
+        : i18n.t('traderDeck.outlook.instrumentFbPosture', { dir: dirLabel }),
+      keyLevel: dash(),
       note: driverMatch?.effect
         ? String(driverMatch.effect).slice(0, 170)
-        : 'Cross-asset read synthesized from desk signals.',
+        : i18n.t('traderDeck.outlook.instrumentFbNote'),
     };
   });
 }
@@ -85,7 +90,7 @@ function buildImplicationsDecisionModel(showing) {
   const reg = String(regime.currentRegime || '').trim();
   const bias = String(regime.bias || regime.marketSentiment || '').trim();
   if (reg || bias) {
-    scenarioParts.push(`${reg || 'Mixed regime'}${bias ? ` · ${bias}` : ''}`);
+    scenarioParts.push(`${reg || i18n.t('traderDeck.outlook.wordMixedRegime')}${bias ? ` · ${bias}` : ''}`);
   }
   const tl0 = timeline[0];
   if (tl0 && (tl0.whatChanged || tl0.title)) {
@@ -100,10 +105,10 @@ function buildImplicationsDecisionModel(showing) {
   let keyTheme = String(regime.primaryDriver || '').trim();
   if (!keyTheme && drivers[0]) {
     const d0 = drivers[0];
-    keyTheme = `${d0.name || 'Lead driver'}: ${String(d0.effect || d0.explanation || '').trim()}`.trim();
+    keyTheme = `${d0.name || i18n.t('traderDeck.outlook.wordLeadDriver')}: ${String(d0.effect || d0.explanation || '').trim()}`.trim();
   }
   if (!keyTheme && signals[0]) {
-    keyTheme = `${signals[0].asset || 'Cross-asset'} · ${String(signals[0].signal || signals[0].implication || '').trim()}`.trim();
+    keyTheme = `${signals[0].asset || i18n.t('traderDeck.outlook.instrumentFbCrossAsset')} · ${String(signals[0].signal || signals[0].implication || '').trim()}`.trim();
   }
   keyTheme = keyTheme.slice(0, 240);
 
@@ -129,27 +134,45 @@ function buildImplicationsDecisionModel(showing) {
   const rec = Array.isArray(pulse.recommendedAction) ? pulse.recommendedAction : [];
   rec.slice(0, 2).forEach((r) => pushPool(typeof r === 'string' ? r : r?.text || r?.title || ''));
 
+  const em = i18n.t('traderDeck.eta.emDash');
   if (riskEngine?.level != null || riskEngine?.score != null) {
-    pushPool(`Risk desk: ${riskEngine.level || 'posture'} · score ${riskEngine.score ?? '—'}/100`);
+    pushPool(
+      i18n.t('traderDeck.outlook.implPrefixRiskDesk', {
+        level: riskEngine.level || i18n.t('traderDeck.pulse.posture'),
+        score: riskEngine.score ?? em,
+      }),
+    );
   }
-  if (outlookRisk?.volatilityState) pushPool(`Vol regime: ${outlookRisk.volatilityState}`);
-  if (outlookRisk?.clusteringBehavior) pushPool(`Linkage: ${outlookRisk.clusteringBehavior}`);
-  if (outlookRisk?.nextRiskWindow) pushPool(`Next window: ${String(outlookRisk.nextRiskWindow).slice(0, 120)}`);
+  if (outlookRisk?.volatilityState) {
+    pushPool(i18n.t('traderDeck.outlook.implPrefixVolRegime', { state: outlookRisk.volatilityState }));
+  }
+  if (outlookRisk?.clusteringBehavior) {
+    pushPool(i18n.t('traderDeck.outlook.implPrefixLinkage', { text: outlookRisk.clusteringBehavior }));
+  }
+  if (outlookRisk?.nextRiskWindow) {
+    pushPool(i18n.t('traderDeck.outlook.implPrefixNextWindow', { text: String(outlookRisk.nextRiskWindow).slice(0, 120) }));
+  }
 
   implications.slice(0, 2).forEach((row) => {
-    if (row?.then) pushPool(`Tape: ${String(row.then).slice(0, 120)}`);
-    if (row?.implication) pushPool(`Desk lean: ${String(row.implication).slice(0, 120)}`);
+    if (row?.then) pushPool(`${i18n.t('traderDeck.outlook.implPrefixTape')} ${String(row.then).slice(0, 120)}`);
+    if (row?.implication) pushPool(`${i18n.t('traderDeck.outlook.implPrefixDeskLean')} ${String(row.implication).slice(0, 120)}`);
   });
 
   traderFocus.slice(0, 6).forEach((f) => {
     const title = typeof f === 'string' ? f : f?.title || '';
     const reason = typeof f === 'object' && f?.reason ? String(f.reason).trim() : '';
-    if (title) pushPool(reason ? `Watch · ${title}: ${reason.slice(0, 72)}` : `Watch · ${title}`);
+    if (title) {
+      pushPool(
+        i18n.t('traderDeck.outlook.implPrefixWatch', {
+          text: reason ? `${title}: ${reason.slice(0, 72)}` : title,
+        }),
+      );
+    }
   });
 
   signals.slice(0, 10).forEach((s) => {
     const imp = String(s.implication || '').trim();
-    if (imp) pushPool(`${s.asset || 'Market'}: ${imp.slice(0, 96)}`);
+    if (imp) pushPool(`${s.asset || i18n.t('traderDeck.outlook.wordMarket')}: ${imp.slice(0, 96)}`);
   });
 
   const uniq = [];
@@ -164,13 +187,13 @@ function buildImplicationsDecisionModel(showing) {
   let bullets = uniq.slice(0, 5);
   const seenBullet = new Set(bullets.map((b) => b.slice(0, 52)));
   const takeBullet = (raw) => {
-    const t = String(raw || '').trim().replace(/\s+/g, ' ');
-    if (t.length < 8) return;
-    const k = t.slice(0, 52);
+    const lineText = String(raw || '').trim().replace(/\s+/g, ' ');
+    if (lineText.length < 8) return;
+    const k = lineText.slice(0, 52);
     if (seenBullet.has(k)) return;
     if (bullets.length >= 5) return;
     seenBullet.add(k);
-    bullets.push(t.slice(0, 132));
+    bullets.push(lineText.slice(0, 132));
   };
   if (bullets.length < 5) {
     [deriveNetDriverBiasLine(drivers), deriveDominantFactorLine(drivers), deriveWeakestLinkLine(signals)].forEach(takeBullet);
@@ -183,7 +206,7 @@ function buildImplicationsDecisionModel(showing) {
   if (bullets.length < 5) {
     signals.slice(6, 18).forEach((s) => {
       const imp = String(s.implication || '').trim();
-      if (imp) takeBullet(`${s.asset || 'Market'}: ${imp.slice(0, 96)}`);
+      if (imp) takeBullet(`${s.asset || i18n.t('traderDeck.outlook.wordMarket')}: ${imp.slice(0, 96)}`);
     });
   }
 
@@ -212,14 +235,25 @@ function deriveMarketImplicationsFromDesk(regime, drivers, timeline) {
   const rReg = regime?.currentRegime || '';
   const rBias = regime?.bias || regime?.marketSentiment || '';
   if (rReg || rBias) {
+    const biasSuffix = rBias ? i18n.t('traderDeck.outlook.derivSentimentGlue', { s: String(rBias).trim() }) : '';
+    const impRaw = drivers[1]?.impact || 'medium';
+    const impKey = String(impRaw).toLowerCase();
+    const impTierKey = ['high', 'medium', 'low'].includes(impKey) ? impKey : 'medium';
+    const impactPhrase = i18n.t(`traderDeck.driver.impact${impTierKey.charAt(0).toUpperCase() + impTierKey.slice(1)}`);
     rows.push({
-      condition: `Market regime: ${rReg || 'Mixed'}${rBias ? ` · sentiment ${String(rBias).trim()}` : ''}`,
+      condition: i18n.t('traderDeck.outlook.derivConditionMarketRegime', {
+        reg: rReg || i18n.t('traderDeck.outlook.wordMixedOnly'),
+        bias: biasSuffix,
+      }),
       then: drivers[0]?.effect
         ? String(drivers[0].effect).slice(0, 200)
-        : 'Leadership, breadth, and liquidity windows decide whether the narrative holds.',
+        : i18n.t('traderDeck.outlook.derivThenLeadership'),
       implication: drivers[1]
-        ? `Secondary driver: ${drivers[1].name || drivers[1].title} (${drivers[1].impact || 'medium'} impact).`
-        : 'Correlations often tighten when macro headlines align across regions.',
+        ? i18n.t('traderDeck.outlook.derivImplSecondary', {
+            name: drivers[1].name || drivers[1].title,
+            impact: impactPhrase,
+          })
+        : i18n.t('traderDeck.outlook.derivImplCorrelations'),
     });
   }
   const t0 = Array.isArray(timeline) ? timeline[0] : null;
@@ -227,29 +261,35 @@ function deriveMarketImplicationsFromDesk(regime, drivers, timeline) {
   if (tape) {
     const hook = String(tape).trim();
     rows.push({
-      condition: `Tape theme: ${hook.slice(0, 140)}${hook.length > 140 ? '…' : ''}`,
-      then: String(t0.whyItMatters || 'Calendar spacing and overlap sessions shape follow-through.'),
+      condition: i18n.t('traderDeck.outlook.derivConditionTape', {
+        hook: `${hook.slice(0, 140)}${hook.length > 140 ? '…' : ''}`,
+      }),
+      then: String(t0.whyItMatters || i18n.t('traderDeck.outlook.derivThenCalendar')),
       implication:
         Array.isArray(t0.assetsAffected) && t0.assetsAffected.length > 0
-          ? `Watch sleeves: ${t0.assetsAffected.slice(0, 6).join(', ')}.`
-          : 'Confirm with breadth and volatility regime.',
+          ? i18n.t('traderDeck.outlook.derivImplWatchSleeves', {
+              assets: t0.assetsAffected.slice(0, 6).join(', '),
+            })
+          : i18n.t('traderDeck.outlook.derivImplConfirmBreadth'),
     });
   }
   return rows.slice(0, 3);
 }
 
 function buildTimelineFallback(marketChangesToday, tf) {
-  const label = tf === 'weekly' ? 'Week' : 'Session';
+  const label = tf === 'weekly'
+    ? i18n.t('traderDeck.outlook.timelineLabelWeek')
+    : i18n.t('traderDeck.outlook.timelineLabelSession');
   const list = Array.isArray(marketChangesToday) ? marketChangesToday : [];
   return list.map((item, idx) => {
     const text = typeof item === 'string' ? item : (item?.title || item?.description || '');
     const assets = [];
     const tl = String(text || '').toLowerCase();
-    if (/yield|bond|rate/.test(tl)) assets.push('Yields');
-    if (/usd|dollar|fx/.test(tl)) assets.push('FX');
-    if (/gold|xau/.test(tl)) assets.push('Gold');
-    if (/equit|stock|risk/.test(tl)) assets.push('Equities');
-    if (assets.length === 0) assets.push('Cross-asset');
+    if (/yield|bond|rate/.test(tl)) assets.push(i18n.t('traderDeck.outlook.assetTagYields'));
+    if (/usd|dollar|fx/.test(tl)) assets.push(i18n.t('traderDeck.outlook.assetTagFx'));
+    if (/gold|xau/.test(tl)) assets.push(i18n.t('traderDeck.outlook.assetTagGold'));
+    if (/equit|stock|risk/.test(tl)) assets.push(i18n.t('traderDeck.outlook.assetTagEquities'));
+    if (assets.length === 0) assets.push(i18n.t('traderDeck.outlook.assetTagCrossAsset'));
     return {
       timeLabel: `${label} ${idx + 1}`,
       whatChanged: text,
@@ -276,7 +316,7 @@ function enrichTimelineStaleWhyCopy(rows) {
   });
 }
 
-function normalizeForUI(data, period = 'daily') {
+function normalizeForUI(data, period = 'daily', deskStatusPendingLabel = 'Desk status pending') {
   if (!data) return null;
   const tf = period === 'weekly' || data.deskTimeframe === 'weekly' || data.timeframe === 'weekly' ? 'weekly' : 'daily';
   const regime = data.marketRegime;
@@ -291,7 +331,7 @@ function normalizeForUI(data, period = 'daily') {
   }));
   const signals = (data.crossAssetSignals || []).map((s) => ({
     asset: s.asset || '',
-    signal: s.signal || s.label || '—',
+    signal: s.signal || s.label || i18n.t('traderDeck.eta.emDash'),
     direction: (s.direction || 'neutral').toLowerCase(),
     strength: typeof s.strength === 'string' ? s.strength : '',
     implication: typeof s.implication === 'string' ? s.implication : '',
@@ -322,7 +362,7 @@ function normalizeForUI(data, period = 'daily') {
     ? data.outlookDataStatus
     : {
       lastUpdated: data.updatedAt || null,
-      freshnessLabel: formatRelativeFreshness(data.updatedAt) || 'Desk status pending',
+      freshnessLabel: formatRelativeFreshness(data.updatedAt) || deskStatusPendingLabel,
       sourceTier: 'fallback',
       degraded: true,
     };
@@ -392,6 +432,8 @@ function mergeManualOverrides(botPayload, manualOverrides, overrideKeys = []) {
 }
 
 export default function MarketOutlookView({ selectedDate, period, canEdit }) {
+  const { t, i18n } = useTranslation();
+  const deskStatusPendingLabel = t('traderDeck.deskStatusPending');
   const type = period === 'weekly' ? 'outlook-weekly' : 'outlook-daily';
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -421,13 +463,13 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
             const effective = hasOverrideEnvelope
               ? mergeManualOverrides(livePayload || payload.botPayload || {}, payload.manualOverrides, payload.manualOverrideKeys || [])
               : payload;
-            const normalizedSaved = normalizeForUI(effective, period);
+            const normalizedSaved = normalizeForUI(effective, period, deskStatusPendingLabel);
             setData(normalizedSaved);
             if (!hasDetailedRiskRadarRows(normalizedSaved?.riskRadar) && !hasOverrideEnvelope) {
               getMarketIntelligence({ refresh: true, timeframe: period, date: dateStr })
                 .then((rawLive) => {
                   if (cancelled) return;
-                  const normalizedLive = normalizeForUI(rawLive, period);
+                  const normalizedLive = normalizeForUI(rawLive, period, deskStatusPendingLabel);
                   if (!normalizedLive?.riskRadar || normalizedLive.riskRadar.length === 0) return;
                   setData((prev) => {
                     if (!prev) return normalizedLive;
@@ -459,18 +501,19 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
         dataSourceRef.current = 'live';
         return getMarketIntelligence({ refresh: false, timeframe: period, date: dateStr }).then((raw) => {
           if (cancelled) return;
-          const normalized = normalizeForUI(raw, period) || normalizeForUI(SEED_MARKET_INTELLIGENCE, period);
+          const normalized = normalizeForUI(raw, period, deskStatusPendingLabel)
+            || normalizeForUI(SEED_MARKET_INTELLIGENCE, period, deskStatusPendingLabel);
           setData(normalized);
         });
       })
       .catch(() => {
         if (cancelled) return;
         dataSourceRef.current = 'live';
-        const normalized = normalizeForUI(SEED_MARKET_INTELLIGENCE, period);
+        const normalized = normalizeForUI(SEED_MARKET_INTELLIGENCE, period, deskStatusPendingLabel);
         setData(normalized);
       })
       .finally(() => { if (!cancelled) setLoading(false); });
-  }, [type, selectedDate, period]);
+  }, [type, selectedDate, period, deskStatusPendingLabel, i18n.language]);
 
   // Refresh live outlook + AI brief on an interval (not when displaying saved admin content)
   useEffect(() => {
@@ -484,7 +527,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       // Keep periodic refresh cache-friendly; explicit admin edits still force updates on save.
       getMarketIntelligence({ refresh: false, timeframe: period, date: dateStr })
         .then((raw) => {
-          const normalized = normalizeForUI(raw, period);
+          const normalized = normalizeForUI(raw, period, deskStatusPendingLabel);
           if (normalized) setData(normalized);
         })
         .catch((e) => {
@@ -498,7 +541,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
         });
     }, LIVE_REFRESH_MS);
     return () => clearInterval(iv);
-  }, [editMode, type, selectedDate, period]);
+  }, [editMode, type, selectedDate, period, deskStatusPendingLabel, i18n.language]);
 
   const handleEditToggle = () => {
     if (editMode) {
@@ -506,7 +549,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       setEditDraft(null);
       return;
     }
-    const ui = data || normalizeForUI(SEED_MARKET_INTELLIGENCE, period);
+    const ui = data || normalizeForUI(SEED_MARKET_INTELLIGENCE, period, deskStatusPendingLabel);
     const toStr = (x) => (typeof x === 'string' ? x : (x && (x.title || x.text || x.description)) || '');
     const toRiskRow = (x) => {
       if (typeof x === 'string') return { title: x };
@@ -551,13 +594,13 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     setSaveSuccess(null);
     Api.putTraderDeckContent(type, dateStr, payload)
       .then(() => {
-        setData(normalizeForUI(mergeManualOverrides(data || {}, manualOverrides, manualOverrideKeys), period));
+        setData(normalizeForUI(mergeManualOverrides(data || {}, manualOverrides, manualOverrideKeys), period, deskStatusPendingLabel));
         setEditMode(false);
         setEditDraft(null);
-        setSaveSuccess(`Saved for ${dateStr}`);
+        setSaveSuccess(t('traderDeck.savedFor', { date: dateStr }));
         setTimeout(() => setSaveSuccess(null), 3000);
       })
-      .catch((err) => setError(err.response?.data?.message || 'Failed to save'));
+      .catch((err) => setError(err.response?.data?.message || t('traderDeck.saveFailed')));
   };
 
   const handleCancel = () => {
@@ -569,12 +612,16 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     return (
       <div className="td-mi-loading td-mi-loading--page">
         <div className="td-mi-loading-pulse" aria-hidden />
-        <p>Loading {period} outlook…</p>
+        <p>
+          {t('traderDeck.loadingOutlook', {
+            period: period === 'weekly' ? t('traderDeck.periodWeekly') : t('traderDeck.periodDaily'),
+          })}
+        </p>
       </div>
     );
   }
 
-  const ui = data || normalizeForUI(SEED_MARKET_INTELLIGENCE, period);
+  const ui = data || normalizeForUI(SEED_MARKET_INTELLIGENCE, period, deskStatusPendingLabel);
   const showing =
     editMode && editDraft
       ? {
@@ -638,19 +685,23 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     marketPulse: marketPulseForGauge,
   });
   let sessionFallbackPairs = regimeSessionFallbackPairs(marketRegime || {});
+  const dash = t('traderDeck.eta.emDash');
   if (!sessionFallbackPairs.length && (marketPulse?.score != null || marketPulse?.label)) {
     sessionFallbackPairs = [
-      ['Desk pulse', `${marketPulse.score ?? '—'}/100 · ${String(marketPulse.label || '').trim() || '—'}`],
+      [
+        t('traderDeck.outlook.sessionFallbackDeskPulse'),
+        `${marketPulse.score ?? dash}/100 · ${String(marketPulse.label || '').trim() || dash}`,
+      ],
     ];
   }
   if (!sessionFallbackPairs.length && keyDrivers[0]) {
     const d0 = keyDrivers[0];
     const line = `${String(d0.name || '').trim()}: ${String(d0.effect || d0.explanation || '').trim()}`.trim();
-    if (line.length > 4) sessionFallbackPairs = [['Lead driver', line.slice(0, 200)]];
+    if (line.length > 4) sessionFallbackPairs = [[t('traderDeck.outlook.sessionFallbackLeadDriver'), line.slice(0, 200)]];
   }
   if (!sessionFallbackPairs.length && crossAssetSignals[0]) {
     const line = signalLine(crossAssetSignals[0]);
-    if (line) sessionFallbackPairs = [['Cross-asset', line]];
+    if (line) sessionFallbackPairs = [[t('traderDeck.outlook.sessionFallbackCrossAsset'), line]];
   }
 
   const riskDerivedLines = buildDerivedRiskFallbackLines(marketPulse, keyDrivers, outlookRiskContext);
@@ -664,14 +715,14 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
           {['currentRegime', 'bias', 'primaryDriver', 'secondaryDriver', 'marketSentiment', 'tradeEnvironment', 'biasStrength', 'convictionClarity'].map((key) => (
             <div key={key} className="td-mi-regime-row">
               <label className="td-mi-regime-label">
-                {key === 'currentRegime' && 'Regime'}
-                {key === 'bias' && 'Bias'}
-                {key === 'primaryDriver' && 'Primary Driver'}
-                {key === 'secondaryDriver' && 'Secondary Driver'}
-                {key === 'marketSentiment' && 'Global Sentiment'}
-                {key === 'tradeEnvironment' && 'Trade Environment'}
-                {key === 'biasStrength' && 'Bias strength'}
-                {key === 'convictionClarity' && 'Conviction / clarity'}
+                {key === 'currentRegime' && t('traderDeck.regime.currentRegime')}
+                {key === 'bias' && t('traderDeck.regime.bias')}
+                {key === 'primaryDriver' && t('traderDeck.regime.primaryDriver')}
+                {key === 'secondaryDriver' && t('traderDeck.regime.secondaryDriver')}
+                {key === 'marketSentiment' && t('traderDeck.regime.marketSentiment')}
+                {key === 'tradeEnvironment' && t('traderDeck.regime.tradeEnvironment')}
+                {key === 'biasStrength' && t('traderDeck.regime.biasStrength')}
+                {key === 'convictionClarity' && t('traderDeck.regime.convictionClarity')}
               </label>
               <input
                 type="text"
@@ -701,12 +752,12 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       const p = editDraft.marketPulse || { score: 50, label: 'NEUTRAL' };
       return (
         <div className="td-mi-edit">
-          <label className="td-mi-edit-label">Score (0–100)</label>
+          <label className="td-mi-edit-label">{t('traderDeck.outlook.editScoreRange')}</label>
           <input type="range" min="0" max="100" value={p.score}
             onChange={(e) => setEditDraft((d) => ({ ...d, marketPulse: { ...d.marketPulse, score: Number(e.target.value), label: p.label } }))}
             className="td-mi-edit-range" />
           <span className="td-mi-edit-value">{p.score}</span>
-          <label className="td-mi-edit-label">Label</label>
+          <label className="td-mi-edit-label">{t('traderDeck.outlook.editLabelField')}</label>
           <input type="text" className="td-mi-edit-input" value={p.label || ''}
             onChange={(e) => setEditDraft((d) => ({ ...d, marketPulse: { ...d.marketPulse, label: e.target.value } }))} />
         </div>
@@ -746,7 +797,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       ))}
       <li>
         <button type="button" className="td-mi-btn td-mi-btn-small"
-          onClick={() => setEditDraft((d) => ({ ...d, [key]: [...(d[key] || []), options.preserveObject ? { title: '' } : ''] }))}>+ Add</button>
+          onClick={() => setEditDraft((d) => ({ ...d, [key]: [...(d[key] || []), options.preserveObject ? { title: '' } : ''] }))}>{t('traderDeck.outlook.editAdd')}</button>
       </li>
     </ul>
   );
@@ -761,30 +812,39 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                 const next = [...(editDraft.keyDrivers || [])];
                 next[i] = { ...next[i], name: e.target.value };
                 setEditDraft((x) => ({ ...x, keyDrivers: next }));
-              }} placeholder="Driver name" />
+              }} placeholder={t('traderDeck.outlook.editPlaceholderDriver')} />
             <select className="td-mi-edit-select" value={d.impact || 'medium'}
               onChange={(e) => {
                 const next = [...(editDraft.keyDrivers || [])];
                 next[i] = { ...next[i], impact: e.target.value };
                 setEditDraft((x) => ({ ...x, keyDrivers: next }));
-              }} aria-label="Impact">
-              {impactOptions.map((opt) => <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)} Impact</option>)}
+              }} aria-label={t('traderDeck.driver.impactField')}>
+              {impactOptions.map((opt) => {
+                const tier = opt.charAt(0).toUpperCase() + opt.slice(1);
+                return (
+                  <option key={opt} value={opt}>
+                    {t(`traderDeck.driver.impact${tier}`)}
+                  </option>
+                );
+              })}
             </select>
             <select className="td-mi-edit-select td-mi-edit-select--dir" value={d.direction || 'neutral'}
               onChange={(e) => {
                 const next = [...(editDraft.keyDrivers || [])];
                 next[i] = { ...next[i], direction: e.target.value };
                 setEditDraft((x) => ({ ...x, keyDrivers: next }));
-              }} aria-label="Direction">
-              {directionOptions.map((o) => <option key={o} value={o}>{o === 'neutral' ? 'Neutral' : o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
+              }} aria-label={t('traderDeck.outlook.editAriaDirection')}>
+              {directionOptions.map((o) => (
+                <option key={o} value={o}>{t(`traderDeck.direction.${o}`)}</option>
+              ))}
             </select>
             <button type="button" className="td-mi-btn td-mi-btn-remove"
-              onClick={() => setEditDraft((x) => ({ ...x, keyDrivers: (x.keyDrivers || []).filter((_, j) => j !== i) }))} aria-label="Remove">×</button>
+              onClick={() => setEditDraft((x) => ({ ...x, keyDrivers: (x.keyDrivers || []).filter((_, j) => j !== i) }))} aria-label={t('traderDeck.outlook.editAriaRemove')}>×</button>
           </li>
         ))}
       </ul>
       <button type="button" className="td-mi-btn td-mi-btn-small"
-        onClick={() => setEditDraft((d) => ({ ...d, keyDrivers: [...(d.keyDrivers || []), { name: '', impact: 'medium', direction: 'neutral' }] }))}>+ Add driver</button>
+        onClick={() => setEditDraft((d) => ({ ...d, keyDrivers: [...(d.keyDrivers || []), { name: '', impact: 'medium', direction: 'neutral' }] }))}>{t('traderDeck.outlook.editAddDriver')}</button>
     </div>
   );
 
@@ -798,38 +858,52 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                 const next = [...(editDraft.crossAssetSignals || [])];
                 next[i] = { ...next[i], asset: e.target.value };
                 setEditDraft((x) => ({ ...x, crossAssetSignals: next }));
-              }} placeholder="Asset" />
+              }} placeholder={t('traderDeck.outlook.editPlaceholderAsset')} />
             <input type="text" className="td-mi-edit-input td-mi-edit-signal-value" value={s.signal || ''}
               onChange={(e) => {
                 const next = [...(editDraft.crossAssetSignals || [])];
                 next[i] = { ...next[i], signal: e.target.value };
                 setEditDraft((x) => ({ ...x, crossAssetSignals: next }));
-              }} placeholder="Signal" />
+              }} placeholder={t('traderDeck.outlook.editPlaceholderSignal')} />
             <select className="td-mi-edit-select td-mi-edit-select--dir" value={s.direction || 'neutral'}
               onChange={(e) => {
                 const next = [...(editDraft.crossAssetSignals || [])];
                 next[i] = { ...next[i], direction: e.target.value };
                 setEditDraft((x) => ({ ...x, crossAssetSignals: next }));
-              }} aria-label="Direction">
-              {directionOptions.map((o) => <option key={o} value={o}>{o === 'neutral' ? 'Neutral' : o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
+              }} aria-label={t('traderDeck.outlook.editAriaDirection')}>
+              {directionOptions.map((o) => (
+                <option key={o} value={o}>{t(`traderDeck.direction.${o}`)}</option>
+              ))}
             </select>
             <button type="button" className="td-mi-btn td-mi-btn-remove"
-              onClick={() => setEditDraft((x) => ({ ...x, crossAssetSignals: (x.crossAssetSignals || []).filter((_, j) => j !== i) }))} aria-label="Remove">×</button>
+              onClick={() => setEditDraft((x) => ({ ...x, crossAssetSignals: (x.crossAssetSignals || []).filter((_, j) => j !== i) }))} aria-label={t('traderDeck.outlook.editAriaRemove')}>×</button>
           </li>
         ))}
       </ul>
       <button type="button" className="td-mi-btn td-mi-btn-small"
-        onClick={() => setEditDraft((d) => ({ ...d, crossAssetSignals: [...(d.crossAssetSignals || []), { asset: '', signal: '—', direction: 'neutral' }] }))}>+ Add signal</button>
+        onClick={() => setEditDraft((d) => ({
+          ...d,
+          crossAssetSignals: [...(d.crossAssetSignals || []), { asset: '', signal: t('traderDeck.eta.emDash'), direction: 'neutral' }],
+        }))}>{t('traderDeck.outlook.editAddSignal')}</button>
     </div>
   );
 
-  const periodLabel = period === 'weekly' ? 'Weekly' : 'Daily';
+  const periodSentence = period === 'weekly'
+    ? t('traderDeck.outlookPeriodWeeklySentence')
+    : t('traderDeck.outlookPeriodDailySentence');
   const displayDate = (() => {
     const d = new Date(selectedDate + 'T12:00:00');
-    return isNaN(d.getTime()) ? selectedDate : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    if (isNaN(d.getTime())) return selectedDate;
+    const loc = i18n.language === 'zh-CN' ? 'zh-CN'
+      : i18n.language === 'hi' ? 'hi-IN'
+        : i18n.language === 'ar' ? 'ar'
+          : i18n.language === 'bn' ? 'bn-BD'
+            : i18n.language === 'ur' ? 'ur-PK'
+              : i18n.language || 'en-GB';
+    return d.toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' });
   })();
-  const mainTitle = `Market Outlook — ${periodLabel} (${displayDate})`;
-  const changesTitle = period === 'weekly' ? 'Market Change This Week' : 'Market Change Today';
+  const mainTitle = t('traderDeck.outlookHeroTitle', { period: periodSentence, date: displayDate });
+  const changesTitle = period === 'weekly' ? t('traderDeck.changesTitleWeek') : t('traderDeck.changesTitleToday');
 
   return (
     <>
@@ -842,14 +916,14 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               <h1 className="td-outlook-main-title td-outlook-concept-page-title">{mainTitle}</h1>
               {outlookDataStatus ? (
                 <div className="mo-outlook-freshness" role="status" aria-live="polite">
-                  <span className="mo-outlook-freshness__label">{outlookDataStatus.freshnessLabel || '—'}</span>
+                  <span className="mo-outlook-freshness__label">{outlookDataStatus.freshnessLabel || dash}</span>
                 </div>
               ) : null}
             </div>
             {canEdit && editMode ? (
               <div className="td-mi-shell-actions td-deck-mo-outlook-actions">
-                <button type="button" className="td-mi-btn td-mi-btn-save" onClick={handleSave}>Save</button>
-                <button type="button" className="td-mi-btn td-mi-btn-cancel" onClick={handleCancel}>Cancel</button>
+                <button type="button" className="td-mi-btn td-mi-btn-save" onClick={handleSave}>{t('traderDeck.editSave')}</button>
+                <button type="button" className="td-mi-btn td-mi-btn-cancel" onClick={handleCancel}>{t('traderDeck.editCancel')}</button>
               </div>
             ) : null}
           </header>
@@ -860,17 +934,20 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                   <div className="td-outlook-concept-col td-outlook-concept-col--primary">
                   <section
                     className="td-outlook-concept-card td-outlook-concept-card--regime mo-card-shell"
-                    aria-label="Aura market regime"
+                    aria-label={t('traderDeck.outlook.sectionAuraMarketRegime')}
                   >
-                    <h2 className="td-outlook-concept-card__title">Aura Market Regime</h2>
+                    <h2 className="td-outlook-concept-card__title">{t('traderDeck.outlook.sectionAuraMarketRegime')}</h2>
                     <div className="td-outlook-concept-card__body">{renderRegime()}</div>
                   </section>
 
-                  <div className="td-outlook-concept-intel mo-grid-gap-sm" aria-label="Session context, drivers, and cross-asset signals">
+                  <div
+                    className="td-outlook-concept-intel mo-grid-gap-sm"
+                    aria-label={`${t('traderDeck.outlook.sectionSessionContext')} · ${t('traderDeck.outlook.sectionKeyDrivers')} · ${t('traderDeck.outlook.sectionCrossAssetSignals')}`}
+                  >
                     <div className="td-outlook-concept-intel-col td-outlook-concept-intel-col--left">
                       {(sessionContextLive || sessionFallbackPairs.length > 0) ? (
-                      <section className="td-outlook-concept-card td-outlook-concept-card--session mo-card-shell" aria-label="Session context">
-                        <h2 className="td-outlook-concept-card__title mo-section-header">Session Context</h2>
+                      <section className="td-outlook-concept-card td-outlook-concept-card--session mo-card-shell" aria-label={t('traderDeck.outlook.sectionSessionContext')}>
+                        <h2 className="td-outlook-concept-card__title mo-section-header">{t('traderDeck.outlook.sectionSessionContext')}</h2>
                         <div className="td-outlook-concept-card__body td-outlook-concept-card__body--session">
                           {sessionContextLive ? (
                             <SessionContextPanel sessionContext={sessionContextLive} />
@@ -888,7 +965,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                       </section>
                       ) : null}
                       <section className="td-outlook-concept-card td-outlook-concept-card--drivers mo-card-shell">
-                        <h2 className="td-outlook-concept-card__title">Key Market Drivers</h2>
+                        <h2 className="td-outlook-concept-card__title">{t('traderDeck.outlook.sectionKeyDrivers')}</h2>
                         <div className="td-outlook-concept-card__body">
                           {editMode && editDraft ? renderDriversEdit() : <DriverList drivers={keyDrivers} />}
                         </div>
@@ -896,51 +973,51 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                       {marketStructureMap ? (
                       <section
                         className="td-outlook-concept-card td-outlook-concept-card--structure-map mo-card-shell mo-card-shell--dense"
-                        aria-label="Market structure map"
+                        aria-label={t('traderDeck.outlook.sectionMarketStructureMap')}
                       >
-                        <h2 className="td-outlook-concept-card__title">Market Structure Map</h2>
+                        <h2 className="td-outlook-concept-card__title">{t('traderDeck.outlook.sectionMarketStructureMap')}</h2>
                         <div className="td-outlook-concept-card__body td-outlook-concept-card__body--structure-map">
                           <div className="mo-structure-map-grid">
                             <div className="mo-structure-map-col">
                               <div className="mo-structure-kv">
-                                <span className="mo-structure-k">Trend State</span>
+                                <span className="mo-structure-k">{t('traderDeck.outlook.structureTrendState')}</span>
                                 <strong className="mo-structure-v">{marketStructureMap.trendState}</strong>
                               </div>
                               <div className="mo-structure-kv">
-                                <span className="mo-structure-k">Volatility Regime</span>
+                                <span className="mo-structure-k">{t('traderDeck.outlook.structureVolatilityRegime')}</span>
                                 <strong className="mo-structure-v">{marketStructureMap.volatilityRegime}</strong>
                               </div>
                               <div className="mo-structure-kv">
-                                <span className="mo-structure-k">Liquidity Condition</span>
+                                <span className="mo-structure-k">{t('traderDeck.outlook.structureLiquidityCondition')}</span>
                                 <strong className="mo-structure-v">{marketStructureMap.liquidityCondition}</strong>
                               </div>
                             </div>
                             <div className="mo-structure-map-col">
                               <div className="mo-structure-kv">
-                                <span className="mo-structure-k">Correlation Regime</span>
+                                <span className="mo-structure-k">{t('traderDeck.outlook.structureCorrelationRegime')}</span>
                                 <strong className="mo-structure-v">{marketStructureMap.correlationRegime}</strong>
                               </div>
                               <div className="mo-structure-kv">
-                                <span className="mo-structure-k">Market Breadth</span>
+                                <span className="mo-structure-k">{t('traderDeck.outlook.structureMarketBreadth')}</span>
                                 <strong className="mo-structure-v">{marketStructureMap.marketBreadth}</strong>
                               </div>
                               <div className="mo-structure-kv">
-                                <span className="mo-structure-k">Positioning Pressure</span>
+                                <span className="mo-structure-k">{t('traderDeck.outlook.structurePositioningPressure')}</span>
                                 <strong className="mo-structure-v">{marketStructureMap.positioningPressure}</strong>
                               </div>
                             </div>
                           </div>
                           <div className="mo-structure-insights">
                             <p className="mo-structure-line">
-                              <span className="mo-structure-k">Structure Insight</span>
+                              <span className="mo-structure-k">{t('traderDeck.outlook.structureInsight')}</span>
                               <span className="mo-structure-t">{marketStructureMap.structureInsight}</span>
                             </p>
                             <p className="mo-structure-line">
-                              <span className="mo-structure-k">What This Means</span>
+                              <span className="mo-structure-k">{t('traderDeck.outlook.structureWhatThisMeans')}</span>
                               <span className="mo-structure-t">{marketStructureMap.whatThisMeans}</span>
                             </p>
                             <p className="mo-structure-line">
-                              <span className="mo-structure-k">Watch For</span>
+                              <span className="mo-structure-k">{t('traderDeck.outlook.structureWatchFor')}</span>
                               <span className="mo-structure-t">{marketStructureMap.watchFor}</span>
                             </p>
                           </div>
@@ -950,24 +1027,24 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     </div>
                     <div className="td-outlook-concept-intel-col td-outlook-concept-intel-col--right">
                       <section className="td-outlook-concept-card td-outlook-concept-card--signals mo-card-shell">
-                        <h2 className="td-outlook-concept-card__title">Cross-Asset Signals</h2>
+                        <h2 className="td-outlook-concept-card__title">{t('traderDeck.outlook.sectionCrossAssetSignals')}</h2>
                         <div className="td-outlook-concept-card__body">
                           {editMode && editDraft ? renderSignalsEdit() : <SignalList signals={crossAssetSignals} />}
                         </div>
                       </section>
                       {(instrumentSnapshots || []).filter(Boolean).length > 0 ? (
-                      <section className="td-outlook-concept-card td-outlook-concept-card--instruments mo-card-shell" aria-label="Instrument snapshots">
-                        <h2 className="td-outlook-concept-card__title">Instrument Snapshots</h2>
+                      <section className="td-outlook-concept-card td-outlook-concept-card--instruments mo-card-shell" aria-label={t('traderDeck.outlook.sectionInstrumentSnapshots')}>
+                        <h2 className="td-outlook-concept-card__title">{t('traderDeck.outlook.sectionInstrumentSnapshots')}</h2>
                         <div className="td-outlook-concept-card__body td-outlook-concept-card__body--instruments">
                             <div className="mo-instrument-grid mo-instrument-grid--compact">
                               {(instrumentSnapshots || []).slice(0, 8).map((card, idx) => (
                                 <article key={card.symbol || `snap-${idx}`} className="mo-instrument-card">
                                   <header className="mo-instrument-card__head">
                                     <span className="mo-instrument-card__sym">{card.symbol}</span>
-                                    <span className="mo-pill mo-pill--soft">{card.bias || '—'}</span>
+                                    <span className="mo-pill mo-pill--soft">{card.bias || dash}</span>
                                   </header>
-                                  <p className="mo-instrument-card__row"><span>Structure</span><strong>{card.structure || '—'}</strong></p>
-                                  <p className="mo-instrument-card__row"><span>Key level</span><strong>{card.keyLevel || '—'}</strong></p>
+                                  <p className="mo-instrument-card__row"><span>{t('traderDeck.outlook.instrumentStructure')}</span><strong>{card.structure || dash}</strong></p>
+                                  <p className="mo-instrument-card__row"><span>{t('traderDeck.outlook.instrumentKeyLevel')}</span><strong>{card.keyLevel || dash}</strong></p>
                                   <p className="mo-instrument-card__note">{card.note || ''}</p>
                                 </article>
                               ))}
@@ -982,11 +1059,11 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     <h2 className="td-outlook-concept-card__title">{changesTitle}</h2>
                     <div className="td-outlook-concept-card__body">
                       {editMode && editDraft ? (
-                        renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', 'Theme')
+                        renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', t('traderDeck.outlook.editPlaceholderTheme'))
                       ) : marketChangesTimeline && marketChangesTimeline.length > 0 ? (
                         <ChangeList items={marketChangesTimeline} variant="timeline" />
                       ) : (
-                        <p className="td-outlook-empty">No themes recorded. Use Edit to add.</p>
+                        <p className="td-outlook-empty">{t('traderDeck.outlook.emptyChanges')}</p>
                       )}
                     </div>
                   </section>
@@ -994,28 +1071,28 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                   {(implicationsDecision.scenario || implicationsDecision.keyTheme || implicationsDecision.bullets.length > 0) ? (
                   <section
                     className="td-outlook-concept-card td-outlook-concept-card--implications mo-card-shell mo-card-shell--dense"
-                    aria-label="Market implications"
+                    aria-label={t('traderDeck.outlook.sectionMarketImplications')}
                   >
-                    <h2 className="td-outlook-concept-card__title">Market Implications</h2>
+                    <h2 className="td-outlook-concept-card__title">{t('traderDeck.outlook.sectionMarketImplications')}</h2>
                     <div className="td-outlook-concept-card__body td-outlook-concept-card__body--implications">
                         <div className="mo-implications-decision-grid">
                           <div className="mo-implications-decision-col mo-implications-decision-col--narrative">
                             {implicationsDecision.scenario ? (
                               <>
-                                <span className="mo-implications-kicker">Scenario</span>
+                                <span className="mo-implications-kicker">{t('traderDeck.outlook.kickerScenario')}</span>
                                 <p className="mo-implications-scenario">{implicationsDecision.scenario}</p>
                               </>
                             ) : null}
                             {implicationsDecision.keyTheme ? (
                               <>
-                                <span className="mo-implications-kicker">Key theme</span>
+                                <span className="mo-implications-kicker">{t('traderDeck.outlook.kickerKeyTheme')}</span>
                                 <p className="mo-implications-theme">{implicationsDecision.keyTheme}</p>
                               </>
                             ) : null}
                           </div>
                           {implicationsDecision.bullets.length > 0 ? (
                           <div className="mo-implications-decision-col mo-implications-decision-col--action">
-                            <span className="mo-implications-kicker">Actionable</span>
+                            <span className="mo-implications-kicker">{t('traderDeck.outlook.kickerActionable')}</span>
                               <ul className="mo-implications-action-list">
                                 {implicationsDecision.bullets.map((line, i) => (
                                   <li key={i}>{line}</li>
@@ -1028,15 +1105,15 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                   </section>
                   ) : null}
 
-                  <section className="td-outlook-concept-card td-outlook-concept-card--focus mo-card-shell" aria-label="Trader focus">
-                    <h2 className="td-outlook-concept-card__title">Trader Focus</h2>
+                  <section className="td-outlook-concept-card td-outlook-concept-card--focus mo-card-shell" aria-label={t('traderDeck.outlook.sectionTraderFocus')}>
+                    <h2 className="td-outlook-concept-card__title">{t('traderDeck.outlook.sectionTraderFocus')}</h2>
                     <div className="td-outlook-concept-card__body">
                       {editMode && editDraft ? (
-                        renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item')
+                        renderListEdit(editDraft.traderFocus, 'traderFocus', t('traderDeck.outlook.editPlaceholderFocus'))
                       ) : traderFocusEffective.length > 0 ? (
                         <FocusList items={traderFocusEffective} />
                       ) : (
-                        <p className="td-outlook-empty">No focus items. Use Edit to add.</p>
+                        <p className="td-outlook-empty">{t('traderDeck.outlook.emptyFocus')}</p>
                       )}
                     </div>
                   </section>
@@ -1045,18 +1122,18 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                   <div className="td-outlook-concept-col td-outlook-concept-col--secondary">
                   <section
                     className="td-outlook-concept-card td-outlook-concept-card--pulse td-outlook-concept-pulse mo-card-shell mo-card-shell--focal"
-                    aria-label="Aura market pulse"
+                    aria-label={t('traderDeck.outlook.sectionAuraMarketPulse')}
                   >
                     <header className="td-outlook-concept-card__head">
-                      <h2 className="td-outlook-concept-card__title">Aura Market Pulse</h2>
+                      <h2 className="td-outlook-concept-card__title">{t('traderDeck.outlook.sectionAuraMarketPulse')}</h2>
                       {canEdit && !editMode ? (
                         <button
                           type="button"
                           className="td-mi-btn td-mi-btn-edit td-outlook-concept-pulse-edit"
                           onClick={handleEditToggle}
-                          aria-label="Edit content"
+                          aria-label={t('traderDeck.outlook.editAria')}
                         >
-                          Edit
+                          {t('traderDeck.outlook.editButton')}
                         </button>
                       ) : null}
                     </header>
@@ -1065,11 +1142,11 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     </div>
                   </section>
 
-                  <section className="td-outlook-concept-card td-outlook-concept-card--risk mo-card-shell" aria-label="Market risk engine">
-                    <h2 className="td-outlook-concept-card__title">Market Risk Engine</h2>
+                  <section className="td-outlook-concept-card td-outlook-concept-card--risk mo-card-shell" aria-label={t('traderDeck.outlook.sectionMarketRiskEngine')}>
+                    <h2 className="td-outlook-concept-card__title">{t('traderDeck.outlook.sectionMarketRiskEngine')}</h2>
                     <div className="td-outlook-concept-card__body td-outlook-concept-risk__body">
                       {editMode && editDraft ? (
-                        renderListEdit(editDraft.riskRadar, 'riskRadar', 'Risk factor', { preserveObject: true })
+                        renderListEdit(editDraft.riskRadar, 'riskRadar', t('traderDeck.outlook.editPlaceholderRisk'), { preserveObject: true })
                       ) : (riskRadar && riskRadar.length > 0) || riskEngine ? (
                         <RiskRadarList
                           items={riskRadar || []}
@@ -1092,20 +1169,20 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                   {tradeExpressionMatrix.length > 0 ? (
                     <section
                       className="td-outlook-concept-card td-outlook-concept-card--trade-matrix mo-card-shell mo-card-shell--dense"
-                      aria-label="Trade expression matrix"
+                      aria-label={t('traderDeck.outlook.sectionTradeExpressionMatrix')}
                     >
-                      <h2 className="td-outlook-concept-card__title">Trade Expression Matrix</h2>
+                      <h2 className="td-outlook-concept-card__title">{t('traderDeck.outlook.sectionTradeExpressionMatrix')}</h2>
                       <div className="td-outlook-concept-card__body td-outlook-concept-card__body--trade-matrix">
                         <div className="mo-trade-matrix">
                           {tradeExpressionMatrix.map((row, i) => (
                             <article key={i} className="mo-trade-matrix-row">
                               <div className="mo-trade-matrix-head">{row.headline}</div>
                               <div className="mo-trade-matrix-line">
-                                <span className="mo-tm-label">Expression</span>
+                                <span className="mo-tm-label">{t('traderDeck.outlook.tradeMatrixExpression')}</span>
                                 <span className="mo-tm-value">{row.expression}</span>
                               </div>
                               <div className="mo-trade-matrix-line">
-                                <span className="mo-tm-label">Why</span>
+                                <span className="mo-tm-label">{t('traderDeck.outlook.tradeMatrixWhy')}</span>
                                 <span className="mo-tm-value">{row.why}</span>
                               </div>
                               <div className="mo-trade-matrix-line mo-trade-matrix-line--invalidation">

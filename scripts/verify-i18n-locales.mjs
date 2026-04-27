@@ -19,7 +19,15 @@ const mirrorEnglish = !process.argv.includes('--skip-mirror-english');
 const BRAND_KEY_SUBSTR = ['slides.auraAI', 'slides.courses.statBadge', 'marketing.brand', 'wordmark', 'loadingBrand', 'auraAnalysis', 'Aura', 'TradingView', 'Binance', 'Coinbase', 'Bloomberg', 'Reuters', 'Glitch', 'A7FX', 'C & S', 'MFA', 'GDPR', 'PPTX', 'PowerPoint', 'GIF', 'GIFs', 'KB', 'MetaTrader', 'Twelve Data', 'CDN'];
 
 /** Identical to English is acceptable for any locale (typography, brand, decorative UI). */
-const IDENTICAL_OK_KEYS = new Set(['common.dash', 'loadingSpinner.title', 'loadingSpinner.percent']);
+const IDENTICAL_OK_KEYS = new Set([
+  'common.dash',
+  'loadingSpinner.title',
+  'loadingSpinner.percent',
+  /** Em dash placeholder; same glyph is correct in every script. */
+  'traderDeck.eta.emDash',
+  /** Macro timing headline glue; same separator in every script. */
+  'traderDeck.macroGen.sep',
+]);
 
 /**
  * Some locales use the same spelling as English for loanwords/cognates (e.g. French "Menu", "Performance").
@@ -52,6 +60,11 @@ const STRICT_IDENTICAL_OK_KEYS = new Set([
 const IDENTICAL_OK_BY_LANG = {
   es: new Set(['community.editChannel.catGeneral', 'community.editChannel.catPremium']),
   fr: new Set([
+    'traderDeck.city.sydney',
+    'traderDeck.city.tokyo',
+    'traderDeck.city.newYork',
+    'traderDeck.sessionContext.newYork',
+    'traderDeck.sessionShort.new_york',
     'common.article',
     'navbar.journal',
     'navbar.messages',
@@ -70,7 +83,12 @@ const IDENTICAL_OK_BY_LANG = {
     'community.editChannel.catPremium',
     'community.editChannel.description',
   ]),
-  pt: new Set(['community.editChannel.catPremium', 'community.subModal.badgeElite']),
+  pt: new Set([
+    'community.editChannel.catPremium',
+    'community.subModal.badgeElite',
+    'traderDeck.city.dubai',
+    'traderDeck.city.sydney',
+  ]),
 };
 
 function flattenKeys(obj, prefix = '') {
@@ -162,10 +180,16 @@ for (const code of codes) {
       const v = getLeaf(tree, k);
       if (typeof ev !== 'string' || typeof v !== 'string') continue;
       if (v === ev && v.trim().length > 0) {
+        const deskGlueMirrorOk =
+          code !== 'hi' &&
+          (k.startsWith('traderDeck.macroGen.') ||
+            k.startsWith('traderDeck.structureMap.') ||
+            k.startsWith('traderDeck.riskRadar.'));
         const allow =
           IDENTICAL_OK_KEYS.has(k) ||
           STRICT_IDENTICAL_OK_KEYS.has(k) ||
           IDENTICAL_OK_BY_LANG[code]?.has(k) ||
+          deskGlueMirrorOk ||
           BRAND_KEY_SUBSTR.some((s) => k.includes(s) || v.includes(s));
         if (!allow) {
           console.error(`${code}: value still English for ${k}`);

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Semi-circular pulse gauge: Risk Off (red) → Neutral (yellow) → Risk On (green).
@@ -30,23 +31,31 @@ export default function MarketPulseGauge({
   /** Short regime line from Market Regime (e.g. currentRegime); outlook only */
   regimeDescriptor = '',
 }) {
+  const { t } = useTranslation();
   const normalized = Math.max(0, Math.min(100, Number(score)));
-  // Needle: 0 = left (Risk Off), 100 = right (Risk On). Semi-circle = 180°; we use -90° to +90° (left to right)
   const rotation = -90 + (normalized / 100) * 180;
 
   const badgeClass = badgeClassFromLabelAndScore(label, normalized);
-  const volatility =
-    normalized >= 72 ? 'Elevated' : normalized <= 34 ? 'Low' : 'Moderate';
-  const directionalClarity =
-    normalized >= 70 || normalized <= 30 ? 'Defined' : 'Mixed';
-  const riskTone =
-    normalized >= 67 ? 'Risk-on' : normalized <= 33 ? 'Risk-off' : 'Balanced';
-  const posture =
-    normalized >= 67 ? 'Lean with trend' : normalized <= 33 ? 'Defensive' : 'Selective';
+
+  const { volatility, directionalClarity, riskTone, posture } = useMemo(() => ({
+    volatility:
+      normalized >= 72 ? t('traderDeck.pulse.volElevated') : normalized <= 34 ? t('traderDeck.pulse.volLow') : t('traderDeck.pulse.volModerate'),
+    directionalClarity:
+      normalized >= 70 || normalized <= 30 ? t('traderDeck.pulse.clarityDefined') : t('traderDeck.pulse.clarityMixed'),
+    riskTone:
+      normalized >= 67 ? t('traderDeck.pulse.riskOnTone') : normalized <= 33 ? t('traderDeck.pulse.riskOffTone') : t('traderDeck.pulse.riskBalanced'),
+    posture:
+      normalized >= 67 ? t('traderDeck.pulse.postureLeanTrend') : normalized <= 33 ? t('traderDeck.pulse.postureDefensive') : t('traderDeck.pulse.postureSelective'),
+  }), [normalized, t]);
 
   const outlook = variant === 'outlook';
   const op = outlookPulse && typeof outlookPulse === 'object' ? outlookPulse : null;
-  const outlookVol = op?.volatilityCondition || (normalized >= 72 ? 'Elevated pulse vs baseline' : normalized <= 34 ? 'Subdued pulse vs baseline' : 'Balanced pulse vs baseline');
+  const outlookVol = op?.volatilityCondition
+    || (normalized >= 72
+      ? t('traderDeck.pulse.outlookVolElevated')
+      : normalized <= 34
+        ? t('traderDeck.pulse.outlookVolSubdued')
+        : t('traderDeck.pulse.outlookVolBalanced'));
   const shiftLines = Array.isArray(op?.stateShiftFactors) && op.stateShiftFactors.length
     ? op.stateShiftFactors
     : (Array.isArray(recommendedAction) ? recommendedAction : []);
@@ -56,7 +65,7 @@ export default function MarketPulseGauge({
       <div
         className={`td-mi-gauge${outlook ? ' td-mi-gauge--outlook' : ''}`}
         role="img"
-        aria-label={`Market pulse ${label}, score ${normalized}`}
+        aria-label={t('traderDeck.pulse.aria', { label, score: normalized })}
       >
         <div className="td-mi-gauge-arc-bg" aria-hidden />
         {outlook ? <div className="td-mi-gauge-arc-glow" aria-hidden /> : null}
@@ -68,8 +77,8 @@ export default function MarketPulseGauge({
         />
       </div>
       <div className="td-mi-gauge-axis-labels">
-        <span>{outlook ? 'Risk off' : 'RISK OFF'}</span>
-        <span>{outlook ? 'Risk on' : 'RISK ON'}</span>
+        <span>{outlook ? t('traderDeck.pulse.axisRiskOff') : t('traderDeck.pulse.axisRiskOff')}</span>
+        <span>{outlook ? t('traderDeck.pulse.axisRiskOn') : t('traderDeck.pulse.axisRiskOn')}</span>
       </div>
       <div className={`td-mi-gauge-badge td-mi-gauge-badge--${badgeClass}`}>
         {label}
@@ -77,16 +86,16 @@ export default function MarketPulseGauge({
       {outlook ? (
         <>
           <div className="td-mi-pulse-snapshot td-mi-pulse-snapshot--compact">
-            <p><span>State</span><strong>{op?.pulseState || label} ({normalized}%)</strong></p>
-            <p><span>Volatility</span><strong>{outlookVol}</strong></p>
+            <p><span>{t('traderDeck.pulse.state')}</span><strong>{op?.pulseState || label} ({normalized}%)</strong></p>
+            <p><span>{t('traderDeck.pulse.volatility')}</span><strong>{outlookVol}</strong></p>
             {regimeDescriptor ? (
-              <p><span>Regime</span><strong>{regimeDescriptor}</strong></p>
+              <p><span>{t('traderDeck.pulse.regime')}</span><strong>{regimeDescriptor}</strong></p>
             ) : null}
-            <p><span>Clarity</span><strong>{directionalClarity}</strong></p>
+            <p><span>{t('traderDeck.pulse.clarity')}</span><strong>{directionalClarity}</strong></p>
           </div>
           {Array.isArray(op?.topDrivers) && op.topDrivers.length > 0 ? (
             <div className="td-mi-pulse-meta td-mi-pulse-meta--drivers">
-              <p className="td-mi-pulse-actions-label">Top drivers</p>
+              <p className="td-mi-pulse-actions-label">{t('traderDeck.pulse.topDrivers')}</p>
               <ul className="td-mi-bullets td-mi-pulse-actions-list">
                 {op.topDrivers.slice(0, 3).map((line, idx) => (
                   <li key={idx} className="td-mi-bullet-item">{line}</li>
@@ -95,11 +104,11 @@ export default function MarketPulseGauge({
             </div>
           ) : null}
           {op?.recentChangeSummary ? (
-            <p className="td-mi-pulse-recent"><span>Recent shift</span><strong>{op.recentChangeSummary}</strong></p>
+            <p className="td-mi-pulse-recent"><span>{t('traderDeck.pulse.recentShift')}</span><strong>{op.recentChangeSummary}</strong></p>
           ) : null}
           {Array.isArray(shiftLines) && shiftLines.length > 0 && (
             <div className="td-mi-pulse-meta td-mi-pulse-meta--actions">
-              <p className="td-mi-pulse-actions-label">What could shift the tape</p>
+              <p className="td-mi-pulse-actions-label">{t('traderDeck.pulse.whatShiftTape')}</p>
               <ul className="td-mi-bullets td-mi-pulse-actions-list">
                 {shiftLines.slice(0, 4).map((line, idx) => (
                   <li key={idx} className="td-mi-bullet-item">{line}</li>
@@ -111,17 +120,17 @@ export default function MarketPulseGauge({
       ) : (
         <>
           <div className="td-mi-pulse-snapshot">
-            <p><span>State</span><strong>{label}</strong></p>
-            <p><span>Confidence</span><strong>{normalized}%</strong></p>
-            <p><span>Volatility</span><strong>{volatility}</strong></p>
-            <p><span>Directional Clarity</span><strong>{directionalClarity}</strong></p>
-            <p><span>Risk Tone</span><strong>{riskTone}</strong></p>
-            <p><span>Posture</span><strong>{posture}</strong></p>
+            <p><span>{t('traderDeck.pulse.state')}</span><strong>{label}</strong></p>
+            <p><span>{t('traderDeck.pulse.confidence')}</span><strong>{normalized}%</strong></p>
+            <p><span>{t('traderDeck.pulse.volatility')}</span><strong>{volatility}</strong></p>
+            <p><span>{t('traderDeck.pulse.clarity')}</span><strong>{directionalClarity}</strong></p>
+            <p><span>{t('traderDeck.pulse.riskTone')}</span><strong>{riskTone}</strong></p>
+            <p><span>{t('traderDeck.pulse.posture')}</span><strong>{posture}</strong></p>
           </div>
           <div className="td-mi-pulse-meta">
             {Array.isArray(recommendedAction) && recommendedAction.length > 0 && (
               <>
-                <p><strong>Desk context:</strong></p>
+                <p><strong>{t('traderDeck.pulse.deskContext')}</strong></p>
                 <ul className="td-mi-bullets">
                   {recommendedAction.slice(0, 3).map((line, idx) => (
                     <li key={idx} className="td-mi-bullet-item">{line}</li>

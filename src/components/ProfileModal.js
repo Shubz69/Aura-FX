@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import {
     getRankTitle,
@@ -118,6 +119,7 @@ const ALL_ACHIEVEMENTS = [
 ];
 
 const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, currentUserId }) => {
+    const { t } = useTranslation();
     const [profile, setProfile] = useState(userData || null);
     const [loading, setLoading] = useState(!userData);
     const [activeTab, setActiveTab] = useState('overview');
@@ -465,7 +467,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
             <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(16px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }} onClick={onClose}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }} onClick={e => e.stopPropagation()}>
                     <div className="pf-spinner" />
-                    <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.38em', fontFamily: "'Space Grotesk', sans-serif" }}>Loading profile</span>
+                    <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.38em', fontFamily: "'Space Grotesk', sans-serif" }}>{t('profile.loading')}</span>
                 </div>
             </div>, getModalRoot()
         );
@@ -474,10 +476,10 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     const level = displayProfile.level || 1;
     const xp = displayProfile.xp || 0;
     const xpProgress = getXPProgress(xp, level);
-    const rankTitle = getRankTitle(level);
-    const tierName = getTierName(level);
+    const rankTitle = getRankTitle(level, t);
+    const tierName = getTierName(level, t);
     const tierColor = getTierColor(level);
-    const nextMilestone = getNextRankMilestone(level);
+    const nextMilestone = getNextRankMilestone(level, t);
     const loginStreak = displayProfile.login_streak || 0;
     const xpForNext = getXPForNextLevel(level);
     const achievements = getAchievements(level, loginStreak, stats?.ai_chats_count || 0, stats?.community_messages || 0);
@@ -494,7 +496,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     const subjectIsSuperAdmin = isSuperAdmin(membershipSubject);
     const subjectIsAdmin = normalizeRoleKey(displayProfile.role) === 'admin';
     const tierUpper = inferTierUpperFromProfile(membershipSubject);
-    const membershipHeadline = formatMembershipLabel(displayProfile.role, tierUpper);
+    const membershipHeadline = formatMembershipLabel(displayProfile.role, tierUpper, t);
     const subStatusNorm = normalizeRoleKey(displayProfile.subscription_status);
     const activeSub = ['active', 'trialing'].includes(subStatusNorm);
     const planName = planProductLabel(displayProfile.subscription_plan);
@@ -915,7 +917,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                             )}
                                         </div>
                                         <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '0.04em', lineHeight: 1.45 }}>
-                                            Subscription view: <span style={{ color: tierColor }}>{formatMembershipLabel('USER', tierUpper)}</span>
+                                            Subscription view: <span style={{ color: tierColor }}>{formatMembershipLabel('USER', tierUpper, t)}</span>
                                             {tierName ? <span style={{ color: 'rgba(255,255,255,0.35)' }}> · XP rank {tierName}</span> : null}
                                         </div>
                                     </div>

@@ -1,0 +1,36 @@
+/** Curated macro headlines — not a generic RSS dump. */
+export const intelligenceFeedMock = [
+  {
+    id: 'feed-1',
+    ts: '2026-04-27T12:30:00Z',
+    category: 'Labor',
+    impact: 'High',
+    headline: 'US Initial Jobless Claims Fall to 215K, Better Than Forecast',
+    affectedAssets: ['EURUSD', 'DXY', 'US2Y', 'US10Y'],
+    aiSummary: 'Labor data came in stronger than expected, supporting USD and yields.',
+    whyItMatters: 'Stronger labor conditions may delay rate-cut expectations and pressure EURUSD.',
+    action: 'Avoid long EURUSD breakouts until USD momentum cools.',
+  },
+  {
+    id: 'feed-2',
+    ts: '2026-04-27T09:15:00Z',
+    category: 'Central bank',
+    impact: 'Medium',
+    headline: 'ECB Speakers Lean Patient on June Cut Pricing',
+    affectedAssets: ['EURUSD', 'EUR crosses', 'Bund'],
+    aiSummary: 'Officials emphasized data-dependence; markets trimmed dovish tail.',
+    whyItMatters: 'EUR can bounce on headlines but lacks sustained trend fuel vs USD.',
+    action: 'Fade headline spikes; require DXY/yield confirmation for swing shorts.',
+  },
+  {
+    id: 'feed-3',
+    ts: '2026-04-27T08:00:00Z',
+    category: 'Liquidity',
+    impact: 'Low',
+    headline: 'Month-End Flows: Rebalancing Models Point Mild USD Selling',
+    affectedAssets: ['DXY', 'EURUSD', 'GBPUSD'],
+    aiSummary: 'Model-driven demand may cushion EURUSD into the NY afternoon.',
+    whyItMatters: 'Can distort short-term price without changing intraday structure.',
+    action: 'Do not chase; use extremes for mean reversion only with reduced size.',
+  },
+];

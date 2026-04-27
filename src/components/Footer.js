@@ -71,7 +71,7 @@ const Footer = React.memo(function Footer() {
           <h4 className="footer-column-heading">{t('footer.platform')}</h4>
           <ul className="footer-links">
             <li><Link to="/">{t('navbar.home')}</Link></li>
-            <li><Link to="/courses">C&S</Link></li>
+            <li><Link to="/courses">{t('navbar.cs')}</Link></li>
             <li><Link to="/explore">{t('navbar.explore')}</Link></li>
             <li><Link to="/why-glitch">{t('navbar.whyAura')}</Link></li>
             <li><Link to="/contact">{t('navbar.contactUs')}</Link></li>
@@ -83,7 +83,7 @@ const Footer = React.memo(function Footer() {
           <h4 className="footer-column-heading">{t('footer.resources')}</h4>
           <ul className="footer-links">
             <li><Link to="/choose-plan">{t('footer.plans')}</Link></li>
-            <li><Link to="/affiliation">Affiliation</Link></li>
+            <li><Link to="/affiliation">{t('footer.affiliation')}</Link></li>
             <li><Link to="/privacy">{t('footer.privacy')}</Link></li>
             <li><Link to="/terms">{t('footer.terms')}</Link></li>
           </ul>

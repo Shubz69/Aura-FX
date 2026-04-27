@@ -1,14 +1,14 @@
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', label: 'English' },
-  { code: 'zh-CN', label: 'Chinese (Simplified)' },
-  { code: 'hi', label: 'Hindi' },
-  { code: 'es', label: 'Spanish' },
-  { code: 'fr', label: 'French' },
-  { code: 'ar', label: 'Arabic' },
-  { code: 'bn', label: 'Bengali' },
-  { code: 'pt', label: 'Portuguese' },
-  { code: 'ru', label: 'Russian' },
-  { code: 'ur', label: 'Urdu' },
+  { code: 'zh-CN', label: '简体中文' },
+  { code: 'hi', label: 'हिन्दी' },
+  { code: 'es', label: 'Español' },
+  { code: 'fr', label: 'Français' },
+  { code: 'ar', label: 'العربية' },
+  { code: 'bn', label: 'বাংলা' },
+  { code: 'pt', label: 'Português' },
+  { code: 'ru', label: 'Русский' },
+  { code: 'ur', label: 'اردو' },
 ];
 
 export const SUPPORTED_LANGUAGE_CODES = SUPPORTED_LANGUAGES.map((lang) => lang.code);

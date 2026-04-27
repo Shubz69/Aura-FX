@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { FaCog } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
@@ -83,45 +84,46 @@ export default function TraderDeckProfile() {
   const displayEmail = (user?.email && user.email.trim()) || '—';
   const displayRole = formatMembershipLabel(
     meUser?.role ?? user?.role,
-    entitlements?.effectiveTier ?? entitlements?.tier
+    entitlements?.effectiveTier ?? entitlements?.tier,
+    t
   );
   const displayBalance = defaultBalance.trim() || '—';
   const displayRisk = defaultRisk.trim() ? `${defaultRisk}%` : '—';
 
   return (
     <div className="td-profile">
-      <h2 className="td-profile-title">Profile</h2>
+      <h2 className="td-profile-title">{t('traderDeck.pageTitle')}</h2>
 
       <div className="td-profile-grid">
         <section className="td-profile-account-card">
           <div className="td-profile-account-header">
             <div>
-              <h3 className="td-profile-account-title">Account</h3>
-              <p className="td-profile-account-sub">Your profile and defaults</p>
+              <h3 className="td-profile-account-title">{t('traderDeck.accountTitle')}</h3>
+              <p className="td-profile-account-sub">{t('traderDeck.accountSub')}</p>
             </div>
-            <Link to="/profile" className="td-profile-settings-icon" aria-label="Account settings">
+            <Link to="/profile" className="td-profile-settings-icon" aria-label={t('traderDeck.accountSettingsAria')}>
               <FaCog />
             </Link>
           </div>
           <dl className="td-profile-account-fields">
             <div className="td-profile-field">
-              <dt>Name</dt>
+              <dt>{t('traderDeck.fieldName')}</dt>
               <dd>{displayName}</dd>
             </div>
             <div className="td-profile-field">
-              <dt>Email</dt>
+              <dt>{t('traderDeck.fieldEmail')}</dt>
               <dd>{displayEmail}</dd>
             </div>
             <div className="td-profile-field">
-              <dt>Role</dt>
+              <dt>{t('traderDeck.fieldRole')}</dt>
               <dd>{displayRole}</dd>
             </div>
             <div className="td-profile-field">
-              <dt>Default balance</dt>
+              <dt>{t('traderDeck.fieldDefaultBalance')}</dt>
               <dd>{displayBalance}</dd>
             </div>
             <div className="td-profile-field">
-              <dt>Default risk %</dt>
+              <dt>{t('traderDeck.fieldDefaultRisk')}</dt>
               <dd>{displayRisk}</dd>
             </div>
           </dl>
@@ -130,39 +132,39 @@ export default function TraderDeckProfile() {
         <div className="td-profile-stats-wrap">
           <div className="td-profile-stats-grid">
             <div className="td-profile-stat-card">
-              <span className="td-profile-stat-label">Total trades</span>
+              <span className="td-profile-stat-label">{t('traderDeck.statTotalTrades')}</span>
               <span className="td-profile-stat-value">{loading ? '—' : stats.totalTrades}</span>
             </div>
             <div className="td-profile-stat-card">
-              <span className="td-profile-stat-label">Win rate</span>
+              <span className="td-profile-stat-label">{t('traderDeck.statWinRate')}</span>
               <span className="td-profile-stat-value td-profile-stat-positive">
                 {loading ? '—' : `${stats.winRate.toFixed(2)}%`}
               </span>
             </div>
             <div className="td-profile-stat-card">
-              <span className="td-profile-stat-label">Average R</span>
+              <span className="td-profile-stat-label">{t('traderDeck.statAverageR')}</span>
               <span className="td-profile-stat-value">{loading ? '—' : stats.averageR.toFixed(2)}</span>
             </div>
             <div className="td-profile-stat-card">
-              <span className="td-profile-stat-label">Total PnL</span>
+              <span className="td-profile-stat-label">{t('traderDeck.statTotalPnl')}</span>
               <span className={`td-profile-stat-value ${stats.totalPnL >= 0 ? 'td-profile-stat-positive' : 'td-profile-stat-negative'}`}>
                 {loading ? '—' : formatPnL(stats.totalPnL)}
               </span>
             </div>
             <div className="td-profile-stat-card">
-              <span className="td-profile-stat-label">Best pair</span>
+              <span className="td-profile-stat-label">{t('traderDeck.statBestPair')}</span>
               <span className="td-profile-stat-value">{loading ? '—' : stats.bestPair}</span>
             </div>
             <div className="td-profile-stat-card">
-              <span className="td-profile-stat-label">Worst pair</span>
+              <span className="td-profile-stat-label">{t('traderDeck.statWorstPair')}</span>
               <span className="td-profile-stat-value">{loading ? '—' : stats.worstPair}</span>
             </div>
             <div className="td-profile-stat-card">
-              <span className="td-profile-stat-label">Consistency score</span>
+              <span className="td-profile-stat-label">{t('traderDeck.statConsistency')}</span>
               <span className="td-profile-stat-value">{loading ? '—' : stats.consistency}</span>
             </div>
             <div className="td-profile-stat-card">
-              <span className="td-profile-stat-label">Preferred session</span>
+              <span className="td-profile-stat-label">{t('traderDeck.statPreferredSession')}</span>
               <span className="td-profile-stat-value">{loading ? '—' : stats.preferredSession}</span>
             </div>
           </div>

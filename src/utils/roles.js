@@ -122,14 +122,22 @@ export const getUserRole = (user) => {
  * apiRole: USER | ADMIN | SUPER_ADMIN from /api/me (permission role).
  * tier: ACCESS | PRO | ELITE from entitlements (legacy FREE/PREMIUM/A7FX normalized upstream).
  */
-export function formatMembershipLabel(apiRole, tier) {
+export function formatMembershipLabel(apiRole, tier, t) {
   const r = (apiRole || 'USER').toString().toUpperCase();
+  const tierKey = (tier || 'ACCESS').toString().toUpperCase();
+  if (t && typeof t === 'function') {
+    if (r === 'SUPER_ADMIN') return t('profile.membership.superAdmin');
+    if (r === 'ADMIN') return t('profile.membership.admin');
+    if (tierKey === 'ELITE' || tierKey === 'A7FX') return t('profile.membership.elite');
+    if (tierKey === 'PRO' || tierKey === 'PREMIUM') return t('profile.membership.pro');
+    if (tierKey === 'ACCESS' || tierKey === 'FREE') return t('profile.membership.access');
+    return t('profile.membership.access');
+  }
   if (r === 'SUPER_ADMIN') return 'Super Admin';
   if (r === 'ADMIN') return 'Admin';
-  const t = (tier || 'ACCESS').toString().toUpperCase();
-  if (t === 'ELITE' || t === 'A7FX') return 'Elite';
-  if (t === 'PRO' || t === 'PREMIUM') return 'Pro';
-  if (t === 'ACCESS' || t === 'FREE') return 'Access';
+  if (tierKey === 'ELITE' || tierKey === 'A7FX') return 'Elite';
+  if (tierKey === 'PRO' || tierKey === 'PREMIUM') return 'Pro';
+  if (tierKey === 'ACCESS' || tierKey === 'FREE') return 'Access';
   return 'Access';
 }
 

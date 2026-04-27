@@ -5,6 +5,7 @@
  */
 
 import Api from '../services/Api';
+import i18n from '../i18n/config';
 import { sanitizeTraderDeskPayloadDeep } from '../utils/sanitizeAiDeskOutput.react.js';
 
 export const DEFAULT_MARKET_REGIME = {
@@ -146,18 +147,6 @@ function capitalize(s) {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
-const SESSION_STATE_LABELS = {
-  range_bound: 'Range-bound',
-  expansion_likely: 'Expansion likely',
-  trend_continuation: 'Trend continuation',
-  reversal_risk: 'Reversal risk',
-  compressed: 'Compressed',
-  choppy: 'Choppy',
-  event_sensitive: 'Event-sensitive',
-  liquidity_build: 'Liquidity build',
-  inactive: 'Inactive',
-};
-
 function normalizeSessionRow(r) {
   if (!r || typeof r !== 'object') return null;
   const tags = Array.isArray(r.tags) ? r.tags.map((t) => String(t || '').trim()).filter(Boolean).slice(0, 2) : [];
@@ -192,8 +181,10 @@ function normalizeSessionContext(sc) {
 }
 
 export function sessionStateDisplayLabel(stateKey) {
-  if (!stateKey || typeof stateKey !== 'string') return '—';
-  return SESSION_STATE_LABELS[stateKey] || stateKey.replace(/_/g, ' ');
+  if (!stateKey || typeof stateKey !== 'string') return i18n.t('traderDeck.eta.emDash');
+  const k = `traderDeck.sessionState.${stateKey}`;
+  if (i18n.exists(k)) return i18n.t(k);
+  return stateKey.replace(/_/g, ' ');
 }
 
 /** Preserve API risk radar rows (time, impact, actuals); legacy strings become minimal objects. */

@@ -45,7 +45,7 @@ export function normalizeChartBars(bars) {
 export function timeScaleOptionsForInterval(interval) {
   const iv = normalizeApiInterval(interval);
   const isDaily = iv === '1D';
-  const isMinute = iv === '1' || iv === '15';
+  const isMinute = iv === '1' || iv === '5' || iv === '15';
   const isHourly = iv === '60' || iv === '240';
 
   const pad2 = (n) => String(n).padStart(2, '0');

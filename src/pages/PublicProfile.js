@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/PublicProfile.css';
@@ -16,6 +17,7 @@ import { resolveAvatarUrl, getPlaceholderColor } from '../utils/avatar';
 import { FaArrowLeft, FaEnvelope } from 'react-icons/fa';
 
 const PublicProfile = () => {
+    const { t } = useTranslation();
     const { userId } = useParams();
     const { user: currentUser } = useAuth();
     const [profile, setProfile] = useState(null);
@@ -30,7 +32,7 @@ const PublicProfile = () => {
 
     useEffect(() => {
         if (!userId || String(userId).toLowerCase() === 'system') {
-            setError("Profile not found. System profile is not available.");
+            setError(t('publicProfile.systemUnavailable'));
             setLoading(false);
             return;
         }
@@ -46,12 +48,12 @@ const PublicProfile = () => {
                     const data = await response.json();
                     setProfile(data);
                 } else {
-                    setError("Profile not found. Please check the user ID.");
+                    setError(t('publicProfile.notFound'));
                 }
                 setLoading(false);
             } catch (err) {
                 console.error("Error fetching profile:", err);
-                setError("Failed to load profile. Please try again later.");
+                setError(t('publicProfile.loadFailed'));
                 setLoading(false);
             } finally {
                 fetchInFlightRef.current = false;
@@ -79,7 +81,7 @@ const PublicProfile = () => {
                 <CosmicBackground />
                 <div className="profile-modal loading">
                     <div className="loading-spinner"></div>
-                    <div className="loading-text">Loading profile...</div>
+                    <div className="loading-text">{t('publicProfile.loading')}</div>
                 </div>
             </div>
         );
@@ -90,9 +92,9 @@ const PublicProfile = () => {
             <div className="public-profile-container">
                 <CosmicBackground />
                 <div className="profile-modal error">
-                    <div className="error-message">{error || "Profile not found"}</div>
+                    <div className="error-message">{error || t('publicProfile.notFound')}</div>
                     <button className="back-button" onClick={goBack}>
-                        <FaArrowLeft /> Go Back
+                        <FaArrowLeft /> {t('publicProfile.back')}
                     </button>
                 </div>
             </div>
@@ -101,22 +103,22 @@ const PublicProfile = () => {
 
     // Calculate XP progress using the XP system
     const xpProgress = getXPProgress(profile.xp || 0, profile.level || 1);
-    const rankTitle = getRankTitle(profile.level || 1);
-    const tierName = getTierName(profile.level || 1);
+    const rankTitle = getRankTitle(profile.level || 1, t);
+    const tierName = getTierName(profile.level || 1, t);
     const tierColor = getTierColor(profile.level || 1);
-    const nextMilestone = getNextRankMilestone(profile.level || 1);
+    const nextMilestone = getNextRankMilestone(profile.level || 1, t);
     const joinDate = new Date(profile.joinDate || profile.createdAt || Date.now()).toLocaleDateString();
     const loginStreak = profile.login_streak || 0;
 
     // Get achievements based on level
     const getAchievements = (level) => {
         const list = [];
-        if (level >= 10) list.push({ name: "Getting Started", icon: "🔰" });
-        if (level >= 20) list.push({ name: "Active Communicator", icon: "🎯" });
-        if (level >= 40) list.push({ name: "Professional Tier", icon: "🔥" });
-        if (level >= 60) list.push({ name: "Elite Tier", icon: "🏆" });
-        if (level >= 80) list.push({ name: "Legend Tier", icon: "👑" });
-        if (level >= 100) list.push({ name: "AURA God", icon: "💎" });
+        if (level >= 10) list.push({ name: t('publicProfile.achv.started'), icon: "🔰" });
+        if (level >= 20) list.push({ name: t('publicProfile.achv.communicator'), icon: "🎯" });
+        if (level >= 40) list.push({ name: t('publicProfile.achv.proTier'), icon: "🔥" });
+        if (level >= 60) list.push({ name: t('publicProfile.achv.eliteTier'), icon: "🏆" });
+        if (level >= 80) list.push({ name: t('publicProfile.achv.legendTier'), icon: "👑" });
+        if (level >= 100) list.push({ name: t('publicProfile.achv.auraGod'), icon: "💎" });
         return list;
     };
 
@@ -128,7 +130,7 @@ const PublicProfile = () => {
             <div className="profile-modal">
                 {/* Back Button */}
                 <button className="back-button" onClick={goBack}>
-                    <FaArrowLeft /> Back
+                    <FaArrowLeft /> {t('publicProfile.navBack')}
                 </button>
 
                 {/* Profile Banner */}
@@ -136,13 +138,13 @@ const PublicProfile = () => {
                     {profile.banner && (profile.banner.startsWith('http') || (profile.banner.startsWith('data:image') && profile.banner.includes(',') && profile.banner.length > 30)) ? (
                         <img 
                             src={profile.banner} 
-                            alt="Banner" 
+                            alt={t('profile.bannerAlt')} 
                             className="profile-banner"
                             loading="lazy"
                         />
                     ) : (
                         <div className="profile-banner-placeholder">
-                            <div className="banner-text">Welcome to AURA TERMINAL™</div>
+                            <div className="banner-text">{t('publicProfile.bannerWelcome')}</div>
                         </div>
                     )}
                     
@@ -164,7 +166,7 @@ const PublicProfile = () => {
 
                 {/* Profile Header Info */}
                 <div className="profile-header-info">
-                    <h1 className="profile-username">{profile.username || profile.name || 'User'}</h1>
+                    <h1 className="profile-username">{profile.username || profile.name || t('publicProfile.defaultUser')}</h1>
                     <div className="profile-rank" style={{ color: tierColor }}>
                         {rankTitle}
                     </div>
@@ -175,7 +177,7 @@ const PublicProfile = () => {
                 {nextMilestone && (
                     <div className="profile-progress-section">
                         <div className="progress-text">
-                            <span>{nextMilestone.title} in {nextMilestone.level - (profile.level || 1)} levels</span>
+                            <span>{t('publicProfile.nextRankGap', { title: nextMilestone.title, count: nextMilestone.level - (profile.level || 1) })}</span>
                         </div>
                         <div className="progress-bar-container">
                             <div 
@@ -202,25 +204,25 @@ const PublicProfile = () => {
                         className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
                         onClick={() => setActiveTab('overview')}
                     >
-                        Information
+                        {t('publicProfile.tabInformation')}
                     </button>
                     <button 
                         className={`tab-btn ${activeTab === 'journey' ? 'active' : ''}`}
                         onClick={() => setActiveTab('journey')}
                     >
-                        Hero's Journey
+                        {t('profile.herosJourney')}
                     </button>
                     <button 
                         className={`tab-btn ${activeTab === 'statistics' ? 'active' : ''}`}
                         onClick={() => setActiveTab('statistics')}
                     >
-                        Statistics
+                        {t('profile.tab.statistics')}
                     </button>
                     <button 
                         className={`tab-btn ${activeTab === 'achievements' ? 'active' : ''}`}
                         onClick={() => setActiveTab('achievements')}
                     >
-                        Achievements
+                        {t('profile.tab.achievements')}
                     </button>
                 </div>
 
@@ -233,8 +235,8 @@ const PublicProfile = () => {
                                 <div className="public-profile-discipline-streak">
                                     <span className="public-profile-streak-icon">🔥</span>
                                     <div className="public-profile-streak-text">
-                                        <span className="public-profile-streak-label">Discipline Streak</span>
-                                        <span className="public-profile-streak-value">{loginStreak} day{loginStreak !== 1 ? 's' : ''}</span>
+                                        <span className="public-profile-streak-label">{t('publicProfile.disciplineStreakLabel')}</span>
+                                        <span className="public-profile-streak-value">{t('profile.loginStreakDays', { count: loginStreak })}</span>
                                     </div>
                                 </div>
                             )}
@@ -245,25 +247,25 @@ const PublicProfile = () => {
                                         <div className="public-profile-stat-circle-ring" style={{ '--pct': profile.journalStats.todayPct != null ? profile.journalStats.todayPct : 0 }}>
                                             <span className="public-profile-stat-circle-value">{profile.journalStats.todayPct != null ? `${profile.journalStats.todayPct}%` : '—'}</span>
                                         </div>
-                                        <span className="public-profile-stat-circle-label">Today</span>
+                                        <span className="public-profile-stat-circle-label">{t('profile.today')}</span>
                                     </div>
                                     <div className="public-profile-stat-circle">
                                         <div className="public-profile-stat-circle-ring" style={{ '--pct': profile.journalStats.weekPct != null ? profile.journalStats.weekPct : 0 }}>
                                             <span className="public-profile-stat-circle-value">{profile.journalStats.weekPct != null ? `${profile.journalStats.weekPct}%` : '—'}</span>
                                         </div>
-                                        <span className="public-profile-stat-circle-label">This week</span>
+                                        <span className="public-profile-stat-circle-label">{t('profile.thisWeek')}</span>
                                     </div>
                                     <div className="public-profile-stat-circle">
                                         <div className="public-profile-stat-circle-ring" style={{ '--pct': profile.journalStats.monthPct != null ? profile.journalStats.monthPct : 0 }}>
                                             <span className="public-profile-stat-circle-value">{profile.journalStats.monthPct != null ? `${profile.journalStats.monthPct}%` : '—'}</span>
                                         </div>
-                                        <span className="public-profile-stat-circle-label">This month</span>
+                                        <span className="public-profile-stat-circle-label">{t('profile.thisMonth')}</span>
                                     </div>
                                 </div>
                             )}
                             <div className="info-section">
                                 <div className="info-row">
-                                    <span className="info-label">Power Level:</span>
+                                    <span className="info-label">{t('publicProfile.powerLevel')}:</span>
                                     <span className="info-value large">{profile.level || 1}</span>
                                     <span className="info-badge" style={{ color: tierColor }}>+{Math.round((profile.level || 1) * 10)}%</span>
                                 </div>
@@ -272,16 +274,16 @@ const PublicProfile = () => {
                                     <span className="info-value">{(profile.xp || 0).toLocaleString()}</span>
                                 </div>
                                 <div className="info-row">
-                                    <span className="info-label">Discipline Streak:</span>
-                                    <span className="info-value">{loginStreak}+ days</span>
+                                    <span className="info-label">{t('publicProfile.disciplineStreakLabel')}:</span>
+                                    <span className="info-value">{t('publicProfile.disciplinePlusDays', { count: loginStreak })}</span>
                                 </div>
                             </div>
 
                             {/* Roles Section */}
                             <div className="roles-section">
-                                <label className="section-label">Roles</label>
+                                <label className="section-label">{t('publicProfile.roles')}</label>
                                 <select className="roles-dropdown" disabled>
-                                    <option>{profile.role || 'Member'}</option>
+                                    <option>{profile.role || t('publicProfile.roleMember')}</option>
                                 </select>
                             </div>
 
@@ -296,7 +298,7 @@ const PublicProfile = () => {
                                 {profile.role && profile.role !== 'free' && (
                                     <div className="tag-badge">
                                         <span className="tag-dot" style={{ backgroundColor: '#eaa960' }}></span>
-                                        {profile.role.charAt(0).toUpperCase() + profile.role.slice(1)} Member
+                                        {t('publicProfile.memberBadge', { role: profile.role.charAt(0).toUpperCase() + profile.role.slice(1) })}
                                     </div>
                                 )}
                             </div>
@@ -317,7 +319,7 @@ const PublicProfile = () => {
                                         }
                                     }}
                                 >
-                                    <FaEnvelope /> Message User
+                                    <FaEnvelope /> {t('publicProfile.messageUser')}
                                 </button>
                             )}
                         </div>
@@ -329,7 +331,7 @@ const PublicProfile = () => {
                                 <div className="journey-stat">
                                     <div className="journey-icon">📈</div>
                                     <div className="journey-info">
-                                        <div className="journey-label">Current Level</div>
+                                        <div className="journey-label">{t('profile.currentLevel')}</div>
                                         <div className="journey-value">{profile.level || 1}</div>
                                     </div>
                                 </div>
@@ -343,7 +345,7 @@ const PublicProfile = () => {
                                 <div className="journey-stat">
                                     <div className="journey-icon">🏆</div>
                                     <div className="journey-info">
-                                        <div className="journey-label">Rank</div>
+                                        <div className="journey-label">{t('profile.rank')}</div>
                                         <div className="journey-value">{rankTitle}</div>
                                     </div>
                                 </div>
@@ -364,12 +366,12 @@ const PublicProfile = () => {
                                 <div className="stat-card">
                                     <div className="stat-icon">📊</div>
                                     <div className="stat-value">{profile.stats?.totalTrades || 0}</div>
-                                    <div className="stat-label">Total Trades</div>
+                                    <div className="stat-label">{t('profile.stat.totalTrades')}</div>
                                 </div>
                                 <div className="stat-card">
                                     <div className="stat-icon">✅</div>
                                     <div className="stat-value">{profile.stats?.winRate || 0}%</div>
-                                    <div className="stat-label">Win Rate</div>
+                                    <div className="stat-label">{t('profile.stat.winRate')}</div>
                                 </div>
                                 <div className="stat-card">
                                     <div className="stat-icon">💰</div>
@@ -379,11 +381,11 @@ const PublicProfile = () => {
                                 <div className="stat-card">
                                     <div className="stat-icon">📅</div>
                                     <div className="stat-value">{joinDate}</div>
-                                    <div className="stat-label">Joined</div>
+                                    <div className="stat-label">{t('publicProfile.joined')}</div>
                                 </div>
                             </div>
                             <div className="stats-note">
-                                Trading statistics will be available when you connect your trading account.
+                                {t('profile.tradingNote')}
                             </div>
                         </div>
                     )}
@@ -402,8 +404,8 @@ const PublicProfile = () => {
                             ) : (
                                 <div className="no-achievements">
                                     <div className="no-achievements-icon">🏅</div>
-                                    <div className="no-achievements-text">No achievements yet</div>
-                                    <div className="no-achievements-hint">Keep trading and engaging to unlock achievements!</div>
+                                    <div className="no-achievements-text">{t('profile.noAchievementsTitle')}</div>
+                                    <div className="no-achievements-hint">{t('profile.noAchievementsHint')}</div>
                                 </div>
                             )}
                         </div>

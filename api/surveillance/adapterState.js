@@ -76,14 +76,29 @@ async function markSuccess(adapterId, itemsIn, itemsOut, durationMs, ingestMeta 
   );
   const row = rows && rows[0];
   const interval = row?.interval_seconds || 900;
-  const nextSec = jitterSeconds(interval);
+  const prev = parseJsonMeta(row?.meta);
+  const prevStreak = Number(prev.last_ingest?.empty_yield_streak) || 0;
+  const emptyRun = (Number(itemsIn) || 0) === 0 && (Number(itemsOut) || 0) === 0;
+  const streak =
+    emptyRun && ingestMeta && ingestMeta.backoff_empty === true ? prevStreak + 1 : 0;
+
+  let nextSec = jitterSeconds(interval);
+  const forceDelay = ingestMeta && Number(ingestMeta.force_next_run_sec);
+  if (Number.isFinite(forceDelay) && forceDelay >= 60) {
+    nextSec = jitterSeconds(Math.min(86400, forceDelay));
+  } else if (emptyRun && ingestMeta && ingestMeta.backoff_empty === true) {
+    const base = Math.max(300, Number(interval) || 300);
+    const sec = Math.min(7200, base * Math.pow(2, Math.min(Math.max(streak - 1, 0), 6)));
+    nextSec = jitterSeconds(Math.max(900, sec));
+  }
+
   let metaJson = null;
   if (ingestMeta && typeof ingestMeta === 'object') {
-    const prev = parseJsonMeta(row?.meta);
     const merged = {
       ...prev,
       last_ingest: {
         ...ingestMeta,
+        empty_yield_streak: streak,
         recorded_at: new Date().toISOString(),
       },
     };

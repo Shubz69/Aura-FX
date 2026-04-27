@@ -5,10 +5,13 @@
  *
  * Env:
  *   DATALASTIC_API_KEY (required)
- *   DATALASTIC_AIS_RADIUS_NM — max 50, default 38
- *   DATALASTIC_AIS_CALLS_PER_RUN — geographic queries this run, default 8
- *   DATALASTIC_AIS_TYPE — optional vessel type filter: cargo | tanker | military | … (omit for all types; costly)
+ *   DATALASTIC_AIS_RADIUS_NM — max 50 (Datalastic API cap), default 50
+ *   DATALASTIC_AIS_CALLS_PER_RUN — geographic queries this run, default 12
+ *   DATALASTIC_AIS_TYPE — optional vessel type filter (only sent if DATALASTIC_AIS_APPLY_TYPE_FILTER=1)
  *   DATALASTIC_AIS_ADAPTER_DISABLED — 1/true to skip
+ *   DATALASTIC_AIS_FETCH_ATTEMPTS — HTTP retries per hub (default 1 to avoid duplicate billing)
+ *
+ * Note: Datalastic measures radius in nautical miles (NM), max 50 NM (~92.6 km). Larger radii are not supported.
  *
  * @see https://datalastic.com/api-reference/
  */
@@ -17,6 +20,7 @@ const { fetchWithRetry } = require('../httpFetch');
 
 const ID = 'datalastic_ais_live';
 const HOSTS = ['api.datalastic.com'];
+/** Path must be /api/v0/vessel_inradius (Location Traffic Tracking API). */
 const ENDPOINT = 'https://api.datalastic.com/api/v0/vessel_inradius';
 
 /**
@@ -72,16 +76,23 @@ function apiKey() {
   return String(process.env.DATALASTIC_API_KEY || '').trim();
 }
 
+/** Datalastic caps radius at 50 NM; default to max for densest traffic sample per call. */
 function radiusNm() {
-  const n = parseInt(process.env.DATALASTIC_AIS_RADIUS_NM || '38', 10);
-  if (!Number.isFinite(n) || n < 1) return 38;
+  const n = parseInt(process.env.DATALASTIC_AIS_RADIUS_NM || '50', 10);
+  if (!Number.isFinite(n) || n < 1) return 50;
   return Math.min(50, Math.max(5, n));
 }
 
 function callsPerRun() {
-  const n = parseInt(process.env.DATALASTIC_AIS_CALLS_PER_RUN || '8', 10);
-  if (!Number.isFinite(n) || n < 1) return 8;
+  const n = parseInt(process.env.DATALASTIC_AIS_CALLS_PER_RUN || '12', 10);
+  if (!Number.isFinite(n) || n < 1) return 12;
   return Math.min(24, Math.max(1, n));
+}
+
+/** Type / type_specific / exclude / nav_status are opt-in only (strict filters cost credits and often return 0). */
+function applyTypeFilter() {
+  const v = String(process.env.DATALASTIC_AIS_APPLY_TYPE_FILTER || '').toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
 }
 
 function typeFilter() {
@@ -94,25 +105,90 @@ function hubOffset() {
   return slot % SHIPPING_HUBS.length;
 }
 
+function scoreVesselArray(arr) {
+  if (!Array.isArray(arr) || !arr.length) return -1;
+  let score = 0;
+  const n = Math.min(4, arr.length);
+  for (let i = 0; i < n; i += 1) {
+    const o = arr[i];
+    if (!o || typeof o !== 'object') continue;
+    if (o.lat != null || o.latitude != null) score += 2;
+    if (o.lon != null || o.longitude != null || o.lng != null) score += 2;
+    if (o.mmsi != null || o.imo != null || o.uuid) score += 1;
+  }
+  return score;
+}
+
+/**
+ * Datalastic returns { data: { point, total, vessels: [...] } }; tolerate nesting and alternate keys.
+ */
 function extractVessels(json) {
   if (!json || typeof json !== 'object') return [];
-  const d = json.data != null ? json.data : json;
-  if (Array.isArray(d)) return d;
-  if (d && typeof d === 'object') {
-    if (Array.isArray(d.vessels)) return d.vessels;
-    if (Array.isArray(d.results)) return d.results;
-    if (Array.isArray(d.records)) return d.records;
-    if (Array.isArray(d.items)) return d.items;
-    if (Array.isArray(d.ships)) return d.ships;
+
+  const candidates = [];
+
+  function consider(arr) {
+    if (Array.isArray(arr) && arr.length) candidates.push(arr);
   }
-  if (Array.isArray(json.results)) return json.results;
-  if (Array.isArray(json.vessels)) return json.vessels;
-  return [];
+
+  const d0 = json.data != null ? json.data : json;
+  consider(d0);
+
+  if (d0 && typeof d0 === 'object' && !Array.isArray(d0)) {
+    for (const k of ['vessels', 'results', 'records', 'items', 'ships', 'vessel_list', 'list']) {
+      consider(d0[k]);
+    }
+    for (const v of Object.values(d0)) {
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        for (const k of ['vessels', 'results', 'ships']) {
+          consider(v[k]);
+        }
+      }
+    }
+  }
+
+  consider(json.vessels);
+  consider(json.results);
+
+  let best = [];
+  let bestScore = -1;
+  for (const arr of candidates) {
+    const s = scoreVesselArray(arr);
+    if (s > bestScore) {
+      bestScore = s;
+      best = arr;
+    }
+  }
+  return bestScore > 0 ? best : [];
 }
 
 function pickNumber(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
+}
+
+function sanitizeRequestUrl(urlStr) {
+  try {
+    const u = new URL(urlStr);
+    if (u.searchParams.has('api-key')) u.searchParams.set('api-key', '[REDACTED]');
+    if (u.searchParams.has('api_key')) u.searchParams.set('api_key', '[REDACTED]');
+    return u.toString();
+  } catch {
+    return '[invalid_url]';
+  }
+}
+
+function vesselSanitizeSnippet(v) {
+  if (!v || typeof v !== 'object') return {};
+  const lat = v.lat ?? v.latitude;
+  const lon = v.lon ?? v.longitude ?? v.lng;
+  return {
+    mmsi: v.mmsi != null ? String(v.mmsi).replace(/\D/g, '').slice(0, 12) : null,
+    uuid: v.uuid != null ? `${String(v.uuid).slice(0, 10)}…` : null,
+    lat: typeof lat === 'number' ? Math.round(lat * 1000) / 1000 : lat,
+    lon: typeof lon === 'number' ? Math.round(lon * 1000) / 1000 : lon,
+    type: v.type ? String(v.type).slice(0, 32) : null,
+  };
 }
 
 function vesselToEvent(v, hubLabel) {
@@ -122,29 +198,38 @@ function vesselToEvent(v, hubLabel) {
   const nav = v.navigation && typeof v.navigation === 'object' ? v.navigation : null;
   const pos = v.position && typeof v.position === 'object' ? v.position : null;
   const lp = v.last_position && typeof v.last_position === 'object' ? v.last_position : null;
+  const cp = v.current_position && typeof v.current_position === 'object' ? v.current_position : null;
   const lat = pickNumber(
     v.lat ??
       v.latitude ??
       v.lat_deg ??
+      nav?.lat ??
       nav?.latitude ??
+      pos?.lat ??
       pos?.latitude ??
+      lp?.lat ??
       lp?.latitude ??
-      v?.current_position?.lat
+      cp?.lat ??
+      cp?.latitude
   );
   const lon = pickNumber(
     v.lon ??
       v.longitude ??
       v.lng ??
       v.lon_deg ??
+      nav?.lon ??
       nav?.longitude ??
+      pos?.lon ??
       pos?.longitude ??
+      lp?.lon ??
       lp?.longitude ??
-      v?.current_position?.lon
+      cp?.lon ??
+      cp?.longitude
   );
   if (lat == null || lon == null) return null;
 
-  const sog = pickNumber(v.speed ?? v.sog);
-  const cog = pickNumber(v.course ?? v.cog);
+  const sog = pickNumber(v.speed ?? v.sog ?? nav?.speed);
+  const cog = pickNumber(v.course ?? v.cog ?? nav?.course);
   const type = (v.type && String(v.type)) || '';
   const typeSpecific = (v.type_specific && String(v.type_specific)) || '';
   const flag = (v.country_iso && String(v.country_iso)) || (v.flag && String(v.flag)) || '';
@@ -183,7 +268,7 @@ function vesselToEvent(v, hubLabel) {
     published_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
     event_type: 'maritime',
     lat,
-    lng,
+    lng: lon,
     confidence: 0.78,
     verification_state: 'telemetry',
     tags,
@@ -202,6 +287,16 @@ function vesselToEvent(v, hubLabel) {
       uuid: v.uuid || null,
     },
   };
+}
+
+function buildInradiusUrl(hub, keyParam, key, radius, typeOpt) {
+  const u = new URL(ENDPOINT);
+  u.searchParams.set(keyParam, key);
+  u.searchParams.set('lat', String(hub.lat));
+  u.searchParams.set('lon', String(hub.lon));
+  u.searchParams.set('radius', String(radius));
+  if (typeOpt) u.searchParams.set('type', typeOpt);
+  return u;
 }
 
 module.exports = {
@@ -231,44 +326,78 @@ module.exports = {
 
     const radius = radiusNm();
     const nCalls = callsPerRun();
-    const type = typeFilter();
+    const useType = applyTypeFilter();
+    const type = useType ? typeFilter() : null;
     const offset = hubOffset();
     const maxEmit = Math.min(80, Math.max(12, ctx.maxPerAdapter || 48));
 
     const timeoutMs = Math.min(55000, Math.max(12000, parseInt(process.env.DATALASTIC_AIS_TIMEOUT_MS || '22000', 10) || 22000));
-    const maxAttempts = Math.min(3, Math.max(1, parseInt(process.env.DATALASTIC_AIS_FETCH_ATTEMPTS || '2', 10) || 2));
+    const maxAttempts = Math.min(3, Math.max(1, parseInt(process.env.DATALASTIC_AIS_FETCH_ATTEMPTS || '1', 10) || 1));
 
     const collected = [];
     let rawVesselRows = 0;
 
     async function fetchHubOnce(hub, keyParam) {
-      const u = new URL(ENDPOINT);
-      u.searchParams.set(keyParam, key);
-      u.searchParams.set('lat', String(hub.lat));
-      u.searchParams.set('lon', String(hub.lon));
-      u.searchParams.set('radius', String(radius));
-      if (type) u.searchParams.set('type', type);
-      const { text } = await fetchWithRetry(u.toString(), {
-        allowHosts: HOSTS,
-        timeoutMs,
-        maxAttempts,
-        headers: { Accept: 'application/json' },
-      });
+      const u = buildInradiusUrl(hub, keyParam, key, radius, type);
+      const safeUrl = sanitizeRequestUrl(u.toString());
+      let fr;
+      try {
+        fr = await fetchWithRetry(u.toString(), {
+          allowHosts: HOSTS,
+          timeoutMs,
+          maxAttempts,
+          headers: { Accept: 'application/json' },
+        });
+      } catch (e) {
+        ctx.log('warn', `${ID} http_error`, { hub: hub.label, url: safeUrl, err: String(e && e.message) });
+        return {
+          ok: false,
+          reason: String(e && e.message),
+          vessels: [],
+          textLen: 0,
+          safeUrl,
+          status: null,
+        };
+      }
+
+      const text = fr.text || '';
+      const textLen = text.length;
       let json;
       try {
         json = JSON.parse(text);
       } catch {
-        return { ok: false, reason: 'invalid_json', vessels: [] };
+        ctx.log('warn', `${ID} invalid_json`, { hub: hub.label, url: safeUrl, response_length: textLen });
+        return { ok: false, reason: 'invalid_json', vessels: [], textLen, safeUrl, status: fr.status };
       }
+
       if (json && json.meta && json.meta.success === false) {
+        ctx.log('warn', `${ID} api_meta_false`, {
+          hub: hub.label,
+          url: safeUrl,
+          response_length: textLen,
+          message: json.meta.message || json.meta.error || null,
+        });
         return {
           ok: false,
           reason: json.meta.message || json.meta.error || 'api_meta_false',
           vessels: [],
+          textLen,
+          safeUrl,
+          status: fr.status,
         };
       }
+
       const vessels = extractVessels(json);
-      return { ok: true, vessels };
+      const preview = vessels.slice(0, 2).map(vesselSanitizeSnippet);
+      ctx.log('info', `${ID} hub_response`, {
+        hub: hub.label,
+        url: safeUrl,
+        response_length: textLen,
+        vessel_rows: vessels.length,
+        sample_vessels: preview,
+      });
+
+      return { ok: true, vessels, textLen, safeUrl, status: fr.status };
     }
 
     for (let i = 0; i < nCalls; i += 1) {
@@ -276,16 +405,22 @@ module.exports = {
       const hub = SHIPPING_HUBS[(offset + i) % SHIPPING_HUBS.length];
 
       try {
-        let res = await fetchHubOnce(hub, 'api-key').catch((e) => ({ ok: false, reason: String(e && e.message), vessels: [] }));
+        let res = await fetchHubOnce(hub, 'api-key');
         let vessels = res.ok && Array.isArray(res.vessels) ? res.vessels : [];
-        if (!vessels.length) {
-          const r2 = await fetchHubOnce(hub, 'api_key').catch((e) => ({ ok: false, reason: String(e && e.message), vessels: [] }));
-          if (r2.ok && Array.isArray(r2.vessels) && r2.vessels.length) vessels = r2.vessels;
+
+        if (!res.ok && (res.reason === 'invalid_json' || /http_|fetch|abort/i.test(String(res.reason)))) {
+          const r2 = await fetchHubOnce(hub, 'api_key');
+          if (r2.ok && Array.isArray(r2.vessels)) {
+            vessels = r2.vessels;
+            res = r2;
+          }
         }
+
         if (!vessels.length && !res.ok) {
           ctx.log('warn', `${ID} ${hub.label}`, res.reason || 'fetch_failed');
           continue;
         }
+
         rawVesselRows += vessels.length;
         for (const v of vessels) {
           const ev = vesselToEvent(v, hub.label);
@@ -314,6 +449,28 @@ module.exports = {
 
     const fetchedCount = rawVesselRows;
     const normalizedEmitted = items.length;
+
+    const backoffEmpty = fetchedCount === 0 && normalizedEmitted === 0;
+    const parseOnlyLoss = fetchedCount > 0 && normalizedEmitted === 0;
+
+    const meta = {
+      adapter_id: ID,
+      hubs_polled: nCalls,
+      hub_offset: offset,
+      radius_nm: radius,
+      type_filter: type,
+      apply_type_filter: useType,
+      candidates: unique.length,
+      emitted: items.length,
+      fetched_count: fetchedCount,
+      normalized_emitted: normalizedEmitted,
+      backoff_empty: backoffEmpty,
+    };
+
+    if (parseOnlyLoss) {
+      meta.force_next_run_sec = 600;
+    }
+
     ctx.log('info', `${ID} ingest_summary`, {
       fetched_count: fetchedCount,
       normalized_emitted: normalizedEmitted,
@@ -321,21 +478,9 @@ module.exports = {
       hubs_polled: nCalls,
       radius_nm: radius,
       type_filter: type || null,
+      backoff_empty: backoffEmpty,
     });
 
-    return {
-      items,
-      meta: {
-        adapter_id: ID,
-        hubs_polled: nCalls,
-        hub_offset: offset,
-        radius_nm: radius,
-        type_filter: type,
-        candidates: unique.length,
-        emitted: items.length,
-        fetched_count: fetchedCount,
-        normalized_emitted: normalizedEmitted,
-      },
-    };
+    return { items, meta };
   },
 };

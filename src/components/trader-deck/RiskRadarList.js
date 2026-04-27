@@ -1,10 +1,5 @@
-import React from 'react';
-
-const IMPACT_META = {
-  high:   { cls: 'rr-impact--high',   label: '●●●', title: 'High Impact' },
-  medium: { cls: 'rr-impact--medium', label: '●●○', title: 'Medium Impact' },
-  low:    { cls: 'rr-impact--low',    label: '●○○', title: 'Low Impact' },
-};
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 function normalizeImpactKey(raw) {
   if (raw == null || raw === '') return 'medium';
@@ -35,12 +30,12 @@ function parseItem(item) {
     typeof rawImpact === 'number' ? rawImpact : String(rawImpact || '').trim() || null,
   );
   return {
-    title:    item.title || item.event || item.text || item.name || '—',
+    title: item.title || item.event || item.text || item.name || '—',
     impact,
     forecast: item.forecast ?? item.estimate ?? item.fcst ?? null,
     previous: item.previous ?? item.prior ?? null,
     actual: item.actual ?? item.value ?? null,
-    time:     item.time ?? item.datetime ?? item.date ?? null,
+    time: item.time ?? item.datetime ?? item.date ?? null,
     currency: item.currency || item.category || null,
   };
 }
@@ -74,14 +69,20 @@ function riskLevelTone(level) {
   return 'rr-level--medium';
 }
 
-/** Human-readable label for 0–100 risk sub-scores from the intelligence engine. */
-function formatRiskDimension(score) {
-  if (score == null || score === '') return '—';
+function formatRiskDimension(score, t) {
+  if (score == null || score === '') return t('traderDeck.eta.emDash');
   const n = Number(score);
   if (!Number.isFinite(n)) return String(score);
   const rounded = Math.round(n);
-  const tone = n >= 70 ? 'Elevated' : n >= 45 ? 'Moderate' : 'Contained';
-  return `${tone} (${rounded})`;
+  const toneKey = n >= 70 ? 'dimElevated' : n >= 45 ? 'dimModerate' : 'dimContained';
+  return `${t(`traderDeck.riskRadar.${toneKey}`)} (${rounded})`;
+}
+
+function translateRiskLevelLabel(raw, t) {
+  const s = String(raw || '').toLowerCase();
+  if (s.includes('high') || s.includes('extreme')) return t('traderDeck.riskRadar.levelHigh');
+  if (s.includes('low')) return t('traderDeck.riskRadar.levelLow');
+  return t('traderDeck.riskRadar.levelModerate');
 }
 
 /**
@@ -89,50 +90,81 @@ function formatRiskDimension(score) {
  *   Use on Market Outlook daily where the full Economic Calendar sits below to avoid duplicate “calendars”.
  */
 export default function RiskRadarList({ items = [], riskEngine = null, summaryOnly = false, outlookContext = null }) {
+  const { t } = useTranslation();
   const hasList = items.length > 0;
+
+  const impactMeta = useMemo(
+    () => ({
+      high: { cls: 'rr-impact--high', label: '●●●', title: t('traderDeck.riskRadar.impactTitleHigh') },
+      medium: { cls: 'rr-impact--medium', label: '●●○', title: t('traderDeck.riskRadar.impactTitleMedium') },
+      low: { cls: 'rr-impact--low', label: '●○○', title: t('traderDeck.riskRadar.impactTitleLow') },
+    }),
+    [t],
+  );
+
+  const breakdown = riskEngine?.breakdown || null;
+  const riskStats = useMemo(
+    () => [
+      { id: 'score', label: t('traderDeck.riskRadar.marketRiskScore'), value: Number(riskEngine?.score || 0), isScore: true },
+      { id: 'level', label: t('traderDeck.riskRadar.riskLevel'), value: translateRiskLevelLabel(riskEngine?.level, t), isLevel: true },
+      { id: 'vol', label: t('traderDeck.riskRadar.volatility'), value: formatRiskDimension(breakdown?.volatility, t) },
+      { id: 'liq', label: t('traderDeck.riskRadar.liquidity'), value: formatRiskDimension(breakdown?.liquidity, t) },
+      { id: 'cl', label: t('traderDeck.riskRadar.clustering'), value: formatRiskDimension(breakdown?.clustering, t) },
+      { id: 'geo', label: t('traderDeck.riskRadar.geoRisk'), value: formatRiskDimension(breakdown?.geopoliticalRisk, t) },
+      { id: 'macro', label: t('traderDeck.riskRadar.macroPressure'), value: formatRiskDimension(breakdown?.eventRisk, t) },
+    ],
+    [t, riskEngine, breakdown],
+  );
+
+  const levelClass = riskLevelTone(riskEngine?.level);
+
   if (!hasList && !riskEngine) {
-    return <p className="td-mi-list-empty" style={{ padding: '12px 0', color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>No market risk factors available.</p>;
+    return (
+      <p className="td-mi-list-empty" style={{ padding: '12px 0', color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>
+        {t('traderDeck.riskRadar.emptyNoFactors')}
+      </p>
+    );
   }
 
   if (summaryOnly && !riskEngine && hasList) {
     return (
       <div className="rr-table-wrap">
         <p className="td-mi-list-empty" style={{ padding: '12px 0', color: 'rgba(255,255,255,0.42)', fontSize: '0.82rem' }}>
-          Scheduled releases are listed in the Economic Calendar below.
+          {t('traderDeck.riskRadar.scheduledInCal')}
         </p>
       </div>
     );
   }
 
   const parsed = hasList ? items.map(parseItem).slice(0, 8) : [];
-  const breakdown = riskEngine?.breakdown || null;
-  const levelClass = riskLevelTone(riskEngine?.level);
-  const riskStats = [
-    ['Market Risk Score', Number(riskEngine?.score || 0)],
-    ['Risk Level', riskEngine?.level || 'Moderate'],
-    ['Volatility', formatRiskDimension(breakdown?.volatility)],
-    ['Liquidity', formatRiskDimension(breakdown?.liquidity)],
-    ['Clustering', formatRiskDimension(breakdown?.clustering)],
-    ['Geo Risk', formatRiskDimension(breakdown?.geopoliticalRisk)],
-    ['Macro Pressure', formatRiskDimension(breakdown?.eventRisk)],
-  ];
 
   return (
     <div className="rr-table-wrap">
       {outlookContext && typeof outlookContext === 'object' ? (
-        <div className="td-mi-outlook-risk-context" aria-label="Risk outlook context">
+        <div className="td-mi-outlook-risk-context" aria-label={t('traderDeck.riskRadar.outlookAria')}>
           <p className="td-mi-outlook-risk-line">
-            <span>Level</span>
-            <strong>{outlookContext.currentRiskLevel || riskEngine?.level || '—'}</strong>
+            <span>{t('traderDeck.riskRadar.lblLevel')}</span>
+            <strong>
+              {translateRiskLevelLabel(outlookContext.currentRiskLevel || riskEngine?.level, t) || t('traderDeck.eta.emDash')}
+            </strong>
           </p>
           {outlookContext.volatilityState ? (
-            <p className="td-mi-outlook-risk-line"><span>Volatility</span><strong>{outlookContext.volatilityState}</strong></p>
+            <p className="td-mi-outlook-risk-line">
+              <span>{t('traderDeck.riskRadar.volatility')}</span>
+              <strong>{outlookContext.volatilityState}</strong>
+            </p>
           ) : null}
           {outlookContext.clusteringBehavior ? (
-            <p className="td-mi-outlook-risk-line"><span>Clustering</span><strong>{outlookContext.clusteringBehavior}</strong></p>
+            <p className="td-mi-outlook-risk-line">
+              <span>{t('traderDeck.riskRadar.clustering')}</span>
+              <strong>{outlookContext.clusteringBehavior}</strong>
+            </p>
           ) : null}
           {outlookContext.nextRiskWindow ? (
-            <p className="td-mi-outlook-risk-line td-mi-outlook-risk-line--wide"><span>Next window</span><strong>{outlookContext.nextRiskWindow}</strong></p>
+            <p className="td-mi-outlook-risk-line td-mi-outlook-risk-line--wide">
+              <span>{t('traderDeck.riskRadar.lblNextWindow')}</span>
+              <strong>{outlookContext.nextRiskWindow}</strong>
+            </p>
           ) : null}
           {Array.isArray(outlookContext.upcomingEvents) && outlookContext.upcomingEvents.length > 0 ? (
             <ul className="td-mi-outlook-risk-events">
@@ -149,46 +181,53 @@ export default function RiskRadarList({ items = [], riskEngine = null, summaryOn
       {riskEngine && (
         <div className="td-mi-pulse-meta td-mi-pulse-meta--risk td-mi-risk-engine-meta">
           <div className="td-mi-risk-engine-stats">
-            {riskStats.map(([k, v]) => (
-              <p key={k}>
-                <span>{k}</span>
-                <strong className={k === 'Risk Level' ? levelClass : ''}>
-                  {k === 'Market Risk Score' ? `${v}/100` : v}
-                </strong>
+            {riskStats.map((row) => (
+              <p key={row.id}>
+                <span>{row.label}</span>
+                <strong className={row.isLevel ? levelClass : ''}>{row.isScore ? `${row.value}/100` : row.value}</strong>
               </p>
             ))}
           </div>
           {Number.isFinite(riskEngine.nextRiskEventInMins) && (
-            <p className="td-mi-risk-engine-next"><strong>Next Risk Window:</strong> in {riskEngine.nextRiskEventInMins} mins</p>
+            <p className="td-mi-risk-engine-next">
+              <strong>{t('traderDeck.riskRadar.nextRiskWindow', { m: riskEngine.nextRiskEventInMins })}</strong>
+            </p>
           )}
         </div>
       )}
       {summaryOnly && riskEngine && (
         <p className="td-mi-list-empty" style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.38)', fontSize: '0.78rem' }}>
-          Event detail is in the Economic Calendar below.
+          {t('traderDeck.riskRadar.eventDetailBelow')}
         </p>
       )}
       {!summaryOnly && (
         <div className="rr-risk-list">
           {parsed.map((row, i) => {
-            const impMeta = IMPACT_META[row.impact] || IMPACT_META.medium;
+            const impMeta = impactMeta[row.impact] || impactMeta.medium;
             const timeLabel = formatTime(row.time);
             const actual = metric(row.actual);
             const forecast = metric(row.forecast);
             const previous = metric(row.previous);
             const hasMetrics = Boolean(actual || forecast || previous);
+            const dash = t('traderDeck.eta.emDash');
             return (
               <article key={i} className="rr-risk-item">
                 <p className="rr-risk-item-title">{row.title}</p>
                 <p className="rr-risk-item-meta">
                   {row.currency ? <span className="rr-currency">{String(row.currency).toUpperCase()}</span> : 'GLB'}
                   {' · '}
-                  <span className={`rr-impact ${impMeta.cls}`} title={impMeta.title}>{impMeta.label}</span>
+                  <span className={`rr-impact ${impMeta.cls}`} title={impMeta.title}>
+                    {impMeta.label}
+                  </span>
                   {timeLabel ? ` · ${timeLabel}` : ''}
                 </p>
                 {hasMetrics && (
                   <p className="rr-risk-item-metrics">
-                    {actual ? `Actual: ${actual}` : 'Actual: —'} · {forecast ? `Forecast: ${forecast}` : 'Forecast: —'} · {previous ? `Previous: ${previous}` : 'Previous: —'}
+                    {t('traderDeck.riskRadar.metricsActual', { v: actual || dash })}
+                    {' · '}
+                    {t('traderDeck.riskRadar.metricsForecast', { v: forecast || dash })}
+                    {' · '}
+                    {t('traderDeck.riskRadar.metricsPrevious', { v: previous || dash })}
                   </p>
                 )}
               </article>

@@ -38,7 +38,8 @@ export const XP_COOLDOWNS = {
     HELPING_USER: 3600000     // 1h
 };
 
-const TIER_NAMES = [
+/** English tier labels (fallback + source for i18n generators). */
+export const XP_TIER_NAMES_EN = [
     'Beginner Tier',
     'Intermediate Tier',
     'Advanced Tier',
@@ -50,6 +51,8 @@ const TIER_NAMES = [
     'Immortal Tier',
     'GOD Tier'
 ];
+
+const TIER_NAMES = XP_TIER_NAMES_EN;
 
 /** Tier accent colors — peachy gold ladder (brand); replaces gray/blue/teal progression */
 const TIER_COLORS = [
@@ -65,7 +68,7 @@ const TIER_COLORS = [
     '#fff4e6',
 ];
 
-const TIER_RANK_NAMES = [
+export const XP_TIER_RANK_MATRIX_EN = [
     ['Market Initiate', 'Session Observer', 'Chart Apprentice', 'Bias Student', 'Structure Novice', 'Range Reader', 'Risk Learner', 'Execution Rookie', 'Momentum Trainee', 'Pattern Seeker'],
     ['Trend Practitioner', 'Liquidity Reader', 'Zone Apprentice', 'Reaction Analyst', 'Discipline Builder', 'Consistency Seeker', 'Setup Tracker', 'Candle Technician', 'Price Cartographer', 'Signal Operator'],
     ['Session Specialist', 'Structure Specialist', 'Flow Analyst', 'Liquidity Specialist', 'Refinement Analyst', 'Confirmation Specialist', 'Risk Technician', 'Execution Technician', 'Momentum Specialist', 'Precision Trader'],
@@ -77,6 +80,8 @@ const TIER_RANK_NAMES = [
     ['Immortal Analyst', 'Immortal Strategist', 'Immortal Executor', 'Immortal Risk Lord', 'Immortal Commander', 'Immortal Architect', 'Immortal Specialist', 'Immortal Sovereign', 'Immortal Grandmaster', 'Immortal Trader'],
     ['God of Structure', 'God of Timing', 'God of Confirmation', 'God of Execution', 'God of Risk', 'God of Process', 'God of Discipline', 'God of Edge', 'Supreme Trader', 'AURA TERMINAL™ God']
 ];
+
+const TIER_RANK_NAMES = XP_TIER_RANK_MATRIX_EN;
 
 export const TRADING_RANKS = (() => {
     const out = {};
@@ -101,15 +106,29 @@ export const calculateLoginXP = (_streak) => {
     return round2(XP_REWARDS.DAILY_LOGIN);
 };
 
-export const getRankTitle = (level) => {
+/** Rank title; pass `t` from `useTranslation` for locale-aware labels (keys `xp.rank.{level}`). */
+export const getRankTitle = (level, t) => {
     const lv = Math.max(1, Math.min(MAX_LEVEL, parseInt(level, 10) || 1));
-    return TRADING_RANKS[lv] || 'Market Initiate';
+    const fallback = TRADING_RANKS[lv] || TRADING_RANKS[1];
+    if (t && typeof t === 'function') {
+        const key = `xp.rank.${lv}`;
+        const out = t(key);
+        if (out && out !== key) return out;
+    }
+    return fallback;
 };
 
-export const getTierName = (level) => {
+/** Tier name; pass `t` for keys `xp.tier.{0-9}`. */
+export const getTierName = (level, t) => {
     const lv = Math.max(1, Math.min(MAX_LEVEL, parseInt(level, 10) || 1));
     const tierIdx = Math.floor((lv - 1) / 10);
-    return TIER_NAMES[tierIdx] || TIER_NAMES[0];
+    const fallback = TIER_NAMES[tierIdx] || TIER_NAMES[0];
+    if (t && typeof t === 'function') {
+        const key = `xp.tier.${tierIdx}`;
+        const out = t(key);
+        if (out && out !== key) return out;
+    }
+    return fallback;
 };
 
 export const getTierColor = (level) => {
@@ -203,14 +222,14 @@ export const calculateMessageXP = (messageContent, hasFile) => {
 /**
  * Get next rank milestone
  */
-export const getNextRankMilestone = (currentLevel) => {
+export const getNextRankMilestone = (currentLevel, t) => {
     const lv = Math.max(1, Math.min(MAX_LEVEL, parseInt(currentLevel, 10) || 1));
     const milestones = Object.keys(TRADING_RANKS).map(Number).sort((a, b) => a - b);
     for (const milestone of milestones) {
         if (lv < milestone) {
             return {
                 level: milestone,
-                title: TRADING_RANKS[milestone],
+                title: getRankTitle(milestone, t),
                 xpNeeded: getXPForNextLevel(lv)
             };
         }

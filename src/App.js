@@ -128,6 +128,7 @@ const BacktestingSessions = lazy(() => import('./pages/backtesting/BacktestingSe
 const BacktestingTrades = lazy(() => import('./pages/backtesting/BacktestingTrades'));
 const BacktestingReports = lazy(() => import('./pages/backtesting/BacktestingReports'));
 const SurveillancePage = lazy(() => import('./pages/surveillance/SurveillancePage'));
+const OperatorIntelligencePage = lazy(() => import('./pages/OperatorIntelligencePage'));
 
 /** Prefetch route chunks after initial load so navigation feels instant site-wide */
 function usePrefetchRoutes() {
@@ -428,11 +429,16 @@ function AppRoutes() {
                         <Route path="/manual-metrics/processing" element={<AuthenticatedGuard><ManualMetricsProcessingPage /></AuthenticatedGuard>} />
                         <Route path="/manual-metrics" element={<AuthenticatedGuard><ManualMetricsEntryPage /></AuthenticatedGuard>} />
                         {/* Operator Galaxy - Central Hub */}
-<Route path="/operator-galaxy" element={
+                        <Route path="/operator-galaxy" element={
   <AuthenticatedGuard>
     <OperatorGalaxy />
   </AuthenticatedGuard>
 } />
+                        <Route path="/operator-intelligence" element={
+                            <AuthenticatedGuard>
+                                <OperatorIntelligencePage />
+                            </AuthenticatedGuard>
+                        } />
                         <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />
                         <Route path="/trader-lab" element={<AuthenticatedGuard><Navigate to="/trader-deck/trade-validator/trader-lab" replace /></AuthenticatedGuard>} />
                         <Route path="/trader-replay" element={<AuthenticatedGuard><Navigate to="/aura-analysis/dashboard/trader-replay" replace /></AuthenticatedGuard>} />

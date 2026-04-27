@@ -29,6 +29,7 @@ import {
   FaHistory,
   FaGlobe,
   FaProjectDiagram,
+  FaBrain,
 } from "react-icons/fa";
 import { isSuperAdmin, isAdmin, isPremium } from "../utils/roles";
 import A7Logo from "./A7Logo";
@@ -76,7 +77,6 @@ const Navbar = () => {
   };
 
   const auraAiHref = isPremium(user) ? "/premium-ai" : "/subscription";
-  const auraAiLabel = "Aura AI";
 
   // ── Mobile full-screen menu (portalled to body)
   const mobileMenuPortal = ReactDOM.createPortal(
@@ -97,21 +97,21 @@ const Navbar = () => {
                 onClick={closeMobileMenu}
                 className={isActive('/premium-ai') || isActive('/subscription') ? 'active' : ''}
               >
-                Aura AI
+                {t('navbar.auraAi')}
               </Link>
             </li>
             <li><Link to="/courses" onClick={closeMobileMenu} className={isActive('/courses') ? 'active' : ''}>C &amp; S</Link></li>
             <li><Link to="/leaderboard" onClick={closeMobileMenu} className={isActive('/leaderboard') ? 'active' : ''}>{t('navbar.leaderboard')}</Link></li>
           </ul>
           <p className="mobile-menu-account-hint">
-            Tap the <strong>profile icon</strong> (next to the bell) for Trader Desk, Journal, Profile, Settings &amp; more — same menu as desktop.
+            {t('navbar.mobileAccountHint')}
           </p>
         </>
       ) : (
         <>
           <ul className="mobile-nav-links">
             <li><Link to="/" onClick={closeMobileMenu}>{t('navbar.home')}</Link></li>
-            <li><Link to="/courses" onClick={closeMobileMenu}>C &amp; S</Link></li>
+            <li><Link to="/courses" onClick={closeMobileMenu}>{t('navbar.cs')}</Link></li>
             <li><Link to="/explore" onClick={closeMobileMenu}>{t('navbar.explore')}</Link></li>
             <li><Link to="/why-glitch" onClick={closeMobileMenu}>{t('navbar.whyAura')}</Link></li>
             <li><Link to="/contact" onClick={closeMobileMenu}>{t('navbar.contactUs')}</Link></li>
@@ -155,16 +155,16 @@ const Navbar = () => {
                   to={auraAiHref}
                   className={isActive("/premium-ai") || isActive("/subscription") ? "active" : ""}
                 >
-                  Aura AI
+                  {t('navbar.auraAi')}
                 </Link>
               </li>
-              <li><Link to="/courses" className={isActive("/courses") ? "active" : ""}>C &amp; S</Link></li>
+              <li><Link to="/courses" className={isActive("/courses") ? "active" : ""}>{t('navbar.cs')}</Link></li>
               <li><Link to="/leaderboard" className={isActive("/leaderboard") ? "active" : ""}>{t('navbar.leaderboard')}</Link></li>
             </>
           ) : (
             <>
               <li><Link to="/">{t('navbar.home')}</Link></li>
-              <li><Link to="/courses">C &amp; S</Link></li>
+              <li><Link to="/courses">{t('navbar.cs')}</Link></li>
               <li><Link to="/explore">{t('navbar.explore')}</Link></li>
               <li><Link to="/why-glitch">{t('navbar.whyAura')}</Link></li>
               <li><Link to="/contact">{t('navbar.contactUs')}</Link></li>
@@ -207,12 +207,15 @@ const Navbar = () => {
                       <Link to="/journal" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaBook className="dropdown-icon" /> {t('navbar.journal')}
                       </Link>
-                   <Link to="/operator-galaxy" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-  <FaCheckSquare className="dropdown-icon" /> The Operator
-</Link>
+                      <Link to="/operator-galaxy" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                        <FaCheckSquare className="dropdown-icon" /> {t('navbar.operator')}
+                      </Link>
+                      <Link to="/operator-intelligence" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                        <FaBrain className="dropdown-icon" /> {t('navbar.operatorIntelligence')}
+                      </Link>
            {isLocalDev || entitlements?.canAccessSurveillance ? (
   <Link to="/surveillance" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-    <FaGlobe className="dropdown-icon" /> Surveillance
+    <FaGlobe className="dropdown-icon" /> {t('navbar.surveillance')}
     {isLocalDev && !entitlements?.canAccessSurveillance && (
       <span className="dropdown-dev-badge" style={{
         background: '#ff9800',
@@ -222,28 +225,28 @@ const Navbar = () => {
         borderRadius: '3px',
         marginLeft: '8px',
         fontWeight: 'bold'
-      }}>DEV</span>
+      }}>{t('navbar.devBadge')}</span>
     )}
   </Link>
 ) : (
   <button
     type="button"
     className="dropdown-item dropdown-item--locked"
-    title="Surveillance is included with Elite (active Elite/A7FX billing) or Admin / Super Admin accounts."
+    title={t('navbar.surveillanceLockedTitle')}
     onClick={() => {
       setDropdownOpen(false);
       navigate('/choose-plan', { state: { feature: 'surveillance' } });
     }}
   >
-    <FaGlobe className="dropdown-icon" /> Surveillance
-    <span className="dropdown-lock-label" aria-hidden>Locked</span>
+    <FaGlobe className="dropdown-icon" /> {t('navbar.surveillance')}
+    <span className="dropdown-lock-label" aria-hidden>{t('navbar.locked')}</span>
   </button>
 )}
                       <Link to="/aura-analysis" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaChartLine className="dropdown-icon" /> Aura Analysis
                       </Link>
                       <Link to="/backtesting" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaHistory className="dropdown-icon" /> Backtesting
+                        <FaHistory className="dropdown-icon" /> {t('navbar.backtesting')}
                       </Link>
                       {isPremium(user) && (
                         <>
@@ -264,14 +267,14 @@ const Navbar = () => {
                       {showAdminNavGroup && (
                         <>
                           <Link to="/admin" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                            <FaCog className="dropdown-icon" /> Admin Panel
+                            <FaCog className="dropdown-icon" /> {t('navbar.adminPanel')}
                           </Link>
                           <Link
                             to="/admin/integration-health"
                             className="dropdown-item dropdown-item--nested"
                             onClick={() => setDropdownOpen(false)}
                           >
-                            <FaHeartbeat className="dropdown-icon" /> Integration health
+                            <FaHeartbeat className="dropdown-icon" /> {t('navbar.integrationHealth')}
                           </Link>
                           {showPipelineNav && (
                             <Link
@@ -279,7 +282,7 @@ const Navbar = () => {
                               className="dropdown-item dropdown-item--nested"
                               onClick={() => setDropdownOpen(false)}
                             >
-                              <FaProjectDiagram className="dropdown-icon" /> Pipeline Monitor
+                              <FaProjectDiagram className="dropdown-icon" /> {t('navbar.pipelineMonitor')}
                             </Link>
                           )}
                         </>
@@ -290,7 +293,7 @@ const Navbar = () => {
                             <FaSlidersH className="dropdown-icon" /> {t('navbar.settings')}
                           </Link>
                           <Link to="/admin/messages" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                            <FaHeadset className="dropdown-icon" /> Contact Submissions
+                            <FaHeadset className="dropdown-icon" /> {t('navbar.contactSubmissions')}
                           </Link>
                         </>
                       )}

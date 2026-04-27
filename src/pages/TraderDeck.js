@@ -5,6 +5,7 @@
  */
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../utils/roles';
@@ -44,31 +45,35 @@ const SESSION_UI_TICK_MS = 30000;
 // Combined component that pairs each session with its countdown
 // Replace the MarketSessionsWithCountdowns component with this professional row layout
 function MarketSessionsWithCountdowns() {
+  const { t } = useTranslation();
   const [tick, setTick] = useState(0);
   useEffect(() => {
-    const iv = setInterval(() => setTick((t) => t + 1), SESSION_UI_TICK_MS);
+    const iv = setInterval(() => setTick((x) => x + 1), SESSION_UI_TICK_MS);
     return () => clearInterval(iv);
   }, []);
   const now = useMemo(() => Date.now(), [tick]);
-  
+
   return (
     <div className="td-deck-sessions-row">
       {TRADER_DESK_SESSIONS.map((s) => {
         const open = isSessionOpen(s, now);
-        const { ms, phrase } = getSessionCountdown(s, now);
-        
+        const { ms, phraseKey } = getSessionCountdown(s, now);
+        const phrase = phraseKey === 'opensIn' ? t('traderDeck.sessionOpensIn') : t('traderDeck.sessionEndsIn');
+        const statusLabel = open ? `● ${t('traderDeck.sessionOpen')}` : `○ ${t('traderDeck.sessionClosed')}`;
+        const cityLabel = t(`traderDeck.city.${s.cityKey}`);
+
         return (
-          <div key={s.name} className="td-deck-session-tile">
+          <div key={s.cityKey} className="td-deck-session-tile">
             <div className="td-deck-session-tile-header">
               <span className={`td-deck-session-dot${open ? ' td-deck-session-dot--open' : ''}`} />
-              <span className="td-deck-session-name">{s.name}</span>
+              <span className="td-deck-session-name">{cityLabel}</span>
               <span className={`td-deck-session-status${open ? ' td-deck-session-status--open' : ''}`}>
-                {open ? '● OPEN' : '○ CLOSED'}
+                {statusLabel}
               </span>
             </div>
             <div className="td-deck-session-tile-countdown">
               <span className="td-deck-session-countdown-phrase">{phrase}</span>
-              <span className="td-deck-session-countdown-eta">{formatSessionEta(ms)}</span>
+              <span className="td-deck-session-countdown-eta">{formatSessionEta(ms, t)}</span>
             </div>
           </div>
         );
@@ -83,6 +88,7 @@ function getMonthStart(ym) {
 }
 
 export default function TraderDeck() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const canEdit = isAdmin(user);
 
@@ -199,7 +205,7 @@ export default function TraderDeck() {
               className="td-deck-calendar-overlay-close"
               onClick={() => setCalendarOverlayOpen(false)}
             >
-              Close
+              {t('traderDeck.close')}
             </button>
           </div>
         </div>
@@ -221,13 +227,13 @@ export default function TraderDeck() {
             <div className="td-deck-eco-cal-overlay-panel">
               <div className="td-deck-eco-cal-overlay-head">
                 <h2 id="td-deck-eco-cal-title" className="td-deck-eco-cal-overlay-title">
-                  Economic calendar
+                  {t('traderDeck.economicCalendar')}
                 </h2>
                 <button
                   type="button"
                   className="td-deck-eco-cal-overlay-x"
                   onClick={() => setEconomicCalendarOpen(false)}
-                  aria-label="Close economic calendar"
+                  aria-label={t('traderDeck.closeEconomicCalendarAria')}
                 >
                   <FaTimes aria-hidden />
                 </button>
@@ -259,11 +265,11 @@ export default function TraderDeck() {
                 className={`td-deck-tab${mainTab === 'outlook' ? ' td-deck-tab--active' : ''}`}
                 onClick={() => setMainTab('outlook')}
               >
-                MARKET OUTLOOK
+                {t('traderDeck.tabMarketOutlook')}
               </button>
             </nav>
 
-            <h1 className="td-deck-page-title">TRADER DESK</h1>
+            <h1 className="td-deck-page-title">{t('traderDeck.pageHeadingTraderDesk')}</h1>
 
             <nav className="td-deck-header-right">
               <button
@@ -272,7 +278,7 @@ export default function TraderDeck() {
                   setMainTab('intelligence');
                 }}
               >
-                MARKET INTELLIGENCE
+                {t('traderDeck.tabMarketIntelligence')}
               </button>
             </nav>
           </header>
@@ -312,38 +318,38 @@ export default function TraderDeck() {
               >
                 {mainTab === 'intelligence' ? (
                   <>
-                    <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-left" aria-label="Brief period">
+                    <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-left" aria-label={t('traderDeck.periodDaily')}>
                       <button
                         type="button"
                         className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
                         onClick={() => setSubTab('daily')}
                       >
-                        DAILY
+                        {t('traderDeck.periodDaily')}
                       </button>
                       <button
                         type="button"
                         className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
                         onClick={() => setSubTab('weekly')}
                       >
-                        WEEKLY
+                        {t('traderDeck.periodWeekly')}
                       </button>
                     </nav>
-                    <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-center" aria-label="Market intelligence format">
+                    <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-center" aria-label={t('traderDeck.intelBriefs')}>
                       <button
                         type="button"
                         className={`td-deck-sub-tab${intelMode === 'briefs' ? ' td-deck-sub-tab--active' : ''}`}
                         onClick={() => setIntelMode('briefs')}
                       >
-                        BRIEFS
+                        {t('traderDeck.intelBriefs')}
                       </button>
                     </nav>
-                    <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-right" aria-label="Market decoder">
+                    <nav className="td-deck-sub-tabs td-deck-sub-tabs--intel-right" aria-label={t('traderDeck.intelMarketDecoder')}>
                       <button
                         type="button"
                         className={`td-deck-sub-tab${intelMode === 'decoder' ? ' td-deck-sub-tab--active' : ''}`}
                         onClick={() => setIntelMode('decoder')}
                       >
-                        MARKET DECODER
+                        {t('traderDeck.intelMarketDecoder')}
                       </button>
                     </nav>
                   </>
@@ -354,14 +360,14 @@ export default function TraderDeck() {
                       className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
                       onClick={() => setSubTab('daily')}
                     >
-                      DAILY
+                      {t('traderDeck.periodDaily')}
                     </button>
                     <button
                       type="button"
                       className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
                       onClick={() => setSubTab('weekly')}
                     >
-                      WEEKLY
+                      {t('traderDeck.periodWeekly')}
                     </button>
                   </nav>
                 )}
@@ -372,7 +378,7 @@ export default function TraderDeck() {
                   className="td-deck-sub-tab td-deck-eco-cal-trigger"
                   onClick={() => setEconomicCalendarOpen(true)}
                 >
-                  Economic calendar
+                  {t('traderDeck.economicCalendar')}
                 </button>
               )}
             </div>

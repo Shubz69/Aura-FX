@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 /** i18n / RTL checks only; starts CRA when no server is listening. */
 export default defineConfig({
   testDir: './e2e',
-  testMatch: '**/language-support.spec.js',
+  testMatch: ['**/language-support.spec.js', '**/trader-deck-hindi-audit.spec.js'],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

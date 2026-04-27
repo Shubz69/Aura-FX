@@ -95,9 +95,10 @@ const Profile = () => {
         () =>
             formatMembershipLabel(
                 meUser?.role ?? user?.role,
-                entitlements?.effectiveTier ?? entitlements?.tier
+                entitlements?.effectiveTier ?? entitlements?.tier,
+                t
             ),
-        [meUser?.role, user?.role, entitlements?.effectiveTier, entitlements?.tier]
+        [meUser?.role, user?.role, entitlements?.effectiveTier, entitlements?.tier, t]
     );
     const { supported: pushSupported, subscribed: pushSubscribed, loading: pushLoading, permission: pushPermission, error: pushError, subscribe: enablePush, unsubscribe: disablePush } = usePushNotifications();
     const [activeTab, setActiveTab] = useState('overview');
@@ -143,7 +144,7 @@ const isMobile = () => {
         localStorage.setItem(`avatar_color_${user.id}`, color);
         savePlaceholderColor(user.id, color);
         
-        setStatus('Color selected. Click Save Profile to update permanently.');
+        setStatus(t('profile.status.colorSelected'));
         setTimeout(() => setStatus(''), 3000);
     };
 
@@ -465,12 +466,12 @@ useEffect(() => {
 
     const maxSize = isMobile() ? 3 * 1024 * 1024 : 5 * 1024 * 1024;
     if (file.size > maxSize) {
-        setStatus(`Avatar image must be less than ${isMobile() ? '3MB' : '5MB'}`);
+        setStatus(t('profile.status.avatarTooBig', { limit: isMobile() ? '3MB' : '5MB' }));
         return;
     }
 
     try {
-        setStatus("Processing...");
+        setStatus(t('profile.status.processing'));
         
         // Use FileReader directly (works better on mobile)
         const reader = new FileReader();
@@ -526,24 +527,24 @@ useEffect(() => {
                     URL.revokeObjectURL(img.src);
                 }
                 
-                setStatus("Avatar ready to save");
+                setStatus(t('profile.status.avatarReady'));
                 setTimeout(() => setStatus(""), 2000);
             };
             
             img.onerror = () => {
-                setStatus("Failed to load image");
+                setStatus(t('profile.status.imageLoadFail'));
             };
         };
         
         reader.onerror = () => {
-            setStatus("Failed to read file");
+            setStatus(t('profile.status.readFileFail'));
         };
         
         reader.readAsDataURL(file);
         
     } catch (error) {
         console.error('Avatar error:', error);
-        setStatus("Failed to process avatar");
+        setStatus(t('profile.status.avatarProcessFail'));
     }
 };
 
@@ -553,7 +554,7 @@ const handleBannerChange = async (e) => {
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
-        setStatus("Banner image must be less than 10MB");
+        setStatus(t('profile.status.bannerTooBig'));
         return;
     }
 
@@ -600,25 +601,25 @@ const handleBannerChange = async (e) => {
             };
         });
 
-        setStatus("Banner ready to save. Click 'Save Profile' to update permanently.");
+        setStatus(t('profile.status.bannerReady'));
     } catch (error) {
         console.error('Banner processing error:', error);
-        setStatus("Failed to process banner image");
+        setStatus(t('profile.status.bannerProcessFail'));
     }
 };
 const handleSaveChanges = async () => {
     if (!user?.id) {
-        setStatus("You must be logged in to save changes");
+        setStatus(t('profile.status.mustLogin'));
         return;
     }
 
-    setStatus("Saving...");
+    setStatus(t('profile.status.saving'));
     setUsernameValidationError("");
 
     try {
         const token = localStorage.getItem("token");
         if (!token) {
-            setStatus("Authentication required");
+            setStatus(t('profile.status.authRequired'));
             return;
         }
 
@@ -630,31 +631,31 @@ const handleSaveChanges = async () => {
 
         if (usernameChanged) {
             if (!newUsername) {
-                setUsernameValidationError("Username cannot be empty");
-                setStatus("Username validation failed");
+                setUsernameValidationError(t('profile.status.usernameEmpty'));
+                setStatus(t('profile.status.usernameValidationFail'));
                 return;
             }
 
             const validation = validateUsername(newUsername);
             
             if (!validation || typeof validation !== 'object') {
-                setUsernameValidationError("Username validation error");
-                setStatus("Username validation failed");
+                setUsernameValidationError(t('profile.status.usernameValidationError'));
+                setStatus(t('profile.status.usernameValidationFail'));
                 return;
             }
             
             if (validation.isValid === false) {
-                setUsernameValidationError(validation.error || "Invalid username format");
-                setStatus("Username validation failed");
+                setUsernameValidationError(validation.error || t('profile.validation.invalidUsernameFormat'));
+                setStatus(t('profile.status.usernameValidationFail'));
                 return;
             }
 
             if (lastUsernameChange) {
                 const cooldownCheck = canChangeUsername(lastUsernameChange);
                 if (cooldownCheck && cooldownCheck.canChange === false) {
-                    const cooldownMessage = getCooldownMessage(lastUsernameChange) || "Username change on cooldown";
+                    const cooldownMessage = getCooldownMessage(lastUsernameChange) || t('profile.status.usernameCooldown');
                     setUsernameValidationError(cooldownMessage);
-                    setStatus("Username change on cooldown");
+                    setStatus(t('profile.status.usernameCooldown'));
                     return;
                 }
             }
@@ -752,10 +753,10 @@ if (!avatarToSave && avatarColor) {
             }
 
             setEditedUserData({});
-            setStatus("Profile updated successfully!");
+            setStatus(t('profile.status.profileUpdated'));
             setTimeout(() => setStatus(""), 3000);
         } else {
-            setStatus("Failed to update profile");
+            setStatus(t('profile.status.profileUpdateFail'));
         }
     } catch (error) {
         console.error('Save error:', error);
@@ -764,32 +765,32 @@ if (!avatarToSave && avatarColor) {
             const errorMessage = error.response.data?.message || '';
             
             if (error.response.status === 409) {
-                setUsernameValidationError("This username is already taken. Please choose another.");
-                setStatus("Username already taken.");
+                setUsernameValidationError(t('profile.status.usernameTaken'));
+                setStatus(t('profile.status.usernameTaken'));
             } else if (error.response.status === 400) {
                 if (errorMessage.toLowerCase().includes('username')) {
                     setUsernameValidationError(errorMessage || "Invalid username format");
                 }
-                setStatus(errorMessage || "Bad request. Please check your data.");
+                setStatus(errorMessage || t('profile.status.badRequest'));
             } else if (error.response.status === 413) {
-                setStatus("Images too large. Please try smaller images.");
+                setStatus(t('profile.status.imagesTooLarge'));
             } else {
-                setStatus(errorMessage || `Error ${error.response.status}: Failed to update profile`);
+                setStatus(errorMessage || t('profile.status.httpSaveError', { status: error.response.status }));
             }
         } else if (error.request) {
-            setStatus("No response from server. Please check your connection.");
+            setStatus(t('profile.status.noServerResponse'));
         } else {
-            setStatus(error.message || "Failed to update profile");
+            setStatus(error.message || t('profile.status.profileUpdateFail'));
         }
     }
 };
 
     // XP calculations
     const xpProgress = getXPProgress(formData.xp || 0, formData.level || 1);
-    const rankTitle = getRankTitle(formData.level || 1);
-    const tierName = getTierName(formData.level || 1);
+    const rankTitle = getRankTitle(formData.level || 1, t);
+    const tierName = getTierName(formData.level || 1, t);
     const tierColor = getTierColor(formData.level || 1);
-    const nextMilestone = getNextRankMilestone(formData.level || 1);
+    const nextMilestone = getNextRankMilestone(formData.level || 1, t);
 
     // Journal stats
     const journalToday = new Date().toISOString().slice(0, 10);
@@ -825,8 +826,8 @@ if (!avatarToSave && avatarColor) {
 
     const formatStatPreview = (key, val) => {
         if (val === undefined || val === null) return '—';
-        if (['discipline_score', 'journal_score', 'consistency_score', 'win_rate'].includes(key)) return `${val}%`;
-        if (key === 'login_streak') return `${val}d`;
+        if (['discipline_score', 'journal_score', 'consistency_score', 'win_rate'].includes(key)) return t('profile.statPreview.percent', { val });
+        if (key === 'login_streak') return t('profile.statPreview.streak', { val });
         return String(val);
     };
 
@@ -839,7 +840,7 @@ if (!avatarToSave && avatarColor) {
             <div className="pf-container">
                 <div className="pf-loading journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
                     <div className="pf-spinner"></div>
-                    <span className="pf-loading-text">Loading Profile</span>
+                    <span className="pf-loading-text">{t('profile.loading')}</span>
                 </div>
             </div>
             </AuraTerminalThemeShell>
@@ -855,7 +856,7 @@ if (!avatarToSave && avatarColor) {
                     {bannerPreview || formData.banner ? (
                         <img
                             src={bannerPreview || formData.banner}
-                            alt="Banner"
+                            alt={t('profile.bannerAlt')}
                             className="pf-banner-img"
                             onError={(e) => {
                                 console.error('Banner failed to load');
@@ -864,7 +865,7 @@ if (!avatarToSave && avatarColor) {
                         />
                     ) : (
                         <div className="pf-banner-placeholder">
-                            <span className="pf-banner-hint">Upload Banner</span>
+                            <span className="pf-banner-hint">{t('profile.uploadBanner')}</span>
                         </div>
                     )}
                     <input
@@ -875,7 +876,7 @@ if (!avatarToSave && avatarColor) {
                         style={{ display: 'none' }}
                     />
                     <button className="pf-banner-btn" onClick={() => bannerInputRef.current?.click()}>
-                        <span>📷</span> Change Banner
+                        <span>📷</span> {t('profile.changeBanner')}
                     </button>
                 </div>
 
@@ -889,7 +890,7 @@ if (!avatarToSave && avatarColor) {
                                     <div style={{ position: 'relative' }}>
                                         <img
                                             src={avatarPreview || formData.avatar}
-                                            alt="Avatar"
+                                            alt={t('profile.avatarAlt')}
                                             className="pf-avatar-img"
                                             onError={(e) => {
                                                 console.error('Avatar failed to load');
@@ -925,12 +926,12 @@ if (!avatarToSave && avatarColor) {
                                 onChange={handleAvatarChange}
                                 style={{ display: 'none' }}
                             />
-                            <button className="pf-avatar-edit-btn" onClick={() => fileInputRef.current?.click()} title="Change avatar">✏️</button>
+                            <button className="pf-avatar-edit-btn" onClick={() => fileInputRef.current?.click()} title={t('profile.changeAvatarTitle')}>✏️</button>
                         </div>
 
                         {!hasAvatar && (
                             <div className="pf-swatch-picker">
-                                <span className="pf-swatch-label">Ring Colour</span>
+                                <span className="pf-swatch-label">{t('profile.ringColour')}</span>
                                 <div className="pf-swatches">
                                     {PLACEHOLDER_COLORS.map((color) => (
                                         <button
@@ -948,7 +949,7 @@ if (!avatarToSave && avatarColor) {
 
                     {/* Info */}
                     <div className="pf-header-info">
-                        <h1 className="pf-username">{formData.username || 'Trader'}</h1>
+                        <h1 className="pf-username">{formData.username || t('profile.defaultUsername')}</h1>
                         <div className="pf-rank-pill" style={{ '--tier-color': tierColor }}>
                             <span className="pf-rank-dot" style={{ background: tierColor }}></span>
                             <span className="pf-rank-text">{rankTitle}</span>
@@ -960,15 +961,15 @@ if (!avatarToSave && avatarColor) {
                     <div className="pf-header-quick-stats">
                         <div className="pf-qstat">
                             <span className="pf-qstat-num">{formData.level || 1}</span>
-                            <span className="pf-qstat-lbl">Level</span>
+                            <span className="pf-qstat-lbl">{t('profile.level')}</span>
                         </div>
                         <div className="pf-qstat">
                             <span className="pf-qstat-num">{((formData.xp || 0) / 1000).toFixed(1)}K</span>
-                            <span className="pf-qstat-lbl">Total XP</span>
+                            <span className="pf-qstat-lbl">{t('profile.totalXp')}</span>
                         </div>
                         <div className="pf-qstat">
                             <span className="pf-qstat-num">🔥{loginStreak}</span>
-                            <span className="pf-qstat-lbl">Streak</span>
+                            <span className="pf-qstat-lbl">{t('profile.streak')}</span>
                         </div>
                     </div>
                 </div>
@@ -977,13 +978,13 @@ if (!avatarToSave && avatarColor) {
                 <div className="pf-xp-card">
                     <div className="pf-xp-header">
                         <div>
-                            <p className="pf-xp-eyebrow">XP Progress · Level {formData.level || 1}</p>
-                            <p className="pf-xp-count">{(formData.xp || 0).toLocaleString()} XP</p>
+                            <p className="pf-xp-eyebrow">{t('profile.xpProgressEyebrow', { level: formData.level || 1 })}</p>
+                            <p className="pf-xp-count">{t('profile.xpCount', { count: (formData.xp || 0).toLocaleString() })}</p>
                         </div>
                         {nextMilestone && (
                             <div className="pf-xp-milestone">
-                                <span className="pf-xp-milestone-lbl">Next Rank</span>
-                                <span className="pf-xp-milestone-val">{nextMilestone.title} · Lv {nextMilestone.level}</span>
+                                <span className="pf-xp-milestone-lbl">{t('profile.nextRank')}</span>
+                                <span className="pf-xp-milestone-val">{t('profile.nextRankDetail', { title: nextMilestone.title, level: nextMilestone.level })}</span>
                             </div>
                         )}
                     </div>
@@ -1007,62 +1008,67 @@ if (!avatarToSave && avatarColor) {
                     <div className="pf-streak-card">
                         <span className="pf-streak-flame">🔥</span>
                         <div className="pf-streak-info">
-                            <span className="pf-streak-lbl">Login Streak</span>
+                            <span className="pf-streak-lbl">{t('profile.loginStreak')}</span>
                             <span className="pf-streak-val">{loginStreak}</span>
-                            <span className="pf-streak-unit">Days</span>
+                            <span className="pf-streak-unit">{t('profile.days')}</span>
                         </div>
                     </div>
                     <div className="pf-mini-stats">
                         <div className="pf-mini-stat">
                             <span className="pf-mini-icon">📈</span>
                             <span className="pf-mini-val">{formData.level || 1}</span>
-                            <span className="pf-mini-lbl">Level</span>
+                            <span className="pf-mini-lbl">{t('profile.level')}</span>
                         </div>
                         <div className="pf-mini-stat">
                             <span className="pf-mini-icon">⭐</span>
                             <span className="pf-mini-val">{((formData.xp || 0) / 1000).toFixed(1)}K</span>
-                            <span className="pf-mini-lbl">XP Total</span>
+                            <span className="pf-mini-lbl">{t('profile.xpTotalShort')}</span>
                         </div>
                         <div className="pf-mini-stat">
                             <span className="pf-mini-icon">🏆</span>
                             <span className="pf-mini-val">{achievements.length}</span>
-                            <span className="pf-mini-lbl">Badges</span>
+                            <span className="pf-mini-lbl">{t('profile.badges')}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Journal summary */}
                 <div className="pf-journal-card">
-                    <p className="pf-section-label">Journal · Completion</p>
+                    <p className="pf-section-label">{t('profile.journalCompletion')}</p>
                     {journalStatsLoading ? (
                         <div className="pf-journal-loading">
                             <div className="pf-spinner pf-spinner-sm"></div>
-                            <span>Loading stats…</span>
+                            <span>{t('profile.loadingStats')}</span>
                         </div>
                     ) : (
                         <>
                             <div className="pf-rings-row">
                                 <RingProgress pct={journalDayPct} color="rgba(16,185,129,0.85)"
-                                    value={dayTotal ? `${journalDayPct}%` : '—'} label="Today" />
+                                    value={dayTotal ? `${journalDayPct}%` : '—'} label={t('profile.today')} />
                                 <RingProgress pct={journalWeekPct} color="rgba(234,169,96,0.85)"
-                                    value={weekTotal ? `${journalWeekPct}%` : '—'} label="This Week" />
+                                    value={weekTotal ? `${journalWeekPct}%` : '—'} label={t('profile.thisWeek')} />
                                 <RingProgress pct={journalMonthPct} color="rgba(248,195,125,0.85)"
-                                    value={monthTotal ? `${journalMonthPct}%` : '—'} label="This Month" />
+                                    value={monthTotal ? `${journalMonthPct}%` : '—'} label={t('profile.thisMonth')} />
                             </div>
-                            <p className="pf-journal-hint">Task completion from your Aura Journal. Add and complete tasks to improve your stats.</p>
+                            <p className="pf-journal-hint">{t('profile.journalHint')}</p>
                         </>
                     )}
                 </div>
 
                 {/* Tabs */}
                 <div className="pf-tabs">
-                    {['overview', 'journey', 'statistics', 'achievements'].map(tab => (
+                    {[
+                        { id: 'overview', label: t('profile.tab.overview') },
+                        { id: 'journey', label: t('profile.tab.journey') },
+                        { id: 'statistics', label: t('profile.tab.statistics') },
+                        { id: 'achievements', label: t('profile.tab.achievements') },
+                    ].map(({ id, label }) => (
                         <button
-                            key={tab}
-                            className={`pf-tab-btn${activeTab === tab ? ' active' : ''}`}
-                            onClick={() => setActiveTab(tab)}
+                            key={id}
+                            className={`pf-tab-btn${activeTab === id ? ' active' : ''}`}
+                            onClick={() => setActiveTab(id)}
                         >
-                            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                            {label}
                         </button>
                     ))}
                 </div>
@@ -1072,42 +1078,42 @@ if (!avatarToSave && avatarColor) {
                     {/* Overview Tab */}
                     {activeTab === 'overview' && (
                         <div className="pf-panel">
-                            <p className="pf-section-label">Account Settings</p>
+                            <p className="pf-section-label">{t('profile.section.account')}</p>
 
                             <div className="pf-role-row">
-                                <span className="pf-role-lbl">Membership</span>
+                                <span className="pf-role-lbl">{t('profile.label.membership')}</span>
                                 <span className="pf-role-val">{membershipLabel}</span>
                             </div>
 
                             <div className="pf-form-row-2">
                                 <div className="pf-form-group">
-                                    <label className="pf-label">Username</label>
+                                    <label className="pf-label">{t('profile.label.username')}</label>
                                     <input className="pf-input" type="text" name="username"
                                         value={formData.username || ''} onChange={handleChange} />
                                     {usernameValidationError && <span className="pf-error">{usernameValidationError}</span>}
                                 </div>
                                 <div className="pf-form-group">
-                                    <label className="pf-label">Full Name</label>
+                                    <label className="pf-label">{t('profile.label.fullName')}</label>
                                     <input className="pf-input" type="text" name="name"
                                         value={formData.name || ''} onChange={handleChange} />
                                 </div>
                             </div>
 
                             <div className="pf-form-group">
-                                <label className="pf-label">Email</label>
+                                <label className="pf-label">{t('profile.label.email')}</label>
                                 <input className="pf-input pf-input-disabled" type="email" name="email"
                                     value={formData.email || ''} onChange={handleChange} disabled />
                             </div>
 
                             <div className="pf-form-group">
-                                <label className="pf-label">Bio</label>
+                                <label className="pf-label">{t('profile.label.bio')}</label>
                                 <textarea className="pf-input pf-textarea" name="bio" rows="3"
                                     value={formData.bio || ''} onChange={handleChange}
-                                    placeholder="Tell us about your trading journey…" />
+                                    placeholder={t('profile.bioPlaceholder')} />
                             </div>
 
                             <div className="pf-form-group">
-                                <label className="pf-label">Timezone <span className="pf-label-hint">· daily journal reminder at 08:00</span></label>
+                                <label className="pf-label">{t('profile.label.timezone')} <span className="pf-label-hint">· {t('profile.timezoneHint')}</span></label>
                                 <select className="pf-input" name="timezone"
                                     value={formData.timezone || ''}
                                     onChange={async (e) => {
@@ -1129,15 +1135,15 @@ if (!avatarToSave && avatarColor) {
 
                                                 if (setUser) setUser(updatedUser);
 
-                                                setStatus("Timezone updated");
+                                                setStatus(t('profile.status.timezoneUpdated'));
                                                 setTimeout(() => setStatus(""), 2000);
                                             }
                                         } catch (error) {
                                             console.error('Timezone update error:', error);
-                                            setStatus("Failed to update timezone");
+                                            setStatus(t('profile.status.timezoneFail'));
                                         }
                                     }}>
-                                    <option value="">Auto (browser)</option>
+                                    <option value="">{t('profile.timezoneAuto')}</option>
                                     {getIANATimezones().map(tz => (
                                         <option key={tz} value={tz}>{tz}</option>
                                     ))}
@@ -1145,7 +1151,7 @@ if (!avatarToSave && avatarColor) {
                             </div>
 
                             <div className="pf-form-group">
-                                <label className="pf-label">{t('profile.websiteLanguage')} <span className="pf-label-hint">· one click, site-wide</span></label>
+                                <label className="pf-label">{t('profile.websiteLanguage')} <span className="pf-label-hint">· {t('profile.websiteLanguageHint')}</span></label>
                                 <select
                                     className="pf-input"
                                     name="siteLanguage"
@@ -1179,16 +1185,16 @@ if (!avatarToSave && avatarColor) {
 
                             {/* Community Card — Visible Stats */}
                             <div className="pf-stat-vis-section">
-                                <p className="pf-section-label" style={{ marginBottom: 4 }}>Community Card — Visible Stats</p>
-                                <p className="pf-stat-vis-hint">Choose which trading stats appear on your public community profile card. PnL and balance are never shown.</p>
+                                <p className="pf-section-label" style={{ marginBottom: 4 }}>{t('profile.communityCardTitle')}</p>
+                                <p className="pf-stat-vis-hint">{t('profile.communityCardHint')}</p>
                                 <div className="pf-stat-vis-grid">
                                     {[
-                                        { key: 'discipline_score', label: 'Discipline Score', icon: '🎯', desc: '% of trades following rules (90d)' },
-                                        { key: 'journal_score',    label: 'Journal Score',    icon: '📓', desc: 'Days journaled last 30 days' },
-                                        { key: 'consistency_score',label: 'Consistency',       icon: '📈', desc: 'R:R deviation score (90d)' },
-                                        { key: 'win_rate',         label: 'Win Rate',          icon: '✅', desc: '% winning trades (90d)' },
-                                        { key: 'total_trades',     label: 'Total Trades',      icon: '📊', desc: 'Trades logged last 90 days' },
-                                        { key: 'login_streak',     label: 'Login Streak',      icon: '🔥', desc: 'Current daily login streak' },
+                                        { key: 'discipline_score', label: t('profile.stat.discipline'), icon: '🎯', desc: t('profile.stat.disciplineDesc') },
+                                        { key: 'journal_score',    label: t('profile.stat.journal'),    icon: '📓', desc: t('profile.stat.journalDesc') },
+                                        { key: 'consistency_score',label: t('profile.stat.consistency'), icon: '📈', desc: t('profile.stat.consistencyDesc') },
+                                        { key: 'win_rate',         label: t('profile.stat.winRate'),    icon: '✅', desc: t('profile.stat.winRateDesc') },
+                                        { key: 'total_trades',     label: t('profile.stat.totalTrades'), icon: '📊', desc: t('profile.stat.totalTradesDesc') },
+                                        { key: 'login_streak',     label: t('profile.stat.loginStreak'), icon: '🔥', desc: t('profile.stat.loginStreakDesc') },
                                     ].map(({ key, label, icon, desc }) => (
                                         <div key={key} className="pf-stat-vis-row">
                                             <div className="pf-stat-vis-info">
@@ -1226,11 +1232,11 @@ if (!avatarToSave && avatarColor) {
                                     scrollMarginTop: '72px'
                                 }}>
                                     <div>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0' }}>Push Notifications</div>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0' }}>{t('profile.push.title')}</div>
                                         <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 2 }}>
-                                            {pushPermission === 'denied' ? 'Blocked — enable in browser settings' :
-                                             pushSubscribed ? 'Active for DMs, @mentions, and channels you enable. Disable to use the bell only.' :
-                                             'Browser alerts for DMs, @mentions, and Community channels you turn on.'}
+                                            {pushPermission === 'denied' ? t('profile.push.blocked') :
+                                             pushSubscribed ? t('profile.push.active') :
+                                             t('profile.push.default')}
                                         </div>
                                         {pushError ? (
                                             <div style={{ fontSize: '0.72rem', color: '#f87171', marginTop: 6 }} role="alert">{pushError}</div>
@@ -1241,13 +1247,13 @@ if (!avatarToSave && avatarColor) {
                                             if (pushSubscribed) {
                                                 const serverOk = await disablePush();
                                                 if (serverOk) {
-                                                    setStatus('Push disabled — notifications stay in the bell menu only.');
+                                                    setStatus(t('profile.status.pushDisabled'));
                                                     setTimeout(() => setStatus(''), 4000);
                                                 }
                                             } else {
                                                 const ok = await enablePush();
                                                 if (ok) {
-                                                    setStatus('Push enabled — your device can show alerts.');
+                                                    setStatus(t('profile.status.pushEnabled'));
                                                     setTimeout(() => setStatus(''), 4000);
                                                 }
                                             }
@@ -1262,30 +1268,30 @@ if (!avatarToSave && avatarColor) {
                                             opacity: pushLoading ? 0.7 : 1, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 12
                                         }}
                                     >
-                                        {pushLoading ? '…' : pushSubscribed ? 'Disable' : 'Enable'}
+                                        {pushLoading ? '…' : pushSubscribed ? t('profile.push.disable') : t('profile.push.enable')}
                                     </button>
                                 </div>
                             )}
-                            <button className="pf-save-btn" onClick={handleSaveChanges}>Save Profile</button>
+                            <button className="pf-save-btn" onClick={handleSaveChanges}>{t('profile.saveProfile')}</button>
                         </div>
                     )}
 
                     {/* Other tabs remain the same */}
                     {activeTab === 'journey' && (
                         <div className="pf-panel">
-                            <p className="pf-section-label">Hero's Journey</p>
+                            <p className="pf-section-label">{t('profile.herosJourney')}</p>
                             <div className="pf-journey-grid">
                                 <div className="pf-journey-stat">
                                     <span className="pf-journey-icon">📈</span>
                                     <div className="pf-journey-info">
-                                        <span className="pf-journey-lbl">Current Level</span>
+                                        <span className="pf-journey-lbl">{t('profile.currentLevel')}</span>
                                         <span className="pf-journey-val">{formData.level || 1}</span>
                                     </div>
                                 </div>
                                 <div className="pf-journey-stat">
                                     <span className="pf-journey-icon">🎯</span>
                                     <div className="pf-journey-info">
-                                        <span className="pf-journey-lbl">Total XP</span>
+                                        <span className="pf-journey-lbl">{t('profile.totalXp')}</span>
                                         <span className="pf-journey-val">{(formData.xp || 0).toLocaleString()}</span>
                                     </div>
                                 </div>
@@ -1299,16 +1305,16 @@ if (!avatarToSave && avatarColor) {
                                 <div className="pf-journey-stat">
                                     <span className="pf-journey-icon">🔥</span>
                                     <div className="pf-journey-info">
-                                        <span className="pf-journey-lbl">Login Streak</span>
-                                        <span className="pf-journey-val">{loginStreak} days</span>
+                                        <span className="pf-journey-lbl">{t('profile.loginStreak')}</span>
+                                        <span className="pf-journey-val">{t('profile.loginStreakDays', { count: loginStreak })}</span>
                                     </div>
                                 </div>
                             </div>
                             {nextMilestone && (
                                 <div className="pf-milestone-card">
-                                    <span className="pf-milestone-eyebrow">Next Milestone</span>
+                                    <span className="pf-milestone-eyebrow">{t('profile.nextMilestone')}</span>
                                     <span className="pf-milestone-name">{nextMilestone.title}</span>
-                                    <span className="pf-milestone-level">Level {nextMilestone.level}</span>
+                                    <span className="pf-milestone-level">{t('profile.levelN', { n: nextMilestone.level })}</span>
                                 </div>
                             )}
                         </div>
@@ -1321,28 +1327,28 @@ if (!avatarToSave && avatarColor) {
                                 <div className="pf-stat-card">
                                     <span className="pf-stat-icon">📊</span>
                                     <span className="pf-stat-val">{tradingStats.totalTrades}</span>
-                                    <span className="pf-stat-lbl">Total Trades</span>
+                                    <span className="pf-stat-lbl">{t('profile.stat.totalTrades')}</span>
                                 </div>
                                 <div className="pf-stat-card">
                                     <span className="pf-stat-icon">✅</span>
                                     <span className="pf-stat-val">{tradingStats.winRate}%</span>
-                                    <span className="pf-stat-lbl">Win Rate</span>
+                                    <span className="pf-stat-lbl">{t('profile.stat.winRate')}</span>
                                 </div>
                                 <div className="pf-stat-card">
                                     <span className="pf-stat-icon">💰</span>
                                     <span className="pf-stat-val">${tradingStats.totalProfit.toLocaleString()}</span>
-                                    <span className="pf-stat-lbl">Total Profit</span>
+                                    <span className="pf-stat-lbl">{t('profile.trading.totalProfit')}</span>
                                 </div>
                             </div>
                             <div className="pf-stats-note">
-                                Trading statistics will be available when you connect your trading account.
+                                {t('profile.tradingNote')}
                             </div>
                         </div>
                     )}
 
                     {activeTab === 'achievements' && (
                         <div className="pf-panel">
-                            <p className="pf-section-label">Achievements · {achievements.length} Unlocked</p>
+                            <p className="pf-section-label">{t('profile.achievementsTitle', { count: achievements.length })}</p>
                             {achievements.length > 0 ? (
                                 <div className="pf-achievements-grid">
                                     {achievements.map((achievement, index) => (
@@ -1355,8 +1361,8 @@ if (!avatarToSave && avatarColor) {
                             ) : (
                                 <div className="pf-no-achievements">
                                     <span className="pf-no-ach-icon">🏅</span>
-                                    <p className="pf-no-ach-title">No achievements yet</p>
-                                    <p className="pf-no-ach-hint">Keep trading and engaging to unlock achievements!</p>
+                                    <p className="pf-no-ach-title">{t('profile.noAchievementsTitle')}</p>
+                                    <p className="pf-no-ach-hint">{t('profile.noAchievementsHint')}</p>
                                 </div>
                             )}
                         </div>

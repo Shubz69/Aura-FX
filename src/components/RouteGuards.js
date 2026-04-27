@@ -6,6 +6,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { Navigate, useLocation, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
@@ -13,39 +14,42 @@ import { isSuperAdmin, isAdmin } from '../utils/roles';
 import { useReportsEligibility } from '../pages/reports/useReportsEligibility';
 
 // Loading spinner component - shown while waiting for subscription status
-const LoadingSpinner = () => (
-  <div style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    background: '#0a0a0a',
-    color: '#fff'
-  }}>
+const LoadingSpinner = () => {
+  const { t } = useTranslation();
+  return (
     <div style={{
       display: 'flex',
-      flexDirection: 'column',
+      justifyContent: 'center',
       alignItems: 'center',
-      gap: '16px'
+      height: '100vh',
+      background: '#0a0a0a',
+      color: '#fff'
     }}>
       <div style={{
-        width: '40px',
-        height: '40px',
-        border: '3px solid rgba(255,255,255,0.1)',
-        borderTop: '3px solid #eaa960',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite'
-      }} />
-      <span style={{ opacity: 0.7, fontSize: '14px' }}>Verifying access...</span>
-      <style>{`
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '16px'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid rgba(255,255,255,0.1)',
+          borderTop: '3px solid #eaa960',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <span style={{ opacity: 0.7, fontSize: '14px' }}>{t('routeGuards.verifyingAccess')}</span>
+        <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
       `}</style>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const GateNotice = ({ title, message, primaryTo, primaryLabel, secondaryTo, secondaryLabel }) => (
   <div style={{
@@ -147,6 +151,7 @@ export const SubscriptionPageGuard = ({ children }) => {
  * FREE users redirect to /subscription when trying to access /premium-ai.
  */
 export const PremiumAIGuard = ({ children }) => {
+  const { t } = useTranslation();
   const { user, token, loading: authLoading } = useAuth();
   const { entitlements, loading: entLoading } = useEntitlements();
   const location = useLocation();
@@ -160,12 +165,12 @@ export const PremiumAIGuard = ({ children }) => {
   if (entitlements && entitlements.canAccessAI === false) {
     return (
       <GateNotice
-        title="Aura Analysis requires an active plan"
-        message="Your current plan does not include Aura Analysis access. Upgrade or manage your subscription to continue."
+        title={t('routeGuards.premiumAiPlanTitle')}
+        message={t('routeGuards.premiumAiPlanMessage')}
         primaryTo="/subscription"
-        primaryLabel="Manage subscription"
+        primaryLabel={t('routeGuards.manageSubscription')}
         secondaryTo="/choose-plan"
-        secondaryLabel="View plans"
+        secondaryLabel={t('routeGuards.viewPlans')}
       />
     );
   }
@@ -204,6 +209,7 @@ export const ReportsDnaGuard = ({ children }) => {
 };
 
 export const ManualMetricsGuard = ({ children }) => {
+  const { t } = useTranslation();
   const { token } = useAuth();
   const { eligibility, loading, error } = useReportsEligibility(token);
 
@@ -211,10 +217,10 @@ export const ManualMetricsGuard = ({ children }) => {
   if (error) {
     return (
       <GateNotice
-        title="Could not verify manual metrics access"
-        message={error || 'Please retry in a moment.'}
+        title={t('routeGuards.manualVerifyFailTitle')}
+        message={error || t('routeGuards.retryMoment')}
         primaryTo="/reports"
-        primaryLabel="Back to reports"
+        primaryLabel={t('routeGuards.backToReports')}
       />
     );
   }
@@ -222,12 +228,12 @@ export const ManualMetricsGuard = ({ children }) => {
   if (!['premium', 'pro', 'elite', 'admin'].includes(role)) {
     return (
       <GateNotice
-        title="Manual metrics require a paid plan"
-        message="CSV metrics dashboard is unavailable on your current plan."
+        title={t('routeGuards.manualPaidTitle')}
+        message={t('routeGuards.manualPaidMessage')}
         primaryTo="/choose-plan"
-        primaryLabel="View plans"
+        primaryLabel={t('routeGuards.viewPlans')}
         secondaryTo="/reports"
-        secondaryLabel="Back to reports"
+        secondaryLabel={t('routeGuards.backToReports')}
       />
     );
   }
@@ -302,52 +308,57 @@ export const AdminGuard = ({ children }) => {
  * Shown when a user without Premium/Elite tries to use the Friends tab.
  * Export so AdminInbox can render it inside the messaging layout.
  */
-export const FriendsUpgradeRequired = () => (
-  <div style={{
-    minHeight: 'calc(100vh - 120px)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '40px 24px',
-    background: 'transparent',
-    color: '#fff',
-    textAlign: 'center',
-    fontFamily: "'Space Grotesk', sans-serif"
-  }}>
+export const FriendsUpgradeRequired = () => {
+  const { t } = useTranslation();
+  return (
     <div style={{
-      maxWidth: 420,
-      padding: '32px 28px',
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(234,169,96,0.25)',
-      borderRadius: 16,
-      boxShadow: '0 8px 40px rgba(0,0,0,0.4)'
-    }}>
-      <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: 12, letterSpacing: '0.02em' }}>
-        Friends messaging is a premium feature
-      </h2>
-      <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem', lineHeight: 1.5, marginBottom: 24 }}>
-        You have to buy Premium or Elite to use this feature.
-      </p>
-      <Link
-        to="/subscription"
-        style={{
-          display: 'inline-block',
-          padding: '12px 24px',
-          background: 'linear-gradient(135deg, #b47830 0%, #f8c37d 100%)',
-          color: '#fff',
-          borderRadius: 10,
-          fontWeight: 600,
-          textDecoration: 'none',
-          fontSize: '0.9rem'
-        }}
+      minHeight: 'calc(100vh - 120px)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '40px 24px',
+      background: 'transparent',
+      color: '#fff',
+      textAlign: 'center',
+      fontFamily: "'Space Grotesk', sans-serif"
+    }}
+    >
+      <div style={{
+        maxWidth: 420,
+        padding: '32px 28px',
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(234,169,96,0.25)',
+        borderRadius: 16,
+        boxShadow: '0 8px 40px rgba(0,0,0,0.4)'
+      }}
       >
-        View Premium & Elite plans
-      </Link>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: 12, letterSpacing: '0.02em' }}>
+          {t('routeGuards.friendsPremiumTitle')}
+        </h2>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem', lineHeight: 1.5, marginBottom: 24 }}>
+          {t('routeGuards.friendsPremiumMessage')}
+        </p>
+        <Link
+          to="/subscription"
+          style={{
+            display: 'inline-block',
+            padding: '12px 24px',
+            background: 'linear-gradient(135deg, #b47830 0%, #f8c37d 100%)',
+            color: '#fff',
+            borderRadius: 10,
+            fontWeight: 600,
+            textDecoration: 'none',
+            fontSize: '0.9rem'
+          }}
+        >
+          {t('routeGuards.friendsPremiumCta')}
+        </Link>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 /**
  * InboxGuard - Allows all authenticated users. Admin tab (message admin) is for everyone;
