@@ -24,6 +24,12 @@ import {
   intensityVisualBand,
   trustQualityPresentation,
 } from './surveillancePresentation';
+import {
+  buildCountryIntel,
+  buildGlobalSummary,
+  buildRenderableEvents,
+  eventForMarkerSelection,
+} from './surveillanceIntelligence';
 import './SurveillancePage.css';
 import './SurveillancePage.modern.css';
 import CosmicBackground from '../../components/CosmicBackground';
@@ -177,15 +183,32 @@ export default function SurveillancePage() {
   loadFeedRef.current = loadFeed;
 
   const eventsById = useMemo(() => buildEventsById(events), [events]);
+  const renderable = useMemo(() => buildRenderableEvents(events), [events]);
+  const displayEvents = renderable.events;
+  const displayEventsById = useMemo(() => buildEventsById(displayEvents), [displayEvents]);
 
   const filteredDigest = useMemo(
-    () => filterDigestByFocus(intelDigest, focusRegion, eventsById),
-    [intelDigest, focusRegion, eventsById]
+    () => filterDigestByFocus(intelDigest, focusRegion, displayEventsById),
+    [intelDigest, focusRegion, displayEventsById]
   );
 
-  const tapeEvents = useMemo(() => filterEventsByFocus(events, focusRegion), [events, focusRegion]);
+  const tapeEvents = useMemo(() => filterEventsByFocus(displayEvents, focusRegion), [displayEvents, focusRegion]);
 
-  const focusSummary = useMemo(() => focusSummaryFromEvents(focusRegion, events), [focusRegion, events]);
+  const focusSummary = useMemo(
+    () => focusSummaryFromEvents(focusRegion, displayEvents),
+    [focusRegion, displayEvents]
+  );
+  const countryIntel = useMemo(
+    () =>
+      buildCountryIntel({
+        focusRegion,
+        events: displayEvents,
+        wireHeadlines: countryHeadlines,
+        wireServiceAvailable: countryWireAvailable,
+      }),
+    [focusRegion, displayEvents, countryHeadlines, countryWireAvailable]
+  );
+  const globalSummary = useMemo(() => buildGlobalSummary(displayEvents), [displayEvents]);
 
   const activeTabLabel = useMemo(() => TABS.find((t) => t.id === tab)?.label || tab, [tab]);
 
@@ -325,6 +348,12 @@ export default function SurveillancePage() {
       setDrawerEvent(null);
       setDrawerRelated([]);
       setDrawerStory(null);
+      const local = eventForMarkerSelection(id, displayEventsById);
+      if (local?.is_demo) {
+        setDrawerEvent(local);
+        setDrawerLoading(false);
+        return;
+      }
       try {
         const res = await fetch(`${apiBase()}/api/surveillance/event?id=${encodeURIComponent(id)}`, {
           headers: authHeaders,
@@ -343,7 +372,7 @@ export default function SurveillancePage() {
         setDrawerLoading(false);
       }
     },
-    [authHeaders]
+    [authHeaders, displayEventsById]
   );
 
   const pickFromBriefing = useCallback(
@@ -357,12 +386,12 @@ export default function SurveillancePage() {
 
   const onGlobeSelectEvent = useCallback(
     (id) => {
-      const ev = eventsById.get(String(id));
+      const ev = displayEventsById.get(String(id));
       const key = primaryCountryFromEvent(ev) || (ev?.region ? normalizeRegionKey(ev.region) : null);
       if (key) setFocusRegion(key);
       openDrawer(id);
     },
-    [eventsById, openDrawer]
+    [displayEventsById, openDrawer]
   );
 
   const onGlobeCountryFocus = useCallback((iso2) => {
@@ -460,7 +489,7 @@ export default function SurveillancePage() {
   const agg = aggregates || {};
   const tensionBand = gridTensionBand(agg.globalTensionScore);
   const chips = [
-    { label: 'Live nodes', value: agg.liveCount ?? events.length, title: 'Events on the current tape after filters' },
+    { label: 'Live nodes', value: agg.liveCount ?? displayEvents.length, title: 'Events on the current tape after filters' },
     {
       label: 'Grid tension',
       value: agg.globalTensionScore != null && Number.isFinite(Number(agg.globalTensionScore)) ? tensionBand.label : '—',
@@ -521,6 +550,22 @@ export default function SurveillancePage() {
               />
             </div>
           </div>
+          {renderable.fallbackActive ? (
+            <div className="sv-masthead-status sv-masthead-status--warm" role="status">
+              <div className="sv-masthead-status-main">
+                <span>Live surveillance feed temporarily unavailable.</span>
+                <span>Using simulated intelligence due to limited live feed.</span>
+                <span>Live data confidence: {renderable.liveDataConfidence || 'Low'}</span>
+              </div>
+            </div>
+          ) : null}
+          {!renderable.fallbackActive ? (
+            <div className="sv-masthead-status" role="status">
+              <div className="sv-masthead-status-main">
+                <span>Live data confidence: {renderable.liveDataConfidence || 'Medium'}</span>
+              </div>
+            </div>
+          ) : null}
           {systemHealth ? (
             <div
               className={`sv-masthead-status ${systemHealth.degraded ? 'sv-masthead-status--degraded' : ''} ${
@@ -601,7 +646,7 @@ export default function SurveillancePage() {
           >
             <div className={`sv-globe-panel ${terminalHandoff ? 'sv-globe-panel--handoff' : ''}`}>
               <SurveillanceGlobe
-                events={events}
+                events={displayEvents}
                 selectedId={selectedId}
                 focusRegion={focusRegion}
                 activeCategory={tab}
@@ -631,7 +676,7 @@ export default function SurveillancePage() {
               focusRegion={focusRegion}
               focusSummary={focusSummary}
               tapeCount={tapeEvents.length}
-              eventsById={eventsById}
+              eventsById={displayEventsById}
               topTapeSeverity={tapeEvents[0]?.severity}
               leadTapeUpdatedAt={eventFreshnessTimestamp(tapeEvents[0])}
               onClearFocus={clearFocusRegion}
@@ -639,6 +684,10 @@ export default function SurveillancePage() {
               wireHeadlines={countryHeadlines}
               wireActive={!!focusCountryIso}
               wireServiceAvailable={countryWireAvailable}
+              countryIntel={countryIntel}
+              globalSummary={globalSummary}
+              dataMode={renderable.dataMode}
+              liveDataConfidence={renderable.liveDataConfidence}
               activeTabId={tab}
               activeTabLabel={activeTabLabel}
               onSelectAllCategories={() => setTab('all')}
@@ -820,6 +869,14 @@ export default function SurveillancePage() {
                         —
                       </span>
                     )}
+                    <span
+                      className="sv-tape-cell sv-tape-cell--type"
+                      title={`Market Impact Score: ${e.market_impact_level || 'Low'}${
+                        e.market_impact_score_scaled != null ? ` (${Math.round(e.market_impact_score_scaled)})` : ''
+                      }`}
+                    >
+                      Impact {e.market_impact_level || 'Low'}
+                    </span>
                     <span className="sv-tape-cell sv-tape-cell--type" title="Event category">
                       {e.event_type}
                     </span>

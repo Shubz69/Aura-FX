@@ -65,9 +65,23 @@ export default function EventDrawer({ event, story, related, onClose, loading, o
                 </div>
                 <h2 className="sv-drawer-title">{event.title}</h2>
               </header>
+              {event.marker_kind ? (
+                <div className="sv-drawer-scores">
+                  <span className="sv-drawer-chip">Marker: {event.marker_kind}</span>
+                  {event.marker_icon ? <span className="sv-drawer-chip">{event.marker_icon}</span> : null}
+                  {event.is_demo ? <span className="sv-drawer-chip">Demo fallback intelligence</span> : null}
+                </div>
+              ) : null}
               <div className="sv-drawer-matters-wrap">
                 <p className="sv-drawer-matters-label">Why it matters</p>
                 <p className="sv-drawer-matters">{event.why_it_matters}</p>
+              </div>
+              <div className="sv-drawer-matters-wrap">
+                <p className="sv-drawer-matters-label">Market Impact Score</p>
+                <p className="sv-drawer-matters">
+                  {event.market_impact_level || 'Low'}
+                  {event.market_impact_score_scaled != null ? ` (${Math.round(event.market_impact_score_scaled)})` : ''}
+                </p>
               </div>
               <div className="sv-drawer-scores" aria-label="Intensity, sourcing, and risk">
                 {event.rank_score != null ? (
@@ -102,6 +116,39 @@ export default function EventDrawer({ event, story, related, onClose, loading, o
                   </span>
                 ) : null}
               </div>
+              {event.immediate_reaction ? (
+                <section className="sv-drawer-section">
+                  <h3>Immediate market reaction</h3>
+                  <ul className="sv-asset-list">
+                    <li>
+                      <strong>FX</strong>
+                      <span className="sv-asset-rationale">{event.immediate_reaction.fx}</span>
+                    </li>
+                    <li>
+                      <strong>Commodities</strong>
+                      <span className="sv-asset-rationale">{event.immediate_reaction.commodities}</span>
+                    </li>
+                    <li>
+                      <strong>Indices</strong>
+                      <span className="sv-asset-rationale">{event.immediate_reaction.indices}</span>
+                    </li>
+                  </ul>
+                </section>
+              ) : null}
+              {Array.isArray(event.trade_setup_ideas) && event.trade_setup_ideas.length ? (
+                <section className="sv-drawer-section">
+                  <h3>Trade setup ideas</h3>
+                  <ul className="sv-asset-list">
+                    {event.trade_setup_ideas.map((idea, idx) => (
+                      <li key={`idea-${idx}`}>
+                        <strong>Watch</strong>
+                        <span className="sv-asset-rationale">{idea}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="sv-drawer-source-note">Scenario-based, not financial advice.</p>
+                </section>
+              ) : null}
               {story && story.siblings?.length > 0 ? (
                 <section className="sv-drawer-section sv-drawer-story">
                   <h3>Developing story</h3>
@@ -165,9 +212,13 @@ export default function EventDrawer({ event, story, related, onClose, loading, o
                 <p className="sv-drawer-source-note">
                   Open the publisher&apos;s page to verify wording, timing, and primary attribution.
                 </p>
-                <a href={event.url} target="_blank" rel="noopener noreferrer" className="sv-drawer-link">
-                  Open source page
-                </a>
+                {event.url ? (
+                  <a href={event.url} target="_blank" rel="noopener noreferrer" className="sv-drawer-link">
+                    Open source page
+                  </a>
+                ) : (
+                  <p className="sv-drawer-source-note">No external link available for this fallback intelligence marker.</p>
+                )}
               </section>
               {related && related.length > 0 && (
                 <section className="sv-drawer-section">

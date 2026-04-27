@@ -8,6 +8,7 @@ import {
   polygonsAndCentroidsFromCountriesGeoJSON,
   normalizeRegionKey,
 } from './surveillanceRegionUtils';
+import { markerIconForKind, markerKindFromEvent } from './surveillanceIntelligence';
 
 const Globe = lazy(() => import('react-globe.gl').then((m) => ({ default: m.default })));
 
@@ -692,7 +693,7 @@ useEffect(() => {
    * arcs (and previously heatmap) — extra layers caused severe lag until lens cleared.
    * Heatmap layer is disabled: three-globe heatmap updates could throw under some WebGL timing paths. */
   /* Under a country lens with a modest event count, prefer point markers (aviation / defence read) over hex bins. */
-  const useHex = !reducedMotion && events.length > 52 && !(focusIso && events.length < 64);
+  const useHex = false;
 
   const rawPoints = useMemo(() => {
     const activeCat = normalizeEventCategory(activeCategory);
@@ -762,14 +763,27 @@ useEffect(() => {
       const trackKind = clusterDominantTrackKind(idMap, p);
       const liveMil = liveCluster && trackKind === 'aviation_military';
       const liveCargo = liveCluster && trackKind === 'aviation_cargo';
+      const leadEvent = idMap.get(String(p.eventId));
+      const impactLevel = String(leadEvent?.market_impact_level || '').toLowerCase();
+      const impactScore = Number(leadEvent?.market_impact_score_scaled) || 0;
+      const recencyWeight = Number(leadEvent?.recency_weight) || 0.45;
+      const highPriority = impactLevel === 'high' || impactLevel === 'critical';
+      const lowPriority = impactLevel === 'low';
+      const freshPriority = recencyWeight >= 0.88 && highPriority;
       const color = isSel
         ? '#ffd9a8'
         : isHover
           ? '#fff0d4'
           : muted
             ? 'rgba(120, 120, 130, 0.28)'
+            : lowPriority
+              ? 'rgba(108, 118, 130, 0.24)'
             : activeCat !== 'all' && !categoryFocused
               ? 'rgba(106, 116, 130, 0.36)'
+              : impactLevel === 'critical'
+                ? 'rgba(255, 122, 102, 0.98)'
+                : impactLevel === 'high'
+                  ? 'rgba(255, 176, 112, 0.96)'
               : liveMil
                 ? 'rgba(255, 198, 138, 0.98)'
                 : liveCargo
@@ -779,12 +793,22 @@ useEffect(() => {
                     : categoryColor(activeCat !== 'all' ? activeCat : dominantCategory);
       return {
         ...p,
+        markerKind: trackKind === 'aviation_military' || trackKind === 'aviation_cargo' || trackKind === 'aviation' ? 'aircraft' : dominantCategory,
+        markerIcon: markerIconForKind(
+          trackKind === 'aviation_military' || trackKind === 'aviation_cargo' || trackKind === 'aviation'
+            ? 'aircraft'
+            : markerKindFromEvent(idMap.get(String(p.eventId)))
+        ),
+        label: `${markerIconForKind(markerKindFromEvent(idMap.get(String(p.eventId))))} ${
+          p.label || 'Surveillance node'
+        } · Market Impact ${leadEvent?.market_impact_level || 'Low'}`,
         color,
         radius: Math.min(
-          1.05,
-          0.28 +
+          1.45,
+          0.24 +
             p.count * 0.06 +
             p.maxSev * 0.05 +
+            Math.min(0.18, impactScore / 620) +
             (liveCluster ? 0.07 : 0) +
             (trackKind === 'aviation' ||
             trackKind === 'aviation_cargo' ||
@@ -793,14 +817,14 @@ useEffect(() => {
               ? 0.06
               : 0) +
             (categoryFocused ? 0.08 : 0) +
-            (hot ? pulseStep * 0.06 : 0) +
+            (hot || freshPriority ? pulseStep * 0.06 : 0) +
             (isSel ? 0.14 : 0) +
             (isHover ? 0.08 : 0) +
             (lens && inFocus ? 0.1 : 0)
         ),
         altitude:
-          0.012 +
-          Math.min(0.065, p.count * 0.004 + pulseBoost + (isSel ? 0.018 : 0) + (isHover ? 0.01 : 0)) +
+          0.02 +
+          Math.min(0.082, p.count * 0.004 + pulseBoost + (freshPriority ? 0.012 : 0) + (isSel ? 0.018 : 0) + (isHover ? 0.01 : 0)) +
           (liveCluster ? 0.014 : 0) +
           (categoryFocused ? 0.012 : 0) +
           (lens && inFocus ? 0.02 : 0),

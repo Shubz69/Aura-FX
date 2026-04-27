@@ -30,6 +30,10 @@ function IntelSidePanel({
   wireHeadlines = [],
   wireActive = false,
   wireServiceAvailable = true,
+  countryIntel = null,
+  globalSummary = null,
+  dataMode = 'live',
+  liveDataConfidence = 'Low',
   activeTabId = 'all',
   activeTabLabel = '',
   onSelectAllCategories,
@@ -70,6 +74,20 @@ function IntelSidePanel({
         </div>
       </header>
 
+      {dataMode !== 'live' ? (
+        <div className="sv-rail-situation sv-rail-situation--empty" role="status">
+          <span className="sv-rail-situation-label">Data mode</span>
+          <p className="sv-rail-situation-text">Using simulated intelligence due to limited live feed.</p>
+          <p className="sv-rail-situation-fresh">Live data confidence: {liveDataConfidence}</p>
+        </div>
+      ) : (
+        <div className="sv-rail-situation" role="status">
+          <span className="sv-rail-situation-label">Data mode</span>
+          <p className="sv-rail-situation-text">Live surveillance intelligence mode.</p>
+          <p className="sv-rail-situation-fresh">Live data confidence: {liveDataConfidence}</p>
+        </div>
+      )}
+
       {wireActive ? (
         <Section title="Live wire" kicker="Rolling headlines">
           <p className="sv-rail-section-hint sv-rail-section-hint--tight">
@@ -102,6 +120,99 @@ function IntelSidePanel({
                 : 'No major wire headlines are available for this country at the moment. The tape may still show high-severity institutional items that have not crossed public desks yet.'}
             </p>
           )}
+        </Section>
+      ) : null}
+
+      {countryIntel ? (
+        <Section title="Country intelligence" kicker={countryIntel.isoHint || 'Lens detail'} priority>
+          <p className="sv-rail-section-hint">
+            {countryIntel.countryName} risk level: <strong>{countryIntel.riskLevel}</strong>. {countryIntel.marketImpactSummary}
+          </p>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>Market Impact Score:</strong> {countryIntel.marketImpactLevel} ({countryIntel.marketImpactScore})
+          </p>
+          <ul className="sv-rail-list">
+            {countryIntel.keyEvents.map((ev) => (
+              <li key={`country-ev-${ev.id}`}>
+                <button
+                  type="button"
+                  className="sv-rail-row"
+                  data-urgency={severityUrgencySlug(ev.severity)}
+                  onClick={() => onOpenEvent(ev.id)}
+                >
+                  <span className="sv-rail-row-eyebrow">Key military/geopolitical event</span>
+                  <span className="sv-rail-row-meta">
+                    Market Impact {ev.market_impact_level || 'Low'} ({ev.market_impact_score_scaled || '—'})
+                  </span>
+                  <span className="sv-rail-row-title">{ev.title}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>Immediate market reaction:</strong> FX: {countryIntel.immediateReaction?.fx} Commodities:{' '}
+            {countryIntel.immediateReaction?.commodities} Indices: {countryIntel.immediateReaction?.indices}
+          </p>
+          {countryIntel.tradeSetupIdeas?.length ? (
+            <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+              <strong>Trade setup ideas:</strong> {countryIntel.tradeSetupIdeas.join(' ')} <em>Scenario-based, not financial advice.</em>
+            </p>
+          ) : null}
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>Affected instruments/sectors:</strong> {countryIntel.impactedInstruments.join(', ') || 'None yet'}.
+          </p>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>Energy/trade route impact:</strong> {countryIntel.energyTradeImpact}
+          </p>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>Source:</strong> {countryIntel.sourceLabel} · <strong>Updated:</strong> {formatRecencyLabel(countryIntel.timestampLabel)}
+          </p>
+          <ul className="sv-rail-list">
+            {(countryIntel.headlines || []).slice(0, 4).map((h, idx) => (
+              <li key={`country-head-${idx}`}>
+                <span className="sv-rail-wire-title">{h.title}</span>
+                <span className="sv-rail-wire-meta">
+                  {h.source || 'Wire'} {countryIntel.headlineMode !== 'live' ? '· fallback/demo' : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>What traders should watch:</strong> {countryIntel.traderWatch.join(' ')}
+          </p>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>Why this matters today:</strong> {countryIntel.whyThisMattersToday}
+          </p>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>What changed recently:</strong> {countryIntel.whatChangedRecently}
+          </p>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>What invalidates this scenario:</strong> {countryIntel.whatInvalidatesScenario}
+          </p>
+        </Section>
+      ) : null}
+
+      {globalSummary ? (
+        <Section title="Global summary" kicker="Today">
+          <p className="sv-rail-section-hint">
+            Top global risks: {globalSummary.topGlobalRisks.join(' · ') || 'No global risks highlighted yet'}.
+          </p>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>Market-sensitive countries:</strong> {globalSummary.marketSensitiveCountries.join(', ') || 'N/A'}
+          </p>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>Energy chokepoints:</strong> {globalSummary.energyChokepoints.join(' · ') || 'N/A'}
+          </p>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>Active military/naval/air events:</strong> {globalSummary.activeCounts?.militaryNavalAir || 0}
+          </p>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>Highest-impact instruments:</strong> {globalSummary.highestImpactInstruments.join(', ') || 'N/A'}
+          </p>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            FX, indices, commodities, oil/gas, gold, defence stocks, and shipping should be assessed together when
+            geopolitical and logistics shocks cluster in the same region.
+          </p>
         </Section>
       ) : null}
 
