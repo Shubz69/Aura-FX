@@ -16,6 +16,7 @@ const { buildMarketWatchNarrative } = require('./marketWatchNarrative');
 const { buildPairHeatFromEvents } = require('./pairHeat');
 const { mergeGeoFallback, countGeoTagged } = require('./fallbackGeoEvents');
 const {
+  SURVEILLANCE_CRON_HINT,
   providerEnvFlags,
   adapterSnapshotForLiveGeo,
   geoTaggedEventCounts,
@@ -24,7 +25,7 @@ const {
 } = require('./feedDiagnostics');
 
 /** Temporary deploy probe: if missing in Network, production is not this API build. */
-const SURVEILLANCE_API_VERSION = 'diagnostics-d6354e6e';
+const SURVEILLANCE_API_VERSION = 'diagnostics-d6354e6e-stale-detail';
 
 function setCors(req, res) {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -166,6 +167,12 @@ module.exports = async (req, res) => {
         fallbackInjected: mergeResult.mergedDemoCount > 0,
         finalEventCount: events.length,
         feed: feedDiag,
+        cron: SURVEILLANCE_CRON_HINT,
+        ingestionObservability: {
+          recencyStaleAdapterIds: systemHealth.recencyStaleAdapterIds || [],
+          recencyNeverAdapterIds: systemHealth.recencyNeverAdapterIds || [],
+          recencyExplainer: systemHealth.recencyExplainer,
+        },
       },
     });
   } catch (e) {

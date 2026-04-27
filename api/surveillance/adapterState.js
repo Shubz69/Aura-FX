@@ -182,10 +182,14 @@ async function getSystemHealthSummary() {
   const degraded = !warmingUp && (stale || failMajor);
 
   const adapterRecencyBuckets = { fresh: 0, warm: 0, cold: 0, stale: 0, never: 0 };
+  const recencyStaleAdapterIds = [];
+  const recencyNeverAdapterIds = [];
   for (const r of s) {
     const iso = r.last_success_at ? new Date(r.last_success_at).toISOString() : null;
     const b = bucketAdapterRecency(iso);
     adapterRecencyBuckets[b] = (adapterRecencyBuckets[b] || 0) + 1;
+    if (b === 'stale') recencyStaleAdapterIds.push(r.adapter_id);
+    if (b === 'never') recencyNeverAdapterIds.push(r.adapter_id);
   }
 
   let failGe1 = 0;
@@ -245,9 +249,11 @@ async function getSystemHealthSummary() {
         lastSuccessAt: r.last_success_at ? new Date(r.last_success_at).toISOString() : null,
         recencyBucket: bucketAdapterRecency(r.last_success_at ? new Date(r.last_success_at).toISOString() : null),
         lastErrorAt: r.last_error_at ? new Date(r.last_error_at).toISOString() : null,
+        lastErrorCode: r.last_error_code || null,
         failures: r.consecutive_failures,
         nextRunAt: r.next_run_at ? new Date(r.next_run_at).toISOString() : null,
-        lastItemsOut: r.last_items_out,
+        lastItemsIn: r.last_items_in != null ? Number(r.last_items_in) : null,
+        lastItemsOut: r.last_items_out != null ? Number(r.last_items_out) : null,
         ingestSignals: {
           listingFingerprint: li.listing_fingerprint || runMeta.listing_fingerprint || null,
           linksFound: li.links_found ?? runMeta.links_found ?? null,
@@ -258,6 +264,11 @@ async function getSystemHealthSummary() {
       };
     }),
     adapterRecencyBuckets,
+    /** Adapters with last_success_at older than 24h — unrelated to providerEnv (env keys vs clock). */
+    recencyStaleAdapterIds,
+    recencyNeverAdapterIds,
+    recencyExplainer:
+      'Stale = no successful ingest in 24h for that adapter row. ProviderEnv only means API keys exist, not that every HTML/RSS adapter ran recently.',
     failureStreakSummary: { adaptersWithFailuresGte1: failGe1, adaptersWithFailuresGte3: failGe3 },
     throughput24h,
     feedMix24h,
