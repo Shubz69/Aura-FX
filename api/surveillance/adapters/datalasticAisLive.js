@@ -5,8 +5,8 @@
  *
  * Env:
  *   DATALASTIC_API_KEY (required)
- *   DATALASTIC_AIS_RADIUS_NM — max 50, default 28 (denser hubs return fewer hulls per credit)
- *   DATALASTIC_AIS_CALLS_PER_RUN — geographic queries this run, default 5
+ *   DATALASTIC_AIS_RADIUS_NM — max 50, default 38
+ *   DATALASTIC_AIS_CALLS_PER_RUN — geographic queries this run, default 8
  *   DATALASTIC_AIS_TYPE — optional vessel type filter: cargo | tanker | military | … (omit for all types; costly)
  *   DATALASTIC_AIS_ADAPTER_DISABLED — 1/true to skip
  *
@@ -73,14 +73,14 @@ function apiKey() {
 }
 
 function radiusNm() {
-  const n = parseInt(process.env.DATALASTIC_AIS_RADIUS_NM || '28', 10);
-  if (!Number.isFinite(n) || n < 1) return 28;
+  const n = parseInt(process.env.DATALASTIC_AIS_RADIUS_NM || '38', 10);
+  if (!Number.isFinite(n) || n < 1) return 38;
   return Math.min(50, Math.max(5, n));
 }
 
 function callsPerRun() {
-  const n = parseInt(process.env.DATALASTIC_AIS_CALLS_PER_RUN || '5', 10);
-  if (!Number.isFinite(n) || n < 1) return 5;
+  const n = parseInt(process.env.DATALASTIC_AIS_CALLS_PER_RUN || '8', 10);
+  if (!Number.isFinite(n) || n < 1) return 8;
   return Math.min(24, Math.max(1, n));
 }
 
@@ -98,9 +98,15 @@ function extractVessels(json) {
   if (!json || typeof json !== 'object') return [];
   const d = json.data != null ? json.data : json;
   if (Array.isArray(d)) return d;
-  if (Array.isArray(d.vessels)) return d.vessels;
-  if (Array.isArray(d.results)) return d.results;
+  if (d && typeof d === 'object') {
+    if (Array.isArray(d.vessels)) return d.vessels;
+    if (Array.isArray(d.results)) return d.results;
+    if (Array.isArray(d.records)) return d.records;
+    if (Array.isArray(d.items)) return d.items;
+    if (Array.isArray(d.ships)) return d.ships;
+  }
   if (Array.isArray(json.results)) return json.results;
+  if (Array.isArray(json.vessels)) return json.vessels;
   return [];
 }
 
@@ -113,8 +119,28 @@ function vesselToEvent(v, hubLabel) {
   const mmsi = v.mmsi != null ? String(v.mmsi).replace(/\D/g, '') : '';
   const imo = v.imo != null ? String(v.imo).replace(/\D/g, '') : '';
   const name = (v.name && String(v.name).trim()) || 'Unknown vessel';
-  const lat = pickNumber(v.lat ?? v.latitude);
-  const lon = pickNumber(v.lon ?? v.longitude ?? v.lng);
+  const nav = v.navigation && typeof v.navigation === 'object' ? v.navigation : null;
+  const pos = v.position && typeof v.position === 'object' ? v.position : null;
+  const lp = v.last_position && typeof v.last_position === 'object' ? v.last_position : null;
+  const lat = pickNumber(
+    v.lat ??
+      v.latitude ??
+      v.lat_deg ??
+      nav?.latitude ??
+      pos?.latitude ??
+      lp?.latitude ??
+      v?.current_position?.lat
+  );
+  const lon = pickNumber(
+    v.lon ??
+      v.longitude ??
+      v.lng ??
+      v.lon_deg ??
+      nav?.longitude ??
+      pos?.longitude ??
+      lp?.longitude ??
+      v?.current_position?.lon
+  );
   if (lat == null || lon == null) return null;
 
   const sog = pickNumber(v.speed ?? v.sog);
@@ -213,32 +239,54 @@ module.exports = {
     const maxAttempts = Math.min(3, Math.max(1, parseInt(process.env.DATALASTIC_AIS_FETCH_ATTEMPTS || '2', 10) || 2));
 
     const collected = [];
+    let rawVesselRows = 0;
 
-    for (let i = 0; i < nCalls; i += 1) {
-      if (ctx.shouldStop()) break;
-      const hub = SHIPPING_HUBS[(offset + i) % SHIPPING_HUBS.length];
+    async function fetchHubOnce(hub, keyParam) {
       const u = new URL(ENDPOINT);
-      u.searchParams.set('api-key', key);
+      u.searchParams.set(keyParam, key);
       u.searchParams.set('lat', String(hub.lat));
       u.searchParams.set('lon', String(hub.lon));
       u.searchParams.set('radius', String(radius));
       if (type) u.searchParams.set('type', type);
+      const { text } = await fetchWithRetry(u.toString(), {
+        allowHosts: HOSTS,
+        timeoutMs,
+        maxAttempts,
+        headers: { Accept: 'application/json' },
+      });
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        return { ok: false, reason: 'invalid_json', vessels: [] };
+      }
+      if (json && json.meta && json.meta.success === false) {
+        return {
+          ok: false,
+          reason: json.meta.message || json.meta.error || 'api_meta_false',
+          vessels: [],
+        };
+      }
+      const vessels = extractVessels(json);
+      return { ok: true, vessels };
+    }
+
+    for (let i = 0; i < nCalls; i += 1) {
+      if (ctx.shouldStop()) break;
+      const hub = SHIPPING_HUBS[(offset + i) % SHIPPING_HUBS.length];
 
       try {
-        const { text } = await fetchWithRetry(u.toString(), {
-          allowHosts: HOSTS,
-          timeoutMs,
-          maxAttempts,
-          headers: { Accept: 'application/json' },
-        });
-        let json;
-        try {
-          json = JSON.parse(text);
-        } catch {
-          ctx.log('warn', `${ID} ${hub.label}`, 'invalid_json');
+        let res = await fetchHubOnce(hub, 'api-key').catch((e) => ({ ok: false, reason: String(e && e.message), vessels: [] }));
+        let vessels = res.ok && Array.isArray(res.vessels) ? res.vessels : [];
+        if (!vessels.length) {
+          const r2 = await fetchHubOnce(hub, 'api_key').catch((e) => ({ ok: false, reason: String(e && e.message), vessels: [] }));
+          if (r2.ok && Array.isArray(r2.vessels) && r2.vessels.length) vessels = r2.vessels;
+        }
+        if (!vessels.length && !res.ok) {
+          ctx.log('warn', `${ID} ${hub.label}`, res.reason || 'fetch_failed');
           continue;
         }
-        const vessels = extractVessels(json);
+        rawVesselRows += vessels.length;
         for (const v of vessels) {
           const ev = vesselToEvent(v, hub.label);
           if (ev) collected.push(ev);
@@ -264,6 +312,17 @@ module.exports = {
 
     const items = unique.slice(0, maxEmit);
 
+    const fetchedCount = rawVesselRows;
+    const normalizedEmitted = items.length;
+    ctx.log('info', `${ID} ingest_summary`, {
+      fetched_count: fetchedCount,
+      normalized_emitted: normalizedEmitted,
+      unique_vessels: unique.length,
+      hubs_polled: nCalls,
+      radius_nm: radius,
+      type_filter: type || null,
+    });
+
     return {
       items,
       meta: {
@@ -274,6 +333,8 @@ module.exports = {
         type_filter: type,
         candidates: unique.length,
         emitted: items.length,
+        fetched_count: fetchedCount,
+        normalized_emitted: normalizedEmitted,
       },
     };
   },

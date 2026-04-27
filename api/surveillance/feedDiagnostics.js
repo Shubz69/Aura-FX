@@ -20,9 +20,12 @@ const SURVEILLANCE_CRON_HINT = {
 };
 
 function providerEnvFlags() {
+  const basicUser = String(process.env.OPENSKY_USERNAME || '').trim();
+  const basicPass = String(process.env.OPENSKY_PASSWORD || '').trim();
   const id = String(process.env.OPENSKY_CLIENT_ID || process.env.OPENSKY_USERNAME || '').trim();
   const secret = String(process.env.OPENSKY_CLIENT_SECRET || process.env.OPENSKY_PASSWORD || '').trim();
   return {
+    opensky_basic_configured: !!(basicUser && basicPass),
     opensky_oauth_configured: !!(id && secret),
     opensky_adapter_disabled: /^1|true|yes$/i.test(String(process.env.OPENSKY_ADAPTER_DISABLED || '')),
     datalastic_configured: !!String(process.env.DATALASTIC_API_KEY || '').trim(),

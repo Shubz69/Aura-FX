@@ -1,7 +1,11 @@
 /**
  * Live ADS-B positions via OpenSky Network (research / non-commercial use).
- * OpenSky requires OAuth2 client credentials (Bearer). Basic auth is no longer supported.
- * Set OPENSKY_CLIENT_ID + OPENSKY_CLIENT_SECRET from Account → API client (or legacy OPENSKY_USERNAME + OPENSKY_PASSWORD with the same values).
+ *
+ * Auth (first match wins for /api/states/all):
+ *   1) HTTP Basic — OPENSKY_USERNAME + OPENSKY_PASSWORD (registered OpenSky account).
+ *   2) OAuth2 client credentials — OPENSKY_CLIENT_ID + OPENSKY_CLIENT_SECRET (Bearer token).
+ *   3) Anonymous — strict rate limits; on Vercel only one bbox per run.
+ *
  * @see https://openskynetwork.github.io/opensky-api/rest.html
  */
 
@@ -52,15 +56,32 @@ function openskyDisabled() {
   return v === '1' || v === 'true' || v === 'yes';
 }
 
-/** OAuth client id + secret from OpenSky account page (API client). */
-function clientCredentials() {
-  const id = String(process.env.OPENSKY_CLIENT_ID || process.env.OPENSKY_USERNAME || '').trim();
-  const secret = String(process.env.OPENSKY_CLIENT_SECRET || process.env.OPENSKY_PASSWORD || '').trim();
+/** Registered-account HTTP Basic (OpenSky REST historically used this for /api/states/all). */
+function basicCredentials() {
+  const user = String(process.env.OPENSKY_USERNAME || '').trim();
+  const pass = String(process.env.OPENSKY_PASSWORD || '').trim();
+  if (!user || !pass) return null;
+  return { user, pass };
+}
+
+/** OAuth client id + secret only (do not mix with Basic username/password). */
+function oauthClientCredentials() {
+  const id = String(process.env.OPENSKY_CLIENT_ID || '').trim();
+  const secret = String(process.env.OPENSKY_CLIENT_SECRET || '').trim();
   return id && secret ? { id, secret } : null;
 }
 
+function hasBasicCredentials() {
+  return !!basicCredentials();
+}
+
 function hasOAuthCredentials() {
-  return !!clientCredentials();
+  return !!oauthClientCredentials();
+}
+
+/** Any credentialed mode (higher rate limits + more bboxes). */
+function hasNetworkAuth() {
+  return hasBasicCredentials() || hasOAuthCredentials();
 }
 
 function invalidateOpenskyToken() {
@@ -71,7 +92,7 @@ function invalidateOpenskyToken() {
  * @returns {Promise<string|null>} Bearer access token, or null if no credentials (anonymous API).
  */
 async function getBearerToken() {
-  const cred = clientCredentials();
+  const cred = oauthClientCredentials();
   if (!cred) return null;
 
   const marginMs = (parseInt(process.env.OPENSKY_TOKEN_REFRESH_MARGIN_SEC || '30', 10) || 30) * 1000;
@@ -141,6 +162,12 @@ async function getBearerToken() {
 
 async function statesRequestHeaders() {
   const h = { Accept: 'application/json' };
+  const basic = basicCredentials();
+  if (basic) {
+    const b64 = Buffer.from(`${basic.user}:${basic.pass}`, 'utf8').toString('base64');
+    h.Authorization = `Basic ${b64}`;
+    return h;
+  }
   const token = await getBearerToken();
   if (token) h.Authorization = `Bearer ${token}`;
   return h;
@@ -157,17 +184,17 @@ function boxLimit() {
 }
 
 function fetchOpts() {
-  const hasAuth = hasOAuthCredentials();
+  const credentialed = hasNetworkAuth();
   const timeoutMs = Math.min(
     60000,
     Math.max(
       8000,
-      parseInt(process.env.OPENSKY_FETCH_TIMEOUT_MS || (hasAuth ? '18000' : '12000'), 10) || (hasAuth ? 18000 : 12000)
+      parseInt(process.env.OPENSKY_FETCH_TIMEOUT_MS || (credentialed ? '22000' : '12000'), 10) || (credentialed ? 22000 : 12000)
     )
   );
   const maxAttempts = Math.max(
     1,
-    Math.min(3, parseInt(process.env.OPENSKY_FETCH_ATTEMPTS || (hasAuth ? '2' : '1'), 10) || (hasAuth ? 2 : 1))
+    Math.min(3, parseInt(process.env.OPENSKY_FETCH_ATTEMPTS || (credentialed ? '2' : '1'), 10) || (credentialed ? 2 : 1))
   );
   return { timeoutMs, maxAttempts };
 }
@@ -470,7 +497,7 @@ module.exports = {
           break;
         } catch (e) {
           const msg = String(e && e.message);
-          if (authRetry === 0 && msg === 'http_401' && hasOAuthCredentials()) {
+          if (authRetry === 0 && msg === 'http_401' && hasOAuthCredentials() && !hasBasicCredentials()) {
             invalidateOpenskyToken();
             continue;
           }
@@ -494,6 +521,16 @@ module.exports = {
       items.push(eventFromRow(unique[i]));
     }
 
+    const fetchedCount = collected.length;
+    const normalizedEmitted = items.length;
+    ctx.log('info', `${ID} ingest_summary`, {
+      fetched_count: fetchedCount,
+      normalized_emitted: normalizedEmitted,
+      unique_aircraft: unique.length,
+      boxes: boxes.length,
+      auth_mode: hasBasicCredentials() ? 'basic' : hasOAuthCredentials() ? 'oauth' : 'anonymous',
+    });
+
     return {
       items,
       meta: {
@@ -501,8 +538,11 @@ module.exports = {
         boxes: boxes.length,
         candidates: unique.length,
         emitted: items.length,
+        fetched_count: fetchedCount,
+        normalized_emitted: normalizedEmitted,
         opensky_timeout_ms: timeoutMs,
         opensky_attempts: maxAttempts,
+        opensky_basic: hasBasicCredentials(),
         opensky_oauth: hasOAuthCredentials(),
         opensky_oauth_suspended_until: oauthSuspendedUntil > Date.now() ? oauthSuspendedUntil : null,
         opensky_token_fetch_timeout_ms: tokenFetchTimeoutMs(),
