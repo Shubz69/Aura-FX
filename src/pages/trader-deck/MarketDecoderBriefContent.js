@@ -20,6 +20,38 @@ import {
   formatDecoderMetricPercent,
 } from '../../utils/decoderDisplayFormat.mjs';
 
+function requestSymbolForChart(brief) {
+  const raw = brief?.instrument?.requestRaw;
+  if (raw && /:/.test(String(raw).trim())) return String(raw).trim();
+  const c = String(brief?.meta?.canonicalSymbol || brief?.instrument?.display || brief?.header?.asset || 'EURUSD')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+  const map = {
+    NAS100: 'OANDA:NAS100USD',
+    NDX: 'OANDA:NAS100USD',
+    SPX: 'OANDA:SPX500USD',
+    SPX500: 'OANDA:SPX500USD',
+    US30: 'OANDA:US30USD',
+    USOIL: 'TVC:USOIL',
+    WTI: 'TVC:USOIL',
+    UKOIL: 'TVC:UKOIL',
+    BRENT: 'TVC:UKOIL',
+    XAUUSD: 'OANDA:XAUUSD',
+    XAGUSD: 'OANDA:XAGUSD',
+    XPTUSD: 'OANDA:XPTUSD',
+    BTCUSD: 'COINBASE:BTCUSD',
+    ETHUSD: 'COINBASE:ETHUSD',
+    SOLUSD: 'BINANCE:SOLUSDT',
+  };
+  if (map[c]) return map[c];
+  if (c.length === 6 && /^[A-Z]{6}$/.test(c)) return `OANDA:${c}`;
+  if (c.includes('XAU')) return 'OANDA:XAUUSD';
+  if (c.includes('XAG')) return 'OANDA:XAGUSD';
+  if (c.includes('BTC')) return 'COINBASE:BTCUSD';
+  if (c.includes('ETH')) return 'COINBASE:ETHUSD';
+  return 'OANDA:EURUSD';
+}
+
 function formatPct(n) {
   if (n == null || Number.isNaN(Number(n))) {
     return null;
@@ -468,6 +500,8 @@ export default function MarketDecoderBriefContent({ brief: rawBrief, q }) {
             <div className="md-mse-chart-shell">
               <MarketDecoderChart
                 bars={brief.meta?.chartBars}
+                requestSymbol={requestSymbolForChart(brief)}
+                seedBars={brief.meta?.chartBars}
                 compact={false}
                 referenceStyle
                 overlays={brief.chartOverlay}
