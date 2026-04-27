@@ -10,6 +10,14 @@ const { getSystemHealthSummary } = require('./adapterState');
 const { buildIntelDigest } = require('./intelDigest');
 const { buildMarketWatchNarrative } = require('./marketWatchNarrative');
 const { buildPairHeatFromEvents } = require('./pairHeat');
+const { mergeGeoFallback, countGeoTagged } = require('./fallbackGeoEvents');
+const {
+  providerEnvFlags,
+  adapterSnapshotForLiveGeo,
+  geoTaggedEventCounts,
+  buildFeedDiagnostics,
+  logFeedServe,
+} = require('./feedDiagnostics');
 
 /** NewsAPI top-headlines (optional; requires NEWS_API_KEY). Lowercase ISO2 country code. */
 async function fetchCountryWireHeadlines(iso2) {
@@ -102,7 +110,7 @@ module.exports = async (req, res) => {
     if (!countryIso2) maxAgeHours = null;
     if (Number.isFinite(maxAgeHours) && maxAgeHours > 168) maxAgeHours = 168;
 
-    const [events, countryHeadlines] = await Promise.all([
+    const [eventsRaw, countryHeadlines, liveGeoAdapters, geoCounts] = await Promise.all([
       queryFeed({
         limit: Math.min(320, Math.max(120, limit)),
         sinceUpdated: since || null,
@@ -114,7 +122,31 @@ module.exports = async (req, res) => {
         maxAgeHours: Number.isFinite(maxAgeHours) ? maxAgeHours : null,
       }),
       countryIso2 ? fetchCountryWireHeadlines(countryIso2) : Promise.resolve([]),
+      adapterSnapshotForLiveGeo(),
+      geoTaggedEventCounts(),
     ]);
+    const liveCount = eventsRaw.length;
+    const geoTaggedLive = countGeoTagged(eventsRaw);
+    const mergeResult = mergeGeoFallback(eventsRaw, {
+      countryIso2,
+      minGeoMarkers: 4,
+      tab: tab === 'all' ? null : tab,
+    });
+    const events = mergeResult.events;
+    const feedDiag = buildFeedDiagnostics({
+      liveEventCount: liveCount,
+      geoTaggedLive,
+      mergedDemoCount: mergeResult.mergedDemoCount,
+      mergeReason: mergeResult.reason,
+      finalGeoCount: mergeResult.geoAfter,
+      tab,
+      countryIso2,
+    });
+    logFeedServe('feed', {
+      ...feedDiag,
+      providerEnv: providerEnvFlags(),
+      liveGeoAdapters,
+    });
     const aggregates = await computeAggregates(events);
     const intelDigest = buildIntelDigest(events, {
       limitStories: 7,
@@ -142,6 +174,14 @@ module.exports = async (req, res) => {
       /** UI only: whether headline wire can be served (no secrets exposed). Always sent for client copy. */
       countryWireAvailable: !!process.env.NEWS_API_KEY,
       serverTime: new Date().toISOString(),
+      surveillanceDiagnostics: {
+        providerEnv: providerEnvFlags(),
+        geoTaggedEventCounts: geoCounts,
+        liveGeoAdapters,
+        fallbackInjected: mergeResult.mergedDemoCount > 0,
+        finalEventCount: events.length,
+        feed: feedDiag,
+      },
     });
   } catch (e) {
     console.error('[surveillance/feed]', e);

@@ -14,6 +14,14 @@ const { getSystemHealthSummary } = require('./adapterState');
 const { buildIntelDigest } = require('./intelDigest');
 const { buildMarketWatchNarrative } = require('./marketWatchNarrative');
 const { buildPairHeatFromEvents } = require('./pairHeat');
+const { mergeGeoFallback, countGeoTagged } = require('./fallbackGeoEvents');
+const {
+  providerEnvFlags,
+  adapterSnapshotForLiveGeo,
+  geoTaggedEventCounts,
+  buildFeedDiagnostics,
+  logFeedServe,
+} = require('./feedDiagnostics');
 
 function setCors(req, res) {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -78,7 +86,29 @@ module.exports = async (req, res) => {
       : null;
     const showIntro = !seenStr || seenStr < today;
 
-    const events = await queryFeed({ limit: 260, tab: null });
+    const [eventsRaw, liveGeoAdapters, geoCounts] = await Promise.all([
+      queryFeed({ limit: 260, tab: null }),
+      adapterSnapshotForLiveGeo(),
+      geoTaggedEventCounts(),
+    ]);
+    const liveCount = eventsRaw.length;
+    const geoTaggedLive = countGeoTagged(eventsRaw);
+    const mergeResult = mergeGeoFallback(eventsRaw, { countryIso2: null, minGeoMarkers: 4, tab: null });
+    const events = mergeResult.events;
+    const feedDiag = buildFeedDiagnostics({
+      liveEventCount: liveCount,
+      geoTaggedLive,
+      mergedDemoCount: mergeResult.mergedDemoCount,
+      mergeReason: mergeResult.reason,
+      finalGeoCount: mergeResult.geoAfter,
+      tab: 'all',
+      countryIso2: null,
+    });
+    logFeedServe('bootstrap', {
+      ...feedDiag,
+      providerEnv: providerEnvFlags(),
+      liveGeoAdapters,
+    });
     const aggregates = await computeAggregates(events);
     const intelDigest = buildIntelDigest(events, {
       limitStories: 7,
@@ -125,6 +155,14 @@ module.exports = async (req, res) => {
       briefing,
       countryWireAvailable: !!process.env.NEWS_API_KEY,
       serverTime: new Date().toISOString(),
+      surveillanceDiagnostics: {
+        providerEnv: providerEnvFlags(),
+        geoTaggedEventCounts: geoCounts,
+        liveGeoAdapters,
+        fallbackInjected: mergeResult.mergedDemoCount > 0,
+        finalEventCount: events.length,
+        feed: feedDiag,
+      },
     });
   } catch (e) {
     console.error('[surveillance/bootstrap]', e);
