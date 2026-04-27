@@ -14,6 +14,7 @@ const axios = require('axios');
 const { toCanonical, forProvider } = require('../ai/utils/symbol-registry');
 
 const REQUEST_TIMEOUT = 12000;
+const TD_USAGE_TTL_MS = 5 * 60_000;
 const responseCache = new Map();
 const inFlight = new Map();
 const providerCallCounts = new Map();
@@ -125,42 +126,162 @@ function toYahooRange(range) {
   }
 }
 
+const TD_MAX_OUTPUT = 5000;
+
+const YAHOO_RANGE_LADDER = ['1d', '5d', '7d', '1mo', '3mo', '6mo', '1y', '2y', '5y', 'max'];
+
+function computeMinBarsWanted(interval, range) {
+  const i = normalizeInterval(interval);
+  const rr = normalizeRange(range);
+  const days = { '1D': 1, '1W': 7, '1M': 31, '3M': 92, '6M': 183, '1Y': 366 }[rr] || 31;
+  if (i === '1') return Math.min(1500, Math.max(300, Math.floor(days * 24 * 60 * 0.6)));
+  if (i === '15') return Math.max(1000, Math.floor((days * 24 * 60) / 15 * 0.7));
+  if (i === '60') return rr === '3M' ? 1500 : Math.max(900, Math.floor(days * 24 * 0.8));
+  if (i === '240') return rr === '1Y' ? 1000 : Math.max(400, Math.floor((days * 24 * 0.55) / 4));
+  if (i === '1D') return rr === '1Y' ? 250 : Math.max(90, Math.floor(days * 0.9));
+  return 80;
+}
+
+function desiredTwelveOutputsize(interval, range, from, to) {
+  const r = normalizeInterval(interval);
+  const rr = normalizeRange(range);
+  if (Number.isFinite(from) || Number.isFinite(to)) {
+    return TD_MAX_OUTPUT;
+  }
+  const d = { '1D': 1, '1W': 7, '1M': 31, '3M': 92, '6M': 183, '1Y': 366 }[rr] || 31;
+  if (r === '1') return Math.min(TD_MAX_OUTPUT, Math.max(900, Math.ceil(d * 24 * 60 * 0.5)));
+  if (r === '15') return Math.min(TD_MAX_OUTPUT, Math.max(500, Math.ceil((d * 24 * 60) / 15)));
+  if (r === '60') return Math.min(TD_MAX_OUTPUT, Math.max(600, d * 28));
+  if (r === '240') return Math.min(TD_MAX_OUTPUT, Math.max(220, Math.ceil(d * 8) + 120));
+  if (r === '1D') return Math.min(TD_MAX_OUTPUT, Math.max(280, d + 60));
+  return 500;
+}
+
+function yahooRangeDowngradeChainFrom(targetYahooRange) {
+  const t = String(targetYahooRange || '3mo');
+  const out = [t];
+  for (const r of YAHOO_RANGE_LADDER) {
+    if (r !== t) out.push(r);
+  }
+  return [...new Set(out)];
+}
+
+function yahooIntervalCoarseFallbacks(yInt) {
+  const u = String(yInt);
+  const m = {
+    '1m': ['2m', '5m', '15m', '30m', '60m', '1h'],
+    '2m': ['5m', '15m', '30m', '60m', '1h'],
+    '5m': ['15m', '30m', '60m', '1h'],
+    '15m': ['30m', '60m', '1h'],
+    '30m': ['60m', '1h'],
+    '60m': ['1h'],
+    '1h': [],
+    '4h': [],
+  };
+  return m[u] || ['15m', '1h', '1d'];
+}
+
+function yahooToReturnedCode(yi) {
+  const u = String(yi);
+  if (u === '1m' || u === '2m') return '1';
+  if (u === '5m' || u === '15m' || u === '30m') return '15';
+  if (u === '60m' || u === '1h') return '60';
+  if (u === '1d' || u === '5d' || u === '1wk' || u === '1mo') return '1D';
+  return '60';
+}
+
 function providerPlan({ interval, range, from, to }) {
   const hasDateWindow = Number.isFinite(from) || Number.isFinite(to);
-  const preferTwelve = interval === '1' || hasDateWindow;
-  return {
-    prefer: preferTwelve ? 'twelvedata' : 'yahoo',
-    fallback: preferTwelve ? 'yahoo' : 'twelvedata',
-    hasDateWindow,
-  };
+  const r = normalizeInterval(interval);
+  const rr = normalizeRange(range);
+  if (r === '1' || hasDateWindow) {
+    return { prefer: 'twelvedata', fallback: 'yahoo', hasDateWindow };
+  }
+  const intraday = r === '1' || r === '15' || r === '60' || r === '240';
+  const deep = rr === '1M' || rr === '3M' || rr === '6M' || rr === '1Y';
+  if (intraday && deep) {
+    return { prefer: 'twelvedata', fallback: 'yahoo', hasDateWindow: false };
+  }
+  return { prefer: 'yahoo', fallback: 'twelvedata', hasDateWindow: false };
+}
+
+function planWithoutTwelve(plan, hasTwKey) {
+  if (hasTwKey) return plan;
+  return { prefer: 'yahoo', fallback: 'yahoo', hasDateWindow: plan.hasDateWindow };
 }
 
 function yahooRangeParams({ interval, range }) {
   const r = normalizeInterval(interval);
   const rr = normalizeRange(range);
-  if (r === '1D') return { interval: '1d', range: toYahooRange(rr), aggregateTo4h: false, returnedInterval: '1D' };
-  if (r === '240') return { interval: '1h', range: toYahooRange(rr), aggregateTo4h: true, returnedInterval: '240' };
-  if (r === '1') return { interval: '1m', range: '7d', aggregateTo4h: false, returnedInterval: '1' };
-  if (r === '15') return { interval: '15m', range: toYahooRange(rr), aggregateTo4h: false, returnedInterval: '15' };
+  if (r === '1D') {
+    return { interval: '1d', range: toYahooRange(rr), aggregateTo4h: false, returnedInterval: '1D' };
+  }
+  if (r === '240') {
+    return { interval: '1h', range: toYahooRange(rr), aggregateTo4h: true, returnedInterval: '240' };
+  }
+  if (r === '1') {
+    const range1m = rr === '1D' ? '1d' : rr === '1W' ? '5d' : '7d';
+    return { interval: '1m', range: range1m, aggregateTo4h: false, returnedInterval: '1' };
+  }
+  if (r === '15') {
+    return { interval: '15m', range: toYahooRange(rr), aggregateTo4h: false, returnedInterval: '15' };
+  }
   return { interval: '1h', range: toYahooRange(rr), aggregateTo4h: false, returnedInterval: '60' };
 }
 
 function twelveDataParams({ interval, range, from, to }) {
   const r = normalizeInterval(interval);
   const rr = normalizeRange(range);
+  const cap = (n) => Math.min(TD_MAX_OUTPUT, Math.max(1, n));
+  const hasDateWindow = Number.isFinite(from) || Number.isFinite(to);
+  const deepIntraday = rr === '1M' || rr === '3M' || rr === '6M' || rr === '1Y';
   if (r === '1D') {
-    return { interval: '1day', aggregateTo4h: false, outputsize: Math.max(120, barsByRange(rr) / 24), returnedInterval: '1D' };
+    return {
+      interval: '1day',
+      aggregateTo4h: false,
+      outputsize: cap(hasDateWindow ? TD_MAX_OUTPUT : Math.max(250, Math.ceil(barsByRange(rr) / 24))),
+      returnedInterval: '1D',
+    };
   }
   if (r === '240') {
-    return { interval: '1h', aggregateTo4h: true, outputsize: Math.max(200, barsByRange(rr)), returnedInterval: '240' };
+    const out = hasDateWindow || deepIntraday ? TD_MAX_OUTPUT : desiredTwelveOutputsize('240', rr, from, to);
+    return {
+      interval: '4h',
+      aggregateTo4h: false,
+      outputsize: cap(Math.max(220, out)),
+      returnedInterval: '240',
+    };
   }
   if (r === '1') {
-    return { interval: '1min', aggregateTo4h: false, outputsize: Math.max(500, barsByRange(rr) * 4), returnedInterval: '1' };
+    const out = hasDateWindow || deepIntraday ? TD_MAX_OUTPUT : desiredTwelveOutputsize('1', rr, from, to);
+    return { interval: '1min', aggregateTo4h: false, outputsize: cap(out), returnedInterval: '1' };
   }
   if (r === '15') {
-    return { interval: '15min', aggregateTo4h: false, outputsize: Math.max(200, Math.ceil(barsByRange(rr) / 0.25)), returnedInterval: '15' };
+    const out = hasDateWindow || deepIntraday ? TD_MAX_OUTPUT : desiredTwelveOutputsize('15', rr, from, to);
+    return { interval: '15min', aggregateTo4h: false, outputsize: cap(out), returnedInterval: '15' };
   }
-  return { interval: '1h', aggregateTo4h: false, outputsize: Math.max(200, barsByRange(rr)), returnedInterval: '60' };
+  const out = hasDateWindow || deepIntraday ? TD_MAX_OUTPUT : desiredTwelveOutputsize('60', rr, from, to);
+  return { interval: '1h', aggregateTo4h: false, outputsize: cap(out), returnedInterval: '60' };
+}
+
+function isIntradayInterval(interval) {
+  const i = normalizeInterval(interval);
+  return i === '1' || i === '15' || i === '60' || i === '240';
+}
+
+function buildTwelveTimeSeriesParams({ symbol, interval, outputsize, from, to, apikey, timezone }) {
+  const params = {
+    symbol,
+    interval,
+    outputsize: String(outputsize),
+    apikey,
+    order: 'ASC',
+    format: 'JSON',
+    ...(timezone ? { timezone } : {}),
+  };
+  if (Number.isFinite(from)) params.start_date = new Date(from * 1000).toISOString();
+  if (Number.isFinite(to)) params.end_date = new Date(to * 1000).toISOString();
+  return params;
 }
 
 /** UTC 4-hour bucket start (Unix seconds). */
@@ -261,8 +382,8 @@ function makeResponseKey({ requestSymbol, canonical, interval, range, from, to, 
   });
 }
 
-function buildChartRequestUrl(yahooSymbol, interval, range) {
-  const base = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}`;
+function buildChartRequestUrl(yahooSymbol, interval, range, host = 'https://query1.finance.yahoo.com') {
+  const base = `${host}/v8/finance/chart/${encodeURIComponent(yahooSymbol)}`;
   const qs = new URLSearchParams({
     interval: String(interval),
     range: String(range),
@@ -271,14 +392,34 @@ function buildChartRequestUrl(yahooSymbol, interval, range) {
   return `${base}?${qs}`;
 }
 
+async function yahooHttpGet(yahooSymbol, interval, range, signal) {
+  const common = {
+    params: { interval, range, includePrePost: 'false' },
+    timeout: REQUEST_TIMEOUT,
+    signal,
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      Accept: 'application/json',
+    },
+  };
+  const path = `/v8/finance/chart/${encodeURIComponent(yahooSymbol)}`;
+  try {
+    return await axios.get(`https://query1.finance.yahoo.com${path}`, common);
+  } catch (e) {
+    return axios.get(`https://query2.finance.yahoo.com${path}`, common);
+  }
+}
+
 /**
- * @returns {Promise<{ bars: Array, requestUrl: string, responseStatus: number|null }>}
+ * One Yahoo attempt with cache; never throws 422/400 to the HTTP layer (caller may chain).
+ * @returns {Promise<{ bars: Array, requestUrl: string, responseStatus: number|null, ... }>}
  */
-async function fetchYahooChartBars(yahooSymbol, interval, range) {
+async function fetchYahooChartBarsOnce(yahooSymbol, interval, range) {
   const key = cacheKey(yahooSymbol, interval, range);
   const hit = responseCache.get(key);
   const requestUrl = buildChartRequestUrl(yahooSymbol, interval, range);
-  const ttlMs = ttlByIntervalMs(interval);
+  const ttlMs = 90_000;
   if (hit && Date.now() - hit.at < ttlMs) {
     return {
       bars: hit.bars,
@@ -302,20 +443,25 @@ async function fetchYahooChartBars(yahooSymbol, interval, range) {
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
   const run = (async () => {
     bumpProviderCall('yahoo');
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}`;
-    const response = await axios.get(url, {
-      params: { interval, range, includePrePost: 'false' },
-      timeout: REQUEST_TIMEOUT,
-      signal: controller.signal,
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        Accept: 'application/json',
-      },
-    });
+    let response;
+    try {
+      response = await yahooHttpGet(yahooSymbol, interval, range, controller.signal);
+    } catch (e) {
+      const st = e.response?.status;
+      const out = { bars: [], requestUrl, responseStatus: st != null ? st : 502, cacheHit: false, cacheTtlMs: ttlMs, inFlightDeduped: false, providerCallMade: true, httpError: e };
+      if (!st || st === 404) responseCache.set(key, { at: Date.now(), bars: [], responseStatus: st });
+      return out;
+    }
     const status = response.status ?? 200;
     const result = response.data?.chart?.result?.[0];
-    const bars = result ? yahooResultToBars(result) : [];
+    const errBlock = response.data?.chart?.error;
+    const bars = result && !errBlock ? yahooResultToBars(result) : [];
+    if (errBlock) {
+      const e = new Error(String(errBlock.description || 'Yahoo chart error'));
+      e.response = { status: 422, data: response.data };
+      const out = { bars: [], requestUrl, responseStatus: 422, cacheHit: false, cacheTtlMs: ttlMs, inFlightDeduped: false, providerCallMade: true, httpError: e };
+      return out;
+    }
     responseCache.set(key, { at: Date.now(), bars, responseStatus: status });
     return {
       bars,
@@ -329,15 +475,68 @@ async function fetchYahooChartBars(yahooSymbol, interval, range) {
   })();
   inFlight.set(inFlightKey, run);
   try {
-    const out = await run;
-    clearTimeout(timeoutId);
-    return out;
-  } catch (e) {
-    clearTimeout(timeoutId);
-    throw e;
+    return await run;
   } finally {
+    clearTimeout(timeoutId);
     inFlight.delete(inFlightKey);
   }
+}
+
+/**
+ * Tries range / interval downgrades; returns best available bars (never throws to HTTP layer).
+ */
+async function fetchYahooChartBars(yahooSymbol, yPlan, normalizedUserInterval, userRange) {
+  const rangeChain = yahooRangeDowngradeChainFrom(yPlan.range);
+  let rest = yPlan.aggregateTo4h
+    ? [String(yPlan.interval)]
+    : [String(yPlan.interval), ...yahooIntervalCoarseFallbacks(String(yPlan.interval))];
+  const uq = new Set();
+  const intervalOrder = rest.filter((x) => (uq.has(x) ? false : (uq.add(x), true)));
+
+  let best = null;
+  for (const yi of intervalOrder) {
+    for (const yRange of rangeChain) {
+      const out = await fetchYahooChartBarsOnce(yahooSymbol, yi, yRange);
+      const n = out.bars ? out.bars.length : 0;
+      if (n < 1) continue;
+      const use4h = Boolean(yPlan.aggregateTo4h) && (yi === '1h' || yi === '60m');
+      let bars = out.bars;
+      if (use4h) {
+        bars = aggregateHourlyToFourHour(bars);
+      }
+      const ab = bars && bars.length ? bars.length : 0;
+      const meta = {
+        ...out,
+        bars,
+        yahooRangeUsed: yRange,
+        yahooIntervalUsed: yi,
+        yahooRangeDowngraded: yRange !== yPlan.range,
+        intervalCoarsened: yi !== yPlan.interval,
+        fourHourAggregated: use4h,
+        returnedInterval: use4h
+          ? '240'
+          : yahooToReturnedCode(yi) || yPlan.returnedInterval || String(normalizedUserInterval),
+        intervalSubstituted: Boolean(
+          !use4h && yahooToReturnedCode(yi) && yahooToReturnedCode(yi) !== String(normalizedUserInterval)
+        ),
+      };
+      if (ab >= 2) {
+        return meta;
+      }
+      if (!best || ab > (best.bars && best.bars.length ? best.bars.length : 0)) {
+        best = meta;
+      }
+    }
+  }
+  if (best) return best;
+  const last = await fetchYahooChartBarsOnce(yahooSymbol, yPlan.interval, yPlan.range);
+  return {
+    ...last,
+    yahooRangeUsed: yPlan.range,
+    yahooIntervalUsed: yPlan.interval,
+    fourHourAggregated: false,
+    returnedInterval: yPlan.returnedInterval || String(normalizedUserInterval),
+  };
 }
 
 function twelveBarToUnified(bar) {
@@ -354,16 +553,15 @@ function twelveBarToUnified(bar) {
 }
 
 async function fetchTwelveDataBars({ symbol, interval, outputsize, from, to, apikey }) {
-  const params = {
+  const params = buildTwelveTimeSeriesParams({
     symbol,
     interval,
-    outputsize: String(outputsize),
+    outputsize,
+    from,
+    to,
     apikey,
-    order: 'ASC',
-    format: 'JSON',
-  };
-  if (Number.isFinite(from)) params.start_date = new Date(from * 1000).toISOString();
-  if (Number.isFinite(to)) params.end_date = new Date(to * 1000).toISOString();
+    timezone: isIntradayInterval(interval) ? 'UTC' : '',
+  });
   const key = cacheKey(`TD:${symbol}`, interval, JSON.stringify({ outputsize, from: params.start_date || '', to: params.end_date || '' }));
   const hit = responseCache.get(key);
   const ttlMs = ttlByIntervalMs(interval);
@@ -396,6 +594,8 @@ async function fetchTwelveDataBars({ symbol, interval, outputsize, from, to, api
       bars,
       requestUrl: `${TWELVE_BASE}?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}`,
       responseStatus: status,
+      tdCreditsUsed: Number(response.headers?.['api-credits-used'] || 0),
+      tdCreditsLeft: Number(response.headers?.['api-credits-left'] || 0),
       cacheHit: false,
       cacheTtlMs: ttlMs,
       inFlightDeduped: false,
@@ -409,6 +609,36 @@ async function fetchTwelveDataBars({ symbol, interval, outputsize, from, to, api
     return await run;
   } finally {
     inFlight.delete(inFlightKey);
+  }
+}
+
+async function fetchTwelveApiUsage(apikey) {
+  const key = 'TD:api_usage';
+  const hit = responseCache.get(key);
+  if (hit && Date.now() - hit.at < TD_USAGE_TTL_MS) return hit.payload;
+  const pending = inFlight.get(key);
+  if (pending) return pending;
+  const run = (async () => {
+    const response = await axios.get('https://api.twelvedata.com/api_usage', {
+      params: { apikey, format: 'JSON', timezone: 'UTC' },
+      timeout: REQUEST_TIMEOUT,
+      headers: { Accept: 'application/json' },
+    });
+    const body = response.data || {};
+    const payload = {
+      timestamp: body.timestamp || null,
+      currentUsage: Number(body.current_usage || 0),
+      planLimit: Number(body.plan_limit || 0),
+      planCategory: body.plan_category || '',
+    };
+    responseCache.set(key, { at: Date.now(), payload });
+    return payload;
+  })();
+  inFlight.set(key, run);
+  try {
+    return await run;
+  } finally {
+    inFlight.delete(key);
   }
 }
 
@@ -434,6 +664,17 @@ function buildDiagnostics(base) {
     firstBarTime: base.firstBarTime != null ? base.firstBarTime : null,
     lastBarTime: base.lastBarTime != null ? base.lastBarTime : null,
     error: base.error || undefined,
+    yahooRangeDowngraded: base.yahooRangeDowngraded,
+    intervalCoarsened: base.intervalCoarsened,
+    intervalSubstituted: base.intervalSubstituted,
+    rangeDowngrade: base.rangeDowngrade,
+    requestedOutputSize: base.requestedOutputSize != null ? base.requestedOutputSize : null,
+    returnedBarCount: base.returnedBarCount != null ? base.returnedBarCount : 0,
+    minBarsWanted: base.minBarsWanted != null ? base.minBarsWanted : null,
+    providerLimitHit: Boolean(base.providerLimitHit),
+    twelveDataCreditsUsed: base.twelveDataCreditsUsed != null ? base.twelveDataCreditsUsed : null,
+    twelveDataCreditsLeft: base.twelveDataCreditsLeft != null ? base.twelveDataCreditsLeft : null,
+    twelveDataApiUsage: base.twelveDataApiUsage || null,
     cacheHit: Boolean(base.cacheHit),
     cacheTtlMs: base.cacheTtlMs != null ? base.cacheTtlMs : null,
     inFlightDeduped: Boolean(base.inFlightDeduped),
@@ -505,7 +746,10 @@ module.exports = async (req, res) => {
   const requestedFrom = parseMaybeDate(req.query.from);
   const requestedTo = parseMaybeDate(req.query.to);
   const twKey = String(process.env.TWELVE_DATA_API_KEY || '').trim();
-  const plan = providerPlan({ interval: normalizedInterval, range: normalizedRange, from: requestedFrom, to: requestedTo });
+  const plan = planWithoutTwelve(
+    providerPlan({ interval: normalizedInterval, range: normalizedRange, from: requestedFrom, to: requestedTo }),
+    Boolean(twKey)
+  );
 
   let canonical;
   let yahoo;
@@ -596,34 +840,74 @@ module.exports = async (req, res) => {
 
   async function fetchProvider(provider) {
     if (provider === 'yahoo') {
-      const out = await fetchYahooChartBars(yahoo, yPlan.interval, yPlan.range);
+      const out = await fetchYahooChartBars(yahoo, yPlan, normalizedInterval, normalizedRange);
       return {
         provider,
-        bars: yPlan.aggregateTo4h ? aggregateHourlyToFourHour(out.bars) : out.bars,
+        bars: out.bars || [],
         requestUrl: out.requestUrl,
         responseStatus: out.responseStatus,
-        returnedInterval: yPlan.returnedInterval,
-        fourHourAggregated: yPlan.aggregateTo4h,
-        yahooFetchInterval: yPlan.interval,
-        yahooRange: yPlan.range,
+        returnedInterval: out.returnedInterval || yPlan.returnedInterval,
+        fourHourAggregated: Boolean(out.fourHourAggregated),
+        yahooFetchInterval: out.yahooIntervalUsed || yPlan.interval,
+        yahooRange: out.yahooRangeUsed || yPlan.range,
         cacheHit: out.cacheHit,
         cacheTtlMs: out.cacheTtlMs,
         inFlightDeduped: out.inFlightDeduped,
         providerCallMade: out.providerCallMade,
+        yahooRangeDowngraded: out.yahooRangeDowngraded,
+        intervalCoarsened: out.intervalCoarsened,
+        intervalSubstituted: out.intervalSubstituted,
+        requestedOutputSize: null,
+        twelveDataCreditsUsed: out.tdCreditsUsed ?? null,
+        twelveDataCreditsLeft: out.tdCreditsLeft ?? null,
       };
     }
     if (!twKey) throw new Error('TWELVE_DATA_API_KEY is required for Twelve Data provider');
-    const out = await fetchTwelveDataBars({
+    let out = await fetchTwelveDataBars({
       symbol: twelveDataSymbol,
       interval: tPlan.interval,
-      outputsize: tPlan.outputsize,
+      outputsize: Math.min(TD_MAX_OUTPUT, tPlan.outputsize),
       from: requestedFrom,
       to: requestedTo,
       apikey: twKey,
     });
+    let bars = out.bars || [];
+    if (normalizedInterval === '240' && tPlan.interval === '4h' && bars.length < 2) {
+      const hPlan = { ...tPlan, interval: '1h', aggregateTo4h: true, returnedInterval: '240' };
+      const out2 = await fetchTwelveDataBars({
+        symbol: twelveDataSymbol,
+        interval: hPlan.interval,
+        outputsize: Math.min(TD_MAX_OUTPUT, desiredTwelveOutputsize('240', normalizedRange, requestedFrom, requestedTo)),
+        from: requestedFrom,
+        to: requestedTo,
+        apikey: twKey,
+      });
+      if ((out2.bars || []).length >= 1) {
+        out = out2;
+        bars = aggregateHourlyToFourHour(out2.bars);
+        return {
+          provider,
+          bars,
+          requestUrl: out2.requestUrl,
+          responseStatus: out2.responseStatus,
+          returnedInterval: '240',
+          fourHourAggregated: true,
+          yahooFetchInterval: '',
+          yahooRange: '',
+          cacheHit: out2.cacheHit,
+          cacheTtlMs: out2.cacheTtlMs,
+          inFlightDeduped: out2.inFlightDeduped,
+          providerCallMade: out2.providerCallMade,
+          twelve4hTo1hFallback: true,
+          requestedOutputSize: Math.min(TD_MAX_OUTPUT, desiredTwelveOutputsize('240', normalizedRange, requestedFrom, requestedTo)),
+          twelveDataCreditsUsed: out2.tdCreditsUsed ?? null,
+          twelveDataCreditsLeft: out2.tdCreditsLeft ?? null,
+        };
+      }
+    }
     return {
       provider,
-      bars: tPlan.aggregateTo4h ? aggregateHourlyToFourHour(out.bars) : out.bars,
+      bars: tPlan.aggregateTo4h ? aggregateHourlyToFourHour(bars) : bars,
       requestUrl: out.requestUrl,
       responseStatus: out.responseStatus,
       returnedInterval: tPlan.returnedInterval,
@@ -634,6 +918,9 @@ module.exports = async (req, res) => {
       cacheTtlMs: out.cacheTtlMs,
       inFlightDeduped: out.inFlightDeduped,
       providerCallMade: out.providerCallMade,
+      requestedOutputSize: Math.min(TD_MAX_OUTPUT, tPlan.outputsize),
+      twelveDataCreditsUsed: out.tdCreditsUsed ?? null,
+      twelveDataCreditsLeft: out.tdCreditsLeft ?? null,
     };
   }
 
@@ -666,8 +953,16 @@ module.exports = async (req, res) => {
     }
 
     const barCount = bars.length;
+    const minBarsWanted = computeMinBarsWanted(normalizedInterval, normalizedRange);
     const firstBarTime = barCount ? bars[0].time : null;
     const lastBarTime = barCount ? bars[barCount - 1].time : null;
+    const requestedOutputSize = Number.isFinite(Number(fetched.requestedOutputSize)) ? Number(fetched.requestedOutputSize) : null;
+    const providerLimitHit = Boolean(
+      selected === 'twelvedata' &&
+      requestedOutputSize != null &&
+      requestedOutputSize >= TD_MAX_OUTPUT &&
+      barCount < minBarsWanted
+    );
 
     const diagnostics = buildDiagnostics({
       requestSymbol: symbol,
@@ -690,11 +985,28 @@ module.exports = async (req, res) => {
       firstBarTime,
       lastBarTime,
       error: providerError || undefined,
+      yahooRangeDowngraded: fetched.yahooRangeDowngraded,
+      intervalCoarsened: fetched.intervalCoarsened,
+      intervalSubstituted: fetched.intervalSubstituted,
+      rangeDowngrade: undefined,
+      requestedOutputSize,
+      returnedBarCount: barCount,
+      minBarsWanted,
+      providerLimitHit,
+      twelveDataCreditsUsed: fetched.twelveDataCreditsUsed ?? null,
+      twelveDataCreditsLeft: fetched.twelveDataCreditsLeft ?? null,
       cacheHit: fetched.cacheHit,
       cacheTtlMs: fetched.cacheTtlMs,
       inFlightDeduped: fetched.inFlightDeduped,
       providerCallMade: fetched.providerCallMade,
     });
+    if (twKey && (selected === 'twelvedata' || fallbackUsed === 'twelvedata')) {
+      try {
+        diagnostics.twelveDataApiUsage = await fetchTwelveApiUsage(twKey);
+      } catch (e) {
+        diagnostics.twelveDataApiUsage = { error: String(e.message || e) };
+      }
+    }
 
     if (barCount < 2) {
       const payload = {
@@ -758,7 +1070,6 @@ module.exports = async (req, res) => {
     return res.status(200).json(payload);
   } catch (err) {
     const status = err.response?.status;
-    const httpStatus = status && status >= 400 && status < 600 ? status : 502;
     const msg = err.code === 'ECONNABORTED' || err.name === 'AbortError' ? 'Chart request timed out' : err.message;
     console.error('[chart-history]', symbol, yahoo, msg);
     const diagnostics = buildDiagnostics({
@@ -777,13 +1088,14 @@ module.exports = async (req, res) => {
       yahooRange: yPlan.range,
       fourHourAggregated: yPlan.aggregateTo4h,
       requestUrl,
-      responseStatus: status != null ? status : null,
+      responseStatus: status != null ? status : 502,
       barCount: 0,
       firstBarTime: null,
       lastBarTime: null,
       error: msg || 'Chart data fetch failed',
+      rangeDowngrade: { providerHttpStatus: status, note: 'Chart fetch failed; response uses HTTP 200 for recoverable provider errors' },
     });
-    return res.status(httpStatus).json({
+    return res.status(200).json({
       success: false,
       message: msg || 'Chart data fetch failed',
       canonical,
@@ -802,3 +1114,8 @@ module.exports.normalizeInterval = normalizeInterval;
 module.exports.normalizeRange = normalizeRange;
 module.exports.providerPlan = providerPlan;
 module.exports.twelveDataSymbolForCanonical = twelveDataSymbolForCanonical;
+module.exports.twelveDataParams = twelveDataParams;
+module.exports.computeMinBarsWanted = computeMinBarsWanted;
+module.exports.desiredTwelveOutputsize = desiredTwelveOutputsize;
+module.exports.buildTwelveTimeSeriesParams = buildTwelveTimeSeriesParams;
+module.exports.isIntradayInterval = isIntradayInterval;

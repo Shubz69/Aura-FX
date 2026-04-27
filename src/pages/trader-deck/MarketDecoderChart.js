@@ -1,5 +1,6 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
+import Api from '../../services/Api';
 
 const MODES = [
   { id: 'candles', label: 'Candles' },
@@ -10,7 +11,20 @@ const MODES = [
 
 const TIMEFRAMES_REF = ['1H', '4H', '1D', '1W', '1M'];
 
-/** Approximate zoom on daily OHLC bars (tabs = visible window from the right). */
+/** Live chart (Candle timeframe → API `interval`, aligned with `browser-qa-lightweight` DECODER_TFS). */
+const CANDLE_TIMEFRAME_BUTTONS = [
+  { label: '1m', apiInterval: '1', testId: 'md-candle-tf-1m' },
+  { label: '15m', apiInterval: '15', testId: 'md-candle-tf-15m' },
+  { label: '1H', apiInterval: '60', testId: 'md-candle-tf-1h' },
+  { label: '4H', apiInterval: '240', testId: 'md-candle-tf-4h' },
+  { label: '1d', apiInterval: '1D', testId: 'md-candle-tf-1d' },
+];
+const VISIBLE_RANGE_BUTTONS = ['1D', '1W', '1M', '3M', '6M', '1Y'].map((r) => ({
+  label: r,
+  testId: `md-range-${r.toLowerCase()}`,
+}));
+
+/** Approximate zoom on daily OHLC bars (legacy non-live reference display). */
 const TF_VISIBLE_BARS = { '1H': 8, '4H': 16, '1D': 32, '1W': 72, '1M': 400 };
 
 /** Reference terminal: height follows flex slot; clamp for readability. */
@@ -99,6 +113,10 @@ const OVERLAY_COLORS = {
 
 export default function MarketDecoderChart({
   bars,
+  /** OANDA:EURUSD, COINBASE:BTCUSD, … for `/api/market/chart-history` (live ref chart). */
+  requestSymbol = '',
+  /** Daily OHLC from decoder; shown until live fetch returns. */
+  seedBars = null,
   compact = false,
   referenceStyle = false,
   overlays = null,
@@ -108,10 +126,49 @@ export default function MarketDecoderChart({
   const chartRef = useRef(null);
   const [mode, setMode] = useState('candles');
   const [activeTf, setActiveTf] = useState('1D');
+  const [candleInterval, setCandleInterval] = useState('60');
+  const [visibleRange, setVisibleRange] = useState('3M');
+  const [liveBars, setLiveBars] = useState(null);
+  const useLive = Boolean(referenceStyle && String(requestSymbol || '').trim());
+
+  const refetchLive = useCallback(() => {
+    const sym = String(requestSymbol || '').trim();
+    if (!sym) return;
+    (async () => {
+      try {
+        const { data } = await Api.getMarketChartHistory(sym, { interval: candleInterval, range: visibleRange });
+        const b = data?.bars;
+        if (Array.isArray(b) && b.length >= 2) {
+          setLiveBars(b);
+        } else {
+          setLiveBars([]);
+        }
+      } catch {
+        setLiveBars([]);
+      }
+    })();
+  }, [requestSymbol, candleInterval, visibleRange]);
+
+  useEffect(() => {
+    if (!useLive) return;
+    setLiveBars(null);
+    refetchLive();
+  }, [useLive, refetchLive]);
+
+  const seed = seedBars && Array.isArray(seedBars) && seedBars.length >= 2 ? seedBars : null;
+  const base = bars && Array.isArray(bars) && bars.length >= 2 ? bars : null;
+  const displayBars = useLive
+    ? (liveBars && liveBars.length >= 2
+        ? liveBars
+        : liveBars && liveBars.length === 0
+          ? null
+          : seed || base)
+    : base;
 
   useEffect(() => {
     const el = wrapRef.current;
-    if (!el || !bars || bars.length < 2) return undefined;
+    if (!el || !displayBars || displayBars.length < 2) return undefined;
+    const bForChart = displayBars;
 
     let height;
     if (referenceStyle) {
@@ -142,7 +199,7 @@ export default function MarketDecoderChart({
     });
     chartRef.current = chart;
 
-    const data = bars.map((b) => ({
+    const data = bForChart.map((b) => ({
       time: Number(b.time),
       open: Number(b.open),
       high: Number(b.high),
@@ -221,7 +278,7 @@ export default function MarketDecoderChart({
       s.setData(lineData);
     }
 
-    if (referenceStyle && data.length > 0) {
+    if (referenceStyle && data.length > 0 && !useLive) {
       const zoomBars = TF_VISIBLE_BARS[activeTf] ?? 32;
       const right = data.length - 1;
       const from = Math.max(0, right - zoomBars + 1);
@@ -251,16 +308,60 @@ export default function MarketDecoderChart({
       chart.remove();
       chartRef.current = null;
     };
-  }, [bars, mode, compact, referenceStyle, activeTf, overlays]);
+  }, [displayBars, mode, compact, referenceStyle, activeTf, overlays, useLive]);
 
-  if (!bars || bars.length < 2) {
+  if (!displayBars || displayBars.length < 2) {
+    if (referenceStyle && useLive) {
+      return (
+        <div className="md-chart-root md-chart-root--ref md-chart-root--ref-fill">
+          <div className="md-chart-tf" role="tablist" aria-label="Candle timeframe">
+            {CANDLE_TIMEFRAME_BUTTONS.map((c) => (
+              <button
+                key={c.apiInterval}
+                type="button"
+                role="tab"
+                data-testid={c.testId}
+                className={`md-chart-tf-btn${candleInterval === c.apiInterval ? ' md-chart-tf-btn--active' : ''}`}
+                onClick={() => {
+                  setCandleInterval(c.apiInterval);
+                }}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          <div className="md-chart-tf" role="tablist" aria-label="Visible history range">
+            {VISIBLE_RANGE_BUTTONS.map((c) => (
+              <button
+                key={c.label}
+                type="button"
+                role="tab"
+                data-testid={c.testId}
+                className={`md-chart-tf-btn${visibleRange === c.label ? ' md-chart-tf-btn--active' : ''}`}
+                onClick={() => setVisibleRange(c.label)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          <div className="md-chart-canvas-wrap md-chart-canvas-wrap--ref-fill">
+            {seed || placeholderSparkline ? (
+              <ReferenceChartPlaceholder sparkline={placeholderSparkline} />
+            ) : (
+              <p className="md-decoder-small md-mse-note">Loading chart data…</p>
+            )}
+          </div>
+        </div>
+      );
+    }
     if (referenceStyle) {
       return <ReferenceChartPlaceholder sparkline={placeholderSparkline} />;
     }
     return (
       <div className={`md-chart-empty${referenceStyle ? ' md-chart-empty--ref' : ''}`}>
         <p className="md-decoder-small">
-          Chart history is still loading for this symbol. The rest of the brief is valid; rerun Decode shortly for full OHLC view.
+          Chart history is still loading for this symbol. The rest of the brief is valid; rerun Decode shortly for full OHLC
+          view.
         </p>
       </div>
     );
@@ -281,6 +382,39 @@ export default function MarketDecoderChart({
             </button>
           ))}
         </div>
+      ) : useLive ? (
+        <>
+          <div className="md-chart-tf" role="tablist" aria-label="Candle timeframe">
+            {CANDLE_TIMEFRAME_BUTTONS.map((c) => (
+              <button
+                key={c.apiInterval}
+                type="button"
+                role="tab"
+                data-testid={c.testId}
+                className={`md-chart-tf-btn${candleInterval === c.apiInterval ? ' md-chart-tf-btn--active' : ''}`}
+                onClick={() => {
+                  setCandleInterval(c.apiInterval);
+                }}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          <div className="md-chart-tf" role="tablist" aria-label="Visible history range">
+            {VISIBLE_RANGE_BUTTONS.map((c) => (
+              <button
+                key={c.label}
+                type="button"
+                role="tab"
+                data-testid={c.testId}
+                className={`md-chart-tf-btn${visibleRange === c.label ? ' md-chart-tf-btn--active' : ''}`}
+                onClick={() => setVisibleRange(c.label)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </>
       ) : (
         <div className="md-chart-tf" role="tablist" aria-label="Timeframe (display)">
           {TIMEFRAMES_REF.map((tf) => (

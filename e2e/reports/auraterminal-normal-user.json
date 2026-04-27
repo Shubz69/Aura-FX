@@ -5,19 +5,27 @@
       "origin": "https://www.auraterminal.ai",
       "localStorage": [
         {
-          "name": "token",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODgsImVtYWlsIjoic2hvYmhpdDIwNjlAZ21haWwuY29tIiwidXNlcm5hbWUiOiJhdXJhcWFfMTc3NjczMzcyMzA3NCIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzc3MDg4ODU5LCJleHAiOjE3NzcxNzUyNTl9.jvdBJb-M-x_zz7oYWoN0qwsJjCQq20dPwwF6rSkGNME"
+          "name": "daily_login_check_88",
+          "value": "Mon Apr 27 2026"
         },
         {
-          "name": "user",
-          "value": "{\"id\":88,\"username\":\"auraqa_1776733723074\",\"email\":\"shobhit2069@gmail.com\",\"name\":\"Playwright QA Trader\",\"avatar\":null,\"role\":\"USER\",\"timezone\":\"Europe/London\"}"
+          "name": "token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODgsImVtYWlsIjoic2hvYmhpdDIwNjlAZ21haWwuY29tIiwidXNlcm5hbWUiOiJhdXJhcWFfMTc3NjczMzcyMzA3NCIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzc3MjgxMTI4LCJleHAiOjE3NzczNjc1Mjh9.5DLby8IT_W0KqX9G9mOSf0kGHBuGVhEBQzoKpyvpF3c"
         },
         {
           "name": "hasActiveSubscription",
           "value": "true"
         },
         {
+          "name": "user",
+          "value": "{\"id\":88,\"username\":\"auraqa_1776733723074\",\"email\":\"shobhit2069@gmail.com\",\"name\":\"Playwright QA Trader\",\"avatar\":null,\"role\":\"USER\",\"mfaVerified\":false,\"timezone\":\"Europe/London\"}"
+        },
+        {
           "name": "gdprAccepted",
+          "value": "true"
+        },
+        {
+          "name": "daily_login_in_progress_88",
           "value": "true"
         }
       ]
