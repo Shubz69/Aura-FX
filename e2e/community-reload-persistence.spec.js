@@ -60,7 +60,7 @@ async function ensureNormalUserAuth(browser) {
 async function pickWritableChannel(page) {
   await page.goto(`${BASE}/community`, { waitUntil: 'domcontentloaded' });
   await dismissConsentIfPresent(page);
-  const names = page.locator('.channels-section li .channel-name');
+  const names = page.locator('.channel-name');
   await expect(names.first()).toBeVisible({ timeout: 30000 });
   const count = await names.count();
   for (let i = 0; i < count; i += 1) {
@@ -154,7 +154,7 @@ test.describe('Community reload persistence', () => {
           await targetByHref.click({ force: true });
           await waitReselectGet;
         } else {
-          const names = page.locator('.channels-section li .channel-name');
+          const names = page.locator('.channel-name');
           const targetName = names.filter({ hasText: channelName }).first();
           if (await targetName.isVisible().catch(() => false)) {
             const waitReselectGet = page.waitForResponse((r) => {
@@ -171,7 +171,7 @@ test.describe('Community reload persistence', () => {
       let zero = 0;
       let dup = 0;
       for (const token of tokens) {
-        const c = await chat.getByText(token, { exact: true }).count().catch(() => 0);
+        const c = await chat.locator(`text="${token}"`).count().catch(() => 0);
         if (c === 0) zero += 1;
         if (c > 1) dup += (c - 1);
       }
@@ -193,7 +193,7 @@ test.describe('Community reload persistence', () => {
         const body = await r.json().catch(() => []);
         return Array.isArray(body) && body.some((m) => String(m?.content || '').includes(lastToken));
       }).catch(() => false);
-      const uiCountAfterReload = await chat.getByText(lastToken, { exact: true }).count().catch(() => 0);
+      const uiCountAfterReload = await chat.locator(`text="${lastToken}"`).count().catch(() => 0);
       console.log('[community-reload-persistence]', JSON.stringify({
         channelId,
         channelName,

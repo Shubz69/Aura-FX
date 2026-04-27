@@ -1,7 +1,7 @@
 # FINAL FULL WEBSITE STATUS REPORT — AuraTerminal
 
 **Generated:** 2026-04-24  
-**Updated:** 2026-04-26 (logged-in Home live market-data watchlist pass + snapshot `meta`)  
+**Updated:** 2026-04-27 (Community production regression hardening pass: route loop + unread 429 + delete spam)  
 **Source artifacts only (no new full test runs):**
 - `ISSUE_BOARD.md`
 - `e2e/reports/FINAL_HARDCHECK_QA_REPORT.md`
@@ -15,6 +15,7 @@
 - `ISSUE_BOARD.md` + focused community specs: `e2e/community-reload-persistence.spec.js`, `e2e/community-latency.spec.js` (2026-04-25 bounded closure)
 - Market-data reduction artifacts: `e2e/reports/API_CONNECTIVITY_STATUS_REPORT.md`, `e2e/reports/MARKET_DATA_AND_SURVEILLANCE_AUDIT_REPORT.md`
 - Logged-in home market-data: `e2e/reports/HOME_LIVE_MARKET_DATA_REPORT.md` (`QA-RISK-HOME-LIVE-MARKET-001`)
+- Community regression follow-up: `src/pages/Community.js`, `src/components/NavbarNotifications.js`, `src/services/Api.js`, `e2e/community-production-stability.spec.js`
 
 ## 1. Executive summary
 
@@ -65,6 +66,7 @@
   - Multi-channel community concurrency not fully verified (monolithic Part C)
   - True multi-user messaging concurrency not verified (>1 non-admin sender unavailable)
   - `/api/admin/users` abort noise remains reliability risk
+  - 2026-04-27 regression follow-up requires production-auth Playwright rerun to fully close community channel-switch + unread 429 risk (`QA-RISK-COMMUNITY-ROUTE-002`)
 
 ### Messaging/community hardening addendum (2026-04-24)
 

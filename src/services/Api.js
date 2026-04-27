@@ -645,8 +645,6 @@ const Api = {
     },
     
     deleteMessage: async (channelId, messageId) => {
-        console.log(`Attempting to delete message ${messageId} from channel ${channelId}`);
-        
         if (!shouldMakeRequest(`${API_BASE_URL}/api/community/channels/${channelId}/messages/${messageId}`)) {
             console.log('Cannot delete message: Not authenticated');
             throw new Error('Authentication required to delete messages');
