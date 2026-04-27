@@ -1049,6 +1049,7 @@ const { id: channelIdParam } = useParams();
     // Delete message modal state
     const [deleteMessageModal, setDeleteMessageModal] = useState(null); // { messageId, messageContent }
     const [isDeletingMessage, setIsDeletingMessage] = useState(false);
+    const deleteInFlightRef = useRef(false);
 
     
     
@@ -3659,7 +3660,11 @@ useEffect(() => {
             const params = new URLSearchParams(location.search);
             const jump = params.get('jump') || params.get('message');
             const path = `/community/${selectedChannel.id}`;
-            navigate(jump ? `${path}?jump=${encodeURIComponent(jump)}` : path, { replace: true });
+            const nextUrl = jump ? `${path}?jump=${encodeURIComponent(jump)}` : path;
+            const currentUrl = `${location.pathname}${location.search}`;
+            if (nextUrl !== currentUrl) {
+                navigate(nextUrl, { replace: true });
+            }
             
             // Load cached messages first for instant display
             const cachedMessages = loadMessagesFromStorage(selectedChannel.id);
@@ -4621,7 +4626,11 @@ setMessages(prev => {
         if (!deleteMessageModal || !selectedChannel) {
             return;
         }
+        if (deleteInFlightRef.current || isDeletingMessage) {
+            return;
+        }
 
+        deleteInFlightRef.current = true;
         setIsDeletingMessage(true);
         const { messageId } = deleteMessageModal;
 
@@ -4720,6 +4729,7 @@ setMessages(prev => {
             }
         } finally {
             setIsDeletingMessage(false);
+            deleteInFlightRef.current = false;
         }
     };
 

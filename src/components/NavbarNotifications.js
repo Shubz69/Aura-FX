@@ -17,14 +17,21 @@ const NavbarNotifications = () => {
   const controllerRef = useRef(null);
   const failStreakRef = useRef(0);
   const nextAllowedAtRef = useRef(0);
+  const lastFetchAtRef = useRef(0);
+  const refreshTimerRef = useRef(null);
   const token = localStorage.getItem('token');
   const baseUrl = process.env.REACT_APP_API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
-  const fetchUnreadCount = useCallback(async () => {
+  const fetchUnreadCount = useCallback(async ({ force = false } = {}) => {
     if (!token || !user) return;
     if (fetchInFlightRef.current) return;
-    if (Date.now() < nextAllowedAtRef.current) return;
+    const now = Date.now();
+    if (!force) {
+      if (now < nextAllowedAtRef.current) return;
+      if (now - lastFetchAtRef.current < 2500) return;
+    }
     fetchInFlightRef.current = true;
+    lastFetchAtRef.current = now;
     try {
       if (controllerRef.current) controllerRef.current.abort();
       const controller = new AbortController();
@@ -47,6 +54,11 @@ const NavbarNotifications = () => {
         }
         failStreakRef.current = 0;
         nextAllowedAtRef.current = 0;
+      } else {
+        failStreakRef.current = Math.min(6, failStreakRef.current + 1);
+        const base = res.status === 429 ? 3000 : 800;
+        const backoffMs = base * (2 ** Math.max(0, failStreakRef.current - 1));
+        nextAllowedAtRef.current = Date.now() + Math.min(30000, backoffMs);
       }
     } catch (e) {
       if (e?.name === 'AbortError') return;
@@ -62,13 +74,26 @@ const NavbarNotifications = () => {
 
   useEffect(() => {
     if (!user) return;
-    fetchUnreadCount();
+    fetchUnreadCount({ force: true });
     const interval = setInterval(fetchUnreadCount, 45000); // poll every 45s to reduce ERR_INSUFFICIENT_RESOURCES
-    const onFocus = () => fetchUnreadCount();
+    const onFocus = () => fetchUnreadCount({ force: true });
+    const onRefresh = () => {
+      if (refreshTimerRef.current) return;
+      refreshTimerRef.current = setTimeout(() => {
+        refreshTimerRef.current = null;
+        void fetchUnreadCount({ force: true });
+      }, 600);
+    };
     window.addEventListener('focus', onFocus);
+    window.addEventListener('aura-notifications-refresh', onRefresh);
     return () => {
       clearInterval(interval);
       window.removeEventListener('focus', onFocus);
+      window.removeEventListener('aura-notifications-refresh', onRefresh);
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
       if (controllerRef.current) controllerRef.current.abort();
     };
   }, [user, fetchUnreadCount]);
@@ -97,7 +122,7 @@ const NavbarNotifications = () => {
         isOpen={isOpen}
         onClose={() => {
           setIsOpen(false);
-          fetchUnreadCount(); // Refresh badge when closing
+          fetchUnreadCount({ force: true }); // Refresh badge when closing
         }}
         anchorRef={bellRef}
         user={user}

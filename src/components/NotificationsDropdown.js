@@ -103,6 +103,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
   const listFetchSeqRef = useRef(0);
   const listControllerRef = useRef(null);
   const inFlightCursorRef = useRef(new Set());
+  const lastNavRef = useRef({ url: '', at: 0 });
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const baseUrl = process.env.REACT_APP_API_URL || window.location.origin;
@@ -267,6 +268,15 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
     }
   };
 
+  const navigateOnce = useCallback((url) => {
+    if (typeof url !== 'string' || !url.startsWith('/')) return;
+    const now = Date.now();
+    const prev = lastNavRef.current;
+    if (prev.url === url && now - prev.at < 1000) return;
+    lastNavRef.current = { url, at: now };
+    navigate(url);
+  }, [navigate]);
+
   // Handle notification click
   const handleNotificationClick = async (notification) => {
     let meta = notification.meta;
@@ -282,7 +292,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
         markAsRead(notification.id);
       }
       onClose();
-      navigate(meta.url);
+      navigateOnce(meta.url);
       return;
     }
 
@@ -292,25 +302,25 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
 
     if (notification.type === 'DAILY_JOURNAL') {
       onClose();
-      navigate('/journal');
+      navigateOnce('/journal');
       return;
     }
     if (notification.type === 'FRIEND_REQUEST') {
       onClose();
-      navigate('/friends');
+      navigateOnce('/friends');
       return;
     }
     if (notification.type === 'CHANNEL_ACTIVITY') {
       onClose();
       if (notification.channelId) {
         const mid = notification.messageId || '';
-        navigate(
+        navigateOnce(
           `/community/${encodeURIComponent(String(notification.channelId))}${
             mid ? `?jump=${encodeURIComponent(String(mid))}` : ''
           }`
         );
       } else {
-        navigate('/community');
+        navigateOnce('/community');
       }
       return;
     }
@@ -318,12 +328,12 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       onClose();
       if (notification.channelId === 0 || notification.channelId === '0') {
         if (isAdmin(user) && notification.title?.toLowerCase().includes('from user')) {
-          navigate(`/admin/inbox?thread=${notification.messageId}`);
+          navigateOnce(`/admin/inbox?thread=${notification.messageId}`);
         } else {
-          navigate(`/messages?thread=${encodeURIComponent(String(notification.messageId))}`);
+          navigateOnce(`/messages?thread=${encodeURIComponent(String(notification.messageId))}`);
         }
       } else if (notification.channelId) {
-        navigate(
+        navigateOnce(
           `/community/${encodeURIComponent(String(notification.channelId))}?jump=${encodeURIComponent(
             String(notification.messageId)
           )}`
