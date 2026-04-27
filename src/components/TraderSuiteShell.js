@@ -47,14 +47,7 @@ const terminalChrome = (
         ) : null}
       </div>
       <div className="trader-suite-terminal-title">
-        {terminalTitlePrefix ? (
-          <span className="trader-suite-terminal-title-inner">
-            {terminalTitlePrefix}
-            <span className="trader-suite-terminal-title-text">{title}</span>
-          </span>
-        ) : (
-          title
-        )}
+        Aura Terminal™
       </div>
       <div className="trader-suite-terminal-actions">
         {primaryAction}
@@ -90,47 +83,39 @@ const terminalChrome = (
 );
 
   /** Aura dashboard: same page chrome as Overview / Performance — no nested Trader Suite glass panel */
-  const auraDashboardTerminal = (
-    <div className="aura-db-replay-page">
-      <header className="aura-db-replay-header">
-        <div className="aura-db-replay-header-top">
-          <div className="aura-db-replay-eyebrow">{eyebrow || 'Aura Terminal™'}</div>
-          <h1 className="aura-db-replay-title">
-            {terminalTitlePrefix ? (
-              <span className="aura-db-replay-title-inner">
-                {terminalTitlePrefix}
-                <span className="aura-db-replay-title-text">{title}</span>
-              </span>
-            ) : (
-              title
-            )}
-          </h1>
-          <div className="aura-db-replay-actions">
-            {primaryAction}
-            {secondaryActions}
-          </div>
+ /** Aura dashboard: same page chrome as Overview / Performance — no nested Trader Suite glass panel */
+const auraDashboardTerminal = (
+  <div className="aura-db-replay-page">
+    <header className="aura-db-replay-header">
+      <div className="aura-db-replay-header-top">
+        <div className="aura-db-replay-eyebrow">{eyebrow || 'Aura Terminal™'}</div>
+        {/* Title hidden — shell header already shows it */}
+        <div className="aura-db-replay-actions">
+          {primaryAction}
+          {secondaryActions}
         </div>
-        {terminalSubtitle ? (
-          <div className="aura-db-replay-subtitle">{terminalSubtitle}</div>
-        ) : null}
-        {stats.length ? (
-          <div className="aura-db-replay-stats">
-            {stats.map((stat) => (
-              <div className="aura-db-replay-stat" key={stat.label}>
-                <span className="aura-db-replay-stat__label">
-                  {stat.label}
-                  {stat.metricId ? <MetricTooltip metricId={stat.metricId} /> : null}
-                </span>
-                <strong className={statToneClass(stat.tone)}>{stat.value}</strong>
-              </div>
-            ))}
-          </div>
-        ) : null}
-        {description ? <p className="aura-db-replay-desc">{description}</p> : null}
-      </header>
-      {children}
-    </div>
-  );
+      </div>
+      {terminalSubtitle ? (
+        <div className="aura-db-replay-subtitle">{terminalSubtitle}</div>
+      ) : null}
+      {stats.length ? (
+        <div className="aura-db-replay-stats">
+          {stats.map((stat) => (
+            <div className="aura-db-replay-stat" key={stat.label}>
+              <span className="aura-db-replay-stat__label">
+                {stat.label}
+                {stat.metricId ? <MetricTooltip metricId={stat.metricId} /> : null}
+              </span>
+              <strong className={statToneClass(stat.tone)}>{stat.value}</strong>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {description ? <p className="aura-db-replay-desc">{description}</p> : null}
+    </header>
+    {children}
+  </div>
+);
 
   const inner = (
       <div

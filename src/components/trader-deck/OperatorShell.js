@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, Outlet, Link } from 'react-router-dom';
+import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
 import { OperatorAccountProvider } from '../../context/OperatorAccountContext';
 import AuraTerminalThemeShell from '../AuraTerminalThemeShell';
 import '../../styles/aura-analysis/AuraAnalysisShell.css';
@@ -19,18 +19,29 @@ const TABS = [
   { path: `${BASE}/leaderboard`,     label: 'Leaderboard' },
 ];
 
+// Pages that render WITHOUT the hero title and tab rail
+const CLEAN_PAGES = [
+  `${BASE}/trader-lab`,
+  `${BASE}/trader-playbook`,
+];
+
 export default function OperatorShell() {
+  const location = useLocation();
+  const isCleanPage = CLEAN_PAGES.some(path => location.pathname.startsWith(path));
+
   return (
     <OperatorAccountProvider>
     <AuraTerminalThemeShell>
-    <div className="aura-shell trade-validator-shell journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
-      <header className="aura-shell-hero">
-        <div className="aura-shell-hero-inner trade-validator-hero-inner trade-validator-hero-inner--centered">
+    <div className={`aura-shell trade-validator-shell journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page ${isCleanPage ? 'trade-validator-shell--clean' : ''}`}>
+      
+      {/* ── Hero Header ── */}
+      <header className={`aura-shell-hero ${isCleanPage ? 'aura-shell-hero--clean' : ''}`}>
+        <div className={`aura-shell-hero-inner trade-validator-hero-inner ${isCleanPage ? 'trade-validator-hero-inner--clean' : 'trade-validator-hero-inner--centered'}`}>
           
-          {/* ── Back to Operator Galaxy ── */}
+          {/* ── Back to Operator Galaxy (always visible) ── */}
           <nav className="trade-validator-hero-back" aria-label="Back to Operator Galaxy">
             <Link
-             to="/operator-galaxy"
+              to="/operator-galaxy"
               className="trade-validator-back-link"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="trade-validator-back-icon">
@@ -40,34 +51,47 @@ export default function OperatorShell() {
             </Link>
           </nav>
 
-          <div className="aura-shell-titles trade-validator-hero-titles">
-            <h1 className="aura-shell-title">The Operator</h1>
-            <p className="aura-shell-sub">
-              One workspace: Checklist, Calculator, Journal, Analytics, Trader CV & Leaderboard.
-            </p>
-          </div>
+          {/* ── Title (Trade Validator pages) ── */}
+          {!isCleanPage && (
+            <div className="aura-shell-titles trade-validator-hero-titles">
+              <h1 className="aura-shell-title">Trade Validator</h1>
+            </div>
+          )}
+
+          {/* ── Clean page title (Trader Lab / Playbook - centered) ── */}
+          {isCleanPage && (
+            <div className="aura-shell-titles trade-validator-hero-titles trade-validator-hero-titles--clean">
+              <h1 className="aura-shell-title aura-shell-title--clean">
+                {location.pathname.includes('trader-lab') ? 'Trader Lab' : 'Trade Playbook'}
+              </h1>
+            </div>
+          )}
 
           {/* Spacer for symmetry */}
-          <div className="trade-validator-hero-spacer" />
+          {!isCleanPage && <div className="trade-validator-hero-spacer" />}
+          {isCleanPage && <div className="trade-validator-hero-spacer-clean" />}
         </div>
       </header>
 
-      <nav className="aura-shell-tabs-wrap aura-shell-tabs-wrap--validator" aria-label="The Operator sections">
-        <div className="aura-shell-tabs-rail">
-          <div className="aura-shell-tabs-inner aura-shell-tabs-inner--validator">
-            {TABS.map((tab) => (
-              <NavLink
-                key={tab.path}
-                to={tab.path}
-                end
-                className={({ isActive }) => `aura-shell-tab aura-shell-tab--validator ${isActive ? 'active' : ''}`}
-              >
-                {tab.label}
-              </NavLink>
-            ))}
+      {/* ── Tab Rail (hidden on clean pages) ── */}
+      {!isCleanPage && (
+        <nav className="aura-shell-tabs-wrap aura-shell-tabs-wrap--validator" aria-label="Trade Validator sections">
+          <div className="aura-shell-tabs-rail">
+            <div className="aura-shell-tabs-inner aura-shell-tabs-inner--validator">
+              {TABS.map((tab) => (
+                <NavLink
+                  key={tab.path}
+                  to={tab.path}
+                  end
+                  className={({ isActive }) => `aura-shell-tab aura-shell-tab--validator ${isActive ? 'active' : ''}`}
+                >
+                  {tab.label}
+                </NavLink>
+              ))}
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       <main className="aura-shell-content">
         <Outlet />

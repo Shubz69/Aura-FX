@@ -1713,3 +1713,141 @@
     display: none !important;
   }
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   CLEAN PAGES (Trader Lab / Playbook) — No tabs, minimal header
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Remove extra padding when tabs are hidden */
+.trade-validator-shell--clean {
+  --tv-nav-offset: calc(var(--nav-height, 62px) + env(safe-area-inset-top, 0px));
+}
+
+.trade-validator-shell--clean .aura-shell-content {
+  padding-top: clamp(12px, 2vw, 20px) !important;
+}
+
+/* Clean hero — minimal, just the back button */
+.trade-validator-shell--clean .aura-shell-hero--clean {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
+  padding: clamp(10px, 2vw, 16px) var(--shell-px) !important;
+}
+
+.trade-validator-shell--clean .aura-shell-hero--clean::after {
+  display: none !important;
+}
+
+.trade-validator-shell .aura-shell-hero-inner.trade-validator-hero-inner--clean {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  max-width: 1540px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+}
+/* ═══════════════════════════════════════════════════════════════════════════
+   CLEAN PAGES (Trader Lab / Playbook) — No tabs, centered heading
+═══════════════════════════════════════════════════════════════════════════ */
+
+.trade-validator-shell--clean {
+  --tv-nav-offset: calc(var(--nav-height, 62px) + env(safe-area-inset-top, 0px));
+}
+
+.trade-validator-shell--clean .aura-shell-content {
+  padding-top: clamp(12px, 2vw, 20px) !important;
+}
+
+/* Clean hero — elegant bar with centered title */
+.trade-validator-shell--clean .aura-shell-hero--clean {
+  background: linear-gradient(
+    180deg,
+    rgba(20, 28, 55, 0.25) 0%,
+    rgba(3, 2, 10, 0.3) 55%,
+    transparent 100%
+  ) !important;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.12) !important;
+  padding: clamp(12px, 2vw, 20px) var(--shell-px) clamp(12px, 2vw, 18px) !important;
+  position: relative;
+}
+
+.trade-validator-shell--clean .aura-shell-hero--clean::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(200px, 50vw);
+  height: 1px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.4), transparent);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
+  pointer-events: none;
+}
+
+/* Clean hero inner — 3-column grid for perfect centering */
+.trade-validator-shell .aura-shell-hero-inner.trade-validator-hero-inner--clean {
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  align-items: center !important;
+  gap: clamp(12px, 2vw, 20px) !important;
+  max-width: 1540px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+}
+
+/* Back button — sits in left column */
+.trade-validator-shell--clean .trade-validator-hero-back {
+  grid-column: 1;
+  justify-self: start;
+}
+
+/* Clean title — centered in middle column */
+.trade-validator-shell .trade-validator-hero-titles--clean {
+  grid-column: 2;
+  text-align: center !important;
+  justify-self: center !important;
+  max-width: none !important;
+  padding-top: 0;
+}
+
+.trade-validator-shell .aura-shell-title--clean {
+  font-size: clamp(1.1rem, 2.8vw, 1.5rem) !important;
+  font-weight: 200 !important;
+  letter-spacing: clamp(0.06em, 1vw, 0.1em) !important;
+  margin: 0 !important;
+  text-align: center !important;
+}
+
+/* Spacer — right column for balance */
+.trade-validator-shell--clean .trade-validator-hero-spacer-clean {
+  grid-column: 3;
+  width: clamp(90px, 13vw, 160px);
+}
+
+/* ── Responsive: stack on mobile ── */
+@media (max-width: 768px) {
+  .trade-validator-shell .aura-shell-hero-inner.trade-validator-hero-inner--clean {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 10px !important;
+  }
+
+  .trade-validator-shell--clean .trade-validator-hero-back {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    justify-self: center !important;
+  }
+
+  .trade-validator-shell .trade-validator-hero-titles--clean {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+  }
+
+  .trade-validator-shell--clean .trade-validator-hero-spacer-clean {
+    display: none !important;
+  }
+}
+/* Hide duplicate title since shell header already shows it */
+.trade-validator-shell--clean .aura-db-replay-title {
+  display: none !important;
+}

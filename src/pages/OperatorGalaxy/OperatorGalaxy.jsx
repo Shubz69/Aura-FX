@@ -329,7 +329,7 @@ export default function OperatorGalaxy() {
         return (
           <div
             key={planet.id}
-            className={`planet-node${isHovered ? ' is-hovered' : ''}${isSelected ? ' is-selected' : ''}${planet.id === 'validator' ? ' is-center' : ''}`}
+           className={`planet-node${isHovered ? ' is-hovered' : ''}${isSelected ? ' is-selected' : ''}${planet.id === 'validator' ? ' is-center' : ''}${planet.id === 'traderlab' ? ' is-lab' : ''}${planet.id === 'playbook' ? ' is-playbook' : ''}`}
             style={{
               '--glow' : planet.glowColor,
               '--sz'   : `${sz}px`,

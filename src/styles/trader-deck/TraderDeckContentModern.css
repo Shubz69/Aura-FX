@@ -6281,3 +6281,122 @@ div.td-outlook-concept-grid--terminal {
         top: 0 !important;
     }
 }
+/* ═══════════════════════════════════════════════════════
+   WORLD CLOCKS - Professional alignment fix
+   Prevents navbar collision while maintaining container size
+═══════════════════════════════════════════════════════ */
+
+/* Main page container - consistent top spacing */
+.journal-page .td-deck-with-tabs.td-layout-page.journal-glass-panel--rim {
+  margin-top: 0 !important;
+  padding-top: calc(var(--nav-height, 64px) + 12px) !important;
+}
+
+/* World clocks rail - stay within the glass panel */
+.td-deck-with-tabs.td-layout-page .td-deck-world-clocks-container {
+  margin-top: 0 !important;
+  padding-top: 8px !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+/* World clocks rail wrapper - consistent sizing */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-rail--above {
+  width: 100% !important;
+  margin-bottom: 14px !important;
+  min-height: auto !important;
+}
+
+/* Analog clock face - maintain proportions */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-analog-clock__face-wrap {
+  filter:
+    drop-shadow(0 0 16px rgba(90, 130, 230, 0.25))
+    drop-shadow(0 6px 22px rgba(0, 0, 0, 0.52)) !important;
+}
+
+/* ── Responsive adjustments ── */
+
+/* Desktop (1100px+) */
+@media (min-width: 1100px) {
+  .journal-page .td-deck-with-tabs.td-layout-page.journal-glass-panel--rim {
+    padding-top: calc(var(--nav-height, 64px) + 16px) !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-container {
+    padding-top: 12px !important;
+  }
+}
+
+/* Tablet landscape (900-1099px) */
+@media (min-width: 900px) and (max-width: 1099px) {
+  .journal-page .td-deck-with-tabs.td-layout-page.journal-glass-panel--rim {
+    padding-top: calc(var(--nav-height, 62px) + 12px) !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-container {
+    padding-top: 8px !important;
+  }
+}
+
+/* Tablet portrait (768-899px) */
+@media (min-width: 768px) and (max-width: 899px) {
+  .journal-page .td-deck-with-tabs.td-layout-page.journal-glass-panel--rim {
+    padding-top: calc(var(--nav-height, 60px) + 10px) !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-container {
+    padding-top: 6px !important;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-rail--above {
+    margin-bottom: 10px !important;
+  }
+}
+
+/* Mobile (480-767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+  .journal-page .td-deck-with-tabs.td-layout-page.journal-glass-panel--rim {
+    padding-top: calc(58px + 8px) !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-container {
+    padding-top: 4px !important;
+  }
+  
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-rail--above {
+    margin-bottom: 8px !important;
+  }
+}
+
+/* Small mobile (320-479px) */
+@media (min-width: 320px) and (max-width: 479px) {
+  .journal-page .td-deck-with-tabs.td-layout-page.journal-glass-panel--rim {
+    padding-top: calc(56px + 6px) !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-container {
+    padding-top: 2px !important;
+  }
+}
+
+/* Extra small (< 320px) */
+@media (max-width: 319px) {
+  .journal-page .td-deck-with-tabs.td-layout-page.journal-glass-panel--rim {
+    padding-top: calc(54px + 4px) !important;
+  }
+  
+  .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-container {
+    padding-top: 0px !important;
+  }
+}
+
+/* Ensure clocks container doesn't overflow */
+.td-deck-with-tabs.td-layout-page .td-deck-world-clocks-container * {
+  box-sizing: border-box !important;
+}
+
+/* Maintain clock size consistency */
+.td-deck-with-tabs.td-layout-page .td-deck-world-clocks-container .td-deck-analog-clock {
+  min-width: 0 !important;
+  flex-shrink: 0 !important;
+}
