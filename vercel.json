@@ -852,6 +852,10 @@
       "destination": "/api/surveillance/admin-diagnostics.js"
     },
     {
+      "source": "/api/surveillance/debug",
+      "destination": "/api/surveillance/debug.js"
+    },
+    {
       "source": "/api/cron/ohlcv-incremental",
       "destination": "/api/cron/ohlcv-incremental.js"
     },
