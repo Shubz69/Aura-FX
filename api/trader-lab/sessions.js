@@ -31,6 +31,17 @@ function parseJsonField(value, fallback = []) {
   }
 }
 
+function parseJsonObject(value, fallback = null) {
+  if (!value) return fallback;
+  if (typeof value === 'object' && !Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function toDateString(value) {
   if (!value) return null;
   return value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
@@ -42,6 +53,7 @@ async function ensureExtraColumns() {
     ['accountSize', 'DECIMAL(16,2) DEFAULT NULL'],
     ['keyDrivers', 'TEXT DEFAULT NULL'],
     ['fundamentalBacking', 'TEXT DEFAULT NULL'],
+    ['decoderExport', 'JSON DEFAULT NULL'],
     ['traderThesisUpdatedAt', 'DATETIME(3) DEFAULT NULL'],
   ];
   for (const [col, def] of alters) {
@@ -101,6 +113,7 @@ async function ensureTable() {
       mistakeTags JSON DEFAULT NULL,
       chartSymbol VARCHAR(64) DEFAULT NULL,
       accountSize DECIMAL(16,2) DEFAULT NULL,
+      decoderExport JSON DEFAULT NULL,
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       INDEX idx_trader_lab_userId (userId),
@@ -168,7 +181,13 @@ function mapRow(row) {
     chartSymbol: row.chartSymbol != null ? String(row.chartSymbol) : '',
     accountSize: row.accountSize != null ? Number(row.accountSize) : '',
     keyDrivers: row.keyDrivers != null ? String(row.keyDrivers) : '',
-    fundamentalBacking: row.fundamentalBacking != null ? String(row.fundamentalBacking) : '',
+    fundamentalBacking:
+      row.fundamentalBacking != null && String(row.fundamentalBacking).trim()
+        ? String(row.fundamentalBacking)
+        : /market decoder/i.test(String(row.setupName || ''))
+          ? 'No fundamental analysis saved for this older decoder run'
+          : '',
+    decoderExport: parseJsonObject(row.decoderExport, null),
     traderThesisUpdatedAt: row.traderThesisUpdatedAt ? new Date(row.traderThesisUpdatedAt).toISOString() : null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -241,8 +260,8 @@ module.exports = async (req, res) => {
         riskPercent, rrRatio, setupValid, biasAligned, entryConfirmed, riskDefined, livePnlR, livePnlPercent, currentPrice,
         distanceToSl, distanceToTp, emotions, duringNotes, outcome, resultR, durationMinutes, followedRules, entryCorrect,
         exitCorrect, whatToChange, emotionalIntensity, mistakeTags, chartSymbol, accountSize,
-        keyDrivers, fundamentalBacking, traderThesisUpdatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        keyDrivers, fundamentalBacking, decoderExport, traderThesisUpdatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         userId,
@@ -288,6 +307,7 @@ module.exports = async (req, res) => {
         body.accountSize !== '' && body.accountSize != null ? Number(body.accountSize) : null,
         body.keyDrivers != null ? String(body.keyDrivers).slice(0, 6000) : null,
         body.fundamentalBacking != null ? String(body.fundamentalBacking).slice(0, 6000) : null,
+        body.decoderExport && typeof body.decoderExport === 'object' ? JSON.stringify(body.decoderExport) : null,
         thesisStamp,
       ]
     );
@@ -323,7 +343,7 @@ module.exports = async (req, res) => {
         targetPrice = ?, riskPercent = ?, rrRatio = ?, setupValid = ?, biasAligned = ?, entryConfirmed = ?, riskDefined = ?, livePnlR = ?,
         livePnlPercent = ?, currentPrice = ?, distanceToSl = ?, distanceToTp = ?, emotions = ?, duringNotes = ?, outcome = ?, resultR = ?,
         durationMinutes = ?, followedRules = ?, entryCorrect = ?, exitCorrect = ?, whatToChange = ?, emotionalIntensity = ?, mistakeTags = ?,
-        chartSymbol = ?, accountSize = ?, keyDrivers = ?, fundamentalBacking = ?, traderThesisUpdatedAt = ?
+        chartSymbol = ?, accountSize = ?, keyDrivers = ?, fundamentalBacking = ?, decoderExport = ?, traderThesisUpdatedAt = ?
       WHERE id = ? AND userId = ?`,
       [
         String(body.sessionDate || '').slice(0, 10) || new Date().toISOString().slice(0, 10),
@@ -368,6 +388,7 @@ module.exports = async (req, res) => {
         body.accountSize !== '' && body.accountSize != null ? Number(body.accountSize) : null,
         body.keyDrivers != null ? String(body.keyDrivers).slice(0, 6000) : null,
         body.fundamentalBacking != null ? String(body.fundamentalBacking).slice(0, 6000) : null,
+        body.decoderExport && typeof body.decoderExport === 'object' ? JSON.stringify(body.decoderExport) : null,
         nextThesisAt,
         sessionId,
         userId,

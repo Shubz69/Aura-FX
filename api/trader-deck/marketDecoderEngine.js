@@ -1050,6 +1050,38 @@ async function runMarketDecoder(symbolInput) {
     };
   }
 
+  const technicalAnalysis = [technicalDriver, exec.entryCondition, scenarios.bullish?.condition, scenarios.bearish?.condition]
+    .filter(Boolean)
+    .join(' ');
+  const fundamentalAnalysis = [macroDriver, riskDriver, ...(Array.isArray(cross) ? cross : [])]
+    .filter(Boolean)
+    .join(' ');
+  const keyDrivers = [
+    { title: 'Macro backdrop', impact: eventHighImpactSoon ? 'High' : 'Medium', direction: 'Two-way', explanation: macroDriver },
+    {
+      title: 'Policy / rates',
+      impact: fred.rising == null ? 'Medium' : 'High',
+      direction: yieldsRising ? 'USD supportive / risk headwind' : 'USD softer / risk supportive',
+      explanation: fred.level != null ? `US 10Y ${fred.level.toFixed(2)}%, ${yieldsRising ? 'rising' : 'easing'} vs prior print.` : 'Rates regime unavailable; monitor policy expectations.',
+    },
+    {
+      title: 'Cross-asset pressure',
+      impact: 'Medium',
+      direction: 'Contextual',
+      explanation: Array.isArray(cross) ? cross.slice(0, 2).join(' ') : 'Cross-asset context pending.',
+    },
+  ];
+  const traderThesis = {
+    whatToSee: postureElite.reason,
+    whyValid: postureElite.subtitle,
+    whatConfirmsEntry: exec.entryCondition,
+  };
+  const riskSummary = {
+    newsRisk: eventHighImpactSoon ? 'High around scheduled macro and headlines' : 'Moderate',
+    volatilityRisk: volLabel,
+    eventRisk: eventHighImpactSoon ? 'Elevated' : 'Contained',
+  };
+
   const marketPulse = {
     biasScore: net,
     biasLabel: structureInsufficient ? 'Unclassified' : biasLabelFromNet(net),
@@ -1239,6 +1271,23 @@ async function runMarketDecoder(symbolInput) {
         technical: technicalDriver,
         risk: riskDriver,
       }),
+      technicalAnalysis,
+      fundamentalAnalysis,
+      keyDrivers,
+      traderThesis,
+      riskSummary,
+      invalidation: exec.invalidation,
+      confirmation: exec.entryCondition,
+      fundamentals: {
+        macroBackdrop: macroDriver,
+        centralBankPolicy: fred.level != null
+          ? `US 10Y ${fred.level.toFixed(2)}% (${yieldsRising ? 'rising' : 'easing'})`
+          : 'Rates context unavailable',
+        economicData: events[0]?.title || 'No major data print in window',
+        geopoliticalContext: riskDriver,
+        crossAssetContext: Array.isArray(cross) ? cross.join('\n') : '',
+        fundamentalBacking: fundamentalAnalysis,
+      },
       keyLevels: {
         resistance1: piv?.r1,
         resistance2: piv?.r2,

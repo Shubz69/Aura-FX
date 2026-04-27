@@ -137,19 +137,22 @@ export function buildLabFormPatchFromMarketDecoderBrief(brief) {
   const whatDoISee = [posture && `Posture: ${posture}`, sub && sub !== posture && sub].filter(Boolean).join('\n\n');
 
   const ex = brief.executionGuidance || {};
-  const bull = brief.scenarioMap?.bullish;
-  const bear = brief.scenarioMap?.bearish;
   const fundamentalBacking = [
-    ex.preferredDirection && `Preferred: ${ex.preferredDirection}`,
-    ex.entryCondition && `Entry: ${ex.entryCondition}`,
-    bull?.condition && `Bull case: ${bull.condition}`,
-    bear?.condition && `Bear case: ${bear.condition}`,
-  ]
-    .filter(Boolean)
-    .join('\n');
+    brief?.fundamentals?.fundamentalBacking,
+    brief?.fundamentals?.macroBackdrop,
+    brief?.fundamentals?.centralBankPolicy,
+    brief?.fundamentals?.economicData,
+    brief?.fundamentals?.geopoliticalContext,
+    brief?.whatMattersNow?.[0]?.text,
+    brief?.whatMattersNow?.[2]?.text,
+  ].filter(Boolean).join('\n');
 
-  const whyIsThisValid = fundamentalBacking || 'Imported from Market Decoder execution guidance.';
-  const whatConfirmsEntry = [ex.invalidation, ex.avoidThis].filter(Boolean).join('\n');
+  const whyIsThisValid = brief?.traderThesis?.whyValid || fundamentalBacking || 'No fundamental analysis saved for this older decoder run.';
+  const whatConfirmsEntry =
+    brief?.traderThesis?.whatConfirmsEntry
+    || brief?.confirmation
+    || ex.entryCondition
+    || 'Define confirmation trigger before entry.';
 
   const tradingCond = brief.instantRead?.tradingCondition || brief.marketPulse?.marketState || '—';
   const sessionGoal = [brief.instantRead?.bestApproach, ex.preferredDirection].filter(Boolean).join(' · ') || '';
@@ -166,7 +169,7 @@ export function buildLabFormPatchFromMarketDecoderBrief(brief) {
     confidence,
     conviction: convNorm,
     keyDrivers: keyDrivers || `Market Decoder context — ${asset}. Add drivers per line.`,
-    fundamentalBacking: fundamentalBacking || 'Imported from Market Decoder execution guidance.',
+    fundamentalBacking: fundamentalBacking || 'No fundamental analysis saved for this older decoder run.',
     whatDoISee: whatDoISee || `What you see structurally for ${asset}.`,
     whyIsThisValid,
     whatConfirmsEntry: whatConfirmsEntry || ex.riskConsideration || 'Define invalidation from decoder or structure.',
