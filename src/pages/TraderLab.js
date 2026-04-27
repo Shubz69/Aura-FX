@@ -33,6 +33,7 @@ import {
   intervalForTraderLab,
   CHART_PATH_TRADER_LAB,
 } from '../lib/chartUserRequest';
+import { validateMarketDecoderSections } from '../lib/trader-deck/marketDecoderExport';
 import '../styles/trader-deck/TraderLabLayout.css';
 
 const INSTRUMENTS = [
@@ -131,6 +132,7 @@ const DEFAULT_FORM = {
   emotionalIntensity: 30,
   mistakeTags: [],
   traderThesisUpdatedAt: null,
+  decoderExport: null,
 };
 
 const TRADER_LAB_LOCAL_DRAFT_KEY = 'aura_trader_lab_last_draft_v1';
@@ -156,6 +158,23 @@ function writeLocalDraft(payload) {
 
 function normalizeSession(session = {}) {
   const { traderThesis: _nestedThesis, whyValid: _legacyWhy, entryConfirmation: _legacyEntry, ...raw } = session;
+  const looksTechnicalOnly = (value) => {
+    const text = String(value || '').toLowerCase();
+    if (!text.trim()) return false;
+    return ['pivot', 'breakout', 'retest', 'support', 'resistance', 'rsi', 'macd', 'moving average', 'entry', 'stop loss', 'target']
+      .some((term) => text.includes(term));
+  };
+  const normalizedDecoderExport =
+    raw.decoderExport && typeof raw.decoderExport === 'object'
+      ? validateMarketDecoderSections(raw.decoderExport)
+      : null;
+  const legacyFundamentalFallback =
+    /market decoder/i.test(String(raw.setupName || '')) && looksTechnicalOnly(raw.fundamentalBacking)
+      ? 'No fundamental analysis saved for this older decoder run'
+      : raw.fundamentalBacking;
+  const safeFundamentalBacking =
+    normalizedDecoderExport?.fundamentals?.fundamentalBacking
+    || legacyFundamentalFallback;
   const whyIsThisValid =
     raw.whyIsThisValid != null
       ? String(raw.whyIsThisValid)
@@ -176,11 +195,12 @@ function normalizeSession(session = {}) {
     accountSize: raw.accountSize !== '' && raw.accountSize != null ? Number(raw.accountSize) : DEFAULT_FORM.accountSize,
     keyDrivers: raw.keyDrivers != null ? String(raw.keyDrivers) : DEFAULT_FORM.keyDrivers,
     fundamentalBacking:
-      raw.fundamentalBacking != null ? String(raw.fundamentalBacking) : DEFAULT_FORM.fundamentalBacking,
+      safeFundamentalBacking != null ? String(safeFundamentalBacking) : DEFAULT_FORM.fundamentalBacking,
     whatDoISee: raw.whatDoISee != null ? String(raw.whatDoISee) : DEFAULT_FORM.whatDoISee,
     whyIsThisValid,
     whatConfirmsEntry,
     traderThesisUpdatedAt: raw.traderThesisUpdatedAt != null ? raw.traderThesisUpdatedAt : DEFAULT_FORM.traderThesisUpdatedAt,
+    decoderExport: normalizedDecoderExport || DEFAULT_FORM.decoderExport,
   };
   if (!raw.conviction && raw.confidence != null) {
     merged.conviction = confidenceToConviction(raw.confidence);
@@ -348,7 +368,8 @@ export default function TraderLab() {
     }
     if (!parsed?.brief) return;
     const brief = parsed.brief || {};
-    const handoff = parsed.traderLabHandoff && typeof parsed.traderLabHandoff === 'object' ? parsed.traderLabHandoff : null;
+    const handoffRaw = parsed.traderLabHandoff && typeof parsed.traderLabHandoff === 'object' ? parsed.traderLabHandoff : null;
+    const handoff = validateMarketDecoderSections(handoffRaw || {});
     const symbol = normalizeDecodedSymbol(
       handoff?.symbol || parsed.decodedSymbol || parsed.symbol || brief?.header?.asset || ''
     );
@@ -365,20 +386,20 @@ export default function TraderLab() {
       });
       setInstrumentOptions(merged);
     }
-    const kln = handoff?.keyLevelsNumeric || {};
+    const kln = handoff?.tradeLevels || {};
     const biasRaw = String(handoff?.bias || brief?.instantRead?.bias || '');
     const bias = biasRaw.toLowerCase();
     const resistance =
-      kln.resistance1 != null && Number.isFinite(Number(kln.resistance1))
-        ? Number(kln.resistance1)
+      kln.target != null && Number.isFinite(Number(kln.target))
+        ? Number(kln.target)
         : parseLevel(brief?.keyLevels?.keyLevelsDisplay?.resistance1);
     const support =
-      kln.support1 != null && Number.isFinite(Number(kln.support1))
-        ? Number(kln.support1)
+      kln.stopLoss != null && Number.isFinite(Number(kln.stopLoss))
+        ? Number(kln.stopLoss)
         : parseLevel(brief?.keyLevels?.keyLevelsDisplay?.support1);
     const spot =
-      kln.spot != null && Number.isFinite(Number(kln.spot))
-        ? Number(kln.spot)
+      kln.entry != null && Number.isFinite(Number(kln.entry))
+        ? Number(kln.entry)
         : parseLevel(brief?.header?.price);
     const entry = spot ?? DEFAULT_FORM.entryPrice;
     const isBear = bias.includes('bear');
@@ -399,8 +420,14 @@ export default function TraderLab() {
           ? resistance ?? DEFAULT_FORM.targetPrice
           : resistance ?? support ?? DEFAULT_FORM.targetPrice
       : DEFAULT_FORM.targetPrice;
-    const exec = handoff?.execution || {};
-    const scen = handoff?.scenarios || {};
+    const thesis = handoff?.traderThesis || {};
+    const fundamentals = handoff?.fundamentals || {};
+    const risks = handoff?.risks || {};
+    const technical = handoff?.technical || {};
+    const keyDriverLines = Array.isArray(handoff?.keyDrivers)
+      ? handoff.keyDrivers.map((d) => `${d?.title || 'Driver'}: ${d?.explanation || ''}`.trim()).filter(Boolean)
+      : [];
+    const fallbackFundamental = 'No fundamental analysis saved for this older decoder run';
     const mapped = normalizeSession({
       ...DEFAULT_FORM,
       sessionDate: toYmd(),
@@ -416,45 +443,49 @@ export default function TraderLab() {
         || [brief?.finalOutput?.currentPosture, brief?.finalOutput?.postureSubtitle].filter(Boolean).join(' — ')
         || DEFAULT_FORM.sessionGoal}${!structOk ? ' — Decoder: insufficient daily history; confirm levels on your chart.' : ''}`,
       keyDrivers: Array.isArray(brief?.whatMattersNow)
-        ? brief.whatMattersNow
+        ? (keyDriverLines.length ? keyDriverLines : brief.whatMattersNow
             .map((x) => `${x?.label || 'Signal'}: ${x?.text || ''}`.trim())
             .filter(Boolean)
-            .join('\n')
+            .join('\n'))
         : DEFAULT_FORM.keyDrivers,
       whatDoISee:
-        [handoff?.bestApproach, handoff?.deskLogLine, brief?.instantRead?.bestApproach].filter(Boolean).join('\n') || '',
+        [thesis.whatToSee, handoff?.marketDecoderLogLine, technical.trend, brief?.instantRead?.bestApproach].filter(Boolean).join('\n') || '',
       whatConfirmsEntry:
-        exec.entryCondition
-        || brief?.executionGuidance?.entryCondition
-        || brief?.executionGuidance?.preferredDirection
+        thesis.whatConfirmsEntry
+        || technical.confirmation
+        || handoff?.confirmation
         || DEFAULT_FORM.whatConfirmsEntry,
       whyIsThisValid:
-        exec.invalidation
-        || handoff?.whatWouldChange
-        || brief?.finalOutput?.whyThisPosture
-        || brief?.executionGuidance?.invalidation
+        thesis.whyValid
+        || handoff?.fundamentalAnalysis
+        || fundamentals.fundamentalBacking
         || DEFAULT_FORM.whyIsThisValid,
       fundamentalBacking:
         [
-          exec.preferredDirection && `Preferred: ${exec.preferredDirection}`,
-          scen.bullish && `Bull case: ${scen.bullish}`,
-          scen.bearish && `Bear case: ${scen.bearish}`,
-          scen.noTrade && `Stand aside if: ${scen.noTrade}`,
-          exec.riskConsideration && `Risk: ${exec.riskConsideration}`,
-          exec.avoidThis && `Avoid: ${exec.avoidThis}`,
-        ]
-          .filter(Boolean)
-          .join('\n') || DEFAULT_FORM.fundamentalBacking,
+          fundamentals.fundamentalBacking,
+          fundamentals.macroBackdrop,
+          fundamentals.centralBankPolicy,
+          fundamentals.economicData,
+          fundamentals.geopoliticalContext,
+          fundamentals.crossAssetContext,
+        ].filter(Boolean).join('\n') || fallbackFundamental,
       decoderContext: {
         symbol,
         exportedAt: parsed.exportedAt || new Date().toISOString(),
         source: 'market_decoder',
         handoffVersion: parsed.version || null,
         generatedAt: brief?.meta?.generatedAt || null,
-        posture: handoff?.currentPosture || brief?.finalOutput?.currentPosture || null,
+        posture: handoff?.bias || brief?.finalOutput?.currentPosture || null,
         traderLabHandoff: handoff,
         brief,
+        riskSummary: {
+          newsRisk: risks.newsRisk || null,
+          eventRisk: risks.eventRisk || null,
+          volatilityRisk: risks.volatilityRisk || null,
+          invalidation: risks.invalidation || null,
+        },
       },
+      decoderExport: handoff,
     });
     decoderImportAppliedRef.current = true;
     setActiveId(null);

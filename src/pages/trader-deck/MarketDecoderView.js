@@ -9,6 +9,7 @@ import CosmicBackground from '../../components/CosmicBackground';
 import MarketDecoderBriefContent from './MarketDecoderBriefContent';
 import { MARKET_DECODER_LAB_HANDOFF_KEY } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import { formatPairLabel } from '../../lib/market/formatPairLabel';
+import { buildMarketDecoderExport } from '../../lib/trader-deck/marketDecoderExport';
 import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import '../../styles/trader-deck/MarketDecoder.css';
 import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput.react.js';
@@ -294,48 +295,13 @@ export default function MarketDecoderView({ embedded }) {
     const symbol = String(activeSymbol || brief?.header?.asset || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     const chips = quickChips.length ? quickChips : QUICK;
     const symbolUniverse = [...new Set([symbol, ...chips].filter(Boolean))];
-    const kl = brief?.keyLevels || {};
-    const traderLabHandoff = {
+    const traderLabHandoff = buildMarketDecoderExport(brief, {
       symbol,
-      generatedAt: brief?.meta?.generatedAt || null,
-      bias: brief?.instantRead?.bias || null,
-      conviction: brief?.instantRead?.conviction || null,
-      tradingCondition: brief?.instantRead?.tradingCondition || null,
-      thesis: brief?.finalOutput?.reason || null,
-      currentPosture: brief?.finalOutput?.currentPosture || null,
-      postureSubtitle: brief?.finalOutput?.postureSubtitle || null,
-      bestApproach: brief?.instantRead?.bestApproach || null,
-      whatWouldChange: brief?.finalOutput?.whatWouldChangeThis || null,
-      keyLevelsNumeric: {
-        spot: brief?.header?.price != null ? Number(brief.header.price) : null,
-        resistance1: kl.resistance1 ?? null,
-        resistance2: kl.resistance2 ?? null,
-        support1: kl.support1 ?? null,
-        support2: kl.support2 ?? null,
-        previousDayHigh: kl.previousDayHigh ?? null,
-        previousDayLow: kl.previousDayLow ?? null,
-        weeklyHigh: kl.weeklyHigh ?? null,
-        weeklyLow: kl.weeklyLow ?? null,
-        pivot: brief?.decoderScenario?.trigger ?? null,
-        invalidation: brief?.decoderScenario?.invalidation ?? null,
-      },
-      execution: {
-        preferredDirection: brief?.executionGuidance?.preferredDirection || null,
-        entryCondition: brief?.executionGuidance?.entryCondition || null,
-        invalidation: brief?.executionGuidance?.invalidation || null,
-        riskConsideration: brief?.executionGuidance?.riskConsideration || null,
-        avoidThis: brief?.executionGuidance?.avoidThis || null,
-      },
-      scenarios: {
-        bullish: brief?.scenarioMap?.bullish?.condition || null,
-        bearish: brief?.scenarioMap?.bearish?.condition || null,
-        noTrade: brief?.scenarioMap?.noTrade?.when || null,
-      },
-      deskLogLine: [brief?.marketPulse?.signalBrief, brief?.finalOutput?.whatWouldChangeThis].filter(Boolean).join(' · ') || null,
-      dataSufficiency: brief?.meta?.dataSufficiency || null,
-    };
+      playbookSetup: 'Market Decoder',
+      sessionFocus: brief?.instantRead?.bestApproach || '',
+    });
     const payload = {
-      version: 5,
+      version: 6,
       exportedAt: new Date().toISOString(),
       symbol,
       decodedSymbol: symbol,
