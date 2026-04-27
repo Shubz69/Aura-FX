@@ -5,8 +5,7 @@
  *
  * Env:
  *   DATALASTIC_API_KEY (required)
- *   DATALASTIC_AIS_RADIUS_NM — max 50 (Datalastic API cap), default 50
- *   DATALASTIC_AIS_CALLS_PER_RUN — geographic queries this run, default 12
+ *   DATALASTIC_AIS_CALLS_PER_RUN — geographic queries this run (sequential through HUBS), default 12
  *   DATALASTIC_AIS_TYPE — optional vessel type filter (only sent if DATALASTIC_AIS_APPLY_TYPE_FILTER=1)
  *   DATALASTIC_AIS_ADAPTER_DISABLED — 1/true to skip
  *   DATALASTIC_AIS_FETCH_ATTEMPTS — HTTP retries per hub (default 1 to avoid duplicate billing)
@@ -23,48 +22,13 @@ const HOSTS = ['api.datalastic.com'];
 /** Path must be /api/v0/vessel_inradius (Location Traffic Tracking API). */
 const ENDPOINT = 'https://api.datalastic.com/api/v0/vessel_inradius';
 
-/**
- * Hubs across chokepoints and major load/discharge regions. Index advances each run so the fleet
- * sweeps the world over time without one burst of hundreds of parallel calls.
- */
-const SHIPPING_HUBS = [
-  { lat: 26.55, lon: 56.35, label: 'strait_of_hormuz' },
-  { lat: 12.6, lon: 43.4, label: 'bab_el_mandeb' },
-  { lat: 1.25, lon: 103.85, label: 'singapore_strait' },
-  { lat: 31.25, lon: 32.35, label: 'suez_south' },
-  { lat: 29.95, lon: 32.55, label: 'suez_red_sea_north' },
-  { lat: 9.45, lon: -79.92, label: 'panama_canal' },
-  { lat: 51.05, lon: 1.55, label: 'dover_strait' },
-  { lat: 51.92, lon: 4.28, label: 'rotterdam' },
-  { lat: 53.55, lon: 9.98, label: 'hamburg_elbe' },
-  { lat: 36.13, lon: -5.35, label: 'gibraltar' },
-  { lat: 40.68, lon: -74.05, label: 'new_york_harbor' },
-  { lat: 29.72, lon: -95.28, label: 'houston_channel' },
-  { lat: 33.72, lon: -118.27, label: 'los_angeles_long_beach' },
-  { lat: 29.75, lon: -95.0, label: 'gulf_of_mexico_central' },
-  { lat: 31.22, lon: 121.5, label: 'shanghai_yangtze' },
-  { lat: 35.45, lon: 139.75, label: 'tokyo_yokohama' },
-  { lat: 22.28, lon: 114.12, label: 'hong_kong_pearl' },
-  { lat: 35.1, lon: 129.08, label: 'busan' },
-  { lat: 18.45, lon: -66.1, label: 'san_juan_caribbean' },
-  { lat: -23.05, lon: -43.15, label: 'santos_rio_lane' },
-  { lat: -34.6, lon: -58.35, label: 'river_plate' },
-  { lat: 6.45, lon: 3.35, label: 'lagos_anchorages' },
-  { lat: 19.08, lon: 72.95, label: 'mumbai_nhava' },
-  { lat: 25.28, lon: 55.25, label: 'fujairah_gulf' },
-  { lat: 11.65, lon: 43.15, label: 'djibouti_red_sea' },
-  { lat: 40.75, lon: 29.9, label: 'sea_of_marmara' },
-  { lat: 45.44, lon: 12.32, label: 'north_adriatic_trieste' },
-  { lat: 59.93, lon: 30.25, label: 'st_petersburg_finnish_gulf' },
-  { lat: -37.85, lon: 144.9, label: 'melbourne_port' },
-  { lat: -33.87, lon: 151.22, label: 'sydney_port' },
-  { lat: 1.42, lon: 104.5, label: 'malacca_mid_strait' },
-  { lat: 49.28, lon: -123.85, label: 'vancouver_salish' },
-  { lat: 60.45, lon: -146.35, label: 'prince_william_sound' },
-  { lat: 35.5, lon: 129.35, label: 'ulsan_korea_east' },
-  { lat: -8.65, lon: 115.2, label: 'bali_lombok_strait' },
-  { lat: 41.0, lon: 40.6, label: 'black_sea_georgia' },
-  { lat: 43.35, lon: 28.95, label: 'varna_constanta' },
+/** High-traffic maritime zones (50 NM radius each, Datalastic max). Rotated by hubOffset each run. */
+const HUBS = [
+  { name: 'Singapore Strait', lat: 1.2, lon: 103.8 },
+  { name: 'English Channel', lat: 50.9, lon: 1.4 },
+  { name: 'Gulf of Mexico', lat: 27.5, lon: -90.0 },
+  { name: 'Shanghai Port', lat: 31.2, lon: 121.5 },
+  { name: 'Rotterdam', lat: 51.9, lon: 4.5 },
 ];
 
 function disabled() {
@@ -74,13 +38,6 @@ function disabled() {
 
 function apiKey() {
   return String(process.env.DATALASTIC_API_KEY || '').trim();
-}
-
-/** Datalastic caps radius at 50 NM; default to max for densest traffic sample per call. */
-function radiusNm() {
-  const n = parseInt(process.env.DATALASTIC_AIS_RADIUS_NM || '50', 10);
-  if (!Number.isFinite(n) || n < 1) return 50;
-  return Math.min(50, Math.max(5, n));
 }
 
 function callsPerRun() {
@@ -102,7 +59,7 @@ function typeFilter() {
 
 function hubOffset() {
   const slot = Math.floor(Date.now() / 120000);
-  return slot % SHIPPING_HUBS.length;
+  return slot % HUBS.length;
 }
 
 function scoreVesselArray(arr) {
@@ -324,7 +281,7 @@ module.exports = {
       };
     }
 
-    const radius = radiusNm();
+    const RADIUS_NM = 50;
     const nCalls = callsPerRun();
     const useType = applyTypeFilter();
     const type = useType ? typeFilter() : null;
@@ -338,7 +295,7 @@ module.exports = {
     let rawVesselRows = 0;
 
     async function fetchHubOnce(hub, keyParam) {
-      const u = buildInradiusUrl(hub, keyParam, key, radius, type);
+      const u = buildInradiusUrl(hub, keyParam, key, RADIUS_NM, type);
       const safeUrl = sanitizeRequestUrl(u.toString());
       let fr;
       try {
@@ -349,7 +306,7 @@ module.exports = {
           headers: { Accept: 'application/json' },
         });
       } catch (e) {
-        ctx.log('warn', `${ID} http_error`, { hub: hub.label, url: safeUrl, err: String(e && e.message) });
+        ctx.log('warn', `${ID} http_error`, { hub: hub.name, url: safeUrl, err: String(e && e.message) });
         return {
           ok: false,
           reason: String(e && e.message),
@@ -366,13 +323,13 @@ module.exports = {
       try {
         json = JSON.parse(text);
       } catch {
-        ctx.log('warn', `${ID} invalid_json`, { hub: hub.label, url: safeUrl, response_length: textLen });
+        ctx.log('warn', `${ID} invalid_json`, { hub: hub.name, url: safeUrl, response_length: textLen });
         return { ok: false, reason: 'invalid_json', vessels: [], textLen, safeUrl, status: fr.status };
       }
 
       if (json && json.meta && json.meta.success === false) {
         ctx.log('warn', `${ID} api_meta_false`, {
-          hub: hub.label,
+          hub: hub.name,
           url: safeUrl,
           response_length: textLen,
           message: json.meta.message || json.meta.error || null,
@@ -390,7 +347,7 @@ module.exports = {
       const vessels = extractVessels(json);
       const preview = vessels.slice(0, 2).map(vesselSanitizeSnippet);
       ctx.log('info', `${ID} hub_response`, {
-        hub: hub.label,
+        hub: hub.name,
         url: safeUrl,
         response_length: textLen,
         vessel_rows: vessels.length,
@@ -402,7 +359,7 @@ module.exports = {
 
     for (let i = 0; i < nCalls; i += 1) {
       if (ctx.shouldStop()) break;
-      const hub = SHIPPING_HUBS[(offset + i) % SHIPPING_HUBS.length];
+      const hub = HUBS[(offset + i) % HUBS.length];
 
       try {
         let res = await fetchHubOnce(hub, 'api-key');
@@ -417,17 +374,17 @@ module.exports = {
         }
 
         if (!vessels.length && !res.ok) {
-          ctx.log('warn', `${ID} ${hub.label}`, res.reason || 'fetch_failed');
+          ctx.log('warn', `${ID} ${hub.name}`, res.reason || 'fetch_failed');
           continue;
         }
 
         rawVesselRows += vessels.length;
         for (const v of vessels) {
-          const ev = vesselToEvent(v, hub.label);
+          const ev = vesselToEvent(v, hub.name);
           if (ev) collected.push(ev);
         }
       } catch (e) {
-        ctx.log('warn', `${ID} ${hub.label}`, String(e && e.message));
+        ctx.log('warn', `${ID} ${hub.name}`, String(e && e.message));
       }
       if (ctx.delayMs) await ctx.sleep(ctx.delayMs);
     }
@@ -453,17 +410,25 @@ module.exports = {
     const backoffEmpty = fetchedCount === 0 && normalizedEmitted === 0;
     const parseOnlyLoss = fetchedCount > 0 && normalizedEmitted === 0;
 
+    const summarySamples = items.slice(0, 2).map((ev) => ({
+      mmsi: ev.source_meta?.mmsi ?? null,
+      lat: ev.lat != null ? Math.round(ev.lat * 1000) / 1000 : null,
+      lng: ev.lng != null ? Math.round(ev.lng * 1000) / 1000 : null,
+      name: (ev.source_meta?.vessel_name && String(ev.source_meta.vessel_name).slice(0, 32)) || null,
+    }));
+
     const meta = {
       adapter_id: ID,
       hubs_polled: nCalls,
       hub_offset: offset,
-      radius_nm: radius,
+      radius_nm: RADIUS_NM,
       type_filter: type,
       apply_type_filter: useType,
       candidates: unique.length,
       emitted: items.length,
       fetched_count: fetchedCount,
       normalized_emitted: normalizedEmitted,
+      sample_vessels: summarySamples,
       backoff_empty: backoffEmpty,
     };
 
@@ -474,9 +439,10 @@ module.exports = {
     ctx.log('info', `${ID} ingest_summary`, {
       fetched_count: fetchedCount,
       normalized_emitted: normalizedEmitted,
+      sample_vessels: summarySamples,
       unique_vessels: unique.length,
       hubs_polled: nCalls,
-      radius_nm: radius,
+      radius_nm: RADIUS_NM,
       type_filter: type || null,
       backoff_empty: backoffEmpty,
     });
