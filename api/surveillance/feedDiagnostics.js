@@ -4,13 +4,15 @@
 
 const { executeQuery } = require('../db');
 const { bucketAdapterRecency } = require('./adapterState');
+const { datalasticGloballyDisabled } = require('./adapters/datalasticAisLive');
 
 /** Static hints for operators (paths match vercel.json crons). */
 const SURVEILLANCE_CRON_HINT = {
   surveillance_ingest: {
     path: '/api/cron/surveillance-ingest',
     schedule_cron: '*/5 * * * *',
-    scope: 'batched HTML/RSS + rotating adapters (see ingestOrchestrator)',
+    scope:
+      'batched HTML/RSS + rotating adapters (includes datalastic_ais_live when enabled; Datalastic HTTP only from this cron)',
   },
   surveillance_tracks: {
     path: '/api/cron/surveillance-tracks',
@@ -29,7 +31,12 @@ function providerEnvFlags() {
     opensky_oauth_configured: !!(id && secret),
     opensky_adapter_disabled: /^1|true|yes$/i.test(String(process.env.OPENSKY_ADAPTER_DISABLED || '')),
     datalastic_configured: !!String(process.env.DATALASTIC_API_KEY || '').trim(),
-    datalastic_adapter_disabled: /^1|true|yes$/i.test(String(process.env.DATALASTIC_AIS_ADAPTER_DISABLED || '')),
+    datalastic_adapter_disabled: datalasticGloballyDisabled(),
+    datalastic_kill_switch_env: {
+      DATALASTIC_ADAPTER_DISABLED: /^1|true|yes$/i.test(String(process.env.DATALASTIC_ADAPTER_DISABLED || '')),
+      DATALASTIC_AIS_ADAPTER_DISABLED: /^1|true|yes$/i.test(String(process.env.DATALASTIC_AIS_ADAPTER_DISABLED || '')),
+      DATALASTIC_DISABLED: /^1|true|yes$/i.test(String(process.env.DATALASTIC_DISABLED || '')),
+    },
     news_api_configured: !!String(process.env.NEWS_API_KEY || '').trim(),
   };
 }

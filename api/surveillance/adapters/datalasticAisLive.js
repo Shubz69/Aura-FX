@@ -3,11 +3,14 @@
  * Global coverage is done by rotating queries across major shipping hubs each run;
  * one HTTP call can return up to 500 vessels (credits scale with results — see Datalastic pricing).
  *
+ * Kill switch (no HTTP to api.datalastic.com when any is 1/true/yes):
+ *   DATALASTIC_ADAPTER_DISABLED, DATALASTIC_AIS_ADAPTER_DISABLED, DATALASTIC_DISABLED
+ *
  * Env:
- *   DATALASTIC_API_KEY (required)
- *   DATALASTIC_AIS_CALLS_PER_RUN — geographic queries this run (sequential through HUBS), default 12
+ *   DATALASTIC_API_KEY (required to call Datalastic)
+ *   DATALASTIC_AIS_CALLS_PER_RUN — hub queries this run (default 1 if unset)
+ *   DATALASTIC_AIS_MAX_CALLS_PER_RUN — hard cap on hub queries (default 1 if unset; raise both to allow more)
  *   DATALASTIC_AIS_TYPE — optional vessel type filter (only sent if DATALASTIC_AIS_APPLY_TYPE_FILTER=1)
- *   DATALASTIC_AIS_ADAPTER_DISABLED — 1/true to skip
  *   DATALASTIC_AIS_FETCH_ATTEMPTS — HTTP retries per hub (default 1 to avoid duplicate billing)
  *
  * Note: Datalastic measures radius in nautical miles (NM), max 50 NM (~92.6 km). Larger radii are not supported.
@@ -31,19 +34,32 @@ const HUBS = [
   { name: 'Rotterdam', lat: 51.9, lon: 4.5 },
 ];
 
-function disabled() {
-  const v = String(process.env.DATALASTIC_AIS_ADAPTER_DISABLED || '').toLowerCase();
-  return v === '1' || v === 'true' || v === 'yes';
+/** True → adapter returns immediately; zero requests to Datalastic. */
+function datalasticGloballyDisabled() {
+  const keys = ['DATALASTIC_ADAPTER_DISABLED', 'DATALASTIC_AIS_ADAPTER_DISABLED', 'DATALASTIC_DISABLED'];
+  return keys.some((k) => /^(1|true|yes)$/i.test(String(process.env[k] || '').trim()));
 }
 
 function apiKey() {
   return String(process.env.DATALASTIC_API_KEY || '').trim();
 }
 
-function callsPerRun() {
-  const n = parseInt(process.env.DATALASTIC_AIS_CALLS_PER_RUN || '12', 10);
-  if (!Number.isFinite(n) || n < 1) return 12;
-  return Math.min(24, Math.max(1, n));
+/**
+ * Planned HTTP hub queries this run. Defaults to 1 when env omitted (credit safety).
+ * To poll more hubs: set DATALASTIC_AIS_CALLS_PER_RUN and raise DATALASTIC_AIS_MAX_CALLS_PER_RUN (both caps apply).
+ */
+function plannedHubCalls() {
+  const rawCalls = process.env.DATALASTIC_AIS_CALLS_PER_RUN;
+  const requested =
+    rawCalls == null || String(rawCalls).trim() === ''
+      ? 1
+      : Math.min(24, Math.max(1, parseInt(String(rawCalls).trim(), 10) || 1));
+  const rawMax = process.env.DATALASTIC_AIS_MAX_CALLS_PER_RUN;
+  const maxCap =
+    rawMax == null || String(rawMax).trim() === ''
+      ? 1
+      : Math.min(24, Math.max(1, parseInt(String(rawMax).trim(), 10) || 1));
+  return Math.min(requested, maxCap);
 }
 
 /** Type / type_specific / exclude / nav_status are opt-in only (strict filters cost credits and often return 0). */
@@ -261,28 +277,49 @@ module.exports = {
   tier: 'standard',
   defaultIntervalSeconds: 300,
   allowHosts: HOSTS,
+  datalasticGloballyDisabled,
   async run(ctx) {
-    if (disabled()) {
+    if (datalasticGloballyDisabled()) {
+      ctx.log('info', 'Datalastic disabled: skipping fetch', {
+        adapter_id: ID,
+        datalastic_planned_calls: 0,
+        datalastic_actual_calls: 0,
+      });
       return {
         items: [],
-        meta: { adapter_id: ID, skipped: true, reason: 'DATALASTIC_AIS_ADAPTER_DISABLED' },
+        meta: {
+          adapter_id: ID,
+          skipped: true,
+          reason: 'datalastic_kill_switch',
+          datalastic_planned_calls: 0,
+          datalastic_actual_calls: 0,
+        },
       };
     }
 
     const key = apiKey();
     if (!key) {
+      ctx.log('info', 'Datalastic disabled: skipping fetch', {
+        adapter_id: ID,
+        reason: 'DATALASTIC_API_KEY unset',
+        datalastic_planned_calls: 0,
+        datalastic_actual_calls: 0,
+      });
       return {
         items: [],
         meta: {
           adapter_id: ID,
           skipped: true,
           reason: 'DATALASTIC_API_KEY unset — add key for live AIS (see .env.example)',
+          datalastic_planned_calls: 0,
+          datalastic_actual_calls: 0,
         },
       };
     }
 
     const RADIUS_NM = 50;
-    const nCalls = callsPerRun();
+    const nCalls = plannedHubCalls();
+    ctx.log('info', `Datalastic planned calls: ${nCalls}`, { adapter_id: ID });
     const useType = applyTypeFilter();
     const type = useType ? typeFilter() : null;
     const offset = hubOffset();
@@ -293,6 +330,7 @@ module.exports = {
 
     const collected = [];
     let rawVesselRows = 0;
+    let datalasticActualCalls = 0;
 
     async function fetchHubOnce(hub, keyParam) {
       const u = buildInradiusUrl(hub, keyParam, key, RADIUS_NM, type);
@@ -305,6 +343,7 @@ module.exports = {
           maxAttempts,
           headers: { Accept: 'application/json' },
         });
+        datalasticActualCalls += 1;
       } catch (e) {
         ctx.log('warn', `${ID} http_error`, { hub: hub.name, url: safeUrl, err: String(e && e.message) });
         return {
@@ -365,7 +404,11 @@ module.exports = {
         let res = await fetchHubOnce(hub, 'api-key');
         let vessels = res.ok && Array.isArray(res.vessels) ? res.vessels : [];
 
-        if (!res.ok && (res.reason === 'invalid_json' || /http_|fetch|abort/i.test(String(res.reason)))) {
+        if (
+          nCalls > 1 &&
+          !res.ok &&
+          (res.reason === 'invalid_json' || /http_|fetch|abort/i.test(String(res.reason)))
+        ) {
           const r2 = await fetchHubOnce(hub, 'api_key');
           if (r2.ok && Array.isArray(r2.vessels)) {
             vessels = r2.vessels;
@@ -430,11 +473,15 @@ module.exports = {
       normalized_emitted: normalizedEmitted,
       sample_vessels: summarySamples,
       backoff_empty: backoffEmpty,
+      datalastic_planned_calls: nCalls,
+      datalastic_actual_calls: datalasticActualCalls,
     };
 
     if (parseOnlyLoss) {
       meta.force_next_run_sec = 600;
     }
+
+    ctx.log('info', `Datalastic actual calls made: ${datalasticActualCalls}`, { adapter_id: ID });
 
     ctx.log('info', `${ID} ingest_summary`, {
       fetched_count: fetchedCount,
@@ -442,6 +489,8 @@ module.exports = {
       sample_vessels: summarySamples,
       unique_vessels: unique.length,
       hubs_polled: nCalls,
+      datalastic_planned_calls: nCalls,
+      datalastic_actual_calls: datalasticActualCalls,
       radius_nm: RADIUS_NM,
       type_filter: type || null,
       backoff_empty: backoffEmpty,
