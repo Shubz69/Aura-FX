@@ -853,7 +853,7 @@
     },
     {
       "source": "/api/surveillance/debug",
-      "destination": "/api/surveillance/debug.js"
+      "destination": "/api/surveillance/admin-diagnostics.js?sv_route=debug"
     },
     {
       "source": "/api/cron/ohlcv-incremental",
