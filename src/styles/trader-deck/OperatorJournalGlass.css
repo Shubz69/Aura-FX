@@ -1620,3 +1620,96 @@
 .trade-validator-shell .trader-lab-v2 textarea::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, rgba(234, 169, 96, 0.6), rgba(212, 141, 68, 0.5)) !important;
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   CENTERED HERO LAYOUT (no side buttons)
+═══════════════════════════════════════════════════════════════════════════ */
+.trade-validator-shell .aura-shell-hero-inner.trade-validator-hero-inner--centered {
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  align-items: center !important;
+  gap: clamp(10px, 2vw, 20px);
+  width: 100%;
+  max-width: 1540px !important;
+  margin: 0 auto !important;
+}
+
+.trade-validator-shell .trade-validator-hero-titles {
+  grid-column: 2;
+  text-align: center;
+  justify-self: center;
+  max-width: min(100%, 44rem);
+  padding-top: 0;
+}
+
+.trade-validator-shell .trade-validator-hero-spacer {
+  grid-column: 3;
+  width: clamp(100px, 15vw, 180px);
+}
+
+/* ── Back to Operator Galaxy button ── */
+.trade-validator-shell .trade-validator-hero-back {
+  grid-column: 1;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+}
+
+.trade-validator-shell .trade-validator-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: clamp(7px, 1.5vw, 10px) clamp(12px, 2vw, 18px);
+  font-size: clamp(0.68rem, 1.45vw, 0.8rem);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 100px;
+  background: rgba(3, 2, 10, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.trade-validator-shell .trade-validator-back-link:hover {
+  color: #fff;
+  border-color: rgba(212, 175, 55, 0.5);
+  background: rgba(212, 175, 55, 0.1);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+}
+
+.trade-validator-shell .trade-validator-back-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.trade-validator-shell .trade-validator-back-link:hover .trade-validator-back-icon {
+  transform: translateX(-3px);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .trade-validator-shell .aura-shell-hero-inner.trade-validator-hero-inner--centered {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 10px !important;
+  }
+
+  .trade-validator-shell .trade-validator-hero-back {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    justify-self: center !important;
+  }
+
+  .trade-validator-shell .trade-validator-hero-titles {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+  }
+
+  .trade-validator-shell .trade-validator-hero-spacer {
+    display: none !important;
+  }
+}

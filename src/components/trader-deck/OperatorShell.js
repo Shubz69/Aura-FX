@@ -1,9 +1,5 @@
-/**
- * The Operator route shell (/trader-deck/trade-validator/*). Nav + Outlet only;
- * tab pages own their logic. Theme CSS is scoped with .trade-validator-shell.
- */
 import React from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, Link } from 'react-router-dom';
 import { OperatorAccountProvider } from '../../context/OperatorAccountContext';
 import AuraTerminalThemeShell from '../AuraTerminalThemeShell';
 import '../../styles/aura-analysis/AuraAnalysisShell.css';
@@ -13,7 +9,6 @@ import '../../styles/trader-deck/OperatorRouteThemeGold.css';
 import '../../styles/trader-deck/OperatorJournalPanels.css';
 
 const BASE = '/trader-deck/trade-validator';
-/** Main tab rail — Trader Lab & Playbook live in the header; Trader Replay is under Aura Analysis. */
 const TABS = [
   { path: `${BASE}/overview`,        label: 'Overview' },
   { path: `${BASE}/checklist`,       label: 'Checklist' },
@@ -24,43 +19,36 @@ const TABS = [
   { path: `${BASE}/leaderboard`,     label: 'Leaderboard' },
 ];
 
-const HERO_TRADER_LAB = { path: `${BASE}/trader-lab`, label: 'Trader Lab' };
-const HERO_PLAYBOOK = { path: `${BASE}/trader-playbook`, label: 'Trader Playbook' };
-
 export default function OperatorShell() {
   return (
     <OperatorAccountProvider>
     <AuraTerminalThemeShell>
     <div className="aura-shell trade-validator-shell journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim aa-page">
       <header className="aura-shell-hero">
-        <div className="aura-shell-hero-inner trade-validator-hero-inner">
-          <nav className="trade-validator-hero-suite trade-validator-hero-suite--left" aria-label="Trader Lab">
-            <NavLink
-              to={HERO_TRADER_LAB.path}
-              className={({ isActive }) =>
-                `trade-validator-hero-suite-link${isActive ? ' trade-validator-hero-suite-link--active' : ''}`
-              }
+        <div className="aura-shell-hero-inner trade-validator-hero-inner trade-validator-hero-inner--centered">
+          
+          {/* ── Back to Operator Galaxy ── */}
+          <nav className="trade-validator-hero-back" aria-label="Back to Operator Galaxy">
+            <Link
+             to="/operator-galaxy"
+              className="trade-validator-back-link"
             >
-              {HERO_TRADER_LAB.label}
-            </NavLink>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="trade-validator-back-icon">
+                <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Operator Galaxy
+            </Link>
           </nav>
+
           <div className="aura-shell-titles trade-validator-hero-titles">
             <h1 className="aura-shell-title">The Operator</h1>
             <p className="aura-shell-sub">
-              One workspace: Trader Lab (plan), Playbook (rules), then Checklist, Calculator, and Journal. Import context from
-              Trader Desk → Market Decoder → Export.
+              One workspace: Checklist, Calculator, Journal, Analytics, Trader CV & Leaderboard.
             </p>
           </div>
-          <nav className="trade-validator-hero-suite trade-validator-hero-suite--right" aria-label="Trader Playbook">
-            <NavLink
-              to={HERO_PLAYBOOK.path}
-              className={({ isActive }) =>
-                `trade-validator-hero-suite-link${isActive ? ' trade-validator-hero-suite-link--active' : ''}`
-              }
-            >
-              {HERO_PLAYBOOK.label}
-            </NavLink>
-          </nav>
+
+          {/* Spacer for symmetry */}
+          <div className="trade-validator-hero-spacer" />
         </div>
       </header>
 
