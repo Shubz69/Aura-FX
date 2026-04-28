@@ -665,6 +665,14 @@
   overflow: hidden;
 }
 
+.sv-globe-chrome-legend {
+  margin: 0;
+  font-size: 0.64rem;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.42);
+  max-width: 52ch;
+}
+
 .sv-terminal-hero > .sv-command-rail.sv-intel-panel {
   min-height: var(--sv-globe-band);
   max-height: var(--sv-globe-band);
@@ -2703,6 +2711,49 @@ a.sv-retry {
   transition:
     opacity 0.34s var(--sv-ease-out),
     filter 0.42s var(--sv-ease-out);
+}
+
+.sv-globe-hover-preview {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  z-index: 5;
+  max-width: min(300px, 80%);
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(248, 195, 125, 0.28);
+  background: rgba(4, 5, 10, 0.86);
+  color: rgba(255, 255, 255, 0.86);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sv-globe-hover-preview__title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: rgba(255, 248, 236, 0.94);
+}
+
+.sv-globe-hover-preview__copy {
+  font-size: 0.62rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.sv-dev-diag {
+  margin: 8px var(--sv-terminal-pad-x) 0;
+  padding: 8px 10px;
+  border: 1px dashed rgba(138, 214, 255, 0.32);
+  border-radius: 8px;
+  background: rgba(14, 28, 40, 0.35);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 0.62rem;
+  color: rgba(182, 226, 255, 0.86);
 }
 
 .sv-globe-wrap--countries .sv-globe-vignette {

@@ -301,6 +301,8 @@ export default function SurveillanceGlobe({
   focusRegion,
   activeCategory = 'all',
   onSelectEvent,
+  onHoverEvent,
+  onDiagnostics,
   onCountryFocus,
   onGlobeBackground,
   reducedMotion,
@@ -317,6 +319,7 @@ export default function SurveillanceGlobe({
   const [povAltitude, setPovAltitude] = useState(2.48);
   const [nightFactor, setNightFactor] = useState(() => nightFactorFromLocalTime());
   const [hoveredId, setHoveredId] = useState(null);
+  const [hoveredPreview, setHoveredPreview] = useState(null);
   const [globeReveal, setGlobeReveal] = useState(false);
   const [globeTextureUrl, setGlobeTextureUrl] = useState(GLOBE_TEXTURE_NIGHT);
 
@@ -735,7 +738,6 @@ useEffect(() => {
       const hot = p.maxSev >= 4 || p.maxSevScore >= 72;
       const pulseBoost = !reducedMotion && hot ? pulseStep * 0.022 : 0;
       const isSel = String(p.eventId) === String(selectedId);
-      const isHover = hoveredId != null && String(p.eventId) === String(hoveredId);
       const inFocus = clusterTouchesFocus(p, idMap, focusRegion);
       const lens = !!focusRegion;
       const muted = lens && !inFocus && !isSel;
@@ -761,9 +763,7 @@ useEffect(() => {
       const freshPriority = recencyWeight >= 0.88 && highPriority;
       const color = isSel
         ? '#ffd9a8'
-        : isHover
-          ? '#fff0d4'
-          : muted
+        : muted
             ? 'rgba(120, 120, 130, 0.28)'
             : lowPriority
               ? 'rgba(108, 118, 130, 0.24)'
@@ -791,6 +791,9 @@ useEffect(() => {
         label: `${markerIconForKind(markerKindFromEvent(idMap.get(String(p.eventId))))} ${
           p.label || 'Surveillance node'
         } · Market Impact ${leadEvent?.market_impact_level || 'Low'}`,
+        previewText: `${p.count > 1 ? `${p.count} clustered signals` : 'Signal'} · ${
+          leadEvent?.market_impact_level || 'Low'
+        } impact`,
         color,
         radius: Math.min(
           1.45,
@@ -808,18 +811,27 @@ useEffect(() => {
             (categoryFocused ? 0.08 : 0) +
             (hot || freshPriority ? pulseStep * 0.06 : 0) +
             (isSel ? 0.14 : 0) +
-            (isHover ? 0.08 : 0) +
             (lens && inFocus ? 0.1 : 0)
         ),
         altitude:
           0.02 +
-          Math.min(0.082, p.count * 0.004 + pulseBoost + (freshPriority ? 0.012 : 0) + (isSel ? 0.018 : 0) + (isHover ? 0.01 : 0)) +
+          Math.min(0.082, p.count * 0.004 + pulseBoost + (freshPriority ? 0.012 : 0) + (isSel ? 0.018 : 0)) +
           (liveCluster ? 0.014 : 0) +
           (categoryFocused ? 0.012 : 0) +
           (lens && inFocus ? 0.02 : 0),
       };
     });
-  }, [events, selectedId, hoveredId, reducedMotion, focusRegion, activeCategory]);
+  }, [events, selectedId, reducedMotion, focusRegion, activeCategory]);
+
+  useEffect(() => {
+    if (typeof onDiagnostics !== 'function') return;
+    onDiagnostics({
+      markerCountInput: events.filter((e) => e.lat != null && e.lng != null).length,
+      markerCountRendered: points.length,
+      selectedMarkerId: selectedId ?? null,
+      hoveredMarkerId: hoveredId ?? null,
+    });
+  }, [events, points, selectedId, hoveredId, onDiagnostics]);
 
   const tensionByIso = useMemo(() => {
     const m = new Map();
@@ -1027,7 +1039,7 @@ useEffect(() => {
           pointColor="color"
           pointRadius="radius"
           pointAltitude="altitude"
-          pointLabel="label"
+          pointLabel={null}
           pointsMerge={false}
           pointResolution={reducedMotion ? 10 : 20}
           onPointClick={(pt) => {
@@ -1035,7 +1047,18 @@ useEffect(() => {
             if (pt && pt.eventId) onSelectEvent(pt.eventId);
           }}
           onPointHover={(pt) => {
-            setHoveredId(pt && pt.eventId ? pt.eventId : null);
+            const nextId = pt && pt.eventId ? pt.eventId : null;
+            setHoveredId(nextId);
+            setHoveredPreview(
+              pt
+                ? {
+                    id: nextId,
+                    title: String(pt.label || 'Surveillance node').replace(/<[^>]+>/g, ''),
+                    copy: pt.previewText || 'Hover preview',
+                  }
+                : null
+            );
+            if (typeof onHoverEvent === 'function') onHoverEvent(nextId);
           }}
           objectsData={celestialObjectsData}
           objectLat="lat"
@@ -1045,6 +1068,16 @@ useEffect(() => {
           objectsTransitionDuration={reducedMotion ? 0 : 400}
         />
       </Suspense>
+      <div className="sv-globe-hover-preview" aria-live="polite">
+        {hoveredPreview ? (
+          <>
+            <span className="sv-globe-hover-preview__title">{hoveredPreview.title}</span>
+            <span className="sv-globe-hover-preview__copy">{hoveredPreview.copy}</span>
+          </>
+        ) : (
+          <span className="sv-globe-hover-preview__copy">Hover markers to preview. Click to pin in side drawer.</span>
+        )}
+      </div>
     </div>
   );
 }

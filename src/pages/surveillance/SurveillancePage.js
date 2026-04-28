@@ -84,6 +84,8 @@ export default function SurveillancePage() {
   const [countryHeadlines, setCountryHeadlines] = useState([]);
   const [countryWireAvailable, setCountryWireAvailable] = useState(true);
   const [surveillanceDiag, setSurveillanceDiag] = useState(null);
+  const [globeDiag, setGlobeDiag] = useState(null);
+  const [hoveredMarkerId, setHoveredMarkerId] = useState(null);
   const loadFeedRef = useRef(null);
   const prevIntroRef = useRef(showIntro);
   const tapeSigRef = useRef('');
@@ -575,7 +577,9 @@ export default function SurveillancePage() {
           {!renderable.fallbackActive ? (
             <div className="sv-masthead-status" role="status">
               <div className="sv-masthead-status-main">
-                <span>Live data confidence: {renderable.liveDataConfidence || 'Medium'}</span>
+                <span title="Quality of current feed coverage and freshness">
+                  Live data confidence: {renderable.liveDataConfidence || 'Medium'}
+                </span>
               </div>
             </div>
           ) : null}
@@ -589,7 +593,9 @@ export default function SurveillancePage() {
               <div className="sv-masthead-status-main">
                 {systemHealth.warmingUp ? <span>Warming — first ingest pass</span> : null}
                 {systemHealth.degraded ? <span>Degraded ingest / sources</span> : null}
-                {!systemHealth.warmingUp && !systemHealth.degraded ? <span>Sources nominal</span> : null}
+                {!systemHealth.warmingUp && !systemHealth.degraded ? (
+                  <span title="Primary ingest adapters reporting healthy">Sources nominal</span>
+                ) : null}
                 {systemHealth.lastIngestSuccessAt ? (
                   <span className="sv-masthead-status-time">
                     Last ingest · {new Date(systemHealth.lastIngestSuccessAt).toLocaleString()}
@@ -598,7 +604,9 @@ export default function SurveillancePage() {
                   <span className="sv-masthead-status-time">No ingest yet</span>
                 )}
                 {systemHealth.adapterRecencyBuckets?.stale > 0 ? (
-                  <span className="sv-masthead-status-stale">{systemHealth.adapterRecencyBuckets.stale} stale adapters</span>
+                  <span className="sv-masthead-status-stale" title="Adapters with no successful ingest in over 24h">
+                    {systemHealth.adapterRecencyBuckets.stale} stale adapters
+                  </span>
                 ) : null}
               </div>
               <span className="sv-masthead-feed-pill" data-live={sseOk ? 'on' : 'off'}>
@@ -664,6 +672,8 @@ export default function SurveillancePage() {
                 focusRegion={focusRegion}
                 activeCategory={tab}
                 onSelectEvent={onGlobeSelectEvent}
+                onHoverEvent={setHoveredMarkerId}
+                onDiagnostics={setGlobeDiag}
                 onCountryFocus={onGlobeCountryFocus}
                 onGlobeBackground={onGlobeBackground}
                 reducedMotion={reducedMotion}
@@ -672,8 +682,12 @@ export default function SurveillancePage() {
             <div className="sv-globe-chrome">
               <span className="sv-globe-chrome-tag">Operating picture</span>
               <p className="sv-globe-chrome-hint">
-                Zoom to frame the theatre. Tap a country for rolling wire headlines plus institutional tape
-                (last 72h). Clear the lens to restore the full global grid.
+                Hover previews a marker. Click pins the event in the side drawer. Tap a country for rolling wire
+                headlines plus institutional tape (last 72h). Clear lens for full global grid.
+              </p>
+              <p className="sv-globe-chrome-legend">
+                Legend: brighter poles = higher impact. Gold highlights = selected marker. Category filters keep
+                markers visible when matches exist.
               </p>
             </div>
           </div>
@@ -913,11 +927,22 @@ export default function SurveillancePage() {
             })}
             {!tapeEvents.length ? (
               <li className="sv-muted sv-tape-empty">
-                {focusRegion ? 'No tape nodes in this sector for the current filters.' : 'No events ingested yet.'}
+                {focusRegion
+                  ? 'No markers match this country lens + category/severity filters. Clear lens or widen categories.'
+                  : 'No events match current category/severity filters yet. Try All categories or lower severity.'}
               </li>
             ) : null}
           </ul>
         </section>
+        {process.env.NODE_ENV !== 'production' ? (
+          <section className="sv-dev-diag" aria-label="Surveillance globe diagnostics">
+            <strong>Globe diagnostics</strong>
+            <span>markers in feed: {globeDiag?.markerCountInput ?? 0}</span>
+            <span>markers rendered: {globeDiag?.markerCountRendered ?? 0}</span>
+            <span>selected marker id: {globeDiag?.selectedMarkerId ?? selectedId ?? 'none'}</span>
+            <span>hovered marker id: {globeDiag?.hoveredMarkerId ?? hoveredMarkerId ?? 'none'}</span>
+          </section>
+        ) : null}
       </div>
 
       <EventDrawer
