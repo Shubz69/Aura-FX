@@ -4,7 +4,10 @@ import { FaChartLine } from 'react-icons/fa';
 import { fetchOperatorChartPack } from '../../services/operatorIntelligenceAdapter';
 import { timeScaleOptionsForInterval } from '../../lib/charts/lightweightChartData';
 import {
-  TERMINAL_INSTRUMENT_OPTIONS,
+  TERMINAL_INSTRUMENTS,
+  TERMINAL_INSTRUMENT_CATEGORIES,
+  getInstrumentByChartSymbol,
+  chartSymbolFromId,
   terminalInstrumentLabel,
 } from '../../data/terminalInstruments';
 
@@ -45,24 +48,47 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
   onSelectCandleRef.current = onSelectCandle;
 
   const [tf, setTf] = useState('1H');
-  const [sym, setSym] = useState(symbol || TERMINAL_INSTRUMENT_OPTIONS[0]?.value || 'OANDA:EURUSD');
+  const [symbolQuery, setSymbolQuery] = useState('');
+  const initialInstrument = getInstrumentByChartSymbol(symbol) || TERMINAL_INSTRUMENTS[0] || null;
+  const [selectedInstrumentId, setSelectedInstrumentId] = useState(initialInstrument?.id || 'EURUSD');
+  const sym = chartSymbolFromId(selectedInstrumentId);
   const [status, setStatus] = useState('loading');
   const [err, setErr] = useState('');
   const [pack, setPack] = useState(null);
   const [lastPrice, setLastPrice] = useState('');
 
+  const loadSeqRef = useRef(0);
+
+  const filteredInstruments = TERMINAL_INSTRUMENTS.filter((inst) => {
+    if (!symbolQuery.trim()) return true;
+    const q = symbolQuery.trim().toLowerCase();
+    return (
+      inst.id.toLowerCase().includes(q)
+      || inst.label.toLowerCase().includes(q)
+      || inst.category.toLowerCase().includes(q)
+    );
+  });
+
+  const groupedInstruments = TERMINAL_INSTRUMENT_CATEGORIES.map((category) => ({
+    category,
+    rows: filteredInstruments.filter((x) => x.category === category),
+  })).filter((group) => group.rows.length > 0);
+
   const load = useCallback(async () => {
+    loadSeqRef.current += 1;
+    const seq = loadSeqRef.current;
     setStatus('loading');
     setErr('');
     setPack(null);
     try {
       const data = await fetchOperatorChartPack(sym, tf);
+      if (seq !== loadSeqRef.current) return;
       const bars = data?.bars;
       if (!bars || bars.length < 2) {
         setPack(null);
         setLastPrice('');
         setStatus('error');
-        setErr('Insufficient chart data.');
+        setErr('No data available for selected instrument.');
         return;
       }
       setPack(data);
@@ -70,6 +96,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
       setLastPrice(last && Number.isFinite(last.close) ? String(last.close) : '');
       setStatus('ready');
     } catch (e) {
+      if (seq !== loadSeqRef.current) return;
       setPack(null);
       setLastPrice('');
       setErr(e?.message || 'Chart load failed');
@@ -82,8 +109,14 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
   }, [load]);
 
   useEffect(() => {
-    if (symbol && symbol !== sym) setSym(symbol);
-  }, [symbol, sym]);
+    if (!symbol) return;
+    const next = getInstrumentByChartSymbol(symbol);
+    if (next?.id && next.id !== selectedInstrumentId) setSelectedInstrumentId(next.id);
+  }, [symbol, selectedInstrumentId]);
+
+  useEffect(() => {
+    onSymbolChange?.(sym);
+  }, [sym, onSymbolChange]);
 
   useLayoutEffect(() => {
     const wrap = wrapRef.current;
@@ -331,21 +364,33 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
           <label className="oi-sr-only" htmlFor="oi-symbol-select">
             Symbol
           </label>
+          <input
+            className="oi-input oi-input--search"
+            type="search"
+            value={symbolQuery}
+            onChange={(e) => setSymbolQuery(e.target.value)}
+            placeholder="Search instruments..."
+            aria-label="Search instruments"
+          />
           <select
             id="oi-symbol-select"
             data-testid="oi-symbol-select"
             className="oi-select oi-select--instrument"
-            value={sym}
+            value={selectedInstrumentId}
             onChange={(e) => {
-              const v = e.target.value;
-              setSym(v);
-              onSymbolChange?.(v);
+              const id = e.target.value;
+              setSelectedInstrumentId(id);
+              onSymbolChange?.(chartSymbolFromId(id));
             }}
           >
-            {TERMINAL_INSTRUMENT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
+            {groupedInstruments.map((group) => (
+              <optgroup key={group.category} label={group.category}>
+                {group.rows.map((inst) => (
+                  <option key={inst.id} value={inst.id}>
+                    {`${inst.id} — ${inst.label} (${inst.category})`}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <div className="oi-tf-bar" role="toolbar" aria-label="Timeframe">

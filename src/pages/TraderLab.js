@@ -50,7 +50,7 @@ const CHART_INTERVALS = [
   { label: '4H', value: '240' },
   { label: '1D', value: '1D' },
 ];
-const CHART_RANGES = ['1D', '1W', '1M', '3M', '6M', '1Y'];
+const CHART_RANGES = ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', '10Y', '20Y', '50Y'];
 
 const LOADING_TERMINAL_STATS = [
   { label: 'Market State', value: '…', tone: 'gold' },
@@ -106,7 +106,7 @@ const DEFAULT_FORM = {
   decoderExport: null,
   /** Candle timeframe for `/api/market/chart-history` (1, 15, 60, 240, 1D). */
   chartInterval: '60',
-  /** Visible history range (1D … 1Y). */
+  /** Visible history range (1D … 50Y). */
   chartRange: '3M',
 };
 

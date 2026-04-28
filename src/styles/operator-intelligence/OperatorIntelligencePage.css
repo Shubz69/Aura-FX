@@ -292,6 +292,25 @@
   font-size: 12px;
   font-weight: 600;
 }
+
+.oi-input {
+  background: rgba(8, 10, 18, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: rgba(245, 248, 255, 0.92);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.oi-input::placeholder {
+  color: rgba(200, 210, 230, 0.45);
+}
+
+.oi-input--search {
+  min-width: 180px;
+  flex: 1 1 220px;
+}
 .oi-tf-bar {
   display: flex;
   flex-wrap: wrap;

@@ -1,15 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FaChartBar, FaPlus, FaTimes } from 'react-icons/fa';
 import {
-  TERMINAL_INSTRUMENT_OPTIONS,
-  TERMINAL_INSTRUMENT_VALUE_SET,
-  chartSymbolFromDecoded,
+  TERMINAL_INSTRUMENTS,
+  TERMINAL_INSTRUMENT_CATEGORIES,
+  getInstrumentById,
+  getInstrumentByChartSymbol,
+  chartSymbolFromId,
+  normalizeSymbol,
   terminalInstrumentLabel,
-  DEFAULT_TERMINAL_CHART_SYMBOL,
 } from '../../data/terminalInstruments';
 import { hashSeed } from '../../data/operatorIntelligence/chartBars.mock';
 
-const STORAGE_KEY = 'oi_market_watch_v1';
+const STORAGE_KEY = 'oi_market_watch_v2';
 
 function mulberry32(a) {
   return function mul() {
@@ -68,7 +70,10 @@ function readStoredList() {
     if (!raw) return null;
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return null;
-    return arr.filter((v) => typeof v === 'string' && TERMINAL_INSTRUMENT_VALUE_SET.has(v));
+    return arr
+      .filter((v) => typeof v === 'string')
+      .map((v) => normalizeSymbol(v))
+      .filter((id) => Boolean(getInstrumentById(id)));
   } catch {
     return null;
   }
@@ -87,11 +92,12 @@ function seedFromBundleRows(rows) {
   const out = [];
   const seen = new Set();
   for (const r of rows) {
-    const v = chartSymbolFromDecoded(String(r.symbol || ''), DEFAULT_TERMINAL_CHART_SYMBOL);
-    if (!v || !TERMINAL_INSTRUMENT_VALUE_SET.has(v)) continue;
-    if (seen.has(v)) continue;
-    seen.add(v);
-    out.push(v);
+    const inst = getInstrumentByChartSymbol(String(r.symbol || ''));
+    const id = inst?.id || normalizeSymbol(r.symbol);
+    if (!id || !getInstrumentById(id)) continue;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
   }
   return out.length ? out : null;
 }
@@ -106,9 +112,10 @@ export default function MarketWatchPanel({ seedRows, loading }) {
     if (stored?.length) return stored;
     const seeded = seedFromBundleRows(seedRows);
     if (seeded?.length) return seeded;
-    return ['OANDA:EURUSD', 'OANDA:GBPUSD', 'OANDA:USDJPY', 'OANDA:XAUUSD'];
+    return ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD'];
   });
   const [addValue, setAddValue] = useState('');
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     const stored = readStoredList();
@@ -125,11 +132,32 @@ export default function MarketWatchPanel({ seedRows, loading }) {
     writeStoredList(next);
   }, []);
 
-  const rows = useMemo(() => values.map((v) => mockRowForValue(v)), [values]);
+  const rows = useMemo(
+    () => values.map((id) => mockRowForValue(chartSymbolFromId(id))).map((r, idx) => ({ ...r, id: values[idx] })),
+    [values],
+  );
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return TERMINAL_INSTRUMENTS;
+    const q = query.trim().toLowerCase();
+    return TERMINAL_INSTRUMENTS.filter(
+      (inst) => inst.id.toLowerCase().includes(q)
+        || inst.label.toLowerCase().includes(q)
+        || inst.category.toLowerCase().includes(q),
+    );
+  }, [query]);
+
+  const grouped = useMemo(
+    () => TERMINAL_INSTRUMENT_CATEGORIES.map((category) => ({
+      category,
+      rows: filtered.filter((x) => x.category === category),
+    })).filter((g) => g.rows.length > 0),
+    [filtered],
+  );
 
   const addInstrument = () => {
     const v = addValue || '';
-    if (!v || !TERMINAL_INSTRUMENT_VALUE_SET.has(v)) return;
+    if (!v || !getInstrumentById(v)) return;
     if (values.includes(v)) return;
     persist([...values, v]);
     setAddValue('');
@@ -139,7 +167,7 @@ export default function MarketWatchPanel({ seedRows, loading }) {
     persist(values.filter((x) => x !== value));
   };
 
-  const canAdd = addValue && TERMINAL_INSTRUMENT_VALUE_SET.has(addValue) && !values.includes(addValue);
+  const canAdd = addValue && Boolean(getInstrumentById(addValue)) && !values.includes(addValue);
 
   return (
     <div className="oi-card oi-card--mwatch">
@@ -152,6 +180,14 @@ export default function MarketWatchPanel({ seedRows, loading }) {
         <label className="oi-sr-only" htmlFor="oi-mwatch-add">
           Add instrument
         </label>
+        <input
+          className="oi-input oi-input--search"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search instruments..."
+          aria-label="Search market watch instruments"
+        />
         <select
           id="oi-mwatch-add"
           data-testid="oi-mwatch-add-select"
@@ -161,10 +197,14 @@ export default function MarketWatchPanel({ seedRows, loading }) {
           disabled={loading}
         >
           <option value="">Add instrument…</option>
-          {TERMINAL_INSTRUMENT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
+          {grouped.map((group) => (
+            <optgroup key={group.category} label={group.category}>
+              {group.rows.map((inst) => (
+                <option key={inst.id} value={inst.id}>
+                  {`${inst.id} — ${inst.label} (${inst.category})`}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
         <button
@@ -186,7 +226,7 @@ export default function MarketWatchPanel({ seedRows, loading }) {
       {!loading && rows.length > 0 ? (
         <ul className="oi-mwatch" data-testid="oi-market-watch-list">
           {rows.map((r) => (
-            <li key={r.value} className="oi-mwatch__row">
+            <li key={r.id} className="oi-mwatch__row">
               <span className="oi-mwatch__sym">{r.label}</span>
               <span className="oi-mwatch__bx">
                 <span className="oi-mwatch__side">Bid {r.bid}</span>
@@ -198,7 +238,7 @@ export default function MarketWatchPanel({ seedRows, loading }) {
                 type="button"
                 className="oi-mwatch__remove"
                 aria-label={`Remove ${r.label} from market watch`}
-                onClick={() => removeAt(r.value)}
+                onClick={() => removeAt(r.id)}
               >
                 <FaTimes aria-hidden />
               </button>

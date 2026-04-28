@@ -231,10 +231,14 @@ test('Operator Intelligence QA (sections, nav order, candle drawer, viewports)',
 
       const instSelect = page.getByTestId('oi-symbol-select');
       const optCount = await instSelect.locator('option').count();
-      expect(optCount, 'Instrument selector should expose the full terminal list').toBeGreaterThan(5);
+      expect(optCount, 'Instrument selector should expose the full terminal list').toBeGreaterThan(100);
 
       if (vp.id === 'desktop') {
-        await instSelect.selectOption({ label: 'NAS100' });
+        await instSelect.selectOption('EURUSD');
+        await expect(canvas).toBeVisible({ timeout: 60000 });
+        await instSelect.selectOption('NAS100');
+        await expect(canvas).toBeVisible({ timeout: 60000 });
+        await instSelect.selectOption('BTCUSD');
         await expect(canvas).toBeVisible({ timeout: 60000 });
         const canvasAfter = chartFrame.locator('canvas').first();
         await expect(canvasAfter).toBeVisible({ timeout: 60000 });
@@ -242,16 +246,16 @@ test('Operator Intelligence QA (sections, nav order, candle drawer, viewports)',
 
       if (vp.id === 'desktop') {
         const mwatchAdd = page.getByTestId('oi-mwatch-add-select');
-        await mwatchAdd.selectOption({ label: 'BTCUSD' });
+        await mwatchAdd.selectOption('BTCUSD');
         await page.getByTestId('oi-mwatch-add-btn').click();
         const mwatchList = page.getByTestId('oi-market-watch-list');
         await expect(mwatchList.locator('li')).toHaveCount(5);
 
-        await mwatchAdd.selectOption({ label: 'BTCUSD' });
+        await mwatchAdd.selectOption('BTCUSD');
         await expect(page.getByTestId('oi-mwatch-add-btn')).toBeDisabled();
 
         for (const lbl of ['ETHUSD', 'SOLUSD', 'XRPUSD', 'ADAUSD']) {
-          await mwatchAdd.selectOption({ label: lbl });
+          await mwatchAdd.selectOption(lbl);
           const addBtn = page.getByTestId('oi-mwatch-add-btn');
           if (await addBtn.isEnabled()) {
             await addBtn.click();
