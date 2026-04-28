@@ -1,8 +1,14 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
 import { FaChartLine } from 'react-icons/fa';
-import { fetchOperatorChartPack } from '../../services/operatorIntelligenceAdapter';
-import { timeScaleOptionsForInterval } from '../../lib/charts/lightweightChartData';
+import Api from '../../services/Api';
+import {
+  auraCandlestickSeriesOptions,
+  auraChartVisualOptions,
+  normalizeChartBars,
+  timeScaleOptionsForInterval,
+} from '../../lib/charts/lightweightChartData';
+import { computeSessionLevels } from '../../data/operatorIntelligence/chartBars.mock';
 import {
   TERMINAL_INSTRUMENTS,
   TERMINAL_INSTRUMENT_CATEGORIES,
@@ -17,9 +23,33 @@ const TIMEFRAMES = [
   { id: '15m', label: '15m', api: '15' },
   { id: '1H', label: '1H', api: '60' },
   { id: '4H', label: '4H', api: '240' },
-  { id: 'D', label: 'D', api: '1D' },
-  { id: 'W', label: 'W', api: '1W' },
+  { id: '1D', label: '1D', api: '1D' },
+  { id: '1W', label: '1W', api: '1W' },
+  { id: '1M', label: '1M', api: '1M' },
 ];
+
+const RANGES = ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', '10Y', '20Y', '50Y'];
+
+function asIsoDate(sec) {
+  const x = Number(sec);
+  if (!Number.isFinite(x)) return 'n/a';
+  return new Date(x * 1000).toISOString().slice(0, 10);
+}
+
+function diagnosticsFromPayload(payload, bars, requestedRange, requestedInterval) {
+  const d = payload?.diagnostics || {};
+  return {
+    providerUsed: d.providerUsed || d.provider || 'unknown',
+    interval: d.requestedInterval || requestedInterval,
+    range: d.requestedRange || requestedRange,
+    effectiveInterval: d.effectiveInterval || requestedInterval,
+    chunksFetched: Number.isFinite(Number(d.chunksFetched)) ? Number(d.chunksFetched) : 0,
+    fallbackReason: d.fallbackReason || '',
+    barCount: bars.length,
+    firstDate: asIsoDate(bars[0]?.time),
+    lastDate: asIsoDate(bars[bars.length - 1]?.time),
+  };
+}
 
 function chartPixelHeight(wrapEl) {
   const rect = wrapEl?.getBoundingClientRect?.();
@@ -37,7 +67,7 @@ function chartPixelWidth(wrapEl) {
 }
 
 /**
- * Central live market chart — mock bars via adapter; candle click surfaces intelligence.
+ * Central live market chart — powered by /api/market/chart-history.
  * @param {{ symbol: string, onSelectCandle: (bar: object) => void, onSymbolChange?: (s: string) => void }} props
  */
 export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange }) {
@@ -48,6 +78,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
   onSelectCandleRef.current = onSelectCandle;
 
   const [tf, setTf] = useState('1H');
+  const [range, setRange] = useState('1Y');
   const [symbolQuery, setSymbolQuery] = useState('');
   const initialInstrument = getInstrumentByChartSymbol(symbol) || TERMINAL_INSTRUMENTS[0] || null;
   const [selectedInstrumentId, setSelectedInstrumentId] = useState(initialInstrument?.id || 'EURUSD');
@@ -56,8 +87,10 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
   const [err, setErr] = useState('');
   const [pack, setPack] = useState(null);
   const [lastPrice, setLastPrice] = useState('');
+  const [diagnostics, setDiagnostics] = useState(null);
 
   const loadSeqRef = useRef(0);
+  const abortRef = useRef(null);
 
   const filteredInstruments = TERMINAL_INSTRUMENTS.filter((inst) => {
     if (!symbolQuery.trim()) return true;
@@ -77,35 +110,71 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
   const load = useCallback(async () => {
     loadSeqRef.current += 1;
     const seq = loadSeqRef.current;
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const tfRow = TIMEFRAMES.find((t) => t.id === tf);
+    const requestedInterval = tfRow?.api || '60';
     setStatus('loading');
     setErr('');
     setPack(null);
+    setDiagnostics(null);
     try {
-      const data = await fetchOperatorChartPack(sym, tf);
+      const response = await Api.getMarketChartHistory(sym, {
+        interval: requestedInterval,
+        range,
+        signal: controller.signal,
+      });
       if (seq !== loadSeqRef.current) return;
-      const bars = data?.bars;
+      const payload = response?.data || {};
+      const bars = normalizeChartBars(payload?.bars);
       if (!bars || bars.length < 2) {
         setPack(null);
         setLastPrice('');
+        setDiagnostics(null);
         setStatus('error');
         setErr('No data available for selected instrument.');
         return;
       }
-      setPack(data);
+      setPack({
+        bars,
+        levels: computeSessionLevels(bars),
+      });
       const last = bars[bars.length - 1];
       setLastPrice(last && Number.isFinite(last.close) ? String(last.close) : '');
+      const diag = diagnosticsFromPayload(payload, bars, range, requestedInterval);
+      setDiagnostics(diag);
+      console.info('[OperatorIntelligence][ChartHistory]', {
+        symbol: sym,
+        requestedInterval,
+        requestedRange: range,
+        ...diag,
+      });
       setStatus('ready');
     } catch (e) {
+      if (e?.name === 'AbortError' || e?.code === 'ERR_CANCELED') return;
       if (seq !== loadSeqRef.current) return;
       setPack(null);
       setLastPrice('');
+      setDiagnostics(null);
       setErr(e?.message || 'Chart load failed');
       setStatus('error');
+    } finally {
+      if (abortRef.current === controller) abortRef.current = null;
     }
-  }, [sym, tf]);
+  }, [range, sym, tf]);
 
   useEffect(() => {
     load();
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
+    };
   }, [load]);
 
   useEffect(() => {
@@ -157,49 +226,31 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
         chartRef.current = null;
       }
 
-      const bg = '#070a10';
-      const gridGold = 'rgba(212, 175, 55, 0.06)';
       const tfRow = TIMEFRAMES.find((t) => t.id === tf);
-      const scaleIv = tf === 'W' ? '1D' : tfRow?.api || '60';
+      const scaleIv = tfRow?.api || '60';
+      const visual = auraChartVisualOptions();
 
       const chart = createChart(wrapEl, {
         width: w,
         height: h,
+        ...visual,
         layout: {
-          background: { type: ColorType.Solid, color: bg },
-          textColor: 'rgba(230, 220, 200, 0.88)',
+          ...(visual.layout || {}),
+          background: visual.layout?.background || { type: ColorType.Solid, color: '#070b14' },
           /* Logo cell intercepts pointer events and breaks candle hit-testing / e2e clicks */
           attributionLogo: false,
         },
-        grid: {
-          vertLines: { color: gridGold },
-          horzLines: { color: gridGold },
-        },
         timeScale: {
-          borderColor: 'rgba(212,175,55,0.14)',
-          ...timeScaleOptionsForInterval(scaleIv === '1W' ? '1D' : scaleIv),
+          ...(visual.timeScale || {}),
+          ...timeScaleOptionsForInterval(scaleIv),
         },
-        rightPriceScale: { borderColor: 'rgba(212,175,55,0.14)' },
       });
       chartRef.current = chart;
 
-      const data = pack.bars.map((b) => ({
-        time: b.time,
-        open: b.open,
-        high: b.high,
-        low: b.low,
-        close: b.close,
-      }));
+      const data = normalizeChartBars(pack.bars);
       barsRef.current = pack.bars;
 
-      const candleSeries = chart.addCandlestickSeries({
-        upColor: '#3dd68c',
-        downColor: '#ff6b81',
-        borderUpColor: '#3dd68c',
-        borderDownColor: '#ff6b81',
-        wickUpColor: '#3dd68c',
-        wickDownColor: '#ff6b81',
-      });
+      const candleSeries = chart.addCandlestickSeries(auraCandlestickSeriesOptions());
       candleSeries.setData(data);
 
       const volData = pack.bars.map((b) => ({
@@ -405,9 +456,32 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
               </button>
             ))}
           </div>
+          <div className="oi-tf-bar" role="toolbar" aria-label="Range">
+            {RANGES.map((r) => (
+              <button
+                key={r}
+                type="button"
+                className={`oi-tf-btn${range === r ? ' is-active' : ''}`}
+                onClick={() => setRange(r)}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-      <p className="oi-chart-hint">Click a candle for intelligence. Mock data — adapter ready for live feed.</p>
+      <p className="oi-chart-hint">
+        Click a candle for intelligence.
+        {diagnostics ? (
+          <>
+            {' '}
+            Live {diagnostics.providerUsed} | {diagnostics.interval}/{diagnostics.range}
+            {' '}| effective {diagnostics.effectiveInterval} | bars {diagnostics.barCount}
+            {' '}| {diagnostics.firstDate} to {diagnostics.lastDate} | chunks {diagnostics.chunksFetched}
+            {diagnostics.fallbackReason ? ` | fallback: ${diagnostics.fallbackReason}` : ''}
+          </>
+        ) : null}
+      </p>
 
       <div className="oi-chart-stage">
         <div ref={wrapRef} className="oi-chart-frame" data-testid="oi-chart-mount" />
