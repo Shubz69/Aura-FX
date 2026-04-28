@@ -211,7 +211,7 @@ const Navbar = () => {
                         <FaCheckSquare className="dropdown-icon" /> {t('navbar.operator')}
                       </Link>
                       <Link to="/operator-intelligence" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaBrain className="dropdown-icon" /> {t('navbar.operatorIntelligence')}
+                        <FaBrain className="dropdown-icon" /> {t('navbar.operatorIntelligence', { defaultValue: 'Operator Intelligence' })}
                       </Link>
            {isLocalDev || entitlements?.canAccessSurveillance ? (
   <Link to="/surveillance" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
