@@ -5,6 +5,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { isSuperAdmin } from '../../utils/roles';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
 import CsvUploadSection from '../../components/reports/CsvUploadSection';
 import { useReportsEligibility } from './useReportsEligibility';
@@ -57,7 +58,7 @@ function useCsvPeriodSnapshot(token, year, month, enabled) {
 }
 
 function ManualMetricsEntryInner() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const { eligibility, loading, error, reload } = useReportsEligibility(token);
 
@@ -103,7 +104,9 @@ function ManualMetricsEntryInner() {
   }, [year, month, setSearchParams]);
 
   const role = (eligibility?.role || '').toLowerCase();
-  const manualMetricsCsvEnabled = ['premium', 'pro', 'elite', 'admin', 'super_admin', 'superadmin'].includes(role);
+  const manualMetricsCsvEnabled =
+    isSuperAdmin(user) ||
+    ['premium', 'pro', 'elite', 'admin', 'super_admin', 'superadmin'].includes(role);
 
   const { csvStatus, loadingCsv } = useCsvPeriodSnapshot(
     token,
@@ -160,7 +163,7 @@ function ManualMetricsEntryInner() {
   if (!eligibility) return null;
 
   if (!manualMetricsCsvEnabled) {
-    return <Navigate to="/reports" replace />;
+    return <Navigate to="/aura-analysis/ai" replace />;
   }
 
   return (
@@ -236,7 +239,7 @@ function ManualMetricsEntryInner() {
         {' · '}
         <Link to="/aura-analysis/ai">Connection Hub</Link>
         {' · '}
-        <Link to="/reports">Performance &amp; DNA</Link>
+        <Link to="/choose-plan">Plans</Link>
       </p>
     </div>
   );

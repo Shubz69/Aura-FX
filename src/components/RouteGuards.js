@@ -210,8 +210,9 @@ export const ReportsDnaGuard = ({ children }) => {
 
 export const ManualMetricsGuard = ({ children }) => {
   const { t } = useTranslation();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { eligibility, loading, error } = useReportsEligibility(token);
+  const superAdminByEmail = isSuperAdmin(user);
 
   if (loading) return <LoadingSpinner />;
   if (error) {
@@ -219,21 +220,21 @@ export const ManualMetricsGuard = ({ children }) => {
       <GateNotice
         title={t('routeGuards.manualVerifyFailTitle')}
         message={error || t('routeGuards.retryMoment')}
-        primaryTo="/reports"
-        primaryLabel={t('routeGuards.backToReports')}
+        primaryTo="/aura-analysis/ai"
+        primaryLabel="Back to Connection Hub"
       />
     );
   }
   const role = (eligibility?.role || '').toLowerCase();
-  if (!['premium', 'pro', 'elite', 'admin'].includes(role)) {
+  if (!superAdminByEmail && !['premium', 'pro', 'elite', 'admin', 'super_admin', 'superadmin'].includes(role)) {
     return (
       <GateNotice
         title={t('routeGuards.manualPaidTitle')}
         message={t('routeGuards.manualPaidMessage')}
         primaryTo="/choose-plan"
         primaryLabel={t('routeGuards.viewPlans')}
-        secondaryTo="/reports"
-        secondaryLabel={t('routeGuards.backToReports')}
+        secondaryTo="/aura-analysis/ai"
+        secondaryLabel="Back to Connection Hub"
       />
     );
   }

@@ -4,6 +4,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { isSuperAdmin } from '../../utils/roles';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
 import { useReportsEligibility } from './useReportsEligibility';
 import '../../styles/aura-analysis/AuraShared.css';
@@ -124,7 +125,7 @@ function WeekdayBars({ extended }) {
 }
 
 function ManualMetricsDashboardInner() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { eligibility, loading: eligibilityLoading } = useReportsEligibility(token);
   const [searchParams] = useSearchParams();
   const yParam = searchParams.get('year');
@@ -137,7 +138,9 @@ function ManualMetricsDashboardInner() {
   const [forbiddenCode, setForbiddenCode] = useState('');
   const [payload, setPayload] = useState(null);
   const role = (eligibility?.role || '').toLowerCase();
-  const canAccessCsvMetrics = ['premium', 'pro', 'elite', 'admin', 'super_admin', 'superadmin'].includes(role);
+  const canAccessCsvMetrics =
+    isSuperAdmin(user) ||
+    ['premium', 'pro', 'elite', 'admin', 'super_admin', 'superadmin'].includes(role);
   const load = useCallback(async () => {
     if (!token || eligibilityLoading || !eligibility || !canAccessCsvMetrics) return;
     setLoading(true);
@@ -214,7 +217,7 @@ function ManualMetricsDashboardInner() {
   }
 
   if (!eligibilityLoading && eligibility && !canAccessCsvMetrics) {
-    return <Navigate to="/reports" replace />;
+    return <Navigate to="/aura-analysis/ai" replace />;
   }
 
   if (error && forbiddenCode) {
