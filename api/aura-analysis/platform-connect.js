@@ -4,7 +4,8 @@
  * Credentials are AES-256-GCM encrypted before storing in DB.
  * GET    — list user's active connections
  * POST   — connect a platform (validate creds + store encrypted)
- * DELETE — disconnect a platform
+ * PATCH  — rename an existing connection
+ * DELETE — disconnect a platform / connection
  */
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
@@ -226,6 +227,28 @@ async function ensureTable() {
   `);
   await ensurePlatformConnectionsColumns(executeQuery);
   try {
+    await executeQuery(`ALTER TABLE aura_platform_connections ADD COLUMN account_login VARCHAR(64) NULL`);
+  } catch (_) {}
+  try {
+    await executeQuery(`ALTER TABLE aura_platform_connections ADD COLUMN display_name VARCHAR(255) NULL`);
+  } catch (_) {}
+  try {
+    await executeQuery(
+      `UPDATE aura_platform_connections
+         SET account_login = JSON_UNQUOTE(JSON_EXTRACT(credentials_enc, '$.login'))
+       WHERE account_login IS NULL`
+    );
+  } catch (_) {}
+  try {
+    await executeQuery(`ALTER TABLE aura_platform_connections DROP INDEX uq_user_platform`);
+  } catch (_) {}
+  try {
+    await executeQuery(
+      `ALTER TABLE aura_platform_connections
+         ADD UNIQUE KEY uq_user_platform_login (user_id, platform_id, account_login)`
+    );
+  } catch (_) {}
+  try {
     await executeQuery(
       `UPDATE aura_platform_connections SET connection_status = status WHERE connection_status IS NULL`
     );
@@ -243,7 +266,7 @@ async function ensureTable() {
 
 // ── Handler ────────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
-  setAuraCorsHeaders(req, res, 'GET, POST, DELETE, OPTIONS');
+  setAuraCorsHeaders(req, res, 'GET, POST, PATCH, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const decoded = verifyToken(req.headers.authorization);
@@ -260,7 +283,7 @@ module.exports = async (req, res) => {
   // ── GET — list connections ─────────────────────────────────────────────
   if (req.method === 'GET') {
     const [rows] = await executeQuery(
-      `SELECT platform_id, account_label, account_info, connected_at, last_sync, status,
+      `SELECT id, platform_id, account_label, display_name, account_login, account_info, connected_at, last_sync, status,
               broker_name, server_name, connection_status, last_sync_at, last_success_at,
               last_error_code, last_error_message
        FROM aura_platform_connections WHERE user_id = ? AND status IN ('active', 'connected', 'error')`,
@@ -269,8 +292,10 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       success: true,
       connections: rows.map((r) => ({
+        connectionId: r.id,
         platformId: r.platform_id,
-        label: r.account_label,
+        label: r.display_name || r.account_label,
+        accountLogin: r.account_login || null,
         accountInfo: safeJsonParse(r.account_info, null),
         connectedAt: r.connected_at,
         lastSync: r.last_sync,
@@ -335,6 +360,7 @@ module.exports = async (req, res) => {
 
     const credEnc = encrypt(JSON.stringify(credentials));
     const accountInfoJson = JSON.stringify(validation.accountInfo || {});
+    const accountLogin = safeString(credentials.login) || null;
     const label =
       credentials.accountId ||
       credentials.login ||
@@ -348,14 +374,16 @@ module.exports = async (req, res) => {
 
     await executeQuery(
       `INSERT INTO aura_platform_connections
-         (user_id, platform_id, account_label, credentials_enc, account_info, status,
+         (user_id, platform_id, account_label, display_name, account_login, credentials_enc, account_info, status,
           broker_name, server_name, connection_status, last_sync_at, last_success_at,
           last_error_code, last_error_message)
-       VALUES (?, ?, ?, ?, ?, 'active', ?, ?, 'connected', NOW(), NOW(), NULL, NULL)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, 'connected', NOW(), NOW(), NULL, NULL)
        ON DUPLICATE KEY UPDATE
          credentials_enc = VALUES(credentials_enc),
          account_info = VALUES(account_info),
          account_label = VALUES(account_label),
+         display_name = COALESCE(display_name, VALUES(display_name)),
+         account_login = VALUES(account_login),
          broker_name = VALUES(broker_name),
          server_name = VALUES(server_name),
          connection_status = VALUES(connection_status),
@@ -369,6 +397,8 @@ module.exports = async (req, res) => {
         userId,
         platformId,
         label,
+        null,
+        accountLogin,
         credEnc,
         accountInfoJson,
         brokerRow.brokerName,
@@ -383,19 +413,61 @@ module.exports = async (req, res) => {
       });
     }
 
-    return res.status(200).json({ success: true, accountInfo: validation.accountInfo });
+    const [saved] = await executeQuery(
+      `SELECT id, display_name, account_label, account_login
+         FROM aura_platform_connections
+        WHERE user_id = ? AND platform_id = ? AND account_login <=> ?
+        LIMIT 1`,
+      [userId, platformId, accountLogin]
+    );
+    return res.status(200).json({
+      success: true,
+      accountInfo: validation.accountInfo,
+      connectionId: saved?.[0]?.id || null,
+      label: saved?.[0]?.display_name || saved?.[0]?.account_label || label,
+      accountLogin: saved?.[0]?.account_login || accountLogin,
+    });
+  }
+
+  if (req.method === 'PATCH') {
+    const parsedBody = parseRequestBody(req.body);
+    const connectionId = Number(parsedBody.connectionId);
+    const displayName = safeString(parsedBody.displayName).slice(0, 255);
+    if (!Number.isFinite(connectionId) || connectionId <= 0) {
+      return res.status(400).json({ success: false, error: 'connectionId required' });
+    }
+    if (!displayName) {
+      return res.status(400).json({ success: false, error: 'displayName required' });
+    }
+    await executeQuery(
+      `UPDATE aura_platform_connections
+          SET display_name = ?
+        WHERE id = ? AND user_id = ?`,
+      [displayName, connectionId, userId]
+    );
+    return res.status(200).json({ success: true, displayName });
   }
 
   // ── DELETE — disconnect ────────────────────────────────────────────────
   if (req.method === 'DELETE') {
+    const connectionId = Number(req.query?.connectionId || req.body?.connectionId);
     const platformId = req.query?.platformId || req.body?.platformId;
-    if (!platformId) return res.status(400).json({ success: false, error: 'platformId required' });
-
-    await executeQuery(
-      `UPDATE aura_platform_connections SET status = 'disconnected'
-       WHERE user_id = ? AND platform_id = ?`,
-      [userId, platformId]
-    );
+    if (!connectionId && !platformId) {
+      return res.status(400).json({ success: false, error: 'connectionId or platformId required' });
+    }
+    if (connectionId) {
+      await executeQuery(
+        `UPDATE aura_platform_connections SET status = 'disconnected'
+         WHERE user_id = ? AND id = ?`,
+        [userId, connectionId]
+      );
+    } else {
+      await executeQuery(
+        `UPDATE aura_platform_connections SET status = 'disconnected'
+         WHERE user_id = ? AND platform_id = ?`,
+        [userId, platformId]
+      );
+    }
     return res.status(200).json({ success: true });
   }
 

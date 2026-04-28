@@ -13,6 +13,7 @@ import { rows as rows6 } from './i18n-part6.mjs';
 import { rows as rows7 } from './i18n-part7.mjs';
 import { rows as rows8 } from './i18n-part8.mjs';
 import { rows as rows9 } from './i18n-part9-traderdeck-ui.mjs';
+import { rows as rows10 } from './i18n-part10-fullsite.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
@@ -20,7 +21,7 @@ const outRoot = path.join(root, 'src', 'i18n', 'locales');
 
 const LANGS = ['en', 'zh-CN', 'hi', 'es', 'fr', 'ar', 'bn', 'pt', 'ru', 'ur'];
 
-const rows = [...rows1, ...rows2, ...rows3, ...rows4, ...rows5, ...rows6, ...rows7, ...rows8, ...rows9];
+const rows = [...rows1, ...rows2, ...rows3, ...rows4, ...rows5, ...rows6, ...rows7, ...rows8, ...rows9, ...rows10];
 
 function setPath(obj, parts, value) {
   let cur = obj;

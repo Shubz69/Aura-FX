@@ -1436,6 +1436,9 @@
       "minutesAgo": "{{count}}م پہلے",
       "hoursAgo": "{{count}}گ پہلے",
       "daysAgo": "{{count}}دن پہلے"
+    },
+    "system": {
+      "newNotification": "نئی اطلاع"
     }
   },
   "xp": {
@@ -1553,5 +1556,120 @@
       "99": "اعلیٰ تاجر",
       "100": "AURA TERMINAL™ کا خدا"
     }
+  },
+  "operatorShell": {
+    "backToOperatorGalaxyAria": "Operator Galaxy پر واپس جائیں",
+    "operatorGalaxy": "آپریٹر گلیکسی",
+    "tradeValidator": "ٹریڈ ویلیڈیٹر",
+    "traderLab": "ٹریڈر لیب",
+    "tradePlaybook": "ٹریڈ پلے بُک",
+    "tradeValidatorSectionsAria": "ٹریڈ ویلیڈیٹر سیکشنز",
+    "tabs": {
+      "overview": "جائزہ",
+      "checklist": "چیک لسٹ",
+      "calculator": "ٹریڈ کیلکولیٹر",
+      "journal": "ٹریڈ جرنل",
+      "analytics": "تجزیات",
+      "traderCv": "ٹریڈر سی وی",
+      "leaderboard": "لیڈر بورڈ"
+    }
+  },
+  "register": {
+    "signUp": "سائن اپ",
+    "form": {
+      "username": "صارف نام",
+      "enterUsername": "صارف نام درج کریں",
+      "email": "ای میل",
+      "enterEmail": "ای میل درج کریں",
+      "fullName": "پورا نام",
+      "enterFullName": "پورا نام درج کریں",
+      "phoneNumberAnyCountry": "فون نمبر (کسی بھی ملک کا)",
+      "phoneExample": "مثلاً 201 555 5555",
+      "password": "پاس ورڈ",
+      "enterPassword": "پاس ورڈ درج کریں",
+      "confirmPassword": "پاس ورڈ کی تصدیق کریں",
+      "confirmPasswordPlaceholder": "پاس ورڈ کی تصدیق کریں",
+      "referralCode": "ریفرل کوڈ",
+      "optional": "اختیاری",
+      "referralExample": "مثلاً AURA-XXXXXXXX یا AT-000123"
+    },
+    "legal": {
+      "iAgreeToThe": "میں متفق ہوں",
+      "terms": "شرائط",
+      "and": "اور",
+      "privacyPolicy": "رازداری کی پالیسی"
+    },
+    "verification": {
+      "enterSixDigitCodes": "اپنے ای میل اور فون پر بھیجے گئے 6 ہندسوں کے کوڈ درج کریں",
+      "emailCodeSentTo": "ای میل کوڈ ({{email}} پر بھیجا گیا)",
+      "phoneCodeSentTo": "فون کوڈ ({{phone}} پر بھیجا گیا)",
+      "sixDigitCode": "6 ہندسوں کا کوڈ",
+      "resendEmailCode": "ای میل کوڈ دوبارہ بھیجیں",
+      "resendPhoneCode": "فون کوڈ دوبارہ بھیجیں"
+    },
+    "errors": {
+      "usernameMinLength": "صارف نام کم از کم 3 حروف کا ہونا چاہیے",
+      "usernameCharset": "صارف نام میں صرف حروف، اعداد، ہائفن اور انڈراسکور ہو سکتے ہیں",
+      "requiredFields": "تمام فیلڈز لازمی ہیں۔",
+      "countryCodeRequired": "براہ کرم ملک کا کوڈ منتخب کریں۔",
+      "phoneInvalid": "درست فون نمبر ضروری ہے (10+ ہندسے)۔",
+      "passwordMismatch": "پاس ورڈز میچ نہیں کرتے۔",
+      "passwordMinLength": "پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔",
+      "acceptTerms": "براہ کرم شرائط و ضوابط قبول کریں",
+      "sendVerificationEmailFailed": "تصدیقی ای میل بھیجنے میں ناکامی۔ دوبارہ کوشش کریں۔",
+      "phoneCodeSendFailedWithRecovery": "فون کوڈ نہیں بھیجا جا سکا۔ اگر ای میل کوڈ بھیجا جا چکا ہے تو ان باکس چیک کریں، نمبر درست کرکے دوبارہ کوڈ بھیجیں۔",
+      "sendVerificationFailed": "تصدیق بھیجنے میں ناکامی۔",
+      "emailServiceUnavailable": "ای میل سروس عارضی طور پر دستیاب نہیں۔ بعد میں کوشش کریں۔",
+      "emailCodeRequired": "براہ کرم ای میل سے 6 ہندسوں کا کوڈ درج کریں۔",
+      "phoneCodeRequired": "براہ کرم فون سے 6 ہندسوں کا کوڈ درج کریں۔",
+      "emailCodeInvalid": "ای میل کوڈ غلط یا ختم ہو چکا ہے۔ چیک کرکے دوبارہ کوشش کریں۔",
+      "phoneCodeInvalid": "فون کوڈ غلط یا ختم ہو چکا ہے۔",
+      "completeSignupFailed": "سائن اپ مکمل نہیں ہو سکا۔ اگر SMS کوڈ پہلے استعمال ہو چکا ہے تو فون کوڈ دوبارہ بھیج کر کوشش کریں۔",
+      "resendCodeFailed": "کوڈ دوبارہ بھیجنے میں ناکامی۔"
+    },
+    "success": {
+      "codesSent": "کوڈ بھیج دیے گئے! ای میل اور فون کے 6 ہندسوں کے کوڈ درج کریں۔",
+      "phoneCodeResent": "کوڈ آپ کے فون پر دوبارہ بھیج دیا گیا۔",
+      "emailCodeResent": "کوڈ آپ کے ای میل پر دوبارہ بھیج دیا گیا۔"
+    },
+    "toast": {
+      "accountCreated": "اکاؤنٹ کامیابی سے بن گیا! AURA TERMINAL™ میں خوش آمدید!"
+    }
+  },
+  "leaderboard": {
+    "title": "لیڈر بورڈ",
+    "subtitle": "سائبر دنیا کے بہترین ٹریڈرز سے مقابلہ کریں",
+    "loading": "لیڈر بورڈ لوڈ ہو رہا ہے…",
+    "loadFailed": "لیڈر بورڈ لوڈ نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
+    "errorLoading": "لیڈر بورڈ لوڈ کرنے میں خرابی",
+    "retry": "دوبارہ کوشش کریں",
+    "noParticipantsYet": "ابھی کوئی شرکاء نہیں",
+    "beFirstToEarnXp": "XP کمانے والے پہلے بنیں!",
+    "top10": "ٹاپ 10 لیڈر بورڈ",
+    "onlineNowCount": "{{count}} ابھی آن لائن",
+    "rank": "درجہ",
+    "trader": "ٹریڈر",
+    "level": "لیول",
+    "totalXp": "کل XP",
+    "activity": "سرگرمی",
+    "xpFor": "{{label}} تجربہ پوائنٹس",
+    "noParticipantsStartEarning": "ابھی کوئی شریک نہیں۔ XP کمانا شروع کریں!",
+    "levelN": "لیول {{level}}",
+    "noRecentActivity": "حالیہ کوئی سرگرمی نہیں",
+    "activeJustNow": "ابھی فعال",
+    "activeMinutesAgo": "{{count}} منٹ پہلے فعال",
+    "activeHoursAgo": "{{count}} گھنٹے پہلے فعال",
+    "activeYesterday": "کل فعال",
+    "activeDaysAgo": "{{count}} دن پہلے فعال",
+    "activeWeeksAgo": "{{count}} ہفتے پہلے فعال",
+    "activeLongAgo": "کافی پہلے فعال",
+    "onlineNow": "ابھی آن لائن",
+    "timeframe": {
+      "today": "آج",
+      "thisWeek": "اس ہفتے",
+      "thisMonth": "اس ماہ",
+      "allTime": "تمام وقت"
+    },
+    "total": "کل"
   }
 }

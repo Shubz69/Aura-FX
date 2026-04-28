@@ -137,7 +137,7 @@ function ManualMetricsDashboardInner() {
   const [forbiddenCode, setForbiddenCode] = useState('');
   const [payload, setPayload] = useState(null);
   const role = (eligibility?.role || '').toLowerCase();
-  const canAccessCsvMetrics = ['premium', 'pro', 'elite', 'admin'].includes(role);
+  const canAccessCsvMetrics = ['premium', 'pro', 'elite', 'admin', 'super_admin', 'superadmin'].includes(role);
   const load = useCallback(async () => {
     if (!token || eligibilityLoading || !eligibility || !canAccessCsvMetrics) return;
     setLoading(true);

@@ -1436,6 +1436,9 @@
       "minutesAgo": "há {{count}} min",
       "hoursAgo": "há {{count}} h",
       "daysAgo": "há {{count}} d"
+    },
+    "system": {
+      "newNotification": "Nova notificação"
     }
   },
   "xp": {
@@ -1553,5 +1556,120 @@
       "99": "Trader Supremo",
       "100": "Deus de AURA TERMINAL™"
     }
+  },
+  "operatorShell": {
+    "backToOperatorGalaxyAria": "Voltar para Operator Galaxy",
+    "operatorGalaxy": "Galáxia do Operador",
+    "tradeValidator": "Validador de trades",
+    "traderLab": "Laboratório do Trader",
+    "tradePlaybook": "Playbook de trading",
+    "tradeValidatorSectionsAria": "Seções do validador de trades",
+    "tabs": {
+      "overview": "Visão geral",
+      "checklist": "Lista de verificação",
+      "calculator": "Calculadora de trades",
+      "journal": "Diário de trading",
+      "analytics": "Análises",
+      "traderCv": "CV do trader",
+      "leaderboard": "Ranking"
+    }
+  },
+  "register": {
+    "signUp": "Cadastre-se",
+    "form": {
+      "username": "Nome de usuário",
+      "enterUsername": "Digite o nome de usuário",
+      "email": "E-mail",
+      "enterEmail": "Digite o e-mail",
+      "fullName": "Nome completo",
+      "enterFullName": "Digite o nome completo",
+      "phoneNumberAnyCountry": "Número de telefone (qualquer país)",
+      "phoneExample": "ex.: 201 555 5555",
+      "password": "Senha",
+      "enterPassword": "Digite a senha",
+      "confirmPassword": "Confirmar senha",
+      "confirmPasswordPlaceholder": "Confirme a senha",
+      "referralCode": "Código de indicação",
+      "optional": "opcional",
+      "referralExample": "ex.: AURA-XXXXXXXX ou AT-000123"
+    },
+    "legal": {
+      "iAgreeToThe": "Eu concordo com os",
+      "terms": "Termos",
+      "and": "e",
+      "privacyPolicy": "Política de Privacidade"
+    },
+    "verification": {
+      "enterSixDigitCodes": "Digite os códigos de 6 dígitos enviados para seu e-mail e telefone",
+      "emailCodeSentTo": "Código de e-mail (enviado para {{email}})",
+      "phoneCodeSentTo": "Código por telefone (enviado para {{phone}})",
+      "sixDigitCode": "Código de 6 dígitos",
+      "resendEmailCode": "Reenviar código de e-mail",
+      "resendPhoneCode": "Reenviar código de telefone"
+    },
+    "errors": {
+      "usernameMinLength": "O nome de usuário deve ter pelo menos 3 caracteres",
+      "usernameCharset": "O nome de usuário só pode conter letras, números, hífens e sublinhados",
+      "requiredFields": "Todos os campos são obrigatórios.",
+      "countryCodeRequired": "Selecione um código de país.",
+      "phoneInvalid": "É necessário um número de telefone válido (10+ dígitos).",
+      "passwordMismatch": "As senhas não coincidem.",
+      "passwordMinLength": "A senha deve ter pelo menos 6 caracteres.",
+      "acceptTerms": "Aceite os termos e condições",
+      "sendVerificationEmailFailed": "Falha ao enviar o e-mail de verificação. Tente novamente.",
+      "phoneCodeSendFailedWithRecovery": "Não foi possível enviar o código por telefone. Se o código de e-mail já foi enviado, verifique sua caixa e corrija o número para reenviar.",
+      "sendVerificationFailed": "Falha ao enviar verificação.",
+      "emailServiceUnavailable": "O serviço de e-mail está temporariamente indisponível. Tente novamente mais tarde.",
+      "emailCodeRequired": "Digite o código de 6 dígitos do e-mail.",
+      "phoneCodeRequired": "Digite o código de 6 dígitos do telefone.",
+      "emailCodeInvalid": "Código de e-mail inválido ou expirado. Verifique e tente novamente.",
+      "phoneCodeInvalid": "Código de telefone inválido ou expirado.",
+      "completeSignupFailed": "Não foi possível concluir o cadastro. Se o código SMS já foi usado, reenviar o código do telefone e tente novamente.",
+      "resendCodeFailed": "Falha ao reenviar o código."
+    },
+    "success": {
+      "codesSent": "Códigos enviados! Digite os códigos de 6 dígitos do e-mail e telefone.",
+      "phoneCodeResent": "Código reenviado para seu telefone.",
+      "emailCodeResent": "Código reenviado para seu e-mail."
+    },
+    "toast": {
+      "accountCreated": "Conta criada com sucesso! Bem-vindo ao AURA TERMINAL™!"
+    }
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "subtitle": "Compita com os melhores traders no mundo cyber",
+    "loading": "Carregando ranking…",
+    "loadFailed": "Falha ao carregar o ranking. Tente novamente.",
+    "errorLoading": "Erro ao carregar ranking",
+    "retry": "Tentar novamente",
+    "noParticipantsYet": "Ainda não há participantes",
+    "beFirstToEarnXp": "Seja o primeiro a ganhar XP!",
+    "top10": "Top 10 ranking",
+    "onlineNowCount": "{{count}} online agora",
+    "rank": "Posição",
+    "trader": "Operador",
+    "level": "Nível",
+    "totalXp": "XP total",
+    "activity": "Atividade",
+    "xpFor": "Experiência {{label}}",
+    "noParticipantsStartEarning": "Ainda não há participantes. Comece a ganhar XP!",
+    "levelN": "Nível {{level}}",
+    "noRecentActivity": "Sem atividade recente",
+    "activeJustNow": "Ativo agora mesmo",
+    "activeMinutesAgo": "Ativo há {{count}} min",
+    "activeHoursAgo": "Ativo há {{count}} h",
+    "activeYesterday": "Ativo ontem",
+    "activeDaysAgo": "Ativo há {{count}} d",
+    "activeWeeksAgo": "Ativo há {{count}} sem",
+    "activeLongAgo": "Ativo há muito tempo",
+    "onlineNow": "Online agora",
+    "timeframe": {
+      "today": "Hoje",
+      "thisWeek": "Esta semana",
+      "thisMonth": "Este mês",
+      "allTime": "Todo o período"
+    },
+    "total": "Acumulado"
   }
 }

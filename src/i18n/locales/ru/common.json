@@ -1436,6 +1436,9 @@
       "minutesAgo": "{{count}}м назад",
       "hoursAgo": "{{count}}ч назад",
       "daysAgo": "{{count}}д назад"
+    },
+    "system": {
+      "newNotification": "Новое уведомление"
     }
   },
   "xp": {
@@ -1553,5 +1556,120 @@
       "99": "Верховный трейдер",
       "100": "Бог AURA TERMINAL™"
     }
+  },
+  "operatorShell": {
+    "backToOperatorGalaxyAria": "Назад в Operator Galaxy",
+    "operatorGalaxy": "Галактика оператора",
+    "tradeValidator": "Валидатор сделок",
+    "traderLab": "Лаборатория трейдера",
+    "tradePlaybook": "Торговый плейбук",
+    "tradeValidatorSectionsAria": "Разделы валидатора сделок",
+    "tabs": {
+      "overview": "Обзор",
+      "checklist": "Чек-лист",
+      "calculator": "Калькулятор сделок",
+      "journal": "Торговый журнал",
+      "analytics": "Аналитика",
+      "traderCv": "Резюме трейдера",
+      "leaderboard": "Таблица лидеров"
+    }
+  },
+  "register": {
+    "signUp": "Регистрация",
+    "form": {
+      "username": "Имя пользователя",
+      "enterUsername": "Введите имя пользователя",
+      "email": "Электронная почта",
+      "enterEmail": "Введите e-mail",
+      "fullName": "Полное имя",
+      "enterFullName": "Введите полное имя",
+      "phoneNumberAnyCountry": "Номер телефона (любая страна)",
+      "phoneExample": "напр. 201 555 5555",
+      "password": "Пароль",
+      "enterPassword": "Введите пароль",
+      "confirmPassword": "Подтвердите пароль",
+      "confirmPasswordPlaceholder": "Подтвердите пароль",
+      "referralCode": "Реферальный код",
+      "optional": "необязательно",
+      "referralExample": "напр. AURA-XXXXXXXX или AT-000123"
+    },
+    "legal": {
+      "iAgreeToThe": "Я согласен с",
+      "terms": "Условия",
+      "and": "и",
+      "privacyPolicy": "Политика конфиденциальности"
+    },
+    "verification": {
+      "enterSixDigitCodes": "Введите 6-значные коды, отправленные на e-mail и телефон",
+      "emailCodeSentTo": "Код e-mail (отправлен на {{email}})",
+      "phoneCodeSentTo": "Код телефона (отправлен на {{phone}})",
+      "sixDigitCode": "6-значный код",
+      "resendEmailCode": "Отправить код e-mail повторно",
+      "resendPhoneCode": "Отправить код телефона повторно"
+    },
+    "errors": {
+      "usernameMinLength": "Имя пользователя должно содержать минимум 3 символа",
+      "usernameCharset": "Имя пользователя может содержать только буквы, цифры, дефисы и подчеркивания",
+      "requiredFields": "Все поля обязательны.",
+      "countryCodeRequired": "Пожалуйста, выберите код страны.",
+      "phoneInvalid": "Требуется действительный номер телефона (10+ цифр).",
+      "passwordMismatch": "Пароли не совпадают.",
+      "passwordMinLength": "Пароль должен содержать минимум 6 символов.",
+      "acceptTerms": "Пожалуйста, примите условия",
+      "sendVerificationEmailFailed": "Не удалось отправить письмо подтверждения. Попробуйте снова.",
+      "phoneCodeSendFailedWithRecovery": "Не удалось отправить код на телефон. Если e-mail код уже отправлен, проверьте почту, исправьте номер и отправьте снова.",
+      "sendVerificationFailed": "Не удалось отправить подтверждение.",
+      "emailServiceUnavailable": "Почтовый сервис временно недоступен. Попробуйте позже.",
+      "emailCodeRequired": "Введите 6-значный код из e-mail.",
+      "phoneCodeRequired": "Введите 6-значный код с телефона.",
+      "emailCodeInvalid": "Неверный или просроченный e-mail код. Проверьте и попробуйте снова.",
+      "phoneCodeInvalid": "Неверный или просроченный код телефона.",
+      "completeSignupFailed": "Не удалось завершить регистрацию. Если SMS-код уже использован, отправьте код телефона повторно и попробуйте снова.",
+      "resendCodeFailed": "Не удалось отправить код повторно."
+    },
+    "success": {
+      "codesSent": "Коды отправлены! Введите 6-значные коды из e-mail и телефона.",
+      "phoneCodeResent": "Код повторно отправлен на телефон.",
+      "emailCodeResent": "Код повторно отправлен на e-mail."
+    },
+    "toast": {
+      "accountCreated": "Аккаунт успешно создан! Добро пожаловать в AURA TERMINAL™!"
+    }
+  },
+  "leaderboard": {
+    "title": "Таблица лидеров",
+    "subtitle": "Соревнуйтесь с лучшими трейдерами в кибермире",
+    "loading": "Загрузка таблицы лидеров…",
+    "loadFailed": "Не удалось загрузить таблицу лидеров. Попробуйте снова.",
+    "errorLoading": "Ошибка загрузки таблицы лидеров",
+    "retry": "Повторить",
+    "noParticipantsYet": "Пока нет участников",
+    "beFirstToEarnXp": "Станьте первым, кто заработает XP!",
+    "top10": "Топ-10 таблицы лидеров",
+    "onlineNowCount": "Сейчас онлайн: {{count}}",
+    "rank": "Ранг",
+    "trader": "Трейдер",
+    "level": "Уровень",
+    "totalXp": "Всего XP",
+    "activity": "Активность",
+    "xpFor": "Опыт {{label}}",
+    "noParticipantsStartEarning": "Пока нет участников. Начните зарабатывать XP!",
+    "levelN": "Уровень {{level}}",
+    "noRecentActivity": "Нет недавней активности",
+    "activeJustNow": "Только что активен",
+    "activeMinutesAgo": "Был активен {{count}} мин назад",
+    "activeHoursAgo": "Был активен {{count}} ч назад",
+    "activeYesterday": "Был активен вчера",
+    "activeDaysAgo": "Был активен {{count}} дн назад",
+    "activeWeeksAgo": "Был активен {{count}} нед назад",
+    "activeLongAgo": "Был активен давно",
+    "onlineNow": "Сейчас онлайн",
+    "timeframe": {
+      "today": "Сегодня",
+      "thisWeek": "На этой неделе",
+      "thisMonth": "В этом месяце",
+      "allTime": "За всё время"
+    },
+    "total": "Итого"
   }
 }

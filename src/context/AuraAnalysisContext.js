@@ -60,19 +60,19 @@ const DATE_RANGE_OPTIONS = [
 
 export { DATE_RANGE_OPTIONS, ALL_TIME_LOOKBACK_DAYS };
 
-function pickDefaultPlatformId(connections = []) {
-  const mt5 = connections.find(c => c.platformId === 'mt5' || c.platformId === 'mt4');
-  return mt5?.platformId || connections[0]?.platformId || null;
+function pickDefaultConnection(connections = []) {
+  const mt = connections.find((c) => c.platformId === 'mt5' || c.platformId === 'mt4');
+  return mt || connections[0] || null;
 }
 
-function lastGoodStorageKey(platformId) {
-  return `${LAST_GOOD_KEY_PREFIX}:${String(platformId || '')}`;
+function lastGoodStorageKey(platformId, connectionId) {
+  return `${LAST_GOOD_KEY_PREFIX}:${String(platformId || '')}:${String(connectionId || '')}`;
 }
 
-function readLastGoodDashboardState(platformId) {
-  if (!platformId || typeof window === 'undefined' || !window.localStorage) return null;
+function readLastGoodDashboardState(platformId, connectionId) {
+  if (!platformId || !connectionId || typeof window === 'undefined' || !window.localStorage) return null;
   try {
-    const raw = window.localStorage.getItem(lastGoodStorageKey(platformId));
+    const raw = window.localStorage.getItem(lastGoodStorageKey(platformId, connectionId));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || parsed.v !== LAST_GOOD_STATE_VERSION) return null;
@@ -82,10 +82,10 @@ function readLastGoodDashboardState(platformId) {
   }
 }
 
-function writeLastGoodDashboardState(platformId, nextState) {
-  if (!platformId || typeof window === 'undefined' || !window.localStorage || !nextState) return;
+function writeLastGoodDashboardState(platformId, connectionId, nextState) {
+  if (!platformId || !connectionId || typeof window === 'undefined' || !window.localStorage || !nextState) return;
   try {
-    window.localStorage.setItem(lastGoodStorageKey(platformId), JSON.stringify(nextState));
+    window.localStorage.setItem(lastGoodStorageKey(platformId, connectionId), JSON.stringify(nextState));
   } catch {
     /* ignore storage quota / private mode */
   }
@@ -141,22 +141,26 @@ export function AuraAnalysisProvider({ children }) {
   const { user } = useAuth();
   const userId = user?.id != null ? user.id : null;
   const { connections } = useAuraConnection();
-  const initialPlatformId = pickDefaultPlatformId(connections);
-  const initialLastGood = readLastGoodDashboardState(initialPlatformId);
+  const initialConnection = pickDefaultConnection(connections);
+  const initialPlatformId = initialConnection?.platformId || null;
+  const initialConnectionId = initialConnection?.connectionId || null;
+  const initialLastGood = readLastGoodDashboardState(initialPlatformId, initialConnectionId);
 
   const defaultPlatformId = useRef(null);
   const [activePlatformId, setActivePlatformId] = useState(() => {
     return initialPlatformId;
   });
+  const [activeConnectionId, setActiveConnectionId] = useState(() => initialConnectionId);
 
   useEffect(() => {
-    if (!activePlatformId && connections.length > 0) {
-      const mt5 = connections.find(c => c.platformId === 'mt5' || c.platformId === 'mt4');
-      const id  = mt5?.platformId || connections[0]?.platformId;
+    if ((!activePlatformId || !activeConnectionId) && connections.length > 0) {
+      const seed = pickDefaultConnection(connections);
+      const id = seed?.platformId || null;
       setActivePlatformId(id);
+      setActiveConnectionId(seed?.connectionId || null);
       defaultPlatformId.current = id;
     }
-  }, [connections, activePlatformId]);
+  }, [connections, activePlatformId, activeConnectionId]);
 
   const [daysFilter,   setDaysFilter]   = useState(30);
   const [customRange, setCustomRange] = useState(null);
@@ -211,8 +215,8 @@ export function AuraAnalysisProvider({ children }) {
   }, [activePlatformId]);
 
   useEffect(() => {
-    if (!activePlatformId) return;
-    const cached = readLastGoodDashboardState(activePlatformId);
+    if (!activePlatformId || !activeConnectionId) return;
+    const cached = readLastGoodDashboardState(activePlatformId, activeConnectionId);
     if (cached) {
       const nextTrades = Array.isArray(cached.rawTrades) ? cached.rawTrades : [];
       const nextAccount = cached.account || null;
@@ -258,10 +262,10 @@ export function AuraAnalysisProvider({ children }) {
     setHistoryDataSource(null);
     setAccountDataSource(null);
     setError(null);
-  }, [activePlatformId]);
+  }, [activePlatformId, activeConnectionId]);
 
   const fetchData = useCallback(async (background = false) => {
-    if (!activePlatformId) return;
+    if (!activePlatformId || !activeConnectionId) return;
     if (isFetching.current) return;
     isFetching.current = true;
 
@@ -298,12 +302,15 @@ export function AuraAnalysisProvider({ children }) {
           : daysFilter;
 
       const tAcc0 = devPerfFetch ? performance.now() : 0;
-      const accP = Api.getAuraPlatformAccount(activePlatformId).then((res) => {
+      const accP = Api.getAuraPlatformAccount(activePlatformId, { connectionId: activeConnectionId }).then((res) => {
         if (devPerfFetch) auraAnalysisDevPerfPipelineStageMs('fetch.account', performance.now() - tAcc0);
         return res;
       });
       const tHist0 = devPerfFetch ? performance.now() : 0;
-      const histP = Api.getAuraPlatformHistory(activePlatformId, historyArg).then((res) => {
+      const histArg = typeof historyArg === 'object'
+        ? { ...historyArg, connectionId: activeConnectionId }
+        : { days: historyArg, connectionId: activeConnectionId };
+      const histP = Api.getAuraPlatformHistory(activePlatformId, histArg).then((res) => {
         if (devPerfFetch) auraAnalysisDevPerfPipelineStageMs('fetch.history', performance.now() - tHist0);
         return res;
       });
@@ -393,7 +400,7 @@ export function AuraAnalysisProvider({ children }) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activePlatformId, daysFilter, customRange?.from, customRange?.to]);
+  }, [activePlatformId, activeConnectionId, daysFilter, customRange?.from, customRange?.to]);
 
   useEffect(() => {
     if (activePlatformId) fetchData(false);
@@ -404,7 +411,7 @@ export function AuraAnalysisProvider({ children }) {
     clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => fetchData(true), REFRESH_INTERVAL_MS);
     return () => clearInterval(intervalRef.current);
-  }, [activePlatformId, fetchData]);
+  }, [activePlatformId, activeConnectionId, fetchData]);
 
   const trades = useMemo(() => {
     const devPerfMemo = isAuraAnalysisDevPerfEnabled() && auraAnalysisDevPerfIsPipelineActive();
@@ -534,7 +541,7 @@ export function AuraAnalysisProvider({ children }) {
 
   useEffect(() => {
     if (!activePlatformId || !filtersAtDefault) return;
-    const existing = readLastGoodDashboardState(activePlatformId) || {};
+    const existing = readLastGoodDashboardState(activePlatformId, activeConnectionId) || {};
     const nextAccount = account || existing.account || null;
     const nextTrades = rawTrades.length ? rawTrades : (Array.isArray(existing.rawTrades) ? existing.rawTrades : []);
     const nextAnalytics = analytics || existing.analytics || null;
@@ -552,8 +559,8 @@ export function AuraAnalysisProvider({ children }) {
       accountUpdatedAt: nextAccount ? new Date().toISOString() : existing.accountUpdatedAt || null,
       historyUpdatedAt: nextTrades.length ? new Date().toISOString() : existing.historyUpdatedAt || null,
     };
-    writeLastGoodDashboardState(activePlatformId, safeNext);
-  }, [activePlatformId, filtersAtDefault, account, rawTrades, analytics]);
+    writeLastGoodDashboardState(activePlatformId, activeConnectionId, safeNext);
+  }, [activePlatformId, activeConnectionId, filtersAtDefault, account, rawTrades, analytics]);
 
   const lastUpdatedStr = useMemo(() => {
     if (!lastUpdated) return null;
@@ -566,7 +573,13 @@ export function AuraAnalysisProvider({ children }) {
   const dataValue = useMemo(
     () => ({
       activePlatformId,
-      setActivePlatformId,
+      setActivePlatformId: (platformId) => {
+        setActivePlatformId(platformId);
+        const first = connections.find((c) => c.platformId === platformId);
+        setActiveConnectionId(first?.connectionId || null);
+      },
+      activeConnectionId,
+      setActiveConnectionId,
       connections,
       account,
       rawTrades,
@@ -601,6 +614,7 @@ export function AuraAnalysisProvider({ children }) {
     }),
     [
       activePlatformId,
+      activeConnectionId,
       connections,
       account,
       rawTrades,

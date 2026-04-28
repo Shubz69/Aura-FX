@@ -1,7 +1,8 @@
 /**
  * /api/aura-analysis/platform-history
  * GET — fetch trade history from a connected trading platform.
- * Query params: platformId, days (default 30, max MAX_HISTORY_LOOKBACK_DAYS)
+ * Query params: platformId, connectionId (optional, preferred with multi-account),
+ *   days (default 30, max MAX_HISTORY_LOOKBACK_DAYS)
  * Optional: from, to (YYYY-MM-DD, both required together) — slice metrics to inclusive UTC calendar range;
  *   lookback is expanded so data from `from` through today can be loaded.
  */
@@ -430,7 +431,10 @@ module.exports = async (req, res) => {
   if (!decoded) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const { platformId, days: daysParam, from: fromQ, to: toQ, live: liveQ } = req.query || {};
-  if (!platformId) return res.status(400).json({ success: false, error: 'platformId required' });
+  const connectionId = Number(req.query?.connectionId);
+  if (!platformId && !connectionId) {
+    return res.status(400).json({ success: false, error: 'platformId or connectionId required' });
+  }
 
   const forceLive =
     liveQ === '1'
@@ -448,21 +452,27 @@ module.exports = async (req, res) => {
     days = lookbackDaysFromFromYmd(dateRange.from);
   }
 
+  const queryByConnection = Number.isFinite(connectionId) && connectionId > 0;
   const [rows] = await executeQuery(
-    `SELECT ${selectOrNull(existingColumns, 'credentials_enc')},
+    `SELECT id, platform_id,
+            ${selectOrNull(existingColumns, 'credentials_enc')},
             ${selectOrNull(existingColumns, 'account_info')},
             ${selectOrNull(existingColumns, 'analytics_presets_json')},
             ${selectOrNull(existingColumns, 'mt_sync_state_json')}
      FROM aura_platform_connections
-     WHERE user_id = ? AND platform_id = ? AND status IN ('active', 'connected', 'error')`,
-    [decoded.id, platformId],
+     WHERE user_id = ?
+       AND ${queryByConnection ? 'id = ?' : 'platform_id = ?'}
+       AND status IN ('active', 'connected', 'error')
+     ORDER BY id DESC
+     LIMIT 1`,
+    [decoded.id, queryByConnection ? connectionId : platformId],
   );
   if (!rows.length) {
     return res.status(200).json({
       success: true,
       trades: [],
       count: 0,
-      platformId,
+      platformId: String(platformId || ''),
       days,
       stale: false,
       dataSource: 'none',
@@ -488,11 +498,12 @@ module.exports = async (req, res) => {
   }
 
   const connRow = rows[0];
+  const resolvedPlatformId = String(connRow.platform_id || platformId || '').toLowerCase();
   const isMtBridge =
-    (platformId === 'mt5' || platformId === 'mt4') && hasMtBridgeCredentials(creds);
+    (resolvedPlatformId === 'mt5' || resolvedPlatformId === 'mt4') && hasMtBridgeCredentials(creds);
 
   if (isMtBridge && !forceLive) {
-    const cachedTrades = await loadCachedTradesForRange(decoded.id, platformId, days, dateRange);
+    const cachedTrades = await loadCachedTradesForRange(decoded.id, resolvedPlatformId, days, dateRange);
     if (cachedTrades.length > 0) {
       const account = safeJsonParse(connRow.account_info, null);
       const analyticsInputFingerprint = closedHistoryDataKey(cachedTrades, account);
@@ -505,7 +516,7 @@ module.exports = async (req, res) => {
       const revalidating = scheduleMt5BridgeBackgroundSync(
         executeQuery,
         decoded.id,
-        platformId,
+        resolvedPlatformId,
         creds,
       );
       if (!precomputedAnalytics) {
@@ -557,11 +568,11 @@ module.exports = async (req, res) => {
     }
   }
 
-  const result = await fetchHistoryForPlatform(platformId, creds, days);
+  const result = await fetchHistoryForPlatform(resolvedPlatformId, creds, days);
 
   if (!result.ok) {
     safeMtLog('history_live_failed', { platformId, code: result.code || null });
-    const stale = await loadCachedTradesForRange(decoded.id, platformId, days, dateRange);
+    const stale = await loadCachedTradesForRange(decoded.id, resolvedPlatformId, days, dateRange);
     if (stale.length) {
       let openCount = 0;
       let closedCount = 0;
@@ -596,7 +607,7 @@ module.exports = async (req, res) => {
     }
     const revalidatingEmpty =
       isMtBridge &&
-      scheduleMt5BridgeBackgroundSync(executeQuery, decoded.id, platformId, creds);
+      scheduleMt5BridgeBackgroundSync(executeQuery, decoded.id, resolvedPlatformId, creds);
     safeMtLog('history_live_empty_fallback', { platformId, code: result.code || null });
     return res.status(200).json({
       success: true,
@@ -614,10 +625,10 @@ module.exports = async (req, res) => {
     });
   }
 
-  await upsertTradeCacheRows(decoded.id, platformId, result.trades);
+  await upsertTradeCacheRows(decoded.id, resolvedPlatformId, result.trades);
 
   if (isMtBridge) {
-    schedulePresetWarmAfterDbSync(executeQuery, decoded.id, platformId, {
+    schedulePresetWarmAfterDbSync(executeQuery, decoded.id, resolvedPlatformId, {
       reason: 'platform_history_live_ok',
     });
   }
@@ -627,7 +638,7 @@ module.exports = async (req, res) => {
     success: true,
     trades: slicedTrades,
     count: slicedTrades.length,
-    platformId,
+    platformId: resolvedPlatformId,
     days,
     ...(dateRange ? { dateFrom: dateRange.from, dateTo: dateRange.to } : {}),
     stale: false,

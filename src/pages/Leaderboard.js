@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import '../styles/Leaderboard.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
@@ -107,33 +108,33 @@ const ONLINE_MS = 5 * 60 * 1000;
 const AWAY_MAX_MS = 24 * 60 * 60 * 1000;
 
 function formatRelativeActivity(iso, nowMs) {
-    if (!iso) return 'No recent activity';
+    if (!iso) return 'no-recent-activity';
     const t = new Date(iso).getTime();
-    if (Number.isNaN(t)) return 'No recent activity';
+    if (Number.isNaN(t)) return 'no-recent-activity';
     const diff = nowMs - t;
-    if (diff < 45 * 1000) return 'Active just now';
+    if (diff < 45 * 1000) return 'active-just-now';
     const min = Math.floor(diff / 60000);
-    if (min < 60) return `Active ${min}m ago`;
+    if (min < 60) return `active-minutes:${min}`;
     const hr = Math.floor(min / 60);
-    if (hr < 24) return `Active ${hr}h ago`;
+    if (hr < 24) return `active-hours:${hr}`;
     const days = Math.floor(hr / 24);
-    if (days === 1) return 'Active yesterday';
-    if (days < 14) return `Active ${days}d ago`;
+    if (days === 1) return 'active-yesterday';
+    if (days < 14) return `active-days:${days}`;
     const weeks = Math.floor(days / 7);
-    if (weeks < 8) return `Active ${weeks}w ago`;
-    return 'Active long ago';
+    if (weeks < 8) return `active-weeks:${weeks}`;
+    return 'active-long-ago';
 }
 
 /** Presence for leaderboard row (dot + label). `nowMs` should tick so labels stay fresh. */
 function getPresenceFromUser(user, nowMs = Date.now()) {
     const seen = user?.lastSeenAt ? new Date(user.lastSeenAt).getTime() : 0;
     if (seen && nowMs - seen < ONLINE_MS) {
-        return { dot: 'online', label: 'Online now' };
+        return { dot: 'online', label: 'online-now' };
     }
     const actIso = user?.lastActivityAt || user?.lastSeenAt || user?.lastXpAt;
     const label = formatRelativeActivity(actIso, nowMs);
     const ref = actIso ? new Date(actIso).getTime() : 0;
-    if (!ref) return { dot: 'offline', label: 'No recent activity' };
+    if (!ref) return { dot: 'offline', label: 'no-recent-activity' };
     const diff = nowMs - ref;
     let dot = 'offline';
     if (diff < AWAY_MAX_MS) dot = 'away';
@@ -205,6 +206,7 @@ function getFlag(userId) {
 // ─── Main Leaderboard Component ───────────────────────────────────────────────
 
 const Leaderboard = () => {
+    const { t } = useTranslation();
     const containerRef = useRef(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -239,7 +241,7 @@ const Leaderboard = () => {
             }
         } catch (err) {
             console.error('Error fetching leaderboard:', err);
-            setError('Failed to load leaderboard. Please try again.');
+            setError(t('leaderboard.loadFailed'));
             setLeaderboardData([]);
         } finally {
             setLoading(false);
@@ -316,11 +318,24 @@ const Leaderboard = () => {
 
     const getXpLabel = () => {
         switch (selectedTimeframe) {
-            case 'daily':   return 'Today';
-            case 'weekly':  return 'This Week';
-            case 'monthly': return 'This Month';
-            default:        return 'Total';
+            case 'daily':   return t('leaderboard.timeframe.today');
+            case 'weekly':  return t('leaderboard.timeframe.thisWeek');
+            case 'monthly': return t('leaderboard.timeframe.thisMonth');
+            default:        return t('leaderboard.total');
         }
+    };
+
+    const mapActivityLabel = (token) => {
+        if (token === 'no-recent-activity') return t('leaderboard.noRecentActivity');
+        if (token === 'active-just-now') return t('leaderboard.activeJustNow');
+        if (token === 'active-yesterday') return t('leaderboard.activeYesterday');
+        if (token === 'active-long-ago') return t('leaderboard.activeLongAgo');
+        if (token === 'online-now') return t('leaderboard.onlineNow');
+        if (token.startsWith('active-minutes:')) return t('leaderboard.activeMinutesAgo', { count: Number(token.split(':')[1] || 0) });
+        if (token.startsWith('active-hours:')) return t('leaderboard.activeHoursAgo', { count: Number(token.split(':')[1] || 0) });
+        if (token.startsWith('active-days:')) return t('leaderboard.activeDaysAgo', { count: Number(token.split(':')[1] || 0) });
+        if (token.startsWith('active-weeks:')) return t('leaderboard.activeWeeksAgo', { count: Number(token.split(':')[1] || 0) });
+        return t('leaderboard.noRecentActivity');
     };
 
     const formatXp = (user) => {
@@ -341,8 +356,8 @@ const Leaderboard = () => {
                 <div className="top3-podium">
                     <div className="podium-empty">
                         <div className="empty-icon">🏆</div>
-                        <div className="empty-text">No participants yet</div>
-                        <div className="empty-subtext">Be the first to earn XP!</div>
+                        <div className="empty-text">{t('leaderboard.noParticipantsYet')}</div>
+                        <div className="empty-subtext">{t('leaderboard.beFirstToEarnXp')}</div>
                     </div>
                 </div>
             );
@@ -389,8 +404,8 @@ const Leaderboard = () => {
                         </div>
                         <div className="podium-xp">{formatXp(user)}</div>
                         <div className="podium-xp-label">{getXpLabel()}</div>
-                        <div className="podium-level">Level {Math.min(100, user.level || 1)}</div>
-                        <div className="podium-activity">{activity.label}</div>
+                        <div className="podium-level">{t('leaderboard.levelN', { level: Math.min(100, user.level || 1) })}</div>
+                        <div className="podium-activity">{mapActivityLabel(activity.label)}</div>
                     </div>
                 </div>
             );
@@ -416,35 +431,35 @@ const Leaderboard = () => {
             <div className="top10-list">
                 <div className="section-title-row">
                     <h3 className="section-title">
-                        🏆 Top 10 Leaderboard
+                        {t('leaderboard.top10')}
                         <span className="timeframe-label">
-                            {selectedTimeframe === 'all-time' ? ' · All Time' : ` · ${getXpLabel()}`}
+                            {selectedTimeframe === 'all-time' ? ` · ${t('leaderboard.timeframe.allTime')}` : ` · ${getXpLabel()}`}
                         </span>
                     </h3>
                     {onlineCount > 0 && (
                         <div className="online-badge">
                             <span className="online-pulse" />
-                            <span>{onlineCount} online now</span>
+                            <span>{t('leaderboard.onlineNowCount', { count: onlineCount })}</span>
                         </div>
                     )}
                 </div>
 
                 <div className="leaderboard-table">
                     <div className="table-header">
-                        <div className="header-rank">Rank</div>
-                        <div className="header-user">Trader</div>
-                        <div className="header-level">Level</div>
+                        <div className="header-rank">{t('leaderboard.rank')}</div>
+                        <div className="header-user">{t('leaderboard.trader')}</div>
+                        <div className="header-level">{t('leaderboard.level')}</div>
                         <div className="header-xp">
-                            {selectedTimeframe === 'all-time' ? 'Total XP' : `XP ${getXpLabel()}`}
+                            {selectedTimeframe === 'all-time' ? t('leaderboard.totalXp') : t('leaderboard.xpFor', { label: getXpLabel() })}
                         </div>
-                        <div className="header-status">Activity</div>
+                        <div className="header-status">{t('leaderboard.activity')}</div>
                     </div>
 
                     {!hasData ? (
                         <div className="leaderboard-row empty-row">
                             <div className="empty-table-message">
                                 <span>📊</span>
-                                <span>No participants yet. Start earning XP!</span>
+                                <span>{t('leaderboard.noParticipantsStartEarning')}</span>
                             </div>
                         </div>
                     ) : (
@@ -485,7 +500,7 @@ const Leaderboard = () => {
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="user-activity-label">{activity.label}</div>
+                                            <div className="user-activity-label">{mapActivityLabel(activity.label)}</div>
                                         </div>
                                     </div>
 
@@ -512,7 +527,7 @@ const Leaderboard = () => {
                                     <div className="status-cell">
                                         {getStrikeDisplay(user.strikes) || (
                                             <span className={`activity-status activity-status--${activity.dot}`}>
-                                                {activity.label}
+                                                {mapActivityLabel(activity.label)}
                                             </span>
                                         )}
                                     </div>
@@ -530,15 +545,15 @@ const Leaderboard = () => {
             <div className="leaderboard-container" ref={containerRef}>
                 <CosmicBackground />
                 <div className="leaderboard-header">
-                    <h1 className="leaderboard-main-title aura-page-title">Leaderboard</h1>
+                    <h1 className="leaderboard-main-title aura-page-title">{t('leaderboard.title')}</h1>
                     <div className="aura-page-title-line" aria-hidden>
                         <span className="aura-page-title-dot" />
                     </div>
                 </div>
                 <div className="error-message">
-                    <h2>⚠️ Error Loading Leaderboard</h2>
+                    <h2>{t('leaderboard.errorLoading')}</h2>
                     <p>{error}</p>
-                    <button onClick={() => window.location.reload()}>Retry</button>
+                    <button onClick={() => window.location.reload()}>{t('leaderboard.retry')}</button>
                 </div>
             </div>
         );
@@ -553,11 +568,11 @@ const Leaderboard = () => {
 
             {/* Header */}
             <div className="leaderboard-header">
-                <h1 className="leaderboard-main-title aura-page-title">Leaderboard</h1>
+                <h1 className="leaderboard-main-title aura-page-title">{t('leaderboard.title')}</h1>
                 <div className="aura-page-title-line" aria-hidden>
                     <span className="aura-page-title-dot" />
                 </div>
-                <p className="leaderboard-subtitle">Compete with the best traders in the cyber realm</p>
+                <p className="leaderboard-subtitle">{t('leaderboard.subtitle')}</p>
 
                 <div className="timeframe-selector">
                     {['daily','weekly','monthly','all-time'].map(tf => (
@@ -566,7 +581,7 @@ const Leaderboard = () => {
                             className={`timeframe-btn ${selectedTimeframe === tf ? 'active' : ''}`}
                             onClick={() => setSelectedTimeframe(tf)}
                         >
-                            {tf === 'daily' ? 'Today' : tf === 'weekly' ? 'This Week' : tf === 'monthly' ? 'This Month' : 'All Time'}
+                            {tf === 'daily' ? t('leaderboard.timeframe.today') : tf === 'weekly' ? t('leaderboard.timeframe.thisWeek') : tf === 'monthly' ? t('leaderboard.timeframe.thisMonth') : t('leaderboard.timeframe.allTime')}
                         </button>
                     ))}
                 </div>
@@ -575,7 +590,7 @@ const Leaderboard = () => {
             {loading ? (
                 <div className="loading-screen">
                     <div className="loading-spinner" />
-                    <div className="loading-text">Loading leaderboard…</div>
+                    <div className="loading-text">{t('leaderboard.loading')}</div>
                 </div>
             ) : (
                 <>

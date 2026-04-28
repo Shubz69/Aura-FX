@@ -1436,6 +1436,9 @@
       "minutesAgo": "منذ {{count}}د",
       "hoursAgo": "منذ {{count}}س",
       "daysAgo": "منذ {{count}}ي"
+    },
+    "system": {
+      "newNotification": "إشعار جديد"
     }
   },
   "xp": {
@@ -1553,5 +1556,120 @@
       "99": "متداول أعلى",
       "100": "إله AURA TERMINAL™"
     }
+  },
+  "operatorShell": {
+    "backToOperatorGalaxyAria": "العودة إلى Operator Galaxy",
+    "operatorGalaxy": "مجرة المشغّل",
+    "tradeValidator": "مدقق الصفقات",
+    "traderLab": "مختبر المتداول",
+    "tradePlaybook": "دليل التداول",
+    "tradeValidatorSectionsAria": "أقسام مدقق الصفقات",
+    "tabs": {
+      "overview": "نظرة عامة",
+      "checklist": "قائمة التحقق",
+      "calculator": "حاسبة الصفقات",
+      "journal": "مفكرة التداول",
+      "analytics": "التحليلات",
+      "traderCv": "السيرة المهنية للمتداول",
+      "leaderboard": "لوحة الصدارة"
+    }
+  },
+  "register": {
+    "signUp": "إنشاء حساب",
+    "form": {
+      "username": "اسم المستخدم",
+      "enterUsername": "أدخل اسم المستخدم",
+      "email": "البريد الإلكتروني",
+      "enterEmail": "أدخل البريد الإلكتروني",
+      "fullName": "الاسم الكامل",
+      "enterFullName": "أدخل الاسم الكامل",
+      "phoneNumberAnyCountry": "رقم الهاتف (أي دولة)",
+      "phoneExample": "مثال: 201 555 5555",
+      "password": "كلمة المرور",
+      "enterPassword": "أدخل كلمة المرور",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "confirmPasswordPlaceholder": "أكد كلمة المرور",
+      "referralCode": "رمز الإحالة",
+      "optional": "اختياري",
+      "referralExample": "مثال: AURA-XXXXXXXX أو AT-000123"
+    },
+    "legal": {
+      "iAgreeToThe": "أوافق على",
+      "terms": "الشروط",
+      "and": "و",
+      "privacyPolicy": "سياسة الخصوصية"
+    },
+    "verification": {
+      "enterSixDigitCodes": "أدخل الرمزين المكونين من 6 أرقام المرسلين إلى بريدك وهاتفك",
+      "emailCodeSentTo": "رمز البريد الإلكتروني (أُرسل إلى {{email}})",
+      "phoneCodeSentTo": "رمز الهاتف (أُرسل إلى {{phone}})",
+      "sixDigitCode": "رمز من 6 أرقام",
+      "resendEmailCode": "إعادة إرسال رمز البريد",
+      "resendPhoneCode": "إعادة إرسال رمز الهاتف"
+    },
+    "errors": {
+      "usernameMinLength": "يجب أن يكون اسم المستخدم 3 أحرف على الأقل",
+      "usernameCharset": "يمكن لاسم المستخدم أن يحتوي فقط على أحرف وأرقام وشرطات وشرطات سفلية",
+      "requiredFields": "جميع الحقول مطلوبة.",
+      "countryCodeRequired": "يرجى اختيار رمز الدولة.",
+      "phoneInvalid": "مطلوب رقم هاتف صالح (10 أرقام أو أكثر).",
+      "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+      "passwordMinLength": "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.",
+      "acceptTerms": "يرجى قبول الشروط والأحكام",
+      "sendVerificationEmailFailed": "فشل إرسال بريد التحقق. حاول مرة أخرى.",
+      "phoneCodeSendFailedWithRecovery": "تعذر إرسال رمز الهاتف. إذا تم إرسال رمز البريد بالفعل، تحقق من بريدك ثم صحح رقم الهاتف وأعد الإرسال.",
+      "sendVerificationFailed": "فشل إرسال التحقق.",
+      "emailServiceUnavailable": "خدمة البريد غير متاحة مؤقتًا. حاول لاحقًا.",
+      "emailCodeRequired": "يرجى إدخال رمز البريد الإلكتروني المكون من 6 أرقام.",
+      "phoneCodeRequired": "يرجى إدخال رمز الهاتف المكون من 6 أرقام.",
+      "emailCodeInvalid": "رمز البريد الإلكتروني غير صالح أو منتهي. تحقق وحاول مرة أخرى.",
+      "phoneCodeInvalid": "رمز الهاتف غير صالح أو منتهي.",
+      "completeSignupFailed": "تعذر إكمال التسجيل. إذا تم استخدام رمز SMS بالفعل، أعد إرسال رمز الهاتف وحاول مجددًا.",
+      "resendCodeFailed": "فشل إعادة إرسال الرمز."
+    },
+    "success": {
+      "codesSent": "تم إرسال الرموز! أدخل رمزي 6 أرقام من البريد والهاتف.",
+      "phoneCodeResent": "تمت إعادة إرسال الرمز إلى هاتفك.",
+      "emailCodeResent": "تمت إعادة إرسال الرمز إلى بريدك."
+    },
+    "toast": {
+      "accountCreated": "تم إنشاء الحساب بنجاح! مرحبًا بك في AURA TERMINAL™!"
+    }
+  },
+  "leaderboard": {
+    "title": "لوحة الصدارة",
+    "subtitle": "نافس أفضل المتداولين في عالم السايبر",
+    "loading": "جارٍ تحميل لوحة الصدارة…",
+    "loadFailed": "فشل تحميل لوحة الصدارة. حاول مرة أخرى.",
+    "errorLoading": "خطأ في تحميل لوحة الصدارة",
+    "retry": "إعادة المحاولة",
+    "noParticipantsYet": "لا يوجد مشاركون بعد",
+    "beFirstToEarnXp": "كن أول من يكسب XP!",
+    "top10": "أفضل 10 في لوحة الصدارة",
+    "onlineNowCount": "{{count}} متصلون الآن",
+    "rank": "الترتيب",
+    "trader": "متداول",
+    "level": "المستوى",
+    "totalXp": "إجمالي XP",
+    "activity": "النشاط",
+    "xpFor": "نقاط الخبرة {{label}}",
+    "noParticipantsStartEarning": "لا يوجد مشاركون بعد. ابدأ في كسب XP!",
+    "levelN": "المستوى {{level}}",
+    "noRecentActivity": "لا توجد نشاطات حديثة",
+    "activeJustNow": "نشط الآن",
+    "activeMinutesAgo": "نشط قبل {{count}} دقيقة",
+    "activeHoursAgo": "نشط قبل {{count}} ساعة",
+    "activeYesterday": "نشط أمس",
+    "activeDaysAgo": "نشط قبل {{count}} يوم",
+    "activeWeeksAgo": "نشط قبل {{count}} أسبوع",
+    "activeLongAgo": "نشط منذ وقت طويل",
+    "onlineNow": "متصل الآن",
+    "timeframe": {
+      "today": "اليوم",
+      "thisWeek": "هذا الأسبوع",
+      "thisMonth": "هذا الشهر",
+      "allTime": "كل الأوقات"
+    },
+    "total": "الإجمالي"
   }
 }

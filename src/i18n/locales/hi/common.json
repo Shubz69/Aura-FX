@@ -1436,6 +1436,9 @@
       "minutesAgo": "{{count}}मि पहले",
       "hoursAgo": "{{count}}घं पहले",
       "daysAgo": "{{count}}दिन पहले"
+    },
+    "system": {
+      "newNotification": "नई सूचना"
     }
   },
   "xp": {
@@ -1553,5 +1556,120 @@
       "99": "सर्वोच्च व्यापारी",
       "100": "AURA TERMINAL™ देवता"
     }
+  },
+  "operatorShell": {
+    "backToOperatorGalaxyAria": "ऑपरेटर गैलेक्सी पर वापस जाएँ",
+    "operatorGalaxy": "ऑपरेटर गैलेक्सी",
+    "tradeValidator": "ट्रेड वैलिडेटर",
+    "traderLab": "ट्रेडर लैब",
+    "tradePlaybook": "ट्रेड प्लेबुक",
+    "tradeValidatorSectionsAria": "ट्रेड वैलिडेटर अनुभाग",
+    "tabs": {
+      "overview": "अवलोकन",
+      "checklist": "चेकलिस्ट",
+      "calculator": "ट्रेड कैलकुलेटर",
+      "journal": "ट्रेड जर्नल",
+      "analytics": "विश्लेषण",
+      "traderCv": "ट्रेडर सीवी",
+      "leaderboard": "लीडरबोर्ड"
+    }
+  },
+  "register": {
+    "signUp": "साइन अप",
+    "form": {
+      "username": "उपयोगकर्ता नाम",
+      "enterUsername": "उपयोगकर्ता नाम दर्ज करें",
+      "email": "ईमेल",
+      "enterEmail": "ईमेल दर्ज करें",
+      "fullName": "पूरा नाम",
+      "enterFullName": "पूरा नाम दर्ज करें",
+      "phoneNumberAnyCountry": "फ़ोन नंबर (कोई भी देश)",
+      "phoneExample": "उदा. 201 555 5555",
+      "password": "पासवर्ड",
+      "enterPassword": "पासवर्ड दर्ज करें",
+      "confirmPassword": "पासवर्ड की पुष्टि करें",
+      "confirmPasswordPlaceholder": "पासवर्ड की पुष्टि करें",
+      "referralCode": "रेफ़रल कोड",
+      "optional": "वैकल्पिक",
+      "referralExample": "उदा. AURA-XXXXXXXX या AT-000123"
+    },
+    "legal": {
+      "iAgreeToThe": "मैं सहमत हूँ",
+      "terms": "शर्तें",
+      "and": "और",
+      "privacyPolicy": "गोपनीयता नीति"
+    },
+    "verification": {
+      "enterSixDigitCodes": "अपने ईमेल और फ़ोन पर भेजे गए 6-अंकीय कोड दर्ज करें",
+      "emailCodeSentTo": "ईमेल कोड ({{email}} पर भेजा गया)",
+      "phoneCodeSentTo": "फोन कोड ({{phone}} पर भेजा गया)",
+      "sixDigitCode": "6-अंकीय कोड",
+      "resendEmailCode": "ईमेल कोड फिर भेजें",
+      "resendPhoneCode": "फोन कोड फिर भेजें"
+    },
+    "errors": {
+      "usernameMinLength": "उपयोगकर्ता नाम कम से कम 3 अक्षरों का होना चाहिए",
+      "usernameCharset": "उपयोगकर्ता नाम में केवल अक्षर, अंक, हाइफ़न और अंडरस्कोर हो सकते हैं",
+      "requiredFields": "सभी फ़ील्ड आवश्यक हैं।",
+      "countryCodeRequired": "कृपया देश कोड चुनें।",
+      "phoneInvalid": "मान्य फ़ोन नंबर आवश्यक है (10+ अंक)।",
+      "passwordMismatch": "पासवर्ड मेल नहीं खाते।",
+      "passwordMinLength": "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।",
+      "acceptTerms": "कृपया नियम एवं शर्तें स्वीकार करें",
+      "sendVerificationEmailFailed": "सत्यापन ईमेल भेजने में विफल। कृपया फिर से प्रयास करें।",
+      "phoneCodeSendFailedWithRecovery": "फोन कोड नहीं भेजा जा सका। यदि ईमेल कोड भेजा जा चुका है, तो इनबॉक्स देखें—मोबाइल नंबर ठीक करके फिर से कोड भेजें।",
+      "sendVerificationFailed": "सत्यापन भेजने में विफल।",
+      "emailServiceUnavailable": "ईमेल सेवा अस्थायी रूप से उपलब्ध नहीं है। बाद में प्रयास करें।",
+      "emailCodeRequired": "कृपया ईमेल से 6-अंकीय कोड दर्ज करें।",
+      "phoneCodeRequired": "कृपया फोन से 6-अंकीय कोड दर्ज करें।",
+      "emailCodeInvalid": "ईमेल कोड अमान्य या समाप्त हो गया। कृपया जाँचकर फिर प्रयास करें।",
+      "phoneCodeInvalid": "फोन कोड अमान्य या समाप्त हो गया।",
+      "completeSignupFailed": "साइन-अप पूरा नहीं हो सका। यदि SMS कोड पहले इस्तेमाल हो चुका है, तो फोन कोड फिर भेजें और दोबारा प्रयास करें।",
+      "resendCodeFailed": "कोड दोबारा भेजने में विफल।"
+    },
+    "success": {
+      "codesSent": "कोड भेज दिए गए! ईमेल और फोन से 6-अंकीय कोड दर्ज करें।",
+      "phoneCodeResent": "कोड आपके फोन पर फिर भेजा गया।",
+      "emailCodeResent": "कोड आपके ईमेल पर फिर भेजा गया।"
+    },
+    "toast": {
+      "accountCreated": "खाता सफलतापूर्वक बन गया! AURA TERMINAL™ में आपका स्वागत है!"
+    }
+  },
+  "leaderboard": {
+    "title": "लीडरबोर्ड",
+    "subtitle": "साइबर दुनिया के सर्वश्रेष्ठ ट्रेडरों से प्रतिस्पर्धा करें",
+    "loading": "लीडरबोर्ड लोड हो रहा है…",
+    "loadFailed": "लीडरबोर्ड लोड नहीं हो सका। कृपया पुनः प्रयास करें।",
+    "errorLoading": "लीडरबोर्ड लोड करने में त्रुटि",
+    "retry": "पुनः प्रयास करें",
+    "noParticipantsYet": "अभी कोई प्रतिभागी नहीं",
+    "beFirstToEarnXp": "XP कमाने वाले पहले बनें!",
+    "top10": "शीर्ष 10 लीडरबोर्ड",
+    "onlineNowCount": "{{count}} अभी ऑनलाइन",
+    "rank": "रैंक",
+    "trader": "ट्रेडर",
+    "level": "लेवल",
+    "totalXp": "कुल XP",
+    "activity": "गतिविधि",
+    "xpFor": "{{label}} अनुभव अंक",
+    "noParticipantsStartEarning": "अभी कोई प्रतिभागी नहीं। XP कमाना शुरू करें!",
+    "levelN": "लेवल {{level}}",
+    "noRecentActivity": "हाल की कोई गतिविधि नहीं",
+    "activeJustNow": "अभी सक्रिय",
+    "activeMinutesAgo": "{{count}} मिनट पहले सक्रिय",
+    "activeHoursAgo": "{{count}} घंटे पहले सक्रिय",
+    "activeYesterday": "कल सक्रिय",
+    "activeDaysAgo": "{{count}} दिन पहले सक्रिय",
+    "activeWeeksAgo": "{{count}} सप्ताह पहले सक्रिय",
+    "activeLongAgo": "काफी समय पहले सक्रिय",
+    "onlineNow": "अभी ऑनलाइन",
+    "timeframe": {
+      "today": "आज",
+      "thisWeek": "इस सप्ताह",
+      "thisMonth": "इस माह",
+      "allTime": "सर्वकालिक"
+    },
+    "total": "कुल"
   }
 }

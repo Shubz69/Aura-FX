@@ -102,8 +102,8 @@ function ManualMetricsEntryInner() {
     }
   }, [year, month, setSearchParams]);
 
-  const role = eligibility?.role;
-  const manualMetricsCsvEnabled = ['premium', 'pro', 'elite', 'admin'].includes(role);
+  const role = (eligibility?.role || '').toLowerCase();
+  const manualMetricsCsvEnabled = ['premium', 'pro', 'elite', 'admin', 'super_admin', 'superadmin'].includes(role);
 
   const { csvStatus, loadingCsv } = useCsvPeriodSnapshot(
     token,
@@ -159,7 +159,7 @@ function ManualMetricsEntryInner() {
 
   if (!eligibility) return null;
 
-  if (role === 'free' || role === 'access') {
+  if (!manualMetricsCsvEnabled) {
     return <Navigate to="/reports" replace />;
   }
 
@@ -222,8 +222,16 @@ function ManualMetricsEntryInner() {
       />
 
       <p className="mm-entry-footer">
-        <Link to={`/manual-metrics/dashboard?year=${year}&month=${month}`} className="mm-link-dashboard">
-          Open dashboard for {MONTH_NAMES[month - 1]} {year}
+        <Link
+          to={`/manual-metrics/dashboard?year=${year}&month=${month}`}
+          className="mm-link-dashboard"
+          aria-disabled={!csvStatus}
+          onClick={(e) => {
+            if (!csvStatus) e.preventDefault();
+          }}
+          style={!csvStatus ? { opacity: 0.55, pointerEvents: 'none', cursor: 'not-allowed' } : undefined}
+        >
+          {csvStatus ? `Enter dashboard for ${MONTH_NAMES[month - 1]} ${year}` : 'Upload CSV to enter dashboard'}
         </Link>
         {' · '}
         <Link to="/aura-analysis/ai">Connection Hub</Link>

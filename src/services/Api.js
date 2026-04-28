@@ -960,22 +960,32 @@ const Api = {
             }
         );
     },
-    disconnectAuraPlatform: (platformId) => {
+    disconnectAuraPlatform: (platformId, connectionId = null) => {
         const token = localStorage.getItem('token');
         return axios.delete(`${API_BASE_URL}/api/aura-analysis/platform-connect`, {
-            params: { platformId },
+            params: connectionId ? { platformId, connectionId } : { platformId },
             headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
     },
-    getAuraPlatformAccount: (platformId) => {
+    renameAuraPlatformConnection: (connectionId, displayName) => {
+        const token = localStorage.getItem('token');
+        return axios.patch(
+            `${API_BASE_URL}/api/aura-analysis/platform-connect`,
+            { connectionId, displayName },
+            {
+                headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+            }
+        );
+    },
+    getAuraPlatformAccount: (platformId, options = {}) => {
         const token = localStorage.getItem('token');
         return axios.get(`${API_BASE_URL}/api/aura-analysis/platform-account`, {
-            params: { platformId },
+            params: options.connectionId ? { platformId, connectionId: options.connectionId } : { platformId },
             headers: token ? { Authorization: `Bearer ${token}` } : {},
             skipCache: true,
         });
     },
-    /** @param {number|{ days?: number, from?: string, to?: string }} daysOrOpts - preset window in days, or { from, to } YYYY-MM-DD (UTC range on API) */
+    /** @param {number|{ days?: number, from?: string, to?: string, connectionId?: number }} daysOrOpts */
     getAuraPlatformHistory: (platformId, daysOrOpts = 30) => {
         const token = localStorage.getItem('token');
         const params = { platformId };
@@ -985,6 +995,7 @@ const Api = {
             if (daysOrOpts.days != null) params.days = daysOrOpts.days;
             if (daysOrOpts.from) params.from = daysOrOpts.from;
             if (daysOrOpts.to) params.to = daysOrOpts.to;
+            if (daysOrOpts.connectionId) params.connectionId = daysOrOpts.connectionId;
         }
         return axios.get(`${API_BASE_URL}/api/aura-analysis/platform-history`, {
             params,

@@ -47,7 +47,7 @@ function AuraFilterBar() {
     dirFilter, setDirFilter,
     filterPresets, saveCurrentFilterPreset, applyFilterPreset, removeFilterPreset,
     refreshing, lastUpdatedStr, refresh,
-    activePlatformId, connections, setActivePlatformId,
+    activePlatformId, activeConnectionId, connections, setActivePlatformId, setActiveConnectionId,
   } = useAuraAnalysisData();
 
   const [customOpen, setCustomOpen] = useState(false);
@@ -93,17 +93,22 @@ function AuraFilterBar() {
     <div className="aura-db-filterbar">
       <div className="aura-db-filterbar-inner">
 
-        {/* Platform selector (only if multiple connections) */}
+        {/* Account selector (for multi-account MT4/MT5) */}
         {connections.length > 1 && (
           <select
             className="aura-db-filter-select"
-            value={activePlatformId || ''}
-            onChange={e => setActivePlatformId(e.target.value)}
-            title="Active platform"
+            value={String(activeConnectionId || '')}
+            onChange={e => {
+              const selected = connections.find((c) => String(c.connectionId) === e.target.value);
+              if (!selected) return;
+              setActiveConnectionId(selected.connectionId);
+              setActivePlatformId(selected.platformId);
+            }}
+            title="Active account"
           >
             {connections.map(c => (
-              <option key={c.platformId} value={c.platformId}>
-                {c.platformId.toUpperCase()}
+              <option key={String(c.connectionId || `${c.platformId}:${c.label}`)} value={String(c.connectionId || '')}>
+                {(c.label || c.platformId || 'Account')}
               </option>
             ))}
           </select>

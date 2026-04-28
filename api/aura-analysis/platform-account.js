@@ -1,7 +1,7 @@
 /**
  * /api/aura-analysis/platform-account
  * GET — fetch live account information from a connected trading platform.
- * Query param: platformId
+ * Query params: platformId, connectionId (optional, preferred with multi-account)
  */
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
@@ -196,7 +196,8 @@ module.exports = async (req, res) => {
   if (!decoded) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const { platformId, live: liveQ } = req.query || {};
-  if (!platformId) return res.status(400).json({ success: false, error: 'platformId required' });
+  const connectionId = Number(req.query?.connectionId);
+  if (!platformId && !connectionId) return res.status(400).json({ success: false, error: 'platformId or connectionId required' });
   const forceLive =
     liveQ === '1'
     || liveQ === 'true'
@@ -204,15 +205,21 @@ module.exports = async (req, res) => {
 
   const existingColumns = await listPlatformConnectionColumns(executeQuery).catch(() => new Set());
 
+  const queryByConnection = Number.isFinite(connectionId) && connectionId > 0;
   const [rows] = await executeQuery(
-    `SELECT ${selectOrNull(existingColumns, 'credentials_enc')},
+    `SELECT id, platform_id,
+            ${selectOrNull(existingColumns, 'credentials_enc')},
             ${selectOrNull(existingColumns, 'account_info')},
             ${selectOrNull(existingColumns, 'last_success_at')},
             ${selectOrNull(existingColumns, 'last_sync_at')},
             ${selectOrNull(existingColumns, 'last_sync')}
      FROM aura_platform_connections
-     WHERE user_id = ? AND platform_id = ? AND status IN ('active', 'connected', 'error')`,
-    [decoded.id, platformId],
+     WHERE user_id = ?
+       AND ${queryByConnection ? 'id = ?' : 'platform_id = ?'}
+       AND status IN ('active', 'connected', 'error')
+     ORDER BY id DESC
+     LIMIT 1`,
+    [decoded.id, queryByConnection ? connectionId : platformId],
   );
   if (!rows.length) return res.status(404).json({ success: false, error: 'Platform not connected' });
 
@@ -225,11 +232,12 @@ module.exports = async (req, res) => {
 
   const row0 = rows[0];
   const cachedAccount = safeJsonParse(row0.account_info, null);
+  const resolvedPlatformId = String(row0.platform_id || platformId || '').toLowerCase();
   const isMtBridge =
-    (platformId === 'mt5' || platformId === 'mt4') && hasMtBridgeCredentials(creds);
+    (resolvedPlatformId === 'mt5' || resolvedPlatformId === 'mt4') && hasMtBridgeCredentials(creds);
 
   if (isMtBridge && !forceLive && isUsableAccountSnapshot(cachedAccount)) {
-    const revalidating = scheduleMt5BridgeBackgroundSync(executeQuery, decoded.id, platformId, creds);
+    const revalidating = scheduleMt5BridgeBackgroundSync(executeQuery, decoded.id, resolvedPlatformId, creds);
     const stale = accountSnapshotStale(row0);
     const body = {
       success: true,
@@ -244,12 +252,12 @@ module.exports = async (req, res) => {
     return res.status(200).json(body);
   }
 
-  const result = await fetchForPlatform(platformId, creds);
+  const result = await fetchForPlatform(resolvedPlatformId, creds);
 
   if (!result.ok) {
     safeMtLog('account_live_fetch_failed', { platformId, code: result.code || null });
     try {
-      await patchConnectionRow(executeQuery, decoded.id, platformId, {
+      await patchConnectionRow(executeQuery, decoded.id, resolvedPlatformId, {
         last_sync_at: true,
         last_error_code: result.code || 'unknown',
         last_error_message: publicAccountLiveError(result.code, result.error).slice(0, 512),
@@ -281,8 +289,8 @@ module.exports = async (req, res) => {
   // Update cached account info + last_sync
   await executeQuery(
     `UPDATE aura_platform_connections SET account_info = ?, last_sync = NOW()
-     WHERE user_id = ? AND platform_id = ?`,
-    [JSON.stringify(result.data), decoded.id, platformId]
+     WHERE user_id = ? AND id = ?`,
+    [JSON.stringify(result.data), decoded.id, row0.id]
   );
   try {
     await patchConnectionRow(executeQuery, decoded.id, platformId, {

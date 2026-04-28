@@ -32,6 +32,18 @@ export const PLATFORMS = [
 export function AuraConnectionProvider({ children }) {
   const { token, loading: authLoading } = useAuth();
   const [connections, setConnections] = useState([]);
+  const sanitizeConnections = useCallback((rows = []) => {
+    return (Array.isArray(rows) ? rows : []).map((c) => {
+      const loginLabel = c?.accountLogin ? ` (${c.accountLogin})` : '';
+      const platformName = c?.platformId === 'mt5' ? 'MetaTrader 5' : c?.platformId === 'mt4' ? 'MetaTrader 4' : (c?.platformId || 'Account');
+      return {
+        ...c,
+        connectionId: c?.connectionId ?? c?.id ?? null,
+        label: c?.label || `${platformName}${loginLabel}`,
+      };
+    });
+  }, []);
+
   const [loading, setLoading] = useState(true);
 
   const mapConnectError = useCallback((err) => {
@@ -83,7 +95,7 @@ export function AuraConnectionProvider({ children }) {
     setLoading(true);
     Api.getAuraPlatformConnections()
       .then((r) => {
-        if (r.data?.success) setConnections(r.data.connections || []);
+        if (r.data?.success) setConnections(sanitizeConnections(r.data.connections || []));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -105,25 +117,39 @@ export function AuraConnectionProvider({ children }) {
     if (!r.data?.success) throw new Error(r.data?.error || 'Connection failed');
     const accountInfo = r.data.accountInfo || {};
     setConnections((prev) => {
-      const next = prev.filter((c) => c.platformId !== platformId);
+      const next = [...prev];
       const mtLabel = credentials.login ? String(credentials.login) : null;
-      next.push({
+      const nextRow = {
+        connectionId: r.data?.connectionId || null,
         platformId,
-        label: credentials.accountId || mtLabel || (credentials.apiKey ? `${credentials.apiKey.slice(0, 8)}...` : null) || platformId,
+        accountLogin: r.data?.accountLogin || mtLabel || null,
+        label: r.data?.label || credentials.accountId || mtLabel || (credentials.apiKey ? `${credentials.apiKey.slice(0, 8)}...` : null) || platformId,
         accountInfo,
         connectedAt: new Date().toISOString(),
         lastSync: new Date().toISOString(),
         status: 'active',
-      });
+      };
+      const idx = next.findIndex((c) => c.connectionId && nextRow.connectionId && c.connectionId === nextRow.connectionId);
+      if (idx >= 0) next[idx] = { ...next[idx], ...nextRow };
+      else next.push(nextRow);
       return next;
     });
     return accountInfo;
   }, [mapConnectError]);
 
   /** Disconnect a platform */
-  const disconnectPlatform = useCallback(async (platformId) => {
-    await Api.disconnectAuraPlatform(platformId);
-    setConnections((prev) => prev.filter((c) => c.platformId !== platformId));
+  const disconnectPlatform = useCallback(async (platformId, connectionId = null) => {
+    await Api.disconnectAuraPlatform(platformId, connectionId);
+    setConnections((prev) => prev.filter((c) => (connectionId ? c.connectionId !== connectionId : c.platformId !== platformId)));
+  }, []);
+
+  const renameConnection = useCallback(async (connectionId, displayName) => {
+    const trimmed = String(displayName || '').trim();
+    if (!connectionId || !trimmed) return;
+    await Api.renameAuraPlatformConnection(connectionId, trimmed);
+    setConnections((prev) => prev.map((c) => (
+      c.connectionId === connectionId ? { ...c, label: trimmed } : c
+    )));
   }, []);
 
   const getConnection = useCallback(
@@ -140,6 +166,7 @@ export function AuraConnectionProvider({ children }) {
     loading,
     connectPlatform,
     disconnectPlatform,
+    renameConnection,
     getConnection,
   };
 

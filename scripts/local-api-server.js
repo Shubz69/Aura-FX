@@ -19,6 +19,44 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'local-api-server', port: PORT });
 });
 
+app.get('/api/me', (_req, res) => {
+  res.json({
+    id: 9001,
+    userId: 9001,
+    email: 'qa@local.test',
+    role: 'admin',
+    username: 'qa-admin',
+  });
+});
+
+app.get('/api/users/:userId', (req, res) => {
+  const id = Number(req.params.userId || 9001);
+  res.json({
+    id,
+    userId: id,
+    email: 'qa@local.test',
+    role: 'admin',
+    username: 'qa-admin',
+  });
+});
+
+app.get('/api/subscription/status', (_req, res) => {
+  res.json({
+    success: true,
+    hasAccess: true,
+    plan: 'elite',
+    status: 'active',
+  });
+});
+
+app.post('/api/users/daily-login', (_req, res) => {
+  res.json({
+    success: true,
+    awarded: false,
+    message: 'local-dev daily login bypass',
+  });
+});
+
 app.get('/api/market/chart-history', async (req, res) => {
   try {
     await chartHistoryHandler(req, res);

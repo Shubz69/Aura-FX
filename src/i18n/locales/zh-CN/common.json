@@ -1436,6 +1436,9 @@
       "minutesAgo": "{{count}}分钟前",
       "hoursAgo": "{{count}}小时前",
       "daysAgo": "{{count}}天前"
+    },
+    "system": {
+      "newNotification": "新通知"
     }
   },
   "xp": {
@@ -1553,5 +1556,120 @@
       "99": "至尊交易者",
       "100": "AURA TERMINAL™ 之神"
     }
+  },
+  "operatorShell": {
+    "backToOperatorGalaxyAria": "返回操作员星系",
+    "operatorGalaxy": "操作员星系",
+    "tradeValidator": "交易验证器",
+    "traderLab": "交易员实验室",
+    "tradePlaybook": "交易手册",
+    "tradeValidatorSectionsAria": "交易验证器分区",
+    "tabs": {
+      "overview": "概览",
+      "checklist": "检查清单",
+      "calculator": "交易计算器",
+      "journal": "交易日志",
+      "analytics": "分析",
+      "traderCv": "交易员简历",
+      "leaderboard": "排行榜"
+    }
+  },
+  "register": {
+    "signUp": "注册",
+    "form": {
+      "username": "用户名",
+      "enterUsername": "输入用户名",
+      "email": "电子邮箱",
+      "enterEmail": "输入电子邮箱",
+      "fullName": "全名",
+      "enterFullName": "输入全名",
+      "phoneNumberAnyCountry": "电话号码（任意国家）",
+      "phoneExample": "例如 201 555 5555",
+      "password": "密码",
+      "enterPassword": "输入密码",
+      "confirmPassword": "确认密码",
+      "confirmPasswordPlaceholder": "确认密码",
+      "referralCode": "推荐码",
+      "optional": "可选",
+      "referralExample": "例如 AURA-XXXXXXXX 或 AT-000123"
+    },
+    "legal": {
+      "iAgreeToThe": "我同意",
+      "terms": "条款",
+      "and": "和",
+      "privacyPolicy": "隐私政策"
+    },
+    "verification": {
+      "enterSixDigitCodes": "输入发送到您邮箱和手机的 6 位验证码",
+      "emailCodeSentTo": "邮箱验证码（发送至 {{email}}）",
+      "phoneCodeSentTo": "手机验证码（发送至 {{phone}}）",
+      "sixDigitCode": "6 位验证码",
+      "resendEmailCode": "重新发送邮箱验证码",
+      "resendPhoneCode": "重新发送手机验证码"
+    },
+    "errors": {
+      "usernameMinLength": "用户名至少需要 3 个字符",
+      "usernameCharset": "用户名只能包含字母、数字、连字符和下划线",
+      "requiredFields": "所有字段均为必填。",
+      "countryCodeRequired": "请选择国家区号。",
+      "phoneInvalid": "需要有效手机号（至少 10 位）。",
+      "passwordMismatch": "两次输入的密码不一致。",
+      "passwordMinLength": "密码至少需要 6 个字符。",
+      "acceptTerms": "请接受条款和条件",
+      "sendVerificationEmailFailed": "发送验证邮件失败，请重试。",
+      "phoneCodeSendFailedWithRecovery": "无法发送手机验证码。如果邮箱验证码已发送，请检查收件箱；修正手机号后可再次发送验证码。",
+      "sendVerificationFailed": "发送验证失败。",
+      "emailServiceUnavailable": "邮件服务暂时不可用，请稍后重试。",
+      "emailCodeRequired": "请输入邮箱中的 6 位验证码。",
+      "phoneCodeRequired": "请输入手机中的 6 位验证码。",
+      "emailCodeInvalid": "邮箱验证码无效或已过期，请检查后重试。",
+      "phoneCodeInvalid": "手机验证码无效或已过期。",
+      "completeSignupFailed": "无法完成注册。如果短信验证码已使用，请重新发送手机验证码后重试。",
+      "resendCodeFailed": "重发验证码失败。"
+    },
+    "success": {
+      "codesSent": "验证码已发送！请输入邮箱和手机中的 6 位验证码。",
+      "phoneCodeResent": "验证码已重新发送到您的手机。",
+      "emailCodeResent": "验证码已重新发送到您的邮箱。"
+    },
+    "toast": {
+      "accountCreated": "账户创建成功！欢迎来到 AURA TERMINAL™！"
+    }
+  },
+  "leaderboard": {
+    "title": "排行榜",
+    "subtitle": "与网络世界中最优秀的交易员竞争",
+    "loading": "正在加载排行榜…",
+    "loadFailed": "加载排行榜失败，请重试。",
+    "errorLoading": "加载排行榜出错",
+    "retry": "重试",
+    "noParticipantsYet": "暂无参与者",
+    "beFirstToEarnXp": "成为首位获得 XP 的人！",
+    "top10": "前 10 名排行榜",
+    "onlineNowCount": "当前在线 {{count}} 人",
+    "rank": "排名",
+    "trader": "交易员",
+    "level": "等级",
+    "totalXp": "总 XP",
+    "activity": "活跃度",
+    "xpFor": "{{label}} 经验值",
+    "noParticipantsStartEarning": "暂无参与者。开始赚取 XP 吧！",
+    "levelN": "等级 {{level}}",
+    "noRecentActivity": "暂无最近活动",
+    "activeJustNow": "刚刚活跃",
+    "activeMinutesAgo": "{{count}} 分钟前活跃",
+    "activeHoursAgo": "{{count}} 小时前活跃",
+    "activeYesterday": "昨天活跃",
+    "activeDaysAgo": "{{count}} 天前活跃",
+    "activeWeeksAgo": "{{count}} 周前活跃",
+    "activeLongAgo": "很久前活跃",
+    "onlineNow": "当前在线",
+    "timeframe": {
+      "today": "今天",
+      "thisWeek": "本周",
+      "thisMonth": "本月",
+      "allTime": "全部时间"
+    },
+    "total": "总计"
   }
 }

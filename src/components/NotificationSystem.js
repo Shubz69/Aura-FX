@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FaBell, FaTimes, FaEnvelope, FaAt } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { ensureWebPushSubscription } from '../utils/ensureWebPushSubscription';
@@ -161,6 +162,7 @@ if (typeof window !== 'undefined') {
 }
 
 const NotificationSystem = ({ user, onNotificationClick, headless = false }) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
@@ -190,7 +192,7 @@ const NotificationSystem = ({ user, onNotificationClick, headless = false }) => 
             const newNotification = {
                 id: Date.now(),
                 type: event.detail.type || 'message',
-                title: event.detail.title || 'New Notification',
+                title: event.detail.title || t('notifications.system.newNotification'),
                 message: event.detail.message || '',
                 timestamp: new Date().toISOString(),
                 read: false,
@@ -263,10 +265,10 @@ const NotificationSystem = ({ user, onNotificationClick, headless = false }) => 
         const hours = Math.floor(diff / 3600000);
         const days = Math.floor(diff / 86400000);
 
-        if (minutes < 1) return 'Just now';
-        if (minutes < 60) return `${minutes}m ago`;
-        if (hours < 24) return `${hours}h ago`;
-        if (days < 7) return `${days}d ago`;
+        if (minutes < 1) return t('notifications.time.justNow');
+        if (minutes < 60) return t('notifications.time.minutesAgo', { count: minutes });
+        if (hours < 24) return t('notifications.time.hoursAgo', { count: hours });
+        if (days < 7) return t('notifications.time.daysAgo', { count: days });
         return date.toLocaleDateString();
     };
 
@@ -274,7 +276,7 @@ const NotificationSystem = ({ user, onNotificationClick, headless = false }) => 
 
     return (
         <div className="notification-container" ref={notificationRef}>
-            <button className="notification-bell" onClick={() => setIsOpen(!isOpen)} aria-label="Notifications">
+            <button className="notification-bell" onClick={() => setIsOpen(!isOpen)} aria-label={t('notifications.title')}>
                 <FaBell />
                 {unreadCount > 0 && (
                     <span className="notification-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
@@ -284,10 +286,10 @@ const NotificationSystem = ({ user, onNotificationClick, headless = false }) => 
             {isOpen && (
                 <div className="notification-dropdown">
                     <div className="notification-header">
-                        <h3>Notifications</h3>
+                        <h3>{t('notifications.title')}</h3>
                         {unreadCount > 0 && (
                             <button onClick={markAllAsRead} className="mark-all-read">
-                                Mark all as read
+                                {t('notifications.markAllAsRead')}
                             </button>
                         )}
                         <button onClick={() => setIsOpen(false)} className="close-notifications">
@@ -296,7 +298,7 @@ const NotificationSystem = ({ user, onNotificationClick, headless = false }) => 
                     </div>
                     <div className="notification-list">
                         {notifications.length === 0 ? (
-                            <div className="no-notifications">No notifications</div>
+                            <div className="no-notifications">{t('notifications.noneYet')}</div>
                         ) : (
                             notifications.map((notification) => (
                                 <div

@@ -153,7 +153,7 @@ const Particles = () => {
 export default function ConnectionHub() {
   const navigate = useNavigate();
   const { user, token } = useAuth();
-  const { platforms, connections, getConnection, connectPlatform, disconnectPlatform } = useAuraConnection();
+  const { platforms, connections, connectPlatform, disconnectPlatform, renameConnection } = useAuraConnection();
   const canEnter = useCanEnterAuraDashboard(user);
   const superAdmin = user && isSuperAdmin(user);
   const { eligibility: reportsEligibility } = useReportsEligibility(token);
@@ -164,11 +164,23 @@ export default function ConnectionHub() {
   const [hoveredCard, setHoveredCard] = useState(null);
   const [successPlatform, setSuccessPlatform] = useState(null);
   const [disconnecting, setDisconnecting] = useState(null);
+  const [selectedConnectionByPlatform, setSelectedConnectionByPlatform] = useState({});
   const [csvStatus, setCsvStatus] = useState(null);
   const [csvLoading, setCsvLoading] = useState(false);
   const [csvError, setCsvError] = useState('');
 
   const connectedCount = connections.length;
+  const getPlatformConnections = useCallback((platformId) => (
+    connections.filter((c) => c.platformId === platformId)
+  ), [connections]);
+
+  const getSelectedConnection = useCallback((platformId) => {
+    const rows = getPlatformConnections(platformId);
+    if (!rows.length) return null;
+    const selectedId = selectedConnectionByPlatform[platformId];
+    return rows.find((c) => String(c.connectionId) === String(selectedId)) || rows[0];
+  }, [getPlatformConnections, selectedConnectionByPlatform]);
+
   const reportsRole = (reportsEligibility?.role || '').toLowerCase();
   const csvEnabled = superAdmin || ['premium', 'elite', 'admin'].includes(reportsRole);
   const now = new Date();
@@ -240,10 +252,10 @@ export default function ConnectionHub() {
     }
   };
 
-  const handleDisconnect = async (platformId) => {
-    setDisconnecting(platformId);
+  const handleDisconnect = async (platformId, connectionId) => {
+    setDisconnecting(connectionId || platformId);
     try {
-      await disconnectPlatform(platformId);
+      await disconnectPlatform(platformId, connectionId);
     } catch {
       // silently ignore
     } finally {
@@ -322,13 +334,14 @@ export default function ConnectionHub() {
 
         <section className="connection-hub-grid">
           {platforms.map((p) => {
-            const conn = getConnection(p.id);
+            const platformConnections = getPlatformConnections(p.id);
+            const conn = getSelectedConnection(p.id);
             const isConn = !!conn;
             const isMeta = p.id === 'mt5' || p.id === 'mt4';
             const connectCta =
               p.id === 'mt5' ? 'Connect MetaTrader 5' : p.id === 'mt4' ? 'Connect MetaTrader 4' : 'Connect Platform';
             const isSuccess = successPlatform === p.id;
-            const isDisconnecting = disconnecting === p.id;
+            const isDisconnecting = disconnecting === (conn?.connectionId || p.id);
             const info = conn?.accountInfo || {};
 
             return (
@@ -350,6 +363,20 @@ export default function ConnectionHub() {
                     <div className="connection-card-status">
                       <span className="status-dot ok" />
                       <span>Connected</span>
+                      {platformConnections.length > 1 && (
+                        <select
+                          className="chub-account-switch"
+                          value={String(conn.connectionId || '')}
+                          onChange={(e) => setSelectedConnectionByPlatform((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                          style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.06)', color: '#d8d8d8', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 6, fontSize: '0.72rem' }}
+                        >
+                          {platformConnections.map((row) => (
+                            <option key={String(row.connectionId || row.label)} value={String(row.connectionId || '')}>
+                              {row.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                       {conn.lastSync && (
                         <span style={{ marginLeft: 'auto', fontSize: '0.7rem', opacity: 0.6 }}>
                           <i className="fas fa-sync-alt" style={{ marginRight: 4 }} />
@@ -364,8 +391,11 @@ export default function ConnectionHub() {
                       {info.equity != null && info.equity !== info.balance && (
                         <span><i className="fas fa-chart-line" /> Equity: {fmt$(info.equity, info.currency || 'USD')}</span>
                       )}
+                      {conn.label && (
+                        <span><i className="fas fa-user" /> {conn.label}</span>
+                      )}
                       {info.name && (
-                        <span><i className="fas fa-user" /> {info.name}</span>
+                        <span><i className="fas fa-id-badge" /> {info.name}</span>
                       )}
                       {info.server && (
                         <span><i className="fas fa-server" /> {info.server}</span>
@@ -374,11 +404,30 @@ export default function ConnectionHub() {
                         <i className="fas fa-heartbeat" /> Health: <span className="health-ok">Live</span>
                       </span>
                     </div>
+                      <button
+                        type="button"
+                        className="connection-card-connect"
+                        onClick={() => {
+                          const current = prompt('Rename this account', conn.label || '');
+                          if (current && String(current).trim()) {
+                            // eslint-disable-next-line no-void
+                            void (async () => {
+                              try {
+                                await renameConnection(conn.connectionId, current.trim());
+                              } catch (_) {}
+                            })();
+                          }
+                        }}
+                        style={{ marginTop: 8 }}
+                      >
+                        <i className="fas fa-pen" style={{ marginRight: 8 }} />
+                        Rename account
+                      </button>
                     <button
                       type="button"
                       className="connection-card-disconnect"
                       disabled={isDisconnecting}
-                      onClick={() => handleDisconnect(p.id)}
+                        onClick={() => handleDisconnect(p.id, conn.connectionId)}
                     >
                       {isDisconnecting
                         ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: 8 }} />Disconnecting…</>
@@ -422,6 +471,17 @@ export default function ConnectionHub() {
                       )}
                     </button>
                   </>
+                )}
+                {isMeta && isConn && (
+                  <button
+                    type="button"
+                    className="connection-card-connect"
+                    style={{ marginTop: 8 }}
+                    onClick={() => openModal(p)}
+                  >
+                    <i className="fas fa-plus" style={{ marginRight: 8 }} />
+                    Add another account
+                  </button>
                 )}
               </div>
             );
@@ -531,7 +591,7 @@ export default function ConnectionHub() {
                     onClick={() => navigate(`/manual-metrics/dashboard?year=${csvYear}&month=${csvMonth}`)}
                   >
                     <i className="fas fa-chart-line" style={{ marginRight: 8 }} />
-                    Open CSV Dashboard
+                    Enter Dashboard
                   </button>
                 )}
               </div>

@@ -36,7 +36,6 @@
     "auraAi": "Aura AI",
     "cs": "C & S",
     "operator": "The Operator",
-    "operatorIntelligence": "Operator Intelligence",
     "surveillance": "Surveillance",
     "surveillanceLockedTitle": "Surveillance is included with Elite (active Elite/A7FX billing) or Admin / Super Admin accounts.",
     "locked": "Locked",
@@ -1437,6 +1436,9 @@
       "minutesAgo": "{{count}}m ago",
       "hoursAgo": "{{count}}h ago",
       "daysAgo": "{{count}}d ago"
+    },
+    "system": {
+      "newNotification": "New Notification"
     }
   },
   "xp": {
@@ -1554,5 +1556,120 @@
       "99": "Supreme Trader",
       "100": "AURA TERMINAL™ God"
     }
+  },
+  "operatorShell": {
+    "backToOperatorGalaxyAria": "Back to Operator Galaxy",
+    "operatorGalaxy": "Operator Galaxy",
+    "tradeValidator": "Trade Validator",
+    "traderLab": "Trader Lab",
+    "tradePlaybook": "Trade Playbook",
+    "tradeValidatorSectionsAria": "Trade Validator sections",
+    "tabs": {
+      "overview": "Overview",
+      "checklist": "Checklist",
+      "calculator": "Trade Calculator",
+      "journal": "Trade Journal",
+      "analytics": "Analytics",
+      "traderCv": "Trader CV",
+      "leaderboard": "Leaderboard"
+    }
+  },
+  "register": {
+    "signUp": "Sign up",
+    "form": {
+      "username": "Username",
+      "enterUsername": "Enter username",
+      "email": "Email",
+      "enterEmail": "Enter email",
+      "fullName": "Full Name",
+      "enterFullName": "Enter full name",
+      "phoneNumberAnyCountry": "Phone Number (any country)",
+      "phoneExample": "e.g. 201 555 5555",
+      "password": "Password",
+      "enterPassword": "Enter password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm password",
+      "referralCode": "Referral code",
+      "optional": "optional",
+      "referralExample": "e.g. AURA-XXXXXXXX or AT-000123"
+    },
+    "legal": {
+      "iAgreeToThe": "I agree to the",
+      "terms": "Terms",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy"
+    },
+    "verification": {
+      "enterSixDigitCodes": "Enter the 6-digit codes sent to your email and phone",
+      "emailCodeSentTo": "Email code (sent to {{email}})",
+      "phoneCodeSentTo": "Phone code (sent to {{phone}})",
+      "sixDigitCode": "6-digit code",
+      "resendEmailCode": "Resend email code",
+      "resendPhoneCode": "Resend phone code"
+    },
+    "errors": {
+      "usernameMinLength": "Username must be at least 3 characters long",
+      "usernameCharset": "Username can only contain letters, numbers, hyphens, and underscores",
+      "requiredFields": "All fields are required.",
+      "countryCodeRequired": "Please select a country code.",
+      "phoneInvalid": "Valid phone number is required (10+ digits).",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordMinLength": "Password must be at least 6 characters long.",
+      "acceptTerms": "Please accept the terms and conditions",
+      "sendVerificationEmailFailed": "Failed to send verification email. Please try again.",
+      "phoneCodeSendFailedWithRecovery": "Could not send phone code. If an email code was already sent, check your inbox—you can fix your mobile number and tap Send verification codes again.",
+      "sendVerificationFailed": "Failed to send verification.",
+      "emailServiceUnavailable": "Email service is temporarily unavailable. Please try again later.",
+      "emailCodeRequired": "Please enter the 6-digit code from your email.",
+      "phoneCodeRequired": "Please enter the 6-digit code from your phone.",
+      "emailCodeInvalid": "Invalid or expired email code. Please check and try again.",
+      "phoneCodeInvalid": "Invalid or expired phone code.",
+      "completeSignupFailed": "Could not finish sign-up. If your SMS code was already used, tap Resend phone code and try again.",
+      "resendCodeFailed": "Failed to resend code."
+    },
+    "success": {
+      "codesSent": "Codes sent! Enter the 6-digit codes from your email and phone.",
+      "phoneCodeResent": "Code resent to your phone.",
+      "emailCodeResent": "Code resent to your email."
+    },
+    "toast": {
+      "accountCreated": "Account created successfully! Welcome to AURA TERMINAL™!"
+    }
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Compete with the best traders in the cyber realm",
+    "loading": "Loading leaderboard…",
+    "loadFailed": "Failed to load leaderboard. Please try again.",
+    "errorLoading": "Error Loading Leaderboard",
+    "retry": "Retry",
+    "noParticipantsYet": "No participants yet",
+    "beFirstToEarnXp": "Be the first to earn XP!",
+    "top10": "Top 10 Leaderboard",
+    "onlineNowCount": "{{count}} online now",
+    "rank": "Rank",
+    "trader": "Trader",
+    "level": "Level",
+    "totalXp": "Total XP",
+    "activity": "Activity",
+    "xpFor": "XP {{label}}",
+    "noParticipantsStartEarning": "No participants yet. Start earning XP!",
+    "levelN": "Level {{level}}",
+    "noRecentActivity": "No recent activity",
+    "activeJustNow": "Active just now",
+    "activeMinutesAgo": "Active {{count}}m ago",
+    "activeHoursAgo": "Active {{count}}h ago",
+    "activeYesterday": "Active yesterday",
+    "activeDaysAgo": "Active {{count}}d ago",
+    "activeWeeksAgo": "Active {{count}}w ago",
+    "activeLongAgo": "Active long ago",
+    "onlineNow": "Online now",
+    "timeframe": {
+      "today": "Today",
+      "thisWeek": "This Week",
+      "thisMonth": "This Month",
+      "allTime": "All Time"
+    },
+    "total": "Total"
   }
 }
