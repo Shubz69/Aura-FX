@@ -4,6 +4,7 @@
 
 const { executeQuery } = require('../db');
 const { ensureTimezoneColumn } = require('../utils/ensure-timezone-column');
+const { ensureCommunityAutoTranslateColumn } = require('../utils/ensure-community-message-translation-schema');
 const SUPPORTED_LANGUAGE_CODES = ['en', 'zh-CN', 'hi', 'es', 'fr', 'ar', 'bn', 'pt', 'ru', 'ur'];
 
 // Track if table has been created this session
@@ -14,6 +15,7 @@ async function ensureSettingsTable() {
   if (settingsTableCreated) {
     await ensureTradingUiPrefsColumn();
     await ensurePreferredLanguageColumn();
+    await ensureCommunityAutoTranslateColumn();
     return true;
   }
 
@@ -48,12 +50,14 @@ async function ensureSettingsTable() {
     console.log('User settings table ready');
     await ensureTradingUiPrefsColumn();
     await ensurePreferredLanguageColumn();
+    await ensureCommunityAutoTranslateColumn();
     return true;
   } catch (error) {
     console.log('Settings table check:', error.code || error.message);
     settingsTableCreated = true;
     await ensureTradingUiPrefsColumn();
     await ensurePreferredLanguageColumn();
+    await ensureCommunityAutoTranslateColumn();
     return true;
   }
 }
@@ -120,6 +124,7 @@ const defaultSettings = {
   ai_personality: 'professional',
   ai_chart_preference: 'candlestick',
   preferred_language: null,
+  community_auto_translate: true,
   profile_visible_stats: { discipline_score: false, journal_score: false, consistency_score: false, win_rate: false, total_trades: false, login_streak: false }
 };
 
@@ -199,6 +204,11 @@ module.exports = async (req, res) => {
             }
           } else {
             settingsData.trading_ui_prefs = {};
+          }
+          if (settingsData.community_auto_translate === undefined || settingsData.community_auto_translate === null) {
+            settingsData.community_auto_translate = true;
+          } else {
+            settingsData.community_auto_translate = Number(settingsData.community_auto_translate) === 1;
           }
         }
       } catch (tableErr) {
@@ -295,13 +305,14 @@ module.exports = async (req, res) => {
       try {
         await ensureTradingUiPrefsColumn();
         await ensurePreferredLanguageColumn();
+        await ensureCommunityAutoTranslateColumn();
         // Allowed fields for update (user_settings only; timezone handled above)
         const allowedFields = [
           'preferred_markets', 'trading_sessions', 'risk_profile', 'trading_style',
           'experience_level', 'theme', 'notifications_enabled', 'email_notifications',
           'sound_enabled', 'compact_mode', 'show_online_status', 'profile_visibility',
           'show_trading_stats', 'show_achievements', 'ai_personality', 'ai_chart_preference',
-          'profile_visible_stats', 'preferred_language'
+          'profile_visible_stats', 'preferred_language', 'community_auto_translate'
         ];
 
         const setClauses = [];
@@ -321,6 +332,8 @@ module.exports = async (req, res) => {
             setClauses.push(`${key} = ?`);
             if (key === 'preferred_markets' || key === 'trading_sessions' || key === 'profile_visible_stats') {
               values.push(JSON.stringify(value));
+            } else if (key === 'community_auto_translate') {
+              values.push(value ? 1 : 0);
             } else {
               values.push(value);
             }

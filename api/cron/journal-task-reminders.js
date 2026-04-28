@@ -3,7 +3,7 @@
  * Runs every minute; creates SYSTEM notifications for journal tasks where reminder_at is due and reminder_sent_at is null.
  */
 const { executeQuery } = require('../db');
-const { createNotification } = require('../notifications/index');
+const { tryDeliverJournalTaskReminder } = require('../journal/journalReminderDeliver');
 
 function getRows(result) {
   if (!result) return [];
@@ -26,7 +26,6 @@ module.exports = async (req, res) => {
   const sent = [];
   const errors = [];
   try {
-    // Ensure new columns exist before querying.
     try {
       await executeQuery('ALTER TABLE journal_tasks ADD COLUMN reminder_at DATETIME NULL');
     } catch (_) {}
@@ -48,23 +47,10 @@ module.exports = async (req, res) => {
 
     for (const t of tasks) {
       try {
-        const taskId = String(t.id || '');
-        const title = (t.title || 'Journal task').toString().slice(0, 220);
-        const dateStr = String(t.date || '').slice(0, 10);
-        await createNotification({
-          userId: Number(t.userId),
-          type: 'SYSTEM',
-          title: 'Task due',
-          body: `Journal task due now: ${title}`,
-          meta: {
-            kind: 'JOURNAL_TASK_DUE',
-            taskId,
-            taskDate: dateStr,
-            url: '/journal',
-          },
-        });
-        await executeQuery('UPDATE journal_tasks SET reminder_sent_at = UTC_TIMESTAMP() WHERE id = ?', [taskId]);
-        sent.push({ taskId, userId: Number(t.userId) });
+        const out = await tryDeliverJournalTaskReminder(t, 'cron');
+        if (out.claimed) {
+          sent.push({ taskId: String(t.id || ''), userId: Number(t.userId != null ? t.userId : t.userid) });
+        }
       } catch (err) {
         errors.push({ taskId: t.id, message: err.message });
       }
@@ -87,4 +73,3 @@ module.exports = async (req, res) => {
     });
   }
 };
-

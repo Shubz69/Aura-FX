@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { isAdmin } from '../utils/roles';
+import { getApiBaseUrl } from '../services/Api';
 import { logClassifiedError } from '../utils/apiObservability';
 import '../styles/NotificationsDropdown.css';
 
@@ -106,7 +107,6 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
   const lastNavRef = useRef({ url: '', at: 0 });
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  const baseUrl = process.env.REACT_APP_API_URL || window.location.origin;
 
   // Fetch notifications
   const fetchNotifications = useCallback(async (cursor = null, append = false) => {
@@ -126,14 +126,15 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       const params = new URLSearchParams();
       if (cursor) params.append('cursor', cursor);
       params.append('limit', '20');
-      
-      let response = await fetch(`${baseUrl}/api/notifications?${params}`, {
+      const apiBase = getApiBaseUrl();
+
+      let response = await fetch(`${apiBase}/api/notifications?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` }
         , signal: controller.signal
       });
       // Safe retry for idempotent GET only.
       if (!response.ok && response.status >= 500) {
-        response = await fetch(`${baseUrl}/api/notifications?${params}`, {
+        response = await fetch(`${apiBase}/api/notifications?${params}`, {
           headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal,
         });
@@ -191,7 +192,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [token, baseUrl, onUnreadCountChange]);
+  }, [token, onUnreadCountChange]);
 
   // Load on open
   useEffect(() => {
@@ -219,7 +220,8 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
     if (!token || !notificationId) return;
     
     try {
-      const res = await fetch(`${baseUrl}/api/notifications/${notificationId}/read`, {
+      const apiBase = getApiBaseUrl();
+      const res = await fetch(`${apiBase}/api/notifications/${notificationId}/read`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -247,7 +249,8 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
     if (!token) return;
     
     try {
-      const res = await fetch(`${baseUrl}/api/notifications/read-all`, {
+      const apiBase = getApiBaseUrl();
+      const res = await fetch(`${apiBase}/api/notifications/read-all`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -350,7 +353,8 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
     setProcessingIds(prev => new Set([...prev, notification.id]));
     
     try {
-      const response = await fetch(`${baseUrl}/api/friends/accept`, {
+      const apiBase = getApiBaseUrl();
+      const response = await fetch(`${apiBase}/api/friends/accept`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -389,7 +393,8 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
     setProcessingIds(prev => new Set([...prev, notification.id]));
     
     try {
-      const response = await fetch(`${baseUrl}/api/friends/decline`, {
+      const apiBase = getApiBaseUrl();
+      const response = await fetch(`${apiBase}/api/friends/decline`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

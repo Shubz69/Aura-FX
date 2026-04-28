@@ -19,7 +19,7 @@ import { ensureWebPushSubscription } from './utils/ensureWebPushSubscription';
 import { isQaTestModeEnabled } from './utils/qaTestMode';
 import JournalReminderScheduler from './components/JournalReminderScheduler';
 import SiteLanguageBootstrap from './components/SiteLanguageBootstrap';
-import NotificationSystem from './components/NotificationSystem';
+import NotificationSystem, { triggerNotification } from './components/NotificationSystem';
 import { registerAppNavigate } from './utils/appNavigate';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -205,6 +205,17 @@ function AppRoutes() {
     const showChatbot = !user || isQaTestModeEnabled();
     const location = useLocation();
     const isHomePage = location.pathname === '/';
+
+    /** Playwright / QA: `?e2eNotify=1` — arm after Router sees search (reload-safe; module init alone can miss). */
+    useEffect(() => {
+        try {
+            if (/\be2eNotify=1\b/.test(location.search || '')) {
+                window.__AURA_E2E_TRIGGER__ = triggerNotification;
+            }
+        } catch (_) {
+            /* ignore */
+        }
+    }, [location.search]);
 
     const [showGDPR, setShowGDPR] = useState(false);
     const [postLoginGateArmed, setPostLoginGateArmed] = useState(() => {

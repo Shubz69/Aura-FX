@@ -86,6 +86,7 @@
     "gen:i18n:part8": "node scripts/gen-i18n-part8.mjs",
     "gen:i18n:part9": "node scripts/generate-part9-traderdeck-ui.mjs",
     "build:i18n": "node scripts/build-i18n-locales.mjs",
+    "test:community-translate": "node tests/community-message-translate.test.js",
     "verify:i18n": "node scripts/verify-i18n-locales.mjs"
   },
   "eslintConfig": {

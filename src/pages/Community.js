@@ -40,6 +40,9 @@ import {
     has as isChannelMuted
 } from '../utils/mutedChannelsStore';
 import { popTraderPassportShare, setTraderPassportShare, dataUrlToBlob } from '../utils/traderPassportShare';
+import CommunityMessageTranslatedBody from '../components/community/CommunityMessageTranslatedBody';
+import { getPreferredSiteLanguage } from '../utils/siteLanguage';
+import { invalidateMessageTranslation } from '../utils/communityMessageTranslationCache';
 import { subscribeVisibleInterval } from '../utils/subscribeVisibleInterval';
 // All API calls use real endpoints only - no mock mode
 
@@ -546,10 +549,11 @@ function isPersistedCommunityMessageId(messageId) {
 
 // Main Community Component
 const Community = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [userLevel, setUserLevel] = useState(1);
     const [storedUser, setStoredUser] = useState(null);
     const [userId, setUserId] = useState(null);
+    const [communityAutoTranslate, setCommunityAutoTranslate] = useState(true);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [profileModalData, setProfileModalData] = useState(null);
     //for image 
@@ -2468,7 +2472,8 @@ useEffect(() => {
             content: messageContent,
             userId,
             username: senderUsername,
-            clientMessageId
+            clientMessageId,
+            writingLanguage: getPreferredSiteLanguage()
         };
 
         // Optimistic update - add message to UI immediately
@@ -2476,6 +2481,8 @@ useEffect(() => {
             id: clientMessageId,
             channelId: selectedChannel.id,
             content: messageContent,
+            originalText: messageContent,
+            originalLanguage: getPreferredSiteLanguage(),
             sender: {
                 id: userId,
                 username: storedUser?.username || storedUser?.name || 'User',
@@ -3493,6 +3500,27 @@ if (window.requestAnimationFrame) {
         }
     }, [navigate, authUser, checkSubscriptionFromDB, refreshEntitlements, refreshChannelList]);
 
+    useEffect(() => {
+        if (!userId) return undefined;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await Api.getUserSettings();
+                if (cancelled) return;
+                const s = res?.data?.settings;
+                if (s && Object.prototype.hasOwnProperty.call(s, 'community_auto_translate')) {
+                    const v = s.community_auto_translate;
+                    setCommunityAutoTranslate(v === true || Number(v) === 1);
+                }
+            } catch {
+                /* keep default */
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [userId]);
+
     // Prevent page scrolling on Community only - Discord-like behavior; always restore on unmount/route
     useEffect(() => {
         document.body.classList.add('community-page-active');
@@ -4193,29 +4221,39 @@ const handleSendMessage = async (e) => {
 
   // If editing a message, handle update instead
   if (editingMessageId) {
-    const message = messages.find(m => m.id === editingMessageId);
+    const message = messages.find((m) => m.id === editingMessageId);
     if (message && String(message.userId) === String(userId)) {
+      const updatedContent = newMessage.trim();
+      if (!updatedContent) {
+        return;
+      }
       try {
-        const updatedContent = newMessage.trim();
-       // Add message to state immediately and ensure proper chronological order
-setMessages(prev => {
-    // Check if we already have this message (prevent duplicates)
-    if (prev.some(m => m.id === clientMessageId || m.clientMessageId === clientMessageId)) {
-        console.log('⚠️ Message already exists, skipping');
-        return prev;
-    }
-    
-    // Add new message and sort by timestamp (oldest first)
-    const updated = [...prev, optimisticMessage].sort((a, b) => {
-        const timeA = new Date(a.timestamp || a.createdAt || a.created_at || 0).getTime();
-        const timeB = new Date(b.timestamp || b.createdAt || b.created_at || 0).getTime();
-        return timeA - timeB; // Ascending order (oldest to newest)
-    });
-    
-    saveMessagesToStorage(selectedChannel.id, updated);
-    return updated;
-});
-        
+        reconcilePauseUntilRef.current = Date.now() + 1800;
+        const editChannelId = sendChannelId || String(selectedChannel?.id || '');
+        const res = await Api.updateMessage(editChannelId, editingMessageId, {
+          content: updatedContent,
+          writingLanguage: getPreferredSiteLanguage(),
+        });
+        const data = res?.data;
+        const nextContent = data?.content ?? updatedContent;
+        const nextOrigLang =
+          data?.originalLanguage != null ? data.originalLanguage : getPreferredSiteLanguage();
+        invalidateMessageTranslation(editingMessageId);
+        setMessages((prev) => {
+          const next = prev.map((m) =>
+            m.id === editingMessageId
+              ? {
+                  ...m,
+                  content: nextContent,
+                  originalText: data?.originalText ?? nextContent,
+                  originalLanguage: nextOrigLang,
+                }
+              : m
+          );
+          if (selectedChannel?.id) saveMessagesToStorage(selectedChannel.id, next);
+          return next;
+        });
+        setNewMessage('');
         handleCancelEdit();
         return;
       } catch (error) {
@@ -4239,7 +4277,8 @@ setMessages(prev => {
     content: messageContent || '',
     userId,
     username: senderUsername,
-    clientMessageId
+    clientMessageId,
+    writingLanguage: getPreferredSiteLanguage()
   };
   
   // Handle file if present
@@ -4265,6 +4304,8 @@ setMessages(prev => {
     id: clientMessageId,
     channelId: sendChannelId,
     content: messageContent,
+    originalText: messageContent,
+    originalLanguage: getPreferredSiteLanguage(),
     sender: {
       id: userId,
       username: storedUser?.username || storedUser?.name || 'User',
@@ -5281,7 +5322,12 @@ useEffect(() => {
             return <div key={idx} style={{ marginBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
         })
     ) : (
-        renderMessageContent(message.content, message.file)
+        <CommunityMessageTranslatedBody
+            message={message}
+            viewerLanguage={i18n.language}
+            communityAutoTranslate={communityAutoTranslate}
+            renderMessageContent={renderMessageContent}
+        />
     )}
 </div>
                                             

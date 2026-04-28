@@ -227,6 +227,8 @@
       "percent": "{{val}} %"
     },
     "websiteLanguageHint": "Un clic sur tout le site",
+    "communityAutoTranslate": "Traduire automatiquement les messages de la communauté",
+    "communityAutoTranslateHint": "Si activé, les messages des autres s’affichent dans la langue du site lorsque c’est possible.",
     "validation": {
       "invalidUsernameFormat": "Format de nom d’utilisateur invalide"
     },
@@ -589,6 +591,12 @@
     },
     "msg": {
       "saveFailed": "Le message n'a pas pu être enregistré. Réessayez."
+    },
+    "translation": {
+      "loading": "Traduction…",
+      "translatedFrom": "Traduit depuis l’{{language}}",
+      "showOriginal": "Afficher l’original",
+      "showTranslation": "Afficher la traduction"
     },
     "alert": {
       "noSendPermission": "Vous n'avez pas la permission d'envoyer des messages sur ce canal.",

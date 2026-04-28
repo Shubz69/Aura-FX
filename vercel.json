@@ -124,6 +124,14 @@
       "destination": "/api/community/channels/messages.js?channelId=:channelId&messageId=:messageId"
     },
     {
+      "source": "/api/translate-message",
+      "destination": "/api/translate-message.js"
+    },
+    {
+      "source": "/api/translate-messages",
+      "destination": "/api/translate-messages.js"
+    },
+    {
       "source": "/api/stripe/create-subscription",
       "destination": "/api/stripe/create-subscription.js"
     },
@@ -634,6 +642,10 @@
     {
       "source": "/api/journal/tasks",
       "destination": "/api/journal/tasks.js"
+    },
+    {
+      "source": "/api/journal/tasks/:taskId/reminder-delivered",
+      "destination": "/api/journal/reminder-delivered.js?taskId=:taskId"
     },
     {
       "source": "/api/journal/tasks/:id",

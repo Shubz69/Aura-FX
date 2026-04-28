@@ -227,6 +227,8 @@
       "percent": "{{val}}٪"
     },
     "websiteLanguageHint": "نقرة واحدة للموقع بالكامل",
+    "communityAutoTranslate": "ترجمة رسائل المجتمع تلقائيًا",
+    "communityAutoTranslateHint": "عند التفعيل، تظهر رسائل الآخرين بلغة الموقع عندما يكون ذلك ممكنًا.",
     "validation": {
       "invalidUsernameFormat": "تنسيق اسم المستخدم غير صالح"
     },
@@ -589,6 +591,12 @@
     },
     "msg": {
       "saveFailed": "تعذر حفظ الرسالة. أعد المحاولة لاحقًا."
+    },
+    "translation": {
+      "loading": "جارٍ الترجمة…",
+      "translatedFrom": "مترجم من {{language}}",
+      "showOriginal": "عرض الأصل",
+      "showTranslation": "عرض الترجمة"
     },
     "alert": {
       "noSendPermission": "ليس لديك إذن لإرسال رسائل في هذه القناة.",

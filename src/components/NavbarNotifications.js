@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaBell } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
+import { getApiBaseUrl } from '../services/Api';
 import NotificationsDropdown from './NotificationsDropdown';
 import '../styles/NotificationSystem.css';
 
@@ -37,7 +38,6 @@ const NavbarNotifications = () => {
   const lastFetchAtRef = useRef(0);
   const refreshTimerRef = useRef(null);
   const token = localStorage.getItem('token');
-  const baseUrl = process.env.REACT_APP_API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
   const fetchUnreadCount = useCallback(async ({ force = false } = {}) => {
     if (!token || !user) return;
@@ -54,16 +54,17 @@ const NavbarNotifications = () => {
     lastFetchAtRef.current = now;
     globalUnreadLastAttemptAt = now;
     const requestPromise = (async () => {
+      const apiBase = getApiBaseUrl();
       if (controllerRef.current) controllerRef.current.abort();
       const controller = new AbortController();
       controllerRef.current = controller;
-      let res = await fetch(`${baseUrl}/api/notifications?limit=1`, {
+      let res = await fetch(`${apiBase}/api/notifications?limit=1`, {
         headers: { Authorization: `Bearer ${token}` }
         , signal: controller.signal
       });
       if (!res.ok && res.status >= 500) {
         await new Promise((resolve) => setTimeout(resolve, 300));
-        res = await fetch(`${baseUrl}/api/notifications?limit=1`, {
+        res = await fetch(`${apiBase}/api/notifications?limit=1`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal
         });
@@ -100,7 +101,7 @@ const NavbarNotifications = () => {
     });
     globalUnreadInFlightPromise = requestPromise;
     return requestPromise;
-  }, [token, user, baseUrl]);
+  }, [token, user]);
 
   useEffect(() => {
     if (!user) return;

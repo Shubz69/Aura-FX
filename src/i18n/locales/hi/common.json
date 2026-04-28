@@ -227,6 +227,8 @@
       "percent": "{{val}} प्रतिशत"
     },
     "websiteLanguageHint": "एक क्लिक, पूरी साइट",
+    "communityAutoTranslate": "सामुदायिक संदेशों का स्वचालित अनुवाद",
+    "communityAutoTranslateHint": "चालू रहने पर, दूसरों के संदेश जहाँ संभव हो आपकी वेबसाइट भाषा में दिखेंगे।",
     "validation": {
       "invalidUsernameFormat": "अमान्य उपयोगकर्ता नाम प्रारूप"
     },
@@ -589,6 +591,12 @@
     },
     "msg": {
       "saveFailed": "संदेश सहेजा नहीं जा सका। क्षण बाद पुनः प्रयास करें।"
+    },
+    "translation": {
+      "loading": "अनुवाद हो रहा है…",
+      "translatedFrom": "{{language}} से अनुवादित",
+      "showOriginal": "मूल दिखाएँ",
+      "showTranslation": "अनुवाद दिखाएँ"
     },
     "alert": {
       "noSendPermission": "इस चैनल में संदेश भेजने की अनुमति नहीं है।",

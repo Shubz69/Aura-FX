@@ -227,6 +227,8 @@
       "percent": "{{val}} %"
     },
     "websiteLanguageHint": "Один клик на весь сайт",
+    "communityAutoTranslate": "Автоматически переводить сообщения сообщества",
+    "communityAutoTranslateHint": "Если включено, сообщения других пользователей отображаются на языке сайта, когда это возможно.",
     "validation": {
       "invalidUsernameFormat": "Неверный формат имени"
     },
@@ -589,6 +591,12 @@
     },
     "msg": {
       "saveFailed": "Сообщение не сохранилось. Повторите позже."
+    },
+    "translation": {
+      "loading": "Перевод…",
+      "translatedFrom": "Переведено с {{language}}",
+      "showOriginal": "Показать оригинал",
+      "showTranslation": "Показать перевод"
     },
     "alert": {
       "noSendPermission": "Нет прав на отправку сообщений в этом канале.",

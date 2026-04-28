@@ -227,6 +227,8 @@
       "percent": "{{val}} فیصد"
     },
     "websiteLanguageHint": "ایک کلک، پوری سائٹ",
+    "communityAutoTranslate": "کمیونٹی کے پیغامات خودکار ترجمہ",
+    "communityAutoTranslateHint": "جب آن ہو، دوسروں کے پیغام ممکن ہو تو آپ کی ویب سائٹ کی زبان میں دکھائے جاتے ہیں۔",
     "validation": {
       "invalidUsernameFormat": "غلط صارف نام کی شکل"
     },
@@ -589,6 +591,12 @@
     },
     "msg": {
       "saveFailed": "پیغام محفوظ نہیں ہوا۔ دوبارہ کوشش کریں۔"
+    },
+    "translation": {
+      "loading": "ترجمہ ہو رہا ہے…",
+      "translatedFrom": "{{language}} سے ترجمہ شدہ",
+      "showOriginal": "اصل دکھائیں",
+      "showTranslation": "ترجمہ دکھائیں"
     },
     "alert": {
       "noSendPermission": "اس چینل میں پیغام بھیجنے کی اجازت نہیں۔",

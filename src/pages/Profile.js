@@ -130,6 +130,7 @@ const Profile = () => {
     });
     const [profileStatsPreview, setProfileStatsPreview] = useState(null);
     const [siteLanguage, setSiteLanguage] = useState(getPreferredSiteLanguage());
+    const [communityAutoTranslate, setCommunityAutoTranslate] = useState(true);
 
     const initialLoadDone = useRef(false);
 // Add near your other helper functions
@@ -268,6 +269,11 @@ useEffect(() => {
                 }
                 if (settingsRes?.data?.language && SITE_LANGUAGES.some((l) => l.code === settingsRes.data.language)) {
                     setSiteLanguage(settingsRes.data.language);
+                }
+                const st = settingsRes?.data?.settings;
+                if (st && Object.prototype.hasOwnProperty.call(st, 'community_auto_translate')) {
+                    const v = st.community_auto_translate;
+                    setCommunityAutoTranslate(v === true || Number(v) === 1);
                 }
                 if (settingsRes?.data?.settings?.profile_visible_stats) {
                     try {
@@ -1181,6 +1187,37 @@ if (!avatarToSave && avatarColor) {
                                         <option key={lang.code} value={lang.code}>{lang.label}</option>
                                     ))}
                                 </select>
+                            </div>
+
+                            <div className="pf-form-group">
+                                <label className="pf-label">{t('profile.communityAutoTranslate')} <span className="pf-label-hint">· {t('profile.communityAutoTranslateHint')}</span></label>
+                                <div
+                                    className={`pf-toggle${communityAutoTranslate ? ' pf-toggle--on' : ''}`}
+                                    onClick={async () => {
+                                        const prev = communityAutoTranslate;
+                                        const next = !prev;
+                                        setCommunityAutoTranslate(next);
+                                        try {
+                                            const token = localStorage.getItem('token');
+                                            if (token) {
+                                                await axios.put(
+                                                    `${resolveApiBaseUrl()}/api/users/settings`,
+                                                    { community_auto_translate: next },
+                                                    { headers: { Authorization: `Bearer ${token}` } }
+                                                );
+                                            }
+                                        } catch (e) {
+                                            console.warn('community_auto_translate sync failed', e?.message);
+                                            setCommunityAutoTranslate(prev);
+                                        }
+                                    }}
+                                    role="switch"
+                                    aria-checked={communityAutoTranslate}
+                                    tabIndex={0}
+                                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}
+                                >
+                                    <div className="pf-toggle__thumb" />
+                                </div>
                             </div>
 
                             {/* Community Card — Visible Stats */}

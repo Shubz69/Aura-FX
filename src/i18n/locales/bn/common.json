@@ -227,6 +227,8 @@
       "percent": "{{val}} শতাংশ"
     },
     "websiteLanguageHint": "এক ক্লিকে সাইটজুড়ে",
+    "communityAutoTranslate": "কমিউনিটি বার্তা স্বয়ংক্রিয় অনুবাদ করুন",
+    "communityAutoTranslateHint": "চালু থাকলে, সম্ভব হলে অন্যদের বার্তা আপনার ওয়েবসাইটের ভাষায় দেখাবে।",
     "validation": {
       "invalidUsernameFormat": "অবৈধ ব্যবহারকারীর নাম বিন্যাস"
     },
@@ -589,6 +591,12 @@
     },
     "msg": {
       "saveFailed": "বার্তা সংরক্ষণ হয়নি। একটু পরে চেষ্টা করুন।"
+    },
+    "translation": {
+      "loading": "অনুবাদ হচ্ছে…",
+      "translatedFrom": "{{language}} থেকে অনূদিত",
+      "showOriginal": "মূল দেখান",
+      "showTranslation": "অনুবাদ দেখান"
     },
     "alert": {
       "noSendPermission": "এই চ্যানেলে বার্তা পাঠানোর অনুমতি নেই।",

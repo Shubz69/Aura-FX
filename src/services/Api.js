@@ -32,7 +32,8 @@ function resolveRuntimeApiOverride() {
 
 // Define a fixed API base URL with proper fallback
 // Automatically detect the origin to avoid CORS issues with www redirects
-const getApiBaseUrl = () => {
+/** Canonical API origin for fetches (same logic as axios `API_BASE_URL`). */
+export function getApiBaseUrl() {
     // Highest priority: explicit QA/local override (build-time env or runtime hook).
     const explicitEnv =
         process.env.REACT_APP_PLAYWRIGHT_API_BASE_URL
@@ -65,7 +66,7 @@ const getApiBaseUrl = () => {
         return window.location.origin;
     }
     return '';
-};
+}
 
 const API_BASE_URL = getApiBaseUrl();
 const LOGIN_REQUEST_TIMEOUT_MS = 12000;
@@ -696,6 +697,42 @@ const Api = {
             console.error(`Error updating message ${messageId}:`, error);
             throw error; // Rethrow as updates should report errors to user
         }
+    },
+
+    translateMessage: async ({ text, sourceLanguage, targetLanguage, messageId }) => {
+        if (!shouldMakeRequest(`${API_BASE_URL}/api/translate-message`)) {
+            throw new Error('Authentication required');
+        }
+        const token = localStorage.getItem('token');
+        const customAxios = axios.create();
+        return customAxios.post(
+            `${API_BASE_URL}/api/translate-message`,
+            { text, sourceLanguage, targetLanguage, messageId },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+    },
+
+    translateMessages: async ({ targetLanguage, items }) => {
+        if (!shouldMakeRequest(`${API_BASE_URL}/api/translate-messages`)) {
+            throw new Error('Authentication required');
+        }
+        const token = localStorage.getItem('token');
+        const customAxios = axios.create();
+        return customAxios.post(
+            `${API_BASE_URL}/api/translate-messages`,
+            { targetLanguage, items },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
     },
     
     // User Profile

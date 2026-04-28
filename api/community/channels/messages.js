@@ -1,4 +1,6 @@
 const { getDbConnection } = require('../../db');
+const { normalizeLang } = require('../../utils/communityTranslateEngine');
+const { ensureOriginalLanguageOnMessages } = require('../../utils/ensure-community-message-translation-schema');
 const { jsonSafeDeep } = require('../../utils/jsonSafe');
 const { getEntitlements, getChannelPermissions, canAccessChannel, isSuperAdminEmail } = require('../../utils/entitlements');
 const {
@@ -580,6 +582,9 @@ module.exports = async (req, res) => {
             }
           }
           const isDeleted = !!row.deleted_at || row.content === '[deleted]';
+          const originalLanguage = row.original_language != null && String(row.original_language).trim()
+            ? normalizeLang(row.original_language)
+            : 'en';
           return {
             id: row.id,
             sequence: row.id,
@@ -587,6 +592,8 @@ module.exports = async (req, res) => {
             userId: row.sender_id,
             username,
             content: row.content,
+            originalText: row.content,
+            originalLanguage,
             createdAt: row.timestamp,
             timestamp: row.timestamp,
             file: fileData,
@@ -819,6 +826,9 @@ module.exports = async (req, res) => {
           
           // Check if message is deleted (soft-delete)
           const isDeleted = !!row.deleted_at || row.content === '[deleted]';
+          const originalLanguage = row.original_language != null && String(row.original_language).trim()
+            ? normalizeLang(row.original_language)
+            : 'en';
           
           return {
             id: row.id,
@@ -827,6 +837,8 @@ module.exports = async (req, res) => {
             userId: row.sender_id,
             username: username,
             content: row.content,
+            originalText: row.content,
+            originalLanguage,
             createdAt: row.timestamp,
             timestamp: row.timestamp,
             file: fileData, // Include file data if present
@@ -867,8 +879,24 @@ module.exports = async (req, res) => {
     if (req.method === 'POST') {
       reqDiag.pathType = 'post';
       // Create a new message
-      const { userId, username, content, file, clientMessageId } = req.body;
+      const { userId, username, content, file, clientMessageId, writingLanguage } = req.body;
       const senderId = userId || decoded.id;
+
+      await ensureOriginalLanguageOnMessages().catch(() => {});
+
+      let originalLanguage = normalizeLang(writingLanguage);
+      if (writingLanguage == null || writingLanguage === '') {
+        try {
+          const [prefRows] = await db.execute(
+            'SELECT preferred_language FROM user_settings WHERE user_id = ? LIMIT 1',
+            [senderId]
+          );
+          const pref = prefRows && prefRows[0];
+          if (pref && pref.preferred_language) {
+            originalLanguage = normalizeLang(pref.preferred_language);
+          }
+        } catch (_) { /* optional column / table */ }
+      }
 
       // Allow empty content if file metadata is present
       if ((!content || !content.trim()) && !file) {
@@ -959,6 +987,9 @@ module.exports = async (req, res) => {
               const r = existing[0];
               const uname = r.username || r.name || (r.email ? r.email.split('@')[0] : 'Anonymous');
               const dupSender = { role: r.role, email: r.email, subscription_plan: r.subscription_plan };
+              const dupOrigLang = r.original_language != null && String(r.original_language).trim()
+                ? normalizeLang(r.original_language)
+                : 'en';
               const msg = {
                 id: r.id,
                 channelId: channelId,
@@ -966,6 +997,8 @@ module.exports = async (req, res) => {
                 userId: r.sender_id,
                 username: uname,
                 content: r.content,
+                originalText: r.content,
+                originalLanguage: dupOrigLang,
                 createdAt: r.timestamp,
                 timestamp: r.timestamp,
                 file: r.file_data ? (typeof r.file_data === 'string' ? JSON.parse(r.file_data) : r.file_data) : null,
@@ -1013,25 +1046,41 @@ module.exports = async (req, res) => {
           const insertVals = '?, ?, ?, FALSE, ?, NOW()';
           const insertParams = [channelIdValue, senderId || userId || null, messageContent, fileDataJson];
           let insertResult;
+          const isBadField = (e) => e && e.code === 'ER_BAD_FIELD_ERROR';
           if (clientMsgId) {
             try {
               insertResult = await db.execute(
-                `INSERT INTO messages (${insertCols}, client_message_id) VALUES (${insertVals}, ?)`,
-                [...insertParams, clientMsgId]
+                `INSERT INTO messages (${insertCols}, original_language, client_message_id) VALUES (${insertVals}, ?, ?)`,
+                [...insertParams, originalLanguage, clientMsgId]
               );
-            } catch (colErr) {
-              if (colErr.code === 'ER_BAD_FIELD_ERROR' || (colErr.message && colErr.message.includes('client_message_id'))) {
+            } catch (e1) {
+              if (!isBadField(e1)) throw e1;
+              try {
+                insertResult = await db.execute(
+                  `INSERT INTO messages (${insertCols}, client_message_id) VALUES (${insertVals}, ?)`,
+                  [...insertParams, clientMsgId]
+                );
+              } catch (e2) {
+                if (!isBadField(e2)) throw e2;
                 insertResult = await db.execute(
                   `INSERT INTO messages (${insertCols}) VALUES (${insertVals})`,
                   insertParams
                 );
-              } else throw colErr;
+              }
             }
           } else {
-            insertResult = await db.execute(
-              `INSERT INTO messages (${insertCols}) VALUES (${insertVals})`,
-              insertParams
-            );
+            try {
+              insertResult = await db.execute(
+                `INSERT INTO messages (${insertCols}, original_language) VALUES (${insertVals}, ?)`,
+                [...insertParams, originalLanguage]
+              );
+            } catch (e1) {
+              if (!isBadField(e1)) throw e1;
+              insertResult = await db.execute(
+                `INSERT INTO messages (${insertCols}) VALUES (${insertVals})`,
+                insertParams
+              );
+            }
           }
           // result is [ResultSetHeader, fields], we need the first element
           result = insertResult[0];
@@ -1089,6 +1138,8 @@ module.exports = async (req, res) => {
           userId: senderId || userId || null,
           username: senderUsername,
           content: messageContent,
+          originalText: messageContent,
+          originalLanguage,
           createdAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
           file: fileData,
@@ -1209,6 +1260,144 @@ module.exports = async (req, res) => {
       }
     }
 
+    if (req.method === 'PUT') {
+      reqDiag.pathType = 'put';
+      let messageId = req.query.messageId || req.query.id;
+      if (!messageId && req.url) {
+        const urlParts = req.url.split('/');
+        const messageIdIndex = urlParts.findIndex((part) => part === 'messages') + 1;
+        if (messageIdIndex > 0 && urlParts[messageIdIndex]) {
+          messageId = urlParts[messageIdIndex].split('?')[0];
+        }
+      }
+      if (!messageId) {
+        await releaseDb();
+        return res.status(400).json({ success: false, message: 'Message ID is required' });
+      }
+      if (!db) {
+        await releaseDb();
+        return res.status(503).json({ success: false, message: 'Database unavailable' });
+      }
+
+      const { content, writingLanguage } = req.body || {};
+      const trimmed = (content != null ? String(content) : '').trim();
+      if (!trimmed) {
+        await releaseDb();
+        return res.status(400).json({ success: false, message: 'Message content is required' });
+      }
+
+      let messageIdValue = messageId;
+      let msgRows = [];
+      try {
+        [msgRows] = await db.execute(
+          'SELECT id, sender_id, channel_id, content, original_language FROM messages WHERE id = ?',
+          [messageIdValue]
+        );
+      } catch (e) {
+        const numericId = parseInt(messageId, 10);
+        if (!Number.isNaN(numericId)) {
+          messageIdValue = numericId;
+          [msgRows] = await db.execute(
+            'SELECT id, sender_id, channel_id, content, original_language FROM messages WHERE id = ?',
+            [messageIdValue]
+          );
+        } else {
+          await releaseDb();
+          return res.status(400).json({ success: false, message: 'Invalid message ID' });
+        }
+      }
+
+      if (!msgRows || msgRows.length === 0) {
+        await releaseDb();
+        return res.status(404).json({ success: false, message: 'Message not found' });
+      }
+
+      const msg = msgRows[0];
+      const msgCh = String(msg.channel_id).toLowerCase();
+      const routeCh = String(channelId).toLowerCase();
+      const rowCh = channelRow?.id != null ? String(channelRow.id).toLowerCase() : '';
+      const sameChannel = msgCh === routeCh || (rowCh && msgCh === rowCh);
+      if (!sameChannel) {
+        await releaseDb();
+        return res.status(400).json({ success: false, message: 'Message is not in this channel' });
+      }
+
+      const jwtRole = (decoded.role || '').toString().toUpperCase();
+      const isStaff = jwtRole === 'ADMIN' || jwtRole === 'SUPER_ADMIN';
+      const senderOk = Number(msg.sender_id) === Number(decoded.id);
+      if (!senderOk && !isStaff) {
+        await releaseDb();
+        return res.status(403).json({ success: false, message: 'You can only edit your own messages' });
+      }
+
+      let newOrigLang =
+        writingLanguage != null && writingLanguage !== ''
+          ? normalizeLang(writingLanguage)
+          : msg.original_language != null && String(msg.original_language).trim()
+            ? normalizeLang(msg.original_language)
+            : 'en';
+
+      try {
+        await db.execute('UPDATE messages SET content = ?, original_language = ? WHERE id = ?', [
+          trimmed,
+          newOrigLang,
+          messageIdValue,
+        ]);
+      } catch (updErr) {
+        const msgErr = String(updErr.message || '');
+        if (msgErr.includes('original_language')) {
+          await db.execute('UPDATE messages SET content = ? WHERE id = ?', [trimmed, messageIdValue]);
+        } else {
+          throw updErr;
+        }
+      }
+
+      try {
+        await db.execute('DELETE FROM message_translations WHERE message_id = ?', [messageIdValue]);
+      } catch (delTr) {
+        console.warn('message_translations delete on edit:', delTr.message);
+      }
+
+      const [afterRows] = await db.execute(
+        'SELECT m.timestamp, m.file_data, u.username, u.name, u.email, u.avatar, u.role, u.subscription_plan FROM messages m LEFT JOIN users u ON m.sender_id = u.id WHERE m.id = ? LIMIT 1',
+        [messageIdValue]
+      );
+      const ar = afterRows && afterRows[0];
+      const u = ar || {};
+      const uname = u.username || u.name || (u.email ? u.email.split('@')[0] : 'Anonymous');
+      let fileData = null;
+      if (ar?.file_data) {
+        try {
+          fileData = typeof ar.file_data === 'string' ? JSON.parse(ar.file_data) : ar.file_data;
+        } catch (_) {
+          fileData = null;
+        }
+      }
+
+      await releaseDb();
+      return res.status(200).json({
+        id: messageIdValue,
+        sequence: messageIdValue,
+        channelId,
+        channel_id: channelId,
+        userId: msg.sender_id,
+        username: uname,
+        content: trimmed,
+        originalText: trimmed,
+        originalLanguage: newOrigLang,
+        createdAt: ar?.timestamp,
+        timestamp: ar?.timestamp,
+        file: fileData,
+        sender: {
+          id: msg.sender_id,
+          username: uname,
+          avatar: u.avatar ?? null,
+          role: permissionRoleFromUserRow(u),
+          subscriptionPlan: canonicalSubscriptionPlanForResponse(u),
+        },
+      });
+    }
+
     if (req.method === 'DELETE') {
       // Delete a message (admin only or message owner)
       // Extract messageId from query params (Vercel routing) or URL path
@@ -1261,6 +1450,12 @@ module.exports = async (req, res) => {
 
         const message = messageRows[0];
         console.log('Found message to delete:', message.id, 'in channel:', message.channel_id);
+
+        try {
+          await db.execute('DELETE FROM message_translations WHERE message_id = ?', [messageIdValue]);
+        } catch (trDel) {
+          console.warn('message_translations delete on message delete:', trDel.message);
+        }
 
         // TODO: Add admin check from JWT token
         // For now, allow deletion (you can add auth check later)

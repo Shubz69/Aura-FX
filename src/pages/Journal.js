@@ -239,6 +239,8 @@ export default function Journal() {
   const [reminderCustomDt, setReminderCustomDt] = useState('');
   const reminderWrapRef = useRef(null);
   const [, bumpReminders] = useReducer((n) => n + 1, 0);
+  const reminderNavSyncedRef = useRef(false);
+  const reminderScrollDoneRef = useRef(false);
 
   // Note editing
   const [editingNoteId, setEditingNoteId]     = useState(null);
@@ -266,6 +268,40 @@ export default function Journal() {
       window.removeEventListener('storage', sync);
     };
   }, []);
+
+  /** Notification / push deep link: /journal?reminderTask=&reminderDate= */
+  useEffect(() => {
+    const tid = searchParams.get('reminderTask');
+    if (!tid) {
+      reminderNavSyncedRef.current = false;
+      reminderScrollDoneRef.current = false;
+      return;
+    }
+    const tdate = searchParams.get('reminderDate');
+    if (tdate && /^\d{4}-\d{2}-\d{2}$/.test(tdate) && !reminderNavSyncedRef.current) {
+      reminderNavSyncedRef.current = true;
+      setSelectedDate(tdate.slice(0, 10));
+      setCalendarMonth(tdate.slice(0, 7));
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const tid = searchParams.get('reminderTask');
+    if (!tid || loading) return;
+    const inList = monthTasks.some((t) => String(t.id) === String(tid));
+    if (!inList || reminderScrollDoneRef.current) return;
+    reminderScrollDoneRef.current = true;
+    let raf = 0;
+    raf = requestAnimationFrame(() => {
+      const el = document.getElementById(`journal-task-${tid}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const next = new URLSearchParams(searchParams);
+      next.delete('reminderTask');
+      next.delete('reminderDate');
+      setSearchParams(next, { replace: true });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [loading, monthTasks, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!reminderMenuTaskId) return;
@@ -906,6 +942,7 @@ export default function Journal() {
 
     return (
       <li
+        id={`journal-task-${task.id}`}
         key={task.id}
         className={[
           'journal-task-item',

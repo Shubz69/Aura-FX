@@ -227,6 +227,8 @@
       "percent": "{{val}}％"
     },
     "websiteLanguageHint": "一键全站",
+    "communityAutoTranslate": "自动翻译社区消息",
+    "communityAutoTranslateHint": "开启后，在可行时以您选择的网站语言显示他人的消息。",
     "validation": {
       "invalidUsernameFormat": "用户名格式无效"
     },
@@ -589,6 +591,12 @@
     },
     "msg": {
       "saveFailed": "消息无法保存。请稍后重试。"
+    },
+    "translation": {
+      "loading": "正在翻译…",
+      "translatedFrom": "翻译自{{language}}",
+      "showOriginal": "显示原文",
+      "showTranslation": "显示译文"
     },
     "alert": {
       "noSendPermission": "您没有在此频道发送消息的权限。",
