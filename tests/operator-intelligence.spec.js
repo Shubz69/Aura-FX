@@ -46,6 +46,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     try {
       localStorage.removeItem('auraApiBaseUrlOverride');
+      localStorage.removeItem('oi_market_watch_v1');
     } catch {
       /* ignore */
     }
@@ -218,7 +219,7 @@ test('Operator Intelligence QA (sections, nav order, candle drawer, viewports)',
 
       await expectCoreSections();
 
-      const chartFrame = page.locator('.oi-chart-frame').first();
+      const chartFrame = page.locator('[data-testid="oi-chart-mount"]').first();
       await expect(chartFrame).toBeVisible({ timeout: 90000 });
       const chartMsg = page.locator('.oi-chart-frame--msg');
       if (await chartMsg.isVisible().catch(() => false)) {
@@ -227,6 +228,75 @@ test('Operator Intelligence QA (sections, nav order, candle drawer, viewports)',
       }
       const canvas = chartFrame.locator('canvas').first();
       await expect(canvas).toBeVisible({ timeout: 90000 });
+
+      const instSelect = page.getByTestId('oi-symbol-select');
+      const optCount = await instSelect.locator('option').count();
+      expect(optCount, 'Instrument selector should expose the full terminal list').toBeGreaterThan(5);
+
+      if (vp.id === 'desktop') {
+        await instSelect.selectOption({ label: 'NAS100' });
+        await expect(canvas).toBeVisible({ timeout: 60000 });
+        const canvasAfter = chartFrame.locator('canvas').first();
+        await expect(canvasAfter).toBeVisible({ timeout: 60000 });
+      }
+
+      if (vp.id === 'desktop') {
+        const mwatchAdd = page.getByTestId('oi-mwatch-add-select');
+        await mwatchAdd.selectOption({ label: 'BTCUSD' });
+        await page.getByTestId('oi-mwatch-add-btn').click();
+        const mwatchList = page.getByTestId('oi-market-watch-list');
+        await expect(mwatchList.locator('li')).toHaveCount(5);
+
+        await mwatchAdd.selectOption({ label: 'BTCUSD' });
+        await expect(page.getByTestId('oi-mwatch-add-btn')).toBeDisabled();
+
+        for (const lbl of ['ETHUSD', 'SOLUSD', 'XRPUSD', 'ADAUSD']) {
+          await mwatchAdd.selectOption({ label: lbl });
+          const addBtn = page.getByTestId('oi-mwatch-add-btn');
+          if (await addBtn.isEnabled()) {
+            await addBtn.click();
+          }
+        }
+        const scrollable = await mwatchList.evaluate((el) => el.scrollHeight > el.clientHeight + 2);
+        expect(scrollable, 'Market watch list should scroll after more than four rows').toBe(true);
+      }
+
+      if (vp.id === 'desktop') {
+        await page.keyboard.press('Escape').catch(() => {});
+        const box = await chartFrame.boundingBox();
+        if (!box) throw new Error('Chart mount has no bounding box');
+        const clickXs = [0.55, 0.48, 0.62, 0.5];
+        const clickYs = [0.18, 0.14, 0.22, 0.28];
+        let opened = false;
+        for (let yi = 0; yi < clickYs.length && !opened; yi += 1) {
+          for (let xi = 0; xi < clickXs.length && !opened; xi += 1) {
+            await chartFrame.click({
+              position: {
+                x: Math.max(8, box.width * clickXs[xi]),
+                y: Math.max(8, box.height * clickYs[yi]),
+              },
+              force: true,
+            });
+            try {
+              await expect(page.getByRole('dialog', { name: /candle intelligence/i })).toBeVisible({
+                timeout: 4000,
+              });
+              opened = true;
+            } catch {
+              /* try next point */
+            }
+          }
+        }
+        if (!opened) {
+          throw new Error('Candle Intelligence panel did not open after chart clicks');
+        }
+        await expect(page.getByText(/practical guidance/i).first()).toBeVisible();
+        // Backdrop: avoids fixed navbar intercepting the drawer header close control on some viewports.
+        await page.locator('.oi-drawer__backdrop').click({ position: { x: 24, y: Math.min(480, vp.height * 0.5) } });
+        await expect(page.getByRole('dialog', { name: /candle intelligence/i })).not.toBeVisible({
+          timeout: 10000,
+        });
+      }
 
       if (vp.id === 'desktop') {
         await page.locator('.user-icon').click();
@@ -253,34 +323,6 @@ test('Operator Intelligence QA (sections, nav order, candle drawer, viewports)',
         }
         await expect(oiLink).toHaveText(/operator intelligence|navbar\.operatorintelligence/i);
         await page.keyboard.press('Escape').catch(() => {});
-      }
-
-      if (vp.id === 'desktop') {
-        const box = await canvas.boundingBox();
-        if (!box) throw new Error('Chart canvas has no bounding box');
-        const clickXs = [0.55, 0.48, 0.62];
-        const clickYs = [0.28, 0.22, 0.32];
-        let opened = false;
-        for (let i = 0; i < clickXs.length && !opened; i += 1) {
-          await page.mouse.click(box.x + box.width * clickXs[i], box.y + box.height * clickYs[i]);
-          try {
-            await expect(page.getByRole('dialog', { name: /candle intelligence/i })).toBeVisible({
-              timeout: 4000,
-            });
-            opened = true;
-          } catch {
-            /* try next point */
-          }
-        }
-        if (!opened) {
-          throw new Error('Candle Intelligence panel did not open after chart clicks');
-        }
-        await expect(page.getByText(/practical guidance/i).first()).toBeVisible();
-        // Backdrop: avoids fixed navbar intercepting the drawer header close control on some viewports.
-        await page.locator('.oi-drawer__backdrop').click({ position: { x: 24, y: Math.min(480, vp.height * 0.5) } });
-        await expect(page.getByRole('dialog', { name: /candle intelligence/i })).not.toBeVisible({
-          timeout: 10000,
-        });
       }
 
       await assertNoHorizontalOverflow(vp.id);

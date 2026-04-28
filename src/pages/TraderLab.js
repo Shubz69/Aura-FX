@@ -35,43 +35,13 @@ import {
 } from '../lib/chartUserRequest';
 import { validateMarketDecoderSections } from '../lib/trader-deck/marketDecoderExport';
 import { normalizeApiInterval } from '../lib/charts/lightweightChartData';
+import {
+  TERMINAL_INSTRUMENT_OPTIONS as INSTRUMENTS,
+  TERMINAL_INSTRUMENT_LABEL_TO_VALUE as INSTRUMENT_LABEL_TO_VALUE,
+  chartSymbolFromDecoded as chartSymbolFromDecodedBase,
+  normalizeDecodedSymbol,
+} from '../data/terminalInstruments';
 import '../styles/trader-deck/TraderLabLayout.css';
-
-const INSTRUMENTS = [
-  { label: 'XAUUSD', value: 'OANDA:XAUUSD' },
-  { label: 'XAGUSD', value: 'OANDA:XAGUSD' },
-  { label: 'EURUSD', value: 'OANDA:EURUSD' },
-  { label: 'GBPUSD', value: 'OANDA:GBPUSD' },
-  { label: 'USDJPY', value: 'OANDA:USDJPY' },
-  { label: 'AUDUSD', value: 'OANDA:AUDUSD' },
-  { label: 'NZDUSD', value: 'OANDA:NZDUSD' },
-  { label: 'USDCAD', value: 'OANDA:USDCAD' },
-  { label: 'USDCHF', value: 'OANDA:USDCHF' },
-  { label: 'EURJPY', value: 'OANDA:EURJPY' },
-  { label: 'GBPJPY', value: 'OANDA:GBPJPY' },
-  { label: 'EURGBP', value: 'OANDA:EURGBP' },
-  { label: 'US500', value: 'OANDA:SPX500USD' },
-  { label: 'NAS100', value: 'OANDA:NAS100USD' },
-  { label: 'US30', value: 'OANDA:US30USD' },
-  { label: 'SPY', value: 'AMEX:SPY' },
-  { label: 'QQQ', value: 'NASDAQ:QQQ' },
-  { label: 'IWM', value: 'AMEX:IWM' },
-  { label: 'DIA', value: 'AMEX:DIA' },
-  { label: 'GLD', value: 'AMEX:GLD' },
-  { label: 'TLT', value: 'NASDAQ:TLT' },
-  { label: 'USOIL', value: 'TVC:USOIL' },
-  { label: 'UKOIL', value: 'TVC:UKOIL' },
-  { label: 'XNGUSD', value: 'TVC:NATGASUSD' },
-  { label: 'BTCUSD', value: 'COINBASE:BTCUSD' },
-  { label: 'ETHUSD', value: 'COINBASE:ETHUSD' },
-  { label: 'SOLUSD', value: 'BINANCE:SOLUSDT' },
-  { label: 'XRPUSD', value: 'BINANCE:XRPUSDT' },
-  { label: 'ADAUSD', value: 'BINANCE:ADAUSDT' },
-  { label: 'DXY', value: 'TVC:DXY' },
-  { label: 'VIX', value: 'TVC:VIX' },
-];
-const INSTRUMENT_VALUE_SET = new Set(INSTRUMENTS.map((x) => x.value));
-const INSTRUMENT_LABEL_TO_VALUE = new Map(INSTRUMENTS.map((x) => [x.label, x.value]));
 
 const CHART_INTERVALS = [
   { label: '1m', value: '1' },
@@ -256,16 +226,8 @@ function parseLevel(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-function normalizeDecodedSymbol(value) {
-  return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-}
-
 function chartSymbolFromDecoded(decodedSymbol) {
-  const s = normalizeDecodedSymbol(decodedSymbol);
-  if (!s) return DEFAULT_FORM.chartSymbol;
-  if (INSTRUMENT_LABEL_TO_VALUE.has(s)) return INSTRUMENT_LABEL_TO_VALUE.get(s);
-  if (/^[A-Z]{6}$/.test(s)) return `OANDA:${s}`;
-  return s;
+  return chartSymbolFromDecodedBase(decodedSymbol, DEFAULT_FORM.chartSymbol);
 }
 
 function displaySymbolFromChartSymbol(chartSymbol) {

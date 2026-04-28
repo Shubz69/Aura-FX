@@ -2,7 +2,7 @@
  * Deterministic mock OHLCV for Operator Intelligence chart (adapter-friendly).
  * @param {{ symbol: string, timeframeId: string }} p
  */
-function hashSeed(str) {
+export function hashSeed(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i += 1) {
     h ^= str.charCodeAt(i);

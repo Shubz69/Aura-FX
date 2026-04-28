@@ -14,7 +14,7 @@ export default function OperatorWatchlists({ watchlists, loading }) {
       {loading ? <p className="oi-card__muted">Loading watchlists…</p> : null}
       {!loading && !watchlists ? <p className="oi-card__muted">No watchlist data.</p> : null}
       {!loading && watchlists ? (
-        <>
+        <div className="oi-watchlists-body" data-testid="oi-watchlists-scroll">
           <p className="oi-metric-label">FX</p>
           <ul className="oi-watch">
             {(watchlists.pairs || []).map((p) => (
@@ -35,7 +35,7 @@ export default function OperatorWatchlists({ watchlists, loading }) {
               </li>
             ))}
           </ul>
-        </>
+        </div>
       ) : null}
     </div>
   );

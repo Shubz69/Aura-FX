@@ -1,79 +1,77 @@
 # Operator Intelligence — Playwright QA report
 
-**Generated:** 2026-04-27 (local run)
+**Generated:** 2026-04-27T22:09:30.043Z
 
-## Overall: **PASS**
+## Overall: PASS
 
-| Step | Result |
-|------|--------|
-| Playwright (`npm run test:e2e:operator-intelligence`) | PASS (Chromium, ~15s) |
-| `npm run build` | PASS (`Compiled successfully`, exit 0) |
-| `node scripts/verify-i18n-locales.mjs` | PASS (after restoring `navbar.operatorIntelligence` in all locales) |
 
-## How to re-run
+## Screenshots
 
-```bash
-npm run test:e2e:operator-intelligence
-```
+- `C:\Users\1230s\OneDrive\Documents\Samy\Aura FX\e2e\artifacts\operator-intelligence-qa\oi-desktop.png`
+- `C:\Users\1230s\OneDrive\Documents\Samy\Aura FX\e2e\artifacts\operator-intelligence-qa\oi-tablet.png`
+- `C:\Users\1230s\OneDrive\Documents\Samy\Aura FX\e2e\artifacts\operator-intelligence-qa\oi-mobile.png`
 
-- Config: `playwright.operator-intelligence.config.js` (starts CRA with `REACT_APP_API_URL=` so `/api` stays same-origin and CSP is satisfied on `http://localhost:3000`).
-- HTML report: `e2e/playwright-report-operator-intelligence/index.html`
-- Auth: rewrites `e2e/reports/auraterminal-normal-user.json` origin to `PLAYWRIGHT_BASE_URL` / `http://localhost:3000` (same pattern as other Aura Terminal e2e specs).
+## Console errors (blocking)
 
-## Screenshots (full-page)
+- (none)
 
-Relative to repo root:
+## Console errors (ignored — documented dev / stale JWT noise)
 
-- `e2e/artifacts/operator-intelligence-qa/oi-desktop.png` (1440×900)
-- `e2e/artifacts/operator-intelligence-qa/oi-tablet.png` (834×1112)
-- `e2e/artifacts/operator-intelligence-qa/oi-mobile.png` (390×844)
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] [observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: d8a273be-6b25-49fa-9a5a-8922da2e87e6, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
+- `[console.error] Subscription fetch error: AxiosError`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: caa8f2df-fcad-47a9-a7c7-e8d0cdbaf41f, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: c425ea23-904f-41c3-b623-e92539f918df, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
+- `[console.error] Subscription fetch error: AxiosError`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: a2c98632-84d6-42c6-8278-4ccdf81140ce, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
+- `[console.error] Subscription fetch error: AxiosError`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: 451fb813-9b6b-465f-997f-ac8255ecb8cc, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: 879b207c-0225-4fff-b976-8710e1d95500, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: 0a9464d6-8f6e-4561-83d0-6f4e9ff4d16d, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
+- `[console.error] Subscription fetch error: AxiosError`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
 
-*(An earlier failed run may leave `e2e/artifacts/operator-intelligence-qa/oi-FAILURE-state.png`; safe to delete.)*
+## Visual / layout issues
 
-## What was verified
+- (none noted)
 
-- `/operator-intelligence` loads when authenticated (no stuck login for this route).
-- Navbar user menu: `/operator-intelligence` link is **immediately after** `/operator-galaxy`; label matches **Operator Intelligence** (or localized equivalent / missing-key fallback pattern).
-- Sections visible: Aura Pulse, Market Drivers, Operator Bias Engine, Live Market View, Market Intelligence Feed, Market Impact Calendar, Action summary (“What to do now”).
-- Desktop: click chart → **Candle Intelligence** dialog → content including “Practical guidance” → close via backdrop (avoids navbar intercepting drawer close).
-- No horizontal overflow on `.oi-page` for desktop / tablet / mobile checks.
-- **Blocking** console: none after filters (see below).
+## Build (npm run build)
 
-## Console errors
+- *(pending — run `npm run build` after Playwright)*
 
-### Blocking (must be empty for PASS)
+## Recommended fixes
 
-- **None** on last successful run.
-
-### Ignored (documented dev / stale JWT / tooling noise)
-
-The spec filters these categories so local QA does not fail on environment noise that is **not** Operator Intelligence regressions:
-
-- `403 (Forbidden)` / “Access forbidden” / `api.response_interceptor` with `type: auth` (saved Playwright JWT can be expired vs live API).
-- `auth.session_verify_user` observability lines tied to the above.
-- `Subscription fetch error: AxiosError` when auth is marginal.
-- `WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header` — CRA dev client vs app STOMP on the same `/ws` path.
-
-**Recommended:** regenerate `e2e/reports/auraterminal-normal-user.json` when JWT expires (`e2e/create-normal-user-state.spec.js` / `manual-save-normal-user-state.spec.js`) to reduce ignored noise and validate real `/api/me` flows.
-
-## Visual issues
-
-- None noted on last pass (layout / overflow checks passed).
-
-## Build (`npm run build`)
-
-- **PASS** — production bundle built after Playwright; CRA reported `Compiled successfully`.
-
-## Recommended fixes (follow-up)
-
-1. **Auth storage:** Refresh `e2e/reports/auraterminal-normal-user.json` periodically so `/api/me` and subscription calls succeed in e2e (fewer ignored 403s).
-2. **Dev WebSocket:** Consider separating STOMP path from CRA HMR (e.g. different path than `/ws`) to remove “Invalid frame header” noise in local dev.
-3. **i18n:** Ensure `navbar.operatorIntelligence` stays in **all** `src/i18n/locales/*/common.json` files when adding navbar keys (parity enforced by `npm run verify:i18n`).
-
-## Repo files touched for this QA
-
-- `tests/operator-intelligence.spec.js` — new Playwright spec.
-- `playwright.operator-intelligence.config.js` — focused config (Chromium + webServer env).
-- `playwright.config.js` — `testDir: '.'` + `testMatch` includes `tests/**/*.spec.js`.
-- `package.json` — script `test:e2e:operator-intelligence`.
-- `src/i18n/locales/*/common.json` — `navbar.operatorIntelligence` restored across locales.
+- If auth storage expires, regenerate `e2e/reports/auraterminal-normal-user.json` via `create-normal-user-state` / `manual-save-normal-user-state`.

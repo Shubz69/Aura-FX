@@ -11,6 +11,7 @@ import ActionSummaryCard from '../components/operator-intelligence/ActionSummary
 import OperatorWatchlists from '../components/operator-intelligence/OperatorWatchlists';
 import MarketWatchPanel from '../components/operator-intelligence/MarketWatchPanel';
 import { fetchOperatorIntelligencePageBundle } from '../services/operatorIntelligenceAdapter';
+import { DEFAULT_TERMINAL_CHART_SYMBOL } from '../data/terminalInstruments';
 import '../styles/operator-intelligence/OperatorIntelligencePage.css';
 
 /**
@@ -20,7 +21,7 @@ export default function OperatorIntelligencePage() {
   const [bundle, setBundle] = useState(null);
   const [pageState, setPageState] = useState('loading');
   const [pageError, setPageError] = useState('');
-  const [deskSymbol, setDeskSymbol] = useState('EURUSD');
+  const [deskSymbol, setDeskSymbol] = useState(DEFAULT_TERMINAL_CHART_SYMBOL);
   const [candleOpen, setCandleOpen] = useState(false);
   const [selectedBar, setSelectedBar] = useState(null);
 
@@ -76,7 +77,7 @@ export default function OperatorIntelligencePage() {
           <aside className="oi-col oi-col--left">
             <MarketDriversPanel drivers={bundle?.drivers ?? null} loading={loading} />
             <OperatorBiasEngine bias={bundle?.bias ?? null} loading={loading} />
-            <MarketWatchPanel rows={bundle?.marketWatch ?? null} loading={loading} />
+            <MarketWatchPanel seedRows={bundle?.marketWatch ?? null} loading={loading} />
           </aside>
 
           <section className="oi-col oi-col--center">
