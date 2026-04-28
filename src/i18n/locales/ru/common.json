@@ -36,7 +36,6 @@
     "auraAi": "Aura AI",
     "cs": "Курсы и поддержка",
     "operator": "Оператор",
-    "operatorIntelligence": "Аналитика оператора",
     "surveillance": "Наблюдение",
     "surveillanceLockedTitle": "Наблюдение включено в Elite (активная оплата Elite/A7FX) или для аккаунтов администратора / суперадминистратора.",
     "locked": "Заблокировано",
@@ -98,7 +97,23 @@
     "resendCodeSeconds": "Повторить ({{seconds}}с)",
     "backToLogin": "Ко входу",
     "resendSuccessAlert": "Код отправлен повторно.",
-    "resendFailed": "Не удалось отправить. Повторите."
+    "resendFailed": "Не удалось отправить. Повторите.",
+    "errorAccountDeleted": "Ваш аккаунт удалён администратором. Вы вышли из системы.",
+    "errorEmailRequired": "Введите e-mail или имя пользователя.",
+    "errorPasswordRequired": "Требуется пароль.",
+    "errorIncorrectPassword": "Неверный пароль. Попробуйте снова или нажмите «Забыли пароль».",
+    "errorNoAccount": "Аккаунт с этим e-mail не найден. Зарегистрируйтесь.",
+    "errorTooManyAttempts": "Слишком много попыток. Повторите позже.",
+    "errorSigninUnavailable": "Вход временно недоступен. Попробуйте через несколько минут.",
+    "errorSomethingWrong": "Что-то пошло не так. Повторите попытку.",
+    "errorLoginFailed": "Ошибка входа. Повторите попытку.",
+    "errorCannotConnect": "Не удаётся подключиться к серверу. Повторите попытку.",
+    "errorTimeout": "Сервер слишком долго отвечает. Проверьте соединение и попробуйте снова.",
+    "errorInvalidMfaCode": "Введите корректный 6-значный код",
+    "errorInvalidServerResponse": "Некорректный ответ сервера",
+    "errorInvalidCode": "Неверный код. Попробуйте снова.",
+    "errorLabelIncorrectPassword": "Неверный пароль",
+    "errorLabelNoAccount": "Нет аккаунта для этого e-mail или имени"
   },
   "profile": {
     "accountSettings": "Настройки аккаунта",
@@ -227,8 +242,6 @@
       "percent": "{{val}} %"
     },
     "websiteLanguageHint": "Один клик на весь сайт",
-    "communityAutoTranslate": "Автоматически переводить сообщения сообщества",
-    "communityAutoTranslateHint": "Если включено, сообщения других пользователей отображаются на языке сайта, когда это возможно.",
     "validation": {
       "invalidUsernameFormat": "Неверный формат имени"
     },
@@ -591,12 +604,6 @@
     },
     "msg": {
       "saveFailed": "Сообщение не сохранилось. Повторите позже."
-    },
-    "translation": {
-      "loading": "Перевод…",
-      "translatedFrom": "Переведено с {{language}}",
-      "showOriginal": "Показать оригинал",
-      "showTranslation": "Показать перевод"
     },
     "alert": {
       "noSendPermission": "Нет прав на отправку сообщений в этом канале.",
@@ -1402,6 +1409,33 @@
       "metricsActual": "Actual: {{v}}",
       "metricsForecast": "Forecast: {{v}}",
       "metricsPrevious": "Previous: {{v}}"
+    }
+  },
+  "notifications": {
+    "title": "Уведомления",
+    "markAllAsRead": "Отметить всё прочитанным",
+    "markAllRead": "Отметить всё",
+    "loading": "Загрузка уведомлений...",
+    "couldNotLoad": "Не удалось загрузить уведомления",
+    "tapToRetry": "Нажмите для повтора",
+    "noneYet": "Пока нет уведомлений",
+    "accept": "Принять",
+    "decline": "Отклонить",
+    "friends": "Друзья",
+    "declined": "Отклонено",
+    "loadFailed": "Не удалось загрузить уведомления",
+    "loadFailedStatus": "Не удалось загрузить уведомления ({{status}})",
+    "allMarkedRead": "Все уведомления отмечены прочитанными",
+    "markAllFailed": "Не удалось отметить всё прочитанным",
+    "friendAccepted": "Запрос в друзья принят!",
+    "acceptFailed": "Не удалось принять запрос",
+    "friendDeclined": "Запрос в друзья отклонён",
+    "declineFailed": "Не удалось отклонить запрос",
+    "time": {
+      "justNow": "только что",
+      "minutesAgo": "{{count}}м назад",
+      "hoursAgo": "{{count}}ч назад",
+      "daysAgo": "{{count}}д назад"
     }
   },
   "xp": {

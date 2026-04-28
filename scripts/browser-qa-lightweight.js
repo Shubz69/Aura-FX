@@ -24,6 +24,7 @@ function parseChartHistoryRequest(resp) {
 }
 
 const BASE_URL = process.env.QA_BASE_URL || 'http://localhost:3000';
+const QA_LIGHT_MODE = process.env.QA_LIGHT_MODE !== '0';
 const CHART_STORAGE_KEY = 'aura_chart_user_request_v1';
 
 const SYMBOLS = [
@@ -58,6 +59,11 @@ const DECODER_TFS = [
   ['1d', '1D'],
 ];
 const DECODER_RANGES = ['1D', '1W', '1M', '3M', '6M', '1Y'];
+const QA_SYMBOLS = QA_LIGHT_MODE ? SYMBOLS.slice(0, 3) : SYMBOLS;
+const QA_LAB_TFS = QA_LIGHT_MODE ? LAB_TFS.slice(1, 4) : LAB_TFS;
+const QA_REPLAY_TFS = QA_LIGHT_MODE ? REPLAY_TFS.slice(1, 4) : REPLAY_TFS;
+const QA_DECODER_TFS = QA_LIGHT_MODE ? DECODER_TFS.slice(1, 4) : DECODER_TFS;
+const QA_DECODER_RANGES = QA_LIGHT_MODE ? DECODER_RANGES.slice(0, 4) : DECODER_RANGES;
 const DECODER_TF_TESTID = {
   1: 'md-candle-tf-1m',
   15: 'md-candle-tf-15m',
@@ -168,9 +174,9 @@ async function run() {
   await dismissGdpr(page);
   const labBefore = await page.locator('.tlab-chart-host--fill').boundingBox();
   let labHeightStable = null;
-  for (const [, sym] of SYMBOLS) {
+  for (const [, sym] of QA_SYMBOLS) {
     await page.selectOption('.tlab-chart-toolbar select.tlab-select', sym);
-    for (const [tfLabel, tfVal] of LAB_TFS) {
+    for (const [tfLabel, tfVal] of QA_LAB_TFS) {
       let body = null;
       let status = null;
       let firstBarTime = null;
@@ -351,8 +357,8 @@ async function run() {
   }
 
   // Replay checks (register chart response listener before navigation to avoid missing the fetch)
-  for (const [, sym] of SYMBOLS) {
-    for (const [, tfVal] of REPLAY_TFS) {
+  for (const [, sym] of QA_SYMBOLS) {
+    for (const [, tfVal] of QA_REPLAY_TFS) {
       await page.goto(`${BASE_URL}/?qa_test_mode=1`, { waitUntil: 'domcontentloaded' });
       await dismissGdpr(page);
       await page.evaluate(([k, p]) => sessionStorage.setItem(k, JSON.stringify(p)), [CHART_STORAGE_KEY, {
@@ -647,7 +653,7 @@ async function run() {
         });
       }
     } else {
-      for (const [label, intervalVal] of DECODER_TFS) {
+      for (const [label, intervalVal] of QA_DECODER_TFS) {
       const respPromise = waitChartResp(page, decoderSymbol, intervalVal, { range: '3M', timeoutMs: 90000 });
       const tfTestId = DECODER_TF_TESTID[intervalVal] || '';
       if (tfTestId && (await page.locator(`[data-testid="${tfTestId}"]`).count())) {
@@ -696,7 +702,7 @@ async function run() {
       });
     }
 
-      for (const rangeVal of DECODER_RANGES) {
+      for (const rangeVal of QA_DECODER_RANGES) {
       const respPromise = waitChartResp(page, decoderSymbol, '60', { range: rangeVal, timeoutMs: 90000 });
       const rangeTestId = DECODER_RANGE_TESTID[rangeVal] || '';
       if (rangeTestId && (await page.locator(`[data-testid="${rangeTestId}"]`).count())) {

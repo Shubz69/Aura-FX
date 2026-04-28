@@ -36,7 +36,6 @@
     "auraAi": "Aura AI",
     "cs": "C & S",
     "operator": "The Operator",
-    "operatorIntelligence": "Operator Intelligence",
     "surveillance": "Surveillance",
     "surveillanceLockedTitle": "Surveillance is included with Elite (active Elite/A7FX billing) or Admin / Super Admin accounts.",
     "locked": "Locked",
@@ -98,7 +97,23 @@
     "resendCodeSeconds": "Resend Code ({{seconds}}s)",
     "backToLogin": "Back to Login",
     "resendSuccessAlert": "Code resent to your email.",
-    "resendFailed": "Failed to resend code. Please try again."
+    "resendFailed": "Failed to resend code. Please try again.",
+    "errorAccountDeleted": "Your account has been deleted by an administrator. You have been logged out.",
+    "errorEmailRequired": "Please enter your email or username.",
+    "errorPasswordRequired": "Password is required.",
+    "errorIncorrectPassword": "The password you entered is incorrect. Try again or use Forgot Password.",
+    "errorNoAccount": "No account exists with this email address. Please sign up for an account.",
+    "errorTooManyAttempts": "Too many attempts. Try again shortly.",
+    "errorSigninUnavailable": "Sign-in is temporarily unavailable. Please try again in a few minutes.",
+    "errorSomethingWrong": "Something went wrong. Please try again.",
+    "errorLoginFailed": "Login failed. Please try again.",
+    "errorCannotConnect": "Cannot connect to server. Please try again.",
+    "errorTimeout": "The server took too long to respond. Check your connection and try again.",
+    "errorInvalidMfaCode": "Please enter a valid 6-digit code",
+    "errorInvalidServerResponse": "Invalid response from server",
+    "errorInvalidCode": "Invalid code. Please try again.",
+    "errorLabelIncorrectPassword": "Incorrect password",
+    "errorLabelNoAccount": "No account for this email or username"
   },
   "profile": {
     "accountSettings": "Account Settings",
@@ -227,8 +242,6 @@
       "percent": "{{val}}%"
     },
     "websiteLanguageHint": "One click, site-wide",
-    "communityAutoTranslate": "Automatically translate community messages",
-    "communityAutoTranslateHint": "When on, messages from others appear in your website language when possible.",
     "validation": {
       "invalidUsernameFormat": "Invalid username format"
     },
@@ -591,12 +604,6 @@
     },
     "msg": {
       "saveFailed": "Message could not be saved. Try again in a moment."
-    },
-    "translation": {
-      "loading": "Translating…",
-      "translatedFrom": "Translated from {{language}}",
-      "showOriginal": "Show original",
-      "showTranslation": "Show translation"
     },
     "alert": {
       "noSendPermission": "You don't have permission to send messages in this channel.",
@@ -1402,6 +1409,33 @@
       "metricsActual": "Actual: {{v}}",
       "metricsForecast": "Forecast: {{v}}",
       "metricsPrevious": "Previous: {{v}}"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllAsRead": "Mark all as read",
+    "markAllRead": "Mark all read",
+    "loading": "Loading notifications...",
+    "couldNotLoad": "Couldn't load notifications",
+    "tapToRetry": "Tap to retry",
+    "noneYet": "No notifications yet",
+    "accept": "Accept",
+    "decline": "Decline",
+    "friends": "Friends",
+    "declined": "Declined",
+    "loadFailed": "Failed to load notifications",
+    "loadFailedStatus": "Could not load notifications ({{status}})",
+    "allMarkedRead": "All notifications marked as read",
+    "markAllFailed": "Failed to mark all as read",
+    "friendAccepted": "Friend request accepted!",
+    "acceptFailed": "Failed to accept request",
+    "friendDeclined": "Friend request declined",
+    "declineFailed": "Failed to decline request",
+    "time": {
+      "justNow": "just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
     }
   },
   "xp": {

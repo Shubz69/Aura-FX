@@ -36,7 +36,6 @@
     "auraAi": "Aura AI",
     "cs": "کورسز و سپورٹ",
     "operator": "آپریٹر",
-    "operatorIntelligence": "آپریٹر انٹیلیجنس",
     "surveillance": "نگرانی",
     "surveillanceLockedTitle": "نگرانی Elite (فعال Elite/A7FX بلنگ) یا ایڈمن/سپر ایڈمن اکاؤنٹس میں شامل ہے۔",
     "locked": "مقفل",
@@ -98,7 +97,23 @@
     "resendCodeSeconds": "دوبارہ ({{seconds}}س)",
     "backToLogin": "لاگ ان پر واپس",
     "resendSuccessAlert": "کوڈ دوبارہ ای میل بھیج دیا گیا۔",
-    "resendFailed": "دوبارہ بھیجنا ناکام۔ دوبارہ کوشش کریں۔"
+    "resendFailed": "دوبارہ بھیجنا ناکام۔ دوبارہ کوشش کریں۔",
+    "errorAccountDeleted": "آپ کا اکاؤنٹ ایڈمن نے حذف کر دیا ہے۔ آپ لاگ آؤٹ ہو گئے ہیں۔",
+    "errorEmailRequired": "براہ کرم اپنا ای میل یا صارف نام درج کریں۔",
+    "errorPasswordRequired": "پاس ورڈ درکار ہے۔",
+    "errorIncorrectPassword": "آپ کا درج کردہ پاس ورڈ غلط ہے۔ دوبارہ کوشش کریں یا Forgot Password استعمال کریں۔",
+    "errorNoAccount": "اس ای میل پتے کے ساتھ کوئی اکاؤنٹ موجود نہیں۔ براہ کرم سائن اپ کریں۔",
+    "errorTooManyAttempts": "بہت زیادہ کوششیں۔ تھوڑی دیر بعد دوبارہ کوشش کریں۔",
+    "errorSigninUnavailable": "سائن اِن عارضی طور پر دستیاب نہیں۔ چند منٹ بعد کوشش کریں۔",
+    "errorSomethingWrong": "کچھ غلط ہوا۔ براہ کرم دوبارہ کوشش کریں۔",
+    "errorLoginFailed": "لاگ ان ناکام۔ دوبارہ کوشش کریں۔",
+    "errorCannotConnect": "سرور سے رابطہ نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
+    "errorTimeout": "سرور نے جواب دینے میں زیادہ وقت لیا۔ کنکشن چیک کریں اور دوبارہ کوشش کریں۔",
+    "errorInvalidMfaCode": "براہ کرم درست 6 ہندسوں کا کوڈ درج کریں",
+    "errorInvalidServerResponse": "سرور سے غلط جواب",
+    "errorInvalidCode": "کوڈ غلط ہے۔ براہ کرم دوبارہ کوشش کریں۔",
+    "errorLabelIncorrectPassword": "غلط پاس ورڈ",
+    "errorLabelNoAccount": "اس ای میل یا صارف نام کے لیے کوئی اکاؤنٹ نہیں"
   },
   "profile": {
     "accountSettings": "اکاؤنٹ کی ترتیبات",
@@ -227,8 +242,6 @@
       "percent": "{{val}} فیصد"
     },
     "websiteLanguageHint": "ایک کلک، پوری سائٹ",
-    "communityAutoTranslate": "کمیونٹی کے پیغامات خودکار ترجمہ",
-    "communityAutoTranslateHint": "جب آن ہو، دوسروں کے پیغام ممکن ہو تو آپ کی ویب سائٹ کی زبان میں دکھائے جاتے ہیں۔",
     "validation": {
       "invalidUsernameFormat": "غلط صارف نام کی شکل"
     },
@@ -591,12 +604,6 @@
     },
     "msg": {
       "saveFailed": "پیغام محفوظ نہیں ہوا۔ دوبارہ کوشش کریں۔"
-    },
-    "translation": {
-      "loading": "ترجمہ ہو رہا ہے…",
-      "translatedFrom": "{{language}} سے ترجمہ شدہ",
-      "showOriginal": "اصل دکھائیں",
-      "showTranslation": "ترجمہ دکھائیں"
     },
     "alert": {
       "noSendPermission": "اس چینل میں پیغام بھیجنے کی اجازت نہیں۔",
@@ -1402,6 +1409,33 @@
       "metricsActual": "Actual: {{v}}",
       "metricsForecast": "Forecast: {{v}}",
       "metricsPrevious": "Previous: {{v}}"
+    }
+  },
+  "notifications": {
+    "title": "اطلاعات",
+    "markAllAsRead": "سب کو پڑھا ہوا نشان زد کریں",
+    "markAllRead": "سب پڑھا ہوا",
+    "loading": "اطلاعات لوڈ ہو رہی ہیں...",
+    "couldNotLoad": "اطلاعات لوڈ نہیں ہو سکیں",
+    "tapToRetry": "دوبارہ کوشش کے لیے ٹیپ کریں",
+    "noneYet": "ابھی کوئی اطلاع نہیں",
+    "accept": "قبول کریں",
+    "decline": "مسترد کریں",
+    "friends": "دوست",
+    "declined": "مسترد",
+    "loadFailed": "اطلاعات لوڈ کرنے میں ناکامی",
+    "loadFailedStatus": "اطلاعات لوڈ نہیں ہو سکیں ({{status}})",
+    "allMarkedRead": "تمام اطلاعات کو پڑھا ہوا نشان زد کیا گیا",
+    "markAllFailed": "سب کو پڑھا ہوا نشان زد کرنے میں ناکامی",
+    "friendAccepted": "دوستی کی درخواست قبول کر لی گئی!",
+    "acceptFailed": "درخواست قبول کرنے میں ناکامی",
+    "friendDeclined": "دوستی کی درخواست مسترد",
+    "declineFailed": "درخواست مسترد کرنے میں ناکامی",
+    "time": {
+      "justNow": "ابھی",
+      "minutesAgo": "{{count}}م پہلے",
+      "hoursAgo": "{{count}}گ پہلے",
+      "daysAgo": "{{count}}دن پہلے"
     }
   },
   "xp": {

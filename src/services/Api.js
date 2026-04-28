@@ -1047,7 +1047,11 @@ const Api = {
             ...(options.from != null ? { from: String(options.from) } : {}),
             ...(options.to != null ? { to: String(options.to) } : {}),
         };
-        return dedupeGet(`${API_BASE_URL}/api/market/chart-history`, { params, skipCache: true });
+        return dedupeGet(`${API_BASE_URL}/api/market/chart-history`, {
+            params,
+            skipCache: true,
+            signal: options.signal,
+        });
     },
     /**
      * Economic calendar. skipCache so actuals stay fresh.

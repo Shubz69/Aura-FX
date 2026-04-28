@@ -36,7 +36,6 @@
     "auraAi": "Aura AI",
     "cs": "دورات ودعم",
     "operator": "المشغّل",
-    "operatorIntelligence": "ذكاء المشغّل",
     "surveillance": "المراقبة",
     "surveillanceLockedTitle": "المراقبة مضمنة مع Elite (اشتراك Elite/A7FX نشط) أو حسابات المشرف/المشرف الأعلى.",
     "locked": "مقفل",
@@ -98,7 +97,23 @@
     "resendCodeSeconds": "إعادة الإرسال ({{seconds}}ث)",
     "backToLogin": "العودة لتسجيل الدخول",
     "resendSuccessAlert": "أُعيد إرسال الرمز إلى بريدك.",
-    "resendFailed": "فشل إعادة الإرسال. حاول مرة أخرى."
+    "resendFailed": "فشل إعادة الإرسال. حاول مرة أخرى.",
+    "errorAccountDeleted": "تم حذف حسابك بواسطة المشرف. تم تسجيل خروجك.",
+    "errorEmailRequired": "يرجى إدخال البريد أو اسم المستخدم.",
+    "errorPasswordRequired": "كلمة المرور مطلوبة.",
+    "errorIncorrectPassword": "كلمة المرور غير صحيحة. حاول مجددًا أو استخدم نسيت كلمة المرور.",
+    "errorNoAccount": "لا يوجد حساب بهذا البريد. يرجى التسجيل.",
+    "errorTooManyAttempts": "محاولات كثيرة جدًا. حاول بعد قليل.",
+    "errorSigninUnavailable": "تسجيل الدخول غير متاح مؤقتًا. حاول بعد بضع دقائق.",
+    "errorSomethingWrong": "حدث خطأ ما. حاول مرة أخرى.",
+    "errorLoginFailed": "فشل تسجيل الدخول. حاول مرة أخرى.",
+    "errorCannotConnect": "تعذر الاتصال بالخادم. حاول مرة أخرى.",
+    "errorTimeout": "استغرق الخادم وقتًا طويلًا للرد. تحقق من الاتصال وحاول مرة أخرى.",
+    "errorInvalidMfaCode": "يرجى إدخال رمز صحيح من 6 أرقام",
+    "errorInvalidServerResponse": "استجابة غير صالحة من الخادم",
+    "errorInvalidCode": "رمز غير صالح. حاول مرة أخرى.",
+    "errorLabelIncorrectPassword": "كلمة المرور غير صحيحة",
+    "errorLabelNoAccount": "لا يوجد حساب لهذا البريد أو الاسم"
   },
   "profile": {
     "accountSettings": "إعدادات الحساب",
@@ -227,8 +242,6 @@
       "percent": "{{val}}٪"
     },
     "websiteLanguageHint": "نقرة واحدة للموقع بالكامل",
-    "communityAutoTranslate": "ترجمة رسائل المجتمع تلقائيًا",
-    "communityAutoTranslateHint": "عند التفعيل، تظهر رسائل الآخرين بلغة الموقع عندما يكون ذلك ممكنًا.",
     "validation": {
       "invalidUsernameFormat": "تنسيق اسم المستخدم غير صالح"
     },
@@ -591,12 +604,6 @@
     },
     "msg": {
       "saveFailed": "تعذر حفظ الرسالة. أعد المحاولة لاحقًا."
-    },
-    "translation": {
-      "loading": "جارٍ الترجمة…",
-      "translatedFrom": "مترجم من {{language}}",
-      "showOriginal": "عرض الأصل",
-      "showTranslation": "عرض الترجمة"
     },
     "alert": {
       "noSendPermission": "ليس لديك إذن لإرسال رسائل في هذه القناة.",
@@ -1402,6 +1409,33 @@
       "metricsActual": "Actual: {{v}}",
       "metricsForecast": "Forecast: {{v}}",
       "metricsPrevious": "Previous: {{v}}"
+    }
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "markAllAsRead": "تحديد الكل كمقروء",
+    "markAllRead": "تحديد الكل كمقروء",
+    "loading": "جارٍ تحميل الإشعارات...",
+    "couldNotLoad": "تعذر تحميل الإشعارات",
+    "tapToRetry": "اضغط لإعادة المحاولة",
+    "noneYet": "لا إشعارات بعد",
+    "accept": "قبول",
+    "decline": "رفض",
+    "friends": "أصدقاء",
+    "declined": "مرفوض",
+    "loadFailed": "فشل تحميل الإشعارات",
+    "loadFailedStatus": "تعذر تحميل الإشعارات ({{status}})",
+    "allMarkedRead": "تم تحديد كل الإشعارات كمقروءة",
+    "markAllFailed": "فشل تحديد الكل كمقروء",
+    "friendAccepted": "تم قبول طلب الصداقة!",
+    "acceptFailed": "فشل قبول الطلب",
+    "friendDeclined": "تم رفض طلب الصداقة",
+    "declineFailed": "فشل رفض الطلب",
+    "time": {
+      "justNow": "الآن",
+      "minutesAgo": "منذ {{count}}د",
+      "hoursAgo": "منذ {{count}}س",
+      "daysAgo": "منذ {{count}}ي"
     }
   },
   "xp": {

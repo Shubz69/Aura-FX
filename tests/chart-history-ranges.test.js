@@ -72,18 +72,53 @@ it('long ranges want more bars than short ranges (4h 1Y > 4h 1M)', () => {
   const long = chartHistory.computeMinBarsWanted('240', '1Y');
   expect(long).toBeGreaterThan(short);
 });
+it('5Y daily has meaningful bar target', () => {
+  const n = chartHistory.computeMinBarsWanted('1D', '5Y');
+  expect(n).toBeGreaterThanOrEqual(1200);
+});
+it('10Y daily has meaningful bar target', () => {
+  const n = chartHistory.computeMinBarsWanted('1D', '10Y');
+  expect(n).toBeGreaterThanOrEqual(2500);
+});
+it('20Y daily has meaningful bar target', () => {
+  const n = chartHistory.computeMinBarsWanted('1D', '20Y');
+  expect(n).toBeGreaterThanOrEqual(5000);
+});
+it('1D + 50Y remains daily-first (no forced monthly default)', () => {
+  const c = chartHistory.coerceIntervalForRange('1D', '50Y');
+  expect(c.effectiveInterval).toBe('1D');
+});
+it('impossible combo 1m + 50Y gracefully downgrades', () => {
+  const c = chartHistory.coerceIntervalForRange('1', '50Y');
+  expect(c.effectiveInterval).toBe('1D');
+});
+it('pagination merge/dedupe/sort is stable', () => {
+  const merged = chartHistory.mergeBarsAscendingDedupe([
+    [{ time: 3, open: 1, high: 1, low: 1, close: 1 }, { time: 1, open: 1, high: 1, low: 1, close: 1 }],
+    [{ time: 2, open: 2, high: 2, low: 2, close: 2 }, { time: 3, open: 9, high: 9, low: 9, close: 9 }],
+  ]);
+  expect(merged.length).toBe(3);
+  expect(merged[0].time).toBe(1);
+  expect(merged[1].time).toBe(2);
+  expect(merged[2].time).toBe(3);
+  expect(merged[2].close).toBe(9);
+});
 
 console.log('\nchart-history provider plan (Yahoo when shallow; Twelve when deep intraday)');
 it('prefers Yahoo for 60 + 1W', () => {
   const p = chartHistory.providerPlan({ interval: '60', range: '1W', from: null, to: null });
   expect(p.prefer).toBe('yahoo');
 });
-it('prefers Twelve for 15 + 1M', () => {
+it('prefers Yahoo for 15 + 1M normal load', () => {
   const p = chartHistory.providerPlan({ interval: '15', range: '1M', from: null, to: null });
-  expect(p.prefer).toBe('twelvedata');
+  expect(p.prefer).toBe('yahoo');
 });
-it('prefers Twelve for 60 + 1Y', () => {
+it('prefers Yahoo for 60 + 1Y normal load', () => {
   const p = chartHistory.providerPlan({ interval: '60', range: '1Y', from: null, to: null });
+  expect(p.prefer).toBe('yahoo');
+});
+it('prefers Twelve for 1D + 20Y (daily-first deep history)', () => {
+  const p = chartHistory.providerPlan({ interval: '1D', range: '20Y', from: null, to: null });
   expect(p.prefer).toBe('twelvedata');
 });
 

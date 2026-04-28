@@ -243,7 +243,7 @@ const Navbar = () => {
   </button>
 )}
                       <Link to="/aura-analysis" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaChartLine className="dropdown-icon" /> Aura Analysis
+                        <FaChartLine className="dropdown-icon" /> {t('navbar.auraAnalysis')}
                       </Link>
                       <Link to="/backtesting" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaHistory className="dropdown-icon" /> {t('navbar.backtesting')}
@@ -251,7 +251,7 @@ const Navbar = () => {
                       {isPremium(user) && (
                         <>
                           <Link to="/reports" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                            <FaFileAlt className="dropdown-icon" /> Performance & DNA
+                            <FaFileAlt className="dropdown-icon" /> {t('navbar.performanceDna')}
                           </Link>
                         </>
                       )}
@@ -262,7 +262,7 @@ const Navbar = () => {
                         <FaEnvelope className="dropdown-icon" /> {t('navbar.messages')}
                       </Link>
                       <Link to="/affiliation" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaLink className="dropdown-icon" /> Affiliation
+                        <FaLink className="dropdown-icon" /> {t('footer.affiliation')}
                       </Link>
                       {showAdminNavGroup && (
                         <>

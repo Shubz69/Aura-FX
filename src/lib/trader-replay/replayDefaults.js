@@ -47,6 +47,8 @@ export const CHART_INTERVAL_OPTIONS = [
   { label: '1H', value: '60' },
   { label: '4H', value: '240' },
   { label: 'D', value: 'D' },
+  { label: 'W', value: '1W' },
+  { label: 'M', value: '1M' },
 ];
 export const CHART_RANGE_OPTIONS = [
   { label: '1D', value: '1D' },
@@ -55,6 +57,10 @@ export const CHART_RANGE_OPTIONS = [
   { label: '3M', value: '3M' },
   { label: '6M', value: '6M' },
   { label: '1Y', value: '1Y' },
+  { label: '5Y', value: '5Y' },
+  { label: '10Y', value: '10Y' },
+  { label: '20Y', value: '20Y' },
+  { label: '50Y', value: '50Y' },
 ];
 
 export const MARKER_TYPES = [

@@ -36,7 +36,6 @@
     "auraAi": "Aura AI",
     "cs": "课程与支持",
     "operator": "执行者",
-    "operatorIntelligence": "操盘手情报",
     "surveillance": "监控",
     "surveillanceLockedTitle": "监控功能包含在 Elite（有效 Elite/A7FX 订阅）或管理员/超级管理员账户中。",
     "locked": "已锁定",
@@ -98,7 +97,23 @@
     "resendCodeSeconds": "重发验证码（{{seconds}} 秒）",
     "backToLogin": "返回登录",
     "resendSuccessAlert": "验证码已重新发送到您的邮箱。",
-    "resendFailed": "重发失败，请重试。"
+    "resendFailed": "重发失败，请重试。",
+    "errorAccountDeleted": "您的账户已被管理员删除，您已退出登录。",
+    "errorEmailRequired": "请输入邮箱或用户名。",
+    "errorPasswordRequired": "请输入密码。",
+    "errorIncorrectPassword": "您输入的密码不正确。请重试或使用忘记密码。",
+    "errorNoAccount": "该邮箱没有对应账户，请先注册。",
+    "errorTooManyAttempts": "尝试次数过多，请稍后再试。",
+    "errorSigninUnavailable": "登录暂时不可用，请稍后再试。",
+    "errorSomethingWrong": "出现问题，请重试。",
+    "errorLoginFailed": "登录失败，请重试。",
+    "errorCannotConnect": "无法连接服务器，请重试。",
+    "errorTimeout": "服务器响应超时。请检查网络后重试。",
+    "errorInvalidMfaCode": "请输入有效的 6 位验证码",
+    "errorInvalidServerResponse": "服务器返回无效响应",
+    "errorInvalidCode": "验证码无效，请重试。",
+    "errorLabelIncorrectPassword": "密码错误",
+    "errorLabelNoAccount": "此邮箱或用户名没有账户"
   },
   "profile": {
     "accountSettings": "账户设置",
@@ -227,8 +242,6 @@
       "percent": "{{val}}％"
     },
     "websiteLanguageHint": "一键全站",
-    "communityAutoTranslate": "自动翻译社区消息",
-    "communityAutoTranslateHint": "开启后，在可行时以您选择的网站语言显示他人的消息。",
     "validation": {
       "invalidUsernameFormat": "用户名格式无效"
     },
@@ -591,12 +604,6 @@
     },
     "msg": {
       "saveFailed": "消息无法保存。请稍后重试。"
-    },
-    "translation": {
-      "loading": "正在翻译…",
-      "translatedFrom": "翻译自{{language}}",
-      "showOriginal": "显示原文",
-      "showTranslation": "显示译文"
     },
     "alert": {
       "noSendPermission": "您没有在此频道发送消息的权限。",
@@ -1402,6 +1409,33 @@
       "metricsActual": "Actual: {{v}}",
       "metricsForecast": "Forecast: {{v}}",
       "metricsPrevious": "Previous: {{v}}"
+    }
+  },
+  "notifications": {
+    "title": "通知",
+    "markAllAsRead": "全部标记为已读",
+    "markAllRead": "全部已读",
+    "loading": "正在加载通知...",
+    "couldNotLoad": "无法加载通知",
+    "tapToRetry": "点击重试",
+    "noneYet": "暂无通知",
+    "accept": "接受",
+    "decline": "拒绝",
+    "friends": "好友",
+    "declined": "已拒绝",
+    "loadFailed": "加载通知失败",
+    "loadFailedStatus": "无法加载通知 ({{status}})",
+    "allMarkedRead": "所有通知已标记为已读",
+    "markAllFailed": "全部标记已读失败",
+    "friendAccepted": "好友请求已接受！",
+    "acceptFailed": "接受请求失败",
+    "friendDeclined": "好友请求已拒绝",
+    "declineFailed": "拒绝请求失败",
+    "time": {
+      "justNow": "刚刚",
+      "minutesAgo": "{{count}}分钟前",
+      "hoursAgo": "{{count}}小时前",
+      "daysAgo": "{{count}}天前"
     }
   },
   "xp": {

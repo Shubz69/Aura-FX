@@ -36,7 +36,6 @@
     "auraAi": "Aura AI",
     "cs": "কোর্স ও সাপোর্ট",
     "operator": "অপারেটর",
-    "operatorIntelligence": "অপারেটর ইন্টেলিজেন্স",
     "surveillance": "নজরদারি",
     "surveillanceLockedTitle": "নজরদারি Elite (সক্রিয় Elite/A7FX বিলিং) বা অ্যাডমিন/সুপার অ্যাডমিন অ্যাকাউন্টে অন্তর্ভুক্ত।",
     "locked": "লক",
@@ -98,7 +97,23 @@
     "resendCodeSeconds": "পুনরায় পাঠান ({{seconds}}সে)",
     "backToLogin": "লগইনে ফিরুন",
     "resendSuccessAlert": "কোড আবার ইমেইলে পাঠানো হয়েছে।",
-    "resendFailed": "পুনরায় পাঠানো ব্যর্থ। আবার চেষ্টা করুন।"
+    "resendFailed": "পুনরায় পাঠানো ব্যর্থ। আবার চেষ্টা করুন।",
+    "errorAccountDeleted": "আপনার অ্যাকাউন্ট অ্যাডমিন মুছে দিয়েছেন। আপনাকে লগ আউট করা হয়েছে।",
+    "errorEmailRequired": "ইমেইল বা ইউজারনেম লিখুন।",
+    "errorPasswordRequired": "পাসওয়ার্ড প্রয়োজন।",
+    "errorIncorrectPassword": "আপনার পাসওয়ার্ড ভুল। আবার চেষ্টা করুন বা Forgot Password ব্যবহার করুন।",
+    "errorNoAccount": "এই ইমেইলে কোনো অ্যাকাউন্ট নেই। সাইন আপ করুন।",
+    "errorTooManyAttempts": "অতিরিক্ত চেষ্টা। একটু পরে আবার চেষ্টা করুন।",
+    "errorSigninUnavailable": "সাইন-ইন সাময়িকভাবে অনুপলব্ধ। কয়েক মিনিট পরে চেষ্টা করুন।",
+    "errorSomethingWrong": "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।",
+    "errorLoginFailed": "লগইন ব্যর্থ। আবার চেষ্টা করুন।",
+    "errorCannotConnect": "সার্ভারে সংযোগ করা যাচ্ছে না। আবার চেষ্টা করুন।",
+    "errorTimeout": "সার্ভার সাড়া দিতে বেশি সময় নিয়েছে। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।",
+    "errorInvalidMfaCode": "সঠিক ৬-সংখ্যার কোড দিন",
+    "errorInvalidServerResponse": "সার্ভার থেকে অবৈধ উত্তর",
+    "errorInvalidCode": "কোড অবৈধ। আবার চেষ্টা করুন।",
+    "errorLabelIncorrectPassword": "ভুল পাসওয়ার্ড",
+    "errorLabelNoAccount": "এই ইমেইল বা ইউজারনেমের জন্য কোনো অ্যাকাউন্ট নেই"
   },
   "profile": {
     "accountSettings": "অ্যাকাউন্ট সেটিংস",
@@ -227,8 +242,6 @@
       "percent": "{{val}} শতাংশ"
     },
     "websiteLanguageHint": "এক ক্লিকে সাইটজুড়ে",
-    "communityAutoTranslate": "কমিউনিটি বার্তা স্বয়ংক্রিয় অনুবাদ করুন",
-    "communityAutoTranslateHint": "চালু থাকলে, সম্ভব হলে অন্যদের বার্তা আপনার ওয়েবসাইটের ভাষায় দেখাবে।",
     "validation": {
       "invalidUsernameFormat": "অবৈধ ব্যবহারকারীর নাম বিন্যাস"
     },
@@ -591,12 +604,6 @@
     },
     "msg": {
       "saveFailed": "বার্তা সংরক্ষণ হয়নি। একটু পরে চেষ্টা করুন।"
-    },
-    "translation": {
-      "loading": "অনুবাদ হচ্ছে…",
-      "translatedFrom": "{{language}} থেকে অনূদিত",
-      "showOriginal": "মূল দেখান",
-      "showTranslation": "অনুবাদ দেখান"
     },
     "alert": {
       "noSendPermission": "এই চ্যানেলে বার্তা পাঠানোর অনুমতি নেই।",
@@ -1402,6 +1409,33 @@
       "metricsActual": "Actual: {{v}}",
       "metricsForecast": "Forecast: {{v}}",
       "metricsPrevious": "Previous: {{v}}"
+    }
+  },
+  "notifications": {
+    "title": "বিজ্ঞপ্তি",
+    "markAllAsRead": "সব পড়া হয়েছে চিহ্নিত করুন",
+    "markAllRead": "সব পড়া",
+    "loading": "বিজ্ঞপ্তি লোড হচ্ছে...",
+    "couldNotLoad": "বিজ্ঞপ্তি লোড করা যায়নি",
+    "tapToRetry": "আবার চেষ্টা করতে ট্যাপ করুন",
+    "noneYet": "এখনও কোনো বিজ্ঞপ্তি নেই",
+    "accept": "গ্রহণ",
+    "decline": "প্রত্যাখ্যান",
+    "friends": "বন্ধু",
+    "declined": "প্রত্যাখ্যাত",
+    "loadFailed": "বিজ্ঞপ্তি লোড ব্যর্থ",
+    "loadFailedStatus": "বিজ্ঞপ্তি লোড করা যায়নি ({{status}})",
+    "allMarkedRead": "সব বিজ্ঞপ্তি পড়া হয়েছে চিহ্নিত",
+    "markAllFailed": "সব পড়া চিহ্নিত ব্যর্থ",
+    "friendAccepted": "ফ্রেন্ড রিকোয়েস্ট গ্রহণ করা হয়েছে!",
+    "acceptFailed": "রিকোয়েস্ট গ্রহণ ব্যর্থ",
+    "friendDeclined": "ফ্রেন্ড রিকোয়েস্ট প্রত্যাখ্যাত",
+    "declineFailed": "রিকোয়েস্ট প্রত্যাখ্যান ব্যর্থ",
+    "time": {
+      "justNow": "এখনই",
+      "minutesAgo": "{{count}}মি আগে",
+      "hoursAgo": "{{count}}ঘ আগে",
+      "daysAgo": "{{count}}দি আগে"
     }
   },
   "xp": {

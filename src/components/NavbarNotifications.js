@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaBell } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { getApiBaseUrl } from '../services/Api';
 import NotificationsDropdown from './NotificationsDropdown';
@@ -29,6 +30,7 @@ function parseRetryAfterMs(headerValue) {
  * and shows NotificationsDropdown (friend requests, admin messages, etc.)
  */
 const NavbarNotifications = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -146,7 +148,7 @@ const NavbarNotifications = () => {
       <button
         className="notification-bell"
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-label="Notifications"
+        aria-label={t('notifications.title')}
       >
         <FaBell />
         {unreadCount > 0 && (

@@ -144,7 +144,7 @@ for (const i of ['1', '15', '60', '240', '1D']) {
     expect(chartHistory.normalizeInterval(i)).toBe(i);
   });
 }
-for (const r of ['1D', '1W', '1M', '3M', '6M', '1Y']) {
+for (const r of ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', '10Y', '20Y', '50Y']) {
   it(`normalizes range ${r}`, () => {
     expect(chartHistory.normalizeRange(r)).toBe(r);
   });
@@ -153,13 +153,17 @@ it('prefers Twelve Data for 1m', () => {
   const p = chartHistory.providerPlan({ interval: '1', range: '1D', from: null, to: null });
   expect(p.prefer).toBe('twelvedata');
 });
-it('prefers Twelve Data for deep range 1Y', () => {
+it('prefers Yahoo for 1Y non-intraday default', () => {
   const p = chartHistory.providerPlan({ interval: '60', range: '1Y', from: null, to: null });
-  expect(p.prefer).toBe('twelvedata');
+  expect(p.prefer).toBe('yahoo');
 });
 it('supports from/to provider planning', () => {
   const p = chartHistory.providerPlan({ interval: '60', range: '3M', from: 1710000000, to: 1715000000 });
   expect(p.prefer).toBe('twelvedata');
+});
+it('coerces impossible 1m + 50Y request safely', () => {
+  const c = chartHistory.coerceIntervalForRange('1', '50Y');
+  expect(c.effectiveInterval).toBe('1D');
 });
 
 (async () => {

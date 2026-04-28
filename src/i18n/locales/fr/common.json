@@ -36,7 +36,6 @@
     "auraAi": "Aura AI",
     "cs": "Cours et support",
     "operator": "L’opérateur",
-    "operatorIntelligence": "Intelligence opérateur",
     "surveillance": "Veille des marchés",
     "surveillanceLockedTitle": "La surveillance est incluse avec Elite (facturation Elite/A7FX active) ou les comptes Admin / Super Admin.",
     "locked": "Verrouillé",
@@ -98,7 +97,23 @@
     "resendCodeSeconds": "Renvoyer ({{seconds}}s)",
     "backToLogin": "Retour à la connexion",
     "resendSuccessAlert": "Code renvoyé à votre e-mail.",
-    "resendFailed": "Échec du renvoi. Réessayez."
+    "resendFailed": "Échec du renvoi. Réessayez.",
+    "errorAccountDeleted": "Votre compte a été supprimé par un administrateur. Vous avez été déconnecté.",
+    "errorEmailRequired": "Veuillez saisir votre e-mail ou nom d’utilisateur.",
+    "errorPasswordRequired": "Le mot de passe est requis.",
+    "errorIncorrectPassword": "Le mot de passe est incorrect. Réessayez ou utilisez Mot de passe oublié.",
+    "errorNoAccount": "Aucun compte n’existe avec cet e-mail. Veuillez vous inscrire.",
+    "errorTooManyAttempts": "Trop de tentatives. Réessayez bientôt.",
+    "errorSigninUnavailable": "La connexion est temporairement indisponible. Réessayez dans quelques minutes.",
+    "errorSomethingWrong": "Une erreur est survenue. Réessayez.",
+    "errorLoginFailed": "Échec de connexion. Réessayez.",
+    "errorCannotConnect": "Impossible de se connecter au serveur. Réessayez.",
+    "errorTimeout": "Le serveur a mis trop de temps à répondre. Vérifiez votre connexion et réessayez.",
+    "errorInvalidMfaCode": "Veuillez saisir un code à 6 chiffres valide",
+    "errorInvalidServerResponse": "Réponse serveur invalide",
+    "errorInvalidCode": "Code invalide. Réessayez.",
+    "errorLabelIncorrectPassword": "Mot de passe incorrect",
+    "errorLabelNoAccount": "Aucun compte pour cet e-mail ou nom"
   },
   "profile": {
     "accountSettings": "Paramètres du compte",
@@ -227,8 +242,6 @@
       "percent": "{{val}} %"
     },
     "websiteLanguageHint": "Un clic sur tout le site",
-    "communityAutoTranslate": "Traduire automatiquement les messages de la communauté",
-    "communityAutoTranslateHint": "Si activé, les messages des autres s’affichent dans la langue du site lorsque c’est possible.",
     "validation": {
       "invalidUsernameFormat": "Format de nom d’utilisateur invalide"
     },
@@ -591,12 +604,6 @@
     },
     "msg": {
       "saveFailed": "Le message n'a pas pu être enregistré. Réessayez."
-    },
-    "translation": {
-      "loading": "Traduction…",
-      "translatedFrom": "Traduit depuis l’{{language}}",
-      "showOriginal": "Afficher l’original",
-      "showTranslation": "Afficher la traduction"
     },
     "alert": {
       "noSendPermission": "Vous n'avez pas la permission d'envoyer des messages sur ce canal.",
@@ -1402,6 +1409,33 @@
       "metricsActual": "Actual: {{v}}",
       "metricsForecast": "Forecast: {{v}}",
       "metricsPrevious": "Previous: {{v}}"
+    }
+  },
+  "notifications": {
+    "title": "Alertes",
+    "markAllAsRead": "Tout marquer comme lu",
+    "markAllRead": "Tout lu",
+    "loading": "Chargement des notifications...",
+    "couldNotLoad": "Impossible de charger les notifications",
+    "tapToRetry": "Touchez pour réessayer",
+    "noneYet": "Aucune notification pour le moment",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "friends": "Amis",
+    "declined": "Refusé",
+    "loadFailed": "Échec du chargement des notifications",
+    "loadFailedStatus": "Impossible de charger les notifications ({{status}})",
+    "allMarkedRead": "Toutes les notifications marquées comme lues",
+    "markAllFailed": "Échec du marquage global",
+    "friendAccepted": "Demande d’ami acceptée !",
+    "acceptFailed": "Échec de l’acceptation",
+    "friendDeclined": "Demande d’ami refusée",
+    "declineFailed": "Échec du refus",
+    "time": {
+      "justNow": "à l’instant",
+      "minutesAgo": "il y a {{count}} min",
+      "hoursAgo": "il y a {{count}} h",
+      "daysAgo": "il y a {{count}} j"
     }
   },
   "xp": {

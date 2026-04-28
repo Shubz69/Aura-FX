@@ -1,7 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
 import Api from '../../services/Api';
-import { normalizeChartBars, normalizeApiInterval, timeScaleOptionsForInterval } from '../../lib/charts/lightweightChartData';
+import {
+  normalizeChartBars,
+  normalizeApiInterval,
+  timeScaleOptionsForInterval,
+} from '../../lib/charts/lightweightChartData';
+import {
+  AURA_CANDLE_SERIES_OPTIONS,
+  buildAuraChartOptions,
+  getAuraVolumeColor,
+} from '../../utils/auraChartTheme';
 
 function computeChartHeight(containerEl, fillParent, fixedHeight) {
   if (fixedHeight != null && Number.isFinite(Number(fixedHeight))) return Math.max(200, Number(fixedHeight));
@@ -33,6 +42,7 @@ export default function LightweightInstrumentChart({
   const rootRef = useRef(null);
   const wrapRef = useRef(null);
   const chartRef = useRef(null);
+  const lastQueryKeyRef = useRef('');
   const [status, setStatus] = useState('loading');
   const [errorMessage, setErrorMessage] = useState('');
   const [bars, setBars] = useState(null);
@@ -48,15 +58,22 @@ export default function LightweightInstrumentChart({
     }
     const intervalNorm = normalizeApiInterval(interval);
     const rangeNorm = String(range || '3M');
+    const queryKey = JSON.stringify({ sym, interval: intervalNorm, range: rangeNorm, from: from || '', to: to || '' });
+    if (lastQueryKeyRef.current === queryKey) {
+      return undefined;
+    }
+    lastQueryKeyRef.current = queryKey;
     setStatus('loading');
     setErrorMessage('');
     setBars(null);
+    const controller = new AbortController();
     const timer = setTimeout(() => {
       Api.getMarketChartHistory(sym, {
         interval: intervalNorm,
         range: rangeNorm,
         ...(from ? { from } : {}),
         ...(to ? { to } : {}),
+        signal: controller.signal,
       })
         .then((res) => {
           if (cancelled) return;
@@ -91,6 +108,7 @@ export default function LightweightInstrumentChart({
         })
         .catch((err) => {
           if (cancelled) return;
+          if (err?.name === 'AbortError' || err?.code === 'ERR_CANCELED') return;
           const diag = err?.response?.data?.diagnostics;
           if (diag && typeof console !== 'undefined' && console.warn) {
             console.warn('[LightweightInstrumentChart] chart request failed', diag);
@@ -99,9 +117,10 @@ export default function LightweightInstrumentChart({
           setBars(null);
           setErrorMessage(err?.response?.data?.message || err?.message || 'Chart failed to load');
         });
-    }, 160);
+    }, 420);
     return () => {
       cancelled = true;
+      controller.abort();
       clearTimeout(timer);
     };
   }, [symbol, interval, range, from, to]);
@@ -110,29 +129,20 @@ export default function LightweightInstrumentChart({
     const wrap = wrapRef.current;
     if (!wrap || status !== 'ready' || !bars || bars.length < 2) return undefined;
 
-    const bg = '#0b0e14';
-    const gridGold = 'rgba(212, 175, 55, 0.07)';
-
     const h = computeChartHeight(rootRef.current, fillParent, height);
     const intervalNorm = normalizeApiInterval(interval);
-    const chart = createChart(wrap, {
-      width: wrap.clientWidth,
-      height: h,
-      layout: {
-        background: { type: ColorType.Solid, color: bg },
-        textColor: 'rgba(230, 220, 200, 0.88)',
+    const chart = createChart(
+      wrap,
+      buildAuraChartOptions({
+        ColorType,
+        width: wrap.clientWidth,
+        height: h,
         attributionLogo: true,
-      },
-      grid: {
-        vertLines: { color: gridGold },
-        horzLines: { color: gridGold },
-      },
-      timeScale: {
-        borderColor: 'rgba(212,175,55,0.15)',
-        ...timeScaleOptionsForInterval(intervalNorm),
-      },
-      rightPriceScale: { borderColor: 'rgba(212,175,55,0.15)' },
-    });
+        timeScale: {
+          ...timeScaleOptionsForInterval(intervalNorm),
+        },
+      })
+    );
     chartRef.current = chart;
 
     const data = bars.map((b) => ({
@@ -143,15 +153,27 @@ export default function LightweightInstrumentChart({
       close: b.close,
     }));
 
-    const series = chart.addCandlestickSeries({
-      upColor: '#3dd68c',
-      downColor: '#ff6b81',
-      borderUpColor: '#3dd68c',
-      borderDownColor: '#ff6b81',
-      wickUpColor: '#3dd68c',
-      wickDownColor: '#ff6b81',
-    });
+    const series = chart.addCandlestickSeries(AURA_CANDLE_SERIES_OPTIONS);
     series.setData(data);
+    const volumeData = bars
+      .map((b) => ({
+        time: b.time,
+        value: Number(b.volume),
+        color: getAuraVolumeColor(b.open, b.close),
+      }))
+      .filter((v) => Number.isFinite(v.value) && v.value > 0);
+    if (volumeData.length > 0) {
+      const volSeries = chart.addHistogramSeries({
+        priceFormat: { type: 'volume' },
+        priceScaleId: '',
+        lastValueVisible: false,
+        priceLineVisible: false,
+      });
+      volSeries.priceScale().applyOptions({
+        scaleMargins: { top: 0.82, bottom: 0 },
+      });
+      volSeries.setData(volumeData);
+    }
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         try {

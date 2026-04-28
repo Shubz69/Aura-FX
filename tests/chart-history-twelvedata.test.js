@@ -71,6 +71,14 @@ it('maps 1d -> 1day', () => {
   const t = chartHistory.twelveDataParams({ interval: '1D', range: '1Y', from: null, to: null });
   expect(t.interval).toBe('1day');
 });
+it('maps 1w -> 1week', () => {
+  const t = chartHistory.twelveDataParams({ interval: '1W', range: '20Y', from: null, to: null });
+  expect(t.interval).toBe('1week');
+});
+it('maps 1m -> 1month', () => {
+  const t = chartHistory.twelveDataParams({ interval: '1M', range: '50Y', from: null, to: null });
+  expect(t.interval).toBe('1month');
+});
 
 console.log('\nchart-history Twelve outputsize and backtesting dates');
 it('deep intraday requests outputsize near provider cap', () => {
@@ -80,6 +88,11 @@ it('deep intraday requests outputsize near provider cap', () => {
 it('long range outputsize exceeds short range outputsize (1h 1Y > 1h 1W)', () => {
   const short = chartHistory.twelveDataParams({ interval: '60', range: '1W', from: null, to: null });
   const long = chartHistory.twelveDataParams({ interval: '60', range: '1Y', from: null, to: null });
+  expect(long.outputsize).toBeGreaterThan(short.outputsize);
+});
+it('supports long daily windows (20Y > 5Y outputsize)', () => {
+  const short = chartHistory.twelveDataParams({ interval: '1D', range: '5Y', from: null, to: null });
+  const long = chartHistory.twelveDataParams({ interval: '1D', range: '20Y', from: null, to: null });
   expect(long.outputsize).toBeGreaterThan(short.outputsize);
 });
 

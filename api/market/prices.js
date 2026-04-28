@@ -1023,30 +1023,16 @@ async function fetchFinnhubPrice(symbol) {
  * Requires TWELVE_DATA_API_KEY environment variable
  */
 async function fetchTwelveDataPrice(symbol) {
-  const apiKey = process.env.TWELVE_DATA_API_KEY;
-  if (!apiKey) return null;
-
   const canonical = toCanonical(symbol);
+  const td = require('../market-data/providers/twelveDataClient');
+  if (!td.apiKey() || td.primaryDisabled()) return null;
   const tdSymbol = forProvider(canonical, 'twelvedata') || TWELVE_DATA_SYMBOLS[canonical];
   if (!tdSymbol) return null;
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-
-    const response = await axios.get(
-      'https://api.twelvedata.com/price',
-      {
-        params: { symbol: tdSymbol, apikey: apiKey },
-        timeout: REQUEST_TIMEOUT,
-        signal: controller.signal
-      }
-    );
-
-    clearTimeout(timeoutId);
-
-    const price = parseFloat(response.data?.price);
-    if (!response.data?.price || isNaN(price) || price <= 0) return null;
+    const response = await td.fetchPrice(tdSymbol);
+    const price = parseFloat(response?.data?.price);
+    if (!response?.ok || !response?.data?.price || isNaN(price) || price <= 0) return null;
 
     return {
       symbol: canonical,

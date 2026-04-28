@@ -36,7 +36,6 @@
     "auraAi": "Aura AI",
     "cs": "Cursos e suporte",
     "operator": "O operador",
-    "operatorIntelligence": "Inteligência do operador",
     "surveillance": "Vigilância",
     "surveillanceLockedTitle": "A vigilância está incluída no Elite (cobrança Elite/A7FX ativa) ou em contas de Admin / Super Admin.",
     "locked": "Bloqueado",
@@ -98,7 +97,23 @@
     "resendCodeSeconds": "Reenviar ({{seconds}}s)",
     "backToLogin": "Voltar ao login",
     "resendSuccessAlert": "Código reenviado para seu e-mail.",
-    "resendFailed": "Falha ao reenviar. Tente novamente."
+    "resendFailed": "Falha ao reenviar. Tente novamente.",
+    "errorAccountDeleted": "Sua conta foi excluída por um administrador. Você saiu da sessão.",
+    "errorEmailRequired": "Digite seu e-mail ou usuário.",
+    "errorPasswordRequired": "A senha é obrigatória.",
+    "errorIncorrectPassword": "A senha está incorreta. Tente novamente ou use Esqueci a senha.",
+    "errorNoAccount": "Não existe conta com esse e-mail. Cadastre-se.",
+    "errorTooManyAttempts": "Muitas tentativas. Tente novamente em instantes.",
+    "errorSigninUnavailable": "Login temporariamente indisponível. Tente em alguns minutos.",
+    "errorSomethingWrong": "Algo deu errado. Tente novamente.",
+    "errorLoginFailed": "Falha no login. Tente novamente.",
+    "errorCannotConnect": "Não foi possível conectar ao servidor. Tente novamente.",
+    "errorTimeout": "O servidor demorou para responder. Verifique sua conexão e tente novamente.",
+    "errorInvalidMfaCode": "Digite um código válido de 6 dígitos",
+    "errorInvalidServerResponse": "Resposta inválida do servidor",
+    "errorInvalidCode": "Código inválido. Tente novamente.",
+    "errorLabelIncorrectPassword": "Senha incorreta",
+    "errorLabelNoAccount": "Sem conta para este e-mail ou usuário"
   },
   "profile": {
     "accountSettings": "Configurações da conta",
@@ -227,8 +242,6 @@
       "percent": "{{val}} %"
     },
     "websiteLanguageHint": "Um clique em todo o site",
-    "communityAutoTranslate": "Traduzir automaticamente as mensagens da comunidade",
-    "communityAutoTranslateHint": "Quando ativado, as mensagens de outras pessoas aparecem no idioma do site sempre que possível.",
     "validation": {
       "invalidUsernameFormat": "Formato de nome de usuário inválido"
     },
@@ -591,12 +604,6 @@
     },
     "msg": {
       "saveFailed": "Não foi possível salvar a mensagem. Tente em instantes."
-    },
-    "translation": {
-      "loading": "A traduzir…",
-      "translatedFrom": "Traduzido de {{language}}",
-      "showOriginal": "Ver original",
-      "showTranslation": "Ver tradução"
     },
     "alert": {
       "noSendPermission": "Sem permissão para enviar mensagens neste canal.",
@@ -1402,6 +1409,33 @@
       "metricsActual": "Actual: {{v}}",
       "metricsForecast": "Forecast: {{v}}",
       "metricsPrevious": "Previous: {{v}}"
+    }
+  },
+  "notifications": {
+    "title": "Notificações",
+    "markAllAsRead": "Marcar tudo como lido",
+    "markAllRead": "Marcar tudo lido",
+    "loading": "Carregando notificações...",
+    "couldNotLoad": "Não foi possível carregar notificações",
+    "tapToRetry": "Toque para tentar novamente",
+    "noneYet": "Ainda não há notificações",
+    "accept": "Aceitar",
+    "decline": "Recusar",
+    "friends": "Amigos",
+    "declined": "Recusado",
+    "loadFailed": "Falha ao carregar notificações",
+    "loadFailedStatus": "Não foi possível carregar notificações ({{status}})",
+    "allMarkedRead": "Todas as notificações marcadas como lidas",
+    "markAllFailed": "Falha ao marcar tudo como lido",
+    "friendAccepted": "Pedido de amizade aceito!",
+    "acceptFailed": "Falha ao aceitar solicitação",
+    "friendDeclined": "Pedido de amizade recusado",
+    "declineFailed": "Falha ao recusar solicitação",
+    "time": {
+      "justNow": "agora",
+      "minutesAgo": "há {{count}} min",
+      "hoursAgo": "há {{count}} h",
+      "daysAgo": "há {{count}} d"
     }
   },
   "xp": {

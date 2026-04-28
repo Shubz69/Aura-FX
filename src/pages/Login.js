@@ -55,7 +55,7 @@ const Login = () => {
     useEffect(() => {
         // Check if account was deleted
         if (queryParams.get('deleted') === 'true') {
-            setError('Your account has been deleted by an administrator. You have been logged out.');
+            setError(t('auth.errorAccountDeleted'));
             // Clear the URL parameter
             window.history.replaceState({}, document.title, window.location.pathname);
         }
@@ -117,12 +117,12 @@ const Login = () => {
 
         const emailTrimmed = (email || '').trim();
         if (!emailTrimmed || emailTrimmed.length < 2) {
-            setError('Please enter your email or username.');
+            setError(t('auth.errorEmailRequired'));
             setIsLoading(false);
             return;
         }
         if (!(password || '').trim()) {
-            setError('Password is required.');
+            setError(t('auth.errorPasswordRequired'));
             setIsLoading(false);
             return;
         }
@@ -140,7 +140,7 @@ const Login = () => {
 
             setPasswordError(true);
             setErrorType('password');
-            setError('The password you entered is incorrect. Try again or use Forgot Password.');
+            setError(t('auth.errorIncorrectPassword'));
         } catch (err) {
             console.error('Login error details:', err);
 
@@ -168,12 +168,12 @@ const Login = () => {
                 setErrorType('password');
                 setPasswordError(true);
                 setEmailError(false);
-                errorMessage = serverMessage || errMsg || 'The password you entered is incorrect. Try again or use Forgot Password.';
+                errorMessage = serverMessage || errMsg || t('auth.errorIncorrectPassword');
             } else if (isNoAccount) {
                 setErrorType('email');
                 setPasswordError(false);
                 setEmailError(true);
-                errorMessage = serverMessage || errMsg || 'No account exists with this email address. Please sign up for an account.';
+                errorMessage = serverMessage || errMsg || t('auth.errorNoAccount');
             } else if (err.response) {
                 setErrorType(null);
                 setPasswordError(false);
@@ -182,22 +182,22 @@ const Login = () => {
                     serverMessage ||
                     errMsg ||
                     (status === 429
-                        ? 'Too many attempts. Try again shortly.'
+                        ? t('auth.errorTooManyAttempts')
                         : status === 503
-                          ? 'Sign-in is temporarily unavailable. Please try again in a few minutes.'
+                          ? t('auth.errorSigninUnavailable')
                           : status === 500
-                            ? 'Something went wrong. Please try again.'
-                            : 'Login failed. Please try again.');
+                            ? t('auth.errorSomethingWrong')
+                            : t('auth.errorLoginFailed'));
             } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || (err.message && err.message.includes('Network Error'))) {
                 setErrorType(null);
                 setPasswordError(false);
                 setEmailError(false);
-                errorMessage = 'Cannot connect to server. Please try again.';
+                errorMessage = t('auth.errorCannotConnect');
             } else if (err.code === 'ETIMEDOUT' || (err.message && err.message.includes('timeout'))) {
                 setErrorType(null);
                 setPasswordError(false);
                 setEmailError(false);
-                errorMessage = 'The server took too long to respond. Check your connection and try again.';
+                errorMessage = t('auth.errorTimeout');
             } else if (errMsg) {
                 const isPwErr = errMsg.toLowerCase().includes('password') || errMsg.toLowerCase().includes('incorrect');
                 setErrorType(isPwErr ? 'password' : 'email');
@@ -208,7 +208,7 @@ const Login = () => {
                 setErrorType(null);
                 setPasswordError(false);
                 setEmailError(false);
-                errorMessage = 'Login failed. Please try again.';
+                errorMessage = t('auth.errorLoginFailed');
             }
 
             errorRef.current = errorMessage;
@@ -224,7 +224,7 @@ const Login = () => {
         setIsLoading(true);
         
         if (!mfaCode || mfaCode.length !== 6) {
-            setError('Please enter a valid 6-digit code');
+            setError(t('auth.errorInvalidMfaCode'));
             setIsLoading(false);
             return;
         }
@@ -258,11 +258,11 @@ const Login = () => {
                 armPostLoginTransition();
                 navigate('/');
             } else {
-                throw new Error("Invalid response from server");
+                throw new Error(t('auth.errorInvalidServerResponse'));
             }
         } catch (err) {
             console.error("MFA verification error:", err);
-            setError(err.response?.data?.message || err.message || "Invalid code. Please try again.");
+            setError(err.response?.data?.message || err.message || t('auth.errorInvalidCode'));
             setIsLoading(false);
         }
     };
@@ -424,10 +424,10 @@ const Login = () => {
                             id={passwordError ? 'password-error' : emailError ? 'email-error' : 'login-error-general'}
                         >
                             {errorType === 'password' && (
-                                <div className="login-error-label">Incorrect password</div>
+                                <div className="login-error-label">{t('auth.errorLabelIncorrectPassword')}</div>
                             )}
                             {errorType === 'email' && (
-                                <div className="login-error-label">No account for this email or username</div>
+                                <div className="login-error-label">{t('auth.errorLabelNoAccount')}</div>
                             )}
                             <div className="login-error-body">{error}</div>
                         </div>

@@ -26,6 +26,21 @@ function hasRealTranslationProvider() {
   return !!(googleKey || libreUrl);
 }
 
+function logTranslationDebug(meta) {
+  if (process.env.NODE_ENV === 'production') return;
+  try {
+    const line = {
+      provider: meta.provider || 'none',
+      translated: !!meta.translated,
+      sourceLanguage: normalizeLang(meta.sourceLanguage || 'en'),
+      targetLanguage: normalizeLang(meta.targetLanguage || 'en'),
+    };
+    console.info('community-translate:', JSON.stringify(line));
+  } catch {
+    // Never let debug logging affect translation path.
+  }
+}
+
 /**
  * Replace URLs, fenced code blocks, inline code, $TICKER, @mentions, and **trading-domain** spans
  * with placeholders so generic MT does not literal-translate them (Long→longue, SL→es, etc.).
@@ -145,6 +160,12 @@ async function translateMessageText(opts) {
   const targetLanguage = normalizeLang(opts.targetLanguage);
   const text = String(opts.text || '');
   if (!text.trim() || sourceLanguage === targetLanguage) {
+    logTranslationDebug({
+      provider: 'none',
+      translated: false,
+      sourceLanguage,
+      targetLanguage,
+    });
     return { text, translated: false };
   }
 
@@ -156,22 +177,44 @@ async function translateMessageText(opts) {
   const real = hasRealTranslationProvider();
 
   if (!mock && !real) {
+    logTranslationDebug({
+      provider: 'none',
+      translated: false,
+      sourceLanguage,
+      targetLanguage,
+    });
     return { text, translated: false };
   }
 
+  let provider = 'none';
   let raw;
   try {
     if (mock) {
+      provider = 'mock';
       raw = translateMock(masked, sourceLanguage, targetLanguage);
     } else if (googleKey) {
+      provider = 'google';
       raw = await translateGoogle(masked, sourceLanguage, targetLanguage, googleKey);
     } else {
+      provider = 'libre';
       raw = await translateLibre(masked, sourceLanguage, targetLanguage, libreUrl);
     }
   } catch {
+    logTranslationDebug({
+      provider,
+      translated: false,
+      sourceLanguage,
+      targetLanguage,
+    });
     return { text, translated: false };
   }
 
+  logTranslationDebug({
+    provider,
+    translated: true,
+    sourceLanguage,
+    targetLanguage,
+  });
   return { text: unprotectAfterTranslation(raw, tokens), translated: true };
 }
 

@@ -1,6 +1,6 @@
 # Operator Intelligence — Playwright QA report
 
-**Generated:** 2026-04-27T22:09:30.043Z
+**Generated:** 2026-04-28T10:38:08.718Z
 
 ## Overall: PASS
 
@@ -23,45 +23,52 @@
 - `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
 - `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
 - `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: d8a273be-6b25-49fa-9a5a-8922da2e87e6, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: c4ce9291-0dd6-4c92-b767-39de2257e322, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: 768d50a6-6c2f-40ce-a2ad-05ee9672e18e, status: 403, code: ERR_BAD_REQUEST}`
 - `[console.error] Access forbidden: Authentication failed or insufficient permissions`
 - `[console.error] Subscription fetch error: AxiosError`
 - `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: caa8f2df-fcad-47a9-a7c7-e8d0cdbaf41f, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: 2118b6ba-6aff-4ec5-815a-8c8d69204759, status: 403, code: ERR_BAD_REQUEST}`
 - `[console.error] Access forbidden: Authentication failed or insufficient permissions`
 - `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
-- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
-- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: 974ca747-bf15-45de-95bc-48eb83cc4a8e, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
+- `[console.error] Subscription fetch error: AxiosError`
+- `[console.error] [observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}`
 - `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
 - `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: c425ea23-904f-41c3-b623-e92539f918df, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: 4d46be86-cd09-4d81-98cd-10df1574cdb3, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: bd0c72b2-7592-4ef1-9604-c266e45b506b, status: 403, code: ERR_BAD_REQUEST}`
 - `[console.error] Access forbidden: Authentication failed or insufficient permissions`
 - `[console.error] Subscription fetch error: AxiosError`
 - `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
 - `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
 - `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: a2c98632-84d6-42c6-8278-4ccdf81140ce, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] [observability] {scope: auth.session_verify_user, type: unknown, correlationId: null, status: null, code: null}`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: 142e1968-fc51-4244-98c3-be8ed061d236, status: 403, code: ERR_BAD_REQUEST}`
+- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
+- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
+- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: 73d290c8-9ae4-4607-9db4-671a7342229d, status: 403, code: ERR_BAD_REQUEST}`
 - `[console.error] Access forbidden: Authentication failed or insufficient permissions`
 - `[console.error] Subscription fetch error: AxiosError`
-- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: 451fb813-9b6b-465f-997f-ac8255ecb8cc, status: 403, code: ERR_BAD_REQUEST}`
-- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
-- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
-- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
-- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: 879b207c-0225-4fff-b976-8710e1d95500, status: 403, code: ERR_BAD_REQUEST}`
-- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
-- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
-- `[console.error] [observability] {scope: api.response_interceptor, type: auth, correlationId: 0a9464d6-8f6e-4561-83d0-6f4e9ff4d16d, status: 403, code: ERR_BAD_REQUEST}`
-- `[console.error] Access forbidden: Authentication failed or insufficient permissions`
-- `[console.error] Subscription fetch error: AxiosError`
-- `[console.error] Failed to load resource: the server responded with a status of 403 (Forbidden)`
 - `[console.error] WebSocket connection to 'ws://localhost:3000/ws' failed: Invalid frame header`
 
 ## Visual / layout issues

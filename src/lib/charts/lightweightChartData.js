@@ -3,7 +3,7 @@
  * Keeps ascending order, drops duplicate timestamps (last wins), no layout/CSS impact.
  */
 
-import { TickMarkType } from 'lightweight-charts';
+import { LineStyle, TickMarkType } from 'lightweight-charts';
 
 /** @param {string} interval */
 export function normalizeApiInterval(interval) {
@@ -11,6 +11,8 @@ export function normalizeApiInterval(interval) {
   if (!s) return '60';
   const u = s.toUpperCase();
   if (u === 'D' || u === '1D') return '1D';
+  if (u === 'W' || u === '1W') return '1W';
+  if (u === 'M' || u === '1M') return '1M';
   return s;
 }
 
@@ -44,7 +46,7 @@ export function normalizeChartBars(bars) {
  */
 export function timeScaleOptionsForInterval(interval) {
   const iv = normalizeApiInterval(interval);
-  const isDaily = iv === '1D';
+  const isDaily = iv === '1D' || iv === '1W' || iv === '1M';
   const isMinute = iv === '1' || iv === '5' || iv === '15';
   const isHourly = iv === '60' || iv === '240';
 
@@ -93,5 +95,60 @@ export function timeScaleOptionsForInterval(interval) {
       }
       return `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
     },
+  };
+}
+
+/**
+ * Shared Aura visual theme for Lightweight Charts.
+ * Layout/container sizing is intentionally excluded.
+ */
+export function auraChartVisualOptions() {
+  return {
+    layout: {
+      background: { type: 'solid', color: '#070b14' },
+      textColor: 'rgba(219, 228, 245, 0.9)',
+    },
+    grid: {
+      vertLines: { color: 'rgba(120, 158, 220, 0.08)' },
+      horzLines: { color: 'rgba(224, 181, 90, 0.06)' },
+    },
+    crosshair: {
+      vertLine: {
+        color: 'rgba(122, 182, 255, 0.45)',
+        width: 1,
+        style: LineStyle.Dotted,
+        labelBackgroundColor: '#10203a',
+      },
+      horzLine: {
+        color: 'rgba(231, 187, 96, 0.42)',
+        width: 1,
+        style: LineStyle.Dotted,
+        labelBackgroundColor: '#3a2a13',
+      },
+    },
+    rightPriceScale: {
+      borderColor: 'rgba(226, 181, 84, 0.24)',
+      textColor: 'rgba(231, 213, 175, 0.95)',
+      autoScale: true,
+    },
+    leftPriceScale: {
+      visible: false,
+    },
+    localization: {
+      locale: 'en-US',
+    },
+  };
+}
+
+export function auraCandlestickSeriesOptions() {
+  return {
+    upColor: '#30d89e',
+    downColor: '#ff6f8e',
+    borderUpColor: '#57edbc',
+    borderDownColor: '#ff9ab0',
+    wickUpColor: '#67c9ff',
+    wickDownColor: '#f7ba74',
+    priceLineVisible: false,
+    lastValueVisible: true,
   };
 }

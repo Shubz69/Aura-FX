@@ -3,7 +3,7 @@
  * priority queue (interactive over background), in-flight dedupe by URL+params.
  *
  * Env:
- * - TWELVE_DATA_MAX_RPM (default 520 — headroom under common ~610 Venture caps; tune per deployment)
+ * - TWELVE_DATA_MAX_RPM (default 500 — leaves spare headroom under common ~610 Venture caps)
  * - TWELVE_DATA_MAX_CONCURRENT (default 4)
  *
  * Multi-instance / serverless: each isolate has its own gate — set TWELVE_DATA_MAX_RPM to
@@ -13,7 +13,7 @@
 const { getTdRequestMeta } = require('./tdRequestContext');
 
 const WINDOW_MS = 60000;
-const MAX_RPM = Math.max(30, parseInt(process.env.TWELVE_DATA_MAX_RPM || '520', 10) || 520);
+const MAX_RPM = Math.max(30, parseInt(process.env.TWELVE_DATA_MAX_RPM || '500', 10) || 500);
 const MAX_CONCURRENT = Math.max(1, parseInt(process.env.TWELVE_DATA_MAX_CONCURRENT || '4', 10) || 4);
 
 const highQ = [];

@@ -1335,7 +1335,7 @@ if (!avatarToSave && avatarColor) {
                                 <div className="pf-journey-stat">
                                     <span className="pf-journey-icon">🏆</span>
                                     <div className="pf-journey-info">
-                                        <span className="pf-journey-lbl">Rank</span>
+                                        <span className="pf-journey-lbl">{t('profile.rank')}</span>
                                         <span className="pf-journey-val">{rankTitle}</span>
                                     </div>
                                 </div>
@@ -1359,7 +1359,7 @@ if (!avatarToSave && avatarColor) {
 
                     {activeTab === 'statistics' && (
                         <div className="pf-panel">
-                            <p className="pf-section-label">Trading Statistics</p>
+                            <p className="pf-section-label">{t('profile.tradingStatistics')}</p>
                             <div className="pf-stats-grid">
                                 <div className="pf-stat-card">
                                     <span className="pf-stat-icon">📊</span>

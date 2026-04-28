@@ -1,7 +1,18 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
 import Api from '../../services/Api';
-import { normalizeChartBars, normalizeApiInterval, timeScaleOptionsForInterval } from '../../lib/charts/lightweightChartData';
+import {
+  normalizeChartBars,
+  normalizeApiInterval,
+  timeScaleOptionsForInterval,
+} from '../../lib/charts/lightweightChartData';
+import {
+  AURA_AREA_SERIES_OPTIONS,
+  AURA_CANDLE_SERIES_OPTIONS,
+  AURA_LINE_SERIES_OPTIONS,
+  buildAuraChartOptions,
+  getAuraVolumeColor,
+} from '../../utils/auraChartTheme';
 
 const MODES = [
   { id: 'candles', label: 'Candles' },
@@ -20,7 +31,7 @@ const CANDLE_TIMEFRAME_BUTTONS = [
   { label: '4H', apiInterval: '240', testId: 'md-candle-tf-4h' },
   { label: '1d', apiInterval: '1D', testId: 'md-candle-tf-1d' },
 ];
-const VISIBLE_RANGE_BUTTONS = ['1D', '1W', '1M', '3M', '6M', '1Y'].map((r) => ({
+const VISIBLE_RANGE_BUTTONS = ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', '10Y', '20Y', '50Y'].map((r) => ({
   label: r,
   testId: `md-range-${r.toLowerCase()}`,
 }));
@@ -127,6 +138,8 @@ export default function MarketDecoderChart({
 }) {
   const wrapRef = useRef(null);
   const chartRef = useRef(null);
+  const liveAbortRef = useRef(null);
+  const lastLiveQueryRef = useRef('');
   const [mode, setMode] = useState('candles');
   const [activeTf, setActiveTf] = useState('1D');
   const [candleInterval, setCandleInterval] = useState('60');
@@ -139,9 +152,15 @@ export default function MarketDecoderChart({
     if (!sym) return;
     const intervalNorm = normalizeApiInterval(candleInterval);
     const rangeNorm = String(visibleRange || '3M');
+    const queryKey = `${sym}|${intervalNorm}|${rangeNorm}`;
+    if (lastLiveQueryRef.current === queryKey) return;
+    lastLiveQueryRef.current = queryKey;
+    if (liveAbortRef.current) liveAbortRef.current.abort();
+    const controller = new AbortController();
+    liveAbortRef.current = controller;
     (async () => {
       try {
-        const { data } = await Api.getMarketChartHistory(sym, { interval: intervalNorm, range: rangeNorm });
+        const { data } = await Api.getMarketChartHistory(sym, { interval: intervalNorm, range: rangeNorm, signal: controller.signal });
         const b = data?.bars;
         const normalized = Array.isArray(b) ? normalizeChartBars(b) : [];
         if (typeof console !== 'undefined' && console.debug) {
@@ -162,7 +181,8 @@ export default function MarketDecoderChart({
         } else {
           setLiveBars([]);
         }
-      } catch {
+      } catch (e) {
+        if (e?.name === 'AbortError' || e?.code === 'ERR_CANCELED') return;
         setLiveBars([]);
       }
     })();
@@ -171,7 +191,11 @@ export default function MarketDecoderChart({
   useEffect(() => {
     if (!useLive) return;
     setLiveBars(null);
-    refetchLive();
+    const t = setTimeout(() => refetchLive(), 380);
+    return () => {
+      clearTimeout(t);
+      if (liveAbortRef.current) liveAbortRef.current.abort();
+    };
   }, [useLive, refetchLive]);
 
   const seed = seedBars && Array.isArray(seedBars) && seedBars.length >= 2 ? seedBars : null;
@@ -198,28 +222,19 @@ export default function MarketDecoderChart({
       height = Math.min(compact ? 260 : 400, Math.max(compact ? 180 : 260, Math.floor(baseH)));
     }
 
-    const bg = referenceStyle ? '#0b0e14' : '#07111f';
-    const gridGold = referenceStyle ? 'rgba(212, 175, 55, 0.07)' : 'rgba(140, 175, 255, 0.08)';
-
     const scaleInterval = useLive ? normalizeApiInterval(candleInterval) : '1D';
-    const chart = createChart(el, {
-      width: el.clientWidth,
-      height,
-      layout: {
-        background: { type: ColorType.Solid, color: bg },
-        textColor: referenceStyle ? 'rgba(230, 220, 200, 0.88)' : 'rgba(220, 225, 235, 0.88)',
+    const chart = createChart(
+      el,
+      buildAuraChartOptions({
+        ColorType,
+        width: el.clientWidth,
+        height,
         attributionLogo: true,
-      },
-      grid: {
-        vertLines: { color: gridGold },
-        horzLines: { color: gridGold },
-      },
-      timeScale: {
-        borderColor: referenceStyle ? 'rgba(212,175,55,0.15)' : 'rgba(140,175,255,0.2)',
-        ...timeScaleOptionsForInterval(scaleInterval),
-      },
-      rightPriceScale: { borderColor: referenceStyle ? 'rgba(212,175,55,0.15)' : 'rgba(140,175,255,0.2)' },
-    });
+        timeScale: {
+          ...timeScaleOptionsForInterval(scaleInterval),
+        },
+      })
+    );
     chartRef.current = chart;
 
     const data = normalizeChartBars(bForChart);
@@ -227,15 +242,25 @@ export default function MarketDecoderChart({
     const lineData = data.map((b) => ({ time: b.time, value: b.close }));
 
     if (referenceStyle) {
-      const s = chart.addCandlestickSeries({
-        upColor: '#3dd68c',
-        downColor: '#ff6b81',
-        borderUpColor: '#3dd68c',
-        borderDownColor: '#ff6b81',
-        wickUpColor: '#3dd68c',
-        wickDownColor: '#ff6b81',
-      });
+      const s = chart.addCandlestickSeries(AURA_CANDLE_SERIES_OPTIONS);
       s.setData(data);
+      const volumeData = data
+        .map((b, idx) => ({
+          time: b.time,
+          value: Number(bForChart[idx]?.volume),
+          color: getAuraVolumeColor(b.open, b.close),
+        }))
+        .filter((v) => Number.isFinite(v.value) && v.value > 0);
+      if (volumeData.length > 0) {
+        const volSeries = chart.addHistogramSeries({
+          priceFormat: { type: 'volume' },
+          priceScaleId: '',
+          lastValueVisible: false,
+          priceLineVisible: false,
+        });
+        volSeries.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+        volSeries.setData(volumeData);
+      }
       if (overlays?.horizontalLevels?.length) {
         overlays.horizontalLevels.forEach((lv) => {
           if (lv.price == null || Number.isNaN(Number(lv.price))) return;
@@ -266,15 +291,25 @@ export default function MarketDecoderChart({
         }
       }
     } else if (mode === 'candles') {
-      const s = chart.addCandlestickSeries({
-        upColor: '#56e3a7',
-        downColor: '#ff7e91',
-        borderUpColor: '#56e3a7',
-        borderDownColor: '#ff7e91',
-        wickUpColor: '#56e3a7',
-        wickDownColor: '#ff7e91',
-      });
+      const s = chart.addCandlestickSeries(AURA_CANDLE_SERIES_OPTIONS);
       s.setData(data);
+      const volumeData = data
+        .map((b, idx) => ({
+          time: b.time,
+          value: Number(bForChart[idx]?.volume),
+          color: getAuraVolumeColor(b.open, b.close),
+        }))
+        .filter((v) => Number.isFinite(v.value) && v.value > 0);
+      if (volumeData.length > 0) {
+        const volSeries = chart.addHistogramSeries({
+          priceFormat: { type: 'volume' },
+          priceScaleId: '',
+          lastValueVisible: false,
+          priceLineVisible: false,
+        });
+        volSeries.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+        volSeries.setData(volumeData);
+      }
     } else if (mode === 'bars') {
       const s = chart.addBarSeries({
         upColor: '#56e3a7',
@@ -283,15 +318,10 @@ export default function MarketDecoderChart({
       });
       s.setData(data);
     } else if (mode === 'line') {
-      const s = chart.addLineSeries({ color: '#8cafff', lineWidth: 2 });
+      const s = chart.addLineSeries(AURA_LINE_SERIES_OPTIONS);
       s.setData(lineData);
     } else {
-      const s = chart.addAreaSeries({
-        lineColor: '#8cafff',
-        topColor: 'rgba(140, 175, 255, 0.28)',
-        bottomColor: 'rgba(7, 17, 31, 0.04)',
-        lineWidth: 2,
-      });
+      const s = chart.addAreaSeries(AURA_AREA_SERIES_OPTIONS);
       s.setData(lineData);
     }
 

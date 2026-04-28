@@ -36,7 +36,6 @@
     "auraAi": "Aura AI",
     "cs": "Cursos y soporte",
     "operator": "El operador",
-    "operatorIntelligence": "Inteligencia del operador",
     "surveillance": "Vigilancia",
     "surveillanceLockedTitle": "La vigilancia está incluida con Elite (facturación Elite/A7FX activa) o cuentas de administrador / superadministrador.",
     "locked": "Bloqueado",
@@ -98,7 +97,23 @@
     "resendCodeSeconds": "Reenviar ({{seconds}}s)",
     "backToLogin": "Volver al inicio de sesión",
     "resendSuccessAlert": "Código reenviado a tu correo.",
-    "resendFailed": "No se pudo reenviar. Inténtalo de nuevo."
+    "resendFailed": "No se pudo reenviar. Inténtalo de nuevo.",
+    "errorAccountDeleted": "Tu cuenta ha sido eliminada por un administrador. Has cerrado sesión.",
+    "errorEmailRequired": "Introduce tu correo o usuario.",
+    "errorPasswordRequired": "La contraseña es obligatoria.",
+    "errorIncorrectPassword": "La contraseña es incorrecta. Intenta de nuevo o usa Olvidé mi contraseña.",
+    "errorNoAccount": "No existe una cuenta con este correo. Regístrate primero.",
+    "errorTooManyAttempts": "Demasiados intentos. Inténtalo en breve.",
+    "errorSigninUnavailable": "El inicio de sesión no está disponible temporalmente. Intenta de nuevo en unos minutos.",
+    "errorSomethingWrong": "Algo salió mal. Inténtalo de nuevo.",
+    "errorLoginFailed": "Error de inicio de sesión. Inténtalo de nuevo.",
+    "errorCannotConnect": "No se puede conectar con el servidor. Inténtalo de nuevo.",
+    "errorTimeout": "El servidor tardó demasiado en responder. Revisa tu conexión e inténtalo de nuevo.",
+    "errorInvalidMfaCode": "Introduce un código válido de 6 dígitos",
+    "errorInvalidServerResponse": "Respuesta no válida del servidor",
+    "errorInvalidCode": "Código no válido. Inténtalo de nuevo.",
+    "errorLabelIncorrectPassword": "Contraseña incorrecta",
+    "errorLabelNoAccount": "No hay cuenta para este correo o usuario"
   },
   "profile": {
     "accountSettings": "Configuración de cuenta",
@@ -227,8 +242,6 @@
       "percent": "{{val}} %"
     },
     "websiteLanguageHint": "Un clic en todo el sitio",
-    "communityAutoTranslate": "Traducir automáticamente los mensajes de la comunidad",
-    "communityAutoTranslateHint": "Si está activado, los mensajes de otros se muestran en el idioma del sitio cuando sea posible.",
     "validation": {
       "invalidUsernameFormat": "Formato de usuario no válido"
     },
@@ -591,12 +604,6 @@
     },
     "msg": {
       "saveFailed": "No se pudo guardar el mensaje. Inténtalo en un momento."
-    },
-    "translation": {
-      "loading": "Traduciendo…",
-      "translatedFrom": "Traducido del {{language}}",
-      "showOriginal": "Ver original",
-      "showTranslation": "Ver traducción"
     },
     "alert": {
       "noSendPermission": "No tienes permiso para enviar mensajes en este canal.",
@@ -1402,6 +1409,33 @@
       "metricsActual": "Actual: {{v}}",
       "metricsForecast": "Forecast: {{v}}",
       "metricsPrevious": "Previous: {{v}}"
+    }
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "markAllAsRead": "Marcar todo como leído",
+    "markAllRead": "Marcar todo leído",
+    "loading": "Cargando notificaciones...",
+    "couldNotLoad": "No se pudieron cargar las notificaciones",
+    "tapToRetry": "Toca para reintentar",
+    "noneYet": "Aún no hay notificaciones",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "friends": "Amigos",
+    "declined": "Rechazado",
+    "loadFailed": "Error al cargar notificaciones",
+    "loadFailedStatus": "No se pudieron cargar notificaciones ({{status}})",
+    "allMarkedRead": "Todas las notificaciones marcadas como leídas",
+    "markAllFailed": "Error al marcar todo como leído",
+    "friendAccepted": "¡Solicitud de amistad aceptada!",
+    "acceptFailed": "No se pudo aceptar la solicitud",
+    "friendDeclined": "Solicitud de amistad rechazada",
+    "declineFailed": "No se pudo rechazar la solicitud",
+    "time": {
+      "justNow": "ahora",
+      "minutesAgo": "hace {{count}}m",
+      "hoursAgo": "hace {{count}}h",
+      "daysAgo": "hace {{count}}d"
     }
   },
   "xp": {

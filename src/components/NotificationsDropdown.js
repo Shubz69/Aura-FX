@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import {
   FaBell, FaTimes, FaUserPlus, FaReply, FaAt, FaCheck,
   FaTimes as FaDecline, FaCog, FaUserCheck, FaUserTimes,
@@ -37,17 +38,17 @@ const TYPE_COLORS = {
 };
 
 // Format relative time
-function formatRelativeTime(date) {
+function formatRelativeTime(date, t) {
   if (!date) return '';
   const now = new Date();
   const then = new Date(date);
   const diffMs = now - then;
   const diffMins = Math.floor(diffMs / 60000);
   
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-  if (diffMins < 10080) return `${Math.floor(diffMins / 1440)}d ago`;
+  if (diffMins < 1) return t('notifications.time.justNow');
+  if (diffMins < 60) return t('notifications.time.minutesAgo', { count: diffMins });
+  if (diffMins < 1440) return t('notifications.time.hoursAgo', { count: Math.floor(diffMins / 60) });
+  if (diffMins < 10080) return t('notifications.time.daysAgo', { count: Math.floor(diffMins / 1440) });
   return then.toLocaleDateString();
 }
 
@@ -90,6 +91,7 @@ function parseUnreadCount(data) {
 }
 
 const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCountChange }) => {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -145,7 +147,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
 
       if (!response.ok) {
         setListFetchFailed(true);
-        const msg = data?.message || `Could not load notifications (${response.status})`;
+        const msg = data?.message || t('notifications.loadFailedStatus', { status: response.status });
         toast.error(msg);
         if (!append) setNotifications([]);
         return;
@@ -153,7 +155,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
 
       if (data.success === false) {
         setListFetchFailed(true);
-        toast.error(data.message || 'Failed to load notifications');
+        toast.error(data.message || t('notifications.loadFailed'));
         return;
       }
 
@@ -186,7 +188,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       console.error('Failed to fetch notifications:', error);
       logClassifiedError('notifications.list_fetch', error, { cursor: cursor || null, append });
       setListFetchFailed(true);
-      toast.error('Failed to load notifications');
+      toast.error(t('notifications.loadFailed'));
     } finally {
       inFlightCursorRef.current.delete(cursorKey);
       setLoading(false);
@@ -261,13 +263,13 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       onUnreadCountChange?.(0);
       
       if (res.ok) {
-        toast.success('All notifications marked as read');
+        toast.success(t('notifications.allMarkedRead'));
       } else {
-        toast.error('Failed to mark all as read');
+        toast.error(t('notifications.markAllFailed'));
       }
     } catch (error) {
       console.error('Failed to mark all as read:', error);
-      toast.error('Failed to mark all as read');
+      toast.error(t('notifications.markAllFailed'));
     }
   };
 
@@ -369,13 +371,13 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
         setNotifications(prev => prev.map(n => 
           n.id === notification.id ? { ...n, actionStatus: 'ACCEPTED' } : n
         ));
-        toast.success('Friend request accepted!');
+        toast.success(t('notifications.friendAccepted'));
       } else {
-        toast.error(data.message || 'Failed to accept request');
+        toast.error(data.message || t('notifications.acceptFailed'));
       }
     } catch (error) {
       console.error('Failed to accept friend request:', error);
-      toast.error('Failed to accept request');
+      toast.error(t('notifications.acceptFailed'));
     } finally {
       setProcessingIds(prev => {
         const next = new Set(prev);
@@ -409,13 +411,13 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
         setNotifications(prev => prev.map(n => 
           n.id === notification.id ? { ...n, actionStatus: 'DECLINED' } : n
         ));
-        toast.info('Friend request declined');
+        toast.info(t('notifications.friendDeclined'));
       } else {
-        toast.error(data.message || 'Failed to decline request');
+        toast.error(data.message || t('notifications.declineFailed'));
       }
     } catch (error) {
       console.error('Failed to decline friend request:', error);
-      toast.error('Failed to decline request');
+      toast.error(t('notifications.declineFailed'));
     } finally {
       setProcessingIds(prev => {
         const next = new Set(prev);
@@ -445,7 +447,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
         <div className="notifications-header">
           <div className="notifications-title">
             <FaBell className="notifications-icon" />
-            <span>Notifications</span>
+            <span>{t('notifications.title')}</span>
             {unreadCount > 0 && (
               <span className="unread-badge">{unreadCount}</span>
             )}
@@ -455,9 +457,9 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
               <button 
                 className="mark-all-read-btn"
                 onClick={markAllAsRead}
-                title="Mark all as read"
+                title={t('notifications.markAllAsRead')}
               >
-                <FaCheck /> Mark all read
+                <FaCheck /> {t('notifications.markAllRead')}
               </button>
             )}
             <button className="close-btn" onClick={onClose}>
@@ -475,14 +477,14 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
           {loading ? (
             <div className="notifications-loading">
               <FaSpinner className="spinner" />
-              <span>Loading notifications...</span>
+              <span>{t('notifications.loading')}</span>
             </div>
           ) : notifications.length === 0 ? (
             <div className="notifications-empty">
               <FaBell className="empty-icon" />
               {(listFetchFailed || (unreadCount > 0)) ? (
                 <>
-                  <span>Couldn&apos;t load notifications</span>
+                  <span>{t('notifications.couldNotLoad')}</span>
                   <button
                     type="button"
                     className="notifications-retry-btn"
@@ -491,11 +493,11 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
                       fetchNotifications();
                     }}
                   >
-                    Tap to retry
+                    {t('notifications.tapToRetry')}
                   </button>
                 </>
               ) : (
-                <span>No notifications yet</span>
+                <span>{t('notifications.noneYet')}</span>
               )}
             </div>
           ) : (
@@ -533,7 +535,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
                       <div className="notification-header">
                         <span className="notification-title">{notification.title}</span>
                         <span className="notification-time">
-                          {formatRelativeTime(notification.createdAt)}
+                          {formatRelativeTime(notification.createdAt, t)}
                         </span>
                       </div>
                       
@@ -552,7 +554,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
                                 disabled={isProcessing}
                               >
                                 {isProcessing ? <FaSpinner className="spinner" /> : <FaCheck />}
-                                Accept
+                                {t('notifications.accept')}
                               </button>
                               <button
                                 className="action-btn decline"
@@ -560,16 +562,16 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
                                 disabled={isProcessing}
                               >
                                 <FaDecline />
-                                Decline
+                                {t('notifications.decline')}
                               </button>
                             </>
                           ) : isAccepted ? (
                             <span className="action-status accepted">
-                              <FaUserCheck /> Friends
+                              <FaUserCheck /> {t('notifications.friends')}
                             </span>
                           ) : isDeclined ? (
                             <span className="action-status declined">
-                              <FaUserTimes /> Declined
+                              <FaUserTimes /> {t('notifications.declined')}
                             </span>
                           ) : null}
                         </div>
