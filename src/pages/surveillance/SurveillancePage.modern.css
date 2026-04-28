@@ -1,0 +1,793 @@
+/* =============================================================================
+   SURVEILLANCE PAGE — MODERN TERMINAL THEME v2.0
+   Elite-grade intelligence dashboard with precision typography,
+   refined glassmorphism, and tactical data density.
+   Import AFTER SurveillancePage.css
+   ============================================================================= */
+
+/* ── Design System Tokens ─────────────────────────────────────────────── */
+:root {
+  --sv-surface-0: #030308;
+  --sv-surface-1: rgba(8, 8, 16, 0.92);
+  --sv-surface-2: rgba(12, 12, 24, 0.82);
+  --sv-surface-3: rgba(16, 16, 32, 0.72);
+  
+  --sv-gold-100: #f8c37d;
+  --sv-gold-200: #eaa960;
+  --sv-gold-300: #d48d44;
+  --sv-gold-alpha-5: rgba(248, 195, 125, 0.05);
+  --sv-gold-alpha-10: rgba(248, 195, 125, 0.10);
+  --sv-gold-alpha-15: rgba(248, 195, 125, 0.15);
+  --sv-gold-alpha-25: rgba(248, 195, 125, 0.25);
+  --sv-gold-alpha-40: rgba(248, 195, 125, 0.40);
+  
+  --sv-text-primary: rgba(255, 252, 248, 0.96);
+  --sv-text-secondary: rgba(255, 248, 240, 0.78);
+  --sv-text-tertiary: rgba(255, 248, 240, 0.48);
+  --sv-text-muted: rgba(255, 255, 255, 0.32);
+  
+  --sv-border-subtle: rgba(255, 255, 255, 0.06);
+  --sv-border-medium: rgba(255, 255, 255, 0.10);
+  --sv-border-accent: rgba(234, 169, 96, 0.18);
+  --sv-border-gold: rgba(234, 169, 96, 0.35);
+  
+  --sv-radius-sm: 8px;
+  --sv-radius-md: 12px;
+  --sv-radius-lg: 16px;
+  
+  --sv-shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --sv-shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --sv-shadow-gold: 0 0 28px rgba(234, 169, 96, 0.08);
+  
+  --sv-font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', ui-monospace, monospace;
+  --sv-font-sans: 'Inter', 'SF Pro Display', -apple-system, system-ui, sans-serif;
+  --sv-font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+}
+
+/* ── Page Foundation ──────────────────────────────────────────────────── */
+.sv-page {
+  font-family: var(--sv-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+}
+
+.sv-page--terminal {
+  background: radial-gradient(ellipse 100% 72% at 50% -18%, rgba(234, 169, 96, 0.06), transparent 58%),
+              var(--sv-surface-0);
+}
+
+/* ── Terminal Canvas — Premium Glass Container ────────────────────────── */
+.sv-terminal-canvas {
+  background: linear-gradient(165deg, rgba(12, 12, 24, 0.45) 0%, rgba(8, 8, 16, 0.82) 42%, rgba(4, 4, 12, 0.95) 100%);
+  backdrop-filter: blur(32px) saturate(1.2);
+  -webkit-backdrop-filter: blur(32px) saturate(1.2);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  border-radius: var(--sv-radius-lg);
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 24px 56px rgba(0, 0, 0, 0.45),
+    0 0 0 0.5px rgba(234, 169, 96, 0.08);
+  overflow: hidden;
+}
+
+/* Gold hairline glow on top edge */
+.sv-terminal-canvas::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(234, 169, 96, 0.5) 25%,
+    rgba(248, 195, 125, 0.35) 50%,
+    rgba(234, 169, 96, 0.5) 75%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Masthead — Command Header ────────────────────────────────────────── */
+.sv-terminal-masthead {
+  background: linear-gradient(180deg, rgba(8, 8, 20, 0.95) 0%, rgba(8, 8, 20, 0.8) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(234, 169, 96, 0.1);
+}
+
+.sv-masthead-grid {
+  padding: 16px var(--sv-terminal-pad-x) 14px;
+}
+
+.sv-terminal-title {
+  font-family: var(--sv-font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 30%, #f8c37d 65%, #eaa960 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sv-terminal-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 32% 28%, rgba(248, 195, 125, 0.6), rgba(248, 195, 125, 0.08));
+  border: 1.5px solid rgba(248, 195, 125, 0.45);
+  box-shadow: 
+    0 0 28px rgba(248, 195, 125, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ── Instruments — Data Chips ─────────────────────────────────────────── */
+.sv-instrument {
+  background: rgba(8, 8, 20, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  border-radius: var(--sv-radius-md);
+  box-shadow: 
+    var(--sv-shadow-card),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: all 0.25s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.sv-instrument:hover {
+  border-color: rgba(234, 169, 96, 0.25);
+  box-shadow: 
+    var(--sv-shadow-elevated),
+    var(--sv-shadow-gold),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+.sv-instrument-label {
+  font-family: var(--sv-font-sans);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--sv-text-tertiary);
+}
+
+.sv-instrument-value {
+  font-family: var(--sv-font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--sv-gold-100);
+  letter-spacing: -0.02em;
+}
+
+/* ── Status Bar — System Health ───────────────────────────────────────── */
+.sv-masthead-status {
+  background: rgba(4, 4, 12, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 8px var(--sv-terminal-pad-x) 10px;
+}
+
+.sv-masthead-feed-pill {
+  font-family: var(--sv-font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 8, 16, 0.6);
+  transition: all 0.3s ease;
+}
+
+.sv-masthead-feed-pill[data-live='on'] {
+  border-color: rgba(120, 200, 150, 0.4);
+  background: rgba(20, 48, 32, 0.5);
+  box-shadow: 0 0 16px rgba(120, 200, 150, 0.12);
+  color: rgba(190, 245, 210, 0.95);
+}
+
+/* ── Context Bar — Sector Lens ────────────────────────────────────────── */
+.sv-hero-context {
+  background: linear-gradient(90deg, rgba(234, 169, 96, 0.1), rgba(8, 8, 16, 0.4));
+  border-bottom: 1px solid rgba(234, 169, 96, 0.15);
+  padding: 8px var(--sv-terminal-pad-x);
+}
+
+.sv-hero-context-clear {
+  background: rgba(8, 8, 16, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--sv-radius-sm);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--sv-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.sv-hero-context-clear:hover {
+  background: rgba(234, 169, 96, 0.12);
+  border-color: rgba(234, 169, 96, 0.4);
+  color: var(--sv-gold-100);
+}
+
+/* ── Category Tabs — Vertical Navigation ──────────────────────────────── */
+.sv-terminal-side {
+  background: transparent;
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.sv-pill-tab {
+  font-family: var(--sv-font-sans);
+  font-size: 0.64rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+  border-radius: var(--sv-radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--sv-text-tertiary);
+  transition: all 0.2s ease;
+}
+
+.sv-pill-tab:hover {
+  background: rgba(234, 169, 96, 0.08);
+  color: var(--sv-text-secondary);
+  border-color: rgba(234, 169, 96, 0.15);
+}
+
+.sv-pill-tab--active {
+  background: rgba(234, 169, 96, 0.12);
+  border-color: rgba(234, 169, 96, 0.35);
+  color: var(--sv-gold-100);
+  font-weight: 600;
+  box-shadow: 
+    0 0 16px rgba(234, 169, 96, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ── Globe Stage — 3D Visualization ───────────────────────────────────── */
+.sv-globe-stage {
+  background: radial-gradient(ellipse 100% 88% at 50% 50%, rgba(18, 20, 36, 0.3), transparent 70%);
+}
+
+.sv-globe-panel {
+  background: radial-gradient(ellipse 100% 88% at 50% 50%, rgba(12, 14, 28, 0.25), transparent 70%);
+  border-radius: var(--sv-radius-md);
+}
+
+.sv-globe-chrome {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.18) 44%, transparent 100%);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* ── Tape Deck — Event Feed ───────────────────────────────────────────── */
+.sv-tape-deck {
+  background: linear-gradient(180deg, rgba(8, 8, 16, 0.92) 0%, rgba(4, 4, 12, 0.88) 100%);
+}
+
+.sv-tape-list {
+  background: rgba(4, 4, 12, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(234, 169, 96, 0.1);
+  border-radius: var(--sv-radius-md);
+}
+
+.sv-tape-row {
+  font-family: var(--sv-font-sans);
+  transition: all 0.2s cubic-bezier(0.33, 1, 0.68, 1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.sv-tape-row:hover {
+  background: rgba(234, 169, 96, 0.06);
+  box-shadow: inset 2px 0 0 rgba(234, 169, 96, 0.3);
+}
+
+.sv-tape-row--active {
+  background: rgba(234, 169, 96, 0.1);
+  box-shadow: 
+    inset 4px 0 0 rgba(234, 169, 96, 0.65),
+    0 0 24px rgba(234, 169, 96, 0.06);
+}
+
+.sv-tape-cell--title {
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--sv-text-primary);
+}
+
+.sv-tape-signal-trust {
+  font-family: var(--sv-font-mono);
+  font-size: 0.6rem;
+}
+
+/* ── Intel Panel — Right Sidebar ──────────────────────────────────────── */
+.sv-intel-panel {
+  font-family: var(--sv-font-sans);
+}
+
+.sv-rail-masthead {
+  background: rgba(8, 8, 20, 0.75);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border-bottom: 1px solid rgba(234, 169, 96, 0.12);
+}
+
+.sv-rail-situation {
+  background: rgba(8, 8, 20, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(234, 169, 96, 0.15);
+  border-radius: var(--sv-radius-md);
+  box-shadow: var(--sv-shadow-card);
+}
+
+.sv-rail-kpi {
+  background: rgba(8, 8, 20, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(234, 169, 96, 0.1);
+  border-radius: var(--sv-radius-md);
+  transition: all 0.25s ease;
+}
+
+.sv-rail-kpi:hover {
+  border-color: rgba(234, 169, 96, 0.25);
+  box-shadow: var(--sv-shadow-gold);
+  transform: translateY(-1px);
+}
+
+.sv-rail-kpi-value {
+  font-family: var(--sv-font-mono);
+  font-weight: 700;
+  color: var(--sv-gold-100);
+}
+
+.sv-rail-focus {
+  background: linear-gradient(142deg, rgba(234, 169, 96, 0.12), rgba(8, 8, 20, 0.6));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(234, 169, 96, 0.3);
+  border-radius: var(--sv-radius-md);
+  box-shadow: 
+    0 0 32px rgba(234, 169, 96, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ── Control Deck — Filters & Legend ──────────────────────────────────── */
+.sv-control-deck {
+  background: linear-gradient(180deg, rgba(8, 8, 20, 0.95) 0%, rgba(4, 4, 12, 0.92) 100%);
+  border-top: 1px solid rgba(234, 169, 96, 0.08);
+}
+
+.sv-field-select {
+  font-family: var(--sv-font-sans);
+  background: rgba(8, 8, 20, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--sv-radius-sm);
+  color: var(--sv-text-primary);
+  transition: all 0.2s ease;
+}
+
+.sv-field-select:focus {
+  border-color: rgba(234, 169, 96, 0.4);
+  box-shadow: 0 0 0 3px rgba(234, 169, 96, 0.08);
+  outline: none;
+}
+
+/* ── Event Drawer — Detail Panel ──────────────────────────────────────── */
+.sv-drawer {
+  background: linear-gradient(165deg, rgba(12, 12, 24, 0.98) 0%, rgba(8, 8, 16, 0.98) 48%, rgba(4, 4, 12, 0.99) 100%);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border-left: 1px solid rgba(234, 169, 96, 0.2);
+  font-family: var(--sv-font-sans);
+}
+
+.sv-drawer-close {
+  background: rgba(8, 8, 16, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--sv-radius-md);
+  transition: all 0.2s ease;
+}
+
+.sv-drawer-close:hover {
+  background: rgba(234, 169, 96, 0.12);
+  border-color: rgba(234, 169, 96, 0.4);
+}
+
+.sv-drawer-title {
+  font-family: var(--sv-font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--sv-text-primary);
+}
+
+/* ── Typography Refinements ───────────────────────────────────────────── */
+.sv-page h1, .sv-page h2, .sv-page h3 {
+  font-family: var(--sv-font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.sv-page p, .sv-page span, .sv-page button {
+  font-family: var(--sv-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.sv-page .sv-mono {
+  font-family: var(--sv-font-mono);
+}
+
+/* ── Scrollbar Styling ────────────────────────────────────────────────── */
+.sv-page--terminal ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sv-page--terminal ::-webkit-scrollbar-track {
+  background: rgba(4, 4, 12, 0.4);
+  border-radius: 3px;
+}
+
+.sv-page--terminal ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(234, 169, 96, 0.25), rgba(234, 169, 96, 0.15));
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sv-page--terminal ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(234, 169, 96, 0.4), rgba(234, 169, 96, 0.25));
+}
+
+/* ── Animations & Micro-interactions ──────────────────────────────────── */
+@keyframes sv-gold-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(234, 169, 96, 0.05); }
+  50% { box-shadow: 0 0 32px rgba(234, 169, 96, 0.12); }
+}
+
+.sv-terminal-canvas {
+  animation: sv-gold-pulse 4s ease-in-out infinite;
+}
+
+/* ── Responsive Design ────────────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .sv-terminal-canvas {
+    border-radius: var(--sv-radius-sm);
+  }
+  
+  .sv-terminal-canvas::before {
+    left: 12px;
+    right: 12px;
+  }
+}
+
+/* ── Print Styles (for brief export) ──────────────────────────────────── */
+@media print {
+  .sv-globe-stage,
+  .sv-intel-panel {
+    display: none;
+  }
+  
+  .sv-tape-deck {
+    background: white;
+    color: black;
+  }
+}
+/* =============================================================================
+   GLOBE FORCE-FIT — Override all background/fit issues
+   ============================================================================= */
+
+/* Remove ALL backgrounds from the globe container chain */
+.sv-globe-stage,
+.sv-globe-stage::before,
+.sv-globe-stage::after,
+.sv-globe-panel,
+.sv-globe-panel::before,
+.sv-globe-panel::after {
+  background: #060714 !important;
+  background-image: none !important;
+}
+
+/* Force the globe wrapper to fill the panel exactly */
+.sv-globe-wrap {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+/* Force canvas to fill wrapper */
+.sv-globe-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  background: #060714 !important;
+}
+
+/* Vignette - circular fade from edges, doesn't clip globe */
+.sv-globe-vignette {
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+  background: radial-gradient(
+    circle at center,
+    transparent 50%,
+    rgba(6, 7, 20, 0.4) 75%,
+    rgba(6, 7, 20, 0.8) 90%,
+    rgba(6, 7, 20, 0.95) 100%
+  ) !important;
+}
+/* Make the stage background match the globe */
+.sv-globe-stage {
+  background: #060714 !important;
+  background-image: none !important;
+}
+
+.sv-globe-stage::before,
+.sv-globe-stage::after {
+  display: none !important;
+}
+
+/* Remove any borders between columns */
+.sv-globe-stage {
+  border-right: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+/* Remove conflicting backgrounds from the hero row */
+.sv-terminal-hero {
+  background: #060714 !important;
+  background-image: none !important;
+}
+
+.sv-terminal-hero::before,
+.sv-terminal-hero::after {
+  display: none !important;
+}
+
+/* Make the three-column row seamless */
+.sv-globe-stage {
+  border: none !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+@media (max-width: 960px) {
+  .sv-globe-stage {
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  }
+}
+/* =============================================================================
+   GLOBE FIX — Maintain Three.js starfield, fit container
+   ============================================================================= */
+
+/* Globe panel: transparent so Three.js background shows */
+.sv-globe-panel {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+/* Globe wrapper: absolute fill */
+.sv-globe-wrap {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Canvas: fill wrapper, keep Three.js rendering */
+.sv-globe-wrap canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Vignette: subtle edge fade without killing stars */
+.sv-globe-vignette {
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+  box-shadow: 
+    inset 0 0 80px 30px rgba(6, 7, 20, 0.5),
+    inset 0 0 40px 15px rgba(6, 7, 20, 0.3) !important;
+  background: transparent !important;
+}
+
+/* Globe stage: transparent to show hero background */
+.sv-globe-stage {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+.sv-globe-stage::before,
+.sv-globe-stage::after {
+  display: none !important;
+}
+
+/* Hero row: keep deep space background */
+.sv-terminal-hero {
+  background: #040610 !important;
+}
+
+.sv-terminal-hero::before,
+.sv-terminal-hero::after {
+  display: none !important;
+}
+.sv-terminal-canvas {
+  background: rgba(8, 8, 20, 0.65) !important;
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+/* Add this to the END of your SurveillancePage.modern.css */
+
+/* ── Transparent Terminal Canvas ──────────────────────────────────────── */
+.sv-terminal-canvas {
+  background: rgba(8, 8, 20, 0.45) !important;
+  backdrop-filter: blur(16px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.1) !important;
+  border: 1px solid rgba(234, 169, 96, 0.1) !important;
+}
+
+/* Remove the solid background from inner sections */
+.sv-terminal-masthead {
+  background: rgba(4, 4, 12, 0.5) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.sv-terminal-hero {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+.sv-tape-deck {
+  background: rgba(4, 4, 12, 0.55) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.sv-control-deck {
+  background: rgba(4, 4, 12, 0.5) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+/* ── Transparent Canvas for Cosmic BG ─────────────────────────────────── */
+.sv-terminal-canvas {
+  background: rgba(6, 7, 20, 0.35) !important;
+  backdrop-filter: blur(14px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.1) !important;
+}
+/* ── Masthead Market Strip Transparency ────────────────────────────────── */
+.sv-strip--compact,
+.sv-strip-compact-scroll,
+.sv-strip-compact-scroll--pair-heat {
+  background: rgba(6, 7, 20, 0.4) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border-color: rgba(234, 169, 96, 0.08) !important;
+}
+
+.sv-pair-bias-card {
+  background: rgba(6, 7, 20, 0.35) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+/* =============================================================================
+   GLOBE & BACKGROUND — Final Clean Override
+   ============================================================================= */
+
+/* Globe panel: KEEP TRANSPARENT so Three.js starfield shows */
+.sv-globe-panel {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Globe wrapper */
+.sv-globe-wrap {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+.sv-globe-wrap canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Vignette: box-shadow only, no background that kills stars */
+.sv-globe-vignette {
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+  box-shadow: 
+    inset 0 0 80px 30px rgba(6, 7, 20, 0.5),
+    inset 0 0 40px 15px rgba(6, 7, 20, 0.3) !important;
+}
+
+/* Hero row: transparent, let CosmicBackground show through */
+.sv-terminal-hero {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+.sv-terminal-hero::before,
+.sv-terminal-hero::after {
+  display: none !important;
+}
+
+/* Terminal canvas: glass transparency */
+.sv-terminal-canvas {
+  background: rgba(6, 7, 20, 0.35) !important;
+  backdrop-filter: blur(14px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.1) !important;
+  border: 1px solid rgba(234, 169, 96, 0.1) !important;
+}
+
+.sv-terminal-masthead {
+  background: rgba(4, 4, 12, 0.5) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.sv-tape-deck {
+  background: rgba(4, 4, 12, 0.55) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.sv-control-deck {
+  background: rgba(4, 4, 12, 0.5) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Market strip */
+.sv-strip--compact,
+.sv-strip-compact-scroll,
+.sv-strip-compact-scroll--pair-heat {
+  background: rgba(6, 7, 20, 0.4) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}

@@ -1,4 +1,4 @@
-import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import SurveillanceGlobe from './SurveillanceGlobe';
 import EventDrawer from './EventDrawer';
@@ -25,6 +25,8 @@ import {
   trustQualityPresentation,
 } from './surveillancePresentation';
 import './SurveillancePage.css';
+import './SurveillancePage.modern.css';
+import CosmicBackground from '../../components/CosmicBackground';
 
 const TABS = [
   { id: 'all', label: 'All' },
@@ -78,7 +80,7 @@ export default function SurveillancePage() {
   const loadFeedRef = useRef(null);
   const prevIntroRef = useRef(showIntro);
   const tapeSigRef = useRef('');
-  const tapeInitRef = useRef(true); /* skip glow on first populated tape */
+  const tapeInitRef = useRef(true);
 
   const reducedMotion =
     typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
@@ -202,7 +204,7 @@ export default function SurveillancePage() {
   const clearFocusRegion = useCallback(() => setFocusRegion(null), []);
 
   const setFocusFromHeat = useCallback((region) => {
-    startTransition(() => setFocusRegion(normalizeRegionKey(region)));
+    setFocusRegion(normalizeRegionKey(region));
   }, []);
 
   useEffect(() => {
@@ -357,14 +359,14 @@ export default function SurveillancePage() {
     (id) => {
       const ev = eventsById.get(String(id));
       const key = primaryCountryFromEvent(ev) || (ev?.region ? normalizeRegionKey(ev.region) : null);
-      if (key) startTransition(() => setFocusRegion(key));
+      if (key) setFocusRegion(key);
       openDrawer(id);
     },
     [eventsById, openDrawer]
   );
 
   const onGlobeCountryFocus = useCallback((iso2) => {
-    startTransition(() => setFocusRegion(normalizeRegionKey(iso2)));
+    setFocusRegion(normalizeRegionKey(iso2));
   }, []);
 
   const onGlobeBackground = useCallback(() => {
@@ -476,6 +478,7 @@ export default function SurveillancePage() {
         terminalHandoff ? 'sv-page--handoff' : ''
       }`}
     >
+      <CosmicBackground />
       {showIntro && (
         <IntroOverlay
           briefing={briefing}

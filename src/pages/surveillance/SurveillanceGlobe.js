@@ -451,23 +451,26 @@ export default function SurveillanceGlobe({
     };
   }, []);
 
-  useEffect(() => {
-    const el = wrapRef.current;
-    const panel = el?.parentElement;
-    const target = panel && panel.classList?.contains('sv-globe-panel') ? panel : el;
-    if (!target || typeof ResizeObserver === 'undefined') return undefined;
-    /* Reserve only a sliver for bottom chrome; large values shrink the square vs wide columns. */
-    const chromePx = 6;
-    const ro = new ResizeObserver((entries) => {
-      const cr = entries[0]?.contentRect;
-      if (cr && cr.width > 0 && cr.height > 0) {
-        const side = Math.floor(Math.min(cr.width, Math.max(cr.height - chromePx, 200)));
-        setDims({ w: Math.max(side, 200), h: Math.max(side, 200) });
-      }
-    });
-    ro.observe(target);
-    return () => ro.disconnect();
-  }, []);
+useEffect(() => {
+  const el = wrapRef.current;
+  const panel = el?.parentElement;
+  const target = panel && panel.classList?.contains('sv-globe-panel') ? panel : el;
+  if (!target || typeof ResizeObserver === 'undefined') return undefined;
+  
+  const ro = new ResizeObserver((entries) => {
+    const cr = entries[0]?.contentRect;
+    if (cr && cr.width > 0 && cr.height > 0) {
+      // Use the FULL panel size - let CSS center the globe
+      // The globe will be square (aspect-ratio: 1) but centered in the panel
+      const w = Math.floor(cr.width);
+      const h = Math.floor(cr.height);
+      setDims({ w, h });
+    }
+  });
+  
+  ro.observe(target);
+  return () => ro.disconnect();
+}, []);
 
   useEffect(() => {
     if (dims.w < 200) return undefined;
@@ -517,23 +520,38 @@ export default function SurveillanceGlobe({
     };
   }, [globeReveal, dims.w, dims.h, refineGlobeSurface, globeTextureUrl]);
 
-  useEffect(() => {
-    if (reducedMotion) return undefined;
-    let id;
-    const loop = (t) => {
-      setPulse(0.5 + 0.5 * Math.sin(t / 680));
-      id = requestAnimationFrame(loop);
-    };
+useEffect(() => {
+  if (reducedMotion) return undefined;
+  let id;
+  const loop = (t) => {
+    // Slower pulse, fewer state updates
+    const v = Math.sin(t / 1200);
+    setPulse(Math.round(v * 4) / 4);
     id = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(id);
-  }, [reducedMotion]);
-
+  };
+  id = requestAnimationFrame(loop);
+  return () => cancelAnimationFrame(id);
+}, [reducedMotion]);
   const handleZoom = useCallback((pov) => {
     if (pov && typeof pov.altitude === 'number' && Number.isFinite(pov.altitude)) {
       setPovAltitude(pov.altitude);
     }
   }, []);
+// Add this inside SurveillanceGlobe function, after the other useEffects
+useEffect(() => {
+  const wrap = wrapRef.current;
+  if (!wrap) return;
 
+  const onWheel = (e) => {
+    if (!e.ctrlKey && !e.metaKey) {
+      e.stopPropagation();
+      // Let the event bubble to scroll the page
+    }
+  };
+
+  wrap.addEventListener('wheel', onWheel, { passive: true, capture: true });
+  return () => wrap.removeEventListener('wheel', onWheel, { capture: true });
+}, []);
   useEffect(() => {
     moonMaterial.emissive.lerpColors(
       new THREE.Color(0x101420),
@@ -708,7 +726,7 @@ export default function SurveillanceGlobe({
   const arcs = useMemo(() => (useHex ? [] : buildArcs(events)), [events, useHex]);
 
   /** Coarse pulse for marker styling only — avoids rebuilding point buffers every animation frame. */
-  const pulseStep = Math.round(pulse * 14) / 14;
+  const pulseStep = 0.5; // Fixed value, no animation flicker
 
   const arcColor = useCallback((d) => {
     const s = d.sev != null ? Number(d.sev) : 1;

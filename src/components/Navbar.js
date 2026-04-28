@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -32,7 +33,12 @@ import { isSuperAdmin, isAdmin, isPremium } from "../utils/roles";
 import A7Logo from "./A7Logo";
 import { triggerNotification } from "./NotificationSystem";
 import NavbarNotifications from "./NavbarNotifications";
-
+const isLocalDev = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || 
+   window.location.hostname === '127.0.0.1' ||
+   window.location.hostname.startsWith('192.168.') ||
+   window.location.hostname.startsWith('10.') ||
+   window.location.hostname.endsWith('.local'));
 const Navbar = () => {
   const { user, loading, logout } = useAuth();
   const { entitlements } = useEntitlements();
@@ -202,24 +208,35 @@ const Navbar = () => {
                    <Link to="/operator-galaxy" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
   <FaCheckSquare className="dropdown-icon" /> The Operator
 </Link>
-                      {entitlements?.canAccessSurveillance ? (
-                        <Link to="/surveillance" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                          <FaGlobe className="dropdown-icon" /> Surveillance
-                        </Link>
-                      ) : (
-                        <button
-                          type="button"
-                          className="dropdown-item dropdown-item--locked"
-                          title="Surveillance is included with Elite (active Elite/A7FX billing) or Admin / Super Admin accounts."
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            navigate('/choose-plan', { state: { feature: 'surveillance' } });
-                          }}
-                        >
-                          <FaGlobe className="dropdown-icon" /> Surveillance
-                          <span className="dropdown-lock-label" aria-hidden>Locked</span>
-                        </button>
-                      )}
+           {isLocalDev || entitlements?.canAccessSurveillance ? (
+  <Link to="/surveillance" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+    <FaGlobe className="dropdown-icon" /> Surveillance
+    {isLocalDev && !entitlements?.canAccessSurveillance && (
+      <span className="dropdown-dev-badge" style={{
+        background: '#ff9800',
+        color: '#000',
+        fontSize: '9px',
+        padding: '1px 4px',
+        borderRadius: '3px',
+        marginLeft: '8px',
+        fontWeight: 'bold'
+      }}>DEV</span>
+    )}
+  </Link>
+) : (
+  <button
+    type="button"
+    className="dropdown-item dropdown-item--locked"
+    title="Surveillance is included with Elite (active Elite/A7FX billing) or Admin / Super Admin accounts."
+    onClick={() => {
+      setDropdownOpen(false);
+      navigate('/choose-plan', { state: { feature: 'surveillance' } });
+    }}
+  >
+    <FaGlobe className="dropdown-icon" /> Surveillance
+    <span className="dropdown-lock-label" aria-hidden>Locked</span>
+  </button>
+)}
                       <Link to="/aura-analysis" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaChartLine className="dropdown-icon" /> Aura Analysis
                       </Link>
