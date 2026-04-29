@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
+import html2canvas from 'html2canvas';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
@@ -308,6 +309,39 @@ function BiasPill({ bias }) {
   return <span className={cls}>{String(bias || '—').toUpperCase()}</span>;
 }
 
+function normalizeCommunityChannels(payload) {
+  const rows = Array.isArray(payload?.channels)
+    ? payload.channels
+    : Array.isArray(payload)
+      ? payload
+      : [];
+  return rows
+    .map((row) => ({
+      id: row?.id,
+      name: String(row?.name || row?.channel_name || '').trim(),
+      category: String(row?.category_name || row?.category || '').trim(),
+    }))
+    .filter((row) => row.id && row.name);
+}
+
+function buildTraderLabShareMessage(form, rr, riskAmount, positionLotsLabel) {
+  const symbol = displaySymbolFromChartSymbol(form.chartSymbol);
+  const rrLabel = Number.isFinite(rr) && rr > 0 ? `1:${rr.toFixed(2)}` : 'N/A';
+  const goal = String(form.sessionGoal || '').trim();
+  const setup = String(form.setupName || 'Trader Lab setup').trim();
+  const conviction = String(form.conviction || 'medium').toUpperCase();
+  return [
+    'Trader Lab setup',
+    `Setup: ${setup}`,
+    `Instrument: ${symbol}`,
+    `Bias: ${form.marketBias || 'N/A'} | Conviction: ${conviction}`,
+    `Entry: ${formatLabLevel(form.entryPrice)} | SL: ${formatLabLevel(form.stopLoss)} | TP: ${formatLabLevel(form.targetPrice)}`,
+    `R:R: ${rrLabel} | Risk: ${form.riskPercent || 0}% (${Number.isFinite(riskAmount) ? `$${riskAmount.toFixed(0)}` : '$0'})`,
+    `Position size: ${positionLotsLabel || 'N/A'}`,
+    goal ? `Session goal: ${goal}` : '',
+  ].filter(Boolean).join('\n');
+}
+
 export default function TraderLab() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -323,6 +357,13 @@ export default function TraderLab() {
   const [lastSavedAt, setLastSavedAt] = useState(null);
   const [latestClose, setLatestClose] = useState(null);
   const [planPricePrecision, setPlanPricePrecision] = useState(defaultPrecisionForSymbol(DEFAULT_FORM.chartSymbol));
+  const [sharingOpen, setSharingOpen] = useState(false);
+  const [shareChannels, setShareChannels] = useState([]);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareChannelId, setShareChannelId] = useState('');
+  const [shareNote, setShareNote] = useState('');
+  const [shareSending, setShareSending] = useState(false);
+  const [downloadingReport, setDownloadingReport] = useState(false);
   const decoderImportAppliedRef = React.useRef(false);
 
   useEffect(() => {
@@ -817,6 +858,118 @@ export default function TraderLab() {
     }
   };
 
+  const openShareModal = async () => {
+    setSharingOpen(true);
+    setShareLoading(true);
+    try {
+      const res = await Api.getChannelsBootstrap();
+      const normalized = normalizeCommunityChannels(res?.data);
+      setShareChannels(normalized);
+      if (normalized.length > 0) {
+        setShareChannelId(String(normalized[0].id));
+      }
+    } catch {
+      try {
+        const fallback = await Api.getChannels();
+        const normalized = normalizeCommunityChannels(fallback?.data);
+        setShareChannels(normalized);
+        if (normalized.length > 0) {
+          setShareChannelId(String(normalized[0].id));
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Could not load community channels.');
+      }
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const handleShareToCommunity = async () => {
+    const channel = shareChannels.find((c) => String(c.id) === String(shareChannelId));
+    if (!channel) {
+      toast.warning('Choose a channel first.');
+      return;
+    }
+    const summary = buildTraderLabShareMessage(form, rr, riskAmount, positionLotsLabel);
+    const note = String(shareNote || '').trim();
+    const payload = {
+      content: note ? `${summary}\n\nNote: ${note}` : summary,
+    };
+    setShareSending(true);
+    try {
+      await Api.sendMessage(channel.id, payload);
+      toast.success(`Shared to #${channel.name}`);
+      setSharingOpen(false);
+      setShareNote('');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to share to community channel.');
+    } finally {
+      setShareSending(false);
+    }
+  };
+
+  const handleDownloadReport = async () => {
+    if (downloadingReport) return;
+    const sourceRoot = document.querySelector('.trader-lab-v2');
+    if (!sourceRoot) {
+      toast.error('Could not capture Trader Lab view.');
+      return;
+    }
+    setDownloadingReport(true);
+    try {
+      const clone = sourceRoot.cloneNode(true);
+      clone.classList.add('tlab-report-export-root');
+      clone.querySelectorAll('textarea').forEach((el) => {
+        const area = el;
+        area.style.height = `${Math.max(area.scrollHeight, 80)}px`;
+        area.style.overflow = 'visible';
+      });
+      clone.querySelectorAll('.tlab-saved-list, .tlab-decoder-log').forEach((el) => {
+        el.style.maxHeight = 'none';
+        el.style.overflow = 'visible';
+      });
+      clone.querySelectorAll('*').forEach((el) => {
+        if (el instanceof HTMLElement) {
+          el.style.maxHeight = 'none';
+        }
+      });
+
+      const host = document.createElement('div');
+      host.className = 'tlab-report-export-host';
+      host.appendChild(clone);
+      document.body.appendChild(host);
+      await new Promise((resolve) => setTimeout(resolve, 250));
+
+      const canvas = await html2canvas(clone, {
+        backgroundColor: '#03050f',
+        useCORS: true,
+        allowTaint: false,
+        scale: 2,
+        windowWidth: Math.max(clone.scrollWidth, 1600),
+        windowHeight: clone.scrollHeight + 40,
+        scrollX: 0,
+        scrollY: 0,
+      });
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      const date = new Date().toISOString().slice(0, 10);
+      link.download = `trader-lab-report-${date}.png`;
+      link.href = dataUrl;
+      link.click();
+      document.body.removeChild(host);
+      toast.success('Trader Lab report downloaded.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Could not generate report download.');
+    } finally {
+      const orphan = document.querySelector('.tlab-report-export-host');
+      if (orphan?.parentNode) orphan.parentNode.removeChild(orphan);
+      setDownloadingReport(false);
+    }
+  };
+
   const welcomeEyebrow = (
     <span className="tlab-welcome">
       <span className="tlab-avatar" aria-hidden>
@@ -827,6 +980,71 @@ export default function TraderLab() {
   );
 
   return (
+<>
+  {sharingOpen && (
+    <div className="tlab-share-modal__overlay" role="dialog" aria-modal="true" aria-label="Share Trader Lab to community">
+      <div className="tlab-share-modal">
+        <div className="tlab-share-modal__head">
+          <h3>Share Trader Lab</h3>
+          <button
+            type="button"
+            className="tlab-share-modal__close"
+            onClick={() => !shareSending && setSharingOpen(false)}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <p className="tlab-share-modal__sub">Post your current setup snapshot into a community channel.</p>
+        {shareLoading ? (
+          <p className="tlab-share-modal__status">Loading channels…</p>
+        ) : (
+          <>
+            <label className="tlab-share-modal__label" htmlFor="tlab-share-channel">Channel</label>
+            <select
+              id="tlab-share-channel"
+              className="tlab-share-modal__select"
+              value={shareChannelId}
+              onChange={(e) => setShareChannelId(e.target.value)}
+            >
+              {shareChannels.map((channel) => (
+                <option key={channel.id} value={String(channel.id)}>
+                  {channel.category ? `${channel.category} · ` : ''}{channel.name}
+                </option>
+              ))}
+            </select>
+            <label className="tlab-share-modal__label" htmlFor="tlab-share-note">Optional note</label>
+            <textarea
+              id="tlab-share-note"
+              className="tlab-share-modal__textarea"
+              rows={3}
+              value={shareNote}
+              onChange={(e) => setShareNote(e.target.value)}
+              placeholder="Add context before posting…"
+            />
+          </>
+        )}
+        <div className="tlab-share-modal__actions">
+          <button
+            type="button"
+            className="trader-suite-btn"
+            onClick={() => setSharingOpen(false)}
+            disabled={shareSending}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="trader-suite-btn trader-suite-btn--primary"
+            onClick={handleShareToCommunity}
+            disabled={shareLoading || !shareChannels.length || shareSending}
+          >
+            {shareSending ? 'Sharing…' : 'Share to channel'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
 <TraderSuiteShell
   variant="terminal"
   eyebrow={welcomeEyebrow}
@@ -847,6 +1065,12 @@ export default function TraderLab() {
       }
       secondaryActions={
         <>
+          <button type="button" className="trader-suite-btn" onClick={openShareModal} disabled={loading}>
+            Share to Community
+          </button>
+          <button type="button" className="trader-suite-btn" onClick={handleDownloadReport} disabled={loading || downloadingReport}>
+            {downloadingReport ? 'Downloading…' : 'Download Report'}
+          </button>
           <button type="button" className="trader-suite-btn" onClick={createFreshSession} disabled={loading}>
             {t('traderLab.newSession')}
           </button>
@@ -1353,5 +1577,6 @@ export default function TraderLab() {
         </div>
       ) : null}
     </TraderSuiteShell>
+</>
   );
 }

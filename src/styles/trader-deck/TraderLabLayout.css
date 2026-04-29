@@ -2998,3 +2998,99 @@ body {
 .trader-lab-v2--workspace .tl-card-shell {
   color: rgba(255, 255, 255, 0.92) !important;
 }
+
+/* Share modal + export capture host */
+.tlab-share-modal__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(2, 4, 10, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.tlab-share-modal {
+  width: min(520px, 100%);
+  border-radius: 14px;
+  border: 1px solid rgba(234, 169, 96, 0.26);
+  background: linear-gradient(170deg, rgba(8, 10, 22, 0.96), rgba(4, 6, 16, 0.98));
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.48);
+  padding: 16px;
+}
+
+.tlab-share-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tlab-share-modal__head h3 {
+  margin: 0;
+  color: rgba(248, 195, 125, 0.95);
+  font-size: 1rem;
+}
+
+.tlab-share-modal__close {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+.tlab-share-modal__sub,
+.tlab-share-modal__status {
+  color: rgba(220, 230, 255, 0.72);
+  margin: 8px 0 12px;
+  font-size: 0.82rem;
+}
+
+.tlab-share-modal__label {
+  display: block;
+  color: rgba(248, 195, 125, 0.82);
+  font-size: 0.74rem;
+  margin: 10px 0 6px;
+}
+
+.tlab-share-modal__select,
+.tlab-share-modal__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 10px;
+  border: 1px solid rgba(234, 169, 96, 0.26);
+  background: rgba(3, 4, 12, 0.72);
+  color: #eef3ff;
+  padding: 10px 11px;
+}
+
+.tlab-share-modal__textarea {
+  resize: vertical;
+  min-height: 84px;
+}
+
+.tlab-share-modal__actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.tlab-report-export-host {
+  position: fixed;
+  left: -99999px;
+  top: 0;
+  width: 1680px;
+  background: #03050f;
+  padding: 20px;
+  z-index: -1;
+}
+
+.tlab-report-export-root {
+  width: 1640px !important;
+  max-width: none !important;
+}
