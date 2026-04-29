@@ -11,14 +11,42 @@
  * Keeping this in one module avoids the four copies of resolveRole drifting apart.
  */
 
-function resolveNominalReportsRole(user) {
-  if (!user) return 'access';
-  const role = (user.role || '')
+const SUPER_ADMIN_EMAIL_FALLBACK_LOWER = Object.freeze([
+  'slutherfx@gmail.com',
+  'auraterminal2002@gmail.com',
+]);
+
+function normalizeRoleKey(value) {
+  return (value || '')
     .toString()
     .trim()
     .toLowerCase()
     .replace(/[\s-]+/g, '_');
+}
+
+function getSuperAdminEmailsLower() {
+  const raw = process.env.SUPER_ADMIN_EMAIL;
+  const fromEnv =
+    raw == null || String(raw).trim() === ''
+      ? []
+      : String(raw)
+          .split(/[,;]/)
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean);
+  return Array.from(new Set([...SUPER_ADMIN_EMAIL_FALLBACK_LOWER, ...fromEnv]));
+}
+
+function isSuperAdminEmail(user) {
+  const email = (user?.email || '').toString().trim().toLowerCase();
+  if (!email) return false;
+  return getSuperAdminEmailsLower().includes(email);
+}
+
+function resolveNominalReportsRole(user) {
+  if (!user) return 'access';
+  const role = normalizeRoleKey(user.role);
   const plan = (user.subscription_plan || '').toString().trim().toLowerCase();
+  if (isSuperAdminEmail(user)) return 'admin';
   // JWT/API permission roles (USER) never imply paid tier — use subscription_plan
   if (['admin', 'super_admin'].includes(role)) return 'admin';
   if (['elite', 'a7fx'].includes(role) || ['elite', 'a7fx'].includes(plan)) return 'elite';
@@ -31,7 +59,8 @@ function resolveNominalReportsRole(user) {
  */
 function effectiveReportsRole(user) {
   if (!user) return 'access';
-  const role = (user.role || '').toString().trim().toLowerCase();
+  const role = normalizeRoleKey(user.role);
+  if (isSuperAdminEmail(user)) return 'admin';
   if (['admin', 'super_admin'].includes(role)) return 'admin';
 
   const failed = user.payment_failed === 1 || user.payment_failed === true;
@@ -60,7 +89,8 @@ function effectiveReportsRole(user) {
 /** Trader DNA is Elite-only; staff roles may still open the tool. */
 function canAccessTraderDna(user) {
   if (!user) return false;
-  const role = (user.role || '').toString().trim().toLowerCase();
+  const role = normalizeRoleKey(user.role);
+  if (isSuperAdminEmail(user)) return true;
   if (['admin', 'super_admin'].includes(role)) return true;
   return effectiveReportsRole(user) === 'elite';
 }
