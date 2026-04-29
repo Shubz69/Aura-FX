@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { verifyToken } = require('../utils/auth');
-const { loadReplayTradeByIdForUser } = require('./tradeSources');
+const { loadReplayTradeByIdForUser, decodeReplayIdParam } = require('./tradeSources');
 
 function setCors(req, res) {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -102,7 +102,7 @@ module.exports = async (req, res) => {
 
   try {
     const body = parseBody(req);
-    const tradeId = String(body.tradeId || '').trim();
+    const tradeId = decodeReplayIdParam(body.tradeId);
     if (!tradeId) return res.status(400).json({ success: false, message: 'tradeId is required' });
 
     const trade = await loadReplayTradeByIdForUser(userId, tradeId);

@@ -15,9 +15,14 @@ const { snapshotDiagnostics: wsSnapshotDiagnostics } = require('../market-data/t
 const { stats: tdRestStats } = require('../market-data/tdRateLimiter');
 
 const CACHE_KEY = 'markets:snapshot:v1';
-const CACHE_TTL_MS = 5 * 1000;
+/** Server-side quote snapshot: keep warm 20–30s to cap TwelveData batch work (env: MARKETS_SNAPSHOT_CACHE_TTL_MS). */
+const CACHE_TTL_MS = Math.max(
+  15000,
+  Math.min(60000, parseInt(process.env.MARKETS_SNAPSHOT_CACHE_TTL_MS || '25000', 10) || 25000)
+);
 const STALE_OK_MS = 5 * 60 * 1000;
-const SNAPSHOT_CACHE_CONTROL = 'public, max-age=30, s-maxage=30, stale-while-revalidate=15';
+const SNAPSHOT_MAX_AGE_SEC = Math.max(15, Math.min(90, Math.floor(CACHE_TTL_MS / 1000)));
+const SNAPSHOT_CACHE_CONTROL = `public, max-age=${SNAPSHOT_MAX_AGE_SEC}, s-maxage=${SNAPSHOT_MAX_AGE_SEC}, stale-while-revalidate=30`;
 
 /** Wall-clock ceiling for building the snapshot (large watchlist × waves can exceed Vercel maxDuration). */
 const HARD_BUILD_MS = Math.min(

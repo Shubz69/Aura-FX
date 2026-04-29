@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { savePostAuthRedirect } from '../utils/postAuthRedirect';
 import { ensureCorrelationId, logClassifiedError } from '../utils/apiObservability';
+import marketDataDiagnostics from '../lib/marketDataDiagnostics';
 
 /** If REACT_APP_API_URL points at the standalone analysis API host, ignore it — app JWT routes live on the main site. */
 function resolveReactAppApiUrl() {
@@ -207,7 +208,11 @@ const shouldMakeRequest = (url) => {
 };
 
 // Lightweight GET cache (site-wide speed: avoid duplicate/repeated GETs)
-const GET_CACHE_TTL_MS = 18000; // 18s
+const GET_CACHE_TTL_MS = 18000; // 18s default for generic GETs
+const GET_CACHE_TTL_MARKET_MS = Math.max(
+  20000,
+  Math.min(120000, parseInt(process.env.REACT_APP_MARKET_GET_CACHE_MS || '45000', 10) || 45000)
+);
 const GET_CACHE_SKIP_PATTERNS =
     /login|register|payment|stripe|password|forgot-password|auth\/login|auth\/register|auth\/forgot|auth\/phone-verification|auth\/verify-signup|auth\/send-signup|aura-analysis\/platform-connect|aura-analysis\/platform-account|aura-analysis\/platform-history|aura-analysis\/trades/i;
 const getCacheStore = (() => {
@@ -224,6 +229,13 @@ const getCacheKey = (config) => {
 const shouldCacheGet = (config) => {
     const url = resolveRequestUrl(config.url) || (config.baseURL || '') + (config.url || '');
     return config.method === 'get' && !config.skipCache && !GET_CACHE_SKIP_PATTERNS.test(url);
+};
+
+const getMarketGetCacheTtlMs = (url) => {
+    const u = String(url || '');
+    if (!/\/api\/market\//i.test(u)) return GET_CACHE_TTL_MS;
+    if (/\/chart-history/i.test(u) || /\/candle-context/i.test(u)) return GET_CACHE_TTL_MARKET_MS;
+    return GET_CACHE_TTL_MS;
 };
 
 // De-duplicate concurrent GET calls for the same resource.
@@ -288,6 +300,12 @@ const dedupeGetWithRetry = async (
 axios.interceptors.request.use(
     (config) => {
         ensureCorrelationId(config);
+        if (process.env.NODE_ENV === 'development' && String(config.method || 'get').toLowerCase() === 'get') {
+            const reqUrl = resolveRequestUrl(config.url) || (config.baseURL || '') + (config.url || '');
+            if (/\/api\/market\//i.test(reqUrl)) {
+                marketDataDiagnostics.record(reqUrl, config.params);
+            }
+        }
         const token = localStorage.getItem('token');
         if (token && !config.skipAuthRefresh) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -295,7 +313,9 @@ axios.interceptors.request.use(
         if (shouldCacheGet(config)) {
             const key = getCacheKey(config);
             const entry = getCacheStore().get(key);
-            if (entry && (Date.now() - entry.at) < GET_CACHE_TTL_MS) {
+            const url = resolveRequestUrl(config.url) || (config.baseURL || '') + (config.url || '');
+            const ttlMs = entry?.ttlMs ?? getMarketGetCacheTtlMs(url);
+            if (entry && (Date.now() - entry.at) < ttlMs) {
                 config.adapter = () => Promise.resolve(entry.response);
             }
         }
@@ -312,8 +332,10 @@ axios.interceptors.response.use(
         const config = response.config || {};
         if (shouldCacheGet(config) && response.status >= 200 && response.status < 300) {
             const key = getCacheKey(config);
+            const url = resolveRequestUrl(config.url) || (config.baseURL || '') + (config.url || '');
             getCacheStore().set(key, {
                 at: Date.now(),
+                ttlMs: getMarketGetCacheTtlMs(url),
                 response: { data: response.data, status: response.status, statusText: response.statusText, headers: response.headers, config }
             });
         }
@@ -1069,7 +1091,6 @@ const Api = {
         };
         return dedupeGet(`${API_BASE_URL}/api/market/chart-history`, {
             params,
-            skipCache: true,
             signal: options.signal,
         });
     },
@@ -1090,7 +1111,6 @@ const Api = {
         };
         return dedupeGet(`${API_BASE_URL}/api/market/candle-context`, {
             params,
-            skipCache: true,
             signal: options.signal,
         });
     },
@@ -1478,7 +1498,8 @@ const Api = {
     },
     getTraderReplayTrade: (id) => {
         const token = localStorage.getItem('token');
-        return axios.get(`${API_BASE_URL}/api/trader-replay/trades/${encodeURIComponent(id)}`, {
+        return axios.get(`${API_BASE_URL}/api/trader-replay/trades`, {
+            params: { tradeId: id },
             headers: token ? { Authorization: `Bearer ${token}` } : {},
             skipCache: true,
         });
@@ -2243,5 +2264,9 @@ const Api = {
         }
     }
 };
+
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    window.marketDataDiagnostics = marketDataDiagnostics;
+}
 
 export default Api;

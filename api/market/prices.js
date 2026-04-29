@@ -46,10 +46,11 @@ const SYMBOL_DECIMALS = buildSymbolDecimalsMap();
 // Persistent price cache (survives between requests)
 // Key: symbol, Value: { ...priceData, timestamp }
 const priceCache = new Map();
-const CACHE_TTL = 2000; // Fresh data TTL: 2 seconds for accuracy
+/** Per-symbol row cache before hitting provider stack (15–30s; env MARKET_PRICES_ROW_TTL_MS). */
+const CACHE_TTL = Math.max(5000, parseInt(process.env.MARKET_PRICES_ROW_TTL_MS || '20000', 10) || 20000);
 const STALE_TTL = 300000; // Stale data TTL: 5 minutes (use as delayed fallback)
 const REQUEST_TIMEOUT = 5000; // 5 second timeout per request
-const ROUTE_CACHE_TTL_MS = Math.max(5000, parseInt(process.env.MARKET_PRICES_ROUTE_TTL_MS || '8000', 10) || 8000);
+const ROUTE_CACHE_TTL_MS = Math.max(10000, parseInt(process.env.MARKET_PRICES_ROUTE_TTL_MS || '20000', 10) || 20000);
 const ROUTE_CACHE_MAX_ENTRIES = Math.max(50, parseInt(process.env.MARKET_PRICES_ROUTE_CACHE_MAX || '350', 10) || 350);
 const ROUTE_CACHE_CONTROL = `public, max-age=${Math.floor(ROUTE_CACHE_TTL_MS / 1000)}, s-maxage=${Math.floor(ROUTE_CACHE_TTL_MS / 1000)}, stale-while-revalidate=10`;
 const routeResponseCache = new Map();

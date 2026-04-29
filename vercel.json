@@ -368,6 +368,22 @@
       "destination": "/api/aura-analysis/trades.js"
     },
     {
+      "source": "/api/trader-replay/trades",
+      "destination": "/api/trader-replay/trades.js"
+    },
+    {
+      "source": "/api/trader-replay/trades/:tradeId",
+      "destination": "/api/trader-replay/trades.js?tradeId=:tradeId"
+    },
+    {
+      "source": "/api/trader-replay/candles",
+      "destination": "/api/trader-replay/candles.js"
+    },
+    {
+      "source": "/api/trader-replay/analysis",
+      "destination": "/api/trader-replay/analysis.js"
+    },
+    {
       "source": "/api/aura-analysis/validator-accounts",
       "destination": "/api/aura-analysis/validator-accounts.js"
     },

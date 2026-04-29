@@ -1,6 +1,7 @@
 const {
   buildReplayId,
   parseReplayId,
+  decodeReplayIdParam,
   normalizeMtTrade,
   normalizeAuraTrade,
   normalizeCsvTrade,
@@ -49,6 +50,11 @@ describe('trader replay normalization', () => {
     expect(trade.replayId).toBe('mt5:d-1');
     expect(trade.symbol).toBe('EURUSD');
     expect(trade.durationSeconds).toBe(3600);
+  });
+
+  it('decodeReplayIdParam unwraps URL-encoded replay ids', () => {
+    expect(decodeReplayIdParam('csv%3A2026-4-6184')).toBe('csv:2026-4-6184');
+    expect(decodeReplayIdParam('csv%253A2026-4-0')).toBe('csv:2026-4-0');
   });
 
   it('normalizes aura + csv sources into one shape', () => {

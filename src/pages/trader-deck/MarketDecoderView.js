@@ -17,7 +17,7 @@ import { sanitizeTraderDeskPayloadDeep } from '../../utils/sanitizeAiDeskOutput.
 import '../../styles/MarketDecoderPremium.css'; 
 
 const QUICK = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD', 'SPY', 'USDJPY'];
-const LIVE_POLL_MS = Math.max(15000, parseInt(process.env.REACT_APP_MARKET_DECODER_POLL_MS || '30000', 10) || 30000);
+const LIVE_POLL_MS = Math.max(45000, parseInt(process.env.REACT_APP_MARKET_DECODER_POLL_MS || '60000', 10) || 60000);
 
 function formatGeneratedAt(iso) {
   if (!iso || typeof iso !== 'string') return null;

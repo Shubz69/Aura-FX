@@ -2,6 +2,7 @@ const { verifyToken } = require('../utils/auth');
 const {
   loadReplayableTradesForUser,
   loadReplayTradeByIdForUser,
+  decodeReplayIdParam,
 } = require('./tradeSources');
 
 function setCors(req, res) {
@@ -24,6 +25,7 @@ function getPathname(req) {
 function toListItem(trade) {
   return {
     id: trade.replayId,
+    replayId: trade.replayId,
     sourceId: trade.sourceId,
     source: trade.source,
     symbol: trade.symbol,
@@ -47,8 +49,10 @@ module.exports = async (req, res) => {
 
   try {
     const pathname = getPathname(req);
-    const idMatch = pathname.match(/\/api\/trader-replay\/trades\/([^/]+)$/i);
-    const replayId = idMatch ? decodeURIComponent(idMatch[1]) : null;
+    const qTrade = req.query?.tradeId != null ? decodeReplayIdParam(req.query.tradeId) : '';
+    const idMatch = pathname.match(/\/api\/trader-replay\/trades\/([^/?#]+)\/?$/i);
+    const pathTrade = idMatch ? decodeReplayIdParam(idMatch[1]) : '';
+    const replayId = qTrade || pathTrade || null;
     const source = String(req.query?.source || 'all').toLowerCase();
 
     if (replayId) {

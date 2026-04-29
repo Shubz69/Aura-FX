@@ -19,6 +19,8 @@ jest.mock('../../components/trader-replay/TradeReplayChart', () => () => (
   <div data-testid="trade-replay-chart">chart</div>
 ));
 
+jest.mock('../../components/operator-intelligence/CandleIntelligencePanel', () => () => null);
+
 jest.mock('../../services/Api', () => ({
   __esModule: true,
   default: {
@@ -75,7 +77,7 @@ describe('TraderReplay page', () => {
     await waitFor(() => expect(mockApi.getTraderReplayTrade).toHaveBeenCalledWith('mt5:1'));
     expect(screen.getByText('Trader Replay')).toBeTruthy();
     expect(await screen.findByTestId('trade-replay-chart')).toBeTruthy();
-    expect(screen.getByText(/AI Trade Review/i)).toBeTruthy();
+    expect(screen.getByText(/AI trade review/i)).toBeTruthy();
     expect(screen.getByText(/Jump Entry/i)).toBeTruthy();
     expect(screen.getByText(/Jump Exit/i)).toBeTruthy();
   });

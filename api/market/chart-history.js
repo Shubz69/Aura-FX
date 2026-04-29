@@ -14,10 +14,35 @@ const axios = require('axios');
 const { toCanonical, forProvider } = require('../ai/utils/symbol-registry');
 
 const REQUEST_TIMEOUT = 12000;
-const TD_USAGE_TTL_MS = 5 * 60_000;
+const TD_USAGE_TTL_MS = Math.max(5 * 60_000, parseInt(process.env.TWELVE_DATA_USAGE_CACHE_MS || '900000', 10) || 900000);
 const responseCache = new Map();
 const inFlight = new Map();
+/** Serialize identical chart requests (same symbol/interval/range/window) to avoid parallel TwelveData work. */
+const chartBuildMutexes = new Map();
 const providerCallCounts = new Map();
+
+async function withChartBuildLock(lockKey, fn) {
+  const key = String(lockKey || '');
+  if (!chartBuildMutexes.has(key)) {
+    chartBuildMutexes.set(key, { locked: false, queue: [] });
+  }
+  const m = chartBuildMutexes.get(key);
+  await new Promise((resolve) => {
+    if (!m.locked) {
+      m.locked = true;
+      resolve();
+    } else {
+      m.queue.push(resolve);
+    }
+  });
+  try {
+    return await fn();
+  } finally {
+    const next = m.queue.shift();
+    if (next) next();
+    else m.locked = false;
+  }
+}
 const VALID_INTERVALS = new Set(['1', '5', '15', '30', '45', '60', '240', '1D', 'D', '1W', '1M', '1Y']);
 const VALID_RANGES = new Set(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', '10Y', '20Y', '50Y']);
 const TWELVE_BASE = 'https://api.twelvedata.com/time_series';
@@ -496,14 +521,16 @@ function cacheKey(yahooSym, interval, range, suffix = '') {
 function ttlByIntervalMs(interval, range = '3M') {
   const i = normalizeInterval(interval);
   const r = normalizeRange(range);
-  if ((r === '5Y' || r === '10Y' || r === '20Y' || r === '50Y') && i === '1D') return 24 * 60 * 60_000;
+  if ((r === '5Y' || r === '10Y' || r === '20Y' || r === '50Y') && i === '1D') return 45 * 60 * 60_000;
   if (r === '50Y' && (i === '1W' || i === '1M')) return 24 * 60 * 60_000;
-  if (i === '1D' && r === '1Y') return 45 * 60_000; // market-decoder style daily structure windows
-  if (i === '1') return 45_000;
+  if (i === '1D' && r === '1Y') return 45 * 60_000;
+  if (i === '1') return 90_000;
+  if (i === '5') return 90_000;
   if (i === '15') return 120_000;
-  if (i === '60') return 30 * 60_000;
-  if (i === '240') return 60 * 60_000;
-  if (i === '1D') return 12 * 60 * 60_000;
+  if (i === '30' || i === '45') return 120_000;
+  if (i === '60') return 45 * 60_000;
+  if (i === '240') return 90 * 60_000;
+  if (i === '1D') return 30 * 60 * 60_000;
   if (i === '1W' || i === '1M') return 24 * 60 * 60_000;
   return 6 * 60 * 60_000;
 }
@@ -1092,6 +1119,7 @@ module.exports = async (req, res) => {
     requestedFrom = rangeStartUnix(normalizedRange, requestedTo);
   }
   const twKey = String(process.env.TWELVE_DATA_API_KEY || '').trim();
+  const wantDiagnostics = String(req.query.diagnostics || '').trim() === '1';
   const plan = planWithoutTwelve(
     providerPlan({ interval: normalizedInterval, range: normalizedRange, from: requestedFrom, to: requestedTo }),
     Boolean(twKey)
@@ -1339,27 +1367,43 @@ module.exports = async (req, res) => {
     };
   }
 
-  let selected = plan.prefer;
-  let fallbackUsed = '';
-  let providerError = '';
-  let fallbackReason = '';
-  let twelveCallSkippedDueToBudget = false;
-  try {
-    let fetched;
-    try {
-      fetched = await fetchProvider(plan.prefer);
-    } catch (primaryErr) {
-      providerError = String(primaryErr.message || primaryErr);
-      if (primaryErr?.code === 'TD_BUDGET_EXCEEDED') {
-        twelveCallSkippedDueToBudget = true;
-        fallbackReason = 'twelve_budget_exceeded';
-      }
-      fetched = await fetchProvider(plan.fallback);
-      selected = plan.fallback;
-      fallbackUsed = plan.prefer;
+  await withChartBuildLock(responseKeyAuto, async () => {
+    const hitInside = responseCache.get(responseKeyAuto);
+    if (hitInside && Date.now() - hitInside.at < responseTtlMs) {
+      return res.status(200).json({
+        ...hitInside.payload,
+        diagnostics: {
+          ...(hitInside.payload.diagnostics || {}),
+          cacheHit: true,
+          cacheTtlMs: responseTtlMs,
+          inFlightDeduped: false,
+          providerCallMade: false,
+          chartBuildLockWait: true,
+        },
+      });
     }
 
-    let bars = fetched.bars || [];
+    let selected = plan.prefer;
+    let fallbackUsed = '';
+    let providerError = '';
+    let fallbackReason = '';
+    let twelveCallSkippedDueToBudget = false;
+    try {
+      let fetched;
+      try {
+        fetched = await fetchProvider(plan.prefer);
+      } catch (primaryErr) {
+        providerError = String(primaryErr.message || primaryErr);
+        if (primaryErr?.code === 'TD_BUDGET_EXCEEDED') {
+          twelveCallSkippedDueToBudget = true;
+          fallbackReason = 'twelve_budget_exceeded';
+        }
+        fetched = await fetchProvider(plan.fallback);
+        selected = plan.fallback;
+        fallbackUsed = plan.prefer;
+      }
+
+      let bars = fetched.bars || [];
     if (fetched.fourHourAggregated) {
       const aggKey = cacheKey(selected === 'yahoo' ? yahoo : twelveDataSymbol, normalizedInterval, normalizedRange, 'agg4h');
       const sourceFresh = bars;
@@ -1438,7 +1482,7 @@ module.exports = async (req, res) => {
       pricePrecision: pricePrecisionForSymbol(canonical),
       priceScaleMode: 'auto',
     });
-    if (twKey && (selected === 'twelvedata' || fallbackUsed === 'twelvedata')) {
+    if (wantDiagnostics && twKey && (selected === 'twelvedata' || fallbackUsed === 'twelvedata')) {
       try {
         diagnostics.twelveDataApiUsage = await fetchTwelveApiUsage(twKey);
       } catch (e) {
@@ -1505,48 +1549,49 @@ module.exports = async (req, res) => {
       }),
       { at: Date.now(), payload }
     );
-    return res.status(200).json(payload);
-  } catch (err) {
-    const status = err.response?.status;
-    const msg = err.code === 'ECONNABORTED' || err.name === 'AbortError' ? 'Chart request timed out' : err.message;
-    console.error('[chart-history]', symbol, yahoo, msg);
-    const budget = currentTwelveBudgetState();
-    const diagnostics = buildDiagnostics({
-      requestSymbol: symbol,
-      canonical,
-      yahooSymbol: yahoo,
-      twelveDataSymbol,
-      selectedProvider: plan.prefer,
-      fallbackProvider: plan.fallback,
-      requestedInterval: intervalParam,
-      returnedInterval: normalizedInterval,
-      requestedRange,
-      requestedFrom,
-      requestedTo,
-      yahooFetchInterval: yPlan.interval,
-      yahooRange: yPlan.range,
-      fourHourAggregated: yPlan.aggregateTo4h,
-      requestUrl,
-      responseStatus: status != null ? status : 502,
-      barCount: 0,
-      firstBarTime: null,
-      lastBarTime: null,
-      error: msg || 'Chart data fetch failed',
-      providerUsed: plan.prefer,
-      fallbackReason: err?.code === 'TD_BUDGET_EXCEEDED' ? 'twelve_budget_exceeded' : '',
-      twelveCallSkippedDueToBudget: err?.code === 'TD_BUDGET_EXCEEDED',
-      twelveBudgetRemaining: budget.twelveBudgetRemaining,
-      twelveCallsThisMinute: budget.twelveCallsThisMinute,
-      rangeDowngrade: { providerHttpStatus: status, note: 'Chart fetch failed; response uses HTTP 200 for recoverable provider errors' },
-    });
-    return res.status(200).json({
-      success: false,
-      message: msg || 'Chart data fetch failed',
-      canonical,
-      yahooSymbol: yahoo,
-      diagnostics,
-    });
-  }
+      return res.status(200).json(payload);
+    } catch (err) {
+      const status = err.response?.status;
+      const msg = err.code === 'ECONNABORTED' || err.name === 'AbortError' ? 'Chart request timed out' : err.message;
+      console.error('[chart-history]', symbol, yahoo, msg);
+      const budget = currentTwelveBudgetState();
+      const diagnostics = buildDiagnostics({
+        requestSymbol: symbol,
+        canonical,
+        yahooSymbol: yahoo,
+        twelveDataSymbol,
+        selectedProvider: plan.prefer,
+        fallbackProvider: plan.fallback,
+        requestedInterval: intervalParam,
+        returnedInterval: normalizedInterval,
+        requestedRange,
+        requestedFrom,
+        requestedTo,
+        yahooFetchInterval: yPlan.interval,
+        yahooRange: yPlan.range,
+        fourHourAggregated: yPlan.aggregateTo4h,
+        requestUrl,
+        responseStatus: status != null ? status : 502,
+        barCount: 0,
+        firstBarTime: null,
+        lastBarTime: null,
+        error: msg || 'Chart data fetch failed',
+        providerUsed: plan.prefer,
+        fallbackReason: err?.code === 'TD_BUDGET_EXCEEDED' ? 'twelve_budget_exceeded' : '',
+        twelveCallSkippedDueToBudget: err?.code === 'TD_BUDGET_EXCEEDED',
+        twelveBudgetRemaining: budget.twelveBudgetRemaining,
+        twelveCallsThisMinute: budget.twelveCallsThisMinute,
+        rangeDowngrade: { providerHttpStatus: status, note: 'Chart fetch failed; response uses HTTP 200 for recoverable provider errors' },
+      });
+      return res.status(200).json({
+        success: false,
+        message: msg || 'Chart data fetch failed',
+        canonical,
+        yahooSymbol: yahoo,
+        diagnostics,
+      });
+    }
+  });
 };
 
 module.exports.resolveChartYahooSymbol = resolveChartYahooSymbol;
@@ -1572,3 +1617,4 @@ module.exports.__resetTwelveBudgetForTests = () => {
   twelveUsageWindow.minuteStart = Date.now();
   twelveUsageWindow.calls = 0;
 };
+module.exports.ttlByIntervalMs = ttlByIntervalMs;

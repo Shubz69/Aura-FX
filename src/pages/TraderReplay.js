@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import TradeReplayChart from '../components/trader-replay/TradeReplayChart';
 import CandleIntelligencePanel from '../components/operator-intelligence/CandleIntelligencePanel';
 import Api from '../services/Api';
 import { useAuraAnalysisData } from '../context/AuraAnalysisContext';
+import { sanitizeTradeIdQueryParam } from '../lib/trader-replay/replayLink';
+import { buildHeuristicTradeAnalysis } from '../lib/trader-replay/heuristicAnalysis';
+import '../styles/trader-replay/TraderReplayPage.css';
 
 const SPEEDS = [500, 900, 1400, 2000];
 const TIMEFRAME_OPTIONS = [
@@ -33,16 +36,26 @@ function fmtNum(value, fixed = 2) {
   return Number.isFinite(n) ? n.toFixed(fixed) : '—';
 }
 
+function pickAnalysisPayload(res) {
+  const a = res?.data?.analysis;
+  if (a && typeof a === 'object') return a;
+  return null;
+}
+
 export default function TraderReplay() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { activePlatformId } = useAuraAnalysisData();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState('');
   const [trades, setTrades] = useState([]);
   const [selectedId, setSelectedId] = useState('');
   const [selectedTrade, setSelectedTrade] = useState(null);
+  const [tradeLoading, setTradeLoading] = useState(false);
+  const [tradeError, setTradeError] = useState('');
   const [bars, setBars] = useState([]);
+  const [chartError, setChartError] = useState('');
   const [analysis, setAnalysis] = useState(null);
+  const [analysisProvider, setAnalysisProvider] = useState('');
   const [playing, setPlaying] = useState(false);
   const [speedMs, setSpeedMs] = useState(900);
   const [index, setIndex] = useState(0);
@@ -51,6 +64,9 @@ export default function TraderReplay() {
   const [selectedBar, setSelectedBar] = useState(null);
   const [candleOpen, setCandleOpen] = useState(false);
   const timerRef = useRef(null);
+  const [filterSymbol, setFilterSymbol] = useState('');
+  const [filterSource, setFilterSource] = useState('all');
+  const [filterDir, setFilterDir] = useState('all');
 
   const source = useMemo(() => {
     if (activePlatformId === 'mt4' || activePlatformId === 'mt5') return activePlatformId;
@@ -59,54 +75,137 @@ export default function TraderReplay() {
 
   useEffect(() => {
     const run = async () => {
-      setLoading(true);
-      setError('');
+      setListLoading(true);
+      setListError('');
       try {
         const res = await Api.getTraderReplayTrades({ source });
         const rows = Array.isArray(res?.data?.trades) ? res.data.trades : [];
         setTrades(rows);
       } catch (e) {
-        setError(e?.response?.data?.message || 'Could not load replay trades');
+        setListError(e?.response?.data?.message || 'Could not load replay trades');
       } finally {
-        setLoading(false);
+        setListLoading(false);
       }
     };
     run();
   }, [source]);
 
   useEffect(() => {
-    const q = searchParams.get('tradeId');
-    if (!q) return;
+    const q = sanitizeTradeIdQueryParam(searchParams.get('tradeId'));
     setSelectedId(q);
   }, [searchParams]);
 
+  const applyAnalysisResult = useCallback((trade, res, fetchError) => {
+    const remote = pickAnalysisPayload(res);
+    if (remote) {
+      setAnalysis(remote);
+      setAnalysisProvider(res?.data?.provider || 'api');
+      return;
+    }
+    setAnalysis(buildHeuristicTradeAnalysis(trade));
+    setAnalysisProvider(fetchError ? 'heuristic (analysis unavailable)' : 'heuristic');
+  }, []);
+
+  /* Trade + analysis only — candles load after trade exists (second effect). */
   useEffect(() => {
-    if (!selectedId) return;
+    if (!selectedId) {
+      setSelectedTrade(null);
+      setBars([]);
+      setAnalysis(null);
+      setAnalysisProvider('');
+      setTradeError('');
+      setChartError('');
+      setPlaying(false);
+      return undefined;
+    }
+
+    let cancelled = false;
     const run = async () => {
-      setError('');
+      setTradeLoading(true);
+      setTradeError('');
+      setChartError('');
       setPlaying(false);
       try {
-        const [tradeRes, candlesRes, analysisRes] = await Promise.all([
-          Api.getTraderReplayTrade(selectedId),
-          Api.getTraderReplayCandles({ tradeId: selectedId, interval: chartInterval }),
-          Api.getTraderReplayAnalysis(selectedId),
-        ]);
+        const tradeRes = await Api.getTraderReplayTrade(selectedId);
+        if (cancelled) return;
         const trade = tradeRes?.data?.trade || null;
-        const candleBars = Array.isArray(candlesRes?.data?.bars) ? candlesRes.data.bars : [];
+        if (!trade) {
+          setSelectedTrade(null);
+          setBars([]);
+          setAnalysis(null);
+          setTradeError(tradeRes?.data?.message || 'Trade not found');
+          return;
+        }
+        const rid = trade.replayId || selectedId;
         setSelectedTrade(trade);
-        setBars(candleBars);
-        setAnalysis(analysisRes?.data?.analysis || null);
-        const entryTs = trade?.openTime ? Math.floor(new Date(trade.openTime).getTime() / 1000) : null;
-        const entryIndex = entryTs ? Math.max(0, candleBars.findIndex((b) => Number(b.time) >= entryTs)) : 0;
-        setIndex(entryIndex >= 0 ? entryIndex : 0);
+
+        const urlId = sanitizeTradeIdQueryParam(searchParams.get('tradeId'));
+        if (rid && rid !== urlId) {
+          setSearchParams(
+            (prev) => {
+              const next = new URLSearchParams(prev);
+              next.set('tradeId', rid);
+              return next;
+            },
+            { replace: true }
+          );
+        }
+
+        let analysisRes = null;
+        let analysisErr = null;
+        try {
+          analysisRes = await Api.getTraderReplayAnalysis(rid);
+        } catch (e) {
+          analysisErr = e;
+        }
+        if (cancelled) return;
+        applyAnalysisResult(trade, analysisRes, analysisErr);
       } catch (e) {
-        setError(e?.response?.data?.message || 'Could not load selected trade replay');
-        setSelectedTrade(null);
-        setBars([]);
+        if (!cancelled) {
+          setTradeError(e?.response?.data?.message || 'Could not load selected trade replay');
+          setSelectedTrade(null);
+          setBars([]);
+          setAnalysis(null);
+        }
+      } finally {
+        if (!cancelled) setTradeLoading(false);
       }
     };
     run();
-  }, [selectedId, chartInterval]);
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId, applyAnalysisResult, setSearchParams, searchParams]);
+
+  useEffect(() => {
+    const rid = selectedTrade?.replayId;
+    if (!rid) {
+      setBars([]);
+      return undefined;
+    }
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const candlesRes = await Api.getTraderReplayCandles({ tradeId: rid, interval: chartInterval });
+        if (cancelled) return;
+        const candleBars = Array.isArray(candlesRes?.data?.bars) ? candlesRes.data.bars : [];
+        setBars(candleBars);
+        setChartError('');
+        const entryTs = selectedTrade?.openTime ? Math.floor(new Date(selectedTrade.openTime).getTime() / 1000) : null;
+        const entryIndex = entryTs ? Math.max(0, candleBars.findIndex((b) => Number(b.time) >= entryTs)) : 0;
+        setIndex(entryIndex >= 0 ? entryIndex : 0);
+      } catch (e) {
+        if (!cancelled) {
+          setChartError(e?.response?.data?.message || 'Chart data could not be loaded for this symbol or range.');
+          setBars([]);
+        }
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedTrade, chartInterval]);
 
   useEffect(() => {
     if (!playing || !bars.length) return undefined;
@@ -124,11 +223,40 @@ export default function TraderReplay() {
     };
   }, [playing, speedMs, bars.length]);
 
+  const filteredTrades = useMemo(() => {
+    const sym = filterSymbol.trim().toUpperCase();
+    return trades.filter((t) => {
+      if (sym && String(t.symbol || '').toUpperCase().indexOf(sym) === -1) return false;
+      if (filterSource !== 'all' && String(t.source || '').toLowerCase() !== filterSource) return false;
+      if (filterDir !== 'all' && String(t.direction || '').toLowerCase() !== filterDir) return false;
+      return true;
+    });
+  }, [trades, filterSymbol, filterSource, filterDir]);
+
   const visibleBars = Math.max(1, index + 1);
   const entryTs = selectedTrade?.openTime ? Math.floor(new Date(selectedTrade.openTime).getTime() / 1000) : null;
   const exitTs = selectedTrade?.closeTime ? Math.floor(new Date(selectedTrade.closeTime).getTime() / 1000) : null;
   const entryIndex = entryTs ? Math.max(0, bars.findIndex((b) => Number(b.time) >= entryTs)) : 0;
   const exitIndex = exitTs ? Math.max(0, bars.findIndex((b) => Number(b.time) >= exitTs)) : bars.length - 1;
+
+  const activeReplayId = selectedTrade?.replayId || selectedId;
+
+  const selectTrade = useCallback(
+    (id) => {
+      const clean = sanitizeTradeIdQueryParam(id);
+      setSelectedId(clean);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (clean) next.set('tradeId', clean);
+          else next.delete('tradeId');
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
 
   return (
     <TraderSuiteShell
@@ -136,132 +264,255 @@ export default function TraderReplay() {
       terminalPresentation="aura-dashboard"
       title="Trader Replay"
       description="Replay real trades from Aura Analysis sources with chart context, controls, and AI review."
-      stats={selectedTrade ? [
-        { label: 'Symbol', value: selectedTrade.symbol || '—' },
-        { label: 'Source', value: String(selectedTrade.source || '—').toUpperCase() },
-        { label: 'PnL', value: fmtNum(selectedTrade.pnl, 2) },
-      ] : []}
+      stats={
+        selectedTrade
+          ? [
+              { label: 'Symbol', value: selectedTrade.symbol || '—' },
+              { label: 'Source', value: String(selectedTrade.source || '—').toUpperCase() },
+              { label: 'PnL', value: fmtNum(selectedTrade.pnl, 2) },
+            ]
+          : []
+      }
     >
-      {loading ? <div className="trader-suite-empty">Loading replayable trades...</div> : null}
-      {error ? <div className="trader-suite-empty">{error}</div> : null}
+      <div className="tr-replay-page">
+        {listLoading ? <div className="trader-suite-empty">Loading replayable trades…</div> : null}
+        {listError ? <div className="tr-replay-empty tr-replay-empty--error">{listError}</div> : null}
+        {tradeError ? <div className="tr-replay-empty tr-replay-empty--error">{tradeError}</div> : null}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 330px) 1fr', gap: 12 }}>
-        <aside className="trader-suite-panel">
-          <h3 style={{ marginTop: 0 }}>Trades</h3>
-          {trades.length === 0 ? (
-            <p style={{ color: 'rgba(255,255,255,0.65)' }}>Select a trade to replay.</p>
-          ) : (
-            <div style={{ display: 'grid', gap: 8, maxHeight: 700, overflow: 'auto' }}>
-              {trades.map((t) => (
-                <div key={t.id} className="trader-suite-card" style={{ padding: 10 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                    <strong>{t.symbol || '—'}</strong>
-                    <span>{String(t.source || '').toUpperCase()}</span>
-                  </div>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>{fmtDate(t.openTime)}</div>
-                  <button
-                    type="button"
-                    className="trader-suite-btn trader-suite-btn--primary"
-                    onClick={() => {
-                      setSelectedId(t.id);
-                      setSearchParams((prev) => {
-                        const next = new URLSearchParams(prev);
-                        next.set('tradeId', t.id);
-                        return next;
-                      }, { replace: true });
-                    }}
-                  >
-                    Replay
-                  </button>
-                </div>
-              ))}
+        {selectedTrade ? (
+          <header className="tr-replay-banner">
+            <h2>
+              {selectedTrade.symbol || '—'} · {(selectedTrade.direction || '').toUpperCase()} ·{' '}
+              {String(selectedTrade.source || '').toUpperCase()}
+            </h2>
+            <div className="tr-replay-banner-meta">
+              <span>
+                Open <strong>{fmtDate(selectedTrade.openTime)}</strong>
+              </span>
+              <span>
+                Close <strong>{fmtDate(selectedTrade.closeTime)}</strong>
+              </span>
+              <span>
+                P/L <strong>{fmtNum(selectedTrade.pnl, 2)}</strong>
+              </span>
+              <span>
+                Replay ID <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{activeReplayId}</strong>
+              </span>
             </div>
-          )}
-        </aside>
+          </header>
+        ) : null}
 
-        <main className="trader-suite-panel">
-          {!selectedTrade ? <div className="trader-suite-empty">Select a trade to replay.</div> : null}
-          {selectedTrade ? (
-            <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginBottom: 10 }}>
-                {[
-                  ['Symbol', selectedTrade.symbol],
-                  ['Direction', selectedTrade.direction],
-                  ['Open', fmtDate(selectedTrade.openTime)],
-                  ['Close', fmtDate(selectedTrade.closeTime)],
-                  ['Entry', fmtNum(selectedTrade.entry, 5)],
-                  ['Exit', fmtNum(selectedTrade.exit, 5)],
-                  ['SL', fmtNum(selectedTrade.stopLoss, 5)],
-                  ['TP', fmtNum(selectedTrade.takeProfit, 5)],
-                  ['Lot Size', fmtNum(selectedTrade.lotSize, 2)],
-                  ['PnL', fmtNum(selectedTrade.pnl, 2)],
-                  ['Duration (s)', selectedTrade.durationSeconds ?? '—'],
-                  ['Source', String(selectedTrade.source || '').toUpperCase()],
-                ].map(([k, v]) => (
-                  <div key={k} className="trader-suite-card" style={{ padding: 8 }}>
-                    <div style={{ fontSize: 12, opacity: 0.7 }}>{k}</div>
-                    <div style={{ fontSize: 13 }}>{v}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={() => setPlaying(true)}>Play</button>
-                <button type="button" className="trader-suite-btn" onClick={() => setPlaying(false)}>Pause</button>
-                <button type="button" className="trader-suite-btn" onClick={() => setIndex((i) => Math.min(i + 1, bars.length - 1))}>Step +</button>
-                <button type="button" className="trader-suite-btn" onClick={() => setIndex((i) => Math.max(i - 1, 0))}>Step -</button>
-                <button type="button" className="trader-suite-btn" onClick={() => setIndex(Math.max(0, entryIndex))}>Jump Entry</button>
-                <button type="button" className="trader-suite-btn" onClick={() => setIndex(Math.max(0, exitIndex))}>Jump Exit</button>
-                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 12 }}>Speed</span>
-                  <select value={speedMs} onChange={(e) => setSpeedMs(Number(e.target.value))}>
-                    {SPEEDS.map((v) => <option key={v} value={v}>{v} ms</option>)}
-                  </select>
-                </label>
-                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 12 }}>Timeframe</span>
-                  <select value={chartInterval} onChange={(e) => setChartInterval(e.target.value)}>
-                    {TIMEFRAME_OPTIONS.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
-                  </select>
-                </label>
-              </div>
-
-              {hoverTooltip ? (
-                <div className="trader-suite-card" style={{ marginBottom: 8, padding: 8, fontSize: 12 }}>
-                  {hoverTooltip.timeIso} | O:{hoverTooltip.open} H:{hoverTooltip.high} L:{hoverTooltip.low} C:{hoverTooltip.close}
-                  {' '}| Δ{hoverTooltip.movePct != null ? `${hoverTooltip.movePct.toFixed(3)}%` : 'n/a'} | R:{hoverTooltip.range.toFixed(5)}
-                </div>
-              ) : null}
-              <TradeReplayChart
-                bars={bars}
-                visibleBars={visibleBars}
-                trade={selectedTrade}
-                currentIndex={index}
-                symbol={selectedTrade.symbol}
-                interval={chartInterval}
-                onHoverCandle={setHoverTooltip}
-                onSelectCandle={(bar) => {
-                  setSelectedBar(bar);
-                  setCandleOpen(true);
-                }}
+        <div className="tr-replay-grid">
+          <aside className="tr-replay-aside trader-suite-panel">
+            <h3>Trades</h3>
+            <div className="tr-replay-filters">
+              <input
+                type="search"
+                placeholder="Filter symbol…"
+                value={filterSymbol}
+                onChange={(e) => setFilterSymbol(e.target.value)}
+                aria-label="Filter by symbol"
               />
+              <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} aria-label="Filter by source">
+                <option value="all">All sources</option>
+                <option value="mt4">MT4</option>
+                <option value="mt5">MT5</option>
+                <option value="csv">CSV</option>
+                <option value="aura">Aura</option>
+              </select>
+              <select value={filterDir} onChange={(e) => setFilterDir(e.target.value)} aria-label="Filter by direction">
+                <option value="all">Buy + Sell</option>
+                <option value="buy">Buy</option>
+                <option value="sell">Sell</option>
+              </select>
+            </div>
+            {filteredTrades.length === 0 ? (
+              <p className="tr-replay-empty" style={{ padding: '12px 0' }}>
+                {trades.length === 0 ? 'Select a trade to replay.' : 'No trades match filters.'}
+              </p>
+            ) : (
+              <div className="tr-replay-trade-list">
+                {filteredTrades.map((t) => {
+                  const tid = t.id;
+                  const isActive = tid && activeReplayId && tid === activeReplayId;
+                  return (
+                    <div key={tid} className={`tr-replay-trade-card ${isActive ? 'tr-replay-trade-card--active' : ''}`}>
+                      <div className="tr-replay-trade-card-top">
+                        <strong>{t.symbol || '—'}</strong>
+                        <span className="tr-replay-pill">{String(t.source || '').toUpperCase()}</span>
+                      </div>
+                      <div className="tr-replay-trade-card-sub">{fmtDate(t.openTime)}</div>
+                      <button
+                        type="button"
+                        className="trader-suite-btn trader-suite-btn--primary"
+                        style={{ width: '100%' }}
+                        onClick={() => selectTrade(tid)}
+                      >
+                        Replay
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </aside>
 
-              <section className="trader-suite-card" style={{ marginTop: 12, padding: 12 }}>
-                <h3 style={{ marginTop: 0 }}>AI Trade Review</h3>
-                {!analysis ? <p>Loading analysis...</p> : (
-                  <div style={{ display: 'grid', gap: 8 }}>
-                    <p><strong>What was good:</strong> {(analysis.strengths || []).join(' ') || '—'}</p>
-                    <p><strong>What was bad:</strong> {(analysis.weaknesses || []).join(' ') || '—'}</p>
-                    <p><strong>What to do differently:</strong> {(analysis.betterApproach || []).join(' ') || '—'}</p>
-                    <p><strong>What to watch next time:</strong> {(analysis.nextTimeChecklist || []).join(' ') || '—'}</p>
-                    <p><strong>Entry / Exit / Risk / Timing:</strong> {analysis.verdict ? `${analysis.verdict.entry} ${analysis.verdict.exit} ${analysis.verdict.risk} ${analysis.verdict.timing}` : '—'}</p>
+          <main className="tr-replay-main trader-suite-panel">
+            {tradeLoading ? <div className="tr-replay-empty">Loading trade…</div> : null}
+            {!tradeLoading && !selectedTrade && !tradeError ? (
+              <div className="tr-replay-empty">Select a trade to replay.</div>
+            ) : null}
+
+            {selectedTrade ? (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, marginBottom: 12 }}>
+                  {[
+                    ['Symbol', selectedTrade.symbol],
+                    ['Direction', selectedTrade.direction],
+                    ['Open', fmtDate(selectedTrade.openTime)],
+                    ['Close', fmtDate(selectedTrade.closeTime)],
+                    ['Entry', fmtNum(selectedTrade.entry, 5)],
+                    ['Exit', fmtNum(selectedTrade.exit, 5)],
+                    ['SL', fmtNum(selectedTrade.stopLoss, 5)],
+                    ['TP', fmtNum(selectedTrade.takeProfit, 5)],
+                    ['Lot Size', fmtNum(selectedTrade.lotSize, 2)],
+                    ['PnL', fmtNum(selectedTrade.pnl, 2)],
+                    ['Duration (s)', selectedTrade.durationSeconds ?? '—'],
+                    ['Source', String(selectedTrade.source || '').toUpperCase()],
+                  ].map(([k, v]) => (
+                    <div key={k} className="trader-suite-card" style={{ padding: 8 }}>
+                      <div style={{ fontSize: 11, opacity: 0.65, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k}</div>
+                      <div style={{ fontSize: 13, marginTop: 4 }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="tr-replay-controls">
+                  <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={() => setPlaying(true)}>
+                    Play
+                  </button>
+                  <button type="button" className="trader-suite-btn" onClick={() => setPlaying(false)}>
+                    Pause
+                  </button>
+                  <button type="button" className="trader-suite-btn" onClick={() => setIndex((i) => Math.min(i + 1, Math.max(0, bars.length - 1)))}>
+                    Step +
+                  </button>
+                  <button type="button" className="trader-suite-btn" onClick={() => setIndex((i) => Math.max(i - 1, 0))}>
+                    Step −
+                  </button>
+                  <button type="button" className="trader-suite-btn" onClick={() => setIndex(Math.max(0, entryIndex))}>
+                    Jump entry
+                  </button>
+                  <button type="button" className="trader-suite-btn" onClick={() => setIndex(Math.max(0, exitIndex))}>
+                    Jump exit
+                  </button>
+                  <label>
+                    <span>Speed</span>
+                    <select value={speedMs} onChange={(e) => setSpeedMs(Number(e.target.value))}>
+                      {SPEEDS.map((v) => (
+                        <option key={v} value={v}>
+                          {v} ms
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Timeframe</span>
+                    <select value={chartInterval} onChange={(e) => setChartInterval(e.target.value)}>
+                      {TIMEFRAME_OPTIONS.map((v) => (
+                        <option key={v.value} value={v.value}>
+                          {v.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                {hoverTooltip ? (
+                  <div className="trader-suite-card" style={{ marginBottom: 8, padding: 8, fontSize: 12 }}>
+                    {hoverTooltip.timeIso} | O:{hoverTooltip.open} H:{hoverTooltip.high} L:{hoverTooltip.low} C:{hoverTooltip.close}
+                    {' '}
+                    | Δ{hoverTooltip.movePct != null ? `${hoverTooltip.movePct.toFixed(3)}%` : 'n/a'} | R:{hoverTooltip.range.toFixed(5)}
                   </div>
-                )}
-              </section>
-            </>
-          ) : null}
-        </main>
+                ) : null}
+
+                <div className="tr-replay-chart-wrap">
+                  {chartError ? <div className="tr-replay-chart-error">{chartError}</div> : null}
+                  <TradeReplayChart
+                    bars={bars}
+                    visibleBars={visibleBars}
+                    trade={selectedTrade}
+                    currentIndex={index}
+                    symbol={selectedTrade.symbol}
+                    interval={chartInterval}
+                    onHoverCandle={setHoverTooltip}
+                    onSelectCandle={(bar) => {
+                      setSelectedBar(bar);
+                      setCandleOpen(true);
+                    }}
+                  />
+                </div>
+
+                <section className="tr-replay-ai">
+                  <h3>AI trade review</h3>
+                  {!analysis ? (
+                    <p className="tr-replay-empty" style={{ padding: '8px 0' }}>
+                      Preparing analysis…
+                    </p>
+                  ) : (
+                    <>
+                      <div className="tr-replay-ai-grid">
+                        <div className="tr-replay-ai-block">
+                          <h4>Good</h4>
+                          <ul>
+                            {(analysis.strengths || []).map((x, i) => (
+                              <li key={`g-${i}`}>{x}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="tr-replay-ai-block">
+                          <h4>Bad</h4>
+                          <ul>
+                            {(analysis.weaknesses || []).map((x, i) => (
+                              <li key={`b-${i}`}>{x}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="tr-replay-ai-block">
+                          <h4>Improve</h4>
+                          <ul>
+                            {(analysis.betterApproach || []).map((x, i) => (
+                              <li key={`i-${i}`}>{x}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="tr-replay-ai-block">
+                          <h4>Next time</h4>
+                          <ul>
+                            {(analysis.nextTimeChecklist || []).map((x, i) => (
+                              <li key={`n-${i}`}>{x}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                      {analysis.verdict ? (
+                        <div className="tr-replay-ai-verdict">
+                          <strong>Entry / exit / risk / timing:</strong>{' '}
+                          {[analysis.verdict.entry, analysis.verdict.exit, analysis.verdict.risk, analysis.verdict.timing]
+                            .filter(Boolean)
+                            .join(' ')}
+                        </div>
+                      ) : null}
+                      <div className="tr-replay-ai-provider">Source: {analysisProvider || '—'}</div>
+                    </>
+                  )}
+                </section>
+              </>
+            ) : null}
+          </main>
+        </div>
       </div>
+
       <CandleIntelligencePanel
         open={candleOpen}
         onClose={() => setCandleOpen(false)}

@@ -27,6 +27,23 @@ function buildReplayId(source, id) {
   return `${source}:${String(id || '')}`;
 }
 
+/** Safe decode for query params / legacy double-encoding (e.g. csv%253A...). */
+function decodeReplayIdParam(value) {
+  if (value == null || value === '') return '';
+  let s = String(value).trim();
+  if (!s) return '';
+  try {
+    for (let i = 0; i < 4; i += 1) {
+      const next = decodeURIComponent(s.replace(/\+/g, ' '));
+      if (next === s) break;
+      s = next;
+    }
+  } catch {
+    /* keep s */
+  }
+  return String(s).trim();
+}
+
 function parseReplayId(value) {
   const raw = String(value || '').trim();
   const parts = raw.split(':');
@@ -35,6 +52,24 @@ function parseReplayId(value) {
   const sourceId = parts.slice(1).join(':');
   if (!source || !sourceId) return null;
   return { source, sourceId };
+}
+
+/** Legacy Aura CSV UI used `csv-123` (1-based index in raw upload_json row order, latest snapshot). */
+async function loadLegacyCsvDashTrade(userId, oneBased) {
+  const n = Number(oneBased);
+  if (!Number.isFinite(n) || n < 1) return null;
+  const idx = n - 1;
+  const [rows] = await executeQuery(
+    `SELECT period_year, period_month, upload_json FROM report_csv_uploads WHERE user_id = ? ORDER BY uploaded_at DESC, id DESC LIMIT 1`,
+    [userId]
+  );
+  const row = rows?.[0];
+  if (!row) return null;
+  const parsed = parseTradeJson(row.upload_json);
+  const trades = Array.isArray(parsed?.trades) ? parsed.trades : [];
+  if (idx < 0 || idx >= trades.length) return null;
+  const normalized = normalizeCsvTrade(row.period_year, row.period_month, trades[idx], idx);
+  return normalized.symbol ? normalized : null;
 }
 
 function normalizeMtTrade(raw, platformId) {
@@ -181,16 +216,42 @@ async function loadReplayableTradesForUser(userId, source = 'all') {
   return sortTradesDesc(trades);
 }
 
-async function loadReplayTradeByIdForUser(userId, replayId) {
-  const parsed = parseReplayId(replayId);
-  if (!parsed) return null;
-  const sourceTrades = await loadReplayableTradesForUser(userId, parsed.source);
-  return sourceTrades.find((t) => t.replayId === replayId) || null;
+async function loadReplayTradeByIdForUser(userId, rawId) {
+  const decoded = decodeReplayIdParam(rawId);
+  if (!decoded) return null;
+
+  const parsed = parseReplayId(decoded);
+  if (parsed) {
+    const sourceTrades = await loadReplayableTradesForUser(userId, parsed.source);
+    const exact = sourceTrades.find((t) => t.replayId === decoded);
+    if (exact) return exact;
+  }
+
+  const legacyCsv = decoded.match(/^csv-(\d+)$/i);
+  if (legacyCsv) {
+    const leg = await loadLegacyCsvDashTrade(userId, Number(legacyCsv[1], 10));
+    if (leg) return leg;
+  }
+
+  const all = await loadReplayableTradesForUser(userId, 'all');
+  const direct = all.find((t) => t.replayId === decoded || String(t.sourceId) === decoded);
+  if (direct) return direct;
+
+  if (!decoded.includes(':')) {
+    for (const plat of ['mt4', 'mt5', 'aura']) {
+      const candidate = buildReplayId(plat, decoded);
+      const hit = all.find((t) => t.replayId === candidate);
+      if (hit) return hit;
+    }
+  }
+
+  return null;
 }
 
 module.exports = {
   buildReplayId,
   parseReplayId,
+  decodeReplayIdParam,
   loadReplayableTradesForUser,
   loadReplayTradeByIdForUser,
   normalizeMtTrade,

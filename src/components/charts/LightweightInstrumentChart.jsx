@@ -69,7 +69,9 @@ export default function LightweightInstrumentChart({
     }
     const intervalNorm = normalizeApiInterval(interval);
     const rangeNorm = String(range || '');
-    const queryKey = JSON.stringify({ sym, interval: intervalNorm });
+    const fromNorm = String(from || '').trim();
+    const toNorm = String(to || '').trim();
+    const queryKey = JSON.stringify({ sym, interval: intervalNorm, range: rangeNorm, from: fromNorm, to: toNorm });
     if (lastQueryKeyRef.current === queryKey) {
       return undefined;
     }
@@ -144,10 +146,11 @@ export default function LightweightInstrumentChart({
     }, 420);
     return () => {
       cancelled = true;
+      lastQueryKeyRef.current = '';
       controller.abort();
       clearTimeout(timer);
     };
-  }, [symbol, interval]);
+  }, [symbol, interval, range, from, to]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -237,33 +240,55 @@ export default function LightweightInstrumentChart({
     const sym = String(symbol || '').trim().toUpperCase();
     if (!sym || status !== 'ready') return undefined;
     if (typeof EventSource === 'undefined') return undefined;
-    const base = Api.getBaseUrl()?.replace(/\/$/, '') || window.location.origin;
-    const es = new EventSource(`${base}/api/market/live-quotes-stream?symbols=${encodeURIComponent(sym)}`);
-    liveEventSourceRef.current = es;
 
-    es.addEventListener('quote', (evt) => {
-      try {
-        const quote = JSON.parse(evt.data || '{}');
-        const px = Number(quote?.price);
-        if (!Number.isFinite(px) || px <= 0 || !candleSeriesRef.current || !liveBarRef.current) return;
-        const next = { ...liveBarRef.current };
-        next.close = px;
-        if (px > next.high) next.high = px;
-        if (px < next.low) next.low = px;
-        liveBarRef.current = next;
-        candleSeriesRef.current.update(next);
-      } catch (_) {
-        // Ignore malformed live quote payloads.
-      }
-    });
+    let es = null;
+    const openStream = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      if (es) return;
+      const base = Api.getBaseUrl()?.replace(/\/$/, '') || window.location.origin;
+      es = new EventSource(`${base}/api/market/live-quotes-stream?symbols=${encodeURIComponent(sym)}`);
+      liveEventSourceRef.current = es;
+      es.addEventListener('quote', (evt) => {
+        try {
+          const quote = JSON.parse(evt.data || '{}');
+          const px = Number(quote?.price);
+          if (!Number.isFinite(px) || px <= 0 || !candleSeriesRef.current || !liveBarRef.current) return;
+          const next = { ...liveBarRef.current };
+          next.close = px;
+          if (px > next.high) next.high = px;
+          if (px < next.low) next.low = px;
+          liveBarRef.current = next;
+          candleSeriesRef.current.update(next);
+        } catch (_) {
+          // Ignore malformed live quote payloads.
+        }
+      });
+    };
 
-    return () => {
+    const closeStream = () => {
+      if (!es) return;
       try {
         es.close();
       } catch {
         // ignore
       }
       if (liveEventSourceRef.current === es) liveEventSourceRef.current = null;
+      es = null;
+    };
+
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') {
+        closeStream();
+      } else {
+        openStream();
+      }
+    };
+
+    openStream();
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      document.removeEventListener('visibilitychange', onVis);
+      closeStream();
     };
   }, [symbol, status]);
 

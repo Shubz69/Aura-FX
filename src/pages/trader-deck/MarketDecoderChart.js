@@ -195,6 +195,7 @@ export default function MarketDecoderChart({
     const t = setTimeout(() => refetchLive(), 380);
     return () => {
       clearTimeout(t);
+      lastLiveQueryRef.current = '';
       if (liveAbortRef.current) liveAbortRef.current.abort();
     };
   }, [useLive, refetchLive]);

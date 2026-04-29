@@ -75,14 +75,23 @@ function normalizeCsvDirection(value) {
   return raw;
 }
 
-function normalizeCsvTrades(rows = []) {
+/** Stable replay id aligned with api/trader-replay/tradeSources.js (csv:year-month-index). */
+function buildCsvReplayListId(periodYear, periodMonth, indexZero) {
+  const y = Number(periodYear);
+  const m = Number(periodMonth);
+  const yi = Number.isFinite(y) ? y : new Date().getFullYear();
+  const mi = Number.isFinite(m) ? m : new Date().getMonth() + 1;
+  return `csv:${yi}-${mi}-${indexZero}`;
+}
+
+function normalizeCsvTrades(rows = [], periodYear, periodMonth) {
   const mapped = rows.map((row, idx) => {
     const closeIso = parseCsvIsoTime(row?.time);
     const pnl = Number(row?.profit) || 0;
     const commission = Number(row?.commission) || 0;
     const swap = Number(row?.swap) || 0;
     return {
-      id: `csv-${idx + 1}`,
+      id: buildCsvReplayListId(periodYear, periodMonth, idx),
       pair: row?.symbol || '—',
       symbol: row?.symbol || '—',
       direction: normalizeCsvDirection(row?.type),
@@ -374,7 +383,9 @@ export function AuraAnalysisProvider({ children, dataMode = 'live', csvPeriod = 
         if (!csvData.success) {
           throw new Error(csvData.message || 'Failed to load CSV dashboard data.');
         }
-        const normalizedTrades = Array.isArray(csvData.trades) ? normalizeCsvTrades(csvData.trades) : [];
+        const py = csvData.period?.year;
+        const pm = csvData.period?.month;
+        const normalizedTrades = Array.isArray(csvData.trades) ? normalizeCsvTrades(csvData.trades, py, pm) : [];
         const syntheticAccount = buildCsvSyntheticAccount(csvData);
         const tfp = tradesPayloadFingerprint(normalizedTrades);
         const afp = accountPayloadFingerprint(syntheticAccount);
@@ -516,16 +527,33 @@ export function AuraAnalysisProvider({ children, dataMode = 'live', csvPeriod = 
     return () => clearInterval(intervalRef.current);
   }, [activePlatformId, activeConnectionId, fetchData, dataMode]);
 
+  const withReplayListId = useCallback(
+    (row) => {
+      if (!row || row.id == null) return row;
+      const idStr = String(row.id);
+      if (idStr.includes(':')) return row;
+      if (dataMode === 'csv' || row.source === 'csv') return row;
+      if (activePlatformId === 'mt4' || activePlatformId === 'mt5') {
+        return { ...row, id: `${activePlatformId}:${idStr}` };
+      }
+      if (activePlatformId === 'aura') {
+        return { ...row, id: `aura:${idStr}` };
+      }
+      return row;
+    },
+    [activePlatformId, dataMode]
+  );
+
   const trades = useMemo(() => {
     const devPerfMemo = isAuraAnalysisDevPerfEnabled() && auraAnalysisDevPerfIsPipelineActive();
     const t0 = devPerfMemo ? performance.now() : 0;
-    let t = rawTrades.map((row) => mergeTradeMetadataRow(userId, activePlatformId, row));
+    let t = rawTrades.map((row) => withReplayListId(mergeTradeMetadataRow(userId, activePlatformId, row)));
     if (symbolFilter  !== 'ALL') t = t.filter(x => (x.pair || x.symbol) === symbolFilter);
     if (sessionFilter !== 'ALL') t = t.filter(x => x.session === sessionFilter);
     if (dirFilter     !== 'ALL') t = t.filter(x => (x.direction || '').toLowerCase() === dirFilter.toLowerCase());
     if (devPerfMemo) auraAnalysisDevPerfPipelineStageMs('normalize.trades', performance.now() - t0);
     return t;
-  }, [rawTrades, symbolFilter, sessionFilter, dirFilter, userId, activePlatformId, tradeMetaTick]);
+  }, [rawTrades, symbolFilter, sessionFilter, dirFilter, userId, activePlatformId, tradeMetaTick, withReplayListId]);
 
   const symbolOptions = useMemo(() => {
     const s = new Set(rawTrades.map(t => t.pair || t.symbol).filter(Boolean));
