@@ -1190,3 +1190,155 @@
   border: 1px solid transparent !important;
   box-shadow: none !important;
 }
+
+/* Replay workspace polish */
+.journal-page .bt-root .bt-replay-page {
+  display: grid;
+  gap: 14px;
+}
+
+.journal-page .bt-root .bt-replay-controls__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.journal-page .bt-root .bt-replay-controls__sub {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+}
+
+.journal-page .bt-root .bt-replay-kpis {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.journal-page .bt-root .bt-replay-controls__grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+}
+
+.journal-page .bt-root .bt-replay-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.journal-page .bt-root .bt-replay-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(320px, 1fr);
+  gap: 14px;
+}
+
+.journal-page .bt-root .bt-replay-chart {
+  min-height: 520px;
+}
+
+.journal-page .bt-root .bt-replay-empty {
+  min-height: 420px;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.journal-page .bt-root .bt-replay-trading__grid {
+  grid-template-columns: 1fr;
+  gap: 10px !important;
+}
+
+.journal-page .bt-root .bt-replay-trading__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.journal-page .bt-root .bt-replay-balance {
+  margin: 12px 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.journal-page .bt-root .bt-replay-balance > div {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.73rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.journal-page .bt-root .bt-replay-balance strong {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.journal-page .bt-root .bt-replay-bottom {
+  margin-bottom: 0 !important;
+}
+
+.journal-page .bt-root .bt-replay-ai__log {
+  display: grid;
+  gap: 8px;
+  max-height: 240px;
+  overflow: auto;
+  margin-bottom: 8px;
+}
+
+.journal-page .bt-root .bt-replay-chat-line {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.journal-page .bt-root .bt-replay-chat-line span {
+  color: var(--bt-gold-bright);
+}
+
+.journal-page .bt-root .bt-replay-chat-line--user {
+  border-color: rgba(234, 169, 96, 0.26);
+}
+
+.journal-page .bt-root .bt-replay-ai__composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.journal-page .bt-root .bt-replay-saved__actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 1120px) {
+  .journal-page .bt-root .bt-replay-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .journal-page .bt-root .bt-replay-ai__composer {
+    grid-template-columns: 1fr;
+  }
+  .journal-page .bt-root .bt-replay-balance {
+    grid-template-columns: 1fr;
+  }
+  .journal-page .bt-root .bt-replay-actions .bt-btn,
+  .journal-page .bt-root .bt-replay-trading__actions .bt-btn {
+    flex: 1 1 calc(50% - 6px);
+  }
+}

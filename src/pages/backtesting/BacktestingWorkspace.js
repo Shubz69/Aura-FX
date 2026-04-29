@@ -28,6 +28,7 @@ export default function BacktestingWorkspace() {
   const [chatQuestion, setChatQuestion] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
   const [chatBusy, setChatBusy] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   const [controls, setControls] = useState({
     instrument: 'EURUSD',
@@ -116,10 +117,13 @@ export default function BacktestingWorkspace() {
   useEffect(() => {
     (async () => {
       setLoading(true);
+      setLoadError('');
       try {
         await refreshSessionData();
       } catch (e) {
-        toast.error(e?.response?.data?.message || 'Could not load backtesting workspace');
+        const msg = e?.response?.data?.message || 'Could not load backtesting workspace';
+        setLoadError(msg);
+        toast.error(msg);
       } finally {
         setLoading(false);
       }
@@ -133,6 +137,7 @@ export default function BacktestingWorkspace() {
     }
     setBusy(true);
     setPlaying(false);
+    setLoadError('');
     try {
       const fromIso = `${controls.date}T${controls.time}:00.000Z`;
       const fromSec = Math.floor(new Date(fromIso).getTime() / 1000);
@@ -168,7 +173,9 @@ export default function BacktestingWorkspace() {
         },
       });
     } catch (e) {
-      toast.error(e?.response?.data?.message || 'Failed to load candles');
+      const msg = e?.response?.data?.message || 'Failed to load candles';
+      setLoadError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -288,11 +295,26 @@ export default function BacktestingWorkspace() {
 
   if (loading || !session) return <p className="bt-muted">{loading ? 'Loading workspace…' : 'Session not found'}</p>;
 
+  const replayClockLabel = currentBar?.time
+    ? new Date(Number(currentBar.time) * 1000).toLocaleString()
+    : '—';
+  const progressPct = candles.length ? Math.round((visibleBars / candles.length) * 100) : 0;
+
   return (
-    <div style={{ display: 'grid', gap: 14 }}>
-      <div className="aa-card">
-        <h2 className="aa-section-title-lg">Backtesting Replay Workspace</h2>
-        <div className="bt-form-grid">
+    <div className="bt-replay-page">
+      <section className="aa-card bt-replay-controls">
+        <div className="bt-replay-controls__head">
+          <div>
+            <h2 className="aa-section-title-lg">Backtesting Replay Workspace</h2>
+            <p className="aa--muted bt-replay-controls__sub">Load historical candles and replay forward without revealing future bars.</p>
+          </div>
+          <div className="bt-replay-kpis">
+            <span className="aa-pill aa-pill--dim">Replay: {playing ? 'Playing' : 'Paused'}</span>
+            <span className="aa-pill aa-pill--dim">Progress: {progressPct}%</span>
+            <span className="aa-pill aa-pill--dim">Clock: {replayClockLabel}</span>
+          </div>
+        </div>
+        <div className="bt-form-grid bt-replay-controls__grid">
           <div>
             <label className="bt-label">Instrument</label>
             <select className="bt-select" value={controls.instrument} onChange={(e) => setControls((p) => ({ ...p, instrument: e.target.value }))}>
@@ -322,37 +344,48 @@ export default function BacktestingWorkspace() {
             </select>
           </div>
         </div>
-        <div className="bt-hero-actions" style={{ marginTop: 10 }}>
+        <div className="bt-replay-actions">
           <button type="button" className="bt-btn bt-btn--primary" onClick={loadCandles} disabled={busy}>Load</button>
           <button type="button" className="bt-btn" onClick={() => setPlaying(true)} disabled={!candles.length}>Play</button>
-          <button type="button" className="bt-btn bt-btn--ghost" onClick={() => setPlaying(false)}>Pause</button>
+          <button type="button" className="bt-btn bt-btn--ghost" onClick={() => setPlaying(false)} disabled={!candles.length}>Pause</button>
           <button type="button" className="bt-btn bt-btn--ghost" onClick={() => setCursor((i) => Math.max(0, i - 1))} disabled={!candles.length}>Step back</button>
           <button type="button" className="bt-btn bt-btn--ghost" onClick={() => setCursor((i) => Math.min(i + 1, candles.length - 1))} disabled={!candles.length}>Step forward</button>
           <button type="button" className="bt-btn bt-btn--ghost" onClick={() => { setPlaying(false); setCursor(startIndex); }} disabled={!candles.length}>Restart</button>
         </div>
-      </div>
+        {loadError && <p className="bt-inline-err">{loadError}</p>}
+      </section>
 
-      <div className="aa-card">
-        {!candles.length ? (
-          <p className="aa--muted">Load candles to start replay.</p>
-        ) : (
-          <TradeReplayChart
-            bars={candles}
-            visibleBars={visibleBars}
-            currentIndex={cursor}
-            openTrades={openTrades}
-            closedTrades={closedTrades}
-            annotations={[
-              { time: Number(currentBar?.time), text: 'Now', shape: 'square', color: '#38bdf8' },
-            ]}
-          />
-        )}
-      </div>
+      <section className="bt-replay-layout">
+        <div className="aa-card bt-replay-chart">
+          {busy ? (
+            <div className="bt-replay-empty">
+              <span className="aa-spinner" aria-hidden />
+              <p className="aa--muted">Loading historical candles…</p>
+            </div>
+          ) : !candles.length ? (
+            <div className="bt-replay-empty">
+              <p className="aa--muted">Choose instrument/time/date and click Load to begin replay.</p>
+            </div>
+          ) : (
+            <>
+              <TradeReplayChart
+                bars={candles}
+                visibleBars={visibleBars}
+                currentIndex={cursor}
+                openTrades={openTrades}
+                closedTrades={closedTrades}
+                annotations={[
+                  { time: Number(currentBar?.time), text: 'Now', shape: 'square', color: '#38bdf8' },
+                ]}
+              />
+              {cursor >= candles.length - 1 && <p className="bt-field-hint">Replay reached the end of loaded candles. Restart or load another point.</p>}
+            </>
+          )}
+        </div>
 
-      <div className="bt-two-col">
-        <div className="aa-card">
+        <aside className="aa-card bt-replay-trading">
           <h3 className="aa-section-title">Trading panel</h3>
-          <div className="bt-form-grid">
+          <div className="bt-form-grid bt-replay-trading__grid">
             <div>
               <label className="bt-label">Lot size</label>
               <input className="bt-input" type="number" step="0.01" value={ticket.lotSize} onChange={(e) => setTicket((p) => ({ ...p, lotSize: e.target.value }))} />
@@ -366,13 +399,16 @@ export default function BacktestingWorkspace() {
               <input className="bt-input" value={ticket.takeProfit} onChange={(e) => setTicket((p) => ({ ...p, takeProfit: e.target.value }))} />
             </div>
           </div>
-          <div className="bt-hero-actions" style={{ marginTop: 10 }}>
+          <div className="bt-replay-trading__actions">
             <button type="button" className="bt-btn bt-btn--primary" onClick={() => placeTrade('long')}>Buy</button>
             <button type="button" className="bt-btn bt-btn--danger" onClick={() => placeTrade('short')}>Sell</button>
           </div>
-          <p className="aa--muted" style={{ marginTop: 12 }}>
-            Balance: {fmt(session.initialBalance)} | Closed PnL: {fmt(closedPnl)} | Floating: {fmt(markToMarketPnl)} | Equity: {fmt(equity)}
-          </p>
+          <div className="bt-replay-balance">
+            <div><span>Balance</span><strong>{fmt(session.initialBalance)}</strong></div>
+            <div><span>Closed PnL</span><strong>{fmt(closedPnl)}</strong></div>
+            <div><span>Floating</span><strong>{fmt(markToMarketPnl)}</strong></div>
+            <div><span>Equity</span><strong>{fmt(equity)}</strong></div>
+          </div>
           <div className="bt-table-wrap">
             <table className="bt-table">
               <thead><tr><th>Direction</th><th>Entry</th><th>SL/TP</th><th /></tr></thead>
@@ -388,52 +424,61 @@ export default function BacktestingWorkspace() {
               </tbody>
             </table>
           </div>
-        </div>
+        </aside>
+      </section>
 
-        <div className="aa-card">
+      <section className="bt-two-col bt-replay-bottom">
+        <div className="aa-card bt-replay-ai">
           <h3 className="aa-section-title">AI coaching</h3>
-          <div style={{ display: 'grid', gap: 8, maxHeight: 220, overflow: 'auto', marginBottom: 8 }}>
+          <div className="bt-replay-ai__log">
             {chatHistory.length === 0 ? <p className="aa--muted">Ask: "Was this a good entry?"</p> : chatHistory.map((m, i) => (
-              <div key={`${m.role}-${i}`} className="aa-pill aa-pill--dim">{m.role === 'user' ? 'You' : 'Coach'}: {m.text}</div>
+              <div key={`${m.role}-${i}`} className={`bt-replay-chat-line ${m.role === 'user' ? 'bt-replay-chat-line--user' : ''}`}>
+                <span>{m.role === 'user' ? 'You' : 'Coach'}:</span> {m.text}
+              </div>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="bt-replay-ai__composer">
             <input className="bt-input" value={chatQuestion} onChange={(e) => setChatQuestion(e.target.value)} placeholder="What would a trader do here?" />
             <button type="button" className="bt-btn bt-btn--primary" disabled={chatBusy} onClick={askCoach}>Ask</button>
           </div>
+          <p className="bt-field-hint">Coach context includes symbol, timeframe, visible candles, open trades, and saved trades.</p>
         </div>
-      </div>
 
-      <div className="aa-card">
-        <h3 className="aa-section-title">Saved trades</h3>
-        <div className="bt-table-wrap">
-          <table className="bt-table">
-            <thead><tr><th>Instrument</th><th>Dir</th><th>Entry</th><th>Exit</th><th>Lot</th><th>PnL</th><th>Result</th><th>AI</th><th /></tr></thead>
-            <tbody>
-              {savedTrades.length === 0 ? <tr><td colSpan={9}>No saved trades yet.</td></tr> : savedTrades.map((t) => (
-                <tr key={t.id}>
-                  <td>{t.instrument}</td>
-                  <td>{t.direction}</td>
-                  <td>{fmt(t.entryPrice, 5)}</td>
-                  <td>{fmt(t.exitPrice, 5)}</td>
-                  <td>{fmt(t.lotSize, 2)}</td>
-                  <td>{fmt(t.pnlAmount)}</td>
-                  <td>{t.result}</td>
-                  <td>{(t.aiFeedback || '').slice(0, 60) || '—'}</td>
-                  <td><button type="button" className="bt-btn bt-btn--ghost bt-btn--sm" onClick={() => loadSavedTradeReplay(t)}>Reopen</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="aa-card bt-replay-saved">
+          <h3 className="aa-section-title">Saved trades</h3>
+          <div className="bt-table-wrap">
+            <table className="bt-table">
+              <thead><tr><th>Instrument</th><th>Dir</th><th>Entry</th><th>Exit</th><th>Lot</th><th>PnL</th><th>Result</th><th>AI</th><th /></tr></thead>
+              <tbody>
+                {savedTrades.length === 0 ? <tr><td colSpan={9}>No saved trades yet.</td></tr> : savedTrades.map((t) => (
+                  <tr key={t.id}>
+                    <td>{t.instrument}</td>
+                    <td>{t.direction}</td>
+                    <td>{fmt(t.entryPrice, 5)}</td>
+                    <td>{fmt(t.exitPrice, 5)}</td>
+                    <td>{fmt(t.lotSize, 2)}</td>
+                    <td>{fmt(t.pnlAmount)}</td>
+                    <td>{t.result}</td>
+                    <td>{(t.aiFeedback || '').slice(0, 60) || '—'}</td>
+                    <td><button type="button" className="bt-btn bt-btn--ghost bt-btn--sm" onClick={() => loadSavedTradeReplay(t)}>Reopen</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="bt-replay-saved__actions">
+            {closedTrades.length === 0 ? (
+              <p className="aa--muted">Close a simulated trade to save it here.</p>
+            ) : (
+              closedTrades.slice(0, 5).map((t) => (
+                <button key={t.id} type="button" className="bt-btn bt-btn--ghost bt-btn--sm" onClick={() => saveTrade(t)}>
+                  Save {t.instrument} {new Date(t.closeTime || t.openTime).toLocaleDateString()}
+                </button>
+              ))
+            )}
+          </div>
         </div>
-        <div className="bt-hero-actions" style={{ marginTop: 10 }}>
-          {closedTrades.slice(0, 5).map((t) => (
-            <button key={t.id} type="button" className="bt-btn bt-btn--ghost bt-btn--sm" onClick={() => saveTrade(t)}>
-              Save {t.instrument} {new Date(t.closeTime || t.openTime).toLocaleDateString()}
-            </button>
-          ))}
-        </div>
-      </div>
+      </section>
     </div>
   );
 }
