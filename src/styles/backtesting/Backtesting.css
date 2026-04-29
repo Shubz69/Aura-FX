@@ -1342,3 +1342,68 @@
     flex: 1 1 calc(50% - 6px);
   }
 }
+
+/* Quick start setup */
+.journal-page .bt-root .bt-quickstart-card {
+  border-color: rgba(234, 169, 96, 0.28) !important;
+  padding: 16px 18px 18px !important;
+}
+
+.journal-page .bt-root .bt-quickstart-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.journal-page .bt-root .bt-quickstart-card .aa-section-title-lg {
+  margin-bottom: 10px !important;
+}
+
+.journal-page .bt-root .bt-quickstart-actions {
+  margin-top: 12px !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+.journal-page .bt-root .bt-quickstart-actions__primary {
+  min-width: 190px !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  box-shadow: 0 10px 24px rgba(234, 169, 96, 0.32) !important;
+}
+
+.journal-page .bt-root .bt-advanced-card {
+  opacity: 0.9;
+  border-color: rgba(255, 255, 255, 0.11) !important;
+}
+
+.journal-page .bt-root .bt-advanced-toggle {
+  padding: 8px 14px !important;
+  font-size: 0.68rem !important;
+  letter-spacing: 0.07em !important;
+}
+
+.journal-page .bt-root .bt-advanced-grid {
+  gap: 14px !important;
+}
+
+@media (max-width: 1080px) {
+  .journal-page .bt-root .bt-quickstart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .journal-page .bt-root .bt-quickstart-card {
+    padding: 14px 14px 16px !important;
+  }
+  .journal-page .bt-root .bt-quickstart-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .journal-page .bt-root .bt-quickstart-actions {
+    margin-top: 10px !important;
+  }
+  .journal-page .bt-root .bt-quickstart-actions__primary {
+    width: 100% !important;
+  }
+}

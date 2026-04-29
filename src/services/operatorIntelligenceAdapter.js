@@ -14,6 +14,16 @@ import {
   computeSessionLevels,
 } from '../data/operatorIntelligence/chartBars.mock';
 import { buildCandleIntelligenceMock } from '../data/operatorIntelligence/candleIntelligence.mock';
+import Api from './Api';
+import {
+  chartSymbolFromId,
+  dataSymbolFromId,
+  providerSymbolFromId,
+  getInstrumentById,
+  getInstrumentByChartSymbol,
+  normalizeSymbol,
+} from '../data/terminalInstruments';
+import { normalizeChartBars } from '../lib/charts/lightweightChartData';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -61,10 +71,73 @@ export async function fetchActionSummary() {
 }
 
 export async function fetchOperatorChartPack(symbol, timeframeId) {
-  await delay(140);
-  const bars = generateOperatorMockBars(symbol, timeframeId);
+  await delay(60);
+  const normalized = normalizeSymbol(symbol);
+  const inst = getInstrumentById(normalized) || getInstrumentByChartSymbol(symbol);
+  const cleanChartSymbol = inst?.chartSymbol || chartSymbolFromId(normalized || symbol);
+  const cleanDataSymbol = inst?.dataSymbol || dataSymbolFromId(normalized || symbol) || cleanChartSymbol;
+  const providerSymbol = inst?.providerSymbol || providerSymbolFromId(normalized || symbol) || cleanChartSymbol;
+
+  const tfMap = {
+    '1m': '1',
+    '5m': '5',
+    '15m': '15',
+    '30m': '30',
+    '45m': '45',
+    '1H': '60',
+    '4H': '240',
+    D: '1D',
+    '1D': '1D',
+    W: '1W',
+    '1W': '1W',
+    '1mo': '1M',
+    '1M': '1M',
+    '1y': '1Y',
+    '1Y': '1Y',
+  };
+  const requestedInterval = tfMap[String(timeframeId || '1H')] || '60';
+
+  const trySymbols = [cleanDataSymbol, cleanChartSymbol, providerSymbol].filter(Boolean);
+  let bars = [];
+  let usedSymbol = cleanDataSymbol;
+  let diagnostics = null;
+
+  for (const symTry of trySymbols) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const response = await Api.getMarketChartHistory(symTry, { interval: requestedInterval });
+      const payload = response?.data || {};
+      const normalizedBars = normalizeChartBars(payload?.bars);
+      if (normalizedBars.length > 1) {
+        bars = normalizedBars;
+        usedSymbol = symTry;
+        diagnostics = payload?.diagnostics || null;
+        break;
+      }
+    } catch {
+      /* try next symbol */
+    }
+  }
+
+  if (!bars.length) {
+    bars = generateOperatorMockBars(cleanDataSymbol || cleanChartSymbol, timeframeId);
+    diagnostics = {
+      providerUsed: 'mock',
+      requestedInterval,
+      fallbackReason: 'api_empty_or_unavailable',
+    };
+  }
+
   const levels = computeSessionLevels(bars);
-  return { bars, levels };
+  return {
+    symbol: cleanChartSymbol,
+    dataSymbol: cleanDataSymbol,
+    providerSymbol,
+    usedSymbol,
+    bars,
+    levels,
+    diagnostics,
+  };
 }
 
 export function resolveCandleIntelligence(bar, ctx) {

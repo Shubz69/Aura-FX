@@ -2,21 +2,22 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { useTranslation } from 'react-i18next';
 import { createChart, ColorType } from 'lightweight-charts';
 import { FaChartLine } from 'react-icons/fa';
-import Api from '../../services/Api';
+import { fetchOperatorChartPack } from '../../services/operatorIntelligenceAdapter';
 import {
   auraCandlestickSeriesOptions,
   auraChartVisualOptions,
   normalizeChartBars,
   timeScaleOptionsForInterval,
 } from '../../lib/charts/lightweightChartData';
-import { computeSessionLevels } from '../../data/operatorIntelligence/chartBars.mock';
 import {
   TERMINAL_INSTRUMENTS,
   TERMINAL_INSTRUMENT_CATEGORIES,
   getInstrumentByChartSymbol,
   chartSymbolFromId,
+  dataSymbolFromId,
   terminalInstrumentLabel,
 } from '../../data/terminalInstruments';
+import { formatCandleTooltip } from '../../lib/charts/candleIntelligence';
 
 const TIMEFRAMES = [
   { id: '1m', label: '1m', api: '1' },
@@ -86,12 +87,15 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
     const inst = getInstrumentByChartSymbol(symbol) || TERMINAL_INSTRUMENTS[0];
     return inst && inst.id ? inst.id : 'EURUSD';
   });
-  const sym = chartSymbolFromId(selectedInstrumentId);
+  const cleanChartSymbol = chartSymbolFromId(selectedInstrumentId);
+  const cleanDataSymbol = dataSymbolFromId(selectedInstrumentId);
+  const symLabel = terminalInstrumentLabel(cleanChartSymbol);
   const [status, setStatus] = useState('loading');
   const [err, setErr] = useState('');
   const [pack, setPack] = useState(null);
   const [lastPrice, setLastPrice] = useState('');
   const [diagnostics, setDiagnostics] = useState(null);
+  const [hoverTooltip, setHoverTooltip] = useState(null);
 
   const loadSeqRef = useRef(0);
   const abortRef = useRef(null);
@@ -127,13 +131,10 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
     setPack(null);
     setDiagnostics(null);
     try {
-      const response = await Api.getMarketChartHistory(sym, {
-        interval: requestedInterval,
-        signal: controller.signal,
-      });
+      const data = await fetchOperatorChartPack(cleanDataSymbol || selectedInstrumentId, tf);
+      if (controller.signal.aborted) return;
       if (seq !== loadSeqRef.current) return;
-      const payload = response?.data || {};
-      const bars = normalizeChartBars(payload?.bars);
+      const bars = normalizeChartBars(data?.bars);
       if (!bars || bars.length < 2) {
         setPack(null);
         setLastPrice('');
@@ -144,15 +145,17 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
       }
       setPack({
         bars,
-        levels: computeSessionLevels(bars),
+        levels: data?.levels || null,
       });
       const last = bars[bars.length - 1];
       setLastPrice(last && Number.isFinite(last.close) ? String(last.close) : '');
-      const diag = diagnosticsFromPayload(payload, bars, requestedInterval);
+      const diag = diagnosticsFromPayload({ diagnostics: data?.diagnostics || {} }, bars, requestedInterval);
       setDiagnostics(diag);
       console.info('[OperatorIntelligence][ChartHistory]', {
-        symbol: sym,
+        symbol: cleanChartSymbol,
+        dataSymbol: cleanDataSymbol,
         requestedInterval,
+        usedSymbol: data?.usedSymbol || cleanDataSymbol,
         ...diag,
       });
       setStatus('ready');
@@ -167,7 +170,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
     }
-  }, [sym, tf]);
+  }, [cleanChartSymbol, cleanDataSymbol, selectedInstrumentId, tf, t]);
 
   useEffect(() => {
     load();
@@ -186,8 +189,8 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
   }, [symbol, selectedInstrumentId]);
 
   useEffect(() => {
-    onSymbolChange?.(sym);
-  }, [sym, onSymbolChange]);
+    onSymbolChange?.(cleanChartSymbol);
+  }, [cleanChartSymbol, onSymbolChange]);
 
   useLayoutEffect(() => {
     const wrap = wrapRef.current;
@@ -252,7 +255,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
       const data = normalizeChartBars(pack.bars);
       barsRef.current = pack.bars;
 
-      const candleSeries = chart.addCandlestickSeries(auraCandlestickSeriesOptions(sym));
+      const candleSeries = chart.addCandlestickSeries(auraCandlestickSeriesOptions(cleanChartSymbol));
       candleSeries.setData(data);
 
       const volData = pack.bars.map((b) => ({
@@ -351,10 +354,33 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
             if (bestD <= step * 2.5) bar = best;
           }
         }
-        if (bar) onSelectCandleRef.current?.(bar);
+        if (bar) {
+          onSelectCandleRef.current?.({
+            ...bar,
+            symbol: cleanChartSymbol,
+            interval: scaleIv,
+            instrument: symLabel,
+          });
+        }
       };
       chart.subscribeClick(clickHandler);
       chart.__oiClickHandler = clickHandler;
+
+      const crosshairHandler = (param) => {
+        let bar = null;
+        const seriesMap = param?.seriesData;
+        if (seriesMap && typeof seriesMap.forEach === 'function') {
+          seriesMap.forEach((pt) => {
+            if (bar || !pt || typeof pt.time !== 'number') return;
+            if (!('open' in pt) || !('high' in pt)) return;
+            bar = barsRef.current.find((b) => b.time === pt.time) || null;
+          });
+        }
+        const next = formatCandleTooltip({ bar, symbol: cleanChartSymbol, interval: scaleIv });
+        setHoverTooltip(next);
+      };
+      chart.subscribeCrosshairMove(crosshairHandler);
+      chart.__oiCrosshairHandler = crosshairHandler;
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -386,6 +412,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
       if (c) {
         try {
           if (c.__oiClickHandler) c.unsubscribeClick(c.__oiClickHandler);
+          if (c.__oiCrosshairHandler) c.unsubscribeCrosshairMove(c.__oiCrosshairHandler);
         } catch {
           /* ignore */
         }
@@ -397,9 +424,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
         chartRef.current = null;
       }
     };
-  }, [pack, status, tf]);
-
-  const symLabel = terminalInstrumentLabel(sym);
+  }, [pack, status, tf, cleanChartSymbol, symLabel]);
 
   return (
     <div className="oi-card oi-card--chart oi-card--chart-focal">
@@ -475,6 +500,15 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
 
       <div className="oi-chart-stage">
         <div ref={wrapRef} className="oi-chart-frame" data-testid="oi-chart-mount" />
+        {hoverTooltip ? (
+          <div className="oi-chart-hint" style={{ position: 'absolute', left: 12, top: 12, zIndex: 4, background: 'rgba(9,12,18,0.88)', padding: '6px 8px', borderRadius: 8, fontSize: 12 }}>
+            {hoverTooltip.timeIso} | O:{hoverTooltip.open} H:{hoverTooltip.high} L:{hoverTooltip.low} C:{hoverTooltip.close}
+            {' '}| Δ{hoverTooltip.movePct != null ? `${hoverTooltip.movePct.toFixed(3)}%` : 'n/a'}
+            {' '}| R:{hoverTooltip.range.toFixed(5)}
+            {hoverTooltip.volume != null ? ` | V:${hoverTooltip.volume}` : ''}
+            {' '}| {hoverTooltip.symbol} {hoverTooltip.interval}
+          </div>
+        ) : null}
         {status === 'loading' ? (
           <div className="oi-chart-loading" aria-busy="true" aria-live="polite">
             <span className="oi-chart-loading__ring" aria-hidden />

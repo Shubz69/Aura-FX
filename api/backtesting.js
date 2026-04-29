@@ -311,6 +311,7 @@ function timeframeToChartInterval(tf) {
   if (raw === 'H4' || raw === '240') return '240';
   if (raw === 'W1' || raw === '1W') return '1W';
   if (raw === 'MN1' || raw === '1M') return '1M';
+  if (raw === 'Y1' || raw === '1Y') return '1Y';
   return '1D';
 }
 

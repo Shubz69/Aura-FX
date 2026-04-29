@@ -32,6 +32,7 @@ const HARD_BUILD_MS = Math.min(
 let lastGoodSnapshot = null;
 let lastGoodSnapshotTime = 0;
 let snapshotBuildInFlight = null;
+let snapshotFallbackCount = 0;
 const recentCallerWindow = new Map();
 const RECENT_CALLER_WINDOW_MS = Math.max(1000, parseInt(process.env.MARKETS_SNAPSHOT_RATE_WINDOW_MS || '1500', 10) || 1500);
 
@@ -104,6 +105,7 @@ module.exports = async (req, res) => {
   if (typeof console !== 'undefined' && console.debug) {
     console.debug('[markets/snapshot] request', { diagnostics: wantDiagnostics });
   }
+  snapshotFallbackCount += 1;
 
   const burstBlocked = callerBurstBlocked(req);
 
@@ -220,4 +222,11 @@ module.exports = async (req, res) => {
       snapshotTimestamp: null,
     });
   }
+};
+
+module.exports.getSnapshotRouteDiagnostics = function getSnapshotRouteDiagnostics() {
+  return {
+    snapshotFallbackCount,
+    cacheTtlMs: CACHE_TTL_MS,
+  };
 };

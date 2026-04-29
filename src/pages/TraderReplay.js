@@ -2,10 +2,24 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import TradeReplayChart from '../components/trader-replay/TradeReplayChart';
+import CandleIntelligencePanel from '../components/operator-intelligence/CandleIntelligencePanel';
 import Api from '../services/Api';
 import { useAuraAnalysisData } from '../context/AuraAnalysisContext';
 
 const SPEEDS = [500, 900, 1400, 2000];
+const TIMEFRAME_OPTIONS = [
+  { label: '1m', value: '1' },
+  { label: '5m', value: '5' },
+  { label: '15m', value: '15' },
+  { label: '30m', value: '30' },
+  { label: '45m', value: '45' },
+  { label: '1h', value: '60' },
+  { label: '4h', value: '240' },
+  { label: '1d', value: '1D' },
+  { label: '1w', value: '1W' },
+  { label: '1mo', value: '1M' },
+  { label: '1y', value: '1Y' },
+];
 
 function fmtDate(value) {
   if (!value) return '—';
@@ -32,6 +46,10 @@ export default function TraderReplay() {
   const [playing, setPlaying] = useState(false);
   const [speedMs, setSpeedMs] = useState(900);
   const [index, setIndex] = useState(0);
+  const [chartInterval, setChartInterval] = useState('15');
+  const [hoverTooltip, setHoverTooltip] = useState(null);
+  const [selectedBar, setSelectedBar] = useState(null);
+  const [candleOpen, setCandleOpen] = useState(false);
   const timerRef = useRef(null);
 
   const source = useMemo(() => {
@@ -70,7 +88,7 @@ export default function TraderReplay() {
       try {
         const [tradeRes, candlesRes, analysisRes] = await Promise.all([
           Api.getTraderReplayTrade(selectedId),
-          Api.getTraderReplayCandles({ tradeId: selectedId, interval: '15' }),
+          Api.getTraderReplayCandles({ tradeId: selectedId, interval: chartInterval }),
           Api.getTraderReplayAnalysis(selectedId),
         ]);
         const trade = tradeRes?.data?.trade || null;
@@ -88,7 +106,7 @@ export default function TraderReplay() {
       }
     };
     run();
-  }, [selectedId]);
+  }, [selectedId, chartInterval]);
 
   useEffect(() => {
     if (!playing || !bars.length) return undefined;
@@ -200,9 +218,33 @@ export default function TraderReplay() {
                     {SPEEDS.map((v) => <option key={v} value={v}>{v} ms</option>)}
                   </select>
                 </label>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 12 }}>Timeframe</span>
+                  <select value={chartInterval} onChange={(e) => setChartInterval(e.target.value)}>
+                    {TIMEFRAME_OPTIONS.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
+                  </select>
+                </label>
               </div>
 
-              <TradeReplayChart bars={bars} visibleBars={visibleBars} trade={selectedTrade} currentIndex={index} />
+              {hoverTooltip ? (
+                <div className="trader-suite-card" style={{ marginBottom: 8, padding: 8, fontSize: 12 }}>
+                  {hoverTooltip.timeIso} | O:{hoverTooltip.open} H:{hoverTooltip.high} L:{hoverTooltip.low} C:{hoverTooltip.close}
+                  {' '}| Δ{hoverTooltip.movePct != null ? `${hoverTooltip.movePct.toFixed(3)}%` : 'n/a'} | R:{hoverTooltip.range.toFixed(5)}
+                </div>
+              ) : null}
+              <TradeReplayChart
+                bars={bars}
+                visibleBars={visibleBars}
+                trade={selectedTrade}
+                currentIndex={index}
+                symbol={selectedTrade.symbol}
+                interval={chartInterval}
+                onHoverCandle={setHoverTooltip}
+                onSelectCandle={(bar) => {
+                  setSelectedBar(bar);
+                  setCandleOpen(true);
+                }}
+              />
 
               <section className="trader-suite-card" style={{ marginTop: 12, padding: 12 }}>
                 <h3 style={{ marginTop: 0 }}>AI Trade Review</h3>
@@ -220,6 +262,13 @@ export default function TraderReplay() {
           ) : null}
         </main>
       </div>
+      <CandleIntelligencePanel
+        open={candleOpen}
+        onClose={() => setCandleOpen(false)}
+        bar={selectedBar}
+        symbol={selectedTrade?.symbol || ''}
+        interval={chartInterval}
+      />
     </TraderSuiteShell>
   );
 }

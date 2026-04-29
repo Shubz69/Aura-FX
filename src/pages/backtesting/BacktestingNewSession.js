@@ -2,24 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Api from '../../services/Api';
 import { toast } from 'react-toastify';
-import BacktestDateField from '../../components/backtesting/BacktestDateField';
-
-const MARKETS = ['forex', 'indices', 'commodities', 'stocks', 'crypto', 'futures', 'other'];
-const OBJECTIVES = [
-  { value: 'playbook', label: 'Test a specific playbook', hint: 'Isolate one strategy card and measure expectancy.' },
-  { value: 'entry_model', label: 'Test an entry model', hint: 'Same trigger, varied context — see when it holds.' },
-  { value: 'time_edge', label: 'Test session / time-of-day edge', hint: 'Asia, London, NY — where does simulated edge cluster?' },
-  { value: 'instrument', label: 'Test a specific instrument', hint: 'Behaviour, volatility, and structure on one symbol.' },
-  { value: 'risk_model', label: 'Test a risk model', hint: 'Fixed % vs fixed lot vs manual — impact on R and drawdowns.' },
-  { value: 'market_conditions', label: 'Test market condition behaviour', hint: 'Trend vs range, news days, liquidity regimes.' },
-];
-
-const STEP_META = [
-  { n: 1, title: 'Session identity', short: 'Identity' },
-  { n: 2, title: 'Scope & risk', short: 'Scope' },
-  { n: 3, title: 'Strategy context', short: 'Context' },
-  { n: 4, title: 'Review & launch', short: 'Review' },
-];
 
 const defaultStrategyContext = () => ({
   entryModel: '',
@@ -43,79 +25,52 @@ const defaultStrategyContext = () => ({
   defaultTags: [],
 });
 
+function toLocalDateTimeInput(value) {
+  const d = value ? new Date(value) : new Date();
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function deriveEndDate(startIsoDate) {
+  if (!startIsoDate) return '';
+  const d = new Date(`${startIsoDate}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return '';
+  d.setDate(d.getDate() + 7);
+  return d.toISOString().slice(0, 10);
+}
+
 export default function BacktestingNewSession() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const draftFromUrl = searchParams.get('draft');
 
-  const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [draftSessionId, setDraftSessionId] = useState(null);
-  const [playbooks, setPlaybooks] = useState([]);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
-  const [sessionName, setSessionName] = useState('');
-  const [description, setDescription] = useState('');
-  const [playbookId, setPlaybookId] = useState('');
-  const [playbookName, setPlaybookName] = useState('');
-  const [objective, setObjective] = useState('');
-  const [objectiveDetail, setObjectiveDetail] = useState('');
-  const [marketType, setMarketType] = useState('forex');
-  const [instruments, setInstruments] = useState(['EURUSD']);
-  const [dateStart, setDateStart] = useState('');
-  const [dateEnd, setDateEnd] = useState('');
+  const [instrument, setInstrument] = useState('EURUSD');
   const [replayTimeframe, setReplayTimeframe] = useState('M15');
+  const [startDateTime, setStartDateTime] = useState('');
+  const [initialBalance, setInitialBalance] = useState(100000);
+
+  const [dateEnd, setDateEnd] = useState('');
   const [replayGranularity, setReplayGranularity] = useState('candle');
   const [tradingHoursMode, setTradingHoursMode] = useState('all');
-  const [initialBalance, setInitialBalance] = useState(100000);
   const [riskModel, setRiskModel] = useState('fixed_percent');
+  const [extraInstruments, setExtraInstruments] = useState([]);
+  const [sessionName, setSessionName] = useState('');
+  const [notes, setNotes] = useState('');
   const [strategyContext, setStrategyContext] = useState(defaultStrategyContext);
-  const [stepError, setStepError] = useState('');
-
-  const stepBlockers = useCallback((stepToValidate) => {
-    const blockers = [];
-    const inst = instruments.map((x) => String(x || '').trim()).filter(Boolean);
-    const hasBadInstrumentRows = instruments.some((x) => String(x || '').trim() === '');
-
-    if (stepToValidate >= 1) {
-      if (!sessionName.trim()) blockers.push('Session name is required.');
-      if (!objective) blockers.push('Choose what you are testing (objective).');
-    }
-
-    if (stepToValidate >= 2) {
-      if (!inst.length) blockers.push('Add at least one instrument.');
-      if (hasBadInstrumentRows) blockers.push('Remove or fill empty instrument rows.');
-      if (!dateStart || !dateEnd) blockers.push('Set both date start and date end.');
-      if (dateStart && dateEnd && dateStart > dateEnd) blockers.push('Date start must be before or equal to date end.');
-    }
-
-    return blockers;
-  }, [sessionName, objective, instruments, dateStart, dateEnd]);
-
-  const loadPlaybooks = useCallback(async () => {
-    try {
-      const res = await Api.getTraderPlaybookSetups();
-      const list = res.data?.setups || [];
-      setPlaybooks(Array.isArray(list) ? list : []);
-    } catch {
-      setPlaybooks([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadPlaybooks();
-  }, [loadPlaybooks]);
 
   const hydrateFromSession = useCallback((s) => {
     if (!s) return;
+    const list = Array.isArray(s.instruments) && s.instruments.length ? s.instruments : ['EURUSD'];
     setSessionName(s.sessionName || '');
-    setDescription(s.description || '');
-    setPlaybookId(s.playbookId || '');
-    setPlaybookName(s.playbookName || '');
-    setObjective(s.objective || '');
-    setObjectiveDetail(s.objectiveDetail || '');
-    setMarketType(s.marketType || 'forex');
-    setInstruments(Array.isArray(s.instruments) && s.instruments.length ? s.instruments : ['EURUSD']);
-    setDateStart(s.dateStart || '');
+    setNotes(s.description || s.notes || '');
+    setInstrument(list[0] || 'EURUSD');
+    setExtraInstruments(list.slice(1, 5));
+    setStartDateTime(toLocalDateTimeInput(s.lastReplayAt || `${s.dateStart || new Date().toISOString().slice(0, 10)}T09:00:00`));
     setDateEnd(s.dateEnd || '');
     setReplayTimeframe(s.replayTimeframe || 'M15');
     setReplayGranularity(s.replayGranularity || 'candle');
@@ -125,6 +80,10 @@ export default function BacktestingNewSession() {
     setStrategyContext({ ...defaultStrategyContext(), ...(s.strategyContext || {}) });
     setDraftSessionId(s.id);
   }, []);
+
+  useEffect(() => {
+    if (!startDateTime) setStartDateTime(toLocalDateTimeInput(new Date()));
+  }, [startDateTime]);
 
   useEffect(() => {
     const id = draftFromUrl || draftSessionId;
@@ -140,19 +99,22 @@ export default function BacktestingNewSession() {
   }, [draftFromUrl, draftSessionId, hydrateFromSession]);
 
   const buildPayload = (saveDraft) => {
-    const inst = instruments.map((x) => String(x).trim()).filter(Boolean).slice(0, 5);
+    const primary = String(instrument || '').trim().toUpperCase();
+    const extras = extraInstruments
+      .map((x) => String(x || '').trim().toUpperCase())
+      .filter(Boolean);
+    const instruments = [primary, ...extras].filter(Boolean).slice(0, 5);
+    const dateStart = startDateTime ? startDateTime.slice(0, 10) : '';
+    const dateEndFinal = dateEnd || deriveEndDate(dateStart) || dateStart;
+
     return {
       saveDraft,
-      sessionName: sessionName || 'Untitled session',
-      description,
-      playbookId: playbookId || null,
-      playbookName: playbookName || null,
-      objective: objective || null,
-      objectiveDetail,
-      marketType,
-      instruments: inst,
+      sessionName: sessionName || `${primary || 'Market'} ${replayTimeframe} Replay`,
+      description: notes,
+      marketType: 'forex',
+      instruments,
       dateStart: dateStart || null,
-      dateEnd: dateEnd || null,
+      dateEnd: dateEndFinal || null,
       replayTimeframe,
       replayGranularity,
       tradingHoursMode,
@@ -160,17 +122,12 @@ export default function BacktestingNewSession() {
       riskModel,
       strategyContext,
       draftForm: {
-        step,
         sessionName,
-        description,
-        playbookId,
-        playbookName,
-        objective,
-        objectiveDetail,
-        marketType,
-        instruments: inst,
+        notes,
+        instruments,
+        startDateTime,
         dateStart,
-        dateEnd,
+        dateEnd: dateEndFinal,
         replayTimeframe,
         replayGranularity,
         tradingHoursMode,
@@ -203,237 +160,113 @@ export default function BacktestingNewSession() {
     }
   };
 
-  const createSession = async () => {
-    const blockers = stepBlockers(4);
-    if (blockers.length > 0) {
-      toast.error(`Cannot create session yet: ${blockers[0]}`);
+  const startReplay = async () => {
+    if (!String(instrument || '').trim()) {
+      toast.error('Instrument is required.');
       return;
     }
+    if (!startDateTime) {
+      toast.error('Start date/time is required.');
+      return;
+    }
+
     setSaving(true);
     try {
       const payload = buildPayload(false);
+      const replayIso = new Date(startDateTime).toISOString();
+
       if (draftSessionId || draftFromUrl) {
         const id = draftSessionId || draftFromUrl;
-        await Api.patchBacktestingSession(id, {
-          ...payload,
-          status: 'active',
-          saveDraft: false,
-        });
+        await Api.patchBacktestingSession(id, { ...payload, status: 'active', saveDraft: false });
         await Api.resumeBacktestingSession(id);
+        await Api.patchBacktestingSession(id, {
+          lastActiveInstrument: String(instrument || '').trim().toUpperCase(),
+          replayTimeframe,
+          lastReplayAt: replayIso,
+        });
         navigate(`/backtesting/session/${id}`);
         return;
       }
+
       const res = await Api.createBacktestingSession(payload);
       if (res.data?.success && res.data.session?.id) {
-        navigate(`/backtesting/session/${res.data.session.id}`);
+        const createdId = res.data.session.id;
+        await Api.patchBacktestingSession(createdId, {
+          lastActiveInstrument: String(instrument || '').trim().toUpperCase(),
+          replayTimeframe,
+          lastReplayAt: replayIso,
+        });
+        navigate(`/backtesting/session/${createdId}`);
       }
     } catch (e) {
-      toast.error(e?.response?.data?.message || 'Could not create session');
+      toast.error(e?.response?.data?.message || 'Could not start replay');
     } finally {
       setSaving(false);
     }
   };
 
-  const next = () => {
-    const blockers = stepBlockers(step);
-    if (blockers.length > 0) {
-      setStepError(blockers[0]);
-      return;
-    }
-    setStepError('');
-    setStep((s) => Math.min(4, s + 1));
-  };
-  const back = () => {
-    setStepError('');
-    setStep((s) => Math.max(1, s - 1));
-  };
-
-  const canCreate = () => stepBlockers(4).length === 0;
-
-  const currentStepBlockers = stepBlockers(step);
-
   const addInstrument = () => {
-    if (instruments.length >= 5) return;
-    setInstruments([...instruments, '']);
+    if (extraInstruments.length >= 4) return;
+    setExtraInstruments([...extraInstruments, '']);
   };
 
   return (
     <>
       <header className="bt-hero">
-        <p className="bt-hero-kicker">Guided setup</p>
-        <h1 className="bt-hero-title">New backtest session</h1>
-        <p className="bt-hero-sub">
-          Define what you are testing, the replay window, and risk assumptions — then step through history with institutional-grade logging.
-        </p>
-        <div className="bt-hero-actions">
-          <button type="button" className="bt-btn bt-btn--ghost" onClick={() => navigate('/backtesting')}>
-            Cancel
+        <h1 className="bt-hero-title">Start Backtest</h1>
+        <p className="bt-hero-sub">Pick a market and jump to replay fast.</p>
+      </header>
+
+      <div className="aa-card bt-quickstart-card">
+        <h2 className="aa-section-title-lg">
+          <span className="aa-title-dot" />
+          Quick Start
+        </h2>
+        <div className="bt-form-grid bt-quickstart-grid">
+          <div>
+            <label className="bt-label">Instrument</label>
+            <input className="bt-input" value={instrument} onChange={(e) => setInstrument(e.target.value)} placeholder="EURUSD" />
+          </div>
+          <div>
+            <label className="bt-label">Timeframe</label>
+            <select className="bt-select" value={replayTimeframe} onChange={(e) => setReplayTimeframe(e.target.value)}>
+              {['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1'].map((tf) => (
+                <option key={tf} value={tf}>{tf}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="bt-label">Start date/time</label>
+            <input className="bt-input" type="datetime-local" value={startDateTime} onChange={(e) => setStartDateTime(e.target.value)} />
+          </div>
+          <div>
+            <label className="bt-label">Starting balance</label>
+            <input className="bt-input" type="number" min={1000} step={100} value={initialBalance} onChange={(e) => setInitialBalance(e.target.value)} />
+          </div>
+        </div>
+        <div className="bt-hero-actions bt-quickstart-actions">
+          <button type="button" className="bt-btn bt-btn--primary bt-quickstart-actions__primary" disabled={saving} onClick={startReplay}>
+            {saving ? 'Starting…' : 'Start Replay'}
           </button>
           <button type="button" className="bt-btn bt-btn--ghost" disabled={saving} onClick={saveDraft}>
             Save draft
           </button>
+          <button type="button" className="bt-btn bt-btn--ghost" onClick={() => navigate('/backtesting')}>
+            Cancel
+          </button>
         </div>
-      </header>
-
-      <div className="bt-wizard-progress">
-        <div className="bt-wizard-progress-fill" style={{ width: `${(step / 4) * 100}%` }} />
       </div>
-      <div className="bt-wizard-steps">
-        {STEP_META.map((s) => (
-          <span
-            key={s.n}
-            className={`bt-wizard-step${step === s.n ? ' bt-wizard-step--active' : ''}${step > s.n ? ' bt-wizard-step--done' : ''}`}
-          >
-            {s.n}. {s.short}
-          </span>
-        ))}
-      </div>
-      {stepError && <p className="bt-inline-err">{stepError}</p>}
 
-      {step === 1 && (
-        <div className="aa-card">
-          <h2 className="aa-section-title-lg">
-            <span className="aa-title-dot" />
-            {STEP_META[0].title}
-          </h2>
-          <div className="bt-form-grid">
-            <div>
-              <label className="bt-label" htmlFor="bt-name">
-                Session name
-              </label>
-              <input id="bt-name" className="bt-input" value={sessionName} onChange={(e) => setSessionName(e.target.value)} />
-            </div>
-            <div>
-              <label className="bt-label" htmlFor="bt-market">
-                Market type
-              </label>
-              <select id="bt-market" className="bt-select" value={marketType} onChange={(e) => setMarketType(e.target.value)}>
-                {MARKETS.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label className="bt-label" htmlFor="bt-desc">
-                Description
-              </label>
-              <textarea id="bt-desc" className="bt-textarea" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
-            </div>
-            <div>
-              <label className="bt-label" htmlFor="bt-pb">
-                Playbook / strategy
-              </label>
-              <select
-                id="bt-pb"
-                className="bt-select"
-                value={playbookId}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setPlaybookId(id);
-                  const p = playbooks.find((x) => x.id === id);
-                  setPlaybookName(p?.name || '');
-                }}
-              >
-                <option value="">— Optional —</option>
-                {playbooks.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label className="bt-label" htmlFor="bt-obj">
-                What are you testing?
-              </label>
-              <select id="bt-obj" className="bt-select" value={objective} onChange={(e) => setObjective(e.target.value)}>
-                <option value="">Select objective…</option>
-                {OBJECTIVES.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-              {objective && (
-                <p className="bt-field-hint">{OBJECTIVES.find((x) => x.value === objective)?.hint}</p>
-              )}
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label className="bt-label" htmlFor="bt-objd">
-                Objective detail
-              </label>
-              <textarea id="bt-objd" className="bt-textarea" value={objectiveDetail} onChange={(e) => setObjectiveDetail(e.target.value)} rows={2} />
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="aa-card bt-advanced-card">
+        <button type="button" className="bt-btn bt-btn--ghost bt-advanced-toggle" onClick={() => setAdvancedOpen((v) => !v)} aria-expanded={advancedOpen}>
+          {advancedOpen ? 'Hide Advanced Settings' : 'Show Advanced Settings'}
+        </button>
 
-      {step === 2 && (
-        <div className="aa-card">
-          <h2 className="aa-section-title-lg">
-            <span className="aa-title-dot" />
-            {STEP_META[1].title}
-          </h2>
-          <p className="bt-field-hint" style={{ marginTop: 0, marginBottom: 14 }}>
-            Up to five instruments per session. Replay focus follows the chip you select in the workspace.
-          </p>
-          <div className="bt-form-grid">
-            {instruments.map((sym, i) => (
-              <div key={i}>
-                <label className="bt-label">Instrument {i + 1}</label>
-                <input
-                  className="bt-input"
-                  value={sym}
-                  onChange={(e) => {
-                    const nextI = [...instruments];
-                    nextI[i] = e.target.value;
-                    setInstruments(nextI);
-                  }}
-                />
-              </div>
-            ))}
+        {advancedOpen && (
+          <div className="bt-form-grid bt-advanced-grid" style={{ marginTop: 14 }}>
             <div>
-              <label className="bt-label">&nbsp;</label>
-              <button type="button" className="bt-btn bt-btn--ghost" onClick={addInstrument}>
-                + Add instrument
-              </button>
-            </div>
-            <div>
-              <BacktestDateField
-                id="bt-date-start"
-                label="Date start"
-                value={dateStart}
-                onChange={setDateStart}
-                maxIso={dateEnd || undefined}
-              />
-            </div>
-            <div>
-              <BacktestDateField
-                id="bt-date-end"
-                label="Date end"
-                value={dateEnd}
-                onChange={setDateEnd}
-                minIso={dateStart || undefined}
-              />
-            </div>
-            <div>
-              <label className="bt-label">Base timeframe</label>
-              <select className="bt-select" value={replayTimeframe} onChange={(e) => setReplayTimeframe(e.target.value)}>
-                {['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1'].map((tf) => (
-                  <option key={tf} value={tf}>
-                    {tf}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="bt-label">Replay granularity</label>
-              <select className="bt-select" value={replayGranularity} onChange={(e) => setReplayGranularity(e.target.value)}>
-                <option value="candle">Candle</option>
-                <option value="tick">Tick (future)</option>
-              </select>
+              <label className="bt-label">End date</label>
+              <input className="bt-input" type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} />
             </div>
             <div>
               <label className="bt-label">Trading hours</label>
@@ -444,17 +277,6 @@ export default function BacktestingNewSession() {
               </select>
             </div>
             <div>
-              <label className="bt-label">Initial balance</label>
-              <input
-                className="bt-input"
-                type="number"
-                min={1000}
-                step={100}
-                value={initialBalance}
-                onChange={(e) => setInitialBalance(e.target.value)}
-              />
-            </div>
-            <div>
               <label className="bt-label">Risk model</label>
               <select className="bt-select" value={riskModel} onChange={(e) => setRiskModel(e.target.value)}>
                 <option value="fixed_lot">Fixed lot</option>
@@ -462,117 +284,52 @@ export default function BacktestingNewSession() {
                 <option value="manual">Manual per trade</option>
               </select>
             </div>
-          </div>
-        </div>
-      )}
+            <div>
+              <label className="bt-label">Replay granularity</label>
+              <select className="bt-select" value={replayGranularity} onChange={(e) => setReplayGranularity(e.target.value)}>
+                <option value="candle">Candle</option>
+                <option value="tick">Tick (future)</option>
+              </select>
+            </div>
 
-      {step === 3 && (
-        <div className="aa-card">
-          <h2 className="aa-section-title-lg">
-            <span className="aa-title-dot" />
-            {STEP_META[2].title}
-          </h2>
-          <div className="bt-form-grid">
+            {extraInstruments.map((sym, i) => (
+              <div key={i}>
+                <label className="bt-label">Extra instrument {i + 1}</label>
+                <input
+                  className="bt-input"
+                  value={sym}
+                  onChange={(e) => {
+                    const next = [...extraInstruments];
+                    next[i] = e.target.value;
+                    setExtraInstruments(next);
+                  }}
+                />
+              </div>
+            ))}
+            <div>
+              <label className="bt-label">&nbsp;</label>
+              <button type="button" className="bt-btn bt-btn--ghost" onClick={addInstrument}>
+                + Add extra instrument
+              </button>
+            </div>
+
+            <div>
+              <label className="bt-label">Session name</label>
+              <input className="bt-input" value={sessionName} onChange={(e) => setSessionName(e.target.value)} />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label className="bt-label">Notes</label>
+              <textarea className="bt-textarea" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            </div>
             <div>
               <label className="bt-label">Entry model</label>
-              <input
-                className="bt-input"
-                value={strategyContext.entryModel}
-                onChange={(e) => setStrategyContext({ ...strategyContext, entryModel: e.target.value })}
-              />
+              <input className="bt-input" value={strategyContext.entryModel} onChange={(e) => setStrategyContext({ ...strategyContext, entryModel: e.target.value })} />
             </div>
             <div>
               <label className="bt-label">Bias model</label>
-              <input
-                className="bt-input"
-                value={strategyContext.biasModel}
-                onChange={(e) => setStrategyContext({ ...strategyContext, biasModel: e.target.value })}
-              />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label className="bt-label">Default TP / SL behavior (notes)</label>
-              <textarea
-                className="bt-textarea"
-                rows={2}
-                value={strategyContext.defaultTpSlBehavior}
-                onChange={(e) => setStrategyContext({ ...strategyContext, defaultTpSlBehavior: e.target.value })}
-              />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label className="bt-label">Default partials behavior</label>
-              <textarea
-                className="bt-textarea"
-                rows={2}
-                value={strategyContext.defaultPartialsBehavior}
-                onChange={(e) => setStrategyContext({ ...strategyContext, defaultPartialsBehavior: e.target.value })}
-              />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label className="bt-label">Confluence checklist template (used in workspace)</label>
-              <p className="bt-muted" style={{ marginTop: 0 }}>
-                Standard items are prefilled; scores feed analytics.
-              </p>
+              <input className="bt-input" value={strategyContext.biasModel} onChange={(e) => setStrategyContext({ ...strategyContext, biasModel: e.target.value })} />
             </div>
           </div>
-        </div>
-      )}
-
-      {step === 4 && (
-        <div className="aa-card aa-card--accent">
-          <h2 className="aa-section-title-lg">
-            <span className="aa-title-dot" />
-            {STEP_META[3].title}
-          </h2>
-          <p className="bt-field-hint">Confirm details before launch. You can still pause and edit playbook focus from the workspace.</p>
-          <ul className="bt-insight-list">
-            <li>
-              <strong>Name:</strong> {sessionName || '—'}
-            </li>
-            <li>
-              <strong>Market:</strong> {marketType}
-            </li>
-            <li>
-              <strong>Instruments:</strong> {instruments.filter(Boolean).join(', ') || '—'}
-            </li>
-            <li>
-              <strong>Range:</strong> {dateStart || '—'} → {dateEnd || '—'}
-            </li>
-            <li>
-              <strong>Timeframe:</strong> {replayTimeframe} · <strong>Risk:</strong> {riskModel}
-            </li>
-            <li>
-              <strong>Balance:</strong> {initialBalance}
-            </li>
-            {playbookName && (
-              <li>
-                <strong>Playbook:</strong> {playbookName}
-              </li>
-            )}
-          </ul>
-        </div>
-      )}
-
-      <div className="bt-actions" style={{ marginTop: 8 }}>
-        {currentStepBlockers.length > 0 && (
-          <p className="bt-inline-err" role="status" aria-live="polite">
-            {step < 4 ? 'Complete these before Next: ' : 'Complete these before Create session: '}
-            {currentStepBlockers.join(' ')}
-          </p>
-        )}
-        {step > 1 && (
-          <button type="button" className="bt-btn bt-btn--ghost" onClick={back}>
-            Back
-          </button>
-        )}
-            {step < 4 && (
-          <button type="button" className="bt-btn bt-btn--primary" onClick={next} disabled={currentStepBlockers.length > 0}>
-            Next
-          </button>
-        )}
-        {step === 4 && (
-          <button type="button" className="bt-btn bt-btn--primary" disabled={saving || !canCreate()} onClick={createSession}>
-            Create session
-          </button>
         )}
       </div>
     </>

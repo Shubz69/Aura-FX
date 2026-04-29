@@ -19,7 +19,7 @@ function parseSymbols(queryValue) {
     .slice(0, 150);
 }
 
-module.exports = async (req, res) => {
+const handler = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -90,3 +90,12 @@ module.exports = async (req, res) => {
     }
   });
 };
+
+function getLiveQuotesStreamDiagnostics() {
+  return {
+    activeSseClients,
+  };
+}
+
+module.exports = handler;
+module.exports.getLiveQuotesStreamDiagnostics = getLiveQuotesStreamDiagnostics;

@@ -106,6 +106,7 @@ export default function OperatorIntelligencePage() {
         }}
         bar={selectedBar}
         symbol={deskSymbol}
+        interval={selectedBar?.interval || '60'}
       />
     </AuraTerminalThemeShell>
   );

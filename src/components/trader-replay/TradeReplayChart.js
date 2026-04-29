@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { createChart, LineStyle } from 'lightweight-charts';
+import {
+  auraCandlestickSeriesOptions,
+  auraChartVisualOptions,
+} from '../../lib/charts/lightweightChartData';
+import { formatCandleTooltip } from '../../lib/charts/candleIntelligence';
 
 function toMarkerColor(direction) {
   return direction === 'buy' ? '#10b981' : '#ef4444';
@@ -13,6 +18,10 @@ export default function TradeReplayChart({
   openTrades = [],
   closedTrades = [],
   annotations = [],
+  symbol,
+  interval = '15',
+  onHoverCandle,
+  onSelectCandle,
 }) {
   const wrapRef = useRef(null);
   const chartRef = useRef(null);
@@ -33,23 +42,65 @@ export default function TradeReplayChart({
     const chart = createChart(wrapRef.current, {
       width: wrapRef.current.clientWidth,
       height: 420,
-      layout: { background: { color: '#0f172a' }, textColor: '#cbd5e1' },
-      grid: {
-        vertLines: { color: 'rgba(148,163,184,0.08)' },
-        horzLines: { color: 'rgba(148,163,184,0.08)' },
+      ...auraChartVisualOptions(),
+      timeScale: {
+        ...(auraChartVisualOptions().timeScale || {}),
+        timeVisible: true,
+        secondsVisible: false,
       },
-      rightPriceScale: { borderColor: 'rgba(148,163,184,0.2)' },
-      timeScale: { borderColor: 'rgba(148,163,184,0.2)', timeVisible: true, secondsVisible: false },
-      crosshair: { vertLine: { color: 'rgba(245,158,11,0.5)' }, horzLine: { color: 'rgba(245,158,11,0.5)' } },
     });
     chartRef.current = chart;
     candleRef.current = chart.addCandlestickSeries({
-      upColor: '#10b981',
-      downColor: '#ef4444',
-      wickUpColor: '#10b981',
-      wickDownColor: '#ef4444',
-      borderVisible: false,
+      ...auraCandlestickSeriesOptions(symbol),
     });
+
+    const clickHandler = (param) => {
+      if (!param?.point) return;
+      let selected = null;
+      const seriesMap = param?.seriesData;
+      if (seriesMap && typeof seriesMap.forEach === 'function') {
+        seriesMap.forEach((pt) => {
+          if (selected || !pt || typeof pt.time !== 'number') return;
+          if (!('open' in pt)) return;
+          selected = {
+            time: pt.time,
+            open: pt.open,
+            high: pt.high,
+            low: pt.low,
+            close: pt.close,
+          };
+        });
+      }
+      if (!selected) return;
+      onSelectCandle?.({
+        ...selected,
+        symbol,
+        interval,
+      });
+    };
+    chart.subscribeClick(clickHandler);
+    chart.__replayClick = clickHandler;
+
+    const hoverHandler = (param) => {
+      let selected = null;
+      const seriesMap = param?.seriesData;
+      if (seriesMap && typeof seriesMap.forEach === 'function') {
+        seriesMap.forEach((pt) => {
+          if (selected || !pt || typeof pt.time !== 'number') return;
+          if (!('open' in pt)) return;
+          selected = {
+            time: pt.time,
+            open: pt.open,
+            high: pt.high,
+            low: pt.low,
+            close: pt.close,
+          };
+        });
+      }
+      onHoverCandle?.(formatCandleTooltip({ bar: selected, symbol, interval }));
+    };
+    chart.subscribeCrosshairMove(hoverHandler);
+    chart.__replayHover = hoverHandler;
 
     const makeLine = (price, color, title, style = LineStyle.Solid) => {
       if (!Number.isFinite(Number(price))) return null;
@@ -74,11 +125,17 @@ export default function TradeReplayChart({
     ro.observe(wrapRef.current);
     return () => {
       ro.disconnect();
+      try {
+        if (chart.__replayClick) chart.unsubscribeClick(chart.__replayClick);
+        if (chart.__replayHover) chart.unsubscribeCrosshairMove(chart.__replayHover);
+      } catch (_) {
+        // ignore
+      }
       chart.remove();
       chartRef.current = null;
       candleRef.current = null;
     };
-  }, [trade?.entry, trade?.exit, trade?.stopLoss, trade?.takeProfit]);
+  }, [trade?.entry, trade?.exit, trade?.stopLoss, trade?.takeProfit, symbol, interval, onHoverCandle, onSelectCandle]);
 
   useEffect(() => {
     if (!candleRef.current) return;

@@ -946,7 +946,6 @@ const Api = {
             throw error;
         });
     },
-
     // Platform connections (real MT5/exchange APIs — requires same JWT as other protected APIs)
     getAuraPlatformConnections: () => {
         const token = localStorage.getItem('token');
@@ -1069,6 +1068,27 @@ const Api = {
             ...(options.to != null ? { to: String(options.to) } : {}),
         };
         return dedupeGet(`${API_BASE_URL}/api/market/chart-history`, {
+            params,
+            skipCache: true,
+            signal: options.signal,
+        });
+    },
+    getMarketCandleContext: (symbol, options = {}) => {
+        const sym = String(symbol || '').trim();
+        if (!sym) {
+            return Promise.reject(new Error('symbol required'));
+        }
+        const params = {
+            symbol: sym,
+            ...(options.interval != null ? { interval: String(options.interval) } : {}),
+            ...(options.candleTime != null ? { candleTime: String(options.candleTime) } : {}),
+            ...(options.open != null ? { open: String(options.open) } : {}),
+            ...(options.high != null ? { high: String(options.high) } : {}),
+            ...(options.low != null ? { low: String(options.low) } : {}),
+            ...(options.close != null ? { close: String(options.close) } : {}),
+            ...(options.volume != null ? { volume: String(options.volume) } : {}),
+        };
+        return dedupeGet(`${API_BASE_URL}/api/market/candle-context`, {
             params,
             skipCache: true,
             signal: options.signal,

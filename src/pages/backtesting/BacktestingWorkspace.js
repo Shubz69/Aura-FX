@@ -3,14 +3,31 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
 import TradeReplayChart from '../../components/trader-replay/TradeReplayChart';
+import CandleIntelligencePanel from '../../components/operator-intelligence/CandleIntelligencePanel';
 import '../../styles/backtesting/Backtesting.css';
 
 const SPEEDS = [250, 500, 900, 1400, 2200];
-const TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1'];
+const TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'M45', 'H1', 'H4', 'D1', 'W1', 'MN1', 'Y1'];
 
 function fmt(v, d = 2) {
   const n = Number(v);
   return Number.isFinite(n) ? n.toFixed(d) : '—';
+}
+
+function replayTimeframeToInterval(tf) {
+  const raw = String(tf || '').toUpperCase();
+  if (raw === 'M1') return '1';
+  if (raw === 'M5') return '5';
+  if (raw === 'M15') return '15';
+  if (raw === 'M30') return '30';
+  if (raw === 'M45') return '45';
+  if (raw === 'H1') return '60';
+  if (raw === 'H4') return '240';
+  if (raw === 'D1') return '1D';
+  if (raw === 'W1') return '1W';
+  if (raw === 'MN1') return '1M';
+  if (raw === 'Y1') return '1Y';
+  return '15';
 }
 
 export default function BacktestingWorkspace() {
@@ -29,6 +46,9 @@ export default function BacktestingWorkspace() {
   const [chatHistory, setChatHistory] = useState([]);
   const [chatBusy, setChatBusy] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [hoverTooltip, setHoverTooltip] = useState(null);
+  const [selectedBar, setSelectedBar] = useState(null);
+  const [candleOpen, setCandleOpen] = useState(false);
 
   const [controls, setControls] = useState({
     instrument: 'EURUSD',
@@ -374,10 +394,23 @@ export default function BacktestingWorkspace() {
                 currentIndex={cursor}
                 openTrades={openTrades}
                 closedTrades={closedTrades}
+                symbol={controls.instrument}
+                interval={controls.timeframe}
+                onHoverCandle={setHoverTooltip}
+                onSelectCandle={(bar) => {
+                  setSelectedBar(bar);
+                  setCandleOpen(true);
+                }}
                 annotations={[
                   { time: Number(currentBar?.time), text: 'Now', shape: 'square', color: '#38bdf8' },
                 ]}
               />
+              {hoverTooltip ? (
+                <p className="bt-field-hint">
+                  {hoverTooltip.timeIso} | O:{hoverTooltip.open} H:{hoverTooltip.high} L:{hoverTooltip.low} C:{hoverTooltip.close}
+                  {' '}| Δ{hoverTooltip.movePct != null ? `${hoverTooltip.movePct.toFixed(3)}%` : 'n/a'} | Range {hoverTooltip.range.toFixed(5)}
+                </p>
+              ) : null}
               {cursor >= candles.length - 1 && <p className="bt-field-hint">Replay reached the end of loaded candles. Restart or load another point.</p>}
             </>
           )}
@@ -479,6 +512,13 @@ export default function BacktestingWorkspace() {
           </div>
         </div>
       </section>
+      <CandleIntelligencePanel
+        open={candleOpen}
+        onClose={() => setCandleOpen(false)}
+        bar={selectedBar}
+        symbol={controls.instrument}
+        interval={replayTimeframeToInterval(controls.timeframe)}
+      />
     </div>
   );
 }

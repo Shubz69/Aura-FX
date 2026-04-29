@@ -752,6 +752,14 @@
       "destination": "/api/market/chart-history.js"
     },
     {
+      "source": "/api/market/candle-context",
+      "destination": "/api/market/candle-context.js"
+    },
+    {
+      "source": "/api/market/internal-live-diagnostics",
+      "destination": "/api/market/internal-live-diagnostics.js"
+    },
+    {
       "source": "/api/markets/snapshot",
       "destination": "/api/markets/snapshot.js"
     },

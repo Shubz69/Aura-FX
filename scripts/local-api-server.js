@@ -6,6 +6,8 @@ const chartHistoryHandler = require('../api/market/chart-history');
 const watchlistHandler = require('../api/market/watchlist');
 const snapshotHandler = require('../api/markets/snapshot');
 const liveQuotesStreamHandler = require('../api/market/live-quotes-stream');
+const internalLiveDiagnosticsHandler = require('../api/market/internal-live-diagnostics');
+const candleContextHandler = require('../api/market/candle-context');
 
 const PORT = Number(process.env.LOCAL_API_PORT || 3001);
 const app = express();
@@ -104,6 +106,32 @@ app.get('/api/market/live-quotes-stream', async (req, res) => {
     await liveQuotesStreamHandler(req, res);
   } catch (e) {
     console.error('[local-api-server] live-quotes-stream error:', e);
+    res.status(500).json({
+      success: false,
+      message: 'Local API wrapper failed',
+      error: String(e?.message || e),
+    });
+  }
+});
+
+app.get('/api/market/internal-live-diagnostics', async (req, res) => {
+  try {
+    await internalLiveDiagnosticsHandler(req, res);
+  } catch (e) {
+    console.error('[local-api-server] internal-live-diagnostics error:', e);
+    res.status(500).json({
+      success: false,
+      message: 'Local API wrapper failed',
+      error: String(e?.message || e),
+    });
+  }
+});
+
+app.get('/api/market/candle-context', async (req, res) => {
+  try {
+    await candleContextHandler(req, res);
+  } catch (e) {
+    console.error('[local-api-server] candle-context error:', e);
     res.status(500).json({
       success: false,
       message: 'Local API wrapper failed',

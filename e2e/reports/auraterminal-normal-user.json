@@ -10,11 +10,11 @@
         },
         {
           "name": "token",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODgsImVtYWlsIjoic2hvYmhpdDIwNjlAZ21haWwuY29tIiwidXNlcm5hbWUiOiJhdXJhcWFfMTc3NjczMzcyMzA3NCIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzc3MzcyNDAyLCJleHAiOjE3Nzc0NTg4MDJ9.VMTzz8T6bAT4mc-bkRO-49VvdJVvnuHTz-P299_vQc4"
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODgsImVtYWlsIjoic2hvYmhpdDIwNjlAZ21haWwuY29tIiwidXNlcm5hbWUiOiJhdXJhcWFfMTc3NjczMzcyMzA3NCIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzc3NDc5MzMyLCJleHAiOjE3Nzc1NjU3MzJ9.cwidIWwaTUIE-8qkWKDuOGidqyQaEwtlsJ12WM0yyO8"
         },
         {
           "name": "daily_login_check_88",
-          "value": "Tue Apr 28 2026"
+          "value": "Wed Apr 29 2026"
         },
         {
           "name": "hasActiveSubscription",
@@ -22,14 +22,10 @@
         },
         {
           "name": "user",
-          "value": "{\"id\":88,\"username\":\"auraqa_1776733723074\",\"email\":\"shobhit2069@gmail.com\",\"name\":\"Playwright QA Trader\",\"avatar\":null,\"role\":\"USER\",\"mfaVerified\":false,\"timezone\":\"Europe/London\"}"
+          "value": "{\"id\":88,\"username\":\"auraqa_1776733723074\",\"email\":\"shobhit2069@gmail.com\",\"name\":\"Playwright QA Trader\",\"avatar\":null,\"role\":\"USER\",\"mfaVerified\":false,\"timezone\":\"Europe/London\",\"subscription_plan\":\"elite\",\"subscription_status\":\"active\",\"level\":1,\"xp\":49.13}"
         },
         {
           "name": "gdprAccepted",
-          "value": "true"
-        },
-        {
-          "name": "daily_login_in_progress_88",
           "value": "true"
         }
       ]

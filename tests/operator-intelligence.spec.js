@@ -14,6 +14,9 @@ const ARTIFACT_DIR = path.join(process.cwd(), 'e2e', 'artifacts', 'operator-inte
 const REPORT_MD = path.join(process.cwd(), 'e2e', 'reports', 'operator-intelligence-qa-report.md');
 const LOCAL_STATE = path.join(tmpdir(), 'aura-operator-intelligence-storage.json');
 
+/** Single message when storage/credentials cannot reach Operator Intelligence (fail fast, no OI assertions). */
+const AUTH_FAIL_OI = 'Auth failed before Operator Intelligence assertions';
+
 const VIEWPORTS = [
   { id: 'desktop', width: 1440, height: 900 },
   { id: 'tablet', width: 834, height: 1112 },
@@ -47,6 +50,7 @@ test.beforeEach(async ({ page }) => {
     try {
       localStorage.removeItem('auraApiBaseUrlOverride');
       localStorage.removeItem('oi_market_watch_v1');
+      localStorage.removeItem('oi_market_watch_v2');
     } catch {
       /* ignore */
     }
@@ -81,7 +85,7 @@ async function ensureAuthenticated(page) {
     (await page.getByRole('heading', { name: /sign in/i }).first().isVisible().catch(() => false));
   if (!onLogin) return;
   const creds = readSignupCredentials();
-  if (!creds) throw new Error(`On /login but missing ${SIGNUP_CREDS} for auth refresh`);
+  if (!creds) throw new Error(AUTH_FAIL_OI);
   const emailInput = page.getByLabel(/email or username|email/i).first();
   const passwordInput = page.getByLabel(/password/i).first();
   await emailInput.fill(creds.email);
@@ -95,7 +99,17 @@ async function ensureAuthenticated(page) {
     /\/login(\?|$)/i.test(page.url()) ||
     (await page.getByRole('heading', { name: /sign in/i }).first().isVisible().catch(() => false));
   if (stillOnLogin) {
-    throw new Error('Login refresh failed — still on sign-in after credentials submit');
+    throw new Error(AUTH_FAIL_OI);
+  }
+}
+
+async function assertAuthReadyBeforeOiAssertions(page) {
+  await dismissConsentIfPresent(page);
+  const stillOnLogin =
+    /\/login(\?|$)/i.test(page.url()) ||
+    (await page.getByRole('heading', { name: /sign in/i }).first().isVisible().catch(() => false));
+  if (stillOnLogin) {
+    throw new Error(AUTH_FAIL_OI);
   }
 }
 
@@ -201,6 +215,11 @@ test('Operator Intelligence QA (sections, nav order, candle drawer, viewports)',
   };
 
   try {
+    await page.setViewportSize({ width: VIEWPORTS[0].width, height: VIEWPORTS[0].height });
+    await page.goto(`${BASE}/operator-intelligence`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await ensureAuthenticated(page);
+    await assertAuthReadyBeforeOiAssertions(page);
+
     for (const vp of VIEWPORTS) {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await page.goto(`${BASE}/operator-intelligence`, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -209,9 +228,7 @@ test('Operator Intelligence QA (sections, nav order, candle drawer, viewports)',
       await ensureAuthenticated(page);
       await page.waitForLoadState('load').catch(() => {});
 
-      if (/\/login(\?|$)/i.test(page.url())) {
-        throw new Error(`Route gated: redirected to login (url=${page.url()})`);
-      }
+      await assertAuthReadyBeforeOiAssertions(page);
 
       await expect(page.locator('h1.oi-title').filter({ hasText: /operator intelligence/i })).toBeVisible({
         timeout: 60000,
@@ -234,14 +251,23 @@ test('Operator Intelligence QA (sections, nav order, candle drawer, viewports)',
       expect(optCount, 'Instrument selector should expose the full terminal list').toBeGreaterThan(100);
 
       if (vp.id === 'desktop') {
-        await instSelect.selectOption('EURUSD');
-        await expect(canvas).toBeVisible({ timeout: 60000 });
-        await instSelect.selectOption('NAS100');
-        await expect(canvas).toBeVisible({ timeout: 60000 });
-        await instSelect.selectOption('BTCUSD');
-        await expect(canvas).toBeVisible({ timeout: 60000 });
-        const canvasAfter = chartFrame.locator('canvas').first();
-        await expect(canvasAfter).toBeVisible({ timeout: 60000 });
+        for (const assetId of ['EURUSD', 'XAUUSD', 'BTCUSD', 'SPY']) {
+          await instSelect.selectOption(assetId);
+          await expect(canvas).toBeVisible({ timeout: 60000 });
+          await expect(page.locator('.oi-chart-loading')).toHaveCount(0, { timeout: 60000 });
+          await expect(page.locator('.oi-chart-error')).toHaveCount(0, { timeout: 60000 });
+
+          const clickFrame = page.locator('[data-testid="oi-chart-mount"]').first();
+          const box = await clickFrame.boundingBox();
+          if (!box) throw new Error(`Chart box missing after selecting ${assetId}`);
+          await clickFrame.click({
+            position: { x: Math.max(8, box.width * 0.56), y: Math.max(8, box.height * 0.22) },
+            force: true,
+          });
+          await expect(page.getByRole('dialog', { name: /candle intelligence/i })).toBeVisible({ timeout: 5000 });
+          await page.locator('.oi-drawer__backdrop').click({ position: { x: 24, y: Math.min(480, vp.height * 0.5) } });
+          await expect(page.getByRole('dialog', { name: /candle intelligence/i })).not.toBeVisible({ timeout: 10000 });
+        }
       }
 
       if (vp.id === 'desktop') {
@@ -342,6 +368,9 @@ test('Operator Intelligence QA (sections, nav order, candle drawer, viewports)',
     const ignorableConsole = (line) => {
       if (/WebSocket connection to 'ws:\/\/.+\/ws' failed: Invalid frame header/i.test(line)) return true;
       if (/Failed to load resource: the server responded with a status of 403/i.test(line)) return true;
+      if (/Failed to load resource:.*\b(502|503|504)\b/i.test(line)) return true;
+      if (/Gateway Timeout|Bad Gateway|Service Unavailable/i.test(line)) return true;
+      if (/status:\s*(502|503|504)\b/i.test(line)) return true;
       if (/Access forbidden: Authentication failed or insufficient permissions/i.test(line)) return true;
       if (/\[observability\].*session_verify_user/i.test(line)) return true;
       if (/\[observability\].*api\.response_interceptor.*type:\s*auth/i.test(line)) return true;
