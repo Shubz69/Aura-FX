@@ -60,6 +60,63 @@ const DATE_RANGE_OPTIONS = [
 
 export { DATE_RANGE_OPTIONS, ALL_TIME_LOOKBACK_DAYS };
 
+function parseCsvIsoTime(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  if (!Number.isFinite(d.getTime())) return null;
+  return d.toISOString();
+}
+
+function normalizeCsvDirection(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return '';
+  if (raw.includes('buy') || raw.includes('long')) return 'buy';
+  if (raw.includes('sell') || raw.includes('short')) return 'sell';
+  return raw;
+}
+
+function normalizeCsvTrades(rows = []) {
+  const mapped = rows.map((row, idx) => {
+    const closeIso = parseCsvIsoTime(row?.time);
+    const pnl = Number(row?.profit) || 0;
+    const commission = Number(row?.commission) || 0;
+    const swap = Number(row?.swap) || 0;
+    return {
+      id: `csv-${idx + 1}`,
+      pair: row?.symbol || '—',
+      symbol: row?.symbol || '—',
+      direction: normalizeCsvDirection(row?.type),
+      volume: Number(row?.volume) || 0,
+      pnl,
+      netPnl: pnl + commission + swap,
+      commission,
+      swap,
+      openTime: closeIso,
+      closeTime: closeIso,
+      session: null,
+      tradeStatus: 'closed',
+      source: 'csv',
+    };
+  });
+  return mapped.sort((a, b) => {
+    const ta = a.closeTime ? new Date(a.closeTime).getTime() : 0;
+    const tb = b.closeTime ? new Date(b.closeTime).getTime() : 0;
+    return ta - tb;
+  });
+}
+
+function buildCsvSyntheticAccount(payload) {
+  const totalPnl = Number(payload?.summary?.totalPnl) || 0;
+  const balance = 10000 + totalPnl;
+  return {
+    balance,
+    equity: balance,
+    currency: 'USD',
+    marginLevel: null,
+    source: 'csv',
+  };
+}
+
 function pickDefaultConnection(connections = []) {
   const mt = connections.find((c) => c.platformId === 'mt5' || c.platformId === 'mt4');
   return mt || connections[0] || null;
@@ -137,10 +194,15 @@ function AuraAnalysisPerfFlushBridge() {
   return null;
 }
 
-export function AuraAnalysisProvider({ children }) {
+export function AuraAnalysisProvider({ children, dataMode = 'live', csvPeriod = null }) {
   const { user } = useAuth();
   const userId = user?.id != null ? user.id : null;
-  const { connections } = useAuraConnection();
+  const { connections: liveConnections } = useAuraConnection();
+  const csvConnections = useMemo(
+    () => [{ platformId: 'csv_mt5', connectionId: 'csv_snapshot', label: 'CSV Snapshot' }],
+    []
+  );
+  const connections = dataMode === 'csv' ? csvConnections : liveConnections;
   const initialConnection = pickDefaultConnection(connections);
   const initialPlatformId = initialConnection?.platformId || null;
   const initialConnectionId = initialConnection?.connectionId || null;
@@ -296,6 +358,46 @@ export function AuraAnalysisProvider({ children }) {
     let gotTrades = false;
     let usedLiveFallback = false;
     try {
+      if (dataMode === 'csv') {
+        const reqParams = {};
+        if (csvPeriod?.year != null) reqParams.year = csvPeriod.year;
+        if (csvPeriod?.month != null) reqParams.month = csvPeriod.month;
+        const token = typeof window !== 'undefined' ? window.localStorage?.getItem('token') : null;
+        const qs = new URLSearchParams();
+        if (reqParams.year != null) qs.set('year', String(reqParams.year));
+        if (reqParams.month != null) qs.set('month', String(reqParams.month));
+        const base = typeof Api.getBaseUrl === 'function' ? Api.getBaseUrl() : '';
+        const csvRes = await fetch(`${base}/api/reports/csv-metrics${qs.toString() ? `?${qs.toString()}` : ''}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const csvData = await csvRes.json().catch(() => ({}));
+        if (!csvData.success) {
+          throw new Error(csvData.message || 'Failed to load CSV dashboard data.');
+        }
+        const normalizedTrades = Array.isArray(csvData.trades) ? normalizeCsvTrades(csvData.trades) : [];
+        const syntheticAccount = buildCsvSyntheticAccount(csvData);
+        const tfp = tradesPayloadFingerprint(normalizedTrades);
+        const afp = accountPayloadFingerprint(syntheticAccount);
+        if (tfp !== lastTradesFpRef.current) {
+          setRawTrades(normalizedTrades);
+          lastTradesFpRef.current = tfp;
+        }
+        if (afp !== lastAccountFpRef.current) {
+          setAccount(syntheticAccount);
+          lastAccountFpRef.current = afp;
+        }
+        pendingServerPrecomputedRef.current = null;
+        gotAccount = true;
+        gotTrades = true;
+        setHistoryStale(false);
+        setAccountStale(false);
+        setHistoryDataSource('live');
+        setAccountDataSource('live');
+        setError(csvData.hasData ? null : 'No CSV snapshot found for this period. Upload a CSV first.');
+        setLastUpdated(new Date());
+        return;
+      }
+
       const historyArg =
         customRange?.from && customRange?.to
           ? { from: customRange.from, to: customRange.to }
@@ -400,18 +502,19 @@ export function AuraAnalysisProvider({ children }) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activePlatformId, activeConnectionId, daysFilter, customRange?.from, customRange?.to]);
+  }, [activePlatformId, activeConnectionId, daysFilter, customRange?.from, customRange?.to, dataMode, csvPeriod?.year, csvPeriod?.month]);
 
   useEffect(() => {
     if (activePlatformId) fetchData(false);
-  }, [activePlatformId, daysFilter, customRange?.from, customRange?.to]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activePlatformId, daysFilter, customRange?.from, customRange?.to, dataMode, csvPeriod?.year, csvPeriod?.month]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!activePlatformId) return undefined;
+    if (dataMode === 'csv') return undefined;
     clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => fetchData(true), REFRESH_INTERVAL_MS);
     return () => clearInterval(intervalRef.current);
-  }, [activePlatformId, activeConnectionId, fetchData]);
+  }, [activePlatformId, activeConnectionId, fetchData, dataMode]);
 
   const trades = useMemo(() => {
     const devPerfMemo = isAuraAnalysisDevPerfEnabled() && auraAnalysisDevPerfIsPipelineActive();
@@ -573,12 +676,14 @@ export function AuraAnalysisProvider({ children }) {
   const dataValue = useMemo(
     () => ({
       activePlatformId,
+      dataMode,
       setActivePlatformId: (platformId) => {
         setActivePlatformId(platformId);
         const first = connections.find((c) => c.platformId === platformId);
         setActiveConnectionId(first?.connectionId || null);
       },
       activeConnectionId,
+      csvPeriod,
       setActiveConnectionId,
       connections,
       account,
@@ -614,7 +719,9 @@ export function AuraAnalysisProvider({ children }) {
     }),
     [
       activePlatformId,
+      dataMode,
       activeConnectionId,
+      csvPeriod,
       connections,
       account,
       rawTrades,

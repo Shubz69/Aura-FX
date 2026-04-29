@@ -38,6 +38,13 @@ function LegacyManualMetricsRedirect({ suffix = '' }) {
     return <Navigate to={`/manual-metrics${suffix}${location.search}`} replace />;
 }
 
+function ManualMetricsDashboardRedirect() {
+    const location = useLocation();
+    const params = new URLSearchParams(location.search || '');
+    if (!params.has('source')) params.set('source', 'csv');
+    return <Navigate to={`/aura-analysis/dashboard/overview?${params.toString()}`} replace />;
+}
+
 /* Lazy-load pages so each route loads only when visited (faster initial load) */
 const Home = lazy(() => import('./pages/Home'));
 const Login = lazy(() => import('./pages/Login'));
@@ -113,7 +120,6 @@ const ReportsLiveAnalyticsHub = lazy(() => import('./pages/reports/ReportsLiveAn
 const ReportsDnaPage = lazy(() => import('./pages/reports/ReportsDnaPage'));
 const ManualMetricsEntryPage = lazy(() => import('./pages/reports/ManualMetricsEntryPage'));
 const ManualMetricsProcessingPage = lazy(() => import('./pages/reports/ManualMetricsProcessingPage'));
-const ManualMetricsDashboardPage = lazy(() => import('./pages/reports/ManualMetricsDashboardPage'));
 const Affiliation = lazy(() => import('./pages/Affiliation'));
 const TraderLab = lazy(() => import('./pages/TraderLab'));
 const TraderReplay = lazy(() => import('./pages/TraderReplay'));
@@ -436,7 +442,7 @@ function AppRoutes() {
                         <Route path="/reports/manual-metrics/dashboard" element={<LegacyManualMetricsRedirect suffix="/dashboard" />} />
                         <Route path="/reports/manual-metrics/processing" element={<LegacyManualMetricsRedirect suffix="/processing" />} />
                         <Route path="/reports/manual-metrics" element={<LegacyManualMetricsRedirect />} />
-                        <Route path="/manual-metrics/dashboard" element={<AuthenticatedGuard><ManualMetricsGuard><ManualMetricsDashboardPage /></ManualMetricsGuard></AuthenticatedGuard>} />
+                        <Route path="/manual-metrics/dashboard" element={<AuthenticatedGuard><ManualMetricsGuard><ManualMetricsDashboardRedirect /></ManualMetricsGuard></AuthenticatedGuard>} />
                         <Route path="/manual-metrics/processing" element={<AuthenticatedGuard><ManualMetricsProcessingPage /></AuthenticatedGuard>} />
                         <Route path="/manual-metrics" element={<AuthenticatedGuard><ManualMetricsEntryPage /></AuthenticatedGuard>} />
                         {/* Operator Galaxy - Central Hub */}

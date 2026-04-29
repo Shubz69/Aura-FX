@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { NavLink, Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AuraAnalysisProvider,
   useAuraAnalysisData,
@@ -311,6 +311,8 @@ function AuraDashboardInner() {
     error,
     account,
     rawTrades,
+    dataMode,
+    csvPeriod,
   } = useAuraAnalysisData();
   const { analyticsDataKey } = useAuraAnalysisMetrics();
   const prevLoadingPerfRef = useRef(/** @type {boolean | null} */ (null));
@@ -346,6 +348,12 @@ function AuraDashboardInner() {
   const tabSeg = rawTab.split('/')[0] || 'overview';
   const activeTabPath = TABS.some((t) => t.path === tabSeg) ? tabSeg : 'overview';
   const noDataYet = !loading && !error && !account && (!rawTrades || rawTrades.length === 0);
+  const isCsvMode = dataMode === 'csv';
+  const csvQuery = isCsvMode
+    ? `?source=csv${csvPeriod?.year ? `&year=${encodeURIComponent(String(csvPeriod.year))}` : ''}${csvPeriod?.month ? `&month=${encodeURIComponent(String(csvPeriod.month))}` : ''}`
+    : '';
+  const backHref = isCsvMode ? '/manual-metrics' : '/aura-analysis/ai';
+  const brandTitle = isCsvMode ? 'Back to Manual Metrics' : 'Back to Connection Hub';
 
   return (
     <div className="aura-dashboard journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
@@ -353,7 +361,7 @@ function AuraDashboardInner() {
       {/* ══ Primary Tab Header ══ */}
       <div className="aura-dashboard-tabs-wrap">
         <div className="aura-dashboard-tabs-inner">
-          <Link to="/aura-analysis/ai" className="aura-dashboard-brand" title="Back to Connection Hub">
+          <Link to={backHref} className="aura-dashboard-brand" title={brandTitle}>
             <span className="aura-db-brand-slash">/</span>
             <span className="aura-db-brand-name">AURA TERMINAL™</span>
           </Link>
@@ -362,7 +370,7 @@ function AuraDashboardInner() {
             {TABS.map(({ path, label }) => (
               <NavLink
                 key={path}
-                to={`${base}/${path}`}
+                to={`${base}/${path}${csvQuery}`}
                 className={({ isActive }) => `aura-dashboard-tab${isActive ? ' active' : ''}`}
                 end={path === 'overview'}
               >
@@ -375,7 +383,7 @@ function AuraDashboardInner() {
             <select
               className="aura-dashboard-tab-select"
               value={activeTabPath}
-              onChange={(e) => navigate(`${base}/${e.target.value}`)}
+              onChange={(e) => navigate(`${base}/${e.target.value}${csvQuery}`)}
             >
               {TABS.map(({ path, label }) => (
                 <option key={path} value={path}>{label}</option>
@@ -413,7 +421,9 @@ function AuraDashboardInner() {
         )}
         {noDataYet && (
           <div className="aura-db-warn-banner" role="status">
-            Dashboard is ready, but no synced account data is available yet. Connect MetaTrader in Connection Hub, then refresh.
+            {isCsvMode
+              ? 'No CSV snapshot found for this period. Upload a CSV in Manual Metrics and re-enter the dashboard.'
+              : 'Dashboard is ready, but no synced account data is available yet. Connect MetaTrader in Connection Hub, then refresh.'}
           </div>
         )}
         <Outlet />
@@ -423,8 +433,16 @@ function AuraDashboardInner() {
 }
 
 export default function AuraDashboardLayout() {
+  const [searchParams] = useSearchParams();
+  const csvMode = searchParams.get('source') === 'csv';
+  const csvYear = Number(searchParams.get('year'));
+  const csvMonth = Number(searchParams.get('month'));
+  const csvPeriod =
+    Number.isFinite(csvYear) && Number.isFinite(csvMonth) && csvMonth >= 1 && csvMonth <= 12
+      ? { year: csvYear, month: csvMonth }
+      : null;
   return (
-    <AuraAnalysisProvider>
+    <AuraAnalysisProvider dataMode={csvMode ? 'csv' : 'live'} csvPeriod={csvPeriod}>
       <AuraTerminalThemeShell>
         <AuraDashboardInner />
       </AuraTerminalThemeShell>
