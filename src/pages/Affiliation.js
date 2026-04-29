@@ -400,7 +400,7 @@ export default function Affiliation() {
           <div className="aff-hero__eyebrow">Referral programme</div>
           <h1 className="aff-hero__title">Refer &amp; earn</h1>
           <p className="aff-hero__sub">
-            One link. Real rewards. Share AURA TERMINALâ„¢ with traders you trust â€” unlock Premium and Elite perks as your
+            One link. Real rewards. Share AURA TERMINAL™ with traders you trust — unlock Premium and Elite perks as your
             community grows.
           </p>
           <div className="aff-hero__chips">
@@ -550,6 +550,14 @@ export default function Affiliation() {
               </div>
               <div className="aff-link-box__code">
                 Code: <strong>{referralCode || 'â€”'}</strong>
+              </div>
+              <div className="aff-milestone-progress__hint" style={{ marginTop: 10 }}>
+                <strong>How to use:</strong> share your <strong>link</strong> first (best tracking). Use your <strong>code</strong> only when
+                someone cannot use the link (e.g. they sign up manually or go straight to checkout).
+              </div>
+              <div className="aff-milestone-progress__hint" style={{ marginTop: 6 }}>
+                <strong>When to use code:</strong> ask them to paste it on <strong>Sign up</strong> (Referral code) or in Stripe checkout
+                <strong> Referral</strong> field. If they used your link, they usually do not need to enter the code again.
               </div>
               {nextTier && (
                 <div className="aff-milestone-progress">
