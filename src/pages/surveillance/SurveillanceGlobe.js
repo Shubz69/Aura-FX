@@ -17,7 +17,7 @@ const NO_HEATMAPS = [];
 
 const GLOBE_BASE = 'https://unpkg.com/three-globe@2.45.2/example/img';
 /** Tactical night basemap (Glint-style operating picture). */
-const GLOBE_TEXTURE_NIGHT = `${GLOBE_BASE}/earth-night.jpg`;
+const GLOBE_TEXTURE_NIGHT = 'https://eoimages.gsfc.nasa.gov/images/imagerecords/79000/79765/dnb_land_ocean_ice.2012.3600x1800.jpg';
 /** Fallback if night texture fails to load. */
 const GLOBE_TEXTURE_LO = `${GLOBE_BASE}/earth-blue-marble.jpg`;
 
@@ -103,7 +103,9 @@ function clusterEvents(events, precision = 1) {
     count: b.count,
     maxSev: b.maxSev,
     maxSevScore: b.maxSevScore,
-    label: b.count > 1 ? `${b.count} events · ${b.label.slice(0, 42)}…` : b.label,
+   label: b.count > 1 
+  ? `<b>${b.count} events</b><br/>${b.label.slice(0, 60)}`
+  : `<b>${b.label}</b>`,
   }));
 }
 
@@ -314,7 +316,6 @@ export default function SurveillanceGlobe({
   const [dims, setDims] = useState({ w: 320, h: 320 });
   const [povAltitude, setPovAltitude] = useState(2.48);
   const [nightFactor, setNightFactor] = useState(() => nightFactorFromLocalTime());
-  const [pulse, setPulse] = useState(0);
   const [hoveredId, setHoveredId] = useState(null);
   const [globeReveal, setGlobeReveal] = useState(false);
   const [globeTextureUrl, setGlobeTextureUrl] = useState(GLOBE_TEXTURE_NIGHT);
@@ -411,14 +412,13 @@ export default function SurveillanceGlobe({
     [nightFactor]
   );
 
-  const atmosphereColor = useMemo(() => {
-    const r = Math.round(22 + nightFactor * 10);
-    const g = Math.round(32 + nightFactor * 12);
-    const b = Math.round(58 + nightFactor * 18);
-    return `rgb(${r}, ${g}, ${b})`;
-  }, [nightFactor]);
-
-  const atmosphereAltitude = useMemo(() => 0.055 + nightFactor * 0.022, [nightFactor]);
+ const atmosphereColor = useMemo(() => {
+  const r = Math.round(12 + nightFactor * 6);
+  const g = Math.round(18 + nightFactor * 8);
+  const b = Math.round(32 + nightFactor * 12);
+  return `rgb(${r}, ${g}, ${b})`;
+}, [nightFactor]);
+const atmosphereAltitude = useMemo(() => 0.035 + nightFactor * 0.015, [nightFactor]);
 
   const refineGlobeSurface = useCallback(() => {
     const g = globeRef.current;
@@ -432,9 +432,9 @@ export default function SurveillanceGlobe({
     mat.map.magFilter = THREE.LinearFilter;
     mat.map.generateMipmaps = true;
     mat.map.needsUpdate = true;
-    mat.color = new THREE.Color(0x8b92a4);
-    mat.shininess = 2;
-    mat.specular = new THREE.Color(0x08080a);
+mat.color = new THREE.Color(0xcccccc);   // Neutral — let texture show
+mat.shininess = 0.5;
+mat.specular = new THREE.Color(0x000000);
     mat.needsUpdate = true;
     return true;
   }, []);
@@ -521,18 +521,7 @@ useEffect(() => {
     };
   }, [globeReveal, dims.w, dims.h, refineGlobeSurface, globeTextureUrl]);
 
-useEffect(() => {
-  if (reducedMotion) return undefined;
-  let id;
-  const loop = (t) => {
-    // Slower pulse, fewer state updates
-    const v = Math.sin(t / 1200);
-    setPulse(Math.round(v * 4) / 4);
-    id = requestAnimationFrame(loop);
-  };
-  id = requestAnimationFrame(loop);
-  return () => cancelAnimationFrame(id);
-}, [reducedMotion]);
+
   const handleZoom = useCallback((pov) => {
     if (pov && typeof pov.altitude === 'number' && Number.isFinite(pov.altitude)) {
       setPovAltitude(pov.altitude);
@@ -601,7 +590,7 @@ useEffect(() => {
     const scene = g.scene();
     const globeR = typeof g.getGlobeRadius === 'function' ? g.getGlobeRadius() : 100;
     const shellR = globeR * 4.65;
-    const count = reducedMotionRef.current ? 1100 : 2400;
+   const count = reducedMotionRef.current ? 800 : 1500;
     const positions = new Float32Array(count * 3);
     const rnd = mulberry32(0x5c3e91d2);
     for (let i = 0; i < count; i++) {
@@ -619,7 +608,7 @@ useEffect(() => {
     const rm0 = reducedMotionRef.current;
     const starMat = new THREE.PointsMaterial({
       color: 0xf2f4fc,
-      size: rm0 ? 0.048 : 0.068,
+      size: rm0 ? 0.065 : 0.085, 
       transparent: true,
       opacity: 0.88,
       depthWrite: false,
@@ -830,7 +819,7 @@ useEffect(() => {
           (lens && inFocus ? 0.02 : 0),
       };
     });
-  }, [events, selectedId, hoveredId, reducedMotion, pulseStep, focusRegion, activeCategory]);
+  }, [events, selectedId, hoveredId, reducedMotion, focusRegion, activeCategory]);
 
   const tensionByIso = useMemo(() => {
     const m = new Map();
