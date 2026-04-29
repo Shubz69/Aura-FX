@@ -274,10 +274,10 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
 
       const lv = pack.levels || {};
       const lineLevels = [
-        { price: lv.rangeHigh, title: t('operatorIntelligence.liveMarket.rangeHigh'), color: 'rgba(248, 195, 125, 0.75)' },
+        { price: lv.rangeHigh, title: 'Range high', color: 'rgba(248, 195, 125, 0.75)' },
         { price: lv.vah, title: 'VAH', color: 'rgba(140, 200, 255, 0.65)' },
         { price: lv.val, title: 'VAL', color: 'rgba(140, 200, 255, 0.65)' },
-        { price: lv.rangeLow, title: t('operatorIntelligence.liveMarket.rangeLow'), color: 'rgba(248, 195, 125, 0.75)' },
+        { price: lv.rangeLow, title: 'Range low', color: 'rgba(248, 195, 125, 0.75)' },
       ];
       lineLevels.forEach((ln) => {
         if (ln.price == null || !Number.isFinite(Number(ln.price))) return;
