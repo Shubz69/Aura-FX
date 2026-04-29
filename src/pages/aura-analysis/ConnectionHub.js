@@ -12,11 +12,47 @@ const MT_CONNECT_HELPER =
   'Uses read-only investor credentials for secure analytics access. Enter your account login, investor password, and broker server. Used for analytics and performance insights only — no trading or account changes.';
 
 // ── Credential Modal ────────────────────────────────────────────────────────
-function ConnectModal({ platform, onClose, onSubmit, connecting, error }) {
-  const [fields, setFields] = useState({});
+function ConnectModal({ platform, initialFields, onFieldsChange, onClose, onSubmit, connecting, error }) {
+  const [fields, setFields] = useState(initialFields || {});
   const [showSecret, setShowSecret] = useState({});
 
-  const handleChange = (key, value) => setFields((prev) => ({ ...prev, [key]: value }));
+  useEffect(() => {
+    setFields(initialFields || {});
+  }, [platform.id, initialFields]);
+
+  const normalizeKey = (v) => String(v || '').toLowerCase();
+  const missingSet = new Set((error?.missing || []).map(normalizeKey));
+  const messageLc = String(error?.message || '').toLowerCase();
+  const hasServerIssue = messageLc.includes('server');
+  const hasLoginIssue = messageLc.includes('login') || messageLc.includes('account number') || messageLc.includes('account login');
+  const hasPasswordIssue = messageLc.includes('password') || messageLc.includes('investor');
+
+  const fieldHintByKey = {
+    login: missingSet.has('credentials.login')
+      ? 'Account login is required.'
+      : hasLoginIssue
+        ? 'Account login may be incorrect.'
+        : '',
+    password: missingSet.has('credentials.password')
+      ? 'Investor password is required.'
+      : hasPasswordIssue
+        ? 'Investor password may be incorrect.'
+        : '',
+    server: missingSet.has('credentials.server')
+      ? 'Broker server is required.'
+      : hasServerIssue
+        ? 'Broker server name may be incorrect (use exact MT server).'
+        : '',
+  };
+
+  const handleChange = (key, value) => {
+    setFields((prev) => {
+      const next = { ...prev, [key]: value };
+      if (typeof onFieldsChange === 'function') onFieldsChange(next);
+      return next;
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(fields);
@@ -68,12 +104,15 @@ function ConnectModal({ platform, onClose, onSubmit, connecting, error }) {
                   </button>
                 )}
               </div>
+              {fieldHintByKey[f.key] ? (
+                <div className="chub-modal-field-hint">{fieldHintByKey[f.key]}</div>
+              ) : null}
             </div>
           ))}
 
-          {error && (
+          {!!error?.message && (
             <div className="chub-modal-error">
-              <i className="fas fa-exclamation-triangle" /> {error}
+              <i className="fas fa-exclamation-triangle" /> {error.message}
             </div>
           )}
 
@@ -159,7 +198,8 @@ export default function ConnectionHub() {
   const { eligibility: reportsEligibility } = useReportsEligibility(token);
   const [modalPlatform, setModalPlatform] = useState(null);
   const [connecting, setConnecting] = useState(false);
-  const [connectError, setConnectError] = useState('');
+  const [connectError, setConnectError] = useState(null);
+  const [connectDraftByPlatform, setConnectDraftByPlatform] = useState({});
   const [transitioning, setTransitioning] = useState(false);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [successPlatform, setSuccessPlatform] = useState(null);
@@ -233,20 +273,24 @@ export default function ConnectionHub() {
 
   const openModal = (platform) => {
     if (platform?.id !== 'mt5' && platform?.id !== 'mt4') return;
-    setConnectError('');
+    setConnectError(null);
     setModalPlatform(platform);
   };
 
   const handleModalSubmit = async (fields) => {
     setConnecting(true);
-    setConnectError('');
+    setConnectError(null);
     try {
       await connectPlatform(modalPlatform.id, fields);
       setModalPlatform(null);
       setSuccessPlatform(modalPlatform.id);
       setTimeout(() => setSuccessPlatform(null), 2500);
     } catch (err) {
-      setConnectError(err.message || 'Connection failed. Check your credentials.');
+      setConnectError({
+        message: err?.message || 'Connection failed. Check your credentials.',
+        code: err?.code || '',
+        missing: Array.isArray(err?.missing) ? err.missing : [],
+      });
     } finally {
       setConnecting(false);
     }
@@ -289,6 +333,10 @@ export default function ConnectionHub() {
       {modalPlatform && (
         <ConnectModal
           platform={modalPlatform}
+          initialFields={connectDraftByPlatform[modalPlatform.id] || {}}
+          onFieldsChange={(next) => {
+            setConnectDraftByPlatform((prev) => ({ ...prev, [modalPlatform.id]: next }));
+          }}
           onClose={() => { if (!connecting) setModalPlatform(null); }}
           onSubmit={handleModalSubmit}
           connecting={connecting}

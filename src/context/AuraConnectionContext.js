@@ -112,7 +112,13 @@ export function AuraConnectionProvider({ children }) {
     try {
       r = await Api.connectAuraPlatform(platformId, payload);
     } catch (err) {
-      throw new Error(mapConnectError(err));
+      const mapped = mapConnectError(err);
+      const e = new Error(mapped);
+      e.code = err?.response?.data?.code || '';
+      e.missing = Array.isArray(err?.response?.data?.missing) ? err.response.data.missing : [];
+      e.status = err?.response?.status || null;
+      e.rawError = err?.response?.data?.error || '';
+      throw e;
     }
     if (!r.data?.success) throw new Error(r.data?.error || 'Connection failed');
     const accountInfo = r.data.accountInfo || {};
