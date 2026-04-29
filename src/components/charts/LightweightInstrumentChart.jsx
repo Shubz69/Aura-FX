@@ -5,6 +5,8 @@ import {
   normalizeChartBars,
   normalizeApiInterval,
   timeScaleOptionsForInterval,
+  auraCandlestickSeriesOptions,
+  auraChartVisualOptions,
 } from '../../lib/charts/lightweightChartData';
 import {
   AURA_CANDLE_SERIES_OPTIONS,
@@ -31,17 +33,21 @@ function computeChartHeight(containerEl, fillParent, fixedHeight) {
 export default function LightweightInstrumentChart({
   symbol,
   interval = '60',
-  range = '3M',
+  range = '',
   from = '',
   to = '',
   fillParent = false,
   height,
   className = 'trader-suite-chart-frame',
   showTradingViewLink = true,
+  onDataLoaded,
 }) {
   const rootRef = useRef(null);
   const wrapRef = useRef(null);
   const chartRef = useRef(null);
+  const candleSeriesRef = useRef(null);
+  const liveBarRef = useRef(null);
+  const liveEventSourceRef = useRef(null);
   const lastQueryKeyRef = useRef('');
   const [status, setStatus] = useState('loading');
   const [errorMessage, setErrorMessage] = useState('');
@@ -57,7 +63,7 @@ export default function LightweightInstrumentChart({
       return undefined;
     }
     const intervalNorm = normalizeApiInterval(interval);
-    const rangeNorm = String(range || '3M');
+    const rangeNorm = String(range || '');
     const queryKey = JSON.stringify({ sym, interval: intervalNorm, range: rangeNorm, from: from || '', to: to || '' });
     if (lastQueryKeyRef.current === queryKey) {
       return undefined;
@@ -70,7 +76,7 @@ export default function LightweightInstrumentChart({
     const timer = setTimeout(() => {
       Api.getMarketChartHistory(sym, {
         interval: intervalNorm,
-        range: rangeNorm,
+        ...(rangeNorm ? { range: rangeNorm } : {}),
         ...(from ? { from } : {}),
         ...(to ? { to } : {}),
         signal: controller.signal,
@@ -97,10 +103,23 @@ export default function LightweightInstrumentChart({
               scope: 'LightweightInstrumentChart',
               symbol: sym,
               interval: intervalNorm,
-              range: rangeNorm,
+              range: rangeNorm || 'auto',
               barCount: normalized.length,
               firstBarTime: first?.time,
               lastBarTime: last?.time,
+            });
+          }
+          if (typeof onDataLoaded === 'function') {
+            const first = normalized[0] || null;
+            const last = normalized[normalized.length - 1] || null;
+            onDataLoaded({
+              symbol: sym,
+              interval: intervalNorm,
+              range: rangeNorm,
+              latestClose: Number.isFinite(Number(last?.close)) ? Number(last.close) : null,
+              firstBarTime: first?.time ?? null,
+              lastBarTime: last?.time ?? null,
+              barCount: normalized.length,
             });
           }
           setBars(normalized);
@@ -123,7 +142,7 @@ export default function LightweightInstrumentChart({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [symbol, interval, range, from, to]);
+  }, [symbol, interval, range, from, to, onDataLoaded]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -131,6 +150,7 @@ export default function LightweightInstrumentChart({
 
     const h = computeChartHeight(rootRef.current, fillParent, height);
     const intervalNorm = normalizeApiInterval(interval);
+    const visual = auraChartVisualOptions();
     const chart = createChart(
       wrap,
       buildAuraChartOptions({
@@ -138,7 +158,9 @@ export default function LightweightInstrumentChart({
         width: wrap.clientWidth,
         height: h,
         attributionLogo: true,
+        ...visual,
         timeScale: {
+          ...(visual.timeScale || {}),
           ...timeScaleOptionsForInterval(intervalNorm),
         },
       })
@@ -153,8 +175,13 @@ export default function LightweightInstrumentChart({
       close: b.close,
     }));
 
-    const series = chart.addCandlestickSeries(AURA_CANDLE_SERIES_OPTIONS);
+    const series = chart.addCandlestickSeries({
+      ...AURA_CANDLE_SERIES_OPTIONS,
+      ...auraCandlestickSeriesOptions(symbol),
+    });
     series.setData(data);
+    candleSeriesRef.current = series;
+    liveBarRef.current = data.length > 0 ? { ...data[data.length - 1] } : null;
     const volumeData = bars
       .map((b) => ({
         time: b.time,
@@ -194,10 +221,46 @@ export default function LightweightInstrumentChart({
 
     return () => {
       ro.disconnect();
+      candleSeriesRef.current = null;
+      liveBarRef.current = null;
       chart.remove();
       chartRef.current = null;
     };
   }, [bars, status, fillParent, height, interval]);
+
+  useEffect(() => {
+    const sym = String(symbol || '').trim().toUpperCase();
+    if (!sym || status !== 'ready') return undefined;
+    if (typeof EventSource === 'undefined') return undefined;
+    const base = Api.getBaseUrl()?.replace(/\/$/, '') || window.location.origin;
+    const es = new EventSource(`${base}/api/market/live-quotes-stream?symbols=${encodeURIComponent(sym)}`);
+    liveEventSourceRef.current = es;
+
+    es.addEventListener('quote', (evt) => {
+      try {
+        const quote = JSON.parse(evt.data || '{}');
+        const px = Number(quote?.price);
+        if (!Number.isFinite(px) || px <= 0 || !candleSeriesRef.current || !liveBarRef.current) return;
+        const next = { ...liveBarRef.current };
+        next.close = px;
+        if (px > next.high) next.high = px;
+        if (px < next.low) next.low = px;
+        liveBarRef.current = next;
+        candleSeriesRef.current.update(next);
+      } catch (_) {
+        // Ignore malformed live quote payloads.
+      }
+    });
+
+    return () => {
+      try {
+        es.close();
+      } catch {
+        // ignore
+      }
+      if (liveEventSourceRef.current === es) liveEventSourceRef.current = null;
+    };
+  }, [symbol, status]);
 
   const tradingViewHref =
     symbol && showTradingViewLink

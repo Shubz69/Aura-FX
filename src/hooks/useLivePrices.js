@@ -20,8 +20,8 @@ function getMarketApiBaseUrl() {
   }
   return '';
 }
-/** Keep in sync with api/markets/snapshot.js Cache-Control max-age / s-maxage */
-const SNAPSHOT_POLL_MS = 30000;
+/** Snapshot fallback only; primary live path is SSE quotes stream. */
+const SNAPSHOT_POLL_MS = 120000;
 
 // ============================================================================
 // Singleton: one snapshot poll for the whole app
@@ -41,6 +41,11 @@ let serverSymbolRows = {};
 let activeSymbols = new Set();
 let visibilityListenerAttached = false;
 let pollingSuspendedHidden = false;
+let liveStream = null;
+let liveStreamConnected = false;
+let liveStreamSymbols = new Set();
+let liveStreamReconnectTimer = null;
+let liveStreamReconnectAttempts = 0;
 
 function isDocumentHidden() {
   return typeof document !== 'undefined' && document.visibilityState === 'hidden';
@@ -77,6 +82,13 @@ const healthStats = {
   delayedSymbols: 0,
   /** Last `meta` object from GET /api/markets/snapshot (server cache hit, symbol count, stale fallback). */
   lastSnapshotMeta: null,
+  liveStreamConnected: false,
+  liveStreamMessages: 0,
+  liveStreamLastEventAt: 0,
+  liveStreamDiagnostics: null,
+  snapshotFallbackFetches: 0,
+  snapshotFetchSkippedDueToLiveStream: 0,
+  snapshotFallbackReasons: {},
 };
 
 // Decimals configuration
@@ -184,12 +196,143 @@ function notifyListeners() {
   });
 }
 
-// Fetch snapshot — allow HTTP caching (CDN + browser) per api/markets/snapshot Cache-Control
-async function fetchSnapshot() {
+function updatePriceFromLiveQuote(quote) {
+  if (!quote || !quote.symbol) return;
+  const symbol = quote.symbol;
+  const prev = globalPriceData[symbol];
+  const newPrice = Number(quote.price);
+  if (!Number.isFinite(newPrice) || newPrice <= 0) return;
+  const oldPrice = prev ? parseFloat(prev.rawPrice || prev.price) : newPrice;
+  const flash = prev && oldPrice !== newPrice ? (newPrice > oldPrice ? 'up' : 'down') : null;
+  globalPriceData[symbol] = {
+    ...(prev || {}),
+    symbol,
+    displayName: prev?.displayName || getDisplayName(symbol, serverSymbolRows[symbol]),
+    price: formatPrice(newPrice, symbol),
+    rawPrice: newPrice,
+    source: 'twelvedata-ws',
+    delayed: false,
+    loading: false,
+    quoteUnavailable: false,
+    timestamp: quote.timestamp || Date.now(),
+    flash,
+    flashTime: flash ? Date.now() : prev?.flashTime || 0,
+    lastUpdate: Date.now(),
+  };
+}
+
+function stopLiveStream() {
+  if (liveStreamReconnectTimer) {
+    clearTimeout(liveStreamReconnectTimer);
+    liveStreamReconnectTimer = null;
+  }
+  if (liveStream) {
+    try {
+      liveStream.close();
+    } catch (e) {
+      // ignore
+    }
+  }
+  liveStream = null;
+  liveStreamConnected = false;
+  healthStats.liveStreamConnected = false;
+}
+
+function connectLiveStream() {
+  if (typeof window === 'undefined' || typeof EventSource === 'undefined') return;
+  const symbols = Array.from(activeSymbols).sort();
+  if (symbols.length === 0) {
+    stopLiveStream();
+    return;
+  }
+  const sameSymbols =
+    liveStreamSymbols.size === symbols.length &&
+    symbols.every((s) => liveStreamSymbols.has(s));
+  if (liveStream && sameSymbols) return;
+
+  stopLiveStream();
+  liveStreamSymbols = new Set(symbols);
+  const url = `${getMarketApiBaseUrl()}/api/market/live-quotes-stream?symbols=${encodeURIComponent(symbols.join(','))}`;
+  const es = new EventSource(url);
+  liveStream = es;
+  es.addEventListener('ready', (evt) => {
+    liveStreamConnected = true;
+    liveStreamReconnectAttempts = 0;
+    healthStats.liveStreamConnected = true;
+    healthStats.liveStreamLastEventAt = Date.now();
+    try {
+      const payload = JSON.parse(evt.data || '{}');
+      healthStats.liveStreamDiagnostics = payload?.diagnostics || null;
+      const quotes = payload?.quotes || {};
+      Object.values(quotes).forEach((q) => updatePriceFromLiveQuote(q));
+      notifyListeners();
+    } catch (e) {
+      // ignore payload parse errors
+    }
+  });
+  es.addEventListener('quote', (evt) => {
+    healthStats.liveStreamMessages += 1;
+    healthStats.liveStreamLastEventAt = Date.now();
+    try {
+      const quote = JSON.parse(evt.data || '{}');
+      updatePriceFromLiveQuote(quote);
+      notifyListeners();
+    } catch (e) {
+      // ignore malformed quote events
+    }
+  });
+  es.addEventListener('diag', (evt) => {
+    try {
+      healthStats.liveStreamDiagnostics = JSON.parse(evt.data || '{}');
+    } catch (e) {
+      // ignore
+    }
+  });
+  es.onerror = () => {
+    liveStreamConnected = false;
+    healthStats.liveStreamConnected = false;
+    try {
+      es.close();
+    } catch (e) {
+      // ignore
+    }
+    liveStream = null;
+    if (liveStreamReconnectTimer) return;
+    const wait = Math.min(15000, 1000 * (2 ** Math.min(liveStreamReconnectAttempts, 4)));
+    liveStreamReconnectAttempts += 1;
+    liveStreamReconnectTimer = setTimeout(() => {
+      liveStreamReconnectTimer = null;
+      connectLiveStream();
+    }, wait);
+  };
+}
+
+function shouldSkipSnapshotFetch(reason = 'interval') {
+  const hasLiveData = Object.keys(globalPriceData || {}).length > 0;
+  const liveFresh =
+    liveStreamConnected &&
+    healthStats.liveStreamLastEventAt > 0 &&
+    Date.now() - healthStats.liveStreamLastEventAt < 90000;
+  if (liveFresh && hasLiveData) {
+    healthStats.snapshotFetchSkippedDueToLiveStream += 1;
+    return true;
+  }
+  if (reason === 'interval' && liveStreamConnected && hasLiveData) {
+    healthStats.snapshotFetchSkippedDueToLiveStream += 1;
+    return true;
+  }
+  return false;
+}
+
+// Fetch snapshot fallback — allow HTTP caching (CDN + browser) per api/markets/snapshot Cache-Control
+async function fetchSnapshot(reason = 'manual') {
   if (fetchInFlight) return;
   if (isDocumentHidden()) return;
+  if (shouldSkipSnapshotFetch(reason)) return;
   fetchInFlight = true;
   const startTime = Date.now();
+  healthStats.snapshotFallbackFetches += 1;
+  healthStats.snapshotFallbackReasons[reason] = (healthStats.snapshotFallbackReasons[reason] || 0) + 1;
 
   try {
     const controller = new AbortController();
@@ -283,7 +426,7 @@ async function fetchSnapshot() {
   } catch (error) {
     console.error('Snapshot fetch error:', error.message);
     healthStats.errors++;
-    // Keep existing data; next 60s poll will retry
+    // Keep existing data; fallback poll will retry
   } finally {
     fetchInFlight = false;
   }
@@ -292,8 +435,9 @@ async function fetchSnapshot() {
 // Start global snapshot polling; immediate fetch unless tab is hidden
 function startSnapshotPolling() {
   attachSnapshotVisibilityHandler();
-  if (!isDocumentHidden()) {
-    fetchSnapshot();
+  connectLiveStream();
+  if (!isDocumentHidden() && Object.keys(globalPriceData || {}).length === 0) {
+    fetchSnapshot('bootstrap');
   }
   if (snapshotInterval) return;
   if (isDocumentHidden()) {
@@ -301,7 +445,7 @@ function startSnapshotPolling() {
     return;
   }
   pollingSuspendedHidden = false;
-  snapshotInterval = setInterval(fetchSnapshot, SNAPSHOT_POLL_MS);
+  snapshotInterval = setInterval(() => fetchSnapshot('interval'), SNAPSHOT_POLL_MS);
 }
 
 function stopSnapshotPolling() {
@@ -310,6 +454,7 @@ function stopSnapshotPolling() {
     snapshotInterval = null;
   }
   isConnected = false;
+  stopLiveStream();
 }
 
 // Fetch watchlist configuration
@@ -412,7 +557,7 @@ export function useLivePrices(options = {}) {
   useEffect(() => {
     const onFocus = () => {
       if (isDocumentHidden()) return;
-      if (lastFetchTime > 0 && Date.now() - lastFetchTime > SNAPSHOT_POLL_MS) fetchSnapshot();
+      if (lastFetchTime > 0 && Date.now() - lastFetchTime > SNAPSHOT_POLL_MS) fetchSnapshot('focus');
     };
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
@@ -445,6 +590,7 @@ export function useLivePrices(options = {}) {
 
       symbolsRef.current = symbolsToTrack || [];
       symbolsToTrack.forEach(s => activeSymbols.add(s));
+      connectLiveStream();
 
       globalListeners.add(handleUpdate);
 
@@ -463,6 +609,8 @@ export function useLivePrices(options = {}) {
       if (globalListeners.size === 0) {
         stopSnapshotPolling();
         activeSymbols.clear();
+      } else {
+        connectLiveStream();
       }
     };
   }, [customSymbols, beginnerMode, category, handleUpdate]);
@@ -559,11 +707,18 @@ export function useLivePrices(options = {}) {
     activeSymbolCount: activeSymbols.size,
     lastFetchTime,
     pollIntervalMs: SNAPSHOT_POLL_MS,
+    liveStreamConnected,
+    liveStreamMessages: healthStats.liveStreamMessages,
+    liveStreamLastEventAt: healthStats.liveStreamLastEventAt,
+    liveStreamDiagnostics: healthStats.liveStreamDiagnostics,
+    snapshotFallbackFetches: healthStats.snapshotFallbackFetches,
+    snapshotFetchSkippedDueToLiveStream: healthStats.snapshotFetchSkippedDueToLiveStream,
+    snapshotFallbackReasons: healthStats.snapshotFallbackReasons,
   }), [stale]);
 
   // Trigger an immediate refresh (e.g. when opening All Markets modal or on page focus)
   const refresh = useCallback(() => {
-    fetchSnapshot();
+    fetchSnapshot('manual');
   }, []);
 
   return {
@@ -586,10 +741,15 @@ export function getTickerHealth() {
   return {
     ...healthStats,
     connected: isConnected,
+    liveStreamConnected,
     listenerCount: globalListeners.size,
     activeSymbolCount: activeSymbols.size,
     lastFetchTime,
-    pollIntervalMs: SNAPSHOT_POLL_MS
+    pollIntervalMs: SNAPSHOT_POLL_MS,
+    snapshotFallbackFetches: healthStats.snapshotFallbackFetches,
+    snapshotFetchSkippedDueToLiveStream: healthStats.snapshotFetchSkippedDueToLiveStream,
+    snapshotFallbackReasons: healthStats.snapshotFallbackReasons,
+    liveStreamDiagnostics: healthStats.liveStreamDiagnostics,
   };
 }
 

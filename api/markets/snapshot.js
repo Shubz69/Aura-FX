@@ -11,6 +11,8 @@ const { getCached, setCached } = require('../cache');
 const { getSnapshotSymbols } = require('../market/defaultWatchlist');
 const { buildLiveHotSnapshot } = require('../market-data/liveHotSnapshot');
 const { snapshot: tdMetricsSnapshot } = require('../market-data/tdMetrics');
+const { snapshotDiagnostics: wsSnapshotDiagnostics } = require('../market-data/twelveWsManager');
+const { stats: tdRestStats } = require('../market-data/tdRateLimiter');
 
 const CACHE_KEY = 'markets:snapshot:v1';
 const CACHE_TTL_MS = 20 * 1000;
@@ -30,6 +32,19 @@ const HARD_BUILD_MS = Math.min(
 let lastGoodSnapshot = null;
 let lastGoodSnapshotTime = 0;
 let snapshotBuildInFlight = null;
+
+function liveDiagnostics() {
+  const rest = tdRestStats();
+  const ws = wsSnapshotDiagnostics();
+  return {
+    twelveRestCallsThisMinute: rest.rollingWindowUsedSlots,
+    twelveRestBudgetRemaining: Math.max(0, rest.maxRpm - rest.rollingWindowUsedSlots),
+    twelveWsActiveSubscriptions: ws.twelveWsActiveSubscriptions,
+    twelveWsMessagesReceived: ws.twelveWsMessagesReceived,
+    inFlightDedupe: rest.dedupeJoinsLifetime,
+    skippedRestDueToBudget: 0,
+  };
+}
 
 async function buildSnapshotWithBudget() {
   const built = await Promise.race([
@@ -85,6 +100,7 @@ module.exports = async (req, res) => {
         cacheTtlMs: CACHE_TTL_MS,
         hotUniverseSymbols: getSnapshotSymbols(),
         lastEngineRun: tdMetricsSnapshot().liveHotSnapshot,
+        ...liveDiagnostics(),
       };
     }
     return res.status(200).json(body);
@@ -126,6 +142,7 @@ module.exports = async (req, res) => {
         hotUniverseSymbols: getSnapshotSymbols(),
         sharedBuild: true,
         ...built.diagnostics,
+        ...liveDiagnostics(),
       };
     }
     return res.status(200).json(body);
@@ -155,6 +172,7 @@ module.exports = async (req, res) => {
           staleOk: true,
           hotUniverseSymbols: getSnapshotSymbols(),
           lastEngineRun: tdMetricsSnapshot().liveHotSnapshot,
+          ...liveDiagnostics(),
         };
       }
       return res.status(200).json(body);
