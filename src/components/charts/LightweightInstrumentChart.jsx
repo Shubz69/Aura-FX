@@ -48,10 +48,15 @@ export default function LightweightInstrumentChart({
   const candleSeriesRef = useRef(null);
   const liveBarRef = useRef(null);
   const liveEventSourceRef = useRef(null);
+  const onDataLoadedRef = useRef(onDataLoaded);
   const lastQueryKeyRef = useRef('');
   const [status, setStatus] = useState('loading');
   const [errorMessage, setErrorMessage] = useState('');
   const [bars, setBars] = useState(null);
+
+  useEffect(() => {
+    onDataLoadedRef.current = onDataLoaded;
+  }, [onDataLoaded]);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,7 +69,7 @@ export default function LightweightInstrumentChart({
     }
     const intervalNorm = normalizeApiInterval(interval);
     const rangeNorm = String(range || '');
-    const queryKey = JSON.stringify({ sym, interval: intervalNorm, range: rangeNorm, from: from || '', to: to || '' });
+    const queryKey = JSON.stringify({ sym, interval: intervalNorm });
     if (lastQueryKeyRef.current === queryKey) {
       return undefined;
     }
@@ -109,10 +114,10 @@ export default function LightweightInstrumentChart({
               lastBarTime: last?.time,
             });
           }
-          if (typeof onDataLoaded === 'function') {
+          if (typeof onDataLoadedRef.current === 'function') {
             const first = normalized[0] || null;
             const last = normalized[normalized.length - 1] || null;
-            onDataLoaded({
+            onDataLoadedRef.current({
               symbol: sym,
               interval: intervalNorm,
               range: rangeNorm,
@@ -142,7 +147,7 @@ export default function LightweightInstrumentChart({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [symbol, interval, range, from, to, onDataLoaded]);
+  }, [symbol, interval]);
 
   useEffect(() => {
     const wrap = wrapRef.current;

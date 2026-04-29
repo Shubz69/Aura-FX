@@ -10,9 +10,11 @@ export function normalizeApiInterval(interval) {
   const s = String(interval || '60').trim();
   if (!s) return '60';
   const u = s.toUpperCase();
+  if (u === '1Y' || u === 'Y') return '1Y';
   if (u === 'D' || u === '1D') return '1D';
   if (u === 'W' || u === '1W') return '1W';
   if (u === 'M' || u === '1M') return '1M';
+  if (u === 'MO' || u === '1MO') return '1M';
   return s;
 }
 
@@ -46,8 +48,8 @@ export function normalizeChartBars(bars) {
  */
 export function timeScaleOptionsForInterval(interval) {
   const iv = normalizeApiInterval(interval);
-  const isDaily = iv === '1D' || iv === '1W' || iv === '1M';
-  const isMinute = iv === '1' || iv === '5' || iv === '15';
+  const isDaily = iv === '1D' || iv === '1W' || iv === '1M' || iv === '1Y';
+  const isMinute = iv === '1' || iv === '5' || iv === '15' || iv === '30' || iv === '45';
   const isHourly = iv === '60' || iv === '240';
 
   const pad2 = (n) => String(n).padStart(2, '0');
@@ -130,6 +132,7 @@ export function auraChartVisualOptions() {
       borderColor: 'rgba(226, 181, 84, 0.24)',
       textColor: 'rgba(231, 213, 175, 0.95)',
       autoScale: true,
+      entireTextOnly: true,
     },
     leftPriceScale: {
       visible: false,
@@ -140,15 +143,30 @@ export function auraChartVisualOptions() {
   };
 }
 
-export function auraCandlestickSeriesOptions() {
+export function pricePrecisionForSymbol(symbol) {
+  const token = String(symbol || '').toUpperCase();
+  const bare = token.includes(':') ? token.split(':')[1] : token;
+  if (/JPY/.test(bare)) return 3;
+  if (/^(EUR|GBP|AUD|NZD|USD|CHF|CAD)[A-Z]{3}$/.test(bare)) return 5;
+  if (/^(BTC|ETH|SOL|ADA|XRP|LTC|DOGE)/.test(bare)) return 2;
+  return 2;
+}
+
+export function auraCandlestickSeriesOptions(symbol = '') {
+  const precision = pricePrecisionForSymbol(symbol);
   return {
-    upColor: '#30d89e',
-    downColor: '#ff6f8e',
-    borderUpColor: '#57edbc',
-    borderDownColor: '#ff9ab0',
-    wickUpColor: '#67c9ff',
-    wickDownColor: '#f7ba74',
+    upColor: '#f4cd7a',
+    downColor: '#8c6a2a',
+    borderUpColor: '#f7d894',
+    borderDownColor: '#9a7530',
+    wickUpColor: '#f7d894',
+    wickDownColor: '#9a7530',
     priceLineVisible: false,
     lastValueVisible: true,
+    priceFormat: {
+      type: 'price',
+      precision,
+      minMove: 1 / (10 ** precision),
+    },
   };
 }

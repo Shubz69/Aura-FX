@@ -845,6 +845,16 @@ const Api = {
     getBacktestingSessionReports: (sessionId) => axios.get(`${API_BASE_URL}/api/backtesting/sessions/${sessionId}/reports`),
     getBacktestingReportsOverview: (params = {}) => axios.get(`${API_BASE_URL}/api/backtesting/reports/overview`, { params }),
     getBacktestingReportsBreakdowns: (params = {}) => axios.get(`${API_BASE_URL}/api/backtesting/reports/breakdowns`, { params }),
+    getBacktestingCandles: (params = {}) => axios.get(`${API_BASE_URL}/api/backtesting/candles`, { params, skipCache: true }),
+    patchBacktestingReplaySession: (sessionId, body) => axios.patch(`${API_BASE_URL}/api/backtesting/replay/sessions/${sessionId}`, body),
+    placeBacktestingReplayTrade: (sessionId, body) => axios.post(`${API_BASE_URL}/api/backtesting/replay/sessions/${sessionId}/trades`, body),
+    closeBacktestingReplayTrade: (sessionId, tradeId, body) =>
+        axios.post(`${API_BASE_URL}/api/backtesting/replay/sessions/${sessionId}/trades/${tradeId}/close`, body),
+    saveBacktestingTrade: (body) => axios.post(`${API_BASE_URL}/api/backtesting/saved-trades`, body),
+    listBacktestingSavedTrades: () => axios.get(`${API_BASE_URL}/api/backtesting/saved-trades`, { skipCache: true }),
+    getBacktestingSavedTrade: (id) => axios.get(`${API_BASE_URL}/api/backtesting/saved-trades/${id}`),
+    getBacktestingAiCoach: (context = {}) =>
+        axios.post(`${API_BASE_URL}/api/backtesting/ai-coach`, { context }, { headers: { 'Content-Type': 'application/json' } }),
 
     getJournalTasks: (params = {}) => {
         return axios.get(`${API_BASE_URL}/api/journal/tasks`, { params });
@@ -1437,6 +1447,37 @@ const Api = {
         return axios.delete(`${API_BASE_URL}/api/trader-replay/sessions/${id}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
+    },
+    getTraderReplayTrades: (params = {}) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/trader-replay/trades`, {
+            params,
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            skipCache: true,
+        });
+    },
+    getTraderReplayTrade: (id) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/trader-replay/trades/${encodeURIComponent(id)}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            skipCache: true,
+        });
+    },
+    getTraderReplayCandles: (params = {}) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/trader-replay/candles`, {
+            params,
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            skipCache: true,
+        });
+    },
+    getTraderReplayAnalysis: (tradeId, context = {}) => {
+        const token = localStorage.getItem('token');
+        return axios.post(
+            `${API_BASE_URL}/api/trader-replay/analysis`,
+            { tradeId, ...context },
+            { headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
+        );
     },
 
     getJournalDaily: (date) => {

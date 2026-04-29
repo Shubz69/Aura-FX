@@ -1,6 +1,8 @@
 import React, { useState, useMemo, memo } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuraAnalysisData, useAuraAnalysisMetrics } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
+import { buildReplayTradeUrl } from '../../../lib/trader-replay/replayLink';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import { AuraHourOfDayStrip, AuraWeekdayHourHeatmap } from '../../../components/aura-analysis/AuraPerformanceCharts';
 import { useAuraPerfSection, useIdleDeferredReady, useInViewOnce } from '../auraTabPerf';
@@ -210,7 +212,7 @@ const CalendarIntelligenceMain = memo(function CalendarIntelligenceMain() {
                 </div>
                 <div className="aa-table-wrap">
                   <table className="aa-table">
-                    <thead><tr><th>Symbol</th><th>Dir</th><th>Lots</th><th>P/L</th></tr></thead>
+                    <thead><tr><th>Symbol</th><th>Dir</th><th>Lots</th><th>P/L</th><th>Replay</th></tr></thead>
                     <tbody>
                       {selDayData.trades.map((t, i) => (
                         <tr key={t.id || i}>
@@ -222,6 +224,15 @@ const CalendarIntelligenceMain = memo(function CalendarIntelligenceMain() {
                           </td>
                           <td className="aa-table-num">{t.volume != null ? fmtNum(t.volume, 2) : '—'}</td>
                           <td className={`aa-table-num ${pnlCls(Number(t.pnl)||0)}`}>{fmtPnl(t.pnl)}</td>
+                          <td>
+                            <Link
+                              to={buildReplayTradeUrl(t.id)}
+                              className="aa-pill aa-pill--green"
+                              style={{ textDecoration: 'none', fontSize: '0.56rem' }}
+                            >
+                              Replay
+                            </Link>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

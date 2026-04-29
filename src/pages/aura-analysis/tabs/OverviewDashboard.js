@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuraAnalysisData, useAuraAnalysisMetrics } from '../../../context/AuraAnalysisContext';
 import { useReplayContributionProfile } from '../../../hooks/useReplayContributionProfile';
 import { fmtPnl, fmtPct, fmtNum, fmtDuration } from '../../../lib/aura-analysis/analytics';
+import { buildReplayTradeUrl } from '../../../lib/trader-replay/replayLink';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
 import AuraDnaOverviewCard from '../../../components/aura-analysis/AuraDnaOverviewCard';
 import {
@@ -591,7 +592,7 @@ export default function OverviewDashboard() {
               <thead>
                 <tr>
                   <th>Symbol</th><th>Dir</th><th>Open</th><th>Close</th>
-                  <th>Lots</th><th>Entry</th><th>Exit</th><th>Session</th><th>P/L</th>
+                  <th>Lots</th><th>Entry</th><th>Exit</th><th>Session</th><th>P/L</th><th>Replay</th>
                 </tr>
               </thead>
               <tbody>
@@ -613,6 +614,11 @@ export default function OverviewDashboard() {
                       <td className="aa-table-num">{t.closePrice > 0 ? fmtNum(t.closePrice, 5) : '—'}</td>
                       <td><span className="aa-pill aa-pill--dim" style={{ fontSize: '0.58rem' }}>{t.session || '—'}</span></td>
                       <td className={`aa-table-num ${pnlCls(p)}`}>{fmtPnl(p)}</td>
+                      <td>
+                        <Link to={buildReplayTradeUrl(t.id)} className="aa-pill aa-pill--green" style={{ textDecoration: 'none', fontSize: '0.58rem' }}>
+                          Replay
+                        </Link>
+                      </td>
                     </tr>
                   );
                 })}

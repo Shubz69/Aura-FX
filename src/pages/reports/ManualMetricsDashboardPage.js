@@ -131,8 +131,6 @@ function ManualMetricsDashboardInner() {
   const yParam = searchParams.get('year');
   const mParam = searchParams.get('month');
   const now = new Date();
-  const navYear = yParam ? parseInt(yParam, 10) : now.getFullYear();
-  const navMonth = mParam ? parseInt(mParam, 10) : now.getMonth() + 1;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [forbiddenCode, setForbiddenCode] = useState('');
@@ -205,9 +203,6 @@ function ManualMetricsDashboardInner() {
     return `Best: ${best.symbol} (${best.pnl >= 0 ? '+' : ''}${best.pnl.toFixed(2)}). Weakest: ${worst.symbol} (${worst.pnl >= 0 ? '+' : ''}${worst.pnl.toFixed(2)}).`;
   }, [symbolRows]);
 
-  const subNavYear = payload?.period?.year ?? navYear;
-  const subNavMonth = payload?.period?.month ?? navMonth;
-
   if (loading) {
     return (
       <div className="aa-page journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
@@ -266,7 +261,7 @@ function ManualMetricsDashboardInner() {
           <p>
             Upload your MT5 trade history for this month (Connection Hub or Manual metrics home).
           </p>
-          <Link to={`/manual-metrics?year=${subNavYear}&month=${subNavMonth}`} className="rp-btn rp-btn--primary">
+          <Link to="/manual-metrics" className="rp-btn rp-btn--primary">
             Upload CSV
           </Link>
         </div>

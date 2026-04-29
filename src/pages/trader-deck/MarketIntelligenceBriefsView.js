@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
 import Api from '../../services/Api';
 import '../../styles/trader-deck/MarketIntelligenceBriefPreview.css';
 import { FaEye, FaTrash, FaTimes } from 'react-icons/fa';
@@ -322,6 +323,7 @@ function isTextLikeMime(mime) {
 }
 
 export default function MarketIntelligenceBriefsView({ selectedDate, period, canEdit }) {
+  const { t } = useTranslation();
   const type = period === 'weekly' ? 'intel-weekly' : 'intel-daily';
   const storageDateStr = useMemo(
     () => getTraderDeckIntelStorageYmd(selectedDate, period),
@@ -567,7 +569,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           setEmptyDeskMessages(emptyDeskMessagesFor(period, 'repeat'));
         }
       })
-      .catch(() => setError('Failed to load briefs'))
+      .catch(() => setError(t('marketBriefs.failedToLoadBriefs')))
       .finally(() => setLoading(false));
   }, [fetchBriefsPayload, period]);
 
@@ -644,7 +646,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         setBriefs([]);
         setIntelDailySundayHold(false);
         setIntelDeskMeta(null);
-        setError('Failed to load briefs');
+        setError(t('marketBriefs.failedToLoadBriefs'));
       })
       .finally(finishLoading);
 
@@ -809,7 +811,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
         setPreviewEmbedUrl(embed);
         return;
       }
-      setError('That link must be a public http(s) URL to preview here.');
+      setError(t('marketBriefs.publicLinkRequired'));
       return;
     }
     setPreviewEmbedUrl(null);
@@ -817,10 +819,10 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   };
 
   const handleDelete = (id) => {
-    if (!window.confirm('Remove this brief?')) return;
+    if (!window.confirm(t('marketBriefs.confirmRemoveBrief'))) return;
     Api.deleteTraderDeckBrief(id)
       .then(() => setBriefs((prev) => prev.filter((b) => b.id !== id)))
-      .catch((err) => setError(err.response?.data?.message || 'Delete failed'));
+      .catch((err) => setError(err.response?.data?.message || t('marketBriefs.deleteFailed')));
   };
 
   const toggleKindFilter = (kind) => {
@@ -844,7 +846,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     return (
       <div className="td-mi-loading td-mi-loading--page">
         <div className="td-mi-loading-pulse" aria-hidden />
-        <p>Loading {period} briefs…</p>
+        <p>{t('marketBriefs.loadingBriefs', { period })}</p>
       </div>
     );
   }
@@ -860,7 +862,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       <div className="td-deck-mi-modern">
         <header className="td-deck-mi-modern-hero">
           <div className="td-deck-mi-modern-hero-copy">
-            <p className="td-deck-mo-eyebrow">Market intelligence</p>
+            <p className="td-deck-mo-eyebrow">{t('marketBriefs.marketIntelligence')}</p>
             <h1 className="td-deck-mi-modern-title">{mainTitle}</h1>
             <p className="td-deck-mi-modern-sub">
               Open a brief to read it fullscreen.{' '}
@@ -930,7 +932,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
           <section className="td-deck-mi-tile td-deck-mi-tile--list" aria-labelledby="intel-list-heading">
             <div className="td-deck-mi-tile-head">
               <h2 id="intel-list-heading" className="td-deck-mi-tile-title">
-                Briefs
+                {t('marketBriefs.briefs')}
               </h2>
               <div className="td-deck-mi-head-tools">
                 <div className="td-deck-mi-filter-wrap" ref={filterWrapRef}>
@@ -942,7 +944,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                     aria-expanded={filtersOpen}
                     aria-haspopup="dialog"
                   >
-                    Filter types
+                    {t('marketBriefs.filterTypes')}
                   </button>
                 </div>
                 <span className="td-deck-mi-tile-badge" title="Rows shown after filters">
@@ -956,10 +958,10 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               {error ? (
                 <li className="td-deck-mi-brief-empty td-deck-mi-brief-empty--fullwidth">
                   <span className="td-deck-mi-empty-user" role="alert">
-                    We could not load briefs (connection or server issue). Check your network, then try again.
+                    {t('marketBriefs.couldNotLoadBriefs')}
                   </span>{' '}
                   <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
-                    Retry fetch
+                    {t('marketBriefs.retryFetch')}
                   </button>
                 </li>
               ) : sortedBriefs.length === 0 && emptyDeskMessages ? (
@@ -973,15 +975,15 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                   {sleevePlaceholdersOrder.map((kind) => (
                     <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--pending">
                       <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
-                      <span className="td-deck-mi-brief-pending">Awaiting generation</span>
+                      <span className="td-deck-mi-brief-pending">{t('marketBriefs.awaitingGeneration')}</span>
                     </li>
                   ))}
                 </>
               ) : sortedBriefs.length === 0 ? (
                 <li className="td-deck-mi-brief-empty td-deck-mi-brief-empty--fullwidth">
-                  <span className="td-deck-mi-empty-user">No briefs for this date.</span>{' '}
+                  <span className="td-deck-mi-empty-user">{t('marketBriefs.noBriefsForDate')}</span>{' '}
                   <button type="button" className="td-mi-btn td-mi-btn-small" onClick={handleManualBriefsRetry}>
-                    Retry fetch
+                    {t('marketBriefs.retryFetch')}
                   </button>
                 </li>
               ) : (
@@ -993,7 +995,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                         return (
                           <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--pending">
                             <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
-                            <span className="td-deck-mi-brief-pending">Awaiting generation</span>
+                            <span className="td-deck-mi-brief-pending">{t('marketBriefs.awaitingGeneration')}</span>
                           </li>
                         );
                       }
@@ -1001,9 +1003,9 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                         return (
                           <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--filtered">
                             <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
-                            <span className="td-deck-mi-brief-pending">Hidden by filters</span>
+                            <span className="td-deck-mi-brief-pending">{t('marketBriefs.hiddenByFilters')}</span>
                             <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
-                              Show all
+                              {t('marketBriefs.showAll')}
                             </button>
                           </li>
                         );
@@ -1012,7 +1014,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                         <li key={b.id} className="td-deck-mi-brief-card">
                           <span className="td-deck-mi-brief-card-titles">
                             <span className="td-deck-mi-brief-card-kicker">
-                              {BRIEF_KIND_LABEL[String(b?.briefKind || '').toLowerCase()] || 'Brief'}
+                              {BRIEF_KIND_LABEL[String(b?.briefKind || '').toLowerCase()] || t('marketBriefs.brief')}
                             </span>
                             <span className="td-deck-mi-brief-card-title">
                               {displayBriefCardSubtitle(b.title, b.briefKind)}
@@ -1024,9 +1026,9 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                               type="button"
                               className="td-mi-btn td-mi-btn-small"
                               onClick={() => handlePreview(b)}
-                              title="Fullscreen preview"
+                              title={t('marketBriefs.fullscreenPreview')}
                             >
-                              <FaEye /> Preview
+                              <FaEye /> {t('marketBriefs.preview')}
                             </button>
                             {canEdit && (
                               <button
@@ -1074,7 +1076,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                                     type="button"
                                     className="td-mi-btn td-mi-btn-remove"
                                     onClick={() => handleDelete(sundayMarketBrief.id)}
-                                    title="Remove"
+                                    title={t('common.remove')}
                                   >
                                     <FaTrash />
                                   </button>
@@ -1084,9 +1086,9 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                           ) : (
                             <>
                               <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL.aura_sunday_market_open}</span>
-                              <span className="td-deck-mi-brief-pending">Hidden by filters</span>
+                            <span className="td-deck-mi-brief-pending">{t('marketBriefs.hiddenByFilters')}</span>
                               <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
-                                Show all
+                                {t('marketBriefs.showAll')}
                               </button>
                             </>
                           )}
@@ -1098,7 +1100,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                           return (
                             <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--pending">
                               <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
-                              <span className="td-deck-mi-brief-pending">Awaiting generation</span>
+                              <span className="td-deck-mi-brief-pending">{t('marketBriefs.awaitingGeneration')}</span>
                             </li>
                           );
                         }
@@ -1106,9 +1108,9 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                           return (
                             <li key={kind} className="td-deck-mi-brief-card td-deck-mi-brief-card--filtered">
                               <span className="td-deck-mi-brief-card-title">{BRIEF_KIND_LABEL[kind] || kind}</span>
-                              <span className="td-deck-mi-brief-pending">Hidden by filters</span>
+                              <span className="td-deck-mi-brief-pending">{t('marketBriefs.hiddenByFilters')}</span>
                               <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
-                                Show all
+                                {t('marketBriefs.showAll')}
                               </button>
                             </li>
                           );
@@ -1117,7 +1119,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                           <li key={b.id} className="td-deck-mi-brief-card">
                             <span className="td-deck-mi-brief-card-titles">
                               <span className="td-deck-mi-brief-card-kicker">
-                                {BRIEF_KIND_LABEL[String(b?.briefKind || '').toLowerCase()] || 'Brief'}
+                                {BRIEF_KIND_LABEL[String(b?.briefKind || '').toLowerCase()] || t('marketBriefs.brief')}
                               </span>
                               <span className="td-deck-mi-brief-card-title">
                                 {displayBriefCardSubtitle(b.title, b.briefKind)}
@@ -1129,16 +1131,16 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                                 type="button"
                                 className="td-mi-btn td-mi-btn-small"
                                 onClick={() => handlePreview(b)}
-                                title="Fullscreen preview"
+                                title={t('marketBriefs.fullscreenPreview')}
                               >
-                                <FaEye /> Preview
+                                <FaEye /> {t('marketBriefs.preview')}
                               </button>
                               {canEdit && (
                                 <button
                                   type="button"
                                   className="td-mi-btn td-mi-btn-remove"
                                   onClick={() => handleDelete(b.id)}
-                                  title="Remove"
+                                    title={t('common.remove')}
                                 >
                                   <FaTrash />
                                 </button>
@@ -1175,12 +1177,12 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
             width: filterMenuPos.width,
           }}
           role="dialog"
-          aria-label="Brief filters"
+          aria-label={t('marketBriefs.briefFilters')}
         >
           <div className="td-deck-mi-filter-head">
-            <span>Show brief types</span>
+            <span>{t('marketBriefs.showBriefTypes')}</span>
             <button type="button" className="td-mi-btn td-mi-btn-small" onClick={clearFilters}>
-              Reset
+              {t('common.reset')}
             </button>
           </div>
           <div className="td-deck-mi-filter-list">
@@ -1225,7 +1227,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               </p>
             ) : null}
           </div>
-          <button type="button" className="td-intel-preview-close--floating" onClick={closePreview} aria-label="Close preview">
+          <button type="button" className="td-intel-preview-close--floating" onClick={closePreview} aria-label={t('marketBriefs.closePreview')}>
             <FaTimes />
           </button>
         </div>
@@ -1236,7 +1238,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
               aria-busy={textPreviewLoading || briefTypewriterActive}
             >
               {textPreviewLoading ? (
-                <p className="td-intel-preview-md-loading">Loading brief…</p>
+                <p className="td-intel-preview-md-loading">{t('marketBriefs.loadingBrief')}</p>
               ) : (
                 <div className="td-intel-brief-md-document">
                   <div className="td-intel-brief-md td-intel-brief-md--typewriter">
@@ -1266,16 +1268,16 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
             <div className="td-intel-preview-fallback">
               <h3 className="td-intel-preview-fallback-title">{displayBriefTitle(previewBriefMeta?.title)}</h3>
               <p className="td-intel-preview-fallback-text">
-                This file type cannot be rendered in-browser here. Use Open or Download, or upload a PDF for inline preview.
+                {t('marketBriefs.fileTypeCannotRender')}
               </p>
               <div className="td-intel-preview-fallback-actions">
                 {previewDirectUrl && (
                   <>
                     <a href={previewDirectUrl} target="_blank" rel="noreferrer" className="td-mi-btn td-mi-btn-edit">
-                      Open file
+                      {t('marketBriefs.openFile')}
                     </a>
                     <a href={previewDirectUrl} download className="td-mi-btn td-mi-btn-small">
-                      Download
+                      {t('common.download')}
                     </a>
                   </>
                 )}

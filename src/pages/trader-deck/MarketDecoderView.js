@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FiSearch, FiMic } from 'react-icons/fi';
 import { FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
@@ -42,14 +43,14 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
-const DECODER_FLOW = [
-  { step: '1', title: 'Read the brief', note: 'Start with bias, conviction, and current posture.' },
-  { step: '2', title: 'Inspect structure', note: 'Use price action, levels, and scenario map.' },
-  { step: '3', title: 'Check risk context', note: 'Review macro calendar, headlines, and positioning.' },
-  { step: '4', title: 'Decide execution', note: 'Only act if the posture and trigger still align.' },
-];
-
 export default function MarketDecoderView({ embedded }) {
+  const decoderFlow = [
+    { step: '1', title: t('marketDecoder.flowStep1Title'), note: t('marketDecoder.flowStep1Note') },
+    { step: '2', title: t('marketDecoder.flowStep2Title'), note: t('marketDecoder.flowStep2Note') },
+    { step: '3', title: t('marketDecoder.flowStep3Title'), note: t('marketDecoder.flowStep3Note') },
+    { step: '4', title: t('marketDecoder.flowStep4Title'), note: t('marketDecoder.flowStep4Note') },
+  ];
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [q, setQ] = useState('EURUSD');
   const [quickChips, setQuickChips] = useState(QUICK);
@@ -212,10 +213,10 @@ export default function MarketDecoderView({ embedded }) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success('Brief downloaded as JSON.');
+      toast.success(t('marketDecoder.toast.downloadedJson'));
     } catch (e) {
       console.warn(e);
-      toast.error('Could not download JSON. Try again.');
+      toast.error(t('marketDecoder.toast.downloadJsonFailed'));
     }
   }, [brief, q]);
 
@@ -280,7 +281,7 @@ export default function MarketDecoderView({ embedded }) {
     `;
     const w = window.open('', '_blank', 'noopener,noreferrer');
     if (!w) {
-      toast.error('Allow pop-ups for this site to use Print / PDF.');
+      toast.error(t('marketDecoder.toast.allowPopups'));
       return;
     }
     w.document.open();
@@ -324,12 +325,12 @@ export default function MarketDecoderView({ embedded }) {
       } catch (e2) {
         console.warn(e);
         console.warn(e2);
-        toast.error('Could not export this brief to Trader Lab. Try again.');
+        toast.error(t('marketDecoder.toast.exportToTraderLabFailed'));
         return;
       }
     }
     setPreviewOpen(false);
-    toast.info('Opening Trader Lab with your Market Decoder context.');
+    toast.info(t('marketDecoder.toast.openingTraderLab'));
     navigate('/trader-deck/trade-validator/trader-lab');
   }, [brief, activeSymbol, navigate, quickChips]);
 
@@ -338,14 +339,13 @@ export default function MarketDecoderView({ embedded }) {
   return (
     <div className={`md-decoder md-decoder--reference ${embedded ? 'md-decoder--embedded' : ''}`}>
       <header className="md-ref-top">
-        <p className="md-ref-aura">Aura Terminal™</p>
-        <h1 className="md-ref-title">Market Decoder</h1>
+        <p className="md-ref-aura">{t('marketDecoder.auraTerminal')}</p>
+        <h1 className="md-ref-title">{t('marketDecoder.title')}</h1>
         {brief?.finalOutput?.currentPosture === 'DATA INCOMPLETE' ? (
           <div className="md-ref-structure-alert" role="alert">
-            <strong>Structural bias not scored</strong>
+              <strong>{t('marketDecoder.structureBiasNotScored')}</strong>
             <span>
-              Five daily closes are required for trend, MAs, and pivots. Quote and calendar may still apply — use Refresh
-              decode or confirm symbol mapping. Full detail appears in the brief preview.
+                {t('marketDecoder.structureBiasHelp')}
             </span>
           </div>
         ) : null}
@@ -356,21 +356,21 @@ export default function MarketDecoderView({ embedded }) {
               className="md-ref-search-input"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Symbol or name (e.g. EUR, gold, SPY)"
-              aria-label="Asset symbol or name"
+              placeholder={t('marketDecoder.searchPlaceholder')}
+              aria-label={t('marketDecoder.searchAria')}
               aria-autocomplete="list"
               aria-controls="md-decoder-suggest-list"
               aria-expanded={suggestions.length > 0}
             />
-            <button type="button" className="md-ref-mic" aria-label="Voice search">
+            <button type="button" className="md-ref-mic" aria-label={t('marketDecoder.voiceSearch')}>
               <FiMic aria-hidden />
             </button>
             <button type="submit" className="md-ref-decode" disabled={loading}>
-              {loading ? '…' : 'Decode'}
+              {loading ? '…' : t('marketDecoder.decode')}
             </button>
           </form>
           {suggestions.length > 0 ? (
-            <ul id="md-decoder-suggest-list" className="md-ref-suggest-panel" role="listbox" aria-label="Symbol suggestions">
+            <ul id="md-decoder-suggest-list" className="md-ref-suggest-panel" role="listbox" aria-label={t('marketDecoder.symbolSuggestions')}>
               {suggestions.map((row) => (
                 <li key={row.symbol} role="none">
                   <button
@@ -393,7 +393,7 @@ export default function MarketDecoderView({ embedded }) {
             </ul>
           ) : null}
         </div>
-        <div className="md-ref-chips" role="group" aria-label="Quick symbols">
+        <div className="md-ref-chips" role="group" aria-label={t('marketDecoder.quickSymbols')}>
           {quickChips.map((s) => (
             <button key={s} type="button" className="md-ref-chip" onClick={() => { setQ(s); setSuggestions([]); run(s, true); }}>
               {s}
@@ -403,34 +403,33 @@ export default function MarketDecoderView({ embedded }) {
         <div className="md-ref-meta-row">
           {cached && brief ? (
             <span className="md-ref-cache-note">
-              Cached snapshot
+              {t('marketDecoder.cachedSnapshot')}
               {cacheSnapshot.ageSec != null ? ` · ${cacheSnapshot.ageSec}s old` : ''}
-              {cacheSnapshot.ttlSec != null ? ` · TTL ~${cacheSnapshot.ttlSec}s` : ''} — Decode again for live refresh
+              {cacheSnapshot.ttlSec != null ? ` · TTL ~${cacheSnapshot.ttlSec}s` : ''} — {t('marketDecoder.decodeAgainForRefresh')}
             </span>
           ) : null}
           {brief ? (
             <span className="md-ref-live" role="status">
               <span className="md-ref-live-dot" aria-hidden />
-              Live ~{Math.round(LIVE_POLL_MS / 1000)}s
+              {t('marketDecoder.liveEvery', { seconds: Math.round(LIVE_POLL_MS / 1000) })}
               {formatGeneratedAt(brief.meta?.generatedAt) ? ` · ${formatGeneratedAt(brief.meta.generatedAt)}` : ''}
-              {liveRefreshing ? ' · Updating' : ''}
+              {liveRefreshing ? ` · ${t('marketDecoder.updating')}` : ''}
             </span>
           ) : null}
           {brief && !previewOpen ? (
             <button type="button" className="md-ref-link-btn md-ref-link-btn--emphasis" onClick={() => setPreviewOpen(true)}>
-              Open preview
+              {t('marketDecoder.openPreview')}
             </button>
           ) : null}
         </div>
         <div className="md-ref-flow-note">
-          <strong>Flow:</strong> Decode a symbol → review the full brief in the preview → <strong>Export</strong> sends bias, levels,
-          and context into <strong>Trader Lab</strong> (The Operator). Then use Checklist and Calculator.
+          <strong>{t('marketDecoder.flow')}</strong> {t('marketDecoder.flowText')}
         </div>
         <details className="md-ref-details-help">
-          <summary className="md-ref-details-sum">How to use · what this is</summary>
+          <summary className="md-ref-details-sum">{t('marketDecoder.howToUse')}</summary>
           <div className="md-decoder-hero-grid md-decoder-hero-grid--nested">
             <div className="md-decoder-flow" aria-label="Decoder workflow">
-              {DECODER_FLOW.map((item) => (
+              {decoderFlow.map((item) => (
                 <div key={item.step} className="md-decoder-flow-step">
                   <span className="md-decoder-flow-index">{item.step}</span>
                   <span className="md-decoder-flow-copy">
@@ -442,12 +441,12 @@ export default function MarketDecoderView({ embedded }) {
             </div>
             <aside className="md-decoder-hero-rail">
               <div className="md-hero-rail-card">
-                <span className="md-hero-rail-label">What this is</span>
-                <strong>One pre-trade brief — context and filters, not a signal feed.</strong>
+                <span className="md-hero-rail-label">{t('marketDecoder.whatThisIs')}</span>
+                <strong>{t('marketDecoder.whatThisIsText')}</strong>
               </div>
               <div className="md-hero-rail-card">
-                <span className="md-hero-rail-label">Best use</span>
-                <strong>Read posture and risks first; execute only when your trigger still aligns.</strong>
+                <span className="md-hero-rail-label">{t('marketDecoder.bestUse')}</span>
+                <strong>{t('marketDecoder.bestUseText')}</strong>
               </div>
             </aside>
           </div>
@@ -458,15 +457,15 @@ export default function MarketDecoderView({ embedded }) {
 
       {!brief ? (
         <div className="md-ref-placeholder">
-          <p className="md-ref-placeholder-msg">Decode a symbol to open the brief preview.</p>
+          <p className="md-ref-placeholder-msg">{t('marketDecoder.decodeSymbolToOpen')}</p>
         </div>
       ) : !previewOpen ? (
         <div className="md-ref-placeholder md-ref-placeholder--brief-ready">
           <p className="md-ref-placeholder-msg">
-            Brief ready for <strong>{activeSymbol || pairLabel}</strong>. Open the preview to read the full desk, then export to Trader Lab.
+            {t('marketDecoder.briefReadyFor')} <strong>{activeSymbol || pairLabel}</strong>. {t('marketDecoder.openPreviewThenExport')}
           </p>
           <button type="button" className="md-preview-open-btn" onClick={() => setPreviewOpen(true)}>
-            Open preview
+            {t('marketDecoder.openPreview')}
           </button>
         </div>
       ) : null}
@@ -490,14 +489,14 @@ export default function MarketDecoderView({ embedded }) {
                   <div className="td-intel-preview-chrome--minimal md-decoder-intel-chrome">
                     <div className="md-decoder-intel-chrome-text">
                       <p id="md-preview-title" className="td-intel-preview-title-bar">
-                        Market Decoder — {pairLabel || activeSymbol}
+                        {t('marketDecoder.title')} — {pairLabel || activeSymbol}
                       </p>
                       <p className="md-decoder-intel-chrome-sub">
-                        Review the brief, then Export to continue in Trader Lab with this context.
+                        {t('marketDecoder.reviewThenExport')}
                       </p>
                       {brief?.meta?.generatedAt ? (
                         <p className="md-decoder-intel-generated" title={brief.meta.generatedAt}>
-                          Last updated ·{' '}
+                          {t('marketDecoder.lastUpdated')} ·{' '}
                           {(() => {
                             const t = Date.parse(brief.meta.generatedAt);
                             if (Number.isNaN(t)) return brief.meta.generatedAt;
@@ -515,12 +514,12 @@ export default function MarketDecoderView({ embedded }) {
                     </div>
                     <div className="md-decoder-intel-actions">
                       <button type="button" className="md-decoder-intel-export" onClick={exportToTraderLab}>
-                        Export
+                        {t('marketDecoder.export')}
                       </button>
                       <button
                         type="button"
                         className="td-intel-preview-close--floating"
-                        aria-label="Close preview"
+                        aria-label={t('marketDecoder.closePreview')}
                         onClick={() => setPreviewOpen(false)}
                       >
                         <FaTimes />
@@ -536,10 +535,10 @@ export default function MarketDecoderView({ embedded }) {
                     <footer className="md-decoder-intel-footer">
                       <div className="md-preview-footer-extras">
                         <button type="button" className="md-preview-linkish" onClick={exportPreviewPdf}>
-                          Print / PDF
+                          {t('marketDecoder.printPdf')}
                         </button>
                         <button type="button" className="md-preview-linkish" onClick={exportJson}>
-                          Download JSON
+                          {t('marketDecoder.downloadJson')}
                         </button>
                       </div>
                     </footer>

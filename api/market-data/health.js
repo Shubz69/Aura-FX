@@ -38,6 +38,10 @@ const {
   ventureMarketsGloballyEnabled,
 } = require('./equities/ventureRemainingMarkets');
 const { FX_QUOTE_TTL_MS } = require('./cachePolicy');
+const {
+  ensureCommunityTranslationMetricsTable,
+  getCommunityTranslationMetricsSummary,
+} = require('../utils/communityTranslateMetrics');
 
 function cryptoWatchlistSymbolsForHealth() {
   try {
@@ -173,6 +177,7 @@ module.exports = async (req, res) => {
       cboeUkTdCoverage,
       cboeAuOhlcvCoverage,
       cboeAuTdCoverage,
+      communityTranslationMetrics,
     ] = await Promise.all([
       listLatestSnapshots(25),
       listLatestDecoderStates(25),
@@ -199,6 +204,14 @@ module.exports = async (req, res) => {
       listTwelveDataCoverageForStorageCategory('cboe_uk_equity', cboeUkSymbolsForHealth()),
       getForexOhlcvCoverageReport(cboeAuSymbolsForHealth()),
       listTwelveDataCoverageForStorageCategory('cboe_au_equity', cboeAuSymbolsForHealth()),
+      (async () => {
+        try {
+          await ensureCommunityTranslationMetricsTable();
+          return await getCommunityTranslationMetricsSummary({ days: 31 });
+        } catch {
+          return null;
+        }
+      })(),
     ]);
 
     const watchlistCount = uniqueSymbolsFromWatchlist().length;
@@ -387,6 +400,21 @@ module.exports = async (req, res) => {
         updatedAt: toIso(row.updated_at),
       })),
       usage,
+      googleCloud: {
+        translation: {
+          configured: Boolean(
+            process.env.GOOGLE_TRANSLATE_API_KEY || process.env.GOOGLE_CLOUD_TRANSLATE_API_KEY
+          ),
+          provider: 'google',
+          monthlyTranslatedCharacters: Number(communityTranslationMetrics?.translatedCharacters || 0),
+          estimatedMonthlyCostUsd: Number(communityTranslationMetrics?.estimatedCostUsd || 0),
+          cacheHitRatePct: Number(communityTranslationMetrics?.cacheHitRatePct || 0),
+          failures: Number(communityTranslationMetrics?.failures || 0),
+          lastSuccessfulTranslationAt: communityTranslationMetrics?.lastSuccessfulTranslationAt || null,
+          budgetTargetUsd: Number(process.env.GCLOUD_TRANSLATION_BUDGET_USD || 0),
+          creditValueUsd: Number(process.env.GCLOUD_MANUAL_CREDIT_USD || 0),
+        },
+      },
       latest: {
         snapshots: snapshots.slice(0, 10).map((row) => ({
           key: row.snapshot_key,

@@ -4,6 +4,7 @@
  */
 
 const crypto = require('crypto');
+const axios = require('axios');
 const { executeQuery } = require('./db');
 const { verifyToken } = require('./utils/auth');
 const { ensureBacktestTables } = require('./backtesting/schema');
@@ -270,6 +271,74 @@ function mapTradeRow(row) {
     screenshotUrl: row.screenshotUrl ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+  };
+}
+
+function mapSavedTradeRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    userId: row.userId,
+    sessionId: row.sessionId || null,
+    sourceTradeId: row.sourceTradeId || null,
+    instrument: row.instrument,
+    direction: row.direction,
+    entryTime: row.entryTime || null,
+    entryPrice: num(row.entryPrice),
+    exitTime: row.exitTime || null,
+    exitPrice: row.exitPrice != null ? num(row.exitPrice) : null,
+    lotSize: row.lotSize != null ? num(row.lotSize) : null,
+    pnlAmount: num(row.pnlAmount, 0),
+    result: row.result || classifyResult(row.pnlAmount),
+    timeframe: row.timeframe || null,
+    replayReference: jsonVal(row.replayReferenceJson, {}),
+    screenshotUrl: row.screenshotUrl || null,
+    notes: row.notes || '',
+    aiFeedback: row.aiFeedback || '',
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+function timeframeToChartInterval(tf) {
+  const raw = String(tf || 'M15').toUpperCase();
+  if (raw === 'M1' || raw === '1') return '1';
+  if (raw === 'M5' || raw === '5') return '5';
+  if (raw === 'M15' || raw === '15') return '15';
+  if (raw === 'M30' || raw === '30') return '30';
+  if (raw === 'M45' || raw === '45') return '45';
+  if (raw === 'H1' || raw === '60') return '60';
+  if (raw === 'H4' || raw === '240') return '240';
+  if (raw === 'W1' || raw === '1W') return '1W';
+  if (raw === 'MN1' || raw === '1M') return '1M';
+  return '1D';
+}
+
+function buildAiCoaching(context) {
+  const currentPrice = num(context?.currentPrice);
+  const direction = String(context?.direction || '').toLowerCase();
+  const openTrades = Array.isArray(context?.openTrades) ? context.openTrades : [];
+  const accountBalance = num(context?.accountBalance, 0);
+  const riskPct = accountBalance > 0 && openTrades.length
+    ? (openTrades.reduce((acc, t) => acc + Math.max(0, Math.abs(num(t.entryPrice, 0) - num(t.stopLoss, num(t.entryPrice, 0))) * num(t.lotSize, 0)), 0) / accountBalance) * 100
+    : 0;
+  const top = [];
+  if (Number.isFinite(currentPrice)) top.push(`Current replay price is ${currentPrice.toFixed(5)}.`);
+  if (openTrades.length > 0) top.push(`You have ${openTrades.length} open simulated trade${openTrades.length > 1 ? 's' : ''}.`);
+  if (riskPct > 0) top.push(`Estimated open risk is about ${riskPct.toFixed(2)}% of balance.`);
+  if (direction === 'buy' || direction === 'long') top.push('For long ideas, prefer entries after structure confirms higher lows.');
+  if (direction === 'sell' || direction === 'short') top.push('For short ideas, avoid fading clear bullish momentum without confirmation.');
+
+  return {
+    answer: top.join(' ') || 'Wait for clear structure confirmation, keep risk fixed, and avoid forcing entries.',
+    strengths: ['You are replaying candle-by-candle, which is good deliberate practice.'],
+    weaknesses: riskPct > 2 ? ['Risk appears elevated relative to balance.'] : ['No major risk breach detected in this snapshot.'],
+    improvements: [
+      'Define invalidation (SL) before entry.',
+      'Target at least 1.5R when conditions allow.',
+      'Log why the entry was valid at that timestamp.',
+    ],
+    rrAssessment: riskPct > 2 ? 'Risk profile is aggressive; reduce size or widen only with clear setup quality.' : 'Risk profile is acceptable for a training simulation.',
   };
 }
 
@@ -702,6 +771,33 @@ module.exports = async (req, res) => {
       return handleReportsBreakdowns(req, res, userId);
     }
 
+    if (req.method === 'GET' && pathname === '/api/backtesting/candles') {
+      const url = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+      const symbol = String(url.searchParams.get('symbol') || '').trim().toUpperCase();
+      const timeframe = String(url.searchParams.get('timeframe') || 'M15');
+      const from = url.searchParams.get('from');
+      const to = url.searchParams.get('to');
+      if (!symbol) return res.status(400).json({ success: false, message: 'symbol is required' });
+      const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+      const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').trim();
+      const baseUrl = `${proto}://${host}`;
+      const interval = timeframeToChartInterval(timeframe);
+      const { data } = await axios.get(`${baseUrl}/api/market/chart-history`, {
+        params: { symbol, interval, ...(from ? { from } : {}), ...(to ? { to } : {}) },
+        headers: { Authorization: req.headers.authorization || '' },
+        timeout: 20000,
+      });
+      return res.status(200).json({
+        success: Boolean(data?.success),
+        symbol,
+        timeframe,
+        interval,
+        bars: Array.isArray(data?.bars) ? data.bars : [],
+        source: data?.source || data?.diagnostics?.provider || 'market-chart-history',
+        diagnostics: data?.diagnostics || null,
+      });
+    }
+
     /** GET /api/backtesting/sessions */
     if (req.method === 'GET' && pathname === '/api/backtesting/sessions') {
       const url = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
@@ -1072,6 +1168,119 @@ module.exports = async (req, res) => {
         const [rows] = await executeQuery('SELECT * FROM backtest_trades WHERE id = ?', [tid]);
         return res.status(201).json({ success: true, trade: mapTradeRow(rows[0]) });
       }
+    }
+
+    const replaySession = pathname.match(/^\/api\/backtesting\/replay\/sessions\/([a-f0-9-]{36})$/i);
+    if (replaySession && req.method === 'PATCH') {
+      const sessionId = replaySession[1];
+      const s = await loadSessionForUser(sessionId, userId);
+      if (!s) return res.status(404).json({ success: false, message: 'Session not found' });
+      const body = parseBody(req);
+      const currentPrefs = jsonVal(s.chartPrefsJson, {});
+      const replayState = body.replayState && typeof body.replayState === 'object' ? body.replayState : {};
+      const nextPrefs = { ...currentPrefs, replayState };
+      await executeQuery(
+        'UPDATE backtest_sessions SET chartPrefsJson = ?, lastReplayAt = COALESCE(?, lastReplayAt), updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND userId = ?',
+        [stringifyJson(nextPrefs), toMysqlDatetimeUtc(body.lastReplayAt), sessionId, userId]
+      );
+      const updated = await loadSessionForUser(sessionId, userId);
+      return res.status(200).json({ success: true, session: mapSessionRow(updated), replayState });
+    }
+
+    const replayTradeCreate = pathname.match(/^\/api\/backtesting\/replay\/sessions\/([a-f0-9-]{36})\/trades$/i);
+    if (replayTradeCreate && req.method === 'POST') {
+      const sessionId = replayTradeCreate[1];
+      const s = await loadSessionForUser(sessionId, userId);
+      if (!s) return res.status(404).json({ success: false, message: 'Session not found' });
+      const body = parseBody(req);
+      const side = normalizeDirection(body.direction || 'long');
+      const entryPrice = num(body.entryPrice);
+      const lotSize = num(body.lotSize, 0.01);
+      if (!Number.isFinite(entryPrice) || entryPrice <= 0) return res.status(400).json({ success: false, message: 'entryPrice invalid' });
+      const tid = crypto.randomUUID();
+      await executeQuery(
+        `INSERT INTO backtest_trades (
+          id, sessionId, userId, instrument, marketType, direction, entryPrice, stopLoss, takeProfit,
+          positionSize, initialRiskAmount, pnlAmount, openTime, timeframe, resultType, notes, checklistItemsJson, extraContextJson
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        [
+          tid, sessionId, userId, String(body.instrument || s.lastActiveInstrument || 'EURUSD').slice(0, 64), s.marketType || null, side,
+          entryPrice, body.stopLoss != null && body.stopLoss !== '' ? num(body.stopLoss) : null,
+          body.takeProfit != null && body.takeProfit !== '' ? num(body.takeProfit) : null,
+          lotSize, null, 0, toMysqlDatetimeUtc(body.openTime || new Date()),
+          String(body.timeframe || s.replayTimeframe || 'M15').slice(0, 32), 'breakeven',
+          String(body.notes || '').slice(0, 2000), stringifyJson([]), stringifyJson(body.replayReference || {})
+        ]
+      );
+      const [rows] = await executeQuery('SELECT * FROM backtest_trades WHERE id = ? AND userId = ?', [tid, userId]);
+      return res.status(201).json({ success: true, trade: mapTradeRow(rows[0]) });
+    }
+
+    const replayTradeClose = pathname.match(/^\/api\/backtesting\/replay\/sessions\/([a-f0-9-]{36})\/trades\/([a-f0-9-]{36})\/close$/i);
+    if (replayTradeClose && req.method === 'POST') {
+      const sessionId = replayTradeClose[1];
+      const tradeId = replayTradeClose[2];
+      const [rows] = await executeQuery('SELECT * FROM backtest_trades WHERE id = ? AND sessionId = ? AND userId = ?', [tradeId, sessionId, userId]);
+      if (!rows[0]) return res.status(404).json({ success: false, message: 'Trade not found' });
+      const trade = mapTradeRow(rows[0]);
+      const body = parseBody(req);
+      const exitPrice = num(body.exitPrice);
+      if (!Number.isFinite(exitPrice) || exitPrice <= 0) return res.status(400).json({ success: false, message: 'exitPrice invalid' });
+      const lots = num(trade.positionSize, 0);
+      const pnlRaw = trade.direction === 'short' ? (trade.entryPrice - exitPrice) * lots : (exitPrice - trade.entryPrice) * lots;
+      const pnlAmount = Number.isFinite(num(body.pnlAmount)) ? num(body.pnlAmount) : pnlRaw;
+      const resultType = classifyResult(pnlAmount);
+      await executeQuery(
+        `UPDATE backtest_trades SET exitPrice = ?, closeTime = ?, pnlAmount = ?, resultType = ?, notes = CONCAT(COALESCE(notes, ''), ?), updatedAt = CURRENT_TIMESTAMP
+         WHERE id = ? AND sessionId = ? AND userId = ?`,
+        [exitPrice, toMysqlDatetimeUtc(body.closeTime || new Date()), pnlAmount, resultType, body.notes ? `\n${String(body.notes).slice(0, 500)}` : '', tradeId, sessionId, userId]
+      );
+      await recalculateSessionAggregates(sessionId, userId);
+      const [updatedRows] = await executeQuery('SELECT * FROM backtest_trades WHERE id = ? AND userId = ?', [tradeId, userId]);
+      return res.status(200).json({ success: true, trade: mapTradeRow(updatedRows[0]) });
+    }
+
+    if (pathname === '/api/backtesting/saved-trades') {
+      if (req.method === 'GET') {
+        const [rows] = await executeQuery('SELECT * FROM backtest_saved_trades WHERE userId = ? ORDER BY createdAt DESC LIMIT 1000', [userId]);
+        return res.status(200).json({ success: true, trades: rows.map(mapSavedTradeRow) });
+      }
+      if (req.method === 'POST') {
+        const body = parseBody(req);
+        const sourceTradeId = String(body.sourceTradeId || '').trim();
+        if (!sourceTradeId) return res.status(400).json({ success: false, message: 'sourceTradeId is required' });
+        const [rows] = await executeQuery('SELECT * FROM backtest_trades WHERE id = ? AND userId = ?', [sourceTradeId, userId]);
+        if (!rows[0]) return res.status(404).json({ success: false, message: 'Trade not found' });
+        const tr = mapTradeRow(rows[0]);
+        const sid = crypto.randomUUID();
+        await executeQuery(
+          `INSERT INTO backtest_saved_trades (
+            id, userId, sessionId, sourceTradeId, instrument, direction, entryTime, entryPrice, exitTime, exitPrice, lotSize,
+            pnlAmount, result, timeframe, replayReferenceJson, screenshotUrl, notes, aiFeedback
+          ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [
+            sid, userId, tr.sessionId, tr.id, tr.instrument, tr.direction, toMysqlDatetimeUtc(tr.openTime), tr.entryPrice,
+            toMysqlDatetimeUtc(tr.closeTime), tr.exitPrice, tr.positionSize, tr.pnlAmount, tr.resultType,
+            tr.timeframe, stringifyJson(body.replayReference || tr.extraContext || {}), body.screenshotUrl ? String(body.screenshotUrl).slice(0, 512) : null,
+            String(body.notes || tr.notes || '').slice(0, 4000), String(body.aiFeedback || '').slice(0, 8000),
+          ]
+        );
+        const [saved] = await executeQuery('SELECT * FROM backtest_saved_trades WHERE id = ? AND userId = ?', [sid, userId]);
+        return res.status(201).json({ success: true, trade: mapSavedTradeRow(saved[0]) });
+      }
+    }
+
+    const savedTradeDetail = pathname.match(/^\/api\/backtesting\/saved-trades\/([a-f0-9-]{36})$/i);
+    if (savedTradeDetail && req.method === 'GET') {
+      const [rows] = await executeQuery('SELECT * FROM backtest_saved_trades WHERE id = ? AND userId = ?', [savedTradeDetail[1], userId]);
+      if (!rows[0]) return res.status(404).json({ success: false, message: 'Saved trade not found' });
+      return res.status(200).json({ success: true, trade: mapSavedTradeRow(rows[0]) });
+    }
+
+    if (req.method === 'POST' && pathname === '/api/backtesting/ai-coach') {
+      const body = parseBody(req);
+      const coaching = buildAiCoaching(body.context || {});
+      return res.status(200).json({ success: true, feedback: coaching });
     }
 
     const sessionNotebook = pathname.match(/^\/api\/backtesting\/sessions\/([a-f0-9-]{36})\/notebook$/i);

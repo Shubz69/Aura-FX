@@ -43,24 +43,16 @@ export const PLAYBACK_SPEED_OPTIONS = [
 
 export const CHART_INTERVAL_OPTIONS = [
   { label: '1m', value: '1' },
+  { label: '5m', value: '5' },
   { label: '15m', value: '15' },
+  { label: '30m', value: '30' },
+  { label: '45m', value: '45' },
   { label: '1H', value: '60' },
   { label: '4H', value: '240' },
-  { label: 'D', value: 'D' },
-  { label: 'W', value: '1W' },
-  { label: 'M', value: '1M' },
-];
-export const CHART_RANGE_OPTIONS = [
-  { label: '1D', value: '1D' },
-  { label: '1W', value: '1W' },
-  { label: '1M', value: '1M' },
-  { label: '3M', value: '3M' },
-  { label: '6M', value: '6M' },
-  { label: '1Y', value: '1Y' },
-  { label: '5Y', value: '5Y' },
-  { label: '10Y', value: '10Y' },
-  { label: '20Y', value: '20Y' },
-  { label: '50Y', value: '50Y' },
+  { label: '1d', value: '1D' },
+  { label: '1w', value: '1W' },
+  { label: '1mo', value: '1M' },
+  { label: '1y', value: '1Y' },
 ];
 
 export const MARKER_TYPES = [
@@ -79,7 +71,6 @@ export const DEMO_REPLAY_TEMPLATE = {
   title: 'EURUSD · London reclaim (guided example)',
   symbol: 'OANDA:EURUSD',
   interval: '15',
-  chartRange: '3M',
   asset: 'EURUSD',
   direction: 'Long',
   outcome: 'Win',
@@ -186,7 +177,6 @@ export function emptySessionDraft(overrides = {}) {
     title: 'New replay',
     symbol: 'OANDA:EURUSD',
     interval: '15',
-    chartRange: '3M',
     asset: 'EURUSD',
     direction: 'Long',
     outcome: '',

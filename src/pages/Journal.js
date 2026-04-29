@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, useReducer } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
@@ -27,11 +28,11 @@ import {
 } from '../lib/trader-replay/replayToolHandoff';
 
 const MOOD_OPTIONS = [
-  { value: 'great', label: 'Great', emoji: '😊' },
-  { value: 'good',  label: 'Good',  emoji: '🙂' },
-  { value: 'ok',    label: 'Okay',  emoji: '😐' },
-  { value: 'low',   label: 'Low',   emoji: '😔' },
-  { value: 'rough', label: 'Rough', emoji: '😤' },
+  { value: 'great', labelKey: 'journal.mood.great', emoji: '😊' },
+  { value: 'good', labelKey: 'journal.mood.good', emoji: '🙂' },
+  { value: 'ok', labelKey: 'journal.mood.ok', emoji: '😐' },
+  { value: 'low', labelKey: 'journal.mood.low', emoji: '😔' },
+  { value: 'rough', labelKey: 'journal.mood.rough', emoji: '😤' },
 ];
 
 function getMonthStart(d) {
@@ -68,12 +69,6 @@ function isJournalSaturdayUTC(dateStr) {
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay() === 6;
 }
 
-const MONTH_NAMES = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December',
-];
-const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
 function isCanceledError(err) {
   return Boolean(err && (err.code === 'ERR_CANCELED' || err.name === 'CanceledError'));
 }
@@ -81,16 +76,16 @@ function isCanceledError(err) {
 const REMINDER_MAX_MS = 1000 * 60 * 60 * 24 * 30;
 const JOURNAL_DAY_IMAGES_MAX = 8;
 
-function formatReminderRelative(fireAt) {
+function formatReminderRelative(fireAt, t) {
   const ms = Number(fireAt) - Date.now();
   if (!Number.isFinite(ms)) return '';
-  if (ms < 45_000) return 'in a moment';
+  if (ms < 45_000) return t('journal.inAMoment');
   const mins = Math.round(ms / 60_000);
-  if (mins < 60) return `in ${mins} min`;
+  if (mins < 60) return t('journal.inMin', { count: mins });
   const hrs = Math.round(ms / 3_600_000);
-  if (hrs < 48) return `in ~${hrs} h`;
+  if (hrs < 48) return t('journal.inHoursApprox', { count: hrs });
   const days = Math.round(ms / 86_400_000);
-  return `in ~${days} day${days === 1 ? '' : 's'}`;
+  return t('journal.inDaysApprox', { count: days });
 }
 
 function tomorrowAtNineLocalMs() {
@@ -100,11 +95,11 @@ function tomorrowAtNineLocalMs() {
   return d.getTime();
 }
 
-async function ensureNotificationPermission() {
+async function ensureNotificationPermission(t) {
   if (typeof Notification === 'undefined') return;
   if (Notification.permission === 'granted') return;
   if (Notification.permission === 'denied') {
-    toast.info('Turn on notifications in your browser settings if you want desktop alerts.', { autoClose: 6000 });
+    toast.info(t('journal.turnOnNotifications'), { autoClose: 6000 });
     return;
   }
   try {
@@ -118,6 +113,7 @@ async function ensureNotificationPermission() {
    PHOTO LIGHTBOX
    ══════════════════════════════════════════════════════════════ */
 function PhotoLightbox({ photos, startIndex = 0, onClose }) {
+  const { t } = useTranslation();
   const [current, setCurrent] = useState(startIndex);
   const [closing, setClosing] = useState(false);
 
@@ -147,7 +143,7 @@ function PhotoLightbox({ photos, startIndex = 0, onClose }) {
       className={`journal-lightbox${closing ? ' journal-lightbox--closing' : ''}`}
       onClick={(e) => { if (e.target === e.currentTarget) close(); }}
     >
-      <button className="journal-lightbox-close" onClick={close} title="Close (Esc)" type="button">
+      <button className="journal-lightbox-close" onClick={close} title={t('journal.closeEsc')} type="button">
         <FaTimes />
       </button>
       <button
@@ -159,7 +155,7 @@ function PhotoLightbox({ photos, startIndex = 0, onClose }) {
         <FaChevronLeft />
       </button>
       <div className="journal-lightbox-img-wrap" key={current}>
-        <img src={photos[current]} alt={`Proof ${current + 1}`} draggable={false} />
+        <img src={photos[current]} alt={t('journal.proofN', { n: current + 1 })} draggable={false} />
       </div>
       <button
         className="journal-lightbox-arrow journal-lightbox-arrow--next"
@@ -180,7 +176,7 @@ function PhotoLightbox({ photos, startIndex = 0, onClose }) {
               className={`journal-lightbox-thumb${i === current ? ' journal-lightbox-thumb--active' : ''}`}
               onClick={() => setCurrent(i)}
             >
-              <img src={src} alt={`thumb ${i + 1}`} draggable={false} />
+              <img src={src} alt={t('journal.thumbN', { n: i + 1 })} draggable={false} />
             </div>
           ))}
         </div>
@@ -193,6 +189,7 @@ function PhotoLightbox({ photos, startIndex = 0, onClose }) {
    MAIN JOURNAL COMPONENT
    ══════════════════════════════════════════════════════════════ */
 export default function Journal() {
+  const { t, i18n } = useTranslation();
   const { user: authUser } = useAuth();
   const userAdmin = useMemo(() => isAdmin(authUser), [authUser]);
 
@@ -381,7 +378,7 @@ export default function Journal() {
       skipDiaryAutosaveRef.current = false;
     }).catch((err) => {
       if (!cancelled) {
-        setError(err.response?.data?.message || 'Failed to load tasks.');
+        setError(err.response?.data?.message || t('journal.failedLoadTasks'));
         setMonthTasks([]);
         setLoading(false);
         skipDiaryAutosaveRef.current = false;
@@ -455,7 +452,7 @@ export default function Journal() {
     } catch (err) {
       if (isCanceledError(err)) return;
       setDiarySaveStatus('error');
-      setError(err.response?.data?.message || 'Failed to save notes.');
+      setError(err.response?.data?.message || t('journal.failedSaveNotes'));
     } finally {
       setDailySaving(false);
     }
@@ -491,7 +488,7 @@ export default function Journal() {
         .catch((err) => {
           if (isCanceledError(err)) return;
           setDiarySaveStatus('error');
-          setError(err.response?.data?.message || 'Failed to save notes.');
+          setError(err.response?.data?.message || t('journal.failedSaveNotes'));
         });
     }, 700);
 
@@ -557,7 +554,7 @@ export default function Journal() {
         if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for adding a task!`, { icon: '⭐' });
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add task.');
+      setError(err.response?.data?.message || t('journal.failedAddTask'));
     } finally {
       setAdding(false);
     }
@@ -577,7 +574,7 @@ export default function Journal() {
       }
     } catch (err) {
       setMonthTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: prevCompleted } : t)));
-      setError(err.response?.data?.message || 'Failed to update task.');
+      setError(err.response?.data?.message || t('journal.failedUpdateTask'));
     }
   };
 
@@ -589,40 +586,40 @@ export default function Journal() {
       setMonthTasks((prev) => prev.filter((t) => t.id !== id));
       setProofPhotos((prev) => { const n = { ...prev }; delete n[id]; return n; });
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete task.');
+      setError(err.response?.data?.message || t('journal.failedDeleteTask'));
     }
   };
 
   const applyJournalReminder = useCallback(async (task, fireAtMs) => {
     if (!journalUserId) {
-      toast.error('Sign in to use reminders.');
+      toast.error(t('journal.signInForReminders'));
       return;
     }
-    const t = Number(fireAtMs);
-    if (!Number.isFinite(t) || t <= Date.now()) {
-      toast.error('Choose a future time.');
+    const fireTs = Number(fireAtMs);
+    if (!Number.isFinite(fireTs) || fireTs <= Date.now()) {
+      toast.error(t('journal.chooseFutureTime'));
       return;
     }
-    if (t - Date.now() > REMINDER_MAX_MS) {
-      toast.error('Reminders can be at most 30 days ahead.');
+    if (fireTs - Date.now() > REMINDER_MAX_MS) {
+      toast.error(t('journal.remindersMax30Days'));
       return;
     }
-    await ensureNotificationPermission();
+    await ensureNotificationPermission(t);
     upsertReminder({
       userId: journalUserId,
       taskId: task.id,
       taskTitle: task.title,
-      fireAtMs: t,
+      fireAtMs: fireTs,
     });
     try {
-      await Api.updateJournalTask(task.id, { reminderAt: new Date(t).toISOString() });
+      await Api.updateJournalTask(task.id, { reminderAt: new Date(fireTs).toISOString() });
     } catch (e) {
       // Keep local reminder fallback even if server sync fails.
       console.warn('Server reminder sync failed:', e?.response?.data?.message || e?.message);
     }
-    toast.success(`Reminder set ${formatReminderRelative(t)}.`);
+    toast.success(t('journal.reminderSet', { when: formatReminderRelative(fireTs, t) }));
     setReminderMenuTaskId(null);
-  }, [journalUserId]);
+  }, [journalUserId, t]);
 
   const applyCustomReminder = useCallback((task) => {
     const t = new Date(reminderCustomDt).getTime();
@@ -641,7 +638,7 @@ export default function Journal() {
       setEditingTaskId(null);
       setEditTitle('');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update task.');
+      setError(err.response?.data?.message || t('journal.failedUpdateTask'));
     }
   };
 
@@ -677,7 +674,7 @@ export default function Journal() {
             if (updated) setMonthTasks((p) => p.map((t) => (t.id === taskId ? updated : t)));
             if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for proof!`, { icon: '⭐' });
           })
-          .catch(() => setError('Failed to attach proof.'));
+          .catch(() => setError(t('journal.failedAttachProof')));
         return { ...prev, [taskId]: merged };
       });
     });
@@ -730,7 +727,7 @@ export default function Journal() {
             if (Array.isArray(saved)) setDayImages(saved.filter((x) => typeof x === 'string'));
           })
           .catch(() => {
-            setError('Failed to save day screenshots.');
+            setError(t('journal.failedSaveDayScreenshots'));
             setDayImages(snapshot);
           });
         return merged;
@@ -749,7 +746,7 @@ export default function Journal() {
           if (Array.isArray(saved)) setDayImages(saved.filter((x) => typeof x === 'string'));
         })
         .catch(() => {
-          setError('Failed to remove screenshot.');
+          setError(t('journal.failedRemoveScreenshot'));
           setDayImages(snapshot);
         });
       return next;
@@ -772,7 +769,7 @@ export default function Journal() {
         if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for saving a note!`, { icon: '⭐' });
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add note.');
+      setError(err.response?.data?.message || t('journal.failedAddNote'));
     } finally {
       setAddingNote(false);
     }
@@ -784,7 +781,7 @@ export default function Journal() {
       await Api.deleteJournalNote(id);
       setDailyNotesList((prev) => prev.filter((n) => n.id !== id));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete note.');
+      setError(err.response?.data?.message || t('journal.failedDeleteNote'));
     }
   };
 
@@ -849,8 +846,26 @@ export default function Journal() {
     : (dayPct ?? 0);
 
   const label = isSameDay(selectedDate, journalToday)
-    ? 'Today'
-    : (() => { const d = new Date(selectedDate + 'T12:00:00'); return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; })();
+    ? t('journal.today')
+    : (() =>
+        new Date(`${selectedDate}T12:00:00`).toLocaleDateString(i18n.language || undefined, {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }))();
+  const monthHeaderLabel = useMemo(() => {
+    const [yy, mm] = calendarMonth.split('-').map(Number);
+    const d = new Date(yy, (mm || 1) - 1, 1);
+    return d.toLocaleDateString(i18n.language || undefined, { month: 'long', year: 'numeric' });
+  }, [calendarMonth, i18n.language]);
+  const dayNames = useMemo(() => {
+    const base = new Date(Date.UTC(2024, 0, 1)); // Monday
+    return [...Array(7)].map((_, idx) =>
+      new Date(base.getTime() + idx * 24 * 60 * 60 * 1000).toLocaleDateString(i18n.language || undefined, {
+        weekday: 'short',
+      }),
+    );
+  }, [i18n.language]);
 
   const isMandatoryRestDay = isJournalSaturdayUTC(selectedDate);
 
@@ -864,10 +879,10 @@ export default function Journal() {
             key={i}
             className="journal-proof-thumb"
             onClick={() => setLightbox({ photos: dayImages, index: i })}
-            title="Tap to view"
+            title={t('journal.tapToView')}
             role="presentation"
           >
-            <img src={src} alt={`Day screenshot ${i + 1}`} loading="lazy" />
+            <img src={src} alt={t('journal.dayScreenshotN', { n: i + 1 })} loading="lazy" />
             {canEditJournal && (
               <button
                 type="button"
@@ -876,7 +891,7 @@ export default function Journal() {
                   e.stopPropagation();
                   handleRemoveDayImage(i);
                 }}
-                title="Remove"
+                title={t('common.remove')}
               >
                 ✕
               </button>
@@ -888,7 +903,7 @@ export default function Journal() {
             type="button"
             className="journal-proof-add-more"
             onClick={handleDayImagesClick}
-            title="Add screenshot"
+            title={t('journal.addScreenshot')}
           >
             +
           </button>
@@ -904,17 +919,17 @@ export default function Journal() {
       <div className="journal-proof-strip">
         {photos.map((src, i) => (
           <div key={i} className="journal-proof-thumb"
-            onClick={() => setLightbox({ photos, index: i })} title="Tap to view">
-            <img src={src} alt={`Proof ${i + 1}`} loading="lazy" />
+            onClick={() => setLightbox({ photos, index: i })} title={t('journal.tapToView')}>
+            <img src={src} alt={t('journal.proofN', { n: i + 1 })} loading="lazy" />
             {canEditJournal && (
               <button type="button" className="journal-proof-thumb-remove"
-                onClick={(e) => { e.stopPropagation(); handleRemoveProofPhoto(taskId, i); }} title="Remove">✕</button>
+                onClick={(e) => { e.stopPropagation(); handleRemoveProofPhoto(taskId, i); }} title={t('common.remove')}>✕</button>
             )}
           </div>
         ))}
         {canEditJournal && (
           <button type="button" className="journal-proof-add-more"
-            onClick={() => handleProofClick(taskId)} title="Add more photos">+</button>
+            onClick={() => handleProofClick(taskId)} title={t('journal.addMorePhotos')}>+</button>
         )}
       </div>
     );
@@ -925,9 +940,9 @@ export default function Journal() {
     const count = (proofPhotos[taskId] || []).length;
     return (
       <button type="button" className="journal-task-proof-btn"
-        onClick={() => handleProofClick(taskId)} title="Add picture proof (+25 XP)">
+        onClick={() => handleProofClick(taskId)} title={t('journal.addPictureProof')}>
         <FaCamera />
-        {count === 0 ? ' Proof' : ' More'}
+        {count === 0 ? ` ${t('journal.proof')}` : ` ${t('journal.more')}`}
         {count > 0 && <span className="journal-proof-count-badge">{count}</span>}
       </button>
     );
@@ -968,10 +983,10 @@ export default function Journal() {
             />
             <div className="journal-task-edit-actions">
               <button type="button" className="journal-task-edit-btn" onClick={handleEditSave}>
-                <FaSave /> Save
+                <FaSave /> {t('common.save')}
               </button>
               <button type="button" className="journal-task-edit-btn journal-task-edit-btn--cancel" onClick={handleEditCancel}>
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -984,7 +999,7 @@ export default function Journal() {
                 className="journal-task-check"
                 onClick={() => handleToggle(task)}
                 disabled={!canEditJournal}
-                aria-label={isDone ? 'Mark not done' : 'Mark done'}
+                aria-label={isDone ? t('journal.markNotDone') : t('journal.markDone')}
               >
                 {isDone ? <FaCheck /> : <span className="journal-task-check-empty" />}
               </button>
@@ -996,7 +1011,7 @@ export default function Journal() {
               <span
                 className="journal-task-title"
                 onClick={() => canEditJournal && !isMand && handleEditStart(task)}
-                title={isMand ? task.title : (canEditJournal ? 'Click to edit' : task.title)}
+                title={isMand ? task.title : (canEditJournal ? t('journal.clickToEdit') : task.title)}
               >
                 {task.title}
               </span>
@@ -1021,26 +1036,26 @@ export default function Journal() {
                         existingReminder ? 'journal-task-remind-btn--active' : '',
                       ].filter(Boolean).join(' ')}
                       onClick={() => setReminderMenuTaskId(reminderMenuTaskId === task.id ? null : task.id)}
-                      title="Set reminder"
-                      aria-label="Set reminder"
+                      title={t('journal.setReminder')}
+                      aria-label={t('journal.setReminder')}
                     >
                       <FaBell />
                     </button>
                     {reminderMenuTaskId === task.id && (
-                      <div className="journal-reminder-popover" role="dialog" aria-label="Task reminder">
-                        <div className="journal-reminder-popover-title">Remind me</div>
+                      <div className="journal-reminder-popover" role="dialog" aria-label={t('journal.taskReminder')}>
+                        <div className="journal-reminder-popover-title">{t('journal.remindMe')}</div>
                         {existingReminder && (
                           <p className="journal-reminder-scheduled">
-                            Scheduled {formatReminderRelative(existingReminder.fireAt)}
+                            {t('journal.scheduled')} {formatReminderRelative(existingReminder.fireAt)}
                           </p>
                         )}
                         <div className="journal-reminder-presets">
                           {[
-                            { label: '1 hour', ms: 60 * 60 * 1000 },
-                            { label: '3 hours', ms: 3 * 60 * 60 * 1000 },
-                            { label: '6 hours', ms: 6 * 60 * 60 * 1000 },
-                            { label: '1 day', ms: 24 * 60 * 60 * 1000 },
-                            { label: '2 days', ms: 2 * 24 * 60 * 60 * 1000 },
+                            { label: t('journal.reminder1Hour'), ms: 60 * 60 * 1000 },
+                            { label: t('journal.reminder3Hours'), ms: 3 * 60 * 60 * 1000 },
+                            { label: t('journal.reminder6Hours'), ms: 6 * 60 * 60 * 1000 },
+                            { label: t('journal.reminder1Day'), ms: 24 * 60 * 60 * 1000 },
+                            { label: t('journal.reminder2Days'), ms: 2 * 24 * 60 * 60 * 1000 },
                           ].map((p) => (
                             <button
                               key={p.label}
@@ -1056,12 +1071,12 @@ export default function Journal() {
                             className="journal-reminder-preset"
                             onClick={() => applyJournalReminder(task, tomorrowAtNineLocalMs())}
                           >
-                            Tomorrow 9:00
+                            {t('journal.tomorrowNine')}
                           </button>
                         </div>
                         <div className="journal-reminder-custom">
                           <label className="journal-reminder-custom-label" htmlFor={`journal-reminder-dt-${task.id}`}>
-                            Custom time
+                            {t('journal.customTime')}
                           </label>
                           <input
                             id={`journal-reminder-dt-${task.id}`}
@@ -1075,7 +1090,7 @@ export default function Journal() {
                             className="journal-reminder-apply"
                             onClick={() => applyCustomReminder(task)}
                           >
-                            Set
+                            {t('journal.set')}
                           </button>
                         </div>
                         {existingReminder && (
@@ -1089,11 +1104,11 @@ export default function Journal() {
                               } catch (e) {
                                 console.warn('Server reminder clear failed:', e?.response?.data?.message || e?.message);
                               }
-                              toast.success('Reminder removed');
+                              toast.success(t('journal.reminderRemoved'));
                               setReminderMenuTaskId(null);
                             }}
                           >
-                            Clear reminder
+                            {t('journal.clearReminder')}
                           </button>
                         )}
                       </div>
@@ -1103,14 +1118,14 @@ export default function Journal() {
                 {canEditJournal && !isMand && (
                   <button type="button" className="journal-task-edit-icon"
                     onClick={(e) => { e.stopPropagation(); handleEditStart(task); }}
-                    aria-label="Edit task">
+                    aria-label={t('journal.editTask')}>
                     <FaEdit />
                   </button>
                 )}
                 {canEditJournal && !isMand && (
                   <button type="button" className="journal-task-delete"
                     onClick={() => handleDelete(task.id)}
-                    aria-label="Delete task">
+                    aria-label={t('journal.deleteTask')}>
                     <FaTrash />
                   </button>
                 )}
@@ -1137,21 +1152,19 @@ export default function Journal() {
         {/* ══════════ SIDEBAR ══════════ */}
         <aside className="journal-sidebar">
           <header className="journal-sidebar-header">
-            <h2 className="journal-sidebar-title">Aura Journal</h2>
-            <p className="journal-sidebar-sub">Mandatory · Personal · Reflection</p>
+            <h2 className="journal-sidebar-title">{t('journal.title')}</h2>
+            <p className="journal-sidebar-sub">{t('journal.sidebarSub')}</p>
           </header>
 
           {/* Calendar */}
           <div className="journal-calendar">
             <div className="journal-calendar-nav">
-              <button type="button" className="journal-calendar-btn" onClick={handlePrevMonth} aria-label="Previous month">‹</button>
-              <span className="journal-calendar-month">
-                {MONTH_NAMES[parseInt(calendarMonth.split('-')[1], 10) - 1]}&nbsp;{calendarMonth.split('-')[0]}
-              </span>
-              <button type="button" className="journal-calendar-btn" onClick={handleNextMonth} aria-label="Next month">›</button>
+              <button type="button" className="journal-calendar-btn" onClick={handlePrevMonth} aria-label={t('journal.previousMonth')}>‹</button>
+              <span className="journal-calendar-month">{monthHeaderLabel}</span>
+              <button type="button" className="journal-calendar-btn" onClick={handleNextMonth} aria-label={t('journal.nextMonth')}>›</button>
             </div>
             <div className="journal-calendar-weekdays">
-              {DAY_NAMES.map((d) => <span key={d} className="journal-calendar-wd">{d}</span>)}
+              {dayNames.map((d, idx) => <span key={`wd-${idx}`} className="journal-calendar-wd">{d}</span>)}
             </div>
             <div className="journal-calendar-grid">
               {calendarDays.map((dateStr, i) => {
@@ -1168,7 +1181,7 @@ export default function Journal() {
                   >
                     <span className="journal-calendar-day-num">{parseInt(dateStr.slice(-2), 10)}</span>
                     {hasTasks && (
-                      <span className="journal-calendar-day-dot" title={`${doneCount}/${totalCount} done`}>
+                      <span className="journal-calendar-day-dot" title={t('journal.doneCount', { done: doneCount, total: totalCount })}>
                         {totalCount === doneCount && totalCount > 0
                           ? <FaCheck className="journal-dot-done" />
                           : <FaCircle className="journal-dot-pending" />}
@@ -1183,14 +1196,14 @@ export default function Journal() {
           {/* Streak */}
           <div className="journal-streak-card">
             <span className="journal-streak-flame"><FaFire /></span>
-            <div className="journal-streak-title">{streak} Day Discipline Streak</div>
-            <div className="journal-streak-longest">Longest Streak: <span className="journal-streak-longest-value">{streak} Days</span></div>
-            <div className="journal-streak-consistency">Consistency Score: {Math.min(100, Math.round((streak / 21) * 100))}%</div>
+            <div className="journal-streak-title">{t('journal.dayDisciplineStreak', { streak })}</div>
+            <div className="journal-streak-longest">{t('journal.longestStreak')}: <span className="journal-streak-longest-value">{t('journal.daysCount', { count: streak })}</span></div>
+            <div className="journal-streak-consistency">{t('journal.consistencyScore')}: {Math.min(100, Math.round((streak / 21) * 100))}%</div>
           </div>
 
           {/* Circles */}
           <div className="journal-stats-circles">
-            {[{ pct: dayPct, label: 'Today' }, { pct: weekPct, label: 'This Week' }, { pct: monthPct, label: 'This Month' }]
+            {[{ pct: dayPct, label: t('journal.today') }, { pct: weekPct, label: t('journal.thisWeek') }, { pct: monthPct, label: t('journal.thisMonth') }]
               .map(({ pct, label: lbl }) => (
                 <div key={lbl} className="journal-stat-circle">
                   <div className="journal-stat-circle-ring" style={{ '--pct': pct ?? 0 }}>
@@ -1218,16 +1231,16 @@ export default function Journal() {
                     ? <strong className="journal-percent-done">{dayPct}% complete</strong>
                     : <strong>{dayPct}%</strong>}{' '}done</>)}
                 </span>
-              ) : <span>No tasks yet</span>}
+              ) : <span>{t('journal.noTasksYet')}</span>}
             </div>
           </div>
 
           {/* Progress cards */}
           <div className="journal-progress-cards">
             {[
-              { label: isSameDay(selectedDate, journalToday) ? 'Today' : 'Selected day', pct: dayPct },
-              { label: 'This week',  pct: weekPct  },
-              { label: 'This month', pct: monthPct },
+              { label: isSameDay(selectedDate, journalToday) ? t('journal.today') : t('journal.selectedDay'), pct: dayPct },
+              { label: t('journal.thisWeek'),  pct: weekPct  },
+              { label: t('journal.thisMonth'), pct: monthPct },
             ].map(({ label: lbl, pct }) => (
               <div key={lbl} className="journal-progress-card">
                 <span className="journal-progress-card-label">{lbl}</span>
@@ -1241,7 +1254,7 @@ export default function Journal() {
 
           {/* Discipline score */}
           <div className="journal-discipline-score">
-            <span className="journal-discipline-label">Discipline Score: {disciplineScore}%</span>
+            <span className="journal-discipline-label">{t('journal.disciplineScore')}: {disciplineScore}%</span>
             <div className="journal-progress-bar">
               <div className="journal-progress-fill" style={{ width: `${disciplineScore}%` }} />
             </div>
@@ -1249,12 +1262,11 @@ export default function Journal() {
 
           {/* XP info */}
           <div className="journal-xp-info">
-            <strong>Earn XP:</strong> Add personal tasks (+5), save diary or notes (+5), complete tasks with picture proof (+25).
-            Day / week / month completion XP (min 5 tasks) when you open the journal.
+            <strong>{t('journal.earnXp')}:</strong> {t('journal.earnXpBody')}
           </div>
 
           {/* Section tabs */}
-          <nav className="journal-tabs" role="tablist" aria-label="Journal sections">
+          <nav className="journal-tabs" role="tablist" aria-label={t('journal.sections')}>
             <button
               type="button"
               role="tab"
@@ -1264,7 +1276,7 @@ export default function Journal() {
               className={`journal-tab${journalTab === 'mandatory' ? ' journal-tab--active' : ''}`}
               onClick={() => setJournalTab('mandatory')}
             >
-              <span className="journal-tab-label">Mandatory Tasks</span>
+              <span className="journal-tab-label">{t('journal.mandatoryTasks')}</span>
               {mandatoryTabCount > 0 && (
                 <span className="journal-tab-badge">{mandatoryTabCount}</span>
               )}
@@ -1278,7 +1290,7 @@ export default function Journal() {
               className={`journal-tab${journalTab === 'personal' ? ' journal-tab--active' : ''}`}
               onClick={() => setJournalTab('personal')}
             >
-              <span className="journal-tab-label">Personal Tasks</span>
+              <span className="journal-tab-label">{t('journal.personalTasks')}</span>
               {personalTabCount > 0 && (
                 <span className="journal-tab-badge">{personalTabCount}</span>
               )}
@@ -1292,7 +1304,7 @@ export default function Journal() {
               className={`journal-tab${journalTab === 'reflection' ? ' journal-tab--active' : ''}`}
               onClick={() => setJournalTab('reflection')}
             >
-              <span className="journal-tab-label">Reflection</span>
+              <span className="journal-tab-label">{t('journal.reflection')}</span>
               {reflectionTabCount > 0 && (
                 <span className="journal-tab-badge journal-tab-badge--soft">{reflectionTabCount}</span>
               )}
@@ -1307,20 +1319,18 @@ export default function Journal() {
             hidden={journalTab !== 'mandatory'}
             className="journal-tab-panel"
           >
-            <p className="journal-tab-lede">
-              Set by Aura for your plan. They count toward your daily completion — same rules as your personal list (Saturday is a rest day).
-            </p>
+            <p className="journal-tab-lede">{t('journal.mandatoryLede')}</p>
             {loading ? (
-              <div className="journal-loading">Loading…</div>
+              <div className="journal-loading">{t('common.loading')}…</div>
             ) : isMandatoryRestDay ? (
               <div className="journal-tab-empty journal-glass-card">
-                <span className="journal-tab-empty-title">Rest day</span>
-                <p>No mandatory tasks on Saturday. Use Personal Tasks or Reflection if you still want to log something.</p>
+                <span className="journal-tab-empty-title">{t('journal.restDay')}</span>
+                <p>{t('journal.restDayHint')}</p>
               </div>
             ) : mandatoryTabCount === 0 ? (
               <div className="journal-tab-empty journal-glass-card">
-                <span className="journal-tab-empty-title">Nothing scheduled</span>
-                <p>Mandatory tasks for your tier will show here for this date. Try another day or check back after refresh.</p>
+                <span className="journal-tab-empty-title">{t('journal.nothingScheduled')}</span>
+                <p>{t('journal.nothingScheduledHint')}</p>
               </div>
             ) : (
               <ul className="journal-task-list journal-task-list-mandatory">
@@ -1337,28 +1347,26 @@ export default function Journal() {
             hidden={journalTab !== 'personal'}
             className="journal-tab-panel"
           >
-            <p className="journal-tab-lede">
-              Your own tasks for {label}. Add anything you want to track — edit or delete anytime.
-            </p>
+            <p className="journal-tab-lede">{t('journal.personalLede', { label })}</p>
             <form className="journal-add-form" onSubmit={handleAddTask}>
               <input
                 type="text"
                 className="journal-add-input"
-                placeholder="Add a personal task…"
+                placeholder={t('journal.addPersonalTask')}
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
                 disabled={adding || !canEditJournal}
               />
               <button type="submit" className="journal-add-btn" disabled={adding || !newTaskTitle.trim() || !canEditJournal}>
-                <FaPlus /> Add
+                <FaPlus /> {t('common.add')}
               </button>
             </form>
             {loading ? (
-              <div className="journal-loading">Loading…</div>
+              <div className="journal-loading">{t('common.loading')}…</div>
             ) : (
               <ul className="journal-task-list">
                 {dayRegularTasks.length === 0 ? (
-                  <li className="journal-task-empty">No personal tasks yet — add one above.</li>
+                  <li className="journal-task-empty">{t('journal.noPersonalTasksYet')}</li>
                 ) : (
                   dayRegularTasks.map(renderTaskCard)
                 )}
@@ -1374,22 +1382,20 @@ export default function Journal() {
             hidden={journalTab !== 'reflection'}
             className="journal-tab-panel"
           >
-            <p className="journal-tab-lede">
-              Everything here is saved per day, just for you — diary entry, mood, and short reflection notes.
-            </p>
+            <p className="journal-tab-lede">{t('journal.reflectionLede')}</p>
             {replayReturnHref ? (
               <div className="journal-replay-handoff">
-                <span className="journal-replay-chip">From Trader Replay</span>
+                <span className="journal-replay-chip">{t('journal.fromTraderReplay')}</span>
                 <Link to={replayReturnHref} className="journal-replay-back">
-                  Back to replay
+                  {t('journal.backToReplay')}
                 </Link>
               </div>
             ) : null}
 
             <section className="journal-glass-card journal-diary-section">
-              <h3 className="journal-subsection-title">Daily diary</h3>
+              <h3 className="journal-subsection-title">{t('journal.dailyDiary')}</h3>
               <p className="journal-diary-hint">
-                Long-form space for the day: wins, frustrations, lessons, or a full journal entry. Saved for this date only.
+                {t('journal.dailyDiaryHint')}
               </p>
               <textarea
                 className="journal-diary-textarea"
@@ -1398,10 +1404,10 @@ export default function Journal() {
                 readOnly={!canEditJournal}
                 placeholder={
                   !canEditJournal
-                    ? 'This day is read-only.'
+                    ? t('journal.dayReadOnly')
                     : userAdmin
-                      ? 'Write freely… (saved when you click Save diary)'
-                      : 'Write freely… (saved automatically for today)'
+                      ? t('journal.writeFreelyAdmin')
+                      : t('journal.writeFreelyAuto')
                 }
                 maxLength={8000}
                 rows={10}
@@ -1410,9 +1416,9 @@ export default function Journal() {
               <div className="journal-diary-actions">
                 {!userAdmin && canEditJournal && (
                   <span className="journal-diary-autosave-status" aria-live="polite">
-                    {diarySaveStatus === 'saving' && 'Saving…'}
-                    {diarySaveStatus === 'saved' && 'Saved ✓'}
-                    {diarySaveStatus === 'error' && 'Could not save — check your connection'}
+                    {diarySaveStatus === 'saving' && t('journal.saving')}
+                    {diarySaveStatus === 'saved' && t('journal.saved')}
+                    {diarySaveStatus === 'error' && t('journal.couldNotSave')}
                   </span>
                 )}
                 {userAdmin && canEditJournal && (
@@ -1422,7 +1428,7 @@ export default function Journal() {
                     disabled={dailySaving}
                     onClick={() => saveDailyNote()}
                   >
-                    {dailySaving ? 'Saving…' : 'Save diary'}
+                    {dailySaving ? t('journal.saving') : t('journal.saveDiary')}
                   </button>
                 )}
               </div>
@@ -1430,16 +1436,16 @@ export default function Journal() {
 
             <section className="journal-glass-card journal-day-images-section">
               <h3 className="journal-subsection-title">
-                <FaCamera className="journal-reflection-icon" aria-hidden /> Day screenshots
+                <FaCamera className="journal-reflection-icon" aria-hidden /> {t('journal.dayScreenshots')}
               </h3>
               <p className="journal-diary-hint">
-                Optional charts or notes as images for this date. Saved separately from your diary text (up to{' '}
+                {t('journal.dayScreenshotsHintPrefix')}{' '}
                 {JOURNAL_DAY_IMAGES_MAX}).
               </p>
               {renderDayImagesStrip()}
               {canEditJournal && dayImages.length === 0 && (
                 <button type="button" className="journal-task-proof-btn" onClick={handleDayImagesClick}>
-                  <FaCamera /> Add screenshot
+                  <FaCamera /> {t('journal.addScreenshot')}
                 </button>
               )}
               <input
@@ -1453,11 +1459,11 @@ export default function Journal() {
             </section>
 
             <section className="journal-glass-card journal-mood-section">
-              <h3 className="journal-subsection-title">Mood today</h3>
+              <h3 className="journal-subsection-title">{t('journal.moodToday')}</h3>
               <p className="journal-diary-hint">
                 {canEditJournal
-                  ? 'Tap to set how you felt — saves automatically.'
-                  : 'Mood is read-only for past days.'}
+                  ? t('journal.tapMoodSaveAuto')
+                  : t('journal.moodReadOnlyPastDays')}
               </p>
               <div className="journal-mood-row">
                 <div className="journal-mood-options">
@@ -1473,7 +1479,7 @@ export default function Journal() {
                         setDailyMood(m);
                         saveDailyNote({ mood: m });
                       }}
-                      title={opt.label}
+                      title={t(opt.labelKey)}
                     >
                       {opt.emoji}
                     </button>
@@ -1481,16 +1487,16 @@ export default function Journal() {
                 </div>
               </div>
               {canEditJournal && diarySaveStatus === 'saved' && journalTab === 'reflection' && (
-                <span className="journal-mood-saved">Saved ✓</span>
+                <span className="journal-mood-saved">{t('journal.saved')}</span>
               )}
             </section>
 
             <section className="journal-notes-section journal-reflection-section">
               <h3 className="journal-subsection-title">
-                <FaBolt className="journal-reflection-icon" aria-hidden /> Quick notes
+                <FaBolt className="journal-reflection-icon" aria-hidden /> {t('journal.quickNotes')}
               </h3>
-              <p className="journal-reflection-prompt">Short bullets or reminders alongside your diary.</p>
-              <p className="journal-notes-hint">Add as many as you like. Edit or delete with the icons.</p>
+              <p className="journal-reflection-prompt">{t('journal.quickNotesPrompt')}</p>
+              <p className="journal-notes-hint">{t('journal.quickNotesHint')}</p>
 
               {dailyNotesList.length > 0 && (
                 <ul className="journal-notes-list">
@@ -1514,15 +1520,15 @@ export default function Journal() {
                               className="journal-note-save-btn"
                               onClick={() => handleNoteEditSave(note.id)}
                               disabled={!editingNoteText.trim()}
-                              title="Save (Ctrl+Enter)"
+                              title={t('journal.saveCtrlEnter')}
                             >
-                              <FaSave /> Save
+                              <FaSave /> {t('common.save')}
                             </button>
                             <button
                               type="button"
                               className="journal-note-action-btn journal-note-delete"
                               onClick={handleNoteEditCancel}
-                              title="Cancel"
+                              title={t('common.cancel')}
                             >
                               <FaTimes />
                             </button>
@@ -1537,8 +1543,8 @@ export default function Journal() {
                                 type="button"
                                 className="journal-note-action-btn journal-note-edit-btn"
                                 onClick={() => handleNoteEditStart(note)}
-                                title="Edit note"
-                                aria-label="Edit note"
+                                title={t('journal.editNote')}
+                                aria-label={t('journal.editNote')}
                               >
                                 <FaEdit />
                               </button>
@@ -1546,8 +1552,8 @@ export default function Journal() {
                                 type="button"
                                 className="journal-note-action-btn journal-note-delete"
                                 onClick={() => handleDeleteNote(note.id)}
-                                title="Delete note"
-                                aria-label="Delete note"
+                                title={t('journal.deleteNote')}
+                                aria-label={t('journal.deleteNote')}
                               >
                                 <FaTrash />
                               </button>
@@ -1564,7 +1570,7 @@ export default function Journal() {
                 <input
                   type="text"
                   className="journal-add-note-input"
-                  placeholder="Add a quick note…"
+                  placeholder={t('journal.addQuickNote')}
                   value={newNoteContent}
                   onChange={(e) => setNewNoteContent(e.target.value)}
                   disabled={addingNote || !canEditJournal}
@@ -1574,7 +1580,7 @@ export default function Journal() {
                   className="journal-add-note-btn journal-add-note-btn-gold"
                   disabled={addingNote || !newNoteContent.trim() || !canEditJournal}
                 >
-                  <FaPlus /> Add note
+                  <FaPlus /> {t('journal.addNote')}
                 </button>
               </form>
             </section>
@@ -1585,7 +1591,7 @@ export default function Journal() {
             dayTotal > 0 &&
             !completionBannerDismissed && (
               <div className="journal-completion-banner">
-                ✦ All tasks completed for this day — outstanding work.
+                {t('journal.allTasksCompleted')}
                 <button
                   type="button"
                   className="journal-completion-dismiss"

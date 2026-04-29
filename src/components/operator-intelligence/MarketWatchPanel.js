@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaChartBar, FaPlus, FaTimes } from 'react-icons/fa';
 import {
   TERMINAL_INSTRUMENTS,
@@ -107,6 +108,7 @@ function seedFromBundleRows(rows) {
  * @param {{ seedRows?: Array<Record<string, unknown>> | null, loading?: boolean }} props
  */
 export default function MarketWatchPanel({ seedRows, loading }) {
+  const { t } = useTranslation();
   const [values, setValues] = useState(() => {
     const stored = readStoredList();
     if (stored?.length) return stored;
@@ -173,7 +175,7 @@ export default function MarketWatchPanel({ seedRows, loading }) {
     <div className="oi-card oi-card--mwatch">
       <div className="oi-card__head oi-card__head--mwatch">
         <FaChartBar className="oi-card__icon" aria-hidden />
-        <span className="oi-card__title">Market watch</span>
+        <span className="oi-card__title">{t('operatorIntelligence.marketWatch.title')}</span>
       </div>
 
       <div className="oi-mwatch-toolbar">
@@ -185,8 +187,8 @@ export default function MarketWatchPanel({ seedRows, loading }) {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search instruments..."
-          aria-label="Search market watch instruments"
+          placeholder={t('operatorIntelligence.marketWatch.searchPlaceholder')}
+          aria-label={t('operatorIntelligence.marketWatch.searchAria')}
         />
         <select
           id="oi-mwatch-add"
@@ -196,7 +198,7 @@ export default function MarketWatchPanel({ seedRows, loading }) {
           onChange={(e) => setAddValue(e.target.value)}
           disabled={loading}
         >
-          <option value="">Add instrument…</option>
+          <option value="">{t('operatorIntelligence.marketWatch.addInstrument')}</option>
           {grouped.map((group) => (
             <optgroup key={group.category} label={group.category}>
               {group.rows.map((inst) => (
@@ -213,15 +215,15 @@ export default function MarketWatchPanel({ seedRows, loading }) {
           data-testid="oi-mwatch-add-btn"
           onClick={addInstrument}
           disabled={loading || !canAdd}
-          title={addValue && values.includes(addValue) ? 'Already in Market Watch' : undefined}
-          aria-label="Add instrument to market watch"
+          title={addValue && values.includes(addValue) ? t('operatorIntelligence.marketWatch.alreadyIn') : undefined}
+          aria-label={t('operatorIntelligence.marketWatch.addAria')}
         >
           <FaPlus aria-hidden />
         </button>
       </div>
 
-      {loading ? <p className="oi-card__muted">Loading watch…</p> : null}
-      {!loading && rows.length === 0 ? <p className="oi-card__muted">No instruments — add from the list.</p> : null}
+      {loading ? <p className="oi-card__muted">{t('operatorIntelligence.marketWatch.loading')}</p> : null}
+      {!loading && rows.length === 0 ? <p className="oi-card__muted">{t('operatorIntelligence.marketWatch.none')}</p> : null}
 
       {!loading && rows.length > 0 ? (
         <ul className="oi-mwatch" data-testid="oi-market-watch-list">
@@ -229,10 +231,10 @@ export default function MarketWatchPanel({ seedRows, loading }) {
             <li key={r.id} className="oi-mwatch__row">
               <span className="oi-mwatch__sym">{r.label}</span>
               <span className="oi-mwatch__bx">
-                <span className="oi-mwatch__side">Bid {r.bid}</span>
-                <span className="oi-mwatch__side">Ask {r.ask}</span>
+                <span className="oi-mwatch__side">{t('operatorIntelligence.marketWatch.bid')} {r.bid}</span>
+                <span className="oi-mwatch__side">{t('operatorIntelligence.marketWatch.ask')} {r.ask}</span>
               </span>
-              <span className="oi-mwatch__spr">Spr {r.spread}</span>
+              <span className="oi-mwatch__spr">{t('operatorIntelligence.marketWatch.spr')} {r.spread}</span>
               <span className="oi-mwatch__note">{r.note}</span>
               <button
                 type="button"

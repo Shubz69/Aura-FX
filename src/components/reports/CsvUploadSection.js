@@ -8,13 +8,11 @@ const BASE_URL = process.env.REACT_APP_API_URL || '';
  */
 export default function CsvUploadSection({
   token,
-  year,
-  month,
   csvStatus,
   onUploaded,
 }) {
   const navigate = useNavigate();
-  const dashboardHref = `/manual-metrics/dashboard?year=${year}&month=${month}`;
+  const dashboardHref = '/manual-metrics/dashboard';
   const [csv, setCsv] = useState('');
   const [fileName, setFileName] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -48,7 +46,7 @@ export default function CsvUploadSection({
       const res = await fetch(`${BASE_URL}/api/reports/csv-upload`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ csv, year, month }),
+        body: JSON.stringify({ csv }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
@@ -74,7 +72,7 @@ export default function CsvUploadSection({
       const res = await fetch(`${BASE_URL}/api/reports/csv-upload`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ year, month }),
+        body: JSON.stringify({}),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
@@ -108,7 +106,7 @@ export default function CsvUploadSection({
             disabled={removing}
             type="button"
             aria-busy={removing}
-            aria-label="Remove uploaded MT5 CSV for this month"
+            aria-label="Remove uploaded MT5 CSV snapshot"
           >
             {removing ? 'Removing…' : 'Remove'}
           </button>

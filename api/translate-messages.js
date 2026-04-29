@@ -11,12 +11,31 @@ const {
   ensureMessageTranslationsTable,
 } = require('./utils/ensure-community-message-translation-schema');
 const { normalizeLang, translateMessageText } = require('./utils/communityTranslateEngine');
+const {
+  ensureCommunityTranslationMetricsTable,
+  trackCommunityTranslationMetric,
+} = require('./utils/communityTranslateMetrics');
 const { getEntitlements, getChannelPermissions } = require('./utils/entitlements');
 
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = Number(process.env.COMMUNITY_TRANSLATE_RATE_PER_MIN) || 60;
 const rateBuckets = new Map();
 const MAX_ITEMS = 20;
+const GOOGLE_TRANSLATE_COST_PER_MILLION_USD = Number(process.env.GOOGLE_TRANSLATE_COST_PER_MILLION_USD || 20);
+
+function inferTranslationProvider() {
+  const forced = String(process.env.COMMUNITY_TRANSLATE_PROVIDER || '').toLowerCase().trim();
+  if (forced === 'mock') return 'mock';
+  if (process.env.GOOGLE_TRANSLATE_API_KEY || process.env.GOOGLE_CLOUD_TRANSLATE_API_KEY) return 'google';
+  if (process.env.LIBRETRANSLATE_API_URL) return 'libre';
+  return 'none';
+}
+
+function estimateGoogleCostUsd(chars = 0, provider = 'none') {
+  if (provider !== 'google') return 0;
+  const c = Math.max(0, Number(chars) || 0);
+  return Number(((c / 1_000_000) * GOOGLE_TRANSLATE_COST_PER_MILLION_USD).toFixed(6));
+}
 
 function checkRateLimit(userId, cost = 1) {
   const uid = Number(userId);
@@ -121,6 +140,7 @@ module.exports = async (req, res) => {
   try {
     await ensureOriginalLanguageOnMessages();
     await ensureMessageTranslationsTable();
+    await ensureCommunityTranslationMetricsTable();
   } catch (e) {
     console.warn('translate-messages schema ensure:', e.message);
   }
@@ -151,6 +171,7 @@ module.exports = async (req, res) => {
   }
 
   const results = [];
+  const provider = inferTranslationProvider();
   for (const it of items) {
     const src = it.sourceLanguage;
     const tgt = targetLanguage;
@@ -168,6 +189,12 @@ module.exports = async (req, res) => {
 
     const ch = cacheMap.get(it.messageId);
     if (ch && typeof ch.translated_text === 'string' && ch.translated_text.length > 0) {
+      await trackCommunityTranslationMetric({
+        provider,
+        translatedCharacters: 0,
+        cacheHit: true,
+        failed: false,
+      }).catch(() => {});
       results.push({
         messageId: it.messageId,
         translatedText: ch.translated_text,
@@ -231,13 +258,38 @@ module.exports = async (req, res) => {
       continue;
     }
 
-    const out = await translateMessageText({
-      text: stored,
-      sourceLanguage: src,
-      targetLanguage: tgt,
-    });
+    let out;
+    try {
+      out = await translateMessageText({
+        text: stored,
+        sourceLanguage: src,
+        targetLanguage: tgt,
+      });
+    } catch {
+      await trackCommunityTranslationMetric({
+        provider,
+        translatedCharacters: 0,
+        cacheHit: false,
+        failed: true,
+      }).catch(() => {});
+      results.push({
+        messageId: it.messageId,
+        translatedText: it.text,
+        sourceLanguage: src,
+        targetLanguage: tgt,
+        cached: false,
+        translated: false,
+      });
+      continue;
+    }
 
     if (!out.translated) {
+      await trackCommunityTranslationMetric({
+        provider,
+        translatedCharacters: 0,
+        cacheHit: false,
+        failed: false,
+      }).catch(() => {});
       results.push({
         messageId: it.messageId,
         translatedText: it.text,
@@ -259,6 +311,13 @@ module.exports = async (req, res) => {
     } catch (insErr) {
       console.warn('message_translations batch insert:', insErr.message);
     }
+    await trackCommunityTranslationMetric({
+      provider,
+      translatedCharacters: stored.length,
+      cacheHit: false,
+      failed: false,
+      estimatedCostUsd: estimateGoogleCostUsd(stored.length, provider),
+    }).catch(() => {});
 
     results.push({
       messageId: it.messageId,

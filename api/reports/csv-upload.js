@@ -1,7 +1,7 @@
 /**
  * POST /api/reports/csv-upload
  * Parses MT5 CSV export and stores it for report generation / manual metrics dashboard.
- * Body: { csv: string (raw CSV text), year: number, month: number }
+ * Body: { csv: string (raw CSV text), year?: number, month?: number }
  * Premium, Elite, and Admin may upload (Elite also has Aura Analysis for live MT5 — separate).
  */
 const { verifyToken } = require('../utils/auth');
@@ -309,14 +309,30 @@ module.exports = async (req, res) => {
       return res.status(403).json({ success: false, code: 'FREE_PLAN', message: 'CSV upload requires a Pro plan.' });
     }
 
-    const { year, month } = req.body || {};
+    const now = new Date();
+    const bodyYear = Number(req.body?.year);
+    const bodyMonth = Number(req.body?.month);
+    const year = Number.isFinite(bodyYear) ? bodyYear : now.getFullYear();
+    const month = Number.isFinite(bodyMonth) ? bodyMonth : now.getMonth() + 1;
 
-    // DELETE: remove existing CSV for period
+    // DELETE: remove existing CSV for selected period, or latest upload if period omitted.
     if (req.method === 'DELETE') {
-      await executeQuery(
-        'DELETE FROM report_csv_uploads WHERE user_id = ? AND period_year = ? AND period_month = ?',
-        [userId, year, month]
-      );
+      if (Number.isFinite(bodyYear) && Number.isFinite(bodyMonth)) {
+        await executeQuery(
+          'DELETE FROM report_csv_uploads WHERE user_id = ? AND period_year = ? AND period_month = ?',
+          [userId, year, month]
+        );
+      } else {
+        await executeQuery(
+          `DELETE FROM report_csv_uploads
+           WHERE id = (
+             SELECT id FROM (
+               SELECT id FROM report_csv_uploads WHERE user_id = ? ORDER BY uploaded_at DESC, id DESC LIMIT 1
+             ) t
+           )`,
+          [userId]
+        );
+      }
       return res.status(200).json({ success: true });
     }
 

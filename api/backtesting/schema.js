@@ -117,9 +117,41 @@ async function ensureBacktestTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
+  await executeQuery(`
+    CREATE TABLE IF NOT EXISTS backtest_saved_trades (
+      id CHAR(36) PRIMARY KEY,
+      userId INT NOT NULL,
+      sessionId CHAR(36) DEFAULT NULL,
+      sourceTradeId CHAR(36) DEFAULT NULL,
+      instrument VARCHAR(64) NOT NULL,
+      direction VARCHAR(12) NOT NULL,
+      entryTime DATETIME DEFAULT NULL,
+      entryPrice DECIMAL(24,8) NOT NULL,
+      exitTime DATETIME DEFAULT NULL,
+      exitPrice DECIMAL(24,8) DEFAULT NULL,
+      lotSize DECIMAL(24,8) DEFAULT NULL,
+      pnlAmount DECIMAL(20,6) NOT NULL DEFAULT 0,
+      result VARCHAR(16) NOT NULL DEFAULT 'breakeven',
+      timeframe VARCHAR(32) DEFAULT NULL,
+      replayReferenceJson JSON DEFAULT NULL,
+      screenshotUrl VARCHAR(512) DEFAULT NULL,
+      notes TEXT,
+      aiFeedback TEXT,
+      createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_bt_saved_user (userId, createdAt),
+      INDEX idx_bt_saved_session (sessionId),
+      INDEX idx_bt_saved_trade (sourceTradeId)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
   const alters = [
     'ALTER TABLE backtest_sessions ADD COLUMN completionRecapJson JSON DEFAULT NULL',
     'ALTER TABLE backtest_trades ADD COLUMN screenshotUrl VARCHAR(512) DEFAULT NULL',
+    'ALTER TABLE backtest_saved_trades ADD COLUMN replayReferenceJson JSON DEFAULT NULL',
+    'ALTER TABLE backtest_saved_trades ADD COLUMN screenshotUrl VARCHAR(512) DEFAULT NULL',
+    'ALTER TABLE backtest_saved_trades ADD COLUMN notes TEXT',
+    'ALTER TABLE backtest_saved_trades ADD COLUMN aiFeedback TEXT',
   ];
   for (const sql of alters) {
     try {

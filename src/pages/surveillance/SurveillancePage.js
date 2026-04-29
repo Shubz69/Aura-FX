@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import SurveillanceGlobe from './SurveillanceGlobe';
 import EventDrawer from './EventDrawer';
@@ -35,17 +36,17 @@ import './SurveillancePage.modern.css';
 import CosmicBackground from '../../components/CosmicBackground';
 
 const TABS = [
-  { id: 'all', label: 'All' },
-  { id: 'macro', label: 'Macro' },
-  { id: 'geopolitics', label: 'Geopolitics' },
-  { id: 'conflict', label: 'Conflict' },
-  { id: 'aviation', label: 'Aviation' },
-  { id: 'maritime', label: 'Maritime' },
-  { id: 'energy', label: 'Energy' },
-  { id: 'commodities', label: 'Commodities' },
-  { id: 'sanctions', label: 'Sanctions' },
-  { id: 'central_banks', label: 'Central banks' },
-  { id: 'high_impact', label: 'High impact' },
+  { id: 'all' },
+  { id: 'macro' },
+  { id: 'geopolitics' },
+  { id: 'conflict' },
+  { id: 'aviation' },
+  { id: 'maritime' },
+  { id: 'energy' },
+  { id: 'commodities' },
+  { id: 'sanctions' },
+  { id: 'central_banks' },
+  { id: 'high_impact' },
 ];
 
 function apiBase() {
@@ -56,6 +57,7 @@ function apiBase() {
 }
 
 export default function SurveillancePage() {
+  const { t } = useTranslation();
   const { token } = useAuth();
   const [events, setEvents] = useState([]);
   const [aggregates, setAggregates] = useState(null);
@@ -418,17 +420,17 @@ export default function SurveillancePage() {
     return (
       <div className="sv-page sv-page--error" role="alert" aria-live="assertive">
         <div className="sv-page-error-panel">
-          <h1 className="sv-page-error-title">Access restricted</h1>
+          <h1 className="sv-page-error-title">{t('surveillance.accessRestricted')}</h1>
           <p className="sv-page-error-copy">
             Your account cannot open Surveillance (Elite terminal). If you believe this is a mistake, confirm your
             subscription is active or contact support.
           </p>
           <div className="sv-page-error-actions">
             <a className="sv-retry" href="/choose-plan">
-              View plans
+              {t('surveillance.viewPlans')}
             </a>
             <a className="sv-page-error-secondary" href="/">
-              Home
+              {t('surveillance.home')}
             </a>
           </div>
         </div>
@@ -439,21 +441,21 @@ export default function SurveillancePage() {
   if (loading && !events.length) {
     return (
       <div className="sv-page sv-page--loading sv-page--boot">
-        <div className="sv-boot" aria-busy="true" aria-label="Loading surveillance">
+        <div className="sv-boot" aria-busy="true" aria-label={t('surveillance.loading')}>
           <div className="sv-boot-bg" aria-hidden />
           <div className="sv-boot-inner">
             <header className="sv-boot-masthead">
               <div className="sv-boot-masthead-top">
                 <span className="sv-boot-session">Elite · secured channel</span>
-                <span className="sv-boot-state">Loading</span>
+                <span className="sv-boot-state">{t('surveillance.loading')}</span>
               </div>
               <div className="sv-boot-wordmark" aria-hidden>
                 <span className="sv-boot-wordmark-aura">Aura</span>
                 <span className="sv-boot-wordmark-divider" />
                 <span className="sv-boot-wordmark-sv">Surveillance</span>
               </div>
-              <p className="sv-boot-headline">Establishing live terminal</p>
-              <p className="sv-boot-sub">Authenticating and pulling the latest normalized feed from official public sources.</p>
+              <p className="sv-boot-headline">{t('surveillance.establishingLiveTerminal')}</p>
+              <p className="sv-boot-sub">{t('surveillance.bootSub')}</p>
               <div className="sv-boot-progress" aria-hidden>
                 <span className="sv-boot-progress-track">
                   <span className="sv-boot-progress-fill" />
@@ -462,7 +464,7 @@ export default function SurveillancePage() {
             </header>
             <div className="sv-boot-footer">
               <div className="sv-spinner sv-spinner--boot" aria-hidden />
-              <span className="sv-boot-footer-copy">Synchronizing grid…</span>
+              <span className="sv-boot-footer-copy">{t('surveillance.synchronizingGrid')}</span>
             </div>
           </div>
         </div>
@@ -474,7 +476,7 @@ export default function SurveillancePage() {
     return (
       <div className="sv-page sv-page--error" role="alert" aria-live="assertive">
         <div className="sv-page-error-panel">
-          <h1 className="sv-page-error-title">Could not load Surveillance</h1>
+          <h1 className="sv-page-error-title">{t('surveillance.couldNotLoad')}</h1>
           <p className="sv-page-error-copy">
             The grid could not reach the server or your session may have expired. Check your connection and try again.
           </p>
@@ -483,7 +485,7 @@ export default function SurveillancePage() {
               Retry
             </button>
             <a className="sv-page-error-secondary" href="/login">
-              Sign in again
+              {t('surveillance.signInAgain')}
             </a>
           </div>
         </div>
@@ -494,16 +496,16 @@ export default function SurveillancePage() {
   const agg = aggregates || {};
   const tensionBand = gridTensionBand(agg.globalTensionScore);
   const chips = [
-    { label: 'Live nodes', value: agg.liveCount ?? displayEvents.length, title: 'Events on the current tape after filters' },
+    { label: t('surveillance.liveNodes'), value: agg.liveCount ?? displayEvents.length, title: t('surveillance.eventsOnCurrentTape') },
     {
-      label: 'Grid tension',
+      label: t('surveillance.gridTension'),
       value: agg.globalTensionScore != null && Number.isFinite(Number(agg.globalTensionScore)) ? tensionBand.label : '—',
       title:
         agg.globalTensionScore != null && Number.isFinite(Number(agg.globalTensionScore))
-          ? `Blended stress index (0–100 scale): ${Math.round(Number(agg.globalTensionScore))}`
+          ? t('surveillance.blendedStressIndex', { score: Math.round(Number(agg.globalTensionScore)) })
           : undefined,
     },
-    { label: 'Publisher feeds', value: sources.length || '—', title: 'Distinct ingest feeds represented on the tape' },
+    { label: t('surveillance.publisherFeeds'), value: sources.length || '—', title: t('surveillance.distinctIngestFeeds') },
   ];
 
   return (
@@ -529,12 +531,12 @@ export default function SurveillancePage() {
             <div className="sv-masthead-brand-block">
               <span className="sv-terminal-mark" aria-hidden />
               <div className="sv-masthead-titles">
-                <p className="sv-masthead-eyebrow">Elite · secured grid</p>
+                <p className="sv-masthead-eyebrow">{t('surveillance.eliteSecuredGrid')}</p>
                 <h1 id="sv-terminal-heading" className="sv-terminal-title">
-                  Surveillance
+                  {t('surveillance.title')}
                 </h1>
                 <p className="sv-terminal-sub">
-                  Official and institutional public channels — ranked by relevance and freshness, sector lens on the globe
+                  {t('surveillance.terminalSub')}
                 </p>
               </div>
             </div>
@@ -568,9 +570,9 @@ export default function SurveillancePage() {
           {renderable.fallbackActive ? (
             <div className="sv-masthead-status sv-masthead-status--warm" role="status">
               <div className="sv-masthead-status-main">
-                <span>Live surveillance feed temporarily unavailable.</span>
-                <span>Using simulated intelligence due to limited live feed.</span>
-                <span>Live data confidence: {renderable.liveDataConfidence || 'Low'}</span>
+                <span>{t('surveillance.liveFeedTemporarilyUnavailable')}</span>
+                <span>{t('surveillance.usingSimulatedIntelligence')}</span>
+                <span>{t('surveillance.liveDataConfidence', { level: renderable.liveDataConfidence || t('surveillance.low') })}</span>
               </div>
             </div>
           ) : null}
@@ -578,7 +580,7 @@ export default function SurveillancePage() {
             <div className="sv-masthead-status" role="status">
               <div className="sv-masthead-status-main">
                 <span title="Quality of current feed coverage and freshness">
-                  Live data confidence: {renderable.liveDataConfidence || 'Medium'}
+                  {t('surveillance.liveDataConfidence', { level: renderable.liveDataConfidence || t('surveillance.medium') })}
                 </span>
               </div>
             </div>
@@ -591,26 +593,26 @@ export default function SurveillancePage() {
               role="status"
             >
               <div className="sv-masthead-status-main">
-                {systemHealth.warmingUp ? <span>Warming — first ingest pass</span> : null}
-                {systemHealth.degraded ? <span>Degraded ingest / sources</span> : null}
+                {systemHealth.warmingUp ? <span>{t('surveillance.warmingFirstIngest')}</span> : null}
+                {systemHealth.degraded ? <span>{t('surveillance.degradedIngestSources')}</span> : null}
                 {!systemHealth.warmingUp && !systemHealth.degraded ? (
-                  <span title="Primary ingest adapters reporting healthy">Sources nominal</span>
+                  <span title={t('surveillance.primaryIngestHealthy')}>{t('surveillance.sourcesNominal')}</span>
                 ) : null}
                 {systemHealth.lastIngestSuccessAt ? (
                   <span className="sv-masthead-status-time">
                     Last ingest · {new Date(systemHealth.lastIngestSuccessAt).toLocaleString()}
                   </span>
                 ) : (
-                  <span className="sv-masthead-status-time">No ingest yet</span>
+                  <span className="sv-masthead-status-time">{t('surveillance.noIngestYet')}</span>
                 )}
                 {systemHealth.adapterRecencyBuckets?.stale > 0 ? (
-                  <span className="sv-masthead-status-stale" title="Adapters with no successful ingest in over 24h">
-                    {systemHealth.adapterRecencyBuckets.stale} stale adapters
+                  <span className="sv-masthead-status-stale" title={t('surveillance.adaptersNoIngest24h')}>
+                    {t('surveillance.staleAdaptersCount', { count: systemHealth.adapterRecencyBuckets.stale })}
                   </span>
                 ) : null}
               </div>
               <span className="sv-masthead-feed-pill" data-live={sseOk ? 'on' : 'off'}>
-                {sseOk ? 'Live stream' : 'Polling'}
+                {sseOk ? t('surveillance.liveStream') : t('surveillance.polling')}
               </span>
             </div>
           ) : null}
@@ -618,7 +620,7 @@ export default function SurveillancePage() {
 
         {focusRegion && focusSummary ? (
           <div className="sv-hero-context" aria-live="polite">
-            <span className="sv-hero-context-label">Sector lens</span>
+            <span className="sv-hero-context-label">{t('surveillance.sectorLens')}</span>
             <span className="sv-hero-context-name">{focusSummary.label || focusRegion}</span>
             {focusSummary.isoHint ? (
               <span className="sv-hero-context-iso" title="Country code">
@@ -637,25 +639,25 @@ export default function SurveillancePage() {
               </span>
             ) : null}
             <button type="button" className="sv-hero-context-clear" onClick={clearFocusRegion}>
-              Clear lens
+              {t('surveillance.clearLens')}
             </button>
           </div>
         ) : null}
 
         <div className="sv-terminal-hero">
           <div className="sv-terminal-side" aria-label="Event categories">
-            <span className="sv-side-eyebrow">Categories</span>
+            <span className="sv-side-eyebrow">{t('surveillance.categories')}</span>
             <div className="sv-pill-tabs sv-pill-tabs--stack" role="tablist" aria-label="Event categories">
-              {TABS.map((t) => (
+              {TABS.map((tabRow) => (
                 <button
-                  key={t.id}
+                  key={tabRow.id}
                   type="button"
                   role="tab"
-                  aria-selected={tab === t.id}
-                  className={`sv-pill-tab ${tab === t.id ? 'sv-pill-tab--active' : ''}`}
-                  onClick={() => setTab(t.id)}
+                  aria-selected={tab === tabRow.id}
+                  className={`sv-pill-tab ${tab === tabRow.id ? 'sv-pill-tab--active' : ''}`}
+                  onClick={() => setTab(tabRow.id)}
                 >
-                  {t.label}
+                  {t(`surveillance.tabs.${tabRow.id}`)}
                 </button>
               ))}
             </div>
@@ -680,7 +682,7 @@ export default function SurveillancePage() {
               />
             </div>
             <div className="sv-globe-chrome">
-              <span className="sv-globe-chrome-tag">Operating picture</span>
+              <span className="sv-globe-chrome-tag">{t('surveillance.operatingPicture')}</span>
               <p className="sv-globe-chrome-hint">
                 Hover previews a marker. Click pins the event in the side drawer. Tap a country for rolling wire
                 headlines plus institutional tape (last 72h). Clear lens for full global grid.
@@ -720,7 +722,7 @@ export default function SurveillancePage() {
               onSelectAllCategories={() => setTab('all')}
             />
             <details className="sv-rail-accordion">
-              <summary>Type mix</summary>
+              <summary>{t('surveillance.typeMix')}</summary>
               <ul className="sv-type-list sv-type-list--compact">
                 {Object.entries(agg.countsByType || {}).map(([k, v]) => (
                   <li key={k}>
@@ -729,7 +731,7 @@ export default function SurveillancePage() {
                   </li>
                 ))}
                 {!agg.countsByType || !Object.keys(agg.countsByType).length ? (
-                  <li className="sv-muted">Awaiting ingest</li>
+                  <li className="sv-muted">{t('surveillance.awaitingIngest')}</li>
                 ) : null}
               </ul>
             </details>
@@ -739,56 +741,54 @@ export default function SurveillancePage() {
         <div className="sv-control-deck">
           <div className="sv-control-deck-inner sv-control-deck-inner--compact">
             <div className="sv-control-deck-label">
-              <span className="sv-control-eyebrow">Tape</span>
-              <span className="sv-control-title">Refine severity</span>
+              <span className="sv-control-eyebrow">{t('surveillance.tape')}</span>
+              <span className="sv-control-title">{t('surveillance.refineSeverity')}</span>
             </div>
             <details className="sv-metrics-legend">
-              <summary>How to read the tape</summary>
+              <summary>{t('surveillance.howToReadTape')}</summary>
               <dl className="sv-metrics-legend-grid">
                 <div>
-                  <dt>Intensity</dt>
+                  <dt>{t('surveillance.intensity')}</dt>
                   <dd>{intensityHint()}</dd>
                 </div>
                 <div>
-                  <dt>Severity</dt>
-                  <dd>Editorial urgency 1–5. Accent colors mark watch, elevated, and critical tiers.</dd>
+                  <dt>{t('surveillance.severity')}</dt>
+                  <dd>{t('surveillance.severityHelp')}</dd>
                 </div>
                 <div>
-                  <dt>Market risk</dt>
-                  <dd>Lean from the asset-impact scan (risk-on / risk-off / supply shock). Neutral when unclear.</dd>
+                  <dt>{t('surveillance.marketRisk')}</dt>
+                  <dd>{t('surveillance.marketRiskHelp')}</dd>
                 </div>
                 <div>
-                  <dt>Corroboration</dt>
-                  <dd>Independent coverage overlap on the same storyline. Higher counts mean stronger cross-check.</dd>
+                  <dt>{t('surveillance.corroboration')}</dt>
+                  <dd>{t('surveillance.corroborationHelp')}</dd>
                 </div>
                 <div>
-                  <dt>Source quality</dt>
+                  <dt>{t('surveillance.sourceQuality')}</dt>
                   <dd>
-                    Publisher tier (official, institutional, authority, corroborated, public). Open an item for the
-                    original link — internal ingest labels are not shown on the tape.
+                    {t('surveillance.sourceQualityHelp')}
                   </dd>
                 </div>
               </dl>
               <p className="sv-metrics-legend-note">
-                Close intensity scores usually mean comparable weighting, not identical risk. Use severity, source quality,
-                and recency to judge urgency.
+                {t('surveillance.intensityScoresNote')}
               </p>
             </details>
             <div className="sv-control-filters">
               <label className="sv-field">
-                <span className="sv-field-label">Minimum severity</span>
+                <span className="sv-field-label">{t('surveillance.minimumSeverity')}</span>
                 <select
                   className="sv-field-select"
                   value={severityMin}
                   onChange={(e) => setSeverityMin(e.target.value)}
-                  aria-label="Minimum severity"
+                  aria-label={t('surveillance.minimumSeverity')}
                 >
-                  <option value="">Any level</option>
-                  <option value="1">1 — Routine+</option>
-                  <option value="2">2 — Watch+</option>
-                  <option value="3">3 — Elevated+</option>
-                  <option value="4">4 — High+</option>
-                  <option value="5">5 — Critical only</option>
+                  <option value="">{t('surveillance.anyLevel')}</option>
+                  <option value="1">{t('surveillance.severity1')}</option>
+                  <option value="2">{t('surveillance.severity2')}</option>
+                  <option value="3">{t('surveillance.severity3')}</option>
+                  <option value="4">{t('surveillance.severity4')}</option>
+                  <option value="5">{t('surveillance.severity5')}</option>
                 </select>
               </label>
             </div>
@@ -799,18 +799,18 @@ export default function SurveillancePage() {
           className={`sv-tape-deck ${tapeRefreshGlow ? 'sv-tape-deck--refresh' : ''} ${
             focusRegion ? 'sv-tape-deck--lensed' : ''
           }`}
-          aria-label="Ranked event tape"
+          aria-label={t('surveillance.rankedEventTape')}
         >
           <header className="sv-tape-deck-head">
             <div className="sv-tape-deck-head-text">
-              <p className="sv-tape-eyebrow">Live stream</p>
+              <p className="sv-tape-eyebrow">{t('surveillance.liveStream')}</p>
               <div className="sv-tape-heading-row">
-                <h2 className="sv-tape-heading">Tape</h2>
+                <h2 className="sv-tape-heading">{t('surveillance.tape')}</h2>
                 <span className="sv-scoring-help">
                   <button
                     type="button"
                     className="sv-scoring-help-btn"
-                    aria-label="How intensity scoring works"
+                    aria-label={t('surveillance.howIntensityScoringWorks')}
                   >
                     <span aria-hidden className="sv-scoring-help-icon" />
                   </button>
@@ -820,25 +820,24 @@ export default function SurveillancePage() {
                 </span>
               </div>
               <p className="sv-tape-deck-hint">
-                Intensity and freshness drive order · open a row for verification detail and the original publisher link ·
-                lens highlights in-sector nodes
+                {t('surveillance.tapeHint')}
               </p>
               <p className="sv-tape-deck-legend">{intensityHint()}</p>
             </div>
             <div className="sv-tape-deck-meta">
               <span className="sv-stream-live sv-stream-live--tape" data-live={sseOk ? 'on' : 'off'}>
-                {sseOk ? 'Live' : 'Poll'}
+                {sseOk ? t('surveillance.live') : t('surveillance.poll')}
               </span>
-              <span className="sv-tape-count">{tapeEvents.length} visible</span>
+              <span className="sv-tape-count">{t('surveillance.visibleCount', { count: tapeEvents.length })}</span>
               {focusRegion ? (
                 <span className="sv-tape-lens-inline">
-                  Lens · <strong>{focusSummary?.label || focusRegion}</strong>
+                  {t('surveillance.lens')} · <strong>{focusSummary?.label || focusRegion}</strong>
                   <button type="button" className="sv-tape-lens-clear" onClick={clearFocusRegion}>
-                    Clear
+                    {t('surveillance.clear')}
                   </button>
                 </span>
               ) : (
-                <span className="sv-tape-lens-inline sv-tape-lens-inline--muted">Global tape</span>
+                <span className="sv-tape-lens-inline sv-tape-lens-inline--muted">{t('surveillance.globalTape')}</span>
               )}
             </div>
           </header>

@@ -22,6 +22,8 @@ function getMarketApiBaseUrl() {
 }
 /** Snapshot fallback only; primary live path is SSE quotes stream. */
 const SNAPSHOT_POLL_MS = 120000;
+const STREAM_STALE_MS = 10000;
+const SSE_RECONNECT_BACKOFF_MS = [1000, 2000, 5000, 10000];
 
 // ============================================================================
 // Singleton: one snapshot poll for the whole app
@@ -39,6 +41,7 @@ let serverDecimalsBySymbol = {};
 /** symbol → { symbol, displayName, decimals } from server watchlist */
 let serverSymbolRows = {};
 let activeSymbols = new Set();
+let activeSymbolRefCounts = new Map();
 let visibilityListenerAttached = false;
 let pollingSuspendedHidden = false;
 let liveStream = null;
@@ -65,9 +68,9 @@ function attachSnapshotVisibilityHandler() {
     }
     pollingSuspendedHidden = false;
     if (globalListeners.size === 0) return;
-    fetchSnapshot();
+    fetchSnapshot('visibility');
     if (!snapshotInterval) {
-      snapshotInterval = setInterval(fetchSnapshot, SNAPSHOT_POLL_MS);
+      snapshotInterval = setInterval(() => fetchSnapshot('interval'), SNAPSHOT_POLL_MS);
     }
   });
 }
@@ -196,6 +199,33 @@ function notifyListeners() {
   });
 }
 
+function streamHealthy() {
+  if (!liveStreamConnected) return false;
+  if (healthStats.liveStreamLastEventAt <= 0) return false;
+  return Date.now() - healthStats.liveStreamLastEventAt <= STREAM_STALE_MS;
+}
+
+function addTrackedSymbols(symbols) {
+  (symbols || []).forEach((symbol) => {
+    if (!symbol) return;
+    const key = String(symbol).toUpperCase();
+    const next = (activeSymbolRefCounts.get(key) || 0) + 1;
+    activeSymbolRefCounts.set(key, next);
+  });
+  activeSymbols = new Set([...activeSymbolRefCounts.keys()]);
+}
+
+function removeTrackedSymbols(symbols) {
+  (symbols || []).forEach((symbol) => {
+    if (!symbol) return;
+    const key = String(symbol).toUpperCase();
+    const curr = activeSymbolRefCounts.get(key) || 0;
+    if (curr <= 1) activeSymbolRefCounts.delete(key);
+    else activeSymbolRefCounts.set(key, curr - 1);
+  });
+  activeSymbols = new Set([...activeSymbolRefCounts.keys()]);
+}
+
 function updatePriceFromLiveQuote(quote) {
   if (!quote || !quote.symbol) return;
   const symbol = quote.symbol;
@@ -253,6 +283,9 @@ function connectLiveStream() {
   stopLiveStream();
   liveStreamSymbols = new Set(symbols);
   const url = `${getMarketApiBaseUrl()}/api/market/live-quotes-stream?symbols=${encodeURIComponent(symbols.join(','))}`;
+  if (typeof console !== 'undefined' && console.debug) {
+    console.debug('[LivePrices] SSE connect', { symbolCount: symbols.length });
+  }
   const es = new EventSource(url);
   liveStream = es;
   es.addEventListener('ready', (evt) => {
@@ -298,8 +331,11 @@ function connectLiveStream() {
     }
     liveStream = null;
     if (liveStreamReconnectTimer) return;
-    const wait = Math.min(15000, 1000 * (2 ** Math.min(liveStreamReconnectAttempts, 4)));
+    const wait = SSE_RECONNECT_BACKOFF_MS[Math.min(liveStreamReconnectAttempts, SSE_RECONNECT_BACKOFF_MS.length - 1)];
     liveStreamReconnectAttempts += 1;
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('[LivePrices] SSE disconnect', { waitMs: wait, reconnectAttempt: liveStreamReconnectAttempts });
+    }
     liveStreamReconnectTimer = setTimeout(() => {
       liveStreamReconnectTimer = null;
       connectLiveStream();
@@ -308,16 +344,12 @@ function connectLiveStream() {
 }
 
 function shouldSkipSnapshotFetch(reason = 'interval') {
-  const hasLiveData = Object.keys(globalPriceData || {}).length > 0;
-  const liveFresh =
-    liveStreamConnected &&
-    healthStats.liveStreamLastEventAt > 0 &&
-    Date.now() - healthStats.liveStreamLastEventAt < 90000;
-  if (liveFresh && hasLiveData) {
+  if (streamHealthy()) {
     healthStats.snapshotFetchSkippedDueToLiveStream += 1;
     return true;
   }
-  if (reason === 'interval' && liveStreamConnected && hasLiveData) {
+  const hasData = Object.keys(globalPriceData || {}).length > 0;
+  if (reason === 'interval' && hasData) {
     healthStats.snapshotFetchSkippedDueToLiveStream += 1;
     return true;
   }
@@ -335,6 +367,9 @@ async function fetchSnapshot(reason = 'manual') {
   healthStats.snapshotFallbackReasons[reason] = (healthStats.snapshotFallbackReasons[reason] || 0) + 1;
 
   try {
+    if (typeof console !== 'undefined' && console.debug) {
+      console.debug('[LivePrices] REST snapshot fallback', { reason });
+    }
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
     const url = `${getMarketApiBaseUrl()}/api/markets/snapshot`;
@@ -589,7 +624,7 @@ export function useLivePrices(options = {}) {
       }
 
       symbolsRef.current = symbolsToTrack || [];
-      symbolsToTrack.forEach(s => activeSymbols.add(s));
+      addTrackedSymbols(symbolsToTrack || []);
       connectLiveStream();
 
       globalListeners.add(handleUpdate);
@@ -609,7 +644,9 @@ export function useLivePrices(options = {}) {
       if (globalListeners.size === 0) {
         stopSnapshotPolling();
         activeSymbols.clear();
+        activeSymbolRefCounts.clear();
       } else {
+        removeTrackedSymbols(symbolsRef.current || []);
         connectLiveStream();
       }
     };

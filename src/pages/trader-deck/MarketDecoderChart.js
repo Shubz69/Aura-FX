@@ -5,6 +5,7 @@ import {
   normalizeChartBars,
   normalizeApiInterval,
   timeScaleOptionsForInterval,
+  auraCandlestickSeriesOptions,
 } from '../../lib/charts/lightweightChartData';
 import {
   AURA_AREA_SERIES_OPTIONS,
@@ -26,15 +27,17 @@ const TIMEFRAMES_REF = ['1H', '4H', '1D', '1W', '1M'];
 /** Live chart (Candle timeframe → API `interval`, aligned with `browser-qa-lightweight` DECODER_TFS). */
 const CANDLE_TIMEFRAME_BUTTONS = [
   { label: '1m', apiInterval: '1', testId: 'md-candle-tf-1m' },
+  { label: '5m', apiInterval: '5', testId: 'md-candle-tf-5m' },
   { label: '15m', apiInterval: '15', testId: 'md-candle-tf-15m' },
+  { label: '30m', apiInterval: '30', testId: 'md-candle-tf-30m' },
+  { label: '45m', apiInterval: '45', testId: 'md-candle-tf-45m' },
   { label: '1H', apiInterval: '60', testId: 'md-candle-tf-1h' },
   { label: '4H', apiInterval: '240', testId: 'md-candle-tf-4h' },
   { label: '1d', apiInterval: '1D', testId: 'md-candle-tf-1d' },
+  { label: '1w', apiInterval: '1W', testId: 'md-candle-tf-1w' },
+  { label: '1mo', apiInterval: '1M', testId: 'md-candle-tf-1mo' },
+  { label: '1y', apiInterval: '1Y', testId: 'md-candle-tf-1y' },
 ];
-const VISIBLE_RANGE_BUTTONS = ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', '10Y', '20Y', '50Y'].map((r) => ({
-  label: r,
-  testId: `md-range-${r.toLowerCase()}`,
-}));
 
 /** Approximate zoom on daily OHLC bars (legacy non-live reference display). */
 const TF_VISIBLE_BARS = { '1H': 8, '4H': 16, '1D': 32, '1W': 72, '1M': 400 };
@@ -143,7 +146,6 @@ export default function MarketDecoderChart({
   const [mode, setMode] = useState('candles');
   const [activeTf, setActiveTf] = useState('1D');
   const [candleInterval, setCandleInterval] = useState('60');
-  const [visibleRange, setVisibleRange] = useState('3M');
   const [liveBars, setLiveBars] = useState(null);
   const useLive = Boolean(referenceStyle && String(requestSymbol || '').trim());
 
@@ -151,8 +153,7 @@ export default function MarketDecoderChart({
     const sym = String(requestSymbol || '').trim();
     if (!sym) return;
     const intervalNorm = normalizeApiInterval(candleInterval);
-    const rangeNorm = String(visibleRange || '3M');
-    const queryKey = `${sym}|${intervalNorm}|${rangeNorm}`;
+    const queryKey = `${sym}|${intervalNorm}`;
     if (lastLiveQueryRef.current === queryKey) return;
     lastLiveQueryRef.current = queryKey;
     if (liveAbortRef.current) liveAbortRef.current.abort();
@@ -160,7 +161,7 @@ export default function MarketDecoderChart({
     liveAbortRef.current = controller;
     (async () => {
       try {
-        const { data } = await Api.getMarketChartHistory(sym, { interval: intervalNorm, range: rangeNorm, signal: controller.signal });
+        const { data } = await Api.getMarketChartHistory(sym, { interval: intervalNorm, signal: controller.signal });
         const b = data?.bars;
         const normalized = Array.isArray(b) ? normalizeChartBars(b) : [];
         if (typeof console !== 'undefined' && console.debug) {
@@ -170,7 +171,7 @@ export default function MarketDecoderChart({
             scope: 'MarketDecoder',
             symbol: sym,
             interval: intervalNorm,
-            range: rangeNorm,
+            range: 'auto',
             barCount: normalized.length,
             firstBarTime: first?.time,
             lastBarTime: last?.time,
@@ -186,7 +187,7 @@ export default function MarketDecoderChart({
         setLiveBars([]);
       }
     })();
-  }, [requestSymbol, candleInterval, visibleRange]);
+  }, [requestSymbol, candleInterval]);
 
   useEffect(() => {
     if (!useLive) return;
@@ -242,7 +243,10 @@ export default function MarketDecoderChart({
     const lineData = data.map((b) => ({ time: b.time, value: b.close }));
 
     if (referenceStyle) {
-      const s = chart.addCandlestickSeries(AURA_CANDLE_SERIES_OPTIONS);
+      const s = chart.addCandlestickSeries({
+        ...AURA_CANDLE_SERIES_OPTIONS,
+        ...auraCandlestickSeriesOptions(requestSymbol),
+      });
       s.setData(data);
       const volumeData = data
         .map((b, idx) => ({
@@ -291,7 +295,10 @@ export default function MarketDecoderChart({
         }
       }
     } else if (mode === 'candles') {
-      const s = chart.addCandlestickSeries(AURA_CANDLE_SERIES_OPTIONS);
+      const s = chart.addCandlestickSeries({
+        ...AURA_CANDLE_SERIES_OPTIONS,
+        ...auraCandlestickSeriesOptions(requestSymbol),
+      });
       s.setData(data);
       const volumeData = data
         .map((b, idx) => ({
@@ -363,7 +370,7 @@ export default function MarketDecoderChart({
       chart.remove();
       chartRef.current = null;
     };
-  }, [displayBars, mode, compact, referenceStyle, activeTf, overlays, useLive, candleInterval, visibleRange]);
+  }, [displayBars, mode, compact, referenceStyle, activeTf, overlays, useLive, candleInterval]);
 
   if (!displayBars || displayBars.length < 2) {
     if (referenceStyle && useLive) {
@@ -381,21 +388,6 @@ export default function MarketDecoderChart({
                 onClick={() => {
                   setCandleInterval(c.apiInterval);
                 }}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-          <div className="md-chart-tf" role="tablist" aria-label="Visible history range">
-            {VISIBLE_RANGE_BUTTONS.map((c) => (
-              <button
-                key={c.label}
-                type="button"
-                role="tab"
-                aria-selected={visibleRange === c.label}
-                data-testid={c.testId}
-                className={`md-chart-tf-btn${visibleRange === c.label ? ' md-chart-tf-btn--active' : ''}`}
-                onClick={() => setVisibleRange(c.label)}
               >
                 {c.label}
               </button>
@@ -453,21 +445,6 @@ export default function MarketDecoderChart({
                 onClick={() => {
                   setCandleInterval(c.apiInterval);
                 }}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-          <div className="md-chart-tf" role="tablist" aria-label="Visible history range">
-            {VISIBLE_RANGE_BUTTONS.map((c) => (
-              <button
-                key={c.label}
-                type="button"
-                role="tab"
-                aria-selected={visibleRange === c.label}
-                data-testid={c.testId}
-                className={`md-chart-tf-btn${visibleRange === c.label ? ' md-chart-tf-btn--active' : ''}`}
-                onClick={() => setVisibleRange(c.label)}
               >
                 {c.label}
               </button>

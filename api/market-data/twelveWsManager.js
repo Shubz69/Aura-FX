@@ -152,6 +152,9 @@ function ensureConnected() {
   ws.on('open', () => {
     wsReady = true;
     metrics.reconnects += 1;
+    if (typeof console !== 'undefined' && console.debug) {
+      console.debug('[twelveWsManager] connected', { reconnects: metrics.reconnects });
+    }
     startHeartbeat();
     resyncSubscriptions();
   });
@@ -185,6 +188,9 @@ function ensureConnected() {
   ws.on('close', (code, reason) => {
     wsReady = false;
     metrics.lastDisconnectReason = `${code || ''}:${String(reason || '')}`.trim();
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('[twelveWsManager] disconnected', { reason: metrics.lastDisconnectReason });
+    }
     stopHeartbeat();
     scheduleReconnect(3000);
   });
@@ -226,6 +232,13 @@ function subscribeSymbols(inputSymbols = []) {
   if (newlySubscribed.length > 0 && wsReady) {
     sendSubscriptionAction('subscribe', newlySubscribed);
   }
+  if (typeof console !== 'undefined' && console.debug) {
+    console.debug('[twelveWsManager] subscribe symbols', {
+      requested: canonicalSymbols.length,
+      newlySubscribed: newlySubscribed.length,
+      activeSubscriptions: snapshotDiagnostics().twelveWsActiveSubscriptions,
+    });
+  }
 
   return {
     subscribedSymbols: canonicalSymbols,
@@ -242,6 +255,12 @@ function releaseSymbols(inputSymbols = []) {
     existing.refs = Math.max(0, existing.refs - 1);
     existing.lastTouched = now;
   });
+  if (typeof console !== 'undefined' && console.debug) {
+    console.debug('[twelveWsManager] release symbols', {
+      released: canonicalSymbols.length,
+      activeSubscriptions: snapshotDiagnostics().twelveWsActiveSubscriptions,
+    });
+  }
 }
 
 function pruneIdleSubscriptions() {

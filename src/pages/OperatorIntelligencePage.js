@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import AuraPulseBar from '../components/operator-intelligence/AuraPulseBar';
 import LiveMarketView from '../components/operator-intelligence/LiveMarketView';
@@ -18,6 +19,7 @@ import '../styles/operator-intelligence/OperatorIntelligencePage.css';
  * Operator Intelligence — fast decision layer (mock data via adapter).
  */
 export default function OperatorIntelligencePage() {
+  const { t } = useTranslation();
   const [bundle, setBundle] = useState(null);
   const [pageState, setPageState] = useState('loading');
   const [pageError, setPageError] = useState('');
@@ -40,7 +42,7 @@ export default function OperatorIntelligencePage() {
         if (cancelled) return;
         setBundle(null);
         setPageState('error');
-        setPageError(e?.message || 'Unable to load operator intelligence.');
+        setPageError(e?.message || t('operatorIntelligence.errors.loadFailed'));
       });
     return () => {
       cancelled = true;
@@ -57,10 +59,10 @@ export default function OperatorIntelligencePage() {
       <div className="oi-page">
         <header className="oi-hero">
           <div className="oi-hero__text">
-            <p className="oi-eyebrow">Aurora Terminal</p>
-            <h1 className="oi-title">Operator Intelligence</h1>
+            <p className="oi-eyebrow">{t('operatorIntelligence.hero.eyebrow')}</p>
+            <h1 className="oi-title">{t('operatorIntelligence.hero.title')}</h1>
             <p className="oi-subtitle">
-              Compress the tape into decisions: what is happening, why, and what to do now.
+              {t('operatorIntelligence.hero.subtitle')}
             </p>
           </div>
         </header>

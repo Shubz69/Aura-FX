@@ -26,6 +26,7 @@ function parseChartHistoryRequest(resp) {
 const BASE_URL = process.env.QA_BASE_URL || 'http://localhost:3000';
 const QA_LIGHT_MODE = process.env.QA_LIGHT_MODE !== '0';
 const CHART_STORAGE_KEY = 'aura_chart_user_request_v1';
+const LAB_CHART_HOST_SELECTOR = '.tlab-chart-host--fill, .tlab-chart-host';
 
 const SYMBOLS = [
   ['EURUSD', 'OANDA:EURUSD'],
@@ -125,6 +126,36 @@ async function hasCanvas(page) {
   try { return await c.isVisible({ timeout: 5000 }); } catch { return false; }
 }
 
+async function waitForTraderLabReady(page) {
+  await page.waitForURL(/trader-deck\/trade-validator\/trader-lab/i, { timeout: 45000 });
+  await page.locator('.tlab-chart-toolbar--terminal').first().waitFor({ state: 'visible', timeout: 45000 });
+  await page.locator(LAB_CHART_HOST_SELECTOR).first().waitFor({ state: 'visible', timeout: 45000 });
+}
+
+async function readPlanPrices(page) {
+  const read = async (label) => {
+    const val = await page
+      .locator(`.tlab-card--plan-rail .tlab-field:has(label:has-text("${label}")) input`)
+      .first()
+      .inputValue();
+    return Number(val);
+  };
+  return {
+    entry: await read('Entry'),
+    stop: await read('Stop loss'),
+    target: await read('Target'),
+  };
+}
+
+async function chartHostBox(page) {
+  return page.evaluate(() => {
+    const el = document.querySelector('.tlab-chart-host--fill') || document.querySelector('.tlab-chart-host');
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
+  });
+}
+
 async function fetchChartStats(page, symbol, interval, range = DEFAULT_CHART_RANGE) {
   try {
     const r = await page.request.get(
@@ -163,19 +194,22 @@ async function run() {
   });
 
   await page.addInitScript((t) => {
+    window.__AURA_API_BASE_URL__ = 'http://localhost:3001';
     localStorage.setItem('token', t);
     localStorage.setItem('user', JSON.stringify({ id: 9001, userId: 9001, role: 'admin', email: 'qa@local.test' }));
     localStorage.setItem('mfaVerified', 'true');
     localStorage.setItem('gdprAccepted', 'true');
     localStorage.setItem('qaTestMode', '1');
+    localStorage.setItem('auraApiBaseUrlOverride', 'http://localhost:3001');
   }, token());
 
   await page.goto(`${BASE_URL}/trader-deck/trade-validator/trader-lab?qa_test_mode=1`, { waitUntil: 'domcontentloaded' });
   await dismissGdpr(page);
-  const labBefore = await page.locator('.tlab-chart-host--fill').boundingBox();
+  await waitForTraderLabReady(page);
+  const labBefore = await chartHostBox(page);
   let labHeightStable = null;
   for (const [, sym] of QA_SYMBOLS) {
-    await page.selectOption('.tlab-chart-toolbar select.tlab-select', sym);
+    await page.selectOption('.tlab-chart-toolbar select[aria-label="Instrument"]', sym);
     for (const [tfLabel, tfVal] of QA_LAB_TFS) {
       let body = null;
       let status = null;
@@ -238,7 +272,7 @@ async function run() {
   }
   await page.setViewportSize({ width: 1400, height: 900 });
   await page.setViewportSize({ width: 1024, height: 720 });
-  const labAfter = await page.locator('.tlab-chart-host--fill').boundingBox();
+  const labAfter = await chartHostBox(page);
   resize.traderLab = { before: labBefore, after: labAfter };
   if (labBefore && labAfter) {
     labHeightStable = Math.abs(labBefore.height - labAfter.height) < 4;
@@ -249,7 +283,7 @@ async function run() {
 
   // Trader Lab: verify 1Y range (EURUSD 1H + range=1Y)
   try {
-    await page.selectOption('.tlab-chart-toolbar select.tlab-select', 'OANDA:EURUSD');
+    await page.selectOption('.tlab-chart-toolbar select[aria-label="Instrument"]', 'OANDA:EURUSD');
     await page.locator('.tlab-chart-toolbar--terminal .tlab-tf', { hasText: '1H' }).first().click();
     const yResp = waitChartResp(page, 'OANDA:EURUSD', '60', { range: '1Y' });
     await page.getByLabel('Chart range').selectOption('1Y');
@@ -282,8 +316,26 @@ async function run() {
     ensureReportsDir();
     await page.goto(`${BASE_URL}/trader-deck/trade-validator/trader-lab?qa_test_mode=1`, { waitUntil: 'domcontentloaded' });
     await dismissGdpr(page);
+    await waitForTraderLabReady(page);
     await page.waitForTimeout(500);
     await page.selectOption('.tlab-chart-toolbar select[aria-label="Instrument"]', 'OANDA:EURUSD');
+
+    const tfGroupCount = await page.locator('[aria-label="Candle timeframe"]').count();
+    if (tfGroupCount !== 1) {
+      issues.push({
+        page: 'TraderLab',
+        chartControl: true,
+        error: `expected exactly 1 Candle timeframe group, got ${tfGroupCount}`,
+      });
+    }
+    const rangeGroupCount = await page.locator('[aria-label="History range"]').count();
+    if (rangeGroupCount !== 1) {
+      issues.push({
+        page: 'TraderLab',
+        chartControl: true,
+        error: `expected exactly 1 History range group, got ${rangeGroupCount}`,
+      });
+    }
 
     const labActiveTf = await page.locator('.tlab-chart-toolbar--terminal .tlab-tf.tlab-tf--active').count();
     if (labActiveTf !== 1) {
@@ -306,7 +358,7 @@ async function run() {
     }
 
     const rB = waitChartResp(page, 'OANDA:EURUSD', '15', { range: '1W' });
-    await page.getByLabel('Chart range').selectOption('1W');
+    await page.locator('.tlab-chart-toolbar--terminal [aria-label="History range"] .tlab-tf', { hasText: '1W' }).first().click();
     const respB = await rB;
     const pB = parseChartHistoryRequest(respB);
     if (!intervalsMatch(pB.interval, '15') || pB.range !== '1W') {
@@ -339,8 +391,16 @@ async function run() {
         error: `after changes expected 1 active interval, got ${labActiveTfAfter}`,
       });
     }
+    const labActiveRangeAfter = await page.locator('.tlab-chart-toolbar--terminal [aria-label="History range"] .tlab-tf.tlab-tf--active').count();
+    if (labActiveRangeAfter !== 1) {
+      issues.push({
+        page: 'TraderLab',
+        chartControl: true,
+        error: `after changes expected 1 active range, got ${labActiveRangeAfter}`,
+      });
+    }
 
-    const canvasBox = page.locator('.tlab-chart-host--fill .trader-suite-chart-frame canvas').first();
+    const canvasBox = page.locator(`${LAB_CHART_HOST_SELECTOR} .trader-suite-chart-frame canvas`).first();
     if (await canvasBox.isVisible().catch(() => false)) {
       await canvasBox.screenshot({ path: path.join(QA_REPORTS_DIR, 'qa-chart-control-trader-lab-canvas.png') });
     }
@@ -354,6 +414,81 @@ async function run() {
     });
   } catch (e) {
     issues.push({ page: 'TraderLab', chartControl: true, error: String(e.message || e) });
+  }
+
+  // Trader Lab: instrument sync and scale checks.
+  try {
+    await page.goto(`${BASE_URL}/trader-deck/trade-validator/trader-lab?qa_test_mode=1`, { waitUntil: 'domcontentloaded' });
+    await dismissGdpr(page);
+    await waitForTraderLabReady(page);
+    await page.waitForTimeout(500);
+
+    const eurReq = waitChartResp(page, 'OANDA:EURUSD', '60', { range: '3M' });
+    await page.selectOption('.tlab-chart-toolbar select[aria-label="Instrument"]', 'OANDA:EURUSD');
+    const eurResp = await eurReq;
+    const eurParams = parseChartHistoryRequest(eurResp);
+    const eur = await readPlanPrices(page);
+    if (!(Number.isFinite(eur.entry) && eur.entry > 0.5 && eur.entry < 2.5)) {
+      issues.push({ page: 'TraderLab', scale: true, symbol: 'OANDA:EURUSD', error: `EURUSD entry out of scale (${eur.entry})`, prices: eur });
+    }
+    if (!(Number.isFinite(eur.stop) && eur.stop > 0.5 && eur.stop < 2.5)) {
+      issues.push({ page: 'TraderLab', scale: true, symbol: 'OANDA:EURUSD', error: `EURUSD stop out of scale (${eur.stop})`, prices: eur });
+    }
+    if (!(Number.isFinite(eur.target) && eur.target > 0.5 && eur.target < 2.5)) {
+      issues.push({ page: 'TraderLab', scale: true, symbol: 'OANDA:EURUSD', error: `EURUSD target out of scale (${eur.target})`, prices: eur });
+    }
+    if (eurParams.symbol !== 'OANDA:EURUSD') {
+      issues.push({ page: 'TraderLab', scale: true, symbol: 'OANDA:EURUSD', error: 'chart request symbol mismatch', params: eurParams });
+    }
+
+    const xauReq = waitChartResp(page, 'OANDA:XAUUSD', '60', { range: '3M' });
+    await page.selectOption('.tlab-chart-toolbar select[aria-label="Instrument"]', 'OANDA:XAUUSD');
+    const xauResp = await xauReq;
+    const xauParams = parseChartHistoryRequest(xauResp);
+    const xau = await readPlanPrices(page);
+    if (!(Number.isFinite(xau.entry) && xau.entry > 1000 && xau.entry < 5000)) {
+      issues.push({ page: 'TraderLab', scale: true, symbol: 'OANDA:XAUUSD', error: `XAUUSD entry out of scale (${xau.entry})`, prices: xau });
+    }
+    if (xauParams.symbol !== 'OANDA:XAUUSD') {
+      issues.push({ page: 'TraderLab', scale: true, symbol: 'OANDA:XAUUSD', error: 'chart request symbol mismatch', params: xauParams });
+    }
+
+    const eurBackReq = waitChartResp(page, 'OANDA:EURUSD', '60', { range: '3M' });
+    await page.selectOption('.tlab-chart-toolbar select[aria-label="Instrument"]', 'OANDA:EURUSD');
+    const eurBackResp = await eurBackReq;
+    const eurBackParams = parseChartHistoryRequest(eurBackResp);
+    const eurBack = await readPlanPrices(page);
+    if (!(Number.isFinite(eurBack.entry) && eurBack.entry > 0.5 && eurBack.entry < 2.5)) {
+      issues.push({ page: 'TraderLab', scale: true, symbol: 'OANDA:EURUSD', error: `XAU→EUR switch kept stale value (${eurBack.entry})`, prices: eurBack });
+    }
+    if (Number.isFinite(xau.entry) && Number.isFinite(eurBack.entry) && !(xau.entry - eurBack.entry > 100)) {
+      issues.push({ page: 'TraderLab', scale: true, symbol: 'OANDA:EURUSD', error: 'XAU→EUR switch did not materially clear/recalculate stale gold values', from: xau, to: eurBack });
+    }
+    if (eurBackParams.symbol !== 'OANDA:EURUSD') {
+      issues.push({ page: 'TraderLab', scale: true, symbol: 'OANDA:EURUSD', error: 'chart request symbol mismatch after switch back', params: eurBackParams });
+    }
+
+    const btcReq = waitChartResp(page, 'COINBASE:BTCUSD', '60', { range: '3M' });
+    await page.selectOption('.tlab-chart-toolbar select[aria-label="Instrument"]', 'COINBASE:BTCUSD');
+    const btcResp = await btcReq;
+    const btcParams = parseChartHistoryRequest(btcResp);
+    const btc = await readPlanPrices(page);
+    if (!(Number.isFinite(btc.entry) && btc.entry > 1000)) {
+      issues.push({ page: 'TraderLab', scale: true, symbol: 'COINBASE:BTCUSD', error: `BTCUSD entry out of scale (${btc.entry})`, prices: btc });
+    }
+    if (btcParams.symbol !== 'COINBASE:BTCUSD') {
+      issues.push({ page: 'TraderLab', scale: true, symbol: 'COINBASE:BTCUSD', error: 'chart request symbol mismatch', params: btcParams });
+    }
+
+    matrix.push({
+      page: 'TraderLab',
+      chartControlChecks: 'instrumentScaleAndSync',
+      symbolsChecked: ['OANDA:EURUSD', 'OANDA:XAUUSD', 'COINBASE:BTCUSD'],
+      requests: [eurParams, xauParams, eurBackParams, btcParams],
+      prices: { eur, xau, eurBack, btc },
+    });
+  } catch (e) {
+    issues.push({ page: 'TraderLab', scale: true, error: String(e.message || e) });
   }
 
   // Replay checks (register chart response listener before navigation to avoid missing the fetch)
@@ -764,10 +899,12 @@ async function run() {
     return `${h}.${p}.x`;
   })();
   await chatPage.addInitScript((t) => {
+    window.__AURA_API_BASE_URL__ = 'http://localhost:3001';
     localStorage.setItem('token', t);
     localStorage.setItem('user', JSON.stringify({ id: 9002, userId: 9002, role: 'USER', email: 'chatqa@local.test' }));
     localStorage.setItem('gdprAccepted', 'true');
     localStorage.setItem('qaTestMode', '1');
+    localStorage.setItem('auraApiBaseUrlOverride', 'http://localhost:3001');
   }, userToken);
   await chatPage.goto(`${BASE_URL}/?qa_test_mode=1`, { waitUntil: 'domcontentloaded' });
   await dismissGdpr(chatPage);

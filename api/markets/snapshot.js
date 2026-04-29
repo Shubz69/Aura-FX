@@ -15,7 +15,7 @@ const { snapshotDiagnostics: wsSnapshotDiagnostics } = require('../market-data/t
 const { stats: tdRestStats } = require('../market-data/tdRateLimiter');
 
 const CACHE_KEY = 'markets:snapshot:v1';
-const CACHE_TTL_MS = 20 * 1000;
+const CACHE_TTL_MS = 5 * 1000;
 const STALE_OK_MS = 5 * 60 * 1000;
 const SNAPSHOT_CACHE_CONTROL = 'public, max-age=30, s-maxage=30, stale-while-revalidate=15';
 
@@ -32,6 +32,29 @@ const HARD_BUILD_MS = Math.min(
 let lastGoodSnapshot = null;
 let lastGoodSnapshotTime = 0;
 let snapshotBuildInFlight = null;
+const recentCallerWindow = new Map();
+const RECENT_CALLER_WINDOW_MS = Math.max(1000, parseInt(process.env.MARKETS_SNAPSHOT_RATE_WINDOW_MS || '1500', 10) || 1500);
+
+function callerKey(req) {
+  const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+  const ua = req.headers['user-agent'] || 'ua';
+  const diag = String(req.query?.diagnostics || '0');
+  return `${ip}|${ua}|${diag}`;
+}
+
+function callerBurstBlocked(req) {
+  const key = callerKey(req);
+  const now = Date.now();
+  const prev = recentCallerWindow.get(key) || 0;
+  recentCallerWindow.set(key, now);
+  if (recentCallerWindow.size > 2000) {
+    const cutoff = now - (RECENT_CALLER_WINDOW_MS * 4);
+    for (const [k, t] of recentCallerWindow.entries()) {
+      if (t < cutoff) recentCallerWindow.delete(k);
+    }
+  }
+  return now - prev < RECENT_CALLER_WINDOW_MS;
+}
 
 function liveDiagnostics() {
   const rest = tdRestStats();
@@ -78,6 +101,11 @@ module.exports = async (req, res) => {
   }
 
   const wantDiagnostics = String(req.query.diagnostics || '').trim() === '1';
+  if (typeof console !== 'undefined' && console.debug) {
+    console.debug('[markets/snapshot] request', { diagnostics: wantDiagnostics });
+  }
+
+  const burstBlocked = callerBurstBlocked(req);
 
   const cached = getCached(CACHE_KEY, CACHE_TTL_MS);
   if (cached && cached.prices && typeof cached.snapshotTimestamp === 'number') {
@@ -104,6 +132,14 @@ module.exports = async (req, res) => {
       };
     }
     return res.status(200).json(body);
+  }
+
+  if (burstBlocked) {
+    return res.status(429).json({
+      success: false,
+      message: 'Snapshot rate limited',
+      retryAfterMs: RECENT_CALLER_WINDOW_MS,
+    });
   }
 
   try {

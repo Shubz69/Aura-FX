@@ -20,6 +20,12 @@ function prettyLabel(value) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function formatUsd(value) {
+  const num = Number(value || 0);
+  if (!Number.isFinite(num)) return '$0.00';
+  return `$${num.toFixed(2)}`;
+}
+
 function StatCard({ title, value, subtitle, status }) {
   const color = toneForStatus(status);
   return (
@@ -126,6 +132,27 @@ export default function PipelineHealthAdmin() {
         status: payload.db?.status,
       },
     ];
+  }, [payload]);
+
+  const googleTranslateCard = useMemo(() => {
+    const tr = payload?.googleCloud?.translation || null;
+    if (!tr) return null;
+    const budget = Number(tr.budgetTargetUsd || 0);
+    const credit = Number(tr.creditValueUsd || 0);
+    const estimated = Number(tr.estimatedMonthlyCostUsd || 0);
+    const remaining = Math.max(0, budget + credit - estimated);
+    return {
+      status: tr.configured ? 'healthy' : 'error',
+      configuredLabel: tr.configured ? 'Live' : 'Not configured',
+      translatedCharacters: Number(tr.monthlyTranslatedCharacters || 0),
+      estimatedCostUsd: estimated,
+      cacheHitRatePct: Number(tr.cacheHitRatePct || 0),
+      failures: Number(tr.failures || 0),
+      budgetTargetUsd: budget,
+      creditValueUsd: credit,
+      remainingUsd: remaining,
+      lastSuccessfulTranslationAt: tr.lastSuccessfulTranslationAt || null,
+    };
   }, [payload]);
 
   if (!user) return <Navigate to="/login" replace />;
@@ -248,6 +275,64 @@ export default function PipelineHealthAdmin() {
                 ]}
               />
             </div>
+
+            {googleTranslateCard ? (
+              <section className="aa-card" style={{ marginBottom: 22 }}>
+                <h3 className="pipeline-data-table__title">Google Cloud Translation</h3>
+                <div className="aa-grid-4" style={{ marginBottom: 12 }}>
+                  <StatCard
+                    title="Translation API"
+                    value={googleTranslateCard.configuredLabel}
+                    subtitle="Google provider status"
+                    status={googleTranslateCard.status}
+                  />
+                  <StatCard
+                    title="Monthly Characters"
+                    value={googleTranslateCard.translatedCharacters.toLocaleString()}
+                    subtitle="Translated source characters (31d)"
+                    status="unknown"
+                  />
+                  <StatCard
+                    title="Estimated Cost"
+                    value={formatUsd(googleTranslateCard.estimatedCostUsd)}
+                    subtitle={`Budget ${formatUsd(googleTranslateCard.budgetTargetUsd)} | Credit ${formatUsd(googleTranslateCard.creditValueUsd)}`}
+                    status={googleTranslateCard.estimatedCostUsd > (googleTranslateCard.budgetTargetUsd + googleTranslateCard.creditValueUsd) ? 'high' : 'healthy'}
+                  />
+                  <StatCard
+                    title="Remaining Budget"
+                    value={formatUsd(googleTranslateCard.remainingUsd)}
+                    subtitle="Budget + manual credit - estimated cost"
+                    status={googleTranslateCard.remainingUsd > 0 ? 'healthy' : 'critical'}
+                  />
+                </div>
+                <div className="aa-grid-4">
+                  <StatCard
+                    title="Cache Hit Rate"
+                    value={`${googleTranslateCard.cacheHitRatePct.toFixed(2)}%`}
+                    subtitle="message_translations cache efficiency"
+                    status={googleTranslateCard.cacheHitRatePct >= 50 ? 'healthy' : 'degraded'}
+                  />
+                  <StatCard
+                    title="Failures"
+                    value={googleTranslateCard.failures}
+                    subtitle="Translation failures (31d)"
+                    status={googleTranslateCard.failures > 0 ? 'degraded' : 'healthy'}
+                  />
+                  <StatCard
+                    title="Budget Target"
+                    value={formatUsd(googleTranslateCard.budgetTargetUsd)}
+                    subtitle="GCLOUD_TRANSLATION_BUDGET_USD"
+                    status="unknown"
+                  />
+                  <StatCard
+                    title="Last Successful Translation"
+                    value={googleTranslateCard.lastSuccessfulTranslationAt ? new Date(googleTranslateCard.lastSuccessfulTranslationAt).toLocaleString() : '—'}
+                    subtitle="Last successful provider write"
+                    status={googleTranslateCard.lastSuccessfulTranslationAt ? 'healthy' : 'degraded'}
+                  />
+                </div>
+              </section>
+            ) : null}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 22 }}>
               <DataTable

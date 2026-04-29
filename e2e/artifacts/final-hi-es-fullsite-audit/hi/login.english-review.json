@@ -1,0 +1,14 @@
+{
+  "route": "/login",
+  "language": "hi",
+  "allowedVisibleEnglish": [
+    "AURA",
+    "AURA TERMINAL क्यों",
+    "AURA TERMINAL™",
+    "Aura Terminal क्यों",
+    "© 2025 AURA TERMINAL™. सर्वाधिकार सुरक्षित।"
+  ],
+  "fixCandidates": [
+    "TERMINALTM"
+  ]
+}

@@ -1,546 +1,225 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'react-toastify';
-import { useSearchParams, useLocation } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import TraderSuiteShell from '../components/TraderSuiteShell';
-import ReplayHub from '../components/trader-replay/ReplayHub';
-import ReplaySetupPanel from '../components/trader-replay/ReplaySetupPanel';
-import ReplayWorkspace from '../components/trader-replay/ReplayWorkspace';
-import ReplaySummaryModal from '../components/trader-replay/ReplaySummaryModal';
-import { useAuth } from '../context/AuthContext';
-import { useSubscription } from '../context/SubscriptionContext';
-import { useReplayPlayback } from '../hooks/useReplayPlayback';
+import TradeReplayChart from '../components/trader-replay/TradeReplayChart';
 import Api from '../services/Api';
-import { formatWelcomeEyebrow } from '../utils/welcomeUser';
-import { computeReplayHabitStats } from '../lib/trader-replay/replayHabit';
-import { getReplayTier, getReplayFeatureFlags } from '../lib/trader-replay/replayEntitlements';
-import {
-  emptySessionDraft,
-  REPLAY_MODES,
-  REPLAY_STATUSES,
-} from '../lib/trader-replay/replayDefaults';
-import {
-  normalizeReplay,
-  sessionFingerprint,
-  computeReplayQualityScore,
-  computeReviewCompletenessScore,
-} from '../lib/trader-replay/replayNormalizer';
-import { findContinueLastSession } from '../lib/trader-replay/replayScenarioEngine';
-import {
-  peekChartUserRequestFromStorage,
-  clearChartUserRequestStorage,
-  intervalForReplayForm,
-  CHART_PATH_TRADER_REPLAY,
-} from '../lib/chartUserRequest';
-import { isQaTestModeEnabled } from '../utils/qaTestMode';
+import { useAuraAnalysisData } from '../context/AuraAnalysisContext';
 
-function toApiPayload(form) {
-  return normalizeReplay(form, { forApi: true });
+const SPEEDS = [500, 900, 1400, 2000];
+
+function fmtDate(value) {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString();
+}
+
+function fmtNum(value, fixed = 2) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n.toFixed(fixed) : '—';
 }
 
 export default function TraderReplay() {
-  const { user } = useAuth();
-  const { tier, accessType, isAdmin } = useSubscription();
   const [searchParams, setSearchParams] = useSearchParams();
-  const location = useLocation();
-  const replayTier = useMemo(() => getReplayTier({ tier, accessType, isAdmin }), [tier, accessType, isAdmin]);
-  const replayFlags = useMemo(() => getReplayFeatureFlags(replayTier), [replayTier]);
-  const [sessions, setSessions] = useState([]);
+  const { activePlatformId } = useAuraAnalysisData();
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
-  const [view, setView] = useState('hub');
-  const [setupMode, setSetupMode] = useState(REPLAY_MODES.trade);
-  const [activeId, setActiveId] = useState(null);
-  const [form, setForm] = useState(() => emptySessionDraft());
-  const [lastSavedFingerprint, setLastSavedFingerprint] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [trades, setTrades] = useState([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [selectedTrade, setSelectedTrade] = useState(null);
+  const [bars, setBars] = useState([]);
+  const [analysis, setAnalysis] = useState(null);
   const [playing, setPlaying] = useState(false);
-  const [summaryOpen, setSummaryOpen] = useState(false);
-  const [finishedSnapshot, setFinishedSnapshot] = useState(null);
-  const saveLockRef = useRef(false);
-  const finishLockRef = useRef(false);
+  const [speedMs, setSpeedMs] = useState(900);
+  const [index, setIndex] = useState(0);
+  const timerRef = useRef(null);
 
-  const habitStats = useMemo(() => computeReplayHabitStats(sessions), [sessions]);
-  const [tradeLibraryExamplesOnly, setTradeLibraryExamplesOnly] = useState(false);
-  const qaMode = isQaTestModeEnabled();
-
-  const refreshSessions = useCallback(async () => {
-    const res = await Api.getTraderReplaySessions();
-    const rows = Array.isArray(res?.data?.sessions) ? res.data.sessions : [];
-    setSessions(rows.map((r) => normalizeReplay(r)));
-  }, []);
-
-  const runInitialLoad = useCallback(async () => {
-    setLoadError(null);
-    setLoading(true);
-    try {
-      await refreshSessions();
-    } catch (e) {
-      if (!qaMode) {
-        setLoadError('Could not load replay sessions');
-      }
-      setSessions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [refreshSessions, qaMode]);
+  const source = useMemo(() => {
+    if (activePlatformId === 'mt4' || activePlatformId === 'mt5') return activePlatformId;
+    return 'all';
+  }, [activePlatformId]);
 
   useEffect(() => {
-    runInitialLoad();
-  }, [runInitialLoad]);
-
-  useEffect(() => {
-    if (qaMode && location.pathname.includes('trader-replay')) {
-      // In QA mode ensure workspace is visible even when no saved sessions are present.
-      setView('workspace');
-    }
-  }, [qaMode, location.pathname]);
-
-  useEffect(() => {
-    if (loading) return;
-    if (!location.pathname.includes('trader-replay')) return;
-    const payload = peekChartUserRequestFromStorage();
-    if (!payload || payload.path !== CHART_PATH_TRADER_REPLAY) return;
-    clearChartUserRequestStorage();
-    setForm((prev) => ({
-      ...prev,
-      ...(payload.chartSymbol ? { symbol: payload.chartSymbol } : {}),
-      ...(payload.interval ? { interval: intervalForReplayForm(payload.interval) } : {}),
-    }));
-    setView('workspace');
-  }, [loading, location.pathname]);
-
-  const continueLast = useMemo(() => findContinueLastSession(sessions), [sessions]);
-
-  const dirty = useMemo(
-    () => Boolean(activeId || form._isDemoLocal) && sessionFingerprint(form) !== lastSavedFingerprint,
-    [form, lastSavedFingerprint, activeId]
-  );
-
-  useEffect(() => {
-    setPlaying(false);
-  }, [activeId, view, setupMode]);
-
-  useReplayPlayback(playing, setPlaying, form.playbackSpeedMs, setForm);
-
-  const openWorkspace = useCallback((session, id) => {
-    setPlaying(false);
-    const n = normalizeReplay({ ...session, id: id ?? session.id });
-    setActiveId(id ?? session.id ?? null);
-    const nextForm = { ...n };
-    if (session._isDemoLocal) nextForm._isDemoLocal = true;
-    else delete nextForm._isDemoLocal;
-    setForm(nextForm);
-    setLastSavedFingerprint(sessionFingerprint(n));
-    setView('workspace');
-  }, []);
-
-  const openSession = useCallback(
-    (session) => {
-      const id = session.id;
-      if (!id) {
-        openWorkspace({ ...session, _isDemoLocal: true }, null);
-        return;
-      }
-      openWorkspace(session, id);
-    },
-    [openWorkspace]
-  );
-
-  const openSessionWithDirtyGuard = useCallback(
-    (session) => {
-      if (view === 'workspace' && dirty) {
-        const ok = window.confirm(
-          'You have unsaved changes. Open this replay anyway? Save first if you need to keep your work.'
-        );
-        if (!ok) return;
-      }
-      openSession(session);
-    },
-    [view, dirty, openSession]
-  );
-
-  const persistReplayFields = useCallback(
-    async (partial) => {
-      const merged = normalizeReplay({ ...form, ...partial });
-      setForm(merged);
-      if (finishedSnapshot?.id && merged.id === finishedSnapshot.id) {
-        setFinishedSnapshot(merged);
-      }
-      const id = activeId || merged.id;
-      if (!id) {
-        toast.info('Save the replay to your library first.');
-        return;
-      }
+    const run = async () => {
+      setLoading(true);
+      setError('');
       try {
-        const res = await Api.updateTraderReplaySession(id, toApiPayload(merged));
-        const saved = normalizeReplay(res?.data?.session || merged);
-        setForm(saved);
-        if (summaryOpen) setFinishedSnapshot(saved);
-        setLastSavedFingerprint(sessionFingerprint(saved));
-        setSessions((prev) => prev.map((x) => (x.id === saved.id ? saved : x)));
-        await refreshSessions();
+        const res = await Api.getTraderReplayTrades({ source });
+        const rows = Array.isArray(res?.data?.trades) ? res.data.trades : [];
+        setTrades(rows);
       } catch (e) {
-        console.error(e);
-        toast.error('Could not sync — try Save.');
+        setError(e?.response?.data?.message || 'Could not load replay trades');
+      } finally {
+        setLoading(false);
       }
-    },
-    [form, activeId, finishedSnapshot, summaryOpen, refreshSessions]
-  );
+    };
+    run();
+  }, [source]);
 
   useEffect(() => {
-    const openId = searchParams.get('open');
-    if (!openId || loading || loadError || !sessions.length) return;
-    const found = sessions.find((s) => s.id === openId);
-    if (!found) return;
-    openSession(found);
-    const next = new URLSearchParams(searchParams);
-    next.delete('open');
-    setSearchParams(next, { replace: true });
-  }, [loading, loadError, sessions, searchParams, setSearchParams, openSession]);
+    const q = searchParams.get('tradeId');
+    if (!q) return;
+    setSelectedId(q);
+  }, [searchParams]);
 
-  const goHub = useCallback(() => {
-    setPlaying(false);
-    setView('hub');
-    setActiveId(null);
-    const cleared = emptySessionDraft();
-    setForm(cleared);
-    setLastSavedFingerprint(sessionFingerprint(normalizeReplay(cleared)));
-    setTradeLibraryExamplesOnly(false);
-  }, []);
-
-  const requestHub = useCallback(() => {
-    if (dirty) {
-      const ok = window.confirm('You have unsaved changes. Leave this replay?');
-      if (!ok) return;
-    }
-    goHub();
-  }, [dirty, goHub]);
-
-  const saveReplay = async () => {
-    if (saveLockRef.current) return;
-    saveLockRef.current = true;
-    setSaving(true);
-    try {
-      const payload = toApiPayload(form);
-      if (activeId) {
-        const res = await Api.updateTraderReplaySession(activeId, payload);
-        const saved = normalizeReplay(res?.data?.session || { ...form, id: activeId });
-        setSessions((prev) => prev.map((item) => (item.id === activeId ? saved : item)));
-        setForm(saved);
-        setLastSavedFingerprint(sessionFingerprint(saved));
-        toast.success('Replay saved');
-      } else {
-        const res = await Api.createTraderReplaySession(payload);
-        const saved = normalizeReplay(res?.data?.session || payload);
-        setSessions((prev) => [saved, ...prev]);
-        setActiveId(saved.id);
-        setForm(saved);
-        setLastSavedFingerprint(sessionFingerprint(saved));
-        toast.success('Replay created');
+  useEffect(() => {
+    if (!selectedId) return;
+    const run = async () => {
+      setError('');
+      setPlaying(false);
+      try {
+        const [tradeRes, candlesRes, analysisRes] = await Promise.all([
+          Api.getTraderReplayTrade(selectedId),
+          Api.getTraderReplayCandles({ tradeId: selectedId, interval: '15' }),
+          Api.getTraderReplayAnalysis(selectedId),
+        ]);
+        const trade = tradeRes?.data?.trade || null;
+        const candleBars = Array.isArray(candlesRes?.data?.bars) ? candlesRes.data.bars : [];
+        setSelectedTrade(trade);
+        setBars(candleBars);
+        setAnalysis(analysisRes?.data?.analysis || null);
+        const entryTs = trade?.openTime ? Math.floor(new Date(trade.openTime).getTime() / 1000) : null;
+        const entryIndex = entryTs ? Math.max(0, candleBars.findIndex((b) => Number(b.time) >= entryTs)) : 0;
+        setIndex(entryIndex >= 0 ? entryIndex : 0);
+      } catch (e) {
+        setError(e?.response?.data?.message || 'Could not load selected trade replay');
+        setSelectedTrade(null);
+        setBars([]);
       }
-      await refreshSessions();
-    } catch (error) {
-      console.error(error);
-      toast.error('Could not save replay — your edits are still local. Try again.');
-    } finally {
-      saveLockRef.current = false;
-      setSaving(false);
-    }
-  };
+    };
+    run();
+  }, [selectedId]);
 
-  const deleteReplay = async () => {
-    if (!activeId) return;
-    const title = (form.title || 'this replay').slice(0, 80);
-    const ok = window.confirm(`Delete "${title}" permanently? This cannot be undone.`);
-    if (!ok) return;
-    setPlaying(false);
-    const idToDelete = activeId;
-    try {
-      await Api.deleteTraderReplaySession(idToDelete);
-      toast.success('Replay deleted');
-      await refreshSessions();
-      goHub();
-    } catch (e) {
-      console.error(e);
-      toast.error('Delete failed — session may still exist.');
-    }
-  };
+  useEffect(() => {
+    if (!playing || !bars.length) return undefined;
+    timerRef.current = window.setInterval(() => {
+      setIndex((prev) => {
+        if (prev >= bars.length - 1) {
+          setPlaying(false);
+          return bars.length - 1;
+        }
+        return prev + 1;
+      });
+    }, speedMs);
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+    };
+  }, [playing, speedMs, bars.length]);
 
-  const finishReplay = async () => {
-    if (finishLockRef.current || saveLockRef.current) return;
-    finishLockRef.current = true;
-    setPlaying(false);
-    const norm = normalizeReplay(form);
-    const maxIdx = Math.max(0, (norm.replayMarkers?.length || 1) - 1);
-    const next = normalizeReplay({
-      ...form,
-      replayStatus: REPLAY_STATUSES.completed,
-      completedAt: new Date().toISOString(),
-      replayStep: maxIdx,
-    });
-    setForm(next);
-    setFinishedSnapshot(next);
-    setSummaryOpen(true);
-    setSaving(true);
-    try {
-      if (activeId) {
-        const res = await Api.updateTraderReplaySession(activeId, toApiPayload(next));
-        const saved = normalizeReplay(res?.data?.session || next);
-        setForm(saved);
-        setFinishedSnapshot(saved);
-        setLastSavedFingerprint(sessionFingerprint(saved));
-        setSessions((prev) => prev.map((x) => (x.id === saved.id ? saved : x)));
-      } else {
-        const res = await Api.createTraderReplaySession(toApiPayload(next));
-        const saved = normalizeReplay(res?.data?.session || next);
-        setActiveId(saved.id);
-        setForm(saved);
-        setFinishedSnapshot(saved);
-        setLastSavedFingerprint(sessionFingerprint(saved));
-        setSessions((prev) => [saved, ...prev]);
-      }
-      await refreshSessions();
-      toast.success('Replay marked complete');
-    } catch (e) {
-      console.error(e);
-      toast.error('Could not sync completion — data is in the summary; try Save from workspace.');
-    } finally {
-      finishLockRef.current = false;
-      setSaving(false);
-    }
-  };
-
-  const createFromDraft = async (draft) => {
-    if (saveLockRef.current) return;
-    saveLockRef.current = true;
-    const merged = normalizeReplay({ ...emptySessionDraft(), ...draft, replayStatus: REPLAY_STATUSES.inProgress });
-    setSaving(true);
-    try {
-      const res = await Api.createTraderReplaySession(toApiPayload(merged));
-      const saved = normalizeReplay(res?.data?.session || merged);
-      setSessions((prev) => [saved, ...prev]);
-      openWorkspace(saved, saved.id);
-      toast.success('Replay session created');
-      await refreshSessions();
-    } catch (e) {
-      console.error(e);
-      toast.error('Could not create session');
-    } finally {
-      saveLockRef.current = false;
-      setSaving(false);
-    }
-  };
-
-  const newReplayFlow = () => {
-    if (dirty) {
-      const ok = window.confirm('Discard unsaved changes and start a new replay?');
-      if (!ok) return;
-    }
-    setPlaying(false);
-    setSetupMode(REPLAY_MODES.trade);
-    setView('setup');
-    setActiveId(null);
-    const draft = emptySessionDraft({ replayStatus: REPLAY_STATUSES.inProgress });
-    setForm(draft);
-    setLastSavedFingerprint(sessionFingerprint(normalizeReplay(draft)));
-  };
-
-  const tryDemo = () => {
-    if (dirty) {
-      const ok = window.confirm('Replace the current draft with the guided example?');
-      if (!ok) return;
-    }
-    setPlaying(false);
-    openWorkspace({ _isDemoLocal: true }, null);
-  };
-
-  const headerStats = useMemo(() => {
-    const s = normalizeReplay(form);
-    const markers = s.replayMarkers?.length || 1;
-    const step = Math.min((s.replayStep || 0) + 1, markers);
-    const verdictShort = s.verdict ? `${s.verdict.slice(0, 28)}${s.verdict.length > 28 ? '…' : ''}` : '—';
-    return [
-      { label: 'Mode', value: s.mode || '—' },
-      { label: 'Symbol', value: s.asset || s.symbol || '—' },
-      { label: 'Date', value: s.replayDate || s.sourceDate || '—' },
-      { label: 'Verdict', value: verdictShort },
-      { label: 'Outcome', value: s.outcome || '—' },
-      {
-        label: 'Progress',
-        value: `${step}/${markers}`,
-        tone: 'gold',
-      },
-      { label: 'Exec Q', value: String(computeReplayQualityScore(s).score), tone: 'gold' },
-      { label: 'Review', value: `${computeReviewCompletenessScore(s).score}%`, tone: 'green' },
-    ];
-  }, [form]);
-
-  const subTitle = useMemo(() => {
-    if (view !== 'workspace') return null;
-    if (!activeId && form._isDemoLocal) {
-      return 'Local preview · not saved to your account';
-    }
-    if (form.updatedAt) {
-      return `Last updated · ${new Date(form.updatedAt).toLocaleString()}`;
-    }
-    return dirty ? 'Not synced yet · save to persist' : 'Synced';
-  }, [view, activeId, form._isDemoLocal, form.updatedAt, dirty]);
+  const visibleBars = Math.max(1, index + 1);
+  const entryTs = selectedTrade?.openTime ? Math.floor(new Date(selectedTrade.openTime).getTime() / 1000) : null;
+  const exitTs = selectedTrade?.closeTime ? Math.floor(new Date(selectedTrade.closeTime).getTime() / 1000) : null;
+  const entryIndex = entryTs ? Math.max(0, bars.findIndex((b) => Number(b.time) >= entryTs)) : 0;
+  const exitIndex = exitTs ? Math.max(0, bars.findIndex((b) => Number(b.time) >= exitTs)) : bars.length - 1;
 
   return (
     <TraderSuiteShell
       variant="terminal"
       terminalPresentation="aura-dashboard"
-      eyebrow={formatWelcomeEyebrow(user)}
       title="Trader Replay"
-      terminalSubtitle={view === 'workspace' ? subTitle : null}
-      description="Multi-mode review: scenario drills, full-day narrative, and single-trade forensics with persisted markers, reflections, and deep links across Aura."
-      stats={view === 'workspace' ? headerStats : []}
-      primaryAction={(
-        <div className="aura-tr-header-actions">
-          {view !== 'hub' ? (
-            <button type="button" className="trader-suite-btn" onClick={requestHub}>Hub</button>
-          ) : null}
-          <button type="button" className="trader-suite-btn" onClick={newReplayFlow}>New replay</button>
-          {continueLast ? (
-            <button
-              type="button"
-              className="trader-suite-btn trader-suite-btn--primary"
-              onClick={() => openSessionWithDirtyGuard(continueLast)}
-            >
-              Continue last
-            </button>
-          ) : null}
-          {view === 'workspace' ? (
+      description="Replay real trades from Aura Analysis sources with chart context, controls, and AI review."
+      stats={selectedTrade ? [
+        { label: 'Symbol', value: selectedTrade.symbol || '—' },
+        { label: 'Source', value: String(selectedTrade.source || '—').toUpperCase() },
+        { label: 'PnL', value: fmtNum(selectedTrade.pnl, 2) },
+      ] : []}
+    >
+      {loading ? <div className="trader-suite-empty">Loading replayable trades...</div> : null}
+      {error ? <div className="trader-suite-empty">{error}</div> : null}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 330px) 1fr', gap: 12 }}>
+        <aside className="trader-suite-panel">
+          <h3 style={{ marginTop: 0 }}>Trades</h3>
+          {trades.length === 0 ? (
+            <p style={{ color: 'rgba(255,255,255,0.65)' }}>Select a trade to replay.</p>
+          ) : (
+            <div style={{ display: 'grid', gap: 8, maxHeight: 700, overflow: 'auto' }}>
+              {trades.map((t) => (
+                <div key={t.id} className="trader-suite-card" style={{ padding: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                    <strong>{t.symbol || '—'}</strong>
+                    <span>{String(t.source || '').toUpperCase()}</span>
+                  </div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>{fmtDate(t.openTime)}</div>
+                  <button
+                    type="button"
+                    className="trader-suite-btn trader-suite-btn--primary"
+                    onClick={() => {
+                      setSelectedId(t.id);
+                      setSearchParams((prev) => {
+                        const next = new URLSearchParams(prev);
+                        next.set('tradeId', t.id);
+                        return next;
+                      }, { replace: true });
+                    }}
+                  >
+                    Replay
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </aside>
+
+        <main className="trader-suite-panel">
+          {!selectedTrade ? <div className="trader-suite-empty">Select a trade to replay.</div> : null}
+          {selectedTrade ? (
             <>
-              <button
-                type="button"
-                className="trader-suite-btn"
-                onClick={saveReplay}
-                disabled={saving || (Boolean(activeId) && !dirty)}
-                title={(activeId && !dirty) ? 'Nothing new to save' : 'Save replay to your library'}
-              >
-                {saving ? 'Saving…' : activeId && !dirty ? 'Saved' : 'Save'}
-              </button>
-              <button
-                type="button"
-                className="trader-suite-btn trader-suite-btn--primary"
-                onClick={finishReplay}
-                disabled={saving}
-              >
-                Finish replay
-              </button>
-              {activeId ? (
-                <button type="button" className="trader-suite-btn" onClick={deleteReplay} disabled={saving}>
-                  Delete
-                </button>
-              ) : null}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginBottom: 10 }}>
+                {[
+                  ['Symbol', selectedTrade.symbol],
+                  ['Direction', selectedTrade.direction],
+                  ['Open', fmtDate(selectedTrade.openTime)],
+                  ['Close', fmtDate(selectedTrade.closeTime)],
+                  ['Entry', fmtNum(selectedTrade.entry, 5)],
+                  ['Exit', fmtNum(selectedTrade.exit, 5)],
+                  ['SL', fmtNum(selectedTrade.stopLoss, 5)],
+                  ['TP', fmtNum(selectedTrade.takeProfit, 5)],
+                  ['Lot Size', fmtNum(selectedTrade.lotSize, 2)],
+                  ['PnL', fmtNum(selectedTrade.pnl, 2)],
+                  ['Duration (s)', selectedTrade.durationSeconds ?? '—'],
+                  ['Source', String(selectedTrade.source || '').toUpperCase()],
+                ].map(([k, v]) => (
+                  <div key={k} className="trader-suite-card" style={{ padding: 8 }}>
+                    <div style={{ fontSize: 12, opacity: 0.7 }}>{k}</div>
+                    <div style={{ fontSize: 13 }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={() => setPlaying(true)}>Play</button>
+                <button type="button" className="trader-suite-btn" onClick={() => setPlaying(false)}>Pause</button>
+                <button type="button" className="trader-suite-btn" onClick={() => setIndex((i) => Math.min(i + 1, bars.length - 1))}>Step +</button>
+                <button type="button" className="trader-suite-btn" onClick={() => setIndex((i) => Math.max(i - 1, 0))}>Step -</button>
+                <button type="button" className="trader-suite-btn" onClick={() => setIndex(Math.max(0, entryIndex))}>Jump Entry</button>
+                <button type="button" className="trader-suite-btn" onClick={() => setIndex(Math.max(0, exitIndex))}>Jump Exit</button>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 12 }}>Speed</span>
+                  <select value={speedMs} onChange={(e) => setSpeedMs(Number(e.target.value))}>
+                    {SPEEDS.map((v) => <option key={v} value={v}>{v} ms</option>)}
+                  </select>
+                </label>
+              </div>
+
+              <TradeReplayChart bars={bars} visibleBars={visibleBars} trade={selectedTrade} currentIndex={index} />
+
+              <section className="trader-suite-card" style={{ marginTop: 12, padding: 12 }}>
+                <h3 style={{ marginTop: 0 }}>AI Trade Review</h3>
+                {!analysis ? <p>Loading analysis...</p> : (
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    <p><strong>What was good:</strong> {(analysis.strengths || []).join(' ') || '—'}</p>
+                    <p><strong>What was bad:</strong> {(analysis.weaknesses || []).join(' ') || '—'}</p>
+                    <p><strong>What to do differently:</strong> {(analysis.betterApproach || []).join(' ') || '—'}</p>
+                    <p><strong>What to watch next time:</strong> {(analysis.nextTimeChecklist || []).join(' ') || '—'}</p>
+                    <p><strong>Entry / Exit / Risk / Timing:</strong> {analysis.verdict ? `${analysis.verdict.entry} ${analysis.verdict.exit} ${analysis.verdict.risk} ${analysis.verdict.timing}` : '—'}</p>
+                  </div>
+                )}
+              </section>
             </>
           ) : null}
-        </div>
-      )}
-      secondaryActions={null}
-    >
-      {loading ? <div className="trader-suite-empty aura-tr-loading">Loading your replay library…</div> : null}
-      {loadError ? (
-        <div className="trader-suite-empty aura-tr-error">
-          <p>{loadError}</p>
-          <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={runInitialLoad}>
-            Retry
-          </button>
-        </div>
-      ) : null}
-
-      {!loading && !loadError && view === 'hub' ? (
-        <ReplayHub
-          sessionsCount={sessions.length}
-          continueSession={continueLast}
-          habitStats={habitStats}
-          replayTier={replayTier}
-          replayFlags={replayFlags}
-          onChooseMode={(mode) => {
-            setPlaying(false);
-            setSetupMode(mode);
-            setView('setup');
-          }}
-          onOpenLibrary={() => {
-            setPlaying(false);
-            setSetupMode(REPLAY_MODES.trade);
-            setTradeLibraryExamplesOnly(false);
-            setView('setup');
-          }}
-          onBrowseLearningExamples={() => {
-            setPlaying(false);
-            setSetupMode(REPLAY_MODES.trade);
-            setTradeLibraryExamplesOnly(true);
-            setView('setup');
-          }}
-          onTryDemo={tryDemo}
-          sessions={sessions}
-          onOpenSession={openSessionWithDirtyGuard}
-        />
-      ) : null}
-
-      {!loading && !loadError && view === 'setup' ? (
-        <ReplaySetupPanel
-          mode={setupMode}
-          sessions={sessions}
-          replayTier={replayTier}
-          replayFlags={replayFlags}
-          initialLearningExamplesFilter={tradeLibraryExamplesOnly}
-          onConsumedLearningExamplesFilter={() => setTradeLibraryExamplesOnly(false)}
-          onBack={() => {
-            setPlaying(false);
-            setView('hub');
-            setTradeLibraryExamplesOnly(false);
-          }}
-          onCreateFromDraft={createFromDraft}
-          onOpenSession={openSessionWithDirtyGuard}
-        />
-      ) : null}
-
-      {!loading && !loadError && view === 'workspace' ? (
-        <ReplayWorkspace
-          form={form}
-          setForm={setForm}
-          activeId={activeId}
-          dirty={dirty}
-          playing={playing}
-          setPlaying={setPlaying}
-          onSave={saveReplay}
-          saving={saving}
-          sessions={sessions}
-          habitStats={habitStats}
-          replayFlags={replayFlags}
-          onPersistFields={persistReplayFields}
-        />
-      ) : null}
-
-      {summaryOpen && finishedSnapshot ? (
-        <ReplaySummaryModal
-          session={normalizeReplay(finishedSnapshot)}
-          replayFlags={replayFlags}
-          allSessions={sessions}
-          habitStats={habitStats}
-          onClose={() => { setSummaryOpen(false); }}
-          onReplayAnother={() => { setSummaryOpen(false); goHub(); }}
-          onApplyLearningExample={
-            finishedSnapshot.id
-              ? (kind) => persistReplayFields({
-                  learningExample: true,
-                  learningExampleKind: kind,
-                })
-              : undefined
-          }
-          onClearLearningExample={
-            finishedSnapshot.id
-              ? () => persistReplayFields({
-                  learningExample: false,
-                  learningExampleKind: null,
-                })
-              : undefined
-          }
-        />
-      ) : null}
+        </main>
+      </div>
     </TraderSuiteShell>
   );
 }

@@ -1,7 +1,7 @@
 /* Manual metrics entry, processing, shared */
 .mm-entry.mm-entry {
   max-width: 720px;
-  margin: 0 auto;
+  margin: clamp(56px, 10vh, 120px) auto 0;
 }
 
 .mm-entry-head .rp-title {

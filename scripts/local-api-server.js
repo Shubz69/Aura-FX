@@ -3,6 +3,9 @@ const express = require('express');
 const cors = require('cors');
 
 const chartHistoryHandler = require('../api/market/chart-history');
+const watchlistHandler = require('../api/market/watchlist');
+const snapshotHandler = require('../api/markets/snapshot');
+const liveQuotesStreamHandler = require('../api/market/live-quotes-stream');
 
 const PORT = Number(process.env.LOCAL_API_PORT || 3001);
 const app = express();
@@ -70,8 +73,49 @@ app.get('/api/market/chart-history', async (req, res) => {
   }
 });
 
+app.get('/api/market/watchlist', async (req, res) => {
+  try {
+    await watchlistHandler(req, res);
+  } catch (e) {
+    console.error('[local-api-server] watchlist error:', e);
+    res.status(500).json({
+      success: false,
+      message: 'Local API wrapper failed',
+      error: String(e?.message || e),
+    });
+  }
+});
+
+app.get('/api/markets/snapshot', async (req, res) => {
+  try {
+    await snapshotHandler(req, res);
+  } catch (e) {
+    console.error('[local-api-server] snapshot error:', e);
+    res.status(500).json({
+      success: false,
+      message: 'Local API wrapper failed',
+      error: String(e?.message || e),
+    });
+  }
+});
+
+app.get('/api/market/live-quotes-stream', async (req, res) => {
+  try {
+    await liveQuotesStreamHandler(req, res);
+  } catch (e) {
+    console.error('[local-api-server] live-quotes-stream error:', e);
+    res.status(500).json({
+      success: false,
+      message: 'Local API wrapper failed',
+      error: String(e?.message || e),
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`[local-api-server] listening on http://localhost:${PORT}`);
   console.log(`[local-api-server] chart endpoint: http://localhost:${PORT}/api/market/chart-history`);
+  console.log(`[local-api-server] snapshot endpoint: http://localhost:${PORT}/api/markets/snapshot`);
+  console.log(`[local-api-server] live endpoint: http://localhost:${PORT}/api/market/live-quotes-stream`);
 });
 

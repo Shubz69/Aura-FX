@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaEye } from 'react-icons/fa';
 import { getInstrumentByChartSymbol, normalizeSymbol } from '../../data/terminalInstruments';
 
@@ -6,6 +7,7 @@ import { getInstrumentByChartSymbol, normalizeSymbol } from '../../data/terminal
  * @param {{ watchlists?: { pairs?: unknown[], indices?: unknown[] } | null, loading?: boolean }} props
  */
 export default function OperatorWatchlists({ watchlists, loading }) {
+  const { t } = useTranslation();
   const displaySymbol = (raw) => {
     const inst = getInstrumentByChartSymbol(String(raw || ''));
     if (inst?.id) return inst.id;
@@ -17,13 +19,13 @@ export default function OperatorWatchlists({ watchlists, loading }) {
     <div className="oi-card oi-card--watch">
       <div className="oi-card__head">
         <FaEye className="oi-card__icon" aria-hidden />
-        <span className="oi-card__title">Watchlists</span>
+        <span className="oi-card__title">{t('operatorIntelligence.watchlists.title')}</span>
       </div>
-      {loading ? <p className="oi-card__muted">Loading watchlists…</p> : null}
-      {!loading && !watchlists ? <p className="oi-card__muted">No watchlist data.</p> : null}
+      {loading ? <p className="oi-card__muted">{t('operatorIntelligence.watchlists.loading')}</p> : null}
+      {!loading && !watchlists ? <p className="oi-card__muted">{t('operatorIntelligence.watchlists.none')}</p> : null}
       {!loading && watchlists ? (
         <div className="oi-watchlists-body" data-testid="oi-watchlists-scroll">
-          <p className="oi-metric-label">FX</p>
+          <p className="oi-metric-label">{t('operatorIntelligence.watchlists.fx')}</p>
           <ul className="oi-watch">
             {(watchlists.pairs || []).map((p) => (
               <li key={p.symbol} className="oi-watch__row">
@@ -33,7 +35,7 @@ export default function OperatorWatchlists({ watchlists, loading }) {
               </li>
             ))}
           </ul>
-          <p className="oi-metric-label">Indices</p>
+          <p className="oi-metric-label">{t('operatorIntelligence.watchlists.indices')}</p>
           <ul className="oi-watch">
             {(watchlists.indices || []).map((p) => (
               <li key={p.symbol} className="oi-watch__row">

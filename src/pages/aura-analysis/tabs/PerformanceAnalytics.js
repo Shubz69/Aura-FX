@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuraAnalysisData, useAuraAnalysisMetrics } from '../../../context/AuraAnalysisContext';
 import { fmtPnl, fmtPct, fmtNum } from '../../../lib/aura-analysis/analytics';
 import AuraAnalysisEmptyState from '../../../components/aura-analysis/AuraAnalysisEmptyState';
@@ -16,8 +17,8 @@ import '../../../styles/aura-analysis/AuraShared.css';
 
 function pnlCls(v) { return v > 0 ? 'aa--green' : v < 0 ? 'aa--red' : 'aa--muted'; }
 
-const MonthlyBars = memo(function MonthlyBars({ byMonth }) {
-  if (!byMonth.length) return <div className="aa-empty">No monthly data</div>;
+const MonthlyBars = memo(function MonthlyBars({ byMonth, t }) {
+  if (!byMonth.length) return <div className="aa-empty">{t('performanceAnalytics.noMonthlyData')}</div>;
   const maxAbs = Math.max(...byMonth.map(m => Math.abs(m.pnl)), 1);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -39,17 +40,17 @@ const MonthlyBars = memo(function MonthlyBars({ byMonth }) {
   );
 });
 
-const PerformanceLowerTables = memo(function PerformanceLowerTables({ a }) {
+const PerformanceLowerTables = memo(function PerformanceLowerTables({ a, t }) {
   return (
     <>
       <div className="aa-grid-2" style={{ marginBottom: 16 }}>
         <div className="aa-card">
-          <div className="aa-section-title">Instrument Breakdown</div>
-          {a.bySymbol.length === 0 ? <div className="aa-empty">No data</div> : (
+          <div className="aa-section-title">{t('performanceAnalytics.instrumentBreakdown')}</div>
+          {a.bySymbol.length === 0 ? <div className="aa-empty">{t('common.noData')}</div> : (
             <div className="aa-table-wrap">
               <table className="aa-table">
                 <thead>
-                  <tr><th>Symbol</th><th>Trades</th><th>Win%</th><th>Exp</th><th>Avg P/L</th><th>P-Factor</th><th>Net P/L</th></tr>
+                    <tr><th>{t('performanceAnalytics.symbol')}</th><th>{t('performanceAnalytics.trades')}</th><th>{t('performanceAnalytics.winRate')}</th><th>{t('performanceAnalytics.exp')}</th><th>{t('performanceAnalytics.avgPl')}</th><th>{t('performanceAnalytics.pFactor')}</th><th>{t('performanceAnalytics.netPl')}</th></tr>
                 </thead>
                 <tbody>
                   {a.bySymbol.slice(0, 12).map(s => (
@@ -70,13 +71,13 @@ const PerformanceLowerTables = memo(function PerformanceLowerTables({ a }) {
         </div>
 
         <div className="aa-card">
-          <div className="aa-section-title">Session Analysis</div>
-          {a.bySession.length === 0 ? <div className="aa-empty">No data</div> : (
+          <div className="aa-section-title">{t('performanceAnalytics.sessionAnalysis')}</div>
+          {a.bySession.length === 0 ? <div className="aa-empty">{t('common.noData')}</div> : (
             <>
               <div className="aa-table-wrap" style={{ marginBottom: 14 }}>
                 <table className="aa-table">
                   <thead>
-                    <tr><th>Session</th><th>Trades</th><th>Win%</th><th>Exp</th><th>P-Factor</th><th>Net P/L</th></tr>
+                    <tr><th>{t('performanceAnalytics.session')}</th><th>{t('performanceAnalytics.trades')}</th><th>{t('performanceAnalytics.winRate')}</th><th>{t('performanceAnalytics.exp')}</th><th>{t('performanceAnalytics.pFactor')}</th><th>{t('performanceAnalytics.netPl')}</th></tr>
                   </thead>
                   <tbody>
                     {a.bySession.map(s => (
@@ -93,7 +94,7 @@ const PerformanceLowerTables = memo(function PerformanceLowerTables({ a }) {
                 </table>
               </div>
 
-              <div className="aa-section-title" style={{ marginTop: 4 }}>Direction Breakdown</div>
+              <div className="aa-section-title" style={{ marginTop: 4 }}>{t('performanceAnalytics.directionBreakdown')}</div>
               <div style={{ display: 'flex', gap: 10 }}>
                 {[
                   { key: 'buy', label: 'Long', col: '#f8c37d', data: a.byDirection.buy },
@@ -120,7 +121,7 @@ const PerformanceLowerTables = memo(function PerformanceLowerTables({ a }) {
       </div>
 
       <div className="aa-card" style={{ marginBottom: 16 }}>
-        <div className="aa-section-title">Weekday Performance</div>
+        <div className="aa-section-title">{t('performanceAnalytics.weekdayPerformance')}</div>
         <div className="aa-wd-grid">
           {a.byWeekday.map(w => (
             <div key={w.day} className={`aa-wd-cell ${w.pnl > 0 ? 'aa-wd-cell--pos' : w.pnl < 0 ? 'aa-wd-cell--neg' : ''}`}>
@@ -151,6 +152,7 @@ const PerformanceLowerTables = memo(function PerformanceLowerTables({ a }) {
 });
 
 const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
+  const { t } = useTranslation();
   const { analytics: a, analyticsDataKey } = useAuraAnalysisMetrics();
   useAuraPerfSection('PerformanceAnalytics.body');
   const deferHeavyCharts = useIdleDeferredReady(analyticsDataKey || '');
@@ -161,11 +163,11 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
 
       <div className="aa-grid-5" style={{ marginBottom: 12 }}>
         {[
-          { label: 'Total Trades', value: a.totalTrades, sub: `${a.wins}W · ${a.losses}L` },
-          { label: 'Win Rate', value: fmtPct(a.winRate), cls: a.winRate >= 50 ? 'aa--green' : 'aa--red' },
-          { label: 'Net P/L', value: fmtPnl(a.totalPnl), cls: pnlCls(a.totalPnl) },
-          { label: 'Profit Factor', value: a.profitFactor > 0 ? fmtNum(a.profitFactor) : '—', cls: a.profitFactor >= 1 ? 'aa--green' : 'aa--red' },
-          { label: 'Expectancy', value: a.expectancy !== 0 ? fmtPnl(a.expectancy) : '—', cls: pnlCls(a.expectancy), sub: 'per trade' },
+          { label: t('performanceAnalytics.totalTrades'), value: a.totalTrades, sub: `${a.wins}W · ${a.losses}L` },
+          { label: t('performanceAnalytics.winRate'), value: fmtPct(a.winRate), cls: a.winRate >= 50 ? 'aa--green' : 'aa--red' },
+          { label: t('performanceAnalytics.netPl'), value: fmtPnl(a.totalPnl), cls: pnlCls(a.totalPnl) },
+          { label: t('performanceAnalytics.profitFactor'), value: a.profitFactor > 0 ? fmtNum(a.profitFactor) : '—', cls: a.profitFactor >= 1 ? 'aa--green' : 'aa--red' },
+          { label: t('performanceAnalytics.expectancy'), value: a.expectancy !== 0 ? fmtPnl(a.expectancy) : '—', cls: pnlCls(a.expectancy), sub: t('performanceAnalytics.perTrade') },
         ].map(({ label, value, sub, cls }) => (
           <div key={label} className="aa-kpi">
             <span className="aa-kpi-label">{label}</span>
@@ -177,10 +179,10 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
 
       <div className="aa-grid-2" style={{ marginBottom: 16 }}>
         <div>
-          <AuraEquityAreaChart curve={a.equityCurve} height={132} title="Equity curve" />
-          <div className="aa-section-title" style={{ margin: '12px 0 8px' }}>Intraday footprint (UTC)</div>
+          <AuraEquityAreaChart curve={a.equityCurve} height={132} title={t('performanceAnalytics.equityCurve')} />
+          <div className="aa-section-title" style={{ margin: '12px 0 8px' }}>{t('performanceAnalytics.intradayFootprint')}</div>
           <AuraHourOfDayStrip byHourUtc={a.byHourUtc} />
-          <div className="aa-section-title" style={{ margin: '14px 0 8px' }}>P/L histogram</div>
+          <div className="aa-section-title" style={{ margin: '14px 0 8px' }}>{t('performanceAnalytics.plHistogram')}</div>
           {deferHeavyCharts ? (
             <AuraPnlHistogram bins={a.pnlHistogram} height={100} />
           ) : (
@@ -195,7 +197,7 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
           )}
           {a.institutional?.rollingExpectancy?.series?.length > 0 && (
             deferHeavyCharts ? (
-              <AuraRollingExpectancyChart series={a.institutional.rollingExpectancy.series} height={92} title="Rolling expectancy" />
+              <AuraRollingExpectancyChart series={a.institutional.rollingExpectancy.series} height={92} title={t('performanceAnalytics.rollingExpectancy')} />
             ) : (
               <div className="aa-skeleton aa-skeleton-chart" style={{ height: 92 }} aria-hidden />
             )
@@ -216,8 +218,8 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
           )}
         </div>
         <div className="aa-card">
-          <div className="aa-section-title">Monthly P/L</div>
-          <MonthlyBars byMonth={a.byMonth} />
+          <div className="aa-section-title">{t('performanceAnalytics.monthlyPl')}</div>
+          <MonthlyBars byMonth={a.byMonth} t={t} />
         </div>
       </div>
 
@@ -243,7 +245,7 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
 
       {a.institutional?.distribution?.pnlQuantiles && a.totalTrades > 0 && (
         <div className="aa-card" style={{ marginBottom: 16 }}>
-          <div className="aa-section-title">Realized P/L quantiles</div>
+          <div className="aa-section-title">{t('performanceAnalytics.realizedPlQuantiles')}</div>
           <div className="aa-grid-5">
             {[
               { k: 'p1', label: 'P1' },
@@ -258,7 +260,7 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
                 <div key={k} className="aa-kpi">
                   <span className="aa-kpi-label">{label}</span>
                   <span className="aa-kpi-value">{v}</span>
-                  <span className="aa-kpi-sub">Per trade $</span>
+                  <span className="aa-kpi-sub">{t('performanceAnalytics.perTradeUsd')}</span>
                 </div>
               );
             })}
@@ -279,7 +281,7 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
             </div>
           </>
         ) : (
-          <PerformanceLowerTables a={a} />
+          <PerformanceLowerTables a={a} t={t} />
         )}
       </div>
 
@@ -288,6 +290,7 @@ const PerformanceAnalyticsBody = memo(function PerformanceAnalyticsBody() {
 });
 
 export default function PerformanceAnalytics() {
+  const { t } = useTranslation();
   const { trades, loading, error, activePlatformId, connections } = useAuraAnalysisData();
   const needsConnection = !connections?.length || !activePlatformId;
 
@@ -306,11 +309,11 @@ export default function PerformanceAnalytics() {
         <AuraAnalysisEmptyState
           icon="mt5"
           variant={needsConnection ? 'connect' : 'data'}
-          title={needsConnection ? 'Connect to view performance' : 'No trades in this period'}
+          title={needsConnection ? t('performanceAnalytics.connectToViewPerformance') : t('performanceAnalytics.noTradesInPeriod')}
           description={
             needsConnection
-              ? 'Connect MetaTrader from the Connection Hub to unlock win rate, equity trends, and monthly breakdowns.'
-              : 'Nothing matched your filters for this date range yet. Try a wider range or refresh after new closed trades.'
+              ? t('performanceAnalytics.connectDescription')
+              : t('performanceAnalytics.noTradesDescription')
           }
         />
       </div>

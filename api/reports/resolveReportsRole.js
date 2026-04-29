@@ -13,7 +13,11 @@
 
 function resolveNominalReportsRole(user) {
   if (!user) return 'access';
-  const role = (user.role || '').toString().trim().toLowerCase();
+  const role = (user.role || '')
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
   const plan = (user.subscription_plan || '').toString().trim().toLowerCase();
   // JWT/API permission roles (USER) never imply paid tier — use subscription_plan
   if (['admin', 'super_admin'].includes(role)) return 'admin';

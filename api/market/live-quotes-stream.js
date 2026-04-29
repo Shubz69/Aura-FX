@@ -9,6 +9,7 @@ const {
   ensureConnected,
 } = require('../market-data/twelveWsManager');
 const { stats: tdRestStats } = require('../market-data/tdRateLimiter');
+let activeSseClients = 0;
 
 function parseSymbols(queryValue) {
   return String(queryValue || '')
@@ -33,8 +34,12 @@ module.exports = async (req, res) => {
     return res.status(400).json({ success: false, message: 'symbols query is required' });
   }
 
-  const sub = subscribeSymbols(symbols);
+  subscribeSymbols(symbols);
   ensureConnected();
+  activeSseClients += 1;
+  if (typeof console !== 'undefined' && console.debug) {
+    console.debug('[live-quotes-stream] client connected', { activeSseClients, symbols: symbols.length });
+  }
 
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/event-stream');
@@ -70,6 +75,7 @@ module.exports = async (req, res) => {
         twelveRestBudgetRemaining: Math.max(0, rest.maxRpm - rest.rollingWindowUsedSlots),
         twelveWsActiveSubscriptions: diag.twelveWsActiveSubscriptions,
         twelveWsMessagesReceived: diag.twelveWsMessagesReceived,
+        activeSseClients,
       })}\n\n`
     );
   }, 15000);
@@ -78,5 +84,9 @@ module.exports = async (req, res) => {
     clearInterval(heartbeat);
     stop();
     releaseSymbols(symbols);
+    activeSseClients = Math.max(0, activeSseClients - 1);
+    if (typeof console !== 'undefined' && console.debug) {
+      console.debug('[live-quotes-stream] client disconnected', { activeSseClients, symbols: symbols.length });
+    }
   });
 };

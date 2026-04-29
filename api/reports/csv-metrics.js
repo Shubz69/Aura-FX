@@ -157,24 +157,33 @@ module.exports = async (req, res) => {
     const now = new Date();
     let year = jsonNumber(req.query?.year, NaN);
     let month = jsonNumber(req.query?.month, NaN);
-    if (!Number.isFinite(year) || year < 2000 || year > 2100) year = now.getFullYear();
-    if (!Number.isFinite(month) || month < 1 || month > 12) month = now.getMonth() + 1;
+    const hasExplicitPeriod = Number.isFinite(year) && Number.isFinite(month) && month >= 1 && month <= 12;
+    if (!hasExplicitPeriod) {
+      year = NaN;
+      month = NaN;
+    }
 
-    const [rows] = await executeQuery(
-      'SELECT upload_json, trade_count, uploaded_at FROM report_csv_uploads WHERE user_id = ? AND period_year = ? AND period_month = ?',
-      [userId, year, month]
-    ).catch(() => [[]]);
+    const [rows] = hasExplicitPeriod
+      ? await executeQuery(
+          'SELECT period_year, period_month, upload_json, trade_count, uploaded_at FROM report_csv_uploads WHERE user_id = ? AND period_year = ? AND period_month = ?',
+          [userId, year, month]
+        ).catch(() => [[]])
+      : await executeQuery(
+          'SELECT period_year, period_month, upload_json, trade_count, uploaded_at FROM report_csv_uploads WHERE user_id = ? ORDER BY uploaded_at DESC, id DESC LIMIT 1',
+          [userId]
+        ).catch(() => [[]]);
 
     const row = rows?.[0];
     if (!row || !row.upload_json) {
-      const periodIsFutureEmpty = year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth() + 1);
       return res.status(200).json({
         success: true,
         hasData: false,
-        period: { year, month },
-        periodIsFuture: periodIsFutureEmpty,
+        period: hasExplicitPeriod ? { year, month } : null,
+        periodIsFuture: false,
       });
     }
+    const resolvedYear = jsonNumber(row.period_year, now.getFullYear());
+    const resolvedMonth = jsonNumber(row.period_month, now.getMonth() + 1);
 
     let parsed;
     try {
@@ -200,12 +209,12 @@ module.exports = async (req, res) => {
       meta.storedTradeCount = trades.length;
     }
 
-    const periodIsFuture = year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth() + 1);
+    const periodIsFuture = resolvedYear > now.getFullYear() || (resolvedYear === now.getFullYear() && resolvedMonth > now.getMonth() + 1);
 
     return res.status(200).json({
       success: true,
       hasData: true,
-      period: { year, month },
+      period: { year: resolvedYear, month: resolvedMonth },
       periodIsFuture,
       uploaded_at: row.uploaded_at,
       trade_count: summary.tradeCount,

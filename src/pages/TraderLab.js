@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import { useAuth } from '../context/AuthContext';
@@ -45,12 +46,17 @@ import '../styles/trader-deck/TraderLabLayout.css';
 
 const CHART_INTERVALS = [
   { label: '1m', value: '1' },
+  { label: '5m', value: '5' },
   { label: '15m', value: '15' },
+  { label: '30m', value: '30' },
+  { label: '45m', value: '45' },
   { label: '1H', value: '60' },
   { label: '4H', value: '240' },
   { label: '1D', value: '1D' },
+  { label: '1W', value: '1W' },
+  { label: '1mo', value: '1M' },
+  { label: '1y', value: '1Y' },
 ];
-const CHART_RANGES = ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', '10Y', '20Y', '50Y'];
 
 const LOADING_TERMINAL_STATS = [
   { label: 'Market State', value: '…', tone: 'gold' },
@@ -106,8 +112,7 @@ const DEFAULT_FORM = {
   decoderExport: null,
   /** Candle timeframe for `/api/market/chart-history` (1, 15, 60, 240, 1D). */
   chartInterval: '60',
-  /** Visible history range (1D … 50Y). */
-  chartRange: '3M',
+  tradePlanInstrument: 'OANDA:XAUUSD',
 };
 
 const TRADER_LAB_LOCAL_DRAFT_KEY = 'aura_trader_lab_last_draft_v1';
@@ -177,12 +182,11 @@ function normalizeSession(session = {}) {
     traderThesisUpdatedAt: raw.traderThesisUpdatedAt != null ? raw.traderThesisUpdatedAt : DEFAULT_FORM.traderThesisUpdatedAt,
     decoderExport: normalizedDecoderExport || DEFAULT_FORM.decoderExport,
   };
+  merged.tradePlanInstrument = merged.tradePlanInstrument || merged.chartSymbol;
   if (!raw.conviction && raw.confidence != null) {
     merged.conviction = confidenceToConviction(raw.confidence);
   }
   merged.chartInterval = normalizeApiInterval(raw.chartInterval ?? merged.chartInterval);
-  const rangeRaw = String(raw.chartRange || merged.chartRange || '3M').toUpperCase();
-  merged.chartRange = CHART_RANGES.includes(rangeRaw) ? rangeRaw : merged.chartRange || '3M';
   return merged;
 }
 
@@ -230,6 +234,65 @@ function chartSymbolFromDecoded(decodedSymbol) {
   return chartSymbolFromDecodedBase(decodedSymbol, DEFAULT_FORM.chartSymbol);
 }
 
+function symbolTokenFromChartSymbol(chartSymbol) {
+  const raw = String(chartSymbol || '').trim();
+  if (!raw) return '';
+  return raw.includes(':') ? raw.split(':')[1] : raw;
+}
+
+function assetClassForSymbol(chartSymbol) {
+  const token = symbolTokenFromChartSymbol(chartSymbol).toUpperCase();
+  if (!token) return 'generic';
+  if (/^(BTC|ETH|SOL|ADA|XRP|LTC|DOGE)/.test(token)) return 'crypto';
+  if (/^(XAU|XAG|USOIL|UKOIL|WTI|BRENT|SPX|NAS100|US30|GER40|DAX|NIKKEI|FTSE|CAC40)/.test(token)) return 'macro';
+  if (/JPY$/.test(token)) return 'fx-jpy';
+  if (/^[A-Z]{6}$/.test(token)) return 'fx-major';
+  return 'generic';
+}
+
+function defaultPrecisionForSymbol(chartSymbol) {
+  const assetClass = assetClassForSymbol(chartSymbol);
+  if (assetClass === 'fx-major') return 5;
+  if (assetClass === 'fx-jpy') return 3;
+  return 2;
+}
+
+function roundToPrecision(value, precision) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const p = Math.max(0, Number(precision) || 0);
+  const f = 10 ** p;
+  return Math.round(n * f) / f;
+}
+
+function derivePlanLevels(chartSymbol, latestClose) {
+  const assetClass = assetClassForSymbol(chartSymbol);
+  const fallbackByClass = {
+    'fx-major': 1.175,
+    'fx-jpy': 154.2,
+    macro: 2235,
+    crypto: 64000,
+    generic: 100,
+  };
+  const entryRaw = Number.isFinite(Number(latestClose))
+    ? Number(latestClose)
+    : fallbackByClass[assetClass] || fallbackByClass.generic;
+  const pctByClass = {
+    'fx-major': 0.0035,
+    'fx-jpy': 0.003,
+    macro: 0.008,
+    crypto: 0.02,
+    generic: 0.01,
+  };
+  const stopPct = pctByClass[assetClass] || pctByClass.generic;
+  const targetPct = stopPct * 1.5;
+  const precision = defaultPrecisionForSymbol(chartSymbol);
+  const entry = roundToPrecision(entryRaw, precision);
+  const stop = roundToPrecision(entryRaw * (1 - stopPct), precision);
+  const target = roundToPrecision(entryRaw * (1 + targetPct), precision);
+  return { entry, stop, target, precision };
+}
+
 function displaySymbolFromChartSymbol(chartSymbol) {
   const raw = String(chartSymbol || '');
   if (!raw) return '—';
@@ -246,6 +309,7 @@ function BiasPill({ bias }) {
 }
 
 export default function TraderLab() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -257,6 +321,8 @@ export default function TraderLab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
+  const [latestClose, setLatestClose] = useState(null);
+  const [planPricePrecision, setPlanPricePrecision] = useState(defaultPrecisionForSymbol(DEFAULT_FORM.chartSymbol));
   const decoderImportAppliedRef = React.useRef(false);
 
   useEffect(() => {
@@ -470,7 +536,7 @@ export default function TraderLab() {
     } catch {
       // ignore
     }
-    toast.success('Market Decoder context imported into Trader Lab. Save to keep it.');
+    toast.success(t('traderLab.toast.decoderImported'));
   }, [loading]);
 
   const rr = useMemo(
@@ -584,6 +650,23 @@ export default function TraderLab() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const applyTradePlanDefaultsForSymbol = React.useCallback((chartSymbol, closeHint = null) => {
+    const levels = derivePlanLevels(chartSymbol, closeHint);
+    setPlanPricePrecision(levels.precision);
+    setForm((prev) => ({
+      ...prev,
+      chartSymbol,
+      tradePlanInstrument: chartSymbol,
+      entryPrice: levels.entry,
+      stopLoss: levels.stop,
+      targetPrice: levels.target,
+    }));
+  }, []);
+
+  const handleInstrumentChange = (nextSymbol) => {
+    applyTradePlanDefaultsForSymbol(nextSymbol, latestClose);
+  };
+
   const saveSession = async () => {
     setSaving(true);
     try {
@@ -604,13 +687,13 @@ export default function TraderLab() {
         writeLocalDraft(saved);
         setLastSavedAt(new Date().toISOString());
       }
-      toast.success('Trader Lab saved');
+      toast.success(t('traderLab.toast.saved'));
     } catch (error) {
       console.error(error);
       const fallback = normalizeSession({ ...form, rrRatio: rr });
       writeLocalDraft(fallback);
       setLastSavedAt(new Date().toISOString());
-      toast.warning('Cloud save failed. Saved locally on this device.');
+      toast.warning(t('traderLab.toast.cloudSaveFailed'));
     } finally {
       setSaving(false);
     }
@@ -632,7 +715,7 @@ export default function TraderLab() {
   const deleteSavedLab = async (sessionId, event) => {
     event?.stopPropagation?.();
     if (!sessionId) return;
-    const ok = window.confirm('Remove this saved lab from your archive?');
+    const ok = window.confirm(t('traderLab.confirm.removeSavedLab'));
     if (!ok) return;
     const nextList = sessions.filter((s) => s.id !== sessionId);
     try {
@@ -648,18 +731,54 @@ export default function TraderLab() {
           setLastSavedAt(null);
         }
       }
-      toast.success('Lab removed');
+      toast.success(t('traderLab.toast.removed'));
     } catch (err) {
       console.error(err);
-      toast.error('Could not remove lab');
+      toast.error(t('traderLab.toast.removeFailed'));
     }
   };
 
   const readyToExecute = validator.passed && rrOk;
 
+  useEffect(() => {
+    const precision = defaultPrecisionForSymbol(form.chartSymbol);
+    setPlanPricePrecision(precision);
+  }, [form.chartSymbol]);
+
+  useEffect(() => {
+    if (loading) return;
+    const chartSymbol = form.chartSymbol;
+    const planInstrument = form.tradePlanInstrument || chartSymbol;
+    if (planInstrument === chartSymbol) return;
+    applyTradePlanDefaultsForSymbol(chartSymbol, latestClose);
+  }, [applyTradePlanDefaultsForSymbol, form.chartSymbol, form.tradePlanInstrument, latestClose, loading]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    const payload = {
+      selectedInstrument: form.chartSymbol,
+      chartSymbol: form.chartSymbol,
+      tradePlanInstrument: form.tradePlanInstrument || form.chartSymbol,
+      entry: form.entryPrice,
+      stop: form.stopLoss,
+      target: form.targetPrice,
+      latestClose,
+      interval: form.chartInterval,
+    };
+    console.debug('[TraderLab][SyncDiagnostics]', payload);
+  }, [
+    form.chartSymbol,
+    form.tradePlanInstrument,
+    form.entryPrice,
+    form.stopLoss,
+    form.targetPrice,
+    latestClose,
+    form.chartInterval,
+  ]);
+
   const handleExecute = async () => {
     if (!readyToExecute) {
-      toast.warning('Complete the Decision Engine checks and ensure reward:risk is at least 1:1.');
+      toast.warning(t('traderLab.toast.completeDecisionChecks'));
       return;
     }
     setSaving(true);
@@ -687,12 +806,12 @@ export default function TraderLab() {
       } catch (e) {
         console.warn(e);
       }
-      toast.success('Saved. Opening The Operator checklist.');
+      toast.success(t('traderLab.toast.savedOpeningChecklist'));
       navigate('/trader-deck/trade-validator/checklist', { state: { fromTraderLab: true } });
     } catch (error) {
       console.error(error);
       writeLocalDraft(normalizeSession({ ...form, rrRatio: rr }));
-      toast.error('Could not execute this trade plan yet.');
+      toast.error(t('traderLab.toast.executeFailed'));
     } finally {
       setSaving(false);
     }
@@ -711,9 +830,9 @@ export default function TraderLab() {
 <TraderSuiteShell
   variant="terminal"
   eyebrow={welcomeEyebrow}
-  terminalSubtitle="Focus. Execute. Profit."
+  terminalSubtitle={t('traderLab.terminalSubtitle')}
   terminalTitlePrefix={null}
-  title="AURA TERMINAL™ — TRADER LAB"
+  title={t('traderLab.terminalTitle')}
       description={null}
       stats={loading ? LOADING_TERMINAL_STATS : stats}
       primaryAction={
@@ -723,13 +842,13 @@ export default function TraderLab() {
           onClick={saveSession}
           disabled={saving || loading}
         >
-          {saving ? 'Saving...' : 'Save lab'}
+          {saving ? t('traderLab.saving') : t('traderLab.saveLab')}
         </button>
       }
       secondaryActions={
         <>
           <button type="button" className="trader-suite-btn" onClick={createFreshSession} disabled={loading}>
-            New session
+            {t('traderLab.newSession')}
           </button>
         </>
       }
@@ -741,13 +860,13 @@ export default function TraderLab() {
           {/* LEFT RAIL - Reorganized: Trade Thesis → Key Drivers → Risk & Geopolitical → Session Focus */}
           <aside className="trader-lab-v2__left">
             <div className="tlab-card tlab-card--gold tlab-card--bias-rail">
-              <h3 className="tlab-card__title">Trade thesis</h3>
+              <h3 className="tlab-card__title">{t('traderLab.tradeThesis')}</h3>
               <div className="tlab-pill-row">
                 <BiasPill bias={form.marketBias} />
                 <span className="tlab-pill-confidence">{form.auraConfidence}%</span>
               </div>
               <div className="tlab-field" style={{ marginBottom: 8 }}>
-                <label>Bias</label>
+                <label>{t('traderLab.bias')}</label>
                 <select className="tlab-select" value={form.marketBias} onChange={(e) => updateField('marketBias', e.target.value)}>
                   {['Bullish', 'Bearish', 'Neutral', 'Bullish intraday'].map((s) => (
                     <option key={s} value={s}>{s}</option>
@@ -765,13 +884,13 @@ export default function TraderLab() {
                 className="tlab-range"
                 value={form.auraConfidence}
                 onChange={(e) => updateField('auraConfidence', safeNumber(e.target.value))}
-                aria-label="Aura confidence"
+                aria-label={t('traderLab.auraConfidence')}
               />
               <div className="tlab-progress">
                 <span style={{ width: `${safeNumber(form.auraConfidence, 0)}%` }} />
               </div>
               <div className="tlab-field" style={{ marginTop: 10 }}>
-                <label>Market state</label>
+                <label>{t('traderLab.marketState')}</label>
                 <select className="tlab-select" value={form.marketState} onChange={(e) => updateField('marketState', e.target.value)}>
                   {['Trending', 'Ranging', 'Volatile', 'Quiet'].map((s) => (
                     <option key={s} value={s}>{s}</option>
@@ -781,28 +900,28 @@ export default function TraderLab() {
             </div>
 
             <div className="tlab-card tlab-card--gold tlab-card--key-drivers-rail">
-              <h3 className="tlab-card__title">Key drivers</h3>
-              <p className="tlab-card__subnote">One driver per line</p>
+              <h3 className="tlab-card__title">{t('traderLab.keyDrivers')}</h3>
+              <p className="tlab-card__subnote">{t('traderLab.oneDriverPerLine')}</p>
               <textarea
                 className="tlab-textarea tlab-textarea--tight"
                 rows={5}
                 value={form.keyDrivers}
                 onChange={(e) => updateField('keyDrivers', e.target.value)}
-                placeholder="One line per driver…"
-                aria-label="Key drivers"
+                placeholder={t('traderLab.oneLinePerDriver')}
+                aria-label={t('traderLab.keyDrivers')}
               />
             </div>
 
             {/* RISK & GEOPOLITICAL - MOVED FROM CENTER COLUMN */}
             <div className="tlab-card tlab-card--gold tlab-card--desk-context">
-              <h3 className="tlab-card__title">Risk & geopolitical</h3>
-              <p className="tlab-hint tlab-hint--tight">Region | sentiment (one per line)</p>
+              <h3 className="tlab-card__title">{t('traderLab.riskGeopolitical')}</h3>
+              <p className="tlab-hint tlab-hint--tight">{t('traderLab.regionSentiment')}</p>
               <div className="tlab-table-wrap tlab-table-wrap--compact">
                 <table className="tlab-table tlab-table--compact">
                   <thead>
                     <tr>
-                      <th>Region</th>
-                      <th>Sentiment</th>
+                      <th>{t('traderLab.region')}</th>
+                      <th>{t('traderLab.sentiment')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -820,26 +939,26 @@ export default function TraderLab() {
                 </table>
               </div>
               <details className="tlab-geo-inline-edit">
-                <summary>Edit region lines</summary>
+                <summary>{t('traderLab.editRegionLines')}</summary>
                 <textarea
                   className="tlab-textarea tlab-textarea--tight tlab-textarea--geo-inline"
                   value={form.todaysFocus}
                   onChange={(e) => updateField('todaysFocus', e.target.value)}
-                  aria-label="Geopolitical backing lines"
+                  aria-label={t('traderLab.geopoliticalBackingLines')}
                 />
               </details>
               <table className="tlab-table tlab-table--compact tlab-table--risk-inline">
                 <tbody>
                   <tr>
-                    <td>Volatility</td>
+                    <td>{t('traderLab.volatility')}</td>
                     <td><span className="tlab-pill tlab-pill--warn">{volLabel}</span></td>
                   </tr>
                   <tr>
-                    <td>News risk</td>
+                    <td>{t('traderLab.newsRisk')}</td>
                     <td><span className="tlab-pill tlab-pill--ok">{newsRiskLabel}</span></td>
                   </tr>
                   <tr>
-                    <td>Event risk</td>
+                    <td>{t('traderLab.eventRisk')}</td>
                     <td><span className="tlab-pill tlab-pill--ok">{eventRiskLabel}</span></td>
                   </tr>
                 </tbody>
@@ -923,37 +1042,30 @@ export default function TraderLab() {
                       <select
                         className="tlab-select"
                         value={form.chartSymbol}
-                        onChange={(e) => updateField('chartSymbol', e.target.value)}
+                        onChange={(e) => handleInstrumentChange(e.target.value)}
                         aria-label="Instrument"
                       >
                         {instrumentOptions.map((opt) => (
                           <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
                       </select>
-                      <div className="tlab-tf-group" role="tablist" aria-label="Candle timeframe">
-                        {CHART_INTERVALS.map((tf) => (
-                          <button
-                            key={tf.value}
-                            type="button"
-                            role="tab"
-                            aria-selected={form.chartInterval === tf.value}
-                            className={`tlab-tf${form.chartInterval === tf.value ? ' tlab-tf--active' : ''}`}
-                            onClick={() => updateField('chartInterval', tf.value)}
-                          >
-                            {tf.label}
-                          </button>
-                        ))}
+                      <div>
+                        <div className="tlab-hint tlab-hint--tight">Candle timeframe</div>
+                        <div className="tlab-tf-group" role="tablist" aria-label="Candle timeframe">
+                          {CHART_INTERVALS.map((tf) => (
+                            <button
+                              key={tf.value}
+                              type="button"
+                              role="tab"
+                              aria-selected={form.chartInterval === tf.value}
+                              className={`tlab-tf${form.chartInterval === tf.value ? ' tlab-tf--active' : ''}`}
+                              onClick={() => updateField('chartInterval', tf.value)}
+                            >
+                              {tf.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <select
-                        className="tlab-select"
-                        value={form.chartRange}
-                        onChange={(e) => updateField('chartRange', e.target.value)}
-                        aria-label="Chart range"
-                      >
-                        {CHART_RANGES.map((r) => (
-                          <option key={r} value={r}>{r}</option>
-                        ))}
-                      </select>
                     </div>
                     {sessions.length ? (
                       <div className="tlab-session-tabs-inline" role="tablist" aria-label="Recent saved sessions">
@@ -979,7 +1091,10 @@ export default function TraderLab() {
                     <LightweightInstrumentChart
                       symbol={form.chartSymbol}
                       interval={normalizeApiInterval(form.chartInterval)}
-                      range={form.chartRange}
+                      onDataLoaded={(meta) => {
+                        const close = Number(meta?.latestClose);
+                        if (Number.isFinite(close)) setLatestClose(close);
+                      }}
                       fillParent
                       className="trader-suite-chart-frame"
                     />
@@ -1127,7 +1242,7 @@ export default function TraderLab() {
               <h3 className="tlab-card__title">Trade plan builder</h3>
               <div className="tlab-field">
                 <label>Instrument</label>
-                <select className="tlab-select" value={form.chartSymbol} onChange={(e) => updateField('chartSymbol', e.target.value)}>
+                <select className="tlab-select" value={form.chartSymbol} onChange={(e) => handleInstrumentChange(e.target.value)}>
                   {instrumentOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
@@ -1141,7 +1256,7 @@ export default function TraderLab() {
                     type="number"
                     step="any"
                     value={form.entryPrice}
-                    onChange={(e) => updateField('entryPrice', e.target.value)}
+                    onChange={(e) => updateField('entryPrice', roundToPrecision(e.target.value, planPricePrecision))}
                   />
                 </div>
                 <div className="tlab-field">
@@ -1151,7 +1266,7 @@ export default function TraderLab() {
                     type="number"
                     step="any"
                     value={form.stopLoss}
-                    onChange={(e) => updateField('stopLoss', e.target.value)}
+                    onChange={(e) => updateField('stopLoss', roundToPrecision(e.target.value, planPricePrecision))}
                   />
                 </div>
                 <div className="tlab-field">
@@ -1161,7 +1276,7 @@ export default function TraderLab() {
                     type="number"
                     step="any"
                     value={form.targetPrice}
-                    onChange={(e) => updateField('targetPrice', e.target.value)}
+                    onChange={(e) => updateField('targetPrice', roundToPrecision(e.target.value, planPricePrecision))}
                   />
                 </div>
                 <div className="tlab-field">

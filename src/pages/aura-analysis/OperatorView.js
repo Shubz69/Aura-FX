@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { FaArrowLeft, FaCheckSquare, FaImage, FaPlus, FaTimes } from 'react-icons/fa';
@@ -128,6 +129,7 @@ function labelsInCard(items) {
 }
 
 function TemplatePickerModal({ sectionTitle, templateRows, existingLabels, onClose, onConfirm }) {
+  const { t } = useTranslation();
   const [picked, setPicked] = useState(() => new Set(templateRows.map((_, i) => i)));
 
   const toggle = (idx) => {
@@ -188,13 +190,13 @@ function TemplatePickerModal({ sectionTitle, templateRows, existingLabels, onClo
   const modal = (
     <div className="tv-modal-overlay" role="presentation" onClick={onClose}>
       <div className="tv-modal" role="dialog" aria-labelledby="tv-template-modal-title" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="tv-modal-close" onClick={onClose} aria-label="Close">
+        <button type="button" className="tv-modal-close" onClick={onClose} aria-label={t('common.close')}>
           <FaTimes />
         </button>
         <h2 id="tv-template-modal-title" className="tv-modal-title">
-          Aura template · {sectionTitle}
+          {t('tradeValidator.modal.auraTemplate')} · {sectionTitle}
         </h2>
-        <p className="tv-modal-sub">Select lines to add, or add every template line at once.</p>
+        <p className="tv-modal-sub">{t('tradeValidator.modal.selectLines')}</p>
         <ul className="tv-template-list">
           {templateRows.map((row, idx) => (
             <li key={`${row.label}-${idx}`} className="tv-template-row">
@@ -207,13 +209,13 @@ function TemplatePickerModal({ sectionTitle, templateRows, existingLabels, onClo
         </ul>
         <div className="tv-modal-actions">
           <button type="button" className="tv-modal-btn tv-modal-btn--ghost" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className="tv-modal-btn tv-modal-btn--secondary" onClick={handleAddSelected}>
-            Save selection
+            {t('tradeValidator.modal.saveSelection')}
           </button>
           <button type="button" className="tv-modal-btn tv-modal-btn--primary" onClick={handleAddAll}>
-            Save all lines
+            {t('tradeValidator.modal.saveAllLines')}
           </button>
         </div>
       </div>
@@ -224,6 +226,7 @@ function TemplatePickerModal({ sectionTitle, templateRows, existingLabels, onClo
 }
 
 function CustomLineModal({ sectionTitle, onClose, onAdd }) {
+  const { t } = useTranslation();
   const [value, setValue] = useState('');
   const inputRef = useRef(null);
 
@@ -247,7 +250,7 @@ function CustomLineModal({ sectionTitle, onClose, onAdd }) {
   const submit = () => {
     const label = value.trim();
     if (!label) {
-      toast.info('Enter a checklist line first.');
+      toast.info(t('tradeValidator.modal.enterChecklistLine'));
       return;
     }
     onAdd({ id: newRowId(), label });
@@ -257,28 +260,28 @@ function CustomLineModal({ sectionTitle, onClose, onAdd }) {
   const modal = (
     <div className="tv-modal-overlay" role="presentation" onClick={onClose}>
       <div className="tv-modal tv-modal--narrow" role="dialog" aria-labelledby="tv-custom-modal-title" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="tv-modal-close" onClick={onClose} aria-label="Close">
+        <button type="button" className="tv-modal-close" onClick={onClose} aria-label={t('common.close')}>
           <FaTimes />
         </button>
         <h2 id="tv-custom-modal-title" className="tv-modal-title">
-          Your line · {sectionTitle}
+          {t('tradeValidator.modal.yourLine')} · {sectionTitle}
         </h2>
-        <p className="tv-modal-sub">Write a single rule or reminder for this checklist section.</p>
+        <p className="tv-modal-sub">{t('tradeValidator.modal.writeSingleRule')}</p>
         <input
           ref={inputRef}
           className="tv-modal-input"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && submit()}
-          placeholder="e.g. Wait for London open volatility to settle"
+          placeholder={t('tradeValidator.modal.linePlaceholder')}
           maxLength={240}
         />
         <div className="tv-modal-actions">
           <button type="button" className="tv-modal-btn tv-modal-btn--ghost" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className="tv-modal-btn tv-modal-btn--primary" onClick={submit}>
-            Save line
+            {t('tradeValidator.modal.saveLine')}
           </button>
         </div>
       </div>
@@ -289,6 +292,7 @@ function CustomLineModal({ sectionTitle, onClose, onAdd }) {
 }
 
 function ExampleImageLightbox({ overlay, onClose, onSaveDataUrl, onRemoveImage }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef(null);
@@ -304,7 +308,7 @@ function ExampleImageLightbox({ overlay, onClose, onSaveDataUrl, onRemoveImage }
         const dataUrl = await compressImageToJpegDataUrl(file, COMPRESS_PRESETS.checklist);
         await onSaveDataUrl(dataUrl);
       } catch (err) {
-        toast.error(err?.message || 'Could not use this image.');
+        toast.error(err?.message || t('tradeValidator.image.couldNotUseImage'));
       } finally {
         setBusy(false);
       }
@@ -351,8 +355,8 @@ function ExampleImageLightbox({ overlay, onClose, onSaveDataUrl, onRemoveImage }
   if (!overlay) return null;
 
   const lightbox = (
-    <div className="tv-example-lightbox" role="dialog" aria-modal="true" aria-label="Checklist line image" onClick={onClose}>
-      <button type="button" className="tv-example-lightbox-close" onClick={onClose} aria-label="Close">
+    <div className="tv-example-lightbox" role="dialog" aria-modal="true" aria-label={t('tradeValidator.image.checklistLineImage')} onClick={onClose}>
+      <button type="button" className="tv-example-lightbox-close" onClick={onClose} aria-label={t('common.close')}>
         ×
       </button>
       <div className="tv-example-lightbox-inner" onClick={(e) => e.stopPropagation()}>
@@ -370,7 +374,7 @@ function ExampleImageLightbox({ overlay, onClose, onSaveDataUrl, onRemoveImage }
             onDragLeave={() => setDragOver(false)}
             onDrop={onDrop}
           >
-            <img src={overlay.src} alt={overlay.label || 'Checklist example'} className="tv-example-lightbox-img" />
+            <img src={overlay.src} alt={overlay.label || t('tradeValidator.image.checklistExample')} className="tv-example-lightbox-img" />
           </div>
         ) : (
           <div
@@ -387,7 +391,7 @@ function ExampleImageLightbox({ overlay, onClose, onSaveDataUrl, onRemoveImage }
             onDrop={onDrop}
           >
             <FaImage className="tv-example-lightbox-placeholder-icon" aria-hidden />
-            <p>{canEdit ? 'Add an example image for this line' : 'No example image for this line yet.'}</p>
+            <p>{canEdit ? t('tradeValidator.image.addExampleForLine') : t('tradeValidator.image.noneForLineYet')}</p>
             {canEdit ? (
               <>
                 <p className="tv-example-lightbox-hint">
@@ -401,7 +405,7 @@ function ExampleImageLightbox({ overlay, onClose, onSaveDataUrl, onRemoveImage }
                     disabled={busy}
                     onClick={() => cameraRef.current?.click()}
                   >
-                    {busy ? 'Working…' : 'Camera / photo'}
+                    {busy ? t('tradeValidator.image.working') : t('tradeValidator.image.cameraPhoto')}
                   </button>
                   <button
                     type="button"
@@ -409,7 +413,7 @@ function ExampleImageLightbox({ overlay, onClose, onSaveDataUrl, onRemoveImage }
                     disabled={busy}
                     onClick={() => fileRef.current?.click()}
                   >
-                    {busy ? 'Working…' : 'Choose file'}
+                    {busy ? t('tradeValidator.image.working') : t('tradeValidator.image.chooseFile')}
                   </button>
                 </div>
               </>
@@ -584,6 +588,7 @@ function ChecklistCard({
   onAppendItems,
   onRemoveItem,
 }) {
+  const { t } = useTranslation();
   const exampleScope = useMemo(() => ({ type: 'execution', tabId, cardId: cardMeta.id }), [tabId, cardMeta.id]);
   const pmap = useMemo(() => allocateEvenPointsById(items, cardBudget), [items, cardBudget]);
   const earned = useMemo(
@@ -609,11 +614,11 @@ function ChecklistCard({
           onTemplate={() => setTemplateOpen(true)}
         />
       </div>
-      <p className="tv-section-card-hint">Use + to add your own lines or load Aura&apos;s template (all or pick specific lines).</p>
+      <p className="tv-section-card-hint">{t('tradeValidator.sectionCardHint')}</p>
       {items.length === 0 ? (
         <div className="tv-checklist-empty">
-          <span className="tv-checklist-empty-title">No lines yet</span>
-          <span className="tv-checklist-empty-text">This section stays blank until you build your checklist.</span>
+          <span className="tv-checklist-empty-title">{t('tradeValidator.noLinesYet')}</span>
+          <span className="tv-checklist-empty-text">{t('tradeValidator.sectionBlankUntilBuild')}</span>
         </div>
       ) : (
         <div className="tv-section-list">
@@ -632,7 +637,7 @@ function ChecklistCard({
         </div>
       )}
       <p className="tv-section-score">
-        Section score <span className="tv-section-score-value">{items.length ? `${pct}%` : '—'}</span>
+        {t('tradeValidator.sectionScore')} <span className="tv-section-score-value">{items.length ? `${pct}%` : '—'}</span>
       </p>
 
       {templateOpen && (

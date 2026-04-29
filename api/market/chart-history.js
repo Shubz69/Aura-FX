@@ -18,7 +18,7 @@ const TD_USAGE_TTL_MS = 5 * 60_000;
 const responseCache = new Map();
 const inFlight = new Map();
 const providerCallCounts = new Map();
-const VALID_INTERVALS = new Set(['1', '15', '60', '240', '1D', 'D', '1W', '1M']);
+const VALID_INTERVALS = new Set(['1', '5', '15', '30', '45', '60', '240', '1D', 'D', '1W', '1M', '1Y']);
 const VALID_RANGES = new Set(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', '10Y', '20Y', '50Y']);
 const TWELVE_BASE = 'https://api.twelvedata.com/time_series';
 const TD_PAGE_SIZE = 5000;
@@ -77,15 +77,26 @@ function twelveDataSymbolForCanonical(canonical) {
  */
 function normalizeInterval(input) {
   const raw = String(input || '60').toUpperCase();
+  if (raw === 'Y' || raw === '1Y') return '1Y';
+  if (raw === 'MO' || raw === '1MO') return '1M';
   if (raw === 'D') return '1D';
   if (raw === 'W') return '1W';
   if (raw === 'M') return '1M';
   return VALID_INTERVALS.has(raw) ? raw : '60';
 }
 
-function normalizeRange(input) {
-  const raw = String(input || '3M').toUpperCase();
-  return VALID_RANGES.has(raw) ? raw : '3M';
+function normalizeRange(input, fallback = '3M') {
+  const raw = String(input || fallback).toUpperCase();
+  return VALID_RANGES.has(raw) ? raw : fallback;
+}
+
+function defaultRangeForInterval(interval) {
+  const i = normalizeInterval(interval);
+  if (i === '1' || i === '5' || i === '15' || i === '30' || i === '45') return '1M';
+  if (i === '60') return '1Y';
+  if (i === '240') return '5Y';
+  if (i === '1D' || i === '1W' || i === '1M' || i === '1Y') return '50Y';
+  return '1Y';
 }
 
 function parseMaybeDate(value) {
@@ -177,10 +188,14 @@ function computeMinBarsWanted(interval, range) {
   const rr = normalizeRange(range);
   const days = rangeToDays(rr);
   if (i === '1') return Math.min(1500, Math.max(300, Math.floor(days * 24 * 60 * 0.6)));
+  if (i === '5') return Math.max(1200, Math.floor((days * 24 * 60) / 5 * 0.65));
   if (i === '15') return Math.max(1000, Math.floor((days * 24 * 60) / 15 * 0.7));
+  if (i === '30') return Math.max(900, Math.floor((days * 24 * 60) / 30 * 0.7));
+  if (i === '45') return Math.max(700, Math.floor((days * 24 * 60) / 45 * 0.7));
   if (i === '60') return rr === '3M' ? 1500 : Math.max(900, Math.floor(days * 24 * 0.8));
   if (i === '240') return rr === '1Y' ? 1000 : Math.max(400, Math.floor((days * 24 * 0.55) / 4));
   if (i === '1D') return rr === '1Y' ? 250 : Math.max(90, Math.floor(days * 0.9));
+  if (i === '1Y') return 20;
   return 80;
 }
 
@@ -192,7 +207,10 @@ function desiredTwelveOutputsize(interval, range, from, to) {
   }
   const d = rangeToDays(rr);
   if (r === '1') return Math.min(TD_MAX_OUTPUT, Math.max(900, Math.ceil(d * 24 * 60 * 0.5)));
+  if (r === '5') return Math.min(TD_MAX_OUTPUT, Math.max(900, Math.ceil((d * 24 * 60) / 5)));
   if (r === '15') return Math.min(TD_MAX_OUTPUT, Math.max(500, Math.ceil((d * 24 * 60) / 15)));
+  if (r === '30') return Math.min(TD_MAX_OUTPUT, Math.max(500, Math.ceil((d * 24 * 60) / 30)));
+  if (r === '45') return Math.min(TD_MAX_OUTPUT, Math.max(500, Math.ceil((d * 24 * 60) / 45)));
   if (r === '60') return Math.min(TD_MAX_OUTPUT, Math.max(600, d * 28));
   if (r === '240') return Math.min(TD_MAX_OUTPUT, Math.max(220, Math.ceil(d * 8) + 120));
   if (r === '1D') return Math.min(TD_MAX_OUTPUT, Math.max(280, d + 60));
@@ -226,7 +244,9 @@ function yahooIntervalCoarseFallbacks(yInt) {
 function yahooToReturnedCode(yi) {
   const u = String(yi);
   if (u === '1m' || u === '2m') return '1';
-  if (u === '5m' || u === '15m' || u === '30m') return '15';
+  if (u === '5m') return '5';
+  if (u === '15m') return '15';
+  if (u === '30m') return '30';
   if (u === '60m' || u === '1h') return '60';
   if (u === '1d' || u === '5d' || u === '1wk' || u === '1mo') return '1D';
   return '60';
@@ -290,6 +310,9 @@ function yahooRangeParams({ interval, range }) {
   if (r === '1D') {
     return { interval: '1d', range: toYahooRange(rr), aggregateTo4h: false, returnedInterval: '1D' };
   }
+  if (r === '1Y') {
+    return { interval: '1mo', range: 'max', aggregateTo4h: false, returnedInterval: '1Y' };
+  }
   if (r === '240') {
     return { interval: '1h', range: toYahooRange(rr), aggregateTo4h: true, returnedInterval: '240' };
   }
@@ -297,8 +320,17 @@ function yahooRangeParams({ interval, range }) {
     const range1m = rr === '1D' ? '1d' : rr === '1W' ? '5d' : '7d';
     return { interval: '1m', range: range1m, aggregateTo4h: false, returnedInterval: '1' };
   }
+  if (r === '5') {
+    return { interval: '5m', range: toYahooRange(rr), aggregateTo4h: false, returnedInterval: '5' };
+  }
   if (r === '15') {
     return { interval: '15m', range: toYahooRange(rr), aggregateTo4h: false, returnedInterval: '15' };
+  }
+  if (r === '30') {
+    return { interval: '30m', range: toYahooRange(rr), aggregateTo4h: false, returnedInterval: '30' };
+  }
+  if (r === '45') {
+    return { interval: '15m', range: toYahooRange(rr), aggregateTo4h: false, returnedInterval: '45' };
   }
   return { interval: '1h', range: toYahooRange(rr), aggregateTo4h: false, returnedInterval: '60' };
 }
@@ -346,9 +378,24 @@ function twelveDataParams({ interval, range, from, to }) {
     const out = hasDateWindow || deepIntraday ? TD_MAX_OUTPUT : desiredTwelveOutputsize('1', rr, from, to);
     return { interval: '1min', aggregateTo4h: false, outputsize: cap(out), returnedInterval: '1' };
   }
+  if (r === '5') {
+    const out = hasDateWindow || deepIntraday ? TD_MAX_OUTPUT : desiredTwelveOutputsize('5', rr, from, to);
+    return { interval: '5min', aggregateTo4h: false, outputsize: cap(out), returnedInterval: '5' };
+  }
   if (r === '15') {
     const out = hasDateWindow || deepIntraday ? TD_MAX_OUTPUT : desiredTwelveOutputsize('15', rr, from, to);
     return { interval: '15min', aggregateTo4h: false, outputsize: cap(out), returnedInterval: '15' };
+  }
+  if (r === '30') {
+    const out = hasDateWindow || deepIntraday ? TD_MAX_OUTPUT : desiredTwelveOutputsize('30', rr, from, to);
+    return { interval: '30min', aggregateTo4h: false, outputsize: cap(out), returnedInterval: '30' };
+  }
+  if (r === '45') {
+    const out = hasDateWindow || deepIntraday ? TD_MAX_OUTPUT : desiredTwelveOutputsize('45', rr, from, to);
+    return { interval: '45min', aggregateTo4h: false, outputsize: cap(out), returnedInterval: '45' };
+  }
+  if (r === '1Y') {
+    return { interval: '1month', aggregateTo4h: false, outputsize: cap(Math.max(900, rangeToDays(rr) / 30)), returnedInterval: '1Y' };
   }
   const out = hasDateWindow || deepIntraday ? TD_MAX_OUTPUT : desiredTwelveOutputsize('60', rr, from, to);
   return { interval: '1h', aggregateTo4h: false, outputsize: cap(out), returnedInterval: '60' };
@@ -752,6 +799,69 @@ function mergeBarsAscendingDedupe(chunks) {
   return [...byTime.values()].sort((a, b) => a.time - b.time);
 }
 
+function pricePrecisionForSymbol(symbol) {
+  const s = String(symbol || '').toUpperCase();
+  if (/JPY/.test(s)) return 3;
+  if (/^(EUR|GBP|AUD|NZD|USD|CHF|CAD)[A-Z]{3}$/.test(s)) return 5;
+  return 2;
+}
+
+function sanitizeBarsForScale(bars, canonical) {
+  const list = Array.isArray(bars) ? bars : [];
+  const out = [];
+  let removedInvalidBars = 0;
+  let removedOutlierBars = 0;
+  const closes = [];
+  const c = String(canonical || '').toUpperCase();
+  const isFx = /^[A-Z]{6}$/.test(c);
+  const isJpyFx = isFx && /JPY/.test(c);
+  const isCrypto = /^(BTC|ETH|SOL|ADA|XRP|LTC|DOGE)/.test(c);
+
+  for (const b of list) {
+    const t = Number(b?.time);
+    const o = Number(b?.open);
+    const h = Number(b?.high);
+    const l = Number(b?.low);
+    const cl = Number(b?.close);
+    if (![t, o, h, l, cl].every(Number.isFinite) || l <= 0 || h <= 0 || o <= 0 || cl <= 0 || h < l) {
+      removedInvalidBars += 1;
+      continue;
+    }
+    if (isFx && !isJpyFx) {
+      if (h > 20 || l < 0.00001) {
+        removedOutlierBars += 1;
+        continue;
+      }
+    }
+    if (isJpyFx && (h > 1000 || l < 0.01)) {
+      removedOutlierBars += 1;
+      continue;
+    }
+    if (isCrypto && h < 1) {
+      removedOutlierBars += 1;
+      continue;
+    }
+    closes.push(cl);
+    out.push({ time: t, open: o, high: h, low: l, close: cl });
+  }
+
+  if (closes.length > 20) {
+    const sorted = [...closes].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    const maxRatio = isFx ? 10 : isCrypto ? 80 : 25;
+    const filtered = [];
+    for (const b of out) {
+      if (median > 0 && (b.high / median > maxRatio || median / b.low > maxRatio)) {
+        removedOutlierBars += 1;
+        continue;
+      }
+      filtered.push(b);
+    }
+    return { bars: filtered, removedInvalidBars, removedOutlierBars };
+  }
+  return { bars: out, removedInvalidBars, removedOutlierBars };
+}
+
 function intervalWindowSeconds(interval) {
   const iv = String(interval || '').toLowerCase();
   if (iv === '1min') return 14 * 86400;
@@ -902,6 +1012,10 @@ function buildDiagnostics(base) {
     cacheTtlMs: base.cacheTtlMs != null ? base.cacheTtlMs : null,
     inFlightDeduped: Boolean(base.inFlightDeduped),
     providerCallMade: Boolean(base.providerCallMade),
+    removedInvalidBars: base.removedInvalidBars != null ? base.removedInvalidBars : 0,
+    removedOutlierBars: base.removedOutlierBars != null ? base.removedOutlierBars : 0,
+    pricePrecision: base.pricePrecision != null ? base.pricePrecision : null,
+    priceScaleMode: base.priceScaleMode || 'auto',
     providerCallCounts: {
       yahoo: providerCallCounts.get('yahoo') || 0,
       twelvedata: providerCallCounts.get('twelvedata') || 0,
@@ -965,7 +1079,9 @@ module.exports = async (req, res) => {
 
   const intervalParam = req.query.interval != null ? String(req.query.interval) : '60';
   const requestedInterval = normalizeInterval(intervalParam);
-  const requestedRange = normalizeRange(req.query.range != null ? String(req.query.range) : '3M');
+  const hasRangeQuery = req.query.range != null && String(req.query.range).trim() !== '';
+  const autoRange = defaultRangeForInterval(requestedInterval);
+  const requestedRange = normalizeRange(hasRangeQuery ? String(req.query.range) : autoRange, autoRange);
   const coercion = coerceIntervalForRange(requestedInterval, requestedRange);
   const normalizedInterval = coercion.effectiveInterval;
   const normalizedRange = coercion.effectiveRange;
@@ -1257,6 +1373,8 @@ module.exports = async (req, res) => {
       }
     }
 
+    const sanitized = sanitizeBarsForScale(bars, canonical);
+    bars = sanitized.bars;
     const barCount = bars.length;
     const minBarsWanted = computeMinBarsWanted(normalizedInterval, normalizedRange);
     const firstBarTime = barCount ? bars[0].time : null;
@@ -1315,6 +1433,10 @@ module.exports = async (req, res) => {
       cacheTtlMs: fetched.cacheTtlMs,
       inFlightDeduped: fetched.inFlightDeduped,
       providerCallMade: fetched.providerCallMade,
+      removedInvalidBars: sanitized.removedInvalidBars,
+      removedOutlierBars: sanitized.removedOutlierBars,
+      pricePrecision: pricePrecisionForSymbol(canonical),
+      priceScaleMode: 'auto',
     });
     if (twKey && (selected === 'twelvedata' || fallbackUsed === 'twelvedata')) {
       try {

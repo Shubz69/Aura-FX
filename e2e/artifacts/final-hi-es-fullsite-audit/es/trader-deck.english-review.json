@@ -1,0 +1,43 @@
+{
+  "route": "/trader-deck",
+  "language": "es",
+  "allowedVisibleEnglish": [
+    "AURA TERMINAL™ valora tu privacidad. Recopilamos correo, chats, progreso del curso y uso solo para el funcionamiento de la plataforma. Los datos se almacenan de forma segura y no se comparten con terceros.",
+    "AURA",
+    "POR QUÉ AURA TERMINAL",
+    "AURA TERMINAL™",
+    "Por qué Aura Terminal",
+    "© 2025 AURA TERMINAL™. Todos los derechos reservados."
+  ],
+  "fixCandidates": [
+    "🔒 AVISO DE PRIVACIDAD GDPR",
+    "Al hacer clic en \"Acepto\", confirmas que entiendes y aceptas nuestra política de tratamiento de datos conforme al GDPR.",
+    "ACEPTO",
+    "TERMINALTM",
+    "INICIO",
+    "CURSOS Y SOPORTE",
+    "EXPLORAR",
+    "CONTÁCTANOS",
+    "INICIAR SESIÓN",
+    "REGISTRARSE",
+    "ACCEDE A TU CUENTA DE TRADING",
+    "Idioma",
+    "CORREO O USUARIO",
+    "CONTRASEÑA",
+    "ENTRAR",
+    "¿OLVIDASTE TU CONTRASEÑA?",
+    "¿No tienes cuenta? REGISTRARSE",
+    "Opera con más inteligencia con insights de IA.",
+    "PLATAFORMA",
+    "Inicio",
+    "Cursos y soporte",
+    "Explorar",
+    "Contáctanos",
+    "RECURSOS",
+    "Planes",
+    "Afiliación",
+    "Política de privacidad",
+    "Términos del servicio",
+    "Todos los sistemas operativos"
+  ]
+}

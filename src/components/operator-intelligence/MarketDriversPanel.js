@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaGlobe } from 'react-icons/fa';
 
 function dirClass(dir) {
@@ -12,15 +13,16 @@ function dirClass(dir) {
  * @param {{ drivers?: Array<Record<string, unknown>> | null, loading?: boolean }} props
  */
 export default function MarketDriversPanel({ drivers, loading }) {
+  const { t } = useTranslation();
   return (
     <div className="oi-card">
       <div className="oi-card__head">
         <FaGlobe className="oi-card__icon" aria-hidden />
-        <span className="oi-card__title">Market drivers</span>
+        <span className="oi-card__title">{t('operatorIntelligence.drivers.title')}</span>
       </div>
-      {loading ? <p className="oi-card__muted">Loading drivers…</p> : null}
+      {loading ? <p className="oi-card__muted">{t('operatorIntelligence.drivers.loading')}</p> : null}
       {!loading && (!drivers || drivers.length === 0) ? (
-        <p className="oi-card__muted">No driver data.</p>
+        <p className="oi-card__muted">{t('operatorIntelligence.drivers.none')}</p>
       ) : null}
       {!loading && drivers && drivers.length > 0 ? (
         <ul className="oi-drivers">

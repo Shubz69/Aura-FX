@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import TraderSuiteShell from '../components/TraderSuiteShell';
 import { useAuth } from '../context/AuthContext';
@@ -166,6 +167,7 @@ const CHECKLIST_READINESS = {
 };
 
 export default function TraderPlaybook() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [setups, setSetups] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -643,7 +645,7 @@ export default function TraderPlaybook() {
   const openHubAnalytics = () => {
     const active = setups.find((s) => String(s.status || 'active').toLowerCase() !== 'archived') || setups[0];
     if (!active) {
-      toast.info('Create a playbook first to view analytics in context.');
+      toast.info(t('traderPlaybook.toast.createFirst'));
       return;
     }
     openDetail(active.id, 'analytics');
@@ -652,7 +654,7 @@ export default function TraderPlaybook() {
   const renderHub = () => {
     if (loading) {
       return (
-        <div className="tp-root tp-root--loading" aria-busy="true" aria-label="Loading playbooks">
+        <div className="tp-root tp-root--loading" aria-busy="true" aria-label={t('traderPlaybook.loadingPlaybooks')}>
           <div className="tp-hub-max">
           <div className="tp-hub-skel-strip">
             {[0, 1, 2, 3, 4].map((i) => (
@@ -665,7 +667,7 @@ export default function TraderPlaybook() {
             <div className="tp-skeleton tp-skeleton--hub-col" />
             <div className="tp-skeleton tp-skeleton--hub-col" />
           </div>
-          <p className="tp-loading-caption">Loading playbooks and execution sample…</p>
+          <p className="tp-loading-caption">{t('traderPlaybook.loadingCaption')}</p>
           </div>
         </div>
       );
@@ -691,7 +693,7 @@ export default function TraderPlaybook() {
     return (
       <div className="tp-root tp-root--hub">
         <div className="tp-hub-max">
-        <section className="tp-hub-discipline-strip" aria-label="Discipline overview">
+        <section className="tp-hub-discipline-strip" aria-label={t('traderPlaybook.disciplineOverview')}>
           <div className="tp-hub-discipline-cards">
             <div className="tp-panel tp-hub-disc-card tp-hub-disc-card--onbook">
               <span className="tp-hub-disc-card__label">
@@ -710,7 +712,7 @@ export default function TraderPlaybook() {
                 <MetricLabel metricId={MID.OFF_PLAN_RATE_CLASSIFIED}>{METRIC_LABEL.OFF_PLAN}</MetricLabel>
               </span>
               <strong className="tp-hub-disc-card__value">{noSetupPct}</strong>
-              <small className="tp-hub-disc-card__hint">of classified executions</small>
+              <small className="tp-hub-disc-card__hint">{t('traderPlaybook.ofClassifiedExecutions')}</small>
               {disc.noSetupRate != null ? (
                 <div className="tp-hub-microbar tp-hub-microbar--red" aria-hidden>
                   <span style={{ width: `${Math.min(100, Math.round(disc.noSetupRate * 100))}%` }} />
@@ -722,14 +724,14 @@ export default function TraderPlaybook() {
                 <MetricLabel metricId={MID.MISSED_LOG}>Missed</MetricLabel>
               </span>
               <strong className="tp-hub-disc-card__value">{disc.missedTrades ?? 0}</strong>
-              <small className="tp-hub-disc-card__hint">logged setups</small>
+              <small className="tp-hub-disc-card__hint">{t('traderPlaybook.loggedSetups')}</small>
             </div>
             <div className="tp-panel tp-hub-disc-card tp-hub-disc-card--coverage">
               <span className="tp-hub-disc-card__label">
                 <MetricLabel metricId={MID.CLASSIFICATION_COVERAGE}>Coverage</MetricLabel>
               </span>
               <strong className="tp-hub-disc-card__value">{tagPct}</strong>
-              <small className="tp-hub-disc-card__hint">on-book vs full rollup</small>
+              <small className="tp-hub-disc-card__hint">{t('traderPlaybook.onBookVsFullRollup')}</small>
               {disc.disciplineTaggedVsAll != null ? (
                 <div className="tp-hub-microbar tp-hub-microbar--blue" aria-hidden>
                   <span style={{ width: `${Math.min(100, Math.round(disc.disciplineTaggedVsAll * 100))}%` }} />
@@ -741,15 +743,15 @@ export default function TraderPlaybook() {
                 <MetricLabel metricId={MID.LEADING_SETUP}>Best playbook</MetricLabel>
               </span>
               <strong className="tp-hub-disc-card__value tp-hub-disc-card__value--text">{disc.bestPlaybook?.name?.slice(0, 28) || '—'}</strong>
-              <small className="tp-hub-disc-card__hint">by sample expectancy</small>
+              <small className="tp-hub-disc-card__hint">{t('traderPlaybook.bySampleExpectancy')}</small>
             </div>
           </div>
           {hubDisciplineInsight ? <p className="tp-hub-discipline-insight">{hubDisciplineInsight}</p> : null}
           {hubDisciplineInsight ? null : processCostHint ? <p className="tp-hub-discipline-insight tp-hub-discipline-insight--muted">{processCostHint}</p> : null}
         </section>
 
-        <nav className="tp-terminal-flow" aria-label="Execution workspace">
-          <span className="tp-terminal-flow__label">Workspace</span>
+        <nav className="tp-terminal-flow" aria-label={t('traderPlaybook.executionWorkspace')}>
+          <span className="tp-terminal-flow__label">{t('traderPlaybook.workspace')}</span>
           <div className="tp-terminal-flow__links">
             <Link to={`${TV_BASE}/checklist`} className="tp-terminal-flow__link">
               Checklist
@@ -772,26 +774,26 @@ export default function TraderPlaybook() {
         <div className="tp-hub-command-grid">
           <div className="tp-hub-col tp-hub-col--left">
             <div className="tp-hub-col-head">
-              <span className="tp-kicker">Your playbooks</span>
+              <span className="tp-kicker">{t('traderPlaybook.yourPlaybooks')}</span>
             </div>
             <div className="tp-toolbar tp-toolbar--elevated tp-toolbar--hub">
               <input
                 className="tp-search"
-                placeholder="Find a playbook…"
+                placeholder={t('traderPlaybook.findPlaybook')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                aria-label="Search playbooks"
+                aria-label={t('traderPlaybook.searchPlaybooks')}
               />
-              <select className="trader-suite-select" value={hubFilter} onChange={(e) => setHubFilter(e.target.value)} aria-label="Filter by status">
-                <option value="all">All statuses</option>
-                <option value="active">Active</option>
-                <option value="draft">Drafts</option>
-                <option value="archived">Archived</option>
+              <select className="trader-suite-select" value={hubFilter} onChange={(e) => setHubFilter(e.target.value)} aria-label={t('traderPlaybook.filterByStatus')}>
+                <option value="all">{t('traderPlaybook.allStatuses')}</option>
+                <option value="active">{t('traderPlaybook.active')}</option>
+                <option value="draft">{t('traderPlaybook.drafts')}</option>
+                <option value="archived">{t('traderPlaybook.archived')}</option>
               </select>
-              <select className="trader-suite-select" value={sortKey} onChange={(e) => setSortKey(e.target.value)} aria-label="Sort playbooks">
-                <option value="updated">Recently updated</option>
-                <option value="lastUsed">Last used</option>
-                <option value="name">Name A–Z</option>
+              <select className="trader-suite-select" value={sortKey} onChange={(e) => setSortKey(e.target.value)} aria-label={t('traderPlaybook.sortPlaybooks')}>
+                <option value="updated">{t('traderPlaybook.recentlyUpdated')}</option>
+                <option value="lastUsed">{t('traderPlaybook.lastUsed')}</option>
+                <option value="name">{t('traderPlaybook.nameAz')}</option>
               </select>
             </div>
 
@@ -827,27 +829,27 @@ export default function TraderPlaybook() {
                       </span>
                       <h3 className="tp-playbook-card__title tp-playbook-card__title--hub">{s.name}</h3>
                       <span className={`tp-pill tp-pill--status-${st === 'archived' ? 'archived' : st === 'draft' ? 'draft' : 'active'}`}>
-                        {st === 'archived' ? 'Archived' : st === 'draft' ? 'Draft' : 'Active'}
+                        {st === 'archived' ? t('traderPlaybook.archived') : st === 'draft' ? t('traderPlaybook.draft') : t('traderPlaybook.active')}
                       </span>
                     </div>
                     <p className="tp-playbook-card__meta-line tp-playbook-card__meta-line--hub">
-                      {[s.setupType, s.marketType, s.session].filter(Boolean).join(' · ') || 'Complete context in Rules'}
+                      {[s.setupType, s.marketType, s.session].filter(Boolean).join(' · ') || t('traderPlaybook.completeContextInRules')}
                       <span className="tp-playbook-card__meta-sep" aria-hidden>
                         {' '}
                         ·{' '}
                       </span>
                       <span className="tp-playbook-card__meta-dates">
-                        Upd {fmtDt(s.updatedAt)} · Used {fmtDt(s.lastUsedAt)}
+                        {t('traderPlaybook.updatedShort')} {fmtDt(s.updatedAt)} · {t('traderPlaybook.usedShort')} {fmtDt(s.lastUsedAt)}
                       </span>
                     </p>
                     <div className="tp-pill-row tp-pill-row--hub-tight">
-                      {(assetChips.length ? assetChips : ['Define assets']).map((x, i) => (
+                      {(assetChips.length ? assetChips : [t('traderPlaybook.defineAssets')]).map((x, i) => (
                         <span key={`${s.id}-chip-${i}`} className="tp-pill tp-pill--asset">
                           {x}
                         </span>
                       ))}
                     </div>
-                    <div className="tp-playbook-card__metric-strip" role="group" aria-label="Playbook metrics">
+                    <div className="tp-playbook-card__metric-strip" role="group" aria-label={t('traderPlaybook.playbookMetrics')}>
                       <div className="tp-playbook-card__metric-cell">
                         <span className="tp-playbook-card__metric-label">
                           <MetricLabel metricId={MID.WIN_RATE_PLAYBOOK}>{METRIC_LABEL.WIN_RATE}</MetricLabel>
@@ -876,18 +878,18 @@ export default function TraderPlaybook() {
                     <div className="tp-card-actions tp-card-actions--split" onClick={(e) => e.stopPropagation()}>
                       <div className="tp-card-actions__primary">
                         <button type="button" className="tp-btn-ghost tp-btn-ghost--emphasis" onClick={() => openDetail(s.id)}>
-                          Open playbook
+                          {t('traderPlaybook.openPlaybook')}
                         </button>
                       </div>
                       <div className="tp-card-actions__menu">
                         <button type="button" className="tp-btn-ghost" onClick={() => duplicatePlaybook(s.id)}>
-                          Duplicate
+                          {t('traderPlaybook.duplicate')}
                         </button>
                         <button type="button" className="tp-btn-ghost" onClick={() => archivePlaybook(s.id)}>
-                          Archive
+                          {t('traderPlaybook.archive')}
                         </button>
                         <button type="button" className="tp-btn-ghost tp-btn-ghost--danger" onClick={() => deletePlaybook(s.id)}>
-                          Delete
+                          {t('traderPlaybook.delete')}
                         </button>
                       </div>
                     </div>
@@ -898,20 +900,20 @@ export default function TraderPlaybook() {
 
             <div className="tp-hub-col-cta">
               <button type="button" className="trader-suite-btn trader-suite-btn--primary" onClick={startNewWizard}>
-                New playbook
+                {t('traderPlaybook.newPlaybook')}
               </button>
               <button type="button" className="trader-suite-btn" onClick={() => openTagDrawer()}>
-                Classify trades
+                {t('traderPlaybook.classifyTrades')}
               </button>
               <button type="button" className="trader-suite-btn" onClick={() => setDrawer('missed')}>
-                Log missed setup
+                {t('traderPlaybook.logMissedSetup')}
               </button>
             </div>
           </div>
 
           <div className="tp-hub-col tp-hub-col--mid">
             <div className="tp-hub-col-head">
-              <span className="tp-kicker">Performance</span>
+              <span className="tp-kicker">{t('traderPlaybook.performance')}</span>
             </div>
             <div className="tp-panel tp-hub-mid-card">
               <div className="tp-hub-mid-metrics">
@@ -944,12 +946,12 @@ export default function TraderPlaybook() {
                 </div>
               </div>
               <button type="button" className="tp-hub-link-analytics tp-inline-link" onClick={openHubAnalytics}>
-                Open performance tab
+                {t('traderPlaybook.openPerformanceTab')}
               </button>
             </div>
 
             <div className="tp-hub-col-head tp-hub-col-head--tight">
-              <span className="tp-kicker">Top issues</span>
+              <span className="tp-kicker">{t('traderPlaybook.topIssues')}</span>
             </div>
             <div className="tp-panel tp-hub-mid-card tp-hub-issues">
               {hubTopIssues.length ? (
@@ -959,17 +961,17 @@ export default function TraderPlaybook() {
                   ))}
                 </ul>
               ) : (
-                <p className="tp-hub-muted">Classify more executions to surface rule-based insights.</p>
+                <p className="tp-hub-muted">{t('traderPlaybook.classifyMoreExecutions')}</p>
               )}
             </div>
 
             <div className="tp-hub-col-head tp-hub-col-head--tight">
-              <span className="tp-kicker">Trading rhythm</span>
-              <span className="tp-hub-rhythm-caption">{hubBreakdown.sampleSize} on-book fills in client sample</span>
+              <span className="tp-kicker">{t('traderPlaybook.tradingRhythm')}</span>
+              <span className="tp-hub-rhythm-caption">{hubBreakdown.sampleSize} {t('traderPlaybook.onBookFillsInSample')}</span>
             </div>
             <div className="tp-panel tp-hub-mid-card tp-hub-rhythm">
               {hubBreakdown.sampleSize > 0 ? (
-                <div className="tp-hub-dow-bars" aria-label="Tagged executions by weekday">
+                <div className="tp-hub-dow-bars" aria-label={t('traderPlaybook.taggedExecutionsByWeekday')}>
                   {DOW_CHART_ORDER.map((d) => {
                     const c = dowMap[d] || 0;
                     const h = Math.round((c / dowMax) * 100);
@@ -984,16 +986,16 @@ export default function TraderPlaybook() {
                   })}
                 </div>
               ) : (
-                <p className="tp-hub-muted">No tagged playbook executions in the loaded validator + journal sample yet.</p>
+                <p className="tp-hub-muted">{t('traderPlaybook.noTaggedExecutionsYet')}</p>
               )}
             </div>
           </div>
 
           <div className="tp-hub-col tp-hub-col--right">
             <div className="tp-hub-col-head">
-              <span className="tp-kicker">Recent missed setups</span>
+              <span className="tp-kicker">{t('traderPlaybook.recentMissedSetups')}</span>
               <Link to={PLAYBOOK_MISSED_REVIEW_PATH} className="tp-hub-col-head__link">
-                Full review →
+                {t('traderPlaybook.fullReview')} →
               </Link>
             </div>
             <div className="tp-panel tp-hub-side-card">
