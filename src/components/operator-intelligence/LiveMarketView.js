@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createChart, ColorType } from 'lightweight-charts';
 import { FaChartLine } from 'react-icons/fa';
 import Api from '../../services/Api';
@@ -21,14 +22,15 @@ const TIMEFRAMES = [
   { id: '1m', label: '1m', api: '1' },
   { id: '5m', label: '5m', api: '5' },
   { id: '15m', label: '15m', api: '15' },
+  { id: '30m', label: '30m', api: '30' },
+  { id: '45m', label: '45m', api: '45' },
   { id: '1H', label: '1H', api: '60' },
   { id: '4H', label: '4H', api: '240' },
   { id: '1D', label: '1D', api: '1D' },
   { id: '1W', label: '1W', api: '1W' },
-  { id: '1M', label: '1M', api: '1M' },
+  { id: '1mo', label: '1mo', api: '1M' },
+  { id: '1y', label: '1y', api: '1Y' },
 ];
-
-const RANGES = ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', '10Y', '20Y', '50Y'];
 
 function asIsoDate(sec) {
   const x = Number(sec);
@@ -36,12 +38,12 @@ function asIsoDate(sec) {
   return new Date(x * 1000).toISOString().slice(0, 10);
 }
 
-function diagnosticsFromPayload(payload, bars, requestedRange, requestedInterval) {
+function diagnosticsFromPayload(payload, bars, requestedInterval) {
   const d = payload?.diagnostics || {};
   return {
     providerUsed: d.providerUsed || d.provider || 'unknown',
     interval: d.requestedInterval || requestedInterval,
-    range: d.requestedRange || requestedRange,
+    range: d.requestedRange || 'auto',
     effectiveInterval: d.effectiveInterval || requestedInterval,
     chunksFetched: Number.isFinite(Number(d.chunksFetched)) ? Number(d.chunksFetched) : 0,
     fallbackReason: d.fallbackReason || '',
@@ -71,6 +73,7 @@ function chartPixelWidth(wrapEl) {
  * @param {{ symbol: string, onSelectCandle: (bar: object) => void, onSymbolChange?: (s: string) => void }} props
  */
 export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange }) {
+  const { t } = useTranslation();
   const wrapRef = useRef(null);
   const chartRef = useRef(null);
   const barsRef = useRef([]);
@@ -78,10 +81,11 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
   onSelectCandleRef.current = onSelectCandle;
 
   const [tf, setTf] = useState('1H');
-  const [range, setRange] = useState('1Y');
   const [symbolQuery, setSymbolQuery] = useState('');
-  const initialInstrument = getInstrumentByChartSymbol(symbol) || TERMINAL_INSTRUMENTS[0] || null;
-  const [selectedInstrumentId, setSelectedInstrumentId] = useState(initialInstrument?.id || 'EURUSD');
+  const [selectedInstrumentId, setSelectedInstrumentId] = useState(() => {
+    const inst = getInstrumentByChartSymbol(symbol) || TERMINAL_INSTRUMENTS[0];
+    return inst && inst.id ? inst.id : 'EURUSD';
+  });
   const sym = chartSymbolFromId(selectedInstrumentId);
   const [status, setStatus] = useState('loading');
   const [err, setErr] = useState('');
@@ -125,7 +129,6 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
     try {
       const response = await Api.getMarketChartHistory(sym, {
         interval: requestedInterval,
-        range,
         signal: controller.signal,
       });
       if (seq !== loadSeqRef.current) return;
@@ -136,7 +139,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
         setLastPrice('');
         setDiagnostics(null);
         setStatus('error');
-        setErr('No data available for selected instrument.');
+        setErr(t('operatorIntelligence.liveMarket.noData'));
         return;
       }
       setPack({
@@ -145,12 +148,11 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
       });
       const last = bars[bars.length - 1];
       setLastPrice(last && Number.isFinite(last.close) ? String(last.close) : '');
-      const diag = diagnosticsFromPayload(payload, bars, range, requestedInterval);
+      const diag = diagnosticsFromPayload(payload, bars, requestedInterval);
       setDiagnostics(diag);
       console.info('[OperatorIntelligence][ChartHistory]', {
         symbol: sym,
         requestedInterval,
-        requestedRange: range,
         ...diag,
       });
       setStatus('ready');
@@ -160,12 +162,12 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
       setPack(null);
       setLastPrice('');
       setDiagnostics(null);
-      setErr(e?.message || 'Chart load failed');
+      setErr(e?.message || t('operatorIntelligence.liveMarket.loadFailed'));
       setStatus('error');
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
     }
-  }, [range, sym, tf]);
+  }, [sym, tf]);
 
   useEffect(() => {
     load();
@@ -250,7 +252,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
       const data = normalizeChartBars(pack.bars);
       barsRef.current = pack.bars;
 
-      const candleSeries = chart.addCandlestickSeries(auraCandlestickSeriesOptions());
+      const candleSeries = chart.addCandlestickSeries(auraCandlestickSeriesOptions(sym));
       candleSeries.setData(data);
 
       const volData = pack.bars.map((b) => ({
@@ -272,10 +274,10 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
 
       const lv = pack.levels || {};
       const lineLevels = [
-        { price: lv.rangeHigh, title: 'Range high', color: 'rgba(248, 195, 125, 0.75)' },
+        { price: lv.rangeHigh, title: t('operatorIntelligence.liveMarket.rangeHigh'), color: 'rgba(248, 195, 125, 0.75)' },
         { price: lv.vah, title: 'VAH', color: 'rgba(140, 200, 255, 0.65)' },
         { price: lv.val, title: 'VAL', color: 'rgba(140, 200, 255, 0.65)' },
-        { price: lv.rangeLow, title: 'Range low', color: 'rgba(248, 195, 125, 0.75)' },
+        { price: lv.rangeLow, title: t('operatorIntelligence.liveMarket.rangeLow'), color: 'rgba(248, 195, 125, 0.75)' },
       ];
       lineLevels.forEach((ln) => {
         if (ln.price == null || !Number.isFinite(Number(ln.price))) return;
@@ -404,7 +406,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
       <div className="oi-card__head oi-card__head--chart">
         <div className="oi-chart-title">
           <FaChartLine className="oi-card__icon" aria-hidden />
-          <span className="oi-card__title">Live market view</span>
+          <span className="oi-card__title">{t('operatorIntelligence.liveMarket.title')}</span>
           {lastPrice ? (
             <span className="oi-chart-price" aria-live="polite">
               {symLabel} <strong>{lastPrice}</strong>
@@ -420,8 +422,8 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
             type="search"
             value={symbolQuery}
             onChange={(e) => setSymbolQuery(e.target.value)}
-            placeholder="Search instruments..."
-            aria-label="Search instruments"
+            placeholder={t('operatorIntelligence.liveMarket.searchPlaceholder')}
+            aria-label={t('operatorIntelligence.liveMarket.searchAria')}
           />
           <select
             id="oi-symbol-select"
@@ -444,7 +446,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
               </optgroup>
             ))}
           </select>
-          <div className="oi-tf-bar" role="toolbar" aria-label="Timeframe">
+          <div className="oi-tf-bar" role="toolbar" aria-label={t('operatorIntelligence.liveMarket.timeframe')}>
             {TIMEFRAMES.map((t) => (
               <button
                 key={t.id}
@@ -456,22 +458,10 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
               </button>
             ))}
           </div>
-          <div className="oi-tf-bar" role="toolbar" aria-label="Range">
-            {RANGES.map((r) => (
-              <button
-                key={r}
-                type="button"
-                className={`oi-tf-btn${range === r ? ' is-active' : ''}`}
-                onClick={() => setRange(r)}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
       <p className="oi-chart-hint">
-        Click a candle for intelligence.
+        {t('operatorIntelligence.liveMarket.clickCandle')}
         {diagnostics ? (
           <>
             {' '}
@@ -488,12 +478,12 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
         {status === 'loading' ? (
           <div className="oi-chart-loading" aria-busy="true" aria-live="polite">
             <span className="oi-chart-loading__ring" aria-hidden />
-            <span className="oi-chart-loading__text">Loading chart…</span>
+            <span className="oi-chart-loading__text">{t('operatorIntelligence.liveMarket.loadingChart')}</span>
           </div>
         ) : null}
         {status === 'error' ? (
           <div className="oi-chart-error" role="alert">
-            {err || 'Chart unavailable'}
+            {err || t('operatorIntelligence.liveMarket.chartUnavailable')}
           </div>
         ) : null}
       </div>
