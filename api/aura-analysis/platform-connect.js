@@ -7,7 +7,7 @@
  * PATCH  — rename an existing connection
  * DELETE — disconnect a platform / connection
  */
-const { executeQuery } = require('../db');
+const { executeQuery, indexExists } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
@@ -233,14 +233,17 @@ async function ensureTable() {
     await executeQuery(`ALTER TABLE aura_platform_connections ADD COLUMN display_name VARCHAR(255) NULL`);
   } catch (_) {}
   try {
+    // credentials_enc stores AES ciphertext (hex:hex:base64), not JSON — only migrate legacy plaintext-JSON rows.
     await executeQuery(
       `UPDATE aura_platform_connections
          SET account_login = JSON_UNQUOTE(JSON_EXTRACT(credentials_enc, '$.login'))
-       WHERE account_login IS NULL`
+       WHERE account_login IS NULL AND JSON_VALID(credentials_enc)`
     );
   } catch (_) {}
   try {
-    await executeQuery(`ALTER TABLE aura_platform_connections DROP INDEX uq_user_platform`);
+    if (await indexExists('aura_platform_connections', 'uq_user_platform')) {
+      await executeQuery(`ALTER TABLE aura_platform_connections DROP INDEX uq_user_platform`);
+    }
   } catch (_) {}
   try {
     await executeQuery(
