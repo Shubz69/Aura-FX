@@ -180,6 +180,36 @@ function run() {
   assert(fredRows[0].actual === '4.10', 'FRED actual value should be normalized');
   assert(fredRows[0].previous === '4.20', 'FRED previous value should be carried from prior observation');
 
+  const nowHot = Date.UTC(2026, 5, 1, 12, 0, 0);
+  assert(
+    _test.calendarNeedsHotRefresh(
+      [{ timestamp: nowHot + 3 * 60 * 1000, actual: null }],
+      nowHot
+    ) === true,
+    'calendarNeedsHotRefresh true inside ±10m pre-release'
+  );
+  assert(
+    _test.calendarNeedsHotRefresh(
+      [{ timestamp: nowHot + 3 * 60 * 1000, actual: '1.0' }],
+      nowHot
+    ) === false,
+    'calendarNeedsHotRefresh false once actual exists'
+  );
+  assert(
+    _test.calendarNeedsHotRefresh(
+      [{ timestamp: nowHot - 5 * 60 * 1000, actual: null }],
+      nowHot
+    ) === true,
+    'calendarNeedsHotRefresh true within grace after release time without actual'
+  );
+  assert(
+    _test.calendarNeedsHotRefresh(
+      [{ timestamp: nowHot - 25 * 60 * 1000, actual: null }],
+      nowHot
+    ) === false,
+    'calendarNeedsHotRefresh false long after release without actual (outside grace)'
+  );
+
   console.log('OK economic-calendar-timezone tests');
 }
 

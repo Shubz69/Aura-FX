@@ -51,6 +51,13 @@ const peekCached = (key, ttl = DEFAULT_TTLS.DEFAULT) => {
   return item.data;
 };
 
+/** Raw cache read (no stats, no TTL eviction) — for adaptive TTL consumers like economic calendar. */
+const peekCacheEntry = (key) => {
+  const item = cache.get(key);
+  if (!item) return null;
+  return { data: item.data, ageMs: Date.now() - item.timestamp };
+};
+
 const getCached = (key, ttl = DEFAULT_TTLS.DEFAULT) => {
   const item = cache.get(key);
   if (!item) {
@@ -303,6 +310,7 @@ setInterval(() => {
 module.exports = {
   invalidateEntitlementsCache,
   peekCached,
+  peekCacheEntry,
   getCached,
   getCachedWithMeta,
   setCached,

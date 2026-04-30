@@ -10,7 +10,10 @@ require('../utils/suppress-warnings');
  *      Set FMP_API_KEY (and optionally TRADING_ECONOMICS_API_KEY) in production for reliable actuals.
  *   3. If still missing (post-release): Forex Factory **HTML** scrape per calendar day
  *   4. Else FMP-only / TE-only / static fallback
- * Cached ~45s server-side (bump CACHE_KEY when changing merge logic).
+ *
+ * Twelve Data: WebSocket (`wss://ws.twelvedata.com/v1/quotes/price`) streams **quotes only** per official
+ * docs — there is **no** economic-calendar WebSocket. This route uses **REST-only** providers (FF/FMP/TE/FRED).
+ * Refresh strategy: long TTL when no imminent releases; short TTL ±10m around unreleased events (see below).
  *
  * Debug: set env DEBUG_TRADER_DECK_CALENDAR=1 to log ForexFactory ingest skip counts and feed errors.
  */
@@ -18,11 +21,63 @@ require('../utils/suppress-warnings');
 const cheerio = require('cheerio');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getSeriesRange, SERIES_IDS } = require('./services/fredService');
-const { getCached, setCached } = require('../cache');
+const { getCached, setCached, peekCacheEntry } = require('../cache');
 
-const CACHE_KEY = 'trader-deck:economic-calendar:v8';
-const CACHE_TTL_MS = 45 * 1000; // 45 s — fresher calendar for release times
+const CACHE_KEY = 'trader-deck:economic-calendar:v9';
+/** Past-only ranges: stable actuals — long cache. */
+const HISTORICAL_RANGE_CACHE_TTL_MS = 4 * 60 * 60 * 1000;
+/** Cool path: full calendar payload when nothing is near release (5–15 min). */
+const CAL_COOL_TTL_MS = Math.min(
+  15 * 60 * 1000,
+  Math.max(5 * 60 * 1000, parseInt(process.env.ECONOMIC_CALENDAR_COOL_TTL_MS || String(10 * 60 * 1000), 10) || 10 * 60 * 1000)
+);
+/** Hot path: ±10m around an unreleased event — tighter refresh (30–60s). */
+const CAL_HOT_TTL_MS = Math.min(
+  60 * 1000,
+  Math.max(30 * 1000, parseInt(process.env.ECONOMIC_CALENDAR_HOT_TTL_MS || String(45 * 1000), 10) || 45 * 1000)
+);
+const RELEASE_WINDOW_MS = 10 * 60 * 1000;
 const SCRAPE_DAY_CACHE_MS = 35 * 1000; // per-day HTML scrape (actuals) — short TTL
+
+/** Concurrent identical calendar builds (same cache key) share one provider round-trip. */
+const calendarInflight = new Map();
+
+/** Match client `isEventWaitingForActual` grace — keep short TTL after scheduled time until actual lands. */
+const HOT_GRACE_AFTER_RELEASE_MS = 20 * 60 * 1000;
+
+function calendarNeedsHotRefresh(events, nowMs = Date.now()) {
+  if (!Array.isArray(events)) return false;
+  for (const ev of events) {
+    if (hasActualBackend(ev.actual)) continue;
+    const ts = typeof ev.timestamp === 'number' && Number.isFinite(ev.timestamp) ? ev.timestamp : null;
+    if (ts == null) continue;
+    if (Math.abs(ts - nowMs) <= RELEASE_WINDOW_MS) return true;
+    if (nowMs >= ts && nowMs - ts <= HOT_GRACE_AFTER_RELEASE_MS) return true;
+  }
+  return false;
+}
+
+function getAdaptiveCalendarCached(key) {
+  const entry = peekCacheEntry(key);
+  if (!entry || !entry.data) return null;
+  const events = entry.data.events;
+  const hot = calendarNeedsHotRefresh(events, Date.now());
+  const maxAge = hot ? CAL_HOT_TTL_MS : CAL_COOL_TTL_MS;
+  if (entry.ageMs > maxAge) return null;
+  return entry.data;
+}
+
+async function dedupeCalendarInflight(cacheKey, factory) {
+  const existing = calendarInflight.get(cacheKey);
+  if (existing) return existing;
+  const p = Promise.resolve()
+    .then(() => factory())
+    .finally(() => {
+      calendarInflight.delete(cacheKey);
+    });
+  calendarInflight.set(cacheKey, p);
+  return p;
+}
 /** FF + FMP rows must align; naive API datetimes were parsed as UTC and missed by 4–5h — keep a generous window */
 const MATCH_WINDOW_MS = 25 * 60 * 1000;
 
@@ -886,7 +941,6 @@ async function scrapeForwardDays(days = 7) {
 // --- Explicit date range (historical / single-day browse) ---
 const RANGE_MAX_DAYS = 366;
 const RANGE_MAX_LOOKBACK_MS = 366 * 24 * 60 * 60 * 1000;
-const HISTORICAL_RANGE_CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4h — past actuals are stable
 const DEFAULT_RANGE_PAST_DAYS = 7;
 const DEFAULT_RANGE_FUTURE_DAYS = 14;
 
@@ -1321,55 +1375,69 @@ module.exports = async (req, res) => {
     const rangeKey = `trader-deck:economic-calendar:range:v2:${from}:${to}:${rangeFilterKey}`;
     const etToday = calendarEtTodayStr();
     const includesTodayOrFuture = to >= etToday;
-    const rangeTtl = includesTodayOrFuture ? CACHE_TTL_MS : HISTORICAL_RANGE_CACHE_TTL_MS;
-    const rangeCachedForRecovery = getCached(rangeKey, rangeTtl);
-    const rangeCached = forceRefresh ? null : rangeCachedForRecovery;
-    if (rangeCached) {
-      return res.status(200).json({ success: true, ...rangeCached, viewerTimeZone, cached: true });
+    const rangeStaleForRecovery = peekCacheEntry(rangeKey)?.data || null;
+
+    if (!forceRefresh) {
+      const rangeCached = includesTodayOrFuture
+        ? getAdaptiveCalendarCached(rangeKey)
+        : getCached(rangeKey, HISTORICAL_RANGE_CACHE_TTL_MS);
+      if (rangeCached) {
+        return res.status(200).json({ success: true, ...rangeCached, viewerTimeZone, cached: true });
+      }
     }
     const providerHint = process.env.TRADING_ECONOMICS_API_KEY ? 'TradingEconomicsRange+FFHTML+FMP' : 'FFHTML+FMP';
-    const { events, source } = await fetchHistoricalRange(from, to);
-    const normalized = normalizeCalendarPayloadRows(events, viewerTimeZone);
-    const deduped = dedupeEconomicEvents(normalized);
-    const filteredRows = applyQueryFilters(deduped, req.query || {});
-    filteredRows.sort(compareEvents);
-    if (debugCalendar) {
-      console.debug('[trader-deck/economic-calendar] range', {
+
+    const buildRangePayload = async () => {
+      const { events, source } = await fetchHistoricalRange(from, to);
+      const normalized = normalizeCalendarPayloadRows(events, viewerTimeZone);
+      const deduped = dedupeEconomicEvents(normalized);
+      const filteredRows = applyQueryFilters(deduped, req.query || {});
+      filteredRows.sort(compareEvents);
+      if (debugCalendar) {
+        console.debug('[trader-deck/economic-calendar] range', {
+          from,
+          to,
+          providerEndpoint: providerHint,
+          rowsProvider: Array.isArray(events) ? events.length : 0,
+          rowsNormalized: normalized.length,
+          rowsDeduped: deduped.length,
+          rowsFiltered: filteredRows.length,
+          sample: filteredRows[0] || null,
+        });
+      }
+      const fetchedAt = new Date().toISOString();
+      return {
+        events: filteredRows,
+        source,
         from,
         to,
-        providerEndpoint: providerHint,
-        rowsProvider: Array.isArray(events) ? events.length : 0,
-        rowsNormalized: normalized.length,
-        rowsDeduped: deduped.length,
-        rowsFiltered: filteredRows.length,
-        sample: filteredRows[0] || null,
-      });
-    }
-    const fetchedAt = new Date().toISOString();
+        days: enumerateInclusiveDays(from, to).length,
+        viewerTimeZone,
+        updatedAt: fetchedAt,
+        fetchedAt,
+        sourceUpdatedAt: fetchedAt,
+      };
+    };
 
-    const looksLikeStaticFallback = source === 'fallback' && Array.isArray(filteredRows) && filteredRows.length <= 5;
-    if (forceRefresh && rangeCachedForRecovery && looksLikeStaticFallback) {
+    const rangePayload = forceRefresh
+      ? await buildRangePayload()
+      : await dedupeCalendarInflight(rangeKey, buildRangePayload);
+
+    const looksLikeStaticFallback =
+      rangePayload.source === 'fallback' &&
+      Array.isArray(rangePayload.events) &&
+      rangePayload.events.length <= 5;
+    if (forceRefresh && rangeStaleForRecovery && looksLikeStaticFallback) {
       return res.status(200).json({
         success: true,
-        ...rangeCachedForRecovery,
+        ...rangeStaleForRecovery,
         viewerTimeZone,
         cached: true,
         recoveredFromCache: true,
       });
     }
 
-    const rangePayload = {
-      events: filteredRows,
-      source,
-      from,
-      to,
-      days: enumerateInclusiveDays(from, to).length,
-      viewerTimeZone,
-      updatedAt: fetchedAt,
-      fetchedAt,
-      sourceUpdatedAt: fetchedAt,
-    };
-    setCached(rangeKey, rangePayload, rangeTtl);
+    setCached(rangeKey, rangePayload, CAL_COOL_TTL_MS);
     return res.status(200).json({ success: true, ...rangePayload, cached: false });
   }
 
@@ -1381,48 +1449,54 @@ module.exports = async (req, res) => {
 
   // ?refresh=1 bypasses cache — used by frontend for precision fetches at event release time
   const forceRefresh = req.query.refresh === '1';
-  const cachedForRecovery = getCached(cacheKey, CACHE_TTL_MS);
+  const cachedForRecovery = getAdaptiveCalendarCached(cacheKey);
   const cached = forceRefresh ? null : cachedForRecovery;
   if (cached) return res.status(200).json({ success: true, ...cached, viewerTimeZone, cached: true });
 
   if (useDefaultRange) {
     const forceRefreshRange = req.query.refresh === '1';
-    const rangeQuery = { from: defaultRangeFrom, to: defaultRangeTo, refresh: forceRefreshRange ? '1' : undefined };
     const rangeKey = `trader-deck:economic-calendar:range:v2:${defaultRangeFrom}:${defaultRangeTo}:${JSON.stringify({ tz: viewerTimeZone })}`;
-    const rangeCachedForRecovery = getCached(rangeKey, CACHE_TTL_MS);
-    const rangeCached = forceRefreshRange ? null : rangeCachedForRecovery;
-    if (rangeCached) {
-      return res.status(200).json({ success: true, ...rangeCached, viewerTimeZone, cached: true });
+    if (!forceRefreshRange) {
+      const rangeCached = getAdaptiveCalendarCached(rangeKey);
+      if (rangeCached) {
+        return res.status(200).json({ success: true, ...rangeCached, viewerTimeZone, cached: true });
+      }
     }
-    const { events, source } = await fetchHistoricalRange(defaultRangeFrom, defaultRangeTo);
-    const normalized = normalizeCalendarPayloadRows(events, viewerTimeZone);
-    const deduped = dedupeEconomicEvents(normalized);
-    const filteredRows = applyQueryFilters(deduped, req.query || {}).sort(compareEvents);
-    if (debugCalendar) {
-      console.debug('[trader-deck/economic-calendar] default-range', {
+    const buildDefaultPayload = async () => {
+      const { events, source } = await fetchHistoricalRange(defaultRangeFrom, defaultRangeTo);
+      const normalized = normalizeCalendarPayloadRows(events, viewerTimeZone);
+      const deduped = dedupeEconomicEvents(normalized);
+      const filteredRows = applyQueryFilters(deduped, req.query || {}).sort(compareEvents);
+      if (debugCalendar) {
+        console.debug('[trader-deck/economic-calendar] default-range', {
+          from: defaultRangeFrom,
+          to: defaultRangeTo,
+          providerEndpoint: process.env.TRADING_ECONOMICS_API_KEY ? 'TradingEconomicsRange+FFHTML+FMP' : 'FFHTML+FMP',
+          rowsProvider: Array.isArray(events) ? events.length : 0,
+          rowsNormalized: normalized.length,
+          rowsDeduped: deduped.length,
+          rowsFiltered: filteredRows.length,
+          sample: filteredRows[0] || null,
+        });
+      }
+      const fetchedAt = new Date().toISOString();
+      return {
+        events: filteredRows,
+        source,
         from: defaultRangeFrom,
         to: defaultRangeTo,
-        providerEndpoint: process.env.TRADING_ECONOMICS_API_KEY ? 'TradingEconomicsRange+FFHTML+FMP' : 'FFHTML+FMP',
-        rowsProvider: Array.isArray(events) ? events.length : 0,
-        rowsNormalized: normalized.length,
-        rowsDeduped: deduped.length,
-        rowsFiltered: filteredRows.length,
-        sample: filteredRows[0] || null,
-      });
-    }
-    const fetchedAt = new Date().toISOString();
-    const payload = {
-      events: filteredRows,
-      source,
-      from: defaultRangeFrom,
-      to: defaultRangeTo,
-      days: enumerateInclusiveDays(defaultRangeFrom, defaultRangeTo).length,
-      viewerTimeZone,
-      updatedAt: fetchedAt,
-      fetchedAt,
-      sourceUpdatedAt: fetchedAt,
+        days: enumerateInclusiveDays(defaultRangeFrom, defaultRangeTo).length,
+        viewerTimeZone,
+        updatedAt: fetchedAt,
+        fetchedAt,
+        sourceUpdatedAt: fetchedAt,
+      };
     };
-    setCached(rangeKey, payload, CACHE_TTL_MS);
+    const payload = forceRefreshRange
+      ? await buildDefaultPayload()
+      : await dedupeCalendarInflight(rangeKey, buildDefaultPayload);
+    setCached(rangeKey, payload, CAL_COOL_TTL_MS);
+    setCached(cacheKey, payload, CAL_COOL_TTL_MS);
     return res.status(200).json({ success: true, ...payload, cached: false });
   }
 
@@ -1430,7 +1504,14 @@ module.exports = async (req, res) => {
   const etToday = calendarEtTodayStr();
   const toDay = shiftIsoDate(etToday, days);
   const collectionStart = shiftIsoDate(etToday, -DEFAULT_RANGE_PAST_DAYS);
-  let { events, source } = await fetchHistoricalRange(collectionStart, toDay);
+  const snapshotInflightKey = `${CACHE_KEY}:days:${days}:${viewerTimeZone}:${JSON.stringify({
+    ccy: parseCsvParam(req.query?.currencies).map((s) => s.toUpperCase()).sort(),
+    ctry: parseCsvParam(req.query?.countries).map((s) => s.toUpperCase()).sort(),
+    imp: parseCsvParam(req.query?.impact).map((s) => normImpact(s)).sort(),
+  })}`;
+  let { events, source } = await dedupeCalendarInflight(snapshotInflightKey, () =>
+    fetchHistoricalRange(collectionStart, toDay)
+  );
   if (Array.isArray(events) && events.length > 0) {
     const upcoming = events.filter((ev) => ev && ev.date && ev.date >= etToday);
     if (upcoming.length > 0) events = upcoming;
@@ -1464,22 +1545,23 @@ module.exports = async (req, res) => {
     ? events.filter((e) => hasActualBackend(e.actual)).length
     : 0;
 
-  const withForecastCached = cachedForRecovery?.events
-    ? cachedForRecovery.events.filter((e) => normalizeValue(e.forecast) != null).length
+  const snapshotStaleForRecovery = peekCacheEntry(cacheKey)?.data || cachedForRecovery;
+  const withForecastCached = snapshotStaleForRecovery?.events
+    ? snapshotStaleForRecovery.events.filter((e) => normalizeValue(e.forecast) != null).length
     : 0;
-  const withActualCached = cachedForRecovery?.events
-    ? cachedForRecovery.events.filter((e) => hasActualBackend(e.actual)).length
+  const withActualCached = snapshotStaleForRecovery?.events
+    ? snapshotStaleForRecovery.events.filter((e) => hasActualBackend(e.actual)).length
     : 0;
 
   const looksLikeStaticFallback = source === 'fallback' && Array.isArray(events) && events.length <= 5;
   const looksLikeFigureDrop =
-    cachedForRecovery &&
+    snapshotStaleForRecovery &&
     withForecastCached > 0 &&
     withForecastNew < Math.max(2, Math.floor(withForecastCached * 0.25));
-  if (forceRefresh && cachedForRecovery && (looksLikeStaticFallback || looksLikeFigureDrop)) {
+  if (forceRefresh && snapshotStaleForRecovery && (looksLikeStaticFallback || looksLikeFigureDrop)) {
     return res.status(200).json({
       success: true,
-      ...cachedForRecovery,
+      ...snapshotStaleForRecovery,
       viewerTimeZone,
       cached: true,
       recoveredFromCache: true,
@@ -1495,7 +1577,7 @@ module.exports = async (req, res) => {
     fetchedAt,
     sourceUpdatedAt: fetchedAt,
   };
-  setCached(cacheKey, payload, CACHE_TTL_MS);
+  setCached(cacheKey, payload, CAL_COOL_TTL_MS);
 
   return res.status(200).json({ success: true, ...payload, cached: false });
 };
@@ -1513,4 +1595,5 @@ module.exports._test = {
   isValidIsoDateOnly,
   enumerateInclusiveDays,
   mapFredSeriesToEvents,
+  calendarNeedsHotRefresh,
 };

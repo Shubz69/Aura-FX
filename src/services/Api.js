@@ -1115,7 +1115,7 @@ const Api = {
         });
     },
     /**
-     * Economic calendar. skipCache so actuals stay fresh.
+     * Economic calendar. Client GET cache disabled only when refresh=true (backend adaptive cache + release-window logic).
      * Supports both legacy params (from/to/date/days) and range aliases (startDate/endDate),
      * plus optional currencies/countries/impact/includePast/includeFuture.
      * @param {number|{ from?: string, to?: string, startDate?: string, endDate?: string, date?: string, days?: number, refresh?: boolean, currencies?: string[]|string, countries?: string[]|string, impact?: string[]|string, includePast?: boolean, includeFuture?: boolean }} daysOrOpts
@@ -1159,7 +1159,8 @@ const Api = {
         if (doRefresh) params.refresh = '1';
         return dedupeGet(`${API_BASE_URL}/api/trader-deck/economic-calendar`, {
             params,
-            skipCache: true,
+            // Backend holds adaptive cache; skip client GET cache only when forcing provider refresh.
+            skipCache: doRefresh,
         });
     },
     /**
