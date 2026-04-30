@@ -136,8 +136,8 @@ async function runReplayChecks(page, counters) {
     errors: [],
   };
 
-  await page.goto(`${BASE_URL}/trader-replay`, { waitUntil: 'domcontentloaded', timeout: 120000 });
-  await page.waitForSelector('text=Trader Replay', { timeout: 90000 });
+  await page.goto(`${BASE_URL}/aura-analysis/dashboard/trader-replay`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await page.waitForSelector('.tr-replay-page', { timeout: 90000 });
   await page.waitForTimeout(1200);
 
   const replayButton = page.getByRole('button', { name: /Replay/i }).first();
@@ -147,8 +147,9 @@ async function runReplayChecks(page, counters) {
     return result;
   }
   await replayButton.click();
+  await page.waitForTimeout(800);
 
-  const chartCanvas = await waitForChartCanvas(page, 'div[style*="height: 420px"]');
+  const chartCanvas = await waitForChartCanvas(page, '[data-testid="replay-chart-mount"]');
   const chartBox = await chartCanvas.boundingBox();
   if (!chartBox) {
     result.errors.push('Replay chart canvas has no bounding box');
@@ -213,6 +214,8 @@ async function main() {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify({ id: 9001, userId: 9001, role: 'admin', email: 'qa@local.test' }));
     localStorage.removeItem('auraApiBaseUrlOverride');
+    /** Bypass Aura dashboard MT-connection gate in dev-only QA mode (see `src/utils/qaTestMode.js`). */
+    localStorage.setItem('qaTestMode', '1');
   }, makeFakeJwt());
 
   page.on('response', async (res) => {

@@ -1,9 +1,10 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import TraderReplay from '../TraderReplay';
 import Api from '../../services/Api';
 import { buildCsvReplayTradeId, buildReplayTradeUrl } from '../../lib/trader-replay/replayLink';
+const mockTradeReplayChart = jest.fn(() => <div data-testid="trade-replay-chart">chart</div>);
 
 jest.mock('../../context/AuraAnalysisContext', () => ({
   useAuraAnalysisData: () => ({ activePlatformId: 'csv' }),
@@ -16,7 +17,7 @@ jest.mock('../../components/TraderSuiteShell', () => ({ children, title }) => (
   </div>
 ));
 
-jest.mock('../../components/trader-replay/TradeReplayChart', () => () => <div data-testid="trade-replay-chart">chart</div>);
+jest.mock('../../components/trader-replay/TradeReplayChart', () => (props) => mockTradeReplayChart(props));
 
 jest.mock('../../components/operator-intelligence/CandleIntelligencePanel', () => () => null);
 
@@ -35,6 +36,7 @@ const mockApi = Api;
 describe('TraderReplay load order and Aura-style deep link', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockTradeReplayChart.mockClear();
   });
 
   it('does not request candles until trade fetch has resolved', async () => {
@@ -121,5 +123,48 @@ describe('TraderReplay load order and Aura-style deep link', () => {
 
     await waitFor(() => expect(mockApi.getTraderReplayAnalysis).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByText(/Good/i)).toBeTruthy());
+  });
+
+  it('does not auto-reset chart centering during playback ticks', async () => {
+    jest.useFakeTimers();
+    mockApi.getTraderReplayTrades.mockResolvedValue({
+      data: { trades: [{ id: 'mt5:10', symbol: 'EURUSD', source: 'mt5', openTime: '2026-01-01T09:00:00Z' }] },
+    });
+    mockApi.getTraderReplayTrade.mockResolvedValue({
+      data: {
+        trade: {
+          replayId: 'mt5:10',
+          source: 'mt5',
+          symbol: 'EURUSD',
+          direction: 'buy',
+          openTime: '2026-01-01T09:00:00Z',
+          closeTime: '2026-01-01T10:00:00Z',
+          entry: 1.1,
+          exit: 1.11,
+          lotSize: 0.2,
+          pnl: 20,
+        },
+      },
+    });
+    mockApi.getTraderReplayCandles.mockResolvedValue({
+      data: { bars: Array.from({ length: 200 }).map((_, i) => ({ time: 1700000000 + i * 60, open: 1, high: 2, low: 1, close: 1.5 })) },
+    });
+    mockApi.getTraderReplayAnalysis.mockResolvedValue({ data: { analysis: { strengths: ['ok'] } } });
+    render(
+      <MemoryRouter initialEntries={['/aura-analysis/dashboard/trader-replay?tradeId=mt5%3A10']}>
+        <Routes>
+          <Route path="/aura-analysis/dashboard/trader-replay" element={<TraderReplay />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(mockTradeReplayChart).toHaveBeenCalled());
+    const before = mockTradeReplayChart.mock.calls.at(-1)[0].recenterKey;
+    fireEvent.click(screen.getByRole('button', { name: /^Play$/i }));
+    jest.advanceTimersByTime(2800);
+    await waitFor(() => {
+      const after = mockTradeReplayChart.mock.calls.at(-1)[0].recenterKey;
+      expect(after).toBe(before);
+    });
+    jest.useRealTimers();
   });
 });

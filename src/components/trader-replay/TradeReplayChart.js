@@ -15,6 +15,8 @@ export default function TradeReplayChart({
   visibleBars,
   trade,
   currentIndex,
+  recenterKey = 0,
+  recenterTargetTime = null,
   openTrades = [],
   closedTrades = [],
   annotations = [],
@@ -103,9 +105,10 @@ export default function TradeReplayChart({
     chart.__replayHover = hoverHandler;
 
     const makeLine = (price, color, title, style = LineStyle.Solid) => {
-      if (!Number.isFinite(Number(price))) return null;
+      const p = Number(price);
+      if (!Number.isFinite(p) || p <= 0) return null;
       return candleRef.current.createPriceLine({
-        price: Number(price),
+        price: p,
         color,
         lineStyle: style,
         lineWidth: 1,
@@ -176,12 +179,29 @@ export default function TradeReplayChart({
       });
     }
     candleRef.current.setMarkers(markers);
-    chartRef.current?.timeScale().fitContent();
   }, [annotations, closedTrades, currentBars, openTrades, trade]);
+
+  useEffect(() => {
+    if (!chartRef.current || !currentBars.length) return;
+    const ts = Number(recenterTargetTime);
+    if (!Number.isFinite(ts)) return;
+    const targetIndex = currentBars.findIndex((b) => Number(b.time) >= ts);
+    const safeIndex = targetIndex >= 0 ? targetIndex : Math.max(0, currentBars.length - 1);
+    const left = 45;
+    const right = 45;
+    chartRef.current.timeScale().setVisibleLogicalRange({
+      from: Math.max(-5, safeIndex - left),
+      to: Math.min(currentBars.length + 5, safeIndex + right),
+    });
+  }, [recenterKey, recenterTargetTime, currentBars]);
 
   return (
     <div>
-      <div ref={wrapRef} style={{ width: '100%', height: 420, borderRadius: 10, overflow: 'hidden' }} />
+      <div
+        ref={wrapRef}
+        data-testid="replay-chart-mount"
+        style={{ width: '100%', height: 420, borderRadius: 10, overflow: 'hidden' }}
+      />
       <div style={{ marginTop: 8, color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>
         Candle {Math.max(0, currentIndex + 1)} / {bars?.length || 0} · zoom and pan directly on chart
       </div>

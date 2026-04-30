@@ -40,6 +40,47 @@ function deriveEndDate(startIsoDate) {
   return d.toISOString().slice(0, 10);
 }
 
+function parseDateLike(value) {
+  if (value == null || value === '') return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const d = new Date(`${raw}T00:00:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(raw)) {
+    const d = new Date(raw.length === 16 ? `${raw}:00` : raw);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)) {
+    const d = new Date(raw.replace(' ', 'T'));
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(raw)) {
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+    const [dd, mm, yyyy] = raw.split('/');
+    const d = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
+function toIsoDate(value) {
+  const d = parseDateLike(value);
+  if (!d) return null;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function toIsoDateTime(value) {
+  const d = parseDateLike(value);
+  return d ? d.toISOString() : null;
+}
+
 export default function BacktestingNewSession() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -104,8 +145,11 @@ export default function BacktestingNewSession() {
       .map((x) => String(x || '').trim().toUpperCase())
       .filter(Boolean);
     const instruments = [primary, ...extras].filter(Boolean).slice(0, 5);
-    const dateStart = startDateTime ? startDateTime.slice(0, 10) : '';
-    const dateEndFinal = dateEnd || deriveEndDate(dateStart) || dateStart;
+    const dateStart = toIsoDate(startDateTime);
+    const normalizedDateEnd = toIsoDate(dateEnd);
+    const dateEndFinal = normalizedDateEnd || deriveEndDate(dateStart || '') || dateStart;
+    const replayStartAt = toIsoDateTime(startDateTime);
+    const normalizedInitialBalance = Number(initialBalance);
 
     return {
       saveDraft,
@@ -115,10 +159,11 @@ export default function BacktestingNewSession() {
       instruments,
       dateStart: dateStart || null,
       dateEnd: dateEndFinal || null,
+      replayStartAt: replayStartAt || null,
       replayTimeframe,
       replayGranularity,
       tradingHoursMode,
-      initialBalance: Number(initialBalance) || 100000,
+      initialBalance: Number.isFinite(normalizedInitialBalance) ? normalizedInitialBalance : 100000,
       riskModel,
       strategyContext,
       draftForm: {
@@ -126,12 +171,13 @@ export default function BacktestingNewSession() {
         notes,
         instruments,
         startDateTime,
-        dateStart,
+        dateStart: dateStart || null,
         dateEnd: dateEndFinal,
+        replayStartAt: replayStartAt || null,
         replayTimeframe,
         replayGranularity,
         tradingHoursMode,
-        initialBalance,
+        initialBalance: Number.isFinite(normalizedInitialBalance) ? normalizedInitialBalance : 100000,
         riskModel,
         strategyContext,
       },
@@ -173,7 +219,11 @@ export default function BacktestingNewSession() {
     setSaving(true);
     try {
       const payload = buildPayload(false);
-      const replayIso = new Date(startDateTime).toISOString();
+      const replayIso = toIsoDateTime(startDateTime);
+      if (!payload.dateStart || !replayIso) {
+        toast.error('Start date/time is invalid.');
+        return;
+      }
 
       if (draftSessionId || draftFromUrl) {
         const id = draftSessionId || draftFromUrl;

@@ -63,6 +63,8 @@ export default function TraderReplay() {
   const [hoverTooltip, setHoverTooltip] = useState(null);
   const [selectedBar, setSelectedBar] = useState(null);
   const [candleOpen, setCandleOpen] = useState(false);
+  const [recenterKey, setRecenterKey] = useState(0);
+  const [recenterTargetTime, setRecenterTargetTime] = useState(null);
   const timerRef = useRef(null);
   const [filterSymbol, setFilterSymbol] = useState('');
   const [filterSource, setFilterSource] = useState('all');
@@ -191,9 +193,19 @@ export default function TraderReplay() {
         const candleBars = Array.isArray(candlesRes?.data?.bars) ? candlesRes.data.bars : [];
         setBars(candleBars);
         setChartError('');
-        const entryTs = selectedTrade?.openTime ? Math.floor(new Date(selectedTrade.openTime).getTime() / 1000) : null;
-        const entryIndex = entryTs ? Math.max(0, candleBars.findIndex((b) => Number(b.time) >= entryTs)) : 0;
-        setIndex(entryIndex >= 0 ? entryIndex : 0);
+        const openTs = selectedTrade?.openTime ? Math.floor(new Date(selectedTrade.openTime).getTime() / 1000) : null;
+        const closeTs = selectedTrade?.closeTime ? Math.floor(new Date(selectedTrade.closeTime).getTime() / 1000) : null;
+        const entryIdx = openTs ? Math.max(0, candleBars.findIndex((b) => Number(b.time) >= openTs)) : 0;
+        const exitIdx = closeTs ? Math.max(0, candleBars.findIndex((b) => Number(b.time) >= closeTs)) : entryIdx;
+        const focusIdx = Math.max(0, Math.floor((entryIdx + Math.max(entryIdx, exitIdx)) / 2));
+        const focusTs = Number.isFinite(openTs) && Number.isFinite(closeTs)
+          ? Math.floor((openTs + closeTs) / 2)
+          : (Number.isFinite(openTs) ? openTs : closeTs);
+        setIndex(Math.min(Math.max(0, candleBars.length - 1), focusIdx + 45));
+        if (Number.isFinite(Number(focusTs))) {
+          setRecenterTargetTime(Number(focusTs));
+          setRecenterKey((k) => k + 1);
+        }
       } catch (e) {
         if (!cancelled) {
           setChartError(e?.response?.data?.message || 'Chart data could not be loaded for this symbol or range.');
@@ -238,6 +250,26 @@ export default function TraderReplay() {
   const exitTs = selectedTrade?.closeTime ? Math.floor(new Date(selectedTrade.closeTime).getTime() / 1000) : null;
   const entryIndex = entryTs ? Math.max(0, bars.findIndex((b) => Number(b.time) >= entryTs)) : 0;
   const exitIndex = exitTs ? Math.max(0, bars.findIndex((b) => Number(b.time) >= exitTs)) : bars.length - 1;
+  const tradeMidIndex = Math.max(0, Math.floor((entryIndex + Math.max(0, exitIndex)) / 2));
+  const csvMissingEntryExit = Boolean(
+    selectedTrade
+      && String(selectedTrade.source || '').toLowerCase() === 'csv'
+      && (!Number.isFinite(Number(selectedTrade.entry)) || Number(selectedTrade.entry) <= 0
+        || !Number.isFinite(Number(selectedTrade.exit)) || Number(selectedTrade.exit) <= 0)
+  );
+
+  const revealWithContext = useCallback((targetIdx) => {
+    const idx = Math.max(0, Number(targetIdx) || 0);
+    return Math.min(Math.max(0, bars.length - 1), idx + 45);
+  }, [bars.length]);
+
+  const centerAround = useCallback((targetTime, targetIdx) => {
+    const ts = Number(targetTime);
+    if (!Number.isFinite(ts)) return;
+    setRecenterTargetTime(ts);
+    setRecenterKey((k) => k + 1);
+    setIndex(revealWithContext(targetIdx));
+  }, [revealWithContext]);
 
   const activeReplayId = selectedTrade?.replayId || selectedId;
 
@@ -400,11 +432,29 @@ export default function TraderReplay() {
                   <button type="button" className="trader-suite-btn" onClick={() => setIndex((i) => Math.max(i - 1, 0))}>
                     Step −
                   </button>
-                  <button type="button" className="trader-suite-btn" onClick={() => setIndex(Math.max(0, entryIndex))}>
+                  <button
+                    type="button"
+                    className="trader-suite-btn"
+                    onClick={() => centerAround(entryTs, entryIndex)}
+                  >
                     Jump entry
                   </button>
-                  <button type="button" className="trader-suite-btn" onClick={() => setIndex(Math.max(0, exitIndex))}>
+                  <button
+                    type="button"
+                    className="trader-suite-btn"
+                    onClick={() => centerAround(exitTs || entryTs, exitIndex)}
+                  >
                     Jump exit
+                  </button>
+                  <button
+                    type="button"
+                    className="trader-suite-btn"
+                    onClick={() => centerAround(
+                      Number.isFinite(entryTs) && Number.isFinite(exitTs) ? Math.floor((entryTs + exitTs) / 2) : (entryTs || exitTs),
+                      tradeMidIndex
+                    )}
+                  >
+                    Reset View
                   </button>
                   <label>
                     <span>Speed</span>
@@ -427,6 +477,11 @@ export default function TraderReplay() {
                     </select>
                   </label>
                 </div>
+                {csvMissingEntryExit ? (
+                  <div className="trader-suite-card" style={{ marginBottom: 8, padding: 8, fontSize: 12, color: '#f8c37d' }}>
+                    This CSV trade is missing entry/exit prices, so replay markers may be limited.
+                  </div>
+                ) : null}
 
                 {hoverTooltip ? (
                   <div className="trader-suite-card" style={{ marginBottom: 8, padding: 8, fontSize: 12 }}>
@@ -443,6 +498,8 @@ export default function TraderReplay() {
                     visibleBars={visibleBars}
                     trade={selectedTrade}
                     currentIndex={index}
+                    recenterKey={recenterKey}
+                    recenterTargetTime={recenterTargetTime}
                     symbol={selectedTrade.symbol}
                     interval={chartInterval}
                     onHoverCandle={setHoverTooltip}

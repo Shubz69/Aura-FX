@@ -102,10 +102,18 @@ export async function fetchOperatorChartPack(symbol, timeframeId) {
   let usedSymbol = cleanDataSymbol;
   let diagnostics = null;
 
+  const chartAbort =
+    typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+      ? AbortSignal.timeout(42000)
+      : undefined;
+
   for (const symTry of trySymbols) {
     try {
       // eslint-disable-next-line no-await-in-loop
-      const response = await Api.getMarketChartHistory(symTry, { interval: requestedInterval });
+      const response = await Api.getMarketChartHistory(symTry, {
+        interval: requestedInterval,
+        ...(chartAbort ? { signal: chartAbort } : {}),
+      });
       const payload = response?.data || {};
       const normalizedBars = normalizeChartBars(payload?.bars);
       if (normalizedBars.length > 1) {

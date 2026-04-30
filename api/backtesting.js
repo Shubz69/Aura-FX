@@ -74,8 +74,17 @@ function toMysqlDatetimeUtc(value) {
     if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s)) return s;
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
       dt = new Date(`${s}T00:00:00.000Z`);
-    } else {
+    } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) {
+      dt = new Date(`${s}:00Z`);
+    } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) {
+      dt = new Date(`${s}Z`);
+    } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(s)) {
       dt = new Date(s);
+    } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+      const [dd, mm, yyyy] = s.split('/');
+      dt = new Date(`${yyyy}-${mm}-${dd}T00:00:00.000Z`);
+    } else {
+      return null;
     }
   }
   if (Number.isNaN(dt.getTime())) return null;
@@ -86,6 +95,35 @@ function toMysqlDatetimeUtc(value) {
   const mi = String(dt.getUTCMinutes()).padStart(2, '0');
   const sec = String(dt.getUTCSeconds()).padStart(2, '0');
   return `${y}-${mo}-${d} ${h}:${mi}:${sec}`;
+}
+
+function normalizeDateOnly(value) {
+  if (value == null || value === '') return null;
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null;
+    const y = value.getUTCFullYear();
+    const m = String(value.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(value.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) {
+    const dt = toMysqlDatetimeUtc(raw);
+    return dt ? dt.slice(0, 10) : null;
+  }
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)) return raw.slice(0, 10);
+  const slash = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (slash) {
+    const dd = String(Number(slash[1])).padStart(2, '0');
+    const mm = String(Number(slash[2])).padStart(2, '0');
+    const yyyy = slash[3];
+    const iso = `${yyyy}-${mm}-${dd}`;
+    const test = new Date(`${iso}T00:00:00.000Z`);
+    return Number.isNaN(test.getTime()) ? null : iso;
+  }
+  return null;
 }
 
 async function listTableColumns(tableName) {
@@ -835,10 +873,10 @@ module.exports = async (req, res) => {
       const instruments = Array.isArray(body.instruments) ? body.instruments.map((x) => String(x).slice(0, 64)).slice(0, 5) : [];
       const playbookId = body.playbookId ? String(body.playbookId).slice(0, 36) : null;
       const playbookName = body.playbookName ? String(body.playbookName).slice(0, 160) : null;
-      const initialBalance = body.initialBalance != null ? num(body.initialBalance, 100000) : 100000;
+      const initialBalance = body.initialBalance != null ? Number(body.initialBalance) : 100000;
       const riskModel = body.riskModel ? String(body.riskModel).slice(0, 32) : 'fixed_percent';
-      const dateStart = body.dateStart ? String(body.dateStart).slice(0, 10) : null;
-      const dateEnd = body.dateEnd ? String(body.dateEnd).slice(0, 10) : null;
+      const dateStart = normalizeDateOnly(body.dateStart);
+      const dateEnd = normalizeDateOnly(body.dateEnd);
       const replayTimeframe = body.replayTimeframe ? String(body.replayTimeframe).slice(0, 32) : 'M15';
       const replayGranularity = body.replayGranularity ? String(body.replayGranularity).slice(0, 32) : 'candle';
       const tradingHoursMode = body.tradingHoursMode ? String(body.tradingHoursMode).slice(0, 32) : 'all';
@@ -847,6 +885,21 @@ module.exports = async (req, res) => {
       const strategyContext = body.strategyContext && typeof body.strategyContext === 'object' ? body.strategyContext : {};
       const chartPrefs = body.chartPrefs && typeof body.chartPrefs === 'object' ? body.chartPrefs : {};
       const draftFormJson = body.draftForm && typeof body.draftForm === 'object' ? body.draftForm : null;
+
+      const replayStartAt = body.replayStartAt ? toMysqlDatetimeUtc(body.replayStartAt) : null;
+
+      if (!Number.isFinite(initialBalance)) {
+        return res.status(400).json({ success: false, message: 'initialBalance must be numeric' });
+      }
+      if (body.dateStart != null && !dateStart) {
+        return res.status(400).json({ success: false, message: 'dateStart must be YYYY-MM-DD (or parseable date)' });
+      }
+      if (body.dateEnd != null && body.dateEnd !== '' && !dateEnd) {
+        return res.status(400).json({ success: false, message: 'dateEnd must be YYYY-MM-DD (or parseable date)' });
+      }
+      if (body.replayStartAt != null && body.replayStartAt !== '' && !replayStartAt) {
+        return res.status(400).json({ success: false, message: 'replayStartAt must be a valid datetime' });
+      }
 
       if (!saveDraft) {
         if (!dateStart || !dateEnd || dateStart > dateEnd) {
@@ -859,7 +912,7 @@ module.exports = async (req, res) => {
 
       const status = saveDraft ? 'draft' : 'active';
       const startedAt = saveDraft ? null : toMysqlDatetimeUtc(new Date());
-      const lastReplayAt = dateStart ? toMysqlDatetimeUtc(new Date(`${dateStart}T00:00:00.000Z`)) : null;
+      const lastReplayAt = replayStartAt || (dateStart ? toMysqlDatetimeUtc(new Date(`${dateStart}T00:00:00.000Z`)) : null);
 
       await insertBacktestSessionResilient({
         id,
@@ -914,10 +967,28 @@ module.exports = async (req, res) => {
         if (body.instruments != null) next.instruments = Array.isArray(body.instruments) ? body.instruments.slice(0, 5) : [];
         if (body.playbookId !== undefined) next.playbookId = body.playbookId ? String(body.playbookId).slice(0, 36) : null;
         if (body.playbookName !== undefined) next.playbookName = body.playbookName ? String(body.playbookName).slice(0, 160) : null;
-        if (body.initialBalance != null) next.initialBalance = num(body.initialBalance);
+        if (body.initialBalance != null) {
+          const parsedBalance = Number(body.initialBalance);
+          if (!Number.isFinite(parsedBalance)) {
+            return res.status(400).json({ success: false, message: 'initialBalance must be numeric' });
+          }
+          next.initialBalance = parsedBalance;
+        }
         if (body.riskModel != null) next.riskModel = String(body.riskModel).slice(0, 32);
-        if (body.dateStart != null) next.dateStart = String(body.dateStart).slice(0, 10);
-        if (body.dateEnd != null) next.dateEnd = String(body.dateEnd).slice(0, 10);
+        if (body.dateStart != null) {
+          const normalized = normalizeDateOnly(body.dateStart);
+          if (!normalized) return res.status(400).json({ success: false, message: 'dateStart must be YYYY-MM-DD (or parseable date)' });
+          next.dateStart = normalized;
+        }
+        if (body.dateEnd != null) {
+          if (body.dateEnd === '') {
+            next.dateEnd = null;
+          } else {
+            const normalized = normalizeDateOnly(body.dateEnd);
+            if (!normalized) return res.status(400).json({ success: false, message: 'dateEnd must be YYYY-MM-DD (or parseable date)' });
+            next.dateEnd = normalized;
+          }
+        }
         if (body.replayTimeframe != null) next.replayTimeframe = String(body.replayTimeframe).slice(0, 32);
         if (body.replayGranularity != null) next.replayGranularity = String(body.replayGranularity).slice(0, 32);
         if (body.tradingHoursMode != null) next.tradingHoursMode = String(body.tradingHoursMode).slice(0, 32);
@@ -937,6 +1008,23 @@ module.exports = async (req, res) => {
         const st = next.status;
         if (['draft', 'active', 'paused', 'completed', 'archived'].indexOf(st) === -1) {
           return res.status(400).json({ success: false, message: 'Invalid status' });
+        }
+        if (next.dateStart && next.dateEnd && next.dateStart > next.dateEnd) {
+          return res.status(400).json({ success: false, message: 'dateStart must be on or before dateEnd' });
+        }
+        const normalizedReplayStartAt =
+          body.replayStartAt !== undefined
+            ? (body.replayStartAt === '' || body.replayStartAt == null ? null : toMysqlDatetimeUtc(body.replayStartAt))
+            : undefined;
+        if (body.replayStartAt !== undefined && body.replayStartAt !== '' && body.replayStartAt != null && !normalizedReplayStartAt) {
+          return res.status(400).json({ success: false, message: 'replayStartAt must be a valid datetime' });
+        }
+        const normalizedLastReplayAt =
+          body.lastReplayAt !== undefined
+            ? (body.lastReplayAt === '' || body.lastReplayAt == null ? null : toMysqlDatetimeUtc(body.lastReplayAt))
+            : undefined;
+        if (body.lastReplayAt !== undefined && body.lastReplayAt !== '' && body.lastReplayAt != null && !normalizedLastReplayAt) {
+          return res.status(400).json({ success: false, message: 'lastReplayAt must be a valid datetime' });
         }
 
         await executeQuery(
@@ -967,9 +1055,11 @@ module.exports = async (req, res) => {
             stringifyJson(next.strategyContext || {}),
             stringifyJson(next.chartPrefs || {}),
             next.notes,
-            body.lastReplayAt !== undefined
-              ? toMysqlDatetimeUtc(next.lastReplayAt)
-              : toMysqlDatetimeUtc(row.lastReplayAt),
+            normalizedReplayStartAt !== undefined
+              ? normalizedReplayStartAt
+              : normalizedLastReplayAt !== undefined
+                ? normalizedLastReplayAt
+                : toMysqlDatetimeUtc(row.lastReplayAt),
             next.lastActiveInstrument,
             next.replaySpeed,
             next.timeSpentSeconds != null ? next.timeSpentSeconds : row.timeSpentSeconds,

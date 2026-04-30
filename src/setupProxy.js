@@ -9,14 +9,31 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
  *   REACT_APP_LOCAL_API_PROXY_TARGET=http://localhost:3001
  */
 module.exports = function setupProxy(app) {
-  const localChartTarget = process.env.REACT_APP_LOCAL_API_PROXY_TARGET || 'http://localhost:3001';
+  const explicitLocalApi = process.env.REACT_APP_LOCAL_API_PROXY_TARGET;
+  const defaultChartLocal = 'http://localhost:3001';
   const defaultApiTarget = process.env.REACT_APP_DEFAULT_API_PROXY_TARGET || 'https://www.auraterminal.ai';
 
-  // Route chart-history specifically to local handler for QA/dev validation.
+  // Full local backend (chart, candle-context, Replay stubs, daily-login, etc.).
+  // Required for: node scripts/local-api-server.js + REACT_APP_LOCAL_API_PROXY_TARGET=http://localhost:3001 npm start
+  if (explicitLocalApi && String(explicitLocalApi).trim()) {
+    app.use(
+      '/api',
+      createProxyMiddleware({
+        target: explicitLocalApi.trim(),
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        logLevel: 'warn',
+      })
+    );
+    return;
+  }
+
+  // Default dev: chart-history (+ path under /api/market/chart-history) proxied to local :3001; other /api routes use production API.
   app.use(
     '/api/market',
     createProxyMiddleware({
-      target: localChartTarget,
+      target: defaultChartLocal,
       changeOrigin: true,
       secure: false,
       ws: true,
@@ -26,7 +43,6 @@ module.exports = function setupProxy(app) {
     })
   );
 
-  // Keep remaining API routes on the existing backend target.
   app.use(
     '/api',
     createProxyMiddleware({
