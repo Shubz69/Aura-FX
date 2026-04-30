@@ -44,13 +44,13 @@ function escapeHtml(s) {
 }
 
 export default function MarketDecoderView({ embedded }) {
+  const { t } = useTranslation();
   const decoderFlow = [
     { step: '1', title: t('marketDecoder.flowStep1Title'), note: t('marketDecoder.flowStep1Note') },
     { step: '2', title: t('marketDecoder.flowStep2Title'), note: t('marketDecoder.flowStep2Note') },
     { step: '3', title: t('marketDecoder.flowStep3Title'), note: t('marketDecoder.flowStep3Note') },
     { step: '4', title: t('marketDecoder.flowStep4Title'), note: t('marketDecoder.flowStep4Note') },
   ];
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [q, setQ] = useState('EURUSD');
   const [quickChips, setQuickChips] = useState(QUICK);
