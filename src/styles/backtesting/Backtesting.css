@@ -1241,7 +1241,37 @@
 }
 
 .journal-page .bt-root .bt-replay-chart {
-  min-height: 520px;
+  min-height: 560px;
+}
+
+.journal-page .bt-root .bt-replay-chart-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.journal-page .bt-root .bt-replay-chart-tool {
+  appearance: none;
+  border: 1px solid rgba(234, 169, 96, 0.35);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(252, 250, 245, 0.88);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.journal-page .bt-root .bt-replay-chart-tool:hover {
+  border-color: rgba(234, 169, 96, 0.55);
+  background: rgba(234, 169, 96, 0.12);
+}
+
+.journal-page .bt-root .bt-replay-chart-tool--active {
+  border-color: rgba(234, 169, 96, 0.85);
+  background: rgba(234, 169, 96, 0.2);
 }
 
 .journal-page .bt-root .bt-replay-empty {

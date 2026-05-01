@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import Api from '../../services/Api';
 import TradeReplayChart from '../../components/trader-replay/TradeReplayChart';
 import CandleIntelligencePanel from '../../components/operator-intelligence/CandleIntelligencePanel';
+import { replayPortfolioFloatingUsd, replayTradePnlUsd } from '../../lib/backtesting/replayPnl';
 import '../../styles/backtesting/Backtesting.css';
 
 const SPEEDS = [250, 500, 900, 1400, 2200];
@@ -30,6 +31,36 @@ function replayTimeframeToInterval(tf) {
   return '15';
 }
 
+/** @returns {{ price: number } | null} */
+function detectReplaySlTp(bar, trade) {
+  const h = Number(bar.high);
+  const l = Number(bar.low);
+  if (!Number.isFinite(h) || !Number.isFinite(l)) return null;
+  const sl = trade.stopLoss != null && trade.stopLoss !== '' ? Number(trade.stopLoss) : NaN;
+  const tp = trade.takeProfit != null && trade.takeProfit !== '' ? Number(trade.takeProfit) : NaN;
+  const dir = String(trade.direction || 'long').toLowerCase();
+  const isShort = dir === 'short' || dir === 'sell';
+  if (!isShort) {
+    if (Number.isFinite(sl) && l <= sl) return { price: sl };
+    if (Number.isFinite(tp) && h >= tp) return { price: tp };
+  } else {
+    if (Number.isFinite(sl) && h >= sl) return { price: sl };
+    if (Number.isFinite(tp) && l <= tp) return { price: tp };
+  }
+  return null;
+}
+
+function pnlHintsForInstrument(chartInstrument, markPrice, tradeInstrument) {
+  const px = Number(markPrice);
+  const chart = String(chartInstrument || '').toUpperCase();
+  const tins = String(tradeInstrument || '').toUpperCase();
+  const hints = {};
+  if (tins === 'USDJPY' && Number.isFinite(px)) hints.usdJpyHint = px;
+  if (tins.endsWith('JPY') && tins !== 'USDJPY')
+    hints.crossUsdJpy = chart === 'USDJPY' && Number.isFinite(px) ? px : 150;
+  return hints;
+}
+
 export default function BacktestingWorkspace() {
   const { sessionId } = useParams();
   const timerRef = useRef(null);
@@ -49,6 +80,7 @@ export default function BacktestingWorkspace() {
   const [hoverTooltip, setHoverTooltip] = useState(null);
   const [selectedBar, setSelectedBar] = useState(null);
   const [candleOpen, setCandleOpen] = useState(false);
+  const [chartFitKey, setChartFitKey] = useState(0);
 
   const [controls, setControls] = useState({
     instrument: 'EURUSD',
@@ -73,23 +105,22 @@ export default function BacktestingWorkspace() {
   const markToMarketPnl = useMemo(() => {
     const px = Number(currentBar?.close);
     if (!Number.isFinite(px)) return 0;
-    return openTrades.reduce((acc, t) => {
-      const entry = Number(t.entryPrice);
-      const lots = Number(t.positionSize || 0);
-      if (!Number.isFinite(entry)) return acc;
-      const raw = t.direction === 'short' ? (entry - px) * lots : (px - entry) * lots;
-      return acc + raw;
-    }, 0);
-  }, [currentBar?.close, openTrades]);
+    const chartIns = String(controls.instrument || '').toUpperCase();
+    return replayPortfolioFloatingUsd(openTrades, px, {
+      usdJpy: chartIns === 'USDJPY' ? px : undefined,
+      crossUsdJpy: chartIns === 'USDJPY' ? px : undefined,
+    });
+  }, [currentBar?.close, openTrades, controls.instrument]);
 
   const closedPnl = useMemo(
     () => closedTrades.reduce((acc, t) => acc + Number(t.pnlAmount || 0), 0),
     [closedTrades]
   );
-  const equity = useMemo(
-    () => Number(session?.initialBalance || 0) + closedPnl + markToMarketPnl,
-    [closedPnl, markToMarketPnl, session?.initialBalance]
+  const balance = useMemo(
+    () => Number(session?.initialBalance || 0) + closedPnl,
+    [closedPnl, session?.initialBalance]
   );
+  const equity = useMemo(() => balance + markToMarketPnl, [balance, markToMarketPnl]);
 
   useEffect(() => () => {
     if (timerRef.current) window.clearInterval(timerRef.current);
@@ -190,6 +221,7 @@ export default function BacktestingWorkspace() {
       setCandles(list);
       setStartIndex(start);
       setCursor(start);
+      setChartFitKey((k) => k + 1);
       await Api.patchBacktestingSession(sessionId, {
         lastActiveInstrument: controls.instrument,
         replayTimeframe: controls.timeframe,
@@ -215,6 +247,11 @@ export default function BacktestingWorkspace() {
 
   const placeTrade = async (direction) => {
     const entry = Number(currentBar?.close);
+    const lots = Number(ticket.lotSize);
+    if (!Number.isFinite(lots) || lots <= 0) {
+      toast.error('Lot size must be greater than zero.');
+      return;
+    }
     if (!Number.isFinite(entry)) {
       toast.error('Load candles first.');
       return;
@@ -227,7 +264,7 @@ export default function BacktestingWorkspace() {
         entryPrice: entry,
         stopLoss: ticket.stopLoss !== '' ? Number(ticket.stopLoss) : null,
         takeProfit: ticket.takeProfit !== '' ? Number(ticket.takeProfit) : null,
-        lotSize: Number(ticket.lotSize) || 0.1,
+        lotSize: lots,
         openTime: new Date(Number(currentBar.time) * 1000).toISOString(),
         replayReference: { cursor, startIndex, symbol: controls.instrument, timeframe: controls.timeframe },
       });
@@ -241,13 +278,58 @@ export default function BacktestingWorkspace() {
     }
   };
 
+  useEffect(() => {
+    if (!candles.length || !currentBar || !openTrades.length || !sessionId) return undefined;
+    const bar = currentBar;
+
+    let cancelled = false;
+    (async () => {
+      const toCheck = [...openTrades];
+      for (const t of toCheck) {
+        const hit = detectReplaySlTp(bar, t);
+        if (!hit || cancelled) continue;
+        const hints = pnlHintsForInstrument(controls.instrument, hit.price, t.instrument);
+        const pnlAmount = replayTradePnlUsd(
+          t.direction,
+          Number(t.entryPrice),
+          hit.price,
+          t.instrument,
+          Number(t.positionSize || 0),
+          hints
+        );
+        try {
+          await Api.closeBacktestingReplayTrade(sessionId, t.id, {
+            exitPrice: hit.price,
+            closeTime: new Date(Number(bar.time) * 1000).toISOString(),
+            pnlAmount: Number.isFinite(pnlAmount) ? pnlAmount : undefined,
+          });
+          const trRes = await Api.getBacktestingSessionTrades(sessionId);
+          if (trRes.data?.success) setAllTrades(trRes.data.trades || []);
+        } catch (e) {
+          /* one auto-close per bar */
+        }
+        break;
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cursor, candles, currentBar, openTrades, sessionId, controls.instrument]);
+
   const closeTrade = async (tradeId) => {
     const px = Number(currentBar?.close);
     if (!Number.isFinite(px)) return;
+    const t = openTrades.find((x) => x.id === tradeId);
+    const hints = t ? pnlHintsForInstrument(controls.instrument, px, t.instrument) : {};
+    const pnlAmount = t
+      ? replayTradePnlUsd(t.direction, Number(t.entryPrice), px, t.instrument, Number(t.positionSize || 0), hints)
+      : null;
     try {
       await Api.closeBacktestingReplayTrade(sessionId, tradeId, {
         exitPrice: px,
         closeTime: new Date(Number(currentBar.time) * 1000).toISOString(),
+        pnlAmount: Number.isFinite(pnlAmount) ? pnlAmount : undefined,
       });
       const trRes = await Api.getBacktestingSessionTrades(sessionId);
       if (trRes.data?.success) setAllTrades(trRes.data.trades || []);
@@ -382,7 +464,18 @@ export default function BacktestingWorkspace() {
           <button type="button" className="bt-btn bt-btn--ghost" onClick={() => setPlaying(false)} disabled={!candles.length}>Pause</button>
           <button type="button" className="bt-btn bt-btn--ghost" onClick={() => setCursor((i) => Math.max(0, i - 1))} disabled={!candles.length}>Step back</button>
           <button type="button" className="bt-btn bt-btn--ghost" onClick={() => setCursor((i) => Math.min(i + 1, candles.length - 1))} disabled={!candles.length}>Step forward</button>
-          <button type="button" className="bt-btn bt-btn--ghost" onClick={() => { setPlaying(false); setCursor(startIndex); }} disabled={!candles.length}>Restart</button>
+          <button
+            type="button"
+            className="bt-btn bt-btn--ghost"
+            onClick={() => {
+              setPlaying(false);
+              setCursor(startIndex);
+              setChartFitKey((k) => k + 1);
+            }}
+            disabled={!candles.length}
+          >
+            Restart
+          </button>
         </div>
         {loadError && <p className="bt-inline-err">{loadError}</p>}
       </section>
@@ -404,6 +497,7 @@ export default function BacktestingWorkspace() {
                 bars={candles}
                 visibleBars={visibleBars}
                 currentIndex={cursor}
+                fitLayoutKey={chartFitKey}
                 openTrades={openTrades}
                 closedTrades={closedTrades}
                 symbol={controls.instrument}
@@ -449,7 +543,7 @@ export default function BacktestingWorkspace() {
             <button type="button" className="bt-btn bt-btn--danger" onClick={() => placeTrade('short')}>Sell</button>
           </div>
           <div className="bt-replay-balance">
-            <div><span>Balance</span><strong>{fmt(session.initialBalance)}</strong></div>
+            <div><span>Balance</span><strong>{fmt(balance)}</strong></div>
             <div><span>Closed PnL</span><strong>{fmt(closedPnl)}</strong></div>
             <div><span>Floating</span><strong>{fmt(markToMarketPnl)}</strong></div>
             <div><span>Equity</span><strong>{fmt(equity)}</strong></div>

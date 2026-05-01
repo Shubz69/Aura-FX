@@ -196,6 +196,37 @@
   background: rgba(0, 0, 0, 0.25);
 }
 
+.tr-replay-chart-wrap .bt-replay-chart-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 0 4px 4px;
+}
+
+.tr-replay-chart-wrap .bt-replay-chart-tool {
+  appearance: none;
+  border: 1px solid rgba(248, 195, 125, 0.35);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(252, 250, 245, 0.88);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tr-replay-chart-wrap .bt-replay-chart-tool:hover {
+  border-color: rgba(248, 195, 125, 0.55);
+  background: rgba(248, 195, 125, 0.1);
+}
+
+.tr-replay-chart-wrap .bt-replay-chart-tool--active {
+  border-color: rgba(248, 195, 125, 0.85);
+  background: rgba(248, 195, 125, 0.18);
+}
+
 .tr-replay-chart-error {
   padding: 24px;
   font-size: 0.82rem;
