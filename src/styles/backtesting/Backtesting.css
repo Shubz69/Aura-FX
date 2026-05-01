@@ -18,6 +18,12 @@
   gap: clamp(20px, 2.5vw, 28px) !important;
 }
 
+/* journal-glass-panel--rim defaults to overflow:hidden (Journal.css), which clips the
+   instrument combobox — allow dropdowns to extend past the glass shell. */
+.journal-page .bt-root.journal-glass-panel--rim.aa-page {
+  overflow: visible !important;
+}
+
 /* ══════════════════════════════════════════════════════════
    TOKENS — Match The Operator shell exactly
    ══════════════════════════════════════════════════════════ */
@@ -1347,6 +1353,8 @@
 .journal-page .bt-root .bt-quickstart-card {
   border-color: rgba(234, 169, 96, 0.28) !important;
   padding: 16px 18px 18px !important;
+  /* aa-card uses overflow:hidden for glass; allow instrument dropdown to extend below card */
+  overflow: visible !important;
 }
 
 .journal-page .bt-root .bt-quickstart-grid {
@@ -1422,8 +1430,8 @@
   left: 0;
   right: 0;
   top: calc(100% + 4px);
-  z-index: 60;
-  max-height: 240px;
+  z-index: 200;
+  max-height: min(440px, 52vh);
   overflow-y: auto;
   border-radius: 10px;
   border: 1px solid rgba(234, 169, 96, 0.24);
